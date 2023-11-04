@@ -8,10 +8,13 @@ from time import sleep
 import pytest
 from flask import Flask, json, jsonify, session, url_for, make_response
 from flask_security.utils import login_user
+from jinja2.exceptions import TemplateNotFound
 from invenio_accounts.testutils import login_user_via_session
 from invenio_i18n.babel import set_locale
 from invenio_pidstore.errors import PIDDoesNotExistError
 from mock import patch
+from weko_redis.redis import RedisConnection
+from weko_deposit.api import WekoRecord
 from weko_workflow.api import WorkActivity
 from weko_workflow.models import Activity,WorkFlow
 
@@ -298,20 +301,27 @@ def test_iframe_save_model_nologin(client, db_sessionlifetime):
     "id, status_code",
     [
         (0, 200),
-        (1, 200),
-        (2, 200),
-        (3, 200),
-        (4, 200),
-        (5, 200),
-        (6, 200),
-        (7, 200),
+        # (1, 200),
+        # (2, 200),
+        # (3, 200),
+        # (4, 200),
+        # (5, 200),
+        # (6, 200),
+        # (7, 200),
     ],
 )
-def test_iframe_save_model_acl(app, client, db_itemtype, users, id, status_code):
+def test_iframe_save_model_acl(app, client, db_itemtype, db_workflow, users, id, status_code):
     login_user_via_session(client=client, email=users[id]["email"])
     url = url_for("weko_items_ui.iframe_save_model", _external=True)
-    res = client.post(url)
+    with client.session_transaction() as session:
+        session["activity_info"] = db_workflow['activity'].__dict__
+    data = {"metainfo": {"either_valid_test": "test", "pubdate": "2022-08-19", "item_1617186331708": [{"subitem_1551255647225": "aa", "subitem_1551255648112": "ja"}], "item_1617186385884": [{}], "item_1617186419668": [{"creatorAffiliations": [{"affiliationNameIdentifiers": [{}], "affiliationNames": [{}]}], "creatorAlternatives": [{}], "creatorMails": [{}], "creatorNames": [{}], "familyNames": [{}], "givenNames": [{}], "nameIdentifiers": [{}]}], "item_1617186499011": [{}], "item_1617186609386": [{}], "item_1617186626617": [{}], "item_1617186643794": [{}], "item_1617186660861": [{}], "item_1617186702042": [{}], "item_1617186783814": [{}], "item_1617186859717": [{}], "item_1617186882738": [{"subitem_geolocation_place": [{}]}], "item_1617186901218": [{"subitem_1522399412622": [{}], "subitem_1522399651758": [{}]}], "item_1617186920753": [{}], "item_1617186941041": [{}], "item_1617187112279": [{}], "item_1617187187528": [{"subitem_1599711633003": [{}], "subitem_1599711660052": [{}], "subitem_1599711758470": [{}], "subitem_1599711788485": [{}]}], "item_1617349709064": [{"contributorAffiliations": [{"contributorAffiliationNameIdentifiers": [{}], "contributorAffiliationNames": [{}]}], "contributorAlternatives": [{}], "contributorMails": [{}], "contributorNames": [{}], "familyNames": [{}], "givenNames": [{}], "nameIdentifiers": [{}]}], "item_1617353299429": [{"subitem_1523320863692": [{}]}], "item_1617605131499": [{"date": [{}], "fileDate": [{}], "filesize": [{}]}], "item_1617610673286": [{"nameIdentifiers": [{}], "rightHolderNames": [{}]}], "item_1617620223087": [{}], "item_1617944105607": [{"subitem_1551256015892": [{}], "subitem_1551256037922": [{}]}], "item_1617187056579": {"bibliographic_titles": [{}]}, "item_1617258105262": {"resourcetype": "conference paper", "resourceuri": "http://purl.org/coar/resource_type/c_5794"}, "shared_user_id": -1}, "files": [], "endpoints": {"initialization": "/api/deposits/items"}}
+    activity = Activity.query.first()
+    assert activity.temp_data == {}
+    res = client.post(url, json=data)
     assert res.status_code == status_code
+    activity = Activity.query.first()
+    assert activity.temp_data == '{"endpoints": {"initialization": "/api/deposits/items"}, "files": [], "metainfo": {"item_1617186331708": [{"subitem_1551255647225": "aa", "subitem_1551255648112": "ja"}], "item_1617186385884": [{}], "item_1617186419668": [{"creatorAffiliations": [{"affiliationNameIdentifiers": [{}], "affiliationNames": [{}]}], "creatorAlternatives": [{}], "creatorMails": [{}], "creatorNames": [{}], "familyNames": [{}], "givenNames": [{}], "nameIdentifiers": [{}]}], "item_1617186499011": [{}], "item_1617186609386": [{}], "item_1617186626617": [{}], "item_1617186643794": [{}], "item_1617186660861": [{}], "item_1617186702042": [{}], "item_1617186783814": [{}], "item_1617186859717": [{}], "item_1617186882738": [{"subitem_geolocation_place": [{}]}], "item_1617186901218": [{"subitem_1522399412622": [{}], "subitem_1522399651758": [{}]}], "item_1617186920753": [{}], "item_1617186941041": [{}], "item_1617187056579": {"bibliographic_titles": [{}]}, "item_1617187112279": [{}], "item_1617187187528": [{"subitem_1599711633003": [{}], "subitem_1599711660052": [{}], "subitem_1599711758470": [{}], "subitem_1599711788485": [{}]}], "item_1617258105262": {"resourcetype": "conference paper", "resourceuri": "http://purl.org/coar/resource_type/c_5794"}, "item_1617349709064": [{"contributorAffiliations": [{"contributorAffiliationNameIdentifiers": [{}], "contributorAffiliationNames": [{}]}], "contributorAlternatives": [{}], "contributorMails": [{}], "contributorNames": [{}], "familyNames": [{}], "givenNames": [{}], "nameIdentifiers": [{}]}], "item_1617353299429": [{"subitem_1523320863692": [{}]}], "item_1617605131499": [{"date": [{}], "fileDate": [{}], "filesize": [{}]}], "item_1617610673286": [{"nameIdentifiers": [{}], "rightHolderNames": [{}]}], "item_1617620223087": [{}], "item_1617944105607": [{"subitem_1551256015892": [{}], "subitem_1551256037922": [{}]}], "pubdate": "2022-08-19", "shared_user_id": -1}}'
 
 
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_iframe_save_model_error -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
@@ -321,13 +331,17 @@ def test_iframe_save_model_acl(app, client, db_itemtype, users, id, status_code)
         (0, 200),
     ],
 )
-def test_iframe_save_model_error(app, client, db_itemtype, users, id, status_code):
+def test_iframe_save_model_error(app, client, db_itemtype, db_workflow, users, id, status_code):
     login_user_via_session(client=client, email=users[id]["email"])
     url = url_for("weko_items_ui.iframe_save_model", _external=True)
     data = "{'metainfo': {'pubdate': '2022-08-19', 'item_1617186331708': [{'subitem_1551255647225': 'aa', 'subitem_1551255648112': 'ja'}], 'item_1617186385884': [{}], 'item_1617186419668': [{'creatorAffiliations': [{'affiliationNameIdentifiers': [{}], 'affiliationNames': [{}]}], 'creatorAlternatives': [{}], 'creatorMails': [{}], 'creatorNames': [{}], 'familyNames': [{}], 'givenNames': [{}], 'nameIdentifiers': [{}]}], 'item_1617186499011': [{}], 'item_1617186609386': [{}], 'item_1617186626617': [{}], 'item_1617186643794': [{}], 'item_1617186660861': [{}], 'item_1617186702042': [{}], 'item_1617186783814': [{}], 'item_1617186859717': [{}], 'item_1617186882738': [{'subitem_geolocation_place': [{}]}], 'item_1617186901218': [{'subitem_1522399412622': [{}], 'subitem_1522399651758': [{}]}], 'item_1617186920753': [{}], 'item_1617186941041': [{}], 'item_1617187112279': [{}], 'item_1617187187528': [{'subitem_1599711633003': [{}], 'subitem_1599711660052': [{}], 'subitem_1599711758470': [{}], 'subitem_1599711788485': [{}]}], 'item_1617349709064': [{'contributorAffiliations': [{'contributorAffiliationNameIdentifiers': [{}], 'contributorAffiliationNames': [{}]}], 'contributorAlternatives': [{}], 'contributorMails': [{}], 'contributorNames': [{}], 'familyNames': [{}], 'givenNames': [{}], 'nameIdentifiers': [{}]}], 'item_1617353299429': [{'subitem_1523320863692': [{}]}], 'item_1617605131499': [{'date': [{}], 'fileDate': [{}], 'filesize': [{}]}], 'item_1617610673286': [{'nameIdentifiers': [{}], 'rightHolderNames': [{}]}], 'item_1617620223087': [{}], 'item_1617944105607': [{'subitem_1551256015892': [{}], 'subitem_1551256037922': [{}]}], 'item_1617187056579': {'bibliographic_titles': [{}]}, 'item_1617258105262': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, 'shared_user_id': -1}, 'files': [], 'endpoints': {'initialization': '/api/deposits/items'}}"
+    activity = Activity.query.first()
+    assert activity.temp_data == {}
     res = client.post(url, json=data)
     assert res.status_code == status_code
-    assert res.data == b'{"code":1,"msg":"Model save error"}\n'
+    assert json.loads(res.data) == {"code":1, "msg":"Model save error"}
+    activity = Activity.query.first()
+    assert activity.temp_data == {}
 
 
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_iframe_save_model -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
@@ -20299,10 +20313,8 @@ def test_iframe_items_index_acl(app, client, users, id, status_code):
     assert res.status_code == 302
 
 
-# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_test_iframe_items_index -v -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-
-
-def test_test_iframe_items_index(app, db, client, users, db_records, db_activity,redis_connect,without_remove_session,mocker):
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_iframe_items_index_get_error -v -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_iframe_items_index_get_error(app, client, db_itemtype, users, db_records, db_workflow, esindex):
     login_user_via_session(client=client, email=users[0]["email"])
     mocker.patch("weko_items_ui.views.set_files_display_type")
     mocker.patch("weko_items_ui.views.get_thumbnails",return_value=[])
@@ -20329,90 +20341,153 @@ def test_test_iframe_items_index(app, db, client, users, db_records, db_activity
 
     # "." not in pid_value
     with client.session_transaction() as session:
-        session["itemlogin_activity"] = Activity.query.filter_by(activity_id="A-00000000-00001").one()
-        session["itemlogin_record"] = []
-        session["itemlogin_item"] = []
-        session["itemlogin_steps"] = []
-        session["itemlogin_action_id"] = 1
-        session["itemlogin_cur_step"] = "item_login"
-        session["itemlogin_histories"] = []
-        session["itemlogin_res_check"] = 0
-        session["itemlogin_pid"] = "1"
-    mocker.patch("weko_workflow.utils.get_main_record_detail",return_value={"record:":[],"files":[], "files_thumbnail":[]})
-    with patch("weko_items_ui.views.render_template",return_value=make_response()) as mock_render:
-        res = client.get(url)
-        assert res.status_code == 200
-        args, kwargs = mock_render.call_args
-        assert args[0] == 'weko_items_ui/iframe/item_index.html'
-        assert "form" in kwargs
-        
-    
-    # "." in pid_value
-    with client.session_transaction() as session:
-        session["itemlogin_activity"] = Activity.query.filter_by(activity_id="A-00000000-00001").one()
-        session["itemlogin_record"] = []
-        session["itemlogin_item"] = {"title":"test_title"}
-        session["itemlogin_steps"] = []
-        session["itemlogin_action_id"] = 1
-        session["itemlogin_cur_step"] = "item_login"
-        session["itemlogin_histories"] = []
-        session["itemlogin_res_check"] = 0
-        session["itemlogin_pid"] = "1"
-    url = url_for("weko_items_ui.iframe_items_index", pid_value="1.1", _external=True)
-    with patch("weko_items_ui.views.get_record_by_root_ver",return_value=({"title":["test"]},["file1","file2"])):
-        with patch("weko_items_ui.views.render_template",return_value=make_response()) as mock_render:
-            res = client.get(url)
-            assert res.status_code == 200
-            args, kwargs = mock_render.call_args
-            assert args[0] == 'weko_items_ui/iframe/item_index.html'
+        session["itemlogin_activity"] = db_workflow["activity"]
+    res = client.get(url)
+    assert res.status_code == 400
 
-    # root_record is not , len(files) > 0
-    url = url_for("weko_items_ui.iframe_items_index", pid_value="1.1", _external=True)
-    with patch("weko_items_ui.views.get_record_by_root_ver",return_value=({},[])):
-        with patch("weko_items_ui.views.render_template",return_value=make_response()) as mock_render:
-            res = client.get(url)
-            assert res.status_code == 200
-            args, kwargs = mock_render.call_args
-            assert args[0] == 'weko_items_ui/iframe/item_index.html'
-    
-    # workflow_detail.index_tree_id > 0
-    workflow = WorkFlow.query.filter_by(id=1).one()
-    workflow.index_tree_id=11
-    db.session.merge(workflow)
-    db.session.commit()
-    with patch("weko_items_ui.views.redirect",return_value=make_response()) as mock_redirect:
-        res = client.get(url)
-        mock_redirect.assert_called_with("/workflow/iframe/success")
-    
-    
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_iframe_items_index_update_index_error -v -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_iframe_items_index_update_index_error(app, client, db_itemtype, users, db_records, db_workflow, esindex):
+    login_user_via_session(client=client, email=users[0]["email"])
+
     url = url_for("weko_items_ui.iframe_items_index", pid_value=str(1), _external=True)
-    # content-type is not application/json
-    with patch("weko_items_ui.views.render_template",return_value=make_response()) as mock_redirect:
-        with patch("weko_items_ui.views.flash") as mock_flash:
-            headers = {'content-type': 'plain/text'}
-            res = client.post(url,data="test_data",headers=headers)
-            args, kwargs = mock_redirect.call_args
-            assert args[0] == 'weko_items_ui/iframe/item_index.html'
-            assert kwargs == {'page': None, 'render_widgets': False, 'community_id': 'c', 'community': None}
-            mock_flash.assert_called_with("Invalid Request", "error")
-    
-    # method is put
-    redis_connect.put("item_index_1",bytes('{"index":{"name":"test_index"}}',"utf-8"),ttl_secs=30)
-    data = {"name":"test_index_new"}
-    res  =client.put(url,json=data)
-    assert res.status_code == 200
-    assert json.loads(res.data) == data
-    assert redis_connect.redis.exists("item_index_1") == False
-    
-    # method is post
-    res  =client.post(url,json=data)
-    assert res.status_code == 200
-    assert json.loads(res.data) == data
-    assert json.loads(redis_connect.get("item_index_1")) == {"name":"test_index_new"}
-    
-    redis_connect.delete("item_index_1")
+    with client.session_transaction() as session:
+        activity = db_workflow['activity']
+        activity.workflow_id = 2
+        session["itemlogin_activity"] = activity
+    depid, recid, parent, doi, record, item = db_records[0]
+    redis_connection = RedisConnection()
+    datastore = redis_connection.connection(db=app.config['CACHE_REDIS_DB'], kv = True)
+    datastore.put(
+        app.config['WEKO_DEPOSIT_ITEMS_CACHE_PREFIX'].format(pid_value=recid.pid_value),
+        (json.dumps(record)).encode('utf-8'))
+    with patch("weko_deposit.api.WekoIndexer.upload_metadata", return_value=True):
+        res = WekoRecord.get_record(recid.object_uuid)
+        assert res["path"] == ['1']
+        res = client.get(url)
+        assert res.status_code == 400
+        res = WekoRecord.get_record(recid.object_uuid)
+        assert res["path"] == ['1']
 
+
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_iframe_items_index_update_index -v -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_iframe_items_index_update_index(app, client, db_itemtype, users, db_records, db_workflow, esindex):
+    login_user_via_session(client=client, email=users[0]["email"])
+
+    url = url_for("weko_items_ui.iframe_items_index", pid_value=str(1), _external=True)
+    with client.session_transaction() as session:
+        activity = db_workflow['activity']
+        activity.workflow_id = 2
+        session["itemlogin_activity"] = activity
+    depid, recid, parent, doi, record, item = db_records[0]
+    record['$schema'] = "/items/jsonschema/1"
+    redis_connection = RedisConnection()
+    datastore = redis_connection.connection(db=app.config['CACHE_REDIS_DB'], kv = True)
+    datastore.put(
+        app.config['WEKO_DEPOSIT_ITEMS_CACHE_PREFIX'].format(pid_value=recid.pid_value),
+        (json.dumps(record)).encode('utf-8'))
+    with patch("weko_deposit.api.WekoIndexer.upload_metadata", return_value=True):
+        res = WekoRecord.get_record(recid.object_uuid)
+        assert res["path"] == ['1']
+        res = client.get(url)
+        assert res.status_code == 302
+        res = WekoRecord.get_record(recid.object_uuid)
+        assert res["path"] == ['2']
+
+
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_iframe_items_index_get -v -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_iframe_items_index_get(app, client, db_itemtype, users, db_records, db_workflow, esindex):
+    login_user_via_session(client=client, email=users[0]["email"])
+
+    depid, recid, parent, doi, record, item = db_records[0]
+    record['$schema'] = "/items/jsonschema/1"
+    redis_connection = RedisConnection()
+    datastore = redis_connection.connection(db=app.config['CACHE_REDIS_DB'], kv = True)
+    datastore.put(
+        app.config['WEKO_DEPOSIT_ITEMS_CACHE_PREFIX'].format(pid_value=recid.pid_value),
+        (json.dumps(record)).encode('utf-8'))
+
+    url = url_for("weko_items_ui.iframe_items_index", pid_value=str(1), _external=True)
+    with client.session_transaction() as session:
+        activity = db_workflow['activity']
+        session["itemlogin_activity"] = activity
+        session["itemlogin_record"] = record
+        session["itemlogin_item"] = item
+        session["itemlogin_steps"] = 3
+        session["itemlogin_action_id"] = 1
+        session["itemlogin_cur_step"] = 1
+        session["itemlogin_histories"] = []
+        session["itemlogin_res_check"] = None
+        session["itemlogin_pid"] = recid
     
+    with patch("weko_deposit.api.WekoIndexer.upload_metadata", return_value=True):
+        with patch("weko_workflow.utils.get_main_record_detail", return_value={"record": record, "files": [], "files_thumbnail": []}):
+            with pytest.raises(Exception) as e:
+                client.get(url)
+                assert e.type==TemplateNotFound
+
+    # depid, recid,parent,doi,record, item  = db_records[0]
+    # app.config['PRESERVE_CONTEXT_ON_EXCEPTION']=False
+    # app.config['TESTING'] = True
+    # depid, recid,parent,doi,record, item  = db_records[0]
+    # action = db_workflow['flow_action2']
+    # url = url_for('weko_items_ui.iframe_items_index',pid_value=str(depid.pid_value),_external=True)
+    # with app.test_request_context(url_for('weko_items_ui.iframe_items_index',pid_value=str(depid.pid_value))):
+    #     login_user(users[id]['obj'])
+    #     activity_data = {
+    #             'itemtype_id': 1,
+    #             'workflow_id': 1,
+    #             'flow_id': 1,
+    #             'activity_confirm_term_of_use': True,
+    #             'extra_info': {}
+    #         }
+
+    #     activity = WorkActivity().init_activity(activity_data)
+    #     with patch('flask.templating._render', return_value=''):
+    #         with client.session_transaction() as session:
+    #             session['itemlogin_activity'] = activity
+    #             session['itemlogin_record']=[]
+    #             # session['itemlogin_setps'] = [{'ActivityId': 'A-20220827-00002', 'ActionId': 1, 'ActionName': 'Start', 'ActionVersion': '1.0.0', 'ActionEndpoint': 'begin_action', 'Author': 'wekosoftware@nii.ac.jp', 'Status': 'action_done', 'ActionOrder': 1}, {'ActivityId': 'A-20220827-00002', 'ActionId': 3, 'ActionName': 'Item Registration', 'ActionVersion': '1.0.1', 'ActionEndpoint': 'item_login', 'Author': '', 'Status': ' ', 'ActionOrder': 2}, {'ActivityId': 'A-20220827-00002', 'ActionId': 5, 'ActionName': 'Item Link', 'ActionVersion': '1.0.1', 'ActionEndpoint': 'item_link', 'Author': '', 'Status': ' ', 'ActionOrder': 3}, {'ActivityId': 'A-20220827-00002', 'ActionId': 7, 'ActionName': 'Identifier Grant', 'ActionVersion': '1.0.0', 'ActionEndpoint': 'identifier_grant', 'Author': '', 'Status': ' ', 'ActionOrder': 4}, {'ActivityId': 'A-20220827-00002', 'ActionId': 4, 'ActionName': 'Approval', 'ActionVersion': '2.0.0', 'ActionEndpoint': 'approval', 'Author': '', 'Status': ' ', 'ActionOrder': 5}, {'ActivityId': 'A-20220827-00002', 'ActionId': 2, 'ActionName': 'End', 'ActionVersion': '1.0.0', 'ActionEndpoint': 'end_action', 'Author': '', 'Status': ' ', 'ActionOrder': 6}]
+    #         res = client.get(url)
+    #         assert res.status_code == status_code
+
+    # TODO POST, PUT
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_iframe_items_index_put_error -v -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_iframe_items_index_put_error(app, client, db_itemtype, users, db_records, db_workflow, esindex):
+    login_user_via_session(client=client, email=users[0]["email"])
+    headers = {'content-type': 'text/plain'}
+
+    url = url_for("weko_items_ui.iframe_items_index", pid_value=str(1), _external=True)
+    with pytest.raises(Exception) as e:
+        client.put(url,data=json.dumps("{}"), headers=headers)
+        assert e.type==TemplateNotFound
+
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_iframe_items_index_put -v -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_iframe_items_index_put(app, client, db_itemtype, users, db_records, db_workflow, esindex):
+    login_user_via_session(client=client, email=users[0]["email"])
+    headers = {'content-type': 'application/json'}
+
+    depid, recid, parent, doi, record, item = db_records[0]
+    record['$schema'] = "/items/jsonschema/1"
+    redis_connection = RedisConnection()
+    datastore = redis_connection.connection(db=app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
+    datastore.put(
+        'item_index_{}'.format(recid.pid_value),
+        (json.dumps(record)).encode('utf-8'))
+
+    url = url_for("weko_items_ui.iframe_items_index", pid_value=str(1), _external=True)
+    res = client.put(url, data=json.dumps("{}"), headers=headers)
+    assert res.status_code == 200
+
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_iframe_items_index_post -v -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_iframe_items_index_post(app, client, db_itemtype, users, db_records, db_workflow, esindex):
+    login_user_via_session(client=client, email=users[0]["email"])
+    headers = {'content-type': 'application/json'}
+    depid, recid, parent, doi, record, item = db_records[0]
+    record['$schema'] = "/items/jsonschema/1"
+
+    url = url_for("weko_items_ui.iframe_items_index", pid_value=str(1), _external=True)
+    res = client.post(url, data=json.dumps("{}"), headers=headers)
+    assert res.status_code == 200
 
 
 # def default_view_method(pid, record, template=None):

@@ -250,66 +250,59 @@ class Indexes(object):
         :param index_id: Identifier of the index.
         :return: bool True: Delete success None: Delete failed
         """
-        try:
-            if del_self:
+        if del_self:
+            with db.session.begin_nested():
+                slf = cls.get_index(index_id)
+                if not slf:
+                    return
+
+                query = db.session.query(Index).filter(
+                    Index.parent == index_id)
+                obj_list = query.all()
+                dct = query.update(
+                    {
+                        Index.parent: slf.parent,
+                        Index.owner_user_id: current_user.get_id(),
+                        Index.updated: datetime.utcnow()
+                    },
+                    synchronize_session='fetch')
+                db.session.delete(slf)
+                p_lst = [o.id for o in obj_list]
+                cls.delete_set_info('move', index_id, p_lst)
+                return p_lst
+        else:
+            with db.session.no_autoflush:
+                recursive_t = cls.recs_query(pid=index_id)
+                obj = db.session.query(recursive_t). \
+                    union_all(db.session.query(
+                        Index.parent,
+                        Index.id,
+                        literal_column("''", db.Text).label("path"),
+                        literal_column("''", db.Text).label("name"),
+                        literal_column("''", db.Text).label(
+                            "name_en"),
+                        literal_column("0", db.Integer).label("lev"),
+                        Index.public_state,
+                        Index.public_date,
+                        Index.comment,
+                        Index.browsing_role,
+                        Index.browsing_group,
+                        Index.harvest_public_state
+                    ).filter(Index.id == index_id)).all()
+
+            if obj:
+                p_lst = [o.cid for o in obj]
                 with db.session.begin_nested():
-                    slf = cls.get_index(index_id)
-                    if not slf:
-                        return
-
-                    query = db.session.query(Index).filter(
-                        Index.parent == index_id)
-                    obj_list = query.all()
-                    dct = query.update(
-                        {
-                            Index.parent: slf.parent,
-                            Index.owner_user_id: current_user.get_id(),
-                            Index.updated: datetime.utcnow()
-                        },
-                        synchronize_session='fetch')
-                    db.session.delete(slf)
-                    db.session.commit()
-                    p_lst = [o.id for o in obj_list]
-                    cls.delete_set_info('move', index_id, p_lst)
-                    return p_lst
-            else:
-                with db.session.no_autoflush:
-                    recursive_t = cls.recs_query(pid=index_id)
-                    obj = db.session.query(recursive_t). \
-                        union_all(db.session.query(
-                            Index.parent,
-                            Index.id,
-                            literal_column("''", db.Text).label("path"),
-                            literal_column("''", db.Text).label("name"),
-                            literal_column("''", db.Text).label(
-                                "name_en"),
-                            literal_column("0", db.Integer).label("lev"),
-                            Index.public_state,
-                            Index.public_date,
-                            Index.comment,
-                            Index.browsing_role,
-                            Index.browsing_group,
-                            Index.harvest_public_state
-                        ).filter(Index.id == index_id)).all()
-
-                if obj:
-                    p_lst = [o.cid for o in obj]
-                    with db.session.begin_nested():
-                        e = 0
-                        batch = 100
-                        while e <= len(p_lst):
-                            s = e
-                            e = e + batch
-                            dct = db.session.query(Index).filter(
-                                Index.id.in_(p_lst[s:e])). \
-                                delete(synchronize_session='fetch')
-                    db.session.commit()
-                    cls.delete_set_info('delete', index_id, p_lst)
-                    return p_lst
-        except Exception as ex:
-            current_app.logger.debug(ex)
-            db.session.rollback()
-            return None
+                    e = 0
+                    batch = 100
+                    while e <= len(p_lst):
+                        s = e
+                        e = e + batch
+                        dct = db.session.query(Index).filter(
+                            Index.id.in_(p_lst[s:e])). \
+                            delete(synchronize_session='fetch')
+                cls.delete_set_info('delete', index_id, p_lst)
+                return p_lst
         return 0
 
     @classmethod

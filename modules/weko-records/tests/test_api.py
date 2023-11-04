@@ -1595,7 +1595,7 @@ def test_site_license_update(app, db, site_license_info):
         'site_license': [
             {
                 'mail_address': 'nii@nii.co.jp',
-                'receive_mail_flag': True,
+                'receive_mail_flag': 'T',
                 'organization_name': 'test1',
                 'domain_name': 'domain1',
                 'addresses': [
@@ -1609,12 +1609,17 @@ def test_site_license_update(app, db, site_license_info):
     }
 
     SiteLicense.update(_none_obj)
+    db.session.commit()
     records = SiteLicense.get_records()
     assert len(records)==1
+
     SiteLicense.update(_no_data_obj)
+    db.session.commit()
     records = SiteLicense.get_records()
     assert len(records)==0
+
     SiteLicense.update(_test_obj)
+    db.session.commit()
     records = SiteLicense.get_records()
     assert len(records)==1
     assert records[0]['organization_name']=='test1'
@@ -1678,25 +1683,26 @@ def test_depid_WekoRecord(app):
 #     def get_mail_list_by_item_id(cls, item_id):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_feedback_mail_list_create_and_update -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
 def test_feedback_mail_list_create_and_update(app, db):
+    _item_id0 = uuid.uuid4()
     _item_id1 = uuid.uuid4()
     _item_id2 = uuid.uuid4()
     _feedback_maillist1 = []
     _feedback_maillist2 = ['nii2@nii.co.jp']
     _feedback_maillist3 = ['nii3@nii.co.jp']
 
-    flag = FeedbackMailList.update(1, _feedback_maillist1)
-    assert flag==False
-    record0 = FeedbackMailList.get_mail_list_by_item_id(1)
+    FeedbackMailList.update(_item_id0, _feedback_maillist1)
+    db.session.commit()
+    record0 = FeedbackMailList.get_mail_list_by_item_id(_item_id0)
     assert record0==[]
     record1 = FeedbackMailList.get_mail_list_by_item_id(_item_id1)
     assert record1==[]
-    flag = FeedbackMailList.update(_item_id1, _feedback_maillist1)
+    FeedbackMailList.update(_item_id1, _feedback_maillist1)
+    db.session.commit()
     record1 = FeedbackMailList.get_mail_list_by_item_id(_item_id1)
-    assert flag==True
     assert record1==[]
-    flag = FeedbackMailList.update(_item_id1, _feedback_maillist2)
+    FeedbackMailList.update(_item_id1, _feedback_maillist2)
+    db.session.commit()
     record1 = FeedbackMailList.get_mail_list_by_item_id(_item_id1)
-    assert flag==True
     assert record1==['nii2@nii.co.jp']
     FeedbackMailList.update_by_list_item_id([_item_id1, _item_id2], _feedback_maillist3)
     record1 = FeedbackMailList.get_mail_list_by_item_id(_item_id1)

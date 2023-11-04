@@ -16,7 +16,7 @@ from __future__ import absolute_import, print_function
 import asyncio
 from concurrent.futures.thread import ThreadPoolExecutor
 
-from flask import current_app
+from flask import current_app, abort
 from weko_admin.models import AdminSettings
 from weko_records.api import ItemTypes, Mapping
 from weko_records.utils import sort_meta_data_by_options
@@ -30,12 +30,16 @@ def record_responsify(serializer, mimetype):
     :returns: Function that generates a record HTTP response.
     """
     def view(pid, record, code=200, headers=None, links_factory=None):
-        response = current_app.response_class(
-            serializer.serialize(pid, record, links_factory=links_factory),
-            mimetype=mimetype)
-        response.status_code = code
-        response.set_etag(str(record.revision_id))
-        response.last_modified = record.updated
+        if pid and record:
+            response = current_app.response_class(
+                serializer.serialize(pid, record, links_factory=links_factory),
+                mimetype=mimetype)
+            response.set_etag(str(record.revision_id))
+            response.last_modified = record.updated
+        else:
+            response = current_app.response_class(abort(500), mimetype=mimetype)
+            response.status_code = code
+        
         if headers is not None:
             response.headers.extend(headers)
 

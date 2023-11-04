@@ -403,13 +403,16 @@ class LocationResource(ContentNegotiatedMethodView):
     @need_location_permission('location-update', hidden=False)
     def post(self):
         """Create bucket."""
-        with db.session.begin_nested():
+        try:
             bucket = Bucket.create(
                 storage_class=current_app.config[
                     'FILES_REST_DEFAULT_STORAGE_CLASS'
                 ],
             )
-        db.session.commit()
+            db.session.commit()
+        except Exception as e:
+            current_app.logger.error(e)
+            db.session.rollback()
         return self.make_response(
             data=bucket,
             context={
@@ -654,7 +657,7 @@ class ObjectResource(ContentNegotiatedMethodView):
             desc = 'Location has no quota'
             current_app.logger.error(desc)
             raise FileSizeError(description=desc)
-        with db.session.begin_nested():
+        try:
             obj = ObjectVersion.create(bucket, key, is_thumbnail=is_thumbnail)
             obj.set_contents(
                 stream, size=content_length, size_limit=size_limit,
@@ -664,7 +667,11 @@ class ObjectResource(ContentNegotiatedMethodView):
                 for key, value in tags.items():
                     ObjectVersionTag.create(obj, key, value)
 
-        db.session.commit()
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(e)
+
         _response = self.make_response(
             data=obj,
             context={
@@ -698,30 +705,34 @@ class ObjectResource(ContentNegotiatedMethodView):
         :param version_id: The version ID.
         :returns: A Flask response.
         """
-        if version_id is None:
-            # Create a delete marker.
-            with db.session.begin_nested():
-                ObjectVersion.delete(bucket, obj.key)
-        else:
-            # Permanently delete specific object version.
-            check_permission(
-                current_permission_factory(bucket, 'object-delete-version'),
-                hidden=False,
-            )
-            obj.remove()
-            # Set newest object as head
-            if obj.is_head:
-                obj_to_restore = \
-                    ObjectVersion.get_versions(obj.bucket,
-                                               obj.key,
-                                               desc=True).first()
-                if obj_to_restore:
-                    obj_to_restore.is_head = True
+        try:
+            if version_id is None:
+                # Create a delete marker.
+                with db.session.begin_nested():
+                    ObjectVersion.delete(bucket, obj.key)
+            else:
+                # Permanently delete specific object version.
+                check_permission(
+                    current_permission_factory(bucket, 'object-delete-version'),
+                    hidden=False,
+                )
+                obj.remove()
+                # Set newest object as head
+                if obj.is_head:
+                    obj_to_restore = \
+                        ObjectVersion.get_versions(obj.bucket,
+                                                obj.key,
+                                                desc=True).first()
+                    if obj_to_restore:
+                        obj_to_restore.is_head = True
 
-            if obj.file_id and not delete_file_instance(obj.file_id):
-                remove_file_data.delay(str(obj.file_id))
+                if obj.file_id and not delete_file_instance(obj.file_id):
+                    remove_file_data.delay(str(obj.file_id))
 
-        db.session.commit()
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(e)
         return self.make_response('', 204)
 
     @staticmethod
@@ -809,8 +820,12 @@ class ObjectResource(ContentNegotiatedMethodView):
             raise MissingQueryParameter('size')
         if part_size is None:
             raise MissingQueryParameter('partSize')
-        multipart = MultipartObject.create(bucket, key, size, part_size)
-        db.session.commit()
+        try:
+            multipart = MultipartObject.create(bucket, key, size, part_size)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(e)
         return self.make_response(
             data=multipart,
             context={
@@ -866,8 +881,12 @@ class ObjectResource(ContentNegotiatedMethodView):
             instance.
         :returns: A Flask response.
         """
-        multipart.complete()
-        db.session.commit()
+        try:
+            multipart.complete()
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(e)
 
         version_id = str(uuid.uuid4())
 
@@ -898,10 +917,14 @@ class ObjectResource(ContentNegotiatedMethodView):
             instance.
         :returns: A Flask response.
         """
-        multipart.delete()
-        db.session.commit()
-        if multipart.file_id:
-            remove_file_data.delay(str(multipart.file_id))
+        try:
+            multipart.delete()
+            db.session.commit()
+            if multipart.file_id:
+                remove_file_data.delay(str(multipart.file_id))
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(e)
         return self.make_response('', 204)
 
     #

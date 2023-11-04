@@ -987,14 +987,18 @@ class WidgetBucket:
                 _("Bucket with UUID {} already exists.".format(bucket_id))
             )
         else:
-            storage_class = current_app.config[
-                'FILES_REST_DEFAULT_STORAGE_CLASS']
-            location = Location.get_default()
-            bucket = Bucket(id=bucket_id,
-                            location=location,
-                            default_storage_class=storage_class)
-            db.session.add(bucket)
-            db.session.commit()
+            try:
+                storage_class = current_app.config[
+                    'FILES_REST_DEFAULT_STORAGE_CLASS']
+                location = Location.get_default()
+                bucket = Bucket(id=bucket_id,
+                                location=location,
+                                default_storage_class=storage_class)
+                db.session.add(bucket)
+                db.session.commit()
+            except Exception as ex:
+                current_app.logger.error(ex)
+                db.session.rollback()
 
     def __validate(self, file_stream, file_name, community_id="0", file_size=0):
         """Validate upload file.
@@ -1059,22 +1063,23 @@ class WidgetBucket:
             file_size = file_stream.tell()
             if self.__validate(file_stream, file_name, community_id, file_size):
                 file_stream.seek(0)  # Rewind the stream to the beginning
-                with db.session.begin_nested():
-                    ObjectVersion.create(
-                        file_bucket, key, stream=file_stream, size=file_size,
-                        mimetype=mimetype
-                    )
+                ObjectVersion.create(
+                    file_bucket, key, stream=file_stream, size=file_size,
+                    mimetype=mimetype
+                )
                 db.session.commit()
                 rtn["url"] = "/widget/uploaded/{}/{}".format(
                     file_name,community_id
                 )
                 return rtn
         except UnexpectedFileSizeError as error:
+            db.session.rollback()
             current_app.logger.error(error)
             rtn['status'] = False
             rtn['msg'] = str(error.errors)
             return rtn
         except FileInstanceAlreadySetError as error:
+            db.session.rollback()
             current_app.logger.error(error.errors)
             rtn['status'] = False
             rtn['duplicated'] = True
@@ -1082,6 +1087,12 @@ class WidgetBucket:
             rtn["url"] = "/widget/uploaded/{}/{}".format(
                 file_name, community_id
             )
+            return rtn
+        except Exception as ex:
+            db.session.rollback()
+            current_app.logger.error(ex)
+            rtn['status'] = False
+            rtn['msg'] = str(ex)
             return rtn
 
     def get_file(self, file_name, community_id=0):

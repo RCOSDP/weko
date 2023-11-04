@@ -95,15 +95,20 @@ def list_records_from_dates(metadata_prefix=None, from_date=None,
     :param encoding: Override the encoding returned by the server. ISO-8859-1
                      if it is not provided by the server.
     """
-    request, records = list_records(
-        metadata_prefix,
-        from_date,
-        until_date,
-        url,
-        name,
-        setspecs,
-        encoding
-    )
+    try:
+        request, records = list_records(
+            metadata_prefix,
+            from_date,
+            until_date,
+            url,
+            name,
+            setspecs,
+            encoding
+        )
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(e)
     if signals:
         oaiharvest_finished.send(request, records=records, name=name, **kwargs)
 
@@ -131,7 +136,6 @@ def create_indexes(parent_id, sets):
             idx.position = pos
             pos = pos + 1
             db.session.add(idx)
-            db.session.commit()
 
 
 def map_indexes(index_specs, parent_id):
@@ -318,7 +322,6 @@ def process_item(record, harvesting, counter, request_info):
                 first_ver.publish()
 
     harvesting.item_processed = harvesting.item_processed + 1
-    db.session.commit()
 
     current_app.logger.debug('[{0}] [{1}] Finish {2} {3}'.format(
         0, 'Harvesting', mapper.identifier(), event))
@@ -401,34 +404,40 @@ def run_harvesting(id, start_time, user_data, request_info):
     # For registering runtime stats
     start_time = datetime.strptime(start_time, '%Y-%m-%dT%H:%M:%S')
 
-    harvesting = HarvestSettings.query.filter_by(id=id).first()
-    harvesting.task_id = current_task.request.id
-    rtoken = harvesting.resumption_token
-    counter = {}
-    if not rtoken:
-        harvesting.item_processed = 0
-        counter['processed_items'] = 0
-        counter['created_items'] = 0
-        counter['updated_items'] = 0
-        counter['deleted_items'] = 0
-        counter['error_items'] = 0
-        harvest_log = HarvestLogs(harvest_setting_id=id, status='Running',
-                                  start_time=datetime.utcnow(), counter=counter)
-        db.session.add(harvest_log)
-    else:
-        harvest_log = HarvestLogs.query.filter_by(
-            harvest_setting_id=id).order_by(
-            HarvestLogs.id.desc()).first()
-        harvest_log.end_time = None
-        harvest_log.status = 'Running'
-        counter = harvest_log.counter
-    harvest_log.setting = dump(harvesting)
-    db.session.commit()
     try:
+        harvesting = HarvestSettings.query.filter_by(id=id).first()
+        harvesting.task_id = current_task.request.id
+        rtoken = harvesting.resumption_token
+        counter = {}
+        try:
+            if not rtoken:
+                harvesting.item_processed = 0
+                counter['processed_items'] = 0
+                counter['created_items'] = 0
+                counter['updated_items'] = 0
+                counter['deleted_items'] = 0
+                counter['error_items'] = 0
+                harvest_log = HarvestLogs(harvest_setting_id=id, status='Running',
+                                        start_time=datetime.utcnow(), counter=counter)
+                db.session.add(harvest_log)
+            else:
+                harvest_log = HarvestLogs.query.filter_by(
+                    harvest_setting_id=id).order_by(
+                    HarvestLogs.id.desc()).first()
+                harvest_log.end_time = None
+                harvest_log.status = 'Running'
+                counter = harvest_log.counter
+            harvest_log.setting = dump(harvesting)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(e)
+    
         if int(harvesting.auto_distribution):
             sets = list_sets(harvesting.base_url)
             sets_map = map_sets(sets)
             create_indexes(harvesting.index_id, sets_map)
+            db.session.commit()
         DCMapper.update_itemtype_map()
         pause = False
 
@@ -449,6 +458,7 @@ def run_harvesting(id, start_time, user_data, request_info):
             for record in records:
                 try:
                     process_item(record, harvesting, counter, request_info)
+                    db.session.commit()
                 except Exception as ex:
                     current_app.logger.debug(traceback.format_exc())
                     current_app.logger.error(
@@ -464,19 +474,24 @@ def run_harvesting(id, start_time, user_data, request_info):
                 harvest_log.status = 'Suspended'
                 break
     except Exception as ex:
+        db.session.rollback()
         harvest_log.status = 'Failed'
         current_app.logger.error(str(ex))
         harvest_log.errmsg = str(ex)[:255]
         harvest_log.requrl = harvesting.base_url
         harvesting.resumption_token = None
     finally:
-        harvesting.task_id = None
-        end_time = datetime.utcnow()
-        harvest_log.end_time = end_time
-        harvest_log.counter = counter
-        current_app.logger.info('[{0}] [{1}] END'.format(0, 'Harvesting'))
-        send_run_status_mail(harvesting, harvest_log)
-        db.session.commit()
+        try:
+            harvesting.task_id = None
+            end_time = datetime.utcnow()
+            harvest_log.end_time = end_time
+            harvest_log.counter = counter
+            current_app.logger.info('[{0}] [{1}] END'.format(0, 'Harvesting'))
+            send_run_status_mail(harvesting, harvest_log)
+            db.session.commit()
+        except Exception as ex:
+            db.session.rollback()
+            current_app.logger.error(ex)
         return ({'task_state': 'SUCCESS',
                  'start_time': start_time.strftime('%Y-%m-%dT%H:%M:%S%z'),
                  'end_time': end_time.strftime('%Y-%m-%dT%H:%M:%S%z'),

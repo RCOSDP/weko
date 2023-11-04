@@ -23,6 +23,7 @@ from __future__ import absolute_import, print_function
 
 import click
 from flask.cli import with_appcontext
+from invenio_db import db
 
 from .api import get_records, list_records
 from .errors import IdentifiersOrDates
@@ -71,47 +72,52 @@ def harvest(metadata_prefix, name, setspecs, identifiers, from_date,
     """Harvest records from an OAI repository."""
     arguments = dict(x.split('=', 1) for x in arguments)
     records = None
-    if identifiers is None:
-        # If no identifiers are provided, a harvest is scheduled:
-        # - url / name is used for the endpoint
-        # - from_date / lastrun is used for the dates
-        # (until_date optionally if from_date is used)
-        params = (metadata_prefix, from_date, until_date, url,
-                  name, setspecs, signals)
-        if enqueue:
-            job = list_records_from_dates.delay(*params, **arguments)
-            click.echo("Scheduled job {0}".format(job.id))
+    try:
+        if identifiers is None:
+            # If no identifiers are provided, a harvest is scheduled:
+            # - url / name is used for the endpoint
+            # - from_date / lastrun is used for the dates
+            # (until_date optionally if from_date is used)
+            params = (metadata_prefix, from_date, until_date, url,
+                    name, setspecs, signals)
+            if enqueue:
+                job = list_records_from_dates.delay(*params, **arguments)
+                click.echo("Scheduled job {0}".format(job.id))
+            else:
+                request, records = list_records(
+                    metadata_prefix,
+                    from_date,
+                    until_date,
+                    url,
+                    name,
+                    setspecs,
+                    encoding
+                )
         else:
-            request, records = list_records(
-                metadata_prefix,
-                from_date,
-                until_date,
-                url,
-                name,
-                setspecs,
-                encoding
-            )
-    else:
-        if (from_date is not None) or (until_date is not None):
-            raise IdentifiersOrDates(
-                "Identifiers cannot be used in combination with dates."
-            )
+            if (from_date is not None) or (until_date is not None):
+                raise IdentifiersOrDates(
+                    "Identifiers cannot be used in combination with dates."
+                )
 
-        # If identifiers are provided, we schedule an immediate run using them.
-        params = (identifiers, metadata_prefix, url,
-                  name, signals)
-        if enqueue:
-            job = get_specific_records.delay(*params, **arguments)
-            click.echo("Scheduled job {0}".format(job.id))
-        else:
-            identifiers = get_identifier_names(identifiers)
-            request, records = get_records(
-                identifiers,
-                metadata_prefix,
-                url,
-                name,
-                encoding
-            )
+            # If identifiers are provided, we schedule an immediate run using them.
+            params = (identifiers, metadata_prefix, url,
+                    name, signals)
+            if enqueue:
+                job = get_specific_records.delay(*params, **arguments)
+                click.echo("Scheduled job {0}".format(job.id))
+            else:
+                identifiers = get_identifier_names(identifiers)
+                request, records = get_records(
+                    identifiers,
+                    metadata_prefix,
+                    url,
+                    name,
+                    encoding
+                )
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        click.echo(str(e))
 
     if records:
         if signals:

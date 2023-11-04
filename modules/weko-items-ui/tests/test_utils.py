@@ -30,6 +30,7 @@ from weko_workflow.models import (
     ActionStatus,
     ActionStatusPolicy,
     Activity,
+    ActivityAction,
     FlowAction,
     FlowDefine,
     WorkFlow,
@@ -8316,24 +8317,66 @@ def test_is_need_to_show_agreement_page(db_itemtype,users,id,result):
 
 # def update_index_tree_for_record(pid_value, index_tree_id):
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_update_index_tree_for_record -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_update_index_tree_for_record(db_itemtype,db_records,users,esindex):
+def test_update_index_tree_for_record(app, db_itemtype, db_records, users, esindex):
     depid, recid, parent, doi, record, item = db_records[0]
-    assert update_index_tree_for_record(recid.pid_value, 1) == ""
+    record['$schema'] = "/items/jsonschema/1"
+    redis_connection = RedisConnection()
+    datastore = redis_connection.connection(db=app.config['CACHE_REDIS_DB'], kv = True)
+    datastore.put(
+        app.config['WEKO_DEPOSIT_ITEMS_CACHE_PREFIX'].format(pid_value=recid.pid_value),
+        (json.dumps(record)).encode('utf-8'))
+    with patch("weko_deposit.api.WekoIndexer.upload_metadata", return_value=True):
+        res = WekoRecord.get_record(recid.object_uuid)
+        assert res["path"] == ['1']
+        update_index_tree_for_record(recid.pid_value, 2)
+        res = WekoRecord.get_record(recid.object_uuid)
+        assert res["path"] == ['2']
 
 
 # def validate_user_mail(users, activity_id, request_data, keys, result):
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_validate_user_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_validate_user_mail():
-    request_data={'activity_id': 'A-20220830-00001', 'user_to_check': [], 'user_key_to_check': [], 'auto_set_index_action': 'True'}
-    users = request_data.get('user_to_check', [])
+def test_validate_user_mail(app, db, db_workflow):
+    request_data={'activity_id': 'A-00000000-00000', 'user_to_check': ['user_b'], 'user_key_to_check': ['bbb'], 'auto_set_index_action': 'True'}
+    users = ['user_a', 'user_c']
     keys = request_data.get('user_key_to_check', [])
     auto_set_index_action = request_data.get('auto_set_index_action', False)
     activity_id = request_data.get('activity_id')
     result = {
         "index": True
     }
-    assert validate_user_mail(users, activity_id, request_data, keys, result)=={'index': True,'validate_register_in_system': [],'validate_required_email': [], 'validation': False}
+    assert validate_user_mail(users, activity_id, request_data, keys, result)=={'index': True, 'validate_map_flow_and_item_type': False, 'validate_register_in_system': [], 'validate_required_email': ['bbb']}
 
+    request_data={'user_a': 'test_a@test.com', 'activity_id': 'A-00000000-00000', 'user_to_check': [], 'user_key_to_check': [], 'auto_set_index_action': 'True'}
+    activity_id = 'A-00000000-00000'
+    users = ['user_a']
+    keys = ['aaa']
+    result = {
+        "index": True
+    }
+    assert validate_user_mail(users, activity_id, request_data, keys, result)=={'index': True, 'validate_map_flow_and_item_type': False, 'validate_register_in_system': ['aaa'], 'validate_required_email': []}
+
+    activity_action = ActivityAction(
+        activity_id="A-00000000-00000",
+        action_id=4,
+        action_status="M",
+        action_comment="test comment",
+        action_handler=-1,
+        action_order=1
+    )
+    db.session.add(activity_action)
+    db.session.commit()
+    request_data={'user_b': 'user@test.org', 'activity_id': 'A-00000000-00000', 'user_to_check': [], 'user_key_to_check': [], 'auto_set_index_action': 'True'}
+    activity_id = 'A-00000000-00000'
+    users = ['user_b']
+    keys = ['ccc']
+    result = {
+        "index": True
+    }
+    res = ActivityAction.query.first()
+    assert res.action_handler == -1
+    assert validate_user_mail(users, activity_id, request_data, keys, result)=={'index': True, 'validate_map_flow_and_item_type': False, 'validate_register_in_system': [], 'validate_required_email': []}
+    res = ActivityAction.query.first()
+    assert res.action_handler == 1
 
 # def check_approval_email(activity_id, user):
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_check_approval_email -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
@@ -8360,9 +8403,35 @@ def test_update_action_handler(users,db_workflow):
 
 # def validate_user_mail_and_index(request_data):
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_validate_user_mail_and_index -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_validate_user_mail_and_index():
-    request_data={'activity_id': 'A-20220830-00001', 'user_to_check': [], 'user_key_to_check': [], 'auto_set_index_action': 'True'}
-    assert validate_user_mail_and_index(request_data)=={'index': True, 'validate_required_email': [], 'validate_register_in_system': [], 'validation': False}
+def test_validate_user_mail_and_index(app, db, db_workflow):
+    activity_action = ActivityAction(
+        activity_id="A-00000000-00000",
+        action_id=4,
+        action_status="M",
+        action_comment="test comment",
+        action_handler=-1,
+        action_order=1
+    )
+    db.session.add(activity_action)
+    db.session.commit()
+    res = ActivityAction.query.first()
+    assert res.action_handler == -1
+
+    request_data={'user_b': 'user@test.org', 'activity_id': 'A-00000000-00000', 'user_to_check': ['user_b'], 'user_key_to_check': ['ccc'], 'auto_set_index_action': False}
+    assert validate_user_mail_and_index(request_data)=={'index': True, 'validate_map_flow_and_item_type': False, 'validate_required_email': [], 'validate_register_in_system': []}
+    res = ActivityAction.query.first()
+    assert res.action_handler == 1
+    
+    request_data={'user_b': 'contributor@test.org', 'activity_id': 'A-00000000-00000', 'user_to_check': ['user_b'], 'user_key_to_check': ['ccc'], 'auto_set_index_action': True}
+    assert validate_user_mail_and_index(request_data)=={'index': False, 'validate_map_flow_and_item_type': False, 'validate_required_email': [], 'validate_register_in_system': []}
+    res = ActivityAction.query.first()
+    assert res.action_handler == 2
+
+    request_data={'user_b': 'contributor@test.org', 'activity_id': 'A-00000000-00000', 'user_to_check': ['user_b'], 'user_key_to_check': ['ccc'], 'auto_set_index_action': True}
+    with patch("weko_items_ui.utils.db.session.commit", side_effect=Exception('')):
+        assert validate_user_mail_and_index(request_data)=={'error': '', 'index': False, 'validate_map_flow_and_item_type': False, 'validate_required_email': [], 'validate_register_in_system': [], 'validation': False}
+        res = ActivityAction.query.first()
+        assert res.action_handler == 2
 
 
 # def recursive_form(schema_form):

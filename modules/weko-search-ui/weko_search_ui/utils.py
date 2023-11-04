@@ -212,7 +212,6 @@ def delete_records(index_tree_id, ignore_items):
     hits = get_tree_items(index_tree_id)
     result = []
 
-    from weko_records_ui.utils import soft_delete
     for hit in hits:
         recid = hit.get("_id")
         record = Record.get_record(recid)
@@ -243,7 +242,6 @@ def delete_records(index_tree_id, ignore_items):
                     # Update to ES
                     indexer.update_es_data(record, update_revision=False)
                     record.commit()
-                    db.session.commit()
                 elif del_flag and removed_path is not None:
                     from weko_records_ui.utils import soft_delete
                     soft_delete(pid)
@@ -1447,18 +1445,12 @@ def create_work_flow(item_type_id):
     it = ItemTypes.get_by_id(item_type_id)
 
     if flow_define and it:
-        try:
-            data = WorkFlow()
-            data.flows_id = uuid.uuid4()
-            data.flows_name = it.item_type_name.name
-            data.itemtype_id = it.id
-            data.flow_id = flow_define.id
-            db.session.add(data)
-            db.session.commit()
-        except Exception as ex:
-            db.session.rollback()
-            current_app.logger.error("create work flow error")
-            current_app.logger.error(ex)
+        data = WorkFlow()
+        data.flows_id = uuid.uuid4()
+        data.flows_name = it.item_type_name.name
+        data.itemtype_id = it.id
+        data.flow_id = flow_define.id
+        db.session.add(data)
 
 
 def create_flow_define():
@@ -1779,11 +1771,7 @@ def handle_check_and_prepare_index_tree(list_record, all_index_permission, can_e
         """
         temp_res = []
         index_info = None
-        try:
-            index_info = Indexes.get_path_list([index_id])
-        except Exception:
-            db.session.rollback()
-            current_app.logger.warning("Specified IndexID is invalid!")
+        index_info = Indexes.get_path_list([index_id])
 
         msg_not_exist = _("The specified {} does not exist in system.")
         if index_info and len(index_info) == 1:
@@ -1859,7 +1847,7 @@ def handle_check_and_prepare_index_tree(list_record, all_index_permission, can_e
             errors = [_("Both of IndexID and POS_INDEX are not being set.")]
         else:
             if not index_ids:
-                index_ids = ["" for _ in range(len(pos_index))]
+                index_ids = [None for _ in range(len(pos_index))]
             for x, index_id in enumerate(index_ids):
                 index_name_path = ""
                 if pos_index and x <= len(pos_index) - 1:
@@ -3572,17 +3560,13 @@ def delete_exported(uri, cache_key):
     """Delete File instance after time in file config."""
     from simplekv.memory.redisstore import RedisStore
 
-    try:
-        with db.session.begin_nested():
-            file_instance = FileInstance.get_by_uri(uri)
-            file_instance.delete()
-        redis_connection = RedisConnection()
-        datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
-        if datastore.redis.exists(cache_key):
-            datastore.delete(cache_key)
-        db.session.commit()
-    except Exception as ex:
-        current_app.logger.error(ex)
+    with db.session.begin_nested():
+        file_instance = FileInstance.get_by_uri(uri)
+        file_instance.delete()
+    redis_connection = RedisConnection()
+    datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
+    if datastore.redis.exists(cache_key):
+        datastore.delete(cache_key)
 
 from weko_search_ui.tasks import delete_task_id_cache
 def cancel_export_all():

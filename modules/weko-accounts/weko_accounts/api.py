@@ -147,13 +147,13 @@ class ShibUser(object):
         :return: ShibbolethUser instance
 
         """
-        self.user = User.query.filter_by(email=account).first()
-        shib_username_config = current_app.config[
-            'WEKO_ACCOUNTS_SHIB_ALLOW_USERNAME_INST_EPPN']
         try:
+            self.user = User.query.filter_by(email=account).first()
+            shib_username_config = current_app.config[
+                'WEKO_ACCOUNTS_SHIB_ALLOW_USERNAME_INST_EPPN']
+            
             with db.session.begin_nested():
                 self.user.email = self.shib_attr['shib_mail']
-            db.session.commit()
 
             if not self.shib_attr['shib_eppn'] and shib_username_config:
                 self.shib_attr['shib_eppn'] = self.shib_attr['shib_user_name']
@@ -161,11 +161,14 @@ class ShibUser(object):
                 self.user,
                 **self.shib_attr
             )
-        except Exception as ex:
-            current_app.logger.error(ex)
+            res = self.shib_user
+            db.session.commit()
+        except Exception as e:
+            res = None
             db.session.rollback()
+            current_app.logger.error(e)
 
-        return self.shib_user
+        return res
 
     def new_relation_info(self):
         """
@@ -211,7 +214,6 @@ class ShibUser(object):
                                           'USERPROFILES_LANGUAGE_DEFAULT'])
             userprofile.username = self.shib_user.shib_user_name
             db.session.add(userprofile)
-        db.session.commit()
         return userprofile
 
     def shib_user_login(self):

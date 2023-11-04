@@ -63,14 +63,18 @@ def init():
 def addlogo(community_id, logo):
     """Add logo to the community."""
     # Create the bucket
-    c = Community.get(community_id)
-    if not c:
-        click.secho('Community {0} does not exist.'.format(community_id),
-                    fg='red')
-        return
-    ext = save_and_validate_logo(logo, logo.name, c.id)
-    c.logo_ext = ext
-    db.session.commit()
+    try:
+        c = Community.get(community_id)
+        if not c:
+            click.secho('Community {0} does not exist.'.format(community_id),
+                        fg='red')
+            return
+        ext = save_and_validate_logo(logo, logo.name, c.id)
+        c.logo_ext = ext
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        click.secho(e, fg='red')
 
 
 @communities.command()
@@ -80,17 +84,22 @@ def addlogo(community_id, logo):
 @with_appcontext
 def request(community_id, record_id, accept):
     """Request a record acceptance to a community."""
-    c = Community.get(community_id)
-    assert c is not None
-    record = Record.get_record(record_id)
-    if accept:
-        c.add_record(record)
-        record.commit()
-    else:
-        InclusionRequest.create(community=c, record=record,
-                                notify=False)
-    db.session.commit()
-    RecordIndexer().index_by_id(record.id)
+    try:
+        c = Community.get(community_id)
+        assert c is not None
+        record = Record.get_record(record_id)
+        if accept:
+            c.add_record(record)
+            record.commit()
+        else:
+            InclusionRequest.create(community=c, record=record,
+                                    notify=False)
+        db.session.commit()
+        RecordIndexer().index_by_id(record_id)
+    except Exception as e:
+        db.session.rollback()
+        RecordIndexer().delete_by_id(record_id)
+        click.secho(e, fg='red')
 
 
 @communities.command()
@@ -99,9 +108,14 @@ def request(community_id, record_id, accept):
 @with_appcontext
 def remove(community_id, record_id):
     """Remove a record from community."""
-    c = Community.get(community_id)
-    assert c is not None
-    record = Record.get_record(record_id)
-    c.remove_record(record)
-    db.session.commit()
-    RecordIndexer().index_by_id(record_id)
+    try:
+        c = Community.get(community_id)
+        assert c is not None
+        record = Record.get_record(record_id)
+        c.remove_record(record)
+        db.session.commit()
+        RecordIndexer().delete_by_id(record_id)
+    except Exception as e:
+        db.session.rollback()
+        RecordIndexer().index_by_id(record_id)
+        click.secho(e, fg='red')

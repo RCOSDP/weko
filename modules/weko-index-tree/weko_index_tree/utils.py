@@ -32,6 +32,7 @@ from flask_babelex import gettext as _
 from flask_babelex import to_user_timezone, to_utc
 from flask_login import current_user
 from invenio_cache import current_cache
+from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_search import RecordsSearch
@@ -959,6 +960,11 @@ def perform_delete_index(index_id, record_class, action: str):
                     raise IndexBaseRESTError(
                         description='Could not delete data.')
             msg = 'Index deleted successfully.'
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.erorr(e)
+        msg = 'Failed to delete index.'
     finally:
         if is_unlock:
             unlock_index(locked_key)

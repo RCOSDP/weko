@@ -134,19 +134,23 @@ class HarvestSettingView(ModelView):
     @expose('/clear/')
     def clear(self):
         """Clear harvesting."""
-        harvesting = HarvestSettings.query.filter_by(
-            id=request.args.get('id')).first()
-        harvesting.task_id = None
-        harvesting.resumption_token = None
-        harvesting.item_processed = 0
-        harvest_log = \
-            HarvestLogs.query.filter_by(
-                harvest_setting_id=harvesting.id).order_by(
-                HarvestLogs.id.desc()).first()
-        harvest_log.status = 'Cancel'
-        harvest_log.end_time = datetime.now()
-        send_run_status_mail(harvesting, harvest_log)
-        db.session.commit()
+        try:
+            harvesting = HarvestSettings.query.filter_by(
+                id=request.args.get('id')).first()
+            harvesting.task_id = None
+            harvesting.resumption_token = None
+            harvesting.item_processed = 0
+            harvest_log = \
+                HarvestLogs.query.filter_by(
+                    harvest_setting_id=harvesting.id).order_by(
+                    HarvestLogs.id.desc()).first()
+            harvest_log.status = 'Cancel'
+            harvest_log.end_time = datetime.now()
+            send_run_status_mail(harvesting, harvest_log)
+            db.session.commit()
+        except Exception as e:
+            current_app.logger.error(e)
+            db.session.rollback()
         return redirect(url_for('harvestsettings.details_view',
                                 id=request.args.get('id')))
 
@@ -178,15 +182,19 @@ class HarvestSettingView(ModelView):
     @expose('/set_schedule/<id>/', methods=['POST'])
     def set_schedule(self, id):
         """Set schedule."""
-        harvesting = HarvestSettings.query.filter_by(
-            id=id).first()
-        harvesting.schedule_enable = eval(request.form['dis_enable_schedule'])
-        harvesting.schedule_frequency = request.form['frequency']
-        if harvesting.schedule_frequency == 'weekly':
-            harvesting.schedule_details = request.form['weekly_details']
-        elif harvesting.schedule_frequency == 'monthly':
-            harvesting.schedule_details = request.form['monthly_details']
-        db.session.commit()
+        try:
+            harvesting = HarvestSettings.query.filter_by(
+                id=id).first()
+            harvesting.schedule_enable = eval(request.form['dis_enable_schedule'])
+            harvesting.schedule_frequency = request.form['frequency']
+            if harvesting.schedule_frequency == 'weekly':
+                harvesting.schedule_details = request.form['weekly_details']
+            elif harvesting.schedule_frequency == 'monthly':
+                harvesting.schedule_details = request.form['monthly_details']
+            db.session.commit()
+        except Exception as e:
+            current_app.logger.error(e)
+            db.session.rollback()
         return redirect(url_for('harvestsettings.edit_view', id=id))
 
     @expose('/edit/', methods=('GET', 'POST'))

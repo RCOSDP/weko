@@ -123,7 +123,6 @@ def handle_profile_form(form):
                 current_user.confirmed_at = None
                 db.session.add(current_user)
                 email_changed = True
-        db.session.commit()
 
         if email_changed:
             send_confirmation_instructions(current_user)

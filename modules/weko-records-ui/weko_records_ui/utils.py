@@ -244,70 +244,66 @@ def soft_delete(recid):
         ids = locked_data.get('ids', set())
         return item_id in ids
 
-    try:
-        if current_user:
-            current_user_id = current_user.get_id()
-        else:
-            current_user_id = '1'
+    if current_user:
+        current_user_id = current_user.get_id()
+    else:
+        current_user_id = '1'
+    pid = PersistentIdentifier.query.filter_by(
+        pid_type='recid', pid_value=recid).first()
+    if not pid:
         pid = PersistentIdentifier.query.filter_by(
-            pid_type='recid', pid_value=recid).first()
-        if not pid:
-            pid = PersistentIdentifier.query.filter_by(
-                pid_type='recid', object_uuid=recid).first()
-        if pid.status == PIDStatus.DELETED:
-            return
+            pid_type='recid', object_uuid=recid).first()
+    if pid.status == PIDStatus.DELETED:
+        return
 
-        # Check Record is in import progress
-        if check_an_item_is_locked(int(pid.pid_value.split(".")[0])):
-            raise Exception({
-                'is_locked': True,
-                'msg': _('Item cannot be deleted because '
-                         'the import is in progress.')
-            })
+    # Check Record is in import progress
+    if check_an_item_is_locked(int(pid.pid_value.split(".")[0])):
+        raise Exception({
+            'is_locked': True,
+            'msg': _('Item cannot be deleted because '
+                        'the import is in progress.')
+        })
 
-        versioning = PIDVersioning(child=pid)
-        if not versioning.exists:
-            return
-        all_ver = versioning.children.all()
-        draft_pid = PersistentIdentifier.query.filter_by(
-            pid_type='recid',
-            pid_value="{}.0".format(pid.pid_value.split(".")[0])
-        ).one_or_none()
+    versioning = PIDVersioning(child=pid)
+    if not versioning.exists:
+        return
+    all_ver = versioning.children.all()
+    draft_pid = PersistentIdentifier.query.filter_by(
+        pid_type='recid',
+        pid_value="{}.0".format(pid.pid_value.split(".")[0])
+    ).one_or_none()
 
-        if draft_pid:
-            all_ver.append(draft_pid)
-        del_files = {}
-        for ver in all_ver:
-            depid = PersistentIdentifier.query.filter_by(
+    if draft_pid:
+        all_ver.append(draft_pid)
+    del_files = {}
+    for ver in all_ver:
+        depid = PersistentIdentifier.query.filter_by(
                 pid_type='depid', object_uuid=ver.object_uuid).first()
-            if depid:
-                rec = RecordMetadata.query.filter_by(
+        if depid:
+            rec = RecordMetadata.query.filter_by(
                     id=ver.object_uuid).first()
-                dep = WekoDeposit(rec.json, rec)
-                #dep['path'] = []
-                dep['publish_status'] = PublishStatus.DELETE.value
-                dep.indexer.update_es_data(dep, update_revision=False, field='publish_status')
-                FeedbackMailList.delete(ver.object_uuid)
-                dep.remove_feedback_mail()
-                for f in dep.files:
-                    if f.file.uri not in del_files:
-                        del_files[f.file.uri] = f.file.storage()
-                        f.bucket.location.size -= f.file.size
+            dep = WekoDeposit(rec.json, rec)
+            #dep['path'] = []
+            dep['publish_status'] = PublishStatus.DELETE.value
+            dep.indexer.update_es_data(dep, update_revision=False, field='publish_status')
+            FeedbackMailList.delete(ver.object_uuid)
+            dep.remove_feedback_mail()
+            for f in dep.files:
+                if f.file.uri not in del_files:
+                    del_files[f.file.uri] = f.file.storage()
+                    f.bucket.location.size -= f.file.size
                     f.bucket.deleted = True
-                dep.commit()
+            dep.commit()
             pids = PersistentIdentifier.query.filter_by(
                 object_uuid=ver.object_uuid)
             for p in pids:
                 p.status = PIDStatus.DELETED
-            db.session.commit()
-        for file_storage in del_files.values():
-            file_storage.delete()
+            #db.session.commit()
+    for file_storage in del_files.values():
+        file_storage.delete()
 
-        current_app.logger.info(
-            'user({0}) deleted record id({1}).'.format(current_user_id, recid))
-    except Exception as ex:
-        db.session.rollback()
-        raise ex
+    current_app.logger.info(
+        'user({0}) deleted record id({1}).'.format(current_user_id, recid))
 
 
 def restore(recid):

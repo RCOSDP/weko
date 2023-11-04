@@ -24,6 +24,7 @@ from flask import abort, current_app, flash, jsonify, make_response, \
     redirect, request, url_for
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
+from invenio_db import db
 
 from .permissions import schema_permission
 from .schema import delete_schema, delete_schema_cache, schema_list_render
@@ -53,19 +54,24 @@ class OAISchemaSettingView(BaseView):
     @expose('/delete', methods=['POST'])
     def delete(self, pid=None):
         """Delete schema with pid."""
-        pid = pid or request.values.get('pid')
-        if pid:
-            schema_name = delete_schema(pid)
+        try:
+            pid = pid or request.values.get('pid')
+            if pid:
+                schema_name = delete_schema(pid)
+            db.session.commit()
             # delete schema cache on redis
             delete_schema_cache(schema_name)
+            schema_name = schema_name.replace("_mapping", "")
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(e)
 
-            # schema_name = schema_name.replace("_mapping", "")
-            # for k, v in current_app.config["RECORDS_UI_EXPORT_FORMATS"].items():
-            #     if isinstance(v, dict):
-            #         for v1 in v.values():
-            #             if v.get(schema_name):
-            #                 v.pop(schema_name)
-            #                 break
+        # for k, v in current_app.config["RECORDS_UI_EXPORT_FORMATS"].items():
+        #     if isinstance(v, dict):
+        #         for v1 in v.values():
+        #             if v.get(schema_name):
+        #                 v.pop(schema_name)
+        #                 break
         return redirect(url_for("schemasettings.list"))
 
 

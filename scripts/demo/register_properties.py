@@ -40,11 +40,16 @@ def main():
             sys.exit(0) 
     except Exception as ex:
         print(ex)
+        db.session.rollback()
 
 
 def truncate_table():
-    db.session.execute('TRUNCATE item_type_property;')
-    db.session.commit()
+    try:
+        db.session.execute('TRUNCATE item_type_property;')
+        db.session.commit()
+    except Exception as ex:
+        print(ex)
+        db.session.rollback()
 
 
 def get_properties_id():

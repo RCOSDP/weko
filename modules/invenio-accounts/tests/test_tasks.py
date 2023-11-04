@@ -13,6 +13,7 @@ from __future__ import absolute_import, print_function
 
 from datetime import timedelta
 from time import sleep
+from mock import patch
 
 from flask import url_for
 from flask_login import login_required
@@ -57,7 +58,7 @@ def test_send_message_through_security(task_app):
             assert sent_msg.sender == 'test1@test1.test1'
             assert sent_msg.recipients == ['test1@test1.test1']
 
-
+# .tox/c1/bin/pytest --cov=invenio_accounts tests/test_tasks.py::test_clean_session_table -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-accounts/.tox/c1/tmp
 def test_clean_session_table(task_app):
     """Test clean session table."""
     # set session lifetime
@@ -104,3 +105,15 @@ def test_clean_session_table(task_app):
             res = client.get(protected_url)
             # check if the user is really logout
             assert res.status_code == 302
+
+        with task_app.test_client() as client:
+            client.post(url_for_security('login'), data=dict(
+                email=user2.email,
+                password=user2.password_plaintext,
+            ))
+            assert len(SessionActivity.query.all()) == 1
+            sleep(10)
+
+            with patch('invenio_accounts.tasks.db.session.commit', side_effect=Exception('')):
+                clean_session_table.s().apply()
+                assert len(SessionActivity.query.all()) == 1
