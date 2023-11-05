@@ -978,6 +978,8 @@ def prepare_edit_item():
                 msg=_('An error has occurred.')
             )
         except BaseException as ex:
+            import traceback
+            current_app.logger.error(traceback.format_exc())
             current_app.logger.error('Unexpected error: {}'.format(ex))
             db.session.rollback()
             return jsonify(

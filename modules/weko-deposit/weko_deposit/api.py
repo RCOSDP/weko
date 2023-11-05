@@ -1709,36 +1709,37 @@ class WekoDeposit(Deposit):
             # Get draft bucket's data
             sync_bucket = RecordsBuckets.query.filter_by(
                 record_id=self.id).first()
-            sync_bucket.bucket.locked = False
-            snapshot = Bucket.get(
-                _deposit.files.bucket.id).snapshot(lock=False)
-            bucket = Bucket.get(sync_bucket.bucket_id)
-            if keep_version:
-                self.clean_unuse_file_contents(item_id, bucket.objects,
-                                               snapshot.objects, is_import)
-            snapshot.locked = False
-            sync_bucket.bucket = snapshot
-            bucket.locked = False
+            if sync_bucket:
+                sync_bucket.bucket.locked = False
+                snapshot = Bucket.get(
+                    _deposit.files.bucket.id).snapshot(lock=False)
+                bucket = Bucket.get(sync_bucket.bucket_id)
+                if keep_version:
+                    self.clean_unuse_file_contents(item_id, bucket.objects,
+                                                snapshot.objects, is_import)
+                snapshot.locked = False
+                sync_bucket.bucket = snapshot
+                bucket.locked = False
 
-            if not RecordsBuckets.query.filter_by(
-                    bucket_id=bucket.id).all():
-                bucket.remove()
+                if not RecordsBuckets.query.filter_by(
+                        bucket_id=bucket.id).all():
+                    bucket.remove()
 
-            bucket = {
-                "_buckets": {
-                    "deposit": str(snapshot.id)
+                bucket = {
+                    "_buckets": {
+                        "deposit": str(snapshot.id)
+                    }
                 }
-            }
 
-            args = [index, item_metadata]
-            self.update(*args)
-            # Update '_buckets'
-            super(WekoDeposit, self).update(bucket)
-            self.commit()
-            # update records_metadata
-            flag_modified(self.model, 'json')
-            db.session.add(self.model)
-            db.session.add(sync_bucket)
+                args = [index, item_metadata]
+                self.update(*args)
+                # Update '_buckets'
+                super(WekoDeposit, self).update(bucket)
+                self.commit()
+                # update records_metadata
+                flag_modified(self.model, 'json')
+                db.session.add(self.model)
+                db.session.add(sync_bucket)
 
         return self.__class__(self.model.json, model=self.model)
 

@@ -1067,8 +1067,132 @@ async def sort_meta_data_by_options(
         
         return result
 
-    def get_creator_comments(creators):
-        current_app.logger.error(creators)
+    
+    def get_value_by_selected_language(values,lang_key,current_lang):
+        dict = convert_array_to_dict(values,lang_key)
+        if dict.get(current_lang):
+            return dict.get(current_lang)
+        elif dict.get("None"):
+            return dict.get("None")
+        elif dict.get("en"):
+            return dict.get("en")
+  
+    def get_creator_comments(key,meta_options,creators,is_hide_email):
+        """
+        TODO: affiliationは未実装
+        TODO: nameIdentifiersのhide設定。現状属性がhideであればすべてhide。
+        """
+        ret = []
+        current_lang = current_i18n.language
+        dict = convert_array_to_dict(meta_options,"key")
+        for creator in creators:
+            if creator.get("creatorMails"):
+                opt = dict["{}.{}".format(key,"creatorMails")]
+                if opt.get('option'):
+                    _opt = opt.get('option')    
+                    if (_opt.get('hide') | _opt.get('non_display')|is_hide_email):
+                        creator.pop("creatorMails")
+                opt = dict["{}.{}.{}".format(key,"creatorMails","creatorMail")]
+                if opt.get('option'):
+                    _opt = opt.get('option')    
+                    if (_opt.get('hide') | _opt.get('non_display')|is_hide_email):
+                        if creator.get("creatorMails"):
+                            creator.pop("creatorMails")
+            
+            if creator.get("familyNames"):
+                opt = dict["{}.{}".format(key,"familyNames")]
+                if opt.get('option'):
+                    _opt = opt.get('option')    
+                    if (_opt.get('hide') | _opt.get('non_display')):
+                        creator.pop("familyNames")
+                    else:
+                        creator["familyNames"] = get_value_by_selected_language(creator["familyNames"],"familyNameLang",current_lang)
+                opt = dict["{}.{}.{}".format(key,"familyNames","familyName")]
+                if opt.get('option'):
+                    _opt = opt.get('option')    
+                    if (_opt.get('hide') | _opt.get('non_display')):
+                        if creator.get("familyNames"):
+                            creator.pop("familyNames")
+                        
+            if creator.get("creatorNames"):
+                opt = dict["{}.{}".format(key,"creatorNames")]
+                if opt.get('option'):
+                    _opt = opt.get('option')    
+                    if (_opt.get('hide') | _opt.get('non_display')):
+                        creator.pop("creatorNames")
+                    else:
+                        creator["creatorNames"] = get_value_by_selected_language(creator["creatorNames"],"creatorNameLang",current_lang)
+                
+                opt = dict["{}.{}.{}".format(key,"creatorNames","creatorName")]
+                if opt.get('option'):
+                    _opt = opt.get('option')    
+                    if (_opt.get('hide') | _opt.get('non_display')):
+                        if creator.get("creatorNames"):
+                            creator.pop("creatorNames")
+            
+            if creator.get("givenNames"):
+                opt = dict["{}.{}".format(key,"givenNames")]
+                if opt.get('option'):
+                    _opt = opt.get('option')    
+                    if (_opt.get('hide') | _opt.get('non_display')):
+                        creator.pop("givenNames")
+                    else:
+                        creator["givenNames"] = get_value_by_selected_language(creator["givenNames"],"givenNameLang",current_lang)
+                opt = dict["{}.{}.{}".format(key,"givenNames","givenName")]
+                if opt.get('option'):
+                    _opt = opt.get('option')    
+                    if (_opt.get('hide') | _opt.get('non_display')):
+                        if creator.get("givenNames"):
+                            creator.pop("givenNames")
+            
+            if creator.get("nameIdentifiers"):
+                opt = dict["{}.{}".format(key,"nameIdentifiers")]
+                if opt.get('option'):
+                    _opt = opt.get('option')    
+                    if (_opt.get('hide') | _opt.get('non_display')):
+                        creator.pop("nameIdentifiers")
+                opt = dict["{}.{}.{}".format(key,"nameIdentifiers","nameIdentifierScheme")]
+                if opt.get('option'):
+                    _opt = opt.get('option')    
+                    if (_opt.get('hide') | _opt.get('non_display')):
+                        if creator.get("nameIdentifiers"):
+                            creator.pop("nameIdentifiers")
+                        
+                opt = dict["{}.{}.{}".format(key,"nameIdentifiers","nameIdentifierURI")]
+                if opt.get('option'):
+                    _opt = opt.get('option')    
+                    if (_opt.get('hide') | _opt.get('non_display')):
+                        if creator.get("nameIdentifiers"):
+                            creator.pop("nameIdentifiers")
+                            
+                opt = dict["{}.{}.{}".format(key,"nameIdentifiers","nameIdentifier")]
+                if opt.get('option'):
+                    _opt = opt.get('option')    
+                    if (_opt.get('hide') | _opt.get('non_display')):
+                        if creator.get("nameIdentifiers"):
+                            creator.pop("nameIdentifiers")        
+
+            if creator.get("creatorAffiliations"):
+                opt = dict["{}.{}".format(key,"creatorAffiliations")]
+                if opt.get('option'):
+                    _opt = opt.get('option')    
+                    if (_opt.get('hide') | _opt.get('non_display')):
+                        creator.pop("creatorAffiliations")
+            
+            if creator.get("affiliationNameIdentifiers"):
+                opt = dict["{}.{}".format(key,"affiliationNameIdentifiers")]
+                if opt.get('option'):
+                    _opt = opt.get('option')    
+                    if (_opt.get('hide') | _opt.get('non_display')):
+                        creator.pop("affiliationNameIdentifiers")
+        
+            current_app.logger.error("creator:{}".format(creator))
+            ret.append(creator)
+                    
+        return ret
+                
+            
+            
         
     
     def get_file_comments(record, files):
@@ -1248,6 +1372,7 @@ async def sort_meta_data_by_options(
         hide_list = get_hide_list_by_schema_form(item_type_id)
         solst_dict_array = convert_data_to_dict(solst)
         files_info = []
+        creator_info = None
         thumbnail = None
         hide_item_metadata(src, settings, item_type_mapping, item_type_data)
         # Set value and parent option
@@ -1271,13 +1396,15 @@ async def sort_meta_data_by_options(
                 if is_thumbnail and not option.get("hidden") and option.get("showlist"):
                     thumbnail = get_file_thumbnail(mlt)
                     continue
-
+                
+                
                 if (
                     val.get("attribute_type", "") == "creator"
                     and not option.get("hidden")
                     and option.get("showlist")
                 ):
-                    creator_info = get_creator_comments(mlt)
+                    is_hide_email = not settings.items_display_email
+                    creator_info = get_creator_comments(key,solst_dict_array,mlt,is_hide_email)
                     continue
                 
                 mlt = append_parent_key(key, mlt)
@@ -1331,6 +1458,8 @@ async def sort_meta_data_by_options(
             record_hit["_source"]["_files_info"] = files_info
         if thumbnail:
             record_hit["_source"]["_thumbnail"] = thumbnail
+        if creator_info:
+            record_hit["_source"]["_creator_info"] = creator_info
     except Exception:
         current_app.logger.exception(
             "Record serialization failed {}.".format(
@@ -1338,6 +1467,20 @@ async def sort_meta_data_by_options(
             )
         )
 
+
+def convert_array_to_dict(solst_dict_array,key):
+    dict = {}
+    idx = 0
+    for item in solst_dict_array:
+        if item.get(key):
+            item['idx']=idx
+            dict[item.get(key)] = item
+        else:
+            item['idx']=idx
+            dict['None'] = item
+        idx=idx+1
+    return dict
+    
 
 def get_keywords_data_load(str):
     """Get a json of item type info.
