@@ -5,7 +5,7 @@ docker-compose -f docker-compose2.yml down -v
 for volume in $(docker volume ls -f name=weko -q); do
   docker volume rm $(volume)
 done
-DOCKER_BUILDKIT=1 COMPOSE_DOCKER_CLI_BUILD=1 docker-compose -f docker-compose2.yml build --no-cache --force-rm
+#DOCKER_BUILDKIT=1 COMPOSE_DOCKER_CLI_BUILD=1 docker-compose -f docker-compose2.yml build --no-cache --force-rm
 
 # Initialize resources
 docker-compose -f docker-compose2.yml run --rm web ./scripts/populate-instance.sh
