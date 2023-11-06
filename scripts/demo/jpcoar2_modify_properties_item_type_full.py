@@ -184,7 +184,7 @@ creator_form_list: list = [
     creator_form
     for creator_form
     in item_type_full[0].form
-    if creator_form.get("title", {}) == "Creator"
+    if (creator_form.get("title", {}) == "Creator") or (creator_form.get("title", {}) == "作成者")
 ]
 
 #? Element of Creator from itemtype.render["table_row_map"]["form"] 
@@ -192,7 +192,7 @@ creator_render_form_list: list = [
     creator_form
     for creator_form
     in item_type_full[0].render["table_row_map"]["form"]
-    if creator_form.get("title", {}) == "Creator"
+    if (creator_form.get("title", {}) == "Creator") or (creator_form.get("title", {}) == "作成者")
 ]
 
 #? Creator Property for Creator Type
@@ -279,7 +279,7 @@ creator_form_list: list = [
     creator_form
     for creator_form
     in item_type_full[0].form
-    if creator_form.get("title", {}) == "Creator"
+    if (creator_form.get("title", {}) == "Creator") or (creator_form.get("title", {}) == "作成者")
 ]
 
 #? Get Creator Name form
@@ -305,7 +305,7 @@ creator_render_form_list: list = [
     creator_form
     for creator_form
     in item_type_full[0].render["table_row_map"]["form"]
-    if creator_form.get("title", {}) == "Creator"
+    if (creator_form.get("title", {}) == "Creator") or (creator_form.get("title", {}) == "作成者")
 ]
 
 #? Get Creator Name form from itemtype.render["table_row_map"]["form"]
@@ -510,7 +510,7 @@ contributor_render_form_list: list = [
     contributor_form
     for contributor_form
     in item_type_full[0].render["table_row_map"]["form"]
-    if contributor_form.get("title", {}) == "Contributor"
+    if contributor_form.get("title", {}) == "Contributor" or contributor_form.get("title", {}) == "寄与者"
 ]
 
 #? Get Contributor Name form from itemtype.render["table_row_map"]["form"]
@@ -1211,11 +1211,14 @@ ROR
 subject_item_key: str or None = None
 for subject in list(item_type_full[0].schema["properties"].keys()):
     for y in list(item_type_full[0].schema["properties"][subject].get("items",{}).get("properties", {}).keys()):
-        if item_type_full[0].schema["properties"][subject].get("items",{}).get("properties", {}).get(y, {}).get("title_i18n"):
-            if "Subject URI" in item_type_full[0].schema["properties"][subject].get("items",{}).get("properties", {}).get(y, {}).get("title_i18n", {}).get("en", {}) \
+        if item_type_full[0].schema["properties"][subject].get("items",{}).get("properties", {}).get(y, {}).get("title") or \
+            item_type_full[0].schema["properties"][subject].get("items",{}).get("properties", {}).get(y, {}).get("title_i18n"):
+            if "主題" in item_type_full[0].schema["properties"][subject].get("items",{}).get("properties", {}).get(y, {}).get("title") or \
+                "Subject URI" in item_type_full[0].schema["properties"][subject].get("items",{}).get("properties", {}).get(y, {}).get("title_i18n", {}).get("en", {}) \
                     or "主題URI" in item_type_full[0].schema["properties"][subject].get("items",{}).get("properties", {}).get(y, {}).get("title_i18n", {}).get("ja", {}):
                 subject_item_key = subject
 
+          
 #? Subject Schema
 subject_scheme_schema: dict or None = None
 if subject_item_key:
@@ -1223,9 +1226,11 @@ if subject_item_key:
         if isinstance(item_type_full[0].schema["properties"][subject_item_key]["items"]["properties"], dict):
             for subj_scheme_item in list(item_type_full[0].schema["properties"][subject_item_key]["items"]["properties"].keys()):
                 if item_type_full[0].schema["properties"][subject_item_key]["items"]["properties"][subj_scheme_item].get("title"):
-                    if "Scheme" in item_type_full[0].schema["properties"][subject_item_key]["items"]["properties"][subj_scheme_item]["title"]:
+                    if "主題Scheme" in item_type_full[0].schema["properties"][subject_item_key]["items"]["properties"][subj_scheme_item]["title"] or \
+                        "Scheme" in item_type_full[0].schema["properties"][subject_item_key]["items"]["properties"][subj_scheme_item]["title"]:
                         subject_scheme_schema = item_type_full[0].schema["properties"][subject_item_key]["items"]["properties"][subj_scheme_item]
 
+   
 #? Element of Subject from itemtype.form
 subject_form_list: list = [
     subject_form
@@ -1285,8 +1290,8 @@ subject_scheme_new_values_title_map = [
 ]
 
 ###! UPDATE CHANGES IN ITEM TYPE Full FOR SUBJECT SCHEME ~ START
-if "JEL" in subject_scheme_schema.get("currentEnum") \
-        or "JEL" in subject_scheme_schema.get("enum"):
+if "JEL" in subject_scheme_schema.get("currentEnum",[]) \
+        or "JEL" in subject_scheme_schema.get("enum",[]):
     print("SUBJECT SCHEME already updated for デフォルトアイテムタイプ（フル）.")
 else:
     if subject_item_key:
@@ -1296,7 +1301,14 @@ else:
             for sub_sch in subject_scheme_new_values:
                 subject_scheme_schema["currentEnum"].append(sub_sch)
                 subject_scheme_schema["enum"].append(sub_sch)
-
+                
+        if not subject_scheme_schema.get("currentEnum") \
+                and subject_scheme_schema.get("enum"):
+            subject_scheme_schema["currentEnum"] = subject_scheme_schema["enum"]
+            for sub_sch in subject_scheme_new_values:
+                subject_scheme_schema["currentEnum"].append(sub_sch)
+                subject_scheme_schema["enum"].append(sub_sch)
+        
         if subject_form_list:
             if subject_form_list[0].get("items") \
                     and isinstance(subject_form_list[0].get("items"), list) \
@@ -1439,7 +1451,7 @@ creator_form_list: list = [
     creator_form
     for creator_form
     in item_type_full[0].form
-    if creator_form.get("title", {}) == "Creator"
+    if creator_form.get("title", {}) == "Creator" or creator_form.get("title", {}) == "作成者"
 ]
 
 #? Get Creator Affiliation form
@@ -1456,7 +1468,7 @@ creator_render_form_list: list = [
     creator_form
     for creator_form
     in item_type_full[0].render["table_row_map"]["form"]
-    if creator_form.get("title", {}) == "Creator"
+    if creator_form.get("title", {}) == "Creator" or creator_form.get("title", {}) == "作成者"
 ]
 
 #? Get Creator Affiliation form from itemtype.render["table_row_map"]["form"]
@@ -1520,8 +1532,8 @@ ror_title_map = {
 }
 
 ###! UPDATE CHANGES IN ITEM TYPE Full FOR CREATOR AFFILIATION NAME IDENTIFIER SCHEME ~ START
-if "kakenhi【非推奨】" in creator_affiliation_name_identifier_schema.get("currentEnum") \
-        or "kakenhi【非推奨】" in creator_affiliation_name_identifier_schema.get("enum"):
+if "kakenhi【非推奨】" in creator_affiliation_name_identifier_schema.get("currentEnum",[]) \
+        or "kakenhi【非推奨】" in creator_affiliation_name_identifier_schema.get("enum",[]):
     print("CREATOR AFFILIATION NAME IDENTIFIER SCHEME already updated for デフォルトアイテムタイプ（フル）.")
 else:
     if creator_item_key:
@@ -1543,6 +1555,25 @@ else:
                 creator_affiliation_name_identifier_schema["currentEnum"].remove("GRID")
                 creator_affiliation_name_identifier_schema["currentEnum"].append("GRID【非推奨】")
 
+        if not creator_affiliation_name_identifier_schema.get("currentEnum") \
+                and creator_affiliation_name_identifier_schema.get("enum"):
+            creator_affiliation_name_identifier_schema["currentEnum"]=creator_affiliation_name_identifier_schema.get("enum")
+            creator_affiliation_name_identifier_schema["currentEnum"].append(ror)
+            creator_affiliation_name_identifier_schema["enum"].append(ror)
+            if "kakenhi" in creator_affiliation_name_identifier_schema["enum"]:
+                creator_affiliation_name_identifier_schema["enum"].remove("kakenhi")
+                creator_affiliation_name_identifier_schema["enum"].append("kakenhi【非推奨】")
+            if "GRID" in creator_affiliation_name_identifier_schema["enum"]:
+                creator_affiliation_name_identifier_schema["enum"].remove("GRID")
+                creator_affiliation_name_identifier_schema["enum"].append("GRID【非推奨】")
+            if "kakenhi" in creator_affiliation_name_identifier_schema["currentEnum"]:
+                creator_affiliation_name_identifier_schema["currentEnum"].remove("kakenhi")
+                creator_affiliation_name_identifier_schema["currentEnum"].append("kakenhi【非推奨】")
+            if "GRID" in creator_affiliation_name_identifier_schema["currentEnum"]:
+                creator_affiliation_name_identifier_schema["currentEnum"].remove("GRID")
+                creator_affiliation_name_identifier_schema["currentEnum"].append("GRID【非推奨】")
+
+        
         if creator_affiliation_form:
             if creator_affiliation_form[0].get("items") \
                     and isinstance(creator_affiliation_form[0].get("items"), list):
@@ -1703,7 +1734,7 @@ contributor_form_list: list = [
     contributor_form
     for contributor_form
     in item_type_full[0].form
-    if contributor_form.get("title", {}) == "Contributor"
+    if contributor_form.get("title", {}) == "Contributor" or contributor_form.get("title", {}) == "寄与者"
 ]
 
 #? Get Contributor Affiliation form
@@ -1720,7 +1751,7 @@ contributor_render_form_list: list = [
     contributor_form
     for contributor_form
     in item_type_full[0].render["table_row_map"]["form"]
-    if contributor_form.get("title", {}) == "Contributor"
+    if contributor_form.get("title", {}) == "Contributor" or contributor_form.get("title", {}) == "寄与者"
 ]
 
 #? Get Contributor Affiliation form from itemtype.render["table_row_map"]["form"]
@@ -1745,8 +1776,8 @@ ror_title_map = {
 }
 
 ###! UPDATE CHANGES IN ITEM TYPE Full FOR CONTRIBUTOR AFFILIATION NAME IDENTIFIER SCHEME ~ START
-if "kakenhi【非推奨】" in contributor_affiliation_name_identifier_schema.get("currentEnum") \
-        or "kakenhi【非推奨】" in contributor_affiliation_name_identifier_schema.get("enum"):
+if "kakenhi【非推奨】" in contributor_affiliation_name_identifier_schema.get("currentEnum",[]) \
+        or "kakenhi【非推奨】" in contributor_affiliation_name_identifier_schema.get("enum",[]):
     print("CONTRIBUTOR AFFILIATION NAME IDENTIFIER SCHEME already updated for デフォルトアイテムタイプ（フル）.")
 else:
     if contributor_item_key:
@@ -1767,6 +1798,25 @@ else:
             if "GRID" in contributor_affiliation_name_identifier_schema["currentEnum"]:
                 contributor_affiliation_name_identifier_schema["currentEnum"].remove("GRID")
                 contributor_affiliation_name_identifier_schema["currentEnum"].append("GRID【非推奨】")
+
+        if not contributor_affiliation_name_identifier_schema.get("currentEnum") \
+                and contributor_affiliation_name_identifier_schema.get("enum"):
+            contributor_affiliation_name_identifier_schema["currentEnum"]=contributor_affiliation_name_identifier_schema.get("enum")
+            contributor_affiliation_name_identifier_schema["currentEnum"].append(ror)
+            contributor_affiliation_name_identifier_schema["enum"].append(ror)
+            if "kakenhi" in contributor_affiliation_name_identifier_schema["enum"]:
+                contributor_affiliation_name_identifier_schema["enum"].remove("kakenhi")
+                contributor_affiliation_name_identifier_schema["enum"].append("kakenhi【非推奨】")
+            if "GRID" in contributor_affiliation_name_identifier_schema["enum"]:
+                contributor_affiliation_name_identifier_schema["enum"].remove("GRID")
+                contributor_affiliation_name_identifier_schema["enum"].append("GRID【非推奨】")
+            if "kakenhi" in contributor_affiliation_name_identifier_schema["currentEnum"]:
+                contributor_affiliation_name_identifier_schema["currentEnum"].remove("kakenhi")
+                contributor_affiliation_name_identifier_schema["currentEnum"].append("kakenhi【非推奨】")
+            if "GRID" in contributor_affiliation_name_identifier_schema["currentEnum"]:
+                contributor_affiliation_name_identifier_schema["currentEnum"].remove("GRID")
+                contributor_affiliation_name_identifier_schema["currentEnum"].append("GRID【非推奨】")
+
 
         if contributor_affiliation_form:
             if contributor_affiliation_form[0].get("items") \
@@ -1981,7 +2031,16 @@ for relation in list(item_type_full[0].schema["properties"].keys()):
                             ["properties"] \
                             [key] \
                             .get("title_i18n", {}) \
-                            .get("ja") == "関連名称":
+                            .get("ja") == "関連名称" \
+                    or item_type_full[0].schema["properties"] \
+                            [relation] \
+                            ["items"] \
+                            ["properties"] \
+                            [rel_key] \
+                            ["items"] \
+                            ["properties"] \
+                            [key] \
+                            .get("title", "") == "関連名称":
                         relation_item_key = relation
 
 #? Relation Schema
@@ -2010,7 +2069,8 @@ relation_form_list: list = [
     for relation_form
     in item_type_full[0].form
     if relation_form.get("title_i18n", {}).get("en") == "Relation"
-    or relation_form.get("title_i18n", {}).get("ja") == "関連情報"
+    or relation_form.get("title_i18n", {}).get("ja") == "関連情報" 
+    or relation_form.get("title", {}) == "関連情報"
 ]
 
 #? Get Relation Type form from itemtype.form
@@ -2085,12 +2145,14 @@ relation_type_new_values_title_map = [
 ]
 
 ###! UPDATE CHANGES IN ITEM TYPE Full FOR RELATION TYPE ~ START
-if "inSeries" in relation_type_schema.get("currentEnum") \
-        or "inSeries" in relation_type_schema.get("enum"):
+if "inSeries" in relation_type_schema.get("currentEnum",[]) \
+        or "inSeries" in relation_type_schema.get("enum",[]):
     print("RELATION TYPE already updated for デフォルトアイテムタイプ（フル）.")
 else:
     if relation_item_key:
         #* Modify ITEM TYPE Full for Relation Type
+        if not relation_type_schema.get("currentEnum"):
+            relation_type_schema["currentEnum"] = relation_type_schema.get("enum")
         if relation_type_schema.get("currentEnum"):
             for rel_type in relation_type_new_values:
                 relation_type_schema["currentEnum"].append(rel_type)
@@ -2232,7 +2294,16 @@ for relation in list(item_type_full[0].schema["properties"].keys()):
                             ["properties"] \
                             [key] \
                             .get("title_i18n", {}) \
-                            .get("ja") == "関連名称":
+                            .get("ja") == "関連名称" \
+                    or item_type_full[0].schema["properties"] \
+                            [relation] \
+                            ["items"] \
+                            ["properties"] \
+                            [rel_key] \
+                            ["items"] \
+                            ["properties"] \
+                            [key] \
+                            .get("title", "") == "関連名称":
                         relation_item_key = relation
 
 #? Relation Identifier Type Schema
@@ -2295,6 +2366,7 @@ relation_form_list: list = [
     in item_type_full[0].form
     if relation_form.get("title_i18n", {}).get("en") == "Relation"
     or relation_form.get("title_i18n", {}).get("ja") == "関連情報"
+    or relation_form.get("title", "") == "関連情報"
 ]
 
 #? Get Relation Identifier Type form from itemtype.form
@@ -2359,12 +2431,15 @@ relation_identifer_type_new_values_title_map = [
 ]
 
 ###! UPDATE CHANGES IN ITEM TYPE Full FOR RELATION IDENTIFIER TYPE ~ START
-if "CRID" in relation_identifier_type_schema.get("currentEnum") \
-        or "CRID" in relation_identifier_type_schema.get("enum"):
+if "CRID" in relation_identifier_type_schema.get("currentEnum",[]) \
+        or "CRID" in relation_identifier_type_schema.get("enum",[]):
     print("RELATION IDENTIFIER TYPE already updated for デフォルトアイテムタイプ（フル）.")
 else:
     if relation_item_key:
         #* Modify ITEM TYPE Full for Relation Type
+        if not relation_identifier_type_schema.get("currentEnum"):
+            relation_identifier_type_schema["currentEnum"] = relation_identifier_type_schema.get("enum")
+        
         if relation_identifier_type_schema.get("currentEnum"):
             for rel_id_type in relation_identifer_type_new_values:
                 relation_identifier_type_schema["currentEnum"].append(rel_id_type)
@@ -2522,7 +2597,6 @@ for fund_ref_key in list(item_type_full[0].schema["properties"].keys()):
                             or item_type_full[0].schema["properties"][fund_ref_key]["items"]["properties"][prop_key]["title"] == "研究課題番号" \
                             or item_type_full[0].schema["properties"][fund_ref_key]["items"]["properties"][prop_key]["title"] == "研究課題名":
                         funding_reference_key = fund_ref_key
-
 funder_identifier_type_schema: dict or None = None
 if funding_reference_key:
     if item_type_full[0].schema["properties"][funding_reference_key].get("items", {}).get("properties"):
@@ -2535,12 +2609,14 @@ if funding_reference_key:
                     ):
                         for fund_id_type_key \
                         in list(item_type_full[0].schema["properties"][funding_reference_key]["items"]["properties"][fund_id_type_schema_key].get("properties").keys()):
-                            if item_type_full[0].schema["properties"] \
+                            if (item_type_full[0].schema["properties"] \
                                 [funding_reference_key]["items"]["properties"][fund_id_type_schema_key]["properties"][fund_id_type_key].get("enum") \
-                            and item_type_full[0].schema["properties"] \
-                                    [funding_reference_key]["items"]["properties"][fund_id_type_schema_key]["properties"][fund_id_type_key].get("currentEnum") \
-                            and "助成機関識別子タイプ" in item_type_full[0].schema["properties"] \
-                                    [funding_reference_key]["items"]["properties"][fund_id_type_schema_key]["properties"][fund_id_type_key].get("title"):
+                            or item_type_full[0].schema["properties"] \
+                                    [funding_reference_key]["items"]["properties"][fund_id_type_schema_key]["properties"][fund_id_type_key].get("currentEnum")) \
+                            and ("助成機関識別子タイプ" in item_type_full[0].schema["properties"] \
+                                    [funding_reference_key]["items"]["properties"][fund_id_type_schema_key]["properties"][fund_id_type_key].get("title") \
+                                or "識別子タイプ" in item_type_full[0].schema["properties"] \
+                                    [funding_reference_key]["items"]["properties"][fund_id_type_schema_key]["properties"][fund_id_type_key].get("title")):
                                 funder_identifier_type_schema = item_type_full[0].schema["properties"] \
                                     [funding_reference_key]["items"]["properties"][fund_id_type_schema_key]["properties"][fund_id_type_key]
 
@@ -2613,12 +2689,15 @@ new_funder_identifier_type_title_map = [
 ]
 
 ###! UPDATE CHANGES IN ITEM TYPE Full FOR FUNDER IDENTIFIER TYPE ~ START
-if "ROR" in funder_identifier_type_schema.get("currentEnum") \
-        or "ROR" in funder_identifier_type_schema.get("enum"):
+if "ROR" in funder_identifier_type_schema.get("currentEnum",[]) \
+        or "ROR" in funder_identifier_type_schema.get("enum",[]):
     print("FUNDER IDENTIFIER TYPE already updated for デフォルトアイテムタイプ（フル）.")
 else:
     if funding_reference_key:
         #* Modify ITEM TYPE Full for Relation Type
+        if not funder_identifier_type_schema.get("currentEnum"):
+            funder_identifier_type_schema["currentEnum"] = funder_identifier_type_schema.get("enum")
+        
         if funder_identifier_type_schema.get("currentEnum"):
             for fund_id_type in new_funder_identifier_type_values:
                 funder_identifier_type_schema["currentEnum"].append(fund_id_type)
