@@ -54,7 +54,7 @@ def create_new_property(
 
 
 #* Get the latest existing property id 
-all_existing_item_type_properties_ids: list = sorted([prop.id for prop in ItemTypeProperty.query.all()])
+all_existing_item_type_properties_ids: list = sorted([prop.id for prop in ItemTypeProperty.query.filter(ItemTypeProperty.id<1001).all()])
 latest_existing_property_id: int = all_existing_item_type_properties_ids[-1]
 
 #* Language selection value for all properties to be created

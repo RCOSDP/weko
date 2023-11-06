@@ -582,7 +582,10 @@ def validate_form_input_data(
     # current_app.logger.error("item_id: {}".format(item_id))
     # current_app.logger.error("data: {}".format(data))
     def _get_jpcoar_mapping_value_mapping(key, item_type_mapping):
-        return item_type_mapping[key]["jpcoar_mapping"]
+        ret = {}
+        if key in item_type_mapping and "jpcoar_mapping" in item_type_mapping[key]:
+            ret = item_type_mapping[key]["jpcoar_mapping"]
+        return ret
 
     def _get_keys_that_exist_from_data(given_data: dict) -> list:
         return list(given_data.keys())
