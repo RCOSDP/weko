@@ -1538,28 +1538,14 @@ if "kakenhi【非推奨】" in creator_affiliation_name_identifier_schema.get("c
 else:
     if creator_item_key:
         #* Modify ITEM TYPE Full for Creator Affilication Name Identifier Scheme
+        if creator_affiliation_name_identifier_schema.get("currentEnum"):
+            creator_affiliation_name_identifier_schema["currentEnum"]=creator_affiliation_name_identifier_schema.get("enum")
+            
         if creator_affiliation_name_identifier_schema.get("currentEnum") \
                 and creator_affiliation_name_identifier_schema.get("enum"):
-            creator_affiliation_name_identifier_schema["currentEnum"].append(ror)
-            creator_affiliation_name_identifier_schema["enum"].append(ror)
-            if "kakenhi" in creator_affiliation_name_identifier_schema["enum"]:
-                creator_affiliation_name_identifier_schema["enum"].remove("kakenhi")
-                creator_affiliation_name_identifier_schema["enum"].append("kakenhi【非推奨】")
-            if "GRID" in creator_affiliation_name_identifier_schema["enum"]:
-                creator_affiliation_name_identifier_schema["enum"].remove("GRID")
-                creator_affiliation_name_identifier_schema["enum"].append("GRID【非推奨】")
-            if "kakenhi" in creator_affiliation_name_identifier_schema["currentEnum"]:
-                creator_affiliation_name_identifier_schema["currentEnum"].remove("kakenhi")
-                creator_affiliation_name_identifier_schema["currentEnum"].append("kakenhi【非推奨】")
-            if "GRID" in creator_affiliation_name_identifier_schema["currentEnum"]:
-                creator_affiliation_name_identifier_schema["currentEnum"].remove("GRID")
-                creator_affiliation_name_identifier_schema["currentEnum"].append("GRID【非推奨】")
-
-        if not creator_affiliation_name_identifier_schema.get("currentEnum") \
-                and creator_affiliation_name_identifier_schema.get("enum"):
-            creator_affiliation_name_identifier_schema["currentEnum"]=creator_affiliation_name_identifier_schema.get("enum")
-            creator_affiliation_name_identifier_schema["currentEnum"].append(ror)
-            creator_affiliation_name_identifier_schema["enum"].append(ror)
+            if ror not in creator_affiliation_name_identifier_schema["enum"]:
+                creator_affiliation_name_identifier_schema["currentEnum"].append(ror)
+                creator_affiliation_name_identifier_schema["enum"].append(ror)
             if "kakenhi" in creator_affiliation_name_identifier_schema["enum"]:
                 creator_affiliation_name_identifier_schema["enum"].remove("kakenhi")
                 creator_affiliation_name_identifier_schema["enum"].append("kakenhi【非推奨】")
@@ -1585,7 +1571,8 @@ else:
                                     if "affiliationNameIdentifierScheme" in cr_aff_item_lv1.get("key"):
                                         if cr_aff_item_lv1.get("titleMap"):
                                             if isinstance(cr_aff_item_lv1.get("titleMap"), list):
-                                                cr_aff_item_lv1["titleMap"].append(ror_title_map)
+                                                if ror_title_map not in cr_aff_item_lv1["titleMap"]:
+                                                    cr_aff_item_lv1["titleMap"].append(ror_title_map)
                                                 for not_recommended_change in cr_aff_item_lv1["titleMap"]:
                                                     if not_recommended_change["name"] == "kakenhi":
                                                         not_recommended_change["name"] = "kakenhi【非推奨】"
@@ -1608,7 +1595,8 @@ else:
                                                 if "affiliationNameIdentifierScheme" in cr_aff_item_lv2.get("key"):
                                                     if cr_aff_item_lv2.get("titleMap"):
                                                         if isinstance(cr_aff_item_lv2.get("titleMap"), list):
-                                                            cr_aff_item_lv2["titleMap"].append(ror_title_map)
+                                                            if ror_title_map not in cr_aff_item_lv2["titleMap"]:
+                                                                cr_aff_item_lv2["titleMap"].append(ror_title_map)
                                                             for not_recommended_change in cr_aff_item_lv2["titleMap"]:
                                                                 if not_recommended_change["name"] == "kakenhi":
                                                                     not_recommended_change["name"] = "kakenhi【非推奨】"
@@ -1619,7 +1607,8 @@ else:
 
         if creator_affiliation_identifier_scheme_property_schema_property:
             if creator_affiliation_identifier_scheme_property_schema_property.get("enum"):
-                creator_affiliation_identifier_scheme_property_schema_property["enum"].append(ror)
+                if ror not in creator_affiliation_identifier_scheme_property_schema_property["enum"]:
+                    creator_affiliation_identifier_scheme_property_schema_property["enum"].append(ror)
             if "kakenhi" in creator_affiliation_name_identifier_schema["enum"]:
                 creator_affiliation_name_identifier_schema["enum"].remove("kakenhi")
                 creator_affiliation_name_identifier_schema["enum"].append("kakenhi【非推奨】")
@@ -1634,7 +1623,8 @@ else:
                         if cr_aff_prop_form_lv1.get("key") \
                                 and "affiliationNameIdentifierScheme" in cr_aff_prop_form_lv1["key"]:
                             if cr_aff_prop_form_lv1.get("titleMap"):
-                                cr_aff_prop_form_lv1["titleMap"].append(ror_title_map)
+                                if ror_title_map not in cr_aff_prop_form_lv1["titleMap"]:
+                                    cr_aff_prop_form_lv1["titleMap"].append(ror_title_map)
                             for not_recommended_change in cr_aff_prop_form_lv1["titleMap"]:
                                 if not_recommended_change["name"] == "kakenhi":
                                     not_recommended_change["name"] = "kakenhi【非推奨】"
@@ -1782,10 +1772,14 @@ if "kakenhi【非推奨】" in contributor_affiliation_name_identifier_schema.ge
 else:
     if contributor_item_key:
         #* Modify ITEM TYPE Full for Contributor Affilication Name Identifier Scheme
+        if contributor_affiliation_name_identifier_schema.get("currentEnum"):
+            contributor_affiliation_name_identifier_schema["currentEnum"]=contributor_affiliation_name_identifier_schema.get("enum")
+        
         if contributor_affiliation_name_identifier_schema.get("currentEnum") \
                 and contributor_affiliation_name_identifier_schema.get("enum"):
-            contributor_affiliation_name_identifier_schema["currentEnum"].append(ror)
-            contributor_affiliation_name_identifier_schema["enum"].append(ror)
+            if ror not in contributor_affiliation_name_identifier_schema["enum"]:
+                contributor_affiliation_name_identifier_schema["currentEnum"].append(ror)
+                contributor_affiliation_name_identifier_schema["enum"].append(ror)
             if "kakenhi" in contributor_affiliation_name_identifier_schema["enum"]:
                 contributor_affiliation_name_identifier_schema["enum"].remove("kakenhi")
                 contributor_affiliation_name_identifier_schema["enum"].append("kakenhi【非推奨】")
@@ -1799,25 +1793,7 @@ else:
                 contributor_affiliation_name_identifier_schema["currentEnum"].remove("GRID")
                 contributor_affiliation_name_identifier_schema["currentEnum"].append("GRID【非推奨】")
 
-        if not contributor_affiliation_name_identifier_schema.get("currentEnum") \
-                and contributor_affiliation_name_identifier_schema.get("enum"):
-            contributor_affiliation_name_identifier_schema["currentEnum"]=contributor_affiliation_name_identifier_schema.get("enum")
-            contributor_affiliation_name_identifier_schema["currentEnum"].append(ror)
-            contributor_affiliation_name_identifier_schema["enum"].append(ror)
-            if "kakenhi" in contributor_affiliation_name_identifier_schema["enum"]:
-                contributor_affiliation_name_identifier_schema["enum"].remove("kakenhi")
-                contributor_affiliation_name_identifier_schema["enum"].append("kakenhi【非推奨】")
-            if "GRID" in contributor_affiliation_name_identifier_schema["enum"]:
-                contributor_affiliation_name_identifier_schema["enum"].remove("GRID")
-                contributor_affiliation_name_identifier_schema["enum"].append("GRID【非推奨】")
-            if "kakenhi" in contributor_affiliation_name_identifier_schema["currentEnum"]:
-                contributor_affiliation_name_identifier_schema["currentEnum"].remove("kakenhi")
-                contributor_affiliation_name_identifier_schema["currentEnum"].append("kakenhi【非推奨】")
-            if "GRID" in contributor_affiliation_name_identifier_schema["currentEnum"]:
-                contributor_affiliation_name_identifier_schema["currentEnum"].remove("GRID")
-                contributor_affiliation_name_identifier_schema["currentEnum"].append("GRID【非推奨】")
-
-
+        
         if contributor_affiliation_form:
             if contributor_affiliation_form[0].get("items") \
                     and isinstance(contributor_affiliation_form[0].get("items"), list):
@@ -1829,7 +1805,8 @@ else:
                                     if "contributorAffiliationScheme" in contrib_aff_item_lv1.get("key"):
                                         if contrib_aff_item_lv1.get("titleMap"):
                                             if isinstance(contrib_aff_item_lv1.get("titleMap"), list):
-                                                contrib_aff_item_lv1["titleMap"].append(ror_title_map)
+                                                if ror_title_map not in contrib_aff_item_lv1["titleMap"]:
+                                                    contrib_aff_item_lv1["titleMap"].append(ror_title_map)
                                                 for not_recommended_change in contrib_aff_item_lv1["titleMap"]:
                                                     if not_recommended_change["name"] == "kakenhi":
                                                         not_recommended_change["name"] = "kakenhi【非推奨】"
@@ -1852,7 +1829,8 @@ else:
                                                 if "contributorAffiliationScheme" in contrib_aff_item_lv2.get("key"):
                                                     if contrib_aff_item_lv2.get("titleMap"):
                                                         if isinstance(contrib_aff_item_lv2.get("titleMap"), list):
-                                                            contrib_aff_item_lv2["titleMap"].append(ror_title_map)
+                                                            if ror_title_map not in contrib_aff_item_lv2["titleMap"]:
+                                                                contrib_aff_item_lv2["titleMap"].append(ror_title_map)
                                                             for not_recommended_change in contrib_aff_item_lv2["titleMap"]:
                                                                 if not_recommended_change["name"] == "kakenhi":
                                                                     not_recommended_change["name"] = "kakenhi【非推奨】"
@@ -1905,7 +1883,8 @@ else:
 
                 if contributor_affiliation_identifier_scheme_property_schema_property:
                     if contributor_affiliation_identifier_scheme_property_schema_property.get("enum"):
-                        contributor_affiliation_identifier_scheme_property_schema_property["enum"].append(ror)
+                        if ror not in contributor_affiliation_identifier_scheme_property_schema_property["enum"]:
+                            contributor_affiliation_identifier_scheme_property_schema_property["enum"].append(ror)
                         if "kakenhi" in contributor_affiliation_identifier_scheme_property_schema_property["enum"]:
                             contributor_affiliation_identifier_scheme_property_schema_property["enum"].remove("kakenhi")
                             contributor_affiliation_identifier_scheme_property_schema_property["enum"].append("kakenhi【非推奨】")
@@ -1920,7 +1899,8 @@ else:
                                 if contrib_aff_prop_form_lv1.get("key") \
                                         and "contributorAffiliationScheme" in contrib_aff_prop_form_lv1["key"]:
                                     if contrib_aff_prop_form_lv1.get("titleMap"):
-                                        contrib_aff_prop_form_lv1["titleMap"].append(ror_title_map)
+                                        if ror_title_map not in contrib_aff_prop_form_lv1["titleMap"]:
+                                            contrib_aff_prop_form_lv1["titleMap"].append(ror_title_map)
                                     for not_recommended_change in contrib_aff_prop_form_lv1["titleMap"]:
                                         if not_recommended_change["name"] == "kakenhi":
                                             not_recommended_change["name"] = "kakenhi【非推奨】"
@@ -1936,7 +1916,8 @@ else:
                                 if contrib_aff_prop_forms_lv1.get("key") \
                                         and "contributorAffiliationScheme" in contrib_aff_prop_forms_lv1["key"]:
                                     if contrib_aff_prop_forms_lv1.get("titleMap"):
-                                        contrib_aff_prop_forms_lv1["titleMap"].append(ror_title_map)
+                                        if ror_title_map not in contrib_aff_prop_forms_lv1["titleMap"]:
+                                            contrib_aff_prop_forms_lv1["titleMap"].append(ror_title_map)
                                     for not_recommended_change in contrib_aff_prop_forms_lv1["titleMap"]:
                                         if not_recommended_change["name"] == "kakenhi":
                                             not_recommended_change["name"] = "kakenhi【非推奨】"

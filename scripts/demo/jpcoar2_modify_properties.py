@@ -110,12 +110,12 @@ item_type_full: [ItemType or None] = [
     if itemtype.item_type_name.name == "デフォルトアイテムタイプ（フル）"
 ]
 #TODO
-item_type_full: [ItemType or None] = [
-    itemtype
-    for itemtype
-    in ItemTypes.get_all(True)
-    if itemtype.item_type_name.name == "test_full_04"
-]
+# item_type_full: [ItemType or None] = [
+#     itemtype
+#     for itemtype
+#     in ItemTypes.get_all(True)
+#     if itemtype.item_type_name.name == "test_full_04"
+# ]
 
 #* デフォルトアイテムタイプ（シンプル）Item Type
 item_type_simple: [ItemType or None] = [
@@ -163,7 +163,7 @@ creator_form_list: list = [
     creator_form
     for creator_form
     in item_type_full[0].form
-    if creator_form.get("title", {}) == "Creator"
+    if creator_form.get("title", {}) == "Creator" or creator_form.get("title", {}) == "作成者"
 ]
 
 #? Element of Creator from itemtype.render["table_row_map"]["form"] 
@@ -171,7 +171,7 @@ creator_render_form_list: list = [
     creator_form
     for creator_form
     in item_type_full[0].render["table_row_map"]["form"]
-    if creator_form.get("title", {}) == "Creator"
+    if creator_form.get("title", {}) == "Creator" or creator_form.get("title", {}) == "作成者"
 ]
 
 #? Creator Property for Creator Type
@@ -249,7 +249,7 @@ creator_form_list: list = [
     creator_form
     for creator_form
     in item_type_full[0].form
-    if creator_form.get("title", {}) == "Creator"
+    if creator_form.get("title", {}) == "Creator" or creator_form.get("title", {}) == "作成者"
 ]
 
 #? Get Creator Name form
@@ -275,7 +275,7 @@ creator_render_form_list: list = [
     creator_form
     for creator_form
     in item_type_full[0].render["table_row_map"]["form"]
-    if creator_form.get("title", {}) == "Creator"
+    if creator_form.get("title", {}) == "Creator" or creator_form.get("title", {}) == "作成者"
 ]
 
 #? Get Creator Name form from itemtype.render["table_row_map"]["form"]
@@ -441,7 +441,8 @@ contributor_form_list: list = [
     contributor_form
     for contributor_form
     in item_type_full[0].form
-    if contributor_form.get("title", {}) == "Contributor"
+    if contributor_form.get("title", {}) == "Contributor" 
+    or contributor_form.get("title", {}) == "寄与者"
     or contributor_form.get("title_i18n", {}).get("en", {}) == "Contributor"
     or contributor_form.get("title_i18n", {}).get("ja", {}) == "寄与者"
 ]
@@ -469,7 +470,7 @@ contributor_render_form_list: list = [
     contributor_form
     for contributor_form
     in item_type_full[0].render["table_row_map"]["form"]
-    if contributor_form.get("title", {}) == "Contributor"
+    if contributor_form.get("title", {}) == "Contributor" or contributor_form.get("title", {}) == "寄与者"
 ]
 
 #? Get Contributor Name form from itemtype.render["table_row_map"]["form"]
@@ -487,7 +488,7 @@ for prop in all_item_type_properties:
      schema_keys = list(schema.keys())
      for contributor_schema_key in schema_keys:
         if schema.get(contributor_schema_key, {}).get('title'):
-            if "寄与者" in schema.get(contributor_schema_key, {}).get('title') \
+            if "寄与者名" in schema.get(contributor_schema_key, {}).get('title') \
                     or "Contributor" in schema.get(contributor_schema_key, {}).get('title'):
                 contributor_property = prop
 
@@ -704,7 +705,8 @@ if len(funding_reference_property.schema.get("properties", {})) > 0:
         if len(funding_reference_property.schema["properties"][schema_prop_key].get("properties", {})) > 0:
             for schema_prop_sub_lv_key in list(funding_reference_property.schema["properties"][schema_prop_key].get("properties", {}).keys()):
                 if funding_reference_property.schema["properties"][schema_prop_key]["properties"][schema_prop_sub_lv_key].get("title"):
-                    if funding_reference_property.schema["properties"][schema_prop_key]["properties"][schema_prop_sub_lv_key]["title"] == "助成機関識別子タイプ":
+                    if funding_reference_property.schema["properties"][schema_prop_key]["properties"][schema_prop_sub_lv_key]["title"] == "助成機関識別子タイプ" \
+                        or funding_reference_property.schema["properties"][schema_prop_key]["properties"][schema_prop_sub_lv_key]["title"] == "識別子タイプ":
                         funder_identifier_property_schema_property = funding_reference_property.schema["properties"][schema_prop_key]["properties"]
             
 #? Get Funder Identifier form from Funding Reference Property
@@ -716,6 +718,7 @@ if funding_reference_property.form.get("items"):
                 if funding_reference_render_form["items"]:
                     if funding_reference_render_form["items"][0].get("title"):
                         if funding_reference_render_form["items"][0]["title"] == "助成機関識別子タイプ" \
+                            or funding_reference_render_form["items"][0]["title"] == "識別子タイプ" \
                                 or funding_reference_render_form["items"][0]["title"] == "助成機関識別子":
                             funder_identifier_property_form = funding_reference_render_form["items"]
 
@@ -728,6 +731,7 @@ if funding_reference_property.forms.get("items"):
                 if funding_reference_render_form["items"]:
                     if funding_reference_render_form["items"][0].get("title"):
                         if funding_reference_render_form["items"][0]["title"] == "助成機関識別子タイプ" \
+                            or funding_reference_render_form["items"][0]["title"] == "識別子タイプ" \
                                 or funding_reference_render_form["items"][0]["title"] == "助成機関識別子":
                             funder_identifier_property_forms = funding_reference_render_form["items"]
 
@@ -920,7 +924,8 @@ if funding_reference_property.form.get("items"):
                 if funding_reference_render_form["items"]:
                     if funding_reference_render_form["items"][0].get("title"):
                         if funding_reference_render_form["items"][0]["title"] == "研究課題URI" \
-                                or funding_reference_render_form["items"][0]["title"] == "研究課題番号":
+                            or funding_reference_render_form["items"][0]["title"] == "研究課題番号URI" \
+                           or funding_reference_render_form["items"][0]["title"] == "研究課題番号":
                             award_number_property_form = funding_reference_render_form["items"]
 
 #? Get Award Number forms from Funding Reference Property
@@ -932,6 +937,7 @@ if funding_reference_property.forms.get("items"):
                 if funding_reference_render_form["items"]:
                     if funding_reference_render_form["items"][0].get("title"):
                         if funding_reference_render_form["items"][0]["title"] == "研究課題URI" \
+                            or funding_reference_render_form["items"][0]["title"] == "研究課題番号URI" \
                                 or funding_reference_render_form["items"][0]["title"] == "研究課題番号":
                             award_number_property_forms = funding_reference_render_form["items"]
 
@@ -1285,7 +1291,7 @@ creator_form_list: list = [
     creator_form
     for creator_form
     in item_type_full[0].form
-    if creator_form.get("title", {}) == "Creator"
+    if creator_form.get("title", {}) == "Creator" or creator_form.get("title", {}) == "作成者"
 ]
 
 #? Get Creator Affiliation form
@@ -1302,7 +1308,7 @@ creator_render_form_list: list = [
     creator_form
     for creator_form
     in item_type_full[0].render["table_row_map"]["form"]
-    if creator_form.get("title", {}) == "Creator"
+    if creator_form.get("title", {}) == "Creator" or creator_form.get("title", {}) == "作成者"
 ]
 
 #? Get Creator Affiliation form from itemtype.render["table_row_map"]["form"]
@@ -1499,7 +1505,7 @@ contributor_form_list: list = [
     contributor_form
     for contributor_form
     in item_type_full[0].form
-    if contributor_form.get("title", {}) == "Contributor"
+    if contributor_form.get("title", {}) == "Contributor" or contributor_form.get("title", {}) == "寄与者"
 ]
 
 #? Get Contributor Affiliation form
@@ -1516,7 +1522,7 @@ contributor_render_form_list: list = [
     contributor_form
     for contributor_form
     in item_type_full[0].render["table_row_map"]["form"]
-    if contributor_form.get("title", {}) == "Contributor"
+    if contributor_form.get("title", {}) == "Contributor" or contributor_form.get("title", {}) == "寄与者"
 ]
 
 #? Get Contributor Affiliation form from itemtype.render["table_row_map"]["form"]
