@@ -115,7 +115,7 @@
               <div name="node" class="list-group-item node-flex">
                 <input type="radio" name="select-node" class="margin-r-ten">
                 <input type="text" name="node-name" class="form-control">
-                <div name="node-name-message" class="alert alert-danger error-message inline-block hide">
+                <div name="node-name-message" class="alert alert-danger error-message inline-block hide ten-pixel-left-margin">
                   <strong>{{_('Error')}} : {{_('Node name is blank.')}}</strong>
                 </div>
                 <div class="pull-right ten-pixel-left-margin">
@@ -185,7 +185,7 @@
         </div>
         <div class="form-inline ten-pixel-bottom-margin">
           <input type="text" id="node-name" class="form-control" disabled>
-          <div name="node-name-message" class="alert alert-danger error-message inline-block hide">
+          <div name="node-name-message" class="alert alert-danger error-message inline-block hide ten-pixel-left-margin">
             <strong>{{_('Error')}} : {{_('Node name is blank.')}}</strong>
           </div>
         </div>
@@ -255,11 +255,11 @@
 
           <!-- Template: item property input area -->
           <div id="template-item-property-row">
-            <div name="item-property-row" class="row margin-h-none margin-b-ten">
+            <div name="item-property-row" class="row margin-h-none margin-b-ten flex-col">
               <div class="row col-sm-12 margin-h-none">
                 <label><input type="checkbox" name="check-language">{{_('Specify language')}}</label>
               </div>
-              <div name="item-property" class="row margin-h-none flex">
+              <div name="item-property" class="row margin-h-none flex width-fit">
                 <div class="col-sm-11 item-property">
                   <div name="item-property-field" class="form-group ten-pixel-right-margin">
                     <select name="select-item-property" class="form-control inline-block">
@@ -406,8 +406,8 @@
 
           <!-- Template: Item property input area (for file property) -->
           <div id="template-item-property-row-file">
-            <div name="item-property-row" class="row margin-h-none margin-b-ten">
-              <div name="item-property" class="row margin-h-none flex">
+            <div name="item-property-row" class="row margin-h-none margin-b-ten flex-col">
+              <div name="item-property" class="row margin-h-none flex width-fit">
                 <div class="col-sm-11 item-property">
                   <div name="item-property-field" class="form-group ten-pixel-right-margin">
                     <select name="select-item-property-file" class="form-control inline-block">
@@ -451,15 +451,15 @@
               <div name="rocrate-property-cell" class="padding-h-none flex">
                 <div name="rocrate-property" class="padding-h-none">
                 </div>
-                <div class="pull-right ten-pixel-right-margin">
+                <div class="pull-right ten-pixel-left-margin">
                   <button type="button" class="btn btn-danger" data-action="del-mapping">
                     <span class="glyphicon glyphicon-remove"></span>
                   </button>
                 </div>
               </div>
               <!-- Static value -->
-              <div name="item-property-cell" class="col-sm-9 padding-h-none width-auto">
-                <div name="item-property-row" class="row margin-h-none">
+              <div name="item-property-cell" class="col-sm-9 padding-h-none">
+                <div name="item-property-row" class="row margin-h-none flex-col">
                   <div class="row col-sm-12 margin-h-none">
                     <div name="static-value" class="form-group">
                       <input type="text" name="text-static-value" class="form-control">

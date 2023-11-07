@@ -76,7 +76,7 @@ $(() => {
   };
 
   $('.arrow').on('click', (ev) => {
-    $(ev.target).nextAll('.nested').toggleClass('active');
+    $(ev.target).parent().nextAll('.nested').toggleClass('active');
     $(ev.target).toggleClass('arrow-down');
   });
 
