@@ -255,6 +255,9 @@ class WekoRecordsResource(ContentNegotiatedMethodView):
             pid = PersistentIdentifier.get('depid', kwargs.get('pid_value'))
             record = WekoRecord.get_record(pid.object_uuid)
 
+            # Get IndexID
+            indexId = record['path'][0]
+
             # Check Permission
             if not page_permission_factory(record).can():
                 raise PermissionError()
@@ -283,6 +286,7 @@ class WekoRecordsResource(ContentNegotiatedMethodView):
 
             # Create Response
             res_json = {
+                'index': indexId,
                 'rocrate': rocrate,
                 'metadata': self._convert_metadata(record, language),
             }

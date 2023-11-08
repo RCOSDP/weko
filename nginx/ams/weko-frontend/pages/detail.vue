@@ -178,9 +178,7 @@ async function getDetail(number: string) {
     onResponse({ response }) {
       if (response.status === 200) {
         itemDetail = response._data;
-        indexId = Object.prototype.hasOwnProperty.call(response._data, 'rocrate')
-          ? getContentById(response._data.rocrate, './')[appConf.roCrate.info.index] ?? ''
-          : {};
+        indexId = response._data.index ?? '';
       }
     },
     onResponseError({ response }) {

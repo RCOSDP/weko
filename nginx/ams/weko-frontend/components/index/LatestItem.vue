@@ -9,14 +9,14 @@
               v-if="itemInfo.hasOwnProperty(appConf.roCrate.info.releaseRange)"
               :class="[
                 itemInfo[appConf.roCrate.info.releaseRange][0] === appConf.roCrate.selector.releaseRange.public
-                  ? 'icons-type icon-published'
+                  ? 'icons-type icon-public'
                   : itemInfo[appConf.roCrate.info.releaseRange][0] === appConf.roCrate.selector.releaseRange.shared
                   ? 'icons-type icon-group'
                   : itemInfo[appConf.roCrate.info.releaseRange][0] === appConf.roCrate.selector.releaseRange.private
-                  ? 'icons-type icon-private'
+                  ? 'icons-type icon-unshared'
                   : itemInfo[appConf.roCrate.info.releaseRange][0] === appConf.roCrate.selector.releaseRange.unshared
-                  ? 'icons-type icon-limited'
-                  : 'icons-type icon-published'
+                  ? 'icons-type icon-private'
+                  : 'icons-type icon-public'
               ]">
               <span>
                 {{
@@ -32,7 +32,7 @@
                 }}
               </span>
             </p>
-            <p v-else class="icons-type icon-published">
+            <p v-else class="icons-type icon-public">
               <span>undefined</span>
             </p>
             <!-- 公開日 -->

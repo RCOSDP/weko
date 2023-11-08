@@ -414,16 +414,16 @@
       background-image: url(/img/icon/icon_group.svg);
     }
 
+    &.icon-unshared::before {
+      background-image: url(/img/icon/icon_unshared.svg);
+    }
+
     &.icon-private::before {
       background-image: url(/img/icon/icon_private.svg);
     }
 
-    &.icon-limited::before {
-      background-image: url(/img/icon/icon_limited.svg);
-    }
-
-    &.icon-published::before {
-      background-image: url(/img/icon/icon_published.svg);
+    &.icon-public::before {
+      background-image: url(/img/icon/icon_public.svg);
     }
   }
 
