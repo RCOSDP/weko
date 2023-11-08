@@ -110,7 +110,7 @@
         <!-- node template -->
         <ul id="template-node-ul" class="nested active">
           <li name="node-li">
-            <div class="node-flex">
+            <div name="node-contents" class="node-flex">
               <span class="arrow arrow-down"></span>
               <div name="node" class="list-group-item node-flex">
                 <input type="radio" name="select-node" class="margin-r-ten">
@@ -143,7 +143,7 @@
         <ul id="tree-base" class="nested active">
           <li name="root-node-li" data-id="root">
             <!-- root node -->
-            <div class="node-flex">
+            <div name="node-contents" class="node-flex">
               <span class="arrow arrow-down"></span>
               <div name="node" class="list-group-item node-flex">
                 <input type="radio" name="select-node" class="margin-r-ten">
@@ -154,7 +154,7 @@
             <ul class="nested active">
               <li name="file-node-li" data-id="file">
                 <!-- file node -->
-                <div class="node-flex">
+                <div name="node-contents" class="node-flex">
                   <span class="arrow arrow-down invisible"></span>
                   <div name="node" class="list-group-item node-flex">
                     <input type="radio" name="select-node" class="margin-r-ten">
@@ -286,7 +286,7 @@
                   </div>
                 </div>
               </div>
-              <div name="item-property-with-lang" class="row margin-h-none hide">
+              <div name="item-property-with-lang" class="row margin-h-none flex width-fit hide">
                 <div class="col-sm-11 item-property">
                   <div>
                     <label class="lang-label padding-h-none block">{{_('Value')}}</label>
