@@ -22,9 +22,10 @@
 
 import re
 
-from flask import Blueprint, current_app, json, jsonify, make_response, request
+from flask import Response, Blueprint, current_app, json, jsonify, make_response, request
 from flask_babelex import gettext as _
 from flask_login import login_required
+from flask_security import current_user
 from invenio_db import db
 from invenio_indexer.api import RecordIndexer
 from weko_schema_ui.models import PublishStatus
@@ -102,6 +103,7 @@ def update_author():
         current_app.logger.debug(request.headers['Content-Type'])
         return jsonify(msg=_('Header Error'))
 
+    user_id = current_user.get_id()
     data = request.get_json()
     indexer = RecordIndexer()
     body = {'doc': data}
@@ -121,7 +123,7 @@ def update_author():
 
     from weko_deposit.tasks import update_items_by_authorInfo
     update_items_by_authorInfo.delay(
-        [json.loads(json.dumps(data))["pk_id"]], data)
+        user_id, [json.loads(json.dumps(data))["pk_id"]], [json.loads(json.dumps(data))["id"]], data)
 
     return jsonify(msg=_('Success'))
 
@@ -438,58 +440,21 @@ def mapping():
 @author_permission.require(http_exception=403)
 def gatherById():
     """Gather author."""
+    from weko_deposit.tasks import update_items_by_authorInfo
+    from weko_workflow.utils import update_cache_data
+
+    user_id = current_user.get_id()
     data = request.get_json()
     gatherFrom = data["idFrom"]
     gatherFromPkId = data["idFromPkId"]
     gatherTo = data["idTo"]
 
+    indexer = RecordIndexer()
     # Remove the target from the gatherFrom list
     if gatherTo in gatherFrom:
         target_index = gatherFrom.index(gatherTo)
         gatherFrom.pop(target_index)
         gatherFromPkId.pop(target_index)
-
-    # update DB of Author
-    try:
-        with db.session.begin_nested():
-            for j in gatherFromPkId:
-                author_data = Authors.query.filter_by(id=j).one()
-                author_data.gather_flg = 1
-                db.session.merge(author_data)
-        db.session.commit()
-    except Exception as ex:
-        current_app.logger.debug(ex)
-        db.session.rollback()
-        return jsonify({'code': 204, 'msg': 'Failed'})
-
-    update_author_q = {
-        "query": {
-            "match": {
-                "_id": "@id"
-            }
-        }
-    }
-
-    indexer = RecordIndexer()
-    for t in gatherFrom:
-        q = json.dumps(update_author_q).replace("@id", t)
-        q = json.loads(q)
-        res = indexer.client.search(
-            index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
-            body=q
-        )
-        for h in res.get("hits").get("hits"):
-            body = {
-                'doc': {
-                    'gather_flg': 1
-                }
-            }
-            indexer.client.update(
-                index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
-                doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
-                id=h.get("_id"),
-                body=body
-            )
 
     target_author_q = {
         "query": {
@@ -506,10 +471,62 @@ def gatherById():
     )
     target_data = res.get("hits").get("hits")[0].get("_source")
 
-    from weko_deposit.tasks import update_items_by_authorInfo
-    update_items_by_authorInfo.delay(gatherFromPkId, target_data)
+    update_cache_data("update_items_by_authorInfo_{}".format(user_id), gatherTo, 0)
+    update_items_by_authorInfo.delay(user_id, gatherFromPkId, gatherFrom, target_data, True)
 
     return jsonify({'code': 0, 'msg': 'Success'})
+
+
+@blueprint_api.route("/check_item_update_task", methods=['GET'])
+@login_required
+@author_permission.require(http_exception=403)
+def check_item_update_task():
+    from weko_workflow.utils import delete_cache_data, get_cache_data
+
+    user_id = current_user.get_id()
+    check = get_cache_data("update_items_by_authorInfo_{}".format(user_id))
+    status = get_cache_data("update_items_status_{}".format(user_id))
+    has_file = True if status else False
+    if not check:
+        delete_cache_data("update_items_by_authorInfo_{}".format(user_id))
+        return jsonify({"is_running": False, "has_file": has_file})
+    else:
+        return jsonify(
+            {
+                "is_running": True,
+                "target_id": get_cache_data("update_items_by_authorInfo_{}".format(user_id)),
+                "error_id": check,
+                "has_file": has_file
+            }
+        )
+
+@blueprint_api.route("/download_process_status", methods=['GET'])
+@login_required
+@author_permission.require(http_exception=403)
+def download_process_status():
+    """Download process status."""
+    from weko_deposit.tasks import make_stats_file
+    from weko_workflow.utils import get_cache_data
+
+    user_id = current_user.get_id()
+    file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
+
+    status = get_cache_data("update_items_status_{}".format(user_id))
+    file_name = ''
+    if status:
+        file_name = "author_merge_status.{}".format(file_format)
+        output_file = make_stats_file(json.loads(status))
+        return Response(
+            output_file.getvalue(),
+            mimetype="text/{}".format(file_format),
+            headers={"Content-disposition": "attachment; filename=" + file_name},
+        )
+    else:
+        return Response(
+            [],
+            mimetype="text/{}".format(file_format),
+            headers={"Content-disposition": "attachment; filename=" + file_name},
+        )
 
 
 @blueprint_api.route("/search_prefix", methods=['get'])

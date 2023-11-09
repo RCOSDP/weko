@@ -51,6 +51,9 @@ FILES_REST_UPLOAD_OWNER_FACTORIES = 'weko_deposit.serializer.file_uploaded_owner
 WEKO_DEPOSIT_ITEMS_CACHE_PREFIX = 'cache_itemsIndex_{pid_value}'
 """ cache items prifix info"""
 
+WEKO_DEPOSIT_ITEM_UPDATE_STATUS_TTL = 60 * 10
+""" cache default timeout (sec.)"""
+
 WEKO_DEPOSIT_ITEMS_CACHE_TTL = 300
 """ cache default timeout 5 minutes"""
 
