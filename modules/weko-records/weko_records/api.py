@@ -23,6 +23,7 @@
 import urllib.parse
 import pickle
 from typing import Union
+import json
 
 from elasticsearch.exceptions import NotFoundError
 from elasticsearch_dsl.query import QueryString
@@ -776,8 +777,10 @@ class ItemTypes(RecordBase):
             # self.validate(**kwargs)
 
             # self.model.json = dict(self)
-            # flag_modified(self.model, 'json')
-
+            # flag_modified(self.model, 'schema')
+            # flag_modified(self.model, 'form')
+            # flag_modified(self.model, 'render')
+            
             db.session.merge(self.model)
 
         after_record_update.send(
@@ -887,6 +890,37 @@ class ItemTypes(RecordBase):
             raise MissingModelError()
 
         return RevisionsIterator(self.model)
+
+    @classmethod
+    def renew(self,itemtype_id):
+        """renew itemtype.
+
+        Args:
+            itemtype_id (_type_): _description_
+        """
+        with db.session.begin_nested():
+            item_type = ItemTypes.get_by_id(itemtype_id)
+            for idx, i in enumerate(item_type.render['table_row_map']['form']):
+                _prop_id = i['key']
+                if _prop_id.startswith('item_'):
+                    _input_type = item_type.render['meta_list'][_prop_id]['input_type']
+                    _input_type = _input_type.replace('cus_', '')
+                    _prop = ItemTypeProps.get_record(_input_type)
+                    item_type.render['schemaeditor']['schema'][_prop_id]=pickle.loads(pickle.dumps(_prop.schema, -1))
+                    _tmp = item_type.render['table_row_map']['schema']['properties'][_prop_id]
+                    if(_tmp.get('format')=='array'):
+                        item_type.render['table_row_map']['schema']['properties'][_prop_id]['items']=pickle.loads(pickle.dumps(_prop.schema, -1))
+                    else:
+                        item_type.render['table_row_map']['schema']['properties'][_prop_id] = pickle.loads(pickle.dumps(_prop.schema, -1))
+                    item_type.render['table_row_map']['form'][idx]=json.loads(json.dumps(_prop.form).replace('parentkey',_prop_id))
+                    item_type.form[idx]=pickle.loads(pickle.dumps(item_type.render['table_row_map']['form'][idx], -1))
+                    item_type.schema['properties'][_prop_id]=pickle.loads(pickle.dumps(_prop.schema, -1))
+            flag_modified(item_type,'schema')
+            flag_modified(item_type,'render')
+            flag_modified(item_type,'form')
+            db.session.merge(item_type)
+            
+            
 
 
 class ItemTypeEditHistory(object):
@@ -1277,7 +1311,7 @@ class ItemTypeProps(RecordBase):
                 query = ItemTypeProperty.query.filter_by(delflg=False)
 
             return query.all()
-
+        
     @property
     def revisions(self):
         """Get revisions iterator."""

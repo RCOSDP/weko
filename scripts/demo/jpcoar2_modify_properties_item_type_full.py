@@ -241,10 +241,11 @@ add_to_form_singular_creator_type = {
 
 #? Creator Type mapping data
 add_to_mapping_creator_type = {
-    "creatorType": {
-        # "@value": "creatorType",
-        # "@value": f"{creator_item_key[0]}.creatorType",
-    }
+    # "creator": {
+    #     '@attributes': {
+    #                         'creatorType': 'creatorType'
+    #     }
+    # }
 }
 
 ###! UPDATE CHANGES IN ITEM TYPE Full FOR CREATOR TYPE ~ START
@@ -1640,7 +1641,8 @@ else:
                         if cr_aff_prop_forms_lv1.get("key") \
                                 and "affiliationNameIdentifierScheme" in cr_aff_prop_forms_lv1["key"]:
                             if cr_aff_prop_forms_lv1.get("titleMap"):
-                                cr_aff_prop_forms_lv1["titleMap"].append(ror_title_map)
+                                if ror_title_map not in cr_aff_prop_forms_lv1["titleMap"]:
+                                    cr_aff_prop_forms_lv1["titleMap"].append(ror_title_map)
                             for not_recommended_change in cr_aff_prop_forms_lv1["titleMap"]:
                                 if not_recommended_change["name"] == "kakenhi":
                                     not_recommended_change["name"] = "kakenhi【非推奨】"

@@ -2083,12 +2083,14 @@ def check_info_in_metadata(str_key_lang, str_key_val, str_lang, metadata):
                 if s is not None and str_lang is None:
                     value = s
                     if isinstance(s,dict):
-                        value = s.get(str_key_val[len(str_key_val) - 1]).strip()
-                    if len(value) > 0:
-                        return value
+                        value = s.get(str_key_val[len(str_key_val) - 1])
+                        if value:
+                            value.strip()
+                            if len(value) > 0:
+                                return value
                 
                 if (
-                    s
+                    s and str_key_lang 
                     and isinstance(s, dict)
                     and s.get(str_key_lang[-1])
                     and s.get(str_key_val[-1])

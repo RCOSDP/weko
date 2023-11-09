@@ -151,7 +151,8 @@ def add(post_data, key, **kwargs):
                     },
                     'contributorName': {
                         '@attributes': {
-                            'xml:lang': 'contributorNames.lang'
+                            'xml:lang': 'contributorNames.lang',
+                            'nameType': 'contributorNames.nameType'
                         },
                         '@value': 'contributorNames.contributorName'
                     },
@@ -246,6 +247,13 @@ def schema(title='', multi_flag=multiple_flag):
                                 'enum': config.LANGUAGE_VAL2_1,
                                 'format': 'select',
                                 'title': '言語',
+                                'type': ['null', 'string']
+                            },
+                            'nameType': {
+                                'editAble': False,
+                                'enum': config.NAME_TYPE_VAL,
+                                'format': 'select',
+                                'title': '名前タイプ',
                                 'type': ['null', 'string']
                             }
                         },
@@ -486,7 +494,18 @@ def form(key='', title='', title_ja=name_ja, title_en=name_en, multi_flag=multip
                             },
                             'titleMap': get_select_value(config.LANGUAGE_VAL2_1),
                             'type': 'select'
+                        },
+                        {
+                            'key': '{}.contributorNames[].nameType'.format(key),
+                            'title': '名前タイプ',
+                            'title_i18n': {
+                                'en': 'Name Type',
+                                'ja': '名前タイプ'
+                            },
+                            'titleMap': get_select_value(config.NAME_TYPE_VAL),
+                            'type': 'select'
                         }
+                        
                     ],
                     'key': '{}.contributorNames'.format(key),
                     'style': {

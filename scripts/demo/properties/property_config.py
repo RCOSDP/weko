@@ -86,7 +86,7 @@ EXCLUSION_LIST = []
 # Exclusion property id list. The ID set in the list will not be registered.
 # e.g.: EXCLUSION_LIST = [3020, 3021] or EXCLUSION_LIST = [PUBLISHED_DATE, SUMMARY]
 
-SPECIFIED_LIST = []
+SPECIFIED_LIST = [1038]
 # Specified property id list. The ID set in the list will be deleted and registered.
 # e.g.: SPECIFIED_LIST = [3020, 3021] or SPECIFIED_LIST = [PUBLISHED_DATE, SUMMARY]
 
@@ -107,7 +107,80 @@ LANGUAGE_VAL3 = [None, 'jpn', 'eng', 'aar', 'abk', 'afr', 'aka', 'amh','ara', 'a
 COUNTRY_VAL = [None, 'JPN', 'ABW', 'AFG', 'AGO', 'AIA', 'ALA', 'ALB', 'AND', 'ARE', 'ARG', 'ARM', 'ASM', 'ATA', 'ATF', 'ATG', 'AUS', 'AUT', 'AZE', 'BDI', 'BEL', 'BEN', 'BES', 'BFA', 'BGD', 'BGR', 'BHR', 'BHS', 'BIH', 'BLM', 'BLR', 'BLZ', 'BMU', 'BOL', 'BRA', 'BRB', 'BRN', 'BTN', 'BVT', 'BWA', 'CAF', 'CAN', 'CCK', 'CHE', 'CHL', 'CHN', 'CIV', 'CMR', 'COD', 'COG', 'COK', 'COL', 'COM', 'CPV', 'CRI', 'CUB', 'CUW', 'CXR', 'CYM', 'CYP', 'CZE', 'DEU', 'DJI', 'DMA', 'DNK', 'DOM', 'DZA', 'ECU', 'EGY', 'ERI', 'ESH', 'ESP', 'EST', 'ETH', 'FIN', 'FJI', 'FLK', 'FRA', 'FRO', 'FSM', 'GAB', 'GBR', 'GEO', 'GGY', 'GHA', 'GIB', 'GIN', 'GLP', 'GMB', 'GNB', 'GNQ', 'GRC', 'GRD', 'GRL', 'GTM', 'GUF', 'GUM', 'GUY', 'HKG', 'HMD', 'HND', 'HRV', 'HTI', 'HUN', 'IDN', 'IMN', 'IND', 'IOT', 'IRL', 'IRN', 'IRQ', 'ISL', 'ISR', 'ITA', 'JAM', 'JEY', 'JOR', 'KAZ', 'KEN', 'KGZ', 'KHM', 'KIR', 'KNA', 'KOR', 'KWT', 'LAO', 'LBN', 'LBR', 'LBY', 'LCA', 'LIE', 'LKA', 'LSO', 'LTU', 'LUX', 'LVA', 'MAC', 'MAF', 'MAR', 'MCO', 'MDA', 'MDG', 'MDV', 'MEX', 'MHL', 'MKD', 'MLI', 'MLT', 'MMR', 'MNE', 'MNG', 'MNP', 'MOZ', 'MRT', 'MSR', 'MTQ', 'MUS', 'MWI', 'MYS', 'MYT', 'NAM', 'NCL', 'NER', 'NFK', 'NGA', 'NIC', 'NIU', 'NLD', 'NOR', 'NPL', 'NRU', 'NZL', 'OMN', 'PAK', 'PAN', 'PCN', 'PER', 'PHL', 'PLW', 'PNG', 'POL', 'PRI', 'PRK', 'PRT', 'PRY', 'PSE', 'PYF', 'QAT', 'REU', 'ROU', 'RUS', 'RWA', 'SAU', 'SDN', 'SEN', 'SGP', 'SGS', 'SHN', 'SJM', 'SLB', 'SLE', 'SLV', 'SMR', 'SOM', 'SPM', 'SRB', 'SSD', 'STP', 'SUR', 'SVK', 'SVN', 'SWE', 'SWZ', 'SXM', 'SYC', 'SYR', 'TCA', 'TCD', 'TGO', 'THA', 'TJK', 'TKL', 'TKM', 'TLS', 'TON', 'TTO', 'TUN', 'TUR', 'TUV', 'TWN', 'TZA', 'UGA', 'UKR', 'UMI', 'URY', 'USA', 'UZB', 'VAT', 'VCT', 'VEN', 'VGB', 'VIR', 'VNM', 'VUT', 'WLF', 'WSM', 'YEM', 'ZAF', 'ZMB', 'ZWE']
 AFFILIATION_SCHEME_VAL = [None, 'kakenhi', 'ISNI', 'Ringgold', 'GRID']
 DATE_TYPE_VAL = [None, 'Accepted', 'Available', 'Collected', 'Copyrighted', 'Created', 'Issued', 'Submitted', 'Updated', 'Valid']
-FILE_TYPE_VAL = [None, 'abstract', 'dataset', 'fulltext', 'software', 'summary', 'thumbnail', 'other']
+FILE_TYPE_VAL = [None, 'abstract', 'dataset', 'fulltext','iiif', 'software', 'summary', 'thumbnail', 'other']
 DATEPICKER_URL = '/static/templates/weko_deposit/datepicker.html'
 DATEPICKER_MULTI_FORMAT_URL = '/static/templates/weko_deposit/datepicker_multi_format.html'
 DATALIST_URL = "/static/templates/weko_deposit/datalist.html"
+AWARD_NUMBER_TYPE = [None,'JGN']
+FUNDER_IDENTIFIER_TYPE_VAL = [None,'Crossref Funder','e-Rad_funder','GRID','ISNI','ROR','Other']
+FUNDER_IDENTIFIER_TYPE_LBL = [None,'Crossref Funder','e-Rad_funder','GRID【非推奨】','ISNI','ROR','Other']
+NAME_TYPE_VAL = [None,'Personal','Organizational']
+SUBJECT_SCHEME_LBL = [None,'BSH','DDC','e-Rad_field','JEL','LCC','LCSH','MeSH','NDC','NDLC','NDLSH','SciVal','UDC','Other']
+SUBJECT_SCHEME_VAL = [None,'BSH','DDC','e-Rad_field','JEL','LCC','LCSH','MeSH','NDC','NDLC','NDLSH','SciVal','UDC','Other']
+RELATION_TYPE  = [
+    None,
+    'isVersionOf',
+    'hasVersion',
+    'isPartOf',
+    'hasPart',
+    'isReferencedBy',
+    'references',
+    'isFormatOf',
+    'hasFormat',
+    'isReplacedBy',
+    'replaces',
+    'isRequiredBy',
+    'requires',
+    'isSupplementedBy',
+    'isSupplementTo',
+    'isIdenticalTo',
+    'isDerivedFrom',
+    'isSourceOf',
+    'isCitedBy',
+    'Cites',
+    'inSeries'
+]
+RELATION_ID_TYPE_LBL = [
+    None,
+    'ARK',
+    'arXiv',
+    'DOI',
+    'HDL',
+    'ICHUSHI',
+    'ISBN',
+    'J-GLOBAL',
+    'Local',
+    'PISSN',
+    'EISSN',
+    'ISSN【非推奨】',
+    'NAID',
+    'NCID',
+    'PMID【現在不使用】',
+    'PURL',
+    'SCOPUS',
+    'URI',
+    'WOS',
+    'CRID'
+]
+RELATION_ID_TYPE_VAL = [
+    None,
+    'ARK',
+    'arXiv',
+    'DOI',
+    'HDL',
+    'ICHUSHI',
+    'ISBN',
+    'J-GLOBAL',
+    'Local',
+    'PISSN',
+    'EISSN',
+    'ISSN',
+    'NAID',
+    'NCID',
+    'PMID',
+    'PURL',
+    'SCOPUS',
+    'URI',
+    'WOS',
+    'CRID'
+]

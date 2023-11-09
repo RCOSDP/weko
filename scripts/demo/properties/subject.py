@@ -1,26 +1,13 @@
 # coding:utf-8
 """Definition of subject property."""
-from .property_func import get_property_schema, get_property_form, set_post_data, get_select_value
+from .property_func import get_property_schema, get_property_form, set_post_data, get_select_value,make_title_map
 from . import property_config as config
 
 property_id = config.SUBJECT
 multiple_flag = True
 name_ja = '主題'
 name_en = 'Subject'
-subject_scheme = [
-    None,
-    'BSH',
-    'DDC',
-    'LCC',
-    'LCSH',
-    'MeSH',
-    'NDC',
-    'NDLC',
-    'NDLSH',
-    'SciVal',
-    'UDC',
-    'Other'
-]
+
 
 def add(post_data, key, **kwargs):
     """Add to a item type."""
@@ -86,7 +73,7 @@ def schema(title='', multi_flag=multiple_flag):
                 'subitem_subject_scheme': {
                     'type': ['null', 'string'],
                     'format': 'select',
-                    'enum': subject_scheme,
+                    'enum': config.SUBJECT_SCHEME_VAL,
                     'title': '主題Scheme'
                 },
                 'subitem_subject_uri': {
@@ -124,7 +111,7 @@ def form(key='', title='', title_ja=name_ja, title_en=name_en, multi_flag=multip
                         'en': 'Subject Scheme',
                         'ja': '主題Scheme'
                     },
-                    'titleMap': get_select_value(subject_scheme),
+                    'titleMap': make_title_map(config.SUBJECT_SCHEME_LBL,config.SUBJECT_SCHEME_VAL),
                     'type': 'select'
                 },
                 {

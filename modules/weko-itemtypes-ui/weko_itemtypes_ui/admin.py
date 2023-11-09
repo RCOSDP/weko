@@ -22,6 +22,7 @@
 
 import sys
 import io
+import traceback
 
 from flask import abort, current_app, flash, json, jsonify, redirect, \
     request, session, url_for, make_response, send_file
@@ -472,6 +473,8 @@ class ItemTypePropertiesView(BaseView):
     def index(self, property_id=0):
         """Renders an primitive property view."""
         lists = ItemTypeProps.get_records([])
+        
+        # remove default properties
         properties = lists.copy()
         defaults_property_ids = [prop.id for prop in lists if
                                  prop.schema.get(
@@ -650,8 +653,9 @@ class ItemTypeMappingView(BaseView):
                 jpcoar_lists[item.schema_name] = json.loads(item.xsd)
 
             item_type_mapping = Mapping.get_record(ItemTypeID)
-            
-           
+            if item_type_mapping is None:
+                current_app.logger.error("item_type_mapping is None.")
+                item_type_mapping = {}
 
             return self.render(
                 current_app.config['WEKO_ITEMTYPES_UI_ADMIN_MAPPING_TEMPLATE'],
@@ -667,6 +671,7 @@ class ItemTypeMappingView(BaseView):
                 lang_code=session.get('selected_language', 'en')  # Set default
             )
         except BaseException:
+            current_app.logger.error(traceback.format_exc())
             current_app.logger.error(
                 "Unexpected error: {}".format(sys.exc_info()))
         return abort(400)

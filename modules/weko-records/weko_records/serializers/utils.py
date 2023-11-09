@@ -129,6 +129,7 @@ def get_mapping_inactive_show_list(item_type_mapping, mapping_type):
         return schema_json
 
     schema = {}
+
     for item_id, maps in item_type_mapping.items():
         if mapping_type in maps.keys() and isinstance(maps[mapping_type], dict):
             item_schema = get_schema_key_info(maps[mapping_type], '', {})

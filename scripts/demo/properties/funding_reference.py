@@ -1,19 +1,13 @@
 # coding:utf-8
 """Definition of funding reference property."""
-from .property_func import get_property_schema, get_property_form, set_post_data, get_select_value
+from .property_func import get_property_schema, get_property_form, set_post_data, get_select_value, make_title_map
 from . import property_config as config
 
 property_id = config.FUNDING_REFERENCE
 multiple_flag = True
 name_ja = '助成情報'
 name_en = 'Funder'
-id_type = [
-    None,
-    'Crossref Funder',
-    'GRID',
-    'ISNI',
-    'Other'
-]
+
 
 
 def add(post_data, key, **kwargs):
@@ -41,7 +35,8 @@ def add(post_data, key, **kwargs):
                     },
                     'awardNumber': {
                         '@attributes': {
-                            'awardURI': 'subitem_award_numbers.subitem_award_uri'
+                            'awardURI': 'subitem_award_numbers.subitem_award_uri',
+                            'awardNumber': 'subitem_award_numbers.subitem_award_number_type'
                         },
                         '@value': 'subitem_award_numbers.subitem_award_number'
                     },
@@ -58,7 +53,9 @@ def add(post_data, key, **kwargs):
                     'funderIdentifier': {
                         '@attributes': {
                             'funderIdentifierType':
-                                'subitem_funder_identifiers.subitem_funder_identifier_type'
+                                'subitem_funder_identifiers.subitem_funder_identifier_type',
+                            'funderIdentifierTypeURI':
+                                'subitem_funder_identifiers.subitem_funder_identifier_type_uri'
                         },
                         '@value': 'subitem_funder_identifiers.subitem_funder_identifier'
                     },
@@ -70,7 +67,8 @@ def add(post_data, key, **kwargs):
                     },
                     'awardNumber': {
                         '@attributes': {
-                            'awardURI': 'subitem_award_numbers.subitem_award_uri'
+                            'awardURI': 'subitem_award_numbers.subitem_award_uri',
+                            'awardNumberType': 'subitem_award_numbers.subitem_award_number_type'
                         },
                         '@value': 'subitem_award_numbers.subitem_award_number'
                     },
@@ -106,7 +104,7 @@ def schema(title='', multi_flag=multiple_flag):
                         'subitem_funder_identifier_type': {
                             'type': ['null', 'string'],
                             'format': 'select',
-                            'enum': id_type,
+                            'enum': config.FUNDER_IDENTIFIER_TYPE_VAL,
                             'title': '識別子タイプ'
                         },
                         'subitem_funder_identifier': {
@@ -152,7 +150,13 @@ def schema(title='', multi_flag=multiple_flag):
                             'format': 'text',
                             'title': '研究課題番号',
                             'type': 'string'
-                        }
+                        },
+                        'subitem_award_number_type': {
+                            'type': ['null', 'string'],
+                            'format': 'select',
+                            'enum': config.AWARD_NUMBER_TYPE,
+                            'title': '研究課題番号タイプ'
+                       }
                     },
                     'title': '研究課題番号'
                 },
@@ -195,13 +199,22 @@ def form(key='', title='', title_ja=name_ja, title_en=name_en, multi_flag=multip
                     'items': [
                         {
                             'key': '{}.subitem_funder_identifiers.subitem_funder_identifier_type'.format(key),
-                            'title': '識別子タイプ',
+                            'title': '助成機関識別子タイプ',
                             'title_i18n': {
                                 'en': 'Funder Identifier Type',
-                                'ja': '識別子タイプ'
+                                'ja': '助成機関識別子タイプ'
                             },
-                            'titleMap': get_select_value(id_type),
+                            'titleMap': make_title_map(config.FUNDER_IDENTIFIER_TYPE_LBL,config.FUNDER_IDENTIFIER_TYPE_VAL),
                             'type': 'select'
+                        },
+                         {
+                            'key': '{}.subitem_funder_identifiers.subitem_funder_identifier_type_uri'.format(key),
+                            'title': '助成機関識別子URI',
+                            'title_i18n': {
+                                'en': 'Funder IdentifierタイプURI',
+                                'ja': '助成機関識別子タイプURI'
+                            },
+                            'type': 'text'
                         },
                         {
                             'key': '{}.subitem_funder_identifiers.subitem_funder_identifier'.format(key),

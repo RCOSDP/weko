@@ -20,12 +20,15 @@
 
 """Utils for weko-itemtypes-ui."""
 import copy
+import json
+import pickle
 from copy import deepcopy
 
 from flask import current_app
 from flask_login import current_user
 from weko_itemtypes_ui.config import DISABLE_DUPLICATION_CHECK
-
+from invenio_db import db
+from weko_records.api import ItemTypes,ItemTypeProps,ItemTypeNames
 
 def remove_xsd_prefix(jpcoar_lists):
     """Remove xsd prefix."""
@@ -335,7 +338,6 @@ def check_duplicate_mapping(
 
     return lst_duplicate
 
-
 def update_required_schema_not_exist_in_form(schema, forms):
     """Update required in schema.
 
@@ -483,3 +485,7 @@ def update_text_and_textarea(item_type_id, new_schema, new_form):
                         else:
                             item['key'] = key_pattern.format(key, lang_key)
     return new_schema, new_form
+
+
+
+
