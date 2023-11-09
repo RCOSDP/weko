@@ -324,24 +324,24 @@ property_list = [
         showlist=False,
         newline=False
     ),
-    # AddProperty(
-    #     AddProperty.jpcoar_dataset_series,
-    #     'データセットシリーズ',
-    #     'データセットシリーズ',
-    #     'Dataset Series',
-    #     multiple=False,
-    #     showlist=False,
-    #     newline=False
-    # ),
-    # AddProperty(
-    #     AddProperty.jpcoar_catalog,
-    #     'カタログ',
-    #     'カタログ',
-    #     'Catalog',
-    #     multiple=False,
-    #     showlist=False,
-    #     newline=False
-    # ),
+    AddProperty(
+        AddProperty.jpcoar_dataset_series,
+        'データセットシリーズ',
+        'データセットシリーズ',
+        'Dataset Series',
+        multiple=False,
+        showlist=False,
+        newline=False
+    ),
+    AddProperty(
+        AddProperty.jpcoar_catalog,
+        'カタログ',
+        'カタログ',
+        'Catalog',
+        multiple=False,
+        showlist=False,
+        newline=False
+    ),
     AddProperty(
         AddProperty.heading,
         '見出し',
