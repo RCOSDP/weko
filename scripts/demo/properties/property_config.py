@@ -60,6 +60,16 @@ HEADING = '1041'                                        # 見出し
 TEXT = '1042'                                           # テキスト
 TEXTAREA = '1043'                                       # テキストエリア
 LINK = '1044'                                           # リンク
+PUBLISHERINFO = '1045'                                  # 出版者情報
+DATE_LITERAL = '1046'                                   # 日付（文字列）
+DCNDL_EDITION = '1047'                                  # 版
+DCNDL_VOLUME_TITLE = '1048'                             # 部編名
+DCNDL_ORIGINAL_LANGUAGE = '1049'                        # 原文の言語
+DCTERMS_EXTENT = '1050'                                 # ページ数
+JPCOAR_FORMAT = '1051'                                  # 大きさ
+JPCOAR_HOLDING_AGENT = '1052'                           # 所蔵機関
+JPCOAR_DATASET_SERIES = '1053'                          # データセットシリーズ
+JPCOAR_CATALOG = '1054'                                 # カタログ
 DATASET_USAGE = '3001'                                  # データ名
 USER_INFORMATION = '3002'                               # 登録者情報
 GUARANTOR = '3003'                                      # 保証人
@@ -86,7 +96,7 @@ EXCLUSION_LIST = []
 # Exclusion property id list. The ID set in the list will not be registered.
 # e.g.: EXCLUSION_LIST = [3020, 3021] or EXCLUSION_LIST = [PUBLISHED_DATE, SUMMARY]
 
-SPECIFIED_LIST = [1038]
+SPECIFIED_LIST = [1045,1046,1047,1048,1049,1050,1051,1052,1053,1054]
 # Specified property id list. The ID set in the list will be deleted and registered.
 # e.g.: SPECIFIED_LIST = [3020, 3021] or SPECIFIED_LIST = [PUBLISHED_DATE, SUMMARY]
 
@@ -184,3 +194,6 @@ RELATION_ID_TYPE_VAL = [
     'WOS',
     'CRID'
 ]
+
+HOLDING_AGENT_NAMEID_SCHEMA_VAL=['kakenhi', 'ISNI', 'Ringgold', 'GRID', 'ROR', 'FANO', 'ISIL', 'MARC', 'OCLC']
+HOLDING_AGENT_NAMEID_SCHEMA_LBL=['kakenhi【非推奨】', 'ISNI', 'Ringgold', 'GRID【非推奨】', 'ROR', 'FANO', 'ISIL', 'MARC', 'OCLC']
