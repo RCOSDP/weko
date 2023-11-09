@@ -350,7 +350,6 @@ msgid "Registrar"
 msgstr "登録者"
 
 #: weko_admin/config.py:158
-#, fuzzy
 msgid "No. Of Times Viewed"
 msgstr "ファイルプレビュー数"
 
