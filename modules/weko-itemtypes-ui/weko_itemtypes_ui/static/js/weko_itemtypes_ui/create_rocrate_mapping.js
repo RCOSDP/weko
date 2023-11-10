@@ -76,7 +76,7 @@ $(() => {
   };
 
   $('.arrow').on('click', (ev) => {
-    $(ev.target).nextAll('.nested').toggleClass('active');
+    $(ev.target).parent().nextAll('.nested').toggleClass('active');
     $(ev.target).toggleClass('arrow-down');
   });
 
@@ -350,9 +350,9 @@ $(() => {
     }
 
     let node_path = '';
-    const selected_radio = $('#tree-base').find(`li[data-id="${node_id}"]`).children('div[name="node"]').find('input[name="select-node"]');
+    const selected_radio = $('#tree-base').find(`li[data-id="${node_id}"]`).children('div[name="node-contents"]').children('div[name="node"]').find('input[name="select-node"]');
     selected_radio.parents('li').each((_, elem) => {
-      const node_text = $(elem).children().eq(1).find('input[name="node-name"]').val();
+      const node_text = $(elem).children('div[name="node-contents"]').children().eq(1).find('input[name="node-name"]').val();
       node_path = node_text + '/' + node_path;
     });
     node_path = node_path.slice(0, -1);

@@ -56,16 +56,16 @@
             <!-- 公開区分（凡例） -->
             <div class="flex whitespace-nowrap ml-auto mt-4 mb-8 text-center">
               <div class="w-full flex flex-wrap content-center gap-4 justify-start">
-                <p class="icons-type icon-published">
+                <p class="icons-type icon-public">
                   <span>{{ $t('openPublic') }}</span>
                 </p>
                 <p class="icons-type icon-group">
                   <span>{{ $t('openGroup') }}</span>
                 </p>
-                <p class="icons-type icon-private">
+                <p class="icons-type icon-unshared">
                   <span>{{ $t('openPrivate') }}</span>
                 </p>
-                <p class="icons-type icon-limited">
+                <p class="icons-type icon-private">
                   <span>{{ $t('openRestricted') }}</span>
                 </p>
               </div>
