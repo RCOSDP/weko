@@ -1,2 +1,167 @@
 
-update oaiserver_schema set xsd='"{\"dc:title\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":1,\"attributes\":[{\"use\":\"required\",\"name\":\"xml:lang\",\"ref\":\"xml:lang\"}]}},\"dcterms:alternative\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0,\"attributes\":[{\"use\":\"optional\",\"name\":\"xml:lang\",\"ref\":\"xml:lang\"}]}},\"jpcoar:creator\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0,\"attributes\":[{\"use\":\"optional\",\"name\":\"creatorType\",\"ref\":null}]},\"jpcoar:nameIdentifier\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0,\"attributes\":[{\"use\":\"required\",\"name\":\"nameIdentifierScheme\",\"ref\":null,\"restriction\":{\"enumeration\":[\"e-Rad\",\"NRID\",\"ORCID\",\"ISNI\",\"VIAF\",\"AID\",\"kakenhi\",\"Ringgold\",\"GRID\",\"ROR\"]}},{\"use\":\"optional\",\"name\":\"nameIdentifierURI\",\"ref\":null}]}},\"jpcoar:creatorName\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0,\"attributes\":[{\"use\":\"optional\",\"name\":\"xml:lang\",\"ref\":\"xml:lang\"},{\"use\":\"required\",\"name\":\"nameType\",\"ref\":null,\"restriction\":{\"enumeration\":[\"Organizational\",\"Personal\"]}}]}},\"jpcoar:familyName\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0,\"attributes\":[{\"use\":\"optional\",\"name\":\"xml:lang\",\"ref\":\"xml:lang\"}]}},\"jpcoar:givenName\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0,\"attributes\":[{\"use\":\"optional\",\"name\":\"xml:lang\",\"ref\":\"xml:lang\"}]}},\"jpcoar:creatorAlternative\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0,\"attributes\":[{\"use\":\"optional\",\"name\":\"xml:lang\",\"ref\":\"xml:lang\"}]}},\"jpcoar:affiliation\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0},\"jpcoar:nameIdentifier\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0,\"attributes\":[{\"use\":\"required\",\"name\":\"nameIdentifierScheme\",\"ref\":null,\"restriction\":{\"enumeration\":[\"kakenhi\",\"ISNI\",\"Ringgold\",\"GRID\",\"ROR\"]}},{\"use\":\"optional\",\"name\":\"nameIdentifierURI\",\"ref\":null}]}},\"jpcoar:affiliationName\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0,\"attributes\":[{\"use\":\"optional\",\"name\":\"xml:lang\",\"ref\":\"xml:lang\"}]}}}},\"jpcoar:contributor\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0,\"attributes\":[{\"use\":\"optional\",\"name\":\"contributorType\",\"ref\":null,\"restriction\":{\"enumeration\":[\"ContactPerson\",\"DataCollector\",\"DataCurator\",\"DataManager\",\"Distributor\",\"Editor\",\"HostingInstitution\",\"Producer\",\"ProjectLeader\",\"ProjectManager\",\"ProjectMember\",\"RegistrationAgency\",\"RegistrationAuthority\",\"RelatedPerson\",\"Researcher\",\"ResearchGroup\",\"Sponsor\",\"Supervisor\",\"WorkPackageLeader\",\"Other\"]}}]},\"jpcoar:nameIdentifier\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0,\"attributes\":[{\"use\":\"required\",\"name\":\"nameIdentifierScheme\",\"ref\":null,\"restriction\":{\"enumeration\":[\"e-Rad\",\"NRID\",\"ORCID\",\"ISNI\",\"VIAF\",\"AID\",\"kakenhi\",\"Ringgold\",\"GRID\",\"ROR\"]}},{\"use\":\"optional\",\"name\":\"nameIdentifierURI\",\"ref\":null}]}},\"jpcoar:contributorName\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0,\"attributes\":[{\"use\":\"optional\",\"name\":\"xml:lang\",\"ref\":\"xml:lang\"},{\"use\":\"required\",\"name\":\"nameType\",\"ref\":null,\"restriction\":{\"enumeration\":[\"Organizational\",\"Personal\"]}}]}},\"jpcoar:familyName\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0,\"attributes\":[{\"use\":\"optional\",\"name\":\"xml:lang\",\"ref\":\"xml:lang\"}]}},\"jpcoar:givenName\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0,\"attributes\":[{\"use\":\"optional\",\"name\":\"xml:lang\",\"ref\":\"xml:lang\"}]}},\"jpcoar:contributorAlternative\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0,\"attributes\":[{\"use\":\"optional\",\"name\":\"xml:lang\",\"ref\":\"xml:lang\"}]}},\"jpcoar:affiliation\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0},\"jpcoar:nameIdentifier\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0,\"attributes\":[{\"use\":\"required\",\"name\":\"nameIdentifierScheme\",\"ref\":null,\"restriction\":{\"enumeration\":[\"kakenhi\",\"ISNI\",\"Ringgold\",\"GRID\",\"ROR\"]}},{\"use\":\"optional\",\"name\":\"nameIdentifierURI\",\"ref\":null}]}},\"jpcoar:affiliationName\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0,\"attributes\":[{\"use\":\"optional\",\"name\":\"xml:lang\",\"ref\":\"xml:lang\"}]}}}},\"dcterms:accessRights\":{\"type\":{\"maxOccurs\":1,\"minOccurs\":0,\"attributes\":[{\"use\":\"required\",\"name\":\"rdf:resource\",\"ref\":\"rdf:resource\"}],\"restriction\":{\"enumeration\":[\"embargoed access\",\"metadata only access\",\"open access\",\"restricted access\"]}}},\"dc:rights\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0,\"attributes\":[{\"use\":\"optional\",\"name\":\"rdf:resource\",\"ref\":\"rdf:resource\"},{\"use\":\"optional\",\"name\":\"xml:lang\",\"ref\":\"xml:lang\"}]}},\"jpcoar:rightsHolder\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0},\"jpcoar:nameIdentifier\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0,\"attributes\":[{\"use\":\"required\",\"name\":\"nameIdentifierScheme\",\"ref\":null,\"restriction\":{\"enumeration\":[\"e-Rad\",\"NRID\",\"ORCID\",\"ISNI\",\"VIAF\",\"AID\",\"kakenhi\",\"Ringgold\",\"GRID\"]}},{\"use\":\"optional\",\"name\":\"nameIdentifierURI\",\"ref\":null}]}},\"jpcoar:rightsHolderName\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0,\"attributes\":[{\"use\":\"optional\",\"name\":\"xml:lang\",\"ref\":\"xml:lang\"}]}}},\"jpcoar:subject\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0,\"attributes\":[{\"use\":\"optional\",\"name\":\"xml:lang\",\"ref\":\"xml:lang\"},{\"use\":\"optional\",\"name\":\"subjectURI\",\"ref\":null},{\"use\":\"required\",\"name\":\"subjectScheme\",\"ref\":null,\"restriction\":{\"enumeration\":[\"BSH\",\"DDC\",\"e-Rad_field\",\"JEL\",\"LCC\",\"LCSH\",\"MeSH\",\"NDC\",\"NDLC\",\"NDLSH\",\"SciVal\",\"UDC\",\"Other\"]}}]}},\"datacite:description\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0,\"attributes\":[{\"use\":\"optional\",\"name\":\"xml:lang\",\"ref\":\"xml:lang\"},{\"use\":\"required\",\"name\":\"descriptionType\",\"ref\":null,\"restriction\":{\"enumeration\":[\"Abstract\",\"Methods\",\"TableOfContents\",\"TechnicalInfo\",\"Other\"]}}]}},\"dc:publisher\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0,\"attributes\":[{\"use\":\"optional\",\"name\":\"xml:lang\",\"ref\":\"xml:lang\"}]}},\"datacite:date\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0,\"attributes\":[{\"use\":\"required\",\"name\":\"dateType\",\"ref\":null,\"restriction\":{\"enumeration\":[\"Accepted\",\"Available\",\"Collected\",\"Copyrighted\",\"Created\",\"Issued\",\"Submitted\",\"Updated\",\"Valid\"]}}]}},\"dc:language\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0,\"restriction\":{\"patterns\":[\"^[a-z]{3}$\"]}}},\"dc:type\":{\"type\":{\"maxOccurs\":1,\"minOccurs\":1,\"attributes\":[{\"use\":\"required\",\"name\":\"rdf:resource\",\"ref\":\"rdf:resource\"}],\"restriction\":{\"enumeration\":[\"conference paper\",\"data paper\",\"departmental bulletin paper\",\"editorial\",\"journal article\",\"newspaper\",\"periodical\",\"review article\",\"software paper\",\"article\",\"book\",\"book part\",\"cartographic material\",\"map\",\"conference object\",\"conference proceedings\",\"conference poster\",\"dataset\",\"aggregated data\",\"clinical trial data\",\"compiled data\",\"encoded data\",\"experimental data\",\"genomic data\",\"geospatial data\",\"laboratory notebook\",\"measurement and test data\",\"observational data\",\"recorded data\",\"simulation data\",\"survey data\",\"interview\",\"image\",\"still image\",\"moving image\",\"video\",\"lecture\",\"patent\",\"internal report\",\"report\",\"research report\",\"technical report\",\"policy report\",\"report part\",\"working paper\",\"data management plan\",\"sound\",\"thesis\",\"bachelor thesis\",\"master thesis\",\"doctoral thesis\",\"interactive resource\",\"learning object\",\"manuscript\",\"musical notation\",\"research proposal\",\"software\",\"technical documentation\",\"workflow\",\"other\"]}}},\"datacite:version\":{\"type\":{\"maxOccurs\":1,\"minOccurs\":0}},\"oaire:versiontype\":{\"type\":{\"maxOccurs\":1,\"minOccurs\":0,\"attributes\":[{\"use\":\"required\",\"name\":\"rdf:resource\",\"ref\":\"rdf:resource\"}],\"restriction\":{\"enumeration\":[\"AO\",\"SMUR\",\"AM\",\"P\",\"VoR\",\"CVoR\",\"EVoR\",\"NA\"]}}},\"jpcoar:identifier\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0,\"attributes\":[{\"use\":\"required\",\"name\":\"identifierType\",\"ref\":null,\"restriction\":{\"enumeration\":[\"DOI\",\"HDL\",\"URI\"]}}]}},\"jpcoar:identifierRegistration\":{\"type\":{\"maxOccurs\":1,\"minOccurs\":0,\"attributes\":[{\"use\":\"required\",\"name\":\"identifierType\",\"ref\":null,\"restriction\":{\"enumeration\":[\"JaLC\",\"Crossref\",\"DataCite\",\"PMID\"]}}]}},\"jpcoar:relation\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0,\"attributes\":[{\"use\":\"optional\",\"name\":\"relationType\",\"ref\":null,\"restriction\":{\"enumeration\":[\"inSeries\",\"isCitedBy\",\"Cites\",\"isVersionOf\",\"hasVersion\",\"isPartOf\",\"hasPart\",\"isReferencedBy\",\"references\",\"isFormatOf\",\"hasFormat\",\"isReplacedBy\",\"replaces\",\"isRequiredBy\",\"requires\",\"isSupplementTo\",\"isSupplementedBy\",\"isIdenticalTo\",\"isDerivedFrom\",\"isSourceOf\"]}}]},\"jpcoar:relatedIdentifier\":{\"type\":{\"maxOccurs\":1,\"minOccurs\":0,\"attributes\":[{\"use\":\"required\",\"name\":\"identifierType\",\"ref\":null,\"restriction\":{\"enumeration\":[\"ARK\",\"arXiv\",\"CRID\",\"DOI\",\"HDL\",\"ICHUSHI\",\"ISBN\",\"J-GLOBAL\",\"Local\",\"PISSN\",\"EISSN\",\"ISSN\",\"NAID\",\"NCID\",\"PMID\",\"PURL\",\"SCOPUS\",\"URI\",\"WOS\"]}}]}},\"jpcoar:relatedTitle\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0,\"attributes\":[{\"use\":\"optional\",\"name\":\"xml:lang\",\"ref\":\"xml:lang\"}]}}},\"dcterms:temporal\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0,\"attributes\":[{\"use\":\"optional\",\"name\":\"xml:lang\",\"ref\":\"xml:lang\"}]}},\"datacite:geoLocation\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0},\"datacite:geoLocationPoint\":{\"type\":{\"maxOccurs\":1,\"minOccurs\":0},\"datacite:pointLongitude\":{\"type\":{\"maxOccurs\":1,\"minOccurs\":1,\"restriction\":{\"maxInclusive\":180,\"minInclusive\":-180}}},\"datacite:pointLatitude\":{\"type\":{\"maxOccurs\":1,\"minOccurs\":1,\"restriction\":{\"maxInclusive\":90,\"minInclusive\":-90}}}},\"datacite:geoLocationBox\":{\"type\":{\"maxOccurs\":1,\"minOccurs\":0},\"datacite:westBoundLongitude\":{\"type\":{\"maxOccurs\":1,\"minOccurs\":1,\"restriction\":{\"maxInclusive\":180,\"minInclusive\":-180}}},\"datacite:eastBoundLongitude\":{\"type\":{\"maxOccurs\":1,\"minOccurs\":1,\"restriction\":{\"maxInclusive\":180,\"minInclusive\":-180}}},\"datacite:southBoundLatitude\":{\"type\":{\"maxOccurs\":1,\"minOccurs\":1,\"restriction\":{\"maxInclusive\":90,\"minInclusive\":-90}}},\"datacite:northBoundLatitude\":{\"type\":{\"maxOccurs\":1,\"minOccurs\":1,\"restriction\":{\"maxInclusive\":90,\"minInclusive\":-90}}}},\"datacite:geoLocationPlace\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0}}},\"jpcoar:fundingReference\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0},\"jpcoar:funderIdentifier\":{\"type\":{\"maxOccurs\":1,\"minOccurs\":0,\"attributes\":[{\"use\":\"required\",\"name\":\"funderIdentifierType\",\"ref\":null,\"restriction\":{\"enumeration\":[\"Crossref Funder\",\"e-Rad_funder\",\"GRID\",\"ISNI\",\"ROR\",\"Other\"]}},{\"use\":\"optional\",\"name\":\"funderIdentifierTypeURI\",\"ref\":null}]}},\"jpcoar:funderName\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":1,\"attributes\":[{\"use\":\"optional\",\"name\":\"xml:lang\",\"ref\":\"xml:lang\"}]}},\"jpcoar:awardNumber\":{\"type\":{\"maxOccurs\":1,\"minOccurs\":0,\"attributes\":[{\"use\":\"optional\",\"name\":\"awardURI\",\"ref\":null},{\"use\":\"optional\",\"name\":\"awardNumberType\",\"ref\":null,\"restriction\":{\"enumeration\":[\"JGN\"]}}]}},\"jpcoar:awardTitle\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0,\"attributes\":[{\"use\":\"optional\",\"name\":\"xml:lang\",\"ref\":\"xml:lang\"}]}},\"jpcoar:fundingStreamIdentifier\":{\"type\":{\"maxOccurs\":\"1\",\"minOccurs\":0,\"attributes\":[{\"use\":\"optional\",\"name\":\"fundingStreamIdentifierType\",\"ref\":null,\"restriction\":{\"enumeration\":[\"Crossref Funder\",\"JGN_fundingStream\"]}},{\"use\":\"optional\",\"name\":\"fundingStreamIdentifierTypeURI\",\"ref\":null}]}},\"jpcoar:fundingStream\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0,\"attributes\":[{\"use\":\"optional\",\"name\":\"xml:lang\",\"ref\":\"xml:lang\"}]}}},\"jpcoar:sourceIdentifier\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0,\"attributes\":[{\"use\":\"required\",\"name\":\"identifierType\",\"ref\":null,\"restriction\":{\"enumeration\":[\"PISSN\",\"EISSN\",\"ISSN\",\"NCID\"]}}]}},\"jpcoar:sourceTitle\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0,\"attributes\":[{\"use\":\"optional\",\"name\":\"xml:lang\",\"ref\":\"xml:lang\"}]}},\"jpcoar:volume\":{\"type\":{\"maxOccurs\":1,\"minOccurs\":0}},\"jpcoar:issue\":{\"type\":{\"maxOccurs\":1,\"minOccurs\":0}},\"jpcoar:numPages\":{\"type\":{\"maxOccurs\":1,\"minOccurs\":0}},\"jpcoar:pageStart\":{\"type\":{\"maxOccurs\":1,\"minOccurs\":0}},\"jpcoar:pageEnd\":{\"type\":{\"maxOccurs\":1,\"minOccurs\":0}},\"dcndl:dissertationNumber\":{\"type\":{\"maxOccurs\":1,\"minOccurs\":0}},\"dcndl:degreeName\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0,\"attributes\":[{\"use\":\"optional\",\"name\":\"xml:lang\",\"ref\":\"xml:lang\"}]}},\"dcndl:dateGranted\":{\"type\":{\"maxOccurs\":1,\"minOccurs\":0}},\"jpcoar:degreeGrantor\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0},\"jpcoar:nameIdentifier\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0,\"attributes\":[{\"use\":\"required\",\"name\":\"nameIdentifierScheme\",\"ref\":null,\"restriction\":{\"enumeration\":[\"e-Rad\",\"NRID\",\"ORCID\",\"ISNI\",\"VIAF\",\"AID\",\"kakenhi\",\"Ringgold\",\"GRID\"]}},{\"use\":\"optional\",\"name\":\"nameIdentifierURI\",\"ref\":null}]}},\"jpcoar:degreeGrantorName\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0,\"attributes\":[{\"use\":\"optional\",\"name\":\"xml:lang\",\"ref\":\"xml:lang\"}]}}},\"jpcoar:conference\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0},\"jpcoar:conferenceName\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0,\"attributes\":[{\"use\":\"optional\",\"name\":\"xml:lang\",\"ref\":\"xml:lang\"}]}},\"jpcoar:conferenceSequence\":{\"type\":{\"maxOccurs\":1,\"minOccurs\":0}},\"jpcoar:conferenceSponsor\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0,\"attributes\":[{\"use\":\"optional\",\"name\":\"xml:lang\",\"ref\":\"xml:lang\"}]}},\"jpcoar:conferenceDate\":{\"type\":{\"maxOccurs\":1,\"minOccurs\":0,\"attributes\":[{\"use\":\"optional\",\"name\":\"startMonth\",\"ref\":null,\"restriction\":{\"maxInclusive\":12,\"minInclusive\":1,\"totalDigits\":2}},{\"use\":\"optional\",\"name\":\"endYear\",\"ref\":null,\"restriction\":{\"maxInclusive\":2200,\"minInclusive\":1400,\"totalDigits\":4}},{\"use\":\"optional\",\"name\":\"startDay\",\"ref\":null,\"restriction\":{\"maxInclusive\":31,\"minInclusive\":1,\"totalDigits\":2}},{\"use\":\"optional\",\"name\":\"endDay\",\"ref\":null,\"restriction\":{\"maxInclusive\":31,\"minInclusive\":1,\"totalDigits\":2}},{\"use\":\"optional\",\"name\":\"endMonth\",\"ref\":null,\"restriction\":{\"maxInclusive\":12,\"minInclusive\":1,\"totalDigits\":2}},{\"use\":\"optional\",\"name\":\"xml:lang\",\"ref\":\"xml:lang\"},{\"use\":\"optional\",\"name\":\"startYear\",\"ref\":null,\"restriction\":{\"maxInclusive\":2200,\"minInclusive\":1400,\"totalDigits\":4}}]}},\"jpcoar:conferenceVenue\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0,\"attributes\":[{\"use\":\"optional\",\"name\":\"xml:lang\",\"ref\":\"xml:lang\"}]}},\"jpcoar:conferencePlace\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0,\"attributes\":[{\"use\":\"optional\",\"name\":\"xml:lang\",\"ref\":\"xml:lang\"}]}},\"jpcoar:conferenceCountry\":{\"type\":{\"maxOccurs\":1,\"minOccurs\":0,\"restriction\":{\"patterns\":[\"^[A-Z]{3}$\"]}}}},\"jpcoar:file\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0},\"jpcoar:URI\":{\"type\":{\"maxOccurs\":1,\"minOccurs\":0,\"attributes\":[{\"use\":\"optional\",\"name\":\"label\",\"ref\":null},{\"use\":\"optional\",\"name\":\"objectType\",\"ref\":null,\"restriction\":{\"enumeration\":[\"abstract\",\"dataset\",\"fulltext\",\"software\",\"summary\",\"thumbnail\",\"other\"]}}]}},\"jpcoar:mimeType\":{\"type\":{\"maxOccurs\":1,\"minOccurs\":0}},\"jpcoar:extent\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0}},\"datacite:date\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0,\"attributes\":[{\"use\":\"required\",\"name\":\"dateType\",\"ref\":null,\"restriction\":{\"enumeration\":[\"Accepted\",\"Available\",\"Collected\",\"Copyrighted\",\"Created\",\"Issued\",\"Submitted\",\"Updated\",\"Valid\"]}}]}},\"datacite:version\":{\"type\":{\"maxOccurs\":1,\"minOccurs\":0}}},\"custom:system_file\":{\"type\":{\"minOccurs\":0,\"maxOccurs\":\"unbounded\"},\"jpcoar:URI\":{\"type\":{\"minOccurs\":0,\"maxOccurs\":1,\"attributes\":[{\"name\":\"objectType\",\"ref\":null,\"use\":\"optional\",\"restriction\":{\"enumeration\":[\"abstract\",\"summary\",\"fulltext\",\"thumbnail\",\"other\"]}},{\"name\":\"label\",\"ref\":null,\"use\":\"optional\"}]}},\"jpcoar:mimeType\":{\"type\":{\"minOccurs\":0,\"maxOccurs\":1}},\"jpcoar:extent\":{\"type\":{\"minOccurs\":0,\"maxOccurs\":\"unbounded\"}},\"datacite:date\":{\"type\":{\"minOccurs\":1,\"maxOccurs\":\"unbounded\",\"attributes\":[{\"name\":\"dateType\",\"ref\":null,\"use\":\"required\",\"restriction\":{\"enumeration\":[\"Accepted\",\"Available\",\"Collected\",\"Copyrighted\",\"Created\",\"Issued\",\"Submitted\",\"Updated\",\"Valid\"]}}]}},\"datacite:version\":{\"type\":{\"minOccurs\":0,\"maxOccurs\":1}}},\"jpcoar:publisher_jpcoar\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0},\"jpcoar:publisherName\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0,\"attributes\":[{\"use\":\"optional\",\"name\":\"xml:lang\",\"ref\":\"xml:lang\"}]}},\"jpcoar:publisherDescription\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0,\"attributes\":[{\"use\":\"optional\",\"name\":\"xml:lang\",\"ref\":\"xml:lang\"}]}},\"dcndl:location\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0}},\"dcndl:publicationPlace\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0}}},\"dcterms:date_dcterms\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0}},\"dcndl:edition\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0,\"attributes\":[{\"use\":\"optional\",\"name\":\"xml:lang\",\"ref\":\"xml:lang\"}]}},\"dcndl:volumeTitle\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0,\"attributes\":[{\"use\":\"optional\",\"name\":\"xml:lang\",\"ref\":\"xml:lang\"}]}},\"dcndl:originalLanguage\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0,\"attributes\":[{\"use\":\"optional\",\"name\":\"xml:lang\",\"ref\":\"xml:lang\"}]}},\"dcterms:extent\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0,\"attributes\":[{\"use\":\"optional\",\"name\":\"xml:lang\",\"ref\":\"xml:lang\"}]}},\"jpcoar:format\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0,\"attributes\":[{\"use\":\"optional\",\"name\":\"xml:lang\",\"ref\":\"xml:lang\"}]}},\"jpcoar:holdingAgent\":{\"type\":{\"maxOccurs\":1,\"minOccurs\":0},\"jpcoar:holdingAgentNameIdentifier\":{\"type\":{\"maxOccurs\":1,\"minOccurs\":1,\"attributes\":[{\"use\":\"required\",\"name\":\"nameIdentifierScheme\",\"ref\":null,\"restriction\":{\"enumeration\":[\"kakenhi\",\"ISNI\",\"Ringgold\",\"GRID\",\"ROR\",\"FANO\",\"ISIL\",\"MARC\",\"OCLC\"]}},{\"use\":\"optional\",\"name\":\"nameIdentifierURI\",\"ref\":null}]}},\"jpcoar:holdingAgentName\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0,\"attributes\":[{\"use\":\"optional\",\"name\":\"xml:lang\",\"ref\":\"xml:lang\"}]}}},\"jpcoar:datasetSeries\":{\"type\":{\"maxOccurs\":1,\"minOccurs\":0,\"attributes\":[{\"use\":\"optional\",\"name\":\"datasetSeriesType\",\"ref\":null,\"restriction\":{\"enumeration\":[\"True\",\"False\"]}}]}},\"jpcoar:catalog\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0},\"jpcoar:contributor\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0,\"attributes\":[{\"use\":\"optional\",\"name\":\"contributorType\",\"ref\":null,\"restriction\":{\"enumeration\":[\"HostingInstitution\"]}}]},\"jpcoar:contributorName\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":1,\"attributes\":[{\"use\":\"required\",\"name\":\"xml:lang\",\"ref\":\"xml:lang\"}]}}},\"jpcoar:identifier\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0,\"attributes\":[{\"use\":\"required\",\"name\":\"identifierType\",\"ref\":null,\"restriction\":{\"enumeration\":[\"DOI\",\"HDL\",\"URI\"]}}]}},\"dc:title\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0,\"attributes\":[{\"use\":\"required\",\"name\":\"xml:lang\",\"ref\":\"xml:lang\"}]}},\"datacite:description\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0,\"attributes\":[{\"use\":\"optional\",\"name\":\"xml:lang\",\"ref\":\"xml:lang\"},{\"use\":\"required\",\"name\":\"descriptionType\",\"ref\":null,\"restriction\":{\"enumeration\":[\"Abstract\",\"Methods\",\"TableOfContents\",\"TechnicalInfo\",\"Other\"]}}]}},\"jpcoar:subject\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0,\"attributes\":[{\"use\":\"optional\",\"name\":\"xml:lang\",\"ref\":\"xml:lang\"},{\"use\":\"optional\",\"name\":\"subjectURI\",\"ref\":null},{\"use\":\"required\",\"name\":\"subjectScheme\",\"ref\":null,\"restriction\":{\"enumeration\":[\"BSH\",\"DDC\",\"e-Rad\",\"LCC\",\"LCSH\",\"MeSH\",\"NDC\",\"NDLC\",\"NDLSH\",\"SciVal\",\"UDC\",\"Other\"]}}]}},\"jpcoar:license\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0,\"attributes\":[{\"use\":\"optional\",\"name\":\"xml:lang\",\"ref\":\"xml:lang\"},{\"use\":\"required\",\"name\":\"licenseType\",\"ref\":null,\"restriction\":{\"enumeration\":[\"file\",\"metadata\",\"thumbnail\"]}},{\"use\":\"required\",\"name\":\"rdf:resource\",\"ref\":null}]}},\"dc:rights\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0,\"attributes\":[{\"use\":\"required\",\"name\":\"xml:lang\",\"ref\":\"xml:lang\"},{\"use\":\"required\",\"name\":\"rdf:resource\",\"ref\":null}]}},\"dcterms:accessRights\":{\"type\":{\"maxOccurs\":1,\"minOccurs\":0,\"attributes\":[{\"use\":\"required\",\"ref\":null,\"name\":\"accessRights\",\"restriction\":{\"enumeration\":[\"embargoed access\",\"metadata only access\",\"restricted access\",\"open access\"]}},{\"use\":\"required\",\"name\":\"rdf:resource\",\"ref\":null}]}},\"jpcoar:file\":{\"type\":{\"maxOccurs\":\"unbounded\",\"minOccurs\":0},\"jpcoar:URI\":{\"type\":{\"maxOccurs\":1,\"minOccurs\":0,\"attributes\":[{\"use\":\"required\",\"name\":\"objectType\",\"ref\":null,\"restriction\":{\"enumeration\":[\"thumbnail\"]}}]}}}}}"' where schema_name='jpcoar_mapping';
+
+DELETE FROM item_type_property WHERE id=121;
+DELETE FROM item_type_property WHERE id=122;
+DELETE FROM item_type_property WHERE id=124;
+
+DELETE FROM item_type_property WHERE id=103;
+DELETE FROM item_type_property WHERE id=120;
+DELETE FROM item_type_property WHERE id=132;
+DELETE FROM item_type_property WHERE id=139;
+DELETE FROM item_type_property WHERE id=142;
+DELETE FROM item_type_property WHERE id=175;
+
+-- LINK = '1044'
+UPDATE item_type SET render=replace(render::text,'cus_142"','cus_1044"')::jsonb;
+
+UPDATE item_type SET schema=replace(schema::text,'subitem_1587693279322','subitem_link_url')::jsonb;
+UPDATE item_type SET form=replace(form::text,'subitem_1587693279322','subitem_link_url')::jsonb;
+UPDATE item_type SET render=replace(render::text,'subitem_1587693279322','subitem_link_url')::jsonb;
+
+UPDATE item_type SET schema=replace(schema::text,'subitem_1587650325204','subitem_link_text')::jsonb;
+UPDATE item_type SET form=replace(form::text,'subitem_1587650325204','subitem_link_text')::jsonb;
+UPDATE item_type SET render=replace(render::text,'subitem_1587650325204','subitem_link_text')::jsonb;
+
+UPDATE item_type SET schema=replace(schema::text,'subitem_1587693278490','subitem_link_language')::jsonb;
+UPDATE item_type SET form=replace(form::text,'subitem_1587693278490','subitem_link_language')::jsonb;
+UPDATE item_type SET render=replace(render::text,'subitem_1587693278490','subitem_link_language')::jsonb;
+
+UPDATE records_metadata SET json=replace(json::text,'subitem_1587693279322','subitem_link_url')::jsonb;
+UPDATE records_metadata SET json=replace(json::text,'subitem_1587650325204','subitem_link_text')::jsonb;
+UPDATE records_metadata SET json=replace(json::text,'subitem_1587693278490','subitem_link_language')::jsonb;
+
+UPDATE item_metadata SET json=replace(json::text,'subitem_1587693279322','subitem_link_url')::jsonb;
+UPDATE item_metadata SET json=replace(json::text,'subitem_1587650325204','subitem_link_text')::jsonb;
+UPDATE item_metadata SET json=replace(json::text,'subitem_1587693278490','subitem_link_language')::jsonb;
+
+DELETE FROM item_type_property WHERE id=142;
+
+-- TITLE = '1001'
+UPDATE item_type SET render=replace(render::text,'cus_67"','cus_1001"')::jsonb;
+
+UPDATE item_type SET schema=replace(schema::text,'subitem_1551255647225','subitem_title')::jsonb;
+UPDATE item_type SET form=replace(form::text,'subitem_1551255647225','subitem_title')::jsonb;
+UPDATE item_type SET render=replace(render::text,'subitem_1551255647225','subitem_title')::jsonb;
+
+UPDATE item_type SET schema=replace(schema::text,'subitem_1551255648112','subitem_title_language')::jsonb;
+UPDATE item_type SET form=replace(form::text,'subitem_1551255648112','subitem_title_language')::jsonb;
+UPDATE item_type SET render=replace(render::text,'subitem_1551255648112','subitem_title_language')::jsonb;
+
+UPDATE records_metadata SET json=replace(json::text,'subitem_1551255647225','subitem_title')::jsonb;
+UPDATE records_metadata SET json=replace(json::text,'subitem_1551255648112','subitem_title_language')::jsonb;
+
+UPDATE item_metadata SET json=replace(json::text,'subitem_1551255647225','subitem_title')::jsonb;
+UPDATE item_metadata SET json=replace(json::text,'subitem_1551255648112','subitem_title_language')::jsonb;
+
+DELETE FROM item_type_property WHERE id=67;
+
+-- TEXT = '1042'
+UPDATE item_type SET render=replace(render::text,'cus_137"','cus_1042"')::jsonb;
+
+UPDATE item_type SET schema=replace(schema::text,'subitem_1586228465211','subitem_text_value')::jsonb;
+UPDATE item_type SET form=replace(form::text,'subitem_1586228465211','subitem_text_value')::jsonb;
+UPDATE item_type SET render=replace(render::text,'subitem_1586228465211','subitem_text_value')::jsonb;
+
+UPDATE item_type SET schema=replace(schema::text,'subitem_158622849035','subitem_text_language')::jsonb;
+UPDATE item_type SET form=replace(form::text,'subitem_158622849035','subitem_text_language')::jsonb;
+UPDATE item_type SET render=replace(render::text,'subitem_158622849035','subitem_text_language')::jsonb;
+
+UPDATE records_metadata SET json=replace(json::text,'subitem_1586228465211','subitem_text_value')::jsonb;
+UPDATE records_metadata SET json=replace(json::text,'"subitem_158622849035','subitem_text_language')::jsonb;
+
+UPDATE item_metadata SET json=replace(json::text,'subitem_1586228465211','subitem_text_value')::jsonb;
+UPDATE item_metadata SET json=replace(json::text,'subitem_158622849035','subitem_text_language')::jsonb;
+
+DELETE FROM item_type_property WHERE id=137;
+
+-- THUMBNAIL = '1037'
+UPDATE item_type SET render=replace(render::text,'cus_120"','cus_1037"')::jsonb;
+DELETE FROM item_type_property WHERE id=120;
+
+-- TEXTAREA = '1043'
+UPDATE item_type SET render=replace(render::text,'cus_139"','cus_1043"')::jsonb;
+
+UPDATE item_type SET schema=replace(schema::text,'subitem_1586253392325','subitem_textarea_value')::jsonb;
+UPDATE item_type SET form=replace(form::text,'subitem_1586253392325','subitem_textarea_value')::jsonb;
+UPDATE item_type SET render=replace(render::text,'subitem_1586253392325','subitem_textarea_value')::jsonb;
+
+UPDATE item_type SET schema=replace(schema::text,'"subitem_158625340053','subitem_textarea_language')::jsonb;
+UPDATE item_type SET form=replace(form::text,'"subitem_158625340053','subitem_textarea_language')::jsonb;
+UPDATE item_type SET render=replace(render::text,'"subitem_158625340053','subitem_textarea_language')::jsonb;
+
+UPDATE records_metadata SET json=replace(json::text,'subitem_1586253392325','subitem_textarea_value')::jsonb;
+UPDATE records_metadata SET json=replace(json::text,'subitem_158625340053','subitem_textarea_language')::jsonb;
+
+UPDATE item_metadata SET json=replace(json::text,'subitem_1586253392325','subitem_textarea_value')::jsonb;
+UPDATE item_metadata SET json=replace(json::text,'subitem_158625340053','subitem_textarea_language')::jsonb;
+
+DELETE FROM item_type_property WHERE id=139;
+
+-- APC = '1006'
+UPDATE item_type SET render=replace(render::text,'cus_27"','cus_1006"')::jsonb;
+
+UPDATE item_type SET schema=replace(schema::text,'subitem_1523260933860','subitem_apc')::jsonb;
+UPDATE item_type SET form=replace(form::text,'subitem_1523260933860','subitem_apc')::jsonb;
+UPDATE item_type SET render=replace(render::text,'subitem_1523260933860','subitem_apc')::jsonb;
+
+UPDATE records_metadata SET json=replace(json::text,'subitem_1523260933860','subitem_apc')::jsonb;
+UPDATE item_metadata SET json=replace(json::text,'subitem_1523260933860','subitem_apc')::jsonb;
+
+DELETE FROM item_type_property WHERE id=27;
+
+-- IDENTIFIER_REGISTRATION = '1018'
+UPDATE item_type SET render=replace(render::text,'cus_16"','cus_1018"')::jsonb;
+DELETE FROM item_type_property WHERE id=16;
+
+-- NUMBER_OF_PAGES = '126'
+UPDATE item_type SET render=replace(render::text,'cus_85"','cus_126"')::jsonb;
+
+UPDATE item_type SET schema=replace(schema::text,'subitem_1551256248092','subitem_number_of_pages')::jsonb;
+UPDATE item_type SET form=replace(form::text,'subitem_1551256248092','subitem_number_of_pages')::jsonb;
+UPDATE item_type SET render=replace(render::text,'subitem_1551256248092','subitem_number_of_pages')::jsonb;
+
+UPDATE records_metadata SET json=replace(json::text,'subitem_1551256248092','subitem_number_of_pages')::jsonb;
+UPDATE item_metadata SET json=replace(json::text,'subitem_1551256248092','subitem_number_of_pages')::jsonb;
+
+DELETE FROM item_type_property WHERE id=85;
+
+-- RESOURCE_TYPE_SIMPLE = '127'
+UPDATE item_type SET render=replace(render::text,'cus_177"','cus_127"')::jsonb;
+DELETE FROM item_type_property WHERE id=177;
+
+-- S_FILE = '125'  
+UPDATE item_type SET render=replace(render::text,'cus_131"','cus_125"')::jsonb;
+DELETE FROM item_type_property WHERE id=131;
+
+-- S_IDENTIFIER = '123'
+UPDATE item_type SET render=replace(render::text,'cus_130"','cus_123"')::jsonb;
+DELETE FROM item_type_property WHERE id=130;
+
+
+-- START_PAGE = '1028'
+UPDATE records_metadata SET json=replace(json::text,'subitem_1551256198917','subitem_start_page')::jsonb;
+UPDATE item_metadata SET json=replace(json::text,'subitem_1551256198917','subitem_start_page')::jsonb;
+
+UPDATE item_type SET render=replace(render::text,'cus_84"','cus_1028"')::jsonb;
+UPDATE item_type SET schema=replace(schema::text,'subitem_1551256198917','subitem_start_page')::jsonb;
+UPDATE item_type SET form=replace(form::text,'subitem_1551256198917','subitem_start_page')::jsonb;
+UPDATE item_type SET render=replace(render::text,'subitem_1551256198917','subitem_start_page')::jsonb;
+
+
+
+-- APC = '1006'
+UPDATE records_metadata SET json=replace(json::text,'subitem_1523260933860','subitem_apc')::jsonb;
+UPDATE item_type SET render=replace(render::text,'cus_27"','cus_1006"')::jsonb;
+UPDATE item_type SET schema=replace(schema::text,'subitem_1523260933860','subitem_apc')::jsonb;
+UPDATE item_type SET render=replace(render::text,'subitem_1523260933860','subitem_apc')::jsonb;
+
+-- 値を引き継ぐことができない
+-- UPDATE records_metadata SET json=replace(json::text,'subitem_1551255818386','subitem_language')::jsonb;
+-- UPDATE item_type SET render=replace(render::text,'cus_71"','cus_1003"')::jsonb;
+
+
+-- UPDATE records_metadata SET json=replace(json::text,'subitem_1551255647225','subitem_title')::jsonb;
+-- UPDATE records_metadata SET json=replace(json::text,'subitem_1551255648112','subitem_title_language')::jsonb;
+
+-- UPDATE item_type SET render=replace(render::text,'cus_67"','cus_1001"')::jsonb;
+UPDATE item_type SET form=replace(form::text,'subitem_1523260933860','subitem_apc')::jsonb;

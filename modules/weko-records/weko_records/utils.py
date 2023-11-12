@@ -1186,7 +1186,7 @@ async def sort_meta_data_by_options(
                     if (_opt.get('hide') | _opt.get('non_display')):
                         creator.pop("affiliationNameIdentifiers")
         
-            current_app.logger.error("creator:{}".format(creator))
+            # current_app.logger.error("creator:{}".format(creator))
             ret.append(creator)
                     
         return ret

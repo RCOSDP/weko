@@ -1508,12 +1508,22 @@ xsd = {
             "type": {
                 "maxOccurs": "unbounded",
                 "minOccurs": 0,
+                "attributes": [{
+                    "use": "optional",
+                    "name": "xml:lang",
+                    "ref": "xml:lang"
+                }]
             }
         },
         "dcndl:publicationPlace": {
             "type": {
                 "maxOccurs": "unbounded",
                 "minOccurs": 0,
+                "attributes": [{
+                    "use": "optional",
+                    "name": "xml:lang",
+                    "ref": "xml:lang"
+                }]
             }
         },
     },
@@ -1521,6 +1531,11 @@ xsd = {
         "type": {
             "maxOccurs": "unbounded",
             "minOccurs": 0,
+            "attributes": [{
+                "use": "optional",
+                "name": "xml:lang",
+                "ref": "xml:lang"
+            }]
         },
     },
     "dcndl:edition": {

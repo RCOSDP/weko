@@ -1,5 +1,5 @@
-S_IDENTIFIER = '1'                                      # system identifier
-S_FILE = '2'                                            # system file
+S_IDENTIFIER = '123'                                    # system identifier
+S_FILE = '125'                                          # system file
 NUMBER_OF_PAGES = '126'                                 # ページ数
 RESOURCE_TYPE_SIMPLE = '127'                            # 資源タイプ（シンプル）
 STUDY_ID = '301'                                        # 調査番号
@@ -60,16 +60,19 @@ HEADING = '1041'                                        # 見出し
 TEXT = '1042'                                           # テキスト
 TEXTAREA = '1043'                                       # テキストエリア
 LINK = '1044'                                           # リンク
-PUBLISHERINFO = '1045'                                  # 出版者情報
-DATE_LITERAL = '1046'                                   # 日付（文字列）
-DCNDL_EDITION = '1047'                                  # 版
-DCNDL_VOLUME_TITLE = '1048'                             # 部編名
-DCNDL_ORIGINAL_LANGUAGE = '1049'                        # 原文の言語
-DCTERMS_EXTENT = '1050'                                 # ページ数
-JPCOAR_FORMAT = '1051'                                  # 大きさ
-JPCOAR_HOLDING_AGENT = '1052'                           # 所蔵機関
-JPCOAR_DATASET_SERIES = '1053'                          # データセットシリーズ
-JPCOAR_CATALOG = '1054'                                 # カタログ
+CHECKBOX = '1045'                                       # チェックボックス
+RADIOBUTTON = '1046'                                    # ラジオボタン
+LISTBOX = '1047'                                        # リストボックス
+PUBLISHERINFO = '1048'                                  # 出版者情報
+DATE_LITERAL = '1049'                                   # 日付（文字列）
+DCNDL_EDITION = '1050'                                  # 版
+DCNDL_VOLUME_TITLE = '1051'                             # 部編名
+DCNDL_ORIGINAL_LANGUAGE = '1052'                        # 原文の言語
+DCTERMS_EXTENT = '1053'                                 # ページ数
+JPCOAR_FORMAT = '1054'                                  # 大きさ
+JPCOAR_HOLDING_AGENT = '1055'                           # 所蔵機関
+JPCOAR_DATASET_SERIES = '1056'                          # データセットシリーズ
+JPCOAR_CATALOG = '1057'                                 # カタログ
 DATASET_USAGE = '3001'                                  # データ名
 USER_INFORMATION = '3002'                               # 登録者情報
 GUARANTOR = '3003'                                      # 保証人
@@ -96,7 +99,7 @@ EXCLUSION_LIST = []
 # Exclusion property id list. The ID set in the list will not be registered.
 # e.g.: EXCLUSION_LIST = [3020, 3021] or EXCLUSION_LIST = [PUBLISHED_DATE, SUMMARY]
 
-SPECIFIED_LIST = [1045,1046,1047,1048,1049,1050,1051,1052,1053,1054]
+SPECIFIED_LIST = [1048,1049,1050,1051,1052,1053,1054,1055,1056,1057]
 # Specified property id list. The ID set in the list will be deleted and registered.
 # e.g.: SPECIFIED_LIST = [3020, 3021] or SPECIFIED_LIST = [PUBLISHED_DATE, SUMMARY]
 

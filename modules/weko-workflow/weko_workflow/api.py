@@ -23,6 +23,7 @@
 import math
 import urllib.parse
 import uuid
+import traceback
 from datetime import date,datetime, timedelta
 
 from flask import abort, current_app, request, session, url_for
@@ -2293,7 +2294,7 @@ class WorkActivity(object):
             db.session.commit()
         except Exception as ex:
             db.session.rollback()
-            current_app.logger.error(ex)
+            current_app.logger.error(traceback.format_exc())
             raise ex
 
     @staticmethod

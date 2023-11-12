@@ -27,6 +27,7 @@ from collections import OrderedDict
 from copy import deepcopy
 from datetime import datetime, timedelta
 from typing import NoReturn, Optional, Tuple, Union
+import traceback
 
 import redis
 from redis import sentinel
@@ -3025,7 +3026,6 @@ def save_activity_data(data: dict) -> NoReturn:
     }
     if activity_id:
         WorkActivity().update_activity(activity_id, activity_data)
-
 
 def send_mail_url_guest_user(mail_info: dict) -> bool:
     """Send mail url guest_user.

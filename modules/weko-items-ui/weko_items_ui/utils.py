@@ -1017,23 +1017,23 @@ def validate_form_input_data(
             # result["is_valid"] = False
             # result['error'] = f"{item_error_message} -- {date_format_error}"
 
-    """
-    This snippet is for testing 'validation_date_format_error_checker' while 'dcterms date' doesn't exist yet
-    """
-    date_format_test_data = [
-        "1997",
-        "1997-07",
-        "1997-07-16",
-        "1997-07-16T19:20+01:00",
-        "1997-07-16T19:20-01:00",
-        "1997-07-16T19:20:30+01:00",
-        "1997-07-16T19:20:30-01:00",
-        "1997-07-16T19:20:30.45+01:00",
-        "1997-07-16T19:20:30.45-01:00",
-        "199-this-will-result-in-error"
-    ]
-    for date in date_format_test_data:
-        validation_date_format_error_checker("DATE FORMAT TEST", [date])
+    # """
+    # This snippet is for testing 'validation_date_format_error_checker' while 'dcterms date' doesn't exist yet
+    # """
+    # date_format_test_data = [
+    #     "1997",
+    #     "1997-07",
+    #     "1997-07-16",
+    #     "1997-07-16T19:20+01:00",
+    #     "1997-07-16T19:20-01:00",
+    #     "1997-07-16T19:20:30+01:00",
+    #     "1997-07-16T19:20:30-01:00",
+    #     "1997-07-16T19:20:30.45+01:00",
+    #     "1997-07-16T19:20:30.45-01:00",
+    #     "199-this-will-result-in-error"
+    # ]
+    # for date in date_format_test_data:
+    #     validation_date_format_error_checker("DATE FORMAT TEST", [date])
 
     for data_key in data_keys:
         data_item_value_list = data[data_key]
