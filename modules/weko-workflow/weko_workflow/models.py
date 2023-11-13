@@ -1135,15 +1135,8 @@ class GuestActivity(db.Model, Timestamp):
         @param guest_activity:
         @return:
         """
-        try:
-            with db.session.begin_nested():
-                db.session.delete(guest_activity)
-            db.session.commit()
-            return True
-        except Exception as ex:
-            db.session.rollback()
-            current_app.logger.error(ex)
-            return False
+        with db.session.begin_nested():
+            db.session.delete(guest_activity)
 
     @classmethod
     def get_expired_activities(cls) -> list:

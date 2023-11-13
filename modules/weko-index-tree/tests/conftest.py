@@ -26,6 +26,7 @@ import tempfile
 import json
 import uuid
 from datetime import date, datetime, timedelta
+from kombu import Exchange, Queue
 
 import pytest
 from mock import Mock, patch
@@ -44,7 +45,6 @@ from invenio_deposit.config import (
     DEPOSIT_DEFAULT_JSONSCHEMA,
     DEPOSIT_JSONSCHEMAS_PREFIX,
 )
-from kombu import Exchange, Queue
 from invenio_stats.contrib.event_builders import (
     build_file_unique_id,
     build_record_unique_id,
@@ -93,6 +93,7 @@ from invenio_files_rest.permissions import bucket_listmultiparts_all, \
 from invenio_files_rest.models import Bucket
 from invenio_db.utils import drop_alembic_version_table
 
+from weko_admin.models import AdminLangSettings
 from weko_schema_ui.models import OAIServerSchema
 from weko_index_tree.api import Indexes
 from weko_records import WekoRecords
@@ -136,12 +137,6 @@ def base_app(instance_path):
         SECRET_KEY='SECRET_KEY',
         WEKO_INDEX_TREE_UPDATED=True,
         TESTING=True,
-        BROKER_URL='amqp://guest:guest@rabbitmq:5672/',
-        CELERY_BROKER_URL = 'amqp://guest:guest@rabbitmq:5672/',
-        CELERY_ALWAYS_EAGER=True,
-        CELERY_CACHE_BACKEND='memory',
-        CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
-        CELERY_RESULT_BACKEND='cache',
         FILES_REST_DEFAULT_QUOTA_SIZE = None,
         FILES_REST_DEFAULT_STORAGE_CLASS = 'S',
         FILES_REST_STORAGE_CLASS_LIST = {
@@ -149,6 +144,7 @@ def base_app(instance_path):
             'A': 'Archive',
         },
         CACHE_REDIS_URL='redis://redis:6379/0',
+        CACHE_TYPE="redis",
         CACHE_REDIS_DB='0',
         CACHE_REDIS_HOST="redis",
         WEKO_INDEX_TREE_STATE_PREFIX="index_tree_expand_state",
@@ -162,11 +158,11 @@ def base_app(instance_path):
             'test'
         ),
         INDEX_IMG='indextree/36466818-image.jpg',
-        # SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-        #                                   'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/invenio'),
+        INDEXER_MQ_QUEUE = Queue("indexer", exchange=Exchange("indexer", type="direct"), routing_key="indexer",queue_arguments={"x-queue-type":"quorum"}),
+        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
+                                          'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
         # SQLALCHEMY_DATABASE_URI=os.environ.get(
         #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
-        SQLALCHEMY_DATABASE_URI='postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest',
         SEARCH_ELASTIC_HOSTS=os.environ.get(
             'SEARCH_ELASTIC_HOSTS', 'elasticsearch'),
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
@@ -440,7 +436,8 @@ def base_app(instance_path):
         },
         WEKO_INDEX_TREE_INDEX_ADMIN_TEMPLATE = 'weko_index_tree/admin/index_edit_setting.html',
         WEKO_INDEX_TREE_LIST_API = "/api/tree",
-        INDEXER_MQ_QUEUE = Queue("indexer", exchange=Exchange("indexer",type="direct"), routing_key="indexer",queue_arguments={"x-queue-type":"quorum"}),
+        WEKO_INDEX_TREE_API = "/api/tree/index/",
+        WEKO_THEME_INSTANCE_DATA_DIR="data"
     )
     app_.url_map.converters['pid'] = PIDConverter
 
@@ -493,6 +490,11 @@ def db(app):
     db_.drop_all()
     drop_alembic_version_table()
 
+@pytest.yield_fixture()
+def without_session_remove():
+    with patch("weko_search_ui.views.db.session.remove"):
+        with patch("weko_search_ui.rest.db.session.remove"):
+            yield
 
 @pytest.yield_fixture()
 def i18n_app(app):
@@ -771,10 +773,10 @@ def test_indices(app, db):
             id=id,
             parent=parent,
             position=position,
-            index_name="Test index {}".format(id),
-            index_name_english="Test index {}".format(id),
-            index_link_name="Test index link {}".format(id),
-            index_link_name_english="Test index link {}".format(id),
+            index_name="Test index {}_ja".format(id),
+            index_name_english="Test index {}_en".format(id),
+            index_link_name="Test index link {}_ja".format(id),
+            index_link_name_english="Test index link {}_en".format(id),
             index_link_enabled=True,
             more_check=False,
             display_no=position,
@@ -804,7 +806,6 @@ def test_indices(app, db):
         db.session.add(base_index(21, 2, 0))
         db.session.add(base_index(22, 2, 1))
     db.session.commit()
-
 
 @pytest.yield_fixture
 def without_oaiset_signals(app):
@@ -1593,3 +1594,9 @@ def auth_headers(client_api, json_headers, create_token_user_1):
     It uses the token associated with the first user.
     """
     return fill_oauth2_headers(json_headers, create_token_user_1)
+
+@pytest.fixture()
+def admin_lang_setting(db):
+    AdminLangSettings.create("en","English", True, 0, True)
+    AdminLangSettings.create("ja","日本語", True, 1, True)
+    AdminLangSettings.create("zh","中文", False, 0, True)

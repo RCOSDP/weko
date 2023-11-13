@@ -58,8 +58,12 @@ def create_author():
         "is_deleted": False
     }
 
-    WekoAuthors.create(data)
-    db.session.commit()
+    try:
+        WekoAuthors.create(data)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        print(e)
 
 
 if __name__ == '__main__':

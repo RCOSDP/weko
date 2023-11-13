@@ -32,6 +32,7 @@ from flask_babelex import gettext as _
 from flask_babelex import to_user_timezone, to_utc
 from flask_login import current_user
 from invenio_cache import current_cache
+from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_search import RecordsSearch
@@ -266,6 +267,7 @@ def filter_index_list_by_role(index_list):
     """Filter index list by role."""
     def _check(index_data, roles, groups):
         """Check index data by role."""
+        from weko_records_ui.utils import is_future
         can_view = False
         if roles[0]:
             can_view = True
@@ -274,8 +276,7 @@ def filter_index_list_by_role(index_list):
                     or check_groups(groups, index_data.browsing_group):
                 if index_data.public_state \
                         and (index_data.public_date is None
-                             or (isinstance(index_data.public_date, datetime)
-                                 and date.today() >= index_data.public_date.date())):
+                             or not is_future(index_data.public_date)):
                     can_view = True
         return can_view
 
@@ -290,6 +291,7 @@ def filter_index_list_by_role(index_list):
 
 def reduce_index_by_role(tree, roles, groups, browsing_role=True, plst=None):
     """Reduce index by."""
+    from weko_records_ui.utils import is_future
     if isinstance(tree, list):
         i = 0
         while i < len(tree):
@@ -315,8 +317,7 @@ def reduce_index_by_role(tree, roles, groups, browsing_role=True, plst=None):
 
                         if public_state and \
                                 (public_date is None
-                                 or (isinstance(public_date, datetime)
-                                     and date.today() >= public_date.date())):
+                                 or not is_future(public_date)):
                             reduce_index_by_role(children, roles, groups)
                             i += 1
                         else:
@@ -694,6 +695,7 @@ def check_index_permissions(record=None, index_id=None, index_path_list=None,
             [bool]: True if the user can access index.
 
         """
+        from weko_records_ui.utils import is_future
         can_view = False
         if roles[0]:
             # In case admin role.
@@ -702,8 +704,7 @@ def check_index_permissions(record=None, index_id=None, index_path_list=None,
             check_user_role = check_roles(roles, index_data.browsing_role) or \
                 check_groups(groups, index_data.browsing_group)
             check_public_date = \
-                isinstance(index_data.public_date, datetime) and \
-                date.today() >= index_data.public_date.date() \
+                not is_future(index_data.public_date) \
                 if index_data.public_date else True
             if check_user_role and check_public_date:
                 can_view = True
@@ -959,6 +960,11 @@ def perform_delete_index(index_id, record_class, action: str):
                     raise IndexBaseRESTError(
                         description='Could not delete data.')
             msg = 'Index deleted successfully.'
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.erorr(e)
+        msg = 'Failed to delete index.'
     finally:
         if is_unlock:
             unlock_index(locked_key)
@@ -1002,7 +1008,7 @@ def get_editing_items_in_index(index_id, recursively=False):
 
     return result
 
-def save_index_trees_to_redis(tree):
+def save_index_trees_to_redis(tree, lang=None):
     """save inde_tree to redis for roles
     
     """
@@ -1012,11 +1018,22 @@ def save_index_trees_to_redis(tree):
         else:
             return str(o)
     redis = __get_redis_store()
+    if lang is None:
+        lang = current_i18n.language
     try:
         v = bytes(json.dumps(tree, default=default), encoding='utf-8')
-        redis.put("index_tree_view_" + os.environ.get('INVENIO_WEB_HOST_NAME') + "_" + current_i18n.language,v)
+        
+        redis.put("index_tree_view_" + os.environ.get('INVENIO_WEB_HOST_NAME') + "_" + lang,v)
     except ConnectionError:
         current_app.logger.error("Fail save index_tree to redis")
+
+def delete_index_trees_from_redis(lang):
+    """delete index_tree from redis
+    """
+    redis = __get_redis_store()
+    key = "index_tree_view_" + os.environ.get('INVENIO_WEB_HOST_NAME') + "_" + lang
+    if redis.redis.exists(key):
+        redis.delete(key)
 
 def str_to_datetime(str_dt, format):
     try:

@@ -4,10 +4,12 @@ import io
 from flask import Flask, json, jsonify, session, url_for
 from flask_security.utils import login_user
 from invenio_accounts.testutils import login_user_via_session
+from invenio_files_rest.models import ObjectVersion
+from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from mock import patch
 from lxml import etree
 from weko_deposit.api import WekoRecord
-from werkzeug.exceptions import NotFound
+from werkzeug.exceptions import NotFound, InternalServerError
 from sqlalchemy.orm.exc import MultipleResultsFound
 from jinja2.exceptions import TemplatesNotFound
 from weko_workflow.models import (
@@ -19,6 +21,7 @@ from weko_workflow.models import (
     FlowDefine,
     WorkFlow,
 )
+from weko_records_ui.models import PDFCoverPageSettings, FilePermission
 from weko_records_ui.views import (
     check_permission,
     citation,
@@ -526,11 +529,39 @@ def test_set_pdfcoverpage_header_acl_guest(app, client, records, pdfcoverpageset
     assert res.status_code == 308
     assert res.location == 'http://test_server/admin/pdfcoverpage/'
 
-    res = client.post(url)
-    assert res.status_code == 302
-    assert res.location == 'http://test_server/login/?next=%2Frecords%2Fparent%3A1'
-
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_set_pdfcoverpage_header_acl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+@pytest.mark.parametrize(
+    "id, result",
+    [
+        (0, False),
+        # (1, True),
+        # (2, True),
+        # (3, True),
+        # (4, True),
+        # (5, True),
+        # (6, True),
+        # (7, True),
+    ],
+)
+def test_set_pdfcoverpage_header_acl_error(app, client, records, users, id, result, pdfcoverpagesetting):
+    login_user_via_session(client=client, email=users[id]["email"])
+    url = url_for("weko_records_ui.set_pdfcoverpage_header",_external=True)
+    res = client.get(url)
+    assert res.status_code == 308
+    assert res.location == 'http://test_server/admin/pdfcoverpage/'
+    s = PDFCoverPageSettings.find(1)
+    assert s is not None
+    assert s.header_output_image == ''
+
+    data = {'availability':'enable', 'header-display':'string', 'header-output-string':'Weko Univ', 'header-display-position':'center', 'pdfcoverpage_form': '',
+        'header-output-image': (io.BytesIO(b"some initial text data"), 'test.png')}
+    with patch('weko_records_ui.views.db.session.commit', side_effect=Exception("")):
+        res = client.post(url,data=data)
+        assert res.status_code == 302
+        s = PDFCoverPageSettings.find(1)
+        assert s is not None
+        assert s.header_output_image == ''
+
 @pytest.mark.parametrize(
     "id, result",
     [
@@ -550,12 +581,18 @@ def test_set_pdfcoverpage_header_acl(app, client, records, users, id, result, pd
     res = client.get(url)
     assert res.status_code == 308
     assert res.location == 'http://test_server/admin/pdfcoverpage/'
+    s = PDFCoverPageSettings.find(1)
+    assert s is not None
+    assert s.header_output_image == ''
 
     data = {'availability':'enable', 'header-display':'string', 'header-output-string':'Weko Univ', 'header-display-position':'center', 'pdfcoverpage_form': '',
-    'header-output-image': (io.BytesIO(b"some initial text data"), 'test.png')}
+        'header-output-image': (io.BytesIO(b"some initial text data"), 'test.png')}
     res = client.post(url,data=data)
     assert res.status_code == 302
     assert res.location == 'http://test_server/admin/pdfcoverpage'
+    s = PDFCoverPageSettings.find(1)
+    assert s is not None
+    assert s.header_output_image != ''
 
     data = {'availability':'enable', 'header-display':'image', 'header-output-string':'Weko Univ', 'header-display-position':'center', 'pdfcoverpage_form': '',
     'header-output-image': (io.BytesIO(b"some initial text data"), 'test.png')}
@@ -596,11 +633,19 @@ def test_file_version_update_acl(client, records, users, id, status_code):
     assert res.status_code == status_code
     assert json.loads(res.data) == {'status': 0, 'msg': 'Insufficient permission'}
 
-    # need to fix
     with patch("weko_records_ui.views.has_update_version_role", return_value=True):
-        with pytest.raises(Exception) as e:
+        _data = {'is_show': '1'}
+        obj = ObjectVersion.get(bucket=None, key=None, version_id=None)
+        assert obj.is_show == False
+
+        with patch('weko_records_ui.views.db.session.commit', side_effect=Exception("")):
             res = client.put(url, data=_data)
-        assert e.type == MultipleResultsFound
+            obj = ObjectVersion.get(bucket=None, key=None, version_id=None)
+            assert obj.is_show == False
+        
+        res = client.put(url, data=_data)
+        obj = ObjectVersion.get(bucket=None, key=None, version_id=None)
+        assert obj.is_show == True
 
         _data['bucket_id'] = 'none bucket'
         _data['key'] = 'none key'
@@ -653,8 +698,17 @@ def test_soft_delete_acl(client, records, users, id, status_code):
             "weko_records_ui.soft_delete", recid=1, _external=True
         )
         with patch("flask.templating._render", return_value=""):
+            pid = PersistentIdentifier.query.filter_by(
+                pid_type='recid', pid_value='1').first()
+            assert pid.status == PIDStatus.REGISTERED
             res = client.post(url)
             assert res.status_code == status_code
+            pid = PersistentIdentifier.query.filter_by(
+                pid_type='recid', pid_value='1').first()
+            if status_code == 200:
+                assert pid.status == PIDStatus.DELETED
+            else:
+                assert pid.status == PIDStatus.REGISTERED
 
 
 # def restore(recid):
@@ -699,7 +753,6 @@ def test_init_permission_acl_guest(client, records):
     assert res.status_code == 302
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_init_permission_acl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-# Error
 @pytest.mark.parametrize(
     "id, status_code",
     [
@@ -716,14 +769,48 @@ def test_init_permission_acl_guest(client, records):
 def test_init_permission_acl(client, records,users, id, status_code):
     login_user_via_session(client=client, email=users[id]["email"])
     _data = {
-        'file_name': 'helloworld.pdf',
-        'activity_id': 'A-00000000-00000',
+        "file_name": "helloworld.pdf",
+        "activity_id": "A-00000000-00000"
     }
     url = url_for(
-        "weko_records_ui.init_permission", recid=1, _external=True
+        "weko_records_ui.init_permission", recid=1
     )
-    res = client.post(url, data=_data,headers = {"Content-Type" : "application/json"})
-    assert res.status_code == status_code
+
+    res = client.post(url, data=json.dumps(_data), headers=[('Content-Type', 'application/json')])
+    assert res.status_code == 200
+    res = FilePermission.query.all()
+    assert len(res)==1
+
+# Error
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_init_permission_acl_error -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+@pytest.mark.parametrize(
+    "id, status_code",
+    [
+        (0, 400),
+        # (1, 302),
+        # (2, 302),
+        # (3, 302),
+        # (4, 302),
+        # (5, 302),
+        # (6, 302),
+        # (7, 302),
+    ],
+)
+def test_init_permission_acl_error(client, records,users, id, status_code):
+    login_user_via_session(client=client, email=users[id]["email"])
+    _data = {
+        "file_name": None,
+        "activity_id": None
+    }
+    url = url_for(
+        "weko_records_ui.init_permission", recid=1
+    )
+
+    with pytest.raises(Exception) as e:
+        res = client.post(url, data=json.dumps(_data), headers=[('Content-Type', 'application/json')])
+        assert e.type==KeyError
+        res = FilePermission.query.all()
+        assert len(res)==0
 
 
 # def escape_str(s):

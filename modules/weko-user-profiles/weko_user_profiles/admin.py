@@ -375,30 +375,34 @@ class UserProfileView(ModelView):
 
         if self.validate_form(form):
             if self.update_model(form, model):
-                with db.session.begin_nested():
-                    """Get role by position"""
-                    if (current_app.config['USERPROFILES_EMAIL_ENABLED']
-                            and form.position):
-                        role_name = get_role_by_position(form.position.data)
-                        roles1 = db.session.query(Role).filter_by(
-                            name=role_name).all()
-                        """Get account_user by user profile id"""
-                        account_user = db.session.query(User).filter_by(
-                            id=id).first()
-                        admin_role = current_app.config.get(
-                            "WEKO_USERPROFILES_ADMINISTRATOR_ROLE")
-                        userprofile_roles = current_app.config.get(
-                            "WEKO_USERPROFILES_ROLES")
-                        roles2 = [
-                            role for role in account_user.roles
-                            if
-                            role not in userprofile_roles or role == admin_role
-                        ]
-                        roles = roles1 + roles2
-                        account_user.roles = roles
-                    """Set role for user"""
-                    db.session.add(account_user)
-                db.session.commit()
+                try:
+                    with db.session.begin_nested():
+                        """Get role by position"""
+                        if (current_app.config['USERPROFILES_EMAIL_ENABLED']
+                                and form.position):
+                            role_name = get_role_by_position(form.position.data)
+                            roles1 = db.session.query(Role).filter_by(
+                                name=role_name).all()
+                            """Get account_user by user profile id"""
+                            account_user = db.session.query(User).filter_by(
+                                id=id).first()
+                            admin_role = current_app.config.get(
+                                "WEKO_USERPROFILES_ADMINISTRATOR_ROLE")
+                            userprofile_roles = current_app.config.get(
+                                "WEKO_USERPROFILES_ROLES")
+                            roles2 = [
+                                role for role in account_user.roles
+                                if
+                                role not in userprofile_roles or role == admin_role
+                            ]
+                            roles = roles1 + roles2
+                            account_user.roles = roles
+                        """Set role for user"""
+                        db.session.add(account_user)
+                    db.session.commit()
+                except Exception as e:
+                    db.session.rollback()
+                    current_app.logger.error(e)
                 flash(gettext('Record was successfully saved.'), 'success')
                 if '_add_another' in request.form:
                     return redirect(

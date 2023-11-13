@@ -11,12 +11,12 @@ institution_name = InstitutionName(
 )
 
 file_permission = FilePermission(
-    user_id="test",
+    user_id=1,
     record_id=99,
     file_name="test",
     usage_application_activity_id="test",
     usage_report_activity_id="test",
-    status="test",
+    status=-1
 )
 
 file_one_time_download = FileOnetimeDownload(
@@ -58,32 +58,35 @@ def test_FilePermission_init_file_permission(app, db):
     )
 
 
-# ERROR
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_models.py::test_FilePermission_update_status -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_FilePermission_update_status(app, db):
     db.session.add(file_permission)
     db.session.commit()
 
-    try:
-        file_permission.update_status(
-            permission=MagicMock(),
-            status="test",
-        )
-    except:
-        pass
+    f = db.session.query(FilePermission).first()
+    assert f.status == -1
+    file_permission.update_status(
+        permission=f,
+        status=1
+    )
+    db.session.commit()
+    f = db.session.query(FilePermission).first()
+    assert f.status == 1
 
 
-# ERROR
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_models.py::test_FilePermission_update_open_date -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_FilePermission_update_open_date(app, db):
     db.session.add(file_permission)
     db.session.commit()
 
-    try:
-        file_permission.update_open_date(
-            permission=MagicMock(),
-            open_date=datetime.datetime.now()
-        )
-    except:
-        pass
+    f = db.session.query(FilePermission).first()
+    file_permission.update_open_date(
+        permission=f,
+        open_date=datetime.datetime(2022, 12, 31)
+    )
+    db.session.commit()
+    f = db.session.query(FilePermission).first()
+    assert f.open_date == datetime.datetime(2022, 12, 31)
 
 
 def test_FilePermission_find_by_activity(app, db):
@@ -95,35 +98,38 @@ def test_FilePermission_find_by_activity(app, db):
     )
 
 
-# ERROR
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_models.py::test_FilePermission_update_usage_report_activity_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_FilePermission_update_usage_report_activity_id(app, db):
     db.session.add(file_permission)
     db.session.commit()
 
-    try:
-        file_permission.update_usage_report_activity_id(
-            permission=MagicMock(),
-            activity_id=file_permission.usage_application_activity_id
-        )
-    except:
-        pass
+    f = db.session.query(FilePermission).first()
+    assert f.usage_application_activity_id == "test"
+    file_permission.update_usage_report_activity_id(
+        permission=f,
+        activity_id='test2'
+    )
+    db.session.commit()
+    f = db.session.query(FilePermission).first()
+    assert f.usage_report_activity_id == "test2"
 
 
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_models.py::test_FilePermission_delete_object -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_FilePermission_delete_object(app, db):
     db.session.add(file_permission)
     db.session.commit()
 
+    assert db.session.query(FilePermission).count() == 1
     file_permission.delete_object(
         permission=file_permission
     )
+    assert db.session.query(FilePermission).count() == 0
 
 
 def test_FileOnetimeDownload_update_download(app, db):
     db.session.add(file_one_time_download)
     db.session.add(file_permission)
     db.session.commit()
-
-    
 
     data1 = {
         "file_name": file_one_time_download.file_name,

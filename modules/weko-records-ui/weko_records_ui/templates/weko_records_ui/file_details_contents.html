@@ -157,10 +157,13 @@
               {% from "weko_records_ui/output_detail_data.html" import output_attribute_value_mlt %}
               {%- set display_file_info = record.display_file_info -%}
               <table class="table table-bordered table-striped detail-table">
-                <!-- Output Pubdate -->
-                {{output_attribute_value_mlt(display_file_info[0]['attribute_value_mlt'], 0)}}
-                <!-- Output File Information -->
-                {{output_attribute_value_mlt(display_file_info[1]['attribute_value_mlt'], 0,false)}}
+                {%- for info in display_file_info -%}
+                  {%- if info['attribute_type'] == 'file' -%}
+                    {{output_attribute_value_mlt(info['attribute_value_mlt'], 0,false)}}
+                  {%- elif info['attribute_name'] == 'PubDate' -%}
+                    {{output_attribute_value_mlt(info['attribute_value_mlt'], 0)}}
+                  {%- endif -%}
+                {%- endfor -%}
               </table>
             </div>
 

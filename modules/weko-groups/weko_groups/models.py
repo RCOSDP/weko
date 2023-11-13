@@ -256,7 +256,6 @@ class Group(db.Model):
                 db.session.add(GroupAdmin(
                     group=obj, admin_id=a.get_id(),
                     admin_type=resolve_admin_type(a)))
-        db.session.commit()
 
         return obj
 
@@ -267,7 +266,6 @@ class Group(db.Model):
             GroupAdmin.query_by_group(self).delete()
             GroupAdmin.query_by_admin(self).delete()
             db.session.delete(self)
-        db.session.commit()
 
     def update(self, name=None, description=None, privacy_policy=None,
                subscription_policy=None, is_managed=None):
@@ -299,7 +297,6 @@ class Group(db.Model):
                 self.is_managed = is_managed
 
             db.session.merge(self)
-        db.session.commit()
 
         return self
 
@@ -431,7 +428,13 @@ class Group(db.Model):
             try:
                 user = User.query.filter_by(email=email).one()
                 results.append(self.invite(user))
+                db.session.commit()
             except NoResultFound:
+                db.session.rollback()
+                results.append(None)
+            except Exception as e:
+                db.session.rollback()
+                current_app.logger.error(e)
                 results.append(None)
 
         return results
@@ -771,7 +774,6 @@ class Membership(db.Model):
                 state=state,
             )
             db.session.add(membership)
-        db.session.commit()
         return membership
 
     @classmethod
@@ -784,20 +786,17 @@ class Membership(db.Model):
         """
         with db.session.begin_nested():
             cls.query.filter_by(group=group, user_id=user.get_id()).delete()
-        db.session.commit()
 
     def accept(self):
         """Activate membership."""
         with db.session.begin_nested():
             self.state = MembershipState.ACTIVE
             db.session.merge(self)
-        db.session.commit()
 
     def reject(self):
         """Remove membership."""
         with db.session.begin_nested():
             db.session.delete(self)
-        db.session.commit()
 
     def is_active(self):
         """Check if membership is in an active state."""
@@ -855,7 +854,6 @@ class GroupAdmin(db.Model):
                 admin=admin,
             )
             db.session.add(obj)
-        db.session.commit()
         return obj
 
     @classmethod
@@ -886,7 +884,6 @@ class GroupAdmin(db.Model):
             obj = cls.query.filter(
                 cls.admin == admin, cls.group == group).one()
             db.session.delete(obj)
-        db.session.commit()
 
     @classmethod
     def query_by_group(cls, group):

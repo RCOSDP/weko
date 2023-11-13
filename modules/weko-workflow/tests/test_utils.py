@@ -47,6 +47,7 @@ from weko_workflow.utils import (
     validation_item_property,
     handle_check_required_data,
     get_activity_id_of_record_without_version,
+    handle_check_required_pattern_and_either,
     check_required_data,get_sub_item_value,
     get_item_value_in_deep,
     delete_bucket,
@@ -327,6 +328,244 @@ def test_item_metadata_validation(db_records,item_type):
         assert result == "Cannot register selected DOI for current Item Type of this item."
 
     
+#* THIS IS FOR JPCOAR2.0 DOI VALIDATION TEST
+#* This test is for the following as well:
+#*     def validation_item_property
+#*     def handle_check_required_pattern_and_either
+#*     def validattion_item_property_required
+# def item_metadata_validation(item_id, identifier_type, record=None,
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_item_metadata_validation_2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_item_metadata_validation_2(db_records_for_doi_validation_test, item_type):
+    #* 別表2-1 JaLC DOI
+    recid0, depid0, record0, item0, parent0, doi0, deposit0 = db_records_for_doi_validation_test[0]
+    result_0: dict = item_metadata_validation(
+        item_id=recid0.object_uuid,
+        identifier_type="1",
+        record=record0,
+    )
+    result_0_keys: list = list(result_0.keys())
+    result_0_check_list_1: list = [
+        "jpcoar:URI",
+        "dc:publisher",
+        "dcndl:dateGranted",
+        "datacite:date",
+        "jpcoar:pageStart",
+        "jpcoar:publisher_jpcoar"
+    ]
+    result_0_check_list_2: list = []
+    for result_0_check_item_1 in result_0_check_list_1:
+        for result_0_key in result_0_keys:
+            if result_0_check_item_1 in result_0.get(result_0_key):
+                result_0_check_list_2.append(result_0_check_item_1)
+    assert len(result_0_check_list_1) == len(result_0_check_list_2)
+
+    #* 別表2-2 JaLC DOI
+    recid1, depid1, record1, item1, parent1, doi1, deposit1 = db_records_for_doi_validation_test[1]
+    result_1: dict = item_metadata_validation(
+        item_id=recid1.object_uuid,
+        identifier_type="1",
+        record=record1,
+    )
+    result_1_keys: list = list(result_1.keys())
+    result_1_check_list_1: list = [
+        "jpcoar:URI",
+        "dc:publisher",
+        "dcndl:dateGranted",
+        "jpcoar:degreeGrantor",
+        "jpcoar:publisher_jpcoar"
+    ]
+    result_1_check_list_2: list = []
+    for result_1_check_item_1 in result_1_check_list_1:
+        for result_1_key in result_1_keys:
+            if result_1_check_item_1 in result_1.get(result_1_key):
+                result_1_check_list_2.append(result_1_check_item_1)
+    assert len(result_1_check_list_1) == len(result_1_check_list_2)
+
+    #* 別表2-3 JaLC DOI
+    recid2, depid2, record2, item2, parent2, doi2, deposit2 = db_records_for_doi_validation_test[2]
+    result_2: dict = item_metadata_validation(
+        item_id=recid2.object_uuid,
+        identifier_type="1",
+        record=record2,
+    )
+    result_2_keys: list = list(result_2.keys())
+    result_2_check_list_1: list = [
+        "jpcoar:URI",
+        "dc:publisher",
+        "dcndl:dateGranted",
+        "datacite:date",
+        "jpcoar:publisher_jpcoar"
+    ]
+    result_2_check_list_2: list = []
+    for result_2_check_item_1 in result_2_check_list_1:
+        for result_2_key in result_2_keys:
+            if result_2_check_item_1 in result_2.get(result_2_key):
+                result_2_check_list_2.append(result_2_check_item_1)
+    assert len(result_2_check_list_1) == len(result_2_check_list_2)
+
+    #* 別表2-4 JaLC DOI
+    recid3, depid3, record3, item3, parent3, doi3, deposit3 = db_records_for_doi_validation_test[3]
+    result_3: dict = item_metadata_validation(
+        item_id=recid3.object_uuid,
+        identifier_type="1",
+        record=record3,
+    )
+    result_3_keys: list = list(result_3.keys())
+    result_3_check_list_1: list = [
+        "jpcoar:URI",
+        "dc:publisher",
+        "dcndl:dateGranted",
+        "datacite:date",
+        "jpcoar:publisher_jpcoar"
+    ]
+    result_3_check_list_2: list = []
+    for result_3_check_item_1 in result_3_check_list_1:
+        for result_3_key in result_3_keys:
+            if result_3_check_item_1 in result_3.get(result_3_key):
+                result_3_check_list_2.append(result_3_check_item_1)
+    assert len(result_3_check_list_1) == len(result_3_check_list_2)
+
+    #* 別表2-5 JaLC DOI
+    recid4, depid4, record4, item4, parent4, doi4, deposit4 = db_records_for_doi_validation_test[4]
+    result_4: dict = item_metadata_validation(
+        item_id=recid4.object_uuid,
+        identifier_type="1",
+        record=record4,
+    )
+    result_4_keys: list = list(result_4.keys())
+    result_4_check_list_1: list = [
+        "jpcoar:URI",
+        "jpcoar:givenName",
+        "dc:publisher",
+        "dcndl:dateGranted",
+        "jpcoar:creatorName",
+        "datacite:date",
+        "jpcoar:publisher_jpcoar"
+    ]
+    result_4_check_list_2: list = []
+    for result_4_check_item_1 in result_4_check_list_1:
+        for result_4_key in result_4_keys:
+            if result_4_check_item_1 in result_4.get(result_4_key):
+                result_4_check_list_2.append(result_4_check_item_1)
+    assert len(result_4_check_list_1) == len(result_4_check_list_2)
+
+    #* 別表2-6 JaLC DOI
+    recid5, depid5, record5, item5, parent5, doi5, deposit5 = db_records_for_doi_validation_test[5]
+    result_5: dict = item_metadata_validation(
+        item_id=recid5.object_uuid,
+        identifier_type="1",
+        record=record5,
+    )
+    result_5_keys: list = list(result_5.keys())
+    result_5_check_list_1: list = [
+        "jpcoar:URI",
+        "dc:publisher",
+        "dcndl:dateGranted",
+        "datacite:date",
+        "jpcoar:publisher_jpcoar"
+    ]
+    result_5_check_list_2: list = []
+    for result_5_check_item_1 in result_5_check_list_1:
+        for result_5_key in result_5_keys:
+            if result_5_check_item_1 in result_5.get(result_5_key):
+                result_5_check_list_2.append(result_5_check_item_1)
+    assert len(result_5_check_list_1) == len(result_5_check_list_2)
+
+    #* 別表3-1 Crossref DOI
+    recid6, depid6, record6, item6, parent6, doi6, deposit6 = db_records_for_doi_validation_test[6]
+    result_6: dict = item_metadata_validation(
+        item_id=recid6.object_uuid,
+        identifier_type="2",
+        record=record6,
+    )
+    result_6_keys: list = list(result_6.keys())
+    result_6_check_list_1: list = [
+        "jpcoar:URI",
+        "jpcoar:sourceIdentifier",
+        "dc:publisher",
+        "dcndl:dateGranted",
+        "jpcoar:sourceTitle",
+        "datacite:date",
+        "jpcoar:publisher_jpcoar"
+    ]
+    result_6_check_list_2: list = []
+    for result_6_check_item_1 in result_6_check_list_1:
+        for result_6_key in result_6_keys:
+            if result_6_check_item_1 in result_6.get(result_6_key):
+                result_6_check_list_2.append(result_6_check_item_1)
+    assert len(result_6_check_list_1) == len(result_6_check_list_2)
+
+    #* 別表3-2 Crossref DOI
+    recid7, depid7, record7, item7, parent7, doi7, deposit7 = db_records_for_doi_validation_test[7]
+    result_7: dict = item_metadata_validation(
+        item_id=recid7.object_uuid,
+        identifier_type="2",
+        record=record7,
+    )
+    result_7_keys: list = list(result_7.keys())
+    result_7_check_list_1: list = [
+        "jpcoar:URI",
+        "dc:publisher",
+        "dcndl:dateGranted",
+        "datacite:date",
+        "jpcoar:publisher_jpcoar"
+    ]
+    result_7_check_list_2: list = []
+    for result_7_check_item_1 in result_7_check_list_1:
+        for result_7_key in result_7_keys:
+            if result_7_check_item_1 in result_7.get(result_7_key):
+                result_7_check_list_2.append(result_7_check_item_1)
+    assert len(result_7_check_list_1) == len(result_7_check_list_2)
+
+    #* 別表4-1 DataCite DOI
+    recid8, depid8, record8, item8, parent8, doi8, deposit8 = db_records_for_doi_validation_test[8]
+    result_8: dict = item_metadata_validation(
+        item_id=recid8.object_uuid,
+        identifier_type="3",
+        record=record8,
+    )
+    result_8_keys: list = list(result_8.keys())
+    result_8_check_list_1: list = [
+        "jpcoar:URI",
+        "jpcoar:givenName",
+        "dc:publisher",
+        "dcndl:dateGranted",
+        "jpcoar:creatorName",
+        "datacite:date",
+        "jpcoar:publisher_jpcoar"
+    ]
+    result_8_check_list_2: list = []
+    for result_8_check_item_1 in result_8_check_list_1:
+        for result_8_key in result_8_keys:
+            if result_8_check_item_1 in result_8.get(result_8_key):
+                result_8_check_list_2.append(result_8_check_item_1)
+    assert len(result_8_check_list_1) == len(result_8_check_list_2)
+
+    #* 別表4-1 DataCite DOI ~ Testing jpcoar:givenName, jpcoar:creatorName, dc:publisher, jpcoar:publisherName for "en" value
+    recid8, depid8, record8, item8, parent8, doi8, deposit8 = db_records_for_doi_validation_test[8]
+    result_8: dict = item_metadata_validation(
+        item_id=recid8.object_uuid,
+        identifier_type="3",
+        record=record8,
+    )
+    result_8_keys: list = list(result_8.keys())
+    result_8_check_list_1: list = [
+        "jpcoar:URI",
+        "jpcoar:givenName",
+        "dc:publisher",
+        "dcndl:dateGranted",
+        "jpcoar:creatorName",
+        "datacite:date",
+        "jpcoar:publisher_jpcoar"
+    ]
+    result_8_check_list_2: list = []
+    for result_8_check_item_1 in result_8_check_list_1:
+        for result_8_key in result_8_keys:
+            if result_8_check_item_1 in result_8.get(result_8_key):
+                result_8_check_list_2.append(result_8_check_item_1)
+    assert len(result_8_check_list_1) == len(result_8_check_list_2)
+
+
 # def merge_doi_error_list(current, new):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_merge_doi_error_list():#c
@@ -356,18 +595,18 @@ def test_validation_item_property(db_records,item_type,mocker):
     not_error = {"required":[],"either":[],"pattern":[],"mapping":[]}
     with patch("weko_workflow.utils.validattion_item_property_required",return_value=None):
         with patch("weko_workflow.utils.validattion_item_property_either_required",return_value=None):
-            result = validation_item_property(mapping_item,properties)
+            result = validation_item_property(mapping_item,properties,"1")
             assert result == None
 
     required_error = {"required":["error1"],"either":[],"pattern":[],"mapping":[]}
     either_error = {"required":[],"either":["error2"],"pattern":[],"mapping":[]}
     with patch("weko_workflow.utils.validattion_item_property_required",return_value=required_error):
         with patch("weko_workflow.utils.validattion_item_property_either_required",return_value=either_error):
-            result = validation_item_property(mapping_item,properties)
+            result = validation_item_property(mapping_item,properties,"1")
             assert result == {"required":["error1"],"required_key":[],"either":["error2"],"either_key":[],"pattern":[],"mapping":[]}
 
     properties = {}
-    result = validation_item_property(mapping_item, properties)
+    result = validation_item_property(mapping_item, properties,"1")
     assert result == None
 
 
@@ -397,8 +636,80 @@ def test_handle_check_required_data(db_records, item_type):#c
 
 
 # def handle_check_required_pattern_and_either(mapping_data, mapping_keys,
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_handle_check_required_pattern_and_either -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_handle_check_required_pattern_and_either(db,item_type):
+    # mapping_data is None, mapping_key is None
+    result = handle_check_required_pattern_and_either(None,None,None)
+    assert result == None
+    
+    rec_uuid1 = uuid.uuid4()
+    record_data = {
+        "path":["1"],"recid":"1","title":["title"],"item_title": "title","item_type_id": "1",
+        "item_1617186331708": {"attribute_name": "Title","attribute_value_mlt": [{ "subitem_1551255647225": "title1"}]},
+        "item_1617258105262": {"attribute_name": "Resource Type","attribute_value_mlt": [{"resourceuri": "http://purl.org/coar/resource_type/c_5794","resourcetype": "conference paper"}]},
+        "item_1617605131499": {"attribute_name": "File","attribute_type": "file","attribute_value_mlt": [{"url": {"url": "https://localhost/record/1/files/test.txt"},"date": [{"dateType": "Available","dateValue": "2022-10-03"}],"format": "text/tab-separated-values","filename": "check_2022-03-10.tsv","filesize": [{"value": "460 B"}],"accessrole": "open_access","version_id": "29dd361d-dc7f-49bc-b471-bdb5752afef5","displaytype": "detail","licensetype": "license_12",}]}
+    }
+    record = record = WekoRecord.create(record_data, id_=rec_uuid1)
+    mapping_data = MappingData(record=record)
+    # identifier_type = JaLC, not exist error
+    result = handle_check_required_pattern_and_either(mapping_data,["dc:title"],"1")
+    assert result == None
+    
+    
+    rec_uuid2 = uuid.uuid4()
+    record_data = {
+        "path":["1"],"recid":"2","title":["title"],"item_title": "title","item_type_id": "1",
+        "item_1617186331708": {"attribute_name": "Title","attribute_value_mlt": [{ "subitem_1551255647225": "title1"}]},
+        "item_1617186941041": {"attribute_name": "Source Title","attribute_value_mlt": [{"subitem_1522650091861": "source_title1","subitem_1522650068558":"en"}]},
+        "item_1617258105262": {"attribute_name": "Resource Type","attribute_value_mlt": [{"resourceuri": "http://purl.org/coar/resource_type/c_5794","resourcetype": "conference paper"}]},
+        "item_1617605131499": {"attribute_name": "File","attribute_type": "file","attribute_value_mlt": [{"url": {"url": "https://localhost/record/1/files/test.txt"},"date": [{"dateType": "Available","dateValue": "2022-10-03"}],"format": "text/tab-separated-values","filename": "check_2022-03-10.tsv","filesize": [{"value": "460 B"}],"accessrole": "open_access","version_id": "29dd361d-dc7f-49bc-b471-bdb5752afef5","displaytype": "detail","licensetype": "license_12",}]}
+    }
+    record = record = WekoRecord.create(record_data, id_=rec_uuid2)
+    mapping_data = MappingData(record=record)
+    # current pattern
+    result = handle_check_required_pattern_and_either(mapping_data,['jpcoar:sourceTitle'],"1")
+    assert result == None
+    
 
+    rec_uuid3 = uuid.uuid4()
+    record_data = {
+        "path":["1"],"recid":"3","title":["title"],"item_title": "title","item_type_id": "1",
+        "item_1617186331708": {"attribute_name": "Title","attribute_value_mlt": [{ "subitem_1551255647225": "title1"}]},
+        "item_1617186941041": {"attribute_name": "Source Title","attribute_value_mlt": [{"subitem_1522650091861": "source_title1","subitem_1522650068558":"ja"}]},
+        "item_1617258105262": {"attribute_name": "Resource Type","attribute_value_mlt": [{"resourceuri": "http://purl.org/coar/resource_type/c_5794","resourcetype": "conference paper"}]},
+        "item_1617605131499": {"attribute_name": "File","attribute_type": "file","attribute_value_mlt": [{"url": {"url": "https://localhost/record/1/files/test.txt"},"date": [{"dateType": "Available","dateValue": "2022-10-03"}],"format": "text/tab-separated-values","filename": "check_2022-03-10.tsv","filesize": [{"value": "460 B"}],"accessrole": "open_access","version_id": "29dd361d-dc7f-49bc-b471-bdb5752afef5","displaytype": "detail","licensetype": "license_12",}]}
+    }
+    record = record = WekoRecord.create(record_data, id_=rec_uuid3)
+    mapping_data = MappingData(record=record)
+    # not current pattern
+    result = handle_check_required_pattern_and_either(mapping_data,['jpcoar:sourceTitle'],"1")
+    assert result == {'required': [], 'required_key': [], 'pattern': ['item_1617186941041.subitem_1522650068558'], 'either': [], 'either_key': [], 'mapping': []}
+    
+    # not exist mapping
+    with patch("weko_workflow.utils.DOI_VALIDATION_INFO_JALC",{"dc:title":[["not_exist.@value",None]]}):
+        result = handle_check_required_pattern_and_either(mapping_data,["dc:title"],"1")
+        assert result == {'required': [], 'required_key': [], 'pattern': [], 'either': [], 'either_key': [], 'mapping': ['dc:title']}
+        
+    # identifier_type = Crossref
+    # exist requirements, is_either = False
+    result = handle_check_required_pattern_and_either(mapping_data,["dc:title"],"2")
+    assert result == {'required': ['item_1617186331708.subitem_1551255648112'], 'required_key': ['dc:title'], 'pattern': [], 'either': [], 'either_key': [], 'mapping': []}
+    
+    rec_uuid4 = uuid.uuid4()
+    record_data = {
+        "path":["1"],"recid":"4","title":["title"],"item_title": "title","item_type_id": "1",
+        "item_1617258105262": {"attribute_name": "Resource Type","attribute_value_mlt": [{"resourceuri": "http://purl.org/coar/resource_type/c_5794","resourcetype": "conference paper"}]},
+        "item_1617605131499": {"attribute_name": "File","attribute_type": "file","attribute_value_mlt": [{"url": {"url": "https://localhost/record/1/files/test.txt"},"date": [{"dateType": "Available","dateValue": "2022-10-03"}],"format": "text/tab-separated-values","filename": "check_2022-03-10.tsv","filesize": [{"value": "460 B"}],"accessrole": "open_access","version_id": "29dd361d-dc7f-49bc-b471-bdb5752afef5","displaytype": "detail","licensetype": "license_12",}]}
+    }
+    record = record = WekoRecord.create(record_data, id_=rec_uuid4)
+    mapping_data = MappingData(record=record)
+    # is_either is True, either not in error_list
+    result = handle_check_required_pattern_and_either(mapping_data,["dc:title"],"2",is_either=True)
+    assert result == {'required': [], 'required_key': [], 'pattern': [], 'either': [['item_1617186331708.subitem_1551255647225', 'item_1617186331708.subitem_1551255648112']], 'either_key': ['dc:title'], 'mapping': []}
+    
+    # is_either is True, either in error_list
+    result = handle_check_required_pattern_and_either(mapping_data,["dc:title"],"2",error_list=result,is_either=True)
+    assert result == {'required': [], 'required_key': [], 'pattern': [], 'either': [['item_1617186331708.subitem_1551255647225', 'item_1617186331708.subitem_1551255648112'], [['item_1617186331708.subitem_1551255647225', 'item_1617186331708.subitem_1551255648112']]], 'either_key': ['dc:title', 'dc:title'], 'mapping': []}
 # def validattion_item_property_required(
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 

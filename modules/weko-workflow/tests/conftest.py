@@ -28,6 +28,7 @@ import uuid
 from datetime import datetime
 from six import BytesIO
 import base64
+from mock import patch
 
 import pytest
 from flask import Flask, session, url_for, Response
@@ -71,6 +72,7 @@ from weko_search_ui import WekoSearchUI
 from weko_workflow.models import Activity, ActionStatus, Action, ActivityAction, WorkFlow, FlowDefine, FlowAction, ActionFeedbackMail, ActionIdentifier,FlowActionRole, ActivityHistory,GuestActivity
 from weko_workflow.views import workflow_blueprint as weko_workflow_blueprint
 from weko_workflow.config import WEKO_WORKFLOW_GAKUNINRDM_DATA,WEKO_WORKFLOW_ACTION_START,WEKO_WORKFLOW_ACTION_END,WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION,WEKO_WORKFLOW_ACTION_APPROVAL,WEKO_WORKFLOW_ACTION_ITEM_LINK,WEKO_WORKFLOW_ACTION_OA_POLICY_CONFIRMATION,WEKO_WORKFLOW_ACTION_IDENTIFIER_GRANT,WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION_USAGE_APPLICATION,WEKO_WORKFLOW_ACTION_GUARANTOR,WEKO_WORKFLOW_ACTION_ADVISOR,WEKO_WORKFLOW_ACTION_ADMINISTRATOR,WEKO_WORKFLOW_ACTIVITYLOG_XLS_COLUMNS
+from weko_workflow.utils import generate_guest_activity_token_value
 from weko_theme.views import blueprint as weko_theme_blueprint
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy_utils.functions import create_database, database_exists, \
@@ -82,7 +84,7 @@ from sqlalchemy import event
 from invenio_files_rest.models import Location, Bucket,ObjectVersion
 from invenio_files_rest import InvenioFilesREST
 from invenio_records import InvenioRecords
-
+from invenio_oauth2server import InvenioOAuth2Server
 from invenio_pidrelations import InvenioPIDRelations
 from invenio_pidstore import InvenioPIDStore
 from weko_index_tree.api import Indexes
@@ -212,11 +214,10 @@ def base_app(instance_path, search_class, cache_config):
         SECRET_KEY='SECRET_KEY',
         TESTING=True,
         SERVER_NAME='TEST_SERVER.localdomain',
-        # SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-        #                                   'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/invenio'),
+        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
+                                           'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
         # SQLALCHEMY_DATABASE_URI=os.environ.get(
         #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
-        SQLALCHEMY_DATABASE_URI='postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest',
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         ACCOUNTS_USERINFO_HEADERS=True,
         WEKO_PERMISSION_SUPER_ROLE_USER=['System Administrator',
@@ -511,13 +512,14 @@ def base_app(instance_path, search_class, cache_config):
     search.register_mappings(search_class.Meta.index, 'mock_module.mappings')
     # InvenioCommunities(app_)
     # WekoAdmin(app_)
-    # WekoTheme(app_)
+    WekoTheme(app_)
     WekoSearchUI(app_)
     WekoWorkflow(app_)
     WekoUserProfiles(app_)
     WekoDeposit(app_)
     WekoItemsUI(app_)
     WekoAdmin(app_)
+    InvenioOAuth2Server(app_)
     # WekoRecordsUI(app_)
     # app_.register_blueprint(invenio_theme_blueprint)
     app_.register_blueprint(invenio_communities_blueprint)
@@ -578,6 +580,11 @@ def redis_connect(app):
     redis_connection = RedisConnection().connection(db=app.config['CACHE_REDIS_DB'], kv = True)
     redis_connection.put('updated_json_schema_A-00000001-10001',bytes('test', 'utf-8'))
     return redis_connection
+
+@pytest.fixture()
+def without_remove_session(app):
+    with patch("weko_workflow.views.db.session.remove"):
+        yield
 
 @pytest.fixture()
 def users(app, db):
@@ -1228,6 +1235,18 @@ def db_records(db, location):
     yield result
 
 @pytest.fixture()
+def db_records_for_doi_validation_test(db, location):
+    record_data = json_data("data/test_records_doi_validation_test.json")
+    item_data = json_data("data/test_items_doi_validation_test.json")
+    record_num = len(record_data)
+    result = []
+    for d in range(record_num):
+        result.append(create_record(record_data[d], item_data[d]))
+        db.session.commit()
+
+    yield result
+
+@pytest.fixture()
 def add_file(db, location):
     def factory(record, contents=b'test example', filename="generic_file.txt"):
         b = Bucket.create()
@@ -1484,7 +1503,7 @@ def db_register_fullaction(app, db, db_records, users, action_data, item_type):
         activity_action = ActivityAction(
             activity_id=_activity.activity_id,
             action_id=_flow_action.action_id,
-            action_status="F",
+            action_status="B",
             action_handler=action_handler,
             action_order=_flow_action.action_order
         )
@@ -1532,6 +1551,35 @@ def db_register_fullaction(app, db, db_records, users, action_data, item_type):
         db.session.add(action_identifier1)
         db.session.add(action_identifier3)
     db.session.commit()
+
+    doi_identifier = Identifier(id=1, repository='Root Index',jalc_flag= True,jalc_crossref_flag= True,jalc_datacite_flag=True,ndl_jalc_flag=True,
+        jalc_doi='123',jalc_crossref_doi='456',jalc_datacite_doi='789',ndl_jalc_doi='000',suffix='def',
+        created_userId='1',created_date=datetime.strptime('2022-09-28 04:33:42','%Y-%m-%d %H:%M:%S'),
+        updated_userId='1',updated_date=datetime.strptime('2022-09-28 04:33:42','%Y-%m-%d %H:%M:%S')
+    )
+    doi_identifier2 = Identifier(id=2, repository='test',jalc_flag= True,jalc_crossref_flag= True,jalc_datacite_flag=True,ndl_jalc_flag=True,
+        jalc_doi=None,jalc_crossref_doi=None,jalc_datacite_doi=None,ndl_jalc_doi=None,suffix=None,
+        created_userId='1',created_date=datetime.strptime('2022-09-28 04:33:42','%Y-%m-%d %H:%M:%S'),
+        updated_userId='1',updated_date=datetime.strptime('2022-09-28 04:33:42','%Y-%m-%d %H:%M:%S')
+        )
+    with db.session.begin_nested():
+        db.session.add(doi_identifier)
+        db.session.add(doi_identifier2)
+    db.session.commit()
+
+    gActivity = GuestActivity(
+        user_mail="guest@mail.com",
+        record_id="1",
+        file_name="test",
+        activity_id="2",
+        token="token",
+        expiration_date=5,
+        is_usage_report=True
+    )
+    with db.session.begin_nested():
+        db.session.add(gActivity)
+    db.session.commit()
+
     return {"flow_actions":flow_actions,
             "activities":[activity,activity_item1,activity_item2,activity_item3,activity_item4,activity_item5,activity_item6]}
 
@@ -1552,11 +1600,40 @@ def get_mapping_data(db):
 
 
 @pytest.fixture()
-def db_guestactivity(db):
-    record = GuestActivity(user_mail="user_mail",record_id="record_id",file_name="file_name",activity_id="activity_id",token="token",expiration_date=datetime.utcnow(),is_usage_report=False)
+def db_guestactivity(app, db, db_register):
+    activity_id1 = db_register['activities'][1].activity_id
+    activity_id2 = db_register['activities'][0].activity_id
+    file_name = "Test_file"
+    guest_mail = "user@test.com"
+    
+    token1 = generate_guest_activity_token_value(activity_id1, file_name, datetime.utcnow(), guest_mail)
+    record1 = GuestActivity(
+        user_mail=guest_mail,
+        record_id="record_id",
+        file_name=file_name,
+        activity_id=activity_id1,
+        token=token1,
+        expiration_date=-500,
+        is_usage_report=True
+    )
+
+    token2 = generate_guest_activity_token_value(activity_id2, file_name, datetime.utcnow(), guest_mail)
+    record2 = GuestActivity(
+        user_mail=guest_mail,
+        record_id="record_id",
+        file_name=file_name,
+        activity_id=activity_id2,
+        token=token2,
+        expiration_date=500,
+        is_usage_report=True
+    )
+
     with db.session.begin_nested():
-        db.session.add(record)
+        db.session.add(record1)
+        db.session.add(record2)
     db.session.commit()
+
+    return [token1, token2]
     
 
 

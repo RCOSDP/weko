@@ -307,6 +307,7 @@ def test_getEncode():
 
     for f in csv_files:
         filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "csv",f['file'])
+        print(filepath)
         assert getEncode(filepath) == f['enc']
 
 

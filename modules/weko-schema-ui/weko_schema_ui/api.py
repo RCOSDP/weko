@@ -169,6 +169,5 @@ class WekoSchema(RecordBase):
         """Aaa."""
         with db.session.begin_nested():
             obj = OAIServerSchema.query.filter_by(id=pid).one()
-        db.session.delete(obj)
-        db.session.commit()
+            db.session.delete(obj)
         return obj.schema_name
