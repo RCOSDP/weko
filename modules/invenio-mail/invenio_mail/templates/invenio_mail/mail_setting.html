@@ -105,6 +105,18 @@
   </div>
   <div class="row">
     <div class="col-sm-2 text-right">
+      <label>Domain</label>
+    </div>
+    <div class="col-xs-2">
+      <input type="text" class="form-control" name="mail_local_hostname" id="mail_local_hostname"
+        {% if mail_cfg['mail_local_hostname'] %}
+            value={{mail_cfg['mail_local_hostname']}}
+        {% endif %}
+      >
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-sm-2 text-right">
       <label>{{_("Default sender")}}</label>
     </div>
     <div class="col-xs-2">

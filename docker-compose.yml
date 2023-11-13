@@ -146,10 +146,11 @@ services:
     # pscap apt-get install libcap-ng-utils
     #cap_add:
     #  - SYS_ADMIN
+    oom_kill_disable: true
     deploy:
       resources:
         limits:
-          memory: 2000m
+          memory: 8000m
 
   postgresql:
     restart: "always"

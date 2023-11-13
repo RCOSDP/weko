@@ -225,7 +225,6 @@ def _generate_id():
 def get_stats_events_partition_tables():
     query = "select tablename from pg_tables where tablename like 'stats_events_%'"
     tables = db.session.execute(query).fetchall()
-    db.session.commit()
 
     return [a[0] for a in tables]
 

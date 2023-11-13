@@ -221,38 +221,52 @@ def test_post(client, headers, permissions, bucket):
         )
         assert resp.status_code == expected
 
-
-def test_put(client, bucket, permissions, get_sha256, get_json):
+# .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_views_objectversion.py::test_put -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
+@pytest.mark.parametrize('user, expected', [
+    (None, 404),
+    ('auth', 404),
+    ('objects', 404),
+    ('bucket', 200),
+    ('location', 200),
+])
+def test_put(client, bucket, permissions, get_sha256, get_json, user, expected):
     """Test upload of an object."""
-    cases = [
-        (None, 404),
-        ('auth', 404),
-        ('objects', 404),
-        ('bucket', 200),
-        ('location', 200),
-    ]
-
     key = 'test.txt'
     data = b'updated_content'
     checksum = get_sha256(data, prefix=True)
     object_url = url_for(
         'invenio_files_rest.object_api', bucket_id=bucket.id, key=key)
 
-    for user, expected in cases:
-        login_user(client, permissions[user])
+    login_user(client, permissions[user])
+    resp = client.put(
+        object_url,
+        input_stream=BytesIO(data),
+    )
+    assert resp.status_code == expected
+
+    # if expected == 200:
+    #     assert resp.get_etag()[0] == checksum
+
+    #     resp = client.get(object_url)
+    #     assert resp.status_code == 200
+    #     assert resp.data == data
+
+# .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_views_objectversion.py::test_put_fail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
+def test_put_fail(client, bucket, permissions, get_sha256, get_json):
+    """Test upload of an object."""
+    key = 'test.txt'
+    data = b'updated_content'
+    checksum = get_sha256(data, prefix=True)
+    object_url = url_for(
+        'invenio_files_rest.object_api', bucket_id=bucket.id, key=key)
+
+    login_user(client, permissions['location'])
+    with patch("invenio_files_rest.views.db.session.commit", side_effect=Exception('')):
         resp = client.put(
             object_url,
             input_stream=BytesIO(data),
         )
-        assert resp.status_code == expected
-
-        # if expected == 200:
-        #     assert resp.get_etag()[0] == checksum
-
-        #     resp = client.get(object_url)
-        #     assert resp.status_code == 200
-        #     assert resp.data == data
-
+        assert resp.status_code == 200
 
 def test_put_versioning(client, bucket, permissions, get_json):
     """Test versioning feature."""
@@ -401,7 +415,7 @@ def test_put_multipartform(client, bucket, admin_user):
     })
     assert res.status_code == 200
 
-
+# # .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_views_objectversion.py::test_delete -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
 # @pytest.mark.parametrize('user, expected', [
 #     (None, 404),
 #     ('auth', 404),

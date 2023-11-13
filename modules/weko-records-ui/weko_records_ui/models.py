@@ -111,7 +111,7 @@ class PDFCoverPageSettings(db.Model):
         record.header_output_string = settings.header_output_string
         record.header_output_image = settings.header_output_image
         record.header_display_position = settings.header_display_position
-        db.session.commit()
+
         return record
 
 
@@ -241,7 +241,6 @@ class FilePermission(db.Model):
                                          status_initialized
                                          )
         db.session.add(file_permission)
-        db.session.commit()
         return cls
 
     @classmethod
@@ -249,7 +248,6 @@ class FilePermission(db.Model):
         """Update a permission 's status."""
         permission.status = status
         db.session.merge(permission)
-        db.session.commit()
         return permission
 
     @classmethod
@@ -257,7 +255,6 @@ class FilePermission(db.Model):
         """Update a permission 's open date."""
         permission.open_date = open_date
         db.session.merge(permission)
-        db.session.commit()
         return permission
 
     @classmethod
@@ -273,7 +270,6 @@ class FilePermission(db.Model):
         """Update a permission 's usage report."""
         permission.usage_report_activity_id = activity_id
         db.session.merge(permission)
-        db.session.commit()
         return permission
 
     @classmethod
@@ -283,7 +279,6 @@ class FilePermission(db.Model):
         @rtype: object
         """
         db.session.delete(permission)
-        db.session.commit()
 
 
 class FileOnetimeDownload(db.Model, Timestamp):

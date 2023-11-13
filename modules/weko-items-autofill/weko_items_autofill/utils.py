@@ -1297,14 +1297,15 @@ def get_wekoid_record_data(recid, item_type_id):
         if values and values[0] and mapping_key not in ignore_mapping:
             item_map_data_src[mapping_key] = values[0]
     # Get destination mapping info.
-    mapping_des = Mapping.get_record(item_type_id)
-    item_map_des = get_mapping(mapping_des, "jpcoar_mapping")
+    item_map_des = get_mapping(item_type_id, "jpcoar_mapping")
     item_map_data_des = {}
-    for mapping_key, item_key in item_map_des.items():
-        if mapping_key in item_map_data_src.keys():
-            value = item_map_data_src.get(mapping_key)
-            if not all(x is None for x in value):
-                item_map_data_des[item_key] = value
+    for mapping_key, item_key_str in item_map_des.items():
+        for item_key in item_key_str.split(','):
+            if mapping_key in item_map_data_src.keys():
+                value = item_map_data_src.get(mapping_key)
+                if not all(x is None for x in value):
+                    item_map_data_des[item_key] = value
+                    break
     # Convert structure of schema to record model.
     record_model = build_record_model_for_wekoid(
         item_type_id, item_map_data_des)
@@ -1403,7 +1404,7 @@ def set_val_for_record_model(record_model, item_map_data):
         keys = k.split('.')
         if len(keys) > the_most_levels:
             the_most_levels = len(keys)
-        set_val_for_all_child(keys, record_model, item_map_data.get(k))
+        set_val_for_all_child(keys, record_model, v)
     # Remove item if value is empty.
     # values map with this condition => remove.
     condition = [[], {}, [{}], '']
@@ -1432,10 +1433,10 @@ def set_val_for_all_child(keys, models, values):
                 if k == keys[-1]:
                     model_temp[k] = val if val else ''
     if isinstance(model_temp, list):
-        if len(model_temp) == len(values):
-            # Set value for case multiple data.
-            i = 0
-            for val in values:
+        organization_item = copy.deepcopy(model_temp[0])
+        for i, val in enumerate(values):
+            if i < len(model_temp):
+                # Set value for case multiple data.
                 if not model_temp[i].get(keys[-1]) is None and model_temp[i][
                         keys[-1]].get(keys[-1]) is None:
                     model_temp[i][keys[-1]] = val if val else ''
@@ -1448,12 +1449,8 @@ def set_val_for_all_child(keys, models, values):
                                 keys[-1]) is None:
                             model_temp[i][k] = v
                             model_temp[i][k][0][keys[-1]] = val if val else ''
-                i += 1
-        else:
-            # The first time set value for this item.
-            organization_item = model_temp[0]
-            model_temp.remove(organization_item)
-            for val in values:
+            else:
+                # The first time set value for this item.
                 temp = copy.deepcopy(organization_item)
                 if not temp.get(keys[-1]) is None and temp[keys[-1]].get(
                         keys[-1]) is None:

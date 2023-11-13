@@ -198,10 +198,17 @@ def app(request, search_class):
             )
         },
         SERVER_NAME='localhost:5000',
+        SEARCH_UI_SEARCH_INDEX="{}-weko".format("test"),
+        CACHE_TYPE="redis",
+        CACHE_REDIS_DB=0,
+        CACHE_REDIS_HOST="redis",
+        REDIS_PORT="6379",
+        ACCOUNTS_SESSION_REDIS_DB_NO=1,
         # SQLALCHEMY_DATABASE_URI=os.environ.get(
         #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'
         # ),
-        SQLALCHEMY_DATABASE_URI='postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest',
+        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
+                                          'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         TESTING=True,
     )

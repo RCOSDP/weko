@@ -60,6 +60,7 @@
   {% set guest_email = activity.extra_info.guest_mail %}
 {% endif %}
 {%- block page_body_main %}
+{{ form.csrf_token }}
 <div class="row">
   {%- if community %}
   <div id="community_id" class="hide">{{community.id}}</div>
@@ -221,6 +222,9 @@
                     </div>
                   </div>
                   <div class="panel-footer">
+                    <button type="button" class="btn btn-info next-button" id="btn-back">
+                      <span class="glyphicon glyphicon-chevron-left"></span>{{_('Back')}}
+                    </button>
                     <button type="button" class="btn btn-primary save-button" id="btn-draft">
                       <span class="glyphicon glyphicon-saved"></span>
                       {{_('Save')}}

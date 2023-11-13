@@ -149,8 +149,10 @@ def shib_auto_login():
             shib_user.shib_user_login()
 
         datastore.delete(cache_key)
+        db.session.commit()
         return redirect(session['next'] if 'next' in session else '/')
     except BaseException:
+        db.session.rollback()
         current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
     return abort(400)
 
@@ -331,7 +333,16 @@ def shib_stub_login():
         return abort(403)
 
     session['next'] = request.args.get('next', '/')
+    return_url = _shib_login_url.format(request.url_root)
 
+    sp_entityID = "https://" + current_app.config["WEB_HOST_NAME"]+"/shibboleth-sp"
+    if 'SP_ENTITYID' in current_app.config:
+        sp_entityID = current_app.config['SP_ENTITYID']
+    
+    sp_handlerURL = "https://" + current_app.config["WEB_HOST_NAME"]+"/Shibboleth.sso"
+    if 'SP_HANDLERURL' in current_app.config:
+        sp_handlerURL = current_app.config['SP_HANDLERURL']
+    
     # LOGIN USING JAIROCLOUD PAGE
     if current_app.config['WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED']:
         return redirect(_shib_login_url.format(request.url_root))
@@ -339,6 +350,9 @@ def shib_stub_login():
         return render_template(
             current_app.config[
                 'WEKO_ACCOUNTS_SECURITY_LOGIN_SHIB_USER_TEMPLATE'],
+            sp_entityID = sp_entityID,
+            sp_handlerURL = sp_handlerURL,
+            return_url = return_url,
             module_name=_('WEKO-Accounts'))
 
 

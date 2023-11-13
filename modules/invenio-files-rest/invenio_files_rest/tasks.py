@@ -49,17 +49,20 @@ def verify_checksum(file_id, pessimistic=False, chunk_size=None, throws=True,
 
     :param file_id: The file ID.
     """
-    f = FileInstance.query.get(uuid.UUID(file_id))
+    try:
+        f = FileInstance.query.get(uuid.UUID(file_id))
 
-    # Anything might happen during the task, so being pessimistic and marking
-    # the file as unchecked is a reasonable precaution
-    if pessimistic:
-        f.clear_last_check()
+        # Anything might happen during the task, so being pessimistic and marking
+        # the file as unchecked is a reasonable precaution
+        if pessimistic:
+            f.clear_last_check()
+        f.verify_checksum(
+            progress_callback=progress_updater, chunk_size=chunk_size,
+            throws=throws, checksum_kwargs=checksum_kwargs)
         db.session.commit()
-    f.verify_checksum(
-        progress_callback=progress_updater, chunk_size=chunk_size,
-        throws=throws, checksum_kwargs=checksum_kwargs)
-    db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(e)
 
 
 def default_checksum_verification_files_query():
@@ -171,30 +174,26 @@ def migrate_file(src_id, location_name, post_fixity_check=False):
     :param post_fixity_check: Verify checksum after migration.
         (Default: ``False``)
     """
-    location = Location.get_by_name(location_name)
-    f_src = FileInstance.get(src_id)
-
-    # Create destination
-    f_dst = FileInstance.create()
-    db.session.commit()
-
     try:
+        location = Location.get_by_name(location_name)
+        f_src = FileInstance.get(src_id)
+
+        # Create destination
+        f_dst = FileInstance.create()
+    
         # Copy contents
         f_dst.copy_contents(
             f_src,
             progress_callback=progress_updater,
             default_location=location.uri,
         )
-        db.session.commit()
-    except Exception:
-        # Remove destination file instance if an error occurred.
-        db.session.delete(f_dst)
-        db.session.commit()
-        raise
 
-    # Update all objects pointing to file.
-    ObjectVersion.relink_all(f_src, f_dst)
-    db.session.commit()
+        # Update all objects pointing to file.
+        ObjectVersion.relink_all(f_src, f_dst)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(e)
 
     # Start a fixity check
     if post_fixity_check:
@@ -216,6 +215,7 @@ def remove_file_data(file_id, silent=True):
         # ensure integrity constraints are checked and enforced.
         f = FileInstance.get(file_id)
         if not f.writable:
+            db.session.commit()
             return
         f.delete()
         db.session.commit()
@@ -224,8 +224,12 @@ def remove_file_data(file_id, silent=True):
         # disk file removal doesn't work.
         f.storage().delete()
     except IntegrityError:
+        db.session.rollback()
         if not silent:
             raise
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(e)
 
 
 @shared_task()

@@ -280,7 +280,7 @@ def base_app(instance_path, search_class, request):
         INDEXER_DEFAULT_INDEX="{}-weko-item-v1.0.0".format("test"),
         INDEX_IMG="indextree/36466818-image.jpg",
         # SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-        #                                   'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/invenio'),
+        #                                   'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
         # SQLALCHEMY_DATABASE_URI=os.environ.get(
         #     "SQLALCHEMY_DATABASE_URI", "sqlite:///test.db"
         # ),
@@ -1025,6 +1025,57 @@ def indices(app, db):
         "index_non_dict": testIndexThree,
         "index_non_dict_child": testIndexThreeChild,
     }
+
+
+@pytest.fixture
+def indices2(app, db):
+    dict_list = []
+    with db.session.begin_nested():
+        testIndexA = Index(
+            index_name="A",
+            index_name_english="A",
+            browsing_role="3,-98,-99",
+            parent=0,
+            position=1,
+            public_state=True,
+            id=1
+        )
+        testIndexAC = Index(
+            index_name="C",
+            index_name_english="C",
+            browsing_role="3,-98,-99",
+            parent=1,
+            position=1,
+            public_state=True,
+            id=2
+        )
+        testIndexB = Index(
+            index_name="B",
+            index_name_english="B",
+            browsing_role="3,-98,-99",
+            parent=0,
+            position=2,
+            public_state=True,
+            id=3
+        )
+        testIndexBC = Index(
+            index_name="C",
+            index_name_english="C",
+            browsing_role="3,-98,-99",
+            parent=3,
+            position=1,
+            public_state=True,
+            id=4
+        )
+
+        db.session.add(testIndexA)
+        db.session.add(testIndexAC)
+        db.session.add(testIndexB)
+        db.session.add(testIndexBC)
+        dict_list.append(testIndexA)
+        dict_list.append(testIndexAC)
+        dict_list.append(testIndexB)
+        dict_list.append(testIndexBC)
 
 
 @pytest.fixture()

@@ -103,7 +103,7 @@ def test_wekobibtexserializer(app, records):
     assert isinstance(serializer,WekoBibTexSerializer)
     ret = serializer.serialize(pid,record)
     assert ret==('@misc{oai:weko3.example.org:00000001,\n'
-                 ' author = {情報, 太郎 and ジョウホウ, タロウ and xxxxxxx and Joho, Taro and xxxxxxx and zzzzzzz and 情報, 太郎 and ジョウホウ, タロウ and xxxxxxx and Joho, Taro and zzzzzzz and 情報, 太郎 and ジョウホウ, タロウ and xxxxxxx and Joho, Taro and zzzzzzz},\n'
+                 ' author = {情報, 太郎 and Joho, Taro and 情報, 太郎 and Joho, Taro and 情報, 太郎 and Joho, Taro},\n'
                  ' month = {Jun, Jun, },\n'
                  ' note = {Description\n'
                  'Description<br/>Description, 概要\n'
@@ -113,7 +113,7 @@ def test_wekobibtexserializer(app, records):
                  ' title = {ja_conference '
                  'paperITEM00000009(public_open_access_open_access_simple)},\n'
                  ' year = {2021, 2021, 2021},\n'
-                 ' yomi = {4 and xxxxxxx and xxxxxxx}\n'
+                 ' yomi = {ジョウホウ, タロウ and ジョウホウ, タロウ and ジョウホウ, タロウ}\n'
                  '}\n'
                  '\n')
 
@@ -123,7 +123,7 @@ def test_wekobibtexserializer(app, records):
     assert isinstance(serializer,WekoBibTexSerializer)
     ret = serializer.serialize(pid,record)
     assert ret==('@inproceedings{oai:weko3.example.org:00000002,\n'
-                 ' author = {情報, 太郎 and ジョウホウ, タロウ and xxxxxxx and Joho, Taro and xxxxxxx and zzzzzzz and 情報, 太郎 and ジョウホウ, タロウ and xxxxxxx and Joho, Taro and zzzzzzz and 情報, 太郎 and ジョウホウ, タロウ and xxxxxxx and Joho, Taro and zzzzzzz},\n'
+                 ' author = {情報, 太郎 and Joho, Taro and 情報, 太郎 and Joho, Taro and 情報, 太郎 and Joho, Taro},\n'
                  ' book = {Source Title},\n'
                  ' issue = {111},\n'
                  ' month = {Jun, Jun, },\n'
@@ -133,12 +133,12 @@ def test_wekobibtexserializer(app, records):
                  '概要\n'
                  '概要},\n'
                  ' pages = {1--3},\n'
-                 ' publisher = {Publisher},\n'
+                 ' publisher = {unknown},\n'
                  ' title = {ja_conference '
                  'paperITEM00000009(public_open_access_open_access_simple)},\n'
                  ' volume = {1},\n'
                  ' year = {2021, 2021, 2021},\n'
-                 ' yomi = {4 and xxxxxxx and xxxxxxx}\n'
+                 ' yomi = {ジョウホウ, タロウ and ジョウホウ, タロウ and ジョウホウ, タロウ}\n'
                  '}\n'
                  '\n')
 

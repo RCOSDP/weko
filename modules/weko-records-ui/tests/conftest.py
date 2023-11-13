@@ -33,6 +33,7 @@ from datetime import datetime
 from collections import OrderedDict
 from unittest.mock import patch
 from datetime import timedelta
+from kombu import Exchange, Queue
 
 import pytest
 from elasticsearch import Elasticsearch
@@ -195,7 +196,8 @@ def base_app(instance_path):
         # SQLALCHEMY_DATABASE_URI=os.environ.get(
         #     "SQLALCHEMY_DATABASE_URI", "sqlite:///test.db"
         # ),
-        SQLALCHEMY_DATABASE_URI='postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest',
+        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
+                                           'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         SQLALCHEMY_ECHO=False,
         TESTING=True,
@@ -264,6 +266,7 @@ def base_app(instance_path):
         WEKO_RECORDS_UI_SECRET_KEY=WEKO_RECORDS_UI_SECRET_KEY,
         WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN=WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN,
         WEKO_ADMIN_PDFCOVERPAGE_TEMPLATE=WEKO_ADMIN_PDFCOVERPAGE_TEMPLATE,
+        INDEXER_MQ_QUEUE = Queue("indexer", exchange=Exchange("indexer", type="direct"), routing_key="indexer",queue_arguments={"x-queue-type":"quorum"})
     )
     # with ESTestServer(timeout=30) as server:
     Babel(app_)
@@ -685,7 +688,7 @@ def records(app, db, esindex, indextree, location, itemtypes, oaischema):
     filename = "helloworld.pdf"
     mimetype = "application/pdf"
     filepath = "tests/data/helloworld.pdf"
-    results.append(make_record(db, indexer, i, filepath, filename, mimetype))
+    results.append(make_record(db, indexer, i, filepath, filename, mimetype, file_head=True))
 
     i = 2
     filename = "helloworld.docx"
@@ -693,18 +696,18 @@ def records(app, db, esindex, indextree, location, itemtypes, oaischema):
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     )
     filepath = "tests/data/helloworld.docx"
-    results.append(make_record(db, indexer, i, filepath, filename, mimetype))
+    results.append(make_record(db, indexer, i, filepath, filename, mimetype, file_head=False))
 
     i = 3
     filename = "helloworld.zip"
     mimetype = "application/zip"
     filepath = "tests/data/helloworld.zip"
-    results.append(make_record(db, indexer, i, filepath, filename, mimetype))
+    results.append(make_record(db, indexer, i, filepath, filename, mimetype, file_head=False))
 
     return indexer, results
 
 
-def make_record(db, indexer, i, filepath, filename, mimetype):
+def make_record(db, indexer, i, filepath, filename, mimetype, file_head):
     record_data = {
         "_oai": {"id": "oai:weko3.example.org:000000{:02d}".format(i), "sets": ["{}".format((i % 2) + 1)]},
         "path": ["{}".format((i % 2) + 1)],
@@ -1738,6 +1741,7 @@ def make_record(db, indexer, i, filepath, filename, mimetype):
         ).decode("utf-8")
     with open(filepath, "rb") as f:
         obj = ObjectVersion.create(bucket=bucket.id, key=filename, stream=f)
+        obj.is_head = file_head
     deposit = aWekoDeposit(record, record.model)
     deposit.commit()
     record["item_1617605131499"]["attribute_value_mlt"][0]["version_id"] = str(
@@ -1771,6 +1775,7 @@ def make_record(db, indexer, i, filepath, filename, mimetype):
     # stream = BytesIO(b"Hello, World")
     record_v1.files[filename] = stream
     obj_v1 = ObjectVersion.create(bucket=bucket_v1.id, key=filename, stream=stream)
+    obj_v1.is_head = False
     record_v1["item_1617605131499"]["attribute_value_mlt"][0]["file"] = (
         base64.b64encode(stream.getvalue())
     ).decode("utf-8")

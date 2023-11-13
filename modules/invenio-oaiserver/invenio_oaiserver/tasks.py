@@ -39,23 +39,27 @@ def update_records_sets(record_ids):
 
     :param record_ids: List of record UUID.
     """
-    _records_commit(record_ids)
-    db.session.commit()
+    try:
+        _records_commit(record_ids)
+        db.session.commit()
 
-    # update record to ES
-    sleep(20)
-    query = (x[0] for x in PersistentIdentifier.query.filter_by(
-        object_type='rec', status=PIDStatus.REGISTERED
-    ).filter(
-        PersistentIdentifier.pid_type.in_(['oai'])
-    ).filter(
-        PersistentIdentifier.object_uuid.in_(record_ids)
-    ).values(
-        PersistentIdentifier.object_uuid
-    ))
-    RecordIndexer().bulk_index(query)
-    RecordIndexer().process_bulk_queue(
-        es_bulk_kwargs={'raise_on_error': True})
+        # update record to ES
+        sleep(20)
+        query = (x[0] for x in PersistentIdentifier.query.filter_by(
+            object_type='rec', status=PIDStatus.REGISTERED
+        ).filter(
+            PersistentIdentifier.pid_type.in_(['oai'])
+        ).filter(
+            PersistentIdentifier.object_uuid.in_(record_ids)
+        ).values(
+            PersistentIdentifier.object_uuid
+        ))
+        RecordIndexer().bulk_index(query)
+        RecordIndexer().process_bulk_queue(
+            es_bulk_kwargs={'raise_on_error': True})
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(e)
 
 
 @shared_task(base=RequestContextTask)

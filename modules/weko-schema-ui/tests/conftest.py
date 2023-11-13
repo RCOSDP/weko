@@ -222,7 +222,8 @@ def base_app(instance_path):
         # SQLALCHEMY_DATABASE_URI=os.environ.get(
         #     "SQLALCHEMY_DATABASE_URI", "sqlite:///test.db"
         # ),
-        SQLALCHEMY_DATABASE_URI='postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest',
+        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
+                                           'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
         CACHE_REDIS_URL="redis://redis:6379/0",
         CACHE_TYPE="redis",
         CACHE_REDIS_DB=0,
@@ -1390,6 +1391,23 @@ def make_record(db, indexer, i, filepath, filename, mimetype):
                         {"lang": "ja-Kana", "contributorName": "ジョウホウ, タロウ"},
                         {"lang": "en", "contributorName": "Joho, Taro"},
                     ],
+                    "contributorAffiliations":[
+                        {
+                            "contributorAffiliationNames": [
+                                {
+                                    "contributorAffiliationName": "University",
+                                    "contributorAffiliationNameLang": "en",
+                                }
+                            ],
+                            "contributorAffiliationNameIdentifiers": [
+                                {
+                                    "contributorAffiliationNameIdentifier": "0000000123456788",
+                                    "contributorAffiliationURI": "http://isni.org/isni/0000000123456788",
+                                    "contributorAffiliationScheme": "ISNI",
+                                }
+                            ],
+                        }
+                    ]
                 },
                 {
                     "givenNames": [
@@ -1995,6 +2013,23 @@ def make_record(db, indexer, i, filepath, filename, mimetype):
                     {"lang": "ja-Kana", "contributorName": "ジョウホ, タロウ"},
                     {"lang": "en", "contributorName": "Joho, Taro"},
                 ],
+                "contributorAffiliations":[
+                    {
+                        "contributorAffiliationNames":[
+                            {
+                                "contributorAffiliationName":"University",
+                                "contributorAffiliationNameLang":"en"
+                            }
+                        ],
+                        "contributorAffiliationNameIdentifiers":[
+                            {
+                                "contributorAffiliationURI":"0000000123456788",
+                                "contributorAffiliationScheme":"http://isni.org/isni/0000000123456788",
+                                "contributorAffiliationNameIdentifier":"ISNI"
+                            }
+                        ]
+                    }
+                ]
             }
         ],
         "item_1617349808926": {"subitem_1523263171732": "Version"},

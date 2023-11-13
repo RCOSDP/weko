@@ -39,6 +39,14 @@ require([
     $(".lds-ring-background").addClass("hidden");
   }
 
+  // click button Back
+  $('#btn-back').on('click', function () {
+    startLoading($(this));
+    if (preparePostData(1, $(this))) {
+      sendBackAction($(this));
+    }
+  });
+
   // click button Next
   $('#btn-finish').on('click', function () {
     startLoading($(this));
@@ -219,6 +227,47 @@ require([
       }
     });
   });
+
+  // back
+  function sendBackAction(actionButton) {
+    let post_uri = data_global.post_uri + "/rejectOrReturn/0";
+    if (!post_uri) {
+      let error_msg = $('#AutoCancelMsg').text();
+      $('#cancelModalBody').text(error_msg);
+      $('#cancelModal').modal('show');
+    }
+    $.ajax({
+      url: post_uri,
+      method: 'POST',
+      async: true,
+      contentType: 'application/json',
+      data: JSON.stringify(data_global.post_data),
+      success: function (data, status) {
+        if (0 == data.code) {
+          if (data.hasOwnProperty('data') &&
+            data.data.hasOwnProperty('redirect')) {
+            document.location.href = data.data.redirect;
+          } else {
+            document.location.reload(true);
+          }
+        } else if (-2 == data.code) {
+          let error_msg = $('#AutoCancelMsg').text();
+          $('#cancelModalBody').text(error_msg);
+          $('#cancelModal').modal('show');
+        } else {
+          endLoading(actionButton);
+          if (data.msg) {
+            alert(data.msg);
+          }
+        }
+      },
+      error: function (jqXHE, status) {
+        endLoading(actionButton);
+        alert('Server error');
+        $('#myModal').modal('hide');
+      }
+    });
+  }
 
   // send
   function sendQuitAction(actionButton) {

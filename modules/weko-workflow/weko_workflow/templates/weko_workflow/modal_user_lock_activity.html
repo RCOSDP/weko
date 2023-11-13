@@ -1,0 +1,41 @@
+{#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
+<div id="action_unlock_activity" class="modal fade" tabindex="-1"
+     role="dialog" aria-labelledby="deleteHeader" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document" style="display: table; width: auto;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <h4 class="modal-title">WEKO</h4>
+      </div>
+      <div class="modal-body" style="overflow-x: auto;">
+        <span class="glyphicon glyphicon-lock fa-3x" style="vertical-align: middle; margin: 0 10px"></span>
+        <span style="margin: 0 10px" id="user_locked_msg">{{ _('Already have another activity open ({}). Close any open activities.')}}</span>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default"
+                data-dismiss="modal">{{_('Cancel')}}</button>
+      </div>
+    </div>
+  </div>
+</div>

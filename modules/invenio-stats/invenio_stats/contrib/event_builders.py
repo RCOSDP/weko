@@ -336,16 +336,23 @@ def build_search_detail_condition(doc):
     return doc
 
 
-def item_create_event_builder(event, sender_app, user_id=None,
-                              item_id=None, item_title=None, **kwargs):
+def item_create_event_builder(event, sender_app, user_id=-1,
+                              item_id=None, item_title=None, admin_action=None, **kwargs):
     """Build a item-create event."""
     if is_valid_access():
+        if admin_action:
+            _referrer = admin_action
+            _remote_addr = "localhost"
+        else:
+            _referrer = request.referrer
+            _remote_addr = get_remote_addr()
+
         event.update(dict(
             # When:
             timestamp=datetime.datetime.utcnow().isoformat(),
             # What:
-            referrer=request.referrer,
-            remote_addr=get_remote_addr(),
+            referrer=_referrer,
+            remote_addr=_remote_addr,
             cur_user_id=user_id,
             pid_type=item_id.pid_type,
             pid_value=str(item_id.pid_value),

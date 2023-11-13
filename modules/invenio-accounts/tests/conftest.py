@@ -56,11 +56,12 @@ def _app_factory(config=None):
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
         # SQLALCHEMY_DATABASE_URI=os.environ.get(
         #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
+        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
+                                          'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
         # SQLALCHEMY_DATABASE_URI=os.environ.get(
         #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///'+os.path.join(instance_path,'test.db')),
         # SQLALCHEMY_DATABASE_URI=os.environ.get(
         #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///:memory:'),
-        SQLALCHEMY_DATABASE_URI='postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest',
         SERVER_NAME='example.com',
         TESTING=True,
         WTF_CSRF_ENABLED=False,
@@ -192,14 +193,21 @@ def app_i18n(app):
 @pytest.fixture()
 def users(app):
     """Create users."""
-    user1 = create_test_user(email='info@inveniosoftware.org',
-                             password='tester')
-    user2 = create_test_user(email='info2@inveniosoftware.org',
-                             password='tester2')
+    with app.app_context():
+        user1 = create_test_user(email='info@inveniosoftware.org',
+                                 password='tester')
+        user1_email = user1.email
+        user1_id = user1.id
+        user1_pw = user1.password_plaintext
+        user2 = create_test_user(email='info2@inveniosoftware.org',
+                                 password='tester2')
+        user2_email = user2.email
+        user2_id = user2.id
+        user2_pw = user2.password_plaintext
 
     return [
-        {'email': user1.email, 'id': user1.id,
-         'password': user1.password_plaintext, 'obj': user1},
-        {'email': user2.email, 'id': user2.id,
-         'password': user2.password_plaintext, 'obj': user2},
+        {'email': user1_email, 'id': user1_id,
+         'password': user1_pw, 'obj': user1},
+        {'email': user2_email, 'id': user2_id,
+         'password': user2_pw, 'obj': user2},
     ]

@@ -141,6 +141,10 @@
                placeholder="">{{temporary_comment if temporary_comment else ''}}</textarea>
             </div>
           </div>
+          <button type="button" class="btn btn-info action-button" id="item-link-back-btn" ng-click="btn_back()">
+            <span class="glyphicon glyphicon-chevron-left"></span>
+            {{_('Back')}}
+          </button>
           <button type="button" class="btn btn-primary save-button" id="item-link-save-btn" ng-click="btn_save()">
             <span class="glyphicon glyphicon-saved"></span>
             {{_('Save')}}
