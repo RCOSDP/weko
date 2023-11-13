@@ -4,14 +4,20 @@ import traceback
 
 def main():
     try:
-        with db.session.begin_nested():
-            itemtypes = ItemTypes.get_all()
-            for itemtype in itemtypes:
-                ItemTypes.renew(itemtype.id)
-        db.session.commit()
+        
+        itemtypes = ItemTypes.get_all()
+        for itemtype in itemtypes:
+            ret = ItemTypes.renew(itemtype.id)
     except Exception as e:
         print(traceback.format_exc())
         db.session.rollback()
+
+        
+    except Exception as e:
+        print(traceback.format_exc())
+        db.session.rollback()    
+
+        
 
 if __name__ == '__main__':
     main()

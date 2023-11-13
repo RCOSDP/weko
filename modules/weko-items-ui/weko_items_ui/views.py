@@ -1166,6 +1166,8 @@ def validate():
         request_data.get('item_id'),
         request_data.get('data')
     )
+
+        
     return jsonify(result)
 
 

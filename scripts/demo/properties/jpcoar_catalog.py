@@ -85,7 +85,7 @@ def schema(title="", multi_flag=multiple_flag):
                                             },
                                         },
                                         "contributor_name_language": {
-                                            "type": "string",
+                                            'type': ['null', 'string'],
                                             "format": "select",
                                             "enum": config.LANGUAGE_VAL2_1,
                                             "currentEnum": config.LANGUAGE_VAL2_1,
@@ -117,7 +117,7 @@ def schema(title="", multi_flag=multiple_flag):
                                 "title_i18n": {"ja": "識別子", "en": "Identifier"},
                             },
                             "catalog_identifier_type": {
-                                "type": "string",
+                                'type': ['null', 'string'],
                                 "format": "select",
                                 "enum": ["DOI", "HDL", "URI"],
                                 "currentEnum": ["DOI", "HDL", "URI"],

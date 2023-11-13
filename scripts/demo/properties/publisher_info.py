@@ -117,6 +117,7 @@ def schema(title="", multi_flag=multiple_flag):
                 "publisher_locations": {
                     "type": "array",
                     "format": "array",
+                    "title":"出版地",
                     "items": {
                         "type": "object",
                         "format": "object",
@@ -133,6 +134,7 @@ def schema(title="", multi_flag=multiple_flag):
                 "publication_places": {
                     "type": "array",
                     "format": "array",
+                    "title":"出版地",
                     "items": {
                         "type": "object",
                         "format": "object",
@@ -181,7 +183,8 @@ def form(
                             "key": "{}.publisher_names[].publisher_name_language".format(
                                 key
                             ),
-                            "type": "select",
+                            "format": "select",
+                            'type': ['null', 'string'],
                             "title": "言語",
                             "title_i18n": {"ja": "言語", "en": "Language"},
                             "titleMap": get_select_value(config.LANGUAGE_VAL2_1),
@@ -209,7 +212,8 @@ def form(
                             "key": "{}.publisher_descriptions[].publisher_description_language".format(
                                 key
                             ),
-                            "type": "select",
+                            "format": "select",
+                            'type': ['null', 'string'],
                             "title": "言語",
                             "title_i18n": {"ja": "言語", "en": "Language"},
                             "titleMap": get_select_value(config.LANGUAGE_VAL2_1),

@@ -146,6 +146,7 @@ def schema(title='', multi_flag=multiple_flag):
                     'type': ['null', 'string'],
                     'format': 'select',
                     'enum': relation_type,
+                    'currentEnum': relation_type,
                     'title': '関連タイプ'
                 },
                 'subitem_relation_type_id': {
@@ -161,6 +162,7 @@ def schema(title='', multi_flag=multiple_flag):
                             'type': ['null', 'string'],
                             'format': 'select',
                             'enum': config.RELATION_ID_TYPE_VAL,
+                            'currentEnum': config.RELATION_ID_TYPE_VAL,
                             'title': '識別子タイプ'
                         }
                     },

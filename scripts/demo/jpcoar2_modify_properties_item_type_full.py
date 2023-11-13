@@ -241,11 +241,11 @@ add_to_form_singular_creator_type = {
 
 #? Creator Type mapping data
 add_to_mapping_creator_type = {
-    # "creator": {
-    #     '@attributes': {
-    #                         'creatorType': 'creatorType'
-    #     }
-    # }
+    "creator": {
+        '@attributes': {
+                            'creatorType': 'creatorType'
+        }
+    }
 }
 
 ###! UPDATE CHANGES IN ITEM TYPE Full FOR CREATOR TYPE ~ START

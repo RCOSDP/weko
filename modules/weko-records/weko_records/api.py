@@ -24,6 +24,8 @@ import urllib.parse
 import pickle
 from typing import Union
 import json
+import copy
+import re
 
 from elasticsearch.exceptions import NotFoundError
 from elasticsearch_dsl.query import QueryString
@@ -43,6 +45,7 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy.sql.expression import desc
 from werkzeug.local import LocalProxy
+
 
 from .fetchers import weko_record_fetcher
 from .models import FeedbackMailList as _FeedbackMailList
@@ -641,6 +644,24 @@ class ItemTypes(RecordBase):
             return query.one_or_none()
 
     @classmethod
+    def get_by_name(cls, name_, with_deleted=False):
+        """Retrieve the item type by id.
+
+        :param name_: Name of item type.
+        :param with_deleted: If `True` then it includes deleted item types.
+        :returns: The :class:`ItemTypes` instance.
+        """
+        with db.session.no_autoflush:
+            query = ItemTypeName.query.filter_by(name=name_)
+            if not with_deleted:
+                query = query.filter(ItemType.is_deleted.is_(False))  # noqa
+            itemTypeName = query.one_or_none()
+            query = ItemType.query.filter_by(name_id=itemTypeName.id)
+            if not with_deleted:
+                query = query.filter(ItemType.is_deleted.is_(False))  # noqa
+            return query.one_or_none()
+
+    @classmethod
     def get_by_name_id(cls, name_id, with_deleted=False):
         """Retrieve multiple item types by name identifier.
 
@@ -892,33 +913,60 @@ class ItemTypes(RecordBase):
         return RevisionsIterator(self.model)
 
     @classmethod
-    def renew(self,itemtype_id):
+    def renew(cls,itemtype_id):
         """renew itemtype.
 
         Args:
             itemtype_id (_type_): _description_
         """
-        with db.session.begin_nested():
-            item_type = ItemTypes.get_by_id(itemtype_id)
-            for idx, i in enumerate(item_type.render['table_row_map']['form']):
-                _prop_id = i['key']
-                if _prop_id.startswith('item_'):
-                    _input_type = item_type.render['meta_list'][_prop_id]['input_type']
-                    _input_type = _input_type.replace('cus_', '')
-                    _prop = ItemTypeProps.get_record(_input_type)
-                    item_type.render['schemaeditor']['schema'][_prop_id]=pickle.loads(pickle.dumps(_prop.schema, -1))
-                    _tmp = item_type.render['table_row_map']['schema']['properties'][_prop_id]
-                    if(_tmp.get('format')=='array'):
-                        item_type.render['table_row_map']['schema']['properties'][_prop_id]['items']=pickle.loads(pickle.dumps(_prop.schema, -1))
-                    else:
-                        item_type.render['table_row_map']['schema']['properties'][_prop_id] = pickle.loads(pickle.dumps(_prop.schema, -1))
-                    item_type.render['table_row_map']['form'][idx]=json.loads(json.dumps(_prop.form).replace('parentkey',_prop_id))
-                    item_type.form[idx]=pickle.loads(pickle.dumps(item_type.render['table_row_map']['form'][idx], -1))
-                    item_type.schema['properties'][_prop_id]=pickle.loads(pickle.dumps(_prop.schema, -1))
-            flag_modified(item_type,'schema')
-            flag_modified(item_type,'render')
-            flag_modified(item_type,'form')
-            db.session.merge(item_type)
+        # with db.session.begin_nested():
+        item_type = ItemTypes.get_by_id(itemtype_id)
+        data = pickle.loads(pickle.dumps(item_type.render, -1))
+        pat1 = re.compile(r'cus_(\d+)')
+        for idx, i in enumerate(data['table_row_map']['form']):
+            _prop_id = i['key']
+            if _prop_id.startswith('item_'):
+                _tmp = data['meta_list'][_prop_id]['input_type']
+                if pat1.match(_tmp):
+                    _tmp = int(_tmp.replace('cus_', ''))
+                    _prop = ItemTypeProps.get_record(_tmp)
+                    if _prop:
+                        # data['meta_list'][_prop_id] = json.loads('{"input_maxItems": "9999","input_minItems": "1","input_type": "cus_'+str(_prop.id)+'","input_value": "","option": {"crtf": false,"hidden": false,"multiple": true,"required": false,"showlist": false},"title": "'+_prop.name+'","title_i18n": {"en": "", "ja": "'+_prop.name+'"}}')
+                        data['schemaeditor']['schema'][_prop_id]=pickle.loads(pickle.dumps(_prop.schema, -1))
+                        data['table_row_map']['schema']['properties'][_prop_id]=pickle.loads(pickle.dumps(_prop.schema, -1))
+                        _form = json.loads(json.dumps(pickle.loads(pickle.dumps(_prop.form, -1))).replace('parentkey',_prop_id))
+                        data['table_row_map']['form'][idx]=pickle.loads(pickle.dumps(_form, -1))
+                                                     
+        
+        from weko_itemtypes_ui.utils import fix_json_schema,update_required_schema_not_exist_in_form, update_text_and_textarea
+        table_row_map = data.get('table_row_map')
+        json_schema = fix_json_schema(table_row_map.get('schema'))
+        json_form = table_row_map.get('form')
+        json_schema = update_required_schema_not_exist_in_form(
+            json_schema, json_form)
+
+        if itemtype_id != 0:
+            json_schema, json_form = update_text_and_textarea(
+                itemtype_id, json_schema, json_form)
+
+        ret = cls.update(id_=itemtype_id,name=table_row_map.get('name'),
+                                      schema=json_schema,
+                                      form=table_row_map.get('form'),
+                                      render=data)
+        
+        # item_type.schema = json_schema
+        # item_type.form = json_form
+        # item_type.render = data
+        
+        # flag_modified(item_type, 'schema')
+        # flag_modified(item_type, 'form')
+        # flag_modified(item_type, 'render')
+
+        # db.session.merge(item_type)
+        return ret
+
+
+
             
             
 

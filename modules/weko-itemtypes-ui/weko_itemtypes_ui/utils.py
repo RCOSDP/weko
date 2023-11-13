@@ -51,7 +51,7 @@ def remove_xsd_prefix(jpcoar_lists):
     return jpcoar_copy
 
 
-def fix_json_schema(json_schema):
+def fix_json_schema(json_schema: dict):
     """Fix format for json schema.
 
     Arguments:
@@ -103,7 +103,7 @@ def fix_min_max_multiple_item(json_schema):
     return json_schema
 
 
-def parse_required_item_in_schema(json_schema):
+def parse_required_item_in_schema(json_schema: dict):
     """Get required item and split to sub items.
 
     Arguments:
@@ -132,13 +132,15 @@ def parse_required_item_in_schema(json_schema):
     return data
 
 
-def helper_remove_empty_enum(data):
+def helper_remove_empty_enum(data: dict):
     """Help to remove enum key if it is empty.
 
     Arguments:
         data {dict} -- schema to remove enum key
 
     """
+    if isinstance(data,list):
+        print(data)
     if "enum" in data.keys():
         if not data.get("enum"):
             data.pop("enum", None)

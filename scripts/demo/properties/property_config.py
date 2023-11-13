@@ -99,19 +99,19 @@ EXCLUSION_LIST = []
 # Exclusion property id list. The ID set in the list will not be registered.
 # e.g.: EXCLUSION_LIST = [3020, 3021] or EXCLUSION_LIST = [PUBLISHED_DATE, SUMMARY]
 
-SPECIFIED_LIST = [1048,1049,1050,1051,1052,1053,1054,1055,1056,1057]
+SPECIFIED_LIST = [1009,1011,1019,1022,1038,1039,1048,1049,1050,1051,1052,1053,1054,1055,1056,1057]
 # Specified property id list. The ID set in the list will be deleted and registered.
 # e.g.: SPECIFIED_LIST = [3020, 3021] or SPECIFIED_LIST = [PUBLISHED_DATE, SUMMARY]
 
 DEFAULT_MAPPING = {
-    'display_lang_type': '',
-    'jpcoar_v1_mapping': '',
-    'jpcoar_mapping': '',
-    'junii2_mapping': '',
-    'lido_mapping': '',
-    'lom_mapping': '',
-    'oai_dc_mapping': '',
-    'spase_mapping': ''
+    'display_lang_type': None,
+    'jpcoar_v1_mapping': None,
+    'jpcoar_mapping': None,
+    'junii2_mapping': None,
+    'lido_mapping': None,
+    'lom_mapping': None,
+    'oai_dc_mapping': None,
+    'spase_mapping': None
 }
 
 LANGUAGE_VAL2_1 = [None, 'ja', 'ja-Kana', 'ja-Latn', 'en', 'fr', 'it', 'de', 'es', 'zh-cn', 'zh-tw', 'ru', 'la', 'ms', 'eo', 'ar', 'el', 'ko']
@@ -126,9 +126,9 @@ DATEPICKER_MULTI_FORMAT_URL = '/static/templates/weko_deposit/datepicker_multi_f
 DATALIST_URL = "/static/templates/weko_deposit/datalist.html"
 AWARD_NUMBER_TYPE = [None,'JGN']
 FUNDER_IDENTIFIER_TYPE_VAL = [None,'Crossref Funder','e-Rad_funder','GRID','ISNI','ROR','Other']
-FUNDER_IDENTIFIER_TYPE_LBL = [None,'Crossref Funder','e-Rad_funder','GRID【非推奨】','ISNI','ROR','Other']
+FUNDER_IDENTIFIER_TYPE_LBL = ['','Crossref Funder','e-Rad_funder','GRID【非推奨】','ISNI','ROR','Other']
 NAME_TYPE_VAL = [None,'Personal','Organizational']
-SUBJECT_SCHEME_LBL = [None,'BSH','DDC','e-Rad_field','JEL','LCC','LCSH','MeSH','NDC','NDLC','NDLSH','SciVal','UDC','Other']
+SUBJECT_SCHEME_LBL = ['','BSH','DDC','e-Rad_field','JEL','LCC','LCSH','MeSH','NDC','NDLC','NDLSH','SciVal','UDC','Other']
 SUBJECT_SCHEME_VAL = [None,'BSH','DDC','e-Rad_field','JEL','LCC','LCSH','MeSH','NDC','NDLC','NDLSH','SciVal','UDC','Other']
 RELATION_TYPE  = [
     None,
@@ -154,7 +154,7 @@ RELATION_TYPE  = [
     'inSeries'
 ]
 RELATION_ID_TYPE_LBL = [
-    None,
+    '',
     'ARK',
     'arXiv',
     'DOI',
@@ -198,5 +198,5 @@ RELATION_ID_TYPE_VAL = [
     'CRID'
 ]
 
-HOLDING_AGENT_NAMEID_SCHEMA_VAL=['kakenhi', 'ISNI', 'Ringgold', 'GRID', 'ROR', 'FANO', 'ISIL', 'MARC', 'OCLC']
-HOLDING_AGENT_NAMEID_SCHEMA_LBL=['kakenhi【非推奨】', 'ISNI', 'Ringgold', 'GRID【非推奨】', 'ROR', 'FANO', 'ISIL', 'MARC', 'OCLC']
+HOLDING_AGENT_NAMEID_SCHEMA_VAL=[None,'kakenhi', 'ISNI', 'Ringgold', 'GRID', 'ROR', 'FANO', 'ISIL', 'MARC', 'OCLC']
+HOLDING_AGENT_NAMEID_SCHEMA_LBL=['','kakenhi【非推奨】', 'ISNI', 'Ringgold', 'GRID【非推奨】', 'ROR', 'FANO', 'ISIL', 'MARC', 'OCLC']

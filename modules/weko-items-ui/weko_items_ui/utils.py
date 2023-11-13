@@ -597,7 +597,7 @@ def validate_form_input_data(
     item_type = ItemTypes.get_by_id(item_id)
     json_schema = item_type.schema.copy()
     data_keys = list(data.keys())
-    item_type_mapping: Object = Mapping.get_record(item_type.id)
+    item_type_mapping = Mapping.get_record(item_type.id)
     item_type_mapping_keys = list(item_type_mapping.keys())
     is_error = False
     items_to_be_checked_for_duplication: list = []
@@ -911,6 +911,7 @@ def validate_form_input_data(
                 )
 
         except ValidationError as error:
+            current_app.logger.error(traceback.format_exc())
             current_app.logger.error(error)
             result["is_valid"] = False
             result['error'] = f"{item_error_message} -- {duplication_error}"
@@ -943,6 +944,7 @@ def validate_form_input_data(
                 )
 
         except ValidationError as error:
+            current_app.logger.error(traceback.format_exc())
             current_app.logger.error(error)
             result["is_valid"] = False
             result['error'] = f"{item_error_message} -- {ja_kana_error}"
@@ -975,6 +977,7 @@ def validate_form_input_data(
                 )
 
         except ValidationError as error:
+            current_app.logger.error(traceback.format_exc())
             current_app.logger.error(error)
             result["is_valid"] = False
             result['error'] = f"{item_error_message} -- {ja_latn_error}"
@@ -1010,6 +1013,7 @@ def validate_form_input_data(
                 )
 
         except ValidationError as error:
+            current_app.logger.error(traceback.format_exc())
             current_app.logger.error(error)
             """
             Commeneted out result["is_valid"] and result["error"] will be enabled when "dcterms date" will be used
@@ -1598,6 +1602,7 @@ def validate_form_input_data(
     try:
         validation_data.validate()
     except ValidationError as error:
+        current_app.logger.error(traceback.format_exc())
         current_app.logger.error(error)
         result["is_valid"] = False
         if 'required' == error.validator:
@@ -1607,7 +1612,9 @@ def validate_form_input_data(
         else:
             result['error'] = _(error.message)
     except SchemaError as error:
+        current_app.logger.error(traceback.format_exc())
         current_app.logger.error(error)
+        current_app.logger.error("data:{}".format(data))
         result["is_valid"] = False
         result['error'] = 'Schema Error:<br/><br/>' + _(error.message)
     except Exception as ex:

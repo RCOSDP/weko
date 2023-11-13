@@ -173,6 +173,7 @@ class ItemTypeMetaDataView(BaseView):
             return jsonify(msg=_('Header Error'))
 
         data = request.get_json()
+        # current_app.logger.error("data:{}".format(data))
         try:
             table_row_map = data.get('table_row_map')
             json_schema = fix_json_schema(table_row_map.get('schema'))
@@ -213,7 +214,7 @@ class ItemTypeMetaDataView(BaseView):
                 user_id=current_user.get_id(),
                 notes=data.get('edit_notes', {})
             )
-
+            
             db.session.commit()
         except Exception as ex:
             db.session.rollback()
