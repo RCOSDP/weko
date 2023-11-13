@@ -20,6 +20,7 @@
 
 """WEKO3 module docstring."""
 
+import unicodedata
 import markupsafe
 from operator import index
 
@@ -261,6 +262,7 @@ def escape_str(s):
         s -- {str} string removing escape character.
     """
 
+    s = unicodedata.normalize("NFKD", s)
     s = repr(markupsafe.escape(s))[8:-2]
 
     #s = repr(s)

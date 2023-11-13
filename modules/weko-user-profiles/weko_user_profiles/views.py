@@ -126,10 +126,15 @@ def profile():
 
     # Process forms
     form = request.form.get('submit', None)
-    if form == 'profile':
-        handle_profile_form(profile_form)
-    elif form == 'verification':
-        handle_verification_form(verification_form)
+    try:
+        if form == 'profile':
+            handle_profile_form(profile_form)
+            db.session.commit()
+        elif form == 'verification':
+            handle_verification_form(verification_form)
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(e)
 
     return render_template(
         current_app.config['USERPROFILES_PROFILE_TEMPLATE'],

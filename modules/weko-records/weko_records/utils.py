@@ -73,7 +73,17 @@ def json_loader(data, pid, owner_id=None):
             and value["nameIdentifiers"][0]["nameIdentifierScheme"] == "WEKO"
         ):
             author_link.append(value["nameIdentifiers"][0]["nameIdentifier"])
-
+            
+    def _set_shared_id(data):
+        """set weko_shared_id from shared_user_id"""
+        if data.get("weko_shared_id",-1)==-1:
+            return dict(weko_shared_id=data.get("shared_user_id",-1))
+        else:
+            if data.get("shared_user_id",-1)==-1:
+                return dict(weko_shared_id=data.get("weko_shared_id"))
+            else:
+                return dict(weko_shared_id=data.get("shared_user_id"))
+            
     dc = OrderedDict()
     jpcoar = OrderedDict()
     item = dict()
@@ -248,21 +258,21 @@ def json_loader(data, pid, owner_id=None):
             if not jrc_weko_creator_id:
                 # in case first time create record
                 jrc.update(dict(weko_creator_id=owner_id or current_user_id))
-                jrc.update(dict(weko_shared_id=data.get("shared_user_id", -1)))
+                jrc.update(_set_shared_id(data))
             else:
                 # incase record is end and someone is updating record
                 if current_user_id == int(jrc_weko_creator_id):
                     # just allow owner update shared_user_id
-                    jrc.update(dict(weko_shared_id=data.get("shared_user_id", -1)))
+                    jrc.update(_set_shared_id(data))
 
             # dc js saved on postgresql
             dc_owner = dc.get("owner", None)
             if not dc_owner:
-                dc.update(dict(weko_shared_id=data.get("shared_user_id", -1)))
+                dc.update(_set_shared_id(data))
                 dc.update(dict(owner=owner_id or current_user_id))
             else:
                 if current_user_id == int(dc_owner):
-                    dc.update(dict(weko_shared_id=data.get("shared_user_id", -1)))
+                    dc.update(_set_shared_id(data))
 
     del ojson, mjson, item
     return dc, jrc, is_edit
@@ -744,6 +754,8 @@ def get_all_items2(nlst, klst):
     :param nlst:
     :param klst:
     :return: alst
+    
+    :note 
     """
     alst = []
 
@@ -755,9 +767,24 @@ def get_all_items2(nlst, klst):
                 else:
                     get_items(v)
         elif isinstance(nlst, list):
-            for lst in nlst:
+            for ix,lst in enumerate(nlst):
                 get_items(lst)
-
+    
+    def get_items2(nlst):
+        ret = []
+        if isinstance(nlst, dict):
+            for k, v in nlst.items():
+                if isinstance(v, str):
+                    ret.append({k: v})
+                else:
+                    tmp = get_items2(v)
+                    ret.append(tmp)
+        elif isinstance(nlst, list):
+            for ix,lst in enumerate(nlst):
+                tmp = get_items2(lst)
+                ret.append(tmp)
+        return ret
+                        
     to_orderdict(nlst, klst, True)
     get_items(nlst)
     return alst
@@ -823,6 +850,7 @@ async def sort_meta_data_by_options(
     :param item_type_mapping:
     :param item_type_data:
     """
+    
     from weko_deposit.api import _FormatSysBibliographicInformation
     from weko_records_ui.permissions import check_file_download_permission
     from weko_records_ui.utils import hide_item_metadata
@@ -864,6 +892,7 @@ async def sort_meta_data_by_options(
                     result.append(",".join(value))
                 else:
                     result[-1] += "," + ",".join(value)
+        
         return result
 
     def data_comment(result, data_result, stt_key, is_specify_newline_array):
@@ -934,6 +963,7 @@ async def sort_meta_data_by_options(
                 else child_option.get(option_type)
             )
 
+        from weko_items_ui.utils import del_hide_sub_item
         result = []
         data_result = {}
         stt_key = []
@@ -946,9 +976,13 @@ async def sort_meta_data_by_options(
         if _license_dict:
             _ignore_items.append(_license_dict[0].get("value"))
         for i, s in enumerate(solst_dict_array):
+            if not s['key']:
+                continue
             value = s["value"]
             option = s["option"]
             parent_option = s["parent_option"]
+            parent_key = s["key"].replace('[]', '').split('.')[0]
+            del_hide_sub_item(parent_key, mlt, hide_list)
             # Get 'show list', 'specify newline', 'hide' flag.
             is_show_list = get_option_value("show_list", parent_option, option)
             is_specify_newline = get_option_value(
@@ -981,9 +1015,11 @@ async def sort_meta_data_by_options(
                 # Format creator data to display on item list
                 author_key = s["key"]
                 attr_mlt = src.get(s["key"], {}).get("attribute_value_mlt", {})
+                del_hide_sub_item(parent_key, attr_mlt, hide_list)
                 author_data = get_show_list_author(
                     solst_dict_array, hide_email_flag, author_key, attr_mlt
                 )
+                sub_author_key = s["key"].split(".")[-1]
             elif (
                 bibliographic_key is None
                 and is_show_list
@@ -995,6 +1031,7 @@ async def sort_meta_data_by_options(
                     "attribute_value_mlt"
                 )
                 if mlt_bibliographic:
+                    del_hide_sub_item(parent_key, mlt_bibliographic, hide_list)
                     sys_bibliographic = _FormatSysBibliographicInformation(
                         pickle.loads(pickle.dumps(mlt_bibliographic, -1)), pickle.loads(pickle.dumps(solst, -1))
                     )
@@ -1020,14 +1057,144 @@ async def sort_meta_data_by_options(
                 data_result, stt_key = get_value_and_lang_by_key(
                     s["key"], solst_dict_array, data_result, stt_key
                 )
+                
                 is_specify_newline_array.append({s["key"]: is_specify_newline})
 
         if len(data_result) > 0:
             result = data_comment(
                 result, data_result, stt_key, is_specify_newline_array
             )
+        
         return result
 
+    
+    def get_value_by_selected_language(values,lang_key,current_lang):
+        dict = convert_array_to_dict(values,lang_key)
+        if dict.get(current_lang):
+            return dict.get(current_lang)
+        elif dict.get("None"):
+            return dict.get("None")
+        elif dict.get("en"):
+            return dict.get("en")
+  
+    def get_creator_comments(key,meta_options,creators,is_hide_email):
+        """
+        TODO: affiliationは未実装
+        TODO: nameIdentifiersのhide設定。現状属性がhideであればすべてhide。
+        """
+        ret = []
+        current_lang = current_i18n.language
+        dict = convert_array_to_dict(meta_options,"key")
+        for creator in creators:
+            if creator.get("creatorMails"):
+                opt = dict["{}.{}".format(key,"creatorMails")]
+                if opt.get('option'):
+                    _opt = opt.get('option')    
+                    if (_opt.get('hide') | _opt.get('non_display')|is_hide_email):
+                        creator.pop("creatorMails")
+                opt = dict["{}.{}.{}".format(key,"creatorMails","creatorMail")]
+                if opt.get('option'):
+                    _opt = opt.get('option')    
+                    if (_opt.get('hide') | _opt.get('non_display')|is_hide_email):
+                        if creator.get("creatorMails"):
+                            creator.pop("creatorMails")
+            
+            if creator.get("familyNames"):
+                opt = dict["{}.{}".format(key,"familyNames")]
+                if opt.get('option'):
+                    _opt = opt.get('option')    
+                    if (_opt.get('hide') | _opt.get('non_display')):
+                        creator.pop("familyNames")
+                    else:
+                        creator["familyNames"] = get_value_by_selected_language(creator["familyNames"],"familyNameLang",current_lang)
+                opt = dict["{}.{}.{}".format(key,"familyNames","familyName")]
+                if opt.get('option'):
+                    _opt = opt.get('option')    
+                    if (_opt.get('hide') | _opt.get('non_display')):
+                        if creator.get("familyNames"):
+                            creator.pop("familyNames")
+                        
+            if creator.get("creatorNames"):
+                opt = dict["{}.{}".format(key,"creatorNames")]
+                if opt.get('option'):
+                    _opt = opt.get('option')    
+                    if (_opt.get('hide') | _opt.get('non_display')):
+                        creator.pop("creatorNames")
+                    else:
+                        creator["creatorNames"] = get_value_by_selected_language(creator["creatorNames"],"creatorNameLang",current_lang)
+                
+                opt = dict["{}.{}.{}".format(key,"creatorNames","creatorName")]
+                if opt.get('option'):
+                    _opt = opt.get('option')    
+                    if (_opt.get('hide') | _opt.get('non_display')):
+                        if creator.get("creatorNames"):
+                            creator.pop("creatorNames")
+            
+            if creator.get("givenNames"):
+                opt = dict["{}.{}".format(key,"givenNames")]
+                if opt.get('option'):
+                    _opt = opt.get('option')    
+                    if (_opt.get('hide') | _opt.get('non_display')):
+                        creator.pop("givenNames")
+                    else:
+                        creator["givenNames"] = get_value_by_selected_language(creator["givenNames"],"givenNameLang",current_lang)
+                opt = dict["{}.{}.{}".format(key,"givenNames","givenName")]
+                if opt.get('option'):
+                    _opt = opt.get('option')    
+                    if (_opt.get('hide') | _opt.get('non_display')):
+                        if creator.get("givenNames"):
+                            creator.pop("givenNames")
+            
+            if creator.get("nameIdentifiers"):
+                opt = dict["{}.{}".format(key,"nameIdentifiers")]
+                if opt.get('option'):
+                    _opt = opt.get('option')    
+                    if (_opt.get('hide') | _opt.get('non_display')):
+                        creator.pop("nameIdentifiers")
+                opt = dict["{}.{}.{}".format(key,"nameIdentifiers","nameIdentifierScheme")]
+                if opt.get('option'):
+                    _opt = opt.get('option')    
+                    if (_opt.get('hide') | _opt.get('non_display')):
+                        if creator.get("nameIdentifiers"):
+                            creator.pop("nameIdentifiers")
+                        
+                opt = dict["{}.{}.{}".format(key,"nameIdentifiers","nameIdentifierURI")]
+                if opt.get('option'):
+                    _opt = opt.get('option')    
+                    if (_opt.get('hide') | _opt.get('non_display')):
+                        if creator.get("nameIdentifiers"):
+                            creator.pop("nameIdentifiers")
+                            
+                opt = dict["{}.{}.{}".format(key,"nameIdentifiers","nameIdentifier")]
+                if opt.get('option'):
+                    _opt = opt.get('option')    
+                    if (_opt.get('hide') | _opt.get('non_display')):
+                        if creator.get("nameIdentifiers"):
+                            creator.pop("nameIdentifiers")        
+
+            if creator.get("creatorAffiliations"):
+                opt = dict["{}.{}".format(key,"creatorAffiliations")]
+                if opt.get('option'):
+                    _opt = opt.get('option')    
+                    if (_opt.get('hide') | _opt.get('non_display')):
+                        creator.pop("creatorAffiliations")
+            
+            if creator.get("affiliationNameIdentifiers"):
+                opt = dict["{}.{}".format(key,"affiliationNameIdentifiers")]
+                if opt.get('option'):
+                    _opt = opt.get('option')    
+                    if (_opt.get('hide') | _opt.get('non_display')):
+                        creator.pop("affiliationNameIdentifiers")
+        
+            # current_app.logger.error("creator:{}".format(creator))
+            ret.append(creator)
+                    
+        return ret
+                
+            
+            
+        
+    
     def get_file_comments(record, files):
         """Check and get file info."""
 
@@ -1160,58 +1327,52 @@ async def sort_meta_data_by_options(
         item_type_id = record_hit["_source"].get("item_type_id") or src.get(
             "item_type_id"
         )
-        item_map = get_mapping(item_type_mapping, "jpcoar_mapping")
-        language_dict = {}
-        suffixes = ".@attributes.xml:lang"
-        for key in item_map:
-            if key.find(suffixes) != -1:
-                # get language
-                title_languages, _title_key = get_data_by_property(src, item_map, key)
-                # get value
-                prefix = key.replace(suffixes, "")
-                title_values, _title_key1 = get_data_by_property(
-                    src, item_map, prefix + ".@value"
-                )
-                language_dict.update(
-                    {
-                        prefix: {
-                            "lang": title_languages,
-                            "lang-id": _title_key,
-                            "val": title_values,
-                            "val-id": _title_key1,
-                        }
-                    }
-                )
+        item_map = get_mapping(item_type_id, "jpcoar_mapping")
+        
         # selected title
-        title_obj = language_dict.get("title")
-        if title_obj is not None:
-            lang_arr = title_obj.get("lang")
-            val_arr = title_obj.get("val")
-            lang_id = title_obj.get("lang-id")
-            val_id = title_obj.get("val-id")
-            if lang_arr and len(lang_arr) > 0 and lang_arr != "null":
-                result = selected_value_by_language(
-                    lang_arr, val_arr, lang_id, val_id, web_screen_lang, _item_metadata
-                )
-                if result is not None:
-                    for idx, val in enumerate(record_hit["_source"]["title"]):
-                        if val == result:
-                            arr = []
-                            record_hit["_source"]["title"][idx] = record_hit["_source"][
-                                "title"
-                            ][0]
-                            record_hit["_source"]["title"][0] = result
-                            arr.append(result)
-                            record_hit["_source"]["_comment"] = arr
-                            break
-            elif val_arr and len(val_arr) > 0:
-                record_hit["_source"]["_comment"] = [val_arr[0]]
+        from weko_items_ui.utils import get_hide_list_by_schema_form
+        solst, meta_options = get_options_and_order_list(item_type_id, item_type_data)
+        hide_list = get_hide_list_by_schema_form(item_type_id)
+        title_value_key = 'title.@value'
+        title_lang_key = 'title.@attributes.xml:lang'
+        title_languages = []
+        title_values = []
+        _title_key_str = ''
+        _title_key1_str = ''
+        if title_value_key in item_map:
+            if title_lang_key in item_map:
+                # get language
+                title_languages, _title_key_str = get_data_by_property(
+                    src, item_map, title_lang_key)
+            # get value
+            title_values, _title_key1_str = get_data_by_property(
+                src, item_map, title_value_key)
+        if title_languages and len(title_languages) > 0:
+            result = selected_value_by_language(
+                title_languages, title_values, _title_key_str, _title_key1_str, web_screen_lang, _item_metadata, meta_options, hide_list
+            )
+            if result is not None:
+                for idx, val in enumerate(record_hit["_source"]["title"]):
+                    if val == result:
+                        arr = []
+                        record_hit["_source"]["title"][idx] = record_hit["_source"]["title"][0]
+                        record_hit["_source"]["title"][0] = result
+                        arr.append(result)
+                        record_hit["_source"]["_comment"] = arr
+                        break
+        elif title_values and len(title_values) > 0:
+            record_hit["_source"]["_comment"] = [title_values[0]]
+            record_hit["_source"]["title"][0] = title_values[0]
 
         if not item_type_id:
             return
+        
+        from weko_items_ui.utils import get_hide_list_by_schema_form
         solst, meta_options = get_options_and_order_list(item_type_id, item_type_data)
+        hide_list = get_hide_list_by_schema_form(item_type_id)
         solst_dict_array = convert_data_to_dict(solst)
         files_info = []
+        creator_info = None
         thumbnail = None
         hide_item_metadata(src, settings, item_type_mapping, item_type_data)
         # Set value and parent option
@@ -1222,6 +1383,7 @@ async def sort_meta_data_by_options(
             if not val or not option:
                 continue
             mlt = val.get("attribute_value_mlt", [])
+            
             if mlt:
                 if (
                     val.get("attribute_type", "") == "file"
@@ -1234,21 +1396,34 @@ async def sort_meta_data_by_options(
                 if is_thumbnail and not option.get("hidden") and option.get("showlist"):
                     thumbnail = get_file_thumbnail(mlt)
                     continue
+                
+                
+                if (
+                    val.get("attribute_type", "") == "creator"
+                    and not option.get("hidden")
+                    and option.get("showlist")
+                ):
+                    is_hide_email = not settings.items_display_email
+                    creator_info = get_creator_comments(key,solst_dict_array,mlt,is_hide_email)
+                    continue
+                
                 mlt = append_parent_key(key, mlt)
                 meta_data = get_all_items2(mlt, solst)
                 for m in meta_data:
                     for s in solst_dict_array:
                         s_key = s.get("key")
-                        if m.get(s_key):
+                        
+                        tmp = m.get(s_key)
+                        if tmp:
                             s["value"] = (
-                                m.get(s_key)
+                                tmp
                                 if not s["value"]
                                 else "{}{} {}".format(
                                     s["value"],
                                     current_app.config.get(
                                         "WEKO_RECORDS_SYSTEM_COMMA", ""
                                     ),
-                                    m.get(s_key),
+                                    tmp,
                                 )
                             )
                             s["parent_option"] = {
@@ -1257,7 +1432,7 @@ async def sort_meta_data_by_options(
                                 "specify_newline": option.get("crtf"),
                                 "hide": option.get("hidden"),
                             }
-                            break
+                            break    
         # Format data to display on item list
         items = get_comment(
             solst_dict_array,
@@ -1283,6 +1458,8 @@ async def sort_meta_data_by_options(
             record_hit["_source"]["_files_info"] = files_info
         if thumbnail:
             record_hit["_source"]["_thumbnail"] = thumbnail
+        if creator_info:
+            record_hit["_source"]["_creator_info"] = creator_info
     except Exception:
         current_app.logger.exception(
             "Record serialization failed {}.".format(
@@ -1290,6 +1467,20 @@ async def sort_meta_data_by_options(
             )
         )
 
+
+def convert_array_to_dict(solst_dict_array,key):
+    dict = {}
+    idx = 0
+    for item in solst_dict_array:
+        if item.get(key):
+            item['idx']=idx
+            dict[item.get(key)] = item
+        else:
+            item['idx']=idx
+            dict['None'] = item
+        idx=idx+1
+    return dict
+    
 
 def get_keywords_data_load(str):
     """Get a json of item type info.
@@ -1567,7 +1758,10 @@ def get_attribute_value_all_items(
                 else:
                     temp = []
                     for lst in klst:
-                        key = lst[0].split(".")[-1]
+                        keys = lst[0].split(".")
+                        if keys[0].replace('[]', '') != root_key:
+                            continue
+                        key = keys[-1]
                         val = alst.pop(key, {})
                         name = get_name(key, False) or ""
                         hide = lst[3].get("hide") or (
@@ -1753,7 +1947,7 @@ def remove_weko2_special_character(s: str):
 
 
 def selected_value_by_language(
-    lang_array, value_array, lang_id, val_id, lang_selected, _item_metadata
+    lang_array, value_array, lang_key_str, val_key_str, lang_selected, _item_metadata, meta_option={}, hide_list=[]
 ):
     """Select value by language.
 
@@ -1763,76 +1957,91 @@ def selected_value_by_language(
     @param val_id:
     @param lang_selected:
     @param _item_metadata:
+    @param meta_option:
+    @param hide_list:
     @return:
     """
-    if (
-        (lang_array is not None)
-        and (value_array is not None)
-        and isinstance(lang_selected, str)
-    ):
-        if len(value_array) < 1:
-            return None
-        else:
-            if len(lang_array) > 0:
-                for idx, lang in enumerate(lang_array):
-                    lang_array[idx] = lang.strip()
-            if lang_selected in lang_array:  # Web screen display language
-                value = check_info_in_metadata(
-                    lang_id, val_id, lang_selected, _item_metadata
-                )
-                if value is not None:
-                    return value
-            
-            if len(value_array)>len(lang_array): # First title without language code
-                value0 = value_array[0]
-                tmp = copy.copy(value_array)
-                for lang in lang_array:
-                    value = check_info_in_metadata(
-                        lang_id, val_id, lang, _item_metadata
-                    )
-                    if value and value in tmp:
-                        tmp.remove(value)
-                if len(tmp)>0 and tmp[0]==value0:
-                    return tmp[0]
-            
-            if "ja-Latn" in lang_array:  # ja_Latn
-                value = check_info_in_metadata(
-                    lang_id, val_id, "ja-Latn", _item_metadata
-                )
-                if value is not None:
-                    return value
-            if "en" in lang_array and (
-                lang_selected != "ja"
-                or not current_app.config.get("WEKO_RECORDS_UI_LANG_DISP_FLG", False)
-            ):  # English
-                value = check_info_in_metadata(lang_id, val_id, "en", _item_metadata)
-                if value is not None:
-                    return value
-            # 1st language when registering items
-            if len(lang_array) > 0:
-                noreturn = False
-                for idx, lg in enumerate(lang_array):
-                    if current_app.config.get(
-                        "WEKO_RECORDS_UI_LANG_DISP_FLG", False
-                    ) and (
-                        (lg == "ja" and lang_selected == "en")
-                        or (lg == "en" and lang_selected == "ja")
-                    ):
-                        noreturn = True
-                        break
-                    if len(lg) > 0:
+    result = None
+    lang_key_list = lang_key_str.split(",")
+    val_key_list = val_key_str.split(",")
+    
+    for val_key in val_key_list:
+        val_parent_key = val_key.split(".")[0]
+        val_sub_key = val_key.split(".")[-1]
+        prop_hidden = meta_option.get(val_parent_key, {}).get('option', {}).get('hidden', False)
+        for h in hide_list:
+            if h.startswith(val_parent_key) and h.endswith(val_sub_key):
+                prop_hidden = True
+
+        for lang_key in lang_key_list:
+            if val_parent_key == lang_key.split(".")[0]:
+                if (
+                    lang_array is not None
+                    and (value_array is not None and len(value_array) > 0)
+                    and isinstance(lang_selected, str)
+                    and not prop_hidden
+                ):
+                    if len(lang_array) > 0:
+                        for idx, lang in enumerate(lang_array):
+                            lang_array[idx] = lang.strip()
+                    if lang_selected in lang_array:  # Web screen display language
                         value = check_info_in_metadata(
-                            lang_id, val_id, lg, _item_metadata
+                            lang_key, val_key, lang_selected, _item_metadata
                         )
                         if value is not None:
-                            return value
-                if noreturn:
-                    return None
-            # 1st value when registering without language
-            if len(value_array) > 0:
-                return value_array[0]
-    else:
-        return None
+                            result = value
+
+                    if len(value_array)>len(lang_array): # First title without language code
+                        result = check_info_in_metadata(lang_key, val_key, None, _item_metadata)
+                    
+                    if not result and "ja-Latn" in lang_array:  # ja_Latn
+                        value = check_info_in_metadata(
+                            lang_key, val_key, "ja-Latn", _item_metadata
+                        )
+                        if value is not None:
+                            result = value
+                    if not result and "en" in lang_array and (
+                        lang_selected != "ja"
+                        or not current_app.config.get("WEKO_RECORDS_UI_LANG_DISP_FLG", False)
+                    ):  # English
+                        value = check_info_in_metadata(lang_key, val_key, "en", _item_metadata)
+                        if value is not None:
+                            result = value
+                    # 1st language when registering items
+                    if not result and len(lang_array) > 0:
+                        noreturn = False
+                        for idx, lg in enumerate(lang_array):
+                            if current_app.config.get(
+                                "WEKO_RECORDS_UI_LANG_DISP_FLG", False
+                            ) and (
+                                (lg == "ja" and lang_selected == "en")
+                                or (lg == "en" and lang_selected == "ja")
+                            ):
+                                noreturn = True
+                                break
+                            if len(lg) > 0:
+                                value = check_info_in_metadata(
+                                    lang_key, val_key, lg, _item_metadata
+                                )
+                                if value is not None:
+                                    result = value
+                        if noreturn:
+                            result = None
+                    # 1st value when registering without language
+                    if not result and len(value_array) > 0:
+                        result = check_info_in_metadata(lang_key, val_key, None, _item_metadata)
+            if not result:
+                break
+        if not result:
+            if (
+                (value_array is not None and len(value_array) > 0)
+                and isinstance(lang_selected, str)
+                and not prop_hidden
+            ):
+                result = check_info_in_metadata('', val_key, None, _item_metadata)
+        if result:
+            break
+    return result
 
 
 def check_info_in_metadata(str_key_lang, str_key_val, str_lang, metadata):
@@ -1845,8 +2054,7 @@ def check_info_in_metadata(str_key_lang, str_key_val, str_lang, metadata):
     @return
     """
     if (
-        len(str_key_lang) > 0
-        and (len(str_lang) > 0 or str_lang is None)
+        (str_lang is None or len(str_lang) > 0)
         and len(metadata) > 0
         and str_key_val is not None
         and len(str_key_val) > 0
@@ -1858,24 +2066,31 @@ def check_info_in_metadata(str_key_lang, str_key_val, str_lang, metadata):
         metadata = (
             metadata.get("_item_metadata") if "_item_metadata" in metadata else metadata
         )
-        if str_key_lang[0] in metadata:
-            obj = metadata.get(str_key_lang[0]).get("attribute_value_mlt")
+        if str_key_val[0] in metadata:
+            obj = metadata.get(str_key_val[0])
+            if not isinstance(obj,list):
+                obj = obj.get("attribute_value_mlt")
             save = obj
-            for ob in str_key_lang:
+            for ob in str_key_val:
                 if (
-                    ob not in str_key_lang[0]
-                    and ob not in str_key_lang[len(str_key_lang) - 1]
+                    ob not in str_key_val[0]
+                    and ob not in str_key_val[len(str_key_val) - 1]
                 ):
                     for x in save:
                         if x.get(ob):
                             save = x.get(ob)
             for s in save:
-                if str_lang is None:
-                    value = s.get(str_key_val[len(str_key_val) - 1]).strip()
-                    if len(value) > 0:
-                        return value
+                if s is not None and str_lang is None:
+                    value = s
+                    if isinstance(s,dict):
+                        value = s.get(str_key_val[len(str_key_val) - 1])
+                        if value:
+                            value.strip()
+                            if len(value) > 0:
+                                return value
+                
                 if (
-                    s
+                    s and str_key_lang 
                     and isinstance(s, dict)
                     and s.get(str_key_lang[-1])
                     and s.get(str_key_val[-1])
@@ -2050,8 +2265,9 @@ def format_creates(creates, hide_creator_keys):
     @return:
     """
     current_lang = current_i18n.language
-    result_end = {}
+    result_ends = []
     for create in creates:
+        result_end = {}
         # get creator comments
         result_end = get_creator(create, result_end, hide_creator_keys, current_lang)
         # get alternatives comments
@@ -2069,7 +2285,8 @@ def format_creates(creates, hide_creator_keys):
             result_end = get_affiliation(
                 create["creatorAffiliations"], result_end, current_lang, affiliation_key
             )
-    return result_end
+        result_ends.append(result_end)
+    return result_ends
 
 
 def get_creator(create, result_end, hide_creator_keys, current_lang):

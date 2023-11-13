@@ -56,8 +56,9 @@ class ResponseErrorSchema(ResponseSchema):
 class ResponseLockSchema(Schema):
     code = fields.Integer(required=True)
     msg = fields.String()
+    err = fields.String()
     locked_value = fields.String()
-    locked_by_email = fields.Email(allow_none=True)
+    locked_by_email = fields.String(allow_none=True)
     locked_by_username = fields.String(allow_none=True)
     class Meta:
         strict = True
@@ -86,7 +87,8 @@ class GetFeedbackMailListSchema(ResponseSchema):
     
 class SaveActivitySchema(Schema):
     activity_id = fields.String(required=True)
-    title = fields.String(required=True)
+    # title = fields.String(required=True)
+    # title = fields.List(required=True)
     shared_user_id = fields.Integer(required=True,validate=Range(min=-1))
     approval1 = fields.String(allow_none=True)
     approval2 = fields.String(allow_none=True)

@@ -20,7 +20,7 @@ from invenio_db.utils import rebuild_encrypted_properties, \
     versioning_model_classname, versioning_models_registered,\
         create_alembic_version_table,drop_alembic_version_table
 
-
+# .tox/c1/bin/pytest --cov=invenio_db tests/test_utils.py::test_rebuild_encrypted_properties -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-db/.tox/c1/tmp
 def test_rebuild_encrypted_properties(db, app):
     old_secret_key = "SECRET_KEY_1"
     new_secret_key = "SECRET_KEY_2"

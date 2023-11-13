@@ -430,12 +430,17 @@ def _partition_create(year, month):
         click.secho(e, fg='red')
         return
 
-    tables = get_stats_events_partition_tables()
+    try:
+        tables = get_stats_events_partition_tables()
 
-    for m in range(sm, em+1):
-        tablename = make_stats_events_partition_table(year, m)
-        if tablename in tables:
-            click.secho('Table {} is already exist.'.format(tablename), fg='yellow')
-        else:
-            click.secho('Creating partitioning table {}.'.format(tablename), fg='green')
-            db.metadata.tables[tablename].create(bind=db.engine, checkfirst=True)
+        for m in range(sm, em+1):
+            tablename = make_stats_events_partition_table(year, m)
+            if tablename in tables:
+                click.secho('Table {} is already exist.'.format(tablename), fg='yellow')
+            else:
+                click.secho('Creating partitioning table {}.'.format(tablename), fg='green')
+                db.metadata.tables[tablename].create(bind=db.engine, checkfirst=True)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        click.secho(str(e), fg='red')

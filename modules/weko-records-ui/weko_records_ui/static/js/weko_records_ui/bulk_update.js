@@ -475,10 +475,25 @@ require([
 
     // Get date
     function getDate() {
-      var date = new Date();
-      var year = date.getFullYear();
-      var month = date.getMonth() + 1;
-      var day = date.getDate();
+      var year;
+      var month;
+      var day;
+      $.ajax({
+        url: '/api/admin/get_server_date',
+        method: 'GET',
+        async: false,
+        success: function (data, status) {
+          year = data.year
+          month = data.month
+          day = data.day
+        },
+        error: function (data, status) {
+          var date = new Date();
+          year = date.getFullYear();
+          month = date.getMonth() + 1;
+          day = date.getDate();
+        }
+      });
 
       var toTwoDigits = function (num, digit) {
         num += '';

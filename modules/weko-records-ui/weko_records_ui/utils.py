@@ -60,7 +60,27 @@ from .permissions import check_create_usage_report, \
     is_open_restricted
 
 
-
+def is_future(date):
+    """Checks if a date is in the future."""
+    res = True
+    if date:
+        try:
+            if isinstance(date, str):
+                pdt = None
+                if len(date) == 10:
+                    pdt = dt.strptime(date, '%Y-%m-%d')
+                else:
+                    if 'T' in date:
+                        pdt = dt.strptime(date[:19], '%Y-%m-%dT%H:%M:%S')
+                    else:
+                        pdt = dt.strptime(date[:19], '%Y-%m-%d %H:%M:%S')
+                if pdt:
+                    res = to_utc(pdt) > dt.utcnow()
+            elif isinstance(date, dt):
+                res = to_utc(date) > dt.utcnow()
+        except Exception as ex:
+            current_app.logger.error(ex)
+    return res
 
 def check_items_settings(settings=None):
     """Check items setting."""
@@ -224,70 +244,66 @@ def soft_delete(recid):
         ids = locked_data.get('ids', set())
         return item_id in ids
 
-    try:
-        if current_user:
-            current_user_id = current_user.get_id()
-        else:
-            current_user_id = '1'
+    if current_user:
+        current_user_id = current_user.get_id()
+    else:
+        current_user_id = '1'
+    pid = PersistentIdentifier.query.filter_by(
+        pid_type='recid', pid_value=recid).first()
+    if not pid:
         pid = PersistentIdentifier.query.filter_by(
-            pid_type='recid', pid_value=recid).first()
-        if not pid:
-            pid = PersistentIdentifier.query.filter_by(
-                pid_type='recid', object_uuid=recid).first()
-        if pid.status == PIDStatus.DELETED:
-            return
+            pid_type='recid', object_uuid=recid).first()
+    if pid.status == PIDStatus.DELETED:
+        return
 
-        # Check Record is in import progress
-        if check_an_item_is_locked(int(pid.pid_value.split(".")[0])):
-            raise Exception({
-                'is_locked': True,
-                'msg': _('Item cannot be deleted because '
-                         'the import is in progress.')
-            })
+    # Check Record is in import progress
+    if check_an_item_is_locked(int(pid.pid_value.split(".")[0])):
+        raise Exception({
+            'is_locked': True,
+            'msg': _('Item cannot be deleted because '
+                        'the import is in progress.')
+        })
 
-        versioning = PIDVersioning(child=pid)
-        if not versioning.exists:
-            return
-        all_ver = versioning.children.all()
-        draft_pid = PersistentIdentifier.query.filter_by(
-            pid_type='recid',
-            pid_value="{}.0".format(pid.pid_value.split(".")[0])
-        ).one_or_none()
+    versioning = PIDVersioning(child=pid)
+    if not versioning.exists:
+        return
+    all_ver = versioning.children.all()
+    draft_pid = PersistentIdentifier.query.filter_by(
+        pid_type='recid',
+        pid_value="{}.0".format(pid.pid_value.split(".")[0])
+    ).one_or_none()
 
-        if draft_pid:
-            all_ver.append(draft_pid)
-        del_files = {}
-        for ver in all_ver:
-            depid = PersistentIdentifier.query.filter_by(
+    if draft_pid:
+        all_ver.append(draft_pid)
+    del_files = {}
+    for ver in all_ver:
+        depid = PersistentIdentifier.query.filter_by(
                 pid_type='depid', object_uuid=ver.object_uuid).first()
-            if depid:
-                rec = RecordMetadata.query.filter_by(
+        if depid:
+            rec = RecordMetadata.query.filter_by(
                     id=ver.object_uuid).first()
-                dep = WekoDeposit(rec.json, rec)
-                #dep['path'] = []
-                dep['publish_status'] = PublishStatus.DELETE.value
-                dep.indexer.update_es_data(dep, update_revision=False, field='publish_status')
-                FeedbackMailList.delete(ver.object_uuid)
-                dep.remove_feedback_mail()
-                for i in range(len(dep.files)):
-                    if dep.files[i].file.uri not in del_files:
-                        del_files[dep.files[i].file.uri] = dep.files[i].file.storage()
-                        dep.files[i].bucket.location.size -= dep.files[i].file.size
-                    dep.files[i].bucket.deleted = True
-                dep.commit()
+            dep = WekoDeposit(rec.json, rec)
+            #dep['path'] = []
+            dep['publish_status'] = PublishStatus.DELETE.value
+            dep.indexer.update_es_data(dep, update_revision=False, field='publish_status')
+            FeedbackMailList.delete(ver.object_uuid)
+            dep.remove_feedback_mail()
+            for f in dep.files:
+                if f.file.uri not in del_files:
+                    del_files[f.file.uri] = f.file.storage()
+                    f.bucket.location.size -= f.file.size
+                    f.bucket.deleted = True
+            dep.commit()
             pids = PersistentIdentifier.query.filter_by(
                 object_uuid=ver.object_uuid)
             for p in pids:
                 p.status = PIDStatus.DELETED
-            db.session.commit()
-        for file_storage in del_files.values():
-            file_storage.delete()
+            #db.session.commit()
+    for file_storage in del_files.values():
+        file_storage.delete()
 
-        current_app.logger.info(
-            'user({0}) deleted record id({1}).'.format(current_user_id, recid))
-    except Exception as ex:
-        db.session.rollback()
-        raise ex
+    current_app.logger.info(
+        'user({0}) deleted record id({1}).'.format(current_user_id, recid))
 
 
 def restore(recid):
@@ -458,7 +474,7 @@ def hide_item_metadata(record, settings=None, item_type_mapping=None,
                 del record['_deposit']['owners_ext']['email']
 
         if hide_email and not current_app.config['EMAIL_DISPLAY_FLG']:
-            record = hide_by_email(record)
+            record = hide_by_email(record, True)
 
 
         record = hide_by_file(record)
@@ -488,7 +504,7 @@ def hide_item_metadata_email_only(record):
             del record['_deposit']['owners_ext']['email']
 
     if hide_email and not current_app.config['EMAIL_DISPLAY_FLG']:
-        record = hide_by_email(record)
+        record = hide_by_email(record, True)
         return True
 
     record.pop('weko_creator_id')
@@ -515,27 +531,39 @@ def hide_by_file(item_metadata):
     return item_metadata
 
 
-def hide_by_email(item_metadata):
+def hide_by_email(item_metadata, force_flag=False):
     """Hiding emails.
 
     :param item_metadata:
+    :param force_flag: force to hide
     :return:
     """
+    from weko_items_ui.utils import get_options_and_order_list, get_hide_list_by_schema_form
+    show_email_flag = item_setting_show_email()
     subitem_keys = current_app.config['WEKO_RECORDS_UI_EMAIL_ITEM_KEYS']
+
+    item_type_id = item_metadata.get('item_type_id')
+    meta_options, type_mapping = get_options_and_order_list(item_type_id)
+    hide_list = get_hide_list_by_schema_form(item_type_id)
 
     # Hidden owners_ext.email
     if item_metadata.get('_deposit') and \
         item_metadata['_deposit'].get('owners_ext') and item_metadata['_deposit']['owners_ext'].get('email'):
-        del item_metadata['_deposit']['owners_ext']['email']
+        if force_flag or not show_email_flag:
+            del item_metadata['_deposit']['owners_ext']['email']
 
     for item in item_metadata:
         _item = item_metadata[item]
+        prop_hidden = meta_options.get(item, {}).get('option', {}).get('hidden', False)
         if isinstance(_item, dict) and \
                 _item.get('attribute_value_mlt'):
             for _idx, _value in enumerate(_item['attribute_value_mlt']):
                 if _value is not None:
                     for key in subitem_keys:
-                        if key in _value.keys():
+                        for h in hide_list:
+                            if h.startswith(item) and h.endswith(key):
+                                prop_hidden = True
+                        if key in _value.keys() and (force_flag or not show_email_flag or prop_hidden):
                             del _item['attribute_value_mlt'][_idx][key]
 
     return item_metadata
@@ -576,53 +604,14 @@ def hide_by_itemtype(item_metadata, hidden_items):
     return item_metadata
 
 
-def is_show_email_of_creator(item_type_id):
-    """Check setting show/hide email for 'Detail' and 'PDF Cover Page' screen.
-
-    :param item_type_id: item type id of current record.
-    :return: True/False, True: show, False: hide.
-    """
-    def get_creator_id(item_type_id):
-        type_mapping = Mapping.get_record(item_type_id)
-        item_map = get_mapping(type_mapping, "jpcoar_mapping")
-        creator = 'creator.creatorName.@value'
-        creator_id = None
-        if creator in item_map:
-            creator_id = item_map[creator].split('.')[0]
-        return creator_id
-
-    def item_type_show_email(item_type_id):
-        # Get flag of creator's email hide from item type.
-        creator_id = get_creator_id(item_type_id)
-        if not creator_id:
-            return None
-        item_type = ItemTypes.get_by_id(item_type_id)
-        schema_editor = item_type.render.get('schemaeditor', {})
-        schema = schema_editor.get('schema', {})
-        creator = schema.get(creator_id)
-        if not creator:
-            return None
-        properties = creator.get('properties', {})
-        creator_mails = properties.get('creatorMails', {})
-        items = creator_mails.get('items', {})
-        properties = items.get('properties', {})
-        creator_mail = properties.get('creatorMail', {})
-        is_hide = creator_mail.get('isHide', None)
-        return is_hide
-
-    def item_setting_show_email():
-        # Display email from setting item admin.
-        settings = AdminSettings.get('items_display_settings',dict_to_object=False)
-        if settings and 'items_display_email' in settings:
-            is_display = settings['items_display_email']
-        else:
-            is_display = False
-        return is_display
-
-    is_hide = item_type_show_email(item_type_id)
-    is_display = item_setting_show_email()
-    
-    return not is_hide and is_display
+def item_setting_show_email():
+    # Display email from setting item admin.
+    settings = AdminSettings.get('items_display_settings',dict_to_object=False)
+    if settings and 'items_display_email' in settings:
+        is_display = settings['items_display_email']
+    else:
+        is_display = False
+    return is_display
 
 
 def replace_license_free(record_metadata, is_change_label=True):
@@ -689,17 +678,17 @@ def get_file_info_list(record):
             p_file['future_date_message'] = _("Restricted Access")
         elif access == "open_date":
             if date and isinstance(date, list) and date[0]:
-                adt = date[0].get('dateValue')
-                if adt is None:
-                    adt = dt.date.max
-                pdt = to_utc(dt.strptime(adt, '%Y-%m-%d'))
-                if pdt > dt.utcnow():
+                adtv = date[0].get('dateValue')
+                if adtv is None:
+                    adtv = dt.date.max
+                adt = dt.strptime(adtv, '%Y-%m-%d')
+                if is_future(adtv):
                     message = "Download is available from {}/{}/{}."
                     p_file['future_date_message'] = _(message).format(
-                        pdt.year, pdt.month, pdt.day)
+                        adt.year, adt.month, adt.day)
                     message = "Download / Preview is available from {}/{}/{}."
                     p_file['download_preview_message'] = _(message).format(
-                        pdt.year, pdt.month, pdt.day)
+                        adt.year, adt.month, adt.day)
 
     def get_data_by_key_array_json(key, array_json, get_key):
         for item in array_json:

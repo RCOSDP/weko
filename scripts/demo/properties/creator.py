@@ -1,6 +1,6 @@
 # coding:utf-8
 """Definition of creator property."""
-from .property_func import get_property_schema, get_property_form, set_post_data, get_select_value
+from .property_func import get_property_schema, get_property_form, set_post_data, get_select_value,make_title_map
 from . import property_config as config
 
 property_id = config.CREATOR
@@ -86,6 +86,9 @@ def add(post_data, key, **kwargs):
             },
             'jpcoar_mapping': {
                 'creator': {
+                    '@attributes': {
+                            'creatorType': 'creatorType'
+                    },
                     'affiliation': {
                         'affiliationName': {
                             '@attributes': {
@@ -124,7 +127,8 @@ def add(post_data, key, **kwargs):
                     },
                     'creatorName': {
                         '@attributes': {
-                            'xml:lang': 'creatorNames.creatorNameLang'
+                            'xml:lang': 'creatorNames.creatorNameLang',
+                            'nameType': 'creatorNames.creatorNameType'
                         },
                         '@value': 'creatorNames.creatorName'
                     },
@@ -178,6 +182,12 @@ def schema(title='', multi_flag=multiple_flag):
                     'title': 'iscreator',
                     'type': 'string'
                 },
+                "creatorType": {
+                    "type": "string",
+                    "format": "text",
+                    "title": "作成者タイプ",
+                    "title_i18n": {"en": "Creator Type", "ja": "作成者タイプ"},
+                },
                 'creatorAlternatives': {
                     'type': 'array',
                     'format': 'array',
@@ -214,6 +224,13 @@ def schema(title='', multi_flag=multiple_flag):
                                 'format': 'select',
                                 'enum': config.LANGUAGE_VAL2_1,
                                 'title': '言語'
+                            },
+                            'creatorNameType': {
+                                'editAble': False,
+                                'type': ['null', 'string'],
+                                'format': 'select',
+                                'enum': config.NAME_TYPE_VAL,
+                                'title': '名前タイプ'
                             },
                             'creatorName': {
                                 'format': 'text',
@@ -267,7 +284,7 @@ def schema(title='', multi_flag=multiple_flag):
                                         'affiliationNameIdentifierScheme': {
                                             'type': ['null', 'string'],
                                             'format': 'select',
-                                            'enum': config.AFFILIATION_SCHEME_VAL,
+                                            #'enum': config.AFFILIATION_SCHEME_VAL,
                                             'title': '所属機関識別子Scheme'
                                         },
                                         'affiliationNameIdentifier': {
@@ -387,6 +404,12 @@ def form(key='', title='', title_ja=name_ja, title_en=name_en, multi_flag=multip
         _d = {
             'items': [
                 {
+                    "key": '{}.creatorType'.format(key),
+                    "type": "text",
+                    "title": "作成者タイプ",
+                    "title_i18n": {"en": "Creator Type", "ja": "作成者タイプ"},
+                },
+                {
                     'add': 'New',
                     'items': [
                         {
@@ -448,6 +471,16 @@ def form(key='', title='', title_ja=name_ja, title_en=name_en, multi_flag=multip
                                 'ja': '言語'
                             },
                             'titleMap': get_select_value(config.LANGUAGE_VAL2_1),
+                            'type': 'select'
+                        },
+                        {
+                            'key': '{}.creatorNames[].creatorNameType'.format(key),
+                            'title': '名前タイプ',
+                            'title_i18n': {
+                                'en': 'Name Type',
+                                'ja': '名前タイプ'
+                            },
+                            'titleMap': get_select_value(config.NAME_TYPE_VAL),
                             'type': 'select'
                         }
                     ],

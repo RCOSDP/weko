@@ -606,9 +606,11 @@ class WekoBibTexSerializer():
         @param bibtex_type:
         @return:
         """
+        all_fields = []
         all_field_type = self.____get_bibtex_type_fields(bibtex_type)
-        all_fields = all_field_type.get(
-            'required') + all_field_type.get('optional')
+        if isinstance(all_field_type, dict):
+            all_fields = all_field_type.get(
+                'required', []) + all_field_type.get('optional', [])
         # partial_req = all_field_type.get('required_partial')
         # for item in partial_req:
         #     if BibTexFields.PAGES in item:
@@ -668,6 +670,8 @@ class WekoBibTexSerializer():
                 value = ''
                 dates = []
                 for element in elements:
+                    if not element:
+                        continue
                     if field == BibTexFields.YEAR or \
                             field == BibTexFields.MONTH:
                         process_by_att('dateType', 'issued', dates)
@@ -730,10 +734,11 @@ class WekoBibTexSerializer():
         item_id = ''
         namespace = 'http://www.openarchives.org/OAI/2.0/'
         request_tag = '{' + namespace + '}' + 'request'
-        for element in root:
-            if request_tag == element.tag:
-                subs = element.get('identifier').split('/')
-                item_id = subs[len(subs) - 1]
+        if isinstance(root, list):
+            for element in root:
+                if element and request_tag == element.tag:
+                    subs = element.get('identifier', '').split('/')
+                    item_id = subs[len(subs) - 1]
 
         return item_id
 
@@ -772,7 +777,8 @@ class WekoBibTexSerializer():
         @param identifier_types_data:
         @return:
         """
-        for type in identifier_type:
-            if identifier_types_data.get(type) and len(
-                    identifier_types_data.get(type)) > 0:
-                return identifier_types_data.get(type)[0]
+        if identifier_types_data:
+            for type in identifier_type:
+                if identifier_types_data.get(type) and len(
+                        identifier_types_data.get(type)) > 0:
+                    return identifier_types_data.get(type)[0]

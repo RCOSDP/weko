@@ -23,6 +23,9 @@
 import urllib.parse
 import pickle
 from typing import Union
+import json
+import copy
+import re
 
 from elasticsearch.exceptions import NotFoundError
 from elasticsearch_dsl.query import QueryString
@@ -42,6 +45,7 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy.sql.expression import desc
 from werkzeug.local import LocalProxy
+
 
 from .fetchers import weko_record_fetcher
 from .models import FeedbackMailList as _FeedbackMailList
@@ -640,6 +644,24 @@ class ItemTypes(RecordBase):
             return query.one_or_none()
 
     @classmethod
+    def get_by_name(cls, name_, with_deleted=False):
+        """Retrieve the item type by id.
+
+        :param name_: Name of item type.
+        :param with_deleted: If `True` then it includes deleted item types.
+        :returns: The :class:`ItemTypes` instance.
+        """
+        with db.session.no_autoflush:
+            query = ItemTypeName.query.filter_by(name=name_)
+            if not with_deleted:
+                query = query.filter(ItemType.is_deleted.is_(False))  # noqa
+            itemTypeName = query.one_or_none()
+            query = ItemType.query.filter_by(name_id=itemTypeName.id)
+            if not with_deleted:
+                query = query.filter(ItemType.is_deleted.is_(False))  # noqa
+            return query.one_or_none()
+
+    @classmethod
     def get_by_name_id(cls, name_id, with_deleted=False):
         """Retrieve multiple item types by name identifier.
 
@@ -776,8 +798,10 @@ class ItemTypes(RecordBase):
             # self.validate(**kwargs)
 
             # self.model.json = dict(self)
-            # flag_modified(self.model, 'json')
-
+            # flag_modified(self.model, 'schema')
+            # flag_modified(self.model, 'form')
+            # flag_modified(self.model, 'render')
+            
             db.session.merge(self.model)
 
         after_record_update.send(
@@ -887,6 +911,64 @@ class ItemTypes(RecordBase):
             raise MissingModelError()
 
         return RevisionsIterator(self.model)
+
+    @classmethod
+    def renew(cls,itemtype_id):
+        """renew itemtype.
+
+        Args:
+            itemtype_id (_type_): _description_
+        """
+        # with db.session.begin_nested():
+        item_type = ItemTypes.get_by_id(itemtype_id)
+        data = pickle.loads(pickle.dumps(item_type.render, -1))
+        pat1 = re.compile(r'cus_(\d+)')
+        for idx, i in enumerate(data['table_row_map']['form']):
+            _prop_id = i['key']
+            if _prop_id.startswith('item_'):
+                _tmp = data['meta_list'][_prop_id]['input_type']
+                if pat1.match(_tmp):
+                    _tmp = int(_tmp.replace('cus_', ''))
+                    _prop = ItemTypeProps.get_record(_tmp)
+                    if _prop:
+                        # data['meta_list'][_prop_id] = json.loads('{"input_maxItems": "9999","input_minItems": "1","input_type": "cus_'+str(_prop.id)+'","input_value": "","option": {"crtf": false,"hidden": false,"multiple": true,"required": false,"showlist": false},"title": "'+_prop.name+'","title_i18n": {"en": "", "ja": "'+_prop.name+'"}}')
+                        data['schemaeditor']['schema'][_prop_id]=pickle.loads(pickle.dumps(_prop.schema, -1))
+                        data['table_row_map']['schema']['properties'][_prop_id]=pickle.loads(pickle.dumps(_prop.schema, -1))
+                        _form = json.loads(json.dumps(pickle.loads(pickle.dumps(_prop.form, -1))).replace('parentkey',_prop_id))
+                        data['table_row_map']['form'][idx]=pickle.loads(pickle.dumps(_form, -1))
+                                                     
+        
+        from weko_itemtypes_ui.utils import fix_json_schema,update_required_schema_not_exist_in_form, update_text_and_textarea
+        table_row_map = data.get('table_row_map')
+        json_schema = fix_json_schema(table_row_map.get('schema'))
+        json_form = table_row_map.get('form')
+        json_schema = update_required_schema_not_exist_in_form(
+            json_schema, json_form)
+
+        if itemtype_id != 0:
+            json_schema, json_form = update_text_and_textarea(
+                itemtype_id, json_schema, json_form)
+
+        ret = cls.update(id_=itemtype_id,name=table_row_map.get('name'),
+                                      schema=json_schema,
+                                      form=table_row_map.get('form'),
+                                      render=data)
+        
+        # item_type.schema = json_schema
+        # item_type.form = json_form
+        # item_type.render = data
+        
+        # flag_modified(item_type, 'schema')
+        # flag_modified(item_type, 'form')
+        # flag_modified(item_type, 'render')
+
+        # db.session.merge(item_type)
+        return ret
+
+
+
+            
+            
 
 
 class ItemTypeEditHistory(object):
@@ -1277,7 +1359,7 @@ class ItemTypeProps(RecordBase):
                 query = ItemTypeProperty.query.filter_by(delflg=False)
 
             return query.all()
-
+        
     @property
     def revisions(self):
         """Get revisions iterator."""
@@ -1903,7 +1985,6 @@ class SiteLicense(RecordBase):
                     sif.append(slif)
                 # add new rows
                 db.session.add_all(sif)
-        db.session.commit()
 
 
 class RevisionsIterator(object):
@@ -2000,24 +2081,18 @@ class FeedbackMailList(object):
         :param feedback_maillist: list mail feedback
         :return boolean: True if success
         """
-        try:
-            with db.session.begin_nested():
-                query_object = _FeedbackMailList.query.filter_by(
-                    item_id=item_id).one_or_none()
-                if not query_object:
-                    query_object = _FeedbackMailList(
-                        item_id=item_id,
-                        mail_list=feedback_maillist
-                    )
-                    db.session.add(query_object)
-                else:
-                    query_object.mail_list = feedback_maillist
-                    db.session.merge(query_object)
-            db.session.commit()
-        except SQLAlchemyError:
-            db.session.rollback()
-            return False
-        return True
+        with db.session.begin_nested():
+            query_object = _FeedbackMailList.query.filter_by(
+                item_id=item_id).one_or_none()
+            if not query_object:
+                query_object = _FeedbackMailList(
+                    item_id=item_id,
+                    mail_list=feedback_maillist
+                )
+                db.session.add(query_object)
+            else:
+                query_object.mail_list = feedback_maillist
+                db.session.merge(query_object)
 
     @classmethod
     def update_by_list_item_id(cls, item_ids, feedback_maillist):

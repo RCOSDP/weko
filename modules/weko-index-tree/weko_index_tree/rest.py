@@ -32,6 +32,8 @@ from invenio_records_rest.utils import obj_or_import_string
 from invenio_rest import ContentNegotiatedMethodView
 from invenio_db import db
 
+from weko_admin.models import AdminLangSettings
+
 from .api import Indexes
 from .errors import IndexAddedRESTError, IndexNotFoundRESTError, \
     IndexUpdatedRESTError, InvalidDataRESTError
@@ -243,8 +245,17 @@ class IndexActionResource(ContentNegotiatedMethodView):
             status = 201
             msg = 'Index created successfully.'
 
-            tree = self.record_class.get_index_tree()
-            save_index_trees_to_redis(tree)
+            langs = AdminLangSettings.get_registered_language()
+            if "ja" in [lang["lang_code"] for lang in langs]:
+                tree_ja = self.record_class.get_index_tree(lang="ja")
+            tree = self.record_class.get_index_tree(lang="other_lang")
+            for lang in langs:
+                lang_code = lang["lang_code"]
+                if lang_code == "ja":
+                    save_index_trees_to_redis(tree_ja, lang=lang_code)
+                else:
+                    save_index_trees_to_redis(tree, lang=lang_code)
+                
         return make_response(
             jsonify({'status': status, 'message': msg, 'errors': errors}),
             status)
@@ -267,7 +278,7 @@ class IndexActionResource(ContentNegotiatedMethodView):
             if not data.get('public_state'):
                 errors.append(_('The index cannot be kept private because '
                                 'there are links from items that have a DOI.'))
-            elif not data.get('harvest_public_state'):
+            else: # not data.get('harvest_public_state'):
                 errors.append(_('Index harvests cannot be kept private because'
                                 ' there are links from items that have a DOI.'
                                 ))
@@ -291,8 +302,16 @@ class IndexActionResource(ContentNegotiatedMethodView):
 
             #roles = get_account_role()
             #for role in roles:
-            tree = self.record_class.get_index_tree()
-            save_index_trees_to_redis(tree)
+            langs = AdminLangSettings.get_registered_language()
+            if "ja" in [lang["lang_code"] for lang in langs]:
+                tree_ja = self.record_class.get_index_tree(lang="ja")
+            tree = self.record_class.get_index_tree(lang="other_lang")
+            for lang in langs:
+                lang_code = lang["lang_code"]
+                if lang_code == "ja":
+                    save_index_trees_to_redis(tree_ja, lang=lang_code)
+                else:
+                    save_index_trees_to_redis(tree, lang=lang_code)
 
         return make_response(jsonify(
             {'status': status, 'message': msg, 'errors': errors,
@@ -307,8 +326,16 @@ class IndexActionResource(ContentNegotiatedMethodView):
         action = request.values.get('action', 'all')
         msg, errors = perform_delete_index(index_id, self.record_class, action)
 
-        tree = self.record_class.get_index_tree()
-        save_index_trees_to_redis(tree)
+        langs = AdminLangSettings.get_registered_language()
+        if "ja" in [lang["lang_code"] for lang in langs]:
+            tree_ja = self.record_class.get_index_tree(lang="ja")
+        tree = self.record_class.get_index_tree(lang="other_lang")
+        for lang in langs:
+            lang_code = lang["lang_code"]
+            if lang_code == "ja":
+                save_index_trees_to_redis(tree_ja, lang=lang_code)
+            else:
+                save_index_trees_to_redis(tree, lang=lang_code)
 
         return make_response(jsonify(
             {'status': 200, 'message': msg, 'errors': errors}), 200)
@@ -341,6 +368,23 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
 
     def get(self, **kwargs):
         """Get tree json."""
+        def _check_edit_permission(is_admin, tree, can_edit_indexes):
+            if is_admin:
+                for i in tree:
+                    i['settings']['can_edit'] = True
+                    if len(i['children']) > 0:
+                        _check_edit_permission(is_admin, i['children'], can_edit_indexes)
+            else:
+                for i in tree:
+                    i['settings']['can_edit'] = False
+                    if str(i['id']) in can_edit_indexes:
+                        i['settings']['can_edit'] = True
+                    elif str(i['id']) not in can_edit_indexes and \
+                            'settings' in i and i['settings'].get('checked', False):
+                        i['settings']['checked'] = False
+                    if len(i['children']) > 0:
+                        _check_edit_permission(is_admin, i['children'], can_edit_indexes)
+
         from invenio_communities.models import Community
         try:
             action = request.values.get('action')
@@ -359,7 +403,39 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
                     tree = self.record_class.get_contribute_tree(
                         pid, int(comm.root_node_id))
                 else:
-                    tree = self.record_class.get_contribute_tree(pid)
+                    tree = []
+                    role_ids = []
+                    can_edit_indexes = []
+                    is_admin = False
+                    if current_user and current_user.is_authenticated:
+                        for role in current_user.roles:
+                            if role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']:
+                                role_ids = []
+                                tree = self.record_class.get_contribute_tree(pid)
+                                is_admin = True
+                                break
+                            else:
+                                role_ids.append(role.id)
+                    if role_ids:
+                        from invenio_communities.models import Community
+                        comm_list = Community.query.filter(
+                            Community.id_role.in_(role_ids)
+                        ).all()
+                        root_id_list = []
+                        
+                        for comm in comm_list:
+                            index_list = Indexes.get_self_list(comm.root_node_id)
+                            if len(index_list) > 0:
+                                root_id = index_list[0].path.split('/')[0]
+                                if root_id not in root_id_list:
+                                    root_id_list.append(root_id)
+                            for index in index_list:
+                                if index.cid not in can_edit_indexes:
+                                    can_edit_indexes.append(str(index.cid))
+                        for index_id in root_id_list:
+                            tree += self.record_class.get_contribute_tree(pid, int(index_id))
+                    _check_edit_permission(is_admin, tree, can_edit_indexes)
+                    # tree = self.record_class.get_contribute_tree(pid)
             elif action and 'browsing' in action and comm_id is None:
                 if more_id_list is None:
                     tree = self.record_class.get_browsing_tree()
@@ -405,7 +481,6 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
                             if index_id not in check_list:
                                 tree += self.record_class.get_index_tree(index_id)
                                 check_list.append(index_id)
-                        
             return make_response(jsonify(tree), 200)
         except Exception as ex:
             current_app.logger.error('IndexTree Action Exception: ', ex)
@@ -425,8 +500,15 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
         else:
             status = 201
             msg = _('Index moved successfully.')
-
-            tree = self.record_class.get_index_tree()
-            save_index_trees_to_redis(tree)
+            langs = AdminLangSettings.get_registered_language()
+            if "ja" in [lang["lang_code"] for lang in langs]:
+                tree_ja = self.record_class.get_index_tree(lang="ja")
+            tree = self.record_class.get_index_tree(lang="other_lang")
+            for lang in langs:
+                lang_code = lang["lang_code"]
+                if lang_code == "ja":
+                    save_index_trees_to_redis(tree_ja, lang=lang_code)
+                else:
+                    save_index_trees_to_redis(tree, lang=lang_code)
         return make_response(
             jsonify({'status': status, 'message': msg}), status)

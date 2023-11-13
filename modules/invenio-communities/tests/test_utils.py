@@ -112,6 +112,10 @@ def test_initialize_communities_bucket(app,db,instance_path):
     db.session.commit()
     
     # not exist Bucket
+    with patch("invenio_communities.utils.db.session.commit", side_effect=Exception('')):
+        initialize_communities_bucket()
+        assert Bucket.query.filter_by(id="00000000-0000-0000-0000-000000000000").first()==None
+
     initialize_communities_bucket()
     bucket = Bucket.query.filter_by(id="00000000-0000-0000-0000-000000000000").first()
     assert bucket.default_storage_class == "S"

@@ -711,23 +711,38 @@ def find_rss_value(data, keyword):
             result = get_rss_data_source(source.get('date')[0], 'value')
         return result
     elif keyword == 'description':
+        res = ''
         if source.get('description') and source.get('description')[0]:
-            item_type_mapping = Mapping.get_record(source.get(
-                '_item_metadata').get('item_type_id'))
-            item_map = get_mapping(item_type_mapping, "jpcoar_mapping")
-            desc_typ = item_map.get('description.@attributes.descriptionType')
-            desc_val = item_map.get('description.@value')
-            desc_dat = source.get('_item_metadata').get(desc_typ.split('.')[0])
-            if desc_dat and desc_dat.get('attribute_value_mlt'):
-                list_des_data = get_pair_value(desc_val.split('.')[1:],
-                                               desc_typ.split('.')[1:],
-                                               desc_dat.get(
-                                                   'attribute_value_mlt'))
-                for des_text, des_type in list_des_data:
-                    if des_type == 'Abstract':
-                        return des_text
-        else:
-            return ''
+            from weko_items_ui.utils import get_options_and_order_list, get_hide_list_by_schema_form
+
+            meta_option, item_type_mapping = get_options_and_order_list(
+                source.get('_item_metadata').get('item_type_id'))
+            hide_list = get_hide_list_by_schema_form(
+                source.get('_item_metadata').get('item_type_id'))
+            item_map = get_mapping(source.get('_item_metadata').get('item_type_id'), "jpcoar_mapping")
+            desc_typ_list = item_map.get('description.@attributes.descriptionType').split(',')
+            desc_val_list = item_map.get('description.@value').split(',')
+            for desc_val in desc_val_list:
+                skip_flag = False
+                val_key_list = desc_val.split('.')
+                for desc_typ in desc_typ_list:
+                    typ_key_list = desc_typ.split('.')
+                if val_key_list[0] == typ_key_list[0]:
+                    prop_hidden = meta_option.get(val_key_list[0], {}).get('option', {}).get('hidden', False)
+                    desc_dat = source.get('_item_metadata').get(typ_key_list[0])
+                    if desc_dat and desc_dat.get('attribute_value_mlt') and not prop_hidden:
+                        for h in hide_list:
+                            if h.startswith(val_key_list[0]) and h.endswith(val_key_list[-1]):
+                                skip_flag = True
+                                break
+                        if not skip_flag:
+                            list_des_data = get_pair_value(val_key_list[1:],
+                                                           typ_key_list[1:],
+                                                           desc_dat.get('attribute_value_mlt'))
+                            for des_text, des_type in list_des_data:
+                                if des_type == 'Abstract':
+                                    res = des_text
+        return res
     elif keyword == '_updated':
         return get_rss_data_source(source, '_updated')
     else:
@@ -972,14 +987,18 @@ class WidgetBucket:
                 _("Bucket with UUID {} already exists.".format(bucket_id))
             )
         else:
-            storage_class = current_app.config[
-                'FILES_REST_DEFAULT_STORAGE_CLASS']
-            location = Location.get_default()
-            bucket = Bucket(id=bucket_id,
-                            location=location,
-                            default_storage_class=storage_class)
-            db.session.add(bucket)
-            db.session.commit()
+            try:
+                storage_class = current_app.config[
+                    'FILES_REST_DEFAULT_STORAGE_CLASS']
+                location = Location.get_default()
+                bucket = Bucket(id=bucket_id,
+                                location=location,
+                                default_storage_class=storage_class)
+                db.session.add(bucket)
+                db.session.commit()
+            except Exception as ex:
+                current_app.logger.error(ex)
+                db.session.rollback()
 
     def __validate(self, file_stream, file_name, community_id="0", file_size=0):
         """Validate upload file.
@@ -1035,7 +1054,8 @@ class WidgetBucket:
             "file_name": file_name,
         }
         file_bucket = Bucket.query.get(self.bucket_id)
-        community_id = community_id.split("@")[0]
+        #community_id = community_id.split("@")[0]
+        community_id = community_id.split("@")[0] if community_id.split("@")[0] else "0"
         key = "{0}_{1}".format(community_id, file_name)
         root_url = request.host_url
         try:
@@ -1043,29 +1063,36 @@ class WidgetBucket:
             file_size = file_stream.tell()
             if self.__validate(file_stream, file_name, community_id, file_size):
                 file_stream.seek(0)  # Rewind the stream to the beginning
-                with db.session.begin_nested():
-                    ObjectVersion.create(
-                        file_bucket, key, stream=file_stream, size=file_size,
-                        mimetype=mimetype
-                    )
+                ObjectVersion.create(
+                    file_bucket, key, stream=file_stream, size=file_size,
+                    mimetype=mimetype
+                )
                 db.session.commit()
-                rtn["url"] = "{}widget/uploaded/{}/{}".format(
-                    root_url, file_name, community_id
+                rtn["url"] = "/widget/uploaded/{}/{}".format(
+                    file_name,community_id
                 )
                 return rtn
         except UnexpectedFileSizeError as error:
+            db.session.rollback()
             current_app.logger.error(error)
             rtn['status'] = False
             rtn['msg'] = str(error.errors)
             return rtn
         except FileInstanceAlreadySetError as error:
+            db.session.rollback()
             current_app.logger.error(error.errors)
             rtn['status'] = False
             rtn['duplicated'] = True
             rtn['msg'] = str(error.errors)
-            rtn["url"] = "{}widget/uploaded/{}/{}".format(
-                root_url, file_name, community_id
+            rtn["url"] = "/widget/uploaded/{}/{}".format(
+                file_name, community_id
             )
+            return rtn
+        except Exception as ex:
+            db.session.rollback()
+            current_app.logger.error(ex)
+            rtn['status'] = False
+            rtn['msg'] = str(ex)
             return rtn
 
     def get_file(self, file_name, community_id=0):

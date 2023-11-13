@@ -795,10 +795,11 @@ class RecordsListResource(ContentNegotiatedMethodView):
         if size * page < search_result.hits.total and \
                 size * page < self.max_result_window:
             links['next'] = url_for(endpoint, page=page + 1, **urlkwargs)
-
+        from weko_search_ui.utils import combine_aggs
+        search_result = combine_aggs(search_result.to_dict())
         return self.make_response(
             pid_fetcher=self.pid_fetcher,
-            search_result=search_result.to_dict(),
+            search_result=search_result,
             links=links,
             item_links_factory=self.item_links_factory,
         )
@@ -840,27 +841,33 @@ class RecordsListResource(ContentNegotiatedMethodView):
         if permission_factory:
             verify_record_permission(permission_factory, data)
 
-        # Create uuid for record
-        record_uuid = uuid.uuid4()
-        # Create persistent identifier
-        pid = self.minter(record_uuid, data=data)
-        # Create record
-        record = self.record_class.create(data, id_=record_uuid)
+        try:
+            # Create uuid for record
+            record_uuid = uuid.uuid4()
+            # Create persistent identifier
+            pid = self.minter(record_uuid, data=data)
+            # Create record
+            record = self.record_class.create(data, id_=record_uuid)
 
-        db.session.commit()
+            db.session.commit()
 
-        # Index the record
-        if self.indexer_class:
-            self.indexer_class().index(record)
+            # Index the record
+            if self.indexer_class:
+                self.indexer_class().index(record)
 
-        response = self.make_response(
-            pid, record, 201, links_factory=self.item_links_factory)
+            response = self.make_response(
+                pid, record, 201, links_factory=self.item_links_factory)
 
-        # Add location headers
-        endpoint = '.{0}_item'.format(
-            current_records_rest.default_endpoint_prefixes[pid.pid_type])
-        location = url_for(endpoint, pid_value=pid.pid_value, _external=True)
-        response.headers.extend(dict(location=location))
+            # Add location headers
+            endpoint = '.{0}_item'.format(
+                current_records_rest.default_endpoint_prefixes[pid.pid_type])
+            location = url_for(endpoint, pid_value=pid.pid_value, _external=True)
+            response.headers.extend(dict(location=location))
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(e)
+            response = self.make_response(None, None, 500)
+        
         return response
 
 
@@ -918,18 +925,23 @@ class RecordResource(ContentNegotiatedMethodView):
         """
         self.check_etag(str(record.model.version_id))
 
-        record.delete()
-        # mark all PIDs as DELETED
-        all_pids = PersistentIdentifier.query.filter(
-            PersistentIdentifier.object_type == pid.object_type,
-            PersistentIdentifier.object_uuid == pid.object_uuid,
-        ).all()
-        for rec_pid in all_pids:
-            if not rec_pid.is_deleted():
-                rec_pid.delete()
-        db.session.commit()
-        if self.indexer_class:
-            self.indexer_class().delete(record)
+        try:
+            record.delete()
+            # mark all PIDs as DELETED
+            all_pids = PersistentIdentifier.query.filter(
+                PersistentIdentifier.object_type == pid.object_type,
+                PersistentIdentifier.object_uuid == pid.object_uuid,
+            ).all()
+            for rec_pid in all_pids:
+                if not rec_pid.is_deleted():
+                    rec_pid.delete()
+            db.session.commit()
+
+            if self.indexer_class:
+                self.indexer_class().delete(record)
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(e)
 
         return '', 204
 
@@ -991,14 +1003,19 @@ class RecordResource(ContentNegotiatedMethodView):
 
         self.check_etag(str(record.revision_id))
         try:
-            record = record.patch(data)
-        except (JsonPatchException, JsonPointerException):
-            raise PatchJSONFailureRESTError()
+            try:
+                record = record.patch(data)
+            except (JsonPatchException, JsonPointerException):
+                raise PatchJSONFailureRESTError()
 
-        record.commit()
-        db.session.commit()
-        if self.indexer_class:
-            self.indexer_class().index(record)
+            record.commit()
+            db.session.commit()
+
+            if self.indexer_class:
+                self.indexer_class().index(record)
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(e)
 
         return self.make_response(
             pid, record, links_factory=self.links_factory)
@@ -1037,15 +1054,39 @@ class RecordResource(ContentNegotiatedMethodView):
 
         try:
             current_app.logger.debug(type(record))
+            role_ids = []
+            can_edit_indexes = []
+            if current_user and current_user.is_authenticated:
+                for role in current_user.roles:
+                    if role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']:
+                        role_ids = []
+                        break
+                    else:
+                        role_ids.append(role.id)
+            if role_ids:
+                from invenio_communities.models import Community
+                from weko_index_tree.api import Indexes
+
+                comm_list = Community.query.filter(
+                    Community.id_role.in_(role_ids)
+                ).all()
+                for comm in comm_list:
+                    for index in Indexes.get_self_list(comm.root_node_id):
+                        if index.cid not in can_edit_indexes:
+                            can_edit_indexes.append(str(index.cid))
+                path = record.get('path', [])
+                data['index'] = list(set(path) - set(can_edit_indexes)) + data.get('index', [])
             record.clear()
             record.update(data)
             record.commit()
             db.session.commit()
+
+            if self.indexer_class:
+                self.indexer_class().index(record)
         except BaseException as e:
+            db.session.rollback()
             current_app.logger.error(traceback.format_exc())
 
-        if self.indexer_class:
-            self.indexer_class().index(record)
         return self.make_response(
             pid, record, links_factory=self.links_factory)
 

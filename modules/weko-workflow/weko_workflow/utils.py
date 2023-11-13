@@ -27,6 +27,7 @@ from collections import OrderedDict
 from copy import deepcopy
 from datetime import datetime, timedelta
 from typing import NoReturn, Optional, Tuple, Union
+import traceback
 
 import redis
 from redis import sentinel
@@ -76,7 +77,7 @@ from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
 
 from .api import GetCommunity, UpdateItem, WorkActivity, WorkActivityHistory, \
     WorkFlow
-from .config import DOI_VALIDATION_INFO, IDENTIFIER_GRANT_SELECT_DICT, \
+from .config import DOI_VALIDATION_INFO, DOI_VALIDATION_INFO_CROSSREF, DOI_VALIDATION_INFO_DATACITE, IDENTIFIER_GRANT_SELECT_DICT, \
     WEKO_SERVER_CNRI_HOST_LINK
 from .models import Action as _Action
 from .models import ActionStatusPolicy, ActivityStatusPolicy, GuestActivity
@@ -325,7 +326,12 @@ def item_metadata_validation(item_id, identifier_type, record=None,
     report_types = ['technical report', 'research report', 'report',
                     'book', 'book part']
     elearning_type = ['learning object', 'learning material']
-    dataset_type = ['software', 'dataset']
+    dataset_type = ['software', 'dataset', 'aggregated data',
+                    'clinical trial data', 'compiled data', 
+                    'encoded data', 'experimental data', 'genomic data',
+                    'geospatial data', 'laboratory notebook', 'measurement and test data',
+                    'observational data', 'recorded data', 'simulation data',
+                    'survey data', 'source code']
     datageneral_types = ['internal report', 'policy report', 'report part',
                          'working paper', 'interactive resource',
                          'musical notation', 'research proposal',
@@ -431,39 +437,145 @@ def item_metadata_validation(item_id, identifier_type, record=None,
     # JaLC DOI identifier registration
     if identifier_type == IDENTIFIER_GRANT_SELECT_DICT['JaLC']:
         # 別表2-1 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【ジャーナルアーティクル】
-        # 別表2-2 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【学位論文】
-        # 別表2-3 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【書籍】
-        # 別表2-4 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【e-learning】
-        # 別表2-6 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【汎用データ】
-        if resource_type in journalarticle_type \
-                or resource_type in report_types \
-                or resource_type in thesis_types \
-                or resource_type in elearning_type \
-                or resource_type in datageneral_types:
-            required_properties = ['title']
+        if resource_type in journalarticle_type:
+            required_properties = [
+                'title',
+                'publisher',
+                'publisher_jpcoar',
+                'date',
+                'dateGranted',
+                'type',
+                # 'identifier',
+                # 'identifierRegistration',
+                'pageStart',
+                'fileURI',
+            ]
             # remove 20220207
             # either_properties = ['version']
+
+
+        # 別表2-2 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【学位論文】
+        elif resource_type in thesis_types:
+            required_properties = [
+                'title',
+                'publisher',
+                'publisher_jpcoar',
+                'date',
+                'dateGranted',
+                'degreeGrantor',
+                'type',
+                # 'identifier',
+                # 'identifierRegistration',
+                'pageStart',
+                'fileURI',
+            ]
+        
+        # 別表2-3 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【書籍】
+        elif resource_type in report_types:
+            required_properties = [
+                'title',
+                'publisher',
+                'publisher_jpcoar',
+                'date',
+                'dateGranted',
+                'type',
+                # 'identifier',
+                # 'identifierRegistration',
+                'fileURI',
+            ]
+        
+        # 別表2-4 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【e-learning】
+        elif resource_type in elearning_type:
+            required_properties = [
+                'title',
+                'publisher',
+                'publisher_jpcoar',
+                'date',
+                'dateGranted',
+                'type',
+                # 'identifier',
+                # 'identifierRegistration',
+                'fileURI',
+            ]
+
         # 別表2-5 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【研究データ】
         elif resource_type in dataset_type:
-            required_properties = ['title',
-                                   'givenName']
+            required_properties = [
+                'title',
+                'givenName',
+                'creatorName',
+                'publisher',
+                'publisher_jpcoar',
+                'date',
+                'dateGranted',
+                'type',
+                # 'identifier',
+                # 'identifierRegistration',
+                'fileURI',
+            ]
             # remove 20220207
             # either_properties = ['geoLocation']
+
+        # 別表2-6 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【汎用データ】
+        elif resource_type in datageneral_types:
+            required_properties = [
+                'title',
+                'publisher',
+                'publisher_jpcoar',
+                'date',
+                'dateGranted',
+                'type',
+                # 'identifier',
+                # 'identifierRegistration',
+                'fileURI',
+            ]
+            
     # CrossRef DOI identifier registration
     elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['Crossref']:
+        # 別表3-1 Crossref DOI登録メタデータのJPCOAR/JaLCマッピング【ジャーナルアーティクル】
         if resource_type in journalarticle_type:
-            required_properties = ['title',
-                                   'publisher',
-                                   'sourceIdentifier',
-                                   'sourceTitle']
+            required_properties = [
+                'title',
+                'publisher',
+                'publisher_jpcoar',
+                'date',
+                'dateGranted',
+                'type',
+                # 'identifier',
+                # 'identifierRegistration',
+                'sourceIdentifier',
+                'sourceTitle',
+                'fileURI',
+            ]
         elif resource_type in report_types \
                 or resource_type in thesis_types:
-            required_properties = ['title']
+            required_properties = [
+                'title',
+                'publisher',
+                'publisher_jpcoar',
+                'date',
+                'dateGranted',
+                'type',
+                # 'identifier',
+                # 'identifierRegistration',
+                'fileURI',
+            ]
     # DataCite DOI identifier registration
     elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['DataCite']:
         if resource_type in dataset_type:
-            required_properties = ['title',
-                                   'givenName']
+            required_properties = [
+                'title',
+                'givenName',
+                'creatorName',
+                'publisher',
+                'publisher_jpcoar', 
+                'date',
+                'dateGranted',
+                'type',
+                # 'identifier',
+                # 'identifierRegistration',
+                'fileURI',
+            ]
             # remove 20220207
             # either_properties = ['geoLocation']
     # NDL JaLC DOI identifier registration
@@ -490,11 +602,12 @@ def item_metadata_validation(item_id, identifier_type, record=None,
     current_app.logger.debug(properties)
     current_app.logger.debug(metadata_item)
 
-    if properties and \
-            ((identifier_type != IDENTIFIER_GRANT_SELECT_DICT['DataCite']
-              and identifier_type != IDENTIFIER_GRANT_SELECT_DICT['NDL JaLC']
-              ) or is_import):
-        return validation_item_property(metadata_item, properties)
+    # if properties and \
+    #         ((identifier_type != IDENTIFIER_GRANT_SELECT_DICT['DataCite']
+    #           and identifier_type != IDENTIFIER_GRANT_SELECT_DICT['NDL JaLC']
+    #           ) or is_import):
+    if properties:
+        return validation_item_property(metadata_item, properties, identifier_type=identifier_type)
     else:
         return _('Cannot register selected DOI for current Item Type of this '
                  'item.')
@@ -523,7 +636,7 @@ def merge_doi_error_list(current, new):
         current['mapping'] = list(set(current['mapping']))
 
 
-def validation_item_property(mapping_data, properties):
+def validation_item_property(mapping_data, properties, identifier_type=None):
     """
     Validate item property.
 
@@ -537,13 +650,13 @@ def validation_item_property(mapping_data, properties):
 
     if properties.get('required'):
         error_list_required = validattion_item_property_required(
-            mapping_data, properties['required'])
+            mapping_data, properties['required'],identifier_type=identifier_type)
         if error_list_required:
             merge_doi_error_list(error_list, error_list_required)
 
     if properties.get('either'):
         error_list_either = validattion_item_property_either_required(
-            mapping_data, properties['either'])
+            mapping_data, properties['either'], identifier_type=identifier_type)
         if error_list_either:
             merge_doi_error_list(error_list, error_list_either)
 
@@ -576,7 +689,7 @@ def handle_check_required_data(mapping_data, mapping_key):
 
 
 def handle_check_required_pattern_and_either(mapping_data, mapping_keys,
-                                             error_list=None, is_either=False):
+                                             error_list=None, is_either=False, identifier_type=None):
     """Check required, pattern and either required."""
     if not (mapping_data and mapping_keys):
         return
@@ -587,8 +700,16 @@ def handle_check_required_pattern_and_either(mapping_data, mapping_keys,
     keys = []
     num_map = 0
     requirements = []
+    doi_validation_information = deepcopy(DOI_VALIDATION_INFO)
+
+    if identifier_type:
+        if identifier_type == '2':
+            doi_validation_information = DOI_VALIDATION_INFO_CROSSREF
+        elif identifier_type == '3':
+            doi_validation_information = DOI_VALIDATION_INFO_DATACITE
+
     for mapping_key in mapping_keys:
-        for elem, pattern in DOI_VALIDATION_INFO[mapping_key]:
+        for elem, pattern in doi_validation_information[mapping_key]:
             check_required_info = handle_check_required_data(
                 mapping_data, elem)
             if not check_required_info[1]:
@@ -631,7 +752,7 @@ def handle_check_required_pattern_and_either(mapping_data, mapping_keys,
 
 
 def validattion_item_property_required(
-        mapping_data, properties):
+        mapping_data, properties, identifier_type=None):
     """
     Validate item property is required.
 
@@ -647,37 +768,91 @@ def validattion_item_property_required(
     if 'fileURI' in properties:
         mapping_keys = ['jpcoar:URI']
         handle_check_required_pattern_and_either(
-            mapping_data, mapping_keys, error_list)
+            mapping_data, mapping_keys, error_list, identifier_type=identifier_type)
 
     # check タイトル dc:title
     if 'title' in properties:
         mapping_keys = ['dc:title']
         handle_check_required_pattern_and_either(
-            mapping_data, mapping_keys, error_list)
+            mapping_data, mapping_keys, error_list, identifier_type=identifier_type)
 
     # check 識別子 jpcoar:givenName
     if 'givenName' in properties:
         mapping_keys = ['jpcoar:givenName']
         handle_check_required_pattern_and_either(
-            mapping_data, mapping_keys, error_list)
+            mapping_data, mapping_keys, error_list, identifier_type=identifier_type)
 
     # check 収録物識別子 jpcoar:sourceIdentifier
     if 'sourceIdentifier' in properties:
         mapping_keys = ['jpcoar:sourceIdentifier']
         handle_check_required_pattern_and_either(
-            mapping_data, mapping_keys, error_list)
+            mapping_data, mapping_keys, error_list, identifier_type=identifier_type)
 
     # check 収録物名 jpcoar:sourceTitle
     if 'sourceTitle' in properties:
         mapping_keys = ['jpcoar:sourceTitle']
         handle_check_required_pattern_and_either(
-            mapping_data, mapping_keys, error_list)
+            mapping_data, mapping_keys, error_list, identifier_type=identifier_type)
 
     # check 収録物名 dc:publisher
     if 'publisher' in properties:
         mapping_keys = ['dc:publisher']
         handle_check_required_pattern_and_either(
-            mapping_data, mapping_keys, error_list)
+            mapping_data, mapping_keys, error_list, identifier_type=identifier_type)
+    
+    # check jpcoar:publisher
+    if 'publisher_jpcoar' in properties:
+        mapping_keys = ['jpcoar:publisher_jpcoar']
+        handle_check_required_pattern_and_either(
+            mapping_data, mapping_keys, error_list, identifier_type=identifier_type)
+
+    # check datacite:date
+    if 'date' in properties:
+        mapping_keys = ['datacite:date']
+        handle_check_required_pattern_and_either(
+            mapping_data, mapping_keys, error_list, identifier_type=identifier_type)
+    
+    # check dcndl:dateGranted
+    if 'dateGranted' in properties:
+        mapping_keys = ['dcndl:dateGranted']
+        handle_check_required_pattern_and_either(
+            mapping_data, mapping_keys, error_list, identifier_type=identifier_type)
+
+    # check dc:type
+    if 'type' in properties:
+        mapping_keys = ['dc:type']
+        handle_check_required_pattern_and_either(
+            mapping_data, mapping_keys, error_list, identifier_type=identifier_type)
+    
+    # check jpcoar:identifier
+    # if 'identifier' in properties:
+    #     mapping_keys = ['jpcoar:identifier']
+    #     handle_check_required_pattern_and_either(
+    #         mapping_data, mapping_keys, error_list, identifier_type=identifier_type)
+
+    # check jpcoar:identifierRegistration
+    # if 'identifierRegistration' in properties:
+    #     mapping_keys = ['jpcoar:identifierRegistration']
+    #     handle_check_required_pattern_and_either(
+    #         mapping_data, mapping_keys, error_list, identifier_type=identifier_type)
+    
+    # check jpcoar:pageStart
+    if 'pageStart' in properties:
+        mapping_keys = ['jpcoar:pageStart']
+        handle_check_required_pattern_and_either(
+            mapping_data, mapping_keys, error_list, identifier_type=identifier_type)
+    
+    # check jpcoar:degreeGrantor
+    if 'degreeGrantor' in properties:
+        mapping_keys = ['jpcoar:degreeGrantor']
+        handle_check_required_pattern_and_either(
+            mapping_data, mapping_keys, error_list, identifier_type=identifier_type)
+
+    # check jpcoar:creatorName
+    if 'creatorName' in properties:
+        mapping_keys = ['jpcoar:creatorName']
+        handle_check_required_pattern_and_either(
+            mapping_data, mapping_keys, error_list, identifier_type=identifier_type)
 
     if error_list == empty_list:
         return None
@@ -689,7 +864,7 @@ def validattion_item_property_required(
 
 
 def validattion_item_property_either_required(
-        mapping_data, properties):
+        mapping_data, properties, identifier_type):
     """
     Validate item property is either required.
 
@@ -706,13 +881,13 @@ def validattion_item_property_either_required(
         # check 位置情報（点） datacite:geoLocationPoint
         mapping_keys = ['datacite:geoLocationPoint']
         geo_location = handle_check_required_pattern_and_either(
-            mapping_data, mapping_keys, None, True)
+            mapping_data, mapping_keys, identifier_type, None, True)
 
         # check 位置情報（空間） datacite:geoLocationBox
         if geo_location:
             mapping_keys = ['datacite:geoLocationBox']
             errors = handle_check_required_pattern_and_either(
-                mapping_data, mapping_keys, None, True)
+                mapping_data, mapping_keys, identifier_type, None, True)
             if not errors:
                 geo_location = None
             else:
@@ -722,7 +897,7 @@ def validattion_item_property_either_required(
         if geo_location:
             mapping_keys = ['datacite:geoLocationPlace']
             errors = handle_check_required_pattern_and_either(
-                mapping_data, mapping_keys, None, True)
+                mapping_data, mapping_keys, identifier_type, None, True)
             if not errors:
                 geo_location = None
             else:
@@ -740,13 +915,13 @@ def validattion_item_property_either_required(
         # check フォーマット jpcoar:mimeType
         mapping_keys = ['jpcoar:mimeType']
         version = handle_check_required_pattern_and_either(
-            mapping_data, mapping_keys, None, True)
+            mapping_data, mapping_keys, identifier_type, None, True)
 
         if version:
             # check バージョン datacite:version
             mapping_keys = ['datacite:version']
             errors = handle_check_required_pattern_and_either(
-                mapping_data, mapping_keys, None, True)
+                mapping_data, mapping_keys, identifier_type, None, True)
             if not errors:
                 version = None
             else:
@@ -756,7 +931,7 @@ def validattion_item_property_either_required(
             # check 出版タイプ oaire:version
             mapping_keys = ['oaire:version']
             errors = handle_check_required_pattern_and_either(
-                mapping_data, mapping_keys, None, True)
+                mapping_data, mapping_keys, identifier_type, None, True)
             if not errors:
                 version = None
             else:
@@ -1461,10 +1636,19 @@ def prepare_edit_workflow(post_activity, recid, deposit):
         rtn = activity.init_activity(post_activity,
                                      community,
                                      draft_record.model.id)
+        # create item link info of draft record from parent record
+        weko_record = WekoRecord.get_record_by_pid(
+            draft_record.pid.pid_value)
+        if weko_record:
+            weko_record.update_item_link(recid.pid_value)
     else:
         # Clone org bucket into draft record.
         try:
+            _parent = WekoDeposit.get_record(recid.object_uuid)
             _deposit = WekoDeposit.get_record(draft_pid.object_uuid)
+            _deposit['path'] = _parent.get('path')
+            _deposit.merge_data_to_record_without_version(recid, True)
+            _deposit.publish()
             _bucket = Bucket.get(_deposit.files.bucket.id)
 
             if not _bucket:
@@ -1589,7 +1773,7 @@ def handle_finish_workflow(deposit, current_pid, recid):
                 ver_attaching_deposit.update_feedback_mail()
             ver_attaching_deposit.publish()
 
-            weko_record = WekoRecord.get_record_by_pid(current_pid.pid_value)
+            weko_record = WekoRecord.get_record_by_pid(new_deposit.pid.pid_value)
             if weko_record:
                 weko_record.update_item_link(current_pid.pid_value)
             updated_item.publish(deposit)
@@ -1625,6 +1809,11 @@ def handle_finish_workflow(deposit, current_pid, recid):
                     new_parent_record.update_feedback_mail()
                     new_parent_record.commit()
                     updated_item.publish(new_parent_record)
+                    # update item link info of main record
+                    weko_record = WekoRecord.get_record_by_pid(
+                        maintain_record.pid.pid_value)
+                    if weko_record:
+                        weko_record.update_item_link(current_pid.pid_value)
                 else:  # Handle Upgrade workflow
                     draft_pid = PersistentIdentifier.get(
                         'recid',
@@ -1639,7 +1828,13 @@ def handle_finish_workflow(deposit, current_pid, recid):
                     new_draft_record.update_feedback_mail()
                     new_draft_record.commit()
                     updated_item.publish(new_draft_record)
+                    # update item link info of draft record
+                    weko_record = WekoRecord.get_record_by_pid(
+                        draft_deposit.pid.pid_value)
+                    if weko_record:
+                        weko_record.update_item_link(current_pid.pid_value)
 
+                # update item link info of parent record
                 weko_record = WekoRecord.get_record_by_pid(
                     pid_without_ver.pid_value)
                 if weko_record:
@@ -2832,7 +3027,6 @@ def save_activity_data(data: dict) -> NoReturn:
     if activity_id:
         WorkActivity().update_activity(activity_id, activity_data)
 
-
 def send_mail_url_guest_user(mail_info: dict) -> bool:
     """Send mail url guest_user.
 
@@ -3095,6 +3289,8 @@ def get_activity_display_info(activity_id: str):
     item = None
     if activity_detail and activity_detail.item_id:
         try:
+            #obj = RecordMetadata.query.filter_by(id=activity_detail.item_id).one_or_none()
+            #item = ItemsMetadata(obj.json, model=obj)
             item = ItemsMetadata.get_record(id_=activity_detail.item_id)
         except NoResultFound as ex:
             current_app.logger.exception(str(ex))
@@ -3738,16 +3934,16 @@ def get_record_first_version(deposit):
     return deposit, pid.object_uuid
 
 
-def get_files_and_thumbnail(activity_id, item):
+def get_files_and_thumbnail(activity_id, item_id):
     """Get files and thumbnail from activity id.
 
     Args:
         activity_id: The activity identifier.
-        item:  Item metadata.
+        item_id:  Item uuid.
     """
     from weko_items_ui.utils import to_files_js
     files, files_thumbnail = [], []
-    deposit = WekoDeposit.get_record(item.id)
+    deposit = WekoDeposit.get_record(item_id)
     activity = WorkActivity()
     metadata = activity.get_activity_metadata(activity_id)
     # Load files from metadata.
@@ -3838,7 +4034,7 @@ def get_main_record_detail(activity_id,
     if item and not approval_record:
         recid, approval_record = get_pid_and_record(item.id)
     if item and not files:
-        files, files_thumbnail = get_files_and_thumbnail(activity_id, item)
+        files, files_thumbnail = get_files_and_thumbnail(activity_id, item.id)
 
     record_metadata = []
     item_type_id = approval_record.get('item_type_id')

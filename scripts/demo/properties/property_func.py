@@ -274,6 +274,21 @@ def set_post_data(post_data, property_id, name, key, option, form, schema, **kwa
         post_data['edit_notes'][key] = ''
 
 
+def make_title_map(labels:list,values:list):
+    """Make title map.
+
+    Args:
+        labels ([list]): label list.
+        values ([list]): value list.
+
+    Returns:
+        [list]: title map.
+    """
+    title_map = []
+    for label, value in zip(labels, values):
+        title_map.append({'name': label, 'value': value})
+    return title_map
+
 def get_select_value(value_list=None):
     """Get select item of item type.
 

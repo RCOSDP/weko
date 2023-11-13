@@ -36,6 +36,7 @@ from flask_babelex import gettext as _
 from flask_login import current_user
 from flask_wtf import FlaskForm
 from weko_admin.api import validate_csrf_header
+from invenio_db import db
 from invenio_files_rest.models import FileInstance
 from invenio_i18n.ext import current_i18n
 from weko_admin.api import TempDirInfo
@@ -107,45 +108,52 @@ class ItemManagementBulkDelete(BaseView):
                 recursive_tree = Indexes.get_recursive_tree(q)
                 recursively = request.values.get("recursively") == "true"
 
+                msg = "Invalid tree"
                 if current_tree:
-                    doi_items = get_doi_items_in_index(q, recursively)
-                    edt_items = get_editing_items_in_index(q, recursively)
-                    ignore_items = list(set(doi_items + edt_items))
-                    # Delete items in current_tree
-                    delete_records(current_tree.id, ignore_items)
+                    try:
+                        doi_items = get_doi_items_in_index(q, recursively)
+                        edt_items = get_editing_items_in_index(q, recursively)
+                        ignore_items = list(set(doi_items + edt_items))
+                        # Delete items in current_tree
+                        delete_records(current_tree.id, ignore_items)
 
-                    # If recursively, then delete items of child indices
-                    if recursively:
-                        # Delete recursively
-                        direct_child_trees = []
-                        for obj in recursive_tree:
-                            if obj[1] != current_tree.id:
-                                child_tree = Indexes.get_index(obj[1])
+                        # If recursively, then delete items of child indices
+                        if recursively:
+                            # Delete recursively
+                            direct_child_trees = []
+                            for obj in recursive_tree:
+                                if obj[1] != current_tree.id:
+                                    child_tree = Indexes.get_index(obj[1])
 
-                                # Do delete items in child_tree
-                                delete_records(child_tree.id, ignore_items)
-                                # Add the level 1 child into the current_tree
-                                if obj[0] == current_tree.id:
-                                    direct_child_trees.append(child_tree.id)
+                                    # Do delete items in child_tree
+                                    delete_records(child_tree.id, ignore_items)
+                                    # Add the level 1 child into the current_tree
+                                    if obj[0] == current_tree.id:
+                                        direct_child_trees.append(child_tree.id)
 
-                    if ignore_items:
-                        msg = "{}<br/>".format(
-                            _("The following item(s) cannot be deleted.")
-                        )
-                        if doi_items:
-                            _item_d = ["recid: {}".format(i) for i in doi_items]
-                            msg += "<br/>{}<br/>&nbsp;{}".format(
-                                _("DOI granting item(s):"), (", ").join(_item_d)
+                        db.session.commit()
+                        if ignore_items:
+                            msg = "{}<br/>".format(
+                                _("The following item(s) cannot be deleted.")
                             )
-                        if edt_items:
-                            _item_e = ["recid: {}".format(i) for i in edt_items]
-                            msg += "<br/>{}<br/>&nbsp;{}".format(
-                                _("Editing item(s):"), (", ").join(_item_e)
-                            )
-                        return jsonify({"status": 1, "msg": msg})
-                    return jsonify({"status": 1, "msg": _("Success")})
+                            if doi_items:
+                                _item_d = ["recid: {}".format(i) for i in doi_items]
+                                msg += "<br/>{}<br/>&nbsp;{}".format(
+                                    _("DOI granting item(s):"), (", ").join(_item_d)
+                                )
+                            if edt_items:
+                                _item_e = ["recid: {}".format(i) for i in edt_items]
+                                msg += "<br/>{}<br/>&nbsp;{}".format(
+                                    _("Editing item(s):"), (", ").join(_item_e)
+                                )
+                            return jsonify({"status": 1, "msg": msg})
+                        return jsonify({"status": 1, "msg": _("Success")})
+                    except Exception as e:
+                        db.session.rollback()
+                        current_app.logger.error(e)
+                        msg = str(e)
 
-            return jsonify({"status": 0, "msg": "Invalid tree"})
+            return jsonify({"status": 0, "msg": msg})
 
         """Render view."""
         detail_condition = get_search_detail_keyword("")
@@ -427,12 +435,13 @@ class ItemImportView(BaseView):
         """Import item into System."""
         data = request.get_json() or {}
         data_path = data.get("data_path")
-        user_id = current_user.get_id() if current_user else 1
+        user_id = current_user.get_id() if current_user else -1
         request_info = {
             "remote_addr": request.remote_addr,
             "referrer": request.referrer,
             "hostname": request.host,
-            "user_id": user_id
+            "user_id": user_id,
+            "action": "IMPORT"
         }
         # update temp dir expire to 1 day from now
         expire = datetime.now() + timedelta(days=1)
@@ -446,10 +455,15 @@ class ItemImportView(BaseView):
         if list_record:
             group_tasks = []
             for item in list_record:
-                item["root_path"] = data_path + "/data"
-                create_flow_define()
-                handle_workflow(item)
-                group_tasks.append(import_item.s(item, request_info))
+                try:
+                    item["root_path"] = data_path + "/data"
+                    create_flow_define()
+                    handle_workflow(item)
+                    group_tasks.append(import_item.s(item, request_info))
+                    db.session.commit()
+                except Exception as e:
+                    db.session.rollback()
+                    current_app.logger.error(e)
 
             # handle import tasks
             import_task = chord(group_tasks)(remove_temp_dir_task.si(data_path))

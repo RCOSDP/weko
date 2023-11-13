@@ -21,7 +21,7 @@ from invenio_oaiharvester.harvester import (
     add_creator_jpcoar,
     add_contributor_jpcoar,
     add_access_right,
-    add_apc,
+    # add_apc,
     add_right,
     add_subject,
     add_description,
@@ -739,7 +739,7 @@ def test_add_funding_reference(mapper_jpcoar):
     add_funding_reference(schema, mapping, res, metadata)
     assert "item_1551265385290" in res
     assert res["item_1551265385290"] == [{'subitem_1551256462220': [{'subitem_1551256653656': 'テスト助成機関', 'subitem_1551256657859': 'ja'}], 'subitem_1551256454316': [{'subitem_1551256614960': '22222', 'subitem_1551256619706': 'Crossref Funder'}], 'subitem_1551256688098': [{'subitem_1551256691232': 'テスト研究', 'subitem_1551256694883': 'ja'}], 'subitem_1551256665850': [{'subitem_1551256671920': '1111', 'subitem_1551256679403': 'https://test.research.com'}]}]
-    
+
 # def add_geo_location(schema, mapping, res, metadata):
 # .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_harvester.py::test_add_geo_location -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
 def test_add_geo_location(mapper_jpcoar):
@@ -1166,6 +1166,762 @@ class TestJPCOARMapper:
         test = {'$schema': 10, 'pubdate': '2023-02-20', 'item_1551264308487': [{'subitem_1551255647225': 'test full item', 'subitem_1551255648112': 'ja'}], 'title': 'test full item', 'item_1551264326373': [{'subitem_1551255720400': 'other title', 'subitem_1551255721061': 'en'}], 'item_1551264340087': [{'subitem_1551255991424': [{'subitem_1551256006332': '太郎', 'subitem_1551256007414': 'ja'}], 'subitem_1551255929209': [{'subitem_1551255938498': 'テスト', 'subitem_1551255964991': 'ja'}], 'subitem_1551255898956': [{'subitem_1551255905565': 'テスト, 太郎', 'subitem_1551255907416': 'ja'}], 'subitem_1551256025394': [{'subitem_1551256035730': 'テスト\u3000別郎', 'subitem_1551256055588': 'ja'}]}], 'item_1551264418667': [{'subitem_1551257036415': 'ContactPerson', 'subitem_1551257339190': [{'subitem_1551257342360': '', 'subitem_1551257343979': 'en'}], 'subitem_1551257272214': [{'subitem_1551257314588': 'test', 'subitem_1551257316910': 'en'}], 'subitem_1551257245638': [{'subitem_1551257276108': 'test, smith', 'subitem_1551257279831': 'en'}], 'subitem_1551257372442': [{'subitem_1551257374288': 'other smith', 'subitem_1551257375939': 'en'}]}], 'item_1551264447183': [{'subitem_1551257553743': 'metadata only access', 'subitem_1551257578398': 'http://purl.org/coar/access_right/c_14cb'}], 'item_1551264605515': [{'subitem_1551257776901': 'Paid'}], 'item_1551264629907': [{'subitem_1551257025236': [{'subitem_1551257043769': 'テスト権利情報', 'subitem_1551257047388': 'ja'}], 'subitem_1551257030435': 'テスト権利情報Resource'}], 'item_1551264767789': [{'subitem_1551257249371': [{'subitem_1551257255641': 'テスト\u3000太郎', 'subitem_1551257257683': 'ja'}]}], 'item_1551264822581': [{'subitem_1551257315453': 'テスト主題', 'subitem_1551257323812': 'ja', 'subitem_1551257343002': 'http://bsh.com', 'subitem_1551257329877': 'BSH'}], 'item_1551264846237': [{'subitem_1551255577890': 'this is test abstract.', 'subitem_1551255592625': 'en', 'subitem_1551255637472': 'Abstract'}], 'item_1551264917614': [{'subitem_1551255702686': 'test publisher', 'subitem_1551255710277': 'ja'}], 'item_1551264974654': [{'subitem_1551255753471': '2022-10-20', 'subitem_1551255775519': 'Accepted'}, {'subitem_1551255753471': '2022-10-19', 'subitem_1551255775519': 'Issued'}], 'item_1551265002099': [{'subitem_1551255818386': 'jpn'}], 'item_1551265032053': [{'resourcetype': 'newspaper', 'resourceuri': 'http://purl.org/coar/resource_type/c_2fe3'}], 'item_1551265075370': [{'subitem_1551255975405': '1.1'}], 'item_1551265118680': [{'subitem_1551256025676': 'AO'}], 'system_identifier_doi': [{'subitem_systemidt_identifier': '1111', 'subitem_systemidt_identifier_type': 'DOI'}, {'subitem_systemidt_identifier': 'https://doi.org/1234/0000000001', 'subitem_systemidt_identifier_type': 'DOI'}, {'subitem_systemidt_identifier': 'https://192.168.56.103/records/1', 'subitem_systemidt_identifier_type': 'URI'}], 'item_1581495499605': [{'subitem_1551256250276': '1234/0000000001', 'subitem_1551256259586': 'JaLC'}], 'item_1551265227803': [{'subitem_1551256388439': 'isVersionOf', 'subitem_1551256480278': [{'subitem_1551256498531': '関連情報テスト', 'subitem_1551256513476': 'ja'}], 'subitem_1551256465077': [{'subitem_1551256478339': '1111111', 'subitem_1551256629524': 'ARK'}]}, {'subitem_1551256388439': 'isVersionOf', 'subitem_1551256465077': [{'subitem_1551256478339': 'https://192.168.56.103/records/3', 'subitem_1551256629524': 'URI'}]}], 'item_1551265302120': [{'subitem_1551256918211': '1 to 2', 'subitem_1551256920086': 'ja'}], 'item_1551265385290': [{'subitem_1551256462220': [{'subitem_1551256653656': 'テスト助成機関', 'subitem_1551256657859': 'ja'}], 'subitem_1551256454316': [{'subitem_1551256614960': '22222', 'subitem_1551256619706': 'Crossref Funder'}], 'subitem_1551256688098': [{'subitem_1551256691232': 'テスト研究', 'subitem_1551256694883': 'ja'}], 'subitem_1551256665850': [{'subitem_1551256671920': '1111', 'subitem_1551256679403': 'https://test.research.com'}]}], 'item_1551265409089': [{'subitem_1551256405981': 'test source Identifier', 'subitem_1551256409644': 'PISSN'}], 'item_1551265438256': [{'subitem_1551256349044': 'test collectibles', 'subitem_1551256350188': 'ja'}, {'subitem_1551256349044': 'test title book', 'subitem_1551256350188': 'ja'}], 'item_1551265463411': [{'subitem_1551256328147': '5'}, {'subitem_1551256328147': '1'}], 'item_1551265520160': [{'subitem_1551256294723': '2'}, {'subitem_1551256294723': '2'}], 'item_1551265553273': [{'subitem_1551256248092': '333'}, {'subitem_1551256248092': '555'}], 'item_1551265569218': [{'subitem_1551256198917': '123'}, {'subitem_1551256198917': '789'}, {'subitem_1551256198917': '456'}, {'subitem_1551256198917': '234'}], 'item_1551265738931': [{'subitem_1551256171004': '9999'}], 'item_1551265790591': [{'subitem_1551256126428': 'テスト学位', 'subitem_1551256129013': 'ja'}], 'item_1551265811989': [{'subitem_1551256096004': '2022-10-19'}], 'item_1551265903092': [{'subitem_1551256015892': [{'subitem_1551256027296': '学位授与機関識別子テスト', 'subitem_1551256029891': 'kakenhi'}], 'subitem_1551256037922': [{'subitem_1551256042287': '学位授与機関', 'subitem_1551256047619': 'ja'}]}], 'item_1551265973055': [{'subitem_1599711813532': 'JPN', 'subitem_1599711655652': '12345', 'subitem_1599711633003': [{'subitem_1599711636923': 'テスト会議', 'subitem_1599711645590': 'ja'}]}], 'item_1570069138259': [{'subitem_1551255854908': '1.0', 'subitem_1551255750794': 'text/plain', 'subitem_1551255788530': [{'subitem_1570068579439': '18 B'}], 'subitem_1551255820788': [{'subitem_1551255828320': '2022-10-20', 'subitem_1551255833133': 'Accepted'}], 'subitem_1551255558587': [{'subitem_1551255570271': 'https://weko3.example.org/record/1/files/test1.txt'}]}, {'subitem_1551255854908': '1.2', 'subitem_1551255750794': 'application/octet-stream', 'subitem_1551255788530': [{'subitem_1570068579439': '18 B'}], 'subitem_1551255558587': [{'subitem_1551255570271': 'https://weko3.example.org/record/1/files/test2'}]}, {'subitem_1551255854908': '2.1', 'subitem_1551255750794': 'image/png', 'subitem_1551255788530': [{'subitem_1570068579439': '18 B'}], 'subitem_1551255558587': [{'subitem_1551255570271': 'https://weko3.example.org/record/1/files/test3.png'}]}]}
         result = mapper.map()
         assert result == test
+
+    # .tox/c1/bin/pytest -v --cov=invenio_oaiharvester tests/test_harvester.py::TestJPCOARMapper::test_map_2 -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
+    def test_map_2(self,db_itemtype):
+        xml_str = '<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd"><responseDate>2023-06-15T08:09:48Z</responseDate><request metadataPrefix="jpcoar_2.0" identifier="oai:weko3.example.org:00000026" verb="GetRecord">https://localhost/oai</request><GetRecord><record><header><identifier>oai:weko3.example.org:00000026</identifier><datestamp>2023-06-15T08:01:19Z</datestamp><setSpec>1686726684832</setSpec></header><metadata><jpcoar:jpcoar xmlns:datacite="https://schema.datacite.org/meta/kernel-4/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcndl="http://ndl.go.jp/dcndl/terms/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:jpcoar="https://github.com/JPCOAR/schema/blob/master/2.0/" xmlns:oaire="http://namespace.openaire.eu/schema/oaire/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:rioxxterms="http://www.rioxx.net/schema/v2.0/rioxxterms/" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns="https://github.com/JPCOAR/schema/blob/master/2.0/" xsi:schemaLocation="https://github.com/JPCOAR/schema/blob/master/2.0/jpcoar_scm.xsd"><dc:title xml:lang="en">thesis_test_today</dc:title><jpcoar:creator creatorType="creator_type_test"><jpcoar:creatorName nameType="Personal" xml:lang="en">creator_name_test</jpcoar:creatorName><jpcoar:affiliation><jpcoar:nameIdentifier nameIdentifierURI="creator_aff_name_identifier_uri_test" nameIdentifierScheme="ROR">creator_aff_name_identifier</jpcoar:nameIdentifier><jpcoar:affiliationName xml:lang="en">creator_aff_name</jpcoar:affiliationName></jpcoar:affiliation></jpcoar:creator><jpcoar:contributor><jpcoar:contributorName nameType="Organizational" xml:lang="ja">contributor_name_test</jpcoar:contributorName><jpcoar:affiliation><jpcoar:nameIdentifier nameIdentifierURI="contrib_aff_name_id_uri_test" nameIdentifierScheme="GRID">contrib_aff_name_id_test</jpcoar:nameIdentifier><jpcoar:affiliationName xml:lang="en">contrib_aff_name_test</jpcoar:affiliationName></jpcoar:affiliation></jpcoar:contributor><jpcoar:subject xml:lang="en" subjectURI="subject_uri_test" subjectScheme="DDC">subject_test</jpcoar:subject><datacite:date>2023-06-15</datacite:date><dc:type rdf:resource="http://purl.org/coar/resource_type/c_46ec">thesis</dc:type><jpcoar:identifier identifierType="URI">https://localhost/records/26</jpcoar:identifier><jpcoar:relation relationType="inSeries"><jpcoar:relatedIdentifier identifierType="WOS">related_identifier_test</jpcoar:relatedIdentifier><jpcoar:relatedTitle xml:lang="en">related_title_test</jpcoar:relatedTitle></jpcoar:relation><jpcoar:fundingReference><jpcoar:funderIdentifier funderIdentifierType="Crossref Funder" funderIdentifierTypeURI="funder_identifier_type_uri_test">funder_identifier_test</jpcoar:funderIdentifier><jpcoar:awardNumber awardURI="award_number_uri_test" awardNumberType="JGN">award_number_test</jpcoar:awardNumber><jpcoar:fundingStreamIdentifier fundingStreamIdentifierType="Crossref Funder" fundingStreamIdentifierTypeURI="funding_stream_identifier_type_uri_test">funding_stream_identifier_test</jpcoar:fundingStreamIdentifier><jpcoar:fundingStream xml:lang="en">funding_stream_test</jpcoar:fundingStream></jpcoar:fundingReference><jpcoar:publisher><jpcoar:publisherName xml:lang="en">publisher_test</jpcoar:publisherName><jpcoar:publisherDescription xml:lang="ja">description_test</jpcoar:publisherDescription><dcndl:location>location_test</dcndl:location><dcndl:publicationPlace>publication_place_test</dcndl:publicationPlace></jpcoar:publisher><dcterms:date>2016</dcterms:date><dcndl:edition xml:lang="en">edition_test</dcndl:edition><dcndl:volumeTitle xml:lang="ja">volume_title_test</dcndl:volumeTitle><dcndl:originalLanguage>original_language_test</dcndl:originalLanguage><dcterms:extent xml:lang="en">extent_test</dcterms:extent><jpcoar:format xml:lang="en">format_test</jpcoar:format><jpcoar:holdingAgent><jpcoar:holdingAgentNameIdentifier nameIdentifierURI="holding_agent_name_identifier_uri_test" nameIdentifierScheme="ROR">holding_agent_name_identifier_test</jpcoar:holdingAgentNameIdentifier><jpcoar:holdingAgentName xml:lang="en">holding_agent_name_test</jpcoar:holdingAgentName></jpcoar:holdingAgent><jpcoar:datasetSeries>True</jpcoar:datasetSeries><jpcoar:catalog><jpcoar:contributor contributorType="HostingInstitution"><jpcoar:contributorName xml:lang="en">catalog_contributor_test</jpcoar:contributorName></jpcoar:contributor><jpcoar:identifier identifierType="DOI">catalog_identifier_test</jpcoar:identifier><dc:title xml:lang="en">catalog_title_test</dc:title><datacite:description xml:lang="ja" descriptionType="Abstract">catalog_description_test</datacite:description><jpcoar:subject xml:lang="en" subjectURI="catalog_subject_uri_test" subjectScheme="DDC">catalog_subject_test</jpcoar:subject><jpcoar:license xml:lang="en" licenseType="file" rdf:resource="catalog_rdf_license_test">catalog_license_test</jpcoar:license><dc:rights xml:lang="en" rdf:resource="catalog_rdf_rights_test">catalog_rights_test</dc:rights><dcterms:accessRights rdf:resource="catalog_rdf_access_rights_test">metadata only access</dcterms:accessRights><jpcoar:file><jpcoar:URI objectType="open access">catalog_file_test</jpcoar:URI></jpcoar:file></jpcoar:catalog></jpcoar:jpcoar></metadata></record></GetRecord></OAI-PMH>'
+        tree = etree.fromstring(xml_str)
+        record = tree.findall("./GetRecord/record",namespaces=tree.nsmap)[0]
+        xml = etree.tostring(record,encoding="utf-8").decode()
+        mapper = JPCOARMapper(xml)
+        mapper.json["record"]["metadata"]["jpcoar:jpcoar"] = OrderedDict(
+            [
+                ("@xmlns:datacite", "https://schema.datacite.org/meta/kernel-4/"),
+                ("@xmlns:dc", "http://purl.org/dc/elements/1.1/"),
+                ("@xmlns:dcndl", "http://ndl.go.jp/dcndl/terms/"),
+                ("@xmlns:dcterms", "http://purl.org/dc/terms/"),
+                ("@xmlns:jpcoar", "https://github.com/JPCOAR/schema/blob/master/1.0/"),
+                ("@xmlns:oaire", "http://namespace.openaire.eu/schema/oaire/"),
+                ("@xmlns:rdf", "http://www.w3.org/1999/02/22-rdf-syntax-ns#"),
+                ("@xmlns:rioxxterms", "http://www.rioxx.net/schema/v2.0/rioxxterms/"),
+                ("@xmlns:xs", "http://www.w3.org/2001/XMLSchema"),
+                ("@xmlns", "https://github.com/JPCOAR/schema/blob/master/1.0/"),
+                (
+                    "@xsi:schemaLocation",
+                    "https://github.com/JPCOAR/schema/blob/master/1.0/jpcoar_scm.xsd",
+                ),
+                ("dc:title", OrderedDict([("@xml:lang", "ja"), ("#text", "test full item")])),
+                (
+                    "dcterms:alternative",
+                    OrderedDict([("@xml:lang", "en"), ("#text", "other title")]),
+                ),
+                (
+                    "jpcoar:creator",
+                    OrderedDict(
+                        [
+                            ("@creatorType", "creatorType_test"),
+                            (
+                                "jpcoar:nameIdentifier",
+                                OrderedDict(
+                                    [
+                                        ("@nameIdentifierURI", "https://orcid.org/1234"),
+                                        ("@nameIdentifierScheme", "ORCID"),
+                                        ("#text", "1234"),
+                                    ]
+                                ),
+                            ),
+                            (
+                                "jpcoar:creatorName",
+                                OrderedDict
+                                (
+                                    [
+                                        ("@xml:lang", "ja"),
+                                        ("#text", "テスト, 太郎"),
+                                        ("@nameType", "Personal"),
+                                    ]
+                                ),
+                            ),
+                            (
+                                "jpcoar:familyName",
+                                OrderedDict([("@xml:lang", "ja"), ("#text", "テスト")]),
+                            ),
+                            (
+                                "jpcoar:givenName",
+                                OrderedDict([("@xml:lang", "ja"), ("#text", "太郎")]),
+                            ),
+                            (
+                                "jpcoar:creatorAlternative",
+                                OrderedDict([("@xml:lang", "ja"), ("#text", "テスト\u3000別郎")]),
+                            ),
+                            (
+                                "jpcoar:affiliation",
+                                OrderedDict(
+                                    [
+                                        (
+                                            "jpcoar:nameIdentifier",
+                                            OrderedDict(
+                                                [
+                                                    (
+                                                        "@nameIdentifierURI",
+                                                        "http://www.isni.org/isni/5678",
+                                                    ),
+                                                    ("@nameIdentifierScheme", "ISNI"),
+                                                    ("#text", "5678"),
+                                                ]
+                                            ),
+                                        )
+                                    ]
+                                ),
+                            ),
+                        ]
+                    ),
+                ),
+                (
+                    "jpcoar:contributor",
+                    OrderedDict(
+                        [
+                            ("@contributorType", "ContactPerson"),
+                            (
+                                "jpcoar:nameIdentifier",
+                                OrderedDict(
+                                    [
+                                        ("@nameIdentifierURI", "https://orcid.org/5678"),
+                                        ("@nameIdentifierScheme", "ORCID"),
+                                        ("#text", "5678"),
+                                    ]
+                                ),
+                            ),
+                            (
+                                "jpcoar:contributorName",
+                                OrderedDict(
+                                    [
+                                        ("@xml:lang", "en"),
+                                        ("#text", "test, smith"),
+                                        ("@nameType", "Personal"),
+                                    ]
+                                ),
+                            ),
+                            (
+                                "jpcoar:familyName",
+                                OrderedDict([("@xml:lang", "en"), ("#text", "test")]),
+                            ),
+                            (
+                                "jpcoar:givenName",
+                                OrderedDict([("@xml:lang", "en"), ("#text", "smith")]),
+                            ),
+                            (
+                                "jpcoar:contributorAlternative",
+                                OrderedDict([("@xml:lang", "en"), ("#text", "other smith")]),
+                            ),
+                            (
+                                "jpcoar:affiliation",
+                                OrderedDict(
+                                    [
+                                        (
+                                            "jpcoar:nameIdentifier",
+                                            OrderedDict(
+                                                [
+                                                    (
+                                                        "@nameIdentifierURI",
+                                                        "http://www.isni.org/isni/1234",
+                                                    ),
+                                                    ("@nameIdentifierScheme", "ISNI"),
+                                                    ("#text", "1234"),
+                                                ]
+                                            ),
+                                        )
+                                    ]
+                                ),
+                            ),
+                        ]
+                    ),
+                ),
+                (
+                    "dcterms:accessRights",
+                    OrderedDict(
+                        [
+                            ("@rdf:resource", "http://purl.org/coar/access_right/c_14cb"),
+                            ("#text", "metadata only access"),
+                        ]
+                    ),
+                ),
+                ("rioxxterms:apc", "Paid"),
+                (
+                    "dc:rights",
+                    OrderedDict(
+                        [
+                            ("@xml:lang", "ja"),
+                            ("@rdf:resource", "テスト権利情報Resource"),
+                            ("#text", "テスト権利情報"),
+                        ]
+                    ),
+                ),
+                (
+                    "jpcoar:rightsHolder",
+                    OrderedDict(
+                        [
+                            (
+                                "jpcoar:rightsHolderName",
+                                OrderedDict([("@xml:lang", "ja"), ("#text", "テスト\u3000太郎")]),
+                            )
+                        ]
+                    ),
+                ),
+                (
+                    "jpcoar:subject",
+                    OrderedDict(
+                        [
+                            ("@xml:lang", "ja"),
+                            ("@subjectURI", "http://bsh.com"),
+                            ("@subjectScheme", "BSH"),
+                            ("#text", "テスト主題"),
+                        ]
+                    ),
+                ),
+                (
+                    "datacite:description",
+                    OrderedDict(
+                        [
+                            ("@xml:lang", "en"),
+                            ("@descriptionType", "Abstract"),
+                            ("#text", "this is test abstract."),
+                        ]
+                    ),
+                ),
+                (
+                    "dc:publisher",
+                    OrderedDict([("@xml:lang", "ja"), ("#text", "test publisher")]),
+                ),
+                (
+                    "datacite:date",
+                    [
+                        OrderedDict([("@dateType", "Accepted"), ("#text", "2022-10-20")]),
+                        OrderedDict([("@dateType", "Issued"), ("#text", "2022-10-19")]),
+                    ],
+                ),
+                ("dc:language", "jpn"),
+                (
+                    "dc:type",
+                    OrderedDict(
+                        [
+                            ("@rdf:resource", "http://purl.org/coar/resource_type/c_2fe3"),
+                            ("#text", "newspaper"),
+                        ]
+                    ),
+                ),
+                ("datacite:version", "1.1"),
+                (
+                    "oaire:version",
+                    OrderedDict(
+                        [
+                            (
+                                "@rdf:resource",
+                                "http://purl.org/coar/version/c_b1a7d7d4d402bcce",
+                            ),
+                            ("#text", "AO"),
+                        ]
+                    ),
+                ),
+                (
+                    "jpcoar:identifier",
+                    [
+                        OrderedDict([("@identifierType", "DOI"), ("#text", "1111")]),
+                        OrderedDict(
+                            [
+                                ("@identifierType", "DOI"),
+                                ("#text", "https://doi.org/1234/0000000001"),
+                            ]
+                        ),
+                        OrderedDict(
+                            [
+                                ("@identifierType", "URI"),
+                                ("#text", "https://192.168.56.103/records/1"),
+                            ]
+                        ),
+                    ],
+                ),
+                (
+                    "jpcoar:identifierRegistration",
+                    OrderedDict([("@identifierType", "JaLC"), ("#text", "1234/0000000001")]),
+                ),
+                (
+                    "jpcoar:relation",
+                    [
+                        OrderedDict(
+                            [
+                                ("@relationType", "isVersionOf"),
+                                (
+                                    "jpcoar:relatedIdentifier",
+                                    OrderedDict(
+                                        [("@identifierType", "ARK"), ("#text", "1111111")]
+                                    ),
+                                ),
+                                (
+                                    "jpcoar:relatedTitle",
+                                    OrderedDict([("@xml:lang", "ja"), ("#text", "関連情報テスト")]),
+                                ),
+                            ]
+                        ),
+                        OrderedDict(
+                            [
+                                ("@relationType", "isVersionOf"),
+                                (
+                                    "jpcoar:relatedIdentifier",
+                                    OrderedDict(
+                                        [
+                                            ("@identifierType", "URI"),
+                                            ("#text", "https://192.168.56.103/records/3"),
+                                        ]
+                                    ),
+                                ),
+                            ]
+                        ),
+                    ],
+                ),
+                ("dcterms:temporal", OrderedDict([("@xml:lang", "ja"), ("#text", "1 to 2")])),
+                (
+                    "datacite:geoLocation",
+                    OrderedDict(
+                        [
+                            (
+                                "datacite:geoLocationPoint",
+                                OrderedDict(
+                                    [
+                                        ("datacite:pointLongitude", "12345"),
+                                        ("datacite:pointLatitude", "67890"),
+                                    ]
+                                ),
+                            ),
+                            (
+                                "datacite:geoLocationBox",
+                                OrderedDict(
+                                    [
+                                        ("datacite:westBoundLongitude", "123"),
+                                        ("datacite:eastBoundLongitude", "456"),
+                                        ("datacite:southBoundLatitude", "789"),
+                                        ("datacite:northBoundLatitude", "1112"),
+                                    ]
+                                ),
+                            ),
+                            ("datacite:geoLocationPlace", "テスト位置情報"),
+                        ]
+                    ),
+                ),
+                (
+                    "jpcoar:fundingReference",
+                    OrderedDict(
+                        [
+                            (
+                                "jpcoar:fundingStreamIdentifier",
+                                OrderedDict(
+                                    [
+                                        ("@fundingStreamIdentifierType", "Crossref Funder"),
+                                        ("@fundingStreamIdentifierTypeURI", "fundingStreamIdentifierTypeURI_test"),
+                                    ]
+                                ),
+                            ),
+                            (
+                                "jpcoar:fundingStream",
+                                OrderedDict(
+                                    [
+                                        ("@xml:lang", "ja"),
+                                        ("#text", "fundingStream_test")
+                                    ]
+                                )
+                            ),
+                            (
+                                "jpcoar:funderIdentifier",
+                                OrderedDict(
+                                    [
+                                        ("@funderIdentifierType", "Crossref Funder"),
+                                        ("@funderIdentifierTypeURI", "funderIdentifierTypeURI_test"),
+                                        ("#text", "22222"),
+                                    ]
+                                ),
+                            ),
+                            (
+                                "jpcoar:funderName",
+                                OrderedDict([("@xml:lang", "ja"), ("#text", "テスト助成機関")]),
+                            ),
+                            (
+                                "jpcoar:awardNumber",
+                                OrderedDict(
+                                    [
+                                        ("@awardURI", "https://test.research.com"),
+                                        ("#text", "1111"),
+                                        ("@awardNumberType", "JGN"),
+                                    ]
+                                ),
+                            ),
+                            (
+                                "jpcoar:awardTitle",
+                                OrderedDict([("@xml:lang", "ja"), ("#text", "テスト研究")]),
+                            ),
+                        ]
+                    ),
+                ),
+                (
+                    "jpcoar:sourceIdentifier",
+                    OrderedDict(
+                        [("@identifierType", "PISSN"), ("#text", "test source Identifier")]
+                    ),
+                ),
+                (
+                    "jpcoar:sourceTitle",
+                    [
+                        OrderedDict([("@xml:lang", "ja"), ("#text", "test collectibles")]),
+                        OrderedDict([("@xml:lang", "ja"), ("#text", "test title book")]),
+                    ],
+                ),
+                ("jpcoar:volume", ["5", "1"]),
+                ("jpcoar:issue", ["2", "2"]),
+                ("jpcoar:numPages", ["333", "555"]),
+                ("jpcoar:pageStart", ["123", "789"]),
+                ("jpcoar:pageEnd", ["456", "234"]),
+                ("dcndl:dissertationNumber", "9999"),
+                ("dcndl:degreeName", OrderedDict([("@xml:lang", "ja"), ("#text", "テスト学位")])),
+                ("dcndl:dateGranted", "2022-10-19"),
+                (
+                    "jpcoar:degreeGrantor",
+                    OrderedDict(
+                        [
+                            (
+                                "jpcoar:nameIdentifier",
+                                OrderedDict(
+                                    [
+                                        ("@nameIdentifierScheme", "kakenhi"),
+                                        ("#text", "学位授与機関識別子テスト"),
+                                    ]
+                                ),
+                            ),
+                            (
+                                "jpcoar:degreeGrantorName",
+                                OrderedDict([("@xml:lang", "ja"), ("#text", "学位授与機関")]),
+                            ),
+                        ]
+                    ),
+                ),
+                (
+                    "jpcoar:conference",
+                    OrderedDict(
+                        [
+                            (
+                                "jpcoar:conferenceName",
+                                OrderedDict([("@xml:lang", "ja"), ("#text", "テスト会議")]),
+                            ),
+                            ("jpcoar:conferenceSequence", "12345"),
+                            (
+                                "jpcoar:conferenceSponsor",
+                                OrderedDict([("@xml:lang", "ja"), ("#text", "テスト機関")]),
+                            ),
+                            (
+                                "jpcoar:conferenceDate",
+                                OrderedDict(
+                                    [
+                                        ("@endDay", "1"),
+                                        ("@endYear", "2005"),
+                                        ("@endMonth", "12"),
+                                        ("@startDay", "11"),
+                                        ("@xml:lang", "ja"),
+                                        ("@startYear", "2000"),
+                                        ("@startMonth", "4"),
+                                        ("#text", "12"),
+                                    ]
+                                ),
+                            ),
+                            (
+                                "jpcoar:conferenceVenue",
+                                OrderedDict([("@xml:lang", "ja"), ("#text", "テスト会場")]),
+                            ),
+                            ("jpcoar:conferenceCountry", "JPN"),
+                        ]
+                    ),
+                ),
+                (
+                    "jpcoar:file",
+                    [
+                        OrderedDict(
+                            [
+                                (
+                                    "jpcoar:URI",
+                                    "https://weko3.example.org/record/1/files/test1.txt",
+                                ),
+                                ("jpcoar:mimeType", "text/plain"),
+                                ("jpcoar:extent", "18 B"),
+                                (
+                                    "datacite:date",
+                                    OrderedDict(
+                                        [("@dateType", "Accepted"), ("#text", "2022-10-20")]
+                                    ),
+                                ),
+                                ("datacite:version", "1.0"),
+                            ]
+                        ),
+                        OrderedDict(
+                            [
+                                (
+                                    "jpcoar:URI",
+                                    "https://weko3.example.org/record/1/files/test2",
+                                ),
+                                ("jpcoar:mimeType", "application/octet-stream"),
+                                ("jpcoar:extent", "18 B"),
+                                ("datacite:version", "1.2"),
+                            ]
+                        ),
+                        OrderedDict(
+                            [
+                                (
+                                    "jpcoar:URI",
+                                    "https://weko3.example.org/record/1/files/test3.png",
+                                ),
+                                ("jpcoar:mimeType", "image/png"),
+                                ("jpcoar:extent", "18 B"),
+                                ("datacite:version", "2.1"),
+                            ]
+                        ),
+                    ],
+                ),
+                (
+                    "jpcoar:publisher",
+                    OrderedDict(
+                        [
+                            (
+                                "jpcoar:publisherName",
+                                OrderedDict(
+                                    [
+                                        ("@xml:lang", "ja"),
+                                        ("#text", "publisher_name_test"),
+                                    ]
+                                ),
+                            ),
+                            (
+                                "jpcoar:publisherDescription",
+                                OrderedDict(
+                                    [
+                                        ("@xml:lang", "ja"),
+                                        ("#text", "publisher_description_test"),
+                                    ]
+                                ),
+                            ),
+                            (
+                                "dcndl:location",
+                                OrderedDict(
+                                    [
+                                        ("#text", "location_test"),
+                                    ]
+                                ),
+                            ),
+                            (
+                                "dcndl:publicationPlace",
+                                OrderedDict(
+                                    [
+                                        ("#text", "publication_place_test"),
+                                    ]
+                                ),
+                            ),
+                        ]
+                    ),
+                ),
+                (
+                    "dcterms:date",
+                    OrderedDict(
+                        [
+                            ("@xml:lang", "ja"),
+                            ("#text", "test full item"),
+                        ]
+                    )
+                ),
+                (
+                    "dcndl:edition",
+                    OrderedDict(
+                        [
+                            ("@xml:lang", "ja"),
+                            ("#text", "edition_test"),
+                        ]
+                    )
+                ),
+                (
+                    "dcndl:volumeTitle",
+                    OrderedDict(
+                        [
+                            ("@xml:lang", "ja"),
+                            ("#text", "volumeTitle_test"),
+                        ]
+                    )
+                ),
+                (
+                    "dcndl:originalLanguage",
+                    OrderedDict(
+                        [
+                            ("#text", "originalLanguage_test"),
+                        ]
+                    )
+                ),
+                (
+                    "dcterms:extent",
+                    OrderedDict(
+                        [
+                            ("@xml:lang", "ja"),
+                            ("#text", "extent_test"),
+                        ]
+                    )
+                ),
+                (
+                    "jpcoar:format",
+                    OrderedDict(
+                        [
+                            ("@xml:lang", "ja"),
+                            ("#text", "format_test"),
+                        ]
+                    )
+                ),
+                (
+                    "jpcoar:holdingAgent",
+                    OrderedDict(
+                        [
+                            (
+                                "jpcoar:holdingAgentNameIdentifier",
+                                OrderedDict(
+                                    [
+                                        ("@nameIdentifierScheme", "ROR"),
+                                        ("@nameIdentifierURI", "nameIdentifierURI_test"),
+                                    ]
+                                ),
+                            ),
+                            (
+                                "jpcoar:holdingAgentName",
+                                OrderedDict(
+                                    [
+                                        ("@xml:lang", "ja"),
+                                        ("#text", "holdingAgentName_test"),
+                                    ]
+                                ),
+                            ),
+                        ]
+                    ),
+                ),
+                (
+                    "jpcoar:datasetSeries",
+                    OrderedDict(
+                        [
+                            ("@datasetSeriesType", "True"),
+                        ]
+                    )
+                ),
+                (
+                    "jpcoar:catalog",
+                    OrderedDict(
+                        [
+                            (
+                                "jpcoar:contributorName",
+                                OrderedDict(
+                                    [
+                                        ("@xml:lang", "ja"),
+                                        ("#text", "contributorName_test"),
+                                    ]
+                                ),
+                            ),
+                            (
+                                "jpcoar:identifier",
+                                OrderedDict(
+                                    [
+                                        ("@identifierType", "DOI"),
+                                    ]
+                                ),
+                            ),
+                            (
+                                "dc:title",
+                                OrderedDict(
+                                    [
+                                        ("@xml:lang", "ja"),
+                                        ("#text", "title_test")
+                                    ]
+                                ),
+                            ),
+                            (
+                                "datacite:description",
+                                OrderedDict(
+                                    [
+                                        ("@xml:lang", "ja"),
+                                        ("#text", "description_test"),
+                                        ("@descriptionType", "Abstract"),
+                                    ]
+                                ),
+                            ),
+                            (
+                                "jpcoar:subject",
+                                OrderedDict(
+                                    [
+                                        ("@xml:lang", "ja"),
+                                        ("#text", "subject_test"),
+                                        ("@subjectScheme", "DDC"),
+                                        ("@subjectURI", "subjectURI_test"),
+                                    ]
+                                ),
+                            ),
+                            (
+                                "jpcoar:license",
+                                OrderedDict(
+                                    [
+                                        ("@xml:lang", "ja"),
+                                        ("#text", "license_test"),
+                                        ("@licenseType", "file"),
+                                        ("@rdf:resource", "http://purl.org/coar/access_right/c_14cb"),
+                                    ]
+                                ),
+                            ),
+                            (
+                                "dc:rights",
+                                OrderedDict(
+                                    [
+                                        ("@xml:lang", "ja"),
+                                        ("#text", "rights_test"),
+                                        ("@rdf:resource", "http://purl.org/coar/access_right/c_14cb"),
+                                    ]
+                                ),
+                            ),
+                            (
+                                "dcterms:accessRights",
+                                OrderedDict(
+                                    [
+                                        ("@accessRights", "open access"),
+                                        ("@rdf:resource", "http://purl.org/coar/access_right/c_14cb"),
+                                    ]
+                                ),
+                            ),
+                            (
+                                "jpcoar:file",
+                                OrderedDict(
+                                    [
+                                        (
+                                            "jpcoar:URI",
+                                            OrderedDict(
+                                                [
+                                                    ("@objectType", "thumbnail"),
+                                                ]
+                                            ),
+                                        ),
+                                    ]
+                                ),
+                            ),
+                        ]
+                    ),
+                ),
+            ]
+        )
+        result = mapper.map()
+
+        # assert condition will be updated once update_item_type.py be updated with jpcoar2 properties created
+        # right now jpcoar2 items added to harvester.py is being covered by this test case and there are no errors
+        # 
+        assert result
+
+    # .tox/c1/bin/pytest -v --cov=invenio_oaiharvester tests/test_harvester.py::TestJPCOARMapper::test_map_3 -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
+    def test_map_3(self,db_itemtype):
+        xml_str = '<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd"><responseDate>2023-06-15T08:09:48Z</responseDate><request metadataPrefix="jpcoar_2.0" identifier="oai:weko3.example.org:00000026" verb="GetRecord">https://localhost/oai</request><GetRecord><record><header><identifier>oai:weko3.example.org:00000026</identifier><datestamp>2023-06-15T08:01:19Z</datestamp><setSpec>1686726684832</setSpec></header><metadata><jpcoar:jpcoar xmlns:datacite="https://schema.datacite.org/meta/kernel-4/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcndl="http://ndl.go.jp/dcndl/terms/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:jpcoar="https://github.com/JPCOAR/schema/blob/master/2.0/" xmlns:oaire="http://namespace.openaire.eu/schema/oaire/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:rioxxterms="http://www.rioxx.net/schema/v2.0/rioxxterms/" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns="https://github.com/JPCOAR/schema/blob/master/2.0/" xsi:schemaLocation="https://github.com/JPCOAR/schema/blob/master/2.0/jpcoar_scm.xsd"><dc:title xml:lang="en">thesis_test_today</dc:title><jpcoar:creator creatorType="creator_type_test"><jpcoar:creatorName nameType="Personal" xml:lang="en">creator_name_test</jpcoar:creatorName><jpcoar:affiliation><jpcoar:nameIdentifier nameIdentifierURI="creator_aff_name_identifier_uri_test" nameIdentifierScheme="ROR">creator_aff_name_identifier</jpcoar:nameIdentifier><jpcoar:affiliationName xml:lang="en">creator_aff_name</jpcoar:affiliationName></jpcoar:affiliation></jpcoar:creator><jpcoar:contributor><jpcoar:contributorName nameType="Organizational" xml:lang="ja">contributor_name_test</jpcoar:contributorName><jpcoar:affiliation><jpcoar:nameIdentifier nameIdentifierURI="contrib_aff_name_id_uri_test" nameIdentifierScheme="GRID">contrib_aff_name_id_test</jpcoar:nameIdentifier><jpcoar:affiliationName xml:lang="en">contrib_aff_name_test</jpcoar:affiliationName></jpcoar:affiliation></jpcoar:contributor><jpcoar:subject xml:lang="en" subjectURI="subject_uri_test" subjectScheme="DDC">subject_test</jpcoar:subject><datacite:date>2023-06-15</datacite:date><dc:type rdf:resource="http://purl.org/coar/resource_type/c_46ec">thesis</dc:type><jpcoar:identifier identifierType="URI">https://localhost/records/26</jpcoar:identifier><jpcoar:relation relationType="inSeries"><jpcoar:relatedIdentifier identifierType="WOS">related_identifier_test</jpcoar:relatedIdentifier><jpcoar:relatedTitle xml:lang="en">related_title_test</jpcoar:relatedTitle></jpcoar:relation><jpcoar:fundingReference><jpcoar:funderIdentifier funderIdentifierType="Crossref Funder" funderIdentifierTypeURI="funder_identifier_type_uri_test">funder_identifier_test</jpcoar:funderIdentifier><jpcoar:awardNumber awardURI="award_number_uri_test" awardNumberType="JGN">award_number_test</jpcoar:awardNumber><jpcoar:fundingStreamIdentifier fundingStreamIdentifierType="Crossref Funder" fundingStreamIdentifierTypeURI="funding_stream_identifier_type_uri_test">funding_stream_identifier_test</jpcoar:fundingStreamIdentifier><jpcoar:fundingStream xml:lang="en">funding_stream_test</jpcoar:fundingStream></jpcoar:fundingReference><jpcoar:publisher><jpcoar:publisherName xml:lang="en">publisher_test</jpcoar:publisherName><jpcoar:publisherDescription xml:lang="ja">description_test</jpcoar:publisherDescription><dcndl:location>location_test</dcndl:location><dcndl:publicationPlace>publication_place_test</dcndl:publicationPlace></jpcoar:publisher><dcterms:date>2016</dcterms:date><dcndl:edition xml:lang="en">edition_test</dcndl:edition><dcndl:volumeTitle xml:lang="ja">volume_title_test</dcndl:volumeTitle><dcndl:originalLanguage>original_language_test</dcndl:originalLanguage><dcterms:extent xml:lang="en">extent_test</dcterms:extent><jpcoar:format xml:lang="en">format_test</jpcoar:format><jpcoar:holdingAgent><jpcoar:holdingAgentNameIdentifier nameIdentifierURI="holding_agent_name_identifier_uri_test" nameIdentifierScheme="ROR">holding_agent_name_identifier_test</jpcoar:holdingAgentNameIdentifier><jpcoar:holdingAgentName xml:lang="en">holding_agent_name_test</jpcoar:holdingAgentName></jpcoar:holdingAgent><jpcoar:datasetSeries>True</jpcoar:datasetSeries><jpcoar:catalog><jpcoar:contributor contributorType="HostingInstitution"><jpcoar:contributorName xml:lang="en">catalog_contributor_test</jpcoar:contributorName></jpcoar:contributor><jpcoar:identifier identifierType="DOI">catalog_identifier_test</jpcoar:identifier><dc:title xml:lang="en">catalog_title_test</dc:title><datacite:description xml:lang="ja" descriptionType="Abstract">catalog_description_test</datacite:description><jpcoar:subject xml:lang="en" subjectURI="catalog_subject_uri_test" subjectScheme="DDC">catalog_subject_test</jpcoar:subject><jpcoar:license xml:lang="en" licenseType="file" rdf:resource="catalog_rdf_license_test">catalog_license_test</jpcoar:license><dc:rights xml:lang="en" rdf:resource="catalog_rdf_rights_test">catalog_rights_test</dc:rights><dcterms:accessRights rdf:resource="catalog_rdf_access_rights_test">metadata only access</dcterms:accessRights><jpcoar:file><jpcoar:URI objectType="open access">catalog_file_test</jpcoar:URI></jpcoar:file></jpcoar:catalog></jpcoar:jpcoar></metadata></record></GetRecord></OAI-PMH>'
+        tree = etree.fromstring(xml_str)
+        record = tree.findall("./GetRecord/record",namespaces=tree.nsmap)[0]
+        xml = etree.tostring(record,encoding="utf-8").decode()
+        mapper = JPCOARMapper(xml)
+        mapper.json["record"]["metadata"]["jpcoar:jpcoar"] = OrderedDict(
+            [
+                (
+                    "dcndl:edition",
+                    OrderedDict(
+                        [
+                            ("@xml:lang", "ja"),
+                            ("#text", "edition_test"),
+                        ]
+                    )
+                ),
+            ]
+        )
+        result = mapper.map()
+
+        # assert condition will be updated once update_item_type.py be updated with jpcoar2 properties created
+        # right now jpcoar2 items added to harvester.py is being covered by this test case and there are no errors
+        # 
+        assert result 
 
 # class DDIMapper(BaseMapper):
 # .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_harvester.py::TestDDIMapper -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp

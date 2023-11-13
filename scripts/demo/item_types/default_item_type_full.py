@@ -87,10 +87,24 @@ property_list = [
         multiple=True
     ),
     AddProperty(
+        AddProperty.publisher_info,
+        '出版者情報',
+        '出版者情報',
+        'Publisher Information',
+        multiple=True
+    ),
+    AddProperty(
         AddProperty.date,
         '日付',
         '日付',
         'Date',
+        multiple=True
+    ),
+    AddProperty(
+        AddProperty.date_literal,
+        '日付（リテラル）',
+        '日付（リテラル）',
+        'Date Literal',
         multiple=True
     ),
     AddProperty(
@@ -255,6 +269,78 @@ property_list = [
         multiple=True,
         showlist=True,
         newline=True
+    ),
+    AddProperty(
+        AddProperty.dcndl_edition,
+        '版',
+        '版',
+        'Edition',
+        multiple=True,
+        showlist=False,
+        newline=False
+    ),
+    AddProperty(
+        AddProperty.dcndl_volume_title,
+        '部編名',
+        '部編名',
+        'Volume Title',
+        multiple=True,
+        showlist=False,
+        newline=False
+    ),
+    AddProperty(
+        AddProperty.dcndl_original_language,
+        '原文の言語',
+        '原文の言語',
+        'Original Language',
+        multiple=True,
+        showlist=False,
+        newline=False
+    ),
+    AddProperty(
+        AddProperty.dcterms_extent,
+        '大きさ',
+        '大きさ',
+        'Extent',
+        multiple=True,
+        showlist=False,
+        newline=False
+    ),
+    AddProperty(
+        AddProperty.jpcoar_format,
+        '物理的形態',
+        '物理的形態',
+        'Physical Format',
+        multiple=True,
+        showlist=False,
+        newline=False
+    ),
+    AddProperty(
+        AddProperty.jpcoar_holding_agent,
+        '所蔵機関',
+        '所蔵機関',
+        'Holding Agent',
+        multiple=False,
+        showlist=False,
+        newline=False
+    ),
+    AddProperty(
+        AddProperty.jpcoar_dataset_series,
+        'データセットシリーズ',
+        'データセットシリーズ',
+        'Dataset Series',
+        multiple=False,
+        showlist=False,
+        newline=False
+    ),
+    AddProperty(
+        AddProperty.jpcoar_catalog,
+        'カタログ',
+        'カタログ',
+        'Catalog',
+        multiple=False,
+        showlist=False,
+        newline=False
     ),
     AddProperty(
         AddProperty.heading,

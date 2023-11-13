@@ -61,10 +61,7 @@ packages = find_packages()
 
 
 # Get the version string. Cannot be done with import!
-g = {}
-with open(os.path.join('invenio_queues', 'version.py'), 'rt') as fp:
-    exec(fp.read(), g)
-    version = g['__version__']
+version = '1.0.0'
 
 setup(
     name='invenio-queues',

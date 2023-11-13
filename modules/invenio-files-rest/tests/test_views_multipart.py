@@ -29,21 +29,46 @@ def obj_url(bucket):
         key='mybigfile',
     )
 
-
-def test_post_init(client, headers, permissions, bucket, get_json):
+# .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_views_multipart.py::test_post_init -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
+@pytest.mark.parametrize('user, expected', [
+    (None, 404),
+    ('auth', 404),
+    ('objects', 404),  # TODO - use 403 instead
+    ('bucket', 200),
+    ('location', 200),
+])
+def test_post_init(client, headers, permissions, bucket, get_json, user, expected):
     """Test init multipart upload."""
-    cases = [
-        (None, 404),
-        ('auth', 404),
-        ('objects', 404),  # TODO - use 403 instead
-        ('bucket', 200),
-        ('location', 200),
-    ]
+    login_user(client, permissions[user])
 
-    for user, expected in cases:
-        login_user(client, permissions[user])
+    # Initiate multipart upload
+    res = client.post(
+        obj_url(bucket),
+        query_string='uploads',
+        headers={'Content-Type': 'application/json'},
+        data=json.dumps({
+            'size': 10,
+            'partSize': 4,
+        })
+    )
+    assert res.status_code == expected
 
-        # Initiate multipart upload
+    if res.status_code == 200:
+        data = get_json(res)
+        expected_keys = [
+            'id', 'bucket', 'completed', 'size', 'part_size',
+            'last_part_number', 'last_part_size', 'links'
+        ]
+        for k in expected_keys:
+            assert k in data
+
+# .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_views_multipart.py::test_post_init_fail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
+def test_post_init_fail(client, headers, permissions, bucket, get_json):
+    """Test init multipart upload."""
+    login_user(client, permissions['location'])
+
+    # Initiate multipart upload
+    with patch("invenio_files_rest.views.db.session.commit", side_effect=Exception('')):
         res = client.post(
             obj_url(bucket),
             query_string='uploads',
@@ -53,16 +78,7 @@ def test_post_init(client, headers, permissions, bucket, get_json):
                 'partSize': 4,
             })
         )
-        assert res.status_code == expected
-
-        if res.status_code == 200:
-            data = get_json(res)
-            expected_keys = [
-                'id', 'bucket', 'completed', 'size', 'part_size',
-                'last_part_number', 'last_part_size', 'links'
-            ]
-            for k in expected_keys:
-                assert k in data
+        assert res.status_code == 200
 
 
 def test_post_init_querystring(client, bucket, get_json, admin_user):
@@ -373,7 +389,7 @@ def test_get_serialization(client, multipart, multipart_url, get_json,
     for k in expected_keys:
         assert k in data
 
-
+# .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_views_multipart.py::test_post_complete -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
 @pytest.mark.parametrize('user, expected', [
     (None, 404),
     ('auth', 404),
@@ -420,7 +436,7 @@ def test_post_complete(client, headers, permissions, bucket, multipart,
             # # Object exists
             # assert client.get(data['links']['object']).status_code == 200
 
-
+# .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_views_multipart.py::test_post_complete_fail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
 def test_post_complete_fail(client, headers, bucket, multipart,
                             multipart_url, parts, get_json, admin_user):
     """Test completing multipart when merge fails."""
