@@ -1,0 +1,1 @@
+ALTER TABLE shibboleth_user ALTER column shib_eppn TYPE CHARACTER VARYING(2310);

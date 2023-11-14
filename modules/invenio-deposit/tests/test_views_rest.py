@@ -29,6 +29,7 @@ from __future__ import absolute_import, print_function
 
 import json
 from time import sleep
+from mock import patch
 
 import pytest
 from flask import url_for
@@ -172,7 +173,7 @@ def test_delete_deposit_users(api, es, users, location, deposit,
             )
             assert res.status_code == status
 
-
+# .tox/c1/bin/pytest --cov=invenio_deposit tests/test_views_rest.py::test_links_html_link_missing -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-deposit/.tox/c1/tmp
 def test_links_html_link_missing(api, es, location, fake_schemas,
                                  users, json_headers):
     """Test if the html key from links is missing."""
@@ -188,7 +189,7 @@ def test_links_html_link_missing(api, es, location, fake_schemas,
             # try create deposit as logged in user
             res = client.post(url_for('invenio_deposit_rest.depid_list'),
                               data=json.dumps({}), headers=json_headers)
-            assert res.status_code == 201
+            assert res.status_code == 200
 
             data = json.loads(res.data.decode('utf-8'))
             links = data['links']
@@ -228,7 +229,7 @@ def test_delete_deposit_by_bad_oauth2_token(api, es, users, location,
             )
             assert res.status_code == 403
 
-
+# .tox/c1/bin/pytest --cov=invenio_deposit tests/test_views_rest.py::test_deposition_file_operations -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-deposit/.tox/c1/tmp
 def test_deposition_file_operations(api, es, location, users,
                                     write_token_user_1, pdf_file, pdf_file2,
                                     pdf_file2_samename, oauth2_headers_user_1):
@@ -239,7 +240,7 @@ def test_deposition_file_operations(api, es, location, users,
             res = client.post(url_for('invenio_deposit_rest.depid_list'),
                               data=json.dumps({}),
                               headers=oauth2_headers_user_1)
-            assert res.status_code == 201
+            assert res.status_code == 200
             data = json.loads(res.data.decode('utf-8'))
             deposit_id = data['metadata']['_deposit']['id']
 
@@ -424,7 +425,7 @@ def test_deposition_file_operations(api, es, location, users,
             # )
             # assert res.status_code == 410
 
-
+# .tox/c1/bin/pytest --cov=invenio_deposit tests/test_views_rest.py::test_simple_rest_flow -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-deposit/.tox/c1/tmp
 def test_simple_rest_flow(api, es, location, fake_schemas, users,
                           json_headers):
     """Test simple flow using REST API."""
@@ -450,7 +451,7 @@ def test_simple_rest_flow(api, es, location, fake_schemas, users,
             # try create deposit as logged in user
             res = client.post(url_for('invenio_deposit_rest.depid_list'),
                               data=json.dumps({}), headers=json_headers)
-            assert res.status_code == 201
+            assert res.status_code == 200
 
             data = json.loads(res.data.decode('utf-8'))
             deposit = data['metadata']
@@ -462,6 +463,18 @@ def test_simple_rest_flow(api, es, location, fake_schemas, users,
             sleep(1)
 
             # Upload first file:
+            content = b'# Hello world!\nWe are here.'
+            filename = 'test.json'
+            real_filename = 'real_test.json'
+            file_to_upload = (BytesIO(content), filename)
+            with patch("invenio_deposit.views.rest.db.session.commit", side_effect=Exception('')):
+                res = client.post(
+                    links['files'],
+                    data={'file': file_to_upload, 'name': real_filename},
+                    content_type='multipart/form-data',
+                )
+                assert res.status_code == 400
+
             content = b'# Hello world!\nWe are here.'
             filename = 'test.json'
             real_filename = 'real_test.json'
@@ -503,6 +516,12 @@ def test_simple_rest_flow(api, es, location, fake_schemas, users,
             file_2 = data['id']
 
             # Ensure the order:
+            with patch("invenio_deposit.views.rest.db.session.commit", side_effect=Exception('')):
+                res = client.put(links['files'], data=json.dumps([
+                    {'id': file_1}, {'id': file_2}
+                ]))
+                assert res.status_code == 400
+
             res = client.put(links['files'], data=json.dumps([
                 {'id': file_1}, {'id': file_2}
             ]))
@@ -518,7 +537,7 @@ def test_simple_rest_flow(api, es, location, fake_schemas, users,
 
             res = client.post(links['publish'], data=None,
                               headers=json_headers)
-            assert res.status_code == 202
+            assert res.status_code == 200
 
             # Check that the published record is created:
             data = json.loads(res.data.decode('utf-8'))

@@ -39,6 +39,7 @@ from xmlschema.validators import XsdAnyAttribute, XsdAnyElement, \
     XsdPatternsFacet, XsdSingleFacet, XsdUnion
 
 from .api import WekoSchema
+from .models import OAIServerSchema
 
 
 class SchemaConverter:
@@ -250,10 +251,11 @@ class SchemaTree:
         if self._record and self._item_type_id:
             self._ignore_list_all, self._ignore_list = \
                 self.get_ignore_item_from_option()
-        for schema in schemas:
-            if self._schema_name == schema.schema_name:
-                self._location = schema.schema_location
-                self._target_namespace = schema.target_namespace
+        if isinstance(schemas, list):
+            for schema in schemas:
+                if isinstance(schema, OAIServerSchema) and self._schema_name == schema.schema_name:
+                    self._location = schema.schema_location
+                    self._target_namespace = schema.target_namespace
 
     def get_ignore_item_from_option(self):
         """Get all keys of properties that is enable Hide option in metadata."""
@@ -263,14 +265,16 @@ class SchemaTree:
         from weko_records.utils import get_options_and_order_list
         ignore_list_all, meta_options = \
             get_options_and_order_list(self._item_type_id)
-        for key, val in meta_options.items():
-            hidden = val.get('option').get('hidden')
-            if hidden:
-                ignore_list_parents.append(key)
+        if isinstance(meta_options, dict):
+            for key, val in meta_options.items():
+                hidden = val.get('option', {}).get('hidden', False)
+                if hidden:
+                    ignore_list_parents.append(key)
         for element_info in ignore_list_all:
-            element_info[0] = element_info[0].replace("[]", "")
-            # only get hide option
-            ignore_dict_all[element_info[0]] = element_info[3].get("hide")
+            if len(element_info) >= 4:
+                element_info[0] = element_info[0].replace("[]", "")
+                # only get hide option
+                ignore_dict_all[element_info[0]] = element_info[3].get("hide", False)
         return ignore_dict_all, ignore_list_parents
 
     def get_mapping_data(self):
@@ -294,13 +298,16 @@ class SchemaTree:
                 self._record.pop("_deposit", {})
                 mjson = Mapping.get_record(_id)
                 self.item_type_mapping = mjson
-                mp = mjson.dumps()
-                if mjson:
-                    for k, v in self._record.items():
-                        if isinstance(v, dict) and mp.get(k) and k != "_oai":
-                            v.update({self._schema_name: mp.get(
-                                k).get(self._schema_name)})
+                if isinstance(mjson, Mapping):
+                    mp = mjson.dumps()
+                    if isinstance(mp, dict):
+                        for k, v in mp.items():
+                            if k in self._record:
+                                self._record[k].update({self._schema_name: v.get(self._schema_name)})
+                            else:
+                                self._record[k] = {self._schema_name: v.get(self._schema_name)}
                 return _id
+
 
         # inject mappings info to record
         item_type_id = get_mapping()
@@ -311,7 +318,8 @@ class SchemaTree:
         description_type = "descriptionType"
         _need_to_nested = ('subjectScheme', 'dateType', 'identifierType',
                            'objectType', description_type)
-
+        _need_to_nested_key = ('subject', 'date', 'identifier', 'relatedIdentifier'
+                               'identifierRegistration', 'sourceIdentifier', 'URI')
         def list_reduce(olst):
             if isinstance(olst, list):
                 for lst in olst:
@@ -343,7 +351,7 @@ class SchemaTree:
                 is_valid = False
             return is_valid
 
-        def json_reduce(node):
+        def json_reduce(node, field=None):
             if isinstance(node, dict):
                 val = node.get(self._v)
                 attr = node.get(self._atr)
@@ -368,12 +376,13 @@ class SchemaTree:
                                     list_attr))
                             else:
                                 return []
-
+                    elif field in _need_to_nested_key:
+                        return list(map(lambda x: {"value": x}, list(list_reduce(val))))
                     return list(list_reduce(val))
                 else:
                     for k, v in node.items():
                         if k != self._atr:
-                            node[k] = json_reduce(v)
+                            node[k] = json_reduce(v, field=k)
                     return node
 
         json_reduce(node)
@@ -484,16 +493,24 @@ class SchemaTree:
             # for ex:"subitem_1551257025236.subitem_1551257043769"
             if isinstance(list_key, list) and len(list_key) > 1:
                 key = list_key.pop(0)
-                if isinstance(atr_vm, dict) and atr_vm.get(key):
-                    for a, b in get_value_from_content_by_mapping_key(
-                            atr_vm.get(key), list_key):
-                        yield a, b
+                if isinstance(atr_vm, dict):
+                    if atr_vm.get(key):
+                        for a, b in get_value_from_content_by_mapping_key(
+                                atr_vm.get(key), list_key):
+                            yield a, b
+                    else:
+                        if list_key[-1].startswith("="):
+                            yield list_key[-1][1:], id(list_key[-1])
                 elif isinstance(atr_vm, list):
-                    for i in atr_vm:
-                        if i.get(key):
-                            for a, b in get_value_from_content_by_mapping_key(
-                                    i.get(key), list_key):
-                                yield a, b
+                    if key not in set([x for atr_ in atr_vm for x in list(atr_.keys())]):
+                        if list_key[-1].startswith("="):
+                            yield list_key[-1][1:], id(list_key[-1])
+                    else:
+                        for i in atr_vm:
+                            if isinstance(i, dict) and i.get(key):
+                                for a, b in get_value_from_content_by_mapping_key(
+                                        i.get(key), list_key):
+                                    yield a, b
             elif isinstance(list_key, list) and len(list_key) == 1:
                 try:
                     key = list_key[0]
@@ -962,7 +979,7 @@ class SchemaTree:
                 # List or string
                 atr_v = value_item_parent.get('attribute_value')
                 # List of dict
-                atr_vm = value_item_parent.get('attribute_value_mlt')
+                atr_vm = value_item_parent.get('attribute_value_mlt',[])
                 # attr of name
                 atr_name = value_item_parent.get('attribute_name')
 
@@ -983,17 +1000,26 @@ class SchemaTree:
                     set_value(mpdic, atr_v)
                     # current_app.logger.debug("mpdic:{0}".format(mpdic))
                     vlst.append(mpdic)
-                elif atr_vm and atr_name and isinstance(atr_vm, list) \
-                        and isinstance(mpdic, dict):
-                    for atr_vm_item in atr_vm:
-                        if self._ignore_list_all:
-                            remove_hide_data(atr_vm_item, key_item_parent)
-                        if self._schema_name == current_app.config[
-                                'WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME']:
-                            replace_resource_type_for_jpcoar_v1(atr_vm_item)
-                        vlst_child = get_mapping_value(mpdic, atr_vm_item,
-                                                       key_item_parent,
-                                                       atr_name)
+                elif isinstance(atr_vm, list) and isinstance(mpdic, dict):
+                    if len(atr_vm) > 0:
+                        for atr_vm_item in atr_vm:
+                            if self._ignore_list_all:
+                                remove_hide_data(atr_vm_item, key_item_parent)
+                            if self._schema_name == current_app.config[
+                                    'WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME']:
+                                replace_resource_type_for_jpcoar_v1(atr_vm_item)
+                            vlst_child = get_mapping_value(mpdic, atr_vm_item,
+                                                           key_item_parent,
+                                                           atr_name)
+                            if vlst_child[0]:
+                                vlst.extend(vlst_child)
+                    else:
+                        from weko_records.models import ItemType
+                        item_type = ItemType.query.filter_by(id=self._item_type_id).one_or_none()
+                        atr_name = item_type.schema["properties"][key_item_parent]["title"]
+                        vlst_child = get_mapping_value(mpdic, {},
+                                                           key_item_parent,
+                                                           atr_name)
                         if vlst_child[0]:
                             vlst.extend(vlst_child)
         return vlst
@@ -1426,18 +1452,20 @@ class SchemaTree:
                         return None
 
                     aff_data = _item.get("attribute_value_mlt")[creator_idx]
-                    if not aff_data.get(_item_key):
+                    if not aff_data or not aff_data.get(_item_key, None):
                         return None
 
-                    for _subitem in aff_data.get(_item_key):
+                    for _subitem in aff_data.get(_item_key, []):
                         _len_affname = 0
                         _len_nameidt = 0
-                        for item in _subitem.get(_name_keys, []):
-                            if item.get(_name_key):
-                                _len_affname += 1
-                        for item in _subitem.get(_idtf_keys, []):
-                            if item.get(_idtf_key):
-                                _len_nameidt += 1
+                        if _subitem.get(_name_keys):
+                            for item in _subitem.get(_name_keys, []):
+                                if item.get(_name_key):
+                                    _len_affname += 1
+                        if _subitem.get(_idtf_keys):
+                            for item in _subitem.get(_idtf_keys, []):
+                                if item.get(_idtf_key):
+                                    _len_nameidt += 1
 
                         ret.append({
                             jpcoar_affname: _len_affname,
@@ -1809,8 +1837,14 @@ class SchemaTree:
                         except StopIteration:
                             pass
                 version_type = current_app.config['WEKO_SCHEMA_VERSION_TYPE']
+                publisher_type = current_app.config['WEKO_SCHEMA_PUBLISHER_TYPE']
+                date_type = current_app.config['WEKO_SCHEMA_DATE_TYPE']
                 if k == version_type['modified']:
                     nlst.append({version_type['original']: nv})
+                elif k == publisher_type['modified']:
+                    nlst.append({publisher_type['original']: nv})
+                elif k == date_type['modified']:
+                    nlst.append({date_type['original']: nv})
                 else:
                     nlst.append({k: nv})
         return nlst
@@ -1861,7 +1895,7 @@ def cache_schema(schema_name, delete=False):
         try:
             schema = get_schema()
             if schema:
-                datastore.put(cache_key, json.dumps(schema))
+                datastore.put(cache_key, json.dumps(schema).encode("utf-8"))
         except BaseException:
             return get_schema()
         else:
@@ -1900,14 +1934,16 @@ def schema_list_render(pid=None, **kwargs):
     lst = WekoSchema.get_all()
 
     records = []
-    for r in lst:
-        sc = r.form_data.copy()
-        sc.update(dict(schema_name=r.schema_name))
-        sc.update(dict(pid=str(r.id)))
-        sc.update(dict(dis="disabled" if r.isfixed else None))
-        records.append(sc)
+    if isinstance(lst, list):
+        for r in lst:
+            if isinstance(r, OAIServerSchema):
+                sc = r.form_data.copy()
+                sc.update(dict(schema_name=r.schema_name))
+                sc.update(dict(pid=str(r.id)))
+                sc.update(dict(dis="disabled" if r.isfixed else None))
+                records.append(sc)
 
-    del lst
+        del lst
 
     return records
 
@@ -1936,7 +1972,9 @@ def get_oai_metadata_formats(app):
             if isinstance(obj, list):
                 sel = list(oad.values())[0].get('serializer')
                 for lst in obj:
-                    if lst.schema_name.endswith('_mapping'):
+                    if not isinstance(lst, OAIServerSchema):
+                        continue
+                    if lst.schema_name and lst.schema_name.endswith('_mapping'):
                         schema_name = lst.schema_name[:-8]
                     if not oad.get(schema_name):
                         scm = dict()

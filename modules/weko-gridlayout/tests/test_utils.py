@@ -11,7 +11,11 @@ import json
 import copy
 from mock import patch, MagicMock, Mock
 from datetime import datetime
+from uuid import UUID
+from io import BytesIO
+from werkzeug.datastructures import FileStorage
 
+from invenio_files_rest.models import Bucket, Location
 from invenio_files_rest.errors import FileInstanceAlreadySetError, \
     FilesException, UnexpectedFileSizeError
 from sqlalchemy.orm.exc import MultipleResultsFound    
@@ -860,73 +864,40 @@ class TestWidgetBucket:
                 with patch('weko_gridlayout.utils.db.session.add', return_value=""):
                     assert w.initialize_widget_bucket() == None
 
-
+    
+        
+        
+        
     # def __validate(self, file_stream, file_name, community_id="0", file_size=0):
     # def save_file(self, file_stream, file_name: str, mimetype: str,
-    def test_save_file(self, app):
+    # .tox/c1/bin/pytest --cov=weko_gridlayout tests/test_utils.py::TestWidgetBucket::test_save_file -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-gridlayout/.tox/c1/tmp
+    def test_save_file(self, app, db, location):
+        bucket_id = app.config['WEKO_GRIDLAYOUT_BUCKET_UUID']
+        bucket_id = UUID(bucket_id)
+        storage_class = app.config[
+                    'FILES_REST_DEFAULT_STORAGE_CLASS']
+        location = Location.get_default()
+        bucket = Bucket(id=bucket_id,
+                            location=location,
+                            default_storage_class=storage_class)
+        db.session.add(bucket)
+        img=FileStorage(filename='test.png', stream=BytesIO(b'test'))
+        
         w = WidgetBucket()
-
-        def seek(*args):
-            return "seek"
-
-        def tell():
-            return 999
-        
-        def tell2():
-            return 1024 * 1024 * 16 + 99
-
-        def get_func(key):
-            return "key"
-
-        def none_get_func(key, value):
-            return None
-        
-        def create_func(file_bucket, key, stream, size, mimetype):
-            return None
-
-        bucket = MagicMock()
-        bucket.query = MagicMock()
-        bucket.query.get = get_func
-
-        file_stream = MagicMock()
-        file_stream.seek = seek
-        file_stream.tell = tell
-
-        with app.test_request_context():
-            with patch('weko_gridlayout.utils.Bucket', bucket):
-                with patch('weko_gridlayout.utils.ObjectVersion.get', none_get_func):
-                    with patch('weko_gridlayout.utils.ObjectVersion.create', create_func):
-                        assert w.save_file(
-                            file_stream=file_stream,
-                            file_name="file_name",
-                            mimetype="mimetype",
-                            community_id="0@999",
-                        ) != None
-
-                        # Exception coverage ~ Line 998
-                        file_stream.tell = tell2
-                        try:
-                            assert w.save_file(
-                                file_stream=file_stream,
-                                file_name="file_name",
-                                mimetype="mimetype",
-                                community_id="0@999",
-                            ) != None
-                        except:
-                            pass
-
-                        with patch('weko_gridlayout.utils.ObjectVersion.create', side_effect=FileInstanceAlreadySetError('')):
-                            # Exception coverage ~ Line 1061
-                            file_stream.tell = tells
-                            try:
-                                assert w.save_file(
-                                    file_stream=file_stream,
-                                    file_name="file_name",
-                                    mimetype="mimetype",
-                                    community_id="0@999",
-                                ) != None
-                            except:
-                                pass
+        with app.test_request_context("/widget/uploads/test_comm@widget"):
+            result = w.save_file(img, "test_file.png","image/png","test_comm@widget")
+            test = {"status": True, "duplicated": False, "url": "/widget/uploaded/test_file.png/test_comm", "msg": "OK", "mimetype": "image/png", "file_name": "test_file.png"}
+            assert result == test
+            with patch("weko_gridlayout.utils.WidgetBucket._WidgetBucket__validate",
+                       side_effect=FileInstanceAlreadySetError("The test_file.png file is alreasy exists")):
+                result = w.save_file(img, "test_file.png","image/png","test_comm@widget")
+                test = {"status": False, "duplicated": True, "url": "/widget/uploaded/test_file.png/test_comm", "msg": "The test_file.png file is alreasy exists", "mimetype": "image/png", "file_name": "test_file.png"}
+                assert result == test
+            with patch("weko_gridlayout.utils.WidgetBucket._WidgetBucket__validate",
+                       side_effect=UnexpectedFileSizeError("10 is greater than the maximum value allowed (16777216).")):
+                result = w.save_file(img, "test_file.png","image/png","test_comm@widget")
+                test = {"status": False, "duplicated": False, "url": "", "msg": "10 is greater than the maximum value allowed (16777216).", "mimetype": "image/png", "file_name": "test_file.png"}
+                assert result == test
                 
 
     # def get_file(self, file_name, community_id=0):

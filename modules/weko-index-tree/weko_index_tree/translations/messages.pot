@@ -60,6 +60,10 @@ msgid "You cannot keep an item private because it has a DOI."
 msgstr ""
 
 #:
+msgid "Please wait a moment."
+msgstr ""
+
+#:
 msgid "The item cannot be deleted because it has a DOI."
 msgstr ""
 

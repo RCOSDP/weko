@@ -113,6 +113,9 @@ msgstr "アップロード開始"
 #~ msgid "Display"
 #~ msgstr "表示する"
 
+msgid "Please wait a moment."
+msgstr "少々お待ちください。"
+
 msgid "You cannot keep an item private because it has a DOI."
 msgstr "アイテムにDOIが付与されているため、アイテムを非公開にすることはできません。"
 

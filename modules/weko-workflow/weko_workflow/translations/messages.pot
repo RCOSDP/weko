@@ -392,6 +392,10 @@ msgstr ""
 msgid "This activity is being locked ({})."
 msgstr ""
 
+#: weko_workflow/templates/weko_workflow/lock_activity.html:27
+msgid "Already have another activity open ({}). Close any open activities."
+msgstr ""
+
 #: weko_workflow/templates/weko_workflow/lock_activity.html:43
 msgid "Do you want to unlock this activity?"
 msgstr ""
@@ -403,6 +407,7 @@ msgstr ""
 #: weko_workflow/templates/weko_workflow/lock_activity.html:49
 #: weko_workflow/templates/weko_workflow/modal_quit_confirmation.html:39
 #: weko_workflow/templates/weko_workflow/modal_withdraw_confirmation.html:71
+#: weko_workflow/templates/weko_workflow/modal_user_lock_activity.html: 37
 msgid "Cancel"
 msgstr ""
 
@@ -418,6 +423,10 @@ msgstr ""
 #: weko_workflow/templates/weko_workflow/modal_withdraw_confirmation.html:44
 msgid "Are you sure you want to withdraw DOI?"
 msgstr ""
+
+#: weko_workflow/templates/weko_workflow/modal_user_lock_activity: 33
+msgid "already open another activity ({})."
+msgstr "既に別のアクティビティ({})を開いています。"
 
 #: weko_workflow/templates/weko_workflow/oapolicy_search.html:3
 msgid "Journal"

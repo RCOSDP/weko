@@ -27,14 +27,15 @@ def _save_mail_cfg_to_db(cfg):
 
 def _set_flask_mail_cfg(cfg):
     current_app.extensions['mail'].suppress = False
-    current_app.extensions['mail'].server = cfg['mail_server']
-    current_app.extensions['mail'].port = cfg['mail_port']
-    current_app.extensions['mail'].username = cfg['mail_username']
-    current_app.extensions['mail'].password = cfg['mail_password']
-    current_app.extensions['mail'].use_tls = cfg['mail_use_tls']
-    current_app.extensions['mail'].use_ssl = cfg['mail_use_ssl']
-    current_app.extensions['mail'].default_sender = cfg['mail_default_sender']
+    current_app.extensions['mail'].server = cfg.get('mail_server', '')
+    current_app.extensions['mail'].port = cfg.get('mail_port', '')
+    current_app.extensions['mail'].username = cfg.get('mail_username', '')
+    current_app.extensions['mail'].password = cfg.get('mail_password', '')
+    current_app.extensions['mail'].use_tls = cfg.get('mail_use_tls', '')
+    current_app.extensions['mail'].use_ssl = cfg.get('mail_use_ssl', '')
+    current_app.extensions['mail'].default_sender = cfg.get('mail_default_sender', '')
     current_app.extensions['mail'].debug = 0
+    current_app.extensions['mail'].local_hostname = cfg['mail_local_hostname']
 
 
 class MailSettingView(BaseView):
@@ -47,7 +48,9 @@ class MailSettingView(BaseView):
             'mail_use_ssl': False,
             'mail_username': None,
             'mail_password': None,
-            'mail_default_sender': None}
+            'mail_default_sender': None,
+            'mail_local_hostname':None
+        }
         try:
             mail_cfg.update(_load_mail_cfg_from_db())
             if request.method == 'POST':

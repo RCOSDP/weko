@@ -7,8 +7,10 @@
 # under the terms of the MIT License; see LICENSE file for more details.
 
 import pytest
+from mock import patch
 from flask import current_app, session, url_for
 from flask_admin import menu
+from flask_security import url_for_security
 from flask_security.utils import hash_password
 from invenio_db import db
 from werkzeug.local import LocalProxy
@@ -16,7 +18,8 @@ from werkzeug.local import LocalProxy
 from invenio_accounts import InvenioAccounts
 from invenio_accounts.cli import users_create
 from invenio_accounts.models import SessionActivity
-from invenio_accounts.testutils import login_user_via_view
+from invenio_accounts.testutils import create_test_user, login_user_via_view
+from invenio_accounts.admin import SessionActivityView
 
 _datastore = LocalProxy(
     lambda: current_app.extensions['security'].datastore
@@ -124,43 +127,94 @@ def test_admin_createuser(app, admin_view):
     assert user is not None
     assert user.active is False
 
-
-def test_admin_sessions(app, admin_view, users):
+# .tox/c1/bin/pytest --cov=invenio_accounts tests/test_admin.py::test_admin_sessions -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-accounts/.tox/c1/tmp
+def test_admin_sessions(app, admin_view):
     """Test flask-admin session."""
     with app.test_request_context():
         index_view_url = url_for('sessionactivity.index_view')
         delete_view_url = url_for('sessionactivity.delete_view')
-    with app.test_client() as client:
-        res = client.get(index_view_url)
-        assert res.status_code == 200
 
-        # simulate login as user 1
-        datastore = app.extensions['security'].datastore
-        login_user_via_view(client=client, email=users[0]['email'],
-                            password=users[0]['password'])
-        from flask import session
-        sid_s = session.sid_s
-        # and try to delete own session sid_s: FAILS
-        res = client.post(
-            delete_view_url, data={'id': sid_s}, follow_redirects=True)
-        assert res.status_code == 200
-        sessions = SessionActivity.query.all()
-        assert len(sessions) == 1
-        assert sessions[0].sid_s == sid_s
+        user1 = create_test_user(email='user1@invenio-software.org')
+        user1_email = user1.email
+        user1_pw = user1.password_plaintext
 
-    with app.test_client() as client:
-        # simulate login as user 2
-        login_user_via_view(client=client, email=users[1]['email'],
-                            password=users[1]['password'])
-        new_sid_s = session.sid_s
-        sessions = SessionActivity.query.all()
-        assert len(sessions) == 2
-        all_sid_s = [session.sid_s for session in sessions]
-        assert sorted([sid_s, new_sid_s]) == sorted(all_sid_s)
-        # and try to delete a session of another user: WORKS
-        res = client.post(
-            delete_view_url, data={'id': sid_s},
-            follow_redirects=True)
-        sessions = SessionActivity.query.all()
-        assert len(sessions) == 1
-        assert sessions[0].sid_s == new_sid_s
+        user2 = create_test_user(email='user2@invenio-software.org')
+        user2_email = user2.email
+        user2_pw = user2.password_plaintext
+
+        with app.test_client() as client:
+            res = client.get(index_view_url)
+            assert res.status_code == 200
+
+            # simulate login as user 1
+            datastore = app.extensions['security'].datastore
+            login_user_via_view(client=client, email=user1_email,
+                                password=user1_pw)
+            from flask import session
+            sid_s = session.sid_s
+            # and try to delete own session sid_s: FAILS
+            res = client.post(
+                delete_view_url, data={'id': sid_s}, follow_redirects=True)
+            assert res.status_code == 200
+            sessions = SessionActivity.query.all()
+            assert len(sessions) == 1
+            assert sessions[0].sid_s == sid_s
+
+        with app.test_client() as client:
+            # simulate login as user 2
+            login_user_via_view(client=client, email=user2_email,
+                                password=user2_pw)
+            new_sid_s = session.sid_s
+            sessions = SessionActivity.query.all()
+            assert len(sessions) == 2
+            all_sid_s = [session.sid_s for session in sessions]
+            assert sorted([sid_s, new_sid_s]) == sorted(all_sid_s)
+            # and try to delete a session of another user: WORKS
+            with patch('invenio_accounts.admin.db.session.commit', side_effect=Exception('')):
+                res = client.post(
+                    delete_view_url, data={'id': sid_s}, follow_redirects=True)
+                assert res.status_code == 200
+
+            res = client.post(
+                delete_view_url, data={'id': sid_s}, follow_redirects=True)
+            sessions = SessionActivity.query.all()
+            assert len(sessions) == 1
+            assert sessions[0].sid_s == new_sid_s
+
+
+# .tox/c1/bin/pytest --cov=invenio_accounts tests/test_admin.py::test_admin_sessions_action_delete -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-accounts/.tox/c1/tmp
+def test_admin_sessions_action_delete(app):
+    """Test action_delete of SessionActivityView."""
+    view = SessionActivityView(SessionActivity, db.session)
+    with app.test_request_context():
+        user1 = create_test_user(email='user1@invenio-software.org')
+        user1_id = user1.id
+        user1_email = user1.email
+        user1_pw = user1.password_plaintext
+        user2 = create_test_user(email='user2@invenio-software.org')
+        user2_email = user2.email
+        user2_pw = user2.password_plaintext
+
+        with app.test_client() as client:
+            login_user_via_view(client=client, email=user1_email,
+                                password=user1_pw)
+            sessions_1 = SessionActivity.query.filter_by(
+                user_id=user1_id).all()
+            user1_sid = sessions_1[0].sid_s
+            view.action_delete([user1_sid])
+            sessions = SessionActivity.query.all()
+            assert len(sessions) == 1
+
+        with app.test_client() as client:
+            login_user_via_view(client=client, email=user2_email,
+                                password=user2_pw)
+            
+            with patch('invenio_accounts.admin.db.session.commit', side_effect=Exception('')):
+                view.action_delete([user1_sid])
+                sessions = SessionActivity.query.all()
+                assert len(sessions) == 2
+
+            view.action_delete([user1_sid])
+            sessions = SessionActivity.query.all()
+            assert len(sessions) == 1
+    

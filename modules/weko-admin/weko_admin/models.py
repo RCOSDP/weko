@@ -358,8 +358,6 @@ class AdminLangSettings(db.Model):
                 lang_setting_data.is_active = is_active
             db.session.merge(lang_setting_data)
 
-        db.session.commit()
-
     @classmethod
     def get_registered_language(cls):
         """Get registered languages.
@@ -1151,6 +1149,7 @@ class FeedbackMailSetting(db.Model, Timestamp):
             db.session.commit()
             return True
         except BaseException as ex:
+            db.session.rollback()
             current_app.logger.debug(ex)
             return False
 

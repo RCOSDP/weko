@@ -2,6 +2,7 @@ import pytest
 import tempfile
 from datetime import datetime
 from six import BytesIO
+from mock import patch
 
 from werkzeug.datastructures import ImmutableMultiDict
 
@@ -301,3 +302,10 @@ def test_item_create_event_builder(app, request_headers, records):
     with app.test_request_context(headers=request_headers['user']):
         res = item_create_event_builder({}, app, 1, records[0][0], 'Test title')
         assert res=={'cur_user_id': 1, 'ip_address': None, 'pid_type': 'recid', 'pid_value': '1', 'record_name': 'Test title', 'referrer': None, 'remote_addr': None, 'session_id': None, 'timestamp': res['timestamp'], 'user_agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko)Chrome/45.0.2454.101 Safari/537.36', 'user_id': None}
+
+        with patch('invenio_stats.contrib.event_builders.is_valid_access', return_value=False):
+            res = item_create_event_builder({}, app, 1, records[0][0], 'Test title')
+            assert res==None
+        
+        res = item_create_event_builder({}, app, 1, records[0][0], 'Test title', 'TEST')
+        assert res=={'cur_user_id': 1, 'ip_address': None, 'pid_type': 'recid', 'pid_value': '1', 'record_name': 'Test title', 'referrer': 'TEST', 'remote_addr': 'localhost', 'session_id': None, 'timestamp': res['timestamp'], 'user_agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko)Chrome/45.0.2454.101 Safari/537.36', 'user_id': None}

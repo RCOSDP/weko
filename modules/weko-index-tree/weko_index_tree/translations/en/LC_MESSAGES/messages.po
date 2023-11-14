@@ -105,6 +105,9 @@ msgstr ""
 #~ msgid "Display"
 #~ msgstr "Display"
 
+msgid "Please wait a moment."
+msgstr ""
+
 msgid "You cannot keep an item private because it has a DOI."
 msgstr ""
 

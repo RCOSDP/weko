@@ -1156,6 +1156,23 @@ class Test_FormatSysCreator:
             obj._format_creator_to_show_detail(language,parent_key,lst)
             assert lst==['Joho, Taro']
 
+    #* This is for testing only for the changes regarding creatorType
+    # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::Test_FormatSysCreator::test__format_creator_to_show_detail_2 -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+    def test__format_creator_to_show_detail_2(self, app, prepare_creator):
+        with app.test_request_context():
+            prepare_creator["creatorType"] = "creator_type_test"
+            obj = _FormatSysCreator(prepare_creator)
+            language = 'en'
+            parent_key = 'creatorType'
+            lst = []
+
+            assert obj._format_creator_to_show_detail(
+                language,
+                parent_key,
+                lst
+            ) is None
+            
+            assert len(lst) == 0
 
     #     def _get_creator_to_show_popup(self, creators: Union[list, dict],
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::Test_FormatSysCreator::test__get_creator_to_show_popup -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
@@ -1163,7 +1180,7 @@ class Test_FormatSysCreator:
         with app.test_request_context():
             obj = _FormatSysCreator(prepare_creator)
             assert isinstance(obj,_FormatSysCreator)==True 
-            creators={'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierURI': 'https://orcid.org/', 'nameIdentifierScheme': 'ORCID'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierURI': 'https://ci.nii.ac.jp/', 'nameIdentifierScheme': 'CiNii'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/', 'nameIdentifierScheme': 'KAKEN2'}], 'creatorAffiliations': [{'affiliationNames': [{'affiliationName': '所属機関', 'affiliationNameLang': 'ja'}, {'affiliationName': 'Affilication Name', 'affiliationNameLang': 'en'}], 'affiliationNameIdentifiers': [{'affiliationNameIdentifier': 'xxxxxx', 'affiliationNameIdentifierURI': 'xxxxx', 'affiliationNameIdentifierScheme': 'ISNI'}]}], 'creatorAlternatives': [{'creatorAlternative': 'Alternative Name', 'creatorAlternativeLang': 'en'}, {'creatorAlternative': '別名', 'creatorAlternativeLang': 'ja'}]}
+            creators={'creatorType': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierURI': 'https://orcid.org/', 'nameIdentifierScheme': 'ORCID'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierURI': 'https://ci.nii.ac.jp/', 'nameIdentifierScheme': 'CiNii'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/', 'nameIdentifierScheme': 'KAKEN2'}], 'creatorAffiliations': [{'affiliationNames': [{'affiliationName': '所属機関', 'affiliationNameLang': 'ja'}, {'affiliationName': 'Affilication Name', 'affiliationNameLang': 'en'}], 'affiliationNameIdentifiers': [{'affiliationNameIdentifier': 'xxxxxx', 'affiliationNameIdentifierURI': 'xxxxx', 'affiliationNameIdentifierScheme': 'ISNI'}]}], 'creatorAlternatives': [{'creatorAlternative': 'Alternative Name', 'creatorAlternativeLang': 'en'}, {'creatorAlternative': '別名', 'creatorAlternativeLang': 'ja'}]}
             language='ja'
             creator_list=[]
             creator_list_temp=None
@@ -1172,7 +1189,30 @@ class Test_FormatSysCreator:
             assert language=="ja"
             assert creator_list==[{'ja': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'familyName': '情報', 'familyNameLang': 'ja'}, {'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'affiliationName': '所属機関', 'affiliationNameLang': 'ja', 'affiliationNameIdentifier': 'xxxxxx', 'affiliationNameIdentifierURI': 'xxxxx', 'affiliationNameIdentifierScheme': 'ISNI'}, {'creatorAlternative': '別名', 'creatorAlternativeLang': 'ja'}]}]
             assert creator_list_temp==None
-            
+
+    #* This is for testing only for the changes regarding creatorType
+    # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::Test_FormatSysCreator::test__get_creator_to_show_popup_2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+    def test__get_creator_to_show_popup_2(self, app, prepare_creator):
+        with app.test_request_context():
+            prepare_creator["creatorType"] = "creator_type_test"
+            obj = _FormatSysCreator(prepare_creator)
+
+            creators = {
+                'creatorType': 'creator_type_test'
+            }
+
+            language = 'ja'
+            creator_list = []
+            creator_list_temp = None
+
+            obj._get_creator_to_show_popup(
+                creators,
+                language,
+                creator_list,
+                creator_list_temp
+            )
+
+            assert len(creator_list) == 0
 
 #         def _run_format_affiliation(affiliation_max, affiliation_min,
 #         def format_affiliation(affiliation_data):
@@ -1196,6 +1236,28 @@ class Test_FormatSysCreator:
             assert isinstance(obj,_FormatSysCreator)==True
             assert obj.format_creator()=={'name': ['Joho, Taro'], 'order_lang': [{'ja': {'creatorName': ['情報, 太郎'], 'creatorAlternative': ['別名'], 'affiliationName': ['ISNI 所属機関'], 'affiliationNameIdentifier': [{'identifier': 'xxxxxx', 'uri': 'xxxxx'}]}}, {'ja-Kana': {'creatorName': ['ジョウホウ, タロウ'], 'creatorAlternative': [], 'affiliationName': [], 'affiliationNameIdentifier': []}}, {'en': {'creatorName': ['Joho, Taro'], 'creatorAlternative': ['Alternative Name'], 'affiliationName': [' Affilication Name'], 'affiliationNameIdentifier': [{'identifier': '', 'uri': ''}]}}]}
     
+    #* This is for testing only for the changes regarding creatorType
+    # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::Test_FormatSysCreator::test_format_creator_2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+    def test_format_creator_2(self, app, prepare_creator):
+        with app.test_request_context():
+            prepare_creator["creatorType"] = "creator_type_test"
+            obj = _FormatSysCreator(prepare_creator)
+            
+            assert isinstance(
+                obj,
+                _FormatSysCreator
+            ) == True
+
+            returnData = obj.format_creator()
+
+            for item in returnData.get("order_lang"):
+                if item.get("ja"):
+                    assert "creatorType" not in list(item.get("ja").keys())
+                elif item.get("ja-Kana"):
+                    assert "creatorType" not in list(item.get("ja-Kana").keys())
+                elif item.get("en"):
+                    assert "creatorType" not in list(item.get("en").keys())
+                    
     # def _format_creator_on_creator_popup(self, creators: Union[dict, list],
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::Test_FormatSysCreator::test__format_creator_on_creator_popup -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test__format_creator_on_creator_popup(self,app,prepare_creator):

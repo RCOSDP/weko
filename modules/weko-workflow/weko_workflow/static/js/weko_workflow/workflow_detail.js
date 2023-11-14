@@ -75,24 +75,52 @@ require([
       post_uri = post_uri + "?community=" + community;
     }
     $.ajax({
-      url: post_uri,
-      method: 'POST',
+      url: '/workflow/activity/user_lock',
+      method: 'GET',
       async: true,
-      contentType: 'application/json',
-      data: JSON.stringify(post_data),
-      success: function (data, status) {
-        if (0 == data.code) {
-          document.location.href = data.data.redirect;
+      success: function(data, status) {
+        if (data.is_open == false) {
+          $.ajax({
+            url: post_uri,
+            method: 'POST',
+            async: true,
+            contentType: 'application/json',
+            data: JSON.stringify(post_data),
+            success: function (data, status) {
+              if (0 == data.code) {
+                document.location.href = data.data.redirect;
+              } else {
+                endLoading(_this);
+                alert(data.msg);
+              }
+            },
+            error: function (jqXHE, status) {
+              endLoading(_this);
+              alert(jqXHE.responseJSON.msg);
+            }
+          });
         } else {
           endLoading(_this);
-          alert(data.msg);
+          msg = $('#user_locked_msg').text()
+          console.log(msg)
+          console.log(data.activity_id)
+          if (data.activity_id) {
+            console.log(1)
+            msg = msg.replace('{}', data.activity_id);
+          } else {
+            console.log(2)
+            msg = msg.replace('({})', '');
+          }
+          console.log(msg)
+          $('#user_locked_msg').html(msg)
+          $('#action_unlock_activity').modal("show")
         }
       },
-      error: function (jqXHE, status) {
+      error: function(jqXHE, status) {
         endLoading(_this);
         alert(jqXHE.responseJSON.msg);
       }
-    });
+    })
   });
 
   $('#btn-finish').on('click', function () {

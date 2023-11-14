@@ -1,6 +1,6 @@
 # coding:utf-8
 """Definition of relation property."""
-from .property_func import get_property_schema, get_property_form, set_post_data, get_select_value
+from .property_func import get_property_schema, get_property_form, set_post_data, get_select_value,make_title_map
 from . import property_config as config
 
 property_id = config.RELATION
@@ -27,7 +27,8 @@ relation_type = [
     'isDerivedFrom',
     'isSourceOf',
     'isCitedBy',
-    'Cites'
+    'Cites',
+    'inSeries'
 ]
 id_type = [
     None,
@@ -145,6 +146,7 @@ def schema(title='', multi_flag=multiple_flag):
                     'type': ['null', 'string'],
                     'format': 'select',
                     'enum': relation_type,
+                    'currentEnum': relation_type,
                     'title': '関連タイプ'
                 },
                 'subitem_relation_type_id': {
@@ -159,7 +161,8 @@ def schema(title='', multi_flag=multiple_flag):
                         'subitem_relation_type_select': {
                             'type': ['null', 'string'],
                             'format': 'select',
-                            'enum': id_type,
+                            'enum': config.RELATION_ID_TYPE_VAL,
+                            'currentEnum': config.RELATION_ID_TYPE_VAL,
                             'title': '識別子タイプ'
                         }
                     },
@@ -197,7 +200,7 @@ def form(key='', title='', title_ja=name_ja, title_en=name_en, multi_flag=multip
                                 'en': 'Identifier Type',
                                 'ja': '識別子タイプ'
                             },
-                            'titleMap': get_select_value(id_type),
+                            'titleMap': make_title_map(config.RELATION_ID_TYPE_LBL,config.RELATION_ID_TYPE_VAL),
                             'type': 'select'
                         },
                         {

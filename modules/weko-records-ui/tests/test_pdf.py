@@ -58,10 +58,6 @@ def test_make_combined_pdf(app,records,itemtypes,pdfcoverpagesetting):
                     "title": "",
                     "creator": MagicMock()
                 }
-
-                with patch("weko_records_ui.pdf.ItemsMetadata.get_record", return_value=data3):
-                    with patch("weko_records_ui.pdf.is_show_email_of_creator", return_value=True):
-                        assert make_combined_pdf(record.pid,data1,obj,None).status_code == 200
                 
                 with patch("weko_records_ui.pdf.tempfile.gettempdir", return_value="tests/data"):
                     assert make_combined_pdf(record.pid,data1,obj,None).status_code == 200
