@@ -31,6 +31,7 @@ import tempfile
 import traceback
 import uuid
 import zipfile
+import mimetypes
 from collections import Callable, OrderedDict
 from datetime import datetime
 from functools import partial, reduce, wraps
@@ -50,7 +51,7 @@ from flask import abort, current_app, has_request_context, request
 from flask_babelex import gettext as _
 from flask_login import current_user
 from invenio_db import db
-from invenio_files_rest.models import FileInstance, Location, ObjectVersion
+from invenio_files_rest.models import Bucket, FileInstance, Location, MultipartObject, ObjectVersion
 from invenio_files_rest.proxies import current_files_rest
 from invenio_files_rest.utils import find_and_update_location_size
 from invenio_i18n.ext import current_i18n
@@ -60,6 +61,7 @@ from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.api import Record
 from invenio_records.models import RecordMetadata
+from invenio_records_files.models import RecordsBuckets
 from invenio_records_rest.errors import InvalidQueryRESTError
 from invenio_search import RecordsSearch
 from invenio_stats.config import SEARCH_INDEX_PREFIX as index_prefix
@@ -485,7 +487,7 @@ def parse_to_json_form(data: list, item_path_not_existed=[], include_empty=False
             if (
                 include_empty
                 or value
-                or key_path[0] in ["file_path", "thumbnail_path"]
+                or key_path[0] in ["file_path", "upload_id", "thumbnail_path"]
                 or key_path[-1] == "filename"
             ):
                 set_nested_item(result, key_path, value)
@@ -662,7 +664,7 @@ def unpackage_import_file(data_path: str, file_name: str, file_format: str, forc
     # current_app.logger.debug('list_record4: {}'.format(list_record))
     # [{'pos_index': ['Index A'], 'publish_status': 'public', 'feedback_mail': ['wekosoftware@nii.ac.jp'], 'edit_mode': 'Keep', 'metadata': {'pubdate': '2021-03-19', 'item_1617186331708': [{'subitem_1551255647225': 'ja_conference paperITEM00000001(public_open_access_open_access_simple)', 'subitem_1551255648112': 'ja'}, {'subitem_1551255647225': 'en_conference paperITEM00000001(public_open_access_simple)', 'subitem_1551255648112': 'en'}], 'item_1617186385884': [{'subitem_1551255720400': 'Alternative Title', 'subitem_1551255721061': 'en'}, {'subitem_1551255720400': 'Alternative Title', 'subitem_1551255721061': 'ja'}], 'item_1617186419668': [{'creatorAffiliations': [{'affiliationNameIdentifiers': [{'affiliationNameIdentifier': '0000000121691048', 'affiliationNameIdentifierScheme': 'ISNI', 'affiliationNameIdentifierURI': 'http://isni.org/isni/0000000121691048'}], 'affiliationNames': [{'affiliationName': 'University', 'affiliationNameLang': 'en'}]}], 'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': '4', 'nameIdentifierScheme': 'WEKO'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}, {'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}, {'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}], 'item_1617349709064': [{'contributorMails': [{'contributorMail': 'wekosoftware@nii.ac.jp'}], 'contributorNames': [{'contributorName': '情報, 太郎', 'lang': 'ja'}, {'contributorName': 'ジョウホウ, タロウ', 'lang': 'ja-Kana'}, {'contributorName': 'Joho, Taro', 'lang': 'en'}], 'contributorType': 'ContactPerson', 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}], 'item_1617186476635': {'subitem_1522299639480': 'open access', 'subitem_1600958577026': 'http://purl.org/coar/access_right/c_abf2'}, 'item_1617351524846': {'subitem_1523260933860': 'Unknown'}, 'item_1617186499011': [{'subitem_1522650717957': 'ja', 'subitem_1522650727486': 'http://localhost', 'subitem_1522651041219': 'Rights Information'}], 'item_1617610673286': [{'nameIdentifiers': [{'nameIdentifier': 'xxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}], 'rightHolderNames': [{'rightHolderLanguage': 'ja', 'rightHolderName': 'Right Holder Name'}]}], 'item_1617186609386': [{'subitem_1522299896455': 'ja', 'subitem_1522300014469': 'Other', 'subitem_1522300048512': 'http://localhost/', 'subitem_1523261968819': 'Sibject1'}], 'item_1617186626617': [{'subitem_description': 'Description\nDescription<br/>Description', 'subitem_description_language': 'en', 'subitem_description_type': 'Abstract'}, {'subitem_description': '概要\n概要\n概要\n概要', 'subitem_description_language': 'ja', 'subitem_description_type': 'Abstract'}], 'item_1617186643794': [{'subitem_1522300295150': 'en', 'subitem_1522300316516': 'Publisher'}], 'item_1617186660861': [{'subitem_1522300695726': 'Available', 'subitem_1522300722591': '2021-06-30'}], 'item_1617186702042': [{'subitem_1551255818386': 'jpn'}], 'item_1617258105262': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, 'item_1617349808926': {'subitem_1523263171732': 'Version'}, 'item_1617265215918': {'subitem_1522305645492': 'AO', 'subitem_1600292170262': 'http://purl.org/coar/version/c_b1a7d7d4d402bcce'}, 'item_1617186783814': [{'subitem_identifier_type': 'URI', 'subitem_identifier_uri': 'http://localhost'}], 'item_1617353299429': [{'subitem_1522306207484': 'isVersionOf', 'subitem_1522306287251': {'subitem_1522306382014': 'arXiv', 'subitem_1522306436033': 'xxxxx'}, 'subitem_1523320863692': [{'subitem_1523320867455': 'en', 'subitem_1523320909613': 'Related Title'}]}], 'item_1617186859717': [{'subitem_1522658018441': 'en', 'subitem_1522658031721': 'Temporal'}], 'item_1617186882738': [{'subitem_geolocation_place': [{'subitem_geolocation_place_text': 'Japan'}]}], 'item_1617186901218': [{'subitem_1522399143519': {'subitem_1522399281603': 'ISNI', 'subitem_1522399333375': 'http://xxx'}, 'subitem_1522399412622': [{'subitem_1522399416691': 'en', 'subitem_1522737543681': 'Funder Name'}], 'subitem_1522399571623': {'subitem_1522399585738': 'Award URI', 'subitem_1522399628911': 'Award Number'}, 'subitem_1522399651758': [{'subitem_1522721910626': 'en', 'subitem_1522721929892': 'Award Title'}]}], 'item_1617186920753': [{'subitem_1522646500366': 'ISSN', 'subitem_1522646572813': 'xxxx-xxxx-xxxx'}], 'item_1617186941041': [{'subitem_1522650068558': 'en', 'subitem_1522650091861': 'Source Title'}], 'item_1617186959569': {'subitem_1551256328147': '1'}, 'item_1617186981471': {'subitem_1551256294723': '111'}, 'item_1617186994930': {'subitem_1551256248092': '12'}, 'item_1617187024783': {'subitem_1551256198917': '1'}, 'item_1617187045071': {'subitem_1551256185532': '3'}, 'item_1617187112279': [{'subitem_1551256126428': 'Degree Name', 'subitem_1551256129013': 'en'}], 'item_1617187136212': {'subitem_1551256096004': '2021-06-30'}, 'item_1617944105607': [{'subitem_1551256015892': [{'subitem_1551256027296': 'xxxxxx', 'subitem_1551256029891': 'kakenhi'}], 'subitem_1551256037922': [{'subitem_1551256042287': 'Degree Grantor Name', 'subitem_1551256047619': 'en'}]}], 'item_1617187187528': [{'subitem_1599711633003': [{'subitem_1599711636923': 'Conference Name', 'subitem_1599711645590': 'ja'}], 'subitem_1599711655652': '1', 'subitem_1599711660052': [{'subitem_1599711680082': 'Sponsor', 'subitem_1599711686511': 'ja'}], 'subitem_1599711699392': {'subitem_1599711704251': '2020/12/11', 'subitem_1599711712451': '1', 'subitem_1599711727603': '12', 'subitem_1599711731891': '2000', 'subitem_1599711735410': '1', 'subitem_1599711739022': '12', 'subitem_1599711743722': '2020', 'subitem_1599711745532': 'ja'}, 'subitem_1599711758470': [{'subitem_1599711769260': 'Conference Venue', 'subitem_1599711775943': 'ja'}], 'subitem_1599711788485': [{'subitem_1599711798761': 'Conference Place', 'subitem_1599711803382': 'ja'}], 'subitem_1599711813532': 'JPN'}], 'item_1617605131499': [{'accessrole': 'open_access', 'date': [{'dateType': 'Available', 'dateValue': '2021-07-12'}], 'displaytype': 'simple', 'filename': '1KB.pdf', 'filesize': [{'value': '1 KB'}], 'format': 'text/plain'}, {'filename': ''}], 'item_1617620223087': [{'subitem_1565671149650': 'ja', 'subitem_1565671169640': 'Banner Headline', 'subitem_1565671178623': 'Subheading'}, {'subitem_1565671149650': 'en', 'subitem_1565671169640': 'Banner Headline', 'subitem_1565671178623': 'Subheding'}]}, 'file_path': ['file00000001/1KB.pdf', ''], 'item_type_name': 'デフォルトアイテムタイプ（フル）', 'item_type_id': 15, '$schema': 'https://localhost:8443/items/jsonschema/15', 'identifier_key': 'item_1617186819068', 'errors': None, 'status': 'new', 'id': None, 'item_title': 'ja_conference paperITEM00000001(public_open_access_open_access_simple)'}]
 
-    
+
 
     return list_record
 
@@ -1005,6 +1007,16 @@ def handle_check_exist_record(list_record) -> list:
         errors = item.get("errors") or []
         item_id = item.get("id")
         # current_app.logger.debug("item_id:{}".format(item_id))
+        
+        file_meta_id = ""
+        for key, val in item.get("metadata").items():
+            # print("\033[32m", val, "\033[0m")
+            if isinstance(val, list):
+                for i in val:
+                    if isinstance(i, dict) and "filename" in i:
+                        file_meta_id = key
+                        break
+        
         if item_id and item_id is not "":
             system_url = request.host_url + "records/" + str(item_id)
             if item.get("uri") != system_url:
@@ -1041,6 +1053,34 @@ def handle_check_exist_record(list_record) -> list:
                                 item["status"] = None
                             else:
                                 item["status"] = _edit_mode.lower()
+
+            if item.get("upload_id"):
+                all_size = 0
+                for i, id in enumerate(item.get("upload_id")):
+                    if(id != "" and item.get("file_path")[i] != ""):
+                        errors.append(_('file_path and upload_id both entered'))
+                    else:
+                        if(is_valid_uuid(id)):
+                            if(item.get("metadata")[file_meta_id][i].get("format") in mimetypes.types_map.values() ): # 「正しいフォーマット」の条件が抜けている（何か文字列が入っていればOKとなっている）
+                                multipartObject = MultipartObject.get_by_uploadId(id)
+                                if(multipartObject):
+                                    if(multipartObject.completed and multipartObject.bucket_id == None):
+                                        if multipartObject.file.uri.startswith(RecordsBuckets.query.filter_by(record_id=PersistentIdentifier.query.filter_by(pid_type="recid", pid_value=item["id"]).first().object_uuid).one_or_none().bucket.location.uri):
+                                            all_size += multipartObject.file.size
+                                        else:
+                                            errors.append(_('Files and items have different locations '))
+                                    else:
+                                        errors.append(_('specified uploadId not completed or already linked to the item'))
+                                else:
+                                    errors.append(_('specified uploadId is not found'))
+                            else:
+                                errors.append(_('Please set the file format correctly'))
+                        else:
+                            if id != '':
+                                errors.append(_('uploadId is invalid format'))
+                if all_size > RecordsBuckets.query.filter_by(record_id=PersistentIdentifier.query.filter_by(pid_type="recid", pid_value=item["id"]).first().object_uuid).one_or_none().bucket.quota_size:
+                    print("okp") #要変更
+                    
         else:
             item["id"] = None
             item["status"]="new"
@@ -1113,6 +1153,12 @@ def clean_thumbnail_file(deposit, root_path, thumbnail_path):
         if file.obj.is_thumbnail and file.obj.key not in list_not_remove:
             file.obj.remove()
 
+def is_valid_uuid(val):
+        try:
+            uuid.UUID(str(val))
+            return True
+        except ValueError:
+            return False
 
 def up_load_file(record, root_path, deposit, allow_upload_file_content, old_files):
     """Upload thumbnail or file content.
@@ -1125,7 +1171,6 @@ def up_load_file(record, root_path, deposit, allow_upload_file_content, old_file
         old_files      -- {list} List of ObjectVersion in current bucket.
 
     """
-
     def upload(paths, is_thumbnail=False):
         if len(old_files) > len(paths):
             paths.extend([None for _idx in range(0, len(old_files) - len(paths))])
@@ -1134,11 +1179,34 @@ def up_load_file(record, root_path, deposit, allow_upload_file_content, old_file
             old_file = (
                 old_files[idx] if not is_thumbnail and idx < len(old_files) else None
             )
+            if(is_valid_uuid(path)):
+                a = MultipartObject.get_by_uploadId(path)
+                if(a):
+                    # 追加
+                    root_file_id = None
+                    if old_file and not (
+                        len(record["filenames"]) > idx
+                        and record["filenames"][idx]
+                        and old_file.key == record["filenames"][idx]["filename"]
+                    ):
+                        root_file_id = old_file.root_file_id
+                        old_file.remove()
+                        obj = ObjectVersion.create(deposit.files.bucket, a.key, _file_id = a.file_id)
+                        obj.is_thumbnail = is_thumbnail
+                        a.bucket_id = deposit.files.bucket.id
+                    continue
+                    # db.session.commit()
+                    
+                    # obj.set_contents(
+                    #     None, root_file_id=root_file_id, is_set_size_location=False
+                    # ) 
+                           
             if not path or not os.path.isfile(root_path + "/" + path):
                 if old_file and not (
                     len(record["filenames"]) > idx
                     and record["filenames"][idx]
                     and old_file.key == record["filenames"][idx]["filename"]
+                    and MultipartObject.get_by_fileId(old_file.file_id) != None
                 ):
                     old_file.remove()
                 continue
@@ -1161,6 +1229,7 @@ def up_load_file(record, root_path, deposit, allow_upload_file_content, old_file
             if not file.is_thumbnail and (delete_all or not file.is_head):
                 file.remove()
 
+    upload_id = record.get("upload_id", []) if allow_upload_file_content else []
     file_path = record.get("file_path", []) if allow_upload_file_content else []
     thumbnail_path = record.get("thumbnail_path", [])
     if isinstance(thumbnail_path, str):
@@ -1169,9 +1238,10 @@ def up_load_file(record, root_path, deposit, allow_upload_file_content, old_file
         thumbnail_path = list(filter(lambda path: path, thumbnail_path))
 
     clean_thumbnail_file(deposit, root_path, thumbnail_path)
-    if file_path or thumbnail_path:
+    if file_path or thumbnail_path or upload_id:
         upload(thumbnail_path, is_thumbnail=True)
         upload(file_path)
+        upload(upload_id)
     clean_file_contents(not allow_upload_file_content)
 
 
@@ -1546,6 +1616,23 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
                     PIDVersioning(child=pid).last_child.object_uuid
                 )
 
+            for i, id in enumerate(item["upload_id"]):
+                a = MultipartObject.get_by_uploadId(id) if is_valid_uuid(id) else None
+                if a:
+                    file_meta_id = re.search(r'item_[0-9]+', item["filenames"][i]["id"]).group()
+                    
+                    file_meta_data = {
+                        "accessrole": "open_access",
+                        "date": [{"dateType": "Available", "dateValue": a.updated.strftime("%Y-%m-%d")}],
+                        "filename": a.key,
+                        "filesize": [{"value": "1TB"}],# 要変更
+                        "url": {
+                            "url": current_app.config["THEME_SITEURL"] + "/record/" + item["id"] + "/files/" + a.key
+                        },
+                        "format": item["metadata"][file_meta_id][0]["format"]
+                    }
+                    item["metadata"][file_meta_id][0] = file_meta_data
+                    item["filenames"][i]["filename"] = a.key
             register_item_metadata(item, root_path, owner, is_gakuninrdm)
             if not is_gakuninrdm:
                 if current_app.config.get("WEKO_HANDLE_ALLOW_REGISTER_CNRI"):
@@ -3284,6 +3371,17 @@ def export_all(root_url, user_id, data):
             export_path
         )
         keys, labels, is_systems, options = headers
+        j = 0
+        for i in range(1, len(keys) + 1):
+            if(re.search(r"\.file_path", keys[-i + j])):
+                # current_app.logger.info(keys[-i + j])
+                keys.insert(-i + j + 1, re.sub("file_path", "upload_id", keys[-i + j], 1))
+                labels.insert(-i + j + 1, re.sub("ファイルパス", "ファイルアップロードID", labels[-i + j], 1))
+                is_systems.insert(-i + j + 1, "")
+                options.insert(-i + j + 1, options[-i + j])
+                for x in records.values():
+                    x.insert(-i + j + 1, "")
+                j -= 1
         item_datas["recids"].sort()
         item_datas["keys"] = keys
         item_datas["labels"] = labels
