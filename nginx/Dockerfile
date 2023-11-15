@@ -4,11 +4,19 @@ ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /tmp
 
 RUN apt-get update -y
-RUN apt-get install -y wget curl gnupg2 ca-certificates lsb-release unzip uuid-dev dpkg-dev
+RUN apt-get install -y wget curl gnupg2 ca-certificates lsb-release unzip uuid-dev dpkg-dev  
 RUN echo "deb http://nginx.org/packages/ubuntu focal nginx" | tee /etc/apt/sources.list.d/nginx.list
 RUN echo "deb-src http://nginx.org/packages/ubuntu focal nginx" | tee -a /etc/apt/sources.list.d/nginx.list
 RUN curl -fsSL https://nginx.org/keys/nginx_signing.key | apt-key add -
 RUN apt-get update -y
+
+RUN apt-get install -y build-essential libpcre3 libpcre3-dev zlib1g zlib1g-dev libssl-dev libxml2-dev libxslt1-dev mercurial 
+RUN hg clone http://hg.nginx.org/njs
+WORKDIR /tmp/njs
+RUN ./configure 
+RUN make
+WORKDIR /tmp
+
 #RUN apt-get source -y nginx=1.18.0
 #RUN apt-get build-dep -y nginx=1.18.0
 RUN apt-get source -y nginx=1.20.1
@@ -31,7 +39,7 @@ RUN unzip nginx-http-auth-digest.zip && \
 RUN cd /tmp/incubator-pagespeed-ngx-1.13.35.2-stable ; wget https://dl.google.com/dl/page-speed/psol/1.13.35.2-x64.tar.gz ; tar -xzvf 1.13.35.2-x64.tar.gz
 #RUN sed -i "s#--modules-path=/usr/lib/nginx/modules#--modules-path=/usr/lib/nginx/modules --add-module=/tmp/headers-more-nginx-module-0.33 --add-module=/tmp/nginx-http-shibboleth-2.0.1 --add-module=/tmp/nginx-http-auth-digest-master --add-module=/tmp/incubator-pagespeed-ngx-1.13.35.2-stable --add-module=/tmp/ngx_cache_purge-2.3 #g" nginx-1.18.0/debian/rules
 #RUN cd nginx-1.18.0 && dpkg-buildpackage -b
-RUN sed -i "s#--modules-path=/usr/lib/nginx/modules#--modules-path=/usr/lib/nginx/modules --add-module=/tmp/headers-more-nginx-module-0.33 --add-module=/tmp/nginx-http-shibboleth-2.0.1 --add-module=/tmp/nginx-http-auth-digest-master --add-module=/tmp/incubator-pagespeed-ngx-1.13.35.2-stable --add-module=/tmp/ngx_cache_purge-2.3 #g" nginx-1.20.1/debian/rules
+RUN sed -i "s#--modules-path=/usr/lib/nginx/modules#--modules-path=/usr/lib/nginx/modules --add-module=/tmp/headers-more-nginx-module-0.33 --add-module=/tmp/nginx-http-shibboleth-2.0.1 --add-module=/tmp/nginx-http-auth-digest-master --add-module=/tmp/incubator-pagespeed-ngx-1.13.35.2-stable --add-module=/tmp/ngx_cache_purge-2.3 --add-module=/tmp/njs/nginx #g" nginx-1.20.1/debian/rules
 RUN cd nginx-1.20.1 && dpkg-buildpackage -b
 
 FROM ubuntu:focal AS nginx-stage_1
@@ -80,6 +88,14 @@ ADD ./login.php /usr/share/nginx/html/secure/login.php
 ADD ./shib_clear_headers /etc/nginx/shib_clear_headers
 ADD ./shib_fastcgi_params /etc/nginx/shib_fastcgi_params
 
+RUN mkdir /var/tmp/tmp_data
+ADD signature.js /var/tmp/
+RUN rm /usr/share/nginx/html/index.html
+ADD index.html /usr/share/nginx/html/index.html
+ADD index.js /usr/share/nginx/html/index.js
+RUN mkdir /usr/share/nginx/html/okp
+RUN cp /usr/share/nginx/html/index.html /usr/share/nginx/html/okp
+RUN cp /usr/share/nginx/html/index.js /usr/share/nginx/html/okp
 
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/supervisord.conf"]
 

@@ -10,11 +10,11 @@
 
 from __future__ import absolute_import, print_function
 
-import uuid
+import uuid, hashlib, hmac, re, urllib.parse, json
 from functools import partial, wraps
 
 from flask import Blueprint, abort, current_app, jsonify, request, session
-from flask_login import current_user
+from flask_login import current_user, login_required
 from invenio_db import db
 from invenio_records.models import RecordMetadata
 from invenio_rest import ContentNegotiatedMethodView
@@ -26,7 +26,7 @@ from webargs.flaskparser import use_kwargs
 from .errors import DuplicateTagError, ExhaustedStreamError, FileSizeError, \
     InvalidTagError, MissingQueryParameter, MultipartInvalidChunkSize
 from .models import Bucket, Location, MultipartObject, ObjectVersion, \
-    ObjectVersionTag, Part
+    ObjectVersionTag, Part, FileInstance
 from .proxies import current_files_rest, current_permission_factory
 from .serializer import json_serializer
 from .signals import file_downloaded, file_previewed
@@ -37,6 +37,46 @@ blueprint = Blueprint(
     'invenio_files_rest',
     __name__,
     url_prefix='/files',
+    template_folder='templates',
+    static_folder='static',
+)
+
+# 追加
+largeDataUpload_blueprint = Blueprint(
+    'largeFile1',
+    __name__,
+    template_folder='templates',
+    static_folder='static',
+)
+
+# 追加
+createFileInstance_blueprint = Blueprint(
+    'createFileInstance',
+    __name__,
+    template_folder='templates',
+    static_folder='static',
+)
+
+# 追加
+createMultipartObjectInstance_blueprint = Blueprint(
+    'createMultipartObjectInstance',
+    __name__,
+    template_folder='templates',
+    static_folder='static',
+)
+
+# 追加
+partFunc_blueprint = Blueprint(
+    'partFunc_blueprint',
+    __name__,
+    template_folder='templates',
+    static_folder='static',
+)
+
+# 追加
+completeFunc_blueprint = Blueprint(
+    'completeFunc_blueprint',
+    __name__,
     template_folder='templates',
     static_folder='static',
 )
@@ -59,6 +99,202 @@ api_blueprint = Blueprint(
 # Helpers
 #
 
+# 前処理
+@login_required # ←これ機能してる？
+@createFileInstance_blueprint.route("/createFileInstance", methods = ["POST"])
+def createFileInstance():
+    fileinstance = None
+    size = request.args.get("size")
+    if(size == None or size == ""):
+        return "Error", 400
+    size = int(size)
+    
+    with db.session.begin_nested():
+        fileinstance = FileInstance.create()
+        # fileinstance.init_contents(
+        #     size,
+        #     default_location = Location.get_default().uri,
+        #     default_storage_class = current_app.config['FILES_REST_DEFAULT_STORAGE_CLASS']
+        # )
+        uuid = str(fileinstance.id)
+        fileinstance.uri = Location.get_default().uri + "/" + uuid[0:2] + "/" + uuid[2:4] + "/" + uuid[4:] + "/data"
+        fileinstance.storage_class = current_app.config['FILES_REST_DEFAULT_STORAGE_CLASS']
+        fileinstance.size = size
+        fileinstance.readable = False
+        fileinstance.writable = True
+        db.session.add(fileinstance)
+
+    db.session.commit()
+    return str(fileinstance.id)
+
+@login_required # ←これ機能してる？
+@createMultipartObjectInstance_blueprint.route("/createMultipartObjectInstance", methods = ["POST"])
+def createMultipartObject():
+    upload_id = request.args.get("upload_id")
+    file_id = request.args.get("file_id")
+    key = request.args.get("key")
+    size = request.args.get("size")
+    chunk_size = request.args.get("chunk_size")
+    
+    if(upload_id == None or key == None or size == None or chunk_size == None):
+        return "Error", 400
+    
+    multipartObject = MultipartObject.get_by_uploadId(upload_id)
+    if(multipartObject == None):
+        with db.session.begin_nested():
+            multipartObject = MultipartObject()
+            multipartObject.upload_id = upload_id
+            multipartObject.file_id = file_id
+            multipartObject.key = key
+            multipartObject.size = size
+            multipartObject.chunk_size = chunk_size
+            multipartObject.completed = False
+            db.session.add(multipartObject)
+            
+        db.session.commit()
+    else:
+        if(multipartObject.completed):
+            return f"This UploadId is Already Completed: {multipartObject.upload_id}", 400
+        else:
+            return str(multipartObject.file_id)
+        
+    return file_id, 200
+
+# アップロードパート中
+@partFunc_blueprint.route("/part", methods = ["GET", "POST"])
+def partFunc():
+    upload_id = request.args.get("uploadId")
+    part_number = request.args.get("partNumber")
+    checksum = request.args.get("checkSum")
+    
+    if(request.method == "GET"):
+        part = Part.get_by_upload_id_partNumber(upload_id, part_number)
+        if(part == None):
+            return ""
+        else:
+            return part.checksum
+    elif(request.method == "POST"):
+        with db.session.begin_nested():
+            part = Part()
+            part.upload_id = upload_id
+            part.part_number = part_number
+            part.checksum = checksum
+            
+            db.session.add(part)
+            # multipartObjectと紐づけ必要？
+            
+        db.session.commit()
+        return "success"
+    
+
+# 後処理
+@completeFunc_blueprint.route("/completeFunc", methods = ["GET", "POST"])
+def completeFunc():
+    upload_id = request.args.get("upload_id")
+    if(upload_id == None):
+        return "Error" , 400
+    
+    with db.session.begin_nested():
+        multipartObject = MultipartObject.get_by_uploadId(upload_id)
+        multipartObject.completed = True
+        multipartObject.file.readable = True
+        multipartObject.file.writable = False
+        # multipartObject.file.update_checksum()
+        db.session.add(multipartObject)
+        
+    db.session.commit()
+    return "Success", 200 #ステータスコードとメッセージ
+
+# Authorizationヘッダの内容の生成
+@largeDataUpload_blueprint.route("/getAuthorization/", methods = ["GET", "POST"])
+@largeDataUpload_blueprint.route("/getAuthorization/<path:path>", methods = ["GET", "POST", "PUT", "DELETE"])
+def getAuthorization(path = None):
+    accessKey = current_app.config.get('S3_ACCCESS_KEY_ID', '')
+    secretKey = current_app.config.get('S3_SECRECT_ACCESS_KEY', '')
+    bucketName = current_app.config.get('S3_BUCKET_NAME') # 本当はデータベースからとってきたい？
+    regionName = current_app.config.get('S3_REGION_NAME', '')
+    host = current_app.config.get('S3_ENDPOINT_URL').replace("https://", "")
+    
+    tz = request.args.get("tz")
+    key = re.sub("\/.*?\/", "/", urllib.parse.quote(request.path), 1) # おそらくここでバグ起きる
+    uri = "/" + bucketName
+    
+    if(path != None):
+        uri = uri + key
+    
+    if(request.args.get("query") != ""):
+        query = json.loads(request.args.get("query"))
+        query = urllib.parse.urlencode(query)
+    else:
+        query = ""
+        
+    bodyHash = request.headers.get("bodyHash")
+    if(bodyHash == None):
+        bodyHash = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    
+    # body = json.loads(request.get_data())
+    
+    authorization = "AWS4-HMAC-SHA256 Credential=" + \
+                    accessKey + "/" + tz[0:8] + \
+                    "/" + regionName + "/s3/aws4_request, SignedHeaders="
+                    
+    signedHeaders = ""
+    
+    canonicalRequest =  request.method + "\n" + \
+                        uri + "\n" + \
+                        query + "\n"
+
+    if(request.headers["Content-Type"]):
+        canonicalRequest = canonicalRequest + "content-type:" + request.headers["Content-Type"] + "\n"
+        authorization = authorization + "content-type;"
+        signedHeaders = signedHeaders + "content-type;"
+    
+    canonicalRequest =  canonicalRequest + \
+                    "host:" + host + "\n" + \
+                    "x-amz-content-sha256:" + bodyHash + "\n" + \
+                    "x-amz-date:" + tz + "\n" + \
+                    "\n" + \
+                    signedHeaders + "host;x-amz-content-sha256;x-amz-date\n" + \
+                    bodyHash
+    
+    # canonicalRequest =  request.method + "\n" + \
+    #                     uri + "\n" + \
+    #                     query + "\n"
+
+    # if(request.headers["Content-Length"]):
+    #     canonicalRequest = canonicalRequest + "content-length:" + request.environ.get("HTTP_CONTENT_LENGTH") + "\n"
+    #     authorization = authorization + "content-length;"
+    #     signedHeaders = signedHeaders + "content-length;"
+    # if(request.headers["Content-Type"]):
+    #     canonicalRequest = canonicalRequest + "content-type:" + request.headers["Content-Type"] + "\n"
+    #     authorization = authorization + "content-type;"
+    #     signedHeaders = signedHeaders + "content-type;"
+    
+    # canonicalRequest =  canonicalRequest + \
+    #                 "host:" + host + "\n" + \
+    #                 "x-amz-content-sha256:" + bodyHash + "\n" + \
+    #                 "x-amz-date:" + tz + "\n" + \
+    #                 "\n" + \
+    #                 signedHeaders + "host;x-amz-content-sha256;x-amz-date\n" + \
+    #                 bodyHash
+    
+    urlenc = hashlib.sha256(canonicalRequest.encode('latin-1')).hexdigest()
+    
+    stringToSign = "AWS4-HMAC-SHA256\n" + \
+                    tz + "\n" + \
+                    tz[0:8] + "/" + regionName + "/s3/aws4_request\n" + \
+                    urlenc
+    
+    dateKey = hmac.HMAC(("AWS4" + secretKey).encode('latin-1'), tz[0:8].encode('latin-1'), hashlib.sha256).digest()
+    dateRegionKey = hmac.HMAC(dateKey, regionName.encode('latin-1'), hashlib.sha256).digest()
+    dateRegionServiceKey = hmac.HMAC(dateRegionKey , b"s3", hashlib.sha256).digest()
+    signingKey = hmac.HMAC(dateRegionServiceKey, b"aws4_request", hashlib.sha256).digest()
+    
+    signature = hmac.HMAC(signingKey, stringToSign.encode('latin-1'), hashlib.sha256).hexdigest()
+    return jsonify({
+        "Authorization" : authorization + "host;x-amz-content-sha256;x-amz-date, Signature=" + signature,
+        "bucketName" : bucketName
+        })
 
 def as_uuid(value):
     """Convert value to UUID."""
@@ -465,6 +701,8 @@ class BucketResource(ContentNegotiatedMethodView):
                 current_permission_factory(bucket, 'bucket-read-versions'),
                 hidden=False
             )
+        a = ObjectVersion.get_by_bucket(
+                bucket.id, versions=versions is not missing).limit(1000).all(),
         return self.make_response(
             data=ObjectVersion.get_by_bucket(
                 bucket.id, versions=versions is not missing).limit(1000).all(),
@@ -1086,3 +1324,4 @@ def dbsession_clean(exception):
         except:
             db.session.rollback()
     db.session.remove()
+    

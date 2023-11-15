@@ -1407,6 +1407,18 @@ def write_files(item_types_data, export_path, list_item_role):
         current_app.logger.debug("headers:{}".format(headers))
         current_app.logger.debug("records:{}".format(records))
         keys, labels, is_systems, options = headers
+        
+        j = 0
+        for i in range(1, len(keys) + 1):
+            if(re.search(r"\.file_path", keys[-i + j])):
+                keys.insert(-i + j + 1, re.sub("file_path", "upload_id", keys[-i + j], 1))
+                labels.insert(-i + j + 1, re.sub("ファイルパス", "ファイルアップロードID", labels[-i + j], 1))
+                is_systems.insert(-i + j + 1, "")
+                options.insert(-i + j + 1, options[-i + j])
+                for x in records.values():
+                    x.insert(-i + j + 1, "")
+                j -= 1
+        
         item_types_data[item_type_id]['recids'].sort()
         item_types_data[item_type_id]['keys'] = keys
         item_types_data[item_type_id]['labels'] = labels
@@ -1738,6 +1750,7 @@ def to_files_js(record):
     Returns:
         _type_: _description_
     """
+    traceback.print_stack()
     current_app.logger.debug("type: {}".format(type(record))) 
     res = []
     files = record.files or []
