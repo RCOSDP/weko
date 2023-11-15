@@ -104,6 +104,12 @@ FILES_REST_UPLOAD_FACTORIES = [
 FILES_REST_MULTIPART_MAX_PARTS = 10000
 """Maximum number of parts."""
 
+FILES_REST_USE_MULTIPART_UPLOAD = True
+''' True if enable multipart_upload'''
+
+FILES_REST_RESUME_CHUNK_SIZE = 1024 * 1024 * 256 # 256MiB
+''' Border of file size between use upload and use multipart upload '''
+
 FILES_REST_MULTIPART_CHUNKSIZE_MIN = 5 * 1024 * 1024  # 5 MiB
 """Minimum chunk size of multipart objects."""
 

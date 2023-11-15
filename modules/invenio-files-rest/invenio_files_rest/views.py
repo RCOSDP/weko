@@ -9,6 +9,9 @@
 """Files download/upload REST API similar to S3 for Invenio."""
 
 from __future__ import absolute_import, print_function
+import json
+import time
+import traceback
 
 import uuid, hashlib, hmac, re, urllib.parse, json
 from functools import partial, wraps
@@ -16,12 +19,15 @@ from functools import partial, wraps
 from flask import Blueprint, abort, current_app, jsonify, request, session
 from flask_login import current_user, login_required
 from invenio_db import db
+from invenio_files_rest.storage.pyfs import pyfs_storage_factory
 from invenio_records.models import RecordMetadata
 from invenio_rest import ContentNegotiatedMethodView
 from marshmallow import missing
 from six.moves.urllib.parse import parse_qsl
 from webargs import fields
 from webargs.flaskparser import use_kwargs
+
+from invenio_s3.storage import S3FSFileStorage
 
 from .errors import DuplicateTagError, ExhaustedStreamError, FileSizeError, \
     InvalidTagError, MissingQueryParameter, MultipartInvalidChunkSize
@@ -30,7 +36,7 @@ from .models import Bucket, Location, MultipartObject, ObjectVersion, \
 from .proxies import current_files_rest, current_permission_factory
 from .serializer import json_serializer
 from .signals import file_downloaded, file_previewed
-from .tasks import merge_multipartobject, remove_file_data
+from .tasks import merge_multipartobject, remove_file_data 
 from .utils import _location_has_quota, delete_file_instance
 
 blueprint = Blueprint(
@@ -1058,7 +1064,7 @@ class ObjectResource(ContentNegotiatedMethodView):
         )
 
     @pass_multipart(with_completed=True)
-    def multipart_uploadpart(self, multipart):
+    def multipart_uploadpart(self, multipart , checksum):
         """Upload a part.
 
         :param multipart: A :class:`invenio_files_rest.models.MultipartObject`
@@ -1073,13 +1079,13 @@ class ObjectResource(ContentNegotiatedMethodView):
                 part_number == multipart.last_part_number \
                 else multipart.chunk_size
 
-            if ck != content_length:
+            if ck != content_length and ck != 0:
                 raise MultipartInvalidChunkSize()
 
         # Create part
         try:
-            p = Part.get_or_create(multipart, part_number)
-            p.set_contents(stream)
+            p = Part.get_or_create(multipart, part_number , checksum)
+            res = p.set_contents(stream)
             db.session.commit()
         except Exception:
             # We remove the Part since incomplete data may have been written to
@@ -1087,11 +1093,13 @@ class ObjectResource(ContentNegotiatedMethodView):
             # reuploaded.
             db.session.rollback()
             Part.delete(multipart, part_number)
+            traceback.print_exc()
             raise
         return self.make_response(
             data=p,
             context={
                 'class': Part,
+                'etag':res.etag
             },
             etag=p.checksum
         )
@@ -1105,24 +1113,32 @@ class ObjectResource(ContentNegotiatedMethodView):
         :returns: A Flask response.
         """
         multipart.complete()
-        db.session.commit()
-
         version_id = str(uuid.uuid4())
-
-        return self.make_response(
-            data=multipart,
-            context={
-                'class': MultipartObject,
-                'bucket': multipart.bucket,
-                'object_version_id': version_id,
-            },
-            # This will wait for the result, and send whitespace on the
-            # connection until the task has finished (or max timeout reached).
-            task_result=merge_multipartobject.delay(
-                str(multipart.upload_id),
+        with db.session.begin_nested():
+            obj = ObjectVersion.create(
+                multipart.bucket,
+                multipart.key,
+                _file_id=multipart.file_id,
                 version_id=version_id,
-            ),
+                current_login_user_id=current_user.id,
+            )
+        db.session.commit()
+        return self.make_response(
+            data=obj,
+            context={
+                'class': ObjectVersion,
+                'bucket': multipart.bucket,
+            },
+            etag=obj.file.checksum,
+
+            # Large File Upload is not calc checksum
+            # task_result=merge_multipartobject.delay(
+            #     str(multipart.upload_id),
+            #     current_login_user_id=current_user.id,
+            #     version_id=version_id,
+            # )
         )
+
 
     @pass_multipart()
     @need_permissions(
@@ -1181,11 +1197,16 @@ class ObjectResource(ContentNegotiatedMethodView):
         :param upload_id: The upload ID. (Default: ``None``)
         :returns: A Flask response.
         """
-        if uploads is not missing:
-            return self.multipart_init(bucket, key)
-        elif upload_id is not None:
-            return self.multipart_complete(bucket, key, upload_id)
-        abort(403)
+        try :
+            if uploads is not missing:
+                return self.multipart_init(bucket, key)
+            elif upload_id is not None:
+                return self.multipart_complete(bucket, key, upload_id)
+            abort(403) 
+        except Exception:
+            traceback.print_exc()
+            abort(403)    
+            
 
     @use_kwargs(put_args)
     @pass_bucket
@@ -1200,13 +1221,19 @@ class ObjectResource(ContentNegotiatedMethodView):
         :param upload_id: The upload ID. (Default: ``None``)
         :returns: A Flask response.
         """
-        if upload_id is not None:
-            return self.multipart_uploadpart(bucket, key, upload_id)
-        else:
-            is_thumbnail = True if is_thumbnail is not None else False
-            replace_version_id = request.args.get('replace_version_id')
-            return self.create_object(bucket, key, is_thumbnail=is_thumbnail,
-                                      replace_version_id=replace_version_id)
+        try:
+            # raise #handled
+            if upload_id is not None:
+                checksum = request.args.get('checksum')
+                return self.multipart_uploadpart(upload_id ,checksum)
+            else:
+                is_thumbnail = True if is_thumbnail is not None else False
+                replace_version_id = request.args.get('replace_version_id')
+                return self.create_object(bucket, key, is_thumbnail=is_thumbnail,
+                                        replace_version_id=replace_version_id)
+        except Exception:
+            traceback.print_exc()
+            abort(403)
 
     @use_kwargs(delete_args)
     @pass_bucket
@@ -1221,11 +1248,11 @@ class ObjectResource(ContentNegotiatedMethodView):
         :param upload_id: The upload ID. (Default: ``None``)
         :returns: A Flask response.
         """
-        if upload_id is not None:
-            return self.multipart_delete(bucket, key, upload_id)
-        else:
-            obj = self.get_object(bucket, key, version_id)
-            return self.delete_object(bucket, obj, version_id)
+        # if upload_id is not None:
+        #     return self.multipart_delete(bucket, key, upload_id)
+        # else:
+        obj = self.get_object(bucket, key, version_id)
+        return self.delete_object(bucket, obj, version_id)
 
 
 class LocationUsageAmountInfo(ContentNegotiatedMethodView):
