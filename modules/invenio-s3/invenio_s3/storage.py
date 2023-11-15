@@ -6,12 +6,15 @@
 # under the terms of the MIT License; see LICENSE file for more details.
 """S3 file storage interface."""
 from __future__ import absolute_import, print_function
-
-from io import BytesIO
-
+import os ,pathlib
+import shutil
+from tempfile import SpooledTemporaryFile
+import boto3
+import traceback
+import uuid
 import s3fs
 from flask import current_app
-from invenio_files_rest.models import Location
+from invenio_files_rest.models import Location, Part
 from invenio_files_rest.errors import StorageError
 from invenio_files_rest.storage import PyFSFileStorage, pyfs_storage_factory
 
@@ -52,6 +55,7 @@ class S3FSFileStorage(PyFSFileStorage):
                 fp.write(b'\0' * current_chunk_size)
                 to_write -= current_chunk_size
         except Exception:
+            traceback.format_exc()
             fp.close()
             self.delete()
             raise
@@ -61,6 +65,41 @@ class S3FSFileStorage(PyFSFileStorage):
         self._size = size
 
         return self.fileurl, size, None
+
+    def initiateMultipartUpload(self, bucket_name:str ,object_name ,buket_type:str):
+        bucket_type_s3 = current_app.config['FILES_REST_LOCATION_TYPE_LIST'][0][0]
+        if bucket_type_s3 == buket_type:
+            s3 = self.get_s3_client()
+            bucket_nm = bucket_name.replace("s3://" ,"").split("/")[0]
+            # organ_nm = bucket_name.replace("s3://" ,"").split("/")[1]
+            res = s3.create_multipart_upload(
+                Bucket=bucket_nm
+                ,Key=self.fileurl.replace("s3://" + bucket_nm + "/","")
+            )
+
+            upload_id = res['UploadId']
+            return self.fileurl, upload_id
+
+        else :
+            # local file
+            upload_id = uuid.uuid4()
+            
+            path = pathlib.Path(bucket_name).joinpath(self.fileurl.replace("/data" ,"")).joinpath(str(upload_id))
+            os.makedirs(name=str(path))
+
+            return self.fileurl, upload_id
+
+    def get_s3_client(self):
+        
+        s3client = boto3.client(
+            's3'
+            ,aws_access_key_id=current_app.config['S3_ACCCESS_KEY_ID']
+            ,aws_secret_access_key=current_app.config['S3_SECRECT_ACCESS_KEY']
+            ,region_name=current_app.config['S3_REGION_NAME']
+            ,endpoint_url=current_app.config['S3_ENDPOINT_URL']
+        )
+
+        return s3client
 
     def remove(self, fs, path):
         """Delete a file with check FS."""
@@ -75,6 +114,88 @@ class S3FSFileStorage(PyFSFileStorage):
         fs, path = self._get_fs()
         self.remove(fs, path)
         return True
+    
+    def upload_multipart(self
+                , object_name :str
+                , incoming_stream :SpooledTemporaryFile
+                , bucket_name:str
+                , part_number:int
+                , upload_id:uuid.UUID
+                , buket_type:str
+                ):
+        """Update a file in the file system."""
+        """
+        PartNumber : 0~9999
+        """
+
+        bucket_type_s3 = current_app.config['FILES_REST_LOCATION_TYPE_LIST'][0][0]
+        if bucket_type_s3 == buket_type:
+
+            s3 = self.get_s3_client()
+
+            # raise 
+            bucket_nm = bucket_name.replace("s3://" ,"").split("/")[0]
+            res = s3.upload_part(
+                Key=self.fileurl.replace("s3://" + bucket_nm + "/","")
+                ,Body=incoming_stream
+                ,Bucket=bucket_nm
+                ,PartNumber=part_number + 1
+                ,UploadId=str(upload_id)
+            )
+
+            etag = res['ETag']
+
+            return etag
+        
+        else :
+            # local file
+            path = pathlib.Path(bucket_name).joinpath(self.fileurl.replace("/data" ,"")).joinpath(str(upload_id)).joinpath(str(part_number))
+            path.touch()
+            with path.open(mode='wb') as con :
+                con.write(incoming_stream.read())
+
+            return upload_id
+
+    def complete_multipart_upload(self
+    
+                , object_name :str
+                , bucket_name:str
+                , upload_id:uuid.UUID
+                , parts
+                , buket_type:str
+                ):
+        bucket_type_s3 = current_app.config['FILES_REST_LOCATION_TYPE_LIST'][0][0]
+        if bucket_type_s3 == buket_type:
+            s3 = self.get_s3_client()
+            li = []
+            for part in parts:
+                li.append({
+                    'PartNumber': part.part_number + 1,
+                    'ETag': part.etag
+                })
+            multipart_upload = {'Parts': li}
+            bucket_nm = bucket_name.replace("s3://" ,"").split("/")[0]
+            res = s3.complete_multipart_upload(
+                Key=self.fileurl.replace("s3://" + bucket_nm + "/" ,"")
+                ,Bucket=bucket_nm
+                ,UploadId=str(upload_id)
+                ,MultipartUpload=multipart_upload
+            )
+            return res
+        else :
+            # local file
+            path_tmp = pathlib.Path(bucket_name).joinpath(self.fileurl.replace("/data" ,"")).joinpath(str(upload_id))
+            path_data = pathlib.Path(self.fileurl)
+            path_data.touch(exist_ok=True)
+
+            listdir = os.listdir(str(path_tmp))
+            with path_data.open("wb") as con:
+                for file in listdir:
+                    with path_tmp.joinpath(file).open("rb") as con_tmp:
+                        con.write(con_tmp.read())
+            shutil.rmtree(path_tmp)
+
+            return True
 
     def update(self,
                incoming_stream,
@@ -159,6 +280,7 @@ class S3FSFileStorage(PyFSFileStorage):
                 as_attachment=as_attachment,
             )
         except Exception as e:
+            traceback.format_exc()
             raise StorageError('Could not send file: {}'.format(e))
 
     def copy(self, src, *args, **kwargs):

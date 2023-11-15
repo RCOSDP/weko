@@ -14,6 +14,7 @@ import glob
 import math
 import os
 import uuid
+import traceback
 from datetime import date, datetime, timedelta
 
 import sqlalchemy as sa
@@ -229,7 +230,7 @@ def remove_file_data(file_id, silent=True):
 
 
 @shared_task()
-def merge_multipartobject(upload_id, version_id=None):
+def merge_multipartobject(upload_id, current_login_user_id, version_id=None):
     """Merge multipart object.
 
     :param upload_id: The :class:`invenio_files_rest.models.MultipartObject`
@@ -246,14 +247,16 @@ def merge_multipartobject(upload_id, version_id=None):
         raise RuntimeError('MultipartObject is not completed.')
 
     try:
-        obj = mp.merge_parts(
+        mp.merge_parts(
             version_id=version_id,
+            current_login_user_id=current_login_user_id,
             progress_callback=progress_updater
         )
         db.session.commit()
-        return str(obj.version_id)
+        return True
     except Exception:
         db.session.rollback()
+        traceback.print_exc()
         raise
 
 

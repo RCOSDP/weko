@@ -21,6 +21,7 @@
 """Blueprint for weko-items-ui."""
 
 import json
+import math
 import os
 import sys
 from copy import deepcopy
@@ -41,6 +42,7 @@ from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_records_ui.signals import record_viewed
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy.exc import SQLAlchemyError
+from invenio_files_rest.models import MultipartObject
 from weko_accounts.utils import login_required_customize
 from weko_admin.models import AdminSettings, RankingSettings
 from weko_deposit.api import WekoRecord
@@ -1289,3 +1291,49 @@ def dbsession_clean(exception):
         except:
             db.session.rollback()
     db.session.remove()
+
+
+@blueprint.route('/large_file_upload')
+@login_required
+def get_large_file_upload_view():
+    '''show large file upload view
+    
+        Args:
+            pagestodo (int, optional): _description_. Defaults to '1'.
+            sizetodo  (int, optional): _description_. Defaults to '20'.
+        Return:
+            rendered template
+    '''
+
+    def __get_history(pages:int,size:int):
+        if pages < 0 or size < 0:
+            return abort(400)
+
+        q = MultipartObject.query \
+        .filter( MultipartObject.created_by_id == current_user.id) \
+        .order_by(MultipartObject.updated.desc())
+        count = q.count()
+        all = q.limit(size) \
+        .offset(size * (pages - 1)).all()
+        return count , all
+    
+    # only contributer
+    if not current_user or not current_user.roles:
+        return abort(403)
+
+    # page control
+    pagestodo = int(request.args.get('pagestodo' , 1))
+    sizetodo = int(request.args.get('sizetodo' , 20))
+    
+    count ,histories = __get_history(pagestodo,sizetodo)
+
+    maxpage=math.ceil(count / int(sizetodo))
+    pages = pagestodo if pagestodo <= maxpage else maxpage
+    retry_count = current_app.config['WEKO_ITEMS_UI_LARGE_FILE_UPLOAD_MAX_RETRY']
+    
+    return render_template('weko_items_ui/large_upload_view.html'
+                            ,histories=histories
+                            ,maxpage=maxpage
+                            ,pages=pages
+                            ,size=sizetodo
+                            ,retry_count=retry_count)

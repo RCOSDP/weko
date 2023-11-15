@@ -24,10 +24,11 @@ import copy
 
 from invenio_records_rest.utils import deny_all
 
-WEKO_BUCKET_QUOTA_SIZE = 50 * 1024 * 1024 * 1024  # 50 GB
+WEKO_BUCKET_QUOTA_SIZE = 2 * 1024 * 1024 * 1024 * 1024  # 2 TiB
 """Maximum quota per bucket."""
 
 WEKO_MAX_FILE_SIZE = WEKO_BUCKET_QUOTA_SIZE
+WEKO_MAX_UPLOAD_FILE_SIZE = '1TB'
 WEKO_MAX_FILE_SIZE_FOR_ES = 1 * 1024 * 1024  # 1MB
 """Maximum file size accepted."""
 

@@ -99,9 +99,10 @@
                           {%- endif -%}
                           <a class="forcewrap{{billing_file_class}}" {{billing_file_data}} {{billing_file_url}}
                           {% if file_url %} href="javascript:OnLinkClick('{{ file_url }}', {{ pid.pid_value }}, '{{ file.accessrole }}')" {% endif %}>{{ file.filename }} ({{ file.size|filesizeformat }})</a>
-
+                          {%- if file.checksum -%}
                           <span>{{file.checksum.split(':')[0]}}</span>
                           <span class="break-word">{{file.checksum.split(':')[1]}}</span>
+                          {%- endif -%}
                         </span>
                         {%- if 'pdf' in file.mimetype and can_download_original_pdf -%}
                           {%- set original_file_url = url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value,

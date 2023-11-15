@@ -32,6 +32,9 @@
     {% if display_community %}
     <li role="presentation" {% if tab_value=='community' %}class="active"{% endif %}><a href="{{url_for('invenio_communities.community_list')}}">{{ _('Communities') }}</a></li>
     {% endif %}
-  {%- endif %}
-  <li role="presentation" class="{{ check_ranking_show() }} {% if tab_value=='rank' %}active{% endif %}"><a href="{{url_for('weko_items_ui.ranking')}}">{{ _('Ranking') }}</a></li>
+    {%- endif %}
+    <li role="presentation" class="{{ check_ranking_show() }} {% if tab_value=='rank' %}active{% endif %}"><a href="{{url_for('weko_items_ui.ranking')}}">{{ _('Ranking') }}</a></li>
+    {%- if current_user.is_authenticated and current_user.roles %}
+    <li role="presentation" {% if tab_value=='large_file_upload' %}class="active"{% endif %}><a href="{{url_for('weko_items_ui.get_large_file_upload_view')}}">{{ _('Large File Upload') }}</a></li>
+    {%- endif %}
 {% endmacro %}

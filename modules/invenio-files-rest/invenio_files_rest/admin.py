@@ -9,18 +9,23 @@
 """Admin model views for PersistentIdentifier."""
 
 from __future__ import absolute_import, print_function
+from datetime import datetime
 
 import os
 import uuid
 
-from flask import current_app, flash, url_for
+from flask import current_app, flash, url_for ,request
 from flask_admin.actions import action
 from flask_admin.contrib.sqla import ModelView
 from flask_admin.form import SecureForm
+from flask_admin.model.filters import BaseFilter
 from flask_security import current_user
 from flask_wtf import FlaskForm
+from flask_babelex import gettext as _
 from invenio_admin.filters import FilterConverter
 from invenio_admin.forms import LazyChoices
+from invenio_accounts.models import User
+from invenio_db import db
 from markupsafe import Markup
 from wtforms.fields import PasswordField
 from wtforms.fields import StringField
@@ -33,9 +38,9 @@ from .models import Bucket, FileInstance, Location, MultipartObject, \
 from .tasks import verify_checksum
 
 
-def _(x):
-    """Identity function for string extraction."""
-    return x
+# def _(x):
+#     """Identity function for string extraction."""
+#     return x
 
 
 def require_slug(form, field):
@@ -52,6 +57,22 @@ def link(text, link_func):
             link_func(m), text))
     return object_formatter
 
+def link_ver2(link_text1, link_text2 , link_func1 , link_func2 , func_link_is_1):
+    """Generate a object formatter for links.."""
+    def object_formatter(v, c, m, p):
+        """Format object view link."""
+        if func_link_is_1(m) :
+            if '1' in current_user.role : #System Administrator
+                return Markup('<a href="{0}">{1}</a>'.format(
+                    link_func1(m), link_text1))
+            else :
+                return Markup('{1}'.format(
+                    link_func1(m), link_text1))
+        else:
+            return Markup('{1}'.format(
+                link_func2(m), link_text2))
+    return object_formatter
+    
 
 class LocationModelView(ModelView):
     """ModelView for the locations."""
@@ -155,7 +176,7 @@ class BucketModelView(ModelView):
     column_filters = (
         # Change of order affects Location.column_formatters!
         'location.name', 'default_storage_class', 'deleted', 'locked', 'size',
-        'created', 'updated',
+        'created', 'updated', 'id',
     )
     column_default_sort = ('updated', True)
     form_base_class = FlaskForm
@@ -273,7 +294,18 @@ class FileInstanceModelView(ModelView):
             current_app.logger.exception(str(exc))  # pragma: no cover
             flash(_('Failed to run fixity checks.'),
                   'error')  # pragma: no cover
+            
+class UnboundFilter(BaseFilter):
+    def __init__(self, column, name, options=None, data_type=None):
+        super(UnboundFilter, self).__init__(name, options, data_type)
 
+        self.bucket_id = column
+    
+    def apply(self, query, value):
+        return query.filter(MultipartObject.bucket_id.is_(None))
+
+    def operation(self):
+        return _('is Unbind')
 
 class MultipartObjectModelView(ModelView):
     """ModelView for the objects."""
@@ -281,11 +313,19 @@ class MultipartObjectModelView(ModelView):
     filter_converter = FilterConverter()
     can_create = False
     can_edit = False
-    can_delete = False
+    can_delete = True
     can_view_details = True
     column_formatters = dict(
         file_instance=link('File', lambda o: url_for(
             'fileinstance.index_view', flt0_0=o.file_id)),
+
+        item_bucket=link_ver2(_('Item Bucket') 
+                        , _('Unbind')
+                        ,lambda o : url_for('bucket.index_view', flt2_39=o.bucket_id)
+                        ,lambda o : '' 
+                        ,lambda o : o.bucket_id
+                    ),
+        created_by=lambda o ,p ,q ,r : '' if q.created_by is None else q.created_by.email,
     )
     column_labels = dict(
         id=_('ID'),
@@ -293,14 +333,34 @@ class MultipartObjectModelView(ModelView):
         file_instance=_('File'),
     )
     column_list = (
-        'upload_id', 'completed', 'created', 'updated', 'file_instance', )
+        'upload_id', 'completed', 'created', 'updated', 'key' , 'size' , 'created_by','file_instance', 'item_bucket', )
     column_details_list = (
-        'upload_id', 'completed', 'created', 'updated', 'file_instance', )
+        'upload_id', 'completed', 'created', 'updated', 'key' , 'size' , 'created_by','file_instance', 'item_bucket', )
     column_filters = (
-        'upload_id', 'completed', 'created', 'updated', )
-    column_default_sort = ('upload_id', True)
+        'upload_id', 'completed', 'created', 'updated', 'key' , 'size' , UnboundFilter(column='bucket_id',name=_('Item Bucket')) , )
+    column_default_sort = ('updated', True)
     page_size = 25
 
+
+    def delete_model(self ,model:MultipartObject):
+        if model.bucket_id and model.completed:
+            return flash(_("Record that bound item must not be deleted."), 'error')
+        
+        if not model.completed and model.updated - current_app.config['FILES_REST_MULTIPART_EXPIRES'] < datetime.utcnow():
+            return flash(_("Record that be able to retry upload cannot be deleted yet."), 'error')
+            
+        # delete MultipartObject and Part
+        with db.session.begin_nested():
+            model.delete()
+            f = FileInstance.get(model.file_id)
+            
+            # delete file instance and file
+            if model.completed:
+                f.strage().delete()
+            f.delete()
+        db.session.commit()
+
+        return True # delete success
 
 location_adminview = dict(
     modelview=LocationModelView,

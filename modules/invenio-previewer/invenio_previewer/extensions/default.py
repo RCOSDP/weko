@@ -36,6 +36,6 @@ def can_preview(file):
     return True
 
 
-def preview(file):
+def preview(file , reason=""):
     """Return appropriate template and passes the file and an embed flag."""
-    return render_template("invenio_previewer/default.html", file=file)
+    return render_template("invenio_previewer/default.html", file=file ,reason=reason)

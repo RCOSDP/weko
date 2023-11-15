@@ -21,6 +21,7 @@
 """Utilities for download file."""
 
 import mimetypes
+import traceback
 import unicodedata
 
 from flask import abort, current_app, render_template, request
@@ -30,6 +31,7 @@ from invenio_db import db
 from invenio_files_rest import signals
 from invenio_files_rest.models import FileInstance
 from invenio_files_rest.views import ObjectResource
+from invenio_previewer.extensions import default
 from invenio_records_files.utils import record_file_factory
 from requests.sessions import session
 from sqlalchemy.exc import SQLAlchemyError
@@ -240,6 +242,11 @@ def file_ui(
             current_app.logger.error("Unexpected error: {}".format(ex))
             db.session.rollback()
             abort(500)
+    else:
+        #Check file size that can preview
+        # print(fileobj.data)
+        if not fileobj.file_preview_able():
+            return default.preview(fileobj ,_('file size exceeded.')) # Cannot preview file
 
     # #Check permissions
     # ObjectResource.check_object_permission(obj)
@@ -303,6 +310,7 @@ def _download_file(file_obj, is_preview, lang, obj, pid, record):
                 convert_to_pdf=convert_to_pdf
             )
     except AttributeError:
+        traceback.format_exc()
         return ObjectResource.send_object(
             obj.bucket, obj,
             expected_chksum=file_obj.get('checksum'),
