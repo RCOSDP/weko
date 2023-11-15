@@ -1150,6 +1150,7 @@ WEKO_ADMIN_REPOSITORY_ACCESS_LIST = [
     'longanalysissetting',
     'site_info',
     'location',
+    'multipartobject',
     'facet-search',
     'community',
     'restricted_access'

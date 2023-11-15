@@ -62,11 +62,11 @@ msgstr ""
 
 #: invenio_previewer/templates/invenio_previewer/default.html:33
 msgid "Cannot preview file"
-msgstr ""
+msgstr "ファイルをプレビューできません"
 
 #: invenio_previewer/templates/invenio_previewer/default.html:34
 msgid "Sorry, we are unfortunately not able to preview this file."
-msgstr ""
+msgstr "すみません。残念ながらこのファイルはプレビューすることができません。"
 
 #: invenio_previewer/templates/invenio_previewer/macros.html:39
 msgid "Name"

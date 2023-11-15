@@ -49,6 +49,7 @@ import six
 import sqlalchemy as sa
 from flask import current_app, flash, redirect, request, url_for
 from flask_login import current_user
+from invenio_accounts.models import User
 from invenio_db import db
 from invenio_previewer.api import convert_to
 from sqlalchemy.dialects import mysql, postgresql
@@ -585,6 +586,8 @@ class Bucket(db.Model, Timestamp):
             ObjectVersion.query.filter_by(
                 bucket_id=self.id
             ).delete()
+            for multiptobj in MultipartObject.query_by_bucket(self):
+                multiptobj.delete()
             self.query.filter_by(id=self.id).delete()
         return self
 
@@ -1277,7 +1280,7 @@ class ObjectVersion(db.Model, Timestamp):
 
     @classmethod
     def create(cls, bucket, key, _file_id=None, root_file_id=None, stream=None,
-               mimetype=None, version_id=None, is_thumbnail=False, **kwargs):
+               mimetype=None, version_id=None, is_thumbnail=False, current_login_user_id=None, **kwargs):
         """Create a new object in a bucket.
 
         The created object is by default created as a delete marker. You must
@@ -1305,8 +1308,11 @@ class ObjectVersion(db.Model, Timestamp):
             ).one_or_none()
 
             login_user_id = 0
-            if current_user and current_user.is_authenticated:
-                login_user_id = current_user.get_id()
+            if current_user :
+                if current_user.is_authenticated:
+                    login_user_id = current_user.get_id()
+            elif current_login_user_id :
+                login_user_id = current_login_user_id
 
             if latest_obj is not None:
                 # set updated user id.
@@ -1622,12 +1628,20 @@ class MultipartObject(db.Model, Timestamp):
                           default=False)
     """Defines if object is the completed."""
 
+    created_by_id = db.Column(
+        db.Integer, 
+        db.ForeignKey(User.id, ondelete='SET NULL'),nullable=True)
+    ""
+
     # Relationships definitions
     bucket = db.relationship(Bucket, backref='multipart_objects')
     """Relationship to buckets."""
 
     file = db.relationship(FileInstance, backref='multipart_objects')
-    """Relationship to buckets."""
+    """Relationship to FileInstance."""
+
+    created_by = db.relationship(User , backref='multipart_objects')
+    """Relationship to User."""
 
     def __repr__(self):
         """Return representation of the multipart object."""
@@ -1687,26 +1701,32 @@ class MultipartObject(db.Model, Timestamp):
             self.completed = True
             self.file.readable = True
             self.file.writable = False
+                    
+            self.file.storage(
+                default_location=self.bucket.location.uri,
+                default_storage_class=self.bucket.default_storage_class
+            ).complete_multipart_upload(
+                self.key
+                , self.bucket.location.uri
+                , self.upload_id
+                , Part.query_by_multipart(self)
+                , self.bucket.location.type
+            )
         return self
 
     @ensure_completed()
-    def merge_parts(self, version_id=None, **kwargs):
+    def merge_parts(self, version_id=None, current_login_user_id=None, **kwargs):
         """Merge parts into object version."""
         self.file.update_checksum(**kwargs)
         with db.session.begin_nested():
-            obj = ObjectVersion.create(
-                self.bucket,
-                self.key,
-                _file_id=self.file_id,
-                version_id=version_id
-            )
-            self.delete()
-        return obj
+            return self.delete()
+
 
     def delete(self):
         """Delete a multipart object."""
         # Update bucket size.
-        self.bucket.size -= self.size
+        if self.bucket:
+            self.bucket.size -= self.size
         # Remove parts
         Part.query_by_multipart(self).delete()
         # Remove self
@@ -1739,21 +1759,34 @@ class MultipartObject(db.Model, Timestamp):
             file_ = FileInstance.create()
             file_.size = size
             obj = cls(
-                upload_id=uuid.uuid4(),
+                upload_id=None,
                 bucket=bucket,
                 key=key,
                 chunk_size=chunk_size,
                 size=size,
                 completed=False,
                 file=file_,
+                created_by_id=current_user.id,
             )
             bucket.size += size
             db.session.add(obj)
-        file_.init_contents(
+
+        #s3 API CALL
+        fileurl ,obj.upload_id = file_.storage(
             size=size,
             default_location=bucket.location.uri,
             default_storage_class=bucket.default_storage_class,
+        ).initiateMultipartUpload(
+            bucket.location.uri
+            ,key
+            ,bucket.location.type
         )
+
+        # set values to fileInstance table
+        file_.set_uri(
+            fileurl , size , None ,
+            readable=False, writable=True)
+
         return obj
 
     @classmethod
@@ -1801,6 +1834,8 @@ class Part(db.Model, Timestamp):
     checksum = db.Column(db.String(255), nullable=True)
     """String representing the checksum of the part."""
 
+    etag = db.Column(db.String(255), nullable=True)
+
     # Relationships definitions
     multipart = db.relationship(MultipartObject, backref='parts')
     """Relationship to multipart objects."""
@@ -1824,7 +1859,7 @@ class Part(db.Model, Timestamp):
         return self.end_byte - self.start_byte
 
     @classmethod
-    def create(cls, mp, part_number, stream=None, **kwargs):
+    def create(cls, mp, part_number, stream=None, checksum=None, **kwargs):
         """Create a new part object in a multipart object."""
         if part_number < 0 or part_number > mp.last_part_number:
             raise MultipartInvalidPartNumber()
@@ -1833,6 +1868,7 @@ class Part(db.Model, Timestamp):
             obj = cls(
                 multipart=mp,
                 part_number=part_number,
+                checksum=checksum,
             )
             db.session.add(obj)
         if stream:
@@ -1848,12 +1884,12 @@ class Part(db.Model, Timestamp):
         ).one_or_none()
 
     @classmethod
-    def get_or_create(cls, mp, part_number):
+    def get_or_create(cls, mp, part_number, checksum):
         """Get or create a part."""
         obj = cls.get_or_none(mp, part_number)
         if obj:
             return obj
-        return cls.create(mp, part_number)
+        return cls.create(mp, part_number, checksum=checksum)
 
     @classmethod
     def delete(cls, mp, part_number):
@@ -1894,11 +1930,20 @@ class Part(db.Model, Timestamp):
         :param chunk_size: Desired chunk size to read stream in. It is up to
             the storage interface if it respects this value.
         """
-        size, checksum = self.multipart.file.update_contents(
-            stream, seek=self.start_byte, size=self.part_size,
-            progress_callback=progress_callback,
+        bucket_name = self.multipart.bucket.location.uri
+        etag = self.multipart.file.storage(
+            default_location=bucket_name
+            ,default_storage_class=self.multipart.bucket.default_storage_class
+        ).upload_multipart(
+            self.multipart.key
+            , stream
+            , bucket_name
+            , self.part_number
+            , self.upload_id
+            , self.multipart.bucket.location.type
         )
-        self.checksum = checksum
+    
+        self.etag = etag
         return self
 
 
