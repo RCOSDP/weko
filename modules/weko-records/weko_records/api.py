@@ -949,7 +949,7 @@ class ItemTypes(RecordBase):
             json_schema, json_form = update_text_and_textarea(
                 itemtype_id, json_schema, json_form)
 
-        ret = cls.update(id_=itemtype_id,name=table_row_map.get('name'),
+        ret = cls.update(id_=itemtype_id,name=item_type.item_type_name.name,
                                       schema=json_schema,
                                       form=table_row_map.get('form'),
                                       render=data)

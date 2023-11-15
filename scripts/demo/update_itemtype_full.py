@@ -27,7 +27,8 @@ def main():
     try:
         i = 1
         with db.session.begin_nested():
-            itemType = ItemTypes.get_by_name('デフォルトアイテムタイプ（フル）')
+            # itemType = ItemTypes.get_by_name('デフォルトアイテムタイプ（フル）')
+            itemType = ItemTypes.get_by_id(30002)
             cur_prop_ids = checkRegisterdProperty(itemType,new_prop_ids)
             _render = pickle.loads(pickle.dumps(itemType.render, -1))
             for id in cur_prop_ids:
