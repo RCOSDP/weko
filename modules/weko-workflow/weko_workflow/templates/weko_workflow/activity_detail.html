@@ -253,7 +253,7 @@
             </div>
           {%- else %}
             <div class="panel-body" id="activity_locked">
-              {% include 'weko_workflow/lock_activity.html' %}
+              {% include 'weko_workflow/lock_activity.html' with context %}
             </div>
             <div class="panel-body" id="step_page">
               <div class="hide" id="hide-actionId">{{action_id}}</div>

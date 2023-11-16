@@ -440,10 +440,10 @@ def item_metadata_validation(item_id, identifier_type, record=None,
         if resource_type in journalarticle_type:
             required_properties = [
                 'title',
-                'publisher',
-                'publisher_jpcoar',
-                'date',
-                'dateGranted',
+                # 'publisher',
+                # 'publisher_jpcoar',
+                # 'date',
+                # 'dateGranted',
                 'type',
                 # 'identifier',
                 # 'identifierRegistration',
@@ -452,67 +452,68 @@ def item_metadata_validation(item_id, identifier_type, record=None,
             ]
             # remove 20220207
             # either_properties = ['version']
-
+            either_properties = ['publisher','date']
 
         # 別表2-2 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【学位論文】
         elif resource_type in thesis_types:
             required_properties = [
                 'title',
-                'publisher',
-                'publisher_jpcoar',
-                'date',
-                'dateGranted',
-                'degreeGrantor',
+                # 'publisher',
+                # 'publisher_jpcoar',
+                # 'date',
+                # 'dateGranted',
+                # 'degreeGrantor',
                 'type',
                 # 'identifier',
                 # 'identifierRegistration',
                 'pageStart',
                 'fileURI',
             ]
-        
+            either_properties = ['date','degreeGrantor']
         # 別表2-3 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【書籍】
         elif resource_type in report_types:
             required_properties = [
                 'title',
-                'publisher',
-                'publisher_jpcoar',
-                'date',
-                'dateGranted',
+                # 'publisher',
+                # 'publisher_jpcoar',
+                # 'date',
+                # 'dateGranted',
                 'type',
                 # 'identifier',
                 # 'identifierRegistration',
                 'fileURI',
             ]
-        
+            either_properties = ['date','publisher']
         # 別表2-4 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【e-learning】
         elif resource_type in elearning_type:
             required_properties = [
                 'title',
-                'publisher',
-                'publisher_jpcoar',
-                'date',
-                'dateGranted',
+                # 'publisher',
+                # 'publisher_jpcoar',
+                # 'date',
+                # 'dateGranted',
                 'type',
                 # 'identifier',
                 # 'identifierRegistration',
                 'fileURI',
             ]
-
+            either_properties = ['date','publisher']
         # 別表2-5 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【研究データ】
         elif resource_type in dataset_type:
             required_properties = [
                 'title',
-                'givenName',
-                'creatorName',
-                'publisher',
-                'publisher_jpcoar',
-                'date',
-                'dateGranted',
+                # 'givenName',
+                # 'creatorName',
+                # 'publisher',
+                # 'publisher_jpcoar',
+                # 'date',
+                # 'dateGranted',
                 'type',
                 # 'identifier',
                 # 'identifierRegistration',
                 'fileURI',
             ]
+            either_properties = ['givenName','date','publisher']
             # remove 20220207
             # either_properties = ['geoLocation']
 
@@ -520,15 +521,16 @@ def item_metadata_validation(item_id, identifier_type, record=None,
         elif resource_type in datageneral_types:
             required_properties = [
                 'title',
-                'publisher',
-                'publisher_jpcoar',
-                'date',
-                'dateGranted',
+                # 'publisher',
+                # 'publisher_jpcoar',
+                # 'date',
+                # 'dateGranted',
                 'type',
                 # 'identifier',
                 # 'identifierRegistration',
                 'fileURI',
             ]
+            either_properties = ['date','publisher']
             
     # CrossRef DOI identifier registration
     elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['Crossref']:
@@ -536,10 +538,10 @@ def item_metadata_validation(item_id, identifier_type, record=None,
         if resource_type in journalarticle_type:
             required_properties = [
                 'title',
-                'publisher',
-                'publisher_jpcoar',
-                'date',
-                'dateGranted',
+                # 'publisher',
+                # 'publisher_jpcoar',
+                # 'date',
+                # 'dateGranted',
                 'type',
                 # 'identifier',
                 # 'identifierRegistration',
@@ -547,35 +549,38 @@ def item_metadata_validation(item_id, identifier_type, record=None,
                 'sourceTitle',
                 'fileURI',
             ]
+            either_properties = ['date','publisher']
         elif resource_type in report_types \
                 or resource_type in thesis_types:
             required_properties = [
                 'title',
-                'publisher',
-                'publisher_jpcoar',
-                'date',
-                'dateGranted',
+                # 'publisher',
+                # 'publisher_jpcoar',
+                # 'date',
+                # 'dateGranted',
                 'type',
                 # 'identifier',
                 # 'identifierRegistration',
                 'fileURI',
             ]
+            either_properties = ['date','publisher']
     # DataCite DOI identifier registration
     elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['DataCite']:
         if resource_type in dataset_type:
             required_properties = [
                 'title',
-                'givenName',
-                'creatorName',
-                'publisher',
-                'publisher_jpcoar', 
-                'date',
-                'dateGranted',
+                # 'givenName',
+                # 'creatorName',
+                # 'publisher',
+                # 'publisher_jpcoar', 
+                # 'date',
+                # 'dateGranted',
                 'type',
                 # 'identifier',
                 # 'identifierRegistration',
                 'fileURI',
             ]
+            either_properties = ['givenName','date','publisher']
             # remove 20220207
             # either_properties = ['geoLocation']
     # NDL JaLC DOI identifier registration
@@ -910,7 +915,6 @@ def validattion_item_property_either_required(
 
     # For other resource type
     version = None
-    current_app.logger.debug("properties: {}".format(properties))
     if 'version' in properties:
         # check フォーマット jpcoar:mimeType
         mapping_keys = ['jpcoar:mimeType']
@@ -942,6 +946,95 @@ def validattion_item_property_either_required(
                 version['either'] = [version['either']]
             merge_doi_error_list(error_list, version)
 
+    publisher = None
+    if 'publisher' in properties:
+        mapping_keys = ['dc:publisher']
+        publisher = handle_check_required_pattern_and_either(
+            mapping_data, mapping_keys, None, True,identifier_type)
+        if publisher:
+            mapping_keys = ['jpcoar:publisherName']
+            errors = handle_check_required_pattern_and_either(
+                mapping_data, mapping_keys,  None, True,identifier_type)
+            if not errors:
+                publisher = None
+            else:
+                merge_doi_error_list(publisher, errors)
+
+        if publisher:
+            if publisher['either']:
+                publisher['either'] = [publisher['either']]
+            merge_doi_error_list(error_list, publisher)
+
+    date = None
+    if 'date' in properties:
+        mapping_keys = ['datacite:date']
+        date = handle_check_required_pattern_and_either(
+            mapping_data, mapping_keys, None, True,identifier_type)
+        if date:
+            mapping_keys = ['dcndl:dateGranted']
+            errors = handle_check_required_pattern_and_either(
+                mapping_data, mapping_keys,  None, True,identifier_type)
+            if not errors:
+                date = None
+            else:
+                merge_doi_error_list(date, errors)
+
+        if date:
+            if date['either']:
+                date['either'] = [date['either']]
+            merge_doi_error_list(error_list, date)
+        
+        
+    # For other resource type
+    degreeGrantor = None
+    if 'degreeGrantor' in properties:
+        mapping_keys = ['jpcoar:degreeGrantor']
+        degreeGrantor = handle_check_required_pattern_and_either(
+            mapping_data, mapping_keys, identifier_type, None, True)
+
+        if degreeGrantor:
+            mapping_keys = ['dc:publisher']
+            errors = handle_check_required_pattern_and_either(
+                mapping_data, mapping_keys, identifier_type, None, True)
+            if not errors:
+                degreeGrantor = None
+            else:
+                merge_doi_error_list(degreeGrantor, errors)
+
+        if degreeGrantor:
+            # check 出版タイプ oaire:version
+            mapping_keys = ['jpcoar:publisherName']
+            errors = handle_check_required_pattern_and_either(
+                mapping_data, mapping_keys, identifier_type, None, True)
+            if not errors:
+                degreeGrantor = None
+            else:
+                merge_doi_error_list(degreeGrantor, errors)
+
+        if degreeGrantor:
+            if degreeGrantor['either']:
+                degreeGrantor['either'] = [degreeGrantor['either']]
+            merge_doi_error_list(error_list, degreeGrantor)
+
+    givenName = None
+    if 'givenName' in properties:
+        mapping_keys = ['jpcoar:givenName']
+        givenName = handle_check_required_pattern_and_either(
+            mapping_data, mapping_keys, None, True,identifier_type)
+        if givenName:
+            mapping_keys = ['jpcoar:creatorName']
+            errors = handle_check_required_pattern_and_either(
+                mapping_data, mapping_keys,  None, True,identifier_type)
+            if not errors:
+                givenName = None
+            else:
+                merge_doi_error_list(givenName, errors)
+
+        if givenName:
+            if givenName['either']:
+                givenName['either'] = [givenName['either']]
+            merge_doi_error_list(error_list, givenName)
+                                
     return error_list
 
 
