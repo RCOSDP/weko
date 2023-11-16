@@ -216,7 +216,7 @@ class ItemManagementCustomSort(BaseView):
             # save data to DB
             item_sort = {}
             for sort in sort_data:
-                sd = sort.get("custom_sort").get(index_id)
+                sd = sort.get("custom_sort", {}).get(index_id)
                 if sd:
                     item_sort[sort.get("id")] = sd
 
@@ -227,8 +227,9 @@ class ItemManagementCustomSort(BaseView):
             # Indexes.update_item_sort_custom_es(fp.path, sort_data)
 
             jfy = {"status": 200, "message": "Data is successfully updated."}
-        except Exception:
+        except Exception as ex:
             jfy = {"status": 405, "message": "Error."}
+            current_app.logger.error(ex)
         return make_response(jsonify(jfy), jfy["status"])
 
 
