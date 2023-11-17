@@ -348,7 +348,7 @@ WEKO_SEARCH_KEYWORDS_DICT = {
         "srctitle": ["sourceTitle", "sourceTitle.ja"],
         "spatial": "geoLocation.geoLocationPlace",
         "temporal": "temporal",
-        "version": "versionType",
+        "version": "versiontype",
         "dissno": "dissertationNumber",
         "degreename": ["degreeName", "degreeName.ja"],
         "dgname": ["dgName", "dgName.ja"],
