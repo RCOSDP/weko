@@ -24,6 +24,7 @@ from datetime import datetime
 import re
 import os
 import uuid
+from urllib.parse import urlparse
 
 import six
 import werkzeug
@@ -638,15 +639,18 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     if file_order >= 0 and files and files[file_order].get('url') and files[file_order]['url'].get('url'):
         file_url = files[file_order]['url']['url']
     
-    mailcheckflag=request.args.get("q")
+    mailcheckflag=request.args.get("v")
 
 
     restricted_errorMsg = ''
     restricted_access = get_restricted_access('error_msg')
     restricted_errorMsg = restricted_access['content'].get(current_lang, None)['content']
 
+    onetime_file_name = ''
     onetime_file_url = request.args.get("onetime_file_url")
-
+    if onetime_file_url:
+        k = urlparse(onetime_file_url)
+        onetime_file_name = k.path.split("/")[-1]
 
     return render_template(
         template,
@@ -692,6 +696,8 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         show_secret_URL=_get_show_secret_url_button(record,filename),
         mailcheckflag = mailcheckflag,
         onetime_file_url = onetime_file_url,
+        onetime_file_name = onetime_file_name,
+        restricted_errorMsg = restricted_errorMsg,
         **ctx,
         **kwargs
     )

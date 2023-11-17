@@ -107,7 +107,7 @@ function TermsList({termList, setTermList, currentTerm, setCurrentTerm}) {
                         <a
                           className={`list-group-item list-group-item-action ${currentTerm !== undefined && currentTerm.key === term.key ? 'active' : ''}`}
                           onClick={handleOnTermClick}
-                          id={term.key}>{term.content.subject}
+                          id={term.key}>ID:{term.key} | {term.content.subject}
                         </a>
                         {term.flag === false ? (
                           <a

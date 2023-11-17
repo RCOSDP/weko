@@ -2291,7 +2291,7 @@ def extract_term_description(file_info):
     terms = file_info.get('terms')
     if terms == 'term_free':
         terms_description = file_info.get('termsDescription', '')
-        return terms_description, terms_description
+        return '', terms_description
     elif not terms:
         return '', ''
 
@@ -2936,7 +2936,7 @@ def init_activity_for_guest_user(
     return activity, tmp_url
 
 
-def send_usage_application_mail_for_guest_user(guest_mail: str, temp_url: str):
+def send_usage_application_mail_for_guest_user(guest_mail: str, temp_url: str, data: dict):
     """Send usage application mail for guest user.
 
     @param guest_mail:
@@ -2960,6 +2960,18 @@ def send_usage_application_mail_for_guest_user(guest_mail: str, temp_url: str):
         "restricted_site_mail": site_mail,
         "restricted_site_url": site_url,
     }
+    applying_record_id = data.get('record_id', -1)
+    applying_filename = data.get('file_name', '')
+    record = WekoRecord.get_record_by_pid(applying_record_id)
+    file_info = None
+    if record:
+        file_info = next((file_data for file_data in record.get_file_data()
+                            if file_data.get('filename') == applying_filename))
+        if file_info:
+            term_description_ja, term_description_en = extract_term_description(file_info)
+            mail_info['terms_of_use_jp'] = term_description_ja
+            mail_info['terms_of_use_en'] = term_description_en
+
     return send_mail_url_guest_user(mail_info)
 
 
@@ -3448,15 +3460,15 @@ def process_send_approval_mails(activity_detail, actions_mail_setting,
     if actions_mail_setting["approval"]:
         if actions_mail_setting.get("previous", {}):
             if is_guest_user:
-                setting =actions_mail_setting.get("previous")\
+                setting =actions_mail_setting["previous"]\
                 .get("inform_approval_for_guest", {})
             else:
-                setting =actions_mail_setting.get("previous")\
+                setting =actions_mail_setting["previous"]\
                 .get("inform_approval", {})
             if _check_mail_setting(setting):
                 process_send_mail(mail_info, setting["mail"])
             else:
-                setting =actions_mail_setting.get("previous")\
+                setting =actions_mail_setting["previous"]\
                     .get("inform_itemReg", {})         
                 if _check_mail_setting(setting):
                     process_send_mail(mail_info, setting["mail"])    

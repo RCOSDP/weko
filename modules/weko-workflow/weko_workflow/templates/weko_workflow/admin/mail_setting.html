@@ -34,7 +34,7 @@
                                 {%- for mail_template in mail_templates %}
                                 <option value="{{mail_template['key']}}" {% if action.send_mail_setting.request_approval
                                     and mail_template['key']==action.send_mail_setting.request_approval.mail
-                                    %}selected{% endif %}>ID:{{mail_template['key']}} {{mail_template['content']['subject']}}</option>
+                                    %}selected{% endif %}>ID:{{mail_template['key']}} | {{mail_template['content']['subject']}}</option>
                                 {%- endfor %}
                             </select>
                         </div>
@@ -51,7 +51,7 @@
                                 <option value="{{mail_template['key']}}" {% if
                                     action.send_mail_setting.request_approval_for_guest and
                                     mail_template['key']==action.send_mail_setting.request_approval_for_guest.mail
-                                    %}selected{% endif %}>ID:{{mail_template['key']}} {{mail_template['content']['subject']}}</option>
+                                    %}selected{% endif %}>ID:{{mail_template['key']}} | {{mail_template['content']['subject']}}</option>
                                 {%- endfor %}
                             </select>
                         </div>
@@ -78,7 +78,7 @@
                                 <option value="{{mail_template['key']}}" {% if action.send_mail_setting.inform_reject
                                     and mail_template['key']==action.send_mail_setting.inform_reject.mail %}selected{%
                                     endif %}>
-                                    ID:{{mail_template['key']}} {{mail_template['content']['subject']}}</option>
+                                    ID:{{mail_template['key']}} | {{mail_template['content']['subject']}}</option>
                                 {%- endfor %}
                             </select>
                         </div>
@@ -94,7 +94,7 @@
                                 <option value="{{mail_template['key']}}" {% if
                                     action.send_mail_setting.inform_reject_for_guest and
                                     mail_template['key']==action.send_mail_setting.inform_reject_for_guest.mail
-                                    %}selected{% endif %}>ID:{{mail_template['key']}} {{mail_template['content']['subject']}}</option>
+                                    %}selected{% endif %}>ID:{{mail_template['key']}} | {{mail_template['content']['subject']}}</option>
                                 {%- endfor %}
                             </select>
                         </div>
@@ -120,7 +120,7 @@
                                 {%- for mail_template in mail_templates %}
                                 <option value="{{mail_template['key']}}" {% if action.send_mail_setting.inform_approval
                                     and mail_template['key']==action.send_mail_setting.inform_approval.mail %}selected{%
-                                    endif %}>ID:{{mail_template['key']}} {{mail_template['content']['subject']}}</option>
+                                    endif %}>ID:{{mail_template['key']}} | {{mail_template['content']['subject']}}</option>
                                 {%- endfor %}
                             </select>
                         </div>
@@ -137,7 +137,7 @@
                                 <option value="{{mail_template['key']}}" {% if
                                     action.send_mail_setting.inform_approval_for_guest and
                                     mail_template['key']==action.send_mail_setting.inform_approval_for_guest.mail
-                                    %}selected{% endif %}>ID:{{mail_template['key']}} {{mail_template['content']['subject']}}</option>
+                                    %}selected{% endif %}>ID:{{mail_template['key']}} | {{mail_template['content']['subject']}}</option>
                                 {%- endfor %}
                             </select>
                         </div>

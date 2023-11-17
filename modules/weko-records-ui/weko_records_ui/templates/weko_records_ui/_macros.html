@@ -19,7 +19,7 @@
 #}
 
 {% macro check_download_file(record, file, permission, community, url_for_security, is_file_name_url, file_label) %}
-  <input id="non-role-msg" type="hidden>
+  <input id="non-role-msg" type="hidden"
          value="{{restricted_errorMsg}}"/>
   {% set is_guest = False %}
   {% if not session['user_id'] %}
@@ -106,7 +106,7 @@
       {% endif %}
     {% elif usage_workflow_id %}
       {% set workflow_id = usage_workflow_id %}
-      {% set workflow_detail = workflow_id | get_workflow_detail() %}
+      {% set workflow_detail,is_terms_only  = workflow_id | get_workflow_detail() %}
       {% set data_item_type_id = workflow_detail.itemtype_id %}
       {% set data_flow_id = workflow_detail.flow_id %}
       {% set itemtitle = record.item_title %}

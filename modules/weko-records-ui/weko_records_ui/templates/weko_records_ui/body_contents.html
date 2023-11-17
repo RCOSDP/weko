@@ -458,13 +458,14 @@
 </div><!-- /.modal -->
 {%-if mailcheckflag %}
   <div class="modal fade" tabindex="-1" role="dialog" id="mailcheck_download_modal">
-    <div class="modal-dialog" role="document">
+    <div class="modal-dialog" role="document" style="display: table; width: 700px">
         <div class="modal-content">
           <div class="modal-header">
             <button type="button" class="close" id="close_btn" data-dismiss="modal"
                     aria-label="Close"><span aria-hidden="true">&times;</span>
             </button>
-            <h4 class="modal-title">{{ _('Please input email address.') }}</h4>
+            <h4 class="modal-title">{{ _('You must enter your email address to download the files below.') }}</h4>
+            <h4 class="modal-title">  {{_('File Name')}} :{{ onetime_file_name }}</h4>
           </div>
           <div class="modal-body">
             <div class="form-group mail_form">

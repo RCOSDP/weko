@@ -1254,7 +1254,7 @@ def test_get_default_mail_sender(db):
     assert result == "test_sender"
 # def set_mail_info(item_info, activity_detail, guest_user=False):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_set_mail_info -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_set_mail_info(app, db_register, mocker):
+def test_set_mail_info(app, db_register, mocker, records_restricted, db_records):
     config = current_app.config
     mocker.patch("weko_workflow.utils.get_site_info_name",return_value=("name_en","name_ja"))
     mocker.patch("weko_workflow.utils.get_default_mail_sender",return_value="default_sender")
@@ -1377,16 +1377,20 @@ def test_set_mail_info(app, db_register, mocker):
 
     #testNo.20(W2023-22 2)
     with app.test_request_context():
-        result = set_mail_info(item_info,db_register["activities"][9],False)
-        assert result["landing_url"] != ""
+       record = WekoRecord.get_record(db_records[0][2].id)
+       with patch("weko_workflow.utils.WekoRecord.get_record_by_pid", return_value = record):
+           result = set_mail_info(item_info,db_register["activities"][9],False)
+           assert result["landing_url"] != ""
     
     #testNo.21(W2023-22 2)
     with app.test_request_context():
-        with patch("weko_workflow.utils.WekoRecord.get_file_data", return_value = [{"filename":"aaa.txt"}]):
-            with patch("weko_workflow.utils.extract_term_description", return_value=("","")):
-                result = set_mail_info(item_info,db_register["activities"][10],False)
-                assert result["terms_of_use_jp"] == ""
-                assert result["terms_of_use_en"] == ""
+        record = WekoRecord.get_record(db_records[0][2].id)
+        with patch("weko_workflow.utils.WekoRecord.get_record_by_pid", return_value = record):
+            with patch("weko_workflow.utils.WekoRecord.get_file_data", return_value = [{"filename":"aaa.txt"}]):
+                with patch("weko_workflow.utils.extract_term_description", return_value=("","")):
+                    result = set_mail_info(item_info,db_register["activities"][10],False)
+                    assert result["terms_of_use_jp"] == ""
+                    assert result["terms_of_use_en"] == ""
 
 class MockDict():
     def __init__(self, data):
@@ -1400,7 +1404,7 @@ def test_extract_term_description(db):
 
     #testNo.15(W2023-22 2)
     file_info = {"terms": "term_free", "termsDescription": "test_terms"}
-    test = ('test_terms', 'test_terms')
+    test = ('', 'test_terms')
     result = extract_term_description(file_info)
     assert result == test
 

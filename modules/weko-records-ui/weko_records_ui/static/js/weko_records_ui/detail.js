@@ -346,7 +346,7 @@ require([
   })
 });
 
-})
+
 $('#close_btn, #modal_close_btn').on('click', function () {
   document.location.href = location.pathname;
   })
