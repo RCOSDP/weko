@@ -577,10 +577,6 @@ msgstr ""
 msgid "Previous"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/box/preview_carousel.html:47
-msgid "Next"
-msgstr ""
-
 #: weko_records_ui/templates/weko_records_ui/box/preview_carousel.html:51
 msgid "Last"
 msgstr ""
@@ -657,3 +653,15 @@ msgstr "このデータは利用できません（権限がないため）。"
 
 msgid "Success Secret URL Generate"
 msgstr "成功: シークレットURLを生成し、あなたのメールアドレス宛に送信しました。"
+
+msgid "Print Terms and Conditions"
+msgstr "利用規約を印刷"
+
+msgid "Could not download file."
+msgstr "ファイルをダウンロードできませんでした"
+
+msgid "You must enter your email address to download the files below."
+msgstr "以下のファイルのダウンロードには、メールアドレスの入力が必要です。"
+
+msgid "File Name"
+msgstr "ファイル名"

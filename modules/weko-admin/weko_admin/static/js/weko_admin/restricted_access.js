@@ -35,6 +35,7 @@ const MSG_SEND_MAIL_SUCCESSFUL = document.getElementById("msg_sent_success").val
 const MSG_SEND_MAIL_FAILED = document.getElementById("msg_sent_failed").value;
 const LABEL_SECRET_URL_DOWNLOAD = document.getElementById("label_secret_url_download").value;
 const LABEL_SECRET_URL_ENABLED = document.getElementById("label_secret_url_enabled").value;
+const LABEL_ERROR_MESSAGE = document.getElementById("error_message").value;
 
 const EMPTY_TERM = {
   key: '',
@@ -467,13 +468,15 @@ function RestrictedAccessLayout({
                                   secret_URL_file_download,
                                   content_file_download,
                                   terms_and_conditions,
-                                  usage_report_workflow_access
+                                  usage_report_workflow_access,
+                                  error_msg
                                 }) {
   const [secretURLFileDownload , setSecretURLFileDownload] = useState(secret_URL_file_download)
   const [contentFileDownload, setContentFileDownload] = useState(content_file_download);
   const [usageReportWorkflowAccess, setUsageReportWorkflowAccess] = useState(usage_report_workflow_access);
   const [termList, setTermList] = useState(terms_and_conditions);
   const [currentTerm, setCurrentTerm] = useState(EMPTY_TERM);
+  const [errorMsg, setErrorMsg] = useState(error_msg);
 
   function handleApply() {
     let termListClone = [...termList];
@@ -549,7 +552,8 @@ function RestrictedAccessLayout({
       secret_URL_file_download:secretURLFileDownload,
       content_file_download: contentFileDownload,
       usage_report_workflow_access: usageReportWorkflowAccess,
-      terms_and_conditions: terms_data["data"]
+      terms_and_conditions: terms_data["data"],
+      error_msg:errorMsg
     }
 
     $.ajax({
@@ -659,6 +663,7 @@ function RestrictedAccessLayout({
       <TermsConditions termList={termList} setTermList={setTermList}
                        currentTerm={currentTerm}
                        setCurrentTerm={setCurrentTerm}/>
+      <ErrorMsgConditions errorMsg={errorMsg} setErrorMsg={setErrorMsg}/>
       <div className="form-group">
         <button id="save-btn" className="btn btn-primary pull-right" style={{marginBottom: "15px"}}
                 onClick={handleSave}>

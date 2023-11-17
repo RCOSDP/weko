@@ -641,7 +641,7 @@ def init_activity_guest():
             return jsonify(msg='Cannot send mail')
 
         if send_usage_application_mail_for_guest_user(
-                post_data.get('guest_mail'), tmp_url):
+                post_data.get('guest_mail'), tmp_url, data.get('extra_info')):
             return jsonify(msg=_('Email is sent successfully.'))
     return jsonify(msg='Cannot send mail')
 

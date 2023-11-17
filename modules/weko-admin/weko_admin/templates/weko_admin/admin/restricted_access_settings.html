@@ -58,7 +58,7 @@
          value='{{ _("Must set a positive integer for %(name)s.", name=expiration_date) }}'/>
   <input id="empty_download" type="hidden" value='{{ _("Please set %(name)s.", name=download_limit) }}'/>
   <input id="empty_expiration_date" type="hidden" value='{{ _("Please set %(name)s.", name=expiration_date) }}'/>
-  <input id="empty_error_message" type="hidden" value='{{_("Please set Error Message.")}}'/>
+  <input id="error_message" type="hidden" value="{{error_message}}">
 
   <input type="hidden" id="english" value='{{_("English")}}'/>
   <input type="hidden" id="japanese" value='{{_("Japanese")}}'/>

@@ -21,17 +21,19 @@ def test_role_has_access(app,users):
     app.config.update(WEKO_ADMIN_USE_MAIL_TEMPLATE_EDIT = True)
     with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
         assert test.role_has_access('mailtemplates') == True
+    
+    #W2023-22-2 TestNo.24
+    app.config.update(WEKO_ADMIN_USE_MAIL_TEMPLATE_EDIT = False)
+    with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
+        assert test.role_has_access('mailtemplates') == False
 
     #W2023-22-2 TestNo.25
     app.config.pop("WEKO_ADMIN_USE_MAIL_TEMPLATE_EDIT")
     with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):  
         assert test.role_has_access('mailtemplates') == True
-    
-    
-    #W2023-22-2 TestNo.24
+
     app.config.update(WEKO_ADMIN_USE_MAIL_TEMPLATE_EDIT = False)
     assert test.role_has_access('mailtemplates') == False
-
     
 
     

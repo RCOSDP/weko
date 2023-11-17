@@ -740,10 +740,6 @@ msgid "Position(Others)"
 msgstr ""
 
 # WEKO_RECORDS_UI_LICENSE_DICT
-msgid "write your own license"
-msgstr ""
-
-# WEKO_RECORDS_UI_LICENSE_DICT
 msgid "Creative Commons Attribution 3.0 Unported (CC BY 3.0)"
 msgstr ""
 
@@ -896,9 +892,6 @@ msgid "Source Identifier"
 msgstr ""
 
 msgid "Source Identifier Type"
-msgstr ""
-
-msgid "Source Identifier"
 msgstr ""
 
 msgid "Relation"
@@ -1150,9 +1143,6 @@ msgstr ""
 msgid "Search repository"
 msgstr ""
 
-msgid "Content File"
-msgstr ""
-
 msgid "Billing File"
 msgstr ""
 
@@ -1169,9 +1159,6 @@ msgid "DateType"
 msgstr ""
 
 msgid "Bibliographic Citation"
-msgstr ""
-
-msgid "Topic"
 msgstr ""
 
 msgid "Topic"
@@ -1226,9 +1213,6 @@ msgid "Collection Method E"
 msgstr ""
 
 msgid "Sampling Rate"
-msgstr ""
-
-msgid "Access"
 msgstr ""
 
 msgid "Access"
@@ -1295,9 +1279,6 @@ msgid "Fund Agency"
 msgstr ""
 
 msgid "Fund Agency ID"
-msgstr ""
-
-msgid "Funder Identifier Type"
 msgstr ""
 
 msgid "GrantNo"
@@ -1385,3 +1366,15 @@ msgstr ""
 
 msgid "Success Secret URL Generate"
 msgstr "Success: Secret URL Generate is succeed. Sent the URL to your email adress."
+
+msgid "Print Terms and Conditions"
+msgstr ""
+
+msgid "Could not download file."
+msgstr ""
+
+msgid "You must enter your email address to download the files below."
+msgstr ""
+
+msgid "File Name"
+msgstr ""

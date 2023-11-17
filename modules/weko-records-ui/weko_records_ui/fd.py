@@ -405,77 +405,72 @@ def add_signals_info(record, obj):
     obj.item_id = record['_deposit']['id']
 
 
-def file_download_onetime(pid, record, file_name=None, user_mail=None, login_flag=False, _record_file_factory=None, **kwargs):
+def file_download_onetime(pid, record,file_name=None, user_mail=None,login_flag=False,  _record_file_factory=None, **kwargs):
     """File download onetime.
-
+ 
     :param pid:
     :param record: Record json
     :param _record_file_factory:
     :param kwargs:
     :return:
     """
-    is_ajax = request.args.get('isajax')
-
     def __make_error_response(is_ajax, error_msg):
         error_template = "weko_theme/error.html"
         if  is_ajax:
             return error_msg, 401
         else:
             return render_template(error_template,
-                               error = error_msg)
-
-    # Guest Mailadress Check Modal
-    if not current_user.is_authenticated:
-        mailaddress = request.args.get('mailaddress')
-        if not mailaddress:
-            onetime_file_url = request.url
-            url=url_for(endpoint="invenio_records_ui.recid", onetime_file_url= onetime_file_url, pid_value = pid.pid_value, q="mailcheckflag")
-            return redirect(url)
-
-    # Cutting out the necessary information
+                               error=error_msg)
+   
+ # Cutting out the necessary information
     if login_flag: #call by method, for login user
         filename = file_name
         user_mail = user_mail
         record_id = pid.pid_value
     else: #call by redirect, for guest
+        is_ajax = request.args.get('isajax')
         filename = kwargs.get("filename")
         token = request.args.get('token', type=str)
+        mailaddress = request.args.get('mailaddress',None)
         # Parse token
+        if not mailaddress:
+            onetime_file_url = request.url
+            url=url_for(endpoint="invenio_records_ui.recid", onetime_file_url= onetime_file_url, pid_value = pid.pid_value, q="mailcheckflag")
+            return redirect(url)
         error, token_data = \
             parse_one_time_download_token(token)
         if error:
             return __make_error_response(is_ajax, error_msg=error)
         record_id, user_mail, date, secret_token = token_data
-
-
+ 
     # Validate record status
     validate_download_record(record)
-
+ 
     # Get one time download record.
     onetime_download = get_onetime_download(
         file_name=filename, record_id=record_id, user_mail=user_mail
     )
-
-    # Validate token for guest
-    if not login_flag:
+ 
+    # # Validate token for guest
+    if not current_user.is_authenticated:
         is_valid, error = validate_onetime_download_token(
             onetime_download, filename, record_id, user_mail, date, secret_token)
         if not is_valid:
             return __make_error_response(is_ajax, error_msg=error)
-
+ 
     _record_file_factory = _record_file_factory or record_file_factory
-
+ 
     # Get file object
     file_object = _record_file_factory(pid, record, filename)
     if not file_object or not file_object.obj :
-        return __make_error_response(is_ajax, error_msg="{} does not exist.".format(filename))
-
+        return __make_error_response(is_ajax, error_msg="{} does not exist.".format(filename))  
+ 
     # Create updated data
     update_data = dict(
         file_name=filename, record_id=record_id, user_mail=user_mail,
         download_count=onetime_download.download_count - 1,
     )
-
+ 
     # Check and send usage report for Guest User.
     if onetime_download.extra_info and 'open_restricted' == file_object.get(
             'accessrole'):
@@ -488,18 +483,18 @@ def file_download_onetime(pid, record, file_name=None, user_mail=None, login_fla
         except SQLAlchemyError as ex:
             current_app.logger.error("sqlalchemy error: {}".format(ex))
             db.session.rollback()
-            __make_error_response(is_ajax, error_msg=_("Unexpected error occurred."))
+            return __make_error_response(is_ajax, error_msg=_("Unexpected error occurred."))
         except BaseException as ex:
             current_app.logger.error("Unexpected error: {}".format(ex))
             db.session.rollback()
             return __make_error_response(is_ajax, error_msg=_("Unexpected error occurred."))
-
+ 
         update_data['extra_info'] = extra_info
-
+ 
     # Update download data
     if not update_onetime_download(**update_data):
         return __make_error_response(is_ajax, error_msg=_("Unexpected error occurred."))
-
+ 
     #　Guest Mailaddress Check
     if not current_user.is_authenticated:
         if mailaddress == user_mail:
@@ -507,6 +502,7 @@ def file_download_onetime(pid, record, file_name=None, user_mail=None, login_fla
                                 record)
         else:
             return __make_error_response(is_ajax, error_msg=_("Could not download file."))
+ 
     return _download_file(file_object, False, 'en', file_object.obj, pid,
                           record)
 
