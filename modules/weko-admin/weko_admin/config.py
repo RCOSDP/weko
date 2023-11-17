@@ -615,11 +615,14 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
 
         {'id': 'version', 'contents': '', 'contents_value': {'en': 'Author Version Flag', 'ja': '著者版フラグ'}, 'useable_status': True, 'mapping': [],
          'options':[
-             {'id': 'accepted', 'contents': 'accepted'},
-             {'id': 'published', 'contents': 'published'},
-             {'id': 'draft', 'contents': 'draft'},
-             {'id': 'submitted', 'contents': 'submitted'},
-             {'id': 'updated', 'contents': 'updated'}
+             {'id': 'AO', 'contents': 'AO'},
+             {'id': 'SMUR', 'contents': 'SMUR'},
+             {'id': 'AM', 'contents': 'AM'},
+             {'id': 'P', 'contents': 'P'},
+             {'id': 'VoR', 'contents': 'VoR'},
+             {'id': 'CVoR', 'contents': 'CVoR'},
+             {'id': 'EVoR', 'contents': 'EVoR'},
+             {'id': 'NA', 'contents': 'NA'}
         ], 'default_display': True, 'inputType': 'selectbox', 'inputVal': '', 'mappingFlg': False, 'mappingName': ''},
         {'id': 'dissno',
          'contents': '',
