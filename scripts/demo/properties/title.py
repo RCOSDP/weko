@@ -56,15 +56,24 @@ def schema(title='', multi_flag=multiple_flag):
             'properties': {
                 'subitem_title': {
                     'format': 'text',
+                    'type': 'string',
                     'title': 'タイトル',
-                    'type': 'string'
+                    "title_i18n": {
+                            "en": "Title",
+                            "ja": "タイトル"
+                    },
                 },
                 'subitem_title_language': {
                     'editAble': True,
                     'type': ['null', 'string'],
                     'format': 'select',
+                    'currentEnum': (config.LANGUAGE_VAL2_1)[1:],
                     'enum': config.LANGUAGE_VAL2_1,
-                    'title': '言語'
+                    'title': '言語',
+                    "title_i18n": {
+                            "en": "Language",
+                            "ja": "言語"
+                    },
                 }
             }
         }
@@ -78,11 +87,16 @@ def form(key='', title='', title_ja=name_ja, title_en=name_en, multi_flag=multip
     def _form(key):
         """Form text."""
         _d = {
+            "title": "Title",
             'items': [
                 {
                     'key': '{}.subitem_title'.format(key),
                     'title': 'タイトル',
                     'title_i18n': {
+                        'ja': 'タイトル',
+                        'en': 'Title'
+                    },
+                    'title_i18n_temp': {
                         'ja': 'タイトル',
                         'en': 'Title'
                     },
@@ -95,12 +109,17 @@ def form(key='', title='', title_ja=name_ja, title_en=name_en, multi_flag=multip
                         'ja': '言語',
                         'en': 'Language'
                     },
+                    'title_i18n_temp': {
+                        'ja': '言語',
+                        'en': 'Language'
+                    },
                     'titleMap': get_select_value(config.LANGUAGE_VAL2_1),
                     'type': 'select'
                 }
             ],
             'key': key.replace('[]', '')
         }
+        
         return _d
 
     return get_property_form(key, title, title_ja, title_en, multi_flag, _form)

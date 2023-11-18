@@ -57,14 +57,23 @@ def schema(title='', multi_flag=multiple_flag):
                 'subitem_alternative_title': {
                     'format': 'text',
                     'title': 'その他のタイトル',
-                    'type': 'string'
+                    'type': 'string',
+                    "title_i18n": {
+                            "en": "Alternative Title",
+                            "ja": "その他のタイトル"
+                        },
                 },
                 'subitem_alternative_title_language': {
-                    'editAble': True,
+                    # 'editAble': True,
                     'type': ['null', 'string'],
                     'format': 'select',
+                    'currentEnum': (config.LANGUAGE_VAL2_1)[1:],
                     'enum': config.LANGUAGE_VAL2_1,
-                    'title': '言語'
+                    'title': '言語',
+                    "title_i18n": {
+                            "en": "Language",
+                            "ja": "言語"
+                        },
                 }
             }
         }

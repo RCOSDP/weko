@@ -200,11 +200,14 @@ def schema(title='', multi_flag=multiple_flag):
                                 'type': ['null', 'string'],
                                 'format': 'select',
                                 'enum': config.LANGUAGE_VAL2_1,
-                                'title': '言語'
+                                'currentEnum': (config.LANGUAGE_VAL2_1)[1:],
+                                'title': '言語',
+                                "title_i18n": {"en": "Language", "ja": "言語"},
                             },
                             'creatorAlternative': {
                                 'format': 'text',
                                 'title': '別名',
+                                "title_i18n": {"en": "Alternative Name", "ja": "別名"},
                                 'type': 'string'
                             }
                         }
@@ -223,19 +226,22 @@ def schema(title='', multi_flag=multiple_flag):
                                 'type': ['null', 'string'],
                                 'format': 'select',
                                 'enum': config.LANGUAGE_VAL2_1,
-                                'title': '言語'
+                                'currentEnum': (config.LANGUAGE_VAL2_1)[1:],
+                                'title': '言語',
+                                "title_i18n": {"en": "Language", "ja": "言語"},
                             },
                             'creatorNameType': {
-                                'editAble': False,
                                 'type': ['null', 'string'],
                                 'format': 'select',
                                 'enum': config.NAME_TYPE_VAL,
-                                'title': '名前タイプ'
+                                'title': '名前タイプ',
+                                "title_i18n": {"en": "Name Type", "ja": "名前タイプ"},
                             },
                             'creatorName': {
                                 'format': 'text',
                                 'title': '姓名',
-                                'type': 'string'
+                                'type': 'string',
+                                "title_i18n": {"en": "Name", "ja": "姓名"},
                             }
                         }
                     },
@@ -251,16 +257,21 @@ def schema(title='', multi_flag=multiple_flag):
                             'nameIdentifierScheme': {
                                 'type': ['null', 'string'],
                                 'format': 'select',
-                                'title': '作成者識別子Scheme'
+                                'currentEnum': [],
+                                'enum':[],
+                                'title': '作成者識別子Scheme',
+                                "title_i18n": {"en": "IdentifierScheme", "ja": "作成者識別子Scheme"},
                             },
                             'nameIdentifier': {
                                 'format': 'text',
                                 'title': '作成者識別子',
+                                "title_i18n": {"en": "Creator Name Identifier", "ja": "作成者識別子"},
                                 'type': 'string'
                             },
                             'nameIdentifierURI': {
                                 'format': 'text',
                                 'title': '作成者識別子URI',
+                                "title_i18n": {"en": "Creator Name Identifier URI", "ja": "作成者識別子URI"},
                                 'type': 'string'
                             }
                         }
@@ -285,16 +296,19 @@ def schema(title='', multi_flag=multiple_flag):
                                             'type': ['null', 'string'],
                                             'format': 'select',
                                             #'enum': config.AFFILIATION_SCHEME_VAL,
-                                            'title': '所属機関識別子Scheme'
+                                            'title': '所属機関識別子Scheme',
+                                            "title_i18n": {"en": "Affiliation Name Identifier Scheme", "ja": "所属機関識別子Scheme"},    
                                         },
-                                        'affiliationNameIdentifier': {
+                                        '': {
                                             'format': 'text',
                                             'title': '所属機関識別子',
+                                            "title_i18n": {"en": "Affiliation Name Identifier", "ja": "所属機関識別子"},      
                                             'type': 'string'
                                         },
                                         'affiliationNameIdentifierURI': {
                                             'format': 'text',
                                             'title': '所属機関識別子URI',
+                                            "title_i18n": {"en": "Affiliation Name Identifier URI", "ja": "所属機関識別子URI"},                                               
                                             'type': 'string'
                                         }
                                     }
@@ -311,6 +325,7 @@ def schema(title='', multi_flag=multiple_flag):
                                         'affiliationName': {
                                             'format': 'text',
                                             'title': '所属機関名',
+                                            "title_i18n": {"en": "Affiliation Name", "ja": "所属機関名"},                                                
                                             'type': 'string'
                                         },
                                         'affiliationNameLang': {
@@ -318,7 +333,9 @@ def schema(title='', multi_flag=multiple_flag):
                                             'type': ['null', 'string'],
                                             'format': 'select',
                                             'enum': config.LANGUAGE_VAL2_1,
-                                            'title': '言語'
+                                            'currentEnum': (config.LANGUAGE_VAL2_1)[1:],
+                                            'title': '言語',
+                                            "title_i18n": {"en": "Language", "ja": "言語"},
                                         }
                                     }
                                 },
@@ -338,6 +355,7 @@ def schema(title='', multi_flag=multiple_flag):
                             'creatorMail': {
                                 'format': 'text',
                                 'title': 'メールアドレス',
+                                "title_i18n": {"en": "Email Address", "ja": "メールアドレス"},
                                 'type': 'string'
                             }
                         }
@@ -356,11 +374,15 @@ def schema(title='', multi_flag=multiple_flag):
                                 'type': ['null', 'string'],
                                 'format': 'select',
                                 'enum': config.LANGUAGE_VAL2_1,
-                                'title': '言語'
+                                'currentEnum': (config.LANGUAGE_VAL2_1)[1:],
+                                'title': '言語',
+                                "title_i18n": {"en": "Language", "ja": "言語"},
+                                       
                             },
                             'givenName': {
                                 'format': 'text',
                                 'title': '名',
+                                "title_i18n": {"en": "Given Name", "ja": "名"},
                                 'type': 'string'
                             }
                         }
@@ -378,13 +400,16 @@ def schema(title='', multi_flag=multiple_flag):
                                 'editAble': True,
                                 'type': ['null', 'string'],
                                 'format': 'select',
+                                'currentEnum': (config.LANGUAGE_VAL2_1)[1:],
                                 'enum': config.LANGUAGE_VAL2_1,
-                                'title': '言語'
+                                'title': '言語',
+                                "title_i18n": {"en": "Language", "ja": "言語"},
                             },
                             'familyName': {
                                 'format': 'text',
                                 'title': '姓',
-                                'type': 'string'
+                                'type': 'string',
+                                "title_i18n": {"en": "Family Name", "ja": "姓"},
                             }
                         }
                     },
