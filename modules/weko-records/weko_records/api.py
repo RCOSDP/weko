@@ -54,6 +54,7 @@ from .models import ItemTypeEditHistory as ItemTypeEditHistoryModel
 from .models import ItemTypeMapping, ItemTypeName, ItemTypeProperty, \
     SiteLicenseInfo, SiteLicenseIpAddress
 
+
 _records_state = LocalProxy(
     lambda: current_app.extensions['invenio-records'])
 
@@ -959,10 +960,27 @@ class ItemTypes(RecordBase):
         # flag_modified(item_type, 'form')
         # flag_modified(item_type, 'render')
         # db.session.merge(item_type)
-        ret = cls.update(id_=itemtype_id,name=item_type.item_type_name.name,
+        record = cls.update(id_=itemtype_id,
+                                      name=table_row_map.get('name'),
                                       schema=json_schema,
-                                      form=json_form,
+                                      form=table_row_map.get('form'),
                                       render=data)
+        # Mapping.create(item_type_id=record.model.id,
+        #                        mapping=table_row_map.get('mapping'))
+        # Mapping.create(item_type_id=record.model.id,
+        #                        mapping=table_row_map.get('mapping'))
+        # from weko_workflow.api import WorkFlow
+        # workflow = WorkFlow()
+        # workflow_list = workflow.get_workflow_by_itemtype_id(
+        #             itemtype_id)
+        # for wf in workflow_list:
+        #     workflow.update_itemtype_id(wf, record.model.id)
+        # ItemTypeEditHistory.create_or_update(
+        #         item_type_id=record.model.id,
+        #         user_id=1,
+        #         notes=data.get('edit_notes', {})
+        # )
+        # db.session.commit()
         # db.session.merge(item_type)
         # return ret
 
