@@ -91,8 +91,8 @@ DOI_VALIDATION_INFO = {
         # ['title.@attributes.xml:lang', None]
     ],
     'datacite:date': [
-        ['date.@attributes.dateType', None],
-        ['date.@value', None]
+        ['date.@value', None],
+         ['date.@attributes.dateType', None]
     ],
     'dc:type': [
         ['type.@attributes.rdf:resource', None],
@@ -167,7 +167,7 @@ DOI_VALIDATION_INFO_CROSSREF = {
         ['title.@attributes.xml:lang', None]
     ],
     'datacite:date': [
-        ['date.@attributes.dateType', None],
+        # ['date.@attributes.dateType', None],
         ['date.@value', None]
     ],
     'dc:type': [

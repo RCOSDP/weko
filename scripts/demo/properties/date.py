@@ -1,6 +1,6 @@
 # coding:utf-8
 """Definition of date property."""
-from .property_func import get_property_schema, get_property_form, set_post_data, get_select_value
+from .property_func import get_property_schema, get_property_form, set_post_data, get_select_value,make_title_map
 from . import property_config as config
 
 property_id = config.DATE
@@ -62,6 +62,7 @@ def schema(title='', multi_flag=multiple_flag):
                 'subitem_date_issued_type': {
                     'type': ['null', 'string'],
                     'format': 'select',
+                    'currentEnum': config.DATE_TYPE_VAL,
                     'enum': config.DATE_TYPE_VAL,
                     'title': '日付タイプ'
                 }
@@ -96,7 +97,7 @@ def form(key='', title='', title_ja=name_ja, title_en=name_en, multi_flag=multip
                         'ja': '日付タイプ',
                         'en': 'Date Type'
                     },
-                    'titleMap': get_select_value(config.DATE_TYPE_VAL),
+                    'titleMap': make_title_map(config.DATE_TYPE_Label,config.DATE_TYPE_VAL),
                     'type': 'select'
                 }
             ],

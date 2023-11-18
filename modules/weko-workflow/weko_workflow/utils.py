@@ -952,7 +952,7 @@ def validattion_item_property_either_required(
         publisher = handle_check_required_pattern_and_either(
             mapping_data, mapping_keys, None, True,identifier_type)
         if publisher:
-            mapping_keys = ['jpcoar:publisherName']
+            mapping_keys = ['jpcoar:publisher_jpcoar']
             errors = handle_check_required_pattern_and_either(
                 mapping_data, mapping_keys,  None, True,identifier_type)
             if not errors:
@@ -1003,7 +1003,7 @@ def validattion_item_property_either_required(
 
         if degreeGrantor:
             # check 出版タイプ oaire:version
-            mapping_keys = ['jpcoar:publisherName']
+            mapping_keys = ['jpcoar:publisher_jpcoar']
             errors = handle_check_required_pattern_and_either(
                 mapping_data, mapping_keys, identifier_type, None, True)
             if not errors:

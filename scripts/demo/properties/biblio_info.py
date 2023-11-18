@@ -9,6 +9,7 @@ name_ja = '書誌情報'
 name_en = 'Bibliographic Information'
 date_type = [
     None,
+    '',
     'Issued'
 ]
 
@@ -166,6 +167,7 @@ def schema(title='', multi_flag=multiple_flag):
                         'bibliographicIssueDateType': {
                             'type': ['null', 'string'],
                             'format': 'select',
+                            'currentEnum': date_type,
                             'enum': date_type,
                             'title': '日付タイプ'
                         }

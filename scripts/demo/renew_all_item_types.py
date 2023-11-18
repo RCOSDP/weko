@@ -8,14 +8,10 @@ def main():
         itemtypes = ItemTypes.get_all()
         for itemtype in itemtypes:
             ret = ItemTypes.renew(itemtype.id)
+        db.session.commit()
     except Exception as e:
         print(traceback.format_exc())
         db.session.rollback()
-
-        
-    except Exception as e:
-        print(traceback.format_exc())
-        db.session.rollback()    
 
         
 

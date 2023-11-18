@@ -933,10 +933,13 @@ class ItemTypes(RecordBase):
                     if _prop:
                         # data['meta_list'][_prop_id] = json.loads('{"input_maxItems": "9999","input_minItems": "1","input_type": "cus_'+str(_prop.id)+'","input_value": "","option": {"crtf": false,"hidden": false,"multiple": true,"required": false,"showlist": false},"title": "'+_prop.name+'","title_i18n": {"en": "", "ja": "'+_prop.name+'"}}')
                         data['schemaeditor']['schema'][_prop_id]=pickle.loads(pickle.dumps(_prop.schema, -1))
-                        data['table_row_map']['schema']['properties'][_prop_id]=pickle.loads(pickle.dumps(_prop.schema, -1))
+                        if 'items' in data['table_row_map']['schema']['properties'][_prop_id]:
+                            data['table_row_map']['schema']['properties'][_prop_id]['items']==pickle.loads(pickle.dumps(_prop.schema, -1))
+                        else:
+                            data['table_row_map']['schema']['properties'][_prop_id]=pickle.loads(pickle.dumps(_prop.schema, -1))
                         _form = json.loads(json.dumps(pickle.loads(pickle.dumps(_prop.form, -1))).replace('parentkey',_prop_id))
                         data['table_row_map']['form'][idx]=pickle.loads(pickle.dumps(_form, -1))
-                                                     
+                                                      
         
         from weko_itemtypes_ui.utils import fix_json_schema,update_required_schema_not_exist_in_form, update_text_and_textarea
         table_row_map = data.get('table_row_map')
@@ -949,21 +952,19 @@ class ItemTypes(RecordBase):
             json_schema, json_form = update_text_and_textarea(
                 itemtype_id, json_schema, json_form)
 
-        ret = cls.update(id_=itemtype_id,name=item_type.item_type_name.name,
-                                      schema=json_schema,
-                                      form=table_row_map.get('form'),
-                                      render=data)
-        
+        # item_type.render = data
         # item_type.schema = json_schema
         # item_type.form = json_form
-        # item_type.render = data
-        
         # flag_modified(item_type, 'schema')
         # flag_modified(item_type, 'form')
         # flag_modified(item_type, 'render')
-
         # db.session.merge(item_type)
-        return ret
+        ret = cls.update(id_=itemtype_id,name=item_type.item_type_name.name,
+                                      schema=json_schema,
+                                      form=json_form,
+                                      render=data)
+        # db.session.merge(item_type)
+        # return ret
 
 
 

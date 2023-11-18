@@ -3994,6 +3994,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         let listItemErrors = [];
         let eitherRequired = [];
         let noEitherError = $scope.checkEitherRequired();
+        
         if (noEitherError && $scope.error_list && $scope.error_list['either']) {
           eitherRequired = [];
           $scope.error_list['either'].forEach(function (group) {
@@ -4040,7 +4041,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
             $("#react-component-version").addClass("has-error");
           }
         }
-
+        
         if (listItemErrors.length > 0) {
           let message = $("#validate_error").val() + '<br/><br/>';
           message += listItemErrors[0];
