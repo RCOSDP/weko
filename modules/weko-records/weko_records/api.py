@@ -922,6 +922,7 @@ class ItemTypes(RecordBase):
         """
         # with db.session.begin_nested():
         item_type = ItemTypes.get_by_id(itemtype_id)
+        old_render = pickle.loads(pickle.dumps(item_type.render, -1))
         data = pickle.loads(pickle.dumps(item_type.render, -1))
         pat1 = re.compile(r'cus_(\d+)')
         for idx, i in enumerate(data['table_row_map']['form']):
@@ -945,13 +946,7 @@ class ItemTypes(RecordBase):
                         else:
                             _form = json.loads(json.dumps(pickle.loads(pickle.dumps(_prop.form, -1))).replace('parentkey',_prop_id))
                             data['table_row_map']['form'][idx]=pickle.loads(pickle.dumps(_form, -1))
-                                                      
-        # data['meta_system']['system_file']['input_type'] = 'S_File'
-        # data['meta_system']['system_identifier_doi']['input_type'] = 'S_Identifier'
-        # data['meta_system']['system_identifier_hdl']['input_type'] = 'S_Identifier'
-        # data['meta_system']['system_identifier_uri']['input_type'] = 'S_Identifier'
-        
-        
+                                                       
         from weko_itemtypes_ui.utils import fix_json_schema,update_required_schema_not_exist_in_form, update_text_and_textarea
         table_row_map = data.get('table_row_map')
         json_schema = fix_json_schema(table_row_map.get('schema'))
@@ -963,36 +958,12 @@ class ItemTypes(RecordBase):
             json_schema, json_form = update_text_and_textarea(
                 itemtype_id, json_schema, json_form)
 
-        # item_type.render = data
-        # item_type.schema = json_schema
-        # item_type.form = json_form
-        # flag_modified(item_type, 'schema')
-        # flag_modified(item_type, 'form')
-        # flag_modified(item_type, 'render')
-        # db.session.merge(item_type)
         record = cls.update(id_=itemtype_id,
                                       name=table_row_map.get('name'),
                                       schema=json_schema,
                                       form=table_row_map.get('form'),
                                       render=data)
-        # Mapping.create(item_type_id=record.model.id,
-        #                        mapping=table_row_map.get('mapping'))
-        # Mapping.create(item_type_id=record.model.id,
-        #                        mapping=table_row_map.get('mapping'))
-        # from weko_workflow.api import WorkFlow
-        # workflow = WorkFlow()
-        # workflow_list = workflow.get_workflow_by_itemtype_id(
-        #             itemtype_id)
-        # for wf in workflow_list:
-        #     workflow.update_itemtype_id(wf, record.model.id)
-        # ItemTypeEditHistory.create_or_update(
-        #         item_type_id=record.model.id,
-        #         user_id=1,
-        #         notes=data.get('edit_notes', {})
-        # )
-        # db.session.commit()
-        # db.session.merge(item_type)
-        # return ret
+        return record
 
 
 
