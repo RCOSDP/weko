@@ -64,6 +64,7 @@ def schema(title="", multi_flag=multiple_flag):
                 "publisher_names": {
                     "type": "array",
                     "format": "array",
+                    "title": "出版者名",
                     "items": {
                         "type": "object",
                         "format": "object",
@@ -84,11 +85,12 @@ def schema(title="", multi_flag=multiple_flag):
                             },
                         },
                     },
-                    "title": "出版者名",
+                    
                 },
                 "publisher_descriptions": {
                     "type": "array",
                     "format": "array",
+                    "title": "出版者注記",
                     "items": {
                         "type": "object",
                         "format": "object",
@@ -103,7 +105,7 @@ def schema(title="", multi_flag=multiple_flag):
                                 },
                             },
                             "publisher_description_language": {
-                                "type": "string",
+                                'type': ['null', 'string'],
                                 "format": "select",
                                 "enum": config.LANGUAGE_VAL2_1,
                                 "currentEnum": config.LANGUAGE_VAL2_1,
@@ -112,7 +114,6 @@ def schema(title="", multi_flag=multiple_flag):
                             },
                         },
                     },
-                    "title": "出版者注記",
                 },
                 "publisher_locations": {
                     "type": "array",
@@ -134,7 +135,7 @@ def schema(title="", multi_flag=multiple_flag):
                 "publication_places": {
                     "type": "array",
                     "format": "array",
-                    "title":"出版地",
+                    "title":"出版地（国名コード）",
                     "items": {
                         "type": "object",
                         "format": "object",
@@ -196,6 +197,10 @@ def form(
                     "add": "New",
                     "key": "{}.publisher_descriptions".format(key),
                     "title": "Publisher Description",
+                    "title_i18n": {
+                                "ja": "出版者注記",
+                                "en": "Publisher Description",
+                            },
                     "items": [
                         {
                             "key": "{}.publisher_descriptions[].publisher_description".format(
@@ -224,6 +229,8 @@ def form(
                 {
                     "add": "New",
                     "key": "{}.publisher_locations".format(key),
+                    "title": "出版地",
+                    "title_i18n": {"ja": "出版地", "en": "Publication Place"},
                     "items": [
                         {
                             "key": "{}.publisher_locations[].publisher_location".format(
@@ -239,9 +246,14 @@ def form(
                 {
                     "add": "New",
                     "key": "{}.publication_places".format(key),
+                    "title": "出版地（国名コード）",
+                            "title_i18n": {
+                                "ja": "出版地（国名コード）",
+                                "en": "Publication Place (Country code)",
+                            },
                     "items": [
                         {
-                            "key": "{}.publication_places.publication_place".format(key),
+                            "key": "{}.publication_places[].publication_place".format(key),
                             "type": "text",
                             "title": "出版地（国名コード）",
                             "title_i18n": {

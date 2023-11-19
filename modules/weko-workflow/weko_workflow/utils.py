@@ -452,7 +452,8 @@ def item_metadata_validation(item_id, identifier_type, record=None,
             ]
             # remove 20220207
             # either_properties = ['version']
-            either_properties = ['publisher','date']
+            # いずれか必須が動いていない
+            # either_properties = ['publisher','date']
 
         # 別表2-2 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【学位論文】
         elif resource_type in thesis_types:
@@ -469,7 +470,8 @@ def item_metadata_validation(item_id, identifier_type, record=None,
                 'pageStart',
                 'fileURI',
             ]
-            either_properties = ['date','degreeGrantor']
+            # いずれか必須が動いていない
+            # either_properties = ['date','degreeGrantor']
         # 別表2-3 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【書籍】
         elif resource_type in report_types:
             required_properties = [
@@ -483,7 +485,8 @@ def item_metadata_validation(item_id, identifier_type, record=None,
                 # 'identifierRegistration',
                 'fileURI',
             ]
-            either_properties = ['date','publisher']
+            # いずれか必須が動いていない
+            # either_properties = ['date','publisher']
         # 別表2-4 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【e-learning】
         elif resource_type in elearning_type:
             required_properties = [
@@ -497,7 +500,8 @@ def item_metadata_validation(item_id, identifier_type, record=None,
                 # 'identifierRegistration',
                 'fileURI',
             ]
-            either_properties = ['date','publisher']
+            # いずれか必須が動いていない
+            # either_properties = ['date','publisher']
         # 別表2-5 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【研究データ】
         elif resource_type in dataset_type:
             required_properties = [
@@ -513,7 +517,8 @@ def item_metadata_validation(item_id, identifier_type, record=None,
                 # 'identifierRegistration',
                 'fileURI',
             ]
-            either_properties = ['givenName','date','publisher']
+            # いずれか必須が動いていない
+            # either_properties = ['givenName','date','publisher']
             # remove 20220207
             # either_properties = ['geoLocation']
 
@@ -530,7 +535,8 @@ def item_metadata_validation(item_id, identifier_type, record=None,
                 # 'identifierRegistration',
                 'fileURI',
             ]
-            either_properties = ['date','publisher']
+            # いずれか必須が動いていない
+            # either_properties = ['date','publisher']
             
     # CrossRef DOI identifier registration
     elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['Crossref']:
@@ -549,7 +555,8 @@ def item_metadata_validation(item_id, identifier_type, record=None,
                 'sourceTitle',
                 'fileURI',
             ]
-            either_properties = ['date','publisher']
+            # いずれか必須が動いていない
+            # either_properties = ['date','publisher']
         elif resource_type in report_types \
                 or resource_type in thesis_types:
             required_properties = [
@@ -563,7 +570,8 @@ def item_metadata_validation(item_id, identifier_type, record=None,
                 # 'identifierRegistration',
                 'fileURI',
             ]
-            either_properties = ['date','publisher']
+            # いずれか必須が動いていない
+            # either_properties = ['date','publisher']
     # DataCite DOI identifier registration
     elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['DataCite']:
         if resource_type in dataset_type:
@@ -580,7 +588,8 @@ def item_metadata_validation(item_id, identifier_type, record=None,
                 # 'identifierRegistration',
                 'fileURI',
             ]
-            either_properties = ['givenName','date','publisher']
+            # いずれか必須が動いていない
+            # either_properties = ['givenName','date','publisher']
             # remove 20220207
             # either_properties = ['geoLocation']
     # NDL JaLC DOI identifier registration

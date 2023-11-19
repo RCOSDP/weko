@@ -57,6 +57,10 @@ def schema(title='', multi_flag=multiple_flag):
                 'subitem_publisher': {
                     'format': 'text',
                     'title': '出版者',
+                    'title_i18n': {
+                        'en': 'Publisher',
+                        'ja': '出版者'
+                    },
                     'type': 'string'
                 },
                 'subitem_publisher_language': {
@@ -64,7 +68,12 @@ def schema(title='', multi_flag=multiple_flag):
                     'type': ['null', 'string'],
                     'format': 'select',
                     'enum': config.LANGUAGE_VAL2_1,
-                    'title': '言語'
+                    'currentEnum': config.LANGUAGE_VAL2_1[1:],
+                    'title': '言語',
+                    'title_i18n': {
+                        'en': 'Language',
+                        'ja': '言語'
+                    },
                 }
             }
         }
@@ -80,6 +89,15 @@ def form(key='', title='', title_ja=name_ja, title_en=name_en, multi_flag=multip
         _d = {
             'items': [
                 {
+                    'key': '{}.subitem_publisher'.format(key),
+                    'title': '出版者',
+                    'title_i18n': {
+                        'en': 'Publisher',
+                        'ja': '出版者'
+                    },
+                    'type': 'text'
+                },
+                {
                     'key': '{}.subitem_publisher_language'.format(key),
                     'title': '言語',
                     'title_i18n': {
@@ -89,15 +107,7 @@ def form(key='', title='', title_ja=name_ja, title_en=name_en, multi_flag=multip
                     'titleMap': get_select_value(config.LANGUAGE_VAL2_1),
                     'type': 'select'
                 },
-                {
-                    'key': '{}.subitem_publisher'.format(key),
-                    'title': '出版者',
-                    'title_i18n': {
-                        'en': 'Publisher',
-                        'ja': '出版者'
-                    },
-                    'type': 'text'
-                }
+                
             ],
             'key': key.replace('[]', '')
         }

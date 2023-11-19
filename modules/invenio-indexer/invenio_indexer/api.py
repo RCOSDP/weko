@@ -373,8 +373,9 @@ class RecordIndexer(object):
         :returns: Dictionary defining an Elasticsearch bulk 'index' action.
         """
         record = Record.get_record(id)
-        current_app.logger.debug("indexing id:{}".format(id))
         self.count = self.count + 1
+        click.secho("Indexing ID:{}, Count:{}".format(id,self.count),fg='green') 
+        
         self.latest_item_id = id
         index, doc_type = self.record_to_index(record)
 

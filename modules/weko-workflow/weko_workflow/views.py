@@ -2449,10 +2449,11 @@ def user_unlock_activity(activity_id="0"):
     cache_key = "workflow_userlock_activity_{}".format(str(current_user.get_id()))
     cur_locked_val = str(get_cache_data(cache_key)) or str()
     data = json.loads(request.data.decode("utf-8"))
+    msg = _("Not unlock")
     if cur_locked_val and not data["is_opened"] or (cur_locked_val == activity_id and data["is_opened"]):
         delete_cache_data(cache_key)
         msg = "User Unlock Success"
-    res = {"code":200, "msg":msg or _("Not unlock")}
+    res = {"code":200, "msg":msg}
     return jsonify(res), 200
 
 @workflow_blueprint.route('/activity/lock/<string:activity_id>', methods=['POST'])
