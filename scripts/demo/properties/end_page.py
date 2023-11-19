@@ -51,6 +51,10 @@ def schema(title='', multi_flag=multiple_flag):
                 'subitem_end_page': {
                     'format': 'text',
                     'title': '終了ページ',
+                    'title_i18n': {
+                        'en': 'End Page',
+                        'ja': '終了ページ'
+                    },
                     'type': 'string'
                 }
             }

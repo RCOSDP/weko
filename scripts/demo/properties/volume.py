@@ -51,6 +51,10 @@ def schema(title='', multi_flag=multiple_flag):
                 'subitem_volume': {
                     'format': 'text',
                     'title': '巻',
+                    'title_i18n': {
+                        'en': 'Volume',
+                        'ja': '巻'
+                    },
                     'type': 'string'
                 }
             }

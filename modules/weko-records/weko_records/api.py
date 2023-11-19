@@ -946,10 +946,10 @@ class ItemTypes(RecordBase):
                             _form = json.loads(json.dumps(pickle.loads(pickle.dumps(_prop.form, -1))).replace('parentkey',_prop_id))
                             data['table_row_map']['form'][idx]=pickle.loads(pickle.dumps(_form, -1))
                                                       
-        data['meta_system']['system_file']['input_type'] = 'S_File'
-        data['meta_system']['system_identifier_doi']['input_type'] = 'S_Identifier'
-        data['meta_system']['system_identifier_hdl']['input_type'] = 'S_Identifier'
-        data['meta_system']['system_identifier_uri']['input_type'] = 'S_Identifier'
+        # data['meta_system']['system_file']['input_type'] = 'S_File'
+        # data['meta_system']['system_identifier_doi']['input_type'] = 'S_Identifier'
+        # data['meta_system']['system_identifier_hdl']['input_type'] = 'S_Identifier'
+        # data['meta_system']['system_identifier_uri']['input_type'] = 'S_Identifier'
         
         
         from weko_itemtypes_ui.utils import fix_json_schema,update_required_schema_not_exist_in_form, update_text_and_textarea

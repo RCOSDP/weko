@@ -28,6 +28,10 @@ def schema(title='', multi_flag=multiple_flag):
                 'subitem_study_id': {
                     'format': 'text',
                     'title': '調査番号',
+                    'title_i18n': {
+                        'en': 'Study ID',
+                        'ja': '調査番号'
+                    },
                     'type': 'string'
                 },
                 'subitem_study_id_language': {
@@ -35,11 +39,20 @@ def schema(title='', multi_flag=multiple_flag):
                     'type': ['null', 'string'],
                     'format': 'select',
                     'enum': config.LANGUAGE_VAL2_2,
-                    'title': '言語'
+                    'currentEnum': config.LANGUAGE_VAL2_2[1:],
+                    'title': '言語',
+                    'title_i18n': {
+                        'en': 'Language',
+                        'ja': '言語'
+                    },
                 },
                 'subitem_study_id_agency': {
                     'format': 'text',
                     'title': '調査番号付与機関',
+                    'title_i18n': {
+                        'en': 'ID Agency',
+                        'ja': '調査番号付与機関'
+                    },
                     'type': ['null', 'string']
                 }
             }

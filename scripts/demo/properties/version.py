@@ -47,6 +47,10 @@ def schema(title='', multi_flag=multiple_flag):
                 'subitem_version': {
                     'format': 'text',
                     'title': 'バージョン情報',
+                    'title_i18n': {
+                        'en': 'Version',
+                        'ja': 'バージョン情報'
+                    },
                     'type': 'string'
                 }
             }

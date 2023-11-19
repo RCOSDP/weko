@@ -47,6 +47,10 @@ def schema(title='', multi_flag=multiple_flag):
                 'subitem_number_of_pages': {
                     'format': 'text',
                     'title': 'ページ数',
+                    'title_i18n': {
+                        'ja': 'ページ数',
+                        'en': 'Number of Pages'
+                    },
                     'type': 'string'
                 }
             }

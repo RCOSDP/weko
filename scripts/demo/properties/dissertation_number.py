@@ -51,6 +51,10 @@ def schema(title='', multi_flag=multiple_flag):
                 'subitem_dissertationnumber': {
                     'format': 'text',
                     'title': '学位授与番号',
+                    'title_i18n': {
+                        'en': 'Dissertation Number',
+                        'ja': '学位授与番号'
+                    },
                     'type': 'string'
                 }
             }

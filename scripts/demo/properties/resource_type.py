@@ -129,13 +129,22 @@ def schema(title='', multi_flag=multiple_flag):
                 'resourceuri': {
                     'format': 'text',
                     'title': '資源タイプ識別子',
+                    'title_i18n': {
+                        'en': 'Resource Type Identifier',
+                        'ja': '資源タイプ識別子'
+                    },
                     'type': 'string'
                 },
                 'resourcetype': {
                     'type': ['null', 'string'],
                     'format': 'select',
                     'enum': resource_type,
-                    'title': '資源タイプ'
+                    'currentEnum': resource_type[1:],
+                    'title': '資源タイプ',
+                    'title_i18n': {
+                        'en': 'Resource Type',
+                        'ja': '資源タイプ '
+                    },
                 }
             }
         }

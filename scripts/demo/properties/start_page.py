@@ -51,6 +51,10 @@ def schema(title='', multi_flag=multiple_flag):
                 'subitem_start_page': {
                     'format': 'text',
                     'title': '開始ページ',
+                    'title_i18n': {
+                        'en': 'Start Page',
+                        'ja': '開始ページ'
+                    },
                     'type': 'string'
                 }
             }

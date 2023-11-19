@@ -61,6 +61,10 @@ def schema(title='', multi_flag=multiple_flag):
                 'subitem_subject': {
                     'format': 'text',
                     'title': '主題',
+                    'title_i18n': {
+                        'en': 'Subject',
+                        'ja': '主題'
+                    },
                     'type': 'string'
                 },
                 'subitem_subject_language': {
@@ -68,17 +72,31 @@ def schema(title='', multi_flag=multiple_flag):
                     'type': ['null', 'string'],
                     'format': 'select',
                     'enum': config.LANGUAGE_VAL2_1,
-                    'title': '言語'
+                    'currentEnum': config.LANGUAGE_VAL2_1[1:],
+                    'title': '言語',
+                    'title_i18n': {
+                        'en': 'Language',
+                        'ja': '言語'
+                    },
                 },
                 'subitem_subject_scheme': {
                     'type': ['null', 'string'],
                     'format': 'select',
                     'enum': config.SUBJECT_SCHEME_VAL,
-                    'title': '主題Scheme'
+                    'currentEnum': config.SUBJECT_SCHEME_VAL[1:],
+                    'title': '主題Scheme',
+                    'title_i18n': {
+                        'en': 'Subject Scheme',
+                        'ja': '主題Scheme'
+                    },
                 },
                 'subitem_subject_uri': {
                     'format': 'text',
                     'title': '主題URI',
+                    'title_i18n': {
+                        'en': 'Subject URI',
+                        'ja': '主題URI'
+                    },
                     'type': 'string'
                 }
             }

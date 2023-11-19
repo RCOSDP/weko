@@ -55,9 +55,14 @@ def schema(title='', multi_flag=multiple_flag):
             'properties': {
                 'subitem_apc': {
                     'title': 'APC',
+                    'title_i18n': {
+                        'en': 'APC',
+                        'ja': 'APC'
+                    },
                     'type': ['null', 'string'],
                     'format': 'select',
                     'enum': apc,
+                    'currentEnum': apc[1:],
                 }
             }
         }

@@ -69,13 +69,22 @@ def schema(title='', multi_flag=multiple_flag):
                 'subitem_identifier_reg_text': {
                     'format': 'text',
                     'title': 'ID登録',
+                    'title_i18n': {
+                        'en': 'Identifier Registration',
+                        'ja': 'ID登録'
+                    },
                     'type': 'string'
                 },
                 'subitem_identifier_reg_type': {
                     'type': ['null', 'string'],
                     'format': 'select',
                     'enum': id_type,
-                    'title': 'ID登録タイプ'
+                    'currentEnum': id_type[1:],
+                    'title': 'ID登録タイプ',
+                    'title_i18n': {
+                        'en': 'Identifier Registration Type',
+                        'ja': 'ID登録タイプ'
+                    },
                 }
             }
         }

@@ -69,11 +69,20 @@ def schema(title='', multi_flag=multiple_flag):
                     'type': ['null', 'string'],
                     'format': 'select',
                     'enum': version_type,
-                    'title': '出版タイプ'
+                    'currentEnum': version_type[1:],
+                    'title': '出版タイプ',
+                    'title_i18n': {
+                        'en': 'Version Type',
+                        'ja': '出版タイプ'
+                    },
                 },
                 'subitem_version_resource': {
                     'format': 'text',
                     'title': '出版タイプResource',
+                    'title_i18n': {
+                        'en': 'Version Type Resource',
+                        'ja': '出版タイプResource'
+                    },
                     'type': 'string'
                 }
             }

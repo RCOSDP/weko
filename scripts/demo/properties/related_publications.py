@@ -60,6 +60,10 @@ def schema(title='', multi_flag=multiple_flag):
                             'subitem_related_publication_title': {
                                 'format': 'text',
                                 'title': '関連文献タイトル',
+                                'title_i18n': {
+                                'en': 'Related Publications Title',
+                                'ja': '関連文献タイトル'
+                                },
                                 'type': 'string'
                             },
                             'subitem_related_publication_title_language': {
@@ -67,7 +71,11 @@ def schema(title='', multi_flag=multiple_flag):
                                 'type': ['null', 'string'],
                                 'format': 'select',
                                 'enum': config.LANGUAGE_VAL2_2,
-                                'title': '言語'
+                                'title': '言語',
+                                'title_i18n': {
+                                    'en': 'Language',
+                                    'ja': '言語'
+                                },
                             }
                         }
                     },
@@ -80,13 +88,22 @@ def schema(title='', multi_flag=multiple_flag):
                         'subitem_related_publication_identifier': {
                             'format': 'text',
                             'title': '関連文献識別子',
+                            'title_i18n': {
+                                'en': 'Related Publications Identifier',
+                                'ja': '関連文献識別子'
+                            },
                             'type': 'string'
                         },
                         'subitem_related_publication_identifier_type': {
                             'type': ['null', 'string'],
                             'format': 'select',
                             'enum': id_type,
-                            'title': '関連文献識別子タイプ'
+                            'currentEnum': id_type[1:],
+                            'title': '関連文献識別子タイプ',
+                            'title_i18n': {
+                                'en': 'Related Publications Identifier Type',
+                                'ja': '関連文献識別子タイプ'
+                            },
                         }
                     },
                     'title': '関連文献識別子'
@@ -94,8 +111,13 @@ def schema(title='', multi_flag=multiple_flag):
                 'subitem_related_publication_type': {
                     'format': 'select',
                     'title': '(JPCOAR対応用)関連タイプ',
+                    'title_i18n': {
+                        'en': '(for JPCOAR)Relation Type',
+                        'ja': '(JPCOAR対応用)関連タイプ'
+                    },
                     'type': ['null', 'string'],
-                    'enum': relation_type
+                    'enum': relation_type,
+                    'currentEnum': relation_type[1:]
                 }
             }
         }

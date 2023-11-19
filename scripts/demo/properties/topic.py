@@ -32,6 +32,10 @@ def schema(title='', multi_flag=multiple_flag):
                 'subitem_topic': {
                     'format': 'text',
                     'title': 'トピック',
+                    'title_i18n': {
+                        'en': 'Topic',
+                        'ja': 'トピック'
+                    },
                     'type': 'string'
                 },
                 'subitem_topic_language': {
@@ -39,23 +43,41 @@ def schema(title='', multi_flag=multiple_flag):
                     'type': ['null', 'string'],
                     'format': 'select',
                     'enum': config.LANGUAGE_VAL2_2,
-                    'title': '言語'
+                    'currentEnum': config.LANGUAGE_VAL2_2[1:],
+                    'title': '言語',
+                    'title_i18n': {
+                        'en': 'Language',
+                        'ja': '言語'
+                    },
                 },
                 'subitem_topic_vocab': {
                     'format': 'text',
                     'title': '統制語彙',
+                    'title_i18n': {
+                        'en': 'Topic Vocab',
+                        'ja': '統制語彙'
+                    },
                     'type': 'string'
                 },
                 'subitem_topic_vocab_uri': {
                     'format': 'text',
                     'title': '統制語彙参照URI',
+                    'title_i18n': {
+                        'en': 'Topic Vocab URI',
+                        'ja': '統制語彙参照URI'
+                    },
                     'type': 'string'
                 },
                 'subitem_topic_subject_scheme': {
                     'format': 'select',
                     'title': '(JPCOAR対応用)主題スキーム',
+                    'title_i18n': {
+                        'en': '(for JPCOAR)Subject Scheme',
+                        'ja': '(JPCOAR対応用)主題スキーム'
+                    },
                     'type': ['null', 'string'],
-                    'enum': subject_schema
+                    'enum': subject_schema,
+                    'currentEnum': subject_schema[1:]
                 }
             }
         }

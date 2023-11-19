@@ -74,11 +74,20 @@ def schema(title='', multi_flag=multiple_flag):
                     'type': ['null', 'string'],
                     'format': 'select',
                     'enum': access_rights,
-                    'title': 'アクセス権'
+                    'currentEnum': access_rights[1:],
+                    'title': 'アクセス権',
+                    'title_i18n': {
+                        'en': 'Access Rights',
+                        'ja': 'アクセス権'
+                    },
                 },
                 'subitem_access_right_uri': {
                     'format': 'text',
                     'title': 'アクセス権URI',
+                    'title_i18n': {
+                        'en': 'Access Rights URI',
+                        'ja': 'アクセス権URI'
+                    },
                     'type': 'string'
                 }
             }

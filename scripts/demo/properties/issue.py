@@ -51,6 +51,10 @@ def schema(title='', multi_flag=multiple_flag):
                 'subitem_issue': {
                     'format': 'text',
                     'title': '号',
+                    'title_i18n': {
+                        'en': 'Issue',
+                        'ja': '号'
+                    },
                     'type': 'string'
                 }
             }

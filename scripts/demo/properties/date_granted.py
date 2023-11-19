@@ -51,6 +51,10 @@ def schema(title='', multi_flag=multiple_flag):
                 'subitem_dategranted': {
                     'format': 'datetime',
                     'title': '学位授与年月日',
+                    'title_i18n': {
+                        'en': 'Date Granted',
+                        'ja': '学位授与年月日'
+                    },
                     'type': 'string'
                 }
             }

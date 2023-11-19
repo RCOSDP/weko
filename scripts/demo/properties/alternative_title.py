@@ -64,7 +64,7 @@ def schema(title='', multi_flag=multiple_flag):
                         },
                 },
                 'subitem_alternative_title_language': {
-                    # 'editAble': True,
+                    'editAble': True,
                     'type': ['null', 'string'],
                     'format': 'select',
                     'currentEnum': (config.LANGUAGE_VAL2_1)[1:],
