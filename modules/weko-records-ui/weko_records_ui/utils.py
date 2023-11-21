@@ -26,15 +26,14 @@ import datetime
 from datetime import datetime as dt
 from datetime import timedelta
 from decimal import Decimal
-from typing import List, NoReturn, Optional, Tuple
-from urllib.parse import urlparse,quote
+from typing import List, Optional, Tuple
+from urllib.parse import quote
 
-from flask import abort, current_app, json, request, url_for, Flask
+from flask import abort, current_app, json, request, Flask
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-from flask_babelex import get_locale
 from flask_babelex import gettext as _
-from flask_babelex import to_user_timezone, to_utc
+from flask_babelex import to_utc
 from flask_login import current_user
 from sqlalchemy import desc
 from invenio_accounts.models import Role, User
@@ -1550,23 +1549,21 @@ def create_secret_url(record_id:str ,file_name:str ,user_mail:str ,restricted_fu
     
     # generate url
     secret_file_url = _generate_secret_download_url(
-        file_name, record_id, secret_obj.id , secret_obj.created)
+        file_name, record_id, secret_obj.id, secret_obj.created)
 
-    return_dict:dict = {
-        "restricted_download_link":"",
-        "mail_recipient":"",
-        "file_name":file_name,
+    return_dict: dict = {
+        "secret_url": secret_file_url,
+        "mail_recipient": secret_obj.user_mail,
+        "file_name": file_name,
         "restricted_expiration_date": "",
         "restricted_expiration_date_ja": "",
         "restricted_expiration_date_en": "",
-        "restricted_download_count":"",
-        "restricted_download_count_ja":"",
-        "restricted_download_count_en":"",
-        "restricted_fullname" :restricted_fullname,
-        "restricted_data_name" :restricted_data_name,
+        "restricted_download_count": "",
+        "restricted_download_count_ja": "",
+        "restricted_download_count_en": "",
+        "restricted_fullname": restricted_fullname,
+        "restricted_data_name": restricted_data_name,
     }
-    return_dict["mail_recipient"] = secret_obj.user_mail
-    return_dict["restricted_download_link"] = secret_file_url
 
     max_int :int = current_app.config["WEKO_ADMIN_RESTRICTED_ACCESS_MAX_INTEGER"]
     if secret_obj.expiration_date < max_int:

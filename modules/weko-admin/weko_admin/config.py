@@ -1221,6 +1221,18 @@ WEKO_INDEX_TREE_STYLE_OPTIONS = {
     'widths': ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11']
 }
 
+WEKO_ADMIN_RESTRICTED_ACCESS_ERROR_MESSAGE = {
+    "key" : "",
+    "content" : {
+        "ja" : {
+            "content" : "このデータは利用できません（権限がないため）。"
+        },
+        "en":{
+            "content" : "This data is not available for this user"
+        }
+    }
+}
+
 WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS = {
     "secret_URL_file_download": {
         "secret_expiration_date": 30,
@@ -1238,7 +1250,8 @@ WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS = {
         "expiration_date_access": 500,
         "expiration_date_access_unlimited_chk": False,
     },
-    "terms_and_conditions": []
+    "terms_and_conditions": [],
+    "error_msg": WEKO_ADMIN_RESTRICTED_ACCESS_ERROR_MESSAGE
 }
 """Default restricted access settings."""
 
@@ -1275,3 +1288,6 @@ WEKO_ADMIN_FACET_SEARCH_SETTING_BUCKET_SIZE = 1000
 
 WEKO_ADMIN_CACHE_TEMP_DIR_INFO_KEY_DEFAULT = 'cache::temp_dir_info'
 """Default Cache Temporary Directory Information Key."""
+
+WEKO_ADMIN_USE_MAIL_TEMPLATE_EDIT = True
+"""Whether system can edit mail template or not."""

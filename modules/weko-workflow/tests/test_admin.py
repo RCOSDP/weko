@@ -55,17 +55,31 @@ class TestFlowSettingView:
     def test_flow_detail_acl(self,client,workflow,db_register2,users,users_index,status_code):
         flow_define = workflow['flow']
         login(client=client, email=users[users_index]['email'])
+        #test No.8(W2023-22 2)
         url = '/admin/flowsetting/{}'.format(0)
-        print(url)
         with patch("flask.templating._render", return_value=""):
             res =  client.get(url)
             assert res.status_code == status_code
         
-        
+        #test No.9(W2023-22 2)
         url = '/admin/flowsetting/{}'.format(flow_define.flow_id)
         with patch("flask.templating._render", return_value=""):
             res =  client.get(url)
-            assert res.status_code == status_code  
+            assert res.status_code == status_code
+        
+        #test No.10(W2023-22 2)
+        url = '/admin/flowsetting/{}'.format("hoge")
+        with patch("flask.templating._render", return_value=""):
+            res =  client.get(url)
+            assert res.status_code == 404
+        
+        #test No.11(W2023-22 2)        
+        login(client=client, email=users[users_index]['email'])
+        url = '/admin/flowsetting/{}'.format(flow_define.flow_id)
+        with patch("weko_workflow.admin.FlowSettingView._check_auth",return_value = False):
+            with patch("flask.templating._render", return_value=""):
+                res =  client.get(url)
+                assert res.status_code == 403
 
     # def flow_detail(self, flow_id='0'):
     # def new_flow(self, flow_id='0'):
