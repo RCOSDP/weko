@@ -13,21 +13,84 @@ property_id = config.JPCOAR_CATALOG
 multiple_flag = True
 name_ja = "カタログ"
 name_en = "Catalog"
-mapping ={
-            "display_lang_type": "",
-            "jpcoar_v1_mapping": {},
-            "jpcoar_mapping": {
-                "publisher": {
-                    "@attributes": {"xml:lang": "publisher_language"},
-                    "@value": "publisher",
+mapping = {
+    "display_lang_type": "",
+    "jpcoar_v1_mapping": {},
+    "jpcoar_mapping": {
+        "catalog": {
+            "accessRights": {
+                "@value": "catalog_access_rights.catalog_access_right",
+                "@attributes": {
+                    "rdf:resource": "catalog_access_rights.catalog_access_right_rdf_resource"
+                },
+            },
+            "contributor": {
+                "contributorName": {
+                    "@value": "catalog_contributors.contributor_names.contributor_name",
+                    "@attributes": {
+                        "xml:lang": "catalog_contributors.contributor_names.contributor_name_language"
+                    },
+                },
+                "@attributes": {
+                    "contributorType": "catalog_contributors.contributor_type"
+                },
+            },
+            "description": {
+                "@value": "catalog_descriptions.catalog_description",
+                "@attributes": {
+                    "xml:lang": "catalog_descriptions.catalog_description_language",
+                    "descriptionType": "catalog_descriptions.catalog_description_type",
+                },
+            },
+            "file": {
+                "URI": {
+                    "@attributes": {
+                        "objectType": "catalog_file.catalog_file_object_type"
+                    },
+                    "@value": "catalog_file.catalog_file_uri",
                 }
             },
-            "junii2_mapping": "",
-            "lido_mapping": "",
-            "lom_mapping": "",
-            "oai_dc_mapping": {"publisher": {"@value": "publisher"}},
-            "spase_mapping": "",
+            "identifier": {
+                "@value": "catalog_identifiers.catalog_identifier",
+                "@attributes": {
+                    "identifierType": "catalog_identifiers.catalog_identifier_type"
+                },
+            },
+            "license": {
+                "@value": "catalog_licenses.catalog_license",
+                "@attributes": {
+                    "xml:lang": "catalog_licenses.catalog_license_language",
+                    "rdf:resource": "catalog_licenses.catalog_license_rdf_resource",
+                    "licenseType": "catalog_licenses.catalog_license_type",
+                },
+            },
+            "rights": {
+                "@attributes": {
+                    "xml:lang": "catalog_rights.catalog_right_language",
+                    "rdf:resource": "catalog_rights.catalog_right_rdf_resource",
+                },
+                "@value": "catalog_rights.catalog_rights_right",
+            },
+            "subject": {
+                "@value": "catalog_subjects.catalog_subject",
+                "@attributes": {
+                    "xml:lang": "catalog_subjects.catalog_subject_language",
+                    "subjectScheme": "catalog_subjects.catalog_subject_scheme",
+                    "subjectURI": "catalog_subjects.catalog_subject_uri",
+                },
+            },
+            "title": {
+                "@value": "catalog_titles.catalog_title",
+                "@attributes": {"xml:lang": "catalog_titles.catalog_title_language"},
+            },
         }
+    },
+    "junii2_mapping": "",
+    "lido_mapping": "",
+    "lom_mapping": "",
+    "oai_dc_mapping": {"publisher": {"@value": "publisher"}},
+    "spase_mapping": "",
+}
 
 
 def add(post_data, key, **kwargs):
@@ -86,7 +149,7 @@ def schema(title="", multi_flag=multiple_flag):
                                             },
                                         },
                                         "contributor_name_language": {
-                                            'type': ['null', 'string'],
+                                            "type": ["null", "string"],
                                             "format": "select",
                                             "enum": config.LANGUAGE_VAL2_1,
                                             "currentEnum": config.LANGUAGE_VAL2_1,
@@ -118,7 +181,7 @@ def schema(title="", multi_flag=multiple_flag):
                                 "title_i18n": {"ja": "識別子", "en": "Identifier"},
                             },
                             "catalog_identifier_type": {
-                                'type': ['null', 'string'],
+                                "type": ["null", "string"],
                                 "format": "select",
                                 "enum": ["DOI", "HDL", "URI"],
                                 "currentEnum": ["DOI", "HDL", "URI"],
@@ -198,169 +261,171 @@ def schema(title="", multi_flag=multiple_flag):
                 "catalog_subjects": {
                     "type": "array",
                     "format": "array",
-                    "items":{
-                    "type": "object",
-                    "format": "object",
-                    "properties": {
-                        "catalog_subject": {
-                            "type": "string",
-                            "format": "text",
-                            "title": "Subject",
-                            "title_i18n": {"ja": "主題", "en": "Subject"},
+                    "items": {
+                        "type": "object",
+                        "format": "object",
+                        "properties": {
+                            "catalog_subject": {
+                                "type": "string",
+                                "format": "text",
+                                "title": "Subject",
+                                "title_i18n": {"ja": "主題", "en": "Subject"},
+                            },
+                            "catalog_subject_language": {
+                                "type": "string",
+                                "format": "select",
+                                "enum": config.LANGUAGE_VAL2_1,
+                                "currentEnum": config.LANGUAGE_VAL2_1,
+                                "title": "Language",
+                                "title_i18n": {"ja": "言語", "en": "Language"},
+                            },
+                            "catalog_subject_uri": {
+                                "type": "string",
+                                "format": "text",
+                                "title": "Subject URI",
+                                "title_i18n": {"ja": "主題URI", "en": "Subject URI"},
+                            },
+                            "catalog_subject_scheme": {
+                                "type": "string",
+                                "format": "select",
+                                "enum": [
+                                    "BSH",
+                                    "DDC",
+                                    "e-Rad",
+                                    "LCC",
+                                    "LCSH",
+                                    "MeSH",
+                                    "NDC",
+                                    "NDLC",
+                                    "NDLSH",
+                                    "SciVal",
+                                    "UDC",
+                                    "Other",
+                                ],
+                                "currentEnum": [
+                                    "BSH",
+                                    "DDC",
+                                    "e-Rad",
+                                    "LCC",
+                                    "LCSH",
+                                    "MeSH",
+                                    "NDC",
+                                    "NDLC",
+                                    "NDLSH",
+                                    "SciVal",
+                                    "UDC",
+                                    "Other",
+                                ],
+                                "title": "Subject Scheme",
+                                "title_i18n": {"ja": "主題スキーマ", "en": "Subject Scheme"},
+                            },
                         },
-                        "catalog_subject_language": {
-                            "type": "string",
-                            "format": "select",
-                            "enum": config.LANGUAGE_VAL2_1,
-                            "currentEnum": config.LANGUAGE_VAL2_1,
-                            "title": "Language",
-                            "title_i18n": {"ja": "言語", "en": "Language"},
-                        },
-                        "catalog_subject_uri": {
-                            "type": "string",
-                            "format": "text",
-                            "title": "Subject URI",
-                            "title_i18n": {"ja": "主題URI", "en": "Subject URI"},
-                        },
-                        "catalog_subject_scheme": {
-                            "type": "string",
-                            "format": "select",
-                            "enum": [
-                                "BSH",
-                                "DDC",
-                                "e-Rad",
-                                "LCC",
-                                "LCSH",
-                                "MeSH",
-                                "NDC",
-                                "NDLC",
-                                "NDLSH",
-                                "SciVal",
-                                "UDC",
-                                "Other",
-                            ],
-                            "currentEnum": [
-                                "BSH",
-                                "DDC",
-                                "e-Rad",
-                                "LCC",
-                                "LCSH",
-                                "MeSH",
-                                "NDC",
-                                "NDLC",
-                                "NDLSH",
-                                "SciVal",
-                                "UDC",
-                                "Other",
-                            ],
-                            "title": "Subject Scheme",
-                            "title_i18n": {"ja": "主題スキーマ", "en": "Subject Scheme"},
-                        },
-                    },
                     },
                     "title": "Subject",
                 },
                 "catalog_licenses": {
                     "type": "array",
                     "format": "array",
-                    "items":{
-                    "type": "object",
-                    "format": "object",
-                    "properties": {
-                        "catalog_license": {
-                            "type": "string",
-                            "format": "text",
-                            "title": "License",
-                            "title_i18n": {"ja": "ライセンス", "en": "License"},
+                    "items": {
+                        "type": "object",
+                        "format": "object",
+                        "properties": {
+                            "catalog_license": {
+                                "type": "string",
+                                "format": "text",
+                                "title": "License",
+                                "title_i18n": {"ja": "ライセンス", "en": "License"},
+                            },
+                            "catalog_license_language": {
+                                "type": "string",
+                                "format": "select",
+                                "enum": config.LANGUAGE_VAL2_1,
+                                "currentEnum": config.LANGUAGE_VAL2_1,
+                                "title": "Language",
+                                "title_i18n": {"ja": "言語", "en": "Language"},
+                            },
+                            "catalog_license_type": {
+                                "type": "string",
+                                "format": "select",
+                                "enum": ["file", "metadata", "thumbnail"],
+                                "currentEnum": ["file", "metadata", "thumbnail"],
+                                "title": "License Type",
+                                "title_i18n": {"ja": "ライセンスタイプ", "en": "License Type"},
+                            },
+                            "catalog_license_rdf_resource": {
+                                "type": "string",
+                                "format": "text",
+                                "title": "RDF Resource",
+                                "title_i18n": {"ja": "RDFリソース", "en": "RDF Resource"},
+                            },
                         },
-                        "catalog_license_language": {
-                            "type": "string",
-                            "format": "select",
-                            "enum": config.LANGUAGE_VAL2_1,
-                            "currentEnum": config.LANGUAGE_VAL2_1,
-                            "title": "Language",
-                            "title_i18n": {"ja": "言語", "en": "Language"},
-                        },
-                        "catalog_license_type": {
-                            "type": "string",
-                            "format": "select",
-                            "enum": ["file", "metadata", "thumbnail"],
-                            "currentEnum": ["file", "metadata", "thumbnail"],
-                            "title": "License Type",
-                            "title_i18n": {"ja": "ライセンスタイプ", "en": "License Type"},
-                        },
-                        "catalog_license_rdf_resource": {
-                            "type": "string",
-                            "format": "text",
-                            "title": "RDF Resource",
-                            "title_i18n": {"ja": "RDFリソース", "en": "RDF Resource"},
-                        },
-                    },
                     },
                     "title": "License",
                 },
                 "catalog_rights": {
                     "type": "array",
                     "format": "array",
-                    "items":{
-                                        "type": "object",
-                    "format": "object",
-                    "properties": {
-                        "catalog_rights_right": {
-                            "type": "string",
-                            "format": "text",
-                            "title": "Rights",
-                            "title_i18n": {"ja": "権利情報", "en": "Rights"},
+                    "items": {
+                        "type": "object",
+                        "format": "object",
+                        "properties": {
+                            "catalog_rights_right": {
+                                "type": "string",
+                                "format": "text",
+                                "title": "Rights",
+                                "title_i18n": {"ja": "権利情報", "en": "Rights"},
+                            },
+                            "catalog_right_language": {
+                                "type": "string",
+                                "format": "select",
+                                "enum": config.LANGUAGE_VAL2_1,
+                                "currentEnum": config.LANGUAGE_VAL2_1,
+                                "title": "Language",
+                                "title_i18n": {"ja": "言語", "en": "Language"},
+                            },
+                            "catalog_right_rdf_resource": {
+                                "type": "string",
+                                "format": "text",
+                                "title": "RDF Resource",
+                                "title_i18n": {"ja": "RDFリソース", "en": "RDF Resource"},
+                            },
                         },
-                        "catalog_right_language": {
-                            "type": "string",
-                            "format": "select",
-                            "enum": config.LANGUAGE_VAL2_1,
-                            "currentEnum": config.LANGUAGE_VAL2_1,
-                            "title": "Language",
-                            "title_i18n": {"ja": "言語", "en": "Language"},
-                        },
-                        "catalog_right_rdf_resource": {
-                            "type": "string",
-                            "format": "text",
-                            "title": "RDF Resource",
-                            "title_i18n": {"ja": "RDFリソース", "en": "RDF Resource"},
-                        },
-                    },},
+                    },
                     "title": "Rights",
                 },
                 "catalog_access_rights": {
                     "type": "array",
                     "format": "array",
-                    "items":{
-                                            "type": "object",
-                    "format": "object",
-                    "properties": {
-                        "catalog_access_right": {
-                            "type": "string",
-                            "format": "select",
-                            "enum": [
-                                "embargoed access",
-                                "metadata only access",
-                                "restricted access",
-                                "open access",
-                            ],
-                            "currentEnum": [
-                                "embargoed access",
-                                "metadata only access",
-                                "restricted access",
-                                "open access",
-                            ],
-                            "title": "Access Rights",
-                            "title_i18n": {"ja": "アクセス権", "en": "Access Rights"},
+                    "items": {
+                        "type": "object",
+                        "format": "object",
+                        "properties": {
+                            "catalog_access_right": {
+                                "type": "string",
+                                "format": "select",
+                                "enum": [
+                                    "embargoed access",
+                                    "metadata only access",
+                                    "restricted access",
+                                    "open access",
+                                ],
+                                "currentEnum": [
+                                    "embargoed access",
+                                    "metadata only access",
+                                    "restricted access",
+                                    "open access",
+                                ],
+                                "title": "Access Rights",
+                                "title_i18n": {"ja": "アクセス権", "en": "Access Rights"},
+                            },
+                            "catalog_access_right_rdf_resource": {
+                                "type": "string",
+                                "format": "text",
+                                "title": "RDF Resource",
+                                "title_i18n": {"ja": "RDFリソース", "en": "RDF Resource"},
+                            },
                         },
-                        "catalog_access_right_rdf_resource": {
-                            "type": "string",
-                            "format": "text",
-                            "title": "RDF Resource",
-                            "title_i18n": {"ja": "RDFリソース", "en": "RDF Resource"},
-                        },
-                    },},
+                    },
                     "title": "Access Rights",
                 },
                 "catalog_file": {
@@ -510,7 +575,7 @@ def form(
                 {
                     "key": "{}.catalog_descriptions".format(key),
                     "title": "Description",
-                                        "add": "New",
+                    "add": "New",
                     "style": {"add": "btn-success"},
                     "items": [
                         {
@@ -554,9 +619,7 @@ def form(
                     "style": {"add": "btn-success"},
                     "items": [
                         {
-                            "key": "{}.catalog_subjects[].catalog_subject".format(
-                                key
-                            ),
+                            "key": "{}.catalog_subjects[].catalog_subject".format(key),
                             "type": "text",
                             "title": "Subject",
                             "title_i18n": {"ja": "主題", "en": "Subject"},
@@ -571,7 +634,9 @@ def form(
                             "titleMap": get_select_value(config.LANGUAGE_VAL2_1),
                         },
                         {
-                            "key": "{}.catalog_subjects[].catalog_subject_uri".format(key),
+                            "key": "{}.catalog_subjects[].catalog_subject_uri".format(
+                                key
+                            ),
                             "type": "text",
                             "title": "Subject URI",
                             "title_i18n": {"ja": "主題URI", "en": "Subject URI"},
@@ -608,9 +673,7 @@ def form(
                     "style": {"add": "btn-success"},
                     "items": [
                         {
-                            "key": "{}.catalog_licenses[].catalog_license".format(
-                                key
-                            ),
+                            "key": "{}.catalog_licenses[].catalog_license".format(key),
                             "type": "text",
                             "title": "License",
                             "title_i18n": {"ja": "ライセンス", "en": "License"},
@@ -649,15 +712,12 @@ def form(
                 },
                 {
                     "key": "{}.catalog_rights".format(key),
-                  
                     "title": "Rights",
-                                        "add": "New",
+                    "add": "New",
                     "style": {"add": "btn-success"},
                     "items": [
                         {
-                            "key": "{}.catalog_rights[].catalog_right".format(
-                                key
-                            ),
+                            "key": "{}.catalog_rights[].catalog_right".format(key),
                             "type": "text",
                             "title": "Rights",
                             "title_i18n": {"ja": "アクセス権", "en": "Access Rights"},
@@ -683,9 +743,8 @@ def form(
                 },
                 {
                     "key": "{}.catalog_access_rights".format(key),
-                 
                     "title": "Access Rights",
-                                        "add": "New",
+                    "add": "New",
                     "style": {"add": "btn-success"},
                     "items": [
                         {

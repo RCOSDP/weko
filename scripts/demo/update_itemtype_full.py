@@ -104,7 +104,6 @@ def main():
                         )
                         _render["table_row_map"]["form"].append(_form)
                         _render["table_row_map"]["mapping"][_prop_id] = new_prop_mapping.get(str(id),"")
-                        print(_render["table_row_map"]["mapping"][_prop_id])
                         _render["table_row"].append(_prop_id)
                         print("property cus_{} has been registerd.".format(id))
 
@@ -133,8 +132,12 @@ def main():
                     flag_modified(itemType, "form")
                     flag_modified(itemType, "render")
                     db.session.merge(itemType)
+                    Mapping.create(item_type_id=itemType.id,
+                               mapping=table_row_map.get('mapping'))
                     print("session merged.")
         db.session.commit()
+        
+        
         print("session commited.")
     except Exception as e:
         print(traceback.format_exc())

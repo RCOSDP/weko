@@ -14,32 +14,30 @@ multiple_flag = True
 name_ja = "出版者情報"
 name_en = "Publisher Information"
 mapping = {
-            "display_lang_type": "",
-            "jpcoar_v1_mapping": {},
-            "jpcoar_mapping": {
-                "publisher_jpcoar": {
-                    "publisherDescription": {
-                        "@value": "publisher_descriptions.publisher_description",
-                        "@attributes": {
-                            "xml:lang": "publisher_descriptions.publisher_description_language"
-                        },
-                    },
-                    "location": {"@value": "publisher_locations.publisher_location"},
-                    "publicationPlace": {"@value": "publication_places.publication_place"},
-                    "publisherName": {
-                        "@value": "publisher_names.publisher_name",
-                        "@attributes": {
-                            "xml:lang": "publisher_names.publisher_name_language"
-                        },
-                    },
-                }
+    "display_lang_type": "",
+    "jpcoar_v1_mapping": {},
+    "jpcoar_mapping": {
+        "publisher_jpcoar": {
+            "publisherDescription": {
+                "@value": "publisher_descriptions.publisher_description",
+                "@attributes": {
+                    "xml:lang": "publisher_descriptions.publisher_description_language"
+                },
             },
-            "junii2_mapping": "",
-            "lido_mapping": "",
-            "lom_mapping": "",
-            "oai_dc_mapping": {"publisher": {"@value": "subitem_publisher"}},
-            "spase_mapping": "",
+            "location": {"@value": "publisher_locations.publisher_location"},
+            "publicationPlace": {"@value": "publication_places.publication_place"},
+            "publisherName": {
+                "@value": "publisher_names.publisher_name",
+                "@attributes": {"xml:lang": "publisher_names.publisher_name_language"},
+            },
         }
+    },
+    "junii2_mapping": "",
+    "lido_mapping": "",
+    "lom_mapping": "",
+    "oai_dc_mapping": {"publisher": {"@value": "subitem_publisher"}},
+    "spase_mapping": "",
+}
 
 
 def add(post_data, key, **kwargs):
@@ -86,7 +84,6 @@ def schema(title="", multi_flag=multiple_flag):
                             },
                         },
                     },
-                    
                 },
                 "publisher_descriptions": {
                     "type": "array",
@@ -106,7 +103,7 @@ def schema(title="", multi_flag=multiple_flag):
                                 },
                             },
                             "publisher_description_language": {
-                                'type': ['null', 'string'],
+                                "type": ["null", "string"],
                                 "format": "select",
                                 "enum": config.LANGUAGE_VAL2_1,
                                 "currentEnum": config.LANGUAGE_VAL2_1,
@@ -119,7 +116,7 @@ def schema(title="", multi_flag=multiple_flag):
                 "publisher_locations": {
                     "type": "array",
                     "format": "array",
-                    "title":"出版地",
+                    "title": "出版地",
                     "items": {
                         "type": "object",
                         "format": "object",
@@ -136,7 +133,7 @@ def schema(title="", multi_flag=multiple_flag):
                 "publication_places": {
                     "type": "array",
                     "format": "array",
-                    "title":"出版地（国名コード）",
+                    "title": "出版地（国名コード）",
                     "items": {
                         "type": "object",
                         "format": "object",
@@ -186,7 +183,7 @@ def form(
                                 key
                             ),
                             "format": "select",
-                            'type': ['null', 'string'],
+                            "type": ["null", "string"],
                             "title": "言語",
                             "title_i18n": {"ja": "言語", "en": "Language"},
                             "titleMap": get_select_value(config.LANGUAGE_VAL2_1),
@@ -199,9 +196,9 @@ def form(
                     "key": "{}.publisher_descriptions".format(key),
                     "title": "Publisher Description",
                     "title_i18n": {
-                                "ja": "出版者注記",
-                                "en": "Publisher Description",
-                            },
+                        "ja": "出版者注記",
+                        "en": "Publisher Description",
+                    },
                     "items": [
                         {
                             "key": "{}.publisher_descriptions[].publisher_description".format(
@@ -219,7 +216,7 @@ def form(
                                 key
                             ),
                             "format": "select",
-                            'type': ['null', 'string'],
+                            "type": ["null", "string"],
                             "title": "言語",
                             "title_i18n": {"ja": "言語", "en": "Language"},
                             "titleMap": get_select_value(config.LANGUAGE_VAL2_1),
@@ -248,13 +245,15 @@ def form(
                     "add": "New",
                     "key": "{}.publication_places".format(key),
                     "title": "出版地（国名コード）",
-                            "title_i18n": {
-                                "ja": "出版地（国名コード）",
-                                "en": "Publication Place (Country code)",
-                            },
+                    "title_i18n": {
+                        "ja": "出版地（国名コード）",
+                        "en": "Publication Place (Country code)",
+                    },
                     "items": [
                         {
-                            "key": "{}.publication_places[].publication_place".format(key),
+                            "key": "{}.publication_places[].publication_place".format(
+                                key
+                            ),
                             "type": "text",
                             "title": "出版地（国名コード）",
                             "title_i18n": {
@@ -269,5 +268,5 @@ def form(
             "key": key.replace("[]", ""),
         }
         return _d
-        
+
     return get_property_form(key, title, title_ja, title_en, multi_flag, _form)

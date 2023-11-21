@@ -14,20 +14,20 @@ multiple_flag = True
 name_ja = "物理的形態"
 name_en = "Physical Format"
 mapping = {
-            "display_lang_type": "",
-            "jpcoar_v1_mapping": {},
-            "jpcoar_mapping": {
-                "format": {
-                    "@value": "jpcoar_format",
-                    "@attributes": {"xml:lang": "jpcoar_format_language"},
-                }
-            },
-            "junii2_mapping": "",
-            "lido_mapping": "",
-            "lom_mapping": "",
-            "oai_dc_mapping": "",
-            "spase_mapping": "",
+    "display_lang_type": "",
+    "jpcoar_v1_mapping": {},
+    "jpcoar_mapping": {
+        "format": {
+            "@value": "jpcoar_format",
+            "@attributes": {"xml:lang": "jpcoar_format_language"},
         }
+    },
+    "junii2_mapping": "",
+    "lido_mapping": "",
+    "lom_mapping": "",
+    "oai_dc_mapping": "",
+    "spase_mapping": "",
+}
 
 
 def add(post_data, key, **kwargs):

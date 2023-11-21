@@ -14,20 +14,15 @@ multiple_flag = False
 name_ja = "データセットシリーズ"
 name_en = "Dataset Series"
 mapping = {
-            "display_lang_type": "",
-            "jpcoar_v1_mapping": {},
-            "jpcoar_mapping": {
-                "publisher": {
-                    "@attributes": {"xml:lang": "subitem_publisher_language"},
-                    "@value": "subitem_publisher",
-                }
-            },
-            "junii2_mapping": "",
-            "lido_mapping": "",
-            "lom_mapping": "",
-            "oai_dc_mapping": "",
-            "spase_mapping": "",
-        }
+    "display_lang_type": "",
+    "jpcoar_v1_mapping": {},
+    "jpcoar_mapping": {"datasetSeries": {"@value": "jpcoar_dataset_series"}},
+    "junii2_mapping": "",
+    "lido_mapping": "",
+    "lom_mapping": "",
+    "oai_dc_mapping": "",
+    "spase_mapping": "",
+}
 
 
 def add(post_data, key, **kwargs):

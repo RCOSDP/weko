@@ -914,8 +914,8 @@ class ItemTypes(RecordBase):
         return RevisionsIterator(self.model)
 
     @classmethod
-    def renew(cls,itemtype_id):
-        """renew itemtype.
+    def reload(cls,itemtype_id):
+        """reload itemtype properties.
 
         Args:
             itemtype_id (_type_): _description_

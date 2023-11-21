@@ -14,20 +14,20 @@ multiple_flag = True
 name_ja = "部編名"
 name_en = "Volume Title"
 mapping = {
-            "display_lang_type": "",
-            "jpcoar_v1_mapping": {},
-            "jpcoar_mapping": {
-                "volumeTitle": {
-                    "@value": "volume_title",
-                    "@attributes": {"xml:lang": "volume_title_language"},
-                }
-            },
-            "junii2_mapping": "",
-            "lido_mapping": "",
-            "lom_mapping": "",
-            "oai_dc_mapping": "",
-            "spase_mapping": "",
+    "display_lang_type": "",
+    "jpcoar_v1_mapping": {},
+    "jpcoar_mapping": {
+        "volumeTitle": {
+            "@value": "volume_title",
+            "@attributes": {"xml:lang": "volume_title_language"},
         }
+    },
+    "junii2_mapping": "",
+    "lido_mapping": "",
+    "lom_mapping": "",
+    "oai_dc_mapping": "",
+    "spase_mapping": "",
+}
 
 
 def add(post_data, key, **kwargs):

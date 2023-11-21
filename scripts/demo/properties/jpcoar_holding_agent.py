@@ -13,32 +13,32 @@ property_id = config.JPCOAR_HOLDING_AGENT
 multiple_flag = False
 name_ja = "所蔵機関"
 name_en = "Holding Agent"
-mapping ={
-            "display_lang_type": "",
-            "jpcoar_v1_mapping": {},
-            "jpcoar_mapping": {
-                "holdingAgent": {
-                    "holdingAgentName": {
-                        "@value": "holding_agent_names.holding_agent_name",
-                        "@attributes": {
-                            "xml:lang": "holding_agent_names.holding_agent_name_language"
-                        },
-                    },
-                    "holdingAgentNameIdentifier": {
-                        "@value": "holding_agent_name_identifier.holding_agent_name_idenfitier_value",
-                        "@attributes": {
-                            "nameIdentifierScheme": "holding_agent_name_identifier.holding_agent_name_idenfitier_scheme",
-                            "nameIdentifierURI": "holding_agent_name_identifier.holding_agent_name_idenfitier_uri",
-                        },
-                    },
-                }
+mapping = {
+    "display_lang_type": "",
+    "jpcoar_v1_mapping": {},
+    "jpcoar_mapping": {
+        "holdingAgent": {
+            "holdingAgentName": {
+                "@value": "holding_agent_names.holding_agent_name",
+                "@attributes": {
+                    "xml:lang": "holding_agent_names.holding_agent_name_language"
+                },
             },
-            "junii2_mapping": "",
-            "lido_mapping": "",
-            "lom_mapping": "",
-            "oai_dc_mapping": {"publisher": {"@value": "subitem_publisher"}},
-            "spase_mapping": "",
+            "holdingAgentNameIdentifier": {
+                "@value": "holding_agent_name_identifier.holding_agent_name_idenfitier_value",
+                "@attributes": {
+                    "nameIdentifierScheme": "holding_agent_name_identifier.holding_agent_name_idenfitier_scheme",
+                    "nameIdentifierURI": "holding_agent_name_identifier.holding_agent_name_idenfitier_uri",
+                },
+            },
         }
+    },
+    "junii2_mapping": "",
+    "lido_mapping": "",
+    "lom_mapping": "",
+    "oai_dc_mapping": {"publisher": {"@value": "subitem_publisher"}},
+    "spase_mapping": "",
+}
 
 
 def add(post_data, key, **kwargs):

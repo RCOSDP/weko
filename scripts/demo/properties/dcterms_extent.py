@@ -14,20 +14,20 @@ multiple_flag = True
 name_ja = "大きさ"
 name_en = "Extent"
 mapping = {
-            "display_lang_type": "",
-            "jpcoar_v1_mapping": {},
-            "jpcoar_mapping": {
-                "extent": {
-                    "@value": "dcterms_extent",
-                    "@attributes": {"xml:lang": "dcterms_extent_language"},
-                }
-            },
-            "junii2_mapping": "",
-            "lido_mapping": "",
-            "lom_mapping": "",
-            "oai_dc_mapping": "",
-            "spase_mapping": "",
+    "display_lang_type": "",
+    "jpcoar_v1_mapping": {},
+    "jpcoar_mapping": {
+        "extent": {
+            "@value": "dcterms_extent",
+            "@attributes": {"xml:lang": "dcterms_extent_language"},
         }
+    },
+    "junii2_mapping": "",
+    "lido_mapping": "",
+    "lom_mapping": "",
+    "oai_dc_mapping": "",
+    "spase_mapping": "",
+}
 
 
 def add(post_data, key, **kwargs):
@@ -53,7 +53,7 @@ def schema(title="", multi_flag=multiple_flag):
                 "dcterms_extent": {
                     "type": "string",
                     "format": "text",
-                    "title": "大きさ",
+                    "title": "Extent",
                     "title_i18n": {"ja": "大きさ", "en": "Extent"},
                 },
                 "dcterms_extent_language": {

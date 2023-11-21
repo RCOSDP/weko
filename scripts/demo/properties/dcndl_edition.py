@@ -14,20 +14,20 @@ multiple_flag = True
 name_ja = "版"
 name_en = "Edition"
 mapping = {
-            "display_lang_type": "",
-            "jpcoar_v1_mapping": {},
-            "jpcoar_mapping": {
-                "edition": {
-                    "@value": "edition",
-                    "@attributes": {"xml:lang": "edition_language"},
-                }
-            },
-            "junii2_mapping": "",
-            "lido_mapping": "",
-            "lom_mapping": "",
-            "oai_dc_mapping": {"publisher": {"@value": "subitem_publisher"}},
-            "spase_mapping": "",
+    "display_lang_type": "",
+    "jpcoar_v1_mapping": {},
+    "jpcoar_mapping": {
+        "edition": {
+            "@value": "edition",
+            "@attributes": {"xml:lang": "edition_language"},
         }
+    },
+    "junii2_mapping": "",
+    "lido_mapping": "",
+    "lom_mapping": "",
+    "oai_dc_mapping": {"publisher": {"@value": "subitem_publisher"}},
+    "spase_mapping": "",
+}
 
 
 def add(post_data, key, **kwargs):

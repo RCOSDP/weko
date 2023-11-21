@@ -13,17 +13,15 @@ multiple_flag = True
 name_ja = "日付（リテラル）"
 name_en = "Date(Literal)"
 mapping = {
-            "display_lang_type": "",
-            "jpcoar_v1_mapping": "",
-            "jpcoar_mapping": {'date_dcterms':{'@value': 'subitem_dcterms_date'}},
-            "junii2_mapping": "",
-            "lido_mapping": "",
-            "lom_mapping": "",
-            "oai_dc_mapping": {'date': {
-                    '@value': 'subitem_dcterms_date'
-                }},
-            "spase_mapping": "",
-        }
+    "display_lang_type": "",
+    "jpcoar_v1_mapping": "",
+    "jpcoar_mapping": {"date_dcterms": {"@value": "subitem_dcterms_date"}},
+    "junii2_mapping": "",
+    "lido_mapping": "",
+    "lom_mapping": "",
+    "oai_dc_mapping": {"date": {"@value": "subitem_dcterms_date"}},
+    "spase_mapping": "",
+}
 
 
 def add(post_data, key, **kwargs):
@@ -43,7 +41,7 @@ def schema(title="", multi_flag=multiple_flag):
     def _schema():
         """Schema text."""
         _d = {
-            'system_prop': False,
+            "system_prop": False,
             "type": "object",
             "properties": {
                 "subitem_dcterms_date": {
@@ -75,7 +73,7 @@ def form(
                     "title_i18n": {"en": "Date Literal", "ja": "日付（リテラル）"},
                 },
             ],
-            "key": key.replace('[]', ''),
+            "key": key.replace("[]", ""),
         }
         return _d
 

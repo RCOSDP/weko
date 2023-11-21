@@ -1566,6 +1566,8 @@ xsd = {
             "minOccurs": 0,
             "attributes": [{
                 "use": "optional",
+                "name": "xml:lang",
+                "ref": "xml:lang"
             }]
         },
     },
@@ -1643,19 +1645,19 @@ xsd = {
         "type": {
             "maxOccurs": 1,
             "minOccurs": 0,
-            "attributes": [
-                {
-                    "use": "optional",
-                    "name": "datasetSeriesType",
-                    "ref": None,
-                    "restriction": {
-                        "enumeration": [
-                            "True",
-                            "False",
-                        ]
-                    }
-                },
-            ]
+            # "attributes": [
+            #     {
+            #         "use": "optional",
+            #         "name": "datasetSeriesType",
+            #         "ref": None,
+            #         "restriction": {
+            #             "enumeration": [
+            #                 "True",
+            #                 "False",
+            #             ]
+            #         }
+            #     },
+            # ]
         },
     },
     "jpcoar:catalog": { 

@@ -14,20 +14,20 @@ multiple_flag = True
 name_ja = "原文の言語"
 name_en = "Original Language"
 mapping = {
-            "display_lang_type": "",
-            "jpcoar_v1_mapping": {},
-            "jpcoar_mapping": {
-                "originalLanguage": {
-                    "@value": "original_language",
-                    "@attributes": {"xml:lang": "original_language_language"},
-                }
-            },
-            "junii2_mapping": "",
-            "lido_mapping": "",
-            "lom_mapping": "",
-            "oai_dc_mapping": "",
-            "spase_mapping": "",
+    "display_lang_type": "",
+    "jpcoar_v1_mapping": {},
+    "jpcoar_mapping": {
+        "originalLanguage": {
+            "@value": "original_language",
+            "@attributes": {"xml:lang": "original_language_language"},
         }
+    },
+    "junii2_mapping": "",
+    "lido_mapping": "",
+    "lom_mapping": "",
+    "oai_dc_mapping": "",
+    "spase_mapping": "",
+}
 
 
 def add(post_data, key, **kwargs):
