@@ -283,6 +283,7 @@ class ItemTypeMetaDataView(BaseView):
 
         lists = {'system': {}}
         for k in props:
+            current_app.logger.error("hoge:{}".format(k))
             name = k.name
             if lang and 'title_i18n' in k.form and \
                 lang in k.form['title_i18n'] and \

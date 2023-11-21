@@ -13,15 +13,7 @@ property_id = config.JPCOAR_FORMAT
 multiple_flag = True
 name_ja = "物理的形態"
 name_en = "Physical Format"
-
-
-def add(post_data, key, **kwargs):
-    """Add to a item type."""
-    option = kwargs.pop("option")
-    set_post_data(post_data, property_id, name_ja, key, option, form, schema, **kwargs)
-
-    if kwargs.pop("mapping", True):
-        post_data["table_row_map"]["mapping"][key] = {
+mapping = {
             "display_lang_type": "",
             "jpcoar_v1_mapping": {},
             "jpcoar_mapping": {
@@ -36,6 +28,15 @@ def add(post_data, key, **kwargs):
             "oai_dc_mapping": "",
             "spase_mapping": "",
         }
+
+
+def add(post_data, key, **kwargs):
+    """Add to a item type."""
+    option = kwargs.pop("option")
+    set_post_data(post_data, property_id, name_ja, key, option, form, schema, **kwargs)
+
+    if kwargs.pop("mapping", True):
+        post_data["table_row_map"]["mapping"][key] = mapping
     else:
         post_data["table_row_map"]["mapping"][key] = config.DEFAULT_MAPPING
 

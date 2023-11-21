@@ -926,26 +926,27 @@ class ItemTypes(RecordBase):
         data = pickle.loads(pickle.dumps(item_type.render, -1))
         pat1 = re.compile(r'cus_(\d+)')
         for idx, i in enumerate(data['table_row_map']['form']):
-            _prop_id = i['key']
-            if _prop_id.startswith('item_'):
-                _tmp = data['meta_list'][_prop_id]['input_type']
-                multiple_flg = data['meta_list'][_prop_id]['option']['multiple']
-                if pat1.match(_tmp):
-                    _tmp = int(_tmp.replace('cus_', ''))
-                    _prop = ItemTypeProps.get_record(_tmp)
-                    if _prop:
-                        # data['meta_list'][_prop_id] = json.loads('{"input_maxItems": "9999","input_minItems": "1","input_type": "cus_'+str(_prop.id)+'","input_value": "","option": {"crtf": false,"hidden": false,"multiple": true,"oneline": false,"required": false,"showlist": false},"title": "'+_prop.name+'","title_i18n": {"en": "", "ja": "'+_prop.name+'"}}')
-                        data['schemaeditor']['schema'][_prop_id]=pickle.loads(pickle.dumps(_prop.schema, -1))
-                        if 'items' in data['table_row_map']['schema']['properties'][_prop_id]:
-                            data['table_row_map']['schema']['properties'][_prop_id]['items']==pickle.loads(pickle.dumps(_prop.schema, -1))
-                        else:
-                            data['table_row_map']['schema']['properties'][_prop_id]=pickle.loads(pickle.dumps(_prop.schema, -1))
-                        if multiple_flg:
-                            _forms = json.loads(json.dumps(pickle.loads(pickle.dumps(_prop.forms, -1))).replace('parentkey',_prop_id))
-                            data['table_row_map']['form'][idx]=pickle.loads(pickle.dumps(_forms, -1))
-                        else:
-                            _form = json.loads(json.dumps(pickle.loads(pickle.dumps(_prop.form, -1))).replace('parentkey',_prop_id))
-                            data['table_row_map']['form'][idx]=pickle.loads(pickle.dumps(_form, -1))
+            if isinstance(i,dict) and 'key' in i:
+                _prop_id = i['key']
+                if _prop_id.startswith('item_'):
+                    _tmp = data['meta_list'][_prop_id]['input_type']
+                    multiple_flg = data['meta_list'][_prop_id]['option']['multiple']
+                    if pat1.match(_tmp):
+                        _tmp = int(_tmp.replace('cus_', ''))
+                        _prop = ItemTypeProps.get_record(_tmp)
+                        if _prop:
+                            # data['meta_list'][_prop_id] = json.loads('{"input_maxItems": "9999","input_minItems": "1","input_type": "cus_'+str(_prop.id)+'","input_value": "","option": {"crtf": false,"hidden": false,"multiple": true,"oneline": false,"required": false,"showlist": false},"title": "'+_prop.name+'","title_i18n": {"en": "", "ja": "'+_prop.name+'"}}')
+                            data['schemaeditor']['schema'][_prop_id]=pickle.loads(pickle.dumps(_prop.schema, -1))
+                            if 'items' in data['table_row_map']['schema']['properties'][_prop_id]:
+                                data['table_row_map']['schema']['properties'][_prop_id]['items']=pickle.loads(pickle.dumps(_prop.schema, -1))
+                            else:
+                                data['table_row_map']['schema']['properties'][_prop_id]=pickle.loads(pickle.dumps(_prop.schema, -1))
+                            if multiple_flg:
+                                _forms = json.loads(json.dumps(pickle.loads(pickle.dumps(_prop.forms, -1))).replace('parentkey',_prop_id))
+                                data['table_row_map']['form'][idx]=pickle.loads(pickle.dumps(_forms, -1))
+                            else:
+                                _form = json.loads(json.dumps(pickle.loads(pickle.dumps(_prop.form, -1))).replace('parentkey',_prop_id))
+                                data['table_row_map']['form'][idx]=pickle.loads(pickle.dumps(_form, -1))
                                                        
         from weko_itemtypes_ui.utils import fix_json_schema,update_required_schema_not_exist_in_form, update_text_and_textarea
         table_row_map = data.get('table_row_map')

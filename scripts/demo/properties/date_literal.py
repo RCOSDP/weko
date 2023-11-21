@@ -12,15 +12,7 @@ property_id = config.DATE_LITERAL
 multiple_flag = True
 name_ja = "日付（リテラル）"
 name_en = "Date(Literal)"
-
-
-def add(post_data, key, **kwargs):
-    """Add to a item type."""
-    option = kwargs.pop("option")
-    set_post_data(post_data, property_id, name_ja, key, option, form, schema, **kwargs)
-
-    if kwargs.pop("mapping", True):
-        post_data["table_row_map"]["mapping"][key] = {
+mapping = {
             "display_lang_type": "",
             "jpcoar_v1_mapping": "",
             "jpcoar_mapping": {'date_dcterms':{'@value': 'subitem_dcterms_date'}},
@@ -32,6 +24,15 @@ def add(post_data, key, **kwargs):
                 }},
             "spase_mapping": "",
         }
+
+
+def add(post_data, key, **kwargs):
+    """Add to a item type."""
+    option = kwargs.pop("option")
+    set_post_data(post_data, property_id, name_ja, key, option, form, schema, **kwargs)
+
+    if kwargs.pop("mapping", True):
+        post_data["table_row_map"]["mapping"][key] = mapping
     else:
         post_data["table_row_map"]["mapping"][key] = config.DEFAULT_MAPPING
 
