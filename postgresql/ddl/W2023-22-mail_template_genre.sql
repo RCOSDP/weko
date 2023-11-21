@@ -57,7 +57,7 @@ E-mail：[restricted_site_mail]', true, 1),
 [advisor_fullname]　様
 
 [restricted_site_name_ja]です。
-[advisor_university_institution] [restricted_fullname]様から以下のデータの利用申請がありました。
+[restricted_university_institution] [restricted_fullname]様から以下のデータの利用申請がありました。
 
 申請番号：[restricted_activity_id]
 登録者名：[restricted_fullname]
