@@ -959,21 +959,21 @@ class ItemTypes(RecordBase):
             json_schema, json_form = update_text_and_textarea(
                 itemtype_id, json_schema, json_form)
         
-        item_type.schema = json_schema
-        item_type.form = json_form
-        item_type.render = data
+        # item_type.schema = json_schema
+        # item_type.form = json_form
+        # item_type.render = data
         
-        flag_modified(item_type, 'schema')
-        flag_modified(item_type, 'form')
-        flag_modified(item_type, 'render')
+        # flag_modified(item_type, 'schema')
+        # flag_modified(item_type, 'form')
+        # flag_modified(item_type, 'render')
         
-        db.session.merge(item_type)
+        # db.session.merge(item_type)
 
-        # record = cls.update(id_=itemtype_id,
-        #                               name=table_row_map.get('name'),
-        #                               schema=json_schema,
-        #                               form=table_row_map.get('form'),
-        #                               render=data)
+        record = cls.update(id_=itemtype_id,
+                                      name=table_row_map.get('name'),
+                                      schema=json_schema,
+                                      form=table_row_map.get('form'),
+                                      render=data)
         # return record
 
 

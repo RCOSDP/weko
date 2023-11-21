@@ -7,7 +7,17 @@ property_id = config.ITEM_TITLE
 multiple_flag = False
 name_ja = "アイテムタイトル"
 name_en = "Item Title"
-mapping = {
+mapping = config.DEFAULT_MAPPING
+
+
+def add(post_data, key, **kwargs):
+    """Add to a item type."""
+    option = kwargs.pop("option")
+    mapping_switch = kwargs["mapping_switch"]  # title, alternative
+    set_post_data(post_data, property_id, name_ja, key, option, form, schema, **kwargs)
+
+    if kwargs.pop("mapping", True):
+        post_data["table_row_map"]["mapping"][key] = {
     "display_lang_type": "",
     "jpcoar_v1_mapping": {
         mapping_switch: {"@value": "subitem_restricted_access_item_title"}
@@ -21,16 +31,6 @@ mapping = {
     "oai_dc_mapping": "",
     "spase_mapping": "",
 }
-
-
-def add(post_data, key, **kwargs):
-    """Add to a item type."""
-    option = kwargs.pop("option")
-    mapping_switch = kwargs["mapping_switch"]  # title, alternative
-    set_post_data(post_data, property_id, name_ja, key, option, form, schema, **kwargs)
-
-    if kwargs.pop("mapping", True):
-        post_data["table_row_map"]["mapping"][key] = mapping
     else:
         post_data["table_row_map"]["mapping"][key] = config.DEFAULT_MAPPING
 
