@@ -82,6 +82,7 @@ def form(key='', title='', title_ja='', title_en='', multi_flag=multiple_flag):
     def _form(key):
         """Form text."""
         _d = {
+            "type": "fieldset",
             'items': [
                 {
                     'key': 'parentkey.subitem_systemidt_identifier',
