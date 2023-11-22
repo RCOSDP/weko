@@ -47,6 +47,7 @@ from sqlalchemy.sql.expression import desc
 from werkzeug.local import LocalProxy
 
 
+
 from .fetchers import weko_record_fetcher
 from .models import FeedbackMailList as _FeedbackMailList
 from .models import FileMetadata, ItemMetadata, ItemReference, ItemType
@@ -974,6 +975,30 @@ class ItemTypes(RecordBase):
                                       schema=json_schema,
                                       form=table_row_map.get('form'),
                                       render=data)
+        upgrade_version = current_app.config[
+                'WEKO_ITEMTYPES_UI_UPGRADE_VERSION_ENABLED'
+            ]
+            
+        if not upgrade_version:
+            Mapping.create(item_type_id=record.model.id,
+                            mapping=table_row_map.get('mapping'))
+        # Just update Mapping when create new record
+        elif record.model.id != itemtype_id:
+            Mapping.create(item_type_id=record.model.id,
+                            mapping=table_row_map.get('mapping'))
+            from weko_workflow.api import WorkFlow
+            workflow = WorkFlow()
+            workflow_list = workflow.get_workflow_by_itemtype_id(
+                itemtype_id)
+            for wf in workflow_list:
+                workflow.update_itemtype_id(wf, record.model.id)
+
+        ItemTypeEditHistory.create_or_update(
+            item_type_id=record.model.id,
+            user_id=1,
+            notes=data.get('edit_notes', {})
+        )
+            
         # return record
 
 

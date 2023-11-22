@@ -687,7 +687,7 @@ DELETE FROM item_type_property WHERE id=88;
 
 -- FILE = '1035'   
 UPDATE item_type SET render=replace(render::text,'cus_20"','cus_1035"')::jsonb WHERE render::text like '%cus_20"%';
-UPDATE item_type SET render=replace(render::text,'cus_65"','cus_1035"')::jsonb WHERE render::text like '%cus_20"%';
+-- UPDATE item_type SET render=replace(render::text,'cus_65"','cus_1035"')::jsonb WHERE render::text like '%cus_20"%';
 
 UPDATE item_type SET schema=replace(schema::text,'subitem_1522652546580','url')::jsonb WHERE schema::text like '%subitem_1522652546580%';
 UPDATE item_type SET form=replace(form::text,'subitem_1522652546580','url')::jsonb WHERE form::text like '%subitem_1522652546580%';
@@ -769,7 +769,7 @@ UPDATE item_metadata SET json=replace(json::text,'subitem_1522739295711','type')
 UPDATE item_metadata SET json=replace(json::text,'subitem_1523325300505','version')::jsonb WHERE json::text like '%subitem_1523325300505%';
 
 DELETE FROM item_type_property WHERE id=20;
-DELETE FROM item_type_property WHERE id=65;
+-- DELETE FROM item_type_property WHERE id=65;
 
 -- VERSION = '1015'   
 UPDATE item_type SET render=replace(render::text,'cus_28"','cus_1015"')::jsonb WHERE render::text like '%cus_28"%';

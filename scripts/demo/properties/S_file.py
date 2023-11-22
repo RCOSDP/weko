@@ -91,74 +91,92 @@ def schema(title="", multi_flag=multiple_flag):
     def _schema():
         """Schema text."""
         _d = {
-            "system_prop": True,
-            "type": "object",
+            "format": "object",
             "properties": {
-                "subitem_systemfile_size": {
-                    "type": "string",
-                    "title": "SYSTEMFILE Size",
-                    "format": "text",
-                },
-                "subitem_systemfile_version": {
-                    "type": "string",
-                    "title": "SYSTEMFILE Version",
-                    "format": "text",
-                },
                 "subitem_systemfile_datetime": {
-                    "type": "array",
+                    "format": "array",
                     "items": {
-                        "type": "object",
                         "format": "object",
                         "properties": {
                             "subitem_systemfile_datetime_date": {
-                                "type": "string",
-                                "title": "SYSTEMFILE DateTime Date",
                                 "format": "datetime",
+                                "title": "SYSTEMFILE DateTime Date",
+                                "type": "string",
                             },
                             "subitem_systemfile_datetime_type": {
-                                "enum": date_type,
-                                "type": "string",
-                                "title": "SYSTEMFILE DateTime Type",
+                                "enum": [
+                                    "Accepted",
+                                    "Available",
+                                    "Collected",
+                                    "Copyrighted",
+                                    "Created",
+                                    "Issued",
+                                    "Submitted",
+                                    "Updated",
+                                    "Valid",
+                                ],
                                 "format": "select",
+                                "title": "SYSTEMFILE DateTime Type",
+                                "type": "string",
                             },
                         },
+                        "type": "object",
                     },
                     "title": "SYSTEMFILE DateTime",
-                    "format": "array",
+                    "type": "array",
                 },
                 "subitem_systemfile_filename": {
-                    "type": "array",
+                    "format": "array",
                     "items": {
-                        "type": "object",
                         "format": "object",
                         "properties": {
-                            "subitem_systemfile_filename_uri": {
-                                "type": "string",
-                                "title": "SYSTEMFILE Filename URI",
+                            "subitem_systemfile_filename_label": {
                                 "format": "text",
+                                "title": "SYSTEMFILE Filename Label",
+                                "type": "string",
                             },
                             "subitem_systemfile_filename_type": {
-                                "enum": filename_type,
-                                "type": "string",
-                                "title": "SYSTEMFILE Filename Type",
+                                "enum": [
+                                    "Abstract",
+                                    "Fulltext",
+                                    "Summary",
+                                    "Thumbnail",
+                                    "Other",
+                                ],
                                 "format": "select",
-                            },
-                            "subitem_systemfile_filename_label": {
+                                "title": "SYSTEMFILE Filename Type",
                                 "type": "string",
-                                "title": "SYSTEMFILE Filename Label",
+                            },
+                            "subitem_systemfile_filename_uri": {
                                 "format": "text",
+                                "title": "SYSTEMFILE Filename URI",
+                                "type": "string",
                             },
                         },
+                        "type": "object",
                     },
                     "title": "SYSTEMFILE Filename",
-                    "format": "array",
+                    "type": "array",
                 },
                 "subitem_systemfile_mimetype": {
-                    "type": "string",
-                    "title": "SYSTEMFILE MimeType",
                     "format": "text",
+                    "title": "SYSTEMFILE MimeType",
+                    "type": "string",
+                },
+                "subitem_systemfile_size": {
+                    "format": "text",
+                    "title": "SYSTEMFILE Size",
+                    "type": "string",
+                },
+                "subitem_systemfile_version": {
+                    "format": "text",
+                    "title": "SYSTEMFILE Version",
+                    "type": "string",
                 },
             },
+            "system_prop": True,
+            "title": "File Information",
+            "type": "object",
         }
         return _d
 
@@ -174,67 +192,87 @@ def form(key="", title="", title_ja="", title_en="", multi_flag=multiple_flag):
             "items": [
                 {
                     "add": "New",
-                    "key": "parentkey.subitem_systemfile_filename",
                     "items": [
                         {
-                            "key": "parentkey.subitem_systemfile_filename[].subitem_systemfile_filename_label",
-                            "type": "text",
+                            "key": "{}.subitem_systemfile_filename[].subitem_systemfile_filename_label".format(key),
                             "title": "SYSTEMFILE Filename Label",
-                        },
-                        {
-                            "key": "parentkey.subitem_systemfile_filename[].subitem_systemfile_filename_type",
-                            "type": "select",
-                            "title": "SYSTEMFILE Filename Type",
-                            "titleMap": get_select_value(filename_type),
-                        },
-                        {
-                            "key": "parentkey.subitem_systemfile_filename[].subitem_systemfile_filename_uri",
                             "type": "text",
+                        },
+                        {
+                            "key": "{}.subitem_systemfile_filename[].subitem_systemfile_filename_type".format(key),
+                            "title": "SYSTEMFILE Filename Type",
+                            "titleMap": [
+                                {"name": "Abstract", "value": "Abstract"},
+                                {"name": "Fulltext", "value": "Fulltext"},
+                                {"name": "Summary", "value": "Summary"},
+                                {"name": "Thumbnail", "value": "Thumbnail"},
+                                {"name": "Other", "value": "Other"},
+                            ],
+                            "type": "select",
+                        },
+                        {
+                            "key": "{}.subitem_systemfile_filename[].subitem_systemfile_filename_uri".format(key),
                             "title": "SYSTEMFILE Filename URI",
+                            "type": "text",
                         },
                     ],
+                    "key": "{}.subitem_systemfile_filename".format(key),
                     "style": {"add": "btn-success"},
                     "title": "SYSTEMFILE Filename",
                 },
                 {
-                    "key": "parentkey.subitem_systemfile_mimetype",
-                    "type": "text",
+                    "key": "{}.subitem_systemfile_mimetype".format(key),
                     "title": "SYSTEMFILE MimeType",
+                    "type": "text",
                 },
                 {
-                    "key": "parentkey.subitem_systemfile_size",
-                    "type": "text",
+                    "key": "{}.subitem_systemfile_size".format(key),
                     "title": "SYSTEMFILE Size",
+                    "type": "text",
                 },
                 {
                     "add": "New",
-                    "key": "parentkey.subitem_systemfile_datetime",
                     "items": [
                         {
-                            "key": "parentkey.subitem_systemfile_datetime[].subitem_systemfile_datetime_date",
-                            "type": "template",
-                            "title": "SYSTEMFILE DateTime Date",
                             "format": "yyyy-MM-dd",
-                            "templateUrl": config.DATEPICKER_URL,
+                            "key": "{}.subitem_systemfile_datetime[].subitem_systemfile_datetime_date".format(key),
+                            "templateUrl": "/static/templates/weko_deposit/datepicker.html",
+                            "title": "SYSTEMFILE DateTime Date",
+                            "type": "template",
                         },
                         {
-                            "key": "parentkey.subitem_systemfile_datetime[].subitem_systemfile_datetime_type",
-                            "type": "select",
+                            "key": "{}.subitem_systemfile_datetime[].subitem_systemfile_datetime_type".format(key),
                             "title": "SYSTEMFILE DateTime Type",
-                            "titleMap": get_select_value(date_type),
+                            "titleMap": [
+                                {"name": "Accepted", "value": "Accepted"},
+                                {"name": "Available", "value": "Available"},
+                                {"name": "Collected", "value": "Collected"},
+                                {"name": "Copyrighted", "value": "Copyrighted"},
+                                {"name": "Created", "value": "Created"},
+                                {"name": "Issued", "value": "Issued"},
+                                {"name": "Submitted", "value": "Submitted"},
+                                {"name": "Updated", "value": "Updated"},
+                                {"name": "Valid", "value": "Valid"},
+                            ],
+                            "type": "select",
                         },
                     ],
+                    "key": "{}.subitem_systemfile_datetime".format(key),
                     "style": {"add": "btn-success"},
                     "title": "SYSTEMFILE DateTime",
                 },
                 {
-                    "key": "parentkey.subitem_systemfile_version",
-                    "type": "text",
+                    "key": "{}.subitem_systemfile_version".format(key),
                     "title": "SYSTEMFILE Version",
+                    "type": "text",
                 },
             ],
             "key": key.replace("[]", ""),
+            "title": "File Information",
+            "title_i18n": {"en": "File Information", "ja": "ファイル情報"},
+            "type": "fieldset",
         }
+
         return _d
 
     return get_property_form(key, title, title_ja, title_en, multi_flag, _form)
