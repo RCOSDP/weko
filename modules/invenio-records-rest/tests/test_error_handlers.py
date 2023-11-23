@@ -8,6 +8,8 @@
 
 """Error handler tests."""
 
+# .tox/c1/bin/pytest --cov=invenio_records_rest tests/test_error_handlers.py -vv -s -v --cov-branch --cov-report=term --basetemp=/code/modules/invenio-records-rest/.tox/c1/tmp
+
 from __future__ import absolute_import, print_function
 
 import json

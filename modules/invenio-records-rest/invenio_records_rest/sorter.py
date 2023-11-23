@@ -111,8 +111,8 @@ def eval_field(field, asc, nested_sorting=None):
         current_app.logger.debug(key)
         if "date_range" in key:
             sorting = {"_script":{"type":"number",
-            "script":{"lang":"painless","source":"def x = params._source.date_range1;Date dt = new Date();if (x != null && x instanceof Map) { def st = x.getOrDefault(\"gte\",\"\");SimpleDateFormat format = new SimpleDateFormat();if (st.length()>7) {format.applyPattern(\"yyyy-MM-dd\");}else if (st.length()>4){format.applyPattern(\"yyyy-MM\");}else if (st.length()==4){format.applyPattern(\"yyyy\");} try { dt = format.parse(st);} catch (Exception e){}} return dt.getTime()"},"order": 'asc' if key_asc else 'desc'}}
-        elif "control_number" in key:
+            "script":{"lang":"painless","source":"def x = params._source.date_range1;Date dt = new Date();if (x != null && x instanceof List) { if (x[0] != null && x[0] instanceof Map){ def st = x[0].getOrDefault(\"gte\",\"\");SimpleDateFormat format = new SimpleDateFormat();if (st.length()>7) {format.applyPattern(\"yyyy-MM-dd\");}else if (st.length()>4){format.applyPattern(\"yyyy-MM\");}else if (st.length()==4){format.applyPattern(\"yyyy\");} try { dt = format.parse(st);} catch (Exception e){}}} return dt.getTime()"},"order": 'asc' if key_asc else 'desc'}}
+        if "control_number" in key:
             sorting = {"_script":{"type":"number", "script": "Float.parseFloat(doc['control_number'].value)", "order": "asc" if key_asc else "desc"}}
 
         if nested_sorting:
@@ -150,8 +150,15 @@ def default_sorter_factory(search, index):
         return (search, {})
 
     # Get fields to sort query by
-    search = search.sort(
-        *[eval_field(f, asc, sort_options.get('nested'))
+    sort_field = [eval_field(f, asc, sort_options.get('nested'))
           for f in sort_options['fields']]
+    if key != 'controlnumber':
+        control_number_option = current_app.config['RECORDS_REST_SORT_OPTIONS'].get(index,{}).get('controlnumber')
+        if control_number_option is not None:
+            sort_field.append(eval_field(
+                control_number_option['fields'][0],'asc',control_number_option.get('nested')
+            ))
+    search = search.sort(
+        *sort_field,
     )
     return (search, {sort_arg_name: urlfield})

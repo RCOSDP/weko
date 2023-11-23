@@ -6,6 +6,7 @@
 # Invenio is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
 
+# .tox/c1/bin/pytest --cov=invenio_records_rest tests/test_views_option.py -vv -s -v --cov-branch --cov-report=term --basetemp=/code/modules/invenio-records-rest/.tox/c1/tmp
 """Test sorter."""
 
 from __future__ import absolute_import, print_function
