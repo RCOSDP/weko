@@ -91,17 +91,29 @@ def schema(title="", multi_flag=multiple_flag):
     def _schema():
         """Schema text."""
         _d = {
+            "type": "object",
             "format": "object",
             "properties": {
+                "subitem_systemfile_size": {
+                    "type": "string",
+                    "title": "SYSTEMFILE Size",
+                    "format": "text",
+                },
+                "subitem_systemfile_version": {
+                    "type": "string",
+                    "title": "SYSTEMFILE Version",
+                    "format": "text",
+                },
                 "subitem_systemfile_datetime": {
-                    "format": "array",
+                    "type": "array",
                     "items": {
+                        "type": "object",
                         "format": "object",
                         "properties": {
                             "subitem_systemfile_datetime_date": {
-                                "format": "datetime",
-                                "title": "SYSTEMFILE DateTime Date",
                                 "type": "string",
+                                "title": "SYSTEMFILE DateTime Date",
+                                "format": "datetime",
                             },
                             "subitem_systemfile_datetime_type": {
                                 "enum": [
@@ -115,25 +127,25 @@ def schema(title="", multi_flag=multiple_flag):
                                     "Updated",
                                     "Valid",
                                 ],
-                                "format": "select",
-                                "title": "SYSTEMFILE DateTime Type",
                                 "type": "string",
+                                "title": "SYSTEMFILE DateTime Type",
+                                "format": "select",
                             },
                         },
-                        "type": "object",
                     },
                     "title": "SYSTEMFILE DateTime",
-                    "type": "array",
+                    "format": "array",
                 },
                 "subitem_systemfile_filename": {
-                    "format": "array",
+                    "type": "array",
                     "items": {
+                        "type": "object",
                         "format": "object",
                         "properties": {
-                            "subitem_systemfile_filename_label": {
-                                "format": "text",
-                                "title": "SYSTEMFILE Filename Label",
+                            "subitem_systemfile_filename_uri": {
                                 "type": "string",
+                                "title": "SYSTEMFILE Filename URI",
+                                "format": "text",
                             },
                             "subitem_systemfile_filename_type": {
                                 "enum": [
@@ -143,40 +155,27 @@ def schema(title="", multi_flag=multiple_flag):
                                     "Thumbnail",
                                     "Other",
                                 ],
-                                "format": "select",
+                                "type": "string",
                                 "title": "SYSTEMFILE Filename Type",
-                                "type": "string",
+                                "format": "select",
                             },
-                            "subitem_systemfile_filename_uri": {
-                                "format": "text",
-                                "title": "SYSTEMFILE Filename URI",
+                            "subitem_systemfile_filename_label": {
                                 "type": "string",
+                                "title": "SYSTEMFILE Filename Label",
+                                "format": "text",
                             },
                         },
-                        "type": "object",
                     },
                     "title": "SYSTEMFILE Filename",
-                    "type": "array",
+                    "format": "array",
                 },
                 "subitem_systemfile_mimetype": {
-                    "format": "text",
+                    "type": "string",
                     "title": "SYSTEMFILE MimeType",
-                    "type": "string",
-                },
-                "subitem_systemfile_size": {
                     "format": "text",
-                    "title": "SYSTEMFILE Size",
-                    "type": "string",
-                },
-                "subitem_systemfile_version": {
-                    "format": "text",
-                    "title": "SYSTEMFILE Version",
-                    "type": "string",
                 },
             },
             "system_prop": True,
-            "title": "File Information",
-            "type": "object",
         }
         return _d
 
@@ -189,17 +188,21 @@ def form(key="", title="", title_ja="", title_en="", multi_flag=multiple_flag):
     def _form(key):
         """Form text."""
         _d = {
+            "key": key.replace("[]", ""),
+            "type": "fieldset",
             "items": [
                 {
                     "add": "New",
+                    "key": "{}.subitem_systemfile_filename".format(key),
                     "items": [
                         {
                             "key": "{}.subitem_systemfile_filename[].subitem_systemfile_filename_label".format(key),
-                            "title": "SYSTEMFILE Filename Label",
                             "type": "text",
+                            "title": "SYSTEMFILE Filename Label",
                         },
                         {
                             "key": "{}.subitem_systemfile_filename[].subitem_systemfile_filename_type".format(key),
+                            "type": "select",
                             "title": "SYSTEMFILE Filename Type",
                             "titleMap": [
                                 {"name": "Abstract", "value": "Abstract"},
@@ -208,40 +211,40 @@ def form(key="", title="", title_ja="", title_en="", multi_flag=multiple_flag):
                                 {"name": "Thumbnail", "value": "Thumbnail"},
                                 {"name": "Other", "value": "Other"},
                             ],
-                            "type": "select",
                         },
                         {
                             "key": "{}.subitem_systemfile_filename[].subitem_systemfile_filename_uri".format(key),
-                            "title": "SYSTEMFILE Filename URI",
                             "type": "text",
+                            "title": "SYSTEMFILE Filename URI",
                         },
                     ],
-                    "key": "{}.subitem_systemfile_filename".format(key),
                     "style": {"add": "btn-success"},
                     "title": "SYSTEMFILE Filename",
                 },
                 {
                     "key": "{}.subitem_systemfile_mimetype".format(key),
-                    "title": "SYSTEMFILE MimeType",
                     "type": "text",
+                    "title": "SYSTEMFILE MimeType",
                 },
                 {
                     "key": "{}.subitem_systemfile_size".format(key),
-                    "title": "SYSTEMFILE Size",
                     "type": "text",
+                    "title": "SYSTEMFILE Size",
                 },
                 {
                     "add": "New",
+                    "key": "{}.subitem_systemfile_datetime".format(key),
                     "items": [
                         {
-                            "format": "yyyy-MM-dd",
                             "key": "{}.subitem_systemfile_datetime[].subitem_systemfile_datetime_date".format(key),
-                            "templateUrl": "/static/templates/weko_deposit/datepicker.html",
-                            "title": "SYSTEMFILE DateTime Date",
                             "type": "template",
+                            "title": "SYSTEMFILE DateTime Date",
+                            "format": "yyyy-MM-dd",
+                            "templateUrl": "/static/templates/weko_deposit/datepicker.html",
                         },
                         {
                             "key": "{}.subitem_systemfile_datetime[].subitem_systemfile_datetime_type".format(key),
+                            "type": "select",
                             "title": "SYSTEMFILE DateTime Type",
                             "titleMap": [
                                 {"name": "Accepted", "value": "Accepted"},
@@ -254,23 +257,17 @@ def form(key="", title="", title_ja="", title_en="", multi_flag=multiple_flag):
                                 {"name": "Updated", "value": "Updated"},
                                 {"name": "Valid", "value": "Valid"},
                             ],
-                            "type": "select",
                         },
                     ],
-                    "key": "{}.subitem_systemfile_datetime".format(key),
                     "style": {"add": "btn-success"},
                     "title": "SYSTEMFILE DateTime",
                 },
                 {
                     "key": "{}.subitem_systemfile_version".format(key),
-                    "title": "SYSTEMFILE Version",
                     "type": "text",
+                    "title": "SYSTEMFILE Version",
                 },
             ],
-            "key": key.replace("[]", ""),
-            "title": "File Information",
-            "title_i18n": {"en": "File Information", "ja": "ファイル情報"},
-            "type": "fieldset",
         }
 
         return _d
