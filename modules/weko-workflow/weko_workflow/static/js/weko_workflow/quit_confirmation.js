@@ -7,6 +7,7 @@ require([
     $("#action_quit_confirmation").modal("show");
   });
 
+  // TODO ITEM LINK
   // Handle Continue btn on modal Quit confirmation
   $('#btn_cancel').on('click', function () {
     $("#action_quit_confirmation").modal("hide");
@@ -20,7 +21,30 @@ require([
     if ($('#input-comment') && $('#input-comment').val()) {
       comment = $('#input-comment').val();
     }
-    let post_uri = $('.cur_step').data('cancel-uri');
+
+    alert("BTN QUIT")
+    // TODO ITEM LINK
+    let activity_id = $("#activity_id").text().trim();
+    let action_id = $("#hide-actionId").text().trim();
+    let existing_item_link_button = $("#existing_item_link_button").val();
+    let item_link_index_tree_clicked = $("#item_link_index_tree_clicked").val();
+    let quit_button_pressed = "true"
+
+    alert(existing_item_link_button)
+    // TODO ITEM LINK POST URL
+    if (existing_item_link_button === "true") {
+      var post_uri = '/workflow/activity/action/' + activity_id + '/' + action_id + '/cancel'
+    }
+    else if (item_link_index_tree_clicked === "true") {
+      var post_uri = '/workflow/activity/action/' + activity_id + '/' + action_id + '/cancel'
+    }
+    else {
+      var post_uri = $('.cur_step').data('cancel-uri');
+    }
+
+    alert(`post_uri ~ ${post_uri}`)
+    alert(`existing_item_link_button ~ ${existing_item_link_button}`)
+
     let request_uri = $('#post_url').text();
     let pid_val = request_uri.substring(request_uri.lastIndexOf("/") + 1, request_uri.length)
     if (!pid_val) {
@@ -33,6 +57,7 @@ require([
       commond: comment,
       action_version: $('.cur_step').data('action-version'),
       pid_value: pid_val,
+      quit_button_pressed: quit_button_pressed
     };
     if(!validateSession())
       return;
@@ -64,6 +89,8 @@ require([
       dataType: 'json',
       data: JSON.stringify(data),
       success: function (data, textStatus) {
+        alert(data.data.redirect)
+        
         if(data.unauthorized){
           alert(data.msg);
           window.location.assign("/login/?next=" + window.location.pathname);

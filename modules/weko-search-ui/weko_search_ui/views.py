@@ -24,7 +24,7 @@ import time
 from xml.etree import ElementTree
 
 from blinker import Namespace
-from flask import Blueprint, current_app, flash, jsonify, render_template, request
+from flask import Blueprint, current_app, flash, jsonify, render_template, request, session
 from flask_babelex import gettext as _
 from flask_login import login_required
 from flask_security import current_user
@@ -186,6 +186,55 @@ def search():
             )
         )
         form = FlaskForm(request.form)
+
+        # TODO ITEM LINK TEST ----------------------------------------------------
+        print("\n\n WEKO SEARCH UI - views.py - def search")
+        if session.get("existing_item_link_in_progress"):
+            cur_step = "item_link"
+        if not step_item_login_url:
+            step_item_login_url = "weko_items_ui/iframe/item_edit.html"
+        
+        print("\n\n session['item_link_info']")
+        print(session.get("item_link_info"))
+        print("\n\n")
+
+        item_link_index_tree_clicked = "true"
+        item_id = activity_detail.item_id
+        post_json = request.get_json()
+        current_pid = ""
+        item_link_info = None
+        try:
+            current_pid = PersistentIdentifier.get_by_object(
+                pid_type='recid',
+                object_type='rec',
+                object_uuid=item_id
+            )
+            # print(f"current_pid.pid_value ~ {current_pid.pid_value}")
+            # print(f"post_json ~ {post_json}")
+            # print(f"request ~ {request}")
+            # print(f"request.args ~ {request.args}")
+            item_link = ItemLink(current_pid.pid_value)
+            if session.get("item_link_info"):
+                item_link_info = True
+                err = item_link.update(list(session.get("item_link_info")))
+                print(f"err ~ {err}")
+            # elif post_json:
+            #     relation_data = post_json.get('link_data')
+            #     print(f"relation_data ~ {relation_data}")
+            #     if relation_data:
+            #         err = item_link.update(relation_data)
+            #         print(f"err ~ {err}")
+            print(item_link)
+            print(item_link.get_item_link_info(current_pid.pid_value))
+            
+
+        except Exception as e:
+            print("EXCEPT", e)
+            import traceback
+            traceback.print_exc()
+        print("\n\n")
+        # TODO ITEM LINK TEST ----------------------------------------------------
+
         return render_template(
             "weko_workflow/activity_detail.html",
             action_id=action_id,
@@ -202,6 +251,7 @@ def search():
             is_login=bool(current_user.get_id()),
             is_permission=check_permission(),
             item=item,
+            item_link_index_tree_clicked=item_link_index_tree_clicked,
             page=page,
             pid=pid,
             form=form,

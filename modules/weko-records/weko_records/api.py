@@ -2219,10 +2219,21 @@ class ItemLink(object):
         updated = []
         created = []
         for item in items:
-            item_id = item['item_id']
+            # TODO ITEM LINK
+            print("\n\n UPDATE")
+            print(f"item ~ {item}")
+            print("\n\n")
+            if item.get("item_id"):
+                item_id = item['item_id']
+            elif item.get("item_links"):
+                item_id = item['item_links']
             if item_id in dst_ids:
-                updated.extend(item for dst_item in dst_relations if
-                               dst_item.reference_type != item['sele_id'])
+                if item.get("sele_id"):
+                    updated.extend(item for dst_item in dst_relations if
+                                dst_item.reference_type != item['sele_id'])
+                elif item.get("value"):
+                    updated.extend(item for dst_item in dst_relations if
+                                dst_item.reference_type != item['value'])
                 dst_ids.remove(item_id)
             else:
                 created.append(item)
@@ -2255,8 +2266,8 @@ class ItemLink(object):
         """
         objects = [ItemReference(
             src_item_pid=self.org_item_id,
-            dst_item_pid=cr['item_id'],
-            reference_type=cr['sele_id']) for cr in dst_items]
+            dst_item_pid=cr.get('item_id') or cr.get("item_links"),
+            reference_type=cr.get('sele_id') or cr.get("value")) for cr in dst_items]
         db.session.bulk_save_objects(objects)
 
     def bulk_update(self, dst_items):
@@ -2266,8 +2277,8 @@ class ItemLink(object):
         """
         objects = [ItemReference(
             src_item_pid=self.org_item_id,
-            dst_item_pid=cr['item_id'],
-            reference_type=cr['sele_id']) for cr in dst_items]
+            dst_item_pid=cr.get('item_id') or cr.get("item_links"),
+            reference_type=cr.get('sele_id') or cr.get("value")) for cr in dst_items]
         for obj in objects:
             db.session.merge(obj)
 

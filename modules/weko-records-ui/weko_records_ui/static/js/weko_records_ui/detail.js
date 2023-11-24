@@ -72,20 +72,17 @@ require([
 
   //TODO NEW FUNCTION
   $('#item-link-register-existing-data-btn').on('click', function () {
-    let post_uri = "/api/items/prepare_item_link";
+    let post_uri = "/api/items/prepare_edit_item";
     let pid_val = $(this).data('pid-value');
     let community = $(this).data('community');
+    let existing_item_link_button_pressed = 1;
     let post_data = {
-      pid_value: pid_val
+      pid_value: pid_val,
+      existing_item_link_button_pressed: existing_item_link_button_pressed
     };
     if (community) {
       post_uri = post_uri + "?community=" + community;
     }
-
-    // console.log("\n")
-    // console.log("post_uri")
-    // console.log(post_uri)
-    // console.log("\n")
 
     $.ajax({
       url: post_uri,
@@ -95,13 +92,7 @@ require([
       data: JSON.stringify(post_data),
       success: function (res, status) {
 
-        alert(`JSON.stringify(post_data) ~ ${JSON.stringify(post_data)}`)
-        alert(`Object.keys(res) ~ ${Object.keys(res)}`)
-        alert(`res.code ~ ${res.code}`)
-        alert(`res.data ~ ${res.data}`)
-        alert(`res.msg ~ ${res.msg}`)
-        alert(`$(this).data('pid-value'); ~ ${$(this).data('pid-value');}`)
-        
+        // TODO This will go to weko_items_ui/views.py::prepare_edit_item
 
         if (0 == res.code) {
           let uri = res.data.redirect.replace('api/', '')

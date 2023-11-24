@@ -27,10 +27,7 @@
         <h3 class="panel-title">{{_('Index Tree')}}</h3>
       </div>
       <div class="panel-body index-body table-responsive" style="overflow: auto;">
-
-        <!-- TODO INDEX TREE -->
         <app-tree-items></app-tree-items>
-
       </div>
     </div>
   </div>
@@ -68,26 +65,24 @@
                   {% if item_link %}
                     <input type="hidden" id="ex_item_links" value='{{ item_link|tojson }}'>
                   {% endif %}
-
-                  <!-- TODO -->
                   <div>
-                    {% for itr in session["item_link_record"].keys() %}
-                      {%- if session["current_user_item_link"] == itr %}
-                        {% set data = session['item_link_record'][itr] %}
-                        <div style="display:none;" ng-init="default_item_link_setup({{data}})"></div>
-                      {% endif %}
-                    {% endfor %}
+                    <!-- * S ITEM LINK - NEW ITEM -->
+                    {% if session.get("item_link_record") %}
+                      {% for itr in session["item_link_record"].keys() %}
+                        {% if session["current_user_item_link"] == itr %}
+                          {% set data = session['item_link_record'][itr] %}
+                          <div style="display:none;" ng-init="default_item_link_setup({{data}})"></div>
+                        {% endif %}
+                      {% endfor %}
+                    {% endif %}
                   </div>
-
-                  <!-- TODO SELECTED ITEM LINK TABLE -->
                   <div class="row" ng-repeat="sub_link_item in link_item_list track by $index">
+                    <h1>{[sub_link_item.item_title]}</h1>
                     <div class="col-sm-4 col-md-4 col-lg-4">
-                      <!-- TODO ITEM LINK VALUE -->
                       <select class="form-control" ng-model="sub_link_item.sele_id">
                         <option ng-repeat="option in sele_options" value="{[ option.id ]}">{[
                           option.content]}</option>
                       </select>
-
                     </div>
                     <div class="col-sm-5 col-md-5 col-lg-5">
                       {[sub_link_item.item_title]}
@@ -99,7 +94,6 @@
                       </button>
                     </div>
                   </div>
-                  
                 </div>
               </div>
               <div id="index_item_list">
@@ -163,7 +157,6 @@
             <span class="glyphicon glyphicon-saved"></span>
             {{_('Save')}}
           </button>
-
           <button type="button" class="btn btn-info next-button"
             id="item-link-run-btn" ng-click="btn_run()">{{_('Next_item')}}
             <span _ngcontent-c1="" class="glyphicon glyphicon-chevron-right"></span>
