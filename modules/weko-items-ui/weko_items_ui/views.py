@@ -198,14 +198,6 @@ def iframe_index(item_type_id=0):
                     endpoints = item_json.get('endpoints')
         need_file, need_billing_file = is_schema_include_key(item_type.schema)
 
-        # TODO ITEM LINK
-        print("\n\niframe_index **************************************************************")
-        activity = WorkActivity()
-        metadata = activity.get_activity_metadata(activity_id)
-        print(f"activity ~ {activity}")
-        print(f"metadata ~ {metadata}")
-        print("\n\n")
-
         return render_template(
             'weko_items_ui/iframe/item_edit.html',
             need_file=need_file,
@@ -965,17 +957,11 @@ def prepare_edit_item():
                 msg=_('An error has occurred.')
             )
 
-        # TODO ITEM LINK
-        print(f"\n\n post_activity.get('existing_item_link_button_pressed') ~ {post_activity.get('existing_item_link_button_pressed')}")
         existing_item_link_button_pressed = {}
         session["existing_item_link_button_pressed"] = {}
         if post_activity.get('existing_item_link_button_pressed'):
-            # existing_item_link_button_pressed = post_activity.get('existing_item_link_button_pressed')
             session["existing_item_link_button_pressed"][rtn.activity_id] = post_activity.get('existing_item_link_button_pressed')
-            print(f"session['existing_item_link_button_pressed'] ~ {session['existing_item_link_button_pressed']}")
             existing_item_link_button_pressed[rtn.activity_id] = post_activity.get('existing_item_link_button_pressed')
-            print(f"existing_item_link_button_pressed ~ {existing_item_link_button_pressed}")
-            print("\n\n")
 
         if community:
             comm = GetCommunity.get_community_by_id(community)

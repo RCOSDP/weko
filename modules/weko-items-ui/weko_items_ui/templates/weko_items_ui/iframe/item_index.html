@@ -176,14 +176,6 @@
           <div class="row" style="display: flex;">
             {%- for step in steps %}
             {%- set is_including = cur_step == step.ActionEndpoint and step.ActionOrder == activity.action_order %}
-
-            <!-- TODO ITEM LINK -->
-            {{ step }}
-            <hr>
-            {{ step.ActivityId }}
-            <hr>
-            {{ step.ActionId }}
-            
             <div class="col-xl-3">
               <div class="row" style="display: flex;">
                 <div class="col-md-8 col-xl-8">

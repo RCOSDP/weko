@@ -2219,10 +2219,6 @@ class ItemLink(object):
         updated = []
         created = []
         for item in items:
-            # TODO ITEM LINK
-            print("\n\n UPDATE")
-            print(f"item ~ {item}")
-            print("\n\n")
             if item.get("item_id"):
                 item_id = item['item_id']
             elif item.get("item_links"):

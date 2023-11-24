@@ -415,7 +415,6 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
     { id: "Cites", content: "Cites" }
   ];
 
-  // TODO ITEM LINK DEFAULT FOR NEW ITEM
   $rootScope.default_item_link_setup = function(data) {
     let sub_data = {
       item_id: 0,
@@ -465,17 +464,11 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
 
 //   save button
   $scope.btn_save = function () {
-    // TODO ITEM LINK
     let activity_id = $("#activity_id").text().trim();
     let action_id = $("#hide-actionId").text().trim();
     let existing_item_link_button = $("#existing_item_link_button").val();
     let item_link_index_tree_clicked = $("#item_link_index_tree_clicked").val();
 
-    // TODO ITEM LINK POST URL
-    alert(`existing_item_link_button ~ ${existing_item_link_button}`)
-    alert(`item_link_index_tree_clicked ~ ${item_link_index_tree_clicked}`)
-    alert(`$scope.link_item_list ~ ${$scope.link_item_list}`)
-    alert(`Object.keys($scope.link_item_list) ~ ${Object.keys($scope.link_item_list)}`)
     if (existing_item_link_button === "true") {
       var post_url = '/workflow/activity/action/' + activity_id + '/' + action_id
     }
@@ -488,7 +481,6 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
 
     let saveButton = $("#item-link-save-btn");
     $scope.startLoading(saveButton);
-    // var post_url = $('.cur_step').data('next-uri');
     if (!post_url) {
       let error_msg = $('#AutoCancelMsg').text();
       $('#cancelModalBody').text(error_msg);
@@ -507,26 +499,9 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
       headers: { 'Content-Type': 'application/json' },
     }).then(function successCallback(response) {
       if (0 == response.data.code) {
-
-        // TODO ITEM LINK
-        alert("SAVE - THEN")
-        alert(`data ~ ${Object.keys(response.data)}`)
-        alert(`status ~ ${response.status}`)
-        alert(`headers ~ ${response.headers}`)
-        alert(`config ~ ${Object.keys(response.config)}`)
-        alert(`statusText ~ ${response.statusText}`)
-
         if (response.data.hasOwnProperty('data') && response.data.data.hasOwnProperty('redirect')) {
-
-          // TODO ITEM LINK
-          alert("SAVE - THEN - 1")
-          
           document.location.href = response.data.data.redirect;
         } else {
-
-          // TODO ITEM LINK
-          alert("SAVE - THEN - 2")
-
           document.location.reload(true);
         }
       } else if (-2 == response.data.code) {
@@ -543,20 +518,13 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
       document.location.reload(true);
     });
   };
-  // TODO ITEM LINK
-  // TODO Next button on Item Link page
 //   run button
   $scope.btn_run=function(){
-    // TODO ITEM LINK
     let activity_id = $("#activity_id").text().trim();
     let action_id = $("#hide-actionId").text().trim();
     let existing_item_link_button = $("#existing_item_link_button").val();
     let item_link_index_tree_clicked = $("#item_link_index_tree_clicked").val();
 
-    alert(item_link_index_tree_clicked)
-    alert(`$scope.link_item_list ~ ${$scope.link_item_list}`)
-
-    // TODO ITEM LINK POST URL
     if (existing_item_link_button === "true") {
       var post_url = '/workflow/activity/action/' + activity_id + '/' + action_id
     }
@@ -566,8 +534,6 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
     else {
       var post_url = $('.cur_step').data('next-uri');
     }
-
-    // var post_url = $('.cur_step').data('next-uri');
 
     let runButton = $("#item-link-run-btn");
     $scope.startLoading(runButton);
@@ -584,50 +550,16 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
     };
     $scope.isDisabledRun = true;
 
-    // TODO ITEM LINK
-    // console.log(`action_id ~ ${action_id}`)
-    // console.log("\n")
-    // console.log(`activity_id ~ ${activity_id}`)
-    // console.log("\n")
-    // console.log(`$('.cur_step').data ~ ${$('.cur_step').data}`)
-    // console.log("\n")
-    // console.log(`post_url ~ ${post_url}`)
-    // console.log("\n")
-    // console.log(`post_data ~ ${JSON.stringify(post_data)}`)
-    alert("BTN-RUN")
-    alert("BTN-RUN-2")
-
     $http({
         method: 'POST',
         url: post_url,
         data: JSON.stringify(post_data),
         headers: {'Content-Type': 'application/json'},
     }).then(function successCallback(response) {
-
-      // TODO ITEM LINK
-      console.log(response)
-      alert("THEN")
-
       if (0 === response.data.code) {
-
-        // TODO ITEM LINK
-        alert("SUCCESS 1")
-        alert(`response ~ ${JSON.stringify(response)}`)
-        alert(`response.data.hasOwnProperty('data') ~ ${response.data.hasOwnProperty('data')}`)
-        // alert(`response.data.data.hasOwnProperty('redirect') ~ ${response.data.data.hasOwnProperty('redirect')}`)
-        
-
         if (response.data.hasOwnProperty('data') && response.data.data.hasOwnProperty('redirect')) {
-
-          // TODO ITEM LINK
-          alert("SUCCESS 1 - 1")
-
           document.location.href = response.data.data.redirect;
         } else if (window.location.href.indexOf('/workflow/activity/detail') === -1) {
-
-          // TODO ITEM LINK
-          alert("SUCCESS 1 - 2")
-
           let community_id = $('#community_id').text();
           let redirectUrl = "/workflow/activity/detail/" + $("#activity_id").text().trim();
           if (community_id) {
@@ -635,42 +567,22 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
           }
           parent.document.location.href = redirectUrl;
         } else {
-          // TODO ITEM LINK
-          alert("SUCCESS 1 - 3")
-          alert(`document.location ~ ${document.location}`)
           // document.location.href = response.data.data.redirect;
           document.location.reload(true);
         }
       } else if (-2 === response.data.code) {
-
-        // TODO ITEM LINK
-        alert("SUCCESS 2")
-
         let error_msg = $('#AutoCancelMsg').text();
         $('#cancelModalBody').text(error_msg);
         $('#cancelModal').modal('show');
       } else {
-
-        // TODO ITEM LINK
-        alert("SUCCESS 3")
-
         $scope.endLoading(runButton);
         alert(response.data.msg);
       }
     }, function errorCallback(response) {
-
-      // TODO ITEM LINK
-      console.log(response)
-      alert("ERROR 9999")
-
       $scope.endLoading(runButton);
         alert(response.data.msg);
         document.location.reload(true);
     });
-
-    // TODO ITEM LINK
-    alert("BTN-RUN-3")
-    
   };
 
 // init ex-item links

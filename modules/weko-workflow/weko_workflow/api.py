@@ -276,39 +276,16 @@ class Flow(object):
         with db.session.no_autoflush:
             query = _FlowAction.query.filter_by(flow_id=flow_id,
                                                 action_id=cur_action_id)
-            # TODO ITEM LINK
-            print("\n\n get_next_flow_action ~ api.py")
-            print(f"flow_id ~ {flow_id}")
-            print(f"cur_action_id ~ {cur_action_id}")
-            print(f"action_order ~ {action_order}")
-
-            print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-            print(f"query ~ {query}")
-            
-
             if action_order:
                 query = query.filter_by(action_order=action_order)
-            
-                print(f"action_order ~ {query}")
-
             cur_action = query.first()
-
-            print(f"cur_action ~ {cur_action}")
 
             if cur_action:
                 next_action_order = cur_action.action_order + 1
-
-                print(f"next_action_order ~ {next_action_order}")
-
                 next_action = _FlowAction.query.filter_by(
                     flow_id=flow_id).filter_by(
                     action_order=next_action_order).all()
-
-                print(f"next_action ~ {next_action}")
-
                 return next_action
-            
-            print("\n\n")
         return None
 
     def get_previous_flow_action(self, flow_id, cur_action_id, action_order):

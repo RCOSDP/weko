@@ -34,7 +34,6 @@
   {% include config.THEME_JAVASCRIPT_TEMPLATE %}
   {% assets "weko_theme_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 
-  <!-- TODO ITEM LINK -->
   {%- if 'item_link' == cur_step %}
     {% assets "weko_theme_js_treeview" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
     {% assets "invenio_search_ui_search_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
@@ -131,21 +130,7 @@
                     <p id="activity_id">{{activity.activity_id}}</p>
                     <input id="activity_id_for_lock" type="hidden" value="{{activity.activity_id}}" />
                     <input id="cur_step_for_lock" type="hidden" value="{{cur_step}}" />
-
-                    <!-- TODO ITEM LINK -->
                     <input id="existing_item_link_button" type="hidden" value="{{existing_item_link_button}}" />
-                    <hr>
-                    <h1>existing_item_link_button</h1>
-                    <h1>{{existing_item_link_button}}</h1>
-                    <hr>
-                    <br>
-                    <br>
-                    <hr>
-                    <h1>cur_step ~ {{cur_step}}</h1>
-                    <hr>
-                    <br>
-                    <br>
-
                   </div>
                 </div>
                 <div class="form-group">
@@ -223,14 +208,6 @@
           <div class="col-sm-12 table-responsive table-bordered">
           <div class="row" style="display: flex;">
             {%- for step in steps %}
-
-            <!-- TODO ITEM LINK -->
-            {{ step }}
-            <hr>
-            {{ step.ActivityId }}
-            <hr>
-            {{ step.ActionId }}
-            
             <div class="col-xl-3">
               <div class="row" style="display: flex;">
                 <div class="col-md-8 col-xl-8">
@@ -283,11 +260,7 @@
               <div class="hide" id="hide-actionId">{{action_id}}</div>
               <div class="hide" id="hide-actionstep_item_login_url">{{step_item_login_url}}</div>
               <div class="hide" id="hide-actioncur_step">{{cur_step}}</div>
-              <!-- TODO ITEM LINK -->
               <input id="item_link_index_tree_clicked" type="hidden" value="{{item_link_index_tree_clicked}}" />
-              <h1>{{ cur_step }}</h1>
-              <h1>{{ step_item_login_url }}</h1>
-              <h1>{{ item_link_index_tree_clicked }}</h1>
               {%- if 'item_login' == cur_step or 'item_login_application' == cur_step or 'file_upload' == cur_step %}
                 {% include step_item_login_url %}
               {%- elif 'item_link' == cur_step %}

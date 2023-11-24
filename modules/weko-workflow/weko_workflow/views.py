@@ -772,7 +772,6 @@ def display_activity(activity_id="0"):
         steps, temporary_comment, workflow_detail = \
         get_activity_display_info(activity_id)
 
-    ### TODO ITEM LINK ~ THIS WORKS
     from weko_workflow.models import Action as item_link_action
     existing_item_link_button = "false"
     post_json_dict = dict(request.args)
@@ -780,88 +779,25 @@ def display_activity(activity_id="0"):
     if post_json_dict_existing_item_link_button_pressed:
         post_json_dict_existing_item_link_button_pressed = post_json_dict_existing_item_link_button_pressed.replace("'", '"')
         post_json_dict_existing_item_link_button_pressed = json.loads(post_json_dict_existing_item_link_button_pressed)
-    
-
-    # TODO ITEM LINK
-    # print("\n DISPLAY ACTIVITY FF15")
-    # for x in list(session.keys()):
-    #     print(x)
-    #     print(session.get(x))
-    #     print("--------------------------------")
-    # print("\n")
-
-    # item_id = activity_detail.item_id
-    # current_pid = None
-    # item_link = None
-    # current_pid = PersistentIdentifier.get_by_object(
-    #     pid_type='recid',
-    #     object_type='rec',
-    #     object_uuid=item_id
-    # )
-
-    print('\n\n print(session.get("existing_item_link_button_pressed"))')
-    print(f'session.get("existing_item_link_button_pressed") ~ {session.get("existing_item_link_button_pressed")}')
-    print(f"{session.get('existing_item_link_button_pressed', {}).get(activity_id)}")
-    print(f"{type(session.get('existing_item_link_button_pressed', {}).get(activity_id))}")
-    print(f"request ~ {request}")
-    print(f"request.args ~ {dict(request.args)}")
-    print(f"post_json_dict.get('existing_item_link_button_pressed') ~ {post_json_dict_existing_item_link_button_pressed}")
-    print(f"post_json_dict.get('existing_item_link_button_pressed') ~ {type(post_json_dict_existing_item_link_button_pressed)}")
-    print("\n\n")
 
     if session.get('existing_item_link_button_pressed', {}).get(activity_id):
         existing_item_link_button_pressed_check_list = ["item_link", "begin_action", "item_login"]
-        print("KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK")
         if not action_endpoint in existing_item_link_button_pressed_check_list:
-            print(action_endpoint)
-            print("JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ")
             del session["existing_item_link_button_pressed"][activity_id]
-
-    print("\n\n FINAL FANTASY XV ROYAL EDITION")
-    print(isinstance(post_json_dict_existing_item_link_button_pressed, dict))
-    print(post_json_dict_existing_item_link_button_pressed.get(activity_id))
-    print(session.get('existing_item_link_button_pressed', {}).get(activity_id))
-    print("\n\n")
 
     if session.get('existing_item_link_button_pressed', {}).get(activity_id):
         session['existing_item_link_in_progress'] = True
-        print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
         action_endpoint = 'item_link'
         action_id = item_link_action.query.filter_by(action_endpoint='item_link').one().id
         existing_item_link_button = 'true'
-        # if action_endpoint != "item_link":
-        #     print("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC")
-        #     action_endpoint = 'item_link'
-        #     action_id = item_link_action.query.filter_by(action_endpoint='item_link').one().id
-        #     existing_item_link_button = 'true'
-        # del session['existing_item_link_button_pressed']
 
     elif isinstance(post_json_dict_existing_item_link_button_pressed, dict) and \
             post_json_dict_existing_item_link_button_pressed.get(activity_id):
         session['existing_item_link_in_progress'] = True
-        print("BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB")
         if action_endpoint == "item_login":
-            print("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC")
             action_endpoint = 'item_link'
             action_id = item_link_action.query.filter_by(action_endpoint='item_link').one().id
             existing_item_link_button = 'true'
-
-    # cur_action = item_link_action.query.filter_by(action_endpoint='item_link').one()
-
-    # TODO ITEM LINK
-    print('\n ACTIVITY 9999 --------------------------------')
-    print(session.get("existing_item_link_button_pressed"))
-    print(f"request.args ~ {request.args}")
-    print(f"action_endpoint ~ {action_endpoint}")
-    print(f"action_id ~ {action_id}")
-    print(f"activity_detail ~ {activity_detail}")
-    print(f"cur_action ~ {cur_action}")
-    print(f"histories ~ {histories}")
-    print(f"item ~ {item}")
-    print(f"steps ~ {steps}")
-    print(f"temporary_comment ~ {temporary_comment}")
-    print(f"workflow_detail ~ {workflow_detail}")
-    print("--------------------------------\n")
 
     if any([s is None for s in [action_endpoint, action_id, activity_detail, cur_action, histories, steps, workflow_detail]]):
         current_app.logger.error("display_activity: can not get activity display info")
@@ -959,22 +895,6 @@ def display_activity(activity_id="0"):
             allow_multi_thumbnail \
             = item_login(item_type_id=workflow_detail.itemtype_id)
         
-        # TODO ITEM LINK
-        print('\n\n step_item_login_url 8888')
-        print(f"step_item_login_url ~ {step_item_login_url}")
-        print(f"need_file ~ {need_file}")
-        print(f"need_billing_file ~ {need_billing_file}")
-        print(f"record ~ {record}")
-        print(f"json_schema ~ {json_schema}")
-        print(f"schema_form ~ {schema_form}")
-        print(f"item_save_uri ~ {item_save_uri}")
-        print(f"files ~ {files}")
-        print(f"endpoints ~ {endpoints}")
-        print(f"need_thumbnail ~ {need_thumbnail}")
-        print(f"files_thumbnail ~ {files_thumbnail}")
-        print(f"allow_multi_thumbnail ~ {allow_multi_thumbnail}")
-        print('\n\n')
-
         if not step_item_login_url:
             current_app.logger.error("display_activity: can not get item")
             return render_template("weko_theme/error.html",
@@ -1093,13 +1013,6 @@ def display_activity(activity_id="0"):
         )
     )
 
-    # TODO ITEM LINK
-    # print('\n\n item_link 9999')
-    # print(f"item_link ~ {item_link}")
-    # print(f"ctx ~ {ctx}")
-    # print(f"record_detail_alt ~ {record_detail_alt}")
-    # print('\n\n')
-
     # Get email approval key
     approval_email_key = get_approval_keys()
 
@@ -1127,34 +1040,6 @@ def display_activity(activity_id="0"):
     if session.get("item_link_record"):
         del session["item_link_record"]
 
-    # TODO ITEM LINK
-    print("\nACTIVITY --------------------------------")
-    print(f"cur_step ~ {cur_step}")
-    print(f"action_id ~ {action_id}")
-    print(f"endpoints ~ {endpoints}") # {'initialization': '/api/deposits/items'}
-
-    # endpoints = {'initialization': '/api/deposits/items'}
-
-    print(f"endpoints ~ {endpoints}") # {'initialization': '/api/deposits/items'}
-    print(f"activity ~ {activity}")
-    print(f"record ~ {record}")
-    print(f"existing_item_link_button ~ {existing_item_link_button}")
-    print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-    print(f"action_id ~ {action_id}")
-    print(f"activity_id ~ {activity_detail.activity_id}")
-    print(f"activity ~ {activity_detail}")
-    print(f"cur_step ~ {cur_step}")
-    print(f"endpoints ~ {endpoints}")
-    print(f"id ~ {workflow_detail.itemtype_id}")
-    print(f"is_enable_item_name_link ~ {is_enable_item_name_link(action_endpoint, item_type_name)}")
-    print(f"item ~ {item}")
-    print(f"records ~ {record}")
-    print(f"render_widgets ~ {render_widgets}")
-    print(f"ctx ~ {ctx}")
-    print(f"request.get_json() ~ {request.get_json()}")
-    print(f"session.get('existing_item_link_in_progress') ~ {session.get('existing_item_link_in_progress')}")
-    #! TEST 9999
-
     if session.get('existing_item_link_in_progress') and session.get("existing_item_link_button_pressed"):
         if activity_id in session.get("existing_item_link_button_pressed").keys():
             item_id = activity_detail.item_id
@@ -1174,13 +1059,10 @@ def display_activity(activity_id="0"):
                         session["current_item_links"] = {}
                         session["current_item_links"][activity_id] = ItemLink(current_pid.pid_value).get_item_link_info(current_pid.pid_value)
 
-            print(f"ItemLink(current_pid.pid_value) ~ {ItemLink(current_pid.pid_value)}")
-            print(f"ItemLink(current_pid.pid_value).get_item_link_info(current_pid.pid_value) ~ {ItemLink(current_pid.pid_value).get_item_link_info(current_pid.pid_value)}")
             if ItemLink(current_pid.pid_value).get_item_link_info(current_pid.pid_value):
                 session["item_link_info"] = ItemLink(current_pid.pid_value).get_item_link_info(current_pid.pid_value)
             if action_endpoint == "item_link" and request.get_json():
                 session["item_link_info"] = ItemLink(current_pid.pid_value).get_item_link_info(current_pid.pid_value)
-                print(f"session.keys() ~ {session.keys()}")
                 try:
                     current_pid = PersistentIdentifier.get_by_object(
                         pid_type='recid',
@@ -1188,17 +1070,12 @@ def display_activity(activity_id="0"):
                         object_uuid=item_id
                     )
                     item_link = ItemLink(current_pid.pid_value)
-                    # relation_data = request.args.get('link_data')
                     relation_data = request.get_json().get('link_data')
                     if relation_data:
-                        err = item_link.update(relation_data)
-                    print(f"relation_data ~ {relation_data}")
-                    print(f"session['item_link_info'] ~ {session['item_link_info']}")
-                    print(ItemLink(current_pid.pid_value).get_item_link_info(current_pid.pid_value))
+                        item_link.update(relation_data)
                 except Exception as e:
-                    print(f"error ~ {e}")
+                    current_app.logger.error(str(e))
             
-
             action_endpoint_checklist = [
                 "begin_action"
                 "end_action"
@@ -1208,7 +1085,6 @@ def display_activity(activity_id="0"):
                 "oa_policy"
                 "identifier_grant"
             ]
-            print(f"ACTION_ENDPOINT ~ {action_endpoint}")
             if not action_endpoint in action_endpoint_checklist and \
                     not ItemLink(current_pid.pid_value).get_item_link_info(current_pid.pid_value):
                 current_pid = PersistentIdentifier.get_by_object(
@@ -1222,32 +1098,11 @@ def display_activity(activity_id="0"):
                     try:
                         item_link.update(relation_data)
                     except Exception as e:
-                        print(f"EXCEPTION ~ {e}")
-                print(f"item_link ~ {item_link}")
-                print(f"session['item_link_info'] ~ {session.get('item_link_info')}")
-                print(f"relation_data ~ {relation_data}")
-                print(f"item_link.get_item_link_info(current_pid.pid_value) ~ {item_link.get_item_link_info(current_pid.pid_value)}")
+                        current_app.logger.error(str(e))
 
-        #! TEST 9999
-    print(f"session.keys() ~ {session.keys()}")
-    print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-
-    # cur_step = "item_link"
-    # step_item_login_url = "weko_items_ui/iframe/item_edit.html"
-    print("--------------------------------\n")
     post_json = request.get_json()
-
-    print('\n\n')
-    print(f'request.args ~ {request.args}')
-    print(session)
-    print("\n\n")
-    if post_json:
-        print('\n\n')
-        print(f'post_json.get("quit_button_pressed") ~ {post_json.get("quit_button_pressed")}')
-        print("\n\n")
     if action_endpoint == "end_action" and \
             session.get("existing_item_link_in_progress"):
-        print("END ACTION 1111")
         del session["existing_item_link_in_progress"]
         if session.get("current_action_endpoint"):
             del session["current_action_endpoint"]
@@ -1262,37 +1117,16 @@ def display_activity(activity_id="0"):
             object_uuid=item_id
         )
         item_link = ItemLink(current_pid.pid_value)
-        if session.get("current_item_links", {}).get(activity_id):
-            relation_data = session["current_item_links"][activity_id]
+
+        # TODO ITEM LINK ~ SAVE THIS COMMENT FOR NOW JUST IN CASE
+        # if session.get("current_item_links", {}).get(activity_id):
+            # relation_data = session["current_item_links"][activity_id]
         # if relation_data:
         #     item_link.update(relation_data)
-        #     print(f"END ITEM LINK ~ {relation_data} ~ {ItemLink(current_pid.pid_value).get_item_link_info(current_pid.pid_value)}")
 
         if session.get("current_item_links"):
-            print("END ACTION 2222")
             if session["current_item_links"].get(activity_id):
                 del session["current_item_links"][activity_id]
-                print("END ACTION 3333")
-
-    # elif quit_button_pressed == "true":
-    #     print("QUIT 99999999999999999999999999999999999999999999999999999999999999")
-    #     if session.get("existing_item_link_in_progress"):
-    #         del session["existing_item_link_in_progress"]
-    #     if session.get("current_item_links"):
-    #         if session["current_item_links"].get(activity_id):
-    #             del session["current_item_links"][activity_id]
-    #     current_pid = PersistentIdentifier.get_by_object(
-    #         pid_type='recid',
-    #         object_type='rec',
-    #         object_uuid=item_id
-    #     )
-    #     item_link = ItemLink(current_pid.pid_value)
-    #     relation_data = session["current_item_links"][activity_id]
-    #     print(f"QUIT 2 ~ {relation_data} ~ {ItemLink(current_pid.pid_value).get_item_link_info(current_pid.pid_value)}")
-    #     if relation_data:
-    #         item_link.update(relation_data)
-            
-
 
     return render_template(
         'weko_workflow/activity_detail.html',
@@ -1456,7 +1290,6 @@ def check_authority_action(activity_id='0', action_id=0,
     # Otherwise, user has no permission
     return 1
 
-# TODO ITEM LINK
 @workflow_blueprint.route(
     '/activity/action/<string:activity_id>/<int:action_id>',
     methods=['POST'])
@@ -1570,15 +1403,6 @@ def next_action(activity_id='0', action_id=0):
     action = Action().get_action_detail(action_id)
     action_endpoint = action.action_endpoint
 
-    # TODO ITEM LINK
-    print("\n NEXT ACTION")
-    print(f'activity_id ~ {activity_id}')
-    print(f'action_id ~ {action_id}')
-    print(f'action ~ {action}')
-    print(f'action_endpoint ~ {action_endpoint}')
-    print(f'request.get_json() ~ {request.get_json()}')
-    print("\n")
-
     current_app.logger.debug('action_endpoint: {0}'.format(action_endpoint))
 
     if action_endpoint == 'begin_action':
@@ -1629,100 +1453,31 @@ def next_action(activity_id='0', action_id=0):
 
     flow = Flow()
 
-    # TODO ITEM LINK
-    print("\n\n action_order 9999")
-    print(f"action_order ~ {action_order}")
-    print(f"action_endpoint ~ {action_endpoint}")
-    print(f"session.get('existing_item_link_button_pressed') ~ {session.get('existing_item_link_button_pressed')}")
-    print(f"session.keys() ~ {session.keys()}")
-    print("\n\n")
-
-    ### TODO ITEM LINK ~ THIS WORKS
     action_endpoint_list = ["item_login", "item_link"]
     action_endpoint_list = ["item_link"]
-    action_endpoint_list_2 = ["item_login"]
     if session.get('existing_item_link_button_pressed', {}).get(activity_id):
         session["saved_or_refreshed"] = True
         # action_order = action_order + 1
         if flow.get_next_flow_action(activity_detail.flow_define.flow_id, action_id, action_order) is None:
             action_order = action_order + 1
         
-        # action_endpoint_list = ["item_login", "item_link"]
         if action_endpoint in action_endpoint_list:
             del session['existing_item_link_button_pressed']
-            print("\n\n DELETE existing_item_link_button_pressed 9999")
-            print(f"action_order ~ {action_order}")
-            print(f"action_endpoint ~ {action_endpoint}")
-            print(f"session.get('existing_item_link_button_pressed') ~ {session.get('existing_item_link_button_pressed')}")
-            print("\n\n")
-        elif action_endpoint in action_endpoint_list_2:
-            print("\n\n DELETE ELSE existing_item_link_button_pressed 9999")
-            print(f"action_order ~ {action_order}")
-            print(f"action_endpoint ~ {action_endpoint}")
-            print(action_endpoint_list[0] == action_endpoint, action_endpoint_list[0], action_endpoint)
-            print(action_endpoint_list[0] == action_endpoint, action_endpoint_list[0], action_endpoint)
-            print(f"session.get('existing_item_link_button_pressed') ~ {session.get('existing_item_link_button_pressed')}")
-            print("\n\n")
 
     if session.get("saved_or_refreshed"):
-        print("Z1")
-        print("\n saved_or_refreshed 1 XXX")
-        print(f"action_order ~ {action_order}")
-        print(f"action_endpoint ~ {action_endpoint}")
-        print(action_endpoint in action_endpoint_list_2)
-        print("\n")
         del session['saved_or_refreshed']
         if flow.get_next_flow_action(activity_detail.flow_define.flow_id, action_id, action_order) is None:
             action_order = action_order + 1
             if flow.get_next_flow_action(activity_detail.flow_define.flow_id, action_id, action_order) is None:
                 action_order = action_order + 1
-        # if not action_endpoint in action_endpoint_list_2:
-        #     action_order = action_order + 1
-        # else:
     else:
-        print("Z2")
-        print("\n saved_or_refreshed 2 XXX")
-        print(f"action_order ~ {action_order}")
-        print(f"action_endpoint ~ {action_endpoint}")
-        print(action_endpoint in action_endpoint_list)
-        print("\n")
         if flow.get_next_flow_action(activity_detail.flow_define.flow_id, action_id, action_order) is None:
             action_order = action_order + 1
             if flow.get_next_flow_action(activity_detail.flow_define.flow_id, action_id, action_order) is None:
                 action_order = action_order + 1
-        # if action_endpoint in action_endpoint_list:
-        #     action_order = action_order + 1
-            
-
-    # elif len(request.args) == 0 and not session.get('existing_item_link_button_pressed'):
-    #     action_order = action_order + 1
-    #     print("\n\n\n SESSION")
-    #     print(session.get('existing_item_link_button_pressed'))
-    #     print(session.keys())
-    #     print("\n\n\n")
-        # del session['existing_item_link_button_pressed']
-    
-    # elif isinstance(request.args, dict):
-    #     print("\n 11111111111111111111111111111111111111111111111111")
-    #     print(request.args)
-    #     print("\n")
-    #     print(f"session.get('existing_item_link_button_pressed') ~ {session.get('existing_item_link_button_pressed')}")
-    #     print("11111111111111111111111111111111111111111111111111 \n")
-    #     if request.args.get("existing_item_link_button_pressed"):
-    #         action_order = action_order + 1
-    #         del request.args["existing_item_link_button_pressed"]
-            
 
     next_flow_action = flow.get_next_flow_action(
         activity_detail.flow_define.flow_id, action_id, action_order)
-
-    # TODO ITEM LINK
-    print("\nnext_flow_action")
-    print(f"next_flow_action ~ {next_flow_action}")
-    print(f"activity_detail.flow_define.flow_id ~ {activity_detail.flow_define.flow_id}")
-    print(f"action_id ~ {action_id}")
-    print(f"action_order ~ {action_order}")
-    print("\n")
 
     if not isinstance(next_flow_action, list) or len(next_flow_action) <= 0:
         current_app.logger.error("next_action: can not get next_flow_action")
@@ -1732,16 +1487,6 @@ def next_action(activity_id='0', action_id=0):
     next_action_id = next_flow_action[0].action_id
     next_action_order = next_flow_action[
         0].action_order if action_order else None
-
-    # TODO ITEM LINK
-    print("\n next_action_endpoint")
-    print(f"next_action_endpoint ~ {next_action_endpoint}")
-    print(f"next_action_id ~ {next_action_id}")
-    print(f"next_action_order ~ {next_action_order}")
-    # action_endpoint = "identifier_grant"
-    print(f"action_endpoint ~ {action_endpoint}")
-    print(f"action_order ~ {action_order}")
-    print("\n")
 
     # Start to send mail
     if 'approval' in [action_endpoint, next_action_endpoint]:
@@ -1805,49 +1550,23 @@ def next_action(activity_id='0', action_id=0):
         (not activity_detail.extra_info or not
             activity_detail.extra_info.get('guest_mail')):
 
-        # TODO ITEM LINK
-        print("\n")
-        print("1")
-        print("\n")
-
         process_send_notification_mail(activity_detail,
                                        action_endpoint, next_action_endpoint)
 
     if post_json.get('temporary_save') == 1 \
             and action_endpoint not in ['identifier_grant', 'item_link']:
         
-        # TODO ITEM LINK
-        print("\n")
-        print("2")
-        print("\n")
-
         if 'journal' in post_json:
-
-            # TODO ITEM LINK
-            print("\n")
-            print("3")
-            print("\n")
-
             work_activity.create_or_update_action_journal(
                 activity_id=activity_id,
                 action_id=action_id,
                 journal=post_json.get('journal'))
         else:
-            # TODO ITEM LINK
             item_link = ItemLink(current_pid.pid_value)
             relation_data = post_json.get('link_data')
             err = item_link.update(relation_data)
             session["item_link_info"] = ItemLink(current_pid.pid_value).get_item_link_info(current_pid.pid_value)
-            print("\n")
-            print("4")
-            print(f"item_link ~ {item_link}")
-            print(f"relation_data ~ {relation_data}")
-            print(f"err ~ {err}")
-            print("\n")
             if err:
-                print("\n")
-                print("4.1")
-                print("\n")
                 res = ResponseMessageSchema().load({"code":-1, "msg":_(err)})
                 return jsonify(res.data), 500
 
@@ -1860,11 +1579,6 @@ def next_action(activity_id='0', action_id=0):
         res = ResponseMessageSchema().load({"code":0, "msg":_("success")})
         return jsonify(res.data), 200
     elif post_json.get('journal'):
-
-        # TODO ITEM LINK
-        print("\n")
-        print("5")
-        print("\n")
 
         work_activity.create_or_update_action_journal(
             activity_id=activity_id,
@@ -1938,52 +1652,18 @@ def next_action(activity_id='0', action_id=0):
         deposit.update_feedback_mail()
 
     if action_endpoint == 'item_link' and item_id:
-
-        # TODO ITEM LINK
-        print("\n")
-        print("6")
-        print(post_json)
-        print("\n")
-
         item_link = ItemLink(current_pid.pid_value)
         relation_data = post_json.get('link_data')
 
         if relation_data:
             err = item_link.update(relation_data)
-            
-            # TODO ITEM LINK
-            print("\n relation_data")
-            print(f"relation_data ~ {relation_data}")
-            print("\n")
-
             if err:
-
-                # TODO ITEM LINK
-                print("\n")
-                print("7")
-                print("\n")
-
                 res = ResponseMessageSchema().load({"code":-1, "msg":_(err)})
                 return jsonify(res.data), 500
-
-        # TODO ITEM LINK
         else:
             err = item_link.update([])
 
-            # TODO ITEM LINK
-            print("\n")
-            print(f"item_link ~ {item_link}")
-            print(f"err ~ {err}")
-            print("8")
-            print("\n")
-
         if post_json.get('temporary_save') == 1:
-
-            # TODO ITEM LINK
-            print("\n")
-            print("9")
-            print("\n")
-
             work_activity.upt_activity_action_comment(
                 activity_id=activity_id,
                 action_id=action_id,
@@ -1997,12 +1677,6 @@ def next_action(activity_id='0', action_id=0):
     identifier_select = post_json.get('identifier_grant')
     if 'identifier_grant' == action_endpoint \
             and identifier_select is not None:
-
-        # TODO ITEM LINK
-        print("\n")
-        print("10")
-        print("\n")
-    
         # If is action identifier_grant, then save to to database
         identifier_grant = {
             'action_identifier_select': identifier_select,
@@ -2021,12 +1695,6 @@ def next_action(activity_id='0', action_id=0):
             identifier=identifier_grant
         )
         if post_json.get('temporary_save') == 1:
-
-            # TODO ITEM LINK
-            print("\n")
-            print("11")
-            print("\n")
-
             res = ResponseMessageSchema().load({"code":0, "msg":_("success")})
             return jsonify(res.data), 200
 
@@ -2068,12 +1736,6 @@ def next_action(activity_id='0', action_id=0):
                                 int(identifier_select), False, True)
     elif 'identifier_grant' == action_endpoint \
             and not post_json.get('temporary_save'):
-        
-        # TODO ITEM LINK
-        print("\n")
-        print("12")
-        print("\n")
-
         _value, _type = IdentifierHandle(item_id).get_idt_registration_data()
         if _value and _type:
             error_list = check_doi_validation_not_pass(
@@ -2090,12 +1752,6 @@ def next_action(activity_id='0', action_id=0):
 
     rtn = history.create_activity_history(activity, action_order)
     if not rtn:
-
-        # TODO ITEM LINK
-        print("\n")
-        print("13")
-        print("\n")
-
         res = ResponseMessageSchema().load({"code":-1, "msg":_("error")})
         return jsonify(res.data), 500
     # next action
@@ -2105,12 +1761,6 @@ def next_action(activity_id='0', action_id=0):
         action_order=action_order
     )
     if not flag:
-
-        # TODO ITEM LINK
-        print("\n")
-        print("14")
-        print("\n")
-
         res = ResponseMessageSchema().load({"code":-2, "msg":""})
         return jsonify(res.data), 500
     work_activity.upt_activity_action_comment(
@@ -2155,39 +1805,17 @@ def next_action(activity_id='0', action_id=0):
         except BaseException:
             abort(500, 'MAPPING_ERROR')
     else:
-
-        # TODO ITEM LINK
-        print("\n")
-        print("15")
-
         flag = work_activity.upt_activity_action(
             activity_id=activity_id, action_id=next_action_id,
             action_status=ActionStatusPolicy.ACTION_DOING,
             action_order=next_action_order)
-
-        print(f"flag ~ {flag}")
-        print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")    
     
         flag &= work_activity.upt_activity_action_status(
             activity_id=activity_id, action_id=next_action_id,
             action_status=ActionStatusPolicy.ACTION_DOING,
             action_order=next_action_order)
-        
-        
-        print(f"flag ~ {flag}")
-        print(f"activity_id ~ {activity_id}")
-        print(f"next_action_id ~ {next_action_id}")
-        print(f"ActionStatusPolicy.ACTION_DOING ~ {ActionStatusPolicy.ACTION_DOING}")
-        print(f"next_action_order ~ {next_action_order}")
-        print("\n")        
 
         if not flag:
-
-            # TODO ITEM LINK
-            print("\n")
-            print("16")
-            print("\n")
-
             res = ResponseMessageSchema().load({"code":-2, "msg":""})
             return jsonify(res.data), 500
 
@@ -2214,8 +1842,6 @@ def next_action(activity_id='0', action_id=0):
         del session['itemlogin_community_id']
     res = ResponseMessageSchema().load({"code":0, "msg":_("success")})
 
-    # TODO ITEM LINK
-    # if action_endpoint == "item_link":
     item_id = activity_detail.item_id
     current_pid = None
     item_link = None
@@ -2226,21 +1852,11 @@ def next_action(activity_id='0', action_id=0):
             object_uuid=item_id
         )
         item_link = ItemLink(current_pid.pid_value)
-        # relation_data = request.args.get('link_data')
         relation_data = post_json.get('link_data')
         if relation_data:
             err = item_link.update(relation_data)
-            print(f"\n\n FFXV - SOMNUS \n {relation_data} \n\n")
-        # else:
-            # item_link.update([])
-            # print(f"\n\n FFXV - APOCALYPSIS NOCTIS \n {relation_data} \n\n")
     except Exception as e:
-        print(f"EXCEPTION ~ {e}")
-
-    print("\n")
-    print(f"res.data ~ {res.data}")
-    print("17")
-    print("\n")
+        current_app.logger.error(str(e))
 
     return jsonify(res.data), 200
 
@@ -2559,7 +2175,6 @@ def cancel_action(activity_id='0', action_id=0):
                         example: {"code": -1, "msg": "server error"}
     """
 
-    # TODO ITEM LINK
     if session.get("existing_item_link_in_progress"):
         work_activity = WorkActivity()
         activity_detail = work_activity.get_activity_by_id(activity_id)
@@ -2573,23 +2188,24 @@ def cancel_action(activity_id='0', action_id=0):
             object_uuid=item_id
         )
         item_link = ItemLink(current_pid.pid_value)
+
         if session.get("current_item_links", {}).get(activity_id):
             relation_data = session["current_item_links"][activity_id]
-            print(f"QUIT 1 ~ {relation_data} ~ {ItemLink(current_pid.pid_value).get_item_link_info(current_pid.pid_value)}")
+            
         if relation_data:
             item_link.update(relation_data)
-            print(f"QUIT 2 ~ {relation_data} ~ {ItemLink(current_pid.pid_value).get_item_link_info(current_pid.pid_value)}")
-        print("END ACTION 1")
+            
         del session["existing_item_link_in_progress"]
+
         if session.get("current_action_endpoint"):
             del session["current_action_endpoint"]
+
         if session.get("current_action_id"):
             del session["current_action_id"]
+
         if session.get("current_item_links"):
-            print("END ACTION 2")
             if session["current_item_links"].get(activity_id):
                 del session["current_item_links"][activity_id]
-                print("END ACTION 3")
 
     check_flg = type_null_check(activity_id, str)
     check_flg &= type_null_check(action_id, int)

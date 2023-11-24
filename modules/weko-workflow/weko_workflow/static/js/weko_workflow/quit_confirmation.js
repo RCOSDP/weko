@@ -7,7 +7,6 @@ require([
     $("#action_quit_confirmation").modal("show");
   });
 
-  // TODO ITEM LINK
   // Handle Continue btn on modal Quit confirmation
   $('#btn_cancel').on('click', function () {
     $("#action_quit_confirmation").modal("hide");
@@ -22,16 +21,12 @@ require([
       comment = $('#input-comment').val();
     }
 
-    alert("BTN QUIT")
-    // TODO ITEM LINK
     let activity_id = $("#activity_id").text().trim();
     let action_id = $("#hide-actionId").text().trim();
     let existing_item_link_button = $("#existing_item_link_button").val();
     let item_link_index_tree_clicked = $("#item_link_index_tree_clicked").val();
     let quit_button_pressed = "true"
 
-    alert(existing_item_link_button)
-    // TODO ITEM LINK POST URL
     if (existing_item_link_button === "true") {
       var post_uri = '/workflow/activity/action/' + activity_id + '/' + action_id + '/cancel'
     }
@@ -41,9 +36,6 @@ require([
     else {
       var post_uri = $('.cur_step').data('cancel-uri');
     }
-
-    alert(`post_uri ~ ${post_uri}`)
-    alert(`existing_item_link_button ~ ${existing_item_link_button}`)
 
     let request_uri = $('#post_url').text();
     let pid_val = request_uri.substring(request_uri.lastIndexOf("/") + 1, request_uri.length)

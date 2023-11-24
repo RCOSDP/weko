@@ -25,7 +25,7 @@
     <button id="item-link-register-data-btn" type="button" class="btn btn-primary"
         data-toggle="modal" data-target="#item-link-register-data-modal"
         style="text-align:center;width:55%;margin-bottom:10px;">
-        {{ _('Data Registration') }} <!-- TODO LAGUAGE -->
+        {{ _('Data Registration') }}
     </button>
     <div class="modal fade" id="item-link-register-data-modal" tabindex="-1" role="dialog"
         aria-labelledby="item-link-register-data-modal-label" aria-hidden="true">
@@ -36,10 +36,10 @@
                         <span aria-hidden="true">&times;</span>
                     </button>
                     <h1 class="modal-title" id="item-link-register-data-modal-label" style="text-align:left">
-                        <strong>{{ _('Data Registration') }}</strong> <!-- TODO LAGUAGE -->
+                        <strong>{{ _('Data Registration') }}</strong>
                     </h1>
                     <h4 style="text-align:left">
-                        {{ _('Please select method of registration') }} <!-- TODO LAGUAGE -->
+                        {{ _('Please select method of registration') }}
                     </h4>
                 </div>
                 
@@ -49,7 +49,7 @@
                             <a href="{{ url_for('weko_workflow.new_activity', new_item_link_button_clicked=1) }}">
                                 <button id="item-link-register-new-data-btn" type="button" class="btn btn-light"
                                 style="text-align:center;width:35%;color:black;">
-                                    <h4>{{ _('Link new data') }}</h4> <!-- TODO LAGUAGE -->
+                                    <h4>{{ _('Link new data') }}</h4>
                                 </button>
                             </a>
                         </span>
@@ -58,7 +58,7 @@
                             {%- if community -%}data-community="{{ community.id }}" {%- endif -%}>
                                 <button id="item-link-register-existing-data-btn" type="button" class="btn btn-light"
                                     style="text-align:center;width:35%;color:black;">
-                                    <h4>{{ _('Link existing data') }}</h4> <!-- TODO LAGUAGE -->
+                                    <h4>{{ _('Link existing data') }}</h4>
                                 </button>
                             </a>
                         </span>

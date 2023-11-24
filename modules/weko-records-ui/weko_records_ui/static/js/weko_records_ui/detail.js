@@ -70,7 +70,6 @@ require([
     });
   });
 
-  //TODO NEW FUNCTION
   $('#item-link-register-existing-data-btn').on('click', function () {
     let post_uri = "/api/items/prepare_edit_item";
     let pid_val = $(this).data('pid-value');
@@ -91,8 +90,6 @@ require([
       contentType: 'application/json',
       data: JSON.stringify(post_data),
       success: function (res, status) {
-
-        // TODO This will go to weko_items_ui/views.py::prepare_edit_item
 
         if (0 == res.code) {
           let uri = res.data.redirect.replace('api/', '')
