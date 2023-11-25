@@ -9,7 +9,7 @@ done
 
 # Initialize resources
 docker-compose -f docker-compose2.yml run --rm web ./scripts/populate-instance.sh
-docker cp scripts/demo/item_type3.sql $(docker-compose -f docker-compose2.yml ps -q postgresql):/tmp/item_type.sql
+docker cp scripts/demo/item_type4.sql $(docker-compose -f docker-compose2.yml ps -q postgresql):/tmp/item_type.sql
 docker-compose -f docker-compose2.yml exec postgresql psql -U invenio -d invenio -f /tmp/item_type.sql
 docker-compose -f docker-compose2.yml run --rm web invenio workflow init action_status,Action
 docker cp scripts/demo/resticted_access.sql $(docker-compose -f docker-compose2.yml ps -q postgresql):/tmp/resticted_access.sql
