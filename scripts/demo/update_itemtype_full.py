@@ -14,6 +14,7 @@ import traceback
 import copy
 import pickle
 import time
+from datetime import datetime
 import json
 
 from properties import (
@@ -83,7 +84,7 @@ def main():
                 _render = pickle.loads(pickle.dumps(itemType.render, -1))
                 for id in cur_prop_ids:
                     _prop = ItemTypeProps.get_record(id)
-                    _prop_id = "item_{}".format(int(time.time()) + i)
+                    _prop_id = "item_{}".format(int(datetime(2023,10,30,0,0).strftime('%s')) + i)
                     i = i + 1
                     if _prop:
                         _render["meta_list"][_prop_id] = json.loads(

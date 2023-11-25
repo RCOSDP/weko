@@ -56,8 +56,8 @@ def schema(title="", multi_flag=multiple_flag):
     def _schema():
         """Schema text."""
         _d = {
-            "system_prop": True,
             "type": "object",
+            "format": "object",
             "properties": {
                 "subitem_systemidt_identifier": {
                     "type": "string",
@@ -66,11 +66,13 @@ def schema(title="", multi_flag=multiple_flag):
                 },
                 "subitem_systemidt_identifier_type": {
                     "enum": id_type,
+                    "currentEnum": id_type,
                     "type": "string",
                     "title": "SYSTEMIDT Identifier Type",
                     "format": "select",
                 },
             },
+            "system_prop": True,
         }
         return _d
 
@@ -83,22 +85,23 @@ def form(key="", title="", title_ja="", title_en="", multi_flag=multiple_flag):
     def _form(key):
         """Form text."""
         _d = {
+            "key": key.replace("[]", ""),
             "type": "fieldset",
             "items": [
                 {
-                    "key": "parentkey.subitem_systemidt_identifier",
+                    "key": "{}.subitem_systemidt_identifier".format(key),
                     "type": "text",
                     "title": "SYSTEMIDT Identifier",
                 },
                 {
-                    "key": "parentkey.subitem_systemidt_identifier_type",
+                    "key": "{}.subitem_systemidt_identifier_type".format(key),
                     "type": "select",
                     "title": "SYSTEMIDT Identifier Type",
                     "titleMap": get_select_value(id_type),
                 },
             ],
-            "key": key.replace("[]", ""),
         }
+
         return _d
 
     return get_property_form(key, title, title_ja, title_en, multi_flag, _form)

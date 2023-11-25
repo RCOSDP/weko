@@ -225,7 +225,7 @@ def form(
                             ),
                             "title": "助成機関識別子URI",
                             "title_i18n": {
-                                "en": "Funder IdentifierタイプURI",
+                                "en": "Funder Identifier Type URI",
                                 "ja": "助成機関識別子タイプURI",
                             },
                             "type": "text",

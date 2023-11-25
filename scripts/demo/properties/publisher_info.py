@@ -182,8 +182,7 @@ def form(
                             "key": "{}.publisher_names[].publisher_name_language".format(
                                 key
                             ),
-                            "format": "select",
-                            "type": ["null", "string"],
+                            "type": "select",
                             "title": "言語",
                             "title_i18n": {"ja": "言語", "en": "Language"},
                             "titleMap": get_select_value(config.LANGUAGE_VAL2_1),
@@ -215,8 +214,7 @@ def form(
                             "key": "{}.publisher_descriptions[].publisher_description_language".format(
                                 key
                             ),
-                            "format": "select",
-                            "type": ["null", "string"],
+                            "type": "select",
                             "title": "言語",
                             "title_i18n": {"ja": "言語", "en": "Language"},
                             "titleMap": get_select_value(config.LANGUAGE_VAL2_1),

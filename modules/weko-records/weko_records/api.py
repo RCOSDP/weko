@@ -976,8 +976,9 @@ class ItemTypes(RecordBase):
                                       form=table_row_map.get('form'),
                                       render=data)
         mapping = Mapping.get_record(itemtype_id)
-        mapping.model.mapping = table_row_map.get('mapping')
-        db.session.add(mapping.model)
+        if mapping:
+            mapping.model.mapping = table_row_map.get('mapping')
+            db.session.add(mapping.model)
         
         ItemTypeEditHistory.create_or_update(
             item_type_id=record.model.id,

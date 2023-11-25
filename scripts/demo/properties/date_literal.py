@@ -15,7 +15,9 @@ name_en = "Date(Literal)"
 mapping = {
     "display_lang_type": "",
     "jpcoar_v1_mapping": "",
-    "jpcoar_mapping": {"date_dcterms": {"@value": "subitem_dcterms_date"}},
+    "jpcoar_mapping": {"date_dcterms": {
+        "@value": "subitem_dcterms_date",
+        "@attributes": {"xml:lang": "subitem_dcterms_date_language"}}},
     "junii2_mapping": "",
     "lido_mapping": "",
     "lom_mapping": "",
@@ -49,7 +51,14 @@ def schema(title="", multi_flag=multiple_flag):
                     "format": "text",
                     "title": "日付（リテラル）",
                     "title_i18n": {"en": "Date Literal", "ja": "日付（リテラル）"},
-                }
+                },
+                "subitem_dcterms_date_language": {
+                    "editAble": True,
+                    "type": ["null", "string"],
+                    "format": "select",
+                    "enum": config.LANGUAGE_VAL2_1,
+                    "title": "言語",
+                },
             },
         }
         return _d
@@ -66,11 +75,19 @@ def form(
         """Form text."""
         _d = {
             "items": [
+
                 {
                     "key": "{}.subitem_dcterms_date".format(key),
                     "type": "text",
                     "title": "日付（リテラル）",
                     "title_i18n": {"en": "Date Literal", "ja": "日付（リテラル）"},
+                },
+                                {
+                    "key": "{}.subitem_dcterms_date_language".format(key),
+                    "title": "言語",
+                    "title_i18n": {"ja": "言語", "en": "Language"},
+                    "titleMap": get_select_value(config.LANGUAGE_VAL2_1),
+                    "type": "select",
                 },
             ],
             "key": key.replace("[]", ""),
