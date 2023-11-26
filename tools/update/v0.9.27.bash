@@ -25,6 +25,7 @@ CNT=$(docker-compose -f docker-compose2.yml exec postgresql psql -qtAX -U inveni
 if [ $CNT -gt 100 ]; then
     docker-compose -f docker-compose2.yml exec web invenio index queue init;
     docker-compose -f docker-compose2.yml exec web invenio index reindex -t recid --yes-i-know;
+    docker-compose -f docker-compose2.yml exec web invenio index run;
 fi 
 
 echo "Finish update"
