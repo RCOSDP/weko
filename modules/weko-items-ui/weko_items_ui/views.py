@@ -1179,6 +1179,18 @@ def check_validation_error_msg(activity_id):
 
     :param activity_id: The identify of Activity.
     :return: Show error message
+    {
+    "code": 1,
+    "error_list": {
+        "either": [],
+        "either_key": [],
+        "mapping": [],
+        "pattern": [],
+        "required": [],
+        "required_key": []
+    },
+    "msg": []
+    }
     """
 
     redis_connection = RedisConnection()

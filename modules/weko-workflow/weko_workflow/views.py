@@ -25,6 +25,7 @@ import os
 import re
 import shutil
 import sys
+import traceback
 from collections import OrderedDict
 from copy import deepcopy
 from datetime import datetime
@@ -2098,6 +2099,8 @@ def cancel_action(activity_id='0', action_id=0):
         activity_id=activity_id, action_id=action_id,
         action_status=ActionStatusPolicy.ACTION_CANCELED,
         action_order=activity_detail.action_order)
+    
+
 
     rtn = work_activity.quit_activity(activity)
 
@@ -2123,7 +2126,31 @@ def cancel_action(activity_id='0', action_id=0):
     permission = FilePermission.find_by_activity(activity_id)
     if permission:
         FilePermission.delete_object(permission)
-
+    
+    #  not work 
+    cache_key = "workflow_userlock_activity_{}".format(str(current_user.get_id()))
+    cur_locked_val = str(get_cache_data(cache_key)) or None
+    if cur_locked_val and cur_locked_val==activity_id:
+        update_cache_data(
+            cache_key,
+            cur_locked_val,
+            1
+        )
+        delete_cache_data(cache_key)
+    
+    try:
+        cache_key = 'workflow_locked_activity_{}'.format(activity_id)
+        cur_locked_val = str(get_cache_data(cache_key)) or None
+        if cur_locked_val:
+            update_cache_data(
+                cache_key,
+                cur_locked_val,
+                1
+            )
+            delete_cache_data(cache_key)
+    except Exception as e:
+        current_app.logger.error(traceback.format_exc())
+                 
     res = ResponseMessageSchema().load(
         {"code":0, "msg":_("success"),"data":{"redirect":url}}
         )
@@ -2353,8 +2380,17 @@ def get_feedback_maillist(activity_id='0'):
 def is_user_locked():
     cache_key = "workflow_userlock_activity_{}".format(str(current_user.get_id()))
     cur_locked_val = str(get_cache_data(cache_key)) or str()
+    current_app.logger.error("is_user_locked:{}".format(cur_locked_val))
+         
+        
     if cur_locked_val:
-        is_open=True
+        work_activity = WorkActivity()
+        act = work_activity.get_activity_by_id(cur_locked_val)
+        current_app.logger.error(act.activity_status)
+        if act is None or act.activity_status in [ActivityStatusPolicy.ACTIVITY_CANCEL,ActivityStatusPolicy.ACTIVITY_FORCE_END,ActivityStatusPolicy.ACTIVITY_FINALLY]:
+            is_open = False
+        else:
+            is_open = True
     else:
         is_open=False
     
@@ -2394,18 +2430,22 @@ def user_lock_activity(activity_id="0"):
     validate_csrf_header(request)
     cache_key = "workflow_userlock_activity_{}".format(str(current_user.get_id()))
     timeout = current_app.permanent_session_lifetime.seconds
-    
     cur_locked_val = str(get_cache_data(cache_key)) or str()
-    
     err = ""
     if cur_locked_val:
         err = _("Opened")
     else:
-        update_cache_data(
-            cache_key,
-            activity_id,
-            timeout
-        )
+        work_activity = WorkActivity()
+        act = work_activity.get_activity_by_id(activity_id)
+        if act is None or act.activity_status in [ActivityStatusPolicy.ACTIVITY_BEGIN,ActivityStatusPolicy.ACTIVITY_MAKING]:
+            update_cache_data(
+                cache_key,
+                activity_id,
+                timeout
+            )
+        # elif cur_locked_val==activity_id:
+        #     delete_cache_data(cache_key)
+            
     locked_by_email, locked_by_username = get_account_info(str(current_user.get_id()))
     res = {"code":200,"msg": "" if err else _("Success"),"err": err or "", "locked_by_username":locked_by_username}
     return jsonify(res), 200
@@ -2449,10 +2489,11 @@ def user_unlock_activity(activity_id="0"):
     cache_key = "workflow_userlock_activity_{}".format(str(current_user.get_id()))
     cur_locked_val = str(get_cache_data(cache_key)) or str()
     data = json.loads(request.data.decode("utf-8"))
-    if cur_locked_val and not data["is_opened"] or (cur_locked_val == activity_id and data["is_opened"]):
+    msg = _("Not unlock")
+    if cur_locked_val and not data["is_opened"] or (cur_locked_val == activity_id):
         delete_cache_data(cache_key)
         msg = "User Unlock Success"
-    res = {"code":200, "msg":msg or _("Not unlock")}
+    res = {"code":200, "msg":msg}
     return jsonify(res), 200
 
 @workflow_blueprint.route('/activity/lock/<string:activity_id>', methods=['POST'])
@@ -2538,6 +2579,7 @@ def lock_activity(activity_id="0"):
         current_app.logger.error("lock_activity: "+str(err))
         res = ResponseMessageSchema().load({"code":-1, "msg":str(err)})
         return jsonify(res.data), 500
+    
     data = schema_load.data
     locked_value = data.get('locked_value')
     cur_locked_val = str(get_cache_data(cache_key)) or str()
@@ -2547,20 +2589,26 @@ def lock_activity(activity_id="0"):
             locked_value = cur_locked_val
             err = _('Locked')
         else:
+            work_activity = WorkActivity()
+            act = work_activity.get_activity_by_id(activity_id)
+            if act is None or act.activity_status in [ActivityStatusPolicy.ACTIVITY_BEGIN,ActivityStatusPolicy.ACTIVITY_MAKING]:
+                update_cache_data(
+                    cache_key,
+                    locked_value,
+                    timeout
+                )
+    else:
+        # create new lock cache
+        locked_value = str(current_user.get_id()) + '-' + \
+            str(int(datetime.timestamp(datetime.now()) * 10 ** 3))
+        work_activity = WorkActivity()
+        act = work_activity.get_activity_by_id(activity_id)
+        if act is None or act.activity_status in [ActivityStatusPolicy.ACTIVITY_BEGIN,ActivityStatusPolicy.ACTIVITY_MAKING]:
             update_cache_data(
                 cache_key,
                 locked_value,
                 timeout
             )
-    else:
-        # create new lock cache
-        locked_value = str(current_user.get_id()) + '-' + \
-            str(int(datetime.timestamp(datetime.now()) * 10 ** 3))
-        update_cache_data(
-            cache_key,
-            locked_value,
-            timeout
-        )
 
     locked_by_email, locked_by_username = get_account_info(
         locked_value.split('-')[0])

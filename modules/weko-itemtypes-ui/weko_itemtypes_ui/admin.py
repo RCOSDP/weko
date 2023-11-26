@@ -196,6 +196,7 @@ class ItemTypeMetaDataView(BaseView):
             upgrade_version = current_app.config[
                 'WEKO_ITEMTYPES_UI_UPGRADE_VERSION_ENABLED'
             ]
+            
             if not upgrade_version:
                 Mapping.create(item_type_id=record.model.id,
                                mapping=table_row_map.get('mapping'))

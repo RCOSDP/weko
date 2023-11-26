@@ -1432,7 +1432,8 @@ async def sort_meta_data_by_options(
                                 "specify_newline": option.get("crtf"),
                                 "hide": option.get("hidden"),
                             }
-                            break    
+                            break
+        
         # Format data to display on item list
         items = get_comment(
             solst_dict_array,
@@ -1441,7 +1442,7 @@ async def sort_meta_data_by_options(
             src_default,
             solst,
         )
-
+        
         if "file" in record_hit["_source"]:
             record_hit["_source"].pop("file")
 

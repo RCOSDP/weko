@@ -12,6 +12,7 @@ property_id = config.RADIOBUTTON
 multiple_flag = True
 name_ja = "ラジオボタン"
 name_en = "Radio Button"
+mapping = config.DEFAULT_MAPPING
 
 
 def add(post_data, key, **kwargs):
@@ -20,7 +21,7 @@ def add(post_data, key, **kwargs):
     set_post_data(post_data, property_id, name_ja, key, option, form, schema, **kwargs)
 
     kwargs.pop("mapping", True)
-    post_data["table_row_map"]["mapping"][key] = config.DEFAULT_MAPPING
+    post_data["table_row_map"]["mapping"][key] = mapping
 
 
 def schema(title="", multi_flag=multiple_flag):

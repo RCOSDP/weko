@@ -13,6 +13,21 @@ property_id = config.DCNDL_ORIGINAL_LANGUAGE
 multiple_flag = True
 name_ja = "原文の言語"
 name_en = "Original Language"
+mapping = {
+    "display_lang_type": "",
+    "jpcoar_v1_mapping": {},
+    "jpcoar_mapping": {
+        "originalLanguage": {
+            "@value": "original_language",
+            "@attributes": {"xml:lang": "original_language_language"},
+        }
+    },
+    "junii2_mapping": "",
+    "lido_mapping": "",
+    "lom_mapping": "",
+    "oai_dc_mapping": "",
+    "spase_mapping": "",
+}
 
 
 def add(post_data, key, **kwargs):
@@ -21,21 +36,7 @@ def add(post_data, key, **kwargs):
     set_post_data(post_data, property_id, name_ja, key, option, form, schema, **kwargs)
 
     if kwargs.pop("mapping", True):
-        post_data["table_row_map"]["mapping"][key] = {
-            "display_lang_type": "",
-            "jpcoar_v1_mapping": {},
-            "jpcoar_mapping": {
-                "originalLanguage": {
-                    "@value": "original_language",
-                    "@attributes": {"xml:lang": "original_language_language"},
-                }
-            },
-            "junii2_mapping": "",
-            "lido_mapping": "",
-            "lom_mapping": "",
-            "oai_dc_mapping": "",
-            "spase_mapping": "",
-        }
+        post_data["table_row_map"]["mapping"][key] = mapping
     else:
         post_data["table_row_map"]["mapping"][key] = config.DEFAULT_MAPPING
 
