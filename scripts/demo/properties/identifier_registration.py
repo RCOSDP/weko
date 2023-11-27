@@ -63,6 +63,7 @@ def schema(title="", multi_flag=multiple_flag):
         """Schema text."""
         _d = {
             "type": "object",
+            "title":"identifier_registration",
             "properties": {
                 "subitem_identifier_reg_text": {
                     "format": "text",

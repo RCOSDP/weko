@@ -59,6 +59,7 @@ def schema(title="", multi_flag=multiple_flag):
         _d = {
             "type": "object",
             "format": "object",
+            "title": "publisher_information",
             "properties": {
                 "publisher_names": {
                     "type": "array",

@@ -49,6 +49,7 @@ def schema(title="", multi_flag=multiple_flag):
         _d = {
             "type": "object",
             "format": "object",
+            "title":"volume_title",
             "properties": {
                 "volume_title": {
                     "type": "string",
