@@ -133,7 +133,6 @@ class S3FSFileStorage(PyFSFileStorage):
 
             s3 = self.get_s3_client()
 
-            # raise 
             bucket_nm = bucket_name.replace("s3://" ,"").split("/")[0]
             res = s3.upload_part(
                 Key=self.fileurl.replace("s3://" + bucket_nm + "/","")

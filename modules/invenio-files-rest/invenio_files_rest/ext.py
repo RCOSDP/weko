@@ -112,7 +112,6 @@ class InvenioFilesREST(object):
 
     def init_app(self, app):
         """Flask application initialization."""
-        print("\033[32m", "inveniofiles_rest.ext.InvenioFilesREST.init_app", "\033[0m")
         self.init_config(app)
         if hasattr(app, 'cli'):
             app.cli.add_command(files_cmd)

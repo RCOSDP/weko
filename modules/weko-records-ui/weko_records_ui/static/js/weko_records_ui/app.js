@@ -204,8 +204,8 @@
                     let size = formatBytes(ele.size, 2);
 
                     // Checksum
-                    var checksum = ele.checksum
-                    var checksumIndex = ele.checksum.indexOf(":")
+                    var checksum = ele.checksum || ''
+                    var checksumIndex = ele.checksum?.indexOf(":") || -1
                     if (checksumIndex != -1) {
                         checksum = ele.checksum.substr(0, checksumIndex) + "<span class=\"wrap\">" + ele.checksum.substr(checksumIndex + 1) + "</span>";
                     }

@@ -1010,7 +1010,6 @@ def handle_check_exist_record(list_record) -> list:
         
         file_meta_id = ""
         for key, val in item.get("metadata").items():
-            # print("\033[32m", val, "\033[0m")
             if isinstance(val, list):
                 for i in val:
                     if isinstance(i, dict) and "filename" in i:

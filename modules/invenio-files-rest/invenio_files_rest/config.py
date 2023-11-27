@@ -47,7 +47,7 @@ FILES_REST_DEFAULT_QUOTA_SIZE = None
 FILES_REST_DEFAULT_MAX_FILE_SIZE = None
 """Default maximum file size for a bucket in bytes."""
 
-FILES_REST_MIN_FILE_SIZE = 1
+FILES_REST_MIN_FILE_SIZE = 0
 """Minimum file size for uploads (i.e. do not allow empty files)."""
 
 FILES_REST_SIZE_LIMITERS = 'invenio_files_rest.limiters.file_size_limiters'
