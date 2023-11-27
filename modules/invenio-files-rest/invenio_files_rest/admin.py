@@ -33,6 +33,8 @@ from wtforms.fields import BooleanField
 from wtforms.validators import ValidationError
 from wtforms.widgets import PasswordInput
 
+from weko_redis.redis import RedisConnection
+
 from .models import Bucket, FileInstance, Location, MultipartObject, \
     ObjectVersion, slug_pattern
 from .tasks import verify_checksum
@@ -62,7 +64,7 @@ def link_ver2(link_text1, link_text2 , link_func1 , link_func2 , func_link_is_1)
     def object_formatter(v, c, m, p):
         """Format object view link."""
         if func_link_is_1(m) :
-            if '1' in current_user.role : #System Administrator
+            if '1' in current_user.roles : #System Administrator
                 return Markup('<a href="{0}">{1}</a>'.format(
                     link_func1(m), link_text1))
             else :
@@ -343,11 +345,13 @@ class MultipartObjectModelView(ModelView):
 
 
     def delete_model(self ,model:MultipartObject):
+        redis_connection = RedisConnection()
+        sessionstore = redis_connection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
+        if "upload_id" + str(model.upload_id) in sessionstore.iter_keys():
+            return flash(_("Cannot be deleted because it is being uploaded."), "error")
+        
         if model.bucket_id and model.completed:
             return flash(_("Record that bound item must not be deleted."), 'error')
-        
-        if not model.completed and model.updated - current_app.config['FILES_REST_MULTIPART_EXPIRES'] < datetime.utcnow():
-            return flash(_("Record that be able to retry upload cannot be deleted yet."), 'error')
             
         # delete MultipartObject and Part
         with db.session.begin_nested():

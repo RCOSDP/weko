@@ -80,6 +80,7 @@ js = NpmBundle(
 
 preview_carousel = Bundle(
     'js/weko_records_ui/preview_carousel.js',
+    'js/weko_records_ui/file_download.js',
     filters='jsmin',
     output="gen/weko_records_ui_preview_carousel.%(version)s.js",
 )

@@ -27,7 +27,9 @@
       <h3 class="panel-title" style="display: inline;">{{_('Item')}}</h3>
       <div href="#"><span class="glyphicon glyphicon-file" aria-hidden="true" style="margin-left: 0.25em;"></span> {{ record_org.get('item_title', _('No title')) }}</div>
     </div>
+    <div id="errors1"></div>
     <div class="panel-body">
+      
       <div class="panel-body">
         <div class="row">
           <div class="col-sm-12 col-md-12 col-left">
@@ -77,7 +79,12 @@
                         <span class="filename">
                           <img src="{{img}}" alt={{file.filename or file.key}} />
                           <a class="forcewrap"
-                              href="{{file_url}}">{{ file.filename or file.key }} ({{ file.size|filesizeformat }})</a>
+                            {% if file.size < config.get("MAX_DOWNLOAD_SIZE_AT_ONE_TIME") %}
+                              href="{{file_url}}">
+                            {% else %}
+                              ediv="errors1" href="javascript:void(0)" onclick="downloadFile('{{pid.pid_value}}', '{{file.filename}}', '{{file.size}}', '{{config.get("DOWNLOAD_SIZE_IN_ONE_PART")}}', this)">
+                            {% endif %}
+                            {{ file.filename or file.key }} ({{ file.size|filesizeformat }})</a>
                           <!--<span>[ 0 downloads ]</span><br>-->
                           {%- if file.checksum -%}
                           <span>{{file.checksum.split(':')[0]}}</span>
@@ -118,5 +125,10 @@
       </div>
     </div>
   </div>
+  <input type="hidden" id="error_msg" value="{{_("File Download Failed.")}}">
+  <input type="hidden" id="confirm_msg" value="{{_(
+    "This file will take a long time to download. Please do not close this screen while downloading. Do you want to start downloading?"
+  )}}">
+  <input type="hidden" id="comp_msg" value="{{_("File download is complete.")}}">
 {% endif %}
 <br>

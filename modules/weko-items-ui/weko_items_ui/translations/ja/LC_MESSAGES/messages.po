@@ -420,6 +420,78 @@ msgstr "更新者"
 msgid "Step"
 msgstr "ステップ"
 
+#: 
+msgid "Large File Upload"
+msgstr "大容量ファイルアップロード"
+
+#: 
+msgid "Upload Id"
+msgstr "アップロードID"
+
+#: 
+msgid "When you retry failed upload, Please input the Upload Id here."
+msgstr "失敗したアップロードを再試行する場合は、ここにアップロード ID を入力してください。"
+
+#: 
+msgid "File Select"
+msgstr "選択ファイル"
+
+#: 
+msgid "Upload File"
+msgstr "ファイルアップロード"
+
+#: 
+msgid "Uploading Id"
+msgstr "アップロードID"
+
+#: 
+msgid "Please select a file."
+msgstr "ファイルを選択してください。"
+
+#: 
+msgid "The Upload Id is invalid."
+msgstr "アップロードIDが不正です。"
+
+#: 
+msgid "The Upload Id is expired for retry."
+msgstr "アップロードIDがリトライ期限切れです。"
+
+#: 
+msgid "Different File."
+msgstr "異なるファイルです。"
+
+#: 
+msgid "Different Chunksize."
+msgstr "チャンクサイズが違います。"
+
+#: 
+msgid "An error has occurred."
+msgstr "エラーが発生しました。"
+
+#: 
+msgid "File size is too large."
+msgstr "ファイルサイズが大きすぎます。"
+
+#:
+msgid "Created(UTC)"
+msgstr "作成日(UTC)"
+
+#:
+msgid "Updated(UTC)"
+msgstr "更新日(UTC)"
+
+#:
+msgid "Failed(Expired)"
+msgstr "失敗（期限切れ）"
+
+#:
+msgid "Copy"
+msgstr "転記"
+
+#:
+msgid "Can resume"
+msgstr "レジューム可否"
+
 #: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:241
 msgid "History"
 msgstr "ヒストリー"

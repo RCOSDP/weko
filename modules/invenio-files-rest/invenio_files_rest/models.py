@@ -35,7 +35,6 @@ model.
 """
 
 from __future__ import absolute_import, print_function
-
 import mimetypes
 import os
 import re
@@ -789,6 +788,9 @@ class FileInstance(db.Model, Timestamp):
         """
         location = self.get_location_by_file_instance()
         location.size = location.size - self.size
+        multipartobject = MultipartObject.query.filter_by(file_id = self.id).one_or_none()
+        if multipartobject:
+            multipartobject.delete()
         self.query.filter_by(id=self.id).delete()
         return self
 
@@ -1797,6 +1799,20 @@ class MultipartObject(db.Model, Timestamp):
             q = q.filter(cls.completed.is_(False))
 
         return q.one_or_none()
+    
+    @classmethod
+    def get_by_uploadId(cls, upload_id):
+        q = cls.query.filter_by(
+            upload_id = upload_id
+        )
+        return q.one_or_none()
+    
+    @classmethod
+    def get_by_fileId(cls, file_id):
+        q = cls.query.filter_by(
+            file_id = file_id
+        )
+        return q.one_or_none()
 
     @classmethod
     def query_expired(cls, dt, bucket=None):
@@ -1881,6 +1897,13 @@ class Part(db.Model, Timestamp):
         return cls.query.filter_by(
             upload_id=mp.upload_id,
             part_number=part_number
+        ).one_or_none()
+        
+    @classmethod
+    def get_by_upload_id_partNumber(cls, upload_id, part_number):
+        return cls.query.filter_by(
+            upload_id = upload_id,
+            part_number = part_number
         ).one_or_none()
 
     @classmethod

@@ -13,6 +13,9 @@
 {% assets "workflow_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {% assets "weko_theme_js_widget" %}
 <script src="{{ ASSET_URL }}"></script>{% endassets %}
+{% assets "weko_items_ui_large_file_upload_js" %}
+<script src="{{ ASSET_URL }}"></script>{% endassets %}
+
 {%- endblock javascript %}
 
 {%- block page_body_tabs %}
@@ -55,6 +58,7 @@
 <section name="upload_area">
   <h4>{{_('Large File Upload')}}</h4>
   <div>
+    <div id="errors"></div>
     <section name="upload_controller">
       <!-- <h5>uploader</h5> -->
       <div class="row layout">
@@ -82,7 +86,7 @@
               <div class="col-md-2 col-cd">
               </div>
               <div class="col-md-8 col-xs-12 text-center">
-                <button variant="primary" class="btn btn-sm btn-primary" type="submit" id="upload_button">{{_('Upload File')}}</button>
+                <button variant="primary" class="btn btn-sm btn-primary" type="submit" id="upload_button" onclick="multipartUpload()">{{_('Upload File')}}</button>
               </div>
             </div>
           </div>
@@ -97,7 +101,7 @@
           <div class="col-md-12">
             <div class="col-md-2 col-cd">
               <label>
-                {{_('Status')}} : 
+                {{_('Status')}} : <p name="upload_status"></p>
               </label>
             </div>
             <div class="row col-md-8">
@@ -114,7 +118,7 @@
           <div class="col-md-12">
             <div class="col-md-2 col-cd">
                 <label>
-                  {{_('Uploading Id')}} : 
+                  {{_('Uploading Id')}} : <p name="upload_id"></p>
                 </label>
             </div>
             <div class="col-md-8">
@@ -153,6 +157,7 @@
               <thead>
                 <tr>
                     <th>{{ _('Upload Id') }}</th>
+                    <th>{{ _("Can resume") }}</th>
                     <th>{{ _('Result') }}</th>
                     <th>{{ _('Created') }}</th>
                     <th>{{ _('Updated') }}</th>
@@ -165,8 +170,11 @@
               {%- for history in histories %}
                 <tr class="">
                     <td scope="row"><span>{{history.upload_id}}</span></td>
-                    <td><span>
-                      {%-if history.completed %}{{ _('Success')}}{%- else %}{{ _('Failed')}}{%- endif %}
+                    <td class="btn-copy"><span>
+                      {%- if not history.completed and history.created > day%}<button variant="primary" class="btn btn-sm btn-primary" id="upload_id_set_button" upload_id={{history.upload_id}} onclick="uploadIdSet('{{history.upload_id}}')">{{ _('Copy')}}</button>{%- else %} {%- endif %}
+                    </span></td>
+                    <td ><span>
+                      {%-if history.completed %}{{ _('Success')}}{%- else %}{%- if history.created < day -%}{{_("Failed(Expired)")}}{%- else -%}{{ _('Failed')}}{%- endif %}{%- endif %}
                     </span></td>
                     <td><span>{{history.created}}</span></td>
                     <td><span>{{history.updated}}</span></td>
@@ -226,5 +234,14 @@
     </section>
   {%- endif %}
 <input type="hidden" id="retry_count" value="{{retry_count}}">
+<input type="hidden" id="chunk_size" value="{{chunk_size}}">
+<input type="hidden" id="errormsg" value="{{_("Please select a file.")}}">
+<input type="hidden" id="errormsg" value="{{_("The Upload Id is invalid.")}}">
+<input type="hidden" id="errormsg" value="{{_("The Upload Id is expired for retry.")}}">
+<input type="hidden" id="errormsg" value="{{_("Different File.")}}">
+<input type="hidden" id="errormsg" value="{{_("Different Chunksize.")}}">
+<input type="hidden" id="errormsg" value="{{_("An error has occurred.")}}">
+<input type="hidden" id="errormsg" value="{{_("File size is too large.")}}">
+
 </section>
 {%- endblock page_body_main %}

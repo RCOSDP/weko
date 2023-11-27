@@ -1330,10 +1330,13 @@ def get_large_file_upload_view():
     maxpage=math.ceil(count / int(sizetodo))
     pages = pagestodo if pagestodo <= maxpage else maxpage
     retry_count = current_app.config['WEKO_ITEMS_UI_LARGE_FILE_UPLOAD_MAX_RETRY']
+    chunk_size = current_app.config["FILES_REST_LARGE_FILE_CHUNK_SIZE"]
     
     return render_template('weko_items_ui/large_upload_view.html'
                             ,histories=histories
                             ,maxpage=maxpage
                             ,pages=pages
                             ,size=sizetodo
-                            ,retry_count=retry_count)
+                            ,day=datetime.now() - current_app.config.get("FILES_REST_MULTIPART_EXPIRES")
+                            ,retry_count=retry_count
+                            ,chunk_size=chunk_size)

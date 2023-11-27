@@ -37,6 +37,7 @@ from invenio_accounts.models import Role
 from invenio_cache import current_cache
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
+from invenio_files_rest.models import ObjectVersion
 from invenio_oaiserver.response import getrecord
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
@@ -665,19 +666,7 @@ def get_file_info_list(record):
     """
     def get_file_size(p_file):
         """Get file size and convert to byte."""
-        file_size = p_file.get('filesize', [{}])[0]
-        file_size_value = file_size.get('value', 0)
-        defined_unit = {'b': 1, 'kb': 1000, 'mb': 1000000,
-                        'gb': 1000000000, 'tb': 1000000000000}
-        if type(file_size_value) is str and ' ' in file_size_value:
-            size_num = file_size_value.split(' ')[0]
-            size_unit = file_size_value.split(' ')[1]
-            unit_num = defined_unit.get(size_unit.lower(), 0)
-            try:
-                file_size_value = float(size_num) * unit_num
-            except:
-                file_size_value = -1
-        return file_size_value
+        return ObjectVersion.query.filter_by(version_id = p_file.get("version_id")).one_or_none().file.size
 
     def set_message_for_file(p_file):
         """Check Opendate is future date."""

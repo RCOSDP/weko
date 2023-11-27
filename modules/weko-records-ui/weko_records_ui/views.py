@@ -680,6 +680,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         flg_display_itemtype = current_app.config.get('WEKO_RECORDS_UI_DISPLAY_ITEM_TYPE') ,
         flg_display_resourcetype = current_app.config.get('WEKO_RECORDS_UI_DISPLAY_RESOURCE_TYPE') ,
         search_author_flg=search_author_flg,
+        retry_count = current_app.config.get("WEKO_ITEMS_UI_LARGE_FILE_DOWNLOAD_MAX_RETRY"),
         
         **ctx,
         **kwargs

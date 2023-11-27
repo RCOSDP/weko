@@ -865,7 +865,6 @@ def package_export_file(item_type_data):
             + item_type_data['data'].get(recid)
         )
 
-    # current_app.logger.error("file_output: {}".format(file_output.getvalue()))
     return file_output
 
 
@@ -1098,6 +1097,10 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
                 for key_index in range(key_list_len):
                     item_key_split = item_key.split('.')
                     if 'filename' in key_list[key_index]:
+                        key_list.insert(0, '.upload_id[{}]'.format(
+                            str(idx)))
+                        key_label.insert(0, '.ファイルアップロードID[{}]'.format(
+                            str(idx)))
                         key_list.insert(0, '.file_path[{}]'.format(
                             str(idx)))
                         key_label.insert(0, '.ファイルパス[{}]'.format(
@@ -1106,6 +1109,7 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
                         if key_data[key_index]:
                             file_path = "recid_{}/{}".format(str(self.cur_recid), key_data[key_index])
                             output_path = file_path if os.path.exists(os.path.join(export_path,file_path)) else ""
+                        key_data.insert(0, "")
                         key_data.insert(0,output_path)
                         break
                     elif 'thumbnail_label' in key_list[key_index] \
@@ -1260,7 +1264,7 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
 
         new_keys = []
         for key in keys:
-            if 'file_path' not in key and 'thumbnail_path' not in key:
+            if 'file_path' not in key and 'upload_id' not in key and 'thumbnail_path' not in key:
                 key = '.metadata.{}'.format(key)
             new_keys.append(key)
         ret.extend(new_keys)
@@ -1269,7 +1273,7 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
     ret_system = []
     ret_option = []
     multiple_option = ['.metadata.path', '.pos_index',
-                       '.feedback_mail', '.file_path', '.thumbnail_path']
+                       '.feedback_mail', '.file_path', '.upload_id', '.thumbnail_path']
     meta_list = item_type.get('meta_list', {})
     meta_list.update(item_type.get('meta_fix', {}))
     form = item_type.get('table_row_map', {}).get('form', {})
@@ -1407,17 +1411,6 @@ def write_files(item_types_data, export_path, list_item_role):
         current_app.logger.debug("headers:{}".format(headers))
         current_app.logger.debug("records:{}".format(records))
         keys, labels, is_systems, options = headers
-        
-        j = 0
-        for i in range(1, len(keys) + 1):
-            if(re.search(r"\.file_path", keys[-i + j])):
-                keys.insert(-i + j + 1, re.sub("file_path", "upload_id", keys[-i + j], 1))
-                labels.insert(-i + j + 1, re.sub("ファイルパス", "ファイルアップロードID", labels[-i + j], 1))
-                is_systems.insert(-i + j + 1, "")
-                options.insert(-i + j + 1, options[-i + j])
-                for x in records.values():
-                    x.insert(-i + j + 1, "")
-                j -= 1
         
         item_types_data[item_type_id]['recids'].sort()
         item_types_data[item_type_id]['keys'] = keys
@@ -1634,7 +1627,7 @@ def _export_item(record_id,
                     if file.info().get('accessrole') != 'open_restricted':
                         exported_item['files'].append(file.info())
                         # TODO: Then convert the item into the desired format
-                        if file:
+                        if file.info().get("size") <= current_app.config.get("WEKO_ITEMS_UI_EXPORT_MAX_FILE_SIZE"):
                             file_buffered = file.obj.file.storage().open()
                             temp_file = open(
                                 tmp_path + '/' + file.obj.basename, 'wb')
@@ -3057,6 +3050,10 @@ def make_stats_file_with_permission(item_type_id, recids,
                 for key_index in range(key_list_len):
                     item_key_split = item_key.split('.')
                     if 'filename' in key_list[key_index]:
+                        key_list.insert(0, '.upload_id[{}]'.format(
+                            str(idx)))
+                        key_label.insert(0, '.ファイルアップロードID[{}]'.format(
+                            str(idx)))
                         key_list.insert(0, '.file_path[{}]'.format(
                             str(idx)))
                         key_label.insert(0, '.ファイルパス[{}]'.format(
@@ -3065,6 +3062,7 @@ def make_stats_file_with_permission(item_type_id, recids,
                         if key_data[key_index]:
                             file_path = "recid_{}/{}".format(str(self.cur_recid), key_data[key_index])
                             output_path = file_path if os.path.exists(os.path.join(export_path,file_path)) else ""
+                        key_data.insert(0, "")
                         key_data.insert(0,output_path)
                         break
                     elif 'thumbnail_label' in key_list[key_index] \
@@ -3219,7 +3217,7 @@ def make_stats_file_with_permission(item_type_id, recids,
 
         new_keys = []
         for key in keys:
-            if 'file_path' not in key and 'thumbnail_path' not in key:
+            if 'file_path' not in key and 'upload_id' not in key and 'thumbnail_path' not in key:
                 key = '.metadata.{}'.format(key)
             new_keys.append(key)
         ret.extend(new_keys)
@@ -3228,7 +3226,7 @@ def make_stats_file_with_permission(item_type_id, recids,
     ret_system = []
     ret_option = []
     multiple_option = ['.metadata.path', '.pos_index',
-                       '.feedback_mail', '.file_path', '.thumbnail_path']
+                       '.feedback_mail', '.file_path', '.upload_id', '.thumbnail_path']
     meta_list = item_type.get('meta_list', {})
     meta_list.update(item_type.get('meta_fix', {}))
     form = item_type.get('table_row_map', {}).get('form', {})

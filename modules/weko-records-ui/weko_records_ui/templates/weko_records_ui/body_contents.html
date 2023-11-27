@@ -39,6 +39,7 @@
     <div class="panel-body panel-body2">
       {%- include "weko_records_ui/box/head.html" %}
     </div>
+    <div id="errors"></div>
     <div class="panel-body panel-body2" style="padding-top: 10px;">
       <div class="row row-4">
         <div id="detail-item" class="col-sm-9 col-md-9 col-lg-9 col-left">
@@ -82,6 +83,9 @@
                     {%- set img = file.mimetype | get_image_src -%}
                     {%- set file_url = url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value,
                         filename=file.filename) %}
+                    {%- if file.size > config.get("MAX_DOWNLOAD_SIZE_AT_ONE_TIME") -%}
+                      {%- set file_url = file_url| replace("files", "multipartfiles") -%}
+                    {%- endif -%}
                     {%- set is_billing_file = False -%}
                     {%- set billing_file_data = "" -%}
                     {%- set billing_file_url = "" -%}
@@ -165,12 +169,21 @@
                           {%- endif -%}
                           <!-- Show FileName/Label -->
                           {%- if access_permission and billing_file_access_permission -%}
-                            <a class="forcewrap{{ billing_file_class }}" {{ billing_file_data }} {{ billing_file_url }}
-                              {% if text_url %} href="javascript:OnLinkClick('{{ text_url }}', {{ pid.pid_value }}, '{{ file.accessrole }}')" {% endif %}>
-                              {% autoescape false %}
-                              {{ file_label | escape_str }} {{ filesize }}
-                              {% endautoescape %}
-                            </a>
+                            {%- if file.size < config.get("MAX_DOWNLOAD_SIZE_AT_ONE_TIME") -%}
+                              <a class="forcewrap{{ billing_file_class }}" {{ billing_file_data }} {{ billing_file_url }}
+                                {% if text_url %} href="javascript:OnLinkClick('', {{ pid.pid_value }}, '{{ file.accessrole }}')" {% endif %}>
+                                {% autoescape false %}
+                                {{ file_label | escape_str }} {{ filesize }}
+                                {% endautoescape %}
+                              </a>
+                            {%- else -%}
+                              <a class="forcewrap{{ billing_file_class }}" {{ billing_file_data }} {{ billing_file_url }}
+                                {% if text_url %} href="javascript:void(0)" onclick="downloadFile('{{pid.pid_value}}', '{{file.filename}}', '{{file.size}}', '{{config.get("DOWNLOAD_SIZE_IN_ONE_PART")}}', this)" {% endif %}>
+                                {% autoescape false %}
+                                {{ file_label | escape_str }} {{ filesize }}
+                                {% endautoescape %}
+                              </a>
+                            {%- endif -%}
                             <br>
                           {%- elif clickable -%}
                             {{ check_download_file(record, file, permission, community, url_for_security, is_file_name_url, file_label) }}
@@ -258,12 +271,19 @@
                           {%- set download_id = 'download-' + file.version_id %}
                           {%- if (access_permission and billing_file_access_permission) or not clickable -%}
                             <!-- User has permission download. -->
+                            {%- if file.size < config.get("MAX_DOWNLOAD_SIZE_AT_ONE_TIME") -%}
                             <a class="action-anchor" href="{{file_url}}">
                               <button class="img-rounded action-button button-sm" id="{{download_id}}">
                                 <i class="action-icon fa fa-download"></i>
                                 {{_('Download')}}
                               </button>
                             </a>
+                            {%- else -%}
+                              <button class="img-rounded action-button button-sm" id="{{download_id}}" onclick="downloadFile('{{pid.pid_value}}', '{{file.filename}}', '{{file.size}}', '{{config.get("DOWNLOAD_SIZE_IN_ONE_PART")}}', this)">
+                                <i class="action-icon fa fa-download"></i>
+                                {{_('Download')}}
+                              </button>
+                            {%- endif -%}
                           {%- elif clickable -%}
                             {{ check_download_file(record, file, permission, community, url_for_security, is_file_name_url, file_label) }}
                           {%- endif -%}
@@ -456,6 +476,12 @@
     </div><!-- /.modal-content -->
   </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
+<input type="hidden" id="error_msg" value="{{_("File Download Failed.")}}">
+<input type="hidden" id="confirm_msg" value="{{_(
+  "This file will take a long time to download. Please do not close this screen while downloading. Do you want to start downloading?"
+  )}}">
+<input type="hidden" id="comp_msg" value="{{_("File download is complete.")}}">
+<input type="hidden" id="retry_count" value="{{retry_count}}">
 {% block css %}
 <style>
   #invenio-csl span.twitter-typeahead .tt-menu {

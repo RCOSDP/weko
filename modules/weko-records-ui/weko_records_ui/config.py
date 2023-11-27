@@ -128,6 +128,14 @@ RECORDS_UI_ENDPOINTS = dict(
         permission_factory_imp='weko_records_ui.permissions'
                                ':page_permission_factory',
     ),
+    recid_multipartfiles=dict(
+        pid_type='recid',
+        route='/record/<pid_value>/multipartfiles/<path:filename>',
+        view_imp='weko_records_ui.fd.multipartfile_download_ui',
+        record_class='weko_deposit.api:WekoRecord',
+        permission_factory_imp='weko_records_ui.permissions'
+                               ':page_permission_factory',
+    ),
     recid_file_details=dict(
         pid_type='recid',
         route='/records/<pid_value>/file_details/<path:filename>',
@@ -615,3 +623,7 @@ WEKO_RECORDS_UI_DISPLAY_RESOURCE_TYPE = False
 
 WEKO_RECORDS_UI_DISPLAY_ITEM_TYPE = True
 """ Display item type name on item detail. """
+
+MAX_DOWNLOAD_SIZE_AT_ONE_TIME = 2 * 1024 * 1024 * 1024
+
+DOWNLOAD_SIZE_IN_ONE_PART = 100 * 1024 * 1024 
