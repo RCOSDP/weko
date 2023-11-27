@@ -18,7 +18,7 @@ from invenio_db import db
 from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.utils import import_string
 
-from invenio_files_rest.models import Bucket, FileInstance, Location, \
+from invenio_files_rest.models import Bucket, FileInstance, Location, MultipartObject, \
     ObjectVersion
 
 ENCODING_MIMETYPES = {
@@ -91,6 +91,9 @@ def delete_file_instance(file_id):
     obj_list = ObjectVersion.query.filter_by(
         file_id=file_id).all()
     if len(obj_list) == 0:
+        multipart = MultipartObject.query_by_file_id(file_id).one_or_none()
+        if multipart:
+            multipart.delete()
         file_instance = FileInstance.get(file_id)
         file_instance.delete()
         file_instance.storage().delete()
@@ -166,3 +169,8 @@ def update_ogp_image(ogp_image, file_uri):
             src.set_contents(file)
 
     return src.uri if src else None
+
+
+def get_hash(file_body):
+    import hashlib
+    return hashlib.sha256(file_body).hexdigest()

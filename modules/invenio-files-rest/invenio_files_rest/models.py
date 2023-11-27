@@ -1721,12 +1721,8 @@ class MultipartObject(db.Model, Timestamp):
         with db.session.begin_nested():
             return self.delete()
 
-
     def delete(self):
         """Delete a multipart object."""
-        # Update bucket size.
-        if self.bucket:
-            self.bucket.size -= self.size
         # Remove parts
         Part.query_by_multipart(self).delete()
         # Remove self
@@ -1814,6 +1810,10 @@ class MultipartObject(db.Model, Timestamp):
     def query_by_bucket(cls, bucket):
         """Query all uncompleted multipart uploads."""
         return cls.query.filter(cls.bucket_id == as_bucket_id(bucket))
+    
+    @classmethod
+    def query_by_file_id(cls ,file_id):
+        return cls.query.filter(cls.file_id == file_id)
 
 
 class Part(db.Model, Timestamp):

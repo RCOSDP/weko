@@ -216,8 +216,11 @@ def remove_file_data(file_id, silent=True):
         # First remove FileInstance from database and commit transaction to
         # ensure integrity constraints are checked and enforced.
         f = FileInstance.get(file_id)
+        m = MultipartObject.query_by_file_id(file_id)
         if not f.writable:
             return
+        if m.all():
+            m.delete()
         f.delete()
         db.session.commit()
         # Next, remove the file on disk. This leaves the possibility of having

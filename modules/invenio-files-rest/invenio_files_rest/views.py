@@ -37,7 +37,7 @@ from .proxies import current_files_rest, current_permission_factory
 from .serializer import json_serializer
 from .signals import file_downloaded, file_previewed
 from .tasks import merge_multipartobject, remove_file_data 
-from .utils import _location_has_quota, delete_file_instance
+from .utils import _location_has_quota, delete_file_instance, get_hash
 
 blueprint = Blueprint(
     'invenio_files_rest',
@@ -760,13 +760,28 @@ class ObjectResource(ContentNegotiatedMethodView):
         ),
     }
 
-    get_args = dict(
-        delete_args,
-        download=fields.Raw(
+    get_args = {
+        'version_id': fields.UUID(
+            location='query',
+            load_from='versionId',
+            data_key='versionId',
+            missing=None,
+        ),
+        'upload_id': fields.UUID(
+            location='query',
+            load_from='uploadId',
+            data_key='uploadId',
+            missing=None,
+        ),
+        'uploads': fields.Raw(
+            location='query',
+            validate=invalid_subresource_validator,
+        ),
+        'download':fields.Raw(
             location='query',
             missing=None,
         )
-    )
+    }
 
     post_args = {
         'uploads': fields.Raw(
@@ -1012,10 +1027,26 @@ class ObjectResource(ContentNegotiatedMethodView):
                              as_attachment=as_attachment,
                              convert_to_pdf=convert_to_pdf)
 
+    @pass_multipart(with_completed=True)
+    @need_permissions(
+        lambda self, multipart: multipart,
+        'multipart-read'
+    )
+    def get_multipart_last_part_size(self , multipart :MultipartObject):
+        p = Part.query_by_multipart(multipart=multipart).order_by( Part.part_number.desc()).first()
+        return self.make_response(
+            data=p,
+            context={
+                'class': Part,
+                'multipart': multipart,
+                'many': False,
+            }
+        )
+
     #
     # MultipartObject helpers
     #
-    @pass_multipart(with_completed=True)
+    @pass_multipart(with_completed=False)
     @need_permissions(
         lambda self, multipart: multipart,
         'multipart-read'
@@ -1029,7 +1060,7 @@ class ObjectResource(ContentNegotiatedMethodView):
         """
         return self.make_response(
             data=Part.query_by_multipart(
-                multipart).order_by(Part.part_number).limit(1000).all(),
+                multipart).order_by(Part.part_number).limit(10000).all(),
             context={
                 'class': Part,
                 'multipart': multipart,
@@ -1064,7 +1095,7 @@ class ObjectResource(ContentNegotiatedMethodView):
         )
 
     @pass_multipart(with_completed=True)
-    def multipart_uploadpart(self, multipart , checksum):
+    def multipart_uploadpart(self, multipart):
         """Upload a part.
 
         :param multipart: A :class:`invenio_files_rest.models.MultipartObject`
@@ -1074,19 +1105,23 @@ class ObjectResource(ContentNegotiatedMethodView):
         content_length, part_number, stream, content_type, content_md5, tags =\
             current_files_rest.multipart_partfactory()
 
-        if content_length:
+        if content_length > 0:
             ck = multipart.last_part_size if \
                 part_number == multipart.last_part_number \
                 else multipart.chunk_size
 
             if ck != content_length and ck != 0:
                 raise MultipartInvalidChunkSize()
+        else:
+            return
 
         # Create part
         try:
-            p = Part.get_or_create(multipart, part_number , checksum)
-            res = p.set_contents(stream)
-            db.session.commit()
+            with db.session.begin_nested():
+                file_body = stream.read()
+                checksum = get_hash(file_body)
+                p = Part.get_or_create(multipart, part_number , checksum)
+                res = p.set_contents(file_body)
         except Exception:
             # We remove the Part since incomplete data may have been written to
             # disk (e.g. client closed connection etc.) so it must be
@@ -1131,7 +1166,7 @@ class ObjectResource(ContentNegotiatedMethodView):
             },
             etag=obj.file.checksum,
 
-            # Large File Upload is not calc checksum
+            ## Large File Upload is not calc checksum
             # task_result=merge_multipartobject.delay(
             #     str(multipart.upload_id),
             #     current_login_user_id=current_user.id,
@@ -1154,9 +1189,6 @@ class ObjectResource(ContentNegotiatedMethodView):
         """
         multipart.delete()
         db.session.commit()
-        if multipart.file_id:
-            remove_file_data.delay(str(multipart.file_id))
-        return self.make_response('', 204)
 
     #
     # HTTP methods implementations
@@ -1176,7 +1208,11 @@ class ObjectResource(ContentNegotiatedMethodView):
         :returns: A Flask response.
         """
         if upload_id:
-            return self.multipart_listparts(bucket, key, upload_id)
+            last_part_size = request.args.get("last_part_size" , False)
+            if last_part_size :
+                return self.get_multipart_last_part_size(bucket, key, upload_id)
+            else:
+                return self.multipart_listparts(bucket, key, upload_id)
         else:
             obj = self.get_object(bucket, key, version_id)
             # If 'download' is missing from query string it will have
@@ -1222,10 +1258,8 @@ class ObjectResource(ContentNegotiatedMethodView):
         :returns: A Flask response.
         """
         try:
-            # raise #handled
             if upload_id is not None:
-                checksum = request.args.get('checksum')
-                return self.multipart_uploadpart(upload_id ,checksum)
+                return self.multipart_uploadpart(bucket, key, upload_id)
             else:
                 is_thumbnail = True if is_thumbnail is not None else False
                 replace_version_id = request.args.get('replace_version_id')
@@ -1248,9 +1282,9 @@ class ObjectResource(ContentNegotiatedMethodView):
         :param upload_id: The upload ID. (Default: ``None``)
         :returns: A Flask response.
         """
-        # if upload_id is not None:
-        #     return self.multipart_delete(bucket, key, upload_id)
-        # else:
+        if upload_id is not None:
+            return self.multipart_delete(bucket, key, upload_id)
+
         obj = self.get_object(bucket, key, version_id)
         return self.delete_object(bucket, obj, version_id)
 

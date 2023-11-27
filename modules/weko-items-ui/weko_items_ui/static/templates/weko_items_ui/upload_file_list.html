@@ -32,6 +32,10 @@
         <span ng-show="f.progress < 100 && !f.errored">{{ f.progress }} %</span>
         <span ng-show="f.processing && !f.errored">Processing...</span>
         <span ng-show="f.errored" class="text-danger">Error</span>
+        <span ng-show="f.errored && f.multipart" class="text-danger">
+          <input type="file" id="resume_file" class="ng-hide" ngf-select="hookUploadReumeFiles($files)"></input>
+          <button class="btn btn-sm btn-primary" ng-click="hookAddReumeFiles()">Resume</button>
+        </span>
         <span ng-show="f.completed" class="text-success">✓</span>
       </td>
       <td ng-show="f" class="text-center">

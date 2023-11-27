@@ -1,12 +1,12 @@
 <div class="well" ngf-drag-over-class="'dragover'" ngf-drop="" ngf-change="hookAddFiles($files)"
-    ngf-max-size={{config.WEKO_MAX_UPLOAD_FILE_SIZE}} ngf-multiple="true">
+    ngf-max-size="1024GB" ngf-multiple="true">
     <center>
         Drop files or folders here
     </center>
 </div>
 <p class="text-center legend"><strong>— OR —</strong></p>
 <p class="text-center">
-    <button class="btn btn-primary" ngf-max-size={{config.WEKO_MAX_UPLOAD_FILE_SIZE}} ngf-multiple="true" ngf-select=""
+    <button class="btn btn-primary" ngf-max-size="1024GB" ngf-multiple="true" ngf-select=""
         ngf-change="hookAddFiles($files)">
         Click to select
     </button>

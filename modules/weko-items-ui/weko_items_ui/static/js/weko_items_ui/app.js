@@ -650,13 +650,37 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         }
       }
 
+      $scope.onResumeFileContentChange = function (files, position) {
+        const file = files[0];
+        const f = $rootScope.filesVM.files.filter(f => f.errored && f.key === file.name && f.size === file.size)[0]
+        if (!f ){
+          return alert('invalid file');
+        }
+        const idx_of_file = $rootScope.filesVM.files.indexOf(f);
+        if (idx_of_file !== -1) {
+          // file.name = name;
+          file.position = $rootScope.filesVM.files[idx_of_file].position;
+          file.links = $rootScope.filesVM.files[idx_of_file].links;
+          $rootScope.filesVM.files.splice(idx_of_file , 1);
+          $rootScope.filesVM.addFiles([file]);
+
+          this.resetFilesPosition(idx_of_file);
+        }
+      }
+
       $scope.onUploadFileContents = function () {
         $rootScope.filesVM.files.forEach(function (file) {
           if (file.replace_version_id) {
             file.key += '?replace_version_id=' + file.replace_version_id;
           }
         });
-
+        if (Boolean($("#use_multipart_upload").val())){
+          args = {
+            resumeChunkSize : Number($("#resume_chunk_size").val())
+          }
+          $rootScope.filesVM.invenioFilesArgs = { ...$rootScope.filesVM.invenioFilesArgs, ...args };
+        }
+        
         $rootScope.filesVM.upload();
       }
 
@@ -710,6 +734,19 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
             return;
           }
         }
+      }
+      $scope.hookAddReumeFiles = () => {
+        $('#resume_file').click();
+      }
+      $scope.hookUploadReumeFiles = (files , position) => {
+        if (!files) {
+          return;
+        }
+        // $rootScope.filesVM.resumeUpload(files);
+        $scope.onResumeFileContentChange(files , position );
+        $rootScope.filesVM.upload();
+        // $scope.startLoading();
+        // $scope.endLoading();
       }
 
       $scope.searchFilemetaKey = function () {
@@ -2636,7 +2673,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
             fileInfo.filesize = [{}]; // init array
             fileInfo.filesize[0].value = $scope.bytesToReadableString(fileData.size);
             // Fill format
-            fileInfo.format = fileData.mimetype;
+            fileInfo.format = fileData.mimetype || fileData.type;
             // Fill Date and DateType
             fileInfo.date = [{}]; // init array
             fileInfo.date[0].dateValue = new Date().toJSON().slice(0,10);
@@ -2890,7 +2927,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         filesUploaded.forEach(function (file) {
           filesObject[file.key] = {
             size: $scope.bytesToReadableString(file.size),
-            format: file["mimetype"],
+            format: file["mimetype"] || file["type"],
             url: file.links ? file.links.self : ""
           };
         });

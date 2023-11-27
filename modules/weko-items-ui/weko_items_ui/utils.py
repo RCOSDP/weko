@@ -1750,7 +1750,6 @@ def to_files_js(record):
     Returns:
         _type_: _description_
     """
-    traceback.print_stack()
     current_app.logger.debug("type: {}".format(type(record))) 
     res = []
     files = record.files or []
