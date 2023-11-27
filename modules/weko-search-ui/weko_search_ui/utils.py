@@ -22,6 +22,7 @@
 
 import csv
 import json
+import math
 import os
 import re
 import shutil
@@ -1055,16 +1056,17 @@ def handle_check_exist_record(list_record) -> list:
 
             if item.get("upload_id"):
                 all_size = 0
+                bucket = RecordsBuckets.query.filter_by(record_id=PersistentIdentifier.query.filter_by(pid_type="recid", pid_value=item["id"]).first().object_uuid).one_or_none().bucket
                 for i, id in enumerate(item.get("upload_id")):
-                    if(id != "" and item.get("file_path")[i] != ""):
-                        errors.append(_('file_path and upload_id both entered'))
+                    if(id != "" and item.get("file_path")[i] != "") or (id != "" and item.get("url")):
+                        errors.append(_('Both A and B must be empty'))
                     else:
-                        if(is_valid_uuid(id)):
-                            if(item.get("metadata")[file_meta_id][i].get("format") in mimetypes.types_map.values() ): # 「正しいフォーマット」の条件が抜けている（何か文字列が入っていればOKとなっている）
+                        if is_valid_uuid(id):
+                            if item.get("metadata")[file_meta_id][i].get("format") in mimetypes.types_map.values(): # 「正しいフォーマット」の条件が抜けている（何か文字列が入っていればOKとなっている）
                                 multipartObject = MultipartObject.get_by_uploadId(id)
-                                if(multipartObject):
-                                    if(multipartObject.completed and multipartObject.bucket_id == None):
-                                        if multipartObject.file.uri.startswith(RecordsBuckets.query.filter_by(record_id=PersistentIdentifier.query.filter_by(pid_type="recid", pid_value=item["id"]).first().object_uuid).one_or_none().bucket.location.uri):
+                                if multipartObject:
+                                    if multipartObject.completed and (multipartObject.bucket_id == None or multipartObject.bucket_id == bucket.id):
+                                        if multipartObject.file.uri.startswith(bucket.location.uri):
                                             all_size += multipartObject.file.size
                                         else:
                                             errors.append(_('Files and items have different locations '))
@@ -1077,8 +1079,8 @@ def handle_check_exist_record(list_record) -> list:
                         else:
                             if id != '':
                                 errors.append(_('uploadId is invalid format'))
-                if all_size > RecordsBuckets.query.filter_by(record_id=PersistentIdentifier.query.filter_by(pid_type="recid", pid_value=item["id"]).first().object_uuid).one_or_none().bucket.quota_size:
-                    print("okp") #要変更
+                if all_size > bucket.quota_size:
+                    errors.append(_('Total file size exceeds bucket size'))
                     
         else:
             item["id"] = None
@@ -1170,7 +1172,7 @@ def up_load_file(record, root_path, deposit, allow_upload_file_content, old_file
         old_files      -- {list} List of ObjectVersion in current bucket.
 
     """
-    def upload(paths, is_thumbnail=False):
+    def upload(paths, is_thumbnail=False, is_upload_id = False):
         if len(old_files) > len(paths):
             paths.extend([None for _idx in range(0, len(old_files) - len(paths))])
 
@@ -1178,35 +1180,46 @@ def up_load_file(record, root_path, deposit, allow_upload_file_content, old_file
             old_file = (
                 old_files[idx] if not is_thumbnail and idx < len(old_files) else None
             )
-            if(is_valid_uuid(path)):
-                a = MultipartObject.get_by_uploadId(path)
-                if(a):
-                    # 追加
-                    root_file_id = None
-                    if old_file and not (
-                        len(record["filenames"]) > idx
-                        and record["filenames"][idx]
-                        and old_file.key == record["filenames"][idx]["filename"]
-                    ):
-                        root_file_id = old_file.root_file_id
-                        old_file.remove()
-                        obj = ObjectVersion.create(deposit.files.bucket, a.key, _file_id = a.file_id)
-                        obj.is_thumbnail = is_thumbnail
-                        a.bucket_id = deposit.files.bucket.id
-                    continue
-                    # db.session.commit()
-                    
-                    # obj.set_contents(
-                    #     None, root_file_id=root_file_id, is_set_size_location=False
-                    # ) 
+            if is_upload_id:
+                if is_valid_uuid(path):
+                    a = MultipartObject.get_by_uploadId(path)
+                    if(a):
+                        # 追加
+                        root_file_id = None
+                        if old_file and old_file.file_id != a.file_id: # ファイルがすでにあり、異なるファイルの場合
+                            if MultipartObject.get_by_fileId(old_file.file_id) != None:
+                                root_file_id = old_file.root_file_id
+                                old_file.remove()
+                                
+                                obj = ObjectVersion.create(deposit.files.bucket, a.key, _file_id = a.file_id)
+                                obj.is_thumbnail = is_thumbnail
+                                a.bucket_id = deposit.files.bucket.id
+                                continue
+                            else:
+                                obj = ObjectVersion.create(deposit.files.bucket, a.key, _file_id = a.file_id)
+                                obj.is_thumbnail = is_thumbnail
+                                a.bucket_id = deposit.files.bucket.id
+                        elif not old_file:# ファイルがすでにない場合
+                            obj = ObjectVersion.create(deposit.files.bucket, a.key, _file_id = a.file_id)
+                            obj.is_thumbnail = is_thumbnail
+                            a.bucket_id = deposit.files.bucket.id
+                        continue
+                    else:
+                        if old_file \
+                            and MultipartObject.get_by_fileId(old_file.file_id) \
+                            and not record["filenames"][idx] \
+                            and not old_file.key == record["filenames"][idx]["filename"]:
+                                
+                            print("\033[32m", "old_file_remove", old_file, "\033[0m")
+                            old_file.remove()
+                continue
                            
             if not path or not os.path.isfile(root_path + "/" + path):
                 if old_file and not (
                     len(record["filenames"]) > idx
                     and record["filenames"][idx]
                     and old_file.key == record["filenames"][idx]["filename"]
-                    and MultipartObject.get_by_fileId(old_file.file_id) != None
-                ):
+                ) and MultipartObject.get_by_fileId(old_file.file_id) != None:
                     old_file.remove()
                 continue
 
@@ -1240,7 +1253,7 @@ def up_load_file(record, root_path, deposit, allow_upload_file_content, old_file
     if file_path or thumbnail_path or upload_id:
         upload(thumbnail_path, is_thumbnail=True)
         upload(file_path)
-        upload(upload_id)
+        upload(upload_id, is_upload_id = True)
     clean_file_contents(not allow_upload_file_content)
 
 
@@ -1367,7 +1380,7 @@ def register_item_metadata(item, root_path, owner, is_gakuninrdm=False):
                 old_file_list.append(f_filter[0].obj if f_filter else None)
             else:
                 old_file_list.append(None)
-
+    
     # set delete flag for file metadata if is empty.
     new_data, is_cleaned = clean_file_metadata(item["item_type_id"], new_data)
     # progress upload file, replace file contents.
@@ -1580,7 +1593,13 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
         return      -- Json response.
 
     """
+    def convert_size(size):
+        units = ("B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB")
+        i = math.floor(math.log(size, 1024)) if size > 0 else 0
+        size = round(size / 1024 ** i, 2)
 
+        return f"{size} {units[i]}"
+    
     owner = 1
     if request_info and 'user_id' in request_info:
         owner = request_info['user_id']
@@ -1624,13 +1643,13 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
                         "accessrole": "open_access",
                         "date": [{"dateType": "Available", "dateValue": a.updated.strftime("%Y-%m-%d")}],
                         "filename": a.key,
-                        "filesize": [{"value": "1TB"}],# 要変更
+                        "filesize": [{"value": convert_size(a.size)}],
                         "url": {
                             "url": current_app.config["THEME_SITEURL"] + "/record/" + item["id"] + "/files/" + a.key
                         },
-                        "format": item["metadata"][file_meta_id][0]["format"]
+                        "format": item["metadata"][file_meta_id][i]["format"]
                     }
-                    item["metadata"][file_meta_id][0] = file_meta_data
+                    item["metadata"][file_meta_id][i] = file_meta_data
                     item["filenames"][i]["filename"] = a.key
             register_item_metadata(item, root_path, owner, is_gakuninrdm)
             if not is_gakuninrdm:
@@ -3370,17 +3389,6 @@ def export_all(root_url, user_id, data):
             export_path
         )
         keys, labels, is_systems, options = headers
-        j = 0
-        for i in range(1, len(keys) + 1):
-            if(re.search(r"\.file_path", keys[-i + j])):
-                # current_app.logger.info(keys[-i + j])
-                keys.insert(-i + j + 1, re.sub("file_path", "upload_id", keys[-i + j], 1))
-                labels.insert(-i + j + 1, re.sub("ファイルパス", "ファイルアップロードID", labels[-i + j], 1))
-                is_systems.insert(-i + j + 1, "")
-                options.insert(-i + j + 1, options[-i + j])
-                for x in records.values():
-                    x.insert(-i + j + 1, "")
-                j -= 1
         item_datas["recids"].sort()
         item_datas["keys"] = keys
         item_datas["labels"] = labels

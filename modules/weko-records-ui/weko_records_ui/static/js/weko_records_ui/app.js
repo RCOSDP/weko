@@ -113,6 +113,10 @@
                 let results = '';
                 const bucket_id = response.id;
                 const contents = response.contents;
+                const threshold_size = $('input[id="threshold_size"]').get(0).value;
+                const record_id = $('input[id="record_id"]').get(0).value;
+                const chunk_size = $('input[id="chunk_size"]').get(0).value;
+
                 response.contents.sort(function(first, second) {
                     return second.updated - first.updated;
                 });
@@ -196,9 +200,17 @@
                         } else {
                             permission += '"false"';
                         }
-                        txt_link = '<a class="billing-file-version"' + permission + selfLink + 'href="javascript:void(0);">' + filename + '</a>';
+                        if (response.size < threshold_size){
+                            txt_link = '<a class="billing-file-version"' + permission + selfLink + 'href="javascript:void(0);">' + filename + '</a>';
+                        } else {
+                            txt_link = '<a class="billing-file-version"' + permission + selfLink + 'href="#" onclick="downloadFile(\'' + record_id + "','" + ele.key + "','" + response.size + "','" + chunk_size + "')\">" + filename + '</a>';
+                        }
                     } else {
-                        txt_link = '<a href="' + ele.links.self + '">' + filename + '</a>';
+                        if (response.size < threshold_size){
+                            txt_link = '<a href="' + ele.links.self + '">' + filename + '</a>';
+                        } else {
+                            txt_link = '<a href="#" onclick="downloadFile(\'' + record_id + "','" + ele.key + "','" + response.size + "','" + chunk_size + "')\">" + filename + '</a>';
+                        }
                     }
 
                     let size = formatBytes(ele.size, 2);

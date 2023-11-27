@@ -125,5 +125,5 @@ msgstr "未紐付"
 msgid "Record that bound item must not be deleted."
 msgstr "アイテムに使われているファイルは削除できません。"
 
-msgid "Record that be able to retry upload cannot be deleted yet."
-msgstr "再アップロード期限を過ぎていないレコードはまだ削除できません。"
+msgid "Cannot be deleted because it is being uploaded."
+msgstr "アップロード処理中のため、削除できません。"

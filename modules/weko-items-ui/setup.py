@@ -103,6 +103,7 @@ setup(
             'weko_items_ui.bundles:items_author_search_css',
             'weko_items_authors_search_js = '
             'weko_items_ui.bundles:items_author_search_js',
+            'weko_items_ui_large_file_upload_js = weko_items_ui.bundles:large_file_upload_js',
             'weko_items_ui_feedback_maillist_js = '
             'weko_items_ui.bundles:feedback_maillist_js',
             'weko_items_ui_feedback_maillist_css = '

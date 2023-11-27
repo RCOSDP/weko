@@ -76,6 +76,12 @@ upload_js = NpmBundle(
     output="gen/items_ui_upload.%(version)s.js",
 )
 
+large_file_upload_js = Bundle(
+    'js/weko_items_ui/large_file_upload.js',
+    filters='jsmin',
+    output="gen/weko_items_ui_large_file_upload.%(version)s.js",
+)
+
 feedback_maillist_js = Bundle(
     'js/weko_items_ui/feedback_maillist.js',
     filters='jsmin',

@@ -88,14 +88,7 @@ ADD ./login.php /usr/share/nginx/html/secure/login.php
 ADD ./shib_clear_headers /etc/nginx/shib_clear_headers
 ADD ./shib_fastcgi_params /etc/nginx/shib_fastcgi_params
 
-RUN mkdir /var/tmp/tmp_data
 ADD signature.js /var/tmp/
-RUN rm /usr/share/nginx/html/index.html
-ADD index.html /usr/share/nginx/html/index.html
-ADD index.js /usr/share/nginx/html/index.js
-RUN mkdir /usr/share/nginx/html/okp
-RUN cp /usr/share/nginx/html/index.html /usr/share/nginx/html/okp
-RUN cp /usr/share/nginx/html/index.js /usr/share/nginx/html/okp
 
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/supervisord.conf"]
 

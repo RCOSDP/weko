@@ -114,7 +114,10 @@ FILES_REST_MULTIPART_CHUNKSIZE_MIN = 5 * 1024 * 1024  # 5 MiB
 """Minimum chunk size of multipart objects."""
 
 FILES_REST_MULTIPART_CHUNKSIZE_MAX = 5 * 1024 * 1024 * 1024  # 5 GiB
-"""Minimum chunk size of multipart objects."""
+"""Maximum chunk size of multipart objects."""
+
+FILES_REST_LARGE_FILE_CHUNK_SIZE = 250 * 1024 * 1024
+"""Chunksize per piece"""
 
 FILES_REST_MULTIPART_EXPIRES = timedelta(days=4)
 """Time delta after which a multipart upload is considered expired."""

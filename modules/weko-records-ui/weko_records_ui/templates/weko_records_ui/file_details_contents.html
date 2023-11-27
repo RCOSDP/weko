@@ -27,6 +27,7 @@
 {% from "weko_theme/macros/modal_page.html" import all_modal %}
 {{ all_modal() }}
 <div class="panel-group">
+  <div id="errors"></div>
   <div class="panel panel-default" ng-controller="ItemController">
     <div class="panel-heading clearfix" style="background-color: inherit; font-size: 120%">
       <h4 style="display: inline;">
@@ -98,7 +99,14 @@
                             {%- endif -%}
                           {%- endif -%}
                           <a class="forcewrap{{billing_file_class}}" {{billing_file_data}} {{billing_file_url}}
-                          {% if file_url %} href="javascript:OnLinkClick('{{ file_url }}', {{ pid.pid_value }}, '{{ file.accessrole }}')" {% endif %}>{{ file.filename }} ({{ file.size|filesizeformat }})</a>
+                          {% if file_url %}
+                            {% if file.size < config.get("MAX_DOWNLOAD_SIZE_AT_ONE_TIME") %}
+                              href="javascript:OnLinkClick('{{ file_url }}', {{ pid.pid_value }}, '{{ file.accessrole }}')">
+                            {% else %}
+                              href="javascript:void(0)" onclick="downloadFile('{{pid.pid_value}}', '{{file.filename}}', '{{file.size}}', '{{config.get("DOWNLOAD_SIZE_IN_ONE_PART")}}', this)">
+                            {% endif %}
+                          {% endif %}
+                          {{ file.filename }} ({{ file.size|filesizeformat }})</a>
                           {%- if file.checksum -%}
                           <span>{{file.checksum.split(':')[0]}}</span>
                           <span class="break-word">{{file.checksum.split(':')[1]}}</span>
@@ -115,7 +123,13 @@
                           {%- endif -%}
                           <div class="text-right">
                             <a class="forcewrap{{billing_file_class}}" {{billing_file_data}} {{billing_file_url}} 
-                            {% if original_file_url %} href="javascript:OnLinkClick('{{ original_file_url }}', {{ pid.pid_value }}, '{{ file.accessrole }}')" {% endif %}>{{_('Original')}}</a>
+                            {% if original_file_url %}
+                              {% if file.size < config.get("MAX_DOWNLOAD_SIZE_AT_ONE_TIME") %}
+                                href="javascript:OnLinkClick('{{ original_file_url }}', {{ pid.pid_value }}, '{{ file.accessrole }}')">
+                              {% else %}
+                                href="javascript:void(0)" onclick="downloadFile('{{pid.pid_value}}', '{{file.filename}}', '{{file.size}}', '{{config.get("DOWNLOAD_SIZE_IN_ONE_PART")}}', this)">
+                              {% endif %}
+                            {% endif %}>{{_('Original')}}</a>
                           </div>
                         {%- endif -%}
                       </td>
@@ -252,6 +266,14 @@
                       </tbody>
                     </table>
                   </div><!--End collapse-stats div-->
+                  <input type="hidden" id="threshold_size" value="{{config.get("MAX_DOWNLOAD_SIZE_AT_ONE_TIME")}}">
+                  <input type="hidden" id="chunk_size" value="{{config.get("DOWNLOAD_SIZE_IN_ONE_PART")}}">
+                  <input type="hidden" id="record_id" value="{{pid.pid_value}}">
+                  <input type="hidden" id="error_msg" value="{{_("File Download Failed.")}}">
+                  <input type="hidden" id="confirm_msg" value="{{_(
+                    "This file will take a long time to download. Please do not close this screen while downloading. Do you want to start downloading?"
+                    )}}">
+                  <input type="hidden" id="comp_msg" value="{{_("File download is complete.")}}">
                 </div><!--End stats div-->
               </div><!--End tab-content div-->
             </div>

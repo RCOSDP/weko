@@ -9,6 +9,7 @@
 """Files download/upload REST API similar to S3 for Invenio."""
 
 from __future__ import absolute_import, print_function
+from datetime import datetime, timedelta
 import json
 import time
 import traceback
@@ -28,6 +29,7 @@ from webargs import fields
 from webargs.flaskparser import use_kwargs
 
 from invenio_s3.storage import S3FSFileStorage
+from weko_redis.redis import RedisConnection
 
 from .errors import DuplicateTagError, ExhaustedStreamError, FileSizeError, \
     InvalidTagError, MissingQueryParameter, MultipartInvalidChunkSize
@@ -48,43 +50,10 @@ blueprint = Blueprint(
 )
 
 # 追加
-largeDataUpload_blueprint = Blueprint(
-    'largeFile1',
+largeFileUpload_blueprint = Blueprint(
+    'large_file_uplaod',
     __name__,
-    template_folder='templates',
-    static_folder='static',
-)
-
-# 追加
-createFileInstance_blueprint = Blueprint(
-    'createFileInstance',
-    __name__,
-    template_folder='templates',
-    static_folder='static',
-)
-
-# 追加
-createMultipartObjectInstance_blueprint = Blueprint(
-    'createMultipartObjectInstance',
-    __name__,
-    template_folder='templates',
-    static_folder='static',
-)
-
-# 追加
-partFunc_blueprint = Blueprint(
-    'partFunc_blueprint',
-    __name__,
-    template_folder='templates',
-    static_folder='static',
-)
-
-# 追加
-completeFunc_blueprint = Blueprint(
-    'completeFunc_blueprint',
-    __name__,
-    template_folder='templates',
-    static_folder='static',
+    url_prefix='/largeFileUpload'
 )
 
 admin_blueprint = Blueprint(
@@ -105,37 +74,89 @@ api_blueprint = Blueprint(
 # Helpers
 #
 
-# 前処理
-@login_required # ←これ機能してる？
-@createFileInstance_blueprint.route("/createFileInstance", methods = ["POST"])
+@largeFileUpload_blueprint.route("/lockRedis", methods = ["POST"])
+@login_required 
+def lockRedis():
+    if not current_user.roles:
+        abort(403)
+    try:
+        upload_id = request.args["upload_id"]
+        redis_connection = RedisConnection()
+        sessionstore = redis_connection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
+        sessionstore.put(
+                    "upload_id" + upload_id,
+                    b"lock",
+                    ttl_secs=345600)
+        return f"lock redis upload_id: {upload_id}"
+    except Exception:
+        return "An error has occurred.", 500
+    
+@largeFileUpload_blueprint.route("/unlockRedis", methods = ["POST"])
+@login_required 
+def unlockRedis():
+    if not current_user.roles:
+        abort(403)
+    try:
+        upload_id = request.args["upload_id"]
+        redis_connection = RedisConnection()
+        sessionstore = redis_connection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
+        sessionstore.delete("upload_id" + upload_id)
+        return f"unlock redis upload_id: {upload_id}"
+    except Exception:
+        return "An error has occurred.", 500
+
+@largeFileUpload_blueprint.route("/createFileInstance", methods = ["POST"])
+@login_required 
 def createFileInstance():
+    if not current_user.roles:
+        abort(403)
     fileinstance = None
     size = request.args.get("size")
     if(size == None or size == ""):
-        return "Error", 400
-    size = int(size)
-    
-    with db.session.begin_nested():
-        fileinstance = FileInstance.create()
-        # fileinstance.init_contents(
-        #     size,
-        #     default_location = Location.get_default().uri,
-        #     default_storage_class = current_app.config['FILES_REST_DEFAULT_STORAGE_CLASS']
-        # )
-        uuid = str(fileinstance.id)
-        fileinstance.uri = Location.get_default().uri + "/" + uuid[0:2] + "/" + uuid[2:4] + "/" + uuid[4:] + "/data"
-        fileinstance.storage_class = current_app.config['FILES_REST_DEFAULT_STORAGE_CLASS']
-        fileinstance.size = size
-        fileinstance.readable = False
-        fileinstance.writable = True
-        db.session.add(fileinstance)
+        return "Missing arguments.", 400
+    try:
+        size = int(size)
+        
+        with db.session.begin_nested():
+            fileinstance = FileInstance.create()
+            uuid = str(fileinstance.id)
+            fileinstance.uri = Location.get_default().uri + "/" + uuid[0:2] + "/" + uuid[2:4] + "/" + uuid[4:] + "/data"
+            fileinstance.storage_class = current_app.config['FILES_REST_DEFAULT_STORAGE_CLASS']
+            fileinstance.size = size
+            fileinstance.readable = False
+            fileinstance.writable = True
+            db.session.add(fileinstance)
 
-    db.session.commit()
-    return str(fileinstance.id)
+        db.session.commit()
+        return str(fileinstance.id)
+    except Exception:
+        return "An error has occurred.", 500
 
-@login_required # ←これ機能してる？
-@createMultipartObjectInstance_blueprint.route("/createMultipartObjectInstance", methods = ["POST"])
+@largeFileUpload_blueprint.route("/checkMultipartObjectInstance", methods = ["POST"])
+@login_required 
+def checkMultipartObjectInstance():
+    if not current_user.roles:
+        abort(403)
+    upload_id = request.args.get("upload_id")
+    try:
+        if upload_id:
+            multipartObject = MultipartObject.get_by_uploadId(upload_id)
+            if multipartObject and not multipartObject.completed:
+                if multipartObject.created_by_id == current_user.id:
+                    if multipartObject.created > datetime.now() - current_app.config.get("FILES_REST_MULTIPART_EXPIRES"):
+                        return {"file_id": multipartObject.file_id, "chunk_size": str(multipartObject.chunk_size)}, 200
+                    else:
+                        return "The Upload Id is expired for retry", 404
+        return "The Upload Id is invalid", 400
+    except Exception:
+        return "An error has occurred.", 500
+
+
+@largeFileUpload_blueprint.route("/createMultipartObjectInstance", methods = ["POST"])
+@login_required 
 def createMultipartObject():
+    if not current_user.roles:
+        abort(403)
     upload_id = request.args.get("upload_id")
     file_id = request.args.get("file_id")
     key = request.args.get("key")
@@ -143,10 +164,9 @@ def createMultipartObject():
     chunk_size = request.args.get("chunk_size")
     
     if(upload_id == None or key == None or size == None or chunk_size == None):
-        return "Error", 400
+        return "missing arguments.", 400
     
-    multipartObject = MultipartObject.get_by_uploadId(upload_id)
-    if(multipartObject == None):
+    try:
         with db.session.begin_nested():
             multipartObject = MultipartObject()
             multipartObject.upload_id = upload_id
@@ -155,152 +175,70 @@ def createMultipartObject():
             multipartObject.size = size
             multipartObject.chunk_size = chunk_size
             multipartObject.completed = False
+            multipartObject.created_by_id = current_user.id
             db.session.add(multipartObject)
             
         db.session.commit()
-    else:
-        if(multipartObject.completed):
-            return f"This UploadId is Already Completed: {multipartObject.upload_id}", 400
-        else:
-            return str(multipartObject.file_id)
+        return file_id, 200
+    except Exception:
+        return "An error has occurred.", 500
         
-    return file_id, 200
+    
 
-# アップロードパート中
-@partFunc_blueprint.route("/part", methods = ["GET", "POST"])
+@largeFileUpload_blueprint.route("/part", methods = ["GET", "POST"])
+@login_required 
 def partFunc():
+    if not current_user.roles:
+        abort(403)
     upload_id = request.args.get("uploadId")
     part_number = request.args.get("partNumber")
     checksum = request.args.get("checkSum")
+    if not (upload_id and part_number):
+        return {"message": "fail"}, 400
     
-    if(request.method == "GET"):
-        part = Part.get_by_upload_id_partNumber(upload_id, part_number)
-        if(part == None):
-            return ""
-        else:
-            return part.checksum
-    elif(request.method == "POST"):
-        with db.session.begin_nested():
-            part = Part()
-            part.upload_id = upload_id
-            part.part_number = part_number
-            part.checksum = checksum
-            
-            db.session.add(part)
-            # multipartObjectと紐づけ必要？
-            
-        db.session.commit()
-        return "success"
+    try:
+        if(request.method == "GET"):
+            part = Part.get_by_upload_id_partNumber(upload_id, part_number)
+            if(part == None):
+                return ""
+            else:
+                return part.checksum
+        elif(request.method == "POST"):
+            with db.session.begin_nested():
+                part = Part()
+                part.upload_id = upload_id
+                part.part_number = part_number
+                part.checksum = checksum
+                
+                db.session.add(part)
+                
+            db.session.commit()
+            return "success"
+    except Exception:
+        return "An error has occurred.", 500
     
 
-# 後処理
-@completeFunc_blueprint.route("/completeFunc", methods = ["GET", "POST"])
+@largeFileUpload_blueprint.route("/completeFunc", methods = ["GET", "POST"])
+@login_required 
 def completeFunc():
+    if not current_user.roles:
+        abort(403)
     upload_id = request.args.get("upload_id")
     if(upload_id == None):
         return "Error" , 400
-    
-    with db.session.begin_nested():
-        multipartObject = MultipartObject.get_by_uploadId(upload_id)
-        multipartObject.completed = True
-        multipartObject.file.readable = True
-        multipartObject.file.writable = False
-        # multipartObject.file.update_checksum()
-        db.session.add(multipartObject)
-        
-    db.session.commit()
-    return "Success", 200 #ステータスコードとメッセージ
+    try:
+        with db.session.begin_nested():
+            multipartObject = MultipartObject.get_by_uploadId(upload_id)
+            multipartObject.completed = True
+            multipartObject.file.readable = True
+            multipartObject.file.writable = False
+            db.session.add(multipartObject)
+            
+        db.session.commit()
+        return "Success", 200 
+    except Exception:
+        return "An error has occurred.", 500
 
-# Authorizationヘッダの内容の生成
-@largeDataUpload_blueprint.route("/getAuthorization/", methods = ["GET", "POST"])
-@largeDataUpload_blueprint.route("/getAuthorization/<path:path>", methods = ["GET", "POST", "PUT", "DELETE"])
-def getAuthorization(path = None):
-    accessKey = current_app.config.get('S3_ACCCESS_KEY_ID', '')
-    secretKey = current_app.config.get('S3_SECRECT_ACCESS_KEY', '')
-    bucketName = current_app.config.get('S3_BUCKET_NAME') # 本当はデータベースからとってきたい？
-    regionName = current_app.config.get('S3_REGION_NAME', '')
-    host = current_app.config.get('S3_ENDPOINT_URL').replace("https://", "")
-    
-    tz = request.args.get("tz")
-    key = re.sub("\/.*?\/", "/", urllib.parse.quote(request.path), 1) # おそらくここでバグ起きる
-    uri = "/" + bucketName
-    
-    if(path != None):
-        uri = uri + key
-    
-    if(request.args.get("query") != ""):
-        query = json.loads(request.args.get("query"))
-        query = urllib.parse.urlencode(query)
-    else:
-        query = ""
-        
-    bodyHash = request.headers.get("bodyHash")
-    if(bodyHash == None):
-        bodyHash = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-    
-    # body = json.loads(request.get_data())
-    
-    authorization = "AWS4-HMAC-SHA256 Credential=" + \
-                    accessKey + "/" + tz[0:8] + \
-                    "/" + regionName + "/s3/aws4_request, SignedHeaders="
-                    
-    signedHeaders = ""
-    
-    canonicalRequest =  request.method + "\n" + \
-                        uri + "\n" + \
-                        query + "\n"
-
-    if(request.headers["Content-Type"]):
-        canonicalRequest = canonicalRequest + "content-type:" + request.headers["Content-Type"] + "\n"
-        authorization = authorization + "content-type;"
-        signedHeaders = signedHeaders + "content-type;"
-    
-    canonicalRequest =  canonicalRequest + \
-                    "host:" + host + "\n" + \
-                    "x-amz-content-sha256:" + bodyHash + "\n" + \
-                    "x-amz-date:" + tz + "\n" + \
-                    "\n" + \
-                    signedHeaders + "host;x-amz-content-sha256;x-amz-date\n" + \
-                    bodyHash
-    
-    # canonicalRequest =  request.method + "\n" + \
-    #                     uri + "\n" + \
-    #                     query + "\n"
-
-    # if(request.headers["Content-Length"]):
-    #     canonicalRequest = canonicalRequest + "content-length:" + request.environ.get("HTTP_CONTENT_LENGTH") + "\n"
-    #     authorization = authorization + "content-length;"
-    #     signedHeaders = signedHeaders + "content-length;"
-    # if(request.headers["Content-Type"]):
-    #     canonicalRequest = canonicalRequest + "content-type:" + request.headers["Content-Type"] + "\n"
-    #     authorization = authorization + "content-type;"
-    #     signedHeaders = signedHeaders + "content-type;"
-    
-    # canonicalRequest =  canonicalRequest + \
-    #                 "host:" + host + "\n" + \
-    #                 "x-amz-content-sha256:" + bodyHash + "\n" + \
-    #                 "x-amz-date:" + tz + "\n" + \
-    #                 "\n" + \
-    #                 signedHeaders + "host;x-amz-content-sha256;x-amz-date\n" + \
-    #                 bodyHash
-    
-    urlenc = hashlib.sha256(canonicalRequest.encode('latin-1')).hexdigest()
-    
-    stringToSign = "AWS4-HMAC-SHA256\n" + \
-                    tz + "\n" + \
-                    tz[0:8] + "/" + regionName + "/s3/aws4_request\n" + \
-                    urlenc
-    
-    dateKey = hmac.HMAC(("AWS4" + secretKey).encode('latin-1'), tz[0:8].encode('latin-1'), hashlib.sha256).digest()
-    dateRegionKey = hmac.HMAC(dateKey, regionName.encode('latin-1'), hashlib.sha256).digest()
-    dateRegionServiceKey = hmac.HMAC(dateRegionKey , b"s3", hashlib.sha256).digest()
-    signingKey = hmac.HMAC(dateRegionServiceKey, b"aws4_request", hashlib.sha256).digest()
-    
-    signature = hmac.HMAC(signingKey, stringToSign.encode('latin-1'), hashlib.sha256).hexdigest()
-    return jsonify({
-        "Authorization" : authorization + "host;x-amz-content-sha256;x-amz-date, Signature=" + signature,
-        "bucketName" : bucketName
-        })
 
 def as_uuid(value):
     """Convert value to UUID."""
