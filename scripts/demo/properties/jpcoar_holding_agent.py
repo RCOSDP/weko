@@ -60,7 +60,7 @@ def schema(title="", multi_flag=multiple_flag):
         _d = {
             "type": "object",
             "format": "object",
-            "title": "所蔵機関",
+            "title": "holding_agent_name",
             "properties": {
                 "holding_agent_names": {
                     "type": "array",

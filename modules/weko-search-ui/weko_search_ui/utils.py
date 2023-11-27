@@ -3255,7 +3255,7 @@ def handle_check_duplication_item_id(ids: list):
     return list(set(result))
 
 
-def export_all(root_url, user_id, data):
+def export_all(root_url, user_id, data, timezone):
     """Gather all the item data and export and return as a JSON or BIBTEX.
 
     Parameter
@@ -3276,7 +3276,6 @@ def export_all(root_url, user_id, data):
         name=_run_msg_config,
         user_id=user_id
     )
-    _timezone = str(current_app.config["STATS_WEKO_DEFAULT_TIMEZONE"]())
     _file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
 
     def _itemtype_name(name):
@@ -3427,7 +3426,7 @@ def export_all(root_url, user_id, data):
                             _run_msg_key,
                             "The latest {} file was created on {}.".format(
                                 _file_format,
-                                datetime.now(pytz.timezone(_timezone)).strftime("%Y/%m/%d %H:%M:%S"))
+                                datetime.now(pytz.timezone(timezone)).strftime("%Y/%m/%d %H:%M:%S"))
                             + " Number of retries: {} times.".format(retrys)
                         )
                         current_app.logger.info(
@@ -3469,7 +3468,7 @@ def export_all(root_url, user_id, data):
                     _run_msg_key,
                     "The latest {} file was created on {}.".format(
                         _file_format,
-                        datetime.now(pytz.timezone(_timezone)).strftime("%Y/%m/%d %H:%M:%S"))
+                        datetime.now(pytz.timezone(timezone)).strftime("%Y/%m/%d %H:%M:%S"))
                     + " Number of retries: {} times.".format(retrys)
                 )
                 item_types.remove(it)

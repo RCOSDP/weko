@@ -963,6 +963,24 @@ class SchemaTree:
                 atr_vm_item['resourceuri'] = current_app.config[
                     'RESOURCE_TYPE_URI'][new_type]
 
+        def replace_nameIdentifierScheme_for_jpcoar_v1(atr_vm_item):
+            if 'nameIdentifiers' in atr_vm_item:
+                for idx,val in enumerate(atr_vm_item['nameIdentifiers']):
+                    if val['nameIdentifierScheme'] in current_app.config['WEKO_SCHEMA_JPCOAR_V1_NAMEIDSCHEME_REPLACE']:
+                        new_type = current_app.config[
+                        'WEKO_SCHEMA_JPCOAR_V1_NAMEIDSCHEME_REPLACE'][val['nameIdentifierScheme']]
+                        val['nameIdentifierScheme'] = new_type
+
+        def replace_nameIdentifierScheme_for_jpcoar_v2(atr_vm_item):
+            if 'nameIdentifiers' in atr_vm_item:
+                for idx,val in enumerate(atr_vm_item['nameIdentifiers']):
+                    if val['nameIdentifierScheme'] in current_app.config['WEKO_SCHEMA_JPCOAR_V2_NAMEIDSCHEME_REPLACE']:
+                        new_type = current_app.config[
+                        'WEKO_SCHEMA_JPCOAR_V2_NAMEIDSCHEME_REPLACE'][val['nameIdentifierScheme']]
+                        val['nameIdentifierScheme'] = new_type
+                    
+                
+
         vlst = []
         for key_item_parent, value_item_parent in sorted(self._record.items()):
             if isinstance(value_item_parent, dict):
@@ -1008,6 +1026,10 @@ class SchemaTree:
                             if self._schema_name == current_app.config[
                                     'WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME']:
                                 replace_resource_type_for_jpcoar_v1(atr_vm_item)
+                                replace_nameIdentifierScheme_for_jpcoar_v1(atr_vm_item)
+                            if self._schema_name == current_app.config[
+                                    'WEKO_SCHEMA_JPCOAR_V2_SCHEMA_NAME']:
+                                replace_nameIdentifierScheme_for_jpcoar_v2(atr_vm_item)
                             vlst_child = get_mapping_value(mpdic, atr_vm_item,
                                                            key_item_parent,
                                                            atr_name)
@@ -1020,7 +1042,7 @@ class SchemaTree:
                         vlst_child = get_mapping_value(mpdic, {},
                                                            key_item_parent,
                                                            atr_name)
-                        if vlst_child[0]:
+                        if vlst_child and vlst_child[0]:
                             vlst.extend(vlst_child)
         return vlst
 

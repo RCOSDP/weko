@@ -45,6 +45,7 @@ def schema(title="", multi_flag=multiple_flag):
         _d = {
             "system_prop": False,
             "type": "object",
+            "title":"dcterms_date",
             "properties": {
                 "subitem_dcterms_date": {
                     "type": "string",

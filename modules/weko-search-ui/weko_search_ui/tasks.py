@@ -104,7 +104,7 @@ def delete_task_id_cache(task_id, cache_key):
             datastore.delete(cache_key)
 
 @shared_task
-def export_all_task(root_url, user_id, data):
+def export_all_task(root_url, user_id, data, timezone):
     """Export all items."""
     from weko_admin.utils import reset_redis_cache
 
@@ -120,7 +120,7 @@ def export_all_task(root_url, user_id, data):
         user_id=user_id
     )
 
-    uri = export_all(root_url, user_id, data)
+    uri = export_all(root_url, user_id, data, timezone)
     reset_redis_cache(_cache_key, uri)
     delete_exported_task.apply_async(
         args=(
