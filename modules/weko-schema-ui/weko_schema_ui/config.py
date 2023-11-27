@@ -86,6 +86,9 @@ WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME = 'jpcoar_v1_mapping'
 """JPCOAR v1.0 schema name"""
 
 WEKO_SCHEMA_JPCOAR_V1_RESOURCE_TYPE_REPLACE = {
+    'other periodical':'other',
+    'conference output':'conference object',
+    'conference presentation':'conference object',
     'aggregated data': 'dataset',
     'clinical trial data': 'dataset',
     'compiled data': 'dataset',
@@ -99,6 +102,21 @@ WEKO_SCHEMA_JPCOAR_V1_RESOURCE_TYPE_REPLACE = {
     'recorded data': 'dataset',
     'simulation data': 'dataset',
     'survey data': 'dataset',
+    'design patent': 'patent',
+    'PCT application': 'patent',
+    'plant patent': 'patent',
+    'plant variety protection': 'patent',
+    'software patent': 'patent',
+    'trademark': 'patent',
+    'utility model': 'patent',
+    'commentary': 'other',
+    'design': 'other',
+    'industrial design': 'other',
+    'layout design': 'other',
+    'peer review': 'other',
+    'research protocol': 'other',
+    'source code':'software',
+    'transcription': 'other',
 }
 """Resource type replace list for jpcoar v1.0"""
 
