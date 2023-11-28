@@ -200,13 +200,13 @@
                         } else {
                             permission += '"false"';
                         }
-                        if (response.size < threshold_size){
+                        if (ele.size < threshold_size){
                             txt_link = '<a class="billing-file-version"' + permission + selfLink + 'href="javascript:void(0);">' + filename + '</a>';
                         } else {
                             txt_link = '<a class="billing-file-version"' + permission + selfLink + 'href="#" onclick="downloadFile(\'' + record_id + "','" + ele.key + "','" + response.size + "','" + chunk_size + "')\">" + filename + '</a>';
                         }
                     } else {
-                        if (response.size < threshold_size){
+                        if (ele.size < threshold_size){
                             txt_link = '<a href="' + ele.links.self + '">' + filename + '</a>';
                         } else {
                             txt_link = '<a href="#" onclick="downloadFile(\'' + record_id + "','" + ele.key + "','" + response.size + "','" + chunk_size + "')\">" + filename + '</a>';
