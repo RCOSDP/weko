@@ -506,6 +506,11 @@
             name="auto_fill_subitem_restricted_access_approval_date" value=''>
           <input type="hidden" id="auto_fill_subitem_restricted_access_item_title"
             name="auto_fill_subitem_restricted_access_item_title" value='{{item_title}}'>
+          <input type="hidden" id="msg_please_select_file" value="{{_('Please select a file.')}}">
+          <input type="hidden" id="msg_defferent_file" value="{{_('Defferent File.')}}">
+          <input type="hidden" id="msg_the_upload_id_is_invalid" value="{{_('The Upload Id is invalid.')}}">
+          <input type="hidden" id="msg_the_upload_id_is_expired_for_retry" value="{{_('The Upload Id is expired for retry.')}}">
+          <input type="hidden" id="const_multipart_expires" value="{{ config.FILES_REST_MULTIPART_EXPIRES }}"
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-default" id="meta-search-close" data-dismiss="modal">

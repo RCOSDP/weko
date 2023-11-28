@@ -12,6 +12,7 @@ from __future__ import absolute_import, print_function
 
 import six
 from invenio_rest.errors import RESTException
+from flask_babelex import gettext as _
 
 
 class FilesException(RESTException):
@@ -144,6 +145,12 @@ class MultipartNoPart(MultipartException):
 
     code = 400
     description = "No upload part detected in request."
+
+class MultipartExhausted(MultipartException):
+    """Exception raised by part factories when no part was detected."""
+
+    code = 400
+    description = _("The Upload Id is expired for retry.")
 
 
 class InvalidTagError(InvalidOperationError):

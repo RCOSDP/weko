@@ -31,6 +31,7 @@
       <td class="text-center">
         <span ng-show="f.progress < 100 && !f.errored">{{ f.progress }} %</span>
         <span ng-show="f.processing && !f.errored">Processing...</span>
+        <span ng-show="f.multipart && f.resuming">Resuming...</span>
         <span ng-show="f.errored" class="text-danger">Error</span>
         <span ng-show="f.errored && f.multipart" class="text-danger">
           <input type="file" id="resume_file" class="ng-hide" ngf-select="hookUploadReumeFiles($files)"></input>
