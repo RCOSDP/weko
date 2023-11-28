@@ -53,7 +53,7 @@ async function downloadFile(recNum, fileName, content_length, buffer_size, event
             xhr.send();
             return;
           }else{
-            console.log("File Download Failed");
+            console.log("File Download Failed", new Date());
             xhr.abort();
             showErrorMsg(error_msg, false, ediv)
             ring_background.classList.add("hidden");

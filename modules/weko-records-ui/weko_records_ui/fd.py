@@ -21,6 +21,7 @@
 """Utilities for download file."""
 
 import mimetypes
+import re
 import traceback
 import unicodedata
 
@@ -167,6 +168,162 @@ def file_preview_ui(pid, record, _record_file_factory=None, **kwargs):
         is_preview=True,
         **kwargs)
 
+def multipartfile_download_ui(pid, record, _record_file_factory=None, **kwargs):
+    """File download view for a given record.
+
+    Plug this method into your ``RECORDS_UI_ENDPOINTS`` configuration:
+
+    .. code-block:: python
+
+        RECORDS_UI_ENDPOINTS = dict(
+            recid=dict(
+                # ...
+                route='/records/<pid_value/files/<filename>',
+                view_imp='invenio_records_files.utils:file_download_ui',
+                record_class='invenio_records_files.api:Record',
+            )
+        )
+
+    :param _record_file_factory:
+    :param pid: The :class:`invenio_pidstore.models.PersistentIdentifier`
+        instance.
+    :param record: The record metadata.
+    """
+    part_number = request.args.get("partNumber")
+    
+    if part_number is None:
+        abort(400)
+        
+    return multipartfile_ui(
+        pid,
+        record,
+        part_number,
+        _record_file_factory,
+        **kwargs)
+    
+def multipartfile_ui(
+        pid,
+        record,
+        part_number,
+        _record_file_factory=None,
+        **kwargs):
+    """File Ui.
+
+    :param is_preview: Determine the type of event.
+           True: file-preview, False: file-download
+    :param _record_file_factory:
+    :param pid: The :class:`invenio_pidstore.models.PersistentIdentifier`
+        instance.
+    :param record: The record metadata.
+    """
+    _record_file_factory = _record_file_factory or record_file_factory
+    # Extract file from record.
+    fileobj = _record_file_factory(
+        pid, record, kwargs.get('filename')
+    )
+
+    if not fileobj:
+        abort(404)
+
+    obj = fileobj.obj
+
+    # Check file contents permission
+    if not file_permission_factory(record, fjson=fileobj).can():
+        if not current_user.is_authenticated:
+            return _redirect_method(has_next=True)
+        abort(403)
+
+    # Check permissions
+    # ObjectResource.check_object_permission(obj)
+
+    buffer_size = current_app.config.get("DOWNLOAD_SIZE_IN_ONE_PART")
+    return _download_multipartfile(fileobj, obj, record, part_number, buffer_size)
+
+def _download_multipartfile(file_obj, obj, record, part_number, buffer_size):
+    """Download multipartfile.
+
+    :param file_obj:File object
+    :param is_preview: preview flag.
+    :param lang: Language
+    :param obj:
+    :param pid:
+    :param record:Record json
+    :return:
+    """ 
+
+    def generate(iter):
+        for chunk in iter:
+            yield chunk
+            
+    client = file_obj.file.storage().get_s3_client()
+    bucket_name = current_app.config.get("S3_BUCKET_NAME")
+    key = re.sub(f".*{bucket_name}\/", "", file_obj.file.uri)
+    
+    # Send file without its pdf cover page
+    try:
+        if part_number == "1":     
+            return  current_app.response_class(
+                        generate(
+                            client.get_object(
+                                Bucket = bucket_name,
+                                Key =  key,
+                                Range = f"bytes={buffer_size * (int(part_number) - 1)}-{buffer_size * int(part_number) - 1}"
+                            ).get("Body").iter_chunks()
+                        ),
+                        mimetype = file_obj.mimetype,
+                        direct_passthrough = True,
+                    )
+        
+        # last part
+        elif buffer_size * (int(part_number)) > file_obj.data.get("size"):
+            
+            # Add download signal
+            add_signals_info(record, obj)
+            
+            # Send download signal
+            signals.file_downloaded.send(current_app._get_current_object(), obj=obj)
+            
+            # Check and create usage report
+            try:
+                check_and_create_usage_report(record, file_obj)
+                db.session.commit()
+            except SQLAlchemyError as ex:
+                current_app.logger.error("sqlalchemy error: {}".format(ex))
+                db.session.rollback()
+                abort(500)
+            except BaseException as ex:
+                current_app.logger.error("Unexpected error: {}".format(ex))
+                db.session.rollback()
+                abort(500)
+                
+            return  current_app.response_class(
+                        generate(
+                            client.get_object(
+                                Bucket = bucket_name,
+                                Key =  key,
+                                Range = f"bytes={buffer_size * (int(part_number) - 1)}-{buffer_size * int(part_number) - 1}"
+                            ).get("Body").iter_chunks()
+                        ),
+                        mimetype = file_obj.mimetype,
+                        direct_passthrough = True,
+                    )
+
+        else:
+            return  current_app.response_class(
+                        generate(
+                            client.get_object(
+                                Bucket = bucket_name,
+                                Key =  key,
+                                Range = f"bytes={buffer_size * (int(part_number) - 1)}-{buffer_size * int(part_number) - 1}"
+                            ).get("Body").iter_chunks()
+                        ),
+                        mimetype = file_obj.mimetype,
+                        direct_passthrough = True,
+                    )
+        
+    except AttributeError:
+        traceback.format_exc()
+        abort(500)
 
 def file_download_ui(pid, record, _record_file_factory=None, **kwargs):
     """File download view for a given record.
