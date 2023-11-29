@@ -169,7 +169,7 @@
                           {%- endif -%}
                           <!-- Show FileName/Label -->
                           {%- if access_permission and billing_file_access_permission -%}
-                            {%- if file.size < config.get("MAX_DOWNLOAD_SIZE_AT_ONE_TIME") -%}
+                            {%- if file.size <= config.get("MAX_DOWNLOAD_SIZE_AT_ONE_TIME") -%}
                               <a class="forcewrap{{ billing_file_class }}" {{ billing_file_data }} {{ billing_file_url }}
                                 {% if text_url %} href="javascript:OnLinkClick('', {{ pid.pid_value }}, '{{ file.accessrole }}')" {% endif %}>
                                 {% autoescape false %}
@@ -271,7 +271,7 @@
                           {%- set download_id = 'download-' + file.version_id %}
                           {%- if (access_permission and billing_file_access_permission) or not clickable -%}
                             <!-- User has permission download. -->
-                            {%- if file.size < config.get("MAX_DOWNLOAD_SIZE_AT_ONE_TIME") -%}
+                            {%- if file.size <= config.get("MAX_DOWNLOAD_SIZE_AT_ONE_TIME") -%}
                             <a class="action-anchor" href="{{file_url}}">
                               <button class="img-rounded action-button button-sm" id="{{download_id}}">
                                 <i class="action-icon fa fa-download"></i>

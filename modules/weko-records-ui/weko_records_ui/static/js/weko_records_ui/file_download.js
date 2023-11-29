@@ -44,6 +44,21 @@ async function downloadFile(recNum, fileName, content_length, buffer_size, event
   
     let xhr = new XMLHttpRequest();
     xhr.responseType = "blob";
+
+    xhr.onerror = function(){
+      if(retryCount < retry_count){
+        retryCount += 1;
+        xhr.open("GET", "https://" + host + "/record/" + recNum + "/multipartfiles/" + fileName + "?partNumber=" + partNumber, true)
+        xhr.send();
+        return;
+      }else{
+        console.log("File Download Failed", new Date());
+        xhr.abort();
+        showErrorMsg(error_msg, false, ediv)
+        ring_background.classList.add("hidden");
+        return;
+      }
+    }
   
     xhr.onload = async function() {
         if(String(xhr.status).indexOf("2") != 0){

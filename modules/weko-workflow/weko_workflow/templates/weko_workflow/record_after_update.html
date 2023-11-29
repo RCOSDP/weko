@@ -78,7 +78,7 @@
                         <span class="filename">
                           <img src="{{img}}" alt={{file.filename or file.key}} />
                           <a class="forcewrap"
-                            {% if file.size < config.get("MAX_DOWNLOAD_SIZE_AT_ONE_TIME") %}
+                            {% if file.size <= config.get("MAX_DOWNLOAD_SIZE_AT_ONE_TIME") %}
                               href="{{file_url}}">
                             {% else %}
                               href="javascript:void(0)" onclick="downloadFile('{{pid.pid_value}}', '{{file.filename}}', '{{file.size}}', '{{config.get("DOWNLOAD_SIZE_IN_ONE_PART")}}', this)">

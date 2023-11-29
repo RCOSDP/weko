@@ -19,6 +19,7 @@ from functools import partial, wraps
 
 from flask import Blueprint, abort, current_app, jsonify, request, session
 from flask_login import current_user, login_required
+from flask_babelex import gettext as _
 from invenio_db import db
 from invenio_files_rest.storage.pyfs import pyfs_storage_factory
 from invenio_records.models import RecordMetadata
@@ -49,8 +50,7 @@ blueprint = Blueprint(
     static_folder='static',
 )
 
-# 追加
-largeFileUpload_blueprint = Blueprint(
+large_file_upload_blueprint = Blueprint(
     'large_file_uplaod',
     __name__,
     url_prefix='/largeFileUpload'
@@ -74,9 +74,14 @@ api_blueprint = Blueprint(
 # Helpers
 #
 
-@largeFileUpload_blueprint.route("/lockRedis", methods = ["POST"])
+@large_file_upload_blueprint.route("/lock_upload_id", methods = ["POST"])
 @login_required 
-def lockRedis():
+def lock_upload_id():
+    """Lock upload_id
+
+    Returns:
+        string: 
+    """
     if not current_user.roles:
         abort(403)
     try:
@@ -91,9 +96,14 @@ def lockRedis():
     except Exception:
         return "An error has occurred.", 500
     
-@largeFileUpload_blueprint.route("/unlockRedis", methods = ["POST"])
+@large_file_upload_blueprint.route("/unlock_upload_id", methods = ["POST"])
 @login_required 
-def unlockRedis():
+def unlock_upload_id():
+    """Unlock upload_id
+
+    Returns:
+        string: 
+    """
     if not current_user.roles:
         abort(403)
     try:
@@ -105,9 +115,14 @@ def unlockRedis():
     except Exception:
         return "An error has occurred.", 500
 
-@largeFileUpload_blueprint.route("/createFileInstance", methods = ["POST"])
+@large_file_upload_blueprint.route("/createFileInstance", methods = ["POST"])
 @login_required 
 def createFileInstance():
+    """Create FileInstance record.
+
+    Returns:
+        string: fileinstance.id
+    """
     if not current_user.roles:
         abort(403)
     fileinstance = None
@@ -132,9 +147,14 @@ def createFileInstance():
     except Exception:
         return "An error has occurred.", 500
 
-@largeFileUpload_blueprint.route("/checkMultipartObjectInstance", methods = ["POST"])
+@large_file_upload_blueprint.route("/checkMultipartObjectInstance", methods = ["POST"])
 @login_required 
 def checkMultipartObjectInstance():
+    """Check validation for MultipartObject
+    
+    Returns:
+        string: file_id
+    """
     if not current_user.roles:
         abort(403)
     upload_id = request.args.get("upload_id")
@@ -144,17 +164,22 @@ def checkMultipartObjectInstance():
             if multipartObject and not multipartObject.completed:
                 if multipartObject.created_by_id == current_user.id:
                     if multipartObject.created > datetime.now() - current_app.config.get("FILES_REST_MULTIPART_EXPIRES"):
-                        return {"file_id": multipartObject.file_id, "chunk_size": str(multipartObject.chunk_size)}, 200
+                        return {"file_id": str(multipartObject.file_id), "chunk_size": str(multipartObject.chunk_size)}, 200
                     else:
-                        return "The Upload Id is expired for retry", 404
-        return "The Upload Id is invalid", 400
+                        return _("The Upload Id is expired for retry."), 404
+        return _("The Upload Id is invalid."), 400
     except Exception:
         return "An error has occurred.", 500
 
 
-@largeFileUpload_blueprint.route("/createMultipartObjectInstance", methods = ["POST"])
+@large_file_upload_blueprint.route("/createMultipartObjectInstance", methods = ["POST"])
 @login_required 
 def createMultipartObject():
+    """Create MultipartObject record.
+
+    Returns:
+        string: file_id
+    """
     if not current_user.roles:
         abort(403)
     upload_id = request.args.get("upload_id")
@@ -179,15 +204,20 @@ def createMultipartObject():
             db.session.add(multipartObject)
             
         db.session.commit()
-        return file_id, 200
+        return str(file_id), 200
     except Exception:
         return "An error has occurred.", 500
         
     
 
-@largeFileUpload_blueprint.route("/part", methods = ["GET", "POST"])
+@large_file_upload_blueprint.route("/part", methods = ["GET", "POST"])
 @login_required 
-def partFunc():
+def get_or_create_part():
+    """get or create part object.
+
+    Returns:
+        string: checksum when GET method
+    """
     if not current_user.roles:
         abort(403)
     upload_id = request.args.get("uploadId")
@@ -218,9 +248,14 @@ def partFunc():
         return "An error has occurred.", 500
     
 
-@largeFileUpload_blueprint.route("/completeFunc", methods = ["GET", "POST"])
+@large_file_upload_blueprint.route("/complete_multipart", methods = ["GET", "POST"])
 @login_required 
-def completeFunc():
+def complete_multipart():
+    """Update multipart object after upload is finished.
+    
+    Completion process
+    
+    """
     if not current_user.roles:
         abort(403)
     upload_id = request.args.get("upload_id")
