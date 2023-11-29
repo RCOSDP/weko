@@ -690,7 +690,7 @@ msgid "File Download Failed."
 msgstr "ファイルのダウンロードに失敗しました。"
 
 msgid "This file will take a long time to download. Please do not close this screen while downloading. Do you want to start downloading?"
-msgstr "このファイルのダウンロードには長時間がかかります。ダウンロード中はこの画面を閉じないでください。ダウンロードを開始しますか？"
+msgstr "このファイルのダウンロードには時間がかかります。ダウンロード中はこの画面を閉じないでください。ダウンロードを開始しますか？"
 
 msgid "File download is complete."
 msgstr "ファイルのダウンロードが完了しました。"

@@ -624,6 +624,8 @@ WEKO_RECORDS_UI_DISPLAY_RESOURCE_TYPE = False
 WEKO_RECORDS_UI_DISPLAY_ITEM_TYPE = True
 """ Display item type name on item detail. """
 
-MAX_DOWNLOAD_SIZE_AT_ONE_TIME = 2 * 1024 * 1024 * 1024
+MAX_DOWNLOAD_SIZE_AT_ONE_TIME = 2 * 1024 * 1024 * 1024 # 2 GiB
+""" Maximum download size without multiparts. """
 
-DOWNLOAD_SIZE_IN_ONE_PART = 100 * 1024 * 1024 
+DOWNLOAD_SIZE_IN_ONE_PART = 100 * 1024 * 1024 # 100 MiB
+""" Download size per part. """

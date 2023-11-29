@@ -169,7 +169,7 @@ def file_preview_ui(pid, record, _record_file_factory=None, **kwargs):
         **kwargs)
 
 def multipartfile_download_ui(pid, record, _record_file_factory=None, **kwargs):
-    """File download view for a given record.
+    """MultipartFile download view for a given record.
 
     Plug this method into your ``RECORDS_UI_ENDPOINTS`` configuration:
 
@@ -178,8 +178,8 @@ def multipartfile_download_ui(pid, record, _record_file_factory=None, **kwargs):
         RECORDS_UI_ENDPOINTS = dict(
             recid=dict(
                 # ...
-                route='/records/<pid_value/files/<filename>',
-                view_imp='invenio_records_files.utils:file_download_ui',
+                route='/records/<pid_value/multipartfiles/<filename>',
+                view_imp='invenio_records_files.utils:multipartfile_download_ui',
                 record_class='invenio_records_files.api:Record',
             )
         )
@@ -207,14 +207,13 @@ def multipartfile_ui(
         part_number,
         _record_file_factory=None,
         **kwargs):
-    """File Ui.
+    """Multipart File Ui.
 
-    :param is_preview: Determine the type of event.
-           True: file-preview, False: file-download
     :param _record_file_factory:
     :param pid: The :class:`invenio_pidstore.models.PersistentIdentifier`
         instance.
     :param record: The record metadata.
+    :param part_number: The number of the part.
     """
     _record_file_factory = _record_file_factory or record_file_factory
     # Extract file from record.
@@ -226,6 +225,10 @@ def multipartfile_ui(
         abort(404)
 
     obj = fileobj.obj
+    
+    s3 ,amazons3 = current_app.config.get("FILES_REST_LOCATION_TYPE_LIST")[0]
+    if obj.bucket.location.type != s3:
+        abort(500)
 
     # Check file contents permission
     if not file_permission_factory(record, fjson=fileobj).can():
@@ -243,11 +246,11 @@ def _download_multipartfile(file_obj, obj, record, part_number, buffer_size):
     """Download multipartfile.
 
     :param file_obj:File object
-    :param is_preview: preview flag.
-    :param lang: Language
     :param obj:
     :param pid:
     :param record:Record json
+    :param part_number: The number of the part.
+    :param buffer_size: Chunk size to download.
     :return:
     """ 
 
@@ -255,27 +258,12 @@ def _download_multipartfile(file_obj, obj, record, part_number, buffer_size):
         for chunk in iter:
             yield chunk
             
-    client = file_obj.file.storage().get_s3_client()
-    bucket_name = current_app.config.get("S3_BUCKET_NAME")
-    key = re.sub(f".*{bucket_name}\/", "", file_obj.file.uri)
-    
-    # Send file without its pdf cover page
     try:
-        if part_number == "1":     
-            return  current_app.response_class(
-                        generate(
-                            client.get_object(
-                                Bucket = bucket_name,
-                                Key =  key,
-                                Range = f"bytes={buffer_size * (int(part_number) - 1)}-{buffer_size * int(part_number) - 1}"
-                            ).get("Body").iter_chunks()
-                        ),
-                        mimetype = file_obj.mimetype,
-                        direct_passthrough = True,
-                    )
-        
+        client = file_obj.file.storage().get_s3_client()
+        bucket_name = obj.bucket.location.uri.replace("s3://" ,"").split("/")[0]
+        key = re.sub(f".*{bucket_name}\/", "", file_obj.file.uri)
         # last part
-        elif buffer_size * (int(part_number)) > file_obj.data.get("size"):
+        if buffer_size * (int(part_number)) >= file_obj.data.get("size"):
             
             # Add download signal
             add_signals_info(record, obj)

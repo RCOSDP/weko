@@ -1009,6 +1009,7 @@ def handle_check_exist_record(list_record) -> list:
         item_id = item.get("id")
         # current_app.logger.debug("item_id:{}".format(item_id))
         
+        # Get the meta ID of the file part of the item
         file_meta_id = ""
         for key, val in item.get("metadata").items():
             if isinstance(val, list):
@@ -1058,27 +1059,30 @@ def handle_check_exist_record(list_record) -> list:
                 all_size = 0
                 bucket = RecordsBuckets.query.filter_by(record_id=PersistentIdentifier.query.filter_by(pid_type="recid", pid_value=item["id"]).first().object_uuid).one_or_none().bucket
                 for i, id in enumerate(item.get("upload_id")):
-                    if(id != "" and item.get("file_path")[i] != "") or (id != "" and item.get("url")):
-                        errors.append(_('Both A and B must be empty'))
-                    else:
-                        if is_valid_uuid(id):
-                            if item.get("metadata")[file_meta_id][i].get("format") in mimetypes.types_map.values(): # 「正しいフォーマット」の条件が抜けている（何か文字列が入っていればOKとなっている）
-                                multipartObject = MultipartObject.get_by_uploadId(id)
-                                if multipartObject:
-                                    if multipartObject.completed and (multipartObject.bucket_id == None or multipartObject.bucket_id == bucket.id):
-                                        if multipartObject.file.uri.startswith(bucket.location.uri):
-                                            all_size += multipartObject.file.size
-                                        else:
-                                            errors.append(_('Files and items have different locations '))
-                                    else:
-                                        errors.append(_('specified uploadId not completed or already linked to the item'))
-                                else:
-                                    errors.append(_('specified uploadId is not found'))
-                            else:
-                                errors.append(_('Please set the file format correctly'))
+                    if id != "" and item.get("file_path")[i] != "": # if 'file_path' exist
+                        errors.append(_('file_path must be empty'))
+                        
+                    if is_valid_uuid(id): # if 'id' is valid
+                        if not item.get("metadata")[file_meta_id][i].get("format") in mimetypes.types_map.values(): # If 'format' is in the correct format
+                            errors.append(_('Please set the file format correctly'))
+                            
+                        multipartObject = MultipartObject.get_by_uploadId(id)
+                        if multipartObject:
+                            if not (multipartObject.completed and (multipartObject.bucket_id == None or multipartObject.bucket_id == bucket.id)): # f upload_id is not completed or is already linked to an item
+                                errors.append(_('specified uploadId not completed or already linked to the item'))
+                                
+                            if not multipartObject.file.uri.startswith(bucket.location.uri): # If different from item location
+                                errors.append(_('Files and items have different locations '))
+                            
+                            if not errors:
+                                all_size += multipartObject.file.size
+                                
                         else:
-                            if id != '':
-                                errors.append(_('uploadId is invalid format'))
+                            errors.append(_('specified uploadId is not found'))
+                    else:
+                        if id != '':
+                            errors.append(_('uploadId is invalid format'))
+                            
                 if all_size > bucket.quota_size:
                     errors.append(_('Total file size exceeds bucket size'))
                     
@@ -1184,9 +1188,9 @@ def up_load_file(record, root_path, deposit, allow_upload_file_content, old_file
                 if is_valid_uuid(path):
                     a = MultipartObject.get_by_uploadId(path)
                     if(a):
-                        # 追加
                         root_file_id = None
-                        if old_file and old_file.file_id != a.file_id: # ファイルがすでにあり、異なるファイルの場合
+                        if old_file and old_file.file_id != a.file_id: # item alredy has file 
+                            # replace file
                             if MultipartObject.get_by_fileId(old_file.file_id) != None:
                                 root_file_id = old_file.root_file_id
                                 old_file.remove()
@@ -1194,24 +1198,22 @@ def up_load_file(record, root_path, deposit, allow_upload_file_content, old_file
                                 obj = ObjectVersion.create(deposit.files.bucket, a.key, _file_id = a.file_id)
                                 obj.is_thumbnail = is_thumbnail
                                 a.bucket_id = deposit.files.bucket.id
-                                continue
                             else:
                                 obj = ObjectVersion.create(deposit.files.bucket, a.key, _file_id = a.file_id)
                                 obj.is_thumbnail = is_thumbnail
                                 a.bucket_id = deposit.files.bucket.id
-                        elif not old_file:# ファイルがすでにない場合
+                        elif not old_file: # file not exist
+                            # add file
                             obj = ObjectVersion.create(deposit.files.bucket, a.key, _file_id = a.file_id)
                             obj.is_thumbnail = is_thumbnail
                             a.bucket_id = deposit.files.bucket.id
-                        continue
-                    else:
-                        if old_file \
-                            and MultipartObject.get_by_fileId(old_file.file_id) \
-                            and not record["filenames"][idx] \
-                            and not old_file.key == record["filenames"][idx]["filename"]:
-                                
-                            print("\033[32m", "old_file_remove", old_file, "\033[0m")
-                            old_file.remove()
+                else:
+                    if old_file \
+                        and MultipartObject.get_by_fileId(old_file.file_id) \
+                        and not record["filenames"][idx] \
+                        and not old_file.key == record["filenames"][idx]["filename"]:
+                            
+                        old_file.remove()
                 continue
                            
             if not path or not os.path.isfile(root_path + "/" + path):
@@ -1219,7 +1221,7 @@ def up_load_file(record, root_path, deposit, allow_upload_file_content, old_file
                     len(record["filenames"]) > idx
                     and record["filenames"][idx]
                     and old_file.key == record["filenames"][idx]["filename"]
-                ) and MultipartObject.get_by_fileId(old_file.file_id) != None:
+                ) and MultipartObject.get_by_fileId(old_file.file_id) == None:
                     old_file.remove()
                 continue
 
@@ -1380,7 +1382,7 @@ def register_item_metadata(item, root_path, owner, is_gakuninrdm=False):
                 old_file_list.append(f_filter[0].obj if f_filter else None)
             else:
                 old_file_list.append(None)
-    
+
     # set delete flag for file metadata if is empty.
     new_data, is_cleaned = clean_file_metadata(item["item_type_id"], new_data)
     # progress upload file, replace file contents.
@@ -1635,22 +1637,31 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
                 )
 
             for i, id in enumerate(item["upload_id"]):
-                a = MultipartObject.get_by_uploadId(id) if is_valid_uuid(id) else None
-                if a:
+                multipartobject = MultipartObject.get_by_uploadId(id) if is_valid_uuid(id) else None
+                if multipartobject:
                     file_meta_id = re.search(r'item_[0-9]+', item["filenames"][i]["id"]).group()
                     
                     file_meta_data = {
-                        "accessrole": "open_access",
-                        "date": [{"dateType": "Available", "dateValue": a.updated.strftime("%Y-%m-%d")}],
-                        "filename": a.key,
-                        "filesize": [{"value": convert_size(a.size)}],
+                        "accessrole": "open_access" if item["metadata"][file_meta_id][i].get("accessrole") == None else item["metadata"][file_meta_id][i],
+                        "date": [{"dateType": "Available", "dateValue": multipartobject.updated.strftime("%Y-%m-%d")}],
+                        "filename": multipartobject.key,
+                        "filesize": [{"value": convert_size(multipartobject.size)}],
                         "url": {
-                            "url": current_app.config["THEME_SITEURL"] + "/record/" + item["id"] + "/files/" + a.key
+                            "url": current_app.config["THEME_SITEURL"] + "/record/" + item["id"] + "/files/" + multipartobject.key
                         },
                         "format": item["metadata"][file_meta_id][i]["format"]
                     }
+                    
+                    for dict_data in item["metadata"][file_meta_id]:
+                        if dict_data.get("filename") == multipartobject.key:
+                            if dict_data.get("accessrole") == "open_date":
+                                file_meta_data["date"]["dateValue"] = dict_data.get("date",dict()).get("dateValue",'')
+                    
+                    for meta_name in ["displaytype", "groups", "licensefree", "licensetype", "version"]:
+                        if item["metadata"][file_meta_id][i].get(meta_name): file_meta_data[meta_name] = item["metadata"][file_meta_id][i][meta_name]
+                    
                     item["metadata"][file_meta_id][i] = file_meta_data
-                    item["filenames"][i]["filename"] = a.key
+                    item["filenames"][i]["filename"] = multipartobject.key
             register_item_metadata(item, root_path, owner, is_gakuninrdm)
             if not is_gakuninrdm:
                 if current_app.config.get("WEKO_HANDLE_ALLOW_REGISTER_CNRI"):

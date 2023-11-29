@@ -34,7 +34,6 @@ function getAuth(r){
                             "\n" +
                             "host;x-amz-content-sha256;x-amz-date\n" +
                             payloadHash
-    r.warn(canonicalRequest);
 
     const urlenc = crypto.createHash("sha256").update(canonicalRequest).digest("hex");
 

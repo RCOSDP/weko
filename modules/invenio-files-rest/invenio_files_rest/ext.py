@@ -18,7 +18,7 @@ from . import config
 from .cli import files as files_cmd
 from .errors import MultipartNoPart
 from .utils import load_or_import_from_config, obj_or_import_string
-from .views import admin_blueprint, api_blueprint, largeFileUpload_blueprint
+from .views import admin_blueprint, api_blueprint, large_file_upload_blueprint
 
 
 class _FilesRESTState(object):
@@ -117,7 +117,7 @@ class InvenioFilesREST(object):
             app.cli.add_command(files_cmd)
         app.register_blueprint(admin_blueprint)
         app.register_blueprint(api_blueprint)
-        app.register_blueprint(largeFileUpload_blueprint)
+        app.register_blueprint(large_file_upload_blueprint)
         app.extensions['invenio-files-rest'] = _FilesRESTState(app)
 
     def init_config(self, app):
