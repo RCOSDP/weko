@@ -650,7 +650,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         }
       }
 
-      $scope.onResumeFileContentChange = function (files, position) {
+      $scope.onResumeFileContentChange = function (files) {
         const file = files[0];
         const f = $rootScope.filesVM.files.filter(f => f.errored && f.key === file.name && f.size === file.size)[0]
         if (!f ){
@@ -664,8 +664,6 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           file.resuming = true;
           $rootScope.filesVM.files.splice(idx_of_file , 1);
           $rootScope.filesVM.addFiles([file]);
-
-
           this.resetFilesPosition(idx_of_file);
         }
         //file upload
@@ -742,11 +740,11 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
       $scope.hookAddReumeFiles = () => {
         $('#resume_file').click();
       }
-      $scope.hookUploadReumeFiles = (files , position) => {
+      $scope.hookUploadReumeFiles = (files) => {
         if (!files) {
           return;
         }
-        $scope.onResumeFileContentChange(files , position );
+        $scope.onResumeFileContentChange(files);
 
       }
 

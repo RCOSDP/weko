@@ -68,7 +68,7 @@ js_dependecies_uploader = NpmBundle(
     'node_modules/ng-file-upload/dist/ng-file-upload-all.js',
     'node_modules/invenio-files-js/dist/invenio-files-js.js',
     npm={
-        'invenio-files-js': 'https://github.com/RCOSDP/invenio-files-js.git#master',
+        'invenio-files-js': 'https://github.com/RCOSDP/invenio-files-js.git#release',
         'ng-file-upload': '~12.0.4',
         'underscore': '~1.8.3',
     }
