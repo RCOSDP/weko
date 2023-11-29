@@ -128,8 +128,14 @@ msgstr "アイテムに使われているファイルは削除できません。
 msgid "Cannot be deleted because it is being uploaded."
 msgstr "アップロード処理中のため、削除できません。"
 
-msgid "The Upload Id is expired for retry"
+msgid "The Upload Id is invalid."
+msgstr "アップロードIDが不正です。"
+
+msgid "The Upload Id is expired for retry."
 msgstr "アップロードIDがリトライ期限切れです。"
 
-msgid "The Upload Id is invalid."
-msgstr "アップロードIDが正しくありません。"
+msgid "Defferent File."
+msgstr "異なるファイルです。"
+
+msgid "Please select a file."
+msgstr "ファイルを選択してください。"

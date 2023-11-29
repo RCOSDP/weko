@@ -33,7 +33,7 @@ from invenio_s3.storage import S3FSFileStorage
 from weko_redis.redis import RedisConnection
 
 from .errors import DuplicateTagError, ExhaustedStreamError, FileSizeError, \
-    InvalidTagError, MissingQueryParameter, MultipartInvalidChunkSize
+    InvalidTagError, MissingQueryParameter, MultipartExhausted, MultipartInvalidChunkSize
 from .models import Bucket, Location, MultipartObject, ObjectVersion, \
     ObjectVersionTag, Part, FileInstance
 from .proxies import current_files_rest, current_permission_factory
@@ -91,7 +91,7 @@ def lock_upload_id():
         sessionstore.put(
                     "upload_id" + upload_id,
                     b"lock",
-                    ttl_secs=345600)
+                    ttl_secs=current_app.config['FILES_REST_MULTIPART_EXPIRES'].total_seconds())
         return f"lock redis upload_id: {upload_id}"
     except Exception:
         return "An error has occurred.", 500
@@ -1059,6 +1059,15 @@ class ObjectResource(ContentNegotiatedMethodView):
             raise MissingQueryParameter('partSize')
         multipart = MultipartObject.create(bucket, key, size, part_size)
         db.session.commit()
+
+        #lock deleting by Redis
+        redis_connection = RedisConnection()
+        sessionstore = redis_connection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
+        sessionstore.put(
+                    "upload_id" + str(multipart.upload_id),
+                    b"lock",
+                    ttl_secs=current_app.config['FILES_REST_MULTIPART_EXPIRES'].total_seconds())
+
         return self.make_response(
             data=multipart,
             context={
@@ -1087,6 +1096,13 @@ class ObjectResource(ContentNegotiatedMethodView):
                 raise MultipartInvalidChunkSize()
         else:
             return
+
+            
+        #lock deleting by Redis
+        redis_connection = RedisConnection()
+        sessionstore = redis_connection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
+        if not sessionstore.get("upload_id" + str(multipart.upload_id)):
+            raise MultipartExhausted()
 
         # Create part
         try:
@@ -1131,6 +1147,12 @@ class ObjectResource(ContentNegotiatedMethodView):
                 current_login_user_id=current_user.id,
             )
         db.session.commit()
+
+        #unlock deleting  by Redis
+        redis_connection = RedisConnection()
+        sessionstore = redis_connection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
+        sessionstore.delete("upload_id" + str(multipart.upload_id))
+
         return self.make_response(
             data=obj,
             context={

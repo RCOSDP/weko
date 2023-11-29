@@ -64,7 +64,7 @@ def link_ver2(link_text1, link_text2 , link_func1 , link_func2 , func_link_is_1)
     def object_formatter(v, c, m, p):
         """Format object view link."""
         if func_link_is_1(m) :
-            if '1' in current_user.roles : #System Administrator
+            if 'System Administrator' in current_user.roles : #System Administrator
                 return Markup('<a href="{0}">{1}</a>'.format(
                     link_func1(m), link_text1))
             else :
@@ -318,8 +318,10 @@ class MultipartObjectModelView(ModelView):
     can_delete = True
     can_view_details = True
     column_formatters = dict(
-        file_instance=link('File', lambda o: url_for(
-            'fileinstance.index_view', flt0_0=o.file_id)),
+        file_instance=link_ver2('File','File'
+                            ,lambda o: url_for('fileinstance.index_view', flt0_0=o.file_id)
+                            ,lambda o : '' 
+                            ,lambda o: url_for('fileinstance.index_view', flt0_0=o.file_id)),
 
         item_bucket=link_ver2(_('Item Bucket') 
                         , _('Unbind')
