@@ -67,7 +67,7 @@ def add(post_data, key, **kwargs):
     set_post_data(post_data, property_id, name_ja, key, option, form, schema, **kwargs)
 
     if kwargs.pop("mapping", True):
-        post_data["table_row_map"]["mapping"][key] = mappin
+        post_data["table_row_map"]["mapping"][key] = mapping
     else:
         post_data["table_row_map"]["mapping"][key] = config.DEFAULT_MAPPING
 
@@ -243,7 +243,7 @@ def form(
                         {
                             "fieldHtmlClass": "file-text-url",
                             "key": "{}.url.url".format(key),
-                            "readonly": True,
+                            "readonly": False,
                             "title": "本文URL",
                             "title_i18n": {"en": "URL", "ja": "本文URL"},
                             "type": "text",
