@@ -190,21 +190,27 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
                         # roles check
                         role_is_can = False
                         roles = fjson.get('roles')
-                        if roles and isinstance(roles, list) and len(roles)>0:
+                        if c_is_can and p_is_can:
+                            role_is_can = True
+                        elif roles and isinstance(roles, list) and len(roles)>0:
                             for lst in list(current_user.roles or []):
                                 for role_value in [ role.get('role') for role in roles ]:
                                     if __isint(role_value):
                                         if lst.id == int(role_value):
                                             role_is_can = True
+                                            if role_is_can:
+                                                c_is_can = True
                                             break
                                     else:
                                         if lst.name == role_value:
                                             role_is_can = True
+                                            if role_is_can:
+                                                c_is_can = True
                                             break
                             # ログインユーザーに権限なしの場合でも、コンテンツで「非ログインユーザー」指定した場合OK
-                            if len(list(current_user.roles))==0:
-                                if 'none_loggin' in [ role.get('role') for role in roles ]:
-                                    role_is_can = True
+                            # if len(list(current_user.roles))==0:
+                            #     if 'none_loggin' in [ role.get('role') for role in roles ]:
+                            #         role_is_can = True
                         else:
                             role_is_can = True
                         
@@ -241,8 +247,8 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
                                         is_role_can = True
                                         break
                         # ログインユーザーに権限なしの場合でも、コンテンツで「非ログインユーザー」指定した場合OK
-                        if 'none_loggin' in [ role.get('role') for role in roles ]:
-                            is_role_can = True
+                        # if 'none_loggin' in [ role.get('role') for role in roles ]:
+                        #     is_role_can = True
                     else:
                         is_role_can = True
 
