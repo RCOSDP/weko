@@ -176,12 +176,10 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
                     try:
                         # contents accessdate
                         c_is_can = True
-                        date = fjson.get('date')
-                        if date and isinstance(date, list) and date[0]:
-                            adt = date[0].get('dateValue')
-                            if adt:
-                                adt = to_utc(dt.strptime(adt, '%Y-%m-%d'))
-                                c_is_can = True if dt.utcnow() >= adt else False
+                        date = fjson.get('accessdate')
+                        if date:
+                            date = to_utc(dt.strptime(date, '%Y-%m-%d'))
+                            c_is_can = True if dt.utcnow() >= date else False
                         # publish date
                         p_is_can = True
                         idt = record.get('publish_date')
@@ -226,12 +224,7 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
                     is_can = True
                 else:
                     # ログインユーザーか
-                    is_login_user = False
-                    users = current_app.config['WEKO_PERMISSION_ROLE_USER']
-                    for lst in list(current_user.roles or []):
-                        if lst.name in users:
-                            is_login_user = True
-                            break
+                    is_login_user = current_user.is_authenticated
 
                     # rolesで指定されたユーザーロールか
                     is_role_can = False
@@ -248,9 +241,8 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
                                         is_role_can = True
                                         break
                         # ログインユーザーに権限なしの場合でも、コンテンツで「非ログインユーザー」指定した場合OK
-                        if len(list(current_user.roles))==0:
-                            if 'none_loggin' in [ role.get('role') for role in roles ]:
-                                is_role_can = True
+                        if 'none_loggin' in [ role.get('role') for role in roles ]:
+                            is_role_can = True
                     else:
                         is_role_can = True
 

@@ -14,6 +14,7 @@ from invenio_records.models import RecordMetadata
 
 from weko_records.models import ItemMetadata, ItemType, ItemTypeProperty
 import weko_schema_ui
+from weko_admin.models import AdminSettings
 
 
 def update_item_type_property(restricted_item_type_id):
@@ -133,13 +134,19 @@ def update_item_metadata():
 
     def _format_json(record_json):
         """get new format of json"""
+        owner_id = int(record_json.pop('owner', -1))
         shared_user_id = record_json.pop('shared_user_id', -1)
+
+        if owner_id:
+            record_json['owner'] = owner_id
+
         if not shared_user_id or shared_user_id < 1:
             record_json['shared_user_ids'] = []
             record_json['weko_shared_ids'] = []
         else:
             record_json['shared_user_ids'] = [shared_user_id]
             record_json['weko_shared_ids'] = [shared_user_id]
+
         return record_json
 
     records = ItemMetadata.query.all()
@@ -156,7 +163,15 @@ def update_records_metadata():
 
     def _format_json(record_json):
         """get new format of json"""
+        owner_id = int(record_json.pop('owner', -1))
         shared_user_id = record_json.pop('weko_shared_id', -1)
+
+        if owner_id > 0:
+            record_json['owner'] = owner_id
+            record_json['owners'] = [owner_id]
+            record_json['_deposit']['owner'] = owner_id
+            record_json['_deposit']['owners'] = [owner_id]
+        
         if not shared_user_id or shared_user_id < 1:
             record_json['weko_shared_ids'] = []
             record_json['_deposit']['weko_shared_ids'] = []
@@ -172,6 +187,15 @@ def update_records_metadata():
         record.json = _format_json(dict(record.json))
 
     current_app.logger.info('update record_metadata records success')
+
+def update_admin_settings():
+    """update admin_settings for secret_URL_download """
+    restricted_access = AdminSettings.get('restricted_access', False)
+    restricted_access['secret_URL_file_download'] = {"secret_download_limit": 10,
+                                                     "secret_expiration_date": 30,
+                                                     "secret_download_limit_unlimited_chk": False,
+                                                     "secret_expiration_date_unlimited_chk": False}
+    AdminSettings.update('restricted_access', restricted_access)
 
 def elasticsearch_reindex( is_db_to_es ):
     """ 
@@ -424,6 +448,7 @@ if __name__ == '__main__':
                 update_item_metadata()
                 update_records_metadata()
             db.session.commit()
+            update_admin_settings()
             current_app.logger.info('restricted records update end')
             current_app.logger.info('ElasticSearch data update start')
             elasticsearch_reindex(True)

@@ -3,14 +3,15 @@ CREATE TABLE public.mail_template_genres (
 	name varchar(255) NOT NULL,
 	CONSTRAINT pk_mail_template_genres PRIMARY KEY (id)
 );
-ALTER TABLE public.mail_templates ADD genre_id int NOT NULL DEFAULT 3;
-ALTER TABLE public.mail_templates ADD CONSTRAINT mail_templates_fk FOREIGN KEY (genre_id) REFERENCES public.mail_template_genres(id) ON DELETE RESTRICT ON UPDATE CASCADE;
 INSERT INTO public.mail_template_genres
 	(id, name)
 	VALUES
 		(1, 'Notification of secret URL provision'),
 		(2, 'Guidance to the application form'),
 		(3, 'Others');
+ALTER TABLE public.mail_templates ADD genre_id int NOT NULL DEFAULT 3;
+ALTER TABLE public.mail_templates ADD CONSTRAINT mail_templates_fk FOREIGN KEY (genre_id) REFERENCES public.mail_template_genres(id) ON DELETE RESTRICT ON UPDATE CASCADE;
+
 INSERT INTO public.mail_templates
 	(mail_subject, mail_body, default_mail, genre_id)
 	VALUES('シークレットURL提供のお知らせ／Notice of providing secret URL','[restricted_university_institution]
