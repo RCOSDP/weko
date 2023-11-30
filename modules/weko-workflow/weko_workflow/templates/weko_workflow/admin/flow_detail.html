@@ -273,40 +273,11 @@
 
         {% if use_restricted_item %}
         <div class="mail_setting_for_approval">
-          <div class="form-inline">
-            <label style="font-weight: unset;">
-              <input type="checkbox" class="pointer checkbox_change" id="td_action_request_approval_apply_action.id">
-              {{_('Approval Request Notification Email')}}</label>
-            </label>
-          </div>
-          <select style="width: 200px" id="td_action_request_approval_mail_apply_action.id" disabled>
-            <option value="0" selected></option>
-            {%- for mail_template in mail_templates %}
-              <option value="{{mail_template['key']}}">{{mail_template['content']['subject']}}</option>
-            {%- endfor %}
-          </select>
-          <div class="form-inline">
-            <label style="font-weight: unset;">
-              <input type="checkbox" class="pointer checkbox_change" id="td_action_approval_reject_apply_action.id">
-              {{_('Approval Rejection Notification Email')}}</label>
-            </label>
-          </div>
-          <select style="width: 200px" id="td_action_approval_reject_mail_apply_action.id" disabled>
-            <option value="0" selected></option>
-            {%- for mail_template in mail_templates %}
-              <option value="{{mail_template['key']}}">{{mail_template['content']['subject']}}</option>
-            {%- endfor %}
-          </select>
-          <div class="form-inline">
-            <label style="font-weight: unset;">
-              <input type="checkbox" class="pointer checkbox_change" id="td_action_approval_done_apply_action.id">
-              {{_('Approval Notification Email')}}</label>
-            </label>
-
+          <button class="btn btn-primary ten-pixel-top-margin pull-right btn_setting_nortification_mail" id="btn_setting_nortification_mail_loop.index" data-old-action-order="loop.index">
+            {{_('Notification Email Setting')}}
+          </button>
+        </div>
       </div>
-      <button class="btn btn-primary ten-pixel-top-margin pull-right btn_setting_nortification_mail" id="btn_setting_nortification_mail_loop.index" data-old-action-order="loop.index">
-        {{_('Notification Email Setting')}}
-      </button>
       <!-- /.modal -->
       <div class="modal fade modal_for_setting_nortification_mail" id="settingModal_loop.index" tabindex="-1" role="dialog" aria-labelledby="setting_nortification_mail_Label">
         <div class="modal-dialog" role="document">

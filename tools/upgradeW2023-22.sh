@@ -26,7 +26,8 @@ docker cp "postgresql/ddl/W2023-22 mail_template_genre.sql" $(docker-compose ps 
 docker-compose exec postgresql psql -U invenio -d invenio -f "/tmp/W2023-22 mail_template_genre.sql"
 
 # Start web container
-docker-compose up web -d
+docker-compose down
+docker-compose up -d
 
 # Update json records
 docker-compose exec web invenio shell tools/updateRestrictedRecords.py $RESTRICTED_ITEM_PROPERTY_ID
@@ -35,4 +36,5 @@ docker-compose exec web invenio shell tools/updateRestrictedRecords.py $RESTRICT
 docker-compose exec web invenio collect -v
 docker-compose exec web invenio assets build
 docker-compose exec web bash -c "jinja2 /code/scripts/instance.cfg > /home/invenio/.virtualenvs/invenio/var/instance/invenio.cfg"
-docker-compose restart web
+docker-compose down
+docker-compose up -d
