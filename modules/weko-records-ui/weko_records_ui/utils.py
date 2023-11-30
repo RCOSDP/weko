@@ -45,12 +45,14 @@ from lxml import etree
 from passlib.handlers.oracle import oracle10
 from weko_admin.models import AdminSettings
 from weko_admin.utils import UsageReport, get_restricted_access
-from weko_deposit.api import WekoDeposit
-from weko_records.api import FeedbackMailList, ItemTypes, Mapping
+from weko_deposit.api import WekoDeposit, WekoRecord
+from weko_records.api import FeedbackMailList
 from weko_records.serializers.utils import get_mapping
 from weko_records.utils import replace_fqdn
+from weko_records.models import ItemReference
 from weko_schema_ui.models import PublishStatus
-from weko_workflow.api import WorkActivity, WorkFlow
+from weko_workflow.api import WorkActivity, WorkFlow, UpdateItem
+from weko_workflow.models import ActivityStatusPolicy
 
 from weko_records_ui.models import InstitutionName
 
@@ -220,6 +222,174 @@ def is_billing_item(item_type_id):
                     properties[meta_key]['items']['properties']:
                 return True
         return False
+
+
+def is_workflow_activity_work(item_id):
+    is_work = True
+    workflow = WorkActivity()
+    acitvity = workflow.get_workflow_activity_by_item_id(item_id)
+    if not acitvity or acitvity.activity_status in [
+            ActivityStatusPolicy.ACTIVITY_FINALLY,
+            ActivityStatusPolicy.ACTIVITY_CANCEL]:
+        is_work = False
+    return is_work
+
+
+def get_latest_version(id_without_version):
+    """Get latest version ID to store item of before updating."""
+    version_id = 1
+    pid_value = "{}.%".format(id_without_version)
+    pid = PersistentIdentifier.query\
+        .filter_by(pid_type='recid', status=PIDStatus.REGISTERED)\
+        .filter(PersistentIdentifier.pid_value.like(pid_value)).all()
+    if pid:
+        for idx in pid:
+            rec = RecordMetadata.query.filter_by(
+                id=idx.object_uuid).first()
+            if rec and rec.json and \
+                    rec.json.get('_deposit', {}).get('status') == 'published':
+                temp_ver = int(idx.pid_value.split('.')[-1])
+                version_id = temp_ver if temp_ver > version_id else version_id
+    return "{}.{}".format(id_without_version, version_id)
+
+
+def delete_version(recid):
+    """Soft delete item version."""
+
+    # get user id
+    if current_user:
+        current_user_id = current_user.get_id()
+    else:
+        current_user_id = '1'
+
+    # check item version is exists
+    pid = PersistentIdentifier.query.filter_by(
+        pid_type='recid', pid_value=recid).first()
+    if not pid:
+        pid = PersistentIdentifier.query.filter_by(
+            pid_type='recid', object_uuid=recid).first()
+    if pid.status == PIDStatus.DELETED:
+        return
+
+    id_without_version = recid.split('.')[0]
+    latest_version = get_latest_version(id_without_version)
+    is_latest_version = recid == latest_version
+
+    # delete item version
+    del_files = {}
+    del_bucket = []
+    depid = PersistentIdentifier.query.filter_by(
+            pid_type='depid', object_uuid=pid.object_uuid).first()
+    if depid:
+        rec = RecordMetadata.query.filter_by(
+                id=pid.object_uuid).first()
+        dep = WekoDeposit(rec.json, rec)
+        dep['publish_status'] = PublishStatus.DELETE.value
+        dep.indexer.update_es_data(dep, update_revision=False, field='publish_status')
+        FeedbackMailList.delete(pid.object_uuid)
+        dep.remove_feedback_mail()
+        for f in dep.files:
+            if f.bucket not in del_bucket:
+                del_bucket.append(f.bucket)
+            if f.file.uri not in del_files:
+                del_files[f.file.uri] = {
+                    'storage': f.file.storage(),
+                    'bucket': f.bucket,
+                    'size': f.file.size
+                }
+        dep.commit()
+        pids = PersistentIdentifier.query.filter_by(
+            object_uuid=pid.object_uuid)
+        for p in pids:
+            p.status = PIDStatus.DELETED
+    # delete file if only in the version
+    versioning = PIDVersioning(child=pid)
+    if versioning.exists:
+        all_ver = versioning.children.all()
+        for ver in all_ver:
+            if '.' not in ver.pid_value and is_latest_version:
+                continue
+            if ver.object_uuid != pid.object_uuid:
+                depid = PersistentIdentifier.query.filter_by(
+                        pid_type='depid', object_uuid=ver.object_uuid).first()
+                if depid:
+                    rec = RecordMetadata.query.filter_by(
+                            id=ver.object_uuid).first()
+                    dep = WekoDeposit(rec.json, rec)
+                    for f in dep.files:
+                        if f.file.uri in del_files:
+                            del_files.pop(f.file.uri)
+    for v in del_files.values():
+        v.get('storage').delete()
+        bucket = v.get('bucket')
+        bucket.location.size -= v.get('size')
+    for b in del_bucket:
+        b.deleted = True
+
+    updated_item = UpdateItem()
+    latest_version = get_latest_version(id_without_version)
+    latest_pid = PersistentIdentifier.query.filter_by(
+        pid_type='recid', pid_value=latest_version).first()
+    # update parent item
+    if is_latest_version:
+        pid_without_ver = PersistentIdentifier.query.filter_by(
+            pid_type='recid', pid_value=id_without_version).first()
+        parent_record = WekoDeposit.get_record(
+            pid_without_ver.object_uuid)
+        parent_deposit = WekoDeposit(parent_record, parent_record.model)
+
+        new_parent_record = parent_deposit. \
+            merge_data_to_record_without_version(latest_pid)
+        feedback_mail_list = FeedbackMailList.get_mail_list_by_item_id(
+                latest_pid.object_uuid)
+        if feedback_mail_list:
+            FeedbackMailList.update(
+                item_id=pid_without_ver.object_uuid,
+                feedback_maillist=feedback_mail_list
+            )
+        parent_deposit["relation_version_is_last"] = True
+        parent_deposit.publish()
+        new_parent_record.update_feedback_mail()
+        new_parent_record.commit()
+        updated_item.publish(new_parent_record)
+        weko_record = WekoRecord.get_record_by_pid(
+            pid_without_ver.pid_value)
+        if weko_record:
+            weko_record.update_item_link(latest_pid.pid_value)
+    # update draft item
+    draft_pid = PersistentIdentifier.get(
+        'recid',
+        '{}.0'.format(id_without_version)
+    )
+    if not is_workflow_activity_work(draft_pid.object_uuid):
+        draft_deposit = WekoDeposit.get_record(
+            draft_pid.object_uuid)
+        new_draft_record = draft_deposit. \
+            merge_data_to_record_without_version(latest_pid)
+        feedback_mail_list = FeedbackMailList.get_mail_list_by_item_id(
+                latest_pid.object_uuid)
+        if feedback_mail_list:
+            FeedbackMailList.update(
+                item_id=draft_pid.object_uuid,
+                feedback_maillist=feedback_mail_list
+            )
+        draft_deposit["relation_version_is_last"] = True
+        draft_deposit.publish()
+        new_draft_record.update_feedback_mail()
+        new_draft_record.commit()
+        updated_item.publish(new_draft_record)
+        # update item link info of draft record
+        weko_record = WekoRecord.get_record_by_pid(
+            draft_deposit.pid.pid_value)
+        if weko_record:
+            weko_record.update_item_link(latest_pid.pid_value)
+    # delete item link
+    db.session.query(ItemReference).filter(
+        ItemReference.src_item_pid == recid
+    ).delete(synchronize_session='fetch')
+
+    current_app.logger.info(
+        'user({0}) deleted record version({1}).'.format(current_user_id, recid))
 
 
 def soft_delete(recid):
