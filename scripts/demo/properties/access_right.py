@@ -70,6 +70,7 @@ def schema(title="", multi_flag=multiple_flag):
         _d = {
             "system_prop": True,
             "type": "object",
+            "title": "アクセス権",
             "properties": {
                 "subitem_access_right": {
                     "type": ["null", "string"],

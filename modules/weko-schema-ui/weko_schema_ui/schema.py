@@ -1038,6 +1038,7 @@ class SchemaTree:
                     else:
                         from weko_records.models import ItemType
                         item_type = ItemType.query.filter_by(id=self._item_type_id).one_or_none()
+                        current_app.logger.error(item_type.schema["properties"][key_item_parent])
                         atr_name = item_type.schema["properties"][key_item_parent]["title"]
                         vlst_child = get_mapping_value(mpdic, {},
                                                            key_item_parent,

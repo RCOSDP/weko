@@ -37,6 +37,7 @@ def schema(title="", multi_flag=multiple_flag):
         """Schema text."""
         _d = {
             "type": "object",
+            "title": "巻",
             "properties": {
                 "subitem_volume": {
                     "format": "text",

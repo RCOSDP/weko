@@ -54,6 +54,7 @@ def schema(title="", multi_flag=multiple_flag):
         _d = {
             "system_prop": True,
             "type": "object",
+            "title": "出版タイプ",
             "properties": {
                 "subitem_version_type": {
                     "type": ["null", "string"],

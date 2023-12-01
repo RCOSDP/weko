@@ -36,6 +36,7 @@ def schema(title="", multi_flag=multiple_flag):
     def _schema():
         _d = {
             "type": "object",
+            "title": "ページ数",
             "properties": {
                 "subitem_number_of_pages": {
                     "format": "text",
