@@ -37,6 +37,7 @@ def schema(title="", multi_flag=multiple_flag):
         """Schema text."""
         _d = {
             "type": "object",
+            "title": "学位授与年月日",
             "properties": {
                 "subitem_dategranted": {
                     "format": "datetime",

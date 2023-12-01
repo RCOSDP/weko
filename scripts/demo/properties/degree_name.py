@@ -52,6 +52,7 @@ def schema(title="", multi_flag=multiple_flag):
         """Schema text."""
         _d = {
             "type": "object",
+            "title": "学位名",
             "properties": {
                 "subitem_degreename": {
                     "format": "text",

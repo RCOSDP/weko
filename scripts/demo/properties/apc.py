@@ -51,6 +51,7 @@ def schema(title="", multi_flag=multiple_flag):
         """Schema text."""
         _d = {
             "type": "object",
+            "title": "APC",
             "properties": {
                 "subitem_apc": {
                     "title": "APC",

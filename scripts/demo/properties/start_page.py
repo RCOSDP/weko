@@ -42,6 +42,7 @@ def schema(title="", multi_flag=multiple_flag):
         """Schema text."""
         _d = {
             "type": "object",
+            "title": "開始ページ",
             "properties": {
                 "subitem_start_page": {
                     "format": "text",

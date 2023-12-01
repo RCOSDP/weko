@@ -37,6 +37,7 @@ def schema(title="", multi_flag=multiple_flag):
         """Schema text."""
         _d = {
             "type": "object",
+            "title": "バージョン情報",
             "properties": {
                 "subitem_version": {
                     "format": "text",
