@@ -435,7 +435,7 @@ def file_download_onetime(pid, record,file_name=None, user_mail=None,login_flag=
         # Parse token
         if not mailaddress:
             onetime_file_url = request.url
-            url=url_for(endpoint="invenio_records_ui.recid", onetime_file_url= onetime_file_url, pid_value = pid.pid_value, q="mailcheckflag")
+            url=url_for(endpoint="invenio_records_ui.recid", onetime_file_url= onetime_file_url, pid_value = pid.pid_value, v="mailcheckflag")
             return redirect(url)
         error, token_data = \
             parse_one_time_download_token(token)
