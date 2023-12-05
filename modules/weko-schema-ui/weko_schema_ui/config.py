@@ -120,6 +120,10 @@ WEKO_SCHEMA_JPCOAR_V1_RESOURCE_TYPE_REPLACE = {
     'research protocol': 'other',
     'source code':'software',
     'transcription': 'other',
+    'periodical':'journal',
+    'interview':'other',
+    'internal report':'other',
+    'report part':'other',
 }
 """Resource type replace list for jpcoar v1.0"""
 
