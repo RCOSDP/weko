@@ -247,7 +247,7 @@ class Flow(object):
                             'user_deny') if '0' != action.get(
                                 'user') else False
                     )
-                elif int(action.get('user')) == current_app.config.get("WEKO_WORKFLOW_ITEM_REGISTRANT_ID"):
+                elif action.get('user') == str(current_app.config.get("WEKO_WORKFLOW_ITEM_REGISTRANT_ID")):
                     flowactionrole = _FlowActionRole(
                         flow_action_id=flowaction.id,
                         action_role=action.get(
@@ -261,6 +261,22 @@ class Flow(object):
                             'user_deny') if '0' != action.get(
                                 'user') else False,
                         action_item_registrant = True if '0' != action.get(
+                                'user') else False
+                    )
+                elif action.get('user') == str(current_app.config.get("WEKO_WORKFLOW_REQUEST_MAIL_ID")):
+                    flowactionrole = _FlowActionRole(
+                        flow_action_id=flowaction.id,
+                        action_role=action.get(
+                            'role') if '0' != action.get('role') else None,
+                        action_role_exclude=action.get(
+                            'role_deny') if '0' != action.get(
+                            'role') else False,
+                        action_user= None,
+                        specify_property=None,
+                        action_user_exclude=action.get(
+                            'user_deny') if '0' != action.get(
+                                'user') else False,
+                        action_request_mail = True if '0' != action.get(
                                 'user') else False
                     )
                 else:
@@ -278,7 +294,8 @@ class Flow(object):
                             'user_deny') if '0' != action.get('user') else False
                     )
                 if flowactionrole.action_role or flowactionrole.action_user or \
-                        flowactionrole.specify_property or flowactionrole.action_item_registrant:
+                        flowactionrole.specify_property or flowactionrole.action_item_registrant or \
+                        flowactionrole.action_request_mail:
                     db.session.add(flowactionrole)
         db.session.commit()
 
