@@ -2928,7 +2928,6 @@ def init_activity_for_guest_user(
         GuestActivity.create(**guest_activity)
         record_uuid = PersistentIdentifier.get("recid", record_id).get_assigned_object()
         mail_list = RequestMailList.get_mail_list_by_item_id(item_id=record_uuid)
-        print(record_uuid, mail_list)
         if mail_list:
             action_id = current_app.config.get(
                 "WEKO_WORKFLOW_ITEM_REGISTRATION_ACTION_ID", 3)

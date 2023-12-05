@@ -1475,8 +1475,6 @@ def next_action(activity_id='0', action_id=0):
                                                  current_flow_action.action_order)
                 handler_role = db.session.query(Role).join(userrole).filter_by(user_id=handler).all()
                 is_approver = True
-                print(roles)
-                print(handler_role)
                 for role in handler_role:
                     if roles['deny'] and role.id in roles['deny']:
                         is_approver = False
