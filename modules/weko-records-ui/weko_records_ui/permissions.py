@@ -249,6 +249,7 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
                         # ログインユーザーに権限なしの場合でも、コンテンツで「非ログインユーザー」指定した場合OK
                         # if 'none_loggin' in [ role.get('role') for role in roles ]:
                         #     is_role_can = True
+
                     else:
                         is_role_can = True
 
