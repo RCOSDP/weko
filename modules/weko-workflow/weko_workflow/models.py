@@ -615,6 +615,11 @@ class FlowActionRole(db.Model, TimestampMixin):
         nullable=False, default=False, server_default='0')
     """If set to True, item_registrant allow action"""
 
+    action_request_mail = db.Column(
+        db.Boolean(name='request_mail'),
+        nullable=False, default=False, server_default='0')
+    """If set to True, item_request mail allow action"""
+
 
 class WorkFlow(db.Model, TimestampMixin):
     """Define WorkFlow."""
@@ -1040,6 +1045,57 @@ class ActionFeedbackMail(db.Model, TimestampMixin):
     )
     """Action journal info."""
 
+class ActionRequestMail(db.Model, TimestampMixin):
+    """Define action identifier info."""
+
+    __tablename__ = 'workflow_action_request_mail'
+
+    id = db.Column(
+        db.Integer(),
+        nullable=False,
+        primary_key=True,
+        autoincrement=True
+    )
+    """ActionRequestMail identifier."""
+
+    activity_id = db.Column(
+        db.String(24),
+        nullable=False,
+        unique=False,
+        index=True
+    )
+    """Activity id of Activity Action."""
+
+    action_id = db.Column(
+        db.Integer(),
+        db.ForeignKey(Action.id),
+        nullable=True,
+        unique=False
+    )
+    """Action id."""
+
+    is_request_mail_enabled = db.Column(
+        db.Boolean(name='is_request_mail_enabled'),
+        nullable=False, 
+        default=False, 
+        server_default='0')
+    """If set to True, enable request mail """
+
+    request_maillist = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=True
+    )
+    """Action journal info."""
 
 class WorkflowRole(db.Model, TimestampMixin):
     """Define action identifier info."""
