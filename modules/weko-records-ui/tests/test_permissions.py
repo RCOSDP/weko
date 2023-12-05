@@ -84,7 +84,7 @@ def test_check_file_download_permission(app, records, users):#, db_file_permissi
 
     with patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
         assert check_file_download_permission(record, fjson, True) == True
-    
+
     with patch("flask_login.utils._get_user", return_value=users[7]["obj"]):
         assert check_file_download_permission(record, fjson, True) == True
 
@@ -106,7 +106,18 @@ def test_check_file_download_permission(app, records, users):#, db_file_permissi
             with patch("weko_records_ui.permissions.to_utc", return_value=tomorrow):
                 assert check_file_download_permission(record, fjson, False) == False
 
+            tomorrow = datetime.utcnow() + timedelta(days = 1)
+            with patch("weko_records_ui.permissions.to_utc", return_value=tomorrow):
+                fjson['accessrole'] = 'open_date'
+                fjson['roles'] = [{'role':'none_loggin'},{'role':'1'},{'role':'2'},{'role':'3'},{'role':'4'},{'role':'5'}]
+                assert check_file_download_permission(record, fjson, False) == False
+
             fjson['date'][0]['dateValue'] = ""
+            assert check_file_download_permission(record, fjson, False) == True
+
+            fjson['accessrole'] = 'open_date'
+            record['publish_date'] = "2022-01-01"
+            fjson['roles'] = [{'role':'none_loggin'},{'role':'1'},{'role':'2'},{'role':'3'},{'role':'4'},{'role':'5'}]
             assert check_file_download_permission(record, fjson, False) == True
                  
             fjson['date'][0]['dateValue'] = "2022-01-01"
@@ -131,8 +142,6 @@ def test_check_file_download_permission(app, records, users):#, db_file_permissi
 
             fjson['accessrole'] = 'open_restricted'
             assert check_file_download_permission(record, fjson, True) == False
-
-    
 
     record = results[2]["record"]
     fjson = {'url': {'url': 'https://weko3.example.org/record/11/files/001.jpg'}, 

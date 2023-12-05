@@ -504,6 +504,7 @@ def users(app, db):
         },
         {"email": user.email, "id": user.id, "obj": user},
     ]
+
     db.session.expunge_all()
 
 
