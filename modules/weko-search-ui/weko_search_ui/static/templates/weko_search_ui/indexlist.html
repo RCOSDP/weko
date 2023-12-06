@@ -54,7 +54,7 @@
               <p>{{journal_info.publisher_name}}</p>
               <p>{{journal_info.language}}</p>
               <p>{{journal_info.online_identifier}}</p>
-              <p ng-bind-html="display_comment(vm.invenioSearchResults.aggregations.path.buckets[0][0].comment) | sanitize"></p>
+              <p ng-bind-html="display_comment(vm.invenioSearchResults.aggregations.path.buckets[0][0].comment) | sanitize" style="width: 100%; word-wrap: break-word;"></p>
               <p style="margin: 20px 0;">URL: <a
                   href="{{journal_info.openSearchUrl}}">{{journal_info.openSearchUrl}}</a></p>
             </div>
@@ -119,7 +119,7 @@
             </div>
           </a>
           <div style="padding-left: 14px">
-                <span ng-bind-html="display_comment(index_path.comment) | sanitize"></span>
+            <p ng-bind-html="display_comment(vm.invenioSearchResults.aggregations.path.buckets[0][0].comment) | sanitize" style="width: 100%; word-wrap: break-word;"></p>
           </div>
           <span ng-if="index_path.rss_status" style="position: absolute;top: 9px;right: 15px;">
             <a ng-href="/api/rss.xml?index_id={{ index_path.key.split('/').pop() }}&page=1&count=20&term=14&lang=en"
@@ -131,18 +131,22 @@
       </ul>
     </div>
     <div ng-if="typeIndexList() != 'root'">
-    <div id="index_tree_img" ng-if="vm.invenioSearchResults.aggregations.path.buckets[0][0].hasOwnProperty('img') || (vm.invenioSearchResults.aggregations.path.buckets[0][0].display_format == 1 && !journal_info) || vm.invenioSearchResults.aggregations.path.buckets[0][0].display_format == 2" style="display: flex">
-      <img ng-if="vm.invenioSearchResults.aggregations.path.buckets[0][0].hasOwnProperty('img')" ng-src="{{vm.invenioSearchResults.aggregations.path.buckets[0][0].img}}"
-        class="img-thumbnail ng-hide" id="thumbnail_img" style="max-width: 512px;" 
-        alt={{vm.invenioSearchResults.aggregations.path.buckets[0][0].name.split('-/-')[$index]}}
-        ng-repeat="index_path in vm.invenioSearchResults.aggregations.path.buckets[0][0].key.split('/') track by $index">
-      <span ng-if="(vm.invenioSearchResults.aggregations.path.buckets[0][0].display_format == 1 && !journal_info) || 
-      vm.invenioSearchResults.aggregations.path.buckets[0][0].display_format == 2" style="padding: 0 10px">
-        <p ng-bind-html="display_comment(vm.invenioSearchResults.aggregations.path.buckets[0][0].comment) | sanitize"></p>
-      </span>
+      <div id="index_tree_img" ng-if="vm.invenioSearchResults.aggregations.path.buckets[0][0].hasOwnProperty('img') || (vm.invenioSearchResults.aggregations.path.buckets[0][0].display_format == 1 && !journal_info) || vm.invenioSearchResults.aggregations.path.buckets[0][0].display_format == 2" style="display: flex">
+        <div class="col-xs-4">
+          <img ng-if="vm.invenioSearchResults.aggregations.path.buckets[0][0].hasOwnProperty('img')" ng-src="{{vm.invenioSearchResults.aggregations.path.buckets[0][0].img}}"
+            class="img-thumbnail ng-hide" id="thumbnail_img" style="max-width: 100%;" 
+            alt={{vm.invenioSearchResults.aggregations.path.buckets[0][0].name.split('-/-')[$index]}}
+            ng-repeat="index_path in vm.invenioSearchResults.aggregations.path.buckets[0][0].key.split('/') track by $index">
+        </div>
+        <div class="col-xs-6">
+          <span ng-if="(vm.invenioSearchResults.aggregations.path.buckets[0][0].display_format == 1 && !journal_info) || 
+          vm.invenioSearchResults.aggregations.path.buckets[0][0].display_format == 2" style="padding: 0 10px">
+            <p ng-bind-html="display_comment(vm.invenioSearchResults.aggregations.path.buckets[0][0].comment) | sanitize" style="width: 100%; word-wrap: break-word;"></p>
+          </span>
+        </div>
+      </div>
     </div>
   </div>
-</div>
 </div>
 <input type="hidden" ng-value="vm.invenioSearchResults.aggregations.path.buckets[0].length" id="index_list_length">
 <input type="hidden" ng-value="vm.invenioSearchResults.aggregations.path.buckets[0][0].display_format"
