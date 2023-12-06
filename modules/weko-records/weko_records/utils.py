@@ -45,7 +45,7 @@ from .api import ItemTypes, Mapping
 from .config import COPY_NEW_FIELD, WEKO_TEST_FIELD
 
 
-def json_loader(data, pid, owner_id=None):
+def json_loader(data, pid, owner_id=None, with_deleted=False):
     """Convert the item data and mapping to jpcoar.
 
     :param data: json from item form post.
@@ -105,8 +105,9 @@ def json_loader(data, pid, owner_id=None):
     )
 
     # get item type mappings
-    ojson = ItemTypes.get_record(item_type_id)
-    mjson = Mapping.get_record(item_type_id)
+    ojson = ItemTypes.get_record(item_type_id, with_deleted=with_deleted)
+    mjson = Mapping.get_record(item_type_id, with_deleted=with_deleted)
+
 
     if not (ojson and mjson):
         raise RuntimeError("Item Type {} does not exist.".format(item_type_id))
