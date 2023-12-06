@@ -323,7 +323,7 @@ def itemtypes(db):
         db.session.add(item_type_name2)
         db.session.add(item_type2)
         db.session.add(item_type_mapping2)
-    itemtype_name15 = ItemTypeName(name='テストアイテムタイプ3',
+    itemtype_name15 = ItemTypeName(id=3,name='テストアイテムタイプ3',
                                   has_site_license=True,
                                   is_active=True)
     with db.session.begin_nested():

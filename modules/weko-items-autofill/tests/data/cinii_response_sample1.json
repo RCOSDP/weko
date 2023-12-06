@@ -1,0 +1,284 @@
+{
+  "response": {
+    "@context": {
+      "@vocab": "https://cir.nii.ac.jp/schema/1.0/",
+      "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+      "dc": "http://purl.org/dc/elements/1.1/",
+      "dcterms": "http://purl.org/dc/terms/",
+      "foaf": "http://xmlns.com/foaf/0.1/",
+      "prism": "http://prismstandard.org/namespaces/basic/2.0/",
+      "cinii": "http://ci.nii.ac.jp/ns/1.0/",
+      "datacite": "https://schema.datacite.org/meta/kernel-4/",
+      "ndl": "http://ndl.go.jp/dcndl/terms/",
+      "jpcoar": "https://github.com/JPCOAR/schema/blob/master/2.0/"
+    },
+    "@id": "https://cir.nii.ac.jp/crid/1234567890123456789.json",
+    "@type": "Article",
+    "productIdentifier": [
+      {
+        "identifier": {
+          "@type": "DOI",
+          "@value": "10.12334/jkg.12.11_222"
+        }
+      },
+      {
+        "identifier": {
+          "@type": "NDL_BIB_ID",
+          "@value": "098765432"
+        }
+      },
+      {
+        "identifier": {
+          "@type": "NAID",
+          "@value": "001122334455"
+        }
+      }
+    ],
+    "dc:title": [
+      {
+        "@language": "ja",
+        "@value": "テストタイトル"
+      },
+      {
+        "@language": "en",
+        "@value": "test title"
+      },
+      {
+        "@value": "テストのタイトル"
+      }
+    ],
+    "dcterms:alternative":[
+      {
+        "@language": "en",
+        "@value": "other title"
+      },
+      {
+        "@value":"別タイトル"
+      }
+    ],
+    "dc:language": "ja",
+    "description":[
+      {
+        "notation": [
+          {
+            "@language": "en",
+            "@value": "this is test abstract."
+          },
+          {
+            "@language": "ja",
+            "@value": "これはテストの抄録です。"
+          }
+        ],
+        "abstractLicenseFlag": "allow"
+      },
+      {
+        "type": "Other",
+        "notation": [
+          {
+            "@language": "en",
+            "@value":"this is other abstract."
+          },
+          {
+            "@value": "これはその他の抄録です。"
+          }
+        ]
+      },
+      {
+        "type":"Other"
+      }
+    ],
+    "creator":[
+      {
+        "@id": "https://cir.nii.ac.jp/crid/1234567890123456789",
+        "@type": "Researcher",
+        "personIdentifier": [
+          {
+            "@type": "NRID",
+            "@value": "1098765432101"
+          }
+        ],
+        "foaf:name": [
+          {
+            "@language": "ja",
+            "@value": "テスト 太郎"
+          },
+          {
+            "@language": "en",
+            "@value": "TEST Taro"
+          }
+        ],
+        "jpcoar:affiliationName": [
+          {
+            "@language": "en",
+            "@value": "test affiliation"
+          },
+          {
+            "@language": "ja",
+            "@value": "テスト機関"
+          }
+        ]
+      },
+      {
+        "@id": "https://cir.nii.ac.jp/crid/7890654321123456789",
+        "@type": "Researcher",
+        "personIdentifier": [
+          {
+            "@type": "NRID",
+            "@value": "1012345678910"
+          }
+        ],
+        "foaf:name": [
+          {
+            "@language": "ja",
+            "@value": "テスト 三郎"
+          },
+          {
+            "@language": "en",
+            "@value": "TEST Saburo"
+          }
+        ],
+        "jpcoar:affiliationName": [
+          {
+            "@language": "en",
+            "@value": "test affiliation"
+          },
+          {
+            "@language": "ja",
+            "@value": "テスト機関"
+          }
+        ]
+      },
+      {
+        "@id": "https://cir.nii.ac.jp/crid/7890654321123456788",
+        "@type": "Researcher",
+        "personIdentifier": [
+          {
+            "@type": "NRID",
+            "@value": "1012345678911"
+          }
+        ],
+        "jpcoar:affiliationName": [
+          {
+            "@language": "en",
+            "@value": "test affiliation"
+          },
+          {
+            "@language": "ja",
+            "@value": "テスト機関"
+          }
+        ]
+      }
+    ],
+    "contributor":[
+      {
+        "@id": "https://cir.nii.ac.jp/crid/0987654321987654321",
+        "@type": "Researcher",
+        "foaf:name": [
+          {
+            "@language": "ja",
+            "@value": "テスト 次郎"
+          },
+          {
+            "@language": "en",
+            "@value": "TEST Ziro"
+          }
+        ],
+        "jpcoar:affiliationName": [
+          {
+            "@language": "en",
+            "@value": "test affiliation"
+          },
+          {
+            "@language": "ja",
+            "@value": "テスト機関"
+          }
+        ]
+      },
+      {
+        "@id": "https://cir.nii.ac.jp/crid/0987654321987654322",
+        "@type": "Researcher",
+        "foaf:name": [
+          {
+            "@language": "ja",
+            "@value": "テスト 花子"
+          },
+          {
+            "@language": "en",
+            "@value": "TEST Hanako"
+          }
+        ],
+        "jpcoar:affiliationName": [
+          {
+            "@language": "en",
+            "@value": "test affiliation"
+          },
+          {
+            "@language": "ja",
+            "@value": "テスト機関"
+          }
+        ]
+      },
+      {
+        "@id": "https://cir.nii.ac.jp/crid/0987654321987654323",
+        "@type": "Researcher",
+        "jpcoar:affiliationName": [
+          {
+            "@language": "en",
+            "@value": "test affiliation"
+          },
+          {
+            "@language": "ja",
+            "@value": "テスト機関"
+          }
+        ]
+      }
+    ],
+    "publication":{
+      "publicationIdentifier": [
+        {
+          "@type": "ISSN",
+          "@value": "87654321"
+        },
+        {
+          "@type": "NCID",
+          "@value": "AN34567890"
+        }
+      ],
+      "prism:publicationName": [
+        {
+          "@language": "ja",
+          "@value": "テスト雑誌"
+        },
+        {
+          "@language": "en",
+          "@value": "test journal"
+        }
+      ],
+      "dc:publisher": [
+        {
+          "@language": "en",
+          "@value": "test publisher"
+        },
+        {
+          "@language": "ja",
+          "@value": "テスト公開"
+        }
+      ],
+      "prism:publicationDate": "2012-11-02",
+      "prism:volume": "62",
+      "prism:number": "11",
+      "prism:startingPage": "473",
+      "prism:endingPage": "477"
+    },
+    "foaf:topic": [
+      {
+        "@id": "https://cir.nii.ac.jp/all?q=%E3%82%B7%E3%82%B9%E3%83%86%E3%83%A0%E3%83%87%E3%82%B6%E3%82%A4%E3%83%B3",
+        "dc:title": "システムデザイン"
+      },
+      {
+        "@id": "https://cir.nii.ac.jp/all?q=%E6%A4%9C%E7%B4%A2%E3%82%A8%E3%83%B3%E3%82%B8%E3%83%B3",
+        "dc:title": "検索エンジン"
+      }
+    ]
+  }
+}
