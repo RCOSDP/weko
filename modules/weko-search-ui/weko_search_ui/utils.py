@@ -2098,18 +2098,28 @@ def handle_check_doi(list_record):
     :return
 
     """
-    def _check_doi(doi, item):
+    def _check_doi(doi_ra, doi, item):
         error = None
         split_doi = doi.split("/")
-        if len(split_doi) > 1 and not doi.endswith("/"):
-            error = _("{} cannot be set.").format("DOI")
+        if doi_ra == "NDL JaLC":
+            if len(split_doi) < 2 and not "/" in doi:
+                error = _("{} cannot be set.").format("DOI")
+            else:
+                prefix = split_doi[0]
+                if not item.get("ignore_check_doi_prefix") and prefix != get_doi_prefix(
+                    doi_ra
+                ):
+                    error = _("Specified Prefix of {} is incorrect.").format("DOI")
         else:
-            prefix = re.sub("/$", "", doi)
-            item["doi_suffix_not_existed"] = True
-            if not item.get("ignore_check_doi_prefix") and prefix != get_doi_prefix(
-                doi_ra
-            ):
-                error = _("Specified Prefix of {} is incorrect.").format("DOI")
+            if len(split_doi) > 1 and not doi.endswith("/"):
+                error = _("{} cannot be set.").format("DOI")
+            else:
+                prefix = re.sub("/$", "", doi)
+                item["doi_suffix_not_existed"] = True
+                if not item.get("ignore_check_doi_prefix") and prefix != get_doi_prefix(
+                    doi_ra
+                ):
+                    error = _("Specified Prefix of {} is incorrect.").format("DOI")
         return error
 
     for item in list_record:
@@ -2148,14 +2158,14 @@ def handle_check_doi(list_record):
             else:
                 if item.get("status") == "new":
                      if doi:
-                        error = _check_doi(doi, item)
+                        error = _check_doi(doi_ra, doi, item)
                 else:
                     pid = WekoRecord.get_record_by_pid(item_id).pid_recid
                     identifier = IdentifierHandle(pid.object_uuid)
                     _value, doi_type = identifier.get_idt_registration_data()
                     if not doi_type:
                         if doi:
-                            error = _check_doi(doi, item)
+                            error = _check_doi(doi_ra, doi, item)
                     else:
                         pid_doi = None
                         try:
@@ -2174,7 +2184,7 @@ def handle_check_doi(list_record):
                                     "Specified {} is different from" + " existing {}."
                                 ).format("DOI", "DOI")
                         elif doi:
-                            error = _check_doi(doi, item)
+                            error = _check_doi(doi_ra, doi, item)
 
         if error:
             item["errors"] = item["errors"] + [error] if item.get("errors") else [error]
@@ -2317,7 +2327,6 @@ def prepare_doi_link(item_id):
         + identifier_setting.ndl_jalc_doi
         + suffix
         + "/"
-        + item_id,
     }
 
 
@@ -2383,11 +2392,10 @@ def register_item_doi(item):
                     pid_lastest.object_uuid,
                     pid.object_uuid,
                     data,
-                    WEKO_IMPORT_DOI_TYPE.index(doi_ra) + 1,
-                    is_feature_import=True,
+                    WEKO_IMPORT_DOI_TYPE.index(doi_ra) + 1
                 )
     else:
-        if doi_ra and (not doi or item.get("doi_suffix_not_existed")):
+        if doi_ra and doi_ra != "NDL JaLC" and (not doi or item.get("doi_suffix_not_existed")):
             data = prepare_doi_link(item_id)
             doi_duplicated = check_doi_duplicated(doi_ra, data)
             if doi_duplicated:
@@ -2396,8 +2404,31 @@ def register_item_doi(item):
                 pid_lastest.object_uuid,
                 pid.object_uuid,
                 data,
-                WEKO_IMPORT_DOI_TYPE.index(doi_ra) + 1,
-                is_feature_import=True,
+                WEKO_IMPORT_DOI_TYPE.index(doi_ra) + 1
+            )
+        elif doi_ra == "NDL JaLC" and doi:
+            data = {
+                "identifier_grant_jalc_doi_link": IDENTIFIER_GRANT_LIST[1][2]
+                + "/"
+                + doi,
+                "identifier_grant_jalc_cr_doi_link": IDENTIFIER_GRANT_LIST[2][2]
+                + "/"
+                + doi,
+                "identifier_grant_jalc_dc_doi_link": IDENTIFIER_GRANT_LIST[3][2]
+                + "/"
+                + doi,
+                "identifier_grant_ndl_jalc_doi_link": IDENTIFIER_GRANT_LIST[4][2]
+                + "/"
+                + doi,
+            }
+            doi_duplicated = check_doi_duplicated(doi_ra, data)
+            if doi_duplicated:
+                raise Exception({"error_id": doi_duplicated})
+            saving_doi_pidstore(
+                pid_lastest.object_uuid,
+                pid.object_uuid,
+                data,
+                WEKO_IMPORT_DOI_TYPE.index(doi_ra) + 1
             )
 
     if data:
@@ -2980,7 +3011,9 @@ def handle_fill_system_item(list_record):
 
             fixed_doi = False
             fixed_doi_ra = False
-            
+
+            is_ndl = item_doi_ra == "NDL JaLC" if not existed_doi else registerd_doi_ra=="NDL JaLC"
+
             if is_change_identifier:
                 item["doi"] = item_doi
             elif is_change_identifier == False:
@@ -2988,7 +3021,9 @@ def handle_fill_system_item(list_record):
                     item["doi"] = registerd_doi
                     if registerd_doi != item_doi:
                         fixed_doi = True
-            
+                elif is_ndl:
+                    item["doi"] = item_doi
+
             if is_change_identifier == True:
                 item["doi_ra"] = item_doi_ra
             elif is_change_identifier == False:
@@ -2996,9 +3031,11 @@ def handle_fill_system_item(list_record):
                     item["doi_ra"] = registerd_doi_ra
                     if registerd_doi_ra != item_doi_ra:
                         fixed_doi_ra = True
-            
+                elif is_ndl:
+                    item["doi_ra"] = item_doi_ra
+
             if identifierRegistration_key in item["metadata"]:
-                if existed_doi and checked_registerd_doi_ra and checked_item_doi_ra:                    
+                if existed_doi and checked_registerd_doi_ra and checked_item_doi_ra:
                     if 'subitem_identifier_reg_type' in item["metadata"][identifierRegistration_key]:
                         _doi_ra = item["metadata"][identifierRegistration_key]['subitem_identifier_reg_type']
                         if item.get("is_change_identifier", False) == True:
@@ -3043,7 +3080,8 @@ def handle_fill_system_item(list_record):
                     item["metadata"][identifierRegistration_key]={'subitem_identifier_reg_type':item_doi_ra, 'subitem_identifier_reg_text': item_doi}
             elif existed_doi:
                 item["metadata"][identifierRegistration_key]={'subitem_identifier_reg_type':registerd_doi_ra, 'subitem_identifier_reg_text': registerd_doi}
-
+            elif is_ndl:
+                item["metadata"][identifierRegistration_key]={'subitem_identifier_reg_type':item_doi_ra, 'subitem_identifier_reg_text': item_doi}
             if fixed_doi:
                 warnings.append(_('The specified DOI is wrong and fixed with the registered DOI.'))
                     
@@ -3051,13 +3089,19 @@ def handle_fill_system_item(list_record):
                 warnings.append(_('The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'))
             
             if is_change_identifier:
-                if not (current_app.config["WEKO_HANDLE_ALLOW_REGISTER_CNRI"] and item_cnri):
+                if not (current_app.config["WEKO_HANDLE_ALLOW_REGISTER_CNRI"] and item_cnri): 
                     if item_doi is "":
                         errors.append(_('Please specify DOI prefix/suffix.'))
                     elif item_doi_suffix is "":
                         errors.append(_('Please specify DOI suffix.'))
+            # 書き換えモードでなく、ndl
+            elif is_ndl:
+                if item_doi is "":
+                    errors.append(_('Please specify DOI prefix/suffix.'))
+                elif item_doi_suffix is "":
+                    errors.append(_('Please specify DOI suffix.'))
             else:
-                if item_doi_suffix and existed_doi is False:
+                if item_doi_suffix and existed_doi is False: 
                     errors.append(_('Do not specify DOI suffix.'))
 
             if checked_item_doi_ra is False:

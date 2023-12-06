@@ -135,7 +135,6 @@ def saving_doi_pidstore(item_id,
                         record_without_version,
                         data=None,
                         doi_select=0,
-                        is_feature_import=False,
                         temporal_saving=False):
     """
     Mapp doi pidstore data to ItemMetadata.
@@ -150,8 +149,6 @@ def saving_doi_pidstore(item_id,
         'record_without_version: {0}'.format(record_without_version))
     current_app.logger.debug('data: {0}'.format(data))
     current_app.logger.debug('doi_select: {0}'.format(doi_select))
-    current_app.logger.debug(
-        'is_feature_import: {0}'.format(is_feature_import))
     current_app.logger.debug('temporal_saving: {0}'.format(temporal_saving))
 
     flag_del_pidstore = False
@@ -180,7 +177,7 @@ def saving_doi_pidstore(item_id,
         identifier_val = jalcdoi_dc_link
         doi_register_val = '/'.join(jalcdoi_dc_tail[1:])
         doi_register_typ = 'DataCite'
-    elif is_feature_import and doi_select == IDENTIFIER_GRANT_LIST[4][0] \
+    elif doi_select == IDENTIFIER_GRANT_LIST[4][0] \
             and data.get('identifier_grant_ndl_jalc_doi_link'):
         ndljalcdoi_dc_link = data.get('identifier_grant_ndl_jalc_doi_link')
         ndljalcdoi_dc_tail = (ndljalcdoi_dc_link.split('//')[1]).split('/')
@@ -428,6 +425,11 @@ def item_metadata_validation(item_id, identifier_type, record=None,
                 + 'items that have been grant a DOI.'
             return error_list
 
+    # For NDL prefix, resource type is only doctoral thesis
+    if identifier_type==IDENTIFIER_GRANT_SELECT_DICT['NDL JaLC'] and resource_type != "doctoral thesis":
+        error_list['other'] = _("When assigning a JaLC DOI through NDL, the resource type must be 'doctor thesis'.")
+        return error_list
+
     properties = {}
     # 必須
     required_properties = []
@@ -593,6 +595,11 @@ def item_metadata_validation(item_id, identifier_type, record=None,
             # remove 20220207
             # either_properties = ['geoLocation']
     # NDL JaLC DOI identifier registration
+    elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['NDL JaLC']:
+        required_properties = [
+            'title',
+            'type'
+        ]
 
     # 本文URL条件
     # DDIはスキップ
@@ -4243,10 +4250,6 @@ def prepare_doi_link_workflow(item_id, doi_input):
             _jalc_dc_doi_link = url_format.format(
                 IDENTIFIER_GRANT_LIST[3][2],
                 identifier_setting.jalc_datacite_doi,
-                item_id)
-            _ndl_jalc_doi_link = url_format.format(
-                IDENTIFIER_GRANT_LIST[4][2],
-                identifier_setting.ndl_jalc_doi,
                 _item_id)
         elif suffix_method == 1:
             url_format = '{}/{}/{}{}'
@@ -4259,17 +4262,12 @@ def prepare_doi_link_workflow(item_id, doi_input):
                 IDENTIFIER_GRANT_LIST[2][2],
                 identifier_setting.jalc_crossref_doi,
                 identifier_setting.suffix,
-                doi_input.get('action_identifier_jalc_doi'))
+                doi_input.get('action_identifier_jalc_cr_doi'))
             _jalc_dc_doi_link = url_format.format(
                 IDENTIFIER_GRANT_LIST[3][2],
                 identifier_setting.jalc_datacite_doi,
                 identifier_setting.suffix,
-                doi_input.get('action_identifier_jalc_doi'))
-            _ndl_jalc_doi_link = url_format.format(
-                IDENTIFIER_GRANT_LIST[4][2],
-                identifier_setting.ndl_jalc_doi,
-                identifier_setting.suffix,
-                doi_input.get('action_identifier_jalc_doi'))
+                doi_input.get('action_identifier_jalc_dc_doi'))
         elif suffix_method == 2:
             url_format = '{}/{}/{}'
             _jalc_doi_link = url_format.format(
@@ -4279,15 +4277,15 @@ def prepare_doi_link_workflow(item_id, doi_input):
             _jalc_cr_doi_link = url_format.format(
                 IDENTIFIER_GRANT_LIST[2][2],
                 identifier_setting.jalc_crossref_doi,
-                doi_input.get('action_identifier_jalc_doi'))
+                doi_input.get('action_identifier_jalc_cr_doi'))
             _jalc_dc_doi_link = url_format.format(
                 IDENTIFIER_GRANT_LIST[3][2],
                 identifier_setting.jalc_datacite_doi,
-                doi_input.get('action_identifier_jalc_doi'))
-            _ndl_jalc_doi_link = url_format.format(
-                IDENTIFIER_GRANT_LIST[4][2],
-                identifier_setting.ndl_jalc_doi,
-                doi_input.get('action_identifier_jalc_doi'))
+                doi_input.get('action_identifier_jalc_dc_doi'))
+        _ndl_jalc_doi_link = '{}/{}/{}'.format(
+            IDENTIFIER_GRANT_LIST[4][2],
+            identifier_setting.ndl_jalc_doi,
+            doi_input.get('action_identifier_ndl_jalc_doi'))
 
         ret = {
             'identifier_grant_jalc_doi_link': _jalc_doi_link,
@@ -4319,7 +4317,6 @@ def get_pid_value_by_activity_detail(activity_detail):
 def check_doi_validation_not_pass(item_id, activity_id,
                                   identifier_select, without_ver_id=None):
     """Call DOI validation and save error cache."""
-    current_app.logger.debug("caled check_doi_validation_not_pass")
     error_list = item_metadata_validation(item_id, identifier_select,
                                           without_ver_id=without_ver_id)
     if isinstance(error_list, str):

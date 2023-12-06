@@ -1567,7 +1567,7 @@ def next_action(activity_id='0', action_id=0):
             if not recid:
                 record_without_version = pid_without_ver.object_uuid
             saving_doi_pidstore(item_id, record_without_version, post_json,
-                                int(identifier_select), False, True)
+                                int(identifier_select), True)
     elif 'identifier_grant' == action_endpoint \
             and not post_json.get('temporary_save'):
         _value, _type = IdentifierHandle(item_id).get_idt_registration_data()
