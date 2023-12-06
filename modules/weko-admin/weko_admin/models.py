@@ -1357,7 +1357,13 @@ class SiteInfo(db.Model):
                     return query_object
                 else:
                     return {}
-        except SQLAlchemyError:
+        except SQLAlchemyError as e:
+            import traceback
+            current_app.logger.error(traceback.format_exc())
+            return {}
+        except Exception as e:
+            import traceback
+            current_app.logger.error(traceback.format_exc())
             return {}
 
     @classmethod
