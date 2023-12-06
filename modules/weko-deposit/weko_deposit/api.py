@@ -1257,6 +1257,96 @@ class WekoDeposit(Deposit):
                     'attribute_name' in self[key]:
                 self.pop(key)
 
+    def record_data_from_act_temp(self):
+        def _delete_empty(data):
+            if isinstance(data, dict):
+                result = {}
+                flg = False
+                if len(data) == 0:
+                    return flg, result
+                else:
+                    for k, v in data.items():
+                        not_empty, dd = _delete_empty(v)
+                        if not_empty:
+                            flg = True
+                            result[k] = dd
+                    return flg, result
+            elif isinstance(data, list):
+                result = []
+                flg = False
+                if len(data) == 0:
+                    return flg, None
+                else:
+                    for d in data:
+                        not_empty, dd = _delete_empty(d)
+                        if not_empty:
+                            flg = True
+                            result.append(dd)
+                    return flg, result
+            else:
+                if data:
+                    return True, data
+                else:
+                    return False, None
+        
+        def _get_title_lang(itemtype_id,_data):
+            from weko_items_autofill.utils import get_title_pubdate_path
+            path = get_title_pubdate_path(itemtype_id).get("title")
+            lang = ""
+            title = ""
+            if "title_parent_key" in path and path["title_parent_key"] in _data:
+                temp_record = _data[path["title_parent_key"]]
+                if "title_value_lst_key" in path:
+                    for p in path["title_value_lst_key"]:
+                        if isinstance(temp_record, list) and len(temp_record)>0 \
+                            and p in temp_record[0]:
+                            title = temp_record[0][p]
+                        elif p in temp_record:
+                            title = temp_record[p]
+                if "title_lang_lst_key" in path:
+                    for p in path["title_lang_lst_key"]:
+                        if isinstance(temp_record, list) and len(temp_record)>0 \
+                            and p in temp_record[0]:
+                            lang = temp_record[0][p]
+                        elif p in temp_record:
+                            lang = temp_record[p]
+            return title, lang
+            
+        pid = PersistentIdentifier.query.filter_by(pid_type="recid", pid_value=self.get("recid")).one_or_none()
+        if pid:
+            item_id = pid.object_uuid
+            from weko_workflow.api import WorkActivity
+            activity = WorkActivity().get_workflow_activity_by_item_id(item_id)
+
+            if activity:
+                itemtype_id = activity.workflow.itemtype_id
+                schema = "/items/jsonschema/{}".format(itemtype_id)
+                temp_data = activity.temp_data
+                if temp_data:
+                    data = json.loads(temp_data).get("metainfo")
+                    title, lang = _get_title_lang(itemtype_id,data)
+                    rtn_data = {}
+                    deleted_items=[]
+                    for k, v in data.items():
+                        flg, child_data  = _delete_empty(v)
+                        if flg:
+                            rtn_data[k] = child_data
+                        else:
+                            deleted_items.append(k)
+                    # if activity.approval1 == None:
+                    #     deleted_items.append("approval1")
+                    # if activity.approval2 == None:
+                    #     deleted_items.append("approval2")
+                    rtn_data["deleted_items"] = deleted_items
+                    rtn_data["$schema"] = schema
+                    rtn_data["title"] = title if title else activity.title
+                    rtn_data["lang"] = lang
+
+                    return rtn_data
+        
+        return None
+
+        
     def convert_item_metadata(self, index_obj, data=None):
         """ 
 
@@ -1296,6 +1386,8 @@ class WekoDeposit(Deposit):
                     if not index_obj.get('is_save_path'):
                         datastore.delete(cache_key)
                     data = json.loads(data_str.decode('utf-8'))
+                if not data:
+                    data = self.record_data_from_act_temp()
         except BaseException:
             current_app.logger.error(
                 "Unexpected error: {}".format(sys.exc_info()))
