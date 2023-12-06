@@ -71,7 +71,8 @@ from .permissions import check_content_clickable, check_created_id, \
     check_permission_period, file_permission_factory, get_permission
 from .utils import get_billing_file_download_permission, \
     get_google_detaset_meta, get_google_scholar_meta, get_groups_price, \
-    get_min_price_billing_file_download, get_record_permalink, hide_by_email
+    get_min_price_billing_file_download, get_record_permalink, hide_by_email, \
+    delete_version
 from .utils import restore as restore_imp
 from .utils import soft_delete as soft_delete_imp
 
@@ -426,7 +427,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     if not pid_ver.exists or pid_ver.is_last_child:
         abort(404)
     active_versions = list(pid_ver.children or [])
-    all_versions = list(pid_ver.get_children(ordered=True, pid_status=None)
+    all_versions = list(pid_ver.get_children(ordered=True, pid_status=PIDStatus.REGISTERED)
                         or [])
     try:
         if WekoRecord.get_record(id_=active_versions[-1].object_uuid)[
@@ -870,7 +871,11 @@ def soft_delete(recid):
     try:
         if not has_update_version_role(current_user):
             abort(403)
-        soft_delete_imp(recid)
+        if recid.startswith('del_ver_'):
+            recid = recid.replace('del_ver_', '')
+            delete_version(recid)
+        else:
+            soft_delete_imp(recid)
         db.session.commit()
         return make_response('PID: ' + str(recid) + ' DELETED', 200)
     except Exception as ex:
