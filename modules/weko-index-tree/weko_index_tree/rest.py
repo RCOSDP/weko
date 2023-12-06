@@ -263,42 +263,48 @@ class IndexActionResource(ContentNegotiatedMethodView):
     @need_record_permission('update_permission_factory')
     def put(self, index_id, **kwargs):
         """Update a new index."""
+        from weko_workflow.utils import get_cache_data
+
         data = self.loaders[request.mimetype]()
         if not data:
             raise InvalidDataRESTError()
         msg = ''
         delete_flag = False
         errors = []
-        public_state = data.get('public_state') and data.get(
-            'harvest_public_state')
         status = 200
-        if is_index_locked(index_id):
-            errors.append(_('Index Delete is in progress on another device.'))
-        elif not public_state and check_doi_in_index(index_id):
-            if not data.get('public_state'):
-                errors.append(_('The index cannot be kept private because '
-                                'there are links from items that have a DOI.'))
-            else: # not data.get('harvest_public_state'):
-                errors.append(_('Index harvests cannot be kept private because'
-                                ' there are links from items that have a DOI.'
-                                ))
+        if get_cache_data("import_start_time"):
+            errors.append(_('The index cannot be updated becase '
+                            'import is in progress.'))
         else:
-            if data.get('thumbnail_delete_flag'):
-                delete_flag = True
-                filename = os.path.join(
-                    current_app.instance_path,
-                    current_app.config['WEKO_THEME_INSTANCE_DATA_DIR'],
-                    'indextree',
-                    data.get('image_name').split('/')[-1])
-                if os.path.isfile(filename):
-                    os.remove(filename)
-                data['image_name'] = ""
+            public_state = data.get('public_state') and data.get(
+                'harvest_public_state')
+            if is_index_locked(index_id):
+                errors.append(_('Index Delete is in progress on another device.'))
+            elif not public_state and check_doi_in_index(index_id):
+                if not data.get('public_state'):
+                    errors.append(_('The index cannot be kept private because '
+                                    'there are links from items that have a DOI.'))
+                elif not data.get('harvest_public_state'):
+                    errors.append(_('Index harvests cannot be kept private because'
+                                    ' there are links from items that have a DOI.'
+                                    ))
+            else:
+                if data.get('thumbnail_delete_flag'):
+                    delete_flag = True
+                    filename = os.path.join(
+                        current_app.instance_path,
+                        current_app.config['WEKO_THEME_INSTANCE_DATA_DIR'],
+                        'indextree',
+                        data.get('image_name').split('/')[-1])
+                    if os.path.isfile(filename):
+                        os.remove(filename)
+                    data['image_name'] = ""
 
-            if data.get('thumbnail_delete_flag') is not None:
-                del data['thumbnail_delete_flag']
-            if not self.record_class.update(index_id, **data):
-                raise IndexUpdatedRESTError()
-            msg = 'Index updated successfully.'
+                if data.get('thumbnail_delete_flag') is not None:
+                    del data['thumbnail_delete_flag']
+                if not self.record_class.update(index_id, **data):
+                    raise IndexUpdatedRESTError()
+                msg = 'Index updated successfully.'
 
             #roles = get_account_role()
             #for role in roles:
@@ -320,11 +326,19 @@ class IndexActionResource(ContentNegotiatedMethodView):
     @need_record_permission('delete_permission_factory')
     def delete(self, index_id, **kwargs):
         """Delete a index."""
+        from weko_workflow.utils import get_cache_data
+
+        errors = []
+        msg = ''
         if not index_id or index_id <= 0:
             raise IndexNotFoundRESTError()
 
-        action = request.values.get('action', 'all')
-        msg, errors = perform_delete_index(index_id, self.record_class, action)
+        if get_cache_data("import_start_time"):
+            errors.append(_('The index cannot be deleted becase '
+                            'import is in progress.'))
+        else:
+            action = request.values.get('action', 'all')
+            msg, errors = perform_delete_index(index_id, self.record_class, action)
 
         langs = AdminLangSettings.get_registered_language()
         if "ja" in [lang["lang_code"] for lang in langs]:
@@ -489,25 +503,32 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
     @need_record_permission('update_permission_factory')
     def put(self, index_id, **kwargs):
         """Move a index."""
+        from weko_workflow.utils import get_cache_data
+
         data = self.loaders[request.mimetype]()
         if not data:
             raise InvalidDataRESTError()
-        # Moving
-        moved = self.record_class.move(index_id, **data)
-        if not moved or not moved.get('is_ok'):
+        if get_cache_data("import_start_time"):
             status = 202
-            msg = moved.get('msg')
+            msg = _('The index cannot be moved becase '
+                    'import is in progress.')
         else:
-            status = 201
-            msg = _('Index moved successfully.')
+            # Moving
+            moved = self.record_class.move(index_id, **data)
+            if not moved or not moved.get('is_ok'):
+                status = 202
+                msg = moved.get('msg')
+            else:
+                status = 201
+                msg = _('Index moved successfully.')
             langs = AdminLangSettings.get_registered_language()
             if "ja" in [lang["lang_code"] for lang in langs]:
-                tree_ja = self.record_class.get_index_tree(lang="ja")
+                    tree_ja = self.record_class.get_index_tree(lang="ja")
             tree = self.record_class.get_index_tree(lang="other_lang")
             for lang in langs:
                 lang_code = lang["lang_code"]
                 if lang_code == "ja":
-                    save_index_trees_to_redis(tree_ja, lang=lang_code)
+                        save_index_trees_to_redis(tree_ja, lang=lang_code)
                 else:
                     save_index_trees_to_redis(tree, lang=lang_code)
         return make_response(
