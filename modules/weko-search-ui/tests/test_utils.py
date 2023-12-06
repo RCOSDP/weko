@@ -405,7 +405,6 @@ def test_getEncode():
         filepath = os.path.join(
             os.path.dirname(os.path.realpath(__file__)), "data", "csv", f["file"]
         )
-        print(filepath)
         assert getEncode(filepath) == f["enc"]
 
 
@@ -935,7 +934,8 @@ def test_handle_check_doi_ra(i18n_app, es_item_file_pipeline, es_records):
 
 
 # def handle_check_doi(list_record):
-def test_handle_check_doi(app):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_check_doi -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_handle_check_doi(app,identifier):
     filepath = os.path.join(
         os.path.dirname(os.path.realpath(__file__)),
         "data",
@@ -966,21 +966,51 @@ def test_handle_check_doi(app):
     with patch("weko_deposit.api.WekoRecord.get_record_by_pid", return_value="1"):
         assert not handle_check_doi([item])
 
-    item2 = {"doi_ra": "JaLC", "is_change_identifier": False, "status": "keep"}
-    mock = MagicMock()
-    mock2 = MagicMock()
-    mock3 = MagicMock()
-    mock2.object_uuid = mock3
-    mock.pid_recid = mock2
+    #item2 = {"doi_ra": "JaLC", "is_change_identifier": False, "status": "keep"}
+    #mock = MagicMock()
+    #mock2 = MagicMock()
+    #mock3 = MagicMock()
+    #mock2.object_uuid = mock3
+    #mock.pid_recid = mock2
 
-    # def myfunc():
-    #     return 1,2
-    # mock.get_idt_registration_data = myfunc
+    ## def myfunc():
+    ##     return 1,2
+    ## mock.get_idt_registration_data = myfunc
 
-    with patch("weko_deposit.api.WekoRecord.get_record_by_pid", return_value=mock):
-        # with patch("weko_workflow.utils.IdentifierHandle", return_value=mock):
-        assert not handle_check_doi([item2])
+    #with patch("weko_deposit.api.WekoRecord.get_record_by_pid", return_value=mock):
+    #    # with patch("weko_workflow.utils.IdentifierHandle", return_value=mock):
+    #    assert not handle_check_doi([item2])
+    
+    item = [
+        {"id":"1","doi":"","doi_ra":"JaLC","is_change_identifier":True},
+        {"id":"2","doi":"a"*300,"doi_ra":"JaLC","is_change_identifier":True},
+        {"id":"3","doi":"wrong_prefix/","doi_ra":"JaLC","is_change_identifier":True},
+        {"id":"4","doi":"xyz.jalc/","doi_ra":"JaLC","is_change_identifier":True},
+        {"id":"5","doi":"xyz.jalc/12345","doi_ra":"JaLC","is_change_identifier":True},
+        {"id":"6","status":"new","doi":"xyz.jalc/12345","doi_ra":"JaLC","is_change_identifier":False},
+        {"id":"7","status":"new","doi":"wrong_prefix/","doi_ra":"JaLC","is_change_identifier":False},
+        {"id":"8","status":"new","doi":"xyz.jalc/","doi_ra":"JaLC","is_change_identifier":False},
+        {"id":"9","status":"new","doi":"xyz.ndl","doi_ra":"NDL JaLC","is_change_identifier":False},
+        {"id":"10","status":"new","doi":"wrong_prefix/12345","doi_ra":"NDL JaLC","is_change_identifier":False},
+        {"id":"11","status":"new","doi":"xyz.ndl/12345","doi_ra":"NDL JaLC","is_change_identifier":False},
+    ]
+    test = [
+        {"id":"1","doi":"","doi_ra":"JaLC","is_change_identifier":True,"errors":["Please specify DOI."]},
+        {"id":"2","doi":"a"*300,"doi_ra":"JaLC","is_change_identifier":True,"errors":["The specified DOI exceeds the maximum length."]},
+        {"id":"3","doi":"wrong_prefix/","doi_ra":"JaLC","is_change_identifier":True,"errors":["Specified Prefix of DOI is incorrect."]},
+        {"id":"4","doi":"xyz.jalc/","doi_ra":"JaLC","is_change_identifier":True,"errors":["Please specify DOI suffix."]},
+        {"id":"5","doi":"xyz.jalc/12345","doi_ra":"JaLC","is_change_identifier":True},
+        {"id":"6","status":"new","doi":"xyz.jalc/12345","doi_ra":"JaLC","is_change_identifier":False,"errors":["DOI cannot be set."]},
+        {"id":"7","status":"new","doi":"wrong_prefix/","doi_ra":"JaLC","is_change_identifier":False,"doi_suffix_not_existed":True,"errors":["Specified Prefix of DOI is incorrect."]},
+        {"id":"8","status":"new","doi":"xyz.jalc/","doi_ra":"JaLC","is_change_identifier":False,"doi_suffix_not_existed":True},
+        {"id":"9","status":"new","doi":"xyz.ndl","doi_ra":"NDL JaLC","is_change_identifier":False,"errors":["DOI cannot be set."]},
+        {"id":"10","status":"new","doi":"wrong_prefix/12345","doi_ra":"NDL JaLC","is_change_identifier":False,"errors":["Specified Prefix of DOI is incorrect."]},
+        {"id":"11","status":"new","doi":"xyz.ndl/12345","doi_ra":"NDL JaLC","is_change_identifier":False},
+    ]
+    handle_check_doi(item)
+    assert item == test
 
+    
 
 # def register_item_handle(item):
 def test_register_item_handle(i18n_app, es_item_file_pipeline, es_records):
@@ -1059,6 +1089,7 @@ def test_get_doi_link(i18n_app):
 
 
 # def prepare_doi_link(item_id):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_prepare_doi_link -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_prepare_doi_link(i18n_app, communities2, db):
     from weko_admin.models import Identifier
 
@@ -1073,29 +1104,185 @@ def test_prepare_doi_link(i18n_app, communities2, db):
     db.session.commit()
     item_id = 90
 
-    assert prepare_doi_link(item_id)
+    result = prepare_doi_link(item_id)
+    test = {
+        "identifier_grant_jalc_doi_link":"https://doi.org/<Empty>/0000000090",
+        "identifier_grant_jalc_cr_doi_link":"https://doi.org/<Empty>/0000000090",
+        "identifier_grant_jalc_dc_doi_link":"https://doi.org/<Empty>/0000000090",
+        "identifier_grant_ndl_jalc_doi_link":"https://doi.org/<Empty>/",
+    }
+    assert result == test
 
     item_id = MagicMock()
-    assert prepare_doi_link(item_id)
+    result = prepare_doi_link(item_id)
+    test = {
+        "identifier_grant_jalc_doi_link":"https://doi.org/<Empty>/0000000001",
+        "identifier_grant_jalc_cr_doi_link":"https://doi.org/<Empty>/0000000001",
+        "identifier_grant_jalc_dc_doi_link":"https://doi.org/<Empty>/0000000001",
+        "identifier_grant_ndl_jalc_doi_link":"https://doi.org/<Empty>/",
+    }
+    assert result == test
 
 
 # def register_item_doi(item):
-def test_register_item_doi(i18n_app, db_activity):
-    # item = es_records['results'][0]['item']
-    # item = db_activity['item']
-    item = MagicMock()
-    item.is_change_identifier = True
-    item2 = MagicMock()
-    item2.is_change_identifier = False
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_register_item_doi -vv -s -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_register_item_doi(i18n_app, db_activity, identifier, mocker):
 
-    with patch("weko_deposit.api.WekoRecord.get_record_by_pid", return_value=item):
-        # Doesn't return any value
-        assert not register_item_doi(item)
+    mocker.patch("weko_search_ui.utils.WekoDeposit.get_record",return_value=MagicMock())
+    
+    mock_without_version = MagicMock()
+    mock_recid=MagicMock()
+    mock_without_version.pid_recid=mock_recid
+    mock_pid_doi = MagicMock()
+    mock_pid_doi.pid_value = "https://doi.org/xyz.jalc/0000022222" # path delete
+    mock_without_version.pid_doi = mock_pid_doi
+    
+    mock_lasted=MagicMock()
+    mock_lasted_pid=MagicMock()
+    mock_lasted.pid_recid=mock_lasted_pid
+    
+    # is_change_identifier is True, not doi_ra and doi
+    item = {
+        "id":"1",
+        "is_change_identifier":True
+    }
+    with patch("weko_search_ui.utils.WekoRecord.get_record_by_pid",side_effect=[mock_without_version,mock_lasted]):
+        with patch("weko_search_ui.utils.saving_doi_pidstore") as mock_save:
+            register_item_doi(item)
+            mock_save.assert_not_called()
+    
+    
+    # is_change_identifier is True, pid_value.endswith is False, doi_duplicated is True
+    item = {
+        "id":"2",
+        "is_change_identifier":True,
+        "doi_ra":"JaLC",
+        "doi":"xyz.jalc/0000011111"
+    }
+    return_check = {"isWithdrawnDoi":True,"isExistDOI":False}
 
-        # Doesn't return any value
-        assert not register_item_doi(item2)
-
-
+    with patch("weko_search_ui.utils.WekoRecord.get_record_by_pid",side_effect=[mock_without_version,mock_lasted]):
+        with patch("weko_search_ui.utils.check_existed_doi",return_value=return_check):
+            with patch("weko_search_ui.utils.saving_doi_pidstore") as mock_save:
+                with pytest.raises(Exception) as e:
+                    register_item_doi(item)
+                assert e.value.args[0] == {"error_id":"is_withdraw_doi"}
+    
+    # is_change_identifier is True, pid_value.endswith is False, called saving_doi_pidstore
+    item = {
+        "id":"3",
+        "is_change_identifier":True,
+        "doi_ra":"JaLC",
+        "doi":"xyz.jalc/0000011111"
+    }
+    return_check = {"isWithdrawnDoi":False,"isExistDOI":False}
+    test_data = {
+        "identifier_grant_jalc_doi_link":"https://doi.org/xyz.jalc/0000011111",
+        "identifier_grant_jalc_cr_doi_link":"https://doi.org/xyz.jalc/0000011111",
+        "identifier_grant_jalc_dc_doi_link":"https://doi.org/xyz.jalc/0000011111",
+        "identifier_grant_ndl_jalc_doi_link":"https://doi.org/xyz.jalc/0000011111"
+    }
+    with patch("weko_search_ui.utils.WekoRecord.get_record_by_pid",side_effect=[mock_without_version,mock_lasted]):
+        with patch("weko_search_ui.utils.check_existed_doi",return_value=return_check):
+            with patch("weko_search_ui.utils.saving_doi_pidstore") as mock_save:
+                register_item_doi(item)
+                args, kwargs = mock_save.call_args
+                assert args[2] == test_data
+    
+    # is_change_identifier is True, pid_value.endswith is True
+    item = {
+        "id":"4",
+        "is_change_identifier":True,
+        "doi_ra":"JaLC",
+        "doi":"xyz.jalc/0000022222"
+    }
+    return_check = {"isWithdrawnDoi":False,"isExistDOI":False}
+    with patch("weko_search_ui.utils.WekoRecord.get_record_by_pid",side_effect=[mock_without_version,mock_lasted]):
+        with patch("weko_search_ui.utils.check_existed_doi",return_value=return_check):
+            with patch("weko_search_ui.utils.saving_doi_pidstore") as mock_save:
+                register_item_doi(item)
+                mock_save.assert_not_called()
+    
+    # is_change_identifier is False, doi_ra not NDL, doi_duplicated is True
+    item = {
+        "id":"5",
+        "is_change_identifier":False,
+        "doi_ra":"JaLC",
+    }
+    return_check = {"isWithdrawnDoi":False,"isExistDOI":True}
+    with patch("weko_search_ui.utils.WekoRecord.get_record_by_pid",side_effect=[mock_without_version,mock_lasted]):
+        with patch("weko_search_ui.utils.check_existed_doi",return_value=return_check):
+            with patch("weko_search_ui.utils.saving_doi_pidstore") as mock_save:
+                with pytest.raises(Exception) as e:
+                    register_item_doi(item)
+                assert e.value.args[0] == {"error_id":"is_duplicated_doi"}
+    
+    # is_change_identifier is False, doi_ra not NDL, called saving_doi_pidstore
+    item = {
+        "id":"6",
+        "is_change_identifier":False,
+        "doi_ra":"JaLC",
+    }
+    return_check = {"isWithdrawnDoi":False,"isExistDOI":False}
+    test_data = {
+        "identifier_grant_jalc_doi_link":"https://doi.org/xyz.jalc/0000000006",
+        "identifier_grant_jalc_cr_doi_link":"https://doi.org/xyz.crossref/0000000006",
+        "identifier_grant_jalc_dc_doi_link":"https://doi.org/xyz.datacite/0000000006",
+        "identifier_grant_ndl_jalc_doi_link":"https://doi.org/xyz.ndl/"
+    }
+    with patch("weko_search_ui.utils.WekoRecord.get_record_by_pid",side_effect=[mock_without_version,mock_lasted]):
+        with patch("weko_search_ui.utils.check_existed_doi",return_value=return_check):
+            with patch("weko_search_ui.utils.saving_doi_pidstore") as mock_save:
+                register_item_doi(item)
+                args, kwargs = mock_save.call_args
+                assert args[2] == test_data
+    
+    # is_change_identifier is False, doi_ra is NDL, doi_duplicated is True
+    item = {
+        "id":"7",
+        "is_change_identifier":False,
+        "doi_ra":"NDL JaLC",
+        "doi":"xyz.ndl/0000012345"
+    }
+    return_check = {"isWithdrawnDoi":True,"isExistDOI":False}
+    with patch("weko_search_ui.utils.WekoRecord.get_record_by_pid",side_effect=[mock_without_version,mock_lasted]):
+        with patch("weko_search_ui.utils.check_existed_doi",return_value=return_check):
+            with patch("weko_search_ui.utils.saving_doi_pidstore") as mock_save:
+                with pytest.raises(Exception) as e:
+                    register_item_doi(item)
+                assert e.value.args[0] == {"error_id": "is_withdraw_doi"}
+    
+    # is_change_identifier is False, doi_ra is NDL, called saving_doi_pidstore
+    item = {
+        "id":"8",
+        "is_change_identifier":False,
+        "doi_ra":"NDL JaLC",
+        "doi":"xyz.ndl/0000012345"
+    }
+    return_check = {"isWithdrawnDoi":False,"isExistDOI":False}
+    test_data = {
+        "identifier_grant_jalc_doi_link":"https://doi.org/xyz.ndl/0000012345",
+        "identifier_grant_jalc_cr_doi_link":"https://doi.org/xyz.ndl/0000012345",
+        "identifier_grant_jalc_dc_doi_link":"https://doi.org/xyz.ndl/0000012345",
+        "identifier_grant_ndl_jalc_doi_link":"https://doi.org/xyz.ndl/0000012345"
+    }
+    with patch("weko_search_ui.utils.WekoRecord.get_record_by_pid",side_effect=[mock_without_version,mock_lasted]):
+        with patch("weko_search_ui.utils.check_existed_doi",return_value=return_check):
+            with patch("weko_search_ui.utils.saving_doi_pidstore") as mock_save:
+                register_item_doi(item)
+                args, kwargs = mock_save.call_args
+                assert args[2] == test_data
+    
+    # data is None
+    item = {
+        "id":"9",
+        "is_change_identifier":False,
+    }
+    with patch("weko_search_ui.utils.WekoRecord.get_record_by_pid",side_effect=[mock_without_version,mock_lasted]):
+        with patch("weko_search_ui.utils.check_existed_doi",return_value=return_check):
+            with patch("weko_search_ui.utils.saving_doi_pidstore") as mock_save:
+                register_item_doi(item)
+                
 # def register_item_update_publish_status(item, status):
 def test_register_item_update_publish_status(
     i18n_app, es_item_file_pipeline, es_records
@@ -1321,9 +1508,9 @@ def test_get_system_data_uri():
 
 
 # def handle_fill_system_item(list_record):
-# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_fill_system_item -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_fill_system_item -vv -s -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 
-def test_handle_fill_system_item(app, test_list_records, mocker):
+def test_handle_fill_system_item(app, test_list_records,identifier, mocker):
 
     filepath = os.path.join(
         os.path.dirname(os.path.realpath(__file__)), "data", "item_map.json"
@@ -1336,8 +1523,10 @@ def test_handle_fill_system_item(app, test_list_records, mocker):
     )
     with open(filepath, encoding="utf-8") as f:
         item_type_mapping = json.load(f)
-    mocker.patch("weko_records.serializers.utils.get_mapping", return_value=item_map)
-    mocker.patch("weko_records.api.Mapping.get_record", return_value=item_type_mapping)
+    #mocker.patch("weko_records.serializers.utils.get_mapping", return_value=item_map)
+    mocker.patch("weko_search_ui.utils.get_mapping", return_value=item_map)
+    #mocker.patch("weko_records.api.Mapping.get_record", return_value=item_type_mapping)
+    #mocker.patch("weko_search_ui.utils.get_record", return_value=item_type_mapping)
 
     filepath = os.path.join(
         os.path.dirname(os.path.realpath(__file__)),
@@ -1413,7 +1602,93 @@ def test_handle_fill_system_item(app, test_list_records, mocker):
         item2["metadata"]["item_1617258105262"]["resourcetype"] = a
         item2["metadata"]["item_1617258105262"]["resourceuri"] = ""
         items.append(item2)
-
+    # identifier_type is NDL JaLC, not prefix/suffix
+    item = copy.deepcopy(list_record[0])
+    item["metadata"]["item_1617186819068"]={'subitem_identifier_reg_type':"NDL JaLC", 'subitem_identifier_reg_text': "xyz.ndl/123456"}
+    item["metadata"]["item_1617186476635"]["subitem_1522299639480"] = "open access"
+    item["metadata"]["item_1617186476635"][
+        "subitem_1600958577026"
+    ] = ACCESS_RIGHT_TYPE_URI["open access"]
+    item["metadata"]["item_1617265215918"]["subitem_1522305645492"] = "VoR"
+    item["metadata"]["item_1617265215918"][
+        "subitem_1600292170262"
+    ] = VERSION_TYPE_URI["VoR"]
+    item["metadata"]["item_1617258105262"]["resourcetype"] = "conference paper"
+    item["metadata"]["item_1617258105262"]["resourceuri"] = RESOURCE_TYPE_URI[
+        "conference paper"
+    ]
+    item["doi"] = "xyz.ndl/123456"
+    item["doi_ra"] = "NDL JaLC"
+    item["is_change_identifier"]=False
+    item["warnings"]=[]
+    item["errors"]=[]
+    items_result.append(item)
+    item2 = copy.deepcopy(item)
+    del item2["metadata"]["item_1617186819068"]
+    item2["metadata"]["item_1617186476635"]["subitem_1600958577026"] = ""
+    item2["metadata"]["item_1617258105262"]["resourceuri"] = ""
+    items.append(item2)
+    
+    # identifier_type is NDL JaLC, not suffix
+    item = copy.deepcopy(list_record[0])
+    item["metadata"]["item_1617186819068"]={'subitem_identifier_reg_type':"NDL JaLC", 'subitem_identifier_reg_text': ""}
+    item["metadata"]["item_1617186476635"]["subitem_1522299639480"] = "open access"
+    item["metadata"]["item_1617186476635"][
+        "subitem_1600958577026"
+    ] = ACCESS_RIGHT_TYPE_URI["open access"]
+    item["metadata"]["item_1617265215918"]["subitem_1522305645492"] = "VoR"
+    item["metadata"]["item_1617265215918"][
+        "subitem_1600292170262"
+    ] = VERSION_TYPE_URI["VoR"]
+    item["metadata"]["item_1617258105262"]["resourcetype"] = "conference paper"
+    item["metadata"]["item_1617258105262"]["resourceuri"] = RESOURCE_TYPE_URI[
+        "conference paper"
+    ]
+    item["doi"] = ""
+    item["doi_ra"] = "NDL JaLC"
+    item["is_change_identifier"]=False
+    item["warnings"]=[]
+    item["errors"]=["Please specify DOI prefix/suffix."]
+    items_result.append(item)
+    item2 = copy.deepcopy(item)
+    item2["errors"] = []
+    del item2["metadata"]["item_1617186819068"]
+    item2["metadata"]["item_1617186476635"]["subitem_1600958577026"] = ""
+    item2["metadata"]["item_1617258105262"]["resourceuri"] = ""
+    items.append(item2)
+    
+    # identifier_type is NDL JaLC, not suffix
+    item = copy.deepcopy(list_record[0])
+    item["metadata"]["item_1617186819068"]={'subitem_identifier_reg_type':"NDL JaLC", 'subitem_identifier_reg_text': "xyz.ndl/"}
+    item["metadata"]["item_1617186476635"]["subitem_1522299639480"] = "open access"
+    item["metadata"]["item_1617186476635"][
+        "subitem_1600958577026"
+    ] = ACCESS_RIGHT_TYPE_URI["open access"]
+    item["metadata"]["item_1617265215918"]["subitem_1522305645492"] = "VoR"
+    item["metadata"]["item_1617265215918"][
+        "subitem_1600292170262"
+    ] = VERSION_TYPE_URI["VoR"]
+    item["metadata"]["item_1617258105262"]["resourcetype"] = "conference paper"
+    item["metadata"]["item_1617258105262"]["resourceuri"] = RESOURCE_TYPE_URI[
+        "conference paper"
+    ]
+    item["doi"] = "xyz.ndl/"
+    item["doi_ra"] = "NDL JaLC"
+    item["is_change_identifier"]=False
+    item["warnings"]=[]
+    item["errors"]=["Please specify DOI suffix."]
+    items_result.append(item)
+    item2 = copy.deepcopy(item)
+    item2["errors"] = []
+    del item2["metadata"]["item_1617186819068"]
+    item2["metadata"]["item_1617186476635"]["subitem_1600958577026"] = ""
+    item2["metadata"]["item_1617258105262"]["resourceuri"] = ""
+    items.append(item2)
+    
+    mock_record = MagicMock()
+    mock_doi = MagicMock()
+    mock_record.pid_doi=None
+    #mock_doi.pid_value=
     # with open("items.json","w") as f:
     #     json.dump(items,f)
 
@@ -1427,7 +1702,7 @@ def test_handle_fill_system_item(app, test_list_records, mocker):
     # filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data/handle_fill_system_item/items_result.json")
     # with open(filepath,encoding="utf-8") as f:
     #     items_result = json.load(f)
-
+    mocker.patch("weko_deposit.api.WekoRecord.get_record_by_pid",return_value=mock_record)
     with app.test_request_context():
         with set_locale("en"):
             handle_fill_system_item(items)
