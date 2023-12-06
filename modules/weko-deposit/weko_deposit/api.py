@@ -26,6 +26,7 @@ import uuid
 from collections import OrderedDict
 from datetime import datetime, timezone,date
 from typing import NoReturn, Union
+from tika import parser
 
 import redis
 from redis import sentinel
@@ -160,9 +161,6 @@ class WekoIndexer(RecordIndexer):
                     version_type=self._version_type,
                     body=jrc)
 
-        # Only pass through pipeline if file exists
-        if 'content' in jrc and not skip_files:
-            body['pipeline'] = 'item-file-pipeline'
         if self.client.exists(**es_info):
             del body['version']
             del body['version_type']
@@ -1129,23 +1127,19 @@ class WekoDeposit(Deposit):
 
                             # upload file metadata to Elasticsearch
                             try:
-                                file_size_max = current_app.config[
-                                    'WEKO_MAX_FILE_SIZE_FOR_ES']
                                 mimetypes = current_app.config[
                                     'WEKO_MIMETYPE_WHITELIST_FOR_ES']
                                 content = lst.copy()
-                                file_content = ""
-                                if file.obj.file.size <= file_size_max and \
-                                        file.obj.mimetype in mimetypes:
-                                    ## invenio_files_rest.errors.StorageError
-                                    file_content = ""
+                                attachment = {}
+                                if file.obj.mimetype in mimetypes:
                                     try:
-                                        file_content = file.obj.file.read_file(lst)
-                                    except StorageError as se:
-                                        import traceback
-                                        current_app.logger.critical("StorageError: {}".format(se))
-                                        current_app.logger.critical(traceback.format_exc())
-                                content.update({"file": file_content})
+                                        reader = parser.from_file(file.obj.file.uri)
+                                        attachment["content"] = "".join(reader["content"].splitlines())
+                                    except FileNotFoundError as se:
+                                        current_app.logger.error("FileNotFoundError: {}".format(se))
+                                        current_app.logger.error("file.obj: {}".format(file.obj))
+
+                                content.update({"attachment": attachment})
                                 contents.append(content)
                             except Exception as e2:
                                 import traceback

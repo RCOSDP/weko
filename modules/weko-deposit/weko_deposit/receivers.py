@@ -58,8 +58,6 @@ def append_file_content(sender, json=None, record=None, index=None, **kwargs):
 
         ps = dict(publish_status=dep.get('publish_status'))
         dep.jrc.update(ps)
-        if dep.jrc.get('content', None):
-            kwargs['arguments']['pipeline'] = 'item-file-pipeline'
         json.update(dep.jrc)
 
         # Updated FeedbackMail List
