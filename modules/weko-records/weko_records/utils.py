@@ -1541,6 +1541,24 @@ def check_has_attribute_value(node):
         current_app.logger.error("Function check_has_attribute_value error:", e)
         return False
 
+def set_file_date(root_key, solst, metadata, attr_lst):
+    """set date.dateValue to attribute_value_mlt."""
+    prop_name = ""
+    for lst in solst:
+        keys = lst[0].replace("[]", "").split(".")
+        if keys[0].startswith(root_key) and keys[-1] == "dateValue":
+            name = lst[2]
+            if name:
+                prop_name = name
+            else:
+                prop_name = lst[1]
+
+    for i, d in enumerate(metadata):
+        if isinstance(d, dict):
+            date_elem = d.get("date")
+            if date_elem and len(date_elem) > 0:
+                date_value = date_elem[0].get("dateValue")
+                attr_lst[i][0].insert(0,[{prop_name:date_value}])
 
 def get_attribute_value_all_items(
     root_key,
