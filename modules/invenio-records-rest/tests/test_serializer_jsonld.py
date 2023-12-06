@@ -7,6 +7,8 @@
 # Invenio is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
 
+# .tox/c1/bin/pytest --cov=invenio_records_rest tests/test_serializer_jsonld.py -vv -s -v --cov-branch --cov-report=term --basetemp=/code/modules/invenio-records-rest/.tox/c1/tmp
+
 """Invenio JSON-LD serializer tests."""
 
 from __future__ import absolute_import, print_function
@@ -111,8 +113,8 @@ def test_serialize_search():
     )
 
 
-def test_transform_jsonld(test_records, mocker):
-    record = test_records[0]
+def test_transform_jsonld(indexed_10records, mocker):
+    record = indexed_10records[0]
     obj={
         "http://localhost/record/":"test server",
         "dct:title":"test record01",
