@@ -519,7 +519,7 @@ class TestWekoDeposit:
 
     # def commit(self, *args, **kwargs):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_commit -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
-    def test_commit(sel,app,db,location):
+    def test_commit(sel,app,db,location, db_index, db_itemtype):
         with app.test_request_context():
             deposit = WekoDeposit.create({})
             assert deposit['_deposit']['id']=="1"
@@ -529,6 +529,24 @@ class TestWekoDeposit:
             assert deposit['_deposit']['id']=="1"
             assert 'draft' == deposit.status
             assert 2 == deposit.revision_id
+
+            # exist feedback_mail_list
+            deposit = WekoDeposit.create({})
+            item_id = deposit.pid.object_uuid
+            index_obj = {'index': ['1'], 'actions': 'private'}
+            data = {'pubdate': '2023-12-07', 'item_1617186331708': [{'subitem_1551255647225': 'test', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, 'shared_user_id': -1, 'title': 'test', 'lang': 'ja', 'deleted_items': ['item_1617186385884', 'item_1617186419668', 'item_1617186499011', 'item_1617186609386', 'item_1617186626617', 'item_1617186643794', 'item_1617186660861', 'item_1617186702042', 'item_1617186783814', 'item_1617186859717', 'item_1617186882738', 'item_1617186901218', 'item_1617186920753', 'item_1617186941041', 'item_1617187112279', 'item_1617187187528', 'item_1617349709064', 'item_1617353299429', 'item_1617605131499', 'item_1617610673286', 'item_1617620223087', 'item_1617944105607', 'item_1617187056579', 'approval1', 'approval2'], '$schema': '/items/jsonschema/1'}
+            deposit.update(index_obj,data)
+            FeedbackMailList.update(item_id,[{"email":"test.taro@test.org","author_id":"1"}])
+            db.session.commit()
+            deposit.commit()
+            es_data = deposit.indexer.get_metadata_by_item_id(item_id)
+            assert es_data["_source"]["feedback_mail_list"] == [{"email":"test.taro@test.org","author_id":"1"}]
+ 
+            # not exist feedback_mail_list
+            FeedbackMailList.delete(item_id)
+            deposit.commit()
+            es_data = deposit.indexer.get_metadata_by_item_id(item_id)
+            assert es_data["_source"]["feedback_mail_list"] == []
 
 
     # def newversion(self, pid=None, is_draft=False):
