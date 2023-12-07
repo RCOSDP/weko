@@ -3976,6 +3976,7 @@ def check_provide_in_system(key, item):
     
     for idx in range(metadata_count):
         workflow_list = WorkFlowApi().get_workflow_list()
+        workflow_list = [workflow.id for workflow in workflow_list]
         provide_metadata = item.get('metadata').get(key)[idx].get('provide')
         if not provide_metadata:
             break
@@ -3983,13 +3984,14 @@ def check_provide_in_system(key, item):
             setting_workflow_value = provide_metadata[provide_index].get('workflow')
             if not setting_workflow_value and type(setting_workflow_value) != int:
                 break
-            workflow_list = [workflow.id for workflow in workflow_list]
             if not int(setting_workflow_value) in workflow_list:
                 is_provide_exist[idx] = False
                 break
             
             setting_role_value = provide_metadata[provide_index].get('role')
             if not setting_role_value:
+                break
+            if setting_role_value == 'none_loggin':
                 break
             role_list = [role['id'] for role in get_roles()]
             if not int(setting_role_value) in role_list:
