@@ -22,6 +22,8 @@
 
 from datetime import datetime as dt
 from datetime import timedelta, timezone
+import traceback
+from typing import List, Optional
 
 from flask import abort, current_app
 from flask_babelex import get_locale, to_user_timezone, to_utc
@@ -266,41 +268,50 @@ def is_open_restricted(file_data):
             result = True
     return result
 
+def check_content_clickable(record:dict, fjson:dict) -> bool:
+    """Check if content file is Applyable.
+        Args
+            record: the records metadata
+            fjson: file object json
 
-def check_content_clickable(record, fjson):
-    """Check if content file is clickable."""
+        Returns
+            bool: is content Applyable
+    """
     if not is_open_restricted(fjson):
         return False
-    record_id = record.get('recid')
-    file_name = fjson.get('filename')
-    list_permission = __get_file_permission(record_id, file_name)
-    # can click if user have not log in
-    if list_permission:
-        permission = list_permission[0]
-        if permission.status == 0:
-            return False
-        else:
-            return True
-    else:
-        return True
+    return not check_open_restricted_permission(record, fjson)
 
 
-def check_permission_period(permission):
-    """Check download permission."""
+def check_permission_period(permission : FilePermission) -> bool :
+    """Check download permission.
+        Args
+            FilePermission:permission
+        Returns 
+            bool:is the user has access rights or not
+    """
+
+    from weko_records_ui.utils import get_valid_onetime_download
+    from weko_items_ui.utils import get_user_information
+
     if permission.status == 1:
-        return True
+        res = get_valid_onetime_download(permission.file_name ,permission.record_id , get_user_information(permission.user_id)['email'])
+        current_app.logger.info(res)
+        return res is not None
     else:
         return False
 
 
-def get_permission(record, fjson):
+def get_permission(record:dict, fjson:dict) -> Optional[FilePermission]:
     """Get download file permission.
-
-    @param record:
-    @param fjson:
-    @return:
+    Args
+        record: the records metadata
+        fjson: file object json
+    Returns
+        FilePermission or None
     """
     # current_app.logger.debug("fjson: {}".format(fjson))
+    if not check_file_download_permission(record, fjson):
+        return None
     record_id = record.get('recid')
     file_name = fjson.get('filename')
     list_permission = __get_file_permission(record_id, file_name)
@@ -458,7 +469,7 @@ def check_usage_report_in_permission(permission):
         return False
 
 
-def check_create_usage_report(record, file_json):
+def check_create_usage_report(record, file_json , user_id=None):
     """Check create usage report.
 
     @param record:
@@ -467,21 +478,52 @@ def check_create_usage_report(record, file_json):
     """
     record_id = record.get('recid')
     file_name = file_json.get('filename')
-    list_permission = __get_file_permission(record_id, file_name)
-    if list_permission:
-        permission = list_permission[0]
+    list_permission = __get_file_permission(record_id, file_name ,user_id)
+    for permission in list_permission:
         if check_usage_report_in_permission(permission):
             return permission
-        else:
-            return None
+    return None
+
+def is_owners_or_superusers(record) -> bool:
+    """ 
+    return true if the user can download the record's contents unconditionally
+
+    Args
+        record: The record metadata.
+
+    Returns
+        bool: is owners or superusers
+    """
+    # Get email list of created workflow user.
+    user_id_list = [int(record['owner'])] if record.get('owner') else []
+    if record.get('weko_shared_id'):
+        user_id_list.append(record.get('weko_shared_id'))
+
+    # Registered user
+    if current_user and \
+            current_user.is_authenticated and \
+            current_user.id in user_id_list:
+        return True
+
+    # Super users
+    supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] + \
+        current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
+    for role in list(current_user.roles or []):
+        if role.name in supers:
+            return True
+    
+    return False
 
 
-def __get_file_permission(record_id, file_name):
-    """Get file permission."""
-    user_id = current_user.get_id()
-    current_time = dt.now()
-    duration = current_time - timedelta(
-        days=current_app.config['WEKO_RECORDS_UI_DOWNLOAD_DAYS'])
-    list_permission = FilePermission.find_list_permission_by_date(
-        user_id, record_id, file_name, duration)
+def __get_file_permission(record_id:str, file_name:str ,user_id = None) -> List[FilePermission]:
+    """Get file permission.
+        Args
+            str:record_id
+            str:file_name
+        Returns
+            List[FilePermission]
+    """
+    user_id = user_id or current_user.get_id()
+    list_permission = FilePermission.find_list_permission_approved(
+        user_id, record_id, file_name)
     return list_permission

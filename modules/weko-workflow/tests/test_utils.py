@@ -12,6 +12,7 @@ from werkzeug.datastructures import MultiDict
 from flask import current_app,session
 from flask_babelex import gettext as _
 from sqlalchemy.orm.exc import NoResultFound
+from mock import MagicMock
 from weko_deposit.pidstore import get_record_without_version
 from weko_deposit.api import WekoRecord, WekoDeposit
 from invenio_files_rest.models import Bucket
@@ -22,6 +23,7 @@ from flask_login.utils import login_user,logout_user
 from tests.helpers import json_data
 from invenio_mail.models import MailConfig
 from weko_admin.models import SiteInfo, Identifier
+from weko_records_ui.models import FilePermission,FileOnetimeDownload
 from weko_user_profiles import UserProfile
 from weko_records.api import ItemTypes, ItemsMetadata
 from weko_user_profiles.config import WEKO_USERPROFILES_POSITION_LIST,WEKO_USERPROFILES_INSTITUTE_POSITION_LIST
@@ -3125,3 +3127,90 @@ def test_make_activitylog_tsv(db_register,db_records):
     output_tsv = make_activitylog_tsv(activities)
     assert isinstance(output_tsv,str)
     assert len(output_tsv.splitlines()) == 3
+# def is_terms_of_use_only(workflow_id :int) -> bool:
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_is_terms_of_use_only -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_is_terms_of_use_only(app ,workflow ,workflow_open_restricted):
+    with app.test_request_context():
+        assert not is_terms_of_use_only(workflow["workflow"].id)
+        assert is_terms_of_use_only(workflow_open_restricted[0]["workflow"].id)
+        assert not is_terms_of_use_only(workflow_open_restricted[1]["workflow"].id)
+
+# def grant_access_rights_to_all_open_restricted_files(activity_id :str ,permission:Union[FilePermission,GuestActivity] , activity_detail :Activity) -> dict:
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_grant_access_rights_to_all_open_restricted_files -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_grant_access_rights_to_all_open_restricted_files(app ,db,users ):
+    activity_id = "20000101-99"
+    file_permission = FilePermission(
+        file_name= "bbb.txt"
+        ,record_id=1
+        ,status=-1
+        ,usage_application_activity_id=activity_id
+        ,user_id=users[0]["id"]
+        ,usage_report_activity_id=None
+    )
+    db.session.add(file_permission)
+    activity_detail:Activity = Activity()
+    activity_detail.extra_info = {
+                    "file_name": "bbb.txt"
+                    , "record_id": 1
+                    , "user_mail": users[0]["email"]
+                }
+
+    activity_id_guest = "20001231-99"
+    guest_activity = GuestActivity(
+        file_name= "bbb.txt"
+        ,record_id=1
+        ,status=-1
+        ,activity_id=activity_id_guest
+        ,user_mail=users[5]["email"]
+        ,expiration_date=0
+        ,is_usage_report=None
+        ,token=''
+    )
+    db.session.add(guest_activity)
+    activity_detail_guest:Activity = Activity()
+    activity_detail_guest.extra_info = {
+                    "file_name": "bbb.txt"
+                    , "record_id": 1
+                    , "guest_mail": users[5]["email"]
+                }
+    mock = MagicMock()
+    mock.get_file_data = lambda : [{'accessrole' : 'open_restricted','filename':'aaa.txt'}
+                                ,{'accessrole' : 'open_restricted','filename':'bbb.txt'}
+                                ,{'accessrole' : 'open_access'    ,'filename':'ccc.txt'}]
+
+    with app.test_request_context():
+        with patch('weko_workflow.utils.WekoRecord.get_record_by_pid',return_value = mock):
+            res = grant_access_rights_to_all_open_restricted_files(activity_id ,file_permission, activity_detail )
+            # print(res)
+            assert 'bbb.txt' in res["file_url"]
+            
+            fps = FilePermission.find_by_activity(activity_id)
+            assert len(fps) == 2
+
+            for fp in fps:
+                assert fp.status == 1
+
+                user = list(filter(lambda x : x["obj"].id == fp.user_id ,users))[0]
+
+                fd = FileOnetimeDownload.find(
+                    file_name = fp.file_name,
+                    record_id = fp.record_id,
+                    user_mail = user["obj"].email
+                )
+                assert len(fd) == 1
+
+    with app.test_request_context():
+        res = grant_access_rights_to_all_open_restricted_files(activity_id_guest ,guest_activity, activity_detail_guest )
+        assert 'bbb.txt' in res["file_url"]
+        fps = FilePermission.find_by_activity(activity_id_guest)
+        assert len(fps) == 0
+        fd = FileOnetimeDownload.find(
+                    file_name = guest_activity.file_name,
+                    record_id = guest_activity.record_id,
+                    user_mail = users[5]["email"]
+                )
+        assert len(fd) == 1
+
+    res = grant_access_rights_to_all_open_restricted_files(activity_id ,None, activity_detail )
+    assert res == {}
+
