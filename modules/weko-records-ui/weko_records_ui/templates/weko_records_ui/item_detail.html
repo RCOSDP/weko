@@ -136,8 +136,21 @@
           <th scope="row" colspan="6">{{ _('Link') }}</th>
           <td>
               {%- for sub_record in m_record.relation %}
-                <a target="_self"
-                   href="{{ sub_record.item_links }}">{{ sub_record.item_title | escape_str }}</a>
+                {% if sub_record.item_title == sub_record.value %}
+                  <a
+                    target="_blank"
+                    href="//{{ sub_record.value }}"
+                  >
+                    {{ sub_record.item_title | escape_str }}
+                  </a>
+                {% else %}
+                  <a
+                    target="_self"
+                    href="{{ sub_record.item_links }}"
+                  >
+                    {{ sub_record.item_title | escape_str }}
+                  </a>
+                {% endif %}
                 <br>
               {% endfor %}
           </td>

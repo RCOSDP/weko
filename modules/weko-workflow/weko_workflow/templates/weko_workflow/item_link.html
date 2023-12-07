@@ -66,7 +66,6 @@
                     <input type="hidden" id="ex_item_links" value='{{ item_link|tojson }}'>
                   {% endif %}
                   <div>
-                    <!-- * S ITEM LINK - NEW ITEM -->
                     {% if session.get("item_link_record") %}
                       {% for itr in session["item_link_record"].keys() %}
                         {% if session["current_user_item_link"] == itr %}
@@ -76,24 +75,40 @@
                       {% endfor %}
                     {% endif %}
                   </div>
+
                   <div class="row" ng-repeat="sub_link_item in link_item_list track by $index">
-                    <h1>{[sub_link_item.item_title]}</h1>
-                    <div class="col-sm-4 col-md-4 col-lg-4">
-                      <select class="form-control" ng-model="sub_link_item.sele_id">
-                        <option ng-repeat="option in sele_options" value="{[ option.id ]}">{[
-                          option.content]}</option>
-                      </select>
+                    <div ng-if="sub_link_item.sele_id===sub_link_item.item_title">
+                      <div class="col-sm-4 col-md-4 col-lg-4">
+                        <a href="{[sub_link_item.item_title]}">{[sub_link_item.item_title]}</a>
+                      </div>
+                      <div class="col-sm-5 col-md-5 col-lg-5"></div>
+                      <div class="col-sm-3 col-md-3 col-lg-3 text-center">
+                        <button type="button" class="btn btn-danger delete-button" ng-click="del_link($index)">
+                          <span class="glyphicon glyphicon-trash"></span>
+                          {{_('Delete')}}
+                        </button>
+                      </div>
                     </div>
-                    <div class="col-sm-5 col-md-5 col-lg-5">
-                      {[sub_link_item.item_title]}
-                    </div>
-                    <div class="col-sm-3 col-md-3 col-lg-3 text-center">
-                      <button type="button" class="btn btn-danger delete-button" ng-click="del_link($index)">
-                        <span class="glyphicon glyphicon-trash"></span>
-                        {{_('Delete')}}
-                      </button>
+
+                    <div ng-if="sub_link_item.sele_id!=sub_link_item.item_title">
+                      <div class="col-sm-4 col-md-4 col-lg-4">
+                        <select class="form-control" ng-model="sub_link_item.sele_id">
+                          <option ng-repeat="option in sele_options" value="{[ option.id ]}">{[
+                            option.content]}</option>
+                        </select>
+                      </div>
+                      <div class="col-sm-5 col-md-5 col-lg-5">
+                        {[sub_link_item.item_title]}
+                      </div>
+                      <div class="col-sm-3 col-md-3 col-lg-3 text-center">
+                        <button type="button" class="btn btn-danger delete-button" ng-click="del_link($index)">
+                          <span class="glyphicon glyphicon-trash"></span>
+                          {{_('Delete')}}
+                        </button>
+                      </div>
                     </div>
                   </div>
+
                 </div>
               </div>
               <div id="index_item_list">
@@ -145,6 +160,38 @@
               </div>
             </div>
           </div>
+
+          <!-- TODO ITEM LINK URL -->
+          <div class="panel-group" style="margin-top:5px;margin-bottom:50px;">
+            <div class="panel panel-default">
+              <div class="panel-body">
+                <div class="col-xs-12 col-md-12">
+                  <table class="table table-striped table-bordered">
+                    <thead>
+                      <tr>
+                        <th style="width:80%">URL</th>
+                        <th style="width:20%">Add</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>
+                          <input type="text" name="outside-url" id="outside-url" class="form-control" value="">
+                        </td>
+                        <td class="text-center">
+                          <button type="button" id="btn-add-url" class="btn btn-light
+                              add-button" ng-click="add_url_link()">
+                            <span class="glyphicon glyphicon-plus"></span>
+                          </button>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+              </div>
+            </div>
+          </div>
+          <!-- TODO ITEM LINK URL -->
+
           <div class="form-group">
             <label class="sr-only" for="input-comment">{{_('Comment')}}</label>
             <div class="input-group">

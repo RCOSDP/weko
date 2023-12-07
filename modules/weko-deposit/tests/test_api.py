@@ -1075,6 +1075,19 @@ class TestWekoRecord:
         assert isinstance(rec,WekoRecord)
         assert rec.pid_recid==recid
 
+    # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoRecord::test_get_record_by_pid_2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+    def test_get_record_by_pid_2(self,es_records):
+        indexer, records = es_records
+        record = records[0]['record']
+        recid = records[0]['recid']
+        rec = WekoRecord.get_record_by_pid(1)
+        assert isinstance(rec,WekoRecord)
+        assert rec.pid_recid==recid
+
+        with patch("invenio_pidstore.models.PersistentIdentifier.get", side_effect=Exception("test_error")):
+            rec2 = WekoRecord.get_record_by_pid(1)
+            assert rec2 == None
+
 
     #     def get_record_by_uuid(cls, uuid):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoRecord::test_get_record_by_uuid -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp

@@ -190,27 +190,7 @@ require([
     startWorkflow(workflowId, communityId, recordId, fileName, itemTitle);
   });
 
-  //* ITEM LINK EVIDENCE NEW DATA BUTTON
-  $('#item-link-register-new-data-btn').on('click', function () {
-    let workflowId = $(this).data('workflow-id');
-    let communityId = $(this).data('community');
-    let recordId = $(this).data('record-id');
-    let fileName = $(this).data('filename');
-    let itemTitle = $(this).data('itemtitle');
-    // startWorkflow(workflowId, communityId, recordId, fileName, itemTitle);
-    // $('.next_to_analysis').on('click', function () {
-    //   let analysis_url = $('#analysis_url').text();
-    //   let permalink_uri = $('#permalink_uri').text();
-    //   //let analysis_version = '/HEAD';
-    //   let analysis_version =  '/' + new Date().getTime().toString(16)  + Math.floor(1000*Math.random()).toString(16);
-    //     analysis_url = analysis_url + encodeURIComponent(permalink_uri) + analysis_version;
-    //     window.open(analysis_url);
-    //     $("#show_rights_info").modal("hide");
-    //   }
-    // );
-  });
-
-  $('.term_checked').on('click', function () {
+    $('.term_checked').on('click', function () {
     var file_version_id = $('#' + this.id).data('file-version-id');
     let $nextAction = $("#term_next_" + file_version_id);
     if ($('#term_checked_' + file_version_id).prop("checked") == true) {

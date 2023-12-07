@@ -1782,8 +1782,89 @@ def test_item_link_update(app, db, records):
     assert r[1]['item_title']==records[2][1]['item_title']
     assert r[1]['value']=='HDL'
 
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_item_link_update_2 -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_item_link_update_2(app, db, records):
+    _uuid = str(records[0][0].object_uuid)
+    _items1 = [
+        {
+            'item_id': '1',
+            'sele_id': '11'
+        },
+        {
+            'item_id': '2',
+            'sele_id': '22'
+        },
+        {
+            'item_links': '3',
+            'value': '33'
+        }
+    ]
+
+    def all_func():
+            all_magic_mock1 = MagicMock()
+            all_magic_mock1.dst_item_pid = "1"
+            all_magic_mock1.reference_type = "11"
+            all_magic_mock2 = MagicMock()
+            all_magic_mock2.dst_item_pid = "2"
+            all_magic_mock2.reference_type = "22"
+            all_magic_mock3 = MagicMock()
+            all_magic_mock3.dst_item_pid = "3"
+            all_magic_mock3.reference_type = "33"
+
+            return [
+                all_magic_mock1,
+                all_magic_mock2,
+                all_magic_mock3
+            ]
+    
+    test_data = MagicMock()
+    test_data.all = all_func
+
+    with patch("weko_records.api.ItemReference.get_src_references", return_value=test_data):
+        ItemLink.update(ItemLink(_uuid), _items1)
+        r = ItemLink.get_item_link_info(_uuid)
+        assert len(r)==3
+        assert r[0]['item_links']=='1'
+        assert r[0]['value']=='11'
+        assert r[1]['item_links']=='2'
+        assert r[1]['value']=='22'
+        assert r[2]['item_links']=='3'
+        assert r[2]['value']=='33'
+    
 # class ItemLink(object):
 #     def get_item_link_info(cls, recid):
+def test_get_item_link_info(app, db, records):
+    _uuid = str(records[0][0].object_uuid)
+    _items = [
+        {
+            'item_id': '1',
+            'sele_id': 'URI'
+        }
+    ]
+    ItemLink.bulk_create(ItemLink(_uuid), _items)
+
+    def get_src_references_test_data(content=None):
+        def all_test_data():
+            mm1 = MagicMock()
+            mm1.dst_item_pid = "1"
+            mm2 = MagicMock()
+            mm2.dst_item_pid = "test"
+            return [mm1,mm2]
+        mm = MagicMock()
+        mm.all = all_test_data
+        return mm
+    
+    test_data = MagicMock()
+    test_data.get_src_references = get_src_references_test_data
+
+    with patch("weko_records.api.ItemReference", test_data):
+        result = ItemLink.get_item_link_info(_items[0].get("item_id"))
+        
+        assert result is not None
+        assert result[0].get("item_links") == "1"
+        assert result[1].get("item_links") == "test"
+
+
 #     def bulk_create(self, dst_items):
 #     def get_item_link_info_output_xml(cls, recid):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_item_link_bulk_create -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp

@@ -790,7 +790,7 @@ def display_activity(activity_id="0"):
         action_endpoint = 'item_link'
         action_id = item_link_action.query.filter_by(action_endpoint='item_link').one().id
         existing_item_link_button = 'true'
-
+    
     elif isinstance(post_json_dict_existing_item_link_button_pressed, dict) and \
             post_json_dict_existing_item_link_button_pressed.get(activity_id):
         session['existing_item_link_in_progress'] = True
@@ -1453,11 +1453,9 @@ def next_action(activity_id='0', action_id=0):
 
     flow = Flow()
 
-    action_endpoint_list = ["item_login", "item_link"]
     action_endpoint_list = ["item_link"]
     if session.get('existing_item_link_button_pressed', {}).get(activity_id):
         session["saved_or_refreshed"] = True
-        # action_order = action_order + 1
         if flow.get_next_flow_action(activity_detail.flow_define.flow_id, action_id, action_order) is None:
             action_order = action_order + 1
         
@@ -2206,6 +2204,10 @@ def cancel_action(activity_id='0', action_id=0):
         if session.get("current_item_links"):
             if session["current_item_links"].get(activity_id):
                 del session["current_item_links"][activity_id]
+
+    if session.get("current_item_links"):
+        if session["current_item_links"].get(activity_id):
+            del session["current_item_links"][activity_id]
 
     check_flg = type_null_check(activity_id, str)
     check_flg &= type_null_check(action_id, int)

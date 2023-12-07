@@ -20644,6 +20644,77 @@ def test_prepare_edit_item_guest(client_api, users):
     )
     assert res.status_code == 302
 
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_prepare_edit_item_item_link -v --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+@pytest.mark.parametrize(
+    "id, status_code",
+    [
+        (1, 200),
+    ],
+)
+def test_prepare_edit_item_item_link(app, client_api, users, id, status_code):
+    login_user_via_session(client=client_api, email=users[id]["email"])
+
+    def resolve(content):
+        resolve_magic_mock_1 = MagicMock()
+        resolve_magic_mock_1.id = "1"
+        resolve_magic_mock_2 = MagicMock()
+        resolve_magic_mock_2.id = "2"
+        return (resolve_magic_mock_1, resolve_magic_mock_2)
+
+    def get_latest():
+        return True
+
+    def get_by_id():
+        get_by_id_magic_mock = MagicMock()
+        return get_by_id_magic_mock
+
+    def get_community_by_id(content):
+        get_community_by_id_magic_mock = MagicMock()
+        get_community_by_id_magic_mock.id = "1.0"
+        return get_community_by_id_magic_mock
+
+    test_data = MagicMock()
+    test_data.resolve = resolve
+    test_data.id = "3"
+    test_data.ItemTypes = MagicMock()
+    test_data.ItemTypes.get_latest = get_latest
+    test_data.ItemTypes.get_by_id = get_by_id
+    test_data.get_community_by_id = "1.0"
+    test_data.activity_id = "1.0"
+    test_data.args = {"community": "1.0"}
+
+    with patch("weko_items_ui.views.Resolver", return_value=test_data):
+        with patch("weko_items_ui.views.PIDVersioning", return_value=test_data):
+            with patch("weko_items_ui.views.ItemTypes", return_value=test_data):
+                with patch("weko_items_ui.views.check_an_item_is_locked", return_value=False):
+                    with patch("weko_items_ui.views.get_workflow_by_item_type_id", return_value=test_data):
+                        with patch("weko_items_ui.views.prepare_edit_workflow", return_value=test_data):
+                            res = client_api.post(
+                                "/api/items/prepare_edit_item",
+                                data=json.dumps({
+                                    "existing_item_link_button_pressed": "true",
+                                    "pid_value": "1.0"
+                                }),
+                                content_type="application/json",
+                            )
+                            assert res.status_code == status_code
+
+                            with patch("weko_items_ui.views.GetCommunity", return_value=test_data):
+                                with patch("weko_items_ui.views.request.args", return_value=test_data.args):
+                                    res = client_api.post(
+                                        "/api/items/prepare_edit_item",
+                                        data=json.dumps({
+                                            "existing_item_link_button_pressed": "true",
+                                            "pid_value": "1.0",
+                                            "community": "1"
+                                        }),
+                                        query_string={
+                                            "community": "1"
+                                        },
+                                        content_type="application/json",
+                                    )
+                                    assert res.status_code == status_code
+
 
 # def ranking():
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_ranking_acl_nologin -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp

@@ -81,8 +81,6 @@ require([
       dataType: 'json',
       data: JSON.stringify(data),
       success: function (data, textStatus) {
-        alert(data.data.redirect)
-        
         if(data.unauthorized){
           alert(data.msg);
           window.location.assign("/login/?next=" + window.location.pathname);

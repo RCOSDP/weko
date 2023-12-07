@@ -2105,13 +2105,25 @@ class ItemLink(object):
         ret = []
 
         for relation in dst_relations:
-            record = WekoRecord.get_record_by_pid(relation.dst_item_pid)
-            ret.append(dict(
-                item_links=relation.dst_item_pid,
-                item_title=record.get('item_title'),
-                value=relation.reference_type
-            ))
+            is_outside_url = False
+            try:
+                int(relation.dst_item_pid)
+            except:
+                is_outside_url = True
 
+            record = WekoRecord.get_record_by_pid(relation.dst_item_pid)
+            if not is_outside_url:
+                ret.append(dict(
+                    item_links=relation.dst_item_pid,
+                    item_title=record.get('item_title'),
+                    value=relation.reference_type
+                ))
+            else:
+                ret.append(dict(
+                    item_links=relation.dst_item_pid,
+                    item_title=relation.dst_item_pid,
+                    value=relation.dst_item_pid
+                ))
         return ret
 
     @staticmethod

@@ -443,6 +443,21 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
     
   };
 
+ // add url link button
+  $rootScope.add_url_link = function() {
+    let sub_data = {
+      item_id: 0,
+      item_title: "",
+      sele_id: ""
+    };
+
+    sub_data.sele_id = $('#outside-url').val();
+    sub_data.item_id = $('#outside-url').val();
+    sub_data.item_title = $('#outside-url').val();
+    $scope.link_item_list.push(sub_data);
+    $('#outside-url').val("")
+  };
+
 //   add ex_item_link
   $scope.add_ex_link = function (data) {
     let item_data = {

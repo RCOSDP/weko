@@ -208,8 +208,7 @@ def search():
                 err = item_link.update(list(session.get("item_link_info")))
 
         except Exception as e:
-            import traceback
-            traceback.print_exc()
+            current_app.logger.error(e)
 
         return render_template(
             "weko_workflow/activity_detail.html",

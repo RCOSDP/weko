@@ -25,6 +25,43 @@ def test_search(i18n_app, users, db_register, index_style):
         with patch("flask.templating._render", return_value=""):
             assert search()==""
 
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_views.py::test_search_2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_search_2(i18n_app, users, db_register, index_style):
+    from mock import MagicMock
+
+    def get_activity_index_search_test_data(activity_id=None):
+        dd = {}
+        mm = MagicMock()
+        step_item_login_url = None
+        return [mm,dd,dd,dd,dd,dd,dd,step_item_login_url,dd,dd,dd,dd,dd]
+
+    def get_main_record_detail_test_data(arg1, arg2):
+        return None
+
+    def get_by_object_test_data(pid_type=None, object_type=None, object_uuid=None):
+        return None
+
+    test_data = MagicMock()
+    test_data.get_activity_index_search = get_activity_index_search_test_data
+    test_data.get_by_object = get_by_object_test_data
+    session_test_data = {
+        "existing_item_link_in_progress": True,
+        "item_link_info": [{}]
+    }
+    
+    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        with patch("flask.templating._render", return_value=""):
+            with patch("weko_workflow.api.WorkActivity", return_value=test_data):
+                with patch("weko_workflow.views.get_main_record_detail", return_value={"records":""}):
+                    with patch("weko_search_ui.views.session", return_value=session_test_data):
+                        with patch("weko_search_ui.views.PersistentIdentifier", return_value=test_data):
+                            with i18n_app.test_client() as client:
+                                client.post(
+                                    url_for('weko_search_ui.search'),
+                                    query_string={'item_link': 'activity_id'},
+                                )
+                                assert search()==""
+
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_views.py::test_search_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_search_acl_guest(app,client,db_register2,index_style,users,db_register):
     url = url_for("weko_search_ui.search",_external=True)
