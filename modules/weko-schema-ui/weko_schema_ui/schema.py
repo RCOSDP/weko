@@ -963,6 +963,19 @@ class SchemaTree:
                 atr_vm_item['resourceuri'] = current_app.config[
                     'RESOURCE_TYPE_URI'][new_type]
 
+        def replace_resource_type_for_jpcoar_v2(atr_vm_item):
+            # current_app.logger.debug('atr_vm_item:{0}'.format(atr_vm_item))
+            # atr_vm_item:{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}
+            if 'resourcetype' in atr_vm_item and \
+                    'resourceuri' in atr_vm_item and \
+                    atr_vm_item['resourcetype'] in current_app.config[
+                        'WEKO_SCHEMA_JPCOAR_V2_RESOURCE_TYPE_REPLACE']:
+                new_type = current_app.config[
+                    'WEKO_SCHEMA_JPCOAR_V2_RESOURCE_TYPE_REPLACE'][atr_vm_item['resourcetype']]
+                atr_vm_item['resourcetype'] = new_type
+                atr_vm_item['resourceuri'] = current_app.config[
+                    'RESOURCE_TYPE_URI'][new_type]
+
         def replace_nameIdentifierScheme_for_jpcoar_v1(atr_vm_item):
             if 'nameIdentifiers' in atr_vm_item:
                 for idx,val in enumerate(atr_vm_item['nameIdentifiers']):
@@ -1029,6 +1042,7 @@ class SchemaTree:
                                 replace_nameIdentifierScheme_for_jpcoar_v1(atr_vm_item)
                             if self._schema_name == current_app.config[
                                     'WEKO_SCHEMA_JPCOAR_V2_SCHEMA_NAME']:
+                                replace_resource_type_for_jpcoar_v2(atr_vm_item)
                                 replace_nameIdentifierScheme_for_jpcoar_v2(atr_vm_item)
                             vlst_child = get_mapping_value(mpdic, atr_vm_item,
                                                            key_item_parent,

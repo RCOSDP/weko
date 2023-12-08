@@ -120,12 +120,16 @@ WEKO_SCHEMA_JPCOAR_V1_RESOURCE_TYPE_REPLACE = {
     'research protocol': 'other',
     'source code':'software',
     'transcription': 'other',
+}
+"""Resource type replace list for jpcoar v1.0"""
+
+WEKO_SCHEMA_JPCOAR_V2_RESOURCE_TYPE_REPLACE={
     'periodical':'journal',
     'interview':'other',
     'internal report':'other',
     'report part':'other',
 }
-"""Resource type replace list for jpcoar v1.0"""
+"""Resource type replace list for jpcoar v2.0"""
 
 
 WEKO_SCHEMA_JPCOAR_V1_NAMEIDSCHEME_REPLACE = {'e-Rad_Researcher':'e-Rad'}
