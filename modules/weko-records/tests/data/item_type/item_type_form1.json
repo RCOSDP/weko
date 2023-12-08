@@ -186,29 +186,65 @@
 
       },
       {
-        "key":"item_test5_creator[].creatorName",
-        "type":"text",
+        "key":"item_test5_creator[].creatorNames",
+        "items":[
+          {
+            "key":"item_test5_creator[].creatorNames[].creatorName",
+            "type":"text",
+            "title": "姓名",
+            "title_i18n": {"en": "Name","ja": "姓名"},
+            "title_i18n_temp": {"en": "Name","ja": "姓名"}
+          },
+          {
+            "key":"item_test5_creator[].creatorNames[].creatorNameLang",
+            "type":"text",
+            "title": "姓名",
+            "title_i18n": {"en": "Name","ja": "姓名言語"},
+            "title_i18n_temp": {"en": "Name","ja": "姓名言語"}
+          }
+        ],
         "title":"creator_name",
         "title_i18n":{"en":"Creator Name","ja":"作成者氏名"},
         "title_i18n_temp":{"en":"Creator Name","ja":"作成者氏名"},
         "isShowList":true
       },
       {
-        "key":"item_test5_creator[].familyName",
-        "type":"text",
-        "title":"family_name",
-        "title_i18n":{"en":"Creator Name2","ja":"作成者氏名2"},
-        "title_i18n_temp":{"en":"Creator Name2","ja":"作成者氏名2"},
-        "isShowList":true
+        "key":"item_test5_creator[].familyNames",
+        "items":[
+          {
+            "key":"item_test5_creator[].familyNames[].familyName",
+            "type":"text",
+            "title":"family_name",
+            "title_i18n":{"en":"Creator Name","ja":"作成者性2"},
+            "title_i18n_temp":{"en":"Creator Name","ja":"作成者性2"}
+          },
+          {
+            "key":"item_test5_creator[].familyNames[].familyNameLang",
+            "type":"text",
+            "title":"family_name",
+            "title_i18n":{"en":"Creator Name","ja":"作成者性言語2"},
+            "title_i18n_temp":{"en":"Creator Name","ja":"作成者言語2"}
+          }
+        ]
       },
       {
-        "key":"item_test5_creator[].givenName",
-        "type":"text",
-        "title":"given_name",
-        "title_i18n":{"en":"Creator Name3","ja":"作成者氏名3"},
-        "title_i18n_temp":{"en":"Creator Name3","ja":"作成者氏名3"},
-        "isShowList":true,
-        "isSpecifyNewline":true
+        "key":"item_test5_creator[].givenNames",
+        "items":[
+          {
+            "key":"item_test5_creator[].givenNames[].givenName",
+            "type":"text",
+            "title":"family_name",
+            "title_i18n":{"en":"Creator Name","ja":"作成者名2"},
+            "title_i18n_temp":{"en":"Creator Name","ja":"作成者名2"}
+          },
+          {
+            "key":"item_test5_creator[].givenNames[].givenNameLang",
+            "type":"text",
+            "title":"family_name",
+            "title_i18n":{"en":"Creator Name","ja":"作成者名言語2"},
+            "title_i18n_temp":{"en":"Creator Name","ja":"作成者名言語2"}
+          }
+        ]
       },
       {
         "key":"item_test5_creator[].nameIdentifierURI",
@@ -224,12 +260,105 @@
     "title_i18n":{"en":"Creator","ja":"製作者"}
   },
   {
+    "key":"item_test5_creator2",
+    "items":[
+      {
+        "key":"item_test5_creator2[].creatorMails.creatorMail",
+        "type":"text",
+        "title":"creator_mail",
+        "title_i18n":{"en":"Creator Mail","ja":"製作者メール"},
+        "title_i18n_temp":{"en":"Creator Mail","ja":"製作者メール"}
+
+      },
+      {
+        "key":"item_test5_creator2[].creatorNames",
+        "items":[
+          {
+            "key":"item_test5_creator2[].creatorNames[].creatorName",
+            "type":"text",
+            "title": "姓名",
+            "title_i18n": {"en": "Name","ja": "姓名"},
+            "title_i18n_temp": {"en": "Name","ja": "姓名"}
+          },
+          {
+            "key":"item_test5_creator2[].creatorNames[].creatorNameLang",
+            "type":"text",
+            "title": "姓名",
+            "title_i18n": {"en": "Name","ja": "姓名言語"},
+            "title_i18n_temp": {"en": "Name","ja": "姓名言語"}
+          }
+        ],
+        "title":"creator_name",
+        "title_i18n":{"en":"Creator Name","ja":"作成者氏名"},
+        "title_i18n_temp":{"en":"Creator Name","ja":"作成者氏名"},
+        "isShowList":true
+      },
+      {
+        "key":"item_test5_creator2[].familyNames",
+        "items":[
+          {
+            "key":"item_test5_creator2[].familyNames[].familyName",
+            "type":"text",
+            "title":"family_name",
+            "title_i18n":{"en":"Creator Name2","ja":"作成者性2"},
+            "title_i18n_temp":{"en":"Creator Name2","ja":"作成者性2"}
+          },
+          {
+            "key":"item_test5_creator2[].familyNames[].familyNameLang",
+            "type":"text",
+            "title":"family_name",
+            "title_i18n":{"en":"Creator Name2","ja":"作成者性言語2"},
+            "title_i18n_temp":{"en":"Creator Name2","ja":"作成者言語2"}
+          }
+        ]
+      },
+      {
+        "key":"item_test5_creator2[].givenNames",
+        "items":[
+          {
+            "key":"item_test5_creator2[].givenNames[].givenName",
+            "type":"text",
+            "title":"family_name",
+            "title_i18n":{"en":"Creator Name2","ja":"作成者名2"},
+            "title_i18n_temp":{"en":"Creator Name2","ja":"作成者名2"}
+          },
+          {
+            "key":"item_test5_creator2[].givenNames[].givenNameLang",
+            "type":"text",
+            "title":"family_name",
+            "title_i18n":{"en":"Creator Name2","ja":"作成者名言語2"},
+            "title_i18n_temp":{"en":"Creator Name2","ja":"作成者名言語2"}
+          }
+        ]
+      },
+      {
+        "key":"item_test5_creator2[].nameIdentifierURI",
+        "type":"text",
+        "title":"name_identifier_URI",
+        "title_i18n":{"en":"Creator Name4","ja":"作成者氏名4"},
+        "title_i18n_temp":{"en":"Creator Name4","ja":"作成者氏名4"},
+        "isShowList":true
+      }
+    ],
+    "stype":{"add":"btn-success"},
+    "title":"Creator2",
+    "title_i18n":{"en":"Creator2","ja":"製作者2"}
+  },
+  {
     "key":"item_test6_bibliographic",
     "items":[
       {
-        "key":"item_test6_bibliographic[].bibliographic_titles",
-        "type":"text",
-        "isShowList":true
+        "key":"item_test6_bibliographic.bibliographic_titles",
+        "items":[
+          {
+            "key":"item_test6_bibliographic.bibliographic_titles[].bibliographic_title",
+            "type":"text"
+          },
+          {
+            "key":"item_test6_bibliographic.bibliographic_titles[].bibliographic_titleLang",
+            "type":"text"
+          }
+        ]
       }
     ],
     "stype":{"add":"btn-success"},
