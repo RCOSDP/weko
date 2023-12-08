@@ -95,6 +95,8 @@ require([
           let uri = res.data.redirect.replace('api/', '')
           document.location.href = uri;
         } else {
+          $('[role="alert"]').css('display', 'inline-block');
+          $('[role="alert"]').text(res.msg);
           if ("activity_id" in res) {
             url = "/workflow/activity/detail/"+res.activity_id;
             if (community) {

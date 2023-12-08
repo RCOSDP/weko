@@ -63,12 +63,28 @@
                             </a>
                         </span>
                     </div>
+                    
+                    <br>
+
+                    <input id="edit_message" type="hidden"
+                    value="{{_('The workflow is being edited.')}}" />
+                    <input id="delete_message" type="hidden"
+                    value="{{_('The item cannot be deleted because it has a DOI.')}}" />
+                    <input id="change_publish_message" type="hidden"
+                    value="{{_('You cannot keep an item private because it has a DOI.')}}" />
+                    <div class="row row-4">
+                        <p class="alert alert-danger alert-dismissible text-middle collapse" role="alert"
+                            style="min-width: 330px;">
+                            <button type="button" class="close" id="btn_close_alert" aria-label="Close"><span
+                                aria-hidden="true">&times;</span></button>
+                            {{_('The workflow is being edited.')}}
+                        </p>
+                    </div>
                 </div>
                 
             </div>
         </div>
     </div>
-
     {%- if rights_values -%}
     <button class="term-condtion-modal btn btn-primary" id="btn_analysis" data-modal-id="#show_rights_info"
         style="text-align:center;width:55%;">
