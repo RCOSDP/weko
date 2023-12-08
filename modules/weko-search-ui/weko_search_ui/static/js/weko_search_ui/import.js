@@ -1091,7 +1091,6 @@ class ResultComponent extends React.Component {
     return (
       <div className="result_container row">
         <div className="col-md-12 text-align-right">
-          <p>test</p>
           <button
             className="btn btn-primary"
             onClick={this.handleDownload}
