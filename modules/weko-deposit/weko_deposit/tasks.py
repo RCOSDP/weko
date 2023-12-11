@@ -51,7 +51,7 @@ ORIGIN_LABEL = "origin"
 TITLE_LIST = ["record_id", "author_ids", "message"]
 
 @shared_task(ignore_result=True)
-def update_items_by_authorInfo(user_id, origin_pkid_list, origin_id_list, target, update_gather_flg=False):
+def update_items_by_authorInfo(user_id, target, origin_pkid_list=[], origin_id_list=[], update_gather_flg=False):    
     """Update item by authorInfo."""
     current_app.logger.debug('item update task is running.')
     process_counter = {
@@ -440,7 +440,7 @@ def update_items_by_authorInfo(user_id, origin_pkid_list, origin_id_list, target
 
 def get_origin_data(origin_pkid_list):
     author_data = Authors.query.filter(Authors.id.in_(origin_pkid_list)).all()
-    return [json.loads(a.json) for a in author_data]
+    return [a.json for a in author_data]
 
 def update_db_es_data(origin_pkid_list, origin_id_list):
     try:
