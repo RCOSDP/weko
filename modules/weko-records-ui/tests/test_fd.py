@@ -1,8 +1,9 @@
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_fd.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 
-from weko_records_ui.fd import prepare_response,file_download_onetime,_download_file,add_signals_info,weko_view_method,file_ui,file_preview_ui,file_download_ui
+from weko_records.models import ItemTypeMapping
+from weko_records_ui.fd import *
 from weko_records_ui.config import WEKO_RECORDS_UI_DETAIL_TEMPLATE
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, PropertyMock
 from invenio_theme.config import THEME_ERROR_TEMPLATE 
 import pytest
 import io
@@ -13,6 +14,10 @@ from invenio_accounts.testutils import login_user_via_session
 from mock import patch
 from invenio_records_files.utils import record_file_factory
 from werkzeug.exceptions import NotFound
+import botocore
+
+from weko_records_ui.fd import _download_file
+from weko_records_ui.fd import _download_multipartfile
 
 # def weko_view_method(pid, record, template=None, **kwargs):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_fd.py::test_weko_view_method -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -128,10 +133,44 @@ def test_file_ui(app,records,itemtypes,users):
     #                 pass
 
         with patch("weko_records_ui.fd.file_permission_factory", return_value=data1):
-            # abort(403) coverage
+            with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+                # abort(403) coverage
+                try:
+                    file_ui(recid, record)
+                except:
+                    pass
+                
+            user = MagicMock()
+            user.is_authenticated = False
+            with patch("flask_login.utils._get_user", return_value=user):
+                with patch("weko_records_ui.fd._redirect_method", return_value = "True"):
+                    # redirect_method
+                    res = file_ui(recid, record)
+                    assert res == "True"
+    
+    fileobj = MagicMock()
+    fileobj.file_preview_able = MagicMock(return_value = False)
+    type(fileobj).obj = None
+    with patch("weko_records_ui.fd.file_permission_factory", return_value=data3):
+        with patch("weko_records_ui.fd.record_file_factory", return_value = fileobj):
+            with patch("weko_records_ui.fd.check_and_create_usage_report", side_effect = SQLAlchemyError()):
+                # SQLAlchemyError
+                try:
+                    res = file_ui(recid, record)
+                except Exception as e:
+                    assert True
+                    
+            # BaseException
+            with patch("weko_records_ui.fd.check_and_create_usage_report", side_effect = BaseException()):
+                try:
+                    res = file_ui(recid, record)
+                except Exception as e:
+                    assert True
+                
+            # Cannot preview file
             try:
-                file_ui(data2, data3)
-            except:
+                file_ui(recid, record, is_preview=True)
+            except Exception as e:
                 pass
 
 
@@ -210,3 +249,117 @@ def test_file_download_onetime(app, records, itemtypes, users, db_fileonetimedow
 
                     with patch("weko_records_ui.fd.record_file_factory", return_value=False):
                         assert file_download_onetime(recid,record,record_file_factory)==""
+                        
+def test_multipartfile_download_ui(app, client, records, itemtypes, users):
+    with patch("weko_records_ui.fd.multipartfile_ui", return_value="True"):
+        res = client.get(f"/record/1/multipartfiles/helloworld.pdf")
+        assert res.status_code == 400
+        
+        res = client.get(f"/record/1/multipartfiles/helloworld.pdf?partNumber=1")
+        assert res.status_code == 200
+
+def test_multipartfile_ui(app, client, records, users):
+    indexer, results = records
+    recid = results[0]["recid"]
+    record = results[0]["record"]
+    
+    
+    with patch("weko_records_ui.fd._download_multipartfile", return_value = "True"):
+        # with patch("weko_records_ui.fd.file_permission_factory", return_value=data1):
+        with patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
+            # 404
+            try:
+                res = client.get(f"/record/1/multipartfiles/sample.pdf?partNumber=1")
+            except:
+                assert True
+                
+            app.config.update(
+                FILES_REST_LOCATION_TYPE_LIST = [('local', 'local storage')]
+            )
+            
+            # 500
+            try:
+                res = client.get(f"/record/1/multipartfiles/helloworld.pdf?partNumber=1")
+            except:
+                assert True
+            app.config.update(
+                FILES_REST_LOCATION_TYPE_LIST = [('s3', 'Amazon S3')],
+            )
+                
+            # normal
+            with app.test_request_context():
+                res = multipartfile_ui(recid, record, "1")
+                assert res == "True"
+            
+        data1 = MagicMock()
+        data1.can = MagicMock(return_value = False)
+        
+        data2 = MagicMock()
+        data2.is_authenticated = MagicMock(return_value = False)
+        
+        data3 = MagicMock()
+        data3.can = MagicMock(return_value = True)
+        data3.obj = 1
+        
+        with app.test_request_context():
+            with patch("weko_records_ui.fd.file_permission_factory", return_value=data1):
+                with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+                    # abort(403) coverage
+                    try:
+                        multipartfile_ui(recid, record, "1")
+                    except:
+                        pass
+                
+                user = MagicMock()
+                user.is_authenticated = False
+                with patch("flask_login.utils._get_user", return_value=user):
+                    with patch("weko_records_ui.fd._redirect_method", return_value = "True"):
+                        # redirect 
+                        res = multipartfile_ui(recid, record, "1")
+                        assert res == "True"
+
+
+def test__download_multipartfile(app, db, client, records, itemtypes, users):
+    indexer, results = records
+    recid = results[0]["recid"]
+    record = results[0]["record"]
+    fileobj = record_file_factory(recid,record,"helloworld.pdf")
+    obj = fileobj.obj
+    
+    c = MagicMock()
+    body = botocore.response.StreamingBody(
+        io.BytesIO(obj.file.storage().open().read()),
+        fileobj.data.get("size")
+    )
+    with app.test_request_context():
+        with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+            with patch("invenio_s3.storage.S3FSFileStorage.get_s3_client", side_effect = lambda: "error"):
+                try:
+                    res = _download_multipartfile(fileobj, obj, record, "300", 1024)
+                except:
+                    assert True
+
+            with patch("invenio_s3.storage.S3FSFileStorage.get_s3_client", return_value = c):
+                res = MagicMock()
+                res.get = MagicMock(return_value = body)
+                c.get_object = MagicMock(return_value = res)
+                res = _download_multipartfile(fileobj, obj, record, "1", 10)
+                assert res.status_code == 200
+                
+                # last part
+                res = _download_multipartfile(fileobj, obj, record, "300", 1024)
+                assert res.status_code == 200
+                
+                # SQLAlchemyError
+                with patch("weko_records_ui.fd.check_and_create_usage_report", side_effect = SQLAlchemyError()):
+                    try:
+                        res = _download_multipartfile(fileobj, obj, record, "300", 1024)
+                    except Exception as e:
+                        assert True
+                    
+                # BaseException
+                with patch("weko_records_ui.fd.check_and_create_usage_report", side_effect = BaseException()):
+                    try:
+                        res = _download_multipartfile(fileobj, obj, record, "300", 1024)
+                    except Exception as e:
+                        assert True

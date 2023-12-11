@@ -208,5 +208,10 @@ WEKO_ITEMS_UI_RANKING_BUFFER = 100
 WEKO_ITEMS_UI_SEARCH_RANK_KEY_FILTER = ['']
 
 WEKO_ITEMS_UI_LARGE_FILE_UPLOAD_MAX_RETRY = 1
+""" Maximum number of upload retries(large file upload). """
+
 WEKO_ITEMS_UI_LARGE_FILE_DOWNLOAD_MAX_RETRY = 1
+""" Maximum number of download retries(large file download). """
+
 WEKO_ITEMS_UI_EXPORT_MAX_FILE_SIZE = 256 * 1024 * 1024 # 256MiB
+""" Maximum file size that can be exported. """

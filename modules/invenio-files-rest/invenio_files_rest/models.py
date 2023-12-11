@@ -1717,7 +1717,7 @@ class MultipartObject(db.Model, Timestamp):
         return self
 
     @ensure_completed()
-    def merge_parts(self, version_id=None, current_login_user_id=None, **kwargs):
+    def merge_parts(self, version_id=None, **kwargs):
         """Merge parts into object version."""
         self.file.update_checksum(**kwargs)
         with db.session.begin_nested():
@@ -1802,6 +1802,7 @@ class MultipartObject(db.Model, Timestamp):
     
     @classmethod
     def get_by_uploadId(cls, upload_id):
+        """Fetch a specific multipart object by upload_id. """
         q = cls.query.filter_by(
             upload_id = upload_id
         )
@@ -1809,6 +1810,7 @@ class MultipartObject(db.Model, Timestamp):
     
     @classmethod
     def get_by_fileId(cls, file_id):
+        """Fetch a specific multipart object by file_id. """
         q = cls.query.filter_by(
             file_id = file_id
         )
@@ -1901,6 +1903,7 @@ class Part(db.Model, Timestamp):
         
     @classmethod
     def get_by_upload_id_partNumber(cls, upload_id, part_number):
+        """Fetch a specific part by upload_id and part_number. """
         return cls.query.filter_by(
             upload_id = upload_id,
             part_number = part_number

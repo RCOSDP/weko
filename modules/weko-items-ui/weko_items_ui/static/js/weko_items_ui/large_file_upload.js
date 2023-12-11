@@ -42,7 +42,7 @@ async function multipartUpload(){
     const uploadStatus_p = $('p[name="upload_status"]')[0];
     const uploadId_p = $('p[name="upload_id"]')[0];
 
-    if(file == undefined){
+    if(file === undefined){
         $('button[id="upload_button"]').get(0).disabled = false
         $('input[id="upload_file_area"]').get(0).disabled = false
         showErrorMsg(errorMsgList.get(0).value)
@@ -75,7 +75,15 @@ async function multipartUpload(){
     let file_id;
     let uri;
     const xhr = new XMLHttpRequest();
-    if(uploadId == ""){
+
+    xhr.onerror = function(){
+        $('button[id="upload_button"]').get(0).disabled = false
+        $('input[id="upload_file_area"]').get(0).disabled = false
+        showErrorMsg(errorMsgList.get(5).value)
+        uploadStatus_p.innerText = "Error"
+    }
+
+    if(uploadId === ""){
         xhr.open("POST", "https://" + host + "/api/largeFileUpload/createFileInstance?size=" + file.size, false);
         xhr.send();
 
@@ -118,23 +126,11 @@ async function multipartUpload(){
     }else{
         xhr.open("POST", "https://" + host + "/api/largeFileUpload/checkMultipartObjectInstance?upload_id=" + uploadId, false);
         xhr.send();
-        
-        if(xhr.status == 400){
+
+        if(xhr.status != 200){
             $('button[id="upload_button"]').get(0).disabled = false
             $('input[id="upload_file_area"]').get(0).disabled = false
-            showErrorMsg(errorMsgList.get(1).value)
-            uploadStatus_p.innerText = "Error"
-            return;
-        }else if(xhr.status == 404){
-            $('button[id="upload_button"]').get(0).disabled = false
-            $('input[id="upload_file_area"]').get(0).disabled = false
-            showErrorMsg(errorMsgList.get(2).value)
-            uploadStatus_p.innerText = "Error"
-            return;
-        }else if(xhr.status != 200){
-            $('button[id="upload_button"]').get(0).disabled = false
-            $('input[id="upload_file_area"]').get(0).disabled = false
-            showErrorMsg(errorMsgList.get(5).value)
+            showErrorMsg(xhr.responseText)
             uploadStatus_p.innerText = "Error"
             return;
         }
@@ -149,7 +145,7 @@ async function multipartUpload(){
         file_id = JSON.parse(xhr.responseText)["file_id"]
     }
 
-    xhr.open("POST", "https://" + host + "/api/largeFileUpload/lockRedis?upload_id=" + uploadId, false);
+    xhr.open("POST", "https://" + host + "/api/largeFileUpload/lock_upload_id?upload_id=" + uploadId, false);
     xhr.send();
 
     if(xhr.status != 200){
@@ -160,10 +156,23 @@ async function multipartUpload(){
         return;
     }
 
+    xhr.onerror = function(){
+        console.log("Error");
+        $('button[id="upload_button"]').get(0).disabled = false
+        $('input[id="upload_file_area"]').get(0).disabled = false
+        showErrorMsg(errorMsgList.get(5).value)
+        for(const x of xhrList){
+            x.abort();
+        }
+        uploadStatus_p.innerText = "Error"
+        xhr.open("POST", "https://" + host + "/api/largeFileUpload/unlock_upload_id?upload_id=" + uploadId, false);
+        xhr.send();
+    }
+
     uri = "/" + file_id.slice(0,2) + "/" + file_id.slice(2,4) + "/" + file_id.slice(4) + "/data";
 
     let numOfPart = 0;
-    if(file.size % BUFFER_SIZE == 0){
+    if(file.size % BUFFER_SIZE === 0){
         numOfPart = parseInt(file.size / BUFFER_SIZE);
     }else{
         numOfPart = parseInt(file.size / BUFFER_SIZE) + 1; 
@@ -192,12 +201,12 @@ async function multipartUpload(){
                 $('input[id="upload_file_area"]').get(0).disabled = false
                 showErrorMsg(errorMsgList.get(5).value)
                 uploadStatus_p.innerText = "Error"
-                xhr.open("POST", "https://" + host + "/api/largeFileUpload/unlockRedis?upload_id=" + uploadId, false);
+                xhr.open("POST", "https://" + host + "/api/largeFileUpload/unlock_upload_id?upload_id=" + uploadId, false);
                 xhr.send();
                 return;
             }
 
-            xhr.open('POST', "https://" + host + "/api/largeFileUpload/completeFunc?upload_id=" + uploadId, false);
+            xhr.open('POST', "https://" + host + "/api/largeFileUpload/complete_multipart?upload_id=" + uploadId, false);
             xhr.send();
 
             if(xhr.status != 200){
@@ -205,14 +214,14 @@ async function multipartUpload(){
                 $('input[id="upload_file_area"]').get(0).disabled = false
                 showErrorMsg(errorMsgList.get(5).value)
                 uploadStatus_p.innerText = "Error"
-                xhr.open("POST", "https://" + host + "/api/largeFileUpload/unlockRedis?upload_id=" + uploadId, false);
+                xhr.open("POST", "https://" + host + "/api/largeFileUpload/unlock_upload_id?upload_id=" + uploadId, false);
                 xhr.send();
                 return;
             }
 
             $('button[id="upload_button"]').get(0).disabled = false
             $('input[id="upload_file_area"]').get(0).disabled = false
-            xhr.open("POST", "https://" + host + "/api/largeFileUpload/unlockRedis?upload_id=" + uploadId, false);
+            xhr.open("POST", "https://" + host + "/api/largeFileUpload/unlock_upload_id?upload_id=" + uploadId, false);
             xhr.send();
             uploadStatus_p.innerText = "Complete"
         }
@@ -232,7 +241,7 @@ async function multipartUpload(){
                     getHash(undefined, buf).then(hash => {
                         bodyHash = hash
                         const xhr1 = new XMLHttpRequest();
-                        xhr1.open("GET", "https://" + host + "/api/largeFileUpload/part?partNumber=" + (partNum+1) +"&uploadId=" + uploadId, false);
+                        xhr1.open("GET", "https://" + host + "/api/largeFileUpload/part?part_number=" + (partNum+1) +"&upload_id=" + uploadId, false);
                         xhr1.send();
 
                         if(xhr1.status != 200){
@@ -243,18 +252,18 @@ async function multipartUpload(){
                                 x.abort();
                             }
                             uploadStatus_p.innerText = "Error"
-                            xhr.open("POST", "https://" + host + "/api/largeFileUpload/unlockRedis?upload_id=" + uploadId, false);
+                            xhr.open("POST", "https://" + host + "/api/largeFileUpload/unlock_upload_id?upload_id=" + uploadId, false);
                             xhr.send();
                             return;
                         }
 
-                        if(xhr1.responseText == ""){
+                        if(xhr1.responseText === ""){
                             xhr.open('PUT', "https://" + host + "/uploadPart" + object_name + "?partNumber=" + (partNum + 1) + "&uploadId=" + uploadId, true);
                             xhr.setRequestHeader('Content-type', contentType);
                             xhr.setRequestHeader("bodyHash", bodyHash);
                             xhr.send(partfile);
                         }else{
-                            if(xhr1.responseText == bodyHash){ 
+                            if(xhr1.responseText === bodyHash){ 
                                 uploadStatus_p.innerText = (parseInt((partNumber / numOfPart) * 100)).toString() + "%";
                                 if(partNumber < numOfPart - 1){
                                     partNumber += 1;
@@ -273,13 +282,31 @@ async function multipartUpload(){
                                     x.abort();
                                 }
                                 uploadStatus_p.innerText = "Error"
-                                xhr.open("POST", "https://" + host + "/api/largeFileUpload/unlockRedis?upload_id=" + uploadId, false);
+                                xhr.open("POST", "https://" + host + "/api/largeFileUpload/unlock_upload_id?upload_id=" + uploadId, false);
                                 xhr.send();
                             }
                         }
                     })
                 })
             };
+
+            xhr.onerror = function(){
+                if(retryCount < retry_count){
+                    retryCount += 1;
+                    uploadPart(object_name, currentNum);
+                }else{
+                    console.log("Error");
+                    $('button[id="upload_button"]').get(0).disabled = false
+                    $('input[id="upload_file_area"]').get(0).disabled = false
+                    showErrorMsg(errorMsgList.get(5).value)
+                    for(const x of xhrList){
+                        x.abort();
+                    }
+                    uploadStatus_p.innerText = "Error"
+                    xhr.open("POST", "https://" + host + "/api/largeFileUpload/unlock_upload_id?upload_id=" + uploadId, false);
+                    xhr.send();
+                }
+            }
 
             xhr.onreadystatechange = function(){
                 xhrStateList[indexNum] = xhr.readyState;
@@ -299,7 +326,7 @@ async function multipartUpload(){
                             x.abort();
                         }
                         uploadStatus_p.innerText = "Error"
-                        xhr.open("POST", "https://" + host + "/api/largeFileUpload/unlockRedis?upload_id=" + uploadId, false);
+                        xhr.open("POST", "https://" + host + "/api/largeFileUpload/unlock_upload_id?upload_id=" + uploadId, false);
                         xhr.send();
                     }
                 }else{
@@ -318,7 +345,7 @@ async function multipartUpload(){
                     compTag.append(partTag);
                     
                     const xhr2 = new XMLHttpRequest();
-                    xhr2.open("POST", "https://" + host + "/api/largeFileUpload/part?partNumber=" + (currentNum+1) + "&uploadId=" + uploadId + "&checkSum=" + bodyHash, false);
+                    xhr2.open("POST", "https://" + host + "/api/largeFileUpload/part?part_number=" + (currentNum+1) + "&upload_id=" + uploadId + "&check_sum=" + bodyHash, false);
                     xhr2.send();
 
                     if(xhr2.status != 200){
@@ -329,7 +356,7 @@ async function multipartUpload(){
                             x.abort();
                         }
                         uploadStatus_p.innerText = "Error"
-                        xhr.open("POST", "https://" + host + "/api/largeFileUpload/unlockRedis?upload_id=" + uploadId, false);
+                        xhr.open("POST", "https://" + host + "/api/largeFileUpload/unlock_upload_id?upload_id=" + uploadId, false);
                         xhr.send();
                         return;
                     }

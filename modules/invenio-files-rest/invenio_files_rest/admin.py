@@ -362,7 +362,7 @@ class MultipartObjectModelView(ModelView):
             
             # delete file instance and file
             if model.completed:
-                f.strage().delete()
+                f.storage().delete()
             f.delete()
         db.session.commit()
 

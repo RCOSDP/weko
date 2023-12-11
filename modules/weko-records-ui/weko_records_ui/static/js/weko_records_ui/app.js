@@ -200,16 +200,16 @@
                         } else {
                             permission += '"false"';
                         }
-                        if (ele.size < threshold_size){
+                        if (ele.size <= threshold_size){
                             txt_link = '<a class="billing-file-version"' + permission + selfLink + 'href="javascript:void(0);">' + filename + '</a>';
                         } else {
-                            txt_link = '<a class="billing-file-version"' + permission + selfLink + 'href="#" onclick="downloadFile(\'' + record_id + "','" + ele.key + "','" + response.size + "','" + chunk_size + "')\">" + filename + '</a>';
+                            txt_link = '<a class="billing-file-version"' + permission + selfLink + 'href="#" onclick="downloadFile(\'' + record_id + "','" + ele.key + "','" + ele.size + "','" + chunk_size + "', this)\">" + filename + '</a>';
                         }
                     } else {
-                        if (ele.size < threshold_size){
+                        if (ele.size <= threshold_size){
                             txt_link = '<a href="' + ele.links.self + '">' + filename + '</a>';
                         } else {
-                            txt_link = '<a href="#" onclick="downloadFile(\'' + record_id + "','" + ele.key + "','" + response.size + "','" + chunk_size + "')\">" + filename + '</a>';
+                            txt_link = '<a href="#" onclick="downloadFile(\'' + record_id + "','" + ele.key + "','" + ele.size + "','" + chunk_size + "', this)\">" + filename + '</a>';
                         }
                     }
 

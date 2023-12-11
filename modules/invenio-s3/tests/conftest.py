@@ -17,8 +17,9 @@ import pytest
 from flask import Flask, current_app
 from invenio_db import InvenioDB
 from invenio_db import db as db_
+from invenio_db.utils import drop_alembic_version_table
 from invenio_files_rest import InvenioFilesREST
-from invenio_files_rest.models import Location
+from invenio_files_rest.models import Bucket, Location
 from moto import mock_s3
 from sqlalchemy_utils.functions import create_database, database_exists
 
@@ -29,6 +30,8 @@ from invenio_s3 import InvenioS3, S3FSFileStorage
 def app_config(app_config):
     """Customize application configuration."""
     app_config['FILES_REST_STORAGE_FACTORY'] = 'invenio_s3:s3_storage_factory'
+    app_config['FILES_REST_LOCATION_TYPE_LIST'] = [('s3', 'Amazon S3')]
+    app_config['S3_REGION_NAME'] = "ap-tokyo-1"
     app_config['S3_ENDPOINT_URL'] = None
     app_config['S3_ACCCESS_KEY_ID'] = ''
     app_config['S3_SECRECT_ACCESS_KEY'] = ''
@@ -139,3 +142,38 @@ def get_md5():
         return "md5:{0}".format(m.hexdigest()) if prefix else m.hexdigest()
 
     return inner
+
+@pytest.yield_fixture()
+def dummy_location(db):
+    """File system location."""
+    tmppath = tempfile.mkdtemp()
+
+    loc = Location(
+        name='testloc',
+        uri=tmppath,
+        default=True
+    )
+    db.session.add(loc)
+    db.session.commit()
+
+    yield loc
+
+    shutil.rmtree(tmppath)
+
+@pytest.fixture()
+def bucket(db, dummy_location):
+    """File system location."""
+    b1 = Bucket.create()
+    db.session.commit()
+    return b1
+
+@pytest.yield_fixture()
+def db(base_app):
+    """Get setup database."""
+    if not database_exists(str(db_.engine.url)):
+        create_database(str(db_.engine.url))
+    db_.create_all()
+    yield db_
+    db_.session.remove()
+    db_.drop_all()
+    drop_alembic_version_table()

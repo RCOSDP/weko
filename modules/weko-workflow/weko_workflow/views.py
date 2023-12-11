@@ -1047,10 +1047,6 @@ def display_activity(activity_id="0"):
         term_and_condition_content=term_and_condition_content,
         user_profile=user_profile,
         form=form,
-        resume_chunk_size=current_app.config[
-            'FILES_REST_RESUME_CHUNK_SIZE'],
-        use_multipart_upload=current_app.config[
-            'FILES_REST_USE_MULTIPART_UPLOAD'],
         **ctx
     )
 
