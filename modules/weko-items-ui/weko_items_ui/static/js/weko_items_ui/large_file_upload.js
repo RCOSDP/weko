@@ -241,7 +241,7 @@ async function multipartUpload(){
                     getHash(undefined, buf).then(hash => {
                         bodyHash = hash
                         const xhr1 = new XMLHttpRequest();
-                        xhr1.open("GET", "https://" + host + "/api/largeFileUpload/part?partNumber=" + (partNum+1) +"&uploadId=" + uploadId, false);
+                        xhr1.open("GET", "https://" + host + "/api/largeFileUpload/part?part_number=" + (partNum+1) +"&upload_id=" + uploadId, false);
                         xhr1.send();
 
                         if(xhr1.status != 200){
@@ -345,7 +345,7 @@ async function multipartUpload(){
                     compTag.append(partTag);
                     
                     const xhr2 = new XMLHttpRequest();
-                    xhr2.open("POST", "https://" + host + "/api/largeFileUpload/part?partNumber=" + (currentNum+1) + "&uploadId=" + uploadId + "&checkSum=" + bodyHash, false);
+                    xhr2.open("POST", "https://" + host + "/api/largeFileUpload/part?part_number=" + (currentNum+1) + "&upload_id=" + uploadId + "&check_sum=" + bodyHash, false);
                     xhr2.send();
 
                     if(xhr2.status != 200){

@@ -9,15 +9,20 @@
 """Module test views."""
 
 from __future__ import absolute_import, print_function
+from datetime import timedelta
+import io
 
 import json
+import uuid
 import pytest
 from flask import url_for
 from mock import MagicMock, patch
 from six import BytesIO
+from invenio_files_rest.errors import MultipartExhausted
+from invenio_files_rest.views import ObjectResource
 from tests.testutils import BadBytesIO, login_user
 
-from invenio_files_rest.models import Bucket, MultipartObject, Part
+from invenio_files_rest.models import Bucket, FileInstance, MultipartObject, ObjectVersion, Part
 from invenio_files_rest.tasks import merge_multipartobject
 
 
@@ -572,3 +577,328 @@ def test_already_exhausted_input_stream(app, client, db, bucket, admin_user):
     #     input_stream=BytesIO(data),
     # )
     # assert resp.status_code == 500
+def assert_role(response,is_permission,status_code=403):
+    if is_permission:
+        assert response.status_code != status_code
+    else:
+        assert response.status_code == status_code
+        
+def test_lock_upload_id(app, client, multipart, users, admin_user, redis_connect):
+    # status 403
+    login_user(client, users[0])
+    res = client.post("/largeFileUpload/lock_upload_id")
+    assert_role(res, False)
+    
+    # mocker.patch("weko_admin.utils.RedisConnection.connection",return_value=redis_connect)
+    with patch("invenio_files_rest.views.RedisConnection.connection", return_value=redis_connect):
+        # status 200
+        login_user(client, admin_user)
+        res = client.post("/largeFileUpload/lock_upload_id?upload_id=" + str(multipart.upload_id))
+        assert res.status_code == 200
+        
+        # status 500
+        res = client.post("/largeFileUpload/lock_upload_id?upload_idabc")
+        assert res.status_code == 500
+        
+    m = MagicMock()
+    m.iter_keys = lambda: ["upload_id" + str(multipart.upload_id)]
+    
+    with patch("invenio_files_rest.views.RedisConnection.connection", return_value=m):
+        # status 400
+        res = client.post("/largeFileUpload/lock_upload_id?upload_id=" + str(multipart.upload_id))
+        assert res.status_code == 400
+        
+def test_unlock_upload_id(app, client, multipart, users, admin_user, redis_connect):
+    # status 403
+    login_user(client, users[0])
+    res = client.post("/largeFileUpload/unlock_upload_id")
+    assert_role(res, False)
+    
+    with patch("invenio_files_rest.views.RedisConnection.connection", return_value=redis_connect):
+        # status 200
+        login_user(client, admin_user)
+        res = client.post("/largeFileUpload/unlock_upload_id?upload_id=" + str(multipart.upload_id))
+        assert res.status_code == 200
+        
+        # status 500
+        res = client.post("/largeFileUpload/unlock_upload_id?upload_idabc")
+        assert res.status_code == 500
+
+def test_createFileInstance(client, bucket, users, admin_user):
+    # status 403
+    login_user(client, users[0])
+    res = client.post("/largeFileUpload/createFileInstance")
+    assert_role(res, False)
+    
+    # status 400
+    login_user(client, admin_user)
+    res = client.post("/largeFileUpload/createFileInstance?size=")
+    assert res.status_code == 400
+    
+    # status 200
+    res = client.post("/largeFileUpload/createFileInstance?size=" + str(10 * 1024 * 1024 * 1024))
+    assert res.status_code == 200
+    
+    # status 500
+    res = client.post("/largeFileUpload/createFileInstance?size=abc")
+    assert res.status_code == 500
+    
+def test_checkMultipartObjectInstance(app, client, bucket, db, multipart, users, admin_user):
+    # status 403
+    login_user(client, users[0])
+    res = client.post("/largeFileUpload/checkMultipartObjectInstance")
+    assert_role(res, False)
+    
+    # status 200
+    login_user(client, admin_user)
+    res = client.post("/largeFileUpload/checkMultipartObjectInstance?upload_id=" + str(multipart.upload_id))
+    assert res.status_code == 200
+    
+    with db.session.begin_nested():
+        multipart.created = multipart.created - timedelta(days=5)
+        db.session.add(multipart)
+    db.session.commit()
+    
+    # status 404
+    res = client.post("/largeFileUpload/checkMultipartObjectInstance?upload_id=" + str(multipart.upload_id))
+    assert res.status_code == 404
+    
+    with db.session.begin_nested():
+        multipart.completed = True
+        db.session.add(multipart)
+    db.session.commit()
+    
+    # status 400
+    res = client.post("/largeFileUpload/checkMultipartObjectInstance?upload_id=" + str(multipart.upload_id))
+    assert res.status_code == 400
+    
+    # status 500
+    res = client.post("/largeFileUpload/checkMultipartObjectInstance?upload_id=abc")
+    assert res.status_code == 500
+
+def test_createMultipartObject(app, client, bucket, db, multipart, users, admin_user):
+    # status 403
+    login_user(client, users[0])
+    res = client.post("/largeFileUpload/createMultipartObjectInstance")
+    assert res.status_code == 403
+    
+    login_user(client, admin_user)
+    
+    # status 400
+    res = client.post(f"/largeFileUpload/createMultipartObjectInstance?file_id={multipart.file_id}&key={multipart.key}&size={str(10 * 1024 * 1024 * 1024)}&chunk_size={str(100 * 1024 * 1024)}")
+    assert res.status_code == 400
+    
+    # status 200
+    uuid1 = str(uuid.uuid4())
+    res = client.post("/largeFileUpload/createFileInstance?size=" + str(10 * 1024 * 1024 * 1024))
+    uuid2 = res.get_data().decode()
+    
+    res = client.post(f"/largeFileUpload/createMultipartObjectInstance?upload_id={uuid1}&file_id={uuid2}&key={multipart.key}&size={str(10 * 1024 * 1024 * 1024)}&chunk_size={str(100 * 1024 * 1024)}")
+    assert res.status_code == 200
+    
+    # status 500
+    with patch("invenio_files_rest.views.db") as db:
+        db.session.add = MagicMock(side_effect = lambda: "error")
+        res = client.post(f"/largeFileUpload/createMultipartObjectInstance?upload_id={uuid1}&file_id={uuid2}&key={multipart.key}&size={str(10 * 1024 * 1024 * 1024)}&chunk_size={str(100 * 1024 * 1024)}")
+        assert res.status_code == 500
+        
+def test_get_or_create_part(app, client, bucket, db, multipart, users, admin_user):
+    # status 403
+    login_user(client, users[0])
+    res = client.get("/largeFileUpload/part")
+    assert res.status_code == 403
+    
+    # GET status 400
+    login_user(client, admin_user)
+    res = client.get(f"/largeFileUpload/part?upload_id={multipart.upload_id}")
+    assert res.status_code == 400
+    
+    # GET status 200
+    res = client.get(f"/largeFileUpload/part?upload_id={multipart.upload_id}&part_number=1&check_sum=abcdefg")
+    assert res.status_code == 200
+    
+    # POST status 200
+    res = client.post(f"/largeFileUpload/part?upload_id={multipart.upload_id}&part_number=1&check_sum=abcdefg")
+    assert res.status_code == 200
+    
+    # GET status 200
+    res = client.get(f"/largeFileUpload/part?upload_id={multipart.upload_id}&part_number=1&check_sum=abcdefg")
+    assert res.status_code == 200
+
+    # POST status 500
+    res = client.post(f"/largeFileUpload/part?upload_id={multipart.upload_id}&part_number=1&check_sum=abcdefg")
+    assert res.status_code == 500
+
+def test_complete_multipart(app, client, bucket, db, multipart, users, admin_user):
+    # status 403
+    login_user(client, users[0])
+    res = client.post("/largeFileUpload/complete_multipart")
+    assert res.status_code == 403
+    
+    # status 400
+    login_user(client, admin_user)
+    res = client.post("/largeFileUpload/complete_multipart")
+    assert res.status_code == 400
+    
+    # status 200
+    res = client.post(f"/largeFileUpload/complete_multipart?upload_id={multipart.upload_id}")
+    assert res.status_code == 200
+    
+    # status 500
+    res = client.post(f"/largeFileUpload/complete_multipart?upload_id=")
+    assert res.status_code == 500
+    
+def test_get_multipart_last_part_size(app, client, db, bucket, multipart, admin_user):
+    login_user(client, admin_user)
+    for i in range(0,6):
+        Part.create(multipart, i)
+    db.session.commit()
+    multipart.complete()
+    db.session.commit()
+    ObjectVersion.create(multipart.bucket, multipart.key, multipart.file_id)
+    db.session.commit()
+    res = client.get(f"/files/{str(multipart.bucket_id)}/{str(multipart.key)}?upload_id={multipart.upload_id}&last_part_size=True")
+    assert res.status_code == 200
+    
+def test_multipart_listparts(app, client, db, bucket, multipart, admin_user):
+    login_user(client, admin_user)
+    for i in range(0,6):
+        Part.create(multipart, i)
+    db.session.commit()
+    ObjectVersion.create(multipart.bucket, multipart.key, multipart.file_id)
+    db.session.commit()
+    res = client.get(f"/files/{str(multipart.bucket_id)}/{str(multipart.key)}?upload_id={multipart.upload_id}")
+    assert res.status_code == 200
+    
+def test_multipart_init(app, client, db, bucket, admin_user, redis_connect):
+    login_user(client, admin_user)
+    
+    # MissingQueryParameter('size')
+    res = client.post(f"/files/{str(bucket.id)}/sample?uploads")
+    assert res.status_code == 403
+    
+    # MissingQueryParameter('part_size')
+    res = client.post(f"/files/{str(bucket.id)}/sample?uploads&size=100")
+    assert res.status_code == 403
+    
+    # normal
+    with patch("invenio_files_rest.views.RedisConnection.connection", return_value=redis_connect):
+        res = client.post(f"/files/{str(bucket.id)}/sample?uploads&size=100&part_size=10")
+        assert res.status_code == 200
+        
+def test_multipart_uploadpart1(app, client, db, bucket, multipart, admin_user, redis_connect):
+    s = MagicMock()
+    login_user(client, admin_user)
+    
+    with patch("invenio_files_rest.current_files_rest.multipart_partfactory", return_value = (0, 1, s, None, None, None)):
+        
+        res = client.put(f"/files/{str(bucket.id)}/{multipart.key}?upload_id={multipart.upload_id}")
+        assert res.status_code == 200
+        
+    with patch("invenio_files_rest.current_files_rest.multipart_partfactory", return_value = (10, 1, s, None, None, None)):
+        
+        # error MultipartInvalidChunkSize
+        res = client.put(f"/files/{str(bucket.id)}/{multipart.key}?upload_id={multipart.upload_id}")
+        res.status_code == 403
+        
+def test_multipart_uploadpart2(app, client, db, bucket, multipart, admin_user, redis_connect):
+    s = MagicMock()
+    login_user(client, admin_user)
+    with patch("invenio_files_rest.current_files_rest.multipart_partfactory", return_value = (20, 1, s, None, None, None)):
+        with patch("invenio_files_rest.views.RedisConnection.connection", return_value=redis_connect):
+            
+            # error MultipartExhausted
+            res = client.put(f"/files/{str(bucket.id)}/{multipart.key}?upload_id={multipart.upload_id}")
+            res.status_code == 400
+        
+            redis_connect.put(
+                    "upload_id" + str(multipart.upload_id),
+                    b"lock"
+                    )
+            
+            s.read = MagicMock(side_effect = lambda: "error")
+            
+            # error Exception
+            res = client.put(f"/files/{str(bucket.id)}/{multipart.key}?upload_id={multipart.upload_id}")
+            res.status_code == 403
+            
+def test_multipart_uploadpart3(app, client, db, bucket, multipart, admin_user, redis_connect):
+    s = MagicMock()
+    login_user(client, admin_user)
+    with patch("invenio_files_rest.current_files_rest.multipart_partfactory", return_value = (20, 1, s, None, None, None)):
+        with patch("invenio_files_rest.views.RedisConnection.connection", return_value=redis_connect):
+
+            s.read = MagicMock(return_value = io.BytesIO(b"abcdefg"))
+            
+            with patch("invenio_files_rest.views.get_hash", return_value="hash"):
+                # normal
+                res = client.put(f"/files/{str(bucket.id)}/{multipart.key}?upload_id={multipart.upload_id}")
+                res.status_code == 200
+    
+        
+def test_multipart_complete(app, client, db, bucket, multipart, admin_user, redis_connect):
+    login_user(client, admin_user)
+    for i in range(0,6):
+        Part.create(multipart, i)
+    db.session.commit()
+    with patch("invenio_files_rest.views.RedisConnection.connection", return_value=redis_connect):
+        res = client.post(f"/files/{str(bucket.id)}/{multipart.key}?upload_id={multipart.upload_id}")
+        assert res.status_code == 200
+        
+def test_multipart_delete(client, db, bucket, multipart, admin_user):
+    login_user(client, admin_user)
+    for i in range(0,6):
+        Part.create(multipart, i)
+    db.session.commit()
+    res = client.delete(f"/files/{str(bucket.id)}/{multipart.key}?upload_id={multipart.upload_id}")
+    assert res.status_code == 200
+
+def test_ObjectResource_get_with_parameter(client, db, bucket, multipart, objects, admin_user, multipart_url):
+    login_user(client, admin_user)
+    for i in range(0,6):
+        Part.create(multipart, i)
+    db.session.commit()
+    
+    res = client.get(f"/files/{str(multipart.bucket_id)}/{str(multipart.key)}?upload_id={multipart.upload_id}&last_part_size=True")
+    assert res.status_code == 200
+    
+    res = client.get(f"/files/{str(multipart.bucket_id)}/{str(multipart.key)}?upload_id={multipart.upload_id}")
+    assert res.status_code == 200
+            
+def test_ObjectResource_get_without_parameter(client, db, bucket, multipart, objects, admin_user, multipart_url):
+    login_user(client, admin_user)
+    for i in range(0,6):
+        Part.create(multipart, i)
+    db.session.commit()
+    
+    multipart.complete()
+    db.session.commit()
+    
+    with patch("invenio_files_rest.views.ObjectResource.get_object", return_value = objects[0]):
+        with patch("invenio_files_rest.views.ObjectResource.send_object", return_value = True):
+            res = client.get(f"/files/{str(multipart.bucket_id)}/{str(multipart.key)}")
+            assert res.status_code == 200
+            
+def test_ObjectResource_post_abort(client, db, bucket, multipart, admin_user):
+    login_user(client, admin_user)
+    
+    res = client.post(f"/files/{str(multipart.bucket_id)}/{str(multipart.key)}")
+    assert res.status_code == 403
+    
+    with patch("invenio_files_rest.views.ObjectResource.multipart_init", side_effect = lambda: "error"):
+        res = client.post(f"/files/{str(multipart.bucket_id)}/{str(multipart.key)}?uploads")
+        assert res.status_code == 403
+        
+def test_ObjectResource_put_abort(client, multipart, admin_user):
+    login_user(client, admin_user)
+    
+    with patch("invenio_files_rest.views.ObjectResource.multipart_uploadpart", side_effect = lambda: "error"):
+        res = client.put(f"/files/{str(multipart.bucket_id)}/{str(multipart.key)}?upload_id={multipart.upload_id}")
+        assert res.status_code == 403
+
+def test_ObjectResource_delete(client, db, bucket, multipart, objects, admin_user):
+    login_user(client, admin_user)
+    
+    with patch("invenio_files_rest.views.ObjectResource.get_object", return_value = objects[0]):
+        res = client.delete(f"/files/{str(multipart.bucket_id)}/{str(multipart.key)}?version_id={objects[0].version_id}")
+        assert res.status_code == 204

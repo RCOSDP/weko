@@ -1057,7 +1057,8 @@ def handle_check_exist_record(list_record) -> list:
 
             if item.get("upload_id"):
                 all_size = 0
-                bucket = RecordsBuckets.query.filter_by(record_id=PersistentIdentifier.query.filter_by(pid_type="recid", pid_value=item["id"]).first().object_uuid).one_or_none().bucket
+                p = PersistentIdentifier.query.filter_by(pid_type="recid", pid_value=item["id"]).first()
+                bucket = RecordsBuckets.query.filter_by(record_id = p.object_uuid).one_or_none().bucket 
                 for i, id in enumerate(item.get("upload_id")):
                     if id != "" and item.get("file_path")[i] != "": # if 'file_path' exist
                         errors.append(_('file_path must be empty'))
@@ -1083,10 +1084,41 @@ def handle_check_exist_record(list_record) -> list:
                         if id != '':
                             errors.append(_('uploadId is invalid format'))
                             
-                if all_size > bucket.quota_size:
+                if bucket != None and all_size > bucket.quota_size:
                     errors.append(_('Total file size exceeds bucket size'))
                     
         else:
+            if item.get("upload_id"):
+                all_size = 0
+                for i, id in enumerate(item.get("upload_id")):
+                    if id != "" and item.get("file_path")[i] != "": # if 'file_path' exist
+                        errors.append(_('file_path must be empty'))
+                        
+                    if is_valid_uuid(id): # if 'id' is valid
+                        if not item.get("metadata")[file_meta_id][i].get("format") in mimetypes.types_map.values(): # If 'format' is in the correct format
+                            errors.append(_('Please set the file format correctly'))
+                            
+                        multipartObject = MultipartObject.get_by_uploadId(id)
+                        if multipartObject:
+                            if not (multipartObject.completed and multipartObject.bucket_id == None): # f upload_id is not completed or is already linked to an item
+                                errors.append(_('specified uploadId not completed or already linked to the item'))
+                                
+                            if not multipartObject.file.uri.startswith(Location.get_default().uri): # If different from item location
+                                errors.append(_('Files and items have different locations '))
+                            
+                            if not errors:
+                                all_size += multipartObject.file.size
+                                
+                        else:
+                            errors.append(_('specified uploadId is not found'))
+                            
+                    else:
+                        if id != '':
+                            errors.append(_('uploadId is invalid format'))
+                            
+                if all_size > current_app.config.get("WEKO_BUCKET_QUOTA_SIZE"):
+                    errors.append(_('Total file size exceeds bucket size'))
+                    
             item["id"] = None
             item["status"]="new"
         if errors:
@@ -1176,6 +1208,11 @@ def up_load_file(record, root_path, deposit, allow_upload_file_content, old_file
         old_files      -- {list} List of ObjectVersion in current bucket.
 
     """
+    # print("\033[32m", "record", record, "\033[0m")
+    # print()
+    # print("\033[32m", "deposit", deposit, "\033[0m")
+    # print()
+    # print("\033[32m", "old_files", old_files, "\033[0m")
     def upload(paths, is_thumbnail=False, is_upload_id = False):
         if len(old_files) > len(paths):
             paths.extend([None for _idx in range(0, len(old_files) - len(paths))])
@@ -1186,31 +1223,31 @@ def up_load_file(record, root_path, deposit, allow_upload_file_content, old_file
             )
             if is_upload_id:
                 if is_valid_uuid(path):
-                    a = MultipartObject.get_by_uploadId(path)
-                    if(a):
+                    multipartobject = MultipartObject.get_by_uploadId(path)
+                    if(multipartobject):
                         root_file_id = None
-                        if old_file and old_file.file_id != a.file_id: # item alredy has file 
+                        if old_file and old_file.file_id != multipartobject.file_id: # item alredy has file 
                             # replace file
                             if MultipartObject.get_by_fileId(old_file.file_id) != None:
                                 root_file_id = old_file.root_file_id
                                 old_file.remove()
                                 
-                                obj = ObjectVersion.create(deposit.files.bucket, a.key, _file_id = a.file_id)
+                                obj = ObjectVersion.create(deposit.files.bucket, multipartobject.key, _file_id = multipartobject.file_id)
                                 obj.is_thumbnail = is_thumbnail
-                                a.bucket_id = deposit.files.bucket.id
+                                multipartobject.bucket_id = deposit.files.bucket.id
                             else:
-                                obj = ObjectVersion.create(deposit.files.bucket, a.key, _file_id = a.file_id)
+                                obj = ObjectVersion.create(deposit.files.bucket, multipartobject.key, _file_id = multipartobject.file_id)
                                 obj.is_thumbnail = is_thumbnail
-                                a.bucket_id = deposit.files.bucket.id
+                                multipartobject.bucket_id = deposit.files.bucket.id
                         elif not old_file: # file not exist
                             # add file
-                            obj = ObjectVersion.create(deposit.files.bucket, a.key, _file_id = a.file_id)
+                            obj = ObjectVersion.create(deposit.files.bucket, multipartobject.key, _file_id = multipartobject.file_id)
                             obj.is_thumbnail = is_thumbnail
-                            a.bucket_id = deposit.files.bucket.id
+                            multipartobject.bucket_id = deposit.files.bucket.id
                 else:
                     if old_file \
                         and MultipartObject.get_by_fileId(old_file.file_id) \
-                        and not record["filenames"][idx] \
+                        and record["filenames"][idx] \
                         and not old_file.key == record["filenames"][idx]["filename"]:
                             
                         old_file.remove()
@@ -1642,7 +1679,7 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
                     file_meta_id = re.search(r'item_[0-9]+', item["filenames"][i]["id"]).group()
                     
                     file_meta_data = {
-                        "accessrole": "open_access" if item["metadata"][file_meta_id][i].get("accessrole") == None else item["metadata"][file_meta_id][i],
+                        "accessrole": "open_access" if item["metadata"][file_meta_id][i].get("accessrole") == None else item["metadata"][file_meta_id][i]["accessrole"],
                         "date": [{"dateType": "Available", "dateValue": multipartobject.updated.strftime("%Y-%m-%d")}],
                         "filename": multipartobject.key,
                         "filesize": [{"value": convert_size(multipartobject.size)}],

@@ -1717,7 +1717,7 @@ class MultipartObject(db.Model, Timestamp):
         return self
 
     @ensure_completed()
-    def merge_parts(self, version_id=None, current_login_user_id=None, **kwargs):
+    def merge_parts(self, version_id=None, **kwargs):
         """Merge parts into object version."""
         self.file.update_checksum(**kwargs)
         with db.session.begin_nested():

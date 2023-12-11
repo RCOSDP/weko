@@ -13,14 +13,15 @@ import os
 import shutil
 import tempfile
 from io import BytesIO
+from unittest.mock import MagicMock, PropertyMock
 
 import pytest
 import requests
-from flask import url_for
+from flask import url_for, current_app
 from invenio_files_rest.errors import FileSizeError, StorageError, \
     UnexpectedFileSizeError
 from invenio_files_rest.limiters import FileSizeLimit
-from invenio_files_rest.models import Location
+from invenio_files_rest.models import Location, MultipartObject, Part
 from invenio_files_rest.storage import PyFSFileStorage
 from mock import patch
 from s3fs import S3File, S3FileSystem
@@ -487,3 +488,73 @@ def test_non_unicode_filename(base_app, location, s3fs):
             'żółć.txt', mimetype='text/plain', checksum=checksum)
         assert res.status_code == 200
         assert res.headers['Content-Disposition'] == 'inline'
+
+def test_initiateMultipartUpload(base_app, s3fs, s3_bucket):
+    file_url, upload_id = s3fs.initiateMultipartUpload(s3_bucket.name, None, "s3")
+    assert file_url != None and upload_id != None
+    
+    file_url, upload_id = s3fs.initiateMultipartUpload(s3_bucket.name, None, None)
+    assert file_url and upload_id
+
+def test_get_s3_client(s3fs):
+    assert s3fs.get_s3_client()
+    
+def test_complete_multipart_upload(s3fs, s3_bucket):
+    file_url, upload_id = s3fs.initiateMultipartUpload(s3_bucket.name, None, "s3")
+    
+    parts = []
+    for i in range(0,6):
+        a = PropertyMock()
+        a.part_number = i + 1
+        a.ETag = f"test{i + 1}"
+        parts.append(a)
+    
+    with patch("invenio_s3.storage.boto3") as b:
+        m = MagicMock()
+        m.complete_multipart_upload = MagicMock(return_value = True)
+        b.client = MagicMock(return_value = m)
+        res = s3fs.complete_multipart_upload(None, s3_bucket.name, upload_id, parts, "s3")
+        assert res == True
+        
+        with patch("invenio_s3.storage.pathlib") as p:
+            with patch("invenio_s3.storage.os") as o:
+                with patch("invenio_s3.storage.shutil") as s:
+                    s.rmtree = MagicMock(return_value = None)
+                    o.listdir = MagicMock(return_value = ["a", "b"])
+                    f = MagicMock()
+                    f.write = MagicMock(return_value = None)
+                    f.read = MagicMock(return_value = None)
+                    path = MagicMock()
+                    path.joinpath = MagicMock(return_value = path)
+                    path.touch = MagicMock(return_value = None)
+                    path.open = MagicMock(return_value = f)
+                    p.Path = MagicMock(return_value = path)
+                    
+                    res = s3fs.complete_multipart_upload(None, s3_bucket.name, upload_id, parts, None)
+                    assert res
+
+        
+def test_upload_multipart(s3fs, s3_bucket):
+    file_url, upload_id = s3fs.initiateMultipartUpload(s3_bucket.name, None, "s3")
+    
+    stream = MagicMock()
+    stream.read = MagicMock(return_value = b"abcdefg")
+    
+    with patch("invenio_s3.storage.boto3") as b:
+        m = MagicMock()
+        m.upload_part = MagicMock(return_value = {"ETag": "sample"})
+        b.client = MagicMock(return_value = m)
+        res = s3fs.upload_multipart(None, stream, s3_bucket.name, 1, upload_id, "s3")
+        assert res == "sample"
+        
+        with patch("invenio_s3.storage.pathlib") as p:
+            f = MagicMock()
+            f.write = MagicMock(return_value = None)
+            path = MagicMock()
+            path.joinpath = MagicMock(return_value = path)
+            path.touch = MagicMock(return_value = None)
+            path.open = MagicMock(return_value = f)
+            p.Path = MagicMock(return_value = path)
+
+            res = s3fs.upload_multipart(None, stream, s3_bucket.name, 1, upload_id, None)
+            assert res

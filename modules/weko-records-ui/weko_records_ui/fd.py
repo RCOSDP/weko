@@ -253,10 +253,6 @@ def _download_multipartfile(file_obj, obj, record, part_number, buffer_size):
     :param buffer_size: Chunk size to download.
     :return:
     """ 
-
-    def generate(iter):
-        for chunk in iter:
-            yield chunk
             
     try:
         client = file_obj.file.storage().get_s3_client()
@@ -285,26 +281,22 @@ def _download_multipartfile(file_obj, obj, record, part_number, buffer_size):
                 abort(500)
                 
             return  current_app.response_class(
-                        generate(
-                            client.get_object(
-                                Bucket = bucket_name,
-                                Key =  key,
-                                Range = f"bytes={buffer_size * (int(part_number) - 1)}-{buffer_size * int(part_number) - 1}"
-                            ).get("Body").iter_chunks()
-                        ),
+                        client.get_object(
+                            Bucket = bucket_name,
+                            Key =  key,
+                            Range = f"bytes={buffer_size * (int(part_number) - 1)}-{buffer_size * int(part_number) - 1}"
+                        ).get("Body").iter_chunks(),
                         mimetype = file_obj.mimetype,
                         direct_passthrough = True,
                     )
 
         else:
             return  current_app.response_class(
-                        generate(
-                            client.get_object(
-                                Bucket = bucket_name,
-                                Key =  key,
-                                Range = f"bytes={buffer_size * (int(part_number) - 1)}-{buffer_size * int(part_number) - 1}"
-                            ).get("Body").iter_chunks()
-                        ),
+                        client.get_object(
+                            Bucket = bucket_name,
+                            Key =  key,
+                            Range = f"bytes={buffer_size * (int(part_number) - 1)}-{buffer_size * int(part_number) - 1}"
+                        ).get("Body").iter_chunks(),
                         mimetype = file_obj.mimetype,
                         direct_passthrough = True,
                     )
@@ -455,7 +447,6 @@ def _download_file(file_obj, is_preview, lang, obj, pid, record):
                 convert_to_pdf=convert_to_pdf
             )
     except AttributeError:
-        traceback.format_exc()
         return ObjectResource.send_object(
             obj.bucket, obj,
             expected_chksum=file_obj.get('checksum'),

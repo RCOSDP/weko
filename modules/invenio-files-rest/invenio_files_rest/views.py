@@ -17,7 +17,7 @@ import traceback
 import uuid, hashlib, hmac, re, urllib.parse, json
 from functools import partial, wraps
 
-from flask import Blueprint, abort, current_app, jsonify, request, session
+from flask import Blueprint, flash, abort, current_app, jsonify, request, session
 from flask_login import current_user, login_required
 from flask_babelex import gettext as _
 from invenio_db import db
@@ -88,6 +88,8 @@ def lock_upload_id():
         upload_id = request.args["upload_id"]
         redis_connection = RedisConnection()
         sessionstore = redis_connection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
+        if "upload_id" + upload_id in sessionstore.iter_keys():
+            return _("Cannot be upload because it is being uploaded."), 400
         sessionstore.put(
                     "upload_id" + upload_id,
                     b"lock",
@@ -220,9 +222,9 @@ def get_or_create_part():
     """
     if not current_user.roles:
         abort(403)
-    upload_id = request.args.get("uploadId")
-    part_number = request.args.get("partNumber")
-    checksum = request.args.get("checkSum")
+    upload_id = request.args.get("upload_id")
+    part_number = request.args.get("part_number")
+    checksum = request.args.get("check_sum")
     if not (upload_id and part_number):
         return {"message": "fail"}, 400
     
@@ -248,7 +250,7 @@ def get_or_create_part():
         return "An error has occurred.", 500
     
 
-@large_file_upload_blueprint.route("/complete_multipart", methods = ["GET", "POST"])
+@large_file_upload_blueprint.route("/complete_multipart", methods = ["POST"])
 @login_required 
 def complete_multipart():
     """Update multipart object after upload is finished.
@@ -680,8 +682,6 @@ class BucketResource(ContentNegotiatedMethodView):
                 current_permission_factory(bucket, 'bucket-read-versions'),
                 hidden=False
             )
-        a = ObjectVersion.get_by_bucket(
-                bucket.id, versions=versions is not missing).limit(1000).all(),
         return self.make_response(
             data=ObjectVersion.get_by_bucket(
                 bucket.id, versions=versions is not missing).limit(1000).all(),
@@ -1101,7 +1101,7 @@ class ObjectResource(ContentNegotiatedMethodView):
         #lock deleting by Redis
         redis_connection = RedisConnection()
         sessionstore = redis_connection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
-        if not sessionstore.get("upload_id" + str(multipart.upload_id)):
+        if not "upload_id" + str(multipart.upload_id) in sessionstore.iter_keys():
             raise MultipartExhausted()
 
         # Create part
@@ -1260,7 +1260,9 @@ class ObjectResource(ContentNegotiatedMethodView):
                 replace_version_id = request.args.get('replace_version_id')
                 return self.create_object(bucket, key, is_thumbnail=is_thumbnail,
                                         replace_version_id=replace_version_id)
-        except Exception:
+        except MultipartExhausted as e:
+            return e.description, e.code
+        except Exception as e:
             traceback.print_exc()
             abort(403)
 

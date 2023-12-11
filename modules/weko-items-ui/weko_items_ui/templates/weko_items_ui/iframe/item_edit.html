@@ -472,8 +472,8 @@
               value="{{_('Thumbnail file type error message')}}">
           <input type="hidden" id="max_files_thumnbnail_error" name="max_files_thumnbnail_error"
               value="{{_('is too long.')}}">
-          <input type="hidden" id="resume_chunk_size" name="resume_chunk_size" value="{{resume_chunk_size}}">
-          <input type="hidden" id="use_multipart_upload" name="use_multipart_upload" value="{{use_multipart_upload}}">
+          <input type="hidden" id="resume_chunk_size" name="resume_chunk_size" value="{{config.get("FILES_REST_RESUME_CHUNK_SIZE")}}">
+          <input type="hidden" id="use_multipart_upload" name="use_multipart_upload" value="{{config.get("FILES_REST_USE_MULTIPART_UPLOAD")}}">
           <input type="hidden" id="item_registration_workflow" value="true">
 
           <input type="hidden" id="auto_fill_usage_data_usage_type" name="auto_fill_usage_data_usage_type"
