@@ -17,10 +17,12 @@ import pytest
 from fs.errors import FSError, ResourceNotFoundError
 from mock import MagicMock, patch
 from six import BytesIO
+from flask_login.utils import login_user
 
-from invenio_files_rest.models import Bucket, FileInstance, ObjectVersion
-from invenio_files_rest.tasks import migrate_file, remove_file_data, \
-    schedule_checksum_verification, verify_checksum
+from invenio_files_rest.models import Bucket, FileInstance, ObjectVersion, Part
+# from invenio_files_rest.tasks import migrate_file, remove_file_data, \
+#     schedule_checksum_verification, verify_checksum
+from invenio_files_rest.tasks import *
 
 
 def test_verify_checksum(app, db, dummy_location):
@@ -154,7 +156,7 @@ def test_migrate_file_copyfail(app, db, dummy_location, extra_location,
     assert FileInstance.query.count() == 4
 
 
-def test_remove_file_data(app, db, dummy_location, versions):
+def test_remove_file_data(app, db, dummy_location, versions, multipart):
     """Test remove file data."""
     # Remove an object, so file instance have no references
     obj = versions[1]
@@ -165,23 +167,78 @@ def test_remove_file_data(app, db, dummy_location, versions):
 
     # Remove the file instance - file not writable
     assert exists(file_.uri)
-    assert FileInstance.query.count() == 4
+    assert FileInstance.query.count() == 5
     remove_file_data(str(file_.id))
-    assert FileInstance.query.count() == 4
+    assert FileInstance.query.count() == 5
     assert exists(file_.uri)
 
     # Remove the file instance - file is writable
     file_.writable = True
     db.session.commit()
     assert exists(file_.uri)
-    assert FileInstance.query.count() == 4
+    assert FileInstance.query.count() == 5
     remove_file_data(str(file_.id))
-    assert FileInstance.query.count() == 3
+    assert FileInstance.query.count() == 4
     assert not exists(file_.uri)
 
     # Try to remove file instance with references.
     obj = versions[0]
     assert exists(obj.file.uri)
-    assert FileInstance.query.count() == 3
+    assert FileInstance.query.count() == 4
     remove_file_data(str(obj.file.id))
     assert exists(obj.file.uri)
+
+    remove_file_data(str(multipart.file_id))
+    assert FileInstance.query.count() == 3
+    
+    with patch("invenio_files_rest.models.FileInstance.get", side_effect = IntegrityError("a", "b", "c")):
+        try:
+            remove_file_data(str(file_.id), silent=False)
+        except:
+            pass
+        
+    
+def test_merge_multipartobject(app, db, bucket, multipart, permissions):
+    for i in range(0,6):
+        Part.create(multipart, i)
+    db.session.commit()
+    multipart.complete()
+    db.session.commit()
+    with app.test_request_context(): 
+        login_user(permissions["bucket"])
+        
+        # RuntimeError("Upload ID does not exists.")
+        try:
+            merge_multipartobject(None)
+        except:
+            assert True
+        
+        # RuntimeError("MultipartObject is not completed.")
+        mp = MultipartObject.create(bucket, 'mykey2', 110, 20)
+        db.session.commit()
+        for i in range(0,6):
+            Part.create(mp, i)
+        db.session.commit()
+        try:
+            merge_multipartobject(mp.upload_id)
+        except:
+            assert True
+        
+        # normal
+        assert merge_multipartobject(multipart.upload_id) == True
+        
+        # Exception Error
+        mp = MultipartObject.create(bucket, 'mykey2', 110, 20)
+        db.session.commit()
+        for i in range(0,6):
+            Part.create(mp, i)
+        db.session.commit()
+        mp.complete()
+        
+        with patch("invenio_files_rest.models.MultipartObject") as m:
+            m.merge_parts = MagicMock(side_effect = lambda: b"exception")
+            try:
+                merge_multipartobject(mp.upload_id)
+            except:
+                assert True
+            

@@ -74,6 +74,7 @@ from invenio_records_rest.utils import PIDConverter
 from invenio_records_ui import InvenioRecordsUI
 from invenio_search import InvenioSearch, current_search_client
 from invenio_search_ui import InvenioSearchUI
+from invenio_s3.ext import InvenioS3
 from invenio_stats.config import SEARCH_INDEX_PREFIX as index_prefix
 from invenio_theme import InvenioTheme
 from simplekv.memory.redisstore import RedisStore
@@ -266,7 +267,13 @@ def base_app(instance_path):
         WEKO_RECORDS_UI_SECRET_KEY=WEKO_RECORDS_UI_SECRET_KEY,
         WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN=WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN,
         WEKO_ADMIN_PDFCOVERPAGE_TEMPLATE=WEKO_ADMIN_PDFCOVERPAGE_TEMPLATE,
-        INDEXER_MQ_QUEUE = Queue("indexer", exchange=Exchange("indexer", type="direct"), routing_key="indexer",queue_arguments={"x-queue-type":"quorum"})
+        INDEXER_MQ_QUEUE = Queue("indexer", exchange=Exchange("indexer", type="direct"), routing_key="indexer",queue_arguments={"x-queue-type":"quorum"}),
+        FILES_REST_LOCATION_TYPE_LIST = [('s3', 'Amazon S3')],
+        S3_REGION_NAME = "ap-tokyo-1",
+        S3_ENDPOINT_URL = None,
+        S3_ACCCESS_KEY_ID = '', 
+        S3_SECRECT_ACCESS_KEY = '',
+        FILES_REST_STORAGE_FACTORY = 'invenio_s3.storage.s3fs_storage_factory'
     )
     # with ESTestServer(timeout=30) as server:
     Babel(app_)
@@ -292,6 +299,7 @@ def base_app(instance_path):
     InvenioPIDRelations(app_)
     InvenioI18N(app_)
     InvenioTheme(app_)
+    InvenioS3(app_)
     WekoRecords(app_)
     WekoItemsUI(app_)
     WekoRecordsUI(app_)
@@ -558,7 +566,7 @@ def location(app, db):
 
     location = Location.query.filter_by(name="testloc").count()
     if location != 1:
-        loc = Location(name="testloc", uri=tmppath, default=True)
+        loc = Location(name="testloc", uri=tmppath, default=True, type="s3")
         db.session.add(loc)
         db.session.commit()
     else:

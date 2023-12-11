@@ -233,8 +233,8 @@
         {%- endif%}
     </section>
   {%- endif %}
-<input type="hidden" id="retry_count" value="{{retry_count}}">
-<input type="hidden" id="chunk_size" value="{{chunk_size}}">
+<input type="hidden" id="retry_count" value="{{config.get('WEKO_ITEMS_UI_LARGE_FILE_UPLOAD_MAX_RETRY')}}">
+<input type="hidden" id="chunk_size" value="{{config.get("FILES_REST_LARGE_FILE_CHUNK_SIZE")}}">
 <input type="hidden" id="errormsg" value="{{_("Please select a file.")}}">
 <input type="hidden" id="errormsg" value="{{_("The Upload Id is invalid.")}}">
 <input type="hidden" id="errormsg" value="{{_("The Upload Id is expired for retry.")}}">

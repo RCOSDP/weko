@@ -20904,3 +20904,18 @@ def test_check_record_doi_indexes(
 
     with pytest.raises(PIDDoesNotExistError):
         res = client_api.get("{}?doi=1".format(url))
+
+def test_get_large_file_upload_view_nologin(client, users):
+    with patch("flask.templating._render", return_value=""):
+        login_user_via_session(client=client, email=users[7]["email"])
+        res = client.get("/items/large_file_upload")
+        assert res.status_code == 403
+    
+def test_get_large_file_upload_view_login(client, users):
+    with patch("flask.templating._render", return_value=""):
+        login_user_via_session(client=client, email=users[2]["email"])
+        res = client.get("/items/large_file_upload?pagestodo=-1")
+        assert res.status_code == 400
+        
+        res = client.get("/items/large_file_upload")
+        assert res.status_code == 200
