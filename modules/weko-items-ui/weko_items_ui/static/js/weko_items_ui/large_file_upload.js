@@ -131,6 +131,12 @@ async function multipartUpload(){
             showErrorMsg(errorMsgList.get(2).value)
             uploadStatus_p.innerText = "Error"
             return;
+        }else if(xhr.status == 409){
+            $('button[id="upload_button"]').get(0).disabled = false
+            $('input[id="upload_file_area"]').get(0).disabled = false
+            showErrorMsg(xhr.responseText)
+            uploadStatus_p.innerText = "Error"
+            return;
         }else if(xhr.status != 200){
             $('button[id="upload_button"]').get(0).disabled = false
             $('input[id="upload_file_area"]').get(0).disabled = false

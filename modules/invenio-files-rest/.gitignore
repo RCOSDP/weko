@@ -44,7 +44,7 @@ nosetests.xml
 *,cover
 
 # Translations
-*.mo
+
 
 # Django stuff:
 *.log

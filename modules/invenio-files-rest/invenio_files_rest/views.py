@@ -19,6 +19,7 @@ from functools import partial, wraps
 
 from flask import Blueprint, abort, current_app, jsonify, request, session
 from flask_login import current_user, login_required
+from flask_babelex import gettext as _
 from invenio_db import db
 from invenio_files_rest.storage.pyfs import pyfs_storage_factory
 from invenio_records.models import RecordMetadata
@@ -89,7 +90,7 @@ def lockRedis():
                     ttl_secs=current_app.config['FILES_REST_MULTIPART_EXPIRES'].total_seconds())
         return f"lock redis upload_id: {upload_id}"
     except Exception:
-        return "An error has occurred.", 500
+        return _("An error has occurred."), 500
     
 @largeFileUpload_blueprint.route("/unlockRedis", methods = ["POST"])
 @login_required 
@@ -103,7 +104,7 @@ def unlockRedis():
         sessionstore.delete("upload_id" + upload_id)
         return f"unlock redis upload_id: {upload_id}"
     except Exception:
-        return "An error has occurred.", 500
+        return _("An error has occurred."), 500
 
 @largeFileUpload_blueprint.route("/createFileInstance", methods = ["POST"])
 @login_required 
@@ -130,7 +131,7 @@ def createFileInstance():
         db.session.commit()
         return str(fileinstance.id)
     except Exception:
-        return "An error has occurred.", 500
+        return _("An error has occurred."), 500
 
 @largeFileUpload_blueprint.route("/checkMultipartObjectInstance", methods = ["POST"])
 @login_required 
@@ -141,15 +142,22 @@ def checkMultipartObjectInstance():
     try:
         if upload_id:
             multipartObject = MultipartObject.get_by_uploadId(upload_id)
+
+            #lock deleting by Redis
+            redis_connection = RedisConnection()
+            sessionstore = redis_connection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
+            if "upload_id" + str(multipartObject.upload_id) in sessionstore.iter_keys():
+                return _("Cannot be upload because it is being uploaded."), 409
+
             if multipartObject and not multipartObject.completed:
                 if multipartObject.created_by_id == current_user.id:
                     if multipartObject.created > datetime.now() - current_app.config.get("FILES_REST_MULTIPART_EXPIRES"):
                         return {"file_id": multipartObject.file_id, "chunk_size": str(multipartObject.chunk_size)}, 200
                     else:
-                        return "The Upload Id is expired for retry", 404
-        return "The Upload Id is invalid", 400
+                        return _("The Upload Id is expired for retry"), 404
+        return _("The Upload Id is invalid"), 400
     except Exception:
-        return "An error has occurred.", 500
+        return _("An error has occurred."), 500
 
 
 @largeFileUpload_blueprint.route("/createMultipartObjectInstance", methods = ["POST"])
@@ -164,7 +172,7 @@ def createMultipartObject():
     chunk_size = request.args.get("chunk_size")
     
     if(upload_id == None or key == None or size == None or chunk_size == None):
-        return "missing arguments.", 400
+        return _("missing arguments."), 400
     
     try:
         with db.session.begin_nested():
@@ -181,7 +189,7 @@ def createMultipartObject():
         db.session.commit()
         return file_id, 200
     except Exception:
-        return "An error has occurred.", 500
+        return _("An error has occurred."), 500
         
     
 
@@ -215,7 +223,7 @@ def partFunc():
             db.session.commit()
             return "success"
     except Exception:
-        return "An error has occurred.", 500
+        return _("An error has occurred."), 500
     
 
 @largeFileUpload_blueprint.route("/completeFunc", methods = ["GET", "POST"])
@@ -237,7 +245,7 @@ def completeFunc():
         db.session.commit()
         return "Success", 200 
     except Exception:
-        return "An error has occurred.", 500
+        return _("An error has occurred."), 500
 
 
 def as_uuid(value):

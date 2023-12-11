@@ -462,15 +462,15 @@ msgstr "異なるファイルです。"
 
 #: 
 msgid "Different Chunksize."
-msgstr "チャンクサイズが違います。"
-
-#: 
-msgid "An error has occurred."
-msgstr "エラーが発生しました。"
+msgstr "チャンクサイズが変更されています。"
 
 #: 
 msgid "File size is too large."
 msgstr "ファイルサイズが大きすぎます。"
+
+#: 
+msgid "Cannot be upload because it is being uploaded."
+msgstr "アップロード処理中のため、アップロードできません。"
 
 #:
 msgid "Created(UTC)"
@@ -562,6 +562,9 @@ msgstr ""
 #, fuzzy
 msgid "Export"
 msgstr "インポート"
+
+msgid "No history yet"
+msgstr "ヒストリーはありません"
 
 #~ msgid "Item Test Data"
 #~ msgstr "アイテムテストデータ"
