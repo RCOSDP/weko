@@ -171,7 +171,7 @@
                 <tr class="">
                     <td scope="row"><span>{{history.upload_id}}</span></td>
                     <td class="btn-copy"><span>
-                      {%- if not history.completed and history.created > day%}<button variant="primary" class="btn btn-sm btn-primary" id="upload_id_set_button" upload_id={{history.upload_id}} onclick="uploadIdSet('{{history.upload_id}}')">{{ _('Copy')}}</button>{%- else %} {%- endif %}
+                      {%- if not history.completed and not history.bucket_id and history.created > day%}<button variant="primary" class="btn btn-sm btn-primary" id="upload_id_set_button" upload_id={{history.upload_id}} onclick="uploadIdSet('{{history.upload_id}}')">{{ _('Copy')}}</button>{%- else %} {%- endif %}
                     </span></td>
                     <td ><span>
                       {%-if history.completed %}{{ _('Success')}}{%- else %}{%- if history.created < day -%}{{_("Failed(Expired)")}}{%- else -%}{{ _('Failed')}}{%- endif %}{%- endif %}

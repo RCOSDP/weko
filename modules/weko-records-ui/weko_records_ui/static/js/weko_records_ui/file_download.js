@@ -1,6 +1,6 @@
-const confirm_msg = $('input[id="confirm_msg"]').get(0).value;
-const error_msg = $('input[id="error_msg"]').get(0).value;
-const comp_msg = $('input[id="comp_msg"]').get(0).value;
+const confirm_msg = $('input[id="confirm_msg"]').val();
+const error_msg = $('input[id="error_msg"]').val();
+const comp_msg = $('input[id="comp_msg"]').val();
 
 function closeError(ediv) {
     $('div#' + ediv).empty();
