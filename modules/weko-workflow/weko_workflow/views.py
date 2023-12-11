@@ -1127,6 +1127,11 @@ def display_activity(activity_id="0"):
         if session.get("current_item_links"):
             if session["current_item_links"].get(activity_id):
                 del session["current_item_links"][activity_id]
+    
+    if action_endpoint == "end_action":
+        if session.get("current_item_links"):
+            if session["current_item_links"].get(activity_id):
+                del session["current_item_links"][activity_id]
 
     return render_template(
         'weko_workflow/activity_detail.html',
