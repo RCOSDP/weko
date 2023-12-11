@@ -139,3 +139,6 @@ msgstr "異なるファイルです。"
 
 msgid "Please select a file."
 msgstr "ファイルを選択してください。"
+
+msgid "Cannot be upload because it is being uploaded."
+msgstr "アップロード処理中のため、アップロードできません。"

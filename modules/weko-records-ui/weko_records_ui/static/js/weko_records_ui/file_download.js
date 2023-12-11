@@ -35,7 +35,14 @@ async function downloadFile(recNum, fileName, content_length, buffer_size, event
     let contentLength = parseInt(content_length);
     const BUFFER_SIZE = parseInt(buffer_size);
 
-    let writableStream = await newHandle.createWritable();
+    let writableStream;
+    try{
+      writableStream = await newHandle.createWritable();
+    }catch(e){
+      console.log("File Download Failed", new Date());
+      showErrorMsg(error_msg, false, ediv)
+      return;
+    }
     ring_background.classList.remove("hidden");
   
     let offset = 0;
@@ -44,10 +51,27 @@ async function downloadFile(recNum, fileName, content_length, buffer_size, event
   
     let xhr = new XMLHttpRequest();
     xhr.responseType = "blob";
+
+    xhr.onerror = function(){
+      if(retryCount < retry_count){
+        console.log("retry partNumber", partNumber)
+        retryCount += 1;
+        xhr.open("GET", "https://" + host + "/record/" + recNum + "/multipartfiles/" + fileName + "?partNumber=" + partNumber, true)
+        xhr.send();
+        return;
+      }else{
+        console.log("File Download Failed", new Date());
+        xhr.abort();
+        showErrorMsg(error_msg, false, ediv)
+        ring_background.classList.add("hidden");
+        return;
+      }
+    }
   
     xhr.onload = async function() {
         if(String(xhr.status).indexOf("2") != 0){
           if(retryCount < retry_count){
+            console.log("retry partNumber", partNumber)
             retryCount += 1;
             xhr.open("GET", "https://" + host + "/record/" + recNum + "/multipartfiles/" + fileName + "?partNumber=" + partNumber, true)
             xhr.send();
@@ -62,7 +86,16 @@ async function downloadFile(recNum, fileName, content_length, buffer_size, event
         }
         partNumber += 1;
         
-        await writableStream.write(xhr.response);
+        try{
+          await writableStream.write(xhr.response);
+        }catch(e){
+          console.log(e);
+          console.log("File Download Failed", new Date());
+          xhr.abort();
+          showErrorMsg(error_msg, false, ediv)
+          ring_background.classList.add("hidden");
+          return;
+        }
   
         if(offset + BUFFER_SIZE < contentLength){
             offset += BUFFER_SIZE;

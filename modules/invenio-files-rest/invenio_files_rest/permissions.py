@@ -49,7 +49,6 @@ ObjectDeleteVersion = action_factory(
     'files-rest-object-delete-version', parameter=True)
 """Action needed: permanently delete specific object version in bucket."""
 
-
 MultipartRead = action_factory('files-rest-multipart-read', parameter=True)
 """Action needed: list parts of a multipart upload in a bucket."""
 

@@ -10,6 +10,7 @@
 """Pytest configuration."""
 
 from __future__ import absolute_import, print_function
+from datetime import timedelta
 
 import hashlib
 import os
@@ -34,6 +35,7 @@ from sqlalchemy.schema import DropConstraint, DropSequence, DropTable
 from sqlalchemy_utils.functions import create_database, database_exists
 
 from invenio_files_rest import InvenioFilesREST
+from invenio_files_rest.views import large_file_upload_blueprint
 from invenio_files_rest.models import Bucket, Location, MultipartObject, \
     ObjectVersion, Part
 from invenio_files_rest.permissions import bucket_listmultiparts_all, \
@@ -43,6 +45,11 @@ from invenio_files_rest.permissions import bucket_listmultiparts_all, \
     object_read_version_all
 from invenio_files_rest.storage import PyFSFileStorage
 from invenio_files_rest.views import blueprint
+from flask_login.utils import login_user
+
+from invenio_s3 import InvenioS3
+import weko_redis
+from weko_redis.redis import RedisConnection
 
 
 @compiles(DropTable, 'postgresql')
@@ -86,14 +93,30 @@ def base_app():
         FILES_REST_MULTIPART_MAX_PARTS=100,
         FILES_REST_TASK_WAIT_INTERVAL=0.1,
         FILES_REST_TASK_WAIT_MAX_SECONDS=1,
+        FILES_REST_STORAGE_FACTORY = 'invenio_s3.storage.s3fs_storage_factory',
+        ACCOUNTS_SESSION_REDIS_DB_NO = 1,
+        FILES_REST_MULTIPART_EXPIRES = timedelta(days=4),
+        CACHE_REDIS_URL='redis://redis:6379/0',
+        CACHE_REDIS_DB='0',
+        CACHE_REDIS_HOST="redis",
+        ACCOUNTS_SESSION_REDIS_URL='redis://localhost:6379/0',
+        CACHE_TYPE = "redis",
+        REDIS_PORT = "6379",
+        FILES_REST_DEFAULT_STORAGE_CLASS = "S",
+        PRESERVE_CONTEXT_ON_EXCEPTION = False,
     )
 
     FlaskCeleryExt(app_)
     InvenioDB(app_)
     Babel(app_)
     Menu(app_)
-
+    InvenioS3(app_)
     return app_
+
+@pytest.fixture
+def redis_connect(app):
+    redis_connection = RedisConnection().connection(db=app.config['CACHE_REDIS_DB'], kv = True)
+    return redis_connection
 
 
 @pytest.yield_fixture()
@@ -127,6 +150,13 @@ def client(app):
     with app.test_client() as client:
         yield client
 
+
+@pytest.yield_fixture()
+def api(app):
+    app.register_blueprint(blueprint, url_prefix='/largeFileUpload')
+    with app.test_client() as client:
+        yield client
+        
 
 @pytest.yield_fixture()
 def dummy_location(db):
@@ -185,11 +215,13 @@ def bucket(db, dummy_location):
 
 
 @pytest.fixture()
-def multipart(db, bucket):
+def multipart(app, client, db, bucket, permissions, admin_user):
     """Multipart object."""
-    mp = MultipartObject.create(bucket, 'mykey', 110, 20)
-    db.session.commit()
-    return mp
+    with app.test_request_context(): 
+        login_user(admin_user)
+        mp = MultipartObject.create(bucket, 'mykey', 110, 20)
+        db.session.commit()
+        return mp
 
 
 @pytest.fixture()

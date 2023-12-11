@@ -100,7 +100,7 @@
                           {%- endif -%}
                           <a class="forcewrap{{billing_file_class}}" {{billing_file_data}} {{billing_file_url}}
                           {% if file_url %}
-                            {% if file.size < config.get("MAX_DOWNLOAD_SIZE_AT_ONE_TIME") %}
+                            {% if file.size <= config.get("MAX_DOWNLOAD_SIZE_AT_ONE_TIME") %}
                               href="javascript:OnLinkClick('{{ file_url }}', {{ pid.pid_value }}, '{{ file.accessrole }}')">
                             {% else %}
                               href="javascript:void(0)" onclick="downloadFile('{{pid.pid_value}}', '{{file.filename}}', '{{file.size}}', '{{config.get("DOWNLOAD_SIZE_IN_ONE_PART")}}', this)">
@@ -124,7 +124,7 @@
                           <div class="text-right">
                             <a class="forcewrap{{billing_file_class}}" {{billing_file_data}} {{billing_file_url}} 
                             {% if original_file_url %}
-                              {% if file.size < config.get("MAX_DOWNLOAD_SIZE_AT_ONE_TIME") %}
+                              {% if file.size <= config.get("MAX_DOWNLOAD_SIZE_AT_ONE_TIME") %}
                                 href="javascript:OnLinkClick('{{ original_file_url }}', {{ pid.pid_value }}, '{{ file.accessrole }}')">
                               {% else %}
                                 href="javascript:void(0)" onclick="downloadFile('{{pid.pid_value}}', '{{file.filename}}', '{{file.size}}', '{{config.get("DOWNLOAD_SIZE_IN_ONE_PART")}}', this)">
@@ -274,6 +274,7 @@
                     "This file will take a long time to download. Please do not close this screen while downloading. Do you want to start downloading?"
                     )}}">
                   <input type="hidden" id="comp_msg" value="{{_("File download is complete.")}}">
+                  <input type="hidden" id="retry_count" value="{{config.get('WEKO_ITEMS_UI_LARGE_FILE_DOWNLOAD_MAX_RETRY')}}">
                 </div><!--End stats div-->
               </div><!--End tab-content div-->
             </div>
