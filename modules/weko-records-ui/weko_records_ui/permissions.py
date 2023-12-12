@@ -175,11 +175,14 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
                 else:
                     try:
                         # contents accessdate
-                        c_is_can = True
-                        date = fjson.get('accessdate')
-                        if date:
-                            date = to_utc(dt.strptime(date, '%Y-%m-%d'))
-                            c_is_can = True if dt.utcnow() >= date else False
+                        date = fjson.get('accessdate',None)
+                        if not date:
+                            date = fjson.get('date')
+                        if date and isinstance(date, list) and date[0]:
+                            adt = date[0].get('dateValue')
+                            if adt:
+                                adt = to_utc(dt.strptime(adt, '%Y-%m-%d'))
+                                c_is_can = True if dt.utcnow() >= adt else False
                         # publish date
                         p_is_can = True
                         idt = record.get('publish_date')

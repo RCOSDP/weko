@@ -23,7 +23,6 @@
 from flask import current_app
 from invenio_db import db
 from sqlalchemy import or_
-from weko_admin.models import AdminSettings
 from flask_babelex import gettext as _
 
 
@@ -98,6 +97,7 @@ class MailTemplates(db.Model):
     @classmethod
     def get_templates(cls):
         """Get mail templates."""
+        from weko_admin.models import AdminSettings
         result = []
         # get secret mail enabled
         restricted_access = AdminSettings.get('restricted_access', False)

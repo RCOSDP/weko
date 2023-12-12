@@ -2305,7 +2305,7 @@ def extract_term_description(file_info):
             target_term = term.get('content', {'en': {}, 'ja': {}})
             break
         else:
-            return '', ''
+            target_term = ""
     if target_term:
         return target_term.get('ja').get('content'), target_term.get('en').get('content')
     return '', ''
