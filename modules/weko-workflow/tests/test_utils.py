@@ -2552,7 +2552,7 @@ def test_process_send_approval_mails(app,db_register,users,mocker):
     }
     mocker.patch("weko_workflow.utils.set_mail_info",return_value=mail_info)
     activity = db_register["activities"][1]
-    guest_activity = db_register["activities"][-1]
+    guest_activity = db_register["activities"][8]
     next_step_approver_id = users[2]["id"]
     not_next_step_approver_id = 9999
     file_data={

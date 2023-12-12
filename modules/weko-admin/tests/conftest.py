@@ -73,7 +73,7 @@ from weko_admin.models import SessionLifetime,SiteInfo,SearchManagement,\
         FacetSearchSetting,BillingPermission,LogAnalysisRestrictedIpAddress,\
         LogAnalysisRestrictedCrawlerList,StatisticsEmail,RankingSettings, Identifier
 from weko_admin.views import blueprint_api
-from weko_admin.config import WEKO_ADMIN_COMMUNITY_ACCESS_LIST,WEKO_ADMIN_REPOSITORY_ACCESS_LIST,WEKO_ADMIN_ACCESS_TABLE,WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,WEKO_ADMIN_USE_MAIL_TEMPLATE_EDIT
+from weko_admin.config import WEKO_ADMIN_COMMUNITY_ACCESS_LIST,WEKO_ADMIN_REPOSITORY_ACCESS_LIST,WEKO_ADMIN_ACCESS_TABLE,WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,WEKO_ADMIN_USE_MAIL_TEMPLATE_EDIT, WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS
 
 from tests.helpers import json_data, create_record
 
@@ -147,7 +147,8 @@ def base_app(instance_path, cache_config,request):
         WEKO_ADMIN_REPOSITORY_ACCESS_LIST = WEKO_ADMIN_REPOSITORY_ACCESS_LIST,
         WEKO_ADMIN_ACCESS_TABLE=WEKO_ADMIN_ACCESS_TABLE,
         WEKO_ADMIN_PERMISSION_ROLE_SYSTEM =WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
-        WEKO_ADMIN_USE_MAIL_TEMPLATE_EDIT =WEKO_ADMIN_USE_MAIL_TEMPLATE_EDIT
+        WEKO_ADMIN_USE_MAIL_TEMPLATE_EDIT =WEKO_ADMIN_USE_MAIL_TEMPLATE_EDIT,
+        WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS = WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS,
     )
     app_.testing = True
     app_.login_manager = dict(_login_disabled=True)
