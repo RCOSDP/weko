@@ -1406,6 +1406,7 @@ def test_get_list_key_of_iso_date():
         "item_1617187056579.bibliographicIssueDates.bibliographicIssueDate",
         "item_1617187136212.subitem_1551256096004",
         "item_1617605131499.fileDate.fileDateValue",
+        "item_1617605131499.date[0].dateValue"
     ]
     with open(form, encoding="utf-8") as f:
         df = json.load(f)
