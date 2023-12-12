@@ -2191,10 +2191,16 @@ class ItemLink(object):
                 sid = 'system_identifier_doi'
                 avm = 'attribute_value_mlt'
                 ssi = 'subitem_systemidt_identifier'
-                if wr.get(sid) and wr.get(sid).get(avm)[0]:
-                    url = wr[sid][avm][0][ssi]
-                else:
+
+                # TODO ITEM LINK
+                try:
+                    if wr.get(sid) and wr.get(sid).get(avm)[0]:
+                        url = wr[sid][avm][0][ssi]
+                    else:
+                        url = request.host_url + 'records/' + pid_value
+                except:
                     url = request.host_url + 'records/' + pid_value
+                    
             else:
                 url = permalink
 

@@ -91,11 +91,16 @@ def get_record_permalink(record):
     :param record: index_name_english
     :return: pid value of doi/cnri.
     """
-    doi = record.pid_doi
-    cnri = record.pid_cnri
 
-    if doi or cnri:
-        return doi.pid_value if doi else cnri.pid_value
+    # TODO ITEM LINK
+    try:
+        doi = record.pid_doi
+        cnri = record.pid_cnri
+
+        if doi or cnri:
+            return doi.pid_value if doi else cnri.pid_value
+    except:
+        pass
 
     return None
 

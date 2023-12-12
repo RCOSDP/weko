@@ -451,7 +451,7 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
       sele_id: ""
     };
 
-    sub_data.sele_id = $('#outside-url').val();
+    sub_data.sele_id = "relateTo";
     sub_data.item_id = $('#outside-url').val();
     sub_data.item_title = $('#outside-url').val();
     $scope.link_item_list.push(sub_data);

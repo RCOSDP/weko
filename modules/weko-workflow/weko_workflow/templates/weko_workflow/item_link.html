@@ -77,11 +77,16 @@
                   </div>
 
                   <div class="row" ng-repeat="sub_link_item in link_item_list track by $index">
-                    <div ng-if="sub_link_item.sele_id===sub_link_item.item_title">
+                    <div ng-if="sub_link_item.sele_id === sub_link_item.item_title">
                       <div class="col-sm-4 col-md-4 col-lg-4">
-                        <a href="{[sub_link_item.item_title]}">{[sub_link_item.item_title]}</a>
+                        <select class="form-control" ng-model="sub_link_item.sele_id">
+                          <option ng-repeat="option in sele_options" value="{[ option.id ]}">{[
+                            option.content]}</option>
+                        </select>
                       </div>
-                      <div class="col-sm-5 col-md-5 col-lg-5"></div>
+                      <div class="col-sm-5 col-md-5 col-lg-5">
+                        {[sub_link_item.item_title]}
+                      </div>
                       <div class="col-sm-3 col-md-3 col-lg-3 text-center">
                         <button type="button" class="btn btn-danger delete-button" ng-click="del_link($index)">
                           <span class="glyphicon glyphicon-trash"></span>
@@ -90,7 +95,7 @@
                       </div>
                     </div>
 
-                    <div ng-if="sub_link_item.sele_id!=sub_link_item.item_title">
+                    <div ng-if="sub_link_item.sele_id != sub_link_item.item_title">
                       <div class="col-sm-4 col-md-4 col-lg-4">
                         <select class="form-control" ng-model="sub_link_item.sele_id">
                           <option ng-repeat="option in sele_options" value="{[ option.id ]}">{[
