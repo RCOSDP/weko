@@ -13,6 +13,7 @@ binaryornot==0.4.4
 bleach==3.1.0
 blinker==1.4
 cachelib==0.1
+captcha==0.4
 cchardet==2.1.1
 celery>=4.4.4
 certifi==2017.11.5
@@ -103,6 +104,7 @@ parso==0.1.0
 passlib==1.7.1
 pexpect==4.3.0
 pickleshare==0.7.4
+Pillow==8.1.2
 pluggy>=0.11.0<1.0.0
 poyo==0.4.1
 prompt-toolkit==1.0.15
