@@ -429,7 +429,7 @@ def new_activity():
         if session.get("item_link_record"):
             del session["item_link_record"]
         if session.get("current_user_item_link"):
-                del session["current_user_item_link"]
+            del session["current_user_item_link"]
         for wfa in workflows_actions:
             workflows_actions_names.append([wfa_name.action.action_name for wfa_name in wfa])
             for item_link in workflows_actions_names:
@@ -1042,6 +1042,10 @@ def display_activity(activity_id="0"):
     form = FlaskForm(request.form)
 
     if session.get('existing_item_link_in_progress') and session.get("existing_item_link_button_pressed"):
+        if session.get("current_user_item_link") and session.get("item_link_record"):
+            del session["current_user_item_link"]
+            del session["item_link_record"]
+
         if activity_id in session.get("existing_item_link_button_pressed").keys():
             item_id = activity_detail.item_id
             current_pid = None
@@ -1100,9 +1104,7 @@ def display_activity(activity_id="0"):
                         item_link.update(relation_data)
                     except Exception as e:
                         current_app.logger.error(str(e))
-
-    # if session.get("current_user_item_link") and session.get("item_link_record"):
-    #     del session["current_user_item_link"]
+       
 
     post_json = request.get_json()
     if action_endpoint == "end_action" and \

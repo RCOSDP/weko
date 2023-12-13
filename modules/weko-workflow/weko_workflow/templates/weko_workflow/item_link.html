@@ -67,9 +67,11 @@
                   {% endif %}
                   <div>
                     {% if session.get("item_link_record") %}
+                    <h1>{{session.get("item_link_record")}}</h1>
                       {% for itr in session["item_link_record"].keys() %}
                         {% if session["current_user_item_link"] == itr %}
                           {% set data = session['item_link_record'][itr] %}
+                          <h1>{{data}}</h1>
                           <div style="display:none;" ng-init="default_item_link_setup({{data}})"></div>
                         {% endif %}
                       {% endfor %}
