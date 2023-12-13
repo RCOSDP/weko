@@ -1560,7 +1560,8 @@ def test_next_action(client, db, users, db_register_fullaction, db_records, user
 @pytest.mark.parametrize('users_index, status_code', [
     (0, 200)
 ])
-def test_next_action_item_link(client, db, users, db_register_fullaction, db_records, users_index, status_code, mocker):
+def test_next_action_item_link(client, db, users, db_register_fullaction, db_records, users_index, status_code):
+    import mock
     def update_activity_order(activity_id, action_id, action_order):
         with db.session.begin_nested():
             activity=Activity.query.filter_by(activity_id=activity_id).one_or_none()
@@ -1582,14 +1583,14 @@ def test_next_action_item_link(client, db, users, db_register_fullaction, db_rec
         session['itemlogin_pid'] = "test recid"
         session['itemlogin_community_id'] = "test community_id"
         session['existing_item_link_button_pressed'] = {"2": "1"}
-    mocker.patch("weko_workflow.views.IdentifierHandle.remove_idt_registration_metadata",return_value=None)
-    mocker.patch("weko_workflow.views.IdentifierHandle.update_idt_registration_metadata",return_value=None)
-    mocker.patch("weko_workflow.views.WekoDeposit.update_feedback_mail")
-    mocker.patch("weko_workflow.views.FeedbackMailList.update_by_list_item_id")
-    mocker.patch("weko_workflow.views.FeedbackMailList.delete_by_list_item_id")
-    mock_signal = mocker.patch("weko_workflow.views.item_created.send")
+    mock.patch("weko_workflow.views.IdentifierHandle.remove_idt_registration_metadata",return_value=None)
+    mock.patch("weko_workflow.views.IdentifierHandle.update_idt_registration_metadata",return_value=None)
+    mock.patch("weko_workflow.views.WekoDeposit.update_feedback_mail")
+    mock.patch("weko_workflow.views.FeedbackMailList.update_by_list_item_id")
+    mock.patch("weko_workflow.views.FeedbackMailList.delete_by_list_item_id")
+    mock_signal = mock.patch("weko_workflow.views.item_created.send")
     new_item = uuid.uuid4()
-    mocker.patch("weko_workflow.views.handle_finish_workflow",return_value=new_item)
+    mock.patch("weko_workflow.views.handle_finish_workflow",return_value=new_item)
 
     with patch("weko_workflow.views.WorkActivity.upt_activity_action",return_value=False):
         update_activity_order("2",5,4)
@@ -1654,7 +1655,8 @@ def test_next_action_item_link(client, db, users, db_register_fullaction, db_rec
 @pytest.mark.parametrize('users_index, status_code', [
     (0, 200)
 ])
-def test_next_action_item_link_2(client, db, users, db_register_fullaction, db_records, users_index, status_code, mocker):
+def test_next_action_item_link_2(client, db, users, db_register_fullaction, db_records, users_index, status_code):
+    import mock
     def update_activity_order(activity_id, action_id, action_order):
         with db.session.begin_nested():
             activity=Activity.query.filter_by(activity_id=activity_id).one_or_none()
@@ -1675,14 +1677,14 @@ def test_next_action_item_link_2(client, db, users, db_register_fullaction, db_r
         session['itemlogin_res_check'] = "test res_check"
         session['itemlogin_pid'] = "test recid"
         session['itemlogin_community_id'] = "test community_id"
-    mocker.patch("weko_workflow.views.IdentifierHandle.remove_idt_registration_metadata",return_value=None)
-    mocker.patch("weko_workflow.views.IdentifierHandle.update_idt_registration_metadata",return_value=None)
-    mocker.patch("weko_workflow.views.WekoDeposit.update_feedback_mail")
-    mocker.patch("weko_workflow.views.FeedbackMailList.update_by_list_item_id")
-    mocker.patch("weko_workflow.views.FeedbackMailList.delete_by_list_item_id")
-    mock_signal = mocker.patch("weko_workflow.views.item_created.send")
+    mock.patch("weko_workflow.views.IdentifierHandle.remove_idt_registration_metadata",return_value=None)
+    mock.patch("weko_workflow.views.IdentifierHandle.update_idt_registration_metadata",return_value=None)
+    mock.patch("weko_workflow.views.WekoDeposit.update_feedback_mail")
+    mock.patch("weko_workflow.views.FeedbackMailList.update_by_list_item_id")
+    mock.patch("weko_workflow.views.FeedbackMailList.delete_by_list_item_id")
+    mock_signal = mock.patch("weko_workflow.views.item_created.send")
     new_item = uuid.uuid4()
-    mocker.patch("weko_workflow.views.handle_finish_workflow",return_value=new_item)
+    mock.patch("weko_workflow.views.handle_finish_workflow",return_value=new_item)
 
     with patch("weko_workflow.views.WorkActivity.upt_activity_action",return_value=False):
         update_activity_order("2",5,4)
@@ -1718,7 +1720,8 @@ def test_next_action_item_link_2(client, db, users, db_register_fullaction, db_r
 @pytest.mark.parametrize('users_index, status_code', [
     (0, 200)
 ])
-def test_next_action_item_link_3(client, db, users, db_register_fullaction, db_records, users_index, status_code, mocker):
+def test_next_action_item_link_3(client, db, users, db_register_fullaction, db_records, users_index, status_code):
+    import mock
     def update_activity_order(activity_id, action_id, action_order):
         with db.session.begin_nested():
             activity=Activity.query.filter_by(activity_id=activity_id).one_or_none()
@@ -1740,14 +1743,14 @@ def test_next_action_item_link_3(client, db, users, db_register_fullaction, db_r
         session['itemlogin_pid'] = "test recid"
         session['itemlogin_community_id'] = "test community_id"
         session['existing_item_link_button_pressed'] = {"2": "1"}
-    mocker.patch("weko_workflow.views.IdentifierHandle.remove_idt_registration_metadata",return_value=None)
-    mocker.patch("weko_workflow.views.IdentifierHandle.update_idt_registration_metadata",return_value=None)
-    mocker.patch("weko_workflow.views.WekoDeposit.update_feedback_mail")
-    mocker.patch("weko_workflow.views.FeedbackMailList.update_by_list_item_id")
-    mocker.patch("weko_workflow.views.FeedbackMailList.delete_by_list_item_id")
-    mock_signal = mocker.patch("weko_workflow.views.item_created.send")
+    mock.patch("weko_workflow.views.IdentifierHandle.remove_idt_registration_metadata",return_value=None)
+    mock.patch("weko_workflow.views.IdentifierHandle.update_idt_registration_metadata",return_value=None)
+    mock.patch("weko_workflow.views.WekoDeposit.update_feedback_mail")
+    mock.patch("weko_workflow.views.FeedbackMailList.update_by_list_item_id")
+    mock.patch("weko_workflow.views.FeedbackMailList.delete_by_list_item_id")
+    mock_signal = mock.patch("weko_workflow.views.item_created.send")
     new_item = uuid.uuid4()
-    mocker.patch("weko_workflow.views.handle_finish_workflow",return_value=new_item)
+    mock.patch("weko_workflow.views.handle_finish_workflow",return_value=new_item)
 
     with patch("weko_workflow.views.WorkActivity.upt_activity_action",return_value=False):
         update_activity_order("2",3,2)
@@ -3331,7 +3334,8 @@ def test_display_activity(client, users, db_register,mocker,redis_connect,withou
 
 
 # pytest --cov=weko_workflow tests/test_views.py::test_display_activity_item_link -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_display_activity_item_link(client, users, db_register,mocker,redis_connect,without_remove_session):
+def test_display_activity_item_link(client, users, db_register,redis_connect,without_remove_session):
+    import mock
     login(client=client, email=users[2]['email'])
     workflow_detail = WorkFlow.query.filter_by(id=1).one_or_none()
     mock_render_template = MagicMock(return_value=jsonify({}))
@@ -3381,17 +3385,17 @@ def test_display_activity_item_link(client, users, db_register,mocker,redis_conn
         files=None,
         files_thumbnail=None,
         pid=None)
-    mocker.patch('weko_workflow.views.WorkActivity.get_activity_action_role',
+    mock.patch('weko_workflow.views.WorkActivity.get_activity_action_role',
                 return_value=(roles, action_users))
-    mocker.patch('weko_workflow.views.WorkActivity.get_action_identifier_grant',return_value=identifier)
-    mocker.patch('weko_workflow.views.check_authority_action',return_value=1)
-    mocker.patch('weko_workflow.views.set_files_display_type',return_value=[])
-    mocker.patch('weko_workflow.views.WorkActivity.get_action_journal')
-    mocker.patch('weko_workflow.views.get_files_and_thumbnail',return_value=(["test1","test2"],files_thumbnail))
-    mocker.patch('weko_workflow.views.get_usage_data')
-    mocker.patch('weko_workflow.views.is_usage_application_item_type')
-    mocker.patch('weko_theme.views.get_design_layout',return_value=(None,True))
-    mocker.patch('weko_workflow.views.RedisConnection.connection',return_value=redis_connect)
+    mock.patch('weko_workflow.views.WorkActivity.get_action_identifier_grant',return_value=identifier)
+    mock.patch('weko_workflow.views.check_authority_action',return_value=1)
+    mock.patch('weko_workflow.views.set_files_display_type',return_value=[])
+    mock.patch('weko_workflow.views.WorkActivity.get_action_journal')
+    mock.patch('weko_workflow.views.get_files_and_thumbnail',return_value=(["test1","test2"],files_thumbnail))
+    mock.patch('weko_workflow.views.get_usage_data')
+    mock.patch('weko_workflow.views.is_usage_application_item_type')
+    mock.patch('weko_theme.views.get_design_layout',return_value=(None,True))
+    mock.patch('weko_workflow.views.RedisConnection.connection',return_value=redis_connect)
 
     url = url_for('weko_workflow.display_activity', activity_id='A-00000001-10001')
     request_args = {}

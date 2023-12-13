@@ -1950,6 +1950,46 @@ def test_item_link_bulk_delete(app, db, records):
     assert r[0]['value']=='HDL'
 
 
+# class ItemLink(object):
+#     def get_item_link_info_output_xml(cls, recid):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_item_link_bulk_create -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_get_item_link_info_output_xml(app, db, records, users):
+    test_data_mm = MagicMock()
 
+    def get_src_references_test_data(content=None):
+        test_data_mm_1 = MagicMock()
+        def all_test_data():
+            test_data_mm_2 = MagicMock()
+            test_data_mm_2.dst_item_pid = "test"
+            return [test_data_mm_2]
+        test_data_mm_1.all = all_test_data
+        return test_data_mm_1
 
+    def get_record_by_pid_test_data(content=None):
+        test_data_dict = {
+            "system_identifier_doi": {
+                "attribute_value_mlt": ["test"]
+            },
+        }
+        return test_data_dict
+    
+    test_data_mm.get_record_by_pid = get_record_by_pid_test_data
+    test_data_mm.get_src_references = get_src_references_test_data
+    
+    _uuid = str(records[0][0].object_uuid)
+    _items = [
+        {
+            'item_id': '1',
+            'sele_id': 'URI'
+        }
+    ]
+    ItemLink.bulk_create(ItemLink(_uuid), _items)
+    r = ItemLink.get_item_link_info(_uuid)
+    assert len(r)==1
 
+    #* For exception coverage
+    with patch("weko_records.api.WekoRecord", test_data_mm):
+        with patch("weko_records.api.ItemReference", test_data_mm):
+            with patch("weko_records.api.request", test_data_mm):
+                r2 = ItemLink.get_item_link_info_output_xml(_uuid)
+                assert r2 is not None

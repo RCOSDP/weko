@@ -2192,15 +2192,17 @@ class ItemLink(object):
                 avm = 'attribute_value_mlt'
                 ssi = 'subitem_systemidt_identifier'
 
-                # TODO ITEM LINK
+                #* empty url variable and 'try and except' snippet is for item link outside url function
+                #* to not throw an error be able to display url in item detail screen
+                url = ''
                 try:
                     if wr.get(sid) and wr.get(sid).get(avm)[0]:
                         url = wr[sid][avm][0][ssi]
                     else:
                         url = request.host_url + 'records/' + pid_value
                 except:
-                    url = request.host_url + 'records/' + pid_value
-                    
+                    pass
+
             else:
                 url = permalink
 

@@ -92,7 +92,8 @@ def get_record_permalink(record):
     :return: pid value of doi/cnri.
     """
 
-    # TODO ITEM LINK
+    #* This 'try and except' snippet is for item link outside url function
+    #* to not throw an error be able to display url in item detail screen
     try:
         doi = record.pid_doi
         cnri = record.pid_cnri
