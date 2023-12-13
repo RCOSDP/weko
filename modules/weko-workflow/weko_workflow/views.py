@@ -2873,9 +2873,15 @@ def get_data_init():
     init_workflows = get_workflows()
     init_roles = get_roles()
     init_terms = get_terms()
+    roles = Role.query.all()
+    logged_roles = []
+    for role in roles:
+        if role.id > 2:
+            logged_roles.append({'id': role.id, 'name': role.name})
     return jsonify(
         init_workflows=init_workflows,
         init_roles=init_roles,
+        logged_roles = logged_roles,
         init_terms=init_terms)
 
 

@@ -175,8 +175,9 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
                 else:
                     try:
                         # contents accessdate
-                        c_is_can = True
-                        date = fjson.get('date')
+                        date = fjson.get('accessdate',None)
+                        if not date:
+                            date = fjson.get('date')
                         if date and isinstance(date, list) and date[0]:
                             adt = date[0].get('dateValue')
                             if adt:
@@ -192,21 +193,27 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
                         # roles check
                         role_is_can = False
                         roles = fjson.get('roles')
-                        if roles and isinstance(roles, list) and len(roles)>0:
+                        if c_is_can and p_is_can:
+                            role_is_can = True
+                        elif roles and isinstance(roles, list) and len(roles)>0:
                             for lst in list(current_user.roles or []):
                                 for role_value in [ role.get('role') for role in roles ]:
                                     if __isint(role_value):
                                         if lst.id == int(role_value):
                                             role_is_can = True
+                                            if role_is_can:
+                                                c_is_can = True
                                             break
                                     else:
                                         if lst.name == role_value:
                                             role_is_can = True
+                                            if role_is_can:
+                                                c_is_can = True
                                             break
                             # ログインユーザーに権限なしの場合でも、コンテンツで「非ログインユーザー」指定した場合OK
-                            if len(list(current_user.roles))==0:
-                                if 'none_loggin' in [ role.get('role') for role in roles ]:
-                                    role_is_can = True
+                            # if len(list(current_user.roles))==0:
+                            #     if 'none_loggin' in [ role.get('role') for role in roles ]:
+                            #         role_is_can = True
                         else:
                             role_is_can = True
                         
@@ -226,12 +233,7 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
                     is_can = True
                 else:
                     # ログインユーザーか
-                    is_login_user = False
-                    users = current_app.config['WEKO_PERMISSION_ROLE_USER']
-                    for lst in list(current_user.roles or []):
-                        if lst.name in users:
-                            is_login_user = True
-                            break
+                    is_login_user = current_user.is_authenticated
 
                     # rolesで指定されたユーザーロールか
                     is_role_can = False
@@ -248,9 +250,9 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
                                         is_role_can = True
                                         break
                         # ログインユーザーに権限なしの場合でも、コンテンツで「非ログインユーザー」指定した場合OK
-                        if len(list(current_user.roles))==0:
-                            if 'none_loggin' in [ role.get('role') for role in roles ]:
-                                is_role_can = True
+                        # if 'none_loggin' in [ role.get('role') for role in roles ]:
+                        #     is_role_can = True
+
                     else:
                         is_role_can = True
 
