@@ -25,7 +25,7 @@ import math
 import os
 import sys
 from copy import deepcopy
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 
 import redis
 from redis import sentinel
@@ -1329,11 +1329,13 @@ def get_large_file_upload_view():
 
     maxpage=math.ceil(count / int(sizetodo))
     pages = pagestodo if pagestodo <= maxpage else maxpage
+    print(histories)
     
     return render_template('weko_items_ui/large_upload_view.html'
                             ,histories=histories
                             ,maxpage=maxpage
                             ,pages=pages
                             ,size=sizetodo
-                            ,day=datetime.now() - current_app.config.get("FILES_REST_MULTIPART_EXPIRES")
+                            # ,day=datetime.now() - current_app.config.get("FILES_REST_MULTIPART_EXPIRES")
+                            ,day=datetime.utcnow() - current_app.config.get("FILES_REST_MULTIPART_EXPIRES")
     )

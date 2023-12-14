@@ -15,6 +15,7 @@ function showErrorMsg(msg , success=false, ediv) {
 
 async function downloadFile(recNum, fileName, content_length, buffer_size, event){
     let ediv = event.getAttribute("ediv")
+    let mordal = event.getAttribute("mordal");
     if(!ediv){
         ediv = "errors";
     }
@@ -43,6 +44,9 @@ async function downloadFile(recNum, fileName, content_length, buffer_size, event
       showErrorMsg(error_msg, false, ediv)
       return;
     }
+    if(mordal != null){
+      $(mordal).modal("hide")
+    }
     ring_background.classList.remove("hidden");
   
     let offset = 0;
@@ -64,6 +68,9 @@ async function downloadFile(recNum, fileName, content_length, buffer_size, event
         xhr.abort();
         showErrorMsg(error_msg, false, ediv)
         ring_background.classList.add("hidden");
+        if(mordal != null){
+          $(mordal).modal("show")
+        }
         return;
       }
     }
@@ -81,6 +88,9 @@ async function downloadFile(recNum, fileName, content_length, buffer_size, event
             xhr.abort();
             showErrorMsg(error_msg, false, ediv)
             ring_background.classList.add("hidden");
+            if(mordal != null){
+              $(mordal).modal("show")
+            }
             return;
           }
         }
@@ -94,6 +104,9 @@ async function downloadFile(recNum, fileName, content_length, buffer_size, event
           xhr.abort();
           showErrorMsg(error_msg, false, ediv)
           ring_background.classList.add("hidden");
+          if(mordal != null){
+            $(mordal).modal("show")
+          }
           return;
         }
   
@@ -105,6 +118,9 @@ async function downloadFile(recNum, fileName, content_length, buffer_size, event
           await writableStream.close();
           showErrorMsg(comp_msg, true, ediv);
           ring_background.classList.add("hidden");
+          if(mordal != null){
+            $(mordal).modal("show")
+          }
         }
     }
   

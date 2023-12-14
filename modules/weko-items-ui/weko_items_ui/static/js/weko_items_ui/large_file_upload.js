@@ -227,8 +227,8 @@ async function multipartUpload(){
         }
 
         async function xhrInitialize(indexNum){
-            let xhr = new XMLHttpRequest();
-            xhrList[indexNum] = xhr;
+            let lxhr = new XMLHttpRequest();
+            xhrList[indexNum] = lxhr;
             let currentNum = indexNum;
             let bodyHash;
             let retryCount = 0;
@@ -258,10 +258,10 @@ async function multipartUpload(){
                         }
 
                         if(xhr1.responseText === ""){
-                            xhr.open('PUT', "https://" + host + "/uploadPart" + object_name + "?partNumber=" + (partNum + 1) + "&uploadId=" + uploadId, true);
-                            xhr.setRequestHeader('Content-type', contentType);
-                            xhr.setRequestHeader("bodyHash", bodyHash);
-                            xhr.send(partfile);
+                            lxhr.open('PUT', "https://" + host + "/uploadPart" + object_name + "?partNumber=" + (partNum + 1) + "&uploadId=" + uploadId, true);
+                            lxhr.setRequestHeader('Content-type', contentType);
+                            lxhr.setRequestHeader("bodyHash", bodyHash);
+                            lxhr.send(partfile);
                         }else{
                             if(xhr1.responseText === bodyHash){ 
                                 uploadStatus_p.innerText = (parseInt((partNumber / numOfPart) * 100)).toString() + "%";
@@ -290,7 +290,7 @@ async function multipartUpload(){
                 })
             };
 
-            xhr.onerror = function(){
+            lxhr.onerror = function(){
                 if(retryCount < retry_count){
                     retryCount += 1;
                     uploadPart(object_name, currentNum);
@@ -308,12 +308,12 @@ async function multipartUpload(){
                 }
             }
 
-            xhr.onreadystatechange = function(){
-                xhrStateList[indexNum] = xhr.readyState;
+            lxhr.onreadystatechange = function(){
+                xhrStateList[indexNum] = lxhr.readyState;
             }
 
-            xhr.onload = function() {
-                if(xhr.status != 200){
+            lxhr.onload = function() {
+                if(lxhr.status != 200){
                     if(retryCount < retry_count){
                         retryCount += 1;
                         uploadPart(object_name, currentNum);
@@ -339,13 +339,13 @@ async function multipartUpload(){
                     partTag.append(partNumTag);
 
                     let eTag = doc.createElement("ETag");
-                    eTag.textContent = xhr.getResponseHeader("ETag");
+                    eTag.textContent = lxhr.getResponseHeader("ETag");
                     partTag.append(eTag);
         
                     compTag.append(partTag);
                     
                     const xhr2 = new XMLHttpRequest();
-                    xhr2.open("POST", "https://" + host + "/api/largeFileUpload/part?part_number=" + (currentNum+1) + "&upload_id=" + uploadId + "&check_sum=" + bodyHash, false);
+                    xhr2.open("POST", "https://" + host + "/api/largeFileUpload/part?part_number=" + (currentNum+1) + "&upload_id=" + uploadId + "&check_sum=" + bodyHash + "&ETag=" + lxhr.getResponseHeader("ETag"), false);
                     xhr2.send();
 
                     if(xhr2.status != 200){
