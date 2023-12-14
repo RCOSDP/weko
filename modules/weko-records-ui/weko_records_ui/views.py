@@ -645,11 +645,11 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         
         from flask import session
 
-        # if session.get("current_user_item_link") != record["_oai"]["id"]:
-        #     if session.get("item_link_record"):
-        #         del session["item_link_record"]
-        #     if session.get("current_user_item_link"):
-        #         del session["current_user_item_link"]
+        if session.get("current_user_item_link") != record["_oai"]["id"]:
+            if session.get("item_link_record"):
+                del session["item_link_record"]
+            if session.get("current_user_item_link"):
+                del session["current_user_item_link"]
 
         if session.get("item_link_record") \
                 and isinstance(session.get("item_link_record"), dict):
