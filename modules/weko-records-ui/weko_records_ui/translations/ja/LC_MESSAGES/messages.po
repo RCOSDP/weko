@@ -168,7 +168,7 @@ msgstr ""
 #: weko_records_ui/templates/weko_records_ui/_macros.html:113
 #: weko_records_ui/templates/weko_records_ui/box/preview.html:55
 msgid "Download"
-msgstr ""
+msgstr "ダウンロード"
 
 #: weko_records_ui/templates/weko_records_ui/creator_detail_template.html:77
 msgid "Search repository"
@@ -278,6 +278,14 @@ msgstr ""
 #: weko_records_ui/templates/weko_records_ui/file_details_contents.html:198
 msgid "Plays"
 msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:67
+msgid "Action"
+msgstr "アクション"
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:142
+msgid "Secret URL"
+msgstr "シークレットURL"
 
 #: weko_records_ui/templates/weko_records_ui/box/stats.html:29
 #: weko_records_ui/templates/weko_records_ui/file_details_contents.html:208
@@ -1222,6 +1230,8 @@ msgstr "ダウンロード制限回数を超過しています。"
 msgid "This data is not available for this user."
 msgstr "このデータは利用できません（権限がないため）。"
 
+msgid "Success Secret URL Generate"
+msgstr "成功: シークレットURLを生成し、あなたのメールアドレス宛に送信しました。"
 #~ msgid "Register with new data"
 #~ msgstr "新規データ登録"
 
