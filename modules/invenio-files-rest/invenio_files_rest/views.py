@@ -86,6 +86,7 @@ def lock_upload_id():
         abort(403)
     try:
         upload_id = request.args["upload_id"]
+        as_uuid(upload_id)
         redis_connection = RedisConnection()
         sessionstore = redis_connection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
         if "upload_id" + upload_id in sessionstore.iter_keys():
@@ -96,6 +97,7 @@ def lock_upload_id():
                     ttl_secs=current_app.config['FILES_REST_MULTIPART_EXPIRES'].total_seconds())
         return f"lock redis upload_id: {upload_id}"
     except Exception:
+        traceback.print_exc()
         return _("An error has occurred."), 500
     
 @large_file_upload_blueprint.route("/unlock_upload_id", methods = ["POST"])
@@ -110,11 +112,13 @@ def unlock_upload_id():
         abort(403)
     try:
         upload_id = request.args["upload_id"]
+        as_uuid(upload_id)
         redis_connection = RedisConnection()
         sessionstore = redis_connection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
         sessionstore.delete("upload_id" + upload_id)
         return f"unlock redis upload_id: {upload_id}"
     except Exception:
+        traceback.print_exc()
         return _("An error has occurred."), 500
 
 @large_file_upload_blueprint.route("/createFileInstance", methods = ["POST"])
@@ -147,6 +151,7 @@ def createFileInstance():
         db.session.commit()
         return str(fileinstance.id)
     except Exception:
+        traceback.print_exc()
         return _("An error has occurred."), 500
 
 @large_file_upload_blueprint.route("/checkMultipartObjectInstance", methods = ["POST"])
@@ -178,6 +183,7 @@ def checkMultipartObjectInstance():
                         return _("The Upload Id is expired for retry."), 404
         return _("The Upload Id is invalid."), 400
     except Exception:
+        traceback.print_exc()
         return _("An error has occurred."), 500
 
 
@@ -191,13 +197,13 @@ def createMultipartObject():
     """
     if not current_user.roles:
         abort(403)
-    upload_id = request.args.get("upload_id")
-    file_id = request.args.get("file_id")
-    key = request.args.get("key")
-    size = request.args.get("size")
-    chunk_size = request.args.get("chunk_size")
+    upload_id = request.args.get("upload_id", "")
+    file_id = request.args.get("file_id", "")
+    key = request.args.get("key", "")
+    size = request.args.get("size", "")
+    chunk_size = request.args.get("chunk_size", "")
     
-    if(upload_id == None or key == None or size == None or chunk_size == None):
+    if(upload_id == "" or key == "" or size == "" or chunk_size == ""):
         return _("missing arguments."), 400
     
     try:
@@ -215,6 +221,7 @@ def createMultipartObject():
         db.session.commit()
         return str(file_id), 200
     except Exception:
+        traceback.print_exc()
         return _("An error has occurred."), 500
         
     
@@ -232,6 +239,7 @@ def get_or_create_part():
     upload_id = request.args.get("upload_id")
     part_number = request.args.get("part_number")
     checksum = request.args.get("check_sum")
+    ETag = request.args.get("ETag")
     if not (upload_id and part_number):
         return {"message": "fail"}, 400
     
@@ -248,12 +256,14 @@ def get_or_create_part():
                 part.upload_id = upload_id
                 part.part_number = part_number
                 part.checksum = checksum
+                part.etag = ETag
                 
                 db.session.add(part)
                 
             db.session.commit()
             return "success"
     except Exception:
+        traceback.print_exc()
         return _("An error has occurred."), 500
     
 
@@ -267,8 +277,8 @@ def complete_multipart():
     """
     if not current_user.roles:
         abort(403)
-    upload_id = request.args.get("upload_id")
-    if(upload_id == None):
+    upload_id = request.args.get("upload_id", "")
+    if(upload_id == ""):
         return "Error" , 400
     try:
         with db.session.begin_nested():
@@ -281,6 +291,7 @@ def complete_multipart():
         db.session.commit()
         return "Success", 200 
     except Exception:
+        traceback.print_exc()
         return _("An error has occurred."), 500
 
 

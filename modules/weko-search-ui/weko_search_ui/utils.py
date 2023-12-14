@@ -1056,9 +1056,9 @@ def handle_check_exist_record(list_record) -> list:
                                 item["status"] = _edit_mode.lower()
 
             if item.get("upload_id"):
-                all_size = 0
                 p = PersistentIdentifier.query.filter_by(pid_type="recid", pid_value=item["id"]).first()
                 bucket = RecordsBuckets.query.filter_by(record_id = p.object_uuid).one_or_none().bucket 
+                all_size = bucket.size
                 for i, id in enumerate(item.get("upload_id")):
                     if id != "" and item.get("file_path")[i] != "": # if 'file_path' exist
                         errors.append(_('file_path must be empty'))
@@ -1083,7 +1083,7 @@ def handle_check_exist_record(list_record) -> list:
                     else:
                         if id != '':
                             errors.append(_('uploadId is invalid format'))
-                            
+                           
                 if bucket != None and all_size > bucket.quota_size:
                     errors.append(_('Total file size exceeds bucket size'))
                     
@@ -1221,6 +1221,7 @@ def up_load_file(record, root_path, deposit, allow_upload_file_content, old_file
             old_file = (
                 old_files[idx] if not is_thumbnail and idx < len(old_files) else None
             )
+            # print("\033[32m", "old_file", old_file, "\033[0m")
             if is_upload_id:
                 if is_valid_uuid(path):
                     multipartobject = MultipartObject.get_by_uploadId(path)
@@ -1259,6 +1260,7 @@ def up_load_file(record, root_path, deposit, allow_upload_file_content, old_file
                     and record["filenames"][idx]
                     and old_file.key == record["filenames"][idx]["filename"]
                 ) and MultipartObject.get_by_fileId(old_file.file_id) == None:
+                    print("\033[32m", "file remove1", old_file, "\033[0m")
                     old_file.remove()
                 continue
 
@@ -1278,6 +1280,7 @@ def up_load_file(record, root_path, deposit, allow_upload_file_content, old_file
         # clean file contents in bucket.
         for file in deposit.files.bucket.objects:
             if not file.is_thumbnail and (delete_all or not file.is_head):
+                print("\033[32m", "clean_file", file, "\033[0m")
                 file.remove()
 
     upload_id = record.get("upload_id", []) if allow_upload_file_content else []
@@ -1692,7 +1695,7 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
                     for dict_data in item["metadata"][file_meta_id]:
                         if dict_data.get("filename") == multipartobject.key:
                             if dict_data.get("accessrole") == "open_date":
-                                file_meta_data["date"]["dateValue"] = dict_data.get("date",dict()).get("dateValue",'')
+                                file_meta_data["date"][0]["dateValue"] = dict_data.get("date",[dict()])[0].get("dateValue",'')
                     
                     for meta_name in ["displaytype", "groups", "licensefree", "licensetype", "version"]:
                         if item["metadata"][file_meta_id][i].get(meta_name): file_meta_data[meta_name] = item["metadata"][file_meta_id][i][meta_name]
@@ -1728,7 +1731,7 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
                 delete_cache_data(cache_key)
 
         except SQLAlchemyError as ex:
-            current_app.logger.error("sqlalchemy error: ", ex)
+            current_app.logger.error("sqlalchemy error: {}".format(ex.args))
             db.session.rollback()
             if item.get("id"):
                 pid = PersistentIdentifier.query.filter_by(
@@ -1752,7 +1755,7 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
 
             return {"success": False, "error_id": error_id}
         except ElasticsearchException as ex:
-            current_app.logger.error("elasticsearch  error: ", ex)
+            current_app.logger.error("elasticsearch  error: {}".format(ex.args))
             db.session.rollback()
             if item.get("id"):
                 pid = PersistentIdentifier.query.filter_by(
@@ -1776,7 +1779,7 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
 
             return {"success": False, "error_id": error_id}
         except redis.RedisError as ex:
-            current_app.logger.error("redis  error: ", ex)
+            current_app.logger.error("redis  error: {}".format(ex.args))
             db.session.rollback()
             if item.get("id"):
                 pid = PersistentIdentifier.query.filter_by(
@@ -1800,7 +1803,7 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
 
             return {"success": False, "error_id": error_id}
         except BaseException as ex:
-            current_app.logger.error("Unexpected error: {}".format(ex))
+            current_app.logger.error("Unexpected error: {}".format(ex.args))
             db.session.rollback()
             if item.get("id"):
                 pid = PersistentIdentifier.query.filter_by(

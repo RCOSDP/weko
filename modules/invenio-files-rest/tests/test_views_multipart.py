@@ -770,7 +770,7 @@ def test_multipart_listparts(app, client, db, bucket, multipart, admin_user):
     res = client.get(f"/files/{str(multipart.bucket_id)}/{str(multipart.key)}?upload_id={multipart.upload_id}")
     assert res.status_code == 200
     
-def test_multipart_init(app, client, db, bucket, admin_user, redis_connect):
+def test_multipart_init1(app, client, db, bucket, admin_user, redis_connect):
     login_user(client, admin_user)
     
     # MissingQueryParameter('size')
@@ -780,7 +780,9 @@ def test_multipart_init(app, client, db, bucket, admin_user, redis_connect):
     # MissingQueryParameter('part_size')
     res = client.post(f"/files/{str(bucket.id)}/sample?uploads&size=100")
     assert res.status_code == 403
-    
+        
+def test_multipart_init2(app, client, db, bucket, admin_user, redis_connect):
+    login_user(client, admin_user)
     # normal
     with patch("invenio_files_rest.views.RedisConnection.connection", return_value=redis_connect):
         res = client.post(f"/files/{str(bucket.id)}/sample?uploads&size=100&part_size=10")
@@ -799,7 +801,7 @@ def test_multipart_uploadpart1(app, client, db, bucket, multipart, admin_user, r
         
         # error MultipartInvalidChunkSize
         res = client.put(f"/files/{str(bucket.id)}/{multipart.key}?upload_id={multipart.upload_id}")
-        res.status_code == 403
+        assert res.status_code == 403
         
 def test_multipart_uploadpart2(app, client, db, bucket, multipart, admin_user, redis_connect):
     s = MagicMock()
@@ -809,7 +811,7 @@ def test_multipart_uploadpart2(app, client, db, bucket, multipart, admin_user, r
             
             # error MultipartExhausted
             res = client.put(f"/files/{str(bucket.id)}/{multipart.key}?upload_id={multipart.upload_id}")
-            res.status_code == 400
+            assert res.status_code == 400
         
             redis_connect.put(
                     "upload_id" + str(multipart.upload_id),
@@ -820,20 +822,24 @@ def test_multipart_uploadpart2(app, client, db, bucket, multipart, admin_user, r
             
             # error Exception
             res = client.put(f"/files/{str(bucket.id)}/{multipart.key}?upload_id={multipart.upload_id}")
-            res.status_code == 403
+            assert res.status_code == 403
             
 def test_multipart_uploadpart3(app, client, db, bucket, multipart, admin_user, redis_connect):
     s = MagicMock()
     login_user(client, admin_user)
     with patch("invenio_files_rest.current_files_rest.multipart_partfactory", return_value = (20, 1, s, None, None, None)):
         with patch("invenio_files_rest.views.RedisConnection.connection", return_value=redis_connect):
+            redis_connect.put(
+                    "upload_id" + str(multipart.upload_id),
+                    b"lock"
+                    )
 
             s.read = MagicMock(return_value = io.BytesIO(b"abcdefg"))
             
             with patch("invenio_files_rest.views.get_hash", return_value="hash"):
                 # normal
                 res = client.put(f"/files/{str(bucket.id)}/{multipart.key}?upload_id={multipart.upload_id}")
-                res.status_code == 200
+                assert res.status_code == 200
     
         
 def test_multipart_complete(app, client, db, bucket, multipart, admin_user, redis_connect):

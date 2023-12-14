@@ -81,7 +81,7 @@
                             {% if file.size <= config.get("MAX_DOWNLOAD_SIZE_AT_ONE_TIME") %}
                               href="{{file_url}}">
                             {% else %}
-                              href="javascript:void(0)" onclick="downloadFile('{{pid.pid_value}}', '{{file.filename}}', '{{file.size}}', '{{config.get("DOWNLOAD_SIZE_IN_ONE_PART")}}', this)">
+                              mordal="#myModal" href="javascript:void(0)" onclick="downloadFile('{{pid.pid_value}}', '{{file.filename or file.key}}', '{{file.size}}', '{{config.get("DOWNLOAD_SIZE_IN_ONE_PART")}}', this)">
                             {% endif %}
                             {{ file.filename or file.key }} ({{ file.size|filesizeformat }})</a>
                           {%- if file.checksum -%}

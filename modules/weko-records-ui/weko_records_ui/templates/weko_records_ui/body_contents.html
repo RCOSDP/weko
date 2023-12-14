@@ -171,7 +171,7 @@
                           {%- if access_permission and billing_file_access_permission -%}
                             {%- if file.size <= config.get("MAX_DOWNLOAD_SIZE_AT_ONE_TIME") -%}
                               <a class="forcewrap{{ billing_file_class }}" {{ billing_file_data }} {{ billing_file_url }}
-                                {% if text_url %} href="javascript:OnLinkClick('', {{ pid.pid_value }}, '{{ file.accessrole }}')" {% endif %}>
+                                {% if text_url %} href="javascript:OnLinkClick('{{text_url}}', {{ pid.pid_value }}, '{{ file.accessrole }}')" {% endif %}>
                                 {% autoescape false %}
                                 {{ file_label | escape_str }} {{ filesize }}
                                 {% endautoescape %}
