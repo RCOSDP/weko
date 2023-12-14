@@ -75,6 +75,7 @@ def send_request_mail(item_id, mail_info):
 def create_captcha_image():
 
     expiration_seconds = current_app.config.get('WEKO_RECORDS_UI_CAPTCHA_EXPIRATION_SECONDS', 900)
+    ttl = expiration_seconds - 300
 
     # Get CAPTCHA info
     captcha_info = get_captcha_info()
@@ -93,6 +94,7 @@ def create_captcha_image():
     # Create response
     res_json = {
         "key": key,
-        'image': captcha_info['image']
+        'image': captcha_info['image'],
+        'ttl': ttl 
     }
     return True, res_json
