@@ -112,6 +112,9 @@ require([
           let uri = res.data.redirect.replace('api/', '')
           document.location.href = uri;
         } else {
+          $('#btn_edit').removeAttr("disabled");
+          $('#btn_delete').removeAttr("disabled");
+          $('#btn_ver_delete').removeAttr("disabled");
           $('[role="alert"]').css('display', 'inline-block');
           $('[role="alert"]').text(res.msg);
           if ("activity_id" in res) {
@@ -124,8 +127,18 @@ require([
         }
       },
       error: function (jqXHE, status) {
+        $('[role="msg"]').hide();
+        $('#btn_edit').removeAttr("disabled");
+        $('#btn_delete').removeAttr("disabled");
+        $('#btn_ver_delete').removeAttr("disabled");
+        $('[role="alert"]').css('display', 'inline-block');
+        $('[role="alert"]').text("INTERNAL SERVER ERROR");
       }
     });
+  });
+
+  $('button#btn_close_msg').on('click', function () {
+    $('[role="msg"]').hide();
   });
 
   $('button#btn_close_alert').on('click', function () {

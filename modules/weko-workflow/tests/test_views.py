@@ -4848,7 +4848,6 @@ def test_clear_activitylog_9(client, db_register , users, users_index, status_co
     res = client.get(url)
     assert res.status_code == 403
 
-<<<<<<< HEAD
 # class ActivityActionResource(ContentNegotiatedMethodView):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_ActivityActionResource_post -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_ActivityActionResource_post(client, db_register , users):
@@ -4856,7 +4855,6 @@ def test_ActivityActionResource_post(client, db_register , users):
     login(client=client, email=users[2]['email'])
     res = client.get(url)
     assert res.status_code == 302
-=======
 def test_new_activity(client, users, db_register):
     with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
         res = client.get(
@@ -4894,4 +4892,3 @@ def test_new_activity_2(db_register, client, users, app):
         )
 
         assert res.status_code == 200
->>>>>>> item-link-evidence
