@@ -117,7 +117,7 @@ class S3FSFileStorage(PyFSFileStorage):
     
     def upload_multipart(self
                 , object_name :str
-                , incoming_stream :SpooledTemporaryFile
+                , incoming_stream :bytes
                 , bucket_name:str
                 , part_number:int
                 , upload_id:uuid.UUID
@@ -151,7 +151,7 @@ class S3FSFileStorage(PyFSFileStorage):
             path = pathlib.Path(bucket_name).joinpath(self.fileurl.replace("/data" ,"")).joinpath(str(upload_id)).joinpath(str(part_number))
             path.touch()
             with path.open(mode='wb') as con :
-                con.write(incoming_stream.read())
+                con.write(incoming_stream)
 
             return upload_id
 
