@@ -51,6 +51,7 @@ from weko_records.api import FeedbackMailList, ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
 from weko_records.utils import replace_fqdn
 from weko_schema_ui.models import PublishStatus
+from weko_search_ui.utils import is_valid_uuid
 from weko_workflow.api import WorkActivity, WorkFlow
 
 from weko_records_ui.models import InstitutionName
@@ -666,6 +667,22 @@ def get_file_info_list(record):
     """
     def get_file_size(p_file):
         """Get file size and convert to byte."""
+        vid = p_file.get("version_id")
+        if not is_valid_uuid(vid):
+            file_size = p_file.get('filesize', [{}])[0]
+            file_size_value = file_size.get('value', 0)
+            defined_unit = {'b': 1, 'kb': 1000, 'mb': 1000000,
+                            'gb': 1000000000, 'tb': 1000000000000}
+            if type(file_size_value) is str and ' ' in file_size_value:
+                size_num = file_size_value.split(' ')[0]
+                size_unit = file_size_value.split(' ')[1]
+                unit_num = defined_unit.get(size_unit.lower(), 0)
+                try:
+                    file_size_value = float(size_num) * unit_num
+                except:
+                    file_size_value = -1
+            return file_size_value
+            
         return ObjectVersion.query.filter_by(version_id = p_file.get("version_id")).one_or_none().file.size
 
     def set_message_for_file(p_file):
