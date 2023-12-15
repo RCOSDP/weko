@@ -173,9 +173,9 @@ async function multipartUpload(){
 
     let numOfPart = 0;
     if(file.size % BUFFER_SIZE === 0){
-        numOfPart = parseInt(file.size / BUFFER_SIZE);
+        numOfPart = Math.floor(file.size / BUFFER_SIZE);
     }else{
-        numOfPart = parseInt(file.size / BUFFER_SIZE) + 1; 
+        numOfPart = Math.floor(file.size / BUFFER_SIZE) + 1; 
     }
     console.log(numOfPart);
 

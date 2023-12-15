@@ -20,7 +20,7 @@ async function downloadFile(recNum, fileName, content_length, buffer_size, event
         ediv = "errors";
     }
     const host = window.location.host;
-    const retry_count = $('input[id="retry_count"]');
+    const retry_count = Number($('input[id="retry_count"]').val());
     if(!confirm(confirm_msg)){
         return;
     }
