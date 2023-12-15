@@ -232,6 +232,7 @@ async function multipartUpload(){
             let currentNum = indexNum;
             let bodyHash;
             let retryCount = 0;
+            let numOfCompleteParts = 0;
             let partfile = file.slice(offset, offset + BUFFER_SIZE, contentType)
             offset += BUFFER_SIZE;
 
@@ -265,13 +266,14 @@ async function multipartUpload(){
                         }else{
                             if(xhr1.responseText === bodyHash){ 
                                 uploadStatus_p.innerText = (parseInt((partNumber / numOfPart) * 100)).toString() + "%";
+                                numOfCompleteParts += 1;
                                 if(partNumber < numOfPart - 1){
                                     partNumber += 1;
                                     currentNum = partNumber;
                                     partfile = file.slice(offset, offset + BUFFER_SIZE, contentType)
                                     offset += BUFFER_SIZE;
                                     uploadPart(object_name, currentNum);
-                                } else if (xhrStateList.filter((xhr) => xhr === XMLHttpRequest.DONE).length === xhrStateList.length) {
+                                } else if (xhrStateList.filter((xhr) => xhr === XMLHttpRequest.DONE).length === xhrStateList.length || numOfCompleteParts === numOfPart) {
                                     cmpMultipartUpload();
                                 }
                             }else{
@@ -360,6 +362,7 @@ async function multipartUpload(){
                         xhr.send();
                         return;
                     }
+                    numOfCompleteParts += 1
 
                     if(partNumber < numOfPart - 1){
                         partNumber += 1;
