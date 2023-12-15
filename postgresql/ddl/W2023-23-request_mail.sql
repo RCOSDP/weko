@@ -3,13 +3,13 @@ CREATE TABLE public.workflow_activity_request_mail (
 	status varchar(1) NOT NULL,
 	created timestamp NOT NULL,
 	updated timestamp NOT NULL,
-	id int4 NOT NULL DEFAULT nextval('workflow_action_request_mail_id_seq'::regclass),
+	id serial4 NOT NULL,
 	activity_id varchar(24) NOT NULL,
 	request_maillist jsonb NULL,
 	display_request_button bool NOT NULL,
-	CONSTRAINT pk_workflow_action_request_mail PRIMARY KEY (id)
+	CONSTRAINT pk_workflow_activity_request_mail PRIMARY KEY (id)
 );
-CREATE INDEX ix_workflow_action_request_mail_activity_id ON public.workflow_activity_request_mail USING btree (activity_id);
+CREATE INDEX ix_workflow_activity_request_mail_activity_id ON public.workflow_activity_request_mail USING btree (activity_id);
 
 -- public.request_mail_list definition
 CREATE TABLE public.request_mail_list (

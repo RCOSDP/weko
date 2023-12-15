@@ -5,8 +5,8 @@ from email_validator import validate_email
 from flask import current_app
 from flask_mail import Message
 import hashlib
+from invenio_mail.admin import _load_mail_cfg_from_db, _set_flask_mail_cfg
 
-from invenio_mail.tasks import send_email
 
 from weko_records.api import RequestMailList
 from weko_records_ui.captcha import get_captcha_info
@@ -16,10 +16,10 @@ from weko_redis.redis import RedisConnection
 def send_request_mail(item_id, mail_info):
 
     # Validate CAPTCHA
-    captcha_key = mail_info.pop('key')
-    calculation_result = mail_info.pop('calculation_result')
+    captcha_key = mail_info.get('key')
+    calculation_result = mail_info.get('calculation_result')
     if not captcha_key or not calculation_result:
-        raise InvalidCaptchaError()
+        raise InvalidCaptchaError() #TODO errorカエル
 
     redis_connection = RedisConnection()
     datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'])
@@ -57,10 +57,12 @@ def send_request_mail(item_id, mail_info):
     )
 
     try:
-        send_email.delay(msg.__dict__)
+        mail_cfg = _load_mail_cfg_from_db()
+        _set_flask_mail_cfg(mail_cfg)
+        current_app.extensions['mail'].send(msg)
     except Exception:
         current_app.logger.exception('Sending Email handles unexpected error.')
-        raise InternalServerError()
+        raise InternalServerError() # 500
 
     # Create response
     res_json = {
