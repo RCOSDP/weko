@@ -1233,7 +1233,7 @@ def up_load_file(record, root_path, deposit, allow_upload_file_content, old_file
                                 root_file_id = old_file.root_file_id
                                 old_file.remove()
                                 
-                                obj = ObjectVersion.create(deposit.files.bucket, multipartobject.key, _file_id = multipartobject.file_id)
+                                obj = ObjectVersion.create(deposit.files.bucket, multipartobject.key, _file_id = multipartobject.file_id, root_file_id = root_file_id)
                                 obj.is_thumbnail = is_thumbnail
                                 multipartobject.bucket_id = deposit.files.bucket.id
                             else:

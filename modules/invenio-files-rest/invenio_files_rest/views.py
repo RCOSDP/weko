@@ -75,7 +75,6 @@ api_blueprint = Blueprint(
 #
 
 @large_file_upload_blueprint.route("/lock_upload_id", methods = ["POST"])
-@login_required 
 def lock_upload_id():
     """Lock upload_id
 
@@ -101,7 +100,6 @@ def lock_upload_id():
         return _("An error has occurred."), 500
     
 @large_file_upload_blueprint.route("/unlock_upload_id", methods = ["POST"])
-@login_required 
 def unlock_upload_id():
     """Unlock upload_id
 
@@ -122,7 +120,6 @@ def unlock_upload_id():
         return _("An error has occurred."), 500
 
 @large_file_upload_blueprint.route("/createFileInstance", methods = ["POST"])
-@login_required 
 def createFileInstance():
     """Create FileInstance record.
 
@@ -155,7 +152,6 @@ def createFileInstance():
         return _("An error has occurred."), 500
 
 @large_file_upload_blueprint.route("/checkMultipartObjectInstance", methods = ["POST"])
-@login_required 
 def checkMultipartObjectInstance():
     """Check validation for MultipartObject
     
@@ -175,7 +171,7 @@ def checkMultipartObjectInstance():
             if "upload_id" + str(multipartObject.upload_id) in sessionstore.iter_keys():
                 return _("Cannot be upload because it is being uploaded."), 409
 
-            if multipartObject and not multipartObject.completed:
+            if not multipartObject.completed:
                 if multipartObject.created_by_id == current_user.id:
                     if multipartObject.created > datetime.now() - current_app.config.get("FILES_REST_MULTIPART_EXPIRES"):
                         return {"file_id": str(multipartObject.file_id), "chunk_size": str(multipartObject.chunk_size)}, 200
@@ -188,7 +184,6 @@ def checkMultipartObjectInstance():
 
 
 @large_file_upload_blueprint.route("/createMultipartObjectInstance", methods = ["POST"])
-@login_required 
 def createMultipartObject():
     """Create MultipartObject record.
 
@@ -227,7 +222,6 @@ def createMultipartObject():
     
 
 @large_file_upload_blueprint.route("/part", methods = ["GET", "POST"])
-@login_required 
 def get_or_create_part():
     """get or create part object.
 
@@ -268,7 +262,6 @@ def get_or_create_part():
     
 
 @large_file_upload_blueprint.route("/complete_multipart", methods = ["POST"])
-@login_required 
 def complete_multipart():
     """Update multipart object after upload is finished.
     
