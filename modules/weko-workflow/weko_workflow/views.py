@@ -525,11 +525,8 @@ def init_activity():
             record_uuid = PersistentIdentifier.get("recid", rtn.extra_info.get("record_id",None)).get_assigned_object()
             mail_list = RequestMailList.get_mail_list_by_item_id(item_id=record_uuid)
             if mail_list:
-                action_id = current_app.config.get(
-                    "WEKO_WORKFLOW_ITEM_REGISTRATION_ACTION_ID", 3)
                 activity.create_or_update_action_request_mail(
                     activity_id=rtn.activity_id,
-                    action_id=action_id,
                     request_maillist=mail_list,
                     is_request_mail_enabled=True
                 )
@@ -1473,19 +1470,7 @@ def next_action(activity_id='0', action_id=0):
             for handler in next_action_handler:
                 roles, users = work_activity.get_activity_action_role(activity_id, next_action_id,
                                                  current_flow_action.action_order)
-                handler_role = db.session.query(Role).join(userrole).filter_by(user_id=handler).all()
-                is_approver = True
-                for role in handler_role:
-                    if roles['deny'] and role.id in roles['deny']:
-                        is_approver = False
-                        break
-                    elif roles['deny'] and role.id not in roles['deny']:
-                        is_approver = True
-                    if roles['allow'] and role.id in roles['allow']:
-                        is_approver = True
-                        break
-                    elif roles['allow'] and role.id not in roles['allow']:
-                        is_approver = False
+                is_approver = work_activity.check_user_role_for_mail(handler, roles)
                 if is_approver:
                     process_send_approval_mails(activity_detail, action_mails_setting, handler, url_and_expired_date)
         else:

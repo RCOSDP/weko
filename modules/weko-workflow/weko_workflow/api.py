@@ -1121,7 +1121,6 @@ class WorkActivity(object):
 
     def create_or_update_action_request_mail(self,
                                              activity_id,
-                                             action_id,
                                              request_maillist,
                                              is_request_mail_enabled=False):
         """Create or update action ActionRequstMail's model.
@@ -1140,7 +1139,6 @@ class WorkActivity(object):
                 else:
                     action_request_mail = ActionRequestMail(
                         activity_id=activity_id,
-                        action_id=action_id,
                         request_maillist=request_maillist,
                         is_request_mail_enabled=is_request_mail_enabled
                     )
@@ -1210,7 +1208,6 @@ class WorkActivity(object):
     def get_action_request_mail(self, activity_id):
         """Get ActionRequestMail object from model base on activity's id.
         :param activity_id: acitivity identifier
-        :param action_id:   action identifier
         :return:    object's model or none
         """
         with db.session.no_autoflush:
@@ -2215,32 +2212,34 @@ class WorkActivity(object):
                 continue
             user_ids.append(temp_user_info.id)
         return user_ids
-
-    def get_user_ids_of_request_mails_by_record_id(self, record_id):
+    
+    def check_user_role_for_mail(self, user_id, roles):
         """
-        Get user information of request_mails by record_id
-        :param record_id: int, Id number of item_id
+        Check user_id's role in roles
+        :param record_id: int, user's id
+               roles: get_activity_action_role's return,ex: roles={'allow':[1],'deny':[]} 
         :return: return ids of request mails that set to item  
         """
-        #request_mail_listはuuidでメールリストと紐づいているのでrecidをuuidに変換する。
-        record_uuid = PersistentIdentifier.get("recid",record_id).get_assigned_object()
-        #request_mail_listをuuidで引っ張ってくる。
-        request_mails = RequestMailList.get_mail_list_by_item_id(record_uuid)
-        #該当するuuidがなかった場合、空リストを返す
-        if not request_mails:
-            return []
-        user_ids=[]
-        for mail in request_mails:
-            #リクエスト送信先のメールアドレスでユーザーが登録されているか
-            temp_user_info = db.session.query(User).filter_by(email=mail["email"]).first()
-            if not temp_user_info:
-                continue
-            #ユーザーロールがあるか否か
-            user_role = db.session.query(Role).join(userrole).filter_by(user_id=temp_user_info.id).all()
-            if not user_role:
-                continue
-            user_ids.append(temp_user_info.id)
-        return user_ids
+        user_role = db.session.query(Role).join(userrole).filter_by(user_id=user_id).all()
+        print("ああああああ",user_role)
+        is_approver = True
+        supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']
+        for role in list(user_role or []):
+            if role.name in supers:
+                return True
+        for role in user_role:
+            if roles['deny'] and role.id in roles['deny']:
+                is_approver = False
+                break
+            elif roles['deny'] and role.id not in roles['deny']:
+                is_approver = True
+            if roles['allow'] and role.id in roles['allow']:
+                is_approver = True
+                break
+            elif roles['allow'] and role.id not in roles['allow']:
+                is_approver = False
+        return is_approver
+    
 
     def del_activity(self, activity_id):
         """Delete activity info.
