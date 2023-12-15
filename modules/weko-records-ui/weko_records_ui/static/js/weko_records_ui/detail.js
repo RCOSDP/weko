@@ -87,58 +87,6 @@ require([
 
   $('button#btn_close_msg').on('click', function () {
     $('[role="msg"]').hide();
-  $('#item-link-register-existing-data-btn').on('click', function () {
-    let post_uri = "/api/items/prepare_edit_item";
-    let pid_val = $(this).data('pid-value');
-    let community = $(this).data('community');
-    let existing_item_link_button_pressed = 1;
-    let post_data = {
-      pid_value: pid_val,
-      existing_item_link_button_pressed: existing_item_link_button_pressed
-    };
-    if (community) {
-      post_uri = post_uri + "?community=" + community;
-    }
-
-    $.ajax({
-      url: post_uri,
-      method: 'POST',
-      async: true,
-      contentType: 'application/json',
-      data: JSON.stringify(post_data),
-      success: function (res, status) {
-
-        if (0 == res.code) {
-          let uri = res.data.redirect.replace('api/', '')
-          document.location.href = uri;
-        } else {
-          $('#btn_edit').removeAttr("disabled");
-          $('#btn_delete').removeAttr("disabled");
-          $('#btn_ver_delete').removeAttr("disabled");
-          $('[role="alert"]').css('display', 'inline-block');
-          $('[role="alert"]').text(res.msg);
-          if ("activity_id" in res) {
-            url = "/workflow/activity/detail/"+res.activity_id;
-            if (community) {
-              url = url + "?community=" + community;
-            }
-            $('[role="alert"]').append('<a href=' + url + '>' + res.activity_id + '</a>')
-          }
-        }
-      },
-      error: function (jqXHE, status) {
-        $('[role="msg"]').hide();
-        $('#btn_edit').removeAttr("disabled");
-        $('#btn_delete').removeAttr("disabled");
-        $('#btn_ver_delete').removeAttr("disabled");
-        $('[role="alert"]').css('display', 'inline-block');
-        $('[role="alert"]').text("INTERNAL SERVER ERROR");
-      }
-    });
-  });
-
-  $('button#btn_close_msg').on('click', function () {
-    $('[role="msg"]').hide();
   });
 
   $('button#btn_close_alert').on('click', function () {
@@ -345,5 +293,54 @@ require([
         }
       });
     }
+  });
+
+  $('#item-link-register-existing-data-btn').on('click', function () {
+    let post_uri = "/api/items/prepare_edit_item";
+    let pid_val = $(this).data('pid-value');
+    let community = $(this).data('community');
+    let existing_item_link_button_pressed = 1;
+    let post_data = {
+      pid_value: pid_val,
+      existing_item_link_button_pressed: existing_item_link_button_pressed
+    };
+    if (community) {
+      post_uri = post_uri + "?community=" + community;
+    }
+
+    $.ajax({
+      url: post_uri,
+      method: 'POST',
+      async: true,
+      contentType: 'application/json',
+      data: JSON.stringify(post_data),
+      success: function (res, status) {
+        if (0 == res.code) {
+          let uri = res.data.redirect.replace('api/', '')
+          document.location.href = uri;
+        } else {
+          $('#btn_edit').removeAttr("disabled");
+          $('#btn_delete').removeAttr("disabled");
+          $('#btn_ver_delete').removeAttr("disabled");
+          $('[role="alert"]').css('display', 'inline-block');
+          $('[role="alert"]').text(res.msg);
+          if ("activity_id" in res) {
+            url = "/workflow/activity/detail/"+res.activity_id;
+            if (community) {
+              url = url + "?community=" + community;
+            }
+            $('[role="alert"]').append('<a href=' + url + '>' + res.activity_id + '</a>')
+          }
+        }
+      },
+      error: function (jqXHE, status) {
+        $('[role="msg"]').hide();
+        $('#btn_edit').removeAttr("disabled");
+        $('#btn_delete').removeAttr("disabled");
+        $('#btn_ver_delete').removeAttr("disabled");
+        $('[role="alert"]').css('display', 'inline-block');
+        $('[role="alert"]').text("INTERNAL SERVER ERROR");
+      }
+    });
   });
 });
