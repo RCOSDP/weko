@@ -47,7 +47,7 @@ from passlib.handlers.oracle import oracle10
 from weko_admin.models import AdminSettings
 from weko_admin.utils import UsageReport, get_restricted_access
 from weko_deposit.api import WekoDeposit, WekoRecord
-from weko_records.api import FeedbackMailList
+from weko_records.api import FeedbackMailList, ItemTypes
 from weko_records.serializers.utils import get_mapping
 from weko_records.utils import replace_fqdn
 from weko_records.models import ItemReference
