@@ -1329,7 +1329,6 @@ def get_large_file_upload_view():
 
     maxpage=math.ceil(count / int(sizetodo))
     pages = pagestodo if pagestodo <= maxpage else maxpage
-    print(histories)
     
     return render_template('weko_items_ui/large_upload_view.html'
                             ,histories=histories

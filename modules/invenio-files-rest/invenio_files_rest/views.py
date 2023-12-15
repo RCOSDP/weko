@@ -160,24 +160,29 @@ def checkMultipartObjectInstance():
     """
     if not current_user.roles:
         abort(403)
+        
     upload_id = request.args.get("upload_id")
+
     try:
-        if upload_id:
-            multipartObject = MultipartObject.get_by_uploadId(upload_id)
-
-            #lock deleting by Redis
-            redis_connection = RedisConnection()
-            sessionstore = redis_connection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
-            if "upload_id" + str(multipartObject.upload_id) in sessionstore.iter_keys():
-                return _("Cannot be upload because it is being uploaded."), 409
-
-            if not multipartObject.completed:
-                if multipartObject.created_by_id == current_user.id:
-                    if multipartObject.created > datetime.now() - current_app.config.get("FILES_REST_MULTIPART_EXPIRES"):
-                        return {"file_id": str(multipartObject.file_id), "chunk_size": str(multipartObject.chunk_size)}, 200
-                    else:
-                        return _("The Upload Id is expired for retry."), 404
+        uuid.UUID(upload_id)
+    except ValueError:
         return _("The Upload Id is invalid."), 400
+    
+    try:
+        multipartObject = MultipartObject.get_by_uploadId(upload_id)
+        if not multipartObject or multipartObject.completed or multipartObject.created_by_id != current_user.id:
+            return _("The Upload Id is invalid."), 400
+
+        if multipartObject.created <= datetime.utcnow() - current_app.config.get("FILES_REST_MULTIPART_EXPIRES"):
+            return _("The Upload Id is expired for retry."), 404
+        
+        #lock deleting by Redis
+        redis_connection = RedisConnection()
+        sessionstore = redis_connection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
+        if "upload_id" + str(multipartObject.upload_id) in sessionstore.iter_keys():
+            return _("Cannot be upload because it is being uploaded."), 409
+
+        return {"file_id": str(multipartObject.file_id), "chunk_size": str(multipartObject.chunk_size)}, 200
     except Exception:
         traceback.print_exc()
         return _("An error has occurred."), 500

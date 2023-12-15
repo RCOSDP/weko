@@ -676,7 +676,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
             file.key += '?replace_version_id=' + file.replace_version_id;
           }
         });
-        if (Boolean($("#use_multipart_upload").val())){
+        if ($("#use_multipart_upload").val().toLowerCase() === 'true'){
           args = {
             resumeChunkSize : Number($("#resume_chunk_size").val())
           }
