@@ -672,9 +672,9 @@ def test_checkMultipartObjectInstance(app, client, bucket, db, multipart, users,
     res = client.post("/largeFileUpload/checkMultipartObjectInstance?upload_id=" + str(multipart.upload_id))
     assert res.status_code == 400
     
-    # status 500
+    # status 400
     res = client.post("/largeFileUpload/checkMultipartObjectInstance?upload_id=abc")
-    assert res.status_code == 500
+    assert res.status_code == 400
 
 def test_createMultipartObject(app, client, bucket, db, multipart, users, admin_user):
     # status 403
