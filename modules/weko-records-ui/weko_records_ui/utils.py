@@ -1156,6 +1156,7 @@ def validate_onetime_download_token(
         'WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN']
     hash_value = download_pattern.format(
         file_name, record_id, guest_mail, date)
+    
     if not oracle10.verify(secret_key, token, hash_value):
         current_app.logger.debug('Validate token error: {}'.format(hash_value))
         return False, token_invalid
@@ -1756,16 +1757,17 @@ def _generate_secret_download_url(file_name: str, record_id: str, id: str ,creat
         'WEKO_RECORDS_UI_SECRET_DOWNLOAD_PATTERN']
     current_date = created
     hash_value = download_pattern.format(file_name, record_id, id,
-                                         current_date)
+                                         current_date.isoformat())
     secret_token = oracle10.hash(secret_key, hash_value)
 
     token_pattern = "{} {} {} {}"
-    token = token_pattern.format(record_id, id, current_date,
+    token = token_pattern.format(record_id, id, current_date.isoformat(),
                                  secret_token)
     token_value = base64.b64encode(token.encode()).decode()
     host_name = request.host_url
     url = "{}record/{}/file/secret/{}?token={}" \
         .format(host_name, record_id, file_name, token_value)
+    current_app.logger.debug("secret_file_url:{}".format(url))
     return url
 
 
@@ -1778,12 +1780,13 @@ def parse_secret_download_token(token: str) -> Tuple[str, Tuple]:
         str   : error message
         Tuple : (record_id, id, date, secret_token)
     """
-    current_app.logger.debug("token:{}".format(token))
+    # current_app.logger.debug("token:{}".format(token))
     error = _("Token is invalid.")
     if token is None:
         return error, ()
     try:
         decode_token = base64.b64decode(token.encode()).decode()
+        current_app.logger.debug("decode_token:{}".format(decode_token))
         param = decode_token.split(" ")
         if not param or len(param) != 4:
             return error, ()
@@ -1818,8 +1821,9 @@ def validate_secret_download_token(
         'WEKO_RECORDS_UI_SECRET_DOWNLOAD_PATTERN']
     hash_value = download_pattern.format(
         file_name, record_id, id, date)
+    
     if not oracle10.verify(secret_key, token, hash_value):
-        current_app.logger.info('Validate token error: {}'.format(hash_value))
+        current_app.logger.error('Validate token error: {}'.format(hash_value))
         return False, token_invalid
     try:
         if not secret_download:
@@ -1898,4 +1902,5 @@ def update_secret_download(**kwargs) -> Optional[List[FileSecretDownload]]:
     Returns
         updated List[FileSecretDownload] or None
     """
+    current_app.logger.debug("update_secret_download:{}".format(kwargs))
     return FileSecretDownload.update_download(**kwargs)

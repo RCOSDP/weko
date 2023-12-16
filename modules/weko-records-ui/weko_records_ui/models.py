@@ -484,8 +484,11 @@ class FileSecretDownload(db.Model, Timestamp):
             file_name = data.get("file_name")
             id = data.get("id")
             record_id = data.get("record_id")
+            created = data.get("created")
+            current_app.logger.debug("data: {}".format(data))
             file_permission = cls.find(file_name=file_name, id=id,
-                                        record_id=record_id)
+                                        record_id=record_id,created=created)
+            current_app.logger.debug("file_permission: {}".format(file_permission))
             if len(file_permission) == 1:
                 file = file_permission[0]
                 if data.get("download_count") is not None:
