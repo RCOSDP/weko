@@ -66,13 +66,13 @@ def link_ver2(link_text1, link_text2 , link_func1 , link_func2 , func_link_is_1)
         if func_link_is_1(m) :
             if 'System Administrator' in current_user.roles : #System Administrator
                 return Markup('<a href="{0}">{1}</a>'.format(
-                    link_func1(m), link_text1))
+                    link_func1(m), _(link_text1)))
             else :
                 return Markup('{1}'.format(
-                    link_func1(m), link_text1))
+                    link_func1(m), _(link_text1)))
         else:
             return Markup('{1}'.format(
-                link_func2(m), link_text2))
+                link_func2(m), _(link_text2)))
     return object_formatter
     
 
@@ -323,8 +323,8 @@ class MultipartObjectModelView(ModelView):
                             ,lambda o : '' 
                             ,lambda o: url_for('fileinstance.index_view', flt0_0=o.file_id)),
 
-        item_bucket=link_ver2(_('Item Bucket') 
-                        , _('Unbind')
+        item_bucket=link_ver2('Item Bucket' 
+                        , 'Unbind'
                         ,lambda o : url_for('bucket.index_view', flt2_39=o.bucket_id)
                         ,lambda o : '' 
                         ,lambda o : o.bucket_id

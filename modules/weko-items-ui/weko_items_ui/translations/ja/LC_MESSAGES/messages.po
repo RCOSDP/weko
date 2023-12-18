@@ -492,6 +492,26 @@ msgstr "転記"
 msgid "Can resume"
 msgstr "レジューム可否"
 
+#:
+msgid "Item Bucket"
+msgstr "紐付先"
+
+#:
+msgid "Unbind"
+msgstr "未紐付"
+
+#:
+msgid "Record that bound item must not be deleted."
+msgstr "アイテムに使われているファイルは削除できません。"
+
+#:
+msgid "Cannot be deleted because it is being uploaded."
+msgstr "アップロード処理中のため、削除できません。"
+
+#:
+msgid "Defferent File."
+msgstr "異なるファイルです。"
+
 #: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:241
 msgid "History"
 msgstr "ヒストリー"
@@ -684,4 +704,3 @@ msgstr "ヒストリーはありません"
 #~ "you do not have permission to view"
 #~ " it."
 #~ msgstr "該当アイテムの参照権限がないため流用できません。"
-

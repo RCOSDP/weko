@@ -114,3 +114,29 @@ msgstr ""
 msgid "Files"
 msgstr ""
 
+msgid "Item Bucket"
+msgstr ""
+
+msgid "Unbind"
+msgstr ""
+
+msgid "Record that bound item must not be deleted."
+msgstr ""
+
+msgid "Cannot be deleted because it is being uploaded."
+msgstr ""
+
+msgid "The Upload Id is invalid."
+msgstr ""
+
+msgid "The Upload Id is expired for retry."
+msgstr ""
+
+msgid "Defferent File."
+msgstr ""
+
+msgid "Please select a file."
+msgstr ""
+
+msgid "Cannot be upload because it is being uploaded."
+msgstr ""
