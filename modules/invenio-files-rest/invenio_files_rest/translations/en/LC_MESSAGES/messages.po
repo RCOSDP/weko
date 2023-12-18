@@ -4,7 +4,7 @@
 # project.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2016.
 # 
-#, fuzzy
+#
 msgid ""
 msgstr ""
 "Project-Id-Version: invenio-files-rest 1.0.0a9.dev20160823\n"
@@ -120,4 +120,31 @@ msgid "item bucket"
 msgstr ""
 
 msgid "Download import template"
+msgstr ""
+
+msgid "Item Bucket"
+msgstr ""
+
+msgid "Unbind"
+msgstr ""
+
+msgid "Record that bound item must not be deleted."
+msgstr ""
+
+msgid "Cannot be deleted because it is being uploaded."
+msgstr ""
+
+msgid "The Upload Id is invalid."
+msgstr ""
+
+msgid "The Upload Id is expired for retry."
+msgstr ""
+
+msgid "Defferent File."
+msgstr ""
+
+msgid "Please select a file."
+msgstr ""
+
+msgid "Cannot be upload because it is being uploaded."
 msgstr ""

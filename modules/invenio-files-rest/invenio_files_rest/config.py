@@ -119,7 +119,7 @@ FILES_REST_MULTIPART_CHUNKSIZE_MAX = 5 * 1024 * 1024 * 1024  # 5 GiB
 FILES_REST_LARGE_FILE_CHUNK_SIZE = 250 * 1024 * 1024 # 250MiB
 """Chunksize per piece"""
 
-FILES_REST_MULTIPART_EXPIRES = timedelta(days=4)
+FILES_REST_MULTIPART_EXPIRES = timedelta(days=4) #must integer over 0
 """Time delta after which a multipart upload is considered expired."""
 
 FILES_REST_TASK_WAIT_INTERVAL = 2
