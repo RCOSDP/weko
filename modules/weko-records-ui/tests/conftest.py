@@ -277,6 +277,7 @@ def base_app(instance_path):
         WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN=WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN,
         WEKO_ADMIN_PDFCOVERPAGE_TEMPLATE=WEKO_ADMIN_PDFCOVERPAGE_TEMPLATE,
         WEKO_WORKFLOW_DATE_FORMAT = WEKO_WORKFLOW_DATE_FORMAT,
+        WEKO_RECORDS_UI_MAIL_TEMPLATE_SECRET_GENRE_ID = 1,
     )
     #with ESTestServer(timeout=30) as server:
     client = Elasticsearch(['localhost:9200'])
@@ -504,6 +505,7 @@ def users(app, db):
         },
         {"email": user.email, "id": user.id, "obj": user},
     ]
+
     db.session.expunge_all()
 
 
@@ -4824,6 +4826,7 @@ def db_admin_settings(db):
 def db_restricted_access_secret(db):
     with db.session.begin_nested():
         db.session.add(AdminSettings(id=6,name='restricted_access',settings={"secret_URL_file_download": {"secret_enable": True, "secret_download_limit": 1, "secret_expiration_date": 1, "secret_download_limit_unlimited_chk": False, "secret_expiration_date_unlimited_chk": False}}))
+    db.session.commit()
 
 @pytest.fixture()
 def db_community(db , users ,indextree):
@@ -4841,6 +4844,19 @@ def db_community(db , users ,indextree):
 
     return comm
 
+@pytest.fixture()
+def db_mailTemplateGenre(db):
+    from invenio_mail.models import MailTemplateGenres
+    with db.session.begin_nested():
+        db.session.add(MailTemplateGenres(id=1,name='Notification of secret URL provision'))
+    db.session.commit()
+
+@pytest.fixture()
+def db_mailtemplates(db):
+    from invenio_mail.models import MailTemplates
+    with db.session.begin_nested():
+        db.session.add(MailTemplates(id=1,mail_subject="test_subject",mail_body="test_mail_body",default_mail=True,mail_genre_id=1))
+    db.session.commit()
 
 @pytest.fixture()
 def make_record_need_restricted_access(app, db, workflows, users):

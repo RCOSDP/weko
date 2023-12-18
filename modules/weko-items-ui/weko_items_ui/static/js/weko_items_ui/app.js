@@ -1458,7 +1458,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                 var roles_form = get_subitem(filemeta_form.items, 'roles');
                 var role_form_item = get_subitem(roles_form.items, 'role');
                 role_form_item['titleMap'] = [];
-                var roles = dataInit['init_roles'];
+                var roles = dataInit['logged_roles'];
                 for (let key in roles) {
                   role_schema_child['enum'].push(roles[key]['id'].toString());
                   role_form_item['titleMap'].push({

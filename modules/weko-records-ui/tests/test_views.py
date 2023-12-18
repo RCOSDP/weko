@@ -5,6 +5,7 @@ import io
 from flask import Flask, json, jsonify, session, url_for ,make_response
 from flask_security.utils import login_user
 from invenio_accounts.testutils import login_user_via_session
+from invenio_mail.models import MailTemplateGenres
 from mock import patch
 from weko_deposit.api import WekoRecord
 from werkzeug.exceptions import NotFound ,Forbidden
@@ -424,7 +425,7 @@ def test_get_usage_workflow(app, users, workflows):
 
     with patch("flask_login.utils._get_user", return_value=data1):
         res = get_usage_workflow(_file_json)
-        assert res==3
+        assert res=="3"
 
 
 # def get_workflow_detail(workflow_id):
@@ -908,10 +909,10 @@ def test_get_uri(app,client,db_sessionlifetime,records):
 
 # def create_secret_url_and_send_mail(pid:PersistentIdentifier, record:WekoRecord, filename:str, **kwargs) -> str:
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_create_secret_url_and_send_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_create_secret_url_and_send_mail(app,client,db,users,records,db_restricted_access_secret):
+def test_create_secret_url_and_send_mail(app,client,db,users,records,db_restricted_access_secret,db_mailTemplateGenre,db_mailtemplates):
     indexer, results = records
     record = results[1]
-
+            
     # 79
     id = 1 #repoadmin
     secret_file_url = url_for("invenio_records_ui.recid_secret_url"
@@ -919,9 +920,7 @@ def test_create_secret_url_and_send_mail(app,client,db,users,records,db_restrict
                                 ,filename=results[1]["filename"])
     login_user_via_session(client=client, user=users[id]["obj"] ,email=users[id]["email"])
     with patch('weko_records_ui.views._get_show_secret_url_button',return_value = True):
-        with patch('weko_records_ui.views.MailTemplateGenres.query.get',return_value = {"??template??"}):
-            #with patch('???secret_mail_templateが存在するとき')
-            with patch('weko_records_ui.views.process_send_mail',return_value = True):
+        with patch('weko_records_ui.views.process_send_mail',return_value = True):
                 #with app.test_request_context():
                     #W2023-22-2 TestNo.7
                     res = client.get(secret_file_url)
@@ -930,18 +929,31 @@ def test_create_secret_url_and_send_mail(app,client,db,users,records,db_restrict
                     #W2023-22-2 TestNo.4
                     res = client.post(secret_file_url ,data=json.dumps({}), content_type='application/json')
                     assert res.status_code == 200
-        #W2023-22-2 TestNo.5
-        with patch('weko_records_ui.views.process_send_mail',return_value = False):
-            with patch('weko_records_ui.views.MailTemplateGenres.query.get',return_value ={}):
-                with patch("flask.templating._render", return_value=""):
-                    res = client.post(secret_file_url ,data=json.dumps({}), content_type='application/json')
-                    assert res.status_code == 500
+
+        
     #W2023-22-2 TestNo.6
     with patch('weko_records_ui.views._get_show_secret_url_button',return_value = False):
         with patch('weko_records_ui.views.process_send_mail',return_value = True):
             with patch("flask.templating._render", return_value=""):
                 res = client.post(secret_file_url ,data=json.dumps({}), content_type='application/json')
                 assert res.status_code == 403
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_create_secret_url_and_send_mail_2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_create_secret_url_and_send_mail_2(app,client,db,users,records,db_restricted_access_secret):
+    indexer, results = records
+    record = results[1]
+            
+    # 79
+    id = 1 #repoadmin
+    secret_file_url = url_for("invenio_records_ui.recid_secret_url"
+                                ,pid_value=results[1]["recid"].pid_value
+                                ,filename=results[1]["filename"])
+    login_user_via_session(client=client, user=users[id]["obj"] ,email=users[id]["email"])
+    with patch('weko_records_ui.views._get_show_secret_url_button',return_value = True):
+        #W2023-22-2 TestNo.5
+            with patch('weko_records_ui.views.process_send_mail',return_value = False):
+                with patch("flask.templating._render", return_value=""):
+                    res = client.post(secret_file_url ,data=json.dumps({}), content_type='application/json')
+                    assert res.status_code == 500
 
 # def create_secret_url_and_send_mail(pid:PersistentIdentifier, record:WekoRecord, filename:str, **kwargs) -> str:
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test__get_show_secret_url_button -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp

@@ -335,7 +335,7 @@ require([
     }
   });
   
-  document.getElementById('print-btn').addEventListener('click', () => {
+  $('#print-btn')?.on('click',() => {
     const iframe = document.createElement('iframe');
     iframe.srcdoc = "<!DOCTYPE html>"
     document.body.appendChild(iframe);
