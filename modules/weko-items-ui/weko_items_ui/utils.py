@@ -61,7 +61,7 @@ from weko_deposit.pidstore import get_record_without_version
 from weko_index_tree.api import Indexes
 from weko_index_tree.utils import check_index_permissions, get_index_id, \
     get_user_roles
-from weko_records.api import FeedbackMailList, ItemTypes, Mapping
+from weko_records.api import FeedbackMailList, RequestMailList, ItemTypes, Mapping
 from weko_records.serializers.utils import get_item_type_name
 from weko_records.utils import replace_fqdn_of_file_metadata
 from weko_records_ui.permissions import check_created_id, \
@@ -959,6 +959,22 @@ def make_stats_file(item_type_id, recids, list_item_role):
 
             return self.attr_data['feedback_mail_list']['max_size']
 
+        def get_max_ins_request_mail(self):
+            """Get max data each request mail in all exporting records."""
+            largest_size = 1
+            self.attr_data['request_mail_list'] = {'max_size': 0}
+            for record_id, record in self.records.items():
+                if check_created_id(record):
+                    mail_list = RequestMailList.get_mail_list_by_item_id(
+                        record.id)
+                    self.attr_data['request_mail_list'][record_id] = [
+                        mail.get('email') for mail in mail_list]
+                    if len(mail_list) > largest_size:
+                        largest_size = len(mail_list)
+            self.attr_data['request_mail_list']['max_size'] = largest_size
+
+            return self.attr_data['request_mail_list']['max_size']
+
         def get_max_items(self, item_attrs):
             """Get max data each sub property in all exporting records."""
             max_length = 0
@@ -1144,6 +1160,11 @@ def make_stats_file(item_type_id, recids, list_item_role):
         ret.append('.feedback_mail[{}]'.format(i))
         ret_label.append('.FEEDBACK_MAIL[{}]'.format(i))
 
+    max_request_mail = records.get_max_ins_request_mail()
+    for i in range(max_request_mail):
+        ret.append('.request_mail[{}]'.format(i))
+        ret_label.append('.REQUEST_MAIL[{}]'.format(i))
+
     ret.extend(['.cnri', '.doi_ra', '.doi', '.edit_mode'])
     ret_label.extend(['.CNRI', '.DOI_RA', '.DOI', 'Keep/Upgrade Version'])
     has_pubdate = len([
@@ -1180,6 +1201,13 @@ def make_stats_file(item_type_id, recids, list_item_role):
         records.attr_output[recid].extend(feedback_mail_list)
         records.attr_output[recid].extend(
             [''] * (max_feedback_mail - len(feedback_mail_list))
+        )
+
+        request_mail_list = records.attr_data['request_mail_list'] \
+            .get(recid, [])
+        records.attr_output[recid].extend(request_mail_list)
+        records.attr_output[recid].extend(
+            [''] * (max_request_mail - len(request_mail_list))
         )
 
         pid_cnri = record.pid_cnri
@@ -1269,7 +1297,7 @@ def make_stats_file(item_type_id, recids, list_item_role):
     ret_system = []
     ret_option = []
     multiple_option = ['.metadata.path', '.pos_index',
-                       '.feedback_mail', '.file_path', '.thumbnail_path']
+                       '.feedback_mail', '.request_mail', '.file_path', '.thumbnail_path']
     meta_list = item_type.get('meta_list', {})
     meta_list.update(item_type.get('meta_fix', {}))
     form = item_type.get('table_row_map', {}).get('form', {})
@@ -2904,6 +2932,22 @@ def make_stats_file_with_permission(item_type_id, recids,
 
             return self.attr_data['feedback_mail_list']['max_size']
 
+        def get_max_ins_request_mail(self):
+            """Get max data each request mail in all exporting records."""
+            largest_size = 1
+            self.attr_data['request_mail_list'] = {'max_size': 0}
+            for record_id, record in self.records.items():
+                if permissions['check_created_id'](record):
+                    mail_list = RequestMailList.get_mail_list_by_item_id(
+                        record.id)
+                    self.attr_data['request_mail_list'][record_id] = [
+                        mail.get('email') for mail in mail_list]
+                    if len(mail_list) > largest_size:
+                        largest_size = len(mail_list)
+            self.attr_data['request_mail_list']['max_size'] = largest_size
+
+            return self.attr_data['request_mail_list']['max_size']
+
         def get_max_items(self, item_attrs):
             """Get max data each sub property in all exporting records."""
             max_length = 0
@@ -3088,6 +3132,10 @@ def make_stats_file_with_permission(item_type_id, recids,
     for i in range(max_feedback_mail):
         ret.append('.feedback_mail[{}]'.format(i))
         ret_label.append('.FEEDBACK_MAIL[{}]'.format(i))
+    max_request_mail = records.get_max_ins_request_mail()
+    for i in range(max_request_mail):
+        ret.append('.request_mail[{}]'.format(i))
+        ret_label.append('.REQUEST_MAIL[{}]'.format(i))
 
     ret.extend(['.cnri', '.doi_ra', '.doi', '.edit_mode'])
     ret_label.extend(['.CNRI', '.DOI_RA', '.DOI', 'Keep/Upgrade Version'])
@@ -3121,6 +3169,13 @@ def make_stats_file_with_permission(item_type_id, recids,
         records.attr_output[recid].extend(feedback_mail_list)
         records.attr_output[recid].extend(
             [''] * (max_feedback_mail - len(feedback_mail_list))
+        )
+
+        request_mail_list = records.attr_data['request_mail_list'] \
+            .get(recid, [])
+        records.attr_output[recid].extend(request_mail_list)
+        records.attr_output[recid].extend(
+            [''] * (max_request_mail - len(request_mail_list))
         )
 
         pid_cnri = record.pid_cnri
@@ -3214,7 +3269,7 @@ def make_stats_file_with_permission(item_type_id, recids,
     ret_system = []
     ret_option = []
     multiple_option = ['.metadata.path', '.pos_index',
-                       '.feedback_mail', '.file_path', '.thumbnail_path']
+                       '.feedback_mail', '.request_mail', '.file_path', '.thumbnail_path']
     meta_list = item_type.get('meta_list', {})
     meta_list.update(item_type.get('meta_fix', {}))
     form = item_type.get('table_row_map', {}).get('form', {})

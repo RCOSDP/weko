@@ -38,11 +38,12 @@ from sqlalchemy.orm.exc import NoResultFound
 from weko_deposit.api import WekoDeposit
 from weko_records.serializers.utils import get_item_type_name
 from weko_records.models import ItemMetadata as _ItemMetadata
+from weko_records.api import RequestMailList
 
 from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SUFFIX_METHOD, \
     WEKO_WORKFLOW_ALL_TAB, WEKO_WORKFLOW_TODO_TAB, WEKO_WORKFLOW_WAIT_TAB
 from .models import Action as _Action
-from .models import ActionCommentPolicy, ActionFeedbackMail, \
+from .models import ActionCommentPolicy, ActionFeedbackMail, ActivityRequestMail,\
     ActionIdentifier, ActionJournal, ActionStatusPolicy
 from .models import Activity as _Activity
 from .models import ActivityAction, ActivityHistory, ActivityStatusPolicy
@@ -247,7 +248,7 @@ class Flow(object):
                             'user_deny') if '0' != action.get(
                                 'user') else False
                     )
-                elif int(action.get('user')) == current_app.config.get("WEKO_WORKFLOW_ITEM_REGISTRANT_ID"):
+                elif action.get('user') == str(current_app.config.get("WEKO_WORKFLOW_ITEM_REGISTRANT_ID")):
                     flowactionrole = _FlowActionRole(
                         flow_action_id=flowaction.id,
                         action_role=action.get(
@@ -261,6 +262,22 @@ class Flow(object):
                             'user_deny') if '0' != action.get(
                                 'user') else False,
                         action_item_registrant = True if '0' != action.get(
+                                'user') else False
+                    )
+                elif action.get('user') == str(current_app.config.get("WEKO_WORKFLOW_REQUEST_MAIL_ID")):
+                    flowactionrole = _FlowActionRole(
+                        flow_action_id=flowaction.id,
+                        action_role=action.get(
+                            'role') if '0' != action.get('role') else None,
+                        action_role_exclude=action.get(
+                            'role_deny') if '0' != action.get(
+                            'role') else False,
+                        action_user= None,
+                        specify_property=None,
+                        action_user_exclude=action.get(
+                            'user_deny') if '0' != action.get(
+                                'user') else False,
+                        action_request_mail = True if '0' != action.get(
                                 'user') else False
                     )
                 else:
@@ -278,7 +295,8 @@ class Flow(object):
                             'user_deny') if '0' != action.get('user') else False
                     )
                 if flowactionrole.action_role or flowactionrole.action_user or \
-                        flowactionrole.specify_property or flowactionrole.action_item_registrant:
+                        flowactionrole.specify_property or flowactionrole.action_item_registrant or \
+                        flowactionrole.action_request_mail:
                     db.session.add(flowactionrole)
         db.session.commit()
 
@@ -1101,6 +1119,35 @@ class WorkActivity(object):
             db.session.rollback()
             current_app.logger.exception(str(ex))
 
+    def create_or_update_action_request_mail(self,
+                                             activity_id,
+                                             request_maillist,
+                                             display_request_button=False):
+        """Create or update action ActionRequstMail's model.
+        :param activity_id: activity identifier
+        :param action_id:   action identifier
+        :param request_maillist: list of request mail in json format
+        :return:
+        """
+        try:
+            with db.session.begin_nested():
+                action_request_mail = ActivityRequestMail.query.filter_by(
+                    activity_id=activity_id).one_or_none()
+                if action_request_mail:
+                    action_request_mail.request_maillist = request_maillist
+                    db.session.merge(action_request_mail)
+                else:
+                    action_request_mail = ActivityRequestMail(
+                        activity_id=activity_id,
+                        request_maillist=request_maillist,
+                        display_request_button=display_request_button
+                    )
+                    db.session.add(action_request_mail)
+            db.session.commit()
+        except SQLAlchemyError as ex:
+            db.session.rollback()
+            current_app.logger.exception(str(ex))
+
     def get_action_journal(self, activity_id, action_id):
         """Get action journal info.
 
@@ -1157,6 +1204,16 @@ class WorkActivity(object):
             action_feedbackmail = ActionFeedbackMail.query.filter_by(
                 activity_id=activity_id).one_or_none()
             return action_feedbackmail
+
+    def get_action_request_mail(self, activity_id):
+        """Get ActivityRequestMail object from model base on activity's id.
+        :param activity_id: acitivity identifier
+        :return:    object's model or none
+        """
+        with db.session.no_autoflush:
+            action_request_mail = ActivityRequestMail.query.filter_by(
+                activity_id=activity_id).one_or_none()
+            return action_request_mail
 
     def get_activity_action_status(self, activity_id, action_id, action_order):
         """Get activity action status."""
@@ -1599,6 +1656,10 @@ class WorkActivity(object):
                         _FlowActionRole.action_item_registrant == True,
                         _ItemMetadata.json.op('->>')('owner') == current_user.get_id()
                     ),
+                    and_(
+                        _FlowActionRole.action_request_mail == True,
+                        cast(ActivityRequestMail.request_maillist, String).contains('"'+current_user.email+'"')
+                    ),
                 )
             )
 
@@ -1670,6 +1731,9 @@ class WorkActivity(object):
                         and_(
                              _FlowActionRole.action_item_registrant == True,
                         ),
+                        and_(
+                            _FlowActionRole.action_request_mail == True,
+                        )
                     )
                 )\
                 .filter(_FlowAction.action_id == _Activity.action_id) \
@@ -1701,9 +1765,15 @@ class WorkActivity(object):
                             _FlowActionRole.action_item_registrant == True,
                             _ItemMetadata.json.op('->>')('owner') == current_user.get_id() 
                         ),
+                        and_(
+                        _FlowActionRole.action_request_mail == True,
+                        cast(ActivityRequestMail.request_maillist, String).contains('"'+current_user.email+'"'),
+                        or_(_FlowActionRole.action_role.in_(self_group_ids),
+                            _FlowActionRole.action_role == None
+                            )
+                        ),
                     )
                 )
-
         return query
 
     @staticmethod
@@ -1730,6 +1800,7 @@ class WorkActivity(object):
                 )
             ).outerjoin(_Action) \
             .outerjoin(_FlowAction).outerjoin(_FlowActionRole) \
+            .outerjoin(ActivityRequestMail,and_(ActivityRequestMail.activity_id == _Activity.activity_id))\
             .outerjoin(
                 ActivityAction,
                 and_(
@@ -2104,7 +2175,70 @@ class WorkActivity(object):
                     owner_id = item_metadata["owner"]
                     if owner_id:
                         users['allow'].append(int(owner_id))
+                if action_role.action_user_exclude and action_role.action_request_mail:
+                    approval_ids = self.get_user_ids_of_request_mails_by_activity_id(activity_id)
+                    for id in approval_ids:
+                        users['deny'].append(id)
+                elif not action_role.action_user_exclude and action_role.action_request_mail:
+                    approval_ids = self.get_user_ids_of_request_mails_by_activity_id(activity_id)
+                    for id in approval_ids:
+                        users['allow'].append(id)
             return roles, users
+
+    def get_user_ids_of_request_mails_by_activity_id(self, activity_id):
+        """
+        Get user information of request_mails by activity_id
+        :param activity_id: int, Id number of item
+        :return: return ids of request mails that set to item
+        """
+        #request_mail_listをactivity_idでworkflow_activity_request_mailテーブルから引っ張ってくる。
+        request_mails = self.get_action_request_mail(activity_id)
+        #該当するactivity_idがなかった場合、空リストを返す
+        if not request_mails:
+            return []
+        #request_maillistが空リストかworkflow_activity_request_mailのdisplay_request_buttonがFalseなら空リストを返す
+        if not request_mails.request_maillist or not request_mails.display_request_button:
+            return []
+        maillist=request_mails.request_maillist
+        user_ids=[]
+        for mail in maillist:
+            #リクエスト送信先のメールアドレスでユーザーが登録されているか
+            temp_user_info = db.session.query(User).filter_by(email=mail["email"]).first()
+            if not temp_user_info:
+                continue
+            #ユーザーロールがあるか否か
+            user_role = db.session.query(Role).join(userrole).filter_by(user_id=temp_user_info.id).all()
+            if not user_role:
+                continue
+            user_ids.append(temp_user_info.id)
+        return user_ids
+    
+    def check_user_role_for_mail(self, user_id, roles):
+        """
+        Check user_id's role in roles
+        :param record_id: int, user's id
+               roles: get_activity_action_role's return,ex: roles={'allow':[1],'deny':[]} 
+        :return: return ids of request mails that set to item  
+        """
+        user_role = db.session.query(Role).join(userrole).filter_by(user_id=user_id).all()
+        is_approver = True
+        supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']
+        for role in list(user_role or []):
+            if role.name in supers:
+                return True
+        for role in user_role:
+            if roles['deny'] and role.id in roles['deny']:
+                is_approver = False
+                break
+            elif roles['deny'] and role.id not in roles['deny']:
+                is_approver = True
+            if roles['allow'] and role.id in roles['allow']:
+                is_approver = True
+                break
+            elif roles['allow'] and role.id not in roles['allow']:
+                is_approver = False
+        return is_approver
+    
 
     def del_activity(self, activity_id):
         """Delete activity info.

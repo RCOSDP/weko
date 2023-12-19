@@ -395,6 +395,7 @@ msgstr "DOI not provided"
 #~ msgid "item type"
 #~ msgstr ""
 
+#: weko_workflow/templates/weko_workflow/item_login_sucess.html:288
 #~ msgid "Back"
 #~ msgstr ""
 
@@ -581,6 +582,7 @@ msgid "Quit_Approval"
 msgstr "Quit"
 
 #: weko_workflow/templates/weko_workflow/activity_detail.html:381
+#: weko_workflow/templates/weko_workflow/item_login_sucess.html:295
 msgid "The activity is forcibly canceled because the workflow settings have changed and the next step was not found."
 msgstr ""
 
@@ -607,6 +609,9 @@ msgstr "Specify Property"
 
 msgid "Item registrant"
 msgstr "Item registrant"
+
+msgid "Request mail"
+msgstr "Request mail"
 
 msgid "Guest User"
 msgstr ""
