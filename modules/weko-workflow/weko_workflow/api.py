@@ -43,7 +43,7 @@ from weko_records.api import RequestMailList
 from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SUFFIX_METHOD, \
     WEKO_WORKFLOW_ALL_TAB, WEKO_WORKFLOW_TODO_TAB, WEKO_WORKFLOW_WAIT_TAB
 from .models import Action as _Action
-from .models import ActionCommentPolicy, ActionFeedbackMail, ActionRequestMail,\
+from .models import ActionCommentPolicy, ActionFeedbackMail, ActivityRequestMail,\
     ActionIdentifier, ActionJournal, ActionStatusPolicy
 from .models import Activity as _Activity
 from .models import ActivityAction, ActivityHistory, ActivityStatusPolicy
@@ -1119,10 +1119,10 @@ class WorkActivity(object):
             db.session.rollback()
             current_app.logger.exception(str(ex))
 
-    def create_or_update_action_request_mail(self,
+    def create_or_update_activity_request_mail(self,
                                              activity_id,
                                              request_maillist,
-                                             is_request_mail_enabled=False):
+                                             display_request_button=False):
         """Create or update action ActionRequstMail's model.
         :param activity_id: activity identifier
         :param action_id:   action identifier
@@ -1131,18 +1131,18 @@ class WorkActivity(object):
         """
         try:
             with db.session.begin_nested():
-                action_request_mail = ActionRequestMail.query.filter_by(
+                activity_request_mail = ActivityRequestMail.query.filter_by(
                     activity_id=activity_id).one_or_none()
-                if action_request_mail:
-                    action_request_mail.request_maillist = request_maillist
-                    db.session.merge(action_request_mail)
+                if activity_request_mail:
+                    activity_request_mail.request_maillist = request_maillist
+                    db.session.merge(activity_request_mail)
                 else:
-                    action_request_mail = ActionRequestMail(
+                    activity_request_mail = ActivityRequestMail(
                         activity_id=activity_id,
                         request_maillist=request_maillist,
-                        is_request_mail_enabled=is_request_mail_enabled
+                        display_request_button=display_request_button
                     )
-                    db.session.add(action_request_mail)
+                    db.session.add(activity_request_mail)
             db.session.commit()
         except SQLAlchemyError as ex:
             db.session.rollback()
@@ -1205,15 +1205,15 @@ class WorkActivity(object):
                 activity_id=activity_id).one_or_none()
             return action_feedbackmail
 
-    def get_action_request_mail(self, activity_id):
-        """Get ActionRequestMail object from model base on activity's id.
+    def get_activity_request_mail(self, activity_id):
+        """Get ActivityRequestMail object from model base on activity's id.
         :param activity_id: acitivity identifier
         :return:    object's model or none
         """
         with db.session.no_autoflush:
-            action_request_mail = ActionRequestMail.query.filter_by(
+            activity_request_mail = ActivityRequestMail.query.filter_by(
                 activity_id=activity_id).one_or_none()
-            return action_request_mail
+            return activity_request_mail
 
     def get_activity_action_status(self, activity_id, action_id, action_order):
         """Get activity action status."""
@@ -1658,7 +1658,7 @@ class WorkActivity(object):
                     ),
                     and_(
                         _FlowActionRole.action_request_mail == True,
-                        cast(ActionRequestMail.request_maillist, String).contains('"'+current_user.email+'"')
+                        cast(ActivityRequestMail.request_maillist, String).contains('"'+current_user.email+'"')
                     ),
                 )
             )
@@ -1767,7 +1767,7 @@ class WorkActivity(object):
                         ),
                         and_(
                         _FlowActionRole.action_request_mail == True,
-                        cast(ActionRequestMail.request_maillist, String).contains('"'+current_user.email+'"'),
+                        cast(ActivityRequestMail.request_maillist, String).contains('"'+current_user.email+'"'),
                         or_(_FlowActionRole.action_role.in_(self_group_ids),
                             _FlowActionRole.action_role == None
                             )
@@ -1800,7 +1800,7 @@ class WorkActivity(object):
                 )
             ).outerjoin(_Action) \
             .outerjoin(_FlowAction).outerjoin(_FlowActionRole) \
-            .outerjoin(ActionRequestMail,and_(ActionRequestMail.activity_id == _Activity.activity_id))\
+            .outerjoin(ActivityRequestMail,and_(ActivityRequestMail.activity_id == _Activity.activity_id))\
             .outerjoin(
                 ActivityAction,
                 and_(
@@ -2191,13 +2191,22 @@ class WorkActivity(object):
         :param activity_id: int, Id number of item
         :return: return ids of request mails that set to item
         """
-        #request_mail_listをactivity_idでworkflow_action_request_mailテーブルから引っ張ってくる。
-        request_mails = self.get_action_request_mail(activity_id)
+        #workflowがopen_restrictedがTrueか確認
+        workflow = WorkFlow()
+        activity_detail = self.get_activity_detail(activity_id)
+        is_restricted = workflow.get_workflow_by_id(activity_detail.workflow_id).open_restricted
+        #制限公開アイテムに対して利用申請を出している場合、extra_infoがついているのでそれから制限公開アイテムのrecidをとる。
+        restricted_record_id = activity_detail.extra_info.get("record_id") if activity_detail.extra_info else None
+        #extra_infoがあった場合、このactivity_idは利用申請系ワークフローであるので紐づいている制限公開アイテムのIDで別のメソッドを回す。
+        if is_restricted and activity_detail.extra_info and activity_detail.extra_info.get("is_restricted_access", "") and restricted_record_id :
+            return self.get_user_ids_of_request_mails_by_record_id(restricted_record_id)
+        #request_mail_listをactivity_idでworkflow_activity_request_mailテーブルから引っ張ってくる。
+        request_mails = self.get_activity_request_mail(activity_id)
         #該当するactivity_idがなかった場合、空リストを返す
         if not request_mails:
             return []
-        #request_maillistが空リストかworkflow_action_request_mailのis_request_mail_enabledがFalseなら空リストを返す
-        if not request_mails.request_maillist or not request_mails.is_request_mail_enabled:
+        #request_maillistが空リストかworkflow_activity_request_mailのdisplay_request_buttonがFalseなら空リストを返す
+        if not request_mails.request_maillist or not request_mails.display_request_button:
             return []
         maillist=request_mails.request_maillist
         user_ids=[]
@@ -2213,6 +2222,32 @@ class WorkActivity(object):
             user_ids.append(temp_user_info.id)
         return user_ids
     
+    def get_user_ids_of_request_mails_by_record_id(self, record_id):
+        """
+        Get user information of request_mails by record_id
+        :param record_id: int, Id number of record
+        :return: return ids of request mails that set to item
+        """
+        #request_mail_listはuuidでメールリストと紐づいているのでrecidをuuidに変換する。
+        record_uuid = PersistentIdentifier.get("recid",record_id).get_assigned_object()
+        #request_mail_listをuuidで引っ張ってくる。
+        request_mails = RequestMailList.get_mail_list_by_item_id(record_uuid)
+        #該当するuuidがなかった場合、空リストを返す
+        if not request_mails:
+            return []
+        user_ids=[]
+        for mail in request_mails:
+            #リクエスト送信先のメールアドレスでユーザーが登録されているか
+            temp_user_info = db.session.query(User).filter_by(email=mail["email"]).first()
+            if not temp_user_info:
+                continue
+            #ユーザーロールがあるか否か
+            user_role = db.session.query(Role).join(userrole).filter_by(user_id=temp_user_info.id).all()
+            if not user_role:
+                continue
+            user_ids.append(temp_user_info.id)
+        return user_ids
+
     def check_user_role_for_mail(self, user_id, roles):
         """
         Check user_id's role in roles

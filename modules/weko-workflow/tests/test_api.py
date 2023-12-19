@@ -17,7 +17,7 @@ from weko_workflow.models import FlowAction as _FlowAction
 from weko_workflow.models import FlowActionRole as _FlowActionRole
 from weko_workflow.models import FlowDefine as _Flow
 from weko_workflow.models import WorkFlow as _WorkFlow
-from weko_workflow.models import ActionStatusPolicy, Activity, ActivityAction, FlowActionRole, ActionRequestMail
+from weko_workflow.models import ActionStatusPolicy, Activity, ActivityAction, FlowActionRole, ActivityRequestMail
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_Flow_action -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_Flow_action(app, client, users, db, action_data):
@@ -746,43 +746,43 @@ def test_request_mail_list_create_and_update(app, workflow, db, mocker):
     _request_maillist1 = []
     _request_maillist2 = [{"email": "test@example.com", "author_id": ""}]
 
-    activity.create_or_update_action_request_mail("1", _request_maillist1, True)
-    assert activity.get_action_request_mail("1")
-    activity.create_or_update_action_request_mail("1", _request_maillist2, True)
-    assert activity.get_action_request_mail("1").request_maillist == _request_maillist2
-    activity.create_or_update_action_request_mail("1111111", _request_maillist1, "aaa")
-    assert activity.get_action_request_mail("1").request_maillist == _request_maillist2
+    activity.create_or_update_activity_request_mail("1", _request_maillist1, True)
+    assert activity.get_activity_request_mail("1")
+    activity.create_or_update_activity_request_mail("1", _request_maillist2, True)
+    assert activity.get_activity_request_mail("1").request_maillist == _request_maillist2
+    activity.create_or_update_activity_request_mail("1111111", _request_maillist1, "aaa")
+    assert activity.get_activity_request_mail("1").request_maillist == _request_maillist2
 
 def test_get_user_ids_of_request_mails_by_activity_id(workflow, users, mocker):
     activity = WorkActivity()
-    actionrequestmails = [
-        ActionRequestMail(
+    activityrequestmails = [
+        ActivityRequestMail(
         id = 1,
         activity_id = 1,
-        is_request_mail_enabled = True,
+        display_request_button = True,
         request_maillist = []
     ),
-    ActionRequestMail(
+    ActivityRequestMail(
         id = 2,
         activity_id = 2,
-        is_request_mail_enabled = False,
+        display_request_button = False,
         request_maillist = [{}]
     ),
-    ActionRequestMail(
+    ActivityRequestMail(
         id = 3,
         activity_id = 3,
-        is_request_mail_enabled = True,
+        display_request_button = True,
         request_maillist = [{"email":"not_user","author_id":""},
                             {"email":"user@test.org","author_id":""},
                             {"email":"contributor@test.org","author_id":""}]
     )]
-    with patch("weko_workflow.api.WorkActivity.get_action_request_mail", return_value = None):
+    with patch("weko_workflow.api.WorkActivity.get_activity_request_mail", return_value = None):
         assert not activity.get_user_ids_of_request_mails_by_activity_id(1)
-    with patch("weko_workflow.api.WorkActivity.get_action_request_mail", return_value = actionrequestmails[0]):
+    with patch("weko_workflow.api.WorkActivity.get_activity_request_mail", return_value = activityrequestmails[0]):
         assert not activity.get_user_ids_of_request_mails_by_activity_id(1)
-    with patch("weko_workflow.api.WorkActivity.get_action_request_mail", return_value = actionrequestmails[1]):
+    with patch("weko_workflow.api.WorkActivity.get_activity_request_mail", return_value = activityrequestmails[1]):
         assert not activity.get_user_ids_of_request_mails_by_activity_id(2)
-    with patch("weko_workflow.api.WorkActivity.get_action_request_mail", return_value = actionrequestmails[2]):
+    with patch("weko_workflow.api.WorkActivity.get_activity_request_mail", return_value = activityrequestmails[2]):
         ids = activity.get_user_ids_of_request_mails_by_activity_id(3)
         assert ids == [User.query.filter_by(email="contributor@test.org").one_or_none().id]
 
