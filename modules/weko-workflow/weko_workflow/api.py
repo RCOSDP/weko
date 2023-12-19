@@ -43,7 +43,7 @@ from weko_records.api import RequestMailList
 from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SUFFIX_METHOD, \
     WEKO_WORKFLOW_ALL_TAB, WEKO_WORKFLOW_TODO_TAB, WEKO_WORKFLOW_WAIT_TAB
 from .models import Action as _Action
-from .models import ActionCommentPolicy, ActionFeedbackMail, ActionRequestMail,\
+from .models import ActionCommentPolicy, ActionFeedbackMail, ActivityRequestMail,\
     ActionIdentifier, ActionJournal, ActionStatusPolicy
 from .models import Activity as _Activity
 from .models import ActivityAction, ActivityHistory, ActivityStatusPolicy
@@ -1122,7 +1122,7 @@ class WorkActivity(object):
     def create_or_update_action_request_mail(self,
                                              activity_id,
                                              request_maillist,
-                                             is_request_mail_enabled=False):
+                                             display_request_button=False):
         """Create or update action ActionRequstMail's model.
         :param activity_id: activity identifier
         :param action_id:   action identifier
@@ -1131,16 +1131,16 @@ class WorkActivity(object):
         """
         try:
             with db.session.begin_nested():
-                action_request_mail = ActionRequestMail.query.filter_by(
+                action_request_mail = ActivityRequestMail.query.filter_by(
                     activity_id=activity_id).one_or_none()
                 if action_request_mail:
                     action_request_mail.request_maillist = request_maillist
                     db.session.merge(action_request_mail)
                 else:
-                    action_request_mail = ActionRequestMail(
+                    action_request_mail = ActivityRequestMail(
                         activity_id=activity_id,
                         request_maillist=request_maillist,
-                        is_request_mail_enabled=is_request_mail_enabled
+                        display_request_button=display_request_button
                     )
                     db.session.add(action_request_mail)
             db.session.commit()
@@ -1206,12 +1206,12 @@ class WorkActivity(object):
             return action_feedbackmail
 
     def get_action_request_mail(self, activity_id):
-        """Get ActionRequestMail object from model base on activity's id.
+        """Get ActivityRequestMail object from model base on activity's id.
         :param activity_id: acitivity identifier
         :return:    object's model or none
         """
         with db.session.no_autoflush:
-            action_request_mail = ActionRequestMail.query.filter_by(
+            action_request_mail = ActivityRequestMail.query.filter_by(
                 activity_id=activity_id).one_or_none()
             return action_request_mail
 
@@ -1658,7 +1658,7 @@ class WorkActivity(object):
                     ),
                     and_(
                         _FlowActionRole.action_request_mail == True,
-                        cast(ActionRequestMail.request_maillist, String).contains('"'+current_user.email+'"')
+                        cast(ActivityRequestMail.request_maillist, String).contains('"'+current_user.email+'"')
                     ),
                 )
             )
@@ -1767,7 +1767,7 @@ class WorkActivity(object):
                         ),
                         and_(
                         _FlowActionRole.action_request_mail == True,
-                        cast(ActionRequestMail.request_maillist, String).contains('"'+current_user.email+'"'),
+                        cast(ActivityRequestMail.request_maillist, String).contains('"'+current_user.email+'"'),
                         or_(_FlowActionRole.action_role.in_(self_group_ids),
                             _FlowActionRole.action_role == None
                             )
@@ -1800,7 +1800,7 @@ class WorkActivity(object):
                 )
             ).outerjoin(_Action) \
             .outerjoin(_FlowAction).outerjoin(_FlowActionRole) \
-            .outerjoin(ActionRequestMail,and_(ActionRequestMail.activity_id == _Activity.activity_id))\
+            .outerjoin(ActivityRequestMail,and_(ActivityRequestMail.activity_id == _Activity.activity_id))\
             .outerjoin(
                 ActivityAction,
                 and_(
@@ -2191,13 +2191,13 @@ class WorkActivity(object):
         :param activity_id: int, Id number of item
         :return: return ids of request mails that set to item
         """
-        #request_mail_listをactivity_idでworkflow_action_request_mailテーブルから引っ張ってくる。
+        #request_mail_listをactivity_idでworkflow_activity_request_mailテーブルから引っ張ってくる。
         request_mails = self.get_action_request_mail(activity_id)
         #該当するactivity_idがなかった場合、空リストを返す
         if not request_mails:
             return []
-        #request_maillistが空リストかworkflow_action_request_mailのis_request_mail_enabledがFalseなら空リストを返す
-        if not request_mails.request_maillist or not request_mails.is_request_mail_enabled:
+        #request_maillistが空リストかworkflow_activity_request_mailのdisplay_request_buttonがFalseなら空リストを返す
+        if not request_mails.request_maillist or not request_mails.display_request_button:
             return []
         maillist=request_mails.request_maillist
         user_ids=[]
@@ -2221,7 +2221,6 @@ class WorkActivity(object):
         :return: return ids of request mails that set to item  
         """
         user_role = db.session.query(Role).join(userrole).filter_by(user_id=user_id).all()
-        print("ああああああ",user_role)
         is_approver = True
         supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']
         for role in list(user_role or []):

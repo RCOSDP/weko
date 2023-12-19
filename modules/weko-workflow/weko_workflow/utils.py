@@ -2935,7 +2935,7 @@ def init_activity_for_guest_user(
                 activity_id=activity_id,
                 action_id=action_id,
                 request_maillist=mail_list,
-                is_request_mail_enabled=True
+                display_request_button=True
             )
     else:
         token_value = guest_activity[0].token

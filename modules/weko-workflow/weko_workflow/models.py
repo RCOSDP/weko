@@ -1045,10 +1045,10 @@ class ActionFeedbackMail(db.Model, TimestampMixin):
     )
     """Action journal info."""
 
-class ActionRequestMail(db.Model, TimestampMixin):
+class ActivityRequestMail(db.Model, TimestampMixin):
     """Define action identifier info."""
 
-    __tablename__ = 'workflow_action_request_mail'
+    __tablename__ = 'workflow_activity_request_mail'
 
     id = db.Column(
         db.Integer(),
@@ -1056,7 +1056,7 @@ class ActionRequestMail(db.Model, TimestampMixin):
         primary_key=True,
         autoincrement=True
     )
-    """ActionRequestMail identifier."""
+    """ActivityRequestMail identifier."""
 
     activity_id = db.Column(
         db.String(24),
@@ -1066,16 +1066,8 @@ class ActionRequestMail(db.Model, TimestampMixin):
     )
     """Activity id of Activity Action."""
 
-    action_id = db.Column(
-        db.Integer(),
-        db.ForeignKey(Action.id),
-        nullable=True,
-        unique=False
-    )
-    """Action id."""
-
-    is_request_mail_enabled = db.Column(
-        db.Boolean(name='is_request_mail_enabled'),
+    display_request_button = db.Column(
+        db.Boolean(name='display_request_button'),
         nullable=False, 
         default=False, 
         server_default='0')
@@ -1095,7 +1087,7 @@ class ActionRequestMail(db.Model, TimestampMixin):
         default=lambda: dict(),
         nullable=True
     )
-    """Action journal info."""
+    """Request mail address list."""
 
 class WorkflowRole(db.Model, TimestampMixin):
     """Define action identifier info."""

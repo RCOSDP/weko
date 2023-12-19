@@ -528,7 +528,7 @@ def init_activity():
                 activity.create_or_update_action_request_mail(
                     activity_id=rtn.activity_id,
                     request_maillist=mail_list,
-                    is_request_mail_enabled=True
+                    display_request_button=True
                 )
         url = url_for('weko_workflow.display_activity',
                       activity_id=rtn.activity_id)
