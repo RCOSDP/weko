@@ -1066,14 +1066,6 @@ class ActionRequestMail(db.Model, TimestampMixin):
     )
     """Activity id of Activity Action."""
 
-    action_id = db.Column(
-        db.Integer(),
-        db.ForeignKey(Action.id),
-        nullable=True,
-        unique=False
-    )
-    """Action id."""
-
     is_request_mail_enabled = db.Column(
         db.Boolean(name='is_request_mail_enabled'),
         nullable=False, 

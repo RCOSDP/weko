@@ -2221,7 +2221,6 @@ class WorkActivity(object):
         :return: return ids of request mails that set to item  
         """
         user_role = db.session.query(Role).join(userrole).filter_by(user_id=user_id).all()
-        print("ああああああ",user_role)
         is_approver = True
         supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']
         for role in list(user_role or []):
