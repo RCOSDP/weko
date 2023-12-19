@@ -2191,14 +2191,11 @@ class WorkActivity(object):
         :param activity_id: int, Id number of item
         :return: return ids of request mails that set to item
         """
-        #workflowがopen_restrictedがTrueか確認
-        workflow = WorkFlow()
         activity_detail = self.get_activity_detail(activity_id)
-        is_restricted = workflow.get_workflow_by_id(activity_detail.workflow_id).open_restricted
         #制限公開アイテムに対して利用申請を出している場合、extra_infoがついているのでそれから制限公開アイテムのrecidをとる。
         restricted_record_id = activity_detail.extra_info.get("record_id") if activity_detail.extra_info else None
         #extra_infoがあった場合、このactivity_idは利用申請系ワークフローであるので紐づいている制限公開アイテムのIDで別のメソッドを回す。
-        if is_restricted and activity_detail.extra_info and activity_detail.extra_info.get("is_restricted_access", "") and restricted_record_id :
+        if activity_detail.extra_info and activity_detail.extra_info.get("is_restricted_access", "") and restricted_record_id :
             return self.get_user_ids_of_request_mails_by_record_id(restricted_record_id)
         #request_mail_listをactivity_idでworkflow_activity_request_mailテーブルから引っ張ってくる。
         request_mails = self.get_activity_request_mail(activity_id)
@@ -2237,6 +2234,8 @@ class WorkActivity(object):
             return []
         user_ids=[]
         for mail in request_mails:
+            if not mail:
+                continue
             #リクエスト送信先のメールアドレスでユーザーが登録されているか
             temp_user_info = db.session.query(User).filter_by(email=mail["email"]).first()
             if not temp_user_info:

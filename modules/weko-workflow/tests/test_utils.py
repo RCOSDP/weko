@@ -1970,6 +1970,7 @@ def test_generate_guest_activity_token_value(client,mocker):
     token_value = base64.b64encode(token_value.encode()).decode()
     result = generate_guest_activity_token_value(activity_id,filename,activity_date,mail)
     assert result == token_value
+
 # def init_activity_for_guest_user(
 #     def _get_guest_activity():
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_init_activity_for_guest_user -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -1988,9 +1989,6 @@ def test_init_activity_for_guest_user(app,db_register,mocker):
         new_activit_id="A-20221003-00001"
         mocker.patch("weko_workflow.api.WorkActivity.get_new_activity_id",return_value=new_activit_id)
         mocker.patch("weko_workflow.utils.generate_guest_activity_token_value",return_value="QS0yMDIyMTAwMy0wMDAwMSAyMDIyLTEwLTAxIGd1ZXN0QHRlc3Qub3JnIENFMDZGREZCMTU4MjNBNUM=")
-        mocker.patch("weko_workflow.utils.PersistentIdentifier.get", return_value = PersistentIdentifier())
-        mocker.patch("weko_workflow.utils.PersistentIdentifier.get_assigned_object", return_value = record_id)
-        mocker.patch("weko_workflow.utils.RequestMailList.get_mail_list_by_item_id", return_value = [{"email":"contributor@test.org","author_id":""}])
         activity, tmp_url = init_activity_for_guest_user(data,True)
         assert activity.activity_id == new_activit_id
         assert tmp_url == "http://TEST_SERVER.localdomain/workflow/activity/guest-user/test.txt?token=QS0yMDIyMTAwMy0wMDAwMSAyMDIyLTEwLTAxIGd1ZXN0QHRlc3Qub3JnIENFMDZGREZCMTU4MjNBNUM="
