@@ -1769,9 +1769,6 @@ class WorkActivity(object):
                             _ItemMetadata.json.op('->>')('owner') == current_user.get_id() 
                         ),
                         and_(
-                            _Activity.extra_info.op("#>>")("{'record_id'}").contains('"19"')
-                        ),
-                        and_(
                         _FlowActionRole.action_request_mail == True,
                         cast(ActivityRequestMail.request_maillist, String).contains('"'+current_user.email+'"'),
                         or_(_FlowActionRole.action_role.in_(self_group_ids),

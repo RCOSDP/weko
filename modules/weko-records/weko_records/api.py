@@ -2085,7 +2085,7 @@ class FeedbackMailList(object):
             cls.delete(item_id)
 
 class RequestMailList(object):
-    """RequestMail-Mail List API."""
+    """RequestMail List API."""
 
     @classmethod
     def update(cls, item_id, request_mail_list):
