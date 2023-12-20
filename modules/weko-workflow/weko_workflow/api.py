@@ -1616,6 +1616,7 @@ class WorkActivity(object):
         self_user_id = int(current_user.get_id())
         self_user_id_json = json.dumps({"user" : self_user_id})
         self_group_ids = [role.id for role in current_user.roles]
+        recid_list= WorkActivity().get_recids_for_request_mail_by_mailaddress(current_user.email)
         if is_community_admin:
             query = query \
                 .filter(_Activity.activity_login_user.in_(community_user_ids))
@@ -1660,6 +1661,7 @@ class WorkActivity(object):
                         _FlowActionRole.action_request_mail == True,
                         cast(ActivityRequestMail.request_maillist, String).contains('"'+current_user.email+'"')
                     ),
+                    _Activity.extra_info.op("->>")('record_id').in_(recid_list)
                 )
             )
 
@@ -1707,6 +1709,7 @@ class WorkActivity(object):
             self_user_id = int(current_user.get_id())
             self_user_id_json = json.dumps({"user" : self_user_id})
             self_group_ids = [role.id for role in current_user.roles]
+            recid_list= WorkActivity().get_recids_for_request_mail_by_mailaddress(current_user.email)
             query = query \
                 .filter(
                     or_(
@@ -1772,6 +1775,12 @@ class WorkActivity(object):
                             _FlowActionRole.action_role == None
                             )
                         ),
+                        and_(
+                            _Activity.extra_info.op("->>")('record_id').in_(recid_list),
+                            or_(_FlowActionRole.action_role.in_(self_group_ids),
+                                _FlowActionRole.action_role == None
+                            )
+                        )
                     )
                 )
         return query
@@ -2273,6 +2282,17 @@ class WorkActivity(object):
                 is_approver = False
         return is_approver
     
+    def get_recids_for_request_mail_by_mailaddress(self, address):   
+        request_mail_list =  RequestMailList.get_request_mail_by_mailaddress(address)
+        recid_list=[]
+        for request_mail in request_mail_list:
+            try:
+                tmp_uuid = request_mail.item_id
+                tmp_recid = PersistentIdentifier.get_by_object("recid","rec",tmp_uuid).pid_value
+                recid_list.append(tmp_recid)
+            except Exception as ex:
+                current_app.logger.exception(str(ex))
+        return recid_list
 
     def del_activity(self, activity_id):
         """Delete activity info.

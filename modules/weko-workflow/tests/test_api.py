@@ -8,6 +8,7 @@ from flask_login.utils import login_user
 from invenio_accounts.models import Role, User
 from sqlalchemy import and_, or_, not_
 from weko_records.api import ItemsMetadata
+from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 
 from weko_workflow.api import Flow, WorkActivity
 from weko_workflow.models import Action as _Action
@@ -18,6 +19,7 @@ from weko_workflow.models import FlowActionRole as _FlowActionRole
 from weko_workflow.models import FlowDefine as _Flow
 from weko_workflow.models import WorkFlow as _WorkFlow
 from weko_workflow.models import ActionStatusPolicy, Activity, ActivityAction, FlowActionRole, ActivityRequestMail
+from weko_records.models import RequestMailList as _RequestMailList
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_Flow_action -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_Flow_action(app, client, users, db, action_data):
@@ -838,3 +840,18 @@ def test_check_user_role_for_mail(users):
     roles={'allow':[],'deny':[2]}
     assert activity.check_user_role_for_mail(users[0]["id"], roles)
                              
+# def get_recirds_for_request_mail_by_mailaddress
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_get_recirds_for_request_mail_by_mailaddress -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_get_recirds_for_request_mail_by_mailaddress(db,mocker):
+    activity = WorkActivity()
+    request_mail_list=[
+        _RequestMailList(item_id="1234",mail_list=[{"email": "wekosoftware@nii.ac.jp", "author_id": ""}]),
+        _RequestMailList(item_id="1235",mail_list=[{"email": "wekosoftware@nii.ac.jp", "author_id": ""}])
+    ]
+    mocker.patch("weko_workflow.api.RequestMailList.get_request_mail_by_mailaddress",return_value = request_mail_list)
+    
+    with patch("weko_workflow.api.PersistentIdentifier.get_by_object", return_value = PersistentIdentifier(pid_value = 1)):
+        recids_list = activity.get_recids_for_request_mail_by_mailaddress("wekosoftware@nii.ac.jp")
+        assert recids_list
+    assert not activity.get_recids_for_request_mail_by_mailaddress("wekosoftware@nii.ac.jp")
+
