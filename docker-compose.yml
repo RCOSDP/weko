@@ -206,18 +206,31 @@ services:
 #      - letsencrypt_etc:/etc/letsencrypt
 #      - letsencrypt_html:/var/www/html
     environment:
-      -  "s3AccessKey=changeme"
-      -  "s3SecretKey=changeme"
-      -  "s3BucketName=changeme"
-      -  "s3RegionName=changeme"
-      -  "KIKANMEI=changeme"
-      -  "S3HOST=changeme"
+      - "s3AccessKey=changeme"
+      - "s3SecretKey=changeme"
+      - "s3BucketName=changeme"
+      - "s3RegionName=changeme"
+      - "ORGNIZATIONNAME=changeme"
+      - "S3HOST=changeme"
     links:
       - web
     deploy:
       resources:
         limits:
           memory: 300m
+
+  # ingress:
+  #   restart: "always"
+  #   build: ./ingress
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   links:
+  #     - nginx
+  #   deploy:
+  #     resources:
+  #       limits:
+  #         memory: 300m
 
 #  certbot:
 #    image: certbot/certbot:latest

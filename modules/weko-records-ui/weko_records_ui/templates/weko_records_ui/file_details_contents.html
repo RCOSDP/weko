@@ -127,7 +127,7 @@
                               {% if file.size <= config.get("MAX_DOWNLOAD_SIZE_AT_ONE_TIME") %}
                                 href="javascript:OnLinkClick('{{ original_file_url }}', {{ pid.pid_value }}, '{{ file.accessrole }}')">
                               {% else %}
-                                href="javascript:void(0)" onclick="downloadFile('{{pid.pid_value}}', '{{file.filename}}', '{{file.size}}', '{{config.get("DOWNLOAD_SIZE_IN_ONE_PART")}}', this)">
+                                href="javascript:void(0)" onclick="downloadFile('{{pid.pid_value}}', '{{file.filename}}', '{{file.size}}', '{{config.get("DOWNLOAD_SIZE_IN_ONE_PART")}}', this)"
                               {% endif %}
                             {% endif %}>{{_('Original')}}</a>
                           </div>

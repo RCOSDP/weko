@@ -990,6 +990,32 @@ def get_item_type(item_type_id=0) -> dict:
 
     return result
 
+def is_valid_uuid(val):
+    try:
+        uuid.UUID(str(val))
+        return True
+    except ValueError:
+        return False
+    
+def get_file_size(p_file):
+    """Get file size and convert to byte."""
+    vid = p_file.get("version_id")
+    if not is_valid_uuid(vid):
+        file_size = p_file.get('filesize', [{}])[0]
+        file_size_value = file_size.get('value', 0)
+        defined_unit = {'b': 1, 'kb': 1024, 'mb': 1024 ** 2,
+                        'gb': 1024 ** 3, 'tb': 1024 ** 4}
+        if type(file_size_value) is str and ' ' in file_size_value:
+            size_num = file_size_value.split(' ')[0]
+            size_unit = file_size_value.split(' ')[1]
+            unit_num = defined_unit.get(size_unit.lower(), 0)
+            try:
+                file_size_value = float(size_num) * unit_num
+            except:
+                file_size_value = 0
+        return file_size_value
+        
+    return ObjectVersion.query.filter_by(version_id = p_file.get("version_id")).one_or_none().file.size
 
 def handle_check_exist_record(list_record) -> list:
     """Check record is exist in system.
@@ -1002,6 +1028,7 @@ def handle_check_exist_record(list_record) -> list:
     """
     result = []
     current_app.logger.debug("handle_check_exist_record")
+    upload_ids = set()
     for item in list_record:
         item = dict(**item, **{"status": "new"})
         current_app.logger.debug("item:{}".format(item))
@@ -1055,67 +1082,118 @@ def handle_check_exist_record(list_record) -> list:
                             else:
                                 item["status"] = _edit_mode.lower()
 
-            if item.get("upload_id"):
-                p = PersistentIdentifier.query.filter_by(pid_type="recid", pid_value=item["id"]).first()
-                bucket = RecordsBuckets.query.filter_by(record_id = p.object_uuid).one_or_none().bucket 
-                all_size = bucket.size
-                for i, id in enumerate(item.get("upload_id")):
-                    if id != "" and item.get("file_path")[i] != "": # if 'file_path' exist
-                        errors.append(_('file_path must be empty'))
-                        
-                    if is_valid_uuid(id): # if 'id' is valid
-                        if not item.get("metadata")[file_meta_id][i].get("format") in mimetypes.types_map.values(): # If 'format' is in the correct format
-                            errors.append(_('Please set the file format correctly'))
+            if not errors:
+                if item.get("upload_id"):
+                    p = PersistentIdentifier.query.filter_by(pid_type="recid", pid_value=str(item_id)).first()
+                    record = WekoDeposit.get_record(p.object_uuid)
+                    deposit = WekoDeposit(record, record.model)
+                    file_data_list = deposit.get_file_data()
+                    
+                    bucket = RecordsBuckets.query.filter_by(record_id = p.object_uuid).one_or_none().bucket
+                    all_size = bucket.size
+                    
+                    old_file_name_list = [x.get("filename") for x in file_data_list]
+                    new_file_name_list = [x.get("filename", "") for x in item["metadata"][file_meta_id]]
                             
-                        multipartObject = MultipartObject.get_by_uploadId(id)
-                        if multipartObject:
-                            if not (multipartObject.completed and (multipartObject.bucket_id == None or multipartObject.bucket_id == bucket.id)): # f upload_id is not completed or is already linked to an item
-                                errors.append(_('specified uploadId not completed or already linked to the item'))
-                                
-                            if not multipartObject.file.uri.startswith(bucket.location.uri): # If different from item location
-                                errors.append(_('Files and items have different locations '))
+                    for i in range(len(old_file_name_list)):
+                        if not old_file_name_list[i] in new_file_name_list:
+                            all_size -= get_file_size(file_data_list[i])
+                    
+                    for i, id in enumerate(item.get("upload_id")):
+                        if id != "" and item.get("file_path")[i] != "": # if 'file_path' exist
+                            errors.append(_('Please enter only file_path or upload_id'))
                             
-                            if not errors:
-                                all_size += multipartObject.file.size
+                        if is_valid_uuid(id): # if 'id' is valid
+                            if id in upload_ids:
+                                errors.append(_("Duplicate upload_id"))
+                            else:
+                                upload_ids.add(id)
                                 
+                            if not item.get("metadata")[file_meta_id][i].get("format") in mimetypes.types_map.values(): # If 'format' is in the correct format
+                                errors.append(_('Please set the file format correctly'))
+                                
+                            multipartObject = MultipartObject.get_by_uploadId(id)
+                            if multipartObject:
+                                if not (multipartObject.completed and (multipartObject.bucket_id == None or multipartObject.bucket_id == bucket.id)): # f upload_id is not completed or is already linked to an item
+                                    errors.append(_('specified upload_id not completed or already linked to the item'))
+                                    
+                                if not multipartObject.file.uri.startswith(bucket.location.uri): # If different from item location
+                                    errors.append(_('Files and items have different locations'))
+                                
+                                if not errors:
+                                    all_size += multipartObject.file.size
+                                    
+                            else:
+                                errors.append(_('specified upload_id is not found'))
                         else:
-                            errors.append(_('specified uploadId is not found'))
-                    else:
-                        if id != '':
-                            errors.append(_('uploadId is invalid format'))
-                           
-                if bucket != None and all_size > bucket.quota_size:
-                    errors.append(_('Total file size exceeds bucket size'))
+                            if id != '':
+                                errors.append(_('upload_id is invalid format'))
+                                continue
+                                
+                            path = item["file_path"][i]
+                            if path:
+                                temp_path = (
+                                    tempfile.gettempdir()
+                                    + "/"
+                                    + current_app.config["WEKO_SEARCH_UI_IMPORT_TMP_PREFIX"]
+                                    + datetime.utcnow().strftime(r"%Y%m%d%H%M%S")
+                                    + "/data"
+                                )
+                                
+                                if os.path.isfile(temp_path + "/" + path):
+                                    all_size += os.path.getsize(temp_path + "/" + path)
+                    
+                    if bucket != None and all_size > bucket.quota_size:
+                        errors.append(_('Total file size exceeds bucket size'))
                     
         else:
             if item.get("upload_id"):
                 all_size = 0
                 for i, id in enumerate(item.get("upload_id")):
                     if id != "" and item.get("file_path")[i] != "": # if 'file_path' exist
-                        errors.append(_('file_path must be empty'))
+                        errors.append(_('Please enter only file_path or upload_id'))
                         
                     if is_valid_uuid(id): # if 'id' is valid
+                        if id in upload_ids:
+                                errors.append(_("Duplicate upload_id"))
+                        else:
+                            upload_ids.add(id)
+                                
                         if not item.get("metadata")[file_meta_id][i].get("format") in mimetypes.types_map.values(): # If 'format' is in the correct format
                             errors.append(_('Please set the file format correctly'))
                             
                         multipartObject = MultipartObject.get_by_uploadId(id)
                         if multipartObject:
                             if not (multipartObject.completed and multipartObject.bucket_id == None): # f upload_id is not completed or is already linked to an item
-                                errors.append(_('specified uploadId not completed or already linked to the item'))
+                                errors.append(_('specified upload_id not completed or already linked to the item'))
                                 
                             if not multipartObject.file.uri.startswith(Location.get_default().uri): # If different from item location
-                                errors.append(_('Files and items have different locations '))
+                                errors.append(_('Files and items have different locations'))
                             
                             if not errors:
                                 all_size += multipartObject.file.size
                                 
                         else:
-                            errors.append(_('specified uploadId is not found'))
+                            errors.append(_('specified upload_id is not found'))
                             
                     else:
                         if id != '':
-                            errors.append(_('uploadId is invalid format'))
+                            errors.append(_('upload_id is invalid format'))
+                            continue
+                        
+                        path = item["file_path"][i]
+                        if path:
+                            temp_path = (
+                                tempfile.gettempdir()
+                                + "/"
+                                + current_app.config["WEKO_SEARCH_UI_IMPORT_TMP_PREFIX"]
+                                + datetime.utcnow().strftime(r"%Y%m%d%H%M%S")
+                                + "/data"
+                            )
                             
+                            if os.path.isfile(temp_path + "/" + path):
+                                all_size += os.path.getsize(temp_path + "/" + path)
+                
                 if all_size > current_app.config.get("WEKO_BUCKET_QUOTA_SIZE"):
                     errors.append(_('Total file size exceeds bucket size'))
                     
@@ -1189,13 +1267,6 @@ def clean_thumbnail_file(deposit, root_path, thumbnail_path):
     for file in deposit.files:
         if file.obj.is_thumbnail and file.obj.key not in list_not_remove:
             file.obj.remove()
-
-def is_valid_uuid(val):
-        try:
-            uuid.UUID(str(val))
-            return True
-        except ValueError:
-            return False
 
 def up_load_file(record, root_path, deposit, allow_upload_file_content, old_files):
     """Upload thumbnail or file content.

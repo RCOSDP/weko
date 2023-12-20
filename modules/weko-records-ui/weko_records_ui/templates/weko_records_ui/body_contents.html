@@ -238,7 +238,11 @@
                           {%- endif -%}
                           <div class="text-right">
                             <a class="forcewrap{{billing_file_class}}" {{billing_file_data}} {{billing_file_url}}
-                              href="{{original_file_url}}">{{_('Original')}}</a>
+                            {% if file.size <= config.get("MAX_DOWNLOAD_SIZE_AT_ONE_TIME") %}
+                              href="{{original_file_url}}"
+                            {% else %}
+                              href="javascript:void(0)" onclick="downloadFile('{{pid.pid_value}}', '{{file.filename}}', '{{file.size}}', '{{config.get("DOWNLOAD_SIZE_IN_ONE_PART")}}', this)"
+                            {% endif %}>{{_('Original')}}</a>
                           </div>
                         {%- endif -%}
                       </td>

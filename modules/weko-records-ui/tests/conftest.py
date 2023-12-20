@@ -103,12 +103,9 @@ from weko_index_tree.config import (
     WEKO_INDEX_TREE_REST_ENDPOINTS as _WEKO_INDEX_TREE_REST_ENDPOINTS,
 )
 from weko_index_tree.models import Index, IndexStyle
-from weko_items_ui import WekoItemsUI
-from weko_items_ui.config import WEKO_ITEMS_UI_MS_MIME_TYPE,WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT
 from weko_records import WekoRecords
 from weko_records.api import ItemsMetadata
 from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName, SiteLicenseInfo, FeedbackMailList,SiteLicenseIpAddress
-from weko_records.utils import get_options_and_order_list
 from weko_records_ui.config import WEKO_ADMIN_PDFCOVERPAGE_TEMPLATE,RECORDS_UI_ENDPOINTS,WEKO_RECORDS_UI_SECRET_KEY,WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN
 from weko_records_ui.models import PDFCoverPageSettings,FileOnetimeDownload, FilePermission
 from weko_schema_ui.config import (
@@ -140,6 +137,8 @@ from weko_records_ui.config import (
 )
 from weko_search_ui import WekoSearchUI
 from weko_search_ui.config import WEKO_SEARCH_MAX_RESULT
+from weko_items_ui import WekoItemsUI
+from weko_items_ui.config import WEKO_ITEMS_UI_MS_MIME_TYPE,WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT
 from weko_theme import WekoTheme
 from weko_user_profiles.models import UserProfile
 from weko_workflow.models import (
@@ -301,11 +300,11 @@ def base_app(instance_path):
     InvenioTheme(app_)
     InvenioS3(app_)
     WekoRecords(app_)
-    WekoItemsUI(app_)
-    WekoRecordsUI(app_)
-    # WekoRecordsCitesREST(app_)
     WekoAdmin(app_)
+    # WekoRecordsCitesREST(app_)
     WekoSearchUI(app_)
+    WekoRecordsUI(app_)
+    WekoItemsUI(app_)
     WekoTheme(app_)
     WekoGroups(app_)
     WekoIndexTree(app_)

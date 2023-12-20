@@ -54,25 +54,25 @@ function getAuth(r){
 
 function getPath(r){
     const bucketName = process.env["S3BUCKETNAME"];
-    const kikanmei = process.env["KIKANMEI"];
+    const orgnizationName = process.env["ORGNIZATIONNAME"];
 
     const uri = r.uri;
     if(uri == "/"){
         return `${bucketName}`;
     }else{
-        return `${bucketName}/${kikanmei}${uri}`;
+        return `${bucketName}/${orgnizationName}${uri}`;
     }
 }
 
 function getURL(r){
     const bucketName = process.env["S3BUCKETNAME"];
-    const kikanmei = process.env["KIKANMEI"];
+    const orgnizationName = process.env["ORGNIZATIONNAME"];
     const host = process.env["S3HOST"];
     const uri = r.uri;
     if(uri == "/"){
         return `${host}/${bucketName}`;
     }else{
-        return `${host}/${bucketName}/${kikanmei}`;
+        return `${host}/${bucketName}/${orgnizationName}`;
     }
 }
 
@@ -96,8 +96,12 @@ function getPayloadHash(r){
     }
 }
 
-function getRange(r){
-    return r.headersIn["range"];
+function getBucketName(r){
+    return process.env["S3BUCKETNAME"];
+}
+
+function getOrganizationName(r){
+    return process.env["ORGNIZATIONNAME"];
 }
 
 function getHost(r){
@@ -112,6 +116,7 @@ export default {
     getAuth,
     getPath,
     getURL,
-    getRange,
+    getBucketName,
+    getOrganizationName,
     getHost
 };
