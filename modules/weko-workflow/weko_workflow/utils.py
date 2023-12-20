@@ -2926,17 +2926,6 @@ def init_activity_for_guest_user(
                 'expiration_date_access', 500))
 
         GuestActivity.create(**guest_activity)
-        record_uuid = PersistentIdentifier.get("recid", record_id).get_assigned_object()
-        mail_list = RequestMailList.get_mail_list_by_item_id(item_id=record_uuid)
-        if mail_list:
-            action_id = current_app.config.get(
-                "WEKO_WORKFLOW_ITEM_REGISTRATION_ACTION_ID", 3)
-            tmp = WorkActivity().create_or_update_action_request_mail(
-                activity_id=activity_id,
-                action_id=action_id,
-                request_maillist=mail_list,
-                display_request_button=True
-            )
     else:
         token_value = guest_activity[0].token
 

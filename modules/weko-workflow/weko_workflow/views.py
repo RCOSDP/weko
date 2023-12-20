@@ -521,15 +521,6 @@ def init_activity():
         if rtn is None:
             res = ResponseMessageSchema().load({'code':-1,'msg':'can not make activity_id'})
             return jsonify(res.data), 500
-        if rtn.extra_info:
-            record_uuid = PersistentIdentifier.get("recid", rtn.extra_info.get("record_id",None)).get_assigned_object()
-            mail_list = RequestMailList.get_mail_list_by_item_id(item_id=record_uuid)
-            if mail_list:
-                activity.create_or_update_action_request_mail(
-                    activity_id=rtn.activity_id,
-                    request_maillist=mail_list,
-                    display_request_button=True
-                )
         url = url_for('weko_workflow.display_activity',
                       activity_id=rtn.activity_id)
         if 'community' in request.args and request.args.get('community') != 'undefined':
