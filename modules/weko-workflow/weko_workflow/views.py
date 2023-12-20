@@ -1382,6 +1382,10 @@ def next_action(activity_id='0', action_id=0):
     flow = Flow()
     current_flow_action = flow.get_flow_action_detail(
         activity_detail.flow_define.flow_id, action_id, action_order)
+    if current_flow_action is None:
+        current_app.logger.error("next_action: can not get current_flow_action")
+        res = ResponseMessageSchema().load({"code":-1, "msg":"can not get curretn_flow_action"})
+        return jsonify(res.data), 500
     next_flow_action = flow.get_next_flow_action(
         activity_detail.flow_define.flow_id, action_id, action_order)
     if not isinstance(next_flow_action, list) or len(next_flow_action) <= 0:
@@ -1403,12 +1407,6 @@ def next_action(activity_id='0', action_id=0):
                             "reject": False}
     # Start to send mail
     if next_action_endpoint in ['approval' , 'end_action']:
-        current_flow_action = flow.get_flow_action_detail(
-            activity_detail.flow_define.flow_id, action_id, action_order)
-        if current_flow_action is None:
-            current_app.logger.error("next_action: can not get current_flow_action")
-            res = ResponseMessageSchema().load({"code":-1, "msg":"can not get curretn_flow_action"})
-            return jsonify(res.data), 500
         next_action_detail = work_activity.get_activity_action_comment(
             activity_id, next_action_id,
             next_action_order)
@@ -1446,7 +1444,8 @@ def next_action(activity_id='0', action_id=0):
                 action_id=next_action_id,
                 action_order=next_action_order).one_or_none()
             if current_flow_action and current_flow_action.action_roles and current_flow_action.action_roles[0].action_request_mail:
-                is_request_enabled = AdminSettings.get('items_display_settings').display_request_form or False
+                is_request_enabled = AdminSettings.get('items_display_settings',False)\
+                    .get("display_request_form", {})
                 #リクエスト機能がAdmin画面で無効化されている場合、メールは送信しない。
                 if is_request_enabled :
                     next_action_handler = work_activity.get_user_ids_of_request_mails_by_activity_id(activity_id)
