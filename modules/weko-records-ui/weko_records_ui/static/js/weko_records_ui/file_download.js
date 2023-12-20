@@ -15,7 +15,6 @@ function showErrorMsg(msg , success=false, ediv) {
 
 async function downloadFile(recNum, fileName, content_length, buffer_size, event){
     let ediv = event.getAttribute("ediv")
-    let mordal = event.getAttribute("mordal");
     if(!ediv){
         ediv = "errors";
     }
@@ -44,10 +43,9 @@ async function downloadFile(recNum, fileName, content_length, buffer_size, event
       showErrorMsg(error_msg, false, ediv)
       return;
     }
-    if(mordal != null){
-      $(mordal).modal("hide")
-    }
     ring_background.classList.remove("hidden");
+    ring_zIndex = ring_background.style.zIndex;
+    ring_background.style.zIndex = "2000";
   
     let offset = 0;
     let partNumber = 1;
@@ -68,15 +66,13 @@ async function downloadFile(recNum, fileName, content_length, buffer_size, event
         xhr.abort();
         showErrorMsg(error_msg, false, ediv)
         ring_background.classList.add("hidden");
-        if(mordal != null){
-          $(mordal).modal("show")
-        }
+        ring_background.style.zIndex = ring_zIndex;
         return;
       }
     }
   
     xhr.onload = async function() {
-        if(String(xhr.status).indexOf("2") != 0){
+        if(!(xhr.status === 200 || xhr.status === 206)){
           if(retryCount < retry_count){
             console.log("retry partNumber", partNumber)
             retryCount += 1;
@@ -88,13 +84,13 @@ async function downloadFile(recNum, fileName, content_length, buffer_size, event
             xhr.abort();
             showErrorMsg(error_msg, false, ediv)
             ring_background.classList.add("hidden");
-            if(mordal != null){
-              $(mordal).modal("show")
-            }
+            ring_background.style.zIndex = ring_zIndex;
             return;
           }
         }
         partNumber += 1;
+        retryCount = 0;
+        offset += BUFFER_SIZE;
         
         try{
           await writableStream.write(xhr.response);
@@ -104,23 +100,18 @@ async function downloadFile(recNum, fileName, content_length, buffer_size, event
           xhr.abort();
           showErrorMsg(error_msg, false, ediv)
           ring_background.classList.add("hidden");
-          if(mordal != null){
-            $(mordal).modal("show")
-          }
+          ring_background.style.zIndex = ring_zIndex;
           return;
         }
   
-        if(offset + BUFFER_SIZE < contentLength){
-            offset += BUFFER_SIZE;
+        if(offset < contentLength){
             xhr.open("GET", "https://" + host + "/record/" + recNum + "/multipartfiles/" + fileName + "?partNumber=" + partNumber, true)
             xhr.send();
         }else{
           await writableStream.close();
           showErrorMsg(comp_msg, true, ediv);
           ring_background.classList.add("hidden");
-          if(mordal != null){
-            $(mordal).modal("show")
-          }
+          ring_background.style.zIndex = ring_zIndex;
         }
     }
   

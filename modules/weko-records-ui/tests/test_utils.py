@@ -1,5 +1,5 @@
 import pytest
-from weko_records_ui.utils import create_usage_report_for_user,get_data_usage_application_data,send_usage_report_mail_for_user,check_and_send_usage_report,check_and_create_usage_report,update_onetime_download,create_onetime_download_url,get_onetime_download,validate_onetime_download_token,get_license_pdf,hide_item_metadata,get_pair_value,get_min_price_billing_file_download,parse_one_time_download_token,generate_one_time_download_url,validate_download_record,is_private_index,get_file_info_list,replace_license_free,is_show_email_of_creator,hide_by_itemtype,hide_by_email,hide_by_file,hide_item_metadata_email_only,get_workflows,get_billing_file_download_permission,get_list_licence,restore,soft_delete,is_billing_item,get_groups_price,get_record_permalink,get_google_detaset_meta,get_google_scholar_meta,display_oaiset_path,get_terms,get_roles,check_items_settings
+from weko_records_ui.utils import create_usage_report_for_user,get_data_usage_application_data, is_valid_uuid,get_file_size,send_usage_report_mail_for_user,check_and_send_usage_report,check_and_create_usage_report,update_onetime_download,create_onetime_download_url,get_onetime_download,validate_onetime_download_token,get_license_pdf,hide_item_metadata,get_pair_value,get_min_price_billing_file_download,parse_one_time_download_token,generate_one_time_download_url,validate_download_record,is_private_index,get_file_info_list,replace_license_free,is_show_email_of_creator,hide_by_itemtype,hide_by_email,hide_by_file,hide_item_metadata_email_only,get_workflows,get_billing_file_download_permission,get_list_licence,restore,soft_delete,is_billing_item,get_groups_price,get_record_permalink,get_google_detaset_meta,get_google_scholar_meta,display_oaiset_path,get_terms,get_roles,check_items_settings
 import base64
 from unittest.mock import MagicMock
 import copy
@@ -1338,3 +1338,28 @@ def test_get_google_detaset_meta(app, records, itemtypes, oaischema, oaiidentify
 
         with patch("lxml.etree", return_value=data1):
             assert get_google_detaset_meta(record) == None
+            
+    
+def test_get_file_size(app, db):
+    
+    with patch("weko_records_ui.utils.ObjectVersion") as o:
+        type(o).query = o
+        o.filter_by = MagicMock(return_value = o)
+        o.one_or_none = MagicMock(return_value = o)
+        type(o).file = o
+        type(o).size = 1024
+        assert get_file_size({"version_id": "21406785-d495-b964-7c80-79687d5d3f00"}) == 1024
+    
+    p_file = {
+        "filesize": [
+            {"value": "100 B"}
+        ]
+    }
+    assert get_file_size(p_file) == 100
+    
+    p_file = {
+        "filesize": [
+            {"value": "abc B"}
+        ]
+    }
+    assert get_file_size(p_file) == 0

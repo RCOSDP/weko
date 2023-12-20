@@ -64,6 +64,7 @@ from weko_search_ui.utils import (
     get_export_status,
     get_feedback_mail_list,
     get_file_name,
+    get_file_size,
     get_filenames_from_metadata,
     get_item_type,
     get_journal_info,
@@ -517,7 +518,7 @@ def test_get_item_type(mocker_itemtype):
 
 
 # def handle_check_exist_record(list_record) -> list:
-def test_handle_check_exist_record(app, db, location, users):
+def test_handle_check_exist_record(app, db, location, es_records, users):
     case = unittest.TestCase()
     # case 1 import new items
     filepath = os.path.join(
@@ -572,18 +573,24 @@ def test_handle_check_exist_record(app, db, location, users):
         record["upload_id"] = ["", ""]
         
     list_record[0]["upload_id"][0] = upload_id
+    list_record[0]["file_path"][1] = "sample.txt"
     
-    # error "file_path must be empty"
-    # error "Please set the file format correctly"
-    # error "Files and items have different locations"
-    # error "specified uploadId not completed or already linked to the item"
-    res_list = handle_check_exist_record(list_record[0:1])
-    for res in res_list:
-        for e in res["errors"]:
-            assert e in ['file_path must be empty', 
-                        'specified uploadId not completed or already linked to the item', 
-                        'Files and items have different locations ', 
-                        'Please set the file format correctly']
+    with patch("weko_search_ui.utils.os") as o:
+        type(o).path = o
+        o.isfile = MagicMock(return_value = True)
+        o.getsize = MagicMock(return_value = 3 * 1024 * 1024 * 1024 * 1024)
+        
+        # error "Please enter only file_path or upload_id"
+        # error "Please set the file format correctly"
+        # error "Files and items have different locations"
+        # error "specified upload_id not completed or already linked to the item"
+        res_list = handle_check_exist_record(list_record[0:1])
+        for res in res_list:
+            for e in res["errors"]:
+                assert e in ['Please enter only file_path or upload_id', 
+                            'specified upload_id not completed or already linked to the item', 
+                            'Files and items have different locations',
+                            'Total file size exceeds bucket size']
     
     with db.session.begin_nested():
         multipartObject = MultipartObject.get_by_uploadId(upload_id)
@@ -595,34 +602,32 @@ def test_handle_check_exist_record(app, db, location, users):
         
     db.session.commit()
     
-    list_record[0]["upload_id"][1] = upload_id
+    list_record[0]["file_path"][1] = ""
     list_record[0]["upload_id"][0] = ""
+    list_record[0]["upload_id"][1] = upload_id
     list_record[0]["metadata"]["item_1617605131499"][1]["format"] = "text/plain"
     
     # normal
     res_list = handle_check_exist_record(list_record[0:1])
     assert res_list[0]["errors"] == None
     
-    with db.session.begin_nested():
-        multipartObject = MultipartObject.get_by_uploadId(upload_id)
-        multipartObject.file.size = 3 * 1024 * 1024 * 1024 * 1024
-        db.session.add(multipartObject)
-        
-    db.session.commit()
-    
+    list_record[0]["upload_id"][0] = upload_id
     list_record[1]["upload_id"][1] = "abcd"
     list_record[2]["upload_id"][1] = str(uuid.uuid4())
     
-    # error "specified uploadId is not found"
-    # error "uploadId is invalid format"
+    # error "specified upload_id is not found"
+    # error "upload_id is invalid format"
     # error "Total file size exceeds bucket size"
+    # error "Duplicate upload_id"
     res_list = handle_check_exist_record(list_record[0:3])
     for res in res_list:
         for e in res["errors"]:
-            assert e in ['Please set the file format correctly', 
-                         'uploadId is invalid format', 
-                         'Total file size exceeds bucket size', 
-                         'specified uploadId is not found']
+            assert e in ['Please enter only file_path or upload_id',
+                         'Duplicate upload_id',
+                         'upload_id is invalid format', 
+                         'Please set the file format correctly', 
+                         'specified upload_id is not found']
+
 
     # case 2 import items with id
     filepath = os.path.join(
@@ -646,168 +651,175 @@ def test_handle_check_exist_record(app, db, location, users):
     with app.test_request_context():
         with set_locale("en"):
             case.assertCountEqual(handle_check_exist_record(list_record), result)
+        
+        # upload_id case
+        with db.session.begin_nested():
+            fileinstance = FileInstance.create()
+            file_id = str(fileinstance.id)
+            fileinstance.uri = "/" + file_id[0:2] + "/" + file_id[2:4] + "/" + file_id[4:] + "/data"
+            fileinstance.storage_class = current_app.config['FILES_REST_DEFAULT_STORAGE_CLASS']
+            fileinstance.size = 1024
+            fileinstance.readable = False
+            fileinstance.writable = True
+            db.session.add(fileinstance)
 
+        db.session.commit()
+        
+        upload_id = str(uuid.uuid4())
+        
+        with db.session.begin_nested():
+            multipartObject = MultipartObject()
+            multipartObject.upload_id = upload_id
+            multipartObject.file_id = file_id
+            multipartObject.key = "sample"
+            multipartObject.size = 1024
+            multipartObject.chunk_size = 512
+            multipartObject.completed = False
+            multipartObject.created_by_id = 1
+            db.session.add(multipartObject)
+            
+        db.session.commit()
 
-        p = MagicMock()
-        type(p).object_uuid = None
+        for record in list_record:
+            record["upload_id"] = ["", ""]
+            
+        for i in range(3):
+            p = PersistentIdentifier.query.filter_by(pid_type="recid", pid_value= str(i + 1) ).first()
+            record = WekoDeposit.get_record(p.object_uuid)
+            deposit = WekoDeposit(record, record.model)
+            file_data_list = deposit.get_file_data()
+            
+            bucket = RecordsBuckets.query.filter_by(record_id = p.object_uuid).one_or_none().bucket
+            bucket.quota_size = 2 * 1024 * 1024 * 1024 * 1024
         
-        bucket = MagicMock()
-        type(bucket).id = str(uuid.uuid4())
-        location = MagicMock()
-        type(location).uri = Location.get_default().uri
-        type(bucket).location = location
-        type(bucket).quota_size = app.config.get("WEKO_BUCKET_QUOTA_SIZE")
-        type(p).bucket = bucket
-        res_sql = MagicMock()
-        res_sql.first = MagicMock(return_value = p)
-        res_sql.one_or_none = MagicMock(return_value = p)
+        # error "Specified URI and system URI do not match."
+        res_list = handle_check_exist_record(list_record[0:1])
+        for res in res_list:
+            for e in res["errors"]:
+                assert e in [
+                            'Specified URI and system URI do not match.'
+                            ]
+                
+        list_record[0]["upload_id"] = [upload_id, upload_id, ""]
+        list_record[0]["uri"] = "http://TEST_SERVER/records/1"
+        list_record[0]["file_path"].append("sample.txt")
         
-        q = MagicMock()
-        q.filter_by = MagicMock(return_value = res_sql)
+        file_data_list = [
+                {
+                    'url': {
+                        'url': 'https://weko3.example.org/record/1/files/hello.txt'
+                    }, 
+                    'date': [
+                        {
+                            'dateType': 'Available', 
+                            'dateValue': '2022-09-07'
+                        }
+                    ], 
+                    'file': 'SGVsbG8sIFdvcmxk', 
+                    'format': 'plain/text', 
+                    'filename': 'hello.txt', 
+                    'filesize': [
+                        {
+                            'value': '146 KB'
+                        }
+                    ], 
+                    'mimetype': 'application/pdf', 
+                    'accessrole': 'open_access', 
+                    'version_id': ''
+                }
+            ]
         
+        with patch("weko_search_ui.utils.WekoDeposit.get_file_data", return_value = file_data_list):
+            with patch("weko_search_ui.utils.os") as o:
+                type(o).path = o
+                o.isfile = MagicMock(return_value = True)
+                o.getsize = MagicMock(return_value = 3 * 1024 * 1024 * 1024 * 1024)
+                
+                # error "Please set the file format correctly"
+                # error "Duplicate upload_id"
+                # error "Please enter only file_path or upload_id"
+                # error "Files and items have different locations"
+                # error "specified upload_id not completed or already linked to the item"
+                # error "Total file size exceeds bucket size"
+                res_list = handle_check_exist_record(list_record[0:1])
+                for res in res_list:
+                    for e in res["errors"]:
+                        assert e in ['Please enter only file_path or upload_id', 
+                                    'specified upload_id not completed or already linked to the item', 
+                                    'Files and items have different locations', 
+                                    'Duplicate upload_id',
+                                    'Please set the file format correctly',
+                                    'Total file size exceeds bucket size']
+
+                
+        with db.session.begin_nested():
+            multipartObject = MultipartObject.get_by_uploadId(upload_id)
+            multipartObject.file.uri = Location.get_default().uri + "/" + file_id[0:2] + "/" + file_id[2:4] + "/" + file_id[4:] + "/data"
+            multipartObject.completed = True
+            multipartObject.file.readable = True
+            multipartObject.file.writable = False
+            db.session.add(multipartObject)
+            
+        db.session.commit()
+        
+        list_record[0]["upload_id"][0] = ""
+        list_record[0]["metadata"]["item_1617605131499"][1]["format"] = "text/plain"
+        
+        # normal
+        res_list = handle_check_exist_record(list_record[0:1])
+        assert res_list[0]["errors"] == None
+        
+        list_record[0]["upload_id"] = ["abcd", str(uuid.uuid4())]
+        list_record[0]["file_path"] = ["", ""]
+        
+        # error "upload_id is invalid format"
+        # error "specified upload_id is not found"
+        res_list = handle_check_exist_record(list_record[0:1])
+        for res in res_list:
+            for e in res["errors"]:
+                assert e in ['upload_id is invalid format', 
+                            'specified upload_id is not found']
+                
         pid = MagicMock()
         pid.is_deleted = MagicMock(return_value = False)
         item_exist = MagicMock()
         type(item_exist).pid = pid
+        item_exist.get = MagicMock(return_value = 1)
         
-        with patch("weko_search_ui.utils.PersistentIdentifier"):
-            with patch("weko_search_ui.utils.RecordsBuckets") as rb:
-                 with patch("weko_search_ui.utils.WekoRecord") as wr:
-                    wr.get_record_by_pid = MagicMock(return_value = item_exist)
-                    type(rb).query = q
+        with patch("weko_search_ui.utils.WekoRecord") as wr:
+            wr.get_record_by_pid = MagicMock(return_value = item_exist)
             
-                    # upload_id case
-                    with db.session.begin_nested():
-                        fileinstance = FileInstance.create()
-                        file_id = str(fileinstance.id)
-                        fileinstance.uri = "/" + file_id[0:2] + "/" + file_id[2:4] + "/" + file_id[4:] + "/data"
-                        fileinstance.storage_class = current_app.config['FILES_REST_DEFAULT_STORAGE_CLASS']
-                        fileinstance.size = 1024
-                        fileinstance.readable = False
-                        fileinstance.writable = True
-                        db.session.add(fileinstance)
-
-                    db.session.commit()
-                    
-                    upload_id = str(uuid.uuid4())
-                    
-                    with db.session.begin_nested():
-                        multipartObject = MultipartObject()
-                        multipartObject.upload_id = upload_id
-                        multipartObject.file_id = file_id
-                        multipartObject.key = "sample"
-                        multipartObject.size = 1024
-                        multipartObject.chunk_size = 512
-                        multipartObject.completed = False
-                        multipartObject.created_by_id = 1
-                        db.session.add(multipartObject)
-                        
-                    db.session.commit()
-
-                    for record in list_record:
-                        record["upload_id"] = ["", ""]
-                        
-                    list_record[0]["upload_id"][0] = upload_id
-                    list_record[0]["upload_id"][1] = upload_id
-                    
-                    # error "file_path must be empty"
-                    # error "Please set the file format correctly"
-                    # error "Files and items have different locations"
-                    # error "specified uploadId not completed or already linked to the item"
-                    res_list = handle_check_exist_record(list_record[0:1])
-                    for res in res_list:
-                        for e in res["errors"]:
-                            assert e in [
-                                        'Specified URI and system URI do not match.',
-                                        'file_path must be empty', 
-                                        'specified uploadId not completed or already linked to the item', 
-                                        'Files and items have different locations ', 
-                                        'Please set the file format correctly'] 
+            list_record[0]["edit_mode"] = False
+            
+            # error "Please specify either "Keep" or "Upgrade"."
+            res_list = handle_check_exist_record(list_record[0:1])
+            for res in res_list:
+                for e in res["errors"]:
+                    assert e in [
+                                'Please specify either "Keep" or "Upgrade".'
+                                ]
+            
+            pid.is_deleted = MagicMock(return_value = True)
+            
+            # error "Item already DELETED in the system"
+            res_list = handle_check_exist_record(list_record[0:1])
+            for res in res_list:
+                for e in res["errors"]:
+                    assert e in [
+                                'Item already DELETED in the system'
+                                ]
+            
+            wr.get_record_by_pid = MagicMock(side_effect = PIDDoesNotExistError("recid", 1))
+            
+            # error "Item does not exits in the system"
+            res_list = handle_check_exist_record(list_record[0:1])
+            for res in res_list:
+                for e in res["errors"]:
+                    assert e in [
+                                'Item does not exits in the system'
+                                ]
         
-                    
-                    with db.session.begin_nested():
-                        multipartObject = MultipartObject.get_by_uploadId(upload_id)
-                        multipartObject.file.uri = Location.get_default().uri + "/" + file_id[0:2] + "/" + file_id[2:4] + "/" + file_id[4:] + "/data"
-                        multipartObject.completed = True
-                        multipartObject.file.readable = True
-                        multipartObject.file.writable = False
-                        db.session.add(multipartObject)
-                        
-                    db.session.commit()
-                    
-                    list_record[0]["upload_id"][0] = ""
-                    list_record[0]["metadata"]["item_1617605131499"][1]["format"] = "text/plain"
-                    list_record[0]["uri"] = "http://TEST_SERVER/records/1"
-                    list_record[1]["uri"] = "http://TEST_SERVER/records/2"
-                    list_record[2]["uri"] = "http://TEST_SERVER/records/3"
-                    
-                    # normal
-                    res_list = handle_check_exist_record(list_record[0:1])
-                    assert res_list[0]["errors"] == None
         
-                    with db.session.begin_nested():
-                        multipartObject = MultipartObject.get_by_uploadId(upload_id)
-                        multipartObject.file.size = 3 * 1024 * 1024 * 1024 * 1024
-                        db.session.add(multipartObject)
-                        
-                    db.session.commit()
-                    
-                    list_record[1]["upload_id"][1] = "abcd"
-                    list_record[2]["upload_id"][1] = str(uuid.uuid4())
-                    list_record[2]["edit_mode"] = False
-                    
-                    item_exist.get = MagicMock(side_effect = [1,2,3])
-                    
-                    # error "specified uploadId is not found"
-                    # error "uploadId is invalid format"
-                    # error "Total file size exceeds bucket size"
-                    # error Please specify either "Keep" or "Upgrade"
-                    res_list = handle_check_exist_record(list_record[0:3])
-                    for res in res_list:
-                        for e in res["errors"]:
-                            assert e in [
-                                        'Please specify either "Keep" or "Upgrade".',
-                                        'Please set the file format correctly',
-                                        'Specified URI and system URI do not match.',
-                                        'uploadId is invalid format', 
-                                        'Total file size exceeds bucket size', 
-                                        'specified uploadId is not found']
-                    
-                    pid.is_deleted = MagicMock(return_value = True)
-                    
-                    # error "specified uploadId is not found"
-                    # error "uploadId is invalid format"
-                    # error "Total file size exceeds bucket size"
-                    # error "Item already DELETED in the system"
-                    res_list = handle_check_exist_record(list_record[0:3])
-                    for res in res_list:
-                        for e in res["errors"]:
-                            assert e in [
-                                        'Specified URI and system URI do not match.',
-                                        'Item already DELETED in the system',
-                                        'Please set the file format correctly', 
-                                        'uploadId is invalid format', 
-                                        'Total file size exceeds bucket size', 
-                                        'specified uploadId is not found']
-                    
-                    wr.get_record_by_pid = MagicMock(side_effect = PIDDoesNotExistError("recid", 1))
-                    
-                    # error "specified uploadId is not found"
-                    # error "uploadId is invalid format"
-                    # error "Total file size exceeds bucket size"
-                    
-                    # error "Item does not exits in the system"
-                    res_list = handle_check_exist_record(list_record[0:3])
-                    for res in res_list:
-                        for e in res["errors"]:
-                            assert e in [
-                                        'Item does not exits in the system',
-                                        'Specified URI and system URI do not match.',
-                                        'Please set the file format correctly', 
-                                        'uploadId is invalid format', 
-                                        'Total file size exceeds bucket size', 
-                                        'specified uploadId is not found']
-
     # case 3 import items with id and uri
     filepath = os.path.join(
         os.path.dirname(os.path.realpath(__file__)),
@@ -1176,7 +1188,7 @@ def test_import_items_to_system(i18n_app, db, es_item_file_pipeline, es_records)
                                 assert import_items_to_system(item)
                             item["status"] = "new"
                             
-                            assert import_items_to_system(item)
+                            assert import_items_to_system(item).get("success") == True
                             
                     assert import_items_to_system(
                         item
@@ -1237,22 +1249,22 @@ def test_import_items_to_system(i18n_app, db, es_item_file_pipeline, es_records)
                                 
                                 # SQLAlchemyError
                                 with patch("weko_search_ui.utils.handle_check_item_is_locked", side_effect = SQLAlchemyError({"error_id": "sample"})):
-                                    assert import_items_to_system(item)
+                                    assert import_items_to_system(item).get("success") == False
                                     
                                 # ElasticsearchException 
                                 with patch("weko_search_ui.utils.handle_check_item_is_locked", side_effect = ElasticsearchException({"error_id": "sample"})):
-                                    assert import_items_to_system(item)
+                                    assert import_items_to_system(item).get("success") == False
                                     
                                 # redis.RedisError
                                 with patch("weko_search_ui.utils.handle_check_item_is_locked", side_effect = redis.RedisError({"error_id": "sample"})):
-                                    assert import_items_to_system(item)
+                                    assert import_items_to_system(item).get("success") == False
                                     
                                 # BaseException
                                 with patch("weko_search_ui.utils.handle_check_item_is_locked", side_effect = BaseException({"error_id": "sample"})):
-                                    assert import_items_to_system(item)
+                                    assert import_items_to_system(item).get("success") == False
                                     
                             item["status"] = "new"
-                            assert import_items_to_system(item)
+                            assert import_items_to_system(item).get("success") == True
 
                     assert import_items_to_system(
                         item
@@ -3119,6 +3131,26 @@ def test_handle_check_exist_record_issue35315(app, doi_records, id, uri, warning
         result = handle_check_exist_record(before_list)
         assert after_list == result
 
-def test_is_valid_uuid():
-    assert is_valid_uuid("21406785-d495-b964-7c80-79687d5d3f00")
-    assert is_valid_uuid("") == False
+def test_get_file_size(app, db):
+    
+    with patch("weko_search_ui.utils.ObjectVersion") as o:
+        type(o).query = o
+        o.filter_by = MagicMock(return_value = o)
+        o.one_or_none = MagicMock(return_value = o)
+        type(o).file = o
+        type(o).size = 1024
+        assert get_file_size({"version_id": "21406785-d495-b964-7c80-79687d5d3f00"}) == 1024
+    
+    p_file = {
+        "filesize": [
+            {"value": "100 B"}
+        ]
+    }
+    assert get_file_size(p_file) == 100
+    
+    p_file = {
+        "filesize": [
+            {"value": "abc B"}
+        ]
+    }
+    assert get_file_size(p_file) == 0

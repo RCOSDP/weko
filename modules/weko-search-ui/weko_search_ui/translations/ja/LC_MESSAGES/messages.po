@@ -818,3 +818,26 @@ msgstr "ロールの権限が足りずこのインデックスにアイテム登
 #~ msgid "Execute"
 #~ msgstr "実行"
 
+msgid "Please enter only file_path or upload_id"
+msgstr "ファイルパスかアップロードIDのみ入力してください"
+
+msgid "Duplicate upload_id"
+msgstr "アップロードIDが重複しています"
+
+msgid "Please set the file format correctly"
+msgstr "ファイル形式を正しく設定してください"
+
+msgid "specified upload_id not completed or already linked to the item"
+msgstr "指定されたアップロードIDは完了していないか、すでにアイテムに紐づけられています"
+
+msgid "Files and items have different locations"
+msgstr "ファイルとアイテムのロケーションが異なります"
+
+msgid "specified upload_id is not found"
+msgstr "指定されたアップロードIDが見つかりません"
+
+msgid "upload_id is invalid format"
+msgstr "アップロードIDを正しく入力してください"
+
+msgid "Total file size exceeds bucket size"
+msgstr "ファイルの合計サイズがバケットのサイズを超えています"

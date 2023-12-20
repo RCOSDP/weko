@@ -1,6 +1,7 @@
 const host = window.location.host;
 const retry_count = $('input[id="retry_count"]').get(0).value;
 const chunk_size = parseInt($('input[id="chunk_size"]').get(0).value);
+const max_parts = Number($('input[id="max_parts"]').get(0).value);
 const errorMsgList = $('input[id="errormsg"]');
 
 function closeError() {
@@ -62,7 +63,7 @@ async function multipartUpload(){
     
     let offset = 0;
     const BUFFER_SIZE = chunk_size;
-    if(file.size > BUFFER_SIZE * 10000){
+    if(file.size > BUFFER_SIZE * max_parts){
         $('button[id="upload_button"]').get(0).disabled = false
         $('input[id="upload_file_area"]').get(0).disabled = false
         showErrorMsg(errorMsgList.get(6).value)
@@ -100,8 +101,6 @@ async function multipartUpload(){
 
         xhr.open('POST', "https://" + host + "/initiateMultipartUpload" + uri + "?uploads", false);
         xhr.send();
-        uploadId = xhr.responseText.match(/\<UploadId\>.*\<\/UploadId\>/)[0].replaceAll(/\<(.*?UploadId)\>/g, "");
-        uploadId_p.innerText = uploadId;
 
         if(xhr.status != 200){
             $('button[id="upload_button"]').get(0).disabled = false
@@ -110,6 +109,8 @@ async function multipartUpload(){
             uploadStatus_p.innerText = "Error"
             return;
         }
+        uploadId = xhr.responseText.match(/\<UploadId\>.*\<\/UploadId\>/)[0].replaceAll(/\<(.*?UploadId)\>/g, "");
+        uploadId_p.innerText = uploadId;
 
         xhr.open("POST", "https://" + host + "/api/largeFileUpload/createMultipartObjectInstance?upload_id=" + uploadId + "&file_id=" + file_id + "&key=" + FILE_NAME + "&size=" + file.size + "&chunk_size=" + BUFFER_SIZE, false);
         xhr.send();
@@ -176,6 +177,9 @@ async function multipartUpload(){
         numOfPart = Math.floor(file.size / BUFFER_SIZE);
     }else{
         numOfPart = Math.floor(file.size / BUFFER_SIZE) + 1; 
+    }
+    if(file.size === 0){
+        numOfPart = 1;
     }
     console.log(numOfPart);
 

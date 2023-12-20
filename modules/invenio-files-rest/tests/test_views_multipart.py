@@ -643,7 +643,7 @@ def test_createFileInstance(client, bucket, users, admin_user):
     res = client.post("/largeFileUpload/createFileInstance?size=abc")
     assert res.status_code == 500
     
-def test_checkMultipartObjectInstance(app, client, bucket, db, multipart, users, admin_user):
+def test_checkMultipartObjectInstance(app, client, bucket, db, multipart, users, admin_user, redis_connect):
     # status 403
     login_user(client, users[0])
     res = client.post("/largeFileUpload/checkMultipartObjectInstance")
@@ -654,6 +654,14 @@ def test_checkMultipartObjectInstance(app, client, bucket, db, multipart, users,
     res = client.post("/largeFileUpload/checkMultipartObjectInstance?upload_id=" + str(multipart.upload_id))
     assert res.status_code == 200
     
+    with patch("invenio_files_rest.views.RedisConnection.connection", return_value = redis_connect):
+        redis_connect.put(
+            "upload_id" + str(multipart.upload_id),
+            b"lock"
+            )
+        res = client.post("/largeFileUpload/checkMultipartObjectInstance?upload_id=" + str(multipart.upload_id))
+        assert res.status_code == 409
+        
     with db.session.begin_nested():
         multipart.created = multipart.created - timedelta(days=5)
         db.session.add(multipart)
@@ -675,6 +683,11 @@ def test_checkMultipartObjectInstance(app, client, bucket, db, multipart, users,
     # status 400
     res = client.post("/largeFileUpload/checkMultipartObjectInstance?upload_id=abc")
     assert res.status_code == 400
+    
+    # status 500
+    with patch("invenio_files_rest.views.MultipartObject.get_by_uploadId", side_effect = Exception()):
+        res = client.post("/largeFileUpload/checkMultipartObjectInstance?upload_id=" + str(multipart.upload_id))
+    assert res.status_code == 500
 
 def test_createMultipartObject(app, client, bucket, db, multipart, users, admin_user):
     # status 403
@@ -744,9 +757,10 @@ def test_complete_multipart(app, client, bucket, db, multipart, users, admin_use
     res = client.post(f"/largeFileUpload/complete_multipart?upload_id={multipart.upload_id}")
     assert res.status_code == 200
     
-    # status 500
-    res = client.post(f"/largeFileUpload/complete_multipart?upload_id=")
-    assert res.status_code == 500
+    with patch("invenio_files_rest.views.MultipartObject.get_by_uploadId", side_effect = Exception()):
+        # status 500
+        res = client.post(f"/largeFileUpload/complete_multipart?upload_id={multipart.upload_id}")
+        assert res.status_code == 500
     
 def test_get_multipart_last_part_size(app, client, db, bucket, multipart, admin_user):
     login_user(client, admin_user)
