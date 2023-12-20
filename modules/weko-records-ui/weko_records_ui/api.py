@@ -13,6 +13,8 @@ from weko_records_ui.captcha import get_captcha_info
 from weko_records_ui.errors import ContentsNotFoundError, InternalServerError, InvalidCaptchaError, InvalidEmailError
 from weko_redis.redis import RedisConnection
 
+from .config import WEKO_RECORDS_UI_NOTIFICATION_MESSAGE
+
 def send_request_mail(item_id, mail_info):
 
     # Validate CAPTCHA
@@ -51,7 +53,6 @@ def send_request_mail(item_id, mail_info):
     msg = Message(
         msg_subject,
         sender=msg_sender,
-        cc=[msg_sender],
         recipients=recipients_email,
         body=msg_body
     )
@@ -60,6 +61,13 @@ def send_request_mail(item_id, mail_info):
         mail_cfg = _load_mail_cfg_from_db()
         _set_flask_mail_cfg(mail_cfg)
         current_app.extensions['mail'].send(msg)
+        notification_msg_body = WEKO_RECORDS_UI_NOTIFICATION_MESSAGE + msg_body
+        notification_msg = Message(
+            msg_subject,
+            recipients = [msg_sender],
+            body = notification_msg_body
+        )
+        current_app.extensions['mail'].send(notification_msg)
     except Exception:
         current_app.logger.exception('Sending Email handles unexpected error.')
         raise InternalServerError() # 500
@@ -67,7 +75,6 @@ def send_request_mail(item_id, mail_info):
     # Create response
     res_json = {
         "from": msg_sender,
-        "to": recipients_email,
         "subject": msg_subject,
         "message": msg_body
     }
@@ -77,7 +84,7 @@ def send_request_mail(item_id, mail_info):
 def create_captcha_image():
 
     expiration_seconds = current_app.config.get('WEKO_RECORDS_UI_CAPTCHA_EXPIRATION_SECONDS', 900)
-    ttl = expiration_seconds - 300
+    ttl = expiration_seconds - 890
 
     # Get CAPTCHA info
     captcha_info = get_captcha_info()

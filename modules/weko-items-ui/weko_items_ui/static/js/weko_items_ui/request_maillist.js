@@ -85,7 +85,7 @@ class RequestMailTarget extends React.Component {
         email: event.target.value.trim()
       }
       if (this.props.addEmailToList(new_email)) {
-        $('#custom_input_email').val('');
+        $('div#sltBoxListRequestEmail>input#custom_input_email').val('');
         $('#sltBoxListRequestEmail').animate({
           scrollTop: $("#custom_input_email").offset().top
         }, 1000);

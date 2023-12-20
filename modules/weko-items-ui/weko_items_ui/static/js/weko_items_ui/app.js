@@ -4334,6 +4334,12 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
             $("#react-component-version").addClass("has-error");
           }
         }
+        
+        const emais_info = $scope.getMailList('#sltBoxListRequestEmail');
+        if($("#display_request_btn_checkbox").prop('checked') == true && (emais_info['valid_emails'] == "") ){
+          const blank_request_mail =$("#request-email-list-label").val();
+          listItemErrors.push(blank_request_mail);
+        }
 
         if (listItemErrors.length > 0) {
           let message = $("#validate_error").val() + '<br/><br/>';

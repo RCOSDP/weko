@@ -593,9 +593,9 @@ def db_itemtype(app, db):
     with open("tests/data/itemtype_render.json", "r") as f:
         item_type_render = json.load(f)
 
-    item_type_mapping = dict()
+    _item_type_mapping_mapping = dict()
     with open("tests/data/itemtype_mapping.json", "r") as f:
-        item_type_mapping = json.load(f)
+        item_type_mapping_mapping = json.load(f)
 
     item_type = ItemType(
         id=1,
@@ -608,8 +608,10 @@ def db_itemtype(app, db):
         version_id=1,
         is_deleted=False,
     )
+    created_date = datetime.strptime("2020/01/01 0:00:00.000",'%Y/%m/%d %H:%M:%S.%f')
+    updated_date = datetime.strptime("2021/01/01 0:00:00.000",'%Y/%m/%d %H:%M:%S.%f')
 
-    item_type_mapping = ItemTypeMapping(id=1, item_type_id=1, mapping=item_type_mapping)
+    item_type_mapping = ItemTypeMapping(created=created_date, updated=updated_date, id=1, item_type_id=1, mapping=item_type_mapping_mapping)
 
     with db.session.begin_nested():
         db.session.add(item_type_name)

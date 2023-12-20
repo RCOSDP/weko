@@ -670,3 +670,5 @@ WEKO_RECORDS_UI_API_LIMIT_RATE_DEFAULT = ['100 per minute']
 WEKO_RECORDS_UI_API_ACCEPT_LANGUAGES = ['en', 'ja']
 
 WEKO_RECORDS_UI_CAPTCHA_EXPIRATION_SECONDS = 900
+
+WEKO_RECORDS_UI_NOTIFICATION_MESSAGE = "以下の内容のリクエストメールをデータ提供者に送信しました。\n\n-----------------------------------------------------------------------------\n\n"

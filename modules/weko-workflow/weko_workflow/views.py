@@ -37,7 +37,7 @@ from weko_admin.models import AdminSettings
 from weko_workflow.schema.marshmallow import ActionSchema, \
     ActivitySchema, GetRequestMailListSchema, ResponseMessageSchema, CancelSchema, PasswdSchema, LockSchema,\
     ResponseLockSchema, LockedValueSchema, GetFeedbackMailListSchema, SaveActivityResponseSchema,\
-    SaveActivitySchema, CheckApprovalSchema,ResponseUnlockSchema
+    SaveActivitySchema, CheckApprovalSchema,ResponseUnlockSchema, GetRequestMailListSchema
 from weko_workflow.schema.utils import get_schema_action, type_null_check
 from marshmallow.exceptions import ValidationError
 
@@ -1554,7 +1554,13 @@ def next_action(activity_id='0', action_id=0):
             else:
                 FeedbackMailList.delete_by_list_item_id(item_ids)
 
-            if activity_request_mail and activity_request_mail.request_maillist:
+            enable_request_maillist = False
+            items_display_settings = AdminSettings.get(name='items_display_settings',
+                                        dict_to_object=False)
+            if items_display_settings:
+                enable_request_maillist = items_display_settings.get('display_request_form', False)         
+
+            if activity_request_mail and activity_request_mail.request_maillist and enable_request_maillist:
                 RequestMailList.update_by_list_item_id(
                     item_ids=item_ids,
                     request_maillist=activity_request_mail.request_maillist

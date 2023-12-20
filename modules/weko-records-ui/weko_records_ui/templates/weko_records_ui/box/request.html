@@ -53,12 +53,13 @@
                                     <input type="text" class="form-control" name="calculation_result" id="calculation_result" value="" alt="image loading error...">
                                 </div>
                             </div>
-                            <div class="row">
-                                {{_("Enter calculation results (ignore alphabetical characters)")}}
-                            </div>
+                            <div class="row" id="calculation_message"></div>
                         </div>
                     </div>
                     <input type="hidden" id="isGuest" name="isGuest" value="{{not current_user.is_authenticated}}" />
+                    <input type="hidden" id="key" value="" />
+                    <input type="hidden" id="ttl" value="" />
+                    <input type="hidden" id="dt" value="" />
                 </div>
                 <div class="modal-footer">
                     <div class="form-actions">
