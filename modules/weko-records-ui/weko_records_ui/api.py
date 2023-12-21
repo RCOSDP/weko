@@ -13,15 +13,13 @@ from weko_records_ui.captcha import get_captcha_info
 from weko_records_ui.errors import ContentsNotFoundError, InternalServerError, InvalidCaptchaError, InvalidEmailError
 from weko_redis.redis import RedisConnection
 
-from .config import WEKO_RECORDS_UI_NOTIFICATION_MESSAGE
-
 def send_request_mail(item_id, mail_info):
 
     # Validate CAPTCHA
     captcha_key = mail_info.get('key')
     calculation_result = mail_info.get('calculation_result')
     if not captcha_key or not calculation_result:
-        raise InvalidCaptchaError() #TODO errorカエル
+        raise ContentsNotFoundError()
 
     redis_connection = RedisConnection()
     datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'])
@@ -40,7 +38,7 @@ def send_request_mail(item_id, mail_info):
     # Get request mail info
     msg_sender = mail_info['from']
     msg_subject = mail_info['subject']
-    msg_body = mail_info['message']
+    msg_body = msg_sender + current_app.config.get("WEKO_RECORDS_UI_REQUEST_MESSAGE") + mail_info['message']
 
     # Validate request mail sender
     try :
@@ -48,20 +46,17 @@ def send_request_mail(item_id, mail_info):
     except Exception as ex:
         # Invalid email
         raise InvalidEmailError() # 400 Error
-
-    # Send request mail
-    msg = Message(
-        msg_subject,
-        sender=msg_sender,
-        recipients=recipients_email,
-        body=msg_body
-    )
-
+    
     try:
         mail_cfg = _load_mail_cfg_from_db()
         _set_flask_mail_cfg(mail_cfg)
+        msg = Message(
+            msg_subject,
+            recipients=recipients_email,
+            body=msg_body
+        )
         current_app.extensions['mail'].send(msg)
-        notification_msg_body = WEKO_RECORDS_UI_NOTIFICATION_MESSAGE + msg_body
+        notification_msg_body = current_app.config.get("WEKO_RECORDS_UI_NOTIFICATION_MESSAGE") + mail_info['message']
         notification_msg = Message(
             msg_subject,
             recipients = [msg_sender],
@@ -84,7 +79,7 @@ def send_request_mail(item_id, mail_info):
 def create_captcha_image():
 
     expiration_seconds = current_app.config.get('WEKO_RECORDS_UI_CAPTCHA_EXPIRATION_SECONDS', 900)
-    ttl = expiration_seconds - 890
+    ttl = expiration_seconds - 300
 
     # Get CAPTCHA info
     captcha_info = get_captcha_info()
