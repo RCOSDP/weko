@@ -45,7 +45,13 @@ class InvalidTokenError(RESTException):
 
     code = 400
     description = _('Invalid Tokens.')
-    
+
+class InvalidCaptchaError(RESTException):
+    """Invalid CAPTCHA calculation result error."""
+
+    code = 400
+    description = _('Invalid CAPTCHA')
+
 class InvalidWorkflowError(RESTException):
     """Contents not found error."""
 

@@ -1122,11 +1122,12 @@ class WorkActivity(object):
     def create_or_update_activity_request_mail(self,
                                              activity_id,
                                              request_maillist,
-                                             display_request_button=False):
-        """Create or update action ActionRequstMail's model.
+                                             is_display_request_button):
+        """Create or update action ActivityRequestMail's model.
+
         :param activity_id: activity identifier
-        :param action_id:   action identifier
         :param request_maillist: list of request mail in json format
+        :param is_display_request_button: whether display request button on the item detail page.
         :return:
         """
         try:
@@ -1135,12 +1136,13 @@ class WorkActivity(object):
                     activity_id=activity_id).one_or_none()
                 if activity_request_mail:
                     activity_request_mail.request_maillist = request_maillist
+                    activity_request_mail.display_request_button = is_display_request_button
                     db.session.merge(activity_request_mail)
                 else:
                     activity_request_mail = ActivityRequestMail(
                         activity_id=activity_id,
-                        request_maillist=request_maillist,
-                        display_request_button=display_request_button
+                        display_request_button=is_display_request_button,
+                        request_maillist=request_maillist
                     )
                     db.session.add(activity_request_mail)
             db.session.commit()
@@ -1207,6 +1209,7 @@ class WorkActivity(object):
 
     def get_activity_request_mail(self, activity_id):
         """Get ActivityRequestMail object from model base on activity's id.
+
         :param activity_id: acitivity identifier
         :return:    object's model or none
         """

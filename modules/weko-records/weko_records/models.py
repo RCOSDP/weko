@@ -663,6 +663,7 @@ class FeedbackMailList(db.Model, Timestamp):
 
 class RequestMailList(db.Model, Timestamp):
     """Represent an request mail list.
+
     Stored table stored list email address base on item_id
     """
 
@@ -673,7 +674,8 @@ class RequestMailList(db.Model, Timestamp):
         primary_key=True,
         autoincrement=True
     )
-    """request mail list identifier."""
+
+    """Request mail list identifier."""
 
     item_id = db.Column(
         UUIDType,

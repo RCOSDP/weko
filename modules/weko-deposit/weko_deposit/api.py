@@ -402,11 +402,11 @@ class WekoIndexer(RecordIndexer):
 
         Args:
             request_mail (_type_): request_mail: mail list in json format. {'id': UUID('05fd7cbd-6aad-4c76-a62e-7947868cccf6'), 'mail_list': [{'email': 'wekosoftware@nii.ac.jp', 'author_id': ''}]}
-        
+
         Returns:
             _type_: _request_mail_id
-        """        
-        # current_app.logger.debug("request_mail:{}".format(request_mail));
+        """
+
         self.get_es_index()
         pst = 'request_mail_list'
         body = {'doc': {pst: request_mail.get('mail_list')}}
@@ -1685,6 +1685,37 @@ class WekoDeposit(Deposit):
                 "author_link": author_link
             }
             self.indexer.update_author_link(author_link_info)
+
+    def update_request_mail(self):
+        """
+        Index request mail list.
+        Args:
+            None
+        Returns:
+            None
+        """
+        item_id = self.id
+        mail_list = RequestMailList.get_mail_list_by_item_id(item_id)
+        if mail_list:
+            request_mail = {
+                "id": item_id,
+                "mail_list": mail_list
+            }
+            self.indexer.update_request_mail_list(request_mail)
+
+    def remove_request_mail(self):
+        """
+        Remove request mail list.
+        Args:
+            None
+        Returns:
+            None
+        """
+        request_mail = {
+            "id": self.id,
+            "mail_list": []
+        }
+        self.indexer.update_request_mail_list(request_mail)
 
     def update_feedback_mail(self):
         """ 

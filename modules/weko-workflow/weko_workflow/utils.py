@@ -1496,15 +1496,24 @@ def prepare_edit_workflow(post_activity, recid, deposit):
             identifier_actionid,
             identifier)
 
-        mail_list = FeedbackMailList.get_mail_list_by_item_id(
+        feedback_maillist = FeedbackMailList.get_mail_list_by_item_id(
             item_id=recid.object_uuid)
-        if mail_list:
+        if feedback_maillist:
             action_id = current_app.config.get(
                 "WEKO_WORKFLOW_ITEM_REGISTRATION_ACTION_ID", 3)
             activity.create_or_update_action_feedbackmail(
                 activity_id=rtn.activity_id,
                 action_id=action_id,
-                feedback_maillist=mail_list
+                feedback_maillist=feedback_maillist
+            )
+
+        request_maillist = RequestMailList.get_mail_list_by_item_id(
+            item_id=recid.object_uuid)
+        if request_maillist:
+            activity.create_or_update_activity_request_mail(
+                activity_id=rtn.activity_id,
+                request_maillist=request_maillist,
+                is_display_request_button=True
             )
 
     return rtn

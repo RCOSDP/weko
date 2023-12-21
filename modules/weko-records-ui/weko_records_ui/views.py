@@ -55,7 +55,7 @@ from weko_deposit.pidstore import get_record_without_version
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import IndexStyle
 from weko_index_tree.utils import get_index_link_list
-from weko_records.api import ItemLink, Mapping
+from weko_records.api import ItemLink, Mapping, RequestMailList
 from weko_records.serializers import citeproc_v1
 from weko_records.serializers.utils import get_mapping
 from weko_records.utils import custom_record_medata_for_export, \
@@ -564,7 +564,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         display_stats = display_setting.get('display_stats')
     else:
         display_stats = True
-    
+
     items_display_settings = AdminSettings.get(name='items_display_settings',
                                         dict_to_object=False)
     if items_display_settings:
@@ -652,6 +652,18 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         k = urlparse(onetime_file_url)
         onetime_file_name = k.path.split("/")[-1]
 
+
+    # Get Settings
+    enable_request_maillist = False
+    items_display_settings = AdminSettings.get(name='items_display_settings',
+                                        dict_to_object=False)
+    if items_display_settings:
+        enable_request_maillist = items_display_settings.get('display_request_form', False)
+
+    # Get request recipients
+    request_recipients = RequestMailList.get_mail_list_by_item_id(pid.object_uuid)
+    is_display_request_form = enable_request_maillist and (True if request_recipients else False)
+
     return render_template(
         template,
         pid=pid,
@@ -662,6 +674,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         files=files,
         file_url=file_url,
         display_stats=display_stats,
+        is_display_request_form = is_display_request_form,
         filename=filename,
         can_download_original_pdf=can_download_original,
         is_logged_in=current_user and current_user.is_authenticated,
