@@ -381,7 +381,6 @@ def file_ui(
             abort(500)
     else:
         #Check file size that can preview
-        # print(fileobj.data)
         if not fileobj.file_preview_able():
             return default.preview(fileobj ,_('file size exceeded.')) # Cannot preview file
 

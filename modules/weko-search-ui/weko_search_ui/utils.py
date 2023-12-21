@@ -1279,11 +1279,6 @@ def up_load_file(record, root_path, deposit, allow_upload_file_content, old_file
         old_files      -- {list} List of ObjectVersion in current bucket.
 
     """
-    # print("\033[32m", "record", record, "\033[0m")
-    # print()
-    # print("\033[32m", "deposit", deposit, "\033[0m")
-    # print()
-    # print("\033[32m", "old_files", old_files, "\033[0m")
     def upload(paths, is_thumbnail=False, is_upload_id = False):
         if len(old_files) > len(paths):
             paths.extend([None for _idx in range(0, len(old_files) - len(paths))])
@@ -1292,7 +1287,6 @@ def up_load_file(record, root_path, deposit, allow_upload_file_content, old_file
             old_file = (
                 old_files[idx] if not is_thumbnail and idx < len(old_files) else None
             )
-            # print("\033[32m", "old_file", old_file, "\033[0m")
             if is_upload_id:
                 if is_valid_uuid(path):
                     multipartobject = MultipartObject.get_by_uploadId(path)
@@ -1331,7 +1325,6 @@ def up_load_file(record, root_path, deposit, allow_upload_file_content, old_file
                     and record["filenames"][idx]
                     and old_file.key == record["filenames"][idx]["filename"]
                 ) and MultipartObject.get_by_fileId(old_file.file_id) == None:
-                    print("\033[32m", "file remove1", old_file, "\033[0m")
                     old_file.remove()
                 continue
 
@@ -1351,7 +1344,6 @@ def up_load_file(record, root_path, deposit, allow_upload_file_content, old_file
         # clean file contents in bucket.
         for file in deposit.files.bucket.objects:
             if not file.is_thumbnail and (delete_all or not file.is_head):
-                print("\033[32m", "clean_file", file, "\033[0m")
                 file.remove()
 
     upload_id = record.get("upload_id", []) if allow_upload_file_content else []

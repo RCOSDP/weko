@@ -22,8 +22,8 @@ create table public."$$files_multipartobject" (
 
 
 -- 新テーブルへデータ投入
-insert into public."$$files_multipartobject"(created, updated, upload_id, bucket_id, key, file_id, chunk_size, size, completed, created_by_id)
-  select org.created, org.updated, org.upload_id, org.bucket_id, org.key, org.file_id, org.chunk_size, org.size, org.completed, NULL from public.files_multipartobject org
+insert into public."$$files_multipartobject"(created, updated, upload_id, bucket_id, key, file_id, chunk_size, size, completed)
+  select org.created, org.updated, org.upload_id, org.bucket_id, org.key, org.file_id, org.chunk_size, org.size, org.completed from public.files_multipartobject org
 /
 
 
@@ -38,8 +38,8 @@ alter table public."$$files_multipartobject" rename to files_multipartobject
 
 
 -- インデックスとユニーク制約の作成
-create unique index uix_item on public.files_multipartobject(upload_id,bucket_id,key)
-/
+--create unique index uix_item on public.files_multipartobject(upload_id,bucket_id,key)
+--/
 
 alter table public.files_multipartobject add constraint uix_item unique (upload_id,bucket_id,key)
 /

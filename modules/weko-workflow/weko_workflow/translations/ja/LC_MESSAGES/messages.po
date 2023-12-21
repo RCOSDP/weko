@@ -694,3 +694,12 @@ msgstr "このファイルのダウンロードには時間がかかります。
 
 msgid "File download is complete."
 msgstr "ファイルのダウンロードが完了しました。"
+
+msgid "Start downloading the file"
+msgstr "ダウンロードを開始します"
+
+msgid "Downloading"
+msgstr "ダウンロード中"
+
+msgid "Completion in progress"
+msgstr "完了処理中"

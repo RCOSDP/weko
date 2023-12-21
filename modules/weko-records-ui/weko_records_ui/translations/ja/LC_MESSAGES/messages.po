@@ -646,3 +646,12 @@ msgstr "このデータは利用できません（権限がないため）。"
 #: weko_records_ui/fd.py:249
 msgid "file size exceeded."
 msgstr "プレビューできるファイルサイズを超過しています。"
+
+msgid "Start downloading the file"
+msgstr "ダウンロードを開始します"
+
+msgid "Downloading"
+msgstr "ダウンロード中"
+
+msgid "Completion in progress"
+msgstr "完了処理中"
