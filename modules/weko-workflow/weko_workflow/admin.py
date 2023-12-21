@@ -69,7 +69,7 @@ class FlowSettingView(BaseView):
         actions = self.get_actions()
         mail_templates = MailTemplates.get_templates()
         use_restricted_item = current_app.config.get('WEKO_ADMIN_USE_MAIL_TEMPLATE_EDIT', False)
-        display_request_form = AdminSettings.get('items_display_settings', {}).get("display_request_form", {})
+        display_request_form = AdminSettings.get('items_display_settings', {}).get("display_request_form", False)
         if '0' == flow_id:
             flow = None
             return self.render(

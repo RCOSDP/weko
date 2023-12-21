@@ -1454,7 +1454,7 @@ def next_action(activity_id='0', action_id=0):
                 action_order=next_action_order).one_or_none()
             if current_flow_action and current_flow_action.action_roles and current_flow_action.action_roles[0].action_request_mail:
                 is_request_enabled = AdminSettings.get('items_display_settings',{})\
-                    .get("display_request_form", {})
+                    .get("display_request_form", False)
                 #リクエスト機能がAdmin画面で無効化されている場合、メールは送信しない。
                 if is_request_enabled :
                     next_action_handler = work_activity.get_user_ids_of_request_mails_by_activity_id(activity_id)
