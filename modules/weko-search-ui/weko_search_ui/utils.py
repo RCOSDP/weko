@@ -85,7 +85,7 @@ from weko_index_tree.utils import (
     check_restrict_doi_with_indexes,
 )
 from weko_indextree_journal.api import Journals
-from weko_records.api import FeedbackMailList, ItemTypes, Mapping
+from weko_records.api import FeedbackMailList, ItemTypes, Mapping, RequestMailList
 from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_mapping
 from weko_redis.redis import RedisConnection
@@ -1329,6 +1329,16 @@ def register_item_metadata(item, root_path, is_gakuninrdm=False):
         FeedbackMailList.delete_without_commit(deposit.id)
         deposit.remove_feedback_mail()
 
+    request_mail_list = item["metadata"].get("request_mail_list")
+    if request_mail_list:
+        RequestMailList.update(
+            item_id = deposit.id, request_mail_list=request_mail_list
+        )
+        deposit.update_request_mail()
+    else:
+        RequestMailList.delete_without_commit(deposit.id)
+        deposit.remove_request_mail()
+
     if not is_gakuninrdm:
         deposit.publish_without_commit()
         # Create first version
@@ -1351,6 +1361,12 @@ def register_item_metadata(item, root_path, is_gakuninrdm=False):
                     item_id=_deposit.id, feedback_maillist=feedback_mail_list
                 )
                 _deposit.update_feedback_mail()
+
+            if request_mail_list:
+                RequestMailList.update(
+                    item_id=_deposit.id, feedback_maillist=feedback_mail_list
+                )
+                _deposit.update_request_mail()
 
 
 def update_publish_status(item_id, status):

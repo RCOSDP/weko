@@ -1,6 +1,7 @@
 const NUM_OF_RESULT = 10;
 const LIMIT_PAGINATION_NUMBER = 5;
-const COMPONENT_SEARCH_EMAIL_NAME = document.getElementById("component-search-email-name").value;
+const ENABLE_REQUEST_EMAIL_CHECKBOX_LABEL = document.getElementById("enable-request-email-checkbox-label").value;
+const REQUEST_EMAIL_LIST_LABEL = document.getElementById("request-email-list-label").value;
 const OPEN_MODAL_SEARCH_BUTTON_NAME = document.getElementById("open-modal-search-button-name").value;
 const DELETE_BUTTON_NAME = document.getElementById("delete-button-name").value;
 const DUPLICATE_ERROR_MESSAGE = document.getElementById("duplicate-error-message").value;
@@ -11,7 +12,8 @@ const MAIL_ADDRESS_LABEL = document.getElementById("mail-address-label").value;
 const SEARCH_BUTTON_NAME = document.getElementById("search-button-name").value;
 const IMPORT_BUTTON_NAME = document.getElementById("import-button-name").value;
 
-class ComponentExclusionTarget extends React.Component {
+
+class RequestMailTarget extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -28,19 +30,23 @@ class ComponentExclusionTarget extends React.Component {
   componentDidMount() {
     const activityID = $("#activity_id").text();
     let emails = [];
+    let display_request_mail_btn = false
     $.ajax({
-      url: "/workflow/get_feedback_maillist/" + activityID,
+      url: "/workflow/get_request_maillist/" + activityID,
       async: false,
       method: "GET",
       success: function (response) {
         if (response.code) {
-          emails = response.data || [];
+          emails = response.request_maillist || [];
+          display_request_mail_btn = response.is_display_request_button || false
         }
       },
       error: function(jqXHR, status) {
           alert(jqXHR.responseJSON.msg);
       }
     })
+    console.log(display_request_mail_btn)
+    this.setState({showRequestMailSender: display_request_mail_btn})
     this.props.bindingValueOfComponent('listEmail', emails);
   }
 
@@ -79,8 +85,8 @@ class ComponentExclusionTarget extends React.Component {
         email: event.target.value.trim()
       }
       if (this.props.addEmailToList(new_email)) {
-        $('div#sltBoxListEmail>input#custom_input_email').val('');
-        $('#sltBoxListEmail').animate({
+        $('div#sltBoxListRequestEmail>input#custom_input_email').val('');
+        $('#sltBoxListRequestEmail').animate({
           scrollTop: $("#custom_input_email").offset().top
         }, 1000);
       }
@@ -89,7 +95,7 @@ class ComponentExclusionTarget extends React.Component {
 
   generateSelectedBox(listEmail) {
     return (
-      <div class="list-group" className="style-selected-box" id="sltBoxListEmail">
+      <div class="list-group" className="style-selected-box" id="sltBoxListRequestEmail">
         {
           listEmail.map((item, id) => {
             return (
@@ -130,22 +136,36 @@ class ComponentExclusionTarget extends React.Component {
 
   render() {
     return (
-      <div className="col-sm-12 form-group style-component">
-        <label className="control-label col-xs-3" style={{textAlign:'right'}}>
-          {COMPONENT_SEARCH_EMAIL_NAME}
-        </label>
-        <div className="controls col-xs-9">
-          <div>
-            <ReactBootstrap.Button variant="primary" onClick={this.searchCommand}>
-              <i className="glyphicon glyphicon-search"></i>&nbsp;{OPEN_MODAL_SEARCH_BUTTON_NAME}
-            </ReactBootstrap.Button>
+      <div>
+        <div className="row">
+          <div className="col-sm-12 form-group style-component">
+            <label className="col-xs-3 text-right">
+              <ReactBootstrap.Checkbox id='display_request_btn_checkbox' checked={this.state.showRequestMailSender}
+                onChange={() => {this.setState({showRequestMailSender: !this.state.showRequestMailSender})}}>
+                {ENABLE_REQUEST_EMAIL_CHECKBOX_LABEL}
+              </ReactBootstrap.Checkbox>
+            </label>
           </div>
-          <div className="style-full-size">
-            {this.generateSelectedBox(this.state.listEmail)}
-            <button className="btn btn-danger style-deleteBtn" onClick={this.deleteCommand}>
-              <span className="glyphicon glyphicon-trash" aria-hidden="true"></span>
-              &nbsp;{DELETE_BUTTON_NAME}
-            </button>
+        </div>
+        <div className={`row ${this.state.showRequestMailSender ? 'show': 'hidden'}`} >
+          <div className="col-sm-12 form-group style-component">
+            <label className="control-label col-xs-3 text-right">
+              {REQUEST_EMAIL_LIST_LABEL}
+            </label>
+            <div className="controls col-xs-9">
+              <div>
+                <ReactBootstrap.Button variant="primary" onClick={this.searchCommand}>
+                  <i className="glyphicon glyphicon-search"></i>&nbsp;{OPEN_MODAL_SEARCH_BUTTON_NAME}
+                </ReactBootstrap.Button>
+              </div>
+              <div className="style-full-size">
+                {this.generateSelectedBox(this.state.listEmail)}
+                <button className="btn btn-danger style-deleteBtn" onClick={this.deleteCommand}>
+                  <span className="glyphicon glyphicon-trash" aria-hidden="true"></span>
+                  &nbsp;{DELETE_BUTTON_NAME}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -235,7 +255,7 @@ class TableUserEmailComponent extends React.Component {
 
   importEmail(event, pk_id, email) {
     let listUser = [];
-    $("#sltBoxListEmail > a").each(function () {
+    $("#sltBoxListRequestEmail > a").each(function () {
       listUser.push(this.value);
     });
     if (listUser.indexOf(pk_id) == -1) {
@@ -253,7 +273,7 @@ class TableUserEmailComponent extends React.Component {
   render() {
     return (
       <div className="col-sm-12 col-md-12">
-        <table className="table table-striped style-table-modal" id="table_data">
+        <table className="table table-striped style-table-modal" id="table_data_request">
           <caption ></caption>
           <thead >
             <tr className="success">
@@ -527,10 +547,12 @@ class ModalComponent extends React.Component {
   }
 }
 
+
 class MainLayout extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
+      showRequestMailSender: false,
       showModalSearch: false,
       listEmail: [],
       flagSend: false,
@@ -607,31 +629,31 @@ class MainLayout extends React.Component {
   render() {
     return (
       <div>
-        <div className="row">
-          {
-            this.props.enable_feedback_maillist ?
-              <ComponentExclusionTarget
-                bindingValueOfComponent={this.bindingValueOfComponent}
-                removeEmailFromList={this.removeEmailFromList}
-                listEmail={this.state.listEmail}
-                addEmailToList={(data) => {
-                  return this.addEmailToList(data)
-                }}
-              /> : null
-          }
+        { (this.props.enable_request_maillist) ? (
+                  <div>
+            <RequestMailTarget
+              bindingValueOfComponent={this.bindingValueOfComponent}
+              removeEmailFromList={this.removeEmailFromList}
+              listEmail={this.state.listEmail}
+              addEmailToList={(data) => {
+                return this.addEmailToList(data)
+              }}
+            />
+          <div className="row">
+            <ModalComponent showModalSearch={this.state.showModalSearch} bindingValueOfComponent={this.bindingValueOfComponent} addEmailToList={this.addEmailToList} />
+          </div>
+          </div>
+          ) : null }
         </div>
-        <div className="row">
-          <ModalComponent showModalSearch={this.state.showModalSearch} bindingValueOfComponent={this.bindingValueOfComponent} addEmailToList={this.addEmailToList} />
-        </div>
-      </div>
+
     )
   }
 }
 
 $(function () {
-  let enable_feedback_maillist = document.getElementById('enable_feedback_maillist').value === 'True';
+  let enable_request_maillist = document.getElementById('enable_request_maillist').value === 'True';
   ReactDOM.render(
-    <MainLayout enable_feedback_maillist = {enable_feedback_maillist} />,
-    document.getElementById('react')
+    <MainLayout enable_request_maillist = {enable_request_maillist} />,
+    document.getElementById('request-maillist')
   )
 });

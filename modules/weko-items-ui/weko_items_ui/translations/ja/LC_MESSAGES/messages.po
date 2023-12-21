@@ -654,3 +654,9 @@ msgstr "承認者のメールアドレスを検出できません。"
 
 msgid "The item cannot be copied because you do not have permission to view it."
 msgstr "該当アイテムの参照権限がないため流用できません。"
+
+msgid "Request Mail Destination"
+msgstr "リクエストメール送信先"
+
+msgid "Display Request Mail Button"
+msgstr "リクエストボタンを表示"
