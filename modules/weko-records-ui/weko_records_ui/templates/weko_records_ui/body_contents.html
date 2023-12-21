@@ -486,6 +486,10 @@
   )}}">
 <input type="hidden" id="comp_msg" value="{{_("File download is complete.")}}">
 <input type="hidden" id="retry_count" value="{{config.get('WEKO_ITEMS_UI_LARGE_FILE_DOWNLOAD_MAX_RETRY')}}">
+<input type="hidden" id="download_start_msg" value="{{_("Start downloading the file")}}">
+<input type="hidden" id="downloading_msg" value="{{_("Downloading")}}">
+<input type="hidden" id="download_comp_process_msg" value="{{_("Completion in progress")}}">
+
 {% block css %}
 <style>
   #invenio-csl span.twitter-typeahead .tt-menu {

@@ -18,8 +18,8 @@ create table public."$$files_multipartobject_part" (
 
 
 -- 新テーブルへデータ投入
-insert into public."$$files_multipartobject_part"(created, updated, upload_id, part_number, checksum, etag)
-  select org.created, org.updated, org.upload_id, org.part_number, org.checksum, NULL from public.files_multipartobject_part org
+insert into public."$$files_multipartobject_part"(created, updated, upload_id, part_number, checksum)
+  select org.created, org.updated, org.upload_id, org.part_number, org.checksum from public.files_multipartobject_part org
 /
 
 
