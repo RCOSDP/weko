@@ -57,8 +57,8 @@ from weko_admin.utils import get_restricted_access
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_deposit.pidstore import get_record_without_version
 from weko_handle.api import Handle
-from weko_records.api import FeedbackMailList, ItemsMetadata, ItemTypeNames, \
-    ItemTypes, Mapping, RequestMailList
+from weko_records.api import FeedbackMailList, RequestMailList, ItemsMetadata, ItemTypeNames, \
+    ItemTypes, Mapping
 from weko_records.models import ItemMetadata, ItemType
 from weko_records.serializers.utils import get_full_mapping, get_item_type_name
 from weko_records_ui.models import FilePermission

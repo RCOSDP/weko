@@ -674,6 +674,7 @@ class RequestMailList(db.Model, Timestamp):
         primary_key=True,
         autoincrement=True
     )
+
     """Request mail list identifier."""
 
     item_id = db.Column(
@@ -698,7 +699,6 @@ class RequestMailList(db.Model, Timestamp):
         nullable=True
     )
     """List of request mail in json format."""
-
 
 class ItemReference(db.Model, Timestamp):
     """Model of item reference relations."""

@@ -61,13 +61,14 @@ from weko_redis import RedisConnection
 from weko_accounts.api import ShibUser
 from weko_accounts.utils import login_required_customize
 from weko_authors.models import Authors
+from weko_admin.models import AdminSettings
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_deposit.links import base_factory
 from weko_deposit.pidstore import get_record_identifier, \
     get_record_without_version
 from weko_deposit.signals import item_created
 from weko_items_ui.api import item_login
-from weko_records.api import FeedbackMailList, ItemLink, RequestMailList
+from weko_records.api import FeedbackMailList, RequestMailList, ItemLink
 from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_item_type_name
 from weko_records_ui.models import FilePermission
@@ -521,7 +522,6 @@ def init_activity():
         if rtn is None:
             res = ResponseMessageSchema().load({'code':-1,'msg':'can not make activity_id'})
             return jsonify(res.data), 500
-
         url = url_for('weko_workflow.display_activity',
                       activity_id=rtn.activity_id)
         if 'community' in request.args and request.args.get('community') != 'undefined':
@@ -1391,6 +1391,10 @@ def next_action(activity_id='0', action_id=0):
     flow = Flow()
     current_flow_action = flow.get_flow_action_detail(
         activity_detail.flow_define.flow_id, action_id, action_order)
+    if current_flow_action is None:
+        current_app.logger.error("next_action: can not get current_flow_action")
+        res = ResponseMessageSchema().load({"code":-1, "msg":"can not get curretn_flow_action"})
+        return jsonify(res.data), 500
     next_flow_action = flow.get_next_flow_action(
         activity_detail.flow_define.flow_id, action_id, action_order)
     if not isinstance(next_flow_action, list) or len(next_flow_action) <= 0:
@@ -1412,12 +1416,6 @@ def next_action(activity_id='0', action_id=0):
                             "reject": False}
     # Start to send mail
     if next_action_endpoint in ['approval' , 'end_action']:
-        current_flow_action = flow.get_flow_action_detail(
-            activity_detail.flow_define.flow_id, action_id, action_order)
-        if current_flow_action is None:
-            current_app.logger.error("next_action: can not get current_flow_action")
-            res = ResponseMessageSchema().load({"code":-1, "msg":"can not get curretn_flow_action"})
-            return jsonify(res.data), 500
         next_action_detail = work_activity.get_activity_action_comment(
             activity_id, next_action_id,
             next_action_order)
@@ -1454,13 +1452,28 @@ def next_action(activity_id='0', action_id=0):
                 flow_id=activity_detail.flow_define.flow_id,
                 action_id=next_action_id,
                 action_order=next_action_order).one_or_none()
+            if current_flow_action and current_flow_action.action_roles and current_flow_action.action_roles[0].action_request_mail:
+                is_request_enabled = AdminSettings.get('items_display_settings',False)\
+                    .get("display_request_form", {})
+                #リクエスト機能がAdmin画面で無効化されている場合、メールは送信しない。
+                if is_request_enabled :
+                    next_action_handler = work_activity.get_user_ids_of_request_mails_by_activity_id(activity_id)
+                else:
+                    next_action_handler = []
             if current_flow_action and current_flow_action.action_roles and \
                     current_flow_action.action_roles[0].action_user:
                 next_action_handler = current_flow_action.action_roles[
                     0].action_user
-        process_send_approval_mails(activity_detail, action_mails_setting,
-                                    next_action_handler,
-                                    url_and_expired_date)
+        # next_action_handlerがlist型ならfor文で複数回メール送信する。その際、handlerがロールを満たすか確認する。
+        if type(next_action_handler) == list:
+            for handler in next_action_handler:
+                roles, users = work_activity.get_activity_action_role(activity_id, next_action_id,
+                                                 current_flow_action.action_order)
+                is_approver = work_activity.check_user_role_for_mail(handler, roles)
+                if is_approver:
+                    process_send_approval_mails(activity_detail, action_mails_setting, handler, url_and_expired_date)
+        else:
+            process_send_approval_mails(activity_detail, action_mails_setting, next_action_handler, url_and_expired_date)
     if current_app.config.get(
         'WEKO_WORKFLOW_ENABLE_AUTO_SEND_EMAIL'):
         process_send_notification_mail(activity_detail, action_endpoint,

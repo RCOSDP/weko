@@ -58,8 +58,8 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.attributes import flag_modified
 from weko_admin.models import AdminSettings
 from weko_index_tree.api import Indexes
-from weko_records.api import FeedbackMailList, ItemLink, ItemsMetadata, \
-    ItemTypes, Mapping, RequestMailList
+from weko_records.api import FeedbackMailList, RequestMailList, ItemLink, ItemsMetadata, \
+    ItemTypes, Mapping
 from weko_records.models import ItemMetadata, ItemReference
 from weko_records.utils import get_all_items, get_attribute_value_all_items, \
     get_options_and_order_list, json_loader, remove_weko2_special_character, \
@@ -399,12 +399,14 @@ class WekoIndexer(RecordIndexer):
 
     def update_request_mail_list(self, request_mail):
         """Update request mail info.
+
         Args:
             request_mail (_type_): request_mail: mail list in json format. {'id': UUID('05fd7cbd-6aad-4c76-a62e-7947868cccf6'), 'mail_list': [{'email': 'wekosoftware@nii.ac.jp', 'author_id': ''}]}
 
         Returns:
             _type_: _request_mail_id
         """
+
         self.get_es_index()
         pst = 'request_mail_list'
         body = {'doc': {pst: request_mail.get('mail_list')}}
@@ -1753,6 +1755,41 @@ class WekoDeposit(Deposit):
             "mail_list": []
         }
         self.indexer.update_feedback_mail_list(feedback_mail)
+
+    def update_request_mail(self):
+        """
+        Index request mail list.
+
+        Args:
+            None
+
+        Returns:
+            None
+        """
+        item_id = self.id
+        mail_list = RequestMailList.get_mail_list_by_item_id(item_id)
+        if mail_list:
+            request_mail = {
+                "id": item_id,
+                "mail_list": mail_list
+            }
+            self.indexer.update_request_mail_list(request_mail)
+
+    def remove_request_mail(self):
+        """ 
+        Remove request mail list.
+
+        Args:
+            None
+
+        Returns:
+            None
+        """
+        request_mail = {
+            "id": self.id,
+            "mail_list": []
+        }
+        self.indexer.update_request_mail_list(request_mail)
 
     def clean_unuse_file_contents(self, item_id, pre_object_versions,
                                   new_object_versions, is_import=False):
