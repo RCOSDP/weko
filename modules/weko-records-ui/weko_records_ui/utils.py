@@ -22,18 +22,21 @@
 
 import base64
 import os
+import datetime
 from datetime import datetime as dt
 from datetime import timedelta
 from decimal import Decimal
-from typing import NoReturn, Tuple
-from urllib.parse import urlparse,quote
+from typing import List, Optional, Tuple
+from urllib.parse import quote
 
-from flask import abort, current_app, json, request, url_for
-from flask_babelex import get_locale
+from flask import abort, current_app, json, request, Flask
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from flask_babelex import gettext as _
-from flask_babelex import to_user_timezone, to_utc
+from flask_babelex import to_utc
 from flask_login import current_user
-from invenio_accounts.models import Role
+from sqlalchemy import desc
+from invenio_accounts.models import Role, User
 from invenio_cache import current_cache
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
@@ -53,8 +56,9 @@ from weko_schema_ui.models import PublishStatus
 from weko_workflow.api import WorkActivity, WorkFlow
 
 from weko_records_ui.models import InstitutionName
+from weko_workflow.models import Activity
 
-from .models import FileOnetimeDownload, FilePermission
+from .models import FileOnetimeDownload, FilePermission, FileSecretDownload
 from .permissions import check_create_usage_report, \
     check_file_download_permission, check_user_group_permission, \
     is_open_restricted
@@ -645,6 +649,10 @@ def replace_license_free(record_metadata, is_change_label=True):
                         attr[_license_note] = attr[_license_free]
                         del attr[_license_free]
 
+def get_data_by_key_array_json(key, array_json, get_key):
+    for item in array_json:
+        if str(item.get('id')) == str(key):
+            return item.get(get_key)
 
 def get_file_info_list(record):
     """File Information of all file in record.
@@ -678,22 +686,16 @@ def get_file_info_list(record):
             p_file['future_date_message'] = _("Restricted Access")
         elif access == "open_date":
             if date and isinstance(date, list) and date[0]:
-                adtv = date[0].get('dateValue')
-                if adtv is None:
-                    adtv = dt.date.max
-                adt = dt.strptime(adtv, '%Y-%m-%d')
-                if is_future(adtv):
+                adt = date[0].get('dateValue')
+                if adt is None:
+                    adt = dt.max
+                if is_future(adt):
                     message = "Download is available from {}/{}/{}."
                     p_file['future_date_message'] = _(message).format(
                         adt.year, adt.month, adt.day)
                     message = "Download / Preview is available from {}/{}/{}."
                     p_file['download_preview_message'] = _(message).format(
                         adt.year, adt.month, adt.day)
-
-    def get_data_by_key_array_json(key, array_json, get_key):
-        for item in array_json:
-            if str(item.get('id')) == str(key):
-                return item.get(get_key)
 
     workflows = get_workflows()
     roles = get_roles()
@@ -760,29 +762,19 @@ def get_file_info_list(record):
                                 p['role_id'] = role
                                 p['role'] = get_data_by_key_array_json(
                                     role, roles, 'name')
+                    # add role
+                    role_list = f.get("roles")
+                    if role_list:
+                        for r in role_list:
+                            role = r.get('role')
+                            if role:
+                                r['role_id'] = role
+                                r['role'] = get_data_by_key_array_json(role, roles, 'name')
+
                     f['file_order'] = file_order
                     files.append(f)
                 file_order += 1
     return is_display_file_preview, files
-
-
-def check_and_create_usage_report(record, file_object):
-    """Check and create usage report.
-
-    :param file_object:
-    :param record:
-    :return:
-    """
-    access_role = file_object.get('accessrole', '')
-    if 'open_restricted' in access_role:
-        permission = check_create_usage_report(record, file_object)
-        if permission is not None:
-            from weko_workflow.utils import create_usage_report
-            activity_id = create_usage_report(
-                permission.usage_application_activity_id)
-            if activity_id is not None:
-                FilePermission.update_usage_report_activity_id(permission,
-                                                               activity_id)
 
 
 def create_usage_report_for_user(onetime_download_extra_info: dict):
@@ -896,12 +888,13 @@ def send_usage_report_mail_for_user(guest_mail: str, temp_url: str):
     return send_mail_url_guest_user(mail_info)
 
 
-def check_and_send_usage_report(extra_info, user_mail):
+def check_and_send_usage_report(extra_info:dict, user_mail:str ,record:dict, file_object:dict):
     """Check and send usage report for user.
-
-    @param extra_info:
-    @param user_mail:
-    @return:
+    Args
+        extra_info:dict
+        user_mail:str
+        record:dict
+        file_object:dict
     """
     current_app.logger.debug("extra_info:{}".format(extra_info))
     current_app.logger.debug("user_mail:{}".format(user_mail))
@@ -917,6 +910,12 @@ def check_and_send_usage_report(extra_info, user_mail):
     if not usage_report.send_reminder_mail([], mail_template, [activity]):
         return _("Failed to send mail.")
     extra_info['send_usage_report'] = False
+
+    activity_id = activity.activity_id
+    user =  User.query.filter_by(email=user_mail).one_or_none()
+    permission = check_create_usage_report(record, file_object , user.id if user else None)
+    if permission is not None and activity_id is not None:
+        FilePermission.update_usage_report_activity_id(permission,activity_id)
 
 
 def generate_one_time_download_url(
@@ -1054,15 +1053,38 @@ def validate_download_record(record: dict):
 
 
 def get_onetime_download(file_name: str, record_id: str,
-                         user_mail: str):
+                         user_mail: str) -> Optional[FileOnetimeDownload]:
     """Get onetime download count.
 
-    @param file_name:
-    @param record_id:
-    @param user_mail:
-    @return:
+    Args:
+        str:file_name:
+        str:record_id:
+        str:user_mail:
+    Returns: 
+        FileOnetimeDownload or None
     """
     file_downloads = FileOnetimeDownload.find(
+        file_name=file_name, record_id=record_id, user_mail=user_mail
+    )
+    if file_downloads and len(file_downloads) > 0:
+        return file_downloads[0]
+    else:
+        return None
+    
+def get_valid_onetime_download(file_name: str, record_id: str,user_mail: str) -> Optional[FileOnetimeDownload]:
+    """Get file_onetime_download 
+        if expiration_date and download_count is set downloadable
+
+    Args:
+        str:file_name:
+        str:record_id:
+        str:user_mail:
+    Returns: 
+        FileOnetimeDownload or None
+    """
+                
+    file_downloads:List[FileOnetimeDownload] = FileOnetimeDownload \
+    .find_downloadable_only(
         file_name=file_name, record_id=record_id, user_mail=user_mail
     )
     if file_downloads and len(file_downloads) > 0:
@@ -1105,7 +1127,7 @@ def create_onetime_download_url(
     return False
 
 
-def update_onetime_download(**kwargs) -> NoReturn:
+def update_onetime_download(**kwargs) -> Optional[List[FileOnetimeDownload]]:
     """Update onetime download.
 
     @param kwargs:
@@ -1497,3 +1519,224 @@ def get_google_detaset_meta(record,record_tree=None):
     current_app.logger.debug("res_data: {}".format(json.dumps(res_data, ensure_ascii=False)))
 
     return json.dumps(res_data, ensure_ascii=False)
+
+def create_secret_url(record_id:str ,file_name:str ,user_mail:str ,restricted_fullname='',restricted_data_name='') -> dict:
+    """
+    Save in FileSecretDownload
+    and Generate Secret Download URL.
+    
+    Args:
+        str :record_id:
+        str :file_name:
+        str :user_mail
+        str :restricted_fullname  :embed mail string
+        str :restricted_data_name :embed mail string
+    Return: 
+        dict: created info 
+    """
+    # Save to Database.
+    secret_obj:FileSecretDownload = _create_secret_download_url(
+        file_name, record_id, user_mail)
+    
+    # generate url
+    secret_file_url = _generate_secret_download_url(
+        file_name, record_id, secret_obj.id, secret_obj.created)
+
+    return_dict: dict = {
+        "secret_url": secret_file_url,
+        "mail_recipient": secret_obj.user_mail,
+        "file_name": file_name,
+        "restricted_expiration_date": "",
+        "restricted_expiration_date_ja": "",
+        "restricted_expiration_date_en": "",
+        "restricted_download_count": "",
+        "restricted_download_count_ja": "",
+        "restricted_download_count_en": "",
+        "restricted_fullname": restricted_fullname,
+        "restricted_data_name": restricted_data_name,
+    }
+
+    max_int :int = current_app.config["WEKO_ADMIN_RESTRICTED_ACCESS_MAX_INTEGER"]
+    if secret_obj.expiration_date < max_int:
+        expiration_date = timedelta(days=secret_obj.expiration_date)
+        expiration_date = dt.today() + expiration_date
+        expiration_date = expiration_date.strftime("%Y-%m-%d")
+        return_dict['restricted_expiration_date'] = expiration_date
+    else:
+        return_dict["restricted_expiration_date_ja"] = "無制限"
+        return_dict["restricted_expiration_date_en"] = "Unlimited"
+            
+
+    if secret_obj.download_count < max_int :
+        return_dict["restricted_download_count"] = str(secret_obj.download_count)
+    else:
+        return_dict["restricted_download_count_ja"] = "無制限"
+        return_dict["restricted_download_count_en"] = "Unlimited"
+            
+    return return_dict
+
+
+def _generate_secret_download_url(file_name: str, record_id: str, id: str ,created :dt) -> str:
+    """Generate Secret download URL.
+    
+    Args
+        str: file_name: File name
+        str: record_id: File Version ID
+        str: id: FileSecretDownload id
+        datetime :created :FileSecretDownload created
+    
+    Returns
+        str: generated url
+    """    
+    secret_key = current_app.config['WEKO_RECORDS_UI_SECRET_KEY']
+    download_pattern = current_app.config[
+        'WEKO_RECORDS_UI_SECRET_DOWNLOAD_PATTERN']
+    current_date = created
+    hash_value = download_pattern.format(file_name, record_id, id,
+                                         current_date)
+    secret_token = oracle10.hash(secret_key, hash_value)
+
+    token_pattern = "{} {} {} {}"
+    token = token_pattern.format(record_id, id, current_date,
+                                 secret_token)
+    token_value = base64.b64encode(token.encode()).decode()
+    host_name = request.host_url
+    url = "{}record/{}/file/secret/{}?token={}" \
+        .format(host_name, record_id, file_name, token_value)
+    return url
+
+
+def parse_secret_download_token(token: str) -> Tuple[str, Tuple]:
+    """Parse secret download token.
+
+    Args
+        token:
+    Returns: 
+        str   : error message
+        Tuple : (record_id, id, date, secret_token)
+    """
+    current_app.logger.debug("token:{}".format(token))
+    error = _("Token is invalid.")
+    if token is None:
+        return error, ()
+    try:
+        decode_token = base64.b64decode(token.encode()).decode()
+        param = decode_token.split(" ")
+        if not param or len(param) != 5:
+            return error, ()
+        return "", (param[0], param[1], param[2] + " " + param[3] , param[4]) #record_id, id, current_date(date + time), secret_token
+    except Exception as err:
+        current_app.logger.error(err)
+        return error, ()
+
+
+def validate_secret_download_token(
+    secret_download: FileSecretDownload , file_name: str, record_id: str,
+    id: str, date: str, token: str
+) -> Tuple[bool, str]:
+    """Validate secret download token.
+
+    Args
+        FileSecretDownload:secret_download:
+        str:file_name:
+        str:record_id:
+        str:id:
+        str:date:
+        str:token:
+    Returns 
+        Tuple:
+            bool : is valid 
+            str  : error message
+    """
+    token_invalid = _("Token is invalid.")
+    secret_key = current_app.config['WEKO_RECORDS_UI_SECRET_KEY']
+    download_pattern = current_app.config[
+        'WEKO_RECORDS_UI_SECRET_DOWNLOAD_PATTERN']
+    hash_value = download_pattern.format(
+        file_name, record_id, id, date)
+    if not oracle10.verify(secret_key, token, hash_value):
+        current_app.logger.info('Validate token error: {}'.format(hash_value))
+        return False, token_invalid
+    try:
+        if not secret_download:
+            return False, token_invalid
+        try:
+            expiration_date = timedelta(secret_download.expiration_date)
+            download_date = secret_download.created.date() + expiration_date
+            current_date = dt.utcnow().date()
+            if current_date > download_date:
+                return False, _(
+                    "The expiration date for download has been exceeded.")
+        except OverflowError:
+            # in case of "Unlimited"
+            current_app.logger.debug('date value out of range:'+
+                                    str(secret_download.expiration_date))
+
+        if secret_download.download_count <= 0:
+            return False, _("The download limit has been exceeded.")
+        return True, ""
+    except Exception as err:
+        current_app.logger.error('Validate secret download token error:')
+        current_app.logger.error(err)
+        return False, token_invalid
+        
+def get_secret_download(file_name: str, record_id: str,
+                        id: str , created :dt ) -> Optional[FileSecretDownload]:
+    """Get secret download count.
+
+    Args :
+        str:file_name
+        str:record_id
+        str:id
+        dt :created
+    @return:
+        FileSecretDownload or None
+    """
+    file_downloads = FileSecretDownload.find(
+        file_name=file_name, record_id=record_id, id=id ,created=created
+    )
+    if file_downloads and len(file_downloads) == 1:
+        return file_downloads[0]
+    else:
+        return None
+
+def _create_secret_download_url(file_name: str, record_id: str, user_mail: str) -> FileSecretDownload:
+    """Create secret download.
+
+    Args:
+        str : file_name:
+        str : record_id:
+        str : user_mail:
+    Returns:
+        FileSecretDownload : inserted record
+    """
+    secret_url_file_download:dict = get_restricted_access('secret_URL_file_download')
+        
+    expiration_date = secret_url_file_download.get("secret_expiration_date")
+    download_limit = secret_url_file_download.get("secret_download_limit")
+
+    file_secret = FileSecretDownload.create(**{
+        "file_name": file_name,
+        "record_id": record_id,
+        "user_mail": user_mail,
+        "expiration_date": expiration_date,
+        "download_count": download_limit,
+    })
+    return file_secret
+    
+
+
+def update_secret_download(**kwargs) -> Optional[List[FileSecretDownload]]:
+    """Update secret download.
+
+    Args
+        kwargs:
+    Returns
+        updated List[FileSecretDownload] or None
+    """
+    return FileSecretDownload.update_download(**kwargs)
+
+
+def create_limmiter():
+    from .config import WEKO_RECORDS_UI_API_LIMIT_RATE_DEFAULT
+    return Limiter(app=Flask(__name__), key_func=get_remote_address, default_limits=WEKO_RECORDS_UI_API_LIMIT_RATE_DEFAULT)

@@ -19,11 +19,11 @@
 #}
 
 
-{% macro preview_carousel(record=None, files=[], pid=None, filename=None, nav=True, el_id='preview_carousel', edit_page_prev=False, cur_step=None) %}
+{% macro preview_carousel(record=None, files=[], pid=None, filename=None, nav=True, el_id='preview_carousel', edit_page_prev=False, cur_step=None, approval_preview=False) %}
   <!-- Preview Carousel -->
   {% set list_preview_carousel = [] %}
   {%- for file in files -%}
-    {%- if 'preview' == file.displaytype -%}
+    {%- if approval_preview or 'preview' == file.displaytype %}
       <div style="display: none;">{{ list_preview_carousel.append( file ) }}</div>
     {% endif %}
   {%- endfor -%}
@@ -87,7 +87,7 @@
 
               {%- if (is_billing_file and billing_file_permission and access_permission) or (not is_billing_file and access_permission) -%}
                 {%- set allow_aggs_preview = False if cur_step else True -%}
-                {%- if 'preview' == file.displaytype -%}
+                {%- if ('preview' == file.displaytype) or approval_preview -%}
                   {%- set file_preview_url = url_for('invenio_records_ui.recid_file_preview', pid_value=pid.pid_value, filename=file.filename, allow_aggs=allow_aggs_preview) %}
                   <div class="item {{ 'active' if loop.index == firstPreviewFileIndex.value else '' }}" id="carousel_prev_item_{{ loop.index }}">
                     <div class="embed-responsive embed-responsive-16by9">

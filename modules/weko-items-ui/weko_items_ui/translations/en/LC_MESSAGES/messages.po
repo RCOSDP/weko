@@ -66,6 +66,10 @@ msgstr "Specified ID does not exist."
 msgid "Item cannot be edited because the import is in progress."
 msgstr ""
 
+#: weko_items_ui/views.py:848
+msgid "Logged-in user cannot be deleted."
+msgstr "Logged-in user cannot be deleted."
+
 #: weko_items_ui/views.py:854
 msgid "This Item is being edited."
 msgstr ""
@@ -594,6 +598,11 @@ msgstr ""
 #~ msgid "Guest"
 #~ msgstr "Guest"
 
+msgid "The approver email address cannot be the same as the applicant. Please recheck and input."
+msgstr ""
+
+msgid "The following email address is not registered in the system. Please recheck and input."
+msgstr ""
 #~ msgid "Free Input"
 #~ msgstr "Free Input"
 

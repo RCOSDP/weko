@@ -18,24 +18,29 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.5.1\n"
 
-#: invenio_mail/admin.py:59
+#: invenio_mail/admin.py:79
 msgid "Mail settings have been updated."
 msgstr ""
 
-#: invenio_mail/admin.py:82
+#: invenio_mail/admin.py:102
 msgid "Test mail sent."
 msgstr ""
 
-#: invenio_mail/admin.py:84
+#: invenio_mail/admin.py:104
 msgid "Failed to send mail."
 msgstr ""
 
-#: invenio_mail/admin.py:98
+#: invenio_mail/admin.py:181
+#: invenio_mail/admin.py:190
 msgid "Setting"
 msgstr ""
 
-#: invenio_mail/admin.py:99
+#: invenio_mail/admin.py:182
 msgid "Mail"
+msgstr ""
+
+#: invenio_mail/admin.py:191
+msgid "Mail Templates"
 msgstr ""
 
 #: invenio_mail/templates/invenio_mail/mail_setting.html:26
@@ -90,3 +95,12 @@ msgstr ""
 msgid "Send"
 msgstr ""
 
+# Mail template genre table
+msgid "Notification of secret URL provision"
+msgstr ""
+
+msgid "Guidance to the application form"
+msgstr ""
+
+msgid "Others"
+msgstr ""
