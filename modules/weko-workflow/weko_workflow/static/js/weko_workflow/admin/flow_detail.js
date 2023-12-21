@@ -390,6 +390,9 @@ $(document).ready(function () {
         $('#tb_action_list .action_order').each(function (index) {
           action_order++;
         });
+        if($('#display_request_form')[0].getAttribute("display_request_form") === 'False'){
+          new_row = new_row.replaceAll('request-mail-option', 'hide');
+        }
         new_row=new_row.replaceAll('loop.index', action_order);
       }
       if(!isItemReg(apply_action)){
