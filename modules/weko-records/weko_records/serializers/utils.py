@@ -327,12 +327,21 @@ class OpenSearchDetailData:
         _keywords = request.args.get('q', '')
         _index_id = request.args.get('index_id', type=str)
 
+        # Set language
+        request_lang = request.args.get('lang', '')
+        if request_lang not in ['ja', 'en']:
+            request_lang = 'ja'
+        fg.language(request_lang)
+
         if _index_id:
             index = None
             if _index_id.isnumeric():
                 index = Index.query.filter_by(id=int(_index_id)).one_or_none()
-            _index_name = 'Nonexistent Index' \
-                if index is None else index.index_name
+            if request_lang == 'en':
+                _index_name = 'Nonexistent Index' if index is None else index.index_name_english
+            else:
+                _index_name = 'Nonexistent Index' if index is None else index.index_name
+
             index_meta[_index_id] = 'Unnamed Index' \
                 if _index_name is None else _index_name
 
@@ -376,13 +385,6 @@ class OpenSearchDetailData:
         # Set itemPerPage
         _item_per_page = len(self.search_result['hits']['hits'])
         fg.opensearch.itemsPerPage(str(_item_per_page))
-
-        # Set language
-        request_lang = request.args.get('lang')
-        if request_lang:
-            fg.language(request_lang)
-        else:
-            fg.language('en')
 
         # Aggregate parameter
         log_term = request.args.get('log_term', '')
@@ -506,7 +508,7 @@ class OpenSearchDetailData:
             self._set_publisher(fe, item_map, item_metadata, request_lang)
 
             # Set subject
-            if _index_id:
+            if _index_id and not request.args.get('idx'):
                 fe.dc.dc_subject(index_meta[_index_id])
             else:
                 index_id = item_metadata['path'][0]
@@ -515,8 +517,12 @@ class OpenSearchDetailData:
                     index_name = index_meta[index_id]
                 else:
                     index = Index.query.filter_by(id=index_id).one_or_none()
-                    index_name = index.index_name
-                    index_meta[index_id] = index_name
+                    if index is not None:
+                        if request_lang == 'en':
+                            index_name = index.index_name_english
+                        else:
+                            index_name = index.index_name
+                        index_meta[index_id] = index_name
 
                 fe.dc.dc_subject(index_name)
 
