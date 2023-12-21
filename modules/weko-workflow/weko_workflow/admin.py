@@ -32,7 +32,6 @@ from invenio_db import db
 from invenio_files_rest.models import Location
 from invenio_i18n.ext import current_i18n
 from invenio_mail.models import MailTemplates
-from weko_admin.models import AdminSettings
 from weko_index_tree.models import Index
 from weko_records.api import ItemTypes
 from weko_records.models import ItemTypeProperty
@@ -69,7 +68,6 @@ class FlowSettingView(BaseView):
         actions = self.get_actions()
         mail_templates = MailTemplates.get_templates()
         use_restricted_item = current_app.config.get('WEKO_ADMIN_USE_MAIL_TEMPLATE_EDIT', False)
-        display_request_form = AdminSettings.get('items_display_settings', {}).get("display_request_form", {})
         if '0' == flow_id:
             flow = None
             return self.render(
@@ -83,7 +81,6 @@ class FlowSettingView(BaseView):
                 action_list=actions,
                 mail_templates=mail_templates,
                 use_restricted_item=use_restricted_item,
-                display_request_form=display_request_form,
                 workflow_registrant_id = current_app.config.get("WEKO_WORKFLOW_ITEM_REGISTRANT_ID"),
                 workflow_request_mail_id = current_app.config.get("WEKO_WORKFLOW_REQUEST_MAIL_ID")
             )
@@ -110,7 +107,6 @@ class FlowSettingView(BaseView):
             specifed_properties=specified_properties,
             mail_templates=mail_templates,
             use_restricted_item=use_restricted_item,
-            display_request_form=display_request_form,
             workflow_registrant_id = current_app.config.get("WEKO_WORKFLOW_ITEM_REGISTRANT_ID"),
             workflow_request_mail_id = current_app.config.get("WEKO_WORKFLOW_REQUEST_MAIL_ID")
         )
