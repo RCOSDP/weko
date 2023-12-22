@@ -14,7 +14,7 @@ from weko_theme.utils import (
 
 
 # def get_weko_contents(getargs):
-def test_get_weko_contents(i18n_app, users, client_request_args, communities,redis_connect):
+def test_get_weko_contents(i18n_app, users, client_request_args, communities, redis_connect):
     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
         assert get_weko_contents('comm1')
 
