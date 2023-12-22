@@ -1782,7 +1782,7 @@ def get_attribute_value_all_items(
                         if keys[0].replace('[]', '') != root_key:
                             continue
                         key = keys[-1]
-                        val = alst.pop(key, {})
+                        val = alst.pop('interim') if alst.get('interim', {}) else alst.pop(key, {})
                         name = get_name(key, False) or ""
                         hide = lst[3].get("hide") or (
                             non_display_flag and lst[3].get("non_display", False)
