@@ -728,10 +728,10 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
             date_created = request.values.get('date')
             if date_created:
                 qv = {'gte': date_created, 'lte': date_created}
-                shud = [Q('term', **{'file.date.dateType': 'Created'})]
+                shud = [Q('term', **{'date.dateType': 'Created'})]
 
-                qry = Q('range', **{'file.date.value': qv})
-                qry = Q('nested', path='file.date', query=Q('bool', should=shud, must=[qry]))
+                qry = Q('range', **{'date.value': qv})
+                qry = Q('nested', path='date', query=Q('bool', should=shud, must=[qry]))
                 qy.append(qry)
 
             year_issued_from = request.values.get('pubYearFrom')
@@ -742,10 +742,10 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                     qv.update(dict(gte=year_issued_from + '-01-01'))
                 if year_issued_until:
                     qv.update(dict(lte=year_issued_until + '-12-31'))
-                shud = [Q('term', **{'file.date.dateType': 'Issued'})]
+                shud = [Q('term', **{'date.dateType': 'Issued'})]
 
-                qry = Q('range', **{'file.date.value': qv})
-                qry = Q('nested', path='file.date', query=Q('bool', should=shud, must=[qry]))
+                qry = Q('range', **{'date.value': qv})
+                qry = Q('nested', path='date', query=Q('bool', should=shud, must=[qry]))
                 qy.append(qry)
 
             date_issued_from = request.values.get('pubDateFrom')
@@ -756,10 +756,10 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                     qv.update(dict(gte=date_issued_from))
                 if date_issued_until:
                     qv.update(dict(lte=date_issued_until))
-                shud = [Q('term', **{'file.date.dateType': 'Issued'})]
+                shud = [Q('term', **{'date.dateType': 'Issued'})]
 
-                qry = Q('range', **{'file.date.value': qv})
-                qry = Q('nested', path='file.date', query=Q('bool', should=shud, must=[qry]))
+                qry = Q('range', **{'date.value': qv})
+                qry = Q('nested', path='date', query=Q('bool', should=shud, must=[qry]))
                 qy.append(qry)
 
             return qy
