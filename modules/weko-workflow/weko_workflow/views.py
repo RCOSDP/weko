@@ -1536,7 +1536,7 @@ def next_action(activity_id='0', action_id=0):
             activity_id=activity_id,
             action_id=current_app.config.get(
                 "WEKO_WORKFLOW_ITEM_REGISTRATION_ACTION_ID", 3))
-        activity_request_mail = work_activity.get_activity_requestmail(
+        activity_request_mail = work_activity.get_activity_request_mail(
             activity_id=activity_id)
         if action_feedbackmail or activity_request_mail:
             item_ids = [item_id]
@@ -2502,7 +2502,7 @@ def get_request_maillist(activity_id='0'):
         res = ResponseMessageSchema().load({"code":-1, "msg":"arguments error"})
         return jsonify(res.data), 400
     try:
-        activity_request_mail = WorkActivity().get_activity_requestmail(
+        activity_request_mail = WorkActivity().get_activity_request_mail(
             activity_id=activity_id)
         if activity_request_mail:
             request_mail_list = activity_request_mail.request_maillist

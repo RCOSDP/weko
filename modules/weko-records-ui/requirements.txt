@@ -25,6 +25,7 @@ click>=6.7
 cookiecutter==1.6.0
 counter-robots==2018.6
 cryptography==2.1.4
+captcha==0.4
 datacite==1.0.1
 decorator==4.1.2
 dictdiffer==0.7.0
