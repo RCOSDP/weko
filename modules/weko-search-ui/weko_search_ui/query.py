@@ -701,7 +701,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                     shuld.append(nested)
                 if search_rides:
                     other_must = [
-                        {'terms': {'content.licensetype.raw': ['license_note']}},
+                        {'terms': {'content.licensetype.raw': ['license_free']}},
                         {'terms': {"content.licensefree.raw": [riDes]}}
                     ]
                     other_query = Q('bool', must=other_must)
@@ -714,7 +714,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                 if riDes:
                     # Search only free_input
                     other_must = [
-                        {'terms': {'content.licensetype.raw': ['license_note']}},
+                        {'terms': {'content.licensetype.raw': ['license_free']}},
                         {'terms': {"content.licensefree.raw": [riDes]}}
                     ]
                     other_query = Q('bool', must=other_must)
