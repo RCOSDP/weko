@@ -693,7 +693,7 @@ def indices(app, db):
         testIndexThreeChild = Index(
             index_name="testIndexThreeChild",
             browsing_role="Contributor",
-            parent="testIndexThree",
+            parent=33,
             index_link_enabled=True,
             index_link_name="test_link",
             public_state=True,
