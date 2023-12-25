@@ -1335,7 +1335,7 @@ def register_item_metadata(item, root_path, is_gakuninrdm=False):
     request_mail_list = item["metadata"].get("request_mail_list")
     if request_mail_list:
         RequestMailList.update(
-            item_id = deposit.id, request_mail_list=request_mail_list
+            item_id = deposit.id, request_maillist=request_mail_list
         )
         deposit.update_request_mail()
     else:
@@ -1367,7 +1367,7 @@ def register_item_metadata(item, root_path, is_gakuninrdm=False):
 
             if request_mail_list:
                 RequestMailList.update(
-                    item_id=_deposit.id, request_mail_list=request_mail_list
+                    item_id=_deposit.id, request_maillist=request_mail_list
                 )
                 _deposit.update_request_mail()
 
