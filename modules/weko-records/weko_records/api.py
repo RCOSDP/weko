@@ -2145,6 +2145,23 @@ class RequestMailList(object):
             return []
 
     @classmethod
+    def get_request_mail_by_mailaddress(cls, address):
+        """Get a RequestMail list by mailaddress
+        :param address: str, mailaddress
+        :return request_mail_list
+        """
+        try:
+            with db.session.no_autoflush:
+                query_object = _RequestMailList.query.filter(
+                    cast(_RequestMailList.mail_list, String).contains('"'+address+'"')).all()
+                if query_object:
+                    return query_object
+                else:
+                    return []
+        except SQLAlchemyError:
+            return []
+
+    @classmethod
     def delete(cls, item_id):
         """Delete a request_mail_list by item_id.
 
