@@ -1756,41 +1756,6 @@ class WekoDeposit(Deposit):
         }
         self.indexer.update_feedback_mail_list(feedback_mail)
 
-    def update_request_mail(self):
-        """
-        Index request mail list.
-
-        Args:
-            None
-
-        Returns:
-            None
-        """
-        item_id = self.id
-        mail_list = RequestMailList.get_mail_list_by_item_id(item_id)
-        if mail_list:
-            request_mail = {
-                "id": item_id,
-                "mail_list": mail_list
-            }
-            self.indexer.update_request_mail_list(request_mail)
-
-    def remove_request_mail(self):
-        """ 
-        Remove request mail list.
-
-        Args:
-            None
-
-        Returns:
-            None
-        """
-        request_mail = {
-            "id": self.id,
-            "mail_list": []
-        }
-        self.indexer.update_request_mail_list(request_mail)
-
     def clean_unuse_file_contents(self, item_id, pre_object_versions,
                                   new_object_versions, is_import=False):
         """Summary line.

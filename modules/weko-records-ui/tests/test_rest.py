@@ -561,3 +561,150 @@ def test_FileApplication_post_v1(app, client, db, workflows_restricted, make_rec
     assert res_data['activity_url'] == activity_url.replace("/api", "", 1)
     assert res_data['item_type_schema'] == itemtype_schema
 
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_rest.py::test_RequestMail_post_v1 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_RequestMail_post_v1(app, client, db, make_request_maillist, users):
+    """Test GetFileTerms.post_v1 method."""
+
+    version = 'v1'
+    invalid_version = 'v0'
+
+    test_body = {
+                    "key": "test_key",
+                    "from":"test1@example.com",
+                    "subject":"test_subject",
+                    "message":"test_message",
+                    "calculation_result":1
+                }
+
+    pid_value = "1"
+    res = client.post(
+        f'/{invalid_version}/records/{pid_value}/request-mail',
+        headers = "",
+        json = test_body,
+        content_type='application/json',
+    )
+    try:
+        json.loads(res.get_data())
+    except:
+        assert False
+    assert res.status_code == 400
+
+    pid_value = 1000000
+    res = client.post(
+        f'/{version}/records/{pid_value}/request-mail',
+        headers = "",
+        json = test_body,
+        content_type='application/json',
+    )
+    try:
+        json.loads(res.get_data())
+    except:
+        assert False
+    assert res.status_code == 404
+
+    test_body = {
+                    "key": "test_key",
+                    "subject":"test_subject",
+                    "message":"test_message",
+                    "calculation_result":1
+                }
+
+    pid_value = "100"
+    res = client.post(
+        f'/{version}/records/{pid_value}/request-mail',
+        headers = "",
+        json = test_body,
+        content_type='application/json',
+    )
+    try:
+        json.loads(res.get_data())
+    except:
+        assert False
+    assert res.status_code == 404
+
+    test_body = {
+                    "key": "test_key",
+                    "from":"test1@example.com",
+                    "subject":"test_subject",
+                    "message":"test_message",
+                    "calculation_result":1
+                }
+
+    pid_value = "100"
+    res_test = {"from":"test1@example.com","subject":"test_subject","message":"test_message"}
+    with patch("weko_records_ui.rest.send_request_mail", return_value=(True,res_test)):
+        res = client.post(
+        f'/{version}/records/{pid_value}/request-mail',
+        json = test_body,
+        content_type='application/json',
+        )
+        try:
+            json.loads(res.get_data())
+        except:
+            assert False
+        assert res.status_code == 200
+
+    with patch('weko_workflow.api.WorkActivity.init_activity', side_effect=SQLAlchemyError):
+        test_body = {
+                    "key": "test_key",
+                    "from":"test1@example.com",
+                    "subject":"test_subject",
+                    "message":"test_message",
+                    "calculation_result":1
+                }
+
+        pid_value = "100"
+        res = client.post(
+            f'/{version}/records/{pid_value}/request-mail',
+            headers = "",
+            json = test_body,
+            content_type='application/json',
+        )
+        assert res.status_code == 500
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_rest.py::test_CreateCaptchaImage_get_v1 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_CreateCaptchaImage_get_v1(app, client, db):
+    version = 'v1'
+    invalid_version = 'v0'
+
+    res = client.get(
+        f'/{invalid_version}/captcha/image'
+    )
+
+    try:
+        json.loads(res.get_data())
+    except:
+        assert False
+    assert res.status_code == 400
+
+    res = client.get(
+        f'/{version}/captcha/image'
+    )
+
+    try:
+        json.loads(res.get_data())
+    except:
+        assert False
+    assert res.status_code == 200
+
+    with patch('weko_records_ui.rest.create_captcha_image', return_value = ("","")):
+        res = client.get(
+        f'/{version}/captcha/image'
+    )
+
+    try:
+        json.loads(res.get_data())
+    except:
+        assert False
+    assert res.status_code == 500
+
+    res = client.get(
+        f'/{version}/captcha/image',
+        headers = [("Accept-Language", "jpn")]
+    )
+
+    try:
+        json.loads(res.get_data())
+    except:
+        assert False
+    assert res.status_code == 200

@@ -1556,8 +1556,14 @@ def handle_finish_workflow(deposit, current_pid, recid):
                     feedback_maillist=feedback_mail_list
                 )
                 ver_attaching_deposit.update_feedback_mail()
+            request_mail_list = RequestMailList.get_mail_list_by_item_id(pid_without_ver.object_uuid)
+            if request_mail_list:
+                RequestMailList.update(
+                    item_id=item_id,
+                    request_maillist=request_mail_list
+                )
+                ver_attaching_deposit.update_request_mail()
             ver_attaching_deposit.publish()
-
             weko_record = WekoRecord.get_record_by_pid(current_pid.pid_value)
             if weko_record:
                 weko_record.update_item_link(current_pid.pid_value)
@@ -1592,6 +1598,7 @@ def handle_finish_workflow(deposit, current_pid, recid):
                         merge_data_to_record_without_version(current_pid, True)
                     maintain_deposit.publish()
                     new_parent_record.update_feedback_mail()
+                    new_parent_record.update_request_mail()
                     new_parent_record.commit()
                     updated_item.publish(new_parent_record)
                 else:  # Handle Upgrade workflow
@@ -1606,6 +1613,7 @@ def handle_finish_workflow(deposit, current_pid, recid):
                         merge_data_to_record_without_version(current_pid)
                     draft_deposit.publish()
                     new_draft_record.update_feedback_mail()
+                    new_draft_record.update_request_mail()
                     new_draft_record.commit()
                     updated_item.publish(new_draft_record)
 
@@ -1614,6 +1622,7 @@ def handle_finish_workflow(deposit, current_pid, recid):
                 if weko_record:
                     weko_record.update_item_link(current_pid.pid_value)
                 parent_record.update_feedback_mail()
+                parent_record.update_request_mail()
                 parent_record.commit()
                 updated_item.publish(parent_record)
                 if ".0" in current_pid.pid_value and last_ver:

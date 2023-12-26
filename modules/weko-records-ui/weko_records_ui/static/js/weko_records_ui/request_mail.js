@@ -1,6 +1,7 @@
 $('#request_mail_btn')?.on('click', () => {
     const dt = new Date();
-    $("#calculation_message").text("計算結果を入力してください。");
+    const CALCULATION_MESSAGE = document.getElementById("calculation_message_initial").value;
+    $("#calculation_message").text(CALCULATION_MESSAGE);
     // Get captcha and show modal
     $.ajax({
         url: '/api/v1/captcha/image',
@@ -9,6 +10,10 @@ $('#request_mail_btn')?.on('click', () => {
         success: function (response) {
             $("#request_captcha").attr('src', "data:image/png;base64," + response.image)
             $("#request_mail_dialog").modal("show");
+            $('#request_mail_sender').val("");
+            $('#subject').val("");
+            $('#body').val("");
+            $("#calculation_message").val("");
             $("#key").val(response.key);
             $("#ttl").val(response.ttl);
             $("#dt").val(dt);
@@ -52,6 +57,8 @@ mail_form?.on('submit', (e) => {
     const nowDate = new Date();
     const limitDateSeconds =new Date(dt).setSeconds(new Date(dt).getSeconds() + parseInt(ttl));
     const limitDate = new Date(limitDateSeconds);
+    const FAILED_MESSAGE = document.getElementById("failed_message").value;
+    const CAPTCHA_IMAGE_TIMEOUT = document.getElementById("captcha_image_timeout").value;
   
     if(nowDate > limitDate){
       const dt = new Date();
@@ -62,8 +69,8 @@ mail_form?.on('submit', (e) => {
         success: function (response) {
             $("#request_captcha").attr('src', "data:image/png;base64," + response.image);
             $("#key").val(response.key);
-            $("#calculation_result").val("");
-            $("#calculation_message").text("画像の有効期限が切れています。再度計算して入力してください。");
+            $("#calculation_result").val(CAPTCHA_IMAGE_TIMEOUT);
+            $("#calculation_message").text();
             $("#dt").val(dt);
         },
         error: function (jqXHE, status ,msg) {
@@ -74,6 +81,7 @@ mail_form?.on('submit', (e) => {
     current_path_pattern = /records\/(.+)/.exec(location.pathname)
     url = ['/api/v1/records', current_path_pattern[1], 'request-mail'].join('/')
     const webelement = $('#confirm_send_button');
+    const EMAIL_SENT_SUCCESSFULLY =  document.getElementById("email_sent_successfully").value
     webelement.prop('disabled' ,true);
     $.ajax({
       url: url,
@@ -83,15 +91,16 @@ mail_form?.on('submit', (e) => {
       dataType: 'json',
       success: function (response) {
         webelement.prop('disabled',false);
+        alert(EMAIL_SENT_SUCCESSFULLY);
         $("#request_mail_sender").val("");
         $("#subject").val("");
         $("#body").val("");
         $("#calculation_result").val("");
-        $("#calculation_message").text("メールを送信しました。");
+        $("#calculation_message").val("");
       },
       error: function (jqXHE, status ,msg) {
         webelement.prop('disabled',false);
-        alert(msg);
+        alert(FAILED_MESSAGE);
       }
     });
     }

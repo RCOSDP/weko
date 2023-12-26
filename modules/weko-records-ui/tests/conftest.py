@@ -33,6 +33,7 @@ from datetime import datetime
 from collections import OrderedDict
 from unittest.mock import patch
 from datetime import timedelta
+from invenio_mail import InvenioMail
 
 import pytest
 from elasticsearch import Elasticsearch
@@ -110,7 +111,7 @@ from weko_items_ui.config import WEKO_ITEMS_UI_MS_MIME_TYPE,WEKO_ITEMS_UI_FILE_S
 from weko_records import WekoRecords
 from weko_records.api import ItemsMetadata
 from weko_records_ui.ext import WekoRecordsREST
-from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName, SiteLicenseInfo, FeedbackMailList,SiteLicenseIpAddress
+from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName, SiteLicenseInfo, FeedbackMailList,SiteLicenseIpAddress,RequestMailList
 from weko_records.utils import get_options_and_order_list
 from weko_records_ui.config import WEKO_ADMIN_PDFCOVERPAGE_TEMPLATE,RECORDS_UI_ENDPOINTS,WEKO_RECORDS_UI_SECRET_KEY,WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN
 from weko_records_ui.models import FileSecretDownload, PDFCoverPageSettings,FileOnetimeDownload, FilePermission
@@ -278,6 +279,7 @@ def base_app(instance_path):
         WEKO_ADMIN_PDFCOVERPAGE_TEMPLATE=WEKO_ADMIN_PDFCOVERPAGE_TEMPLATE,
         WEKO_WORKFLOW_DATE_FORMAT = WEKO_WORKFLOW_DATE_FORMAT,
         WEKO_RECORDS_UI_MAIL_TEMPLATE_SECRET_GENRE_ID = 1,
+        MAIL_SUPPRESS_SEND=True
     )
     #with ESTestServer(timeout=30) as server:
     client = Elasticsearch(['localhost:9200'])
@@ -307,6 +309,7 @@ def base_app(instance_path):
     InvenioREST(app_)
     InvenioOAuth2Server(app_)
     InvenioOAuth2ServerREST(app_)
+    InvenioMail(app_)
     WekoRecords(app_)
     WekoItemsUI(app_)
     WekoRecordsUI(app_)
@@ -5215,3 +5218,29 @@ def oauth_headers(client, json_headers, create_oauth_token, create_oauth_token_a
         fill_oauth2_headers(json_headers, create_oauth_token_activity_scope[2]),    # user (activity_scope)
     ]
 
+@pytest.fixture()
+def make_request_maillist(db):
+    rec_id_1 = 100
+    rec_id_2 = 200
+    item_id_1 = uuid.uuid4()
+    item_id_2 = uuid.uuid4()
+    mail_list_1 = [{"email": "author1@example.com", "author_id": "1"}]
+    mail_list_2 = []
+
+    request_maillist_1 = RequestMailList(id = 1, item_id = item_id_1, mail_list = mail_list_1)
+    request_maillist_2 = RequestMailList(id = 2, item_id = item_id_2, mail_list = mail_list_2)
+
+    recid1_test = PersistentIdentifier.create('recid', str(rec_id_1), object_type='rec', object_uuid=item_id_1, status=PIDStatus.REGISTERED)
+    recid2_test = PersistentIdentifier.create('recid', str(rec_id_2), object_type='rec', object_uuid=item_id_2, status=PIDStatus.REGISTERED)
+
+    with db.session.begin_nested():
+        db.session.add(request_maillist_1)
+        db.session.add(request_maillist_2)
+        db.session.add(recid1_test)
+        db.session.add(recid2_test)
+    db.session.commit()
+
+    return [
+        item_id_1,
+        item_id_2
+        ]
