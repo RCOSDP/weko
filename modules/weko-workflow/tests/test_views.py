@@ -1795,7 +1795,7 @@ def test_next_action_usage_application(client, db, users, db_register_usage_appl
     (5, 200),
     (6, 200),
 ])
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_next_action -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_next_action_for_request_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_next_action_for_request_mail(app, client, db, users, db_register_request_mail, db_records, users_index, status_code, mocker):
     def update_activity_order(activity_id, action_id, action_order):
         with db.session.begin_nested():
@@ -1848,7 +1848,6 @@ def test_next_action_for_request_mail(app, client, db, users, db_register_reques
             activity_id="7", action_id=7)
     res = client.post(url, json=input)
     data = response_data(res)
-    print(data)
     assert res.status_code == status_code
     assert data["code"] == 0
     assert data["msg"] == "success"
@@ -1856,27 +1855,35 @@ def test_next_action_for_request_mail(app, client, db, users, db_register_reques
     get_ids.assert_not_called()
 
     # Adminsettings display_request_form is False
-    adminsetting = AdminSettings(id=1,name='items_display_settings',settings={"display_request_form": False})
-    with patch("weko_workflow.views.AdminSettings.get",return_value = adminsetting):
-        update_activity_order("7",7,5)
-        res = client.post(url, json=input)
-        data = response_data(res)
-        assert res.status_code == status_code
-        assert data["code"] == 0
-        assert data["msg"] == "success"
-        send_mail.assert_not_called()
-        get_ids.assert_called()
+    with db.session.begin_nested():
+        db.session.delete(adminsetting)
+        adminsetting = AdminSettings(id=1,name='items_display_settings',settings={"display_request_form": False})
+        db.session.add(adminsetting)
+    db.session.commit()
+
+    update_activity_order("7",7,5)
+    res = client.post(url, json=input)
+    data = response_data(res)
+    assert res.status_code == status_code
+    assert data["code"] == 0
+    assert data["msg"] == "success"
+    send_mail.assert_not_called()
+    get_ids.assert_not_called()
 
     # Adminsettings display_request_form is True
-    adminsetting = AdminSettings(id=1,name='items_display_settings',settings={"display_request_form": True})
-    with patch("weko_workflow.views.AdminSettings.get",return_value = adminsetting):
-        update_activity_order("7",7,5)
-        res = client.post(url, json=input)
-        data = response_data(res)
-        assert res.status_code == status_code
-        assert data["code"] == 0
-        assert data["msg"] == "success"
-        send_mail.assert_called()
+    with db.session.begin_nested():
+        db.session.delete(adminsetting)
+        adminsetting = AdminSettings(id=1,name='items_display_settings',settings={"display_request_form": True})
+        db.session.add(adminsetting)
+    db.session.commit()
+    
+    update_activity_order("7",7,5)
+    res = client.post(url, json=input)
+    data = response_data(res)
+    assert res.status_code == status_code
+    assert data["code"] == 0
+    assert data["msg"] == "success"
+    send_mail.assert_called()
 
 
 def test_cancel_action_acl_nologin(client,db_register2):
