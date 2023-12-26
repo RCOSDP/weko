@@ -4932,6 +4932,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
 
       $scope.saveRequestMailListCallback = function (cur_action_id) {
         const activityID = $("#activity_id").text();
+        const actionID = cur_action_id;
         const display_request_btn = $("#display_request_btn_checkbox").prop('checked');
         const emails = $scope.request_emails;
 
@@ -4944,7 +4945,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           'request_maillist': emails
         }
         $.ajax({
-          url: ['/workflow/save_request_maillist', activityID].join('/'),
+          url: '/workflow/save_request_maillist' + '/' + activityID + '/' + actionID,
           headers: {
             'Content-Type': 'application/json'
           },

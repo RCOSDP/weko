@@ -20,3 +20,6 @@ CREATE TABLE public.request_mail_list (
 	mail_list jsonb NULL,
 	CONSTRAINT pk_request_mail_list PRIMARY KEY (id)
 );
+
+-- public.workflow_flow_action_role definition
+ALTER TABLE public.workflow_flow_action_role ADD action_request_mail Boolean NOT NULL DEFAULT false;
