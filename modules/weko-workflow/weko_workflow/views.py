@@ -2359,11 +2359,11 @@ def save_feedback_maillist(activity_id='0', action_id='0'):
 
 
 @workflow_blueprint.route(
-    '/save_request_maillist/<string:activity_id>',
+    '/save_request_maillist/<string:activity_id>/<int:action_id>',
     methods=['POST'])
 @login_required
 @check_authority
-def save_request_maillist(activity_id='0'):
+def save_request_maillist(activity_id='0', action_id='0'):
     """Save request_mail's list to Activity History models.
 
     :return:
