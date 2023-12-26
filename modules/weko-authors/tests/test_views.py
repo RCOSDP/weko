@@ -23,12 +23,15 @@
 
 import json
 import pytest
+import uuid
 from flask import url_for
 from mock import patch, MagicMock
+from elasticsearch.exceptions import NotFoundError
 from invenio_indexer.api import RecordIndexer
 
 from invenio_accounts.testutils import login_user_via_session
-
+from invenio_search import current_search_client
+from flask import current_app
 from weko_authors.models import Authors, AuthorsPrefixSettings, AuthorsAffiliationSettings
 from weko_authors.views import dbsession_clean
 
@@ -99,8 +102,12 @@ def test_create_acl_users(client, users, index, is_permission):
     login_user_via_session(client=client, email=users[index]['email'])
     res = client.post(url,content_type='text/plain')
     assert_role(res, is_permission)
+
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_create -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
-def test_create(client, users):
+@pytest.mark.parametrize('base_app',[dict(
+    is_es=True
+)],indirect=['base_app'])
+def test_create(client, users, esindex):
     """
     Test of create author.
     :param client: The flask client.
@@ -131,20 +138,48 @@ def test_create(client, users):
                 {"email": "example@com"}
             ]
     }
-    mock_indexer = MagicMock(side_effect=MockIndexer)
-    with patch('weko_authors.views.RecordIndexer', mock_indexer):
-        with patch('weko_authors.views.Authors.get_sequence', return_value=10):
+    # content_type is not json
+    res = client.post(url, content_type="plain/text")
+    assert res.status_code==200
+    assert get_json(res) == {"msg":"Header Error"}
+    
+    # success create
+
+    es_id = uuid.uuid4()
+    pk_id=10
+    with patch('weko_authors.views.Authors.get_sequence', return_value=pk_id):
+        with patch("weko_authors.views.uuid.uuid4",return_value=es_id):
             res = client.post(url,
                               data=json.dumps(input),
                               content_type='application/json')
             assert res.status_code==200
             assert get_json(res) == {"msg":"Success"}
-            assert Authors.query.filter_by(id=10).one()
+            author = Authors.query.filter_by(id=pk_id).one()
+            assert author
+            assert type(author.json) == dict
+            res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=str(es_id))
+            assert res["_source"]["pk_id"] == str(pk_id)
     
-    # content_type is not json
-    res = client.post(url, content_type="plain/text")
-    assert res.status_code==200
-    assert get_json(res) == {"msg":"Header Error"}
+    # raise Exception
+    es_id = uuid.uuid4()
+    pk_id=11
+    with patch("weko_authors.views.Authors",side_effect=Exception("test_error")):
+        with patch('weko_authors.views.Authors.get_sequence', return_value=pk_id):
+            with patch("weko_authors.views.uuid.uuid4",return_value=es_id):
+                res = client.post(url,
+                  data=json.dumps(input),
+                  content_type='application/json')
+                
+                assert res.status_code==500
+                assert get_json(res) == {"msg":"Failed"}
+                assert Authors.query.filter_by(id=pk_id).one_or_none() == None
+                with pytest.raises(NotFoundError):
+                    res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=str(es_id))
+            
+            
+    
+    
+    
     
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_update_author_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_update_author_acl_guest(client):
@@ -176,70 +211,67 @@ def test_update_author_acl_users(client, users, index, is_permission):
     assert_role(res, is_permission)
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_update_author -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
-def test_update_author(client, users, create_author):
+@pytest.mark.parametrize('base_app',[dict(
+    is_es=True
+)],indirect=['base_app'])
+def test_update_author(client, db, users, esindex, create_author):
     """
     Test of update author data.
     :param client: The flask client.
     """
-    author_data = {
-                "authorNameInfo": [
-                    {
-                        "familyName": "テスト",
-                        "firstName": "ハナコ",
-                        "fullName": "",
-                        "language": "ja-Kana",
-                        "nameFormat": "familyNmAndNm",
-                        "nameShowFlg": "true"
-                    }
-                ],
-                "authorIdInfo": [
-                    {
-                        "idType": "2",
-                        "authorId": "01234",
-                        "authorIdShowFlg": "true"
-                    }
-                ],
-                "emailInfo": [
-                    {"email": "example@com"}
-                ]
-        }
-    id = 1
-    author_id = create_author(author_data, id)
+    test_data = {
+        "authorNameInfo": [{"familyName": "テスト","firstName": "ハナコ","fullName": "","language": "ja-Kana","nameFormat": "familyNmAndNm","nameShowFlg": "true"}],
+        "authorIdInfo": [{"idType": "2","authorId": "01234","authorIdShowFlg": "true"}],
+        "emailInfo": [{"email": "example@com"}]
+    }
     login_user_via_session(client=client, email=users[0]['email'])
     url = url_for("weko_authors.update_author")
 
+    # success update
+    id = 1
+    es_id = create_author(json.loads(json.dumps(test_data)), id)
     input = {
-            "id": author_id,
-            "pk_id": author_id,
-            "authorNameInfo": [
-                {
-                    "familyName": "テスト",
-                    "firstName": "タロウ",
-                    "fullName": "",
-                    "language": "ja-Kana",
-                    "nameFormat": "familyNmAndNm",
-                    "nameShowFlg": "true"
-                }
-            ],
-            "authorIdInfo": [
-                {
-                    "idType": "2",
-                    "authorId": "0123",
-                    "authorIdShowFlg": "true"
-                }
-            ],
-            "emailInfo": [
-                {"email": "examplechanged@com"}
-            ]
+            "id": es_id,
+            "pk_id": id,
+            "authorNameInfo": [{"familyName": "テスト","firstName": "タロウ","fullName": "","language": "ja-Kana","nameFormat": "familyNmAndNm","nameShowFlg": "true"}],
+            "authorIdInfo": [{"idType": "2","authorId": "0123","authorIdShowFlg": "true"}],
+            "emailInfo": [{"email": "examplechanged@com"}]
     }
-    mock_indexer = MagicMock(side_effect=MockIndexer)
-    with patch('weko_authors.views.RecordIndexer', mock_indexer):
-        with patch('weko_deposit.tasks.update_items_by_authorInfo'):
-            res = client.post(url,
-                              data=json.dumps(input),
-                              content_type='application/json')
-            assert res.status_code == 200
-            assert get_json(res) == {"msg":"Success"}
+    with patch('weko_deposit.tasks.update_items_by_authorInfo'):
+        res = client.post(url,
+                          data=json.dumps(input),
+                          content_type='application/json')
+        assert res.status_code == 200
+        assert get_json(res) == {"msg":"Success"}
+        author = Authors.query.filter_by(id=id).one()
+        assert author
+        assert author.json["authorNameInfo"][0]["firstName"] == "タロウ"
+        res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=es_id)
+        assert res["_source"]["authorNameInfo"][0]["firstName"] == "タロウ"
+    
+    # failed update
+    id = 2
+    es_id = create_author(json.loads(json.dumps(test_data)), id)
+    input = {
+        "id": es_id,
+        "pk_id": id,
+        "authorNameInfo": [{"familyName": "テスト","firstName": "タロウ","fullName": "","language": "ja-Kana","nameFormat": "familyNmAndNm","nameShowFlg": "true"}],
+        "authorIdInfo": [{"idType": "2","authorId": "0123","authorIdShowFlg": "true"}],
+        "emailInfo": [{"email": "examplechanged@com"}]
+    }
+
+    with patch("weko_authors.views.db.session.commit",side_effect=Exception("test_error")):
+        res = client.post(url,
+                          data=json.dumps(input),
+                          content_type='application/json')
+        assert res.status_code == 500
+        assert get_json(res) == {"msg":"Failed"}
+        author = Authors.query.filter_by(id=id).one()
+        assert author
+        assert author.json["authorNameInfo"][0]["firstName"] == "ハナコ"
+        res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=es_id)
+        assert res["_source"]["authorNameInfo"][0]["firstName"] == "ハナコ"
+        
     
     # content_type is not json
     res = client.post(url, content_type="plain/text")
@@ -277,68 +309,62 @@ def test_delete_author_acl_users(client, users, index, is_permission):
     
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_delete_author -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
-def test_delete_author(client, db,users, create_author, mocker):
+@pytest.mark.parametrize('base_app',[dict(
+    is_es=True
+)],indirect=['base_app'])
+def test_delete_author(client, db,users, esindex, create_author, mocker):
     """
     Test of delete author data.
     :param client: The flask client.
     """
-    author_data = {
-                "authorNameInfo": [
-                    {
-                        "familyName": "テスト",
-                        "firstName": "ハナコ",
-                        "fullName": "",
-                        "language": "ja-Kana",
-                        "nameFormat": "familyNmAndNm",
-                        "nameShowFlg": "true"
-                    }
-                ],
-                "authorIdInfo": [
-                    {
-                        "idType": "2",
-                        "authorId": "01234",
-                        "authorIdShowFlg": "true"
-                    }
-                ],
-                "emailInfo": [
-                    {"email": "example@com"}
-                ]
-        }
-    author_id = 1
-    id = create_author(author_data, author_id)
-    db.session.commit()
+    test_data = {
+        "authorNameInfo": [{"familyName": "テスト","firstName": "ハナコ","fullName": "","language": "ja-Kana","nameFormat": "familyNmAndNm","nameShowFlg": "true"}],
+        "authorIdInfo": [{"idType": "2","authorId": "01234","authorIdShowFlg": "true"}],
+        "emailInfo": [{"email": "example@com"}],
+        "is_deleted":"false"
+    }
+    
+    
     login_user_via_session(client=client, email=users[0]['email'])
     url = url_for("weko_authors.delete_author")
     mocker.patch("weko_authors.views.get_count_item_link", return_value=0)
     
-    input = {"pk_id": str(id),"Id":"ZxYzDYYBklf45I62gqeH"}
-    with patch('weko_authors.views.RecordIndexer', side_effect=MockIndexer):
+    id = 1
+    es_id = create_author(json.loads(json.dumps(test_data)), id)
+    
+    input = {"pk_id": str(id),"Id":es_id}
+    res = client.post(url,json=input)
+    assert res.status_code == 200
+    result = Authors.query.filter_by(id=id).one()
+    assert result.is_deleted == True
+    res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=es_id)
+    assert res["_source"]["is_deleted"] == "true"
+    
+    id = 2
+    es_id = create_author(json.loads(json.dumps(test_data)), id)
+    
+    with patch("weko_authors.db.session.commit",side_effect=Exception("test_error")):
+        input = {"pk_id": str(id),"Id":es_id}
         res = client.post(url,json=input)
         assert res.status_code == 200
         result = Authors.query.filter_by(id=id).one()
-        assert result.is_deleted == True
-        
+        assert result.is_deleted == False
+        res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=es_id)
+        assert res["_source"]["is_deleted"] == "false"
+
+    # author is linked to items
+    input = {"pk_id": str(id),"Id":es_id}
+    with patch("weko_authors.views.get_count_item_link", retutn_value=1):
+        res = client.post(url, json=input)
+        assert res.status_code == 500
+        assert res.get_data().decode("utf-8") == 'The author is linked to items and cannot be deleted.'
 
     # content_type is not json
     res = client.post(url, content_type="plain/text")
     assert res.status_code == 200
     assert get_json(res) == {"msg": "Header Error"}
     
-    # author is linked to items
-    with patch("weko_authors.views.get_count_item_link", retutn_value=1):
-        res = client.post(url, json=input)
-        assert res.status_code == 500
-        assert res.get_data().decode("utf-8") == 'The author is linked to items and cannot be deleted.'
-    
-    author_id = 2
-    id = create_author(author_data, author_id)
-    db.session.commit()
-    input = {"pk_id": str(id),"Id":"ZxYzDYYBklf45I62gqeH"}
-    with patch("weko_authors.views.RecordIndexer",side_effect=Exception("test_error")):
-        res = client.post(url, json=input)
-        assert res.status_code == 200
-        result = Authors.query.filter_by(id=id).one()
-        assert result.is_deleted == False
+
         
     
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_get_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp

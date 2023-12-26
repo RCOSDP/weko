@@ -604,6 +604,7 @@ ACCESS_RIGHT_TYPE_URI = {
     "restricted access": "http://purl.org/coar/access_right/c_16ec",
 }
 DATE_ISO_TEMPLATE_URL = "/static/templates/weko_deposit/datepicker_multi_format.html"
+
 RESOURCE_TYPE_URI = {
     "conference paper": "http://purl.org/coar/resource_type/c_5794",
     "data paper": "http://purl.org/coar/resource_type/c_beb9",
@@ -613,12 +614,15 @@ RESOURCE_TYPE_URI = {
     "newspaper": "http://purl.org/coar/resource_type/c_2fe3",
     "periodical": "http://purl.org/coar/resource_type/c_2659",
     "review article": "http://purl.org/coar/resource_type/c_dcae04bc",
+    "other periodical":"http://purl.org/coar/resource_type/QX5C-AR31",
     "software paper": "http://purl.org/coar/resource_type/c_7bab",
     "article": "http://purl.org/coar/resource_type/c_6501",
     "book": "http://purl.org/coar/resource_type/c_2f33",
     "book part": "http://purl.org/coar/resource_type/c_3248",
     "cartographic material": "http://purl.org/coar/resource_type/c_12cc",
     "map": "http://purl.org/coar/resource_type/c_12cd",
+    "conference output":"http://purl.org/coar/resource_type/c_c94f",
+    "conference presentation":"http://purl.org/coar/resource_type/c_c94f",
     "conference object": "http://purl.org/coar/resource_type/c_c94f",
     "conference proceedings": "http://purl.org/coar/resource_type/c_f744",
     "conference poster": "http://purl.org/coar/resource_type/c_6670",
@@ -665,7 +669,23 @@ RESOURCE_TYPE_URI = {
     "recorded data": "http://purl.org/coar/resource_type/CQMR-7K63",
     "simulation data": "http://purl.org/coar/resource_type/W2XT-7017",
     "survey data": "http://purl.org/coar/resource_type/NHD0-W6SY",
+    "design patent":"http://purl.org/coar/resource_type/C53B-JCY5/",
+    "PCT application":"http://purl.org/coar/resource_type/SB3Y-W4EH/",
+    "plant patent":"http://purl.org/coar/resource_type/Z907-YMBB/",
+    "plant variety protection":"http://purl.org/coar/resource_type/GPQ7-G5VE/",
+    "software patent":"http://purl.org/coar/resource_type/MW8G-3CR8/",
+    "trademark":"http://purl.org/coar/resource_type/H6QP-SC1X/",
+    "utility model":"http://purl.org/coar/resource_type/9DKX-KSAF/",
+    "commentary":"http://purl.org/coar/resource_type/D97F-VB57/",
+    'design': 'http://purl.org/coar/resource_type/542X-3S04/',
+    'industrial design': 'http://purl.org/coar/resource_type/JBNF-DYAD/',
+    'layout design': 'http://purl.org/coar/resource_type/BW7T-YM2G/',
+    'peer review': 'http://purl.org/coar/resource_type/H9BQ-739P/',
+    'research protocol': 'http://purl.org/coar/resource_type/YZ1N-ZFT9/',
+    'source code':'http://purl.org/coar/resource_type/QH80-2R4E/',
+    'transcription': 'http://purl.org/coar/resource_type/6NC7-GK9S/',
 }
+
 WEKO_IMPORT_VALIDATE_MESSAGE = {
     "%r is too long": "%rの数が上限数を超えています。",
     "%r is not one of %r": "%rは次の決められた選択肢に含まれていません。%r",

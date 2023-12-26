@@ -78,6 +78,7 @@ $(document).ready(function () {
       $('#btn_confirm').removeClass('hide');
       $('#myModal').modal('show');
     } else {
+      $('#mapping-submit').addClass('disabled');
       window.location.href = '/admin/itemtypes/mapping/' + page_global.dst_mapping_name + '?mapping_type=' + $('#jpcoar_lists').val();
     }
   });

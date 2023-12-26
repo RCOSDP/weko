@@ -169,6 +169,21 @@ RECORDS_UI_ENDPOINTS = dict(
         view_imp='weko_records_ui.fd.file_download_onetime',
         record_class='weko_deposit.api:WekoRecord',
     ),
+    recid_secret_url=dict(
+        pid_type='recid',
+        route='/records/<pid_value>/secret/<path:filename>',
+        view_imp='weko_records_ui.views.create_secret_url_and_send_mail',
+        record_class='weko_deposit.api:WekoRecord',
+        permission_factory_imp='weko_records_ui.permissions'
+                               ':page_permission_factory',
+        methods=['POST'],
+    ),
+    recid_secret_file_download=dict(
+        pid_type='recid',
+        route='/record/<pid_value>/file/secret/<string:filename>',
+        view_imp='weko_records_ui.fd.file_download_secret',
+        record_class='weko_deposit.api:WekoRecord',
+    ),
 )
 
 WEKO_RECORDS_UI_SECRET_KEY = "secret"
@@ -177,6 +192,12 @@ WEKO_RECORDS_UI_SECRET_KEY = "secret"
 WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN = \
     "filename={} record_id={} user_mail={} date={}"
 """Onetime download pattern."""
+
+WEKO_RECORDS_UI_SECRET_DOWNLOAD_PATTERN = \
+    "filename={} record_id={} id={} date={}"
+"""Secret URL download pattern."""
+
+WEKO_RECORDS_UI_MAIL_TEMPLATE_SECRET_URL = "email_pattern_send_secret_url.tpl"
 
 RECORDS_UI_EXPORT_FORMATS = {
     'recid': {

@@ -19,7 +19,10 @@
 # MA 02111-1307, USA.
 
 """Weko Deposit celery tasks."""
+import csv
+import json
 from time import sleep
+from io import StringIO
 
 from celery import shared_task
 from celery.utils.log import get_task_logger
@@ -31,19 +34,32 @@ from invenio_pidstore.models import PersistentIdentifier
 from invenio_records.models import RecordMetadata
 from invenio_search import RecordsSearch
 from sqlalchemy.exc import SQLAlchemyError
-from weko_authors.models import AuthorsPrefixSettings, AuthorsAffiliationSettings
+from weko_authors.models import Authors, AuthorsPrefixSettings, AuthorsAffiliationSettings
 from weko_records.api import ItemsMetadata
 from weko_schema_ui.models import PublishStatus
+from weko_workflow.utils import delete_cache_data, update_cache_data
 
 from .api import WekoDeposit
 
 logger = get_task_logger(__name__)
 
 
+FAIL_LABEL = "fail_items"
+SUCCESS_LABEL = "success_items"
+TARGET_LABEL = "target"
+ORIGIN_LABEL = "origin"
+TITLE_LIST = ["record_id", "author_ids", "message"]
+
 @shared_task(ignore_result=True)
-def update_items_by_authorInfo(origin_list, target):
+def update_items_by_authorInfo(user_id, target, origin_pkid_list=[], origin_id_list=[], update_gather_flg=False):    
     """Update item by authorInfo."""
     current_app.logger.debug('item update task is running.')
+    process_counter = {
+        FAIL_LABEL: [],
+        SUCCESS_LABEL: [],
+        TARGET_LABEL: target,
+        ORIGIN_LABEL: []
+    }
 
     def _get_author_prefix():
         result = {}
@@ -80,73 +96,75 @@ def update_items_by_authorInfo(origin_list, target):
             affiliation_names = []
             affiliations = []
 
-            for name in target['authorNameInfo']:
-                if not bool(name['nameShowFlg']):
+            for name in target.get('authorNameInfo', []):
+                if not bool(name.get('nameShowFlg', "true")):
                     continue
                 family_names.append({
-                    key_map['fname_key']: name['familyName'],
-                    key_map['fname_lang_key']: name['language']
+                    key_map['fname_key']: name.get('familyName', ''),
+                    key_map['fname_lang_key']: name.get('language', '')
                 })
                 given_names.append({
-                    key_map['gname_key']: name['firstName'],
-                    key_map['gname_lang_key']: name['language']
+                    key_map['gname_key']: name.get('firstName', ''),
+                    key_map['gname_lang_key']: name.get('language', '')
                 })
                 full_names.append({
                     key_map['name_key']: "{}, {}".format(
-                        name['familyName'],
-                        name['firstName']),
-                    key_map['name_lang_key']: name['language']
+                        name.get('familyName', ''),
+                        name.get('firstName', '')),
+                    key_map['name_lang_key']: name.get('language', '')
                 })
 
-            for id in target['authorIdInfo']:
-                if not bool(id['authorIdShowFlg']):
+            for id in target.get('authorIdInfo', []):
+                if not bool(id.get('authorIdShowFlg', "true")):
                     continue
-                prefix_info = author_prefix.get(id['idType'], {})
+                prefix_info = author_prefix.get(id.get('idType', ""), {})
                 if prefix_info:
                     id_info = {
                         key_map['id_scheme_key']: prefix_info['scheme'],
-                        key_map['id_key']: id['authorId']
+                        key_map['id_key']: id.get('authorId', '')
                     }
                     if prefix_info['url']:
                         if '##' in prefix_info['url']:
                             url = prefix_info['url'].replace(
-                                '##', id['authorId'])
+                                '##', id.get('authorId', ''))
                         else:
                             url = prefix_info['url']
                         id_info.update({key_map['id_uri_key']: url})
                     identifiers.append(id_info)
 
                     if prefix_info['scheme'] == 'WEKO':
-                        target_id = id['authorId']
-            for email in target['emailInfo']:
+                        target_id = id.get('authorId', '')
+
+            for email in target.get('emailInfo', []):
                 mails.append({
-                    key_map['mail_key']: email['email']
+                    key_map['mail_key']: email.get('email', '')
                 })
-            for affiliation in target['affiliationInfo']:
-                for identifier in affiliation['identifierInfo']:
-                    if not bool(identifier['identifierShowFlg']):
+
+            for affiliation in target.get('affiliationInfo', []):
+                for identifier in affiliation.get('identifierInfo', []):
+                    if not bool(identifier.get('identifierShowFlg', 'true')):
                         continue
-                    affiliation_id_info = affiliation_id.get(identifier['affiliationIdType'], {})
+                    affiliation_id_info = affiliation_id.get(identifier.get('affiliationIdType', ''), {})
                     if affiliation_id_info:
                         id_info = {
                             key_map['affiliation_id_scheme_key']: affiliation_id_info['scheme'],
-                            key_map['affiliation_id_key']: identifier['affiliationId']
+                            key_map['affiliation_id_key']: identifier.get('affiliationId', '')
                         }
                         if affiliation_id_info['url']:
                             if '##' in affiliation_id_info['url']:
                                 url = affiliation_id_info['url'].replace(
-                                    '##', identifier['affiliationId'])
+                                    '##', identifier.get('affiliationId', ''))
                             else:
                                 url = affiliation_id_info['url']
                             id_info.update({key_map['affiliation_id_uri_key']: url})
                         affiliation_identifiers.append(id_info)
 
-                for name in affiliation['affiliationNameInfo']:
-                    if not bool(name['affiliationNameShowFlg']):
+                for name in affiliation.get('affiliationNameInfo', []):
+                    if not bool(name.get('affiliationNameShowFlg', 'true')):
                         continue
                     affiliation_names.append({
-                        key_map['affiliation_name_key']: name['affiliationName'],
-                        key_map['affiliation_name_lang_key']: name['affiliationNameLang']
+                        key_map['affiliation_name_key']: name.get('affiliationName', ''),
+                        key_map['affiliation_name_lang_key']: name.get('affiliationNameLang', '')
                     })
 
                 affiliations.append({
@@ -181,6 +199,7 @@ def update_items_by_authorInfo(origin_list, target):
         return target_id, meta
 
     def _update_author_data(item_id, record_ids):
+        temp_list = []
         try:
             pid = PersistentIdentifier.get('recid', item_id)
             dep = WekoDeposit.get_record(pid.object_uuid)
@@ -205,10 +224,10 @@ def update_items_by_authorInfo(origin_list, target):
                                 continue
                             origin_id = -1
                             change_flag = False
-                            for id in data['nameIdentifiers']:
-                                if id['nameIdentifierScheme'] == 'WEKO':
+                            for id in data.get('nameIdentifiers', []):
+                                if id.get('nameIdentifierScheme', '') == 'WEKO':
                                     author_link.add(id['nameIdentifier'])
-                                    if id['nameIdentifier'] in origin_list:
+                                    if id['nameIdentifier'] in origin_pkid_list:
                                         origin_id = id['nameIdentifier']
                                         change_flag = True
                                         record_ids.append(pid.object_uuid)
@@ -223,6 +242,7 @@ def update_items_by_authorInfo(origin_list, target):
                                 author_data.update(
                                     {k: dep[k]['attribute_value_mlt']})
                                 if origin_id != target_id:
+                                    temp_list.append(origin_id)
                                     author_link.remove(origin_id)
                                     author_link.add(target_id)
 
@@ -231,12 +251,15 @@ def update_items_by_authorInfo(origin_list, target):
             obj = ItemsMetadata.get_record(pid.object_uuid)
             obj.update(author_data)
             obj.commit()
+            process_counter[SUCCESS_LABEL].append({"record_id": item_id, "author_ids": temp_list, "message": ""})
             return pid.object_uuid, author_link
         except PIDDoesNotExistError as pid_error:
             current_app.logger.error("PID {} does not exist.".format(item_id))
+            process_counter[FAIL_LABEL].append({"record_id": item_id, "author_ids": temp_list, "message": "PID {} does not exist.".format(item_id)})
             return None, set()
         except Exception as ex:
             current_app.logger.error(ex)
+            process_counter[FAIL_LABEL].append({"record_id": item_id, "author_ids": temp_list, "message": str(ex)})
             return None, set()
 
     def _process(data_size, data_from):
@@ -252,7 +275,7 @@ def update_items_by_authorInfo(origin_list, target):
                             }
                         }, {
                             "terms": {
-                                "author_link.raw": origin_list
+                                "author_link.raw": origin_pkid_list
                             }
                         }]
                 }
@@ -272,8 +295,9 @@ def update_items_by_authorInfo(origin_list, target):
         for item in search['hits']['hits']:
             item_id = item['_source']['control_number']
             object_uuid, author_link = _update_author_data(item_id, record_ids)
-            update_es_authorinfo.append({
-                'id': object_uuid, 'author_link': list(author_link)})
+            if object_uuid:
+                update_es_authorinfo.append({
+                    'id': object_uuid, 'author_link': list(author_link)})
         db.session.commit()
         # update record to ES
         if record_ids:
@@ -391,9 +415,113 @@ def update_items_by_authorInfo(origin_list, target):
                 break
         current_app.logger.debug(
             "Total {} items have been updated.".format(counter))
+        if update_gather_flg:
+            process_counter[ORIGIN_LABEL] = get_origin_data(origin_pkid_list)
+            update_db_es_data(origin_pkid_list, origin_id_list)
+            delete_cache_data("update_items_by_authorInfo_{}".format(user_id))
+            update_cache_data(
+                "update_items_status_{}".format(user_id),
+                json.dumps(process_counter),
+                current_app.config["WEKO_DEPOSIT_ITEM_UPDATE_STATUS_TTL"])
     except SQLAlchemyError as e:
+        process_counter[SUCCESS_LABEL] = []
+        process_counter[FAIL_LABEL] = [{"record_id": "ALL", "author_ids": [], "message": str(e)}]
+        delete_cache_data("update_items_by_authorInfo_{}".format(user_id))
+        update_cache_data(
+            "update_items_status_{}".format(user_id),
+            json.dumps(process_counter),
+            current_app.config["WEKO_DEPOSIT_ITEM_UPDATE_STATUS_TTL"])
         db.session.rollback()
         current_app.logger. \
             exception('Failed to update items by author data. err:{0}'.
                       format(e))
         update_items_by_authorInfo.retry(countdown=3, exc=e, max_retries=1)
+
+
+def get_origin_data(origin_pkid_list):
+    author_data = Authors.query.filter(Authors.id.in_(origin_pkid_list)).all()
+    return [a.json for a in author_data]
+
+def update_db_es_data(origin_pkid_list, origin_id_list):
+    try:
+        # update DB of Author
+        with db.session.begin_nested():
+            for j in origin_pkid_list:
+                author_data = Authors.query.filter_by(id=j).one()
+                author_data.gather_flg = 1
+                db.session.merge(author_data)
+        db.session.commit()
+    
+        # update ES of Author
+        update_author_q = {
+            "query": {
+                "match": {
+                    "_id": "@id"
+                }
+            }
+        }
+
+        indexer = RecordIndexer()
+        for t in origin_id_list:
+            q = json.dumps(update_author_q).replace("@id", t)
+            q = json.loads(q)
+            res = indexer.client.search(
+                index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
+                body=q
+            )
+            for h in res.get("hits").get("hits"):
+                body = {
+                    'doc': {
+                        'gather_flg': 1
+                    }
+                }
+                indexer.client.update(
+                    index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
+                    doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
+                    id=h.get("_id"),
+                    body=body
+                )
+    except Exception as ex:
+        current_app.logger.debug(ex)
+        db.session.rollback()
+
+
+def make_stats_file(raw_stats):
+    """Make TSV/CSV report file for stats."""
+    file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
+    file_output = StringIO()
+    if file_format == 'csv':
+        writer = csv.writer(file_output, delimiter=",", lineterminator="\n")
+    else:
+        writer = csv.writer(file_output, delimiter="\t", lineterminator="\n")
+    writer.writerow(["[TARGET]"])
+    writer.writerow(list(raw_stats.get(TARGET_LABEL, {}).keys()))
+    writer.writerow(list(raw_stats.get(TARGET_LABEL, {}).values()))
+    writer.writerow("")
+
+    writer.writerow(["[ORIGIN]"])
+    for o in raw_stats.get(ORIGIN_LABEL, []):
+        writer.writerow(list(o.keys()))
+        writer.writerow(list(o.values()))
+    writer.writerow("")
+
+    writer.writerow(["[SUCCESS]"])
+    if raw_stats.get(SUCCESS_LABEL, []):
+        writer.writerow(TITLE_LIST)
+        for item in raw_stats.get(SUCCESS_LABEL, []):
+            term = []
+            for name in TITLE_LIST:
+                term.append(item.get(name))
+            writer.writerow(term)
+    writer.writerow("")
+
+    writer.writerow(["[FAIL]"])
+    if raw_stats.get(FAIL_LABEL, []):
+        writer.writerow(TITLE_LIST)
+        for item in raw_stats.get(FAIL_LABEL, []):
+            term = []
+            for name in TITLE_LIST:
+                term.append(item.get(name))
+            writer.writerow(term)
+
+    return file_output

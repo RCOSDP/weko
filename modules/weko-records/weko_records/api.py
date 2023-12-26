@@ -938,14 +938,13 @@ class ItemTypes(RecordBase):
                         if _prop:
                             # data['meta_list'][_prop_id] = json.loads('{"input_maxItems": "9999","input_minItems": "1","input_type": "cus_'+str(_prop.id)+'","input_value": "","option": {"crtf": false,"hidden": false,"multiple": true,"oneline": false,"required": false,"showlist": false},"title": "'+_prop.name+'","title_i18n": {"en": "", "ja": "'+_prop.name+'"}}')
                             data['schemaeditor']['schema'][_prop_id]=pickle.loads(pickle.dumps(_prop.schema, -1))
-                            if 'items' in data['table_row_map']['schema']['properties'][_prop_id]:
-                                data['table_row_map']['schema']['properties'][_prop_id]['items']=pickle.loads(pickle.dumps(_prop.schema, -1))
-                            else:
-                                data['table_row_map']['schema']['properties'][_prop_id]=pickle.loads(pickle.dumps(_prop.schema, -1))
                             if multiple_flg:
+                                data['table_row_map']['schema']['properties'][_prop_id]['items']=pickle.loads(pickle.dumps(_prop.schema, -1))
+                                data['table_row_map']['schema']['properties'][_prop_id]['type']="array"
                                 _forms = json.loads(json.dumps(pickle.loads(pickle.dumps(_prop.forms, -1))).replace('parentkey',_prop_id))
                                 data['table_row_map']['form'][idx]=pickle.loads(pickle.dumps(_forms, -1))
                             else:
+                                data['table_row_map']['schema']['properties'][_prop_id]=pickle.loads(pickle.dumps(_prop.schema, -1))
                                 _form = json.loads(json.dumps(pickle.loads(pickle.dumps(_prop.form, -1))).replace('parentkey',_prop_id))
                                 data['table_row_map']['form'][idx]=pickle.loads(pickle.dumps(_form, -1))
                                                        

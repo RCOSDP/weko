@@ -115,10 +115,13 @@ require([
     if (tmp_save == 1 || idf_grant_method == 0) {
       let arrayDoi = [identifier_grant_jalc_doi_link, identifier_grant_jalc_cr_doi_link, identifier_grant_jalc_dc_doi_link];
       isSuffixFormat = validateLengDoi(arrayDoi, actionButton);
+      if (identifier_grant == "4"){
+        isSuffixFormatNDL = isDOISuffixFormat(identifier_grant_ndl_jalc_doi_link,identifier_grant_ndl_jalc_doi_suffix,actionButton)
+        isSuffixFormat = isSuffixFormat && isSuffixFormatNDL
+      }
     } else {
       switch (identifier_grant) {
         case "0":
-        case "4":
         default:
           break;
         case "1":
@@ -129,6 +132,9 @@ require([
           break;
         case "3":
           isSuffixFormat = isDOISuffixFormat(identifier_grant_jalc_dc_doi_link, identifier_grant_jalc_dc_doi_suffix, actionButton);
+          break;
+        case "4":
+          isSuffixFormat = isDOISuffixFormat(identifier_grant_ndl_jalc_doi_link, identifier_grant_ndl_jalc_doi_suffix, actionButton);
           break;
       }
     }

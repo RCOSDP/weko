@@ -26,6 +26,7 @@ import uuid
 from collections import OrderedDict
 from datetime import datetime, timezone,date
 from typing import NoReturn, Union
+from tika import parser
 
 import redis
 from redis import sentinel
@@ -64,7 +65,7 @@ from weko_records.api import FeedbackMailList, ItemLink, ItemsMetadata, \
 from weko_records.models import ItemMetadata, ItemReference
 from weko_records.utils import get_all_items, get_attribute_value_all_items, \
     get_options_and_order_list, json_loader, remove_weko2_special_character, \
-    set_timestamp
+    set_timestamp,set_file_date
 from weko_schema_ui.models import PublishStatus
 from weko_redis.redis import RedisConnection
 from weko_user_profiles.models import UserProfile
@@ -160,9 +161,6 @@ class WekoIndexer(RecordIndexer):
                     version_type=self._version_type,
                     body=jrc)
 
-        # Only pass through pipeline if file exists
-        if 'content' in jrc and not skip_files:
-            body['pipeline'] = 'item-file-pipeline'
         if self.client.exists(**es_info):
             del body['version']
             del body['version_type']
@@ -959,6 +957,11 @@ class WekoDeposit(Deposit):
                     self.indexer.upload_metadata(self.jrc,
                                                  self.pid.object_uuid,
                                                  self.revision_id)
+                    feedback_mail_list = FeedbackMailList.get_mail_list_by_item_id(self.id)
+                    if feedback_mail_list:
+                        self.update_feedback_mail()
+                    else:
+                        self.remove_feedback_mail()
                 except TransportError as err:
                     err_passing_config = current_app.config.get(
                         'WEKO_DEPOSIT_ES_PARSING_ERROR_PROCESS_ENABLE')
@@ -1129,23 +1132,19 @@ class WekoDeposit(Deposit):
 
                             # upload file metadata to Elasticsearch
                             try:
-                                file_size_max = current_app.config[
-                                    'WEKO_MAX_FILE_SIZE_FOR_ES']
                                 mimetypes = current_app.config[
                                     'WEKO_MIMETYPE_WHITELIST_FOR_ES']
                                 content = lst.copy()
-                                file_content = ""
-                                if file.obj.file.size <= file_size_max and \
-                                        file.obj.mimetype in mimetypes:
-                                    ## invenio_files_rest.errors.StorageError
-                                    file_content = ""
+                                attachment = {}
+                                if file.obj.mimetype in mimetypes:
                                     try:
-                                        file_content = file.obj.file.read_file(lst)
-                                    except StorageError as se:
-                                        import traceback
-                                        current_app.logger.critical("StorageError: {}".format(se))
-                                        current_app.logger.critical(traceback.format_exc())
-                                content.update({"file": file_content})
+                                        reader = parser.from_file(file.obj.file.uri)
+                                        attachment["content"] = "".join(reader["content"].splitlines())
+                                    except FileNotFoundError as se:
+                                        current_app.logger.error("FileNotFoundError: {}".format(se))
+                                        current_app.logger.error("file.obj: {}".format(file.obj))
+
+                                content.update({"attachment": attachment})
                                 contents.append(content)
                             except Exception as e2:
                                 import traceback
@@ -1257,6 +1256,96 @@ class WekoDeposit(Deposit):
                     'attribute_name' in self[key]:
                 self.pop(key)
 
+    def record_data_from_act_temp(self):
+        def _delete_empty(data):
+            if isinstance(data, dict):
+                result = {}
+                flg = False
+                if len(data) == 0:
+                    return flg, result
+                else:
+                    for k, v in data.items():
+                        not_empty, dd = _delete_empty(v)
+                        if not_empty:
+                            flg = True
+                            result[k] = dd
+                    return flg, result
+            elif isinstance(data, list):
+                result = []
+                flg = False
+                if len(data) == 0:
+                    return flg, None
+                else:
+                    for d in data:
+                        not_empty, dd = _delete_empty(d)
+                        if not_empty:
+                            flg = True
+                            result.append(dd)
+                    return flg, result
+            else:
+                if data:
+                    return True, data
+                else:
+                    return False, None
+        
+        def _get_title_lang(itemtype_id,_data):
+            from weko_items_autofill.utils import get_title_pubdate_path
+            path = get_title_pubdate_path(itemtype_id).get("title")
+            lang = ""
+            title = ""
+            if "title_parent_key" in path and path["title_parent_key"] in _data:
+                temp_record = _data[path["title_parent_key"]]
+                if "title_value_lst_key" in path:
+                    for p in path["title_value_lst_key"]:
+                        if isinstance(temp_record, list) and len(temp_record)>0 \
+                            and p in temp_record[0]:
+                            title = temp_record[0][p]
+                        elif p in temp_record:
+                            title = temp_record[p]
+                if "title_lang_lst_key" in path:
+                    for p in path["title_lang_lst_key"]:
+                        if isinstance(temp_record, list) and len(temp_record)>0 \
+                            and p in temp_record[0]:
+                            lang = temp_record[0][p]
+                        elif p in temp_record:
+                            lang = temp_record[p]
+            return title, lang
+            
+        pid = PersistentIdentifier.query.filter_by(pid_type="recid", pid_value=self.get("recid")).one_or_none()
+        if pid:
+            item_id = pid.object_uuid
+            from weko_workflow.api import WorkActivity
+            activity = WorkActivity().get_workflow_activity_by_item_id(item_id)
+
+            if activity:
+                itemtype_id = activity.workflow.itemtype_id
+                schema = "/items/jsonschema/{}".format(itemtype_id)
+                temp_data = activity.temp_data
+                if temp_data:
+                    data = json.loads(temp_data).get("metainfo")
+                    title, lang = _get_title_lang(itemtype_id,data)
+                    rtn_data = {}
+                    deleted_items=[]
+                    for k, v in data.items():
+                        flg, child_data  = _delete_empty(v)
+                        if flg:
+                            rtn_data[k] = child_data
+                        else:
+                            deleted_items.append(k)
+                    # if activity.approval1 == None:
+                    #     deleted_items.append("approval1")
+                    # if activity.approval2 == None:
+                    #     deleted_items.append("approval2")
+                    rtn_data["deleted_items"] = deleted_items
+                    rtn_data["$schema"] = schema
+                    rtn_data["title"] = title if title else activity.title
+                    rtn_data["lang"] = lang
+
+                    return rtn_data
+        
+        return None
+
+        
     def convert_item_metadata(self, index_obj, data=None):
         """ 
 
@@ -1296,6 +1385,8 @@ class WekoDeposit(Deposit):
                     if not index_obj.get('is_save_path'):
                         datastore.delete(cache_key)
                     data = json.loads(data_str.decode('utf-8'))
+                if not data:
+                    data = self.record_data_from_act_temp()
         except BaseException:
             current_app.logger.error(
                 "Unexpected error: {}".format(sys.exc_info()))
@@ -2079,8 +2170,9 @@ class WekoRecord(Record):
             option = meta_options.get(key, {}).get('option')
             if not val or not option:
                 continue
-            # Just get data of 'File' and 'Pubdate'.
-            if val.get('attribute_type') != "file" and key != 'pubdate':
+            
+            # Just get data of 'File'
+            if val.get('attribute_type') != "file":
                 continue
             # Check option hide.
             if option.get("hidden"):
@@ -2110,9 +2202,11 @@ class WekoRecord(Record):
                     'attribute_name')
                 nval['attribute_type'] = val.get('attribute_type')
                 # Format structure to display.
-                nval['attribute_value_mlt'] = \
-                    get_attribute_value_all_items(key, file_metadata,
+                attr_mlt = get_attribute_value_all_items(key, file_metadata,
                                                   copy.deepcopy(solst))
+                set_file_date(key, copy.deepcopy(solst), file_metadata, attr_mlt)
+                
+                nval['attribute_value_mlt'] = attr_mlt
                 items.append(nval)
             else:
                 # Processing get pubdate.

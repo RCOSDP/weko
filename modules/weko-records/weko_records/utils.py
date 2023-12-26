@@ -45,7 +45,7 @@ from .api import ItemTypes, Mapping
 from .config import COPY_NEW_FIELD, WEKO_TEST_FIELD
 
 
-def json_loader(data, pid, owner_id=None):
+def json_loader(data, pid, owner_id=None, with_deleted=False):
     """Convert the item data and mapping to jpcoar.
 
     :param data: json from item form post.
@@ -105,8 +105,9 @@ def json_loader(data, pid, owner_id=None):
     )
 
     # get item type mappings
-    ojson = ItemTypes.get_record(item_type_id)
-    mjson = Mapping.get_record(item_type_id)
+    ojson = ItemTypes.get_record(item_type_id, with_deleted=with_deleted)
+    mjson = Mapping.get_record(item_type_id, with_deleted=with_deleted)
+
 
     if not (ojson and mjson):
         raise RuntimeError("Item Type {} does not exist.".format(item_type_id))
@@ -1541,6 +1542,24 @@ def check_has_attribute_value(node):
         current_app.logger.error("Function check_has_attribute_value error:", e)
         return False
 
+def set_file_date(root_key, solst, metadata, attr_lst):
+    """set date.dateValue to attribute_value_mlt."""
+    prop_name = ""
+    for lst in solst:
+        keys = lst[0].replace("[]", "").split(".")
+        if keys[0].startswith(root_key) and keys[-1] == "dateValue":
+            name = lst[2]
+            if name:
+                prop_name = name
+            else:
+                prop_name = lst[1]
+
+    for i, d in enumerate(metadata):
+        if isinstance(d, dict):
+            date_elem = d.get("date")
+            if date_elem and len(date_elem) > 0:
+                date_value = date_elem[0].get("dateValue")
+                attr_lst[i][0].insert(0,[{prop_name:date_value}])
 
 def get_attribute_value_all_items(
     root_key,
