@@ -335,6 +335,8 @@ class WorkFlowSettingView(BaseView):
                 is_sysadmin =True
                 break
 
+        is_display_restricted_access_checkbox = is_sysadmin and current_app.config.get('WEKO_ADMIN_DISPLAY_RESTRICTED_SETTINGS', False)
+
         if '0' == workflow_id:
             """Create new workflow"""
             return self.render(
@@ -350,6 +352,7 @@ class WorkFlowSettingView(BaseView):
                 hide_label=hide_label,
                 display_hide_label=display_hide,
                 is_sysadmin=is_sysadmin,
+                is_display_restricted_access_checkbox=is_display_restricted_access_checkbox,
             )
 
         """Update the workflow info"""
@@ -364,7 +367,7 @@ class WorkFlowSettingView(BaseView):
         else:
             display = role
             hide = []
-        
+
         if workflows.open_restricted and not is_sysadmin:
             abort(403)
 
@@ -380,7 +383,8 @@ class WorkFlowSettingView(BaseView):
             display_label=display_label,
             hide_label=hide_label,
             display_hide_label=display_hide,
-            is_sysadmin=is_sysadmin
+            is_sysadmin=is_sysadmin,
+            is_display_restricted_access_checkbox=is_display_restricted_access_checkbox,
         )
 
     @expose('/<string:workflow_id>', methods=['POST', 'PUT'])

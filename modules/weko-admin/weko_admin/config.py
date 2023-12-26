@@ -1155,9 +1155,8 @@ WEKO_ADMIN_REPOSITORY_ACCESS_LIST = [
     'location',
     'facet-search',
     'restricted_access',
-    'mailtemplates'
-    'community',
-    'restricted_access'
+    'mailtemplates',
+    'community'
 ] + WEKO_ADMIN_COMMUNITY_ACCESS_LIST
 """Classes Repository Administrator can access."""
 
@@ -1306,5 +1305,8 @@ WEKO_ADMIN_CACHE_TEMP_DIR_INFO_KEY_DEFAULT = 'cache::temp_dir_info'
 WEKO_ADMIN_USE_REGEX_IN_CRAWLER_LIST = False
 """ If True, enable regex function in crawler list processing. """
 
-WEKO_ADMIN_USE_MAIL_TEMPLATE_EDIT = True
+WEKO_ADMIN_USE_MAIL_TEMPLATE_EDIT = False
 """Whether system can edit mail template or not."""
+
+WEKO_ADMIN_DISPLAY_RESTRICTED_SETTINGS = False
+"""If True, display admin restricted settings."""
