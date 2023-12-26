@@ -190,6 +190,10 @@ msgstr "データ識別子が入力されていません"
 msgid "Cannot register selected DOI for current Item Type of this item."
 msgstr "選択されたDOIをこのアイテムのアイテムタイプに登録できません。"
 
+#: weko_workflow/utils.py: 433
+msgid "When assigning a JaLC DOI through NDL, the resource type must be 'doctor thesis'."
+msgstr "NDL JaLCに割り当てる場合、資源タイプは「doctoral thesis」である必要があります。"
+
 #: weko_workflow/views.py:405 weko_workflow/views.py:407
 #: weko_workflow/views.py:410 weko_workflow/views.py:412
 msgid "Authorization required"
@@ -594,7 +598,7 @@ msgid "Your session has timed out. Please login again."
 msgstr "セッションが切れました。再度ログインしてください。"
 
 msgid "Restricted Access Flag"
-msgstr "制限公開フラグ"
+msgstr "利用申請フラグ"
 
 msgid "Enable Full"
 msgstr "有効にする"

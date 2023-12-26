@@ -71,7 +71,7 @@ services:
       # production or development
       # - FLASK_ENV=development
       - FLASK_ENV=production
-      #- FLASK_DEBUG=True
+      # - FLASK_DEBUG=True
       - SEARCH_INDEX_PREFIX=tenant1
       #- INVENIO_DB_POOL_CLASS=QueuePool
       - INVENIO_DB_POOL_CLASS=NullPool

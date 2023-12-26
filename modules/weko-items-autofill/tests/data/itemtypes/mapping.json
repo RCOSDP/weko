@@ -86,59 +86,51 @@
             "description": {
                 "@value": "subitem_description",
                 "@attributes": {
-                  "descriptionType": "subitem_description_type"
+                  "xml:lang": "subitem10_lang",
+                  "descriptionType": "description_descriptionType"
                 }
             }
         }
     },
     "test_item11":{
-        "memo":"exist @attributes.subjectSchema",
+        "memo":"subject",
         "jpcoar_mapping": {
             "subject": {
                 "@value": "test11_subitem1",
                 "@attributes": {
-                  "subjectScheme": "test11_subitem1"
+                  "xml:lang": "subject_lang",
+                  "subjectScheme": "subject_subjectScheme",
+                  "subjectURI": "subject_subjectURI"
                 }
             }
         }
     },
     "test_item12":{
-        "memo":"exist @attributes.subjectURI",
+        "memo":"exist @attributes.dateType",
         "jpcoar_mapping": {
-            "subject": {
+            "date": {
                 "@value": "test12_subitem1",
-                "@attributes": {
-                    "subjectURI": "test12_subitem1"
-                }
+                "@attributes": { "dateType": "test12_subitem2" }
             }
         }
     },
     "test_item13":{
-        "memo":"exist @attributes.dateType",
-        "jpcoar_mapping": {
-            "date": {
-                "@value": "test13_subitem1",
-                "@attributes": { "dateType": "test13_subitem2" }
+        "memo":"not exist @value",
+        "jpcoar_mapping":{
+            "others":{
+                "@attributes":{"xxx":"test13_subitem1"}
             }
         }
     },
     "test_item14":{
-        "memo":"not exist @value",
+        "memo":"not exist @attributes",
         "jpcoar_mapping":{
             "others":{
-                "@attributes":{"xxx":"test14_subitem1"}
+                "@value":"test14_subitem1"
             }
         }
     },
     "test_item15":{
-        "memo":"not exist @attributes",
-        "jpcoar_mapping":{
-            "others":{
-                "@value":"test15_subitem1"
-            }
-        }
-    },
-    "test_item16":{
-        "jpcoar_mapping":{"volume": { "@value": "test16_subitem1" } }
+        "jpcoar_mapping":{"volume": { "@value": "test15_subitem1" } }
     }
 }

@@ -788,6 +788,11 @@ class TestSiteInfo:
         with patch("weko_admin.models.db.session.begin_nested",side_effect=SQLAlchemyError):
             result = SiteInfo.get()
             assert result == {}
+        with patch("weko_admin.models.db.session.begin_nested",side_effect=Exception("test_error")):
+            result = SiteInfo.get()
+            assert result == {}
+        
+        assert 1==2
         
 #    def update(cls, site_info):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_models.py::TestSiteInfo::test_update -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp

@@ -6,6 +6,7 @@
 # Invenio is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
 
+# .tox/c1/bin/pytest --cov=invenio_records_rest tests/test_permissions.py -vv -s -v --cov-branch --cov-report=term --basetemp=/code/modules/invenio-records-rest/.tox/c1/tmp
 
 """Permissions tests."""
 
@@ -16,16 +17,16 @@ import json
 from tests.helpers import record_url
 
 
-def test_default_permissions(app, default_permissions, test_data, search_url,
-                             test_records, indexed_records):
+def test_default_permissions(app, default_permissions, indexed_10records, 
+                             record_data10, search_url,aggs_and_facet):
     """Test default create permissions."""
-    pid, record = test_records[0]
+    pid, record = indexed_10records[0]
     rec_url = record_url(pid)
-    data = json.dumps(test_data[0])
+    data = json.dumps(record_data10[0])
     h = {'Content-Type': 'application/json'}
     hp = {'Content-Type': 'application/json-patch+json'}
 
-    with app.test_client() as client:
+    with default_permissions.test_client() as client:
         args = dict(data=data, headers=h)
         pargs = dict(data=data, headers=hp)
         qs = {'user': '1'}

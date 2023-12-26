@@ -415,6 +415,13 @@
                         obj_of_condition.selected_key = search_key;
                         obj_of_condition.key_options = $scope.detail_search_key;
                         obj_of_condition.key_value = angular.copy(db_data[$scope.detail_search_key[sub_default_key].inx]);
+                        if (db_data[$scope.detail_search_key[sub_default_key].inx].inputType == 'checkbox_list'){
+                            if (db_data[$scope.detail_search_key[sub_default_key].inx].check_val.length>$scope.load_delimiter){
+                                obj_of_condition.key_value.limit=$scope.load_delimiter;
+                            }else{
+                                obj_of_condition.key_value.limit=db_data[$scope.detail_search_key[sub_default_key].inx].check_val.length;
+                            }
+                        }
                         break;
                     }
                 }

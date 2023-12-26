@@ -25,6 +25,7 @@ from weko_items_autofill.utils import (
     get_cinii_numpage,
     get_cinii_date_data,
     get_cinii_data_by_key,
+    get_cinii_product_identifier,
     get_crossref_title_data,
     _build_name_data,
     get_crossref_creator_data,
@@ -85,7 +86,7 @@ def test_cached_api_json(app):
 
 # def get_item_id(item_type_id):
 #     def _get_jpcoar_mapping(rtn_results, jpcoar_data):
-# .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_item_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_item_id -vv -v -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
 def test_get_item_id(app, itemtypes, mocker):
     data = json_data("data/itemtypes/mapping.json")
 
@@ -134,12 +135,12 @@ def test_get_item_id(app, itemtypes, mocker):
             "model_id": "test_item6",
         },
         "date": {
-            "@attributes": {"dateType": "test13_subitem2"},
-            "@value": "test13_subitem1",
-            "model_id": "test_item13",
+            "@attributes": {"dateType": "test12_subitem2"},
+            "@value": "test12_subitem1",
+            "model_id": "test_item12",
         },
         "description": {
-            "@attributes": {"descriptionType": "subitem_description_type"},
+            "@attributes": {"xml:lang": "subitem10_lang", "descriptionType": "description_descriptionType"},
             "@value": "subitem_description",
             "model_id": "test_item10",
         },
@@ -151,11 +152,11 @@ def test_get_item_id(app, itemtypes, mocker):
         "others": [
             {
                 "others": {
-                    "@attributes": {"xxx": "test14_subitem1"},
-                    "model_id": "test_item14",
+                    "@attributes": {"xxx": "test13_subitem1"},
+                    "model_id": "test_item13",
                 }
             },
-            {"others": {"@value": "test15_subitem1", "model_id": "test_item15"}},
+            {"others": {"@value": "test14_subitem1", "model_id": "test_item14"}},
         ],
         "relation": {
             "model_id": "test_item8",
@@ -164,23 +165,12 @@ def test_get_item_id(app, itemtypes, mocker):
                 "@value": "test8_subitem1.test8_subitem2",
             },
         },
-        "subject": [
-            {
-                "subject": {
-                    "@attributes": {"subjectScheme": "test11_subitem1"},
-                    "@value": "test11_subitem1",
-                    "model_id": "test_item11",
-                }
-            },
-            {
-                "subject": {
-                    "@attributes": {"subjectURI": "test12_subitem1"},
-                    "@value": "test12_subitem1",
-                    "model_id": "test_item12",
-                }
-            },
-        ],
-        "volume": {"@value": "test16_subitem1", "model_id": "test_item16"},
+        "subject": {
+            "@attributes": {"xml:lang":"subject_lang", "subjectScheme": "subject_subjectScheme","subjectURI":"subject_subjectURI"},
+            "@value": "test11_subitem1",
+            "model_id": "test_item11",
+        },
+        "volume": {"@value": "test15_subitem1", "model_id": "test_item15"},
     }
     result = get_item_id(1)
     assert result == test
@@ -473,74 +463,80 @@ def test_pack_single_value_as_dict():
 # def pack_data_with_multiple_type_cinii(data1, type1, data2, type2):
 # .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_pack_data_with_multiple_type_cinii -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
 def test_pack_data_with_multiple_type_cinii():
-    data1 = "value1"
-    type1 = "test_type1"
-    data2 = "value2"
-    type2 = "test_type2"
-    result = pack_data_with_multiple_type_cinii(data1, type1, data2, type2)
-    assert result == [
-        {"@value": "value1", "@type": "test_type1"},
-        {"@value": "value2", "@type": "test_type2"},
+    data = [
+      {
+        "@type": "PISSN",
+        "@value": "13402625"
+      },
+      {
+        "@type": "EISSN",
+        "@value": "18845843"
+      }
     ]
-
-    result = pack_data_with_multiple_type_cinii("", "", "", "")
-    assert result == []
+    type1 = "PISSN"
+    type2 = "ISSN"
+    result = pack_data_with_multiple_type_cinii(data, type1, type2)
+    assert result == [
+        {"@value": "13402625", "@type": "PISSN"},
+    ]
 
 
 # def get_cinii_creator_data(data):
-# .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_cinii_creator_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_cinii_creator_data -vv -s -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
 def test_get_cinii_creator_data():
-    data = json_data("data/cinii_response_example.json")["@graph"][0]["dc:creator"]
-    test = [
-        {"@value": "テスト 太郎", "@language": "ja"},
-        {"@value": "test taro", "@language": "en"},
-    ]
+    data = json_data("data/cinii_response_sample1.json")['response']['creator']
     result = get_cinii_creator_data(data)
+    test = [
+        {"@value":"テスト 太郎", "@language":"ja"},
+        {"@value":"TEST Taro", "@language":"en"},
+        {"@value":"テスト 三郎", "@language":"ja"},
+        {"@value":"TEST Saburo", "@language":"en"},
+    ]
     assert result == test
 
 
-# def get_cinii_contributor_data(data):
-# .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_cinii_contributor_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_cinii_contributor_data -vv -v -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
 def test_get_cinii_contributor_data():
-    data = json_data("data/cinii_response_example.json")["@graph"][0]["foaf:maker"]
+    data = json_data("data/cinii_response_sample1.json")['response']["contributor"]
     test = [
-        {"@value": "テスト組織", "@language": "ja"},
-        {"@value": "test organization", "@language": "en"},
+        {"@value": "テスト 次郎", "@language": "ja"},
+        {"@value": "TEST Ziro", "@language": "en"},
+        {"@value": "テスト 花子", "@language": "ja"},
+        {"@value": "TEST Hanako", "@language": "en"},
     ]
     result = get_cinii_contributor_data(data)
     assert result == test
 
-
 # def get_cinii_description_data(data):
 # .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_cinii_description_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
 def test_get_cinii_description_data():
-    data = json_data("data/cinii_response_example.json")["@graph"][0]["dc:description"]
+    data = json_data("data/cinii_response_sample1.json")['response']["description"]
     test = [
-        {"@value": "これはテストの説明です", "@language": "ja", "@type": "Abstract"},
-        {"@value": "this is test description.", "@language": "en", "@type": "Abstract"},
+        {"@value": "this is test abstract.", "@language": "en", "@type": "Abstract"},
+        {"@value": "これはテストの抄録です。", "@language": "ja", "@type": "Abstract"},
+        {"@value": "this is other abstract.", "@language": "en", "@type": "Other"},
+        {"@value": "これはその他の抄録です。", "@language": "ja", "@type": "Other"}
     ]
     result = get_cinii_description_data(data)
     assert result == test
 
-
 # def get_cinii_subject_data(data):
 # .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_cinii_subject_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
 def test_get_cinii_subject_data():
-    data = json_data("data/cinii_response_example.json")["@graph"][0]["foaf:topic"]
+    data = json_data("data/cinii_response_sample1.json")['response']["foaf:topic"]
     test = [
         {
             "@scheme": "Other",
-            "@URI": "https://ci.nii.ac.jp/d/search?q=p53",
-            "@value": "p53",
+            "@URI": "https://cir.nii.ac.jp/all?q=%E3%82%B7%E3%82%B9%E3%83%86%E3%83%A0%E3%83%87%E3%82%B6%E3%82%A4%E3%83%B3",
+            "@value": "システムデザイン",
             "@language": "ja",
         },
         {
             "@scheme": "Other",
-            "@URI": "https://ci.nii.ac.jp/d/search?q=Myc",
-            "@value": "Myc",
-            "@language": "en",
+            "@URI": "https://cir.nii.ac.jp/all?q=%E6%A4%9C%E7%B4%A2%E3%82%A8%E3%83%B3%E3%82%B8%E3%83%B3",
+            "@value": "検索エンジン",
+            "@language": "ja",
         },
-        {"@scheme": "Other", "@URI": "https://ci.nii.ac.jp/d/search?q=Runx1"},
     ]
     result = get_cinii_subject_data(data)
     assert result == test
@@ -565,28 +561,38 @@ def test_get_cinii_page_data(app, mocker):
 def test_get_cinii_numpage(app, mocker):
     mocker.patch(
         "weko_items_autofill.utils.pack_single_value_as_dict",
-        side_effect=lambda x: {"@value": x},
+        side_effect=lambda x: {"@value": int(x)} if x != None else {"@value":None},
     )
     mocker.patch(
         "weko_items_autofill.utils.get_cinii_page_data",
-        side_effect=lambda x: {"@value": x},
+        side_effect=lambda x: {"@value": int(x)} if x != None else {"@value":None},
     )
 
+    # exist numPages
     data = {
-        "prism:pageRange": "6",
+        "jpcoar:numPages": "6",
         "prism:startingPage": "10",
         "prism:endingPage": "15",
     }
     result = get_cinii_numpage(data)
-    assert result == {"@value": "6"}
+    assert result == {"@value": 6}
+    
+    # not exist numPage, exist startingPage, endingPage
     data = {"prism:startingPage": "10", "prism:endingPage": "15"}
     result = get_cinii_numpage(data)
-    assert result == {"@value": "6"}
+    assert result == {"@value": 6}
 
+    # not exist numPage, startingPage, endingPage
+    data = {}
+    result = get_cinii_numpage(data)
+    assert result == {"@value": None}
+    
+    # raise exception
     data = {"prism:startingPage": "a", "prism:endingPage": "b"}
     result = get_cinii_numpage(data)
     assert result == {"@value": None}
-
+    
+    
 
 # def get_cinii_date_data(data):
 # .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_cinii_date_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
@@ -599,65 +605,91 @@ def test_get_cinii_date_data():
     result = get_cinii_date_data(data)
     assert result == {"@value": None, "@type": None}
 
+# def get_cinii_product_identifier(data, type1, type2):
+# .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_cinii_product_identifier -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
+def test_get_cinii_product_identifier():
+    data = json_data("data/cinii_response_sample1.json")['response']["productIdentifier"]
+    result = get_cinii_product_identifier(data, "NAID", "DOI")
+    test = [
+        {"@value": "001122334455", "@type":"NAID"},
+        {"@value": "10.12334/jkg.12.11_222", "@type":"DOI"},
+    ]
+    assert result == test
 
 # def get_cinii_data_by_key(api, keyword):
-# .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_cinii_data_by_key -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
-def test_get_cinii_data_by_key(app, mocker):
+# .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_cinii_data_by_key -vv -v -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
+def test_get_cinii_data_by_key(app):
     api = {"response": {}}
     result = get_cinii_data_by_key(api, "key")
     assert result == {}
 
-    api = {"response": json_data("data/cinii_response_example.json")}
+    api = json_data("data/cinii_response_sample1.json")
     test = {
-        "title": [{"@value": "this is test Dissertation", "@language": "ja"}],
-        "alternative": [{"@value": "this is test Dissertation", "@language": "ja"}],
+        "title": [
+            {"@value": "テストタイトル", "@language": "ja"},
+            {"@value": "test title", "@language": "en"},
+            {"@value": "テストのタイトル", "@language": "ja"},
+        ],
+        "alternative": [
+            {"@value": "other title", "@language": "en"},
+            {"@value": "別タイトル", "@language": "ja"},
+        ],
         "creator": [
             {"@value": "テスト 太郎", "@language": "ja"},
-            {"@value": "test taro", "@language": "en"},
+            {"@value": "TEST Taro", "@language": "en"},
+            {"@value": "テスト 三郎", "@language": "ja"},
+            {"@value": "TEST Saburo", "@language": "en"},
         ],
         "contributor": [
-            {"@value": "テスト組織", "@language": "ja"},
-            {"@value": "test organization", "@language": "en"},
+            {"@value": "テスト 次郎", "@language": "ja"},
+            {"@value": "TEST Ziro", "@language": "en"},
+            {"@value": "テスト 花子", "@language": "ja"},
+            {"@value": "TEST Hanako", "@language": "en"}
         ],
         "description": [
-            {"@value": "これはテストの説明です", "@type": "Abstract", "@language": "ja"},
-            {
-                "@value": "this is test description.",
-                "@type": "Abstract",
-                "@language": "en",
-            },
+            {"@value": "this is test abstract.", "@type": "Abstract", "@language": "en"},
+            {"@value": "これはテストの抄録です。", "@type": "Abstract", "@language": "ja"},
+            {"@value": "this is other abstract.", "@type": "Other", "@language": "en"},
+            {"@value": "これはその他の抄録です。", "@type": "Other", "@language": "ja"},
         ],
         "subject": [
             {
                 "@scheme": "Other",
-                "@URI": "https://ci.nii.ac.jp/d/search?q=p53",
-                "@value": "p53",
+                "@URI": "https://cir.nii.ac.jp/all?q=%E3%82%B7%E3%82%B9%E3%83%86%E3%83%A0%E3%83%87%E3%82%B6%E3%82%A4%E3%83%B3",
+                "@value": "システムデザイン",
                 "@language": "ja",
             },
             {
                 "@scheme": "Other",
-                "@URI": "https://ci.nii.ac.jp/d/search?q=Myc",
-                "@value": "Myc",
-                "@language": "en",
-            },
-            {"@scheme": "Other", "@URI": "https://ci.nii.ac.jp/d/search?q=Runx1"},
+                "@URI": "https://cir.nii.ac.jp/all?q=%E6%A4%9C%E7%B4%A2%E3%82%A8%E3%83%B3%E3%82%B8%E3%83%B3",
+                "@value": "検索エンジン",
+                "@language": "ja",
+            }
         ],
-        "sourceTitle": [{"@value": "test_publication", "@language": "ja"}],
-        "volume": {"@value": "10"},
-        "issue": {"@value": "5"},
-        "pageStart": {"@value": "10"},
-        "pageEnd": {"@value": "15"},
-        "numPages": {"@value": "6"},
-        "date": {"@value": "2022-10-01", "@type": "Issued"},
-        "publisher": [{"@value": "Test University (試験大学)", "@language": "ja"}],
-        "sourceIdentifier": [],
+        "sourceTitle": [
+            {"@value": "テスト雑誌", "@language": "ja"},
+            {"@value": "test journal", "@language": "en"}
+        ],
+        "volume": {"@value": "62"},
+        "issue": {"@value": "11"},
+        "pageStart": {"@value": "473"},
+        "pageEnd": {"@value": "477"},
+        "numPages": {"@value": "5"},
+        "date": {"@value": "2012-11-02", "@type": "Issued"},
+        "publisher": [
+            {"@value": "test publisher", "@language": "en"},
+            {"@value": "テスト公開", "@language": "ja"}
+        ],
+        "sourceIdentifier": [
+            {"@value": "87654321", "@type": "ISSN"},
+            {"@value": "AN34567890", "@type": "NCID"}
+        ],
         "relation": [
-            {"@value": "123456789101", "@type": "NAID"},
-            {"@value": [{"@value": "10.1016/j.test.2022.146234"}], "@type": "DOI"},
+            {"@value": "001122334455", "@type": "NAID"},
+            {"@value": "10.12334/jkg.12.11_222", "@type": "DOI"},
         ],
     }
     result = get_cinii_data_by_key(api, "all")
-
     assert result == test
 
     result = get_cinii_data_by_key(api, "other_key")
@@ -1074,7 +1106,7 @@ def test_sort_by_item_type_order():
 
 
 # def get_key_value(schema_form, val, parent_key):
-# .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_key_value -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_key_value -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
 def test_get_key_value():
     # item is not dict
     data = json_data("data/itemtypes/mapping.json")
@@ -1082,85 +1114,75 @@ def test_get_key_value():
     # not exist @value
     with patch(
         "weko_items_autofill.utils.get_autofill_key_path",
+        side_effect=[{"key": "test_item13.test13_subitem1"}],
+    ):
+        result = get_key_value(
+            schema_form, data["test_item13"]["jpcoar_mapping"]["others"], "others"
+        )
+        assert result == {}
+    # not exist @attributes
+    with patch(
+        "weko_items_autofill.utils.get_autofill_key_path",
         side_effect=[{"key": "test_item14.test14_subitem1"}],
     ):
         result = get_key_value(
             schema_form, data["test_item14"]["jpcoar_mapping"]["others"], "others"
         )
-        assert result == {}
+        assert result == {"@value": "test_item14.test14_subitem1"}
 
-    # not exist @attributes
-    with patch(
-        "weko_items_autofill.utils.get_autofill_key_path",
-        side_effect=[{"key": "test_item15.test15_subitem1"}],
-    ):
-        result = get_key_value(
-            schema_form, data["test_item15"]["jpcoar_mapping"]["others"], "others"
-        )
-        assert result == {"@value": "test_item15.test15_subitem1"}
-
-    def assert_test(item_name, parent_key, attribute, value_key, attributes_key):
+    def assert_test(item_name, parent_key, value_key, attributes_keys):
+        mock_effect = [{"key": value_key}]
+        mock_effect += [{"key": attributes_key} for attributes_key in attributes_keys.values()]
         with patch(
             "weko_items_autofill.utils.get_autofill_key_path",
-            side_effect=[{"key": value_key}, {"key": attributes_key}],
+            side_effect=mock_effect,
         ):
             result = get_key_value(
                 schema_form, data[item_name]["jpcoar_mapping"][parent_key], parent_key
             )
-            assert result == {"@value": value_key, attribute: attributes_key}
+            test = {"@value":value_key}
+            test.update(attributes_keys)
+            assert result == test
 
+    
     # exist @attributes.xml:lang
     assert_test(
-        "test_item2",
-        "title",
-        "@language",
-        "test_item2.test2_subitem1",
-        "test_item2.test2_subitem2",
+        item_name="test_item2",
+        parent_key="title",
+        value_key="test2_subitem1",
+        attributes_keys={"@language":"test2_subitems"}
     )
 
     # exist @attributes.identifierType
     assert_test(
-        "test_item9",
-        "identifier",
-        "@type",
-        "test_item9.subitem_identifier_uri",
-        "test_item9.subitem_identifier_type",
+        item_name="test_item9",
+        parent_key="identifier",
+        value_key="subitem_identifier_uri",
+        attributes_keys={"@type":"subitem_identifier_type"}
     )
 
     # exist @attributes.descriptionType
     assert_test(
-        "test_item10",
-        "description",
-        "@type",
-        "test_item10.subitem_description",
-        "test_item10.subitem_description_type",
+        item_name="test_item10",
+        parent_key="description",
+        value_key="subitem_description",
+        attributes_keys={"@language":"subitem10_lang","@type":"description_descriptionType"}
     )
 
     # exist @attributes.subjectSchema
     assert_test(
-        "test_item11",
-        "subject",
-        "@scheme",
-        "test_item11.test11_subitem1",
-        "test_item11.test11_subitem1",
+        item_name="test_item11",
+        parent_key="subject",
+        value_key="test11_subitem1",
+        attributes_keys={"@language":"subject_lang","@scheme":"subject_subjectScheme","@URI":"subject_subjectURI"}
     )
-
-    # exist @attributes.subjectURI
-    assert_test(
-        "test_item12",
-        "subject",
-        "@URI",
-        "test_item12.test12_subitem1",
-        "test_item12.test12_subitem1",
-    )
-
+    
     # exist @attributes.dateType
     assert_test(
-        "test_item13",
-        "date",
-        "@type",
-        "test_item13.test13_subitem1",
-        "test_item13.test13_subitem1",
+        item_name="test_item12",
+        parent_key="date",
+        value_key="test12_subitem1",
+        attributes_keys={"@type":"test12_subitem2"}
     )
 
 
@@ -1547,14 +1569,15 @@ def test_deepcopy():
 
 
 # def fill_data(form_model, autofill_data, is_multiple_data=False):
-# .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_fill_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_fill_data -vv -v -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
 def test_fill_data():
     # autofill_data is not dict, list
     form_model = ""
     autofill_data = ""
     result = fill_data(form_model, autofill_data)
     assert result == None
-
+    
+    # not multiple_data, form.get(key) is not list
     autofill_data = [{"@value": "A.Test1", "@language": "en"}]
     form_model = {
         "@value": {"test_item6": {"creatorNames": {"creatorName": "@value"}}},
@@ -1564,17 +1587,51 @@ def test_fill_data():
         "@value": {"test_item6": {"creatorNames": {"creatorName": "A.Test1"}}},
         "@language": {"test_item6": {"creatorNames": {"creatorNameLang": "en"}}},
     }
-    fill_data(form_model, autofill_data)
-    assert form_model == test
-
+    result = fill_data(form_model, autofill_data)
+    #assert form_model == test
+    assert result == test
+    
+    # not multiple_data, form.get(key) is list
     autofill_data = [{"@value": "A.Test1"}]
     form_model = {
         "@value": [{"test_item6": {"creatorNames": {"creatorName": "@value"}}}],
     }
     test = {"@value": [{"test_item6": {"creatorNames": {"creatorName": "A.Test1"}}}]}
-    fill_data(form_model, autofill_data, True)
-    assert form_model == test
+    result = fill_data(form_model, autofill_data)
+    assert result == test
 
+    # multiple_data, form.get(key) is list
+    autofill_data = [
+        [{"@value": "TEST Taro", "@language": "en"},{"@value": "テスト 太郎", "@language": "ja"}],
+        [{"@value": "TEST Ziro", "@language": "en"},{"@value": "テスト 次郎", "@language": "ja"}]
+    ]
+    form_model = {"item_xxx": [{"creatorNames":[{"creatorName": "@value", "creatorNameLang": "@language"}]}]}
+    test = {"item_xxx": [
+            {
+                "creatorNames": [
+                    {"creatorName": "TEST Taro", "creatorNameLang": "en"},
+                    {"creatorName": "テスト 太郎", "creatorNameLang": "ja"}
+                ]
+            },
+            {
+                "creatorNames": [
+                    {"creatorName": "TEST Ziro", "creatorNameLang": "en"},
+                    {"creatorName": "テスト 次郎", "creatorNameLang": "ja"}
+                ]
+            }
+        ]
+    }
+    result = fill_data(form_model, autofill_data)
+    assert result == test
+
+    # autofill_data is dict, form_model is {}
+    autofill_data = {"@value": "47"}
+    form_model = {}
+    test = {}
+    result = fill_data(form_model,autofill_data)
+    assert result == test
+
+    # 
     autofill_data = {"@value": "47"}
     form_model = [
         {"@value": {"test_item16": {"test16_subitem1": "@value"}}},
@@ -1584,9 +1641,10 @@ def test_fill_data():
         {"@value": {"test_item16": {"test16_subitem1": "47"}}},
         {"@value": {"test_item17": {"test17_subitem1": "47"}}},
     ]
-    fill_data(form_model, autofill_data)
-    assert form_model == test
+    result = fill_data(form_model, autofill_data)
+    assert result == test
 
+    # form_model is not list, dict
     autofill_data = {"@value": "47"}
     form_model = "test"
     fill_data(form_model, autofill_data)

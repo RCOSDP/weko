@@ -62,7 +62,8 @@ def run(delayed, concurrency, version_type=None, queue=None,
         celery_kwargs = {
             'kwargs': {
                 'version_type': version_type,
-                'es_bulk_kwargs': {'raise_on_error': raise_on_error,'raise_on_exception': raise_on_exception,'chunk_size':chunk_size,'max_chunk_bytes':max_chunk_bytes,'max_retries': max_retries,'initial_backoff': initial_backoff,'max_backoff': max_backoff},
+                'es_bulk_kwargs': {'raise_on_error': raise_on_error,'chunk_size':chunk_size,'max_chunk_bytes':max_chunk_bytes,'max_retries': max_retries,'initial_backoff': initial_backoff,'max_backoff': max_backoff},
+                'with_deleted': True
             }
         }
         
@@ -82,7 +83,8 @@ def run(delayed, concurrency, version_type=None, queue=None,
                             'max_chunk_bytes':max_chunk_bytes,
                             'max_retries': max_retries,
                             'initial_backoff': initial_backoff,
-                            'max_backoff': max_backoff})
+                            'max_backoff': max_backoff},
+            with_deleted=True)
 
 
 

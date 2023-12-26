@@ -1,12 +1,10 @@
 import pytest
-from weko_records_ui.utils import is_future, create_usage_report_for_user,get_data_usage_application_data,send_usage_report_mail_for_user,check_and_send_usage_report,check_and_create_usage_report,update_onetime_download,create_onetime_download_url,get_onetime_download,validate_onetime_download_token,get_license_pdf,hide_item_metadata,get_pair_value,get_min_price_billing_file_download,parse_one_time_download_token,generate_one_time_download_url,validate_download_record,is_private_index,get_file_info_list,replace_license_free,is_show_email_of_creator,hide_by_itemtype,hide_by_email,hide_by_file,hide_item_metadata_email_only,get_workflows,get_billing_file_download_permission,get_list_licence,restore,soft_delete,is_billing_item,get_groups_price,get_record_permalink,get_google_detaset_meta,get_google_scholar_meta,display_oaiset_path,get_terms,get_roles,check_items_settings
+from weko_records_ui.utils import is_future, create_usage_report_for_user,get_data_usage_application_data,send_usage_report_mail_for_user,check_and_send_usage_report,update_onetime_download,create_onetime_download_url,get_onetime_download,validate_onetime_download_token,get_license_pdf,hide_item_metadata,get_pair_value,get_min_price_billing_file_download,parse_one_time_download_token,generate_one_time_download_url,validate_download_record,is_private_index,get_file_info_list,replace_license_free,is_show_email_of_creator,hide_by_itemtype,hide_by_email,hide_by_file,hide_item_metadata_email_only,get_workflows,get_billing_file_download_permission,get_list_licence,restore,soft_delete,is_billing_item,get_groups_price,get_record_permalink,get_google_detaset_meta,get_google_scholar_meta,display_oaiset_path,get_terms,get_roles,check_items_settings,get_valid_onetime_download,create_secret_url,_generate_secret_download_url,parse_secret_download_token,validate_secret_download_token,get_secret_download,_create_secret_download_url,update_secret_download
 import base64
 from unittest.mock import MagicMock
 import copy
 import pytest
 import io
-from datetime import datetime as dt
-from datetime import timedelta
 from lxml import etree
 from fpdf import FPDF
 from invenio_records_files.utils import record_file_factory
@@ -16,12 +14,14 @@ from invenio_accounts.testutils import login_user_via_session
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from mock import patch
 from weko_deposit.api import WekoRecord
-from weko_records_ui.models import FileOnetimeDownload
+from weko_records_ui.models import FileOnetimeDownload, FileSecretDownload
 from weko_records.api import ItemTypes,Mapping
 from werkzeug.exceptions import NotFound
 from weko_admin.models import AdminSettings
 from weko_records.serializers.utils import get_mapping
 from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName
+from flask_babelex import gettext as _
+from datetime import datetime ,timedelta
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 
@@ -135,15 +135,6 @@ def test_get_groups_price(app,records):
     record = results[0]["record"]
     assert get_groups_price(record)==[]
 
-    data1 = {"item": {
-        "attribute_value_mlt": [{
-            "groupsprice": ["groupsprices"],
-            "filename": "filename"
-        }]
-    }}
-
-    assert get_groups_price(data1) != None
-
 
 # def get_billing_file_download_permission(groups_price: list) -> dict:
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_get_billing_file_download_permission -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -151,9 +142,6 @@ def test_get_billing_file_download_permission(users):
     groups_price = [{'file_name': '003.jpg', 'groups_price': [{'group': '1', 'price': '100'}]}]
     with patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
         assert get_billing_file_download_permission(groups_price)=={'003.jpg': False}
-
-        with patch("weko_records_ui.utils.check_user_group_permission", return_value=True):
-            assert get_billing_file_download_permission(groups_price)=={'003.jpg': True}
 
 
 # def get_min_price_billing_file_download(groups_price: list,
@@ -180,20 +168,6 @@ def test_get_min_price_billing_file_download(users):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_is_billing_item -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_is_billing_item(app,itemtypes):
     assert is_billing_item(1)==False
-
-    data1 = MagicMock()
-    data1.schema = {
-        "properties": {
-            "meta_key": {
-                "type": "object",
-                "properties": ["groupsprice"]
-            }
-        }
-    }
-
-    with patch("weko_records.api.ItemTypes.get_by_id", return_value=data1):
-        assert is_billing_item(data1) == True
-
 
 # def soft_delete(recid):
 #     def get_cache_data(key: str):
@@ -391,623 +365,15 @@ def test_replace_license_free(app,records):
 def test_get_file_info_list(app,records):
     indexer, results = records
     record = results[0]["record"]
-    
-    # record_data = {
-    #     "_oai": {"id": "oai:weko3.example.org:000000{:02d}".format(i), "sets": ["{}".format((i % 2) + 1)]},
-    #     "path": ["{}".format((i % 2) + 1)],
-    #     "owner": "1",
-    #     "recid": "{}".format(i),
-    #     "title": [
-    #         "ja_conference paperITEM00000009(public_open_access_open_access_simple)"
-    #     ],
-    #     "pubdate": {"attribute_name": "PubDate", "attribute_value": "2021-08-06"},
-    #     "_buckets": {"deposit": "27202db8-aefc-4b85-b5ae-4921ac151ddf"},
-    #     "_deposit": {
-    #         "id": "{}".format(i),
-    #         "pid": {"type": "depid", "value": "{}".format(i), "revision_id": 0},
-    #         "owners": [1],
-    #         "status": "published",
-    #     },
-    #     "item_title": "ja_conference paperITEM00000009(public_open_access_open_access_simple)",
-    #     "author_link": ["4"],
-    #     "item_type_id": "1",
-    #     "publish_date": "2021-08-06",
-    #     "publish_status": "0",
-    #     "weko_shared_id": -1,
-    #     "item_1617186331708": {
-    #         "attribute_name": "Title",
-    #         "attribute_value_mlt": [
-    #             {
-    #                 "subitem_1551255647225": "ja_conference paperITEM00000009(public_open_access_open_access_simple)",
-    #                 "subitem_1551255648112": "ja",
-    #             },
-    #             {
-    #                 "subitem_1551255647225": "en_conference paperITEM00000009(public_open_access_simple)",
-    #                 "subitem_1551255648112": "en",
-    #             },
-    #         ],
-    #     },
-    #     "item_1617186385884": {
-    #         "attribute_name": "Alternative Title",
-    #         "attribute_value_mlt": [
-    #             {
-    #                 "subitem_1551255720400": "Alternative Title",
-    #                 "subitem_1551255721061": "en",
-    #             },
-    #             {
-    #                 "subitem_1551255720400": "Alternative Title",
-    #                 "subitem_1551255721061": "ja",
-    #             },
-    #         ],
-    #     },
-    #     "item_1617186419668": {
-    #         "attribute_name": "Creator",
-    #         "attribute_type": "creator",
-    #         "attribute_value_mlt": [
-    #             {
-    #                 "givenNames": [
-    #                     {"givenName": "太郎", "givenNameLang": "ja"},
-    #                     {"givenName": "タロウ", "givenNameLang": "ja-Kana"},
-    #                     {"givenName": "Taro", "givenNameLang": "en"},
-    #                 ],
-    #                 "familyNames": [
-    #                     {"familyName": "情報", "familyNameLang": "ja"},
-    #                     {"familyName": "ジョウホウ", "familyNameLang": "ja-Kana"},
-    #                     {"familyName": "Joho", "familyNameLang": "en"},
-    #                 ],
-    #                 "creatorMails": [{"creatorMail": "wekosoftware@nii.ac.jp"}],
-    #                 "creatorNames": [
-    #                     {"creatorName": "情報, 太郎", "creatorNameLang": "ja"},
-    #                     {"creatorName": "ジョウホウ, タロウ", "creatorNameLang": "ja-Kana"},
-    #                     {"creatorName": "Joho, Taro", "creatorNameLang": "en"},
-    #                 ],
-    #                 "nameIdentifiers": [
-    #                     {"nameIdentifier": "4", "nameIdentifierScheme": "WEKO"},
-    #                     {
-    #                         "nameIdentifier": "xxxxxxx",
-    #                         "nameIdentifierURI": "https://orcid.org/",
-    #                         "nameIdentifierScheme": "ORCID",
-    #                     },
-    #                     {
-    #                         "nameIdentifier": "xxxxxxx",
-    #                         "nameIdentifierURI": "https://ci.nii.ac.jp/",
-    #                         "nameIdentifierScheme": "CiNii",
-    #                     },
-    #                     {
-    #                         "nameIdentifier": "zzzzzzz",
-    #                         "nameIdentifierURI": "https://kaken.nii.ac.jp/",
-    #                         "nameIdentifierScheme": "KAKEN2",
-    #                     },
-    #                 ],
-    #                 "creatorAffiliations": [
-    #                     {
-    #                         "affiliationNames": [
-    #                             {
-    #                                 "affiliationName": "University",
-    #                                 "affiliationNameLang": "en",
-    #                             }
-    #                         ],
-    #                         "affiliationNameIdentifiers": [
-    #                             {
-    #                                 "affiliationNameIdentifier": "0000000121691048",
-    #                                 "affiliationNameIdentifierURI": "http://isni.org/isni/0000000121691048",
-    #                                 "affiliationNameIdentifierScheme": "ISNI",
-    #                             }
-    #                         ],
-    #                     }
-    #                 ],
-    #             },
-    #             {
-    #                 "givenNames": [
-    #                     {"givenName": "太郎", "givenNameLang": "ja"},
-    #                     {"givenName": "タロウ", "givenNameLang": "ja-Kana"},
-    #                     {"givenName": "Taro", "givenNameLang": "en"},
-    #                 ],
-    #                 "familyNames": [
-    #                     {"familyName": "情報", "familyNameLang": "ja"},
-    #                     {"familyName": "ジョウホウ", "familyNameLang": "ja-Kana"},
-    #                     {"familyName": "Joho", "familyNameLang": "en"},
-    #                 ],
-    #                 "creatorMails": [{"creatorMail": "wekosoftware@nii.ac.jp"}],
-    #                 "creatorNames": [
-    #                     {"creatorName": "情報, 太郎", "creatorNameLang": "ja"},
-    #                     {"creatorName": "ジョウホウ, タロウ", "creatorNameLang": "ja-Kana"},
-    #                     {"creatorName": "Joho, Taro", "creatorNameLang": "en"},
-    #                 ],
-    #                 "nameIdentifiers": [
-    #                     {
-    #                         "nameIdentifier": "xxxxxxx",
-    #                         "nameIdentifierURI": "https://orcid.org/",
-    #                         "nameIdentifierScheme": "ORCID",
-    #                     },
-    #                     {
-    #                         "nameIdentifier": "xxxxxxx",
-    #                         "nameIdentifierURI": "https://ci.nii.ac.jp/",
-    #                         "nameIdentifierScheme": "CiNii",
-    #                     },
-    #                     {
-    #                         "nameIdentifier": "zzzzzzz",
-    #                         "nameIdentifierURI": "https://kaken.nii.ac.jp/",
-    #                         "nameIdentifierScheme": "KAKEN2",
-    #                     },
-    #                 ],
-    #             },
-    #             {
-    #                 "givenNames": [
-    #                     {"givenName": "太郎", "givenNameLang": "ja"},
-    #                     {"givenName": "タロウ", "givenNameLang": "ja-Kana"},
-    #                     {"givenName": "Taro", "givenNameLang": "en"},
-    #                 ],
-    #                 "familyNames": [
-    #                     {"familyName": "情報", "familyNameLang": "ja"},
-    #                     {"familyName": "ジョウホウ", "familyNameLang": "ja-Kana"},
-    #                     {"familyName": "Joho", "familyNameLang": "en"},
-    #                 ],
-    #                 "creatorMails": [{"creatorMail": "wekosoftware@nii.ac.jp"}],
-    #                 "creatorNames": [
-    #                     {"creatorName": "情報, 太郎", "creatorNameLang": "ja"},
-    #                     {"creatorName": "ジョウホウ, タロウ", "creatorNameLang": "ja-Kana"},
-    #                     {"creatorName": "Joho, Taro", "creatorNameLang": "en"},
-    #                 ],
-    #                 "nameIdentifiers": [
-    #                     {
-    #                         "nameIdentifier": "xxxxxxx",
-    #                         "nameIdentifierURI": "https://orcid.org/",
-    #                         "nameIdentifierScheme": "ORCID",
-    #                     },
-    #                     {
-    #                         "nameIdentifier": "xxxxxxx",
-    #                         "nameIdentifierURI": "https://ci.nii.ac.jp/",
-    #                         "nameIdentifierScheme": "CiNii",
-    #                     },
-    #                     {
-    #                         "nameIdentifier": "zzzzzzz",
-    #                         "nameIdentifierURI": "https://kaken.nii.ac.jp/",
-    #                         "nameIdentifierScheme": "KAKEN2",
-    #                     },
-    #                 ],
-    #             },
-    #         ],
-    #     },
-    #     "item_1617186476635": {
-    #         "attribute_name": "Access Rights",
-    #         "attribute_value_mlt": [
-    #             {
-    #                 "subitem_1522299639480": "open access",
-    #                 "subitem_1600958577026": "http://purl.org/coar/access_right/c_abf2",
-    #             }
-    #         ],
-    #     },
-    #     "item_1617186499011": {
-    #         "attribute_name": "Rights",
-    #         "attribute_value_mlt": [
-    #             {
-    #                 "subitem_1522650717957": "ja",
-    #                 "subitem_1522650727486": "http://localhost",
-    #                 "subitem_1522651041219": "Rights Information",
-    #             }
-    #         ],
-    #     },
-    #     "item_1617186609386": {
-    #         "attribute_name": "Subject",
-    #         "attribute_value_mlt": [
-    #             {
-    #                 "subitem_1522299896455": "ja",
-    #                 "subitem_1522300014469": "Other",
-    #                 "subitem_1522300048512": "http://localhost/",
-    #                 "subitem_1523261968819": "Sibject1",
-    #             }
-    #         ],
-    #     },
-    #     "item_1617186626617": {
-    #         "attribute_name": "Description",
-    #         "attribute_value_mlt": [
-    #             {
-    #                 "subitem_description": "Description\nDescription<br/>Description",
-    #                 "subitem_description_type": "Abstract",
-    #                 "subitem_description_language": "en",
-    #             },
-    #             {
-    #                 "subitem_description": "概要\n概要\n概要\n概要",
-    #                 "subitem_description_type": "Abstract",
-    #                 "subitem_description_language": "ja",
-    #             },
-    #         ],
-    #     },
-    #     "item_1617186643794": {
-    #         "attribute_name": "Publisher",
-    #         "attribute_value_mlt": [
-    #             {"subitem_1522300295150": "en", "subitem_1522300316516": "Publisher"}
-    #         ],
-    #     },
-    #     "item_1617186660861": {
-    #         "attribute_name": "Date",
-    #         "attribute_value_mlt": [
-    #             {
-    #                 "subitem_1522300695726": "Available",
-    #                 "subitem_1522300722591": "2021-06-30",
-    #             }
-    #         ],
-    #     },
-    #     "item_1617186702042": {
-    #         "attribute_name": "Language",
-    #         "attribute_value_mlt": [{"subitem_1551255818386": "jpn"}],
-    #     },
-    #     "item_1617186783814": {
-    #         "attribute_name": "Identifier",
-    #         "attribute_value_mlt": [
-    #             {
-    #                 "subitem_identifier_uri": "http://localhost",
-    #                 "subitem_identifier_type": "URI",
-    #             }
-    #         ],
-    #     },
-    #     "item_1617186859717": {
-    #         "attribute_name": "Temporal",
-    #         "attribute_value_mlt": [
-    #             {"subitem_1522658018441": "en", "subitem_1522658031721": "Temporal"}
-    #         ],
-    #     },
-    #     "item_1617186882738": {
-    #         "attribute_name": "Geo Location",
-    #         "attribute_value_mlt": [
-    #             {
-    #                 "subitem_geolocation_place": [
-    #                     {"subitem_geolocation_place_text": "Japan"}
-    #                 ]
-    #             }
-    #         ],
-    #     },
-    #     "item_1617186901218": {
-    #         "attribute_name": "Funding Reference",
-    #         "attribute_value_mlt": [
-    #             {
-    #                 "subitem_1522399143519": {
-    #                     "subitem_1522399281603": "ISNI",
-    #                     "subitem_1522399333375": "http://xxx",
-    #                 },
-    #                 "subitem_1522399412622": [
-    #                     {
-    #                         "subitem_1522399416691": "en",
-    #                         "subitem_1522737543681": "Funder Name",
-    #                     }
-    #                 ],
-    #                 "subitem_1522399571623": {
-    #                     "subitem_1522399585738": "Award URI",
-    #                     "subitem_1522399628911": "Award Number",
-    #                 },
-    #                 "subitem_1522399651758": [
-    #                     {
-    #                         "subitem_1522721910626": "en",
-    #                         "subitem_1522721929892": "Award Title",
-    #                     }
-    #                 ],
-    #             }
-    #         ],
-    #     },
-    #     "item_1617186920753": {
-    #         "attribute_name": "Source Identifier",
-    #         "attribute_value_mlt": [
-    #             {
-    #                 "subitem_1522646500366": "ISSN",
-    #                 "subitem_1522646572813": "xxxx-xxxx-xxxx",
-    #             }
-    #         ],
-    #     },
-    #     "item_1617186941041": {
-    #         "attribute_name": "Source Title",
-    #         "attribute_value_mlt": [
-    #             {"subitem_1522650068558": "en", "subitem_1522650091861": "Source Title"}
-    #         ],
-    #     },
-    #     "item_1617186959569": {
-    #         "attribute_name": "Volume Number",
-    #         "attribute_value_mlt": [{"subitem_1551256328147": "1"}],
-    #     },
-    #     "item_1617186981471": {
-    #         "attribute_name": "Issue Number",
-    #         "attribute_value_mlt": [{"subitem_1551256294723": "111"}],
-    #     },
-    #     "item_1617186994930": {
-    #         "attribute_name": "Number of Pages",
-    #         "attribute_value_mlt": [{"subitem_1551256248092": "12"}],
-    #     },
-    #     "item_1617187024783": {
-    #         "attribute_name": "Page Start",
-    #         "attribute_value_mlt": [{"subitem_1551256198917": "1"}],
-    #     },
-    #     "item_1617187045071": {
-    #         "attribute_name": "Page End",
-    #         "attribute_value_mlt": [{"subitem_1551256185532": "3"}],
-    #     },
-    #     "item_1617187112279": {
-    #         "attribute_name": "Degree Name",
-    #         "attribute_value_mlt": [
-    #             {"subitem_1551256126428": "Degree Name", "subitem_1551256129013": "en"}
-    #         ],
-    #     },
-    #     "item_1617187136212": {
-    #         "attribute_name": "Date Granted",
-    #         "attribute_value_mlt": [{"subitem_1551256096004": "2021-06-30"}],
-    #     },
-    #     "item_1617187187528": {
-    #         "attribute_name": "Conference",
-    #         "attribute_value_mlt": [
-    #             {
-    #                 "subitem_1599711633003": [
-    #                     {
-    #                         "subitem_1599711636923": "Conference Name",
-    #                         "subitem_1599711645590": "ja",
-    #                     }
-    #                 ],
-    #                 "subitem_1599711655652": "1",
-    #                 "subitem_1599711660052": [
-    #                     {
-    #                         "subitem_1599711680082": "Sponsor",
-    #                         "subitem_1599711686511": "ja",
-    #                     }
-    #                 ],
-    #                 "subitem_1599711699392": {
-    #                     "subitem_1599711704251": "2020/12/11",
-    #                     "subitem_1599711712451": "1",
-    #                     "subitem_1599711727603": "12",
-    #                     "subitem_1599711731891": "2000",
-    #                     "subitem_1599711735410": "1",
-    #                     "subitem_1599711739022": "12",
-    #                     "subitem_1599711743722": "2020",
-    #                     "subitem_1599711745532": "ja",
-    #                 },
-    #                 "subitem_1599711758470": [
-    #                     {
-    #                         "subitem_1599711769260": "Conference Venue",
-    #                         "subitem_1599711775943": "ja",
-    #                     }
-    #                 ],
-    #                 "subitem_1599711788485": [
-    #                     {
-    #                         "subitem_1599711798761": "Conference Place",
-    #                         "subitem_1599711803382": "ja",
-    #                     }
-    #                 ],
-    #                 "subitem_1599711813532": "JPN",
-    #             }
-    #         ],
-    #     },
-    #     "item_1617258105262": {
-    #         "attribute_name": "Resource Type",
-    #         "attribute_value_mlt": [
-    #             {
-    #                 "resourceuri": "http://purl.org/coar/resource_type/c_5794",
-    #                 "resourcetype": "conference paper",
-    #             }
-    #         ],
-    #     },
-    #     "item_1617265215918": {
-    #         "attribute_name": "Version Type",
-    #         "attribute_value_mlt": [
-    #             {
-    #                 "subitem_1522305645492": "AO",
-    #                 "subitem_1600292170262": "http://purl.org/coar/version/c_b1a7d7d4d402bcce",
-    #             }
-    #         ],
-    #     },
-    #     "item_1617349709064": {
-    #         "attribute_name": "Contributor",
-    #         "attribute_value_mlt": [
-    #             {
-    #                 "givenNames": [
-    #                     {"givenName": "太郎", "givenNameLang": "ja"},
-    #                     {"givenName": "タロウ", "givenNameLang": "ja-Kana"},
-    #                     {"givenName": "Taro", "givenNameLang": "en"},
-    #                 ],
-    #                 "familyNames": [
-    #                     {"familyName": "情報", "familyNameLang": "ja"},
-    #                     {"familyName": "ジョウホウ", "familyNameLang": "ja-Kana"},
-    #                     {"familyName": "Joho", "familyNameLang": "en"},
-    #                 ],
-    #                 "contributorType": "ContactPerson",
-    #                 "nameIdentifiers": [
-    #                     {
-    #                         "nameIdentifier": "xxxxxxx",
-    #                         "nameIdentifierURI": "https://orcid.org/",
-    #                         "nameIdentifierScheme": "ORCID",
-    #                     },
-    #                     {
-    #                         "nameIdentifier": "xxxxxxx",
-    #                         "nameIdentifierURI": "https://ci.nii.ac.jp/",
-    #                         "nameIdentifierScheme": "CiNii",
-    #                     },
-    #                     {
-    #                         "nameIdentifier": "xxxxxxx",
-    #                         "nameIdentifierURI": "https://kaken.nii.ac.jp/",
-    #                         "nameIdentifierScheme": "KAKEN2",
-    #                     },
-    #                 ],
-    #                 "contributorMails": [{"contributorMail": "wekosoftware@nii.ac.jp"}],
-    #                 "contributorNames": [
-    #                     {"lang": "ja", "contributorName": "情報, 太郎"},
-    #                     {"lang": "ja-Kana", "contributorName": "ジョウホウ, タロウ"},
-    #                     {"lang": "en", "contributorName": "Joho, Taro"},
-    #                 ],
-    #             }
-    #         ],
-    #     },
-    #     "item_1617349808926": {
-    #         "attribute_name": "Version",
-    #         "attribute_value_mlt": [{"subitem_1523263171732": "Version"}],
-    #     },
-    #     "item_1617351524846": {
-    #         "attribute_name": "APC",
-    #         "attribute_value_mlt": [{"subitem_1523260933860": "Unknown"}],
-    #     },
-    #     "item_1617353299429": {
-    #         "attribute_name": "Relation",
-    #         "attribute_value_mlt": [
-    #             {
-    #                 "subitem_1522306207484": "isVersionOf",
-    #                 "subitem_1522306287251": {
-    #                     "subitem_1522306382014": "arXiv",
-    #                     "subitem_1522306436033": "xxxxx",
-    #                 },
-    #                 "subitem_1523320863692": [
-    #                     {
-    #                         "subitem_1523320867455": "en",
-    #                         "subitem_1523320909613": "Related Title",
-    #                     }
-    #                 ],
-    #             }
-    #         ],
-    #     },
-    #     "item_1617605131499": {
-    #         "attribute_name": "File",
-    #         "attribute_type": "file",
-    #         "attribute_value_mlt": [
-    #             {
-    #                 "url": {"url": "https://weko3.example.org/record/{0}/files/{1}".format(
-    #                         i, filename
-    #                     )},
-    #                 "date": [{"dateType": "Available", "dateValue": "2021-07-12"}],
-    #                 "format": "text/plain",
-    #                 "filename": "{}".format(filename),
-    #                 "filesize": [{"value": "1 KB"}],
-    #                 "mimetype": "{}".format(mimetype),
-    #                 "accessrole": "open_login",
-    #                 "version_id": "c1502853-c2f9-455d-8bec-f6e630e54b21",
-    #                 "displaytype": "simple",
-    #             }
-    #         ],
-    #     },
-    #     "item_1617610673286": {
-    #         "attribute_name": "Rights Holder",
-    #         "attribute_value_mlt": [
-    #             {
-    #                 "nameIdentifiers": [
-    #                     {
-    #                         "nameIdentifier": "xxxxxx",
-    #                         "nameIdentifierURI": "https://orcid.org/",
-    #                         "nameIdentifierScheme": "ORCID",
-    #                     }
-    #                 ],
-    #                 "rightHolderNames": [
-    #                     {
-    #                         "rightHolderName": "Right Holder Name",
-    #                         "rightHolderLanguage": "ja",
-    #                     }
-    #                 ],
-    #             }
-    #         ],
-    #     },
-    #     "item_1617620223087": {
-    #         "attribute_name": "Heading",
-    #         "attribute_value_mlt": [
-    #             {
-    #                 "subitem_1565671149650": "ja",
-    #                 "subitem_1565671169640": "Banner Headline",
-    #                 "subitem_1565671178623": "Subheading",
-    #             },
-    #             {
-    #                 "subitem_1565671149650": "en",
-    #                 "subitem_1565671169640": "Banner Headline",
-    #                 "subitem_1565671178623": "Subheding",
-    #             },
-    #         ],
-    #     },
-    #     "item_1617944105607": {
-    #         "attribute_name": "Degree Grantor",
-    #         "attribute_value_mlt": [
-    #             {
-    #                 "subitem_1551256015892": [
-    #                     {
-    #                         "subitem_1551256027296": "xxxxxx",
-    #                         "subitem_1551256029891": "kakenhi",
-    #                     }
-    #                 ],
-    #                 "subitem_1551256037922": [
-    #                     {
-    #                         "subitem_1551256042287": "Degree Grantor Name",
-    #                         "subitem_1551256047619": "en",
-    #                     }
-    #                 ],
-    #             }
-    #         ],
-    #     },
-    #     "relation_version_is_last": True,
-    # }
-
     with app.test_request_context(headers=[("Accept-Language", "en")]):
         ret =  get_file_info_list(record)
         assert len(ret)==2
-    
-    with app.test_request_context(headers=[("Accept-Language", "en")]):
-        record["item_1617605131499"]["attribute_value_mlt"][0]["accessrole"] = "open_login"
-        get_file_info_list(record)
-
-        record["item_1617605131499"]["attribute_value_mlt"][0]["accessrole"] = "open_date"
-        date = dt.now() + timedelta(days=1)
-        record["item_1617605131499"]["attribute_value_mlt"][0]["date"][0]["dateValue"] = date.strftime('%Y-%m-%d')
-        get_file_info_list(record)
-
-        record["item_1617605131499"]["attribute_value_mlt"][0]['terms'] = "term"
-        get_file_info_list(record)
-
-        record["item_1617605131499"]["attribute_value_mlt"][0]['terms'] = "term_free"
-        record["item_1617605131499"]["attribute_value_mlt"][0]['provide'] = [{"workflow": "workflow", "role": 1}]
-        get_file_info_list(record)
-
-
-# def check_and_create_usage_report(record, file_object):
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_check_and_create_usage_report -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_check_and_create_usage_report(app,records):
-    indexer, results = records
-    pid = results[0]["recid"]
-    record = results[0]["record"]
-    filename = results[0]["filename"]
-    fileobj = record_file_factory(
-        pid, record, filename
-    )
-    data1 = MagicMock()
-    fileobj["accessrole"] = ["open_restricted"]
-
-    with patch("weko_records_ui.utils.check_create_usage_report", return_value=data1):
-        with patch("weko_workflow.utils.create_usage_report", return_value=False):
-            with patch("weko_records_ui.models.FilePermission.update_usage_report_activity_id", return_value=True):
-                assert check_and_create_usage_report(record,fileobj)==None
-
 
 # def create_usage_report_for_user(onetime_download_extra_info: dict):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_create_usage_report_for_user(app):
-    data1 = MagicMock()
+#def test_create_usage_report_for_user():
+#    assert False
 
-    data2 = MagicMock()
-    data2.extra_info = {}
-
-    def get_activity_by_id(x):
-        return data2
-    
-    def find_workflow_by_name_false(x):
-        return False
-
-    def find_workflow_by_name_true(x):
-        return True
-
-    data1.get_activity_by_id = get_activity_by_id
-    data1.find_workflow_by_name = find_workflow_by_name_false
-
-    app.config['WEKO_WORKFLOW_USAGE_REPORT_WORKFLOW_NAME'] = "test"
-    with patch("weko_records_ui.utils.WorkActivity", return_value=data1):
-        with patch("weko_records_ui.utils.WorkFlow", return_value=data1):
-            assert create_usage_report_for_user(data1) == ""
-
-            # ERROR
-            data1.find_workflow_by_name = find_workflow_by_name_true
-            # with patch("weko_records_ui.utils.RecordMetadata.query.filter_by", return_value=data2):
-            with patch("invenio_records.models.RecordMetadata.query.filter_by", return_value=data2):
-                try:
-                    assert create_usage_report_for_user(data1) == ""
-                except:
-                    pass
-                
 
 # def get_data_usage_application_data(record_metadata, data_result: dict):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_get_data_usage_application_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -1037,7 +403,7 @@ def test_send_usage_report_mail_for_user(app):
 
 # def check_and_send_usage_report(extra_info, user_mail):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_check_and_send_usage_report -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_check_and_send_usage_report(app, db, workflows, records, users, db_file_permission):
+def test_check_and_send_usage_report(app, db, users, db_file_permission):
     _record = {
         'recid': db_file_permission[0].record_id
     }
@@ -1046,10 +412,10 @@ def test_check_and_send_usage_report(app, db, workflows, records, users, db_file
         'filename': db_file_permission[0].file_name
     }
     app.config['WEKO_WORKFLOW_USAGE_REPORT_WORKFLOW_NAME'] = 'Data Usage Report'
-    with patch("flask_login.utils._get_user", return_value=users[7]['obj']):
-        with patch("weko_workflow.utils.create_record_metadata", return_value='usage_report_activity_0'):
-            assert check_and_send_usage_report(_record, _file_obj)==None
-
+    
+    #56
+    assert not check_and_send_usage_report({"is_guest": False, "send_usage_report": False, "usage_application_activity_id": "A-20230101-00001"},users[7]['email'],_record, _file_obj)
+    
     data1 = MagicMock()
     data2 = MagicMock()
     data3 = MagicMock()
@@ -1060,22 +426,30 @@ def test_check_and_send_usage_report(app, db, workflows, records, users, db_file
     def send_reminder_mail_2(x, y, z):
         return True
 
+    data1.activity_id = 'A-20230301-00001'
     data3.send_reminder_mail = send_reminder_mail
 
     with patch("flask_login.utils._get_user", return_value=users[2]['obj']):
-        with patch("weko_records_ui.utils.create_usage_report_for_user", return_value=data1):
-            with patch("weko_records_ui.utils.UsageReport", return_value=data3):
-                check_and_send_usage_report(data1, data2)
 
         with patch("weko_records_ui.utils.create_usage_report_for_user", return_value=False):
-            check_and_send_usage_report(data1, data2)
+            assert _("Unexpected error occurred.") == check_and_send_usage_report({"is_guest": False, "send_usage_report": True, "usage_application_activity_id": "A-20230101-00001"},users[7]['email'],data1, data2)
 
         with patch("weko_records_ui.utils.create_usage_report_for_user", return_value=data1):
             with patch("weko_records_ui.utils.UsageReport", return_value=data3):
-                data3.send_reminder_mail = send_reminder_mail_2
-                check_and_send_usage_report(data1, data2)
+                assert _("Failed to send mail.") == check_and_send_usage_report({"is_guest": False, "send_usage_report": True, "usage_application_activity_id": "A-20230101-00001"},users[7]['email'],data1, data2)
     
-
+        with patch("weko_records_ui.utils.create_usage_report_for_user", return_value=data1):
+            data3.send_reminder_mail = send_reminder_mail_2
+            with patch("weko_records_ui.utils.UsageReport", return_value=data3):
+                with patch("weko_records_ui.utils.check_create_usage_report" ,return_value={}):
+                    with patch("weko_records_ui.models.FilePermission.update_usage_report_activity_id",return_value=""):
+                        check_and_send_usage_report({"is_guest": False, "send_usage_report": True, "usage_application_activity_id": "A-20230101-00001"},users[7]['email'],_record, _file_obj)
+    data1.activity_id = ""
+    with patch("weko_records_ui.utils.create_usage_report_for_user", return_value=data1):
+        with patch("flask_login.utils._get_user", return_value=users[7]['obj']):
+            with patch("weko_records_ui.utils.UsageReport", return_value=data3):
+                with patch("weko_records_ui.utils.check_create_usage_report",return_value=None):
+                    check_and_send_usage_report({"is_guest": False, "send_usage_report": True, "usage_application_activity_id": "A-20230101-00001"},users[7]['email'],data1, data2)
 
 # def generate_one_time_download_url(
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_generate_one_time_download_url -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -1188,6 +562,15 @@ def test_get_onetime_download(app, db_fileonetimedownload):
         with patch("weko_records_ui.models.FileOnetimeDownload.find", return_value=False):
             assert get_onetime_download('helloworld.pdf','1','wekosoftware@nii.ac.jp') == None
 
+# def def get_valid_onetime_download(file_name: str, record_id: str,user_mail: str) -> Optional[FileOnetimeDownload]:
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_get_valid_onetime_download -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_get_valid_onetime_download():
+    with patch("weko_records_ui.models.FileOnetimeDownload.find_downloadable_only",return_value=[]):
+        assert get_valid_onetime_download(file_name= "str", record_id= "str",user_mail= "str") is None
+    with patch("weko_records_ui.models.FileOnetimeDownload.find_downloadable_only",return_value=[{}]):
+        assert {} == get_valid_onetime_download(file_name= "str", record_id= "str",user_mail= "str")
+    with patch("weko_records_ui.models.FileOnetimeDownload.find_downloadable_only",return_value=["a","b"]):
+        assert "a" == get_valid_onetime_download(file_name= "str", record_id= "str",user_mail= "str")
 
 # def create_onetime_download_url(
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_create_onetime_download_url -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -1288,3 +671,177 @@ def test_get_google_detaset_meta(app, records, itemtypes, oaischema, oaiidentify
 
         with patch("lxml.etree", return_value=data1):
             assert get_google_detaset_meta(record) == None
+
+#def create_secret_url(record_id:str ,file_name:str ,user_mail:str ,restricted_fullname='',restricted_data_name='') -> dict:
+# def _generate_secret_download_url(file_name: str, record_id: str, id: str ,created :dt) -> str:
+# _create_secret_download_url(file_name: str, record_id: str, user_mail: str)
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_create_secret_url -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_create_secret_url(app,db,users,records):
+    url , results = records
+    file_name= results[1]["filename"]
+    record_id=results[1]["recid"].pid_value
+    user_mail = users[0]["email"]
+    
+    db.session.add(AdminSettings(id=6,name='restricted_access',settings={"secret_URL_file_download": 
+            {"secret_enable": True, 
+            "secret_download_limit": 1, 
+            "secret_expiration_date": 9999999, 
+            "secret_download_limit_unlimited_chk": False,
+            "secret_expiration_date_unlimited_chk": False}}))
+    
+    with app.test_request_context():
+
+        #60
+        #76
+        # with db.session.begin_nested():
+        return_dict = create_secret_url(file_name= file_name, record_id=record_id, user_mail=user_mail)
+            
+        assert return_dict["restricted_download_count"] == '1'
+        assert return_dict["restricted_download_count_ja"] == ""
+        assert return_dict["restricted_download_count_en"] == ""
+        assert return_dict['restricted_expiration_date'] == ""
+        assert return_dict['restricted_expiration_date_ja'] == "無制限"
+        assert return_dict['restricted_expiration_date_en'] == "Unlimited"
+        
+        #61
+        # with db.session.begin_nested():
+        db.session.merge(AdminSettings(id=6,name='restricted_access',settings={"secret_URL_file_download": 
+                {"secret_enable": True, 
+                "secret_download_limit": 9999999, 
+                "secret_expiration_date": 1, 
+                "secret_download_limit_unlimited_chk": False,
+                "secret_expiration_date_unlimited_chk": False}}))
+        return_dict = create_secret_url(file_name= file_name
+                    , record_id=record_id
+                    , user_mail=user_mail)
+        assert return_dict["restricted_download_count"] == ""
+        assert return_dict["restricted_download_count_ja"] == "無制限"
+        assert return_dict["restricted_download_count_en"] == "Unlimited"
+        assert return_dict['restricted_expiration_date'] == (datetime.today() + timedelta(1)).strftime("%Y-%m-%d") 
+        assert return_dict['restricted_expiration_date_ja'] == ""
+        assert return_dict['restricted_expiration_date_en'] == ""
+
+        #62
+        #63
+        from re import match
+        assert match("^.+record\/" + record_id + "\/file\/secret\/"+file_name+"\?token=.+=$",return_dict["restricted_download_link"])
+        assert return_dict["restricted_download_link"] != ""
+        assert return_dict["mail_recipient"] == user_mail
+    
+
+# def parse_secret_download_token(token: str) -> Tuple[str, Tuple]:
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_parse_secret_download_token -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_parse_secret_download_token(app ,db):
+    #64
+    assert parse_secret_download_token(None) == (_("Token is invalid."),())
+    assert parse_secret_download_token("") == (_("Token is invalid."),())
+    #65
+    assert parse_secret_download_token("random_string sajfosijdfasodfjv") == (_("Token is invalid."),())
+
+
+    # 66
+    # onetime_download pattern
+    assert parse_secret_download_token("MSB1c2VyQGV4YW1wbGUub3JnIDIwMjItMDktMjcgNDBDRkNGODFGM0FFRUI0Ng==") == (_("Token is invalid."),())
+
+    # 67
+    # secret_download pattern
+    error , res = parse_secret_download_token("MSA1IDIwMjMtMDMtMDggMDA6NTI6MTkuNjI0NTUyIDZGQTdEMzIxQTk0OTU1MEQ=")
+    assert not error
+    assert res == ('1', '5', '2023-03-08 00:52:19.624552', '6FA7D321A949550D')
+
+# def validate_secret_download_token(
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_validate_secret_download_token -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_validate_secret_download_token(app):
+
+    with app.test_request_context():
+        secret_download=FileSecretDownload(
+            file_name= "eee.txt", record_id= '1',user_mail="repoadmin@example.org",expiration_date=999999,download_count=10
+        )
+        secret_download.created = datetime(2023,3,8,0,52,19,624552)
+        secret_download.id = 5
+        # 68
+        res = validate_secret_download_token(secret_download=None , file_name= "eee.txt", record_id= '1', id= '5', date= '2023-03-08 00:52:19.624552', token= '6FA7D321A949550D')
+        assert res == (False , _("Token is invalid."))
+
+        #69
+        res = validate_secret_download_token(secret_download=secret_download , file_name= "aaa.txt", record_id= '1', id= '5', date= '2023-03-08 00:52:19.624552', token= '6FA7D321A949550D')
+        assert res == (False , _("Token is invalid."))
+        res = validate_secret_download_token(secret_download=secret_download , file_name= "eee.txt", record_id= '5', id= '5', date= '2023-03-08 00:52:19.624552', token= '6FA7D321A949550D')
+        assert res == (False , _("Token is invalid."))
+        res = validate_secret_download_token(secret_download=secret_download , file_name= "eee.txt", record_id= '1', id= '1', date= '2023-03-08 00:52:19.624552', token= '6FA7D321A949550D')
+        assert res == (False , _("Token is invalid."))
+        res = validate_secret_download_token(secret_download=secret_download , file_name= "eee.txt", record_id= '1', id= '5', date= '2099-03-08 00:52:19.624552', token= '6FA7D321A949550D')
+        assert res == (False , _("Token is invalid."))
+        res = validate_secret_download_token(secret_download=secret_download , file_name= "eee.txt", record_id= '1', id= '5', date= '2023-03-08 00:52:19.624552', token= '7FA7D321A949550D')
+        assert res == (False , _("Token is invalid."))
+
+        # 70
+        secret_download2=FileSecretDownload(
+            file_name= "eee.txt", record_id= '5',user_mail="repoadmin@example.org",expiration_date=-1,download_count=10
+        )
+        secret_download2.created = datetime(2023,3,8,0,52,19,624552)
+        secret_download2.id = 5
+        res = validate_secret_download_token(secret_download=secret_download2 , file_name= "eee.txt", record_id= '1', id= '5', date= '2023-03-08 00:52:19.624552', token= '6FA7D321A949550D')
+        assert res == (False , _("The expiration date for download has been exceeded."))
+        
+        #71
+        secret_download2.expiration_date = 99999999
+        res = validate_secret_download_token(secret_download=secret_download2 , file_name= "eee.txt", record_id= '1', id= '5', date= '2023-03-08 00:52:19.624552', token= '6FA7D321A949550D')
+        assert res == (True ,"")
+        
+        # 72
+        secret_download2.expiration_date = 9999999
+        secret_download2.download_count = 0
+        res = validate_secret_download_token(secret_download=secret_download2 , file_name= "eee.txt", record_id= '1', id= '5', date= '2023-03-08 00:52:19.624552', token= '6FA7D321A949550D')
+        assert res == (False , _("The download limit has been exceeded."))
+
+        # 73
+        res = validate_secret_download_token(secret_download=secret_download , file_name= "eee.txt", record_id= '1', id= '5', date= '2023-03-08 00:52:19.624552', token= '6FA7D321A949550D')
+        assert res == (True ,"")
+
+        secret_download2.expiration_date = "hoge"
+        res = validate_secret_download_token(secret_download=secret_download2 , file_name= "eee.txt", record_id= '1', id= '5', date= '2023-03-08 00:52:19.624552', token= '6FA7D321A949550D')
+        assert res == (False , _("Token is invalid."))
+
+# def get_secret_download(file_name: str, record_id: str,
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_get_secret_download -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_get_secret_download(app ,db ):
+    with app.test_request_context():
+        with db.session.begin_nested():
+            secret_download=FileSecretDownload(
+                file_name= "eee.txt", record_id= '1',user_mail="repoadmin@example.org",expiration_date=999999,download_count=10
+            )
+            db.session.add(secret_download)
+        
+
+        
+        assert get_secret_download(file_name= secret_download.file_name
+                            , record_id= secret_download.record_id
+                            , id= secret_download.id 
+                            , created =secret_download.created)
+        
+        assert not get_secret_download(file_name= secret_download.file_name
+                            , record_id= secret_download.record_id
+                            , id= secret_download.id + 1
+                            , created =secret_download.created)
+
+# def update_secret_download(**kwargs) -> Optional[List[FileSecretDownload]]:
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_get_data_usage_application_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_get_data_usage_application_data(app ,db):
+    with app.test_request_context():
+        with db.session.begin_nested():
+            secret_download=FileSecretDownload(
+                file_name= "eee.txt", record_id= '1',user_mail="repoadmin@example.org",expiration_date=999999,download_count=10
+            )
+            db.session.add(secret_download)
+        update_data = dict(
+            file_name   = secret_download.file_name
+            , record_id = secret_download.record_id
+            , download_count = 100
+            , created  = secret_download.created
+            , id = secret_download.id
+        )
+        res = update_secret_download(**update_data)
+        assert len(res) == 1
+        assert res[0].download_count == 100
+

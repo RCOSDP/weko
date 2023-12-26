@@ -8,6 +8,8 @@
 
 """Invenio custom schema fields tests."""
 
+# .tox/c1/bin/pytest --cov=invenio_records_rest tests/test_custom_fields.py -vv -s -v --cov-branch --cov-report=term --basetemp=/code/modules/invenio-records-rest/.tox/c1/tmp
+
 import pytest
 from invenio_pidstore.models import PersistentIdentifier as PIDModel
 from invenio_records import Record

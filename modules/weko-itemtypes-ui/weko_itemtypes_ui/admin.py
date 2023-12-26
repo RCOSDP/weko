@@ -118,6 +118,12 @@ class ItemTypeMetaDataView(BaseView):
     @item_type_permission.require(http_exception=403)
     def delete_itemtype(self, item_type_id=0):
         """Soft-delete an item type."""
+        from weko_workflow.utils import get_cache_data
+
+        if get_cache_data("import_start_time"):
+            flash(_('Item type cannot be deleted becase import is in progress.'), 'error')
+            return jsonify(code=-1)
+        
         if item_type_id > 0:
             record = ItemTypes.get_record(id_=item_type_id)
             if record is not None:
@@ -168,9 +174,17 @@ class ItemTypeMetaDataView(BaseView):
     @item_type_permission.require(http_exception=403)
     def register(self, item_type_id=0):
         """Register an item type."""
+        from weko_workflow.utils import get_cache_data
+
         if request.headers['Content-Type'] != 'application/json':
             current_app.logger.debug(request.headers['Content-Type'])
             return jsonify(msg=_('Header Error'))
+
+        if get_cache_data("import_start_time"):
+            response = jsonify(msg=_('Item type cannot be updated becase '
+                                     'import is in progress.'))
+            response.status_code = 400
+            return response
 
         data = request.get_json()
         # current_app.logger.error("data:{}".format(data))

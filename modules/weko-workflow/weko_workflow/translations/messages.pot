@@ -203,6 +203,10 @@ msgstr ""
 msgid "DOI successfully registered!"
 msgstr ""
 
+#: weko_workflow.utils.py: 433
+msgid ""When assigning a JaLC DOI through NDL, the resource type must be 'doctor thesis'."
+msgstr ""
+
 #: tests/test_views.py:1197 weko_workflow/utils.py:449
 msgid "Cannot register selected DOI for current Item Type of this item."
 msgstr ""

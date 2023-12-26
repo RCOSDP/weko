@@ -223,6 +223,13 @@ class TestIndexActionResource:
                     "public_date":"","public_state":True,
                     "harvest_public_state":True,
                 }
+
+                # import running
+                with patch("weko_workflow.utils.get_cache_data",return_value=True):
+                    res = client_rest.put(url,json=data)
+                    assert res.status_code == 200
+                    assert json.loads(res.data)['errors'] == ['The index cannot be updated becase import is in progress.']
+
                 # update with ja, en
                 res = client_rest.put(url,json=data)
                 assert res.status_code == 200
@@ -304,9 +311,16 @@ class TestIndexActionResource:
         # Incorrect index_id
         res = client_rest.delete(url)
         assert res.status_code == 204
-        
+
         mocker.patch("weko_index_tree.rest.perform_delete_index", return_value=("test_msg","test_error"))
         url = url_for("weko_index_tree_rest.tid_index_action",index_id="1")
+
+        # import running
+        with patch("weko_workflow.utils.get_cache_data",return_value=True):
+            res = client_rest.delete(url)
+            assert res.status_code == 200
+            assert json.loads(res.data)['errors'] == ['The index cannot be deleted becase import is in progress.']
+
         # delete with ja, en
         res = client_rest.delete(url)
         assert res.status_code == 200
@@ -392,6 +406,15 @@ class TestIndexTreeActionResource:
             # not data
             res = client_rest.put(url,json={})
             assert res.status_code == 400
+
+            # import running
+            with patch("weko_workflow.utils.get_cache_data",return_value=True):
+                data = {"pre_parent":"0","parent":"0","position":"0"}
+                index_id="3"
+                url = "/tree/move/{}".format(index_id)
+                res = client_rest.put(url,json=data)
+                assert res.status_code == 202
+                assert json.loads(res.data)['message'] == 'The index cannot be moved becase import is in progress.'
 
             # move with jp, en
             data = {"pre_parent":"0","parent":"0","position":"0"}

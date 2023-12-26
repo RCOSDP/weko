@@ -8,6 +8,8 @@
 
 """Test sorter."""
 
+# .tox/c1/bin/pytest --cov=invenio_records_rest tests/test_sorter.py -vv -s -v --cov-branch --cov-report=term --basetemp=/code/modules/invenio-records-rest/.tox/c1/tmp
+
 from __future__ import absolute_import, print_function
 
 import pytest
@@ -40,7 +42,8 @@ def test_eval_field_string(app):
     assert eval_field("-myfield", True) == dict(myfield=dict(order='desc',unmapped_type='long'))
     assert eval_field("-myfield", False) == dict(myfield=dict(order='asc',unmapped_type='long'))
     assert eval_field("myfield", True, True) == dict(myfield=dict(order='asc',unmapped_type='long',nested=True))
-    assert eval_field("date_range", True) == {"_script":{"type":"number", "script":{"lang":"painless","source":"def x = params._source.date_range1;Date dt = new Date();if (x != null && x instanceof Map) { def st = x.getOrDefault(\"gte\",\"\");SimpleDateFormat format = new SimpleDateFormat();if (st.length()>7) {format.applyPattern(\"yyyy-MM-dd\");}else if (st.length()>4){format.applyPattern(\"yyyy-MM\");}else if (st.length()==4){format.applyPattern(\"yyyy\");} try { dt = format.parse(st);} catch (Exception e){}} return dt.getTime()"},"order": 'asc'}}
+    assert eval_field("date_range", True) == {"_script":{"type":"number", "script":{"lang":"painless","source":"def x = params._source.date_range1;Date dt = new Date();if (x != null && x instanceof List) { if (x[0] != null && x[0] instanceof Map){ def st = x[0].getOrDefault(\"gte\",\"\");SimpleDateFormat format = new SimpleDateFormat();if (st.length()>7) {format.applyPattern(\"yyyy-MM-dd\");}else if (st.length()>4){format.applyPattern(\"yyyy-MM\");}else if (st.length()==4){format.applyPattern(\"yyyy\");} try { dt = format.parse(st);} catch (Exception e){}}} return dt.getTime()"},"order": 'asc'}}
+    assert eval_field("control_number", True) == {"_script":{"type":"number", "script": "Float.parseFloat(doc['control_number'].value)", "order": "asc"}}
 
 
 def test_eval_field_callable():
@@ -80,13 +83,25 @@ def test_geolocation_sort(app):
             }
         }
 
-
+# .tox/c1/bin/pytest --cov=invenio_records_rest tests/test_sorter.py::test_default_sorter_factory -vv -s -v --cov-branch --cov-report=term --basetemp=/code/modules/invenio-records-rest/.tox/c1/tmp
 def test_default_sorter_factory(app):
     """Test default sorter factory."""
     app.config["RECORDS_REST_SORT_OPTIONS"] = dict(
         myindex=dict(
             myfield=dict(
                 fields=['field1', '-field2'],
+            ),
+            controlnumber=dict(
+                title='ID',
+                fields=['control_number'],
+                default_order='asc',
+                order=2
+            ),
+            temporal=dict(
+                title="Temporal",
+                fields=["date_range1.gte"],
+                default_order="asc",
+                order=3
             )
         ),
     )
@@ -97,18 +112,23 @@ def test_default_sorter_factory(app):
         ),
     )
 
+
     # Sort
     with app.test_request_context("?sort=myfield"):
         query, urlargs = default_sorter_factory(Search(), 'myindex')
         assert query.to_dict()['sort'] == \
-            [{'field1': {'order': 'asc'}}, {'field2': {'order': 'desc'}}]
+            [{'field1': {'order': 'asc', 'unmapped_type': 'long'}},
+             {'field2': {'order': 'desc', 'unmapped_type': 'long'}},
+             {"_script":{"type":"number", "script": "Float.parseFloat(doc['control_number'].value)", "order": "asc"}}]
         assert urlargs['sort'] == 'myfield'
 
     # Reverse sort
     with app.test_request_context("?sort=-myfield"):
         query, urlargs = default_sorter_factory(Search(), 'myindex')
         assert query.to_dict()['sort'] == \
-            [{'field1': {'order': 'desc'}}, {'field2': {'order': 'asc'}}]
+            [{'field1': {'order': 'desc', 'unmapped_type': 'long'}},
+             {'field2': {'order': 'asc', 'unmapped_type': 'long'}},
+             {"_script":{"type":"number", "script": "Float.parseFloat(doc['control_number'].value)", "order": "asc"}}]
         assert urlargs['sort'] == '-myfield'
 
     # Invalid sort key
@@ -121,24 +141,60 @@ def test_default_sorter_factory(app):
     with app.test_request_context("/?q="):
         query, urlargs = default_sorter_factory(Search(), 'myindex')
         assert query.to_dict()['sort'] == \
-            [{'field1': {'order': 'asc'}}, {'field2': {'order': 'desc'}}]
+            [{'field1': {'order': 'asc', 'unmapped_type': 'long'}},
+             {'field2': {'order': 'desc', 'unmapped_type': 'long'}},
+             {"_script":{"type":"number", "script": "Float.parseFloat(doc['control_number'].value)", "order": "asc"}}]
         assert urlargs == dict(sort='myfield')
 
     # Default sort with query
     with app.test_request_context("/?q=test"):
         query, urlargs = default_sorter_factory(Search(), 'myindex')
         assert query.to_dict()['sort'] == \
-            [{'field1': {'order': 'desc'}}, {'field2': {'order': 'asc'}}]
+            [{'field1': {'order': 'desc', 'unmapped_type': 'long'}},
+             {'field2': {'order': 'asc', 'unmapped_type': 'long'}},
+             {"_script":{"type":"number", "script": "Float.parseFloat(doc['control_number'].value)", "order": "asc"}}]
         assert urlargs == dict(sort='-myfield')
 
     # Default sort with query that includes unicodes
     with app.test_request_context("/?q=tést"):
         query, urlargs = default_sorter_factory(Search(), 'myindex')
         assert query.to_dict()['sort'] == \
-            [{'field1': {'order': 'desc'}}, {'field2': {'order': 'asc'}}]
+            [{'field1': {'order': 'desc', 'unmapped_type': 'long'}},
+             {'field2': {'order': 'asc', 'unmapped_type': 'long'}},
+             {"_script":{"type":"number", "script": "Float.parseFloat(doc['control_number'].value)", "order": "asc"}}]
         assert urlargs == dict(sort='-myfield')
 
     # Default sort another index
     with app.test_request_context("/?q=test"):
         query, urlargs = default_sorter_factory(Search(), 'aidx')
         assert 'sort' not in query.to_dict()
+        
+    # Sort with control_number
+    with app.test_request_context("/?sort=controlnumber"):
+        query, urlargs = default_sorter_factory(Search(), 'myindex')
+        assert query.to_dict()['sort'] == \
+            [{"_script":{"type":"number", "script": "Float.parseFloat(doc['control_number'].value)", "order": "asc"}}]
+        assert urlargs == dict(sort='controlnumber')
+    
+    # Reverse sort with control_number
+    with app.test_request_context("/?sort=-controlnumber"):
+        query, urlargs = default_sorter_factory(Search(), 'myindex')
+        assert query.to_dict()['sort'] == \
+            [{"_script":{"type":"number", "script": "Float.parseFloat(doc['control_number'].value)", "order": "desc"}}]
+        assert urlargs == dict(sort='-controlnumber')
+
+    # Sort with temporal
+    with app.test_request_context("/?sort=temporal"):
+        query, urlargs = default_sorter_factory(Search(), 'myindex')
+        assert query.to_dict()['sort'] == \
+            [{"_script":{"type":"number","script":{"lang":"painless","source":"def x = params._source.date_range1;Date dt = new Date();if (x != null && x instanceof List) { if (x[0] != null && x[0] instanceof Map){ def st = x[0].getOrDefault(\"gte\",\"\");SimpleDateFormat format = new SimpleDateFormat();if (st.length()>7) {format.applyPattern(\"yyyy-MM-dd\");}else if (st.length()>4){format.applyPattern(\"yyyy-MM\");}else if (st.length()==4){format.applyPattern(\"yyyy\");} try { dt = format.parse(st);} catch (Exception e){}}} return dt.getTime()"},"order": 'asc'}},
+            {"_script":{"type":"number", "script": "Float.parseFloat(doc['control_number'].value)", "order": "asc"}}]
+        assert urlargs == dict(sort='temporal')
+    
+    # Reverse sort with control_number
+    with app.test_request_context("/?sort=-temporal"):
+        query, urlargs = default_sorter_factory(Search(), 'myindex')
+        assert query.to_dict()['sort'] == \
+            [{"_script":{"type":"number","script":{"lang":"painless","source":"def x = params._source.date_range1;Date dt = new Date();if (x != null && x instanceof List) { if (x[0] != null && x[0] instanceof Map){ def st = x[0].getOrDefault(\"gte\",\"\");SimpleDateFormat format = new SimpleDateFormat();if (st.length()>7) {format.applyPattern(\"yyyy-MM-dd\");}else if (st.length()>4){format.applyPattern(\"yyyy-MM\");}else if (st.length()==4){format.applyPattern(\"yyyy\");} try { dt = format.parse(st);} catch (Exception e){}}} return dt.getTime()"},"order": 'desc'}},
+            {"_script":{"type":"number", "script": "Float.parseFloat(doc['control_number'].value)", "order": "asc"}}]
+        assert urlargs == dict(sort='-temporal')

@@ -73,7 +73,7 @@
           {%- if idf_grant_data["ndl_jalc_flag"] %}
             {%- set idf_grant_labels = idf_grant_input[4] %}
             {{ render_identifier_link(idf_grant_labels[0], idf_grant_labels[1], idf_grant_labels[2],
-              idf_grant_method, idf_grant_data["ndl_jalc_doi"], idf_grant_data["suffix"], item, item_id) }}
+              2, idf_grant_data["ndl_jalc_doi"], idf_grant_data["suffix"], item, item_id) }}
           {%- endif %}
           <input type="hidden" id="msg_format_doi" value="{{_('Its able to input only haft-width alphanumeric or half-width symbol.')}}" />
           <input type="hidden" id="msg_length_doi" value="{{_('Input value exceeds 255 characters.')}}" />

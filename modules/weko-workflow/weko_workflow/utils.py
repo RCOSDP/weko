@@ -26,7 +26,7 @@ import os
 from collections import OrderedDict
 from copy import deepcopy
 from datetime import datetime, timedelta
-from typing import NoReturn, Optional, Tuple, Union
+from typing import List, NoReturn, Optional, Tuple, Union
 import traceback
 
 import redis
@@ -61,6 +61,7 @@ from weko_records.api import FeedbackMailList, ItemsMetadata, ItemTypeNames, \
     ItemTypes, Mapping
 from weko_records.models import ItemType
 from weko_records.serializers.utils import get_full_mapping, get_item_type_name
+from weko_records_ui.models import FilePermission
 from weko_redis import RedisConnection
 from weko_user_profiles.config import \
     WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
@@ -76,12 +77,12 @@ from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
 
 
 from .api import GetCommunity, UpdateItem, WorkActivity, WorkActivityHistory, \
-    WorkFlow
+    WorkFlow , Flow
 from .config import DOI_VALIDATION_INFO, DOI_VALIDATION_INFO_CROSSREF, DOI_VALIDATION_INFO_DATACITE, IDENTIFIER_GRANT_SELECT_DICT, \
     WEKO_SERVER_CNRI_HOST_LINK
-from .models import Action as _Action
-from .models import ActionStatusPolicy, ActivityStatusPolicy, GuestActivity
-
+from .models import Action as _Action, Activity
+from .models import ActionStatusPolicy, ActivityStatusPolicy, GuestActivity,FlowAction 
+from .models import WorkFlow as _WorkFlow
 
 def get_current_language():
     """Get current language.
@@ -135,7 +136,6 @@ def saving_doi_pidstore(item_id,
                         record_without_version,
                         data=None,
                         doi_select=0,
-                        is_feature_import=False,
                         temporal_saving=False):
     """
     Mapp doi pidstore data to ItemMetadata.
@@ -150,8 +150,6 @@ def saving_doi_pidstore(item_id,
         'record_without_version: {0}'.format(record_without_version))
     current_app.logger.debug('data: {0}'.format(data))
     current_app.logger.debug('doi_select: {0}'.format(doi_select))
-    current_app.logger.debug(
-        'is_feature_import: {0}'.format(is_feature_import))
     current_app.logger.debug('temporal_saving: {0}'.format(temporal_saving))
 
     flag_del_pidstore = False
@@ -180,7 +178,7 @@ def saving_doi_pidstore(item_id,
         identifier_val = jalcdoi_dc_link
         doi_register_val = '/'.join(jalcdoi_dc_tail[1:])
         doi_register_typ = 'DataCite'
-    elif is_feature_import and doi_select == IDENTIFIER_GRANT_LIST[4][0] \
+    elif doi_select == IDENTIFIER_GRANT_LIST[4][0] \
             and data.get('identifier_grant_ndl_jalc_doi_link'):
         ndljalcdoi_dc_link = data.get('identifier_grant_ndl_jalc_doi_link')
         ndljalcdoi_dc_tail = (ndljalcdoi_dc_link.split('//')[1]).split('/')
@@ -428,6 +426,11 @@ def item_metadata_validation(item_id, identifier_type, record=None,
                 + 'items that have been grant a DOI.'
             return error_list
 
+    # For NDL prefix, resource type is only doctoral thesis
+    if identifier_type==IDENTIFIER_GRANT_SELECT_DICT['NDL JaLC'] and resource_type != "doctoral thesis":
+        error_list['other'] = _("When assigning a JaLC DOI through NDL, the resource type must be 'doctor thesis'.")
+        return error_list
+
     properties = {}
     # 必須
     required_properties = []
@@ -593,6 +596,11 @@ def item_metadata_validation(item_id, identifier_type, record=None,
             # remove 20220207
             # either_properties = ['geoLocation']
     # NDL JaLC DOI identifier registration
+    elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['NDL JaLC']:
+        required_properties = [
+            'title',
+            'type'
+        ]
 
     # 本文URL条件
     # DDIはスキップ
@@ -2468,6 +2476,10 @@ def replace_characters(data, content):
         '[data_download_date]': 'data_download_date',
         '[usage_report_url]': 'usage_report_url',
         '[restricted_usage_activity_id]': 'restricted_usage_activity_id',
+        '[file_name]' : 'file_name',
+        '[restricted_download_count]':'restricted_download_count',
+        '[restricted_download_count_ja]':'restricted_download_count_ja',
+        '[restricted_download_count_en]':'restricted_download_count_en',
     }
     for key in replace_list:
         value = replace_list.get(key)
@@ -3718,15 +3730,17 @@ def process_send_approval_mails(activity_detail, actions_mail_setting,
                 current_app.config["WEKO_WORKFLOW_APPROVE_DONE"])
 
         if actions_mail_setting.get('next', {}).get("request_approval", False):
-            approval_user = db.session.query(User).filter_by(
-                id=int(next_step_appover_id)).first()
+            approval_user = None
+            if next_step_appover_id :
+                approval_user = db.session.query(User).filter_by(
+                    id=int(next_step_appover_id)).first()
             if not approval_user:
                 current_app.logger.error("Does not have approval data")
             else:
                 mail_info['mail_recipient'] = approval_user.email
-                process_send_mail(
-                    mail_info,
-                    current_app.config["WEKO_WORKFLOW_REQUEST_APPROVAL"])
+            process_send_mail(
+                mail_info,
+                current_app.config["WEKO_WORKFLOW_REQUEST_APPROVAL"])
 
     if actions_mail_setting["reject"]:
         if actions_mail_setting.get(
@@ -4243,10 +4257,6 @@ def prepare_doi_link_workflow(item_id, doi_input):
             _jalc_dc_doi_link = url_format.format(
                 IDENTIFIER_GRANT_LIST[3][2],
                 identifier_setting.jalc_datacite_doi,
-                item_id)
-            _ndl_jalc_doi_link = url_format.format(
-                IDENTIFIER_GRANT_LIST[4][2],
-                identifier_setting.ndl_jalc_doi,
                 _item_id)
         elif suffix_method == 1:
             url_format = '{}/{}/{}{}'
@@ -4259,17 +4269,12 @@ def prepare_doi_link_workflow(item_id, doi_input):
                 IDENTIFIER_GRANT_LIST[2][2],
                 identifier_setting.jalc_crossref_doi,
                 identifier_setting.suffix,
-                doi_input.get('action_identifier_jalc_doi'))
+                doi_input.get('action_identifier_jalc_cr_doi'))
             _jalc_dc_doi_link = url_format.format(
                 IDENTIFIER_GRANT_LIST[3][2],
                 identifier_setting.jalc_datacite_doi,
                 identifier_setting.suffix,
-                doi_input.get('action_identifier_jalc_doi'))
-            _ndl_jalc_doi_link = url_format.format(
-                IDENTIFIER_GRANT_LIST[4][2],
-                identifier_setting.ndl_jalc_doi,
-                identifier_setting.suffix,
-                doi_input.get('action_identifier_jalc_doi'))
+                doi_input.get('action_identifier_jalc_dc_doi'))
         elif suffix_method == 2:
             url_format = '{}/{}/{}'
             _jalc_doi_link = url_format.format(
@@ -4279,15 +4284,15 @@ def prepare_doi_link_workflow(item_id, doi_input):
             _jalc_cr_doi_link = url_format.format(
                 IDENTIFIER_GRANT_LIST[2][2],
                 identifier_setting.jalc_crossref_doi,
-                doi_input.get('action_identifier_jalc_doi'))
+                doi_input.get('action_identifier_jalc_cr_doi'))
             _jalc_dc_doi_link = url_format.format(
                 IDENTIFIER_GRANT_LIST[3][2],
                 identifier_setting.jalc_datacite_doi,
-                doi_input.get('action_identifier_jalc_doi'))
-            _ndl_jalc_doi_link = url_format.format(
-                IDENTIFIER_GRANT_LIST[4][2],
-                identifier_setting.ndl_jalc_doi,
-                doi_input.get('action_identifier_jalc_doi'))
+                doi_input.get('action_identifier_jalc_dc_doi'))
+        _ndl_jalc_doi_link = '{}/{}/{}'.format(
+            IDENTIFIER_GRANT_LIST[4][2],
+            identifier_setting.ndl_jalc_doi,
+            doi_input.get('action_identifier_ndl_jalc_doi'))
 
         ret = {
             'identifier_grant_jalc_doi_link': _jalc_doi_link,
@@ -4319,7 +4324,6 @@ def get_pid_value_by_activity_detail(activity_detail):
 def check_doi_validation_not_pass(item_id, activity_id,
                                   identifier_select, without_ver_id=None):
     """Call DOI validation and save error cache."""
-    current_app.logger.debug("caled check_doi_validation_not_pass")
     error_list = item_metadata_validation(item_id, identifier_select,
                                           without_ver_id=without_ver_id)
     if isinstance(error_list, str):
@@ -4340,7 +4344,7 @@ def check_doi_validation_not_pass(item_id, activity_id,
             sessionstore.delete(
                 'updated_json_schema_{}'.format(activity_id))
         return False
-
+    
 def make_activitylog_tsv(activities):
     """make tsv for activitiy_log
 
@@ -4363,3 +4367,103 @@ def make_activitylog_tsv(activities):
 
     return file_output.getvalue()
     
+    
+def make_activitylog_tsv(activities):
+    """make tsv for activitiy_log
+
+    Args:
+        activities: activities for download as tsv.
+    """
+    import csv 
+    from io import StringIO
+    file_output = StringIO()
+
+    keys = current_app.config.get("WEKO_WORKFLOW_ACTIVITYLOG_XLS_COLUMNS")
+
+    writer = csv.writer(file_output, delimiter="\t", lineterminator="\n")
+    writer.writerow(keys)
+    for item in activities:
+        term = []
+        for name in keys:
+            term.append(getattr(item,name))
+        writer.writerow(term)
+
+    return file_output.getvalue()
+    
+
+def is_terms_of_use_only(workflow_id :int) -> bool:
+    """
+    return true if the workflow is [terms_of_use_only(利用規約のみ)]
+
+    note:
+        [terms of use only] workflow is open_restricted flag is "true".
+        and 
+        [terms of use only] workflow is structed "Begin Action" and "End Action" only.
+
+    Args 
+        int :workflow_id 
+    Return
+        bool :is the workflow [terms of use only]
+    """
+    
+    current_app.logger.info(workflow_id)
+    ids = [workflow_id]
+
+    wf:_WorkFlow = WorkFlow().get_workflow_by_ids(ids)
+    current_app.logger.info(wf)
+    if wf[0].open_restricted :
+        fa :list[FlowAction] =Flow().get_flow_action_list(wf[0].flow_id)
+        if len(fa) == 2 :
+            #begin action and end action
+            return True
+    return False
+
+def grant_access_rights_to_all_open_restricted_files(activity_id :str ,permission:Union[FilePermission,GuestActivity] , activity_detail :Activity) -> dict:
+    """
+    Target all of open_restricted files in the item , grant access rights for login user.
+    or
+    Target a open_restricted file that is applyed by the guest user  in the item , grant access rights for guest user.
+    
+    Args:
+        str :activity_id
+        FilePermission :permission
+        Activity :activity_detail
+    Returns
+        dict :one time url and expired_date
+    """ 
+    url_and_expired_date:dict = {}
+    if isinstance(permission ,FilePermission): #contributer
+        files = WekoRecord.get_record_by_pid(permission.record_id).get_file_data()
+        for file in files:
+            #{'url': {'url': 'https://weko3.example.org/record/1/files/aaa (1).txt'}, 'date': [{'dateType': 'Available', 'dateValue': '2023-02-03'}], 'terms': 'term_free', 'format': 'text/plain', 'provide': [{'role': 'none_loggin', 'workflow': '2'}, {'role': '3', 'workflow': '1'}], 'version': '1', 'dataType': 'perfectures', 'filename': 'aaa (1).txt', 'filesize': [{'value': '5 B'}], 'mimetype': 'text/plain', 'accessrole': 'open_restricted', 'version_id': '2a0aa15b-d3e2-4846-9e3a-e1e734a1a620', 'displaytype': 'simple', 'licensefree': 'licence text', 'licensetype': 'license_free', 'termsDescription': '利用規約のフリーインプット本文です'}
+            if file['accessrole'] in 'open_restricted':
+            
+                if file['filename'] != permission.file_name:
+                    # create all open_restricted content records in unapplyed
+                    FilePermission.init_file_permission(permission.user_id, permission.record_id, file['filename'], activity_id)
+                
+                #insert file_onetime_download
+                extra_info:dict = deepcopy(activity_detail.extra_info)
+                extra_info.update({'file_name' : file['filename']})
+                tmp:dict = create_onetime_download_url_to_guest(activity_detail.activity_id,extra_info)
+            
+                if file['filename'] == permission.file_name:
+                    # a applyed content.
+                    url_and_expired_date = tmp
+
+        # approve all open_restricted contents.
+        permissions = FilePermission.find_by_activity(activity_id)
+        for permi in permissions:
+            FilePermission.update_status(permi,1) #1:Approval
+    
+    elif isinstance(permission,GuestActivity): #guest user
+
+        #insert file_onetime_download
+        extra_info:dict = deepcopy(activity_detail.extra_info)
+        # extra_info.update({'file_name' : permission.file_name})
+        tmp:dict = create_onetime_download_url_to_guest(activity_detail.activity_id,extra_info)
+
+        url_and_expired_date = tmp
+
+    #url_and_expired_date of a applyed content.
+    return url_and_expired_date

@@ -569,8 +569,109 @@ class RecordsListResource(ContentNegotiatedMethodView):
         # Search_after trigger
         use_search_after = False
 
-        def get_item_control_number(search_result):
-            return search_result["hits"]["hits"][-1]["_source"]["control_number"]
+        def get_item_sort_value(search_result):
+            return list(search_result["hits"]["hits"][-1]["sort"])
+        
+        def set_sort_value(sort_condition, sort_value):
+            
+            sort_fields = [list(condition.keys())[0] for condition in sort_condition]
+            new_data = {}
+            for i, field in enumerate(sort_fields):
+                sort_field = ""
+                if field == "_script":
+                    target_script = sort_condition[i][field].get("script") \
+                        if isinstance(sort_condition[i][field].get("script"),str) else sort_condition[i][field].get("script",{}).get("source","")
+                    if "control_number" in target_script:
+                        sort_field = "control_number"
+                    if "date_range" in target_script:
+                        sort_field = "date_range"
+                else:
+                    sort_field=field
+                new_data[sort_field] = sort_value[i]
+
+            return new_data
+        
+        def get_new_search_after(_page, search_after_size, cache_data, search_query, last_sort_value, first_page_over_max_results, sort_condition):
+            
+            conn_num = ""
+            # The first page whose page*size is greater than max_result_window
+            page_list = []
+            is_error = False
+            for cached_page in cache_data.keys():
+                try:
+                    page_list.append(int(cached_page))
+                except ValueError:
+                    # This exception is for excluding non numerical values
+                    current_app.logger.error(f"{cached_page}: {e}")
+                    current_app.logger.error(traceback.format_exc())
+                    pass
+                except:
+                    current_app.logger.error('An error occurred besides the possibly expected KeyError')
+                    current_app.logger.error(traceback.format_exc())
+            sorted_page_list = sorted(page_list)
+            if _page in sorted_page_list and cache_data.get(str(_page),{}):
+                next_items_sort_value = list(cache_data.get(str(_page),{}).values())
+            else:
+                try:
+                    if _page == first_page_over_max_results:
+                        next_items_sort_value = last_sort_value
+                    else:
+                        if (_page-1) in sorted_page_list and cache_data.get(str(_page-1)):
+                            conn_num = list(cache_data.get(str(_page-1),{}).values())
+                            next_search_after_set = search_query
+                            next_search_after_set._extra.update(search_after_size)
+                            next_search_after_set._extra.update({"search_after": conn_num})
+                            next_items_sort_value = get_item_sort_value(next_search_after_set.execute(ignore_cache=True))
+                        else:
+                            prev_page_last_control_number = (size*(page-1)-size*math.floor(self.max_result_window/size))
+                            num_per_max = prev_page_last_control_number//self.max_result_window
+                            target_index=prev_page_last_control_number%self.max_result_window
+                            if target_index==0:
+                                target_index=self.max_result_window
+                            else:
+                                num_per_max+=1
+
+                            max_size_sort_value, max_cache_data = get_max_result_sort_value(num_per_max, search, sort_condition)
+                            next_search_after_set = search_query
+                            next_search_after_set._extra.update({"size": target_index})
+                            next_search_after_set._extra.update({"search_after": max_size_sort_value})
+                            next_items_sort_value = get_item_sort_value(next_search_after_set.execute(ignore_cache=True))
+                except Exception as e:
+                    current_app.logger.error(traceback.format_exc())
+                    next_items_sort_value = last_sort_value
+                    is_error = True
+
+            if is_error != True and str(_page) not in cache_data:
+                cache_data[str(_page)] = set_sort_value(sort_condition, next_items_sort_value)
+            return next_items_sort_value, cache_data
+
+        def get_max_result_sort_value(max_size_key, search, sort_condition, max_cache_data=None):
+            """Get search_after used to search max_size_key*max_result_window ~ (max_size_key+1)*max_result_window"""
+            max_size_cache_name = f"{cache_name}_max_result"
+            if max_cache_data is None:
+                max_cache_data = json.loads(sessionstorage.get(max_size_cache_name)) \
+                    if sessionstorage.redis.exists(max_size_cache_name) else {}
+            if max_cache_data.get(str(max_size_key)):
+                new_sort_value = list(max_cache_data.get(str(max_size_key),{}).values())
+            else:
+                last_sort_value, max_cache_data = get_max_result_sort_value(max_size_key-1, search, sort_condition, max_cache_data=max_cache_data)
+
+                max_result_search = search
+                max_result_search._extra.update({"size": self.max_result_window})
+                max_result_search._extra.update({"search_after": last_sort_value})
+                new_sort_value = get_item_sort_value(max_result_search.execute(ignore_cache=True))
+                max_cache_data[str(max_size_key)] = set_sort_value(sort_condition, new_sort_value)
+                sessionstorage.put(
+                    max_size_cache_name,
+                    json.dumps(max_cache_data).encode('utf-8'),
+                    ttl_secs=current_app.config.get(
+                        'RECORDS_REST_DEFAULT_TTL_VALUE',
+                        RECORDS_REST_DEFAULT_TTL_VALUE
+                    )
+                )
+
+            return new_sort_value, max_cache_data
+
 
         # Sort key being used in the query
         relevance_sort_is_used = False
@@ -584,10 +685,8 @@ class RecordsListResource(ContentNegotiatedMethodView):
         
         if relevance_sort_is_used:
             sort_key = sort_element
-            sort_key_arrangement = "desc"
         else:
             sort_key = list(sort_element[0].keys())[0]
-            sort_key_arrangement = sort_element[0][sort_key]["order"]
 
         # Cache Storage
         redis_connection = RedisConnection()
@@ -613,6 +712,7 @@ class RecordsListResource(ContentNegotiatedMethodView):
                 if (q_check or sort_check) or size_check:
                     sessionstorage.delete(cache_name)
                     sessionstorage.delete(f"{cache_name}_url_args")
+                    sessionstorage.delete(f"{cache_name}_max_result")
                     json_data = json.dumps(request.args.to_dict()).encode('utf-8')
                     sessionstorage.put(
                         f"{cache_name}_url_args",
@@ -625,6 +725,8 @@ class RecordsListResource(ContentNegotiatedMethodView):
             else:
                 if sessionstorage.redis.exists(cache_name):
                     sessionstorage.delete(cache_name)
+                if sessionstorage.redis.exists(f"{cache_name}_max_result"):
+                    sessionstorage.delete(f"{cache_name}_max_result")
                 json_data = json.dumps(request.args.to_dict()).encode('utf-8')
                 sessionstorage.put(
                     f"{cache_name}_url_args",
@@ -636,18 +738,38 @@ class RecordsListResource(ContentNegotiatedMethodView):
                 )
         
         url_args_check()
-
-        next_items_sort_value = ""
-
+        next_items_sort_value = []
         if page * size > self.max_result_window:
-            start_value = int(self.max_result_window) - 1
-            end_value = int(self.max_result_window)
+            if "sort" not in search.to_dict():
+                from .sorter import eval_field
+                search_index=search._index[0]
+                control_number_sort_option = current_app.config['RECORDS_REST_SORT_OPTIONS'].get(search_index,{}).get('controlnumber')
+                if control_number_sort_option is not None:
+                    search._extra.update({"sort": [
+                        eval_field(
+                            control_number_sort_option['fields'][0],'asc',control_number_sort_option.get('nested')
+                        )
+                    ]})
+            page_value = size*((math.floor(self.max_result_window/size)+1)-1)
+            start_value=page_value-1
+            end_value=page_value
             search_after_start_value = search[start_value:end_value]
             search_after_start_value = search_after_start_value.execute()
-            last_sort_value = get_item_control_number(search_after_start_value)
+            last_sort_value = get_item_sort_value(search_after_start_value)
+            
+            sort_condition=search.to_dict().get("sort")
 
-            # Sort to be used for search_after regardless of the selected sort type on the search results page
-            search._extra.update({"sort": [{"control_number": {"order": f"{sort_key_arrangement}"}}]})
+            #sort_fields = [list(condition.keys())[0] for condition in sort_condition]
+            
+            if not sessionstorage.redis.exists(f"{cache_name}_max_result"):
+                sessionstorage.put(
+                    f"{cache_name}_max_result",
+                    json.dumps({"1": set_sort_value(sort_condition, last_sort_value)}).encode('utf-8'),
+                    ttl_secs=current_app.config.get(
+                        'RECORDS_REST_DEFAULT_TTL_VALUE',
+                        RECORDS_REST_DEFAULT_TTL_VALUE
+                    )
+                )
 
             # Size for search. Dynamically changes depending on the size selected on the search results page
             search_after_size = {"size": size}
@@ -655,104 +777,29 @@ class RecordsListResource(ContentNegotiatedMethodView):
             next_items_sort_value = None
 
             if sessionstorage.redis.exists(cache_name):
-                if json.loads(sessionstorage.get(cache_name)).get(cache_key):
-                    cache_name_checker = json.loads(sessionstorage.get(cache_name)).get(cache_key)
-                else:
-                    cache_name_checker = None
+                cache_data = json.loads(sessionstorage.get(cache_name))
             else:
-                cache_name_checker = None
+                cache_data = {}
+            first_page_over_max_results = math.floor(self.max_result_window/size)+1
 
-            if sessionstorage.redis.exists(cache_name):
-                if cache_name_checker:
-                    page_list = []
-                    cache_name_stored_data = json.loads(sessionstorage.get(cache_name))
-                    for cached_page in cache_name_stored_data.keys():
-                        try:
-                            page_list.append(int(cached_page))
-                        except ValueError:
-                            # This exception is for excluding non numerical values
-                            current_app.logger.error(f"{cached_page}: {e}")
-                            current_app.logger.error(traceback.format_exc())
-                            pass
-                        except:
-                            current_app.logger.error('An error occurred besides the possibly expected KeyError')
-                            current_app.logger.error(traceback.format_exc())
-                    sorted_page_list = sorted(page_list)
-
-                    next_search_after_set = search
-                    next_search_after_set._extra.update(search_after_size)
-                    next_search_after_set._extra.update({"search_after": [json.loads(sessionstorage.get(cache_name)).get(cache_key).get("control_number")]})
-                    next_items_sort_value = next_search_after_set.execute()["hits"]["hits"][-1]["_source"]["control_number"]
-                    
-                else:
-                    page_list = []
-                    cache_name_stored_data = json.loads(sessionstorage.get(cache_name))
-                    for cached_page in cache_name_stored_data.keys():
-                        try:
-                            page_list.append(int(cached_page))
-                        except KeyError:
-                            # This exception is to filter not numerical values
-                            current_app.logger.error(f"{cached_page}: {e}")
-                            current_app.logger.error(traceback.format_exc())
-                            pass
-                        except:
-                            current_app.logger.error('An error occurred besides the possibly expected KeyError')
-                            current_app.logger.error(traceback.format_exc())
-                    sorted_page_list = sorted(page_list)
-
-                    if ((page - 1) == sorted_page_list[-1] or page > sorted_page_list[-1]) and page * size > self.max_result_window:
-                        cache_data = cache_name_stored_data.get(str(int(cache_key) - 1))
-                        next_search_after_set = search
-                        next_search_after_set._extra.update(search_after_size)
-                        next_search_after_set._extra.update({"search_after": [json.loads(sessionstorage.get(cache_name)).get(str(sorted_page_list[-1])).get("control_number")]})
-                        
-                        try:
-                            if cache_data.get("control_number") is None:
-                                next_items_sort_value = last_sort_value
-                            else:
-                                next_items_sort_value = get_item_control_number(next_search_after_set.execute())
-                        except Exception as err:
-                            """
-                            Possible known error:
-                            1) elasticsearch.exceptions.RequestError: TransportError(400, 'parsing_exception', 'Expected [VALUE_STRING] or [VALUE_NUMBER] or [VALUE_BOOLEAN] or [VALUE_NULL] but found [START_ARRAY] inside search_after.')
-                            2) elasticsearch.exceptions.TransportError: TransportError(500, 'search_phase_execution_exception', 'Cannot invoke "java.lang.Long.longValue()" because "value" is null')
-                            """
-                            current_app.logger.error('*** If search_after runs properly ignore this error')
-                            current_app.logger.error(traceback.format_exc())
-
-                            try:
-                                next_items_sort_value = get_item_control_number(next_search_after_set.execute())
-                            except Exception as e:
-                                # This exception is for getting value of the 10,000th element
-                                current_app.logger.error('*** If search_after runs properly ignore this error')
-                                current_app.logger.error(traceback.format_exc())
-                                next_items_sort_value = last_sort_value
-
-                        next_search_after_set = None
-                        cache_name_stored_data[cache_key] = {"control_number": next_items_sort_value}
-
-                        json_data = json.dumps(cache_name_stored_data).encode('utf-8')
-                        sessionstorage.put(
-                            cache_name,
-                            json_data,
-                            ttl_secs=current_app.config.get(
-                                'RECORDS_REST_DEFAULT_TTL_VALUE',
-                                RECORDS_REST_DEFAULT_TTL_VALUE
-                            )
-                        )
-                    else:
-                        next_items_sort_value = last_sort_value
-            else:
-                next_items_sort_value = last_sort_value
+            next_items_sort_value, cache_data = get_new_search_after(page, search_after_size, cache_data, search, last_sort_value, first_page_over_max_results, sort_condition)
+            json_data = json.dumps(cache_data).encode('utf-8')
+            sessionstorage.put(
+                cache_name,
+                json_data,
+                ttl_secs=current_app.config.get(
+                    'RECORDS_REST_DEFAULT_TTL_VALUE',
+                    RECORDS_REST_DEFAULT_TTL_VALUE
+                )
+            )
 
             if sessionstorage.redis.exists(cache_name):
                 if json.loads(sessionstorage.get(cache_name)).get(cache_key):
-                    next_items_search_after = {"search_after": [json.loads(sessionstorage.get(cache_name)).get(cache_key).get("control_number")]}
+                    next_items_search_after = {"search_after": list(json.loads(sessionstorage.get(cache_name)).get(cache_key).values())}
                 else:
-                    next_items_search_after = {"search_after": [next_items_sort_value]}
+                    next_items_search_after = {"search_after": next_items_sort_value}
             else:
-                next_items_search_after = {"search_after": [next_items_sort_value]}
-
+                next_items_search_after = {"search_after": next_items_sort_value}
             search._extra.update(search_after_size)
             search._extra.update(next_items_search_after)
 
@@ -772,7 +819,7 @@ class RecordsListResource(ContentNegotiatedMethodView):
         search_result = search.execute()
 
         if not sessionstorage.redis.exists(cache_name) and size * math.floor(self.max_result_window/size) <= self.max_result_window:
-            json_data = json.dumps({cache_key: {"control_number": [next_items_sort_value]}}).encode('utf-8')
+            json_data = json.dumps({cache_key: next_items_sort_value}).encode('utf-8')
             sessionstorage.put(
                 cache_name,
                 json_data,

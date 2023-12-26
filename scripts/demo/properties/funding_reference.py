@@ -32,7 +32,6 @@ mapping = {
             "awardNumber": {
                 "@attributes": {
                     "awardURI": "subitem_award_numbers.subitem_award_uri",
-                    "awardNumber": "subitem_award_numbers.subitem_award_number_type",
                 },
                 "@value": "subitem_award_numbers.subitem_award_number",
             },
