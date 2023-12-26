@@ -171,9 +171,9 @@ WEKO_SCHEMA_DATE_TYPE = {
 """Modified and original for publisher key"""
 
 WEKO_SCHEMA_RELATION_TYPE = [
-    'isVersionOf', 'hasVersion', 'isPartOf', 'hasPart', 'isReferencedBy',
-    'references', 'isFormatOf', 'hasFormat', 'isReplacedBy', 'replaces',
-    'isRequiredBy', 'requires', 'isSupplementedBy', 'isSupplementTo',
-    'isIdenticalTo', 'isDerivedFrom', 'isSourceOf'
+    'inSeries','isCitedBy','Cites','isVersionOf','hasVersion','isPartOf','hasPart',
+    'isReferencedBy','references','isFormatOf','hasFormat',
+    'isReplacedBy','replaces','isRequiredBy','requires','isSupplementedBy',
+    'isSupplementTo','isIdenticalTo','isDerivedFrom','isSourceOf'
 ]
 """jpcoar:relation relationType Controlled Vocabularies"""
