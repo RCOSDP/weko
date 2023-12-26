@@ -662,6 +662,36 @@ def test_save_feedback_maillist_users(client, users, db_register, users_index, s
         res = client.post(url, json=input)
         assert res.status_code == status_code
 
+@pytest.mark.parametrize('users_index, status_code', [
+    (1, 200)
+])
+#.tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_save_request_maillist -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_save_request_maillist(client,users, db_register, users_index, status_code):
+    login(client=client, email=users[users_index]['email'])
+    input = {
+        'request_maillst':[],
+        'is_display_request_button':True
+    }
+
+    url = url_for('weko_workflow.save_request_maillist',activity_id='1')
+    res = client.post(url, json=input)
+    assert res.status_code == 200
+
+    input = "text"
+    url = url_for('weko_workflow.save_request_maillist',activity_id='1')
+    res = client.post(url, json=input)
+    data = response_data(res)
+    assert data["code"] == -1
+
+    input = {
+        'request_maillst':[],
+        'is_display_request_button':True
+    }
+    with patch('weko_workflow.api.WorkActivity.create_or_update_activity_request_mail',side_effect=Exception()):
+        url = url_for('weko_workflow.save_request_maillist',activity_id='1')
+        res = client.post(url, json=input)
+        data = response_data(res)
+    assert data["code"] == -1        
 
 def test_previous_action_acl_nologin(client,db_register2):
     """Test of previous action."""
@@ -2447,6 +2477,76 @@ def test_get_feedback_maillist(client, users, db_register, users_index, status_c
     print(vars(action_feedback_mail))
 
     url = url_for('weko_workflow.get_feedback_maillist', activity_id='1')
+    with patch('weko_workflow.views.type_null_check', return_value=False):
+        res = client.get(url)
+        data = response_data(res)
+        assert res.status_code== 400
+        assert data["code"] == -1
+        assert data["msg"] == 'arguments error'
+
+    #戻り値jsonify(code=0, msg=_('Empty!'))の分岐テスト
+    url = url_for('weko_workflow.get_feedback_maillist', activity_id='1')
+    res = client.get(url)
+    data = response_data(res)
+    assert res.status_code==status_code
+    assert data['code'] == 0
+    assert data['msg'] == 'Empty!'
+
+    #戻り値jsonify(code=1,msg=_('Success'),data=mail_list)の分岐テスト
+    url = url_for('weko_workflow.get_feedback_maillist', activity_id='4')
+    res = client.get(url)
+    data = response_data(res)
+    mail_list = action_feedback_mail.feedback_maillist
+    assert res.status_code==status_code
+    assert data['code'] == 1
+    assert data['msg'] == 'Success'
+    assert data['data'] == mail_list
+
+    url = url_for('weko_workflow.get_feedback_maillist', activity_id='5')
+    res = client.get(url)
+    data = response_data(res)
+    mail_list = action_feedback_mail_1.feedback_maillist
+    assert res.status_code==status_code
+    assert data['code'] == 1
+    assert data['msg'] == 'Success'
+    assert data['data'] == mail_list
+
+    url = url_for('weko_workflow.get_feedback_maillist', activity_id='6')
+    res = client.get(url)
+    data = response_data(res)
+    mail_list = action_feedback_mail_2.feedback_maillist
+    assert res.status_code==status_code
+    assert data['code'] == 1
+    assert data['msg'] == 'Success'
+    assert data['data'] == mail_list
+
+    #戻り値jsonify(code=-1, msg=_('Error'))の分岐テスト
+    url = url_for('weko_workflow.get_feedback_maillist', activity_id='3')
+    with patch('weko_workflow.views.WorkActivity.get_action_feedbackmail', side_effect=Exception):
+        res = client.get(url)
+        data = response_data(res)
+        assert res.status_code == 400
+        assert data['code'] == -1
+        assert data['msg'] == 'Error'
+
+    url = url_for('weko_workflow.get_feedback_maillist', activity_id='7')
+    res = client.get(url)
+    data = response_data(res)
+    #mail_list = db_register['action_feedback_mail3'].feedback_maillist
+    assert res.status_code == 400
+    assert data['code'] == -1
+    assert data['msg'] == 'mail_list is not list'
+
+#.tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_get_feedback_maillist -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+@pytest.mark.parametrize('users_index, status_code', [
+    (1, 200)
+])
+def test_get_request_maillist(client, users, db_register, users_index, status_code):
+    login(client=client, email=users[users_index]['email'])
+
+    activity_request_mail = db_register['action_feedback_mail']
+
+    url = url_for('weko_workflow.get_request_maillist', activity_id='1')
     with patch('weko_workflow.views.type_null_check', return_value=False):
         res = client.get(url)
         data = response_data(res)

@@ -592,7 +592,7 @@ class RequestMail(ContentNegotiatedMethodView):
         if func_name in [func[0] for func in inspect.getmembers(self, inspect.ismethod)]:
             return getattr(self, func_name)(**kwargs)
         else:
-            raise VersionNotFoundRESTError() # 404 Error
+            raise VersionNotFoundRESTError() # 400 Error
 
     def post_v1(self, **kwargs):
         # Get parameter
@@ -608,17 +608,14 @@ class RequestMail(ContentNegotiatedMethodView):
 
         # Get record
         pid_value = kwargs.get('pid_value')
-        try:
-            pid = PersistentIdentifier.query.filter_by(
-                pid_type='recid', pid_value=str(pid_value)).first()
-        except PIDDoesNotExistError:
-            raise ContentsNotFoundError() # 404 Error
+        pid = PersistentIdentifier.query.filter_by(
+            pid_type='recid', pid_value=str(pid_value)).first()
 
         if not pid:
             raise ContentsNotFoundError() # 404 Error
 
         # Get request mail senders
-        request_body = request.get_json(force=True)
+        request_body = request.get_json(force=True, silent=True)
         msg_sender = request_body.get('from')
         if not msg_sender:
             raise ContentsNotFoundError() # 404 Error
