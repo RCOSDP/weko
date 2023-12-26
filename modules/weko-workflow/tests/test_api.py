@@ -743,11 +743,11 @@ def test_WorkActivity_query_activities_by_tab_is_all(app, users, activity_with_r
         actual = actual_query.all()
         assert (len(actual) > 0) == expected_included
 
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_request_mail_list_create_and_update -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_request_mail_list_create_and_update(app, workflow, db, mocker):
     activity = WorkActivity()
     _request_maillist1 = []
     _request_maillist2 = [{"email": "test@example.com", "author_id": ""}]
-
     activity.create_or_update_activity_request_mail("1", _request_maillist1, True)
     assert activity.get_activity_request_mail("1")
     activity.create_or_update_activity_request_mail("1", _request_maillist2, True)
@@ -766,19 +766,19 @@ def test_get_user_ids_of_request_mails_by_activity_id(workflow, users, mocker):
         display_request_button = True,
         request_maillist = []
     ),
-    ActivityRequestMail(
-        id = 2,
-        activity_id = 2,
-        display_request_button = False,
-        request_maillist = [{}]
+        ActivityRequestMail(
+            id = 2,
+            activity_id = 2,
+            display_request_button = False,
+            request_maillist = [{}]
     ),
-    ActivityRequestMail(
-        id = 3,
-        activity_id = 3,
-        display_request_button = True,
-        request_maillist = [{"email":"not_user","author_id":""},
-                            {"email":"user@test.org","author_id":""},
-                            {"email":"contributor@test.org","author_id":""}]
+        ActivityRequestMail(
+            id = 3,
+            activity_id = 3,
+            display_request_button = True,
+            request_maillist = [{"email":"not_user","author_id":""},
+                                {"email":"user@test.org","author_id":""},
+                                {"email":"contributor@test.org","author_id":""}]
     )]
     with patch("weko_workflow.api.WorkActivity.get_activity_detail", return_value = _Activity(extra_info={"record_id":1, "is_restricted_access":True})):
         mock = mocker.patch("weko_workflow.api.WorkActivity.get_user_ids_of_request_mails_by_record_id")
@@ -786,11 +786,11 @@ def test_get_user_ids_of_request_mails_by_activity_id(workflow, users, mocker):
         mock.assert_called()
     mocker.patch("weko_workflow.api.WorkActivity.get_activity_detail", return_value = _Activity(extra_info={}))
     with patch("weko_workflow.api.WorkActivity.get_activity_request_mail", return_value = None):
-        assert not activity.get_user_ids_of_request_mails_by_activity_id(1)
+        assert activity.get_user_ids_of_request_mails_by_activity_id(1) == []
     with patch("weko_workflow.api.WorkActivity.get_activity_request_mail", return_value = activityrequestmails[0]):
-        assert not activity.get_user_ids_of_request_mails_by_activity_id(1)
+        assert activity.get_user_ids_of_request_mails_by_activity_id(1) == []
     with patch("weko_workflow.api.WorkActivity.get_activity_request_mail", return_value = activityrequestmails[1]):
-        assert not activity.get_user_ids_of_request_mails_by_activity_id(2)
+        assert activity.get_user_ids_of_request_mails_by_activity_id(2) == []
     with patch("weko_workflow.api.WorkActivity.get_activity_request_mail", return_value = activityrequestmails[2]):
         ids = activity.get_user_ids_of_request_mails_by_activity_id(3)
         assert ids == [User.query.filter_by(email="contributor@test.org").one_or_none().id]
