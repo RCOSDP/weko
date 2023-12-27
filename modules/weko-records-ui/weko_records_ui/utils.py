@@ -658,13 +658,13 @@ def replace_license_free(record_metadata, is_change_label=True):
                         del attr[_license_free]
 
 
-def replace_license_free_for_opensearch(record_metadata, is_change_label=True):
+def replace_license_free_for_opensearch(search_result, is_change_label=True):
     """Change the item name 'licensefree' to 'license_note'.
 
     If 'licensefree' is not output as a value.
     The value of 'licensetype' is 'license_note'.
 
-    :param record_metadata:
+    :param search_result:
     :param is_change_label:
     :return: None
     """
@@ -679,8 +679,8 @@ def replace_license_free_for_opensearch(record_metadata, is_change_label=True):
     if _license_dict:
         _license_type_free = _license_dict[0].get('value')
 
-    for i in range(len(record_metadata['hits']['hits'])):
-      for val in record_metadata['hits']['hits'][i]['_source']['_item_metadata'].values():
+    for i in range(len(search_result['hits']['hits'])):
+      for val in search_result['hits']['hits'][i]['_source']['_item_metadata'].values():
           if isinstance(val, dict) and \
                   val.get('attribute_type') == _attribute_type:
               for attr in val[_attribute_value_mlt]:
