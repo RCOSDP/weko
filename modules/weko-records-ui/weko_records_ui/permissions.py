@@ -175,13 +175,17 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
                 else:
                     try:
                         # contents accessdate
-                        date = fjson.get('accessdate',None)
-                        if not date:
-                            date = fjson.get('date')
                         c_is_can = False
-                        if date and isinstance(date, list) and date[0]:
-                            adt = date[0].get('dateValue')
-                            c_is_can = not is_future(adt)
+                        access_date = fjson.get('accessdate',None)
+                        if access_date:
+                            c_is_can = not is_future(access_date)
+                        else:
+                            # get date list and check dateValue is future 
+                            date_list = fjson.get('date')
+                            if date_list and isinstance(date_list, list) and date_list[0]:
+                                adt = date_list[0].get('dateValue')
+                                c_is_can = not is_future(adt)
+
                         # publish date
                         idt = record.get('publish_date')
                         p_is_can = not is_future(idt)
