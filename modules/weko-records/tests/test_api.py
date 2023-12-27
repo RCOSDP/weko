@@ -1536,7 +1536,7 @@ def test_request_mail_list_create_and_update(mocker, app, db):
     assert flag==False
     record0 = RequestMailList.get_mail_list_by_item_id(1)
     assert record0==[]
-    assert not RequestMailList.get_request_mail_by_mailaddress('nii2@nii.co.jp')
+    assert not RequestMailList.get_request_mail_by_mailaddress(address='nii2@nii.co.jp')
     record1 = RequestMailList.get_mail_list_by_item_id(_item_id1)
     assert record1==[]
     flag = RequestMailList.update(_item_id1, _request_maillist1)
@@ -1546,7 +1546,7 @@ def test_request_mail_list_create_and_update(mocker, app, db):
     flag = RequestMailList.update(_item_id1, _request_maillist2)
     record1 = RequestMailList.get_mail_list_by_item_id(_item_id1)
     item_ids=[]
-    for request_mail in RequestMailList.get_request_mail_by_mailaddress('nii2@nii.co.jp'):
+    for request_mail in RequestMailList.get_request_mail_by_mailaddress(address='nii2@nii.co.jp'):
         item_ids.append(request_mail.item_id)
     assert flag==True
     assert record1==[{'email':'nii2@nii.co.jp'}]
@@ -1555,13 +1555,13 @@ def test_request_mail_list_create_and_update(mocker, app, db):
     record1 = RequestMailList.get_mail_list_by_item_id(_item_id1)
     record2 = RequestMailList.get_mail_list_by_item_id(_item_id2)
     item_ids=[]
-    for request_mail in RequestMailList.get_request_mail_by_mailaddress('nii3@nii.co.jp'):
+    for request_mail in RequestMailList.get_request_mail_by_mailaddress(address='nii3@nii.co.jp'):
         item_ids.append(request_mail.item_id)
     assert record1==[{'email':'nii3@nii.co.jp'}]
     assert record2==[{'email':'nii3@nii.co.jp'}]
     assert [_item_id1,_item_id2] == item_ids
     mocker.patch("flask_sqlalchemy.BaseQuery.all", side_effect=SQLAlchemyError)
-    assert not RequestMailList.get_request_mail_by_mailaddress('nii3@nii.co.jp')
+    assert not RequestMailList.get_request_mail_by_mailaddress(address='nii3@nii.co.jp')
 
 
 # class RequestMailList(object):

@@ -765,7 +765,8 @@ def test_register_item_metadata(i18n_app, es_item_file_pipeline, deposit, es_rec
 
     with patch("invenio_files_rest.utils.find_and_update_location_size"):
         assert register_item_metadata(item, root_path, is_gakuninrdm=False)
-
+        
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_register_item_metadata2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 @pytest.mark.parametrize('order_if', [1,2,3,4])
 def test_register_item_metadata2(i18n_app, es_item_file_pipeline, deposit, es_records2, db_index, es, db, mocker, order_if):
     item = es_records2["results"][0]["item"]
@@ -775,7 +776,9 @@ def test_register_item_metadata2(i18n_app, es_item_file_pipeline, deposit, es_re
             with patch("weko_deposit.api.Indexes.get_path_list", return_value={"","",""}):
                 with patch("weko_search_ui.utils.WekoDeposit.commit", return_value=None):
                     with patch("weko_search_ui.utils.WekoDeposit.publish_without_commit", return_value=None):
+                        remove_request = mocker.patch("weko_search_ui.utils.WekoDeposit.remove_request_mail")
                         register_item_metadata(item, root_path, is_gakuninrdm=False)
+                        remove_request.assert_called()
 
     item["metadata"]["request_mail_list"]={"email": "contributor@test.org", "author_id": ""}
     item["metadata"]["feedback_mail_list"]={"email": "contributor@test.org", "author_id": ""}
@@ -795,11 +798,12 @@ def test_register_item_metadata2(i18n_app, es_item_file_pipeline, deposit, es_re
                         register_item_metadata(item, root_path, is_gakuninrdm=False)
                     if order_if == 4:
                         mocker.patch("weko_search_ui.utils.WekoDeposit.update_feedback_mail")
-                        mocker.patch("weko_search_ui.utils.WekoDeposit.update_request_mail")
+                        update_request = mocker.patch("weko_search_ui.utils.WekoDeposit.update_request_mail")
                         mocker.patch("weko_search_ui.utils.WekoDeposit.newversion", return_value = WekoDeposit(0))
                         item["pid"]=None
                         item["status"]="new" 
                         register_item_metadata(item, root_path, is_gakuninrdm=False)
+                        update_request.assert_called()
 
 
 # def update_publish_status(item_id, status):
@@ -982,11 +986,13 @@ def test_handle_check_and_prepare_request_mail(i18n_app, record_with_metadata):
 
     # Doesn't return any value
     assert not handle_check_and_prepare_request_mail([record])
+    assert record["metadata"]["request_mail_list"] == [{'email': 'wekosoftware@test.com', 'author_id': ''}]
 
     record["request_mail"] = ["test"]
 
     # Doesn't return any value
     assert not handle_check_and_prepare_request_mail([record])
+    assert record["errors"] ==['指定されたtestは不正です。']
 
 # def handle_set_change_identifier_flag(list_record, is_change_identifier):
 def test_handle_set_change_identifier_flag(i18n_app, record_with_metadata):

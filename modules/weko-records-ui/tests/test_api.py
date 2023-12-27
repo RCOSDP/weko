@@ -7,7 +7,7 @@ from flask_security.utils import login_user
 from invenio_accounts.testutils import login_user_via_session
 from pytest_mock import mocker
 
-from weko_records_ui.api import send_request_mail
+from weko_records_ui.api import send_request_mail, create_captcha_image
 from weko_records_ui.errors import ContentsNotFoundError, InternalServerError, InvalidCaptchaError, InvalidEmailError
 from weko_redis.redis import RedisConnection
 
@@ -83,3 +83,9 @@ def test_send_request_mail(app, make_request_maillist):
             res = send_request_mail(item_id,mail_info)
             assert res == res_test
 
+# def create_captcha_image(item_id, mail_info):
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_api.py::test_create_captcha_image -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_create_captcha_image(app):
+    with app.test_request_context():
+        ret = create_captcha_image()
+        assert ret[0] == True

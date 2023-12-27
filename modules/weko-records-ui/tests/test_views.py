@@ -541,7 +541,7 @@ def test_default_view_method2(app, records, itemtypes, indexstyle ,users,db_comm
     indexer, results = records
     record = results[0]["record"]
     recid = results[0]["recid"]
-    with app.test_request_context("/?file_order=0&community=community"):
+    with app.test_request_context("/?file_order=0&community=community&onetime_file_url=/extra_info"):
         with patch('weko_records_ui.views.check_original_pdf_download_permission', return_value=True):
             with patch("weko_records_ui.views.get_search_detail_keyword", return_value={}):
                 with patch("weko_records_ui.views.get_index_link_list", return_value=[]):
