@@ -1,7 +1,6 @@
 $('#request_mail_btn')?.on('click', () => {
     const dt = new Date();
     const CALCULATION_MESSAGE = document.getElementById("calculation_message_initial").value;
-    $("#calculation_message").text(CALCULATION_MESSAGE);
     // Get captcha and show modal
     $.ajax({
         url: '/api/v1/captcha/image',
@@ -13,7 +12,8 @@ $('#request_mail_btn')?.on('click', () => {
             $('#request_mail_sender').val("");
             $('#subject').val("");
             $('#body').val("");
-            $("#calculation_message").val("");
+            $("#calculation_message").text(CALCULATION_MESSAGE);
+            $("#calculation_result").val("");
             $("#key").val(response.key);
             $("#ttl").val(response.ttl);
             $("#dt").val(dt);
@@ -69,8 +69,8 @@ mail_form?.on('submit', (e) => {
         success: function (response) {
             $("#request_captcha").attr('src', "data:image/png;base64," + response.image);
             $("#key").val(response.key);
-            $("#calculation_result").val(CAPTCHA_IMAGE_TIMEOUT);
-            $("#calculation_message").text();
+            $("#calculation_message").text(CAPTCHA_IMAGE_TIMEOUT);
+            $("#calculation_result").val("");
             $("#dt").val(dt);
         },
         error: function (jqXHE, status ,msg) {
