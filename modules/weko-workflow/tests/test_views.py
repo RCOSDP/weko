@@ -673,12 +673,12 @@ def test_save_request_maillist(client,users, db_register, users_index, status_co
         'is_display_request_button':True
     }
 
-    url = url_for('weko_workflow.save_request_maillist',activity_id='1')
+    url = url_for('weko_workflow.save_request_maillist',activity_id='1', action_id=3)
     res = client.post(url, json=input)
     assert res.status_code == 200
 
     input = "text"
-    url = url_for('weko_workflow.save_request_maillist',activity_id='1')
+    url = url_for('weko_workflow.save_request_maillist',activity_id='1', action_id=3)
     res = client.post(url, json=input)
     data = response_data(res)
     assert data["code"] == -1
@@ -688,7 +688,7 @@ def test_save_request_maillist(client,users, db_register, users_index, status_co
         'is_display_request_button':True
     }
     with patch('weko_workflow.api.WorkActivity.create_or_update_activity_request_mail',side_effect=Exception()):
-        url = url_for('weko_workflow.save_request_maillist',activity_id='1')
+        url = url_for('weko_workflow.save_request_maillist',activity_id='1', action_id=3)
         res = client.post(url, json=input)
         data = response_data(res)
     assert data["code"] == -1        

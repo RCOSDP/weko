@@ -10,6 +10,8 @@ from invenio_accounts.testutils import login_user_via_session as login
 from werkzeug.exceptions import InternalServerError ,NotFound,Forbidden
 from weko_workflow.admin import FlowSettingView,WorkFlowSettingView
 from weko_workflow.models import FlowDefine, WorkFlow
+from weko_admin.models import AdminSettings
+
 # class FlowSettingView(BaseView):
 class TestFlowSettingView:
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestFlowSettingView::test_index_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -29,7 +31,13 @@ class TestFlowSettingView:
         # (5, 200),
         # (6, 200),
     ])
-    def test_index_acl(self,client,db_register2,users,users_index,status_code):
+    def test_index_acl(self,client,db_register2,users,users_index,status_code,db):                
+        adminsetting=AdminSettings(id=1,name='items_display_settings',settings={})
+        # Adminsettings display_request_form is None
+        with db.session.begin_nested():
+            db.session.add(adminsetting)
+        db.session.commit()
+
         login(client=client, email=users[users_index]['email'])
         url = url_for('flowsetting.index',_external=True)
         res =  client.get(url)
@@ -37,7 +45,13 @@ class TestFlowSettingView:
 
 #     def flow_detail(self, flow_id='0'):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestFlowSettingView::test_flow_detail_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-    def test_flow_detail_acl_guest(self,client,db_register2):
+    def test_flow_detail_acl_guest(self,client,db_register2,db):
+        adminsetting=AdminSettings(id=1,name='items_display_settings',settings={})
+        # Adminsettings display_request_form is None
+        with db.session.begin_nested():
+            db.session.add(adminsetting)
+        db.session.commit()
+
         url = url_for('flowsetting.index',flow_id=str(1),_external=True)
         res =  client.get(url)
         assert res.status_code == 302
@@ -52,7 +66,14 @@ class TestFlowSettingView:
         # (5, 200),
         # (6, 200),
     ])
-    def test_flow_detail_acl(self,client,workflow,db_register2,users,users_index,status_code):
+    def test_flow_detail_acl(self,client,workflow,db_register2,users,users_index,status_code,db):
+        
+        adminsetting=AdminSettings(id=1,name='items_display_settings',settings={})
+        # Adminsettings display_request_form is None
+        with db.session.begin_nested():
+            db.session.add(adminsetting)
+        db.session.commit()
+
         flow_define = workflow['flow']
         login(client=client, email=users[users_index]['email'])
         #test No.8(W2023-22 2)
@@ -85,7 +106,13 @@ class TestFlowSettingView:
     # def new_flow(self, flow_id='0'):
     # def del_flow(self, flow_id='0'):
     # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestFlowSettingView::test_flow_detail_update_delete -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-    def test_flow_detail_update_delete(self,app,client,users,workflow ,workflow_open_restricted):
+    def test_flow_detail_update_delete(self,app,client,users,workflow ,workflow_open_restricted,db):
+        adminsetting=AdminSettings(id=1,name='items_display_settings',settings={})
+        # Adminsettings display_request_form is None
+        with db.session.begin_nested():
+            db.session.add(adminsetting)
+        db.session.commit()
+        
         #repoadmin
         login(client=client, email=users[1]['email'])
         url = '/admin/flowsetting/{}'.format(workflow_open_restricted[1]["flow"].flow_id)
