@@ -57,9 +57,6 @@ def update_records_sets(record_ids):
     RecordIndexer().process_bulk_queue(
         es_bulk_kwargs={'raise_on_error': True})
 
-    from weko_deposit.api import WekoDeposit as dep
-    dep.update_request_mail()
-
 
 @shared_task(base=RequestContextTask)
 def update_affected_records(spec=None, search_pattern=None):
