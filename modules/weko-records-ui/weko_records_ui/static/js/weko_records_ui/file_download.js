@@ -106,6 +106,23 @@ async function downloadFile(recNum, fileName, content_length, buffer_size, event
             return;
           }
         }
+        if(Number(xhr.response.size) !== BUFFER_SIZE && getted_file_size + BUFFER_SIZE < contentLength){
+          if(retryCount < retry_count){
+            console.log("retry partNumber", partNumber)
+            retryCount += 1;
+            xhr.open("GET", "https://" + host + "/record/" + recNum + "/multipartfiles/" + fileName + "?partNumber=" + partNumber, true)
+            xhr.send();
+            return;
+          }else{
+            console.log("File Download Failed", new Date());
+            xhr.abort();
+            showErrorMsg(error_msg, false, ediv)
+            ring_background.classList.add("hidden");
+            ring_background.style.zIndex = ring_zIndex;
+            ring_text.remove();
+            return;
+          }
+        }
         partNumber += 1;
         retryCount = 0;
         offset += BUFFER_SIZE;
