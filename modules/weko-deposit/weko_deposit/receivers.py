@@ -72,7 +72,7 @@ def append_file_content(sender, json={}, record=None, index=None, **kwargs):
             json.update(feedback_mail)
 
         request_mail_list = RequestMailList.get_mail_list_by_item_id(record.id)
-        if mail_list:
+        if request_mail_list:
             request_mail = {
                 'request_mail_list': request_mail_list
             }
