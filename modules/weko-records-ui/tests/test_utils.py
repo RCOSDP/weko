@@ -13,7 +13,7 @@ from weko_records_ui.utils import (
     is_private_index, is_show_email_of_creator,
     parse_one_time_download_token, replace_license_free, restore,
     send_usage_report_mail_for_user, soft_delete, update_onetime_download,
-    validate_download_record, validate_onetime_download_token
+    validate_download_record, validate_onetime_download_token, replace_license_free_for_opensearch
 )
 import base64
 from unittest.mock import MagicMock
@@ -439,6 +439,43 @@ def test_replace_license_free(app,records):
         }]
     }}
     replace_license_free(data1)
+
+# def replace_license_free_for_opensearch(search_result, is_change_label=True):
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_replace_license_free_for_opensearch -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_replace_license_free_for_opensearch(app):
+
+    data1= {'hits': {
+                'hits': [{
+                    '_source': {
+                        '_item_metadata': {
+                            "key": {
+                            "attribute_type": "file",
+                            "attribute_value_mlt": [{
+                                "licensetype": "license_free",
+                                "licensefree": "True"
+                            }]
+                        }
+                    }
+                }
+            }]
+    }}
+    replace_license_free_for_opensearch(data1)
+    data2= {'hits': {
+                'hits': [{
+                    '_source': {
+                        '_item_metadata': {
+                            "key": {
+                            "attribute_type": "file",
+                            "attribute_value_mlt": [{
+                                "licensetype": "license_note",
+                                "license_note": "True"
+                            }]
+                        }
+                    }
+                }
+            }]
+    }}
+    assert data1 == data2
 
 # def get_file_info_list(record):
 #     def get_file_size(p_file):

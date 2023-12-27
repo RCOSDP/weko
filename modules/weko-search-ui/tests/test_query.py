@@ -347,7 +347,7 @@ def test_default_search_factory(db, app, users, communities, db_index2, item_typ
         'pubDateUntil': '2023'
     }
     expected = [
-        {'range': {'file.date.value': {'gte': '2021', 'lte': '2023'}}}
+        {'range': {'date.value': {'gte': '2021', 'lte': '2023'}}}
     ]
     with app.test_request_context(headers=[('Accept-Language','en')], data=_data):
         app.extensions['invenio-oauth2server'] = 1
@@ -361,7 +361,7 @@ def test_default_search_factory(db, app, users, communities, db_index2, item_typ
         'pubDateFrom': '2021'
     }
     expected = [
-        {'range': {'file.date.value': {'gte': '2021'}}}
+        {'range': {'date.value': {'gte': '2021'}}}
     ]
     with app.test_request_context(headers=[('Accept-Language','en')], data=_data):
         app.extensions['invenio-oauth2server'] = 1
@@ -375,7 +375,7 @@ def test_default_search_factory(db, app, users, communities, db_index2, item_typ
         'pubDateUntil': '2023'
     }
     expected = [
-        {'range': {'file.date.value': {'lte': '2023'}}}
+        {'range': {'date.value': {'lte': '2023'}}}
     ]
     with app.test_request_context(headers=[('Accept-Language','en')], data=_data):
         app.extensions['invenio-oauth2server'] = 1
@@ -390,7 +390,7 @@ def test_default_search_factory(db, app, users, communities, db_index2, item_typ
         'pubDateFrom': '2021'
     }
     expected = [
-        {'range': {'file.date.value': {'gte': '2021'}}}
+        {'range': {'date.value': {'gte': '2021'}}}
     ]
     with app.test_request_context(headers=[('Accept-Language','en')], data=_data):
         app.extensions['invenio-oauth2server'] = 1
