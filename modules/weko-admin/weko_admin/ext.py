@@ -69,8 +69,6 @@ class WekoAdmin(object):
                 access_list = access_table[role.name] if role.name in access_table \
                     else []
                 if endpoint in access_list or role.name == system_admin:
-                    current_app.logger.warn(endpoint)
-                    current_app.logger.warn(is_use_mail_templates)
                     return True
             return False
         return _role_endpoint_viewable(endpoint)
