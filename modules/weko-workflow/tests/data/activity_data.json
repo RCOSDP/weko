@@ -36,7 +36,7 @@
         "activity_community_id":3,
         "activity_confirm_term_of_use":true,
         "title":"test",
-        "shared_user_id":-1,
+        "shared_user_ids":[],
         "extra_info":{},
         "action_order":6
     }

@@ -43,6 +43,7 @@
       <div class="row">
         <div class="col-sm-12 col-md-12 col-left">
           {%- block record_author %}
+            {%- set _files = files -%}
             {%- set files = record.files -%}
             {%- set record = record -%}
             {%- set deposit = record['_buckets']['deposit'] -%}
@@ -63,6 +64,9 @@
                   <tr>
                     <th>{{_('File')}}</th>
                     <th class="license">{{_('License')}}</th>
+                    {%- if show_secret_URL -%}
+                    <th>{{_('Action')}}</th>
+                    {%- endif -%}
                   </tr>
                 </thead>
                 <tbody>
@@ -132,6 +136,16 @@
                           {%- endif %}
                         {%- endif -%}
                       </td>
+                      {%- if show_secret_URL -%}
+                      <td>
+                        <a class="action-anchor">
+                          <button class="img-rounded action-button button-sm" id="secret_url" url="{{url_for('invenio_records_ui.recid_secret_url',filename=file.filename, pid_value=pid.pid_value)}}">
+                            <i class="action-icon"></i>
+                            {{_('Secret URL')}}
+                          </button>
+                        </a>
+                      </td>
+                      {%- endif -%}
                     </tr>
                     <!-- demo -->
                     {%- if record | check_permission -%}
@@ -157,11 +171,12 @@
               {% from "weko_records_ui/output_detail_data.html" import output_attribute_value_mlt %}
               {%- set display_file_info = record.display_file_info -%}
               <table class="table table-bordered table-striped detail-table">
+                <!-- Output Pubdate -->
+                {{ _files[0]['date'][0]['dateValue'] }}
+                <!-- Output File Information -->
                 {%- for info in display_file_info -%}
                   {%- if info['attribute_type'] == 'file' -%}
                     {{output_attribute_value_mlt(info['attribute_value_mlt'], 0,false)}}
-                  {%- elif info['attribute_name'] == 'PubDate' -%}
-                    {{output_attribute_value_mlt(info['attribute_value_mlt'], 0)}}
                   {%- endif -%}
                 {%- endfor -%}
               </table>
