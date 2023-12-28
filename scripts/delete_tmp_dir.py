@@ -5,35 +5,16 @@ from datetime import datetime
 import traceback
 import ast
 import glob, re
-import redis
-from celery import Celery
 from celery.task.control import inspect
+from weko_redis.redis import RedisConnection
+from flask import current_app
 
 glob._ishidden = lambda x: False
 
 def get_tasks():
     """現在実行中、待機中のタスクの取得
     """
-    # Celery
-    if os.environ.get('INVENIO_RABBITMQ_VHOST').endswith('/'):
-        # Celery 3
-        BROKER_URL = 'amqp://{}:{}@{}:5672/{}'.format(os.environ.get("INVENIO_RABBITMQ_USER"),os.environ.get("INVENIO_RABBITMQ_PASS"),os.environ.get("INVENIO_RABBITMQ_HOST"),os.environ.get("INVENIO_RABBITMQ_VHOST"))
-        # Celery 4
-        CELERY_BROKER_URL = 'amqp://{}:{}@{}:5672/{}'.format(os.environ.get("INVENIO_RABBITMQ_USER"),os.environ.get("INVENIO_RABBITMQ_PASS"),os.environ.get("INVENIO_RABBITMQ_HOST"),os.environ.get("INVENIO_RABBITMQ_VHOST"))
-    else:
-        # Celery 3
-        BROKER_URL = 'amqp://{}:{}@{}:5672/{}/'.format(os.environ.get("INVENIO_RABBITMQ_USER"),os.environ.get("INVENIO_RABBITMQ_PASS"),os.environ.get("INVENIO_RABBITMQ_HOST"),os.environ.get("INVENIO_RABBITMQ_VHOST"))
-        # Celery 4
-        CELERY_BROKER_URL = 'amqp://{}:{}@{}:5672/{}/'.format(os.environ.get("INVENIO_RABBITMQ_USER"),os.environ.get("INVENIO_RABBITMQ_PASS"),os.environ.get("INVENIO_RABBITMQ_HOST"),os.environ.get("INVENIO_RABBITMQ_VHOST"))
-
-    CELERY_RESULT_BACKEND = 'redis://{}:6379/2'.format(os.environ.get("INVENIO_REDIS_HOST"))    
-
-    celery = Celery(__name__)
-    celery.conf.broker_url = CELERY_BROKER_URL
-    celery.conf.result_backend = CELERY_RESULT_BACKEND
-
     inspector = inspect()
-
     active_tasks = inspector.active()
     reserved_tasks = inspector.reserved()
     actives= []
@@ -50,12 +31,12 @@ def get_tasks():
 def get_temp_dir_info():
     """cache::temp_dir_infoからttlのデータを取得
     """
-    redis_url = 'redis://' + os.environ.get("INVENIO_REDIS_HOST") + ':6379' + '/' + "0"
-    store = redis.StrictRedis.from_url(redis_url)
-    
-    key = 'cache::temp_dir_info'
+    key = current_app.config["WEKO_ADMIN_CACHE_TEMP_DIR_INFO_KEY_DEFAULT"]
+    redis_connection = RedisConnection()
+    sessionstore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'])
     result = {}
-    for idx, val in store.hgetall(key).items():
+    for idx, val in sessionstore.hgetall(key).items():
+        print("idx:{},val:{}".format(idx,val))
         path = idx.decode("UTF-8")
         result[path] = ast.literal_eval(val.decode("UTF-8") or '{}')
     
