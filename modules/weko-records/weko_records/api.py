@@ -970,7 +970,7 @@ class ItemTypes(RecordBase):
         # db.session.merge(item_type)
 
         record = cls.update(id_=itemtype_id,
-                                      name=table_row_map.get('name'),
+                                      name=item_type.item_type_name.name,
                                       schema=json_schema,
                                       form=table_row_map.get('form'),
                                       render=data)
