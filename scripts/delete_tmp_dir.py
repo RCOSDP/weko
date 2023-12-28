@@ -36,7 +36,6 @@ def get_temp_dir_info():
     sessionstore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'])
     result = {}
     for idx, val in sessionstore.hgetall(key).items():
-        print("idx:{},val:{}".format(idx,val))
         path = idx.decode("UTF-8")
         result[path] = ast.literal_eval(val.decode("UTF-8") or '{}')
     
