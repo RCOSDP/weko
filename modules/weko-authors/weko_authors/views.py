@@ -31,7 +31,7 @@ from invenio_indexer.api import RecordIndexer
 from .config import WEKO_AUTHORS_IMPORT_KEY
 from .models import Authors, AuthorsAffiliationSettings, AuthorsPrefixSettings
 from .permissions import author_permission
-from .utils import get_author_prefix_obj, get_author_affiliation_obj, get_count_item_link
+from .utils import get_author_prefix_obj, get_author_affiliation_obj, get_count_item_link, count_authors
 
 blueprint = Blueprint(
     'weko_authors',
@@ -668,3 +668,11 @@ def dbsession_clean(exception):
         except:
             db.session.rollback()
     db.session.remove()
+
+@blueprint.route("/count")
+def a_count_author():
+    """Count authors."""
+    print("====================================count====================================")
+    result = count_authors()
+
+    return jsonify(result)
