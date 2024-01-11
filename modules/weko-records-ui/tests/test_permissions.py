@@ -36,7 +36,9 @@ from weko_records_ui.permissions import (
     is_open_restricted,
     check_charge,
     create_charge,
-    close_charge
+    close_charge,
+    _get_shib_user_name,
+    _get_content_id_for_charge,
 )
 
 
@@ -840,7 +842,7 @@ def test_get_file_price(users, db_item_billing, db_admin_settings):
         result = get_file_price('2')
         assert result[0] == 110
 
-# def check_charge(user_id, item_id, file_name):
+# def check_charge(user_id, item_id):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_permissions.py::test_check_charge -vv -s --cov-branch --cov-report=term --basetemp=.tox/c1/tmp
 @pytest.mark.parametrize(
     "id, result",
@@ -865,34 +867,37 @@ def test_check_charge(db_admin_settings, users, id, result):
         # 29
         with patch('weko_records_ui.permissions.requests.get') as requests_get:
             requests_get.side_effect = Exception
-            assert check_charge('1','1','課金ファイル.txt') == 'api_error'
+            assert check_charge('1','1') == 'api_error'
+        res.json.return_value = None
+        with patch('weko_records_ui.permissions.requests.get', return_value=res):
+            assert check_charge('1','1') == 'api_error'
         # 30
         res.json.return_value = {'message':'unknown_user_id'}
         with patch('weko_records_ui.permissions.requests.get', return_value=res):
-            assert check_charge('1','1','課金ファイル.txt') == 'unknown_user'
+            assert check_charge('1','1') == 'unknown_user'
         # 31
         res.json.return_value = {'message':'this_user_is_not_permit_to_use_credit_card'}
         with patch('weko_records_ui.permissions.requests.get', return_value=res):
-            assert check_charge('1','1','課金ファイル.txt') == 'shared'
+            assert check_charge('1','1') == 'shared'
         # 32
         res.json.return_value = {'location':'location'}
         with patch('weko_records_ui.permissions.requests.get', return_value=res):
-            assert check_charge('1','1','課金ファイル.txt') == 'credit_error'
+            assert check_charge('1','1') == 'credit_error'
         # 33
         res.json.return_value = ['element1','element2']
         with patch('weko_records_ui.permissions.requests.get', return_value=res):
-            assert check_charge('1','1','課金ファイル.txt') == "already"
+            assert check_charge('1','1') == "already"
         # 34
         res.json.return_value = ['']
         with patch('weko_records_ui.permissions.requests.get', return_value=res):
-            assert check_charge('1','1','課金ファイル.txt') == 'not_billed'
+            assert check_charge('1','1') == 'not_billed'
         # 35
         res.json.return_value = ['']
         AdminSettings.update('proxy_settings', settings)
         with patch('weko_records_ui.permissions.requests.get', return_value=res):
-            assert check_charge('1','1','課金ファイル.txt') == 'not_billed'
+            assert check_charge('1','1') == 'not_billed'
 
-# def create_charge(user_id, item_id, file_name, price, title, file_url):
+# def create_charge(user_id, item_id, price, title, file_url):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_permissions.py::test_create_charge -vv -s --cov-branch --cov-report=term --basetemp=.tox/c1/tmp
 @pytest.mark.parametrize(
     "id, result",
@@ -912,42 +917,47 @@ def test_create_charge(db_admin_settings, users, id, result):
 
     trade_id = 1
     res = mock.Mock(spec=Response)
-    res.json.return_value = {'trade_id':1}
     settings = {"host": "host", "port": "port", "user": "user", "password": "pass", "use_proxy": True}
 
     with patch("flask_login.utils._get_user", return_value=users[id]["obj"]):
         # 36
+        res.json.return_value = {'trade_id':1}
         with patch('weko_records_ui.permissions.requests.get') as requests_get:
             requests_get.side_effect = Exception
-            assert create_charge(1, 1, 'filename', 110, 'title', 'fileurl') == 'api_error'
+            assert create_charge(1, 1, 110, 'title', 'fileurl') == 'api_error'
+        res.json.return_value = None
+        with patch('weko_records_ui.permissions.requests.get', return_value=res):
+            assert create_charge(1, 1, 110, 'title', 'fileurl') == 'api_error'
         # 37
         res.headers = {'WEKO_CHARGE_STATUS':-128}
+        res.json.return_value = {'trade_id':1}
         with patch('weko_records_ui.permissions.requests.get', return_value=res):
-            assert create_charge(1, 1, 'filename', 110, 'title', 'fileurl') == 'credit_error'
+            assert create_charge(1, 1, 110, 'title', 'fileurl') == 'credit_error'
         # 38
         res.headers = {'WEKO_CHARGE_STATUS':-64}
+        res.json.return_value = {'trade_id':1}
         with patch('weko_records_ui.permissions.requests.get', return_value=res):
-            assert create_charge(1, 1, 'filename', 110, 'title', 'fileurl') == 'connection_error'
+            assert create_charge(1, 1, 110, 'title', 'fileurl') == 'connection_error'
         # 39
         res.headers = {'WEKO_CHARGE_STATUS':0}
         res.json.return_value = {'trade_id':1, 'charge_status':'1'}
         with patch('weko_records_ui.permissions.requests.get', return_value=res):
-            assert create_charge(1, 1, 'filename', 110, 'title', 'fileurl') == 'already'
+            assert create_charge(1, 1, 110, 'title', 'fileurl') == 'already'
         # 40
         res.json.return_value = {'trade_id':trade_id, 'charge_status':'0'}
         with patch('weko_records_ui.permissions.requests.get', return_value=res):
-            assert create_charge(1, 1, 'filename', 110, 'title', 'fileurl') == str(trade_id)
+            assert create_charge(1, 1, 110, 'title', 'fileurl') == str(trade_id)
         # 41
         res.json.return_value = 'str'
         with patch('weko_records_ui.permissions.requests.get', return_value=res):
-            assert create_charge(1, 1, 'filename', 110, 'title', 'fileurl') == 'api_error'
+            assert create_charge(1, 1, 110, 'title', 'fileurl') == 'api_error'
         # 42
         res.json.return_value = {'trade_id':trade_id, 'charge_status':'0'}
         AdminSettings.update('proxy_settings', settings)
         with patch('weko_records_ui.permissions.requests.get', return_value=res):
-            assert create_charge(1, 1, 'filename', 110, 'title', 'fileurl') == str(trade_id)
+            assert create_charge(1, 1, 110, 'title', 'fileurl') == str(trade_id)
 
-# def close_charge(user_id: int, trade_id: int):
+# def close_charge(user_id, trade_id):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_permissions.py::test_close_charge -vv -s --cov-branch --cov-report=term --basetemp=.tox/c1/tmp
 @pytest.mark.parametrize(
     "id, result",
@@ -974,6 +984,9 @@ def test_close_charge(db_admin_settings, users, id, result):
         with patch('weko_records_ui.permissions.requests.get') as requests_get:
             requests_get.side_effect = Exception
             assert close_charge(1, 1) == False
+        res.json.return_value = None
+        with patch('weko_records_ui.permissions.requests.get', return_value=res):
+            assert close_charge(1, 1) == False
         # 44
         res.json.return_value = {'charge_status':'1'}
         with patch('weko_records_ui.permissions.requests.get', return_value=res):
@@ -987,3 +1000,52 @@ def test_close_charge(db_admin_settings, users, id, result):
         res.json.return_value = {'charge_status':'1'}
         with patch('weko_records_ui.permissions.requests.get', return_value=res):
             close_charge(1, 1) == True
+
+# def _get_shib_user_name(user_id):
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_permissions.py::test__get_shib_user_name -vv -s --cov-branch --cov-report=term --basetemp=.tox/c1/tmp
+@pytest.mark.parametrize(
+    "id, result",
+    [
+        (0, True),
+        (1, True),
+        (2, True),
+        (3, True),
+        (4, True),
+        (5, True),
+        (6, True),
+        (7, True),
+        (8, True),
+    ],
+)
+def test__get_shib_user_name(shib_users, id, result):
+    shib_user_name = _get_shib_user_name(shib_users[id]["id"])
+    if shib_users[id]["shib_obj"]:
+        assert shib_user_name == shib_users[id]["shib_obj"].shib_user_name
+    else:
+        assert shib_user_name == None
+
+
+# def _get_content_id_for_charge(item_id):
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_permissions.py::test__get_content_id_for_charge -vv -s --cov-branch --cov-report=term --basetemp=.tox/c1/tmp
+@pytest.mark.parametrize(
+    "item_id, result",
+    [
+        (1, False),
+        (2, False),
+        (3, True),
+        (4, False),
+        (99, False),
+    ],
+)
+def test__get_content_id_for_charge(records, item_id, result):
+    indexer, results = records
+    idx = item_id - 1
+    yhdl = None
+    if len(results) >= idx:
+        yhdl = results[idx]["yhdl"]
+
+    content_id = _get_content_id_for_charge(item_id)
+    if result:
+        assert content_id == f"1000_{(str(item_id)).zfill(10)}"
+    else:
+        assert content_id == f'127.0.0.1_{item_id}'

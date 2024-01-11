@@ -1023,13 +1023,13 @@ def charge():
     file_url = current_app.config['THEME_SITEURL'] + f'/record/{item_id}/files/{file_name}'
 
     # 課金チェック
-    charge_result = check_charge(current_user.id, int(item_id), file_name)
+    charge_result = check_charge(current_user.id, int(item_id))
     if charge_result == 'already':
         # 課金済みだったら課金しない
         return jsonify({'status': 'already'})
 
     # 課金予約
-    trade_id = create_charge(current_user.id, int(item_id), file_name, price, title, file_url)
+    trade_id = create_charge(current_user.id, int(item_id), price, title, file_url)
     if trade_id in ['connection_error', 'api_error']:
         # 課金失敗
         return jsonify({'status': 'error'})

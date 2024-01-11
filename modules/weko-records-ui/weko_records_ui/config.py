@@ -615,3 +615,6 @@ WEKO_RECORDS_UI_DISPLAY_RESOURCE_TYPE = False
 
 WEKO_RECORDS_UI_DISPLAY_ITEM_TYPE = True
 """ Display item type name on item detail. """
+
+WEKO_RECORDS_UI_Y_HANDLE_HOST = 'http://id.nii.ac.jp/'
+"""Host server of Y_Handle"""
