@@ -21,6 +21,7 @@
 """Configuration for weko-authors."""
 
 from invenio_stats.config import SEARCH_INDEX_PREFIX as index_prefix
+from .rest import Authors
 
 WEKO_AUTHORS_LIST_SCHEME = ['e-Rad', 'NRID', 'ORCID', 'ISNI', 'VIAF', 'AID',
                             'kakenhi', 'Ringgold', 'GRID', 'ROR', 'Other']
@@ -318,3 +319,8 @@ WEKO_AUTHORS_REST_ENDPOINTS = {
 }
 
 WEKO_AUTHORS_API_LIMIT_RATE_DEFAULT = ['100 per minute']
+
+WEKO_AUTHORS_COUNT_API_VERSION = {
+    'get-v1': Authors.get_v1
+}
+"""API version."""

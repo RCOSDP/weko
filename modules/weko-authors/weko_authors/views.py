@@ -668,11 +668,3 @@ def dbsession_clean(exception):
         except:
             db.session.rollback()
     db.session.remove()
-
-@blueprint.route("/count")
-def a_count_author():
-    """Count authors."""
-    print("====================================count====================================")
-    result = count_authors()
-
-    return jsonify(result)

@@ -66,7 +66,6 @@ g = {}
 with open(os.path.join('weko_authors', 'version.py'), 'rt') as fp:
     exec(fp.read(), g)
     version = g['__version__']
-
 setup(
     name='weko-authors',
     version=version,
@@ -85,6 +84,9 @@ setup(
         'invenio_base.apps': [
             'weko_authors = weko_authors:WekoAuthors',
         ],
+        'invenio_base.api_apps': [
+            'weko_authors_rest = weko_authors:WekoAuthorsREST',
+        ],
         'invenio_admin.views': [
             'weko_authors_management = '
             'weko_authors.admin:authors_list_adminview',
@@ -96,9 +98,6 @@ setup(
         'invenio_base.blueprints': [
             'weko_authors = weko_authors.views:blueprint',
         ],
-        'invenio_base.api_apps': [
-            'weko_authors = weko_authors:WekoAuthors',
-        ],
         'invenio_base.api_blueprints': [
             'weko_authors = weko_authors.views:blueprint_api',
         ],
@@ -108,7 +107,7 @@ setup(
         'invenio_db.models': [
             'weko_authors = weko_authors.models',
         ],
-         'invenio_db.alembic': [
+        'invenio_db.alembic': [
             'weko_authors = weko_authors:alembic',
         ],
         'invenio_search.mappings': [
