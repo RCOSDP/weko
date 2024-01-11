@@ -84,7 +84,6 @@ class Authors(ContentNegotiatedMethodView):
     def get(self, **kwargs):
         """Count authors."""
         version = kwargs.get('version')
-        func_name = f'get_{version}'
         from .config import WEKO_AUTHORS_COUNT_API_VERSION
         func = WEKO_AUTHORS_COUNT_API_VERSION.get(f'get-{version}')
 

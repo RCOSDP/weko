@@ -31,7 +31,7 @@ from invenio_indexer.api import RecordIndexer
 from .config import WEKO_AUTHORS_IMPORT_KEY
 from .models import Authors, AuthorsAffiliationSettings, AuthorsPrefixSettings
 from .permissions import author_permission
-from .utils import get_author_prefix_obj, get_author_affiliation_obj, get_count_item_link, count_authors
+from .utils import get_author_prefix_obj, get_author_affiliation_obj, get_count_item_link
 
 blueprint = Blueprint(
     'weko_authors',

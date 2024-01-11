@@ -306,19 +306,12 @@ length: "minLength" <= nameidentifier's length <= "maxLength"
 "reg": string pattern, excluding first and last slashes from literal notation
 """
 
-WEKO_AUTHORS_REST_SORT_KEY = {
-    'name': 'authorNameInfo.fullName',
-    'email': 'emailInfo.email',
-}
-
 WEKO_AUTHORS_REST_ENDPOINTS = {
     'authors': {
         'route': '/<string:version>/authors/count',
         'default_media_type': 'application/json',
     },
 }
-
-WEKO_AUTHORS_API_LIMIT_RATE_DEFAULT = ['100 per minute']
 
 WEKO_AUTHORS_COUNT_API_VERSION = {
     'get-v1': Authors.get_v1
