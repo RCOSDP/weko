@@ -1570,6 +1570,9 @@ class RoCrateConverter:
         file_entities = []
         for index, metadata_file in enumerate(metadata_files):
             file_entity = self.crate.add_file(metadata_file.get('filename', ''))
+            # TODO: RO-Crate Mapping画面のfileのkey項目一覧からaccessModeとdateCreatedを削除（下記で使用するから）
+            file_entity['accessMode'] = metadata_file.get('accessrole', '')
+            file_entity['dateCreated'] = metadata_file.get('date', '')[0]['dateValue']
             self.__add_file_properties(file_entity, map_file, metadata, index)
             file_entities.append(file_entity)
         self.crate.root_dataset['mainEntity'] = file_entities

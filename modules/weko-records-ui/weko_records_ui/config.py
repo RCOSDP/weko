@@ -617,4 +617,23 @@ WEKO_RECORDS_UI_DISPLAY_RESOURCE_TYPE = False
 WEKO_RECORDS_UI_DISPLAY_ITEM_TYPE = True
 """ Display item type name on item detail. """
 
+WEKO_RECORDS_UI_REST_ENDPOINTS = {
+    'send_request_mail': {
+        'route': '/<string:version>/records/<int:pid_value>/request-mail',
+        'default_media_type': 'application/json',
+    },
+    'get_captcha_image': {
+        'route': '/<string:version>/captcha/image',
+        'default_media_type': 'application/json',
+    }
+}
+
 WEKO_RECORDS_UI_API_LIMIT_RATE_DEFAULT = ['100 per minute']
+
+WEKO_RECORDS_UI_API_ACCEPT_LANGUAGES = ['en', 'ja']
+
+WEKO_RECORDS_UI_CAPTCHA_EXPIRATION_SECONDS = 900
+
+WEKO_RECORDS_UI_NOTIFICATION_MESSAGE = "以下の内容のリクエストメールをデータ提供者に送信しました。\n\n-----------------------------------------------------------------------------\n\n"
+
+WEKO_RECORDS_UI_REQUEST_MESSAGE = "様からリクエストメールが送信されました。\n\n-----------------------------------------------------------------------------\n\n"
