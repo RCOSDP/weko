@@ -77,7 +77,7 @@ from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
 from .api import GetCommunity, UpdateItem, WorkActivity, WorkActivityHistory, \
     WorkFlow
 from .config import DOI_VALIDATION_INFO, IDENTIFIER_GRANT_SELECT_DICT, \
-    WEKO_SERVER_CNRI_HOST_LINK
+    WEKO_SERVER_CNRI_HOST_LINK, WEKO_STR_TRUE
 from .models import Action as _Action
 from .models import ActionStatusPolicy, ActivityStatusPolicy, GuestActivity
 
@@ -4013,4 +4013,14 @@ def make_activitylog_tsv(activities):
         writer.writerow(term)
 
     return file_output.getvalue()
-    
+
+def check_pretty(pretty):
+    """
+    Check request parameter pretty.
+
+    :param pretty: boolean of string type.
+    """
+    if pretty.lower() in WEKO_STR_TRUE:
+        current_app.config['JSONIFY_PRETTYPRINT_REGULAR'] = True
+    else:
+        current_app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False

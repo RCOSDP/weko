@@ -23,7 +23,8 @@
 # as an Intergovernmental Organization or submit itself to any jurisdiction.
 
 """Records Error"""
-from invenio_rest.errors import RESTException, RESTValidationError
+from flask_babelex import gettext as _
+from invenio_rest.errors import RESTException
 
 
 class VersionNotFoundRESTError(RESTException):
@@ -46,6 +47,17 @@ class ModeNotFoundRESTError(RESTException):
     code = 400
     description = 'Mode not specified.'
 
+class InvalidEmailError(RESTException):
+    """Invalid email Error error."""
+
+    code = 400
+    description = _('Invalid mailaddress.')
+
+class InvalidCaptchaError(RESTException):
+    """Invalid CAPTCHA calculation result error."""
+
+    code = 400
+    description = _('Invalid CAPTCHA')
 
 class PermissionError(RESTException):
     """Permission error"""
@@ -67,6 +79,11 @@ class FilesNotFoundRESTError(RESTException):
     code = 404
     description = 'This File does not found'
 
+class ContentsNotFoundError(RESTException):
+    """Contents not found error."""
+
+    code = 404
+    description = _('Contents not found.')
 
 class InternalServerError(RESTException):
     """Internal Server Error."""
