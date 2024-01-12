@@ -2,6 +2,7 @@
 import pytest
 
 from flask import url_for,request,make_response,current_app
+from flask_babelex import gettext as _
 from flask_login.utils import login_user,logout_user
 from flask_menu import current_menu
 from mock import patch
@@ -282,12 +283,72 @@ def test_shib_sp_login(client, redis_connect,mocker):
         mock_flash = mocker.patch("weko_accounts.views.flash")
         client.post(url,data=form)
         mock_flash.assert_called_with("Missing SHIB_ATTRs!",category="error")
-        
+
+    # SHIB_ATTR_ACTIVE_FLAG is "FALSE" -> NG
     form = {
         "SHIB_ATTR_SESSION_ID":"1111",
-        "SHIB_ATTR_EPPN":"test_eppn"
+        "SHIB_ATTR_EPPN":"test_eppn",
+        "SHIB_ATTR_ACTIVE_FLAG":"FALSE",
     }
+    mock_flash = mocker.patch("weko_accounts.views.flash")
+    client.post(url,data=form)
+    mock_flash.assert_called_with(_("shib_active_flag_error"),category="error")
+
+    # SHIB_ATTR_ACTIVE_FLAG is not assigned -> OK
+    form = {
+        "SHIB_ATTR_SESSION_ID":"1111",
+        "SHIB_ATTR_EPPN":"test_eppn",
+        "SHIB_ATTR_SITE_USER_WITHIN_IP_RANGE_FLAG":"TRUE",
+    }
+    with patch("weko_accounts.views.ShibUser.get_relation_info",return_value=None):
+        mock_flash = mocker.patch("weko_accounts.views.flash")
+        res = client.post(url,data=form)
+        mock_flash.assert_not_called()
+        assert res.status_code == 200
+
+    # SHIB_ATTR_SITE_USER_WITHIN_IP_RANGE_FLAG is "FALSE" -> NG
+    form = {
+        "SHIB_ATTR_SESSION_ID":"1111",
+        "SHIB_ATTR_EPPN":"test_eppn",
+        "SHIB_ATTR_ACTIVE_FLAG":"",
+        "SHIB_ATTR_SITE_USER_WITHIN_IP_RANGE_FLAG":"FALSE",
+    }
+    mock_flash = mocker.patch("weko_accounts.views.flash")
+    client.post(url,data=form)
+    mock_flash.assert_called_with(_("shib_ip_range_flag_error"),category="error")
+
+    # SHIB_ATTR_SITE_USER_WITHIN_IP_RANGE_FLAG is not assigned -> OK
+    form = {
+        "SHIB_ATTR_SESSION_ID":"1111",
+        "SHIB_ATTR_EPPN":"test_eppn",
+        "SHIB_ATTR_ACTIVE_FLAG":"TRUE",
+    }
+    with patch("weko_accounts.views.ShibUser.get_relation_info",return_value=None):
+        mock_flash = mocker.patch("weko_accounts.views.flash")
+        res = client.post(url,data=form)
+        mock_flash.assert_not_called()
+        assert res.status_code == 200
+
+    # SHIB_ATTR_SITE_USER_WITHIN_IP_RANGE_FLAG is "" -> OK
+    form = {
+        "SHIB_ATTR_SESSION_ID":"1111",
+        "SHIB_ATTR_EPPN":"test_eppn",
+        "SHIB_ATTR_ACTIVE_FLAG":"TRUE",
+        "SHIB_ATTR_SITE_USER_WITHIN_IP_RANGE_FLAG":"",
+    }
+    with patch("weko_accounts.views.ShibUser.get_relation_info",return_value=None):
+        mock_flash = mocker.patch("weko_accounts.views.flash")
+        res = client.post(url,data=form)
+        mock_flash.assert_not_called()
+        assert res.status_code == 200
+
     # shib_user.get_relation_info is None
+    form = {
+        "SHIB_ATTR_SESSION_ID":"1111",
+        "SHIB_ATTR_EPPN":"test_eppn",
+        "SHIB_ATTR_ACTIVE_FLAG":"TRUE",
+        "SHIB_ATTR_SITE_USER_WITHIN_IP_RANGE_FLAG":"TRUE",
+    }
     with patch("weko_accounts.views.ShibUser.get_relation_info",return_value=None):
         res = client.post(url,data=form)
         assert res.status_code == 200
