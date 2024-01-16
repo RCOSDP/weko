@@ -905,7 +905,6 @@ class WekoFileListGetAll(ContentNegotiatedMethodView):
             current_app.config['WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT'] = WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT
             from .fd import file_list_ui
             dl_response = file_list_ui(record, record.files)
-            print(dl_response)
 
             # Check Etag
             hash_str = str(record) + record.get_titles
