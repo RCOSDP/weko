@@ -238,6 +238,17 @@ def create_blueprint_cites(endpoints):
             view_func=wflga,
             methods=['GET'],
         )
+        wflga = WekoFileListGetAll.as_view(
+            WekoFileListGetAll.view_name.format(endpoint),
+            serializers=serializers,
+            ctx=ctx,
+            default_media_type=options.get('default_media_type'),
+        )
+        blueprint.add_url_rule(
+            options.get('file_list_get_all_route'),
+            view_func=wflga,
+            methods=['GET'],
+        )
     return blueprint
 
 
