@@ -7,6 +7,9 @@ docker-compose -f docker-compose2.yml run --rm web invenio collect -v;
 # update OAI-PMH schema
 docker-compose -f docker-compose2.yml run --rm web invenio shell scripts/demo/register_oai_schema.py overwrite_all;
 
+docker cp postgresql/update/2023_Q4.sql $(docker-compose -f docker-compose2.yml ps postgresql -q):/tmp;
+docker-compose -f docker-compose2.yml exec postgresql psql -U invenio -f /tmp/2023_Q4.sql;
+
 # update itemtype
 docker cp postgresql/ddl/v0.9.27.sql $(docker-compose -f docker-compose2.yml ps postgresql -q):/tmp;
 docker-compose -f docker-compose2.yml exec postgresql psql -U invenio -f /tmp/v0.9.27.sql;
@@ -20,6 +23,9 @@ docker-compose -f docker-compose2.yml exec web invenio shell scripts/demo/update
 
 # reload all properteis of item types
 docker-compose -f docker-compose2.yml exec web invenio shell scripts/demo/renew_all_item_types.py;
+
+# update jpcoar v2 mapping
+docker-compose -f docker-compose2.yml exec web invenio shell scripts/demo/addjpcoar_v2_mapping.py;
 
 CNT=$(docker-compose -f docker-compose2.yml exec postgresql psql -qtAX -U invenio -c "SELECT count(id) FROM item_type_property;")
 if [ $CNT -gt 100 ]; then
