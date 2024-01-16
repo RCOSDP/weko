@@ -669,7 +669,9 @@ def check_charge(user_id, item_id):
             res = requests.get(url, params=params, timeout=10, proxies=proxies)
         else:
             res = requests.get(url, params=params, timeout=10)
-    except Exception:
+    except Exception as e:
+        current_app.logger.error(f'requests error in check_charge: url: {url}, params: {params}, proxies: {proxies if proxy_mode else ""}')
+        current_app.logger.error(e)
         return 'api_error'
 
     res_json = res.json()
@@ -751,19 +753,24 @@ def create_charge(user_id, item_id, price, title, file_url):
             res = requests.get(url, params=params, timeout=10, proxies=proxies)
         else:
             res = requests.get(url, params=params, timeout=10)
-    except Exception:
+    except Exception as e:
+        current_app.logger.error(f'requests error in create_charge: url: {url}, params: {params}, proxies: {proxies if proxy_mode else ""}')
+        current_app.logger.error(e)
         return 'api_error'
 
     res_json = res.json()
     if not res_json:
+        current_app.logger.error(f'no json error in create_charge: url: {url}, params: {params}, proxies: {proxies if proxy_mode else ""}')
         return 'api_error'
 
     if res.headers.get('WEKO_CHARGE_STATUS') == -128:
         # クレジットカード情報エラー(カード番号が未登録か無効)
+        current_app.logger.error(f'credit_error in create_charge: url: {url}, params: {params}, proxies: {proxies if proxy_mode else ""}')
         return 'credit_error'
 
     if res.headers.get('WEKO_CHARGE_STATUS') == -64:
         # GMO通信エラー
+        current_app.logger.error(f'connection_error in create_charge: url: {url}, params: {params}, proxies: {proxies if proxy_mode else ""}')
         return 'connection_error'
 
     if isinstance(res_json, dict):
@@ -774,6 +781,7 @@ def create_charge(user_id, item_id, price, title, file_url):
         # 課金予約成功
         return str(res_json.get('trade_id'))
 
+    current_app.logger.error(f'invalid response by charge API in create_charge: url: {url}, params: {params}, proxies: {proxies if proxy_mode else ""}, res_json: {res_json}')
     return 'api_error'
 
 
@@ -822,11 +830,14 @@ def close_charge(user_id, trade_id):
             res = requests.get(url, params=params, timeout=10, proxies=proxies)
         else:
             res = requests.get(url, params=params, timeout=10)
-    except Exception:
+    except Exception as e:
+        current_app.logger.error(f'requests error in close_charge: url: {url}, params: {params}, proxies: {proxies if proxy_mode else ""}')
+        current_app.logger.error(e)
         return False
 
     res_json = res.json()
     if not res_json:
+        current_app.logger.error(f'no json error in close_charge: url: {url}, params: {params}, proxies: {proxies if proxy_mode else ""}')
         return False
 
     if isinstance(res_json, dict):
@@ -834,6 +845,7 @@ def close_charge(user_id, trade_id):
             # 課金成功
             return True
 
+    current_app.logger.error(f'invalid response by charge API in close_charge: url: {url}, params: {params}, proxies: {proxies if proxy_mode else ""}, res_json: {res_json}')
     return False
 
 

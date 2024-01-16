@@ -743,7 +743,7 @@ def db_sessionlifetime(app, db):
 
 
 @pytest.fixture()
-def records(app, db, esindex, indextree, location, itemtypes, oaischema):
+def records(app, db, esindex, indextree, location, itemtypes, oaischema, db_admin_settings):
     indexer = WekoIndexer()
     indexer.get_es_index()
     results = []
@@ -3284,7 +3284,7 @@ def workflows(app, db, itemtypes, users, records):
     )
     data_usage_activity = Activity(
         item_id=records[1][0]['record'].id,
-        activity_id="usage_application_activity_id_dummy1",
+        activity_id="usage_app_act_id_dummy1",
         workflow_id=1,
         flow_id=flow_define.id,
         action_id=1,
@@ -3312,7 +3312,7 @@ def workflows(app, db, itemtypes, users, records):
         file_name=records[1][0]["filename"],
         activity_id='',
         token='',
-        expiration_date=datetime.now()
+        expiration_date=99
     )
 
     with db.session.begin_nested():
@@ -3387,21 +3387,21 @@ def db_file_permission(app, db,users,records):
     filename0 = results[0]["filename"]
     record0 = FilePermission(
         user_id=1, record_id=recid0.pid_value, file_name=filename0,
-        usage_application_activity_id="usage_application_activity_id_dummy1",
+        usage_application_activity_id="usage_app_act_id_dummy1",
         usage_report_activity_id=None, status=1, 
     )
     recid1 = results[1]["recid"]
     filename1 = results[1]["filename"]
     record1 = FilePermission(
         user_id=1, record_id=recid1.pid_value, file_name=filename1,
-                 usage_application_activity_id="usage_application_activity_id_dummy1",
+                 usage_application_activity_id="usage_app_act_id_dummy1",
                  usage_report_activity_id="usage_report_activity_id_dummy1",status=1,
     )
     recid2 = results[2]["recid"]
     filename2 = results[2]["filename"]
     record2 = FilePermission(
         user_id=1, record_id=recid2.pid_value, file_name=filename2,
-                 usage_application_activity_id="usage_application_activity_id_dummy1",
+                 usage_application_activity_id="usage_app_act_id_dummy1",
                  usage_report_activity_id="usage_report_activity_id_dummy1",status=1,
     )
     with db.session.begin_nested():
