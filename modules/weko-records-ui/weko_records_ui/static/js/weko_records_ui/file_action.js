@@ -107,7 +107,11 @@ $(document).ready(function () {
     let userMailConfirmElement = $('#user_mail_confirm');
     let user_mail = userMailElement.val();
     let user_mail_confirm = userMailConfirmElement.val();
-    if (validateUserEmail(user_mail, user_mail_confirm)) {
+    let passwordElement = $('#password_for_download');
+    let passwordConfirmElement = $('#password_for_download_confirm');
+    let password_for_download = passwordElement.val();
+    let password_for_download_confirm = passwordConfirmElement.val();
+    if (validateUserEmail(user_mail, user_mail_confirm) && password_for_download == password_for_download_confirm) {
       let fileName = $(this).data("guest_filename_data");
       let dataType = $(this).data("guest_data_type_title");
       let recordID = $(this).data("guest_record_id");
@@ -118,6 +122,7 @@ $(document).ready(function () {
       const post_uri = '/workflow/activity/init-guest';
       let post_data = {
         guest_mail: user_mail,
+        password: password_for_download,
         file_name: fileName,
         guest_item_title: dataType,
         record_id: recordID.toString(),
@@ -134,6 +139,8 @@ $(document).ready(function () {
         success: function (res) {
           userMailElement.val('');
           userMailConfirmElement.val('');
+          passwordElement.val('');
+          passwordConfirmElement.val('');
           $('#email_modal').modal('hide');
           if(1 === res.code && res.data.is_download){
             const url = new URL(res.data.redirect, document.location.origin);
@@ -161,6 +168,20 @@ $(document).ready(function () {
       $("#confirm_email_btn").attr("disabled", true);
       $('.user-mail').addClass('has-error');
       $('.user_mail_confirm').addClass('has-error');
+    }
+  });
+
+  $('#password_for_download, #password_for_download_confirm').on('input', function () {
+    let password_for_download = $('#password_for_download').val();
+    let password_for_download_confirm = $('#password_for_download_confirm').val();
+    if (validateUserEmail(password_for_download, password_for_download_confirm)) {
+      $('.password_for_download').removeClass('has-error');
+      $('.password_for_download_confirm').removeClass('has-error');
+      $("#confirm_email_btn").removeAttr("disabled");
+    } else {
+      $("#confirm_email_btn").attr("disabled", true);
+      $('.password_for_download').addClass('has-error');
+      $('.password_for_download_confirm').addClass('has-error');
     }
   });
 });

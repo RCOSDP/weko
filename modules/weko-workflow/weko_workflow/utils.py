@@ -2110,7 +2110,8 @@ def replace_characters(data, content):
         '[secret_url]': 'secret_url',
         '[terms_of_use_jp]': 'terms_of_use_jp',
         '[terms_of_use_en]': 'terms_of_use_en',
-        '[landing_url]': 'landing_url'
+        '[landing_url]': 'landing_url',
+        '[restricted_research_plan]': 'restricted_research_plan'
     }
     for key, value in replace_list.items():
         if data.get(value):
@@ -2279,7 +2280,9 @@ def set_mail_info(item_info, activity_detail, guest_user=False):
         restricted_supervisor='',
         restricted_reference='',
         restricted_usage_activity_id=activity_detail.activity_id,
-        landing_url=''
+        landing_url='',
+        restricted_research_plan = item_info.get(
+            'subitem_restricted_access_research_plan')
     )
 
     if getattr(activity_detail, 'extra_info', '') and activity_detail.extra_info:
@@ -3455,8 +3458,22 @@ def process_send_approval_mails(activity_detail, actions_mail_setting,
     :param file_data:
     :return:
     """
+    def _get_email_list_by_ids(user_id_list):
+        """Get user email list by user id list.
+
+        :param user_id_list: list id of users in table accounts_user.
+        :return: list email.
+        """
+        with db.session.no_autoflush:
+            users = User.query.filter(User.id.in_(user_id_list)).all()
+            emails = [x.email for x in users]
+        return emails
+
     is_guest_user = True if activity_detail.extra_info.get(
         'guest_mail') else False
+    if getattr(activity_detail, 'extra_info', '') and activity_detail.extra_info:
+        record_id_to_apply_for = activity_detail.extra_info.get('record_id',-1)
+        record = WekoRecord.get_record_by_pid(record_id_to_apply_for)
     item_info = get_item_info(activity_detail.item_id)
     mail_info = set_mail_info(item_info, activity_detail, is_guest_user)
     mail_info['restricted_expiration_date'] = file_data.get(
@@ -3487,9 +3504,25 @@ def process_send_approval_mails(activity_detail, actions_mail_setting,
                 process_send_mail(mail_info, setting["mail"])
             else:
                 setting =actions_mail_setting["previous"]\
-                    .get("inform_itemReg", {})         
+                    .get("inform_itemReg", {})        
                 if _check_mail_setting(setting):
-                    process_send_mail(mail_info, setting["mail"])    
+                    process_send_mail(mail_info, setting["mail"])
+                setting =actions_mail_setting["previous"]\
+                    .get("inform_itemReg_for_registerPerson", {})        
+                if _check_mail_setting(setting):
+                    if record.get('_deposit') and \
+                    record['_deposit'].get('owners_ext') and \
+                    record['_deposit']['owners_ext'].get('email'):
+                        mail_info['mail_recipient'] = record['_deposit']['owners_ext'].get('email')
+                        process_send_mail(mail_info, setting["mail"])
+                    if record.get('_deposit') and \
+                    record['_deposit'].get('shared_user_ids'):
+                        shared_user_ids = record['_deposit'].get('shared_user_ids')
+                        shared_user_emails = _get_email_list_by_ids(shared_user_ids)
+                        for mail_address in shared_user_emails:
+                            mail_info['mail_recipient'] = mail_address
+                            process_send_mail(mail_info, setting["mail"])
+
 
         if actions_mail_setting.get('next', {}):
             if is_guest_user:

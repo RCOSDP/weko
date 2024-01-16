@@ -950,3 +950,5 @@ msgstr "Restricted Access"
 msgid "Admin menu_Setting_Faceted Search"
 msgstr "Faceted Search"
 
+msgid "Password(reconfirmation)"
+msgstr ""

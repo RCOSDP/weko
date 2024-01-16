@@ -158,5 +158,9 @@ INVENIO_MAIL_VARIABLE_HELP = [
     {
         "key": "[restricted_download_count_en]",
         "comment": "ダウンロード回数説明（英語）"
+    },
+    {
+        "key": "[restricted_research_plan]",
+        "comment": "研究計画"
     }
 ]

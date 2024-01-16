@@ -987,3 +987,6 @@ msgstr "制限公開"
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Setting_Faceted Search"
 msgstr "ファセット検索"
+
+msgid "Password(reconfirmation)"
+msgstr "パスワード（確認用）"

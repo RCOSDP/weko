@@ -36,6 +36,7 @@ const MSG_SEND_MAIL_FAILED = document.getElementById("msg_sent_failed").value;
 const LABEL_SECRET_URL_DOWNLOAD = document.getElementById("label_secret_url_download").value;
 const LABEL_SECRET_URL_ENABLED = document.getElementById("label_secret_url_enabled").value;
 const LABEL_ERROR_MESSAGE = document.getElementById("error_message").value;
+const LABEL_PASSWORD_FOR_DOWNLOAD = document.getElementById("password_for_download").value;
 
 const EMPTY_TERM = {
   key: '',
@@ -116,6 +117,33 @@ function InputComponent({
                disabled={disabledAll}/>
         {UNLIMITED_LABEL}
       </label>
+    </div>
+  )
+}
+
+function PasswordLayout() {
+  const style = {marginRight: "5px", marginLeft: "15px"}
+  return (
+    <div>
+      <div className="row">
+        <div className="col-sm-12 col-md-12 col-md-12">
+          <div className="panel panel-default">
+            <div className="panel-heading">
+              <h5><strong>{LABEL_PASSWORD_FOR_DOWNLOAD}</strong></h5>
+            </div>
+            <div className="panel-body">
+              <div className="form-inline">
+                <label htmlFor="password_enable" className="text-left">
+                  <input type="checkbox"
+                    style={style}
+                    id="password_enable"/>
+                    {LABEL_SECRET_URL_ENABLED}
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
@@ -654,6 +682,7 @@ function RestrictedAccessLayout({
 
   return (
     <div>
+      <PasswordLayout />
       <SecretURLFileDownloadLayout value={secretURLFileDownload}
                                  setValue={setSecretURLFileDownload}/>
       <ContentFileDownloadLayout value={contentFileDownload}

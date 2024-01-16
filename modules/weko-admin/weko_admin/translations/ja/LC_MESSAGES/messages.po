@@ -1711,3 +1711,6 @@ msgstr "既に存在しています。"
 
 msgid "restricted_error_message"
 msgstr "エラーメッセージ"
+
+msgid "password check function"
+msgstr "非ログインユーザーのDLにおけるパスワードチェック機能"

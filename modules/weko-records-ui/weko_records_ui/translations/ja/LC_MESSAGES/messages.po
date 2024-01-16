@@ -660,8 +660,8 @@ msgstr "利用規約を印刷"
 msgid "Could not download file."
 msgstr "ファイルをダウンロードできませんでした"
 
-msgid "You must enter your email address to download the files below."
-msgstr "以下のファイルのダウンロードには、メールアドレスの入力が必要です。"
+msgid "To download the files below, you will need to enter your email address and password."
+msgstr "以下のファイルのダウンロードには、メールアドレスとパスワードの入力が必要です。"
 
 msgid "File Name"
 msgstr "ファイル名"

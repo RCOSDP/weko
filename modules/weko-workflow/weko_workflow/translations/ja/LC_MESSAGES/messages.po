@@ -679,3 +679,15 @@ msgstr "承認却下通知メール"
 
 msgid "Send an email to the registrant"
 msgstr "登録者にメールを送信する"
+
+msgid "Send an email to item registrants when applying for use"
+msgstr "利用申請時に、アイテム登録者に対しメールを送信する"
+
+msgid "Application approved."
+msgstr "申請が承認されました"
+
+msgid "Back to Top page"
+msgstr "トップページへ戻る"
+
+msgid "Waiting for approval."
+msgstr "承認待ちです"
