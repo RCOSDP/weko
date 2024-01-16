@@ -2243,11 +2243,17 @@ class WekoRecord(Record):
             for creator_data in meta_data:
                 creator_dict = _FormatSysCreator(creator_data).format_creator()
                 identifiers = WEKO_DEPOSIT_SYS_CREATOR_KEY['identifiers']
-                creator_mails = WEKO_DEPOSIT_SYS_CREATOR_KEY['creator_mails']
-                if identifiers in creator_data:
-                    creator_dict[identifiers] = creator_data[identifiers]
-                if creator_mails in creator_data and not hide_email_flag:
-                    creator_dict[creator_mails] = creator_data[creator_mails]
+                creator_dict['identifiers'] = []
+                for i in identifiers:
+                    if i in creator_data and creator_data.get(i):
+                        creator_dict['identifiers'] += creator_data.get(i)
+                mails = WEKO_DEPOSIT_SYS_CREATOR_KEY['mails']
+                creator_dict['mails'] = []
+                for m in mails:
+                    if m in creator_data and creator_data.get(m) and not hide_email_flag:
+                        for l in creator_data.get(m):
+                            for k, v in l.items():
+                                creator_dict['mails'].append({'mail': v})
                 creators.append(creator_dict)
         return creators
 
@@ -2452,34 +2458,36 @@ class _FormatSysCreator:
         @return:
         """
         # Prioriry languages: creator, family, given, alternative, affiliation
-        lang_key = OrderedDict()
-        lang_key[WEKO_DEPOSIT_SYS_CREATOR_KEY['creator_names']] = \
-            WEKO_DEPOSIT_SYS_CREATOR_KEY['creator_lang']
-        lang_key[WEKO_DEPOSIT_SYS_CREATOR_KEY['family_names']] = \
-            WEKO_DEPOSIT_SYS_CREATOR_KEY['family_lang']
-        lang_key[WEKO_DEPOSIT_SYS_CREATOR_KEY['given_names']] = \
-            WEKO_DEPOSIT_SYS_CREATOR_KEY['given_lang']
-        lang_key[WEKO_DEPOSIT_SYS_CREATOR_KEY['alternative_names']] = \
-            WEKO_DEPOSIT_SYS_CREATOR_KEY['alternative_lang']
+        lang_key = WEKO_DEPOSIT_SYS_CREATOR_KEY['lang'] + \
+                WEKO_DEPOSIT_SYS_CREATOR_KEY['family_lang'] + \
+                WEKO_DEPOSIT_SYS_CREATOR_KEY['given_lang'] + \
+                WEKO_DEPOSIT_SYS_CREATOR_KEY['alternative_lang']
+        val_key = WEKO_DEPOSIT_SYS_CREATOR_KEY['names'] + \
+                WEKO_DEPOSIT_SYS_CREATOR_KEY['family_names'] + \
+                WEKO_DEPOSIT_SYS_CREATOR_KEY['given_names'] + \
+                WEKO_DEPOSIT_SYS_CREATOR_KEY['alternative_names']
 
         # Get languages for all same structure languages key
         languages = []
-        [languages.append(data.get(v)) for k, v in lang_key.items()
-         for data in self.creator.get(k, []) if data.get(v) not in languages]
+        [languages.append(data.get(l)) for k in val_key
+         for data in self.creator.get(k, []) 
+         for l in lang_key if data.get(l) not in languages]
 
         # Get languages affiliation
-        for creator_affiliation in self.creator.get(
-                WEKO_DEPOSIT_SYS_CREATOR_KEY['creatorAffiliations'], []):
-            for affiliation_name in creator_affiliation.get(
-                    WEKO_DEPOSIT_SYS_CREATOR_KEY['affiliation_names'], []):
-                if affiliation_name.get(
-                    WEKO_DEPOSIT_SYS_CREATOR_KEY[
-                        'affiliation_lang']) not in languages:
-                    languages.append(affiliation_name.get(
-                        WEKO_DEPOSIT_SYS_CREATOR_KEY['affiliation_lang']))
+        affiliations = []
+        for a in WEKO_DEPOSIT_SYS_CREATOR_KEY['affiliations']:
+            affiliations += self.creator.get(a, [])
+        for affiliation in affiliations:
+            temp_val = []
+            for v in WEKO_DEPOSIT_SYS_CREATOR_KEY['affiliation_names']:
+                temp_val += affiliation.get(v, [])
+            for affiliation_name in temp_val:
+                for l in WEKO_DEPOSIT_SYS_CREATOR_KEY['affiliation_lang']:
+                    if affiliation_name.get(l) and affiliation_name.get(l) not in languages:
+                        languages.append(affiliation_name.get(l))
         self.languages = languages
 
-    def _format_creator_to_show_detail(self, language: str, parent_key: str,
+    def _format_creator_to_show_detail(self, language: str, parent_key: list,
                                        lst: list) -> NoReturn:
         """Get creator name to show on item detail.
 
@@ -2487,30 +2495,33 @@ class _FormatSysCreator:
         :param parent_key: parent key
         :param lst: creator name list
         """
-        name_key = ''
-        lang_key = ''
-        if parent_key == WEKO_DEPOSIT_SYS_CREATOR_KEY['creator_names']:
-            name_key = WEKO_DEPOSIT_SYS_CREATOR_KEY['creator_name']
-            lang_key = WEKO_DEPOSIT_SYS_CREATOR_KEY['creator_lang']
+        name_key = []
+        lang_key = []
+        if parent_key == WEKO_DEPOSIT_SYS_CREATOR_KEY['names']:
+            name_key += WEKO_DEPOSIT_SYS_CREATOR_KEY['name']
+            lang_key += WEKO_DEPOSIT_SYS_CREATOR_KEY['lang']
         elif parent_key == WEKO_DEPOSIT_SYS_CREATOR_KEY['family_names']:
-            name_key = WEKO_DEPOSIT_SYS_CREATOR_KEY['family_name']
-            lang_key = WEKO_DEPOSIT_SYS_CREATOR_KEY['family_lang']
+            name_key += WEKO_DEPOSIT_SYS_CREATOR_KEY['family_name']
+            lang_key += WEKO_DEPOSIT_SYS_CREATOR_KEY['family_lang']
         elif parent_key == WEKO_DEPOSIT_SYS_CREATOR_KEY['given_names']:
-            name_key = WEKO_DEPOSIT_SYS_CREATOR_KEY['given_name']
-            lang_key = WEKO_DEPOSIT_SYS_CREATOR_KEY['given_lang']
+            name_key += WEKO_DEPOSIT_SYS_CREATOR_KEY['given_name']
+            lang_key += WEKO_DEPOSIT_SYS_CREATOR_KEY['given_lang']
         elif parent_key == WEKO_DEPOSIT_SYS_CREATOR_KEY['alternative_names']:
-            name_key = WEKO_DEPOSIT_SYS_CREATOR_KEY['alternative_name']
-            lang_key = WEKO_DEPOSIT_SYS_CREATOR_KEY['alternative_lang']
-        elif parent_key == WEKO_DEPOSIT_SYS_CREATOR_KEY['creator_type']: #? ADDED 20231017 CREATOR TYPE BUG FIX
+            name_key += WEKO_DEPOSIT_SYS_CREATOR_KEY['alternative_name']
+            lang_key += WEKO_DEPOSIT_SYS_CREATOR_KEY['alternative_lang']
+        elif parent_key == WEKO_DEPOSIT_SYS_CREATOR_KEY['type']: #? ADDED 20231017 CREATOR TYPE BUG FIX
             return
-        if parent_key in self.creator:
-            lst_value = self.creator[parent_key]
-            if len(lst_value) > 0:
-                for i in range(len(lst_value)):
-                    if lst_value[i] and lst_value[i].get(lang_key) == language:
-                        if name_key in lst_value[i]:
-                            lst.append(lst_value[i][name_key])
-                            break
+        for k in parent_key:
+            if k in self.creator:
+                lst_value = self.creator[k]
+                if len(lst_value) > 0:
+                    for i in range(len(lst_value)):
+                        for l in lang_key:
+                            if lst_value[i] and lst_value[i].get(l) == language:
+                                for n in name_key:
+                                    if n in lst_value[i]:
+                                        lst.append(lst_value[i][n])
+                                        break
 
     def _get_creator_to_show_popup(self, creators: Union[list, dict],
                                    language: any,
@@ -2560,9 +2571,14 @@ class _FormatSysCreator:
             :param affiliation_data: Affiliation data.
             """
             for creator in affiliation_data:
-                affiliation_name_format = creator.get('affiliationNames', [])
-                affiliation_name_identifiers_format = creator.get(
-                    'affiliationNameIdentifiers', [])
+                affiliation_name_format = []
+                affiliation_name_identifiers_format = []
+                for an in WEKO_DEPOSIT_SYS_CREATOR_KEY['affiliation_names']:
+                    if an in creator:
+                        affiliation_name_format = creator.get(an, [])
+                for ani in WEKO_DEPOSIT_SYS_CREATOR_KEY['affiliationNameIdentifiers']:
+                    if ani in creator:
+                        affiliation_name_identifiers_format = creator.get(ani, [])
                 if len(affiliation_name_format) >= len(
                         affiliation_name_identifiers_format):
                     affiliation_max = affiliation_name_format
@@ -2579,11 +2595,11 @@ class _FormatSysCreator:
         if isinstance(creators, dict):
             creator_list_temp = []
             for key, value in creators.items():
-                if (key in [WEKO_DEPOSIT_SYS_CREATOR_KEY['identifiers'], 
-                            WEKO_DEPOSIT_SYS_CREATOR_KEY['creator_mails'],
-                            WEKO_DEPOSIT_SYS_CREATOR_KEY['creator_type']]): #? ADDED 20231017 CREATOR TYPE BUG FIX
+                if (key in WEKO_DEPOSIT_SYS_CREATOR_KEY['identifiers'] +
+                            WEKO_DEPOSIT_SYS_CREATOR_KEY['mails'] +
+                            WEKO_DEPOSIT_SYS_CREATOR_KEY['type']): #? ADDED 20231017 CREATOR TYPE BUG FIX
                     continue
-                if key == WEKO_DEPOSIT_SYS_CREATOR_KEY['creatorAffiliations']:
+                if key in WEKO_DEPOSIT_SYS_CREATOR_KEY['affiliations']:
                     format_affiliation(value)
                 else:
                     self._get_creator_to_show_popup(value, language,
@@ -2613,7 +2629,11 @@ class _FormatSysCreator:
         """
         count = 0
         for k, v in creator_data.items():
-            if 'Lang' in k:
+            if k in (WEKO_DEPOSIT_SYS_CREATOR_KEY['lang'] +
+                     WEKO_DEPOSIT_SYS_CREATOR_KEY['family_lang'] +
+                     WEKO_DEPOSIT_SYS_CREATOR_KEY['given_lang'] +
+                     WEKO_DEPOSIT_SYS_CREATOR_KEY['alternative_lang'] +
+                     WEKO_DEPOSIT_SYS_CREATOR_KEY['affiliation_lang']):
                 if not language:
                     count = count + 1
                 elif v == language:
@@ -2628,14 +2648,14 @@ class _FormatSysCreator:
         """
         creator_lst = []
         rtn_value = {}
-        creator_type = WEKO_DEPOSIT_SYS_CREATOR_KEY['creator_type'] #? ADDED 20231017 CREATOR TYPE BUG FIX
-        creator_names = WEKO_DEPOSIT_SYS_CREATOR_KEY['creator_names']
+        type = WEKO_DEPOSIT_SYS_CREATOR_KEY['type'] #? ADDED 20231017 CREATOR TYPE BUG FIX
+        names = WEKO_DEPOSIT_SYS_CREATOR_KEY['names']
         family_names = WEKO_DEPOSIT_SYS_CREATOR_KEY['family_names']
         given_names = WEKO_DEPOSIT_SYS_CREATOR_KEY['given_names']
         alternative_names = WEKO_DEPOSIT_SYS_CREATOR_KEY['alternative_names']
         list_parent_key = [
-            creator_type, #? ADDED 20231017 CREATOR TYPE BUG FIX
-            creator_names,
+            type, #? ADDED 20231017 CREATOR TYPE BUG FIX
+            names,
             family_names,
             given_names,
             alternative_names
@@ -2691,8 +2711,10 @@ class _FormatSysCreator:
                 des_creator[key] = {}
                 if key != self.no_language_key and isinstance(value, dict):
                     self._format_creator_name(value, des_creator[key])
-                    des_creator[key][alternative_name_key] = value.get(
-                        alternative_name_key, [])
+                    for ank in alternative_name_key:
+                        if ank in value:
+                            des_creator[key]['alternative_name'] = value.get(
+                                ank, [])
                 else:
                     des_creator[key] = value.copy()
                 self._format_creator_affiliation(value.copy(),
@@ -2706,19 +2728,28 @@ class _FormatSysCreator:
         :param creator_data: Creator value.
         :param des_creator: Creator des
         """
-        creator_name_key = WEKO_DEPOSIT_SYS_CREATOR_KEY['creator_name']
+        name_key = WEKO_DEPOSIT_SYS_CREATOR_KEY['name']
         family_name_key = WEKO_DEPOSIT_SYS_CREATOR_KEY['family_name']
         given_name_key = WEKO_DEPOSIT_SYS_CREATOR_KEY['given_name']
-        creator_name = creator_data.get(creator_name_key)
-        family_name = creator_data.get(family_name_key)
-        given_name = creator_data.get(given_name_key)
+        creator_name = ''
+        family_name = ''
+        given_name = ''
+        for k in name_key:
+            if k in creator_data:
+                creator_name = creator_data.get(k)
+        for k in family_name_key:
+            if k in creator_data:
+                family_name = creator_data.get(k)
+        for k in given_name_key:
+            if k in creator_data:
+                given_name = creator_data.get(k)
         if creator_name:
-            des_creator[creator_name_key] = creator_name
+            des_creator['name'] = creator_name
         else:
             if not family_name:
-                des_creator[creator_name_key] = given_name
+                des_creator['name'] = given_name
             elif not given_name:
-                des_creator[creator_name_key] = family_name
+                des_creator['name'] = family_name
             else:
                 lst = []
                 for idx, item in enumerate(family_name):
@@ -2726,7 +2757,7 @@ class _FormatSysCreator:
                     if len(given_name) > idx:
                         _creator_name += " " + given_name[idx]
                     lst.append(_creator_name)
-                des_creator[creator_name_key] = lst
+                des_creator['name'] = lst
 
     @staticmethod
     def _format_creator_affiliation(creator_data: dict,
@@ -2753,10 +2784,22 @@ class _FormatSysCreator:
             'affiliation_name_identifier']
         identifier_uri_key = WEKO_DEPOSIT_SYS_CREATOR_KEY[
             'affiliation_name_identifier_URI']
-        identifier_schema = creator_data.get(identifier_schema_key, [])
-        affiliation_name = creator_data.get(affiliation_name_key, [])
-        identifier = creator_data.get(identifier_key, [])
-        identifier_uri = creator_data.get(identifier_uri_key, [])
+        identifier_schema = []
+        affiliation_name = []
+        identifier = []
+        identifier_uri = []
+        for k in identifier_schema_key:
+            if k in creator_data:
+                identifier_schema = creator_data.get(k, [])
+        for k in affiliation_name_key:
+            if k in creator_data:
+                affiliation_name = creator_data.get(k, [])
+        for k in identifier_key:
+            if k in creator_data:
+                identifier = creator_data.get(k, [])
+        for k in identifier_uri_key:
+            if k in creator_data:
+                identifier_uri = creator_data.get(k, [])
         list_length = _get_max_list_length()
         idx = 0
         identifier_name_list = []
@@ -2780,8 +2823,8 @@ class _FormatSysCreator:
             identifier_list.append(identifier_tmp)
             idx += 1
 
-        des_creator[affiliation_name_key] = identifier_name_list
-        des_creator[identifier_key] = identifier_list
+        des_creator['affiliation_name'] = identifier_name_list
+        des_creator['affiliation_name_identifier'] = identifier_list
 
     def _get_creator_to_display_on_popup(self, creator_list: list):
         """Get creator to display on popup.

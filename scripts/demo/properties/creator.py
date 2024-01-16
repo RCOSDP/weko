@@ -157,7 +157,6 @@ def schema(title="", multi_flag=multiple_flag):
             "system_prop": True,
             "type": "object",
             "properties": {
-                "iscreator": {"format": "text", "title": "iscreator", "type": "string"},
                 "creatorType": {
                     "type": "string",
                     "format": "text",
