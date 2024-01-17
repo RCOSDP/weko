@@ -67,6 +67,7 @@ from weko_user_profiles.config import \
     WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
 from weko_user_profiles.utils import get_user_profile_info
+from weko_index_tree.api import Indexes
 from werkzeug.utils import import_string
 from weko_deposit.pidstore import get_record_without_version
 
@@ -4013,32 +4014,93 @@ def check_authority_by_admin(activity):
     :param activity:
     :return:
     """
+    is_admin = False
+    is_comadmin = False
     # If user has admin role
     supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']
+    community_role_names = current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
     for role in list(current_user.roles or []):
         if role.name in supers:
-            return True
+            is_admin = True
+        elif role.name in community_role_names:
+            is_comadmin = True
     # If user has community role
     # and the user who created activity is member of community
+    # and the index of the item in the activity belongs to the community
     # role -> has permission:
-    community_role_names = current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
-    for community_role_name in community_role_names:
-        # Get the list of users who has the community role
-        community_users = User.query.outerjoin(userrole).outerjoin(Role) \
-            .filter(community_role_name == Role.name) \
-            .filter(userrole.c.role_id == Role.id) \
-            .filter(User.id == userrole.c.user_id) \
-            .all()
-        community_user_ids = [
-            community_user.id for community_user in community_users]
-        for role in list(current_user.roles or []):
-            if role.name in community_role_name:
-                # User has community role
-                if activity.activity_login_user in community_user_ids:
-                    return True
-                break
-    return False
+    if not is_admin and is_comadmin:
+        item_id = activity.item_id
+        if item_id:
+            index_ids = []
+            role_ids = [role.id for role in current_user.roles]
+            from invenio_communities.models import Community
+            comm_list = Community.query.filter(
+                Community.id_role.in_(role_ids)
+            ).all()
+            for comm in comm_list:
+                index_ids += [str(i.cid) for i in Indexes.get_self_list(comm.root_node_id)
+                              if i.cid not in index_ids]
+            dep = WekoDeposit.get_record(item_id)
+        
+            path = dep.get('path',[])
+            for p in path:
+                if str(p) in index_ids:
+                    is_admin = True
+                    break
+    return is_admin
 
+def validate_action_role_user(activity_id, action_id, action_order):
+    """validation action role, and action user
+
+    :param activity_id: activity_id
+    :type activity_id: str
+    :param action_id: action_id
+    :type action_id: int
+    :param action_order: action_order
+    :type action_order: int
+    :return: (Whether allow or deny is set for action role(user)), 
+             (allow roles(users) contain role(user) of current_user),
+             (role of current_user is not in allowed roles(users) or denied roles(users))
+    :rtype: bool, bool, bool
+    """
+    work = WorkActivity()
+    roles, users = work.get_activity_action_role(activity_id, action_id,
+                                             action_order)
+    
+    cur_user = current_user.get_id()
+    cur_role = db.session.query(Role).join(userrole).filter_by(
+        user_id=cur_user).all()
+    cur_role_id = [role.id for role in cur_role]
+    
+    is_set = False
+    is_set |= any(role for role in roles.values())
+    is_set |= any(user for user in users.values())
+    
+    is_deny = False
+    is_allow = False
+    if is_set:
+        if users['deny'] and int(cur_user) in users['deny']:
+            is_deny = True
+        if users['allow']:
+            if int(cur_user) not in users['allow']:
+                is_deny = True
+            if int(cur_user) in users['allow']:
+                is_allow = True
+        if roles['deny']:
+            for role in roles['deny']:
+                if role in cur_role_id:
+                    is_deny = True
+                    break
+        if roles['allow']:
+            is_role_allow = False
+            for role in roles['allow']:
+                if role in cur_role_id:
+                    is_role_allow = True
+            if not is_role_allow:
+                is_deny = True
+            else:
+                is_allow = True
+    return is_set, is_allow, is_deny#
 
 def get_record_first_version(deposit):
     """Get PID of record first version ID."""
