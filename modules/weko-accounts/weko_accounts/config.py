@@ -67,7 +67,7 @@ WEKO_ACCOUNTS_SSO_ATTRIBUTE_MAP = {
     # "SHIB_ATTR_HANDLE": (False, 'shib_handle'),
     'SHIB_ATTR_ROLE_AUTHORITY_NAME': (False, 'shib_role_authority_name'),
     'SHIB_ATTR_PAGE_NAME': (False, 'shib_page_name'),
-    # "SHIB_ATTR_ACTIVE_FLAG": (False, 'shib_active_flag'),
+    'SHIB_ATTR_ACTIVE_FLAG': (False, 'shib_active_flag'),
     'SHIB_ATTR_SITE_USER_WITHIN_IP_RANGE_FLAG': (False, 'shib_ip_range_flag'),
     'SHIB_ATTR_MAIL': (False, 'shib_mail'),
     'SHIB_ATTR_USER_NAME': (False, 'shib_user_name'),
@@ -109,6 +109,10 @@ WEKO_ACCOUNTS_SHIB_DP_LOGIN_DIRECTLY_ENABLED = True
 
 WEKO_ACCOUNTS_SHIB_ALLOW_USERNAME_INST_EPPN = True
 """Allow using SHIB_ATTR_USER_NAME instead of SHIB_ATTR_EPPN."""
+
+WEKO_ACCOUNTS_SHIB_ALLOW_CREATE_GROUP_ROLE = True
+"""Allow new role creation from SHIB_ATTR_PAGE_NAME (wekoSocietySubGroup) at shib login."""
+
 WEKO_ACCOUNTS_LOGIN_LABEL = "Log in to account"
 """The login label"""
 

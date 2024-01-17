@@ -757,7 +757,7 @@ def get_file_info_list(record):
             # 税込/税抜
             itemBilling = ItemBilling.query.filter_by(
                 item_id=record['_deposit']['id'], role_id=int(priceinfo['billingrole'])).one_or_none()
-            priceinfo['tax'] = 'include_tax' if itemBilling.include_tax else 'without_tax'
+            priceinfo['tax'] = 'include_tax' if itemBilling and itemBilling.include_tax else 'without_tax'
 
             # ロールIDをロール名に変換
             role = next(filter(lambda x: x['id'] == int(priceinfo['billingrole']), roles), None)

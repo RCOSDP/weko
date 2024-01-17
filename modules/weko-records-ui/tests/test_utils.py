@@ -1134,7 +1134,7 @@ def test_create_usage_report_for_user(app):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_get_data_usage_application_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_get_data_usage_application_data(app, db, workflows, records, users, db_file_permission):
     _onetime_download_extra_info = {
-        'usage_application_activity_id': 'usage_application_activity_id_dummy1',
+        'usage_application_activity_id': 'usage_app_act_id_dummy1',
         'is_guest': False
     }
     app.config['WEKO_WORKFLOW_USAGE_REPORT_WORKFLOW_NAME'] = 'Data Usage Report'
