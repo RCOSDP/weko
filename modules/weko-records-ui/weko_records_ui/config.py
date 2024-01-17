@@ -125,6 +125,14 @@ RECORDS_UI_ENDPOINTS = dict(
         permission_factory_imp='weko_records_ui.permissions'
                                ':page_permission_factory',
     ),
+    recid_files_all=dict(
+        pid_type='recid',
+        route='/record/<pid_value>/files/all',
+        view_imp='weko_records_ui.fd.file_list_ui',
+        record_class='weko_deposit.api:WekoRecord',
+        permission_factory_imp='weko_records_ui.permissions'
+                               ':page_permission_factory',
+    ),
     recid_file_details=dict(
         pid_type='recid',
         route='/records/<pid_value>/file_details/<path:filename>',
@@ -225,6 +233,7 @@ WEKO_RECORDS_UI_CITES_REST_ENDPOINTS = {
         'records_stats_route': '/<string:version>/records/<int:pid_value>/stats',
         'files_stats_route': '/<string:version>/records/<int:pid_value>/files/<string:filename>/stats',
         'files_get_route': '/<string:version>/records/<int:pid_value>/files/<string:filename>',
+        'file_list_get_all_route': '/<string:version>/records/<int:pid_value>/files/all',
         'default_media_type': 'application/json',
         'max_result_window': 10000,
     },
@@ -521,7 +530,7 @@ WEKO_RECORDS_UI_EMAIL_ITEM_KEYS = ['creatorMails', 'contributorMails', 'mails']
 RECORDS_UI_TOMBSTONE_TEMPLATE = 'weko_records_ui/tombstone.html'
 # Setting the template of showing deleted record
 
-WEKO_RECORDS_UI_LANG_DISP_FLG = False 
+WEKO_RECORDS_UI_LANG_DISP_FLG = False
 """ Enable function of switching metadata by language of metadata """
 
 WEKO_RECORDS_UI_GOOGLE_SCHOLAR_OUTPUT_RESOURCE_TYPE = [
@@ -611,7 +620,7 @@ WEKO_RECORDS_UI_DISPLAY_VERSION_BOX_FLG = True
 WEKO_RECORDS_UI_DISPLAY_EXPORT_BOX_FLG = True
 """ Display Export box on item detail. """
 
-WEKO_RECORDS_UI_DISPLAY_RESOURCE_TYPE = False 
+WEKO_RECORDS_UI_DISPLAY_RESOURCE_TYPE = False
 """ Display resource type on item detail. """
 
 WEKO_RECORDS_UI_DISPLAY_ITEM_TYPE = True
@@ -637,3 +646,9 @@ WEKO_RECORDS_UI_CAPTCHA_EXPIRATION_SECONDS = 900
 WEKO_RECORDS_UI_NOTIFICATION_MESSAGE = "以下の内容のリクエストメールをデータ提供者に送信しました。\n\n-----------------------------------------------------------------------------\n\n"
 
 WEKO_RECORDS_UI_REQUEST_MESSAGE = "様からリクエストメールが送信されました。\n\n-----------------------------------------------------------------------------\n\n"
+
+WEKO_RECORDS_UI_FILELIST_TMP_PREFIX = 'weko_filelist_'
+
+WEKO_RECORDS_UI_TSV_FIELD_NAMES_EN = ['Name', 'Size', 'License', 'Date', 'URL']
+
+WEKO_RECORDS_UI_TSV_FIELD_NAMES_JA = ['名前', 'サイズ', 'ライセンス', '公開日', '格納場所']

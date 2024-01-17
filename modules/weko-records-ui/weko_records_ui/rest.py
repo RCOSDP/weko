@@ -227,6 +227,28 @@ def create_blueprint_cites(endpoints):
             view_func=wfg,
             methods=['GET'],
         )
+        wflga = WekoFileListGetAll.as_view(
+            WekoFileListGetAll.view_name.format(endpoint),
+            serializers=serializers,
+            ctx=ctx,
+            default_media_type=options.get('default_media_type'),
+        )
+        blueprint.add_url_rule(
+            options.get('file_list_get_all_route'),
+            view_func=wflga,
+            methods=['GET'],
+        )
+        wflga = WekoFileListGetAll.as_view(
+            WekoFileListGetAll.view_name.format(endpoint),
+            serializers=serializers,
+            ctx=ctx,
+            default_media_type=options.get('default_media_type'),
+        )
+        blueprint.add_url_rule(
+            options.get('file_list_get_all_route'),
+            view_func=wflga,
+            methods=['GET'],
+        )
     return blueprint
 
 
@@ -834,3 +856,79 @@ class CreateCaptchaImage(ContentNegotiatedMethodView):
 
         response = make_response(jsonify(res_json), 200)
         return response
+
+
+class WekoFileListGetAll(ContentNegotiatedMethodView):
+    """Schema files resource."""
+
+    view_name = '{0}_get_all_file_list'
+
+    def __init__(self, serializers, ctx, *args, **kwargs):
+        """Constructor."""
+        super(WekoFileListGetAll, self).__init__(
+            serializers,
+            *args,
+            **kwargs
+        )
+        for key, value in ctx.items():
+            setattr(self, key, value)
+
+    @require_api_auth(allow_anonymous=True)
+    @require_oauth_scopes(file_read_scope.id)
+    @limiter.limit('')
+    def get(self, **kwargs):
+        """Get file."""
+        version = kwargs.get('version')
+        func_name = f'get_{version}'
+        if func_name in [func[0] for func in inspect.getmembers(self, inspect.ismethod)]:
+            return getattr(self, func_name)(**kwargs)
+        else:
+            raise VersionNotFoundRESTError()
+
+    def get_v1(self, **kwargs):
+        try:
+            from weko_items_ui.config import WEKO_ITEMS_UI_MS_MIME_TYPE, WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT
+
+            # Get record
+            pid = PersistentIdentifier.get('recid', kwargs.get('pid_value'))
+            record = WekoRecord.get_record(pid.object_uuid)
+
+            # Check record permission
+            if not page_permission_factory(record).can():
+                raise PermissionError()
+
+            if not record.files:
+                raise FilesNotFoundRESTError()
+
+            # Get File Request
+            current_app.config['WEKO_ITEMS_UI_MS_MIME_TYPE'] = WEKO_ITEMS_UI_MS_MIME_TYPE
+            current_app.config['WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT'] = WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT
+            from .fd import file_list_ui
+            dl_response = file_list_ui(record, record.files)
+
+            # Check Etag
+            hash_str = str(record) + record.get_titles
+            etag = generate_etag(hash_str.encode('utf-8'))
+            self.check_etag(etag, weak=True)
+
+            # Check Last-Modified
+            last_modified = record.model.updated
+            if not request.if_none_match:
+                self.check_if_modified_since(dt=last_modified)
+
+            # Response Header Setting
+            dl_response.set_etag(etag)
+            dl_response.last_modified = last_modified
+
+            return dl_response
+
+        except (ModeNotFoundRESTError, FilesNotFoundRESTError, PermissionError, SameContentException) as e:
+            raise e
+
+        except PIDDoesNotExistError:
+            raise RecordsNotFoundRESTError()
+
+        except Exception:
+            current_app.logger.error(traceback.print_exc())
+            raise InternalServerError()
+
