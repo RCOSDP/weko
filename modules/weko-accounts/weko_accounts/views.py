@@ -290,6 +290,16 @@ def shib_sp_login():
                 or _shib_username_config and shib_attr.get('shib_user_name')):
             flash(_("Missing SHIB_ATTRs!"), category='error')
             return _redirect_method()
+        
+        # Check SHIB_ATTR_ACTIVE_FLAG:
+        if shib_attr.get('shib_active_flag', None) == "FALSE": # `shib_active_flag=''` is not error
+            flash(_("shib_active_flag_error"), category='error')
+            return _redirect_method()
+        
+        # Check SHIB_ATTR_SITE_USER_WITHIN_IP_RANGE_FLAG:
+        if shib_attr.get('shib_ip_range_flag', None) == "FALSE": # `shib_ip_range_flag=''` is not error
+            flash(_("shib_ip_range_flag_error"), category='error')
+            return _redirect_method()
 
         redis_connection = RedisConnection()
         datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)

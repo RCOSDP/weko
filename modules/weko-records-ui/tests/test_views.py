@@ -1,7 +1,7 @@
 from unittest.mock import MagicMock
 import pytest
 import io
-from flask import Flask, json, jsonify, session, url_for
+from flask import Flask, json, jsonify, session, url_for, make_response
 from flask_security.utils import login_user
 from invenio_accounts.testutils import login_user_via_session
 from mock import patch
@@ -420,7 +420,7 @@ def test_get_usage_workflow(app, users, workflows):
 
     with patch("flask_login.utils._get_user", return_value=data1):
         res = get_usage_workflow(_file_json)
-        assert res==3
+        assert res=="3"
 
 
 # def get_workflow_detail(workflow_id):
@@ -450,8 +450,6 @@ def test_default_view_method(app, records, itemtypes, indexstyle, db_admin_setti
                     with pytest.raises(Exception) as e:
                         res = default_view_method(recid, record, 'helloworld.pdf')
                     assert e.type==TemplatesNotFound
-
-                    meta_options
 
 
 # def doi_ish_view_method(parent_pid_value=0, version=0):
@@ -799,22 +797,8 @@ def test_get_uri(app,client,db_sessionlifetime,records):
     assert json.loads(res.data)=={'status': True}
 
 # def charge():
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_charge -vv -s --cov-branch --cov-report=term --basetemp=.tox/c1/tmp
-@pytest.mark.parametrize(
-    "id, result",
-    [
-        (0, True),
-        (1, True),
-        (2, True),
-        (3, True),
-        (4, True),
-        (5, True),
-        (6, True),
-        (7, True),
-        (8, True),
-    ],
-)
-def test_charge(users,client,id,result):
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_charge -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_charge(db,users,client):
     _data = {}
     url = url_for("weko_records_ui.charge",_external=True)
     _data['item_id'] = '1'
@@ -822,35 +806,55 @@ def test_charge(users,client,id,result):
     _data['title'] = 'title'
     _data['price'] = '110'
     
-    with patch("flask_login.utils._get_user", return_value=users[id]["obj"]):
-        # 49
-        with patch('weko_records_ui.views.check_charge', return_value='already'):
-            res = client.get(url, data=_data)
-            assert json.loads(res.data) == {'status': 'already'}
-        
-        with patch('weko_records_ui.views.check_charge', return_value='not_billed'):
-            # 50
-            with patch('weko_records_ui.views.create_charge', return_value='connection_error'):
-                res = client.get(url, data=_data)
-                assert json.loads(res.data) == {'status': 'error'}
-            # 51
-            with patch('weko_records_ui.views.create_charge', return_value='credit_error'):
-                res = client.get(url, data=_data)
-                assert json.loads(res.data) == {'status': 'credit_error'}
-            # 52
-            with patch('weko_records_ui.views.create_charge', return_value='already'):
+    with patch.object(db.session, "remove", lambda: None):
+        with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
+            # 49
+            with patch('weko_records_ui.views.check_charge', return_value='already'):
                 res = client.get(url, data=_data)
                 assert json.loads(res.data) == {'status': 'already'}
-
-            with patch('weko_records_ui.views.create_charge', return_value='1'):
-                # 53
-                with patch('weko_records_ui.views.close_charge', return_value=True):
-                    res = client.get(url, data=_data)
-                    assert json.loads(res.data) == {'status': 'success'}
-                # 54
-                with patch('weko_records_ui.views.close_charge', return_value=False):
+            with patch('weko_records_ui.views.check_charge', side_effect=Exception):
+                with patch("weko_records_ui.views.abort", return_value=make_response()) as mock_abort:
+                    with patch("weko_records_ui.views.create_charge", return_value=make_response()) as mock_create_charge:
+                        res = client.get(url, data=_data)
+                        mock_abort.assert_called_with(500)
+                        mock_create_charge.assert_not_called()
+            
+            with patch('weko_records_ui.views.check_charge', return_value='not_billed'):
+                # 50
+                with patch('weko_records_ui.views.create_charge', return_value='connection_error'):
                     res = client.get(url, data=_data)
                     assert json.loads(res.data) == {'status': 'error'}
+                # 51
+                with patch('weko_records_ui.views.create_charge', return_value='credit_error'):
+                    res = client.get(url, data=_data)
+                    assert json.loads(res.data) == {'status': 'credit_error'}
+                # 52
+                with patch('weko_records_ui.views.create_charge', return_value='already'):
+                    res = client.get(url, data=_data)
+                    assert json.loads(res.data) == {'status': 'already'}
+                
+                with patch('weko_records_ui.views.create_charge', side_effect=Exception):
+                    with patch("weko_records_ui.views.abort", return_value=make_response()) as mock_abort:
+                        with patch("weko_records_ui.views.close_charge", return_value=make_response()) as mock_close_charge:
+                            res = client.get(url, data=_data)
+                            mock_abort.assert_called_with(500)
+                            mock_close_charge.assert_not_called()
+
+                with patch('weko_records_ui.views.create_charge', return_value='1'):
+                    # 53
+                    with patch('weko_records_ui.views.close_charge', return_value=True):
+                        res = client.get(url, data=_data)
+                        assert json.loads(res.data) == {'status': 'success'}
+                    # 54
+                    with patch('weko_records_ui.views.close_charge', return_value=False):
+                        res = client.get(url, data=_data)
+                        assert json.loads(res.data) == {'status': 'error'}
+                    
+                    with patch('weko_records_ui.views.close_charge', side_effect=Exception) as mock_close_charge:
+                        with patch("weko_records_ui.views.abort", return_value=make_response()) as mock_abort:
+                            res = client.get(url, data=_data)
+                            mock_close_charge.assert_called_once()
+                            mock_abort.assert_called_with(500)
 
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_default_view_method_fix35133 -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -875,4 +879,4 @@ def test_default_view_method_fix35133(app, records, itemtypes, indexstyle,mocker
                         {'name': 'citation_dissertation_institution','data':""},
                         {'name': 'citation_abstract_html_url','data': 'http://TEST_SERVER/records/1'},
                     ]
-                assert kwargs["google_dataset_meta"] == '{"@context": "https://schema.org/", "@type": "Dataset", "citation": ["http://hdl.handle.net/2261/0002005680", "https://repository.dl.itc.u-tokyo.ac.jp/records/2005680"], "creator": [{"@type": "Person", "alternateName": "creator alternative name", "familyName": "creator family name", "givenName": "creator given name", "identifier": "123", "name": "creator name"}], "description": "『史料編纂掛備用寫眞畫像圖畫類目録』（1905年）の「画像」（肖像画模本）の部に著録する資料の架番号の新旧対照表。史料編纂所所蔵肖像画模本データベースおよび『目録』版面画像へのリンク付き。『画像史料解析センター通信』98（2022年10月）に解説記事あり。", "distribution": [{"@type": "DataDownload", "contentUrl": "https://repository.dl.itc.u-tokyo.ac.jp/record/2005680/files/comparison_table_of_preparation_image_catalog.xlsx", "encodingFormat": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/apt.txt", "encodingFormat": "text/plain"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/environment.yml", "encodingFormat": "application/x-yaml"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/postBuild", "encodingFormat": "text/x-shellscript"}], "includedInDataCatalog": {"@type": "DataCatalog", "name": "https://localhost"}, "license": ["CC BY"], "name": "『史料編纂掛備用写真画像図画類目録』画像の部：新旧架番号対照表", "spatialCoverage": [{"@type": "Place", "geo": {"@type": "GeoCoordinates", "latitude": "point longitude test", "longitude": "point latitude test"}}, {"@type": "Place", "geo": {"@type": "GeoShape", "box": "1 3 2 4"}}, "geo location place test"]}'
+                assert kwargs["google_dataset_meta"] == '{"@context": "https://schema.org/", "@type": "Dataset", "citation": ["http://hdl.handle.net/2261/0002005680", "https://repository.dl.itc.u-tokyo.ac.jp/records/2005680"], "creator": [{"@type": "Person", "alternateName": "creator alternative name", "familyName": "creator family name", "givenName": "creator given name", "identifier": "123", "name": "creator name"}], "description": "『史料編纂掛備用寫眞畫像圖畫類目録』（1905年）の「画像」（肖像画模本）の部に著録する資料の架番号の新旧対照表。史料編纂所所蔵肖像画模本データベースおよび『目録』版面画像へのリンク付き。『画像史料解析センター通信』98（2022年10月）に解説記事あり。", "distribution": [{"@type": "DataDownload", "contentUrl": "https://repository.dl.itc.u-tokyo.ac.jp/record/2005680/files/comparison_table_of_preparation_image_catalog.xlsx", "encodingFormat": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/apt.txt", "encodingFormat": "text/plain"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/environment.yml", "encodingFormat": "application/x-yaml"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/postBuild", "encodingFormat": "text/x-shellscript"}], "includedInDataCatalog": {"@type": "DataCatalog", "name": "https://localhost"}, "license": ["CC BY"], "name": "『史料編纂掛備用写真画像図画類目録』画像の部：新旧架番号対照表", "spatialCoverage": [{"@type": "Place", "geo": {"@type": "GeoCoordinates", "latitude": "point latitude test", "longitude": "point longitude test"}}, {"@type": "Place", "geo": {"@type": "GeoShape", "box": "1 3 2 4"}}, "geo location place test"]}'

@@ -210,7 +210,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                 kv = request.values.get('sp')
             elif k == 'temporal':
                 kv = request.values.get('era')
-            elif k == 'version':
+            elif k == 'versiontype':
                 kv = request.values.get('textver')
             elif k == 'dissno':
                 kv = request.values.get('grantid')
@@ -226,15 +226,19 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                 kv = ",".join([i.name for i in item_type_name_list])
             elif k == 'language':
                 kv = request.values.get('ln')
-                lang_dict = current_app.config['WEKO_SEARCH_UI_OPENSEARCH_LANGUAGE_PARAM']
-                kv = lang_dict.get(kv)
+                if kv is not None and kv != '':
+                    lang_dict = current_app.config['WEKO_SEARCH_UI_OPENSEARCH_LANGUAGE_PARAM']
+                    lang_list = []
+                    for lang in kv.split(','):
+                        lang_list.append(lang_dict.get(lang))
+                    kv = ','.join(lang_list)
 
             return kv
 
         def _get_keywords_query(k, v):
             qry = None
             kv = (
-                request.values.get("lang") if k == "language" else request.values.get(k)
+                request.values.get("lang") if (k == "language" and request.values.get('q') is not None) else request.values.get(k)
             )
 
             if not kv:
@@ -243,9 +247,14 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                     return
 
             if isinstance(v, str):
-                name_dict = dict(operator="and")
-                name_dict.update(dict(query=kv))
-                qry = Q("match", **{v: name_dict})
+                kvl = kv.split(",")
+                shud = []
+                for j in kvl:
+                    name_dict = dict(operator="and")
+                    name_dict.update(dict(query=j))
+                    shud.append(Q("match", **{v: name_dict}))
+                if shud:
+                    qry = Q("bool", should=shud)
             elif isinstance(v, list):
                 qry = Q(
                     "multi_match",
@@ -719,10 +728,10 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
             date_created = request.values.get('date')
             if date_created:
                 qv = {'gte': date_created, 'lte': date_created}
-                shud = [Q('term', **{'file.date.dateType': 'Created'})]
+                shud = [Q('term', **{'date.dateType': 'Created'})]
 
-                qry = Q('range', **{'file.date.value': qv})
-                qry = Q('nested', path='file.date', query=Q('bool', should=shud, must=[qry]))
+                qry = Q('range', **{'date.value': qv})
+                qry = Q('nested', path='date', query=Q('bool', should=shud, must=[qry]))
                 qy.append(qry)
 
             year_issued_from = request.values.get('pubYearFrom')
@@ -733,10 +742,10 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                     qv.update(dict(gte=year_issued_from + '-01-01'))
                 if year_issued_until:
                     qv.update(dict(lte=year_issued_until + '-12-31'))
-                shud = [Q('term', **{'file.date.dateType': 'Issued'})]
+                shud = [Q('term', **{'date.dateType': 'Issued'})]
 
-                qry = Q('range', **{'file.date.value': qv})
-                qry = Q('nested', path='file.date', query=Q('bool', should=shud, must=[qry]))
+                qry = Q('range', **{'date.value': qv})
+                qry = Q('nested', path='date', query=Q('bool', should=shud, must=[qry]))
                 qy.append(qry)
 
             date_issued_from = request.values.get('pubDateFrom')
@@ -747,10 +756,10 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                     qv.update(dict(gte=date_issued_from))
                 if date_issued_until:
                     qv.update(dict(lte=date_issued_until))
-                shud = [Q('term', **{'file.date.dateType': 'Issued'})]
+                shud = [Q('term', **{'date.dateType': 'Issued'})]
 
-                qry = Q('range', **{'file.date.value': qv})
-                qry = Q('nested', path='file.date', query=Q('bool', should=shud, must=[qry]))
+                qry = Q('range', **{'date.value': qv})
+                qry = Q('nested', path='date', query=Q('bool', should=shud, must=[qry]))
                 qy.append(qry)
 
             return qy
@@ -899,11 +908,12 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
     def _get_file_meta_query(qstr):
         """Query for searching indexed file meta."""
         # Search fields may increase so leaving as multi
+        qstr = "*" + qstr + "*"
         multi_q = Q(
             "query_string",
             query=qstr,
             default_operator="and",
-            fields=["search_*", "search_*.ja"],
+            fields=["_item_metadata.*.raw"],
         )
 
         return Q("bool", should=[multi_q])
@@ -1006,12 +1016,13 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
     if search_type is None:
         search_type = request.values.get("search_type")
 
-    if request.values.get("format"):
+    q_param = request.values.get("q", "")
+    if not q_param:
         qs = request.values.get("keyword")
     else:
         # Escape special characters for avoiding ES search errors
         qs = (
-            request.values.get("q", "")
+            q_param
             .replace("\\", r"\\")
             .replace("+", r"\+")
             .replace("-", r"\-")

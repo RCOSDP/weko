@@ -70,6 +70,7 @@ from invenio_search_ui import InvenioSearchUI
 from invenio_theme import InvenioTheme
 from six import BytesIO
 from sqlalchemy_utils.functions import create_database, database_exists
+from weko_accounts.models import ShibbolethUser
 from weko_admin import WekoAdmin
 from weko_admin.models import SessionLifetime
 from weko_admin.models import AdminSettings
@@ -502,28 +503,53 @@ def users(app, db, roles):
         ds.add_role_to_user(originalroleuser3, roles['Community Administrator'])
 
     return [
-        {"email": contributor.email, "id": contributor.id, "obj": contributor},
-        {"email": repoadmin.email, "id": repoadmin.id, "obj": repoadmin},
-        {"email": sysadmin.email, "id": sysadmin.id, "obj": sysadmin},
-        {"email": comadmin.email, "id": comadmin.id, "obj": comadmin},
-        {"email": generaluser.email, "id": generaluser.id, "obj": generaluser},
+        {"email": contributor.email, "id": contributor.id, "obj": contributor, "shib": True},
+        {"email": repoadmin.email, "id": repoadmin.id, "obj": repoadmin, "shib": True},
+        {"email": sysadmin.email, "id": sysadmin.id, "obj": sysadmin, "shib": False},
+        {"email": comadmin.email, "id": comadmin.id, "obj": comadmin, "shib": False},
+        {"email": generaluser.email, "id": generaluser.id, "obj": generaluser, "shib": True},
         {
             "email": originalroleuser.email,
             "id": originalroleuser.id,
             "obj": originalroleuser,
+            "shib": True,
         },
         {
             "email": originalroleuser2.email,
             "id": originalroleuser2.id,
             "obj": originalroleuser2,
+            "shib": False,
         },
-        {"email": user.email, "id": user.id, "obj": user},
+        {"email": user.email, "id": user.id, "obj": user, "shib": False},
         {
             "email": originalroleuser3.email,
             "id": originalroleuser3.id,
             "obj": originalroleuser3,
+            "shib": False,
         },
     ]
+
+@pytest.fixture()
+def shib_users(users):
+    """Create shib users."""
+    ret = []
+    for user in users:
+        shib_user = None
+        if user.get('shib', False):
+            params = {
+                'shib_eppn': user['email'],
+                'shib_handle': '',
+                'shib_role_authority_name': '学会員',
+                'shib_page_name': '',
+                'shib_active_flag': '',
+                'shib_mail': user['email'],
+                'shib_user_name': hash(user['email']),
+                'shib_ip_range_flag': '',
+            }
+            shib_user = ShibbolethUser.create(user['obj'], **params)
+        user['shib_obj'] = shib_user
+        ret.append(user)
+    return users
 
 
 @pytest.fixture()
@@ -717,7 +743,7 @@ def db_sessionlifetime(app, db):
 
 
 @pytest.fixture()
-def records(app, db, esindex, indextree, location, itemtypes, oaischema):
+def records(app, db, esindex, indextree, location, itemtypes, oaischema, db_admin_settings):
     indexer = WekoIndexer()
     indexer.get_es_index()
     results = []
@@ -1723,6 +1749,7 @@ def make_record(db, indexer, i, filepath, filename, mimetype):
     parent = None
     doi = None
     hdl = None
+    yhdl = None
     recid_v1 = PersistentIdentifier.create(
         "recid",
         str(i + 0.1),
@@ -1763,6 +1790,16 @@ def make_record(db, indexer, i, filepath, filename, mimetype):
         hdl = PersistentIdentifier.create(
             "hdl",
             "https://hdl.handle.net/0000/{}".format((str(i)).zfill(10)),
+            object_type="rec",
+            object_uuid=rec_uuid,
+            status=PIDStatus.REGISTERED,
+        )
+        yhdl_host = "http://id.nii.ac.jp/1000/{}"
+        if i % 4 == 1:
+            yhdl_host = "https://dummy.nii.ac.jp/1000/{}"
+        yhdl = PersistentIdentifier.create(
+            "yhdl",
+            yhdl_host.format((str(i)).zfill(10)),
             object_type="rec",
             object_uuid=rec_uuid,
             status=PIDStatus.REGISTERED,
@@ -1854,6 +1891,7 @@ def make_record(db, indexer, i, filepath, filename, mimetype):
         "parent": parent,
         "doi": doi,
         "hdl": hdl,
+        "yhdl": yhdl,
         "record": record,
         "record_data": record_data,
         "item": item,
@@ -2994,6 +3032,7 @@ def make_billing_record(db, indexer, i, filepath, filename, mimetype):
     parent = None
     doi = None
     hdl = None
+    yhdl = None
     recid_v1 = PersistentIdentifier.create(
         "recid",
         str(i + 0.1),
@@ -3034,6 +3073,16 @@ def make_billing_record(db, indexer, i, filepath, filename, mimetype):
         hdl = PersistentIdentifier.create(
             "hdl",
             "https://hdl.handle.net/0000/{}".format((str(i)).zfill(10)),
+            object_type="rec",
+            object_uuid=rec_uuid,
+            status=PIDStatus.REGISTERED,
+        )
+        yhdl_host = "http://id.nii.ac.jp/1000/{}"
+        if i % 4 == 1:
+            yhdl_host = "https://dummy.nii.ac.jp/1000/{}"
+        yhdl = PersistentIdentifier.create(
+            "yhdl",
+            yhdl_host.format((str(i)).zfill(10)),
             object_type="rec",
             object_uuid=rec_uuid,
             status=PIDStatus.REGISTERED,
@@ -3123,6 +3172,7 @@ def make_billing_record(db, indexer, i, filepath, filename, mimetype):
         "parent": parent,
         "doi": doi,
         "hdl": hdl,
+        "yhdl": yhdl,
         "record": record,
         "record_data": record_data,
         "item": item,
@@ -3234,7 +3284,7 @@ def workflows(app, db, itemtypes, users, records):
     )
     data_usage_activity = Activity(
         item_id=records[1][0]['record'].id,
-        activity_id="usage_application_activity_id_dummy1",
+        activity_id="usage_app_act_id_dummy1",
         workflow_id=1,
         flow_id=flow_define.id,
         action_id=1,
@@ -3262,7 +3312,7 @@ def workflows(app, db, itemtypes, users, records):
         file_name=records[1][0]["filename"],
         activity_id='',
         token='',
-        expiration_date=datetime.now()
+        expiration_date=99
     )
 
     with db.session.begin_nested():
@@ -3337,21 +3387,21 @@ def db_file_permission(app, db,users,records):
     filename0 = results[0]["filename"]
     record0 = FilePermission(
         user_id=1, record_id=recid0.pid_value, file_name=filename0,
-        usage_application_activity_id="usage_application_activity_id_dummy1",
+        usage_application_activity_id="usage_app_act_id_dummy1",
         usage_report_activity_id=None, status=1, 
     )
     recid1 = results[1]["recid"]
     filename1 = results[1]["filename"]
     record1 = FilePermission(
         user_id=1, record_id=recid1.pid_value, file_name=filename1,
-                 usage_application_activity_id="usage_application_activity_id_dummy1",
+                 usage_application_activity_id="usage_app_act_id_dummy1",
                  usage_report_activity_id="usage_report_activity_id_dummy1",status=1,
     )
     recid2 = results[2]["recid"]
     filename2 = results[2]["filename"]
     record2 = FilePermission(
         user_id=1, record_id=recid2.pid_value, file_name=filename2,
-                 usage_application_activity_id="usage_application_activity_id_dummy1",
+                 usage_application_activity_id="usage_app_act_id_dummy1",
                  usage_report_activity_id="usage_report_activity_id_dummy1",status=1,
     )
     with db.session.begin_nested():
