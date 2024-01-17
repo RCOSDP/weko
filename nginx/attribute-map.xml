@@ -71,5 +71,5 @@
     <Attribute name="urn:oid:1.3.6.1.4.1.32264.2.1.6" id="wekoSocietyAffiliation"/>
     <Attribute name="urn:oid:1.3.6.1.4.1.32264.2.1.7" id="wekoSocietySubGroup"/>
     <Attribute name="urn:oid:1.3.6.1.4.1.32264.2.1.8" id="wekoActiveUser"/>
-    <Attribute name="urn:oid:1.3.6.1.4.1.32264.2.1.9" id="wekoSiteUserWithinIpRange"/>
+    <Attribute name="urn:oid:1.3.6.1.4.1.32264.2.1.24" id="wekoSiteUserWithinIpRange"/>
 </Attributes>
