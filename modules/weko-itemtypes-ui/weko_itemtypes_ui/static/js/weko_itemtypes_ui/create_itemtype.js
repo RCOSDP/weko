@@ -1327,6 +1327,12 @@ $(document).ready(function () {
     requestNum = 2;
     $.get('/admin/itemtypes/' + $('#item-type-lists').val() + '/render', function (data, status) {
       let changedProperties = [];
+      if (data.msg) {
+        let message = '<div class="alert alert-danger alert-dismissable">' +
+        '<button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>' + 
+        '<p>' + data.msg + '</p></div>';
+        $('section.content-header').prepend(message);
+      }
       Object.keys(data).forEach(function(key) {
         src_render[key] = data[key];
       });
