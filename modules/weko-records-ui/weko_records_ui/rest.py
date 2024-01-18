@@ -50,7 +50,7 @@ from weko_workflow.utils import  check_pretty
 
 from .views import escape_str
 from .permissions import page_permission_factory, file_permission_factory
-from .errors import ContentsNotFoundError, VersionNotFoundRESTError, InternalServerError, \
+from .errors import AvailableFilesNotFoundRESTError, ContentsNotFoundError, InvalidRequestError, VersionNotFoundRESTError, InternalServerError, \
     RecordsNotFoundRESTError, PermissionError, DateFormatRESTError, FilesNotFoundRESTError, ModeNotFoundRESTError
 from .scopes import file_read_scope
 from .utils import create_limmiter
@@ -969,7 +969,12 @@ class WekoFileListGetSelected(ContentNegotiatedMethodView):
             record = WekoRecord.get_record(pid.object_uuid)
 
             # Get selected files
-            filenames = request.json.get("filenames")
+            try:
+                filenames = request.json.get("filenames")
+            except:
+                raise InvalidRequestError()
+            if not filenames:
+                raise InvalidRequestError()
             files = [r for r in record.files if r.info().get('key') in filenames]
 
             # Check record permission
@@ -1001,7 +1006,8 @@ class WekoFileListGetSelected(ContentNegotiatedMethodView):
 
             return dl_response
 
-        except (ModeNotFoundRESTError, FilesNotFoundRESTError, PermissionError, SameContentException) as e:
+        except (ModeNotFoundRESTError, FilesNotFoundRESTError, PermissionError,
+                SameContentException, InvalidRequestError, AvailableFilesNotFoundRESTError) as e:
             raise e
 
         except PIDDoesNotExistError:

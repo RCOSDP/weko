@@ -41,6 +41,7 @@ from weko_accounts.views import _redirect_method
 from weko_deposit.api import WekoRecord
 from weko_groups.api import Group
 from weko_records.api import FilesMetadata, ItemTypes
+from weko_records_ui.errors import AvailableFilesNotFoundRESTError
 from weko_user_profiles.models import UserProfile
 from werkzeug.datastructures import Headers
 from werkzeug.urls import url_quote
@@ -511,6 +512,8 @@ def file_list_ui(record, files):
                         files_export_path + '/' + file.obj.basename, 'wb')
                     temp_file.write(file_buffered.read())
                     temp_file.close()
+    if not available_files:
+        raise AvailableFilesNotFoundRESTError()
 
     # Create TSV file
     from .utils import create_tsv

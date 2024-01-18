@@ -59,19 +59,29 @@ class InvalidCaptchaError(RESTException):
     code = 400
     description = _('Invalid CAPTCHA')
 
+class InvalidRequestError(RESTException):
+    """Invalid Request error."""
+
+    code = 400
+    description = 'Invalid Request Header or Body'
+
 class PermissionError(RESTException):
     """Permission error"""
 
     code = 403
     description = 'Permission denied'
 
+class AvailableFilesNotFoundRESTError(RESTException):
+    """Available Files Not Found error."""
+
+    code = 403
+    description = 'This File is private or you don\'t have permission'
 
 class RecordsNotFoundRESTError(RESTException):
     """Records Not Found error."""
 
     code = 404
     description = 'This Item does not found'
-
 
 class FilesNotFoundRESTError(RESTException):
     """Files Not Found error."""
