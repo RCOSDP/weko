@@ -500,10 +500,12 @@ def file_list_ui(record, files):
     os.makedirs(files_export_path)
 
     # Export files
+    available_files = []
     for file in files:
         if check_file_download_permission(record, file.info()):
-            if file.info().get('accessrole') != 'open_restricted':
+            if not file.info().get('accessrole') in ['open_no', 'open_restricted']:
                 if file:
+                    available_files.append(file)
                     file_buffered = file.obj.file.storage().open()
                     temp_file = open(
                         files_export_path + '/' + file.obj.basename, 'wb')
@@ -513,7 +515,7 @@ def file_list_ui(record, files):
     # Create TSV file
     from .utils import create_tsv
     with open(f'{export_path}/{item_title}.tsv', 'w', encoding="utf-8") as tsv_file:
-        tsv_file.write(create_tsv(files).getvalue())
+        tsv_file.write(create_tsv(available_files).getvalue())
 
     # Create download file
     shutil.make_archive(export_path, 'zip', export_path)

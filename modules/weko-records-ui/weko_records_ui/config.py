@@ -133,6 +133,15 @@ RECORDS_UI_ENDPOINTS = dict(
         permission_factory_imp='weko_records_ui.permissions'
                                ':page_permission_factory',
     ),
+    recid_files_selected=dict(
+        pid_type='recid',
+        route='/record/<pid_value>/files/selected',
+        view_imp='weko_records_ui.fd.file_list_ui',
+        record_class='weko_deposit.api:WekoRecord',
+        permission_factory_imp='weko_records_ui.permissions'
+                               ':page_permission_factory',
+        methods=['POST'],
+    ),
     recid_file_details=dict(
         pid_type='recid',
         route='/records/<pid_value>/file_details/<path:filename>',
@@ -234,6 +243,7 @@ WEKO_RECORDS_UI_CITES_REST_ENDPOINTS = {
         'files_stats_route': '/<string:version>/records/<int:pid_value>/files/<string:filename>/stats',
         'files_get_route': '/<string:version>/records/<int:pid_value>/files/<string:filename>',
         'file_list_get_all_route': '/<string:version>/records/<int:pid_value>/files/all',
+        'file_list_get_selected_route': '/<string:version>/records/<int:pid_value>/files/selected',
         'default_media_type': 'application/json',
         'max_result_window': 10000,
     },
