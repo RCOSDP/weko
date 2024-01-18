@@ -1877,10 +1877,9 @@ def create_tsv(files):
             fieldnames[1]:file.info().get('filesize', {})[0].get('value'),
             # license type
             fieldnames[2]:[
-                d.get('contents')
-                for d in license_dict_list[0]
-                if d.get('id') == file.info().get('licensetype')
-            ][0],
+                    d.get('contents') for d in license_dict_list[0]
+                    if d.get('id') == file.info().get('licensetype')
+                ][0] if file.info().get('licensetype') else None,
             # date
             fieldnames[3]:file.info().get('date', {})[0].get('dateValue'),
             # url
