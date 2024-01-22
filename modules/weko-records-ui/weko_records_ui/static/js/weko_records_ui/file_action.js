@@ -102,6 +102,11 @@ $(document).ready(function () {
     return (email && confirmEmail && email === confirmEmail && regex.test(email))
   }
 
+  function validatePassword(password, confirmPassword){
+    // ここでパスワードの形が正しいかをチェックする
+    return (password && confirmPassword && password === confirmPassword)
+  }
+
   $('#confirm_email_btn').click(function () {
     let userMailElement = $('#user_mail');
     let userMailConfirmElement = $('#user_mail_confirm');
@@ -111,7 +116,7 @@ $(document).ready(function () {
     let passwordConfirmElement = $('#password_for_download_confirm');
     let password_for_download = passwordElement.val();
     let password_for_download_confirm = passwordConfirmElement.val();
-    if (validateUserEmail(user_mail, user_mail_confirm) && password_for_download == password_for_download_confirm) {
+    if (validateUserEmail(user_mail, user_mail_confirm) && validatePassword(password_for_download, password_for_download_confirm)) {
       let fileName = $(this).data("guest_filename_data");
       let dataType = $(this).data("guest_data_type_title");
       let recordID = $(this).data("guest_record_id");
@@ -122,7 +127,7 @@ $(document).ready(function () {
       const post_uri = '/workflow/activity/init-guest';
       let post_data = {
         guest_mail: user_mail,
-        password: password_for_download,
+        password_for_download: password_for_download,
         file_name: fileName,
         guest_item_title: dataType,
         record_id: recordID.toString(),
@@ -174,7 +179,7 @@ $(document).ready(function () {
   $('#password_for_download, #password_for_download_confirm').on('input', function () {
     let password_for_download = $('#password_for_download').val();
     let password_for_download_confirm = $('#password_for_download_confirm').val();
-    if (validateUserEmail(password_for_download, password_for_download_confirm)) {
+    if (validatePassword(password_for_download, password_for_download_confirm)) {
       $('.password_for_download').removeClass('has-error');
       $('.password_for_download_confirm').removeClass('has-error');
       $("#confirm_email_btn").removeAttr("disabled");

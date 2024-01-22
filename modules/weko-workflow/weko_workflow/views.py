@@ -46,6 +46,7 @@ from flask import Blueprint, abort, current_app, has_request_context, \
     jsonify, make_response, render_template, request, session, url_for
 from flask_babelex import gettext as _
 from flask_login import current_user, login_required
+from flask_security.utils import hash_password
 from weko_admin.api import validate_csrf_header
 from flask_wtf import FlaskForm
 from invenio_accounts.models import Role, User, userrole
@@ -605,6 +606,11 @@ def init_activity_guest():
         
     """
     post_data = request.get_json()
+
+    password_for_download = ""
+    if post_data.get('password_for_download'):
+        pwd = post_data['password_for_download']
+        password_for_download = hash_password(pwd)
     
     if is_terms_of_use_only(post_data["workflow_id"]):
         # if the workflow is terms_of_use_only(利用規約のみ) ,
@@ -629,7 +635,8 @@ def init_activity_guest():
                     "related_title": post_data.get('guest_item_title'),
                     "file_name": post_data.get('file_name'),
                     "is_restricted_access": True,
-                }
+                    "password_for_download": password_for_download
+                },
             }
             __, tmp_url = init_activity_for_guest_user(data)
             db.session.commit()

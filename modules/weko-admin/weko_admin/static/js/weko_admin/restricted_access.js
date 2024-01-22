@@ -1,4 +1,4 @@
-const {useState, useEffect} = React;
+const {useState, useEffect ,useCallback} = React;
 const CONTENT_FILE_DOWNLOAD_LABEL = document.getElementById('content_file_download_label').value;
 const DOWNLOAD_LIMIT_LABEL = document.getElementById('download_limit_label').value;
 const EXPIRATION_DATE_LABEL = document.getElementById('expiration_date_label').value;
@@ -121,8 +121,9 @@ function InputComponent({
   )
 }
 
-function PasswordLayout() {
-  const style = {marginRight: "5px", marginLeft: "15px"}
+function PasswordLayout(prop) {
+  const style = {marginRight: "5px", marginLeft: "15px"};
+
   return (
     <div>
       <div className="row">
@@ -134,9 +135,11 @@ function PasswordLayout() {
             <div className="panel-body">
               <div className="form-inline">
                 <label htmlFor="password_enable" className="text-left">
-                  <input type="checkbox"
+                <input type="checkbox"
                     style={style}
-                    id="password_enable"/>
+                    id="password_enable"
+                    checked={prop.value}
+                    onChange={(event) =>  prop.setValue(event.target.checked)}/>
                     {LABEL_SECRET_URL_ENABLED}
                 </label>
               </div>
@@ -493,18 +496,22 @@ function ErrorMsgConditions({errorMsg, setErrorMsg}) {
 
 
 function RestrictedAccessLayout({
+                                  password_enable,
                                   secret_URL_file_download,
                                   content_file_download,
                                   terms_and_conditions,
                                   usage_report_workflow_access,
                                   error_msg
                                 }) {
-  const [secretURLFileDownload , setSecretURLFileDownload] = useState(secret_URL_file_download)
+  const [passwordEnable, setPasswordEnable] = useState(!!password_enable);
+  const [secretURLFileDownload , setSecretURLFileDownload] = useState(secret_URL_file_download);
   const [contentFileDownload, setContentFileDownload] = useState(content_file_download);
   const [usageReportWorkflowAccess, setUsageReportWorkflowAccess] = useState(usage_report_workflow_access);
   const [termList, setTermList] = useState(terms_and_conditions);
   const [currentTerm, setCurrentTerm] = useState(EMPTY_TERM);
   const [errorMsg, setErrorMsg] = useState(error_msg);
+
+  const setPasswordEnableCallback = useCallback(setPasswordEnable , []);
 
   function handleApply() {
     let termListClone = [...termList];
@@ -577,6 +584,7 @@ function RestrictedAccessLayout({
      } 
 
     let data = {
+      password_enable:passwordEnable,
       secret_URL_file_download:secretURLFileDownload,
       content_file_download: contentFileDownload,
       usage_report_workflow_access: usageReportWorkflowAccess,
@@ -682,7 +690,8 @@ function RestrictedAccessLayout({
 
   return (
     <div>
-      <PasswordLayout />
+      <PasswordLayout value={passwordEnable}
+                      setValue={setPasswordEnableCallback}/>
       <SecretURLFileDownloadLayout value={secretURLFileDownload}
                                  setValue={setSecretURLFileDownload}/>
       <ContentFileDownloadLayout value={contentFileDownload}

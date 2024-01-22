@@ -171,6 +171,7 @@ RECORDS_UI_ENDPOINTS = dict(
         route='/record/<pid_value>/file/onetime/<string:filename>',
         view_imp='weko_records_ui.fd.file_download_onetime',
         record_class='weko_deposit.api:WekoRecord',
+        methods=['GET','POST'],
     ),
     recid_secret_url=dict(
         pid_type='recid',

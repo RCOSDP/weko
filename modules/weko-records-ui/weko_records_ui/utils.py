@@ -1105,7 +1105,7 @@ def get_valid_onetime_download(file_name: str, record_id: str,user_mail: str) ->
 
 
 def create_onetime_download_url(
-    activity_id: str, file_name: str, record_id: str, user_mail: str,
+    activity_id: str, file_name: str, record_id: str, user_mail: str, password_for_download:str,
     is_guest: bool = False
 ):
     """Create onetime download.
@@ -1124,7 +1124,8 @@ def create_onetime_download_url(
         extra_info = dict(
             usage_application_activity_id=activity_id,
             send_usage_report=True,
-            is_guest=is_guest
+            is_guest=is_guest,
+            password_for_download=password_for_download
         )
         file_onetime = FileOnetimeDownload.create(**{
             "file_name": file_name,

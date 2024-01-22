@@ -478,6 +478,15 @@
                     aria-describedby="emailHelp"
                     placeholder='{{ _("Email address") }}'>
             </div>
+            {%- password_checkflag %}
+              <div class="form-group input_password">
+                <label class="control-label"
+                      for="input_password">{{ _('Password') }}</label>
+                <input type="password" class="form-control" id="input_password"
+                      aria-describedby="passHelp"
+                      placeholder='{{ _("Password") }}'>
+              </div>
+            {%- endif %}
           </div>
           <div class="modal-footer">
                 <button type="button" id="mailaddress_confirm_download" 

@@ -641,6 +641,10 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     
     mailcheckflag=request.args.get("v")
 
+    password_checkflag = False
+    restricted_access = AdminSettings.get(name='restricted_access',dict_to_object=False)
+    if restricted_access and restricted_access.get('password_enable', False):
+        password_checkflag = True
 
     restricted_errorMsg = ''
     restricted_access = get_restricted_access('error_msg')
@@ -694,6 +698,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         files_thumbnail=files_thumbnail,
         can_edit=can_edit,
         open_day_display_flg=open_day_display_flg,
+        password_checkflag=password_checkflag,
         path_name_dict=path_name_dict,
         is_display_file_preview=is_display_file_preview,
         # experimental implementation 20210502

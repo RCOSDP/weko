@@ -3055,6 +3055,7 @@ def create_onetime_download_url_to_guest(activity_id: str,
     file_name = extra_info.get('file_name')
     record_id = extra_info.get('record_id')
     user_mail = extra_info.get('user_mail')
+    password_for_download = extra_info.get('password_for_download')
     is_guest_user = False
     if not user_mail:
         user_mail = extra_info.get('guest_mail')
@@ -3070,7 +3071,7 @@ def create_onetime_download_url_to_guest(activity_id: str,
         # Save onetime to Database.
         from weko_records_ui.utils import create_onetime_download_url
         one_time_obj = create_onetime_download_url(
-            activity_id, file_name, record_id, user_mail, is_guest_user)
+            activity_id, file_name, record_id, user_mail, password_for_download, is_guest_user)
         expiration_tmp = {
             "expiration_date": "",
             "expiration_date_ja": "",
