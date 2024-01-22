@@ -67,6 +67,7 @@ from sqlalchemy import func as _func
 from sqlalchemy.exc import SQLAlchemyError
 from weko_admin.models import SessionLifetime
 from weko_admin.utils import get_redis_cache, reset_redis_cache
+from weko_authors.models import Authors
 from weko_authors.utils import check_email_existed
 from weko_deposit.api import WekoDeposit, WekoIndexer, WekoRecord
 from weko_deposit.pidstore import get_latest_version_id
@@ -306,29 +307,27 @@ def get_feedback_mail_list():
 
     try:
         search_instance = feedback_email_search_factory(None, records_search)
-        aggr = (
-            search_instance.execute()
-            .to_dict()
-            .get("aggregations", {})
-            .get("feedback_mail_list", {})
-            .get("email_list", {})
-            .get("buckets", [])
-        )
     except (NotFoundError, InvalidQueryRESTError):
         current_app.logger.debug("FeedbackMail data cannot found!")
         return ret
 
-    for item in aggr:
-        if item.get("doc_count"):
-            ret[item.get("key")] = {"items": {}, "author_id": ""}
-
     for hit in search_instance.scan():
         source = hit.to_dict()
         for item in source.get("feedback_mail_list", []):
-            _email = ret.get(item.get("email"))
-            if _email:
-                _email["author_id"] = item.get("author_id", _email["author_id"])
-                _email["items"][source.get("control_number")] = hit.meta.id
+            _author_id = item.get("author_id", "")
+            _email = []
+            _email.append(item.get("email", ""))
+            if _author_id:
+                _email = Authors.get_emails_by_id(_author_id)
+            for e in _email:
+                if e:
+                    if e in ret:
+                        ret[e]["items"][source.get("control_number")] = hit.meta.id
+                    else:
+                        ret[e] = {
+                            "author_id": _author_id,
+                            "items": {source.get("control_number"): hit.meta.id}
+                        }
 
     for item in ret.values():
         _items = []
