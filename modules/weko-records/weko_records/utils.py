@@ -1373,7 +1373,7 @@ async def sort_meta_data_by_options(
         hide_list = get_hide_list_by_schema_form(item_type_id)
         solst_dict_array = convert_data_to_dict(solst)
         files_info = []
-        creator_info = None
+        creator_info = []
         thumbnail = None
         hide_item_metadata(src, settings, item_type_mapping, item_type_data)
         # Set value and parent option
@@ -1405,7 +1405,7 @@ async def sort_meta_data_by_options(
                     and option.get("showlist")
                 ):
                     is_hide_email = not settings.items_display_email
-                    creator_info = get_creator_comments(key,solst_dict_array,mlt,is_hide_email)
+                    creator_info += get_creator_comments(key,solst_dict_array,mlt,is_hide_email)
                     continue
                 
                 mlt = append_parent_key(key, mlt)

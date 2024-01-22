@@ -218,13 +218,69 @@
           }
         ]
       },
+      "item_test5_creator2":{
+        "attribute_name":"creator2",
+        "attribute_type":"creator",
+        "attribute_value_mlt":[
+          {
+            "creatorNames":[
+              {
+                "creatorName":"test tarou",
+                "creatorNameLang":"en"
+              }
+            ],
+            "familyNames":[
+              {
+                "familyName":"test",
+                "familyNameLang":"en"
+              }
+            ],
+            "givenNames":[
+              {
+                "givenName":"tarout",
+                "givenNameLang":"en"
+              }
+            ],
+            "nameIdentifierURI":[
+              {
+                "nameIdentifierURI":""
+              }
+            ]
+          },
+          {
+            "creatorNames":[
+              {
+                "creatorName":"test ziro",
+                "creatorNameLang":"en"
+              }
+            ],
+            "familyNames":[
+              {
+                "familyName":"test",
+                "familyNameLang":"en"
+              }
+            ],
+            "givenNames":[
+              {
+                "givenName":"ziro",
+                "givenNameLang":"en"
+              }
+            ],
+            "nameIdentifierURI":[
+              {
+                "nameIdentifierURI":""
+              }
+            ]
+          }
+        ]
+      },
       "item_test6_bibliographic":{
         "attribute_value_mlt":[
           {
             "bibliographic_titles":[
               {
-                "bibliographic_titleLang":"en",
-                "bibliographic_title":"this is test bibliographic title"
+                "bibliographic_title":"this is test bibliographic title",
+                "bibliographic_titleLang":"en"
               }
             ],
             "bibliographic_volume": "10",
