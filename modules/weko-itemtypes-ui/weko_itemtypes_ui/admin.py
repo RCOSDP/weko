@@ -80,6 +80,7 @@ class ItemTypeMetaDataView(BaseView):
     def render_itemtype(self, item_type_id=0):
         """Renderer."""
         result = None
+        msg = ''
         if item_type_id > 0:
             result = ItemTypes.get_by_id(id_=item_type_id, with_deleted=True)
             # Get sub-property has language
@@ -95,6 +96,14 @@ class ItemTypeMetaDataView(BaseView):
                     # get language
                     _title_key = get_key_by_property(result, item_map, key)
                     languageVsValue.append(_title_key)
+
+            from weko_workflow.api import WorkActivity
+            activity = WorkActivity()
+            action_activities = activity.get_activity_by_item_type_id(item_type_id)
+            if len(action_activities) > 0:
+                current_app.logger.debug([a.activity_id for a in action_activities])
+                msg = _('Item type cannot be updated becase '
+                        'activities are in progress.')
         if result is None:
             result = {
                 'table_row': [],
@@ -110,6 +119,8 @@ class ItemTypeMetaDataView(BaseView):
             result = result.render
             result['edit_notes'] = edit_notes
         result['key_subproperty_languague'] = languageVsValue
+        if msg:
+            result['msg'] = msg
         return jsonify(result)
 
     @expose('/delete', methods=['POST'])
@@ -175,6 +186,7 @@ class ItemTypeMetaDataView(BaseView):
     def register(self, item_type_id=0):
         """Register an item type."""
         from weko_workflow.utils import get_cache_data
+        from weko_workflow.api import WorkActivity
 
         if request.headers['Content-Type'] != 'application/json':
             current_app.logger.debug(request.headers['Content-Type'])
@@ -189,6 +201,16 @@ class ItemTypeMetaDataView(BaseView):
         data = request.get_json()
         # current_app.logger.error("data:{}".format(data))
         try:
+            if item_type_id != 0:
+                activity = WorkActivity()
+                action_activities = activity.get_activity_by_item_type_id(item_type_id)
+                if len(action_activities) > 0:
+                    current_app.logger.debug([a.activity_id for a in action_activities])
+                    response = jsonify(msg=_('Item type cannot be updated becase '
+                                             'activities are in progress.'))
+                    response.status_code = 400
+                    return response
+
             table_row_map = data.get('table_row_map')
             json_schema = fix_json_schema(table_row_map.get('schema'))
             json_form = table_row_map.get('form')

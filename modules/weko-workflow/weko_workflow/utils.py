@@ -1708,10 +1708,19 @@ def convert_record_to_item_metadata(record_metadata):
                 if 'attribute_value_mlt' in record_metadata[key]:
                     item_metadata[key] = \
                         record_metadata[key]['attribute_value_mlt']
+                if 'attribute_value' in record_metadata[key]:
+                    item_metadata[key] = [{
+                        "interim": record_metadata[key]['attribute_value']
+                    }]
             else:
                 if 'attribute_value_mlt' in record_metadata[key]:
                     item_metadata[key] = \
                         record_metadata[key]['attribute_value_mlt'][0]
+                    if 'interim' in item_metadata[key]:
+                        item_metadata[key] = item_metadata[key].get('interim')
+                if 'attribute_value' in record_metadata[key]:
+                    item_metadata[key] = \
+                        record_metadata[key]['attribute_value']
 
     return item_metadata
 

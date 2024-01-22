@@ -139,17 +139,20 @@ def json_loader(data, pid, owner_id=None, with_deleted=False):
         # creator = mp.get(k, {}).get('jpcoar_mapping', {})
         # creator = creator.get('creator') if isinstance(
         #     creator, dict) else None
-        iscreator = False
+        is_creator = False
         creator = ojson["properties"][k]
+        creator_keys = list(current_app.config['WEKO_AUTHORS_IMPORT_KEY'].get('author_name', {}).keys())
         if "object" == creator["type"]:
             creator = creator["properties"]
-            if "iscreator" in creator:
-                iscreator = True
+            for nk in creator_keys:
+                if nk in creator:
+                    is_creator = True
         elif "array" == creator["type"]:
             creator = creator["items"]["properties"]
-            if "iscreator" in creator:
-                iscreator = True
-        if iscreator:
+            for nk in creator_keys:
+                if nk in creator:
+                    is_creator = True
+        if is_creator:
             item["attribute_type"] = "creator"
 
         item_data = ojson["properties"][k]
@@ -1782,7 +1785,7 @@ def get_attribute_value_all_items(
                         if keys[0].replace('[]', '') != root_key:
                             continue
                         key = keys[-1]
-                        val = alst.pop(key, {})
+                        val = alst.pop('interim') if alst.get('interim', {}) else alst.pop(key, {})
                         name = get_name(key, False) or ""
                         hide = lst[3].get("hide") or (
                             non_display_flag and lst[3].get("non_display", False)

@@ -103,7 +103,9 @@ $(document).ready(function () {
     }
   };
   property_default = {};
+  generalDateProps = ['datetime']
   generalTextProps = ['text', 'textarea', 'cus_1042', 'cus_1043']
+  generalSelectProps = ['radios', 'select', 'cus_1046', 'cus_1047']
 
   $('#myModal').modal({
     show: false
@@ -1080,8 +1082,9 @@ $(document).ready(function () {
       render_object('schema_'+meta_id, product);
     } else if('checkboxes' == $(this).val() || 'radios' == $(this).val()
             || 'select' == $(this).val()){
+      let value = $("#schema_"+meta_id).find(".select-value-setting").val();
       checkboxMetaId.prop("checked", isFile);
-      render_select('schema_'+meta_id, '');
+      render_select('schema_'+meta_id, value);
     } else {
       $('#chk_prev_' + meta_id + '_1').removeClass('disabled');
       checkboxMetaId.attr('disabled', false);
@@ -1209,7 +1212,9 @@ $(document).ready(function () {
 
   getPropUrl = '/admin/itemtypes/get-all-properties?lang=' + $('#lang-code').val();
   propertyOptions = '';
+  datePropertyOptions = '';
   textPropertyOptions = '';
+  selectPropertyOptions = '';
   // 作成したメタデータ項目タイプの取得
   $.ajax({
     method: 'GET',
@@ -1231,10 +1236,22 @@ $(document).ready(function () {
           propertyOptions = propertyOptions + '<option value="' + defProps[key].value + '">' + defProps[key].name + '</option>';
         }
 
+        if (generalDateProps.includes(defProps[key].value) || generalTextProps.includes(defProps[key].value)) {
+          datePropertyOptions = datePropertyOptions + '<option value="' + defProps[key].value + '">' + defProps[key].name + '</option>';
+        } else {
+          datePropertyOptions = datePropertyOptions + '<option value="' + defProps[key].value + '" disabled>' + defProps[key].name + '</option>';
+        }
+
         if (generalTextProps.includes(defProps[key].value)) {
           textPropertyOptions = textPropertyOptions + '<option value="' + defProps[key].value + '">' + defProps[key].name + '</option>';
         } else {
           textPropertyOptions = textPropertyOptions + '<option value="' + defProps[key].value + '" disabled>' + defProps[key].name + '</option>';
+        }
+
+        if (generalSelectProps.includes(defProps[key].value)) {
+          selectPropertyOptions = selectPropertyOptions + '<option value="' + defProps[key].value + '">' + defProps[key].name + '</option>';
+        } else {
+          selectPropertyOptions = selectPropertyOptions + '<option value="' + defProps[key].value + '" disabled>' + defProps[key].name + '</option>';
         }
       });
 
@@ -1266,6 +1283,8 @@ $(document).ready(function () {
           option = '<option value="cus_' + key + '">' + data[key].name + '</option>';
           if (generalTextProps.includes('cus_' + key)) {
             _option = '<option value="cus_' + key + '">' + data[key].name + '</option>';
+          } else if (generalSelectProps.includes('cus_' + key)) {
+            _option = '<option value="cus_' + key + '">' + data[key].name + '</option>';
           } else {
             _option = '<option value="cus_' + key + '" disabled>' + data[key].name + '</option>';
           }
@@ -1281,10 +1300,14 @@ $(document).ready(function () {
 
       Object.keys(odered).forEach(function (item) {
         propertyOptions = propertyOptions + odered[item];
+        datePropertyOptions = datePropertyOptions + _odered[item];
         textPropertyOptions = textPropertyOptions + _odered[item];
+        selectPropertyOptions = selectPropertyOptions + _odered[item];
       });
       propertyOptions = propertyOptions + others;
+      datePropertyOptions = datePropertyOptions + _others;
       textPropertyOptions = textPropertyOptions + _others;
+      selectPropertyOptions = selectPropertyOptions + _others;
     },
     error: function(status, error){
       console.log(error);
@@ -1304,6 +1327,12 @@ $(document).ready(function () {
     requestNum = 2;
     $.get('/admin/itemtypes/' + $('#item-type-lists').val() + '/render', function (data, status) {
       let changedProperties = [];
+      if (data.msg) {
+        let message = '<div class="alert alert-danger alert-dismissable">' +
+        '<button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>' + 
+        '<p>' + data.msg + '</p></div>';
+        $('section.content-header').prepend(message);
+      }
       Object.keys(data).forEach(function(key) {
         src_render[key] = data[key];
       });
@@ -1314,6 +1343,10 @@ $(document).ready(function () {
       $.each(data.table_row, function(idx, row_id){
         if (generalTextProps.includes(data.meta_list[row_id].input_type)) {
           new_meta_row(row_id, textPropertyOptions);
+        } else if (generalDateProps.includes(data.meta_list[row_id].input_type)) {
+          new_meta_row(row_id, datePropertyOptions);
+        }  else if (generalSelectProps.includes(data.meta_list[row_id].input_type)) {
+          new_meta_row(row_id, selectPropertyOptions);
         } else {
           new_meta_row(row_id, propertyOptions, true);
         }

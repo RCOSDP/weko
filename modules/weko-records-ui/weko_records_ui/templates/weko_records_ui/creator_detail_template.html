@@ -64,9 +64,9 @@
       {%- endif -%}
     </strong></h1>
   <div class="popover-body popover-content">
-    {%- if 'nameIdentifiers' in attribute_data and attribute_data['nameIdentifiers'][0]-%}
+    {%- if 'identifiers' in attribute_data and attribute_data['identifiers'][0]-%}
     <p>
-      {%- for i in attribute_data['nameIdentifiers'] -%}
+      {%- for i in attribute_data['identifiers'] -%}
       {%- if 'nameIdentifierScheme' in i -%}
       {% autoescape false %}
       {{ i['nameIdentifierScheme'] | escape_str }}
@@ -97,12 +97,12 @@
       </tbody>
     </table>
     {%- endif -%}
-    {%- if 'creatorMails' in attribute_data and attribute_data['creatorMails'][0] -%}
+    {%- if 'mails' in attribute_data and attribute_data['mails'][0] -%}
     <p>
       <span>E-MAIL</span>
-      {%- for i in attribute_data['creatorMails'] -%}
+      {%- for i in attribute_data['mails'] -%}
       <br>
-      {{ i['creatorMail'] | escape_str }}
+      {{ i['mail'] | escape_str }}
       {%- endfor -%}
     </p>
     {%- endif -%}
@@ -138,18 +138,18 @@
   <td class='key_lang'>
     {# Creator name #}
     {%- if key == 'NoLanguage' -%}
-    {{ _fill_data(value['creatorName']) }}
+    {{ _fill_data(value['name']) }}
     {{ _fill_data(value['familyName']) }}
     {{ _fill_data(value['givenName']) }}
     {%- else -%}
-    {{ _fill_data(value['creatorName']) }}
+    {{ _fill_data(value['name']) }}
     {%- endif -%}
 
     {# Creator alternative #}
-    {{ _fill_data(value['creatorAlternative']) }}
+    {{ _fill_data(value['alternative_name']) }}
 
     {# Creator affiliation #}
-    {{ _fill_affiliation(value['affiliationName'], value['affiliationNameIdentifier']) }}
+    {{ _fill_affiliation(value['affiliation_name'], value['affiliation_name_identifier']) }}
     <br>
   </td>
 </tr>

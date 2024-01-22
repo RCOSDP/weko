@@ -1662,6 +1662,31 @@ class WorkActivity(object):
                 )
 
         return query
+    
+    @staticmethod
+    def get_activity_by_item_type_id(item_type_id):
+        """Get metadata from activity table.
+
+        :param activity_id:
+        :return metadata:
+        """
+        with db.session.no_autoflush:
+            query = (db.session.query(_Activity)
+                 .join(_WorkFlow,
+                       _Activity.workflow_id == _WorkFlow.id)
+                 .filter(
+                     _Activity.activity_status.notin_(
+                         [ActivityStatusPolicy.ACTIVITY_CANCEL,
+                          ActivityStatusPolicy.ACTIVITY_FINALLY,
+                          ActivityStatusPolicy.ACTIVITY_FORCE_END
+                         ]),
+                     _WorkFlow.itemtype_id == item_type_id,
+
+                 )
+             .all())
+            
+            return query
+        
 
     @staticmethod
     def __common_query_activity_list():
