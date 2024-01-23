@@ -16,6 +16,8 @@ import os
 import pytest
 import shutil
 import tempfile
+import uuid
+from datetime import datetime
 from flask import Flask, json, url_for
 from flask_babelex import Babel
 from flask_celeryext import FlaskCeleryExt
@@ -25,6 +27,7 @@ from invenio_access.models import ActionRoles, ActionUsers, Role
 from invenio_accounts import InvenioAccounts
 from invenio_accounts.testutils import create_test_user
 from invenio_accounts.views import blueprint as accounts_blueprint
+from invenio_accounts.models import Role as Role_, User
 from invenio_db import InvenioDB
 from invenio_db import db as db_
 from invenio_db.utils import drop_alembic_version_table
@@ -43,7 +46,11 @@ from invenio_files_rest.permissions import bucket_listmultiparts_all, \
     object_read_version_all
 from invenio_files_rest.storage import PyFSFileStorage
 from invenio_files_rest.views import blueprint
+from invenio_records import InvenioRecords
+from invenio_records.models import RecordMetadata
+from invenio_records_files.models import RecordsBuckets
 
+RECORD_ID = uuid.uuid4()
 
 @compiles(DropTable, 'postgresql')
 def _compile_drop_table(element, compiler, **kwargs):
@@ -86,10 +93,23 @@ def base_app():
         FILES_REST_MULTIPART_MAX_PARTS=100,
         FILES_REST_TASK_WAIT_INTERVAL=0.1,
         FILES_REST_TASK_WAIT_MAX_SECONDS=1,
+        WEKO_PERMISSION_SUPER_ROLE_USER=[
+            "System Administrator",
+            "Repository Administrator",
+        ],
+        WEKO_PERMISSION_ROLE_COMMUNITY=["Community Administrator"],
+        WEKO_PERMISSION_ROLE_USER=[
+            "System Administrator",
+            "Repository Administrator",
+            "Contributor",
+            "General",
+            "Community Administrator",
+        ],
     )
 
     FlaskCeleryExt(app_)
     InvenioDB(app_)
+    InvenioRecords(app_)
     Babel(app_)
     Menu(app_)
     InvenioPreviewer(app_)
@@ -277,20 +297,132 @@ def versions(objects):
 
 
 @pytest.fixture()
-def users_data(db):
-    """User data fixture."""
-    return [
-        dict(email='user1@inveniosoftware.org', password='pass1'),
-        dict(email='user2@inveniosoftware.org', password='pass1'),
-    ]
+def users(app, db):
+    """Create users."""
+    ds = app.extensions["invenio-accounts"].datastore
+    user_count = User.query.filter_by(email="user@test.org").count()
+    if user_count != 1:
+        user = create_test_user(email="user@test.org")
+        contributor = create_test_user(email="contributor@test.org")
+        comadmin = create_test_user(email="comadmin@test.org")
+        repoadmin = create_test_user(email="repoadmin@test.org")
+        sysadmin = create_test_user(email="sysadmin@test.org")
+        generaluser = create_test_user(email="generaluser@test.org")
+        originalroleuser = create_test_user(email="originalroleuser@test.org")
+        originalroleuser2 = create_test_user(email="originalroleuser2@test.org")
+    else:
+        user = User.query.filter_by(email="user@test.org").first()
+        contributor = User.query.filter_by(email="contributor@test.org").first()
+        comadmin = User.query.filter_by(email="comadmin@test.org").first()
+        repoadmin = User.query.filter_by(email="repoadmin@test.org").first()
+        sysadmin = User.query.filter_by(email="sysadmin@test.org").first()
+        generaluser = User.query.filter_by(email="generaluser@test.org")
+        originalroleuser = create_test_user(email="originalroleuser@test.org")
+        originalroleuser2 = create_test_user(email="originalroleuser2@test.org")
+
+    role_count = Role_.query.filter_by(name="System Administrator").count()
+    if role_count != 1:
+        sysadmin_role = ds.create_role(name="System Administrator")
+        repoadmin_role = ds.create_role(name="Repository Administrator")
+        contributor_role = ds.create_role(name="Contributor")
+        comadmin_role = ds.create_role(name="Community Administrator")
+        general_role = ds.create_role(name="General")
+        originalrole = ds.create_role(name="Original Role")
+    else:
+        sysadmin_role = Role_.query.filter_by(name="System Administrator").first()
+        repoadmin_role = Role_.query.filter_by(name="Repository Administrator").first()
+        contributor_role = Role_.query.filter_by(name="Contributor").first()
+        comadmin_role = Role_.query.filter_by(name="Community Administrator").first()
+        general_role = Role_.query.filter_by(name="General").first()
+        originalrole = Role_.query.filter_by(name="Original Role").first()
 
 
-@pytest.fixture()
-def users(db, users_data):
-    """Create test users."""
+
+    # Assign access authorization
+    with db.session.begin_nested():
+        action_users = [
+            ActionUsers(action="superuser-access", user=sysadmin),
+        ]
+        db.session.add_all(action_users)
+        action_roles = [
+            ActionRoles(action="superuser-access", role=sysadmin_role),
+            ActionRoles(action="admin-access", role=repoadmin_role),
+            ActionRoles(action="schema-access", role=repoadmin_role),
+            ActionRoles(action="index-tree-access", role=repoadmin_role),
+            ActionRoles(action="indextree-journal-access", role=repoadmin_role),
+            ActionRoles(action="item-type-access", role=repoadmin_role),
+            ActionRoles(action="item-access", role=repoadmin_role),
+            ActionRoles(action="files-rest-bucket-update", role=repoadmin_role),
+            ActionRoles(action="files-rest-object-delete", role=repoadmin_role),
+            ActionRoles(action="files-rest-object-delete-version", role=repoadmin_role),
+            ActionRoles(action="files-rest-object-read", role=repoadmin_role),
+            ActionRoles(action="search-access", role=repoadmin_role),
+            ActionRoles(action="detail-page-acces", role=repoadmin_role),
+            ActionRoles(action="download-original-pdf-access", role=repoadmin_role),
+            ActionRoles(action="author-access", role=repoadmin_role),
+            ActionRoles(action="items-autofill", role=repoadmin_role),
+            ActionRoles(action="stats-api-access", role=repoadmin_role),
+            ActionRoles(action="read-style-action", role=repoadmin_role),
+            ActionRoles(action="update-style-action", role=repoadmin_role),
+            ActionRoles(action="detail-page-acces", role=repoadmin_role),
+            ActionRoles(action="admin-access", role=comadmin_role),
+            ActionRoles(action="index-tree-access", role=comadmin_role),
+            ActionRoles(action="indextree-journal-access", role=comadmin_role),
+            ActionRoles(action="item-access", role=comadmin_role),
+            ActionRoles(action="files-rest-bucket-update", role=comadmin_role),
+            ActionRoles(action="files-rest-object-delete", role=comadmin_role),
+            ActionRoles(action="files-rest-object-delete-version", role=comadmin_role),
+            ActionRoles(action="files-rest-object-read", role=comadmin_role),
+            ActionRoles(action="search-access", role=comadmin_role),
+            ActionRoles(action="detail-page-acces", role=comadmin_role),
+            ActionRoles(action="download-original-pdf-access", role=comadmin_role),
+            ActionRoles(action="author-access", role=comadmin_role),
+            ActionRoles(action="items-autofill", role=comadmin_role),
+            ActionRoles(action="detail-page-acces", role=comadmin_role),
+            ActionRoles(action="detail-page-acces", role=comadmin_role),
+            ActionRoles(action="item-access", role=contributor_role),
+            ActionRoles(action="files-rest-bucket-update", role=contributor_role),
+            ActionRoles(action="files-rest-object-delete", role=contributor_role),
+            ActionRoles(
+                action="files-rest-object-delete-version", role=contributor_role
+            ),
+            ActionRoles(action="files-rest-object-read", role=contributor_role),
+            ActionRoles(action="search-access", role=contributor_role),
+            ActionRoles(action="detail-page-acces", role=contributor_role),
+            ActionRoles(action="download-original-pdf-access", role=contributor_role),
+            ActionRoles(action="author-access", role=contributor_role),
+            ActionRoles(action="items-autofill", role=contributor_role),
+            ActionRoles(action="detail-page-acces", role=contributor_role),
+            ActionRoles(action="detail-page-acces", role=contributor_role),
+        ]
+        db.session.add_all(action_roles)
+        ds.add_role_to_user(sysadmin, sysadmin_role)
+        ds.add_role_to_user(repoadmin, repoadmin_role)
+        ds.add_role_to_user(contributor, contributor_role)
+        ds.add_role_to_user(comadmin, comadmin_role)
+        ds.add_role_to_user(generaluser, general_role)
+        ds.add_role_to_user(originalroleuser, originalrole)
+        ds.add_role_to_user(originalroleuser2, originalrole)
+        ds.add_role_to_user(originalroleuser2, repoadmin_role)
+
+    db.session.commit()
     return [
-        create_test_user(active=True, **users_data[0]),
-        create_test_user(active=True, **users_data[1]),
+        {"email": contributor.email, "id": contributor.id, "obj": contributor},
+        {"email": repoadmin.email, "id": repoadmin.id, "obj": repoadmin},
+        {"email": sysadmin.email, "id": sysadmin.id, "obj": sysadmin},
+        {"email": comadmin.email, "id": comadmin.id, "obj": comadmin},
+        {"email": generaluser.email, "id": generaluser.id, "obj": sysadmin},
+        {
+            "email": originalroleuser.email,
+            "id": originalroleuser.id,
+            "obj": originalroleuser,
+        },
+        {
+            "email": originalroleuser2.email,
+            "id": originalroleuser2.id,
+            "obj": originalroleuser2,
+        },
+        {"email": user.email, "id": user.id, "obj": user},
     ]
 
 
@@ -430,3 +562,42 @@ def get_json():
             assert resp.status_code == code
         return json.loads(resp.get_data(as_text=True))
     return inner
+
+
+@pytest.fixture()
+def records(db, bucket):
+    """Added records data."""
+    rb = RecordsBuckets(
+        bucket_id=bucket.id,
+        record_id=RECORD_ID
+    )
+    rm = RecordMetadata(
+        created=datetime.now(),
+        updated=datetime.now(),
+        id=RECORD_ID,
+        json={
+            "owner": "1",
+            "weko_shared_id": "1",
+            "path": ["1"],
+            "item_1": {
+                "attribute_type": "file",
+                "attribute_value_mlt": [
+                    {
+                        "version_id": "1",
+                        "filename": "LICENSE",
+                        "accessrole": "open_no"
+                    },
+                    {
+                        "version_id": "1",
+                        "filename": "README.rst",
+                        "accessrole": "open_login"
+                    }
+                ]
+            }
+        },
+        version_id=1
+    )
+    db.session.add(rb)
+    db.session.add(rm)
+    db.session.commit()
+    return rm

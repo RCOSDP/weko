@@ -45,38 +45,43 @@ def test_get_not_found(client, headers, bucket, permissions):
         # assert resp.status_code == 404
 
 
-def test_get(client, headers, bucket, objects, permissions):
+# class ObjectResource(ContentNegotiatedMethodView):
+#     def get(self, bucket=None, key=None, version_id=None, upload_id=None,
+#             uploads=None, download=None):
+# .tox/c1/bin/pytest --cov=inveio_files_rest tests/test_views_objectversion.py::test_get -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
+@pytest.mark.parametrize(
+        "user_id, code_open_no, code_open_login",
+        [
+        (0, 403, 200), # contributor
+        (1, 200, 200), # repoadmin
+        (2, 200, 200), # sysadmin
+        (3, 200, 200), # comadmin
+        (7, 200, 200), # no role
+    ],
+)
+def test_get(app, client, headers, bucket, objects, users, records, user_id, code_open_no, code_open_login):
     """Test getting an object."""
-    cases = [
-        (None, 404),
-        ('auth', 404),
-        ('bucket', 200),
-        ('location', 200),
-        ('objects', 200),
-    ]
+    login_user(client, users[user_id]['obj'])
+    for obj in objects:
+        key = obj.key
+        object_url = url_for(
+            'invenio_files_rest.object_api',
+            bucket_id=bucket.id,
+            key=key)
 
-    for user, expected in cases:
-        login_user(client, permissions[user])
+        # Get specifying version (of latest obj).
+        resp = client.get(object_url)
+        if key == "LICENSE":
+            assert resp.status_code == code_open_no
+        else:
+            assert resp.status_code == code_open_login
 
-        for obj in objects:
-            object_url = url_for(
-                'invenio_files_rest.object_api',
-                bucket_id=bucket.id,
-                key=obj.key, )
+        # # Get latest
+        # resp = client.get(object_url, headers=headers)
+        # assert resp.status_code == expected
 
-            # # Get specifying version (of latest obj).
-            # resp = client.get(
-            #     object_url,
-            #     query_string='versionId={0}'.format(obj.version_id),
-            #     headers=headers)
-            # assert resp.status_code == expected
-
-            # # Get latest
-            # resp = client.get(object_url, headers=headers)
-            # assert resp.status_code == expected
-
-            # if resp.status_code == 200:
-            #     assert resp.get_etag()[0] == obj.file.checksum
+        # if resp.status_code == 200:
+        #     assert resp.get_etag()[0] == obj.file.checksum
 
 
 def test_get_download(client, headers, bucket, objects, permissions):
