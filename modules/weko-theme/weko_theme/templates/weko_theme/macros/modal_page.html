@@ -124,7 +124,7 @@
 {%- endmacro %}
 
 <!--Email Confirm Modal -->
-{% macro email_modal(modal_id="", button_id="", button_text="", title="") %}
+{% macro email_modal(modal_id="", button_id="", button_text="", title="", password_checkflag=false ) %}
   <div class="modal fade" tabindex="-1" role="dialog" id="{{ modal_id }}">
     <div class="modal-dialog" role="document">
       <div class="modal-content">

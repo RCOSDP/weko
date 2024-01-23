@@ -1059,9 +1059,6 @@ def display_activity(activity_id="0"):
             url_to_item_to_apply_for = urljoin(request.url_root, url_for(
                 'invenio_records_ui.recid', pid_value=record.pid.pid_value))
             application_approved = True
-            print(url_to_item_to_apply_for)
-        
-
 
     # Get Settings
     enable_request_maillist = False

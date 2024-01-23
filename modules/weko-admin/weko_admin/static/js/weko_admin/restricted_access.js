@@ -121,7 +121,7 @@ function InputComponent({
   )
 }
 
-function PasswordLayout(prop) {
+function PasswordLayout({value,setValue}) {
   const style = {marginRight: "5px", marginLeft: "15px"};
 
   return (
@@ -138,8 +138,8 @@ function PasswordLayout(prop) {
                 <input type="checkbox"
                     style={style}
                     id="password_enable"
-                    checked={prop.value}
-                    onChange={(event) =>  prop.setValue(event.target.checked)}/>
+                    checked={value}
+                    onChange={(event) =>  setValue(event.target.checked)}/>
                     {LABEL_SECRET_URL_ENABLED}
                 </label>
               </div>

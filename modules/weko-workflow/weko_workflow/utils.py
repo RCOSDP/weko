@@ -3505,11 +3505,11 @@ def process_send_approval_mails(activity_detail, actions_mail_setting,
                 process_send_mail(mail_info, setting["mail"])
             else:
                 setting =actions_mail_setting["previous"]\
-                    .get("inform_itemReg", {})        
+                    .get("inform_itemReg", {})
                 if _check_mail_setting(setting):
                     process_send_mail(mail_info, setting["mail"])
                 setting =actions_mail_setting["previous"]\
-                    .get("inform_itemReg_for_registerPerson", {})        
+                    .get("inform_itemReg_for_registerPerson", {}) 
                 if _check_mail_setting(setting):
                     if record.get('_deposit') and \
                     record['_deposit'].get('owners_ext') and \

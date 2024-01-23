@@ -22,7 +22,7 @@
 {% from "weko_records_ui/box/preview_carousel.html" import preview_carousel %}
 {% from "weko_theme/macros/modal_page.html" import all_modal, email_modal %}
 
-{{ email_modal('email_modal', 'confirm_email_btn', _('Send'),_('Please input email address.')) }}
+{{ email_modal('email_modal', 'confirm_email_btn', _('Send'),_('Please input email address.'),password_checkflag) }}
 {{ all_modal() }}
 
 {%- block javascript %}
@@ -478,7 +478,7 @@
                     aria-describedby="emailHelp"
                     placeholder='{{ _("Email address") }}'>
             </div>
-            {%- password_checkflag %}
+            {%- if password_checkflag %}
               <div class="form-group input_password">
                 <label class="control-label"
                       for="input_password">{{ _('Password') }}</label>
