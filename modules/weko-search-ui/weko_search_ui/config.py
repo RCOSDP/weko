@@ -235,6 +235,7 @@ WEKO_SEARCH_REST_ENDPOINTS = dict(
         },
         index_route="/index/",
         search_api_route="/<string:version>/records",
+        search_result_list_route="/<string:version>/records/list",
         links_factory_imp="weko_search_ui.links:default_links_factory",
         default_media_type="application/json",
         max_result_window=10000,
