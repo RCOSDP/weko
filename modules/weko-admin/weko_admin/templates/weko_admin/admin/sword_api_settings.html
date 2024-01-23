@@ -1,0 +1,140 @@
+{# -*- coding: utf-8 -*-
+#
+# This file is file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
+{%- extends admin_base_template %}
+
+{% block css %}
+{{ super() }}
+<link href="{{ url_for('static', filename='css/weko_admin/quill.snow.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/weko_admin/language.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/weko_admin/styles.css') }}" rel="stylesheet">
+{% endblock %}
+
+{%- block page_body_tabs %}
+  {% from "weko_theme/macros/edit_tabs_selector.html" import tabs_selector with context %}
+  {{ tabs_selector('item_type') }}
+{%- endblock page_body_tabs%}
+
+{%- block javascript %}
+  {{ super() }}
+    <script src="{{ url_for('static', filename='js/weko_admin/sword_api_settings.js') }}"></script>
+{%- endblock javascript %}
+
+{%- block body %}
+<div id="root"></div>
+    <input id="Required_item" type="hidden" value="{{_('Required item is not inputted')}}" />
+    <input id="Successfully_Changed" type="hidden" value="{{_('Successfully Changed Settings.')}}" />
+    <input id="Failed_Change" type="hidden" value="{{_('Failed To Change Settings')}}" />
+<div class="panel panel-info">
+    <div class="panel-heading">
+        <div class="panel-title">
+            <h4>Default Format<h4>
+        </div>
+    </div>
+    <div class="panel-body">
+<form method="POST" name="default_format_form" action={{url_for('swordapi.index')}}>
+    {{ form.csrf_token }}
+    <div class="row">
+        <div class="col-sm-2 text-right">
+            <label>{{_('Default Format')}}</label>
+        </div>
+        <div class="col-sm-2">
+            <select class="form-control"  name="default_format" id="default_select" >
+                <option value="TSV">TSV</option>
+                <option value="XML">XML</option>
+            </select>
+        </div>
+    </div> 
+    <br>
+    <div class="row">
+        <div class="form-actions">
+            <button type="button" name="submit" value="save_default_format_settings" class="btn btn-primary pull-right" onclick="handleDefaultSubmit()">
+                <span class="glyphicon glyphicon-save"></span>&nbsp
+                {{_('Save')}}
+            </button>
+        </div>
+    </div>
+</form>
+    </div>
+</div>
+</br>
+<div class="panel panel-info">
+    <div class="panel-heading">
+        <div class="panel-title">
+         <h4>Data Format<h4>
+        </div>
+    </div>
+    <div class="panel-body">
+<form method="POST" id="data_format_form" name="data_format_form" action={{url_for('swordapi.data_format')}}>
+    {{ form.csrf_token }}
+    <div class="row">
+        <div class="col-sm-2 text-right">
+            <label>{{_('Data Format')}}</label>
+        </div>
+        <div class="col-sm-2">
+            <select class="form-control"  name="data_format" id="data_format" onchange="toggleMenu()">
+                <option value="empty"></option>
+                <option value="TSV">TSV</option>
+                <option value="XML">XML</option>
+            </select>
+        </div>
+        <span class="errorMessage"></span>
+    </div>
+    <div class="row">
+        <div class="col-sm-2 text-right">
+            <label>{{_('Register Format')}}</label>
+        </div>
+        <div class="col-sm-2">
+            <select class="form-control"  name="register_format" id="register_format" disabled>
+                <option value="empty"></option>
+                <option value="Direct">Direct</option>
+                <option value="Workflow">Workflow</option>
+            </select>
+        </div>
+        <span class="errorMessage"></span>
+    </div>
+    <div class="row">
+        <div class="col-sm-2 text-right">
+                <label for="item-type-lists">{{_('Item Type')}}</label>
+        </div>
+        <div class="col-sm-6">
+            <select class="form-control" name="sword_item_type" id="sword_item_type" disabled>
+                <option value="empty"></option>
+                {%- for list in lists -%}
+                <option  value="{{ list.id }}" {% if list.id == id %}selected{% endif %}>{{ list.name }}({{ list.id }})</option>
+                {%- endfor -%}
+            </select>
+        </div>
+        <span class="errorMessage"></span>
+    </div>
+    <br>
+    <div class="row">
+        <div class="form-actions">
+            <button type="button" name="submit" value="save_data_format_settings" class="btn btn-primary pull-right" onclick="handleSubmit(event)">
+                <span class="glyphicon glyphicon-save"></span>&nbsp
+                {{_('Save')}}
+            </button>
+        </div>
+    </div>
+</form>
+    </div>
+</div>
+{%- endblock body %}

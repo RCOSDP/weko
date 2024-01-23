@@ -469,6 +469,9 @@ ${INVENIO_WEB_INSTANCE} admin_settings create_settings \
 ${INVENIO_WEB_INSTANCE} admin_settings create_settings \
        5 "elastic_reindex_settings" \
        "{'has_errored': False}"
+${INVENIO_WEB_INSTANCE} admin_settings create_settings \
+       6 "sword_api_setting" \
+       { "default_format": "TSV","data_format":{ "TSV":{"item_type": "empty",  "register_format": "empty"},"XML":{"item_type": "empty",  "register_format": "empty"}}}
 # create-admin-settings-end
 
 # create-default-authors-prefix-settings-begin

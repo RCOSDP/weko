@@ -258,6 +258,11 @@ msgstr ""
 msgid "Faceted Search"
 msgstr "ファセット検索一覧"
 
+#: weko_admin/admin.py:1357
+#: weko_admin/templates/weko_admin/admin/sword_api_setting.html:111
+msgid "Required item is not inputted"
+msgstr "必須項目がありません。"
+
 #: weko_admin/api.py:82
 #, fuzzy
 msgid "statistics report"
