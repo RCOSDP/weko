@@ -103,8 +103,8 @@ $(document).ready(function () {
   }
 
   function validatePassword(password, confirmPassword){
-    // ここでパスワードの形が正しいかをチェックする
-    return (password && confirmPassword && password === confirmPassword)
+    let regex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[@!#\$%&=\-\+\*\/\.,:;\[\]\|])[a-zA-Z0-9@!#\$%&=\-\+\*\/\.,:;\[\]\|]{8,}$/;
+    return (password && confirmPassword && password === confirmPassword && regex.test(password))
   }
 
   $('#confirm_email_btn').click(function () {
