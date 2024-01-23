@@ -611,9 +611,11 @@ class ObjectResource(ContentNegotiatedMethodView):
         for k, v in rm.json.items():
             if isinstance(v, dict) and v.get('attribute_type') == 'file':
                 for item in v.get('attribute_value_mlt', []):
-                    is_this_version = item.get('version_id') == version_id
-                    is_preview = item.get('displaytype') == 'preview'
-                    if is_this_version and is_preview:
+                    is_this_version = \
+                        item.get('version_id') == version_id or \
+                        version_id == None
+                    this_file = item.get('filename') == key
+                    if is_this_version and this_file:
                         file_access_permission = \
                             check_file_download_permission(rm.json, item)
                         flag = True
@@ -624,8 +626,9 @@ class ObjectResource(ContentNegotiatedMethodView):
         obj = ObjectVersion.get(bucket, key, version_id=version_id)
         if not obj:
             abort(404, 'Object does not exists.')
-        # Check permission. if it is not permission, return None.
-        cls.check_object_permission(obj, file_access_permission)
+        # Check permission. if it is not permission, return 403.
+        if not file_access_permission:
+            abort(403)
         return obj
 
     def create_object(self, bucket, key,
