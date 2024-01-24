@@ -635,10 +635,6 @@ class IndexSearchResourceAPI(ContentNegotiatedMethodView):
             # Execute search
             search_results = search.execute()
             search_results = search_results.to_dict()
-            import pprint
-            print("==============================search_results========================================")
-            pprint.pprint(search_results)
-            # pprint.pprint(search_results.info())
 
             # Convert RO-Crate format
             from weko_records_ui.utils import RoCrateConverter
