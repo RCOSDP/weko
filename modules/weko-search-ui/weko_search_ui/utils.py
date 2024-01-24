@@ -46,7 +46,7 @@ from celery.result import AsyncResult
 from celery.task.control import revoke
 from elasticsearch import ElasticsearchException
 from elasticsearch.exceptions import NotFoundError
-from flask import Response, abort, current_app, has_request_context, request, Flask, send_file
+from flask import abort, current_app, has_request_context, request, Flask, send_file
 from flask_babelex import gettext as _
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -3962,74 +3962,56 @@ def create_limmiter():
     return Limiter(app=Flask(__name__), key_func=get_remote_address, default_limits=WEKO_SEARCH_UI_API_LIMIT_RATE_DEFAULT)
 
 
-def result_download_ui(search_results, input_json, item_title):
+def result_download_ui(search_results, input_json, item_title, language='en'):
     """Search Result Download Ui.
 
     Args:
-        search_results (_type_): _description_
-        input_json (list): _description_
+        search_results (list): Search result (RO-Crate list)
+        input_json (list): Input json
+        item_title (str): Item title
+        language (str): Language
 
     Returns:
+        Response
     """
     if not search_results:
         abort(404)
 
-    # print(f"=============================aaaaaaaa:{search_results}==============================")
-    # item_title = search_results.get('metadata',{}).get('@graph', {})[0].get('title')
-    temp_path = tempfile.TemporaryDirectory(
-        prefix=current_app.config.get('WEKO_RECORDS_UI_FILELIST_TMP_PREFIX'))# TODO:変更
-
     # Set export folder
+    temp_path = tempfile.TemporaryDirectory(
+        prefix=current_app.config.get('WEKO_SEARCH_UI_RESULT_TMP_PREFIX')
+    )
     export_path = temp_path.name + '/' + datetime.utcnow().strftime("%Y%m%d%H%M%S")
     os.makedirs(export_path)
 
     # Create TSV file
     with open(f'{export_path}/{item_title}.tsv', 'w', encoding="utf-8") as tsv_file:
-        tsv_file.write(search_results_to_tsv(search_results, input_json).getvalue())
+        tsv_file.write(search_results_to_tsv(search_results, input_json, language).getvalue())
 
     return send_file(
         f'{export_path}/{item_title}.tsv',
         as_attachment=True,
-        attachment_filename=item_title + '.tsv',
+        attachment_filename=f'{item_title}.tsv',
         mimetype='text/tab-separated-values'
     )
 
-    # return Response(
-    #     f'{export_path}/{item_title}.tsv',
-    #     mimetype="text/csv",
-    #     headers={"Content-disposition": f"attachment; filename={item_title}.tsv"}
-    # )
 
-
-def search_results_to_tsv(search_results, input_json):
+def search_results_to_tsv(search_results, input_json, language='en'):
     """Create TSV file from search results.
 
     Args:
-        search_results (_type_): _description_
-        input_json (list): _description_
+        search_results (list): Search result (RO-Crate list)
+        input_json (list): Input json
+        language (str): Language
 
     Returns:
         _io.StringIO: TSV file
     """
-    # Language setting
-    language = request.headers.get('Accept-Language')
-
-    # # TSV header setting
-    # fieldnames = ['タイトル' if language == 'ja' else 'title']
-    # for n in input_json:
-    #     fieldnames.append(n.get('name', {}).get(language))
-
-    # # RO-Crate key setting
-    # roCrateKeys = ['title']
-    # for n in input_json:
-    #     roCrateKeys.append(n.get('roCrateKey'))
-
     # Dict {TSV header : RO-Crate key}
-    dict = {'タイトル' if language == 'ja' else 'title': 'name'}# TODO:name→title
+    from .config import WEKO_SEARCH_UI_TITLE_LANGUAGE
+    dict = {WEKO_SEARCH_UI_TITLE_LANGUAGE.get(language): 'title'}
     for n in input_json:
         dict[n.get('name', {}).get(language)] = n.get('roCrateKey')
-
-    print(f"============================d:{dict}=======================================")
 
     # Create TSV
     file_output = StringIO()
@@ -4039,35 +4021,30 @@ def search_results_to_tsv(search_results, input_json):
         delimiter='\t',
         lineterminator='\n'
     )
-    print(f"=============================search_results:{search_results}==============================")
     file_writer.writeheader()
     for result in search_results:
-        print(f"=============================result:{result}==============================")
         metadata = result.get('metadata', {}).get('@graph')
-        print(f"=============================metadata:{metadata}==============================")
-        graph = metadata[0] if metadata else None
-        print(f"=============================graph:{graph}==============================")
+        data_response = metadata[0] if metadata else None
         file_writer.writerow(
-            create_tsv_row(dict, graph)
+            create_tsv_row(dict, data_response)
         )
 
     StringIO().close()
     return file_output
 
 
-def create_tsv_row(dict, metadata):
+def create_tsv_row(dict, data_response):
     """Create TSV row
 
     Args:
         dict (dict): {Field name : RO-Crate key}
-        metadata (_type_): Metadata
+        data_response (dict): Data response
 
     Returns:
         str: TSV row
     """
     result_row = {}
     for key in dict.keys():
-        result_row[key] = metadata.get(dict[key], [None])[0]
-    print(f"=============================result_row:{result_row}==============================")
+        result_row[key] = data_response.get(dict[key], [None])[0]
 
     return result_row

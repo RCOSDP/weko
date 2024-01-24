@@ -742,9 +742,11 @@ class IndexSearchResultList(ContentNegotiatedMethodView):
     def post_v1(self, **kwargs):
         try:
             # Language setting
+            from weko_user_profiles.config import USERPROFILES_LANGUAGE_LIST
             language = request.headers.get('Accept-Language')
-            if language:
-                get_locale().language = language
+            if not language in [lang[0] for lang in USERPROFILES_LANGUAGE_LIST[1:]]:
+                language = 'en'
+            get_locale().language = language
 
             # Get input json
             try:
@@ -800,7 +802,6 @@ class IndexSearchResultList(ContentNegotiatedMethodView):
             # Execute search
             search_results = search.execute()
             search_results = search_results.to_dict()
-            print(f"==============================search_results:{search_results}========================================")
 
             # Convert RO-Crate format
             from weko_records_ui.utils import RoCrateConverter
@@ -818,20 +819,10 @@ class IndexSearchResultList(ContentNegotiatedMethodView):
                     'metadata': rocrate,
                 })
                 update_time_list.append(source["_updated"])
-            print(f"==============================rocrate_list:{rocrate_list}========================================")
-
-            # Check pretty
-            indent = 4 if request.args.get('pretty') == 'true' else None
-
-            cursor = None
-            if len(search_results['hits']['hits']) > 0:
-                sort_key = search_results['hits']['hits'][-1].get('sort')
-                if sort_key:
-                    cursor = sort_key[0]
 
             # Create TSV
             from .utils import result_download_ui
-            dl_response = result_download_ui(rocrate_list, input_json, "sample_title")
+            dl_response = result_download_ui(rocrate_list, input_json, "sample_title", language)
 
             # Check Etag
             hash_str = str(search_result) + str(input_json)
