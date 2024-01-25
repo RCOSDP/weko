@@ -52,7 +52,6 @@ MIMETYPE_PLAINTEXT = {
     'text/css',
     'text/csv',
     'text/html',
-    'text/tab-separated-values',
     'image/svg+xml',
 }
 

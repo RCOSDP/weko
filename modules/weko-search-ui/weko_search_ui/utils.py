@@ -4023,8 +4023,9 @@ def search_results_to_tsv(search_results, input_json, language='en'):
     )
     file_writer.writeheader()
     for result in search_results:
-        metadata = result.get('metadata', {}).get('@graph')
-        data_response = metadata[0] if metadata else None
+        metadata = result.get('metadata')
+        data_response = [graph for graph in metadata.get('@graph') if graph.get('@id') == './']
+        data_response = data_response[0] if data_response else {}
         file_writer.writerow(
             create_tsv_row(dict, data_response)
         )

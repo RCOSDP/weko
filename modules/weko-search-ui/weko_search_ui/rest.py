@@ -40,7 +40,6 @@ from invenio_records_rest.utils import obj_or_import_string
 from invenio_rest import ContentNegotiatedMethodView
 from werkzeug.http import generate_etag
 from weko_index_tree.api import Indexes
-from weko_index_tree.errors import IndexNotFound404Error
 from weko_index_tree.utils import count_items, recorrect_private_items_count
 from weko_items_ui.scopes import item_read_scope
 from weko_records.api import ItemTypes
@@ -299,7 +298,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
             for k in range(len(agp)):
                 if q == agp[k].get("key"):
                     current_idx = {}
-                    _child_indexes = [] 
+                    _child_indexes = []
                     p = {}
                     for path in paths:
                         if path.path == agp[k].get("key"):
@@ -842,11 +841,8 @@ class IndexSearchResultList(ContentNegotiatedMethodView):
 
             return dl_response
 
-        except (InvalidRequestError, IndexNotFound404Error) as e:
+        except InvalidRequestError as e:
             raise e
-
-        except MaxResultWindowRESTError:
-            raise MaxResultWindowRESTError()
 
         except ElasticsearchException:
             raise InternalServerError()
