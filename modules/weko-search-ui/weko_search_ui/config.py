@@ -235,6 +235,7 @@ WEKO_SEARCH_REST_ENDPOINTS = dict(
         },
         index_route="/index/",
         search_api_route="/<string:version>/records",
+        search_result_list_route="/<string:version>/records/list",
         links_factory_imp="weko_search_ui.links:default_links_factory",
         default_media_type="application/json",
         max_result_window=10000,
@@ -705,3 +706,8 @@ WEKO_SEARCH_UI_BULK_EXPORT_RETRY_INTERVAL = 1
 """ retry interval(sec) """
 
 WEKO_SEARCH_UI_API_LIMIT_RATE_DEFAULT = ['100 per minute']
+
+WEKO_SEARCH_UI_RESULT_TMP_PREFIX = 'weko_search_result_list_'
+
+WEKO_SEARCH_UI_TITLE_LANGUAGE = {'en': 'Title',
+                                 'ja': 'タイトル'}
