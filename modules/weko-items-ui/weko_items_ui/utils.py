@@ -588,7 +588,14 @@ def validate_form_input_data(
         return ret
 
     def _get_keys_that_exist_from_data(given_data: dict) -> list:
-        return list(given_data.keys())
+        ret = []
+        if given_data is not None:
+            if type(given_data) is dict:
+                ret = list(given_data.keys())
+            elif type(given_data) is str:
+                ret = list(given_data)
+        return ret
+        
 
     # Get langauge key - DONE
     # Iterate data for validating the value - 
