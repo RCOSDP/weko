@@ -236,7 +236,7 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
 
   $rootScope.display_comment_jounal = function () {
     let aggregations = $rootScope.vm.invenioSearchResults.aggregations || {};
-    if (aggregations['path']) {
+    if (aggregations['path'] && aggregations.path.buckets[0] && aggregations.path.buckets[0][0]) {
       $('#index_comment').append(format_comment(aggregations.path.buckets[0][0].comment))
     }
   }
@@ -345,7 +345,7 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
   $scope.getPathName = function () {
     let aggregations = $rootScope.vm.invenioSearchResults.aggregations || {};
     let path_str = "";
-    if (aggregations.hasOwnProperty("path") && aggregations.path.hasOwnProperty("buckets")) {
+    if (aggregations.hasOwnProperty("path") && aggregations.path.hasOwnProperty("buckets") && aggregations.path.buckets[0] && aggregations.path.buckets[0][0]) {
       path_str = aggregations.path.buckets[0][0].key;
     }
     if (path_str) {

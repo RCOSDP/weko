@@ -22,6 +22,7 @@ from weko_records.utils import (
     makeDateRangeValue,
     get_value_from_dict,
     get_values_from_dict,
+    get_values_from_dict_with_condition,
     copy_value_xml_path,
     copy_value_json_path,
     copy_values_json_path,
@@ -212,6 +213,19 @@ def test_copy_field_test(app, meta, k_v):
             k_v1[0]['item_value']['12']['path_type']['type'] = '99.99'
             assert copy_field_test(meta[0], k_v1, _jrc) == None
 
+# def copy_field_test(dc, map, jrc, iid=None):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_copy_field_test_with_condition -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_copy_field_test_with_condition(app, meta01, k_v_with_c):
+    _jrc = {}
+    copy_field_test(meta01[0], k_v_with_c, _jrc)
+    assert _jrc=={
+        'date_range1': [{'gte': '2000-01-01', 'lte': '2021-03-30'}],
+        'text1': ['東京大学史料編纂所', 'Historiographical Institute, the University of Tokyo'],
+        'text3': ['概要日本語', '概要英語'],
+        'text10': ['神奈川県立金沢文庫・称名寺', 'KANAGAWA PREFECTURAL KANAZAWA-BUNKO MUSEUM, Shomyoji Temple'],
+        'text11': ['史資料: テキスト', 'materials: text']
+    }
+
 # def convert_range_value(start, end=None):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_convert_range_value -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
 def test_convert_range_value():
@@ -298,6 +312,51 @@ def test_get_values_from_dict(app, meta, jsonpath):
         meta[0], jsonpath[3], 'json')==['その他', 'materials: text']
     assert get_values_from_dict(
         meta[0], jsonpath[3], 'xml')==None
+
+# .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_get_values_from_dict_with_condition -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_get_values_from_dict_with_condition(app, meta01, jsonpath):
+    assert get_values_from_dict_with_condition(meta01[0],
+                                '$.item_1551264418667.attribute_value_mlt[*].subitem_1551257245638[*].subitem_1551257276108',
+                                'json',
+                                '$.item_1551264418667.attribute_value_mlt[*].subitem_1551257036415',
+                                'Distributor', None)==['東京大学史料編纂所', 'Historiographical Institute, the University of Tokyo']
+    assert get_values_from_dict_with_condition(meta01[0],
+                                '$.item_1636460428217.attribute_value_mlt[*].subitem_1522657697257',
+                                'json',
+                                '$.item_1636460428217.attribute_value_mlt[*].subitem_1522657647525',
+                                'Abstract', None)==['概要日本語', '概要英語']
+    assert get_values_from_dict_with_condition(meta01[0],
+                                '$.item_1551264418667.attribute_value_mlt[*].subitem_1551257245638[*].subitem_1551257276108',
+                                'json',
+                                '$.item_1551264418667.attribute_value_mlt[*].subitem_1551257036415',
+                                'Other', None)==['神奈川県立金沢文庫・称名寺', 'KANAGAWA PREFECTURAL KANAZAWA-BUNKO MUSEUM, Shomyoji Temple']
+    assert get_values_from_dict_with_condition(meta01[0],
+                                '$.item_1636460428217.attribute_value_mlt[*].subitem_1522657697257',
+                                'json',
+                                '$.item_1636460428217.attribute_value_mlt[*].subitem_1522657647525',
+                                'Other', None)==['史資料: テキスト', 'materials: text']
+    assert get_values_from_dict_with_condition(meta01[0],
+                                '$.item_1551264418667.attribute_value_mlt[*].subitem_1551257245638[*].subitem_1551257276108',
+                                'json',
+                                '$.item_1551264418667.attribute_value_mlt[*].subitem_1551257036415',
+                                'TEST', None) is None
+    assert get_values_from_dict_with_condition(meta01[0],
+                                '$.item_1636460428217.attribute_value_mlt[*].subitem_1522657697257',
+                                'json',
+                                '$.item_1636460428217.attribute_value_mlt[*].subitem_1522657647525',
+                                'TEST', None) is None
+    assert get_values_from_dict_with_condition(meta01[0],
+                                '$.item_1551264418667.attribute_value_mlt[*].subitem_1551257245638[*].subitem_1551257276108',
+                                'json',
+                                '$.item_type_id',
+                                '12', None)==['東京大学史料編纂所', 'Historiographical Institute, the University of Tokyo', '神奈川県立金沢文庫・称名寺', 'KANAGAWA PREFECTURAL KANAZAWA-BUNKO MUSEUM, Shomyoji Temple']
+    assert get_values_from_dict_with_condition(meta01[0],
+                                '$.item_1551264418667.attribute_value_mlt[*].subitem_1551257245638[*].subitem_1551257276108',
+                                'json',
+                                'item_type_id',
+                                'TEST', None) is None
+    assert get_values_from_dict_with_condition(meta01[0], '', 'xml', '', '', None) is None
+    assert get_values_from_dict_with_condition(meta01[0], '', 'pdf', '', '', None) is None
 
 # def copy_value_xml_path(dc, xml_path, iid=None):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_copy_value_xml_path -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
