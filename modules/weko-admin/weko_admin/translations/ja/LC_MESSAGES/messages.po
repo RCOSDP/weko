@@ -1338,6 +1338,10 @@ msgstr ""
 msgid "Enter Input Value"
 msgstr ""
 
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:554
+msgid "Setting detail condition"
+msgstr "条件"
+
 #: weko_admin/templates/weko_admin/admin/site_info.html:39
 msgid "Site Name"
 msgstr "サイト名"
