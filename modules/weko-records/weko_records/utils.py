@@ -292,9 +292,18 @@ def copy_field_test(dc, map, jrc, iid=None):
                                 "id: {0} , inputType: {1}  , path: {2}".format(_id, _inputType,val['path'])
                             )
                             if _inputType == "text":
-                                txt = get_values_from_dict(
-                                    dc, val["path"], val["path_type"], iid
-                                )
+                                if val.get("condition_path") and val.get(
+                                    "condition_value"):
+                                    txt = get_values_from_dict_with_condition(
+                                        dc, val["path"], val["path_type"],
+                                        val["condition_path"],
+                                        val["condition_value"], iid
+                                    )
+                                else:
+                                    txt = get_values_from_dict(
+                                        dc, val["path"], val["path_type"], iid
+                                    )
+
                                 if txt:
                                     jrc[k_v.get("id")] = txt
                             elif _inputType == "range":
@@ -516,6 +525,54 @@ def get_values_from_dict(dc, path, path_type, iid=None):
         ret = copy_values_json_path(dc, path)
 
     current_app.logger.debug("get_values_from_dict: {0}".format(ret))
+    return ret
+
+
+def get_values_from_dict_with_condition(dc, path, path_type, condition_path,
+                                        condition_value, iid=None):
+    """Extracts the values to be used in the advanced search according to the
+    conditions.
+
+    The difference between this function and get_values_from_dict() is that it
+    does not extract values unless the specified conditions are met.
+
+    The condition is judged by extracting the value specified in condition_path
+    for the metadata defined in dc, and then judging whether the value matches
+    the condition_value.
+
+    Args:
+        dc: Item metadata.
+        path: Path to the value to be extracted.
+        path_type: json or xml.
+        condition_path: Path to the value that is the extraction condition
+        condition_value: Condition-determining value.
+        iid: Oai id.
+    Return:
+        Value used in detail search.
+    """
+    ret = None
+
+    if path_type == "xml":
+        ret = copy_value_xml_path(dc, path, iid)
+    elif path_type == "json":
+        path_tmps = path.split('.')
+        cpath_tmps = condition_path.split('.')
+        common_path = None
+        for index, tmp in enumerate(path_tmps):
+            if len(cpath_tmps) > index and tmp == cpath_tmps[index]:
+                common_path = '.'.join(path_tmps[0:index + 1])
+        if common_path:
+            vpath = path.split(common_path + '.')[1]
+            cpath = condition_path.split(common_path + '.')[1]
+            ret = []
+            matches = parse(common_path).find(dc)
+            for match in matches:
+                cval = copy_value_json_path(match, cpath)
+                if condition_value == cval:
+                    ret += copy_values_json_path(match, vpath)
+            if not ret:
+                ret = None
+
     return ret
 
 
