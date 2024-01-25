@@ -28,6 +28,9 @@ WEKO_ADMIN_DEFAULT_AGGREGATION_MONTH = 2
 WEKO_ADMIN_DEFAULT_LIFETIME = 60
 """ Session time out setting, default 60 minutes """
 
+WEKO_ADMIN_IMPORT_PAGE_LIFETIME = 43200
+""" Session time out setting in import page, default 43200 seconds (12 hours) """
+
 WEKO_ADMIN_BASE_TEMPLATE = 'weko_admin/base.html'
 """Base template for weko-admin module."""
 
@@ -1152,7 +1155,7 @@ WEKO_ADMIN_REPOSITORY_ACCESS_LIST = [
     'location',
     'facet-search',
     'community',
-    'restricted_access'
+    # 'restricted_access'
 ] + WEKO_ADMIN_COMMUNITY_ACCESS_LIST
 """Classes Repository Administrator can access."""
 
@@ -1228,6 +1231,12 @@ WEKO_INDEX_TREE_STYLE_OPTIONS = {
 }
 
 WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS = {
+    "secret_URL_file_download": {
+        "secret_expiration_date": 30,
+        "secret_expiration_date_unlimited_chk": False,
+        "secret_download_limit": 10,
+        "secret_download_limit_unlimited_chk": False,
+    },
     "content_file_download": {
         "expiration_date": 30,
         "expiration_date_unlimited_chk": False,
@@ -1241,6 +1250,8 @@ WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS = {
     "terms_and_conditions": []
 }
 """Default restricted access settings."""
+
+WEKO_ADMIN_RESTRICTED_ACCESS_MAX_INTEGER = 9999999
 
 WEKO_ADMIN_ITEMS_PER_PAGE_USAGE_REPORT_REMINDER = 25
 """Default number of usage report activities results that display in one page."""

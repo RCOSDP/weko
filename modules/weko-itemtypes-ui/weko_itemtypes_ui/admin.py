@@ -22,6 +22,7 @@
 
 import sys
 import io
+import traceback
 
 from flask import abort, current_app, flash, json, jsonify, redirect, \
     request, session, url_for, make_response, send_file
@@ -117,6 +118,12 @@ class ItemTypeMetaDataView(BaseView):
     @item_type_permission.require(http_exception=403)
     def delete_itemtype(self, item_type_id=0):
         """Soft-delete an item type."""
+        from weko_workflow.utils import get_cache_data
+
+        if get_cache_data("import_start_time"):
+            flash(_('Item type cannot be deleted becase import is in progress.'), 'error')
+            return jsonify(code=-1)
+        
         if item_type_id > 0:
             record = ItemTypes.get_record(id_=item_type_id)
             if record is not None:
@@ -167,11 +174,20 @@ class ItemTypeMetaDataView(BaseView):
     @item_type_permission.require(http_exception=403)
     def register(self, item_type_id=0):
         """Register an item type."""
+        from weko_workflow.utils import get_cache_data
+
         if request.headers['Content-Type'] != 'application/json':
             current_app.logger.debug(request.headers['Content-Type'])
             return jsonify(msg=_('Header Error'))
 
+        if get_cache_data("import_start_time"):
+            response = jsonify(msg=_('Item type cannot be updated becase '
+                                     'import is in progress.'))
+            response.status_code = 400
+            return response
+
         data = request.get_json()
+        # current_app.logger.error("data:{}".format(data))
         try:
             table_row_map = data.get('table_row_map')
             json_schema = fix_json_schema(table_row_map.get('schema'))
@@ -194,6 +210,7 @@ class ItemTypeMetaDataView(BaseView):
             upgrade_version = current_app.config[
                 'WEKO_ITEMTYPES_UI_UPGRADE_VERSION_ENABLED'
             ]
+            
             if not upgrade_version:
                 Mapping.create(item_type_id=record.model.id,
                                mapping=table_row_map.get('mapping'))
@@ -212,7 +229,7 @@ class ItemTypeMetaDataView(BaseView):
                 user_id=current_user.get_id(),
                 notes=data.get('edit_notes', {})
             )
-
+            
             db.session.commit()
         except Exception as ex:
             db.session.rollback()
@@ -472,6 +489,8 @@ class ItemTypePropertiesView(BaseView):
     def index(self, property_id=0):
         """Renders an primitive property view."""
         lists = ItemTypeProps.get_records([])
+        
+        # remove default properties
         properties = lists.copy()
         defaults_property_ids = [prop.id for prop in lists if
                                  prop.schema.get(
@@ -650,8 +669,9 @@ class ItemTypeMappingView(BaseView):
                 jpcoar_lists[item.schema_name] = json.loads(item.xsd)
 
             item_type_mapping = Mapping.get_record(ItemTypeID)
-            
-           
+            if item_type_mapping is None:
+                current_app.logger.error("item_type_mapping is None.")
+                item_type_mapping = {}
 
             return self.render(
                 current_app.config['WEKO_ITEMTYPES_UI_ADMIN_MAPPING_TEMPLATE'],
@@ -667,6 +687,7 @@ class ItemTypeMappingView(BaseView):
                 lang_code=session.get('selected_language', 'en')  # Set default
             )
         except BaseException:
+            current_app.logger.error(traceback.format_exc())
             current_app.logger.error(
                 "Unexpected error: {}".format(sys.exc_info()))
         return abort(400)

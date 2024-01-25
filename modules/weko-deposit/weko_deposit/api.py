@@ -26,6 +26,7 @@ import uuid
 from collections import OrderedDict
 from datetime import datetime, timezone,date
 from typing import NoReturn, Union
+from tika import parser
 
 import redis
 from redis import sentinel
@@ -60,11 +61,11 @@ from sqlalchemy.orm.attributes import flag_modified
 from weko_admin.models import AdminSettings
 from weko_index_tree.api import Indexes
 from weko_records.api import FeedbackMailList, ItemLink, ItemsMetadata, \
-    ItemTypes, Mapping
+    ItemTypes
 from weko_records.models import ItemMetadata, ItemReference
 from weko_records.utils import get_all_items, get_attribute_value_all_items, \
     get_options_and_order_list, json_loader, remove_weko2_special_character, \
-    set_timestamp
+    set_timestamp,set_file_date
 from weko_schema_ui.models import PublishStatus
 from weko_redis.redis import RedisConnection
 from weko_user_profiles.models import UserProfile
@@ -160,9 +161,6 @@ class WekoIndexer(RecordIndexer):
                     version_type=self._version_type,
                     body=jrc)
 
-        # Only pass through pipeline if file exists
-        if 'content' in jrc and not skip_files:
-            body['pipeline'] = 'item-file-pipeline'
         if self.client.exists(**es_info):
             del body['version']
             del body['version_type']
@@ -673,12 +671,7 @@ class WekoDeposit(Deposit):
 
         """
         deposit = None
-        try:
-            deposit = self.publish_without_commit(pid, id_)
-            db.session.commit()
-        except SQLAlchemyError as ex:
-            current_app.logger.debug(ex)
-            db.session.rollback()
+        deposit = self.publish_without_commit(pid, id_)
         return deposit
 
     def publish_without_commit(self, pid=None, id_=None):
@@ -766,29 +759,25 @@ class WekoDeposit(Deposit):
                     'email': current_user.email
                 }
 
-        try:
-            if recid:
-                deposit = super(WekoDeposit, cls).create(
-                    data,
-                    id_=id_,
-                    recid=recid
-                )
-            else:
-                deposit = super(WekoDeposit, cls).create(data, id_=id_)
-
-            record_id = 0
-            if data.get('_deposit'):
-                record_id = str(data['_deposit']['id'])
-            parent_pid = PersistentIdentifier.create(
-                'parent',
-                'parent:{0}'.format(record_id),
-                object_type='rec',
-                object_uuid=deposit.id,
-                status=PIDStatus.REGISTERED
+        if recid:
+            deposit = super(WekoDeposit, cls).create(
+                data,
+                id_=id_,
+                recid=recid
             )
-            db.session.commit()
-        except BaseException as ex:
-            raise ex
+        else:
+            deposit = super(WekoDeposit, cls).create(data, id_=id_)
+
+        record_id = 0
+        if data.get('_deposit'):
+            record_id = str(data['_deposit']['id'])
+        parent_pid = PersistentIdentifier.create(
+            'parent',
+            'parent:{0}'.format(record_id),
+            object_type='rec',
+            object_uuid=deposit.id,
+            status=PIDStatus.REGISTERED
+        )
 
         RecordsBuckets.create(record=deposit.model, bucket=bucket)
 
@@ -968,6 +957,11 @@ class WekoDeposit(Deposit):
                     self.indexer.upload_metadata(self.jrc,
                                                  self.pid.object_uuid,
                                                  self.revision_id)
+                    feedback_mail_list = FeedbackMailList.get_mail_list_by_item_id(self.id)
+                    if feedback_mail_list:
+                        self.update_feedback_mail()
+                    else:
+                        self.remove_feedback_mail()
                 except TransportError as err:
                     err_passing_config = current_app.config.get(
                         'WEKO_DEPOSIT_ES_PARSING_ERROR_PROCESS_ENABLE')
@@ -1025,85 +1019,81 @@ class WekoDeposit(Deposit):
            AttributeError: 
         """
         deposit = None
-        try:
-            if not self.is_published():
-                raise PIDInvalidAction()
+        if not self.is_published():
+            raise PIDInvalidAction()
 
-            # Check that there is not a newer draft version for this record
-            # and this is the latest version
-            versioning = PIDVersioning(child=pid)
-            record = WekoDeposit.get_record(pid.object_uuid)
+        # Check that there is not a newer draft version for this record
+        # and this is the latest version
+        versioning = PIDVersioning(child=pid)
+        record = WekoDeposit.get_record(pid.object_uuid)
 
-            assert PIDStatus.REGISTERED == pid.status
-            if not record or not versioning.exists or versioning.draft_child:
-                return None
+        assert PIDStatus.REGISTERED == pid.status
+        if not record or not versioning.exists or versioning.draft_child:
+            return None
 
-            data = record.dumps()
-            owners = data['_deposit']['owners']
-            keys_to_remove = ('_deposit', 'doi', '_oai',
-                              '_files', '_buckets', '$schema')
-            for k in keys_to_remove:
-                data.pop(k, None)
+        data = record.dumps()
+        owners = data['_deposit']['owners']
+        keys_to_remove = ('_deposit', 'doi', '_oai',
+                        '_files', '_buckets', '$schema')
+        for k in keys_to_remove:
+            data.pop(k, None)
 
-            draft_id = '{0}.{1}'.format(
-                pid.pid_value,
-                0 if is_draft else get_latest_version_id(pid.pid_value))
+        draft_id = '{0}.{1}'.format(
+            pid.pid_value,
+            0 if is_draft else get_latest_version_id(pid.pid_value))
 
-            # NOTE: We call the superclass `create()` method, because
-            # we don't want a new empty bucket, but
-            # an unlocked snapshot of the old record's bucket.
-            deposit = super(
-                WekoDeposit,
-                self).create(data, recid=draft_id)
-            # Injecting owners is required in case of creating new
-            # version this outside of request context
+        # NOTE: We call the superclass `create()` method, because
+        # we don't want a new empty bucket, but
+        # an unlocked snapshot of the old record's bucket.
+        deposit = super(
+            WekoDeposit,
+            self).create(data, recid=draft_id)
+        # Injecting owners is required in case of creating new
+        # version this outside of request context
 
-            deposit['_deposit']['owners'] = owners
+        deposit['_deposit']['owners'] = owners
 
-            recid = PersistentIdentifier.get(
-                'recid', str(data['_deposit']['id']))
-            depid = PersistentIdentifier.get(
-                'depid', str(data['_deposit']['id']))
+        recid = PersistentIdentifier.get(
+            'recid', str(data['_deposit']['id']))
+        depid = PersistentIdentifier.get(
+            'depid', str(data['_deposit']['id']))
 
-            PIDVersioning(
-                parent=versioning.parent).insert_draft_child(
-                child=recid)
-            RecordDraft.link(recid, depid)
+        PIDVersioning(
+            parent=versioning.parent).insert_draft_child(
+            child=recid)
+        RecordDraft.link(recid, depid)
 
-            if is_draft:
-                with db.session.begin_nested():
-                    # Set relation type of draft record is 3: Draft
-                    parent_pid = PIDVersioning(child=recid).parent
-                    relation = PIDRelation.query. \
-                        filter_by(parent=parent_pid,
-                                  child=recid).one_or_none()
-                    relation.relation_type = 3
-                db.session.merge(relation)
+        if is_draft:
+            with db.session.begin_nested():
+                # Set relation type of draft record is 3: Draft
+                parent_pid = PIDVersioning(child=recid).parent
+                relation = PIDRelation.query. \
+                    filter_by(parent=parent_pid,
+                            child=recid).one_or_none()
+                relation.relation_type = 3
+            db.session.merge(relation)
 
-            snapshot = record.files.bucket. \
-                snapshot(lock=False)
-            snapshot.locked = False
-            deposit['_buckets'] = {'deposit': str(snapshot.id)}
-            RecordsBuckets.create(record=deposit.model,
-                                  bucket=snapshot)
+        snapshot = record.files.bucket. \
+            snapshot(lock=False)
+        snapshot.locked = False
+        deposit['_buckets'] = {'deposit': str(snapshot.id)}
+        RecordsBuckets.create(record=deposit.model,
+                            bucket=snapshot)
 
-            index = {'index': self.get('path', []),
-                     'actions': self.get('publish_status')}
-            if 'activity_info' in session:
-                del session['activity_info']
-            if is_draft:
-                from weko_workflow.utils import convert_record_to_item_metadata
-                item_metadata = convert_record_to_item_metadata(record)
-            else:
-                item_metadata = ItemsMetadata.get_record(
-                    pid.object_uuid).dumps()
-            item_metadata.pop('id', None)
-            args = [index, item_metadata]
-            deposit.update(*args)
-            deposit.commit()
-        except SQLAlchemyError as ex:
-            current_app.logger.debug(ex)
-            db.session.rollback()
+        index = {'index': self.get('path', []),
+                'actions': self.get('publish_status')}
+        if 'activity_info' in session:
+            del session['activity_info']
+        if is_draft:
+            from weko_workflow.utils import convert_record_to_item_metadata
+            item_metadata = convert_record_to_item_metadata(record)
+        else:
+            item_metadata = ItemsMetadata.get_record(
+                pid.object_uuid).dumps()
+        item_metadata.pop('id', None)
+        args = [index, item_metadata]
+        deposit.update(*args)
+        deposit.commit()
         return deposit
 
     def get_content_files(self):
@@ -1142,23 +1132,19 @@ class WekoDeposit(Deposit):
 
                             # upload file metadata to Elasticsearch
                             try:
-                                file_size_max = current_app.config[
-                                    'WEKO_MAX_FILE_SIZE_FOR_ES']
                                 mimetypes = current_app.config[
                                     'WEKO_MIMETYPE_WHITELIST_FOR_ES']
                                 content = lst.copy()
-                                file_content = ""
-                                if file.obj.file.size <= file_size_max and \
-                                        file.obj.mimetype in mimetypes:
-                                    ## invenio_files_rest.errors.StorageError
-                                    file_content = ""
+                                attachment = {}
+                                if file.obj.mimetype in mimetypes:
                                     try:
-                                        file_content = file.obj.file.read_file(lst)
-                                    except StorageError as se:
-                                        import traceback
-                                        current_app.logger.critical("StorageError: {}".format(se))
-                                        current_app.logger.critical(traceback.format_exc())
-                                content.update({"file": file_content})
+                                        reader = parser.from_file(file.obj.file.uri)
+                                        attachment["content"] = "".join(reader["content"].splitlines())
+                                    except FileNotFoundError as se:
+                                        current_app.logger.error("FileNotFoundError: {}".format(se))
+                                        current_app.logger.error("file.obj: {}".format(file.obj))
+
+                                content.update({"attachment": attachment})
                                 contents.append(content)
                             except Exception as e2:
                                 import traceback
@@ -1270,6 +1256,96 @@ class WekoDeposit(Deposit):
                     'attribute_name' in self[key]:
                 self.pop(key)
 
+    def record_data_from_act_temp(self):
+        def _delete_empty(data):
+            if isinstance(data, dict):
+                result = {}
+                flg = False
+                if len(data) == 0:
+                    return flg, result
+                else:
+                    for k, v in data.items():
+                        not_empty, dd = _delete_empty(v)
+                        if not_empty:
+                            flg = True
+                            result[k] = dd
+                    return flg, result
+            elif isinstance(data, list):
+                result = []
+                flg = False
+                if len(data) == 0:
+                    return flg, None
+                else:
+                    for d in data:
+                        not_empty, dd = _delete_empty(d)
+                        if not_empty:
+                            flg = True
+                            result.append(dd)
+                    return flg, result
+            else:
+                if data:
+                    return True, data
+                else:
+                    return False, None
+        
+        def _get_title_lang(itemtype_id,_data):
+            from weko_items_autofill.utils import get_title_pubdate_path
+            path = get_title_pubdate_path(itemtype_id).get("title")
+            lang = ""
+            title = ""
+            if "title_parent_key" in path and path["title_parent_key"] in _data:
+                temp_record = _data[path["title_parent_key"]]
+                if "title_value_lst_key" in path:
+                    for p in path["title_value_lst_key"]:
+                        if isinstance(temp_record, list) and len(temp_record)>0 \
+                            and p in temp_record[0]:
+                            title = temp_record[0][p]
+                        elif p in temp_record:
+                            title = temp_record[p]
+                if "title_lang_lst_key" in path:
+                    for p in path["title_lang_lst_key"]:
+                        if isinstance(temp_record, list) and len(temp_record)>0 \
+                            and p in temp_record[0]:
+                            lang = temp_record[0][p]
+                        elif p in temp_record:
+                            lang = temp_record[p]
+            return title, lang
+            
+        pid = PersistentIdentifier.query.filter_by(pid_type="recid", pid_value=self.get("recid")).one_or_none()
+        if pid:
+            item_id = pid.object_uuid
+            from weko_workflow.api import WorkActivity
+            activity = WorkActivity().get_workflow_activity_by_item_id(item_id)
+
+            if activity:
+                itemtype_id = activity.workflow.itemtype_id
+                schema = "/items/jsonschema/{}".format(itemtype_id)
+                temp_data = activity.temp_data
+                if temp_data:
+                    data = json.loads(temp_data).get("metainfo")
+                    title, lang = _get_title_lang(itemtype_id,data)
+                    rtn_data = {}
+                    deleted_items=[]
+                    for k, v in data.items():
+                        flg, child_data  = _delete_empty(v)
+                        if flg:
+                            rtn_data[k] = child_data
+                        else:
+                            deleted_items.append(k)
+                    # if activity.approval1 == None:
+                    #     deleted_items.append("approval1")
+                    # if activity.approval2 == None:
+                    #     deleted_items.append("approval2")
+                    rtn_data["deleted_items"] = deleted_items
+                    rtn_data["$schema"] = schema
+                    rtn_data["title"] = title if title else activity.title
+                    rtn_data["lang"] = lang
+
+                    return rtn_data
+        
+        return None
+
+        
     def convert_item_metadata(self, index_obj, data=None):
         """ 
 
@@ -1309,6 +1385,8 @@ class WekoDeposit(Deposit):
                     if not index_obj.get('is_save_path'):
                         datastore.delete(cache_key)
                     data = json.loads(data_str.decode('utf-8'))
+                if not data:
+                    data = self.record_data_from_act_temp()
         except BaseException:
             current_app.logger.error(
                 "Unexpected error: {}".format(sys.exc_info()))
@@ -1501,27 +1579,18 @@ class WekoDeposit(Deposit):
         if index_id:
             index_id = str(index_id)
         obj_ids = next((cls.indexer.get_pid_by_es_scroll(index_id)), [])
-        try:
-            for obj_uuid in obj_ids:
-                r = RecordMetadata.query.filter_by(id=obj_uuid).first()
-                if r.json['recid'].split('.')[0] in ignore_items:
-                    continue
-                try:
-                    r.json['path'].remove(index_id)
-                    flag_modified(r, 'json')
-                except BaseException as bex:
-                    current_app.logger.error(bex)
-                if r.json and not r.json['path']:
-                    from weko_records_ui.utils import soft_delete
-                    soft_delete(obj_uuid)
-                else:
-                    dep = WekoDeposit(r.json, r)
-                    dep.indexer.update_es_data(dep, update_revision=False)
-            db.session.commit()
-        except Exception as ex:
-            current_app.logger.error(ex)
-            db.session.rollback()
-            raise ex
+        for obj_uuid in obj_ids:
+            r = RecordMetadata.query.filter_by(id=obj_uuid).first()
+            if r.json['recid'].split('.')[0] in ignore_items:
+                continue
+            r.json['path'].remove(index_id)
+            flag_modified(r, 'json')
+            if r.json and not r.json['path']:
+                from weko_records_ui.utils import soft_delete
+                soft_delete(obj_uuid)
+            else:
+                dep = WekoDeposit(r.json, r)
+                dep.indexer.update_es_data(dep, update_revision=False)
 
     def update_pid_by_index_tree_id(self, path):
         """ 
@@ -1731,36 +1800,37 @@ class WekoDeposit(Deposit):
             # Get draft bucket's data
             sync_bucket = RecordsBuckets.query.filter_by(
                 record_id=self.id).first()
-            sync_bucket.bucket.locked = False
-            snapshot = Bucket.get(
-                _deposit.files.bucket.id).snapshot(lock=False)
-            bucket = Bucket.get(sync_bucket.bucket_id)
-            if keep_version:
-                self.clean_unuse_file_contents(item_id, bucket.objects,
-                                               snapshot.objects, is_import)
-            snapshot.locked = False
-            sync_bucket.bucket = snapshot
-            bucket.locked = False
+            if sync_bucket:
+                sync_bucket.bucket.locked = False
+                snapshot = Bucket.get(
+                    _deposit.files.bucket.id).snapshot(lock=False)
+                bucket = Bucket.get(sync_bucket.bucket_id)
+                if keep_version:
+                    self.clean_unuse_file_contents(item_id, bucket.objects,
+                                                snapshot.objects, is_import)
+                snapshot.locked = False
+                sync_bucket.bucket = snapshot
+                bucket.locked = False
 
-            if not RecordsBuckets.query.filter_by(
-                    bucket_id=bucket.id).all():
-                bucket.remove()
+                if not RecordsBuckets.query.filter_by(
+                        bucket_id=bucket.id).all():
+                    bucket.remove()
 
-            bucket = {
-                "_buckets": {
-                    "deposit": str(snapshot.id)
+                bucket = {
+                    "_buckets": {
+                        "deposit": str(snapshot.id)
+                    }
                 }
-            }
 
-            args = [index, item_metadata]
-            self.update(*args)
-            # Update '_buckets'
-            super(WekoDeposit, self).update(bucket)
-            self.commit()
-            # update records_metadata
-            flag_modified(self.model, 'json')
-            db.session.add(self.model)
-            db.session.add(sync_bucket)
+                args = [index, item_metadata]
+                self.update(*args)
+                # Update '_buckets'
+                super(WekoDeposit, self).update(bucket)
+                self.commit()
+                # update records_metadata
+                flag_modified(self.model, 'json')
+                db.session.add(self.model)
+                db.session.add(sync_bucket)
 
         return self.__class__(self.model.json, model=self.model)
 
@@ -1919,26 +1989,39 @@ class WekoRecord(Record):
         return ''
 
     @staticmethod
-    def __get_titles_key(item_type_mapping):
+    def __get_titles_key(item_type_mapping, meta_option, hide_list):
         """Get title keys in item type mapping.
 
         :param item_type_mapping: item type mapping.
+        :param meta_option: item type option
+        :param hide_list: hide item list of item type
         :return:
         """
         parent_key = None
         title_key = None
         language_key = None
-        for mapping_key in item_type_mapping:
-            property_data = item_type_mapping.get(mapping_key).get(
-                'jpcoar_mapping')
-            if (
-                isinstance(property_data, dict)
-                and property_data.get('title')
-            ):
-                title = property_data.get('title')
-                parent_key = mapping_key
-                title_key = title.get("@value")
-                language_key = title.get("@attributes", {}).get("xml:lang")
+        if item_type_mapping:
+            for mapping_key in item_type_mapping:
+                property_data = item_type_mapping.get(mapping_key).get(
+                    'jpcoar_mapping')
+                prop_hidden = meta_option.get(mapping_key, {}).get('option', {}).get('hidden', False)
+                if (
+                    isinstance(property_data, dict)
+                    and property_data.get('title')
+                    and not prop_hidden
+                ):
+                    title = property_data.get('title')
+                    parent_key = mapping_key
+                    title_key = title.get("@value")
+                    language_key = title.get("@attributes", {}).get("xml:lang")
+                    for h in hide_list:
+                        if parent_key in h and language_key in h:
+                            language_key = None
+                        if parent_key in h and title_key in h:
+                            title_key = None
+                            parent_key = None
+                    if parent_key and title_key and language_key:
+                        break
         return parent_key, title_key, language_key
 
     @property
@@ -1951,9 +2034,11 @@ class WekoRecord(Record):
             sqlalchemy.exc.OperationalError
             TypeError
         """
-        item_type_mapping = Mapping.get_record(self.get('item_type_id'))
+        from weko_items_ui.utils import get_options_and_order_list, get_hide_list_by_schema_form
+        meta_option, item_type_mapping = get_options_and_order_list(self.get('item_type_id'))
+        hide_list = get_hide_list_by_schema_form(self.get('item_type_id'))
         parent_key, title_key, language_key = self.__get_titles_key(
-            item_type_mapping)
+            item_type_mapping, meta_option, hide_list)
         title_metadata = self.get(parent_key)
         titles = []
         if title_metadata:
@@ -1980,12 +2065,14 @@ class WekoRecord(Record):
             AttributeError: 'NoneType' object has no attribute 'model'
             KeyError: 'WEKO_PERMISSION_SUPER_ROLE_USER'
             KeyError: 'WEKO_PERMISSION_ROLE_COMMUNITY'
-        """        
+        """
+        from weko_items_ui.utils import get_hide_list_by_schema_form, del_hide_sub_item
         items = []
         settings = AdminSettings.get('items_display_settings')
         hide_email_flag = not settings.items_display_email
         solst, meta_options = get_options_and_order_list(
             self.get('item_type_id'))
+        hide_list = get_hide_list_by_schema_form(self.get('item_type_id'))
         item_type = ItemTypes.get_by_id(self.get('item_type_id'))
         meta_list = item_type.render.get('meta_list', []) if item_type else {}
 
@@ -2005,6 +2092,7 @@ class WekoRecord(Record):
             if mlt is not None:
                 mlt = copy.deepcopy(mlt)
 
+                del_hide_sub_item(key.replace('[]', '').split('.')[0], mlt, hide_list)
                 self.__remove_special_character_of_weko2(mlt)
                 nval = dict()
                 nval['attribute_name'] = val.get('attribute_name')
@@ -2082,8 +2170,9 @@ class WekoRecord(Record):
             option = meta_options.get(key, {}).get('option')
             if not val or not option:
                 continue
-            # Just get data of 'File' and 'Pubdate'.
-            if val.get('attribute_type') != "file" and key != 'pubdate':
+            
+            # Just get data of 'File'
+            if val.get('attribute_type') != "file":
                 continue
             # Check option hide.
             if option.get("hidden"):
@@ -2113,9 +2202,11 @@ class WekoRecord(Record):
                     'attribute_name')
                 nval['attribute_type'] = val.get('attribute_type')
                 # Format structure to display.
-                nval['attribute_value_mlt'] = \
-                    get_attribute_value_all_items(key, file_metadata,
+                attr_mlt = get_attribute_value_all_items(key, file_metadata,
                                                   copy.deepcopy(solst))
+                set_file_date(key, copy.deepcopy(solst), file_metadata, attr_mlt)
+                
+                nval['attribute_value_mlt'] = attr_mlt
                 items.append(nval)
             else:
                 # Processing get pubdate.
@@ -2238,17 +2329,12 @@ class WekoRecord(Record):
 
         :return: .
         """
-        # Get current date.
-        today = datetime.now().date()
+        from weko_records_ui.utils import is_future
         # Get 'open_date' and convert to datetime.date.
         date_value = self.get_open_date_value(file_metadata)
-        _format = '%Y-%m-%d'
         if date_value is None:
             date_value = str(date.max)
-        dt = datetime.strptime(date_value, _format)
-        # Compare open_date with current date.
-        is_future = dt.date() > today
-        return is_future
+        return is_future(date_value)
 
     @property
     def pid_doi(self):
@@ -2324,8 +2410,7 @@ class WekoRecord(Record):
                          sele_id=item.reference_type)
             relation_data.append(_item)
 
-        if relation_data:
-            item_link.update(relation_data)
+        item_link.update(relation_data)
 
     def get_file_data(self):
         """Get file data."""
@@ -2416,6 +2501,8 @@ class _FormatSysCreator:
         elif parent_key == WEKO_DEPOSIT_SYS_CREATOR_KEY['alternative_names']:
             name_key = WEKO_DEPOSIT_SYS_CREATOR_KEY['alternative_name']
             lang_key = WEKO_DEPOSIT_SYS_CREATOR_KEY['alternative_lang']
+        elif parent_key == WEKO_DEPOSIT_SYS_CREATOR_KEY['creator_type']: #? ADDED 20231017 CREATOR TYPE BUG FIX
+            return
         if parent_key in self.creator:
             lst_value = self.creator[parent_key]
             if len(lst_value) > 0:
@@ -2492,8 +2579,9 @@ class _FormatSysCreator:
         if isinstance(creators, dict):
             creator_list_temp = []
             for key, value in creators.items():
-                if (key in [WEKO_DEPOSIT_SYS_CREATOR_KEY['identifiers'],
-                            WEKO_DEPOSIT_SYS_CREATOR_KEY['creator_mails']]):
+                if (key in [WEKO_DEPOSIT_SYS_CREATOR_KEY['identifiers'], 
+                            WEKO_DEPOSIT_SYS_CREATOR_KEY['creator_mails'],
+                            WEKO_DEPOSIT_SYS_CREATOR_KEY['creator_type']]): #? ADDED 20231017 CREATOR TYPE BUG FIX
                     continue
                 if key == WEKO_DEPOSIT_SYS_CREATOR_KEY['creatorAffiliations']:
                     format_affiliation(value)
@@ -2540,12 +2628,18 @@ class _FormatSysCreator:
         """
         creator_lst = []
         rtn_value = {}
+        creator_type = WEKO_DEPOSIT_SYS_CREATOR_KEY['creator_type'] #? ADDED 20231017 CREATOR TYPE BUG FIX
         creator_names = WEKO_DEPOSIT_SYS_CREATOR_KEY['creator_names']
         family_names = WEKO_DEPOSIT_SYS_CREATOR_KEY['family_names']
         given_names = WEKO_DEPOSIT_SYS_CREATOR_KEY['given_names']
         alternative_names = WEKO_DEPOSIT_SYS_CREATOR_KEY['alternative_names']
-        list_parent_key = [creator_names, family_names, given_names,
-                           alternative_names]
+        list_parent_key = [
+            creator_type, #? ADDED 20231017 CREATOR TYPE BUG FIX
+            creator_names,
+            family_names,
+            given_names,
+            alternative_names
+        ]
 
         # Get default creator name to show on detail screen.
         self._get_default_creator_name(list_parent_key,
@@ -2797,7 +2891,7 @@ class _FormatSysBibliographicInformation:
         :return: title_data, magazine, length
         """
         title_data = []
-        language = 'ja'
+        language = ''
         if bibliographic.get('bibliographic_titles'):
             if is_get_list:
                 current_lang = current_i18n.language
@@ -2809,6 +2903,8 @@ class _FormatSysBibliographicInformation:
                 title_data = self._get_source_title(
                     bibliographic.get('bibliographic_titles'))
         if is_get_list:
+            if not language:
+                language = current_lang
             bibliographic_info, length = self._get_bibliographic_show_list(
                 bibliographic, language)
         else:

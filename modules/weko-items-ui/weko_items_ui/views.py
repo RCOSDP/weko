@@ -34,6 +34,7 @@ from flask import Blueprint, abort, current_app, flash, jsonify, redirect, \
 from flask_babelex import gettext as _
 from flask_login import login_required
 from flask_security import current_user
+from flask_wtf import FlaskForm
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_pidrelations.contrib.versioning import PIDVersioning
@@ -241,7 +242,9 @@ def iframe_save_model():
             save_title(activity_id, data)
             activity = WorkActivity()
             activity.upt_activity_metadata(activity_id, json.dumps(data))
+            db.session.commit()
     except Exception as ex:
+        db.session.rollback()
         current_app.logger.exception("{}".format(ex))
         return jsonify(code=1, msg='Model save error')
     return jsonify(code=0, msg='Model save success at {} (utc)'.format(
@@ -470,11 +473,12 @@ def iframe_items_index(pid_value='0'):
 
             workflow = WorkFlow()
             workflow_detail = workflow.get_workflow_by_id(
-            cur_activity.workflow_id)
+                cur_activity.workflow_id)
             
             if workflow_detail and workflow_detail.index_tree_id:
                 index_id = get_index_id(cur_activity.activity_id)
                 update_index_tree_for_record(pid_value, index_id)
+                db.session.commit()
                 return redirect(url_for('weko_workflow.iframe_success'))
 
             # Get the design for widget rendering
@@ -518,6 +522,8 @@ def iframe_items_index(pid_value='0'):
             # current_app.logger.debug("session['itemlogin_res_check']: {}".format(session['itemlogin_res_check']))
             # current_app.logger.debug("session['itemlogin_pid']: {}".format(session['itemlogin_pid']))
             
+            form = FlaskForm(request.form)
+            
             return render_template(
                 'weko_items_ui/iframe/item_index.html',
                 page=page,
@@ -536,6 +542,7 @@ def iframe_items_index(pid_value='0'):
                 community_id=community_id,
                 files=files,
                 files_thumbnail=files_thumbnail,
+                form=form,
                 **ctx
             )
 
@@ -566,20 +573,25 @@ def iframe_items_index(pid_value='0'):
             """update item data info."""
             sessionstore.put(
                 'item_index_{}'.format(pid_value),
-                json.dumps(data),
+                bytes(json.dumps(data),"utf-8"),
                 ttl_secs=300)
         return jsonify(data)
     except KeyError as ex:
+        db.session.rollback()
         current_app.logger.error('KeyError: {}'.format(ex))
     except AttributeError as ex:
+        db.session.rollback()
         current_app.logger.error('AttributeError: {}'.format(ex))
         import traceback
         current_app.logger.error(traceback.format_exc())
     except BadRequest as ex:
+        db.session.rollback()
         current_app.logger.error('BadRequest: {}'.format(ex))
     except StatementError as ex:
+        db.session.rollback()
         current_app.logger.error('BadRequest: {}'.format(ex))
     except BaseException:
+        db.session.rollback()
         current_app.logger.error(
             'Unexpected error: {}'.format(sys.exc_info()[0]))
     return abort(400)
@@ -862,6 +874,20 @@ def prepare_edit_item():
     pid_value = post_activity.get('pid_value')
     community = getargs.get('community', None)
 
+    # Cache Storage
+    redis_connection = RedisConnection()
+    sessionstorage = redis_connection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
+    if sessionstorage.redis.exists("pid_{}_will_be_edit".format(pid_value)):
+        return jsonify(
+            code=err_code,
+            msg=_('This Item is being edited.')
+        )
+    else:
+        sessionstorage.put(
+            "pid_{}_will_be_edit".format(pid_value),
+            str(current_user.get_id()).encode('utf-8'),
+            ttl_secs=3)
+
     if pid_value:
         record_class = import_string('weko_deposit.api:WekoDeposit')
         resolver = Resolver(pid_type='recid',
@@ -923,6 +949,7 @@ def prepare_edit_item():
                     activity_id=is_begin_edit
                 )
 
+        if post_workflow:
             post_activity['workflow_id'] = post_workflow.workflow_id
             post_activity['flow_id'] = post_workflow.flow_id
         else:
@@ -953,6 +980,8 @@ def prepare_edit_item():
                 msg=_('An error has occurred.')
             )
         except BaseException as ex:
+            import traceback
+            current_app.logger.error(traceback.format_exc())
             current_app.logger.error('Unexpected error: {}'.format(ex))
             db.session.rollback()
             return jsonify(
@@ -1139,6 +1168,8 @@ def validate():
         request_data.get('item_id'),
         request_data.get('data')
     )
+
+        
     return jsonify(result)
 
 
@@ -1150,6 +1181,18 @@ def check_validation_error_msg(activity_id):
 
     :param activity_id: The identify of Activity.
     :return: Show error message
+    {
+    "code": 1,
+    "error_list": {
+        "either": [],
+        "either_key": [],
+        "mapping": [],
+        "pattern": [],
+        "required": [],
+        "required_key": []
+    },
+    "msg": []
+    }
     """
 
     redis_connection = RedisConnection()

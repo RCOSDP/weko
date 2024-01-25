@@ -5,16 +5,17 @@
         ]);
 
         function ItemController($scope, $modal, $http, $window) {
-            $scope.openConfirm = function(message, url, rdt, id) {
+            $scope.openConfirm = function(type, url, rdt, id) {
                 var confirmModalScope = $scope.$new();
                 confirmModalScope.modalInstance = $modal({
-                    templateUrl: "confirm-modal.html",
+                    //templateUrl: "confirm-modal.html",
+                    template: '<div class="modal" tabindex="-1" role="dialog"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h3 class="modal-title"><span class="glyphicon glyphicon-info-sign"></span>{{ confirm_title }}</h3></div><div class="modal-body"><p>{{ check_msg }}</p></div><div class="modal-footer"><button class="btn btn-primary ok-button" ng-click="ok()">{{ ok_label }}</button><button class="btn btn-info cancel-button" ng-click="cancel()">{{ cancel_label }}</button></div></div></div></div>',
                     controller: 'ConfirmController',
                     scope: confirmModalScope,
                     show: false,
                     resolve: {
-                        msg: function() {
-                            return message;
+                        type: function() {
+                            return type;
                         },
                         url: function() {
                             return url;
@@ -24,6 +25,15 @@
                         },
                         id: function() {
                             return id;
+                        },
+                        label_title: function() {
+                            return {
+                                confirm_title: document.getElementById('confirm_title').textContent,
+                                del_ver_msg: document.getElementById('del_ver_msg').textContent,
+                                del_msg: document.getElementById('del_msg').textContent,
+                                ok_label: document.getElementById('ok_label').textContent,
+                                cancel_label: document.getElementById('cancel_label').textContent 
+                            }
                         }
                     }
                 });
@@ -265,10 +275,21 @@
         ];
 
         //function ConfirmController($scope, $modalInstance, msg) {
-        function ConfirmController($scope, $http, $window, msg, url, rdt, id) {
-            $scope.message = msg;
-
+        function ConfirmController($scope, $http, $window, type, url, rdt, id, label_title) {
+            if (type === "del_ver") {
+                $scope.check_msg = label_title.del_ver_msg;
+            } else {
+                $scope.check_msg = label_title.del_msg;
+            }
+            $scope.confirm_title = label_title.confirm_title;
+            $scope.ok_label = label_title.ok_label;
+            $scope.cancel_label = label_title.cancel_label;
             $scope.ok = function() {
+                $('[role="alert"]').hide();
+                $('[role="msg"]').css('display', 'inline-block');
+                $('#btn_edit').attr("disabled", true);
+                $('#btn_delete').attr("disabled", true);
+                $('#btn_ver_delete').attr("disabled", true);
                 $scope.modalInstance.hide();
                 $('body').removeClass('modal-open');
                 $http({
@@ -276,26 +297,53 @@
                     url: "/api/items/check_record_doi/" + id,
                 }).then(function successCallback(response) {
                     if (0 == response.data.code) {
+                        $('[role="msg"]').hide();
                         $('[role="alert"]').css('display', 'inline-block');
                         $('[role="alert"]').text($("#delete_message").val());
+                        $('#btn_edit').removeAttr("disabled");
+                        $('#btn_delete').removeAttr("disabled");
+                        $('#btn_ver_delete').removeAttr("disabled");
                       } else {
                         $http.post(url).then(
                             function(response) {
+                                $('[role="msg"]').hide();
                                 if (response.data.code === -1 && response.data.is_locked) {
+                                    $('#btn_edit').removeAttr("disabled");
+                                    $('#btn_delete').removeAttr("disabled");
+                                    $('#btn_ver_delete').removeAttr("disabled");
                                     $('[role="alert"]').css('display', 'inline-block');
-                                    $('[role="alert"]').text(response.data.msg);
+                                    if (response.data.msg) {
+                                        $('[role="alert"]').text(response.data.msg);
+                                    } else {
+                                        $('[role="alert"]').text("INTERNAL SERVER ERROR");
+                                    }
                                 } else {
                                     // success callback
                                     $window.location.href = rdt;
                                 }
                             },
                             function(response) {
+                                $('[role="msg"]').hide();
+                                $('#btn_edit').removeAttr("disabled");
+                                $('#btn_delete').removeAttr("disabled");
+                                $('#btn_ver_delete').removeAttr("disabled");
+                                $('[role="alert"]').css('display', 'inline-block');
+                                if (response.data.msg) {
+                                    $('[role="alert"]').text(response.data.msg);
+                                } else {
+                                    $('[role="alert"]').text("INTERNAL SERVER ERROR");
+                                }
                                 // failure call back
                                 console.log(response);
                             }
                         );
                       };
                 }, function errorCallback(response) {
+                    $('#btn_edit').removeAttr("disabled");
+                    $('#btn_delete').removeAttr("disabled");
+                    $('#btn_ver_delete').removeAttr("disabled");
+                    $('[role="msg"]').hide();
+                    $('[role="alert"]').text('Check DOI fail.');
                     console.log('Error api /api/items/check_public_status');
                 });
             };

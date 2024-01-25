@@ -240,6 +240,35 @@ require([
         return data;
     }
 
+    function daysInMonth(month, year){
+        switch(month){
+            case 1:
+                return (year % 4 == 0 && year % 100) || year % 400 == 0 ? 29 : 28;
+            case 8: case 3: case 5: case 10:
+                return 30
+            default:
+                return 31
+        }
+    }
+
+    function validDate(elem){
+        const date_pattern = /([0-9]{4})(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])/
+        if (elem.validity.patternMismatch){
+            return true;
+        }else{
+            const dates = elem.value.match(date_pattern)
+            if (dates){
+                const year = parseInt(dates[1])
+                const month = parseInt(dates[2],10) - 1
+                const day = parseInt(dates[3])
+                return day > daysInMonth(month, year);
+            }else{
+                return false
+            }
+        }
+    }
+
+
     $(document).ready(function () {
 
         ArrangeSearch();
@@ -317,7 +346,7 @@ require([
             // 13はエンターキー
             if (event.which === 13) {
                 // サブミット時に無効な値が入力されていたら値をクリアする
-                if (elem.validity.patternMismatch) {
+                if (validDate(elem)){
                     elem.value = '';
                 } else {
                     $('#' + this.id).removeClass('invalid-date');
@@ -325,7 +354,7 @@ require([
                     invalidDateNoticeEl.addClass('hidden-invalid-date-notice');
                 }
             } else {
-                if (elem.validity.patternMismatch) {
+                if (validDate(elem)){
                     $('#' + this.id).addClass('invalid-date');
                     var invalidDateNoticeEl = $(this).parent().next();
                     invalidDateNoticeEl.removeClass('hidden-invalid-date-notice');

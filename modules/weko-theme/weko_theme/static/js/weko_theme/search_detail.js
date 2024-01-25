@@ -203,67 +203,76 @@
                     }
 
                     if (item.key_value.inputType == "dateRange") {
+                        var pattern_date = /^(?:[0-9]{4}|[0-9]{4}(0[1-9]|1[0-2])|[0-9]{4}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1]))$/
                         var inputValFrom = item.key_value.inputVal_from;
                         var inputValTo = item.key_value.inputVal_to;
+                        
+                        if (pattern_date.test(inputValFrom)){
+                            switch (inputValFrom.length) {
+                                // YYYY
+                                case 4:
+                                    inputValFrom = inputValFrom + '01' + '01';
+                                    break;
+                                // YYYYMM
+                                case 6:
+                                    inputValFrom = inputValFrom + '01';
+                                    break;
+                                // YYYYMMDD
+                                case 8:
+                                    var y = inputValFrom.substring(0, 4);
+                                    var m = inputValFrom.substring(4, 6);
+                                    var d = inputValFrom.substring(6, 8);
+                                    var date = new Date(y + '-' + m + '-' + d);
 
-                        switch (inputValFrom.length) {
-                            // YYYY
-                            case 4:
-                                inputValFrom = inputValFrom + '01' + '01';
-                                break;
-                            // YYYYMM
-                            case 6:
-                                inputValFrom = inputValFrom + '01';
-                                break;
-                            // YYYYMMDD
-                            case 8:
-                                var y = inputValFrom.substring(0, 4);
-                                var m = inputValFrom.substring(4, 6);
-                                var d = inputValFrom.substring(6, 8);
-                                var date = new Date(y + '-' + m + '-' + d);
+                                    // Fix invalid date to the first day of the month
+                                    if (!(date instanceof Date) || isNaN(date) || date.getDate() != Number(d)) {
+                                        var inputValFrom = y + m + '01';
+                                    }
 
-                                // Fix invalid date to the first day of the month
-                                if (!(date instanceof Date) || isNaN(date)) {
-                                    var inputValFrom = y + m + '01';
-                                }
-
-                                break;
-                            default:
-                                inputValFrom = '';
+                                    break;
+                                default:
+                                    inputValFrom = '';
+                            }
+                        }else{
+                            inputValFrom = '';
                         }
 
-                        switch (inputValTo.length) {
-                            // YYYY
-                            case 4:
-                                inputValTo = inputValTo + '12' + '31';
-                                break;
-                            // YYYYMM
-                            case 6:
-                                var y = inputValTo.substring(0, 4);
-                                var m = inputValTo.substring(4, 6);
-                                var d =new Date(Number(y), Number(m), 0).getDate();
-                                inputValTo = inputValTo + String(d).padStart(2, '0');
-                                break;
-                            //YYYYMMDD
-                            case 8:
-                                var y = inputValTo.substring(0, 4);
-                                var m = inputValTo.substring(4, 6);
-                                var d = inputValTo.substring(6, 8);
-                                var date = new Date(y + '-' + m + '-' + d);
-                                if (date instanceof Date && !isNaN(date)) {
-                                    inputVal = String(date.getFullYear()).padStart(4, '0');
-                                               + String(date.getMonth() + 1).padStart(2, '0');
-                                               + String(date.getDate()).padStart(2, '0');
+                        if (pattern_date.test(inputValTo)){
+                            switch (inputValTo.length) {
+                                // YYYY
+                                case 4:
+                                    inputValTo = inputValTo + '12' + '31';
+                                    break;
+                                // YYYYMM
+                                case 6:
+                                    var y = inputValTo.substring(0, 4);
+                                    var m = inputValTo.substring(4, 6);
+                                    var d =new Date(Number(y), Number(m), 0).getDate();
+                                    inputValTo = inputValTo + String(d).padStart(2, '0');
+                                    break;
+                                //YYYYMMDD
+                                case 8:
+                                    var y = inputValTo.substring(0, 4);
+                                    var m = inputValTo.substring(4, 6);
+                                    var d = inputValTo.substring(6, 8);
+                                    var date = new Date(y + '-' + m + '-' + d);
+                                    if (date instanceof Date && !isNaN(date) && date.getDate()==Number(d)) {
+                                        inputVal = String(date.getFullYear()).padStart(4, '0');
+                                                   + String(date.getMonth() + 1).padStart(2, '0');
+                                                   + String(date.getDate()).padStart(2, '0');
 
-                                // Fix invalid date to the last day of the month
-                                } else {
-                                    var validDay = new Date(Number(y), Number(m), 0).getDate();
-                                    inputValTo = y + m + String(validDay).padStart(2, '0');
-                                }
+                                    // Fix invalid date to the last day of the month
+                                    } else {
+                                        var validDay = new Date(Number(y), Number(m), 0).getDate();
+                                        inputValTo = y + m + String(validDay).padStart(2, '0');
+                                    }
 
-                                break;
-                            default:
-                                inputValTo = '';
+                                    break;
+                                default:
+                                    inputValTo = '';
+                            }
+                        }else{
+                            inputValTo = '';
                         }
 
                         query_str = query_str + "&" + item.key_value.id + "_from=" + inputValFrom + "&" +
@@ -416,11 +425,73 @@
                         obj_of_condition.selected_key = search_key;
                         obj_of_condition.key_options = $scope.detail_search_key;
                         obj_of_condition.key_value = angular.copy(db_data[$scope.detail_search_key[sub_default_key].inx]);
+                        if (db_data[$scope.detail_search_key[sub_default_key].inx].inputType == 'checkbox_list'){
+                            if (db_data[$scope.detail_search_key[sub_default_key].inx].check_val.length>$scope.load_delimiter){
+                                obj_of_condition.key_value.limit=$scope.load_delimiter;
+                            }else{
+                                obj_of_condition.key_value.limit=db_data[$scope.detail_search_key[sub_default_key].inx].check_val.length;
+                            }
+                        }
                         break;
                     }
                 }
 
                 return obj_of_condition;
+            }
+
+            $scope.daysInMonth = function (month, year){
+                switch(month){
+                    case 1:
+                        return (year % 4 == 0 && year % 100) || year % 400 == 0 ? 29 : 28;
+                    case 8: case 3: case 5: case 10:
+                        return 30
+                    default:
+                        return 31
+                }
+            }
+        
+            $scope.validDate = function(elem){
+                const date_pattern = /([0-9]{4})(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])/
+                if (elem.validity.patternMismatch){
+                    return true;
+                }else{
+                    const dates = elem.value.match(date_pattern)
+                    if (dates){
+                        const year = parseInt(dates[1])
+                        const month = parseInt(dates[2],10) - 1
+                        const day = parseInt(dates[3])
+                        return day > $scope.daysInMonth(month, year);
+                    }else{
+                        return false
+                    }
+                }
+            }
+            $scope.validateDate = function (event) {
+                console.log("called")
+                console.log(event)
+                let target = event.target
+                var elem = document.getElementById(target.id);
+                // 13はエンターキー
+                if (event.which === 13) {
+                    // サブミット時に無効な値が入力されていたら値をクリアする
+                    if ($scope.validDate(elem)){
+                        elem.value = '';
+                    } else {
+                        $('#' + target.id).removeClass('invalid-date');
+                        var invalidDateNoticeEl = $(target).parent().next();
+                        invalidDateNoticeEl.addClass('hidden-invalid-date-notice');
+                    }
+                } else {
+                if ($scope.validDate(elem)){
+                    $('#' + target.id).addClass('invalid-date');
+                    var invalidDateNoticeEl = $(target).parent().next();
+                    invalidDateNoticeEl.removeClass('hidden-invalid-date-notice');
+                } else {
+                    $('#' + target.id).removeClass('invalid-date');
+                    var invalidDateNoticeEl = $(target).parent().next();
+                    invalidDateNoticeEl.addClass('hidden-invalid-date-notice');
+                }
+            }
             }
 
             // $scope.inputDataOnEnter = function () {

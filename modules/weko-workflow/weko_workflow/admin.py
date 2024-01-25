@@ -25,6 +25,7 @@ import uuid
 
 from flask import abort, current_app, jsonify, request, url_for
 from flask_admin import BaseView, expose
+from flask_login import current_user
 from flask_babelex import gettext as _
 from invenio_accounts.models import Role, User
 from invenio_db import db
@@ -83,6 +84,10 @@ class FlowSettingView(BaseView):
         workflow = Flow()
         flow = workflow.get_flow_detail(flow_id)
         specified_properties = self.get_specified_properties()
+
+        if not self._check_auth(flow_id) :
+            abort(403)
+
         return self.render(
             'weko_workflow/admin/flow_detail.html',
             flow_id=flow_id,
@@ -120,9 +125,16 @@ class FlowSettingView(BaseView):
         workflow = Flow()
         try:
             workflow.upt_flow(flow_id, post_data)
+            db.session.commit()
         except ValueError as ex:
+            db.session.rollback()
             response = jsonify(msg=str(ex))
             response.status_code = 400
+            return response
+        except Exception as ex:
+            db.session.rollback()
+            response = jsonify(msg=str(ex))
+            response.status_code = 500
             return response
 
         return jsonify(code=0, msg=_('Updated flow successfully.'))
@@ -130,15 +142,24 @@ class FlowSettingView(BaseView):
     @expose('/<string:flow_id>', methods=['POST'])
     def new_flow(self, flow_id='0'):
         if flow_id != '0':
+            if not self._check_auth(flow_id) :
+                abort(403)
             return self.update_flow(flow_id)
 
         post_data = request.get_json()
         workflow = Flow()
         try:
             flow = workflow.create_flow(post_data)
+            db.session.commit()
         except ValueError as ex:
+            db.session.rollback()
             response = jsonify(msg=str(ex))
             response.status_code = 400
+            return response
+        except Exception as ex:
+            db.session.rollback()
+            response = jsonify(msg=str(ex))
+            response.status_code = 500
             return response
 
         redirect_url = url_for('flowsetting.flow_detail', flow_id=flow.flow_id)
@@ -150,6 +171,9 @@ class FlowSettingView(BaseView):
         if '0' == flow_id:
             return jsonify(code=500, msg='No data to delete.',
                            data={'redirect': url_for('flowsetting.index')})
+        
+        if not self._check_auth(flow_id) :
+            abort(403)
 
         code = 0
         msg = ''
@@ -187,21 +211,51 @@ class FlowSettingView(BaseView):
     @expose('/action/<string:flow_id>', methods=['POST'])
     def upt_flow_action(self, flow_id=0):
         """Update FlowAction Info."""
-        actions = request.get_json()
-        workflow = Flow()
-        workflow.upt_flow_action(flow_id, actions)
-        flow = workflow.get_flow_detail(flow_id)
-        actions = []
-        for action in flow.flow_actions:
-            actions.append({
-                'id': action.id,
-                'action_order': action.action_order,
-            })
+        try:
+            actions = request.get_json()
+            workflow = Flow()
+            workflow.upt_flow_action(flow_id, actions)
+            flow = workflow.get_flow_detail(flow_id)
+            actions = []
+            for action in flow.flow_actions:
+                actions.append({
+                    'id': action.id,
+                    'action_order': action.action_order,
+                })
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(e)
+            return jsonify(
+                code=400,
+                actions=actions), 400
         return jsonify(
             code=0,
             msg=_('Updated flow action successfully'),
             actions=actions)
 
+    @staticmethod
+    def _check_auth(flow_id:str ):
+        """  
+        if the flow is used in open_restricted workflow , 
+        the flow can Update by System Administrator.
+
+        Args FlowDefine
+        """
+        if flow_id == '0':
+            return True
+
+        flow = Flow().get_flow_detail(flow_id)
+        is_sysadmin = False
+        for r in current_user.roles:
+            if r.name in current_app.config['WEKO_SYS_USER']:
+                is_sysadmin =True
+                break
+        if not is_sysadmin :
+            wfs:list = WorkFlow().get_workflow_by_flow_id(flow.id)
+            if 0 < len(list(filter(lambda wf : wf.open_restricted ,wfs ))):
+                return False
+        return True
 
 class WorkFlowSettingView(BaseView):
     MULTI_LANGUAGE = {
@@ -271,6 +325,13 @@ class WorkFlowSettingView(BaseView):
         hide_label = self.get_language_workflows("hide")
         display_hide = self.get_language_workflows("display_hide")
 
+        # the workflow that open_restricted is true can update by system administrator only
+        is_sysadmin = False
+        for r in current_user.roles:
+            if r.name in current_app.config['WEKO_SYS_USER']:
+                is_sysadmin =True
+                break
+
         if '0' == workflow_id:
             """Create new workflow"""
             return self.render(
@@ -285,6 +346,7 @@ class WorkFlowSettingView(BaseView):
                 display_label=display_label,
                 hide_label=hide_label,
                 display_hide_label=display_hide,
+                is_sysadmin=is_sysadmin,
             )
 
         """Update the workflow info"""
@@ -299,6 +361,9 @@ class WorkFlowSettingView(BaseView):
         else:
             display = role
             hide = []
+        
+        if workflows.open_restricted and not is_sysadmin:
+            abort(403)
 
         return self.render(
             'weko_workflow/admin/workflow_detail.html',
@@ -311,7 +376,8 @@ class WorkFlowSettingView(BaseView):
             display_list=display,
             display_label=display_label,
             hide_label=hide_label,
-            display_hide_label=display_hide
+            display_hide_label=display_hide,
+            is_sysadmin=is_sysadmin
         )
 
     @expose('/<string:workflow_id>', methods=['POST', 'PUT'])
@@ -328,27 +394,33 @@ class WorkFlowSettingView(BaseView):
             flow_id=json_data.get('flow_id', 0),
             index_tree_id=json_data.get('index_id'),
             location_id=json_data.get('location_id'),
-            open_restricted=json_data.get('open_restricted'),
+            open_restricted=json_data.get('open_restricted', False),
             is_gakuninrdm=json_data.get('is_gakuninrdm')
         )
         workflow = WorkFlow()
-        if '0' == workflow_id:
-            """Create new workflow"""
-            form_workflow.update(
-                flows_id=uuid.uuid4()
-            )
-            workflow.create_workflow(form_workflow)
-            workflow_detail = workflow.get_workflow_by_flows_id(
-                form_workflow.get('flows_id'))
-            self.save_workflow_role(workflow_detail.id, list_hide)
-        else:
-            """Update the workflow info"""
-            form_workflow.update(
-                id=json_data.get('id', None),
-                flows_id=workflow_id
-            )
-            workflow.upt_workflow(form_workflow)
-            self.save_workflow_role(form_workflow.get('id'), list_hide)
+        try:
+            if '0' == workflow_id:
+                """Create new workflow"""
+                form_workflow.update(
+                    flows_id=uuid.uuid4()
+                )
+                workflow.create_workflow(form_workflow)
+                workflow_detail = workflow.get_workflow_by_flows_id(
+                    form_workflow.get('flows_id'))
+                self.save_workflow_role(workflow_detail.id, list_hide)
+            else:
+                """Update the workflow info"""
+                form_workflow.update(
+                    id=json_data.get('id', None),
+                    flows_id=workflow_id
+                )
+                workflow.upt_workflow(form_workflow)
+                self.save_workflow_role(form_workflow.get('id'), list_hide)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(e)
+            return jsonify(code=400, msg='Error'), 400
         return jsonify(code=0, msg='',
                        data={'redirect': url_for('workflowsetting.index')})
 
@@ -444,7 +516,6 @@ class WorkFlowSettingView(BaseView):
                         role_id=tmp
                     )
                     db.session.execute(WorkflowRole.__table__.insert(), wfrole)
-        db.session.commit()
 
     @classmethod
     def get_language_workflows(cls, key):

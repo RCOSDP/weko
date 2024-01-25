@@ -69,7 +69,9 @@
                 <option value="{{mapping_list_name}}" {% if
                         mapping_name== mapping_list_name
                         %}{{ " selected" }}{% endif %}>
+                        {% if mapping_list_name=="jpcoar_mapping" %}jpcoar_v2_mapping{% else %}
                   {{mapping_list_name}}
+                        {% endif %}
                 </option>
                 {%- endfor -%}
               </select>

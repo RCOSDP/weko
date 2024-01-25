@@ -1618,7 +1618,198 @@ def test_update_restricted_access(admin_settings):
     }
     result = update_restricted_access(data)
     assert result == True
+
+    #9
+    data = {
+        "secret_URL_file_download": {
+            'secret_expiration_date':"",
+            "secret_expiration_date_unlimited_chk": False,
+            "secret_download_limit": 10,
+            "secret_download_limit_unlimited_chk": False,
+        }
+    }
+    result = update_restricted_access(data)
+    assert result == False
+    #10
+    data = {
+        "terms_and_conditions": [
+            {
+                "key": "167635525648",
+                "content": {
+                    "en": {
+                        "title": "terms of servece 1",
+                        "content": "this is the text that \"terms of service1\""
+                    },
+                    "ja": {
+                        "title": "利用規約１",
+                        "content": "利用規約１の本文です"
+                    }
+                },
+                "existed": True
+            }
+        ],
+        "content_file_download": {
+            "download_limit": 1,
+            "expiration_date": 1,
+            "download_limit_unlimited_chk": False,
+            "expiration_date_unlimited_chk": False
+        },
+        "secret_URL_file_download": {
+            "secret_enable": True,
+            "secret_download_limit": 1,
+            "secret_expiration_date": 1,
+            "secret_download_limit_unlimited_chk": False,
+            "secret_expiration_date_unlimited_chk": False
+        },
+        "usage_report_workflow_access": {
+            "expiration_date_access": 1,
+            "expiration_date_access_unlimited_chk": False
+        }
+    }
+    result = update_restricted_access(data)
+    assert result == True
+    assert get_restricted_access() == data
+
+    # 11 14
+    param = {
+        "secret_URL_file_download": {
+            "secret_enable": True, 
+            "secret_expiration_date": "30",
+            "secret_expiration_date_unlimited_chk": True,
+            "secret_download_limit": "10",
+            "secret_download_limit_unlimited_chk": False,
+        }
+    }
+    expect = {
+        "secret_URL_file_download": {
+            "secret_enable": True, 
+            "secret_expiration_date": 9999999,
+            "secret_expiration_date_unlimited_chk": True,
+            "secret_download_limit": 10,
+            "secret_download_limit_unlimited_chk": False,
+        }
+    }
+    result = update_restricted_access(param)
+    assert result == True
+    assert get_restricted_access() == expect
+
+    # 12 13
+    param = {
+        "secret_URL_file_download": {
+            "secret_enable": True, 
+            "secret_expiration_date": "30",
+            "secret_expiration_date_unlimited_chk": False,
+            "secret_download_limit": "10",
+            "secret_download_limit_unlimited_chk": True,
+        }
+    }
+    expect = {
+        "secret_URL_file_download": {
+            "secret_enable": True, 
+            "secret_expiration_date": 30,
+            "secret_expiration_date_unlimited_chk": False,
+            "secret_download_limit": 9999999,
+            "secret_download_limit_unlimited_chk": True,
+        }
+    }
+    result = update_restricted_access(param)
+    assert result == True
+    assert get_restricted_access() == expect
     
+    # validate_secret_URL_file_download is False
+    # 15-1
+    data = {
+        "secret_URL_file_download": {
+            "secret_enable": True, 
+            "secret_expiration_date": None, #check this
+            "secret_expiration_date_unlimited_chk": False, #check this
+            "secret_download_limit": 10,
+            "secret_download_limit_unlimited_chk": False,
+        }
+    }
+    result = update_restricted_access(data)
+    assert result == False
+    
+    # 15-2
+    data = {
+        "secret_URL_file_download": {
+            "secret_enable": True, 
+            "secret_expiration_date": 30,
+            "secret_expiration_date_unlimited_chk": False,
+            "secret_download_limit": None, #check this
+            "secret_download_limit_unlimited_chk": False,#check this
+        }
+    }
+    result = update_restricted_access(data)
+    assert result == False
+
+    # 15-3
+    data = {
+        "secret_URL_file_download": {
+            "secret_enable": True, 
+            "secret_expiration_date": 0, #check this
+            "secret_expiration_date_unlimited_chk": False, 
+            "secret_download_limit": 10,
+            "secret_download_limit_unlimited_chk": False,
+        }
+    }
+    result = update_restricted_access(data)
+    assert result == False
+
+    # 15-4
+    data = {
+        "secret_URL_file_download": {
+            "secret_enable": True, 
+            "secret_expiration_date": 30,
+            "secret_expiration_date_unlimited_chk": False, 
+            "secret_download_limit": 0, #check this
+            "secret_download_limit_unlimited_chk": False,
+        }
+    }
+    result = update_restricted_access(data)
+    assert result == False
+
+    # 15-5
+    data = {
+        "secret_URL_file_download": {
+            "secret_enable": True, 
+            "secret_expiration_date": -1,#check this
+            "secret_expiration_date_unlimited_chk": False, 
+            "secret_download_limit": 10, 
+            "secret_download_limit_unlimited_chk": False,
+        }
+    }
+    result = update_restricted_access(data)
+    assert result == False
+
+    # 15-6
+    data = {
+        "secret_URL_file_download": {
+            "secret_enable": True, 
+            "secret_expiration_date": 30,
+            "secret_expiration_date_unlimited_chk": False, 
+            "secret_download_limit": -1, #check this
+            "secret_download_limit_unlimited_chk": False,
+        }
+    }
+    result = update_restricted_access(data)
+    assert result == False
+
+    # validate_secret_URL_file_download is True
+    # 16
+    data = {
+        "secret_URL_file_download": {
+            "secret_enable": True, 
+            "secret_expiration_date": 1, #check this
+            "secret_expiration_date_unlimited_chk": False,
+            "secret_download_limit": 1,
+            "secret_download_limit_unlimited_chk": False,
+        }
+    }
+    result = update_restricted_access(data)
+    assert result == True
+
+
     # validate_content_file_download is False
     data = {
         "content_file_download": {
@@ -1651,6 +1842,9 @@ def test_update_restricted_access(admin_settings):
     }
     result = update_restricted_access(data)
     assert result == True
+    assert 9999999 == get_restricted_access("content_file_download").get("expiration_date")
+    assert 9999999 == get_restricted_access("content_file_download").get("download_limit")
+
     
     data = {
         "content_file_download": {
@@ -1700,6 +1894,7 @@ def test_update_restricted_access(admin_settings):
         }
     result = update_restricted_access(data)
     assert result == True
+    assert 9999999 == get_restricted_access("usage_report_workflow_access").get("expiration_date_access")
 
 
 # class UsageReport:

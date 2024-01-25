@@ -16,6 +16,7 @@ import sword3common
 from flask import Blueprint, current_app, jsonify, request, url_for
 from invenio_deposit.scopes import write_scope
 from invenio_oauth2server.ext import verify_oauth_token_and_set_current_user
+from invenio_oauth2server.provider import oauth2
 from sword3common import ServiceDocument, StatusDocument, constants
 from sword3common.lib.seamless import SeamlessException
 from weko_admin.api import TempDirInfo
@@ -47,7 +48,7 @@ blueprint = Blueprint(
 blueprint.before_request(verify_oauth_token_and_set_current_user)
 
 @blueprint.route("/service-document", methods=['GET'])
-@check_oauth()
+@oauth2.require_oauth()
 @check_on_behalf_of()
 def get_service_document():
     """
@@ -116,7 +117,7 @@ def get_service_document():
 
 
 @blueprint.route("/service-document", methods=['POST'])
-@check_oauth(write_scope.id)
+@oauth2.require_oauth(write_scope.id)
 @check_on_behalf_of()
 @check_package_contents()
 def post_service_document():
@@ -220,7 +221,7 @@ def post_service_document():
 
 
 @blueprint.route("/deposit/<recid>", methods=['GET'])
-@check_oauth()
+@oauth2.require_oauth()
 @check_on_behalf_of()
 def get_status_document(recid):
     """
@@ -337,7 +338,7 @@ def _get_status_document(recid):
     return statusDocument.data
 
 @blueprint.route("/deposit/<recid>", methods=['DELETE'])
-@check_oauth()
+@oauth2.require_oauth()
 @check_on_behalf_of()
 def delete_item(recid):
     """ Delete the Object in its entirety from the server, along with all Metadata and Files. """
@@ -361,10 +362,14 @@ def delete_item(recid):
         * If the server does not allow this method in this context at this time, MAY respond with a 405 (MethodNotAllowed)
         * If the server does not support On-Behalf-Of deposit and the On-Behalf-Of header has been provided, MAY respond with a 412 (OnBehalfOfNotAllowed)
     """
-    
-    # delete item 
-    soft_delete(recid)
-    current_app.logger.debug("item deleted by sword (recid={})".format(recid))
+    try:
+        # delete item 
+        soft_delete(recid)
+        current_app.logger.debug("item deleted by sword (recid={})".format(recid))
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(e)
     return ('', 204)
 
 def _create_error_document(type, error):
@@ -423,10 +428,4 @@ def handle_weko_swordserver_exception(ex):
 
 @blueprint.teardown_request
 def dbsession_clean(exception):
-    current_app.logger.debug("weko_swordserver dbsession_clean: {}".format(exception))
-    if exception is None:
-        try:
-            db.session.commit()
-        except:
-            db.session.rollback()
     db.session.remove()

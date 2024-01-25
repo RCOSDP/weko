@@ -60,6 +60,10 @@ msgid "You cannot keep an item private because it has a DOI."
 msgstr ""
 
 #:
+msgid "Please wait a moment."
+msgstr ""
+
+#:
 msgid "The item cannot be deleted because it has a DOI."
 msgstr ""
 
@@ -87,6 +91,15 @@ msgid "This index cannot be deleted because the item belonging to this index is 
 msgstr ""
 
 msgid "The index cannot be kept publication date to a future date because there are links from items that have a DOI."
+msgstr ""
+
+msgid "The index cannot be updated becase import is in progress."
+msgstr ""
+
+msgid "The index cannot be deleted becase import is in progress."
+msgstr ""
+
+msgid "The index cannot be moved becase import is in progress."
 msgstr ""
 
 msgid "Index Delete is in progress on another device."

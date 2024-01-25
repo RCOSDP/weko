@@ -42,7 +42,6 @@ def create_widgets():
                 description['description'] = description['description'].format(i + 1)
             insert_obj['multiLangSetting']['en']['description'] = description
             WidgetItemServices.create(insert_obj)
-            db.session.commit()
 
     _create(settings.FREE_DESCRIPTION_LIMIT, "Free description",
             copy.deepcopy(settings.free_description_settings),

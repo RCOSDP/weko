@@ -148,6 +148,15 @@ def test_session_info_offline(client,session_lifetime):
     url = url_for("weko_admin.session_info_offline")
     res = client.get(url)
     assert response_data(res) == {"user_id":None,"session_id":"None","_app_lifetime":"1:40:00","current_app_name":"test_weko_admin_app","lifetime":"1:40:00"}
+
+def test_get_server_date(api):
+    url = url_for("weko_admin.get_server_date")
+    res = api.get(url)
+    result = response_data(res)
+    assert "year" in result
+    assert "month" in result
+    assert "day" in result
+
 #def get_lang_list():
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_views.py::test_get_lang_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
 def test_get_lang_list(api):

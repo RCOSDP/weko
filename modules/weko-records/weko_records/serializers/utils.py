@@ -28,7 +28,7 @@ from flask import request
 from invenio_db import db
 from weko_index_tree.api import Index
 
-from weko_records.api import Mapping
+from weko_records.api import Mapping, ItemTypes
 from weko_records.models import ItemType, ItemTypeName, ItemTypeProperty
 
 from .dc import DcWekoBaseExtension, DcWekoEntryExtension
@@ -37,11 +37,11 @@ from .opensearch import OpensearchEntryExtension, OpensearchExtension
 from .prism import PrismEntryExtension, PrismExtension
 
 
-def get_mapping(item_type_mapping, mapping_type):
+def get_mapping(item_type_id, mapping_type):
     """Format itemtype mapping data.
 
     [Key:Schema, Value:ItemId]
-    :param item_type_mapping:
+    :param item_type_id:
     :param mapping_type:
     :return:
     """
@@ -58,12 +58,18 @@ def get_mapping(item_type_mapping, mapping_type):
         return schema_json
 
     schema = {}
-    for item_id, maps in item_type_mapping.items():
-        if mapping_type in maps.keys() and isinstance(maps[mapping_type], dict):
-            item_schema = get_schema_key_info(maps[mapping_type], '', {})
-            for k, v in item_schema.items():
-                item_schema[k] = item_id + '.' + v if v else item_id
-            schema.update(item_schema)
+    item_type_mapping = Mapping.get_record(item_type_id)
+    item_type_list = ItemTypes.get_by_id(item_type_id).render.get('table_row')
+    for item_id in item_type_list:
+        if item_id in item_type_mapping:
+            maps = item_type_mapping.get(item_id)
+            if mapping_type in maps.keys() and isinstance(maps[mapping_type], dict):
+                item_schema = get_schema_key_info(maps[mapping_type], '', {})
+                for k, v in item_schema.items():
+                    if k in schema:
+                        schema[k] += ',' + item_id + '.' + v if v else ',' + item_id
+                    else:
+                        schema[k] = item_id + '.' + v if v else item_id
 
     return schema
 
@@ -123,6 +129,7 @@ def get_mapping_inactive_show_list(item_type_mapping, mapping_type):
         return schema_json
 
     schema = {}
+
     for item_id, maps in item_type_mapping.items():
         if mapping_type in maps.keys() and isinstance(maps[mapping_type], dict):
             item_schema = get_schema_key_info(maps[mapping_type], '', {})
@@ -341,12 +348,11 @@ class OpenSearchDetailData:
             item_metadata = hit['_source']['_item_metadata']
 
             item_type_id = item_metadata['item_type_id']
-            type_mapping = Mapping.get_record(item_type_id)
 
             if item_type_id in jpcoar_map:
                 item_map = jpcoar_map[item_type_id]
             else:
-                item_map = get_mapping(type_mapping, 'jpcoar_mapping')
+                item_map = get_mapping(item_type_id, 'jpcoar_mapping')
                 jpcoar_map[item_type_id] = item_map
 
             fe = fg.add_entry()

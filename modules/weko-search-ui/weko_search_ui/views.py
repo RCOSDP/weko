@@ -165,8 +165,7 @@ def search():
 
         recid = approval_record.get("control_number", None)
         if recid:
-            pid_without_ver = recid.split(".")[0]
-            item_link = ItemLink.get_item_link_info(pid_without_ver)
+            item_link = ItemLink.get_item_link_info(recid)
             ctx["item_link"] = item_link
         # Get files and thumbnail to set and show popup item link.
         item_link, files = get_record_by_root_ver(recid)

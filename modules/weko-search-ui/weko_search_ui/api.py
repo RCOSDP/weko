@@ -20,6 +20,7 @@
 
 """WEKO3 module docstring."""
 
+import unicodedata
 import markupsafe
 from operator import index
 
@@ -131,13 +132,13 @@ class SearchSetting(object):
                     "order": "asc",
                 }
             }
-            default_sort = {"_created": {"order": "desc", "unmapped_type": "long"}}
+            default_sort = {"_created": {"order": "asc", "unmapped_type": "long"}}
         else:
             factor_obj = Indexes.get_item_sort(index_id)
             script_str = {
                 "_script": {
                     "script": {
-                        "source": 'if(params.factor.get(doc["control_number"].value.toString())!=null){params.factor.get(doc["control_number"].value.toString())}else{0}',
+                        "source": 'if(params.factor.get(doc["control_number"].value.toString())!=null){params.factor.get(doc["control_number"].value.toString())}else{Integer.MAX_VALUE}',
                         "lang": "painless",
                         "params": {"factor": factor_obj},
                     },
@@ -145,7 +146,7 @@ class SearchSetting(object):
                     "order": "desc",
                 }
             }
-            default_sort = {"_created": {"order": "asc", "unmapped_type": "long"}}
+            default_sort = {"_created": {"order": "desc", "unmapped_type": "long"}}
 
         return script_str, default_sort
 
@@ -261,6 +262,7 @@ def escape_str(s):
         s -- {str} string removing escape character.
     """
 
+    s = unicodedata.normalize("NFKD", s)
     s = repr(markupsafe.escape(s))[8:-2]
 
     #s = repr(s)

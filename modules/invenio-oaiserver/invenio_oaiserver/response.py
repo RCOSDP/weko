@@ -340,9 +340,9 @@ def is_private_workflow(record):
 
 def is_pubdate_in_future(record):
     """Check pubdate of workflow is in future."""
+    from weko_records_ui.utils import is_future
     adt = record.get('publish_date')
-    pdt = to_utc(datetime.strptime(adt, '%Y-%m-%d'))
-    return pdt > datetime.utcnow()
+    return is_future(adt)
 
 
 def is_private_index(record):
@@ -714,13 +714,11 @@ def check_correct_system_props_mapping(object_uuid, system_mapping_config):
 
     Correct mapping mean item map have the 2 field same with config
     """
-    from weko_records.api import ItemsMetadata, Mapping
+    from weko_records.api import ItemsMetadata
     from weko_records.serializers.utils import get_mapping
 
     item_type = ItemsMetadata.get_by_object_id(object_uuid)
-    item_type_id = item_type.item_type_id
-    type_mapping = Mapping.get_record(item_type_id)
-    item_map = get_mapping(type_mapping, "jpcoar_mapping")
+    item_map = get_mapping(item_type.item_type_id, "jpcoar_mapping")
 
     if system_mapping_config:
         for key in system_mapping_config:
@@ -737,49 +735,49 @@ def combine_record_file_urls(record, object_uuid, meta_prefix):
 
     Get file property information by item_mapping and put to metadata.
     """
-    from weko_records.api import ItemsMetadata, Mapping
+    from weko_records.api import ItemsMetadata
     from weko_records.serializers.utils import get_mapping
     from weko_schema_ui.schema import get_oai_metadata_formats
 
     metadata_formats = get_oai_metadata_formats(current_app)
     item_type = ItemsMetadata.get_by_object_id(object_uuid)
-    item_type_id = item_type.item_type_id
-    type_mapping = Mapping.get_record(item_type_id)
     mapping_type = metadata_formats[meta_prefix]['serializer'][1]['schema_type']
-    item_map = get_mapping(type_mapping,
+    item_map = get_mapping(item_type.item_type_id,
                            "{}_mapping".format(mapping_type))
-    file_keys = None
+    file_keys_str = None
     if item_map:
         file_props = current_app.config["OAISERVER_FILE_PROPS_MAPPING"]
         if mapping_type in file_props:
-            file_keys = item_map.get(file_props[mapping_type])
+            file_keys_str = item_map.get(file_props[mapping_type])
         else:
-            file_keys = None
+            file_keys_str = None
 
-    if not file_keys:
+    if not file_keys_str:
         return record
     else:
-        file_keys = file_keys.split('.')
+        file_keys = file_keys_str.split(',')
 
-    if len(file_keys) == 3 and record.get(file_keys[0]):
-        attr_mlt = record[file_keys[0]]["attribute_value_mlt"]
-        if isinstance(attr_mlt, list):
-            for attr in attr_mlt:
-                if attr.get('filename'):
-                    if not attr.get(file_keys[1]):
-                        attr[file_keys[1]] = {}
-                    attr[file_keys[1]][file_keys[2]] = create_files_url(
-                        request.url_root,
-                        record.get('recid'),
-                        attr.get('filename'))
-        elif isinstance(attr_mlt, dict) and \
-                attr_mlt.get('filename'):
-            if not attr_mlt.get(file_keys[1]):
-                attr_mlt[file_keys[1]] = {}
-            attr_mlt[file_keys[1]][file_keys[2]] = create_files_url(
-                request.url_root,
-                record.get('recid'),
-                attr_mlt.get('filename'))
+    for file_key in file_keys:
+        key = file_key.split('.')
+        if len(key) == 3 and record.get(key[0]):
+            attr_mlt = record[key[0]]["attribute_value_mlt"]
+            if isinstance(attr_mlt, list):
+                for attr in attr_mlt:
+                    if attr.get('filename'):
+                        if not attr.get(key[1]):
+                            attr[key[1]] = {}
+                        attr[key[1]][key[2]] = create_files_url(
+                            request.url_root,
+                            record.get('recid'),
+                            attr.get('filename'))
+            elif isinstance(attr_mlt, dict) and \
+                    attr_mlt.get('filename'):
+                if not attr_mlt.get(key[1]):
+                    attr_mlt[key[1]] = {}
+                attr_mlt[key[1]][key[2]] = create_files_url(
+                    request.url_root,
+                    record.get('recid'),
+                    attr_mlt.get('filename'))
 
     return record
 

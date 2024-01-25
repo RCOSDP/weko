@@ -20,9 +20,13 @@ from sqlalchemy.exc import SQLAlchemyError
 from invenio_records.admin import record_adminview
 from invenio_records.api import Record
 
-
+# .tox/c1/bin/pytest --cov=invenio_records tests/test_admin.py::test_admin -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-records/.tox/c1/tmp
 def test_admin(app, db):
     """Test flask-admin interace."""
+    HEADERS = [
+        ('Accept', 'application/json'),
+        ('Content-Type', 'application/json')
+    ]
     admin = Admin(app, name="Test")
 
     assert 'model' in record_adminview
@@ -74,10 +78,14 @@ def test_admin(app, db):
         #         delete_view_url, data={'id': rec_uuid}, follow_redirects=True)
         #     assert res.status_code == 200
 
-        # # Delete it.
-        # res = client.post(
-        #     delete_view_url, data={'id': rec_uuid}, follow_redirects=True)
-        # assert res.status_code == 200
+        # soft delete
+        res = client.post('/admin/recordmetadata/soft_delete/{}'.format(1), headers=HEADERS)
+        assert res.status_code == 500
+
+        # Delete it.
+        res = client.post(
+            delete_view_url, data={'id': rec_uuid}, follow_redirects=True)
+        assert res.status_code == 200
 
         # # View the delete record
         # res = client.get(detail_view_url)

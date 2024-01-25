@@ -568,6 +568,11 @@ def import_author_to_system(author):
             if not author.get('emailInfo'):
                 author['emailInfo'] = []
 
+            for nameInfo in author.get('authorNameInfo', []):
+                if "fullName" not in nameInfo:
+                    fullName = nameInfo.get("familyName", "") + " " + nameInfo.get("firstName", "")
+                    nameInfo["fullName"] = fullName
+
             if status == 'new':
                 WekoAuthors.create(author)
             else:

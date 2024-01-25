@@ -165,9 +165,20 @@ require([
       format: "yyyy-mm-dd",
       autoclose: true,
     });
+    let now
     if ($("#createdfrom").val() === '') {
-      let now = new Date();
-      now.setFullYear(now.getFullYear() - 1);
+      $.ajax({
+        url: '/api/admin/get_server_date',
+        method: 'GET',
+        async: false,
+        success: function (data, status) {
+          now = new Date(data.year-1,data.month-1,data.day)
+        },
+        error: function (data, status) {
+          now = new Date();
+          now.setFullYear(now.getFullYear() - 1);
+        }
+      });
       $("#createdfrom").datepicker("setDate", now);
     }
   }

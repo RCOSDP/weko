@@ -643,7 +643,7 @@ def authors(db):
     authors_data = json_data("data/test_authors.json")
     author_list = []
     for data in authors_data:
-        author_list.append(Authors(json=json.dumps(data)))
+        author_list.append(Authors(json=data))
     db.session.add_all(author_list)
     db.session.commit()
     return author_list

@@ -111,14 +111,14 @@ USA. #}
                       pattern="[0-9]{4}|[0-9]{4}(0[1-9]|1[0-2])|[0-9]{4}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])"
                       class="input-sm form-control detail-search-date" name="[[sub_data.key_value.id]]_from"
                       data-provide="datepicker" id="[[sub_data.key_value.id]]_from" placeholder="yyyymmdd"
-                      data-date-format="yyyymmdd" ng-model="sub_data.key_value.inputVal_from"/>
+                      data-date-format="yyyymmdd" ng-model="sub_data.key_value.inputVal_from" ng-keyup="validateDate($event)"/>
                     <span class="input-group-addon">To</span>
                     <label for="[[sub_data.key_value.id]]_to" hidden>{{_('End Date')}}</label>
                     <input type="text"
                       pattern="[0-9]{4}|[0-9]{4}(0[1-9]|1[0-2])|[0-9]{4}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])"
                       class="input-sm form-control detail-search-date" name="[[sub_data.key_value.id]]_to"
                       data-provide="datepicker" id="[[sub_data.key_value.id]]_to" placeholder="yyyymmdd"
-                      data-date-format="yyyymmdd" ng-model="sub_data.key_value.inputVal_to" />
+                      data-date-format="yyyymmdd" ng-model="sub_data.key_value.inputVal_to" ng-keyup="validateDate($event)"/>
                   </div>
                   <p class="hidden-invalid-date-notice invalid-date-notice-txt">
                     {{_('Field does not validate')}}

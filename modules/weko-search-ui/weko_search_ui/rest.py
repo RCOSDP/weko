@@ -260,6 +260,8 @@ class IndexSearchResource(ContentNegotiatedMethodView):
             )
         # aggs result identify
         rd = search_result.to_dict()
+        from weko_search_ui.utils import combine_aggs
+        rd = combine_aggs(rd)
         q = request.values.get("q") or ""
         lang = current_i18n.language
 

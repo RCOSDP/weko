@@ -350,10 +350,9 @@ def init_workflow_tables(tables):
                                            db_workflow)
                     if 'gakuninrdm_data' == table:
                         init_gakuninrdm_data()
+            db.session.commit()
+            click.secho('workflow db has been initialised.', fg='green')
         except BaseException as ex:
             db.session.rollback()
             click.secho(str(ex), fg='blue')
             click.secho('workflow db init failed.', err=ex, fg='red')
-        else:
-            db.session.commit()
-            click.secho('workflow db has been initialised.', fg='green')

@@ -44,8 +44,11 @@ def abort_if_false(ctx, param, value):
               help='Name of the celery queue used to put the tasks into.')
 @click.option('--version-type', help='Elasticsearch version type to use.')
 @click.option(
-    '--raise-on-error/--skip-errors', default=True,
-    help='Controls if Elasticsearch bulk indexing errors raise an exception.')
+    '--raise-on-error', type=bool,default=True,
+    help='raise BulkIndexError containing errors (as .errors) from the execution of the last chunk when some occur. By default we raise.')
+@click.option(
+    '--raise-on-exception', type=bool,default=True,
+    help='if False then don’t propagate exceptions from call to bulk and just report the items that failed as failed.')
 @click.option('--chunk-size',type=int,default=500,help='number of docs in one chunk sent to es (default: 500)')
 @click.option('--max-chunk-bytes',type=int,default=104857600,help='the maximum size of the request in bytes (default: 100MB)')
 @click.option('--max-retries',type=int,default=0,help='maximum number of times a document will be retired when 429 is received, set to 0 (default) for no retries on 429')
@@ -53,13 +56,14 @@ def abort_if_false(ctx, param, value):
 @click.option('--max-backoff',type=int,default=600,help='maximim number of seconds a retry will wait')
 @with_appcontext
 def run(delayed, concurrency, version_type=None, queue=None,
-        raise_on_error=True,chunk_size=500,max_chunk_bytes=104857600,max_retries=0,initial_backoff=2,max_backoff=600):
+        raise_on_error=True,raise_on_exception=True,chunk_size=500,max_chunk_bytes=104857600,max_retries=0,initial_backoff=2,max_backoff=600):
     """Run bulk record indexing."""
     if delayed:
         celery_kwargs = {
             'kwargs': {
                 'version_type': version_type,
                 'es_bulk_kwargs': {'raise_on_error': raise_on_error,'chunk_size':chunk_size,'max_chunk_bytes':max_chunk_bytes,'max_retries': max_retries,'initial_backoff': initial_backoff,'max_backoff': max_backoff},
+                'with_deleted': True
             }
         }
         
@@ -74,11 +78,13 @@ def run(delayed, concurrency, version_type=None, queue=None,
         click.secho('Indexing records...', fg='green')
         RecordIndexer(version_type=version_type).process_bulk_queue(
             es_bulk_kwargs={'raise_on_error': raise_on_error,
+                            'raise_on_exception': raise_on_exception,
                             'chunk_size':chunk_size,
                             'max_chunk_bytes':max_chunk_bytes,
                             'max_retries': max_retries,
                             'initial_backoff': initial_backoff,
-                            'max_backoff': max_backoff})
+                            'max_backoff': max_backoff},
+            with_deleted=True)
 
 
 

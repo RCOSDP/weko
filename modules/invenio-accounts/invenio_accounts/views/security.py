@@ -57,15 +57,19 @@ def revoke_session():
     if not form.validate_on_submit():
         abort(403)
 
-    sid_s = form.data['sid_s']
-    if SessionActivity.query.filter_by(
-            user_id=current_user.get_id(), sid_s=sid_s).count() == 1:
-        delete_session(sid_s=sid_s)
-        db.session.commit()
-        if not SessionActivity.is_current(sid_s=sid_s):
-            # if it's the same session doesn't show the message, otherwise
-            # the session will be still open without the database record
-            flash('Session {0} successfully removed.'.format(sid_s), 'success')
-    else:
-        flash('Unable to remove the session {0}.'.format(sid_s), 'error')
+    try:
+        sid_s = form.data['sid_s']
+        if SessionActivity.query.filter_by(
+                user_id=current_user.get_id(), sid_s=sid_s).count() == 1:
+            delete_session(sid_s=sid_s)
+            db.session.commit()
+            if not SessionActivity.is_current(sid_s=sid_s):
+                # if it's the same session doesn't show the message, otherwise
+                # the session will be still open without the database record
+                flash('Session {0} successfully removed.'.format(sid_s), 'success')
+        else:
+            flash('Unable to remove the session {0}.'.format(sid_s), 'error')
+    except Exception as e:
+        flash(e)
+        db.session.rollback()
     return redirect(url_for('invenio_accounts.security'))

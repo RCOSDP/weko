@@ -680,32 +680,36 @@ def users(app, db):
 def indices(app, db):
     with db.session.begin_nested():
         # Create a test Indices
-        testIndexOne = Index(index_name="testIndexOne",browsing_role="Contributor",public_state=True,id=11)
-        testIndexTwo = Index(index_name="testIndexTwo",browsing_group="group_test1",public_state=True,id=22)
+        testIndexOne = Index(index_name="testIndexOne",position=0, browsing_role="3,-98,-99",public_state=True,id=11)
+        testIndexTwo = Index(index_name="testIndexTwo",position=1, browsing_group="group_test1",public_state=True,id=22)
         testIndexThree = Index(
             index_name="testIndexThree",
-            browsing_role="Contributor",
+            browsing_role="3,-98,-99",
             public_state=True,
             harvest_public_state=True,
             id=33,
-            public_date=datetime.today() - timedelta(days=1)
+            position=2,
+            public_date=datetime.today() + timedelta(days=1)
         )
         testIndexThreeChild = Index(
             index_name="testIndexThreeChild",
-            browsing_role="Contributor",
-            parent="testIndexThree",
+            browsing_role="3,-98,-99",
+            parent=33,
             index_link_enabled=True,
             index_link_name="test_link",
             public_state=True,
             harvest_public_state=False,
             id=44,
-            public_date=datetime.today() - timedelta(days=1)
+            position=0
         )
-        testIndexMore = Index(index_name="testIndexMore",parent="testIndexThree",public_state=True,id='more')
-        testIndexPrivate = Index(index_name="testIndexPrivate",public_state=False,id=55)
+        testIndexMore = Index(index_name="testIndexMore",parent=33,position=1,public_state=True,id='more')
+        testIndexPrivate = Index(index_name="testIndexPrivate",position=3,public_state=False,id=55)
 
+        db.session.add(testIndexOne)
+        db.session.add(testIndexTwo)
         db.session.add(testIndexThree)
         db.session.add(testIndexThreeChild)
+    db.session.commit()
         
     return {
         'index_dict': dict(testIndexThree),
@@ -742,7 +746,7 @@ def esindex(app,db_records):
             search.client.indices.delete(index=app.config["INDEXER_DEFAULT_INDEX"], ignore=[400, 404])
         except:
             search.client.indices.delete_alias(index="test-weko-items", name="test-weko")
-            search.client.indices.delete(index=test-weko-items, ignore=[400, 404])
+            search.client.indices.delete(index="test-weko-items", ignore=[400, 404])
 
 
 @pytest.fixture()

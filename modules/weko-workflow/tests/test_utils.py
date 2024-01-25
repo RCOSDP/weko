@@ -12,6 +12,7 @@ from werkzeug.datastructures import MultiDict
 from flask import current_app,session
 from flask_babelex import gettext as _
 from sqlalchemy.orm.exc import NoResultFound
+from mock import MagicMock
 from weko_deposit.pidstore import get_record_without_version
 from weko_deposit.api import WekoRecord, WekoDeposit
 from invenio_files_rest.models import Bucket
@@ -21,7 +22,8 @@ from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from flask_login.utils import login_user,logout_user
 from tests.helpers import json_data
 from invenio_mail.models import MailConfig
-from weko_admin.models import SiteInfo
+from weko_admin.models import SiteInfo, Identifier
+from weko_records_ui.models import FilePermission,FileOnetimeDownload
 from weko_user_profiles import UserProfile
 from weko_records.api import ItemTypes, ItemsMetadata
 from weko_user_profiles.config import WEKO_USERPROFILES_POSITION_LIST,WEKO_USERPROFILES_INSTITUTE_POSITION_LIST
@@ -126,6 +128,7 @@ from weko_workflow.utils import (
     update_system_data_for_item_metadata,
     update_approval_date_for_deposit,
     update_system_data_for_activity,
+    prepare_doi_link_workflow,
     make_activitylog_tsv
 )
 from weko_workflow.api import GetCommunity, UpdateItem, WorkActivity, WorkActivityHistory, WorkFlow
@@ -179,28 +182,28 @@ def test_saving_doi_pidstore(db_records,item_type,mocker):#c
         "identifier_grant_ndl_jalc_doi_link":"https://doi.org/4000/0000000001"
     }
     mock_update = mocker.patch("weko_workflow.utils.IdentifierHandle.update_idt_registration_metadata")
-    result = saving_doi_pidstore(item_id,pid_without_ver,data,1,False,True)
+    result = saving_doi_pidstore(item_id,pid_without_ver,data,1,True)
     assert result == True
     mock_update.assert_has_calls([mocker.call("1000/0000000001","JaLC")])
     
     mock_update = mocker.patch("weko_workflow.utils.IdentifierHandle.update_idt_registration_metadata")
-    result = saving_doi_pidstore(item_id,pid_without_ver,data,2,False,False)
+    result = saving_doi_pidstore(item_id,pid_without_ver,data,2,False)
     assert result == True
     mock_update.assert_has_calls([mocker.call("2000/0000000001","Crossref")])
     
     with patch("weko_workflow.utils.IdentifierHandle.register_pidstore",return_value=True):
         mock_update = mocker.patch("weko_workflow.utils.IdentifierHandle.update_idt_registration_metadata")
-        result = saving_doi_pidstore(item_id,pid_without_ver,data,3,False,False)
+        result = saving_doi_pidstore(item_id,pid_without_ver,data,3,False)
         assert result == True
         mock_update.assert_has_calls([mocker.call("3000/0000000001","DataCite"),mocker.call("3000/0000000001","DataCite")])
     
     with patch("weko_workflow.utils.IdentifierHandle.register_pidstore",side_effect=Exception):
         mock_update = mocker.patch("weko_workflow.utils.IdentifierHandle.update_idt_registration_metadata")
-        result = saving_doi_pidstore(item_id,pid_without_ver,data,4,True,False)
+        result = saving_doi_pidstore(item_id,pid_without_ver,data,4,False)
         assert result == False
 
     mock_update = mocker.patch("weko_workflow.utils.IdentifierHandle.update_idt_registration_metadata")
-    result = saving_doi_pidstore(uuid.uuid4(),pid_without_ver,data,"wrong",False,False)
+    result = saving_doi_pidstore(uuid.uuid4(),pid_without_ver,data,"wrong",False)
     assert result == False
 
 # def register_hdl(activity_id):
@@ -273,27 +276,28 @@ def test_item_metadata_validation(db_records,item_type):
     recid, depid, record, item, parent, doi, deposit = db_records[2]
     
     without_ver = get_record_without_version(recid)
-    print("tts:{}".format(without_ver))
+
     # identifiery_type is JaLC, new resource_type in journalarticle_type, old resource_type in elearning_type
     with patch("weko_workflow.utils.MappingData.get_first_data_by_mapping",\
         side_effect=[("item_1617258105262.resourcetype", ['conference paper']),(None,["learning object"])]):
         result = item_metadata_validation(recid.object_uuid,"1",without_ver_id=without_ver.object_uuid)
         assert result == {'required': [], 'required_key': [], 'pattern': [],
                   'either': [],  'either_key': [], 'mapping': [], 'other': 'You cannot change the resource type of items that have been grant a DOI.'}
-    print("tt4.1")
+
     # identifiery_type is JaLC, new resource_type in report_types, old resource_type in thesis_types
     with patch("weko_workflow.utils.MappingData.get_first_data_by_mapping",\
         side_effect=[("item_1617258105262.resourcetype", ['thesis']),(None,["report"])]):
         result = item_metadata_validation(recid.object_uuid,"1",without_ver_id=without_ver.object_uuid)
         assert result == {'required': [], 'required_key': [], 'pattern': [],
                   'either': [],  'either_key': [], 'mapping': [], 'other': 'You cannot change the resource type of items that have been grant a DOI.'}
+
     # identifiery_type is JaLC, new resource_type in dataset_type, old resource_type in datageneral_types
     with patch("weko_workflow.utils.MappingData.get_first_data_by_mapping",\
         side_effect=[("item_1617258105262.resourcetype", ['software']),(None,["internal report"])]):
         result = item_metadata_validation(recid.object_uuid,"1",without_ver_id=without_ver.object_uuid)
         assert result == {'required': [], 'required_key': [], 'pattern': [],
                   'either': [],  'either_key': [], 'mapping': [], 'other': 'You cannot change the resource type of items that have been grant a DOI.'}
-    
+
     # identifiery_type is JaLC, new resource_type in else, old resource_type in else
     with patch("weko_workflow.utils.MappingData.get_first_data_by_mapping",\
         side_effect=[("item_1617258105262.resourcetype", ['else']),(None,["else"])]):
@@ -314,20 +318,271 @@ def test_item_metadata_validation(db_records,item_type):
         result = item_metadata_validation(recid.object_uuid,"2",without_ver_id=without_ver.object_uuid)
         assert result == {'required': [], 'required_key': [], 'pattern': [],
                   'either': [],  'either_key': [], 'mapping': [], 'other': 'You cannot change the resource type of items that have been grant a DOI.'}
+
     # identifiery_type is DataCite, new resource_type in dataset_type, old resource_type in else
     with patch("weko_workflow.utils.MappingData.get_first_data_by_mapping",\
         side_effect=[("item_1617258105262.resourcetype", ['dataset']),(None,["thesis"])]):
         result = item_metadata_validation(recid.object_uuid,"3",without_ver_id=without_ver.object_uuid)
         assert result == {'required': [], 'required_key': [], 'pattern': [],
                   'either': [],  'either_key': [], 'mapping': [], 'other': 'You cannot change the resource type of items that have been grant a DOI.'}
-    
-    # identifiery_type is other
+
+    # identifiery_type is NDL, resource_type is not doctoral thesis
     with patch("weko_workflow.utils.MappingData.get_first_data_by_mapping",\
         side_effect=[("item_1617258105262.resourcetype", ['thesis']),(None,["report"])]):
         result = item_metadata_validation(recid.object_uuid,"4",without_ver_id=without_ver.object_uuid)
-        assert result == "Cannot register selected DOI for current Item Type of this item."
-
+        assert result == {'required': [], 'required_key': [], 'pattern': [],
+                  'either': [],  'either_key': [], 'mapping': [], 'other': "When assigning a JaLC DOI through NDL, the resource type must be 'doctor thesis'."}
     
+    # identifier_type is NDL, resource_type is doctoral thesis
+    with patch("weko_workflow.utils.MappingData.get_first_data_by_mapping",return_value=("item_1617258105262.resourcetype",["doctoral thesis"])):
+        result = item_metadata_validation(recid.object_uuid,"4")
+        assert result == {'required': ['item_1617605131499.url.url'], 'required_key': ['jpcoar:URI'], 'pattern': [],
+                  'either': [],  'either_key': [], 'mapping': [], }
+
+    with patch("weko_workflow.utils.MappingData.get_first_data_by_mapping",\
+        side_effect=[("item_1617258105262.resourcetype", ['thesis']),(None,["report"])]):
+        result = item_metadata_validation(None,"5",without_ver_id=without_ver.object_uuid,record=record,file_path="test_file_path")
+        assert result == 'Cannot register selected DOI for current Item Type of this item.'
+
+
+#* THIS IS FOR JPCOAR2.0 DOI VALIDATION TEST
+#* This test is for the following as well:
+#*     def validation_item_property
+#*     def handle_check_required_pattern_and_either
+#*     def validattion_item_property_required
+# def item_metadata_validation(item_id, identifier_type, record=None,
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_item_metadata_validation_2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_item_metadata_validation_2(db_records_for_doi_validation_test, item_type):
+    #* 別表2-1 JaLC DOI
+    recid0, depid0, record0, item0, parent0, doi0, deposit0 = db_records_for_doi_validation_test[0]
+    result_0: dict = item_metadata_validation(
+        item_id=recid0.object_uuid,
+        identifier_type="1",
+        record=record0,
+    )
+    result_0_keys: list = list(result_0.keys())
+    result_0_check_list_1: list = [
+        "jpcoar:URI",
+        "dc:publisher",
+        "dcndl:dateGranted",
+        "datacite:date",
+        "jpcoar:pageStart",
+        "jpcoar:publisher_jpcoar"
+    ]
+    result_0_check_list_2: list = []
+    for result_0_check_item_1 in result_0_check_list_1:
+        for result_0_key in result_0_keys:
+            if result_0_check_item_1 in result_0.get(result_0_key):
+                result_0_check_list_2.append(result_0_check_item_1)
+    assert len(result_0_check_list_1) == len(result_0_check_list_2)
+
+    #* 別表2-2 JaLC DOI
+    recid1, depid1, record1, item1, parent1, doi1, deposit1 = db_records_for_doi_validation_test[1]
+    result_1: dict = item_metadata_validation(
+        item_id=recid1.object_uuid,
+        identifier_type="1",
+        record=record1,
+    )
+    result_1_keys: list = list(result_1.keys())
+    result_1_check_list_1: list = [
+        "jpcoar:URI",
+        "dc:publisher",
+        "dcndl:dateGranted",
+        "jpcoar:degreeGrantor",
+        "jpcoar:publisher_jpcoar"
+    ]
+    result_1_check_list_2: list = []
+    for result_1_check_item_1 in result_1_check_list_1:
+        for result_1_key in result_1_keys:
+            if result_1_check_item_1 in result_1.get(result_1_key):
+                result_1_check_list_2.append(result_1_check_item_1)
+    assert len(result_1_check_list_1) == len(result_1_check_list_2)
+
+    #* 別表2-3 JaLC DOI
+    recid2, depid2, record2, item2, parent2, doi2, deposit2 = db_records_for_doi_validation_test[2]
+    result_2: dict = item_metadata_validation(
+        item_id=recid2.object_uuid,
+        identifier_type="1",
+        record=record2,
+    )
+    result_2_keys: list = list(result_2.keys())
+    result_2_check_list_1: list = [
+        "jpcoar:URI",
+        "dc:publisher",
+        "dcndl:dateGranted",
+        "datacite:date",
+        "jpcoar:publisher_jpcoar"
+    ]
+    result_2_check_list_2: list = []
+    for result_2_check_item_1 in result_2_check_list_1:
+        for result_2_key in result_2_keys:
+            if result_2_check_item_1 in result_2.get(result_2_key):
+                result_2_check_list_2.append(result_2_check_item_1)
+    assert len(result_2_check_list_1) == len(result_2_check_list_2)
+
+    #* 別表2-4 JaLC DOI
+    recid3, depid3, record3, item3, parent3, doi3, deposit3 = db_records_for_doi_validation_test[3]
+    result_3: dict = item_metadata_validation(
+        item_id=recid3.object_uuid,
+        identifier_type="1",
+        record=record3,
+    )
+    result_3_keys: list = list(result_3.keys())
+    result_3_check_list_1: list = [
+        "jpcoar:URI",
+        "dc:publisher",
+        "dcndl:dateGranted",
+        "datacite:date",
+        "jpcoar:publisher_jpcoar"
+    ]
+    result_3_check_list_2: list = []
+    for result_3_check_item_1 in result_3_check_list_1:
+        for result_3_key in result_3_keys:
+            if result_3_check_item_1 in result_3.get(result_3_key):
+                result_3_check_list_2.append(result_3_check_item_1)
+    assert len(result_3_check_list_1) == len(result_3_check_list_2)
+
+    #* 別表2-5 JaLC DOI
+    recid4, depid4, record4, item4, parent4, doi4, deposit4 = db_records_for_doi_validation_test[4]
+    result_4: dict = item_metadata_validation(
+        item_id=recid4.object_uuid,
+        identifier_type="1",
+        record=record4,
+    )
+    result_4_keys: list = list(result_4.keys())
+    result_4_check_list_1: list = [
+        "jpcoar:URI",
+        "jpcoar:givenName",
+        "dc:publisher",
+        "dcndl:dateGranted",
+        "jpcoar:creatorName",
+        "datacite:date",
+        "jpcoar:publisher_jpcoar"
+    ]
+    result_4_check_list_2: list = []
+    for result_4_check_item_1 in result_4_check_list_1:
+        for result_4_key in result_4_keys:
+            if result_4_check_item_1 in result_4.get(result_4_key):
+                result_4_check_list_2.append(result_4_check_item_1)
+    assert len(result_4_check_list_1) == len(result_4_check_list_2)
+
+    #* 別表2-6 JaLC DOI
+    recid5, depid5, record5, item5, parent5, doi5, deposit5 = db_records_for_doi_validation_test[5]
+    result_5: dict = item_metadata_validation(
+        item_id=recid5.object_uuid,
+        identifier_type="1",
+        record=record5,
+    )
+    result_5_keys: list = list(result_5.keys())
+    result_5_check_list_1: list = [
+        "jpcoar:URI",
+        "dc:publisher",
+        "dcndl:dateGranted",
+        "datacite:date",
+        "jpcoar:publisher_jpcoar"
+    ]
+    result_5_check_list_2: list = []
+    for result_5_check_item_1 in result_5_check_list_1:
+        for result_5_key in result_5_keys:
+            if result_5_check_item_1 in result_5.get(result_5_key):
+                result_5_check_list_2.append(result_5_check_item_1)
+    assert len(result_5_check_list_1) == len(result_5_check_list_2)
+
+    #* 別表3-1 Crossref DOI
+    recid6, depid6, record6, item6, parent6, doi6, deposit6 = db_records_for_doi_validation_test[6]
+    result_6: dict = item_metadata_validation(
+        item_id=recid6.object_uuid,
+        identifier_type="2",
+        record=record6,
+    )
+    result_6_keys: list = list(result_6.keys())
+    result_6_check_list_1: list = [
+        "jpcoar:URI",
+        "jpcoar:sourceIdentifier",
+        "dc:publisher",
+        "dcndl:dateGranted",
+        "jpcoar:sourceTitle",
+        "datacite:date",
+        "jpcoar:publisher_jpcoar"
+    ]
+    result_6_check_list_2: list = []
+    for result_6_check_item_1 in result_6_check_list_1:
+        for result_6_key in result_6_keys:
+            if result_6_check_item_1 in result_6.get(result_6_key):
+                result_6_check_list_2.append(result_6_check_item_1)
+    assert len(result_6_check_list_1) == len(result_6_check_list_2)
+
+    #* 別表3-2 Crossref DOI
+    recid7, depid7, record7, item7, parent7, doi7, deposit7 = db_records_for_doi_validation_test[7]
+    result_7: dict = item_metadata_validation(
+        item_id=recid7.object_uuid,
+        identifier_type="2",
+        record=record7,
+    )
+    result_7_keys: list = list(result_7.keys())
+    result_7_check_list_1: list = [
+        "jpcoar:URI",
+        "dc:publisher",
+        "dcndl:dateGranted",
+        "datacite:date",
+        "jpcoar:publisher_jpcoar"
+    ]
+    result_7_check_list_2: list = []
+    for result_7_check_item_1 in result_7_check_list_1:
+        for result_7_key in result_7_keys:
+            if result_7_check_item_1 in result_7.get(result_7_key):
+                result_7_check_list_2.append(result_7_check_item_1)
+    assert len(result_7_check_list_1) == len(result_7_check_list_2)
+
+    #* 別表4-1 DataCite DOI
+    recid8, depid8, record8, item8, parent8, doi8, deposit8 = db_records_for_doi_validation_test[8]
+    result_8: dict = item_metadata_validation(
+        item_id=recid8.object_uuid,
+        identifier_type="3",
+        record=record8,
+    )
+    result_8_keys: list = list(result_8.keys())
+    result_8_check_list_1: list = [
+        "jpcoar:URI",
+        "jpcoar:givenName",
+        "dc:publisher",
+        "dcndl:dateGranted",
+        "jpcoar:creatorName",
+        "datacite:date",
+        "jpcoar:publisher_jpcoar"
+    ]
+    result_8_check_list_2: list = []
+    for result_8_check_item_1 in result_8_check_list_1:
+        for result_8_key in result_8_keys:
+            if result_8_check_item_1 in result_8.get(result_8_key):
+                result_8_check_list_2.append(result_8_check_item_1)
+    assert len(result_8_check_list_1) == len(result_8_check_list_2)
+
+    #* 別表4-1 DataCite DOI ~ Testing jpcoar:givenName, jpcoar:creatorName, dc:publisher, jpcoar:publisherName for "en" value
+    recid8, depid8, record8, item8, parent8, doi8, deposit8 = db_records_for_doi_validation_test[8]
+    result_8: dict = item_metadata_validation(
+        item_id=recid8.object_uuid,
+        identifier_type="3",
+        record=record8,
+    )
+    result_8_keys: list = list(result_8.keys())
+    result_8_check_list_1: list = [
+        "jpcoar:URI",
+        "jpcoar:givenName",
+        "dc:publisher",
+        "dcndl:dateGranted",
+        "jpcoar:creatorName",
+        "datacite:date",
+        "jpcoar:publisher_jpcoar"
+    ]
+    result_8_check_list_2: list = []
+    for result_8_check_item_1 in result_8_check_list_1:
+        for result_8_key in result_8_keys:
+            if result_8_check_item_1 in result_8.get(result_8_key):
+                result_8_check_list_2.append(result_8_check_item_1)
+    assert len(result_8_check_list_1) == len(result_8_check_list_2)
+
+
 # def merge_doi_error_list(current, new):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_merge_doi_error_list():#c
@@ -432,7 +687,7 @@ def test_handle_check_required_pattern_and_either(db,item_type):
     result = handle_check_required_pattern_and_either(mapping_data,['jpcoar:sourceTitle'],"1")
     assert result == None
     
-    
+
     rec_uuid3 = uuid.uuid4()
     record_data = {
         "path":["1"],"recid":"3","title":["title"],"item_title": "title","item_type_id": "1",
@@ -2746,7 +3001,91 @@ def test_get_record_first_version(db_register,db_records):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 
 # def prepare_doi_link_workflow(item_id, doi_input):
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_prepare_doi_link_workflow -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_prepare_doi_link_workflow(app):
+    app.config["PRESERVE_CONTEXT_ON_EXCEPTION"] = False
+    with app.test_request_context(data={}):
+        doi_identifier = Identifier(id=1, repository='Root Index',jalc_flag= True,jalc_crossref_flag= True,jalc_datacite_flag=True,ndl_jalc_flag=True,
+            jalc_doi='123',jalc_crossref_doi='1234',jalc_datacite_doi='12345',ndl_jalc_doi='123456',suffix='suffix_',
+            created_userId='1',created_date=datetime.datetime.strptime('2022-09-28 04:33:42','%Y-%m-%d %H:%M:%S'),
+            updated_userId='1',updated_date=datetime.datetime.strptime('2022-09-28 04:33:42','%Y-%m-%d %H:%M:%S')
+        )
+        with patch("weko_workflow.utils.get_identifier_setting",return_value=doi_identifier):
+            
+            doi_input = {'action_identifier_select': '1',
+                          'action_identifier_jalc_doi': 'test_jalc_doi',
+                          'action_identifier_jalc_cr_doi': 'test_cr_doi',
+                          'action_identifier_jalc_dc_doi': 'test_dc_doi',
+                          'action_identifier_ndl_jalc_doi': 'test_ndl_doi'
+                          }
+            # suffix_method is 0
+            app.config["IDENTIFIER_GRANT_SUFFIX_METHOD"]=0
+            result = prepare_doi_link_workflow("123456", doi_input)
+            test = {
+                'identifier_grant_jalc_doi_link': "https://doi.org/123/0000123456",
+                'identifier_grant_jalc_cr_doi_link': "https://doi.org/1234/0000123456",
+                'identifier_grant_jalc_dc_doi_link': "https://doi.org/12345/0000123456",
+                'identifier_grant_ndl_jalc_doi_link': "https://doi.org/123456/test_ndl_doi"
+            }
+            assert result == test
+
+            # suffix_method is 1
+            app.config["IDENTIFIER_GRANT_SUFFIX_METHOD"]=1
+            result = prepare_doi_link_workflow("123456", doi_input)
+            test = {
+                'identifier_grant_jalc_doi_link': "https://doi.org/123/suffix_test_jalc_doi",
+                'identifier_grant_jalc_cr_doi_link': "https://doi.org/1234/suffix_test_cr_doi",
+                'identifier_grant_jalc_dc_doi_link': "https://doi.org/12345/suffix_test_dc_doi",
+                'identifier_grant_ndl_jalc_doi_link': "https://doi.org/123456/test_ndl_doi"
+            }
+            assert result == test
+
+            # suffix_method is 2
+            app.config["IDENTIFIER_GRANT_SUFFIX_METHOD"]=2
+            result = prepare_doi_link_workflow("123456", doi_input)
+            test = {
+                'identifier_grant_jalc_doi_link': "https://doi.org/123/test_jalc_doi",
+                'identifier_grant_jalc_cr_doi_link': "https://doi.org/1234/test_cr_doi",
+                'identifier_grant_jalc_dc_doi_link': "https://doi.org/12345/test_dc_doi",
+                'identifier_grant_ndl_jalc_doi_link': "https://doi.org/123456/test_ndl_doi"
+            }
+            assert result == test
+        
+        # not exist suffix
+        not_suffix_identifier = Identifier(id=1, repository='Root Index',jalc_flag= True,jalc_crossref_flag= True,jalc_datacite_flag=True,ndl_jalc_flag=True,
+            jalc_doi='123',jalc_crossref_doi='1234',jalc_datacite_doi='12345',ndl_jalc_doi='123456',
+            created_userId='1',created_date=datetime.datetime.strptime('2022-09-28 04:33:42','%Y-%m-%d %H:%M:%S'),
+            updated_userId='1',updated_date=datetime.datetime.strptime('2022-09-28 04:33:42','%Y-%m-%d %H:%M:%S')
+        )
+        with patch("weko_workflow.utils.get_identifier_setting",return_value = not_suffix_identifier):
+            app.config["IDENTIFIER_GRANT_SUFFIX_METHOD"]=1
+            result = prepare_doi_link_workflow("123456", doi_input)
+            test = {
+                'identifier_grant_jalc_doi_link': "https://doi.org/123/test_jalc_doi",
+                'identifier_grant_jalc_cr_doi_link': "https://doi.org/1234/test_cr_doi",
+                'identifier_grant_jalc_dc_doi_link': "https://doi.org/12345/test_dc_doi",
+                'identifier_grant_ndl_jalc_doi_link': "https://doi.org/123456/test_ndl_doi"
+            }
+            assert result == test
+        
+         # doi is null
+        null_identifier = Identifier(id=1, repository='Root Index')
+        with patch("weko_workflow.utils.get_identifier_setting",return_value = null_identifier):
+            app.config["IDENTIFIER_GRANT_SUFFIX_METHOD"]=0
+            result = prepare_doi_link_workflow("123456", doi_input)
+            test = {
+                'identifier_grant_jalc_doi_link': "https://doi.org/<Empty>/0000123456",
+                'identifier_grant_jalc_cr_doi_link': "https://doi.org/<Empty>/0000123456",
+                'identifier_grant_jalc_dc_doi_link': "https://doi.org/<Empty>/0000123456",
+                'identifier_grant_ndl_jalc_doi_link': "https://doi.org/<Empty>/test_ndl_doi"
+            }
+            assert result == test
+        
+        # identifier_setting is null
+        app.config["IDENTIFIER_GRANT_SUFFIX_METHOD"]=0
+        result = prepare_doi_link_workflow("123456", doi_input)
+        assert result == {}
+
 
 # def get_pid_value_by_activity_detail(activity_detail):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -2788,3 +3127,90 @@ def test_make_activitylog_tsv(db_register,db_records):
     output_tsv = make_activitylog_tsv(activities)
     assert isinstance(output_tsv,str)
     assert len(output_tsv.splitlines()) == 3
+# def is_terms_of_use_only(workflow_id :int) -> bool:
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_is_terms_of_use_only -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_is_terms_of_use_only(app ,workflow ,workflow_open_restricted):
+    with app.test_request_context():
+        assert not is_terms_of_use_only(workflow["workflow"].id)
+        assert is_terms_of_use_only(workflow_open_restricted[0]["workflow"].id)
+        assert not is_terms_of_use_only(workflow_open_restricted[1]["workflow"].id)
+
+# def grant_access_rights_to_all_open_restricted_files(activity_id :str ,permission:Union[FilePermission,GuestActivity] , activity_detail :Activity) -> dict:
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_grant_access_rights_to_all_open_restricted_files -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_grant_access_rights_to_all_open_restricted_files(app ,db,users ):
+    activity_id = "20000101-99"
+    file_permission = FilePermission(
+        file_name= "bbb.txt"
+        ,record_id=1
+        ,status=-1
+        ,usage_application_activity_id=activity_id
+        ,user_id=users[0]["id"]
+        ,usage_report_activity_id=None
+    )
+    db.session.add(file_permission)
+    activity_detail:Activity = Activity()
+    activity_detail.extra_info = {
+                    "file_name": "bbb.txt"
+                    , "record_id": 1
+                    , "user_mail": users[0]["email"]
+                }
+
+    activity_id_guest = "20001231-99"
+    guest_activity = GuestActivity(
+        file_name= "bbb.txt"
+        ,record_id=1
+        ,status=-1
+        ,activity_id=activity_id_guest
+        ,user_mail=users[5]["email"]
+        ,expiration_date=0
+        ,is_usage_report=None
+        ,token=''
+    )
+    db.session.add(guest_activity)
+    activity_detail_guest:Activity = Activity()
+    activity_detail_guest.extra_info = {
+                    "file_name": "bbb.txt"
+                    , "record_id": 1
+                    , "guest_mail": users[5]["email"]
+                }
+    mock = MagicMock()
+    mock.get_file_data = lambda : [{'accessrole' : 'open_restricted','filename':'aaa.txt'}
+                                ,{'accessrole' : 'open_restricted','filename':'bbb.txt'}
+                                ,{'accessrole' : 'open_access'    ,'filename':'ccc.txt'}]
+
+    with app.test_request_context():
+        with patch('weko_workflow.utils.WekoRecord.get_record_by_pid',return_value = mock):
+            res = grant_access_rights_to_all_open_restricted_files(activity_id ,file_permission, activity_detail )
+            # print(res)
+            assert 'bbb.txt' in res["file_url"]
+            
+            fps = FilePermission.find_by_activity(activity_id)
+            assert len(fps) == 2
+
+            for fp in fps:
+                assert fp.status == 1
+
+                user = list(filter(lambda x : x["obj"].id == fp.user_id ,users))[0]
+
+                fd = FileOnetimeDownload.find(
+                    file_name = fp.file_name,
+                    record_id = fp.record_id,
+                    user_mail = user["obj"].email
+                )
+                assert len(fd) == 1
+
+    with app.test_request_context():
+        res = grant_access_rights_to_all_open_restricted_files(activity_id_guest ,guest_activity, activity_detail_guest )
+        assert 'bbb.txt' in res["file_url"]
+        fps = FilePermission.find_by_activity(activity_id_guest)
+        assert len(fps) == 0
+        fd = FileOnetimeDownload.find(
+                    file_name = guest_activity.file_name,
+                    record_id = guest_activity.record_id,
+                    user_mail = users[5]["email"]
+                )
+        assert len(fd) == 1
+
+    res = grant_access_rights_to_all_open_restricted_files(activity_id ,None, activity_detail )
+    assert res == {}
+

@@ -26,10 +26,7 @@ import os
 import zipfile
 from datetime import datetime, timedelta
 from io import BytesIO, StringIO
-from typing import Dict, Tuple, Union
-from invenio_search.api import RecordsSearch
-from elasticsearch.exceptions import NotFoundError
-from elasticsearch_dsl.query import QueryString
+from typing import Dict, Optional, Tuple, Union
 
 import redis
 from redis import sentinel
@@ -44,7 +41,6 @@ from invenio_i18n.ext import current_i18n
 from invenio_indexer.api import RecordIndexer
 from invenio_mail.admin import MailSettingView
 from invenio_mail.models import MailConfig
-
 from invenio_records.models import RecordMetadata
 from invenio_records_rest.facets import terms_filter, terms_condition_filter, range_filter
 from invenio_stats.views import QueryFileStatsCount, QueryRecordViewCount
@@ -56,9 +52,8 @@ from weko_schema_ui.models import PublishStatus
 
 from weko_records.api import ItemsMetadata
 from weko_redis.redis import RedisConnection
-from elasticsearch import Elasticsearch
-from invenio_pidstore.models import PersistentIdentifier, PIDStatus
-import weko_schema_ui
+
+
 from . import config
 from .models import AdminLangSettings, AdminSettings, ApiCertificate, \
     FacetSearchSetting, FeedbackMailFailed, FeedbackMailHistory, \
@@ -153,16 +148,11 @@ def update_admin_lang_setting(admin_lang_settings):
 
     :param admin_lang_settings: input data to update language into database
     """
-    try:
-        for admin_lang in admin_lang_settings:
-            AdminLangSettings.update_lang(admin_lang.get('lang_code'),
-                                          admin_lang.get('lang_name'),
-                                          admin_lang.get('is_registered'),
-                                          admin_lang.get('sequence'))
-    except Exception as e:
-        return str(e)
-    return 'success'
-
+    for admin_lang in admin_lang_settings:
+        AdminLangSettings.update_lang(admin_lang.get('lang_code'),
+                                      admin_lang.get('lang_name'),
+                                      admin_lang.get('is_registered'),
+                                      admin_lang.get('sequence'))
 
 def get_selected_language():
     """Get selected language."""
@@ -201,7 +191,7 @@ def get_current_api_certification(api_code):
     """Get current API certification.
 
     :param api_code: API code
-    :return: API certification data if exist 
+    :return: API certification data if exist
     """
     results = {
         'api_code': api_code,
@@ -1620,8 +1610,8 @@ def format_site_info_data(site_info):
     result['favicon_name'] = site_info.get('favicon_name')
     result['notify'] = notify
     result['google_tracking_id_user'] = site_info.get(
-        'google_tracking_id_user').strip()
-    result['addthis_user_id'] = site_info.get('addthis_user_id').strip()
+        'google_tracking_id_user')
+    result['addthis_user_id'] = site_info.get('addthis_user_id')
     result['ogp_image'] = site_info.get('ogp_image')
     result['ogp_image_name'] = site_info.get('ogp_image_name')
     return result
@@ -1720,13 +1710,13 @@ def get_init_display_index(init_disp_index: str) -> list:
     return init_display_indexes
 
 
-def get_restricted_access(key: str = None):
+def get_restricted_access(key: Optional[str] = None) -> Optional[dict]:
     """Get registered access settings.
 
     :param key:setting key.
     :return:
     """
-    restricted_access = AdminSettings.get('restricted_access', False)
+    restricted_access:dict = AdminSettings.get('restricted_access', False)
     if not restricted_access:
         restricted_access = current_app.config[
             'WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS']
@@ -1742,11 +1732,36 @@ def update_restricted_access(restricted_access: dict):
 
     :param restricted_access:
     """
+    def parse_secret_URL_file_download():
+        if secret_URL_file_download.get('secret_expiration_date_unlimited_chk'):
+            secret_URL_file_download['secret_expiration_date'] = config.WEKO_ADMIN_RESTRICTED_ACCESS_MAX_INTEGER
+        if secret_URL_file_download.get('secret_download_limit_unlimited_chk'):
+            secret_URL_file_download['secret_download_limit'] = config.WEKO_ADMIN_RESTRICTED_ACCESS_MAX_INTEGER
+
+        secret_URL_file_download['secret_expiration_date'] = int(
+            secret_URL_file_download['secret_expiration_date'])
+        secret_URL_file_download['secret_download_limit'] = int(
+            secret_URL_file_download['secret_download_limit'])
+
+    def validate_secret_URL_file_download():
+        if not secret_URL_file_download.get(
+            'secret_expiration_date_unlimited_chk') and not secret_URL_file_download[
+            'secret_expiration_date'] or not secret_URL_file_download.get(
+            'secret_download_limit_unlimited_chk') and not \
+                secret_URL_file_download['secret_download_limit']:
+            return False
+        if secret_URL_file_download['secret_expiration_date'] and int(
+            secret_URL_file_download['secret_expiration_date']) < 1 or \
+            secret_URL_file_download['secret_download_limit'] and int(
+                secret_URL_file_download['secret_download_limit']) < 1:
+            return False
+        return True
+        
     def parse_content_file_download():
         if content_file_download.get('expiration_date_unlimited_chk'):
-            content_file_download['expiration_date'] = 9999999
+            content_file_download['expiration_date'] = config.WEKO_ADMIN_RESTRICTED_ACCESS_MAX_INTEGER
         if content_file_download.get('download_limit_unlimited_chk'):
-            content_file_download['download_limit'] = 9999999
+            content_file_download['download_limit'] = config.WEKO_ADMIN_RESTRICTED_ACCESS_MAX_INTEGER
 
         content_file_download['expiration_date'] = int(
             content_file_download['expiration_date'])
@@ -1779,10 +1794,17 @@ def update_restricted_access(restricted_access: dict):
 
     def parse_usage_report_wf_access():
         if usage_report_wf_access.get('expiration_date_access_unlimited_chk'):
-            usage_report_wf_access['expiration_date_access'] = 9999999
+            usage_report_wf_access['expiration_date_access'] = config.WEKO_ADMIN_RESTRICTED_ACCESS_MAX_INTEGER
 
         usage_report_wf_access['expiration_date_access'] = int(
             usage_report_wf_access['expiration_date_access'])
+
+    # Secret URL file download.
+    if 'secret_URL_file_download' in restricted_access:
+        secret_URL_file_download = restricted_access['secret_URL_file_download']
+        if not validate_secret_URL_file_download():
+            return False
+        parse_secret_URL_file_download()
 
     # Content file download.
     if 'content_file_download' in restricted_access:
@@ -2240,7 +2262,6 @@ def get_title_facets():
         searchConditions[item.name_en] = item.search_condition
     return titles, order, uiTypes, isOpens, displayNumbers, searchConditions
 
-
 def is_exits_facet(data, id):
     """Check facet search is exits."""
     facet_by_name = FacetSearchSetting.get_by_name(data.get('name_en'),
@@ -2506,4 +2527,3 @@ def _elasticsearch_remake_item_index(index_name):
     current_app.logger.info(' END elasticsearch import from records_metadata')
     
     return returnlist
-

@@ -237,23 +237,31 @@ class SessionActivityView(ModelView):
 
     def delete_model(self, model):
         """Delete a specific session."""
-        if SessionActivity.is_current(sid_s=model.sid_s):
-            flash('You could not remove your current session', 'error')
-            return
-        delete_session(sid_s=model.sid_s)
-        db.session.commit()
+        try:
+            if SessionActivity.is_current(sid_s=model.sid_s):
+                flash('You could not remove your current session', 'error')
+                return
+            delete_session(sid_s=model.sid_s)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(e)
 
     @action('delete', lazy_gettext('Delete selected sessions'),
             lazy_gettext('Are you sure you want to delete selected sessions?'))
     def action_delete(self, ids):
         """Delete selected sessions."""
-        is_current = any(SessionActivity.is_current(sid_s=id_) for id_ in ids)
-        if is_current:
-            flash('You could not remove your current session', 'error')
-            return
-        for id_ in ids:
-            delete_session(sid_s=id_)
-        db.session.commit()
+        try:
+            is_current = any(SessionActivity.is_current(sid_s=id_) for id_ in ids)
+            if is_current:
+                flash('You could not remove your current session', 'error')
+                return
+            for id_ in ids:
+                delete_session(sid_s=id_)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(e)
 
 
 session_adminview = {

@@ -8,6 +8,7 @@ from flask_security.utils import login_user
 from invenio_accounts.testutils import login_user_via_session
 from mock import patch
 from invenio_pidstore.errors import PIDDoesNotExistError
+from weko_records_ui.models import PDFCoverPageSettings
 
 # class ItemSettingView(BaseView):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_admin.py::test_check_open_restricted_permission -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -70,14 +71,30 @@ class TestItemSettingView():
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_admin.py::TestPdfCoverPageSettingView -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 class TestPdfCoverPageSettingView():
 #     def index(self):
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_admin.py::TestPdfCoverPageSettingView::test_index -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-    def test_index(self,client,db_sessionlifetime,users):
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_admin.py::TestPdfCoverPageSettingView::test_index_eror -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+    def test_index_error(self,client,db_sessionlifetime,users):
         url = url_for("pdfcoverpage.index", _external=True)
         res = client.get(url)
         assert res.status == '302 FOUND'
 
         with patch("flask_login.utils._get_user", return_value=users[1]['obj']):
             with patch("flask.templating._render", return_value=""):
+                with patch('weko_records_ui.admin.db.session.commit') as m:
+                    m.side_effect = Exception('')
+                    res = client.get(url)
+                    assert PDFCoverPageSettings.find(1) == None
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_admin.py::TestPdfCoverPageSettingView::test_index -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+    def test_index(self,client,db_sessionlifetime,users):
+        url = url_for("pdfcoverpage.index", _external=True)
+        res = client.get(url)
+        assert res.status == '302 FOUND'
+        with patch("flask_login.utils._get_user", return_value=users[1]['obj']):
+            with patch("flask.templating._render", return_value=""):
+                res = client.get(url)
+                assert res.status == '200 OK'
+                assert PDFCoverPageSettings.find(1) is not None
+
                 res = client.get(url)
                 assert res.status == '200 OK'
 

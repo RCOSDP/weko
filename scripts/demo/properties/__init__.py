@@ -1,10 +1,115 @@
-from . import (access_right, access, advisor, alternative_title, annual_report, apc, application_date, approval_date, author_name, biblio_info, collection_method, conference, contributor, corresponding_output_id, corresponding_usage_application_id, creator, data_type, dataset_usage, date_granted, date, degree_grantor, degree_name, description, dissertation_number, distributor, end_page, file_price, files, full_name, funding_reference, geocover, geolocation, guarantor, heading, identifier_registration, identifier, issue, item_title, language, link, number_of_pages, output_type, other_language, published_date, published_doi_url, published_media_name, publisher, related_publications, related_study, relation, research_plan, research_title, resource_type_simple, resource_type, rights_holder, rights, S_file, S_identifier, sampling, series, source_id, source_title, start_page, stop_continue, study_id, subject, summary, temporal, text, textarea, thumbnail, time_period, title, topic, unit_of_analysis, universe, uri, usage_report_id, user_information, version_type, version, volume, wf_issued_date)
+from . import (
+    access_right,
+    access,
+    advisor,
+    alternative_title,
+    annual_report,
+    apc,
+    application_date,
+    approval_date,
+    author_name,
+    biblio_info,
+    collection_method,
+    conference,
+    contributor,
+    corresponding_output_id,
+    corresponding_usage_application_id,
+    creator,
+    data_type,
+    dataset_usage,
+    date_granted,
+    date,
+    date_literal,
+    degree_grantor,
+    degree_name,
+    description,
+    dissertation_number,
+    distributor,
+    end_page,
+    file_price,
+    files,
+    full_name,
+    funding_reference,
+    geocover,
+    geolocation,
+    guarantor,
+    heading,
+    identifier_registration,
+    identifier,
+    issue,
+    item_title,
+    language,
+    link,
+    number_of_pages,
+    output_type,
+    other_language,
+    published_date,
+    published_doi_url,
+    published_media_name,
+    publisher,
+    publisher_info,
+    related_publications,
+    related_study,
+    relation,
+    research_plan,
+    research_title,
+    resource_type_simple,
+    resource_type,
+    rights_holder,
+    rights,
+    S_file,
+    S_identifier,
+    sampling,
+    series,
+    source_id,
+    source_title,
+    start_page,
+    stop_continue,
+    study_id,
+    subject,
+    summary,
+    temporal,
+    text,
+    textarea,
+    thumbnail,
+    time_period,
+    title,
+    topic,
+    unit_of_analysis,
+    universe,
+    uri,
+    usage_report_id,
+    user_information,
+    version_type,
+    version,
+    volume,
+    wf_issued_date,
+    dcndl_volume_title,
+    dcndl_edition,
+    dcndl_original_language,
+    dcterms_extent,
+    jpcoar_format,
+    jpcoar_holding_agent,
+    jpcoar_dataset_series,
+    jpcoar_catalog,
+)
 
-class AddProperty():
-    def __init__(self, add_func, title, title_ja='', title_en='',
-                 required=False, multiple=False, showlist=False,
-                 newline=False, hide=False, displayoneline= False,
-                 mapping=True):
+
+class AddProperty:
+    def __init__(
+        self,
+        add_func,
+        title,
+        title_ja="",
+        title_en="",
+        required=False,
+        multiple=False,
+        showlist=False,
+        newline=False,
+        hide=False,
+        displayoneline=False,
+        mapping=True,
+    ):
         self.add_func = add_func
         self.property_title = title
         self.property_title_ja = title_ja
@@ -15,7 +120,7 @@ class AddProperty():
             "oneline": displayoneline,
             "multiple": multiple,
             "required": required,
-            "showlist": showlist
+            "showlist": showlist,
         }
         self.mapping = mapping
 
@@ -39,11 +144,16 @@ class AddProperty():
     dataset_usage = dataset_usage.add
     date_granted = date_granted.add
     date = date.add
+    date_literal = date_literal.add
     degree_grantor = degree_grantor.add
     degree_name = degree_name.add
     description = description.add
     dissertation_number = dissertation_number.add
     distributor = distributor.add
+    dcndl_edition = dcndl_edition.add
+    dcndl_volume_title = dcndl_volume_title.add
+    dcndl_original_language = dcndl_original_language.add
+    dcterms_extent = dcterms_extent.add
     end_page = end_page.add
     file_price = file_price.add
     files = files.add
@@ -57,6 +167,10 @@ class AddProperty():
     identifier = identifier.add
     issue = issue.add
     item_title = item_title.add
+    jpcoar_format = jpcoar_format.add
+    jpcoar_holding_agent = jpcoar_holding_agent.add
+    jpcoar_dataset_series = jpcoar_dataset_series.add
+    jpcoar_catalog = jpcoar_catalog.add
     language = language.add
     link = link.add
     number_of_pages = number_of_pages.add
@@ -66,6 +180,7 @@ class AddProperty():
     published_doi_url = published_doi_url.add
     published_media_name = published_media_name.add
     publisher = publisher.add
+    publisher_info = publisher_info.add
     related_publications = related_publications.add
     related_study = related_study.add
     relation = relation.add

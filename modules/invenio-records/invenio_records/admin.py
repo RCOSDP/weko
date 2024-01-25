@@ -33,8 +33,10 @@ class RecordMetadataModelView(ModelView):
         """Soft delete."""
         try:
             soft_delete_imp(id)
+            db.session.commit()
             return jsonify(code=1, msg='PID: ' + str(id) + ' DELETED')
         except Exception as ex:
+            db.session.rollback()
             current_app.logger.error(ex)
             if ex.args and len(ex.args) and isinstance(ex.args[0], dict) \
                     and ex.args[0].get('is_locked'):

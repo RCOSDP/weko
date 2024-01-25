@@ -9,6 +9,8 @@
 
 """Facets tests."""
 
+# .tox/c1/bin/pytest --cov=invenio_records_rest tests/test_facets.py -vv -s -v --cov-branch --cov-report=term --basetemp=/code/modules/invenio-records-rest/.tox/c1/tmp
+
 from __future__ import absolute_import, print_function
 
 import pytest
@@ -17,6 +19,8 @@ from elasticsearch_dsl.query import Q, Range
 from flask import Flask
 from invenio_rest.errors import RESTValidationError
 from werkzeug.datastructures import MultiDict
+
+from weko_admin.models import FacetSearchSetting
 
 from invenio_records_rest.facets import _aggregations, _create_filter_dsl, \
     _post_filter, _query_filter, default_facets_factory, range_filter, \
@@ -145,37 +149,95 @@ def test_aggregations(app):
         )
         assert _aggregations(search, defs).to_dict()['aggs'] == defs
 
-
-def test_default_facets_factory(app):
+def test_default_facets_factory(app, db, search_user, redis_connect):
     """Test aggregations."""
+    test_redis_key = "test_facet_search_query_has_permission"
+    redis_connect.delete(test_redis_key)
     defs = dict(
         aggs=dict(
             type=dict(
-                terms=dict(field='upload_type'),
+                filter=dict(
+                    bool=dict(
+                        must=[
+                            dict(
+                                term=dict(publish_status="0")
+                            )
+                        ]
+                    )
+                ),
+                aggs=dict(
+                    type=dict(
+                        terms=dict(
+                            field="upload_type",size=1000
+                        )
+                    )
+                )
             ),
             subtype=dict(
-                terms=dict(field='subtype'),
+                filter=dict(
+                    bool=dict(
+                        must=[
+                            dict(
+                                term=dict(publish_status="0")
+                            )
+                        ]
+                    )
+                ),
+                aggs=dict(
+                    subtype=dict(
+                        terms=dict(
+                            field="subtype",size=1000
+                        )
+                    )
+                )
             )
         ),
-        filters=dict(
-            subtype=terms_filter('subtype'),
-        ),
         post_filters=dict(
-            type=terms_filter('type'),
+            bool=dict(
+                must=[
+                    dict(terms=dict(upload_type=["a"])),
+                    dict(terms=dict(subtype=["b"]))
+                ]
+            )
         ),
     )
-    app.config['RECORDS_REST_FACETS']['testidx'] = defs
+    type_setting = FacetSearchSetting(
+        name_en="type",
+        name_jp="type",
+        mapping="upload_type",
+        aggregations=[],
+        active=True,
+        ui_type="SelectBox",
+        display_number=1,
+        is_open=True
+    )
+    subtype_setting = FacetSearchSetting(
+        name_en="subtype",
+        name_jp="subtype",
+        mapping="subtype",
+        aggregations=[],
+        active=True,
+        ui_type="SelectBox",
+        display_number=2,
+        is_open=True
+    )
+    db.session.add(type_setting)
+    db.session.add(subtype_setting)
+    db.session.commit()
+    app.config['SEARCH_UI_SEARCH_INDEX'] = 'testidx'
+    from mock import patch
+    with patch("weko_search_ui.permissions.search_permission.can",return_value=True):
+        with patch("weko_admin.utils.get_query_key_by_permission", return_value=test_redis_key):
+            with app.test_request_context('?type=a&subtype=b'):
+                search = Search().query(Q(query='value'))
+                search, urlkwargs = default_facets_factory(search, 'testidx')
+                assert search.to_dict()['aggs'] == defs['aggs']
+                assert 'post_filter' in search.to_dict()
+                assert search.to_dict()['post_filter'] == defs['post_filters']
 
-    with app.test_request_context('?type=a&subtype=b'):
-        search = Search().query(Q(query='value'))
-        search, urlkwargs = default_facets_factory(search, 'testidx')
-        assert search.to_dict()['aggs'] == defs['aggs']
-        assert 'post_filter' in search.to_dict()
-        assert search.to_dict(
-            )['query']['bool']['filter'][0]['terms']['subtype']
-
-        search = Search().query(Q(query='value'))
-        search, urlkwargs = default_facets_factory(search, 'anotheridx')
-        assert 'aggs' not in search.to_dict()
-        assert 'post_filter' not in search.to_dict()
-        assert 'bool' not in search.to_dict()['query']
+                search = Search().query(Q(query='value'))
+                search, urlkwargs = default_facets_factory(search, 'anotheridx')
+                assert 'aggs' not in search.to_dict()
+                assert 'post_filter' not in search.to_dict()
+                assert 'bool' not in search.to_dict()['query']
+    redis_connect.delete(test_redis_key)

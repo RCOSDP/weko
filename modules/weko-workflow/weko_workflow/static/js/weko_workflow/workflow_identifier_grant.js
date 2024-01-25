@@ -39,6 +39,14 @@ require([
     $(".lds-ring-background").addClass("hidden");
   }
 
+  // click button Back
+  $('#btn-back').on('click', function () {
+    startLoading($(this));
+    if (preparePostData(1, $(this))) {
+      sendBackAction($(this));
+    }
+  });
+
   // click button Next
   $('#btn-finish').on('click', function () {
     startLoading($(this));
@@ -107,10 +115,13 @@ require([
     if (tmp_save == 1 || idf_grant_method == 0) {
       let arrayDoi = [identifier_grant_jalc_doi_link, identifier_grant_jalc_cr_doi_link, identifier_grant_jalc_dc_doi_link];
       isSuffixFormat = validateLengDoi(arrayDoi, actionButton);
+      if (identifier_grant == "4"){
+        isSuffixFormatNDL = isDOISuffixFormat(identifier_grant_ndl_jalc_doi_link,identifier_grant_ndl_jalc_doi_suffix,actionButton)
+        isSuffixFormat = isSuffixFormat && isSuffixFormatNDL
+      }
     } else {
       switch (identifier_grant) {
         case "0":
-        case "4":
         default:
           break;
         case "1":
@@ -121,6 +132,9 @@ require([
           break;
         case "3":
           isSuffixFormat = isDOISuffixFormat(identifier_grant_jalc_dc_doi_link, identifier_grant_jalc_dc_doi_suffix, actionButton);
+          break;
+        case "4":
+          isSuffixFormat = isDOISuffixFormat(identifier_grant_ndl_jalc_doi_link, identifier_grant_ndl_jalc_doi_suffix, actionButton);
           break;
       }
     }
@@ -219,6 +233,47 @@ require([
       }
     });
   });
+
+  // back
+  function sendBackAction(actionButton) {
+    let post_uri = data_global.post_uri + "/rejectOrReturn/0";
+    if (!post_uri) {
+      let error_msg = $('#AutoCancelMsg').text();
+      $('#cancelModalBody').text(error_msg);
+      $('#cancelModal').modal('show');
+    }
+    $.ajax({
+      url: post_uri,
+      method: 'POST',
+      async: true,
+      contentType: 'application/json',
+      data: JSON.stringify(data_global.post_data),
+      success: function (data, status) {
+        if (0 == data.code) {
+          if (data.hasOwnProperty('data') &&
+            data.data.hasOwnProperty('redirect')) {
+            document.location.href = data.data.redirect;
+          } else {
+            document.location.reload(true);
+          }
+        } else if (-2 == data.code) {
+          let error_msg = $('#AutoCancelMsg').text();
+          $('#cancelModalBody').text(error_msg);
+          $('#cancelModal').modal('show');
+        } else {
+          endLoading(actionButton);
+          if (data.msg) {
+            alert(data.msg);
+          }
+        }
+      },
+      error: function (jqXHE, status) {
+        endLoading(actionButton);
+        alert('Server error');
+        $('#myModal').modal('hide');
+      }
+    });
+  }
 
   // send
   function sendQuitAction(actionButton) {

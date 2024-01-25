@@ -2,7 +2,7 @@ import argparse
 import properties
 import sys
 from properties import property_config
-
+from sqlalchemy.dialects.postgresql import Insert
 from invenio_db import db
 from weko_records.models import ItemTypeProperty
 
@@ -40,11 +40,16 @@ def main():
             sys.exit(0) 
     except Exception as ex:
         print(ex)
+        db.session.rollback()
 
 
 def truncate_table():
-    db.session.execute('TRUNCATE item_type_property;')
-    db.session.commit()
+    try:
+        db.session.execute('TRUNCATE item_type_property;')
+        db.session.commit()
+    except Exception as ex:
+        print(ex)
+        db.session.rollback()
 
 
 def get_properties_id():
@@ -75,12 +80,26 @@ def register_properties_from_folder(exclusion_list, specified_list=[]):
                 ))
                 reg_list.append(prop_id)
     if prop_list:
-        db.session.execute(ItemTypeProperty.__table__.insert(), prop_list)
+        db.session.execute(upsert_stmt(), prop_list)
+        # db.session.execute(ItemTypeProperty.__table__.insert(), prop_list)
     db.session.execute("SELECT setval('item_type_property_id_seq', 10000, true);")
 
     reg_list.sort()
     print('Processed id list: ', reg_list)
 
+def upsert_stmt():
+    """upsert_stmt
+    """
+    stmt = Insert(ItemTypeProperty)
+    return stmt.on_conflict_do_update(
+        index_elements=['id'],
+        set_={
+            'name': stmt.excluded.name,
+            'schema': stmt.excluded.schema,
+            'form': stmt.excluded.form,
+            'forms': stmt.excluded.forms,
+            'delflg': stmt.excluded.delflg
+        })
 
 if __name__ == '__main__':
     main()

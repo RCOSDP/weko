@@ -31,6 +31,11 @@
 
 {% from "weko_records_ui/item_detail.html" import output_item_detail with context %}
 {% from "weko_records_ui/_macros.html" import check_download_file with context %}
+<label id="confirm_title" hidden>{{_('Confirm')}}</label>
+<label id="ok_label" hidden>{{_('OK')}}</label>
+<label id="cancel_label" hidden>{{_('Cancel')}}</label>
+<label id="del_msg" hidden>{{_('Are you sure you want to delete this item?')}}</label>
+<label id="del_ver_msg" hidden>{{_('Are you sure you want to delete this version?')}}</label>
 <div class="panel-group">
   <div class="panel panel-default">
     <div class="panel-heading clearfix">
@@ -370,11 +375,29 @@
                 <a class="btn btn-primary edit-button" href="#!" id="btn_edit" data-pid-value="{{ pid.pid_value }}"
                   {%- if community -%}data-community="{{ community.id }}" {%- endif -%}>
                   <span class="glyphicon glyphicon-edit" aria-hidden="true"></span> {{_('Edit')}}</a>
-                <a class="btn btn-danger delete-button" id="btn_delete" ng-click="openConfirm('',
+                <a class="btn btn-danger delete-button" id="btn_delete" ng-click="openConfirm(
+                  'del_item',
                   '{{'/records/soft_delete/'+ pid.pid_value}}',
                   '{{url_for('weko_search_ui.search')}}',
                   '{{pid.pid_value}}')">
                   <span class="glyphicon glyphicon-trash" aria-hidden="true"></span> {{_('Delete')}}</a>
+              {% endif %}
+              {% if active_versions|length > 1 %}
+                {%- if not pid | pid_value_version %} 
+                  <a class="btn btn-danger delete-button" style="width: 180px" id="btn_ver_delete" ng-click="openConfirm(
+                    'del_ver',
+                    '{{'/records/soft_delete/del_ver_'+ all_versions[-1].pid_value}}',
+                    '{{url_for('weko_search_ui.search')}}',
+                    '{{all_versions[-1].pid_value}}')">
+                    <span class="glyphicon glyphicon-trash" aria-hidden="true"></span> {{_('Delete this version')}}</a>
+                {%- else -%} 
+                    <a class="btn btn-danger delete-button" style="width: 180px" id="btn_ver_delete" ng-click="openConfirm(
+                      'del_ver',
+                      '{{'/records/soft_delete/del_ver_'+ pid.pid_value}}',
+                      '{{url_for('weko_search_ui.search')}}',
+                      '{{pid.pid_value}}')">
+                      <span class="glyphicon glyphicon-trash" aria-hidden="true"></span> {{_('Delete this version')}}</a>
+                {% endif -%}
               {% endif %}
             <input id="edit_message" type="hidden"
               value="{{_('The workflow is being edited.')}}" />
@@ -389,25 +412,13 @@
                     aria-hidden="true">&times;</span></button>
                 {{_('The workflow is being edited.')}}
               </p>
+              <p class="alert alert-success alert-dismissible text-middle collapse" role="msg"
+                style="min-width: 330px;">
+                <button type="button" class="close" id="btn_close_msg" aria-label="Close"><span
+                    aria-hidden="true">&times;</span></button>
+                {{_('Please wait a moment.')}}
+              </p>
             </div>
-            <script type="text/ng-template" id="confirm-modal.html">
-              <div class="modal" tabindex="-1" role="dialog">
-                <div class="modal-dialog">
-                  <div class="modal-content">
-                    <div class="modal-header">
-                      <h3 class="modal-title"><span class="glyphicon glyphicon-info-sign"></span>{{_('Confirm')}}</h3>
-                    </div>
-                    <div class="modal-body">
-                      <p>{{_('Are you sure you want to delete this item?')}}</p>
-                    </div>
-                    <div class="modal-footer">
-                      <button class="btn btn-primary ok-button" ng-click="ok()">{{_('OK')}}</button>
-                      <button class="btn btn-info cancel-button" ng-click="cancel()">{{_('Cancel')}}</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </script>
             {% endif %}
           </div>
         </div>

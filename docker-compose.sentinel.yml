@@ -234,6 +234,8 @@ services:
     ports:
       - "24301:4369"
       - "45601:25672"
+    environment:
+      - "RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=-rabbit consumer_timeout 10800000"
 
   nginx:
     restart: "always"

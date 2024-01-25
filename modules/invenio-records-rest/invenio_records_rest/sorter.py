@@ -109,7 +109,6 @@ def eval_field(field, asc, nested_sorting=None):
         sorting = {key: {'order': 'asc' if key_asc else 'desc',
                          'unmapped_type': 'long'}}
 
-
         if "title" in key:
             # When sorting by Title, change the sorting rules according to the language setting.
             if "ja" in current_i18n.language:
@@ -169,8 +168,15 @@ def default_sorter_factory(search, index):
         return (search, {})
 
     # Get fields to sort query by
-    search = search.sort(
-        *[eval_field(f, asc, sort_options.get('nested'))
+    sort_field = [eval_field(f, asc, sort_options.get('nested'))
           for f in sort_options['fields']]
+    if key != 'controlnumber':
+        control_number_option = current_app.config['RECORDS_REST_SORT_OPTIONS'].get(index,{}).get('controlnumber')
+        if control_number_option is not None:
+            sort_field.append(eval_field(
+                control_number_option['fields'][0],'asc',control_number_option.get('nested')
+            ))
+    search = search.sort(
+        *sort_field,
     )
     return (search, {sort_arg_name: urlfield})

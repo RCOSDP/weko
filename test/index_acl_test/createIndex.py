@@ -24,43 +24,43 @@ def createIndex(idx,_parent = 0,depth = 0):
         # -99 : Guest
         # -98 : Authenticated 
         pub_oai_guest = Index(id=idx,parent=_parent, 
-                              index_name="{}-public-oai-guest-{}".format(depth,idx),index_name_english="{}-public-oai-guest-{}".format(depth,idx),
-                              index_link_name="{}-public-oai-guest-{}".format(depth,idx),index_link_name_english="{}-public-oai-guest-{}".format(depth,idx),
+                              index_name="{}-public-oai-guest-{}-ja".format(depth,idx),index_name_english="{}-public-oai-guest-{}-en".format(depth,idx),
+                              index_link_name="{}-public-oai-guest-{}-ja".format(depth,idx),index_link_name_english="{}-public-oai-guest-{}-en".format(depth,idx),
                               position=0,public_state=True,harvest_public_state=True, recursive_browsing_role=False,browsing_role = "3,-98,-99")
         idx = idx + 1
         pri_oai_guest = Index(id=idx,parent=_parent, 
-                              index_name="{}-private-oai-guest-{}".format(depth,idx),index_name_english="{}-private-oai-guest-{}".format(depth,idx),
-                              index_link_name="{}-private-oai-guest-{}".format(depth,idx),index_link_name_english="{}-private-oai-guest-{}".format(depth,idx),
+                              index_name="{}-private-oai-guest-{}-ja".format(depth,idx),index_name_english="{}-private-oai-guest-{}-en".format(depth,idx),
+                              index_link_name="{}-private-oai-guest-{}-ja".format(depth,idx),index_link_name_english="{}-private-oai-guest-{}-en".format(depth,idx),
                               position=1, public_state=False,harvest_public_state=True, recursive_browsing_role=False,browsing_role = "3,-98,-99")
         idx = idx + 1
         pub_nooai_guest = Index(id=idx,parent=_parent, 
-                                index_name="{}-public-nooai-guest-{}".format(depth,idx),index_name_english="{}-public-nooai-guest-{}".format(depth,idx),
-                                index_link_name="{}-public-nooai-guest-{}".format(depth,idx),index_link_name_english="{}-public-nooai-guest-{}".format(depth,idx),
+                                index_name="{}-public-nooai-guest-{}-ja".format(depth,idx),index_name_english="{}-public-nooai-guest-{}-en".format(depth,idx),
+                                index_link_name="{}-public-nooai-guest-{}-ja".format(depth,idx),index_link_name_english="{}-public-nooai-guest-{}-en".format(depth,idx),
                                 position=2, public_state=True,harvest_public_state=False, recursive_browsing_role=False,browsing_role = "3,-98,-99")
         idx = idx + 1
         pri_nooai_guest = Index(id=idx,parent=_parent, 
-                                index_name="{}-private-nooai-guest-{}".format(depth,idx),index_name_english="{}-private-nooai-guest-{}".format(depth,idx),
-                                index_link_name="{}-private-nooai-guest-{}".format(depth,idx),index_link_name_english="{}-private-nooai-guest-{}".format(depth,idx),
+                                index_name="{}-private-nooai-guest-{}-ja".format(depth,idx),index_name_english="{}-private-nooai-guest-{}-en".format(depth,idx),
+                                index_link_name="{}-private-nooai-guest-{}-ja".format(depth,idx),index_link_name_english="{}-private-nooai-guest-{}-en".format(depth,idx),
                                 position=3,public_state=False,harvest_public_state=False, recursive_browsing_role=False,browsing_role = "3,-98,-99")
         idx = idx + 1
         pub_oai_noguest = Index(id=idx,parent=_parent, 
-                                index_name="{}-public-oai-noguest-{}".format(depth,idx),index_name_english="{}-public-oai-noguest-{}".format(depth,idx),
-                                index_link_name="{}-public-oai-noguest-{}".format(depth,idx),index_link_name_english="{}-public-oai-noguest-{}".format(depth,idx),
+                                index_name="{}-public-oai-noguest-{}-ja".format(depth,idx),index_name_english="{}-public-oai-noguest-{}-en".format(depth,idx),
+                                index_link_name="{}-public-oai-noguest-{}-ja".format(depth,idx),index_link_name_english="{}-public-oai-noguest-{}-en".format(depth,idx),
                                 position=4,public_state=True,harvest_public_state=True, recursive_browsing_role=False,browsing_role = "3,-98")
         idx = idx + 1
         pri_oai_noguest = Index(id=idx,parent=_parent, 
-                                index_name="{}-private-oai-noguest-{}".format(depth,idx),index_name_english="{}-private-oai-noguest-{}".format(depth,idx),
-                                index_link_name="{}-private-oai-noguest-{}".format(depth,idx),index_link_name_english="{}-private-oai-noguest-{}".format(depth,idx),
+                                index_name="{}-private-oai-noguest-{}-ja".format(depth,idx),index_name_english="{}-private-oai-noguest-{}-en".format(depth,idx),
+                                index_link_name="{}-private-oai-noguest-{}-ja".format(depth,idx),index_link_name_english="{}-private-oai-noguest-{}-en".format(depth,idx),
                                 position=5, public_state=False,harvest_public_state=True, recursive_browsing_role=False,browsing_role = "3,-98")
         idx = idx + 1
         pub_nooai_noguest = Index(id=idx,parent=_parent, 
-                                  index_name="{}-public-nooai-noguest-{}".format(depth,idx),index_name_english="{}-public-nooai-noguest-{}".format(depth,idx),
-                                  index_link_name="{}-public-nooai-noguest-{}".format(depth,idx),index_link_name_english="{}-public-nooai-noguest-{}".format(depth,idx),
+                                  index_name="{}-public-nooai-noguest-{}-ja".format(depth,idx),index_name_english="{}-public-nooai-noguest-{}-en".format(depth,idx),
+                                  index_link_name="{}-public-nooai-noguest-{}-ja".format(depth,idx),index_link_name_english="{}-public-nooai-noguest-{}-en".format(depth,idx),
                                   position=6, public_state=True,harvest_public_state=False, recursive_browsing_role=False,browsing_role = "3,-98")
         idx = idx + 1
         pri_nooai_noguest = Index(id=idx,parent=_parent, 
-                                  index_name="{}-private-nooai-noguest-{}".format(depth,idx),index_name_english="{}-private-nooai-noguest-{}".format(depth,idx),
-                                  index_link_name="{}-private-nooai-noguest-{}".format(depth,idx),index_link_name_english="{}-private-nooai-noguest-{}".format(depth,idx),
+                                  index_name="{}-private-nooai-noguest-{}-ja".format(depth,idx),index_name_english="{}-private-nooai-noguest-{}-en".format(depth,idx),
+                                  index_link_name="{}-private-nooai-noguest-{}-ja".format(depth,idx),index_link_name_english="{}-private-nooai-noguest-{}-en".format(depth,idx),
                                   position=7,public_state=False,harvest_public_state=False, recursive_browsing_role=False,browsing_role = "3,-98")
         db.session.add(pub_oai_guest)
         db.session.add(pri_oai_guest)
@@ -100,7 +100,11 @@ def clearTable():
     db.session.commit()
 
 if __name__ == '__main__':
-    clearTable()
-    idx = 0
-    idx = createIndex(0,0,0)
+    try:
+        clearTable()
+        idx = 0
+        idx = createIndex(0,0,0)
+    except Exception as e:
+        db.session.rollback()
+        print(e)
     
