@@ -116,7 +116,9 @@ def write_back_oringinal_data(origin_data, institution):
                                 {"terms": {"author_link.raw": [str(pk_id)]}}
                             ]
                         }
-                    }
+                    },
+                    "size": 10000,
+                    "from": 0
                 }
                 search_result = indexer.client.search(
                     index=record_index,doc_type=record_doc_type,body=query
