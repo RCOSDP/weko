@@ -3483,6 +3483,54 @@ def test_display_activity(client, users, db_register, users_index, status_code, 
                                     res = client.post(url, query_string=input)
                                     mock_render_template.assert_called()
 
+    url = url_for('weko_workflow.display_activity', activity_id='A-00000001-10001')
+    mocker.patch("weko_workflow.views.AdminSettings.get",return_value = False)
+    input = {}
+    #action_endpoint = cur_action.action_endpoint
+    activity_detail.extra_info = {"record_id":"100"}
+    activity_detail.activity_id = 'A-00000001-10001'
+    action_endpoint = 'end_action'
+    cur_action.action_version = '1.0.0'
+    with patch('weko_workflow.views.get_activity_display_info',
+               return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
+               steps, temporary_comment, workflow_detail, owner_id, shared_user_ids)):
+        with patch('weko_workflow.views.item_login',return_value=(template_url,
+                need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
+                files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
+            with patch('weko_workflow.views.get_pid_and_record',return_value=(test_pid,None)):
+                with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
+                    with patch('weko_records_ui.utils.get_list_licence',return_value=license_list):
+                        with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
+                            with patch('weko_workflow.views.render_template', mock_render_template):
+                                with patch('weko_workflow.views.WekoRecord.get_record_by_pid', return_value=None):
+                                    res = client.post(url, query_string=input)
+                                    mock_render_template.assert_called()
+
+    url = url_for('weko_workflow.display_activity', activity_id='A-00000001-10001')
+    mocker.patch("weko_workflow.views.AdminSettings.get",return_value = False)
+    input = {}
+    #action_endpoint = cur_action.action_endpoint
+    activity_detail.extra_info = {"record_id":"100"}
+    activity_detail.activity_id = 'A-00000001-10001'
+    action_endpoint = 'end_action'
+    cur_action.action_version = '1.0.0'
+    mock_record = MagicMock()
+    with patch('weko_workflow.views.get_activity_display_info',
+               return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
+               steps, temporary_comment, workflow_detail, owner_id, shared_user_ids)):
+        with patch('weko_workflow.views.item_login',return_value=(template_url,
+                need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
+                files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
+            with patch('weko_workflow.views.get_pid_and_record',return_value=(test_pid,None)):
+                with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
+                    with patch('weko_records_ui.utils.get_list_licence',return_value=license_list):
+                        with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
+                            with patch('weko_workflow.views.render_template', mock_render_template):
+                                with patch('weko_workflow.views.WekoRecord.get_record_by_pid', return_value=mock_record):
+                                    with patch("weko_workflow.views.url_for", return_value = 'records/100'):
+                                        res = client.post(url, query_string=input)
+                                        mock_render_template.assert_called()
+
 
 # def display_activity(activity_id="0")
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_display_activity_1 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp

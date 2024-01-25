@@ -1231,7 +1231,7 @@ def db_register(app, db, db_records, users, action_data, item_type):
                     activity_confirm_term_of_use=True,
                     title='test item8', shared_user_ids=[],
                     action_order=1,
-                    extra_info={"guest_mail":"guest@test.org","related_title":"related_guest_activity","usage_record_id":str(db_records[1][2].id),"usage_activity_id":str(uuid.uuid4())}
+                    extra_info={"guest_mail":"guest@test.org","record_id": 1,"related_title":"related_guest_activity","usage_record_id":str(db_records[1][2].id),"usage_activity_id":str(uuid.uuid4())}
                     )
     activity_landing_url = Activity(activity_id='A-00000001-10003',workflow_id=1, flow_id=flow_define.id,
                     action_id=1, activity_login_user=1,
@@ -1249,6 +1249,26 @@ def db_register(app, db, db_records, users, action_data, item_type):
                     activity_confirm_term_of_use=True,
                     title='test', shared_user_ids=[], extra_info={"record_id": 1, "file_name":"aaa.txt"},
                     action_order=6)
+    activity_guest_2 = Activity(activity_id='guest_2', item_id=db_records[1][2].id,workflow_id=1, flow_id=flow_define.id,
+                    action_id=3, activity_login_user=users[3]["id"],
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=3,
+                    activity_confirm_term_of_use=True,
+                    title='test item11', shared_user_ids=[1],
+                    action_order=1,
+                    extra_info={"guest_mail":"guest@test.org","record_id": 2,"related_title":"related_guest_activity","usage_record_id":str(db_records[1][2].id),"usage_activity_id":str(uuid.uuid4())}
+                    )
+    activity_guest_3 = Activity(activity_id='guest_3', item_id=db_records[1][2].id,workflow_id=1, flow_id=flow_define.id,
+                    action_id=3, activity_login_user=users[3]["id"],
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=3,
+                    activity_confirm_term_of_use=True,
+                    title='test item11', shared_user_ids=[1],
+                    action_order=1,
+                    extra_info={"guest_mail":"guest@test.org","record_id": 3,"related_title":"related_guest_activity","usage_record_id":str(db_records[1][2].id),"usage_activity_id":str(uuid.uuid4())}
+                    )
     with db.session.begin_nested():
         db.session.add(workflow)
         db.session.add(activity)
@@ -1265,6 +1285,8 @@ def db_register(app, db, db_records, users, action_data, item_type):
         db.session.add(activity_item9)
         db.session.add(activity_item10)
         db.session.add(activity_guest)
+        db.session.add(activity_guest_2)
+        db.session.add(activity_guest_3)
     db.session.commit()
 
     activity_action = ActivityAction(activity_id=activity.activity_id,
@@ -1375,7 +1397,7 @@ def db_register(app, db, db_records, users, action_data, item_type):
             'action_feedback_mail1':activity_item4_feedbackmail,
             'action_feedback_mail2':activity_item5_feedbackmail,
             'action_feedback_mail3':activity_item6_feedbackmail,
-            "activities":[activity,activity_item1,activity_item2,activity_item3,activity_item7,activity_item8,activity_item9,activity_item10,activity_guest,activity_landing_url,activity_terms_of_use]}
+            "activities":[activity,activity_item1,activity_item2,activity_item3,activity_item7,activity_item8,activity_item9,activity_item10,activity_guest,activity_landing_url,activity_terms_of_use,activity_guest_2,activity_guest_3]}
 
 @pytest.fixture()
 def db_register_1(app, db, db_records, users_1, action_data, item_type):

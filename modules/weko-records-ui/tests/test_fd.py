@@ -19,6 +19,7 @@ from mock import patch
 from invenio_records_files.utils import record_file_factory
 from werkzeug.exceptions import NotFound ,Forbidden
 
+from weko_admin.models import AdminSettings
 from weko_records_ui.models import FileSecretDownload
 from sqlalchemy.exc import SQLAlchemyError 
 # def weko_view_method(pid, record, template=None, **kwargs):
@@ -328,6 +329,18 @@ def test_file_download_onetime(app, records, itemtypes, users, db_fileonetimedow
                                     # call by method
                                     file_name = "/helloworld_open_restricted.pdf"
                                     assert file_download_onetime(recid,record,file_name, user_mail, True)=="downloaded"
+
+    adminsetting = AdminSettings(id=5,name='restricted_access',settings={"password_enable": True})
+    #with app.test_request_context('?token=MSB1c2VyQGV4YW1wbGUub3JnIDIwMjItMDktMjcgNDBDRkNGODFGM0FFRUI0Ng==&mailaddress='+ mailaddress + '&isajax=true'):
+    with app.test_client() as client:
+        with patch('weko_records_ui.fd.AdminSettings.get', return_value=adminsetting):    
+            with patch("flask.templating._render", return_value=""):
+                with patch("weko_records_ui.fd.get_onetime_download", return_value=db_fileonetimedownload):
+                    #with patch("weko_records_ui.fd.parse_one_time_download_token", return_value=(True, [1])):
+                        res = client.post('/record/1/file/onetime/helloworld.zip',
+                                    data={'input_password':'test_pass'},
+                                    content_type='application/json')
+                        assert res.status_code == 200
 
 # def _is_terms_of_use_only(file_obj:dict , req :dict) -> bool:
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_fd.py::test__is_terms_of_use_only -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp

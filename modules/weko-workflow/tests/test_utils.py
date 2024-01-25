@@ -1140,12 +1140,13 @@ def test_get_file_path(app):
 # def replace_characters(data, content):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_replace_characters -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_replace_characters():
-    context = "url is [10]. restricted_fullname is [restricted_fullname]. advisor_name is [8]."
+    context = "url is [10]. restricted_fullname is [restricted_fullname]. restricted_research_plan = [restricted_research_plan]"
     data = {
         "url":"https://test_url.com",
-        "restricted_fullname":"test_file.txt"
+        "restricted_fullname":"test_file.txt",
+        "restricted_research_plan":"restricted_research_plan"
     }
-    test = "url is https://test_url.com. restricted_fullname is test_file.txt. advisor_name is ."
+    test = "url is https://test_url.com. restricted_fullname is test_file.txt. restricted_research_plan = restricted_research_plan"
     
     result = replace_characters(data,context)
     assert result == test
@@ -1306,10 +1307,11 @@ def test_set_mail_info(app, db_register, mocker, records_restricted, db_records)
         "subitem_restricted_access_dataset_usage":"test_restricted_dataset",
         "subitem_restricted_access_application_date":"test_restricted_date",
         "subitem_restricted_access_mail_address":"restricted@test.org",
+        "subitem_restricted_access_research_plan":"restricted_research_plan"
     }
+
     activity_id = db_register["activities"][0].activity_id
 
-    #TestNo.22(W2023-22 2)
     test = {
         "university_institution":"test_institution",
         "fullname":"test_fullname",
@@ -1349,13 +1351,13 @@ def test_set_mail_info(app, db_register, mocker, records_restricted, db_records)
         "restricted_supervisor":"",
         "restricted_reference":"",
         "restricted_usage_activity_id":activity_id,
-        "landing_url": ''
+        "landing_url": '',
+        "restricted_research_plan":"restricted_research_plan"
     }
     with app.test_request_context():
         result = set_mail_info(item_info,db_register["activities"][0],True)
         assert result == test
-    
-    #Test No.22(W2023-22 2)
+
     test = {
         "university_institution":"test_institution",
         "fullname":"test_fullname",
@@ -1395,20 +1397,19 @@ def test_set_mail_info(app, db_register, mocker, records_restricted, db_records)
         "restricted_supervisor":"",
         "restricted_reference":"",
         "restricted_usage_activity_id":activity_id,
-        "landing_url": ''
+        "landing_url": '',
+        "restricted_research_plan":"restricted_research_plan"
     }
     with app.test_request_context():
         result = set_mail_info(item_info,db_register["activities"][0],False)
         assert result == test
 
-    #testNo.20(W2023-22 2)
     with app.test_request_context():
        record = WekoRecord.get_record(db_records[0][2].id)
        with patch("weko_workflow.utils.WekoRecord.get_record_by_pid", return_value = record):
            result = set_mail_info(item_info,db_register["activities"][9],False)
            assert result["landing_url"] != ""
-    
-    #testNo.21(W2023-22 2)
+
     with app.test_request_context():
         record = WekoRecord.get_record(db_records[0][2].id)
         with patch("weko_workflow.utils.WekoRecord.get_record_by_pid", return_value = record):
@@ -2584,6 +2585,8 @@ def test_process_send_approval_mails(app,db_register,users,mocker):
     mocker.patch("weko_workflow.utils.set_mail_info",return_value=mail_info)
     activity = db_register["activities"][1]
     guest_activity = db_register["activities"][8]
+    guest_activity_2 = db_register["activities"][11]
+    guest_activity_3 = db_register["activities"][12]
     next_step_approver_id = users[2]["id"]
     not_next_step_approver_id = 9999
     file_data={
@@ -2601,7 +2604,7 @@ def test_process_send_approval_mails(app,db_register,users,mocker):
             }
     # no1, not guest, approval is True,previous.inform_approval is True
     actions_mail_setting={
-        "previous":{"inform_reject": {"mail": "0", "send": False}, "inform_itemReg": {"mail": "0", "send": False},
+        "previous":{"inform_reject": {"mail": "0", "send": False}, "inform_itemReg": {"mail": "0", "send": False}, "inform_itemReg_for_registerPerson":{"mail": "0", "send": True},
                      "inform_approval": {"mail": "0", "send": True}, "request_approval": {"mail": "0", "send": False}, 
                      "inform_reject_for_guest": {"mail": "0", "send": False}, "inform_approval_for_guest": {"mail": "0", "send": True},
                      "request_approval_for_guest": {"mail": "0", "send": False}},
@@ -2648,7 +2651,7 @@ def test_process_send_approval_mails(app,db_register,users,mocker):
     # no3, not guest, approval is True,next.request_approval is True
     actions_mail_setting={
         "previous":{},
-        "next": {"inform_reject": {"mail": "0", "send": False}, "inform_itemReg": {"mail": "0", "send": False},
+        "next": {"inform_reject": {"mail": "0", "send": False}, "inform_itemReg": {"mail": "0", "send": False}, "inform_itemReg_for_registerPerson":{"mail": "0", "send": True},
                  "inform_approval": {"mail": "0", "send": False}, "request_approval": {"mail": "0", "send": True},
                    "inform_reject_for_guest": {"mail": "0", "send": False}, "inform_approval_for_guest": {"mail": "0", "send": False},
                   "request_approval_for_guest": {"mail": "0", "send": True}},
@@ -2698,7 +2701,7 @@ def test_process_send_approval_mails(app,db_register,users,mocker):
     # approval is True,previous.inform_approval is False,next.request_approval is False
     actions_mail_setting={
         "previous":{},
-        "next": {"inform_reject": {"mail": "0", "send": False}, "inform_itemReg": {"mail": "0", "send": False},
+        "next": {"inform_reject": {"mail": "0", "send": False}, "inform_itemReg": {"mail": "0", "send": False}, "inform_itemReg_for_registerPerson":{"mail": "0", "send": True},
                 "inform_approval": {"mail": "0", "send": False}, "request_approval": {"mail": "0", "send": False},
                 "inform_reject_for_guest": {"mail": "0", "send": False}, "inform_approval_for_guest": {"mail": "0", "send": False}, 
                 "request_approval_for_guest": {"mail": "0", "send": False}},
@@ -2715,7 +2718,7 @@ def test_process_send_approval_mails(app,db_register,users,mocker):
 
     # no6, approval is True, previous.inform_approval is False,inform_itemreg is True
     actions_mail_setting={
-        "previous":{"inform_reject": {"mail": "0", "send": False}, "inform_itemReg": {"mail": "0", "send": True},
+        "previous":{"inform_reject": {"mail": "0", "send": False}, "inform_itemReg": {"mail": "0", "send": True}, "inform_itemReg_for_registerPerson":{"mail": "0", "send": False},
                    "inform_approval": {"mail": "0", "send": False}, "request_approval": {"mail": "0", "send": False},
                      "inform_reject_for_guest": {"mail": "0", "send": False}, "inform_approval_for_guest": {"mail": "0", "send": False}, 
                      "request_approval_for_guest": {"mail": "0", "send": False}},
@@ -2738,6 +2741,60 @@ def test_process_send_approval_mails(app,db_register,users,mocker):
     process_send_approval_mails(activity, actions_mail_setting,next_step_approver_id,file_data)
     mock_sender.assert_called_with(test_mail_info,"0")
 
+    actions_mail_setting={
+        "previous":{"inform_reject": {"mail": "0", "send": False}, "inform_itemReg": {"mail": "0", "send": True}, "inform_itemReg_for_registerPerson":{"mail": "0", "send": True},
+                   "inform_approval": {"mail": "0", "send": False}, "request_approval": {"mail": "0", "send": False},
+                     "inform_reject_for_guest": {"mail": "0", "send": False}, "inform_approval_for_guest": {"mail": "0", "send": False}, 
+                     "request_approval_for_guest": {"mail": "0", "send": False}},
+        "next": {},
+        "approval": True,
+        "reject": False}
+
+    mail_info={
+        "restricted_download_link":"",
+        "restricted_expiration_date":"",
+        "restricted_expiration_date_ja":"",
+        "restricted_expiration_date_en":""
+    }
+    mocker.patch("weko_workflow.utils.set_mail_info",return_value=mail_info)
+    test_mail_info = {
+        "restricted_download_link":"test_url",
+        "restricted_expiration_date":"",
+        "restricted_expiration_date_ja":"無制限",
+        "restricted_expiration_date_en":"Unlimited",
+        "mail_recipient":"wekosoftware@nii.ac.jp"
+    }
+
+    process_send_approval_mails(guest_activity_2, actions_mail_setting,next_step_approver_id,guest_file_data)
+    mock_sender.assert_called_with(test_mail_info,"0")
+
+    actions_mail_setting={
+        "previous":{"inform_reject": {"mail": "0", "send": False}, "inform_itemReg": {"mail": "0", "send": True}, "inform_itemReg_for_registerPerson":{"mail": "0", "send": True},
+                   "inform_approval": {"mail": "0", "send": False}, "request_approval": {"mail": "0", "send": False},
+                     "inform_reject_for_guest": {"mail": "0", "send": False}, "inform_approval_for_guest": {"mail": "0", "send": False}, 
+                     "request_approval_for_guest": {"mail": "0", "send": False}},
+        "next": {},
+        "approval": True,
+        "reject": False}
+
+    mail_info={
+        "restricted_download_link":"",
+        "restricted_expiration_date":"",
+        "restricted_expiration_date_ja":"",
+        "restricted_expiration_date_en":""
+    }
+    mocker.patch("weko_workflow.utils.set_mail_info",return_value=mail_info)
+    test_mail_info = {
+        "restricted_download_link":"test_url",
+        "restricted_expiration_date":"",
+        "restricted_expiration_date_ja":"無制限",
+        "restricted_expiration_date_en":"Unlimited",
+        "mail_recipient":"user@test.org"
+    }
+
+    process_send_approval_mails(guest_activity_3, actions_mail_setting,next_step_approver_id,guest_file_data)
+    mock_sender.assert_called_with(test_mail_info,"0")
+
      # approval is True, previous.inform_approval is False, previous is True, inform_itemReg.send is False
     actions_mail_setting={
         "previous":{"inform_itemReg": {"mail": "0", "send": False}},
@@ -2755,7 +2812,7 @@ def test_process_send_approval_mails(app,db_register,users,mocker):
 
     # no7, not guest, reject is True, previous.inform_reject is True
     actions_mail_setting={
-        "previous":{"inform_reject": {"mail": "0", "send": True}, "inform_itemReg": {"mail": "0", "send": False}, 
+        "previous":{"inform_reject": {"mail": "0", "send": True}, "inform_itemReg": {"mail": "0", "send": False},  "inform_itemReg_for_registerPerson":{"mail": "0", "send": True},
                     "inform_approval": {"mail": "0", "send": False}, "request_approval": {"mail": "0", "send": False},
                     "inform_reject_for_guest": {"mail": "0", "send": True}, "inform_approval_for_guest": {"mail": "0", "send": False},
                     "request_approval_for_guest": {"mail": "0", "send": False}},
@@ -2800,7 +2857,7 @@ def test_process_send_approval_mails(app,db_register,users,mocker):
 
     # reject is True, previous.inform_reject is False
     actions_mail_setting={
-        "previous":{"inform_reject": {"mail": "0", "send": False}, "inform_itemReg": {"mail": "0", "send": False},
+        "previous":{"inform_reject": {"mail": "0", "send": False}, "inform_itemReg": {"mail": "0", "send": False}, "inform_itemReg_for_registerPerson":{"mail": "0", "send": True},
                     "inform_approval": {"mail": "0", "send": False}, "request_approval": {"mail": "0", "send": False}, 
                     "inform_reject_for_guest": {"mail": "0", "send": False}, "inform_approval_for_guest": {"mail": "0", "send": False},
                     "request_approval_for_guest": {"mail": "0", "send": False}},

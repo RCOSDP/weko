@@ -649,7 +649,11 @@ def test_get_valid_onetime_download():
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_create_onetime_download_url -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_create_onetime_download_url(app):
     with app.test_request_context():
-        assert create_onetime_download_url('ACT','helloworld.pdf','1','wekosoftware@nii.ac.jp')==None
+        assert create_onetime_download_url('ACT','helloworld.pdf','1','wekosoftware@nii.ac.jp','test_password')==None
+
+    with app.test_request_context():
+        with patch('weko_records_ui.utils.get_restricted_access', return_value=""):
+            assert create_onetime_download_url('ACT','helloworld.pdf','1','wekosoftware@nii.ac.jp','test_password')==False
 
 
 # def update_onetime_download(**kwargs) -> NoReturn:
