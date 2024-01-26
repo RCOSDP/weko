@@ -453,24 +453,37 @@ class BucketResource(ContentNegotiatedMethodView):
             }
         )
 
-    @need_permissions(
-        lambda self, bucket, versions: bucket,
-        'bucket-read',
-    )
     def listobjects(self, bucket, versions):
         """List objects in a bucket.
 
         :param bucket: A :class:`invenio_files_rest.models.Bucket` instance.
         :returns: The Flask response.
         """
-        if versions is not missing:
-            check_permission(
-                current_permission_factory(bucket, 'bucket-read-versions'),
-                hidden=False
-            )
+        from invenio_records_files.models import RecordsBuckets
+        from weko_records_ui.permissions import check_file_download_permission
+        from invenio_files_rest.models import as_bucket_id
+
+        # Get record metadata (table records_metadata) from bucket_id.
+        bucket_id = as_bucket_id(bucket)
+        rb = RecordsBuckets.query.filter_by(bucket_id=bucket_id).first()
+        rm = RecordMetadata.query.filter_by(id=rb.record_id).first()
+        all_obj = ObjectVersion.get_by_bucket(
+                bucket.id, versions=versions is not missing).limit(1000).all()
+        # Check and file_access_permission of file in this record metadata.
+        hash_table = {}
+        data = []
+        for i, v in enumerate(all_obj):
+            hash_table[v.key] = i
+        for k, v in rm.json.items():
+            if isinstance(v, dict) and v.get('attribute_type') == 'file':
+                for item in v.get('attribute_value_mlt', []):
+                    if item.get('filename') in hash_table:
+                        file_access_permission = \
+                            check_file_download_permission(rm.json, item)
+                        if file_access_permission:
+                            data.append(all_obj[hash_table[item.get('filename')]])
         return self.make_response(
-            data=ObjectVersion.get_by_bucket(
-                bucket.id, versions=versions is not missing).limit(1000).all(),
+            data=data,
             context={
                 'class': ObjectVersion,
                 'bucket': bucket,
@@ -612,7 +625,7 @@ class ObjectResource(ContentNegotiatedMethodView):
             if isinstance(v, dict) and v.get('attribute_type') == 'file':
                 for item in v.get('attribute_value_mlt', []):
                     is_this_version = \
-                        item.get('version_id') == version_id or \
+                        item.get('version_id') == str(version_id) or \
                         version_id == None
                     this_file = item.get('filename') == key
                     if is_this_version and this_file:
