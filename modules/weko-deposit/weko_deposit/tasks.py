@@ -51,7 +51,7 @@ ORIGIN_LABEL = "origin"
 TITLE_LIST = ["record_id", "author_ids", "message"]
 
 @shared_task(ignore_result=True)
-def update_items_by_authorInfo(user_id, target, origin_pkid_list=[], origin_id_list=[], update_gather_flg=False):    
+def update_items_by_authorInfo(user_id, target, origin_pkid_list=[], origin_id_list=[], update_gather_flg=False):     
     """Update item by authorInfo."""
     current_app.logger.debug('item update task is running.')
     process_counter = {
