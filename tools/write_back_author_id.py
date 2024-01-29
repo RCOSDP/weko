@@ -14,6 +14,33 @@ from invenio_db import db
 from invenio_indexer.api import RecordIndexer
 from weko_authors.models import Authors
 
+names_key_map = {
+    "creator":{
+        "names_key": "creatorNames",
+        "name_key": "creatorName",
+        "fnames_key": "familyNames",
+        "fname_key": "familyName",
+        "gnames_key": "givenNames",
+        "gname_key": "givenName",
+    },
+    "contributor": {
+        "names_key": "contributorNames",
+        "name_key": "contributorName",
+        "fnames_key": "familyNames",
+        "fname_key": "familyName",
+        "gnames_key": "givenNames",
+        "gname_key": "givenName",
+    },
+    "full_name":{
+        "names_key": "names",
+        "name_key": "name",
+        "fnames_key": "familyNames",
+        "fname_key": "familyName",
+        "gnames_key": "givenNames",
+        "gname_key": "givenName",
+    }
+}
+
 def get_original_data(filename, institution):
     original_data = []
     with open(filename, "r") as f:
@@ -117,6 +144,7 @@ def write_back_oringinal_data(origin_data, institution):
                             ]
                         }
                     },
+                    "_source":{"excludes":["content"]}
                     "size": 10000,
                     "from": 0
                 }
@@ -137,15 +165,24 @@ def write_back_oringinal_data(origin_data, institution):
                                     is_duplicate = False
                                     # WEKO IDが対象と同じ
                                     if isinstance(data, dict) and "nameIdentifiers" in data:
+                                        if 'creatorNames' in data:
+                                            prop_type = 'creator'
+                                        elif 'contributorNames' in data:
+                                            prop_type = 'contributor'
+                                        elif 'names' in data:
+                                            prop_type = 'full_name'
+                                        else:
+                                            continue
                                         for id in data["nameIdentifiers"]:
                                             if id["nameIdentifierScheme"] == "WEKO":
                                                 if id["nameIdentifier"] == str(pk_id):
                                                     is_duplicate=True
                                                     break
                                     if is_duplicate:
-                                        full_name = data.get("creatorNames")[0].get("creatorName","") if len(data.get("creatorNames",[])) > 0 else ""
-                                        given_name = data.get("givenNames")[0].get("givenName","") if len(data.get("creatorNames",[])) > 0 else ""
-                                        family_name = data.get("familyNames")[0].get("familyName","") if len(data.get("creatorNames",[])) > 0 else ""
+                                        key_map = names_key_map[prop_type]
+                                        full_name = data.get(key_map["names_key"])[0].get(key_map["name_key"],"") if len(data.get(key_map["names_key"],[])) > 0 else ""
+                                        given_name = data.get(key_map["gnames_key"])[0].get(key_map["gname_key"],"") if len(data.get(key_map["gnames_key"],[])) > 0 else ""
+                                        family_name = data.get(key_map["fnames_key"])[0].get(key_map["fname_key"],"") if len(data.get(key_map["fnames_key"],[])) > 0 else ""
                                         print("# {institution},{recid},{pk_id},'{full_name}',{first_name},{family_name}".format(
                                             institution=institution,
                                             recid=recid,

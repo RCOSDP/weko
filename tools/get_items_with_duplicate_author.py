@@ -54,6 +54,7 @@ def get_items_with_duplicate_author(origin_data):
                         ]
                     }
                 },
+                "_source":{"excludes":["content"]},
                 "size": 10000,
                 "from": 0
             }
