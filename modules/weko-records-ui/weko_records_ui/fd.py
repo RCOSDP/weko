@@ -434,6 +434,7 @@ def file_download_onetime(pid, record,file_name=None, user_mail=None,login_flag=
         filename = kwargs.get("filename")
         token = request.args.get('token', type=str)
         mailaddress = request.args.get('mailaddress',None)
+        input_password = ""
         if request.method == "POST":
             input_pwd = request.get_json().get('input_password')
             if input_pwd:
@@ -503,8 +504,9 @@ def file_download_onetime(pid, record,file_name=None, user_mail=None,login_flag=
 
     passcheck_function = True
     restricted_access = AdminSettings.get(name='restricted_access',dict_to_object=False)
+    password_for_download = onetime_download.extra_info.get("password_for_download", "")
     if restricted_access and restricted_access.get('password_enable', False):
-        if input_password != onetime_download.extra_info["password_for_download"]:
+        if password_for_download and input_password != password_for_download:
             passcheck_function = False
 
     #　Guest Mailaddress Check

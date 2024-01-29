@@ -3512,15 +3512,17 @@ def process_send_approval_mails(activity_detail, actions_mail_setting,
                     .get("inform_itemReg_for_registerPerson", {}) 
                 if _check_mail_setting(setting):
                     if record.get('_deposit') and \
-                    record['_deposit'].get('owners_ext') and \
-                    record['_deposit']['owners_ext'].get('email'):
-                        mail_info['mail_recipient'] = record['_deposit']['owners_ext'].get('email')
-                        process_send_mail(mail_info, setting["mail"])
+                    record['_deposit'].get('owners'):
+                        owners = record['_deposit'].get('owners')
+                        owners_email = _get_email_list_by_ids(owners)
+                        for mail_address in owners_email:
+                            mail_info['mail_recipient'] = mail_address
+                            process_send_mail(mail_info, setting["mail"])
                     if record.get('_deposit') and \
-                    record['_deposit'].get('shared_user_ids'):
-                        shared_user_ids = record['_deposit'].get('shared_user_ids')
-                        shared_user_emails = _get_email_list_by_ids(shared_user_ids)
-                        for mail_address in shared_user_emails:
+                    record['_deposit'].get('weko_shared_ids'):
+                        shared_user_ids = record['_deposit'].get('weko_shared_ids',[])
+                        shared_users_emails = _get_email_list_by_ids(shared_user_ids)
+                        for mail_address in shared_users_emails:
                             mail_info['mail_recipient'] = mail_address
                             process_send_mail(mail_info, setting["mail"])
 

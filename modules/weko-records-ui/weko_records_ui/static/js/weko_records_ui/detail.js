@@ -355,13 +355,18 @@ $('#mailcheck_download_modal').on('hidden.bs.modal', function () {
 })
 $('#mailaddress_confirm_download').click(function () {
  let mailaddress = document.getElementById('mail_form').value;
- let input_password = document.getElementById('input_password').value;
+ let password_checkflag = document.getElementById("password_checkflag").value;
+ var input_password;
+ var post_data = {};
+ if(password_checkflag == "True"){
+  input_password = document.getElementById('input_password').value;
+  post_data = {'input_password': input_password};
+}
  let input_error = document.getElementById('input_error_messsge').value;
  let url_element = document.getElementById('url_element');
  let onetime_file_url = url_element.dataset.onetime_file_url;
  const get_uri =  onetime_file_url + '&mailaddress='+ mailaddress + '&isajax=true';
  let item_detailes_url = location.pathname;
- let post_data = {'input_password': input_password};
  if(mailaddress == null || mailaddress == ""){
    alert(input_error);
    document.location.href = onetime_file_url;

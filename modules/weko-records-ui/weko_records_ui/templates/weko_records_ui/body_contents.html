@@ -460,6 +460,7 @@
   </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
 {%-if mailcheckflag %}
+<input id="password_checkflag" type="hidden" value='{{ password_checkflag }}'/>
   <div class="modal fade" tabindex="-1" role="dialog" id="mailcheck_download_modal">
     <div class="modal-dialog" role="document" style="display: table; width: 650px">
         <div class="modal-content">
@@ -467,7 +468,13 @@
             <button type="button" class="close" id="close_btn" data-dismiss="modal"
                     aria-label="Close"><span aria-hidden="true">&times;</span>
             </button>
-            <h4 class="modal-title">{{ _('To download the files below, you will need to enter your email address and password.') }}</h4>
+            <h4 class="modal-title">
+              {%- if password_checkflag %}
+                {{ _('To download the files below, you will need to enter your email address and password.') }}
+              {%- else %}
+              {{ _('To download the files below, you will need to enter your email address.') }}
+              {%- endif %}
+            </h4>
             <h4 class="modal-title">  {{_('File Name')}} :{{ onetime_file_name }}</h4>
           </div>
           <div class="modal-body">
@@ -485,6 +492,7 @@
                 <input type="password" class="form-control" id="input_password"
                       aria-describedby="passHelp"
                       placeholder='{{ _("Password") }}'>
+                <div>{{_('If you have not set a password, please apply again.')}}</div>
               </div>
             {%- endif %}
           </div>

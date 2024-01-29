@@ -94,24 +94,32 @@ $(document).ready(function () {
     let obj_id = $(this).context.id;
     let id_list = obj_id.split('_');
     let id_list_for_guest = obj_id.split('_');
+    let id_list_for_registerPerson = obj_id.split('_');
     let action_id = id_list.pop();
     id_list_for_guest.pop();
+    id_list_for_registerPerson.pop();
     id_list.push('mail');
     id_list_for_guest.push('mail_for_guest');
+    id_list_for_registerPerson.push('mail_for_registerPerson');
     id_list.push(action_id);
     id_list_for_guest.push(action_id);
+    id_list_for_registerPerson.push(action_id);
     let mail_control_id = id_list.join('_');
     let mail_for_guest_control_id = id_list_for_guest.join('_');
+    let mail_for_registerPerson_control_id = id_list_for_registerPerson.join('_');
     let cur_row = $(this).parents('tr');
     let actionname = $('#td_action_name_' + action_id).text();
     if ($(this).context.checked) {
       cur_row.find('#' + mail_control_id).removeAttr('disabled');
+      cur_row.find('#' + mail_for_registerPerson_control_id).removeAttr('disabled');
       if (isApproval({'name': actionname})){
         cur_row.find('#' + mail_for_guest_control_id).removeAttr('disabled');
       }
     } else {
       cur_row.find('#' + mail_control_id).attr("disabled", "disabled");
       cur_row.find('#' + mail_control_id)[0][0].selected = true;
+      cur_row.find('#' + mail_for_registerPerson_control_id).attr("disabled", "disabled");
+      cur_row.find('#' + mail_for_registerPerson_control_id)[0][0].selected = true;
       if(isApproval({'name': actionname})){
         cur_row.find('#' + mail_for_guest_control_id).attr("disabled", "disabled");
         cur_row.find('#' + mail_for_guest_control_id)[0][0].selected = true;

@@ -98,13 +98,18 @@ $(document).ready(function () {
 
 
   function validateUserEmail(email, confirmEmail) {
-    let regex = /^([a-zA-Z0-9_.+-])+@(([a-zA-Z0-9-])+\.)+([a-zA-Z0-9]{2,4})+$/;
-    return (email && confirmEmail && email === confirmEmail && regex.test(email))
-  }
+      let regex = /^([a-zA-Z0-9_.+-])+@(([a-zA-Z0-9-])+\.)+([a-zA-Z0-9]{2,4})+$/;
+      return (email && confirmEmail && email === confirmEmail && regex.test(email))
+    }
 
   function validatePassword(password, confirmPassword){
+    let password_checkflag = document.getElementById("password_checkflag").value;
     let regex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[@!#\$%&=\-\+\*\/\.,:;\[\]\|])[a-zA-Z0-9@!#\$%&=\-\+\*\/\.,:;\[\]\|]{8,}$/;
-    return (password && confirmPassword && password === confirmPassword && regex.test(password))
+    if (password_checkflag == "True"){
+      return (password && confirmPassword && password === confirmPassword && regex.test(password))
+    }else{
+      return true;
+    }
   }
 
   $('#confirm_email_btn').click(function () {
@@ -114,9 +119,14 @@ $(document).ready(function () {
     let user_mail_confirm = userMailConfirmElement.val();
     let passwordElement = $('#password_for_download');
     let passwordConfirmElement = $('#password_for_download_confirm');
-    let password_for_download = passwordElement.val();
-    let password_for_download_confirm = passwordConfirmElement.val();
-    if (validateUserEmail(user_mail, user_mail_confirm) && validatePassword(password_for_download, password_for_download_confirm)) {
+    let password_checkflag = document.getElementById("password_checkflag").value;
+    var password_check = true;
+    if(password_checkflag == "True"){
+      var password_for_download = passwordElement.val();
+      var password_for_download_confirm = passwordConfirmElement.val();
+      password_check = validatePassword(password_for_download, password_for_download_confirm);
+    }
+    if (validateUserEmail(user_mail, user_mail_confirm) && password_check) {
       let fileName = $(this).data("guest_filename_data");
       let dataType = $(this).data("guest_data_type_title");
       let recordID = $(this).data("guest_record_id");

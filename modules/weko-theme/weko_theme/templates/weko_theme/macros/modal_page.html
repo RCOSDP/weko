@@ -125,6 +125,7 @@
 
 <!--Email Confirm Modal -->
 {% macro email_modal(modal_id="", button_id="", button_text="", title="", password_checkflag=false ) %}
+<input id="password_checkflag" type="hidden" value='{{ password_checkflag }}'/>
   <div class="modal fade" tabindex="-1" role="dialog" id="{{ modal_id }}">
     <div class="modal-dialog" role="document">
       <div class="modal-content">
@@ -157,9 +158,9 @@
                     aria-describedby="passHelp"
                     placeholder='{{ _("Password") }}'>
               <div class="password-rule">
-                <br class="password-rule">・{{_('password rule1')}}</br>
-                <br class="password-rule">・{{_('password rule2')}}</br>
-                <br class="password-rule">・{{_('available characters')}}（ @ ! # $ % &amp; = - + * / . , : ; [ ] | ) </br>
+                <div>・{{_('password rule1')}}</br></div>
+                <div>・{{_('password rule2')}}</br></div>
+                <div>・{{_('available characters')}}（ @ ! # $ % &amp; = - + * / . , : ; [ ] | ) </div>
               </div>
             </div>
             <div class="form-group user-mail">
