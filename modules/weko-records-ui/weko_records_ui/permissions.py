@@ -83,7 +83,7 @@ def file_permission_factory(record, *args, **kwargs):
     return type('FileDownLoadPermissionChecker', (), {'can': can})()
 
 
-def check_file_download_permission(record, fjson, is_display_file_info=False):
+def check_file_download_permission(record, fjson, is_display_file_info=False, is_delete=False):
     """Check file download."""
     def site_license_check():
         # site license permission check
@@ -151,6 +151,12 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
         for role in list(current_user.roles or []):
             if role.name in supers:
                 return is_can
+            
+        # If the check is for the purpose of deleting.
+        # And login user is not owner or super users.
+        # Then return False. (not permission)
+        if is_delete:
+            return False
 
         try:
             from .utils import is_future

@@ -598,7 +598,7 @@ class ObjectResource(ContentNegotiatedMethodView):
             )
 
     @classmethod
-    def get_object(cls, bucket, key, version_id):
+    def get_object(cls, bucket, key, version_id, is_delete=False):
         """Retrieve object and abort if it doesn't exists.
 
         If the file is not found, the connection is aborted and the 404
@@ -607,6 +607,7 @@ class ObjectResource(ContentNegotiatedMethodView):
         :param bucket: The bucket (instance or id) to get the object from.
         :param key: The file key.
         :param version_id: The version ID.
+        :param is_delete: Is delete.
         :returns: A :class:`invenio_files_rest.models.ObjectVersion` instance.
         """
         from invenio_records_files.models import RecordsBuckets
@@ -630,7 +631,7 @@ class ObjectResource(ContentNegotiatedMethodView):
                     this_file = item.get('filename') == key
                     if is_this_version and this_file:
                         file_access_permission = \
-                            check_file_download_permission(rm.json, item)
+                            check_file_download_permission(rm.json, item, is_delete=is_delete)
                         flag = True
                         break
             if flag:
@@ -963,7 +964,7 @@ class ObjectResource(ContentNegotiatedMethodView):
         if upload_id:
             return self.multipart_listparts(bucket, key, upload_id)
         else:
-            obj = self.get_object(bucket, key, version_id)
+            obj = self.get_object(bucket, key, version_id, is_delete=False)
             # If 'download' is missing from query string it will have
             # the value None.
             return self.send_object(bucket, obj,
@@ -1025,7 +1026,7 @@ class ObjectResource(ContentNegotiatedMethodView):
         if upload_id is not None:
             return self.multipart_delete(bucket, key, upload_id)
         else:
-            obj = self.get_object(bucket, key, version_id)
+            obj = self.get_object(bucket, key, version_id, is_delete=True)
             return self.delete_object(bucket, obj, version_id)
 
 
