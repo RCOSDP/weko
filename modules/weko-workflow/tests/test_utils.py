@@ -27,6 +27,7 @@ from weko_admin.models import SiteInfo
 from weko_records_ui.models import FilePermission,FileOnetimeDownload
 from weko_records_ui.utils import get_list_licence
 from weko_user_profiles import UserProfile
+from weko_records.models import ItemApplication
 from weko_records.api import ItemTypes, ItemsMetadata
 from weko_user_profiles.config import WEKO_USERPROFILES_POSITION_LIST,WEKO_USERPROFILES_INSTITUTE_POSITION_LIST
 from weko_workflow.models import ActivityHistory,GuestActivity
@@ -646,10 +647,13 @@ def test_prepare_edit_workflow(app, workflow, db_records,users,mocker, order_if)
         recid = db_records[0][0]
         deposit = db_records[0][6]
         mocker.patch("weko_workflow.utils.FeedbackMailList.get_mail_list_by_item_id", return_value = [{"email":"exam@exam.com","author_id":""}])
-        mocker.patch("weko_workflow.utils.RequestMailList.get_mail_list_by_item_id", return_value = [{"email":"exam@exam.com","author_id":""}])
-        
+        request_mail_mock = mocker.patch("weko_workflow.utils.RequestMailList.get_mail_list_by_item_id", return_value = [{"email":"exam@exam.com","author_id":""}])
+        item_application_mock = mocker.patch("weko_workflow.utils.ItemApplication.get_item_application_by_item_id", return_value = {"workflow":1, "terms":"term_free", "termsDescription":"test"})
+
         if order_if == 0:
             result = prepare_edit_workflow(data,recid,deposit)
+            request_mail_mock.assert_called()
+            item_application_mock.assert_called()
         if order_if == 1:
             with patch("weko_workflow.utils.IdentifierHandle.get_pidstore", return_value = None):
                 result = prepare_edit_workflow(data,recid,deposit)
@@ -1281,7 +1285,7 @@ def test_get_default_mail_sender(db):
     assert result == "test_sender"
 # def set_mail_info(item_info, activity_detail, guest_user=False):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_set_mail_info -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_set_mail_info(app, db_register, mocker, records_restricted, db_records):
+def test_set_mail_info(app, db_register, mocker, records_restricted, db_records, db):
     config = current_app.config
     mocker.patch("weko_workflow.utils.get_site_info_name",return_value=("name_en","name_ja"))
     mocker.patch("weko_workflow.utils.get_default_mail_sender",return_value="default_sender")
@@ -1407,17 +1411,49 @@ def test_set_mail_info(app, db_register, mocker, records_restricted, db_records)
     with app.test_request_context():
        record = WekoRecord.get_record(db_records[0][2].id)
        with patch("weko_workflow.utils.WekoRecord.get_record_by_pid", return_value = record):
-           result = set_mail_info(item_info,db_register["activities"][9],False)
-           assert result["landing_url"] != ""
+           with patch("weko_workflow.utils.url_for", return_value = 'records/1'):
+                result = set_mail_info(item_info,db_register["activities"][9],False)
+                assert result["landing_url"] != ""
 
     with app.test_request_context():
         record = WekoRecord.get_record(db_records[0][2].id)
         with patch("weko_workflow.utils.WekoRecord.get_record_by_pid", return_value = record):
-            with patch("weko_workflow.utils.WekoRecord.get_file_data", return_value = [{"filename":"aaa.txt"}]):
+            with patch("weko_workflow.utils.url_for", return_value = 'records/1'):
+                with patch("weko_workflow.utils.WekoRecord.get_file_data", return_value = [{"filename":"aaa.txt"}]):
+                    with patch("weko_workflow.utils.extract_term_description", return_value=("","")):
+                        result = set_mail_info(item_info,db_register["activities"][10],False)
+                        assert result["terms_of_use_jp"] == ""
+                        assert result["terms_of_use_en"] == ""
+
+    with app.test_request_context():
+        record = WekoRecord.get_record(db_records[0][2].id)
+        with patch("weko_workflow.utils.WekoRecord.get_record_by_pid", return_value = record):
+            with patch("weko_workflow.utils.WekoRecord.get_file_data", return_value = [{"filename":"recid/15"}]):
                 with patch("weko_workflow.utils.extract_term_description", return_value=("","")):
+                    item_id_1 = uuid.uuid4()
+                    item_application_1 = ItemApplication(id = 1, item_id = item_id_1, item_application = {"workflow":"1", "terms":"term_free", "termsDescription":"利用規約自由入力"})
+                    with db.session.begin_nested():
+                        db.session.add(item_application_1)
+                    db.session.commit()
+                    db_register["activities"][10]["extra_info"] = {"file_name":"recid/15"}
+                    mocker.patch("weko_workflow.utils.PersistentIdentifier.get", return_value = "123456789")
                     result = set_mail_info(item_info,db_register["activities"][10],False)
-                    assert result["terms_of_use_jp"] == ""
-                    assert result["terms_of_use_en"] == ""
+                    assert result["terms_of_use_jp"] == "利用規約自由入力"
+
+    with app.test_request_context():
+        record = WekoRecord.get_record(db_records[0][2].id)
+        with patch("weko_workflow.utils.WekoRecord.get_record_by_pid", return_value = record):
+            with patch("weko_workflow.utils.url_for", return_value = 'records/1'):
+                with patch("weko_workflow.utils.extract_term_description", return_value=("test_terms_ja","test_terms_en")):
+                    result = set_mail_info(item_info,db_register["activities"][11],False)
+
+    with app.test_request_context():
+        record = WekoRecord.get_record(db_records[0][2].id)
+        with patch("weko_workflow.utils.WekoRecord.get_record_by_pid", return_value = ""):
+            # with patch("weko_workflow.utils.url_for", return_value = 'records/1'):
+                with patch("weko_workflow.utils.WekoRecord.get_file_data", return_value = [{"filename":"aaa.txt"}]):
+                    with patch("weko_workflow.utils.extract_term_description", return_value=("","")):
+                        result = set_mail_info(item_info,db_register["activities"][10],False)
 
 class MockDict():
     def __init__(self, data):
@@ -2025,26 +2061,62 @@ def test_init_activity_for_guest_user(app,db_register,mocker):
 
 # def send_usage_application_mail_for_guest_user(guest_mail: str, temp_url: str):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_send_usage_application_mail_for_guest_user -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_send_usage_application_mail_for_guest_user(app,db,mocker):
+@pytest.mark.parametrize('order_if', [1,2])
+def test_send_usage_application_mail_for_guest_user(app, db_register, mocker, records_restricted, db_records, db, order_if):
     mail_config = MailConfig(mail_default_sender="test_sender")
     db.session.add(mail_config)
     db.session.commit()
     mail = "guest@test.org"
     url = "https://test.com"
     mock_sender = mocker.patch("weko_workflow.utils.send_mail_url_guest_user")
-    send_usage_application_mail_for_guest_user(mail,url)
+    data = {"records_id":100, "file_name":"check_2022-03-10.tsv"}
+    record = WekoRecord.get_record(db_records[0][2].id)
+    if order_if==1:
+        with patch("weko_workflow.utils.WekoRecord.get_record_by_pid", return_value = record):
+            send_usage_application_mail_for_guest_user(mail, url, data)
+        mock_sender.assert_called_with(
+            {
+                "mail_address":mail,
+                "url_guest_user":url,
+                "mail_id": '1',
+                "restricted_institution_name_en": "",
+                "restricted_institution_name_ja": "",
+                "restricted_site_name_ja": "",
+                "restricted_site_name_en": "",
+                'terms_of_use_jp': '',
+                'terms_of_use_en': '',
+                "restricted_site_mail": "test_sender",
+                "restricted_site_url": "https://localhost"
+            }
+        )
 
-    mock_sender.assert_called_with(
-        {
-            "template":"",
-            "mail_address":mail,
-            "url_guest_user":url,
-            "restricted_site_name_ja": "",
-            "restricted_site_name_en": "",
-            "restricted_site_mail": "test_sender",
-            "restricted_site_url": "https://localhost",
-        }
-    )
+    if order_if==2:
+        data = {"records_id":100, "file_name":"recid/15.0"}
+        with patch("weko_workflow.utils.WekoRecord.get_record_by_pid", return_value = record):
+            item_id_1 = uuid.uuid4()
+            item_application_1 = ItemApplication(id = 1, item_id = item_id_1, item_application = {"workflow":"1", "terms":"term_free", "termsDescription":"利用規約自由入力"})
+            with db.session.begin_nested():
+                db.session.add(item_application_1)
+            db.session.commit()
+            class mockuuid:
+                object_uuid = item_id_1
+            with patch("weko_workflow.utils.PersistentIdentifier.get", return_value = mockuuid()):
+                send_usage_application_mail_for_guest_user(mail, url, data)
+        mock_sender.assert_called_with(
+            {
+                "mail_address":mail,
+                "url_guest_user":url,
+                "mail_id": '1',
+                "restricted_institution_name_en": "",
+                "restricted_institution_name_ja": "",
+                "restricted_site_name_ja": "",
+                "restricted_site_name_en": "",
+                'terms_of_use_jp': '',
+                'terms_of_use_en': '利用規約自由入力',
+                "restricted_site_mail": "test_sender",
+                "restricted_site_url": "https://localhost"
+            }
+        )
 # def validate_guest_activity_token(
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_validate_guest_activity_token -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_validate_guest_activity_token(app):

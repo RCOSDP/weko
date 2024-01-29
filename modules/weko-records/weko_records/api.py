@@ -47,6 +47,7 @@ from werkzeug.local import LocalProxy
 from .fetchers import weko_record_fetcher
 from .models import FeedbackMailList as _FeedbackMailList
 from .models import RequestMailList as _RequestMailList
+from .models import ItemApplication as _ItemApplication
 from .models import FileMetadata, ItemMetadata, ItemReference, ItemType
 from .models import ItemTypeEditHistory as ItemTypeEditHistoryModel
 from .models import ItemTypeMapping, ItemTypeName, ItemTypeProperty, \
@@ -2195,6 +2196,66 @@ class RequestMailList(object):
         for item_id in item_ids:
             cls.delete(item_id)
 
+class ItemApplication(object):
+
+    @classmethod
+    def update(cls, item_id, item_application):
+        try:
+            with db.session.begin_nested():
+                query_object = _ItemApplication.query.filter_by(
+                    item_id=item_id).one_or_none()
+                if not query_object:
+                    query_object = _ItemApplication(
+                        item_id=item_id,
+                        item_application=item_application
+                    )
+                    db.session.add(query_object)
+                else:
+                    query_object.item_application = item_application
+                    db.session.merge(query_object)
+            db.session.commit()
+        except SQLAlchemyError:
+            db.session.rollback()
+            return False
+        return True
+
+    @classmethod
+    def update_by_list_item_id(cls, item_ids, item_application):
+        for item_id in item_ids:
+            cls.update(item_id, item_application)
+
+    @classmethod
+    def get_item_application_by_item_id(cls, item_id):
+        try:
+            with db.session.no_autoflush:
+                query_object = _ItemApplication.query.filter_by(
+                    item_id=item_id).one_or_none()
+                if query_object and query_object.item_application:
+                    return query_object.item_application
+                else:
+                    return {}
+        except SQLAlchemyError:
+            return {}
+
+    @classmethod
+    def delete(cls, item_id):
+        try:
+            cls.delete_without_commit(item_id)
+            db.session.commit()
+        except SQLAlchemyError:
+            db.session.rollback()
+            return False
+        return True
+
+    @classmethod
+    def delete_without_commit(cls, item_id):
+        with db.session.begin_nested():
+            _ItemApplication.query.filter_by(item_id=item_id).delete()
+
+    @classmethod
+    def delete_by_list_item_id(cls, item_ids):
+        for item_id in item_ids:
+            cls.delete(item_id)
 
 class ItemLink(object):
     """Item Link API."""

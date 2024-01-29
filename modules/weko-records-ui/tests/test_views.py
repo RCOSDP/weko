@@ -46,6 +46,7 @@ from weko_records_ui.views import (
     get_file_permission,
     check_content_file_clickable,
     get_usage_workflow,
+    get_item_usage_workflow,
     get_workflow_detail,
     preview_able,
     get_uri,
@@ -427,6 +428,33 @@ def test_get_usage_workflow(app, users, workflows):
         res = get_usage_workflow(_file_json)
         assert res=="3"
 
+# def get_item_usage_workflow(record)
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_get_item_usage_workflow -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_get_item_usage_workflow(records):
+    indexer, results = records
+    record = results[0]["record"]
+    provide_list = {"workflow":"1", "terms":"term_free", "termsDescription":"利用規約自由入力"}
+    with patch("weko_records_ui.views.get_item_provide_list",return_value=provide_list):
+        class Mocklocale:
+            id = 0
+            def get_language_name(self, bbb):
+                return "Japanese"
+        with patch("weko_records_ui.views.get_locale", return_value = Mocklocale()):
+            terms=["利用規約自由入力",  "Terms of Use Free Input"]
+            with patch("weko_records_ui.views.extract_term_description",return_value =terms):
+                terms, provide= get_item_usage_workflow(record)
+                assert terms == "利用規約自由入力"
+                assert provide == "1"
+
+    provide_list = {"workflow":"1", "terms":"1111111111"}
+    with patch("weko_records_ui.views.get_item_provide_list",return_value=provide_list):
+        with patch("weko_records_ui.views.get_locale") as pi:
+            terms=["",  "Terms of Use Free Input"]
+            with patch("weko_records_ui.views.extract_term_description",return_value =terms):
+                pi.get_language_name = MagicMock()
+                terms, provide= get_item_usage_workflow(record)
+                assert terms == "Terms of Use Free Input"
+                assert provide == "1" 
 
 # def get_workflow_detail(workflow_id):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_get_workflow_detail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp

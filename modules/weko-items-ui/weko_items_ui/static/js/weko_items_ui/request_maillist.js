@@ -45,7 +45,6 @@ class RequestMailTarget extends React.Component {
           alert(jqXHR.responseJSON.msg);
       }
     })
-    console.log(display_request_mail_btn)
     this.setState({showRequestMailSender: display_request_mail_btn})
     this.props.bindingValueOfComponent('listEmail', emails);
   }

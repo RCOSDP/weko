@@ -23,6 +23,7 @@
 import base64
 import json
 import os
+import re
 from collections import OrderedDict
 from copy import deepcopy
 from datetime import datetime, timedelta
@@ -58,9 +59,10 @@ from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_deposit.pidstore import get_record_without_version
 from weko_handle.api import Handle
 from weko_records.api import FeedbackMailList, RequestMailList, ItemsMetadata, ItemTypeNames, \
-    ItemTypes, Mapping
+    ItemTypes, Mapping, ItemApplication
 from weko_records.models import ItemMetadata, ItemType
 from weko_records.serializers.utils import get_full_mapping, get_item_type_name
+from weko_records_ui.api import get_item_provide_list
 from weko_records_ui.models import FilePermission
 from weko_redis import RedisConnection
 from weko_user_profiles.config import \
@@ -1516,6 +1518,15 @@ def prepare_edit_workflow(post_activity, recid, deposit):
                 is_display_request_button=True
             )
 
+        item_application = ItemApplication.get_item_application_by_item_id(
+            item_id=recid.object_uuid)
+        if item_application:
+            activity.create_or_update_activity_item_application(
+                activity_id=rtn.activity_id,
+                item_application=item_application,
+                is_display_item_application_button=True
+            )
+
     return rtn
 
 
@@ -2294,12 +2305,17 @@ def set_mail_info(item_info, activity_detail, guest_user=False):
             mail_info['landing_url'] = urljoin(request.url_root, url_for(
                 'invenio_records_ui.recid', pid_value=record.pid.pid_value))
             file_info = next((file_data for file_data in record.get_file_data()
-                            if file_data.get('filename') == applying_filename))
+                            if file_data.get('filename') == applying_filename),{})
         if file_info:
             term_description_ja, term_description_en = extract_term_description(file_info)
             mail_info['terms_of_use_jp'] = term_description_ja
             mail_info['terms_of_use_en'] = term_description_en
-
+        elif re.fullmatch(r'recid/\d+(?:\.\d+)?', applying_filename):
+            pid_info = PersistentIdentifier.get('recid', applying_record_id)
+            provide_info = get_item_provide_list(pid_info.object_uuid)
+            term_description_ja, term_description_en = extract_term_description(provide_info)
+            mail_info['terms_of_use_jp'] = term_description_ja
+            mail_info['terms_of_use_en'] = term_description_en
     return mail_info
 
 
@@ -2311,8 +2327,8 @@ def extract_term_description(file_info):
     """
     terms = file_info.get('terms')
     if terms == 'term_free':
-        terms_description = file_info.get('termsDescription', '')
-        return '', terms_description
+        termsDescription = file_info.get('termsDescription', '')
+        return '', termsDescription
     elif not terms:
         return '', ''
 
@@ -2987,12 +3003,17 @@ def send_usage_application_mail_for_guest_user(guest_mail: str, temp_url: str, d
     file_info = None
     if record:
         file_info = next((file_data for file_data in record.get_file_data()
-                            if file_data.get('filename') == applying_filename))
+                            if file_data.get('filename') == applying_filename),{})
         if file_info:
             term_description_ja, term_description_en = extract_term_description(file_info)
             mail_info['terms_of_use_jp'] = term_description_ja
             mail_info['terms_of_use_en'] = term_description_en
-
+        elif re.fullmatch(r'recid/\d+(?:\.\d+)?', applying_filename):
+            pid_info = PersistentIdentifier.get('recid', applying_record_id)
+            provide_info = get_item_provide_list(pid_info.object_uuid)
+            term_description_ja, term_description_en = extract_term_description(provide_info)
+            mail_info['terms_of_use_jp'] = term_description_ja
+            mail_info['terms_of_use_en'] = term_description_en
     return send_mail_url_guest_user(mail_info)
 
 

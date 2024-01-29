@@ -20,6 +20,7 @@ from weko_admin import WekoAdmin
 from weko_admin.models import AdminLangSettings
 from weko_deposit.api import WekoDeposit, WekoIndexer
 from weko_records.api import ItemsMetadata, WekoRecord
+from weko_workflow.models import WorkFlow
 
 from weko_search_ui import WekoSearchUI
 from weko_search_ui.config import (
@@ -73,6 +74,9 @@ from weko_search_ui.utils import (
     getEncode,
     handle_check_and_prepare_feedback_mail,
     handle_check_and_prepare_request_mail,
+    handle_check_and_prepare_item_application,
+    check_exists_file_name,
+    check_terms_in_system_for_item_application,
     handle_check_and_prepare_index_tree,
     handle_check_and_prepare_publish_status,
     handle_check_cnri,
@@ -367,6 +371,7 @@ def test_check_import_items2(app,test_importdata,mocker,db, order_if):
             mocker.patch("weko_search_ui.utils.handle_check_and_prepare_publish_status")
             mocker.patch("weko_search_ui.utils.handle_check_and_prepare_feedback_mail")
             mocker.patch("weko_search_ui.utils.handle_check_and_prepare_request_mail")
+            mocker.patch("weko_search_ui.utils.handle_check_and_prepare_item_application")
             mocker.patch("weko_search_ui.utils.handle_check_file_metadata")
             mocker.patch("weko_search_ui.utils.handle_check_restricted_access_property")
             mocker.patch("weko_search_ui.utils.handle_check_cnri")
@@ -777,11 +782,14 @@ def test_register_item_metadata2(i18n_app, es_item_file_pipeline, deposit, es_re
                 with patch("weko_search_ui.utils.WekoDeposit.commit", return_value=None):
                     with patch("weko_search_ui.utils.WekoDeposit.publish_without_commit", return_value=None):
                         remove_request = mocker.patch("weko_search_ui.utils.WekoDeposit.remove_request_mail")
+                        delete_item_application = mocker.patch("weko_search_ui.utils.ItemApplication.delete_without_commit")
                         register_item_metadata(item, root_path, is_gakuninrdm=False)
                         remove_request.assert_called()
+                        delete_item_application.assert_called()
 
     item["metadata"]["request_mail_list"]={"email": "contributor@test.org", "author_id": ""}
     item["metadata"]["feedback_mail_list"]={"email": "contributor@test.org", "author_id": ""}
+    item["item_application"]={"workflow":"1", "terms":"term_free", "terms_description":"利用規約自由入力"}
     item["status"]="keep"
     
     item["identifier_key"]="item_1617186331708"
@@ -799,11 +807,13 @@ def test_register_item_metadata2(i18n_app, es_item_file_pipeline, deposit, es_re
                     if order_if == 4:
                         mocker.patch("weko_search_ui.utils.WekoDeposit.update_feedback_mail")
                         update_request = mocker.patch("weko_search_ui.utils.WekoDeposit.update_request_mail")
+                        update_item_application = mocker.patch("weko_search_ui.utils.ItemApplication.update")
                         mocker.patch("weko_search_ui.utils.WekoDeposit.newversion", return_value = WekoDeposit(0))
                         item["pid"]=None
                         item["status"]="new" 
                         register_item_metadata(item, root_path, is_gakuninrdm=False)
                         update_request.assert_called()
+                        update_item_application = mocker.patch("weko_search_ui.utils.ItemApplication.update")
 
 
 # def update_publish_status(item_id, status):
@@ -993,6 +1003,93 @@ def test_handle_check_and_prepare_request_mail(i18n_app, record_with_metadata):
     # Doesn't return any value
     assert not handle_check_and_prepare_request_mail([record])
     assert record["errors"] ==['指定されたtestは不正です。']
+
+# def handle_check_and_prepare_item_application(list_record):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_check_and_prepare_item_application -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_handle_check_and_prepare_item_application(i18n_app, record_with_metadata):
+    list_record = [record_with_metadata[0]]
+
+    # Doesn't return any value
+    assert not handle_check_and_prepare_item_application(list_record)
+
+    # 正常系
+    workflow = WorkFlow(id=1)
+    with patch("weko_search_ui.utils.WorkFlowApi.get_workflow_list", return_value=[workflow]):
+        record = {"metadata":{}, "item_application":{"workflow":"1", "terms":"term_free", "terms_description":"利用規約自由入力"}}
+        handle_check_and_prepare_item_application([record])
+        assert record["metadata"]["item_application"] == {"workflow":"1", "terms":"term_free", "termsDescription":"利用規約自由入力"}
+
+    # 正常系 item_applicationのworkflowが存在しない
+    workflow = WorkFlow(id=1)
+    with patch("weko_search_ui.utils.WorkFlowApi.get_workflow_list", return_value=[workflow]):
+        record = {"metadata":{}, "item_application":{"terms":"term_free", "terms_description":"利用規約自由入力"}}
+        handle_check_and_prepare_item_application([record])
+        assert not record["metadata"].get("item_application", "")
+
+    # 正常系 item_applicationのtermsが存在しない。
+    workflow = WorkFlow(id=1)
+    with patch("weko_search_ui.utils.WorkFlowApi.get_workflow_list", return_value=[workflow]):
+        record = {"metadata":{}, "item_application":{"workflow":"1", "terms_description":"利用規約自由入力"}}
+        handle_check_and_prepare_item_application([record])
+        assert not record["metadata"].get("item_application", "")
+
+    # 異常系 ファイル情報を持っている。
+    record = {"metadata":{}, "file_path":"/recid15/test.txt", "item_application":{"workflow":"1", "terms":"term_free", "terms_description":"利用規約自由入力"}}
+    handle_check_and_prepare_item_application([record])
+    assert record["errors"][0] == "If there is a info of content file, terms of use cannot be set."
+
+    # 異常系 workflowが文字列である。
+    workflow = WorkFlow(id=1)
+    with patch("weko_search_ui.utils.WorkFlowApi.get_workflow_list", return_value=[workflow]):
+        record = {"metadata":{}, "item_application":{"workflow":"not_exist", "terms":"term_free", "terms_description":"利用規約自由入力"}}
+        handle_check_and_prepare_item_application([record])
+        assert record["errors"][0] == "指定する提供方法はシステムに存在しません。"
+
+    # 異常系 workflowがシステムに存在しないworkflowである。
+    workflow = WorkFlow(id=1)
+    with patch("weko_search_ui.utils.WorkFlowApi.get_workflow_list", return_value=[workflow]):
+        record = {"metadata":{}, "item_application":{"workflow":"999999999999", "terms":"term_free", "terms_description":"利用規約自由入力"}}
+        handle_check_and_prepare_item_application([record])
+        assert record["errors"][0] == "指定する提供方法はシステムに存在しません。"
+
+    # 異常系 termsが存在しないtermsである。
+    with patch("weko_search_ui.utils.WorkFlowApi.get_workflow_list", return_value=[workflow]):
+        record = {"metadata":{}, "item_application":{"workflow":"1", "terms":"not_exist", "terms_description":"利用規約自由入力"}}
+        handle_check_and_prepare_item_application([record])
+        assert record["errors"][0] == "指定する利用規約はシステムに存在しません。"
+
+
+# def check_exists_file_name(item):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_check_exists_file_name -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_check_exists_file_name(i18n_app, record_with_metadata):
+    item = record_with_metadata[0]
+    # *.filenameに値が存在する。
+    assert check_exists_file_name(item)
+
+    # *.filenameに値が存在しない。
+    item = {"metadata":{"filename_test":[{"filename":""}]}}
+    assert not check_exists_file_name(item)
+
+# def check_terms_in_system_for_item_application(terms):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_check_terms_in_system_for_item_application -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_check_terms_in_system_for_item_application():
+    terms_list = [{"key":"1234567890", "content":{"en":{},"ja":{}}}]
+    with patch("weko_search_ui.utils.get_restricted_access", return_value=terms_list):
+        # temrsが空文字
+        assert check_terms_in_system_for_item_application("")
+
+        # termsが自由入力
+        assert check_terms_in_system_for_item_application("term_free")
+
+        # termsが存在するkey
+        assert check_terms_in_system_for_item_application("1234567890")
+
+        # termsが存在しないkey
+        assert not check_terms_in_system_for_item_application("not_exists")
+
+    # get_restricted_accessがNoneを返す場合
+    with patch("weko_search_ui.utils.get_restricted_access", return_value=None):
+        assert not check_terms_in_system_for_item_application("1234567890")
 
 # def handle_set_change_identifier_flag(list_record, is_change_identifier):
 def test_handle_set_change_identifier_flag(i18n_app, record_with_metadata):

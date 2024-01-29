@@ -38,7 +38,7 @@ from weko_admin.models import AdminSettings
 from weko_workflow.schema.marshmallow import ActionSchema, \
     ActivitySchema, GetRequestMailListSchema, ResponseMessageSchema, CancelSchema, PasswdSchema, LockSchema,\
     ResponseLockSchema, LockedValueSchema, GetFeedbackMailListSchema, SaveActivityResponseSchema,\
-    SaveActivitySchema, CheckApprovalSchema,ResponseUnlockSchema, GetRequestMailListSchema
+    SaveActivitySchema, CheckApprovalSchema,ResponseUnlockSchema, GetRequestMailListSchema, GetItemApplicationSchema
 from weko_workflow.schema.utils import get_schema_action, type_null_check
 from marshmallow.exceptions import ValidationError
 
@@ -70,7 +70,7 @@ from weko_deposit.pidstore import get_record_identifier, \
     get_record_without_version
 from weko_deposit.signals import item_created
 from weko_items_ui.api import item_login
-from weko_records.api import FeedbackMailList, RequestMailList, ItemLink
+from weko_records.api import FeedbackMailList, RequestMailList, ItemLink, ItemApplication
 from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_item_type_name
 from weko_records_ui.models import FilePermission
@@ -657,6 +657,23 @@ def init_activity_guest():
 
 @workflow_blueprint.route('/activity/guest-user/<string:file_name>', methods=['GET'])
 def display_guest_activity(file_name=""):
+    """Display content application activity for guest user.
+    @param file_name:File name
+    @return:
+    """
+    render_guest_workflow(file_name=file_name)
+
+
+@workflow_blueprint.route('/activity/guest-user/recid/<string:record_id>', methods=['GET'])
+def display_guest_activity_item_application(record_id=""):
+    """Display item application activity for guest user.
+    @param record_id:File name
+    @return:
+    """
+    render_guest_workflow(file_name='recid/' + record_id)
+
+
+def render_guest_workflow(file_name=""):
     """Display activity for guest user.
 
     @param file_name:File name
@@ -1458,12 +1475,16 @@ def next_action(activity_id='0', action_id=0):
             # 利用申請のWF時、申請されたファイルと、そのアイテム内の制限公開ファイルすべてにアクセス権を付与する
             permissions :List[FilePermission] = FilePermission.find_by_activity(activity_id)
             guest_activity :GuestActivity = GuestActivity.find_by_activity_id(activity_id)
-            if permissions and len(permissions) == 1:
-                # 利用申請(ログイン済)なら、WF作成時にFilePermissionが1レコードだけ作られている。
-                url_and_expired_date = grant_access_rights_to_all_open_restricted_files(activity_id,permissions[0] ,activity_detail)
-            elif guest_activity and len(guest_activity) == 1:
-                # 利用申請(ゲスト)なら、WF作成時にFilePermissionが作られていないが、GuestActivityが作られている。
-                url_and_expired_date = grant_access_rights_to_all_open_restricted_files(activity_id,guest_activity[0] ,activity_detail)
+            # validate file name
+            extra_info: dict = deepcopy(activity_detail.extra_info)
+            if extra_info and extra_info.get('file_name') and \
+                not re.fullmatch(r'recid/\d+(?:\.\d+)?', extra_info.get('file_name')):
+                if permissions and len(permissions) == 1:
+                    # 利用申請(ログイン済)なら、WF作成時にFilePermissionが1レコードだけ作られている。
+                    url_and_expired_date = grant_access_rights_to_all_open_restricted_files(activity_id,permissions[0] ,activity_detail)
+                elif guest_activity and len(guest_activity) == 1:
+                    # 利用申請(ゲスト)なら、WF作成時にFilePermissionが作られていないが、GuestActivityが作られている。
+                    url_and_expired_date = grant_access_rights_to_all_open_restricted_files(activity_id,guest_activity[0] ,activity_detail)
 
             
             if not url_and_expired_date:
@@ -1563,7 +1584,10 @@ def next_action(activity_id='0', action_id=0):
                 "WEKO_WORKFLOW_ITEM_REGISTRATION_ACTION_ID", 3))
         activity_request_mail = work_activity.get_activity_request_mail(
             activity_id=activity_id)
-        if action_feedbackmail or activity_request_mail:
+        activity_item_application = work_activity.get_activity_item_application(
+            activity_id=activity_id
+        )
+        if action_feedbackmail or activity_request_mail or activity_item_application:
             item_ids = [item_id]
             if not recid:
                 if ".0" in current_pid.pid_value:
@@ -1605,6 +1629,14 @@ def next_action(activity_id='0', action_id=0):
                 )
             else:
                 RequestMailList.delete_by_list_item_id(item_ids)
+
+            if activity_item_application and activity_item_application.item_application:
+                ItemApplication.update_by_list_item_id(
+                    item_ids=item_ids,
+                    item_application=activity_item_application.item_application
+                )
+            else:
+                ItemApplication.delete_by_list_item_id(item_ids)
 
         deposit.update_feedback_mail()
         deposit.update_request_mail()
@@ -2413,6 +2445,44 @@ def save_request_maillist(activity_id='0', action_id='0'):
         current_app.logger.exception("Unexpected error occured.")
     return jsonify(code=-1, msg=_('Error'))
 
+@workflow_blueprint.route(
+    '/save_item_application/<string:activity_id>/<int:action_id>',
+    methods=['POST'])
+@login_required
+@check_authority
+def save_item_application(activity_id='0', action_id='0'):
+
+    try:
+        if request.headers['Content-Type'] != 'application/json':
+            """Check header of request"""
+            return jsonify(code=-1, msg=_('Header Error'))
+
+        request_body = request.get_json(force=True)
+        workflow_for_item_application = request_body.get('workflow_for_item_application', '')
+        terms_without_contents = request_body.get('terms_without_contents', '')
+        is_display_item_application_button = request_body.get('is_display_item_application_button', False)
+        terms_description_without_contents =request_body.get('terms_description_without_contents', '')
+        if terms_description_without_contents:
+            item_application = {
+                "workflow" : workflow_for_item_application,
+                "terms" : terms_without_contents,
+                "termsDescription" : terms_description_without_contents
+            }
+        else:
+            item_application = {
+                "workflow" : workflow_for_item_application,
+                "terms" : terms_without_contents
+            }
+        work_activity = WorkActivity()
+        work_activity.create_or_update_activity_item_application(
+            activity_id=activity_id,
+            item_application=item_application,
+            is_display_item_application_button= is_display_item_application_button
+        )
+        return jsonify(code=0, msg=_('Success'))
+    except Exception:
+        current_app.logger.exception("Unexpected error occured.")
+    return jsonify(code=-1, msg=_('Error'))
 
 @workflow_blueprint.route('/get_feedback_maillist/<string:activity_id>',
                  methods=['GET'])
@@ -2558,7 +2628,32 @@ def get_request_maillist(activity_id='0'):
     res = ResponseMessageSchema().load({'code':-1,'msg':_('Error')})
     return jsonify(res.data), 400
 
-
+@workflow_blueprint.route('/get_item_application/<string:activity_id>', methods=['GET'])
+@login_required
+def get_item_application(activity_id='0'):
+    check_flg = type_null_check(activity_id, str)
+    if not check_flg:
+        current_app.logger.error("get_request_maillist: argument error")
+        res = ResponseMessageSchema().load({"code":-1, "msg":"arguments error"})
+        return jsonify(res.data), 400
+    try:
+        item_application_and_button = WorkActivity().get_activity_item_application(
+            activity_id=activity_id)
+        if item_application_and_button:
+            res = GetItemApplicationSchema().load({
+                'code':1,
+                'msg':_('Success'),
+                'item_application': item_application_and_button.item_application,
+                'is_display_item_application_button': item_application_and_button.display_item_application_button
+            })
+            return jsonify(res.data), 200
+        else:
+            res = ResponseMessageSchema().load({'code':0,'msg':'Empty!'})
+            return jsonify(res.data), 200
+    except Exception:
+        current_app.logger.exception("Unexpected error:")
+    res = ResponseMessageSchema().load({'code':-1,'msg':_('Error')})
+    return jsonify(res.data), 400
 
 @workflow_blueprint.route('/activity/lock/<string:activity_id>', methods=['POST'])
 @login_required

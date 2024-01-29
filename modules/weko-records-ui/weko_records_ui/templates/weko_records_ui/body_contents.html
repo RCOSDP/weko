@@ -31,6 +31,7 @@
 
 {% from "weko_records_ui/item_detail.html" import output_item_detail with context %}
 {% from "weko_records_ui/_macros.html" import check_download_file with context %}
+{% from "weko_records_ui/box/item_usage_application.html" import check_item_application with context %}
 <div class="panel-group">
   <div class="panel panel-default">
     <div class="panel-heading clearfix">
@@ -424,6 +425,7 @@
           {% if is_display_request_form %}
             {%- include "weko_records_ui/box/request.html" %}
           {% endif %}
+      {{ check_item_application(record, community, url_for_security) }}
 		  {% if config.WEKO_RECORDS_UI_DISPLAY_VERSION_BOX_FLG %}
              {%- include "weko_records_ui/box/versions.html" %}
 		  {% endif %}

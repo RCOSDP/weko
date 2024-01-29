@@ -47,6 +47,7 @@
     {% assets "weko_admin_react_bootstrap_js" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
     {% assets "weko_items_ui_feedback_maillist_js" %}<script type="text/babel" src="{{ ASSET_URL }}"></script>{% endassets %}
     {% assets "weko_items_ui_request_maillist_js" %}<script type="text/babel" src="{{ ASSET_URL }}"></script>{% endassets %}
+    {% assets "weko_items_ui_no_file_approval_js" %}<script type="text/babel" src="{{ ASSET_URL }}"></script>{% endassets %}
     {{ super() }}
     {% assets "invenio_deposit_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
     {%- if need_thumbnail %}
@@ -294,6 +295,14 @@
                     <input id="mail-address-label" type="hidden" value="{{_('Mail address')}}" />
                     <input id="import-button-name" type="hidden" value="{{_('Feedback Mail Import')}}" />
                   {%- endblock feedback_mail_list %}
+
+                  {%- block none_contents_approval %}
+                  <div id="none-contents-approval"></div>
+                  <input id="no_file_approval_checkbox_label" type="hidden" value="{{_('Set usage application workflow for item')}}" />
+                  <input id="no_file_approval_label" type="hidden" value="{{_('WorkFlow')}}" />
+                  <input id="terms_and_conditions_label" type="hidden" value="{{_('Terms and Conditions')}}" />
+                  <input id="invalid-item-application-format" type="hidden" value="{{_('error message for item application')}}" />                  
+                  {%- endblock none_contents_approval %}
 
                   {% if record|length %} <!-- Check Item Registration is edit mode then show version_management -->
                     {%- block radio_version_management %}

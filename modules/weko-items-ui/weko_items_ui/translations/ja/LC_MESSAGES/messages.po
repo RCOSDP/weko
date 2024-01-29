@@ -619,3 +619,9 @@ msgstr "リクエストメール送信先"
 
 msgid "Display Request Mail Button"
 msgstr "リクエストボタンを表示"
+
+msgid "error message for item application"
+msgstr "ファイルアップロード時は、アイテムに対し利用申請ワークフローを設定はできません。"
+
+msgid "Set usage application workflow for item"
+msgstr "アイテムに利用申請ワークフローを設定"

@@ -86,7 +86,7 @@ from weko_index_tree.models import Index
 from weko_workflow import WekoWorkflow
 from weko_search_ui import WekoSearchUI
 from weko_workflow.models import ActionStatusPolicy, Activity, ActionStatus, Action, ActivityAction, WorkFlow, FlowDefine, FlowAction, ActionFeedbackMail, ActivityRequestMail, ActionIdentifier,FlowActionRole, ActivityHistory,GuestActivity, WorkflowRole
-from weko_workflow.utils import MappingData
+from weko_workflow.utils import MappingData, generate_guest_activity_token_value
 from weko_workflow.views import workflow_blueprint as weko_workflow_blueprint
 from weko_workflow.config import WEKO_WORKFLOW_GAKUNINRDM_DATA,WEKO_WORKFLOW_ACTION_START,WEKO_WORKFLOW_ACTION_END,WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION,WEKO_WORKFLOW_REQUEST_MAIL_ID,WEKO_WORKFLOW_ACTION_APPROVAL,WEKO_WORKFLOW_ACTION_ITEM_LINK,WEKO_WORKFLOW_ACTION_OA_POLICY_CONFIRMATION,WEKO_WORKFLOW_ACTION_IDENTIFIER_GRANT,WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION_USAGE_APPLICATION,WEKO_WORKFLOW_ACTION_GUARANTOR,WEKO_WORKFLOW_ACTION_ADVISOR,WEKO_WORKFLOW_ACTION_ADMINISTRATOR,WEKO_WORKFLOW_REST_ENDPOINTS,WEKO_WORKFLOW_APPROVAL_PREVIEW
 from weko_workflow.ext import WekoWorkflowREST
@@ -1249,6 +1249,9 @@ def db_register(app, db, db_records, users, action_data, item_type):
                     activity_confirm_term_of_use=True,
                     title='test', shared_user_ids=[], extra_info={"record_id": 1, "file_name":"aaa.txt"},
                     action_order=6)
+    activity_no_contents = Activity(activity_id='A-00000001-10005',workflow_id=1, flow_id=flow_define.id,
+                    action_id=1, activity_login_user=1,title='test', shared_user_ids=[], extra_info={"record_id": 1, "file_name":"recid/1.0"},
+                    action_order=6)
     activity_guest_2 = Activity(activity_id='guest_2', item_id=db_records[1][2].id,workflow_id=1, flow_id=flow_define.id,
                     action_id=3, activity_login_user=users[3]["id"],
                     activity_update_user=1,
@@ -1397,7 +1400,7 @@ def db_register(app, db, db_records, users, action_data, item_type):
             'action_feedback_mail1':activity_item4_feedbackmail,
             'action_feedback_mail2':activity_item5_feedbackmail,
             'action_feedback_mail3':activity_item6_feedbackmail,
-            "activities":[activity,activity_item1,activity_item2,activity_item3,activity_item7,activity_item8,activity_item9,activity_item10,activity_guest,activity_landing_url,activity_terms_of_use,activity_guest_2,activity_guest_3]}
+            "activities":[activity,activity_item1,activity_item2,activity_item3,activity_item7,activity_item8,activity_item9,activity_item10,activity_guest,activity_landing_url,activity_terms_of_use,activity_no_contents,activity_guest_2,activity_guest_3]}
 
 @pytest.fixture()
 def db_register_1(app, db, db_records, users_1, action_data, item_type):
@@ -2343,7 +2346,7 @@ def db_register_usage_application(app, db, db_records, users, action_data, item_
                     activity_confirm_term_of_use=True,
                     title='test'
                     , shared_user_ids=[]
-                    , extra_info={},
+                    , extra_info={"file_name": "aaa.txt", "record_id": "1", "user_mail": "aaa@test.org", "related_title": "test", "is_restricted_access": True},
                     action_order=2)
     activity1_pre_action = ActivityAction(
         activity_id='A-00000001-20001'
@@ -2466,21 +2469,62 @@ def db_register_usage_application(app, db, db_records, users, action_data, item_
         ,expiration_date=datetime.now()
         ,is_usage_report=False
     )
+    # 利用申請(next ->end)
+    activity5 = Activity(activity_id='A-00000001-20005'
+                        ,workflow_id=workflows["workflow_workflow3"].id
+                        ,flow_id=workflows["flow_define3"].id
+                        ,action_id=4
+                        ,item_id=db_records[2][2].id
+                    , activity_login_user=1
+                    , action_status = 'M'
+                    , activity_update_user=1
+                    , activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f')
+                    , activity_community_id=3
+                    , activity_confirm_term_of_use=True
+                    , title='test'
+                    , shared_user_ids=[]
+                    , extra_info={"file_name": "recid/15.0", "record_id": "1", "user_mail": "aaa@test.org", "related_title": "test", "is_restricted_access": True}
+                    , action_order=3)
+    activity5_pre_action = ActivityAction(
+        activity_id='A-00000001-20005'
+        ,action_id=4
+        ,action_status = 'M'
+        ,action_order=3
+        ,action_handler=1
+    )
+    activity5_next_action = ActivityAction(
+        activity_id='A-00000001-20005'
+        ,action_id=2
+        ,action_status = 'M'
+        ,action_order=4
+        ,action_handler=-1
+    )
+    file_permission = FilePermission(
+        user_id = 1
+        ,record_id= 1
+        ,file_name= "aaa.txt"
+        ,usage_application_activity_id='A-00000001-20005'
+        ,usage_report_activity_id=None
+        ,status = -1
+    )
     with db.session.begin_nested():
         db.session.add(activity1)
         db.session.add(activity2)
         db.session.add(activity3)
         db.session.add(activity4)
+        db.session.add(activity5)
     db.session.commit()
     with db.session.begin_nested():
         db.session.add(activity1_next_action)
         db.session.add(activity2_next_action)
         db.session.add(activity3_next_action)
         db.session.add(activity4_next_action)
+        db.session.add(activity5_next_action)
         db.session.add(activity1_pre_action)
         db.session.add(activity2_pre_action)
         db.session.add(activity3_pre_action)
         db.session.add(activity4_pre_action)
+        db.session.add(activity5_pre_action)
         db.session.add(file_permission)
         db.session.add(guest_activity)
     db.session.commit()
@@ -2489,6 +2533,7 @@ def db_register_usage_application(app, db, db_records, users, action_data, item_
         ,"activity2":activity2
         ,"activity3":activity3
         ,"activity4":activity4
+        ,"activity5":activity5
     })
 
     permissions = list()
@@ -4413,3 +4458,39 @@ def make_record_restricted(db, indexer, id, index_id, item_type_id, userId):
         "rec_uuid": rec_uuid,
         "rec_uuid2": rec_uuid2,
     }
+
+@pytest.fixture()
+def db_guestactivity_2(app, db, db_register):
+    activity_id1 = db_register['activities'][1].activity_id
+    activity_id2 = db_register['activities'][0].activity_id
+    file_name = "Test_file"
+    guest_mail = "user@test.com"
+
+    token1 = generate_guest_activity_token_value(activity_id1, file_name, datetime.utcnow(), guest_mail)
+    record1 = GuestActivity(
+        user_mail=guest_mail,
+        record_id="record_id",
+        file_name=file_name,
+        activity_id=activity_id1,
+        token=token1,
+        expiration_date=-500,
+        is_usage_report=True
+    )
+
+    token2 = generate_guest_activity_token_value(activity_id2, file_name, datetime.utcnow(), guest_mail)
+    record2 = GuestActivity(
+        user_mail=guest_mail,
+        record_id="record_id",
+        file_name=file_name,
+        activity_id=activity_id2,
+        token=token2,
+        expiration_date=500,
+        is_usage_report=True
+    )
+
+    with db.session.begin_nested():
+        db.session.add(record1)
+        db.session.add(record2)
+    db.session.commit()
+
+    return [token1, token2]

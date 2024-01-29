@@ -61,7 +61,7 @@ from weko_deposit.pidstore import get_record_without_version
 from weko_index_tree.api import Indexes
 from weko_index_tree.utils import check_index_permissions, get_index_id, \
     get_user_roles
-from weko_records.api import FeedbackMailList, RequestMailList, ItemTypes, Mapping
+from weko_records.api import FeedbackMailList, RequestMailList, ItemTypes, Mapping, ItemApplication
 from weko_records.serializers.utils import get_item_type_name
 from weko_records.utils import replace_fqdn_of_file_metadata
 from weko_records_ui.permissions import check_created_id, \
@@ -974,6 +974,17 @@ def make_stats_file(item_type_id, recids, list_item_role):
             self.attr_data['request_mail_list']['max_size'] = largest_size
 
             return self.attr_data['request_mail_list']['max_size']
+        
+        # 利用申請を取得する内部メソッド
+        def get_item_application(self):
+            self.attr_data['item_application']={}
+            for record_id, record in self.records.items():
+                if check_created_id(record):
+                    item_application = ItemApplication.get_item_application_by_item_id(record.id)
+                    self.attr_data['item_application'][record_id] = {'workflow':item_application.get('workflow',""),
+                                                                    'terms':item_application.get('terms',""),
+                                                                    'termsDescription':item_application.get('termsDescription',"")}
+            return 0
 
         def get_max_items(self, item_attrs):
             """Get max data each sub property in all exporting records."""
@@ -1165,8 +1176,12 @@ def make_stats_file(item_type_id, recids, list_item_role):
         ret.append('.request_mail[{}]'.format(i))
         ret_label.append('.REQUEST_MAIL[{}]'.format(i))
 
-    ret.extend(['.cnri', '.doi_ra', '.doi', '.edit_mode'])
-    ret_label.extend(['.CNRI', '.DOI_RA', '.DOI', 'Keep/Upgrade Version'])
+    records.get_item_application()
+
+    ret.extend(['.item_application.workflow','.item_application.terms','.item_application.termsDescription',
+                '.cnri', '.doi_ra', '.doi', '.edit_mode'])
+    ret_label.extend(['.ITEM_APPLICATION.WORKFLOW','.ITEM_APPLICATION.TERMS','.ITEM_APPLICATION.TERMS_DESCRIPTION',
+                      '.CNRI', '.DOI_RA', '.DOI', 'Keep/Upgrade Version'])
     has_pubdate = len([
         record for _, record in records.records.items()
         if record.get('pubdate')
@@ -1209,6 +1224,11 @@ def make_stats_file(item_type_id, recids, list_item_role):
         records.attr_output[recid].extend(
             [''] * (max_request_mail - len(request_mail_list))
         )
+
+        item_application = records.attr_data['item_application'].get(recid, {})
+        records.attr_output[recid].append(item_application.get('workflow',''))
+        records.attr_output[recid].append(item_application.get('terms',''))
+        records.attr_output[recid].append(item_application.get('termsDescription',''))
 
         pid_cnri = record.pid_cnri
         cnri = ''
@@ -2947,6 +2967,17 @@ def make_stats_file_with_permission(item_type_id, recids,
             self.attr_data['request_mail_list']['max_size'] = largest_size
 
             return self.attr_data['request_mail_list']['max_size']
+        
+        # 利用申請を取得する内部メソッド
+        def get_item_application(self):
+            self.attr_data['item_application']={}
+            for record_id, record in self.records.items():
+                if permissions['check_created_id'](record):
+                    item_application = ItemApplication.get_item_application_by_item_id(record.id)
+                    self.attr_data['item_application'][record_id] = {'workflow':item_application.get('workflow',""),
+                                                                    'terms':item_application.get('terms',""),
+                                                                    'termsDescription':item_application.get('termsDescription',"")}
+            return 0
 
         def get_max_items(self, item_attrs):
             """Get max data each sub property in all exporting records."""
@@ -3137,8 +3168,11 @@ def make_stats_file_with_permission(item_type_id, recids,
         ret.append('.request_mail[{}]'.format(i))
         ret_label.append('.REQUEST_MAIL[{}]'.format(i))
 
-    ret.extend(['.cnri', '.doi_ra', '.doi', '.edit_mode'])
-    ret_label.extend(['.CNRI', '.DOI_RA', '.DOI', 'Keep/Upgrade Version'])
+    records.get_item_application()
+    ret.extend(['.item_application.workflow','.item_application.terms','.item_application.termsDescription',
+                '.cnri', '.doi_ra', '.doi', '.edit_mode'])
+    ret_label.extend(['.ITEM_APPLICATION.WORKFLOW','.ITEM_APPLICATION.TERMS','.ITEM_APPLICATION.TERMS_DESCRIPTION',
+                      '.CNRI', '.DOI_RA', '.DOI', 'Keep/Upgrade Version'])
     ret.append('.metadata.pubdate')
     ret_label.append('公開日' if
                      permissions['current_language']() == 'ja' else 'PubDate')
@@ -3177,6 +3211,11 @@ def make_stats_file_with_permission(item_type_id, recids,
         records.attr_output[recid].extend(
             [''] * (max_request_mail - len(request_mail_list))
         )
+
+        item_application = records.attr_data['item_application'].get(recid, {})
+        records.attr_output[recid].append(item_application.get('workflow',''))
+        records.attr_output[recid].append(item_application.get('terms',''))
+        records.attr_output[recid].append(item_application.get('termsDescription',''))
 
         pid_cnri = record.pid_cnri
         cnri = ''

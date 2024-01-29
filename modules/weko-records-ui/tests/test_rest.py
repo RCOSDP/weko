@@ -22,10 +22,13 @@
 
 import copy
 from unittest.mock import MagicMock
+from pytest import fail
 from flask import json, url_for
 from mock import patch
+from redis import RedisError
 from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.http import generate_etag
+from weko_redis.redis import RedisConnection
 
 def url(root, kwargs = {}):
     args = ["{key}={value}".format(key = key, value = value) for key, value in kwargs.items()]
@@ -568,143 +571,253 @@ def test_RequestMail_post_v1(app, client, db, make_request_maillist, users):
     version = 'v1'
     invalid_version = 'v0'
 
-    test_body = {
-                    "key": "test_key",
-                    "from":"test1@example.com",
-                    "subject":"test_subject",
-                    "message":"test_message",
-                    "calculation_result":1
-                }
+    correct_request_body = {
+        "key": "test_key",
+        "from":"test1@example.com",
+        "subject":"test_subject",
+        "message":"test_message",
+        "authorization_token": 'token',
+    }
 
-    pid_value = "1"
-    res = client.post(
-        f'/{invalid_version}/records/{pid_value}/request-mail',
-        headers = "",
-        json = test_body,
-        content_type='application/json',
-    )
+    correct_pid_value = 100
+    wrong_pid_value = 1000000
+
+    # TestCase: invalid version
     try:
-        json.loads(res.get_data())
-    except:
-        assert False
-    assert res.status_code == 400
-
-    pid_value = 1000000
-    res = client.post(
-        f'/{version}/records/{pid_value}/request-mail',
-        headers = "",
-        json = test_body,
-        content_type='application/json',
-    )
-    try:
-        json.loads(res.get_data())
-    except:
-        assert False
-    assert res.status_code == 404
-
-    test_body = {
-                    "key": "test_key",
-                    "subject":"test_subject",
-                    "message":"test_message",
-                    "calculation_result":1
-                }
-
-    pid_value = "100"
-    res = client.post(
-        f'/{version}/records/{pid_value}/request-mail',
-        headers = "",
-        json = test_body,
-        content_type='application/json',
-    )
-    try:
-        json.loads(res.get_data())
-    except:
-        assert False
-    assert res.status_code == 404
-
-    test_body = {
-                    "key": "test_key",
-                    "from":"test1@example.com",
-                    "subject":"test_subject",
-                    "message":"test_message",
-                    "calculation_result":1
-                }
-
-    pid_value = "100"
-    res_test = {"from":"test1@example.com","subject":"test_subject","message":"test_message"}
-    with patch("weko_records_ui.rest.send_request_mail", return_value=(True,res_test)):
         res = client.post(
-        f'/{version}/records/{pid_value}/request-mail',
-        json = test_body,
-        content_type='application/json',
-        )
-        try:
-            json.loads(res.get_data())
-        except:
-            assert False
-        assert res.status_code == 200
-
-    with patch('weko_workflow.api.WorkActivity.init_activity', side_effect=SQLAlchemyError):
-        test_body = {
-                    "key": "test_key",
-                    "from":"test1@example.com",
-                    "subject":"test_subject",
-                    "message":"test_message",
-                    "calculation_result":1
-                }
-
-        pid_value = "100"
-        res = client.post(
-            f'/{version}/records/{pid_value}/request-mail',
+            f'/{invalid_version}/records/{correct_pid_value}/request-mail',
             headers = "",
-            json = test_body,
+            json = correct_request_body,
             content_type='application/json',
         )
+    except:
+        fail()
+    assert res.status_code == 400
+
+    # TestCase: record not found
+    try:
+        res = client.post(
+            f'/{version}/records/{wrong_pid_value}/request-mail',
+            headers = "",
+            json = correct_request_body,
+            content_type='application/json',
+        )
+    except:
+        fail()
+    assert res.status_code == 404
+
+    # TestCase: 'key' not found
+    try:
+        res = client.post(
+            f'/{version}/records/{correct_pid_value}/request-mail',
+            headers = "",
+            json = {
+                "from":"test1@example.com",
+                "subject":"test_subject",
+                "message":"test_message",
+                "authorization_token": 'token',
+            },
+            content_type='application/json',
+        )
+    except:
+        fail()
+    assert res.status_code == 400
+
+    # TestCase: 'key' value is empty
+    try:
+        res = client.post(
+            f'/{version}/records/{correct_pid_value}/request-mail',
+            headers = "",
+            json = {
+                "key": '',
+                "from":"test1@example.com",
+                "subject":"test_subject",
+                "message":"test_message",
+                "authorization_token": 'token',
+            },
+            content_type='application/json',
+        )
+    except:
+        fail()
+    assert res.status_code == 400
+    # TestCase: 'from' not found
+    try:
+        res = client.post(
+            f'/{version}/records/{correct_pid_value}/request-mail',
+            headers = "",
+            json = {
+                "key": "test_key",
+                "subject":"test_subject",
+                "message":"test_message",
+                "authorization_token": 'token',
+            },
+            content_type='application/json',
+        )
+    except:
+        fail()
+    assert res.status_code == 400
+
+    # TestCase: 'from' value is empty
+    try:
+       res = client.post(
+            f'/{version}/records/{correct_pid_value}/request-mail',
+            headers = "",
+            json = {
+                "key": "test_key",
+                'from': '',
+                "subject":"test_subject",
+                "message":"test_message",
+                "authorization_token": 'token',
+            },
+            content_type='application/json',
+        )
+    except:
+        fail()
+    assert res.status_code == 400
+
+    # TestCase: 'authorization_token' is not correct
+    try:
+        res = client.post(
+            f'/{version}/records/{correct_pid_value}/request-mail',
+            headers = "",
+            json = {
+                "key": "test_key",
+                "from":"test1@example.com",
+                "subject":"test_subject",
+                "message":"test_message",
+                "authorization_token": 'token1',
+            },
+            content_type='application/json',
+        )
+    except:
+        fail()
+    assert res.status_code == 401
+
+    # TestCase: send mail success
+    res_test = {"from":"test1@example.com","subject":"test_subject","message":"test_message"}
+    with patch("weko_records_ui.rest.send_request_mail", return_value=(True,res_test)):
+        try:
+            res = client.post(
+                f'/{version}/records/{correct_pid_value}/request-mail',
+                json = correct_request_body,
+                content_type='application/json',
+            )
+        except:
+            fail()
+        assert res.status_code == 200
+
+    # TestCase: server error
+    with patch('weko_records_ui.rest.send_request_mail', side_effect=SQLAlchemyError):
+        try:
+            res = client.post(
+                f'/{version}/records/{correct_pid_value}/request-mail',
+                headers = "",
+                json = correct_request_body,
+                content_type='application/json',
+            )
+        except:
+            fail()
         assert res.status_code == 500
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_rest.py::test_CaptchaAnswerValidation_post_v1 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_CaptchaAnswerValidation_post_v1(app, client, db):
+    version = 'v1'
+    invalid_version = 'v0'
+    res = None
+
+    correct_body = {
+        "key": "test_key",
+        "calculation_result": 100
+    }
+
+    redis_connection = RedisConnection()
+    datastore = redis_connection.connection(db=app.config['CACHE_REDIS_DB'])
+
+    datastore.hmset(b'test_key',{b'calculation_result':b'100'})
+
+    # TestCase: invalid api version
+    try:
+        res = client.post(
+            f'/{invalid_version}/captcha/validate',
+            json = correct_body,
+            content_type='application/json',
+        )
+    except:
+        fail()
+    assert res.status_code == 400
+
+    # TestCase: captcha result validation success
+    datastore.hmset(b'test_key',{b'calculation_result':b'100'})
+    try:
+        res = client.post(
+            f'/{version}/captcha/validate',
+            json = correct_body,
+            content_type='application/json',
+        )
+    except:
+        fail()
+    assert res.status_code == 200
+    assert 'authorization_token' in json.loads(res.get_data()).keys()
+
+    # TestCase: internal server error
+    with patch('weko_records_ui.rest.validate_captcha_answer', side_effect=RedisError()):
+        try:
+            res = client.post(
+                f'/{version}/captcha/validate',
+                json = correct_body,
+                content_type='application/json',
+            )
+        except:
+            fail()
+        assert res.status_code == 500
+
+    # TestCase: validate captcha if language is Japanese
+    datastore.hmset(b'test_key',{b'calculation_result':b'100'})
+    try:
+        res = client.post(
+            f'/{version}/captcha/validate',
+            headers = [("Accept-Language", "jpn")],
+            json = correct_body,
+            content_type='application/json',
+        )
+    except:
+        fail()
+    assert res.status_code == 200
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_rest.py::test_CreateCaptchaImage_get_v1 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_CreateCaptchaImage_get_v1(app, client, db):
     version = 'v1'
     invalid_version = 'v0'
+    res = None
 
-    res = client.get(
-        f'/{invalid_version}/captcha/image'
-    )
-
+    # TestCase: invalid api version
     try:
-        json.loads(res.get_data())
+        res= client.get(f'/{invalid_version}/captcha/image')
     except:
-        assert False
+        fail()
     assert res.status_code == 400
 
-    res = client.get(
-        f'/{version}/captcha/image'
-    )
-
+    # TestCase: create captcha image success
     try:
-        json.loads(res.get_data())
+        res = client.get(f'/{version}/captcha/image')
     except:
-        assert False
+        fail()
     assert res.status_code == 200
+    assert 'key' in json.loads(res.get_data()).keys()
+    assert 'image' in json.loads(res.get_data()).keys()
+    assert 'ttl' in json.loads(res.get_data()).keys()
 
+    # TestCase: internal server error
     with patch('weko_records_ui.rest.create_captcha_image', return_value = ("","")):
-        res = client.get(
-        f'/{version}/captcha/image'
-    )
+        try:
+            res = client.get(f'/{version}/captcha/image')
+        except:
+            fail()
+        assert res.status_code == 500
 
+    # TestCase: create captcha image if language is Japanese
     try:
-        json.loads(res.get_data())
+        res = client.get(f'/{version}/captcha/image', headers = [("Accept-Language", "jpn")])
     except:
-        assert False
-    assert res.status_code == 500
-
-    res = client.get(
-        f'/{version}/captcha/image',
-        headers = [("Accept-Language", "jpn")]
-    )
-
-    try:
-        json.loads(res.get_data())
-    except:
-        assert False
+        fail()
     assert res.status_code == 200
