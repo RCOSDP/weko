@@ -350,6 +350,9 @@ def is_private_index(record):
     paths = pickle.loads(pickle.dumps(record.get('path'), -1))
     return not Indexes.is_public_state_and_not_in_future(paths)
 
+def is_draft_workflow(record):
+    """Check workflow is draft"""
+    return record.get("_deposit",{}).get("status") == "draft"
 
 def is_private_index_by_public_list(item_path, public_index_ids):
     """Check index of workflow is private."""
@@ -419,10 +422,12 @@ def getrecord(**kwargs):
 
     # Harvest is private
     # or New activity
+    # or Draft activity
     if path_list and (_is_output == HARVEST_PRIVATE or
                       (is_exists_doi(record) and
                        (_is_output == PRIVATE_INDEX or is_pubdate_in_future(record))) or
-                      is_new_workflow(record)):
+                      is_new_workflow(record) or 
+                      is_draft_workflow(record)):
         return error([('idDoesNotExist', 'No matching identifier')])
     # Item is deleted
     # or Harvest is public & Item is private
