@@ -907,5 +907,43 @@ def register_queries():
                     }
                 }
             )
-        )
+        ),
+        dict(
+            query_name='item-file-download-aggs',
+            query_class=ESWekoFileStatsQuery,
+            query_config=dict(
+                index='{}-events-stats-file-download'.format(search_index_prefix),
+                doc_type='stats-file-download',
+                copy_fields=dict(),
+                metric_fields=dict(
+                    download_ranking=('terms', 'temp', {"size": "1"})
+                ),
+                main_fields=['item_id', 'aggs_size'],
+                main_query={
+                    "query": {
+                        "bool": {
+                            "filter": [
+                                {
+                                    "term": {
+                                        "item_id": {
+                                            "value": "@item_id",
+                                            "boost": 1
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "aggs": {
+                        "value": {
+                            "terms": {
+                                "field": "file_key",
+                                "size": "@aggs_size"
+                            }
+                        }
+                    },
+                    "size": 0
+                },
+            )
+        ),
     ]

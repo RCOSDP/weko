@@ -307,7 +307,10 @@ class ESTermsQuery(ESQuery):
             """Build recursively result buckets."""
             # Add metric results for current bucket
             for metric in self.metric_fields:
-                bucket_result[metric] = agg[metric]['value']
+                if agg[metric].get('value') == 0.0:
+                    bucket_result[metric] = 0.0
+                else:
+                    bucket_result[metric] = agg[metric].get('value') or agg.get('value')
             if self.group_fields:
                 temp_data = {}
                 count = 0

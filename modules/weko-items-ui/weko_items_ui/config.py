@@ -209,6 +209,7 @@ WEKO_ITEMS_UI_SEARCH_RANK_KEY_FILTER = ['']
 WEKO_ITEMS_UI_REST_ENDPOINTS = {
     'ranking': {
         'rank_route': '/<string:version>/ranking/<string:ranking_type>',
+        'rank_files_route': '/<string:version>/ranking/<int:pid_value>/files',
         'default_media_type': 'application/json',
         'max_result_window': 10000,
     },

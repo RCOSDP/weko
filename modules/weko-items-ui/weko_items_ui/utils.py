@@ -88,7 +88,7 @@ def get_list_username():
 
     Query database to get all available username
     return: list of username
-    TODO: 
+    TODO:
     """
     current_user_id = current_user.get_id()
     current_app.logger.debug("current_user:{}".format(current_user))
@@ -100,7 +100,7 @@ def get_list_username():
         username = user.get_username
         if username:
             result.append(username)
-    
+
     return result
 
 
@@ -352,7 +352,7 @@ def find_hidden_items(item_id_list, idx_paths=None, check_creator_permission=Fal
     no_permission_index = []
     hidden_list = []
     for record in WekoRecord.get_records(item_id_list):
-        
+
         if check_creator_permission:
             # Check if user is owner of the item
             if check_created_id(record):
@@ -432,7 +432,7 @@ def get_permission_record(rank_type, es_data, display_rank, has_permission_index
                         break
                 add_flag = is_public and has_index_permission
         except PIDDoesNotExistError:
-            # do not add deleted items into ranking list. 
+            # do not add deleted items into ranking list.
             add_flag = False
             current_app.logger.debug("PID {} does not exist.".format(pid_value))
 
@@ -516,7 +516,7 @@ def parse_ranking_results(rank_type,
             title=title,
             url=url
         )
-    
+
     return res
 
 
@@ -566,7 +566,7 @@ def validate_form_input_data(
 
     :param result: result dictionary.
     :param item_id: item type identifier.
-    :param data: form input data 
+    :param data: form input data
     :param activity_id: activity id
     """
     # current_app.logger.error("result: {}".format(result))
@@ -1247,7 +1247,7 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
                 if not keys:
                     keys = [item_key]
                 if not labels:
-                    labels = [item.get('title')]                
+                    labels = [item.get('title')]
                 data = records.attr_data[item_key].get(recid) or {}
                 attr_val = data.get("attribute_value", "")
                 if isinstance(attr_val,str):
@@ -1367,7 +1367,7 @@ def write_bibtex_files(item_types_data, export_path):
     """
     # current_app.logger.error("item_types_data:{}".format(item_types_data))
     # current_app.logger.error("export_path:{}".format(export_path))
-    
+
     for item_type_id in item_types_data:
         item_type_data = item_types_data[item_type_id]
         output = make_bibtex_data(item_type_data['recids'])
@@ -1393,7 +1393,7 @@ def write_files(item_types_data, export_path, list_item_role):
     file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
 
     for item_type_id in item_types_data:
-        
+
         current_app.logger.debug("item_type_id:{}".format(item_type_id))
         current_app.logger.debug("item_types_data[item_type_id]['recids']:{}".format(item_types_data[item_type_id]['recids']))
         headers, records = make_stats_file(
@@ -1736,7 +1736,7 @@ def to_files_js(record):
     Returns:
         _type_: _description_
     """
-    current_app.logger.debug("type: {}".format(type(record))) 
+    current_app.logger.debug("type: {}".format(type(record)))
     res = []
     files = record.files or []
     files_content_dict = {}
@@ -1749,7 +1749,7 @@ def to_files_js(record):
     # Get files form meta_data, so that you can append any extra info to files
     # (which not contained by file_bucket) such as license below
     files_from_meta = get_files_from_metadata(record)
-    
+
     # get file with order similar metadata
     files_content = []
     for _k, f in files_from_meta.items():
@@ -2341,7 +2341,7 @@ def translate_validation_message(item_property, cur_lang):
     """
     # current_app.logger.error("item_property:{}".format(item_property))
     # current_app.logger.error("cur_lang:{}".format(cur_lang))
-    
+
     items_attr = 'items'
     properties_attr = 'properties'
     if isExistKeyInDict(items_attr, item_property):
@@ -2456,7 +2456,7 @@ def get_ranking(settings):
     :param settings: ranking setting.
     :return:
     """
-    
+
     def _get_index_info(index_json, index_info):
         for index in index_json:
             index_info[index["id"]] = {
@@ -2509,7 +2509,7 @@ def get_ranking(settings):
 
         current_app.logger.debug("finished getting most_downloaded_items data from ES")
         rankings['most_downloaded_items'] = get_permission_record('most_downloaded_items', result, settings.display_rank, has_permission_indexes)
-    
+
     # created_most_items_user
     current_app.logger.debug("get created_most_items_user start")
     if settings.rankings['created_most_items_user']:
@@ -2579,10 +2579,10 @@ def get_ranking(settings):
             agg_size=settings.display_rank + rank_buffer,
             must_not=json.dumps([{"wildcard": {"control_number": "*.*"}}])
         )
-        
+
         current_app.logger.debug("finished getting new_items data from ES")
         rankings['new_items'] = get_permission_record('new_items', result, settings.display_rank, has_permission_indexes)
-        
+
     return rankings
 
 
@@ -2608,7 +2608,7 @@ def sanitize_input_data(data):
 
     Args:
         data (dict or list): target dict or list
-    """    
+    """
     if isinstance(data, dict):
         for k, v in data.items():
             if isinstance(v, str):
@@ -2776,12 +2776,12 @@ def make_stats_file_with_permission(item_type_id, recids,
 
     Returns:
         _type_: _description_
-    """                                   
+    """
     """
 
     Arguments:
-        item_type_id    -- 
-        recids          -- 
+        item_type_id    --
+        recids          --
     Returns:
         ret             -- Key properties
         ret_label       -- Label properties
@@ -3317,7 +3317,7 @@ def check_item_is_deleted(recid):
 
     Returns:
         bool: True: deleted, False: available
-    """    
+    """
     pid = PersistentIdentifier.query.filter_by(
         pid_type='recid', pid_value=recid).first()
     if not pid:
@@ -3336,7 +3336,7 @@ def permission_ranking(result, pid_value_permissions, display_rank, list_name,
         display_rank (_type_): _description_
         list_name (_type_): _description_
         pid_value (_type_): _description_
-    """                       
+    """
     list_result = list()
     for data in result.get(list_name, []):
         if data.get(pid_value, '') in pid_value_permissions:
@@ -3365,3 +3365,52 @@ def has_permission_edit_item(record, recid):
 def create_limmiter():
     from .config import WEKO_ITEMS_UI_API_LIMIT_RATE_DEFAULT
     return Limiter(app=Flask(__name__), key_func=get_remote_address, default_limits=WEKO_ITEMS_UI_API_LIMIT_RATE_DEFAULT)
+
+def get_file_download_data(item_id, filenames, query_date=None, size=None):
+    """Get data."""
+    result = {}
+    result['ranking'] = [{'filename': f, 'download_total': 0} for f in filenames]
+
+    params = {
+        'item_id': str(item_id),
+        'aggs_size': str(size or 10)
+    }
+
+    if query_date:
+        params.update({
+            'start_date': query_date + '-01',
+            'end_date': datetime.now().isoformat(timespec='seconds')
+        })
+
+    try:
+        try:
+            from invenio_stats.proxies import current_stats
+            # file download query
+            query_download_total_cfg = current_stats.queries['item-file-download-aggs']
+            query_download_total = query_download_total_cfg.query_class(**query_download_total_cfg.query_config)
+            res_download_total = query_download_total.run(**params)
+        except Exception as e:
+            current_app.logger.error(traceback.print_exc())
+            res_download_total = {'download_ranking': {'buckets': []}}
+
+        for b in res_download_total.get('download_ranking', {}).get('buckets'):
+            for r in result['ranking']:
+                if r.get('filename') == b.get('key'):
+                    r['download_total'] = b.get('doc_count')
+                    break
+
+        # Sort
+        result['ranking'].sort(key=lambda x:x['download_total'], reverse=True)
+        if size:
+            result['ranking'] = result['ranking'][:int(size)]
+
+    except Exception as e:
+        current_app.logger.error(traceback.print_exc())
+        current_app.logger.debug(e)
+
+    if query_date:
+        result['period'] = query_date
+    else:
+        result['period'] = 'total'
+
+    return result
