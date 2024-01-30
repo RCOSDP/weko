@@ -315,7 +315,8 @@ def make_title_map(labels: list, values: list):
     """
     title_map = []
     for label, value in zip(labels, values):
-        title_map.append({"name": label, "value": value})
+        if value is not None:
+            title_map.append({"name": label, "value": value})
     return title_map
 
 
