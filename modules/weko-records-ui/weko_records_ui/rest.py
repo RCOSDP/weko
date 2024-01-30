@@ -622,7 +622,7 @@ class WekoFilesStats(ContentNegotiatedMethodView):
                 date = date.group()
 
             query_record_stats = QueryFileStatsCount()
-            result = query_record_stats.get_data(pid.object_uuid, kwargs.get('filename'), date)
+            result = query_record_stats.get_data(record.get('_buckets', {}).get('deposit'), kwargs.get('filename'), date)
             if date:
                 result['period'] = date
             else:
