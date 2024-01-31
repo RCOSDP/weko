@@ -9,6 +9,7 @@ from . import (
     approval_date,
     author_name,
     biblio_info,
+    checkbox,
     collection_method,
     conference,
     contributor,
@@ -40,6 +41,7 @@ from . import (
     item_title,
     language,
     link,
+    listbox,
     number_of_pages,
     output_type,
     other_language,
@@ -48,6 +50,7 @@ from . import (
     published_media_name,
     publisher,
     publisher_info,
+    radiobutton,
     related_publications,
     related_study,
     relation,
@@ -134,6 +137,7 @@ class AddProperty:
     approval_date = approval_date.add
     author_name = author_name.add
     biblio_info = biblio_info.add
+    checkbox = checkbox.add
     collection_method = collection_method.add
     conference = conference.add
     contributor = contributor.add
@@ -173,6 +177,7 @@ class AddProperty:
     jpcoar_catalog = jpcoar_catalog.add
     language = language.add
     link = link.add
+    listbox = listbox.add
     number_of_pages = number_of_pages.add
     output_type = output_type.add
     other_language = other_language.add
@@ -181,6 +186,7 @@ class AddProperty:
     published_media_name = published_media_name.add
     publisher = publisher.add
     publisher_info = publisher_info.add
+    radiobutton = radiobutton.add
     related_publications = related_publications.add
     related_study = related_study.add
     relation = relation.add

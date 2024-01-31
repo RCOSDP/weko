@@ -118,9 +118,8 @@ def update_author():
                 id=json.loads(json.dumps(data))["pk_id"]).one()
             author_data.json = data
             db.session.merge(author_data)
-        
-        
         db.session.commit()
+        
         indexer = RecordIndexer()
         body = {'doc': data}
         indexer.client.update(
@@ -130,14 +129,14 @@ def update_author():
             body=body
         )
         from weko_deposit.tasks import update_items_by_authorInfo
+        
         update_items_by_authorInfo.delay(
-            [json.loads(json.dumps(data))["pk_id"]], data)
+            user_id,data, [json.loads(json.dumps(data))["pk_id"]], [json.loads(json.dumps(data))["id"]])
 
     except Exception as ex:
         db.session.rollback()
         current_app.logger.error(ex)
         return jsonify(msg=_('Failed')), 500
-
 
     return jsonify(msg=_('Success'))
 
