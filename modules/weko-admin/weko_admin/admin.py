@@ -1367,20 +1367,30 @@ class SwordAPISettingsView(BaseView):
     @expose('/', methods=['GET'])
     def index(self):
         default_sword_api = { "default_format": "TSV",
-                            "data_format":{ "TSV":{"item_type": "empty",  "register_format": "empty"},
-                                           "XML":{"item_type": "empty",  "register_format": "empty"}}}  # Default
+                            "data_format":{ "TSV":{"item_type": "15",  "register_format": "Direct"},
+                                           "XML":{"item_type": "15",  "register_format": "Direct"}}}  # Default
         current_settings = AdminSettings.get(
                 name='sword_api_setting',
                 dict_to_object=False)
         if not current_settings:  
-            current_settings = AdminSettings.update('sword_api_setting', default_sword_api)
-        current_settings = json.dumps(current_settings)
-        lists = ItemTypes.get_latest()  # ItemTypes.get_all()
+            AdminSettings.update('sword_api_setting', default_sword_api)
+            current_settings = AdminSettings.get(
+                name='sword_api_setting',
+                dict_to_object=False)
+        current_settings_json = json.dumps(current_settings)
+        all_lists = ItemTypes.get_latest(with_deleted=True)
+        lists = ItemTypes.get_latest()
+        deleted_lists = [i for i in all_lists if i not in lists]
         form = FlaskForm(request.form)
-        print(lists)
+        itemtype_name_dict = {}
+        for list in all_lists:
+            itemtype_name_dict[list.id] = list.name
         return self.render(current_app.config['WEKO_ADMIN_SWORD_API_TEMPLATE'],
                            current_settings = current_settings,
+                           current_settings_json = current_settings_json,
                            lists = lists,
+                           deleted_lists = deleted_lists,
+                           itemtype_name_dict = json.dumps(itemtype_name_dict),
                            form = form)
 
     @expose('/default_format', methods=['POST'])
@@ -1392,20 +1402,10 @@ class SwordAPISettingsView(BaseView):
             settings.default_format = default_format_setting
             AdminSettings.update('sword_api_setting',
                         settings.__dict__)
+            return jsonify(success=True),200
         except Exception as e:
             return current_app.logger.error(
                 'ERROR Default Form Settings: {}'.format(e))
-        
-        current_settings = AdminSettings.get(
-                name='sword_api_setting',
-                dict_to_object=False)
-        current_settings = json.dumps(current_settings)
-        lists = ItemTypes.get_latest()  # ItemTypes.get_all()
-        form = FlaskForm(request.form)
-        return self.render(current_app.config['WEKO_ADMIN_SWORD_API_TEMPLATE'],
-                           current_settings = current_settings,
-                           lists = lists,
-                           form = form)
 
     @expose('/data_format', methods=['POST'])
     def data_format(self):
@@ -1424,21 +1424,11 @@ class SwordAPISettingsView(BaseView):
                 settings.data_format["XML"]["register_format"] = register_format_setting                       
                 settings.data_format["XML"]["item_type"] = item_type_setting
             AdminSettings.update('sword_api_setting',
-                                    settings.__dict__)                
+                                    settings.__dict__)    
+            return jsonify(success=True),200            
         except Exception as e:
             return current_app.logger.error(
                 'ERROR Default Form Settings: {}'.format(e))
-
-        current_settings = AdminSettings.get(
-                name='sword_api_setting',
-                dict_to_object=False)
-        current_settings = json.dumps(current_settings)
-        lists = ItemTypes.get_latest()  # ItemTypes.get_all()
-        form = FlaskForm(request.form)
-        return self.render(current_app.config['WEKO_ADMIN_SWORD_API_TEMPLATE'],
-                           current_settings = current_settings,
-                           lists = lists,
-                           form = form)
 
 style_adminview = {
     'view_class': StyleSettingView,

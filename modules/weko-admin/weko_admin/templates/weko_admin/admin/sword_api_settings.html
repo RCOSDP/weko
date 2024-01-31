@@ -43,9 +43,13 @@
     <input id="Required_item" type="hidden" value="{{_('Required item is not inputted')}}" />
     <input id="Successfully_Changed" type="hidden" value="{{_('Successfully Changed Settings.')}}" />
     <input id="Failed_Changed" type="hidden" value="{{_('Failed To Change Settings')}}" />
-    <input id="Dependency_ItemType_not_found." type="hidden" value="{{_('Dependency ItemType not found.')}}"/>
+    <input id="items_required_alert" type="hidden" value="{{_('The following items is required. Please recheck and input.')}}"/>
+    <input id="itemtype_deleted_alert" type="hidden" value="{{_('The selected item type has been deleted. Please recheck and input.')}}"/>
     <input id="current_settings" type="hidden" value='{{current_settings}}'/>
+    <input id="current_settings_json" type="hidden" value='{{current_settings_json}}'/>
     <input id="itemtype_lists" type="hidden" value="{{lists}}"/>
+    <input id="deleted_itemtype_lists" type="hidden" value="{{deleted_lists}}"/>
+    <input id="itemtype_name_dict" type="hidden" value="{{itemtype_name_dict}}"/>
     
 <div class="panel panel-info">
     <div class="panel-heading">
@@ -69,8 +73,8 @@
     </div> 
     <br>
     <div class="row">
-        <div class="form-actions">
-            <button type="button" name="submit" value="save_default_format_settings" class="btn btn-primary pull-right" onclick="handleDefaultSubmit()">
+        <div class="pull-right">
+            <button type="button" name="submit" value="save_default_format_settings" class="btn btn-primary" style="margin-right: 15px;" onclick="handleDefaultSubmit()">
                 <span class="glyphicon glyphicon-save"></span>&nbsp
                 {{_('Save')}}
             </button>
@@ -89,51 +93,46 @@
     <div class="panel-body">
 <form method="POST" id="data_format_form" name="data_format_form" action={{url_for('swordapi.data_format')}}>
     {{ form.csrf_token }}
-    <div class="row">
+    <div class="row" style="margin-bottom: 15px;">
         <div class="col-sm-2 text-right">
             <label>{{_('Data Format')}}</label>
         </div>
         <div class="col-sm-2">
             <select class="form-control"  name="data_format" id="data_format" onchange="toggleMenu()">
-                <option value="empty"></option>
+                <option selected hidden value=""></option>
                 <option value="TSV">TSV</option>
                 <option value="XML">XML</option>
             </select>
         </div>
-        <span class="errorMessage"></span>
     </div>
-    <div class="row">
+    <div class="row" style="margin-bottom: 15px;">
         <div class="col-sm-2 text-right">
             <label>{{_('Register Format')}}</label>
         </div>
         <div class="col-sm-2">
             <select class="form-control"  name="register_format" id="register_format" disabled>
-                <option value="empty"></option>
+                <option selected hidden value=""></option>
                 <option value="Direct">Direct</option>
                 <option value="Workflow">Workflow</option>
             </select>
         </div>
-        <span class="errorMessage"></span>
     </div>
-    <div class="row">
+    <div class="row" style="margin-bottom: 15px;">
         <div class="col-sm-2 text-right">
                 <label for="item-type-lists">{{_('Item Type')}}</label>
         </div>
-        <div class="col-sm-6">
+        <div class="col-sm-8">
             <select class="form-control" name="sword_item_type" id="sword_item_type" disabled>
-                <option value="empty"></option>
-                <option value="deleted_Item_Type">{{_('Deleted Item Type')}}</option>
+                <option selected hidden value=""></option>
                 {%- for list in lists -%}
                 <option  value="{{ list.id }}">{{ list.name }}({{ list.id }})</option>
                 {%- endfor -%}          
             </select>
         </div>
-        <span class="alertMessage"></span>
-        <span class="errorMessage"></span>
     </div>
     <br>
     <div class="row">
-        <div class="form-actions">
+        <div className="pull-right" style="margin-right: 15px;">
             <button type="button" name="submit" value="save_data_format_settings" class="btn btn-primary pull-right" onclick="handleSubmit(event)">
                 <span class="glyphicon glyphicon-save"></span>&nbsp
                 {{_('Save')}}
