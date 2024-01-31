@@ -287,6 +287,18 @@ def form(
                             "title_i18n": {"en": "Award Number", "ja": "研究課題番号"},
                             "type": "text",
                         },
+                        {
+                            "key": "{}.subitem_award_numbers.subitem_award_number_type".format(
+                                key
+                            ),
+                            "title": "研究課題番号タイプ",
+                            "title_i18n": {
+                                "en": "Award Number Type",
+                                "ja": "研究課題番号タイプ",
+                            },
+                            "titleMap": get_select_value(config.AWARD_NUMBER_TYPE),
+                            "type": "select",
+                        },
                     ],
                     "key": "{}.subitem_award_numbers".format(key),
                     "type": "fieldset",
