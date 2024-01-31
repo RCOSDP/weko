@@ -245,9 +245,9 @@ class WekoFileRanking(ContentNegotiatedMethodView):
             # Check file exist
             current_app.config['WEKO_ITEMS_UI_MS_MIME_TYPE'] = WEKO_ITEMS_UI_MS_MIME_TYPE
             current_app.config['WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT'] = WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT
-            if not record.files:
+            if not record.get_file_data():
                 raise FilesNotFoundRESTError()
-            filenames = [r.get('key') for r in record.files]
+            filenames = [r.get('filename') for r in record.get_file_data()]
 
             # Get date param
             date = request.values.get('date', type=str)

@@ -20,6 +20,7 @@
 
 """Module of weko-items-ui utils.."""
 
+import calendar
 import copy
 import csv
 import json
@@ -3377,9 +3378,13 @@ def get_file_download_data(item_id, filenames, query_date=None, size=None):
     }
 
     if query_date:
+        year = int(query_date[0: 4])
+        month = int(query_date[5: 7])
+        _, lastday = calendar.monthrange(year, month)
         params.update({
             'start_date': query_date + '-01',
-            'end_date': datetime.now().isoformat(timespec='seconds')
+            'end_date': query_date + '-' + str(lastday).zfill(2)
+            + 'T23:59:59'
         })
 
     try:
