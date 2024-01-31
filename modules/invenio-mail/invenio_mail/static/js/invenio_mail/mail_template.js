@@ -52,7 +52,7 @@ function TermsList({termList, setTermList, currentTerm, setCurrentTerm}) {
     let data = {
       template_id: event.target.id
     }
-  
+
     $.ajax({
       url: URL,
       method: 'DELETE',
@@ -76,38 +76,60 @@ function TermsList({termList, setTermList, currentTerm, setCurrentTerm}) {
     });
   }
 
+  function groupTemplatesByGenre(templates) {
+    let groupingTemplates = templates.filter((tmpl) => tmpl["genre_key"] != null)
+      .sort((tmpl1, tmpl2) => tmpl1.genre_order - tmpl2.genre_order)
+      .reduce(function (newDict, tmpl) {
+        newDict[tmpl["genre_key"]] = newDict[tmpl["genre_key"]] || {
+          name: tmpl["genre_name"],
+          items: []
+        }
+        newDict[tmpl["genre_key"]].items.push(tmpl);
+        return newDict;
+      }, {});
+    return groupingTemplates
+  }
+
+  let groupTemplates = groupTemplatesByGenre(termList)
+
   return (
     <div className='row'>
       <div className="col col-md-12">
         <div className="panel-default">
-          <div className="col col-md-12 both scrollbar margin-top padding-top"
-               id="sltBoxListEmail">
-            {
-              termList.map((term) => (
-                <li className="tree-list" key={term.key}>
-                  <a
-                    className={`list-group-item list-group-item-action ${currentTerm !== undefined && currentTerm.key === term.key ? 'active' : ''}`}
-                    onClick={handleOnTermClick}
-                    id={term.key}>{term.content.subject}
-                  </a>
-                  {term.flag === false ? (
-                    <a
-                      className="glyphicon glyphicon-remove glyphicon-remove-term pull-right"
-                      id={term.key}
-                      key={term.key} onClick={handleRemoveTerm}/>
-                  ) : (
-                    ""
-                  )}
-                </li>
-              ))
-            }
+          {
+            Object.keys(groupTemplates).map((key) => (
+              <div>
+                <div>{groupTemplates[key].name}</div>
+                <div className={`col col-md-12 padding-top ${key == "Others" ? " margin-top both scrollbar" : "margin-bottom"}`} id="sltBoxListEmail">
+                  {
+                    groupTemplates[key].items.map((term) => (
+                      <li className="tree-list" key={term.key}>
+                        <a
+                          className={`list-group-item list-group-item-action ${currentTerm !== undefined && currentTerm.key === term.key ? 'active' : ''}`}
+                          onClick={handleOnTermClick}
+                          id={term.key}>ID:{term.key} | {term.content.subject}
+                        </a>
+                        {term.flag === false ? (
+                          <a
+                            className="glyphicon glyphicon-remove glyphicon-remove-term pull-right"
+                            id={term.key}
+                            key={term.key} onClick={handleRemoveTerm} />
+                        ) : (
+                          ""
+                        )}
+                      </li>
+                    ))
+                  }
+                </div>
+              </div>
+            ))
+          }
 
-            <button className="btn btn-light add-button btn-add"
-                    style={{marginTop: "10px"}} id="new_term"
-                    onClick={handleCreateNewTerm}>
-              <span class="glyphicon glyphicon-plus"></span>{LABEL_NEW}
-            </button>
-          </div>
+          <button className="btn btn-light add-button btn-add"
+                  style={{ marginTop: "10px" }} id="new_term"
+                  onClick={handleCreateNewTerm}>
+            <span class="glyphicon glyphicon-plus"></span>{LABEL_NEW}
+          </button>
         </div>
       </div>
     </div>
@@ -206,7 +228,7 @@ function MailTemplateLayout({mail_templates}) {
     let data = {
       mail_templates: terms_data["data"]
     }
-  
+
     $.ajax({
       url: URL,
       method: 'POST',

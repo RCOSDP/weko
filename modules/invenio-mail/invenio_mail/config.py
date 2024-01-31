@@ -81,11 +81,11 @@ INVENIO_MAIL_VARIABLE_HELP = [
     },
     {
         "key": "[restricted_expiration_date_ja]",
-        "comment": "日本語のダウンロード回数説明"
+        "comment": "日本語のダウンロード期限説明"
     },
     {
         "key": "[restricted_expiration_date_en]",
-        "comment": "英語のダウンロード回数説明"
+        "comment": "英語のダウンロード期限説明"
     },
     {
         "key": "[restricted_site_name_ja]",
@@ -130,5 +130,37 @@ INVENIO_MAIL_VARIABLE_HELP = [
     {
         "key": "[output_report_title]",
         "comment": "成果物登録のタイトル"
+    },
+    {
+        "key": "[terms_of_use_jp]",
+        "comment": "申請対象の利用規約（日本語）",
+    },
+    {
+        "key": "[terms_of_use_en]",
+        "comment": "申請対象の利用規約（英語、自由入力）",
+    },
+    {
+        "key": "[secret_url]",
+        "comment": "非公開、エンバーゴデータ向けシークレットURL",
+    },
+    {
+        "key": "[landing_url]",
+        "comment": "申請対象のランディングページURL",
+    },
+    {
+        "key": "[resricted_download_count]",
+        "comment": "ダウンロード回数",
+    },
+    {
+        "key": "[restricted_download_count_ja]",
+        "comment": "ダウンロード回数説明（日本語）",
+    },
+    {
+        "key": "[restricted_download_count_en]",
+        "comment": "ダウンロード回数説明（英語）"
+    },
+    {
+        "key": "[restricted_research_plan]",
+        "comment": "研究計画"
     }
 ]

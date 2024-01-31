@@ -43,6 +43,7 @@
       <div class="row">
         <div class="col-sm-12 col-md-12 col-left">
           {%- block record_author %}
+            {%- set _files = files -%}
             {%- set files = record.files -%}
             {%- set record = record -%}
             {%- set deposit = record['_buckets']['deposit'] -%}
@@ -170,7 +171,8 @@
               {%- set display_file_info = record.display_file_info -%}
               <table class="table table-bordered table-striped detail-table">
                 <!-- Output Pubdate -->
-                {{output_attribute_value_mlt(display_file_info[0]['attribute_value_mlt'], 0)}}
+                {{ _files[0]['date'][0]['dateValue'] }}
+                <!-- {{output_attribute_value_mlt(display_file_info[0]['attribute_value_mlt'], 0)}} -->
                 <!-- Output File Information -->
                 {{output_attribute_value_mlt(display_file_info[1]['attribute_value_mlt'], 0)}}
               </table>

@@ -22,6 +22,8 @@
 
 from flask import current_app
 from invenio_db import db
+from sqlalchemy import or_
+from flask_babelex import gettext as _
 
 
 class MailConfig(db.Model):
@@ -61,6 +63,13 @@ class MailConfig(db.Model):
         db.session.commit()
 
 
+class MailTemplateGenres(db.Model):
+    """Mail template genre"""
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    name = db.Column(db.String(255), default='')
+    templates = db.relationship('MailTemplates', backref='genre')
+
+
 class MailTemplates(db.Model):
     """Mail templates."""
 
@@ -68,23 +77,41 @@ class MailTemplates(db.Model):
     mail_subject = db.Column(db.String(255), default='')
     mail_body = db.Column(db.Text, nullable=True)
     default_mail = db.Column(db.Boolean, default=False)
+    mail_genre_id = db.Column('genre_id', db.Integer,
+                              db.ForeignKey('mail_template_genres.id', onupdate='CASCADE', ondelete='RESTRICT'), nullable=False)
+
+    def toDict(self):
+        """model object to dict"""
+        return {
+            "key": str(self.id),
+            "flag": self.default_mail,
+            "content": {
+                "subject": self.mail_subject,
+                "body": self.mail_body
+            },
+            'genre_order': self.genre.id if self.genre else None,
+            'genre_key': self.genre.name if self.genre else None,
+            'genre_name': _(self.genre.name) if self.genre else None,
+        }
 
     @classmethod
     def get_templates(cls):
         """Get mail templates."""
+        from weko_admin.models import AdminSettings
         result = []
+        # get secret mail enabled
+        restricted_access = AdminSettings.get('restricted_access', False)
+        if not restricted_access:
+            restricted_access = current_app.config['WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS']         
+        secret_enabled:bool = restricted_access.get('secret_URL_file_download',{}).get('secret_enable',False)
+
         try:
-            mail_templates = cls.query.order_by(cls.id).all()
-            if mail_templates:
-                for m in mail_templates:
-                    result.append({
-                        "key": str(m.id),
-                        "flag": m.default_mail,
-                        "content": {
-                            "subject": m.mail_subject,
-                            "body": m.mail_body
-                        }
-                    })
+            if not secret_enabled:
+                secret_genre_id = current_app.config.get('WEKO_RECORDS_UI_MAIL_TEMPLATE_SECRET_GENRE_ID', -1)
+                result = [m.toDict() for m in \
+                    cls.query.filter(or_(cls.mail_genre_id != secret_genre_id, cls.mail_genre_id == None)).order_by(cls.id).all()]
+            else:
+                result = [m.toDict() for m in cls.query.order_by(cls.id).all()]
         except Exception as ex:
             current_app.logger.error(ex)
         return result

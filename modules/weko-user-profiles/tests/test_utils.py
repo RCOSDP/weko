@@ -28,7 +28,7 @@ def test_get_user_profile_info(users,user_profiles):
         "subitem_affiliated_division/department":"test department",
         "subitem_position":"test position",
         "subitem_phone_number":"123-4567",
-        "subitem_position(other)":"test other position",
+        "subitem_position(others)":"test other position",
         "subitem_affiliated_institution":[
             {"subitem_affiliated_institution_name":"test institute","subitem_affiliated_institution_position":"test institute position"},
             {"subitem_affiliated_institution_name":"test institute2","subitem_affiliated_institution_position":"test institute position2"},

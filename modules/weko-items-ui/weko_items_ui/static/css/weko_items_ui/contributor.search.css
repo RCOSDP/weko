@@ -75,12 +75,12 @@
       to { transform: scale(1) rotate(360deg);}
   } 
 
-  #id_spinners_username {
+  .id_spinners_username {
     margin-left: -24px;
     margin-top: 8px;
   }
 
-  #id_spinners_email {
+  .id_spinners_email {
     margin-left: -24px;
     margin-top: 8px;
   }
@@ -97,21 +97,38 @@
     padding-bottom: 20px;
   }
 
-  #label_username {
+  .label_username {
     text-align: right;
     margin-top: 7px;
   }
 
-  #label_email {
+  .label_email {
     text-align: right;
-    margin-top: 7px;
+    /*margin-top: 7px; del jin*/
   }
 
-  #pd_username {
+  .pd_username {
     margin-bottom: 20px;
   }
 
   label.field-required::after {
     content: "*";
     color: red;
+  }
+
+  .clearfix {
+    clear:both;
+  }
+
+  .contributor-record {
+    display: flex;
+    position: relative;
+    align-items: center;
+    justify-content: right;
+    margin-right: 30px;
+  }
+
+  .contributor-trash {
+    position: absolute;
+    margin-right: -20px;
   }
