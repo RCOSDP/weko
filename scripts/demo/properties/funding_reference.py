@@ -58,12 +58,18 @@ mapping = {
                 },
                 "@value": "subitem_funder_names.subitem_funder_name",
             },
-            "subitem_funding_stream_identifiers": {
+            "fundingStreamIdentifier": {
                 "@attributes": {
                     "fundingStreamIdentifierType": "subitem_funding_stream_identifiers.subitem_funding_stream_identifier_type",
                     "fundingStreamIdentifierTypeURI": "subitem_funding_stream_identifiers.subitem_funding_stream_identifier_type_uri",
                 },
                 "@value": "subitem_funding_stream_identifiers.subitem_funding_stream_identifier",
+            },
+            "fundingStream": {
+                "@attributes": {
+                    "xml:lang": "subitem_funding_streams.subitem_funding_stream_language"
+                },
+                "@value": "subitem_funding_streams.subitem_funding_stream",
             },
             "awardNumber": {
                 "@attributes": {
@@ -169,6 +175,24 @@ def schema(title="", multi_flag=multiple_flag):
                         },
                     },
                     "title": "プログラム情報識別子",
+                },
+                "subitem_funding_streams": {
+                    "type": "object",
+                    "format": "object",
+                    "properties": {
+                        "subitem_funding_stream_language": {
+                                "type": ["null", "string"],
+                                "format": "select",
+                                "enum": config.LANGUAGE_VAL2_1,
+                                "title": "言語",
+                        },
+                        "subitem_funding_stream": {
+                            "format": "text",
+                            "title": "プログラム情報",
+                            "type": "string",
+                        },
+                    },
+                    "title": "プログラム情報",
                 },
                 "subitem_award_numbers": {
                     "type": "object",
@@ -339,7 +363,34 @@ def form(
                     "title": "プログラム情報識別子",
                     "title_i18n": {"en": "Funding Stream Identifiers", "ja": "プログラム情報識別子"},
                 },
-                
+                 {
+                    "items": [
+                        {
+                            "key": "{}.subitem_funding_streams[].subitem_funding_stream_language".format(
+                                key
+                            ),
+                            "title": "言語",
+                            "title_i18n": {"en": "Language", "ja": "言語"},
+                            "titleMap": get_select_value(config.LANGUAGE_VAL2_1),
+                            "type": "select",
+                        },
+                        {
+                            "key": "{}.subitem_funding_streams.subitem_funding_stream".format(
+                                key
+                            ),
+                            "title": "プログラム情報",
+                            "title_i18n": {
+                                "en": "Funding Stream",
+                                "ja": "プログラム情報",
+                            },
+                            "type": "text",
+                        },
+                    ],
+                    "key": "{}.subitem_funding_streams".format(key),
+                    "type": "fieldset",
+                    "title": "プログラム情報",
+                    "title_i18n": {"en": "Funding Streams", "ja": "プログラム情報"},
+                },
                 {
                     "items": [
                         {
