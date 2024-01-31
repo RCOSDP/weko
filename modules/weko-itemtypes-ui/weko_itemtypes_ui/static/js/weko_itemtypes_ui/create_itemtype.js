@@ -680,14 +680,14 @@ $(document).ready(function () {
       } else if(tmp.input_type == 'radios' || tmp.input_type == 'select') {
         tmp.input_value = $("#schema_"+row_id).find(".select-value-setting").val();
         enum_tmp = []
-        if (tmp && tmp.input_type == 'select') {
-          enum_tmp.push(null);
-        }
         titleMap_tmp = []
         $.each(tmp.input_value.split('|'), function(i,v){
           enum_tmp.push(v);
           titleMap_tmp.push({value:v, name:v});
         })
+        if (tmp && tmp.input_type == 'select' && enum_tmp[0] != undefined && enum_tmp[0] != "" && enum_tmp[0] != null) {
+          enum_tmp.unshift(null);
+        }
 
         if(tmp.option.multiple) {
           page_global.table_row_map.schema.properties[row_id] = {
@@ -1593,7 +1593,12 @@ $(document).ready(function () {
         arrEnumList.push(titleMapList[titleMap].value);
         isTitleMap = true;
       });
-      if (isTitleMap && Array.isArray(arrEnumList) && itpSchema.format == 'select' && (arrEnumList != undefined || arrEnumList != "")) {
+      if (isTitleMap &&
+          Array.isArray(arrEnumList) &&
+          itpSchema.format == 'select' &&
+          arrEnumList[0] != undefined &&
+          arrEnumList[0] != "" &&
+          arrEnumList[0] != null) {
         arrEnumList.unshift(null);
       }
       itpSchema.enum = arrEnumList;
@@ -1940,7 +1945,7 @@ $(document).ready(function () {
       delete property.enum
     } else if (property.format == 'select') {
       property.type = ["null", "string"];
-      if (Array.isArray(property.enum) && (property.enum[0] != undefined || property.enum[0] != "")) {
+      if (Array.isArray(property.enum) && property.enum[0] != undefined && property.enum[0] != "" && property.enum[0] != null) {
         property.enum.unshift(null);
       }
       form.type = form['templateUrl'] ? "template" : "select";
