@@ -662,6 +662,11 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     if restricted_access and restricted_access.get('password_enable', False):
         password_checkflag = True
 
+    with_files = False
+    for content in record.get_file_data():
+        if content.get('filename'):
+            with_files = True
+
     restricted_errorMsg = ''
     restricted_access = get_restricted_access('error_msg')
     restricted_errorMsg = restricted_access['content'].get(current_lang, None)['content']
@@ -732,6 +737,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         onetime_file_url = onetime_file_url,
         onetime_file_name = onetime_file_name,
         restricted_errorMsg = restricted_errorMsg,
+        with_files = with_files,
         **ctx,
         **kwargs
     )

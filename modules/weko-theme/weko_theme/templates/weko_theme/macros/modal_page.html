@@ -124,7 +124,7 @@
 {%- endmacro %}
 
 <!--Email Confirm Modal -->
-{% macro email_modal(modal_id="", button_id="", button_text="", title="", password_checkflag=false ) %}
+{% macro email_modal(modal_id="", button_id="", button_text="", title="", password_checkflag=false, with_files=false) %}
 <input id="password_checkflag" type="hidden" value='{{ password_checkflag }}'/>
   <div class="modal fade" tabindex="-1" role="dialog" id="{{ modal_id }}">
     <div class="modal-dialog" role="document">
@@ -150,7 +150,7 @@
                    aria-describedby="emailHelp"
                    placeholder='{{ _("Email address(reconfirmation)") }}'>
           </div>
-          {%- if password_checkflag %}
+          {%- if password_checkflag and with_files %}
             <div class="form-group password">
               <label class="control-label"
                     for="password_for_download">{{ _('Password') }}</label>
