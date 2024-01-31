@@ -91,7 +91,7 @@ from . import (
     jpcoar_format,
     jpcoar_holding_agent,
     jpcoar_dataset_series,
-    jpcoar_catalog
+    jpcoar_catalog,
 )
 
 

@@ -1,0 +1,46 @@
+{#
+    # This file is part of WEKO3.
+    # Copyright (C) 2017 National Institute of Informatics.
+    #
+    # WEKO3 is free software; you can redistribute it
+    # and/or modify it under the terms of the GNU General Public License as
+    # published by the Free Software Foundation; either version 2 of the
+    # License, or (at your option) any later version.
+    #
+    # WEKO3 is distributed in the hope that it will be
+    # useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+    # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    # General Public License for more details.
+    #
+    # You should have received a copy of the GNU General Public License
+    # along with WEKO3; if not, write to the
+    # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+    # MA 02111-1307, USA.
+    #}
+<div class="row row-4 panel-body panel-body2 contributor-record pd_username" id="pd_username_{{default_id}}">
+    <div class="col-xs-3 col-sm-3 col-md-3 col-lg-3 label_username" id="label_username_{{default_id}}">
+        <label for="share_username_{{default_id}}">
+            <input type="radio" name="owner_radio" id="id_owner_radio_{{default_id}}" class="input_contributor" value="contributor" onChange="handleShareOwner(this.id)">
+            Username
+        </label>
+    </div>
+    <div class="col-xs-2 col-sm-2 col-md-2 col-lg-2">
+        <div class="autocomplete">
+            <input id="share_username_{{default_id}}" autocomplete="off" type="text" name="share_username_{{default_id}}" placeholder="Username" class="form-control" onclick="get_search_data('username', this.id)" forcusout="focusoutShareUsername(this.id)">
+            <span class="glyphicon glyphicon-refresh glyphicon-refresh-animate id_spinners_username" id="id_spinners_username_{{default_id}}"></span>
+        </div>
+    </div>
+    <div class="col-xs-1 col-sm-1 col-md-1 col-lg-1 label_email" id="label_email_{{default_id}}">
+        <label for="share_email_{{default_id}}">Email </label>
+    </div>
+    <div class="col-xs-5 col-sm-5 col-md-5 col-lg-5">
+        <div class="autocomplete">
+            <input id="share_email_{{default_id}}" autocomplete="off" type="text" name="share_email_{{default_id}}" placeholder="Email" class="form-control" onclick="get_search_data('email', this.id)" foucusout="focusoutShareEmail(this.id)">
+            <span class="glyphicon glyphicon-refresh glyphicon-refresh-animate id_spinners_email" id="id_spinners_email_{{default_id}}"></span>
+        </div>
+    </div>
+    <div class="text-center contributor-trash">
+        <a id="id_trash_{{default_id}}" onclick="removeUser(0, this.id)"><i class="fa fa-trash" aria-hidden="true"></i></a>
+    </div>
+</div>
+<div class="row row-4"></div>

@@ -13,6 +13,21 @@ property_id = config.DCNDL_EDITION
 multiple_flag = True
 name_ja = "版"
 name_en = "Edition"
+mapping = {
+    "display_lang_type": "",
+    "jpcoar_v1_mapping": {},
+    "jpcoar_mapping": {
+        "edition": {
+            "@value": "edition",
+            "@attributes": {"xml:lang": "edition_language"},
+        }
+    },
+    "junii2_mapping": "",
+    "lido_mapping": "",
+    "lom_mapping": "",
+    "oai_dc_mapping": {"publisher": {"@value": "subitem_publisher"}},
+    "spase_mapping": "",
+}
 
 
 def add(post_data, key, **kwargs):
@@ -21,21 +36,7 @@ def add(post_data, key, **kwargs):
     set_post_data(post_data, property_id, name_ja, key, option, form, schema, **kwargs)
 
     if kwargs.pop("mapping", True):
-        post_data["table_row_map"]["mapping"][key] = {
-            "display_lang_type": "",
-            "jpcoar_v1_mapping": {},
-            "jpcoar_mapping": {
-                "edition": {
-                    "@value": "edition",
-                    "@attributes": {"xml:lang": "edition_language"},
-                }
-            },
-            "junii2_mapping": "",
-            "lido_mapping": "",
-            "lom_mapping": "",
-            "oai_dc_mapping": {"publisher": {"@value": "subitem_publisher"}},
-            "spase_mapping": "",
-        }
+        post_data["table_row_map"]["mapping"][key] = mapping
     else:
         post_data["table_row_map"]["mapping"][key] = config.DEFAULT_MAPPING
 
@@ -48,6 +49,7 @@ def schema(title="", multi_flag=multiple_flag):
         _d = {
             "type": "object",
             "format": "object",
+            "title":"edition",
             "properties": {
                 "edition": {
                     "type": "string",

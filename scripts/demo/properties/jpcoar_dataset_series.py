@@ -13,6 +13,16 @@ property_id = config.JPCOAR_DATASET_SERIES
 multiple_flag = False
 name_ja = "データセットシリーズ"
 name_en = "Dataset Series"
+mapping = {
+    "display_lang_type": "",
+    "jpcoar_v1_mapping": {},
+    "jpcoar_mapping": {"datasetSeries": {"@value": "jpcoar_dataset_series"}},
+    "junii2_mapping": "",
+    "lido_mapping": "",
+    "lom_mapping": "",
+    "oai_dc_mapping": "",
+    "spase_mapping": "",
+}
 
 
 def add(post_data, key, **kwargs):
@@ -21,21 +31,7 @@ def add(post_data, key, **kwargs):
     set_post_data(post_data, property_id, name_ja, key, option, form, schema, **kwargs)
 
     if kwargs.pop("mapping", True):
-        post_data["table_row_map"]["mapping"][key] = {
-            "display_lang_type": "",
-            "jpcoar_v1_mapping": {},
-            "jpcoar_mapping": {
-                "publisher": {
-                    "@attributes": {"xml:lang": "subitem_publisher_language"},
-                    "@value": "subitem_publisher",
-                }
-            },
-            "junii2_mapping": "",
-            "lido_mapping": "",
-            "lom_mapping": "",
-            "oai_dc_mapping": "",
-            "spase_mapping": "",
-        }
+        post_data["table_row_map"]["mapping"][key] = mapping
     else:
         post_data["table_row_map"]["mapping"][key] = config.DEFAULT_MAPPING
 
@@ -48,6 +44,7 @@ def schema(title="", multi_flag=multiple_flag):
         _d = {
             "type": "object",
             "format": "object",
+            "title":"dataset_series",
             "properties": {
                 "jpcoar_dataset_series": {
                     "type": "string",

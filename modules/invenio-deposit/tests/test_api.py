@@ -28,7 +28,9 @@ from __future__ import absolute_import, print_function
 
 from copy import deepcopy
 
+import uuid
 import pytest
+from mock import patch
 from invenio_db import db
 from invenio_pidstore.errors import PIDInvalidAction
 from invenio_records.errors import MissingModelError
@@ -39,6 +41,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from invenio_deposit.api import Deposit
 from invenio_deposit.errors import MergeConflict
 
+from flask_login.utils import login_user, logout_user
 
 def test_schemas(app, fake_schemas):
     """Test schema URL transformations."""
@@ -237,8 +240,7 @@ def test_publish_revision_changed_mergeable(app, location, fake_schemas):
     # 'http://localhost/schemas/deposit-v1.0.0.json'
 
 
-def test_publish_revision_changed_not_mergeable(app, location,
-                                                fake_schemas):
+def test_publish_revision_changed_not_mergeable(app, location, fake_schemas):
     """Try to Publish and someone change the deposit in the while."""
     # create a deposit
     deposit = Deposit.create({"metadata": {
@@ -268,3 +270,61 @@ def test_publish_revision_changed_not_mergeable(app, location,
     # deposit.commit()
     # with pytest.raises(MergeConflict):
     #     deposit.publish()
+
+
+# .tox/c1/bin/pytest --cov=invenio_deposit tests/test_api.py::test_deposit_create -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-deposit/.tox/c1/tmp
+def test_deposit_create(app, location, fake_schemas):
+    datastore = app.extensions['security'].datastore
+    user1 = datastore.create_user(email='info@inveniosoftware.org', password='tester', active=True)
+
+    with app.test_request_context():
+        logout_user()
+        data_no_login = {
+            "metadata": {
+                        "title": "test-title",
+                        },
+            "_deposit": {
+                "id": "1"
+            }
+        }
+        deposit = Deposit.create(data_no_login)
+        assert deposit['_deposit']['owner'] == 1
+        assert deposit['_deposit']['owners'] == [1]
+        assert deposit['_deposit']['weko_shared_ids'] == []
+
+        with patch("flask_login.utils._get_user", return_value=user1):
+            data = {
+                "metadata": {
+                            "title": "test-title",
+                            },
+                "owner": 1,
+                "weko_shared_ids":[2]
+            }
+            deposit = Deposit.create(data)
+            assert deposit['_deposit']['created_by'] == user1.id
+            assert deposit['_deposit']['owner'] == 1
+            assert deposit['_deposit']['owners'] == [1]
+            assert deposit['_deposit']['weko_shared_ids'] == [2]
+
+            data_1 = {
+                "metadata": {
+                            "title": "test-title",
+                            },
+                "owner": 1
+            }
+            deposit_1 = Deposit.create(data_1)
+            assert deposit_1['weko_shared_ids'] == []
+            assert deposit_1['_deposit']['weko_shared_ids'] == []
+            """
+            data_2 = {
+                "metadata": {
+                            "title": "test-title",
+                            },
+                "owner": 1
+            }
+            id = uuid.uuid4()
+            recid = 3
+            deposit_1 = Deposit.create(data_2, id_=id, recid=recid)
+            assert deposit_1['weko_shared_ids'] == []
+            assert deposit_1['_deposit']['weko_shared_ids'] == []
+            """

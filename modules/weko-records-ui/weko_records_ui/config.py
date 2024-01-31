@@ -169,6 +169,21 @@ RECORDS_UI_ENDPOINTS = dict(
         view_imp='weko_records_ui.fd.file_download_onetime',
         record_class='weko_deposit.api:WekoRecord',
     ),
+    recid_secret_url=dict(
+        pid_type='recid',
+        route='/records/<pid_value>/secret/<path:filename>',
+        view_imp='weko_records_ui.views.create_secret_url_and_send_mail',
+        record_class='weko_deposit.api:WekoRecord',
+        permission_factory_imp='weko_records_ui.permissions'
+                               ':page_permission_factory',
+        methods=['POST'],
+    ),
+    recid_secret_file_download=dict(
+        pid_type='recid',
+        route='/record/<pid_value>/file/secret/<string:filename>',
+        view_imp='weko_records_ui.fd.file_download_secret',
+        record_class='weko_deposit.api:WekoRecord',
+    ),
 )
 
 WEKO_RECORDS_UI_SECRET_KEY = "secret"
@@ -177,6 +192,14 @@ WEKO_RECORDS_UI_SECRET_KEY = "secret"
 WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN = \
     "filename={} record_id={} user_mail={} date={}"
 """Onetime download pattern."""
+
+WEKO_RECORDS_UI_SECRET_DOWNLOAD_PATTERN = \
+    "filename={} record_id={} id={} date={}"
+"""Secret URL download pattern."""
+
+WEKO_RECORDS_UI_MAIL_TEMPLATE_SECRET_URL = "email_pattern_send_secret_url.tpl"
+
+WEKO_RECORDS_UI_MAIL_TEMPLATE_SECRET_GENRE_ID = 1
 
 RECORDS_UI_EXPORT_FORMATS = {
     'recid': {
@@ -239,15 +262,15 @@ OAISERVER_METADATA_FORMATS = {
     #        'schema': 'http://irdb.nii.ac.jp/oai/junii2-3-1.xsd',
     #        'namespace': 'http://irdb.nii.ac.jp/oai',
     #    },
-    'jpcoar': {
-        'serializer': (
-            'weko_schema_ui.utils:dumps_oai_etree', {
-                'schema_type': 'jpcoar_v1',
-            }
-        ),
-        'namespace': 'https://irdb.nii.ac.jp/schema/jpcoar/1.0/',
-        'schema': 'https://irdb.nii.ac.jp/schema/jpcoar/1.0/jpcoar_scm.xsd',
-    },
+    # 'jpcoar': {
+    #     'serializer': (
+    #         'weko_schema_ui.utils:dumps_oai_etree', {
+    #             'schema_type': 'jpcoar_v1',
+    #         }
+    #     ),
+    #     'namespace': 'https://irdb.nii.ac.jp/schema/jpcoar/1.0/',
+    #     'schema': 'https://irdb.nii.ac.jp/schema/jpcoar/1.0/jpcoar_scm.xsd',
+    # },
     'jpcoar_1.0': {
         'serializer': (
             'weko_schema_ui.utils:dumps_oai_etree', {
@@ -256,6 +279,15 @@ OAISERVER_METADATA_FORMATS = {
         ),
         'namespace': 'https://irdb.nii.ac.jp/schema/jpcoar/1.0/',
         'schema': 'https://irdb.nii.ac.jp/schema/jpcoar/1.0/jpcoar_scm.xsd',
+    },
+    'jpcoar': {
+        'serializer': (
+            'weko_schema_ui.utils:dumps_oai_etree', {
+                'schema_type': 'jpcoar',
+            }
+        ),
+        'namespace': 'https://irdb.nii.ac.jp/schema/jpcoar/2.0/',
+        'schema': 'https://irdb.nii.ac.jp/schema/jpcoar/2.0/jpcoar_scm.xsd',
     },
     'jpcoar_2.0': {
         'serializer': (
@@ -615,3 +647,22 @@ WEKO_RECORDS_UI_DISPLAY_RESOURCE_TYPE = False
 
 WEKO_RECORDS_UI_DISPLAY_ITEM_TYPE = True
 """ Display item type name on item detail. """
+
+WEKO_RECORDS_UI_REST_ENDPOINTS = {
+    'need_restricted_access': {
+        'route': '/<string:version>/records/<int:pid_value>/need-restricted-access',
+        'default_media_type': 'application/json',
+    },
+    'get_file_terms': {
+        'route': '/<string:version>/records/<int:pid_value>/files/<string:file_name>/terms',
+        'default_media_type': 'application/json',
+    },
+    'file_application': {
+        'route': '/<string:version>/records/<int:pid_value>/files/<string:file_name>/application',
+        'default_media_type': 'application/json',
+    },
+}
+
+WEKO_RECORDS_UI_API_LIMIT_RATE_DEFAULT = ['100 per minute']
+
+WEKO_RECORDS_UI_API_ACCEPT_LANGUAGES = ['en', 'ja']

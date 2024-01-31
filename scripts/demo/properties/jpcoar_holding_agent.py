@@ -13,6 +13,32 @@ property_id = config.JPCOAR_HOLDING_AGENT
 multiple_flag = False
 name_ja = "所蔵機関"
 name_en = "Holding Agent"
+mapping = {
+    "display_lang_type": "",
+    "jpcoar_v1_mapping": {},
+    "jpcoar_mapping": {
+        "holdingAgent": {
+            "holdingAgentName": {
+                "@value": "holding_agent_names.holding_agent_name",
+                "@attributes": {
+                    "xml:lang": "holding_agent_names.holding_agent_name_language"
+                },
+            },
+            "holdingAgentNameIdentifier": {
+                "@value": "holding_agent_name_identifier.holding_agent_name_idenfitier_value",
+                "@attributes": {
+                    "nameIdentifierScheme": "holding_agent_name_identifier.holding_agent_name_idenfitier_scheme",
+                    "nameIdentifierURI": "holding_agent_name_identifier.holding_agent_name_idenfitier_uri",
+                },
+            },
+        }
+    },
+    "junii2_mapping": "",
+    "lido_mapping": "",
+    "lom_mapping": "",
+    "oai_dc_mapping": {"publisher": {"@value": "subitem_publisher"}},
+    "spase_mapping": "",
+}
 
 
 def add(post_data, key, **kwargs):
@@ -21,32 +47,7 @@ def add(post_data, key, **kwargs):
     set_post_data(post_data, property_id, name_ja, key, option, form, schema, **kwargs)
 
     if kwargs.pop("mapping", True):
-        post_data["table_row_map"]["mapping"][key] = {
-            "display_lang_type": "",
-            "jpcoar_v1_mapping": {},
-            "jpcoar_mapping": {
-                "holdingAgent": {
-                    "holdingAgentName": {
-                        "@value": "holding_agent_names.holding_agent_name",
-                        "@attributes": {
-                            "xml:lang": "holding_agent_names.holding_agent_name_language"
-                        },
-                    },
-                    "holdingAgentNameIdentifier": {
-                        "@value": "holding_agent_name_identifier.holding_agent_name_idenfitier_value",
-                        "@attributes": {
-                            "nameIdentifierScheme": "holding_agent_name_identifier.holding_agent_name_idenfitier_scheme",
-                            "nameIdentifierURI": "holding_agent_name_identifier.holding_agent_name_idenfitier_uri",
-                        },
-                    },
-                }
-            },
-            "junii2_mapping": "",
-            "lido_mapping": "",
-            "lom_mapping": "",
-            "oai_dc_mapping": {"publisher": {"@value": "subitem_publisher"}},
-            "spase_mapping": "",
-        }
+        post_data["table_row_map"]["mapping"][key] = mapping
     else:
         post_data["table_row_map"]["mapping"][key] = config.DEFAULT_MAPPING
 
@@ -59,7 +60,7 @@ def schema(title="", multi_flag=multiple_flag):
         _d = {
             "type": "object",
             "format": "object",
-            "title": "所蔵機関",
+            "title": "holding_agent_name",
             "properties": {
                 "holding_agent_names": {
                     "type": "array",

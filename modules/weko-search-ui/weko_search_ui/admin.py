@@ -757,9 +757,10 @@ class ItemBulkExport(BaseView):
             user_id=user_id
         )
         export_status, download_uri, message, run_message, _ = get_export_status()
+        timezone = str(current_app.config["STATS_WEKO_DEFAULT_TIMEZONE"]())
 
         if not export_status:
-            export_task = export_all_task.apply_async(args=(request.url_root, user_id, data))
+            export_task = export_all_task.apply_async(args=(request.url_root, user_id, data, timezone))
             reset_redis_cache(_cache_key, str(export_task.task_id))
 
         # return Response(status=200)

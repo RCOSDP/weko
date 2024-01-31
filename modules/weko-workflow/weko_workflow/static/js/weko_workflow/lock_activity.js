@@ -140,10 +140,27 @@ $(document).ready(function () {
     locked_value = 0;
   });
 
-  window.addEventListener('beforeunload', function () {
+  window.addEventListener('beforeunload', function (e) {
     if (locked_value) {
       unlock_activity(activity_id, locked_value);
     }
-    user_unlock_activity(activity_id)
+    user_unlock_activity(activity_id);
+    console.log(e.type);
+    // イベントをキャンセルする
+    // e.preventDefault();
+    // Chrome では returnValue を設定する必要がある
+    e.returnValue = '';
+  });
+
+  window.addEventListener('unload', function (e) {
+    if (locked_value) {
+      unlock_activity(activity_id, locked_value);
+    }
+    user_unlock_activity(activity_id);
+    console.log(e.type);
+    // イベントをキャンセルする
+    // e.preventDefault();
+    // Chrome では returnValue を設定する必要がある
+    // e.returnValue = '';
   });
 });

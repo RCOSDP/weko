@@ -60,7 +60,9 @@ def check_import_items_task(file_path, is_change_identifier: bool, host_url,
     else:
         list_record = check_result.get("list_record", [])
         num_record_err = len([i for i in list_record if i.get("errors")])
-        if len(list_record) == num_record_err:
+        # 1件でもエラーが発生するとimport不可に変更 2023/08/26 ayumi.jin
+        #if len(list_record) == num_record_err:
+        if num_record_err > 0:
             remove_temp_dir_task.apply_async((data_path,))
         else:
             expire = datetime.now() + timedelta(seconds=get_lifetime())
@@ -104,7 +106,7 @@ def delete_task_id_cache(task_id, cache_key):
             datastore.delete(cache_key)
 
 @shared_task
-def export_all_task(root_url, user_id, data):
+def export_all_task(root_url, user_id, data, timezone):
     """Export all items."""
     from weko_admin.utils import reset_redis_cache
 
@@ -120,7 +122,7 @@ def export_all_task(root_url, user_id, data):
         user_id=user_id
     )
 
-    uri = export_all(root_url, user_id, data)
+    uri = export_all(root_url, user_id, data, timezone)
     reset_redis_cache(_cache_key, uri)
     delete_exported_task.apply_async(
         args=(

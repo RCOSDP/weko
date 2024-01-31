@@ -1253,7 +1253,8 @@ class RestrictedAccessSettingView(BaseView):
                 "WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS_TEMPLATE"],
             data=json.dumps(get_restricted_access()),
             items_per_page=current_app.config[
-                "WEKO_ADMIN_ITEMS_PER_PAGE_USAGE_REPORT_REMINDER"]
+                "WEKO_ADMIN_ITEMS_PER_PAGE_USAGE_REPORT_REMINDER"],
+            maxint=current_app.config["WEKO_ADMIN_RESTRICTED_ACCESS_MAX_INTEGER"]
         )
 
 

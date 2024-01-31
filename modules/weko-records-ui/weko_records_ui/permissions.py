@@ -22,6 +22,8 @@
 
 from datetime import datetime as dt
 from datetime import timedelta, timezone
+import traceback
+from typing import List, Optional
 
 from flask import abort, current_app
 from flask_babelex import get_locale, to_user_timezone, to_utc
@@ -133,8 +135,8 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
 
         # Get email list of created workflow user.
         user_id_list = [int(record['owner'])] if record.get('owner') else []
-        if record.get('weko_shared_id'):
-            user_id_list.append(record.get('weko_shared_id'))
+        if record.get('weko_shared_ids'):
+            user_id_list.extend(record.get('weko_shared_ids'))
         created_user_email_list = get_email_list_by_ids(user_id_list)
 
         # Registered user
@@ -172,10 +174,51 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
                     is_can = True
                 else:
                     try:
-                        date = fjson.get('date')
-                        if date and isinstance(date, list) and date[0]:
-                            adt = date[0].get('dateValue')
-                            is_can = not is_future(adt)
+                        # contents accessdate
+                        c_is_can = False
+                        access_date = fjson.get('accessdate',None)
+                        if access_date:
+                            c_is_can = not is_future(access_date)
+                        else:
+                            # get date list and check dateValue is future 
+                            date_list = fjson.get('date')
+                            if date_list and isinstance(date_list, list) and date_list[0]:
+                                adt = date_list[0].get('dateValue')
+                                c_is_can = not is_future(adt)
+
+                        # publish date
+                        idt = record.get('publish_date')
+                        p_is_can = not is_future(idt)
+
+                        # roles check
+                        role_is_can = False
+                        roles = fjson.get('roles')
+                        if c_is_can and p_is_can:
+                            role_is_can = True
+                        elif roles and isinstance(roles, list) and len(roles)>0:
+                            for lst in list(current_user.roles or []):
+                                for role_value in [ role.get('role') for role in roles ]:
+                                    if __isint(role_value):
+                                        if lst.id == int(role_value):
+                                            role_is_can = True
+                                            if role_is_can:
+                                                c_is_can = True
+                                            break
+                                    else:
+                                        if lst.name == role_value:
+                                            role_is_can = True
+                                            if role_is_can:
+                                                c_is_can = True
+                                            break
+                            # ログインユーザーに権限なしの場合でも、コンテンツで「非ログインユーザー」指定した場合OK
+                            # if len(list(current_user.roles))==0:
+                            #     if 'none_loggin' in [ role.get('role') for role in roles ]:
+                            #         role_is_can = True
+                        else:
+                            role_is_can = True
+
+                        is_can = c_is_can and p_is_can and role_is_can
+
                     except BaseException:
                         is_can = False
 
@@ -189,34 +232,52 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
                     # Always display the file info area in 'Detail' screen.
                     is_can = True
                 else:
-                    is_can = False
-                    users = current_app.config['WEKO_PERMISSION_ROLE_USER']
-                    for lst in list(current_user.roles or []):
-                        if lst.name in users:
-                            is_can = True
-                            break
+                    # ログインユーザーか
+                    is_login_user = current_user.is_authenticated
+
+                    # rolesで指定されたユーザーロールか
+                    is_role_can = False
+                    roles = fjson.get('roles')
+                    if roles and isinstance(roles, list) and len(roles)>0:
+                        for lst in list(current_user.roles or []):
+                            for role_value in [ role.get('role') for role in roles ]:
+                                if __isint(role_value):
+                                    if lst.id == int(role_value):
+                                        is_role_can = True
+                                        break
+                                else:
+                                    if lst.name == role_value:
+                                        is_role_can = True
+                                        break
+                        # ログインユーザーに権限なしの場合でも、コンテンツで「非ログインユーザー」指定した場合OK
+                        # if 'none_loggin' in [ role.get('role') for role in roles ]:
+                        #     is_role_can = True
+
+                    else:
+                        is_role_can = True
 
                     # Billing file permission check
+                    is_billing_can = False
                     if fjson.get('groupsprice'):
                         is_user_group_permission = False
                         groups = fjson.get('groupsprice')
                         for group in list(groups or []):
                             group_id = group.get('group')
                             if check_user_group_permission(group_id):
-                                is_user_group_permission = \
-                                    check_user_group_permission(group_id)
+                                is_user_group_permission = check_user_group_permission(group_id)
                                 break
-                        is_can = is_can & is_user_group_permission
+                        is_billing_can = is_user_group_permission
                     else:
                         if current_user.is_authenticated:
                             if fjson.get('groups'):
-                                is_can = check_user_group_permission(
-                                    fjson.get('groups'))
+                                is_billing_can = check_user_group_permission(fjson.get('groups'))
                             else:
-                                is_can = True
-                        if not is_can:
+                                is_billing_can = True
+                        if not is_billing_can:
                             # site license permission check
-                            is_can = site_license_check()
+                            is_billing_can = site_license_check()
+
+                    is_can = is_login_user and is_role_can and is_billing_can
 
             #  can not access
             elif 'open_no' in acsrole:
@@ -266,41 +327,50 @@ def is_open_restricted(file_data):
             result = True
     return result
 
+def check_content_clickable(record:dict, fjson:dict) -> bool:
+    """Check if content file is Applyable.
+        Args
+            record: the records metadata
+            fjson: file object json
 
-def check_content_clickable(record, fjson):
-    """Check if content file is clickable."""
+        Returns
+            bool: is content Applyable
+    """
     if not is_open_restricted(fjson):
         return False
-    record_id = record.get('recid')
-    file_name = fjson.get('filename')
-    list_permission = __get_file_permission(record_id, file_name)
-    # can click if user have not log in
-    if list_permission:
-        permission = list_permission[0]
-        if permission.status == 0:
-            return False
-        else:
-            return True
-    else:
-        return True
+    return not check_open_restricted_permission(record, fjson)
 
 
-def check_permission_period(permission):
-    """Check download permission."""
+def check_permission_period(permission : FilePermission) -> bool :
+    """Check download permission.
+        Args
+            FilePermission:permission
+        Returns 
+            bool:is the user has access rights or not
+    """
+
+    from weko_records_ui.utils import get_valid_onetime_download
+    from weko_items_ui.utils import get_user_information
+
     if permission.status == 1:
-        return True
+        res = get_valid_onetime_download(permission.file_name ,permission.record_id , get_user_information(permission.user_id)[0]['email'])
+        current_app.logger.info(res)
+        return res is not None
     else:
         return False
 
 
-def get_permission(record, fjson):
+def get_permission(record:dict, fjson:dict) -> Optional[FilePermission]:
     """Get download file permission.
-
-    @param record:
-    @param fjson:
-    @return:
+    Args
+        record: the records metadata
+        fjson: file object json
+    Returns
+        FilePermission or None
     """
     # current_app.logger.debug("fjson: {}".format(fjson))
+    if not check_file_download_permission(record, fjson):
+        return None
     record_id = record.get('recid')
     file_name = fjson.get('filename')
     list_permission = __get_file_permission(record_id, file_name)
@@ -412,10 +482,10 @@ def check_publish_status(record):
 #                 break
 #             if lst.name == users[2]:
 #                 is_himself = False
-#                 shared_id = record.get('weko_shared_id')
+#                 shared_ids = record.get('weko_shared_ids')
 #                 if user_id and created_id and user_id == str(created_id):
 #                     is_himself = True
-#                 elif user_id and shared_id and user_id == str(shared_id):
+#                 elif user_id and shared_ids and str(user_id) in shared_ids:
 #                     is_himself = True
 #             elif lst.name == users[3]:
 #                 is_himself = False
@@ -426,7 +496,7 @@ def check_created_id(record):
 
     Args:
         record (dict): the record to check edit permission.
-        example: {'_oai': {'id': 'oai:weko3.example.org:00000001', 'sets': ['1657555088462']}, 'path': ['1657555088462'], 'owner': '1', 'recid': '1', 'title': ['a'], 'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2022-07-12'}, '_buckets': {'deposit': '35004d51-8938-4e77-87d7-0c9e176b8e7b'}, '_deposit': {'id': '1', 'pid': {'type': 'depid', 'value': '1', 'revision_id': 0}, 'owner': '1', 'owners': [1], 'status': 'published', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}}, 'item_title': 'a', 'author_link': [], 'item_type_id': '15', 'publish_date': '2022-07-12', 'publish_status': '0', 'weko_shared_id': -1, 'item_1617186331708': {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'a', 'subitem_1551255648112': 'ja'}]}, 'item_1617258105262': {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}, 'relation_version_is_last': True}
+        example: {'_oai': {'id': 'oai:weko3.example.org:00000001', 'sets': ['1657555088462']}, 'path': ['1657555088462'], 'owner': '1', 'recid': '1', 'title': ['a'], 'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2022-07-12'}, '_buckets': {'deposit': '35004d51-8938-4e77-87d7-0c9e176b8e7b'}, '_deposit': {'id': '1', 'pid': {'type': 'depid', 'value': '1', 'revision_id': 0}, 'owner': '1', 'owners': [1], 'status': 'published', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}}, 'item_title': 'a', 'author_link': [], 'item_type_id': '15', 'publish_date': '2022-07-12', 'publish_status': '0', 'weko_shared_ids': [], 'item_1617186331708': {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'a', 'subitem_1551255648112': 'ja'}]}, 'item_1617258105262': {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}, 'relation_version_is_last': True}
 
     Returns:
         bool: True is the current user has the edit permission.
@@ -436,12 +506,12 @@ def check_created_id(record):
     supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']
     user_id = current_user.get_id() \
             if current_user and current_user.is_authenticated else None
-    if user_id is not None:    
+    if user_id is not None:
         created_id = record.get('_deposit', {}).get('created_by')
-        shared_id = record.get('weko_shared_id')
+        shared_ids = record.get('weko_shared_ids')
         if user_id and created_id and user_id == str(created_id):
             is_himself = True
-        elif user_id and shared_id and user_id == str(shared_id):
+        elif user_id and len(shared_ids)>0 and int(user_id) in shared_ids:
             is_himself = True
         for lst in list(current_user.roles or []):
             # In case of supper user,it's always have permission
@@ -458,7 +528,7 @@ def check_usage_report_in_permission(permission):
         return False
 
 
-def check_create_usage_report(record, file_json):
+def check_create_usage_report(record, file_json , user_id=None):
     """Check create usage report.
 
     @param record:
@@ -467,21 +537,60 @@ def check_create_usage_report(record, file_json):
     """
     record_id = record.get('recid')
     file_name = file_json.get('filename')
-    list_permission = __get_file_permission(record_id, file_name)
-    if list_permission:
-        permission = list_permission[0]
+    list_permission = __get_file_permission(record_id, file_name ,user_id)
+    for permission in list_permission:
         if check_usage_report_in_permission(permission):
             return permission
-        else:
-            return None
+    return None
+
+def is_owners_or_superusers(record) -> bool:
+    """ 
+    return true if the user can download the record's contents unconditionally
+
+    Args
+        record: The record metadata.
+
+    Returns
+        bool: is owners or superusers
+    """
+    # Get email list of created workflow user.
+    user_id_list = [int(record['owner'])] if record.get('owner') else []
+    if record.get('weko_shared_ids'):
+        user_id_list.extend(record.get('weko_shared_ids'))
+
+    # Registered user
+    if current_user and \
+            current_user.is_authenticated and \
+            current_user.id in user_id_list:
+        return True
+
+    # Super users
+    supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] + \
+        current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
+    for role in list(current_user.roles or []):
+        if role.name in supers:
+            return True
+    
+    return False
 
 
-def __get_file_permission(record_id, file_name):
-    """Get file permission."""
-    user_id = current_user.get_id()
-    current_time = dt.now()
-    duration = current_time - timedelta(
-        days=current_app.config['WEKO_RECORDS_UI_DOWNLOAD_DAYS'])
-    list_permission = FilePermission.find_list_permission_by_date(
-        user_id, record_id, file_name, duration)
+def __get_file_permission(record_id:str, file_name:str ,user_id = None) -> List[FilePermission]:
+    """Get file permission.
+        Args
+            str:record_id
+            str:file_name
+        Returns
+            List[FilePermission]
+    """
+    user_id = user_id or current_user.get_id()
+    list_permission = FilePermission.find_list_permission_approved(
+        user_id, record_id, file_name)
     return list_permission
+
+def __isint(str):
+    try:
+        int(str, 10)
+    except ValueError:
+        return False
+    else:
+        return True
