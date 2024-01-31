@@ -950,3 +950,14 @@ msgstr "Restricted Access"
 msgid "Admin menu_Setting_Faceted Search"
 msgstr "Faceted Search"
 
+msgid "Password(reconfirmation)"
+msgstr ""
+
+msgid "password rule1"
+msgstr "Please set a password with at least 8 characters."
+
+msgid "password rule2"
+msgstr "Please include at least one uppercase letter, lowercase letter, number, and symbol."
+
+msgid "available characters"
+msgstr "available characters"

@@ -171,6 +171,7 @@ RECORDS_UI_ENDPOINTS = dict(
         route='/record/<pid_value>/file/onetime/<string:filename>',
         view_imp='weko_records_ui.fd.file_download_onetime',
         record_class='weko_deposit.api:WekoRecord',
+        methods=['GET','POST'],
     ),
     recid_secret_url=dict(
         pid_type='recid',
@@ -663,6 +664,10 @@ WEKO_RECORDS_UI_REST_ENDPOINTS = {
         'route': '/<string:version>/captcha/image',
         'default_media_type': 'application/json',
     },
+    'validate_captcha_answer': {
+        'route': '/<string:version>/captcha/validate',
+        'default_media_type': 'application/json',
+    },
 }
 
 WEKO_RECORDS_UI_API_LIMIT_RATE_DEFAULT = ['100 per minute']
@@ -670,6 +675,8 @@ WEKO_RECORDS_UI_API_LIMIT_RATE_DEFAULT = ['100 per minute']
 WEKO_RECORDS_UI_API_ACCEPT_LANGUAGES = ['en', 'ja']
 
 WEKO_RECORDS_UI_CAPTCHA_EXPIRATION_SECONDS = 900
+
+WEKO_RECORDS_UI_CAPTCHA_TTL_SECONDS = 600
 
 WEKO_RECORDS_UI_NOTIFICATION_MESSAGE = "以下の内容のリクエストメールをデータ提供者に送信しました。\n\n-----------------------------------------------------------------------------\n\n"
 

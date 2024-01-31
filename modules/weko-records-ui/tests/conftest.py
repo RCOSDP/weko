@@ -403,8 +403,8 @@ def users(app, db):
         repoadmin = User.query.filter_by(email="repoadmin@test.org").first()
         sysadmin = User.query.filter_by(email="sysadmin@test.org").first()
         generaluser = User.query.filter_by(email="generaluser@test.org")
-        originalroleuser = create_test_user(email="originalroleuser@test.org")
-        originalroleuser2 = create_test_user(email="originalroleuser2@test.org")
+        originalroleuser = User.query.filter_by(email="originalroleuser@test.org")
+        originalroleuser2 = User.query.filter_by(email="originalroleuser2@test.org")
 
     role_count = Role.query.filter_by(name="System Administrator").count()
     if role_count != 1:
@@ -4708,7 +4708,7 @@ def db_fileonetimedownload(app, db):
         record_id='1',
         download_count=10,
         expiration_date=0,
-        extra_info=str({"is_guest": True, "send_usage_report": True, "usage_application_activity_id": ""})
+        extra_info=str({"is_guest": True, "send_usage_report": True, "usage_application_activity_id": "","password_for_download":"test_pass"})
     )
     db.session.add(record)
     return record

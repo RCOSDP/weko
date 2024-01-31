@@ -619,3 +619,8 @@ msgstr ""
 msgid "Display Request Mail Button"
 msgstr ""
 
+msgid "error message for item application"
+msgstr "When uploading a file, you cannot set usage request workflow for the item."
+
+msgid "Set usage application workflow for item"
+msgstr ""

@@ -201,6 +201,19 @@
                          {%- endfor %}
                        </select>
                     </div>
+                    <div class="mail_setting_for_itemReg_for_registerPerson">
+                      <div class="form-inline">
+                        <label style="font-weight: unset;">
+                          <input type="checkbox" class="pointer checkbox_change" id="td_action_item_reg_done_for_registerPerson_{{action.action_id}}" {% if action.send_mail_setting.inform_itemReg_for_registerPerson and action.send_mail_setting.inform_itemReg_for_registerPerson.send %}checked{% endif %}>
+                          {{_('Send an email to item registrants when applying for use')}}</label>
+                      </div>
+                       <select style="width: 200px" id="td_action_item_reg_done_mail_for_registerPerson_{{action.action_id}}" {% if not action.send_mail_setting.inform_itemReg_for_registerPerson or not action.send_mail_setting.inform_itemReg_for_registerPerson.send %}disabled{% endif %}>
+                         <option value="0"></option>
+                         {%- for mail_template in mail_templates %}
+                           <option value="{{mail_template['key']}}" {% if action.send_mail_setting.inform_itemReg_for_registerPerson and mail_template['key'] == action.send_mail_setting.inform_itemReg_for_registerPerson.mail %}selected{% endif %}>ID:{{mail_template['key']}} {{mail_template['content']['subject']}}</option>
+                         {%- endfor %}
+                       </select>
+                    </div>
                   {% endif %}
               </td>
               <td class="hide">{{_(action.action_status.value)}}</td>

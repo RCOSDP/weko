@@ -18,8 +18,9 @@ from weko_workflow.models import FlowAction as _FlowAction
 from weko_workflow.models import FlowActionRole as _FlowActionRole
 from weko_workflow.models import FlowDefine as _Flow
 from weko_workflow.models import WorkFlow as _WorkFlow
-from weko_workflow.models import ActionStatusPolicy, Activity, ActivityAction, FlowActionRole, ActivityRequestMail
+from weko_workflow.models import ActionStatusPolicy, Activity, ActivityAction, FlowActionRole, ActivityRequestMail, ActivityItemApplication
 from weko_records.models import RequestMailList as _RequestMailList
+from weko_records.models import ItemApplication as _ItemApplication
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_Flow_action -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_Flow_action(app, client, users, db, action_data):
@@ -855,3 +856,23 @@ def test_get_recirds_for_request_mail_by_mailaddress(db,mocker):
         assert recids_list
     assert not activity.get_recids_for_request_mail_by_mailaddress("wekosoftware@nii.ac.jp")
 
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_item_application_create_and_update -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_item_application_create_and_update(app, workflow, db, mocker):
+    activity = WorkActivity()
+    _item_application1 = {}
+    _item_application2 = {"workflow":"1", "terms":"term_free", "termsDescription":"test"}
+
+    # create
+    activity.create_or_update_activity_item_application("1", _item_application1, True)
+    assert activity.get_activity_item_application("1")
+
+    # update
+    activity.create_or_update_activity_item_application("1", _item_application2, True)
+    assert activity.get_activity_item_application("1").item_application == _item_application2
+
+    # error
+    activity.create_or_update_activity_item_application("1111111", _item_application1, "aaaaa")
+    assert activity.get_activity_item_application("1").item_application == _item_application2
+
+    # not hit search
+    assert not activity.get_activity_item_application("1111")

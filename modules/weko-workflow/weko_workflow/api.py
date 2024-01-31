@@ -44,7 +44,7 @@ from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SUFFIX_METHOD, \
     WEKO_WORKFLOW_ALL_TAB, WEKO_WORKFLOW_TODO_TAB, WEKO_WORKFLOW_WAIT_TAB
 from .models import Action as _Action
 from .models import ActionCommentPolicy, ActionFeedbackMail, ActivityRequestMail,\
-    ActionIdentifier, ActionJournal, ActionStatusPolicy
+    ActionIdentifier, ActionJournal, ActionStatusPolicy, ActivityItemApplication
 from .models import Activity as _Activity
 from .models import ActivityAction, ActivityHistory, ActivityStatusPolicy
 from .models import FlowAction as _FlowAction
@@ -1150,6 +1150,30 @@ class WorkActivity(object):
             db.session.rollback()
             current_app.logger.exception(str(ex))
 
+    def create_or_update_activity_item_application(self,
+                                                activity_id,
+                                                item_application,
+                                                is_display_item_application_button):
+        try:
+            with db.session.begin_nested():
+                activity_item_application = ActivityItemApplication.query.filter_by(
+                    activity_id=activity_id).one_or_none()
+                if activity_item_application:
+                    activity_item_application.item_application = item_application
+                    activity_item_application.display_item_application_button = is_display_item_application_button
+                    db.session.merge(activity_item_application)
+                else:
+                    activity_item_application = ActivityItemApplication(
+                        activity_id=activity_id,
+                        display_item_application_button=is_display_item_application_button,
+                        item_application=item_application
+                    )
+                    db.session.add(activity_item_application)
+            db.session.commit()
+        except SQLAlchemyError as ex:
+            db.session.rollback()
+            current_app.logger.exception(str(ex))
+
     def get_action_journal(self, activity_id, action_id):
         """Get action journal info.
 
@@ -1194,6 +1218,12 @@ class WorkActivity(object):
             else:
                 identifier = action_identifier
         return identifier
+    
+    def get_activity_item_application(self, activity_id):
+        with db.session.no_autoflush:
+            item_application = ActivityItemApplication.query.filter_by(
+                activity_id=activity_id).one_or_none()
+            return item_application
 
     def get_action_feedbackmail(self, activity_id, action_id):
         """Get ActionFeedbackMail object from model base on activity's id.

@@ -637,3 +637,15 @@ msgstr ""
 #: weko_workflow/templates/weko_workflow/modal_withdraw_confirmation.html:44
 msgid "Are you sure you want to withdraw DOI?"
 msgstr ""
+
+msgid "Send an email to item registrants when applying for use"
+msgstr ""
+
+msgid "Application approved."
+msgstr ""
+
+msgid "Back to Top page"
+msgstr ""
+
+msgid "Waiting for approval."
+msgstr ""

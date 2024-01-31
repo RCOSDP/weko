@@ -1373,7 +1373,13 @@ msgstr ""
 msgid "Could not download file."
 msgstr ""
 
-msgid "You must enter your email address to download the files below."
+msgid "To download the files below, you will need to enter your email address and password."
+msgstr ""
+
+msgid "To download the files below, you will need to enter your email address."
+msgstr ""
+
+msgid "If you have not set a password, please apply again."
 msgstr ""
 
 msgid "File Name"

@@ -22,7 +22,7 @@
 {% from "weko_records_ui/box/preview_carousel.html" import preview_carousel %}
 {% from "weko_theme/macros/modal_page.html" import all_modal, email_modal %}
 
-{{ email_modal('email_modal', 'confirm_email_btn', _('Send'),_('Please input email address.')) }}
+{{ email_modal('email_modal', 'confirm_email_btn', _('Send'),_('Please input email address.'),password_checkflag,with_files) }}
 {{ all_modal() }}
 
 {%- block javascript %}
@@ -31,6 +31,7 @@
 
 {% from "weko_records_ui/item_detail.html" import output_item_detail with context %}
 {% from "weko_records_ui/_macros.html" import check_download_file with context %}
+{% from "weko_records_ui/box/item_usage_application.html" import check_item_application with context %}
 <div class="panel-group">
   <div class="panel panel-default">
     <div class="panel-heading clearfix">
@@ -424,6 +425,7 @@
           {% if is_display_request_form %}
             {%- include "weko_records_ui/box/request.html" %}
           {% endif %}
+      {{ check_item_application(record, community, url_for_security) }}
 		  {% if config.WEKO_RECORDS_UI_DISPLAY_VERSION_BOX_FLG %}
              {%- include "weko_records_ui/box/versions.html" %}
 		  {% endif %}
@@ -460,14 +462,21 @@
   </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
 {%-if mailcheckflag %}
+<input id="password_checkflag" type="hidden" value='{{ password_checkflag }}'/>
   <div class="modal fade" tabindex="-1" role="dialog" id="mailcheck_download_modal">
-    <div class="modal-dialog" role="document" style="display: table; width: 700px">
+    <div class="modal-dialog" role="document" style="display: table; width: 650px">
         <div class="modal-content">
           <div class="modal-header">
             <button type="button" class="close" id="close_btn" data-dismiss="modal"
                     aria-label="Close"><span aria-hidden="true">&times;</span>
             </button>
-            <h4 class="modal-title">{{ _('You must enter your email address to download the files below.') }}</h4>
+            <h4 class="modal-title">
+              {%- if password_checkflag %}
+                {{ _('To download the files below, you will need to enter your email address and password.') }}
+              {%- else %}
+              {{ _('To download the files below, you will need to enter your email address.') }}
+              {%- endif %}
+            </h4>
             <h4 class="modal-title">  {{_('File Name')}} :{{ onetime_file_name }}</h4>
           </div>
           <div class="modal-body">
@@ -478,6 +487,16 @@
                     aria-describedby="emailHelp"
                     placeholder='{{ _("Email address") }}'>
             </div>
+            {%- if password_checkflag %}
+              <div class="form-group input_password">
+                <label class="control-label"
+                      for="input_password">{{ _('Password') }}</label>
+                <input type="password" class="form-control" id="input_password"
+                      aria-describedby="passHelp"
+                      placeholder='{{ _("Password") }}'>
+                <div>{{_('If you have not set a password, please apply again.')}}</div>
+              </div>
+            {%- endif %}
           </div>
           <div class="modal-footer">
                 <button type="button" id="mailaddress_confirm_download" 

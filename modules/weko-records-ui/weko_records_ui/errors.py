@@ -25,7 +25,7 @@
 """Index errors."""
 from flask_babelex import gettext as _
 from flask_babelex import get_locale
-from invenio_rest.errors import RESTException
+from invenio_rest.errors import RESTException, RESTValidationError
 
 
 class VersionNotFoundRESTError(RESTException):
@@ -46,11 +46,22 @@ class InvalidTokenError(RESTException):
     code = 400
     description = _('Invalid Tokens.')
 
+class RequiredItemNotExistError(RESTValidationError):
+    """Required Item not exists in request body error."""
+
+    description = _('Reqired item does not exist.')
+
 class InvalidCaptchaError(RESTException):
     """Invalid CAPTCHA calculation result error."""
 
     code = 400
-    description = _('The calculation results are different')
+    description = _('The calculation results are different.')
+
+class AuthenticationRequiredError(RESTException):
+    """Contents not found error."""
+
+    code = 401
+    description = _('Unauthorized.')
 
 class InvalidWorkflowError(RESTException):
     """Contents not found error."""
