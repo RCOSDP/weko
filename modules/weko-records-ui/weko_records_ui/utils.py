@@ -1830,11 +1830,12 @@ def create_limmiter():
     from .config import WEKO_RECORDS_UI_API_LIMIT_RATE_DEFAULT
     return Limiter(app=Flask(__name__), key_func=get_remote_address, default_limits=WEKO_RECORDS_UI_API_LIMIT_RATE_DEFAULT)
 
-def create_tsv(files):
+def create_tsv(files, language='en'):
     """Create TSV file from files information.
 
     Args:
         files (list): File List.
+        language (str): Language
 
     Returns:
         _io.StringIO: TSV file
@@ -1842,14 +1843,9 @@ def create_tsv(files):
     # Language setting
     from .config import WEKO_RECORDS_UI_TSV_FIELD_NAMES_EN, WEKO_RECORDS_UI_TSV_FIELD_NAMES_JA
 
-    language = request.headers.get('Accept-Language')
     fieldnames = WEKO_RECORDS_UI_TSV_FIELD_NAMES_EN
-
     if language == 'ja':
-        get_locale().language = language
         fieldnames = WEKO_RECORDS_UI_TSV_FIELD_NAMES_JA
-    elif language is None:
-        language = 'en'
 
     # License dict list
     from weko_admin.config import WEKO_ADMIN_MANAGEMENT_OPTIONS
@@ -1874,14 +1870,14 @@ def create_tsv(files):
             # file name
             fieldnames[0]:file.obj.basename,
             # file size
-            fieldnames[1]:file.info().get('filesize', {})[0].get('value'),
+            fieldnames[1]:file.info().get('filesize', [{}])[0].get('value'),
             # license type
             fieldnames[2]:[
-                    d.get('contents') for d in license_dict_list[0]
+                    d.get('contents', [None]) for d in license_dict_list[0]
                     if d.get('id') == file.info().get('licensetype')
                 ][0] if file.info().get('licensetype') else None,
             # date
-            fieldnames[3]:file.info().get('date', {})[0].get('dateValue'),
+            fieldnames[3]:file.info().get('date', [{}])[0].get('dateValue'),
             # url
             fieldnames[4]:file.info().get('url', {}).get('url')
         })
