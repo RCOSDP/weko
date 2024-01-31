@@ -3962,13 +3962,12 @@ def create_limmiter():
     return Limiter(app=Flask(__name__), key_func=get_remote_address, default_limits=WEKO_SEARCH_UI_API_LIMIT_RATE_DEFAULT)
 
 
-def result_download_ui(search_results, input_json, item_title, language='en'):
+def result_download_ui(search_results, input_json, language='en'):
     """Search Result Download Ui.
 
     Args:
         search_results (list): Search result (RO-Crate list)
         input_json (list): Input json
-        item_title (str): Item title
         language (str): Language
 
     Returns:
@@ -3985,13 +3984,13 @@ def result_download_ui(search_results, input_json, item_title, language='en'):
     os.makedirs(export_path)
 
     # Create TSV file
-    with open(f'{export_path}/{item_title}.tsv', 'w', encoding="utf-8") as tsv_file:
+    with open(f'{export_path}/search_result.tsv', 'w', encoding="utf-8") as tsv_file:
         tsv_file.write(search_results_to_tsv(search_results, input_json, language).getvalue())
 
     return send_file(
-        f'{export_path}/{item_title}.tsv',
+        f'{export_path}/search_result.tsv',
         as_attachment=True,
-        attachment_filename=f'{item_title}.tsv',
+        attachment_filename='search_result.tsv',
         mimetype='text/tab-separated-values'
     )
 
@@ -4008,8 +4007,7 @@ def search_results_to_tsv(search_results, input_json, language='en'):
         _io.StringIO: TSV file
     """
     # Dict {TSV header : RO-Crate key}
-    from .config import WEKO_SEARCH_UI_TITLE_LANGUAGE
-    dict = {WEKO_SEARCH_UI_TITLE_LANGUAGE.get(language): 'title'}
+    dict = {}
     for n in input_json:
         dict[n.get('name', {}).get(language)] = n.get('roCrateKey')
 
