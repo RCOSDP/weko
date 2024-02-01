@@ -638,6 +638,10 @@ msgstr ""
 msgid "Resend"
 msgstr ""
 
+#: weko_admin/admin.py:1359
+msgid "The selected item type has been deleted. Please recheck and input."
+msgstr ""
+
 #: weko_admin/template/weko_admin/admin/feedback_mail.html:59
 msgid "There is no data."
 msgstr "No search result"

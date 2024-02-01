@@ -1361,7 +1361,82 @@ class FacetSearchSettingView(ModelView):
             type_str='delete',
             id=id
         )
+    
+class SwordAPISettingsView(BaseView):
 
+    def isEmpty(self,data):
+        if not data:
+            return True
+        elif data == "empty":
+            return True
+        else:
+            return False
+    
+    @expose('/', methods=['GET'])
+    def index(self):
+        default_sword_api = { "default_format": "TSV",
+                            "data_format":{ "TSV":{"item_type": "15",  "register_format": "Direct"},
+                                           "XML":{"item_type": "15",  "register_format": "Direct"}}}  # Default
+        current_settings = AdminSettings.get(
+                name='sword_api_setting',
+                dict_to_object=False)
+        if not current_settings:  
+            AdminSettings.update('sword_api_setting', default_sword_api)
+            current_settings = AdminSettings.get(
+                name='sword_api_setting',
+                dict_to_object=False)
+        current_settings_json = json.dumps(current_settings)
+        all_lists = ItemTypes.get_latest(with_deleted=True)
+        lists = ItemTypes.get_latest()
+        deleted_lists = [i for i in all_lists if i not in lists]
+        form = FlaskForm(request.form)
+        itemtype_name_dict = {}
+        for list in all_lists:
+            itemtype_name_dict[list.id] = list.name
+        return self.render(current_app.config['WEKO_ADMIN_SWORD_API_TEMPLATE'],
+                           current_settings = current_settings,
+                           current_settings_json = current_settings_json,
+                           lists = lists,
+                           deleted_lists = deleted_lists,
+                           itemtype_name_dict = json.dumps(itemtype_name_dict),
+                           form = form)
+
+    @expose('/default_format', methods=['POST'])
+    def default_format(self):
+        """Default Format."""
+        try:
+            settings = AdminSettings.get('sword_api_setting')
+            default_format_setting = request.json.get('default_format')
+            settings.default_format = default_format_setting
+            AdminSettings.update('sword_api_setting',
+                        settings.__dict__)
+            return jsonify(success=True),200
+        except Exception as e:
+            return current_app.logger.error(
+                'ERROR Default Form Settings: {}'.format(e))
+
+    @expose('/data_format', methods=['POST'])
+    def data_format(self):
+        """Data Format Settings."""
+        try:
+            settings = AdminSettings.get('sword_api_setting')
+            data_format_setting = request.json.get('data_format')
+            register_format_setting = request.json.get('register_format')
+            item_type_setting = request.json.get('sword_item_type')
+            if(self.isEmpty(data_format_setting) or self.isEmpty(register_format_setting) or self.isEmpty(item_type_setting)):
+                return current_app.logger.error('ERROR Default Form Settings: Failed To Change Settings')
+            if data_format_setting == "TSV":
+                settings.data_format["TSV"]["register_format"] = register_format_setting                       
+                settings.data_format["TSV"]["item_type"] = item_type_setting
+            if data_format_setting == "XML":                        
+                settings.data_format["XML"]["register_format"] = register_format_setting                       
+                settings.data_format["XML"]["item_type"] = item_type_setting
+            AdminSettings.update('sword_api_setting',
+                                    settings.__dict__)    
+            return jsonify(success=True),200            
+        except Exception as e:
+            return current_app.logger.error(
+                'ERROR Default Form Settings: {}'.format(e))
 
 style_adminview = {
     'view_class': StyleSettingView,
@@ -1522,6 +1597,14 @@ reindex_elasticsearch_adminview = {
     }
 }
 
+sword_api_settings_adminview = {
+    'view_class': SwordAPISettingsView,
+    'kwargs': {
+        'category': _('Setting'),
+        'name': _('SWORD API'),
+        'endpoint': 'swordapi'
+    }
+}
 
 __all__ = (
     'style_adminview',
@@ -1541,5 +1624,6 @@ __all__ = (
     'restricted_access_adminview',
     'identifier_adminview',
     'facet_search_adminview',
-    'reindex_elasticsearch_adminview'
+    'reindex_elasticsearch_adminview',
+    'sword_api_settings_adminview'
 )
