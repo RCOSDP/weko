@@ -257,3 +257,13 @@ WEKO_ITEMS_UI_RANKING_QUERY = dict(
         )
     )
 )
+
+WEKO_ITEMS_UI_CRIS_LINKAGE_RESEACHMAP_BASE_URL="https://api-trial.researchmap.jp"
+WEKO_ITEMS_UI_CRIS_LINKAGE_RESEACHMAP_HOST = "api-trial.researchmap.jp:443"
+WEKO_ITEMS_UI_CRIS_LINKAGE_RESEACHMAP_RETRY_MAX = 5
+WEKO_ITEMS_UI_CRIS_LINKAGE_RESEACHMAP_MERGE_MODE_DEFAULT = 'similar_merge_similar_data'
+
+
+from kombu import Exchange, Queue
+LINKAGE_MQ_EXCHANGE = Exchange('cris_researchmap_linkage', type='direct')
+LINKAGE_MQ_QUEUE = Queue("cris_researchmap_linkage", exchange=LINKAGE_MQ_EXCHANGE, routing_key="cris_researchmap_linkage",queue_arguments={"x-queue-type":"quorum"})

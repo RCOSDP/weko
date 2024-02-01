@@ -37,7 +37,8 @@ WEKO_ITEMS_AUTOFILL_API_CACHE_TIMEOUT = 50
 WEKO_ITEMS_AUTOFILL_SELECT_OPTION = [
     {'value': 'CrossRef', 'text': 'CrossRef'},
     {'value': 'CiNii', 'text': 'CiNii'},
-    {'value': 'WEKOID', 'text': 'WEKOID'}
+    {'value': 'WEKOID', 'text': 'WEKOID'},
+    {'value': 'researchmap','text':'researchmap'}
 ]
 """API select option"""
 

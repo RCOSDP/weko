@@ -58,6 +58,76 @@ class SearchMetaForm extends React.Component {
     };
 
     render() {
+
+        if (this.state.idType === 'researchmap') {
+            return (
+                <div>
+                <ModalHeader headerName={this.props.headerName} />
+                <br></br>
+                <form onSubmit={this.handleSubmit}>
+                    <div className="form-inline">
+                        <label className="input-group-text" for="autofill_id_type">
+                            {this.props.selectMeta}
+                        </label>
+                        &nbsp;&nbsp;
+                        <select name="idType" id="autofill_id_type" value={this.state.idType.value}
+                            onChange={this.handleChange} className="form-control">
+                            {this.state.selectOptions}
+                        </select>
+                        &nbsp;&nbsp;
+                        <div>
+
+                            <div className="col-md-12">
+                                <div className="col-md-4">
+                                    <label className="input-group-text" for="parmalink">
+                                        parmalink
+                                    </label>
+                                </div>
+                                <div className="col-md-8">
+                                    <input name="parmalink" type="text" id="parmalink"
+                                        value={this.state.parmalink} onChange={this.handleChange}
+                                        className="form-control ng-untouched ng-pristine ng-valid" />
+                                </div>
+                            </div>
+                            <div className="col-md-12">
+                                <div className="col-md-4">
+                                    <label className="input-group-text" for="achievement_type">
+                                        {this.props.achievement_type}
+                                    </label>
+                                </div>
+                                <div className="col-md-8">
+                                    <select name="achievement_type" id="achievement_type" value={this.state.achievement_type}
+                                        onChange={this.handleChange} className="form-control">
+                                        <option key="published_papers" value="published_papers">論文</option>
+                                    </select>
+                                    &nbsp;&nbsp;
+                                </div>
+                            </div>
+                            <div className="col-md-12">
+                                <div className="col-md-4">
+                                    <label className="input-group-text" for="achievement_id">
+                                        {this.props.achievement_id}
+                                    </label>
+                                </div>
+                                <div className="col-md-8">
+                                    <input type="text" id="achievement_id" className="form-control ng-untouched ng-pristine ng-valid" />
+                                </div>
+                            </div>
+                        </div>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        <input type="submit" id="autofill_item_button" value={this.props.getValue} className="btn btn-info" />
+                    </div>
+                    <br />
+                    <div id="auto-fill-error-div">
+                        <span id="autofill-error-message"></span>
+                    </div>
+                </form>
+            </div>
+            )
+        }
+
+
+
         return (
             <div>
                 <ModalHeader headerName={this.props.headerName} />
@@ -94,10 +164,14 @@ $(function () {
     let headerName = $("#autofill_header_name").val();
     let selectMeta = $("#autofill_select_meta").val();
     let getValue = $("#autofill_get_value").val();
+    let achievement_type = $("#autofill_achievement_type").val();
+    let achievement_id = $("#autofill_achievement_id").val();
     ReactDOM.render(
         <SearchMetaForm headerName={headerName}
             selectMeta={selectMeta}
-            getValue={getValue} />,
+            getValue={getValue} 
+            achievement_type={achievement_type}
+            achievement_id={achievement_id} />,
         meta_search_body
     )
 });

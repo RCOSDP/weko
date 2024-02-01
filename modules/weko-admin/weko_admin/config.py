@@ -42,6 +42,15 @@ WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS = 'elastic_reindex_settings'
 WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS_HAS_ERRORED = 'has_errored'
 """a json property name of admin_settings record 'lastic_reindex_settings'"""
 
+WEKO_ADMIN_SETTINGS_RESERCHMAP_LINKAGE_SETTINGS='reserchmap_linkage_settings'
+"""admin_settings record name"""
+
+WEKO_ADMIN_SETTINGS_RESERCHMAP_MERGE_MODES = [('similar_merge_similar_data','similar merge(similar data priority)')
+                       ,('similar_merge_input_data','similar merge(input data priority)')
+                       ,('merge','merge')
+                       ,('force','force')]
+""" merge mode select options"""
+
 WEKO_ADMIN_LIFETIME_TEMPLATE = 'weko_admin/settings/lifetime.html'
 """Settings base template for weko-admin module."""
 
@@ -1155,6 +1164,7 @@ WEKO_ADMIN_REPOSITORY_ACCESS_LIST = [
     'location',
     'facet-search',
     'community',
+    'cris_linkage',
     # 'restricted_access'
 ] + WEKO_ADMIN_COMMUNITY_ACCESS_LIST
 """Classes Repository Administrator can access."""
@@ -1288,3 +1298,7 @@ WEKO_ADMIN_CACHE_TEMP_DIR_INFO_KEY_DEFAULT = 'cache::temp_dir_info'
 
 WEKO_ADMIN_USE_REGEX_IN_CRAWLER_LIST = False
 """ If True, enable regex function in crawler list processing. """
+
+WEKO_ADMIN_CRIS_LINKAGE_SETTINGS_TEMPLATE = \
+    'weko_admin/admin/cris_linkage_setting.html'
+"""Item Export Settings template."""

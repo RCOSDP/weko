@@ -14,6 +14,7 @@ INSERT INTO public.authors_affiliation_settings
         ('ISNI', 'ISNI', 'http://www.isni.org/isni/##'),
         ('GRID', 'GRID', 'https://www.grid.ac/institutes/##'), 
         ('Ringgold', 'Ringgold', ''), 
-        ('kakenhi', 'kakenhi', '');
+        ('kakenhi', 'kakenhi', ''),
+        ('researchmap','researchmap','https://researchmap.jp/##');
     
     

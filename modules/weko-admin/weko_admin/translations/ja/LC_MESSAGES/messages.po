@@ -1951,3 +1951,55 @@ msgstr "表示件数は1以上99以下の整数値で入力する必要があり
 #: weko_admin/templates/weko_admin/admin/facet_search_setting.html:65
 msgid "DisplayNumber Validation2"
 msgstr "CheckboxListを選択した場合は表示件数を入力する必要があります。"
+
+#: 
+msgid "CRIS Linkage"
+msgstr "CRIS 連携"
+
+msgid "similar merge(similar data priority)"
+msgstr "マージ（類似データ優先）"
+
+msgid "similar merge(input data priority)"
+msgstr "マージ（入力データ優先）"
+
+msgid "merge"
+msgstr "追加（類似データがあればエラー）"
+
+msgid "force"
+msgstr "追加（入力データ強制）"
+
+msgid "API Key"
+msgstr "APIキー"
+
+msgid "client id key"
+msgstr "client idキー"
+
+msgid "private key"
+msgstr "privateキー"
+
+msgid "Merge Mode"
+msgstr "マージモード"
+
+msgid "Select file"
+msgstr "ファイル選択"
+
+msgid "Selected file name"
+msgstr "選択したファイル名"
+
+msgid "similar merge(similar data priority)"
+msgstr "類似データマージ（類似データ優先）"
+
+msgid "similar merge(input data priority)"
+msgstr "類似データマージ（入力データ優先）"
+
+msgid "merge"
+msgstr "追加（類似データあればエラー）"
+
+msgid "force"
+msgstr "追加（強制）"
+
+msgid "Please input at least one of client id key or private key"
+msgstr "client idキーまたはprivateキーのどちらか最低一つは入力してください"
+
+msgid "Please input Merge Mode"
+msgstr "マージモードを入力してください"

@@ -21,6 +21,8 @@
 """Module of weko-items-autofill utils.."""
 import copy
 from functools import wraps
+import json
+from weko_items_ui.linkage import Reseachmap
 
 from flask import current_app
 from flask_babelex import gettext as _
@@ -1303,7 +1305,28 @@ def get_wekoid_record_data(recid, item_type_id):
         item_type_id, item_map_data_des)
     # Set value for record model.
     result = set_val_for_record_model(record_model, item_map_data_des)
+    print(result)
     return result
+
+def get_reserchmapid_record_data(parmalink, achievement_type ,achievement_id):
+
+
+    data = Reseachmap().get_data(parmalink, achievement_type ,achievement_id)
+    error_description:str = json.loads(data).get("error_description")
+    paper_title:dict = json.loads(data).get("paper_title")
+
+    if error_description:
+        raise Exception(error_description)
+
+    # fixme!
+    elements = []
+    for key in list(paper_title.keys()):
+        elm = {}
+        elm.update({'subitem_title_language' : key})
+        elm.update({'subitem_title' : paper_title[key]})
+        elements.append(elm)
+    print(elements)
+    return [{'item_titles': elements}]
 
 
 def build_record_model_for_wekoid(item_type_id, item_map_data):
