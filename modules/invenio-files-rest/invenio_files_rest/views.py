@@ -453,24 +453,37 @@ class BucketResource(ContentNegotiatedMethodView):
             }
         )
 
-    @need_permissions(
-        lambda self, bucket, versions: bucket,
-        'bucket-read',
-    )
     def listobjects(self, bucket, versions):
         """List objects in a bucket.
 
         :param bucket: A :class:`invenio_files_rest.models.Bucket` instance.
         :returns: The Flask response.
         """
-        if versions is not missing:
-            check_permission(
-                current_permission_factory(bucket, 'bucket-read-versions'),
-                hidden=False
-            )
+        from invenio_records_files.models import RecordsBuckets
+        from weko_records_ui.permissions import check_file_download_permission
+        from invenio_files_rest.models import as_bucket_id
+
+        # Get record metadata (table records_metadata) from bucket_id.
+        bucket_id = as_bucket_id(bucket)
+        rb = RecordsBuckets.query.filter_by(bucket_id=bucket_id).first()
+        rm = RecordMetadata.query.filter_by(id=rb.record_id).first()
+        all_obj = ObjectVersion.get_by_bucket(
+                bucket.id, versions=versions is not missing).limit(1000).all()
+        # Check and file_access_permission of file in this record metadata.
+        hash_table = {}
+        data = []
+        for i, v in enumerate(all_obj):
+            hash_table[v.key] = i
+        for k, v in rm.json.items():
+            if isinstance(v, dict) and v.get('attribute_type') == 'file':
+                for item in v.get('attribute_value_mlt', []):
+                    if item.get('filename') in hash_table:
+                        file_access_permission = \
+                            check_file_download_permission(rm.json, item)
+                        if file_access_permission:
+                            data.append(all_obj[hash_table[item.get('filename')]])
         return self.make_response(
-            data=ObjectVersion.get_by_bucket(
-                bucket.id, versions=versions is not missing).limit(1000).all(),
+            data=data,
             context={
                 'class': ObjectVersion,
                 'bucket': bucket,
@@ -585,7 +598,7 @@ class ObjectResource(ContentNegotiatedMethodView):
             )
 
     @classmethod
-    def get_object(cls, bucket, key, version_id):
+    def get_object(cls, bucket, key, version_id, is_delete=False):
         """Retrieve object and abort if it doesn't exists.
 
         If the file is not found, the connection is aborted and the 404
@@ -594,6 +607,7 @@ class ObjectResource(ContentNegotiatedMethodView):
         :param bucket: The bucket (instance or id) to get the object from.
         :param key: The file key.
         :param version_id: The version ID.
+        :param is_delete: Is delete.
         :returns: A :class:`invenio_files_rest.models.ObjectVersion` instance.
         """
         from invenio_records_files.models import RecordsBuckets
@@ -611,11 +625,13 @@ class ObjectResource(ContentNegotiatedMethodView):
         for k, v in rm.json.items():
             if isinstance(v, dict) and v.get('attribute_type') == 'file':
                 for item in v.get('attribute_value_mlt', []):
-                    is_this_version = item.get('version_id') == version_id
-                    is_preview = item.get('displaytype') == 'preview'
-                    if is_this_version and is_preview:
+                    is_this_version = \
+                        item.get('version_id') == str(version_id) or \
+                        version_id == None
+                    this_file = item.get('filename') == key
+                    if is_this_version and this_file:
                         file_access_permission = \
-                            check_file_download_permission(rm.json, item)
+                            check_file_download_permission(rm.json, item, is_delete=is_delete)
                         flag = True
                         break
             if flag:
@@ -624,8 +640,9 @@ class ObjectResource(ContentNegotiatedMethodView):
         obj = ObjectVersion.get(bucket, key, version_id=version_id)
         if not obj:
             abort(404, 'Object does not exists.')
-        # Check permission. if it is not permission, return None.
-        cls.check_object_permission(obj, file_access_permission)
+        # Check permission. if it is not permission, return 403.
+        if not file_access_permission:
+            abort(403)
         return obj
 
     def create_object(self, bucket, key,
@@ -947,7 +964,7 @@ class ObjectResource(ContentNegotiatedMethodView):
         if upload_id:
             return self.multipart_listparts(bucket, key, upload_id)
         else:
-            obj = self.get_object(bucket, key, version_id)
+            obj = self.get_object(bucket, key, version_id, is_delete=False)
             # If 'download' is missing from query string it will have
             # the value None.
             return self.send_object(bucket, obj,
@@ -1009,7 +1026,7 @@ class ObjectResource(ContentNegotiatedMethodView):
         if upload_id is not None:
             return self.multipart_delete(bucket, key, upload_id)
         else:
-            obj = self.get_object(bucket, key, version_id)
+            obj = self.get_object(bucket, key, version_id, is_delete=True)
             return self.delete_object(bucket, obj, version_id)
 
 

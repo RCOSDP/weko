@@ -31,7 +31,9 @@ from flask_security import current_user
 from invenio_access import Permission, action_factory
 from invenio_accounts.models import User
 from invenio_db import db
+from invenio_communities.models import Community
 from weko_groups.api import Group, Membership, MembershipState
+from weko_index_tree.api import Indexes
 from weko_index_tree.utils import check_index_permissions, get_user_roles
 from weko_records.api import ItemTypes
 from weko_workflow.api import WorkActivity
@@ -83,7 +85,56 @@ def file_permission_factory(record, *args, **kwargs):
     return type('FileDownLoadPermissionChecker', (), {'can': can})()
 
 
-def check_file_download_permission(record, fjson, is_display_file_info=False):
+def check_created_id(record):
+    """Check edit permission to the record for the current user
+
+    Args:
+        record (dict): the record to check edit permission.
+        example: {'_oai': {'id': 'oai:weko3.example.org:00000001', 'sets': ['1657555088462']}, 'path': ['1657555088462'], 'owner': '1', 'recid': '1', 'title': ['a'], 'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2022-07-12'}, '_buckets': {'deposit': '35004d51-8938-4e77-87d7-0c9e176b8e7b'}, '_deposit': {'id': '1', 'pid': {'type': 'depid', 'value': '1', 'revision_id': 0}, 'owner': '1', 'owners': [1], 'status': 'published', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}}, 'item_title': 'a', 'author_link': [], 'item_type_id': '15', 'publish_date': '2022-07-12', 'publish_status': '0', 'weko_shared_id': -1, 'item_1617186331708': {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'a', 'subitem_1551255648112': 'ja'}]}, 'item_1617258105262': {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}, 'relation_version_is_last': True}
+
+    Returns:
+        bool: True is the current user has the edit permission.
+    """
+    is_ok = False
+    # Check registered user
+    user_id_list = [int(record['owner'])] if record.get('owner') else []
+    if record.get('weko_shared_id'):
+        user_id_list.append(record.get('weko_shared_id'))
+    # Check guest user
+    if current_user and not current_user.is_authenticated:
+        is_ok = False
+    elif current_user and current_user.id in user_id_list:
+        is_ok = True
+    # Check super users
+    else:
+        comm_role_ids = []
+        can_edit_indexes = []
+        super_users = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']
+        comm_admin = current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
+        for role in list(current_user.roles or []):
+            if role.name in comm_admin:
+                comm_role_ids.append(role.id)
+            if role.name in super_users:
+                is_ok = True
+                break
+        # Community admin
+        if not is_ok:
+            record_path = record.get('path', [])
+            comm_list = Community.query.filter(
+                    Community.id_role.in_(comm_role_ids)
+                ).all()
+            for comm in comm_list:
+                for index in Indexes.get_self_list(comm.root_node_id):
+                    if index.cid not in can_edit_indexes:
+                        can_edit_indexes.append(str(index.cid))
+            for p in record_path:
+                if p in can_edit_indexes:
+                    is_ok = True
+                    break
+    return is_ok
+
+
+def check_file_download_permission(record, fjson, is_display_file_info=False, is_delete=False):
     """Check file download."""
     def site_license_check():
         # site license permission check
@@ -103,28 +154,6 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
             users = User.query.filter(User.id.in_(user_id_list)).all()
             emails = [x.email for x in users]
         return emails
-
-    def __check_user_permission(user_id_list):
-        """Check user permission.
-
-        :return: True if the login user is allowed to display file metadata.
-        """
-        is_ok = False
-        # Check guest user
-        if not current_user.is_authenticated:
-            return is_ok
-        # Check registered user
-        elif current_user and current_user.id in user_id_list:
-            is_ok = True
-        # Check super users
-        else:
-            super_users = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] + \
-                current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
-            for role in list(current_user.roles or []):
-                if role.name in super_users:
-                    is_ok = True
-                    break
-        return is_ok
 
     if fjson:
         is_can = True
@@ -146,11 +175,34 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
             return is_can
 
         # Super users
-        supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] + \
-            current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
+        comm_role_ids = []
+        can_edit_indexes = []
+        supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']
+        comm_admin = current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
         for role in list(current_user.roles or []):
+            if role.name in comm_admin:
+                comm_role_ids.append(role.id)
             if role.name in supers:
                 return is_can
+        
+        # Community admin
+        record_path = record.get('path', [])
+        comm_list = Community.query.filter(
+                Community.id_role.in_(comm_role_ids)
+            ).all()
+        for comm in comm_list:
+            for index in Indexes.get_self_list(comm.root_node_id):
+                if index.cid not in can_edit_indexes:
+                    can_edit_indexes.append(str(index.cid))
+        for p in record_path:
+            if p in can_edit_indexes:
+                return is_can
+            
+        # If the check is for the purpose of deleting.
+        # And login user is not owner or super users.
+        # Then return False. (not permission)
+        if is_delete:
+            return False
 
         try:
             from .utils import is_future
@@ -225,8 +277,7 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
                 if is_display_file_info:
                     # Allow display the file info area in 'Detail' screen.
                     is_can = True
-                    is_permission_user = __check_user_permission(
-                        user_id_list)
+                    is_permission_user = check_created_id(record)
                     if not current_user.is_authenticated or \
                             not is_permission_user or site_license_check():
                         is_can = False
@@ -432,33 +483,33 @@ def check_publish_status(record):
 #                 is_himself = False
 #     return is_himself
 
-def check_created_id(record):
-    """Check edit permission to the record for the current user
+# def check_created_id(record):
+#     """Check edit permission to the record for the current user
 
-    Args:
-        record (dict): the record to check edit permission.
-        example: {'_oai': {'id': 'oai:weko3.example.org:00000001', 'sets': ['1657555088462']}, 'path': ['1657555088462'], 'owner': '1', 'recid': '1', 'title': ['a'], 'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2022-07-12'}, '_buckets': {'deposit': '35004d51-8938-4e77-87d7-0c9e176b8e7b'}, '_deposit': {'id': '1', 'pid': {'type': 'depid', 'value': '1', 'revision_id': 0}, 'owner': '1', 'owners': [1], 'status': 'published', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}}, 'item_title': 'a', 'author_link': [], 'item_type_id': '15', 'publish_date': '2022-07-12', 'publish_status': '0', 'weko_shared_id': -1, 'item_1617186331708': {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'a', 'subitem_1551255648112': 'ja'}]}, 'item_1617258105262': {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}, 'relation_version_is_last': True}
+#     Args:
+#         record (dict): the record to check edit permission.
+#         example: {'_oai': {'id': 'oai:weko3.example.org:00000001', 'sets': ['1657555088462']}, 'path': ['1657555088462'], 'owner': '1', 'recid': '1', 'title': ['a'], 'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2022-07-12'}, '_buckets': {'deposit': '35004d51-8938-4e77-87d7-0c9e176b8e7b'}, '_deposit': {'id': '1', 'pid': {'type': 'depid', 'value': '1', 'revision_id': 0}, 'owner': '1', 'owners': [1], 'status': 'published', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}}, 'item_title': 'a', 'author_link': [], 'item_type_id': '15', 'publish_date': '2022-07-12', 'publish_status': '0', 'weko_shared_id': -1, 'item_1617186331708': {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'a', 'subitem_1551255648112': 'ja'}]}, 'item_1617258105262': {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}, 'relation_version_is_last': True}
 
-    Returns:
-        bool: True is the current user has the edit permission.
-    """    
-    is_himself = False
-    # Super users
-    supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']
-    user_id = current_user.get_id() \
-            if current_user and current_user.is_authenticated else None
-    if user_id is not None:    
-        created_id = record.get('_deposit', {}).get('created_by')
-        shared_id = record.get('weko_shared_id')
-        if user_id and created_id and user_id == str(created_id):
-            is_himself = True
-        elif user_id and shared_id and user_id == str(shared_id):
-            is_himself = True
-        for lst in list(current_user.roles or []):
-            # In case of supper user,it's always have permission
-            if lst.name in supers:
-                is_himself = True
-    return is_himself
+#     Returns:
+#         bool: True is the current user has the edit permission.
+#     """    
+#     is_himself = False
+#     # Super users
+#     supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']
+#     user_id = current_user.get_id() \
+#             if current_user and current_user.is_authenticated else None
+#     if user_id is not None:    
+#         created_id = record.get('_deposit', {}).get('created_by')
+#         shared_id = record.get('weko_shared_id')
+#         if user_id and created_id and user_id == str(created_id):
+#             is_himself = True
+#         elif user_id and shared_id and user_id == str(shared_id):
+#             is_himself = True
+#         for lst in list(current_user.roles or []):
+#             # In case of supper user,it's always have permission
+#             if lst.name in supers:
+#                 is_himself = True
+#     return is_himself
 
 
 def check_usage_report_in_permission(permission):
