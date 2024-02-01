@@ -164,16 +164,12 @@ def get_authors(record ,pid):
     # current_app.logger.info(dc)
     # current_app.logger.info(jrc)
 
-    ## fixme
-    """{'contributor': {'givenName': ['太郎'], 'familyName': ['WEKO'], '@attributes': {'contributorType': [['Other']]}, 'affiliation': {'nameIdentifier': [], 'affiliationName': []}, 'nameIdentifier': ['2', 'wekosoftware'], 'contributorName': ['WEKO, 太郎'], 'contributorAlternative': []}, 'title': ['送信'], 'type': ['conference paper'], 'file': {'URI': [{'value': 'https://weko3.example.org/record/10.1/files/images.jfif'}], 'date': [{'dateType': 'fileDate.fileDateType'}], 'extent': ['5 KB'], 'version': [], 'mimeType': ['application/octet-stream']}, 'creator': {'givenName': ['和樹'], 'familyName': ['明石'], 'affiliation': {'nameIdentifier': ['1'], 'affiliationName': ['2']}, 'creatorName': ['明石, 和樹'], 'nameIdentifier': ['1', 'tatsuoak'], 'creatorAlternative': []}, 'control_number': '10.1', '_oai': {'id': 'oai:weko3.example.org:00000010.1'}}"""
     author_links = jrc.get("author_link")
 
     authors:list = Authors.get_authorIdInfo('researchmap' , author_links)
 
-    # fixme
     return authors
-    # return ['M1cQhPtdmlrSRFo4','cDVmodveGWuLxpzgCbXE','mUMdGjgtQAwXPNfEDTzK']
-
+    
 def convert_jpcore(records):
     return SchemaTree.get_jpcoar_json(records)
 

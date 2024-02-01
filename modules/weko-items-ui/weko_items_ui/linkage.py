@@ -99,7 +99,7 @@ class Reseachmap:
 
 
     @staticmethod
-    def post_published_papers(token ,body:str):
+    def post_achievement_datas(token ,body:str):
         base_url=current_app.config["WEKO_ITEMS_UI_CRIS_LINKAGE_RESEACHMAP_BASE_URL"] # type: ignore
 
         response = requests.post(base_url + "/_bulk" #+ "?check=1"
@@ -131,7 +131,7 @@ class Reseachmap:
     def post_data(self ,jsons):
         def __post():
             token = self.get_token('post')
-            return Reseachmap.post_published_papers(token ,jsons)
+            return Reseachmap.post_achievement_datas(token ,jsons)
 
         return self.retry(functools.partial(__post))
 

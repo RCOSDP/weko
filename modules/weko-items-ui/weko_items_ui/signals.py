@@ -4,10 +4,9 @@ from flask import current_app
 # make signal
 cris_researchmap_linkage_request = NamedSignal('cris_researchmap_linkage_request')
 
-# FIXME ! 
 def receiver(item_uuid , **kwargs):
-    # This is a function that RabbitMQにエンキューする
-    print(item_uuid)
+    # This is the function that enqueue into RabbitMQ
+
     # make Exchange
     exchange = current_app.config.get("LINKAGE_MQ_EXCHANGE")
     # make Queue
@@ -31,10 +30,3 @@ def receiver(item_uuid , **kwargs):
 
             producer.publish(dict(item_uuid=item_uuid), exchange=bound_exchange,routing_key='cris_researchmap_linkage' ,retry=True)
 
-
-if __name__ == '__main__':
-    print('call')
-    cris_researchmap_linkage_request.connect(receiver=receiver)
-    print('connect')
-    cris_researchmap_linkage_request.send('pid_value')
-    print('called')
