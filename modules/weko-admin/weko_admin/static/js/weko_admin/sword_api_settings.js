@@ -7,14 +7,11 @@ let settings = document.getElementById("current_settings_json").value;
 settings = JSON.parse(settings);
 let itemtype_name_dict = document.getElementById("itemtype_name_dict").value;
 itemtype_name_dict = JSON.parse(itemtype_name_dict);
-let lists = document.getElementById("itemtype_lists").value;
-lists = lists.replace('[', '');
-lists = lists.replace(']','');
-listsarray = lists.split(',');
-let deleted_itemtype_lists = document.getElementById("deleted_itemtype_lists").value;
+let deleted_itemtype_lists = document.getElementById("deleted_itemtype_id").value;
+deleted_itemtype_lists = deleted_itemtype_lists.replace(/\s+/g,'');
 deleted_itemtype_lists = deleted_itemtype_lists.replace('[', '');
 deleted_itemtype_lists = deleted_itemtype_lists.replace(']','');
-let deleted_itemtype_listsarray = deleted_itemtype_lists.split(',');
+deleted_itemtype_array = deleted_itemtype_lists.split(',');
 
 /** close ErrorMessage area */
 function closeError() {
@@ -40,12 +37,9 @@ function componentDidMount() {
 }
 
 function isItemtypeDeleted(value){
-  var value = new RegExp(value);
   var deletedFlag = false;
-  for(i=0; i < deleted_itemtype_listsarray.length; i++){
-    if(value.test(deleted_itemtype_listsarray[i])){
-      deletedFlag = true;
-    }
+  if (deleted_itemtype_array.includes(value)){
+    deletedFlag = true;
   }
   return deletedFlag;
 }

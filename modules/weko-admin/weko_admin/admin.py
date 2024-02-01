@@ -1381,6 +1381,9 @@ class SwordAPISettingsView(BaseView):
         all_lists = ItemTypes.get_latest(with_deleted=True)
         lists = ItemTypes.get_latest()
         deleted_lists = [i for i in all_lists if i not in lists]
+        deleted_itemtype_id = []
+        for deleted_list in deleted_lists:
+           deleted_itemtype_id.append(deleted_list.id)
         form = FlaskForm(request.form)
         itemtype_name_dict = {}
         for list in all_lists:
@@ -1389,7 +1392,7 @@ class SwordAPISettingsView(BaseView):
                            current_settings = current_settings,
                            current_settings_json = current_settings_json,
                            lists = lists,
-                           deleted_lists = deleted_lists,
+                           deleted_itemtype_id = deleted_itemtype_id,
                            itemtype_name_dict = json.dumps(itemtype_name_dict),
                            form = form)
 
