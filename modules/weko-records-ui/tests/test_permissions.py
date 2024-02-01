@@ -1,4 +1,5 @@
 import io
+import datetime as dt
 from datetime import datetime, timedelta, timezone
 from unittest import mock  # python3
 from unittest.mock import MagicMock
@@ -81,12 +82,48 @@ def test_check_file_download_permission(app, records, users,db_file_permission):
     
     with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
         with patch("weko_records_ui.permissions.to_utc", return_value=datetime.now()):
-            assert check_file_download_permission(record, fjson, False) == False
+            assert check_file_download_permission(record, fjson, False) == True
             
             fjson['date'][0]['dateValue'] = ""
             assert check_file_download_permission(record, fjson, False) == True
             
-            fjson['date'][0]['dateValue'] = "2022-09-27"
+            fjson['date'][0]['dateValue'] = datetime.strftime(dt.date(datetime.now().year + 1, 1, 1), "%Y-%m-%d")
+            fjson['accessrole'] = 'open_date'
+            assert check_file_download_permission(record, fjson, True) == True
+            assert check_file_download_permission(record, fjson, False) == False
+
+            with patch("weko_records_ui.permissions.to_utc", return_value="test"):
+                assert check_file_download_permission(record, fjson, False) == False
+            
+            fjson['accessrole'] = 'open_login'
+            assert check_file_download_permission(record, fjson, True) == True
+
+            with patch("weko_records_ui.permissions.check_user_group_permission", return_value=True):
+                fjson['groups'] = True
+                assert check_file_download_permission(record, fjson, False) == True
+                fjson['groups'] = False
+                assert check_file_download_permission(record, fjson, False) == True
+                fjson['groupsprice'] = [MagicMock()]
+                assert check_file_download_permission(record, fjson, False) == True
+    
+            fjson['accessrole'] = 'open_no'
+            assert check_file_download_permission(record, fjson, True) == False
+            assert check_file_download_permission(record, fjson, False) == False
+
+            fjson['accessrole'] = 'open_restricted'
+            assert check_file_download_permission(record, fjson, True) == False
+
+    fjson['accessrole'] = 'open_access'
+    fjson['date'][0]['dateValue'] = '2022-09-27'
+    with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
+        with patch("weko_records_ui.permissions.to_utc", return_value=datetime.now()):
+            assert check_file_download_permission(record, fjson, False) == True
+            assert check_file_download_permission(record, fjson, False, True) == False
+            
+            fjson['date'][0]['dateValue'] = ""
+            assert check_file_download_permission(record, fjson, False) == True
+            
+            fjson['date'][0]['dateValue'] = datetime.strftime(dt.date(datetime.now().year + 1, 1, 1), "%Y-%m-%d")
             fjson['accessrole'] = 'open_date'
             assert check_file_download_permission(record, fjson, True) == True
             assert check_file_download_permission(record, fjson, False) == False
@@ -537,6 +574,7 @@ def test_check_publish_status2(app,publish_status,pubdate,expect_result):
 
 
 # def check_created_id(record):
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_permissions.py::check_created_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_check_created_id(app, users):
     datastore = app.extensions["invenio-accounts"].datastore
     login_manager = app.login_manager
@@ -596,7 +634,7 @@ def test_check_created_id(app, users):
         },
         "relation_version_is_last": True,
     }
-    assert record.get("_deposit", {}).get("created_by") == 1
+    assert record.get("owner") == '1'
     assert record.get("item_type_id") == "15"
     assert record.get("weko_shared_id") == -1
 
@@ -607,13 +645,13 @@ def test_check_created_id(app, users):
         with app.test_client() as client:
             # guest user
             assert current_user.is_authenticated == False
-            assert record.get("_deposit", {}).get("created_by") == 1
+            assert record.get("owner") == '1'
             assert record.get("item_type_id") == "15"
             assert record.get("weko_shared_id") == -1
             assert check_created_id(record) == False
             ## no item type
             record["item_type_id"] = ""
-            assert record.get("_deposit", {}).get("created_by") == 1
+            assert record.get("owner") == '1'
             assert record.get("item_type_id") == ""
             assert record.get("weko_shared_id") == -1
             assert check_created_id(record) == False
@@ -627,36 +665,33 @@ def test_check_created_id(app, users):
     with app.test_request_context(headers=[("Accept-Language", "en")]):
         with app.test_client() as client:
             for user in users:
-                # obj = user.get("obj")
-                obj = MagicMock()
-
-                client.get("/foo_login/{}".format(obj.email), follow_redirects=True)
+                client.get("/foo_login/{}".format(user['obj'].email), follow_redirects=True)
                 assert current_user.is_authenticated == True
-                assert current_user.id == obj.id
-                assert current_user.roles == obj.roles
+                assert current_user.id == user['obj'].id
+                assert current_user.roles == user['obj'].roles
                 super_flg = False
                 for s in supers:
-                    if s in obj.roles:
+                    if s in user['obj'].roles:
                         super_flg = True
 
                 # no item_type_id
                 record["item_type_id"] = ""
                 assert record.get("item_type_id") == ""
-                record["_deposit"]["created_by"] = obj.id
+                record["owner"] = user['obj'].id
                 record["weko_shared_id"] = -1
-                assert record.get("_deposit", {}).get("created_by") == obj.id
+                assert record.get("owner") == user['obj'].id
                 assert record.get("weko_shared_id") == -1
                 assert check_created_id(record) == True
 
-                record["_deposit"]["created_by"] = -1
-                record["weko_shared_id"] = obj.id
-                assert record.get("_deposit", {}).get("created_by") == -1
-                assert record.get("weko_shared_id") == obj.id
+                record["owner"] = -1
+                record["weko_shared_id"] = user['obj'].id
+                assert record.get("owner") == -1
+                assert record.get("weko_shared_id") == user['obj'].id
                 assert check_created_id(record) == True
 
-                record["_deposit"]["created_by"] = -1
+                record["owner"] = -1
                 record["weko_shared_id"] = -1
-                assert record.get("_deposit", {}).get("created_by") == -1
+                assert record.get("owner") == -1
                 assert record.get("weko_shared_id") == -1
                 if super_flg:
                     assert check_created_id(record) == True
@@ -667,30 +702,30 @@ def test_check_created_id(app, users):
                 assert record.get("item_type_id") == "15"
 
                 # created_by
-                record["_deposit"]["created_by"] = obj.id
+                record["owner"] = user['obj'].id
                 record["weko_shared_id"] = -1
-                assert record.get("_deposit", {}).get("created_by") == obj.id
+                assert record.get("owner") == user['obj'].id
                 assert record.get("weko_shared_id") == -1
                 assert check_created_id(record) == True
 
                 # weko_shared_id
-                record["_deposit"]["created_by"] = -1
-                record["weko_shared_id"] = obj.id
-                assert record.get("_deposit", {}).get("created_by") == -1
-                assert record.get("weko_shared_id") == obj.id
+                record["owner"] = -1
+                record["weko_shared_id"] = user['obj'].id
+                assert record.get("owner") == -1
+                assert record.get("weko_shared_id") == user['obj'].id
                 assert check_created_id(record) == True
 
                 # created_id and weko_shared_id
-                record["_deposit"]["created_by"] = obj.id
-                record["weko_shared_id"] = obj.id
-                assert record.get("_deposit", {}).get("created_by") == obj.id
-                assert record.get("weko_shared_id") == obj.id
+                record["owner"] = user['obj'].id
+                record["weko_shared_id"] = user['obj'].id
+                assert record.get("owner") == user['obj'].id
+                assert record.get("weko_shared_id") == user['obj'].id
                 assert check_created_id(record) == True
 
                 # no created_id and weko_shared_id
-                record["_deposit"]["created_by"] = -1
+                record["owner"] = -1
                 record["weko_shared_id"] = -1
-                assert record.get("_deposit", {}).get("created_by") == -1
+                assert record.get("owner") == -1
                 assert record.get("weko_shared_id") == -1
                 if super_flg:
                     assert check_created_id(record) == True

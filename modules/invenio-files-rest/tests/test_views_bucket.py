@@ -10,6 +10,7 @@
 
 from __future__ import absolute_import, print_function
 
+import pytest
 from flask import url_for
 from tests.testutils import login_user
 
@@ -60,45 +61,47 @@ def test_head_locked_deleted(client, db, headers, bucket, permissions):
     assert client.head(bucket_url).status_code == 404
 
 
-def test_get(client, headers, permissions, bucket, objects, get_json):
+# .tox/c1/bin/pytest --cov=inveio_files_rest tests/test_views_bucket.py::test_get -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
+@pytest.mark.parametrize(
+    "user_id, expected, file_count",
+    [
+    (0, 200, 2), # contributor
+    (1, 200, 5), # repoadmin
+    (2, 200, 5), # sysadmin
+    (3, 200, 2), # comadmin
+    (7, 200, 5), # no role
+],
+)
+def test_get(app, client, headers, bucket, objects, users, records, get_json, user_id, expected, file_count):
     """Test listing objects."""
-    cases = [
-        (None, 404),
-        ('auth', 404),
-        ('objects', 404),  # TODO - return 403 instead
-        ('bucket', 200),
-        ('location', 200),
-    ]
+    login_user(client, users[user_id]['obj'])
+    # Existing bucket
+    resp = client.get(url_for(
+        'invenio_files_rest.bucket_api',
+        bucket_id=bucket.id,
+    ), headers=headers)
+    assert resp.status_code == expected
 
-    for user, expected in cases:
-        login_user(client, permissions[user])
-        # Existing bucket
-        resp = client.get(url_for(
-            'invenio_files_rest.bucket_api',
-            bucket_id=bucket.id,
-        ), headers=headers)
-        assert resp.status_code == expected
+    if resp.status_code == 200:
+        data = get_json(resp)
+        assert len(data['contents']) == file_count
+        assert all([x['is_head'] for x in data['contents']])
 
-        if resp.status_code == 200:
-            data = get_json(resp)
-            assert len(data['contents']) == 2
-            assert all([x['is_head'] for x in data['contents']])
+    #     assert set(data['contents'][0].keys()) == {
+    #         'checksum', 'created', 'delete_marker', 'is_head', 'key',
+    #         'links', 'mimetype', 'size', 'updated', 'version_id', 'tags'
+    #     }
+    #     assert set(data.keys()) == {
+    #         'contents', 'created', 'id', 'links', 'locked',
+    #         'max_file_size', 'quota_size', 'size', 'updated',
+    #     }
 
-        #     assert set(data['contents'][0].keys()) == {
-        #         'checksum', 'created', 'delete_marker', 'is_head', 'key',
-        #         'links', 'mimetype', 'size', 'updated', 'version_id', 'tags'
-        #     }
-        #     assert set(data.keys()) == {
-        #         'contents', 'created', 'id', 'links', 'locked',
-        #         'max_file_size', 'quota_size', 'size', 'updated',
-        #     }
-
-        # # Non-existing bucket
-        # resp = client.get(url_for(
-        #     'invenio_files_rest.bucket_api',
-        #     bucket_id='invalid',
-        # ), headers=headers)
-        # assert resp.status_code == 404
+    # # Non-existing bucket
+    # resp = client.get(url_for(
+    #     'invenio_files_rest.bucket_api',
+    #     bucket_id='invalid',
+    # ), headers=headers)
+    # assert resp.status_code == 404
 
 
 def test_get_versions(client, headers, permissions, bucket, objects, get_json):

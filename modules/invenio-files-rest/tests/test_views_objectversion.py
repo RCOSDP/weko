@@ -50,8 +50,8 @@ def test_get_not_found(client, headers, bucket, permissions):
 #             uploads=None, download=None):
 # .tox/c1/bin/pytest --cov=inveio_files_rest tests/test_views_objectversion.py::test_get -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
 @pytest.mark.parametrize(
-        "user_id, code_open_no, code_open_login",
-        [
+    "user_id, code_no, code_can",
+    [
         (0, 403, 200), # contributor
         (1, 200, 200), # repoadmin
         (2, 200, 200), # sysadmin
@@ -59,9 +59,10 @@ def test_get_not_found(client, headers, bucket, permissions):
         (7, 200, 200), # no role
     ],
 )
-def test_get(app, client, headers, bucket, objects, users, records, user_id, code_open_no, code_open_login):
+def test_get(app, db, client, headers, bucket, users, records, user_id, code_no, code_can):
     """Test getting an object."""
     login_user(client, users[user_id]['obj'])
+    objects = db.session.query(ObjectVersion).all()
     for obj in objects:
         key = obj.key
         object_url = url_for(
@@ -71,10 +72,10 @@ def test_get(app, client, headers, bucket, objects, users, records, user_id, cod
 
         # Get specifying version (of latest obj).
         resp = client.get(object_url)
-        if key == "LICENSE":
-            assert resp.status_code == code_open_no
+        if key in ["open_no", "open_date_future"]:
+            assert resp.status_code == code_no
         else:
-            assert resp.status_code == code_open_login
+            assert resp.status_code == code_can
 
         # # Get latest
         # resp = client.get(object_url, headers=headers)
@@ -420,36 +421,40 @@ def test_put_multipartform(client, bucket, admin_user):
     })
     assert res.status_code == 200
 
-# # .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_views_objectversion.py::test_delete -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
-# @pytest.mark.parametrize('user, expected', [
-#     (None, 404),
-#     ('auth', 404),
-#     ('objects', 403),
-#     ('bucket', 204),
-#     ('location', 204),
-# ])
-# def test_delete(client, db, bucket, objects, permissions, user, expected):
-#     """Test deleting an object."""
-#     login_user(client, permissions[user])
-#     for obj in objects:
-#         # Valid object
-#         resp = client.delete(url_for(
-#             'invenio_files_rest.object_api',
-#             bucket_id=bucket.id,
-#             key=obj.key,
-#         ))
-#         assert resp.status_code == expected
-#         if resp.status_code == 204:
-#             assert not ObjectVersion.get(bucket.id, obj.key)
-#         else:
-#             assert ObjectVersion.get(bucket.id, obj.key)
+# .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_views_objectversion.py::test_delete -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
+@pytest.mark.parametrize(
+    "user_id, expected",
+    [
+        (0, 403), # contributor
+        (1, 200), # repoadmin
+        (2, 200), # sysadmin
+        (3, 200), # comadmin
+        (7, 200), # no role
+    ],
+)
+def test_delete(app, db, client, headers, bucket, users, records, user_id, expected):
+    """Test deleting an object."""
+    login_user(client, users[user_id]['obj'])
+    objects = db.session.query(ObjectVersion).all()
+    for obj in objects:
+        # Valid object
+        resp = client.delete(url_for(
+            'invenio_files_rest.object_api',
+            bucket_id=bucket.id,
+            key=obj.key,
+        ))
+        assert resp.status_code == expected
+        if resp.status_code == 204:
+            assert not ObjectVersion.get(bucket.id, obj.key)
+        else:
+            assert ObjectVersion.get(bucket.id, obj.key)
 
-#         # Invalid object
-#         assert client.delete(url_for(
-#             'invenio_files_rest.object_api',
-#             bucket_id=bucket.id,
-#             key='invalid',
-#         )).status_code == 404
+        # Invalid object
+        assert client.delete(url_for(
+            'invenio_files_rest.object_api',
+            bucket_id=bucket.id,
+            key='invalid',
+        )).status_code == 404
 
 
 # @pytest.mark.parametrize('user, expected', [
@@ -488,7 +493,7 @@ def test_put_multipartform(client, bucket, admin_user):
 def test_delete_versions_head_reset(client, db, bucket, versions, admin_user):
     """Test head setting after deletion."""
     login_user(client, admin_user)
-    key = 'LICENSE'
+    key = 'open_access'
     versions_to_delete = \
         [version for version in versions if version.key == key]
     assert len(versions_to_delete) == 2
@@ -582,9 +587,7 @@ def test_put_header_tags(app, client, bucket, permissions, get_md5, get_json):
     assert resp.status_code == 200
 
     tags = ObjectVersion.get(bucket, key).get_tags()
-    assert tags['key1'] == 'val1'
-    assert tags['key2'] == 'val2'
-    assert tags['key3'] == 'val3'
+    assert tags['key1'] == 'val1;key2=val2;key3=val3'
 
 
 def test_put_header_invalid_tags(app, client, bucket, permissions, get_md5,

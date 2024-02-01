@@ -17,7 +17,7 @@ import pytest
 import shutil
 import tempfile
 import uuid
-from datetime import datetime
+import datetime
 from flask import Flask, json, url_for
 from flask_babelex import Babel
 from flask_celeryext import FlaskCeleryExt
@@ -265,8 +265,11 @@ def objects(db, bucket):
     """File system location."""
     # Create older versions first
     for key, content in [
-            ('LICENSE', b'old license'),
-            ('README.rst', b'old readme')]:
+            ('open_access', b'open access'),
+            ('open_date_old', b'open date old'),
+            ('open_date_future', b'open date future'),
+            ('open_login', b'open login'),
+            ('open_no', b'open no')]:
         ObjectVersion.create(
             bucket, key, stream=BytesIO(content), size=len(content)
         )
@@ -274,8 +277,11 @@ def objects(db, bucket):
     # Create new versions
     objs = []
     for key, content in [
-            ('LICENSE', b'license file'),
-            ('README.rst', b'readme file')]:
+            ('open_access', b'open access'),
+            ('open_date_old', b'open date old'),
+            ('open_date_future', b'open date future'),
+            ('open_login', b'open login'),
+            ('open_no', b'open no')]:
         objs.append(
             ObjectVersion.create(
                 bucket, key, stream=BytesIO(content), size=len(content)
@@ -572,8 +578,8 @@ def records(db, bucket):
         record_id=RECORD_ID
     )
     rm = RecordMetadata(
-        created=datetime.now(),
-        updated=datetime.now(),
+        created=datetime.datetime.now(),
+        updated=datetime.datetime.now(),
         id=RECORD_ID,
         json={
             "owner": "1",
@@ -584,13 +590,36 @@ def records(db, bucket):
                 "attribute_value_mlt": [
                     {
                         "version_id": "1",
-                        "filename": "LICENSE",
-                        "accessrole": "open_no"
+                        "filename": "open_access",
+                        "accessrole": "open_access"
                     },
                     {
                         "version_id": "1",
-                        "filename": "README.rst",
+                        "filename": "open_date_old",
+                        "accessrole": "open_date",
+                        "date": [
+                            {"dateValue": "2000-01-01"}
+                        ]
+                    },
+                    {
+                        "version_id": "1",
+                        "filename": "open_date_future",
+                        "accessrole": "open_date",
+                        "date": [
+                            {"dateValue": 
+                                datetime.datetime.strftime(
+                                    datetime.date(datetime.datetime.now().year + 1, 1, 1), "%Y-%m-%d")}
+                        ]
+                    },
+                    {
+                        "version_id": "1",
+                        "filename": "open_login",
                         "accessrole": "open_login"
+                    },
+                    {
+                        "version_id": "1",
+                        "filename": "open_no",
+                        "accessrole": "open_no"
                     }
                 ]
             }
