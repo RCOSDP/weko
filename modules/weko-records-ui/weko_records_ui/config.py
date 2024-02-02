@@ -601,7 +601,7 @@ WEKO_RECORDS_UI_DISPLAY_ONLINE_ANALYSIS_FLG = False
 WEKO_RECORDS_UI_ONLINE_ANALYSIS_URL = 'https://binder.cs.rcos.nii.ac.jp/v2/weko3/'
 """ URL for online analysis button. """
 
-WEKO_RECORDS_UI_DISPLAY_SHARE_BOX_FLG = True
+WEKO_RECORDS_UI_DISPLAY_SHARE_BOX_FLG = False
 """ Display Share box on item detail. """
 
 WEKO_RECORDS_UI_DISPLAY_VERSION_BOX_FLG = True
