@@ -622,7 +622,7 @@ class WekoFilesStats(ContentNegotiatedMethodView):
                 date = date.group()
 
             query_record_stats = QueryFileStatsCount()
-            result = query_record_stats.get_data(pid.object_uuid, kwargs.get('filename'), date)
+            result = query_record_stats.get_data(record.get('_buckets', {}).get('deposit'), kwargs.get('filename'), date)
             if date:
                 result['period'] = date
             else:
@@ -892,19 +892,20 @@ class WekoFileListGetAll(ContentNegotiatedMethodView):
             # Get record
             pid = PersistentIdentifier.get('recid', kwargs.get('pid_value'))
             record = WekoRecord.get_record(pid.object_uuid)
+            files = record.get_file_data()
 
             # Check record permission
             if not page_permission_factory(record).can():
                 raise PermissionError()
 
-            if not record.files:
+            if not files:
                 raise FilesNotFoundRESTError()
 
             # Get File Request
             current_app.config['WEKO_ITEMS_UI_MS_MIME_TYPE'] = WEKO_ITEMS_UI_MS_MIME_TYPE
             current_app.config['WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT'] = WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT
             from .fd import file_list_ui
-            dl_response = file_list_ui(record, record.files)
+            dl_response = file_list_ui(record, files)
 
             # Check Etag
             hash_str = str(record) + record.get_titles
@@ -975,7 +976,7 @@ class WekoFileListGetSelected(ContentNegotiatedMethodView):
                 raise InvalidRequestError()
             if not filenames:
                 raise InvalidRequestError()
-            files = [r for r in record.files if r.info().get('key') in filenames]
+            files = [r for r in record.get_file_data() if r.get('filename') in filenames]
 
             # Check record permission
             if not page_permission_factory(record).can():

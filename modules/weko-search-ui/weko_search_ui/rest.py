@@ -66,7 +66,7 @@ def create_blueprint(app, endpoints):
         __name__,
         url_prefix="",
     )
-    
+
     @blueprint.teardown_request
     def dbsession_clean(exception):
         current_app.logger.debug("weko_search_ui dbsession_clean: {}".format(exception))
@@ -76,7 +76,7 @@ def create_blueprint(app, endpoints):
             except:
                 db.session.rollback()
         db.session.remove()
-    
+
 
     for endpoint, options in (endpoints or {}).items():
         if "record_serializers" in options:
@@ -817,7 +817,7 @@ class IndexSearchResultList(ContentNegotiatedMethodView):
 
             # Create TSV
             from .utils import result_download_ui
-            dl_response = result_download_ui(rocrate_list, input_json, "sample_title", language)
+            dl_response = result_download_ui(rocrate_list, input_json, language)
 
             # Check Etag
             hash_str = str(search_result) + str(input_json)

@@ -708,6 +708,3 @@ WEKO_SEARCH_UI_BULK_EXPORT_RETRY_INTERVAL = 1
 WEKO_SEARCH_UI_API_LIMIT_RATE_DEFAULT = ['100 per minute']
 
 WEKO_SEARCH_UI_RESULT_TMP_PREFIX = 'weko_search_result_list_'
-
-WEKO_SEARCH_UI_TITLE_LANGUAGE = {'en': 'Title',
-                                 'ja': 'タイトル'}

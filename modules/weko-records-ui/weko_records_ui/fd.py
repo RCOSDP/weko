@@ -29,6 +29,7 @@ import unicodedata
 
 from flask import abort, current_app, render_template, request, send_file
 from flask_babelex import gettext as _
+from flask_babelex import get_locale
 from flask_login import current_user
 from invenio_db import db
 from invenio_files_rest import signals
@@ -486,12 +487,20 @@ def file_list_ui(record, files):
     """File List Ui.
 
     :param record: All metadata of a record.
-    :param files: File metadata list.
+    :param files: File metadata list(only attribute_type "file").
     """
     if not files:
         abort(404)
 
-    item_title = record.get('item_title')
+    # Language setting
+    from weko_user_profiles.config import USERPROFILES_LANGUAGE_LIST
+    language = request.headers.get('Accept-Language')
+    if not language in [lang[0] for lang in USERPROFILES_LANGUAGE_LIST[1:]]:
+        language = 'en'
+    get_locale().language = language
+
+    item_title = record.get_titles
+
     temp_path = tempfile.TemporaryDirectory(
         prefix=current_app.config.get('WEKO_RECORDS_UI_FILELIST_TMP_PREFIX'))
 
@@ -500,25 +509,27 @@ def file_list_ui(record, files):
     files_export_path = export_path + '/data'
     os.makedirs(files_export_path)
 
+    # Exclude thumbnails
+    filenames = [f.get('filename') for f in files]
+    target_files = [f for f in record.files if f.info().get('filename') in filenames]
+
     # Export files
     available_files = []
-    for file in files:
+    for file in target_files:
         if check_file_download_permission(record, file.info()):
-            if not file.info().get('accessrole') in ['open_no', 'open_restricted']:
-                if file:
-                    available_files.append(file)
-                    file_buffered = file.obj.file.storage().open()
-                    temp_file = open(
-                        files_export_path + '/' + file.obj.basename, 'wb')
-                    temp_file.write(file_buffered.read())
-                    temp_file.close()
+            available_files.append(file)
+            file_buffered = file.obj.file.storage().open()
+            temp_file = open(
+                files_export_path + '/' + file.obj.basename, 'wb')
+            temp_file.write(file_buffered.read())
+            temp_file.close()
     if not available_files:
         raise AvailableFilesNotFoundRESTError()
 
     # Create TSV file
     from .utils import create_tsv
-    with open(f'{export_path}/{item_title}.tsv', 'w', encoding="utf-8") as tsv_file:
-        tsv_file.write(create_tsv(available_files).getvalue())
+    with open(f'{export_path}/file_list.tsv', 'w', encoding="utf-8") as tsv_file:
+        tsv_file.write(create_tsv(available_files, language).getvalue())
 
     # Create download file
     shutil.make_archive(export_path, 'zip', export_path)
