@@ -39,7 +39,7 @@ from invenio_rest.views import create_api_errorhandler
 from weko_admin.models import RankingSettings
 from weko_deposit.api import WekoRecord
 from sqlalchemy.exc import SQLAlchemyError
-from weko_records_ui.errors import DateFormatRESTError, FilesNotFoundRESTError, RecordsNotFoundRESTError
+from weko_records_ui.errors import AvailableFilesNotFoundRESTError, DateFormatRESTError, FilesNotFoundRESTError, RecordsNotFoundRESTError
 
 from weko_records_ui.permissions import page_permission_factory
 
@@ -273,8 +273,9 @@ class WekoFileRanking(ContentNegotiatedMethodView):
             from .utils import get_file_download_data
             result = get_file_download_data(
                 kwargs.get('pid_value'),
-                record.get('_buckets', {}).get('deposit'),
-                filenames, date,
+                record,
+                filenames,
+                date,
                 display_number
             )
 
@@ -296,7 +297,7 @@ class WekoFileRanking(ContentNegotiatedMethodView):
             return res
 
         except (PermissionError, FilesNotFoundRESTError, DateFormatRESTError,
-                SameContentException, RequestParameterError) as e:
+                SameContentException, RequestParameterError, AvailableFilesNotFoundRESTError) as e:
             raise e
 
         except PIDDoesNotExistError:

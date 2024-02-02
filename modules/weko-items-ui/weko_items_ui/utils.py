@@ -67,6 +67,7 @@ from weko_index_tree.utils import check_index_permissions, get_index_id, \
 from weko_records.api import FeedbackMailList, ItemTypes, Mapping
 from weko_records.serializers.utils import get_item_type_name
 from weko_records.utils import replace_fqdn_of_file_metadata
+from weko_records_ui.errors import AvailableFilesNotFoundRESTError
 from weko_records_ui.permissions import check_created_id, \
     check_file_download_permission, check_publish_status
 from weko_redis.redis import RedisConnection
@@ -3367,18 +3368,45 @@ def create_limmiter():
     from .config import WEKO_ITEMS_UI_API_LIMIT_RATE_DEFAULT
     return Limiter(app=Flask(__name__), key_func=get_remote_address, default_limits=WEKO_ITEMS_UI_API_LIMIT_RATE_DEFAULT)
 
-def get_file_download_data(item_id, bucket_id, filenames, query_date=None, size=None):
-    """Get data."""
-    from invenio_files_rest.models import ObjectVersion
+def get_file_download_data(item_id, record, filenames, query_date=None, size=None):
+    """Get file download data.
+
+    Args:
+        item_id (int): Item id
+        record (WekoRecord): Record
+        filenames (list[str]): Filenames
+        query_date (str): Period(yyyy-MM)
+        size (str): Ranking display number
+
+    Returns:
+        dict: Ranking result dict
+    """
     result = {}
-    result['ranking'] = [{'filename': f, 'download_total': 0} for f in filenames]
-    root_file_id_list = []
+
+    # Check available
+    available_filenames = []
+    target_files = [f for f in record.files if f.info().get('filename') in filenames]
+
+    for file in target_files:
+        if check_file_download_permission(record, file.info()):
+            if not file.info().get('accessrole') in ['open_no', 'open_restricted']:
+                if file:
+                    available_filenames.append(file.info().get('filename'))
+    if not available_filenames:
+        raise AvailableFilesNotFoundRESTError()
+
+    result['ranking'] = [{'filename': f, 'download_total': 0} for f in available_filenames]
 
     # Get root file ids
-    for filename in filenames:
+    from invenio_files_rest.models import ObjectVersion
+    root_file_id_list = []
+    bucket_id = record.get('_buckets', {}).get('deposit')
+
+    for filename in available_filenames:
         obv = ObjectVersion.get(bucket_id, filename)
         root_file_id_list.append(str(obv.root_file_id) if obv else '')
 
+    # Set parameter
     params = {
         'item_id': str(item_id),
         'root_file_id_list': root_file_id_list,
@@ -3389,9 +3417,8 @@ def get_file_download_data(item_id, bucket_id, filenames, query_date=None, size=
         month = int(query_date[5: 7])
         _, lastday = calendar.monthrange(year, month)
         params.update({
-            'start_date': query_date + '-01',
-            'end_date': query_date + '-' + str(lastday).zfill(2)
-            + 'T23:59:59'
+            'start_date': f'{query_date}-01',
+            'end_date': f'{query_date}-{str(lastday).zfill(2)}T23:59:59'
         })
 
     try:
