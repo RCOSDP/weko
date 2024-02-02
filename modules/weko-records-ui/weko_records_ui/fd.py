@@ -493,8 +493,9 @@ def file_list_ui(record, files):
         abort(404)
 
     # Language setting
+    from weko_user_profiles.config import USERPROFILES_LANGUAGE_LIST
     language = request.headers.get('Accept-Language')
-    if not language:
+    if not language in [lang[0] for lang in USERPROFILES_LANGUAGE_LIST[1:]]:
         language = 'en'
     get_locale().language = language
 
@@ -516,14 +517,12 @@ def file_list_ui(record, files):
     available_files = []
     for file in target_files:
         if check_file_download_permission(record, file.info()):
-            if not file.info().get('accessrole') in ['open_no', 'open_restricted']:
-                if file:
-                    available_files.append(file)
-                    file_buffered = file.obj.file.storage().open()
-                    temp_file = open(
-                        files_export_path + '/' + file.obj.basename, 'wb')
-                    temp_file.write(file_buffered.read())
-                    temp_file.close()
+            available_files.append(file)
+            file_buffered = file.obj.file.storage().open()
+            temp_file = open(
+                files_export_path + '/' + file.obj.basename, 'wb')
+            temp_file.write(file_buffered.read())
+            temp_file.close()
     if not available_files:
         raise AvailableFilesNotFoundRESTError()
 

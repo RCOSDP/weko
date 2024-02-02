@@ -3389,9 +3389,7 @@ def get_file_download_data(item_id, record, filenames, query_date=None, size=Non
 
     for file in target_files:
         if check_file_download_permission(record, file.info()):
-            if not file.info().get('accessrole') in ['open_no', 'open_restricted']:
-                if file:
-                    available_filenames.append(file.info().get('filename'))
+            available_filenames.append(file.info().get('filename'))
     if not available_filenames:
         raise AvailableFilesNotFoundRESTError()
 
