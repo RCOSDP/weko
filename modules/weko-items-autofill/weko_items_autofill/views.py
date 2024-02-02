@@ -113,8 +113,10 @@ def get_auto_fill_record_data():
             result['result'] = get_wekoid_record_data(
                 search_data, item_type_id)
         elif api_type == 'researchmap':
+            # FIXME!
+            cris_researchmap_linkage_request.send('1a2e300d-e11e-4d96-8c61-56ddd8aeb057')
             result['result'] = get_reserchmapid_record_data(
-                parmalink, achievement_type ,achievement_id)
+                parmalink, achievement_type ,achievement_id , item_type_id)
         else:
             result['error'] = api_type + ' is NOT support autofill feature.'
     except Exception as e:

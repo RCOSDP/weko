@@ -779,6 +779,20 @@ def get_crossref_autofill_item(item_id):
             crossref_req_item[key] = jpcoar_item.get(key)
     return crossref_req_item
 
+def get_researchmap_autofill_item(item_id):
+    """Get CrossRef autofill item.
+
+    :param item_id: Item ID
+    :return:
+    """
+    jpcoar_item = get_item_id(item_id)
+    req_item = dict()
+    for key in current_app.config[
+            'WEKO_ITEMS_AUTOFILL_RESEARCHMAP_REQUIRED_ITEM']:
+        if jpcoar_item.get(key) is not None:
+            req_item[key] = jpcoar_item.get(key)
+    return req_item
+
 
 def get_autofill_key_tree(schema_form, item, result=None):
     """Get auto fill key tree.
@@ -1305,28 +1319,86 @@ def get_wekoid_record_data(recid, item_type_id):
         item_type_id, item_map_data_des)
     # Set value for record model.
     result = set_val_for_record_model(record_model, item_map_data_des)
-    print(result)
     return result
 
-def get_reserchmapid_record_data(parmalink, achievement_type ,achievement_id):
-
+def get_reserchmapid_record_data(parmalink, achievement_type ,achievement_id ,item_type_id):
+    api_data = {}
+    mappings = [
+                #  {'type' : 'simple', "rm_name" : '@id' , "jpcore_name" :'jpcoar:relatedIdentifier'}
+                # ,{'type' : 'simple', "rm_name" : '@type', "jpcore_name" : 'dc:type'}
+                # ,
+                {'type' : 'lang'  , "rm_name" : 'paper_title', "jpcore_name" : 'dc:title' , "weko_name" :"title"}
+                # ,{'type' : 'lang'  , "rm_name" : ('paper_title' ,"ja"), "jpcore_name" : ('dc:title' ,"ja")}
+                # ,{'type' : 'complex', "rm_name" : ('authors' ,"en" , 'name'), "jpcore_name" : ('jpcoar:creator' ,"en", 'name')}
+                # ,{'type' : 'complex', "rm_name" : ('authors' ,"ja" , 'name'), "jpcore_name" : ('jpcoar:creator' ,"ja", 'name')}
+                # ,{'type' : 'lang'  , "rm_name" : ('description', 'ja'), "jpcore_name" : ('datacite:description', 'ja')}
+                # ,{'type' : 'lang'  , "rm_name" : ('description', 'en'), "jpcore_name" : ('datacite:description', 'en')}
+                ,{'type' : 'simple', "rm_name" : 'publication_date', "jpcore_name" :  'datacite:date' , "weko_name" : "pubdate"}
+    ]
 
     data = Reseachmap().get_data(parmalink, achievement_type ,achievement_id)
+    load_data:dict = json.loads(data)
+    print('load_data')
+    print(load_data)
     error_description:str = json.loads(data).get("error_description")
-    paper_title:dict = json.loads(data).get("paper_title")
 
     if error_description:
         raise Exception(error_description)
+    
+    for mapping in mappings :
+        if mapping.get('type') == 'simple':
+            rm_name:str = mapping.get('rm_name','')
+            weko_name:str = mapping.get('weko_name','')
+            
+            print('rm_name')
+            print(rm_name)
+            element:str = load_data.get(rm_name ,'')
+            api_data.update({weko_name : element})
+        elif mapping.get('type') == 'lang':
+            rm_name:str = mapping.get('rm_name','')
+            weko_name:str = mapping.get('weko_name','')
+            
+            lang_json:dict = load_data.get(rm_name , {})
+            en_value = lang_json.get('en' , '')
+            ja_value = lang_json.get('ja' , '')
 
-    # fixme!
-    elements = []
-    for key in list(paper_title.keys()):
-        elm = {}
-        elm.update({'subitem_title_language' : key})
-        elm.update({'subitem_title' : paper_title[key]})
-        elements.append(elm)
-    print(elements)
-    return [{'item_titles': elements}]
+            elements = []
+            if en_value:
+                elements.append({'@value': en_value, '@language': 'en'})
+            if ja_value:
+                elements.append({'@value': ja_value, '@language': 'ja'})
+            
+            api_data.update({weko_name : elements})
+
+    # paper_title:dict = json.loads(data).get("paper_title")
+    # # FIXME!
+    # elements = []
+    # for key in list(paper_title.keys()):
+    #     elm = {}
+    #     elm.update({'subitem_title_language' : key})
+    #     elm.update({'subitem_title' : paper_title[key]})
+    #     elements.append(elm)
+    # # print(elements)
+
+    # api_data={'item_titles': elements}
+    
+    result = list()
+    with db.session.no_autoflush:
+        items = ItemTypes.get_by_id(item_type_id)
+    if items is None:
+        return result
+    if items.form is not None:
+        autofill_key_tree = sort_by_item_type_order(
+            items.form,
+            get_autofill_key_tree(
+                items.form,
+                get_researchmap_autofill_item(item_type_id)))
+        print('autofill_key_tree')
+        print(autofill_key_tree)
+        print('api_data')
+        print(api_data)
+        result = build_record_model(autofill_key_tree, api_data)
+    return result
 
 
 def build_record_model_for_wekoid(item_type_id, item_map_data):
