@@ -19,7 +19,7 @@ from invenio_stats.contrib.event_builders import build_celery_task_unique_id, \
 from invenio_stats.processors import EventsIndexer, anonymize_user, \
     flag_restricted, flag_robots
 from invenio_stats.queries import ESDateHistogramQuery, ESTermsQuery, \
-    ESWekoFileStatsQuery, ESWekoTermsQuery, ESWekoRankingQuery
+    ESWekoFileStatsQuery, ESWekoTermsQuery, ESWekoRankingQuery, ESWekoFileRankingQuery
 
 
 def register_events():
@@ -848,13 +848,13 @@ def register_queries():
                                 "field": "@group_field",
                                 "size": "@agg_size",
                                 "order": {
-                                    "my_sum": "desc" 
+                                    "my_sum": "desc"
                                 }
                             },
                             "aggs": {
                                 "my_sum": {
                                     "sum": {
-                                        "field": "@count_field" 
+                                        "field": "@count_field"
                                     }
                                 }
                             }
@@ -910,15 +910,15 @@ def register_queries():
         ),
         dict(
             query_name='item-file-download-aggs',
-            query_class=ESWekoFileStatsQuery,
+            query_class=ESWekoFileRankingQuery,
             query_config=dict(
                 index='{}-events-stats-file-download'.format(search_index_prefix),
                 doc_type='stats-file-download',
                 copy_fields=dict(),
                 metric_fields=dict(
-                    download_ranking=('terms', 'temp', {"size": "1"})
+                    download_ranking=('terms', 'file_key', {})
                 ),
-                main_fields=['item_id', 'aggs_size'],
+                main_fields=['item_id'],
                 main_query={
                     "query": {
                         "bool": {
@@ -930,16 +930,13 @@ def register_queries():
                                             "boost": 1
                                         }
                                     }
+                                },
+                                {
+                                    "terms": {
+                                        "root_file_id": "@root_file_id_list"
+                                    }
                                 }
                             ]
-                        }
-                    },
-                    "aggs": {
-                        "value": {
-                            "terms": {
-                                "field": "file_key",
-                                "size": "@aggs_size"
-                            }
                         }
                     },
                     "size": 0

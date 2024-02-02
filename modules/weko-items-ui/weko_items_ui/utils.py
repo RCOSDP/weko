@@ -3367,14 +3367,21 @@ def create_limmiter():
     from .config import WEKO_ITEMS_UI_API_LIMIT_RATE_DEFAULT
     return Limiter(app=Flask(__name__), key_func=get_remote_address, default_limits=WEKO_ITEMS_UI_API_LIMIT_RATE_DEFAULT)
 
-def get_file_download_data(item_id, filenames, query_date=None, size=None):
+def get_file_download_data(item_id, bucket_id, filenames, query_date=None, size=None):
     """Get data."""
+    from invenio_files_rest.models import ObjectVersion
     result = {}
     result['ranking'] = [{'filename': f, 'download_total': 0} for f in filenames]
+    root_file_id_list = []
+
+    # Get root file ids
+    for filename in filenames:
+        obv = ObjectVersion.get(bucket_id, filename)
+        root_file_id_list.append(str(obv.root_file_id) if obv else '')
 
     params = {
         'item_id': str(item_id),
-        'aggs_size': str(size or 10)
+        'root_file_id_list': root_file_id_list,
     }
 
     if query_date:

@@ -245,7 +245,7 @@ class WekoFileRanking(ContentNegotiatedMethodView):
             # Check file exist
             current_app.config['WEKO_ITEMS_UI_MS_MIME_TYPE'] = WEKO_ITEMS_UI_MS_MIME_TYPE
             current_app.config['WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT'] = WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT
-            if not record.get_file_data():
+            if not record.files:
                 raise FilesNotFoundRESTError()
             filenames = [r.get('filename') for r in record.get_file_data()]
 
@@ -271,7 +271,12 @@ class WekoFileRanking(ContentNegotiatedMethodView):
                     raise RequestParameterError()
 
             from .utils import get_file_download_data
-            result = get_file_download_data(kwargs.get('pid_value'), filenames, date, display_number)
+            result = get_file_download_data(
+                kwargs.get('pid_value'),
+                record.get('_buckets', {}).get('deposit'),
+                filenames, date,
+                display_number
+            )
 
             # Check Etag
             etag = generate_etag(str(result).encode('utf-8'))
