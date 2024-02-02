@@ -144,7 +144,7 @@ def write_back_oringinal_data(origin_data, institution):
                             ]
                         }
                     },
-                    "_source":{"excludes":["content"]}
+                    "_source":{"excludes":["content"]},
                     "size": 10000,
                     "from": 0
                 }
