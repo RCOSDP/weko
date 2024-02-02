@@ -24,7 +24,7 @@
 
 """Records Error"""
 from flask_babelex import gettext as _
-from invenio_rest.errors import RESTException
+from invenio_rest.errors import RESTException, RESTValidationError
 
 
 class VersionNotFoundRESTError(RESTException):
@@ -53,6 +53,11 @@ class InvalidEmailError(RESTException):
     code = 400
     description = _('Invalid mailaddress.')
 
+class RequiredItemNotExistError(RESTValidationError):
+    """Required Item not exists in request body error."""
+
+    description = _('Reqired item does not exist.')
+
 class InvalidCaptchaError(RESTException):
     """Invalid CAPTCHA calculation result error."""
 
@@ -64,6 +69,12 @@ class InvalidRequestError(RESTException):
 
     code = 400
     description = 'Invalid Request Header or Body'
+
+class AuthenticationRequiredError(RESTException):
+    """Contents not found error."""
+
+    code = 401
+    description = _('Unauthorized.')
 
 class PermissionError(RESTException):
     """Permission error"""
