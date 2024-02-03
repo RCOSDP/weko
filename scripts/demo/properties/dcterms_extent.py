@@ -49,7 +49,7 @@ def schema(title="", multi_flag=multiple_flag):
         _d = {
             "type": "object",
             "format": "object",
-            "title":"dcterms_extent",
+            "title": "dcterms_extent",
             "properties": {
                 "dcterms_extent": {
                     "type": "string",

@@ -1005,7 +1005,4 @@ HOLDING_AGENT_NAMEID_SCHEMA_LBL = [
     "OCLC",
 ]
 
-FUNDING_STREAM_IDENTIFIER_TYPE= [
-"Crossref Funder",
-"JGN_fundingStream"
-]
+FUNDING_STREAM_IDENTIFIER_TYPE = ["Crossref Funder", "JGN_fundingStream"]
