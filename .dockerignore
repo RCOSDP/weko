@@ -9,11 +9,17 @@
 *.~
 **.log
 *.sh
+*.result
 
 .dockerignore
 Dockerfile
 docker-compose.yml
 docker-compose-dev.yml
+weko3.srctrlbm
+weko3.srctrldb
+weko3.srctrlprj
+stats.txt.gz
+pipdeptree.txt
 
 Procfile*
 
