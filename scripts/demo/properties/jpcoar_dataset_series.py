@@ -44,7 +44,7 @@ def schema(title="", multi_flag=multiple_flag):
         _d = {
             "type": "object",
             "format": "object",
-            "title":"dataset_series",
+            "title": "dataset_series",
             "properties": {
                 "jpcoar_dataset_series": {
                     "type": "string",
