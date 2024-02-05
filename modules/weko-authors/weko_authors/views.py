@@ -129,8 +129,9 @@ def update_author():
             body=body
         )
         from weko_deposit.tasks import update_items_by_authorInfo
+        
         update_items_by_authorInfo.delay(
-            user_id, [json.loads(json.dumps(data))["pk_id"]], [json.loads(json.dumps(data))["id"]], data)
+            user_id,data, [json.loads(json.dumps(data))["pk_id"]], [json.loads(json.dumps(data))["id"]])
 
     except Exception as ex:
         db.session.rollback()
