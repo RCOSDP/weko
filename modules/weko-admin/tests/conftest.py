@@ -439,7 +439,6 @@ def site_info(db):
         site_name=[{"name":"name11"}],
         notify={"name":"notify11"},
         google_tracking_id_user="11",
-        addthis_user_id="12",
         ogp_image="/var/tmp/test_dir",
         ogp_image_name="test ogp image name1"
     )
