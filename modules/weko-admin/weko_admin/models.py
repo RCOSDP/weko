@@ -1410,13 +1410,16 @@ class SiteInfo(db.Model):
                     db.session.add(query_object)
                 else:
                     db.session.merge(query_object)
+                print("check1:{}".format(db.session.is_active))
+            print("check2:{}".format(db.session.is_active))
             db.session.commit()
+            print("check3:{}".format(db.session.is_active))
         except BaseException as ex:
             db.session.rollback()
             current_app.logger.error(ex)
             raise
 
-        return cls
+        return query_object
 
 
 class FeedbackMailHistory(db.Model):

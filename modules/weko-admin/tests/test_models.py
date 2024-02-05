@@ -792,7 +792,6 @@ class TestSiteInfo:
             result = SiteInfo.get()
             assert result == {}
         
-        assert 1==2
         
 #    def update(cls, site_info):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_models.py::TestSiteInfo::test_update -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
@@ -814,8 +813,7 @@ class TestSiteInfo:
                 "favicon_name":"test favicon","google_tracking_id_user":"test_tracking",
                 "ogp_image":"false"
             }
-            SiteInfo.update(data)
-            result = SiteInfo.query.filter_by().one_or_none()
+            result = SiteInfo.update(data)
             assert result.site_name == [{"index":"test_index1","name":"test_name1","language":"en"},{"index":"test_index2","name":"test_name2","language":"ja"}]
             assert result.ogp_image == "/var/tmp/test_dir"
             assert result.ogp_image_name == "test ogp image name1"
@@ -835,8 +833,7 @@ class TestSiteInfo:
                 "ogp_image":"/var/tmp/new_dir",
                 "ogp_image_name":"new ogp image name"
             }
-            SiteInfo.update(data)
-            result = SiteInfo.query.filter_by().one_or_none()
+            result = SiteInfo.update(data)
             assert result.site_name == [{"index":"test_index1","name":"test_name1","language":"en"},{"index":"test_index2","name":"test_name2","language":"ja"}]
             assert result.ogp_image == "/var/tmp/new_dir"
             assert result.ogp_image_name == "new ogp image name"
@@ -853,14 +850,14 @@ class TestSiteInfo:
                     {"notify_name":"new_notify2","language":"ja"}
                 ],
                 "copy_right":"new_copyright","description":"this is new description","keyword":"test new keyword","favicon":"test,favicon",
-                "favicon_name":"test favicon","google_tracking_id_user":"test_tracking",
+                "favicon_name":"test favicon","google_tracking_id_user":"",
                 "ogp_image":""
             }
-            SiteInfo.update(data)
-            result = SiteInfo.query.filter_by().one_or_none()
+            result = SiteInfo.update(data)
             assert result.site_name == [{"index":"new_index1","name":"new_name1","language":"en"},{"index":"new_index2","name":"new_name2","language":"ja"}]
             assert result.ogp_image == None
             assert result.ogp_image_name == None
+            assert result.google_tracking_id_user == ""
 
             # raise Exception
             with patch("weko_admin.models.db.session.commit", side_effect=BaseException("test_error")):
