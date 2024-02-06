@@ -155,3 +155,7 @@ ${INVENIO_WEB_INSTANCE} assets build
 pip install uwsgi
 pip install uwsgitop
 # gunicorn uwsgi -end
+
+# clean caches
+pip cache purge
+CI=true npm cache clean --force
