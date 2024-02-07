@@ -1,6 +1,8 @@
 from blinker import NamedSignal
 from celery import current_app as current_celery_app
 from flask import current_app
+from .models import CRISLinkageResult
+
 # make signal
 cris_researchmap_linkage_request = NamedSignal('cris_researchmap_linkage_request')
 
@@ -19,7 +21,8 @@ def receiver(item_uuid , **kwargs):
         bound_queue.declare()
         bound_exchange = exchange(channel=bound_queue.channel)
         bound_exchange.declare()
-        
+
+        CRISLinkageResult().set_running(item_uuid , 'researchmap')
         
         with conn.Producer(
                 conn,

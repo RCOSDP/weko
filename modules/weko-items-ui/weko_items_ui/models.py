@@ -22,12 +22,14 @@
 
 from datetime import datetime
 from copy import deepcopy
+import math
 from flask import current_app
 from sqlalchemy_utils.models import Timestamp
 from sqlalchemy_utils.types.choice import ChoiceType
 from invenio_db.shared import db
 from invenio_pidstore.models import RecordIdentifier
 from sqlalchemy_utils.types import UUIDType
+from invenio_pidstore.models import PersistentIdentifier
 from weko_records.models import ItemMetadata
 from weko_authors.models import Authors
 
@@ -144,3 +146,24 @@ class CRISLinkageResult(db.Model, Timestamp):
             db.session.add(lresult)
         db.session.commit()
         return True
+    
+    def set_running(self, item_uuid ,cris_institution):
+        with db.session.begin_nested():
+            recid = PersistentIdentifier.get_by_object(pid_type='recid',
+                                            object_type='rec',
+                                            object_uuid=item_uuid)
+            recid = math.floor(float(recid.pid_value))
+            lresult =  self.get_last(recid ,cris_institution)
+            if lresult :
+                lresult.succeed = None
+
+            if not lresult :
+                lresult = CRISLinkageResult()
+                lresult.recid = recid
+                lresult.cris_institution = cris_institution
+                lresult.succeed = None
+                lresult.last_linked_item = item_uuid
+
+        db.session.add(lresult)
+        db.session.commit()
+        return 

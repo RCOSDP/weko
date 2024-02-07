@@ -99,6 +99,11 @@ class SearchMetaForm extends React.Component {
                                     <select name="achievement_type" id="achievement_type" value={this.state.achievement_type}
                                         onChange={this.handleChange} className="form-control">
                                         <option key="published_papers" value="published_papers">論文</option>
+                                        <option key="misc" value="misc">MISC</option>
+                                        <option key="book_etc" value="book_etc">書籍等出版物</option>
+                                        <option key="presentations" value="presentations">講演・口頭発表等</option>
+                                        <option key="works" value="works">Works(作品等)</option>
+                                        <option key="others" value="others">その他</option>
                                     </select>
                                     &nbsp;&nbsp;
                                 </div>

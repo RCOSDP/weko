@@ -16,7 +16,8 @@ from weko_authors.models import Authors
 from weko_deposit.api import WekoRecord
 from weko_index_tree.api import Indexes
 from weko_items_ui.models import CRISLinkageResult
-from weko_records.api import ItemsMetadata
+from weko_records.api import ItemsMetadata, Mapping
+from weko_records.models import ItemTypeMapping
 from weko_records.utils import json_loader
 from weko_records_ui.permissions import check_publish_status, file_permission_factory 
 from weko_schema_ui.schema import SchemaTree
@@ -50,7 +51,7 @@ def bulk_post_item_to_researchmap():
 
 def __callback(body , message):
     
-    # body にpid_valueが入っている想定
+    # body in item_uuid
     current_app.logger.debug(body)
     item_uuid = body["item_uuid"]
     recid = None
@@ -70,18 +71,22 @@ def __callback(body , message):
             current_app.logger.info(record)
             current_app.logger.info(item)
 
+            _ , jrc , _= json_loader(data=item.json ,pid=recid)
+            mapping = Mapping.get_record(item.item_type_id)
+
             # 非公開は送付しない
             current_app.logger.debug("is_public")
             if not is_public(record,pid_int):
-                # message.ack()
+                register_linkage_result(pid_int,False ,item_uuid ,'非公開')
                 return
 
             # 連携対象著者一覧取得
             current_app.logger.debug("get_authors")
-            authors:list = get_authors(item,recid)
+            authors:list = get_authors(jrc)
 
             # 連携対象なし
             if len(authors) == 0:
+                register_linkage_result(pid_int,False ,item_uuid ,'連携対象者無し')
                 return 
 
             # 連携モード取得
@@ -90,11 +95,11 @@ def __callback(body , message):
 
             # 連携形式取得
             current_app.logger.debug("get_achevement_type")
-            achievement_type = get_achevement_type(item)
+            achievement_type = get_achevement_type(jrc)
 
             # 業績情報生成
             current_app.logger.debug("build_achievement")
-            achevement_obj = build_achievement(record ,achievement_type)
+            achevement_obj = build_achievement(record,item ,recid,mapping,jrc,achievement_type)
 
             jsons = []
             for author in authors:
@@ -114,7 +119,7 @@ def __callback(body , message):
             result = sender.get_result(url)
 
             # 結果の書き戻し
-            code = json.loads(result).get('code')
+            code = json.loads(result.splitlines()[0]).get('code')
             is_success = code == 200 or code == 304
 
             register_linkage_result(pid_int,is_success ,item_uuid ,result)
@@ -157,12 +162,8 @@ def file_is_public(record):
     """ファイル公開状況確認"""
     return file_permission_factory(record).can() # type: ignore
 
-def get_authors(record ,pid):
+def get_authors(jrc):
     """著者取得"""
-
-    dc , jrc , is_edit= json_loader(data=record.json ,pid=pid)
-    # current_app.logger.info(dc)
-    # current_app.logger.info(jrc)
 
     author_links = jrc.get("author_link")
 
@@ -185,25 +186,81 @@ def get_merge_mode():
 
     return merge_mode
 
-def get_achevement_type(item_data):
+def get_achevement_type(jrc):
     """業績種別取得"""
 
     # fixme
     return "published_papers"
 
-def build_achievement(record, achievement_type):
+def build_achievement(record,item,recid,mapping,jrc, achievement_type):
     """業績種別JSON作成"""
     #e.g.
     # { "paper_title": {"ja": "ああああ", "en": "aaaaa"}
     #  ,"publication_date":"2024-01-25"
     #  ,"publication_name": {"ja": "ああああ", "en": "aaaaa"} }
 
+    current_app.logger.debug(record)
+    current_app.logger.debug(item.json)
+    current_app.logger.debug(recid.pid_value)
+    current_app.logger.debug(mapping)
+    current_app.logger.debug(jrc)
+    current_app.logger.debug(achievement_type)
 
-    # fixme
-    # jpcore = convert_jpcore(record)
-    return { "paper_title": {"ja": "aaaaa", "en": "aaaaa"}
-            ,"publication_date":"2024-01-25"
-            ,"publication_name": {"ja": "aaaaa", "en": "aaaaa"} }
+
+    return_data = {}
+    researchmap_mappings = [
+        { 'type' : 'lang' , "rm_name" : 'paper_title', "jpcore_name" : 'dc:title' , "weko_name" :"title"}
+        ,{'type' : 'lang' , "rm_name" : 'description', "jpcore_name" : 'datacite:description' , "weko_name" :"description"}
+        ,{'type' : 'lang' , "rm_name" : 'publisher', "jpcore_name" : 'dc:publisher' , "weko_name" :"publisher"}
+        ,{'type' : 'lang' , "rm_name" : 'publication_name ', "jpcore_name" : 'jpcoar:sourceTitle' , "weko_name" :"sourceTitle"}
+        # ,{'type' : 'authors'    , "rm_name" : 'authors'     , "jpcore_name" : 'jpcoar:creator'  ,"weko_name": 'creator'}
+        # ,{'type' : 'identifiers', "rm_name" : "identifiers" , "jpcore_name" : 'jpcoar:relation' ,"weko_name": 'relation'}
+        ,{'type' : 'simple', "rm_name" : 'publication_date', "jpcore_name" :  'datacite:date' , "weko_name" : "date"}
+        # ,{'type' : 'simple', "rm_name" : 'publication_date', "jpcore_name" :  'datacite:date' , "weko_name" : "publish_date"}
+        ,{'type' : 'simple', "rm_name" : 'volume', "jpcore_name" :  'jpcoar:volume' , "weko_name" : "volume"}
+        ,{'type' : 'simple', "rm_name" : 'number', "jpcore_name" :  'jpcoar:issue' , "weko_name" : "issue"}
+        ,{'type' : 'simple', "rm_name" : 'starting_page', "jpcore_name" :  'jpcoar:pageStart' , "weko_name" : "pageStart"}
+        ,{'type' : 'simple', "rm_name" : 'ending_page', "jpcore_name" :  'jpcoar:pageEnd' , "weko_name" : "pageEnd"}
+        ,{'type' : 'simple', "rm_name" : 'languages', "jpcore_name" :  'dc:language' , "weko_name" : "language"}
+    ]
+
+    for rm_map in researchmap_mappings:
+        # ja , en 取得
+        if rm_map['type'] == 'lang':
+            # if mapping:
+            for parent_key in record.keys():
+                jpcoar_mapping = mapping.get(parent_key,{}).get('jpcoar_mapping',"")
+                current_app.logger.debug(jpcoar_mapping)
+                property_name = rm_map["weko_name"]
+                if jpcoar_mapping != "" and jpcoar_mapping.get(property_name):
+                    prop = jpcoar_mapping[property_name]
+                    value_path = prop.get('@value','')
+
+                    lang_path  = prop.get('@attributes',{}).get('xml:lang','')
+                    
+                    langs_dict = {}
+                    for record_child_node in record.get(parent_key).get('attribute_value_mlt'):
+                        value = record_child_node.get(value_path)
+                        lang = record_child_node.get(lang_path)
+                        if lang == "en" or lang == "ja":
+                            langs_dict.update({lang:value})
+                    
+                    if langs_dict != {}:
+                        return_data.update({rm_map["rm_name"]:langs_dict})
+
+        elif  rm_map['type'] == 'simple':
+            value = jrc.get(rm_map["weko_name"])
+            current_app.logger.debug({rm_map["rm_name"]:value})
+            return_data.update({rm_map["rm_name"]:value})
+            # print(jrc.get(rm_map["weko_name"]))
+
+    current_app.logger.debug('return_data')
+    current_app.logger.debug(return_data)
+    return return_data
+
+    # return { "paper_title": {"ja": "aaaaa", "en": "aaaaa"}
+    #         ,"publication_date":"2024-01-25"
+    #         ,"publication_name": {"ja": "aaaaa", "en": "aaaaa"} }
 
 
 def build_one_data(achevement_obj:dict , merge_mode:str , author:str ,achievement_type:str):

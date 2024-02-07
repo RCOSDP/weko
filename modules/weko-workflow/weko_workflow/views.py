@@ -1046,7 +1046,7 @@ def display_activity(activity_id="0"):
     last_result :CRISLinkageResult = CRISLinkageResult().get_last( _id ,CRIS_Institutions.RM)
     last_linkage_result = _('Nothing')
     if last_result:
-        last_linkage_result = _('Successful') if last_result.succeed else _('Failed')
+        last_linkage_result = _('Successful') if last_result.succeed == True else _('Failed') if last_result.succeed == False else _('Running')
         last_linkage_result = last_linkage_result + ' (' +last_result.updated.strftime('%Y-%m-%d') + ') '
         
 

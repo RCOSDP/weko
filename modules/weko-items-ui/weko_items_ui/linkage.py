@@ -90,7 +90,7 @@ class Reseachmap:
     @staticmethod
     def get_reseacher(token , parmalink , achievement_type , achievement_id):
         base_url=current_app.config["WEKO_ITEMS_UI_CRIS_LINKAGE_RESEACHMAP_BASE_URL"] # type: ignore
-        response = requests.get(base_url +"/" + parmalink + '/' + achievement_type+ '/'+   achievement_id
+        response = requests.get('{}/{}/{}/{}'.format(base_url, parmalink , achievement_type,  achievement_id)
                                 , headers={"Authorization": "Bearer "+token+""
                                     ,"Accept": "application/ld+json,application/json,*/*;q=0.1"
                                     ,"Accept-Encoding": "gzip"}
@@ -144,7 +144,7 @@ class Reseachmap:
                                 ,"Accept": "application/ld+json,application/json,*/*;q=0.1"
                                 ,"Accept-Encoding": "gzip"})
             current_app.logger.debug(response.text)
-            if response.status_code == 200 and json.loads(response.text).get('code' , '') == 102:
+            if response.status_code == 200 and json.loads(response.text.splitlines()[0]).get('code' , '') == 102:
                 sleep(10) # 10 seconds waiting
                 return __get()
             else :
@@ -162,7 +162,7 @@ class Reseachmap:
             return response.status_code == 200 or response.status_code == 404 or retry_count >= CONST_RETRY_MAX
 
         def __recovery(response):
-            if response.status_code == 401 and json.loads(response.text.splitlines()).get("error") == "invalid_token" :
+            if response.status_code == 401 and json.loads(response.text.splitlines()[0]).get("error") == "invalid_token" :
                 self.token = ""
 
         response = func()

@@ -1178,8 +1178,21 @@ def fill_data(form_model, autofill_data):
             for v in form_model:
                 new_v = fill_data(v, autofill_data)
                 result.append(new_v)
+    elif isinstance(autofill_data, str):
+        if isinstance(form_model, dict):
+            for k, v in form_model.items():
+                if isinstance(v, str):
+                    result[k] = autofill_data
+                else:
+                    new_v = fill_data(v, autofill_data)
+                    result[k] = new_v
+        elif isinstance(form_model, list):
+            for v in form_model:
+                new_v = fill_data(v, autofill_data)
+                result.append(new_v)
+        return result
     else:
-        return
+        return 
     return result
 
 def is_multiple(form_model, autofill_data):
@@ -1328,12 +1341,23 @@ def get_reserchmapid_record_data(parmalink, achievement_type ,achievement_id ,it
                 # ,{'type' : 'simple', "rm_name" : '@type', "jpcore_name" : 'dc:type'}
                 # ,
                 {'type' : 'lang'  , "rm_name" : 'paper_title', "jpcore_name" : 'dc:title' , "weko_name" :"title"}
-                # ,{'type' : 'lang'  , "rm_name" : ('paper_title' ,"ja"), "jpcore_name" : ('dc:title' ,"ja")}
-                # ,{'type' : 'complex', "rm_name" : ('authors' ,"en" , 'name'), "jpcore_name" : ('jpcoar:creator' ,"en", 'name')}
-                # ,{'type' : 'complex', "rm_name" : ('authors' ,"ja" , 'name'), "jpcore_name" : ('jpcoar:creator' ,"ja", 'name')}
-                # ,{'type' : 'lang'  , "rm_name" : ('description', 'ja'), "jpcore_name" : ('datacite:description', 'ja')}
-                # ,{'type' : 'lang'  , "rm_name" : ('description', 'en'), "jpcore_name" : ('datacite:description', 'en')}
-                ,{'type' : 'simple', "rm_name" : 'publication_date', "jpcore_name" :  'datacite:date' , "weko_name" : "pubdate"}
+                ,{'type' : 'lang' , "rm_name" : 'description', "jpcore_name" : 'datacite:description' , "weko_name" :"description"}
+                ,{'type' : 'lang' , "rm_name" : 'publisher', "jpcore_name" : 'dc:publisher' , "weko_name" :"publisher"}
+                ,{'type' : 'lang' , "rm_name" : 'publication_name ', "jpcore_name" : 'jpcoar:sourceTitle' , "weko_name" :"sourceTitle"}
+                
+                ,{'type' : 'authors'    , "rm_name" : 'authors'     , "jpcore_name"  : 'jpcoar:creator' ,"weko_name": 'creator'}
+                # ,{'type' : 'authors'    , "rm_name" : 'authors'     , "jpcore_name"  : 'jpcoar:creator' ,"weko_name": 'contributor'}
+                ,{'type' : 'identifiers', "rm_name" : "identifiers" , "jpcore_name" : 'jpcoar:relation' ,"weko_name": 'relation'}
+                # ,{'type' : 'complex', "rm_name" : ('description', 'ja'), "dc:type" : ('datacite:description', 'ja')}
+
+                ,{'type' : 'simple', "rm_name" : 'publication_date', "jpcore_name" :  'datacite:date' , "weko_name" : "date"}
+                ,{'type' : 'simple', "rm_name" : 'volume', "jpcore_name" :  'jpcoar:volume' , "weko_name" : "volume"}
+                ,{'type' : 'simple', "rm_name" : 'number', "jpcore_name" :  'jpcoar:issue' , "weko_name" : "issue"}
+                ,{'type' : 'simple', "rm_name" : 'starting_page', "jpcore_name" :  'jpcoar:pageStart' , "weko_name" : "pageStart"}
+                ,{'type' : 'simple', "rm_name" : 'ending_page', "jpcore_name" :  'jpcoar:pageEnd' , "weko_name" : "pageEnd"}
+
+                ,{'type' : 'simple', "rm_name" : 'languages', "jpcore_name" :  'dc:language' , "weko_name" : "language"}
+
     ]
 
     data = Reseachmap().get_data(parmalink, achievement_type ,achievement_id)
@@ -1349,9 +1373,6 @@ def get_reserchmapid_record_data(parmalink, achievement_type ,achievement_id ,it
         if mapping.get('type') == 'simple':
             rm_name:str = mapping.get('rm_name','')
             weko_name:str = mapping.get('weko_name','')
-            
-            print('rm_name')
-            print(rm_name)
             element:str = load_data.get(rm_name ,'')
             api_data.update({weko_name : element})
         elif mapping.get('type') == 'lang':
@@ -1369,18 +1390,45 @@ def get_reserchmapid_record_data(parmalink, achievement_type ,achievement_id ,it
                 elements.append({'@value': ja_value, '@language': 'ja'})
             
             api_data.update({weko_name : elements})
+        
+        elif mapping.get('type') == 'authors':
+            rm_name:str = mapping.get('rm_name','')
+            weko_name:str = mapping.get('weko_name','')
+            lang_json:dict = load_data.get(rm_name , {})
 
-    # paper_title:dict = json.loads(data).get("paper_title")
-    # # FIXME!
-    # elements = []
-    # for key in list(paper_title.keys()):
-    #     elm = {}
-    #     elm.update({'subitem_title_language' : key})
-    #     elm.update({'subitem_title' : paper_title[key]})
-    #     elements.append(elm)
-    # # print(elements)
+            en_values:list = lang_json.get('en' , [])
+            ja_values:list = lang_json.get('ja' , [])
 
-    # api_data={'item_titles': elements}
+            # get larger size
+            rooper = len(en_values) if len(ja_values) < len(en_values) else len(ja_values) 
+
+            elements = []
+            for roop in range(rooper):
+                en_name = en_values[roop].get('name') if roop < len(en_values) else None
+                ja_name = ja_values[roop].get('name') if roop < len(ja_values) else None
+                
+                names = []
+                # creator creatorName
+                if en_name:
+                    names.append({'@value': en_name, '@language': 'en'})
+                if ja_name:
+                    names.append({'@value': ja_name, '@language': 'ja'})
+                
+                elements.append(names)
+            
+            api_data.update({weko_name : elements})
+
+        elif mapping.get('type') == 'identifiers':
+            rm_name:str = mapping.get('rm_name','')
+            weko_name:str = mapping.get('weko_name','')
+            lang_json:dict = load_data.get(rm_name , {})
+
+            elements = []
+            for key in lang_json.keys():
+                elements.append({'@value': lang_json[key] , '@type' : key.upper()})
+
+            api_data.update({weko_name : elements})
+
     
     result = list()
     with db.session.no_autoflush:
@@ -1398,6 +1446,8 @@ def get_reserchmapid_record_data(parmalink, achievement_type ,achievement_id ,it
         print('api_data')
         print(api_data)
         result = build_record_model(autofill_key_tree, api_data)
+        print('result')
+        print(result)
     return result
 
 
