@@ -8,7 +8,7 @@
         <a v-else-if="page == '...'" :class="{ current: false }" class="page-numbers">
           {{ page }}
         </a>
-        <a v-else :class="{ current: false }" class="page-numbers" href="#" @click="emits('clickPage', page)">
+        <a v-else :class="{ current: false }" class="page-numbers cursor-pointer" @click="emits('clickPage', page)">
           {{ page }}
         </a>
       </div>

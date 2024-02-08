@@ -86,13 +86,13 @@ function setContentsList() {
           return;
         }
 
-        if (obj.additionalType === appConf.roCrate.contents.tab) {
+        if (obj.additionalType === appConf.roCrate.layer.tab) {
           const tab: IDivision = { id: obj['@id'], name: obj.name, hasPart: obj.hasPart };
           tabList.value.push(tab);
-        } else if (obj.additionalType === appConf.roCrate.contents.section) {
+        } else if (obj.additionalType === appConf.roCrate.layer.section) {
           const section: IDivision = { id: obj['@id'], name: obj.name, hasPart: obj.hasPart };
           sectionList.value.push(section);
-        } else if (obj.additionalType === appConf.roCrate.contents.subsection) {
+        } else if (obj.additionalType === appConf.roCrate.layer.subsection) {
           const subSection: ISubSection = {
             id: obj['@id'],
             name: obj.name,
@@ -115,21 +115,20 @@ function setContentsList() {
  * @param tab 選択状態のタブ
  */
 function getSectionsTitle(tab: IDivision) {
-  if (!tab) {
-    return;
-  }
-
-  const sectionTitleList: string[] = [];
-  tab.hasPart.forEach((sectionTitle: any) => {
-    sectionTitleList.push(sectionTitle['@id']);
-  });
-
   const titleList: string[] = [];
-  sectionList.value.forEach((section: IDivision) => {
-    if (sectionTitleList.includes(section.id)) {
-      titleList.push(section.name);
-    }
-  });
+
+  if (tab && tab.hasPart) {
+    const sectionTitleList: string[] = [];
+
+    tab.hasPart.forEach((sectionTitle: any) => {
+      sectionTitleList.push(sectionTitle['@id']);
+    });
+    sectionList.value.forEach((section: IDivision) => {
+      if (sectionTitleList.includes(section.id)) {
+        titleList.push(section.name);
+      }
+    });
+  }
 
   return titleList;
 }
@@ -139,21 +138,20 @@ function getSectionsTitle(tab: IDivision) {
  * @param tab 選択状態のタブ
  */
 function getSections(tab: IDivision) {
-  if (!tab) {
-    return;
-  }
-
-  const sectionTitleList: string[] = [];
-  tab.hasPart.forEach((sectionTitle: any) => {
-    sectionTitleList.push(sectionTitle['@id']);
-  });
-
   const targetSection: IDivision[] = [];
-  sectionList.value.forEach((section: IDivision) => {
-    if (sectionTitleList.includes(section.id)) {
-      targetSection.push(section);
-    }
-  });
+
+  if (tab && tab.hasPart) {
+    const sectionTitleList: string[] = [];
+
+    tab.hasPart.forEach((sectionTitle: any) => {
+      sectionTitleList.push(sectionTitle['@id']);
+    });
+    sectionList.value.forEach((section: IDivision) => {
+      if (sectionTitleList.includes(section.id)) {
+        targetSection.push(section);
+      }
+    });
+  }
 
   return targetSection;
 }
@@ -163,17 +161,20 @@ function getSections(tab: IDivision) {
  * @param section 対象セクション
  */
 function getSubSections(section: IDivision) {
-  const subSectionTitleList: string[] = [];
-  section.hasPart.forEach((subSectionTitle: any) => {
-    subSectionTitleList.push(subSectionTitle['@id']);
-  });
-
   const targetSubSection: ISubSection[] = [];
-  subSectionList.value.forEach((subSection: ISubSection) => {
-    if (subSectionTitleList.includes(subSection.id)) {
-      targetSubSection.push(subSection);
-    }
-  });
+
+  if (section && section.hasPart) {
+    const subSectionTitleList: string[] = [];
+
+    section.hasPart.forEach((subSectionTitle: any) => {
+      subSectionTitleList.push(subSectionTitle['@id']);
+    });
+    subSectionList.value.forEach((subSection: ISubSection) => {
+      if (subSectionTitleList.includes(subSection.id)) {
+        targetSubSection.push(subSection);
+      }
+    });
+  }
 
   return targetSubSection;
 }

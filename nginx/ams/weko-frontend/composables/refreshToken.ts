@@ -7,22 +7,19 @@ export default function () {
       issue + expires * 1000 >= Date.now() &&
       issue + (expires - useRuntimeConfig().public.tokenRefreshLimit) * 1000 <= Date.now()
     ) {
-      useFetch('/api/token/refresh?refreshToken=' + String(localStorage.getItem('token:refresh')))
-        .then((response) => {
-          // @ts-ignore
-          localStorage.setItem('token:type', response.data.value.tokenType);
-          // @ts-ignore
-          localStorage.setItem('token:access', response.data.value.accessToken);
-          // @ts-ignore
-          localStorage.setItem('token:refresh', response.data.value.refreshToken);
-          // @ts-ignore
-          localStorage.setItem('token:expires', response.data.value.expires);
+      useFetch('/api/token/refresh', {
+        method: 'GET',
+        params: { refreshToken: String(localStorage.getItem('token:refresh')) }
+      }).then((response) => {
+        if (response.status.value === 'success') {
+          const data: any = response.data.value;
+          localStorage.setItem('token:type', data.tokenType);
+          localStorage.setItem('token:access', data.accessToken);
+          localStorage.setItem('token:refresh', data.refreshToken);
+          localStorage.setItem('token:expires', data.expires);
           localStorage.setItem('token:issue', String(Date.now()));
-        })
-        .catch((error) => {
-          console.log(error);
-        })
-        .finally(() => {});
+        }
+      });
     }
   }
 }

@@ -1,5 +1,5 @@
 <template>
-  <div v-if="type == 'info'" class="toast toast-center w-full z-50">
+  <div v-if="type == 'info'" class="toast toast-center z-50" :class="width + ' ' + position">
     <div class="alert alert-info">
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
         <path
@@ -8,7 +8,7 @@
           stroke-width="2"
           d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
-      <span>{{ $t(message) + code ? ' (' + code + ')' : '' }}</span>
+      <span>{{ $t(message) + (code ? ' (' + code + ')' : '') }}</span>
       <button
         type="button"
         class="ml-auto -mx-1.5 -my-1.5 rounded-lg p-1.5 inline-flex items-center justify-center h-8 w-8"
@@ -27,7 +27,7 @@
       </button>
     </div>
   </div>
-  <div v-if="type == 'success'" class="toast toast-center w-full z-50">
+  <div v-if="type == 'success'" class="toast toast-center z-50" :class="width + ' ' + position">
     <div class="alert alert-success">
       <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
         <path
@@ -36,7 +36,7 @@
           stroke-width="2"
           d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
-      <span>{{ $t(message) + code ? ' (' + code + ')' : '' }}</span>
+      <span>{{ $t(message) + (code ? ' (' + code + ')' : '') }}</span>
       <button
         type="button"
         class="ml-auto -mx-1.5 -my-1.5 rounded-lg p-1.5 inline-flex items-center justify-center h-8 w-8"
@@ -55,7 +55,7 @@
       </button>
     </div>
   </div>
-  <div v-if="type == 'warning'" class="toast toast-center w-full z-50">
+  <div v-if="type == 'warning'" class="toast toast-center z-50" :class="width + ' ' + position">
     <div class="alert alert-warning">
       <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
         <path
@@ -64,7 +64,7 @@
           stroke-width="2"
           d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
       </svg>
-      <span>{{ $t(message) + code ? ' (' + code + ')' : '' }}</span>
+      <span>{{ $t(message) + (code ? ' (' + code + ')' : '') }}</span>
       <button
         type="button"
         class="ml-auto -mx-1.5 -my-1.5 rounded-lg p-1.5 inline-flex items-center justify-center h-8 w-8"
@@ -83,7 +83,7 @@
       </button>
     </div>
   </div>
-  <div v-if="type == 'error'" class="toast toast-center w-full z-50">
+  <div v-if="type == 'error'" class="toast toast-center z-50" :class="width + ' ' + position">
     <div class="alert alert-error">
       <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
         <path
@@ -119,17 +119,31 @@
 /////////////////////////////////// */
 
 defineProps({
+  // トースト種別
+  // {info:インフォーメーション , success:成功 , warning:警告 , error:エラー}
   type: {
     type: String,
     default: 'info'
   },
+  // トーストに表示するメッセージ
   message: {
     type: String,
     default: ''
   },
+  // エラーコード
   code: {
     type: Number,
     default: 0
+  },
+  // 表示位置(https://daisyui.com/components/toast/)
+  position: {
+    type: String,
+    default: ''
+  },
+  // width(css)
+  width: {
+    type: String,
+    default: 'w-full'
   }
 });
 

@@ -2,80 +2,15 @@
   <div>
     <div class="w-full bg-miby-searchtags-blue p-5">
       <div class="mb-2.5 flex flex-wrap">
-        <!-- 公開区分 -->
-        <p class="text-sm text-miby-dark-gray">
-          {{ '[' + $t('publicRange') + ']' }}
-          <span class="ml-px mr-2 text-miby-black">
-            {{ detailConditions.publicRange?.length ? detailConditions.publicRange?.join(', ') : $t('unspecified') }}
-          </span>
-        </p>
-        <!-- ダウンロード区分 -->
-        <p class="text-sm text-miby-dark-gray">
-          {{ '[' + $t('downloadRange') + ']' }}
-          <span class="ml-px mr-2 text-miby-black">
-            {{
-              detailConditions.downloadRange?.length ? detailConditions.downloadRange?.join(', ') : $t('unspecified')
-            }}
-          </span>
-        </p>
-        <!-- タイトル -->
-        <p class="text-sm text-miby-dark-gray">
-          {{ '[' + $t('title') + ']' }}
-          <span class="ml-px mr-2 text-miby-black">
-            {{ conditions?.text && conditions?.text[3] != '' ? conditions?.text[3] : $t('unspecified') }}
-          </span>
-        </p>
-        <!-- 分野 -->
-        <p class="text-sm text-miby-dark-gray">
-          {{ '[' + $t('field') + ']' }}
-          <span class="ml-px mr-2 text-miby-black">
-            {{ detailConditions.field?.length ? detailConditions.field?.join(', ') : $t('unspecified') }}
-          </span>
-        </p>
-        <!-- 掲載日 -->
-        <p class="text-sm text-miby-dark-gray">
-          {{ '[' + $t('publishDate') + ']' }}
-          <span class="ml-px mr-2 text-miby-black">
-            {{ conditions?.date ? formatDate(conditions?.date[0]) : $t('unspecified') }} -
-            {{ conditions?.date ? formatDate(conditions?.date[1]) : $t('unspecified') }}
-          </span>
-        </p>
-        <!-- 更新日 -->
-        <p class="text-sm text-miby-dark-gray">
-          {{ '[' + $t('updatedDate') + ']' }}
-          <span class="ml-px mr-2 text-miby-black">
-            {{ conditions?.date ? formatDate(conditions?.date[0]) : $t('unspecified') }} -
-            {{ conditions?.date ? formatDate(conditions?.date[1]) : $t('unspecified') }}
-          </span>
-        </p>
-        <!-- 作成者 -->
-        <p class="text-sm text-miby-dark-gray">
-          {{ '[' + $t('creater') + ']' }}
-          <span class="ml-px mr-2 text-miby-black">
-            {{ conditions?.text && conditions?.text[7] != '' ? conditions?.text[7] : $t('unspecified') }}
-          </span>
-        </p>
-        <!-- ヒト/動物/その他 -->
-        <p class="text-sm text-miby-dark-gray">
-          {{ '[' + $t('classification') + ']' }}
-          <span class="ml-px mr-2 text-miby-black">
-            {{ conditions?.text && conditions?.text[8] != '' ? conditions?.text[8] : $t('unspecified') }}
-          </span>
-        </p>
-        <!-- リポジトリ -->
-        <p class="text-sm text-miby-dark-gray">
-          {{ '[' + $t('repository') + ']' }}
-          <span class="ml-px mr-2 text-miby-black">
-            {{ conditions?.text && conditions?.text[9] != '' ? conditions?.text[9] : $t('unspecified') }}
-          </span>
-        </p>
-        <!-- 表示件数 -->
-        <p class="text-sm text-miby-dark-gray">
-          {{ '[' + $t('displayTotal') + ']' }}
-          <span class="ml-px mr-2 text-miby-black">
-            {{ perPage }}
-          </span>
-        </p>
+        <!-- 検索条件 -->
+        <div v-for="column in DetailColumn" :key="column.id">
+          <p class="text-sm text-miby-dark-gray">
+            {{ '[' + $t(column.i18n) + ']' }}
+            <span class="ml-px mr-2 text-miby-black">
+              {{ formatConditionsValue(column) ?? $t('unspecified') }}
+            </span>
+          </p>
+        </div>
       </div>
       <div class="flex flex-wrap justify-between items-center">
         <div class="flex flex-wrap gap-5 items-center">
@@ -107,14 +42,14 @@
                 :class="{ active: displayType == 'summary' }"
                 class="icons icon-display display1"
                 @click="emits('clickDisplayType', 'summary')" />
-              <button
+              <!-- <button
                 :class="{ active: displayType == 'table' }"
                 class="icons icon-display display2"
                 @click="emits('clickDisplayType', 'table')" />
               <button
                 :class="{ active: displayType == 'block' }"
                 class="icons icon-display display3"
-                @click="emits('clickDisplayType', 'block')" />
+                @click="emits('clickDisplayType', 'block')" /> -->
             </div>
           </div>
           <!-- 並び順 -->
@@ -182,9 +117,9 @@
         </div>
         <div class="flex gap-2.5 py-5 md:py-0">
           <!-- フィルター -->
-          <button class="btn-modal block cursor-pointer" data-target="Filter" @click="emits('clickFilter')">
+          <!-- <button class="btn-modal block cursor-pointer" data-target="Filter" @click="emits('clickFilter')">
             <img src="/img/btn/btn-filter.svg" alt="Filter" />
-          </button>
+          </button> -->
           <!-- 項目表示 -->
           <button
             v-if="displayType == 'table'"
@@ -200,6 +135,10 @@
 </template>
 
 <script lang="ts" setup>
+import { useI18n } from 'vue-i18n';
+
+import DetailColumn from '~/assets/data/detailSearch.json';
+
 /* ///////////////////////////////////
 // props
 /////////////////////////////////// */
@@ -212,11 +151,6 @@ const props = defineProps({
   },
   // 検索条件
   conditions: {
-    type: Object,
-    default: () => {}
-  },
-  // 詳細検索条件
-  detailConditions: {
     type: Object,
     default: () => {}
   }
@@ -248,15 +182,71 @@ const order = ref(props.conditions.order ?? 'asc');
 /////////////////////////////////// */
 
 /**
- * 日付の整形
+ * 検索条件に表示する値を整形
+ * @param column 検索条件オブジェクト
+ */
+function formatConditionsValue(column: any) {
+  if (column.type === 'text') {
+    return props.conditions.detail[column.query] === '' ? null : props.conditions.detail[column.query];
+  } else if (column.type === 'checkbox') {
+    const valueList: Array<string> = [];
+    // 設定された検索条件値があるか判定
+    if (props.conditions.detail[column.query]) {
+      // カンマ区切りの文字列を配列にする
+      for (const val of String(props.conditions.detail[column.query]).split(',')) {
+        // クエリ用値から表示用値に読み替え
+        for (const data of Array.from(column.data ?? [])) {
+          // @ts-ignore
+          if (data.query === val) {
+            // @ts-ignore
+            valueList.push(data.comment);
+          }
+        }
+      }
+      return valueList.join(', ');
+    } else {
+      return null;
+    }
+  } else if (column.type === 'date') {
+    const valueList: Array<string> = [];
+    const from = props.conditions.detail[column.queryFrom];
+    const to = props.conditions.detail[column.queryTo];
+    let result = null;
+    if (column.checkbox) {
+      for (const val of String(props.conditions.detail[column.query]).split(',')) {
+        for (const data of Array.from(column.checkbox ?? [])) {
+          // @ts-ignore
+          if (data.query === val) {
+            // @ts-ignore
+            valueList.push(useI18n().t(data.name));
+          }
+        }
+      }
+      if (valueList.length) {
+        result = valueList.join(', ') + ': ';
+      }
+    }
+    if (from) {
+      result = (result ?? '') + formatDate(from) + ' - ' + formatDate(to);
+      return result;
+    } else {
+      return result;
+    }
+  }
+  return null;
+}
+
+/**
+ * 8桁文字列を日付に変換
  * @param date 日付
  */
 function formatDate(date: string) {
-  const objDate = new Date(date);
-  const day = objDate.getDate();
-  const month = objDate.getMonth() + 1;
-  const year = objDate.getFullYear();
-
+  if (!date) {
+    return '';
+  }
+  const year = date.slice(0, 4);
+  const month = date.slice(4, 6);
+  const day = date.slice(6, 8);
   return `${year}/${month}/${day}`;
 }
 </script>

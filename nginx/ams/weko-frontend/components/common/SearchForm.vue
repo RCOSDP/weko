@@ -31,7 +31,7 @@
           type="submit"
           class="ml-[-1px] h-10 text-white border border-miby-thin-gray w-[97px] bg-miby-orange rounded-r-[30px]">
           <span class="icons icon-search">
-            {{ $t('searchBtn') }}
+            {{ $t('search') }}
           </span>
         </button>
       </div>
@@ -44,35 +44,35 @@
         @click="openDetailModal">
         <img src="/img/btn/btn-detail-search.svg" class="w-[81px] mx-auto" alt="Detail Search" />
       </a>
-      <a class="block cursor-pointer border py-1 text-center rounded-md text-sm w-[130px]">
+      <!-- <a class="block cursor-pointer border py-1 text-center rounded-md text-sm w-[130px]">
         <img src="/img/btn/btn-mylist.svg" class="w-[94px] mx-auto" alt="My List" />
-      </a>
+      </a> -->
     </div>
     <!-- データ総数 -->
     <div
       v-if="displayFlag"
       class="data-statistics p-5 sm:p-0 flex flex-wrap justify-between sm:justify-center gap-x-1 gap-y-4 sm:gap-7 w-3/4 sm:w-full mx-auto">
-      <div class="sm:w-fit nord">
-        <p class="icons icon-nord text-xs text-white md:text-center">{{ $t('totalData') }}</p>
-        <p class="number text-white text-xs md:text-center font-bold">9,999,999,999</p>
-      </div>
-      <div class="sm:w-fit norf">
-        <p class="icons icon-norf text-xs text-white md:text-center">{{ $t('totalFile') }}</p>
-        <p class="number text-white text-xs md:text-center font-bold">9,999,999</p>
+      <div class="sm:w-fit thesis">
+        <p class="icons icon-thesis text-xs text-white md:text-center">{{ 'Dataset' }}</p>
+        <p class="number text-white text-xs md:text-center font-bold">{{ dataset.toLocaleString() }}</p>
       </div>
       <div class="sm:w-fit thesis">
-        <p class="icons icon-thesis text-xs text-white md:text-center">{{ $t('totalPaper') }}</p>
-        <p class="number text-white text-xs md:text-center font-bold">9,999</p>
+        <p class="icons icon-thesis text-xs text-white md:text-center">{{ 'Journal Article' }}</p>
+        <p class="number text-white text-xs md:text-center font-bold">{{ journal.toLocaleString() }}</p>
       </div>
       <div class="sm:w-fit noro">
-        <p class="icons icon-noro text-xs text-white md:text-center">{{ $t('totalGroup') }}</p>
-        <p class="number text-white text-xs md:text-center font-bold">999</p>
+        <p class="icons icon-noro text-xs text-white md:text-center">{{ $t('totalAuthor') }}</p>
+        <p class="number text-white text-xs md:text-center font-bold">{{ author.toLocaleString() }}</p>
       </div>
     </div>
   </div>
+  <!-- 詳細検索 -->
+  <DetailSearch ref="detailSearch" :sessCondFlag="isRestore" class="z-50" @detail-search="clickDetailSearch" />
 </template>
 
 <script lang="ts" setup>
+import DetailSearch from '~/components/common/modal/DetailSearch.vue';
+
 /* ///////////////////////////////////
 // props
 /////////////////////////////////// */
@@ -101,8 +101,11 @@ const emits = defineEmits(['clickSearch']);
 /////////////////////////////////// */
 
 const conditions = reactive({ type: '0', keyword: '' });
-const modalForm = ref();
-const isFormModalShow = ref(false);
+const detailSearch = ref();
+const isRestore = ref(props.sessCondFlag);
+const dataset = ref(0);
+const journal = ref(0);
+const author = ref(0);
 
 /* ///////////////////////////////////
 // function
@@ -116,6 +119,13 @@ function search() {
     if (sessionStorage.getItem('conditions')) {
       // @ts-ignore
       const sessConditions = JSON.parse(sessionStorage.getItem('conditions'));
+      // 詳細検索条件が設定されている場合は削除
+      if (Object.prototype.hasOwnProperty.call(sessConditions, 'detail')) {
+        delete sessConditions.detail;
+        delete sessConditions.detailData;
+        isRestore.value = false;
+      }
+      // 検索条件設定
       Object.assign(sessConditions, conditions);
       sessionStorage.setItem('conditions', JSON.stringify(sessConditions));
     } else {
@@ -129,24 +139,99 @@ function search() {
 }
 
 /**
+ * 詳細検索実行時イベント
+ */
+function clickDetailSearch() {
+  // 通常検索フォームの値を初期化する
+  conditions.type = '0';
+  conditions.keyword = '';
+  isRestore.value = true;
+  emits('clickSearch');
+}
+
+/**
  * 詳細ボタン押下時イベント
  */
 function openDetailModal() {
-  modalForm.value.showCheckBoxesWhenOpen();
-  isFormModalShow.value = true;
-  document.body.classList.add('overflow-hidden');
+  detailSearch.value.openModal();
+}
+
+/* ///////////////////////////////////
+// main
+/////////////////////////////////// */
+
+try {
+  if (props.displayFlag) {
+    // Dataset数の取得
+    $fetch(useAppConfig().wekoApi + '/records', {
+      timeout: useRuntimeConfig().public.apiTimeout,
+      method: 'GET',
+      headers: {
+        'Cache-Control': 'no-store',
+        Pragma: 'no-cache',
+        'Accept-Language': localStorage.getItem('locale') ?? 'ja',
+        Authorization: localStorage.getItem('token:type') + ' ' + localStorage.getItem('token:access')
+      },
+      params: { size: '0', type: '17' },
+      onResponse({ response }) {
+        if (response.status === 200) {
+          dataset.value = response._data.total_results;
+        }
+      }
+    });
+
+    // JournalArticle数の取得
+    $fetch(useAppConfig().wekoApi + '/records', {
+      timeout: useRuntimeConfig().public.apiTimeout,
+      method: 'GET',
+      headers: {
+        'Cache-Control': 'no-store',
+        Pragma: 'no-cache',
+        'Accept-Language': localStorage.getItem('locale') ?? 'ja',
+        Authorization: localStorage.getItem('token:type') + ' ' + localStorage.getItem('token:access')
+      },
+      params: { size: '0', type: '4' },
+      onResponse({ response }) {
+        if (response.status === 200) {
+          journal.value = response._data.total_results;
+        }
+      }
+    });
+
+    // 著者数の取得
+    $fetch(useAppConfig().wekoApi + '/authors/count', {
+      timeout: useRuntimeConfig().public.apiTimeout,
+      method: 'GET',
+      headers: {
+        'Cache-Control': 'no-store',
+        Pragma: 'no-cache'
+      },
+      onResponse({ response }) {
+        if (response.status === 200) {
+          author.value = response._data.count;
+        }
+      }
+    });
+  }
+} catch (error) {
+  // console.log(error;)
 }
 
 /* ///////////////////////////////////
 // life cycle
 /////////////////////////////////// */
 
-onBeforeMount(() => {
-  if (sessionStorage.getItem('conditions') && props.sessCondFlag) {
-    // @ts-ignore
-    conditions.type = JSON.parse(sessionStorage.getItem('conditions')).type ?? '0';
-    // @ts-ignore
-    conditions.keyword = JSON.parse(sessionStorage.getItem('conditions')).keyword ?? '';
+onMounted(() => {
+  const con = sessionStorage.getItem('conditions');
+
+  if (con && props.sessCondFlag) {
+    if (
+      !Object.prototype.hasOwnProperty.call(JSON.parse(con), 'detail') ||
+      Object.keys(JSON.parse(con).detail).length === 0
+    ) {
+      conditions.type = JSON.parse(con).type ?? '0';
+      conditions.keyword = JSON.parse(con).keyword ?? '';
+    }
   }
 });
 </script>

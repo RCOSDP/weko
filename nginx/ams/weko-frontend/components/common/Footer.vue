@@ -8,49 +8,49 @@
               <span>TOP</span>
             </NuxtLink>
           </li>
-          <li class="mb-1.5">
+          <!-- <li class="mb-1.5">
             <NuxtLink class="underline" to="#">
               <span>ABOUT</span>
             </NuxtLink>
-          </li>
-          <li class="mb-1.5">
+          </li> -->
+          <!-- <li class="mb-1.5">
             <NuxtLink class="underline" to="#">
               <span>HELP</span>
             </NuxtLink>
-          </li>
-          <li class="mb-1.5">
+          </li> -->
+          <!-- <li class="mb-1.5">
             <NuxtLink class="underline" to="#">
               <span>FAQ</span>
             </NuxtLink>
-          </li>
+          </li> -->
           <li>
-            <NuxtLink class="underline" to="#">
+            <NuxtLink class="underline" to="/contact">
               <span>CONTACT</span>
             </NuxtLink>
           </li>
         </ul>
         <ul class="text-white text-sm">
-          <li class="mb-1.5">
+          <!-- <li class="mb-1.5">
             <NuxtLink class="underline" to="#">
               <span>
                 {{ $t('fotterRequestUsePermission') }}
               </span>
             </NuxtLink>
-          </li>
-          <li class="mb-1.5">
+          </li> -->
+          <!-- <li class="mb-1.5">
             <NuxtLink class="underline" to="#">
               <span>
                 {{ $t('fotterOrganization') }}
               </span>
             </NuxtLink>
-          </li>
-          <li>
+          </li> -->
+          <!-- <li>
             <NuxtLink class="underline" to="#">
               <span>
                 {{ $t('fotterPrivacyPolicy') }}
               </span>
             </NuxtLink>
-          </li>
+          </li> -->
         </ul>
       </div>
       <div class="flex flex-wrap lg:flex-nowrap items-center max-w-[245px] lg:max-w-full mx-auto md:mr-0">
