@@ -1677,7 +1677,7 @@ def next_action(activity_id='0', action_id=0):
         # Call signal to cris linkage
         temp_data = work_activity.get_activity_metadata(activity_id=activity_id)
         if temp_data:
-            if json.loads(temp_data).get('cris_linkage',{}).get('reseachmap' , False):
+            if json.loads(temp_data).get('cris_linkage',{}).get('researchmap' , False):
                 cris_researchmap_linkage_request.send(new_item_id)
             
         work_activity.end_activity(activity)

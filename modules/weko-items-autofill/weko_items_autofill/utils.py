@@ -22,7 +22,7 @@
 import copy
 from functools import wraps
 import json
-from weko_items_ui.linkage import Reseachmap
+from weko_items_ui.linkage import Researchmap
 
 from flask import current_app
 from flask_babelex import gettext as _
@@ -1334,33 +1334,34 @@ def get_wekoid_record_data(recid, item_type_id):
     result = set_val_for_record_model(record_model, item_map_data_des)
     return result
 
-def get_reserchmapid_record_data(parmalink, achievement_type ,achievement_id ,item_type_id):
+def get_researchmapid_record_data(parmalink, achievement_type ,achievement_id ,item_type_id) -> list:
+    """get record data from researchmap
+        @param
+            parmalink
+            achievement_type
+            achievement_id
+            item_type_id
+        return list
+    """
+
     api_data = {}
-    mappings = [
-                #  {'type' : 'simple', "rm_name" : '@id' , "jpcore_name" :'jpcoar:relatedIdentifier'}
-                # ,{'type' : 'simple', "rm_name" : '@type', "jpcore_name" : 'dc:type'}
-                # ,
-                {'type' : 'lang'  , "rm_name" : 'paper_title', "jpcore_name" : 'dc:title' , "weko_name" :"title"}
+    researchmap_mappings = [
+                { 'type' : 'lang' , "rm_name" : 'paper_title', "jpcore_name" : 'dc:title' , "weko_name" :"title"}
                 ,{'type' : 'lang' , "rm_name" : 'description', "jpcore_name" : 'datacite:description' , "weko_name" :"description"}
                 ,{'type' : 'lang' , "rm_name" : 'publisher', "jpcore_name" : 'dc:publisher' , "weko_name" :"publisher"}
                 ,{'type' : 'lang' , "rm_name" : 'publication_name ', "jpcore_name" : 'jpcoar:sourceTitle' , "weko_name" :"sourceTitle"}
-                
-                ,{'type' : 'authors'    , "rm_name" : 'authors'     , "jpcore_name"  : 'jpcoar:creator' ,"weko_name": 'creator'}
-                # ,{'type' : 'authors'    , "rm_name" : 'authors'     , "jpcore_name"  : 'jpcoar:creator' ,"weko_name": 'contributor'}
+                ,{'type' : 'authors'    , "rm_name" : 'authors'     , "jpcore_name" : 'jpcoar:creator'  ,"weko_name": 'creator'}
                 ,{'type' : 'identifiers', "rm_name" : "identifiers" , "jpcore_name" : 'jpcoar:relation' ,"weko_name": 'relation'}
-                # ,{'type' : 'complex', "rm_name" : ('description', 'ja'), "dc:type" : ('datacite:description', 'ja')}
-
-                ,{'type' : 'simple', "rm_name" : 'publication_date', "jpcore_name" :  'datacite:date' , "weko_name" : "date"}
+                ,{'type' : 'simple_value', "rm_name" : 'publication_date', "jpcore_name" :  'datacite:date' , "weko_name" : "date"}
+                # ,{'type' : 'simple', "rm_name" : 'publication_date', "jpcore_name" :  'datacite:date' , "weko_name" : "publish_date"}
                 ,{'type' : 'simple', "rm_name" : 'volume', "jpcore_name" :  'jpcoar:volume' , "weko_name" : "volume"}
                 ,{'type' : 'simple', "rm_name" : 'number', "jpcore_name" :  'jpcoar:issue' , "weko_name" : "issue"}
                 ,{'type' : 'simple', "rm_name" : 'starting_page', "jpcore_name" :  'jpcoar:pageStart' , "weko_name" : "pageStart"}
                 ,{'type' : 'simple', "rm_name" : 'ending_page', "jpcore_name" :  'jpcoar:pageEnd' , "weko_name" : "pageEnd"}
-
                 ,{'type' : 'simple', "rm_name" : 'languages', "jpcore_name" :  'dc:language' , "weko_name" : "language"}
-
     ]
 
-    data = Reseachmap().get_data(parmalink, achievement_type ,achievement_id)
+    data = Researchmap().get_data(parmalink, achievement_type ,achievement_id)
     load_data:dict = json.loads(data)
     print('load_data')
     print(load_data)
@@ -1369,8 +1370,8 @@ def get_reserchmapid_record_data(parmalink, achievement_type ,achievement_id ,it
     if error_description:
         raise Exception(error_description)
     
-    for mapping in mappings :
-        if mapping.get('type') == 'simple':
+    for mapping in researchmap_mappings :
+        if mapping.get('type') == 'simple' or mapping.get('type') == 'simple_value':
             rm_name:str = mapping.get('rm_name','')
             weko_name:str = mapping.get('weko_name','')
             element:str = load_data.get(rm_name ,'')
@@ -1441,13 +1442,13 @@ def get_reserchmapid_record_data(parmalink, achievement_type ,achievement_id ,it
             get_autofill_key_tree(
                 items.form,
                 get_researchmap_autofill_item(item_type_id)))
-        print('autofill_key_tree')
-        print(autofill_key_tree)
-        print('api_data')
-        print(api_data)
+        # print('autofill_key_tree')
+        # print(autofill_key_tree)
+        # print('api_data')
+        # print(api_data)
         result = build_record_model(autofill_key_tree, api_data)
-        print('result')
-        print(result)
+        # print('result')
+        # print(result)
     return result
 
 

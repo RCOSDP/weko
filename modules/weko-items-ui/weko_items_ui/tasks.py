@@ -21,7 +21,7 @@ from weko_records.models import ItemTypeMapping
 from weko_records.utils import json_loader
 from weko_records_ui.permissions import check_publish_status, file_permission_factory 
 from weko_schema_ui.schema import SchemaTree
-from .linkage import Reseachmap
+from .linkage import Researchmap
 
 logger = get_task_logger(__name__)
 
@@ -94,21 +94,21 @@ def __callback(body , message):
             merge_mode = get_merge_mode()
 
             # 連携形式取得
-            current_app.logger.debug("get_achevement_type")
-            achievement_type = get_achevement_type(jrc)
+            current_app.logger.debug("get_achievement_type")
+            achievement_type = get_achievement_type(jrc)
 
             # 業績情報生成
             current_app.logger.debug("build_achievement")
-            achevement_obj = build_achievement(record,item ,recid,mapping,jrc,achievement_type)
+            achievement_obj = build_achievement(record,item ,recid,mapping,jrc,achievement_type)
 
             jsons = []
             for author in authors:
                 # 送信JSON作成
-                data  = build_one_data(achevement_obj,merge_mode,author ,achievement_type)
+                data  = build_one_data(achievement_obj,merge_mode,author ,achievement_type)
                 jsons.append(json.dumps(data))
             
             # 送信, 失敗時自動再送
-            sender = Reseachmap()
+            sender = Researchmap()
             current_app.logger.info(jsons)
             response_txt = sender.post_data('\r\n'.join(jsons))
 
@@ -177,16 +177,16 @@ def convert_jpcore(records):
 def get_merge_mode():
     """マージモード取得"""
 
-    SETTINGS_NAME = current_app.config["WEKO_ADMIN_SETTINGS_RESERCHMAP_LINKAGE_SETTINGS"]# type: ignore
+    SETTINGS_NAME = current_app.config["WEKO_ADMIN_SETTINGS_RESEARCHMAP_LINKAGE_SETTINGS"]# type: ignore
     settings:dict = AdminSettings.get(SETTINGS_NAME , False) # type: ignore
 
     merge_mode = settings.get("merge_mode")
     if not merge_mode:
-        merge_mode = current_app.config["WEKO_ITEMS_UI_CRIS_LINKAGE_RESEACHMAP_MERGE_MODE_DEFAULT"]# type: ignore
+        merge_mode = current_app.config["WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_MERGE_MODE_DEFAULT"]# type: ignore
 
     return merge_mode
 
-def get_achevement_type(jrc):
+def get_achievement_type(jrc):
     """業績種別取得"""
 
     # fixme
@@ -213,10 +213,10 @@ def build_achievement(record,item,recid,mapping,jrc, achievement_type):
         ,{'type' : 'lang' , "rm_name" : 'description', "jpcore_name" : 'datacite:description' , "weko_name" :"description"}
         ,{'type' : 'lang' , "rm_name" : 'publisher', "jpcore_name" : 'dc:publisher' , "weko_name" :"publisher"}
         ,{'type' : 'lang' , "rm_name" : 'publication_name ', "jpcore_name" : 'jpcoar:sourceTitle' , "weko_name" :"sourceTitle"}
-        # ,{'type' : 'authors'    , "rm_name" : 'authors'     , "jpcore_name" : 'jpcoar:creator'  ,"weko_name": 'creator'}
-        # ,{'type' : 'identifiers', "rm_name" : "identifiers" , "jpcore_name" : 'jpcoar:relation' ,"weko_name": 'relation'}
-        ,{'type' : 'simple', "rm_name" : 'publication_date', "jpcore_name" :  'datacite:date' , "weko_name" : "date"}
-        # ,{'type' : 'simple', "rm_name" : 'publication_date', "jpcore_name" :  'datacite:date' , "weko_name" : "publish_date"}
+        ,{'type' : 'authors'    , "rm_name" : 'authors'     , "jpcore_name" : 'jpcoar:creator'  ,"weko_name": 'creator'}
+        ,{'type' : 'identifiers', "rm_name" : "identifiers" , "jpcore_name" : 'jpcoar:relation' ,"weko_name": 'relation'}
+        ,{'type' : 'simple_value', "rm_name" : 'publication_date', "jpcore_name" :  'datacite:date' , "weko_name" : "date"}
+        ### ,{'type' : 'simple', "rm_name" : 'publication_date', "jpcore_name" :  'datacite:date' , "weko_name" : "publish_date"}
         ,{'type' : 'simple', "rm_name" : 'volume', "jpcore_name" :  'jpcoar:volume' , "weko_name" : "volume"}
         ,{'type' : 'simple', "rm_name" : 'number', "jpcore_name" :  'jpcoar:issue' , "weko_name" : "issue"}
         ,{'type' : 'simple', "rm_name" : 'starting_page', "jpcore_name" :  'jpcoar:pageStart' , "weko_name" : "pageStart"}
@@ -230,7 +230,6 @@ def build_achievement(record,item,recid,mapping,jrc, achievement_type):
             # if mapping:
             for parent_key in record.keys():
                 jpcoar_mapping = mapping.get(parent_key,{}).get('jpcoar_mapping',"")
-                current_app.logger.debug(jpcoar_mapping)
                 property_name = rm_map["weko_name"]
                 if jpcoar_mapping != "" and jpcoar_mapping.get(property_name):
                     prop = jpcoar_mapping[property_name]
@@ -250,9 +249,63 @@ def build_achievement(record,item,recid,mapping,jrc, achievement_type):
 
         elif  rm_map['type'] == 'simple':
             value = jrc.get(rm_map["weko_name"])
-            current_app.logger.debug({rm_map["rm_name"]:value})
             return_data.update({rm_map["rm_name"]:value})
             # print(jrc.get(rm_map["weko_name"]))
+
+        elif rm_map['type'] == 'simple_value':
+            value = jrc.get(rm_map["weko_name"])[0].get('value')
+            return_data.update({rm_map["rm_name"]:value})
+
+        elif  rm_map['type'] == 'identifiers':
+            identifer_kv = {}
+            for relatedIdentifier in jrc.get(rm_map["weko_name"]).get('relatedIdentifier'):
+                identifierType =relatedIdentifier.get('identifierType')
+                if identifierType.upper() == "DOI" or identifierType.upper() == "ISBN" :
+                    ## DOI and ISBN only sendable. 他の項目はresearchmapのAPI定義上更新不可のため。
+                    value = jrc.get(rm_map["weko_name"]).get('relatedIdentifier')[0].get('value')
+                    identifer_kv = {identifierType.lower():value}
+                return_data.update({rm_map["rm_name"]:identifer_kv})
+            # current_app.logger.debug('identifiers')
+
+        elif  rm_map['type'] == 'authors':
+            current_app.logger.debug('authors')
+            # if mapping:
+            for parent_key in record.keys():
+                jpcoar_mapping = mapping.get(parent_key,{}).get('jpcoar_mapping',"")
+                property_name = rm_map["weko_name"]
+                if jpcoar_mapping != "" and jpcoar_mapping.get(property_name):
+                    current_app.logger.debug(jpcoar_mapping)
+
+                    prop = jpcoar_mapping[property_name]['creatorName']
+                    value_path = prop.get('@value','')
+                    lang_path  = prop.get('@attributes',{}).get('xml:lang','')
+
+                    langs_dict = {}
+                    en_list = []
+                    ja_list = []
+                    current_app.logger.debug('record.get(parent_key)')
+                    current_app.logger.debug(record.get(parent_key))
+                    for record_child_node in record.get(parent_key).get('attribute_value_mlt'):
+
+                        # FIXME!
+                        value = record_child_node.get(value_path.split('.')[0])[0].get(value_path.split('.')[1])
+                        lang = record_child_node.get(lang_path.split('.')[0])[0].get(lang_path.split('.')[1])
+                        current_app.logger.debug(value_path)
+                        current_app.logger.debug(value)
+                        current_app.logger.debug(lang_path)
+                        current_app.logger.debug(lang)
+                        if lang == "en" :
+                            en_list.append({"name":value})
+                        
+                        elif lang == "ja":
+                            ja_list.append({"name":value})
+                    if len(en_list) > 0:
+                        langs_dict.update({"en":en_list})
+                    if len(ja_list) > 0:
+                        langs_dict.update({"ja":ja_list})
+                    
+                    if langs_dict != {}:
+                        return_data.update({rm_map["rm_name"]:langs_dict})
 
     current_app.logger.debug('return_data')
     current_app.logger.debug(return_data)
@@ -263,7 +316,7 @@ def build_achievement(record,item,recid,mapping,jrc, achievement_type):
     #         ,"publication_name": {"ja": "aaaaa", "en": "aaaaa"} }
 
 
-def build_one_data(achevement_obj:dict , merge_mode:str , author:str ,achievement_type:str):
+def build_one_data(achievement_obj:dict , merge_mode:str , author:str ,achievement_type:str):
     """1著者分レコード作成"""
 
     # e.g.
@@ -277,13 +330,13 @@ def build_one_data(achevement_obj:dict , merge_mode:str , author:str ,achievemen
     ret = {}
     current_app.logger.info(merge_mode)
     if merge_mode == 'merge':
-        ret = {"insert": {"type": achievement_type, "permalink": author} , "merge" :achevement_obj}
+        ret = {"insert": {"type": achievement_type, "permalink": author} , "merge" :achievement_obj}
     elif merge_mode == 'force':
-        ret = {"insert": {"type": achievement_type, "permalink": author} , "force" :achevement_obj}
+        ret = {"insert": {"type": achievement_type, "permalink": author} , "force" :achievement_obj}
     elif merge_mode == 'similar_merge_similar_data':
-        ret = {"insert": {"type": achievement_type ,"permalink": author} , "similar_merge" :achevement_obj ,"priority":"similar_data" }
+        ret = {"insert": {"type": achievement_type ,"permalink": author} , "similar_merge" :achievement_obj ,"priority":"similar_data" }
     elif merge_mode == 'similar_merge_input_data':
-        ret = {"insert": {"type": achievement_type, "permalink": author} , "similar_merge" :achevement_obj ,"priority":"input_data" }
+        ret = {"insert": {"type": achievement_type, "permalink": author} , "similar_merge" :achievement_obj ,"priority":"input_data" }
     return ret
 
 def register_linkage_result(pid_int,result,item_uuid, failed_log):
