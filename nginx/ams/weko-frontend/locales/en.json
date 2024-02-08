@@ -1,6 +1,8 @@
 {
   "serviceName": "Mibyo DB title",
   "catchCopy": "& Catch copy",
+  "totalDataset": "Dataset",
+  "totalJournalArticle": "Journal Article",
   "totalAuthor": "Authors",
   "indexLatestInfo": "Information",
   "indexLatestItem": "Latest Item",

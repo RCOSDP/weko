@@ -9,9 +9,15 @@
         :key="index"
         class="flex items-center mb-1.5 icons icon-download after lg:justify-between cursor-pointer"
         @click="download(file.name + '.' + file.extension)">
-        <p v-if="index == 0" class="ranking-number bg-miby-tag-yellow">{{ index + 1 }}</p>
-        <p v-else-if="index == 1" class="ranking-number bg-miby-tag-gray">{{ index + 1 }}</p>
-        <p v-else-if="index == 2" class="ranking-number bg-miby-tag-orange">{{ index + 1 }}</p>
+        <p v-if="index == 0" class="ranking-number bg-miby-tag-yellow">
+          {{ index + 1 }}
+        </p>
+        <p v-else-if="index == 1" class="ranking-number bg-miby-tag-gray">
+          {{ index + 1 }}
+        </p>
+        <p v-else-if="index == 2" class="ranking-number bg-miby-tag-orange">
+          {{ index + 1 }}
+        </p>
         <div class="ranking-text font-medium tooltip" :data-tip="file.name + '.' + file.extension">
           <button class="ranking-text flex items-center w-full">
             <span class="inline-block text-clamp">{{ file.name }}</span>
@@ -110,7 +116,7 @@ async function getRanking() {
     },
     onResponseError({ response }) {
       statusCode = response.status;
-      if (statusCode != 404) {
+      if (statusCode !== 404) {
         emits('error', response.status, 'message.error.getDownloadRanking');
       }
     }

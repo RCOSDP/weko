@@ -53,11 +53,11 @@
       v-if="displayFlag"
       class="data-statistics p-5 sm:p-0 flex flex-wrap justify-between sm:justify-center gap-x-1 gap-y-4 sm:gap-7 w-3/4 sm:w-full mx-auto">
       <div class="sm:w-fit thesis">
-        <p class="icons icon-thesis text-xs text-white md:text-center">{{ 'Dataset' }}</p>
+        <p class="icons icon-thesis text-xs text-white md:text-center">{{ $t('totalDataset') }}</p>
         <p class="number text-white text-xs md:text-center font-bold">{{ dataset.toLocaleString() }}</p>
       </div>
       <div class="sm:w-fit thesis">
-        <p class="icons icon-thesis text-xs text-white md:text-center">{{ 'Journal Article' }}</p>
+        <p class="icons icon-thesis text-xs text-white md:text-center">{{ $t('totalJournalArticle') }}</p>
         <p class="number text-white text-xs md:text-center font-bold">{{ journal.toLocaleString() }}</p>
       </div>
       <div class="sm:w-fit noro">
