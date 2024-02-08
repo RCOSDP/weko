@@ -32,7 +32,7 @@
               @click-prev="changeDetail"
               @click-next="changeDetail" />
             <!-- アイテム情報 -->
-            <ItemInfo v-if="renderFlag" :item="itemDetail" :item-id="currentNumber" @click-creater="openCreaterModal" />
+            <ItemInfo v-if="renderFlag" :item="itemDetail" :item-id="currentNumber" />
             <!-- アイテム内容 -->
             <ItemContent v-if="renderFlag" :item="itemDetail" />
             <!-- 前/次 -->
@@ -53,19 +53,39 @@
         <!-- サブコンテンツ -->
         <div class="w-full md:max-w-[271px] md:ml-[5px]">
           <!-- 閲覧数 -->
-          <div class="bg-miby-light-blue py-3 pl-5">
+          <div class="bg-miby-light-blue py-3 pl-5 flex items-center">
             <p class="icons icon-statistics text-white font-bold">
               {{ $t('detailViews') }}
             </p>
           </div>
-          <ViewsNumber v-if="renderFlag" :currentNumber="currentNumber" />
+          <ViewsNumber
+            v-if="renderFlag"
+            :current-number="currentNumber"
+            :created-date="createdDate"
+            @error="setError" />
+          <!-- リクエストメール -->
+          <div class="bg-miby-light-blue py-3 pl-5">
+            <p class="icons icon-mail text-white font-bold">
+              {{ $t('requestMail') }}
+            </p>
+          </div>
+          <div class="bg-miby-bg-gray py-7 text-center flex justify-center items-center">
+            <button
+              class="flex gap-1 text-white px-4 py-2 rounded"
+              :class="[false ? 'bg-miby-dark-gray' : 'bg-sky-800']"
+              :disabled="false"
+              @click="openRequestMailModal">
+              <img src="/img/icon/icon_mail-send.svg" alt="Send" />
+              {{ $t('request') }}
+            </button>
+          </div>
           <!-- ダウンロードランキング -->
-          <div class="bg-miby-light-blue w-full">
-            <p class="text-white leading-[43px] pl-5 icons icon-dl-rank font-bold">
+          <div class="bg-miby-light-blue py-3 pl-5">
+            <p class="icons icon-dl-rank text-white font-bold">
               {{ $t('detailDLRank') }}
             </p>
           </div>
-          <DownloadRank />
+          <DownloadRank v-if="renderFlag" :current-number="currentNumber" @error="setError" />
           <!-- エクスポート -->
           <div class="bg-miby-light-blue py-3 pl-5">
             <p class="icons icon-export text-white font-bold">
@@ -85,18 +105,28 @@
       <form class="modal-middle h-full">
         <div class="font-bold text-2xl text-white h-full flex justify-center items-center content-center">
           <span class="loading loading-bars loading-lg mr-4" />
-          Loading ...
+          <span v-if="isLoading">Loading ...</span>
+          <span v-else>{{ $t('message.sending') }}</span>
         </div>
       </form>
     </dialog>
     <!-- 著者情報 -->
     <CreaterInfo ref="creater" />
+    <!-- リクエストメール -->
+    <RequestMail
+      v-if="renderFlag"
+      ref="requestMail"
+      :item-id="currentNumber"
+      @click-send="openLoading(false)"
+      @complete-send="checkSendingResponse" />
     <!-- アラート -->
     <Alert
       v-if="visibleAlert"
       :type="alertType"
       :message="alertMessage"
       :code="alertCode"
+      :position="alertPosition"
+      :width="alertWidth"
       @click-close="visibleAlert = !visibleAlert" />
   </div>
 </template>
@@ -111,6 +141,7 @@ import ItemContent from '~/components/detail/ItemContent.vue';
 import ItemInfo from '~/components/detail/ItemInfo.vue';
 import Switcher from '~/components/detail/Switcher.vue';
 import ViewsNumber from '~/components/detail/ViewsNumber.vue';
+import RequestMail from '~/components/detail/modal/RequestMail.vue';
 
 /* ///////////////////////////////////
 // interface
@@ -148,13 +179,18 @@ let currentNumList: number[] = [];
 let nextNumList: number[] = [];
 let shift = '';
 let currentNumber = 0;
+let createdDate = '';
 const prevNum = ref(0);
 const nextNum = ref(0);
 const creater = ref();
+const requestMail = ref();
 const visibleAlert = ref(false);
 const alertType = ref('info');
 const alertMessage = ref('');
 const alertCode = ref(0);
+const alertPosition = ref('');
+const alertWidth = ref('');
+const isLoading = ref(true);
 
 /* ///////////////////////////////////
 // function
@@ -179,6 +215,14 @@ async function getDetail(number: string) {
       if (response.status === 200) {
         itemDetail = response._data;
         indexId = response._data.index ?? '';
+        // 閲覧数用作成日時取得
+        if (Object.prototype.hasOwnProperty.call(itemDetail, 'rocrate')) {
+          // @ts-ignore
+          const obj = getContentById(itemDetail.rocrate, './');
+          if (Object.prototype.hasOwnProperty.call(obj, appConf.roCrate.root.createDate)) {
+            createdDate = obj[appConf.roCrate.root.createDate][0];
+          }
+        }
       }
     },
     onResponseError({ response }) {
@@ -197,6 +241,8 @@ async function getDetail(number: string) {
         alertCode.value = statusCode;
       }
       alertType.value = 'error';
+      alertPosition.value = '';
+      alertWidth.value = 'w-full';
       visibleAlert.value = true;
     }
   }).catch(() => {
@@ -204,6 +250,8 @@ async function getDetail(number: string) {
       // fetchエラー
       alertMessage.value = 'message.error.fetch';
       alertType.value = 'error';
+      alertPosition.value = '';
+      alertWidth.value = 'w-full';
       visibleAlert.value = true;
     }
   });
@@ -267,6 +315,8 @@ async function search(searchPage: string) {
         alertCode.value = statusCode;
       }
       alertType.value = 'error';
+      alertPosition.value = '';
+      alertWidth.value = 'w-full';
       visibleAlert.value = true;
     }
   }).catch(() => {
@@ -274,6 +324,8 @@ async function search(searchPage: string) {
       // fetchエラー
       alertMessage.value = 'message.error.fetch';
       alertType.value = 'error';
+      alertPosition.value = '';
+      alertWidth.value = 'w-full';
       visibleAlert.value = true;
     }
   });
@@ -320,6 +372,8 @@ async function getParentIndex() {
         alertCode.value = statusCode;
       }
       alertType.value = 'error';
+      alertPosition.value = '';
+      alertWidth.value = 'w-full';
       visibleAlert.value = true;
     }
   }).catch(() => {
@@ -327,6 +381,8 @@ async function getParentIndex() {
       // fetchエラー
       alertMessage.value = 'message.error.fetch';
       alertType.value = 'error';
+      alertPosition.value = '';
+      alertWidth.value = 'w-full';
       visibleAlert.value = true;
     }
   });
@@ -437,7 +493,7 @@ async function changeDetail(value: string) {
     }
 
     try {
-      (document.getElementById('loading_modal') as HTMLDialogElement).showModal();
+      openLoading(true);
       await getDetail(String(prevNum.value));
       // REVIEW: pushでクエリを置き換える場合、ブラウザーバック対応をする
       useRouter().replace({ query: { sess: beforePage, number: prevNum.value } });
@@ -468,7 +524,7 @@ async function changeDetail(value: string) {
     }
 
     try {
-      (document.getElementById('loading_modal') as HTMLDialogElement).showModal();
+      openLoading(true);
       await getDetail(String(nextNum.value));
       // REVIEW: pushでクエリを置き換える場合、ブラウザーバック対応をする
       useRouter().replace({ query: { sess: beforePage, number: nextNum.value } });
@@ -494,13 +550,6 @@ async function changeDetail(value: string) {
       });
     }
   }
-}
-
-/**
- * ページ最上部にスクロール
- */
-function scrollToTop() {
-  scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 /**
@@ -543,6 +592,12 @@ function clickParent(indexId: string) {
   if (sessionStorage.getItem('conditions')) {
     // @ts-ignore
     const sessConditions = JSON.parse(sessionStorage.getItem('conditions'));
+    // 詳細検索条件が設定されている場合は削除
+    if (Object.prototype.hasOwnProperty.call(sessConditions, 'detail')) {
+      delete sessConditions.detail;
+      delete sessConditions.detailData;
+    }
+    // 検索条件設定
     Object.assign(sessConditions, { keyword: indexId });
     sessionStorage.setItem('conditions', JSON.stringify(sessConditions));
   } else {
@@ -557,6 +612,67 @@ function clickParent(indexId: string) {
  */
 function openCreaterModal() {
   creater.value.openModal();
+}
+
+/**
+ * リクエストモーダル表示
+ */
+function openRequestMailModal() {
+  requestMail.value.getCaptcha();
+  requestMail.value.openModal();
+}
+
+/**
+ * loadingモーダル表示
+ * @param type true:Loading / false:Sending
+ */
+function openLoading(type: boolean) {
+  isLoading.value = type;
+  (document.getElementById('loading_modal') as HTMLDialogElement).showModal();
+}
+
+/**
+ * エラー発生時イベント
+ * @param status ステータスコード
+ * @param message エラーメッセージ
+ */
+function setError(status = 0, message: string) {
+  alertMessage.value = message;
+  alertCode.value = status;
+  alertType.value = 'error';
+  alertPosition.value = '';
+  alertWidth.value = 'w-full';
+  visibleAlert.value = true;
+}
+
+/**
+ * 問い合わせ送信完了時イベント
+ * @param val true:送信成功 / false:送信失敗
+ */
+function checkSendingResponse(val: boolean) {
+  if (val) {
+    alertType.value = 'success';
+    alertMessage.value = 'message.sendingSuccess';
+    alertPosition.value = 'toast-top pt-20';
+    alertWidth.value = 'w-auto';
+    // 入力内容初期化
+    requestMail.value.initInput();
+  } else {
+    alertType.value = 'error';
+    alertMessage.value = 'message.sendingFailed';
+    alertCode.value = 0;
+    alertPosition.value = 'toast-top pt-20';
+    alertWidth.value = 'w-auto';
+  }
+  (document.getElementById('loading_modal') as HTMLDialogElement).close();
+  visibleAlert.value = true;
+}
+
+/**
+ * ページ最上部にスクロール
+ */
+function scrollToTop() {
+  scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 /* ///////////////////////////////////
@@ -577,6 +693,8 @@ try {
   alertCode.value = 0;
   alertMessage.value = 'message.error.error';
   alertType.value = 'error';
+  alertPosition.value = '';
+  alertWidth.value = 'w-full';
   visibleAlert.value = true;
 }
 

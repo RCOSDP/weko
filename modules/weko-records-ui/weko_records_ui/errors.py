@@ -23,6 +23,7 @@
 # as an Intergovernmental Organization or submit itself to any jurisdiction.
 
 """Records Error"""
+from flask_babelex import gettext as _
 from invenio_rest.errors import RESTException, RESTValidationError
 
 
@@ -46,6 +47,34 @@ class ModeNotFoundRESTError(RESTException):
     code = 400
     description = 'Mode not specified.'
 
+class InvalidEmailError(RESTException):
+    """Invalid email Error error."""
+
+    code = 400
+    description = _('Invalid mailaddress.')
+
+class RequiredItemNotExistError(RESTValidationError):
+    """Required Item not exists in request body error."""
+
+    description = _('Reqired item does not exist.')
+
+class InvalidCaptchaError(RESTException):
+    """Invalid CAPTCHA calculation result error."""
+
+    code = 400
+    description = _('Invalid CAPTCHA')
+
+class InvalidRequestError(RESTException):
+    """Invalid Request error."""
+
+    code = 400
+    description = 'Invalid Request Header or Body'
+
+class AuthenticationRequiredError(RESTException):
+    """Contents not found error."""
+
+    code = 401
+    description = _('Unauthorized.')
 
 class PermissionError(RESTException):
     """Permission error"""
@@ -53,6 +82,11 @@ class PermissionError(RESTException):
     code = 403
     description = 'Permission denied'
 
+class AvailableFilesNotFoundRESTError(RESTException):
+    """Available Files Not Found error."""
+
+    code = 403
+    description = 'This File is private or you don\'t have permission'
 
 class RecordsNotFoundRESTError(RESTException):
     """Records Not Found error."""
@@ -60,13 +94,17 @@ class RecordsNotFoundRESTError(RESTException):
     code = 404
     description = 'This Item does not found'
 
-
 class FilesNotFoundRESTError(RESTException):
     """Files Not Found error."""
 
     code = 404
     description = 'This File does not found'
 
+class ContentsNotFoundError(RESTException):
+    """Contents not found error."""
+
+    code = 404
+    description = _('Contents not found.')
 
 class InternalServerError(RESTException):
     """Internal Server Error."""

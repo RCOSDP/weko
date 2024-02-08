@@ -11,30 +11,29 @@
           </button>
         </div>
       </div>
-      <form action="/search" method="dialog" class="mt-[-3px] pt-10 pb-10 md:mt-0 md:border-0 rounded-b-md px-2.5">
-        <div class="modalForm overflow-y-auto scroll-smooth h-full">
-          <div class="modalForm pt-5 pb-10 overflow-y-auto scroll-smooth h-full">
-            <div class="max-w-[500px] mx-auto" />
-            <table class="table">
-              <tbody>
-                <tr>
-                  <th>所属</th>
-                  <td>東京大学</td>
-                </tr>
-                <tr>
-                  <th>氏名</th>
-                  <td>鈴木 一郎</td>
-                </tr>
-                <tr>
-                  <th>メールアドレス</th>
-                  <td>email@sample.com</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+      <div class="modalForm overflow-y-auto scroll-smooth h-full">
+        <div class="pt-5 pb-5 h-full">
+          <label class="label flex-col">
+            <span class="text-sm font-medium mr-auto text-miby-dark-gray">所属</span>
+            <a class="pt-2 pl-5 pr-3 w-full break-words">
+              {{ '東京大学' }}
+            </a>
+          </label>
+          <label class="label flex-col">
+            <span class="text-sm font-medium mr-auto text-miby-dark-gray">氏名</span>
+            <a class="pt-2 pl-5 pr-3 w-full break-words">
+              {{ '田中 太郎' }}
+            </a>
+          </label>
+          <label class="label flex-col">
+            <span class="text-sm font-medium mr-auto text-miby-dark-gray">メールアドレス</span>
+            <a class="pt-2 pl-5 pr-3 w-full break-words">
+              {{ 'sample@sample.co.jp' }}
+            </a>
+          </label>
         </div>
-      </form>
-      <div class="flex justify-center items-center mb-5">
+      </div>
+      <div class="flex justify-center items-center mt-3 mb-5">
         <a class="text-miby-link-blue underline cursor-pointer">Search Repository</a>
       </div>
     </div>

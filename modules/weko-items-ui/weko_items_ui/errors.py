@@ -27,22 +27,22 @@ from invenio_rest.errors import RESTException, RESTValidationError
 
 class VersionNotFoundRESTError(RESTException):
     """API Version error."""
-    
+
     code = 400
     description = 'This API version does not found'
 
 class NoRankingtypeError(RESTException):
     """No Ranking error."""
-    
+
     code = 404
     description = 'Thie ranking does not exist'
 
 class RequestParameterError(RESTException):
     """Data error."""
-    
+
     code = 400
     description = 'Parameter contains unexpected value'
-    
+
 class PermissionError(RESTException):
     """Permission error"""
 
@@ -51,6 +51,6 @@ class PermissionError(RESTException):
 
 class InternalServerError(RESTException):
     """Internal Server Error."""
-    
+
     code = 500
     description = 'Internal Server Error'

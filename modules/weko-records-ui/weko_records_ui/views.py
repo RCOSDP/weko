@@ -281,8 +281,8 @@ def check_file_permission(record, fjson):
     Args:
         record (weko_deposit.api.WekoRecord): _description_
         fjson (dict): _description_
-    
-    """    
+
+    """
     return check_file_download_permission(record, fjson)
 
 
@@ -447,7 +447,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         if hasattr(current_user, 'site_license_flag') else False
     send_info['site_license_name'] = current_user.site_license_name \
         if hasattr(current_user, 'site_license_name') else ''
-    
+
     record_viewed.send(
         current_app._get_current_object(),
         pid=pid,
@@ -478,7 +478,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         record["relation"] = res
     else:
         record["relation"] = {}
-    
+
     recstr = etree.tostring(
         getrecord(
             identifier=record['_oai'].get('id'),
@@ -489,7 +489,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     et=etree.fromstring(recstr)
     google_scholar_meta = get_google_scholar_meta(record,record_tree=et)
     google_dataset_meta = get_google_detaset_meta(record,record_tree=et)
-    
+
     current_lang = current_i18n.language \
         if hasattr(current_i18n, 'language') else None
     # get title name
@@ -563,7 +563,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         display_stats = display_setting.get('display_stats')
     else:
         display_stats = True
-    
+
     items_display_settings = AdminSettings.get(name='items_display_settings',
                                         dict_to_object=False)
     if items_display_settings:
@@ -679,7 +679,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         flg_display_itemtype = current_app.config.get('WEKO_RECORDS_UI_DISPLAY_ITEM_TYPE') ,
         flg_display_resourcetype = current_app.config.get('WEKO_RECORDS_UI_DISPLAY_RESOURCE_TYPE') ,
         search_author_flg=search_author_flg,
-        
+
         **ctx,
         **kwargs
     )
@@ -778,7 +778,7 @@ def set_pdfcoverpage_header():
         flash(_('PDF cover page settings have been updated.'),
               category='success')
         return redirect('/admin/pdfcoverpage')
-    
+
     return redirect('/admin/pdfcoverpage')
 
 
@@ -952,14 +952,14 @@ def get_uri():
     """_summary_
     ---
       post:
-        description: 
+        description:
         requestBody:
             required: true
             content:
             application/json: {"uri":"https://localhost/record/1/files/001.jpg","pid_value":"1","accessrole":"1"}
         responses:
           200:
-    """  
+    """
     data = request.get_json()
     uri = data.get('uri')
     pid_value = data.get('pid_value')

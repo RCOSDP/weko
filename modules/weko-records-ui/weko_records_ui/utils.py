@@ -21,6 +21,7 @@
 """Module of weko-records-ui utils."""
 
 import base64
+import csv
 import json
 import re
 from datetime import datetime as dt
@@ -28,6 +29,7 @@ from datetime import timedelta
 from decimal import Decimal
 from typing import NoReturn, Tuple
 from urllib.parse import urlparse,quote
+from io import StringIO
 
 from flask import abort, current_app, json, request, url_for, make_response, Flask
 from flask_babelex import get_locale
@@ -72,9 +74,9 @@ def check_items_settings(settings=None):
         if isinstance(settings,dict):
             if 'items_display_email' in settings:
                 current_app.config['EMAIL_DISPLAY_FLG'] = settings['items_display_email']
-            if 'items_search_author' in settings:    
+            if 'items_search_author' in settings:
                 current_app.config['ITEM_SEARCH_FLG'] = settings['items_search_author']
-            if 'item_display_open_date' in settings:    
+            if 'item_display_open_date' in settings:
                 current_app.config['OPEN_DATE_DISPLAY_FLG'] = \
                 settings['item_display_open_date']
         else:
@@ -134,7 +136,7 @@ def get_billing_file_download_permission(groups_price: list) -> dict:
 
     Returns:
         dict: Billing file permission dictionary.
-    """    
+    """
     # current_app.logger.debug("groups_price:{}".format(groups_price))
     billing_file_permission = dict()
     for data in groups_price:
@@ -197,7 +199,7 @@ def is_billing_item(item_type_id):
         properties = item_type.schema['properties']
         for meta_key in properties:
             if properties[meta_key]['type'] == 'object' and \
-               'groupsprice' in properties[meta_key]['properties'] or \
+                'groupsprice' in properties[meta_key]['properties'] or \
                 properties[meta_key]['type'] == 'array' and 'groupsprice' in \
                     properties[meta_key]['items']['properties']:
                 return True
@@ -375,7 +377,7 @@ def get_license_pdf(license, item_metadata_json, pdf, file_item_id, footer_w,
     # current_app.logger.debug("footer_h:{}".format(footer_h))
     # current_app.logger.debug("cc_logo_xposition:{}".format(cc_logo_xposition))
     # current_app.logger.debug("item:{}".format(item))
-        
+
     from .views import blueprint
     license_icon_pdf_location = \
         current_app.config['WEKO_RECORDS_UI_LICENSE_ICON_PDF_LOCATION']
@@ -411,7 +413,7 @@ def get_pair_value(name_keys, lang_keys, datas):
     current_app.logger.debug("name_keys:{}".format(name_keys))
     current_app.logger.debug("lang_keys:{}".format(lang_keys))
     current_app.logger.debug("datas:{}".format(datas))
-    
+
     if len(name_keys) == 1 and len(lang_keys) == 1:
         if isinstance(datas, list):
             for data in datas:
@@ -451,7 +453,7 @@ def hide_item_metadata(record, settings=None, item_type_mapping=None,
             record['item_type_id'], item_type_mapping, item_type_data
         )
         record = hide_by_itemtype(record, list_hidden)
-        
+
         hide_email = hide_meta_data_for_role(record)
         if hide_email:
             # Hidden owners_ext.email
@@ -481,7 +483,7 @@ def hide_item_metadata_email_only(record):
     check_items_settings()
 
     record['weko_creator_id'] = record.get('owner')
-    
+
     hide_email = hide_meta_data_for_role(record)
     if hide_email:
         # Hidden owners_ext.email
@@ -623,7 +625,7 @@ def is_show_email_of_creator(item_type_id):
 
     is_hide = item_type_show_email(item_type_id)
     is_display = item_setting_show_email()
-    
+
     return not is_hide and is_display
 
 
@@ -941,7 +943,7 @@ def generate_one_time_download_url(
     :param record_id: File Version ID
     :param guest_mail: guest email
     :return:
-    """    
+    """
     secret_key = current_app.config['WEKO_RECORDS_UI_SECRET_KEY']
     download_pattern = current_app.config[
         'WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN']
@@ -1342,7 +1344,7 @@ def get_google_detaset_meta(record,record_tree=None):
     # Required property check
     min_length = current_app.config.get('WEKO_RECORDS_UI_GOOGLE_DATASET_DESCRIPTION_MIN',WEKO_RECORDS_UI_GOOGLE_DATASET_DESCRIPTION_MIN)
     max_length = current_app.config.get('WEKO_RECORDS_UI_GOOGLE_DATASET_DESCRIPTION_MAX',WEKO_RECORDS_UI_GOOGLE_DATASET_DESCRIPTION_MAX)
-    
+
     for title in mtdata.findall('dc:title', namespaces=mtdata.nsmap):
         res_data['name'] = title.text
     for description in mtdata.findall('datacite:description', namespaces=mtdata.nsmap):
@@ -1570,6 +1572,9 @@ class RoCrateConverter:
         file_entities = []
         for index, metadata_file in enumerate(metadata_files):
             file_entity = self.crate.add_file(metadata_file.get('filename', ''))
+            # TODO: RO-Crate Mapping画面のfileのkey項目一覧からaccessModeとdateCreatedを削除（下記で使用するから）
+            file_entity['accessMode'] = metadata_file.get('accessrole', '')
+            file_entity['dateCreated'] = metadata_file.get('date', '')[0]['dateValue']
             self.__add_file_properties(file_entity, map_file, metadata, index)
             file_entities.append(file_entity)
         self.crate.root_dataset['mainEntity'] = file_entities
@@ -1824,3 +1829,58 @@ class RoCrateConverter:
 def create_limmiter():
     from .config import WEKO_RECORDS_UI_API_LIMIT_RATE_DEFAULT
     return Limiter(app=Flask(__name__), key_func=get_remote_address, default_limits=WEKO_RECORDS_UI_API_LIMIT_RATE_DEFAULT)
+
+def create_tsv(files, language='en'):
+    """Create TSV file from files information.
+
+    Args:
+        files (list): File List.
+        language (str): Language
+
+    Returns:
+        _io.StringIO: TSV file
+    """
+    # Language setting
+    from .config import WEKO_RECORDS_UI_TSV_FIELD_NAMES_EN, WEKO_RECORDS_UI_TSV_FIELD_NAMES_JA
+
+    fieldnames = WEKO_RECORDS_UI_TSV_FIELD_NAMES_EN
+    if language == 'ja':
+        fieldnames = WEKO_RECORDS_UI_TSV_FIELD_NAMES_JA
+
+    # License dict list
+    from weko_admin.config import WEKO_ADMIN_MANAGEMENT_OPTIONS
+    license_dict_list = [
+        d.get('check_val')
+        for d in WEKO_ADMIN_MANAGEMENT_OPTIONS.get('detail_condition')
+        if d.get('id') == 'license'
+    ]
+
+    # Create TSV
+    file_output = StringIO()
+    file_writer = csv.DictWriter(
+        file_output,
+        fieldnames=fieldnames,
+        delimiter='\t',
+        lineterminator='\n'
+    )
+
+    file_writer.writeheader()
+    for file in files:
+        file_writer.writerow({
+            # file name
+            fieldnames[0]:file.obj.basename,
+            # file size
+            fieldnames[1]:file.info().get('filesize', [{}])[0].get('value'),
+            # license type
+            fieldnames[2]:[
+                    d.get('contents', [None]) for d in license_dict_list[0]
+                    if d.get('id') == file.info().get('licensetype')
+                ][0] if file.info().get('licensetype') else None,
+            # date
+            fieldnames[3]:file.info().get('date', [{}])[0].get('dateValue'),
+            # url
+            fieldnames[4]:file.info().get('url', {}).get('url')
+        })
+
+    StringIO().close()
+    return file_output

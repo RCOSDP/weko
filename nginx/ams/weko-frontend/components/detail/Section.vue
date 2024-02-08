@@ -12,7 +12,7 @@
           v-model="sectionName"
           class="border border-miby-dark-gray text-sm text-left pl-2 p-1"
           @change="scrollToSection(sectionName)">
-          <option v-for="element in titleList" :key="element" :value="element" class="">
+          <option v-for="element in titleList" :key="element" :value="element">
             {{ element }}
           </option>
         </select>

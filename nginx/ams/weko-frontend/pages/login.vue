@@ -11,7 +11,7 @@
       <h1 class="text-3xl text-center font-medium">
         {{ $t('login') }}
       </h1>
-      <Form class="space-y-4 mt-2" @submit="login">
+      <Form class="space-y-2 mt-3" @submit="login">
         <!-- メールアドレス -->
         <label class="label flex-col">
           <span class="font-medium text-base label-text mr-auto">
@@ -23,10 +23,14 @@
             type="email"
             :rules="checkEmail"
             :placeholder="$t('enterMailAddress')"
-            :class="{ 'border-red-600': dirtyEmail && checkEmail(email) !== true }"
+            :class="{ 'border-miby-form-red': dirtyEmail && checkEmail(email) !== true }"
             class="w-full input input-bordered mt-2 hover:[&:focus]:border-sky-700"
             @click="dirtyEmail = true" />
-          <ErrorMessage name="email" class="mr-auto text-red-600" />
+          <ErrorMessage v-slot="message" name="email">
+            <span class="mr-auto text-miby-form-red">
+              {{ '※' + $t(String(message.message)) }}
+            </span>
+          </ErrorMessage>
         </label>
         <!-- パスワード -->
         <label class="label flex-col">
@@ -39,10 +43,14 @@
             type="password"
             :rules="checkPassword"
             :placeholder="$t('enterPassword')"
-            :class="{ 'border-red-600': dirtyPassword && checkPassword(password) !== true }"
+            :class="{ 'border-miby-form-red': dirtyPassword && checkPassword(password) !== true }"
             class="w-full input input-bordered mt-2 hover:[&:focus]:border-sky-700"
             @click="dirtyPassword = true" />
-          <ErrorMessage name="password" class="mr-auto text-red-600" />
+          <ErrorMessage v-slot="message" name="password">
+            <span class="mr-auto text-miby-form-red">
+              {{ '※' + $t(String(message.message)) }}
+            </span>
+          </ErrorMessage>
         </label>
         <!-- ログイン -->
         <div class="pt-3">
@@ -58,13 +66,13 @@
         </div>
         <div class="flex">
           <!-- アカウント作成 -->
-          <div class="flex justify-start flex-1">
+          <!-- <div class="flex justify-start flex-1">
             <a class="text-sm text-gray-600 hover:underline hover:text-sky-700 cursor-pointer">
               {{ $t('createAccount') }}
             </a>
-          </div>
+          </div> -->
           <!-- パスワードを忘れた方はこちら -->
-          <div class="flex justify-end flex-1">
+          <!-- <div class="flex justify-end flex-1">
             <a
               class="text-sm text-gray-600 hover:underline hover:text-sky-700 cursor-pointer"
               @click="
@@ -73,7 +81,7 @@
               ">
               {{ $t('forgetPassword') }}
             </a>
-          </div>
+          </div> -->
         </div>
       </Form>
     </div>
@@ -97,10 +105,14 @@
               type="text"
               :rules="checkEmail"
               :placeholder="$t('enterMailAddress')"
-              :class="{ 'border-red-600': dirtyReset && checkEmail(reset) !== true }"
+              :class="{ 'border-miby-form-red': dirtyReset && checkEmail(reset) !== true }"
               class="w-full input input-bordered mt-2 hover:[&:focus]:border-sky-700"
               @click="dirtyReset = true" />
-            <ErrorMessage name="reset" class="mr-auto text-red-600" />
+            <ErrorMessage v-slot="message" name="reset">
+              <span class="mr-auto text-miby-form-red">
+                {{ '※' + $t(String(message.message)) }}
+              </span>
+            </ErrorMessage>
           </label>
         </div>
         <!-- 送信 -->
@@ -136,7 +148,6 @@
 
 <script lang="ts" setup>
 import { Form, Field, ErrorMessage } from 'vee-validate';
-import { useI18n } from 'vue-i18n';
 
 import Alert from '~/components/common/Alert.vue';
 
@@ -144,8 +155,6 @@ import Alert from '~/components/common/Alert.vue';
 // const and let
 /////////////////////////////////// */
 
-const mRequiredField = useI18n().t('message.alert.requiredField');
-const mRequiredEmail = useI18n().t('message.alert.requiredEmail');
 const email = ref('');
 const password = ref('');
 const reset = ref('');
@@ -227,13 +236,15 @@ function login() {
  * @param value 入力されたメールアドレス
  */
 function checkEmail(value: any) {
+  // 未入力チェック
   if (!value) {
-    return mRequiredField;
+    return 'message.alert.requiredMail';
   }
+  // 形式チェック
   // RFC5322準拠
   const regex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
   if (!regex.test(value)) {
-    return mRequiredEmail;
+    return 'message.alert.requiredMailType';
   }
   return true;
 }
@@ -243,8 +254,9 @@ function checkEmail(value: any) {
  * @param value 入力されたパスワード
  */
 function checkPassword(value: any) {
+  // 未入力チェック
   if (!value) {
-    return mRequiredField;
+    return 'message.alert.requiredPass';
   }
   return true;
 }

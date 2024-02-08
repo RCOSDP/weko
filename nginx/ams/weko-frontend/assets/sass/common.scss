@@ -194,16 +194,17 @@
 
   &.icon-dl-rank::before {
     @include icons;
-    width: 22px;
-    height: 22px;
+    width: 20px;
+    height: 20px;
     margin-right: 10px;
     background-image: url(/img/icon/icon_dl-rank.svg);
   }
 
   &.icon-statistics::before {
     @include icons;
-    width: 14px;
-    height: 16px;
+    width: 17px;
+    height: 17px;
+    margin-right: 10px;
     background-image: url(/img/icon/icon_statistics.svg);
   }
 
@@ -213,6 +214,14 @@
     height: 22px;
     margin-right: 10px;
     background-image: url(/img/icon/icon_export.svg);
+  }
+
+  &.icon-mail::before {
+    @include icons;
+    width: 24px;
+    height: 24px;
+    margin-right: 10px;
+    background-image: url(/img/icon/icon_mail.svg);
   }
 
   &.icon-external {
@@ -414,8 +423,8 @@
       background-image: url(/img/icon/icon_group.svg);
     }
 
-    &.icon-unshared::before {
-      background-image: url(/img/icon/icon_unshared.svg);
+    &.icon-member::before {
+      background-image: url(/img/icon/icon_member.svg);
     }
 
     &.icon-private::before {
@@ -603,7 +612,7 @@
 
   &-text {
     color: $miby-black;
-    width: calc(100% - 34px);
+    width: calc(100% - 70px);
 
     @include min-screen($breakpoint-pc) {
       body#detail & {
@@ -727,11 +736,10 @@ dialog {
 
     &-center {
       position: fixed;
-      top: 30px;
+      top: 50px;
       left: 50%;
       max-width: 728px;
       width: 100%;
-      max-height: calc(100vh - 100px);
       transform: translateX(-50%);
       background-color: $miby-modal-bg-gray;
       border-top-right-radius: 8px;
@@ -796,7 +804,6 @@ dialog {
       left: 50%;
       max-width: 728px;
       width: 30%;
-      max-height: calc(100vh - 100px);
       transform: translateX(-50%);
       background-color: $miby-modal-bg-gray;
       border-top-right-radius: 8px;
@@ -815,6 +822,37 @@ dialog {
         margin: auto;
         padding: 0 40px;
         max-height: calc(100vh - 300px);
+
+        @include max-screen($breakpoint-mobile) {
+          padding: 20px;
+          max-height: calc(100vh - 250px);
+        }
+      }
+    }
+
+    &-confirm {
+      position: fixed;
+      top: 7%;
+      left: 50%;
+      max-width: 728px;
+      width: 100%;
+      transform: translateX(-50%);
+      background-color: $miby-modal-bg-gray;
+      border-top-right-radius: 8px;
+      border-top-left-radius: 8px;
+      border-bottom-right-radius: 8px;
+      border-bottom-left-radius: 8px;
+      border: 3px solid $miby-light-blue;
+
+      @include max-screen($breakpoint-mobile) {
+        top: 5px;
+        max-height: calc(100vh - 50px);
+      }
+
+      .modalForm {
+        max-width: 600px;
+        margin: auto;
+        max-height: calc(100vh - 460px);
 
         @include max-screen($breakpoint-mobile) {
           padding: 20px;
@@ -1285,7 +1323,7 @@ input[type='file'] {
 .tab-btn {
   &__wrap {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: wrap-reverse;
   }
 
   &__label {

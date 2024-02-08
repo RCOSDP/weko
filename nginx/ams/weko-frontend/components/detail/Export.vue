@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-miby-bg-gray py-5 px-3.5 w-full">
+  <div class="bg-miby-bg-gray py-7 px-3.5 w-full">
     <dl class="mb-5">
       <dt class="text-sm font-medium mb-2">OAI-PMH</dt>
       <dd class="flex flex-col gap-x-5">
@@ -23,7 +23,7 @@
         </NuxtLink>
       </dd>
     </dl>
-    <dl class="mb-5">
+    <dl>
       <dt class="text-sm font-medium mb-2">Other Formats</dt>
       <dd class="flex flex-col gap-x-5">
         <NuxtLink

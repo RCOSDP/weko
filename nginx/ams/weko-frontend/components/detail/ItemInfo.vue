@@ -15,27 +15,27 @@
         <div class="flex flex-wrap mb-1.5 gap-2 md:gap-5 items-center">
           <!-- 公開区分 -->
           <p
-            v-if="itemInfo.hasOwnProperty(appConf.roCrate.info.releaseRange)"
+            v-if="itemInfo.hasOwnProperty(appConf.roCrate.root.releaseRange)"
             :class="[
-              itemInfo[appConf.roCrate.info.releaseRange][0] === appConf.roCrate.selector.releaseRange.public
+              itemInfo[appConf.roCrate.root.releaseRange][0] === appConf.roCrate.selector.releaseRange.public
                 ? 'icons-type icon-public'
-                : itemInfo[appConf.roCrate.info.releaseRange][0] === appConf.roCrate.selector.releaseRange.shared
+                : itemInfo[appConf.roCrate.root.releaseRange][0] === appConf.roCrate.selector.releaseRange.group
                 ? 'icons-type icon-group'
-                : itemInfo[appConf.roCrate.info.releaseRange][0] === appConf.roCrate.selector.releaseRange.private
-                ? 'icons-type icon-unshared'
-                : itemInfo[appConf.roCrate.info.releaseRange][0] === appConf.roCrate.selector.releaseRange.unshared
+                : itemInfo[appConf.roCrate.root.releaseRange][0] === appConf.roCrate.selector.releaseRange.member
+                ? 'icons-type icon-member'
+                : itemInfo[appConf.roCrate.root.releaseRange][0] === appConf.roCrate.selector.releaseRange.private
                 ? 'icons-type icon-private'
                 : 'icons-type icon-public'
             ]">
             <span>
               {{
-                itemInfo[appConf.roCrate.info.releaseRange][0] === appConf.roCrate.selector.releaseRange.public
+                itemInfo[appConf.roCrate.root.releaseRange][0] === appConf.roCrate.selector.releaseRange.public
                   ? $t('openPublic')
-                  : itemInfo[appConf.roCrate.info.releaseRange][0] === appConf.roCrate.selector.releaseRange.shared
+                  : itemInfo[appConf.roCrate.root.releaseRange][0] === appConf.roCrate.selector.releaseRange.group
                   ? $t('openGroup')
-                  : itemInfo[appConf.roCrate.info.releaseRange][0] === appConf.roCrate.selector.releaseRange.private
+                  : itemInfo[appConf.roCrate.root.releaseRange][0] === appConf.roCrate.selector.releaseRange.member
                   ? $t('openPrivate')
-                  : itemInfo[appConf.roCrate.info.releaseRange][0] === appConf.roCrate.selector.releaseRange.unshared
+                  : itemInfo[appConf.roCrate.root.releaseRange][0] === appConf.roCrate.selector.releaseRange.private
                   ? $t('openRestricted')
                   : 'undefined'
               }}
@@ -46,17 +46,17 @@
           </p>
           <!-- 公開日 -->
           <p class="date-upload icons icon-publish">
-            <span v-if="itemInfo.hasOwnProperty(appConf.roCrate.info.reelaseDate)">
-              {{ itemInfo[appConf.roCrate.info.reelaseDate][0] }}
+            <span v-if="itemInfo.hasOwnProperty(appConf.roCrate.root.releaseDate)">
+              {{ itemInfo[appConf.roCrate.root.releaseDate][0] }}
             </span>
             <span v-else>undefined</span>
           </p>
           <!-- 更新日 -->
           <p class="date-update icons icon-update">
-            <span v-if="itemInfo.hasOwnProperty(appConf.roCrate.info.updateDate)">
+            <span v-if="itemInfo.hasOwnProperty(appConf.roCrate.root.updateDate)">
               {{
-                typeof itemInfo[appConf.roCrate.info.updateDate] == 'object'
-                  ? itemInfo[appConf.roCrate.info.updateDate][0]
+                typeof itemInfo[appConf.roCrate.root.updateDate] == 'object'
+                  ? itemInfo[appConf.roCrate.root.updateDate][0]
                   : 'undefined'
               }}
             </span>
@@ -65,35 +65,38 @@
         </div>
         <!-- タイトル -->
         <a class="data-dtitle text-left">
-          {{ itemInfo[appConf.roCrate.info.title][0] }}
+          <span v-if="itemInfo.hasOwnProperty(appConf.roCrate.root.title)">
+            {{ itemInfo[appConf.roCrate.root.title][0] }}
+          </span>
+          <span v-else>undefined</span>
         </a>
         <div class="text-left sm:flex mb-1">
           <!-- 分野 -->
           <p class="data-note">
             {{ $t('field') + '：' }}
-            <span v-if="itemInfo.hasOwnProperty(appConf.roCrate.info.field)">
-              {{ itemInfo[appConf.roCrate.info.field][0] }}
+            <span v-if="itemInfo.hasOwnProperty(appConf.roCrate.root.field)">
+              {{ itemInfo[appConf.roCrate.root.field][0] }}
             </span>
             <span v-else>undefined</span>
           </p>
           <!-- 作成者 -->
           <p class="data-note author">
             {{ $t('creater') + '：' }}
-            <span v-if="itemInfo[appConf.roCrate.info.authorAffiliation]" class="data-author mr-1">
+            <span v-if="itemInfo[appConf.roCrate.root.authorAffiliation]" class="data-author mr-1">
               [
               <span
-                v-for="affiliation in itemInfo[appConf.roCrate.info.authorAffiliation]"
+                v-for="affiliation in itemInfo[appConf.roCrate.root.authorAffiliation]"
                 :key="affiliation"
                 class="affiliation">
-                <a @click="emits('clickCreater')">
+                <a>
                   {{ affiliation }}
                 </a>
               </span>
               ]
             </span>
             <span v-else class="mr-1">[undefined]</span>
-            <span v-if="itemInfo.hasOwnProperty(appConf.roCrate.info.authorName)" class="data-author">
-              <span v-for="name in itemInfo[appConf.roCrate.info.authorName]" :key="name" class="tag-link">
+            <span v-if="itemInfo.hasOwnProperty(appConf.roCrate.root.authorName)" class="data-author">
+              <span v-for="name in itemInfo[appConf.roCrate.root.authorName]" :key="name" class="tag-link">
                 <a @click="emits('clickCreater')">
                   {{ name }}
                 </a>
@@ -106,16 +109,16 @@
           <!-- ヒト/動物/その他 -->
           <p class="data-note">
             {{ $t('classification') + '：' }}
-            <span v-if="itemInfo.hasOwnProperty(appConf.roCrate.info.target)" class="font-medium">
-              {{ itemInfo[appConf.roCrate.info.target][0] }}
+            <span v-if="itemInfo.hasOwnProperty(appConf.roCrate.root.target)" class="font-medium">
+              {{ itemInfo[appConf.roCrate.root.target][0] }}
             </span>
             <span v-else>undefined</span>
           </p>
           <!-- アクセス権 -->
           <p class="data-note access-type">
             {{ $t('authority') + '：' }}
-            <span v-if="itemInfo.hasOwnProperty(appConf.roCrate.info.accessMode)">
-              {{ itemInfo[appConf.roCrate.info.accessMode][0] }}
+            <span v-if="itemInfo.hasOwnProperty(appConf.roCrate.root.accessMode)">
+              {{ itemInfo[appConf.roCrate.root.accessMode][0] }}
             </span>
             <span v-else>undefined</span>
           </p>
@@ -127,16 +130,16 @@
                 {{ $t('unexist') }}
               </NuxtLink>
               <NuxtLink v-else class="underline text-miby-link-blue" :to="`/files?number=${itemId}`">
-                {{ $t('exist') + `（${itemInfo.mainEntity.length}）` }}
+                {{ $t('exist') + `（${getFileLength(itemInfo.mainEntity)}）` }}
               </NuxtLink>
             </span>
           </p>
         </div>
         <!-- キーワード -->
         <div class="data-tags mt-1">
-          <span v-if="itemInfo.hasOwnProperty(appConf.roCrate.info.keywords)">
+          <span v-if="itemInfo.hasOwnProperty(appConf.roCrate.root.keywords)">
             <span
-              v-for="keyword in String(itemInfo[appConf.roCrate.info.keywords]).split(',')"
+              v-for="keyword in String(itemInfo[appConf.roCrate.root.keywords]).split(',')"
               :key="keyword"
               class="tag-link">
               <span class="hover:cursor-pointer">
@@ -182,11 +185,34 @@ const appConf = useAppConfig();
 const itemInfo = Object.prototype.hasOwnProperty.call(props.item, 'rocrate')
   ? getContentById(props.item.rocrate, './')
   : {};
-const thumbnailName = Object.prototype.hasOwnProperty.call(itemInfo, appConf.roCrate.info.thumbnail)
-  ? itemInfo[appConf.roCrate.info.thumbnail][0]
+const thumbnailName = Object.prototype.hasOwnProperty.call(itemInfo, appConf.roCrate.root.thumbnail)
+  ? itemInfo[appConf.roCrate.root.thumbnail][0]
   : '';
 const loading = ref(true);
 const thumbnailPath = ref('/img/noimage_thumbnail.jpg');
+
+/* ///////////////////////////////////
+// function
+/////////////////////////////////// */
+
+/**
+ * RO-Crateレスポンスからファイル数を取得
+ * @param fileList アイテムに紐づくファイル
+ */
+function getFileLength(fileList: any[]) {
+  const tmpList = [];
+
+  for (const element of fileList) {
+    const value = getContentById(props.item.rocrate, element['@id']);
+    // NOTE: ロール制御が出来ないので下記のアクセス種別のファイルのみ表示している
+    if (value.accessMode !== 'open_no') {
+      // @ts-ignore
+      tmpList.push(value);
+    }
+  }
+
+  return tmpList.length;
+}
 
 /* ///////////////////////////////////
 // life cycle

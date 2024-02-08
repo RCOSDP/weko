@@ -56,6 +56,12 @@ function searchFromItem(indexId: string) {
   if (sessionStorage.getItem('conditions')) {
     // @ts-ignore
     const sessConditions = JSON.parse(sessionStorage.getItem('conditions'));
+    // 詳細検索条件が設定されている場合は削除
+    if (Object.prototype.hasOwnProperty.call(sessConditions, 'detail')) {
+      delete sessConditions.detail;
+      delete sessConditions.detailData;
+    }
+    // 検索条件設定
     Object.assign(sessConditions, conditions);
     sessionStorage.setItem('conditions', JSON.stringify(sessConditions));
   } else {

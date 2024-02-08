@@ -47,7 +47,6 @@
           <Conditions
             :displayType="displayType"
             :conditions="conditions"
-            :detailConditions="detailConditions"
             @click-per-page="setPerPage"
             @click-display-type="setDisplayType"
             @click-sort="setSort"
@@ -56,13 +55,16 @@
           <div class="p-5 bg-miby-bg-gray">
             <div class="flex justify-end">
               <!-- 全件マイリスト -->
-              <a class="pl-1.5 md:pl-0" href="#">
+              <!-- <a class="pl-1.5 md:pl-0">
                 <span class="underline text-sm text-miby-link-blue pr-1 mr-3">
                   {{ $t('searchMylistAll') }}
                 </span>
-              </a>
+              </a> -->
               <!-- 全件ダウンロード -->
-              <a class="pl-1.5 md:pl-0 icons icon-download after" href="#">
+              <a
+                v-if="total"
+                class="pl-1.5 md:pl-0 icons icon-download after cursor-pointer"
+                @click="downlaodResultList">
                 <span class="underline text-sm text-miby-link-blue pr-1">
                   {{ $t('searchDownloadAll') }}
                 </span>
@@ -77,7 +79,7 @@
                 <p class="icons-type icon-group">
                   <span>{{ $t('openGroup') }}</span>
                 </p>
-                <p class="icons-type icon-unshared">
+                <p class="icons-type icon-member">
                   <span>{{ $t('openPrivate') }}</span>
                 </p>
                 <p class="icons-type icon-private">
@@ -90,11 +92,7 @@
               <span class="loading loading-bars loading-lg" />
             </div>
             <!-- 検索結果 -->
-            <SearchResult
-              v-if="renderFlag"
-              :displayType="displayType"
-              :searchResult="searchResult"
-              @click-creater="openCreaterModal" />
+            <SearchResult v-if="renderFlag" :displayType="displayType" :searchResult="searchResult" />
             <!-- ページネーション -->
             <div class="max-w-[300px] mx-auto mt-3.5 mb-16">
               <Pagination
@@ -121,6 +119,7 @@
 </template>
 
 <script lang="ts" setup>
+import ResultJson from '~/assets/data/searchResult.json';
 import Alert from '~/components/common/Alert.vue';
 import Pagination from '~/components/common/Pagination.vue';
 import SearchForm from '~/components/common/SearchForm.vue';
@@ -147,12 +146,9 @@ const conditions = reactive({
   currentPage: '1',
   perPage: '20',
   sort: 'wtl',
-  order: 'asc'
-});
-const detailConditions = reactive({
-  typePublic: [],
-  typeDownload: [],
-  field: []
+  order: 'asc',
+  detail: {},
+  detailData: {}
 });
 const displayType = ref('summary');
 const total = ref('');
@@ -176,6 +172,18 @@ const alertCode = ref(0);
 async function search() {
   setConditions();
   let statusCode = 0;
+
+  const params = {
+    q: conditions.keyword,
+    search_type: conditions.type,
+    page: conditions.currentPage,
+    size: conditions.perPage,
+    sort: conditions.order === 'asc' ? conditions.sort : '-' + conditions.sort
+  };
+  if (conditions.detail) {
+    Object.assign(params, conditions.detail);
+  }
+
   await $fetch(useAppConfig().wekoApi + '/records', {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'GET',
@@ -185,13 +193,7 @@ async function search() {
       'Accept-Language': localStorage.getItem('locale') ?? 'ja',
       Authorization: localStorage.getItem('token:type') + ' ' + localStorage.getItem('token:access')
     },
-    params: {
-      q: conditions.keyword,
-      search_type: conditions.type,
-      page: conditions.currentPage,
-      size: conditions.perPage,
-      sort: conditions.order === 'asc' ? conditions.sort : '-' + conditions.sort
-    },
+    params,
     onResponse({ response }) {
       if (response.status === 200) {
         searchResult.value = response._data.search_results;
@@ -280,6 +282,69 @@ async function getParentIndex() {
 }
 
 /**
+ * 検索結果一覧ダウンロード
+ */
+async function downlaodResultList() {
+  let statusCode = 0;
+
+  const params = {
+    q: conditions.keyword,
+    search_type: conditions.type,
+    sort: conditions.order === 'asc' ? conditions.sort : '-' + conditions.sort
+  };
+  if (conditions.detail) {
+    Object.assign(params, conditions.detail);
+  }
+
+  await $fetch(useAppConfig().wekoApi + '/records/list', {
+    timeout: useRuntimeConfig().public.apiTimeout,
+    method: 'POST',
+    headers: {
+      'Cache-Control': 'no-store',
+      Pragma: 'no-cache',
+      'Accept-Language': localStorage.getItem('locale') ?? 'ja',
+      Authorization: localStorage.getItem('token:type') + ' ' + localStorage.getItem('token:access')
+    },
+    params,
+    body: ResultJson,
+    onResponse({ response }) {
+      if (response.status === 200) {
+        const a = document.createElement('a');
+        a.href = window.URL.createObjectURL(new Blob([response._data]));
+        a.setAttribute('download', 'result_list.tsv');
+        a.click();
+        a.remove();
+      }
+    },
+    onResponseError({ response }) {
+      alertCode.value = 0;
+      statusCode = response.status;
+      if (statusCode === 401) {
+        // 認証エラー
+        alertMessage.value = 'message.error.auth';
+      } else if (statusCode >= 500 && statusCode < 600) {
+        // サーバーエラー
+        alertMessage.value = 'message.error.server';
+        alertCode.value = statusCode;
+      } else {
+        // リクエストエラー
+        alertMessage.value = 'message.error.downloadResult';
+        alertCode.value = statusCode;
+      }
+      alertType.value = 'error';
+      visibleAlert.value = true;
+    }
+  }).catch(() => {
+    if (statusCode === 0) {
+      // fetchエラー
+      alertMessage.value = 'message.error.fetchError';
+      alertType.value = 'error';
+      visibleAlert.value = true;
+    }
+  });
+}
+
+/**
  * 再レンダリング
  */
 async function renderResult() {
@@ -297,9 +362,7 @@ async function renderResult() {
  * 検索ページ上での検索時イベント
  */
 function reSearch() {
-  setConditions();
   conditions.currentPage = '1';
-  sessionStorage.setItem('conditions', JSON.stringify(conditions));
   navigateTo('/search');
 }
 
@@ -362,11 +425,13 @@ function setConditions() {
     // @ts-ignore
     const json = JSON.parse(sessionStorage.getItem('conditions'));
     conditions.type = json.type ?? '0';
-    conditions.keyword = json.keyword ?? '';
+    conditions.keyword = String(useRoute().params.id) ?? '';
     conditions.currentPage = json.currentPage ?? '1';
     conditions.perPage = json.perPage ?? '20';
     conditions.sort = json.sort ?? 'wtl';
     conditions.order = json.order ?? 'asc';
+    conditions.detail = json.detail ?? {};
+    conditions.detailData = json.detailData ?? {};
   }
 }
 

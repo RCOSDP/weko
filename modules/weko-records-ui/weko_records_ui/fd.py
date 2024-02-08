@@ -20,11 +20,16 @@
 
 """Utilities for download file."""
 
+from datetime import datetime
 import mimetypes
+import os
+import shutil
+import tempfile
 import unicodedata
 
-from flask import abort, current_app, render_template, request
+from flask import abort, current_app, render_template, request, send_file
 from flask_babelex import gettext as _
+from flask_babelex import get_locale
 from flask_login import current_user
 from invenio_db import db
 from invenio_files_rest import signals
@@ -37,13 +42,14 @@ from weko_accounts.views import _redirect_method
 from weko_deposit.api import WekoRecord
 from weko_groups.api import Group
 from weko_records.api import FilesMetadata, ItemTypes
+from weko_records_ui.errors import AvailableFilesNotFoundRESTError
 from weko_user_profiles.models import UserProfile
 from werkzeug.datastructures import Headers
 from werkzeug.urls import url_quote
 
 from .models import PDFCoverPageSettings
 from .pdf import make_combined_pdf
-from .permissions import check_original_pdf_download_permission, \
+from .permissions import check_file_download_permission, check_original_pdf_download_permission, \
     file_permission_factory
 from .utils import check_and_create_usage_report, \
     check_and_send_usage_report, get_billing_file_download_permission, \
@@ -475,3 +481,61 @@ def file_download_onetime(pid, record, _record_file_factory=None, **kwargs):
 
     return _download_file(file_object, False, 'en', file_object.obj, pid,
                           record)
+
+
+def file_list_ui(record, files):
+    """File List Ui.
+
+    :param record: All metadata of a record.
+    :param files: File metadata list(only attribute_type "file").
+    """
+    if not files:
+        abort(404)
+
+    # Language setting
+    from weko_user_profiles.config import USERPROFILES_LANGUAGE_LIST
+    language = request.headers.get('Accept-Language')
+    if not language in [lang[0] for lang in USERPROFILES_LANGUAGE_LIST[1:]]:
+        language = 'en'
+    get_locale().language = language
+
+    item_title = record.get_titles
+
+    temp_path = tempfile.TemporaryDirectory(
+        prefix=current_app.config.get('WEKO_RECORDS_UI_FILELIST_TMP_PREFIX'))
+
+    # Set export folder
+    export_path = temp_path.name + '/' + datetime.utcnow().strftime("%Y%m%d%H%M%S")
+    files_export_path = export_path + '/data'
+    os.makedirs(files_export_path)
+
+    # Exclude thumbnails
+    filenames = [f.get('filename') for f in files]
+    target_files = [f for f in record.files if f.info().get('filename') in filenames]
+
+    # Export files
+    available_files = []
+    for file in target_files:
+        if check_file_download_permission(record, file.info()):
+            available_files.append(file)
+            file_buffered = file.obj.file.storage().open()
+            temp_file = open(
+                files_export_path + '/' + file.obj.basename, 'wb')
+            temp_file.write(file_buffered.read())
+            temp_file.close()
+    if not available_files:
+        raise AvailableFilesNotFoundRESTError()
+
+    # Create TSV file
+    from .utils import create_tsv
+    with open(f'{export_path}/file_list.tsv', 'w', encoding="utf-8") as tsv_file:
+        tsv_file.write(create_tsv(available_files, language).getvalue())
+
+    # Create download file
+    shutil.make_archive(export_path, 'zip', export_path)
+
+    return send_file(
+        export_path + '.zip',
+        as_attachment=True,
+        attachment_filename=item_title + '.zip'
+    )

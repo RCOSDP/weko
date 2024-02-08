@@ -24,9 +24,10 @@ import json
 import re
 import traceback
 from flask import Blueprint, current_app, jsonify, make_response, request, Response
-from flask_babelex import get_locale as get_current_locale
+from flask_babelex import get_locale
 from flask_babelex import gettext as _
 from werkzeug.http import generate_etag
+from redis import RedisError
 from invenio_oauth2server import require_api_auth, require_oauth_scopes
 from invenio_pidstore.errors import PIDInvalidAction, PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier
@@ -41,14 +42,17 @@ from invenio_rest.errors import SameContentException
 from invenio_db import db
 from invenio_rest.views import create_api_errorhandler
 from invenio_stats.views import QueryRecordViewCount, QueryFileStatsCount
+from sqlalchemy.exc import SQLAlchemyError
 from weko_deposit.api import WekoRecord
 from weko_records.serializers import citeproc_v1
+from weko_records_ui.api import create_captcha_image, send_request_mail, validate_captcha_answer
 from weko_items_ui.scopes import item_read_scope
+from weko_workflow.utils import  check_pretty
 
 from .views import escape_str
 from .permissions import page_permission_factory, file_permission_factory
-from .errors import VersionNotFoundRESTError, InternalServerError, \
-    RecordsNotFoundRESTError, PermissionError, DateFormatRESTError, FilesNotFoundRESTError, ModeNotFoundRESTError
+from .errors import AvailableFilesNotFoundRESTError, ContentsNotFoundError, InvalidRequestError, VersionNotFoundRESTError, InternalServerError, \
+    RecordsNotFoundRESTError, PermissionError, DateFormatRESTError, FilesNotFoundRESTError, ModeNotFoundRESTError, RequiredItemNotExistError
 from .scopes import file_read_scope
 from .utils import create_limmiter
 
@@ -62,8 +66,65 @@ def create_error_handlers(blueprint):
     ))
     records_rest_error_handlers(blueprint)
 
-
 def create_blueprint(endpoints):
+    """
+    Create Weko-Records-ui-REST blueprint.
+    See: :data:`weko_records_ui.config.WEKO_RECORDS_UI_REST_ENDPOINTS`.
+
+    :param endpoints: List of endpoints configuration.
+    :returns: The configured blueprint.
+    """
+    blueprint = Blueprint(
+        'weko_records_ui_rest',
+        __name__,
+        url_prefix='',
+    )
+
+    @blueprint.teardown_request
+    def dbsession_clean(exception):
+        current_app.logger.debug("weko_records_ui dbsession_clean: {}".format(exception))
+        if exception is None:
+            try:
+                db.session.commit()
+            except:
+                db.session.rollback()
+        db.session.remove()
+
+    for endpoint, options in (endpoints or {}).items():
+        if endpoint == 'send_request_mail':
+            view_func = RequestMail.as_view(
+                RequestMail.view_name.format(endpoint),
+                default_media_type=options.get('default_media_type'),
+            )
+            blueprint.add_url_rule(
+                options.get('route'),
+                view_func=view_func,
+                methods=['POST'],
+            )
+        if endpoint == 'get_captcha_image':
+            view_func = CreateCaptchaImage.as_view(
+                CreateCaptchaImage.view_name.format(endpoint),
+                default_media_type=options.get('default_media_type'),
+            )
+            blueprint.add_url_rule(
+                options.get('route'),
+                view_func=view_func,
+                methods=['GET'],
+            )
+        if endpoint == 'validate_captcha_answer':
+            view_func = CaptchaAnswerValidation.as_view(
+                CaptchaAnswerValidation.view_name.format(endpoint),
+                default_media_type=options.get('default_media_type'),
+            )
+            blueprint.add_url_rule(
+                options.get('route'),
+                view_func=view_func,
+                methods=['POST'],
+            )
+
+    return blueprint
+
+def create_blueprint_cites(endpoints):
     """Create Weko-Records-UI-Cites-REST blueprint.
 
     See: :data:`invenio_deposit.config.DEPOSIT_REST_ENDPOINTS`.
@@ -177,6 +238,28 @@ def create_blueprint(endpoints):
             view_func=wfg,
             methods=['GET'],
         )
+        wflga = WekoFileListGetAll.as_view(
+            WekoFileListGetAll.view_name.format(endpoint),
+            serializers=serializers,
+            ctx=ctx,
+            default_media_type=options.get('default_media_type'),
+        )
+        blueprint.add_url_rule(
+            options.get('file_list_get_all_route'),
+            view_func=wflga,
+            methods=['GET'],
+        )
+        wflgs = WekoFileListGetSelected.as_view(
+            WekoFileListGetSelected.view_name.format(endpoint),
+            serializers=serializers,
+            ctx=ctx,
+            default_media_type=options.get('default_media_type'),
+        )
+        blueprint.add_url_rule(
+            options.get('file_list_get_selected_route'),
+            view_func=wflgs,
+            methods=['POST'],
+        )
     return blueprint
 
 
@@ -247,7 +330,7 @@ class WekoRecordsResource(ContentNegotiatedMethodView):
             # Language setting
             language = request.headers.get('Accept-Language')
             if language == 'ja':
-                get_current_locale().language = language
+                get_locale().language = language
             elif language is None:
                 language = 'en'
 
@@ -550,7 +633,7 @@ class WekoFilesStats(ContentNegotiatedMethodView):
                 date = date.group()
 
             query_record_stats = QueryFileStatsCount()
-            result = query_record_stats.get_data(pid.object_uuid, kwargs.get('filename'), date)
+            result = query_record_stats.get_data(record.get('_buckets', {}).get('deposit'), kwargs.get('filename'), date)
             if date:
                 result['period'] = date
             else:
@@ -680,3 +763,311 @@ class WekoFilesGet(ContentNegotiatedMethodView):
         except Exception:
             current_app.logger.error(traceback.print_exc())
             raise InternalServerError()
+
+class WekoFileListGetAll(ContentNegotiatedMethodView):
+    """Schema files resource."""
+
+    view_name = '{0}_get_all_file_list'
+
+    def __init__(self, serializers, ctx, *args, **kwargs):
+        """Constructor."""
+        super(WekoFileListGetAll, self).__init__(
+            serializers,
+            *args,
+            **kwargs
+        )
+        for key, value in ctx.items():
+            setattr(self, key, value)
+
+    @require_api_auth(allow_anonymous=True)
+    @require_oauth_scopes(file_read_scope.id)
+    @limiter.limit('')
+    def get(self, **kwargs):
+        """Get file."""
+        version = kwargs.get('version')
+        func_name = f'get_{version}'
+        if func_name in [func[0] for func in inspect.getmembers(self, inspect.ismethod)]:
+            return getattr(self, func_name)(**kwargs)
+        else:
+            raise VersionNotFoundRESTError()
+
+    def get_v1(self, **kwargs):
+        try:
+            from weko_items_ui.config import WEKO_ITEMS_UI_MS_MIME_TYPE, WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT
+
+            # Get record
+            pid = PersistentIdentifier.get('recid', kwargs.get('pid_value'))
+            record = WekoRecord.get_record(pid.object_uuid)
+            files = record.get_file_data()
+
+            # Check record permission
+            if not page_permission_factory(record).can():
+                raise PermissionError()
+
+            if not files:
+                raise FilesNotFoundRESTError()
+
+            # Get File Request
+            current_app.config['WEKO_ITEMS_UI_MS_MIME_TYPE'] = WEKO_ITEMS_UI_MS_MIME_TYPE
+            current_app.config['WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT'] = WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT
+            from .fd import file_list_ui
+            dl_response = file_list_ui(record, files)
+
+            # Check Etag
+            hash_str = str(record) + record.get_titles
+            etag = generate_etag(hash_str.encode('utf-8'))
+            self.check_etag(etag, weak=True)
+
+            # Check Last-Modified
+            last_modified = record.model.updated
+            if not request.if_none_match:
+                self.check_if_modified_since(dt=last_modified)
+
+            # Response Header Setting
+            dl_response.set_etag(etag)
+            dl_response.last_modified = last_modified
+
+            return dl_response
+
+        except (ModeNotFoundRESTError, FilesNotFoundRESTError, PermissionError, SameContentException) as e:
+            raise e
+
+        except PIDDoesNotExistError:
+            raise RecordsNotFoundRESTError()
+
+        except Exception:
+            current_app.logger.error(traceback.print_exc())
+            raise InternalServerError()
+
+
+class WekoFileListGetSelected(ContentNegotiatedMethodView):
+    """Schema files resource."""
+
+    view_name = '{0}_get_selected_file_list'
+
+    def __init__(self, serializers, ctx, *args, **kwargs):
+        """Constructor."""
+        super(WekoFileListGetSelected, self).__init__(
+            serializers,
+            *args,
+            **kwargs
+        )
+        for key, value in ctx.items():
+            setattr(self, key, value)
+
+    @require_api_auth(allow_anonymous=True)
+    @require_oauth_scopes(file_read_scope.id)
+    @limiter.limit('')
+    def post(self, **kwargs):
+        """Get file."""
+        version = kwargs.get('version')
+        func_name = f'post_{version}'
+        if func_name in [func[0] for func in inspect.getmembers(self, inspect.ismethod)]:
+            return getattr(self, func_name)(**kwargs)
+        else:
+            raise VersionNotFoundRESTError()
+
+    def post_v1(self, **kwargs):
+        try:
+            from weko_items_ui.config import WEKO_ITEMS_UI_MS_MIME_TYPE, WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT
+
+            # Get record
+            pid = PersistentIdentifier.get('recid', kwargs.get('pid_value'))
+            record = WekoRecord.get_record(pid.object_uuid)
+
+            # Get selected files
+            try:
+                filenames = request.json.get("filenames")
+            except:
+                raise InvalidRequestError()
+            if not filenames:
+                raise InvalidRequestError()
+            files = [r for r in record.get_file_data() if r.get('filename') in filenames]
+
+            # Check record permission
+            if not page_permission_factory(record).can():
+                raise PermissionError()
+
+            if not files:
+                raise FilesNotFoundRESTError()
+
+            # Get File Request
+            current_app.config['WEKO_ITEMS_UI_MS_MIME_TYPE'] = WEKO_ITEMS_UI_MS_MIME_TYPE
+            current_app.config['WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT'] = WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT
+            from .fd import file_list_ui
+            dl_response = file_list_ui(record, files)
+
+            # Check Etag
+            hash_str = str(record) + ''.join(filenames)
+            etag = generate_etag(hash_str.encode('utf-8'))
+            self.check_etag(etag, weak=True)
+
+            # Check Last-Modified
+            last_modified = record.model.updated
+            if not request.if_none_match:
+                self.check_if_modified_since(dt=last_modified)
+
+            # Response Header Setting
+            dl_response.set_etag(etag)
+            dl_response.last_modified = last_modified
+
+            return dl_response
+
+        except (ModeNotFoundRESTError, FilesNotFoundRESTError, PermissionError,
+                SameContentException, InvalidRequestError, AvailableFilesNotFoundRESTError) as e:
+            raise e
+
+        except PIDDoesNotExistError:
+            raise RecordsNotFoundRESTError()
+
+        except Exception:
+            current_app.logger.error(traceback.print_exc())
+            raise InternalServerError()
+
+class RequestMail(ContentNegotiatedMethodView):
+    view_name = 'records_ui_{0}'
+
+    def __init__(self, *args, **kwargs):
+        """Constructor."""
+        super(RequestMail, self).__init__(*args, **kwargs)
+
+    @limiter.limit('')
+    def post(self, **kwargs):
+        """
+        Post file application.
+
+        Returns:
+            Result json.
+        """
+        version = kwargs.get('version')
+        func_name = f'post_{version}'
+        if func_name in [func[0] for func in inspect.getmembers(self, inspect.ismethod)]:
+            return getattr(self, func_name)(**kwargs)
+        else:
+            raise VersionNotFoundRESTError() # 400 Error
+
+    def post_v1(self, **kwargs):
+        # Get parameter
+        language = str(request.headers.get('Accept-Language', 'en'))
+        param_pretty = str(request.values.get('pretty', 'false'))
+
+        # Check pretty
+        check_pretty(param_pretty)
+
+        # Setting language
+        if language in current_app.config.get('WEKO_RECORDS_UI_API_ACCEPT_LANGUAGES'):
+            get_locale().language = language
+
+        # Get record
+        pid_value = kwargs.get('pid_value')
+        pid = PersistentIdentifier.query.filter_by(
+            pid_type='recid', pid_value=str(pid_value)).first()
+        if not pid:
+            raise ContentsNotFoundError() # 404 Error
+
+        # Get request mail senders
+        request_body = request.get_json(force=True, silent=True)
+        msg_sender = request_body.get('from')
+        if not msg_sender:
+            raise RequiredItemNotExistError() # 400 Error
+
+        try:
+            __, res_json = send_request_mail(pid.object_uuid, request_body)
+        except SQLAlchemyError as ex:
+            current_app.logger.exception('DB access Error')
+            raise InternalServerError()
+
+        response = make_response(jsonify(res_json), 200)
+        return response
+
+class CreateCaptchaImage(ContentNegotiatedMethodView):
+    view_name = 'records_ui_{0}'
+
+    def __init__(self, *args, **kwargs):
+        """Constructor."""
+        super(CreateCaptchaImage, self).__init__(*args, **kwargs)
+
+    @limiter.limit('')
+    def get(self, **kwargs):
+        """
+        Post file application.
+
+        Returns:
+            Result json.
+        """
+        version = kwargs.get('version')
+        func_name = f'get_{version}'
+        if func_name in [func[0] for func in inspect.getmembers(self, inspect.ismethod)]:
+            return getattr(self, func_name)(**kwargs)
+        else:
+            raise VersionNotFoundRESTError() # 404 Error
+
+    def get_v1(self, **kwargs):
+        # Get parameter
+        language = str(request.headers.get('Accept-Language', 'en'))
+        param_pretty = str(request.values.get('pretty', 'false'))
+
+        # Check pretty
+        check_pretty(param_pretty)
+
+        # Setting language
+        if language in current_app.config.get('WEKO_RECORDS_UI_API_ACCEPT_LANGUAGES'):
+            get_locale().language = language
+
+        # Generate CAPTCHA image
+        result, res_json = create_captcha_image()
+
+        if not result:
+            current_app.logger.error(res_json)
+            raise InternalServerError()
+
+        response = make_response(jsonify(res_json), 200)
+        return response
+
+
+class CaptchaAnswerValidation(ContentNegotiatedMethodView):
+
+    view_name = 'records_ui_{0}'
+
+    def __init__(self, *args, **kwargs):
+        """Constructor."""
+        super(CaptchaAnswerValidation, self).__init__(*args, **kwargs)
+
+    @limiter.limit('')
+    def post(self, **kwargs):
+        """
+        Post file application.
+
+        Returns:
+            Result json.
+        """
+        version = kwargs.get('version')
+        func_name = f'post_{version}'
+        if func_name in [func[0] for func in inspect.getmembers(self, inspect.ismethod)]:
+            return getattr(self, func_name)(**kwargs)
+        else:
+            raise VersionNotFoundRESTError() # 400 Error
+
+    def post_v1(self, **kwargs):
+        # Get parameter
+        language = str(request.headers.get('Accept-Language', 'en'))
+        param_pretty = str(request.values.get('pretty', 'false'))
+
+        # Check pretty
+        check_pretty(param_pretty)
+
+        # Setting language
+        if language in current_app.config.get('WEKO_RECORDS_UI_API_ACCEPT_LANGUAGES'):
+            get_locale().language = language
+
+        # Get request mail senders
+        request_body = request.get_json(force=True, silent=True)
+
+        try:
+            __, res_json = validate_captcha_answer(request_body)
+        except RedisError as ex:
+            current_app.logger.exception('Redis access Error')
+            raise InternalServerError()
+
+        response = make_response(jsonify(res_json), 200)
+        return response

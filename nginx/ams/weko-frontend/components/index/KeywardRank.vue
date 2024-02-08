@@ -1,8 +1,5 @@
 <template>
   <div class="w-full">
-    <div class="bg-miby-light-blue w-full">
-      <p class="text-white leading-[43px] pl-5 icons icon-rank font-bold">{{ $t('indexRank') }}</p>
-    </div>
     <div class="bg-miby-bg-gray p-5 w-full md:flex md:gap-5">
       <ul class="w-full md:w-1/2">
         <li class="flex items-center mb-1.5">

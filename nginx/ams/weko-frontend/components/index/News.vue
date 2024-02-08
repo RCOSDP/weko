@@ -1,10 +1,5 @@
 <template>
   <div class="w-full">
-    <div class="bg-miby-light-blue w-full">
-      <p class="text-white leading-[43px] pl-5 icons icon-news font-bold">
-        {{ $t('indexLatestInfo') }}
-      </p>
-    </div>
     <div class="bg-miby-bg-gray">
       <div class="border-b border-dashed border-miby-border-gray p-5">
         <div class="flex mb-1.5">
