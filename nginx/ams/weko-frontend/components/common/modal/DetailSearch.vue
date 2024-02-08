@@ -37,9 +37,9 @@
               </label>
             </div>
             <!-- マイリスト -->
-            <button id="addMyList" class="text-miby-blue text-sm" disabled>
+            <!-- <button id="addMyList" class="text-miby-blue text-sm" disabled>
               <span class="icons icon-mylist-b align-middle text-miby-link-blue">{{ $t('myList') }}</span>
-            </button>
+            </button> -->
           </div>
           <div class="mb-8">
             <!-- 検索ワード入力フォーム -->

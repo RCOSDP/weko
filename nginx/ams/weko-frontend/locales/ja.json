@@ -1,6 +1,8 @@
 {
   "serviceName": "未病データベースタイトル",
   "catchCopy": "＆キャッチコピー",
+  "totalDataset": "データセット",
+  "totalJournalArticle": "学術雑誌論文",
   "totalAuthor": "著者数",
   "indexLatestInfo": "お知らせ",
   "indexLatestItem": "最新情報",

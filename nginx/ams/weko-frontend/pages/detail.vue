@@ -562,7 +562,7 @@ function setConditions(sess: string): boolean {
     conditions.keyword = '';
     conditions.currentPage = '1';
     conditions.perPage = '20';
-    conditions.sort = 'createdate';
+    conditions.sort = 'publish_date';
     conditions.order = 'desc';
   } else if (sess === 'search') {
     if (!sessionStorage.getItem('conditions')) {
