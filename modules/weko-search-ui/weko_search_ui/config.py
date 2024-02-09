@@ -342,7 +342,7 @@ WEKO_SEARCH_KEYWORDS_DICT = {
                 "ara",
                 "ell",
                 "kor",
-                "-",
+                "other"
             ]
         },
         "srctitle": ["sourceTitle", "sourceTitle.ja"],
