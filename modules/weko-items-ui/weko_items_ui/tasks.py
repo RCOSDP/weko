@@ -250,7 +250,6 @@ def build_achievement(record,item,recid,mapping,jrc, achievement_type):
         elif  rm_map['type'] == 'simple':
             value = jrc.get(rm_map["weko_name"])
             return_data.update({rm_map["rm_name"]:value})
-            # print(jrc.get(rm_map["weko_name"]))
 
         elif rm_map['type'] == 'simple_value':
             value = jrc.get(rm_map["weko_name"])[0].get('value')
@@ -261,7 +260,7 @@ def build_achievement(record,item,recid,mapping,jrc, achievement_type):
             for relatedIdentifier in jrc.get(rm_map["weko_name"]).get('relatedIdentifier'):
                 identifierType =relatedIdentifier.get('identifierType')
                 if identifierType.upper() == "DOI" or identifierType.upper() == "ISBN" :
-                    ## DOI and ISBN only sendable. 他の項目はresearchmapのAPI定義上更新不可のため。
+                    ## DOI and ISBN only sendable. 他の項目はresearchmapのAPI定義上更新不可。
                     value = jrc.get(rm_map["weko_name"]).get('relatedIdentifier')[0].get('value')
                     identifer_kv = {identifierType.lower():value}
                 return_data.update({rm_map["rm_name"]:identifer_kv})
@@ -287,18 +286,31 @@ def build_achievement(record,item,recid,mapping,jrc, achievement_type):
                     current_app.logger.debug(record.get(parent_key))
                     for record_child_node in record.get(parent_key).get('attribute_value_mlt'):
 
-                        # FIXME!
-                        value = record_child_node.get(value_path.split('.')[0])[0].get(value_path.split('.')[1])
-                        lang = record_child_node.get(lang_path.split('.')[0])[0].get(lang_path.split('.')[1])
-                        current_app.logger.debug(value_path)
-                        current_app.logger.debug(value)
-                        current_app.logger.debug(lang_path)
-                        current_app.logger.debug(lang)
-                        if lang == "en" :
-                            en_list.append({"name":value})
-                        
-                        elif lang == "ja":
-                            ja_list.append({"name":value})
+                        def __dive( value_path, lang_path ,value_record_child_node,lang_record_child_node , path_depth_index = 0):
+                            current_app.logger.debug(path_depth_index)
+                            # finish
+                            if isinstance(value_record_child_node ,str ):
+                                lang = lang_record_child_node
+                                value = value_record_child_node
+                                if lang == "en" :
+                                    en_list.append({"name":value})
+                                elif lang == "ja":
+                                    ja_list.append({"name":value})
+                            else:
+                                if isinstance(value_record_child_node ,dict ):
+                                    value_record_child_node = value_record_child_node.get(value_path.split('.')[path_depth_index])
+                                    lang_record_child_node = lang_record_child_node.get(lang_path.split('.')[path_depth_index])
+                                    # dive into deeper depth
+                                    path_depth_index = path_depth_index + 1
+                                    __dive( value_path, lang_path ,value_record_child_node,lang_record_child_node , path_depth_index)
+
+                                elif isinstance(value_record_child_node ,list ):
+                                    for index in range(len(value_record_child_node)):
+                                        # dive into deeper depth
+                                        __dive( value_path, lang_path ,value_record_child_node[index],lang_record_child_node[index] , path_depth_index)
+
+                        # execute
+                        __dive( value_path, lang_path ,record_child_node,record_child_node)
                     if len(en_list) > 0:
                         langs_dict.update({"en":en_list})
                     if len(ja_list) > 0:

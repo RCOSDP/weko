@@ -18,7 +18,7 @@ from weko_accounts.utils import login_required_customize
 from weko_admin.utils import get_current_api_certification
 from weko_items_ui.signals import cris_researchmap_linkage_request
 
-from .utils import get_cinii_record_data, get_crossref_record_data, get_reserchmapid_record_data, \
+from .utils import get_cinii_record_data, get_crossref_record_data, get_researchmapid_record_data, \
     get_title_pubdate_path, get_wekoid_record_data, get_workflow_journal
 
 blueprint = Blueprint(
@@ -114,8 +114,8 @@ def get_auto_fill_record_data():
                 search_data, item_type_id)
         elif api_type == 'researchmap':
             # FIXME!
-            cris_researchmap_linkage_request.send('1a2e300d-e11e-4d96-8c61-56ddd8aeb057')
-            result['result'] = get_reserchmapid_record_data(
+            # cris_researchmap_linkage_request.send('0dc788fc-6524-46af-b396-d7ae9220ff8e')
+            result['result'] = get_researchmapid_record_data(
                 parmalink, achievement_type ,achievement_id , item_type_id)
         else:
             result['error'] = api_type + ' is NOT support autofill feature.'
