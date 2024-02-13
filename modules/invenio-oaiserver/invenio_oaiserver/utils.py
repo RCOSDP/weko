@@ -236,14 +236,22 @@ def get_index_state():
     return index_state
 
 
-def is_output_harvest(path_list, index_state):
+def is_output_harvest(path_list):
     def _check(index_id):
-        if index_id in index_state:
-            if not index_state[index_id]['parent'] \
-                    or index_state[index_id]['parent'] == '0':
-                return index_state[index_id]['msg']
+        _idx = Indexes.get_index(index_id)
+        if _idx:
+            if not _idx.parent or _idx.parent == '0':
+                if not _idx.harvest_public_state:
+                    return HARVEST_PRIVATE
+                elif '-99' not in _idx.browsing_role \
+                        or not _idx.public_state \
+                        or (_idx.public_date and
+                            _idx.public_date > datetime.utcnow()):
+                    return PRIVATE_INDEX
+                else:
+                    return OUTPUT_HARVEST
             else:
-                return _check(index_state[index_id]['parent'])
+                return _check(_idx.parent)
         else:
             return HARVEST_PRIVATE
 
