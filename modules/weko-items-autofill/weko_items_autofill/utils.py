@@ -1345,26 +1345,13 @@ def get_researchmapid_record_data(parmalink, achievement_type ,achievement_id ,i
     """
 
     api_data = {}
-    researchmap_mappings = [
-                { 'type' : 'lang' , "rm_name" : 'paper_title', "jpcore_name" : 'dc:title' , "weko_name" :"title"}
-                ,{'type' : 'lang' , "rm_name" : 'description', "jpcore_name" : 'datacite:description' , "weko_name" :"description"}
-                ,{'type' : 'lang' , "rm_name" : 'publisher', "jpcore_name" : 'dc:publisher' , "weko_name" :"publisher"}
-                ,{'type' : 'lang' , "rm_name" : 'publication_name ', "jpcore_name" : 'jpcoar:sourceTitle' , "weko_name" :"sourceTitle"}
-                ,{'type' : 'authors'    , "rm_name" : 'authors'     , "jpcore_name" : 'jpcoar:creator'  ,"weko_name": 'creator'}
-                ,{'type' : 'identifiers', "rm_name" : "identifiers" , "jpcore_name" : 'jpcoar:relation' ,"weko_name": 'relation'}
-                ,{'type' : 'simple_value', "rm_name" : 'publication_date', "jpcore_name" :  'datacite:date' , "weko_name" : "date"}
-                # ,{'type' : 'simple', "rm_name" : 'publication_date', "jpcore_name" :  'datacite:date' , "weko_name" : "publish_date"}
-                ,{'type' : 'simple', "rm_name" : 'volume', "jpcore_name" :  'jpcoar:volume' , "weko_name" : "volume"}
-                ,{'type' : 'simple', "rm_name" : 'number', "jpcore_name" :  'jpcoar:issue' , "weko_name" : "issue"}
-                ,{'type' : 'simple', "rm_name" : 'starting_page', "jpcore_name" :  'jpcoar:pageStart' , "weko_name" : "pageStart"}
-                ,{'type' : 'simple', "rm_name" : 'ending_page', "jpcore_name" :  'jpcoar:pageEnd' , "weko_name" : "pageEnd"}
-                ,{'type' : 'simple', "rm_name" : 'languages', "jpcore_name" :  'dc:language' , "weko_name" : "language"}
-    ]
+    researchmap_mappings = current_app.config["WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_MAPPINGS"] # type: ignore
+    researchtype_mappings = current_app.config["WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_TYPE_MAPPINGS"]# type: ignore
 
     data = Researchmap().get_data(parmalink, achievement_type ,achievement_id)
     load_data:dict = json.loads(data)
-    print('load_data')
-    print(load_data)
+    current_app.logger.debug('load_data')
+    current_app.logger.debug(load_data)
     error_description:str = json.loads(data).get("error_description")
 
     if error_description:
@@ -1430,6 +1417,17 @@ def get_researchmapid_record_data(parmalink, achievement_type ,achievement_id ,i
 
             api_data.update({weko_name : elements})
 
+        elif mapping.get('type') == 'type':
+            rm_name:str = mapping.get('rm_name','')
+            weko_name:str = mapping.get('weko_name','')
+            element:str = load_data.get(rm_name ,'')
+            for r_type_mapping in researchtype_mappings:
+                if r_type_mapping.get('achievement_type') == achievement_type \
+                    and r_type_mapping.get('detail_type_name') == element :
+                    api_data.update({weko_name : r_type_mapping.get('JPCOAR_resource_type')})
+                    break
+    current_app.logger.debug('api_data')
+    current_app.logger.debug(api_data)
     
     result = list()
     with db.session.no_autoflush:
@@ -1442,13 +1440,8 @@ def get_researchmapid_record_data(parmalink, achievement_type ,achievement_id ,i
             get_autofill_key_tree(
                 items.form,
                 get_researchmap_autofill_item(item_type_id)))
-        # print('autofill_key_tree')
-        # print(autofill_key_tree)
-        # print('api_data')
-        # print(api_data)
+
         result = build_record_model(autofill_key_tree, api_data)
-        # print('result')
-        # print(result)
     return result
 
 

@@ -27,6 +27,8 @@ logger = get_task_logger(__name__)
 
 @shared_task(ignore_results=True)
 def bulk_post_item_to_researchmap():
+    """ receive cris_researchmap_linkage Queue and process sequential."""
+
     current_app.logger.debug("weko_item_ui.tasks.bulk_post_item_to_researchmap called")
 
     # make Exchange
@@ -42,14 +44,12 @@ def bulk_post_item_to_researchmap():
             for message in consumer.iterqueue(infinite=False):
                 current_app.logger.debug(message)
                 if message is not None:
-                    __callback(message.decode() ,message)
+                    process_researchmap_queue(message.decode() ,message)
                     
-                # else :
-                #     consumer.cancel()
 
-            # c.drain_events()
 
-def __callback(body , message):
+def process_researchmap_queue(body , message):
+    """main process for regist to researchmap"""
     
     # body in item_uuid
     current_app.logger.debug(body)
@@ -96,6 +96,9 @@ def __callback(body , message):
             # 連携形式取得
             current_app.logger.debug("get_achievement_type")
             achievement_type = get_achievement_type(jrc)
+            if not achievement_type:
+                register_linkage_result(pid_int,False ,item_uuid ,'連携形式対象外')
+                return 
 
             # 業績情報生成
             current_app.logger.debug("build_achievement")
@@ -171,9 +174,6 @@ def get_authors(jrc):
 
     return authors
     
-def convert_jpcore(records):
-    return SchemaTree.get_jpcoar_json(records)
-
 def get_merge_mode():
     """マージモード取得"""
 
@@ -189,8 +189,15 @@ def get_merge_mode():
 def get_achievement_type(jrc):
     """業績種別取得"""
 
-    # fixme
-    return "published_papers"
+    researchtype_mappings = current_app.config["WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_TYPE_MAPPINGS"]# type: ignore
+    
+    current_app.logger.debug('jrc')
+    current_app.logger.debug(jrc)
+    for mapping in researchtype_mappings:
+        if mapping.get('JPCOAR_resource_type') == jrc.get("type")[0]:
+            return mapping.get('achievement_type')
+
+    return None
 
 def build_achievement(record,item,recid,mapping,jrc, achievement_type):
     """業績種別JSON作成"""
@@ -208,21 +215,8 @@ def build_achievement(record,item,recid,mapping,jrc, achievement_type):
 
 
     return_data = {}
-    researchmap_mappings = [
-        { 'type' : 'lang' , "rm_name" : 'paper_title', "jpcore_name" : 'dc:title' , "weko_name" :"title"}
-        ,{'type' : 'lang' , "rm_name" : 'description', "jpcore_name" : 'datacite:description' , "weko_name" :"description"}
-        ,{'type' : 'lang' , "rm_name" : 'publisher', "jpcore_name" : 'dc:publisher' , "weko_name" :"publisher"}
-        ,{'type' : 'lang' , "rm_name" : 'publication_name ', "jpcore_name" : 'jpcoar:sourceTitle' , "weko_name" :"sourceTitle"}
-        ,{'type' : 'authors'    , "rm_name" : 'authors'     , "jpcore_name" : 'jpcoar:creator'  ,"weko_name": 'creator'}
-        ,{'type' : 'identifiers', "rm_name" : "identifiers" , "jpcore_name" : 'jpcoar:relation' ,"weko_name": 'relation'}
-        ,{'type' : 'simple_value', "rm_name" : 'publication_date', "jpcore_name" :  'datacite:date' , "weko_name" : "date"}
-        ### ,{'type' : 'simple', "rm_name" : 'publication_date', "jpcore_name" :  'datacite:date' , "weko_name" : "publish_date"}
-        ,{'type' : 'simple', "rm_name" : 'volume', "jpcore_name" :  'jpcoar:volume' , "weko_name" : "volume"}
-        ,{'type' : 'simple', "rm_name" : 'number', "jpcore_name" :  'jpcoar:issue' , "weko_name" : "issue"}
-        ,{'type' : 'simple', "rm_name" : 'starting_page', "jpcore_name" :  'jpcoar:pageStart' , "weko_name" : "pageStart"}
-        ,{'type' : 'simple', "rm_name" : 'ending_page', "jpcore_name" :  'jpcoar:pageEnd' , "weko_name" : "pageEnd"}
-        ,{'type' : 'simple', "rm_name" : 'languages', "jpcore_name" :  'dc:language' , "weko_name" : "language"}
-    ]
+    DEFAULT_LANG = current_app.config["WEKO_ITEMS_UI_DEFAULT_LANG"] # type: ignore
+    researchmap_mappings = current_app.config["WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_MAPPINGS"] # type: ignore
 
     for rm_map in researchmap_mappings:
         # ja , en 取得
@@ -243,6 +237,9 @@ def build_achievement(record,item,recid,mapping,jrc, achievement_type):
                         lang = record_child_node.get(lang_path)
                         if lang == "en" or lang == "ja":
                             langs_dict.update({lang:value})
+                        elif lang == None or lang == "":
+                            # nothing lang is also "ja" as default
+                            langs_dict.update({DEFAULT_LANG:value})
                     
                     if langs_dict != {}:
                         return_data.update({rm_map["rm_name"]:langs_dict})
@@ -257,7 +254,7 @@ def build_achievement(record,item,recid,mapping,jrc, achievement_type):
 
         elif  rm_map['type'] == 'identifiers':
             identifer_kv = {}
-            for relatedIdentifier in jrc.get(rm_map["weko_name"]).get('relatedIdentifier'):
+            for relatedIdentifier in jrc.get(rm_map["weko_name"] ,{}).get('relatedIdentifier', []):
                 identifierType =relatedIdentifier.get('identifierType')
                 if identifierType.upper() == "DOI" or identifierType.upper() == "ISBN" :
                     ## DOI and ISBN only sendable. 他の項目はresearchmapのAPI定義上更新不可。
@@ -292,6 +289,9 @@ def build_achievement(record,item,recid,mapping,jrc, achievement_type):
                             if isinstance(value_record_child_node ,str ):
                                 lang = lang_record_child_node
                                 value = value_record_child_node
+                                if lang == None or lang == "": 
+                                    lang = DEFAULT_LANG
+                                
                                 if lang == "en" :
                                     en_list.append({"name":value})
                                 elif lang == "ja":
@@ -352,4 +352,5 @@ def build_one_data(achievement_obj:dict , merge_mode:str , author:str ,achieveme
     return ret
 
 def register_linkage_result(pid_int,result,item_uuid, failed_log):
+    """ researchmap 連携結果の登録"""
     return CRISLinkageResult().register_linkage_result(pid_int,"researchmap",result , item_uuid,failed_log)

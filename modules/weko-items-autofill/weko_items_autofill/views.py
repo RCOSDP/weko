@@ -113,8 +113,6 @@ def get_auto_fill_record_data():
             result['result'] = get_wekoid_record_data(
                 search_data, item_type_id)
         elif api_type == 'researchmap':
-            # FIXME!
-            # cris_researchmap_linkage_request.send('0dc788fc-6524-46af-b396-d7ae9220ff8e')
             result['result'] = get_researchmapid_record_data(
                 parmalink, achievement_type ,achievement_id , item_type_id)
         else:
