@@ -26,7 +26,8 @@ import uuid
 
 import six
 import werkzeug
-from flask import Blueprint, abort, current_app, escape, flash, json, \
+import orjson
+from flask import Blueprint, abort, current_app, escape, flash, \
     jsonify, make_response, redirect, render_template, request, url_for
 from flask_babelex import gettext as _
 from flask_login import login_required
@@ -917,7 +918,7 @@ def json_string_escape(s):
     opt = ''
     if s.endswith('"'):
         opt = '"'
-    s = json.dumps(s, ensure_ascii=False)
+    s = orjson.dumps(s).decode()
     s = s.strip('"')
     return s+opt
 

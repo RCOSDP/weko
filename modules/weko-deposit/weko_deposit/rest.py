@@ -20,7 +20,7 @@
 
 """Blueprint for Weko deposit rest."""
 
-import json
+import orjson
 import sys
 from wsgiref.util import request_uri
 
@@ -253,7 +253,7 @@ class ItemResource(ContentNegotiatedMethodView):
             ttl_sec = int(current_app.config['WEKO_DEPOSIT_ITEMS_CACHE_TTL'])
             datastore.put(
                 cache_key,
-                json.dumps(data).encode('utf-8'),
+                orjson.dumps(data).decode().encode('utf-8'),
                 ttl_secs=ttl_sec)
         except SQLAlchemyError as ex:
             current_app.logger.error('sqlalchemy error: %s', ex)

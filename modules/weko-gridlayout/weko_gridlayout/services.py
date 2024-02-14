@@ -21,7 +21,7 @@
 """Service for widget modules."""
 import copy
 import pickle
-import json
+import orjson
 from datetime import date, datetime, timedelta
 from operator import itemgetter
 
@@ -518,7 +518,7 @@ class WidgetDesignServices:
             if widget_setting:
                 settings = widget_setting.get('settings')
                 if settings:
-                    settings = json.loads(settings) \
+                    settings = orjson.loads(settings) \
                         if isinstance(settings, str) else settings
                     for item in settings:
                         widget_preview = dict()
@@ -587,7 +587,7 @@ class WidgetDesignServices:
         """Extract the design from model."""
         result_settings = []
         if settings:
-            settings = json.loads(settings) \
+            settings = orjson.loads(settings) \
                 if isinstance(settings, str) else settings
             for widget_item in settings:
                 widget = cls._get_design_base_on_current_language(
@@ -641,7 +641,7 @@ class WidgetDesignServices:
         page_id = data.get('page_id')  # Save design to page rather than layout
         setting_data = data.get('settings')
         try:
-            json_data = json.loads(setting_data) \
+            json_data = orjson.loads(setting_data) \
                 if isinstance(setting_data, str) else setting_data
             if isinstance(json_data, list):
                 for item in json_data:
@@ -653,7 +653,7 @@ class WidgetDesignServices:
                             WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE \
                             and not item.get('created_date'):
                         item['created_date'] = date.today().strftime("%Y-%m-%d")
-            setting_data = json.dumps(json_data)
+            setting_data = orjson.dumps(json_data).decode()
 
             # Main contents can only be in one page design or main design
             valid = validate_main_widget_insertion(
@@ -704,7 +704,7 @@ class WidgetDesignServices:
             for item in json_data:
                 if str(item.get('widget_id')) == str(widget_id):
                     update_general_item(item, data_result)
-        data = json.dumps(json_data)
+        data = orjson.dumps(json_data).decode()
         return data
 
     @classmethod
@@ -735,7 +735,7 @@ class WidgetDesignServices:
             success = True
             for model in data:  # FIXME: May be confusing to update both here
                 if model.get('settings'):
-                    json_data = json.loads(model.get('settings')) if isinstance(
+                    json_data = orjson.loads(model.get('settings')) if isinstance(
                         model.get('settings'), str) else model.get('settings')
                     update_data = cls.update_item_in_preview_widget_item(
                         widget_id, data_result, json_data)
@@ -780,7 +780,7 @@ class WidgetDesignServices:
 
             for model in data:
                 if model.get('settings'):
-                    json_data = json.loads(model.get('settings')) \
+                    json_data = orjson.loads(model.get('settings')) \
                         if isinstance(model.get('settings'), str) \
                         else model.get('settings')
                     for item in json_data:
@@ -892,7 +892,7 @@ class WidgetDesignPageServices:
             widget_design = WidgetDesignSetting.select_by_repository_id(
                 repository_id)
             if widget_design:
-                settings = json.loads(widget_design.get('settings', '[]')) \
+                settings = orjson.loads(widget_design.get('settings', '[]')) \
                     if isinstance(widget_design.get('settings', '[]'), str) \
                     else widget_design.get('settings')
                 if settings:
@@ -900,7 +900,7 @@ class WidgetDesignPageServices:
                         settings,
                         page_id)
                     WidgetDesignSetting.update(repository_id,
-                                               json.dumps(settings))
+                                               orjson.dumps(settings).decode())
 
     @classmethod
     def _update_page_id_for_widget_design_setting(cls, settings, page_id):
@@ -933,7 +933,7 @@ class WidgetDesignPageServices:
     @classmethod
     def _update_page_id_for_widget_item_setting(cls, page_id,
                                                 widget_item):
-        settings = json.loads(widget_item.settings) \
+        settings = orjson.loads(widget_item.settings) \
             if isinstance(widget_item.settings, str) else widget_item.settings
         default_page_id = "0"
         if settings and settings.get('menu_show_pages'):
@@ -946,7 +946,7 @@ class WidgetDesignPageServices:
                 settings['menu_show_pages'] = new_menu_show_pages
                 widget_item.settings = settings
                 WidgetItem.update_setting_by_id(
-                    widget_item.widget_id, json.dumps(settings))
+                    widget_item.widget_id, orjson.dumps(settings).decode())
 
     @classmethod
     def delete_page(cls, page_id):
@@ -1107,7 +1107,7 @@ class WidgetDataLoaderServices:
                 start_date=start_date,
                 end_date=end_date,
                 agg_size=int(number_result) + 100,
-                must_not=json.dumps([{"wildcard": {"control_number": "*.*"}}])
+                must_not=orjson.dumps([{"wildcard": {"control_number": "*.*"}}]).decode()
             )
             if not res:
                 res['error'] = 'Cannot search data'

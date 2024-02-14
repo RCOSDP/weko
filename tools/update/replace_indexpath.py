@@ -34,7 +34,7 @@ from datetime import datetime
 import os
 import sys
 import math
-import json
+import orjson
 import logging
 import traceback
 
@@ -409,7 +409,7 @@ def update_records_metadata(oai_sets: list = []):
                 deposit['_oai']['sets'].extend(_sets)
                 # current_app.logger.debug("replaced _oai.sets:{}".format(deposit['_oai']['sets']))
 
-                json_str = json.dumps(deposit)
+                json_str = orjson.dumps(deposit).decode()
                 version_id = int(rec.version_id)
                 version_id_next = int(version_id) +1
 

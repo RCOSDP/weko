@@ -21,6 +21,7 @@
 """Blueprint for weko-workflow."""
 
 import json
+import orjson
 import os
 import re
 import shutil
@@ -1886,7 +1887,7 @@ def get_journals():
         try:
             datastore.put(
                 cache_key,
-                json.dumps(multiple_result).encode('utf-8'),
+                orjson.dumps(multiple_result).decode().encode('utf-8'),
                 ttl_secs=int(
                     current_app.config['WEKO_WORKFLOW_OAPOLICY_CACHE_TTL']))
         except Exception:
@@ -2498,7 +2499,7 @@ def unlock_activity(activity_id="0"):
         return jsonify(res.data), 400
     cache_key = 'workflow_locked_activity_{}'.format(activity_id)
     try:
-        data = LockedValueSchema().load(json.loads(request.data.decode("utf-8")))
+        data = LockedValueSchema().load(orjson.loads(request.data.decode("utf-8")))
     except ValidationError as err:
         res = ResponseMessageSchema().load({'code':-1, 'msg':str(err)})
         return jsonify(res.data), 400

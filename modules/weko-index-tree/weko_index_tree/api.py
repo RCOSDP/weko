@@ -22,13 +22,14 @@
 
 import pickle
 import os
+import orjson
 from copy import deepcopy
 from datetime import date, datetime
 from functools import partial
 from socketserver import DatagramRequestHandler
 
 from redis.exceptions import RedisError
-from flask import current_app, json
+from flask import current_app
 from flask_babelex import gettext as _
 from flask_login import current_user
 from invenio_accounts.models import Role
@@ -570,7 +571,7 @@ class Indexes(object):
                 redis_connection = RedisConnection()
                 datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
                 v = datastore.get("index_tree_view_" + os.environ.get('INVENIO_WEB_HOST_NAME') + "_" + current_i18n.language).decode("UTF-8")
-                tree = json.loads(str(v))
+                tree = orjson.loads(str(v))
             except RedisError:
                 tree = cls.get_index_tree(pid)
                 save_index_trees_to_redis(tree)
@@ -597,7 +598,7 @@ class Indexes(object):
                 redis_connection = RedisConnection()
                 datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
                 v = datastore.get("index_tree_view_" + os.environ.get('INVENIO_WEB_HOST_NAME') + "_" + current_i18n.language).decode("UTF-8")
-                tree = json.loads(str(v))
+                tree = orjson.loads(str(v))
             except RedisError:
                 tree = cls.get_index_tree(pid)
                 save_index_trees_to_redis(tree)
@@ -1431,8 +1432,8 @@ class Indexes(object):
             }
             es_index = current_app.config['SEARCH_UI_SEARCH_INDEX']
             es_doc_type = current_app.config['INDEXER_DEFAULT_DOCTYPE']
-            query_q = json.dumps(upd_item_sort_q).replace("@index", index_path)
-            query_q = json.loads(query_q)
+            query_q = orjson.dumps(upd_item_sort_q).decode().replace("@index", index_path)
+            query_q = orjson.loads(query_q)
             indexer = RecordIndexer()
             res = indexer.client.search(
                 index=es_index,

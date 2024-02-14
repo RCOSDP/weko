@@ -10,7 +10,7 @@
 
 from __future__ import absolute_import, print_function
 
-import json
+import orjson
 import re
 
 from citeproc import Citation, CitationItem, CitationStylesBibliography, \
@@ -104,7 +104,7 @@ class CiteprocSerializer(object):
     def _get_source(self, data):
         """Get source data object for citeproc-py."""
         if self.record_format == 'csl':
-            return CiteProcJSON([json.loads(data)])
+            return CiteProcJSON([orjson.loads(data)])
         elif self.record_format == 'bibtex':
             return BibTeX(data)
 

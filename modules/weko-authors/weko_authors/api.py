@@ -19,10 +19,10 @@
 # MA 02111-1307, USA.
 
 """Weko Authors API."""
-import json
+import orjson
 from copy import deepcopy
 
-from flask import current_app, json
+from flask import current_app
 from invenio_db import db
 from invenio_indexer.api import RecordIndexer
 from sqlalchemy.sql.functions import func
@@ -63,7 +63,7 @@ class WekoAuthors(object):
         try:
             with session.begin_nested():
                 data['id'] = es_id
-                author = Authors(id=new_id, json=json.dumps(data))
+                author = Authors(id=new_id, json=orjson.dumps(data).decode())
                 session.add(author)
         except Exception as ex:
             if es_id:
@@ -125,7 +125,7 @@ class WekoAuthors(object):
                     
                 es_id = update_es_data(data)
                 data['id'] = es_id
-                author.json = json.dumps(data)
+                author.json = orjson.dumps(data).decode()
                 db.session.merge(author)
         except Exception as ex:
             if es_id:
@@ -158,7 +158,7 @@ class WekoAuthors(object):
         for author in cls.get_all():
             existed_authors_id[str(author.id)] = not author.is_deleted \
                 and author.gather_flg == 0
-            metadata = json.loads(author.json)
+            metadata = orjson.loads(author.json)
             for authorIdInfo in metadata.get('authorIdInfo', {}):
                 idType = authorIdInfo.get('idType')
                 if idType and idType != '1':
@@ -206,7 +206,7 @@ class WekoAuthors(object):
                     mapping['max'] = 1
                 else:
                     mapping['max'] = max(
-                        list(map(lambda x: len(json.loads(x.json).get(
+                        list(map(lambda x: len(orjson.loads(x.json).get(
                             mapping['json_id'], [])), authors))
                     )
                     if mapping['max'] == 0:
@@ -233,7 +233,7 @@ class WekoAuthors(object):
 
         # handle data rows
         for author in authors:
-            json_data = json.loads(author.json)
+            json_data = orjson.loads(author.json)
             row = []
             for mapping in mappings:
                 if mapping.get('child'):

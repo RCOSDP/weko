@@ -8,7 +8,7 @@
 
 """REST API serializers."""
 
-import json
+import orjson
 import warnings
 from time import sleep
 
@@ -243,13 +243,11 @@ def schema_from_context(context):
 def _format_args():
     if request and request.args.get('prettyprint'):
         return dict(
-            indent=2,
-            separators=(', ', ': '),
+            option=orjson.OPT_INDENT_2
         )
     else:
         return dict(
-            indent=None,
-            separators=(',', ':'),
+            option=0
         )
 
 
@@ -316,10 +314,10 @@ def json_serializer(data=None, code=200, headers=None, context=None,
 
     if data is not None:
         # Generate JSON response
-        data = json.dumps(
+        data = orjson.dumps(
             schema_class(context=context).dump(data, many=many).data,
             **_format_args()
-        )
+        ).decode()
 
         interval = current_app.config['FILES_REST_TASK_WAIT_INTERVAL']
         max_rounds = int(

@@ -20,7 +20,7 @@
 
 """Query factories for REST API."""
 
-import json
+import orjson
 import re
 import sys
 from datetime import datetime
@@ -1101,7 +1101,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
 
     urlkwargs.add("q", query_q)
     # debug elastic search query
-    current_app.logger.debug("query: {}".format(json.dumps((search.query()).to_dict())))
+    current_app.logger.debug("query: {}".format(orjson.dumps((search.query()).to_dict()).decode()))
     # {"query": {"bool": {"filter": [{"bool": {"must": [{"match": {"publish_status": "0"}}, {"range": {"publish_date": {"lte": "now/d"}}}, {"terms": {"path": ["1031", "1029", "1025", "952", "953", "943", "940", "1017", "1015", "1011", "881", "893", "872", "869", "758", "753", "742", "530", "533", "502", "494", "710", "702", "691", "315", "351", "288", "281", "759", "754", "744", "531", "534", "503", "495", "711", "704", "692", "316", "352", "289", "282", "773", "771", "767", "538", "539", "519", "510", "756", "745", "733", "337", "377", "308", "299", "2063", "2061", "2057", "1984", "1985", "1975", "1972", "2049", "2047", "2043", "1913", "1925", "1904", "1901", "1790", "1785", "1774", "1562", "1565", "1534", "1526", "1742", "1734", "1723", "1347", "1383", "1320", "1313", "1791", "1786", "1776", "1563", "1566", "1535", "1527", "1743", "1736", "1724", "1348", "1384", "1321", "1314", "1805", "1803", "1799", "1570", "1571", "1551", "1542", "1788", "1777", "1765", "1369", "1409", "1340", "1331", "4127", "4125", "4121", "4048", "4049", "4039", "4036", "4113", "4111", "4107", "3977", "3989", "3968", "3965", "3854", "3849", "3838", "3626", "3629", "3598", "3590", "3806", "3798", "3787", "3411", "3447", "3384", "3377", "3855", "3850", "3840", "3627", "3630", "3599", "3591", "3807", "3800", "3788", "3412", "3448", "3385", "3378", "3869", "3867", "3863", "3634", "3635", "3615", "3606", "3852", "3841", "3829", "3433", "3473", "3404", "3395"]}}, {"bool": {"must": [{"match": {"publish_status": "0"}}, {"match": {"relation_version_is_last": "true"}}]}}]}}], "must": [{"match_all": {}}]}}, "aggs": {"Data Language": {"filter": {"bool": {"must": [{"term": {"publish_status": "0"}}]}}, "aggs": {"Data Language": {"terms": {"field": "language", "size": 1000}}}}, "Access": {"filter": {"bool": {"must": [{"term": {"publish_status": "0"}}]}}, "aggs": {"Access": {"terms": {"field": "accessRights", "size": 1000}}}}, "Location": {"filter": {"bool": {"must": [{"term": {"publish_status": "0"}}]}}, "aggs": {"Location": {"terms": {"field": "geoLocation.geoLocationPlace", "size": 1000}}}}, "Temporal": {"filter": {"bool": {"must": [{"term": {"publish_status": "0"}}]}}, "aggs": {"Temporal": {"terms": {"field": "temporal", "size": 1000}}}}, "Topic": {"filter": {"bool": {"must": [{"term": {"publish_status": "0"}}]}}, "aggs": {"Topic": {"terms": {"field": "subject.value", "size": 1000}}}}, "Distributor": {"filter": {"bool": {"must": [{"term": {"contributor.@attributes.contributorType": "Distributor"}}, {"term": {"publish_status": "0"}}]}}, "aggs": {"Distributor": {"terms": {"field": "contributor.contributorName", "size": 1000}}}}, "Data Type": {"filter": {"bool": {"must": [{"term": {"description.descriptionType": "Other"}}, {"term": {"publish_status": "0"}}]}}, "aggs": {"Data Type": {"terms": {"field": "description.value", "size": 1000}}}}}, "from": 0, "size": 20, "_source": {"excludes": ["content"]}}
     # {"query": {"bool": {"filter": [{"bool": {"must": [{"match": {"publish_status": "0"}}, {"range": {"publish_date": {"lte": "now/d"}}}, {"terms": {"path": ["1031", "1029", "1025", "952", "953", "943", "940", "1017", "1015", "1011", "881", "893", "872", "869", "758", "753", "742", "530", "533", "502", "494", "710", "702", "691", "315", "351", "288", "281", "759", "754", "744", "531", "534", "503", "495", "711", "704", "692", "316", "352", "289", "282", "773", "771", "767", "538", "539", "519", "510", "756", "745", "733", "337", "377", "308", "299", "2063", "2061", "2057", "1984", "1985", "1975", "1972", "2049", "2047", "2043", "1913", "1925", "1904", "1901", "1790", "1785", "1774", "1562", "1565", "1534", "1526", "1742", "1734", "1723", "1347", "1383", "1320", "1313", "1791", "1786", "1776", "1563", "1566", "1535", "1527", "1743", "1736", "1724", "1348", "1384", "1321", "1314", "1805", "1803", "1799", "1570", "1571", "1551", "1542", "1788", "1777", "1765", "1369", "1409", "1340", "1331", "4127", "4125", "4121", "4048", "4049", "4039", "4036", "4113", "4111", "4107", "3977", "3989", "3968", "3965", "3854", "3849", "3838", "3626", "3629", "3598", "3590", "3806", "3798", "3787", "3411", "3447", "3384", "3377", "3855", "3850", "3840", "3627", "3630", "3599", "3591", "3807", "3800", "3788", "3412", "3448", "3385", "3378", "3869", "3867", "3863", "3634", "3635", "3615", "3606", "3852", "3841", "3829", "3433", "3473", "3404", "3395"]}}, {"bool": {"must": [{"match": {"publish_status": "0"}}, {"match": {"relation_version_is_last": "true"}}]}}]}}], "must": [{"match_all": {}}]}}, "aggs": {"Data Language": {"filter": {"bool": {"must": [{"term": {"publish_status": "0"}}]}}, "aggs": {"Data Language": {"terms": {"field": "language", "size": 1000}}}}, "Access": {"filter": {"bool": {"must": [{"term": {"publish_status": "0"}}]}}, "aggs": {"Access": {"terms": {"field": "accessRights", "size": 1000}}}}, "Location": {"filter": {"bool": {"must": [{"term": {"publish_status": "0"}}]}}, "aggs": {"Location": {"terms": {"field": "geoLocation.geoLocationPlace", "size": 1000}}}}, "Temporal": {"filter": {"bool": {"must": [{"term": {"publish_status": "0"}}]}}, "aggs": {"Temporal": {"terms": {"field": "temporal", "size": 1000}}}}, "Topic": {"filter": {"bool": {"must": [{"term": {"publish_status": "0"}}]}}, "aggs": {"Topic": {"terms": {"field": "subject.value", "size": 1000}}}}, "Distributor": {"filter": {"bool": {"must": [{"term": {"contributor.@attributes.contributorType": "Distributor"}}, {"term": {"publish_status": "0"}}]}}, "aggs": {"Distributor": {"terms": {"field": "contributor.contributorName", "size": 1000}}}}, "Data Type": {"filter": {"bool": {"must": [{"term": {"description.descriptionType": "Other"}}, {"term": {"publish_status": "0"}}]}}, "aggs": {"Data Type": {"terms": {"field": "description.value", "size": 1000}}}}}, "sort": [{"date_range1.gte": {"order": "asc", "unmapped_type": "date"}}], "from": 0, "size": 20, "_source": {"excludes": ["content"]}}
     current_app.logger.debug("urlkwargs: {}".format(urlkwargs))
@@ -1226,8 +1226,8 @@ def item_path_search_factory(self, search, index_id=None):
                             }
                         })
 
-                    query_q = json.dumps(query_q).replace("@idxchild", child_idx_str)
-                    query_q = json.loads(query_q)
+                    query_q = orjson.dumps(query_q).decode().replace("@idxchild", child_idx_str)
+                    query_q = orjson.loads(query_q)
                 except BaseException as ex:
                     current_app.logger.error(ex)
                     import traceback
@@ -1235,8 +1235,8 @@ def item_path_search_factory(self, search, index_id=None):
                     traceback.print_exc(file=sys.stdout)
 
             count = str(Indexes.get_index_count())
-            query_q = json.dumps(query_q).replace("@count", count)
-            query_q = json.loads(query_q)
+            query_q = orjson.dumps(query_q).decode().replace("@count", count)
+            query_q = orjson.loads(query_q)
 
             return query_q, is_perm_paths
         else:
@@ -1332,8 +1332,8 @@ def item_path_search_factory(self, search, index_id=None):
 
             # create search query
             count = str(Indexes.get_index_count())
-            query_not_q = json.dumps(query_not_q).replace("@count", count)
-            query_not_q = json.loads(query_not_q)
+            query_not_q = orjson.dumps(query_not_q).decode().replace("@count", count)
+            query_not_q = orjson.loads(query_not_q)
 
             return query_not_q, is_perm_paths
 
@@ -1407,7 +1407,7 @@ def item_path_search_factory(self, search, index_id=None):
     urlkwargs.add("q", query_q)
     urlkwargs.add("is_perm_paths", is_perm_paths)
     # debug elastic search query
-    current_app.logger.debug(json.dumps((search.query()).to_dict()))
+    current_app.logger.debug(orjson.dumps((search.query()).to_dict()).decode())
     return search, urlkwargs
 
 
@@ -1528,7 +1528,7 @@ def item_search_factory(
         )
         raise InvalidQueryRESTError()
     # debug elastic search query
-    current_app.logger.debug(json.dumps((search.query()).to_dict()))
+    current_app.logger.debug(orjson.dumps((search.query()).to_dict()).decode())
     return search, urlkwargs
 
 
@@ -1597,5 +1597,5 @@ def feedback_email_search_factory(self, search):
         )
         raise InvalidQueryRESTError()
     # debug elastic search query
-    current_app.logger.debug(json.dumps((search.query()).to_dict()))
+    current_app.logger.debug(orjson.dumps((search.query()).to_dict()).decode())
     return search

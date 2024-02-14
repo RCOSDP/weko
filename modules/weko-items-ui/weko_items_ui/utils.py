@@ -23,6 +23,7 @@
 import copy
 import csv
 import json
+import orjson
 import os
 import re
 import shutil
@@ -660,7 +661,7 @@ def update_json_schema_by_activity_id(json_data, activity_id):
         return None
     session_data = sessionstore.get(
         'updated_json_schema_{}'.format(activity_id))
-    error_list = json.loads(session_data.decode('utf-8'))
+    error_list = orjson.loads(session_data.decode('utf-8'))
     #current_app.logger.error("error_list:{}".format(error_list))
     if error_list:
         for item in error_list['required']:
@@ -691,7 +692,7 @@ def update_schema_form_by_activity_id(schema_form, activity_id):
         return None
     session_data = sessionstore.get(
         'updated_json_schema_{}'.format(activity_id))
-    error_list = json.loads(session_data.decode('utf-8'))
+    error_list = orjson.loads(session_data.decode('utf-8'))
 
     if error_list and error_list['either']:
         either_required_list = error_list['either']
@@ -1440,15 +1441,15 @@ def export_items(post_data):
     include_contents = True if \
         post_data.get('export_file_contents_radio') == 'True' else False
     export_format = post_data['export_format_radio']
-    record_ids = json.loads(post_data['record_ids'])
-    invalid_record_ids = json.loads(post_data['invalid_record_ids'])
+    record_ids = orjson.loads(post_data['record_ids'])
+    invalid_record_ids = orjson.loads(post_data['invalid_record_ids'])
     if isinstance(invalid_record_ids,dict) or isinstance(invalid_record_ids,list):
         invalid_record_ids = [int(i) for i in invalid_record_ids]
     else:
         invalid_record_ids = [invalid_record_ids]
     # Remove all invalid records
     record_ids = set(record_ids) - set(invalid_record_ids)
-    record_metadata = json.loads(post_data['record_metadata'])
+    record_metadata = orjson.loads(post_data['record_metadata'])
     if len(record_ids) > _get_max_export_items():
         return abort(400)
     elif len(record_ids) == 0:
@@ -2532,7 +2533,7 @@ def get_ranking(settings):
             event_type='item-create',
             group_field='cur_user_id',
             count_field='count',
-            must_not=json.dumps([{"wildcard": {"pid_value": "*.*"}}])
+            must_not=orjson.dumps([{"wildcard": {"pid_value": "*.*"}}]).decode()
         )
 
         current_app.logger.debug("finished getting created_most_items_user data from ES")
@@ -2560,7 +2561,7 @@ def get_ranking(settings):
             event_type='search',
             group_field='search_key',
             count_field='count',
-            must_not=json.dumps(must_not)
+            must_not=orjson.dumps(must_not).decode()
         )
 
         current_app.logger.debug("finished getting most_searched_keywords data from ES")
@@ -2589,7 +2590,7 @@ def get_ranking(settings):
             start_date=new_item_start_date.strftime('%Y-%m-%d'),
             end_date=end_date,
             agg_size=settings.display_rank + rank_buffer,
-            must_not=json.dumps([{"wildcard": {"control_number": "*.*"}}])
+            must_not=orjson.dumps([{"wildcard": {"control_number": "*.*"}}]).decode()
         )
         
         current_app.logger.debug("finished getting new_items data from ES")
@@ -2717,7 +2718,7 @@ def hide_form_items(item_type, schema_form):
             schema_form.index(form) for form in schema_form
             if form.get('items') and form[
                 'items'][0]['key'].split('.')[1] == i]
-        if hidden_items and i in json.dumps(schema_form):
+        if hidden_items and i in orjson.dumps(schema_form).decode():
             schema_form = update_schema_remove_hidden_item(
                 schema_form,
                 item_type.render,

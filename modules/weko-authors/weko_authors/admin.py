@@ -22,7 +22,7 @@
 
 from __future__ import absolute_import, print_function
 
-import json
+import orjson
 from celery import group, states
 from celery.task.control import revoke
 from flask import abort, current_app, request, session
@@ -70,7 +70,7 @@ class AuthorManagementView(BaseView):
         """Render author edit view."""
         return self.render(
             current_app.config['WEKO_AUTHORS_ADMIN_EDIT_TEMPLATE'],
-            identifier_reg=json.dumps(current_app.config['WEKO_AUTHORS_IDENTIFIER_REG']),
+            identifier_reg=orjson.dumps(current_app.config['WEKO_AUTHORS_IDENTIFIER_REG']).decode(),
             render_widgets=False,  # Moved to admin, no need for widgets
             lang_code=session.get(
                 'selected_language',
@@ -83,7 +83,7 @@ class AuthorManagementView(BaseView):
         """Render an adding author view."""
         return self.render(
             current_app.config['WEKO_AUTHORS_ADMIN_EDIT_TEMPLATE'],
-            identifier_reg=json.dumps(current_app.config['WEKO_AUTHORS_IDENTIFIER_REG']),
+            identifier_reg=orjson.dumps(current_app.config['WEKO_AUTHORS_IDENTIFIER_REG']).decode(),
             render_widgets=False,  # Moved to admin, no need for widgets
             lang_code=session.get('selected_language', 'en')  # Set default
         )

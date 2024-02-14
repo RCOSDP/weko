@@ -8,9 +8,10 @@
 
 """Marshmallow based JSON serializer for records."""
 
+import orjson
 from __future__ import absolute_import, print_function
 
-from flask import json, request
+from flask import request
 
 from .base import PreprocessorMixin, SerializerMixinInterface
 from .marshmallow import MarshmallowMixin
@@ -24,13 +25,11 @@ class JSONSerializerMixin(SerializerMixinInterface):
         """Get JSON dump indentation and separates."""
         if request and request.args.get('prettyprint'):
             return dict(
-                indent=2,
-                separators=(', ', ': '),
+                option=orjson.OPT_INDENT_2
             )
         else:
             return dict(
-                indent=None,
-                separators=(',', ':'),
+                option=0
             )
 
     def serialize(self, pid, record, links_factory=None, **kwargs):
@@ -40,9 +39,9 @@ class JSONSerializerMixin(SerializerMixinInterface):
         :param record: Record instance.
         :param links_factory: Factory function for record links.
         """
-        return json.dumps(
+        return   orjson.dumps(
             self.transform_record(pid, record, links_factory, **kwargs),
-            **self._format_args())
+            **self._format_args()).decode()
 
     def serialize_search(self, pid_fetcher, search_result, links=None,
                          item_links_factory=None, **kwargs):
@@ -52,7 +51,7 @@ class JSONSerializerMixin(SerializerMixinInterface):
         :param search_result: Elasticsearch search result.
         :param links: Dictionary of links to add to response.
         """
-        return json.dumps(dict(
+        return orjson.dumps(dict(
             hits=dict(
                 hits=[self.transform_search_hit(
                     pid_fetcher(hit['_id'], hit['_source']),
@@ -64,7 +63,7 @@ class JSONSerializerMixin(SerializerMixinInterface):
             ),
             links=links or {},
             aggregations=search_result.get('aggregations', dict()),
-        ), **self._format_args())
+        ), **self._format_args()).decode()
 
 
 class JSONSerializer(JSONSerializerMixin, MarshmallowMixin, PreprocessorMixin):

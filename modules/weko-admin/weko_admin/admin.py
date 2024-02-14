@@ -22,7 +22,7 @@
 
 import copy
 import hashlib
-import json
+import orjson
 import os
 import re
 import sys
@@ -447,7 +447,7 @@ class ReportView(BaseView):
     @expose('/stats_file_output', methods=['POST'])
     def get_file_stats_output(self):
         """Get file download/preview stats report."""
-        stats_json = json.loads(request.form.get('report'))
+        stats_json = orjson.loads(request.form.get('report'))
         year = request.form.get('year')
         month = request.form.get('month').zfill(2)
 
@@ -762,7 +762,7 @@ class SearchSettingsView(BaseView):
             'height': height
         }
         # dump json string
-        result = json.dumps(copy.deepcopy(search_setting))
+        result = orjson.dumps(copy.deepcopy(search_setting)).decode()
         if 'POST' in request.method:
             jfy = {}
             try:
@@ -875,7 +875,7 @@ class SiteLicenseSettingsView(BaseView):
             result = get_response_json(result_list, n_lst)
             return self.render(
                 current_app.config['WEKO_ADMIN_SITE_LICENSE_TEMPLATE'],
-                result=json.dumps(result))
+                result=orjson.dumps(result).decode())
         except BaseException as e:
             current_app.logger.error('Could not save site license settings {}'.format(e))
             abort(500)
@@ -1244,7 +1244,7 @@ class RestrictedAccessSettingView(BaseView):
         return self.render(
             current_app.config[
                 "WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS_TEMPLATE"],
-            data=json.dumps(get_restricted_access()),
+            data=orjson.dumps(get_restricted_access()).decode(),
             items_per_page=current_app.config[
                 "WEKO_ADMIN_ITEMS_PER_PAGE_USAGE_REPORT_REMINDER"]
         )
@@ -1305,7 +1305,7 @@ class FacetSearchSettingView(ModelView):
         facet_search.update({'mapping_list': get_item_mapping_list()})
         return self.render(
             current_app.config['WEKO_ADMIN_FACET_SEARCH_SETTING_TEMPLATE'],
-            data=json.dumps(facet_search),
+            data=orjson.dumps(facet_search).decode(),
             type_str='new'
         )
 
@@ -1318,7 +1318,7 @@ class FacetSearchSettingView(ModelView):
         facet_search.update({'mapping_list': get_item_mapping_list()})
         return self.render(
             current_app.config['WEKO_ADMIN_FACET_SEARCH_SETTING_TEMPLATE'],
-            data=json.dumps(facet_search),
+            data=orjson.dumps(facet_search).decode(),
             type_str='edit',
             id=id
         )
@@ -1332,7 +1332,7 @@ class FacetSearchSettingView(ModelView):
         facet_search.update({'mapping_list': get_item_mapping_list()})
         return self.render(
             current_app.config['WEKO_ADMIN_FACET_SEARCH_SETTING_TEMPLATE'],
-            data=json.dumps(facet_search),
+            data=orjson.dumps(facet_search).decode(),
             type_str='details',
             id=id
         )
@@ -1349,7 +1349,7 @@ class FacetSearchSettingView(ModelView):
         facet_search = get_facet_search(id=id)
         return self.render(
             current_app.config['WEKO_ADMIN_FACET_SEARCH_SETTING_TEMPLATE'],
-            data=json.dumps(facet_search),
+            data=orjson.dumps(facet_search).decode(),
             type_str='delete',
             id=id
         )

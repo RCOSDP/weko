@@ -15,7 +15,7 @@ allows for advanced data validation.
 
 from __future__ import absolute_import, print_function
 
-import json
+import orjson
 
 from flask import request
 from invenio_rest.errors import RESTValidationError
@@ -75,7 +75,7 @@ class MarshmallowErrors(RESTValidationError):
         if self.errors:
             body['errors'] = self.errors
 
-        return json.dumps(body)
+        return orjson.dumps(body).decode()
 
 
 def marshmallow_loader(schema_class):

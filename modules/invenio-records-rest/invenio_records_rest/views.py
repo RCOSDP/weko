@@ -46,7 +46,7 @@ from .proxies import current_records_rest
 from .query import es_search_factory
 from .utils import obj_or_import_string
 
-import json
+import orjson
 import os
 import sys
 import math
@@ -606,7 +606,7 @@ class RecordsListResource(ContentNegotiatedMethodView):
         # For checking search results option changes and resetting cache upon option change
         def url_args_check():
             if sessionstorage.redis.exists(f"{cache_name}_url_args"):
-                cache_name_url_args = json.loads(sessionstorage.get(f"{cache_name}_url_args"))
+                cache_name_url_args = orjson.loads(sessionstorage.get(f"{cache_name}_url_args"))
                 q_check = cache_name_url_args.get("q") != request.args.to_dict().get("q")
                 sort_check = cache_name_url_args.get("sort") != request.args.to_dict().get("sort")
                 size_check = cache_name_url_args.get("size") != request.args.to_dict().get("size")
@@ -614,7 +614,7 @@ class RecordsListResource(ContentNegotiatedMethodView):
                 if (q_check or sort_check) or size_check:
                     sessionstorage.delete(cache_name)
                     sessionstorage.delete(f"{cache_name}_url_args")
-                    json_data = json.dumps(request.args.to_dict()).encode('utf-8')
+                    json_data = orjson.dumps(request.args.to_dict()).decode().encode('utf-8')
                     sessionstorage.put(
                         f"{cache_name}_url_args",
                         json_data,
@@ -626,7 +626,7 @@ class RecordsListResource(ContentNegotiatedMethodView):
             else:
                 if sessionstorage.redis.exists(cache_name):
                     sessionstorage.delete(cache_name)
-                json_data = json.dumps(request.args.to_dict()).encode('utf-8')
+                json_data = orjson.dumps(request.args.to_dict()).decode().encode('utf-8')
                 sessionstorage.put(
                     f"{cache_name}_url_args",
                     json_data,
@@ -656,8 +656,8 @@ class RecordsListResource(ContentNegotiatedMethodView):
             next_items_sort_value = None
 
             if sessionstorage.redis.exists(cache_name):
-                if json.loads(sessionstorage.get(cache_name)).get(cache_key):
-                    cache_name_checker = json.loads(sessionstorage.get(cache_name)).get(cache_key)
+                if orjson.loads(sessionstorage.get(cache_name)).get(cache_key):
+                    cache_name_checker = orjson.loads(sessionstorage.get(cache_name)).get(cache_key)
                 else:
                     cache_name_checker = None
             else:
@@ -666,7 +666,7 @@ class RecordsListResource(ContentNegotiatedMethodView):
             if sessionstorage.redis.exists(cache_name):
                 if cache_name_checker:
                     page_list = []
-                    cache_name_stored_data = json.loads(sessionstorage.get(cache_name))
+                    cache_name_stored_data = orjson.loads(sessionstorage.get(cache_name))
                     for cached_page in cache_name_stored_data.keys():
                         try:
                             page_list.append(int(cached_page))
@@ -682,12 +682,12 @@ class RecordsListResource(ContentNegotiatedMethodView):
 
                     next_search_after_set = search
                     next_search_after_set._extra.update(search_after_size)
-                    next_search_after_set._extra.update({"search_after": [json.loads(sessionstorage.get(cache_name)).get(cache_key).get("control_number")]})
+                    next_search_after_set._extra.update({"search_after": [orjson.loads(sessionstorage.get(cache_name)).get(cache_key).get("control_number")]})
                     next_items_sort_value = next_search_after_set.execute()["hits"]["hits"][-1]["_source"]["control_number"]
                     
                 else:
                     page_list = []
-                    cache_name_stored_data = json.loads(sessionstorage.get(cache_name))
+                    cache_name_stored_data = orjson.loads(sessionstorage.get(cache_name))
                     for cached_page in cache_name_stored_data.keys():
                         try:
                             page_list.append(int(cached_page))
@@ -705,7 +705,7 @@ class RecordsListResource(ContentNegotiatedMethodView):
                         cache_data = cache_name_stored_data.get(str(int(cache_key) - 1))
                         next_search_after_set = search
                         next_search_after_set._extra.update(search_after_size)
-                        next_search_after_set._extra.update({"search_after": [json.loads(sessionstorage.get(cache_name)).get(str(sorted_page_list[-1])).get("control_number")]})
+                        next_search_after_set._extra.update({"search_after": [orjson.loads(sessionstorage.get(cache_name)).get(str(sorted_page_list[-1])).get("control_number")]})
                         
                         try:
                             if cache_data.get("control_number") is None:
@@ -732,7 +732,7 @@ class RecordsListResource(ContentNegotiatedMethodView):
                         next_search_after_set = None
                         cache_name_stored_data[cache_key] = {"control_number": next_items_sort_value}
 
-                        json_data = json.dumps(cache_name_stored_data).encode('utf-8')
+                        json_data = orjson.dumps(cache_name_stored_data).decode().encode('utf-8')
                         sessionstorage.put(
                             cache_name,
                             json_data,
@@ -747,8 +747,8 @@ class RecordsListResource(ContentNegotiatedMethodView):
                 next_items_sort_value = last_sort_value
 
             if sessionstorage.redis.exists(cache_name):
-                if json.loads(sessionstorage.get(cache_name)).get(cache_key):
-                    next_items_search_after = {"search_after": [json.loads(sessionstorage.get(cache_name)).get(cache_key).get("control_number")]}
+                if orjson.loads(sessionstorage.get(cache_name)).get(cache_key):
+                    next_items_search_after = {"search_after": [orjson.loads(sessionstorage.get(cache_name)).get(cache_key).get("control_number")]}
                 else:
                     next_items_search_after = {"search_after": [next_items_sort_value]}
             else:
@@ -773,7 +773,7 @@ class RecordsListResource(ContentNegotiatedMethodView):
         search_result = search.execute()
 
         if not sessionstorage.redis.exists(cache_name) and size * math.floor(self.max_result_window/size) <= self.max_result_window:
-            json_data = json.dumps({cache_key: {"control_number": [next_items_sort_value]}}).encode('utf-8')
+            json_data = orjson.dumps({cache_key: {"control_number": [next_items_sort_value]}}).decode().encode('utf-8')
             sessionstorage.put(
                 cache_name,
                 json_data,

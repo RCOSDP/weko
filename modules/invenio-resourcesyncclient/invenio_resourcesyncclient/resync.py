@@ -19,7 +19,7 @@
 # MA 02111-1307, USA.
 
 """WEKO3 module docstring."""
-import json
+import orjson
 import ssl
 
 from flask import current_app
@@ -62,7 +62,7 @@ class ResourceSyncClient(Client):
         elif change == 'updated':
             current_update.append(record_id)
         resource.link_add(href=record_id, rel='file')
-        _resource = json.loads((repr(resource)).replace('\'', '"'))
+        _resource = orjson.loads((repr(resource)).replace('\'', '"'))
         current_resource.append(_resource)
         self.result.update({'created': current_create})
         self.result.update({'updated': current_update})

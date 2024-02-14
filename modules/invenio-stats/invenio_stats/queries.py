@@ -8,7 +8,7 @@
 
 """Query processing classes."""
 
-import json
+import orjson
 from datetime import datetime
 
 import pickle
@@ -414,9 +414,9 @@ class ESWekoFileStatsQuery(ESTermsQuery):
         if self.main_query:
             query_q = self.main_query
             for _field in self.main_fields:
-                query_q = json.dumps(query_q).replace(
+                query_q = orjson.dumps(query_q).decode().replace(
                     "@{}".format(_field), kwargs[_field])
-                query_q = json.loads(query_q)
+                query_q = orjson.loads(query_q)
             agg_query.update_from_dict(query_q)
 
         if start_date or end_date:
@@ -565,7 +565,7 @@ class ESWekoRankingQuery(ESTermsQuery):
                            index=es_index,
                            doc_type=es_doc_type)[0:0]
 
-        query_q = json.dumps(self.main_query)
+        query_q = orjson.dumps(self.main_query).decode()
         for _field in self.main_fields:
             query_q = query_q.replace(
                 "@{}".format(_field), kwargs.get(_field, ""))
@@ -573,9 +573,9 @@ class ESWekoRankingQuery(ESTermsQuery):
         query_q = query_q.replace(
             "@time_zone", current_app.config['STATS_WEKO_DEFAULT_TIMEZONE']
         )
-        query_q = json.loads(query_q)
+        query_q = orjson.loads(query_q)
         if kwargs.get("must_not"):
-            query_q['query']['bool']['must_not'] = json.loads(kwargs.get('must_not'))
+            query_q['query']['bool']['must_not'] = orjson.loads(kwargs.get('must_not'))
         else:
             del query_q['query']['bool']['must_not']
         agg_query.update_from_dict(query_q)

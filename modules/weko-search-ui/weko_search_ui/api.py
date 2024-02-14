@@ -21,9 +21,10 @@
 """WEKO3 module docstring."""
 
 import markupsafe
+import orjson
 from operator import index
 
-from flask import current_app, json
+from flask import current_app
 from flask_babelex import gettext as _
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
@@ -209,7 +210,7 @@ def get_search_detail_keyword(str):
 
     key_options["condition_setting"] = options
 
-    key_options_str = json.dumps(key_options)
+    key_options_str = orjson.dumps(key_options).decode()
     key_options_str.replace("False", "false")
     key_options_str.replace("True", "true")
 

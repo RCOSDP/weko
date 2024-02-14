@@ -22,7 +22,7 @@
 
 from __future__ import absolute_import, print_function
 
-import json
+import orjson
 
 from flask import has_request_context
 from flask_security import current_user
@@ -100,6 +100,6 @@ class WekoJSONSerializer(JSONSerializer):
 
     def serialize_exporter(self, pid, record):
         """Serialize a single record for the exporter."""
-        return json.dumps(
+        return orjson.dumps(
             self.transform_search_hit(pid, record)
-        ).encode('utf8') + b'\n'
+        ).decode().encode('utf8') + b'\n'

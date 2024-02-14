@@ -1,7 +1,7 @@
 import argparse
 import oai_schema
 import uuid
-import json
+import orjson
 import sys
 from oai_schema import oai_schema_config
 
@@ -69,7 +69,7 @@ def register_oai_schema_from_folder(exclusion_list=[], specified_list=[]):
                     id=str(uuid.uuid4()),
                     schema_name=schema_obj.schema_name,
                     form_data=schema_obj.form_data,
-                    xsd=json.dumps(schema_obj.xsd),
+                    xsd=orjson.dumps(schema_obj.xsd).decode(),
                     namespaces=schema_obj.namespaces,
                     schema_location=schema_obj.schema_location,
                     isvalid=True,

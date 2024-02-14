@@ -20,7 +20,7 @@
 
 """Blueprint for weko-items-ui."""
 
-import json
+import orjson
 import os
 import sys
 from copy import deepcopy
@@ -189,7 +189,7 @@ def iframe_index(item_type_id=0):
             activity = WorkActivity()
             metadata = activity.get_activity_metadata(activity_id)
             if metadata:
-                item_json = json.loads(metadata)
+                item_json = orjson.loads(metadata)
                 if 'metainfo' in item_json:
                     record = item_json.get('metainfo')
                 if 'files' in item_json:
@@ -238,7 +238,7 @@ def iframe_save_model():
             sanitize_input_data(data)
             save_title(activity_id, data)
             activity = WorkActivity()
-            activity.upt_activity_metadata(activity_id, json.dumps(data))
+            activity.upt_activity_metadata(activity_id, orjson.dumps(data).decode())
     except Exception as ex:
         current_app.logger.exception("{}".format(ex))
         return jsonify(code=1, msg='Model save error')
@@ -284,7 +284,7 @@ def get_json_schema(item_type_id=0, activity_id=""):
         if item_type_id > 0:
             result = ItemTypes.get_record(item_type_id)
             properties = result.get('properties')
-            if 'filemeta' in json.dumps(result):
+            if 'filemeta' in orjson.dumps(result).decode():
                 group_list = Group.get_group_list()
                 group_enum = list(group_list.keys())
                 filemeta_group = properties.get(
@@ -409,13 +409,13 @@ def items_index(pid_value='0'):
             """update index of item info."""
             item_str = sessionstore.get('item_index_{}'.format(pid_value))
             sessionstore.delete('item_index_{}'.format(pid_value))
-            item = json.loads(item_str)
+            item = orjson.loads(item_str)
             item['index'] = data
         elif request.method == 'POST':
             """update item data info."""
             sessionstore.put(
                 'item_index_{}'.format(pid_value),
-                json.dumps(data),
+                orjson.dumps(data).decode(),
                 ttl_secs=300)
         return jsonify(data)
     except PIDDoesNotExistError as ex:
@@ -554,13 +554,13 @@ def iframe_items_index(pid_value='0'):
             """update index of item info."""
             item_str = sessionstore.get('item_index_{}'.format(pid_value))
             sessionstore.delete('item_index_{}'.format(pid_value))
-            item = json.loads(item_str)
+            item = orjson.loads(item_str)
             item['index'] = data
         elif request.method == 'POST':
             """update item data info."""
             sessionstore.put(
                 'item_index_{}'.format(pid_value),
-                json.dumps(data),
+                orjson.dumps(data).decode(),
                 ttl_secs=300)
         return jsonify(data)
     except KeyError as ex:
@@ -618,7 +618,7 @@ def default_view_method(pid, record, template=None):
         activity = WorkActivity()
         metadata = activity.get_activity_metadata(activity_id)
         if metadata:
-            item_json = json.loads(metadata)
+            item_json = orjson.loads(metadata)
             if 'metainfo' in item_json:
                 record = item_json.get('metainfo')
             if 'files' in item_json:
@@ -1153,7 +1153,7 @@ def check_validation_error_msg(activity_id):
             and sessionstore.get('updated_json_schema_{}'.format(activity_id)):
         session_data = sessionstore.get(
             'updated_json_schema_{}'.format(activity_id))
-        error_list = json.loads(session_data.decode('utf-8'))
+        error_list = orjson.loads(session_data.decode('utf-8'))
         msg = [_('PID does not meet the conditions.')]
         if error_list.get('mapping'):
             mapping_err_msg = _('The mapping of required items for DOI '
