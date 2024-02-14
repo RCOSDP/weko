@@ -80,7 +80,7 @@ class SearchMetaForm extends React.Component {
                             <div className="col-md-12">
                                 <div className="col-md-4">
                                     <label className="input-group-text" for="parmalink">
-                                        parmalink
+                                        {this.props.autofill_parmalink}
                                     </label>
                                 </div>
                                 <div className="col-md-8">
@@ -98,7 +98,12 @@ class SearchMetaForm extends React.Component {
                                 <div className="col-md-8">
                                     <select name="achievement_type" id="achievement_type" value={this.state.achievement_type}
                                         onChange={this.handleChange} className="form-control">
-                                        <option key="published_papers" value="published_papers">論文</option>
+                                        <option key="published_papers" value="published_papers">{this.props.autofill_published_papers}</option>
+                                        <option key="misc" value="misc">{this.props.autofill_misc}</option>
+                                        <option key="book_etc" value="book_etc">{this.props.autofill_book_etc}</option>
+                                        <option key="presentations" value="presentations">{this.props.autofill_presentations}</option>
+                                        <option key="works" value="works">{this.props.autofill_works}</option>
+                                        <option key="others" value="others">{this.props.autofill_others}</option>
                                     </select>
                                     &nbsp;&nbsp;
                                 </div>
@@ -144,7 +149,7 @@ class SearchMetaForm extends React.Component {
                         </select>
                         &nbsp;&nbsp;
                   <input name="itemId" type="text" id="autofill_item_id"
-                            value={this.state.itemId.value} onChange={this.handleChange}
+                            value={this.state.itemId} onChange={this.handleChange}
                             className="form-control ng-untouched ng-pristine ng-valid" />
                         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                   <input type="submit" id="autofill_item_button" value={this.props.getValue} className="btn btn-info" />
@@ -166,12 +171,30 @@ $(function () {
     let getValue = $("#autofill_get_value").val();
     let achievement_type = $("#autofill_achievement_type").val();
     let achievement_id = $("#autofill_achievement_id").val();
+    
+    const autofill_parmalink = $("#autofill_parmalink").val();
+    const autofill_published_papers = $("#autofill_published_papers").val();
+    const autofill_misc = $("#autofill_misc").val();
+    const autofill_book_etc = $("#autofill_book_etc").val();
+    const autofill_presentations = $("#autofill_presentations").val();
+    const autofill_works = $("#autofill_works").val();
+    const autofill_others = $("#autofill_others").val();
+
+
     ReactDOM.render(
         <SearchMetaForm headerName={headerName}
             selectMeta={selectMeta}
             getValue={getValue} 
             achievement_type={achievement_type}
-            achievement_id={achievement_id} />,
+            achievement_id={achievement_id} 
+            autofill_parmalink={autofill_parmalink}
+            autofill_published_papers={autofill_published_papers}
+            autofill_misc={autofill_misc}
+            autofill_book_etc={autofill_book_etc}
+            autofill_presentations={autofill_presentations}
+            autofill_works={autofill_works}
+            autofill_others={autofill_others}
+            />,
         meta_search_body
     )
 });

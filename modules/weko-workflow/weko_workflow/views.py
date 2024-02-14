@@ -1046,7 +1046,7 @@ def display_activity(activity_id="0"):
     last_result :CRISLinkageResult = CRISLinkageResult().get_last( _id ,CRIS_Institutions.RM)
     last_linkage_result = _('Nothing')
     if last_result:
-        last_linkage_result = _('Successful') if last_result.succeed else _('Failed')
+        last_linkage_result = _('Successful') if last_result.succeed == True else _('Failed') if last_result.succeed == False else _('Running')
         last_linkage_result = last_linkage_result + ' (' +last_result.updated.strftime('%Y-%m-%d') + ') '
         
 
@@ -1677,7 +1677,7 @@ def next_action(activity_id='0', action_id=0):
         # Call signal to cris linkage
         temp_data = work_activity.get_activity_metadata(activity_id=activity_id)
         if temp_data:
-            if json.loads(temp_data).get('cris_linkage',{}).get('reseachmap' , False):
+            if json.loads(temp_data).get('cris_linkage',{}).get('researchmap' , False):
                 cris_researchmap_linkage_request.send(new_item_id)
             
         work_activity.end_activity(activity)

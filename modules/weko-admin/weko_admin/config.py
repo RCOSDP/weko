@@ -42,10 +42,10 @@ WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS = 'elastic_reindex_settings'
 WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS_HAS_ERRORED = 'has_errored'
 """a json property name of admin_settings record 'lastic_reindex_settings'"""
 
-WEKO_ADMIN_SETTINGS_RESERCHMAP_LINKAGE_SETTINGS='reserchmap_linkage_settings'
+WEKO_ADMIN_SETTINGS_RESEARCHMAP_LINKAGE_SETTINGS='researchmap_linkage_settings'
 """admin_settings record name"""
 
-WEKO_ADMIN_SETTINGS_RESERCHMAP_MERGE_MODES = [('similar_merge_similar_data','similar merge(similar data priority)')
+WEKO_ADMIN_SETTINGS_RESEARCHMAP_MERGE_MODES = [('similar_merge_similar_data','similar merge(similar data priority)')
                        ,('similar_merge_input_data','similar merge(input data priority)')
                        ,('merge','merge')
                        ,('force','force')]
@@ -1301,4 +1301,4 @@ WEKO_ADMIN_USE_REGEX_IN_CRAWLER_LIST = False
 
 WEKO_ADMIN_CRIS_LINKAGE_SETTINGS_TEMPLATE = \
     'weko_admin/admin/cris_linkage_setting.html'
-"""Item Export Settings template."""
+"""CRIS Linkage Settings template."""

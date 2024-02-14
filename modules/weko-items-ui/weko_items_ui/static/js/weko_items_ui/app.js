@@ -4379,7 +4379,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
             {
               'files': $rootScope.filesVM.files,
               'endpoints': $rootScope.filesVM.invenioFilesEndpoints,
-              'cris_linkage' : {'reseachmap' : $('#researchmap_chk').prop("checked")}
+              'cris_linkage' : {'researchmap' : $('#researchmap_chk').prop("checked")}
             }
           );
         }

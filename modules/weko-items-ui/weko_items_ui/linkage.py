@@ -10,7 +10,7 @@ import json
 
 from weko_admin.models import AdminSettings
 
-class Reseachmap:
+class Researchmap:
 
     def __init__(self) -> None:
         self.token = ""
@@ -28,8 +28,8 @@ class Reseachmap:
         “version”=”2”
         }
         """
-        host = current_app.config["WEKO_ITEMS_UI_CRIS_LINKAGE_RESEACHMAP_HOST"] # type: ignore
-        base_url=current_app.config["WEKO_ITEMS_UI_CRIS_LINKAGE_RESEACHMAP_BASE_URL"] # type: ignore
+        host = current_app.config["WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_HOST"] # type: ignore
+        base_url=current_app.config["WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_BASE_URL"] # type: ignore
 
 
         token_api_url = base_url+"/oauth2/token"
@@ -60,10 +60,10 @@ class Reseachmap:
 
     @staticmethod
     def create_jwt():
-        base_url=current_app.config["WEKO_ITEMS_UI_CRIS_LINKAGE_RESEACHMAP_BASE_URL"] # type: ignore
+        base_url=current_app.config["WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_BASE_URL"] # type: ignore
         
-        # settings_json = AdminSettings.get(current_app.config.get('WEKO_ADMIN_SETTINGS_RESERCHMAP_LINKAGE_SETTINGS') )
-        settings_json = AdminSettings.get('reserchmap_linkage_settings' , False) 
+        # settings_json = AdminSettings.get(current_app.config.get('WEKO_ADMIN_SETTINGS_RESEARCHMAP_LINKAGE_SETTINGS') )
+        settings_json = AdminSettings.get('researchmap_linkage_settings' , False) 
         if not settings_json:
             raise
 
@@ -89,8 +89,8 @@ class Reseachmap:
     
     @staticmethod
     def get_reseacher(token , parmalink , achievement_type , achievement_id):
-        base_url=current_app.config["WEKO_ITEMS_UI_CRIS_LINKAGE_RESEACHMAP_BASE_URL"] # type: ignore
-        response = requests.get(base_url +"/" + parmalink + '/' + achievement_type+ '/'+   achievement_id
+        base_url=current_app.config["WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_BASE_URL"] # type: ignore
+        response = requests.get('{}/{}/{}/{}'.format(base_url, parmalink , achievement_type,  achievement_id)
                                 , headers={"Authorization": "Bearer "+token+""
                                     ,"Accept": "application/ld+json,application/json,*/*;q=0.1"
                                     ,"Accept-Encoding": "gzip"}
@@ -100,7 +100,7 @@ class Reseachmap:
 
     @staticmethod
     def post_achievement_datas(token ,body:str):
-        base_url=current_app.config["WEKO_ITEMS_UI_CRIS_LINKAGE_RESEACHMAP_BASE_URL"] # type: ignore
+        base_url=current_app.config["WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_BASE_URL"] # type: ignore
 
         response = requests.post(base_url + "/_bulk" #+ "?check=1"
                                 , headers={"Authorization": "Bearer "+token+""
@@ -115,7 +115,7 @@ class Reseachmap:
 
     def get_token(self , type):
         if self.token == "":
-            self.token = Reseachmap.create_access_token(Reseachmap.create_jwt() ,type)
+            self.token = Researchmap.create_access_token(Researchmap.create_jwt() ,type)
 
         return self.token
 
@@ -123,7 +123,7 @@ class Reseachmap:
     def get_data(self, parmalink , achievement_type , achievement_id):
         def __get():
             token = self.get_token('get')
-            return Reseachmap.get_reseacher(token , parmalink , achievement_type , achievement_id)
+            return Researchmap.get_reseacher(token , parmalink , achievement_type , achievement_id)
 
         return self.retry(functools.partial(__get))
 
@@ -131,7 +131,7 @@ class Reseachmap:
     def post_data(self ,jsons):
         def __post():
             token = self.get_token('post')
-            return Reseachmap.post_achievement_datas(token ,jsons)
+            return Researchmap.post_achievement_datas(token ,jsons)
 
         return self.retry(functools.partial(__post))
 
@@ -144,7 +144,7 @@ class Reseachmap:
                                 ,"Accept": "application/ld+json,application/json,*/*;q=0.1"
                                 ,"Accept-Encoding": "gzip"})
             current_app.logger.debug(response.text)
-            if response.status_code == 200 and json.loads(response.text).get('code' , '') == 102:
+            if response.status_code == 200 and json.loads(response.text.splitlines()[0]).get('code' , '') == 102:
                 sleep(10) # 10 seconds waiting
                 return __get()
             else :
@@ -156,13 +156,13 @@ class Reseachmap:
     def retry(self ,func :functools.partial):
         
         retry_count = 0 
-        CONST_RETRY_MAX = current_app.config['WEKO_ITEMS_UI_CRIS_LINKAGE_RESEACHMAP_RETRY_MAX'] # type: ignore
+        CONST_RETRY_MAX = current_app.config['WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_RETRY_MAX'] # type: ignore
 
         def __can_end(response):
             return response.status_code == 200 or response.status_code == 404 or retry_count >= CONST_RETRY_MAX
 
         def __recovery(response):
-            if response.status_code == 401 and json.loads(response.text.splitlines()).get("error") == "invalid_token" :
+            if response.status_code == 401 and json.loads(response.text.splitlines()[0]).get("error") == "invalid_token" :
                 self.token = ""
 
         response = func()

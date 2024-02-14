@@ -110,3 +110,27 @@ WEKO_ITEMS_AUTOFILL_IGNORE_MAPPING = [
     "identifierRegistration.@value",
     "identifierRegistration.@attributes.identifierType"
 ]
+
+WEKO_ITEMS_AUTOFILL_RESEARCHMAP_REQUIRED_ITEM = [
+    "title",
+    "creator",
+    "contributor",
+    "subject",
+    "description",
+    "publisher",
+    "date",
+    "language",
+    "type",
+    "version",
+    "identifier",
+    "relation",
+    "sourceIdentifier",
+    "sourceTitle",
+    "volume",
+    "issue",
+    "numPages",
+    "pageStart",
+    "pageEnd",
+    "conference",
+]
+"""CrossRef required item"""
