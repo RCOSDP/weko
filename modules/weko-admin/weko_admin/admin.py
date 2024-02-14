@@ -26,6 +26,7 @@ import json
 import os
 import re
 import sys
+import traceback
 import unicodedata
 import ipaddress
 from datetime import datetime, timedelta
@@ -1363,6 +1364,91 @@ class FacetSearchSettingView(ModelView):
         )
 
 
+class CrisLinkageSettingView(BaseView):
+    """CRIS Linkage Settings View"""
+
+    @expose('/' ,methods=['GET'])
+    def index(self):
+        SETTINGS_NAME = current_app.config["WEKO_ADMIN_SETTINGS_RESEARCHMAP_LINKAGE_SETTINGS"]# type: ignore
+        settings = AdminSettings.get(SETTINGS_NAME)
+        default_merge_mode = settings.merge_mode if settings and settings.merge_mode else 'similar_merge_similar_data' # type: ignore
+
+        MERGE_MODES = current_app.config["WEKO_ADMIN_SETTINGS_RESEARCHMAP_MERGE_MODES"] # type: ignore 
+        return self.render(
+            current_app.config["WEKO_ADMIN_CRIS_LINKAGE_SETTINGS_TEMPLATE"] # type: ignore 
+            ,merge_modes=MERGE_MODES
+            ,default_merge_mode = default_merge_mode
+            )
+    
+    @expose('/save_keys' ,methods=['POST'])
+    def save_keys(self):
+        researchmap_cidkey_contents = request.form.get('researchmap_cidkey_contents' ,'')
+        researchmap_pkey_contents = request.form.get('researchmap_pkey_contents' ,'')
+
+        if researchmap_cidkey_contents == '' and researchmap_pkey_contents == '':
+            flash(_('Failurely Changed Settings.') ,'error')
+            flash(_('Please input at least one of client id key or private key') ,'error')
+            return redirect(url_for('cris_linkage.index'))
+
+        SETTINGS_NAME = current_app.config["WEKO_ADMIN_SETTINGS_RESEARCHMAP_LINKAGE_SETTINGS"]# type: ignore
+        settings = AdminSettings.get(SETTINGS_NAME)
+        if not settings :
+            set = {
+                'researchmap_cidkey_contents':researchmap_cidkey_contents
+                ,'researchmap_pkey_contents':researchmap_pkey_contents
+                ,'merge_mode':''
+            }
+        else :
+            set = {
+                'researchmap_cidkey_contents' : researchmap_cidkey_contents if researchmap_cidkey_contents != '' else settings.researchmap_cidkey_contents # type: ignore 
+                ,'researchmap_pkey_contents' : researchmap_pkey_contents if researchmap_pkey_contents != '' else settings.researchmap_pkey_contents # type: ignore 
+                ,'merge_mode' : settings.merge_mode # type: ignore 
+            }
+
+        try :
+            AdminSettings.update(SETTINGS_NAME , set)
+            flash(_('Successfully Changed Settings.') ,'success')
+        except Exception as e:
+            traceback.print_exc()
+            flash(_('Failurely Changed Settings.') ,'error')
+            raise e
+
+        return redirect(url_for('cris_linkage.index'))
+
+    @expose('/save_merge_mode' ,methods=['POST'])
+    def save_merge_mode(self):
+        merge_mode = request.form.get('merge_mode' ,'')
+
+        if merge_mode == '' :
+            flash(_('Failurely Changed Settings.') ,'error')
+            flash(_('Please input Merge Mode') ,'error')
+            return redirect(url_for('cris_linkage.index'))
+
+        SETTINGS_NAME = current_app.config["WEKO_ADMIN_SETTINGS_RESEARCHMAP_LINKAGE_SETTINGS"]# type: ignore
+        settings = AdminSettings.get(SETTINGS_NAME)
+        if not settings :
+            set = {
+                'researchmap_cidkey_contents': ''
+                ,'researchmap_pkey_contents': ''
+                ,'merge_mode':merge_mode
+            }
+        else :
+            set = {
+                'researchmap_cidkey_contents' : settings.researchmap_cidkey_contents # type: ignore 
+                ,'researchmap_pkey_contents' : settings.researchmap_pkey_contents # type: ignore 
+                ,'merge_mode' : merge_mode  # type: ignore 
+            }
+
+        try :
+            AdminSettings.update(SETTINGS_NAME , set)
+            flash(_('Successfully Changed Settings.') ,'success')
+        except Exception as e:
+            traceback.print_exc()
+            flash(_('Failurely Changed Settings.') ,'error')
+            raise e
+
+        return redirect(url_for('cris_linkage.index'))
+
 style_adminview = {
     'view_class': StyleSettingView,
     'kwargs': {
@@ -1522,6 +1608,15 @@ reindex_elasticsearch_adminview = {
     }
 }
 
+cris_linkage_adminview = {
+    'view_class': CrisLinkageSettingView,
+    'kwargs': {
+        'category': _('Setting'),
+        'name': _('CRIS Linkage'),
+        'endpoint': 'cris_linkage'
+    }
+}
+
 
 __all__ = (
     'style_adminview',
@@ -1541,5 +1636,6 @@ __all__ = (
     'restricted_access_adminview',
     'identifier_adminview',
     'facet_search_adminview',
+    'cris_linkage_adminview',
     'reindex_elasticsearch_adminview'
 )

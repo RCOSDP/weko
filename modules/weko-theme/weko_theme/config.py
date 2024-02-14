@@ -360,8 +360,12 @@ WEKO_THEME_ADMIN_MENU = [
                 'order': 20
             },
             {
-                'name': 'Others',
+                'name': 'CRIS Linkage',
                 'order': 21
+            },
+            {
+                'name': 'Others',
+                'order': 22
             }
         ]
     },

@@ -32,6 +32,42 @@ msgstr "データを正しく入力して下さい。"
 msgid "Error occurred during item export."
 msgstr ""
 
+msgid "Auto Linkage to CRIS Institution"
+msgstr "CRIS機関へ自動連携"
+
+msgid "Latest Linkage Result："
+msgstr "前回連携結果："
+
+msgid "Nothing"
+msgstr "なし"
+
+msgid "parmalink"
+msgstr "parmalink"
+
+msgid "achievement type"
+msgstr "業績種別"
+
+msgid "achievement id"
+msgstr "業績ID"
+
+msgid "published papers"
+msgstr "論文"
+
+msgid "MISC"
+msgstr "MISC"
+
+msgid "book etc"
+msgstr "書籍等出版物"
+
+msgid "presentations"
+msgstr "講演・口頭発表等"
+
+msgid "Works"
+msgstr "Works(作品等)"
+
+msgid "others"
+msgstr "その他"
+
 #: weko_items_ui/views.py:371
 #, fuzzy
 msgid "Invalid request"
