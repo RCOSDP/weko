@@ -549,7 +549,7 @@ def check_billing_file_permission(item_id, file_name, download_status={}):
         return False
 
     # 課金済みチェック
-    charge_result = check_charge(current_user.id, item_id, file_name)
+    charge_result = check_charge(current_user.id, item_id)
     download_status["charge_status"] = charge_result
     if charge_result == 'already':
         # 課金済みの場合はアクセス権限あり
