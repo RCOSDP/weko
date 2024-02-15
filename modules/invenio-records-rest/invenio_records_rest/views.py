@@ -614,7 +614,7 @@ class RecordsListResource(ContentNegotiatedMethodView):
                 if (q_check or sort_check) or size_check:
                     sessionstorage.delete(cache_name)
                     sessionstorage.delete(f"{cache_name}_url_args")
-                    json_data = orjson.dumps(request.args.to_dict()).decode().encode('utf-8')
+                    json_data = orjson.dumps(request.args.to_dict())
                     sessionstorage.put(
                         f"{cache_name}_url_args",
                         json_data,
@@ -626,7 +626,7 @@ class RecordsListResource(ContentNegotiatedMethodView):
             else:
                 if sessionstorage.redis.exists(cache_name):
                     sessionstorage.delete(cache_name)
-                json_data = orjson.dumps(request.args.to_dict()).decode().encode('utf-8')
+                json_data = orjson.dumps(request.args.to_dict())
                 sessionstorage.put(
                     f"{cache_name}_url_args",
                     json_data,
@@ -732,7 +732,7 @@ class RecordsListResource(ContentNegotiatedMethodView):
                         next_search_after_set = None
                         cache_name_stored_data[cache_key] = {"control_number": next_items_sort_value}
 
-                        json_data = orjson.dumps(cache_name_stored_data).decode().encode('utf-8')
+                        json_data = orjson.dumps(cache_name_stored_data)
                         sessionstorage.put(
                             cache_name,
                             json_data,
@@ -773,7 +773,7 @@ class RecordsListResource(ContentNegotiatedMethodView):
         search_result = search.execute()
 
         if not sessionstorage.redis.exists(cache_name) and size * math.floor(self.max_result_window/size) <= self.max_result_window:
-            json_data = orjson.dumps({cache_key: {"control_number": [next_items_sort_value]}}).decode().encode('utf-8')
+            json_data = orjson.dumps({cache_key: {"control_number": [next_items_sort_value]}})
             sessionstorage.put(
                 cache_name,
                 json_data,

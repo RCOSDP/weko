@@ -4033,7 +4033,7 @@ def check_doi_validation_not_pass(item_id, activity_id,
     if error_list:
         sessionstore.put(
             'updated_json_schema_{}'.format(activity_id),
-            orjson.dumps(error_list).decode().encode('utf-8'),
+            orjson.dumps(error_list),
             ttl_secs=300)
         return True
     else:

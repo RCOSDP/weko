@@ -1024,7 +1024,7 @@ def save_index_trees_to_redis(tree):
             return str(o)
     redis = __get_redis_store()
     try:
-        v = bytes(orjson.dumps(tree, default=default).decode(), encoding='utf-8')
+        v = orjson.dumps(tree, default=default)
         redis.put("index_tree_view_" + os.environ.get('INVENIO_WEB_HOST_NAME') + "_" + current_i18n.language,v)
     except ConnectionError:
         current_app.logger.error("Fail save index_tree to redis")

@@ -102,4 +102,4 @@ class WekoJSONSerializer(JSONSerializer):
         """Serialize a single record for the exporter."""
         return orjson.dumps(
             self.transform_search_hit(pid, record)
-        ).decode().encode('utf8') + b'\n'
+        ) + b'\n'

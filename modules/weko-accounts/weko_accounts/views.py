@@ -298,7 +298,7 @@ def shib_sp_login():
         datastore.put(
             current_app.config[
                 'WEKO_ACCOUNTS_SHIB_CACHE_PREFIX'] + shib_session_id,
-            bytes(orjson.dumps(shib_attr).decode(), encoding='utf-8'),
+            orjson.dumps(shib_attr),
             ttl_secs=ttl_sec)
 
         shib_user = ShibUser(shib_attr)

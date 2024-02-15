@@ -1887,7 +1887,7 @@ def get_journals():
         try:
             datastore.put(
                 cache_key,
-                orjson.dumps(multiple_result).decode().encode('utf-8'),
+                orjson.dumps(multiple_result),
                 ttl_secs=int(
                     current_app.config['WEKO_WORKFLOW_OAPOLICY_CACHE_TTL']))
         except Exception:
