@@ -267,10 +267,24 @@ WEKO_ITEMS_UI_DEFAULT_LANG = "ja"
 
 WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_MAPPINGS = [
         { 'type' : 'lang' , "rm_name" : 'paper_title', "jpcore_name" : 'dc:title' , "weko_name" :"title"}
+        ,{ 'type' : 'lang' , "rm_name" : 'book_title', "jpcore_name" : 'dc:title' , "weko_name" :"title"}
+        ,{ 'type' : 'lang' , "rm_name" : 'presentation_title', "jpcore_name" : 'dc:title' , "weko_name" :"title"}
+        ,{ 'type' : 'lang' , "rm_name" : 'work_title', "jpcore_name" : 'dc:title' , "weko_name" :"title"}
+        ,{ 'type' : 'lang' , "rm_name" : 'other_title', "jpcore_name" : 'dc:title' , "weko_name" :"title"}
+        
         ,{'type' : 'lang' , "rm_name" : 'description', "jpcore_name" : 'datacite:description' , "weko_name" :"description"}
         ,{'type' : 'lang' , "rm_name" : 'publisher',   "jpcore_name" : 'dc:publisher' , "weko_name" :"publisher"}
         ,{'type' : 'lang' , "rm_name" : 'publication_name ',   "jpcore_name" : 'jpcoar:sourceTitle' , "weko_name" :"sourceTitle"}
+
+        ,{'type' : 'lang' , "rm_name" : 'event',   "jpcore_name" : 'jpcoar:conference' , "weko_name" :"conference" , "child_node" : "conferenceName"}
+        ,{'type' : 'lang' , "rm_name" : 'promoter',   "jpcore_name" : 'jpcoar:conference' , "weko_name" :"conference", "child_node" : "conferenceSponsor"}
+        ,{'type' : 'lang' , "rm_name" : 'location',   "jpcore_name" : 'jpcoar:conference' , "weko_name" :"conference", "child_node" : "conferenceVenue"}
+        ,{'type' : 'simple' , "rm_name" : 'address_country',   "jpcore_name" : 'jpcoar:conference' , "weko_name" :"conference", "child_node" : "conferenceCountry"}
+
         ,{'type' : 'authors'    ,  "rm_name" : 'authors'     , "jpcore_name" : 'jpcoar:creator'  ,"weko_name": 'creator'}
+        ,{'type' : 'authors'    ,  "rm_name" : 'creators'     , "jpcore_name" : 'jpcoar:creator'  ,"weko_name": 'creator'}
+        ,{'type' : 'authors'    ,  "rm_name" : 'originators'     , "jpcore_name" : 'jpcoar:creator'  ,"weko_name": 'creator'}
+        ,{'type' : 'authors'    ,  "rm_name" : 'presenters'     , "jpcore_name" : 'jpcoar:creator'  ,"weko_name": 'creator'}
         ,{'type' : 'identifiers',  "rm_name" : "identifiers" , "jpcore_name" : 'jpcoar:relation' ,"weko_name": 'relation'}
         ,{'type' : 'simple_value', "rm_name" : 'publication_date',  "jpcore_name" :  'datacite:date' , "weko_name" : "date"}
         ,{'type' : 'simple', "rm_name" : 'volume', "jpcore_name" :  'jpcoar:volume' , "weko_name" : "volume"}

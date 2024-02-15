@@ -218,6 +218,16 @@ def build_achievement(record,item,recid,mapping,jrc, achievement_type):
     DEFAULT_LANG = current_app.config["WEKO_ITEMS_UI_DEFAULT_LANG"] # type: ignore
     researchmap_mappings = current_app.config["WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_MAPPINGS"] # type: ignore
 
+    def __get_child_node(rm_map,prop):
+        if rm_map.get("child_node"):
+            print('!!!!!!!!!!!!!!!child_node!!!!!!!!!!!!!!!!!!!')
+            nodes:list = rm_map.get("child_node").split('.')
+
+            for node in nodes:
+                prop = prop.get(node)
+
+        return prop
+
     for rm_map in researchmap_mappings:
         # ja , en 取得
         if rm_map['type'] == 'lang':
@@ -227,26 +237,52 @@ def build_achievement(record,item,recid,mapping,jrc, achievement_type):
                 property_name = rm_map["weko_name"]
                 if jpcoar_mapping != "" and jpcoar_mapping.get(property_name):
                     prop = jpcoar_mapping[property_name]
+                    prop =  __get_child_node(rm_map,prop)
                     value_path = prop.get('@value','')
 
                     lang_path  = prop.get('@attributes',{}).get('xml:lang','')
                     
                     langs_dict = {}
                     for record_child_node in record.get(parent_key).get('attribute_value_mlt'):
-                        value = record_child_node.get(value_path)
-                        lang = record_child_node.get(lang_path)
+
+                        if len(value_path.split('.')) > 1:
+                            def __get_recursive( record_child_node , value_path ,idx):
+                                if type(record_child_node) == list:
+                                    for v in record_child_node:
+                                        #FIXME
+                                        return __get_recursive(v , value_path ,idx)
+                                elif type(record_child_node) == dict:
+                                    record_child_node = record_child_node.get(value_path.split('.')[idx])
+                                    return __get_recursive(record_child_node , value_path, idx + 1)
+
+                                else:
+                                    return record_child_node 
+                            
+                            value = __get_recursive(record_child_node , value_path ,0)
+                            lang = __get_recursive(record_child_node , lang_path ,0)
+                            # print(value)
+                            # print(lang)
+                        else:
+                            value = record_child_node.get(value_path)
+                            lang = record_child_node.get(lang_path)
+
                         if lang == "en" or lang == "ja":
                             langs_dict.update({lang:value})
-                        elif lang == None or lang == "":
+                        elif (lang == None or lang == "" ) and value != None:
                             # nothing lang is also "ja" as default
                             langs_dict.update({DEFAULT_LANG:value})
                     
                     if langs_dict != {}:
                         return_data.update({rm_map["rm_name"]:langs_dict})
+                        # print(return_data)
 
         elif  rm_map['type'] == 'simple':
-            value = jrc.get(rm_map["weko_name"])
-            return_data.update({rm_map["rm_name"]:value})
+            if not rm_map.get("child_node"):
+                value = jrc.get(rm_map["weko_name"])
+                return_data.update({rm_map["rm_name"]:value})
+            else :
+                value = jrc.get(rm_map["weko_name"]).get(rm_map.get("child_node"))
+                return_data.update({rm_map["rm_name"]:value})
 
         elif rm_map['type'] == 'simple_value':
             value = jrc.get(rm_map["weko_name"])[0].get('value')
@@ -257,7 +293,7 @@ def build_achievement(record,item,recid,mapping,jrc, achievement_type):
             for relatedIdentifier in jrc.get(rm_map["weko_name"] ,{}).get('relatedIdentifier', []):
                 identifierType =relatedIdentifier.get('identifierType')
                 if identifierType.upper() == "DOI" or identifierType.upper() == "ISBN" :
-                    ## DOI and ISBN only sendable. 他の項目はresearchmapのAPI定義上更新不可。
+                    ## 他の項目はresearchmapのAPI定義上更新不可。
                     value = jrc.get(rm_map["weko_name"]).get('relatedIdentifier')[0].get('value')
                     identifer_kv = {identifierType.lower():value}
                 return_data.update({rm_map["rm_name"]:identifer_kv})
@@ -320,7 +356,7 @@ def build_achievement(record,item,recid,mapping,jrc, achievement_type):
                         return_data.update({rm_map["rm_name"]:langs_dict})
 
     current_app.logger.debug('return_data')
-    current_app.logger.debug(return_data)
+    current_app.logger.error(return_data)
     return return_data
 
     # return { "paper_title": {"ja": "aaaaa", "en": "aaaaa"}

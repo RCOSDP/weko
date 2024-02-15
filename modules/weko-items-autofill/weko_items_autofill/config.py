@@ -131,6 +131,6 @@ WEKO_ITEMS_AUTOFILL_RESEARCHMAP_REQUIRED_ITEM = [
     "numPages",
     "pageStart",
     "pageEnd",
-    "conference",
+    "conference"
 ]
 """CrossRef required item"""
