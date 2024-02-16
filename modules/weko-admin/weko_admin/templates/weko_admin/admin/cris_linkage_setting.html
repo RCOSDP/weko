@@ -1,0 +1,115 @@
+{# -*- coding: utf-8 -*-
+#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
+{%- extends admin_base_template %}
+{% block css %}
+{{ super() }}
+{% assets "weko_theme_css_buttons" %}
+<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+{% endblock %}
+
+{%- block javascript %}
+{{ super() }}
+{% assets "weko_admin_cris_linkage_js" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
+{%- endblock javascript %}
+
+{%- block body %}
+<div id="alerts"></div>
+<div class="panel panel-info">
+  <div class="panel-heading">
+    <div class="panel-title">
+      <h4>{{ _("researchmap") }}</h4>
+    </div>
+  </div>
+  <div class="panel-body">
+    <form method="POST" name="researchmap_form" action={{ url_for('cris_linkage.save_keys') }}>
+      <div class="row col-md-12">
+        <div class="col-md-2">
+          <label for="API_Key">{{ _("API Key") }}:</label>
+        </div>
+        <div class="col-md-10">
+          <div class="row">
+            <div class="col-md-2">
+              <label for="researchmap_cidkey_contents">{{ _("client id key") }}</label>
+            </div>
+            <div class="col-md-8">
+              <input type="file" class="hidden form-control" name="researchmap_cidkey" id="researchmap_cidkey" accept=".key" />
+              <button type="button" class="btn btn-primary" onclick='handleOnclickCid()'>{{ _("Select file") }}</button>
+              <span id="file_name_researchmap_cidkey">{% if is_clidkey_registered %}{{_("Registered")}}{% else %}{{ _("Selected file name") }}{% endif %}</span>
+              <input type="hidden" name="researchmap_cidkey_contents" id="researchmap_cidkey_contents" />
+            </div>
+          </div>
+          <p class="row-line-space"></p>
+          <div class="row">
+            <div class="col-md-2">
+              <label for="researchmap_pkey_contents">{{ _("private key") }}</label>
+            </div>
+            <div class="col-md-8">
+              <input type="file" class="hidden" name="researchmap_pkey" id="researchmap_pkey" accept=".key" />
+              <button type="button" class="btn btn-primary" onclick='handleOnclickp()'>{{ _("Select file") }}</button>
+              <span id="file_name_researchmap_pkey">{% if is_pkey_registered %}{{_("Registered")}}{% else %}{{ _("Selected file name") }}{% endif %}</span>
+              <input type="hidden" name="researchmap_pkey_contents" id="researchmap_pkey_contents" />
+            </div>
+          </div>
+          <p class="row-line-space"></p>
+        </div>
+      </div>
+      <div class="col-md-10 text-center">
+        <button id="researchmap_update" type="submit" name="submit" value="researchmap_form"
+          class="btn btn-primary">
+          <i class="glyphicon glyphicon-save"></i>&nbsp
+          {{ _('Save') }}</button>
+      </div>
+
+    </form>
+    <div class="row"></div>
+    <hr />
+    <div class="row"></div>
+    <form method="POST" name="researchmap_form" action={{ url_for('cris_linkage.save_merge_mode') }}>
+
+      <div class="row col-md-12">
+        <p class="row-line-space"></p>
+        <div class="col-md-2">
+          <label for="merge_mode">{{ _("Merge Mode") }}:</label>
+        </div>
+        <div class="col-md-8">
+          <select class="form-control" id="merge_mode" name="merge_mode" >
+            {% for val , txt in merge_modes %}
+              {% if default_merge_mode == val  %}
+                <option value="{{val}}" selected>{{_(txt)}}</option>
+              {% else %}
+                <option value="{{val}}">{{_(txt)}}</option>
+              {% endif %}
+            {% endfor %}
+          </select>
+          <p class="row-line-space"></p>
+        </div>
+      </div>
+      <div class="col-md-10 text-center">
+        <button id="researchmap_update" type="submit" name="submit" value="researchmap_form"
+          class="btn btn-primary">
+          <i class="glyphicon glyphicon-save"></i>&nbsp
+          {{ _('Save') }}</button>
+      </div>
+    </form>
+  </div>
+</div>
+{%- endblock body %}
