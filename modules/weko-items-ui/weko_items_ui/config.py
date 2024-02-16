@@ -266,24 +266,39 @@ WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_MERGE_MODE_DEFAULT = 'similar_merge_simil
 WEKO_ITEMS_UI_DEFAULT_LANG = "ja"
 
 WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_MAPPINGS = [
-        { 'type' : 'lang' , "rm_name" : 'paper_title', "jpcore_name" : 'dc:title' , "weko_name" :"title"}
-        ,{'type' : 'lang' , "rm_name" : 'description', "jpcore_name" : 'datacite:description' , "weko_name" :"description"}
-        ,{'type' : 'lang' , "rm_name" : 'publisher',   "jpcore_name" : 'dc:publisher' , "weko_name" :"publisher"}
-        ,{'type' : 'lang' , "rm_name" : 'publication_name ',   "jpcore_name" : 'jpcoar:sourceTitle' , "weko_name" :"sourceTitle"}
-        ,{'type' : 'authors'    ,  "rm_name" : 'authors'     , "jpcore_name" : 'jpcoar:creator'  ,"weko_name": 'creator'}
-        ,{'type' : 'identifiers',  "rm_name" : "identifiers" , "jpcore_name" : 'jpcoar:relation' ,"weko_name": 'relation'}
-        ,{'type' : 'simple_value', "rm_name" : 'publication_date',  "jpcore_name" :  'datacite:date' , "weko_name" : "date"}
-        ,{'type' : 'simple', "rm_name" : 'volume', "jpcore_name" :  'jpcoar:volume' , "weko_name" : "volume"}
-        ,{'type' : 'simple', "rm_name" : 'number', "jpcore_name" :  'jpcoar:issue' , "weko_name" : "issue"}
-        ,{'type' : 'simple', "rm_name" : 'starting_page', "jpcore_name" : 'jpcoar:pageStart' , "weko_name" : "pageStart"}
-        ,{'type' : 'simple', "rm_name" : 'ending_page', "jpcore_name" :   'jpcoar:pageEnd' ,   "weko_name" : "pageEnd"}
-        ,{'type' : 'simple', "rm_name" : 'languages', "jpcore_name" :  'dc:language' , "weko_name" : "language"}
-        ,{'type' :  'type', "rm_name" : 'published_paper_type'     , "jpcore_name" :  'dc:type'     , "weko_name" : "type"}
-        ,{'type' :  'type', "rm_name" : 'misc_type'     , "jpcore_name" :  'dc:type'     , "weko_name" : "type"}
-        ,{'type' :  'type', "rm_name" : 'book_type'     , "jpcore_name" :  'dc:type'     , "weko_name" : "type"}
-        ,{'type' :  'type', "rm_name" : 'presentation_type'     , "jpcore_name" :  'dc:type'     , "weko_name" : "type"}
-        ,{'type' :  'type', "rm_name" : 'work_type'     , "jpcore_name" :  'dc:type'     , "weko_name" : "type"}
-        ,{'type' :  'type', "rm_name" : 'dataset_type'     , "jpcore_name" :  'dc:type'     , "weko_name" : "type"}
+        { 'type' : 'lang' , "rm_name" : 'paper_title', "jpcoar_name" : 'dc:title' , "weko_name" :"title"}
+        ,{ 'type' : 'lang' , "rm_name" : 'book_title', "jpcoar_name" : 'dc:title' , "weko_name" :"title"}
+        ,{ 'type' : 'lang' , "rm_name" : 'presentation_title', "jpcoar_name" : 'dc:title' , "weko_name" :"title"}
+        ,{ 'type' : 'lang' , "rm_name" : 'work_title', "jpcoar_name" : 'dc:title' , "weko_name" :"title"}
+        ,{ 'type' : 'lang' , "rm_name" : 'other_title', "jpcoar_name" : 'dc:title' , "weko_name" :"title"}
+        
+        ,{'type' : 'lang' , "rm_name" : 'description', "jpcoar_name" : 'datacite:description' , "weko_name" :"description"}
+        ,{'type' : 'lang' , "rm_name" : 'publisher',   "jpcoar_name" : 'dc:publisher' , "weko_name" :"publisher"}
+        ,{'type' : 'lang' , "rm_name" : 'publication_name ',   "jpcoar_name" : 'jpcoar:sourceTitle' , "weko_name" :"sourceTitle"}
+
+        ,{'type' : 'lang' , "rm_name" : 'event',   "jpcoar_name" : 'jpcoar:conference' , "weko_name" :"conference" , "child_node" : "conferenceName"}
+        ,{'type' : 'lang' , "rm_name" : 'promoter',   "jpcoar_name" : 'jpcoar:conference' , "weko_name" :"conference", "child_node" : "conferenceSponsor"}
+        ,{'type' : 'lang' , "rm_name" : 'location',   "jpcoar_name" : 'jpcoar:conference' , "weko_name" :"conference", "child_node" : "conferencePlace"}
+        ,{'type' : 'simple' , "rm_name" : 'address_country',   "jpcoar_name" : 'jpcoar:conference' , "weko_name" :"conference", "child_node" : "conferenceCountry"}
+
+        ,{'type' : 'authors'    ,  "rm_name" : 'authors'     , "jpcoar_name" : 'jpcoar:creator'  ,"weko_name": 'creator'}
+        ,{'type' : 'authors'    ,  "rm_name" : 'creators'     , "jpcoar_name" : 'jpcoar:creator'  ,"weko_name": 'creator'}
+        ,{'type' : 'authors'    ,  "rm_name" : 'originators'     , "jpcoar_name" : 'jpcoar:creator'  ,"weko_name": 'creator'}
+        ,{'type' : 'authors'    ,  "rm_name" : 'presenters'     , "jpcoar_name" : 'jpcoar:creator'  ,"weko_name": 'creator'}
+        ,{'type' : 'identifiers',  "rm_name" : "identifiers" , "jpcoar_name" : 'jpcoar:relation' ,"weko_name": 'relation'}
+        ,{'type' : 'simple_value', "rm_name" : 'publication_date',  "jpcoar_name" :  'datacite:date' , "weko_name" : "date"}
+        ,{'type' : 'simple', "rm_name" : 'volume', "jpcoar_name" :  'jpcoar:volume' , "weko_name" : "volume"}
+        ,{'type' : 'simple', "rm_name" : 'number', "jpcoar_name" :  'jpcoar:issue' , "weko_name" : "issue"}
+        ,{'type' : 'simple', "rm_name" : 'starting_page', "jpcoar_name" : 'jpcoar:pageStart' , "weko_name" : "pageStart"}
+        ,{'type' : 'simple', "rm_name" : 'ending_page', "jpcoar_name" :   'jpcoar:pageEnd' ,   "weko_name" : "pageEnd"}
+        ,{'type' : 'simple', "rm_name" : 'languages', "jpcoar_name" :  'dc:language' , "weko_name" : "language"}
+        ,{'type' :  'type', "rm_name" : 'published_paper_type'     , "jpcoar_name" :  'dc:type'     , "weko_name" : "type"}
+        ,{'type' :  'type', "rm_name" : 'misc_type'     , "jpcoar_name" :  'dc:type'     , "weko_name" : "type"}
+        ,{'type' :  'type', "rm_name" : 'book_type'     , "jpcoar_name" :  'dc:type'     , "weko_name" : "type"}
+        ,{'type' :  'type', "rm_name" : 'presentation_type'     , "jpcoar_name" :  'dc:type'     , "weko_name" : "type"}
+        ,{'type' :  'type', "rm_name" : 'work_type'     , "jpcoar_name" :  'dc:type'     , "weko_name" : "type"}
+        ,{'type' :  'type', "rm_name" : 'dataset_type'     , "jpcoar_name" :  'dc:type'     , "weko_name" : "type"}
+
     ]
 WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_TYPE_MAPPINGS=\
     [{'achievement_type' : 'published_papers','detail_type_name':'','JPCOAR_resource_type':'article'}
