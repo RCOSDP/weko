@@ -1343,6 +1343,7 @@ def get_researchmapid_record_data(parmalink, achievement_type ,achievement_id ,i
             item_type_id
         return list
     """
+
     def __nest_and_merge( weko_name :str ,child_node:str , elements , api_data:dict) -> dict:
         if not (elements == [] or elements == {} or elements== None) :
             if not child_node:
@@ -1359,6 +1360,7 @@ def get_researchmapid_record_data(parmalink, achievement_type ,achievement_id ,i
         return api_data
 
     
+
 
     api_data = {}
     researchmap_mappings = current_app.config["WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_MAPPINGS"] # type: ignore
@@ -1378,6 +1380,7 @@ def get_researchmapid_record_data(parmalink, achievement_type ,achievement_id ,i
             rm_name:str = mapping.get('rm_name','')
             weko_name:str = mapping.get('weko_name','')
             element:str = load_data.get(rm_name ,'')
+
             child_node:str = mapping.get('child_node','')
             api_data = __nest_and_merge(weko_name  ,child_node , element ,api_data)
 
@@ -1395,13 +1398,16 @@ def get_researchmapid_record_data(parmalink, achievement_type ,achievement_id ,i
             if ja_value:
                 elements.append({'@value': ja_value, '@language': 'ja'})
             
+
             api_data = __nest_and_merge(weko_name  ,child_node ,elements ,api_data)
+
         
         elif mapping.get('type') == 'authors':
             rm_name:str = mapping.get('rm_name','')
             weko_name:str = mapping.get('weko_name','')
             lang_json:dict = load_data.get(rm_name , {})
             child_node:str = mapping.get('child_node','')
+
             en_values:list = lang_json.get('en' , [])
             ja_values:list = lang_json.get('ja' , [])
 
@@ -1423,6 +1429,7 @@ def get_researchmapid_record_data(parmalink, achievement_type ,achievement_id ,i
                 elements.append(names)
             
             api_data = __nest_and_merge(weko_name  ,child_node ,elements ,api_data)
+
 
         elif mapping.get('type') == 'identifiers':
             rm_name:str = mapping.get('rm_name','')

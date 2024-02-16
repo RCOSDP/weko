@@ -227,6 +227,7 @@ def build_achievement(record,item,recid,mapping,jrc, achievement_type):
 
         return prop
 
+
     for rm_map in researchmap_mappings:
         # ja , en 取得
         if rm_map['type'] == 'lang':
@@ -236,9 +237,11 @@ def build_achievement(record,item,recid,mapping,jrc, achievement_type):
                 property_name = rm_map["weko_name"]
                 if jpcoar_mapping != "" and jpcoar_mapping.get(property_name):
                     prop = jpcoar_mapping[property_name]
+
                     prop =  __get_child_node(rm_map,prop)
                     if not prop:
                         continue
+
                     value_path = prop.get('@value','')
 
                     lang_path  = prop.get('@attributes',{}).get('xml:lang','')
@@ -277,6 +280,7 @@ def build_achievement(record,item,recid,mapping,jrc, achievement_type):
                             elif (lang == None or lang == "" ) and value != None:
                                 # nothing lang is also "ja" as default
                                 langs_dict.update({DEFAULT_LANG:value})
+
                     
                     if langs_dict != {}:
                         return_data.update({rm_map["rm_name"]:langs_dict})
@@ -289,6 +293,7 @@ def build_achievement(record,item,recid,mapping,jrc, achievement_type):
                 value = jrc.get(rm_map["weko_name"]).get(rm_map.get("child_node"))
                 return_data.update({rm_map["rm_name"]:value})
 
+
         elif rm_map['type'] == 'simple_value':
             value = jrc.get(rm_map["weko_name"])[0].get('value')
             return_data.update({rm_map["rm_name"]:value})
@@ -299,6 +304,7 @@ def build_achievement(record,item,recid,mapping,jrc, achievement_type):
                 identifierType =relatedIdentifier.get('identifierType')
                 if identifierType.upper() == "DOI" or identifierType.upper() == "ISBN" :
                     ## 他の項目はresearchmapのAPI定義上更新不可。
+
                     value = jrc.get(rm_map["weko_name"]).get('relatedIdentifier')[0].get('value')
                     identifer_kv = {identifierType.lower():value}
                 return_data.update({rm_map["rm_name"]:identifer_kv})
