@@ -278,7 +278,7 @@ WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_MAPPINGS = [
 
         ,{'type' : 'lang' , "rm_name" : 'event',   "jpcore_name" : 'jpcoar:conference' , "weko_name" :"conference" , "child_node" : "conferenceName"}
         ,{'type' : 'lang' , "rm_name" : 'promoter',   "jpcore_name" : 'jpcoar:conference' , "weko_name" :"conference", "child_node" : "conferenceSponsor"}
-        ,{'type' : 'lang' , "rm_name" : 'location',   "jpcore_name" : 'jpcoar:conference' , "weko_name" :"conference", "child_node" : "conferenceVenue"}
+        ,{'type' : 'lang' , "rm_name" : 'location',   "jpcore_name" : 'jpcoar:conference' , "weko_name" :"conference", "child_node" : "conferencePlace"}
         ,{'type' : 'simple' , "rm_name" : 'address_country',   "jpcore_name" : 'jpcoar:conference' , "weko_name" :"conference", "child_node" : "conferenceCountry"}
 
         ,{'type' : 'authors'    ,  "rm_name" : 'authors'     , "jpcore_name" : 'jpcoar:creator'  ,"weko_name": 'creator'}

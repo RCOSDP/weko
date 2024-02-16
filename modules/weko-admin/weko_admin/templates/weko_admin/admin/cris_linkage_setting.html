@@ -53,7 +53,7 @@
             <div class="col-md-8">
               <input type="file" class="hidden form-control" name="researchmap_cidkey" id="researchmap_cidkey" accept=".key" />
               <button type="button" class="btn btn-primary" onclick='handleOnclickCid()'>{{ _("Select file") }}</button>
-              <span id="file_name_researchmap_cidkey">{{ _("Selected file name") }}</span>
+              <span id="file_name_researchmap_cidkey">{% if is_clidkey_registered %}{{_("Registered")}}{% else %}{{ _("Selected file name") }}{% endif %}</span>
               <input type="hidden" name="researchmap_cidkey_contents" id="researchmap_cidkey_contents" />
             </div>
           </div>
@@ -65,7 +65,7 @@
             <div class="col-md-8">
               <input type="file" class="hidden" name="researchmap_pkey" id="researchmap_pkey" accept=".key" />
               <button type="button" class="btn btn-primary" onclick='handleOnclickp()'>{{ _("Select file") }}</button>
-              <span id="file_name_researchmap_pkey">{{ _("Selected file name") }}</span>
+              <span id="file_name_researchmap_pkey">{% if is_pkey_registered %}{{_("Registered")}}{% else %}{{ _("Selected file name") }}{% endif %}</span>
               <input type="hidden" name="researchmap_pkey_contents" id="researchmap_pkey_contents" />
             </div>
           </div>
