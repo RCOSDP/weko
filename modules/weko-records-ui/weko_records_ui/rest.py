@@ -829,7 +829,8 @@ class WekoFileListGetAll(ContentNegotiatedMethodView):
 
             return dl_response
 
-        except (ModeNotFoundRESTError, FilesNotFoundRESTError, PermissionError, SameContentException) as e:
+        except (ModeNotFoundRESTError, FilesNotFoundRESTError, PermissionError,
+                SameContentException, InvalidRequestError, AvailableFilesNotFoundRESTError) as e:
             raise e
 
         except PIDDoesNotExistError:
@@ -897,24 +898,10 @@ class WekoFileListGetSelected(ContentNegotiatedMethodView):
             from .fd import file_list_ui
             dl_response = file_list_ui(record, files)
 
-            # Check Etag
-            hash_str = str(record) + ''.join(filenames)
-            etag = generate_etag(hash_str.encode('utf-8'))
-            self.check_etag(etag, weak=True)
-
-            # Check Last-Modified
-            last_modified = record.model.updated
-            if not request.if_none_match:
-                self.check_if_modified_since(dt=last_modified)
-
-            # Response Header Setting
-            dl_response.set_etag(etag)
-            dl_response.last_modified = last_modified
-
             return dl_response
 
         except (ModeNotFoundRESTError, FilesNotFoundRESTError, PermissionError,
-                SameContentException, InvalidRequestError, AvailableFilesNotFoundRESTError) as e:
+                InvalidRequestError, AvailableFilesNotFoundRESTError) as e:
             raise e
 
         except PIDDoesNotExistError:

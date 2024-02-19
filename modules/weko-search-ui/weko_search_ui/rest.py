@@ -754,6 +754,7 @@ class IndexSearchResultList(ContentNegotiatedMethodView):
             # Generate Search Query Class
             search_obj = self.search_class()
             search = search_obj.with_preference_param().params(version=True)
+            search._extra.update(dict(size=10000))
 
             # filter by registered item type in RocrateMapping
             from weko_records_ui.models import RocrateMapping

@@ -1,11 +1,13 @@
 import json
 from mock import patch, MagicMock
-from flask import Blueprint
+from flask import Blueprint, Response
+import pytest
 
 from invenio_deposit.utils import check_oauth2_scope_write, \
     check_oauth2_scope_write_elasticsearch
 from invenio_records_rest.utils import check_elasticsearch
 from sqlalchemy.exc import SQLAlchemyError
+from weko_records_ui.errors import AvailableFilesNotFoundRESTError, FilesNotFoundRESTError, InvalidRequestError
 from weko_records_ui.rest import (
     create_error_handlers,
     create_blueprint,
@@ -44,6 +46,8 @@ endpoints = {
         'indexer_class': None,
         'item_route': '/deposits/<{0}:pid_value>'.format(_PID),
         'file_list_route': '/deposits/<{0}:pid_value>/files'.format(_PID),
+        'file_list_all_route': '/deposits/<{0}:pid_value>/files/all'.format(_PID),
+        'file_list_selected_route': '/deposits/<{0}:pid_value>/files/selected'.format(_PID),
         'file_item_route':
             '/deposits/<{0}:pid_value>/files/<path:key>'.format(_PID),
         'default_media_type': 'application/json',
@@ -318,3 +322,140 @@ def test_WekoFilesGet_error(app, records):
             url = '/v1/records/1/files/helloworld.pdf'
             res = client.get(url)
             assert res.status_code == 500
+
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_rest.py::test_WekoFileListGetAll -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_WekoFileListGetAll(app, mocker, records):
+    app.register_blueprint(create_blueprint(app.config['WEKO_RECORDS_UI_CITES_REST_ENDPOINTS']))
+    with app.test_client() as client:
+        with patch('weko_records_ui.fd.file_list_ui', return_value=Response(status=200)):
+            # 1 GET request
+            res = client.get('/v1/records/1/files/all')
+            assert res.status_code == 200
+
+    test_mock = mocker.patch('weko_records_ui.fd.file_list_ui', return_value=Response(status=200))
+    # 2 Exist thumbnail
+    url = '/v1/records/7/files/all'
+    res = client.get(url)
+    assert len(test_mock.call_args[0][1]) == 1
+
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_rest.py::test_WekoFileListGetAll_error -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_WekoFileListGetAll_error(app, records):
+    app.register_blueprint(create_blueprint(app.config['WEKO_RECORDS_UI_CITES_REST_ENDPOINTS']))
+    with app.test_client() as client:
+        with patch('weko_records_ui.permissions.check_publish_status', MagicMock(return_value=False)):
+            # 3 Access denied
+            url = '/v1/records/1/files/all'
+            res = client.get(url)
+            assert res.status_code == 403
+
+        with patch('weko_records_ui.permissions.page_permission_factory', MagicMock(return_value=False)):
+            # 3 Access denied
+            url = '/v1/records/1/files/all'
+            res = client.get(url)
+            assert res.status_code == 403
+
+        with patch('weko_records_ui.fd.file_list_ui', MagicMock(side_effect=AvailableFilesNotFoundRESTError())):
+            # 4 File not availlable
+            url = '/v1/records/5/files/all'
+            res = client.get(url)
+            assert res.status_code == 403
+
+        with patch('weko_records_ui.fd.file_list_ui', return_value=Response(status=200)):
+            # 5 File not exist
+            url = '/v1/records/6/files/all'
+            res = client.get(url)
+            assert res.status_code == 404
+
+            # 6 Invalid record
+            url = '/v1/records/100/files/all'
+            res = client.get(url)
+            assert res.status_code == 404
+
+            # 7 Invalid version
+            url = '/v0/records/1/files/all'
+            res = client.get(url)
+            assert res.status_code == 400
+
+            # 8 Check Etag, Last-Modified
+            url = '/v1/records/1/files/all'
+            res = client.get(url)
+            etag = res.headers['Etag']
+            last_modified = res.headers['Last-Modified']
+
+            headers = {}
+            headers['If-None-Match'] = etag
+            res = client.get(url, headers=headers)
+            assert res.status_code == 304
+
+            headers = {}
+            headers['If-Modified-Since'] = last_modified
+            res = client.get(url, headers=headers)
+            assert res.status_code == 304
+
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_rest.py::test_WekoFileListGetSelected -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_WekoFileListGetSelected(app, mocker, records):
+    app.register_blueprint(create_blueprint(app.config['WEKO_RECORDS_UI_CITES_REST_ENDPOINTS']))
+    with app.test_client() as client:
+        with patch('weko_records_ui.fd.file_list_ui', return_value=Response(status=200)):
+            # 1 POST request
+            json={"filenames":["helloworld.pdf"]}
+            res = client.post('/v1/records/1/files/selected', json=json)
+            assert res.status_code == 200
+
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_rest.py::test_WekoFileListGetSelected_error -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_WekoFileListGetSelected_error(app, records):
+    app.register_blueprint(create_blueprint(app.config['WEKO_RECORDS_UI_CITES_REST_ENDPOINTS']))
+    json={"filenames":["helloworld.pdf"]}
+    with app.test_client() as client:
+        with patch('weko_records_ui.permissions.check_publish_status', MagicMock(return_value=False)):
+            # 2 Access denied
+            url = '/v1/records/1/files/selected'
+            res = client.post(url, json=json)
+            assert res.status_code == 403
+
+        with patch('weko_records_ui.permissions.page_permission_factory', MagicMock(return_value=False)):
+            # 2 Access denied
+            url = '/v1/records/1/files/selected'
+            res = client.post(url, json=json)
+            assert res.status_code == 403
+
+        with patch('weko_records_ui.fd.file_list_ui', MagicMock(side_effect=AvailableFilesNotFoundRESTError())):
+            # 3 File not availlable
+            url = '/v1/records/5/files/selected'
+            res = client.post(url, json=json)
+            assert res.status_code == 403
+
+        with patch('weko_records_ui.fd.file_list_ui', return_value=Response(status=200)):
+            # 4 File not exist
+            url = '/v1/records/6/files/selected'
+            res = client.post(url, json=json)
+            assert res.status_code == 404
+
+            # 5 Invalid record
+            url = '/v1/records/100/files/selected'
+            res = client.post(url, json=json)
+            assert res.status_code == 404
+
+            # 6 Invalid version
+            url = '/v0/records/1/files/selected'
+            res = client.post(url, json=json)
+            assert res.status_code == 400
+
+            # 7 Invalid filenames
+            json={"filenames":["invalid.file"]}
+            url = '/v1/records/1/files/selected'
+            res = client.post(url, json=json)
+            assert res.status_code == 404
+
+            # 8 Unspecified filenames
+            json={"filenames":[]}
+            res = client.post(url, json=json)
+            assert res.status_code == 400
+
+            # 9 Unspecified request body
+            res = client.post(url, json=None)
+            assert res.status_code == 400
