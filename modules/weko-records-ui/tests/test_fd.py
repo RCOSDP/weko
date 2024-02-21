@@ -1,6 +1,7 @@
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_fd.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 
-from weko_records_ui.fd import prepare_response,file_download_onetime,_download_file,add_signals_info,weko_view_method,file_ui,file_preview_ui,file_download_ui
+from weko_records_ui.errors import AvailableFilesNotFoundRESTError
+from weko_records_ui.fd import prepare_response,file_download_onetime,_download_file,add_signals_info,weko_view_method,file_ui,file_preview_ui,file_download_ui,file_list_ui
 from weko_records_ui.config import WEKO_RECORDS_UI_DETAIL_TEMPLATE
 from unittest.mock import MagicMock
 from invenio_theme.config import THEME_ERROR_TEMPLATE 
@@ -9,6 +10,7 @@ import io
 import copy
 from flask import Flask, json, jsonify, session, url_for,request
 from flask_security.utils import login_user
+from flask_babelex import get_locale
 from invenio_accounts.testutils import login_user_via_session
 from mock import patch
 from invenio_records_files.utils import record_file_factory
@@ -210,3 +212,65 @@ def test_file_download_onetime(app, records, itemtypes, users, db_fileonetimedow
 
                     with patch("weko_records_ui.fd.record_file_factory", return_value=False):
                         assert file_download_onetime(recid,record,record_file_factory)==""
+
+
+# def file_list_ui(
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_fd.py::test_file_list_ui -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_file_list_ui(app,records,itemtypes,users,mocker,db_file_permission):
+    indexer, results = records
+
+    # 9 can download
+    record = results[0]["record"]
+    with app.test_request_context():
+        with patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
+            res = file_list_ui(record, record.files)
+            assert res.status == '200 OK'
+
+    # 10 both accessrole
+    record = results[3]["record"]
+    with app.test_request_context():
+        with patch("flask_login.utils._get_user", return_value=users[4]["obj"]):
+            test_mock = mocker.patch('weko_records_ui.utils.create_tsv', return_value=io.StringIO())
+            accessrole_list = ["open_access", "open_no"]
+            for (file, accessrole) in zip(record.files, accessrole_list):
+                file["accessrole"] = accessrole
+
+            res = file_list_ui(record, record.files)
+            assert res.status == '200 OK'
+            assert len(test_mock.call_args[0][0]) == 1
+
+    # 11 can't download
+    record = results[4]["record"]
+    with app.test_request_context():
+        with pytest.raises(AvailableFilesNotFoundRESTError):
+            record.files[0]["accessrole"] = "open_no"
+            file_list_ui(record, record.files)
+
+    # 12 not exist file
+    record = results[5]["record"]
+    with app.test_request_context():
+        with patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
+            with pytest.raises(NotFound):
+                res = file_list_ui(record, None)
+
+    # 13 not exist Accept-Language
+    record = results[0]["record"]
+    with app.test_request_context():
+        with patch("weko_records_ui.fd.request.headers.get", return_value=None):
+            file_list_ui(record, record.files)
+            assert get_locale().language == "en"
+
+    # 14 Accept-Language is ja or en
+    with app.test_request_context():
+        with patch("weko_records_ui.fd.request.headers.get", return_value="ja"):
+            file_list_ui(record, record.files)
+            assert get_locale().language == "ja"
+        with patch("weko_records_ui.fd.request.headers.get", return_value="en"):
+            file_list_ui(record, record.files)
+            assert get_locale().language == "en"
+
+    # 15 Accept-Language is other
+    with app.test_request_context():
+        with patch("weko_records_ui.fd.request.headers.get", return_value="other_lang"):
+            file_list_ui(record, record.files)
+            assert get_locale().language == "en"
