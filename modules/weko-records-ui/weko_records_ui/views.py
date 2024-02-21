@@ -472,7 +472,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     width = style.width if style else '3'
     height = style.height if style else None
 
-    detail_condition = get_search_detail_keyword('')
+    #detail_condition = get_search_detail_keyword('')
 
     # Add Item Reference data to Record Metadata
     res = ItemLink.get_item_link_info(record.get("recid"))
@@ -661,7 +661,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         render_widgets=render_widgets,
         community_id=community_id,
         width=width,
-        detail_condition=detail_condition,
+        # detail_condition=detail_condition,
         height=height,
         index_link_enabled=style.index_link_enabled,
         index_link_list=index_link_list,

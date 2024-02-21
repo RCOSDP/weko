@@ -12,8 +12,27 @@
 
             $scope.load_delimiter = 50;
 
-            // page init
-            $scope.initData = function (data) {
+            $scope.setupInitData = function() {
+                $http({
+                    method: "GET",
+                    url: "/api/advanced-search/condition",
+                 }).then(function successCallback(response) {
+                    sessionStorage.setItem('init_detail_condition', angular.toJson(response.data))
+                    $scope.initDataKey()
+                    $scope.initData()
+                 }, function errorCallback(error){
+                    console.log(error);
+                 });
+            }
+
+            $scope.onClick = function() {
+                if(!sessionStorage.getItem('init_detail_condition')){
+                    $scope.setupInitData()
+                }   
+            }
+
+            $scope.initDataKey = function(){
+                data= sessionStorage.getItem('init_detail_condition')
                 json_obj = angular.fromJson(data)
                 db_data = json_obj.condition_setting;
 
@@ -47,6 +66,10 @@
                         $scope.default_search_key.push(default_key);
                     };
                 });
+            }
+
+            // page init
+            $scope.initData = function () {
 
                 angular.forEach($scope.default_search_key, function (item, index, array) {
                     var obj_of_condition = {
@@ -449,6 +472,14 @@
                     });
                 });
             }
+
+            if (!(sessionStorage.getItem('btn') == 'detail-search')){
+                sessionStorage.removeItem('init_detail_condition');
+            }
+            else{
+                $scope.setupInitData()
+            }
+            
         }
 
         // Inject depedencies

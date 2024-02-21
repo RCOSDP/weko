@@ -67,7 +67,7 @@ def get_weko_contents(getargs):
     index_link_enabled = style.index_link_enabled
 
     index_link_list = get_index_link_list()
-    detail_condition = get_search_detail_keyword('')
+    #detail_condition = get_search_detail_keyword('')
     check_site_license_permission()
 
     # Get Facet search setting.
@@ -93,7 +93,7 @@ def get_weko_contents(getargs):
     
     return dict(
         community_id=community_id,
-        detail_condition=detail_condition,
+        #detail_condition=detail_condition,
         width=width, height=height,
         index_link_list=index_link_list,
         index_link_enabled=index_link_enabled,
