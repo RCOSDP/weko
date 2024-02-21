@@ -488,6 +488,8 @@ def get_access_counter_record(repository_id, current_language):
                         count = 0
                         for item in top_view_total_by_widget_id['all'].values():
                             count = count + int(item['count'])
+                        
+                        top_view_total_by_widget_id['all'] = {} # clear all data
                         top_view_total_by_widget_id['all'].update(
                             {'count': count})
                         top_view_total_by_widget_id.update(
