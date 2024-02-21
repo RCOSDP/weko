@@ -240,7 +240,7 @@ def is_output_harvest(path_list):
     def _check(index_id):
         _idx = Indexes.get_index(index_id)
         if _idx:
-            if not _idx.parent or _idx.parent == '0':
+            if not _idx.parent or _idx.parent == 0:
                 if not _idx.harvest_public_state:
                     return HARVEST_PRIVATE
                 elif '-99' not in _idx.browsing_role \
