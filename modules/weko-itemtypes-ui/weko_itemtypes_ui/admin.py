@@ -23,7 +23,7 @@
 import sys
 import io
 import orjson
-from flask import abort, current_app, flash, jsonify, redirect, \
+from flask import abort, current_app, flash, json, jsonify, redirect, \
     request, session, url_for, make_response, send_file
 from sqlalchemy.sql.expression import null
 from flask_admin import BaseView, expose
@@ -393,7 +393,7 @@ class ItemTypeMetaDataView(BaseView):
                         current_app.logger.debug(file_name + " is ignored.")
                     else:
                         with import_zip.open(file_name, 'r') as json_file:
-                            json_obj = orjson.load(json_file)
+                            json_obj = json.load(json_file)
                             if file_name == "ItemType.json":
                                 import_data["ItemType"] = json_obj
                                 #print(json_obj)
