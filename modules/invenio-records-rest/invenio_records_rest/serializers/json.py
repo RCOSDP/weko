@@ -8,7 +8,6 @@
 
 """Marshmallow based JSON serializer for records."""
 
-import orjson
 from __future__ import absolute_import, print_function
 
 from flask import request
@@ -16,6 +15,7 @@ from flask import request
 from .base import PreprocessorMixin, SerializerMixinInterface
 from .marshmallow import MarshmallowMixin
 
+import orjson
 
 class JSONSerializerMixin(SerializerMixinInterface):
     """Mixin serializing records as JSON."""
