@@ -257,23 +257,26 @@ def test_is_output_harvest(app):
     with patch("invenio_oaiserver.utils.Indexes.get_index", return_value=idx5):
         assert is_output_harvest(["5"]) == 1
 
+    # index is not found
+    # -> HARVEST_PRIVATE(2)
+    idx6 = ""
     # parent is not 0
-    idx6 = MagicMock()
-    idx6.id = 6
-    idx6.parent = 7
+    idx7 = MagicMock()
+    idx7.id = 7
+    idx7.parent = 8
     # parent index
     # parent is 0
     # harvest_public_state is not False
     # -99 in browsing_role
     # public_state is not False
     # public_date <= now
-    # -> OUTPUT_HARVEST(3)
-    idx7 = MagicMock()
-    idx7.id = 7
-    idx7.parent = 0
-    idx7.harvest_public_state = True
-    idx7.browsing_role = "1,3,-99"
-    idx7.public_state = True
-    idx7.public_date = datetime(1900,1,1)
-    with patch("invenio_oaiserver.utils.Indexes.get_index", side_effect=[idx6, idx7]):
-        assert is_output_harvest(["6"]) == 3
+    # -> OUTPUT_HARVEST(3) -> max
+    idx8 = MagicMock()
+    idx8.id = 8
+    idx8.parent = 0
+    idx8.harvest_public_state = True
+    idx8.browsing_role = "1,3,-99"
+    idx8.public_state = True
+    idx8.public_date = datetime(1900,1,1)
+    with patch("invenio_oaiserver.utils.Indexes.get_index", side_effect=[idx6, idx7, idx8]):
+        assert is_output_harvest(["6", "7"]) == 3
