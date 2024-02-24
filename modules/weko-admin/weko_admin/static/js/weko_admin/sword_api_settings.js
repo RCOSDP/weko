@@ -55,34 +55,13 @@ function toggleMenu() {
     workflowMenu.disabled = true;
     workflowMenu.value = "empty";
   } else if(dataMenu.value === "TSV"){
-    registerMenu.removeAttribute("disabled");
-    registerMenu.setAttribute("required",true);
-    registerMenu.value = settings["data_format"]["TSV"]["register_format"];
-    if(registerMenu.value === "Workflow"){
-      workflowMenu.removeAttribute("disabled");
-      workflowMenu.setAttribute("required",true);
-      if(isDeletedWorkflow(settings["data_format"]["TSV"]["workflow"])){
-        workflowOption.value = "deleted_workflow";
-        workflowOption.textContent = deleted_workflows_name[settings["data_format"]["TSV"]["workflow"]] + "(削除済みワークフロー)";
-        workflowOption.selected = true;
-        workflowOption.setAttribute("hidden","hidden");
-        workflowMenu.appendChild(workflowOption);
-        return showMsg(workflow_deleted_alert, false);
-      }else{
-        workflowMenu.value = settings["data_format"]["TSV"]["workflow"];
-      }
-    }else{
-      workflowMenu.removeAttribute("required");
-      workflowMenu.setAttribute("disabled",true);
-      workflowMenu.value = "";
-    }
+    registerMenu.value ="Direct";
+    workflowMenu.value = "";
+    workflowMenu.disabled = true;
   } else if(dataMenu.value === "XML"){
-    registerMenu.removeAttribute("disabled");
-    registerMenu.setAttribute("required",true);
-    registerMenu.value = settings["data_format"]["XML"]["register_format"];
-    if(registerMenu.value === "Workflow"){
-      workflowMenu.removeAttribute("disabled");
-      workflowMenu.setAttribute("required",true);
+    registerMenu.value = "Workflow";
+    workflowMenu.removeAttribute("disabled");
+    workflowMenu.setAttribute("required",true);
       if(isDeletedWorkflow(settings["data_format"]["XML"]["workflow"])){
         workflowOption.value = "deleted_workflow";
         workflowOption.textContent = deleted_workflows_name[settings["data_format"]["XML"]["workflow"]] + "(削除済みワークフロー)";
@@ -93,11 +72,6 @@ function toggleMenu() {
       }else{
         workflowMenu.value = settings["data_format"]["XML"]["workflow"];
       }
-    }else{
-      workflowMenu.removeAttribute("required");
-      workflowMenu.setAttribute("disabled",true);
-      workflowMenu.value = "";
-    }
   }else{
     registerMenu.removeAttribute("disabled");
     workflowOption.removeAttribute("disabled");
@@ -106,44 +80,6 @@ function toggleMenu() {
   }
 }
 
-function toggleRegisterMenu(){
-  const dataMenu = document.getElementById("data_format");
-  const registerMenu = document.getElementById("register_format");
-  const workflowMenu = document.getElementById("workflow");
-  const workflowOption = document.createElement('option');
-  closeError();
-
-  if(registerMenu.value === "Workflow"){
-    workflowMenu.removeAttribute("disabled");
-    workflowMenu.setAttribute("required",true);
-    if(dataMenu.value === "TSV"){
-      if(isDeletedWorkflow(settings["data_format"]["TSV"]["workflow"])){
-        workflowOption.value = "deleted_workflow";
-        workflowOption.textContent = deleted_workflows_name[settings["data_format"]["TSV"]["workflow"]] + "(削除済みワークフロー)";
-        workflowOption.selected = true;
-        workflowOption.setAttribute("hidden","hidden");
-        workflowMenu.appendChild(workflowOption);
-        return showMsg(workflow_deleted_alert, false);
-      }else{
-        workflowMenu.value = settings["data_format"]["TSV"]["workflow"];
-      }
-    }else{
-    if(isDeletedWorkflow(settings["data_format"]["XML"]["workflow"])){
-      workflowOption.value = "deleted_workflow";
-      workflowOption.textContent = deleted_workflows_name[settings["data_format"]["XML"]["workflow"]] + "(削除済みワークフロー)";
-      workflowOption.selected = true;
-      workflowOption.setAttribute("hidden","hidden");
-      workflowMenu.appendChild(workflowOption);
-      return showMsg(workflow_deleted_alert, false);
-    }else{
-      workflowMenu.value = settings["data_format"]["XML"]["workflow"];
-    }
-  }}else{
-    workflowMenu.removeAttribute("required");
-    workflowMenu.setAttribute("disabled",true);
-    workflowMenu.value = "";
-  }
-}
 
 function isEmpty(value){
   if (!value){

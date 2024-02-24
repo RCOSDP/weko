@@ -1356,20 +1356,12 @@ class FacetSearchSettingView(ModelView):
         )
     
 class SwordAPISettingsView(BaseView):
-
-    def isEmpty(self,data):
-        if not data:
-            return True
-        elif data == "empty":
-            return True
-        else:
-            return False
     
     @expose('/', methods=['GET'])
     def index(self):
         default_sword_api = { "default_format": "TSV",
-                            "data_format":{ "TSV":{"workflow": "-1",  "register_format": "Direct"},
-                                           "XML":{"workflow": "-1",  "register_format": "Direct"}}}  # Default
+                            "data_format":{ "TSV":{"register_format": "Direct"},
+                                           "XML":{"workflow": "-1",  "register_format": "Workflow"}}}  # Default
         current_settings = AdminSettings.get(
                 name='sword_api_setting',
                 dict_to_object=False)
@@ -1417,21 +1409,8 @@ class SwordAPISettingsView(BaseView):
         try:
             settings = AdminSettings.get('sword_api_setting')
             data_format_setting = request.json.get('data_format')
-            register_format_setting = request.json.get('register_format')
-            if register_format_setting == "Workflow":
-                workflow_setting = request.json.get('workflow')
-            else:
-                if data_format_setting == "TSV":
-                    workflow_setting = settings.data_format['TSV']['workflow']
-                else:
-                    workflow_setting = settings.data_format['XML']['workflow']
-            if(self.isEmpty(data_format_setting) or self.isEmpty(register_format_setting) or self.isEmpty(workflow_setting)):
-                return current_app.logger.error('ERROR Default Form Settings: Settings is empty')
-            if data_format_setting == "TSV":
-                settings.data_format["TSV"]["register_format"] = register_format_setting                       
-                settings.data_format["TSV"]["workflow"] = workflow_setting
-            if data_format_setting == "XML":                        
-                settings.data_format["XML"]["register_format"] = register_format_setting                       
+            if data_format_setting == "XML":
+                workflow_setting = request.json.get('workflow')                                         
                 settings.data_format["XML"]["workflow"] = workflow_setting
             AdminSettings.update('sword_api_setting',
                                     settings.__dict__)    
