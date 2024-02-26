@@ -4040,7 +4040,7 @@ def create_tsv_row(dict, data_response):
         data_response (dict): Data response
 
     Returns:
-        str: TSV row
+        dict: TSV row
     """
     result_row = {}
     for key in dict.keys():

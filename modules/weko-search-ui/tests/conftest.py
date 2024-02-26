@@ -47,6 +47,8 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 from sqlalchemy_utils.functions import create_database, database_exists, drop_database
 from werkzeug.local import LocalProxy
+from invenio_records.api import Record
+from invenio_stats.processors import EventsIndexer
 from tests.helpers import create_record, json_data
 
 from invenio_access import InvenioAccess
@@ -624,6 +626,7 @@ def base_app(instance_path, search_class, request):
                 },
                 index_route="/index/",
                 search_api_route="/<string:version>/records",
+                search_result_list_route="/<string:version>/records/list",
                 tree_route="/index",
                 item_tree_route="/index/<string:pid_value>",
                 index_move_route="/index/move/<int:index_id>",
