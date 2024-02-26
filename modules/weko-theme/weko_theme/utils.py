@@ -43,7 +43,7 @@ from weko_index_tree.models import Index, IndexStyle
 from weko_index_tree.utils import get_index_link_list
 from weko_items_ui.utils import get_ranking
 from weko_records_ui.ipaddr import check_site_license_permission
-from weko_search_ui.api import SearchSetting, get_search_detail_keyword
+from weko_search_ui.api import SearchSetting
 from weko_search_ui.utils import check_permission, get_journal_info
 from weko_schema_ui.models import PublishStatus
 
@@ -67,7 +67,6 @@ def get_weko_contents(getargs):
     index_link_enabled = style.index_link_enabled
 
     index_link_list = get_index_link_list()
-    #detail_condition = get_search_detail_keyword('')
     check_site_license_permission()
 
     # Get Facet search setting.
@@ -93,7 +92,6 @@ def get_weko_contents(getargs):
     
     return dict(
         community_id=community_id,
-        #detail_condition=detail_condition,
         width=width, height=height,
         index_link_list=index_link_list,
         index_link_enabled=index_link_enabled,

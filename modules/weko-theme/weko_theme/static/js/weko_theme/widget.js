@@ -727,8 +727,6 @@ function autoAdjustWidgetHeight(widgetElement, pageBodyGrid, otherElement) {
           let height = DEFAULT_WIDGET_HEIGHT > widgetHeight - 1 ? DEFAULT_WIDGET_HEIGHT : widgetHeight - 1;
           pageBodyGrid.resizeWidget(parent, width, height);
           //pageBodyGrid.resizeWidget(parent, width, height);
-          console.log("currentClientHeight: "+ currentClientHeight);
-          console.log("scrollHeight: "+ scrollHeight);
 
 
         } else {

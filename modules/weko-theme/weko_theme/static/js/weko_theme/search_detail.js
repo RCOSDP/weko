@@ -12,6 +12,7 @@
 
             $scope.load_delimiter = 50;
 
+            // Call the API and initialize the data
             $scope.setupInitData = function() {
                 $http({
                     method: "GET",
@@ -25,12 +26,14 @@
                  });
             }
 
+            // Call initialization function on click
             $scope.onClick = function() {
                 if(!sessionStorage.getItem('init_detail_condition')){
                     $scope.setupInitData()
                 }   
             }
 
+            // Create keys for initializing data
             $scope.initDataKey = function(){
                 data= sessionStorage.getItem('init_detail_condition')
                 json_obj = angular.fromJson(data)

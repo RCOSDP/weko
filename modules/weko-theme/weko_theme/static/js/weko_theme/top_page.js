@@ -54,7 +54,9 @@ require([
 
             // 詳細展開 値入力残
             if (btn) {
-                if (btn == 'detail-search') {
+                //if (btn == 'detail-search') {
+                // パフォーマンス改善改修による影響回避
+                if (false) {
                     if (IsParamKey($(this).attr('id')) || IsRec) {
 
                         if (input && input !== '') {
@@ -91,7 +93,9 @@ require([
 
             // 詳細展開 値入力残
             if (btn) {
-                if (btn == 'detail-search') {
+                //if (btn == 'detail-search') {
+                // パフォーマンス改善改修による影響回避
+                if (false) {
                     if (true || IsRec) {
                         if (input && input !== '') {
                             //type is checkbox
