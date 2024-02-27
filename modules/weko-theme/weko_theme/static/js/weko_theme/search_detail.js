@@ -95,7 +95,9 @@
 
                 $scope.default_condition_data = angular.fromJson(angular.toJson($scope.condition_data));
 
-                if (sessionStorage.getItem('btn') == 'detail-search') {
+                const isSimpleSearch = sessionStorage.getItem('btn') === 'simple-search';
+
+                if (init_flg && !isSimpleSearch || sessionStorage.getItem('btn') == 'detail-search') {
                     $scope.condition_data = angular.fromJson(sessionStorage.getItem('detail_search_conditions'));
                     sessionStorage.removeItem('btn');
                 }
@@ -476,12 +478,31 @@
                 });
             }
 
-            if (!(sessionStorage.getItem('btn') == 'detail-search')){
-                sessionStorage.removeItem('init_detail_condition');
+            // Reused the condition for using advanced search from top_page.js.
+            var urlParams = new URLSearchParams(window.location.search);
+            var isDetailSearch = Array.from(urlParams.keys()).length > 6
+            if (isDetailSearch) {
+                if (urlParams.has('cur_index_id')) {
+                    isDetailSearch = false;
+                }
+            }
+
+            // Initialization flag considering the usage status of advanced search and facet search.
+            let init_flg = false
+
+            if (!(isDetailSearch && !urlParams.has('is_facet_search'))){
+                if(urlParams.has('is_facet_search') && sessionStorage.getItem('init_detail_condition')){
+                    init_flg = true
+                    $scope.setupInitData()
+                }
+                else{
+                    sessionStorage.removeItem('init_detail_condition');
+                }
             }
             else{
+                init_flg = true
                 $scope.setupInitData()
-            }
+            }     
             
         }
 

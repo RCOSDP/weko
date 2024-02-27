@@ -385,7 +385,7 @@ require([
         });
 
         // 詳細検索ボタン：フォームのテキスト入力でエンターキーを押したら検索する
-        $('.detail-search-text').keypress(function (event) {
+        $(document).on('keypress', '.detail-search-text', function (event) {
             // 13はエンターキー
             if (event.which == 13) {
               $('#detail-search-btn').click();
