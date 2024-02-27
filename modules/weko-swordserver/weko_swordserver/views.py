@@ -23,7 +23,7 @@ from sword3common.lib.seamless import SeamlessException
 from weko_admin.api import TempDirInfo
 from weko_records_ui.utils import get_record_permalink, soft_delete
 from weko_search_ui.utils import import_items_to_system
-from weko_swordserver.api import check_import_items, create_activity_from_jpcoar
+from weko_swordserver.registration import check_import_items, create_activity_from_jpcoar
 from weko_workflow.scopes import activity_scope
 from werkzeug.http import parse_options_header
 from invenio_db import db

@@ -3200,7 +3200,7 @@ class ActivityActionResource(ContentNegotiatedMethodView):
 
         # register new item
         item['root_path'] = check_result.get('data_path') + '/data'
-        import_result = import_items_to_system(item, None, is_publish_directly=False)
+        import_result = import_items_to_system(item, None, True)
         shutil.rmtree(check_result.get('data_path'))
         if not import_result['success']:
             self.logging_error('import_items_to_system',
