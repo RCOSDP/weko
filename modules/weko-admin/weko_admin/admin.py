@@ -50,6 +50,7 @@ from weko_records.api import ItemTypes, SiteLicense
 from weko_records.models import SiteLicenseInfo
 from weko_records_ui.utils import check_items_settings
 from weko_schema_ui.models import PublishStatus
+from weko_workflow.api import WorkFlow
 from wtforms.fields import StringField
 from wtforms.validators import ValidationError
 
@@ -1363,20 +1364,12 @@ class FacetSearchSettingView(ModelView):
         )
     
 class SwordAPISettingsView(BaseView):
-
-    def isEmpty(self,data):
-        if not data:
-            return True
-        elif data == "empty":
-            return True
-        else:
-            return False
     
     @expose('/', methods=['GET'])
     def index(self):
         default_sword_api = { "default_format": "TSV",
-                            "data_format":{ "TSV":{"item_type": "15",  "register_format": "Direct"},
-                                           "XML":{"item_type": "15",  "register_format": "Direct"}}}  # Default
+                            "data_format":{ "TSV":{"register_format": "Direct"},
+                                           "XML":{"workflow": "-1",  "register_format": "Workflow"}}}  # Default
         current_settings = AdminSettings.get(
                 name='sword_api_setting',
                 dict_to_object=False)
@@ -1386,19 +1379,22 @@ class SwordAPISettingsView(BaseView):
                 name='sword_api_setting',
                 dict_to_object=False)
         current_settings_json = json.dumps(current_settings)
-        all_lists = ItemTypes.get_latest(with_deleted=True)
-        lists = ItemTypes.get_latest()
-        deleted_lists = [i for i in all_lists if i not in lists]
         form = FlaskForm(request.form)
-        itemtype_name_dict = {}
-        for list in all_lists:
-            itemtype_name_dict[list.id] = list.name
+        workflow = WorkFlow()
+        workflows = workflow.get_workflow_list()
+        workflows = workflow.get_workflows_by_roles(workflows)
+        deleted_workflows = workflow.get_deleted_workflow_list()
+        deleted_workflow_name_dict = {}
+        for deleted_workflow in deleted_workflows:
+            deleted_workflow_name_dict[deleted_workflow.id] = deleted_workflow.flows_name
+        # Process exclude workflows
+        from weko_workflow.utils import exclude_admin_workflow
+        exclude_admin_workflow(workflows)
         return self.render(current_app.config['WEKO_ADMIN_SWORD_API_TEMPLATE'],
                            current_settings = current_settings,
                            current_settings_json = current_settings_json,
-                           lists = lists,
-                           deleted_lists = deleted_lists,
-                           itemtype_name_dict = json.dumps(itemtype_name_dict),
+                           deleted_workflow_name_dict = json.dumps(deleted_workflow_name_dict),
+                           workflows = workflows,
                            form = form)
 
     @expose('/default_format', methods=['POST'])
@@ -1421,16 +1417,9 @@ class SwordAPISettingsView(BaseView):
         try:
             settings = AdminSettings.get('sword_api_setting')
             data_format_setting = request.json.get('data_format')
-            register_format_setting = request.json.get('register_format')
-            item_type_setting = request.json.get('sword_item_type')
-            if(self.isEmpty(data_format_setting) or self.isEmpty(register_format_setting) or self.isEmpty(item_type_setting)):
-                return current_app.logger.error('ERROR Default Form Settings: Failed To Change Settings')
-            if data_format_setting == "TSV":
-                settings.data_format["TSV"]["register_format"] = register_format_setting                       
-                settings.data_format["TSV"]["item_type"] = item_type_setting
-            if data_format_setting == "XML":                        
-                settings.data_format["XML"]["register_format"] = register_format_setting                       
-                settings.data_format["XML"]["item_type"] = item_type_setting
+            if data_format_setting == "XML":
+                workflow_setting = request.json.get('workflow')                                         
+                settings.data_format["XML"]["workflow"] = workflow_setting
             AdminSettings.update('sword_api_setting',
                                     settings.__dict__)    
             return jsonify(success=True),200            

@@ -664,7 +664,7 @@ def check_xml_import_items(file, item_type_id, is_gakuninrdm=False):
 
         if not list_xml:
             raise FileNotFoundError()
-        list_record.extend(read_jpcoar_xml_file(data_path, list_xml, item_type_id))
+        list_record.extend(generate_metadata_from_jpcoar(data_path, list_xml, item_type_id))
 
         # current_app.logger.debug("list_record1: {}".format(list_record))
 
@@ -764,7 +764,7 @@ def unpackage_import_file(data_path: str, file_name: str, file_format: str, forc
     return list_record
 
 
-def read_jpcoar_xml_file(data_path: str, filenames: list, item_type_id: int, is_change_identifier=False):
+def generate_metadata_from_jpcoar(data_path: str, filenames: list, item_type_id: int, is_change_identifier=False):
     """Getting record data from CSV/TSV file.
 
     :argument
