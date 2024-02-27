@@ -49,7 +49,7 @@ class TestWekoAuthors:
         test ='{"authorIdInfo": [{"authorId": "1", "authorIdShowFlg": "true", "idType": "1"}], "gather_flg": 0, "id": 1, "pk_id": "1"}'
         result = Authors.query.filter_by(id=1).one()
         assert result.id == 1
-        assert result.json == test
+        assert json.loads(result.json) == json.loads(test)
         
         with patch("weko_authors.api.db.session.add",side_effect=Exception("test_error")):
             data = {

@@ -181,6 +181,15 @@ def test_update_author(client, users, create_author):
     Test of update author data.
     :param client: The flask client.
     """
+    test_id = 1
+    class MockClient:
+        def __init__(self):
+            pass
+        def update(self, index=None, doc_type=None, id=None, body=None):
+            if id != test_id:
+                raise Exception("test_error")
+            return {"_source": {"authorNameInfo": "", "authorIdInfo": "",
+                                "emailInfo": ""}}
     author_data = {
                 "authorNameInfo": [
                     {
@@ -203,7 +212,7 @@ def test_update_author(client, users, create_author):
                     {"email": "example@com"}
                 ]
         }
-    id = 1
+    id = test_id
     author_id = create_author(author_data, id)
     login_user_via_session(client=client, email=users[0]['email'])
     url = url_for("weko_authors.update_author")
@@ -232,14 +241,18 @@ def test_update_author(client, users, create_author):
                 {"email": "examplechanged@com"}
             ]
     }
-    mock_indexer = MagicMock(side_effect=MockIndexer)
-    with patch('weko_authors.views.RecordIndexer', mock_indexer):
-        with patch('weko_deposit.tasks.update_items_by_authorInfo'):
+    record_indexer = RecordIndexer()
+    record_indexer.client = MockClient()
+    with patch('weko_authors.views.RecordIndexer', return_value=record_indexer):
+        mock_authorInfo = MagicMock()
+        with patch('weko_deposit.tasks.update_items_by_authorInfo', mock_authorInfo):
             res = client.post(url,
                               data=json.dumps(input),
                               content_type='application/json')
+            args, kwargs = mock_authorInfo.delay.call_args
             assert res.status_code == 200
             assert get_json(res) == {"msg":"Success"}
+            assert args[0] == [author_id]
     
     # content_type is not json
     res = client.post(url, content_type="plain/text")
@@ -282,6 +295,15 @@ def test_delete_author(client, db,users, create_author, mocker):
     Test of delete author data.
     :param client: The flask client.
     """
+    test_id = 'ZxYzDYYBklf45I62gqeH'
+    class MockClient:
+        def __init__(self):
+            pass
+        def update(self, index=None, doc_type=None, id=None, body=None):
+            if id != test_id:
+                raise Exception("test_error")
+            return {"_source": {"authorNameInfo": "", "authorIdInfo": "",
+                                "emailInfo": ""}}
     author_data = {
                 "authorNameInfo": [
                     {
@@ -311,8 +333,10 @@ def test_delete_author(client, db,users, create_author, mocker):
     url = url_for("weko_authors.delete_author")
     mocker.patch("weko_authors.views.get_count_item_link", return_value=0)
     
-    input = {"pk_id": str(id),"Id":"ZxYzDYYBklf45I62gqeH"}
-    with patch('weko_authors.views.RecordIndexer', side_effect=MockIndexer):
+    input = {"pk_id": str(id),"Id":test_id}
+    record_indexer = RecordIndexer()
+    record_indexer.client = MockClient()
+    with patch('weko_authors.views.RecordIndexer', return_value=record_indexer):
         res = client.post(url,json=input)
         assert res.status_code == 200
         result = Authors.query.filter_by(id=id).one()
@@ -333,7 +357,7 @@ def test_delete_author(client, db,users, create_author, mocker):
     author_id = 2
     id = create_author(author_data, author_id)
     db.session.commit()
-    input = {"pk_id": str(id),"Id":"ZxYzDYYBklf45I62gqeH"}
+    input = {"pk_id": str(id),"Id":test_id}
     with patch("weko_authors.views.RecordIndexer",side_effect=Exception("test_error")):
         res = client.post(url, json=input)
         assert res.status_code == 200
@@ -378,9 +402,12 @@ def test_get(client, users):
     :param client: The flask client.
     """
     class MockClient():
-        def __init__(self,data):
+        def __init__(self,data,body):
             self.data = data
+            self.body = body
         def search(self,index=None,doc_type=None, body=None):
+            if body != self.body[index]:
+                raise Exception("test_error")
             return self.data[index]
     url = url_for("weko_authors.get")
     login_user_via_session(client=client, email=users[0]['email'])
@@ -395,8 +422,12 @@ def test_get(client, users):
         ]}},
         "test-weko":{"hits":{"total":1}}
     }
+    body = {
+            "test-authors":{"query": {"bool": {"must": [{"term": {"gather_flg": 0}}, {"bool": {"should": [{"bool": {"must": [{"term": {"is_deleted": {"value": "false"}}}]}}, {"bool": {"must_not": {"exists": {"field": "is_deleted"}}}}]}}]}}, "from": 0, "size": 25, "sort": {}},
+            "test-weko":{"size": 0, "query": {"bool": {"must": [{"match": {"publish_status": "0"}}, {"match": {"relation_version_is_last": "true"}}, {"bool": {"should": [{"term": {"author_link.raw": "test_id"}}]}}]}}}
+            }
     record_indexer = RecordIndexer()
-    record_indexer.client=MockClient(data)
+    record_indexer.client=MockClient(data, body)
     test = {
         "hits":{"hits":[
             {"_source":{"authorIdInfo":[]}},
@@ -417,8 +448,12 @@ def test_get(client, users):
         ]}},
         "test-weko":{"hits":{"total":0}}# result_itemCnt is not
     }
+    body = {
+            "test-authors":{"query": {"bool": {"must": [{"term": {"gather_flg": 0}}, {"bool": {"should": [{"bool": {"must": [{"term": {"is_deleted": {"value": "false"}}}]}}, {"bool": {"must_not": {"exists": {"field": "is_deleted"}}}}]}}, {"multi_match": {"query": "test_key", "type": "phrase"}}]}}, "from": 0, "size": 25, "sort": {"test_sort.raw": {"order": "test_order", "mode": "min"}}},
+            "test-weko":{"size": 0, "query": {"bool": {"must": [{"match": {"publish_status": "0"}}, {"match": {"relation_version_is_last": "true"}}, {"bool": {"should": [{"term": {"author_link.raw": "test_id"}}]}}]}}}
+            }
     record_indexer = RecordIndexer()
-    record_indexer.client=MockClient(data)
+    record_indexer.client=MockClient(data, body)
     test = {
         "hits":{"hits":[
             {"_source":{"authorIdInfo":[{"authorId":"test_id"}]}}
@@ -482,13 +517,13 @@ def test_getById(client, users, mocker):
     input = {}
     res = client.post(url, json=input)
     assert res.status_code == 200
-    assert res.get_data().decode("utf-8") == '{"test": "test_search_result"}'
+    assert res.get_data().decode("utf-8") == '{"test":"test_search_result"}'
     
     # search_key is not noen
     input = {"Id":"test_id"}
     res = client.post(url, json=input)
     assert res.status_code == 200
-    assert res.get_data().decode("utf-8") == '{"test": "test_search_result"}'
+    assert res.get_data().decode("utf-8") == '{"test":"test_search_result"}'
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_mapping_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_mapping_acl_guest(client):

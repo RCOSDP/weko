@@ -160,6 +160,18 @@ def test_process_sync(app, test_resync):
             res = process_sync(40, _counter)
             assert json.loads(res.data) ==  {'message': "unhashable type: 'dict'", 'status': 'error'}
 
+    with patch('invenio_resourcesyncclient.utils.read_capability', return_value='changelist'):
+        with patch('invenio_resourcesyncclient.utils.sync_incremental', return_value=True):
+            with patch('invenio_resourcesyncclient.utils.get_list_records', return_value=['data']):
+                res = process_sync(40, _counter)
+                assert json.loads(res.data) == {'result': True}
+
+    with patch('invenio_resourcesyncclient.utils.read_capability', return_value='resourcelist'):
+        with patch('invenio_resourcesyncclient.utils.sync_baseline', return_value=True):
+            with patch('invenio_resourcesyncclient.utils.get_list_records', return_value=['data']):
+                with patch('invenio_resourcesyncclient.utils.sync_audit', return_value=True):
+                    res = process_sync(50, _counter)
+                    assert json.loads(res.data) == True
 #def update_counter(counter, result):
 # .tox/c1/bin/pytest --cov=invenio_resourcesyncclient tests/test_utils.py::test_update_counter -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-resourcesyncclient/.tox/c1/tmp
 def test_update_counter(app):

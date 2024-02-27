@@ -38,7 +38,11 @@ def test_item_path_search_factory(i18n_app, indices):
     search = MagicMock()
     data_1 = MagicMock()
 
+    test_data = {'from': 0, 'size': 10000, '_source': {'excludes': ['content', '_item_metadata']}, 'query': {'bool': {'must': [{'match': {'path.tree': '33'}}, {'match': {'relation_version_is_last': 'true'}}]}}, 'post_filter': {'bool': {'must': [{'match': {'publish_status': '0'}}, {'range': {'publish_date': {'lte': 'now/d'}}}, {'terms': {'path': ['33', '33/44']}}]}}}
     assert item_path_search_factory(search, index_id=33)
+    args, kwargs =  search.update_from_dict.call_args
+    assert args[0] == test_data
+    assert type(args[0]) == dict
 
     with patch("weko_index_tree.api.Indexes.get_list_path_publish", return_value="test"):
         with patch("weko_index_tree.api.Indexes.get_child_list", return_value=[MagicMock()]):
@@ -51,7 +55,11 @@ def test_item_path_search_factory(i18n_app, indices):
 def test_item_changes_search_factory(i18n_app, indices):
     search = MagicMock()
 
+    test_data = {'from': 0, 'size': 10000, '_source': {'excludes': ['content', '_item_metadata']}, 'query': {'bool': {'should': [{'match': {'path.tree': '33'}}, {'bool': {'must_not': {'exists': {'field': 'path.tree'}}}}]}}, 'sort': {'_updated': {'order': 'asc'}}, 'post_filter': {'bool': {'must': [{'range': {'publish_date': {'lte': 'now/d'}}}, {'range': {'_updated': {'lte': 'now/d', 'gte': 'now/d'}}}], 'should': {'terms': {'path': ['33', '33/44']}}}}}
     assert item_changes_search_factory(search, index_id=33)
+    args, kwargs =  search.update_from_dict.call_args
+    assert args[0] == test_data
+    assert type(args[0]) == dict
 
     with patch("weko_index_tree.api.Indexes.get_list_path_publish", return_value="test"):
         with patch("weko_index_tree.api.Indexes.get_child_list", return_value=[MagicMock()]):

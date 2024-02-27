@@ -27,12 +27,14 @@ def test_serialize(db):
         title = fields.Str(attribute='metadata.mytitle')
         id = PIDField(attribute='pid.pid_value')
 
-    data = json.loads(JSONSerializer(TestSchema).serialize(
+    ret = JSONSerializer(TestSchema).serialize(
         PersistentIdentifier(pid_type='recid', pid_value='2'),
         Record({'mytitle': 'test'})
-    ))
+    )
+    data = json.loads(ret)
     assert data['title'] == 'test'
     assert data['id'] == '2'
+    assert type(ret) == str
 
 
 def test_serialize_search():
@@ -45,7 +47,7 @@ def test_serialize_search():
         assert obj_uuid in ['a', 'b']
         return PersistentIdentifier(pid_type='recid', pid_value=data['pid'])
 
-    data = json.loads(JSONSerializer(TestSchema).serialize_search(
+    ret = JSONSerializer(TestSchema).serialize_search(
         fetcher,
         dict(
             hits=dict(
@@ -59,8 +61,8 @@ def test_serialize_search():
             ),
             aggregations={},
         )
-    ))
-
+    )
+    data = json.loads(ret)
     assert data['aggregations'] == {}
     assert 'links' in data
     assert data['hits'] == dict(
@@ -70,6 +72,7 @@ def test_serialize_search():
         ],
         total=2,
     )
+    assert type(ret) == str
 
 
 def test_serialize_pretty(app, db):

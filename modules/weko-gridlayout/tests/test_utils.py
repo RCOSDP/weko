@@ -72,7 +72,9 @@ def test_delete_item_in_preview_widget_item(i18n_app):
         "name": "test",
         "type": "test"
     }]
-    assert delete_item_in_preview_widget_item(data_id, json_data)
+    ret = delete_item_in_preview_widget_item(data_id, json_data)
+    assert ret == '[]'
+    assert type(ret) == str
 
 
 # def convert_popular_data(source_data, des_data):
@@ -178,8 +180,12 @@ def test_get_system_language_2(i18n_app):
 # def build_data(data):
 def test_build_data(i18n_app):
     data = MagicMock()
-    with patch("weko_gridlayout.utils.build_data_setting", return_value=""):
-        assert build_data(data)
+    json_data = {'key': 'value'}
+    with patch("weko_gridlayout.utils.build_data_setting", return_value=json_data):
+        ret = build_data(data)
+        assert ret
+        assert json.loads(ret['settings']) == json_data
+        assert type(ret['settings']) == str
 
 
 # def _escape_html_multi_lang_setting(multi_lang_setting: dict):
@@ -300,7 +306,7 @@ def test_convert_widget_data_to_dict(i18n_app):
     def test_func():
         return
     widget_data = MagicMock()
-    widget_data.settings = {}
+    widget_data.settings = {'key': 'value'}
     widget_data.widget_id = "test"
     widget_data.repository_id = "test"
     widget_data.widget_type = "test"
@@ -308,7 +314,10 @@ def test_convert_widget_data_to_dict(i18n_app):
     widget_data.is_deleted = "test"
     widget_data.updated = MagicMock()
     widget_data.updated.timestamp = test_func
-    assert convert_widget_data_to_dict(widget_data)
+    ret = convert_widget_data_to_dict(widget_data)
+    assert ret
+    assert ret['settings'] == widget_data.settings
+    assert type(ret['settings']) == dict
 
 
 # def convert_widget_multi_lang_to_dict(multi_lang_data):
@@ -319,7 +328,10 @@ def test_convert_widget_multi_lang_to_dict(i18n_app):
     multi_lang_data.widget_id = "test"
     multi_lang_data.lang_code = "test"
     multi_lang_data.label = "test"
-    assert convert_widget_multi_lang_to_dict(multi_lang_data)
+    ret = convert_widget_multi_lang_to_dict(multi_lang_data)
+    assert ret
+    assert ret['description_data'] == json.loads(multi_lang_data.description_data)
+    assert type(ret['description_data']) == dict
 
 
 # def convert_data_to_design_pack(widget_data, list_multi_lang_data):
@@ -674,7 +686,7 @@ def test_get_elasticsearch_result_by_date(i18n_app):
 
 # def validate_main_widget_insertion(repository_id, new_settings, page_id=0):
 def test_validate_main_widget_insertion(i18n_app, widget_item):
-    repository_id = 1
+    repository_id = '1'
     new_settings = ""
     return_data = MagicMock()
 
@@ -685,14 +697,16 @@ def test_validate_main_widget_insertion(i18n_app, widget_item):
         assert validate_main_widget_insertion(repository_id, new_settings)
 
     main_settings = {
-        "settings": []
+        "settings": ["test"]
     }
-
-    with patch("weko_gridlayout.utils.has_main_contents_widget", return_value=True):
+    magicmock = MagicMock(return_value=True)
+    with patch("weko_gridlayout.utils.has_main_contents_widget", magicmock):
         with patch('weko_gridlayout.utils.get_widget_design_page_with_main', return_value=False):
             with patch('weko_gridlayout.utils.WidgetDesignSetting.select_by_repository_id', return_value=main_settings):
                 with patch('weko_gridlayout.utils.WidgetDesignPage.get_by_id_or_none', return_value=False):
                  assert validate_main_widget_insertion(repository_id, new_settings)
+                 args, kwargs = magicmock.call_args
+                 assert args[0] == ['test']
     
 
 # def get_widget_design_page_with_main(repository_id):
@@ -702,8 +716,11 @@ def test_get_widget_design_page_with_main(i18n_app):
     mock_data.settings = 9999
     
     with patch("weko_gridlayout.utils.WidgetDesignPage.get_by_repository_id", return_value=[mock_data]):
-        with patch("weko_gridlayout.utils.has_main_contents_widget", return_value="test"):
+        magicmock = MagicMock(return_value="test")
+        with patch("weko_gridlayout.utils.has_main_contents_widget", magicmock):
             assert get_widget_design_page_with_main(repository_id) != None
+            args, kwargs = magicmock.call_args
+            assert args[0] == mock_data.settings
     
     assert get_widget_design_page_with_main(repository_id=None) == None
     

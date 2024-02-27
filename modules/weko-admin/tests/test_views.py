@@ -939,13 +939,18 @@ def test_remove_facet_search(api, users, mocker):
     res = api.post(url,json={"id":""})
     assert response_data(res) == {"status":False,"msg":"Failed to delete due to server error."}
     
-    with patch("weko_admin.views.FacetSearchSetting.delete",return_value=True):
+    mock_delete = MagicMock(return_value=True)
+    with patch("weko_admin.views.FacetSearchSetting.delete", mock_delete):
         res = api.post(url,json={"id":"1"})
+        args, kwargs = mock_delete.call_args
         assert response_data(res) == {"status":True,"msg":"Success"}
-    with patch("weko_admin.views.FacetSearchSetting.delete",return_value=False):
+        assert args[0] == '1'
+    mock_delete = MagicMock(return_value=False)
+    with patch("weko_admin.views.FacetSearchSetting.delete", mock_delete):
         res = api.post(url,json={"id":"1"})
+        args, kwargs = mock_delete.call_args
         assert response_data(res) == {"status":False,"msg":"Failed to delete due to server error."}
-
+        assert args[0] == '1'
 
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_views.py::test_dbsession_clean -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
 def test_dbsession_clean(app, db):

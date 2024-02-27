@@ -2,7 +2,7 @@
 import pytest
 import uuid
 import copy
-from mock import patch
+from mock import patch, MagicMock
 from io import BytesIO
 from werkzeug.datastructures import FileStorage
 from flask import url_for,make_response,json,current_app
@@ -545,10 +545,14 @@ class TestItemTypeMappingView:
             "/admin/itemtypes/mapping/1"
         )
         
+        test_data = {'oai_dc_mapping': {'dc:title': {'type': {'minOccurs': 1, 'maxOccurs': 1, 'attributes': [{'ref': 'xml:lang', 'name': 'xml:lang', 'use': 'optional'}]}}, 'dc:creator': {'type': {'minOccurs': 1, 'maxOccurs': 1, 'attributes': [{'ref': 'xml:lang', 'name': 'xml:lang', 'use': 'optional'}]}}, 'dc:subject': {'type': {'minOccurs': 1, 'maxOccurs': 1, 'attributes': [{'ref': 'xml:lang', 'name': 'xml:lang', 'use': 'optional'}]}}, 'dc:description': {'type': {'minOccurs': 1, 'maxOccurs': 1, 'attributes': [{'ref': 'xml:lang', 'name': 'xml:lang', 'use': 'optional'}]}}, 'dc:publisher': {'type': {'minOccurs': 1, 'maxOccurs': 1, 'attributes': [{'ref': 'xml:lang', 'name': 'xml:lang', 'use': 'optional'}]}}, 'dc:contributor': {'type': {'minOccurs': 1, 'maxOccurs': 1, 'attributes': [{'ref': 'xml:lang', 'name': 'xml:lang', 'use': 'optional'}]}}, 'dc:date': {'type': {'minOccurs': 1, 'maxOccurs': 1, 'attributes': [{'ref': 'xml:lang', 'name': 'xml:lang', 'use': 'optional'}]}}, 'dc:type': {'type': {'minOccurs': 1, 'maxOccurs': 1, 'attributes': [{'ref': 'xml:lang', 'name': 'xml:lang', 'use': 'optional'}]}}, 'dc:format': {'type': {'minOccurs': 1, 'maxOccurs': 1, 'attributes': [{'ref': 'xml:lang', 'name': 'xml:lang', 'use': 'optional'}]}}, 'dc:identifier': {'type': {'minOccurs': 1, 'maxOccurs': 1, 'attributes': [{'ref': 'xml:lang', 'name': 'xml:lang', 'use': 'optional'}]}}, 'dc:source': {'type': {'minOccurs': 1, 'maxOccurs': 1, 'attributes': [{'ref': 'xml:lang', 'name': 'xml:lang', 'use': 'optional'}]}}, 'dc:language': {'type': {'minOccurs': 1, 'maxOccurs': 1, 'attributes': [{'ref': 'xml:lang', 'name': 'xml:lang', 'use': 'optional'}]}}, 'dc:relation': {'type': {'minOccurs': 1, 'maxOccurs': 1, 'attributes': [{'ref': 'xml:lang', 'name': 'xml:lang', 'use': 'optional'}]}}, 'dc:coverage': {'type': {'minOccurs': 1, 'maxOccurs': 1, 'attributes': [{'ref': 'xml:lang', 'name': 'xml:lang', 'use': 'optional'}]}}, 'dc:rights': {'type': {'minOccurs': 1, 'maxOccurs': 1, 'attributes': [{'ref': 'xml:lang', 'name': 'xml:lang', 'use': 'optional'}]}}}}
         url = url_for("itemtypesmapping.index",ItemTypeID=7)
         mock_render = mocker.patch("weko_itemtypes_ui.admin.ItemTypeMappingView.render",return_value=make_response())
-        mocker.patch("weko_itemtypes_ui.admin.remove_xsd_prefix",return_value="called remove_xsd_prefix")
+        magic_mock = MagicMock(return_value="called remove_xsd_prefix")
+        mocker.patch("weko_itemtypes_ui.admin.remove_xsd_prefix", magic_mock)
         res = client.get(url,headers={"Accept-Language":"ja"})
+        args, kwargs = magic_mock.call_args
+        assert args[0] == test_data
         mock_render.assert_called_with(
             "weko_itemtypes_ui/admin/create_mapping.html",
             lists=[data["item_type_name"] for data in item_type],

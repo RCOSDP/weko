@@ -23,7 +23,8 @@ from invenio_stats.queries import (
     ESDateHistogramQuery,
     ESTermsQuery,
     ESWekoFileStatsQuery,
-    ESWekoTermsQuery
+    ESWekoTermsQuery,
+    ESWekoRankingQuery
 )
 
 # class ESQuery(object):
@@ -296,6 +297,13 @@ def test_weko_file_stats_query(app):
     assert query.build_query(None, datetime.datetime(2023, 1, 1)).to_dict() == {'query': {'bool': {'filter': [{'range': {'timestamp': {'lte': '2023-01-01T00:00:00', 'time_zone': 'Asia/Tokyo'}}}]}}, 'aggs': {'value': {'sum': {'field': 'count'}}, 'my_buckets': {'composite': {'size': 6000, 'sources': [{'file_key': {'terms': {'field': 'file_key'}}}, {'count': {'terms': {'field': 'count'}}}]}}, 'top_hit': {'top_hits': {'size': 1, 'sort': {'timestamp': 'desc'}}}}, 'from': 0, 'size': 0}
     assert query.build_query(None, None, after_key='test_key').to_dict() == {'aggs': {'value': {'sum': {'field': 'count'}}, 'my_buckets': {'composite': {'size': 6000, 'sources': [{'file_key': {'terms': {'field': 'file_key'}}}, {'count': {'terms': {'field': 'count'}}}], 'after': 'test_key'}}, 'top_hit': {'top_hits': {'size': 1, 'sort': {'timestamp': 'desc'}}}}, 'from': 0, 'size': 0}
 
+    test_config['main_query'] = {'file_key': 'file_key', 'bucket_id': 'bucket_id', 'root_file_id': 'root_file_id'}
+    query = ESWekoFileStatsQuery(
+        query_name='test_total_count',
+        **test_config
+    )
+    ret = query.build_query(None, None, bucket_id='test_id', file_key='test_file', root_file_id='root_test_id')
+    assert ret.to_dict() == {'aggs': {'value': {'sum': {'field': 'count'}}, 'my_buckets': {'composite': {'size': 6000, 'sources': [{'file_key': {'terms': {'field': 'file_key'}}}, {'count': {'terms': {'field': 'count'}}}]}}, 'top_hit': {'top_hits': {'size': 1, 'sort': {'timestamp': 'desc'}}}}, 'file_key': 'file_key', 'bucket_id': 'bucket_id', 'root_file_id': 'root_file_id'}
 
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_queries.py::test_weko_terms_query -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
 def test_weko_terms_query(app):
@@ -324,3 +332,21 @@ def test_weko_terms_query(app):
         **test_config
     )
     assert query.build_query(None, datetime.datetime(2023, 1, 1), after_key='test_key', required1='v1', agg_filter={'agg': 'agg1'}).to_dict() == {'query': {'bool': {'filter': [{'range': {'timestamp': {'lte': '2023-01-01T00:00:00', 'time_zone': 'Asia/Tokyo'}}}, {'term': {'required1': 'v1'}}, {'terms': {'agg': 'agg1'}}]}}, 'aggs': {'value': {'sum': {'field': 'count'}}, 'my_buckets': {'composite': {'size': 6000, 'sources': [{'search_key': {'terms': {'field': 'search_key'}}}, {'count': {'terms': {'field': 'count'}}}], 'after': 'test_key'}}}, 'from': 0, 'size': 0}
+
+# .tox/c1/bin/pytest --cov=invenio_stats tests/test_queries.py::test_weko_ranking_query -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
+def test_weko_ranking_query(app):
+    config_num = 9        # query_name='bucket-file-download-total'
+    query_configs = register_queries()
+    weko_ranking_config = query_configs[config_num]['query_config']
+
+    # build_query
+    test_config = copy.deepcopy(weko_ranking_config)
+    test_config.pop('main_query')
+    test_config.pop('aggregated_fields')
+    test_config['main_query'] = {'match': 'match', 'key': 'key', 'file_key': 'file_key', 'bucket_id': 'bucket_id', 'root_file_id': 'root_file_id', 'query': {'bool': {'must_not': 'must_not'}}}
+    query = ESWekoRankingQuery(
+        query_name='test_total_count',
+        **test_config
+    )
+    ret = query.build_query(bucket_id='test_id', file_key='test_file', root_file_id='root_test_id', must_not='{"match": {}}')
+    assert ret.to_dict() == {'query': {'bool': {'must_not': [{'match': {}}]}}, 'match': 'match', 'key': 'key', 'file_key': 'file_key', 'bucket_id': 'bucket_id', 'root_file_id': 'root_file_id'}
