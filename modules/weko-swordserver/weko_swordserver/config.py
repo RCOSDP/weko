@@ -25,7 +25,7 @@ WEKO_SWORDSERVER_SERVICEDOCUMENT_ABSTRACT = ""
 WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT = ['*/*']
 """ List of Content Types which are acceptable to the server. """
 
-WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_ARCHIVE_FORMAT = ['application/zip']
+WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_ARCHIVE_FORMAT = ['application/zip', 'multipart/form-data']
 """ List of Archive Formats that the server can unpack. If the server sends a package using a different format, the server MAY treat it as a Binary File """
 
 WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_DEPOSITS = True

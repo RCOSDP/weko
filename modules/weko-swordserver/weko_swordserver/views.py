@@ -15,13 +15,16 @@ import shutil
 import sword3common
 from flask import Blueprint, current_app, jsonify, request, url_for
 from invenio_deposit.scopes import write_scope
+from invenio_oauth2server import require_api_auth, require_oauth_scopes
 from invenio_oauth2server.ext import verify_oauth_token_and_set_current_user
 from invenio_oauth2server.provider import oauth2
 from sword3common import ServiceDocument, StatusDocument, constants
 from sword3common.lib.seamless import SeamlessException
 from weko_admin.api import TempDirInfo
 from weko_records_ui.utils import get_record_permalink, soft_delete
-from weko_search_ui.utils import check_import_items, import_items_to_system
+from weko_search_ui.utils import import_items_to_system
+from weko_swordserver.api import check_import_items, create_activity_from_jpcoar
+from weko_workflow.scopes import activity_scope
 from werkzeug.http import parse_options_header
 from invenio_db import db
 
@@ -117,7 +120,9 @@ def get_service_document():
 
 
 @blueprint.route("/service-document", methods=['POST'])
+@require_api_auth()
 @oauth2.require_oauth(write_scope.id)
+@oauth2.require_oauth(activity_scope.id)
 @check_on_behalf_of()
 @check_package_contents()
 def post_service_document():
@@ -184,7 +189,7 @@ def post_service_document():
     if file is None:
         raise WekoSwordserverException("Not found {0} in request body.".format(filename), ErrorType.BadRequest)
 
-    check_result = check_import_items(file, False)
+    check_result, register_format = check_import_items(file, False)
     item = check_result.get('list_record')[0] if check_result.get('list_record') else None
     if check_result.get('error') or not item or item.get('errors'):
         errorType = None
@@ -200,25 +205,30 @@ def post_service_document():
             check_result_msg = 'item_missing'
         raise WekoSwordserverException('Error in check_import_items: {0}'.format(check_result_msg), errorType)
     if item.get('status') != 'new':
-        raise WekoSwordserverException('This item is already registered: {0]'.format(item.get('item_title')), ErrorType.BadRequest)
+        raise WekoSwordserverException('This item is already registered: {0}'.format(item.get('item_title')), ErrorType.BadRequest)
 
     data_path = check_result.get("data_path","")
     expire = datetime.now() + timedelta(days=1)
     TempDirInfo().set(data_path, {"expire": expire.strftime("%Y-%m-%d %H:%M:%S")})
-    item["root_path"] = data_path+"/data"
-    
+
     # import item
-    import_result = import_items_to_system(item, None)
-    if not import_result.get('success'):
-        raise WekoSwordserverException('Error in import_items_to_system: {0}'.format(item.get('error_id')), ErrorType.ServerError)
-    
+    response = {}
+    if register_format == 'Direct':
+
+        item["root_path"] = data_path+"/data"
+
+        import_result = import_items_to_system(item, None)
+        if not import_result.get('success'):
+            raise WekoSwordserverException('Error in import_items_to_system: {0}'.format(item.get('error_id')), ErrorType.ServerError)
+        recid = import_result.get('recid')
+        response = jsonify(_get_status_document(recid))
+    elif register_format == 'Workflow':
+        activity, recid = create_activity_from_jpcoar(check_result, data_path)
+        response = jsonify(_get_status_workflow_document(activity, recid))
+
     shutil.rmtree(data_path)
     TempDirInfo().delete(data_path)
-    
-    recid = import_result.get('recid')
-
-    return jsonify(_get_status_document(recid))
-
+    return response
 
 @blueprint.route("/deposit/<recid>", methods=['GET'])
 @oauth2.require_oauth()
@@ -332,6 +342,65 @@ def _get_status_document(recid):
                 "rel" : ["alternate"],
                 "contentType" : "text/html"
             })
+
+    statusDocument = StatusDocument(raw=raw_data)
+
+    return statusDocument.data
+
+def _get_status_workflow_document(activity, recid):
+    """
+    :param recid: Record Identifier.
+    :returns: A :class:`sword3common.StatusDocument` instance.
+    """
+
+    # Get record uri
+
+
+    """
+    Set raw data to StatusDocument
+
+    The following fields are set by sword3common
+        # "@context"
+        # "@type"
+    """
+    raw_data = {
+        "@id": url_for('weko_swordserver.get_status_document', recid=recid, _external=True),
+        "@context": constants.JSON_LD_CONTEXT,
+        "@type": constants.DocumentType.ServiceDocument,
+        "actions" : {
+            "getMetadata" : False,      # Not implimented
+            "getFiles" : False,         # Not implimented
+            "appendMetadata" : False,   # Not implimented
+            "appendFiles" : False,      # Not implimented
+            "replaceMetadata" : False,  # Not implimented
+            "replaceFiles" : False,     # Not implimented
+            "deleteMetadata" : False,   # Not implimented
+            "deleteFiles" : False,      # Not implimented
+            "deleteObject" : True,
+        },
+        "fileSet" : {
+            # "@id" : "",
+            # "eTag" : ""
+        },
+        "metadata" : {
+            # "@id" : "",
+            # "eTag" : ""
+        },
+        "service" : url_for('weko_swordserver.get_service_document', _external=True),
+        "state" : [
+            {
+                "@id" : SwordState.inWorkflow,
+                "description" : ""
+            }
+        ],
+        "links" : [
+            {
+                "@id" : url_for('weko_workflow.display_activity', activity_id=activity.activity_id, _external=True),
+                "rel" : ["alternate"],
+                "contentType" : "text/html"
+            },
+        ]
+    }
 
     statusDocument = StatusDocument(raw=raw_data)
 
