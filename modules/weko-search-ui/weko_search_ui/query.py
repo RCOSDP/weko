@@ -1407,7 +1407,7 @@ def item_path_search_factory(self, search, index_id=None):
     urlkwargs.add("q", query_q)
     urlkwargs.add("is_perm_paths", is_perm_paths)
     # debug elastic search query
-    current_app.logger.debug(orjson.dumps((search.query()).to_dict()).decode())
+    current_app.logger.debug(orjson.dumps(str((search.query()).to_dict())).decode())
     return search, urlkwargs
 
 
