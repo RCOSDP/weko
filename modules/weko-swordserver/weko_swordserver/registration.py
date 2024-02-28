@@ -59,6 +59,7 @@ def check_import_items(file, is_change_identifier: bool = False):
 
 
 def create_activity_from_jpcoar(check_result, data_path):
+    deposit = {}
     settings = AdminSettings.get("sword_api_setting", dict_to_object=False)
     default_format = settings.get("default_format", "XML")
     data_format = settings.get("data_format")

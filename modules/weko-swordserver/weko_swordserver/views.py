@@ -363,8 +363,12 @@ def _get_status_workflow_document(activity, recid):
         # "@context"
         # "@type"
     """
+    record_url = ''
+    if recid:
+        record_url = url_for('weko_swordserver.get_status_document', recid=recid, _external=True)
+
     raw_data = {
-        "@id": url_for('weko_swordserver.get_status_document', recid=recid, _external=True),
+        "@id": record_url,
         "@context": constants.JSON_LD_CONTEXT,
         "@type": constants.DocumentType.ServiceDocument,
         "actions" : {
