@@ -415,7 +415,7 @@ def items_index(pid_value='0'):
             """update item data info."""
             sessionstore.put(
                 'item_index_{}'.format(pid_value),
-                orjson.dumps(data).decode(),
+                orjson.dumps(data),
                 ttl_secs=300)
         return jsonify(data)
     except PIDDoesNotExistError as ex:
@@ -560,7 +560,7 @@ def iframe_items_index(pid_value='0'):
             """update item data info."""
             sessionstore.put(
                 'item_index_{}'.format(pid_value),
-                orjson.dumps(data).decode(),
+                orjson.dumps(data),
                 ttl_secs=300)
         return jsonify(data)
     except KeyError as ex:
