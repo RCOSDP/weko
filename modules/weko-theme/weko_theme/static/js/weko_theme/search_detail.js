@@ -27,6 +27,7 @@
             }
 
             // Call initialization function on click
+            // Button to open the detailed search area
             $scope.onClick = function() {
                 if(!sessionStorage.getItem('init_detail_condition')){
                     status_keep_flg = false
