@@ -281,7 +281,7 @@ require([
 
         // 詳細検索からページ遷移した場合、詳細検索のアコーディオンを開いた状態にして、ボタンのテキストを「閉じる」にセット
         var urlParams = new URLSearchParams(window.location.search);
-        var isDetailSearch = Array.from(urlParams.keys()).length > 6  // 6は簡易検索の際のクエリの数
+        var isDetailSearch = Array.from(urlParams.keys()).length > 5  // 5は簡易検索の際のクエリの数。urlに詳細検索の使用状況を管理するパラメータを作るなど、別の方法を考えるべき。
         if (isDetailSearch) {
             // インデックスを開いた状態での簡易検索の判定
             if (urlParams.has('cur_index_id')) {
@@ -299,7 +299,6 @@ require([
 
         // 簡易検索ボタン
         $('#top-search-btn').on('click', function () {
-            sessionStorage.removeItem('detail_search_conditions');
             sessionStorage.setItem('btn', 'simple-search');
             SearchSubmit();
         });
