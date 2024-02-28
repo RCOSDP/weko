@@ -362,16 +362,30 @@ def update_schema(value):
                             break
                 # resource type
                 if k in resource_type_key:
-                    for i, d in enumerate(v['enum']):
-                        if d in jpcoar_2_resource_type:
-                            break
-                        elif d == resource_type_insert_key:
-                            for index, rt in enumerate(jpcoar_2_resource_type):
-                                value['properties'][k]['enum'].insert(i + index, rt)
-                                if 'currentEnum' in v:
-                                    value['properties'][k]['currentEnum'].insert(i + index, rt)
-                            update_flag = True
-                            break
+                    if v['enum'].count(jpcoar_2_resource_type[0]) == 0:
+                        for i, d in enumerate(v['enum']):
+                            if d == resource_type_insert_key:
+                                for index, rt in enumerate(jpcoar_2_resource_type):
+                                    value['properties'][k]['enum'].insert(i + index, rt)
+                                    if 'currentEnum' in v:
+                                        value['properties'][k]['currentEnum'].insert(i + index - 1, rt)
+                                update_flag = True
+                                break
+                    if v['enum'].count(jpcoar_2_resource_type[0]) > 1:
+                        value['properties'][k]['enum'].reverse()
+                        if 'currentEnum' in v:
+                            value['properties'][k]['currentEnum'].reverse()
+                        for rt in jpcoar_2_resource_type:
+                            if value['properties'][k]['enum'].count(rt) > 1:
+                                value['properties'][k]['enum'].pop(value['properties'][k]['enum'].index(rt))
+                            if 'currentEnum' in v and value['properties'][k]['currentEnum'].count(rt) > 1:
+                                value['properties'][k]['currentEnum'].pop(value['properties'][k]['currentEnum'].index(rt))
+                        value['properties'][k]['enum'].reverse()
+                        if 'currentEnum' in v:
+                            value['properties'][k]['currentEnum'].reverse()
+                        update_flag = True
+                    else:
+                        pass
                 # relation type
                 if k in relation_type_key:
                     for i, d in enumerate(v['enum']):
@@ -421,14 +435,25 @@ def update_form(form_data):
                                 break
                     # resource type
                     if subitem_key in resource_type_key:
-                        for map_index, d in enumerate(value['titleMap']):
-                            if d['name'] in jpcoar_2_resource_type:
-                                break
-                            elif d['name'] == resource_type_insert_key:
-                                for jpcoar_index, rt in enumerate(jpcoar_2_resource_type):
-                                    form_data[i]['titleMap'].insert(map_index + jpcoar_index, {'name': rt, 'value': rt})
-                                update_flag = True
-                                break
+                        rt0 = jpcoar_2_resource_type[0]
+                        if value['titleMap'].count({'name': rt0, 'value': rt0}) == 0:
+                            for map_index, d in enumerate(value['titleMap']):
+                                if d['name'] in jpcoar_2_resource_type:
+                                    break
+                                elif d['name'] == resource_type_insert_key:
+                                    for jpcoar_index, rt in enumerate(jpcoar_2_resource_type):
+                                        form_data[i]['titleMap'].insert(map_index + jpcoar_index, {'name': rt, 'value': rt})
+                                    update_flag = True
+                                    break
+                        if value['titleMap'].count({'name': rt0, 'value': rt0}) > 1:
+                            form_data[i]['titleMap'].reverse()
+                            for rt in jpcoar_2_resource_type:
+                                if form_data[i]['titleMap'].count({'name': rt, 'value': rt}) > 1:
+                                    form_data[i]['titleMap'].pop(form_data[i]['titleMap'].index({'name': rt, 'value': rt}))
+                            form_data[i]['titleMap'].reverse()
+                            update_flag = True
+                        else:
+                            pass
                     # relation type
                     if subitem_key in relation_type_key:
                         for map_index, d in enumerate(value['titleMap']):
