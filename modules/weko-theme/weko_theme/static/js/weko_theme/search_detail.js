@@ -9,8 +9,8 @@
             $scope.search_community = document.getElementById('community').value;
             $scope.search_type = "0";
             $scope.default_condition_data = [];
-
             $scope.load_delimiter = 50;
+            let status_keep_flg = true
 
             // Call the API and initialize the data
             $scope.setupInitData = function() {
@@ -27,9 +27,10 @@
             }
 
             // Call initialization function on click
-            // Button to open the detailed search area
+            // Button to open/close the detailed search area
             $scope.onClick = function() {
                 if(!sessionStorage.getItem('init_detail_condition')){
+                    // Prepare detailed search information if data exists in the session storage ('init_detail_condition').
                     status_keep_flg = false
                     $scope.setupInitData()
                 }   
@@ -73,7 +74,7 @@
                 });
             }
 
-            // page init
+            // Generating information for the detailed search area.
             $scope.initData = function () {
 
                 angular.forEach($scope.default_search_key, function (item, index, array) {
@@ -487,8 +488,6 @@
                     isDetailSearch = false;
                 }
             }
-
-            let status_keep_flg = true
 
             // Consider the usage status of advanced search.
             if (isDetailSearch && !urlParams.has('is_facet_search')){
