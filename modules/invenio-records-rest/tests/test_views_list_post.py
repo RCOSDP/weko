@@ -11,14 +11,16 @@
 from __future__ import absolute_import, print_function
 
 import json
+import os
 
 import mock
 import pytest
-from conftest import IndexFlusher
+from tests.conftest import IndexFlusher
 from tests.helpers import _mock_validate_fail, assert_hits_len, get_json, record_url
-from mock import patch
+from mock import patch, MagicMock
 from sqlalchemy.exc import SQLAlchemyError
-
+from weko_redis.redis import RedisConnection
+from elasticsearch_dsl import response, Search
 
 @pytest.mark.parametrize('content_type', [
     'application/json', 'application/json;charset=utf-8'
@@ -159,3 +161,141 @@ def test_jsonschema_validation_error(app, db, search_url, content_type):
         assert res.status_code == 400
         data = get_json(res)
         assert data['message']
+
+@pytest.yield_fixture()
+def i18n_app(app):
+    with app.test_request_context(
+        headers=[('Accept-Language','ja')]):
+        app.extensions['invenio-i18n'] = MagicMock()
+        app.extensions['invenio-i18n'].language = "ja"
+        yield app
+@pytest.yield_fixture()
+def radis_app(app):
+    app.config.update(
+        CACHE_TYPE="redis",
+        ACCOUNTS_SESSION_REDIS_DB_NO=1,
+        CACHE_REDIS_HOST=os.environ.get("INVENIO_REDIS_HOST"),
+        REDIS_PORT="6379"
+    )
+    yield app
+def test_RecordsListResource_get(app, i18n_app, radis_app, db, es, test_data, search_url, search_class):
+    """Test VALID record creation request (POST .../records/)."""
+    json_data = {
+        "took": 137,
+        "timed_out": "false",
+        "_shards": {
+            "total": 3,
+            "successful": 3,
+            "skipped": 0,
+            "failed": 0
+        },
+        "hits": {
+            "total": 3,
+            "max_score": 1,
+            "hits": [
+                {
+                    "_index": "tenant1-weko-item-v1.0.0",
+                    "_type": "item-v1.0.0",
+                    "_id": "f7d87c57-e3d0-4f8a-a40e-cd8167690462",
+                    "_version": "1.0",
+                    "_score": 1,
+                    "_source": {
+                        "control_number": 1,
+                        "_item_metadata": {
+                            "owner": "1"
+                        },
+                        "_oai": {
+                            "id": "oai:weko3.example.org:00000001"
+                        },
+                        "content": [
+                            {
+                                "filename": "test1.pdf"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "_index": "tenant1-weko-item-v1.0.0",
+                    "_type": "item-v1.0.0",
+                    "_id": "f7d87c57-e3d0-4f8a-a40e-cd8167690462",
+                    "_version": "1.0",
+                    "_score": 1,
+                    "_source": {
+                        "control_number": 1,
+                        "_item_metadata": {
+                            "owner": "1"
+                        },
+                        "_oai": {
+                            "id": "oai:weko3.example.org:00000001"
+                        },
+                        "content": [
+                            {
+                                "filename": "test2.pdf"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "_index": "tenant1-weko-item-v1.0.0",
+                    "_type": "item-v1.0.0",
+                    "_id": "f7d87c57-e3d0-4f8a-a40e-cd8167690462",
+                    "_version": "1.0",
+                    "_score": 1,
+                    "_source": {
+                        "control_number": 1,
+                        "_item_metadata": {
+                            "owner": "1"
+                        },
+                        "_oai": {
+                            "id": "oai:weko3.example.org:00000001"
+                        },
+                        "content": [
+                            {
+                                "filename": "test3.pdf"
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    }
+    search_result = response.Response(Search(), json_data)
+    cache_name = "anonymous_user"
+    mock_user = MagicMock()
+    mock_user.is_authenticated = False
+
+    with app.test_client() as client:
+        with patch('weko_admin.utils.get_facet_search_query', return_value=MagicMock()):
+            with patch('weko_search_ui.permissions.search_permission.can', return_value=MagicMock()):
+                with patch("flask_login.utils._get_user", return_value=mock_user):
+                    with patch("elasticsearch_dsl.Search.execute", return_value=search_result):
+                        redis_connection = RedisConnection()
+                        sessionstore = redis_connection.connection(db=app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
+                        cache_key = f"{cache_name}_url_args"
+                        cache_data = {'page': '1'}
+                        sessionstore.put(cache_key, (json.dumps(cache_data)).encode('utf-8'))
+                        res = client.get(search_url, query_string=dict(page=1, size=2))
+                        assert res.status_code == 200
+
+                        cache_key = f"{cache_name}_url_args"
+                        sessionstore.delete(cache_key)
+                        res = client.get(search_url, query_string=dict(page=1, size=2))
+                        assert res.status_code == 200
+
+                        cache_key = f"{cache_name}_url_args"
+                        cache_data = {'page': '1'}
+                        sessionstore.put(cache_key, (json.dumps(cache_data)).encode('utf-8'))
+                        cache_key = cache_name
+                        cache_data = {"10000": {"control_number": 1}}
+                        sessionstore.put(cache_key, (json.dumps(cache_data)).encode('utf-8'))
+                        res = client.get(search_url, query_string=dict(page=10000))
+                        assert res.status_code == 200
+
+                        cache_key = f"{cache_name}_url_args"
+                        cache_data = {'page': '1'}
+                        sessionstore.put(cache_key, (json.dumps(cache_data)).encode('utf-8'))
+                        cache_key = cache_name
+                        cache_data = {"1": {"control_number": [1]}, "2": {"control_number": 1}}
+                        sessionstore.put(cache_key, (json.dumps(cache_data)).encode('utf-8'))
+                        res = client.get(search_url, query_string=dict(page=10000))
+                        assert res.status_code == 200
