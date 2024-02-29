@@ -56,6 +56,15 @@ def test_validate_json(app):
 
     assert validate_json(file=data1) == False
 
+    class MockOpen:
+        def read(self):
+            return json.dumps(json_data).encode()
+        def __enter__(self):
+            return self
+        def __exit__(self, exc_type, exc_value, traceback):
+            pass
+    data1.open = MagicMock(return_value=MockOpen())
+    assert validate_json(file=data1) == False
 
 # def can_preview(file): 
 def test_can_preview(app):
