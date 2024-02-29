@@ -503,17 +503,18 @@ def file_instance(db):
 @pytest.fixture()
 def esindex(app2):
     from invenio_search import current_search_client as client
+    index_name = app2.config["INDEXER_DEFAULT_INDEX"]
     alias_name = "test-author-alias"
 
     with open("tests/data/mappings/author-v1.0.0.json","r") as f:
         mapping = json.load(f)
 
     with app2.test_request_context():
-        client.indices.create(app2.config["INDEXER_DEFAULT_INDEX"], body=mapping, ignore=[400])
-        client.indices.put_alias(index=app2.config["INDEXER_DEFAULT_INDEX"], name=alias_name)
+        client.indices.create(index=index_name, body=mapping, ignore=[400])
+        client.indices.put_alias(index=index_name, name=alias_name)
 
     yield client
 
     with app2.test_request_context():
-        client.indices.delete_alias(index=app2.config["INDEXER_DEFAULT_INDEX"], name=alias_name)
-        client.indices.delete(index=app2.config["INDEXER_DEFAULT_INDEX"], ignore=[400, 404])
+        client.indices.delete_alias(index=index_name, name=alias_name)
+        client.indices.delete(index=index_name, ignore=[400, 404])
