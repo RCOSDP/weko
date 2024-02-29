@@ -774,6 +774,15 @@ def register_queries():
             )
         ),
         dict(
+            query_name='top-view-total-for-access-counter',
+            query_class=ESTermsQuery,
+            query_config=dict(
+                index='{}-stats-top-view'.format(search_index_prefix),
+                doc_type='top-view-day-aggregation'
+            )
+            
+        ),
+        dict(
             query_name='get-top-view-per-site-license',
             query_class=ESTermsQuery,
             query_config=dict(
