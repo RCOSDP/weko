@@ -1344,7 +1344,23 @@ def get_researchmapid_record_data(parmalink, achievement_type ,achievement_id ,i
         return list
     """
 
+    def __nest_and_merge( weko_name :str ,child_node:str , elements , api_data:dict) -> dict:
+        if not (elements == [] or elements == {} or elements== None) :
+            if not child_node:
+                api_data.update({weko_name : elements})
+            else:
+                """e.g {weko_name : {child_node_1:{child_node_2:{child_node_3:{elements}}}}}"""
+                child = elements
+                nodes = child_node.split('.')
+                nodes.reverse()
+                for node in nodes:
+                    child = {node : child}
+
+                merge_dict( api_data, {weko_name : child} ,False)
+        return api_data
+
     api_data = {}
+    resource_type = ''
     researchmap_mappings = current_app.config["WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_MAPPINGS"] # type: ignore
     researchtype_mappings = current_app.config["WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_TYPE_MAPPINGS"]# type: ignore
 
@@ -1362,11 +1378,14 @@ def get_researchmapid_record_data(parmalink, achievement_type ,achievement_id ,i
             rm_name:str = mapping.get('rm_name','')
             weko_name:str = mapping.get('weko_name','')
             element:str = load_data.get(rm_name ,'')
-            api_data.update({weko_name : element})
+
+            child_node:str = mapping.get('child_node','')
+            api_data = __nest_and_merge(weko_name  ,child_node , element ,api_data)
+
         elif mapping.get('type') == 'lang':
             rm_name:str = mapping.get('rm_name','')
             weko_name:str = mapping.get('weko_name','')
-            
+            child_node:str = mapping.get('child_node','')
             lang_json:dict = load_data.get(rm_name , {})
             en_value = lang_json.get('en' , '')
             ja_value = lang_json.get('ja' , '')
@@ -1377,12 +1396,15 @@ def get_researchmapid_record_data(parmalink, achievement_type ,achievement_id ,i
             if ja_value:
                 elements.append({'@value': ja_value, '@language': 'ja'})
             
-            api_data.update({weko_name : elements})
+
+            api_data = __nest_and_merge(weko_name  ,child_node ,elements ,api_data)
+
         
         elif mapping.get('type') == 'authors':
             rm_name:str = mapping.get('rm_name','')
             weko_name:str = mapping.get('weko_name','')
             lang_json:dict = load_data.get(rm_name , {})
+            child_node:str = mapping.get('child_node','')
 
             en_values:list = lang_json.get('en' , [])
             ja_values:list = lang_json.get('ja' , [])
@@ -1404,27 +1426,31 @@ def get_researchmapid_record_data(parmalink, achievement_type ,achievement_id ,i
                 
                 elements.append(names)
             
-            api_data.update({weko_name : elements})
+            api_data = __nest_and_merge(weko_name  ,child_node ,elements ,api_data)
+
 
         elif mapping.get('type') == 'identifiers':
             rm_name:str = mapping.get('rm_name','')
             weko_name:str = mapping.get('weko_name','')
             lang_json:dict = load_data.get(rm_name , {})
+            child_node:str = mapping.get('child_node','')
 
             elements = []
             for key in lang_json.keys():
                 elements.append({'@value': lang_json[key] , '@type' : key.upper()})
 
-            api_data.update({weko_name : elements})
+            api_data = __nest_and_merge(weko_name  ,child_node ,elements ,api_data)
 
         elif mapping.get('type') == 'type':
             rm_name:str = mapping.get('rm_name','')
             weko_name:str = mapping.get('weko_name','')
             element:str = load_data.get(rm_name ,'')
+            child_node:str = mapping.get('child_node','')
             for r_type_mapping in researchtype_mappings:
                 if r_type_mapping.get('achievement_type') == achievement_type \
                     and r_type_mapping.get('detail_type_name') == element :
-                    api_data.update({weko_name : r_type_mapping.get('JPCOAR_resource_type')})
+                    resource_type =  r_type_mapping.get('JPCOAR_resource_type')
+                    api_data.update({weko_name : resource_type})
                     break
     current_app.logger.debug('api_data')
     current_app.logger.debug(api_data)
@@ -1433,7 +1459,7 @@ def get_researchmapid_record_data(parmalink, achievement_type ,achievement_id ,i
     with db.session.no_autoflush:
         items = ItemTypes.get_by_id(item_type_id)
     if items is None:
-        return result
+        return result, resource_type 
     if items.form is not None:
         autofill_key_tree = sort_by_item_type_order(
             items.form,
@@ -1442,7 +1468,7 @@ def get_researchmapid_record_data(parmalink, achievement_type ,achievement_id ,i
                 get_researchmap_autofill_item(item_type_id)))
 
         result = build_record_model(autofill_key_tree, api_data)
-    return result
+    return result , resource_type 
 
 
 def build_record_model_for_wekoid(item_type_id, item_map_data):

@@ -2003,3 +2003,6 @@ msgstr "client idキーまたはprivateキーのどちらか最低一つは入�
 
 msgid "Please input Merge Mode"
 msgstr "マージモードを入力してください"
+
+msgid "Registered"
+msgstr "登録済"

@@ -43,38 +43,6 @@ class CRIS_Institutions(object):
 
     """ INSTITUTION TYPES END """
 
-    @classmethod
-    def is_valid(cls, institution :str) -> bool:
-        return institution in [cls.RM] # all institution type
-    
-    @classmethod
-    def get_institutions_as_list(cls) -> list:
-        return deepcopy([cls.RM]) # all institution type
-
-
-# class CRISLinkageSetting(db.Model, Timestamp):
-#     """CRIS Linkage Settings"""
-
-#     __tablename__ = 'cris_linkage_setting'
-
-#     """ record id """
-#     recid = db.Column(
-#         db.Integer,
-#         db.ForeignKey(RecordIdentifier.recid),
-#         primary_key=True,
-#     )
-
-#     cris_institution = db.Column(
-#         # ChoiceType(CRIS_Institutions().get_institutions_as_list() , db.Text),
-#         primary_key=True,
-#         nullable = False,
-#     )
-
-#     enable_auto_linkage = db.Column(
-#         db.Boolean, nullable=False, default=False
-#     )
-
-
 
 class CRISLinkageResult(db.Model, Timestamp):
 
@@ -89,17 +57,9 @@ class CRISLinkageResult(db.Model, Timestamp):
 
     cris_institution = db.Column(
         db.Text,
-        # ChoiceType(CRIS_Institutions().get_institutions_as_list() , db.Text),
         primary_key=True,
         nullable = False,
     )
-
-    # author = db.Column(
-    #     db.BigInteger,
-    #     db.ForeignKey(Authors.id),
-    #     primary_key=True,
-    #     nullable = False,
-    # )
 
     last_linked_date = db.Column(
         db.DateTime,

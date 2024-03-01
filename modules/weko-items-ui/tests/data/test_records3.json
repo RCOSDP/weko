@@ -1,0 +1,606 @@
+[{
+    "_oai": {
+        "id": "oai:weko3.example.org:00000007",
+        "sets": []
+    },
+    "path": [
+        "303"
+    ],
+    "owner": "2",
+    "recid": "7",
+    "title": [
+        "満艦飾"
+    ],
+    "pubdate": {
+        "attribute_name": "PubDate",
+        "attribute_value": "2024-02-05"
+    },
+    "_buckets": {
+        "deposit": "6beb0e35-5b8b-4d08-9dad-557c0e65b5dd"
+    },
+    "_deposit": {
+        "id": "7",
+        "pid": {
+            "type": "depid",
+            "value": "7",
+            "revision_id": 0
+        },
+        "owner": "2",
+        "owners": [
+            2
+        ],
+        "status": "published",
+        "created_by": 2
+    },
+    "item_title": "満艦飾",
+    "author_link": [
+        "2",
+        "2"
+    ],
+    "item_type_id": "1",
+    "publish_date": "2024-02-05",
+    "control_number": "14.1",
+    "publish_status": "0",
+    "weko_shared_id": -1,
+    "item_1617186331708": {
+        "attribute_name": "Title",
+        "attribute_value_mlt": [
+            {
+                "subitem_1551255647225": "満艦飾",
+                "subitem_1551255648112": "ja"
+            },
+            {
+                "subitem_1551255647225": "full-schema",
+                "subitem_1551255648112": "en"
+            },
+            {
+                "subitem_1551255647225": "full-schema",
+                "subitem_1551255648112": ""
+            },
+            {
+                "subitem_1551255647225": "full-schema",
+                "subitem_1551255648112": "de"
+            }
+        ]
+    },
+    "item_1617186385884": {
+        "attribute_name": "Alternative Title",
+        "attribute_value_mlt": [
+            {
+                "subitem_1551255720400": "フルスキーマ",
+                "subitem_1551255721061": "ja"
+            }
+        ]
+    },
+    "item_1617186419668": {
+        "attribute_name": "Creator",
+        "attribute_type": "creator",
+        "attribute_value_mlt": [
+            {
+                "givenNames": [
+                    {
+                        "givenName": "太郎",
+                        "givenNameLang": "ja"
+                    }
+                ],
+                "familyNames": [
+                    {
+                        "familyName": "WEKO",
+                        "familyNameLang": "ja"
+                    }
+                ],
+                "creatorMails": [
+                    {
+                        "creatorMail": "wekosoftware@nii.ac.jp"
+                    }
+                ],
+                "creatorNames": [
+                    {
+                        "creatorName": "WEKO, 太郎",
+                        "creatorNameLang": "ja"
+                    },
+                    {
+                        "creatorName": "WEKO, 太郎",
+                        "creatorNameLang": "en"
+                    },
+                    {
+                        "creatorName": "WEKO, 太郎",
+                        "creatorNameLang": "de"
+                    },
+                    {
+                        "creatorName": "WEKO, 太郎",
+                        "creatorNameLang": ""
+                    }
+                ],
+                "nameIdentifiers": [
+                    {
+                        "nameIdentifier": "2",
+                        "nameIdentifierScheme": "WEKO"
+                    },
+                    {
+                        "nameIdentifier": "M1cQhPtdmlrSRFo4",
+                        "nameIdentifierURI": "https://researchmap.jp/M1cQhPtdmlrSRFo4",
+                        "nameIdentifierScheme": "researchmap"
+                    }
+                ]
+            }
+        ]
+    },
+    "item_1617186476635": {
+        "attribute_name": "Access Rights",
+        "attribute_value_mlt": [
+            {
+                "subitem_1522299639480": "open access",
+                "subitem_1600958577026": "http://purl.org/coar/access_right/c_abf2"
+            }
+        ]
+    },
+    "item_1617186499011": {
+        "attribute_name": "Rights",
+        "attribute_value_mlt": [
+            {
+                "subitem_1522650717957": "ja",
+                "subitem_1522650727486": "権利情報リソース",
+                "subitem_1522651041219": "権利情報"
+            }
+        ]
+    },
+    "item_1617186609386": {
+        "attribute_name": "Subject",
+        "attribute_value_mlt": [
+            {
+                "subitem_1522299896455": "ja",
+                "subitem_1522300014469": "BSH",
+                "subitem_1522300048512": "https://example.com",
+                "subitem_1523261968819": "subject"
+            }
+        ]
+    },
+    "item_1617186626617": {
+        "attribute_name": "Description",
+        "attribute_value_mlt": [
+            {
+                "subitem_description": "描写",
+                "subitem_description_type": "Methods",
+                "subitem_description_language": "ja"
+            }
+        ]
+    },
+    "item_1617186643794": {
+        "attribute_name": "Publisher",
+        "attribute_value_mlt": [
+            {
+                "subitem_1522300295150": "ja",
+                "subitem_1522300316516": "出版者●●"
+            }
+        ]
+    },
+    "item_1617186660861": {
+        "attribute_name": "Date",
+        "attribute_value_mlt": [
+            {
+                "subitem_1522300695726": "Accepted",
+                "subitem_1522300722591": "2024-02-05"
+            }
+        ]
+    },
+    "item_1617186702042": {
+        "attribute_name": "Language",
+        "attribute_value_mlt": [
+            {
+                "subitem_1551255818386": "jpn"
+            }
+        ]
+    },
+    "item_1617186783814": {
+        "attribute_name": "Identifier",
+        "attribute_value_mlt": [
+            {
+                "subitem_identifier_uri": "999",
+                "subitem_identifier_type": "DOI"
+            },
+            {
+                "subitem_identifier_uri": "123",
+                "subitem_identifier_type": "HDL"
+            }
+        ]
+    },
+    "item_1617186859717": {
+        "attribute_name": "Temporal",
+        "attribute_value_mlt": [
+            {
+                "subitem_1522658018441": "ja",
+                "subitem_1522658031721": "店舗らる"
+            }
+        ]
+    },
+    "item_1617186882738": {
+        "attribute_name": "Geo Location",
+        "attribute_value_mlt": [
+            {
+                "subitem_geolocation_box": {
+                    "subitem_east_longitude": "あｓｄｆ",
+                    "subitem_north_latitude": "あｓｄｆ",
+                    "subitem_south_latitude": "あｓｄｆ",
+                    "subitem_west_longitude": "あｓｄｆ"
+                },
+                "subitem_geolocation_place": [
+                    {
+                        "subitem_geolocation_place_text": "あｓｄｆ"
+                    }
+                ],
+                "subitem_geolocation_point": {
+                    "subitem_point_latitude": "あｓｄｆ",
+                    "subitem_point_longitude": "あｓｆｄ"
+                }
+            }
+        ]
+    },
+    "item_1617186901218": {
+        "attribute_name": "Funding Reference",
+        "attribute_value_mlt": [
+            {
+                "subitem_1522399143519": {
+                    "subitem_1522399281603": "GRID",
+                    "subitem_1522399333375": "あｓｄｆ"
+                },
+                "subitem_1522399412622": [
+                    {
+                        "subitem_1522399416691": "ja",
+                        "subitem_1522737543681": "あｓｄｆ"
+                    }
+                ],
+                "subitem_1522399571623": {
+                    "subitem_1522399585738": "https://example.org",
+                    "subitem_1522399628911": "456"
+                },
+                "subitem_1522399651758": [
+                    {
+                        "subitem_1522721910626": "ja",
+                        "subitem_1522721929892": "hoge賞"
+                    }
+                ]
+            }
+        ]
+    },
+    "item_1617186920753": {
+        "attribute_name": "Source Identifier",
+        "attribute_value_mlt": [
+            {
+                "subitem_1522646500366": "PISSN",
+                "subitem_1522646572813": "369"
+            }
+        ]
+    },
+    "item_1617186941041": {
+        "attribute_name": "Source Title",
+        "attribute_value_mlt": [
+            {
+                "subitem_1522650068558": "ja",
+                "subitem_1522650091861": "ソースタイトル"
+            }
+        ]
+    },
+    "item_1617186959569": {
+        "attribute_name": "Volume Number",
+        "attribute_value_mlt": [
+            {
+                "subitem_1551256328147": "123"
+            }
+        ]
+    },
+    "item_1617186981471": {
+        "attribute_name": "Issue Number",
+        "attribute_value_mlt": [
+            {
+                "subitem_1551256294723": "456"
+            }
+        ]
+    },
+    "item_1617186994930": {
+        "attribute_name": "Number of Pages",
+        "attribute_value_mlt": [
+            {
+                "subitem_1551256248092": "159"
+            }
+        ]
+    },
+    "item_1617187024783": {
+        "attribute_name": "Page Start",
+        "attribute_value_mlt": [
+            {
+                "subitem_1551256198917": "1"
+            }
+        ]
+    },
+    "item_1617187045071": {
+        "attribute_name": "Page End",
+        "attribute_value_mlt": [
+            {
+                "subitem_1551256185532": "10"
+            }
+        ]
+    },
+    "item_1617187056579": {
+        "attribute_name": "Bibliographic Information",
+        "attribute_value_mlt": [
+            {
+                "bibliographicPageEnd": "10",
+                "bibliographic_titles": [
+                    {
+                        "bibliographic_title": "じゃーなる",
+                        "bibliographic_titleLang": "ja"
+                    }
+                ],
+                "bibliographicPageStart": "1",
+                "bibliographicIssueDates": {
+                    "bibliographicIssueDate": "2024-02-05",
+                    "bibliographicIssueDateType": "Issued"
+                },
+                "bibliographicIssueNumber": "1",
+                "bibliographicVolumeNumber": "1",
+                "bibliographicNumberOfPages": "10"
+            }
+        ]
+    },
+    "item_1617187087799": {
+        "attribute_name": "Dissertation Number",
+        "attribute_value_mlt": [
+            {
+                "subitem_1551256171004": "123"
+            }
+        ]
+    },
+    "item_1617187112279": {
+        "attribute_name": "Degree Name",
+        "attribute_value_mlt": [
+            {
+                "subitem_1551256126428": "でぐりー",
+                "subitem_1551256129013": "ja"
+            }
+        ]
+    },
+    "item_1617187136212": {
+        "attribute_name": "Date Granted",
+        "attribute_value_mlt": [
+            {
+                "subitem_1551256096004": "2024-02-05"
+            }
+        ]
+    },
+    "item_1617187187528": {
+        "attribute_name": "Conference",
+        "attribute_value_mlt": [
+            {
+                "subitem_1599711633003": [
+                    {
+                        "subitem_1599711636923": "コンファレンス名",
+                        "subitem_1599711645590": "ja"
+                    },
+                    {
+                        "subitem_1599711636923": "コンファレンス名",
+                        "subitem_1599711645590": "en"
+                    },
+                    {
+                        "subitem_1599711636923": "コンファレンス名",
+                        "subitem_1599711645590": "de"
+                    },
+                    {
+                        "subitem_1599711636923": "コンファレンス名",
+                        "subitem_1599711645590": ""
+                    }
+                ],
+                "subitem_1599711655652": "753",
+                "subitem_1599711660052": [
+                    {
+                        "subitem_1599711680082": "スポンサー",
+                        "subitem_1599711686511": "ja"
+                    }
+                ],
+                "subitem_1599711699392": {
+                    "subitem_1599711704251": "31",
+                    "subitem_1599711712451": "1",
+                    "subitem_1599711727603": "1",
+                    "subitem_1599711731891": "2000",
+                    "subitem_1599711735410": "31",
+                    "subitem_1599711739022": "12",
+                    "subitem_1599711743722": "2019",
+                    "subitem_1599711745532": "ja"
+                },
+                "subitem_1599711758470": [
+                    {
+                        "subitem_1599711769260": "ヴェニュー",
+                        "subitem_1599711775943": "ja"
+                    }
+                ],
+                "subitem_1599711788485": [
+                    {
+                        "subitem_1599711798761": "プレース",
+                        "subitem_1599711803382": "ja"
+                    }
+                ],
+                "subitem_1599711813532": "JPN"
+            }
+        ]
+    },
+    "item_1617258105262": {
+        "attribute_name": "Resource Type",
+        "attribute_value_mlt": [
+            {
+                "resourceuri": "http://purl.org/coar/resource_type/c_2f33",
+                "resourcetype": "book"
+            }
+        ]
+    },
+    "item_1617265215918": {
+        "attribute_name": "Version Type",
+        "attribute_value_mlt": [
+            {
+                "subitem_1522305645492": "AO",
+                "subitem_1600292170262": "http://purl.org/coar/version/c_b1a7d7d4d402bcce"
+            }
+        ]
+    },
+    "item_1617349709064": {
+        "attribute_name": "Contributor",
+        "attribute_value_mlt": [
+            {
+                "givenNames": [
+                    {
+                        "givenName": "太郎",
+                        "givenNameLang": "ja"
+                    }
+                ],
+                "familyNames": [
+                    {
+                        "familyName": "WEKO",
+                        "familyNameLang": "ja"
+                    }
+                ],
+                "nameIdentifiers": [
+                    {
+                        "nameIdentifier": "2",
+                        "nameIdentifierScheme": "WEKO"
+                    },
+                    {
+                        "nameIdentifier": "M1cQhPtdmlrSRFo4",
+                        "nameIdentifierURI": "https://researchmap.jp/M1cQhPtdmlrSRFo4",
+                        "nameIdentifierScheme": "researchmap"
+                    }
+                ],
+                "contributorMails": [
+                    {
+                        "contributorMail": "wekosoftware@nii.ac.jp"
+                    }
+                ],
+                "contributorNames": [
+                    {
+                        "lang": "ja",
+                        "contributorName": "WEKO, 太郎"
+                    }
+                ]
+            }
+        ]
+    },
+    "item_1617349808926": {
+        "attribute_name": "Version",
+        "attribute_value_mlt": [
+            {
+                "subitem_1523263171732": "1.0.1"
+            }
+        ]
+    },
+    "item_1617351524846": {
+        "attribute_name": "APC",
+        "attribute_value_mlt": [
+            {
+                "subitem_1523260933860": "Not required"
+            }
+        ]
+    },
+    "item_1617353299429": {
+        "attribute_name": "Relation",
+        "attribute_value_mlt": [
+            {
+                "subitem_1522306207484": "isVersionOf",
+                "subitem_1522306287251": {
+                    "subitem_1522306382014": "NAID",
+                    "subitem_1522306436033": "123"
+                },
+                "subitem_1523320863692": [
+                    {
+                        "subitem_1523320867455": "ja",
+                        "subitem_1523320909613": "関連タイトル"
+                    }
+                ]
+            }
+        ]
+    },
+    "item_1617605131499": {
+        "attribute_name": "File",
+        "attribute_type": "file",
+        "attribute_value_mlt": [
+            {
+                "url": {
+                    "url": "https://192.168.56.103/record/14.1/files/aaa.txt",
+                    "label": "あああ",
+                    "objectType": "thumbnail"
+                },
+                "date": [
+                    {
+                        "dateType": "Available",
+                        "dateValue": "2024-02-05"
+                    }
+                ],
+                "format": "text/plain",
+                "version": "102",
+                "filename": "aaa.txt",
+                "filesize": [
+                    {
+                        "value": "5 B"
+                    }
+                ],
+                "mimetype": "text/plain",
+                "accessrole": "open_access",
+                "version_id": "e428fc66-5bc7-4a75-ad32-f66ee5f43d40",
+                "displaytype": "detail",
+                "licensefree": "ふぁｓｄふぁｓｄｆ",
+                "licensetype": "license_free"
+            }
+        ]
+    },
+    "item_1617610673286": {
+        "attribute_name": "Rights Holder",
+        "attribute_value_mlt": [
+            {
+                "nameIdentifiers": [
+                    {
+                        "nameIdentifier": "1",
+                        "nameIdentifierURI": "https://researchmap.jp/1",
+                        "nameIdentifierScheme": "researchmap"
+                    }
+                ],
+                "rightHolderNames": [
+                    {
+                        "rightHolderName": "権利保持者名",
+                        "rightHolderLanguage": "ja"
+                    }
+                ]
+            }
+        ]
+    },
+    "item_1617620223087": {
+        "attribute_name": "Heading",
+        "attribute_value_mlt": [
+            {
+                "subitem_1565671149650": "ja",
+                "subitem_1565671169640": "バナー",
+                "subitem_1565671178623": "サブヘッド"
+            }
+        ]
+    },
+    "item_1617944105607": {
+        "attribute_name": "Degree Grantor",
+        "attribute_value_mlt": [
+            {
+                "subitem_1551256015892": [
+                    {
+                        "subitem_1551256027296": "でぐりー",
+                        "subitem_1551256029891": "kakenhi"
+                    }
+                ],
+                "subitem_1551256037922": [
+                    {
+                        "subitem_1551256042287": "でぐりー",
+                        "subitem_1551256047619": "ja"
+                    }
+                ]
+            }
+        ]
+    },
+    "relation_version_is_last": true
+}
+,{"_oai": {"id": "oai:weko3.example.org:00000017", "sets": []}, "path": ["303"], "owner": "2", "recid": "17", "title": ["あｒちｃぇ"], "pubdate": {"attribute_name": "PubDate", "attribute_value": "2024-02-26"}, "_buckets": {"deposit": "26831db3-f593-4cb2-928c-25891986299a"}, "_deposit": {"id": "17", "pid": {"type": "depid", "value": "17", "revision_id": 0}, "owner": "2", "owners": [2], "status": "published", "created_by": 2, "owners_ext": {"email": "repoadmin@example.org", "username": "", "displayname": ""}}, "item_title": "あｒちｃぇ", "author_link": ["2"], "item_type_id": "1", "publish_date": "2024-02-26", "control_number": "17", "publish_status": "0", "weko_shared_id": -1, "item_1617186331708": {"attribute_name": "Title", "attribute_value_mlt": [{"subitem_1551255647225": "あｒちｃぇ", "subitem_1551255648112": "ja"}]}, "item_1617186419668": {"attribute_name": "Creator", "attribute_type": "creator", "attribute_value_mlt": [{"givenNames": [{"givenName": "太郎", "givenNameLang": "ja"}], "familyNames": [{"familyName": "WEKO", "familyNameLang": "ja"}], "creatorMails": [{"creatorMail": "wekosoftware@nii.ac.jp"}], "creatorNames": [{"creatorName": "WEKO, 太郎", "creatorNameLang": "ja"}], "nameIdentifiers": [{"nameIdentifier": "2", "nameIdentifierScheme": "WEKO"}, {"nameIdentifier": "M1cQhPtdmlrSRFo4", "nameIdentifierURI": "https://researchmap.jp/M1cQhPtdmlrSRFo4", "nameIdentifierScheme": "researchmap"}]}]}, "item_1617186660861": {"attribute_name": "Date", "attribute_value_mlt": [{"subitem_1522300695726": "Copyrighted", "subitem_1522300722591": "2024-02-26"}]}, "item_1617258105262": {"attribute_name": "Resource Type", "attribute_value_mlt": [{"resourceuri": "http://purl.org/coar/resource_type/c_6501", "resourcetype": "article"}]}, "relation_version_is_last": true}
+,{"_oai": {"id": "oai:weko3.example.org:00000018", "sets": []}, "path": ["303"], "owner": "2", "recid": "18", "title": ["あｒちｃぇ"], "pubdate": {"attribute_name": "PubDate", "attribute_value": "2024-02-26"}, "_buckets": {"deposit": "26831db3-f593-4cb2-928c-25891986299a"}, "_deposit": {"id": "18", "pid": {"type": "depid", "value": "18", "revision_id": 0}, "owner": "2", "owners": [2], "status": "published", "created_by": 2, "owners_ext": {"email": "repoadmin@example.org", "username": "", "displayname": ""}}, "item_title": "あｒちｃぇ", "author_link": ["2"], "item_type_id": "1", "publish_date": "2024-02-26", "control_number": "18", "publish_status": "0", "weko_shared_id": -1, "item_1617186331708": {"attribute_name": "Title", "attribute_value_mlt": [{"subitem_1551255647225": "あｒちｃぇ", "subitem_1551255648112": "ja"}]}, "item_1617186419668": {"attribute_name": "Creator", "attribute_type": "creator", "attribute_value_mlt": [{"givenNames": [{"givenName": "太郎", "givenNameLang": "en"}], "familyNames": [{"familyName": "WEKO", "familyNameLang": "en"}], "creatorMails": [{"creatorMail": "wekosoftware@nii.ac.jp"}], "creatorNames": [{"creatorName": "WEKO, 太郎", "creatorNameLang": "en"}], "nameIdentifiers": [{"nameIdentifier": "2", "nameIdentifierScheme": "WEKO"}, {"nameIdentifier": "M1cQhPtdmlrSRFo4", "nameIdentifierURI": "https://researchmap.jp/M1cQhPtdmlrSRFo4", "nameIdentifierScheme": "researchmap"}]}]}, "item_1617186660861": {"attribute_name": "Date", "attribute_value_mlt": [{"subitem_1522300695726": "Copyrighted", "subitem_1522300722591": "2024-02-26"}]}, "item_1617258105262": {"attribute_name": "Resource Type", "attribute_value_mlt": [{"resourceuri": "http://purl.org/coar/resource_type/c_6501", "resourcetype": "article"}]}, "relation_version_is_last": true}
+,{"_oai": {"id": "oai:weko3.example.org:00000019", "sets": []}, "path": ["303"], "owner": "2", "recid": "19", "title": ["あｒちｃぇ"], "pubdate": {"attribute_name": "PubDate", "attribute_value": "2024-02-26"}, "_buckets": {"deposit": "26831db3-f593-4cb2-928c-25891986299a"}, "_deposit": {"id": "18", "pid": {"type": "depid", "value": "18", "revision_id": 0}, "owner": "2", "owners": [2], "status": "published", "created_by": 2, "owners_ext": {"email": "repoadmin@example.org", "username": "", "displayname": ""}}, "item_title": "あｒちｃぇ", "author_link": ["2"], "item_type_id": "1", "publish_date": "2024-02-26", "control_number": "18", "publish_status": "0", "weko_shared_id": -1, "item_1617186331708": {"attribute_name": "Title", "attribute_value_mlt": [{"subitem_1551255647225": "あｒちｃぇ", "subitem_1551255648112": "de"}]}, "item_1617186419668": {"attribute_name": "Creator", "attribute_type": "creator", "attribute_value_mlt": [{"givenNames": [{"givenName": "太郎", "givenNameLang": 1111}], "familyNames": [{"familyName": "WEKO", "familyNameLang": 1111}], "creatorMails": [{"creatorMail": "wekosoftware@nii.ac.jp"}], "creatorNames": [{"creatorName": 111111111111, "creatorNameLang": 1111}], "nameIdentifiers": [{"nameIdentifier": "2", "nameIdentifierScheme": "WEKO"}, {"nameIdentifier": "M1cQhPtdmlrSRFo4", "nameIdentifierURI": "https://researchmap.jp/M1cQhPtdmlrSRFo4", "nameIdentifierScheme": "researchmap"}]}]}, "item_1617186660861": {"attribute_name": "Date", "attribute_value_mlt": [{"subitem_1522300695726": "Copyrighted", "subitem_1522300722591": "2024-02-26"}]}, "item_1617258105262": {"attribute_name": "Resource Type", "attribute_value_mlt": [{"resourceuri": "http://purl.org/coar/resource_type/c_6501", "resourcetype": "article"}]}, "relation_version_is_last": true}
+]

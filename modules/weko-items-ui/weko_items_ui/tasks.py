@@ -1,6 +1,7 @@
 import json
 import math
 import traceback
+import uuid
 from amqp import Channel
 from celery import shared_task
 from celery import current_app as current_celery_app
@@ -15,7 +16,7 @@ from celery.utils.log import get_task_logger
 from weko_authors.models import Authors
 from weko_deposit.api import WekoRecord
 from weko_index_tree.api import Indexes
-from weko_items_ui.models import CRISLinkageResult
+from weko_items_ui.models import CRIS_Institutions, CRISLinkageResult
 from weko_records.api import ItemsMetadata, Mapping
 from weko_records.models import ItemTypeMapping
 from weko_records.utils import json_loader
@@ -161,10 +162,6 @@ def is_public(record , pid):
 
     return _is_item_published and not _is_private_index
 
-def file_is_public(record):
-    """ファイル公開状況確認"""
-    return file_permission_factory(record).can() # type: ignore
-
 def get_authors(jrc):
     """著者取得"""
 
@@ -217,6 +214,17 @@ def build_achievement(record,item,recid,mapping,jrc, achievement_type):
     return_data = {}
     DEFAULT_LANG = current_app.config["WEKO_ITEMS_UI_DEFAULT_LANG"] # type: ignore
     researchmap_mappings = current_app.config["WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_MAPPINGS"] # type: ignore
+    researchtype_mappings = current_app.config["WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_TYPE_MAPPINGS"]# type: ignore
+
+    def __get_child_node(rm_map,prop):
+        if rm_map.get("child_node"):
+            nodes:list = rm_map.get("child_node").split('.')
+
+            for node in nodes:
+                prop = prop.get(node)
+
+        return prop
+
 
     for rm_map in researchmap_mappings:
         # ja , en 取得
@@ -227,37 +235,76 @@ def build_achievement(record,item,recid,mapping,jrc, achievement_type):
                 property_name = rm_map["weko_name"]
                 if jpcoar_mapping != "" and jpcoar_mapping.get(property_name):
                     prop = jpcoar_mapping[property_name]
+
+                    prop =  __get_child_node(rm_map,prop)
+                    if not prop:
+                        continue
+
                     value_path = prop.get('@value','')
 
                     lang_path  = prop.get('@attributes',{}).get('xml:lang','')
                     
                     langs_dict = {}
                     for record_child_node in record.get(parent_key).get('attribute_value_mlt'):
-                        value = record_child_node.get(value_path)
-                        lang = record_child_node.get(lang_path)
-                        if lang == "en" or lang == "ja":
-                            langs_dict.update({lang:value})
-                        elif lang == None or lang == "":
-                            # nothing lang is also "ja" as default
-                            langs_dict.update({DEFAULT_LANG:value})
+
+                        if len(value_path.split('.')) > 1:
+                            def __get_recursive( value , value_path ,lang , lang_path,idx):
+                                if type(value) == list:
+                                    li = []
+                                    for i in range(len(value)):
+                                        li.append(__get_recursive(value[i] , value_path ,lang[i] , lang_path,idx))
+                                    return li
+                                elif type(value) == dict:
+                                    value = value.get(value_path.split('.')[idx])
+                                    lang = lang.get(lang_path.split('.')[idx])
+                                    return __get_recursive(value , value_path,lang , lang_path, idx + 1)
+
+                                else:
+                                    if lang == "en" or lang == "ja":
+                                        langs_dict.update({lang:value})
+                                    elif (lang == None or lang == "" ) and value != None:
+                                        # nothing lang is also "ja" as default
+                                        langs_dict.update({DEFAULT_LANG:value})
+                                    return langs_dict
+                            
+                            langs_dict = __get_recursive(record_child_node , value_path ,record_child_node , lang_path,0)
+
+                        else:
+                            value = record_child_node.get(value_path)
+                            lang = record_child_node.get(lang_path)
+
+                            if lang == "en" or lang == "ja":
+                                langs_dict.update({lang:value})
+                            elif (lang == None or lang == "" ) and value != None:
+                                # nothing lang is also "ja" as default
+                                langs_dict.update({DEFAULT_LANG:value})
+
                     
                     if langs_dict != {}:
                         return_data.update({rm_map["rm_name"]:langs_dict})
 
         elif  rm_map['type'] == 'simple':
-            value = jrc.get(rm_map["weko_name"])
-            return_data.update({rm_map["rm_name"]:value})
+            if not rm_map.get("child_node"):
+                value = jrc.get(rm_map["weko_name"])
+                return_data.update({rm_map["rm_name"]:value})
+            else :
+                value = jrc.get(rm_map["weko_name"] , {}).get(rm_map.get("child_node"))
+                if value:
+                    return_data.update({rm_map["rm_name"]:value})
+
 
         elif rm_map['type'] == 'simple_value':
-            value = jrc.get(rm_map["weko_name"])[0].get('value')
-            return_data.update({rm_map["rm_name"]:value})
+            value = jrc.get(rm_map["weko_name"],[{}])[0].get('value')
+            if value:
+                return_data.update({rm_map["rm_name"]:value})
 
         elif  rm_map['type'] == 'identifiers':
             identifer_kv = {}
             for relatedIdentifier in jrc.get(rm_map["weko_name"] ,{}).get('relatedIdentifier', []):
                 identifierType =relatedIdentifier.get('identifierType')
                 if identifierType.upper() == "DOI" or identifierType.upper() == "ISBN" :
-                    ## DOI and ISBN only sendable. 他の項目はresearchmapのAPI定義上更新不可。
+                    ## 他の項目はresearchmapのAPI定義上更新不可。
+
                     value = jrc.get(rm_map["weko_name"]).get('relatedIdentifier')[0].get('value')
                     identifer_kv = {identifierType.lower():value}
                 return_data.update({rm_map["rm_name"]:identifer_kv})
@@ -318,6 +365,20 @@ def build_achievement(record,item,recid,mapping,jrc, achievement_type):
                     
                     if langs_dict != {}:
                         return_data.update({rm_map["rm_name"]:langs_dict})
+        elif  rm_map['type'] == 'type':
+            if rm_map['achievement_type'] != achievement_type:
+                continue
+            
+            resource_type = jrc.get(rm_map["weko_name"])[0]
+
+            for researchtype_mapping in researchtype_mappings:
+                if researchtype_mapping['achievement_type'] == achievement_type and \
+                    researchtype_mapping['JPCOAR_resource_type'] == resource_type:
+                    type_name = researchtype_mapping['detail_type_name']
+                    return_data.update({rm_map["rm_name"]:type_name})
+                    ## 2つある場合はDefault　'' の値に。
+                    break
+
 
     current_app.logger.debug('return_data')
     current_app.logger.debug(return_data)
@@ -351,6 +412,6 @@ def build_one_data(achievement_obj:dict , merge_mode:str , author:str ,achieveme
         ret = {"insert": {"type": achievement_type, "permalink": author} , "similar_merge" :achievement_obj ,"priority":"input_data" }
     return ret
 
-def register_linkage_result(pid_int,result,item_uuid, failed_log):
+def register_linkage_result(pid_int:int,result:bool,item_uuid:uuid, failed_log :str):
     """ researchmap 連携結果の登録"""
-    return CRISLinkageResult().register_linkage_result(pid_int,"researchmap",result , item_uuid,failed_log)
+    return CRISLinkageResult().register_linkage_result(pid_int,CRIS_Institutions.RM,result , item_uuid ,failed_log)

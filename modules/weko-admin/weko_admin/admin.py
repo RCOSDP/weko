@@ -1370,14 +1370,23 @@ class CrisLinkageSettingView(BaseView):
     @expose('/' ,methods=['GET'])
     def index(self):
         SETTINGS_NAME = current_app.config["WEKO_ADMIN_SETTINGS_RESEARCHMAP_LINKAGE_SETTINGS"]# type: ignore
+        DEFAULT_MERGE_MODE = current_app.config["WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_MERGE_MODE_DEFAULT"]# type: ignore
+
         settings = AdminSettings.get(SETTINGS_NAME)
-        default_merge_mode = settings.merge_mode if settings and settings.merge_mode else 'similar_merge_similar_data' # type: ignore
+        default_merge_mode = settings.merge_mode if settings and settings.merge_mode else DEFAULT_MERGE_MODE # type: ignore
+
+
+        is_clidkey_registered = settings and settings.researchmap_cidkey_contents != ''
+        is_pkey_registered = settings and settings.researchmap_pkey_contents != ''
+
 
         MERGE_MODES = current_app.config["WEKO_ADMIN_SETTINGS_RESEARCHMAP_MERGE_MODES"] # type: ignore 
         return self.render(
             current_app.config["WEKO_ADMIN_CRIS_LINKAGE_SETTINGS_TEMPLATE"] # type: ignore 
             ,merge_modes=MERGE_MODES
             ,default_merge_mode = default_merge_mode
+            ,is_clidkey_registered = is_clidkey_registered
+            ,is_pkey_registered = is_pkey_registered
             )
     
     @expose('/save_keys' ,methods=['POST'])
