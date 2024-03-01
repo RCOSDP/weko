@@ -292,12 +292,13 @@ WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_MAPPINGS = [
         ,{'type' : 'simple', "rm_name" : 'starting_page', "jpcoar_name" : 'jpcoar:pageStart' , "weko_name" : "pageStart"}
         ,{'type' : 'simple', "rm_name" : 'ending_page', "jpcoar_name" :   'jpcoar:pageEnd' ,   "weko_name" : "pageEnd"}
         ,{'type' : 'simple', "rm_name" : 'languages', "jpcoar_name" :  'dc:language' , "weko_name" : "language"}
-        ,{'type' :  'type', "rm_name" : 'published_paper_type'     , "jpcoar_name" :  'dc:type'     , "weko_name" : "type"}
-        ,{'type' :  'type', "rm_name" : 'misc_type'     , "jpcoar_name" :  'dc:type'     , "weko_name" : "type"}
-        ,{'type' :  'type', "rm_name" : 'book_type'     , "jpcoar_name" :  'dc:type'     , "weko_name" : "type"}
-        ,{'type' :  'type', "rm_name" : 'presentation_type'     , "jpcoar_name" :  'dc:type'     , "weko_name" : "type"}
-        ,{'type' :  'type', "rm_name" : 'work_type'     , "jpcoar_name" :  'dc:type'     , "weko_name" : "type"}
-        ,{'type' :  'type', "rm_name" : 'dataset_type'     , "jpcoar_name" :  'dc:type'     , "weko_name" : "type"}
+        ,{'type' :  'type', "rm_name" : 'published_paper_type'     , "jpcoar_name" :  'dc:type'     , "weko_name" : "type" ,'achievement_type' : 'published_papers'}
+        ,{'type' :  'type', "rm_name" : 'misc_type'     , "jpcoar_name" :  'dc:type'     , "weko_name" : "type" , 'achievement_type' : 'misc'}
+        ,{'type' :  'type', "rm_name" : 'book_type'     , "jpcoar_name" :  'dc:type'     , "weko_name" : "type" , 'achievement_type' : 'books_etc'}
+        ,{'type' :  'type', "rm_name" : 'presentation_type'     , "jpcoar_name" :  'dc:type'     , "weko_name" : "type",'achievement_type' : 'presentations'}
+        ,{'type' :  'type', "rm_name" : 'work_type'     , "jpcoar_name" :  'dc:type'     , "weko_name" : "type", 'achievement_type' : 'works'}
+        ,{'type' :  'type', "rm_name" : 'dataset_type'     , "jpcoar_name" :  'dc:type'     , "weko_name" : "type" ,'achievement_type' : 'others'}
+
     ]
 WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_TYPE_MAPPINGS=\
     [{'achievement_type' : 'published_papers','detail_type_name':'','JPCOAR_resource_type':'article'}

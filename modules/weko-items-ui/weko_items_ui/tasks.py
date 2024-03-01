@@ -1,6 +1,7 @@
 import json
 import math
 import traceback
+import uuid
 from amqp import Channel
 from celery import shared_task
 from celery import current_app as current_celery_app
@@ -15,7 +16,7 @@ from celery.utils.log import get_task_logger
 from weko_authors.models import Authors
 from weko_deposit.api import WekoRecord
 from weko_index_tree.api import Indexes
-from weko_items_ui.models import CRISLinkageResult
+from weko_items_ui.models import CRIS_Institutions, CRISLinkageResult
 from weko_records.api import ItemsMetadata, Mapping
 from weko_records.models import ItemTypeMapping
 from weko_records.utils import json_loader
@@ -411,6 +412,6 @@ def build_one_data(achievement_obj:dict , merge_mode:str , author:str ,achieveme
         ret = {"insert": {"type": achievement_type, "permalink": author} , "similar_merge" :achievement_obj ,"priority":"input_data" }
     return ret
 
-def register_linkage_result(pid_int,result,item_uuid, failed_log):
+def register_linkage_result(pid_int:int,result:bool,item_uuid:uuid, failed_log :str):
     """ researchmap 連携結果の登録"""
-    return CRISLinkageResult().register_linkage_result(pid_int,"researchmap",result , item_uuid,failed_log)
+    return CRISLinkageResult().register_linkage_result(pid_int,CRIS_Institutions.RM,result , item_uuid ,failed_log)
