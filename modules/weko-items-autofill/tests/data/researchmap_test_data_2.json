@@ -1,0 +1,91 @@
+{
+    "@context": "https://api-trial.researchmap.jp/researcher.jsonld",
+    "@id": "https://api-trial.researchmap.jp/M1cQhPtdmlrSRFo4/published_papers/1356383?format=json",
+    "@type": "published_papers",
+    "@reverse": "https://api-trial.researchmap.jp/M1cQhPtdmlrSRFo4/published_papers",
+    "rm:id": "1356383",
+    "rm:user_id": "R000039316",
+    "display": "disclosed",
+    "major_achievement": false,
+    "rm:creator_id": "client_id:FdY6XmJTi5MbqZL$",
+    "rm:creator_type": "institution",
+    "rm:created": "2024-01-10T01:17:23Z",
+    "rm:modifier_id": "R000039316",
+    "rm:modifier_type": "myself",
+    "rm:modified": "2024-02-14T05:37:48Z",
+    "paper_title": {
+        "ja": "ああああ",
+        "en": "aaaaa"
+    },
+    "authors": {
+        "en": [
+            {
+                "name": "Author English"
+            }
+        ]
+    },
+    "published_paper_owner_roles": [
+        "lead",
+        "last",
+        "corresponding"
+    ],
+    "description": {
+        "ja": "国際・国内誌概要(日本語)",
+        "en": "国際・国内誌概要(英語)"
+    },
+    "publisher": {
+        "ja": "出版者・発行元(日本語)",
+        "en": "pub_english"
+    },
+    "publication_date": "2010-10-10",
+    "publication_name": {
+        "ja": "ああああ",
+        "en": "aaaaa"
+    },
+    "volume": "123",
+    "number": "456",
+    "starting_page": "1",
+    "ending_page": "10",
+    "languages": [
+        "eng"
+    ],
+    "referee": true,
+    "invited": true,
+    "published_paper_type": "international_conference_proceedings",
+    "dataset": {
+        "dataset_name": "aaa.txt",
+        "dataset_type": "others",
+        "dataset_other_type": {
+            "ja": "その他の種別",
+            "en": "other kind"
+        },
+        "access_url": "http://web-trial.researchmap.jp/M1cQhPtdmlrSRFo4/published_papers/1356383/attachment_file.txt",
+        "rm:media_type": "text/plain",
+        "rm:use_password": false
+    },
+    "is_international_journal": false,
+    "is_international_collaboration": true,
+    "rm:is_open_access": true,
+    "identifiers": {
+        "doi": [
+            "10.11501/3140078"
+        ]
+    },
+    "see_also": [
+        {
+            "label": "doi",
+            "@id": "https://doi.org/10.11501/3140078",
+            "is_downloadable": true
+        },
+        {
+            "@id": "https://www.example.org/",
+            "label": "url",
+            "is_downloadable": false
+        },
+        {
+            "@id": "https://www.example.com/",
+            "label": "url",
+            "is_downloadable": true
+        }
+    ]
+}

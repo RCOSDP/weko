@@ -2658,7 +2658,6 @@ def _export_item(record_id,
                                 tmp_path + '/' + file.obj.basename, 'wb')
                             temp_file.write(file_buffered.read())
                             temp_file.close()
-    print(exported_item)
     return exported_item, list_item_role
 
 

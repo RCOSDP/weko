@@ -237,6 +237,13 @@ def base_app(instance_path):
         WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME='jpcoar_v1_mapping',
         WEKO_SCHEMA_DDI_SCHEMA_NAME='ddi_mapping',
         INDEXER_MQ_QUEUE = Queue("indexer", exchange=Exchange("indexer", type="direct"), routing_key="indexer",queue_arguments={"x-queue-type":"quorum"}),
+        WEKO_IMPORT_DOI_TYPE = ["JaLC", "Crossref", "DataCite", "NDL JaLC"],
+        IDENTIFIER_GRANT_LIST = [(0, 'Not Grant', ''),
+                         (1, 'JaLC DOI', 'https://doi.org'),
+                         (2, 'JaLC CrossRef DOI', 'https://doi.org'),
+                         (3, 'JaLC DataCite DOI', 'https://doi.org'),
+                         (4, 'NDL JaLC DOI', 'https://doi.org')
+                         ]        
     )
     
     app_.config['WEKO_SEARCH_REST_ENDPOINTS']['recid']['search_index']='test-weko'
