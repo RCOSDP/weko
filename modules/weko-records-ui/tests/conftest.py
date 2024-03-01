@@ -2593,9 +2593,10 @@ def make_record_v2(db, indexer, i, files, thumbnail=None):
         with open(filepath, "rb") as f:
             stream = BytesIO(f.read())
             record.files[filename] = stream
-            record["item_1617605131499"]["attribute_value_mlt"][0]["file"] = (
-                base64.b64encode(stream.getvalue())
-            ).decode("utf-8")
+            if len(record["item_1617605131499"]["attribute_value_mlt"]) > num:
+                record["item_1617605131499"]["attribute_value_mlt"][num]["file"] = (
+                    base64.b64encode(stream.getvalue())
+                ).decode("utf-8")
 
         with open(filepath, "rb") as f:
             obj = ObjectVersion.create(bucket=bucket.id, key=filename, stream=f)
