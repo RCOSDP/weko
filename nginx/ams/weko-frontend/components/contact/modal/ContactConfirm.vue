@@ -122,6 +122,7 @@
 
 <script lang="ts" setup>
 import { Field } from 'vee-validate';
+import { useI18n } from 'vue-i18n';
 
 /* ///////////////////////////////////
 // expose
@@ -169,6 +170,7 @@ const emits = defineEmits(['clickSend', 'completeSend', 'failedCrs']);
 // const and let
 /////////////////////////////////// */
 
+const { t, locale } = useI18n();
 const appConf = useAppConfig();
 const modalShowFlag = ref(false);
 const isCaptcha = ref(false);
@@ -222,13 +224,16 @@ function getCaptcha() {
 async function send() {
   emits('clickSend');
 
+  locale.value = String(localStorage.getItem('locale'));
+  const contactType = t(props.type);
+
   await useFetch('/api/mail/send', {
     method: 'POST',
     body: JSON.stringify({
       key: captchaKey,
       answer: answer.value,
       mailType: useRuntimeConfig().public.contact.use,
-      type: props.type,
+      type: contactType,
       name: props.name,
       address: props.email,
       contents: props.contents

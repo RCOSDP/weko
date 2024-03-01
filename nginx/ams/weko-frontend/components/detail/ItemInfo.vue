@@ -219,7 +219,7 @@ function getFileLength(fileList: any[]) {
 /////////////////////////////////// */
 
 onMounted(() => {
-  if (thumbnailName) {
+  if (thumbnailName && thumbnailName.indexOf('/') < 0) {
     try {
       $fetch(appConf.wekoApi + '/records/' + props.itemId + '/files/' + thumbnailName, {
         timeout: useRuntimeConfig().public.apiTimeout,

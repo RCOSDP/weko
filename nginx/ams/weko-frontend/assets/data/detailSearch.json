@@ -88,13 +88,13 @@
   },
   {
     "id": 5,
-    "comment": "日付",
-    "i18n": "date",
+    "comment": "コンテンツ作成日",
+    "i18n": "contentsDate",
     "query": "fd_attr",
     "queryFrom": "filedate_from",
     "queryTo": "filedate_to",
     "type": "date",
-    "default": true,
+    "default": false,
     "checkbox": [
       {
         "id": 1,

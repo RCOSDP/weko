@@ -126,6 +126,7 @@ function search() {
         isRestore.value = false;
       }
       // 検索条件設定
+      sessConditions.currentPage = 1;
       Object.assign(sessConditions, conditions);
       sessionStorage.setItem('conditions', JSON.stringify(sessConditions));
     } else {

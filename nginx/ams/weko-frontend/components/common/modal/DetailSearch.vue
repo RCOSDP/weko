@@ -49,7 +49,7 @@
           <TransitionGroup name="list" tag="ul" class="h-full">
             <li v-for="column in columnList" :key="column.id" class="mb-5">
               <!-- 項目削除ボタン -->
-              <button class="block mb-2 removeForm text-miby-black font-medium" @click.prevent="remove(column)">
+              <button class="block mb-2 removeForm text-miby-black font-medium" type="button" @click="remove(column)">
                 <span class="icons icon-remove align-middle">
                   {{ $t(column.i18n) }}
                 </span>
