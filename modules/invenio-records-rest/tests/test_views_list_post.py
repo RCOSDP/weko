@@ -162,98 +162,20 @@ def test_jsonschema_validation_error(app, db, search_url, content_type):
         data = get_json(res)
         assert data['message']
 
-@pytest.yield_fixture()
-def i18n_app(app):
-    with app.test_request_context(
-        headers=[('Accept-Language','ja')]):
-        app.extensions['invenio-i18n'] = MagicMock()
-        app.extensions['invenio-i18n'].language = "ja"
-        yield app
-@pytest.yield_fixture()
-def radis_app(app):
-    app.config.update(
-        CACHE_TYPE="redis",
-        ACCOUNTS_SESSION_REDIS_DB_NO=1,
-        CACHE_REDIS_HOST=os.environ.get("INVENIO_REDIS_HOST"),
-        REDIS_PORT="6379"
-    )
-    yield app
-def test_RecordsListResource_get(app, i18n_app, radis_app, db, es, test_data, search_url, search_class):
+def test_RecordsListResource_get(app, i18n_app, db, es, test_data, search_url, search_class):
     """Test VALID record creation request (POST .../records/)."""
     json_data = {
-        "took": 137,
-        "timed_out": "false",
-        "_shards": {
-            "total": 3,
-            "successful": 3,
-            "skipped": 0,
-            "failed": 0
-        },
         "hits": {
-            "total": 3,
-            "max_score": 1,
+            "total": 1,
             "hits": [
                 {
-                    "_index": "tenant1-weko-item-v1.0.0",
-                    "_type": "item-v1.0.0",
                     "_id": "f7d87c57-e3d0-4f8a-a40e-cd8167690462",
                     "_version": "1.0",
-                    "_score": 1,
                     "_source": {
                         "control_number": 1,
                         "_item_metadata": {
                             "owner": "1"
-                        },
-                        "_oai": {
-                            "id": "oai:weko3.example.org:00000001"
-                        },
-                        "content": [
-                            {
-                                "filename": "test1.pdf"
-                            }
-                        ]
-                    }
-                },
-                {
-                    "_index": "tenant1-weko-item-v1.0.0",
-                    "_type": "item-v1.0.0",
-                    "_id": "f7d87c57-e3d0-4f8a-a40e-cd8167690462",
-                    "_version": "1.0",
-                    "_score": 1,
-                    "_source": {
-                        "control_number": 1,
-                        "_item_metadata": {
-                            "owner": "1"
-                        },
-                        "_oai": {
-                            "id": "oai:weko3.example.org:00000001"
-                        },
-                        "content": [
-                            {
-                                "filename": "test2.pdf"
-                            }
-                        ]
-                    }
-                },
-                {
-                    "_index": "tenant1-weko-item-v1.0.0",
-                    "_type": "item-v1.0.0",
-                    "_id": "f7d87c57-e3d0-4f8a-a40e-cd8167690462",
-                    "_version": "1.0",
-                    "_score": 1,
-                    "_source": {
-                        "control_number": 1,
-                        "_item_metadata": {
-                            "owner": "1"
-                        },
-                        "_oai": {
-                            "id": "oai:weko3.example.org:00000001"
-                        },
-                        "content": [
-                            {
-                                "filename": "test3.pdf"
-                            }
-                        ]
+                        }
                     }
                 }
             ]

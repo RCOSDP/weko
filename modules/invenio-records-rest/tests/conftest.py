@@ -19,6 +19,7 @@ import tempfile
 from os.path import dirname, join
 
 import pytest
+from mock import patch, MagicMock
 from elasticsearch import Elasticsearch
 from elasticsearch import VERSION as ES_VERSION
 from elasticsearch.exceptions import RequestError
@@ -204,6 +205,10 @@ def app(request, search_class):
         SQLALCHEMY_DATABASE_URI='postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest',
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         TESTING=True,
+        CACHE_TYPE="redis",
+        ACCOUNTS_SESSION_REDIS_DB_NO=1,
+        CACHE_REDIS_HOST=os.environ.get("INVENIO_REDIS_HOST"),
+        REDIS_PORT="6379",
     )
     app.config['RECORDS_REST_ENDPOINTS']['recid']['search_class'] = \
         search_class
@@ -394,3 +399,11 @@ def item_type_mapping(db):
     with db.session.begin_nested():
         item=ItemTypeMapping(**data)
         db.session.add(item)
+
+@pytest.yield_fixture()
+def i18n_app(app):
+    with app.test_request_context(
+        headers=[('Accept-Language','ja')]):
+        app.extensions['invenio-i18n'] = MagicMock()
+        app.extensions['invenio-i18n'].language = "ja"
+        yield app
