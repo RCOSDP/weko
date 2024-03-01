@@ -756,14 +756,14 @@ class QueryAccessCounterHelper(object):
                 all_query = all_query_cfg.\
                     query_class(**all_query_cfg.query_config)
                 all_res[query] = all_query.run(**params)
+            all_list = int(all_res[query]['value'])
 
         except Exception as e:
             current_app.logger.debug(e)
 
-        all_list = all_res['top-view-total-for-access-counter']['value']
 
         result['date'] = query_month
-        result['all'] = {'count': int(all_list)}
+        result['all'] = {'count': all_list}
 
         return result
 
