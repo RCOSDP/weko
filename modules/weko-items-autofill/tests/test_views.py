@@ -202,8 +202,27 @@ def test_get_auto_fill_record_data(client_api,db,users,mocker):
     assert res.status_code == 200
     assert json.loads(res.data) == {"result":"return_weko_record_data","items":"","error":""}
     mock_weko_record.assert_called_with("data","1")
+
+    # api_type is researchmap
+    data = {
+        "api_type":"researchmap",
+        "parmalink":"test_parmalink",
+        "achievement_type":"test_achievement_type",
+        "achievement_id":"test_achievement_id",
+        "item_type_id":"1"
+    }
+    mock_researchmapid_record = mocker.patch("weko_items_autofill.views.get_researchmapid_record_data",return_value="return_researchmapid_record_data")
+    res = client_api.post(url,json=data)
+    assert res.status_code == 200
+    assert json.loads(res.data) == {"result":"return_researchmapid_record_data","items":"","error":""}
+    mock_researchmapid_record.assert_called_with("test_parmalink","test_achievement_type","test_achievement_id","1")
     
     # raise Exception
+    data = {
+        "api_type":"WEKOID",
+        "search_data":"data",
+        "item_type_id":"1"
+    }
     mocker.patch("weko_items_autofill.views.get_wekoid_record_data",side_effect=Exception("test_error"))
     res = client_api.post(url,json=data)
     assert res.status_code == 200

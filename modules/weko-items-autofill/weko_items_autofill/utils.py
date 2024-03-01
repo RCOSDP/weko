@@ -780,7 +780,7 @@ def get_crossref_autofill_item(item_id):
     return crossref_req_item
 
 def get_researchmap_autofill_item(item_id):
-    """Get CrossRef autofill item.
+    """Get researchmap autofill item.
 
     :param item_id: Item ID
     :return:

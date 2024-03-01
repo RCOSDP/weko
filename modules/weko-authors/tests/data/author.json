@@ -76,5 +76,41 @@
     "id": "12bdc98a-20fb-4455-92ba-ad1131dbfcc8",
     "is_deleted": "false",
     "pk_id": "2"
+  },
+  {
+    "affiliationInfo": [
+      {
+        "affiliationNameInfo": [
+          {
+            "affiliationName": "",
+            "affiliationNameLang": "ja",
+            "affiliationNameShowFlg": "true"
+          }
+        ],
+        "identifierInfo": [
+          {
+            "affiliationId": "91011",
+            "affiliationIdType": "1",
+            "identifierShowFlg": "true"
+          }
+        ]
+      }
+    ],
+    "authorIdInfo": [],
+    "authorNameInfo": [
+      {
+        "familyName": "test2",
+        "firstName": "smith2",
+        "fullName": "test2 smith2",
+        "language": "en",
+        "nameFormat": "familyNmAndNm",
+        "nameShowFlg": "true"
+      }
+    ],
+    "emailInfo": [{ "email": "test.smith2@test.org" }],
+    "gather_flg": 0,
+    "id": "11bdc98a-20fb-4455-92ba-ad1131dbfcc8",
+    "is_deleted": "false",
+    "pk_id": "3"
   }
 ]
