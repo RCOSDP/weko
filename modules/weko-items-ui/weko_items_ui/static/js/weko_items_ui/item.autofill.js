@@ -100,7 +100,7 @@ class SearchMetaForm extends React.Component {
                                         onChange={this.handleChange} className="form-control">
                                         <option key="published_papers" value="published_papers">{this.props.autofill_published_papers}</option>
                                         <option key="misc" value="misc">{this.props.autofill_misc}</option>
-                                        <option key="book_etc" value="book_etc">{this.props.autofill_book_etc}</option>
+                                        <option key="books_etc" value="books_etc">{this.props.autofill_books_etc}</option>
                                         <option key="presentations" value="presentations">{this.props.autofill_presentations}</option>
                                         <option key="works" value="works">{this.props.autofill_works}</option>
                                         <option key="others" value="others">{this.props.autofill_others}</option>
@@ -175,7 +175,7 @@ $(function () {
     const autofill_parmalink = $("#autofill_parmalink").val();
     const autofill_published_papers = $("#autofill_published_papers").val();
     const autofill_misc = $("#autofill_misc").val();
-    const autofill_book_etc = $("#autofill_book_etc").val();
+    const autofill_books_etc = $("#autofill_book_etc").val();
     const autofill_presentations = $("#autofill_presentations").val();
     const autofill_works = $("#autofill_works").val();
     const autofill_others = $("#autofill_others").val();
@@ -190,7 +190,7 @@ $(function () {
             autofill_parmalink={autofill_parmalink}
             autofill_published_papers={autofill_published_papers}
             autofill_misc={autofill_misc}
-            autofill_book_etc={autofill_book_etc}
+            autofill_books_etc={autofill_books_etc}
             autofill_presentations={autofill_presentations}
             autofill_works={autofill_works}
             autofill_others={autofill_others}

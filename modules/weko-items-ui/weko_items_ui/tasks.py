@@ -161,10 +161,6 @@ def is_public(record , pid):
 
     return _is_item_published and not _is_private_index
 
-def file_is_public(record):
-    """ファイル公開状況確認"""
-    return file_permission_factory(record).can() # type: ignore
-
 def get_authors(jrc):
     """著者取得"""
 
@@ -217,6 +213,7 @@ def build_achievement(record,item,recid,mapping,jrc, achievement_type):
     return_data = {}
     DEFAULT_LANG = current_app.config["WEKO_ITEMS_UI_DEFAULT_LANG"] # type: ignore
     researchmap_mappings = current_app.config["WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_MAPPINGS"] # type: ignore
+    researchtype_mappings = current_app.config["WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_TYPE_MAPPINGS"]# type: ignore
 
     def __get_child_node(rm_map,prop):
         if rm_map.get("child_node"):
@@ -290,13 +287,15 @@ def build_achievement(record,item,recid,mapping,jrc, achievement_type):
                 value = jrc.get(rm_map["weko_name"])
                 return_data.update({rm_map["rm_name"]:value})
             else :
-                value = jrc.get(rm_map["weko_name"]).get(rm_map.get("child_node"))
-                return_data.update({rm_map["rm_name"]:value})
+                value = jrc.get(rm_map["weko_name"] , {}).get(rm_map.get("child_node"))
+                if value:
+                    return_data.update({rm_map["rm_name"]:value})
 
 
         elif rm_map['type'] == 'simple_value':
-            value = jrc.get(rm_map["weko_name"])[0].get('value')
-            return_data.update({rm_map["rm_name"]:value})
+            value = jrc.get(rm_map["weko_name"],[{}])[0].get('value')
+            if value:
+                return_data.update({rm_map["rm_name"]:value})
 
         elif  rm_map['type'] == 'identifiers':
             identifer_kv = {}
@@ -365,6 +364,20 @@ def build_achievement(record,item,recid,mapping,jrc, achievement_type):
                     
                     if langs_dict != {}:
                         return_data.update({rm_map["rm_name"]:langs_dict})
+        elif  rm_map['type'] == 'type':
+            if rm_map['achievement_type'] != achievement_type:
+                continue
+            
+            resource_type = jrc.get(rm_map["weko_name"])[0]
+
+            for researchtype_mapping in researchtype_mappings:
+                if researchtype_mapping['achievement_type'] == achievement_type and \
+                    researchtype_mapping['JPCOAR_resource_type'] == resource_type:
+                    type_name = researchtype_mapping['detail_type_name']
+                    return_data.update({rm_map["rm_name"]:type_name})
+                    ## 2つある場合はDefault　'' の値に。
+                    break
+
 
     current_app.logger.debug('return_data')
     current_app.logger.debug(return_data)

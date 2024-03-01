@@ -1425,10 +1425,14 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           }
         }
       }
-      $scope.resourceTypeSelect = function () {
+      $scope.resourceTypeSelect = function (_recourceType) {
         $scope.accessRoleChange()
         let resourcetype = $("select[name$='resourcetype']").val();
-        resourcetype = resourcetype.split("string:").pop();
+        if (!_recourceType){
+          resourcetype = resourcetype.split("string:").pop();
+        } else {
+          resourcetype = _recourceType
+        }
         let resourceuri = "";
         if ($scope.resourceTypeKey) {
           if (!$("#resourceuri").prop('disabled')) {
@@ -3137,6 +3141,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
             } else if (!$.isEmptyObject(data.result)) {
               $scope.clearAllField();
               $scope.setRecordDataCallBack(data);
+              $scope.resourceTypeSelect(data.resource_type);
             } else {
               $scope.enableAutofillButton();
               $scope.setAutoFillErrorMessage($("#autofill_error_doi").val());
