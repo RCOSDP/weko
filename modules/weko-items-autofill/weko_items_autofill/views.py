@@ -84,7 +84,8 @@ def get_auto_fill_record_data():
     result = {
         'result': '',
         'items': '',
-        'error': ''
+        'error': '',
+        'resource_type' : ''
     }
     if request.headers['Content-Type'] != 'application/json':
         result['error'] = _('Header Error')
@@ -113,7 +114,7 @@ def get_auto_fill_record_data():
             result['result'] = get_wekoid_record_data(
                 search_data, item_type_id)
         elif api_type == 'researchmap':
-            result['result'] = get_researchmapid_record_data(
+            result['result'] , result['resource_type'] = get_researchmapid_record_data(
                 parmalink, achievement_type ,achievement_id , item_type_id)
         else:
             result['error'] = api_type + ' is NOT support autofill feature.'

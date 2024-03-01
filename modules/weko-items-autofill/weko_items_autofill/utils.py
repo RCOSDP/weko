@@ -1359,10 +1359,8 @@ def get_researchmapid_record_data(parmalink, achievement_type ,achievement_id ,i
                 merge_dict( api_data, {weko_name : child} ,False)
         return api_data
 
-    
-
-
     api_data = {}
+    resource_type = ''
     researchmap_mappings = current_app.config["WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_MAPPINGS"] # type: ignore
     researchtype_mappings = current_app.config["WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_TYPE_MAPPINGS"]# type: ignore
 
@@ -1451,7 +1449,8 @@ def get_researchmapid_record_data(parmalink, achievement_type ,achievement_id ,i
             for r_type_mapping in researchtype_mappings:
                 if r_type_mapping.get('achievement_type') == achievement_type \
                     and r_type_mapping.get('detail_type_name') == element :
-                    api_data.update({weko_name : r_type_mapping.get('JPCOAR_resource_type')})
+                    resource_type =  r_type_mapping.get('JPCOAR_resource_type')
+                    api_data.update({weko_name : resource_type})
                     break
     current_app.logger.debug('api_data')
     current_app.logger.debug(api_data)
@@ -1460,7 +1459,7 @@ def get_researchmapid_record_data(parmalink, achievement_type ,achievement_id ,i
     with db.session.no_autoflush:
         items = ItemTypes.get_by_id(item_type_id)
     if items is None:
-        return result
+        return result, resource_type 
     if items.form is not None:
         autofill_key_tree = sort_by_item_type_order(
             items.form,
@@ -1469,7 +1468,7 @@ def get_researchmapid_record_data(parmalink, achievement_type ,achievement_id ,i
                 get_researchmap_autofill_item(item_type_id)))
 
         result = build_record_model(autofill_key_tree, api_data)
-    return result
+    return result , resource_type 
 
 
 def build_record_model_for_wekoid(item_type_id, item_map_data):
