@@ -1599,12 +1599,10 @@ def get_attribute_value_all_items(
     def get_name(key, multi_lang_flag=True):
         """Get multi-lang title."""
         if key in name_mapping:
-            name = (
-                name_mapping[key]["multi_lang"]
-                if multi_lang_flag
-                else name_mapping[key]["item_name"]
-            )
-            return name
+            if multi_lang_flag:
+                return name_mapping[key]["multi_lang"] or name_mapping[key]["item_name"]
+            else:
+                return name_mapping[key]["item_name"]
         else:
             return ""
 

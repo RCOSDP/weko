@@ -957,12 +957,32 @@ def test_get_attribute_value_all_items(app):
             'subitem_1_lang': 'ja'
         }
     ]
-    _klst = [['item_1.subitem_1', 'item_1_title', 'en_item_1_title', {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False, }, ''],
-    ['item_1.subitem_1_lang', 'item_1_lang', 'en_item_1_lang', {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False, }, '']]
+    _klst = [
+        ['item_1.subitem_1', 'item_1_title', 'en_item_1_title', {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False, }, ''],
+        ['item_1.subitem_1_lang', 'item_1_lang', 'en_item_1_lang', {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False, }, '']
+    ]
 
     res = get_attribute_value_all_items('item_1', _nlst, _klst)
     assert res==[[[[{'en_item_1_title': 'en_value'}], [{'en_item_1_lang': 'en'}]]], [[[{'en_item_1_title': 'ja_value'}], [{'en_item_1_lang': 'ja'}]]]]
-
+    
+    # localization setting is none
+    _klst = [
+        ['item_1.subitem_1', 'item_1_title', '', {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False, }, ''],
+        ['item_1.subitem_1_lang', 'item_1_lang', '', {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False, }, '']
+    ]
+    _nlst = [
+        {
+            'subitem_1': 'en_value',
+            'subitem_1_lang': 'en'
+        },
+        {
+            'subitem_1': 'ja_value',
+            'subitem_1_lang': 'ja'
+        }
+    ]
+    res = get_attribute_value_all_items('item_1', _nlst, _klst)
+    res == [[[[{'item_1_title': 'en_value'}], [{'item_1_lang': 'en'}]]], [[[{'item_1_title': 'ja_value'}], [{'item_1_lang': 'ja'}]]]]
+    
     _nlst = [
         {
             'subitem_1': 'en_value',
