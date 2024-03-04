@@ -53,6 +53,7 @@ from marshmallow.exceptions import ValidationError
 from weko_records_ui.models import FileOnetimeDownload, FilePermission
 from weko_records.models import ItemMetadata, ItemReference
 from invenio_records.models import RecordMetadata
+from tests.helpers import create_record
 
 
 
@@ -2498,6 +2499,55 @@ def test_send_mail_users(client, users, users_index, status_code):
         assert res.status_code == status_code
 
 
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_unlocks_activity_nologin -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_unlocks_activity_nologin(client, db_register2):
+    url = url_for('weko_workflow.unlocks_activity',activity_id="A-22000111-00001")
+    res = client.post(url)
+    assert res.status_code == 302
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_unlocks_activity_acl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+@pytest.mark.parametrize('users_index', [ i for i in range(7)])
+def test_unlocks_activity_acl(client, users, db_register2, users_index):
+    url = url_for('weko_workflow.unlocks_activity',activity_id="A-22000111-00001")
+    login(client=client, email=users[users_index]["email"])
+    data = json.dumps({"locked_value":"", "is_opened":False})
+    res = client.post(url,data=data)
+    assert res.status_code != 302
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_unlocks_activity -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_unlocks_activity(client, users, db_register2):
+
+    activity_id="A-22000111-00001"
+    url = url_for("weko_workflow.unlocks_activity", activity_id=activity_id)
+    locked_value = "1-123456789"
+    user = users[2]
+    login(client=client, email=user["email"])
+
+    lock_key = "workflow_locked_activity_{}".format(activity_id)
+    user_lock_key = "workflow_userlock_activity_{}".format(user["id"])
+    current_cache.delete(lock_key)
+    current_cache.delete(user_lock_key)
+
+    data = json.dumps({"locked_value":locked_value, "is_opened":False})
+    
+    # not locked
+    res = client.post(url, data=data)
+    assert res.status_code == 200
+    assert json.loads(res.data) == {"code": 200, "msg_lock":None, "msg_userlock":"Not unlock"}
+    
+    # locked
+    current_cache.set(lock_key,locked_value)
+    current_cache.set(user_lock_key,activity_id)
+    res = client.post(url, data=data)
+    assert res.status_code == 200
+    assert json.loads(res.data) == {"code": 200, "msg_lock":"Unlock success", "msg_userlock":"User Unlock Success"}
+    assert current_cache.get(lock_key) == None
+    assert current_cache.get(user_lock_key) == None
+    
+    current_cache.delete(lock_key)
+    current_cache.delete(user_lock_key)
+    
+
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_is_user_locked_nologin -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_is_user_locked_nologin(client, db_register2):
     url = url_for('weko_workflow.is_user_locked')
@@ -2558,13 +2608,13 @@ def test_user_lock_activity(client,db_register2, users, mocker):
     # not exist cache
     res = client.post(url)
     assert res.status_code == 200
-    assert json.loads(res.data) == {"code":200,"msg":"Success","err":"","locked_by_username":""}
+    assert json.loads(res.data) == {"code":200,"msg":"Success","err":"","activity_id":""}
     assert current_cache.get("workflow_userlock_activity_5") == "1"
     
     # exist cache
     res = client.post(url)
     assert res.status_code == 200
-    assert json.loads(res.data) == {"code":200,"msg":"","err":"Opened","locked_by_username":""}
+    assert json.loads(res.data) == {"code":200,"msg":"","err":"Opened","activity_id":"1"}
     assert current_cache.get("workflow_userlock_activity_5") == "1"
     
     current_cache.delete("workflow_userlock_activity_5")
@@ -2591,13 +2641,13 @@ def test_user_unlock_activity_acl(client,users,db_register2,users_index):
 def test_user_unlock_activity(client,users,db_register2,mocker):
     url = url_for('weko_workflow.user_unlock_activity', activity_id='1')
     login(client=client, email=users[2]['email'])
-    current_cache.set("workflow_userlock_activity_5","1")
+    current_cache.set("workflow_userlock_activity_5","2")
     # is_opened is True
     data = json.dumps({"is_opened": True})
     res = client.post(url,data=data)
     assert res.status_code == 200
-    assert json.loads(res.data) == {"code": 200, "msg": "User Unlock Success"}
-    assert current_cache.get("workflow_userlock_activity_5") == None
+    assert json.loads(res.data) == {"code": 200, "msg": "Not unlock"}
+    assert current_cache.get("workflow_userlock_activity_5") == "2"
     
     # is_opened is False
     data = json.dumps({"is_opened": False})
@@ -2810,6 +2860,7 @@ def test_unlock_activity_acl_users(client, users, users_index, status_code):
     (6, 200),
 ])
 def test_unlock_activity(client, users, db_register, users_index, status_code):
+    current_cache.delete("workflow_locked_activity_1")
     login(client=client, email=users[users_index]['email'])
     url = url_for('weko_workflow.unlock_activity', activity_id='1')
     input = {'locked_value':'1-1661748792565'}
@@ -2823,21 +2874,19 @@ def test_unlock_activity(client, users, db_register, users_index, status_code):
         assert data["msg"] == 'arguments error'
 
     #cur_locked_valが空文字の場合
-    with patch('weko_workflow.views.get_cache_data', return_value=""):
-        res = client.post(url, json=input)
-        data = json.loads(res.data.decode("utf-8"))
-        assert res.status_code==status_code
-        assert data["code"] == 200
-        assert data["msg"] == 'Not unlock'
+    res = client.post(url, json=input)
+    data = json.loads(res.data.decode("utf-8"))
+    assert res.status_code==status_code
+    assert data["code"] == 200
+    assert data["msg"] == 'Not unlock'
 
     #locked_valueが空でなく、cur_locked_valと一致する場合
-    with patch('weko_workflow.views.get_cache_data', return_value='1-1661748792565'):
-        with patch('weko_workflow.views.delete_cache_data'):
-            res = client.post(url, json=input)
-            data = json.loads(res.data.decode("utf-8"))
-            assert res.status_code==status_code
-            assert data["code"] == 200
-            assert data["msg"] == 'Unlock success'
+    current_cache.set("workflow_locked_activity_1",'1-1661748792565')
+    res = client.post(url, json=input)
+    data = json.loads(res.data.decode("utf-8"))
+    assert res.status_code==status_code
+    assert data["code"] == 200
+    assert data["msg"] == 'Unlock success'
 
     #ValidationErrorの分岐テスト
     input = {}
@@ -2846,6 +2895,8 @@ def test_unlock_activity(client, users, db_register, users_index, status_code):
     assert res.status_code== 400
     assert data["code"] == -1
     assert data["msg"] == "{'locked_value': ['Missing data for required field.']}"
+    
+    current_cache.delete("workflow_locked_activity_1")
 
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_check_approval_acl_nologin -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -3129,6 +3180,59 @@ def test_save_activity_guestlogin(guest,db_register2):
         assert data["success"] == False
         assert data["msg"] == "test error"
 
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_verify_deletion -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko_workflow/.tox/c1/tmp
+def test_verify_deletion(client, db, db_register2,db_register,users):
+    flow_id = db_register["flow_define"].id
+    def prepare_activity(act_id, recid, with_item=False, is_deleted=False):
+        if with_item:
+            record_metadata = {"path":["1"],"recid":recid,"title":["title"],"_deposit":{"id":recid}}
+            item_metadata = {"id":recid,"title":"title"}
+            record_id, depid, record, item, parent, doi, deposit = create_record(record_metadata, item_metadata)
+            if is_deleted:
+                parent.status=PIDStatus.DELETED
+                record_id.status=PIDStatus.DELETED
+                depid.status=PIDStatus.DELETED
+                db.session.merge(parent)
+                db.session.merge(record_id)
+                db.session.merge(depid)
+            db.session.commit()
+            if with_item:
+                recid_id = record_id.object_uuid
+                pid=PersistentIdentifier.query.filter_by(pid_type="recid", object_uuid=recid_id).one()
+        activity = Activity(
+            activity_id=act_id,workflow_id=1, flow_id=flow_id,action_id=1, activity_login_user=1,
+            activity_update_user=1,title="title" if with_item else None,action_order=1,
+            item_id=record_id.object_uuid if with_item else None,
+            activity_start=datetime.strptime('2200/01/11 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+        )
+        db.session.add(activity)
+        db.session.commit()
+    
+    login(client=client, email=users[2]['email'])
+
+    # not exist item_id
+    activity_id = "A-22000111-00001"
+    prepare_activity(activity_id,"100")
+    url = url_for("weko_workflow.verify_deletion",activity_id=activity_id)
+    res = client.get(url)
+    assert res.status_code == 200
+    assert json.loads(res.data) == {"code": 200, "is_deleted": False}
+    
+    # exist item_id, not deleted
+    activity_id = "A-22000111-00002"
+    prepare_activity(activity_id,"101",with_item=True)
+    url = url_for("weko_workflow.verify_deletion",activity_id=activity_id)
+    res = client.get(url)
+    assert res.status_code == 200
+    assert json.loads(res.data) == {"code": 200, "is_deleted": False}
+    
+    # exist item_id, deleted
+    activity_id = "A-22000111-00003"
+    prepare_activity(activity_id,"102", with_item=True, is_deleted=True)
+    url = url_for("weko_workflow.verify_deletion",activity_id=activity_id)
+    res = client.get(url)
+    assert res.status_code == 200
+    assert json.loads(res.data) == {"code": 200, "is_deleted": True}
 
 def test_display_activity_nologin(client,db_register2):
     """Test of display activity."""
