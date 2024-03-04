@@ -38,17 +38,17 @@ style = NpmBundle(
 )
 
 js_dependecies = NpmBundle(
-    "node_modules/angular-ui-bootstrap/ui-bootstrap-tpls.js",
-    "node_modules/angular/angular.js",
-    'node_modules/angular-animate/angular-animate.js',
-    'node_modules/angular-sanitize/angular-sanitize.js',
-    'node_modules/angular-strap/dist/angular-strap.js',
-    "node_modules/angular-loading-bar/build/loading-bar.js",
-    "node_modules/typeahead.js/dist/bloodhound.js",
-    "node_modules/typeahead.js/dist/typeahead.bundle.js",
-    "node_modules/typeahead.js/dist/typeahead.jquery.js",
-    "node_modules/invenio-csl-js/dist/invenio-csl-js.js",
-    "node_modules/bootstrap-switch/dist/js/bootstrap-switch.js",
+    "node_modules/angular-ui-bootstrap/ui-bootstrap-tpls.min.js",
+    "node_modules/angular/angular.min.js",
+    'node_modules/angular-animate/angular-animate.min.js',
+    'node_modules/angular-sanitize/angular-sanitize.min.js',
+    'node_modules/angular-strap/dist/angular-strap.min.js',
+    "node_modules/angular-loading-bar/build/loading-bar.min.js",
+    "node_modules/typeahead.js/dist/bloodhound.min.js",
+    "node_modules/typeahead.js/dist/typeahead.bundle.min.js",
+    "node_modules/typeahead.js/dist/typeahead.jquery.min.js",
+    "node_modules/invenio-csl-js/dist/invenio-csl-js.min.js",
+    "node_modules/bootstrap-switch/dist/js/bootstrap-switch.min.js",
     filters='jsmin',
     output='gen/weko_records_ui.dependencies.%(version)s.js',
     npm={
@@ -65,8 +65,8 @@ js_dependecies = NpmBundle(
 )
 
 js = NpmBundle(
-    'node_modules/angular-ui-bootstrap/ui-bootstrap-tpls.js',
-    'node_modules/angular/angular.js',
+    'node_modules/angular-ui-bootstrap/ui-bootstrap-tpls.min.js',
+    'node_modules/angular/angular.min.js',
     'js/weko_records_ui/app.js',
     'js/weko_records_ui/csl.js',
     'js/weko_records_ui/detail.js',

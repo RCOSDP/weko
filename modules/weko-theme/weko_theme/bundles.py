@@ -91,13 +91,13 @@ js = Bundle(
 
 js_top_page = Bundle(
     'js/weko_theme/top_page.js',
-    filters='requirejs',
+    filters='requirejs,jsmin',
     output="gen/weko_top_page.%(version)s.js",
 )
 
 js_detail_search = Bundle(
     'js/weko_theme/search_detail.js',
-    filters='requirejs',
+    filters='requirejs,jsmin',
     output="gen/weko_detail_search.%(version)s.js",
 )
 
