@@ -132,7 +132,9 @@ from weko_workflow.utils import (
     prepare_doi_link_workflow,
     make_activitylog_tsv,
     is_terms_of_use_only,
-    grant_access_rights_to_all_open_restricted_files
+    grant_access_rights_to_all_open_restricted_files,
+    delete_lock_activity_cache,
+    delete_user_lock_activity_cache
 )
 from weko_workflow.api import GetCommunity, UpdateItem, WorkActivity, WorkActivityHistory, WorkFlow
 from weko_workflow.models import Activity
@@ -3200,3 +3202,50 @@ def test_grant_access_rights_to_all_open_restricted_files(app ,db,users ):
     res = grant_access_rights_to_all_open_restricted_files(activity_id ,None, activity_detail )
     assert res == {}
 
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_delete_lock_activity_cache -vv -s -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_delete_lock_activity_cache(client,users):
+    data = {
+        "locked_value": "1-1661748792565"
+    }
+    activity_id="A-22240219-00001"
+    cache_key = "workflow_locked_activity_{}".format(activity_id)
+    current_cache.delete(cache_key)
+    # cur_locked_val is empty
+    result = delete_lock_activity_cache(activity_id, data)
+    assert result == None
+    # cur_locked_val is not empty, cur_locked_val==locked_value
+    current_cache.set(cache_key,data["locked_value"])
+    result = delete_lock_activity_cache(activity_id, data)
+    assert result == "Unlock success"
+    assert current_cache.get(cache_key) == None
+    # cur_locked_val is not empty, cur_locked_val!=locked_value
+    wrong_val = "2-1234456778"
+    current_cache.set(cache_key,wrong_val)
+    result = delete_lock_activity_cache(activity_id, data)
+    assert result == None
+    assert current_cache.get(cache_key) == wrong_val
+
+    current_cache.delete(cache_key)
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_delete_user_lock_activity_cache -vv -s -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_delete_user_lock_activity_cache(client,users):
+    user = users[2]
+    login_user(user["obj"])
+    data = {
+        "is_opened": False
+    }
+    activity_id = "A-22240219-00001"
+    cache_key = "workflow_userlock_activity_{}".format(user["id"])
+    current_cache.delete(cache_key)
+    # cur_locked_val is empty
+    result = delete_user_lock_activity_cache(activity_id, data)
+    assert result == "Not unlock"
+    
+    
+    # cur_locked_val is not empty, is_opened is False
+    current_cache.set(cache_key, activity_id)
+    result = delete_user_lock_activity_cache(activity_id, data)
+    assert result == "User Unlock Success"
+    assert current_cache.get(cache_key) == None
+    
+    current_cache.delete(cache_key)
