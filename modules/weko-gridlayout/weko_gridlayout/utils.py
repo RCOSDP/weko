@@ -22,7 +22,7 @@
 import copy
 import pickle
 import gzip
-import json
+import orjson
 import xml.etree.ElementTree as Et
 from datetime import datetime
 from io import SEEK_END, SEEK_SET, BytesIO
@@ -94,7 +94,7 @@ def delete_item_in_preview_widget_item(data_id, json_data):
                 remove_list.append(item)
     for item in remove_list:
         json_data.remove(item)
-    data = json.dumps(json_data)
+    data = orjson.dumps(json_data).decode()
     return data
 
 
@@ -242,7 +242,7 @@ def build_data(data):
     result = dict()
     result['repository_id'] = data.get('repository')
     result['widget_type'] = data.get('widget_type')
-    result['settings'] = json.dumps(build_data_setting(data))
+    result['settings'] = orjson.dumps(build_data_setting(data)).decode()
     result['is_enabled'] = data.get('enable')
 
     multi_lang_data = data.get('multiLangSetting').copy()
@@ -377,7 +377,7 @@ def build_multi_lang_data(widget_id, multi_lang_json):
         new_lang_data['widget_id'] = widget_id
         new_lang_data['lang_code'] = k
         new_lang_data['label'] = Markup.escape(v.get('label'))
-        new_lang_data['description_data'] = json.dumps(v.get('description'))
+        new_lang_data['description_data'] = orjson.dumps(v.get('description')).decode()
         result.append(new_lang_data)
     return result
 
@@ -393,7 +393,7 @@ def convert_widget_data_to_dict(widget_data):
 
     """
     result = dict()
-    settings = json.loads(widget_data.settings) \
+    settings = orjson.loads(widget_data.settings) \
         if isinstance(widget_data.settings, str) else widget_data.settings
 
     result['widget_id'] = widget_data.widget_id
@@ -417,7 +417,7 @@ def convert_widget_multi_lang_to_dict(multi_lang_data):
 
     """
     result = dict()
-    description = json.loads(multi_lang_data.description_data) \
+    description = orjson.loads(multi_lang_data.description_data) \
         if isinstance(multi_lang_data.description_data, str) \
         else multi_lang_data.description_data
 
@@ -792,7 +792,7 @@ def validate_main_widget_insertion(repository_id, new_settings, page_id=0):
     # Check if main design has main widget
     main_design = \
         WidgetDesignSetting.select_by_repository_id(repository_id or '')
-    settings = json.loads(main_design.get('settings', '[]')) if isinstance(
+    settings = orjson.loads(main_design.get('settings', '[]')) if isinstance(
         main_design.get('settings', '[]'), str) else main_design.get('settings')
     main_has_main = has_main_contents_widget(settings) if main_design else False
 
@@ -819,7 +819,7 @@ def get_widget_design_page_with_main(repository_id):
     if repository_id:
         for page in WidgetDesignPage.get_by_repository_id(repository_id):
             if page.settings and has_main_contents_widget(
-                    json.loads(page.settings)
+                    orjson.loads(page.settings)
                     if isinstance(page.settings, str) else page.settings):
                 return page
     return None
@@ -836,7 +836,7 @@ def main_design_has_main_widget(repository_id):
     """
     main_design = WidgetDesignSetting.select_by_repository_id(repository_id)
     if main_design:
-        settings = json.loads(main_design.get('settings', '[]')) \
+        settings = orjson.loads(main_design.get('settings', '[]')) \
             if isinstance(main_design.get('settings', '[]'), str) \
             else main_design.get('settings')
         return has_main_contents_widget(settings)

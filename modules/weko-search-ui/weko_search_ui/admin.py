@@ -21,7 +21,7 @@
 """Weko Search-UI admin."""
 
 import codecs
-import json
+import orjson
 import os
 import tempfile
 from datetime import datetime, timedelta
@@ -326,7 +326,7 @@ class ItemImportView(BaseView):
 
         return self.render(
             WEKO_ITEM_ADMIN_IMPORT_TEMPLATE,
-            workflows=json.dumps(workflows_js),
+            workflows=orjson.dumps(workflows_js).decode(),
             file_format=current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower(),
             form=form
         )

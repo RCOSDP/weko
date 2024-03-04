@@ -1,4 +1,4 @@
-import json
+import orjson
 from flask import current_app, request
 from elasticsearch_dsl import Q
 from flask_login import current_user
@@ -39,7 +39,7 @@ def billing_file_search_factory(search):
 
     urlkwargs.add("q", query_q)
     # debug elastic search query
-    current_app.logger.debug("query: {}".format(json.dumps((search.query()).to_dict())))
+    current_app.logger.debug("query: {}".format(orjson.dumps((search.query()).to_dict()).decode()))
     current_app.logger.debug("urlkwargs: {}".format(urlkwargs))
 
     return search, urlkwargs

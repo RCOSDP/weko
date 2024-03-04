@@ -21,6 +21,7 @@
 """Module of weko-records-ui utils."""
 
 import base64
+import orjson
 from datetime import datetime as dt
 from datetime import timedelta
 from decimal import Decimal
@@ -28,7 +29,7 @@ from typing import NoReturn, Tuple, Dict
 from urllib.parse import quote
 
 from elasticsearch_dsl import Q
-from flask import abort, current_app, json, request
+from flask import abort, current_app, request
 from flask_babelex import gettext as _
 from flask_babelex import to_utc
 from flask_security import current_user
@@ -1535,9 +1536,9 @@ def get_google_detaset_meta(record,record_tree=None):
                     distributions.append(distribution)
         res_data['distribution'] = distributions
 
-    current_app.logger.debug("res_data: {}".format(json.dumps(res_data, ensure_ascii=False)))
+    current_app.logger.debug("res_data: {}".format(orjson.dumps(res_data).decode()))
 
-    return json.dumps(res_data, ensure_ascii=False)
+    return orjson.dumps(res_data).decode()
 
 def get_billing_role(record: Dict) -> Tuple[str, str]:
     """Get the lowest price and roll.

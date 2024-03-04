@@ -51,9 +51,12 @@ class test_WidgetItems():
             "text_color": "text_color",
             "background_color": "background_color",
         }
+        test_data = {"label_color":"label_color","has_frame_border":"frame_border","frame_border_color":"frame_border_color","text_color":"text_color","background_color":"background_color"}
 
         # Doesn't return any value
         assert not WidgetItems.build_settings_data(widget_object, widget_items)
+        name, args, kwargs = widget_object.mock_calls[0]
+        assert json.loads(args[1]) == test_data
 
 
     # def build_object(cls, widget_items=None, is_update=False):

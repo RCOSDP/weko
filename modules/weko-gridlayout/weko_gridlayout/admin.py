@@ -21,7 +21,7 @@
 """WEKO3 module docstring."""
 
 import pickle
-import json
+import orjson
 from collections import namedtuple
 from datetime import datetime
 from math import ceil
@@ -283,7 +283,7 @@ class WidgetSettingView(ModelView):
             WidgetItemServices.lock_widget(widget_id=id_list,
                                            locked_value=locked_value)
         return self.render(config.WEKO_GRIDLAYOUT_ADMIN_EDIT_WIDGET_SETTINGS,
-                           model=json.dumps(model),
+                           model=orjson.dumps(model).decode(),
                            return_url=return_url,
                            locked_value=locked_value,
                            locked=locked
@@ -299,7 +299,7 @@ class WidgetSettingView(ModelView):
             :param name: Field name
         """
         data_settings = model.settings
-        data_settings = json.loads(data_settings) \
+        data_settings = orjson.loads(data_settings) \
             if isinstance(data_settings, str) else data_settings
         data_settings_model = namedtuple("Settings", data_settings.keys())(
             *data_settings.values())

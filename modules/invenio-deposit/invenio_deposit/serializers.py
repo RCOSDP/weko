@@ -24,7 +24,7 @@
 
 """Deposit serializers."""
 
-import json
+import orjson
 
 from flask import Response, jsonify, make_response
 
@@ -40,7 +40,7 @@ def json_serializer(pid, data, *args):
     """
     if data is not None:
         response = Response(
-            json.dumps(data.dumps()),
+            orjson.dumps(data.dumps()).decode(),
             mimetype='application/json'
         )
     else:
@@ -83,7 +83,7 @@ def json_files_serializer(objs, status=None):
     :rtype: :py:class:`flask.Response`.
     """
     files = [file_serializer(obj) for obj in objs]
-    return make_response(json.dumps(files), status)
+    return make_response(orjson.dumps(files).decode(), status)
 
 
 def json_file_response(obj=None, pid=None, record=None, status=None):

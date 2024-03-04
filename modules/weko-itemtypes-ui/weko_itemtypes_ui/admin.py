@@ -22,7 +22,7 @@
 
 import sys
 import io
-
+import orjson
 from flask import abort, current_app, flash, json, jsonify, redirect, \
     request, session, url_for, make_response, send_file
 from sqlalchemy.sql.expression import null
@@ -651,7 +651,7 @@ class ItemTypeMappingView(BaseView):
             jpcoar_xsd = WekoSchema.get_all()
             jpcoar_lists = {}
             for item in jpcoar_xsd:
-                jpcoar_lists[item.schema_name] = json.loads(item.xsd)
+                jpcoar_lists[item.schema_name] = orjson.loads(item.xsd)
 
             item_type_mapping = Mapping.get_record(ItemTypeID)
             
@@ -713,11 +713,11 @@ class ItemTypeMappingView(BaseView):
         if SchemaName is None:
             jpcoar_xsd = WekoSchema.get_all()
             for item in jpcoar_xsd:
-                jpcoar_lists[item.schema_name] = json.loads(item.xsd)
+                jpcoar_lists[item.schema_name] = orjson.loads(item.xsd)
         else:
             jpcoar_xsd = WekoSchema.get_record_by_name(SchemaName)
             if jpcoar_xsd is not None:
-                jpcoar_lists[SchemaName] = json.loads(jpcoar_xsd.model.xsd)
+                jpcoar_lists[SchemaName] = orjson.loads(jpcoar_xsd.model.xsd)
         return jsonify(remove_xsd_prefix(jpcoar_lists))
 
 

@@ -21,12 +21,12 @@
 """Views for weko-admin."""
 
 import calendar
-import json
+import orjson
 import sys
 import time
 from datetime import timedelta
 
-from flask import Blueprint, Response, abort, current_app, flash, json, \
+from flask import Blueprint, Response, abort, current_app, flash, \
     jsonify, render_template, request
 from flask_babelex import lazy_gettext as _
 from flask_breadcrumbs import register_breadcrumb
@@ -740,7 +740,7 @@ def remove_facet_search():
         "msg": _("Success")
     }
     data = request.get_json()
-    id_facet = json.loads(json.dumps(data))["id"]
+    id_facet = orjson.loads(orjson.dumps(data))["id"]
     if id_facet:
         if not FacetSearchSetting.delete(id_facet):
             result['status'] = False

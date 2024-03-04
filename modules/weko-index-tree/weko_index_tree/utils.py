@@ -20,13 +20,14 @@
 
 """Module of weko-index-tree utils."""
 import os
+import orjson
 from datetime import date, datetime
 from functools import wraps
 from operator import itemgetter
 
 from elasticsearch.exceptions import NotFoundError
 from elasticsearch_dsl.query import Bool, Exists, Q, QueryString
-from flask import Markup, current_app, session, json
+from flask import Markup, current_app, session
 from flask_babelex import get_locale
 from flask_babelex import gettext as _
 from flask_babelex import to_user_timezone, to_utc
@@ -1023,7 +1024,7 @@ def save_index_trees_to_redis(tree):
             return str(o)
     redis = __get_redis_store()
     try:
-        v = bytes(json.dumps(tree, default=default), encoding='utf-8')
+        v = orjson.dumps(tree, default=default)
         redis.put("index_tree_view_" + os.environ.get('INVENIO_WEB_HOST_NAME') + "_" + current_i18n.language,v)
     except ConnectionError:
         current_app.logger.error("Fail save index_tree to redis")

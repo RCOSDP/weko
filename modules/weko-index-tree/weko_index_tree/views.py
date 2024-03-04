@@ -20,7 +20,7 @@
 
 """Blueprint for weko-index-tree."""
 
-import json
+import orjson
 import time
 from datetime import date, timedelta
 from operator import itemgetter
@@ -171,7 +171,7 @@ def create_index():
                 with current_app.test_request_context() as ctx:
                     Indexes.create(pid, create_data)
                     index = Indexes.update(index_id, **update_data)
-                return make_response(json.dumps(dict(index)), 201)
+                return make_response(orjson.dumps(dict(index)).decode(), 201)
             else:
                 return make_response("index_info can not be null.", 400)
         else:

@@ -25,7 +25,7 @@
 """Previews a JSON file."""
 from __future__ import absolute_import, print_function
 
-import json
+import orjson
 import re
 from collections import OrderedDict
 
@@ -45,7 +45,7 @@ def validate_json(file):
 
     with file.open() as fp:
         try:
-            json_data = json.loads(fp.read().decode('utf-8'))
+            json_data = orjson.loads(fp.read().decode('utf-8'))
             if "@context" in json_data.keys():
                 context = json_data["@context"]
                 if type(context) is list:

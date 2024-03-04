@@ -100,5 +100,11 @@ def test_create_index(client_api, db, users, auth_headers):
                         headers=auth_headers)
     assert res.status_code == 400
 
+    with patch('weko_index_tree.views.Indexes.update', return_value={'key': 'value'}):
+        res = client_api.post("/api/indextree/create",
+                        data=json.dumps(_data),
+                        content_type="application/json",
+                        headers=auth_headers)
+        assert res.status_code == 201
 
 # def dbsession_clean(exception):

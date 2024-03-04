@@ -11,7 +11,7 @@
 from __future__ import absolute_import, print_function
 
 import pytest
-from mock import patch
+from mock import patch, MagicMock
 from werkzeug.exceptions import HTTPException
 from flask import url_for,make_response
 from flask_iiif.utils import iiif_image_url
@@ -161,4 +161,6 @@ def test_manifest_view(app,records,mocker):
         result = manifest_view(pid_value,resolver,permission_factory,manifest_class)
         assert result.status_code == 204
         
-    
+        manifest_class.dumps = MagicMock(return_value={'key': 'value'})
+        result = manifest_view(pid_value,resolver,permission_factory,manifest_class)
+        assert result.status_code == 200

@@ -1,4 +1,4 @@
-{# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 #
 # This file is part of Invenio.
 # Copyright (C) 2016 CERN.
@@ -21,14 +21,23 @@
 # In applying this license, CERN does not
 # waive the privileges and immunities granted to it by virtue of its status
 # as an Intergovernmental Organization or submit itself to any jurisdiction.
-#}
 
-{%- extends config.PREVIEWER_ABSTRACT_TEMPLATE %}
+"""Module tests."""
+import json
+from mock import MagicMock, Mock, patch
 
-{% block panel %}
-<pre>
-<code class="language-json">
-{{- content|safe -}}
-</code>
-</pre>
-{% endblock %}
+from invenio_deposit.serializers import json_serializer, json_files_serializer
+
+def test_json_serializer():
+    data = MagicMock()
+    data.dumps = MagicMock(return_value={'key': 'value'})
+    assert json_serializer(None, data, None)
+
+def test_json_files_serializer():
+    json_data = {"id":"id","filename":"filenmae","filesize":"filesize","checksum":"checksum"}
+    with patch("invenio_deposit.serializers.file_serializer", return_value=json_data):
+        magicmock = MagicMock()
+        with patch("invenio_deposit.serializers.make_response", magicmock):
+            json_files_serializer([0])
+            args, kwargs = magicmock.call_args
+            assert json.loads(args[0]) == [json_data]

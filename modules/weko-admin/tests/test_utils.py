@@ -1963,8 +1963,15 @@ def test_store_facet_search_query_in_redis(mocker):
                                     'Data Type': 'description.value'}},
     }
     mocker.patch("weko_admin.utils.create_facet_search_query",return_value=(has_permission,no_permission))
-    mocker.patch("weko_admin.utils.reset_redis_cache")
+    mock_data = mocker.patch("weko_admin.utils.reset_redis_cache")
+    test_data1 = {"test-weko":{"aggs":{"Data Language":{"terms":{"field":"language","size":1000}},"Data Type":{"aggs":{"Data Type":{"terms":{"field":"description.value","size":1000}}},"filter":{"bool":{"must":[{"term":{"description.descriptionType":"Other"}}]}}}},"post_filters":{"Data Language":"language","Data Type":"description.value"}}}
+    test_data2 = {"test-weko":{"aggs":{"Data Language":{"aggs":{"Data Language":{"terms":{"field":"language","size":1000}}},"filter":{"bool":{"must":[{"term":{"publish_status":"0"}}]}}},"Data Type":{"aggs":{"Data Type":{"terms":{"field":"description.value","size":1000}}},"filter":{"bool":{"must":[{"term":{"description.descriptionType":"Other"}},{"term":{"publish_status":"0"}}]}}}},"post_filters":{"Data Language":"language","Data Type":"description.value"}}}
     store_facet_search_query_in_redis()
+    args_list = mock_data.call_args_list
+    args, kwargs = args_list[0]
+    assert json.loads(args[1]) == test_data1
+    args, kwargs = args_list[1]
+    assert json.loads(args[1]) == test_data2
 
 
 # def get_query_key_by_permission(has_permission):

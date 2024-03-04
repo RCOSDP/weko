@@ -3,7 +3,7 @@ from urllib.parse import parse_qs
 import pytest
 import uuid
 from os.path import dirname, join
-from mock import patch
+from mock import patch, MagicMock
 import copy
 import datetime
 import base64
@@ -128,7 +128,10 @@ from weko_workflow.utils import (
     update_approval_date_for_deposit,
     update_system_data_for_activity,
     create_or_update_item_billing,
-    make_activitylog_tsv
+    make_activitylog_tsv,
+    get_files_and_thumbnail,
+    get_pid_value_by_activity_detail,
+    check_doi_validation_not_pass
 )
 from weko_workflow.api import GetCommunity, UpdateItem, WorkActivity, WorkActivityHistory, WorkFlow
 from weko_workflow.models import Activity
@@ -2643,11 +2646,16 @@ def test_update_system_data_for_activity(db_register):
     value = {"data_key":"data_value"}
     activity = db_register["activities"][1]
     update_system_data_for_activity(activity,key,value)
-    assert activity.temp_data == {"metainfo":{key:value}}
+    assert json.loads(activity.temp_data) == {"metainfo":{key:value}}
     
     activity = db_register["activities"][2]
     update_system_data_for_activity(activity,key,value)
-    assert activity.temp_data == {"description":"this is temp_data","metainfo":{key:value}}
+    assert json.loads(activity.temp_data) == {"metainfo":{key:value}}
+
+    activity = db_register["activities"][2]
+    activity.temp_data = json.dumps({'metainfo': {}})
+    update_system_data_for_activity(activity,key,value)
+    assert json.loads(activity.temp_data) == {"metainfo":{key:value}}
 # def check_authority_by_admin(activity):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 
@@ -2664,6 +2672,14 @@ def test_get_record_first_version(db_register,db_records):
     assert pid == db_records[0][0].object_uuid
 # def get_files_and_thumbnail(activity_id, item):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_get_files_and_thumbnail():
+    activity_id = MagicMock()
+    item = MagicMock()
+    json_data = {'test': 'test'}
+    with patch("weko_workflow.utils.WekoDeposit.get_record"):
+        with patch("weko_workflow.utils.WorkActivity.get_activity_metadata", return_value=json.dumps(json_data)):
+            with patch("weko_items_ui.utils.to_files_js"):
+                assert get_files_and_thumbnail(activity_id, item)
 
 # def get_pid_and_record(item_id):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -2680,9 +2696,23 @@ def test_get_record_first_version(db_register,db_records):
 
 # def get_pid_value_by_activity_detail(activity_detail):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_get_pid_value_by_activity_detail():
+    activity_detail = MagicMock()
+    json_data = {'endpoints': {'self': 'test'}}
+    activity_detail.temp_data = json.dumps(json_data)
+    ret = get_pid_value_by_activity_detail(activity_detail)
+    assert ret == 'test'
 
 # def check_doi_validation_not_pass(item_id, activity_id,
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_check_doi_validation_not_pass(app):
+    item_id = MagicMock()
+    identifier_select = MagicMock()
+    without_ver_id = MagicMock()
+    json_data = {'key': 'value'}
+    with app.test_request_context():
+        with patch("weko_workflow.utils.item_metadata_validation", return_value=json_data):
+            assert check_doi_validation_not_pass(item_id, '1', identifier_select, without_ver_id)
 
 
 def test_get_index_id():

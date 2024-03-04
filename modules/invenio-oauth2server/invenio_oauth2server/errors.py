@@ -10,7 +10,7 @@
 
 from __future__ import absolute_import, print_function
 
-import json
+import orjson
 
 from werkzeug.exceptions import HTTPException
 
@@ -58,7 +58,7 @@ class JWTExtendedException(HTTPException):
         if self.errors:
             body['errors'] = errors
 
-        return json.dumps(body)
+        return orjson.dumps(body).decode()
 
     def get_headers(self, environ=None):
         """Get a list of headers."""

@@ -47,7 +47,7 @@ from weko_workflow.views import unlock_activity, check_approval, get_feedback_ma
 from marshmallow.exceptions import ValidationError
 from weko_records_ui.models import FilePermission
 from weko_records.models import ItemMetadata
-
+from weko_redis import RedisConnection
 
 def response_data(response):
     return json.loads(response.data)
@@ -3524,3 +3524,19 @@ def test_clear_activitylog_9(client, db_register , users, users_index, status_co
                 tab='all')
     res = client.get(url)
     assert res.status_code == 403
+
+@pytest.mark.parametrize('users_index, status_code', [
+    (0, 200),
+])
+def test_get_journals(client, db_register , users, users_index, status_code):
+    url = url_for('weko_workflow.get_journals')
+    _data = {}
+    _data['key'] = 'key'
+
+    redis_connection = RedisConnection()
+    datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
+    cache_key = current_app.config['WEKO_WORKFLOW_OAPOLICY_SEARCH'].format(keyword='key')
+    datastore.delete(cache_key)
+
+    res = client.get(url, data=_data)
+    assert res.status_code == status_code

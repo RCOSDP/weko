@@ -8,7 +8,7 @@
 
 """Database models for Invenio-Stats."""
 import hashlib
-import json
+import orjson
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from typing import List
@@ -147,7 +147,7 @@ class _StataModelBase(Timestamp):
                     'source_id': data_object.get("_id"),
                     'index': data_object.get("_index"),
                     'type': data_object.get("_type"),
-                    'source': json.dumps(data_object.get("_source")),
+                    'source': orjson.dumps(data_object.get("_source")).decode(),
                     'date': date
                 }
             else:
