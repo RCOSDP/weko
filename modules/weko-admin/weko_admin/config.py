@@ -477,7 +477,7 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
          'mappingFlg': False,
          'mappingName': ''},
 
-        {'id': 'id', 'contents': '', 'contents_value': {'en': 'ID', 'ja': 'ID'}, 'useable_status': True, 'mapping': ['identifier', 'URI', 'fullTextURL', 'selfDOI', 'ISBN', 'ISSN', 'NCID', 'pmid', 'doi', 'NAID', 'ichushi'],
+        {'id': 'id', 'contents': '', 'contents_value': {'en': 'ID', 'ja': 'ID'}, 'useable_status': True, 'mapping': ['identifier', 'URI', 'fullTextURL', 'selfDOI', 'ISBN', 'ISSN', 'NCID', 'PMID', 'DOI', 'NAID', 'ICHUSHI'],
          'sche_or_attr':[{'id': 'identifier', 'contents': 'identifier', 'checkStus': False},
                          {'id': 'URI', 'contents': 'URI', 'checkStus': False},
                          {'id': 'fullTextURL',
@@ -487,10 +487,10 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
                          {'id': 'ISBN', 'contents': 'ISBN', 'checkStus': False},
                          {'id': 'ISSN', 'contents': 'ISSN', 'checkStus': False},
                          {'id': 'NCID', 'contents': 'NCID', 'checkStus': False},
-                         {'id': 'pmid', 'contents': 'pmid', 'checkStus': False},
-                         {'id': 'doi', 'contents': 'doi', 'checkStus': False},
+                         {'id': 'PMID', 'contents': 'PMID', 'checkStus': False},
+                         {'id': 'DOI', 'contents': 'DOI', 'checkStus': False},
                          {'id': 'NAID', 'contents': 'NAID', 'checkStus': False},
-                         {'id': 'ichushi', 'contents': 'ichushi', 'checkStus': False},
+                         {'id': 'ICHUSHI', 'contents': 'ICHUSHI', 'checkStus': False},
                          ],
          'default_display': True, 'inputType': 'text', 'inputVal': '', 'mappingFlg': True, 'mappingName': 'id_attr'},
 
