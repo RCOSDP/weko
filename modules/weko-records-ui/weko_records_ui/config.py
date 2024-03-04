@@ -665,6 +665,8 @@ WEKO_RECORDS_UI_REQUEST_MESSAGE = "様からリクエストメールが送信さ
 
 WEKO_RECORDS_UI_FILELIST_TMP_PREFIX = 'weko_filelist_'
 
+WEKO_RECORDS_UI_TSV_FIELD_NAMES_DEFAULT = ['Name', 'Size', 'License', 'Date', 'URL']
+
 WEKO_RECORDS_UI_TSV_FIELD_NAMES_EN = ['Name', 'Size', 'License', 'Date', 'URL']
 
 WEKO_RECORDS_UI_TSV_FIELD_NAMES_JA = ['名前', 'サイズ', 'ライセンス', '公開日', '格納場所']

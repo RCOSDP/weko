@@ -37,6 +37,7 @@
   "downloadAgreement": "Required Agreement",
   "field": "Field",
   "date": "Date",
+  "contentsDate": "Contents Created Date",
   "publishDate": "Published",
   "createdDate": "Created",
   "updatedDate": "Updated",

@@ -39,6 +39,7 @@ from invenio_records_rest.links import default_links_factory
 from invenio_records_rest.utils import obj_or_import_string
 from invenio_rest import ContentNegotiatedMethodView
 from werkzeug.http import generate_etag
+from werkzeug.exceptions import NotFound
 from weko_index_tree.api import Indexes
 from weko_index_tree.utils import count_items, recorrect_private_items_count
 from weko_items_ui.scopes import item_read_scope
@@ -746,6 +747,9 @@ class IndexSearchResultList(ContentNegotiatedMethodView):
             # Get input json
             try:
                 input_json = request.json
+                for input_header in input_json:
+                    if not(type(input_header["name"]) == dict and input_header["roCrateKey"]):
+                        raise InvalidRequestError()
             except:
                 raise InvalidRequestError()
             if not input_json:
@@ -754,6 +758,7 @@ class IndexSearchResultList(ContentNegotiatedMethodView):
             # Generate Search Query Class
             search_obj = self.search_class()
             search = search_obj.with_preference_param().params(version=True)
+            search._extra.update(dict(size=10000))
 
             # filter by registered item type in RocrateMapping
             from weko_records_ui.models import RocrateMapping
@@ -824,24 +829,9 @@ class IndexSearchResultList(ContentNegotiatedMethodView):
             etag = generate_etag(hash_str.encode('utf-8'))
             self.check_etag(etag, weak=True)
 
-            # Check Last-Modified(Get update time)
-            if update_time_list:
-                update_time_list.sort(reverse=True)
-                datetime_str = update_time_list[0][:10] + " " + update_time_list[0][11:26]
-                updated = datetime.strptime(datetime_str, '%Y-%m-%d %H:%M:%S.%f')
-            else:
-                updated = datetime.now()
-
-            if not request.if_none_match:
-                self.check_if_modified_since(dt=updated)
-
-            # Response Header Setting
-            dl_response.set_etag(etag)
-            dl_response.last_modified = updated
-
             return dl_response
 
-        except InvalidRequestError as e:
+        except (InvalidRequestError, NotFound) as e:
             raise e
 
         except ElasticsearchException:

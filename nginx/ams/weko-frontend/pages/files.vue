@@ -540,7 +540,7 @@ function filtering(value: any) {
         // 部分一致検索
         const extraction = filteredList.value.filter((item: any) => {
           for (const keyword of arrayStrig) {
-            if (item[key].includes(keyword)) {
+            if (keyword && item[key].includes(keyword)) {
               return item[key].includes(keyword);
             }
           }
@@ -553,11 +553,11 @@ function filtering(value: any) {
         let extraction;
         if (filterCondition[key].data[1]) {
           extraction = filteredList.value.filter((item: any) => {
-            return from <= new Date(Date.parse(item.dateCreated[0])) && to >= new Date(Date.parse(item.dateCreated[0]));
+            return from <= new Date(Date.parse(item.dateCreated)) && to >= new Date(Date.parse(item.dateCreated));
           });
         } else {
           extraction = filteredList.value.filter((item: any) => {
-            return from <= new Date(Date.parse(item.dateCreated[0]));
+            return from <= new Date(Date.parse(item.dateCreated));
           });
         }
         filteredList.value = extraction;

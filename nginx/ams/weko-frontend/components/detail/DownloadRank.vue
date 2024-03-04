@@ -98,7 +98,7 @@ async function getRanking() {
       Authorization: localStorage.getItem('token:type') + ' ' + localStorage.getItem('token:access')
     },
     params: {
-      display_number: useRuntimeConfig().public.dlRanking.display
+      display_number: useRuntimeConfig().public.dlRanking.display ?? 5
     },
     onResponse({ response }) {
       if (response.status === 200) {
@@ -117,12 +117,12 @@ async function getRanking() {
     onResponseError({ response }) {
       statusCode = response.status;
       if (statusCode !== 404) {
-        emits('error', response.status, 'message.error.getDownloadRanking');
+        // emits('error', response.status, 'message.error.getDownloadRanking');
       }
     }
   }).catch(() => {
     if (statusCode === 0) {
-      emits('error', 0, 'message.error.fetch');
+      // emits('error', 0, 'message.error.fetch');
     }
   });
 }

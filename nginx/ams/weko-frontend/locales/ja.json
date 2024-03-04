@@ -37,6 +37,7 @@
   "downloadAgreement": "守秘義務契約必要",
   "field": "分野",
   "date": "日付",
+  "contentsDate": "コンテンツ作成日",
   "publishDate": "掲載日",
   "createdDate": "作成日",
   "updatedDate": "更新日",

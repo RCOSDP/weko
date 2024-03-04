@@ -8,15 +8,10 @@
             <img src="/img/logo/logo01.png" alt="AMS Logo" />
           </NuxtLink>
         </p>
-        <p class="mr-[5px]">
-          <NuxtLink to="/">
-            <img src="/img/logo/logo02.png" alt="AMS Logo" />
-          </NuxtLink>
-        </p>
-        <p class="text-white text-xs w-full md:w-auto mt-2.5 md:mt-auto">
+        <p class="text-white text-xs w-full md:w-auto mt-2 pb-1 md:mt-auto">
           {{ $t('serviceName') }}
-          <br class="hidden md:block" />
-          {{ $t('catchCopy') }}
+          <!-- <br class="hidden md:block" />
+          {{ $t('catchCopy') }} -->
         </p>
       </div>
     </div>

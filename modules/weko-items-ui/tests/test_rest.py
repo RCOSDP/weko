@@ -34,7 +34,7 @@ ranking_type = [
     'most_searched_keywords',
     'created_most_items_user'
 ]
-
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_rest.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_rest.py::test_WekoRanking -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 @pytest.mark.parametrize('ranking_type', ranking_type)
@@ -98,3 +98,88 @@ def test_WekoRanking_error(app, client, db, db_ranking):
 
         res = client.get('/v1/ranking/most_downloaded_items')
         assert res.status_code == 403
+
+
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_rest.py::test_WekoFileRanking -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_WekoFileRanking(app, client, records, db_itemtype):
+    """Test File Ranking."""
+    ranking_result = {
+        'new_items': []
+    }
+    with patch('weko_items_ui.utils.get_file_download_data', return_value=ranking_result):
+        # 1 GET request
+        url = '/v1/ranking/11/files'
+        res = client.get(url + "?date=2024-01&display_number=10")
+        assert res.status_code == 200
+
+    ranking_result = {'new_items':[{'item01':"01"}]}
+    with patch('weko_items_ui.utils.get_file_download_data', return_value=ranking_result):
+        # 2 Set pretty true
+        url = '/v1/ranking/11/files' + '?pretty=true'
+        res = client.get(url)
+        assert res.status_code == 200
+        assert res.get_data(True) == '{\n    "new_items": [\n        {\n            "item01": "01"\n        }\n    ]\n}'
+
+    with patch('weko_items_ui.utils.get_file_download_data', return_value=ranking_result) as test_mock:
+        # 3 Contain thumbnail
+        url = '/v1/ranking/17/files'
+        res = client.get(url)
+        assert res.status_code == 200
+        assert test_mock.call_args[0][2] == ["helloworld.pdf"]
+
+
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_rest.py::test_WekoFileRanking_error -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_WekoFileRanking_error(app, client, records, db_itemtype):
+    """Test File Ranking."""
+    ranking_result = {
+        'new_items': []
+    }
+
+    with patch('weko_records_ui.permissions.check_publish_status', MagicMock(return_value=False)):
+        # 4 Access denied
+        url = '/v1/ranking/11/files'
+        res = client.get(url)
+        assert res.status_code == 403
+
+    with patch('weko_records_ui.permissions.page_permission_factory', MagicMock(return_value=False)):
+        # 4 Access denied
+        res = client.get(url)
+        assert res.status_code == 403
+
+    with patch('weko_items_ui.utils.get_file_download_data', return_value=ranking_result):
+        # 5 File not exist
+        url = '/v1/ranking/16/files'
+        res = client.get(url)
+        assert res.status_code == 404
+
+        # 6 Invalid record
+        url = '/v1/ranking/100/files'
+        res = client.get(url)
+        assert res.status_code == 404
+
+        # 7 Invalid version
+        url = '/v0/ranking/11/files'
+        res = client.get(url)
+        assert res.status_code == 400
+
+        # 8 Invalid date
+        url = '/v1/ranking/11/files'
+        res = client.get(url + "?date=a")
+        assert res.status_code == 400
+
+        # 9 Invalid display_number
+        res = client.get(url + "?display_number=a")
+        assert res.status_code == 400
+
+        # 10 display_number > 2147483647
+        res = client.get(url + "?display_number=2147483648")
+        assert res.status_code == 400
+
+        # 11 Check Etag
+        res = client.get(url)
+        etag = res.headers['Etag']
+
+        headers = {}
+        headers['If-None-Match'] = etag
+        res = client.get(url, headers=headers)
+        assert res.status_code == 304

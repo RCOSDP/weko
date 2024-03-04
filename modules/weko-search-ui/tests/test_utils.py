@@ -1,11 +1,13 @@
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 
 import copy
+from io import StringIO
 import json
 import os
 import unittest
 from datetime import datetime
 import uuid
+from elasticsearch import NotFoundError
 
 import pytest
 from flask import current_app, make_response, request
@@ -16,6 +18,7 @@ from invenio_records.api import Record
 from mock import MagicMock, Mock, patch
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_pidrelations.models import PIDRelation
+from tests.test_rest import DummySearchResult
 from weko_admin.config import WEKO_ADMIN_MANAGEMENT_OPTIONS
 from weko_deposit.api import WekoDeposit, WekoIndexer
 from weko_records.api import ItemsMetadata, WekoRecord
@@ -118,7 +121,11 @@ from weko_search_ui.utils import (
     update_publish_status,
     validation_date_property,
     validation_file_open_date,
+    result_download_ui,
+    search_results_to_tsv,
+    create_tsv_row,
 )
+from werkzeug.exceptions import NotFound
 
 FIXTURE_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
 
@@ -2567,3 +2574,89 @@ def test_handle_check_exist_record_issue35315(app, doi_records, id, uri, warning
         assert before_list != after_list
         result = handle_check_exist_record(before_list)
         assert after_list == result
+
+
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_result_download_ui -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_result_download_ui(app):
+    valid_json = [{
+        "id": 0,
+        "name": {
+            "i18n": "title",
+            "en": "Title",
+            "ja": "タイトル"
+        },
+        "roCrateKey": "title"
+    }]
+    with open('tests/data/rocrate/rocrate_list.json', 'r') as f:
+        search_result = json.load(f)
+
+    with app.test_request_context():
+        with patch('weko_search_ui.utils.search_results_to_tsv', return_value=StringIO('test')):
+            # 9 execute
+            res = result_download_ui(search_result, valid_json)
+            assert res.status_code == 200
+
+            # 10 Empty search_result
+            with pytest.raises(NotFound):
+                res = result_download_ui(None, valid_json)
+
+
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_search_results_to_tsv -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_search_results_to_tsv(app):
+    valid_json = [
+        {
+            "id": 0,
+            "name": {
+                "i18n": "title",
+                "en": "Title",
+                "ja": "タイトル"
+            },
+            "roCrateKey": "title"
+        },
+        {
+            "id": 1,
+            "name": {
+                "i18n": "field",
+                "en": "Field",
+                "ja": "分野"
+            },
+            "roCrateKey": "genre"
+        },
+    ]
+    with open('tests/data/rocrate/rocrate_list.json', 'r') as f:
+        search_result = json.load(f)
+
+    with app.test_request_context():
+        # 11 Execute
+        with patch('weko_search_ui.utils.create_tsv_row', return_value={"Title": "Sample Title","Field": "Sample Field"}):
+            res = search_results_to_tsv(search_result, valid_json)
+            assert res.getvalue() == "Title\tField\nSample Title\tSample Field\n"
+
+        # 12 Empty json
+        input_json = [{}]
+        with patch('weko_search_ui.utils.create_tsv_row', return_value={}):
+            try:
+                search_results_to_tsv(search_result, input_json)
+                assert True
+            except:
+                assert False
+
+
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_create_tsv_row -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_create_tsv_row(app):
+    field_rocrate_dict = {'Title': 'title', 'Field': 'genre'}
+    with open('tests/data/rocrate/rocrate_list.json', 'r') as f:
+        search_result = json.load(f)
+
+    data_response = [
+        graph for graph in search_result[0]['metadata']['@graph']
+        if graph.get('@id') == './'
+    ][0]
+
+    with app.test_request_context():
+        # 13 Execute
+        res = create_tsv_row(field_rocrate_dict, data_response)
+        assert res == {
+            'Title': 'メタボリックシンドロームモデルマウスの多臓器遺伝子発現量データ',
+            'Field': '生物学'
+        }

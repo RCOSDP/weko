@@ -173,6 +173,7 @@ const emits = defineEmits([
 // const and let
 /////////////////////////////////// */
 
+const { t, locale } = useI18n();
 const perPage = ref(props.conditions.perPage ?? '20');
 const sort = ref(props.conditions.sort ?? 'wtl');
 const order = ref(props.conditions.order ?? 'asc');
@@ -208,6 +209,7 @@ function formatConditionsValue(column: any) {
       return null;
     }
   } else if (column.type === 'date') {
+    locale.value = String(localStorage.getItem('locale'));
     const valueList: Array<string> = [];
     const from = props.conditions.detail[column.queryFrom];
     const to = props.conditions.detail[column.queryTo];
@@ -218,7 +220,7 @@ function formatConditionsValue(column: any) {
           // @ts-ignore
           if (data.query === val) {
             // @ts-ignore
-            valueList.push(useI18n().t(data.name));
+            valueList.push(t(data.i18n));
           }
         }
       }

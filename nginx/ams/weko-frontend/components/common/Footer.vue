@@ -59,15 +59,9 @@
             <img src="/img/logo/logo01.png" alt="AMS Logo" />
           </NuxtLink>
         </p>
-        <p class="mr-[5px]">
-          <NuxtLink to="/">
-            <img src="/img/logo/logo02.png" alt="AMS Logo" />
-          </NuxtLink>
-        </p>
-        <p class="text-white text-xs leading-6">
+        <p class="text-white text-xs leading-6 mt-auto">
           {{ $t('serviceName') }}
-          {{ $t('catchCopy') }}
-          <br />
+          <!-- {{ $t('catchCopy') }} -->
           <span class="block text-[10px]">Copyright 2023 NII inc.</span>
         </p>
       </div>

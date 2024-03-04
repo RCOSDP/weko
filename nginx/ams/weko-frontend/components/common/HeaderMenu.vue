@@ -129,7 +129,7 @@ function changeModalState() {
 /////////////////////////////////// */
 
 try {
-  $fetch(useAppConfig().wekoApi + '/tree/index', {
+  await $fetch(useAppConfig().wekoApi + '/tree/index', {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'GET',
     headers: {

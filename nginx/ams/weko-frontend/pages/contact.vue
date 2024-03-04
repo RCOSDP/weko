@@ -99,7 +99,7 @@
                         'border-miby-form-red': dirtyContactEtc && checkContactEtc(contactEtc) !== true,
                         'border-miby-thin-gray': !(dirtyContactEtc && checkContactEtc(contactEtc) !== true)
                       }"
-                      class="mt-1 mb-1 py-2.5 px-5 rounded w-full placeholder:text-miby-thin-gray h-7"
+                      class="mt-1 py-2.5 px-5 rounded w-full placeholder:text-miby-thin-gray h-7"
                       @click="dirtyContactEtc = true" />
                     <ErrorMessage v-slot="message" name="etc">
                       <span class="text-xs mr-auto text-miby-form-red">

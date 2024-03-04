@@ -1841,11 +1841,23 @@ def create_tsv(files, language='en'):
         _io.StringIO: TSV file
     """
     # Language setting
-    from .config import WEKO_RECORDS_UI_TSV_FIELD_NAMES_EN, WEKO_RECORDS_UI_TSV_FIELD_NAMES_JA
+    from .config import (
+        WEKO_RECORDS_UI_TSV_FIELD_NAMES_DEFAULT,
+        WEKO_RECORDS_UI_TSV_FIELD_NAMES_EN,
+        WEKO_RECORDS_UI_TSV_FIELD_NAMES_JA,
+    )
 
     fieldnames = WEKO_RECORDS_UI_TSV_FIELD_NAMES_EN
     if language == 'ja':
         fieldnames = WEKO_RECORDS_UI_TSV_FIELD_NAMES_JA
+
+    if not fieldnames:
+        fieldnames = []
+    fieldnames_num = len(fieldnames) - len(WEKO_RECORDS_UI_TSV_FIELD_NAMES_DEFAULT)
+
+    if fieldnames_num < 0:
+        for i in range(fieldnames_num, 0):
+            fieldnames.append(WEKO_RECORDS_UI_TSV_FIELD_NAMES_DEFAULT[i])
 
     # License dict list
     from weko_admin.config import WEKO_ADMIN_MANAGEMENT_OPTIONS

@@ -15,7 +15,7 @@
         <span class="font-medium">{{ $t('releaseDate') }} :</span>
         <span class="ml-2">
           <span v-if="file.hasOwnProperty('accessMode') && file.hasOwnProperty('dateCreated')">
-            {{ file['dateCreated'][0] }}
+            {{ file['dateCreated'] }}
           </span>
           <span v-else>undefined</span>
         </span>
@@ -35,7 +35,10 @@
         <span class="font-medium">{{ $t('DLNumber') }} :</span>
         <span class="ml-2">
           <span v-if="file['accessMode'] == 'open_access' || file['accessMode'] == 'open_date'">
-            {{ downloadNumber.toLocaleString() }}
+            <span v-if="downloadNumber >= 0">
+              {{ downloadNumber.toLocaleString() }}
+            </span>
+            <span v-else>undefined</span>
           </span>
           <span v-else>{{ $t('openPrivate') }}</span>
         </span>
@@ -87,9 +90,12 @@
     <!-- 格納場所 -->
     <td class="text-left break-words">
       <span v-if="file.hasOwnProperty(appConfig.roCrate.root.file.url)">
-        <a class="inline-block break-all">
-          {{ file[appConfig.roCrate.root.file.url] }}
-        </a>
+        <NuxtLink
+          :to="file[appConfig.roCrate.root.file.url]"
+          target="_blank"
+          class="inline-block break-all text-miby-link-blue">
+          <span class="mr-2.5 underline">{{ file[appConfig.roCrate.root.file.url] }}</span>
+        </NuxtLink>
       </span>
       <span v-else>undefined</span>
     </td>
@@ -129,7 +135,7 @@ const appConfig = useAppConfig();
 const isCeck = ref(false);
 const licenseImg = ref('');
 const isIcon = ref(true);
-const downloadNumber = ref(0);
+const downloadNumber = ref(-1);
 let licenseLink = '';
 
 /* ///////////////////////////////////
@@ -160,11 +166,11 @@ function getDownloadNumber() {
     },
     onResponseError({ response }) {
       statusCode = response.status;
-      emits('error', response.status, 'message.error.getFileDlNumber');
+      // emits('error', response.status, 'message.error.getFileDlNumber');
     }
   }).catch(() => {
     if (statusCode === 0) {
-      emits('error', 0, 'message.error.fetch');
+      // emits('error', 0, 'message.error.fetch');
     }
   });
 }
@@ -367,7 +373,7 @@ function clickLicense() {
 try {
   setLicenseIcon();
   if (props.file.accessMode === 'open_access' || props.file.accessMode === 'open_date') {
-    if (new Date(Date.parse(props.file.dateCreated[0])) <= new Date(Date.now())) {
+    if (new Date(Date.parse(props.file.dateCreated)) <= new Date(Date.now())) {
       getDownloadNumber();
     }
   }
@@ -383,7 +389,7 @@ watch(
   () => props.span,
   () => {
     if (props.file.accessMode === 'open_access' || props.file.accessMode === 'open_date') {
-      if (new Date(Date.parse(props.file.dateCreated[0])) <= new Date(Date.now())) {
+      if (new Date(Date.parse(props.file.dateCreated)) <= new Date(Date.now())) {
         getDownloadNumber();
       }
     }

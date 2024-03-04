@@ -93,7 +93,11 @@ function getItemStats(span: string) {
     },
     onResponseError({ response }) {
       statusCode = response.status;
-      emits('error', response.status, 'message.error.getItemViewsNumber');
+      if (statusCode === 500) {
+        emits('error', statusCode, 'message.error.error');
+      } else {
+        emits('error', statusCode, 'message.error.getItemViewsNumber');
+      }
     }
   }).catch(() => {
     if (statusCode === 0) {
