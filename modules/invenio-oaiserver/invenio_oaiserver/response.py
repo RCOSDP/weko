@@ -35,7 +35,7 @@ from .provider import OAIIDProvider
 from .query import get_records
 from .resumption_token import serialize
 from .utils import HARVEST_PRIVATE, OUTPUT_HARVEST, PRIVATE_INDEX, \
-    datetime_to_datestamp, get_index_state, handle_license_free, \
+    datetime_to_datestamp, handle_license_free, \
     is_output_harvest, serializer
 
 NS_OAIPMH = 'http://www.openarchives.org/OAI/2.0/'
@@ -403,9 +403,8 @@ def getrecord(**kwargs):
     e_tree, e_getrecord = verb(**kwargs)
     e_record = SubElement(e_getrecord, etree.QName(NS_OAIPMH, 'record'))
 
-    index_state = get_index_state()
     path_list = record.get('path') if 'path' in record else []
-    _is_output = is_output_harvest(path_list, index_state)
+    _is_output = is_output_harvest(path_list)
     current_app.logger.debug("_is_output:{}".format(_is_output))
     current_app.logger.debug("path_list:{}".format(path_list))
     current_app.logger.debug(
@@ -472,14 +471,13 @@ def listidentifiers(**kwargs):
     if not identify or not identify.outPutSetting:
         return error(get_error_code_msg(), **kwargs)
 
-    index_state = get_index_state()
     set_is_output = 0
     if 'set' in kwargs:
         set_obj = OAISet.get_set_by_spec(kwargs['set'])
         if not set_obj:
             return error(get_error_code_msg(), **kwargs)
         path = kwargs['set'].replace(':', '/')
-        set_is_output = is_output_harvest([path], index_state)
+        set_is_output = is_output_harvest([path])
         if set_is_output == HARVEST_PRIVATE:
             return error(get_error_code_msg(), **kwargs)
 
@@ -495,7 +493,7 @@ def listidentifiers(**kwargs):
             set_identifier(record, record)
 
             path_list = record.get('path') if 'path' in record else []
-            _is_output = is_output_harvest(path_list, index_state) \
+            _is_output = is_output_harvest(path_list) \
                 if 'set' not in kwargs else set_is_output
             current_app.logger.debug("pid:{}".format(pid))
             current_app.logger.debug("_is_output:{}".format(_is_output))
@@ -569,7 +567,6 @@ def listrecords(**kwargs):
             "No identify.outPutSetting")
         return error(get_error_code_msg(), **kwargs)
 
-    index_state = get_index_state()
     set_is_output = 0
     if 'set' in kwargs:
         set_obj = OAISet.get_set_by_spec(kwargs['set'])
@@ -577,7 +574,7 @@ def listrecords(**kwargs):
             return error(get_error_code_msg(), **kwargs)
         current_app.logger.debug("set: {}".format(set_obj.spec))
         path = kwargs['set'].replace(':', '/')
-        set_is_output = is_output_harvest([path], index_state)
+        set_is_output = is_output_harvest([path])
         current_app.logger.debug("set_is_output: {}".format(set_is_output))
         if set_is_output == HARVEST_PRIVATE:
             return error(get_error_code_msg(), **kwargs)
@@ -593,7 +590,7 @@ def listrecords(**kwargs):
             record = WekoRecord.get_record_by_uuid(pid_object.object_uuid)
             set_identifier(record, record)
             path_list = record.get('path') if 'path' in record else []
-            _is_output = is_output_harvest(path_list, index_state) \
+            _is_output = is_output_harvest(path_list) \
                 if 'set' not in kwargs else set_is_output
 
             current_app.logger.debug("pid:{}".format(pid))
