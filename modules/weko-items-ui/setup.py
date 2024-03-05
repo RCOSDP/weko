@@ -117,9 +117,6 @@ setup(
         'invenio_celery.tasks': [
             'weko_items_ui = weko_items_ui.tasks',
         ],
-        "invenio_config.module": [
-            "weko_items_ui = weko_items_ui.config",
-        ],
     },
     extras_require=extras_require,
     install_requires=install_requires,

@@ -124,7 +124,9 @@ def process_researchmap_queue(body , message):
 
             # 結果の書き戻し
             code = json.loads(result.splitlines()[0]).get('code')
-            is_success = code == 200 or code == 304
+
+            # v2api.pdf p17
+            is_success = code == 200 or code == 201 or code == 204 or code == 304
 
             register_linkage_result(pid_int,is_success ,item_uuid ,result)
 
@@ -300,14 +302,16 @@ def build_achievement(record,item,recid,mapping,jrc, achievement_type):
 
         elif  rm_map['type'] == 'identifiers':
             identifer_kv = {}
+            index = 0
             for relatedIdentifier in jrc.get(rm_map["weko_name"] ,{}).get('relatedIdentifier', []):
                 identifierType =relatedIdentifier.get('identifierType')
                 if identifierType.upper() == "DOI" or identifierType.upper() == "ISBN" :
                     ## 他の項目はresearchmapのAPI定義上更新不可。
 
-                    value = jrc.get(rm_map["weko_name"]).get('relatedIdentifier')[0].get('value')
+                    value = jrc.get(rm_map["weko_name"]).get('relatedIdentifier')[index].get('value')
                     identifer_kv = {identifierType.lower():value}
                 return_data.update({rm_map["rm_name"]:identifer_kv})
+                index = index + 1
             # current_app.logger.debug('identifiers')
 
         elif  rm_map['type'] == 'authors':

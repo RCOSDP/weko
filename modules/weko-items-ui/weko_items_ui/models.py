@@ -74,8 +74,7 @@ class CRISLinkageResult(db.Model, Timestamp):
     
     succeed = db.Column(
         db.Boolean,
-        nullable= True,
-        default = False
+        nullable= True
     )
 
     failed_log = db.Column(
