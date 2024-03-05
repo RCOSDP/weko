@@ -121,8 +121,6 @@ def search():
     # disply_setting = dict(size=display_number, timestamp=ts)
     disply_setting = dict(size=display_number)
 
-    detail_condition = get_search_detail_keyword("")
-
     export_settings = AdminSettings.get(
         "item_export_settings"
     ) or AdminSettings.Dict2Obj(
@@ -291,7 +289,6 @@ def search():
             community_id=community_id,
             sort_option=sort_options,
             disply_setting=disply_setting,
-            detail_condition=detail_condition,
             width=width,
             height=height,
             index_link_enabled=style.index_link_enabled,
@@ -433,6 +430,19 @@ def get_last_item_id():
     except Exception as ex:
         current_app.logger.error(ex)
     return jsonify(data=result), 200
+
+
+@blueprint_api.route('/advanced-search/condition', methods=['GET'])
+def get_advanced_search_condition():
+    """Get detail_condition.
+
+    Returns:
+        json -- detail_condition
+
+    """
+    data = get_search_detail_keyword("")
+
+    return data
 
 @blueprint.teardown_request
 @blueprint_api.teardown_request

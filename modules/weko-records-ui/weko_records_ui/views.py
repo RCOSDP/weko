@@ -58,7 +58,6 @@ from weko_records.serializers import citeproc_v1
 from weko_records.serializers.utils import get_mapping
 from weko_records.utils import custom_record_medata_for_export, \
     remove_weko2_special_character, selected_value_by_language
-from weko_search_ui.api import get_search_detail_keyword
 from weko_schema_ui.models import PublishStatus
 from weko_workflow.api import WorkFlow
 
@@ -473,8 +472,6 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     width = style.width if style else '3'
     height = style.height if style else None
 
-    detail_condition = get_search_detail_keyword('')
-
     # Add Item Reference data to Record Metadata
     res = ItemLink.get_item_link_info(record.get("recid"))
     if res:
@@ -662,7 +659,6 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         render_widgets=render_widgets,
         community_id=community_id,
         width=width,
-        detail_condition=detail_condition,
         height=height,
         index_link_enabled=style.index_link_enabled,
         index_link_list=index_link_list,

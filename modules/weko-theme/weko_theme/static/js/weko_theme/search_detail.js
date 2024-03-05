@@ -9,11 +9,36 @@
             $scope.search_community = document.getElementById('community').value;
             $scope.search_type = "0";
             $scope.default_condition_data = [];
-
             $scope.load_delimiter = 50;
+            let status_keep_flg = true
 
-            // page init
-            $scope.initData = function (data) {
+            // Call the API and initialize the data
+            $scope.setupInitData = function() {
+                $http({
+                    method: "GET",
+                    url: "/api/advanced-search/condition",
+                 }).then(function successCallback(response) {
+                    sessionStorage.setItem('init_detail_condition', angular.toJson(response.data))
+                    $scope.initDataKey()
+                    $scope.initData()
+                 }, function errorCallback(error){
+                    console.log(error);
+                 });
+            }
+
+            // Call initialization function on click
+            // Button to open/close the detailed search area
+            $scope.onClick = function() {
+                if(!sessionStorage.getItem('init_detail_condition')){
+                    // Prepare detailed search information if data exists in the session storage ('init_detail_condition').
+                    status_keep_flg = false
+                    $scope.setupInitData()
+                }   
+            }
+
+            // Create keys for initializing data
+            $scope.initDataKey = function(){
+                data= sessionStorage.getItem('init_detail_condition')
                 json_obj = angular.fromJson(data)
                 db_data = json_obj.condition_setting;
 
@@ -47,6 +72,10 @@
                         $scope.default_search_key.push(default_key);
                     };
                 });
+            }
+
+            // Generating information for the detailed search area.
+            $scope.initData = function () {
 
                 angular.forEach($scope.default_search_key, function (item, index, array) {
                     var obj_of_condition = {
@@ -69,9 +98,10 @@
 
                 $scope.default_condition_data = angular.fromJson(angular.toJson($scope.condition_data));
 
-                if (sessionStorage.getItem('btn') == 'detail-search') {
+                if (status_keep_flg) {
                     $scope.condition_data = angular.fromJson(sessionStorage.getItem('detail_search_conditions'));
-                    sessionStorage.removeItem('btn');
+                    sessionStorage.getItem('btn') === 'detail-search' ? sessionStorage.removeItem('btn') : null;
+                    
                 }
                 else {
                     $scope.reset_data();
@@ -449,6 +479,28 @@
                     });
                 });
             }
+
+            // Reused the condition for using advanced search from top_page.js.
+            var urlParams = new URLSearchParams(window.location.search);
+            var isDetailSearch = Array.from(urlParams.keys()).length > 5
+            if (isDetailSearch) {
+                if (urlParams.has('cur_index_id')) {
+                    isDetailSearch = false;
+                }
+            }
+
+            // Consider the usage status of advanced search.
+            if (isDetailSearch && !urlParams.has('is_facet_search')){
+                $scope.setupInitData()
+            }
+            // Consider the usage status of advanced and facet search.
+            else if(urlParams.has('is_facet_search') && sessionStorage.getItem('init_detail_condition')){
+                $scope.setupInitData()
+            }
+            else {
+                sessionStorage.removeItem('init_detail_condition');
+            }
+            
         }
 
         // Inject depedencies
