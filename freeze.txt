@@ -1,11 +1,11 @@
-alabaster==0.7.12
+alabaster==0.7.13
 alembic==0.9.6
 amqp==2.6.0
 angular-gettext-babel==0.3
 aniso8601==8.0.0
 arrow==0.12.1
 asn1crypto==0.23.0
-atomicwrites==1.4.0
+atomicwrites==1.4.1
 attrs==17.4.0
 b2handle==1.1.2
 Babel==2.5.1
@@ -32,11 +32,11 @@ cookiecutter==1.6.0
 counter-robots==2018.6
 cryptography==2.1.4
 datacite==1.0.1
-DateTime==4.4
+DateTime==4.9
 decorator==4.1.2
 defusedxml==0.5.0
 dictdiffer==0.7.0
-distlib==0.3.4
+distlib==0.3.6
 dnspython==2.2.1
 docutils==0.18.1
 dojson==1.3.2
@@ -71,12 +71,12 @@ Flask-Principal==0.4.0
 Flask-RESTful==0.3.8
 Flask-Security==3.0.0
 flask-shell-ipython==0.4.1
-Flask-Sitemap==0.1.0
+Flask-Sitemap==0.4.0
 Flask-SQLAlchemy==2.3.2
 flask-talisman==0.4.1
 Flask-WTF==0.14.3
 -e git+https://github.com/RCOSDP/pyfpdf.git@f9b032148283d535cabc7789858081c80de36fef#egg=fpdf
-frozendict==2.3.2
+frozendict==2.3.6
 fs==0.5.4
 ftfy==4.4.3
 future==0.16.0
@@ -84,53 +84,53 @@ github3.py==1.1.0
 html5lib==1.0.1
 idna==2.6
 iiif-prezi==0.3.0
-imagesize==1.3.0
+imagesize==1.4.1
 importlib-metadata==4.8.3
 importlib-resources==5.4.0
 infinity==1.4
 intervals==0.8.0
 invenio-access==1.1.0
--e git+https://mhaya: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@github.com/RCOSDP/weko.git@2639d2cfb8ba23ccfb2da1b5e47fcd571dbcff73#egg=invenio_accounts&subdirectory=modules/invenio-accounts
+-e git+https://github.com/RCOSDP/weko.git@7cb362136cc776bf339f6433ce408a035d1a87a9#egg=invenio_accounts&subdirectory=modules/invenio-accounts
 invenio-admin==1.1.2
 invenio-app==1.1.0
 invenio-assets==1.0.0
 invenio-base==1.0.2
 invenio-cache==1.0.0
 invenio-celery==1.1.3
--e git+https://mhaya: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@github.com/RCOSDP/weko.git@2639d2cfb8ba23ccfb2da1b5e47fcd571dbcff73#egg=invenio_communities&subdirectory=modules/invenio-communities
+-e git+https://github.com/RCOSDP/weko.git@7cb362136cc776bf339f6433ce408a035d1a87a9#egg=invenio_communities&subdirectory=modules/invenio-communities
 invenio-config==1.0.0
 invenio-csl-rest==1.0.0a1
--e git+https://mhaya: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@github.com/RCOSDP/weko.git@2639d2cfb8ba23ccfb2da1b5e47fcd571dbcff73#egg=invenio_db&subdirectory=modules/invenio-db
--e git+https://mhaya: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@github.com/RCOSDP/weko.git@2639d2cfb8ba23ccfb2da1b5e47fcd571dbcff73#egg=invenio_deposit&subdirectory=modules/invenio-deposit
--e git+https://mhaya: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@github.com/RCOSDP/weko.git@2639d2cfb8ba23ccfb2da1b5e47fcd571dbcff73#egg=invenio_files_rest&subdirectory=modules/invenio-files-rest
+-e git+https://github.com/RCOSDP/weko.git@7cb362136cc776bf339f6433ce408a035d1a87a9#egg=invenio_db&subdirectory=modules/invenio-db
+-e git+https://github.com/RCOSDP/weko.git@7cb362136cc776bf339f6433ce408a035d1a87a9#egg=invenio_deposit&subdirectory=modules/invenio-deposit
+-e git+https://github.com/RCOSDP/weko.git@7cb362136cc776bf339f6433ce408a035d1a87a9#egg=invenio_files_rest&subdirectory=modules/invenio-files-rest
 invenio-formatter==1.0.0b3
 invenio-i18n==1.0.0
--e git+https://mhaya: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@github.com/RCOSDP/weko.git@2639d2cfb8ba23ccfb2da1b5e47fcd571dbcff73#egg=invenio_iiif&subdirectory=modules/invenio-iiif
-invenio-indexer==1.0.2
+-e git+https://github.com/RCOSDP/weko.git@7cb362136cc776bf339f6433ce408a035d1a87a9#egg=invenio_iiif&subdirectory=modules/invenio-iiif
+-e git+https://github.com/RCOSDP/weko.git@7cb362136cc776bf339f6433ce408a035d1a87a9#egg=invenio_indexer&subdirectory=modules/invenio-indexer
 invenio-jsonschemas==1.0.0
 invenio-logging==1.0.0b3
--e git+https://mhaya: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@github.com/RCOSDP/weko.git@2639d2cfb8ba23ccfb2da1b5e47fcd571dbcff73#egg=invenio_mail&subdirectory=modules/invenio-mail
+-e git+https://github.com/RCOSDP/weko.git@7cb362136cc776bf339f6433ce408a035d1a87a9#egg=invenio_mail&subdirectory=modules/invenio-mail
 invenio-marc21==1.0.0a8
--e git+https://mhaya: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@github.com/RCOSDP/weko.git@2639d2cfb8ba23ccfb2da1b5e47fcd571dbcff73#egg=invenio_oaiharvester&subdirectory=modules/invenio-oaiharvester
--e git+https://mhaya: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@github.com/RCOSDP/weko.git@2639d2cfb8ba23ccfb2da1b5e47fcd571dbcff73#egg=invenio_oaiserver&subdirectory=modules/invenio-oaiserver
--e git+https://mhaya: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@github.com/RCOSDP/weko.git@2639d2cfb8ba23ccfb2da1b5e47fcd571dbcff73#egg=invenio_oauth2server&subdirectory=modules/invenio-oauth2server
+-e git+https://github.com/RCOSDP/weko.git@7cb362136cc776bf339f6433ce408a035d1a87a9#egg=invenio_oaiharvester&subdirectory=modules/invenio-oaiharvester
+-e git+https://github.com/RCOSDP/weko.git@7cb362136cc776bf339f6433ce408a035d1a87a9#egg=invenio_oaiserver&subdirectory=modules/invenio-oaiserver
+-e git+https://github.com/RCOSDP/weko.git@7cb362136cc776bf339f6433ce408a035d1a87a9#egg=invenio_oauth2server&subdirectory=modules/invenio-oauth2server
 invenio-oauthclient==1.0.0
 invenio-pidrelations==1.0.0a4
 invenio-pidstore==1.0.0
--e git+https://mhaya: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@github.com/RCOSDP/weko.git@2639d2cfb8ba23ccfb2da1b5e47fcd571dbcff73#egg=invenio_previewer&subdirectory=modules/invenio-previewer
+-e git+https://github.com/RCOSDP/weko.git@7cb362136cc776bf339f6433ce408a035d1a87a9#egg=invenio_previewer&subdirectory=modules/invenio-previewer
 invenio-query-parser==0.6.0
--e git+https://mhaya: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@github.com/RCOSDP/weko.git@2639d2cfb8ba23ccfb2da1b5e47fcd571dbcff73#egg=invenio_queues&subdirectory=modules/invenio-queues
--e git+https://mhaya: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@github.com/RCOSDP/weko.git@2639d2cfb8ba23ccfb2da1b5e47fcd571dbcff73#egg=invenio_records&subdirectory=modules/invenio-records
+-e git+https://github.com/RCOSDP/weko.git@7cb362136cc776bf339f6433ce408a035d1a87a9#egg=invenio_queues&subdirectory=modules/invenio-queues
+-e git+https://github.com/RCOSDP/weko.git@7cb362136cc776bf339f6433ce408a035d1a87a9#egg=invenio_records&subdirectory=modules/invenio-records
 invenio-records-files==1.0.0a10
--e git+https://mhaya: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@github.com/RCOSDP/weko.git@2639d2cfb8ba23ccfb2da1b5e47fcd571dbcff73#egg=invenio_records_rest&subdirectory=modules/invenio-records-rest
+-e git+https://github.com/RCOSDP/weko.git@7cb362136cc776bf339f6433ce408a035d1a87a9#egg=invenio_records_rest&subdirectory=modules/invenio-records-rest
 invenio-records-ui==1.0.0
--e git+https://mhaya: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@github.com/RCOSDP/weko.git@2639d2cfb8ba23ccfb2da1b5e47fcd571dbcff73#egg=invenio_resourcesyncclient&subdirectory=modules/invenio-resourcesyncclient
--e git+https://mhaya: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@github.com/RCOSDP/weko.git@2639d2cfb8ba23ccfb2da1b5e47fcd571dbcff73#egg=invenio_resourcesyncserver&subdirectory=modules/invenio-resourcesyncserver
+-e git+https://github.com/RCOSDP/weko.git@7cb362136cc776bf339f6433ce408a035d1a87a9#egg=invenio_resourcesyncclient&subdirectory=modules/invenio-resourcesyncclient
+-e git+https://github.com/RCOSDP/weko.git@7cb362136cc776bf339f6433ce408a035d1a87a9#egg=invenio_resourcesyncserver&subdirectory=modules/invenio-resourcesyncserver
 invenio-rest==1.1.2
--e git+https://mhaya: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@github.com/RCOSDP/weko.git@2639d2cfb8ba23ccfb2da1b5e47fcd571dbcff73#egg=invenio_s3&subdirectory=modules/invenio-s3
-invenio-search==1.1.0
-invenio-search-ui==1.0.0a9
--e git+https://mhaya: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@github.com/RCOSDP/weko.git@2639d2cfb8ba23ccfb2da1b5e47fcd571dbcff73#egg=invenio_stats&subdirectory=modules/invenio-stats
+-e git+https://github.com/RCOSDP/weko.git@7cb362136cc776bf339f6433ce408a035d1a87a9#egg=invenio_s3&subdirectory=modules/invenio-s3
+-e git+https://github.com/RCOSDP/invenio-search.git@cff9744c5dc651893a9c51672c5b8da9adc21e16#egg=invenio_search
+-e git+https://github.com/RCOSDP/invenio-search-ui.git@74bd3b2990ff27b39e01b6b31be9a0b5fda3dd0f#egg=invenio_search_ui
+-e git+https://github.com/RCOSDP/weko.git@7cb362136cc776bf339f6433ce408a035d1a87a9#egg=invenio_stats&subdirectory=modules/invenio-stats
 invenio-theme==1.0.0b4
 ipaddress==1.0.19
 ipython==6.2.1
@@ -150,7 +150,7 @@ jsonresolver==0.2.1
 jsonschema==2.6.0
 jupyter-client==5.2.2
 jupyter-core==4.4.0
-kombu==4.6.10
+-e git+https://github.com/RCOSDP/kombu.git@f204fdf078d5e94393c86693f545e2d011f620f5#egg=kombu
 limits==1.2.1
 lxml==4.1.1
 Mako==1.0.7
@@ -173,12 +173,12 @@ packaging==21.3
 pandocfilters==1.4.2
 parso==0.1.0
 passlib==1.7.1
-pbr==5.9.0
+pbr==5.11.1
 pexpect==4.3.0
 pickleshare==0.7.4
 Pillow==5.4.1
 platformdirs==2.4.0
-pluggy==0.11.0
+pluggy==0.13.1
 ply==3.11
 poyo==0.4.1
 prompt-toolkit==1.0.15
@@ -218,7 +218,8 @@ sphinxcontrib-websupport==1.2.4
 SQLAlchemy==1.2.19
 SQLAlchemy-Continuum==1.3.6
 SQLAlchemy-Utils==0.35.0
-stevedore==3.5.0
+stevedore==3.5.2
+sword3common==0.1.1
 testpath==0.3.1
 tornado==4.5.3
 traitlets==4.3.2
@@ -227,11 +228,11 @@ ua-parser==0.7.3
 uritemplate==4.1.1
 uritools==2.1.0
 urllib3==1.22
-uWSGI==2.0.20
+uWSGI==2.0.21
 uwsgitop==0.11
 validators==0.12.0
 vine==1.3.0
-virtualenv==20.14.1
+virtualenv==20.17.1
 virtualenv-clone==0.5.7
 virtualenvwrapper==4.8.4
 Wand==0.6.1
@@ -239,28 +240,30 @@ wcwidth==0.1.7
 webargs==5.5.2
 webassets==0.12.1
 webencodings==0.5.1
--e git+https://mhaya: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@github.com/RCOSDP/weko.git@2639d2cfb8ba23ccfb2da1b5e47fcd571dbcff73#egg=weko_accounts&subdirectory=modules/weko-accounts
--e git+https://mhaya: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@github.com/RCOSDP/weko.git@2639d2cfb8ba23ccfb2da1b5e47fcd571dbcff73#egg=weko_admin&subdirectory=modules/weko-admin
--e git+https://mhaya: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@github.com/RCOSDP/weko.git@2639d2cfb8ba23ccfb2da1b5e47fcd571dbcff73#egg=weko_authors&subdirectory=modules/weko-authors
--e git+https://mhaya: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@github.com/RCOSDP/weko.git@2639d2cfb8ba23ccfb2da1b5e47fcd571dbcff73#egg=weko_bulkupdate&subdirectory=modules/weko-bulkupdate
--e git+https://mhaya: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@github.com/RCOSDP/weko.git@2639d2cfb8ba23ccfb2da1b5e47fcd571dbcff73#egg=weko_deposit&subdirectory=modules/weko-deposit
--e git+https://mhaya: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@github.com/RCOSDP/weko.git@2639d2cfb8ba23ccfb2da1b5e47fcd571dbcff73#egg=weko_gridlayout&subdirectory=modules/weko-gridlayout
--e git+https://mhaya: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@github.com/RCOSDP/weko.git@2639d2cfb8ba23ccfb2da1b5e47fcd571dbcff73#egg=weko_groups&subdirectory=modules/weko-groups
--e git+https://mhaya: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@github.com/RCOSDP/weko.git@2639d2cfb8ba23ccfb2da1b5e47fcd571dbcff73#egg=weko_handle&subdirectory=modules/weko-handle
--e git+https://mhaya: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@github.com/RCOSDP/weko.git@2639d2cfb8ba23ccfb2da1b5e47fcd571dbcff73#egg=weko_index_tree&subdirectory=modules/weko-index-tree
--e git+https://mhaya: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@github.com/RCOSDP/weko.git@2639d2cfb8ba23ccfb2da1b5e47fcd571dbcff73#egg=weko_indextree_journal&subdirectory=modules/weko-indextree-journal
--e git+https://mhaya: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@github.com/RCOSDP/weko.git@2639d2cfb8ba23ccfb2da1b5e47fcd571dbcff73#egg=weko_items_autofill&subdirectory=modules/weko-items-autofill
--e git+https://mhaya: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@github.com/RCOSDP/weko.git@2639d2cfb8ba23ccfb2da1b5e47fcd571dbcff73#egg=weko_items_ui&subdirectory=modules/weko-items-ui
--e git+https://mhaya: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@github.com/RCOSDP/weko.git@2639d2cfb8ba23ccfb2da1b5e47fcd571dbcff73#egg=weko_itemtypes_ui&subdirectory=modules/weko-itemtypes-ui
--e git+https://mhaya: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@github.com/RCOSDP/weko.git@2639d2cfb8ba23ccfb2da1b5e47fcd571dbcff73#egg=weko_logging&subdirectory=modules/weko-logging
--e git+https://mhaya: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@github.com/RCOSDP/weko.git@2639d2cfb8ba23ccfb2da1b5e47fcd571dbcff73#egg=weko_records&subdirectory=modules/weko-records
--e git+https://mhaya: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@github.com/RCOSDP/weko.git@2639d2cfb8ba23ccfb2da1b5e47fcd571dbcff73#egg=weko_records_ui&subdirectory=modules/weko-records-ui
--e git+https://mhaya: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@github.com/RCOSDP/weko.git@2639d2cfb8ba23ccfb2da1b5e47fcd571dbcff73#egg=weko_schema_ui&subdirectory=modules/weko-schema-ui
--e git+https://mhaya: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@github.com/RCOSDP/weko.git@2639d2cfb8ba23ccfb2da1b5e47fcd571dbcff73#egg=weko_search_ui&subdirectory=modules/weko-search-ui
--e git+https://mhaya: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@github.com/RCOSDP/weko.git@2639d2cfb8ba23ccfb2da1b5e47fcd571dbcff73#egg=weko_sitemap&subdirectory=modules/weko-sitemap
--e git+https://mhaya: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@github.com/RCOSDP/weko.git@2639d2cfb8ba23ccfb2da1b5e47fcd571dbcff73#egg=weko_theme&subdirectory=modules/weko-theme
--e git+https://mhaya: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@github.com/RCOSDP/weko.git@2639d2cfb8ba23ccfb2da1b5e47fcd571dbcff73#egg=weko_user_profiles&subdirectory=modules/weko-user-profiles
--e git+https://mhaya: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@github.com/RCOSDP/weko.git@2639d2cfb8ba23ccfb2da1b5e47fcd571dbcff73#egg=weko_workflow&subdirectory=modules/weko-workflow
+-e git+https://github.com/RCOSDP/weko.git@7cb362136cc776bf339f6433ce408a035d1a87a9#egg=weko_accounts&subdirectory=modules/weko-accounts
+-e git+https://github.com/RCOSDP/weko.git@7cb362136cc776bf339f6433ce408a035d1a87a9#egg=weko_admin&subdirectory=modules/weko-admin
+-e git+https://github.com/RCOSDP/weko.git@7cb362136cc776bf339f6433ce408a035d1a87a9#egg=weko_authors&subdirectory=modules/weko-authors
+-e git+https://github.com/RCOSDP/weko.git@7cb362136cc776bf339f6433ce408a035d1a87a9#egg=weko_bulkupdate&subdirectory=modules/weko-bulkupdate
+-e git+https://github.com/RCOSDP/weko.git@7cb362136cc776bf339f6433ce408a035d1a87a9#egg=weko_deposit&subdirectory=modules/weko-deposit
+-e git+https://github.com/RCOSDP/weko.git@7cb362136cc776bf339f6433ce408a035d1a87a9#egg=weko_gridlayout&subdirectory=modules/weko-gridlayout
+-e git+https://github.com/RCOSDP/weko.git@7cb362136cc776bf339f6433ce408a035d1a87a9#egg=weko_groups&subdirectory=modules/weko-groups
+-e git+https://github.com/RCOSDP/weko.git@7cb362136cc776bf339f6433ce408a035d1a87a9#egg=weko_handle&subdirectory=modules/weko-handle
+-e git+https://github.com/RCOSDP/weko.git@7cb362136cc776bf339f6433ce408a035d1a87a9#egg=weko_index_tree&subdirectory=modules/weko-index-tree
+-e git+https://github.com/RCOSDP/weko.git@7cb362136cc776bf339f6433ce408a035d1a87a9#egg=weko_indextree_journal&subdirectory=modules/weko-indextree-journal
+-e git+https://github.com/RCOSDP/weko.git@7cb362136cc776bf339f6433ce408a035d1a87a9#egg=weko_items_autofill&subdirectory=modules/weko-items-autofill
+-e git+https://github.com/RCOSDP/weko.git@7cb362136cc776bf339f6433ce408a035d1a87a9#egg=weko_items_ui&subdirectory=modules/weko-items-ui
+-e git+https://github.com/RCOSDP/weko.git@7cb362136cc776bf339f6433ce408a035d1a87a9#egg=weko_itemtypes_ui&subdirectory=modules/weko-itemtypes-ui
+-e git+https://github.com/RCOSDP/weko.git@7cb362136cc776bf339f6433ce408a035d1a87a9#egg=weko_logging&subdirectory=modules/weko-logging
+-e git+https://github.com/RCOSDP/weko.git@7cb362136cc776bf339f6433ce408a035d1a87a9#egg=weko_records&subdirectory=modules/weko-records
+-e git+https://github.com/RCOSDP/weko.git@7cb362136cc776bf339f6433ce408a035d1a87a9#egg=weko_records_ui&subdirectory=modules/weko-records-ui
+-e git+https://github.com/RCOSDP/weko.git@7cb362136cc776bf339f6433ce408a035d1a87a9#egg=weko_redis&subdirectory=modules/weko-redis
+-e git+https://github.com/RCOSDP/weko.git@7cb362136cc776bf339f6433ce408a035d1a87a9#egg=weko_schema_ui&subdirectory=modules/weko-schema-ui
+-e git+https://github.com/RCOSDP/weko.git@7cb362136cc776bf339f6433ce408a035d1a87a9#egg=weko_search_ui&subdirectory=modules/weko-search-ui
+-e git+https://github.com/RCOSDP/weko.git@7cb362136cc776bf339f6433ce408a035d1a87a9#egg=weko_sitemap&subdirectory=modules/weko-sitemap
+-e git+https://github.com/RCOSDP/weko.git@7cb362136cc776bf339f6433ce408a035d1a87a9#egg=weko_swordserver&subdirectory=modules/weko-swordserver
+-e git+https://github.com/RCOSDP/weko.git@7cb362136cc776bf339f6433ce408a035d1a87a9#egg=weko_theme&subdirectory=modules/weko-theme
+-e git+https://github.com/RCOSDP/weko.git@7cb362136cc776bf339f6433ce408a035d1a87a9#egg=weko_user_profiles&subdirectory=modules/weko-user-profiles
+-e git+https://github.com/RCOSDP/weko.git@7cb362136cc776bf339f6433ce408a035d1a87a9#egg=weko_workflow&subdirectory=modules/weko-workflow
 Werkzeug==0.15.2
 whichcraft==0.4.1
 WTForms==2.1
@@ -269,4 +272,4 @@ WTForms-Components==0.10.3
 xmlschema==0.9.30
 xmltodict==0.12.0
 zipp==3.6.0
-zope.interface==5.4.0
+zope.interface==5.5.2

@@ -3,8 +3,12 @@ import json
 from mock import patch, MagicMock
 from invenio_accounts.testutils import login_user_via_session
 from flask import current_app
+from invenio_records_rest.errors import InvalidDataRESTError
 
 from weko_schema_ui import WekoSchemaREST
+
+# .tox/c1/bin/pytest --cov=weko_schema_ui tests/test_rest.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-schema-ui/.tox/c1/tmp
+
 
 # .tox/c1/bin/pytest --cov=weko_schema_ui tests/test_rest.py::test_ext -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-schema-ui/.tox/c1/tmp
 def test_ext(app):
@@ -89,6 +93,7 @@ def test_SchemaFilesResource_shcemaspid_post_login(client_rest, users, id, statu
                                        data=json.dumps(data),
                                        content_type='application/json')
                 assert res.status_code == status_code
+
 
 
 # .tox/c1/bin/pytest --cov=weko_schema_ui tests/test_rest.py::test_SchemaFilesResource_get_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-schema-ui/.tox/c1/tmp
@@ -305,6 +310,21 @@ def test_SchemaFilesResource_put_login(client_rest, users, id, status_code):
                               data=json.dumps({}),
                               content_type='application/json')
         assert res.status_code == status_code
+
+user_put_results = [
+    (0, 200),
+]
+# .tox/c1/bin/pytest --cov=weko_schema_ui tests/test_rest.py::test_SchemaFilesResource_put_login_error -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-schema-ui/.tox/c1/tmp
+@pytest.mark.parametrize('id, status_code', user_put_results)
+def test_SchemaFilesResource_put_login_error(client_rest, users, id, status_code):
+    login_user_via_session(client=client_rest, email=users[id]['email'])
+    m = MagicMock()
+    m.save.side_effect=Exception("mock exception")
+    with patch('weko_schema_ui.rest.PyFSFileStorage',m):
+        res = client_rest.put('/schemas/put/111/test.zip',
+                              data=json.dumps({}),
+                              content_type='application/json')
+        assert res.status_code == 400
 
 
 # .tox/c1/bin/pytest --cov=weko_schema_ui tests/test_rest.py::test_SchemaFilesResource_put_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-schema-ui/.tox/c1/tmp

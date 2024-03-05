@@ -335,23 +335,10 @@ def get_new_arrivals_data(widget_id):
         json -- new arrivals data
 
     """
-    _suffix = "guest"
-    if current_user.is_authenticated:
-        _suffix = ""
-        for role in current_user.roles:
-            _suffix = _suffix + str(role.id) + '_'
-        _suffix = _suffix.rstrip('_')
+    data = jsonify(
+        WidgetDataLoaderServices.get_new_arrivals_data(widget_id))
 
-    # cache by role
-    cache_name = 'cache_new_arrivals'
-    cached_data = current_cache.get(cache_name)
-    if not cached_data:
-        cached_data = jsonify(
-            WidgetDataLoaderServices.get_new_arrivals_data(widget_id))
-        ttl = current_app.config.get('INVENIO_CACHE_TTL', 50)
-        current_cache.set(cache_name, cached_data, timeout=ttl)
-
-    return cached_data
+    return data
 
 
 @blueprint_rss.route('/records', methods=['GET'])
@@ -396,6 +383,7 @@ def get_widget_page_endpoints(widget_id, lang=''):
 # Based on invenio_pages.views
 def view_widget_page():
     """View user-created WidgetDesignPages."""
+
     community_id, ctx = get_community_id(request.args)
     try:
         page = WidgetDesignPage.get_by_url(request.path)
@@ -569,15 +557,15 @@ def unlocked_widget():
     else:
         return jsonify(success=False, msg=_("Can't unlock widget.")), 200
 
-@blueprint.teardown_request
-@blueprint_api.teardown_request
-@blueprint_pages.teardown_request
-@blueprint_rss.teardown_request
-def dbsession_clean(exception):
-    current_app.logger.debug("weko_gridlayout dbsession_clean: {}".format(exception))
-    if exception is None:
-        try:
-            db.session.commit()
-        except:
-            db.session.rollback()
-    db.session.remove()
+# @blueprint.teardown_request
+# @blueprint_api.teardown_request
+# @blueprint_pages.teardown_request
+# @blueprint_rss.teardown_request
+# def dbsession_clean(exception):
+#     current_app.logger.debug("weko_gridlayout dbsession_clean: {}".format(exception))
+#     if exception is None:
+#         try:
+#             db.session.commit()
+#         except:
+#             db.session.rollback()
+#     db.session.remove()

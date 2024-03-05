@@ -67,7 +67,7 @@ def export_journals():
         file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
         file_delimiter = '\t' if file_format == 'tsv' else ','
         file_name = 'journal.{}'.format(file_format)
-        numpy.savetxt(file_name, data, delimiter=file_delimiter)
+        numpy.savetxt(file_name, data, delimiter=file_delimiter,fmt="%s")
 
         # jsonList = json.dumps({"results" : results})
         # Save journals information to file

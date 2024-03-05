@@ -5,14 +5,14 @@ from datetime import datetime
 from unittest.mock import MagicMock
 
 import pytest
-from flask import Flask, json, jsonify, session, url_for
+from flask import Flask, json, jsonify, session, url_for, make_response
 from flask_security.utils import login_user
 from invenio_accounts.testutils import login_user_via_session
 from invenio_i18n.babel import set_locale
 from invenio_pidstore.errors import PIDDoesNotExistError
 from mock import patch
-from weko_workflow.api import WorkActivity, WorkFlow
-from weko_workflow.models import Activity
+from weko_workflow.api import WorkActivity
+from weko_workflow.models import Activity,WorkFlow
 
 from weko_items_ui.views import (
     check_ranking_show,
@@ -20448,61 +20448,117 @@ def test_iframe_items_index_acl(app, client, users, id, status_code):
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_test_iframe_items_index -v -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 
 
-def test_test_iframe_items_index(app, client, users, db_records, db_activity):
+def test_test_iframe_items_index(app, db, client, users, db_records, db_activity,redis_connect,without_remove_session,mocker):
     login_user_via_session(client=client, email=users[0]["email"])
-
+    mocker.patch("weko_items_ui.views.set_files_display_type")
+    mocker.patch("weko_items_ui.views.get_thumbnails",return_value=[])
+    mocker.patch("weko_items_ui.views.update_index_tree_for_record")
+    
+    # pid_value == 0
+    url = url_for("weko_items_ui.iframe_items_index", pid_value=str(0), _external=True)
+    with patch("weko_items_ui.views.redirect",return_value=make_response()) as mock_redirect:
+        res = client.get(url)
+        mock_redirect.assert_called_with("/items/iframe")
+    
     url = url_for("weko_items_ui.iframe_items_index", pid_value=str(1), _external=True)
-
+    # exist community
     with patch("weko_workflow.api.GetCommunity.get_community_by_id", return_value="c"):
         with client.session_transaction() as session:
             session["itemlogin_community_id"] = "c"
         res = client.get(url)
         assert res.status_code == 400
-
+    # itemlogin_activity is None
     with client.session_transaction() as session:
         session["itemlogin_activity"] = None
     res = client.get(url)
     assert res.status_code == 400
 
+    # "." not in pid_value
     with client.session_transaction() as session:
-        session["itemlogin_activity"] = db_activity["activity"]
-    res = client.get(url)
-    assert res.status_code == 400
+        session["itemlogin_activity"] = Activity.query.filter_by(activity_id="A-00000000-00001").one()
+        session["itemlogin_record"] = []
+        session["itemlogin_item"] = []
+        session["itemlogin_steps"] = []
+        session["itemlogin_action_id"] = 1
+        session["itemlogin_cur_step"] = "item_login"
+        session["itemlogin_histories"] = []
+        session["itemlogin_res_check"] = 0
+        session["itemlogin_pid"] = "1"
+    mocker.patch("weko_workflow.utils.get_main_record_detail",return_value={"record:":[],"files":[], "files_thumbnail":[]})
+    with patch("weko_items_ui.views.render_template",return_value=make_response()) as mock_render:
+        res = client.get(url)
+        assert res.status_code == 200
+        args, kwargs = mock_render.call_args
+        assert args[0] == 'weko_items_ui/iframe/item_index.html'
+        assert "form" in kwargs
+        
+    
+    # "." in pid_value
+    with client.session_transaction() as session:
+        session["itemlogin_activity"] = Activity.query.filter_by(activity_id="A-00000000-00001").one()
+        session["itemlogin_record"] = []
+        session["itemlogin_item"] = {"title":"test_title"}
+        session["itemlogin_steps"] = []
+        session["itemlogin_action_id"] = 1
+        session["itemlogin_cur_step"] = "item_login"
+        session["itemlogin_histories"] = []
+        session["itemlogin_res_check"] = 0
+        session["itemlogin_pid"] = "1"
+    url = url_for("weko_items_ui.iframe_items_index", pid_value="1.1", _external=True)
+    with patch("weko_items_ui.views.get_record_by_root_ver",return_value=({"title":["test"]},["file1","file2"])):
+        with patch("weko_items_ui.views.render_template",return_value=make_response()) as mock_render:
+            res = client.get(url)
+            assert res.status_code == 200
+            args, kwargs = mock_render.call_args
+            assert args[0] == 'weko_items_ui/iframe/item_index.html'
 
-    # depid, recid,parent,doi,record, item  = db_records[0]
-    # app.config['PRESERVE_CONTEXT_ON_EXCEPTION']=False
-    # app.config['TESTING'] = True
-    # depid, recid,parent,doi,record, item  = db_records[0]
-    # action = db_workflow['flow_action2']
-    # url = url_for('weko_items_ui.iframe_items_index',pid_value=str(depid.pid_value),_external=True)
-    # with app.test_request_context(url_for('weko_items_ui.iframe_items_index',pid_value=str(depid.pid_value))):
-    #     login_user(users[id]['obj'])
-    #     activity_data = {
-    #             'itemtype_id': 1,
-    #             'workflow_id': 1,
-    #             'flow_id': 1,
-    #             'activity_confirm_term_of_use': True,
-    #             'extra_info': {}
-    #         }
+    # root_record is not , len(files) > 0
+    url = url_for("weko_items_ui.iframe_items_index", pid_value="1.1", _external=True)
+    with patch("weko_items_ui.views.get_record_by_root_ver",return_value=({},[])):
+        with patch("weko_items_ui.views.render_template",return_value=make_response()) as mock_render:
+            res = client.get(url)
+            assert res.status_code == 200
+            args, kwargs = mock_render.call_args
+            assert args[0] == 'weko_items_ui/iframe/item_index.html'
+    
+    # workflow_detail.index_tree_id > 0
+    workflow = WorkFlow.query.filter_by(id=1).one()
+    workflow.index_tree_id=11
+    db.session.merge(workflow)
+    db.session.commit()
+    with patch("weko_items_ui.views.redirect",return_value=make_response()) as mock_redirect:
+        res = client.get(url)
+        mock_redirect.assert_called_with("/workflow/iframe/success")
+    
+    
+    url = url_for("weko_items_ui.iframe_items_index", pid_value=str(1), _external=True)
+    # content-type is not application/json
+    with patch("weko_items_ui.views.render_template",return_value=make_response()) as mock_redirect:
+        with patch("weko_items_ui.views.flash") as mock_flash:
+            headers = {'content-type': 'plain/text'}
+            res = client.post(url,data="test_data",headers=headers)
+            args, kwargs = mock_redirect.call_args
+            assert args[0] == 'weko_items_ui/iframe/item_index.html'
+            assert kwargs == {'page': None, 'render_widgets': False, 'community_id': 'c', 'community': None}
+            mock_flash.assert_called_with("Invalid Request", "error")
+    
+    # method is put
+    redis_connect.put("item_index_1",bytes('{"index":{"name":"test_index"}}',"utf-8"),ttl_secs=30)
+    data = {"name":"test_index_new"}
+    res  =client.put(url,json=data)
+    assert res.status_code == 200
+    assert json.loads(res.data) == data
+    assert redis_connect.redis.exists("item_index_1") == False
+    
+    # method is post
+    res  =client.post(url,json=data)
+    assert res.status_code == 200
+    assert json.loads(res.data) == data
+    assert json.loads(redis_connect.get("item_index_1")) == {"name":"test_index_new"}
+    
+    redis_connect.delete("item_index_1")
 
-    #     activity = WorkActivity().init_activity(activity_data)
-    #     with patch('flask.templating._render', return_value=''):
-    #         with client.session_transaction() as session:
-    #             session['itemlogin_activity'] = activity
-    #             session['itemlogin_record']=[]
-    #             # session['itemlogin_setps'] = [{'ActivityId': 'A-20220827-00002', 'ActionId': 1, 'ActionName': 'Start', 'ActionVersion': '1.0.0', 'ActionEndpoint': 'begin_action', 'Author': 'wekosoftware@nii.ac.jp', 'Status': 'action_done', 'ActionOrder': 1}, {'ActivityId': 'A-20220827-00002', 'ActionId': 3, 'ActionName': 'Item Registration', 'ActionVersion': '1.0.1', 'ActionEndpoint': 'item_login', 'Author': '', 'Status': ' ', 'ActionOrder': 2}, {'ActivityId': 'A-20220827-00002', 'ActionId': 5, 'ActionName': 'Item Link', 'ActionVersion': '1.0.1', 'ActionEndpoint': 'item_link', 'Author': '', 'Status': ' ', 'ActionOrder': 3}, {'ActivityId': 'A-20220827-00002', 'ActionId': 7, 'ActionName': 'Identifier Grant', 'ActionVersion': '1.0.0', 'ActionEndpoint': 'identifier_grant', 'Author': '', 'Status': ' ', 'ActionOrder': 4}, {'ActivityId': 'A-20220827-00002', 'ActionId': 4, 'ActionName': 'Approval', 'ActionVersion': '2.0.0', 'ActionEndpoint': 'approval', 'Author': '', 'Status': ' ', 'ActionOrder': 5}, {'ActivityId': 'A-20220827-00002', 'ActionId': 2, 'ActionName': 'End', 'ActionVersion': '1.0.0', 'ActionEndpoint': 'end_action', 'Author': '', 'Status': ' ', 'ActionOrder': 6}]
-    #         res = client.get(url)
-    #         assert res.status_code == status_code
-
-    # TODO POST, PUT
-    # headers = {'content-type': 'application/json'}
-    # res = client.put(url,data=json.dumps("{}"),headers=headers)
-    # assert res.status_code == status_code
-    # assert res.data==""
-
-    # res = client.post(url)
-    # assert res.status_code == status_code
-    # assert res.data==""
+    
 
 
 # def default_view_method(pid, record, template=None):

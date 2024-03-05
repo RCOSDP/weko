@@ -40,8 +40,8 @@ from weko_workflow.schema.marshmallow import ActionSchema, \
 from weko_workflow.schema.utils import get_schema_action, type_null_check
 from marshmallow.exceptions import ValidationError
 
-from flask import Blueprint, abort, current_app, has_request_context, \
-    jsonify, make_response, render_template, request, session, url_for
+from flask import Response, Blueprint, abort, current_app, has_request_context, \
+    jsonify, make_response, render_template, request, session, url_for, send_file
 from flask_babelex import gettext as _
 from flask_login import current_user, login_required
 from weko_admin.api import validate_csrf_header
@@ -106,7 +106,8 @@ from .utils import IdentifierHandle, auto_fill_title, \
     save_activity_data, saving_doi_pidstore, \
     send_usage_application_mail_for_guest_user, set_files_display_type, \
     update_approval_date, update_cache_data, validate_guest_activity_expired, \
-    validate_guest_activity_token, get_contributors
+    validate_guest_activity_token, get_contributors, \
+    make_activitylog_tsv
 
 workflow_blueprint = Blueprint(
     'weko_workflow',
@@ -259,6 +260,8 @@ def index():
         action_status=action_status,
         filters=filters,
         send_mail_user_group=send_mail_user_group,
+        delete_activity_log_enable=current_app.config.get("DELETE_ACTIVITY_LOG_ENABLE"),
+        activitylog_roles=current_app.config.get("WEKO_WORKFLOW_ACTIVITYLOG_ROLE_ENABLE"),
         **ctx
     )
 
@@ -363,6 +366,9 @@ def iframe_success():
             thumbnails_org=record_detail_alt.get('files_thumbnail')
         )
     )
+    
+    form = FlaskForm(request.form)
+    
     return render_template('weko_workflow/item_login_success.html',
                            page=page,
                            render_widgets=render_widgets,
@@ -381,6 +387,7 @@ def iframe_success():
                            files_thumbnail=files_thumbnail,
                            is_enable_item_name_link=is_enable_item_name_link(
                                action_endpoint, item_type_name),
+                           form=form,
                            **ctx)
 
 
@@ -859,21 +866,23 @@ def display_activity(activity_id="0"):
     step_item_login_url = None
     term_and_condition_content = ''
     title = ""
-
+    user_lock_key = "workflow_userlock_activity_{}".format(str(current_user.get_id()))
     if action_endpoint in ['item_login',
                            'item_login_application',
                            'file_upload']:
         if not activity.get_activity_by_id(activity_id):
             pass
         if activity.get_activity_by_id(activity_id).action_status != ActionStatusPolicy.ACTION_CANCELED:
-            activity_session = dict(
-                activity_id=activity_id,
-                action_id=activity_detail.action_id,
-                action_version=cur_action.action_version,
-                action_status=ActionStatusPolicy.ACTION_DOING,
-                commond=''
-            )
-            session['activity_info'] = activity_session
+            cur_locked_val = str(get_cache_data(user_lock_key)) or str()
+            if not cur_locked_val:
+                activity_session = dict(
+                    activity_id=activity_id,
+                    action_id=activity_detail.action_id,
+                    action_version=cur_action.action_version,
+                    action_status=ActionStatusPolicy.ACTION_DOING,
+                    commond=''
+                )
+                session['activity_info'] = activity_session
         # get item edit page info.
 
         step_item_login_url, need_file, need_billing_file, \
@@ -956,17 +965,19 @@ def display_activity(activity_id="0"):
     if 'item_login' == action_endpoint or \
             'item_login_application' == action_endpoint or \
             'file_upload' == action_endpoint:
-        session['itemlogin_id'] = activity_id
-        session['itemlogin_activity'] = activity_detail
-        session['itemlogin_item'] = item
-        session['itemlogin_steps'] = steps
-        session['itemlogin_action_id'] = action_id
-        session['itemlogin_cur_step'] = cur_step
-        session['itemlogin_record'] = approval_record
-        session['itemlogin_histories'] = histories
-        session['itemlogin_res_check'] = res_check
-        session['itemlogin_pid'] = recid
-        session['itemlogin_community_id'] = community_id
+        cur_locked_val = str(get_cache_data(user_lock_key)) or str()
+        if not cur_locked_val:
+            session['itemlogin_id'] = activity_id
+            session['itemlogin_activity'] = activity_detail
+            session['itemlogin_item'] = item
+            session['itemlogin_steps'] = steps
+            session['itemlogin_action_id'] = action_id
+            session['itemlogin_cur_step'] = cur_step
+            session['itemlogin_record'] = approval_record
+            session['itemlogin_histories'] = histories
+            session['itemlogin_res_check'] = res_check
+            session['itemlogin_pid'] = recid
+            session['itemlogin_community_id'] = community_id
 
     user_id = current_user.id if hasattr(current_user , 'id') else None
     user_profile = None
@@ -2390,6 +2401,100 @@ def get_feedback_maillist(activity_id='0'):
     res = ResponseMessageSchema().load({'code':-1,'msg':_('Error')})
     return jsonify(res.data), 400
 
+@workflow_blueprint.route('/activity/user_lock/<string:activity_id>', methods=["POST"])
+@login_required
+def user_lock_activity(activity_id="0"):
+    """アクティビティの操作者を確認し、そのユーザーが他にアクティビティを開いている場合ロックする
+    
+    Args:
+        activity_id (str, optional): 対象アクティビティID.パスパラメータから取得. Defaults to '0'.
+        
+    Result:
+        object: アクティビティの状態を示すjson data
+    
+    ---
+    post:
+        description: "user lock activity"
+        security:
+            - login_required: []
+        parameters:
+            - in: path
+                name: activity_id
+                description: 対象のアクティビティID
+                schema:
+                    type: string
+        responses:
+            200:
+                description: "success or locked"
+                content:
+                    application/json:
+                        example:
+                            {"code":200, "msg":"Success", "err": "","locked_by_email": "example@example.org"}
+    """
+    validate_csrf_header(request)
+    cache_key = "workflow_userlock_activity_{}".format(str(current_user.get_id()))
+    timeout = current_app.permanent_session_lifetime.seconds
+    
+    cur_locked_val = str(get_cache_data(cache_key)) or str()
+    
+    err = ""
+    if cur_locked_val:
+        err = _("Opened")
+    else:
+        update_cache_data(
+            cache_key,
+            activity_id,
+            timeout
+        )
+    locked_by_email, locked_by_username = get_account_info(str(current_user.get_id()))
+    res = {"code":200,"msg": "" if err else _("Success"),"err": err or "", "locked_by_username":locked_by_username}
+    return jsonify(res), 200
+
+@workflow_blueprint.route('/activity/user_unlock/<string:activity_id>', methods=["POST"])
+@login_required
+def user_unlock_activity(activity_id="0"):
+    """キャッシュデータを削除することによりロックを解除する
+    そのアクティビティがユーザーロックを受けていない場合のみ解除
+    Args:
+        activity_id (str, optional): 対象のアクティビティID.パスパラメータから取得.. Defaults to "0".
+
+    Returns:
+        object: ロック解除が出来たかを示すResponse
+    
+    ---
+    post:
+        description: "user unlock activity"
+        security:
+            - login_required: []
+        requestBody:
+            required: false
+            content:
+                text/plain:
+                    example: '{"is_opened": true}'
+        parameters:
+            - in: path
+              name: activity_id
+              description: 対象のアクティビティID
+              schema:
+                type: string
+        responses:
+            200:
+                description: "success"
+                content:
+                    application/json:
+                        schema:
+                            ResponseMessageSchema
+                        example: {"code":200,"msg":"Unlock success"}
+    """
+    cache_key = "workflow_userlock_activity_{}".format(str(current_user.get_id()))
+    cur_locked_val = str(get_cache_data(cache_key)) or str()
+    data = json.loads(request.data.decode("utf-8"))
+    msg = None
+    if cur_locked_val and not data["is_opened"]:
+        delete_cache_data(cache_key)
+        msg = "User Unlock Success"
+    res = {"code":200, "msg":msg or _("Not unlock")}
+    return jsonify(res), 200
 
 @workflow_blueprint.route('/activity/lock/<string:activity_id>', methods=['POST'])
 @login_required
@@ -2759,6 +2864,172 @@ def get_data_init():
         logged_roles = logged_roles,
         init_terms=init_terms)
 
+
+@workflow_blueprint.route('/download_activitylog/', methods=['GET','POST'])
+@login_required
+def download_activitylog():
+    """download activitylog
+
+    Args:
+        filters: activity filters.
+    Returns:
+        object: tsv file of activitiylog
+
+    ---
+    get:
+        responses:
+            200:
+                description: "success"
+                content:
+                    test/tsv:
+
+            400: 
+                description: "no activity error"
+
+            403:
+                description: "permittion error"
+    
+    """
+    if not current_app.config.get("DELETE_ACTIVITY_LOG_ENABLE"):
+        abort(403)
+
+    activity = WorkActivity()
+    activities = []
+    if current_user and current_user.roles:
+        admin_roles = current_app.config.get("WEKO_WORKFLOW_ACTIVITYLOG_ROLE_ENABLE")
+        has_admin_role = False
+        for role in current_user.roles:
+            if role in admin_roles:
+                has_admin_role = True
+                break
+        if not has_admin_role:
+            abort(403)
+    if 'activity_id' in request.args:
+        tmp_activity = activity.get_activity_by_id(activity_id=request.args.get('activity_id'))
+        if tmp_activity == None:
+            return jsonify(code=-1, msg='no activity error') ,400
+        activities.append(tmp_activity)
+    else:
+        conditions = filter_all_condition(request.args)
+        activities, maxpage, size, pages, name_param = activity.get_activity_list(conditions=conditions, activitylog=True)
+
+        if not activities:
+            return jsonify(code=-1, msg='no activity error') ,400
+
+    response = Response(
+                make_activitylog_tsv(activities),
+                mimetype='text/tsv',
+                headers={"Content-disposition": "attachment; filename=activitylog.tsv"},
+            )
+    return response , 200
+
+@workflow_blueprint.route('/clear_activitylog/', methods=['GET'])
+@login_required
+def clear_activitylog():
+    """clear and download activitylog.
+
+    Args:
+        filters(optional): activity filters.
+        activity_id(optional): activity_id.
+    Returns:
+        object: tsv file of activitiylog
+
+    ---
+    get:
+        responses:
+            200:
+                description: "success"
+                content:
+                    test/tsv:
+            400: 
+                description: "no activity error"  or "delete failed error"
+
+            403:
+                description: "permittion error"
+    
+    """
+    def _quit_activity(del_activity):
+        """ quit activity"""
+        _activity = dict(
+            activity_id=del_activity.activity_id,
+            action_id=del_activity.action_id,
+            action_status=ActionStatusPolicy.ACTION_CANCELED,
+            action_order=del_activity.action_order
+        )
+
+        result = activity.quit_activity(_activity)
+
+        if not result:
+            return False
+        else:
+            activity.upt_activity_action_status(
+                activity_id=del_activity.activity_id,
+                action_id=del_activity.action_id,
+                action_status=ActionStatusPolicy.ACTION_CANCELED,
+                action_order=del_activity.action_order)    
+            return True
+
+    if not current_app.config.get("DELETE_ACTIVITY_LOG_ENABLE"):
+        abort(403)
+
+    activity = WorkActivity()
+    workflow_activity_action = ActivityAction()
+    activities = []
+    if current_user and current_user.roles:
+        admin_roles = current_app.config.get("WEKO_WORKFLOW_ACTIVITYLOG_ROLE_ENABLE")
+        has_admin_role = False
+        for role in current_user.roles:
+            if role in admin_roles:
+                has_admin_role = True
+                break
+        if not has_admin_role:
+            abort(403)
+
+    # delete a activity
+    if 'activity_id' in request.args:
+        del_activity = activity.get_activity_by_id(activity_id=request.args.get('activity_id'))
+        if del_activity == None:
+            return jsonify(code=-1, msg='no activity error') ,400
+        if del_activity.activity_status in [ActivityStatusPolicy.ACTIVITY_MAKING, ActivityStatusPolicy.ACTIVITY_BEGIN]:
+            result = _quit_activity(del_activity)
+            if not result:
+                return jsonify(code=-1, msg=str(DeleteActivityFailedRESTError())) ,400         
+        try:
+            with db.session.begin_nested():
+                workflow_activity_action.query.filter_by(activity_id=del_activity.activity_id).delete()                
+                db.session.delete(del_activity)
+            db.session.commit()
+        except Exception as ex:
+            db.session.rollback()
+            current_app.logger.exception(str(ex))
+            return jsonify(code=-1, msg='delete failed error') ,400
+    # delete all filitering activity
+    else:
+    
+        conditions = filter_all_condition(request.args)
+        activities, maxpage, size, pages, name_param = activity.get_activity_list(conditions=conditions, activitylog=True)
+
+        if not activities:
+            return jsonify(code=-1, msg='no activity error') ,400
+
+        for del_activity in activities:
+            if del_activity.activity_status in [ActivityStatusPolicy.ACTIVITY_MAKING, ActivityStatusPolicy.ACTIVITY_BEGIN]:
+                result = _quit_activity(del_activity)
+                if not result:
+                   return jsonify(code=-1, msg=str(DeleteActivityFailedRESTError())) ,400 
+
+        try:   
+            with db.session.begin_nested():
+                for activty in activities:
+                    workflow_activity_action.query.filter_by(activity_id=activty.activity_id).delete()                
+                    db.session.delete(activty)
+            db.session.commit()
+        except Exception as ex:
+            db.session.rollback()
+            current_app.logger.exception(str(ex))
+            return jsonify(code=-1, msg='delete failed error') ,400
+
+    return jsonify(code=1, msg='delete activitylogs success') ,200
 
 class ActivityActionResource(ContentNegotiatedMethodView):
     """Workflow Activity Resource."""

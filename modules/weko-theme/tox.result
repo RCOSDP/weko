@@ -1,0 +1,285 @@
+GLOB sdist-make: /code/modules/weko-theme/setup.py
+c1 create: /code/modules/weko-theme/.tox/c1
+c1 installdeps: pytest>=3, pytest-cov, -rrequirements.txt
+c1 inst: /code/modules/weko-theme/.tox/.tmp/package/1/weko-theme-0.1.0.dev20170000.zip
+c1 installed: alabaster==0.7.13,alembic==0.9.6,amqp==2.6.1,angular-gettext-babel==0.3,aniso8601==8.0.0,arrow==0.12.1,asn1crypto==0.23.0,attrs==17.4.0,b2handle==1.1.2,Babel==2.5.1,bagit==1.7.0,beautifulsoup4==4.9.3,bibtexparser==1.0.1,billiard==3.6.3.0,binaryornot==0.4.4,bleach==3.1.0,blinker==1.4,boto3==1.7.84,botocore==1.10.84,cachelib==0.1,cachetools==4.2.4,cchardet==2.1.1,celery==4.4.7,certifi==2017.11.5,cffi==1.11.2,chardet==3.0.4,citeproc-py==0.5.1,citeproc-py-styles==0.1.2,click==8.0.4,cookiecutter==1.6.0,counter-robots==2018.6,coverage==6.2,cryptography==2.1.4,datacite==1.0.1,DateTime==4.9,decorator==4.1.2,defusedxml==0.5.0,dictdiffer==0.7.0,dnspython==2.2.1,docutils==0.18.1,dojson==1.3.2,elasticsearch==6.1.1,elasticsearch-dsl==6.4.0,elementpath==1.0.6,email-validator==1.0.5,entrypoints==0.2.3,feedgen==0.7.0,Flask==1.0.4,Flask-Admin==1.5.3,Flask-Alembic==2.0.1,Flask-Assets==0.12,Flask-BabelEx==0.9.4,Flask-Breadcrumbs==0.5.0,Flask-Caching==1.3.3,Flask-CeleryExt==0.3.4,Flask-Collect==1.2.2,Flask-Cors==3.0.3,Flask-DebugToolbar==0.11.0,Flask-IIIF==0.6.1,Flask-KVSession==0.6.2,Flask-Limiter==1.1.0,Flask-Login==0.4.1,Flask-Mail==0.9.1,flask-marshmallow==0.14.0,Flask-Menu==0.6.0,Flask-OAuthlib==0.9.5,Flask-Plugins==1.6.1,Flask-Principal==0.4.0,Flask-RESTful==0.3.8,Flask-Security==3.0.0,flask-shell-ipython==0.4.1,Flask-Sitemap==0.1.0,Flask-SQLAlchemy==2.3.2,flask-talisman==0.4.1,Flask-WTF==0.14.3,-e git+https://github.com/RCOSDP/pyfpdf.git@f9b032148283d535cabc7789858081c80de36fef#egg=fpdf,frozendict==2.3.6,fs==0.5.4,ftfy==4.4.3,future==0.16.0,github3.py==1.1.0,html5lib==1.0.1,idna==2.6,iiif-prezi==0.3.0,imagesize==1.4.1,importlib-metadata==4.8.3,importlib-resources==5.4.0,infinity==1.4,iniconfig==1.1.1,intervals==0.8.0,invenio-access==1.1.0,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_accounts&subdirectory=modules/invenio-accounts,invenio-admin==1.1.2,invenio-app==1.1.0,invenio-assets==1.0.0,invenio-base==1.0.2,invenio-cache==1.0.0,invenio-celery==1.1.3,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_communities&subdirectory=modules/invenio-communities,invenio-config==1.0.0,invenio-csl-rest==1.0.0a1,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_db&subdirectory=modules/invenio-db,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_deposit&subdirectory=modules/invenio-deposit,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_files_rest&subdirectory=modules/invenio-files-rest,invenio-formatter==1.0.0b3,invenio-i18n==1.0.0,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_iiif&subdirectory=modules/invenio-iiif,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_indexer&subdirectory=modules/invenio-indexer,invenio-jsonschemas==1.0.0,invenio-logging==1.0.0b3,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_mail&subdirectory=modules/invenio-mail,invenio-marc21==1.0.0a8,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_oaiharvester&subdirectory=modules/invenio-oaiharvester,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_oaiserver&subdirectory=modules/invenio-oaiserver,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_oauth2server&subdirectory=modules/invenio-oauth2server,invenio-oauthclient==1.0.0,invenio-pidrelations==1.0.0a4,invenio-pidstore==1.0.0,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_previewer&subdirectory=modules/invenio-previewer,invenio-query-parser==0.6.0,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_queues&subdirectory=modules/invenio-queues,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_records&subdirectory=modules/invenio-records,invenio-records-files==1.0.0a10,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_records_rest&subdirectory=modules/invenio-records-rest,invenio-records-ui==1.0.0,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_resourcesyncclient&subdirectory=modules/invenio-resourcesyncclient,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_resourcesyncserver&subdirectory=modules/invenio-resourcesyncserver,invenio-rest==1.1.2,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_s3&subdirectory=modules/invenio-s3,invenio-search==1.1.0,invenio-search-ui==1.0.0a9,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_stats&subdirectory=modules/invenio-stats,invenio-theme==1.0.0b4,ipaddress==1.0.19,ipython==6.2.1,ipython-genutils==0.2.0,itsdangerous==0.24,jedi==0.11.0,Jinja2==2.10,jinja2-cli==0.6.0,jinja2-time==0.2.0,jmespath==0.10.0,jsmin==2.2.2,jsonpatch==1.21,jsonpath-ng==1.5.2,jsonpointer==1.14,jsonref==0.1,jsonresolver==0.2.1,jsonschema==2.6.0,jupyter-client==5.2.2,jupyter-core==4.4.0,kombu==4.6.10,limits==1.2.1,lxml==4.1.1,Mako==1.0.7,MarkupSafe==1.1.1,marshmallow==2.20.1,marshmallow-sqlalchemy==0.23.1,maxminddb==1.5.2,maxminddb-geolite2==2017.803,mistune==0.8.3,mock==3.0.5,more-itertools==8.10.0,msgpack==0.6.2,nbconvert==5.3.1,nbformat==4.4.0,netaddr==0.8.0,node-semver==0.1.1,numpy==1.16.1,oauthlib==2.1.0,ordereddict==1.1,packaging==21.3,pandocfilters==1.4.2,parso==0.1.0,passlib==1.7.1,pexpect==4.3.0,pickleshare==0.7.4,Pillow==5.4.1,pluggy==0.13.1,ply==3.11,poyo==0.4.1,prompt-toolkit==1.0.15,psycopg2==2.7.3.2,ptyprocess==0.5.2,py==1.11.0,pycparser==2.18,Pygments==2.2.0,PyJWT==1.5.3,PyLD==2.0.3,pyparsing==3.0.9,-e git+https://github.com/RCOSDP/PyPDF2.git@fefc684a3a74aff6f99e5dff24f9b4dd1c95169d#egg=PyPDF2,pyPEG2==2.15.2,pytest==6.1.2,pytest-cov==4.0.0,pytest-mock==3.6.1,python-dateutil==2.6.1,python-editor==1.0.3,python-geoip==1.2,pytz==2017.3,pyzmq==17.0.0,redis==2.10.6,requests==2.18.4,requests-oauthlib==1.1.0,resync==1.0.9,s3fs==0.1.6,s3transfer==0.1.13,Sickle==0.6.4,simplegeneric==0.8.1,simplejson==3.12.0,simplekv==0.11.2,six==1.12.0,snowballstemmer==2.2.0,soupsieve==2.3.2.post1,speaklater==1.3,Sphinx==1.8.4,sphinxcontrib-serializinghtml==1.1.5,sphinxcontrib-websupport==1.2.4,SQLAlchemy==1.2.19,SQLAlchemy-Continuum==1.3.6,SQLAlchemy-Utils==0.35.0,testpath==0.3.1,toml==0.10.2,tomli==1.2.3,tornado==4.5.3,traitlets==4.3.2,typing_extensions==4.1.1,ua-parser==0.7.3,uritemplate==4.1.1,uritools==2.1.0,urllib3==1.22,validators==0.12.0,vine==1.3.0,Wand==0.6.1,wcwidth==0.1.7,webargs==5.5.2,webassets==0.12.1,webencodings==0.5.1,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_accounts&subdirectory=modules/weko-accounts,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_admin&subdirectory=modules/weko-admin,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_authors&subdirectory=modules/weko-authors,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_bulkupdate&subdirectory=modules/weko-bulkupdate,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_deposit&subdirectory=modules/weko-deposit,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_gridlayout&subdirectory=modules/weko-gridlayout,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_groups&subdirectory=modules/weko-groups,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_handle&subdirectory=modules/weko-handle,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_index_tree&subdirectory=modules/weko-index-tree,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_indextree_journal&subdirectory=modules/weko-indextree-journal,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_items_autofill&subdirectory=modules/weko-items-autofill,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_items_ui&subdirectory=modules/weko-items-ui,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_itemtypes_ui&subdirectory=modules/weko-itemtypes-ui,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_logging&subdirectory=modules/weko-logging,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_records&subdirectory=modules/weko-records,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_records_ui&subdirectory=modules/weko-records-ui,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_redis&subdirectory=modules/weko-redis,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_schema_ui&subdirectory=modules/weko-schema-ui,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_search_ui&subdirectory=modules/weko-search-ui,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_sitemap&subdirectory=modules/weko-sitemap,weko-theme @ file:///code/modules/weko-theme/.tox/.tmp/package/1/weko-theme-0.1.0.dev20170000.zip,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_user_profiles&subdirectory=modules/weko-user-profiles,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_workflow&subdirectory=modules/weko-workflow,Werkzeug==0.15.2,whichcraft==0.4.1,WTForms==2.1,WTForms-Alchemy==0.16.5,WTForms-Components==0.10.3,xmlschema==0.9.30,xmltodict==0.12.0,zipp==3.6.0,zope.interface==5.5.2
+c1 run-test-pre: PYTHONHASHSEED='1053425345'
+c1 run-test: commands[0] | pytest --cov=weko_theme tests -v --cov-branch --cov-report=term --cov-report=xml --basetemp=/code/modules/weko-theme/.tox/c1/tmp
+============================= test session starts ==============================
+platform linux -- Python 3.6.15, pytest-6.1.2, py-1.11.0, pluggy-0.13.1 -- /code/modules/weko-theme/.tox/c1/bin/python
+cachedir: .tox/c1/.pytest_cache
+rootdir: /code/modules/weko-theme
+plugins: cov-4.0.0, celery-4.4.7, mock-3.6.1
+collecting ... collected 12 items
+
+tests/test_ext.py::test_WekoTheme PASSED                                 [  8%]
+tests/test_utils.py::test_get_weko_contents PASSED                       [ 16%]
+tests/test_utils.py::test_get_community_id PASSED                        [ 25%]
+tests/test_utils.py::test_get_design_layout PASSED                       [ 33%]
+tests/test_utils.py::test_has_widget_design PASSED                       [ 41%]
+tests/test_utils.py::test_get_init_display_setting PASSED                [ 50%]
+tests/test_views.py::test_index FAILED                                   [ 58%]
+tests/test_views.py::test_edit FAILED                                    [ 66%]
+tests/test_views.py::test_get_default_search_setting PASSED              [ 75%]
+tests/test_views.py::test_get_init_display_setting PASSED                [ 83%]
+tests/test_weko_theme.py::test_version PASSED                            [ 91%]
+tests/test_weko_theme.py::test_init PASSED                               [100%]
+
+=================================== FAILURES ===================================
+__________________________________ test_index __________________________________
+
+i18n_app = <Flask 'testapp'>
+users = [{'email': 'noroleuser@test.org', 'id': 9, 'obj': <User 9>}, {'email': 'contributor@test.org', 'id': 2, 'obj': <User 2...ail': 'comadmin@test.org', 'id': 3, 'obj': <User 3>}, {'email': 'generaluser@test.org', 'id': 6, 'obj': <User 5>}, ...]
+
+    def test_index(i18n_app, users):
+        WekoTheme(i18n_app)
+    
+        with i18n_app.test_client() as client:
+>           res = client.get(url_for("weko_theme.index"))
+
+tests/test_views.py:24: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.tox/c1/lib/python3.6/site-packages/werkzeug/test.py:1029: in get
+    return self.open(*args, **kw)
+.tox/c1/lib/python3.6/site-packages/flask/testing.py:196: in open
+    follow_redirects=follow_redirects
+.tox/c1/lib/python3.6/site-packages/werkzeug/test.py:993: in open
+    response = self.run_wsgi_app(environ.copy(), buffered=buffered)
+.tox/c1/lib/python3.6/site-packages/werkzeug/test.py:884: in run_wsgi_app
+    rv = run_wsgi_app(self.application, environ, buffered=buffered)
+.tox/c1/lib/python3.6/site-packages/werkzeug/test.py:1119: in run_wsgi_app
+    app_rv = app(environ, start_response)
+.tox/c1/lib/python3.6/site-packages/flask/app.py:2334: in __call__
+    return self.wsgi_app(environ, start_response)
+.tox/c1/lib/python3.6/site-packages/flask/app.py:2320: in wsgi_app
+    response = self.handle_exception(e)
+.tox/c1/lib/python3.6/site-packages/flask/app.py:1766: in handle_exception
+    reraise(exc_type, exc_value, tb)
+.tox/c1/lib/python3.6/site-packages/flask/_compat.py:36: in reraise
+    raise value
+.tox/c1/lib/python3.6/site-packages/flask/app.py:2317: in wsgi_app
+    response = self.full_dispatch_request()
+.tox/c1/lib/python3.6/site-packages/flask/app.py:1840: in full_dispatch_request
+    rv = self.handle_user_exception(e)
+.tox/c1/lib/python3.6/site-packages/flask/app.py:1743: in handle_user_exception
+    reraise(exc_type, exc_value, tb)
+.tox/c1/lib/python3.6/site-packages/flask/_compat.py:36: in reraise
+    raise value
+.tox/c1/lib/python3.6/site-packages/flask/app.py:1838: in full_dispatch_request
+    rv = self.dispatch_request()
+.tox/c1/lib/python3.6/site-packages/flask/app.py:1824: in dispatch_request
+    return self.view_functions[rule.endpoint](**req.view_args)
+weko_theme/views.py:76: in index
+    **get_weko_contents(request.args))
+.tox/c1/lib/python3.6/site-packages/flask/templating.py:135: in render_template
+    context, ctx.app)
+.tox/c1/lib/python3.6/site-packages/flask/templating.py:117: in _render
+    rv = template.render(context)
+.tox/c1/lib/python3.6/site-packages/jinja2/asyncsupport.py:76: in render
+    return original_render(self, *args, **kwargs)
+.tox/c1/lib/python3.6/site-packages/jinja2/environment.py:1008: in render
+    return self.environment.handle_exception(exc_info, True)
+.tox/c1/lib/python3.6/site-packages/jinja2/environment.py:780: in handle_exception
+    reraise(exc_type, exc_value, tb)
+.tox/c1/lib/python3.6/site-packages/jinja2/_compat.py:37: in reraise
+    raise value.with_traceback(tb)
+weko_theme/templates/weko_theme/frontpage.html:23: in top-level template code
+    {%- from "invenio_communities/macros.html" import community_header %}
+.tox/c1/lib/python3.6/site-packages/flask/templating.py:58: in get_source
+    return self._get_source_fast(environment, template)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <flask.templating.DispatchingJinjaLoader object at 0x7f6f0cc18b00>
+environment = <flask.templating.Environment object at 0x7f6f0cc18c88>
+template = 'invenio_communities/macros.html'
+
+    def _get_source_fast(self, environment, template):
+        for srcobj, loader in self._iter_loaders(template):
+            try:
+                return loader.get_source(environment, template)
+            except TemplateNotFound:
+                continue
+>       raise TemplateNotFound(template)
+E       jinja2.exceptions.TemplateNotFound: invenio_communities/macros.html
+
+.tox/c1/lib/python3.6/site-packages/flask/templating.py:86: TemplateNotFound
+------------------------------ Captured log call -------------------------------
+ERROR    flask.app:receivers.py:39 Error building event
+Traceback (most recent call last):
+  File "/code/modules/invenio-stats/invenio_stats/receivers.py", line 31, in __call__
+    if self.name in current_stats.events:
+  File "/code/modules/weko-theme/.tox/c1/lib/python3.6/site-packages/werkzeug/local.py", line 348, in __getattr__
+    return getattr(self._get_current_object(), name)
+  File "/code/modules/weko-theme/.tox/c1/lib/python3.6/site-packages/werkzeug/utils.py", line 91, in __get__
+    value = self.func(obj)
+  File "/code/modules/invenio-stats/invenio_stats/ext.py", line 79, in events
+    queue = current_queues.queues[
+  File "/code/modules/weko-theme/.tox/c1/lib/python3.6/site-packages/werkzeug/local.py", line 348, in __getattr__
+    return getattr(self._get_current_object(), name)
+AttributeError: 'int' object has no attribute 'queues'
+__________________________________ test_edit ___________________________________
+
+i18n_app = <Flask 'testapp'>
+users = [{'email': 'noroleuser@test.org', 'id': 9, 'obj': <User 9>}, {'email': 'contributor@test.org', 'id': 2, 'obj': <User 2...ail': 'comadmin@test.org', 'id': 3, 'obj': <User 3>}, {'email': 'generaluser@test.org', 'id': 6, 'obj': <User 5>}, ...]
+
+    def test_edit(i18n_app, users):
+        site_info = MagicMock()
+        site_info.favicon = "favicon,favicon"
+        site_info.ogp_image = "ogp_image"
+        WekoTheme(i18n_app)
+    
+        with i18n_app.test_client() as client:
+            with patch('weko_theme.views.SiteInfo.get', return_value=site_info):
+                # Exception coverage
+                try:
+                    client.get(url_for("weko_theme.edit"))
+                except:
+                    pass
+    
+>           res = client.get(url_for("weko_theme.edit"))
+
+tests/test_views.py:43: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.tox/c1/lib/python3.6/site-packages/werkzeug/test.py:1029: in get
+    return self.open(*args, **kw)
+.tox/c1/lib/python3.6/site-packages/flask/testing.py:196: in open
+    follow_redirects=follow_redirects
+.tox/c1/lib/python3.6/site-packages/werkzeug/test.py:993: in open
+    response = self.run_wsgi_app(environ.copy(), buffered=buffered)
+.tox/c1/lib/python3.6/site-packages/werkzeug/test.py:884: in run_wsgi_app
+    rv = run_wsgi_app(self.application, environ, buffered=buffered)
+.tox/c1/lib/python3.6/site-packages/werkzeug/test.py:1119: in run_wsgi_app
+    app_rv = app(environ, start_response)
+.tox/c1/lib/python3.6/site-packages/flask/app.py:2334: in __call__
+    return self.wsgi_app(environ, start_response)
+.tox/c1/lib/python3.6/site-packages/flask/app.py:2320: in wsgi_app
+    response = self.handle_exception(e)
+.tox/c1/lib/python3.6/site-packages/flask/app.py:1766: in handle_exception
+    reraise(exc_type, exc_value, tb)
+.tox/c1/lib/python3.6/site-packages/flask/_compat.py:36: in reraise
+    raise value
+.tox/c1/lib/python3.6/site-packages/flask/app.py:2317: in wsgi_app
+    response = self.full_dispatch_request()
+.tox/c1/lib/python3.6/site-packages/flask/app.py:1840: in full_dispatch_request
+    rv = self.handle_user_exception(e)
+.tox/c1/lib/python3.6/site-packages/flask/app.py:1743: in handle_user_exception
+    reraise(exc_type, exc_value, tb)
+.tox/c1/lib/python3.6/site-packages/flask/_compat.py:36: in reraise
+    raise value
+.tox/c1/lib/python3.6/site-packages/flask/app.py:1838: in full_dispatch_request
+    rv = self.dispatch_request()
+.tox/c1/lib/python3.6/site-packages/flask/app.py:1824: in dispatch_request
+    return self.view_functions[rule.endpoint](**req.view_args)
+weko_theme/views.py:83: in edit
+    current_app.config['BASE_EDIT_TEMPLATE'],
+.tox/c1/lib/python3.6/site-packages/flask/templating.py:135: in render_template
+    context, ctx.app)
+.tox/c1/lib/python3.6/site-packages/flask/templating.py:117: in _render
+    rv = template.render(context)
+.tox/c1/lib/python3.6/site-packages/jinja2/asyncsupport.py:76: in render
+    return original_render(self, *args, **kwargs)
+.tox/c1/lib/python3.6/site-packages/jinja2/environment.py:1008: in render
+    return self.environment.handle_exception(exc_info, True)
+.tox/c1/lib/python3.6/site-packages/jinja2/environment.py:780: in handle_exception
+    reraise(exc_type, exc_value, tb)
+.tox/c1/lib/python3.6/site-packages/jinja2/_compat.py:37: in reraise
+    raise value.with_traceback(tb)
+weko_theme/templates/weko_theme/edit.html:20: in top-level template code
+    {%- extends config.THEME_BODY_TEMPLATE %}
+weko_theme/templates/weko_theme/body.html:21: in top-level template code
+    {%- extends "weko_theme/base.html" %}
+weko_theme/templates/weko_theme/base.html:13: in top-level template code
+    {%- block head %}
+weko_theme/templates/weko_theme/base.html:62: in block "head"
+    {%- block css %}
+weko_theme/templates/weko_theme/base.html:63: in block "css"
+    {% assets "weko_theme_css" %}
+.tox/c1/lib/python3.6/site-packages/webassets/ext/jinja2.py:186: in _render_assets
+    urls = bundle.urls()
+.tox/c1/lib/python3.6/site-packages/webassets/bundle.py:806: in urls
+    urls.extend(bundle._urls(new_ctx, extra_filters, *args, **kwargs))
+.tox/c1/lib/python3.6/site-packages/webassets/bundle.py:765: in _urls
+    *args, **kwargs)
+.tox/c1/lib/python3.6/site-packages/webassets/bundle.py:619: in _build
+    force, disable_cache=disable_cache, extra_filters=extra_filters)
+.tox/c1/lib/python3.6/site-packages/webassets/bundle.py:543: in _merge_and_apply
+    kwargs=item_data)
+.tox/c1/lib/python3.6/site-packages/webassets/merge.py:276: in apply
+    return self._wrap_cache(key, func)
+.tox/c1/lib/python3.6/site-packages/webassets/merge.py:213: in _wrap_cache
+    content = self.cache.get(key)
+.tox/c1/lib/python3.6/site-packages/webassets/cache.py:183: in get
+    filename = path.join(self.directory, '%s' % make_md5(self.V, key))
+.tox/c1/lib/python3.6/site-packages/webassets/cache.py:84: in make_md5
+    for d in walk(data):
+.tox/c1/lib/python3.6/site-packages/webassets/cache.py:61: in walk
+    for d in walk(item): yield d
+.tox/c1/lib/python3.6/site-packages/webassets/cache.py:61: in walk
+    for d in walk(item): yield d
+.tox/c1/lib/python3.6/site-packages/webassets/cache.py:67: in walk
+    yield obj.data().encode('utf-8')
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <FileHunk /tmp/tmp243xc821/static/css/weko_theme/theme.scss>
+
+    def data(self):
+>       f = open(self.filename, 'r', encoding='utf-8')
+E       FileNotFoundError: [Errno 2] No such file or directory: '/tmp/tmp243xc821/static/css/weko_theme/theme.scss'
+
+.tox/c1/lib/python3.6/site-packages/webassets/merge.py:77: FileNotFoundError
+=============================== warnings summary ===============================
+../invenio-indexer/invenio_indexer/cli.py:108
+  /code/modules/invenio-indexer/invenio_indexer/cli.py:108: DeprecationWarning: 'resultcallback' has been renamed to 'result_callback'. The old name will be removed in Click 8.1.
+    @queue.resultcallback()
+
+.tox/c1/lib/python3.6/site-packages/flask_oauthlib/contrib/cache.py:3
+  /code/modules/weko-theme/.tox/c1/lib/python3.6/site-packages/flask_oauthlib/contrib/cache.py:3: DeprecationWarning: 'werkzeug.contrib.cache' is deprecated as of version 0.15 and will be removed in version 1.0. It has moved to https://github.com/pallets/cachelib.
+    from werkzeug.contrib.cache import NullCache, SimpleCache, FileSystemCache
+
+.tox/c1/lib/python3.6/site-packages/past/translation/__init__.py:35
+  /code/modules/weko-theme/.tox/c1/lib/python3.6/site-packages/past/translation/__init__.py:35: DeprecationWarning: the imp module is deprecated in favour of importlib; see the module's documentation for alternative uses
+    import imp
+
+.tox/c1/src/pypdf2/PyPDF2/generic.py:348
+  /code/modules/weko-theme/.tox/c1/src/pypdf2/PyPDF2/generic.py:348: DeprecationWarning: invalid escape sequence \c
+    b_("c") : b_("\c"),
+
+tests/test_ext.py: 26 warnings
+tests/test_utils.py: 130 warnings
+tests/test_views.py: 104 warnings
+  /code/modules/weko-theme/.tox/c1/lib/python3.6/site-packages/invenio_admin/ext.py:73: PendingDeprecationWarning: Usage of model and modelview kwargs are deprecated in favor of view_class, args and kwargs.
+    PendingDeprecationWarning
+
+tests/test_ext.py: 1 warning
+tests/test_utils.py: 5 warnings
+tests/test_views.py: 4 warnings
+  /code/modules/weko-theme/.tox/c1/lib/python3.6/site-packages/flask_admin/model/base.py:1416: UserWarning: Fields missing from ruleset: created_userId,created_date,updated_userId,updated_date
+    warnings.warn(text)
+
+tests/test_utils.py::test_get_init_display_setting
+  /code/modules/weko-theme/weko_theme/utils.py:216: FlaskWTFDeprecationWarning: "flask_wtf.Form" has been renamed to "FlaskForm" and will be removed in 1.0.
+    form = SearchForm(p=p)
+
+-- Docs: https://docs.pytest.org/en/stable/warnings.html
+
+---------- coverage: platform linux, python 3.6.15-final-0 -----------
+Name                     Stmts   Miss Branch BrPart  Cover
+----------------------------------------------------------
+weko_theme/__init__.py       4      0      0      0   100%
+weko_theme/bundles.py       13      0      0      0   100%
+weko_theme/config.py        30      0      0      0   100%
+weko_theme/ext.py           24      0      8      0   100%
+weko_theme/utils.py        174     15     48      8    86%
+weko_theme/version.py        2      0      0      0   100%
+weko_theme/views.py         60      0      6      1    98%
+----------------------------------------------------------
+TOTAL                      307     15     62      9    91%
+Coverage XML written to file coverage.xml
+
+=========================== short test summary info ============================
+FAILED tests/test_views.py::test_index - jinja2.exceptions.TemplateNotFound: ...
+FAILED tests/test_views.py::test_edit - FileNotFoundError: [Errno 2] No such ...
+============ 2 failed, 10 passed, 275 warnings in 64.48s (0:01:04) =============
+ERROR: InvocationError for command /code/modules/weko-theme/.tox/c1/bin/pytest --cov=weko_theme tests -v --cov-branch --cov-report=term --cov-report=xml --basetemp=/code/modules/weko-theme/.tox/c1/tmp (exited with code 1)
+___________________________________ summary ____________________________________
+ERROR:   c1: commands failed

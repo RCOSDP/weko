@@ -182,10 +182,7 @@ def post_service_document():
             file = value
     if file is None:
         raise WekoSwordserverException("Not found {0} in request body.".format(filename), ErrorType.BadRequest)
-    print("file1:{}".format(file))
-    from zipfile import ZipFile
-    with ZipFile(file)as z:
-        print(z.infolist())
+
     check_result = check_import_items(file, False)
     item = check_result.get('list_record')[0] if check_result.get('list_record') else None
     if check_result.get('error') or not item or item.get('errors'):

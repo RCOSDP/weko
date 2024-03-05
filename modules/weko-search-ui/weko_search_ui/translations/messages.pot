@@ -860,3 +860,35 @@ msgstr ""
 msgid "Is the input contents discarded ?"
 msgstr ""
 
+msgid "The file specified in ({}) does not exist."
+msgstr ""
+
+msgid "The file specified in ({}) does not exist.<br/>The file will not be updated. Update only the metadata with csv/tsv contents."
+msgstr ""
+
+msgid "The file name specified in {} and {} do not match."
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/body_facet_search.html:50
+msgid "Go to"
+msgstr "Go to"
+
+#: weko_search_ui/templates/weko_search_ui/body_facet_search.html:27
+msgid "search"
+msgstr ""
+
+msgid "The following item(s) cannot be deleted."
+msgstr ""
+
+msgid "DOI granting item(s):"
+msgstr ""
+
+msgid "Editing item(s):"
+msgstr ""
+
+msgid "DOI granting item(s) are including in the deletion items.<br/>DOI granting item(s) cannot be deleted without withdrawing the DOI.<br/>Do you want to continue deleting items that are not grant DOI?"
+msgstr ""
+
+msgid "Your role cannot register items in this index."
+msgstr ""
+

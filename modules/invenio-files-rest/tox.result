@@ -1,0 +1,1124 @@
+GLOB sdist-make: /code/modules/invenio-files-rest/setup.py
+c1 create: /code/modules/invenio-files-rest/.tox/c1
+c1 installdeps: pytest>=3, pytest-cov, -rrequirements.txt
+c1 inst: /code/modules/invenio-files-rest/.tox/.tmp/package/1/invenio-files-rest-1.0.1.zip
+c1 installed: alabaster==0.7.13,alembic==0.9.6,amqp==2.6.1,angular-gettext-babel==0.3,aniso8601==8.0.0,arrow==0.12.1,asn1crypto==0.23.0,attrs==17.4.0,b2handle==1.1.2,Babel==2.5.1,bagit==1.7.0,beautifulsoup4==4.9.3,bibtexparser==1.0.1,billiard==3.6.3.0,binaryornot==0.4.4,bleach==3.1.0,blinker==1.4,boto3==1.7.84,botocore==1.10.84,cachelib==0.1,cachetools==4.2.4,cchardet==2.1.1,celery==4.4.7,certifi==2017.11.5,cffi==1.11.2,chardet==3.0.4,citeproc-py==0.5.1,citeproc-py-styles==0.1.2,click==8.0.4,cookiecutter==1.6.0,counter-robots==2018.6,coverage==6.2,cryptography==2.1.4,datacite==1.0.1,DateTime==4.9,decorator==4.1.2,defusedxml==0.5.0,dictdiffer==0.7.0,dnspython==2.2.1,docutils==0.18.1,dojson==1.3.2,elasticsearch==6.1.1,elasticsearch-dsl==6.4.0,elementpath==1.0.6,email-validator==1.0.5,entrypoints==0.2.3,feedgen==0.7.0,Flask==1.0.4,Flask-Admin==1.5.3,Flask-Alembic==2.0.1,Flask-Assets==0.12,Flask-BabelEx==0.9.4,Flask-Breadcrumbs==0.5.0,Flask-Caching==1.3.3,Flask-CeleryExt==0.3.4,Flask-Collect==1.2.2,Flask-Cors==3.0.3,Flask-DebugToolbar==0.11.0,Flask-IIIF==0.6.1,Flask-KVSession==0.6.2,Flask-Limiter==1.1.0,Flask-Login==0.4.1,Flask-Mail==0.9.1,flask-marshmallow==0.14.0,Flask-Menu==0.6.0,Flask-OAuthlib==0.9.5,Flask-Plugins==1.6.1,Flask-Principal==0.4.0,Flask-RESTful==0.3.8,Flask-Security==3.0.0,flask-shell-ipython==0.4.1,Flask-Sitemap==0.1.0,Flask-SQLAlchemy==2.3.2,flask-talisman==0.4.1,Flask-WTF==0.14.3,-e git+https://github.com/RCOSDP/pyfpdf.git@f9b032148283d535cabc7789858081c80de36fef#egg=fpdf,frozendict==2.3.6,fs==0.5.4,ftfy==4.4.3,future==0.16.0,github3.py==1.1.0,html5lib==1.0.1,idna==2.6,iiif-prezi==0.3.0,imagesize==1.4.1,importlib-metadata==4.8.3,importlib-resources==5.4.0,infinity==1.4,iniconfig==1.1.1,intervals==0.8.0,invenio-access==1.1.0,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_accounts&subdirectory=modules/invenio-accounts,invenio-admin==1.1.2,invenio-app==1.1.0,invenio-assets==1.0.0,invenio-base==1.0.2,invenio-cache==1.0.0,invenio-celery==1.1.3,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_communities&subdirectory=modules/invenio-communities,invenio-config==1.0.0,invenio-csl-rest==1.0.0a1,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_db&subdirectory=modules/invenio-db,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_deposit&subdirectory=modules/invenio-deposit,invenio-files-rest @ file:///code/modules/invenio-files-rest/.tox/.tmp/package/1/invenio-files-rest-1.0.1.zip,invenio-formatter==1.0.0b3,invenio-i18n==1.0.0,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_iiif&subdirectory=modules/invenio-iiif,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_indexer&subdirectory=modules/invenio-indexer,invenio-jsonschemas==1.0.0,invenio-logging==1.0.0b3,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_mail&subdirectory=modules/invenio-mail,invenio-marc21==1.0.0a8,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_oaiharvester&subdirectory=modules/invenio-oaiharvester,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_oaiserver&subdirectory=modules/invenio-oaiserver,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_oauth2server&subdirectory=modules/invenio-oauth2server,invenio-oauthclient==1.0.0,invenio-pidrelations==1.0.0a4,invenio-pidstore==1.0.0,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_previewer&subdirectory=modules/invenio-previewer,invenio-query-parser==0.6.0,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_queues&subdirectory=modules/invenio-queues,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_records&subdirectory=modules/invenio-records,invenio-records-files==1.0.0a10,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_records_rest&subdirectory=modules/invenio-records-rest,invenio-records-ui==1.0.0,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_resourcesyncclient&subdirectory=modules/invenio-resourcesyncclient,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_resourcesyncserver&subdirectory=modules/invenio-resourcesyncserver,invenio-rest==1.1.2,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_s3&subdirectory=modules/invenio-s3,invenio-search==1.1.0,invenio-search-ui==1.0.0a9,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_stats&subdirectory=modules/invenio-stats,invenio-theme==1.0.0b4,ipaddress==1.0.19,ipython==6.2.1,ipython-genutils==0.2.0,itsdangerous==0.24,jedi==0.11.0,Jinja2==2.10,jinja2-cli==0.6.0,jinja2-time==0.2.0,jmespath==0.10.0,jsmin==2.2.2,jsonpatch==1.21,jsonpath-ng==1.5.2,jsonpointer==1.14,jsonref==0.1,jsonresolver==0.2.1,jsonschema==2.6.0,jupyter-client==5.2.2,jupyter-core==4.4.0,kombu==4.6.10,limits==1.2.1,lxml==4.1.1,Mako==1.0.7,MarkupSafe==1.1.1,marshmallow==2.20.1,marshmallow-sqlalchemy==0.23.1,maxminddb==1.5.2,maxminddb-geolite2==2017.803,mistune==0.8.3,mock==3.0.5,more-itertools==8.10.0,msgpack==0.6.2,nbconvert==5.3.1,nbformat==4.4.0,netaddr==0.8.0,node-semver==0.1.1,numpy==1.16.1,oauthlib==2.1.0,ordereddict==1.1,packaging==21.3,pandocfilters==1.4.2,parso==0.1.0,passlib==1.7.1,pexpect==4.3.0,pickleshare==0.7.4,Pillow==5.4.1,pluggy==0.13.1,ply==3.11,poyo==0.4.1,prompt-toolkit==1.0.15,psycopg2==2.7.3.2,ptyprocess==0.5.2,py==1.11.0,pycparser==2.18,Pygments==2.2.0,PyJWT==1.5.3,PyLD==2.0.3,pyparsing==3.0.9,-e git+https://github.com/RCOSDP/PyPDF2.git@fefc684a3a74aff6f99e5dff24f9b4dd1c95169d#egg=PyPDF2,pyPEG2==2.15.2,pytest==6.1.2,pytest-cov==4.0.0,pytest-mock==3.6.1,python-dateutil==2.6.1,python-editor==1.0.3,python-geoip==1.2,pytz==2017.3,pyzmq==17.0.0,redis==2.10.6,requests==2.18.4,requests-oauthlib==1.1.0,resync==1.0.9,s3fs==0.1.6,s3transfer==0.1.13,Sickle==0.6.4,simplegeneric==0.8.1,simplejson==3.12.0,simplekv==0.11.2,six==1.12.0,snowballstemmer==2.2.0,soupsieve==2.3.2.post1,speaklater==1.3,Sphinx==1.8.4,sphinxcontrib-serializinghtml==1.1.5,sphinxcontrib-websupport==1.2.4,SQLAlchemy==1.2.19,SQLAlchemy-Continuum==1.3.6,SQLAlchemy-Utils==0.35.0,testpath==0.3.1,toml==0.10.2,tomli==1.2.3,tornado==4.5.3,traitlets==4.3.2,typing_extensions==4.1.1,ua-parser==0.7.3,uritemplate==4.1.1,uritools==2.1.0,urllib3==1.22,validators==0.12.0,vine==1.3.0,Wand==0.6.1,wcwidth==0.1.7,webargs==5.5.2,webassets==0.12.1,webencodings==0.5.1,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_accounts&subdirectory=modules/weko-accounts,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_admin&subdirectory=modules/weko-admin,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_authors&subdirectory=modules/weko-authors,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_bulkupdate&subdirectory=modules/weko-bulkupdate,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_deposit&subdirectory=modules/weko-deposit,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_gridlayout&subdirectory=modules/weko-gridlayout,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_groups&subdirectory=modules/weko-groups,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_handle&subdirectory=modules/weko-handle,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_index_tree&subdirectory=modules/weko-index-tree,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_indextree_journal&subdirectory=modules/weko-indextree-journal,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_items_autofill&subdirectory=modules/weko-items-autofill,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_items_ui&subdirectory=modules/weko-items-ui,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_itemtypes_ui&subdirectory=modules/weko-itemtypes-ui,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_logging&subdirectory=modules/weko-logging,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_records&subdirectory=modules/weko-records,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_records_ui&subdirectory=modules/weko-records-ui,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_redis&subdirectory=modules/weko-redis,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_schema_ui&subdirectory=modules/weko-schema-ui,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_search_ui&subdirectory=modules/weko-search-ui,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_sitemap&subdirectory=modules/weko-sitemap,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_theme&subdirectory=modules/weko-theme,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_user_profiles&subdirectory=modules/weko-user-profiles,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_workflow&subdirectory=modules/weko-workflow,Werkzeug==0.15.2,whichcraft==0.4.1,WTForms==2.1,WTForms-Alchemy==0.16.5,WTForms-Components==0.10.3,xmlschema==0.9.30,xmltodict==0.12.0,zipp==3.6.0,zope.interface==5.5.2
+c1 run-test-pre: PYTHONHASHSEED='630074157'
+c1 run-test: commands[0] | pytest --cov=invenio_files_rest tests -v --cov-branch --cov-report=term --cov-report=xml --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
+============================= test session starts ==============================
+platform linux -- Python 3.6.15, pytest-6.1.2, py-1.11.0, pluggy-0.13.1 -- /code/modules/invenio-files-rest/.tox/c1/bin/python
+cachedir: .tox/c1/.pytest_cache
+rootdir: /code/modules/invenio-files-rest
+plugins: cov-4.0.0, celery-4.4.7, mock-3.6.1
+collecting ... collected 141 items
+
+tests/test_admin.py::test_require_slug PASSED                            [  0%]
+tests/test_admin.py::test_admin_views PASSED                             [  1%]
+tests/test_cli.py::test_simple_workflow SKIPPED                          [  2%]
+tests/test_examples_app.py::test_example_app SKIPPED                     [  2%]
+tests/test_helpers.py::test_make_path PASSED                             [  3%]
+tests/test_invenio_files_rest.py::test_version PASSED                    [  4%]
+tests/test_invenio_files_rest.py::test_init PASSED                       [  4%]
+tests/test_limiters.py::test_file_size_limit_comparisons PASSED          [  5%]
+tests/test_models.py::test_location PASSED                               [  6%]
+tests/test_models.py::test_location_default PASSED                       [  7%]
+tests/test_models.py::test_location_validation PASSED                    [  7%]
+tests/test_models.py::test_bucket_removal PASSED                         [  8%]
+tests/test_models.py::test_bucket_kwargs_creation PASSED                 [  9%]
+tests/test_models.py::test_bucket_create_object PASSED                   [  9%]
+tests/test_models.py::test_bucket_retrieval PASSED                       [ 10%]
+tests/test_models.py::test_object_create PASSED                          [ 11%]
+tests/test_models.py::test_object_create_with_fileid PASSED              [ 12%]
+tests/test_models.py::test_object_multibucket PASSED                     [ 12%]
+tests/test_models.py::test_object_get_by_bucket PASSED                   [ 13%]
+tests/test_models.py::test_object_delete PASSED                          [ 14%]
+tests/test_models.py::test_object_remove PASSED                          [ 14%]
+tests/test_models.py::test_object_remove_marker PASSED                   [ 15%]
+tests/test_models.py::test_object_set_contents PASSED                    [ 16%]
+tests/test_models.py::test_object_set_location PASSED                    [ 17%]
+tests/test_models.py::test_object_snapshot PASSED                        [ 17%]
+tests/test_models.py::test_object_snapshot_deleted PASSED                [ 18%]
+tests/test_models.py::test_bucket_sync_new_object PASSED                 [ 19%]
+tests/test_models.py::test_bucket_sync_same_object PASSED                [ 19%]
+tests/test_models.py::test_bucket_sync_deleted_object PASSED             [ 20%]
+tests/test_models.py::test_bucket_sync_delete_extras PASSED              [ 21%]
+tests/test_models.py::test_bucket_sync PASSED                            [ 21%]
+tests/test_models.py::test_bucket_sync_deleted PASSED                    [ 22%]
+tests/test_models.py::test_object_copy PASSED                            [ 23%]
+tests/test_models.py::test_object_set_file PASSED                        [ 24%]
+tests/test_models.py::test_object_mimetype PASSED                        [ 24%]
+tests/test_models.py::test_object_restore PASSED                         [ 25%]
+tests/test_models.py::test_object_relink_all PASSED                      [ 26%]
+tests/test_models.py::test_object_validation PASSED                      [ 26%]
+tests/test_models.py::test_bucket_tags PASSED                            [ 27%]
+tests/test_models.py::test_fileinstance_get PASSED                       [ 28%]
+tests/test_models.py::test_fileinstance_get_by_uri PASSED                [ 29%]
+tests/test_models.py::test_fileinstance_create PASSED                    [ 29%]
+tests/test_models.py::test_fileinstance_set_contents PASSED              [ 30%]
+tests/test_models.py::test_fileinstance_copy_contents PASSED             [ 31%]
+tests/test_models.py::test_fileinstance_copy_contents_invalid PASSED     [ 31%]
+tests/test_models.py::test_fileinstance_send_file PASSED                 [ 32%]
+tests/test_models.py::test_fileinstance_validation PASSED                [ 33%]
+tests/test_models.py::test_object_version_tags PASSED                    [ 34%]
+tests/test_models_multipart.py::test_multipart_creation PASSED           [ 34%]
+tests/test_models_multipart.py::test_multipart_last_part PASSED          [ 35%]
+tests/test_models_multipart.py::test_part_creation PASSED                [ 36%]
+tests/test_models_multipart.py::test_multipart_full PASSED               [ 36%]
+tests/test_request.py::test_max_content_length PASSED                    [ 37%]
+tests/test_serializer.py::test_serialize_pretty PASSED                   [ 38%]
+tests/test_storage.py::test_storage_interface PASSED                     [ 39%]
+tests/test_storage.py::test_pyfs_initialize PASSED                       [ 39%]
+tests/test_storage.py::test_pyfs_delete PASSED                           [ 40%]
+tests/test_storage.py::test_pyfs_delete_fail PASSED                      [ 41%]
+tests/test_storage.py::test_pyfs_save PASSED                             [ 41%]
+tests/test_storage.py::test_pyfs_save_failcleanup PASSED                 [ 42%]
+tests/test_storage.py::test_pyfs_save_callback PASSED                    [ 43%]
+tests/test_storage.py::test_pyfs_save_limits PASSED                      [ 43%]
+tests/test_storage.py::test_pyfs_update PASSED                           [ 44%]
+tests/test_storage.py::test_pyfs_update_fail PASSED                      [ 45%]
+tests/test_storage.py::test_pyfs_checksum PASSED                         [ 46%]
+tests/test_storage.py::test_pyfs_checksum_fail PASSED                    [ 46%]
+tests/test_storage.py::test_pyfs_send_file PASSED                        [ 47%]
+tests/test_storage.py::test_pyfs_send_file_for_download PASSED           [ 48%]
+tests/test_storage.py::test_pyfs_send_file_xss_prevention PASSED         [ 48%]
+tests/test_storage.py::test_pyfs_send_file_fail PASSED                   [ 49%]
+tests/test_storage.py::test_pyfs_copy PASSED                             [ 50%]
+tests/test_storage.py::test_non_unicode_filename PASSED                  [ 51%]
+tests/test_tasks.py::test_verify_checksum PASSED                         [ 51%]
+tests/test_tasks.py::test_schedule_checksum_verification PASSED          [ 52%]
+tests/test_tasks.py::test_migrate_file PASSED                            [ 53%]
+tests/test_tasks.py::test_migrate_file_copyfail PASSED                   [ 53%]
+tests/test_tasks.py::test_remove_file_data PASSED                        [ 54%]
+tests/test_views_bucket.py::test_head FAILED                             [ 55%]
+tests/test_views_bucket.py::test_head_locked_deleted PASSED              [ 56%]
+tests/test_views_bucket.py::test_get FAILED                              [ 56%]
+tests/test_views_bucket.py::test_get_versions FAILED                     [ 57%]
+tests/test_views_bucket.py::test_get_empty_bucket FAILED                 [ 58%]
+tests/test_views_location.py::test_post_bucket[None-401] PASSED          [ 58%]
+tests/test_views_location.py::test_post_bucket[auth-403] PASSED          [ 59%]
+tests/test_views_location.py::test_post_bucket[location-200] PASSED      [ 60%]
+tests/test_views_location.py::test_get_location[None-405] PASSED         [ 60%]
+tests/test_views_location.py::test_get_location[auth-405] PASSED         [ 61%]
+tests/test_views_location.py::test_get_location[location-405] PASSED     [ 62%]
+tests/test_views_multipart.py::test_post_init FAILED                     [ 63%]
+tests/test_views_multipart.py::test_post_init_querystring PASSED         [ 63%]
+tests/test_views_multipart.py::test_get_init_not_allowed PASSED          [ 64%]
+tests/test_views_multipart.py::test_post_invalid_partsizes FAILED        [ 65%]
+tests/test_views_multipart.py::test_post_size_limits PASSED              [ 65%]
+tests/test_views_multipart.py::test_post_locked_bucket PASSED            [ 66%]
+tests/test_views_multipart.py::test_post_invalidkey PASSED               [ 67%]
+tests/test_views_multipart.py::test_put FAILED                           [ 68%]
+tests/test_views_multipart.py::test_put_not_found PASSED                 [ 68%]
+tests/test_views_multipart.py::test_put_wrong_sizes PASSED               [ 69%]
+tests/test_views_multipart.py::test_put_ngfileupload PASSED              [ 70%]
+tests/test_views_multipart.py::test_put_invalid_part_number PASSED       [ 70%]
+tests/test_views_multipart.py::test_put_completed_multipart PASSED       [ 71%]
+tests/test_views_multipart.py::test_put_badstream FAILED                 [ 72%]
+tests/test_views_multipart.py::test_get FAILED                           [ 73%]
+tests/test_views_multipart.py::test_get_empty PASSED                     [ 73%]
+tests/test_views_multipart.py::test_get_serialization PASSED             [ 74%]
+tests/test_views_multipart.py::test_post_complete[None-404] PASSED       [ 75%]
+tests/test_views_multipart.py::test_post_complete[auth-404] PASSED       [ 75%]
+tests/test_views_multipart.py::test_post_complete[objects-404] PASSED    [ 76%]
+tests/test_views_multipart.py::test_post_complete[bucket-200] PASSED     [ 77%]
+tests/test_views_multipart.py::test_post_complete[location-200] PASSED   [ 78%]
+tests/test_views_multipart.py::test_post_complete_fail PASSED            [ 78%]
+tests/test_views_multipart.py::test_post_complete_timeout PASSED         [ 79%]
+tests/test_views_multipart.py::test_delete FAILED                        [ 80%]
+tests/test_views_multipart.py::test_delete_invalid PASSED                [ 80%]
+tests/test_views_multipart.py::test_delete_init_not_allowed PASSED       [ 81%]
+tests/test_views_multipart.py::test_get_listuploads FAILED               [ 82%]
+tests/test_views_multipart.py::test_already_exhausted_input_stream PASSED [ 82%]
+tests/test_views_objectversion.py::test_get_not_found PASSED             [ 83%]
+tests/test_views_objectversion.py::test_get PASSED                       [ 84%]
+tests/test_views_objectversion.py::test_get_download PASSED              [ 85%]
+tests/test_views_objectversion.py::test_last_modified_utc_conversion PASSED [ 85%]
+tests/test_views_objectversion.py::test_get_unreadable_file PASSED       [ 86%]
+tests/test_views_objectversion.py::test_get_versions PASSED              [ 87%]
+tests/test_views_objectversion.py::test_get_versions_invalid PASSED      [ 87%]
+tests/test_views_objectversion.py::test_post FAILED                      [ 88%]
+tests/test_views_objectversion.py::test_put FAILED                       [ 89%]
+tests/test_views_objectversion.py::test_put_versioning FAILED            [ 90%]
+tests/test_views_objectversion.py::test_put_file_size_errors[50-100-400-Bucket quota] PASSED [ 90%]
+tests/test_views_objectversion.py::test_put_file_size_errors[100-50-400-Maximum file size] PASSED [ 91%]
+tests/test_views_objectversion.py::test_put_file_size_errors[100-100-200-None] PASSED [ 92%]
+tests/test_views_objectversion.py::test_put_file_size_errors[None-None-200-None] PASSED [ 92%]
+tests/test_views_objectversion.py::test_put_invalid_key PASSED           [ 93%]
+tests/test_views_objectversion.py::test_put_zero_size PASSED             [ 94%]
+tests/test_views_objectversion.py::test_put_deleted_locked FAILED        [ 95%]
+tests/test_views_objectversion.py::test_put_error PASSED                 [ 95%]
+tests/test_views_objectversion.py::test_put_multipartform PASSED         [ 96%]
+tests/test_views_objectversion.py::test_delete_versions_head_reset PASSED [ 97%]
+tests/test_views_objectversion.py::test_delete_locked_deleted PASSED     [ 97%]
+tests/test_views_objectversion.py::test_delete_unwritable PASSED         [ 98%]
+tests/test_views_objectversion.py::test_put_header_tags FAILED           [ 99%]
+tests/test_views_objectversion.py::test_put_header_invalid_tags FAILED   [100%]
+
+=================================== FAILURES ===================================
+__________________________________ test_head ___________________________________
+
+client = <FlaskClient <Flask 'testapp'>>
+headers = {'Accept': '*/*', 'Content-Type': 'application/json'}
+bucket = <[DetachedInstanceError('Instance <Bucket at 0x7f2055fe9d30> is not bound to a Session; attribute refresh operation cannot proceed',) raised in repr()] Bucket object at 0x7f2055fe9d30>
+permissions = {None: None, 'auth': <User 1>, 'location': <User 2>, 'bucket': <User 3>, ...}
+
+    def test_head(client, headers, bucket, permissions):
+        """Test checking existence of bucket."""
+        cases = [
+            (None, 404),
+            ('auth', 404),
+            ('objects', 404),  # TODO - return 403 instead
+            ('bucket', 200),
+            ('location', 200),
+        ]
+    
+        for user, expected in cases:
+>           login_user(client, permissions[user])
+
+tests/test_views_bucket.py:30: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/testutils.py:26: in login_user
+    sess['user_id'] = user.id if user else None
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/attributes.py:275: in __get__
+    return self.impl.get(instance_state(instance), dict_)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/attributes.py:669: in get
+    value = state._load_expired(state, passive)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/state.py:632: in _load_expired
+    self.manager.deferred_scalar_loader(self, toload)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+mapper = <Mapper at 0x7f206755e240; User>
+state = <sqlalchemy.orm.state.InstanceState object at 0x7f2055f76278>
+attribute_names = {'active', 'confirmed_at', 'current_login_at', 'current_login_ip', 'email', 'id', ...}
+
+    def load_scalar_attributes(mapper, state, attribute_names):
+        """initiate a column-based attribute refresh operation."""
+    
+        # assert mapper is _state_mapper(state)
+        session = state.session
+        if not session:
+            raise orm_exc.DetachedInstanceError(
+                "Instance %s is not bound to a Session; "
+>               "attribute refresh operation cannot proceed" % (state_str(state))
+            )
+E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <User at 0x7f2055f765c0> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: http://sqlalche.me/e/bhk3)
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/loading.py:913: DetachedInstanceError
+___________________________________ test_get ___________________________________
+
+client = <FlaskClient <Flask 'testapp'>>
+headers = {'Accept': '*/*', 'Content-Type': 'application/json'}
+permissions = {None: None, 'auth': <User 1>, 'location': <User 2>, 'bucket': <User 3>, ...}
+bucket = <[DetachedInstanceError('Instance <Bucket at 0x7f20565f4588> is not bound to a Session; attribute refresh operation cannot proceed',) raised in repr()] Bucket object at 0x7f20565f4588>
+objects = [<[DetachedInstanceError('Instance <ObjectVersion at 0x7f2055a78940> is not bound to a Session; attribute refresh oper... to a Session; attribute refresh operation cannot proceed',) raised in repr()] ObjectVersion object at 0x7f2055a3ad30>]
+get_json = <function get_json.<locals>.inner at 0x7f2055a1e7b8>
+
+    def test_get(client, headers, permissions, bucket, objects, get_json):
+        """Test listing objects."""
+        cases = [
+            (None, 404),
+            ('auth', 404),
+            ('objects', 404),  # TODO - return 403 instead
+            ('bucket', 200),
+            ('location', 200),
+        ]
+    
+        for user, expected in cases:
+>           login_user(client, permissions[user])
+
+tests/test_views_bucket.py:74: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/testutils.py:26: in login_user
+    sess['user_id'] = user.id if user else None
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/attributes.py:275: in __get__
+    return self.impl.get(instance_state(instance), dict_)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/attributes.py:669: in get
+    value = state._load_expired(state, passive)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/state.py:632: in _load_expired
+    self.manager.deferred_scalar_loader(self, toload)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+mapper = <Mapper at 0x7f206755e240; User>
+state = <sqlalchemy.orm.state.InstanceState object at 0x7f20565f4ac8>
+attribute_names = {'active', 'confirmed_at', 'current_login_at', 'current_login_ip', 'email', 'id', ...}
+
+    def load_scalar_attributes(mapper, state, attribute_names):
+        """initiate a column-based attribute refresh operation."""
+    
+        # assert mapper is _state_mapper(state)
+        session = state.session
+        if not session:
+            raise orm_exc.DetachedInstanceError(
+                "Instance %s is not bound to a Session; "
+>               "attribute refresh operation cannot proceed" % (state_str(state))
+            )
+E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <User at 0x7f20565f4630> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: http://sqlalche.me/e/bhk3)
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/loading.py:913: DetachedInstanceError
+______________________________ test_get_versions _______________________________
+
+client = <FlaskClient <Flask 'testapp'>>
+headers = {'Accept': '*/*', 'Content-Type': 'application/json'}
+permissions = {None: None, 'auth': <User 1>, 'location': <User 2>, 'bucket': <User 3>, ...}
+bucket = <[DetachedInstanceError('Instance <Bucket at 0x7f2055838860> is not bound to a Session; attribute refresh operation cannot proceed',) raised in repr()] Bucket object at 0x7f2055838860>
+objects = [<[DetachedInstanceError('Instance <ObjectVersion at 0x7f20557d59b0> is not bound to a Session; attribute refresh oper... to a Session; attribute refresh operation cannot proceed',) raised in repr()] ObjectVersion object at 0x7f20557e4ef0>]
+get_json = <function get_json.<locals>.inner at 0x7f20558431e0>
+
+    def test_get_versions(client, headers, permissions, bucket, objects, get_json):
+        """Test listing objects."""
+        cases = [
+            (None, 404),
+            ('auth', 404),
+            ('bucket', 403),  # User already knowns bucket exists.
+            ('objects', 404),  # TODO - return 403 instead
+            ('location', 200),
+        ]
+    
+        for user, expected in cases:
+>           login_user(client, permissions[user])
+
+tests/test_views_bucket.py:115: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/testutils.py:26: in login_user
+    sess['user_id'] = user.id if user else None
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/attributes.py:275: in __get__
+    return self.impl.get(instance_state(instance), dict_)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/attributes.py:669: in get
+    value = state._load_expired(state, passive)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/state.py:632: in _load_expired
+    self.manager.deferred_scalar_loader(self, toload)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+mapper = <Mapper at 0x7f206755e240; User>
+state = <sqlalchemy.orm.state.InstanceState object at 0x7f2055838390>
+attribute_names = {'active', 'confirmed_at', 'current_login_at', 'current_login_ip', 'email', 'id', ...}
+
+    def load_scalar_attributes(mapper, state, attribute_names):
+        """initiate a column-based attribute refresh operation."""
+    
+        # assert mapper is _state_mapper(state)
+        session = state.session
+        if not session:
+            raise orm_exc.DetachedInstanceError(
+                "Instance %s is not bound to a Session; "
+>               "attribute refresh operation cannot proceed" % (state_str(state))
+            )
+E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <User at 0x7f2055838c88> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: http://sqlalche.me/e/bhk3)
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/loading.py:913: DetachedInstanceError
+____________________________ test_get_empty_bucket _____________________________
+
+db = <SQLAlchemy engine=sqlite:///:memory:>
+client = <FlaskClient <Flask 'testapp'>>
+headers = {'Accept': '*/*', 'Content-Type': 'application/json'}
+bucket = <[DetachedInstanceError('Instance <Bucket at 0x7f20556cc908> is not bound to a Session; attribute refresh operation cannot proceed',) raised in repr()] Bucket object at 0x7f20556cc908>
+objects = [<[DetachedInstanceError('Instance <ObjectVersion at 0x7f20556adbe0> is not bound to a Session; attribute refresh oper... to a Session; attribute refresh operation cannot proceed',) raised in repr()] ObjectVersion object at 0x7f20556adc88>]
+permissions = {None: None, 'auth': <User 1>, 'location': <User 2>, 'bucket': <User 3>, ...}
+get_json = <function get_json.<locals>.inner at 0x7f20556cd2f0>
+
+    def test_get_empty_bucket(db, client, headers, bucket, objects, permissions,
+                              get_json):
+        """Test getting objects from an empty bucket."""
+        # Delete the objects created in the fixtures to have an empty bucket with
+        # permissions set up.
+        for obj in objects:
+            ObjectVersion.delete(obj.bucket_id, obj.key)
+        db.session.commit()
+    
+        cases = [
+            (None, 404),
+            ('auth', 404),
+            ('objects', 404),  # TODO - return 403 instead
+            ('bucket', 200),
+            ('location', 200),
+        ]
+    
+        for user, expected in cases:
+>           login_user(client, permissions[user])
+
+tests/test_views_bucket.py:148: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/testutils.py:26: in login_user
+    sess['user_id'] = user.id if user else None
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/attributes.py:275: in __get__
+    return self.impl.get(instance_state(instance), dict_)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/attributes.py:669: in get
+    value = state._load_expired(state, passive)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/state.py:632: in _load_expired
+    self.manager.deferred_scalar_loader(self, toload)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+mapper = <Mapper at 0x7f206755e240; User>
+state = <sqlalchemy.orm.state.InstanceState object at 0x7f20556cca90>
+attribute_names = {'active', 'confirmed_at', 'current_login_at', 'current_login_ip', 'email', 'id', ...}
+
+    def load_scalar_attributes(mapper, state, attribute_names):
+        """initiate a column-based attribute refresh operation."""
+    
+        # assert mapper is _state_mapper(state)
+        session = state.session
+        if not session:
+            raise orm_exc.DetachedInstanceError(
+                "Instance %s is not bound to a Session; "
+>               "attribute refresh operation cannot proceed" % (state_str(state))
+            )
+E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <User at 0x7f20556ccc18> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: http://sqlalche.me/e/bhk3)
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/loading.py:913: DetachedInstanceError
+________________________________ test_post_init ________________________________
+
+client = <FlaskClient <Flask 'testapp'>>
+headers = {'Accept': '*/*', 'Content-Type': 'application/json'}
+permissions = {None: None, 'auth': <User 1>, 'location': <User 2>, 'bucket': <User 3>, ...}
+bucket = <[DetachedInstanceError('Instance <Bucket at 0x7f205526bc50> is not bound to a Session; attribute refresh operation cannot proceed',) raised in repr()] Bucket object at 0x7f205526bc50>
+get_json = <function get_json.<locals>.inner at 0x7f2055272048>
+
+    def test_post_init(client, headers, permissions, bucket, get_json):
+        """Test init multipart upload."""
+        cases = [
+            (None, 404),
+            ('auth', 404),
+            ('objects', 404),  # TODO - use 403 instead
+            ('bucket', 200),
+            ('location', 200),
+        ]
+    
+        for user, expected in cases:
+>           login_user(client, permissions[user])
+
+tests/test_views_multipart.py:44: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/testutils.py:26: in login_user
+    sess['user_id'] = user.id if user else None
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/attributes.py:275: in __get__
+    return self.impl.get(instance_state(instance), dict_)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/attributes.py:669: in get
+    value = state._load_expired(state, passive)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/state.py:632: in _load_expired
+    self.manager.deferred_scalar_loader(self, toload)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+mapper = <Mapper at 0x7f206755e240; User>
+state = <sqlalchemy.orm.state.InstanceState object at 0x7f205526b710>
+attribute_names = {'active', 'confirmed_at', 'current_login_at', 'current_login_ip', 'email', 'id', ...}
+
+    def load_scalar_attributes(mapper, state, attribute_names):
+        """initiate a column-based attribute refresh operation."""
+    
+        # assert mapper is _state_mapper(state)
+        session = state.session
+        if not session:
+            raise orm_exc.DetachedInstanceError(
+                "Instance %s is not bound to a Session; "
+>               "attribute refresh operation cannot proceed" % (state_str(state))
+            )
+E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <User at 0x7f205526b7b8> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: http://sqlalche.me/e/bhk3)
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/loading.py:913: DetachedInstanceError
+_________________________ test_post_invalid_partsizes __________________________
+
+client = <FlaskClient <Flask 'testapp'>>
+headers = {'Accept': '*/*', 'Content-Type': 'application/json'}
+bucket = <[DetachedInstanceError('Instance <Bucket at 0x7f2054fc25c0> is not bound to a Session; attribute refresh operation cannot proceed',) raised in repr()] Bucket object at 0x7f2054fc25c0>
+get_json = <function get_json.<locals>.inner at 0x7f2054fabe18>
+admin_user = <User 1>
+
+    def test_post_invalid_partsizes(client, headers, bucket, get_json, admin_user):
+        """Test invalid multipart init."""
+        login_user(client, admin_user)
+    
+        # Part size too large
+        res = client.post(
+            obj_url(bucket), query_string='uploads', headers=headers,
+            data=json.dumps({'size': 30, 'partSize': 21}))
+        assert res.status_code == 400
+    
+        # Part size too small
+        res = client.post(
+            obj_url(bucket), query_string='uploads', headers=headers,
+            data=json.dumps({'size': 30, 'partSize': 1}))
+        assert res.status_code == 400
+    
+        # Size too large
+        res = client.post(
+>           obj_url(bucket), query_string='uploads', headers=headers,
+            data=json.dumps({'size': 2 * 100 + 1, 'partSize': 2}))
+
+tests/test_views_multipart.py:106: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_views_multipart.py:28: in obj_url
+    bucket_id=str(bucket.id),
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/attributes.py:275: in __get__
+    return self.impl.get(instance_state(instance), dict_)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/attributes.py:669: in get
+    value = state._load_expired(state, passive)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/state.py:632: in _load_expired
+    self.manager.deferred_scalar_loader(self, toload)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+mapper = <Mapper at 0x7f20658af278; Bucket>
+state = <sqlalchemy.orm.state.InstanceState object at 0x7f2054fc2a58>
+attribute_names = {'created', 'default_location', 'default_storage_class', 'deleted', 'id', 'locked', ...}
+
+    def load_scalar_attributes(mapper, state, attribute_names):
+        """initiate a column-based attribute refresh operation."""
+    
+        # assert mapper is _state_mapper(state)
+        session = state.session
+        if not session:
+            raise orm_exc.DetachedInstanceError(
+                "Instance %s is not bound to a Session; "
+>               "attribute refresh operation cannot proceed" % (state_str(state))
+            )
+E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <Bucket at 0x7f2054fc25c0> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: http://sqlalche.me/e/bhk3)
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/loading.py:913: DetachedInstanceError
+___________________________________ test_put ___________________________________
+
+client = <FlaskClient <Flask 'testapp'>>
+db = <SQLAlchemy engine=sqlite:///:memory:>
+bucket = <[DetachedInstanceError('Instance <Bucket at 0x7f2054bae400> is not bound to a Session; attribute refresh operation cannot proceed',) raised in repr()] Bucket object at 0x7f2054bae400>
+permissions = {None: None, 'auth': <User 1>, 'location': <User 2>, 'bucket': <User 3>, ...}
+multipart = <[DetachedInstanceError('Instance <MultipartObject at 0x7f2054bb1048> is not bound to a Session; attribute refresh operation cannot proceed',) raised in repr()] MultipartObject object at 0x7f2054bb1048>
+multipart_url = 'http://invenio.org/files/f40415d4-bcfa-4f9e-8932-9d82aa2f5f7d/mykey?uploadId=c592a1c3-90cf-48f8-a6e6-448ce19b8901'
+get_sha256 = <function get_sha256.<locals>.inner at 0x7f2054b93f28>
+get_json = <function get_json.<locals>.inner at 0x7f2054bc4598>
+
+    def test_put(client, db, bucket, permissions, multipart, multipart_url,
+                 get_sha256, get_json):
+        """Test part upload."""
+        cases = [
+            (None, 404),
+            ('auth', 404),
+            ('objects', 404),  # TODO - use 403 instead
+            ('bucket', 200),
+            ('location', 200),
+        ]
+    
+        for user, expected in cases:
+>           login_user(client, permissions[user])
+
+tests/test_views_multipart.py:184: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/testutils.py:26: in login_user
+    sess['user_id'] = user.id if user else None
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/attributes.py:275: in __get__
+    return self.impl.get(instance_state(instance), dict_)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/attributes.py:669: in get
+    value = state._load_expired(state, passive)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/state.py:632: in _load_expired
+    self.manager.deferred_scalar_loader(self, toload)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+mapper = <Mapper at 0x7f206755e240; User>
+state = <sqlalchemy.orm.state.InstanceState object at 0x7f2054baedd8>
+attribute_names = {'active', 'confirmed_at', 'current_login_at', 'current_login_ip', 'email', 'id', ...}
+
+    def load_scalar_attributes(mapper, state, attribute_names):
+        """initiate a column-based attribute refresh operation."""
+    
+        # assert mapper is _state_mapper(state)
+        session = state.session
+        if not session:
+            raise orm_exc.DetachedInstanceError(
+                "Instance %s is not bound to a Session; "
+>               "attribute refresh operation cannot proceed" % (state_str(state))
+            )
+E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <User at 0x7f2054bae198> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: http://sqlalche.me/e/bhk3)
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/loading.py:913: DetachedInstanceError
+______________________________ test_put_badstream ______________________________
+
+client = <FlaskClient <Flask 'testapp'>>
+db = <SQLAlchemy engine=sqlite:///:memory:>
+bucket = <[DetachedInstanceError('Instance <Bucket at 0x7f205475a7f0> is not bound to a Session; attribute refresh operation cannot proceed',) raised in repr()] Bucket object at 0x7f205475a7f0>
+multipart = <[DetachedInstanceError('Instance <MultipartObject at 0x7f205477c358> is not bound to a Session; attribute refresh operation cannot proceed',) raised in repr()] MultipartObject object at 0x7f205477c358>
+multipart_url = 'http://invenio.org/files/645200a0-201e-4f33-9d16-d1169a3a7112/mykey?uploadId=61017e43-c13b-42bd-a47c-fc4ceac5de91'
+get_json = <function get_json.<locals>.inner at 0x7f205475dbf8>
+admin_user = <User 1>
+
+    def test_put_badstream(client, db, bucket, multipart, multipart_url, get_json,
+                           admin_user):
+        """Test uploading to a completed multipart upload."""
+        login_user(client, admin_user)
+    
+        client.put(
+            multipart_url + '&partNumber={0}'.format(1),
+            input_stream=BytesIO(b'a' * multipart.chunk_size),
+        )
+    
+        # Part exists
+        data = get_json(client.get(multipart_url), code=200)
+        assert len(data['parts']) == 1
+    
+        pytest.raises(
+            ValueError,
+            client.put,
+            multipart_url + '&partNumber={0}'.format(1),
+>           input_stream=BadBytesIO(b'b' * multipart.chunk_size),
+        )
+
+tests/test_views_multipart.py:304: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/attributes.py:275: in __get__
+    return self.impl.get(instance_state(instance), dict_)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/attributes.py:669: in get
+    value = state._load_expired(state, passive)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/state.py:632: in _load_expired
+    self.manager.deferred_scalar_loader(self, toload)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+mapper = <Mapper at 0x7f20658708d0; MultipartObject>
+state = <sqlalchemy.orm.state.InstanceState object at 0x7f20547712e8>
+attribute_names = {'bucket_id', 'chunk_size', 'completed', 'created', 'file_id', 'key', ...}
+
+    def load_scalar_attributes(mapper, state, attribute_names):
+        """initiate a column-based attribute refresh operation."""
+    
+        # assert mapper is _state_mapper(state)
+        session = state.session
+        if not session:
+            raise orm_exc.DetachedInstanceError(
+                "Instance %s is not bound to a Session; "
+>               "attribute refresh operation cannot proceed" % (state_str(state))
+            )
+E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <MultipartObject at 0x7f205477c358> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: http://sqlalche.me/e/bhk3)
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/loading.py:913: DetachedInstanceError
+___________________________________ test_get ___________________________________
+
+client = <FlaskClient <Flask 'testapp'>>
+db = <SQLAlchemy engine=sqlite:///:memory:>
+bucket = <[DetachedInstanceError('Instance <Bucket at 0x7f2054643198> is not bound to a Session; attribute refresh operation cannot proceed',) raised in repr()] Bucket object at 0x7f2054643198>
+permissions = {None: None, 'auth': <User 1>, 'location': <User 2>, 'bucket': <User 3>, ...}
+multipart = <[DetachedInstanceError('Instance <MultipartObject at 0x7f2054648358> is not bound to a Session; attribute refresh operation cannot proceed',) raised in repr()] MultipartObject object at 0x7f2054648358>
+multipart_url = 'http://invenio.org/files/f397ba23-876c-4459-a2f8-d32c8c7be363/mykey?uploadId=1e73f981-4ce5-475e-9a15-0ff7696446e4'
+get_json = <function get_json.<locals>.inner at 0x7f205462aea0>
+
+    def test_get(client, db, bucket, permissions, multipart, multipart_url,
+                 get_json):
+        """Test get parts."""
+        Part.create(multipart, 0)
+        Part.create(multipart, 1)
+        Part.create(multipart, 3)
+        db.session.commit()
+    
+        cases = [
+            (None, 404),
+            ('auth', 404),
+            ('objects', 404),
+            ('bucket', 200),
+            ('location', 200),
+        ]
+    
+        for user, expected in cases:
+>           login_user(client, permissions[user])
+
+tests/test_views_multipart.py:330: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/testutils.py:26: in login_user
+    sess['user_id'] = user.id if user else None
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/attributes.py:275: in __get__
+    return self.impl.get(instance_state(instance), dict_)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/attributes.py:669: in get
+    value = state._load_expired(state, passive)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/state.py:632: in _load_expired
+    self.manager.deferred_scalar_loader(self, toload)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+mapper = <Mapper at 0x7f206755e240; User>
+state = <sqlalchemy.orm.state.InstanceState object at 0x7f2054643f60>
+attribute_names = {'active', 'confirmed_at', 'current_login_at', 'current_login_ip', 'email', 'id', ...}
+
+    def load_scalar_attributes(mapper, state, attribute_names):
+        """initiate a column-based attribute refresh operation."""
+    
+        # assert mapper is _state_mapper(state)
+        session = state.session
+        if not session:
+            raise orm_exc.DetachedInstanceError(
+                "Instance %s is not bound to a Session; "
+>               "attribute refresh operation cannot proceed" % (state_str(state))
+            )
+E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <User at 0x7f2054643f28> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: http://sqlalche.me/e/bhk3)
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/loading.py:913: DetachedInstanceError
+_________________________________ test_delete __________________________________
+
+client = <FlaskClient <Flask 'testapp'>>
+db = <SQLAlchemy engine=sqlite:///:memory:>
+bucket = <[DetachedInstanceError('Instance <Bucket at 0x7f2054a7a198> is not bound to a Session; attribute refresh operation cannot proceed',) raised in repr()] Bucket object at 0x7f2054a7a198>
+multipart = <[DetachedInstanceError('Instance <MultipartObject at 0x7f2054a73160> is not bound to a Session; attribute refresh operation cannot proceed',) raised in repr()] MultipartObject object at 0x7f2054a73160>
+multipart_url = 'http://invenio.org/files/24bb7215-fb5b-47c1-ab48-5375e08d33a5/mykey?uploadId=700805e7-dba6-48d0-85a8-b1bc157a15a7'
+permissions = {None: None, 'auth': <User 1>, 'location': <User 2>, 'bucket': <User 3>, ...}
+parts = [<Part 700805e7-dba6-48d0-85a8-b1bc157a15a7, 0>, <Part 700805e7-dba6-48d0-85a8-b1bc157a15a7, 1>, <Part 700805e7-dba6-4...-85a8-b1bc157a15a7, 3>, <Part 700805e7-dba6-48d0-85a8-b1bc157a15a7, 4>, <Part 700805e7-dba6-48d0-85a8-b1bc157a15a7, 5>]
+get_json = <function get_json.<locals>.inner at 0x7f2053cadbf8>
+
+    def test_delete(client, db, bucket, multipart, multipart_url, permissions,
+                    parts, get_json):
+        """Test complete when parts are missing."""
+        assert bucket.size == multipart.size
+    
+        cases = [
+            (None, 404),
+            ('auth', 404),
+            ('objects', 404),
+            ('bucket', 404),
+            ('location', 204),
+        ]
+    
+        for user, expected in cases:
+>           login_user(client, permissions[user])
+
+tests/test_views_multipart.py:497: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/testutils.py:26: in login_user
+    sess['user_id'] = user.id if user else None
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/attributes.py:275: in __get__
+    return self.impl.get(instance_state(instance), dict_)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/attributes.py:669: in get
+    value = state._load_expired(state, passive)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/state.py:632: in _load_expired
+    self.manager.deferred_scalar_loader(self, toload)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+mapper = <Mapper at 0x7f206755e240; User>
+state = <sqlalchemy.orm.state.InstanceState object at 0x7f20563b6048>
+attribute_names = {'active', 'confirmed_at', 'current_login_at', 'current_login_ip', 'email', 'id', ...}
+
+    def load_scalar_attributes(mapper, state, attribute_names):
+        """initiate a column-based attribute refresh operation."""
+    
+        # assert mapper is _state_mapper(state)
+        session = state.session
+        if not session:
+            raise orm_exc.DetachedInstanceError(
+                "Instance %s is not bound to a Session; "
+>               "attribute refresh operation cannot proceed" % (state_str(state))
+            )
+E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <User at 0x7f2054a7a748> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: http://sqlalche.me/e/bhk3)
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/loading.py:913: DetachedInstanceError
+_____________________________ test_get_listuploads _____________________________
+
+client = <FlaskClient <Flask 'testapp'>>
+db = <SQLAlchemy engine=sqlite:///:memory:>
+bucket = <[DetachedInstanceError('Instance <Bucket at 0x7f20539ef5f8> is not bound to a Session; attribute refresh operation cannot proceed',) raised in repr()] Bucket object at 0x7f20539ef5f8>
+multipart = <[DetachedInstanceError('Instance <MultipartObject at 0x7f2053992cf8> is not bound to a Session; attribute refresh operation cannot proceed',) raised in repr()] MultipartObject object at 0x7f2053992cf8>
+multipart_url = 'http://invenio.org/files/721c76c9-ea06-49f8-8292-3e139cffbf1c/mykey?uploadId=1ba4238c-34ac-4d11-991a-5cae0618d926'
+permissions = {None: None, 'auth': <User 1>, 'location': <User 2>, 'bucket': <User 3>, ...}
+parts = [<Part 1ba4238c-34ac-4d11-991a-5cae0618d926, 0>, <Part 1ba4238c-34ac-4d11-991a-5cae0618d926, 1>, <Part 1ba4238c-34ac-4...-991a-5cae0618d926, 3>, <Part 1ba4238c-34ac-4d11-991a-5cae0618d926, 4>, <Part 1ba4238c-34ac-4d11-991a-5cae0618d926, 5>]
+get_json = <function get_json.<locals>.inner at 0x7f205398e950>
+
+    def test_get_listuploads(client, db, bucket, multipart, multipart_url,
+                             permissions, parts, get_json):
+        """Test get list of multipart uploads in bucket."""
+        cases = [
+            (None, 404),
+            ('auth', 404),
+            ('objects', 404),
+            ('bucket', 404),
+            ('location', 200),
+        ]
+    
+        for user, expected in cases:
+>           login_user(client, permissions[user])
+
+tests/test_views_multipart.py:538: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/testutils.py:26: in login_user
+    sess['user_id'] = user.id if user else None
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/attributes.py:275: in __get__
+    return self.impl.get(instance_state(instance), dict_)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/attributes.py:669: in get
+    value = state._load_expired(state, passive)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/state.py:632: in _load_expired
+    self.manager.deferred_scalar_loader(self, toload)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+mapper = <Mapper at 0x7f206755e240; User>
+state = <sqlalchemy.orm.state.InstanceState object at 0x7f20539fefd0>
+attribute_names = {'active', 'confirmed_at', 'current_login_at', 'current_login_ip', 'email', 'id', ...}
+
+    def load_scalar_attributes(mapper, state, attribute_names):
+        """initiate a column-based attribute refresh operation."""
+    
+        # assert mapper is _state_mapper(state)
+        session = state.session
+        if not session:
+            raise orm_exc.DetachedInstanceError(
+                "Instance %s is not bound to a Session; "
+>               "attribute refresh operation cannot proceed" % (state_str(state))
+            )
+E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <User at 0x7f20539fc908> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: http://sqlalche.me/e/bhk3)
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/loading.py:913: DetachedInstanceError
+__________________________________ test_post ___________________________________
+
+client = <FlaskClient <Flask 'testapp'>>
+headers = {'Accept': '*/*', 'Content-Type': 'application/json'}
+permissions = {None: None, 'auth': <User 1>, 'location': <User 2>, 'bucket': <User 3>, ...}
+bucket = <[DetachedInstanceError('Instance <Bucket at 0x7f2052f31978> is not bound to a Session; attribute refresh operation cannot proceed',) raised in repr()] Bucket object at 0x7f2052f31978>
+
+    def test_post(client, headers, permissions, bucket):
+        """Test ObjectResource view POST method."""
+        cases = [
+            (None, 404),
+            ('auth', 404),
+            ('bucket', 403),
+            ('location', 403),
+        ]
+    
+        key = 'file.pdf'
+        data = b'mycontent'
+    
+        for user, expected in cases:
+>           login_user(client, permissions[user])
+
+tests/test_views_objectversion.py:214: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/testutils.py:26: in login_user
+    sess['user_id'] = user.id if user else None
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/attributes.py:275: in __get__
+    return self.impl.get(instance_state(instance), dict_)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/attributes.py:669: in get
+    value = state._load_expired(state, passive)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/state.py:632: in _load_expired
+    self.manager.deferred_scalar_loader(self, toload)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+mapper = <Mapper at 0x7f206755e240; User>
+state = <sqlalchemy.orm.state.InstanceState object at 0x7f2052f31470>
+attribute_names = {'active', 'confirmed_at', 'current_login_at', 'current_login_ip', 'email', 'id', ...}
+
+    def load_scalar_attributes(mapper, state, attribute_names):
+        """initiate a column-based attribute refresh operation."""
+    
+        # assert mapper is _state_mapper(state)
+        session = state.session
+        if not session:
+            raise orm_exc.DetachedInstanceError(
+                "Instance %s is not bound to a Session; "
+>               "attribute refresh operation cannot proceed" % (state_str(state))
+            )
+E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <User at 0x7f2052f31390> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: http://sqlalche.me/e/bhk3)
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/loading.py:913: DetachedInstanceError
+___________________________________ test_put ___________________________________
+
+client = <FlaskClient <Flask 'testapp'>>
+bucket = <[DetachedInstanceError('Instance <Bucket at 0x7f20539ef748> is not bound to a Session; attribute refresh operation cannot proceed',) raised in repr()] Bucket object at 0x7f20539ef748>
+permissions = {None: None, 'auth': <User 1>, 'location': <User 2>, 'bucket': <User 3>, ...}
+get_sha256 = <function get_sha256.<locals>.inner at 0x7f2052ed5b70>
+get_json = <function get_json.<locals>.inner at 0x7f2052ed5268>
+
+    def test_put(client, bucket, permissions, get_sha256, get_json):
+        """Test upload of an object."""
+        cases = [
+            (None, 404),
+            ('auth', 404),
+            ('objects', 404),
+            ('bucket', 200),
+            ('location', 200),
+        ]
+    
+        key = 'test.txt'
+        data = b'updated_content'
+        checksum = get_sha256(data, prefix=True)
+        object_url = url_for(
+            'invenio_files_rest.object_api', bucket_id=bucket.id, key=key)
+    
+        for user, expected in cases:
+>           login_user(client, permissions[user])
+
+tests/test_views_objectversion.py:242: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/testutils.py:26: in login_user
+    sess['user_id'] = user.id if user else None
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/attributes.py:275: in __get__
+    return self.impl.get(instance_state(instance), dict_)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/attributes.py:669: in get
+    value = state._load_expired(state, passive)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/state.py:632: in _load_expired
+    self.manager.deferred_scalar_loader(self, toload)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+mapper = <Mapper at 0x7f206755e240; User>
+state = <sqlalchemy.orm.state.InstanceState object at 0x7f20539efe80>
+attribute_names = {'active', 'confirmed_at', 'current_login_at', 'current_login_ip', 'email', 'id', ...}
+
+    def load_scalar_attributes(mapper, state, attribute_names):
+        """initiate a column-based attribute refresh operation."""
+    
+        # assert mapper is _state_mapper(state)
+        session = state.session
+        if not session:
+            raise orm_exc.DetachedInstanceError(
+                "Instance %s is not bound to a Session; "
+>               "attribute refresh operation cannot proceed" % (state_str(state))
+            )
+E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <User at 0x7f20539ef588> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: http://sqlalche.me/e/bhk3)
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/loading.py:913: DetachedInstanceError
+_____________________________ test_put_versioning ______________________________
+
+client = <FlaskClient <Flask 'testapp'>>
+bucket = <[DetachedInstanceError('Instance <Bucket at 0x7f20549547f0> is not bound to a Session; attribute refresh operation cannot proceed',) raised in repr()] Bucket object at 0x7f20549547f0>
+permissions = {None: None, 'auth': <User 1>, 'location': <User 2>, 'bucket': <User 3>, ...}
+get_json = <function get_json.<locals>.inner at 0x7f2052c9e620>
+
+    def test_put_versioning(client, bucket, permissions, get_json):
+        """Test versioning feature."""
+        key = 'test.txt'
+        files = [b'v1', b'v2']
+        object_url = url_for(
+            'invenio_files_rest.object_api', bucket_id=bucket.id, key=key)
+    
+        # Upload to same key twice
+        login_user(client, permissions['location'])
+        for f in files:
+            resp = client.put(object_url, input_stream=BytesIO(f))
+            assert resp.status_code == 200
+    
+        # Assert we have two versions
+        resp = client.get(url_for(
+            'invenio_files_rest.bucket_api',
+>           bucket_id=bucket.id,
+        ), query_string='versions=1')
+
+tests/test_views_objectversion.py:273: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/attributes.py:275: in __get__
+    return self.impl.get(instance_state(instance), dict_)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/attributes.py:669: in get
+    value = state._load_expired(state, passive)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/state.py:632: in _load_expired
+    self.manager.deferred_scalar_loader(self, toload)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+mapper = <Mapper at 0x7f20658af278; Bucket>
+state = <sqlalchemy.orm.state.InstanceState object at 0x7f2054954d30>
+attribute_names = {'created', 'default_location', 'default_storage_class', 'deleted', 'id', 'locked', ...}
+
+    def load_scalar_attributes(mapper, state, attribute_names):
+        """initiate a column-based attribute refresh operation."""
+    
+        # assert mapper is _state_mapper(state)
+        session = state.session
+        if not session:
+            raise orm_exc.DetachedInstanceError(
+                "Instance %s is not bound to a Session; "
+>               "attribute refresh operation cannot proceed" % (state_str(state))
+            )
+E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <Bucket at 0x7f20549547f0> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: http://sqlalche.me/e/bhk3)
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/loading.py:913: DetachedInstanceError
+___________________________ test_put_deleted_locked ____________________________
+
+client = <FlaskClient <Flask 'testapp'>>
+db = <SQLAlchemy engine=sqlite:///:memory:>
+bucket = <[DetachedInstanceError('Instance <Bucket at 0x7f20525abc18> is not bound to a Session; attribute refresh operation cannot proceed',) raised in repr()] Bucket object at 0x7f20525abc18>
+admin_user = <User 1>
+
+    def test_put_deleted_locked(client, db, bucket, admin_user):
+        """Test that file size errors are properly raised."""
+        login_user(client, admin_user)
+    
+        object_url = url_for(
+            'invenio_files_rest.object_api', bucket_id=bucket.id, key='test.txt')
+    
+        # Can upload
+        resp = client.put(object_url, input_stream=BytesIO(b'test'))
+        assert resp.status_code == 200
+    
+        # Locked bucket
+        bucket.locked = True
+        db.session.commit()
+        resp = client.put(object_url, input_stream=BytesIO(b'test'))
+        assert resp.status_code == 403
+    
+        # Deleted bucket
+        bucket.deleted = True
+        db.session.commit()
+        resp = client.put(object_url, input_stream=BytesIO(b'test'))
+>       assert resp.status_code == 404
+E       assert 403 == 404
+E         +403
+E         -404
+
+tests/test_views_objectversion.py:363: AssertionError
+_____________________________ test_put_header_tags _____________________________
+
+app = <Flask 'testapp'>, client = <FlaskClient <Flask 'testapp'>>
+bucket = 18ea76ed-a8d2-46ed-a1ea-1ae760db0813
+permissions = {None: None, 'auth': <User 1>, 'location': <User 2>, 'bucket': <User 3>, ...}
+get_md5 = <function get_md5.<locals>.inner at 0x7f2051da2f28>
+get_json = <function get_json.<locals>.inner at 0x7f2051dc0048>
+
+    def test_put_header_tags(app, client, bucket, permissions, get_md5, get_json):
+        """Test upload of an object with tags in the headers."""
+        key = 'test.txt'
+        headers = {
+            app.config['FILES_REST_FILE_TAGS_HEADER']: (
+                'key1=val1;key2=val2;key3=val3')
+        }
+    
+        login_user(client, permissions['bucket'])
+        resp = client.put(
+            url_for('invenio_files_rest.object_api', bucket_id=bucket.id, key=key),
+            input_stream=BytesIO(b'updated_content'),
+            headers=headers,
+        )
+        assert resp.status_code == 200
+    
+        tags = ObjectVersion.get(bucket, key).get_tags()
+>       assert tags['key1'] == 'val1'
+E       AssertionError: assert 'val1;key2=val2;key3=val3' == 'val1'
+E         - val1
+E         + val1;key2=val2;key3=val3
+
+tests/test_views_objectversion.py:566: AssertionError
+_________________________ test_put_header_invalid_tags _________________________
+
+app = <Flask 'testapp'>, client = <FlaskClient <Flask 'testapp'>>
+bucket = <[DetachedInstanceError('Instance <Bucket at 0x7f2051c23e10> is not bound to a Session; attribute refresh operation cannot proceed',) raised in repr()] Bucket object at 0x7f2051c23e10>
+permissions = {None: None, 'auth': <User 1>, 'location': <User 2>, 'bucket': <User 3>, ...}
+get_md5 = <function get_md5.<locals>.inner at 0x7f2051c3a510>
+get_json = <function get_json.<locals>.inner at 0x7f2051c3a598>
+
+    def test_put_header_invalid_tags(app, client, bucket, permissions, get_md5,
+                                     get_json):
+        """Test upload of an object with tags in the headers."""
+        header_name = app.config['FILES_REST_FILE_TAGS_HEADER']
+        invalid = [
+            # We don't test zero-length values/keys, because they are filtered out
+            # from parse_qsl
+            ('a'*256, 'valid'),
+            ('valid', 'b'*256),
+        ]
+    
+        login_user(client, permissions['bucket'])
+        # Invalid key or values
+        for k, v in invalid:
+            resp = client.put(
+                url_for(
+                    'invenio_files_rest.object_api', bucket_id=bucket.id, key='k'),
+                input_stream=BytesIO(b'updated_content'),
+                headers={header_name: '{}={}'.format(k, v)},
+            )
+            assert resp.status_code == 400
+    
+        # Duplicate key
+        resp = client.put(
+>           url_for('invenio_files_rest.object_api', bucket_id=bucket.id, key='k'),
+            input_stream=BytesIO(b'updated_content'),
+            headers={header_name: 'a=1&a=2'},
+        )
+
+tests/test_views_objectversion.py:595: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/attributes.py:275: in __get__
+    return self.impl.get(instance_state(instance), dict_)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/attributes.py:669: in get
+    value = state._load_expired(state, passive)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/state.py:632: in _load_expired
+    self.manager.deferred_scalar_loader(self, toload)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+mapper = <Mapper at 0x7f20658af278; Bucket>
+state = <sqlalchemy.orm.state.InstanceState object at 0x7f2051c23d68>
+attribute_names = {'created', 'default_location', 'default_storage_class', 'deleted', 'id', 'locked', ...}
+
+    def load_scalar_attributes(mapper, state, attribute_names):
+        """initiate a column-based attribute refresh operation."""
+    
+        # assert mapper is _state_mapper(state)
+        session = state.session
+        if not session:
+            raise orm_exc.DetachedInstanceError(
+                "Instance %s is not bound to a Session; "
+>               "attribute refresh operation cannot proceed" % (state_str(state))
+            )
+E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <Bucket at 0x7f2051c23e10> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: http://sqlalche.me/e/bhk3)
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/loading.py:913: DetachedInstanceError
+=============================== warnings summary ===============================
+../invenio-indexer/invenio_indexer/cli.py:108
+  /code/modules/invenio-indexer/invenio_indexer/cli.py:108: DeprecationWarning: 'resultcallback' has been renamed to 'result_callback'. The old name will be removed in Click 8.1.
+    @queue.resultcallback()
+
+tests/test_admin.py::test_admin_views
+  /code/modules/invenio-files-rest/.tox/c1/lib/python3.6/site-packages/flask_oauthlib/contrib/cache.py:3: DeprecationWarning: 'werkzeug.contrib.cache' is deprecated as of version 0.15 and will be removed in version 1.0. It has moved to https://github.com/pallets/cachelib.
+    from werkzeug.contrib.cache import NullCache, SimpleCache, FileSystemCache
+
+tests/test_admin.py::test_admin_views
+  /code/modules/invenio-files-rest/.tox/c1/lib/python3.6/site-packages/past/translation/__init__.py:35: DeprecationWarning: the imp module is deprecated in favour of importlib; see the module's documentation for alternative uses
+    import imp
+
+tests/test_admin.py::test_admin_views
+  /code/modules/invenio-files-rest/.tox/c1/src/pypdf2/PyPDF2/generic.py:348: DeprecationWarning: invalid escape sequence \c
+    b_("c") : b_("\c"),
+
+tests/test_admin.py: 26 warnings
+  /code/modules/invenio-files-rest/.tox/c1/lib/python3.6/site-packages/invenio_admin/ext.py:73: PendingDeprecationWarning: Usage of model and modelview kwargs are deprecated in favor of view_class, args and kwargs.
+    PendingDeprecationWarning
+
+tests/test_admin.py::test_admin_views
+  /code/modules/invenio-files-rest/.tox/c1/lib/python3.6/site-packages/flask_admin/model/base.py:1416: UserWarning: Fields missing from ruleset: created_userId,created_date,updated_userId,updated_date
+    warnings.warn(text)
+
+-- Docs: https://docs.pytest.org/en/stable/warnings.html
+
+---------- coverage: platform linux, python 3.6.15-final-0 -----------
+Name                                     Stmts   Miss Branch BrPart  Cover
+--------------------------------------------------------------------------
+invenio_files_rest/__init__.py               6      0      0      0   100%
+invenio_files_rest/admin.py                131     13     38      3    87%
+invenio_files_rest/api.py                   22     14      2      0    33%
+invenio_files_rest/app.py                    6      0      2      0   100%
+invenio_files_rest/cli.py                   34     14      2      0    56%
+invenio_files_rest/config.py                31      0      0      0   100%
+invenio_files_rest/errors.py                66      4     44      1    95%
+invenio_files_rest/ext.py                   54      1     20      2    96%
+invenio_files_rest/formparser.py            18      4     10      1    75%
+invenio_files_rest/helpers.py              108     23     46      4    73%
+invenio_files_rest/limiters.py              27      0     14      0   100%
+invenio_files_rest/models.py               643     51    174     12    91%
+invenio_files_rest/permissions.py           53     13     18      2    65%
+invenio_files_rest/proxies.py                7      0      4      0   100%
+invenio_files_rest/serializer.py           141     12     48      7    87%
+invenio_files_rest/signals.py                7      0      0      0   100%
+invenio_files_rest/storage/__init__.py       5      0      0      0   100%
+invenio_files_rest/storage/base.py          88      3     24      1    96%
+invenio_files_rest/storage/pyfs.py         120     46     28      3    59%
+invenio_files_rest/tasks.py                141     38     50      5    66%
+invenio_files_rest/utils.py                 82     46     26      2    39%
+invenio_files_rest/version.py                3      0      0      0   100%
+invenio_files_rest/views.py                336     95    126     16    67%
+invenio_files_rest/wrappers.py               6      0      2      0   100%
+--------------------------------------------------------------------------
+TOTAL                                     2135    377    678     59    79%
+Coverage XML written to file coverage.xml
+
+=========================== short test summary info ============================
+FAILED tests/test_views_bucket.py::test_head - sqlalchemy.orm.exc.DetachedIns...
+FAILED tests/test_views_bucket.py::test_get - sqlalchemy.orm.exc.DetachedInst...
+FAILED tests/test_views_bucket.py::test_get_versions - sqlalchemy.orm.exc.Det...
+FAILED tests/test_views_bucket.py::test_get_empty_bucket - sqlalchemy.orm.exc...
+FAILED tests/test_views_multipart.py::test_post_init - sqlalchemy.orm.exc.Det...
+FAILED tests/test_views_multipart.py::test_post_invalid_partsizes - sqlalchem...
+FAILED tests/test_views_multipart.py::test_put - sqlalchemy.orm.exc.DetachedI...
+FAILED tests/test_views_multipart.py::test_put_badstream - sqlalchemy.orm.exc...
+FAILED tests/test_views_multipart.py::test_get - sqlalchemy.orm.exc.DetachedI...
+FAILED tests/test_views_multipart.py::test_delete - sqlalchemy.orm.exc.Detach...
+FAILED tests/test_views_multipart.py::test_get_listuploads - sqlalchemy.orm.e...
+FAILED tests/test_views_objectversion.py::test_post - sqlalchemy.orm.exc.Deta...
+FAILED tests/test_views_objectversion.py::test_put - sqlalchemy.orm.exc.Detac...
+FAILED tests/test_views_objectversion.py::test_put_versioning - sqlalchemy.or...
+FAILED tests/test_views_objectversion.py::test_put_deleted_locked - assert 40...
+FAILED tests/test_views_objectversion.py::test_put_header_tags - AssertionErr...
+FAILED tests/test_views_objectversion.py::test_put_header_invalid_tags - sqla...
+====== 17 failed, 122 passed, 2 skipped, 31 warnings in 152.61s (0:02:32) ======
+ERROR: InvocationError for command /code/modules/invenio-files-rest/.tox/c1/bin/pytest --cov=invenio_files_rest tests -v --cov-branch --cov-report=term --cov-report=xml --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp (exited with code 1)
+___________________________________ summary ____________________________________
+ERROR:   c1: commands failed

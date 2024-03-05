@@ -1,265 +1,276 @@
 {#
-# This file is part of WEKO3.
-# Copyright (C) 2017 National Institute of Informatics.
-#
-# WEKO3 is free software; you can redistribute it
-# and/or modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; either version 2 of the
-# License, or (at your option) any later version.
-#
-# WEKO3 is distributed in the hope that it will be
-# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with WEKO3; if not, write to the
-# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-# MA 02111-1307, USA.
-#}
-{%- set is_permission = is_permission or False -%}
-<label for="is_permission" hidden>{{_('is_permission')}}</label>
-<input type="text" value="{{is_permission}}" id="is_permission" style="display: none;">
-{%- set is_login = is_login or False -%}
-<label for="is_login" hidden>{{_('is_login')}}</label>
-<input type="text" value="{{is_login}}" id="is_login" style="display: none;">
-{%- if journal_info%}
-  <div id="journal_info" class="panel panel-default" style="display: none;">
-    <div class="panel-body">
-      <div class="col-xs-4" id="journal_info_img" style="padding:0 0 15px; display:none;">
-      </div>
-      <div class="col-xs-6">
-        <p style="font-size: 20px;">{{_('Title')}}</p>
-        <div style="padding-left: 10px;">
-          <p>{{journal_info.publication_title}}</p>
-          <p>{{journal_info.publisher_name}}</p>
-          <p>{{journal_info.language}}</p>
-          <p>{{journal_info.online_identifier}}</p>
-          <p id="index_comment"></p>
-          <p style="margin: 20px 0;">URL: <a href="{{journal_info.openSearchUrl}}">{{journal_info.openSearchUrl}}</a></p>
+  # This file is part of WEKO3.
+  # Copyright (C) 2017 National Institute of Informatics.
+  #
+  # WEKO3 is free software; you can redistribute it
+  # and/or modify it under the terms of the GNU General Public License as
+  # published by the Free Software Foundation; either version 2 of the
+  # License, or (at your option) any later version.
+  #
+  # WEKO3 is distributed in the hope that it will be
+  # useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+  # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+  # General Public License for more details.
+  #
+  # You should have received a copy of the GNU General Public License
+  # along with WEKO3; if not, write to the
+  # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+  # MA 02111-1307, USA.
+  #}
+  {%- set is_permission = is_permission or False -%}
+  <label for="is_permission" hidden>{{_('is_permission')}}</label>
+  <input type="text" value="{{is_permission}}" id="is_permission" style="display: none;">
+  {%- set is_login = is_login or False -%}
+  <label for="is_login" hidden>{{_('is_login')}}</label>
+  <input type="text" value="{{is_login}}" id="is_login" style="display: none;">
+  {%- if journal_info%}
+    <div id="journal_info" class="panel panel-default" style="display: none;">
+      <div class="panel-body">
+        <div class="col-xs-4" id="journal_info_img" style="padding:0 0 15px; display:none;">
         </div>
-        <p>
-          <a href="javascript:;" id="display_details" class="collapsed-link">
-            <span class="icon-right pull-left"></span>
-            <span class="icon-down pull-left collapse"></span>{{_('Details')}}</a>
-        </p>
-        <div id="collapsed_details" class="collapse" style="padding-left: 15px;">
-          <p>{{journal_info.coverage_depth}}</p>
-          <p>{{journal_info.preceding_publication_title_id}}</p>
-          <p>{{journal_info.ncid}}</p>
-          <p>{{journal_info.print_identifier}}</p>
-          <p>{{journal_info.date_first_issue_online}}</p>
-          <p>{{journal_info.ndl_callno}}</p>
-          <p>{{journal_info.num_first_issue_online}}</p>
-          <p>{{journal_info.publication_type}}</p>
-          <p>{{journal_info.num_last_issue_online}}</p>
-          <p>{{journal_info.num_last_vol_online}}</p>
-          <p>{{journal_info.title_transcription}}</p>
-          <p>{{journal_info.ndl_bibid}}</p>
-          <p>{{journal_info.num_first_vol_online}}</p>
-          <p>{{journal_info.coverage_notes}}</p>
-          <p>{{journal_info.parent_publication_title_id}}</p>
-          <p>{{journal_info.jstage_code}}</p>
-          <p>{{journal_info.title_alternative}}</p>
-          <p>{{journal_info.date_last_issue_online}}</p>
-          <p>{{journal_info.ichushi_code}}</p>
-          <p>{{journal_info.embargo_info}}</p>
-          <p>{{journal_info.access_type}}</p>
-        </div>
-      </div>
-    </div>
-  </div>
-  <input type="hidden" value="{{_('Title')}}" id="journal_title_i18n">
-  <input type="hidden" value="{{_('Details')}}" id="journal_details_i18n">
-{%- endif%}
-<div id="invenio-search">
-  <invenio-search
-   {%- if index_id %}
-     search-endpoint="{{ config.WEKO_SEARCH_UI_SEARCH_INDEX_API }}"
-   {%- else %}
-     search-endpoint="{{ config.SEARCH_UI_SEARCH_API }}"
-   {%- endif %}
-   search-extra-params='{{disply_setting|tojson}}'
-   search-hidden-params='{% if search_hidden_params %}{{search_hidden_params|tojson}}{% endif %}'
-   search-headers='{"Accept": "{{ config.SEARCH_UI_SEARCH_MIMETYPE|default('application/json')}}"}'
-  >
-  <div id="search_res" ng-controller="searchResCtrl">
-
-  {%- block search_index_results %}
-  {% if display_index_tree or (current_user.is_authenticated and config.WEKO_SHOW_INDEX_FOR_AUTHENTICATED_USER) %}
-  <div id="body_indexlist">
-
-  <invenio-search-results
-   template="{{ url_for('static', filename=config.WEKO_SEARCH_UI_JSTEMPLATE_INDEX) }}">
-  </invenio-search-results>
-
-  </div>
-  {% endif %}
-  {%- endblock search_index_results %}
-  <div class="panel panel-default" ng-if="typeIndexList() != 'root'">
-    <div class="panel-heading clearfix">
-      <span class="panel-title">
-        {%- if item_export %}
-          {{_('Items to Export')}}
-        {%- elif index_id %}
-          {{_('Item Lists')}}
-        {%- else %}
-          {{_('Search Results')}}
-        {%- endif %}
-      </span>
-      {%- block search_count %}
-      <div class="pull-right">
-        <invenio-search-count
-         template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_COUNT) }}">
-        </invenio-search-count>
-      </div>
-      {%- endblock search_count %}
-    </div>
-
-    <div id="search-result-body" class="panel-body" >
-        <div id="index_item_list" ng-if="vm.invenioSearchResults.hits.total">
-        <div class="form-inline flow-root">
-          <label for="goExportORPrint" hidden>{{_(goExportORPrint)}}</label>
-          <select class="form-control hide" id="goExportORPrint">
-            <option value="check_Export">{{_('Export Checked Items')}}</option>
-            <option value="view_Export">{{_('Export All Displayed Items')}}</option>
-            <option value="all_Export">{{_('Export All Items Of This Index')}}</option>
-            <option value="check_print">{{_('Print Checked Items')}}</option>
-            <option value="view_print">{{_('Print All Displayed Items')}}</option>
-            <option value="all_print">{{_('Print All Items Of This Index')}}</option>
-          </select>
-          <button type="button" class="btn btn-primary hide">{{_('Execution')}}</button>
-          {%- if not item_export and allow_item_exporting %}
-            <a href="{{ url_for('weko_items_ui.export', **request.args) }}" class="btn btn-primary">
-              <i class="fa fa-download"></i> {{ _('Export') }}
-            </a>
-          {%- endif %}
-          <div class="pull-right">
-            <div class="form-group hide">
-              <label for="sort_item">{{_('Display Order')}}</label>
-              <select class="form-control" id="sort_item">
-                <option value="1">{{_('Title(Ascending)')}}</option>
-                <option value="2">{{_('Title(Descending)')}}</option>
-                <option value="3">{{_('Registrant(Ascending)')}}</option>
-                <option value="4">{{_('Registrant(Descending)')}}</option>
-                <option value="5">{{_('Item Types(Asending)')}}</option>
-                <option value="6">{{_('Item Types(Descending)')}}</option>
-                <option value="7" selected="selected">{{_('ID(Ascending)')}}</option>
-                <option value="8">{{_('ID(Descending)')}}</option>
-                <option value="9">{{_('Modified Date and Time(Ascending)')}}</option>
-                <option value="10">{{_('Modified Date and Time(Descending)')}}</option>
-                <option value="11">{{_('Created Date and Time(Ascending)')}}</option>
-                <option value="12">{{_('Created Date and Time(Descending)')}}</option>
-                <option value="13">{{_('Review Date and Time(Ascending)')}}</option>
-                <option value="14">{{_('Review Date and Time(Descending)')}}</option>
-                <option value="15">{{_('Published Year(Ascending)')}}</option>
-                <option value="16">{{_('Published Year(Descending)')}}</option>
-                <option value="17">{{_('Custom(Ascending)')}}</option>
-                <option value="18">{{_('Custom(Descending)')}}</option>
-                <option value="19">{{_('Relevance(Ascending)')}}</option>
-                <option value="20">{{_('Relevance(Descending)')}}</option>
-              </select>
-            </div>
-            {%- if index_display_format == '1' %}
-              {%- block search_sort %}
-                {%- set sort_options = sort_option.get(config.SEARCH_UI_SEARCH_INDEX) %}
-                {%- if sort_options %}
-                <div class="form-group">
-                  {%- block search_sort_select scoped %}
-                  {{_('Display Order')}}:
-                  <invenio-search-select-box
-                     sort-key="sort"
-                     available-options='{{ sort_options|format_sortoptions|safe }}'
-                     template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_SELECT_BOX) }}"
-                    >
-                  </invenio-search-select-box>
-
-                  {%- endblock search_sort_select %}
-                  {%- block search_sort_order scoped %}
-                  <invenio-search-sort-order
-                   sort-key="sort"
-                   template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_SORT_ORDER) }}"
-                  >
-                  </invenio-search-sort-order>
-                  {%- endblock search_sort_order %}
-
-                </div>
-                {%- endif %}
-		<!--
-                <div class="form-group">
-                  <label for="size">{{_('Display Number')}}</label>
-                  <select class="form-control" id="pagesize" onchange="changesize();">
-                    <option value="20" {% if request.args.get('size')=='20' %} selected {% endif %} >20</option>
-                    <option value="50" {% if request.args.get('size')=='50' %} selected {% endif %}>50</option>
-                    <option value="75"  {% if request.args.get('size')=='75' %} selected {% endif %} >75</option>
-                    <option value="100"  {% if request.args.get('size')=='100' %} selected {% endif %} >100</option>
-                  </select>
-                </div>
-		-->
-              {%- endblock search_sort %}
-            {%- endif %}
+        <div class="col-xs-6">
+          <p style="font-size: 20px;">{{_('Title')}}</p>
+          <div style="padding-left: 10px;">
+            <p>{{journal_info.publication_title}}</p>
+            <p>{{journal_info.publisher_name}}</p>
+            <p>{{journal_info.language}}</p>
+            <p>{{journal_info.online_identifier}}</p>
+            <p id="index_comment"></p>
+            <p style="margin: 20px 0;">URL: <a href="{{journal_info.openSearchUrl}}">{{journal_info.openSearchUrl}}</a></p>
+          </div>
+          <p>
+            <a href="javascript:;" id="display_details" class="collapsed-link">
+              <span class="icon-right pull-left"></span>
+              <span class="icon-down pull-left collapse"></span>{{_('Details')}}</a>
+          </p>
+          <div id="collapsed_details" class="collapse" style="padding-left: 15px;">
+            <p>{{journal_info.coverage_depth}}</p>
+            <p>{{journal_info.preceding_publication_title_id}}</p>
+            <p>{{journal_info.ncid}}</p>
+            <p>{{journal_info.print_identifier}}</p>
+            <p>{{journal_info.date_first_issue_online}}</p>
+            <p>{{journal_info.ndl_callno}}</p>
+            <p>{{journal_info.num_first_issue_online}}</p>
+            <p>{{journal_info.publication_type}}</p>
+            <p>{{journal_info.num_last_issue_online}}</p>
+            <p>{{journal_info.num_last_vol_online}}</p>
+            <p>{{journal_info.title_transcription}}</p>
+            <p>{{journal_info.ndl_bibid}}</p>
+            <p>{{journal_info.num_first_vol_online}}</p>
+            <p>{{journal_info.coverage_notes}}</p>
+            <p>{{journal_info.parent_publication_title_id}}</p>
+            <p>{{journal_info.jstage_code}}</p>
+            <p>{{journal_info.title_alternative}}</p>
+            <p>{{journal_info.date_last_issue_online}}</p>
+            <p>{{journal_info.ichushi_code}}</p>
+            <p>{{journal_info.embargo_info}}</p>
+            <p>{{journal_info.access_type}}</p>
           </div>
         </div>
-        <div class="panel-group m-top-5">
-
-              <div class="row row-10">
-                {%- block search_item_result %}
-                  <div class="col-xs-12 col-md-12">
-                    {%- block search_error %}
-                      <invenio-search-error
-                       template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_ERROR) }}"
-                       message="{{ _('Search failed.') }}">
-                      </invenio-search-error>
-                    {%- endblock search_error %}
-                    {%- block search_loading %}
-                      <invenio-search-loading
-                       template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_LOADING) }}"
-                       message="{{ _('Loading...') }}">
-                      </invenio-search-loading>
-                    {%- endblock search_loading %}
-                    {%- block search_results %}
-                      {%- if index_display_format == '1' %}
-                      <invenio-search-results
-                       template="{{ url_for('static', filename=(custom_results_template or config.SEARCH_UI_JSTEMPLATE_LIST_RESULTS)) }}">
-                      </invenio-search-results>
-                      {% else %}
-                      <invenio-search-results
-                       template="{{ url_for('static', filename=(custom_results_template or config.SEARCH_UI_JSTEMPLATE_TABLE_RESULTS)) }}">
-                      </invenio-search-results>
-                      {%- endif %}
-                    {%- endblock search_results %}
-                  </div>
-                {%- endblock search_item_result %}
-              </div>
-
-        </div>
       </div>
-      <div class="text-center">
-        {%- block search_pagination_top %}
-        <invenio-search-pagination
-        adjacent-size="4"
-        show-go-to-first-last="false"
-         template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_PAGINATION) }}">
-        </invenio-search-pagination>
-        {%- endblock search_pagination_top %}
-      </div>
-
-      {%- if item_export %}
-        {%- include 'weko_items_ui/macros/export_controls.html' %}
-      {%- endif %}
-
     </div>
-
+    <input type="hidden" value="{{_('Title')}}" id="journal_title_i18n">
+    <input type="hidden" value="{{_('Details')}}" id="journal_details_i18n">
+  {%- endif%}
+  <div id="invenio-search">
+    <invenio-search
+     {%- if index_id %}
+       search-endpoint="{{ config.WEKO_SEARCH_UI_SEARCH_INDEX_API }}"
+     {%- else %}
+       search-endpoint="{{ config.SEARCH_UI_SEARCH_API }}"
+     {%- endif %}
+     search-extra-params='{{disply_setting|tojson}}'
+     search-hidden-params='{% if search_hidden_params %}{{search_hidden_params|tojson}}{% endif %}'
+     search-headers='{"Accept": "{{ config.SEARCH_UI_SEARCH_MIMETYPE|default('application/json')}}"}'
+    >
+    <div id="search_res" ng-controller="searchResCtrl">
+  
+    {%- block search_index_results %}
+    {% if display_index_tree or (current_user.is_authenticated and config.WEKO_SHOW_INDEX_FOR_AUTHENTICATED_USER) %}
+    <div id="body_indexlist">
+  
+    <invenio-search-results
+     template="{{ url_for('static', filename=config.WEKO_SEARCH_UI_JSTEMPLATE_INDEX) }}">
+    </invenio-search-results>
+  
+    </div>
+    {% endif %}
+    {%- endblock search_index_results %}
+    <div class="panel panel-default" ng-if="typeIndexList() != 'root'">
+      <div class="panel-heading clearfix">
+        <span class="panel-title">
+          {%- if item_export %}
+            {{_('Items to Export')}}
+          {%- elif index_id %}
+            {{_('Item Lists')}}
+          {%- else %}
+            {{_('Search Results')}}
+          {%- endif %}
+        </span>
+        {%- block search_count %}
+        <div class="pull-right">
+          <invenio-search-count
+           template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_COUNT) }}">
+          </invenio-search-count>
+        </div>
+        {%- endblock search_count %}
+      </div>
+  
+      <div id="search-result-body" class="panel-body" >
+          <div id="index_item_list" ng-if="vm.invenioSearchResults.hits.total">
+          <div class="form-inline flow-root">
+            <label for="goExportORPrint" hidden>{{_(goExportORPrint)}}</label>
+            <select class="form-control hide" id="goExportORPrint">
+              <option value="check_Export">{{_('Export Checked Items')}}</option>
+              <option value="view_Export">{{_('Export All Displayed Items')}}</option>
+              <option value="all_Export">{{_('Export All Items Of This Index')}}</option>
+              <option value="check_print">{{_('Print Checked Items')}}</option>
+              <option value="view_print">{{_('Print All Displayed Items')}}</option>
+              <option value="all_print">{{_('Print All Items Of This Index')}}</option>
+            </select>
+            <button type="button" class="btn btn-primary hide">{{_('Execution')}}</button>
+            {%- if not item_export and allow_item_exporting %}
+              <a href="{{ url_for('weko_items_ui.export', **request.args) }}" class="btn btn-primary">
+                <i class="fa fa-download"></i> {{ _('Export') }}
+              </a>
+            {%- endif %}
+            <div class="pull-right">
+              <div class="form-group hide">
+                <label for="sort_item">{{_('Display Order')}}</label>
+                <select class="form-control" id="sort_item">
+                  <option value="1">{{_('Title(Ascending)')}}</option>
+                  <option value="2">{{_('Title(Descending)')}}</option>
+                  <option value="3">{{_('Registrant(Ascending)')}}</option>
+                  <option value="4">{{_('Registrant(Descending)')}}</option>
+                  <option value="5">{{_('Item Types(Asending)')}}</option>
+                  <option value="6">{{_('Item Types(Descending)')}}</option>
+                  <option value="7" selected="selected">{{_('ID(Ascending)')}}</option>
+                  <option value="8">{{_('ID(Descending)')}}</option>
+                  <option value="9">{{_('Modified Date and Time(Ascending)')}}</option>
+                  <option value="10">{{_('Modified Date and Time(Descending)')}}</option>
+                  <option value="11">{{_('Created Date and Time(Ascending)')}}</option>
+                  <option value="12">{{_('Created Date and Time(Descending)')}}</option>
+                  <option value="13">{{_('Review Date and Time(Ascending)')}}</option>
+                  <option value="14">{{_('Review Date and Time(Descending)')}}</option>
+                  <option value="15">{{_('Published Year(Ascending)')}}</option>
+                  <option value="16">{{_('Published Year(Descending)')}}</option>
+                  <option value="17">{{_('Custom(Ascending)')}}</option>
+                  <option value="18">{{_('Custom(Descending)')}}</option>
+                  <option value="19">{{_('Relevance(Ascending)')}}</option>
+                  <option value="20">{{_('Relevance(Descending)')}}</option>
+                </select>
+              </div>
+              {%- if index_display_format == '1' %}
+                {%- block search_sort %}
+                  {%- set sort_options = sort_option.get(config.SEARCH_UI_SEARCH_INDEX) %}
+                  {%- if sort_options %}
+                  <div class="form-group">
+                    {%- block search_sort_select scoped %}
+                    {{_('Display Order')}}:
+                    <invenio-search-select-box
+                       sort-key="sort"
+                       available-options='{{ sort_options|format_sortoptions|safe }}'
+                       template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_SELECT_BOX) }}"
+                      >
+                    </invenio-search-select-box>
+  
+                    {%- endblock search_sort_select %}
+                    {%- block search_sort_order scoped %}
+                    <invenio-search-sort-order
+                     sort-key="sort"
+                     template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_SORT_ORDER) }}"
+                    >
+                    </invenio-search-sort-order>
+                    {%- endblock search_sort_order %}
+  
+                  </div>
+                  {%- endif %}
+                  <div class="form-group">
+                    <label for="size">{{_('Display Number')}}</label>
+                    <select class="form-control" id="pagesize" onchange="changesize();">
+                      <option value="20" {% if request.args.get('size')=='20' %} selected {% endif %} >20</option>
+                      <option value="50" {% if request.args.get('size')=='50' %} selected {% endif %}>50</option>
+                      <option value="75"  {% if request.args.get('size')=='75' %} selected {% endif %} >75</option>
+                      <option value="100"  {% if request.args.get('size')=='100' %} selected {% endif %} >100</option>
+                    </select>
+                  </div>
+                {%- endblock search_sort %}
+              {%- endif %}
+            </div>
+          </div>
+          <div class="panel-group m-top-5">
+  
+                <div class="row row-10">
+                  {%- block search_item_result %}
+                    <div class="col-xs-12 col-md-12">
+                      {%- block search_error %}
+                        <invenio-search-error
+                         template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_ERROR) }}"
+                         message="{{ _('Search failed.') }}">
+                        </invenio-search-error>
+                      {%- endblock search_error %}
+                      {%- block search_loading %}
+                        <invenio-search-loading
+                         template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_LOADING) }}"
+                         message="{{ _('Loading...') }}">
+                        </invenio-search-loading>
+                      {%- endblock search_loading %}
+                      {%- block search_results %}
+                        {%- if index_display_format == '1' %}
+                        <invenio-search-results
+                         template="{{ url_for('static', filename=(custom_results_template or config.SEARCH_UI_JSTEMPLATE_LIST_RESULTS)) }}">
+                        </invenio-search-results>
+                        {% else %}
+                        <invenio-search-results
+                         template="{{ url_for('static', filename=(custom_results_template or config.SEARCH_UI_JSTEMPLATE_TABLE_RESULTS)) }}">
+                        </invenio-search-results>
+                        {%- endif %}
+                      {%- endblock search_results %}
+                    </div>
+                  {%- endblock search_item_result %}
+                </div>
+  
+          </div>
+        </div>
+        <div class="text-center">
+          {%- block search_pagination_top %}
+          <invenio-search-pagination
+           max-result-window="{{ config.WEKO_SEARCH_MAX_RESULT }}"
+           adjacent-size="4"
+           show-go-to-first-last="false"
+           template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_PAGINATION) }}">
+          </invenio-search-pagination>
+          {%- endblock search_pagination_top %}
+        </div>
+  
+        {%- if item_export %}
+          {%- include 'weko_items_ui/macros/export_controls.html' %}
+        {%- endif %}
+  
+      </div>
+  
+    </div>
+    </div>
+    </invenio-search>
+    <script language="javascript" type="text/javascript">
+      function changesize() {
+        var pagesize = document.getElementById('pagesize');
+        var url = new URL(location.href);
+        var params = new URLSearchParams(url.search.slice(1));
+        params.set('size', pagesize.value);
+        if(params.get('search_type') == null){
+          params.set('search_type', 2);
+        }
+        if(params.get('q') == null){
+          var index_id_q= document.getElementById('index_id_q').value;
+          params.set('q', index_id_q);
+        }
+        newpath = location.pathname
+        if(location.pathname=="/"){
+          newpath="/search"
+        }
+        location.href=newpath+"?"+params;
+      };
+    </script>
   </div>
-  </div>
-  </invenio-search>
-  <script language="javascript" type="text/javascript">
-    function changesize() {
-      var pagesize = document.getElementById('pagesize');
-      var url = new URL(location.href);
-      var params = new URLSearchParams(url.search.slice(1));
-      params.set('size', pagesize.value);
-      location.href=location.pathname+"?"+params;
-    };
-  </script>
-</div>
+  

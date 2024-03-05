@@ -39,6 +39,7 @@ from invenio_records_rest.utils import obj_or_import_string
 from invenio_records_rest.views import \
     create_error_handlers as records_rest_error_handlers
 from invenio_rest import ContentNegotiatedMethodView
+from invenio_db import db
 from invenio_rest.views import create_api_errorhandler
 from sqlalchemy.exc import SQLAlchemyError
 from weko_deposit.api import WekoRecord

@@ -768,6 +768,10 @@ msgstr "入力内容を破棄してもよろしいですか？"
 msgid "Go to"
 msgstr "移動"
 
+#: weko_search_ui/templates/weko_search_ui/body_facet_search.html:27
+msgid "search"
+msgstr "検索"
+
 msgid "The following item(s) cannot be deleted."
 msgstr "以下のアイテムを削除することはできませんでした。"
 

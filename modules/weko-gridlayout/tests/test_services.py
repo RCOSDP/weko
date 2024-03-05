@@ -7,8 +7,10 @@
 
 """Module tests."""
 import pytest
+import copy
 import json
 from mock import patch, MagicMock
+from datetime import datetime 
 
 from weko_gridlayout.services import (
     WidgetItemServices,
@@ -27,10 +29,14 @@ def test_get_widget_by_id(i18n_app, widget_item):
 
 
 #     def save_command(cls, data):
-def test_save_command(i18n_app):
+def test_save_command(i18n_app, users):
     data = {
-        "data": 1,
-        "flag_edit": False
+        "data": {
+            "settings": "test",
+            "multiLangSetting": MagicMock(),
+            "repository": "99"
+        },
+        "flag_edit": True
     }
     return_data = {
         "message": "test",
@@ -39,13 +45,23 @@ def test_save_command(i18n_app):
     return_data_2 = {
         "error": False,
     }
-    with patch("weko_gridlayout.utils.build_data", return_value=""):
-        with patch("weko_gridlayout.services.WidgetItemServices.create", return_value=return_data_2):
-            assert WidgetItemServices.save_command(data)
+    old_widget_data = MagicMock()
+    old_widget_data.repository_id = "999"
+    old_widget_data.updated = datetime.now()
+    old_widget_data.locked_by_user = users[0]['obj'].id
+    with patch("flask_login.utils._get_user", return_value=users[0]['obj']):
+        with patch("weko_gridlayout.utils.build_data", return_value=""):
+            with patch("weko_gridlayout.services.WidgetItemServices.create", return_value=return_data_2):
+                with patch('weko_gridlayout.services.WidgetItem.get_by_id', return_value=old_widget_data):
+                    assert WidgetItemServices.save_command(data)
 
+                    data2 = None
+                    assert WidgetItemServices.save_command(data2)
+
+                    data["flag_edit"] = False
+                    assert WidgetItemServices.save_command(data)
 
 #     def __edit_widget(cls, data, ):
-
 
 #     def get_by_id(cls, widget_id):
 def test_get_by_id(i18n_app):
@@ -152,8 +168,11 @@ def test_delete_by_id(i18n_app):
 
 
 #     def delete_multi_item_by_id(cls, widget_id, session):
-#     def get_widget_data_by_widget_id(cls, widget_id):
 
+
+#     def get_widget_data_by_widget_id(cls, widget_id):
+def test_get_widget_data_by_widget_id(i18n_app):
+    assert WidgetItemServices.get_widget_data_by_widget_id(widget_id=None) == None
 
 #     def load_edit_pack(cls, widget_id):
 def test_load_edit_pack(i18n_app, widget_items):
@@ -170,16 +189,31 @@ def test_load_edit_pack(i18n_app, widget_items):
 
 
 #     def get_locked_widget_info(cls, widget_id, widget_item=None,
-# ERR ~ TypeError: '<' not supported between instances of 'datetime.timedelta' and 'datetime.datetime'
-def test_get_locked_widget_info(i18n_app, widget_items):
+def test_get_locked_widget_info(i18n_app, widget_items, users):
     import datetime
-    widget_id = "1"
-    # with patch("weko_gridlayout.services.WidgetItemServices.get_widget_by_id", return_value=return_data):
-    widget_item = MagicMock()
-    widget_item.updated = datetime.timedelta(0, 3)
 
-    assert not WidgetItemServices.get_locked_widget_info(widget_id)
-    assert WidgetItemServices.get_locked_widget_info(widget_id, widget_item)
+    widget_item = MagicMock()
+    widget_item.updated = datetime.datetime.now()
+    widget_item.locked_by_user = "9999"
+    widget_item.locked = True
+
+    def widget_item_func(item):
+        return widget_item
+
+    with patch("flask_login.utils._get_user", return_value=users[0]['obj']):
+        with patch('weko_gridlayout.services.WidgetItemServices.get_widget_by_id', widget_item_func):
+            assert WidgetItemServices.get_locked_widget_info(widget_id=None) != None
+
+        widget_item.updated = datetime.datetime.now() - datetime.timedelta(days=2)
+
+        with patch('weko_gridlayout.services.WidgetItemServices.get_widget_by_id', widget_item_func):
+            assert WidgetItemServices.get_locked_widget_info(widget_id=None) == None
+        
+        widget_item.updated = datetime.datetime.now()
+        widget_item.locked_by_user = users[0]['obj'].id
+
+        with patch('weko_gridlayout.services.WidgetItemServices.get_widget_by_id', widget_item_func):
+            assert WidgetItemServices.get_locked_widget_info(widget_id=None) == None
 
 
 #     def lock_widget(cls, widget_id, locked_value):
@@ -196,8 +230,7 @@ def test_lock_widget(i18n_app, users):
 def test_unlock_widget(i18n_app):
     widget_id = "1"
     with patch("weko_gridlayout.models.WidgetItem.update_by_id", return_value=""):
-        # Doesn't return any value
-            assert not WidgetItemServices.unlock_widget(widget_id)
+        assert WidgetItemServices.unlock_widget(widget_id) == ""
 
 
 #     def __validate(cls, data, is_used_in_widget_design=False):
@@ -215,7 +248,14 @@ def test_get_repository_list_2(i18n_app):
 def test_get_widget_list(i18n_app, widget_items):
     repository_id = "Root Index"
     default_language = {"lang_code": "ja"}
+
     assert WidgetDesignServices.get_widget_list(repository_id, default_language)
+
+    default_language = {"lang_code": "en"}
+    assert WidgetDesignServices.get_widget_list(repository_id, default_language)    
+
+    with patch('weko_gridlayout.services.isinstance', side_effect=Exception('')):
+        assert WidgetDesignServices.get_widget_list(repository_id, default_language)   
 
 
 #     def get_widget_preview(cls, repository_id, default_language,
@@ -455,13 +495,19 @@ def test__update_main_layout_id_for_widget(i18n_app, db):
 #     def _update_main_layout_page_id_for_widget_design( ERR ~ 
 def test__update_main_layout_page_id_for_widget_design(i18n_app):
     repository_id = "1"
-    page_id = "1"
-    return_data = {
-        "settings": "test",
-    }
-    with patch("weko_gridlayout.services.WidgetDesignSetting.select_by_repository_id", return_value=return_data):
-        # Doesn't return any value
-        assert not WidgetDesignPageServices._update_main_layout_page_id_for_widget_design(repository_id, page_id)
+    page_id = "1"  
+
+    def widget_design(id):
+        widget_design = {
+            "settings": [{"type": "type"}],
+        }
+        return widget_design
+
+    i18n_app.config['WEKO_GRIDLAYOUT_MENU_WIDGET_TYPE'] = "type"
+
+    with patch("weko_gridlayout.services.WidgetDesignSetting.select_by_repository_id", widget_design):
+        with patch("weko_gridlayout.services.WidgetDesignSetting.update", return_value="widget_design"):
+            assert not WidgetDesignPageServices._update_main_layout_page_id_for_widget_design(repository_id, page_id)
 
 
 #     def _update_page_id_for_widget_design_setting(cls, settings, page_id):
@@ -530,20 +576,85 @@ def test_get_page(i18n_app):
 
     with patch("weko_gridlayout.services.WidgetDesignPage.get_by_id", return_value=return_data):
         assert WidgetDesignPageServices.get_page(page_id, repository_id)
-    assert WidgetDesignPageServices.get_page(page_id, repository_id)
+
+    from sqlalchemy.orm.exc import NoResultFound
+    i18n_app.config['WEKO_THEME_DEFAULT_COMMUNITY'] = "1"
+
+    with patch("weko_gridlayout.services.WidgetDesignPage.get_by_id", side_effect=NoResultFound('')):
+        assert WidgetDesignPageServices.get_page(0, repository_id)
+    
+        i18n_app.config['WEKO_THEME_DEFAULT_COMMUNITY'] = "0"
+
+        assert WidgetDesignPageServices.get_page(0, repository_id)
+        assert WidgetDesignPageServices.get_page(1, repository_id)
+    
+    with patch("weko_gridlayout.services.WidgetDesignPage.get_by_id", side_effect=Exception('')):
+        assert WidgetDesignPageServices.get_page(page_id, repository_id)
 
 
 ### class WidgetDataLoaderServices:
+#     def _get_index_info(cls, index_json, index_info): 
+def test__get_index_info(i18n_app):
+    w = WidgetDataLoaderServices()
+    index_json = [{
+        "id": "id",
+        "name": "0",
+        "pid": "999",
+        "children": [{
+            "id": "id",
+            "name": "0",
+            "pid": "999",
+            "children": ""
+        }]
+    }]
+    index_info = {}
+
+    assert w._get_index_info(index_json=index_json, index_info=index_info) == None
+
+
 #     def get_new_arrivals_data(cls, widget_id):
 def test_get_new_arrivals_data(i18n_app, widget_item):
-    return_data = {
+    w = WidgetDataLoaderServices()
+    data1 = {
         "settings": {
             "display_result": "test",
             "new_dates": "test",
         }
     }
-    with patch("weko_gridlayout.services.WidgetItemServices.get_widget_data_by_widget_id", return_value=return_data):
-        assert WidgetDataLoaderServices.get_new_arrivals_data(1)
+    with patch("weko_gridlayout.services.WidgetItemServices.get_widget_data_by_widget_id", return_value=data1):
+        assert "Widget is not exist" in w.get_new_arrivals_data(None)["error"]
+    
+    data2 = {}
+
+    with patch("weko_gridlayout.services.WidgetItemServices.get_widget_data_by_widget_id", return_value=data2):
+        assert "Widget is not exist" in w.get_new_arrivals_data(1)["error"]
+    
+    data3 = copy.deepcopy(data1)
+    del data3["settings"]["new_dates"]
+
+    with patch("weko_gridlayout.services.WidgetItemServices.get_widget_data_by_widget_id", return_value=data3):
+        assert "Widget is not exist" in w.get_new_arrivals_data(1)["error"]
+    
+    def get_new_items(start_date, end_date, agg_size, must_not):
+        return {}
+
+    def get_new_items_2(start_date, end_date, agg_size, must_not):
+        return {"res": "res"}
+
+    res = MagicMock()
+    res.get_new_items = get_new_items
+    data4 = copy.deepcopy(data1)
+    data4["settings"]["display_result"] = 999
+    
+    with patch("weko_gridlayout.services.WidgetItemServices.get_widget_data_by_widget_id", return_value=data4):
+        with patch("weko_gridlayout.services.QueryRankingHelper", res):
+            assert "Cannot search data" in w.get_new_arrivals_data(1)["error"]
+
+    res.get_new_items = get_new_items_2
+
+    with patch("weko_gridlayout.services.WidgetItemServices.get_widget_data_by_widget_id", return_value=data4):
+        with patch("weko_gridlayout.services.QueryRankingHelper", res):
+            assert "Cannot search data" in w.get_new_arrivals_data(1)["error"]
 
 
 #     def get_arrivals_rss(cls, data, term, count):
@@ -551,11 +662,32 @@ def test_get_arrivals_rss(i18n_app):
     data = MagicMock()
     term = "test"
     count = 1
-    assert WidgetDataLoaderServices.get_arrivals_rss(data, term, count)
+
+    data = {
+        "hits": {
+            "hits": [{
+                "_source": {
+                    "path": "path"
+                },
+                "_id": "_id",
+                "control_number": "control_number"
+            }]
+        }
+    }
+
+    assert WidgetDataLoaderServices.get_arrivals_rss(None, term, count) != None
+
+    with patch('weko_items_ui.utils.find_hidden_items', return_value=["_id"]):
+        assert WidgetDataLoaderServices.get_arrivals_rss(data, term, count) != None
+    
+    # with patch('weko_items_ui.utils.find_hidden_items', return_value=["id"]):
+        # assert WidgetDataLoaderServices.get_arrivals_rss(data, term, count) != None
 
 
 #     def get_widget_page_endpoints(cls, widget_id, language):
 def test_get_widget_page_endpoints(i18n_app, widget_item):
+    from sqlalchemy.orm.exc import NoResultFound
+
     widget_id = 1
     language = "ja"
     return_data = {
@@ -575,4 +707,9 @@ def test_get_widget_page_endpoints(i18n_app, widget_item):
     with patch("weko_gridlayout.services.WidgetItemServices.get_widget_data_by_widget_id", return_value=return_data):
         with patch("weko_gridlayout.services.WidgetDesignPage.get_by_id", return_value=return_data_2):
             assert WidgetDataLoaderServices.get_widget_page_endpoints(widget_id, language)
+
+            # Exception coverage ~ line 1185
+            with patch("weko_gridlayout.services.WidgetDesignPage.get_by_id", side_effect=NoResultFound('')):
+                WidgetDataLoaderServices.get_widget_page_endpoints(widget_id, language)
+
         assert WidgetDataLoaderServices.get_widget_page_endpoints(widget_id, language)

@@ -196,7 +196,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         from weko_admin.utils import get_facet_search_query
 
         page = request.values.get("page", 1, type=int)
-        size = request.values.get("size", 20, type=int)
+        size = request.values.get("size", 20, type=int) 
         is_search = request.values.get("is_search", 0 ,type=int ) #toppage and search_page is 1
         community_id = request.values.get("community")
         params = {}
@@ -218,7 +218,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         query = request.values.get("q")
         if query:
             urlkwargs["q"] = query
-
+        
         # Execute search
         weko_faceted_search_mapping = FacetSearchSetting.get_activated_facets_mapping()
         for param in params:

@@ -13,18 +13,15 @@ from __future__ import absolute_import, print_function
 import pytest
 import sqlalchemy as sa
 from click.testing import CliRunner
-from conftest import ScriptInfo
 from flask import Flask
 from mock import patch
 from pkg_resources import EntryPoint
-from sqlalchemy.exc import IntegrityError, OperationalError
-from sqlalchemy_continuum import VersioningManager, remove_versioning
-from sqlalchemy_utils.functions import create_database, drop_database
+from sqlalchemy_continuum import VersioningManager
 from werkzeug.utils import import_string
 
 from invenio_db import InvenioDB, shared
 from invenio_db.cli import db as db_cmd
-from invenio_db.utils import drop_alembic_version_table
+
 
 
 class MockEntryPoint(EntryPoint):
@@ -54,8 +51,8 @@ def _mock_entry_points(name):
         for entry_point in data.get(key, []):
             yield entry_point
 
-
-def test_init(db, app):
+# .tox/c1/bin/pytest --cov=invenio_db tests/test_db.py::test_init -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/invenio-db/.tox/c1/tmp
+def test_init(db, app,mock_entry_points):
     """Test extension initialization."""
     class Demo(db.Model):
         __tablename__ = 'demo'
@@ -98,7 +95,7 @@ def test_init(db, app):
         db.drop_all()
 
 
-def test_alembic(db, app):
+def test_alembic(db, app,mock_entry_points):
     """Test alembic recipes."""
     ext = InvenioDB(app, entry_point_group=False, db=db)
 
@@ -109,11 +106,11 @@ def test_alembic(db, app):
         # ext.alembic.upgrade()
         # ext.alembic.downgrade(target='96e796392533')
 
-
-def test_naming_convention(db, app):
+# .tox/c1/bin/pytest --cov=invenio_db tests/test_db.py::test_naming_convention -vv -s --cov-branch --cov-report=term --cov-report=xml --basetemp=/code/modules/invenio-db/.tox/c1/tmp
+def test_naming_convention(db, app,mock_entry_points):
     """Test naming convention."""
-    from sqlalchemy_continuum import remove_versioning
 
+    from sqlalchemy_continuum import remove_versioning
     ext = InvenioDB(app, entry_point_group=False, db=db)
     cfg = dict(
         DB_VERSIONING=True,
@@ -266,16 +263,13 @@ def test_transaction(db, app):
     # with app.app_context():
     #     db.drop_all()
 
-
-@patch('pkg_resources.iter_entry_points', _mock_entry_points)
-def test_entry_points(db, app):
+# .tox/c1/bin/pytest --cov=invenio_db tests/test_db.py::test_entry_points -v -vv -s --cov-branch --cov-report=term --cov-report=xml --basetemp=/code/modules/invenio-db/.tox/c1/tmp
+def test_entry_points(db, app,script_info,mock_entry_points):
     """Test entrypoints loading."""
     InvenioDB(app, db=db)
 
     runner = CliRunner()
-    script_info = ScriptInfo(create_app=lambda info: app)
-
-    assert len(db.metadata.tables) == 2
+    assert len(db.metadata.tables) == 3
 
     # Test merging a base another file.
     with runner.isolated_filesystem():
@@ -341,6 +335,7 @@ def test_local_proxy(app, db):
             z=LocalProxy(lambda: None),
         ).fetchone()
         assert result == (True, True, True, True)
+    
 
 
 # def test_db_create_alembic_upgrade(app, db):
@@ -391,3 +386,4 @@ def test_local_proxy(app, db):
 #             drop_database(str(db.engine.url))
 #             remove_versioning(manager=ext.versioning_manager)
 #             create_database(str(db.engine.url))
+

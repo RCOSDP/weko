@@ -1,0 +1,16 @@
+GLOB sdist-make: /code/modules/invenio-accounts/setup.py
+c1 recreate: /code/modules/invenio-accounts/.tox/c1
+c1 installdeps: pytest>=3, pytest-cov, -rrequirements2.txt
+c1 inst: /code/modules/invenio-accounts/.tox/.tmp/package/1/invenio-accounts-1.1.4.zip
+c1 installed: alabaster==0.7.12,alembic==1.4.3,amqp==5.1.0,async-timeout==4.0.2,atomicwrites==1.4.0,attrs==21.4.0,Babel==2.9.1,billiard==3.6.4.0,blinker==1.4,build==0.7.0,cached-property==1.5.2,celery==5.1.2,certifi==2021.10.8,cffi==1.15.0,charset-normalizer==2.0.12,check-manifest==0.48,click==7.1.2,click-didyoumean==0.3.0,click-plugins==1.1.1,click-repl==0.2.0,coverage==6.2,cryptography==36.0.2,dataclasses==0.8,Deprecated==1.2.13,dnspython==2.2.1,docutils==0.18.1,email-validator==1.1.3,execnet==1.9.0,Flask==2.0.3,Flask-Admin==1.6.0,Flask-Alembic==2.0.1,Flask-BabelEx==0.9.4,Flask-Breadcrumbs==0.5.1,Flask-CeleryExt==0.4.1,Flask-KVSession==0.6.2,Flask-Login==0.4.1,Flask-Mail==0.9.1,Flask-Menu==0.7.2,Flask-Principal==0.4.0,Flask-Security==3.0.0,Flask-SQLAlchemy==2.3.2,Flask-WTF==1.0.1,future==0.18.2,greenlet==1.1.2,idna==3.3,imagesize==1.3.0,importlib-metadata==4.8.3,importlib-resources==5.4.0,invenio-accounts @ file:///code/modules/invenio-accounts/.tox/.tmp/package/1/invenio-accounts-1.1.4.zip,invenio-base==1.2.11,invenio-celery==1.2.4,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_db&subdirectory=modules/invenio-db,invenio-i18n==1.3.1,isort==5.10.1,itsdangerous==2.0.1,Jinja2==3.0.3,kombu==5.1.0,Mako==1.1.6,MarkupSafe==2.0.1,maxminddb==2.2.0,maxminddb-geolite2==2018.703,mock==4.0.3,more-itertools==8.12.0,msgpack==1.0.3,packaging==21.3,passlib==1.7.4,pep517==0.12.0,pep8==1.7.1,pluggy==0.13.1,prompt-toolkit==3.0.29,py==1.11.0,pycparser==2.21,pydocstyle==6.1.1,Pygments==2.11.2,PyJWT==2.3.0,pyparsing==3.0.8,pytest==4.6.11,pytest-cache==1.0,pytest-cov==3.0.0,pytest-flask==0.15.1,pytest-pep8==1.0.6,python-dateutil==2.8.2,python-editor==1.0.4,pytz==2022.1,redis==4.2.2,requests==2.27.1,selenium==3.141.0,simplekv==0.14.1,six==1.16.0,snowballstemmer==2.2.0,speaklater==1.3,Sphinx==1.5.6,SQLAlchemy==1.2.19,SQLAlchemy-Continuum==1.3.6,SQLAlchemy-Utils==0.35.0,tomli==1.2.3,typing_extensions==4.1.1,ua-parser==0.10.0,urllib3==1.26.9,vine==5.0.0,wcwidth==0.2.5,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_redis&subdirectory=modules/weko-redis,Werkzeug==2.0.3,wrapt==1.14.0,WTForms==3.0.0,zipp==3.6.0
+c1 run-test-pre: PYTHONHASHSEED='2876773198'
+c1 run-test: commands[0] | pytest --cov=invenio_accounts tests -v --cov-branch --cov-report=term --basetemp=/code/modules/invenio-accounts/.tox/c1/tmp
+ImportError while loading conftest '/code/modules/invenio-accounts/tests/conftest.py'.
+tests/conftest.py:33: in <module>
+    from invenio_accounts.admin import role_adminview, session_adminview, \
+invenio_accounts/admin.py:30: in <module>
+    from weko_workflow.models import WorkFlow, WorkflowRole
+E   ModuleNotFoundError: No module named 'weko_workflow'
+ERROR: InvocationError for command /code/modules/invenio-accounts/.tox/c1/bin/pytest --cov=invenio_accounts tests -v --cov-branch --cov-report=term --basetemp=/code/modules/invenio-accounts/.tox/c1/tmp (exited with code 4)
+___________________________________ summary ____________________________________
+ERROR:   c1: commands failed

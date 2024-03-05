@@ -4294,3 +4294,26 @@ def check_pretty(pretty):
 def create_limmiter():
     from .config import WEKO_WORKFLOW_API_LIMIT_RATE_DEFAULT
     return Limiter(app=Flask(__name__), key_func=get_remote_address, default_limits=WEKO_WORKFLOW_API_LIMIT_RATE_DEFAULT)  
+
+def make_activitylog_tsv(activities):
+    """make tsv for activitiy_log
+
+    Args:
+        activities: activities for download as tsv.
+    """
+    import csv 
+    from io import StringIO
+    file_output = StringIO()
+
+    keys = current_app.config.get("WEKO_WORKFLOW_ACTIVITYLOG_XLS_COLUMNS")
+
+    writer = csv.writer(file_output, delimiter="\t", lineterminator="\n")
+    writer.writerow(keys)
+    for item in activities:
+        term = []
+        for name in keys:
+            term.append(getattr(item,name))
+        writer.writerow(term)
+
+    return file_output.getvalue()
+    

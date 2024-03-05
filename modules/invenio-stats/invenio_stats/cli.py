@@ -408,3 +408,34 @@ def _aggregations_restore(
         aggregation_types, start_date, end_date, force, verbose
     )
     stats_cli.restore_data(bookmark)
+
+from .models import make_stats_events_partition_table, get_stats_events_partition_tables
+from invenio_db import db
+from datetime import datetime
+
+@stats.group()
+def partition():
+    """Stats Events Table management commands."""
+
+@partition.command('create')
+@click.argument('year', nargs=1, type=int)
+@click.argument('month', default=0, type=int)
+@with_appcontext
+def _partition_create(year, month):
+    (sm, em) = (1, 12) if month==0 else (month, month)
+
+    try:
+        d = datetime(year, sm, 1)
+    except Exception as e:
+        click.secho(e, fg='red')
+        return
+
+    tables = get_stats_events_partition_tables()
+
+    for m in range(sm, em+1):
+        tablename = make_stats_events_partition_table(year, m)
+        if tablename in tables:
+            click.secho('Table {} is already exist.'.format(tablename), fg='yellow')
+        else:
+            click.secho('Creating partitioning table {}.'.format(tablename), fg='green')
+            db.metadata.tables[tablename].create(bind=db.engine, checkfirst=True)

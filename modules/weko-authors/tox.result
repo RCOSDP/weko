@@ -1,0 +1,535 @@
+GLOB sdist-make: /code/modules/weko-authors/setup.py
+c1 recreate: /code/modules/weko-authors/.tox/c1
+c1 installdeps: pytest>=3, pytest-cov, -rrequirements.txt
+c1 inst: /code/modules/weko-authors/.tox/.tmp/package/1/weko-authors-0.1.0.dev20170000.zip
+c1 installed: alabaster==0.7.13,alembic==0.9.6,amqp==2.6.1,angular-gettext-babel==0.3,aniso8601==8.0.0,arrow==0.12.1,asn1crypto==0.23.0,attrs==17.4.0,b2handle==1.1.2,Babel==2.5.1,bagit==1.7.0,beautifulsoup4==4.9.3,bibtexparser==1.0.1,billiard==3.6.3.0,binaryornot==0.4.4,bleach==3.1.0,blinker==1.4,boto3==1.7.84,botocore==1.10.84,cachelib==0.1,cachetools==4.2.4,cchardet==2.1.1,celery==4.4.7,certifi==2017.11.5,cffi==1.11.2,chardet==3.0.4,citeproc-py==0.5.1,citeproc-py-styles==0.1.2,click==8.0.4,cookiecutter==1.6.0,counter-robots==2018.6,coverage==6.2,cryptography==2.1.4,datacite==1.0.1,DateTime==4.9,decorator==4.1.2,defusedxml==0.5.0,dictdiffer==0.7.0,dnspython==2.2.1,docutils==0.18.1,dojson==1.3.2,elasticsearch==6.1.1,elasticsearch-dsl==6.4.0,elementpath==1.0.6,email-validator==1.0.5,entrypoints==0.2.3,feedgen==0.7.0,Flask==1.0.4,Flask-Admin==1.5.3,Flask-Alembic==2.0.1,Flask-Assets==0.12,Flask-BabelEx==0.9.4,Flask-Breadcrumbs==0.5.0,Flask-Caching==1.3.3,Flask-CeleryExt==0.3.4,Flask-Collect==1.2.2,Flask-Cors==3.0.3,Flask-DebugToolbar==0.11.0,Flask-IIIF==0.6.1,Flask-KVSession==0.6.2,Flask-Limiter==1.1.0,Flask-Login==0.4.1,Flask-Mail==0.9.1,flask-marshmallow==0.14.0,Flask-Menu==0.6.0,Flask-OAuthlib==0.9.5,Flask-Plugins==1.6.1,Flask-Principal==0.4.0,Flask-RESTful==0.3.8,Flask-Security==3.0.0,flask-shell-ipython==0.4.1,Flask-Sitemap==0.1.0,Flask-SQLAlchemy==2.3.2,flask-talisman==0.4.1,Flask-WTF==0.14.3,-e git+https://github.com/RCOSDP/pyfpdf.git@f9b032148283d535cabc7789858081c80de36fef#egg=fpdf,frozendict==2.3.6,fs==0.5.4,ftfy==4.4.3,future==0.16.0,github3.py==1.1.0,html5lib==1.0.1,idna==2.6,iiif-prezi==0.3.0,imagesize==1.4.1,importlib-metadata==4.8.3,importlib-resources==5.4.0,infinity==1.4,iniconfig==1.1.1,intervals==0.8.0,invenio-access==1.1.0,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_accounts&subdirectory=modules/invenio-accounts,invenio-admin==1.1.2,invenio-app==1.1.0,invenio-assets==1.0.0,invenio-base==1.0.2,invenio-cache==1.0.0,invenio-celery==1.1.3,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_communities&subdirectory=modules/invenio-communities,invenio-config==1.0.0,invenio-csl-rest==1.0.0a1,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_db&subdirectory=modules/invenio-db,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_deposit&subdirectory=modules/invenio-deposit,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_files_rest&subdirectory=modules/invenio-files-rest,invenio-formatter==1.0.0b3,invenio-i18n==1.0.0,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_iiif&subdirectory=modules/invenio-iiif,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_indexer&subdirectory=modules/invenio-indexer,invenio-jsonschemas==1.0.0,invenio-logging==1.0.0b3,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_mail&subdirectory=modules/invenio-mail,invenio-marc21==1.0.0a8,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_oaiharvester&subdirectory=modules/invenio-oaiharvester,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_oaiserver&subdirectory=modules/invenio-oaiserver,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_oauth2server&subdirectory=modules/invenio-oauth2server,invenio-oauthclient==1.0.0,invenio-pidrelations==1.0.0a4,invenio-pidstore==1.0.0,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_previewer&subdirectory=modules/invenio-previewer,invenio-query-parser==0.6.0,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_queues&subdirectory=modules/invenio-queues,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_records&subdirectory=modules/invenio-records,invenio-records-files==1.0.0a10,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_records_rest&subdirectory=modules/invenio-records-rest,invenio-records-ui==1.0.0,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_resourcesyncclient&subdirectory=modules/invenio-resourcesyncclient,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_resourcesyncserver&subdirectory=modules/invenio-resourcesyncserver,invenio-rest==1.1.2,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_s3&subdirectory=modules/invenio-s3,invenio-search==1.1.0,invenio-search-ui==1.0.0a9,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_stats&subdirectory=modules/invenio-stats,invenio-theme==1.0.0b4,ipaddress==1.0.19,ipython==6.2.1,ipython-genutils==0.2.0,itsdangerous==0.24,jedi==0.11.0,Jinja2==2.10,jinja2-cli==0.6.0,jinja2-time==0.2.0,jmespath==0.10.0,jsmin==2.2.2,jsonpatch==1.21,jsonpath-ng==1.5.2,jsonpointer==1.14,jsonref==0.1,jsonresolver==0.2.1,jsonschema==2.6.0,jupyter-client==5.2.2,jupyter-core==4.4.0,kombu==4.6.10,limits==1.2.1,lxml==4.1.1,Mako==1.0.7,MarkupSafe==1.1.1,marshmallow==2.20.1,marshmallow-sqlalchemy==0.23.1,maxminddb==1.5.2,maxminddb-geolite2==2017.803,mistune==0.8.3,mock==3.0.5,more-itertools==8.10.0,msgpack==0.6.2,nbconvert==5.3.1,nbformat==4.4.0,netaddr==0.8.0,node-semver==0.1.1,numpy==1.16.1,oauthlib==2.1.0,ordereddict==1.1,packaging==21.3,pandocfilters==1.4.2,parso==0.1.0,passlib==1.7.1,pexpect==4.3.0,pickleshare==0.7.4,Pillow==5.4.1,pluggy==0.13.1,ply==3.11,poyo==0.4.1,prompt-toolkit==1.0.15,psycopg2==2.7.3.2,ptyprocess==0.5.2,py==1.11.0,pycparser==2.18,Pygments==2.2.0,PyJWT==1.5.3,PyLD==2.0.3,pyparsing==3.0.9,-e git+https://github.com/RCOSDP/PyPDF2.git@fefc684a3a74aff6f99e5dff24f9b4dd1c95169d#egg=PyPDF2,pyPEG2==2.15.2,pytest==6.1.2,pytest-cov==4.0.0,pytest-mock==3.6.1,python-dateutil==2.6.1,python-editor==1.0.3,python-geoip==1.2,pytz==2017.3,pyzmq==17.0.0,redis==2.10.6,requests==2.18.4,requests-oauthlib==1.1.0,resync==1.0.9,s3fs==0.1.6,s3transfer==0.1.13,Sickle==0.6.4,simplegeneric==0.8.1,simplejson==3.12.0,simplekv==0.11.2,six==1.12.0,snowballstemmer==2.2.0,soupsieve==2.3.2.post1,speaklater==1.3,Sphinx==1.8.4,sphinxcontrib-serializinghtml==1.1.5,sphinxcontrib-websupport==1.2.4,SQLAlchemy==1.2.19,SQLAlchemy-Continuum==1.3.6,SQLAlchemy-Utils==0.35.0,testpath==0.3.1,toml==0.10.2,tomli==1.2.3,tornado==4.5.3,traitlets==4.3.2,typing_extensions==4.1.1,ua-parser==0.7.3,uritemplate==4.1.1,uritools==2.1.0,urllib3==1.22,validators==0.12.0,vine==1.3.0,Wand==0.6.1,wcwidth==0.1.7,webargs==5.5.2,webassets==0.12.1,webencodings==0.5.1,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_accounts&subdirectory=modules/weko-accounts,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_admin&subdirectory=modules/weko-admin,weko-authors @ file:///code/modules/weko-authors/.tox/.tmp/package/1/weko-authors-0.1.0.dev20170000.zip,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_bulkupdate&subdirectory=modules/weko-bulkupdate,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_deposit&subdirectory=modules/weko-deposit,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_gridlayout&subdirectory=modules/weko-gridlayout,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_groups&subdirectory=modules/weko-groups,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_handle&subdirectory=modules/weko-handle,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_index_tree&subdirectory=modules/weko-index-tree,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_indextree_journal&subdirectory=modules/weko-indextree-journal,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_items_autofill&subdirectory=modules/weko-items-autofill,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_items_ui&subdirectory=modules/weko-items-ui,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_itemtypes_ui&subdirectory=modules/weko-itemtypes-ui,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_logging&subdirectory=modules/weko-logging,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_records&subdirectory=modules/weko-records,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_records_ui&subdirectory=modules/weko-records-ui,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_redis&subdirectory=modules/weko-redis,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_schema_ui&subdirectory=modules/weko-schema-ui,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_search_ui&subdirectory=modules/weko-search-ui,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_sitemap&subdirectory=modules/weko-sitemap,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_theme&subdirectory=modules/weko-theme,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_user_profiles&subdirectory=modules/weko-user-profiles,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_workflow&subdirectory=modules/weko-workflow,Werkzeug==0.15.2,whichcraft==0.4.1,WTForms==2.1,WTForms-Alchemy==0.16.5,WTForms-Components==0.10.3,xmlschema==0.9.30,xmltodict==0.12.0,zipp==3.6.0,zope.interface==5.5.2
+c1 run-test-pre: PYTHONHASHSEED='1959331892'
+c1 run-test: commands[0] | pytest --cov=weko_authors tests -v -s -vv --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+============================= test session starts ==============================
+platform linux -- Python 3.6.15, pytest-6.1.2, py-1.11.0, pluggy-0.13.1 -- /code/modules/weko-authors/.tox/c1/bin/python
+cachedir: .tox/c1/.pytest_cache
+rootdir: /code/modules/weko-authors
+plugins: cov-4.0.0, celery-4.4.7, mock-3.6.1
+collecting ... collected 378 items
+
+tests/test_admin.py::TestAuthorManagementView::test_index_acl_guest PASSED
+tests/test_admin.py::TestAuthorManagementView::test_index_acl[0-True] PASSED
+tests/test_admin.py::TestAuthorManagementView::test_index_acl[1-True] PASSED
+tests/test_admin.py::TestAuthorManagementView::test_index_acl[2-True] PASSED
+tests/test_admin.py::TestAuthorManagementView::test_index_acl[3-False] PASSED
+tests/test_admin.py::TestAuthorManagementView::test_index_acl[4-False] PASSED
+tests/test_admin.py::TestAuthorManagementView::test_index_acl[5-False] PASSED
+tests/test_admin.py::TestAuthorManagementView::test_index_acl[6-True] PASSED
+tests/test_admin.py::TestAuthorManagementView::test_index_acl[7-False] PASSED
+tests/test_admin.py::TestAuthorManagementView::test_index_acl[8-False] PASSED
+tests/test_admin.py::TestAuthorManagementView::test_index PASSED
+tests/test_admin.py::TestAuthorManagementView::test_add_acl_guest PASSED
+tests/test_admin.py::TestAuthorManagementView::test_add_acl[0-True] PASSED
+tests/test_admin.py::TestAuthorManagementView::test_add_acl[1-True] PASSED
+tests/test_admin.py::TestAuthorManagementView::test_add_acl[2-True] PASSED
+tests/test_admin.py::TestAuthorManagementView::test_add_acl[3-False] PASSED
+tests/test_admin.py::TestAuthorManagementView::test_add_acl[4-False] PASSED
+tests/test_admin.py::TestAuthorManagementView::test_add_acl[5-False] PASSED
+tests/test_admin.py::TestAuthorManagementView::test_add_acl[6-True] PASSED
+tests/test_admin.py::TestAuthorManagementView::test_add_acl[7-False] PASSED
+tests/test_admin.py::TestAuthorManagementView::test_add_acl[8-False] PASSED
+tests/test_admin.py::TestAuthorManagementView::test_add PASSED
+tests/test_admin.py::TestAuthorManagementView::test_edit_acl_guest PASSED
+tests/test_admin.py::TestAuthorManagementView::test_edit_acl[0-True] PASSED
+tests/test_admin.py::TestAuthorManagementView::test_edit_acl[1-True] PASSED
+tests/test_admin.py::TestAuthorManagementView::test_edit_acl[2-True] PASSED
+tests/test_admin.py::TestAuthorManagementView::test_edit_acl[3-False] PASSED
+tests/test_admin.py::TestAuthorManagementView::test_edit_acl[4-False] PASSED
+tests/test_admin.py::TestAuthorManagementView::test_edit_acl[5-False] PASSED
+tests/test_admin.py::TestAuthorManagementView::test_edit_acl[6-True] PASSED
+tests/test_admin.py::TestAuthorManagementView::test_edit_acl[7-False] PASSED
+tests/test_admin.py::TestAuthorManagementView::test_edit_acl[8-False] PASSED
+tests/test_admin.py::TestAuthorManagementView::test_edit PASSED
+tests/test_admin.py::TestExportView::test_index_acl_guest PASSED
+tests/test_admin.py::TestExportView::test_index_acl[0-True] PASSED
+tests/test_admin.py::TestExportView::test_index_acl[1-True] PASSED
+tests/test_admin.py::TestExportView::test_index_acl[2-True] PASSED
+tests/test_admin.py::TestExportView::test_index_acl[3-False] PASSED
+tests/test_admin.py::TestExportView::test_index_acl[4-False] PASSED
+tests/test_admin.py::TestExportView::test_index_acl[5-False] PASSED
+tests/test_admin.py::TestExportView::test_index_acl[6-True] PASSED
+tests/test_admin.py::TestExportView::test_index_acl[7-False] PASSED
+tests/test_admin.py::TestExportView::test_index_acl[8-False] PASSED
+tests/test_admin.py::TestExportView::test_index PASSED
+tests/test_admin.py::TestExportView::test_download_acl_guest PASSED
+tests/test_admin.py::TestExportView::test_download_acl[0-True] PASSED
+tests/test_admin.py::TestExportView::test_download_acl[1-True] PASSED
+tests/test_admin.py::TestExportView::test_download_acl[2-True] PASSED
+tests/test_admin.py::TestExportView::test_download_acl[3-False] PASSED
+tests/test_admin.py::TestExportView::test_download_acl[4-False] PASSED
+tests/test_admin.py::TestExportView::test_download_acl[5-False] PASSED
+tests/test_admin.py::TestExportView::test_download_acl[6-True] PASSED
+tests/test_admin.py::TestExportView::test_download_acl[7-False] PASSED
+tests/test_admin.py::TestExportView::test_download_acl[8-False] PASSED
+tests/test_admin.py::TestExportView::test_download PASSED
+tests/test_admin.py::TestExportView::test_check_status_acl_guest PASSED
+tests/test_admin.py::TestExportView::test_check_status_acl[0-True] PASSED
+tests/test_admin.py::TestExportView::test_check_status_acl[1-True] PASSED
+tests/test_admin.py::TestExportView::test_check_status_acl[2-True] PASSED
+tests/test_admin.py::TestExportView::test_check_status_acl[3-False] PASSED
+tests/test_admin.py::TestExportView::test_check_status_acl[4-False] PASSED
+tests/test_admin.py::TestExportView::test_check_status_acl[5-False] PASSED
+tests/test_admin.py::TestExportView::test_check_status_acl[6-True] PASSED
+tests/test_admin.py::TestExportView::test_check_status_acl[7-False] PASSED
+tests/test_admin.py::TestExportView::test_check_status_acl[8-False] PASSED
+tests/test_admin.py::TestExportView::test_check_status PASSED
+tests/test_admin.py::TestExportView::test_export_acl_guest PASSED
+tests/test_admin.py::TestExportView::test_export_acl[0-True] PASSED
+tests/test_admin.py::TestExportView::test_export_acl[1-True] PASSED
+tests/test_admin.py::TestExportView::test_export_acl[2-True] PASSED
+tests/test_admin.py::TestExportView::test_export_acl[3-False] PASSED
+tests/test_admin.py::TestExportView::test_export_acl[4-False] PASSED
+tests/test_admin.py::TestExportView::test_export_acl[5-False] PASSED
+tests/test_admin.py::TestExportView::test_export_acl[6-True] PASSED
+tests/test_admin.py::TestExportView::test_export_acl[7-False] PASSED
+tests/test_admin.py::TestExportView::test_export_acl[8-False] PASSED
+tests/test_admin.py::TestExportView::test_export PASSED
+tests/test_admin.py::TestExportView::test_cancel_acl_guest PASSED
+tests/test_admin.py::TestExportView::test_cancel_acl[0-True] PASSED
+tests/test_admin.py::TestExportView::test_cancel_acl[1-True] PASSED
+tests/test_admin.py::TestExportView::test_cancel_acl[2-True] PASSED
+tests/test_admin.py::TestExportView::test_cancel_acl[3-False] PASSED
+tests/test_admin.py::TestExportView::test_cancel_acl[4-False] PASSED
+tests/test_admin.py::TestExportView::test_cancel_acl[5-False] PASSED
+tests/test_admin.py::TestExportView::test_cancel_acl[6-True] PASSED
+tests/test_admin.py::TestExportView::test_cancel_acl[7-False] PASSED
+tests/test_admin.py::TestExportView::test_cancel_acl[8-False] PASSED
+tests/test_admin.py::TestExportView::test_cancel PASSED
+tests/test_admin.py::TestImportView::test_index_acl_guest PASSED
+tests/test_admin.py::TestImportView::test_index_acl[0-True] PASSED
+tests/test_admin.py::TestImportView::test_index_acl[1-True] PASSED
+tests/test_admin.py::TestImportView::test_index_acl[2-True] PASSED
+tests/test_admin.py::TestImportView::test_index_acl[3-False] PASSED
+tests/test_admin.py::TestImportView::test_index_acl[4-False] PASSED
+tests/test_admin.py::TestImportView::test_index_acl[5-False] PASSED
+tests/test_admin.py::TestImportView::test_index_acl[6-True] PASSED
+tests/test_admin.py::TestImportView::test_index_acl[7-False] PASSED
+tests/test_admin.py::TestImportView::test_index_acl[8-False] PASSED
+tests/test_admin.py::TestImportView::test_index PASSED
+tests/test_admin.py::TestImportView::test_is_import_available_acl_guest PASSED
+tests/test_admin.py::TestImportView::test_is_import_available_acl[0-True] PASSED
+tests/test_admin.py::TestImportView::test_is_import_available_acl[1-True] PASSED
+tests/test_admin.py::TestImportView::test_is_import_available_acl[2-True] PASSED
+tests/test_admin.py::TestImportView::test_is_import_available_acl[3-False] PASSED
+tests/test_admin.py::TestImportView::test_is_import_available_acl[4-False] PASSED
+tests/test_admin.py::TestImportView::test_is_import_available_acl[5-False] PASSED
+tests/test_admin.py::TestImportView::test_is_import_available_acl[6-True] PASSED
+tests/test_admin.py::TestImportView::test_is_import_available_acl[7-False] PASSED
+tests/test_admin.py::TestImportView::test_is_import_available_acl[8-False] PASSED
+tests/test_admin.py::TestImportView::test_is_import_available PASSED
+tests/test_admin.py::TestImportView::test_check_import_file_acl_guest PASSED
+tests/test_admin.py::TestImportView::test_check_import_file_acl[0-True] PASSED
+tests/test_admin.py::TestImportView::test_check_import_file_acl[1-True] PASSED
+tests/test_admin.py::TestImportView::test_check_import_file_acl[2-True] PASSED
+tests/test_admin.py::TestImportView::test_check_import_file_acl[3-False] PASSED
+tests/test_admin.py::TestImportView::test_check_import_file_acl[4-False] PASSED
+tests/test_admin.py::TestImportView::test_check_import_file_acl[5-False] PASSED
+tests/test_admin.py::TestImportView::test_check_import_file_acl[6-True] PASSED
+tests/test_admin.py::TestImportView::test_check_import_file_acl[7-False] PASSED
+tests/test_admin.py::TestImportView::test_check_import_file_acl[8-False] PASSED
+tests/test_admin.py::TestImportView::test_check_import_file PASSED
+tests/test_admin.py::TestImportView::test_import_authors_acl_guest PASSED
+tests/test_admin.py::TestImportView::test_import_authors_acl[0-True] PASSED
+tests/test_admin.py::TestImportView::test_import_authors_acl[1-True] PASSED
+tests/test_admin.py::TestImportView::test_import_authors_acl[2-True] PASSED
+tests/test_admin.py::TestImportView::test_import_authors_acl[3-False] PASSED
+tests/test_admin.py::TestImportView::test_import_authors_acl[4-False] PASSED
+tests/test_admin.py::TestImportView::test_import_authors_acl[5-False] PASSED
+tests/test_admin.py::TestImportView::test_import_authors_acl[6-True] PASSED
+tests/test_admin.py::TestImportView::test_import_authors_acl[7-False] PASSED
+tests/test_admin.py::TestImportView::test_import_authors_acl[8-False] PASSED
+tests/test_admin.py::TestImportView::test_import_authors PASSED
+tests/test_admin.py::TestImportView::test_check_import_status_acl_guest PASSED
+tests/test_admin.py::TestImportView::test_check_import_status_acl[0-True] PASSED
+tests/test_admin.py::TestImportView::test_check_import_status_acl[1-True] PASSED
+tests/test_admin.py::TestImportView::test_check_import_status_acl[2-True] PASSED
+tests/test_admin.py::TestImportView::test_check_import_status_acl[3-False] PASSED
+tests/test_admin.py::TestImportView::test_check_import_status_acl[4-False] PASSED
+tests/test_admin.py::TestImportView::test_check_import_status_acl[5-False] PASSED
+tests/test_admin.py::TestImportView::test_check_import_status_acl[6-True] PASSED
+tests/test_admin.py::TestImportView::test_check_import_status_acl[7-False] PASSED
+tests/test_admin.py::TestImportView::test_check_import_status_acl[8-False] PASSED
+tests/test_admin.py::TestImportView::test_check_import_status PASSED
+tests/test_api.py::TestWekoAuthors::test_create PASSED
+tests/test_api.py::TestWekoAuthors::test_update PASSED
+tests/test_api.py::TestWekoAuthors::test_get_all PASSED
+tests/test_api.py::TestWekoAuthors::test_get_author_for_validation PASSED
+tests/test_api.py::TestWekoAuthors::test_get_identifier_scheme_info PASSED
+tests/test_api.py::TestWekoAuthors::test_prepare_export_data PASSED
+tests/test_models.py::TestAuthors::test_none_data PASSED
+tests/test_models.py::TestAuthors::test_get_sequence PASSED
+tests/test_models.py::TestAuthors::test_get_first_email_by_id PASSED
+tests/test_models.py::TestAuthors::test_get_author_by_id PASSED
+tests/test_models.py::TestAuthorsPrefixSettings::test_create PASSED
+tests/test_models.py::TestAuthorsPrefixSettings::test_update PASSED
+tests/test_models.py::TestAuthorsPrefixSettings::test_delete PASSED
+tests/test_models.py::TestAuthorsAffiliationSettings::test_create PASSED
+tests/test_models.py::TestAuthorsAffiliationSettings::test_update PASSED
+tests/test_models.py::TestAuthorsAffiliationSettings::test_delete PASSED
+tests/test_tasks.py::test_export_all PASSED
+tests/test_tasks.py::test_import_author PASSED
+tests/test_tasks.py::test_check_is_import_available PASSED
+tests/test_utils.py::test_get_author_prefix_obj PASSED
+tests/test_utils.py::test_get_author_affiliation_obj PASSED
+tests/test_utils.py::test_check_email_existed PASSED
+tests/test_utils.py::test_get_export_status PASSED
+tests/test_utils.py::test_set_export_status PASSED
+tests/test_utils.py::test_delete_export_status PASSED
+tests/test_utils.py::test_get_export_url PASSED
+tests/test_utils.py::test_save_export_url PASSED
+tests/test_utils.py::test_export_authors Traceback (most recent call last):
+  File "/code/modules/weko-authors/weko_authors/utils.py", line 149, in export_authors
+    authors = WekoAuthors.get_all(with_deleted=False, with_gather=False)
+  File "/code/modules/weko-authors/.tox/c1/lib/python3.6/site-packages/mock/mock.py", line 1092, in __call__
+    return _mock_self._mock_call(*args, **kwargs)
+  File "/code/modules/weko-authors/.tox/c1/lib/python3.6/site-packages/mock/mock.py", line 1143, in _mock_call
+    raise effect
+Exception: test_error
+PASSED
+tests/test_utils.py::test_check_import_data [{'pk_id': '1', 'authorNameInfo': [{'familyName': 'テスト', 'firstName': '太郎', 'language': 'ja', 'nameFormat': 'familyNmAndNm', 'nameShowFlg': 'Y'}], 'authorIdInfo': [{'idType': 'ORCID', 'authorId': '1234', 'authorIdShowFlg': 'Y'}], 'emailInfo': [{'email': 'test.taro@test.org'}], 'is_deleted': ''}, {'pk_id': '2', 'authorNameInfo': [{'familyName': 'test', 'firstName': 'smith', 'language': 'en', 'nameFormat': 'familyNmAndNm', 'nameShowFlg': 'Y'}], 'authorIdInfo': [{'idType': 'ORCID', 'authorId': '5678', 'authorIdShowFlg': 'Y'}], 'emailInfo': [{'email': 'test.smith@test.org'}], 'is_deleted': ''}]
+Traceback (most recent call last):
+  File "/code/modules/weko-authors/weko_authors/utils.py", line 206, in check_import_data
+    WEKO_AUTHORS_FILE_MAPPING)
+  File "/code/modules/weko-authors/.tox/c1/lib/python3.6/site-packages/mock/mock.py", line 1092, in __call__
+    return _mock_self._mock_call(*args, **kwargs)
+  File "/code/modules/weko-authors/.tox/c1/lib/python3.6/site-packages/mock/mock.py", line 1143, in _mock_call
+    raise effect
+Exception: {'error_msg': 'test_error'}
+Traceback (most recent call last):
+  File "/code/modules/weko-authors/weko_authors/utils.py", line 206, in check_import_data
+    WEKO_AUTHORS_FILE_MAPPING)
+  File "/code/modules/weko-authors/.tox/c1/lib/python3.6/site-packages/mock/mock.py", line 1092, in __call__
+    return _mock_self._mock_call(*args, **kwargs)
+  File "/code/modules/weko-authors/.tox/c1/lib/python3.6/site-packages/mock/mock.py", line 1143, in _mock_call
+    raise effect
+AttributeError: test_error
+Traceback (most recent call last):
+  File "/code/modules/weko-authors/weko_authors/utils.py", line 206, in check_import_data
+    WEKO_AUTHORS_FILE_MAPPING)
+  File "/code/modules/weko-authors/.tox/c1/lib/python3.6/site-packages/mock/mock.py", line 1092, in __call__
+    return _mock_self._mock_call(*args, **kwargs)
+  File "/code/modules/weko-authors/.tox/c1/lib/python3.6/site-packages/mock/mock.py", line 1143, in _mock_call
+    raise effect
+UnicodeDecodeError: 'utf-8' codec can't decode byte 0x74 in position 0: test_reason
+PASSED
+tests/test_utils.py::test_getEncode PASSED
+tests/test_utils.py::test_unpackage_and_check_import_file header:['#pk_id', 'pk_id', 'authorNameInfo[0].firstName', 'authorNameInfo[0].language', 'authorNameInfo[0].nameFormat', 'authorNameInfo[0].nameShowFlg', 'authorIdInfo[0].idType', 'authorIdInfo[0].authorId', 'authorIdInfo[0].authorIdShowFlg', 'emailInfo[0].email', 'is_deleted']
+header:['pk_id', 'pk_id', 'authorNameInfo[0].firstName', 'authorNameInfo[0].language', 'authorNameInfo[0].nameFormat', 'authorNameInfo[0].nameShowFlg', 'authorIdInfo[0].idType', 'authorIdInfo[0].authorId', 'authorIdInfo[0].authorIdShowFlg', 'emailInfo[0].email', 'is_deleted']
+header:['#pk_id', 'authorNameInfo[0].familyName', 'authorNameInfo[1].familyName', 'authorNameInfo[0].language', 'authorNameInfo[0].nameFormat', 'authorNameInfo[0].nameShowFlg', 'authorIdInfo[0].idType', 'authorIdInfo[0].authorId', 'authorIdInfo[0].authorIdShowFlg', 'emailInfo[0].email', 'is_deleted']
+header:['pk_id', 'authorNameInfo[0].familyName', 'authorNameInfo[1].familyName', 'authorNameInfo[0].language', 'authorNameInfo[0].nameFormat', 'authorNameInfo[0].nameShowFlg', 'authorIdInfo[0].idType', 'authorIdInfo[0].authorId', 'authorIdInfo[0].authorIdShowFlg', 'emailInfo[0].email', 'is_deleted']
+header:['#pk_id', 'authorNameInfo[0].familyName', 'authorNameInfo[0].firstName', 'authorNameInfo[0].language', 'authorNameInfo[0].nameFormat', 'authorNameInfo[0].nameShowFlg', 'authorIdInfo[0].idType', 'authorIdInfo[0].authorId', 'authorIdInfo[0].authorIdShowFlg', 'emailInfo[0].email', 'is_deleted']
+header:['pk_id', 'authorNameInfo[0].familyName', 'authorNameInfo[0].firstName', 'authorNameInfo[0].language', 'authorNameInfo[0].nameFormat', 'authorNameInfo[0].nameShowFlg', 'authorIdInfo[0].idType', 'authorIdInfo[0].authorId', 'authorIdInfo[0].authorIdShowFlg', 'emailInfo[0].email', 'is_deleted']
+header:['#pk_id', 'authorNameInfo[0].familyName', 'authorNameInfo[0].firstName', 'authorNameInfo[0].language', 'authorNameInfo[0].nameFormat', 'authorNameInfo[0].nameShowFlg', 'authorIdInfo[0].idType', 'authorIdInfo[0].authorId', 'authorIdInfo[0].authorIdShowFlg', 'emailInfo[0].email', 'is_deleted']
+header:['pk_id', 'authorNameInfo[0].familyName', 'authorNameInfo[0].firstName', 'authorNameInfo[0].language', 'authorNameInfo[0].nameFormat', 'authorNameInfo[0].nameShowFlg', 'authorIdInfo[0].idType', 'authorIdInfo[0].authorId', 'authorIdInfo[0].authorIdShowFlg', 'emailInfo[0].email', 'is_deleted']
+header:['#pk_id', 'authorNameInfo[0].familyName', 'authorNameInfo[0].firstName', 'authorNameInfo[0].language', 'authorNameInfo[0].nameFormat', 'authorNameInfo[0].nameShowFlg', 'authorIdInfo[0].idType', 'authorIdInfo[0].authorId', 'authorIdInfo[0].authorIdShowFlg', 'emailInfo[0].email', 'is_deleted']
+header:['pk_id', 'authorNameInfo[0].familyName', 'authorNameInfo[0].firstName', 'authorNameInfo[0].language', 'authorNameInfo[0].nameFormat', 'authorNameInfo[0].nameShowFlg', 'authorIdInfo[0].idType', 'authorIdInfo[0].authorId', 'authorIdInfo[0].authorIdShowFlg', 'emailInfo[0].email', 'is_deleted']
+header:['#pk_id', 'authorNameInfo[0].familyName', 'authorNameInfo[0].firstName', 'authorNameInfo[0].language', 'authorNameInfo[0].nameFormat', 'authorNameInfo[0].nameShowFlg', 'authorIdInfo[0].idType', 'authorIdInfo[0].authorId', 'authorIdInfo[0].authorIdShowFlg', 'emailInfo[0].email', 'is_deleted']
+header:['pk_id', 'authorNameInfo[0].familyName', 'authorNameInfo[0].firstName', 'authorNameInfo[0].language', 'authorNameInfo[0].nameFormat', 'authorNameInfo[0].nameShowFlg', 'authorIdInfo[0].idType', 'authorIdInfo[0].authorId', 'authorIdInfo[0].authorIdShowFlg', 'emailInfo[0].email', 'is_deleted']
+header:['pk_id', 'authorNameInfo[0].familyName', 'authorNameInfo[0].firstName', 'authorNameInfo[0].language', 'authorNameInfo[0].nameFormat', 'authorNameInfo[0].nameShowFlg', 'authorIdInfo[0].idType', 'authorIdInfo[0].authorId', 'authorIdInfo[0].authorIdShowFlg', 'emailInfo[0].email', 'is_deleted']
+header:['pk_id', 'authorNameInfo[0].familyName', 'authorNameInfo[0].firstName', 'authorNameInfo[0].language', 'authorNameInfo[0].nameFormat', 'authorNameInfo[0].nameShowFlg', 'authorIdInfo[0].idType', 'authorIdInfo[0].authorId', 'authorIdInfo[0].authorIdShowFlg', 'emailInfo[0].email', 'is_deleted']
+PASSED
+tests/test_utils.py::test_validate_import_data es:{'2': {'1234': ['1'], '5678': ['2']}}
+pk:1
+ex:{'1': True, '2': True}
+pk:1
+ex:{'1': True, '2': True}
+es:{'2': {'1234': ['1'], '5678': ['2']}}
+pk:None
+ex:{'1': True, '2': True}
+PASSED
+tests/test_utils.py::test_get_values_by_mapping PASSED
+tests/test_utils.py::test_autofill_data PASSED
+tests/test_utils.py::test_convert_data_by_mask PASSED
+tests/test_utils.py::test_convert_scheme_to_id PASSED
+tests/test_utils.py::test_set_record_status pk:1
+ex:{'1': True}
+pk:1
+ex:{'1': False}
+pk:1
+ex:{}
+pk:1
+ex:{}
+pk:1
+ex:{'1': True}
+pk:1
+ex:{'1': True}
+PASSED
+tests/test_utils.py::test_flatten_authors_mapping PASSED
+tests/test_utils.py::test_import_author_to_system Traceback (most recent call last):
+  File "/code/modules/weko-authors/weko_authors/utils.py", line 582, in import_author_to_system
+    raise Exception({'error_id': 'delete_author_link'})
+Exception: {'error_id': 'delete_author_link'}
+PASSED
+tests/test_utils.py::test_get_count_item_link PASSED
+tests/test_validation.py::test_validate_by_extend_validator PASSED
+tests/test_validation.py::test_validate_required PASSED
+tests/test_validation.py::test_validate_map PASSED
+tests/test_validation.py::test_validate_identifier_scheme PASSED
+tests/test_validation.py::test_validate_external_author_identifier PASSED
+tests/test_views.py::test_create_acl_guest PASSED
+tests/test_views.py::test_create_acl_users[0-True] PASSED
+tests/test_views.py::test_create_acl_users[1-True] PASSED
+tests/test_views.py::test_create_acl_users[2-True] PASSED
+tests/test_views.py::test_create_acl_users[3-True] PASSED
+tests/test_views.py::test_create_acl_users[4-False] PASSED
+tests/test_views.py::test_create_acl_users[5-False] PASSED
+tests/test_views.py::test_create_acl_users[6-True] PASSED
+tests/test_views.py::test_create_acl_users[7-False] PASSED
+tests/test_views.py::test_create_acl_users[8-False] PASSED
+tests/test_views.py::test_create PASSED
+tests/test_views.py::test_update_author_acl_guest PASSED
+tests/test_views.py::test_update_author_acl_users[0-True] PASSED
+tests/test_views.py::test_update_author_acl_users[1-True] PASSED
+tests/test_views.py::test_update_author_acl_users[2-True] PASSED
+tests/test_views.py::test_update_author_acl_users[3-True] PASSED
+tests/test_views.py::test_update_author_acl_users[4-False] PASSED
+tests/test_views.py::test_update_author_acl_users[5-False] PASSED
+tests/test_views.py::test_update_author_acl_users[6-True] PASSED
+tests/test_views.py::test_update_author_acl_users[7-False] PASSED
+tests/test_views.py::test_update_author_acl_users[8-False] PASSED
+tests/test_views.py::test_update_author PASSED
+tests/test_views.py::test_delete_author_acl_guest PASSED
+tests/test_views.py::test_delete_author_acl_users[0-True] PASSED
+tests/test_views.py::test_delete_author_acl_users[1-True] PASSED
+tests/test_views.py::test_delete_author_acl_users[2-True] PASSED
+tests/test_views.py::test_delete_author_acl_users[3-True] PASSED
+tests/test_views.py::test_delete_author_acl_users[4-False] PASSED
+tests/test_views.py::test_delete_author_acl_users[5-False] PASSED
+tests/test_views.py::test_delete_author_acl_users[6-True] PASSED
+tests/test_views.py::test_delete_author_acl_users[7-False] PASSED
+tests/test_views.py::test_delete_author_acl_users[8-False] PASSED
+tests/test_views.py::test_delete_author PASSED
+tests/test_views.py::test_get_acl_guest PASSED
+tests/test_views.py::test_get_acl_users[0-True] PASSED
+tests/test_views.py::test_get_acl_users[1-True] PASSED
+tests/test_views.py::test_get_acl_users[2-True] PASSED
+tests/test_views.py::test_get_acl_users[3-True] PASSED
+tests/test_views.py::test_get_acl_users[4-False] PASSED
+tests/test_views.py::test_get_acl_users[5-False] PASSED
+tests/test_views.py::test_get_acl_users[6-True] PASSED
+tests/test_views.py::test_get_acl_users[7-False] PASSED
+tests/test_views.py::test_get_acl_users[8-False] PASSED
+tests/test_views.py::test_get PASSED
+tests/test_views.py::test_getById_acl_guest PASSED
+tests/test_views.py::test_getById_acl_users[0-True] PASSED
+tests/test_views.py::test_getById_acl_users[1-True] PASSED
+tests/test_views.py::test_getById_acl_users[2-True] PASSED
+tests/test_views.py::test_getById_acl_users[3-True] PASSED
+tests/test_views.py::test_getById_acl_users[4-False] PASSED
+tests/test_views.py::test_getById_acl_users[5-False] PASSED
+tests/test_views.py::test_getById_acl_users[6-True] PASSED
+tests/test_views.py::test_getById_acl_users[7-False] PASSED
+tests/test_views.py::test_getById_acl_users[8-False] PASSED
+tests/test_views.py::test_getById PASSED
+tests/test_views.py::test_mapping_acl_guest PASSED
+tests/test_views.py::test_mapping_acl_users[0-True] PASSED
+tests/test_views.py::test_mapping_acl_users[1-True] PASSED
+tests/test_views.py::test_mapping_acl_users[2-True] PASSED
+tests/test_views.py::test_mapping_acl_users[3-True] PASSED
+tests/test_views.py::test_mapping_acl_users[4-False] PASSED
+tests/test_views.py::test_mapping_acl_users[5-False] PASSED
+tests/test_views.py::test_mapping_acl_users[6-True] PASSED
+tests/test_views.py::test_mapping_acl_users[7-False] PASSED
+tests/test_views.py::test_mapping_acl_users[8-False] PASSED
+tests/test_views.py::test_mapping PASSED
+tests/test_views.py::test_gatherById_acl_guest PASSED
+tests/test_views.py::test_gatherById_acl_users[0-True] PASSED
+tests/test_views.py::test_gatherById_acl_users[1-True] PASSED
+tests/test_views.py::test_gatherById_acl_users[2-True] PASSED
+tests/test_views.py::test_gatherById_acl_users[3-True] PASSED
+tests/test_views.py::test_gatherById_acl_users[4-False] PASSED
+tests/test_views.py::test_gatherById_acl_users[5-False] PASSED
+tests/test_views.py::test_gatherById_acl_users[6-True] PASSED
+tests/test_views.py::test_gatherById_acl_users[7-False] PASSED
+tests/test_views.py::test_gatherById_acl_users[8-False] PASSED
+tests/test_views.py::test_gatherById PASSED
+tests/test_views.py::test_get_prefix_list_acl_guest PASSED
+tests/test_views.py::test_get_prefix_list_acl_users[0-True] PASSED
+tests/test_views.py::test_get_prefix_list_acl_users[1-True] PASSED
+tests/test_views.py::test_get_prefix_list_acl_users[2-True] PASSED
+tests/test_views.py::test_get_prefix_list_acl_users[3-True] PASSED
+tests/test_views.py::test_get_prefix_list_acl_users[4-False] PASSED
+tests/test_views.py::test_get_prefix_list_acl_users[5-False] PASSED
+tests/test_views.py::test_get_prefix_list_acl_users[6-True] PASSED
+tests/test_views.py::test_get_prefix_list_acl_users[7-False] PASSED
+tests/test_views.py::test_get_prefix_list_acl_users[8-False] PASSED
+tests/test_views.py::test_get_prefix_list PASSED
+tests/test_views.py::test_get_affiliation_list_acl_guest PASSED
+tests/test_views.py::test_get_affiliation_list_acl_users[0-True] PASSED
+tests/test_views.py::test_get_affiliation_list_acl_users[1-True] PASSED
+tests/test_views.py::test_get_affiliation_list_acl_users[2-True] PASSED
+tests/test_views.py::test_get_affiliation_list_acl_users[3-True] PASSED
+tests/test_views.py::test_get_affiliation_list_acl_users[4-False] PASSED
+tests/test_views.py::test_get_affiliation_list_acl_users[5-False] PASSED
+tests/test_views.py::test_get_affiliation_list_acl_users[6-True] PASSED
+tests/test_views.py::test_get_affiliation_list_acl_users[7-False] PASSED
+tests/test_views.py::test_get_affiliation_list_acl_users[8-False] PASSED
+tests/test_views.py::test_get_affiliation_list PASSED
+tests/test_views.py::test_get_list_schema_acl_guest PASSED
+tests/test_views.py::test_get_list_schema_acl_users[0-True] PASSED
+tests/test_views.py::test_get_list_schema_acl_users[1-True] PASSED
+tests/test_views.py::test_get_list_schema_acl_users[2-True] PASSED
+tests/test_views.py::test_get_list_schema_acl_users[3-True] PASSED
+tests/test_views.py::test_get_list_schema_acl_users[4-False] PASSED
+tests/test_views.py::test_get_list_schema_acl_users[5-False] PASSED
+tests/test_views.py::test_get_list_schema_acl_users[6-True] PASSED
+tests/test_views.py::test_get_list_schema_acl_users[7-False] PASSED
+tests/test_views.py::test_get_list_schema_acl_users[8-False] PASSED
+tests/test_views.py::test_get_list_schema PASSED
+tests/test_views.py::test_get_list_affiliation_schema_acl_guest PASSED
+tests/test_views.py::test_get_list_affiliation_schema_acl_users[0-True] PASSED
+tests/test_views.py::test_get_list_affiliation_schema_acl_users[1-True] PASSED
+tests/test_views.py::test_get_list_affiliation_schema_acl_users[2-True] PASSED
+tests/test_views.py::test_get_list_affiliation_schema_acl_users[3-True] PASSED
+tests/test_views.py::test_get_list_affiliation_schema_acl_users[4-False] PASSED
+tests/test_views.py::test_get_list_affiliation_schema_acl_users[5-False] PASSED
+tests/test_views.py::test_get_list_affiliation_schema_acl_users[6-True] PASSED
+tests/test_views.py::test_get_list_affiliation_schema_acl_users[7-False] PASSED
+tests/test_views.py::test_get_list_affiliation_schema_acl_users[8-False] PASSED
+tests/test_views.py::test_get_list_affiliation_schema PASSED
+tests/test_views.py::test_update_prefix_acl_guest PASSED
+tests/test_views.py::test_update_prefix_acl_users[0-True] PASSED
+tests/test_views.py::test_update_prefix_acl_users[1-True] PASSED
+tests/test_views.py::test_update_prefix_acl_users[2-True] PASSED
+tests/test_views.py::test_update_prefix_acl_users[3-True] PASSED
+tests/test_views.py::test_update_prefix_acl_users[4-False] PASSED
+tests/test_views.py::test_update_prefix_acl_users[5-False] PASSED
+tests/test_views.py::test_update_prefix_acl_users[6-True] PASSED
+tests/test_views.py::test_update_prefix_acl_users[7-False] PASSED
+tests/test_views.py::test_update_prefix_acl_users[8-False] PASSED
+tests/test_views.py::test_update_prefix PASSED
+tests/test_views.py::test_delete_prefix_acl_guest PASSED
+tests/test_views.py::test_delete_prefix_acl_users[0-True] PASSED
+tests/test_views.py::test_delete_prefix_acl_users[1-True] PASSED
+tests/test_views.py::test_delete_prefix_acl_users[2-True] PASSED
+tests/test_views.py::test_delete_prefix_acl_users[3-True] PASSED
+tests/test_views.py::test_delete_prefix_acl_users[4-False] PASSED
+tests/test_views.py::test_delete_prefix_acl_users[5-False] PASSED
+tests/test_views.py::test_delete_prefix_acl_users[6-True] PASSED
+tests/test_views.py::test_delete_prefix_acl_users[7-False] PASSED
+tests/test_views.py::test_delete_prefix_acl_users[8-False] PASSED
+tests/test_views.py::test_delete_prefix PASSED
+tests/test_views.py::test_create_prefix_acl_guest PASSED
+tests/test_views.py::test_create_prefix_acl_users[0-True] PASSED
+tests/test_views.py::test_create_prefix_acl_users[1-True] PASSED
+tests/test_views.py::test_create_prefix_acl_users[2-True] PASSED
+tests/test_views.py::test_create_prefix_acl_users[3-True] PASSED
+tests/test_views.py::test_create_prefix_acl_users[4-False] PASSED
+tests/test_views.py::test_create_prefix_acl_users[5-False] PASSED
+tests/test_views.py::test_create_prefix_acl_users[6-True] PASSED
+tests/test_views.py::test_create_prefix_acl_users[7-False] PASSED
+tests/test_views.py::test_create_prefix_acl_users[8-False] PASSED
+tests/test_views.py::test_create_prefix PASSED
+tests/test_views.py::test_update_affiliation_acl_guest PASSED
+tests/test_views.py::test_update_affiliation_acl_users[0-True] PASSED
+tests/test_views.py::test_update_affiliation_acl_users[1-True] PASSED
+tests/test_views.py::test_update_affiliation_acl_users[2-True] PASSED
+tests/test_views.py::test_update_affiliation_acl_users[3-True] PASSED
+tests/test_views.py::test_update_affiliation_acl_users[4-False] PASSED
+tests/test_views.py::test_update_affiliation_acl_users[5-False] PASSED
+tests/test_views.py::test_update_affiliation_acl_users[6-True] PASSED
+tests/test_views.py::test_update_affiliation_acl_users[7-False] PASSED
+tests/test_views.py::test_update_affiliation_acl_users[8-False] PASSED
+tests/test_views.py::test_update_affiliation PASSED
+tests/test_views.py::test_delete_affiliation_acl_guest PASSED
+tests/test_views.py::test_delete_affiliation_acl_users[0-True] PASSED
+tests/test_views.py::test_delete_affiliation_acl_users[1-True] PASSED
+tests/test_views.py::test_delete_affiliation_acl_users[2-True] PASSED
+tests/test_views.py::test_delete_affiliation_acl_users[3-True] PASSED
+tests/test_views.py::test_delete_affiliation_acl_users[4-False] PASSED
+tests/test_views.py::test_delete_affiliation_acl_users[5-False] PASSED
+tests/test_views.py::test_delete_affiliation_acl_users[6-True] PASSED
+tests/test_views.py::test_delete_affiliation_acl_users[7-False] PASSED
+tests/test_views.py::test_delete_affiliation_acl_users[8-False] PASSED
+tests/test_views.py::test_delete_affiliation PASSED
+tests/test_views.py::test_create_affiliation_acl_guest PASSED
+tests/test_views.py::test_create_affiliation_acl_users[0-True] PASSED
+tests/test_views.py::test_create_affiliation_acl_users[1-True] PASSED
+tests/test_views.py::test_create_affiliation_acl_users[2-True] PASSED
+tests/test_views.py::test_create_affiliation_acl_users[3-True] PASSED
+tests/test_views.py::test_create_affiliation_acl_users[4-False] PASSED
+tests/test_views.py::test_create_affiliation_acl_users[5-False] PASSED
+tests/test_views.py::test_create_affiliation_acl_users[6-True] PASSED
+tests/test_views.py::test_create_affiliation_acl_users[7-False] PASSED
+tests/test_views.py::test_create_affiliation_acl_users[8-False] PASSED
+tests/test_views.py::test_create_affiliation PASSED
+tests/test_views.py::test_dbsession_clean PASSED
+tests/test_weko_authors.py::test_version PASSED
+tests/test_weko_authors.py::test_init PASSED
+
+=============================== warnings summary ===============================
+../invenio-indexer/invenio_indexer/cli.py:108
+  /code/modules/invenio-indexer/invenio_indexer/cli.py:108: DeprecationWarning: 'resultcallback' has been renamed to 'result_callback'. The old name will be removed in Click 8.1.
+    @queue.resultcallback()
+
+.tox/c1/lib/python3.6/site-packages/flask_oauthlib/contrib/cache.py:3
+  /code/modules/weko-authors/.tox/c1/lib/python3.6/site-packages/flask_oauthlib/contrib/cache.py:3: DeprecationWarning: 'werkzeug.contrib.cache' is deprecated as of version 0.15 and will be removed in version 1.0. It has moved to https://github.com/pallets/cachelib.
+    from werkzeug.contrib.cache import NullCache, SimpleCache, FileSystemCache
+
+.tox/c1/lib/python3.6/site-packages/past/translation/__init__.py:35
+  /code/modules/weko-authors/.tox/c1/lib/python3.6/site-packages/past/translation/__init__.py:35: DeprecationWarning: the imp module is deprecated in favour of importlib; see the module's documentation for alternative uses
+    import imp
+
+.tox/c1/src/pypdf2/PyPDF2/generic.py:348
+  /code/modules/weko-authors/.tox/c1/src/pypdf2/PyPDF2/generic.py:348: DeprecationWarning: invalid escape sequence \c
+    b_("c") : b_("\c"),
+
+tests/test_admin.py: 3718 warnings
+tests/test_api.py: 156 warnings
+tests/test_models.py: 260 warnings
+tests/test_tasks.py: 78 warnings
+tests/test_utils.py: 364 warnings
+tests/test_validation.py: 52 warnings
+tests/test_views.py: 4888 warnings
+  /code/modules/weko-authors/.tox/c1/lib/python3.6/site-packages/invenio_admin/ext.py:73: PendingDeprecationWarning: Usage of model and modelview kwargs are deprecated in favor of view_class, args and kwargs.
+    PendingDeprecationWarning
+
+tests/test_admin.py: 143 warnings
+tests/test_api.py: 6 warnings
+tests/test_models.py: 10 warnings
+tests/test_tasks.py: 3 warnings
+tests/test_utils.py: 14 warnings
+tests/test_validation.py: 2 warnings
+tests/test_views.py: 188 warnings
+  /code/modules/weko-authors/.tox/c1/lib/python3.6/site-packages/flask_admin/model/base.py:1416: UserWarning: Fields missing from ruleset: created_userId,created_date,updated_userId,updated_date
+    warnings.warn(text)
+
+tests/test_admin.py: 130 warnings
+tests/test_views.py: 187 warnings
+  /code/modules/weko-authors/.tox/c1/lib/python3.6/site-packages/flask/sessions.py:208: UserWarning: "app" is not a valid cookie domain, it must contain a ".". Add an entry to your hosts file, for example "app.localdomain", and use that instead.
+    ' "{rv}.localdomain", and use that instead.'.format(rv=rv)
+
+-- Docs: https://docs.pytest.org/en/stable/warnings.html
+
+---------- coverage: platform linux, python 3.6.15-final-0 -----------
+Name                                   Stmts   Miss Branch BrPart  Cover
+------------------------------------------------------------------------
+weko_authors/__init__.py                   4      0      0      0   100%
+weko_authors/admin.py                    136      0     42      0   100%
+weko_authors/api.py                      148      0     70      0   100%
+weko_authors/bundles.py                   15      0      0      0   100%
+weko_authors/config.py                    27      0      0      0   100%
+weko_authors/contrib/validation.py        57      0     32      0   100%
+weko_authors/ext.py                       15      0     10      0   100%
+weko_authors/mappings/__init__.py          1      0      0      0   100%
+weko_authors/mappings/v2/__init__.py       1      0      0      0   100%
+weko_authors/mappings/v6/__init__.py       1      0      0      0   100%
+weko_authors/models.py                   137      0     22      0   100%
+weko_authors/permissions.py                4      0      0      0   100%
+weko_authors/tasks.py                     49      0     14      0   100%
+weko_authors/utils.py                    306      0    134      0   100%
+weko_authors/version.py                    2      0      0      0   100%
+weko_authors/views.py                    355      0     90      0   100%
+------------------------------------------------------------------------
+TOTAL                                   1258      0    414      0   100%
+Coverage HTML written to dir htmlcov
+
+=============== 378 passed, 10203 warnings in 2161.38s (0:36:01) ===============
+___________________________________ summary ____________________________________
+  c1: commands succeeded
+  congratulations :)

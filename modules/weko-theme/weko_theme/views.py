@@ -50,6 +50,7 @@ blueprint = Blueprint(
 def index():
     """Simplistic front page view."""
     check_site_license_permission()
+    
     send_info = {}
     send_info['site_license_flag'] = True \
         if hasattr(current_user, 'site_license_flag') else False
@@ -65,6 +66,7 @@ def index():
         current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'],
         current_i18n.language)
     page = None
+    
 
     return render_template(
         current_app.config['THEME_FRONTPAGE_TEMPLATE'],
@@ -107,6 +109,15 @@ def get_site_info(site_info):
     site_info = SiteInfo.get()
     site_name = site_info.site_name if site_info and site_info.site_name else []
     notify = site_info.notify if site_info and site_info.notify else []
+    try:
+        google_tracking_id_user = site_info.google_tracking_id_user if site_info.google_tracking_id_user else current_app.config['GOOGLE_TRACKING_ID_USER']
+    except BaseException:
+        google_tracking_id_user = ""
+    try:
+        addthis_user_id = site_info.addthis_user_id if site_info.addthis_user_id else current_app.config['ADDTHIS_USER_ID']
+    except BaseException:
+        addthis_user_id = ""
+    
     title = get_site_name_for_current_language(site_name) \
         or current_app.config['THEME_SITENAME']
     login_instructions = get_notify_for_current_language(notify)
@@ -137,7 +148,9 @@ def get_site_info(site_info):
         'notify': site_info.notify if site_info
         and site_info.notify else [],
         'enable_notify': current_app.config[
-            "WEKO_ADMIN_ENABLE_LOGIN_INSTRUCTIONS"]
+            "WEKO_ADMIN_ENABLE_LOGIN_INSTRUCTIONS"],
+        'google_tracking_id_user': google_tracking_id_user if google_tracking_id_user else "",
+        'addthis_user_id':addthis_user_id if addthis_user_id else ""
     }
     return result
 
@@ -153,12 +166,12 @@ def get_init_display_setting(settings):
         .get_init_display_setting()
     return init_display_setting
 
-@blueprint.teardown_request
-def dbsession_clean(exception):
-    current_app.logger.debug("weko_theme dbsession_clean: {}".format(exception))
-    if exception is None:
-        try:
-            db.session.commit()
-        except:
-            db.session.rollback()
-    db.session.remove()
+# @blueprint.teardown_request
+# def dbsession_clean(exception):
+#     current_app.logger.debug("weko_theme dbsession_clean: {}".format(exception))
+#     if exception is None:
+#         try:
+#             db.session.commit()
+#         except:
+#             db.session.rollback()
+#     db.session.remove()

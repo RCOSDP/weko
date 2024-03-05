@@ -538,7 +538,6 @@ def copy_value_xml_path(dc, xml_path, iid=None):
             copy_value = root.findall(xpath, ns)[0].text
             return str(copy_value)
     except Exception:
-        print("exception")
         return None
 
 

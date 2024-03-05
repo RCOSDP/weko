@@ -115,13 +115,13 @@ class Journals(object):
         except IntegrityError as ie:
             is_ok = False
             current_app.logger.debug(ie)
+            db.session.rollback()
         except Exception as ex:
             is_ok = False
             current_app.logger.debug(ex)
+            db.session.rollback()
         finally:
             del data
-            if not is_ok:
-                db.session.rollback()
         return is_ok
 
     @classmethod
@@ -164,15 +164,14 @@ class Journals(object):
                 slf = cls.get_journal(journal_id)
                 if not slf:
                     return
-
+                slf = Journal.query.filter_by(id=journal_id).one()
                 db.session.delete(slf)
-                db.session.commit()
-                return dct
+            db.session.commit()
+            return True
         except Exception as ex:
             current_app.logger.debug(ex)
             db.session.rollback()
             return None
-        return 0
 
     @classmethod
     def get_journal(cls, journal_id):
@@ -260,7 +259,8 @@ class Journals(object):
         try:
             journals = db.session.query(Journal).all()
 
-            if journals is None:
+            #if journals is None:
+            if journals == []:
                 current_app.logger.info(
                     '[{0}] Return {1} when get all journal.'.format(
                         0, journals)

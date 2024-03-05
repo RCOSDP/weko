@@ -21,6 +21,7 @@
 """Database models for mail."""
 
 from flask import current_app
+import pickle
 from invenio_db import db
 from sqlalchemy import or_
 from flask_babelex import gettext as _
@@ -44,7 +45,7 @@ class MailConfig(db.Model):
         if len(cls.query.all()) < 1:
             db.session.add(cls())
             db.session.commit()
-        cfg = cls.query.get(1).__dict__
+        cfg = pickle.loads(pickle.dumps(cls.query.get(1).__dict__))
         cfg.pop('id')
         cfg.pop('_sa_instance_state')
         return cfg

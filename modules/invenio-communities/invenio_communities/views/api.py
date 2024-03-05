@@ -26,7 +26,7 @@
 
 from __future__ import absolute_import, print_function
 
-from flask import Blueprint, abort
+from flask import Blueprint, abort, current_app
 from invenio_rest import ContentNegotiatedMethodView
 from webargs import fields
 from webargs.flaskparser import use_kwargs

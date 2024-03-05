@@ -1,8 +1,7 @@
-
 import pytest
-from mock import patch
+from mock import patch, MagicMock
 
-from weko_records_ui.preview import preview
+from weko_records_ui.preview import preview, decode_name, zip_preview, children_to_list
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_preview.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 # def preview(pid, record, template=None, **kwargs):
@@ -88,5 +87,49 @@ def test_preview(app,records):
     
 
 # def children_to_list(node):
+def test_children_to_list(app):
+    obj1 = MagicMock()
+    obj2 = {
+        'type': 'item',
+        'children': []
+    }
+
+    assert children_to_list(obj1) == obj1
+
+    assert children_to_list(obj2) == obj2
+
+
 # def zip_preview(file):
+def test_zip_preview(app):
+    obj1 = MagicMock()
+    obj2 = MagicMock()
+    obj3 = MagicMock()
+
+    with patch("weko_records_ui.preview.make_tree", return_value=(obj1, obj2, obj3)):
+        with patch("weko_records_ui.preview.children_to_list", return_value={"children": [1,2,3]}):
+            # Error
+            try:
+                zip_preview(obj1)
+            except:
+                pass
+
 # def decode_name(k):
+def test_decode_name(app):
+    obj1 = MagicMock()
+    obj2 = {"encoding": "test"}
+
+    assert decode_name(obj1) == obj1
+
+    def detect(a):
+        return obj2
+
+    obj1.detect = detect
+    with patch("weko_records_ui.preview.chardet", return_value=obj1):
+        assert decode_name(obj1) != obj1
+    
+    with patch("weko_records_ui.preview.chardet.detect", return_value={"encoding": False}):
+        assert decode_name(obj1) == obj1
+
+    obj2['encoding'] = 'WINDOWS-1252'
+    with patch("weko_records_ui.preview.chardet.detect", return_value=obj2):
+        assert decode_name(obj1) != obj1

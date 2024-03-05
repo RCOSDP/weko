@@ -80,6 +80,7 @@ docker cp $(docker-compose ps -q postgresql):/weko.sql ${BACKUPDIR}/postgresql/
 # elasticsearch-backup-begin
 echo "elasticsearch-backup(1/4)"
 docker-compose exec -T elasticsearch bash -c "rm  -fr /usr/share/elasticsearch/backups"
+docker-compose exec -T elasticsearch bash -c "mkdir  /usr/share/elasticsearch/backups"
 docker-compose exec -T elasticsearch \
     curl -X PUT \
     http://localhost:9200/_snapshot/weko_backup \

@@ -136,9 +136,18 @@ def test_get_path_name_dict(i18n_app, users, indices):
 
 
 # def gettitlefacet():
-def test_gettitlefacet(i18n_app, users, facet_search_setting):
+def test_gettitlefacet(i18n_app, users, client, facet_search_setting):
     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
         assert gettitlefacet()
+        url = url_for('weko_search_ui.gettitlefacet')
+        ret = client.post(url)
+        assert ret
+        assert ret.status_code == 200
+        result = json.loads(ret.data)
+        data = result.get("data")
+        assert data.get("displayNumbers")
+        assert data.get("isOpens")
+        assert data.get("uiTypes")
 
 
 # def get_last_item_id():

@@ -267,8 +267,9 @@ def soft_delete(recid):
                 rec = RecordMetadata.query.filter_by(
                     id=ver.object_uuid).first()
                 dep = WekoDeposit(rec.json, rec)
-                dep['path'] = []
-                dep.indexer.update_path(dep, update_revision=False)
+                #dep['path'] = []
+                dep['publish_status'] = '-1'
+                dep.indexer.update_es_data(dep, update_revision=False, field='publish_status')
                 FeedbackMailList.delete(ver.object_uuid)
                 dep.remove_feedback_mail()
                 for i in range(len(dep.files)):
@@ -325,7 +326,8 @@ def restore(recid):
                 rec = RecordMetadata.query.filter_by(
                     id=ver.object_uuid).first()
                 dep = WekoDeposit(rec.json, rec)
-                dep.indexer.update_path(dep, update_revision=False)
+                dep['publish_status'] = '0'
+                dep.indexer.update_es_data(dep, update_revision=False, field='publish_status')
                 dep.commit()
             pids = PersistentIdentifier.query.filter_by(
                 object_uuid=ver.object_uuid)
@@ -1456,8 +1458,8 @@ def get_google_detaset_meta(record,record_tree=None):
                 '@type': 'Place',
                 'geo': {
                     '@type': 'GeoCoordinates',
-                    'latitude': point_longitude.text,
-                    'longitude': point_latitude.text,
+                    'latitude': point_latitude.text,
+                    'longitude': point_longitude.text,
                 }
             })
 
