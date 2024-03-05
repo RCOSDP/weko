@@ -961,7 +961,7 @@ class StatisticMail:
                 result += '[閲覧回数] : ' + str(
                     cls.convert_download_count_to_int(
                         item['detail_view'])) + '\n'
-                result += '[ファイルダウンロード回数] : ' + file_down_str
+                result += '[ファイルダウンロード回数] : \n' + file_down_str
 
             else:
                 result += '[Title] : ' + item['title'] + '\n'
