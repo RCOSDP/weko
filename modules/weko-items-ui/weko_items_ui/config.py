@@ -274,7 +274,7 @@ WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_MAPPINGS = [
         
         ,{'type' : 'lang' , "rm_name" : 'description', "jpcoar_name" : 'datacite:description' , "weko_name" :"description"}
         ,{'type' : 'lang' , "rm_name" : 'publisher',   "jpcoar_name" : 'dc:publisher' , "weko_name" :"publisher"}
-        ,{'type' : 'lang' , "rm_name" : 'publication_name ',   "jpcoar_name" : 'jpcoar:sourceTitle' , "weko_name" :"sourceTitle"}
+        ,{'type' : 'lang' , "rm_name" : 'publication_name',   "jpcoar_name" : 'jpcoar:sourceTitle' , "weko_name" :"sourceTitle"}
 
         ,{'type' : 'lang' , "rm_name" : 'event',   "jpcoar_name" : 'jpcoar:conference' , "weko_name" :"conference" , "child_node" : "conferenceName"}
         ,{'type' : 'lang' , "rm_name" : 'promoter',   "jpcoar_name" : 'jpcoar:conference' , "weko_name" :"conference", "child_node" : "conferenceSponsor"}
@@ -287,6 +287,7 @@ WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_MAPPINGS = [
         ,{'type' : 'authors'    ,  "rm_name" : 'presenters'     , "jpcoar_name" : 'jpcoar:creator'  ,"weko_name": 'creator'}
         ,{'type' : 'identifiers',  "rm_name" : "identifiers" , "jpcoar_name" : 'jpcoar:relation' ,"weko_name": 'relation'}
         ,{'type' : 'simple_value', "rm_name" : 'publication_date',  "jpcoar_name" :  'datacite:date' , "weko_name" : "date"}
+        ,{'type' : 'simple' ,"rm_name" : 'total_page',   "jpcoar_name" : 'jpcoar:numPages', "weko_name" : "numPages"}
         ,{'type' : 'simple', "rm_name" : 'volume', "jpcoar_name" :  'jpcoar:volume' , "weko_name" : "volume"}
         ,{'type' : 'simple', "rm_name" : 'number', "jpcoar_name" :  'jpcoar:issue' , "weko_name" : "issue"}
         ,{'type' : 'simple', "rm_name" : 'starting_page', "jpcoar_name" : 'jpcoar:pageStart' , "weko_name" : "pageStart"}

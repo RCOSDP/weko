@@ -1437,7 +1437,8 @@ def get_researchmapid_record_data(parmalink, achievement_type ,achievement_id ,i
 
             elements = []
             for key in lang_json.keys():
-                elements.append({'@value': lang_json[key] , '@type' : key.upper()})
+                for val in lang_json[key]:
+                    elements.append({'@value': val , '@type' : key.upper()})
 
             api_data = __nest_and_merge(weko_name  ,child_node ,elements ,api_data)
 
@@ -1448,6 +1449,7 @@ def get_researchmapid_record_data(parmalink, achievement_type ,achievement_id ,i
             child_node:str = mapping.get('child_node','')
             for r_type_mapping in researchtype_mappings:
                 if r_type_mapping.get('achievement_type') == achievement_type \
+                    and mapping.get('achievement_type') == achievement_type \
                     and r_type_mapping.get('detail_type_name') == element :
                     resource_type =  r_type_mapping.get('JPCOAR_resource_type')
                     api_data.update({weko_name : resource_type})

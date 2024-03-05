@@ -1901,20 +1901,20 @@ def test_get_researchmapid_record_data(app, db, itemtypes):
 
     test =  [{'item_1617186331708': [{'subitem_1551255647225': 'full-schema', 'subitem_1551255648112': 'en'}, {'subitem_1551255647225': '満艦飾', 'subitem_1551255648112': 'ja'}]}, {'item_1617186419668': [{'creatorNames': [{'creatorName': 'WEKO, 太郎', 'creatorNameLang': 'ja'}]}]}, {'item_1617186626617': [{'subitem_description': '描写', 'subitem_description_language': 'ja', 'subitem_description_type': ''}]}, {'item_1617186643794': [{'subitem_1522300316516': '出版者●●', 'subitem_1522300295150': 'ja'}]}, {'item_1617186660861': [{'subitem_1522300722591': '2024-02-05', 'subitem_1522300695726': '2024-02-05'}]}, {'item_1617186702042': [{'subitem_1551255818386': 'jpn'}]}, {'item_1617258105262': {'resourcetype': 'article'}}, {'item_1617186959569': {'subitem_1551256328147': '123'}}, {'item_1617186981471': {'subitem_1551256294723': '456'}}, {'item_1617187024783': {'subitem_1551256198917': '1'}}, {'item_1617187045071': {'subitem_1551256185532': '10'}}]
     with patch("weko_items_autofill.utils.Researchmap.get_data", return_value=data):
-        result = get_researchmapid_record_data("M1cQhPtdmlrSRFo4", "published_papers", 1358081, 3)
+        result,_ = get_researchmapid_record_data("M1cQhPtdmlrSRFo4", "published_papers", 1358081, 3)
         assert result == test
 
     data_2 = json_data("data/researchmap_test_data_2.json")
     data_2 = json.dumps(data_2)
     test =  [{'item_1617186331708': [{'subitem_1551255647225': 'aaaaa', 'subitem_1551255648112': 'en'}, {'subitem_1551255647225': 'ああああ', 'subitem_1551255648112': 'ja'}]}, {'item_1617186419668': [{'creatorNames': [{'creatorName': 'Author English', 'creatorNameLang': 'en'}]}]}, {'item_1617186626617': [{'subitem_description': '国際・国内誌概要(英語)', 'subitem_description_language': 'en', 'subitem_description_type': ''}, {'subitem_description': '国際・国内誌概要(日本語)', 'subitem_description_language': 'ja', 'subitem_description_type': ''}]}, {'item_1617186643794': [{'subitem_1522300316516': 'pub_english', 'subitem_1522300295150': 'en'}, {'subitem_1522300316516': '出版者・発行元(日本語)', 'subitem_1522300295150': 'ja'}]}, {'item_1617186660861': [{'subitem_1522300722591': '2010-10-10', 'subitem_1522300695726': '2010-10-10'}]}, {'item_1617186702042': [{'subitem_1551255818386': 'eng'}]}, {'item_1617258105262': {'resourcetype': 'article'}}, {'item_1617353299429': [{'subitem_1522306287251': {'subitem_1522306436033': ['10.11501/3140078'], 'subitem_1522306382014': 'DOI'}}]}, {'item_1617186959569': {'subitem_1551256328147': '123'}}, {'item_1617186981471': {'subitem_1551256294723': '456'}}, {'item_1617187024783': {'subitem_1551256198917': '1'}}, {'item_1617187045071': {'subitem_1551256185532': '10'}}]
     with patch("weko_items_autofill.utils.Researchmap.get_data", return_value=data_2):
-        result = get_researchmapid_record_data("M1cQhPtdmlrSRFo4", "published_papers", 1356383, 3)
+        result,_ = get_researchmapid_record_data("M1cQhPtdmlrSRFo4", "published_papers", 1356383, 3)
         assert result == test
 
-        result = get_researchmapid_record_data("M1cQhPtdmlrSRFo4", "published_papers", 1356383, 99999)
+        result,_ = get_researchmapid_record_data("M1cQhPtdmlrSRFo4", "published_papers", 1356383, 99999)
         assert result == []
 
-        result = get_researchmapid_record_data("M1cQhPtdmlrSRFo4", "published_papers", 1356383, 4)
+        result,_ = get_researchmapid_record_data("M1cQhPtdmlrSRFo4", "published_papers", 1356383, 4)
         assert result == []
             
     data = {
@@ -1924,18 +1924,18 @@ def test_get_researchmapid_record_data(app, db, itemtypes):
     data = json.dumps(data)
     with patch("weko_items_autofill.utils.Researchmap.get_data", return_value=data):
         with pytest.raises(Exception):
-            result = get_researchmapid_record_data("M1cQhPtdmlrSRFo4", "published_papers", 999999, 3)
+            result,_ = get_researchmapid_record_data("M1cQhPtdmlrSRFo4", "published_papers", 999999, 3)
 
     with patch("weko_items_autofill.utils.Researchmap.get_data", return_value=data_2):
         app.config.update(WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_MAPPINGS = [{ 'type' : 'xxx' , "rm_name" : 'paper_title', "jpcore_name" : 'dc:title' , "weko_name" :"title"}])
-        result = get_researchmapid_record_data("M1cQhPtdmlrSRFo4", "published_papers", 1356383, 3)
+        result,_ = get_researchmapid_record_data("M1cQhPtdmlrSRFo4", "published_papers", 1356383, 3)
         assert result == []
         
     with patch("weko_items_autofill.utils.Researchmap.get_data", return_value=data_2):
         app.config.update(WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_MAPPINGS=WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_MAPPINGS)
         app.config.update(WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_TYPE_MAPPINGS= [{'achievement_type' : 'xxx','detail_type_name':'','JPCOAR_resource_type':'article'}])
         test =  [{'item_1617186331708': [{'subitem_1551255647225': 'aaaaa', 'subitem_1551255648112': 'en'}, {'subitem_1551255647225': 'ああああ', 'subitem_1551255648112': 'ja'}]}, {'item_1617186419668': [{'creatorNames': [{'creatorName': 'Author English', 'creatorNameLang': 'en'}]}]}, {'item_1617186626617': [{'subitem_description': '国際・国内誌概要(英語)', 'subitem_description_language': 'en', 'subitem_description_type': ''}, {'subitem_description': '国際・国内誌概要(日本語)', 'subitem_description_language': 'ja', 'subitem_description_type': ''}]}, {'item_1617186643794': [{'subitem_1522300316516': 'pub_english', 'subitem_1522300295150': 'en'}, {'subitem_1522300316516': '出版者・発行元(日本語)', 'subitem_1522300295150': 'ja'}]}, {'item_1617186660861': [{'subitem_1522300722591': '2010-10-10', 'subitem_1522300695726': '2010-10-10'}]}, {'item_1617186702042': [{'subitem_1551255818386': 'eng'}]}, {'item_1617353299429': [{'subitem_1522306287251': {'subitem_1522306436033': ['10.11501/3140078'], 'subitem_1522306382014': 'DOI'}}]}, {'item_1617186959569': {'subitem_1551256328147': '123'}}, {'item_1617186981471': {'subitem_1551256294723': '456'}}, {'item_1617187024783': {'subitem_1551256198917': '1'}}, {'item_1617187045071': {'subitem_1551256185532': '10'}}]
-        result = get_researchmapid_record_data("M1cQhPtdmlrSRFo4", "published_papers", 1356383, 3)
+        result,_ = get_researchmapid_record_data("M1cQhPtdmlrSRFo4", "published_papers", 1356383, 3)
         assert result == test
 
 

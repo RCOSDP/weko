@@ -449,6 +449,8 @@ ${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
        "KAKEN2" "KAKEN2" "https://nrid.nii.ac.jp/nrid/##"
 ${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
        "ROR" "ROR" "https://ror.org/##"
+${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
+       "researchmap" "researchmap" "https://researchmap.jp/##"
 # create-default-authors-prefix-settings-end
 
 # create-default-authors-affiliation-settings-begin
@@ -460,8 +462,6 @@ ${INVENIO_WEB_INSTANCE} authors_affiliation default_settings \
        "Ringgold" "Ringgold" ""
 ${INVENIO_WEB_INSTANCE} authors_affiliation default_settings \
        "kakenhi" "kakenhi" ""
-${INVENIO_WEB_INSTANCE} authors_affiliation default_settings \
-       "researchmap" "researchmap" "https://researchmap.jp/##"
 # create-default-authors-affiliation-settings-end
 
 # create-widget-bucket-begin
