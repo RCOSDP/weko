@@ -532,7 +532,7 @@ def test_query_access_counter_helper(app, es):
 def test_query_access_counter_helper_error(app):
     # get_top_page_access_counter
     res = QueryAccessCounterHelper.get_top_page_access_counter()
-    assert res=={'date': '', 'all': {'count': {}}}
+    assert res=={'date': '', 'all': {'count': None}}
 
 # class QueryRecordViewPerIndexReportHelper(object):
 #     def build_query(cls, start_date, end_date, after_key=None):

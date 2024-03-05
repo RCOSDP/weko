@@ -743,7 +743,7 @@ class QueryAccessCounterHelper(object):
         """Get toppage access counter."""
 
         result = {}
-        all_list = {}
+        all_int = None
         all_res = {}
         query_month = ''
 
@@ -756,14 +756,14 @@ class QueryAccessCounterHelper(object):
                 all_query = all_query_cfg.\
                     query_class(**all_query_cfg.query_config)
                 all_res[query] = all_query.run(**params)
-            all_list = int(all_res[query]['value'])
+            all_int = int(all_res[query]['value'])
 
         except Exception as e:
-            current_app.logger.debug(e)
+            current_app.logger.error(e)
 
 
         result['date'] = query_month
-        result['all'] = {'count': all_list}
+        result['all'] = {'count': all_int}
 
         return result
 
