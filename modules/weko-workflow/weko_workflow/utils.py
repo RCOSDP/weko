@@ -2533,7 +2533,7 @@ def get_item_info(item_id):
     try:
         item = ItemsMetadata.get_record(id_=item_id)
     except Exception as ex:
-        current_app.logger.exception('Cannot get item data:', ex)
+        current_app.logger.exception('Cannot get item data: %s', ex)
         temp = dict()
         return temp
     item_info = dict()

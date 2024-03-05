@@ -1566,7 +1566,7 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
                 delete_cache_data(cache_key)
 
         except SQLAlchemyError as ex:
-            current_app.logger.error("sqlalchemy error: ", ex)
+            current_app.logger.error("sqlalchemy error: %s", ex)
             db.session.rollback()
             if item.get("id"):
                 pid = PersistentIdentifier.query.filter_by(
@@ -1590,7 +1590,7 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
 
             return {"success": False, "error_id": error_id}
         except ElasticsearchException as ex:
-            current_app.logger.error("elasticsearch  error: ", ex)
+            current_app.logger.error("elasticsearch  error: %s", ex)
             db.session.rollback()
             if item.get("id"):
                 pid = PersistentIdentifier.query.filter_by(
@@ -1614,7 +1614,7 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
 
             return {"success": False, "error_id": error_id}
         except redis.RedisError as ex:
-            current_app.logger.error("redis  error: ", ex)
+            current_app.logger.error("redis  error: %s", ex)
             db.session.rollback()
             if item.get("id"):
                 pid = PersistentIdentifier.query.filter_by(
@@ -2083,7 +2083,7 @@ def handle_check_doi_ra(list_record):
         elif item.get("status") != "new":
             error = check_existed(item_id, doi_ra)
             if error:
-                current_app.logger.error("check_existed: ".format(error))
+                current_app.logger.error("check_existed: {}".format(error))
                 errors.append(error)
 
         if errors:

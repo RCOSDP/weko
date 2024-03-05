@@ -597,7 +597,7 @@ class ItemTypes(RecordBase):
             search_result = search.execute().to_dict()
             result = search_result.get('hits', {}).get('hits', [])
         except NotFoundError as e:
-            current_app.logger.debug("Indexes do not exist yet: ", str(e))
+            current_app.logger.debug("Indexes do not exist yet: %s", str(e))
         return result
 
     @classmethod

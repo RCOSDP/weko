@@ -1171,7 +1171,7 @@ def validate_onetime_download_token(
                 return False, _(
                     "The expiration date for download has been exceeded.")
         except OverflowError:
-            current_app.logger.error('date value out of range:',
+            current_app.logger.error('date value out of range: %s',
                                      onetime_download.expiration_date)
 
         if onetime_download.download_count <= 0:

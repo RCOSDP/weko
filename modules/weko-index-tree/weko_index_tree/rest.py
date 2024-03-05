@@ -497,7 +497,7 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
                                 check_list.append(index_id)
             return make_response(jsonify(tree), 200)
         except Exception as ex:
-            current_app.logger.error('IndexTree Action Exception: ', ex)
+            current_app.logger.error('IndexTree Action Exception: %s', ex)
             raise InvalidDataRESTError()
 
     @need_record_permission('update_permission_factory')

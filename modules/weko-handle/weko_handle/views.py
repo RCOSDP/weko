@@ -52,7 +52,7 @@ def retrieve_handle():
         else:
             return jsonify(code=0, msg='Retrieved handle not found!')
     except Exception as e:
-        current_app.logger.error('Unexpected error: ', e)
+        current_app.logger.error('Unexpected error: %s', e)
 
 
 @blueprint.route('/register', methods=['POST'])
@@ -67,7 +67,7 @@ def register_handle():
 
         return jsonify({'code': -1, 'msg': 'error'})
     except Exception as e:
-        current_app.logger.error('Unexpected error: ', e)
+        current_app.logger.error('Unexpected error: %s', e)
 
 
 

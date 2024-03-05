@@ -2711,7 +2711,7 @@ def get_new_items_by_date(start_date: str, end_date: str, ranking=False) -> dict
         search_result = search_instance.execute()
         result = search_result.to_dict()
     except NotFoundError as e:
-        current_app.logger.debug("Indexes do not exist yet: ", str(e))
+        current_app.logger.debug("Indexes do not exist yet: %s", str(e))
 
     return result
 

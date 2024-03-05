@@ -1539,7 +1539,7 @@ def check_has_attribute_value(node):
                         return check_has_attribute_value(val)
         return False
     except BaseException as e:
-        current_app.logger.error("Function check_has_attribute_value error:", e)
+        current_app.logger.error("Function check_has_attribute_value error: %s", e)
         return False
 
 def set_file_date(root_key, solst, metadata, attr_lst):
@@ -1815,7 +1815,7 @@ def get_attribute_value_all_items(
                     result.append(temp)
                 return result
             except BaseException as e:
-                current_app.logger.error("Function to_sort_dict error: ", e)
+                current_app.logger.error("Function to_sort_dict error: %s", e)
                 return result
 
     def set_attribute_value(nlst):
@@ -1846,7 +1846,7 @@ def get_attribute_value_all_items(
                 _list.append(d)
             return _list
         except BaseException as e:
-            current_app.logger.error("Function set_node error: ", e)
+            current_app.logger.error("Function set_node error: %s", e)
             return _list
 
     get_name_mapping()

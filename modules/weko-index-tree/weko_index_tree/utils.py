@@ -870,7 +870,7 @@ def lock_all_child_index(index_id: str, value: str):
                             value.encode('utf-8'))
             locked_key.append(key_prefix + str(c_index.cid))
     except Exception as e:
-        current_app.logger.error('Could not lock index:', e)
+        current_app.logger.error('Could not lock index: %s', e)
         return False, locked_key
     return True, locked_key
 
@@ -889,7 +889,7 @@ def unlock_index(index_key):
             for key in index_key:
                 redis_store.delete(key)
     except Exception as e:
-        current_app.logger.error('Could not unlock index:', e)
+        current_app.logger.error('Could not unlock index: %s', e)
 
 
 def validate_before_delete_index(index_id):
