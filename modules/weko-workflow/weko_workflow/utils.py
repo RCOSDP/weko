@@ -189,6 +189,7 @@ def saving_doi_pidstore(item_id,
         current_app.logger.error(_('Identifier datas are empty!'))
         return False
 
+    # ! TEST - DR
     try:
         if not flag_del_pidstore and identifier_val and doi_register_val:
             if temporal_saving:
@@ -197,6 +198,7 @@ def saving_doi_pidstore(item_id,
                     doi_register_val,
                     doi_register_typ)
                 current_app.logger.info(_('DOI temporary registered!'))
+                print("\n\n\n\n MAD WORLD \n\n\n\n")
             else:
                 identifier = IdentifierHandle(record_without_version)
                 reg = identifier.register_pidstore('doi', identifier_val)
@@ -209,9 +211,20 @@ def saving_doi_pidstore(item_id,
                         doi_register_val,
                         doi_register_typ)
                 current_app.logger.info(_('DOI successfully registered!'))
+                print("\n\n HEAD OVER HEELS")
+                print(f"identifier = {identifier}")
+                print(f"identifier_val = {identifier_val}")
+                print(f"reg = {reg}")
+                print(f"doi_register_val = {doi_register_val}")
+                print(f"doi_register_typ = {doi_register_typ}")
+                print("\n\n")
+                
+        else:
+            print("\n\n\n\n WOMAN IN CHAINS \n\n\n\n")
         return True
     except Exception as ex:
         current_app.logger.exception(str(ex))
+        print("\n\n\n\n SOWING THE SEEDS OF LOVE \n\n\n\n")
         return False
 
 
@@ -394,6 +407,11 @@ def item_metadata_validation(item_id, identifier_type, record=None,
     current_app.logger.debug("is_import: {}".format(is_import))
     current_app.logger.debug("without_ver_id: {}".format(without_ver_id))
     current_app.logger.debug("file_path: {}".format(file_path))
+
+    # ! TEST - DR
+    print("\n\n RUNNING UP THAT HILL")
+    print(f"identifier_type ~ {identifier_type}")
+    print("\n\n")
 
     if identifier_type == IDENTIFIER_GRANT_SELECT_DICT['NotGrant']:
         return None
@@ -629,6 +647,9 @@ def item_metadata_validation(item_id, identifier_type, record=None,
     #           and identifier_type != IDENTIFIER_GRANT_SELECT_DICT['NDL JaLC']
     #           ) or is_import):
     if properties:
+        # ! TEST - DR
+        print("\n\n NOCTIS")
+        print("\n\n")
         return validation_item_property(metadata_item, properties, identifier_type=identifier_type)
     else:
         return _('Cannot register selected DOI for current Item Type of this '
@@ -1272,6 +1293,7 @@ class IdentifierHandle(object):
         self.item_metadata = ItemsMetadata.get_record(item_id)
         self.item_record = self.metadata_mapping.record
 
+    # ! TEST - DR
     def get_pidstore(self, pid_type='doi', object_uuid=None):
         """Get Persistent Identifier Object by pid_value or item_uuid.
 
@@ -1298,12 +1320,32 @@ class IdentifierHandle(object):
             return       -- PID object if exist
 
         """
+        # ! TEST - DR
         try:
             with db.session.no_autoflush:
                 if not chk_value:
+
+                    noctis = PersistentIdentifier.query.filter_by(
+                        pid_type=pid_type,
+                        object_uuid=self.item_uuid
+                    ).all()
+                    print("\n\n check_pidstore_exist(self, pid_type, chk_value=None):".upper())
+                    print(f"noctis ~ {noctis}")
+                    print("\n\n")
+
                     return PersistentIdentifier.query.filter_by(
                         pid_type=pid_type,
                         object_uuid=self.item_uuid).all()
+                
+                lucis = PersistentIdentifier.query.filter_by(
+                    pid_type=pid_type,
+                    pid_value=chk_value).one_or_none()
+                print("\n\n check_pidstore_exist(self, pid_type, chk_value=None):".upper())
+                print(f"lucis ~ {lucis}")
+                print(f"chk_value ~ {chk_value}")
+                print(f"pid_type ~ {pid_type}")
+                print("\n\n")
+
                 return PersistentIdentifier.query.filter_by(
                     pid_type=pid_type,
                     pid_value=chk_value).one_or_none()
@@ -1324,6 +1366,13 @@ class IdentifierHandle(object):
         """
         try:
             prev_pidstore = self.check_pidstore_exist(pid_type, reg_value)
+            # ! TEST - DR
+            print("\n\n prev_pidstore")
+            print(f"prev_pidstore ~ {prev_pidstore}")
+            print(f"pid_type ~ {pid_type}")
+            print(f"reg_value ~ {reg_value}")
+            print("\n\n")
+
             if not prev_pidstore:
                 return PersistentIdentifier.create(
                     pid_type,
@@ -1413,12 +1462,26 @@ class IdentifierHandle(object):
             "identifierRegistration.@value")
         key_type = self.metadata_mapping.get_first_property_by_mapping(
             "identifierRegistration.@attributes.identifierType")
+        
+        # ! TEST - DR
+        print("\n\n update_idt_registration_metadata".upper())
+        print(f"key_value ~ {key_value}")
+        print(f"key_type ~ {key_type}")
+        print(f"input_value ~ {input_value}")
+        print(f"input_type ~ {input_type}")
+        
         self.commit(key_id=key_value.split('.')[0],
                     key_val=key_value.split('.')[1],
                     key_typ=key_type.split('.')[1],
                     atr_nam='Identifier Registration',
                     atr_val=input_value,
                     atr_typ=input_type)
+        
+        # ! TEST - DR
+        print(f"self.get_idt_registration_data() ~ {self.get_idt_registration_data()}")
+        print(f"self.get_pidstore() ~ {self.get_pidstore()}")
+        print(f"dir(self) ~ {dir(self)}")
+        print("\n\n")
 
     def get_idt_registration_data(self):
         """Get Identifier Registration data.
@@ -1465,6 +1528,13 @@ class IdentifierHandle(object):
                          'actions': deposit.get('publish_status')}
                 deposit.update(index, self.item_metadata)
                 deposit.commit()
+
+                print("\n\n IDENTIFIERHANDLE COMMIT")
+                print(f"rec ~ {rec}")
+                print(f"index ~ {index}")
+                print(f"deposit ~ {deposit}")
+                print("\n\n")
+
         except SQLAlchemyError as ex:
             current_app.logger.debug(ex)
             db.session.rollback()
@@ -1618,6 +1688,7 @@ def is_hidden_pubdate(item_type_name):
     return is_hidden
 
 
+# ! TEST - DR - POSSIBLE FIX
 def get_parent_pid_with_type(pid_type, object_uuid):
     """Get Persistent Identifier Object by pid_value or item_uuid.
 
@@ -1631,12 +1702,59 @@ def get_parent_pid_with_type(pid_type, object_uuid):
     """
     try:
         record = WekoRecord.get_record(object_uuid)
+
+
+        # ! TEST - DR - POSSIBLE FIX ===================================================
+        # ! TEST - DR - Responsible for giving record.pid_doi value
+
+        record_keys = [
+            key for key in record.keys()
+        ]
+        doi_text = ""
+
+        for doi_item_key in record_keys:
+            if isinstance(record.get(doi_item_key), dict):
+                if record.get(doi_item_key).get("attribute_value_mlt") and \
+                        isinstance(record.get(doi_item_key).get("attribute_value_mlt"), list) and \
+                        record.get(doi_item_key).get("attribute_value_mlt") is not None:
+                    if record.get(doi_item_key).get("attribute_value_mlt")[0].get("subitem_identifier_reg_text"):
+                        doi_text = record.get(doi_item_key) \
+                            .get("attribute_value_mlt")[0] \
+                            .get("subitem_identifier_reg_text")
+                            
+        reserved_pid_doi = PersistentIdentifier.query.filter_by(
+            pid_type=pid_type,
+            pid_value=f"https://doi.org/" + doi_text,
+            status=PIDStatus.REGISTERED
+        ).order_by(
+            db.desc(PersistentIdentifier.created)
+        ).first()
+        
+        # ! TEST - DR - POSSIBLE FIX ===================================================
+
+        
         with db.session.no_autoflush:
             pid_object = PersistentIdentifier.query.filter_by(
                 pid_type=pid_type,
                 object_uuid=record.pid_parent.object_uuid
             ).order_by(PersistentIdentifier.created.desc()).first()
-            return pid_object
+
+            print('\n\n get_parent_pid_with_type'.upper())
+            print(f"pid_type ~ {pid_type}")
+            print(f"record ~ {record}")
+            print(f"record.pid_parent ~ {record.pid_parent}")
+            print(f"record.pid_parent.object_uuid ~ {record.pid_parent.object_uuid}")
+            print(f"pid_object ~ {pid_object}")
+            print('\n\n')
+
+            if pid_object:
+                return pid_object
+            else:
+                if reserved_pid_doi:
+                    return reserved_pid_doi
+                else:
+                    return None
+
     except PIDDoesNotExistError as pid_not_exist:
         current_app.logger.error(pid_not_exist)
         return None
@@ -1805,6 +1923,12 @@ def prepare_edit_workflow(post_activity, recid, deposit):
                                      community,
                                      draft_pid.object_uuid)
 
+        # ! TEST - DR - S
+        print("\n\n prepare_edit_workflow")
+        print(f"rtn ~ {rtn}")
+        print("\n\n")
+        # ! TEST - DR - E
+
     if rtn:
         # GOTO: TEMPORARY EDIT MODE FOR IDENTIFIER
         identifier_actionid = get_actionid('identifier_grant')
@@ -1861,8 +1985,25 @@ def handle_finish_workflow(deposit, current_pid, recid):
     item_id = None
     try:
         pid_without_ver = get_record_without_version(current_pid)
+
+        # ! TEST - DR
+        print("\n\n handle_finish_workflow".upper())
+        # if ".1" in current_pid.pid_value:
+        #     current_pid.pid_value = current_pid.pid_value[0:-2]
+        #     current_pid.pid_value = current_pid.pid_value + ".0"
+        #     print(f"IF current_pid.pid_value ~ {current_pid.pid_value}")
+        
+        print(f"pid_without_ver ~ {pid_without_ver}")
+        print(f"current_pid.pid_value ~ {current_pid.pid_value}")
+        print("\n\n")
+
         if ".0" in current_pid.pid_value:
             deposit.commit()
+
+        # else:
+        #     deposit.commit()
+
+
         deposit.publish()
         updated_item = UpdateItem()
         # publish record without version ID when registering newly
@@ -1974,6 +2115,11 @@ def delete_cache_data(key: str):
     """
     current_value = current_cache.get(key) or str()
     if current_value:
+        print("\n\n weko_workflow/utils.py::delete_cache_data".upper())
+        print(f"key ~ {key}")
+        print(f"current_value ~ {current_value}")
+        print(f"current_cache ~ {current_cache}")
+        print("\n\n")
         current_cache.delete(key)
 
 
@@ -4331,6 +4477,11 @@ def check_doi_validation_not_pass(item_id, activity_id,
 
     redis_connection = RedisConnection()
     sessionstore = redis_connection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
+
+    # ! TEST - DR
+    print("\n\n check_doi_validation_not_pass".upper())
+    print(f"sessionstore ~ {sessionstore}")
+    print("\n\n")
 
     if error_list:
         sessionstore.put(

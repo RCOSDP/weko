@@ -107,6 +107,10 @@ function getResultErrorMsg(error_id) {
 class MainLayout extends React.Component {
 
   constructor() {
+
+    // ! TEST - DR IMPORT
+    // alert(`IMPORT.JS`)
+    
     super()
     this.state = {
       tab: 'select',
@@ -187,6 +191,9 @@ class MainLayout extends React.Component {
       }
     });
 
+    // ! TEST - DR IMPORT
+    // alert(`handleCheck ~ formData ~ ${formData}`)
+
     $.ajax({
       url: urlCheck,
       type: 'POST',
@@ -219,6 +226,9 @@ class MainLayout extends React.Component {
         that.setState({ isChecking: false });
         return;
       }
+
+      // ! TEST - DR IMPORT
+      // alert(`getCheckStatus ~ response.list_record ~ ${response.list_record}`)
 
       if ('list_record' in response) {
         const is_import = response.list_record.filter(item => {
@@ -285,6 +295,13 @@ class MainLayout extends React.Component {
     this.setState({
       is_import: true
     })
+
+    // ! TEST - DR IMPORT
+    // alert(`handleImport ~ urlImport ~ ${urlImport}`)
+    // alert(`handleImport ~ list_record ~ ${list_record}`)
+    // alert(`handleImport ~ data_path ~ ${data_path}`)
+    // alert(`handleImport ~ is_import ~ ${is_import}`)
+
     $.ajax({
       url: urlImport,
       type: 'POST',
@@ -317,6 +334,10 @@ class MainLayout extends React.Component {
   getStatus() {
     const that = this
     const { tasks } = this.state
+
+    // ! TEST - DR IMPORT
+    // alert(`handleCheck ~ formData ~ ${formData}`)
+
     $.ajax({
       url: urlCheckStatus,
       method: 'POST',

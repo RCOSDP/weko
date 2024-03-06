@@ -23,20 +23,7 @@
 {% from "weko_theme/macros/modal_page.html" import approval_modal %}
 
 
-{% if index_is_private_state and is_public_state and not pubdate_is_future %}
-    {% set restrict_doi_msg = _('When reserving a DOI to an item, Pubdate must be a future date.') %}
-{% else %}
-    {% if temporary_idf_grant >= 0 %}
-        {% set restrict_doi_msg = _('When assigning a DOI to an item, it must be associated with an index whose index status is "Public" and Harvest Publishing is "Public".') %}
-    {% else %}
-        {% set restrict_doi_msg = _('Since the item has a DOI, it must be associated with an index whose index status is "Public" and whose Harvest Publishing is "Public".') %}
-    {% endif %}
-{% endif %}
-{{ approval_modal(modal_id="restrict_doi_modal",
-button_id="restrict_doi_button",
-button_text="OK",
-title=_('Confirmation'),
-body=restrict_doi_msg)}}
+
 <div class="panel panel-default">
     <div class="panel-heading">
         <span>{{_('Identifier Grant')}}</span>
@@ -44,12 +31,11 @@ body=restrict_doi_msg)}}
     <div class="panel-body" style="line-height: 1.6;">
         <h1>index_is_private_state ~ {{ index_is_private_state }}</h1>
         <h1>is_public_state ~ {{ is_public_state }}</h1>
-        <h1>pubdate_is_future ~ {{ pubdate_is_future }}</h1>
+        <h1>doi_information_key ~ {{ doi_information_key }}</h1>
+        <h1>cur_step ~ {{ cur_step }}</h1>
         <hr>
         <h1>{{ record }}</h1>
         {% if not is_public_state %} <!-- TODO IF Public State Check S -->
-            {% include 'weko_workflow/identifier_grant_private_doi_reservation.html' %}
-        {% elif is_public_state and index_is_private_state %}
             {% include 'weko_workflow/identifier_grant_private_doi_reservation.html' %}
         {% else %}
             {%- if temporary_idf_grant >= 0 %} <!-- TODO IF Main S -->

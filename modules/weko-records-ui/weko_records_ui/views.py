@@ -579,6 +579,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     # Get item meta data
     record['permalink_uri'] = None
     permalink = get_record_permalink(record)
+
     if not permalink:
         if record.get('system_identifier_doi') and \
             record.get('system_identifier_doi').get(
@@ -592,6 +593,17 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
                 request.url_root, record.get("recid"))
     else:
         record['permalink_uri'] = permalink
+
+    # ! TEST - DR - START
+    test_doi = record.pid_doi
+    test_cnri = record.pid_cnri
+    print("\n\n weko_records_ui/views.py::default_view_method")
+    print(f"permalink ~ {permalink}")
+    print(f"record ~ {record}")
+    print(f"test_doi ~ {test_doi}")
+    print(f"test_cnri ~ {test_cnri}")
+    print("\n\n")
+    # ! TEST - DR - END
 
     can_update_version = has_update_version_role(current_user)
 

@@ -288,6 +288,10 @@ msgstr ""
 msgid "Input Field"
 msgstr ""
 
+#: weko_workflow/templates/weko_workflow/identifier_grant.html:27
+msgid "When reserving a DOI to an item, Pubdate must be a future date."
+msgstr ""
+
 #: weko_workflow/templates/weko_workflow/identifier_grant.html:25
 msgid ""
 "When assigning a DOI to an item, it must be associated with an index "
@@ -306,6 +310,14 @@ msgstr ""
 
 #: weko_workflow/templates/weko_workflow/identifier_grant.html:36
 msgid "Identifier Grant"
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/identifier_grant.html:47
+msgid "DOI is reserved"
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/identifier_grant.html:98
+msgid "Register reservation"
 msgstr ""
 
 #: weko_workflow/templates/weko_workflow/identifier_grant.html:78

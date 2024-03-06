@@ -561,6 +561,7 @@ WEKO_EXPORT_TEMPLATE_BASIC_NAME = [
     ".CNRI",
     ".DOI_RA",
     ".DOI",
+    ".DOI_IS_RESERVED",
     "Keep/Upgrade Version",
 ]
 WEKO_EXPORT_TEMPLATE_BASIC_OPTION = [

@@ -81,6 +81,12 @@ def import_item(item, request_info):
         start_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         result = import_items_to_system(item, request_info) or dict()
         result["start_date"] = start_date
+
+        # ! TEST - DR IMPORT
+        print("\n\n\n\n =========================== weko_search_ui/tasks.py::import_item".upper())
+        print(f"result ~ {result}")
+        print("=========================== \n\n\n\n")
+
         return result
     except Exception as ex:
         current_app.logger.error(ex)
