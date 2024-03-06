@@ -2636,16 +2636,6 @@ def test_display_activity_users(client, users, db_register, users_index, status_
                     mock_render_template.assert_called()
 
 #.tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_display_activity -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko_workflow/.tox/c1/tmp
-@pytest.mark.parametrize('users_index, status_code', [
-    (0, 200),
-    (1, 200),
-    (2, 200),
-    (3, 200),
-    (4, 200),
-    (5, 200),
-    (6, 200),
-])
-
 def test_display_activity(client, users, db_register,mocker,redis_connect,without_remove_session):
     def del_session():
         with client.session_transaction() as session:
