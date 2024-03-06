@@ -1373,8 +1373,8 @@ class SwordAPISettingsView(BaseView):
         current_settings_json = json.dumps(current_settings)
         form = FlaskForm(request.form)
         workflow = WorkFlow()
-        workflows = workflow.get_workflow_list()
-        workflows = workflow.get_workflows_by_roles(workflows)
+        workflow_list = workflow.get_workflow_list()
+        workflows = workflow.get_workflows_by_roles(workflow_list)
         deleted_workflows = workflow.get_deleted_workflow_list()
         deleted_workflow_name_dict = {}
         for deleted_workflow in deleted_workflows:
@@ -1400,8 +1400,9 @@ class SwordAPISettingsView(BaseView):
                         settings.__dict__)
             return jsonify(success=True),200
         except Exception as e:
-            return current_app.logger.error(
+            current_app.logger.error(
                 'ERROR Default Form Settings: {}'.format(e))
+            return jsonify(success=False),400
 
     @expose('/data_format', methods=['POST'])
     def data_format(self):
@@ -1410,14 +1411,17 @@ class SwordAPISettingsView(BaseView):
             settings = AdminSettings.get('sword_api_setting')
             data_format_setting = request.json.get('data_format')
             if data_format_setting == "XML":
-                workflow_setting = request.json.get('workflow')                                         
-                settings.data_format["XML"]["workflow"] = workflow_setting
+                workflow_setting = request.json.get('workflow')
+                settings.data_format = {"TSV": {"register_format": "Direct"}, "XML": {"workflow": workflow_setting, "register_format": "Workflow"}}  
+            else:
+                settings.data_format["TSV"]["register_format"] = "Direct"
             AdminSettings.update('sword_api_setting',
-                                    settings.__dict__)    
+                                    settings.__dict__)
             return jsonify(success=True),200            
         except Exception as e:
-            return current_app.logger.error(
+            current_app.logger.error(
                 'ERROR Default Form Settings: {}'.format(e))
+            return jsonify(success=False),400
 
 style_adminview = {
     'view_class': StyleSettingView,
