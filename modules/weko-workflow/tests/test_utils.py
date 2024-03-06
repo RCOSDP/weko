@@ -135,7 +135,7 @@ from weko_workflow.utils import (
     create_conditions_dict,
     check_role,
     check_etag,
-    check_pretty
+    check_pretty,
     make_activitylog_tsv
 )
 from weko_workflow.api import GetCommunity, UpdateItem, WorkActivity, WorkActivityHistory, WorkFlow

@@ -132,7 +132,9 @@ def base_app(instance_path, cache_config,request ,search_class):
         ACCOUNTS_USE_CELERY=False,
         SECRET_KEY='SECRET_KEY',
         SQLALCHEMY_DATABASE_URI=os.environ.get(
-            'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
+            'SQLALCHEMY_DATABASE_URI', 'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
+        #SQLALCHEMY_DATABASE_URI=os.environ.get(
+        #    'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
         SEARCH_ELASTIC_HOSTS=os.environ.get(
             'SEARCH_ELASTIC_HOSTS', None),
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
@@ -269,7 +271,9 @@ def admin_app(instance_path):
         SESSION_TYPE='memcached',
         SERVER_NAME='test_server',
         SQLALCHEMY_DATABASE_URI=os.environ.get(
-            'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
+            'SQLALCHEMY_DATABASE_URI', 'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
+#        SQLALCHEMY_DATABASE_URI=os.environ.get(
+#            'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
         WEKO_ADMIN_FACET_SEARCH_SETTING={"name_en": "","name_jp": "","mapping": "","active": True,"aggregations": []},
         WEKO_ADMIN_FACET_SEARCH_SETTING_TEMPLATE="weko_admin/admin/facet_search_setting.html"
     )

@@ -58,6 +58,8 @@ def base_app(instance_path):
         SERVER_NAME='app',
         SQLALCHEMY_DATABASE_URI=os.environ.get(
             'SQLALCHEMY_DATABASE_URI', 'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
+#        SQLALCHEMY_DATABASE_URI=os.environ.get(
+#            'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
     )
     Babel(app_)
     InvenioDB(app_)
@@ -251,7 +253,10 @@ def email_admin_app():
         SESSION_TYPE='memcached',
         SQLALCHEMY_DATABASE_URI=os.environ.get(
             'SQLALCHEMY_DATABASE_URI',
-            'sqlite://'),
+            'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
+#            SQLALCHEMY_DATABASE_URI=os.environ.get(
+#            'SQLALCHEMY_DATABASE_URI',
+#            'sqlite://'),
     )
     InvenioDB(base_app)
     InvenioMail(base_app)
@@ -278,7 +283,9 @@ def email_task_app(request):
     app = Flask('testapp')
     app.config.update(
         SQLALCHEMY_DATABASE_URI=os.environ.get(
-            'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
+            'SQLALCHEMY_DATABASE_URI', 'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
+#        SQLALCHEMY_DATABASE_URI=os.environ.get(
+#            'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
         CELERY_ALWAYS_EAGER=True,
         CELERY_RESULT_BACKEND='cache',
         CELERY_CACHE_BACKEND='memory',
