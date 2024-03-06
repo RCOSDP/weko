@@ -103,7 +103,33 @@ def reset_tree(tree, path=None, more_ids=None, ignore_more=False):
     else:
         if not roles[0]:
             # for browsing role check
-            reduce_index_by_role(tree, roles, groups)
+            if current_user.get_id() is not None:
+                user_id = current_user.get_id()
+            else:
+                # guest
+                user_id = "-99"
+            key = "index_tree_by_role_" + os.environ.get('INVENIO_WEB_HOST_NAME') + "_" + current_i18n.language + "_" + str(user_id)
+            try:
+                redis_connection = RedisConnection()
+                datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
+                v = datastore.get(key).decode("UTF-8")
+                # tree.clear()
+                # tree.append(json.loads(str(v)))
+                tree[:] = orjson.loads(str(v))
+
+            except KeyError:
+                reduce_index_by_role(tree, roles, groups)
+                if user_id != "-99":
+                    save_filtered_index_trees_to_redis(tree)
+                else:
+                    save_filtered_index_trees_to_redis_guest(tree)
+            except Exception as e:
+                current_app.logger.error("reset_tree: {}".format(e))
+                reduce_index_by_role(tree, roles, groups)
+                if user_id != "-99":
+                    save_filtered_index_trees_to_redis(tree)
+                else:
+                    save_filtered_index_trees_to_redis_guest(tree)
         if not ignore_more:
             reduce_index_by_more(tree=tree, more_ids=more_ids)
 
@@ -139,7 +165,7 @@ def get_tree_json(index_list, root_id):
         index_name = str(index_element.name).replace("&EMPTY&", "")
         index_name = Markup.escape(index_name)
         index_name = index_name.replace("\n", r"<br\>")
-        
+
         index_link_name = str(index_element.link_name).replace("&EMPTY&", "")
         index_link_name = index_link_name.replace("\n", r"<br\>")
 
@@ -351,6 +377,46 @@ def reduce_index_by_role(tree, roles, groups, browsing_role=True, plst=None):
                 tree.pop(i)
 
 
+def reduce_index_by_role_guest(tree):
+    """Reduce index by role for guest user."""
+    if isinstance(tree, list):
+        i = 0
+        while i < len(tree):
+            lst = tree[i]
+
+            if isinstance(lst, dict):
+                public_state = lst.pop('public_state')
+                public_date = lst.pop('public_date')
+                if isinstance(public_date, str):
+                    public_date = str_to_datetime(public_date, "%Y-%m-%dT%H:%M:%S")
+                brw_role = lst.pop('browsing_role')
+                children = lst.get('children')
+
+                # browsing role check
+                # check_roles of guest
+                is_browsable_role = True
+                if isinstance(brw_role, str):
+                    brw_role = brw_role.split(',')
+                if brw_role and "-99" not in brw_role:
+                    is_browsable_role = False
+
+                if is_browsable_role:
+                    if public_state and \
+                            (public_date is None
+                                or (isinstance(public_date, datetime)
+                                    and date.today() >= public_date.date())):
+                        reduce_index_by_role_guest(children)
+                        i += 1
+                    else:
+                        children.clear()
+                        tree.pop(i)
+                else:
+                    children.clear()
+                    tree.pop(i)
+            else:
+                tree.pop(i)
+
+
 def get_index_id_list(indexes, id_list=None):
     """Get index id list."""
     if id_list is None:
@@ -436,7 +502,7 @@ def get_admin_coverpage_setting():
         if setting:
             avail = setting.avail
     except Exception as ex:
-        current_app.logger.debug(ex)
+        current_app.logger.error(ex)
     return avail == 'enable'
 
 
@@ -469,7 +535,7 @@ def get_elasticsearch_records_data_by_indexes(index_ids, start_date, end_date):
         search_result = search_instance.execute()
         result = search_result.to_dict()
     except NotFoundError:
-        current_app.logger.debug('Indexes do not exist yet!')
+        current_app.logger.error('Indexes do not exist yet!')
 
     return result
 
@@ -855,7 +921,7 @@ def lock_all_child_index(index_id: str, value: str):
                             value.encode('utf-8'))
             locked_key.append(key_prefix + str(c_index.cid))
     except Exception as e:
-        current_app.logger.error('Could not lock index:', e)
+        current_app.logger.error("Could not lock index: {}".format(e))
         return False, locked_key
     return True, locked_key
 
@@ -874,7 +940,7 @@ def unlock_index(index_key):
             for key in index_key:
                 redis_store.delete(key)
     except Exception as e:
-        current_app.logger.error('Could not unlock index:', e)
+        current_app.logger.error("Could not unlock index: {}".format(e))
 
 
 def validate_before_delete_index(index_id):
@@ -933,7 +999,7 @@ def is_exists_key_in_redis(key):
         datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
         return datastore.redis.exists(key)
     except Exception as e:
-        current_app.logger.error('Could get value for ' + key, e)
+        current_app.logger.error("Could get value for {}, {}".format(key, e))
     return False
 
 
@@ -1013,24 +1079,66 @@ def get_editing_items_in_index(index_id, recursively=False):
 
     return result
 
+def default_isoformat_str(o):
+    if hasattr(o, "isoformat"):
+        return o.isoformat()
+    else:
+        return str(o)
+
 def save_index_trees_to_redis(tree):
-    """save inde_tree to redis for roles
-    
+    """save index_tree to redis for roles
+
     """
-    def default(o):
-        if hasattr(o, "isoformat"):
-            return o.isoformat()
-        else:
-            return str(o)
     redis = __get_redis_store()
     try:
-        v = orjson.dumps(tree, default=default)
+        v = orjson.dumps(tree, default=default_isoformat_str)
         redis.put("index_tree_view_" + os.environ.get('INVENIO_WEB_HOST_NAME') + "_" + current_i18n.language,v)
     except ConnectionError:
         current_app.logger.error("Fail save index_tree to redis")
 
-def str_to_datetime(str_dt, format):
+
+def save_filtered_index_trees_to_redis(tree):
+    """save filtered index_tree data to redis except for guest user
+
+    """
+    redis = __get_redis_store()
+    if current_user.get_id() is not None:
+        user_id = current_user.get_id()
+    else:
+        # logout or session disconnected
+        pass
+    key = "index_tree_by_role_" + os.environ.get('INVENIO_WEB_HOST_NAME') + "_" + current_i18n.language + "_" + str(user_id)
+    ttl = current_app.config.get('WEKO_INDEX_TREE_BROWSING_TREE_CACHE_TTL', 10)
     try:
-        return datetime.strptime(str_dt, format)
-    except ValueError:
-        return None
+        v = orjson.dumps(tree, default=default_isoformat_str)
+        redis.put(key,v,ttl)
+    except ConnectionError:
+        current_app.logger.error("Fail save index_tree to redis")
+
+
+def save_filtered_index_trees_to_redis_guest(tree):
+    """save filtered index_tree data to redis for guest user
+
+    """
+    redis = __get_redis_store()
+    user_id = "-99"
+    key = "index_tree_by_role_" + os.environ.get('INVENIO_WEB_HOST_NAME') + "_" + current_i18n.language + "_" + str(user_id)
+    try:
+        v = orjson.dumps(tree, default=default_isoformat_str)
+        redis.put(key,v)
+    except ConnectionError:
+        current_app.logger.error("Fail save index_tree to redis")
+
+
+def str_to_datetime(str_dt, format):
+    if format == "%Y-%m-%dT%H:%M:%S":
+        try:
+            return datetime(
+                year=int(str_dt[0:4]),
+                month=int(str_dt[5:7]),
+                day=int(str_dt[8:10]),
+                hour=int(str_dt[11:13]),
+                minute=int(str_dt[14:16]),
+                second=int(str_dt[17:19]))
+        except ValueError:
+            return None
