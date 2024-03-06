@@ -580,7 +580,7 @@ class Indexes(object):
                 save_index_trees_to_redis(tree)
         else:
             tree = cls.get_index_tree(pid)
-        reset_tree(tree=tree)
+        reset_tree(tree=tree, pid=pid)
         return tree
 
     @classmethod
@@ -601,7 +601,7 @@ class Indexes(object):
                 save_index_trees_to_redis(tree)
         else:
             tree = cls.get_index_tree(pid)
-        reset_tree(tree=tree, more_ids=more_ids)
+        reset_tree(tree=tree, more_ids=more_ids, pid=pid)
         return tree
 
     @classmethod
@@ -621,7 +621,7 @@ class Indexes(object):
                 save_index_trees_to_redis(tree)
         else:
             tree = cls.get_index_tree(pid)
-        reset_tree(tree=tree, ignore_more=True)
+        reset_tree(tree=tree, ignore_more=True, pid=pid)
         return tree
 
     @classmethod
@@ -647,9 +647,9 @@ class Indexes(object):
         record = WekoRecord.get_record_by_pid(pid)
         tree = cls.get_index_tree(root_node_id)
         if record.get('_oai'):
-            reset_tree(tree=tree, path=record.get('path'))
+            reset_tree(tree=tree, path=record.get('path'), pid=root_node_id)
         else:
-            reset_tree(tree=tree, path=[])
+            reset_tree(tree=tree, path=[], pid=root_node_id)
 
         return tree
 

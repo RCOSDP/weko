@@ -79,13 +79,14 @@ def cached_index_tree_json(timeout=50, key_prefix='index_tree_json'):
     return caching
 
 
-def reset_tree(tree, path=None, more_ids=None, ignore_more=False):
+def reset_tree(tree, path=None, more_ids=None, ignore_more=False, pid=0):
     """
     Reset the state of checked.
 
     :param tree:
     :param path:
     :param more_ids:
+    :param pid: root_node_index_id
     :return: The dict of index tree.
     """
     if more_ids is None:
@@ -108,7 +109,7 @@ def reset_tree(tree, path=None, more_ids=None, ignore_more=False):
             else:
                 # guest
                 user_id = "-99"
-            key = "index_tree_by_role_" + os.environ.get('INVENIO_WEB_HOST_NAME') + "_" + current_i18n.language + "_" + str(user_id)
+            key = "index_tree_by_role_" + os.environ.get('INVENIO_WEB_HOST_NAME') + "_" + current_i18n.language + "_" + str(user_id) + "_" + str(pid)
             try:
                 redis_connection = RedisConnection()
                 datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
@@ -120,16 +121,16 @@ def reset_tree(tree, path=None, more_ids=None, ignore_more=False):
             except KeyError:
                 reduce_index_by_role(tree, roles, groups)
                 if user_id != "-99":
-                    save_filtered_index_trees_to_redis(tree)
+                    save_filtered_index_trees_to_redis(tree=tree, pid=pid)
                 else:
-                    save_filtered_index_trees_to_redis_guest(tree)
+                    save_filtered_index_trees_to_redis_guest(tree=tree, pid=pid)
             except Exception as e:
                 current_app.logger.error("reset_tree: {}".format(e))
                 reduce_index_by_role(tree, roles, groups)
                 if user_id != "-99":
-                    save_filtered_index_trees_to_redis(tree)
+                    save_filtered_index_trees_to_redis(tree=tree, pid=pid)
                 else:
-                    save_filtered_index_trees_to_redis_guest(tree)
+                    save_filtered_index_trees_to_redis_guest(tree=tree, pid=pid)
         if not ignore_more:
             reduce_index_by_more(tree=tree, more_ids=more_ids)
 
@@ -1097,8 +1098,11 @@ def save_index_trees_to_redis(tree):
         current_app.logger.error("Fail save index_tree to redis")
 
 
-def save_filtered_index_trees_to_redis(tree):
+def save_filtered_index_trees_to_redis(tree, pid):
     """save filtered index_tree data to redis except for guest user
+        :param: tree: index_tree data
+        :param: pid: root_node_index_id
+
 
     """
     redis = __get_redis_store()
@@ -1107,7 +1111,7 @@ def save_filtered_index_trees_to_redis(tree):
     else:
         # logout or session disconnected
         pass
-    key = "index_tree_by_role_" + os.environ.get('INVENIO_WEB_HOST_NAME') + "_" + current_i18n.language + "_" + str(user_id)
+    key = "index_tree_by_role_" + os.environ.get('INVENIO_WEB_HOST_NAME') + "_" + current_i18n.language + "_" + str(user_id) + "_" + str(pid)
     ttl = current_app.config.get('WEKO_INDEX_TREE_BROWSING_TREE_CACHE_TTL', 10)
     try:
         v = orjson.dumps(tree, default=default_isoformat_str)
@@ -1116,13 +1120,15 @@ def save_filtered_index_trees_to_redis(tree):
         current_app.logger.error("Fail save index_tree to redis")
 
 
-def save_filtered_index_trees_to_redis_guest(tree):
+def save_filtered_index_trees_to_redis_guest(tree, pid):
     """save filtered index_tree data to redis for guest user
+        :param: tree: index_tree data
+        :param: pid: root_node_index_id
 
     """
     redis = __get_redis_store()
     user_id = "-99"
-    key = "index_tree_by_role_" + os.environ.get('INVENIO_WEB_HOST_NAME') + "_" + current_i18n.language + "_" + str(user_id)
+    key = "index_tree_by_role_" + os.environ.get('INVENIO_WEB_HOST_NAME') + "_" + current_i18n.language + "_" + str(user_id) + "_" + str(pid)
     try:
         v = orjson.dumps(tree, default=default_isoformat_str)
         redis.put(key,v)
