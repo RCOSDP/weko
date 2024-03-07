@@ -710,6 +710,62 @@ class QueryCommonReportsHelper(object):
         result['all'] = data_list
         return result
 
+class QueryAccessCounterHelper(object):
+    """AccessCounter helper class."""
+
+    @classmethod
+    def get_common_params(cls, **kwargs):
+        """Get common params."""
+        year = kwargs.get('year')
+        month = kwargs.get('month')
+        start_date = kwargs.get('start_date')
+        end_date = kwargs.get('end_date')
+        if not start_date or not end_date:
+            if month > 0 and month <= 12:
+                query_date = str(year) + '-' + str(month).zfill(2)
+                _, lastday = calendar.monthrange(year, month)
+                params = {'start_date': query_date + '-01',
+                          'end_date': query_date + '-'
+                          + str(lastday).zfill(2) + 'T23:59:59'}
+            else:
+                query_date = 'all'
+                params = {'interval': 'day'}
+        else:
+            query_date = start_date + '-' + end_date
+            params = {'start_date': start_date,
+                      'end_date': end_date + 'T23:59:59',
+                      'agg_size': kwargs.get('agg_size', 0),
+                      'agg_sort': kwargs.get('agg_sort', {'_term': 'desc'})}
+        return query_date, params
+
+    @classmethod
+    def get_top_page_access_counter(cls, **kwargs):
+        """Get toppage access counter."""
+
+        result = {}
+        all_int = None
+        all_res = {}
+        query_month = ''
+
+        try:
+            query_month, params = cls.get_common_params(**kwargs)
+            all_query_name = ['top-view-total-for-access-counter']
+
+            for query in all_query_name:
+                all_query_cfg = current_stats.queries[query]
+                all_query = all_query_cfg.\
+                    query_class(**all_query_cfg.query_config)
+                all_res[query] = all_query.run(**params)
+            all_int = int(all_res[query]['value'])
+
+        except Exception as e:
+            current_app.logger.error(e)
+
+
+        result['date'] = query_month
+        result['all'] = {'count': all_int}
+
+        return result
 
 class QueryRecordViewPerIndexReportHelper(object):
     """RecordViewPerIndex helper class."""

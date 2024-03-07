@@ -36,8 +36,8 @@ css = Bundle(
 )
 
 js_dependencies_jquery = NpmBundle(
-    'node_modules/jquery/jquery.js',
-    'node_modules/jqueryui/jquery-ui.js',
+    'node_modules/jquery/jquery.min.js',
+    'node_modules/jqueryui/jquery-ui.min.js',
     npm={
         'jquery': '~1.9.1',
         'jqueryui': '~1.11.1',
@@ -45,7 +45,7 @@ js_dependencies_jquery = NpmBundle(
 )
 
 js_dependencies_ui_sortable = NpmBundle(
-    'node_modules/angular-ui-sortable/dist/sortable.js',
+    'node_modules/angular-ui-sortable/dist/sortable.min.js',
     npm={
         'angular-ui-sortable': '~0.14.3',
     }
@@ -53,8 +53,8 @@ js_dependencies_ui_sortable = NpmBundle(
 
 js_dependencies_ckeditor = NpmBundle(
     'node_modules/ckeditor/ckeditor.js',
-    'node_modules/rr-ng-ckeditor/ng-ckeditor.js',
-    'node_modules/angular-schema-form-ckeditor/bootstrap-ckeditor.js',
+    'node_modules/rr-ng-ckeditor/ng-ckeditor.min.js',
+    'node_modules/angular-schema-form-ckeditor/bootstrap-ckeditor.min.js',
     npm={
         'angular-schema-form-ckeditor':
             'https://github.com/webcanvas/angular-schema-form-ckeditor'
@@ -77,9 +77,9 @@ js_dependecies_uploader = NpmBundle(
 js_dependecies_schema_form = NpmBundle(
     'node_modules/objectpath/lib/ObjectPath.js',
     'node_modules/tv4/tv4.js',
-    'node_modules/angular-schema-form/dist/schema-form.js',
-    'node_modules/angular-schema-form/dist/bootstrap-decorator.js',
-    'node_modules/invenio-records-js/dist/invenio-records-js.js',
+    'node_modules/angular-schema-form/dist/schema-form.min.js',
+    'node_modules/angular-schema-form/dist/bootstrap-decorator.min.js',
+    'node_modules/invenio-records-js/dist/invenio-records-js.min.js',
     npm={
         'angular-schema-form': '~0.8.13',
         'invenio-records-js': '~0.0.8',
@@ -89,12 +89,12 @@ js_dependecies_schema_form = NpmBundle(
 )
 
 js_dependecies_autocomplete = NpmBundle(
-    'node_modules/angular-animate/angular-animate.js',
-    'node_modules/angular-strap/dist/angular-strap.js',
-    'node_modules/angular-strap/dist/angular-strap.tpl.js',
+    'node_modules/angular-animate/angular-animate.min.js',
+    'node_modules/angular-strap/dist/angular-strap.min.js',
+    'node_modules/angular-strap/dist/angular-strap.tpl.min.js',
     'node_modules/angular-underscore/index.js',
-    'node_modules/ui-select/dist/select.js',
-    'node_modules/angular-translate/dist/angular-translate.js',
+    'node_modules/ui-select/dist/select.min.js',
+    'node_modules/angular-translate/dist/angular-translate.min.js',
     'node_modules/angular-schema-form-dynamic-select/'
     'angular-schema-form-dynamic-select.js',
     npm={
@@ -109,8 +109,8 @@ js_dependecies_autocomplete = NpmBundle(
 )
 
 js_main = NpmBundle(
-    'node_modules/angular/angular.js',
-    'node_modules/angular-sanitize/angular-sanitize.js',
+    'node_modules/angular/angular.min.js',
+    'node_modules/angular-sanitize/angular-sanitize.min.js',
     'node_modules/underscore/underscore.js',
     npm={
         'almond': '~0.3.1',

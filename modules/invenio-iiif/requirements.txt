@@ -98,6 +98,7 @@ nbformat==4.4.0
 node-semver==0.1.1
 oauthlib==2.1.0
 ordereddict==1.1
+orjson==3.6.1
 pandocfilters==1.4.2
 parso==0.1.0
 passlib==1.7.1

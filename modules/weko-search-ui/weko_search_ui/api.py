@@ -181,7 +181,7 @@ def get_search_detail_keyword(str):
         check_val.append(sub)
 
     check_val2 = []
-    index_browsing_tree = Indexes.get_browsing_tree()
+    index_browsing_tree = Indexes.get_browsing_tree_ignore_more()
     for indextree in index_browsing_tree:
         index_parelist = []
         index_list = get_childinfo(indextree, index_parelist)
@@ -196,7 +196,7 @@ def get_search_detail_keyword(str):
         # detail search for index
         elif k_v.get("id") == "iid":
             k_v["check_val"] = check_val2
-        
+
         if k_v.get("contents") == "":
             contents_value = k_v.get("contents_value")
             k_v["contents"] = contents_value["en"]

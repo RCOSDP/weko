@@ -37,7 +37,8 @@ from .errors import IndexAddedRESTError, IndexNotFoundRESTError, \
     IndexUpdatedRESTError, InvalidDataRESTError
 from .models import Index
 from .utils import check_doi_in_index, check_index_permissions, \
-    is_index_locked, perform_delete_index, save_index_trees_to_redis
+    is_index_locked, perform_delete_index, save_index_trees_to_redis, \
+    reduce_index_by_role_guest, save_filtered_index_trees_to_redis_guest
 
 
 def need_record_permission(factory_name):
@@ -80,7 +81,7 @@ def create_blueprint(app, endpoints):
         __name__,
         url_prefix='',
     )
-    
+
     @blueprint.teardown_request
     def dbsession_clean(exception):
         current_app.logger.debug("weko_index_tree dbsession_clean: {}".format(exception))
@@ -245,9 +246,16 @@ class IndexActionResource(ContentNegotiatedMethodView):
 
             tree = self.record_class.get_index_tree()
             save_index_trees_to_redis(tree)
-        return make_response(
+
+            # create browsing tree data of guest for save
+            reduce_index_by_role_guest(tree)
+
+            # save browsing tree data of guest
+            save_filtered_index_trees_to_redis_guest(tree=tree, pid=0)
+        a= make_response(
             jsonify({'status': status, 'message': msg, 'errors': errors}),
             status)
+        return a
 
     @need_record_permission('update_permission_factory')
     def put(self, index_id, **kwargs):
@@ -294,6 +302,11 @@ class IndexActionResource(ContentNegotiatedMethodView):
             tree = self.record_class.get_index_tree()
             save_index_trees_to_redis(tree)
 
+            # create browsing tree data of guest for save
+            reduce_index_by_role_guest(tree)
+            # save browsing tree data of guest
+            save_filtered_index_trees_to_redis_guest(tree=tree, pid=0)
+
         return make_response(jsonify(
             {'status': status, 'message': msg, 'errors': errors,
              'delete_flag': delete_flag}), status)
@@ -309,6 +322,11 @@ class IndexActionResource(ContentNegotiatedMethodView):
 
         tree = self.record_class.get_index_tree()
         save_index_trees_to_redis(tree)
+
+        # create browsing tree data of guest for save
+        reduce_index_by_role_guest(tree)
+        # save browsing tree data of guest
+        save_filtered_index_trees_to_redis_guest(tree=tree, pid=0)
 
         return make_response(jsonify(
             {'status': 200, 'message': msg, 'errors': errors}), 200)
@@ -405,7 +423,7 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
                             if index_id not in check_list:
                                 tree += self.record_class.get_index_tree(index_id)
                                 check_list.append(index_id)
-                        
+
             return make_response(jsonify(tree), 200)
         except Exception as ex:
             current_app.logger.error('IndexTree Action Exception: ', ex)
@@ -428,5 +446,11 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
 
             tree = self.record_class.get_index_tree()
             save_index_trees_to_redis(tree)
+
+            # create browsing tree data of guest for save
+            reduce_index_by_role_guest(tree)
+            # save browsing tree data of guest
+            save_filtered_index_trees_to_redis_guest(tree)
+
         return make_response(
             jsonify({'status': status, 'message': msg}), status)

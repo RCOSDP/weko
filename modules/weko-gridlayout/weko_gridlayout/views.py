@@ -17,7 +17,7 @@ from flask import Blueprint, abort, current_app, jsonify, render_template, \
 from flask_babelex import gettext as _
 from flask_login import current_user, login_required
 from invenio_cache import current_cache, current_cache_ext
-from invenio_stats.utils import QueryCommonReportsHelper
+from invenio_stats.utils import QueryAccessCounterHelper
 from sqlalchemy.orm.exc import NoResultFound
 from weko_theme.utils import get_community_id, get_weko_contents
 from werkzeug.exceptions import NotFound
@@ -482,14 +482,8 @@ def get_access_counter_record(repository_id, current_language):
 
                     if start_date:
                         end_date = date.today().strftime("%Y-%m-%d")
-                        top_view_total_by_widget_id = QueryCommonReportsHelper.get(
-                            start_date=start_date, end_date=end_date,
-                            event='top_page_access')
-                        count = 0
-                        for item in top_view_total_by_widget_id['all'].values():
-                            count = count + int(item['count'])
-                        top_view_total_by_widget_id['all'].update(
-                            {'count': count})
+                        top_view_total_by_widget_id = QueryAccessCounterHelper.get_top_page_access_counter(
+                            start_date=start_date, end_date=end_date)
                         top_view_total_by_widget_id.update(
                             {'access_counter': widget.get('access_counter')})
                         if not result.get(widget.get('widget_id')):

@@ -48,7 +48,7 @@ js_dependecies = NpmBundle(
 
 js = Bundle(
     "js/weko_search_ui/app.js",
-    filters="requirejs",
+    filters="requirejs,jsmin",
     output="gen/weko_search_ui.%(version)s.js",
 )
 
