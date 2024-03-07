@@ -1146,7 +1146,7 @@ def db_author(db):
         db.session.add(affiliation_prefix4)
         db.session.add(author1)
     
-    return {"author_prefix":[prefix1,prefix2,prefix3,prefix4,prefix5],"affiliation_prefix":[affiliation_prefix1,affiliation_prefix2,affiliation_prefix3,affiliation_prefix4],"author":[author1]}
+    return {"author_prefix":[prefix1,prefix2,prefix3,prefix4,prefix5,prefix6],"affiliation_prefix":[affiliation_prefix1,affiliation_prefix2,affiliation_prefix3,affiliation_prefix4],"author":[author1]}
 
 @pytest.fixture()
 def db_ranking(db):

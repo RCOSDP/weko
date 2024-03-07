@@ -72,6 +72,60 @@ def test_get_data(app, db_admin_setting):
                 rm = Researchmap()
                 assert rm.get_data("parmalink","published_papar","123456")
 
+#  .tox/c1/bin/pytest --cov=weko_items_ui tests/test_linkage.py::test_get_data_rases -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko_items_ui/.tox/c1/tmp --full-trace
+@pytest.mark.parametrize(
+    ["parmalink", "achievenent_id"],
+    [
+        ('ab', '123456'),
+        ('123456789012345678901', '123456'),
+        ('parmaliあ', '123456'),
+        ('parmali　', '123456'),
+        ('parmali ', '123456'),
+        ('parmali%', '123456'),
+        ('parmali#', '123456'),
+        ('parmali<', '123456'),
+        ('parmali>', '123456'),
+        ('parmali+', '123456'),
+        ('parmali\"', '123456'),
+        ('parmali\'', '123456'),
+        ('parmali\\', '123456'),
+        ('parmali&', '123456'),
+        ('parmali?', '123456'),
+        ('parmali=', '123456'),
+        ('parmali~', '123456'),
+        ('parmali:', '123456'),
+        ('parmali;', '123456'),
+        ('parmali,', '123456'),
+        ('parmali@', '123456'),
+        ('parmali$', '123456'),
+        ('parmali^', '123456'),
+        ('parmali|', '123456'),
+        ('parmali[', '123456'),
+        ('parmali]', '123456'),
+        ('parmali!', '123456'),
+        ('parmali(', '123456'),
+        ('parmali)', '123456'),
+        ('parmali*', '123456'),
+        ('parmali/', '123456'),
+        ('parmalink', '12345a'),
+        ('parmalink', '12345A'),
+        ('parmalink', '12345あ'),
+        ('parmalink', '12345-'),
+        ('parmalink', '12345 '),
+        ('parmalink', '12345　')
+    ],
+)
+def test_get_data_rases(parmalink, achievenent_id):
+    with pytest.raises(Exception):
+        with patch("weko_items_ui.linkage.jwt.encode", return_value="result"):
+            res_ok = Response()
+            res_ok._content = b'{"access_token":"foo"}'
+            with patch("weko_items_ui.linkage.requests.post" , return_value=res_ok):
+                with patch("weko_items_ui.linkage.requests.get" , return_value=res_ok):
+                    rm = Researchmap()
+                    assert rm.get_data(parmalink,"published_papar",achievenent_id)
+
+
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_linkage.py::test_post_data -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko_items_ui/.tox/c1/tmp --full-trace
 def test_post_data(app, db_admin_setting):
     with patch("weko_items_ui.linkage.jwt.encode", return_value="result"):
