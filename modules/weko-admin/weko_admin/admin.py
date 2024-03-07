@@ -421,7 +421,8 @@ class ReportView(BaseView):
                         'aggs_public']['doc_count']
                 }
                 result['private'] = result['total'] - result['open']
-
+            
+            
             current_schedule = AdminSettings.get(
                 name='report_email_schedule_settings',
                 dict_to_object=False)
@@ -860,9 +861,11 @@ class SiteLicenseSettingsView(BaseView):
                             raise ValueError('IP Address is incorrect')
 
                 SiteLicense.update(data)
+                db.session.commit()
                 jfy['status'] = 201
                 jfy['message'] = 'Site license was successfully updated.'
             except BaseException as ex:
+                db.session.rollback()
                 current_app.logger.error('Failed to update site license: {}'.format(ex))
                 jfy['status'] = 500
                 jfy['message'] = 'Failed to update site license.'
@@ -898,7 +901,11 @@ class SiteLicenseSendMailSettingsView(BaseView):
                     organization_name=name).first()
                 if sitelicense:
                     sitelicense.receive_mail_flag = data['checked_list'][name]
-                    db.session.commit()
+                    try:
+                        db.session.commit()
+                    except Exception as e:
+                        db.session.rollback()
+                        current_app.logger.error(e)
 
         sitelicenses = SiteLicenseInfo.query.order_by(
             SiteLicenseInfo.organization_id).all()
@@ -1247,7 +1254,8 @@ class RestrictedAccessSettingView(BaseView):
                 "WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS_TEMPLATE"],
             data=json.dumps(get_restricted_access()),
             items_per_page=current_app.config[
-                "WEKO_ADMIN_ITEMS_PER_PAGE_USAGE_REPORT_REMINDER"]
+                "WEKO_ADMIN_ITEMS_PER_PAGE_USAGE_REPORT_REMINDER"],
+            maxint=current_app.config["WEKO_ADMIN_RESTRICTED_ACCESS_MAX_INTEGER"]
         )
 
 

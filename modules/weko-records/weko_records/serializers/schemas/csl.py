@@ -26,10 +26,13 @@
 
 from __future__ import absolute_import, print_function
 
+import re
+from datetime import datetime
+
 from invenio_formatter.filters.datetime import from_isodate
 from invenio_i18n.ext import current_i18n
 from invenio_oaiserver.response import get_identifier
-from marshmallow import Schema, fields, missing
+from marshmallow import Schema, fields, missing, ValidationError
 
 import weko_records.config as config
 from weko_records.serializers.utils import get_attribute_schema
@@ -93,16 +96,10 @@ def get_data_from_mapping(key, obj):
             if cur_lang in lang_list:
                 return data_list[cur_lang]
             elif 'en' in lang_list:
-                if cur_lang == 'ja':
-                    return ''
-                else:
-                    return data_list['en']
+                return data_list['en']
             elif len(lang_list) > 0:
-                if cur_lang != 'en' or \
-                        (len(lang_list) == 1 and lang_list[0] == 'None Language'):
-                    return data_list[lang_list[0]]
-                else:
-                    return ''
+                return data_list[lang_list[0]]
+            return ''
         if isinstance(data_list, list):
             return_list = []
             for v in data_list:
@@ -182,6 +179,15 @@ class RecordSchemaCSLJSON(Schema):
         metadata = get_data_from_mapping('datacite:date', obj)
         if not metadata:
             return missing
+        if re.search("\d{4}-\d{2}-\d{2}",metadata):
+            format = "%Y-%m-%d"
+        elif re.search("\d{4}-\d{2}",metadata):
+            format = "%Y-%m"
+        elif re.search("\d{4}",metadata):
+            format = "%Y"
+        else:
+            raise ValidationError("Incorrect format")
+        metadata = datetime.strptime(metadata, format)
         date = from_isodate(metadata)
         date_parts = [[date.year, date.month, date.day]]
         result = {'date-parts': date_parts}

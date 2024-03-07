@@ -1,76 +1,80 @@
 # coding:utf-8
 """Definition of text property."""
-from .property_func import get_property_schema, get_property_form, set_post_data, get_select_value
+from .property_func import (
+    get_property_schema,
+    get_property_form,
+    set_post_data,
+    get_select_value,
+)
 from . import property_config as config
 
 property_id = config.TEXT
 multiple_flag = True
-name_ja = 'テキスト'
-name_en = 'Text'
+name_ja = "テキスト"
+name_en = "Text"
+mapping = config.DEFAULT_MAPPING
 
 
 def add(post_data, key, **kwargs):
     """Add to a item type."""
-    option = kwargs.pop('option')
+    option = kwargs.pop("option")
     set_post_data(post_data, property_id, name_ja, key, option, form, schema, **kwargs)
 
-    kwargs.pop('mapping', True)
-    post_data['table_row_map']['mapping'][key] = config.DEFAULT_MAPPING
+    kwargs.pop("mapping", True)
+    post_data["table_row_map"]["mapping"][key] = mapping
 
 
-def schema(title='', multi_flag=multiple_flag):
+def schema(title="", multi_flag=multiple_flag):
     """Get schema text of item type."""
+
     def _schema():
         """Schema text."""
         _d = {
-            'type': 'object',
-            'properties': {
-                'subitem_text_value': {
-                    'format': 'text',
-                    'title': '値',
-                    'type': 'string'
+            "type": "object",
+            "properties": {
+                "subitem_text_value": {
+                    "format": "text",
+                    "title": "値",
+                    "type": "string",
                 },
-                'subitem_text_language': {
-                    'editAble': True,
-                    'type': ['null', 'string'],
-                    'format': 'select',
-                    'enum': config.LANGUAGE_VAL2_1,
-                    'title': '言語'
-                }
-            }
+                "subitem_text_language": {
+                    "editAble": True,
+                    "type": ["null", "string"],
+                    "format": "select",
+                    "enum": config.LANGUAGE_VAL2_1,
+                    "title": "言語",
+                },
+            },
         }
         return _d
 
     return get_property_schema(title, _schema, multi_flag)
 
 
-def form(key='', title='', title_ja=name_ja, title_en=name_en, multi_flag=multiple_flag):
+def form(
+    key="", title="", title_ja=name_ja, title_en=name_en, multi_flag=multiple_flag
+):
     """Get form text of item type."""
+
     def _form(key):
         """Form text."""
         _d = {
-            'key': key.replace('[]', ''),
-            'items': [
+            "key": key.replace("[]", ""),
+            "items": [
                 {
-                    'key': '{}.subitem_text_language'.format(key),
-                    'title': '言語',
-                    'title_i18n': {
-                        'en': 'Language',
-                        'ja': '言語'
-                    },
-                    'titleMap': get_select_value(config.LANGUAGE_VAL2_1),
-                    'type': 'select'
+                    "key": "{}.subitem_text_language".format(key),
+                    "title": "言語",
+                    "title_i18n": {"en": "Language", "ja": "言語"},
+                    "titleMap": get_select_value(config.LANGUAGE_VAL2_1),
+                    "type": "select",
                 },
                 {
-                    'key': '{}.subitem_text_value'.format(key),
-                    'title': '値',
-                    'title_i18n': {
-                        'en': 'Value',
-                        'ja': '値'
-                    },
-                    'type': 'text'
-                }
-            ]
+                    "key": "{}.subitem_text_value".format(key),
+                    "title": "値",
+                    "title_i18n": {"en": "Value", "ja": "値"},
+                    "type": "text",
+                },
+            ],
         }
         return _d
 

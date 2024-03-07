@@ -103,7 +103,7 @@ class Authors(db.Model, Timestamp):
             author = cls.query.filter_by(id=author_id).one_or_none()
             if not author:
                 return None
-            json_data = json.loads(author.json)
+            json_data = author.json
             email_info = json_data.get('emailInfo')
             return email_info[0].get('email')
         except Exception:
@@ -124,7 +124,7 @@ class Authors(db.Model, Timestamp):
             author = cls.query.filter_by(id=author_id).one_or_none()
             if not author:
                 return None
-            json_data = json.loads(author.json)
+            json_data = author.json
             return json_data
         except Exception:
             return None

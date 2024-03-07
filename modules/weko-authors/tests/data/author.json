@@ -34,16 +34,7 @@
     ],
     "emailInfo": [{ "email": "test.taro@test.org" }],
     "gather_flg": 0,
-    "id": {
-      "_id": "_Mlq7IMBh8i3T-5nc6w4",
-      "_index": "tenant1-authors-author-v1.0.0",
-      "_primary_term": 1,
-      "_seq_no": 0,
-      "_shards": { "failed": 0, "successful": 1, "total": 2 },
-      "_type": "author-v1.0.0",
-      "_version": 1,
-      "result": "created"
-    },
+    "id": "8e174b76-66f6-46b3-a2cb-2607fdc1e84b",
     "is_deleted": "false",
     "pk_id": "1"
   },
@@ -82,16 +73,7 @@
     ],
     "emailInfo": [{ "email": "test.smith@test.org" }],
     "gather_flg": 0,
-    "id": {
-      "_id": "_clr7IMBh8i3T-5nF6xR",
-      "_index": "tenant1-authors-author-v1.0.0",
-      "_primary_term": 1,
-      "_seq_no": 1,
-      "_shards": { "failed": 0, "successful": 1, "total": 2 },
-      "_type": "author-v1.0.0",
-      "_version": 1,
-      "result": "created"
-    },
+    "id": "12bdc98a-20fb-4455-92ba-ad1131dbfcc8",
     "is_deleted": "false",
     "pk_id": "2"
   }

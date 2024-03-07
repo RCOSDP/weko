@@ -118,6 +118,7 @@ from weko_search_ui.utils import (
     update_publish_status,
     validation_date_property,
     validation_file_open_date,
+    combine_aggs
 )
 
 FIXTURE_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
@@ -620,8 +621,10 @@ def test_make_stats_file(i18n_app):
 
 
 # def create_deposit(item_id):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_create_deposit -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_create_deposit(i18n_app, location, indices):
-    assert create_deposit(33)
+    assert create_deposit(None)['recid']=='1'
+    assert create_deposit(33)['recid']=='33'
 
 
 # def clean_thumbnail_file(deposit, root_path, thumbnail_path):
@@ -747,9 +750,10 @@ def test_send_item_created_event_to_es(
 
 
 # def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False): ERROR = TypeError: handle_remove_es_metadata() missing 2 required positional arguments: 'bef_metadata' and 'bef_las...
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_import_items_to_system -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_import_items_to_system(i18n_app, es_item_file_pipeline, es_records):
     # item = dict(db_activity['item'])
-    item = es_records["results"][0]["item"]
+    item = es_records["results"][0]
 
     with patch("weko_search_ui.utils.register_item_metadata", return_value={}):
         with patch("weko_search_ui.utils.register_item_doi", return_value={}):
@@ -758,21 +762,21 @@ def test_import_items_to_system(i18n_app, es_item_file_pipeline, es_records):
                 return_value={},
             ):
                 with patch(
-                    "weko_search_ui.utils.create_deposit", return_value=item["id"]
+                    "weko_search_ui.utils.create_deposit", return_value=item["deposit"]
                 ):
                     with patch(
                         "weko_search_ui.utils.send_item_created_event_to_es",
-                        return_value=item["id"],
+                        return_value=item["item"]["id"],
                     ):
                         with patch(
                             "weko_workflow.utils.get_cache_data", return_value=True
                         ):
-                            assert import_items_to_system(item)
-                            item["status"] = "new"
-                            assert import_items_to_system(item)
+                            assert import_items_to_system(item["item"])
+                            item["item"]["status"] = "new"
+                            assert import_items_to_system(item["item"])
 
                     assert import_items_to_system(
-                        item
+                        item["item"]
                     )  # Will result in error but will cover exception part
 
 
@@ -826,6 +830,33 @@ def test_handle_check_and_prepare_index_tree(i18n_app, record_with_metadata, ind
     assert not handle_check_and_prepare_index_tree(
         list_record, all_index_permission, can_edit_indexes
     )
+
+
+# def handle_check_and_prepare_index_tree(list_record, all_index_permission, can_edit_indexes):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_check_and_prepare_index_tree2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_handle_check_and_prepare_index_tree2(i18n_app, record_with_metadata, indices2):
+    i18n_app.config["WEKO_ITEMS_UI_INDEX_PATH_SPLIT"] = "///"
+    list_record = [record_with_metadata[0]]
+
+    list_record[0]["metadata"]["path"] = []
+    list_record[0]["pos_index"] = ["A///C"]
+    all_index_permission = False
+    handle_check_and_prepare_index_tree(
+        list_record, all_index_permission, None
+    )
+    assert list_record[0]["metadata"]["path"] == []
+
+    list_record[0]["metadata"]["path"] = []
+    handle_check_and_prepare_index_tree(
+        list_record, all_index_permission, [4]
+    )
+    assert list_record[0]["metadata"]["path"] == []
+
+    list_record[0]["metadata"]["path"] = []
+    handle_check_and_prepare_index_tree(
+        list_record, all_index_permission, [2]
+    )
+    assert list_record[0]["metadata"]["path"] == [2]
 
 
 # def handle_check_and_prepare_feedback_mail(list_record):
@@ -903,7 +934,8 @@ def test_handle_check_doi_ra(i18n_app, es_item_file_pipeline, es_records):
 
 
 # def handle_check_doi(list_record):
-def test_handle_check_doi(app):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_check_doi -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_handle_check_doi(app,identifier):
     filepath = os.path.join(
         os.path.dirname(os.path.realpath(__file__)),
         "data",
@@ -934,21 +966,51 @@ def test_handle_check_doi(app):
     with patch("weko_deposit.api.WekoRecord.get_record_by_pid", return_value="1"):
         assert not handle_check_doi([item])
 
-    item2 = {"doi_ra": "JaLC", "is_change_identifier": False, "status": "keep"}
-    mock = MagicMock()
-    mock2 = MagicMock()
-    mock3 = MagicMock()
-    mock2.object_uuid = mock3
-    mock.pid_recid = mock2
+    #item2 = {"doi_ra": "JaLC", "is_change_identifier": False, "status": "keep"}
+    #mock = MagicMock()
+    #mock2 = MagicMock()
+    #mock3 = MagicMock()
+    #mock2.object_uuid = mock3
+    #mock.pid_recid = mock2
 
-    # def myfunc():
-    #     return 1,2
-    # mock.get_idt_registration_data = myfunc
+    ## def myfunc():
+    ##     return 1,2
+    ## mock.get_idt_registration_data = myfunc
 
-    with patch("weko_deposit.api.WekoRecord.get_record_by_pid", return_value=mock):
-        # with patch("weko_workflow.utils.IdentifierHandle", return_value=mock):
-        assert not handle_check_doi([item2])
+    #with patch("weko_deposit.api.WekoRecord.get_record_by_pid", return_value=mock):
+    #    # with patch("weko_workflow.utils.IdentifierHandle", return_value=mock):
+    #    assert not handle_check_doi([item2])
+    
+    item = [
+        {"id":"1","doi":"","doi_ra":"JaLC","is_change_identifier":True},
+        {"id":"2","doi":"a"*300,"doi_ra":"JaLC","is_change_identifier":True},
+        {"id":"3","doi":"wrong_prefix/","doi_ra":"JaLC","is_change_identifier":True},
+        {"id":"4","doi":"xyz.jalc/","doi_ra":"JaLC","is_change_identifier":True},
+        {"id":"5","doi":"xyz.jalc/12345","doi_ra":"JaLC","is_change_identifier":True},
+        {"id":"6","status":"new","doi":"xyz.jalc/12345","doi_ra":"JaLC","is_change_identifier":False},
+        {"id":"7","status":"new","doi":"wrong_prefix/","doi_ra":"JaLC","is_change_identifier":False},
+        {"id":"8","status":"new","doi":"xyz.jalc/","doi_ra":"JaLC","is_change_identifier":False},
+        {"id":"9","status":"new","doi":"xyz.ndl","doi_ra":"NDL JaLC","is_change_identifier":False},
+        {"id":"10","status":"new","doi":"wrong_prefix/12345","doi_ra":"NDL JaLC","is_change_identifier":False},
+        {"id":"11","status":"new","doi":"xyz.ndl/12345","doi_ra":"NDL JaLC","is_change_identifier":False},
+    ]
+    test = [
+        {"id":"1","doi":"","doi_ra":"JaLC","is_change_identifier":True,"errors":["Please specify DOI."]},
+        {"id":"2","doi":"a"*300,"doi_ra":"JaLC","is_change_identifier":True,"errors":["The specified DOI exceeds the maximum length."]},
+        {"id":"3","doi":"wrong_prefix/","doi_ra":"JaLC","is_change_identifier":True,"errors":["Specified Prefix of DOI is incorrect."]},
+        {"id":"4","doi":"xyz.jalc/","doi_ra":"JaLC","is_change_identifier":True,"errors":["Please specify DOI suffix."]},
+        {"id":"5","doi":"xyz.jalc/12345","doi_ra":"JaLC","is_change_identifier":True},
+        {"id":"6","status":"new","doi":"xyz.jalc/12345","doi_ra":"JaLC","is_change_identifier":False,"errors":["DOI cannot be set."]},
+        {"id":"7","status":"new","doi":"wrong_prefix/","doi_ra":"JaLC","is_change_identifier":False,"doi_suffix_not_existed":True,"errors":["Specified Prefix of DOI is incorrect."]},
+        {"id":"8","status":"new","doi":"xyz.jalc/","doi_ra":"JaLC","is_change_identifier":False,"doi_suffix_not_existed":True},
+        {"id":"9","status":"new","doi":"xyz.ndl","doi_ra":"NDL JaLC","is_change_identifier":False,"errors":["DOI cannot be set."]},
+        {"id":"10","status":"new","doi":"wrong_prefix/12345","doi_ra":"NDL JaLC","is_change_identifier":False,"errors":["Specified Prefix of DOI is incorrect."]},
+        {"id":"11","status":"new","doi":"xyz.ndl/12345","doi_ra":"NDL JaLC","is_change_identifier":False},
+    ]
+    handle_check_doi(item)
+    assert item == test
 
+    
 
 # def register_item_handle(item):
 def test_register_item_handle(i18n_app, es_item_file_pipeline, es_records):
@@ -1027,6 +1089,7 @@ def test_get_doi_link(i18n_app):
 
 
 # def prepare_doi_link(item_id):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_prepare_doi_link -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_prepare_doi_link(i18n_app, communities2, db):
     from weko_admin.models import Identifier
 
@@ -1041,29 +1104,185 @@ def test_prepare_doi_link(i18n_app, communities2, db):
     db.session.commit()
     item_id = 90
 
-    assert prepare_doi_link(item_id)
+    result = prepare_doi_link(item_id)
+    test = {
+        "identifier_grant_jalc_doi_link":"https://doi.org/<Empty>/0000000090",
+        "identifier_grant_jalc_cr_doi_link":"https://doi.org/<Empty>/0000000090",
+        "identifier_grant_jalc_dc_doi_link":"https://doi.org/<Empty>/0000000090",
+        "identifier_grant_ndl_jalc_doi_link":"https://doi.org/<Empty>/",
+    }
+    assert result == test
 
     item_id = MagicMock()
-    assert prepare_doi_link(item_id)
+    result = prepare_doi_link(item_id)
+    test = {
+        "identifier_grant_jalc_doi_link":"https://doi.org/<Empty>/0000000001",
+        "identifier_grant_jalc_cr_doi_link":"https://doi.org/<Empty>/0000000001",
+        "identifier_grant_jalc_dc_doi_link":"https://doi.org/<Empty>/0000000001",
+        "identifier_grant_ndl_jalc_doi_link":"https://doi.org/<Empty>/",
+    }
+    assert result == test
 
 
 # def register_item_doi(item):
-def test_register_item_doi(i18n_app, db_activity):
-    # item = es_records['results'][0]['item']
-    # item = db_activity['item']
-    item = MagicMock()
-    item.is_change_identifier = True
-    item2 = MagicMock()
-    item2.is_change_identifier = False
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_register_item_doi -vv -s -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_register_item_doi(i18n_app, db_activity, identifier, mocker):
 
-    with patch("weko_deposit.api.WekoRecord.get_record_by_pid", return_value=item):
-        # Doesn't return any value
-        assert not register_item_doi(item)
+    mocker.patch("weko_search_ui.utils.WekoDeposit.get_record",return_value=MagicMock())
+    
+    mock_without_version = MagicMock()
+    mock_recid=MagicMock()
+    mock_without_version.pid_recid=mock_recid
+    mock_pid_doi = MagicMock()
+    mock_pid_doi.pid_value = "https://doi.org/xyz.jalc/0000022222" # path delete
+    mock_without_version.pid_doi = mock_pid_doi
+    
+    mock_lasted=MagicMock()
+    mock_lasted_pid=MagicMock()
+    mock_lasted.pid_recid=mock_lasted_pid
+    
+    # is_change_identifier is True, not doi_ra and doi
+    item = {
+        "id":"1",
+        "is_change_identifier":True
+    }
+    with patch("weko_search_ui.utils.WekoRecord.get_record_by_pid",side_effect=[mock_without_version,mock_lasted]):
+        with patch("weko_search_ui.utils.saving_doi_pidstore") as mock_save:
+            register_item_doi(item)
+            mock_save.assert_not_called()
+    
+    
+    # is_change_identifier is True, pid_value.endswith is False, doi_duplicated is True
+    item = {
+        "id":"2",
+        "is_change_identifier":True,
+        "doi_ra":"JaLC",
+        "doi":"xyz.jalc/0000011111"
+    }
+    return_check = {"isWithdrawnDoi":True,"isExistDOI":False}
 
-        # Doesn't return any value
-        assert not register_item_doi(item2)
-
-
+    with patch("weko_search_ui.utils.WekoRecord.get_record_by_pid",side_effect=[mock_without_version,mock_lasted]):
+        with patch("weko_search_ui.utils.check_existed_doi",return_value=return_check):
+            with patch("weko_search_ui.utils.saving_doi_pidstore") as mock_save:
+                with pytest.raises(Exception) as e:
+                    register_item_doi(item)
+                assert e.value.args[0] == {"error_id":"is_withdraw_doi"}
+    
+    # is_change_identifier is True, pid_value.endswith is False, called saving_doi_pidstore
+    item = {
+        "id":"3",
+        "is_change_identifier":True,
+        "doi_ra":"JaLC",
+        "doi":"xyz.jalc/0000011111"
+    }
+    return_check = {"isWithdrawnDoi":False,"isExistDOI":False}
+    test_data = {
+        "identifier_grant_jalc_doi_link":"https://doi.org/xyz.jalc/0000011111",
+        "identifier_grant_jalc_cr_doi_link":"https://doi.org/xyz.jalc/0000011111",
+        "identifier_grant_jalc_dc_doi_link":"https://doi.org/xyz.jalc/0000011111",
+        "identifier_grant_ndl_jalc_doi_link":"https://doi.org/xyz.jalc/0000011111"
+    }
+    with patch("weko_search_ui.utils.WekoRecord.get_record_by_pid",side_effect=[mock_without_version,mock_lasted]):
+        with patch("weko_search_ui.utils.check_existed_doi",return_value=return_check):
+            with patch("weko_search_ui.utils.saving_doi_pidstore") as mock_save:
+                register_item_doi(item)
+                args, kwargs = mock_save.call_args
+                assert args[2] == test_data
+    
+    # is_change_identifier is True, pid_value.endswith is True
+    item = {
+        "id":"4",
+        "is_change_identifier":True,
+        "doi_ra":"JaLC",
+        "doi":"xyz.jalc/0000022222"
+    }
+    return_check = {"isWithdrawnDoi":False,"isExistDOI":False}
+    with patch("weko_search_ui.utils.WekoRecord.get_record_by_pid",side_effect=[mock_without_version,mock_lasted]):
+        with patch("weko_search_ui.utils.check_existed_doi",return_value=return_check):
+            with patch("weko_search_ui.utils.saving_doi_pidstore") as mock_save:
+                register_item_doi(item)
+                mock_save.assert_not_called()
+    
+    # is_change_identifier is False, doi_ra not NDL, doi_duplicated is True
+    item = {
+        "id":"5",
+        "is_change_identifier":False,
+        "doi_ra":"JaLC",
+    }
+    return_check = {"isWithdrawnDoi":False,"isExistDOI":True}
+    with patch("weko_search_ui.utils.WekoRecord.get_record_by_pid",side_effect=[mock_without_version,mock_lasted]):
+        with patch("weko_search_ui.utils.check_existed_doi",return_value=return_check):
+            with patch("weko_search_ui.utils.saving_doi_pidstore") as mock_save:
+                with pytest.raises(Exception) as e:
+                    register_item_doi(item)
+                assert e.value.args[0] == {"error_id":"is_duplicated_doi"}
+    
+    # is_change_identifier is False, doi_ra not NDL, called saving_doi_pidstore
+    item = {
+        "id":"6",
+        "is_change_identifier":False,
+        "doi_ra":"JaLC",
+    }
+    return_check = {"isWithdrawnDoi":False,"isExistDOI":False}
+    test_data = {
+        "identifier_grant_jalc_doi_link":"https://doi.org/xyz.jalc/0000000006",
+        "identifier_grant_jalc_cr_doi_link":"https://doi.org/xyz.crossref/0000000006",
+        "identifier_grant_jalc_dc_doi_link":"https://doi.org/xyz.datacite/0000000006",
+        "identifier_grant_ndl_jalc_doi_link":"https://doi.org/xyz.ndl/"
+    }
+    with patch("weko_search_ui.utils.WekoRecord.get_record_by_pid",side_effect=[mock_without_version,mock_lasted]):
+        with patch("weko_search_ui.utils.check_existed_doi",return_value=return_check):
+            with patch("weko_search_ui.utils.saving_doi_pidstore") as mock_save:
+                register_item_doi(item)
+                args, kwargs = mock_save.call_args
+                assert args[2] == test_data
+    
+    # is_change_identifier is False, doi_ra is NDL, doi_duplicated is True
+    item = {
+        "id":"7",
+        "is_change_identifier":False,
+        "doi_ra":"NDL JaLC",
+        "doi":"xyz.ndl/0000012345"
+    }
+    return_check = {"isWithdrawnDoi":True,"isExistDOI":False}
+    with patch("weko_search_ui.utils.WekoRecord.get_record_by_pid",side_effect=[mock_without_version,mock_lasted]):
+        with patch("weko_search_ui.utils.check_existed_doi",return_value=return_check):
+            with patch("weko_search_ui.utils.saving_doi_pidstore") as mock_save:
+                with pytest.raises(Exception) as e:
+                    register_item_doi(item)
+                assert e.value.args[0] == {"error_id": "is_withdraw_doi"}
+    
+    # is_change_identifier is False, doi_ra is NDL, called saving_doi_pidstore
+    item = {
+        "id":"8",
+        "is_change_identifier":False,
+        "doi_ra":"NDL JaLC",
+        "doi":"xyz.ndl/0000012345"
+    }
+    return_check = {"isWithdrawnDoi":False,"isExistDOI":False}
+    test_data = {
+        "identifier_grant_jalc_doi_link":"https://doi.org/xyz.ndl/0000012345",
+        "identifier_grant_jalc_cr_doi_link":"https://doi.org/xyz.ndl/0000012345",
+        "identifier_grant_jalc_dc_doi_link":"https://doi.org/xyz.ndl/0000012345",
+        "identifier_grant_ndl_jalc_doi_link":"https://doi.org/xyz.ndl/0000012345"
+    }
+    with patch("weko_search_ui.utils.WekoRecord.get_record_by_pid",side_effect=[mock_without_version,mock_lasted]):
+        with patch("weko_search_ui.utils.check_existed_doi",return_value=return_check):
+            with patch("weko_search_ui.utils.saving_doi_pidstore") as mock_save:
+                register_item_doi(item)
+                args, kwargs = mock_save.call_args
+                assert args[2] == test_data
+    
+    # data is None
+    item = {
+        "id":"9",
+        "is_change_identifier":False,
+    }
+    with patch("weko_search_ui.utils.WekoRecord.get_record_by_pid",side_effect=[mock_without_version,mock_lasted]):
+        with patch("weko_search_ui.utils.check_existed_doi",return_value=return_check):
+            with patch("weko_search_ui.utils.saving_doi_pidstore") as mock_save:
+                register_item_doi(item)
+                
 # def register_item_update_publish_status(item, status):
 def test_register_item_update_publish_status(
     i18n_app, es_item_file_pipeline, es_records
@@ -1289,9 +1508,9 @@ def test_get_system_data_uri():
 
 
 # def handle_fill_system_item(list_record):
-# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_fill_system_item -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_fill_system_item -vv -s -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 
-def test_handle_fill_system_item(app, test_list_records, mocker):
+def test_handle_fill_system_item(app, test_list_records,identifier, mocker):
 
     filepath = os.path.join(
         os.path.dirname(os.path.realpath(__file__)), "data", "item_map.json"
@@ -1304,8 +1523,10 @@ def test_handle_fill_system_item(app, test_list_records, mocker):
     )
     with open(filepath, encoding="utf-8") as f:
         item_type_mapping = json.load(f)
-    mocker.patch("weko_records.serializers.utils.get_mapping", return_value=item_map)
-    mocker.patch("weko_records.api.Mapping.get_record", return_value=item_type_mapping)
+    #mocker.patch("weko_records.serializers.utils.get_mapping", return_value=item_map)
+    mocker.patch("weko_search_ui.utils.get_mapping", return_value=item_map)
+    #mocker.patch("weko_records.api.Mapping.get_record", return_value=item_type_mapping)
+    #mocker.patch("weko_search_ui.utils.get_record", return_value=item_type_mapping)
 
     filepath = os.path.join(
         os.path.dirname(os.path.realpath(__file__)),
@@ -1381,7 +1602,93 @@ def test_handle_fill_system_item(app, test_list_records, mocker):
         item2["metadata"]["item_1617258105262"]["resourcetype"] = a
         item2["metadata"]["item_1617258105262"]["resourceuri"] = ""
         items.append(item2)
-
+    # identifier_type is NDL JaLC, not prefix/suffix
+    item = copy.deepcopy(list_record[0])
+    item["metadata"]["item_1617186819068"]={'subitem_identifier_reg_type':"NDL JaLC", 'subitem_identifier_reg_text': "xyz.ndl/123456"}
+    item["metadata"]["item_1617186476635"]["subitem_1522299639480"] = "open access"
+    item["metadata"]["item_1617186476635"][
+        "subitem_1600958577026"
+    ] = ACCESS_RIGHT_TYPE_URI["open access"]
+    item["metadata"]["item_1617265215918"]["subitem_1522305645492"] = "VoR"
+    item["metadata"]["item_1617265215918"][
+        "subitem_1600292170262"
+    ] = VERSION_TYPE_URI["VoR"]
+    item["metadata"]["item_1617258105262"]["resourcetype"] = "conference paper"
+    item["metadata"]["item_1617258105262"]["resourceuri"] = RESOURCE_TYPE_URI[
+        "conference paper"
+    ]
+    item["doi"] = "xyz.ndl/123456"
+    item["doi_ra"] = "NDL JaLC"
+    item["is_change_identifier"]=False
+    item["warnings"]=[]
+    item["errors"]=[]
+    items_result.append(item)
+    item2 = copy.deepcopy(item)
+    del item2["metadata"]["item_1617186819068"]
+    item2["metadata"]["item_1617186476635"]["subitem_1600958577026"] = ""
+    item2["metadata"]["item_1617258105262"]["resourceuri"] = ""
+    items.append(item2)
+    
+    # identifier_type is NDL JaLC, not suffix
+    item = copy.deepcopy(list_record[0])
+    item["metadata"]["item_1617186819068"]={'subitem_identifier_reg_type':"NDL JaLC", 'subitem_identifier_reg_text': ""}
+    item["metadata"]["item_1617186476635"]["subitem_1522299639480"] = "open access"
+    item["metadata"]["item_1617186476635"][
+        "subitem_1600958577026"
+    ] = ACCESS_RIGHT_TYPE_URI["open access"]
+    item["metadata"]["item_1617265215918"]["subitem_1522305645492"] = "VoR"
+    item["metadata"]["item_1617265215918"][
+        "subitem_1600292170262"
+    ] = VERSION_TYPE_URI["VoR"]
+    item["metadata"]["item_1617258105262"]["resourcetype"] = "conference paper"
+    item["metadata"]["item_1617258105262"]["resourceuri"] = RESOURCE_TYPE_URI[
+        "conference paper"
+    ]
+    item["doi"] = ""
+    item["doi_ra"] = "NDL JaLC"
+    item["is_change_identifier"]=False
+    item["warnings"]=[]
+    item["errors"]=["Please specify DOI prefix/suffix."]
+    items_result.append(item)
+    item2 = copy.deepcopy(item)
+    item2["errors"] = []
+    del item2["metadata"]["item_1617186819068"]
+    item2["metadata"]["item_1617186476635"]["subitem_1600958577026"] = ""
+    item2["metadata"]["item_1617258105262"]["resourceuri"] = ""
+    items.append(item2)
+    
+    # identifier_type is NDL JaLC, not suffix
+    item = copy.deepcopy(list_record[0])
+    item["metadata"]["item_1617186819068"]={'subitem_identifier_reg_type':"NDL JaLC", 'subitem_identifier_reg_text': "xyz.ndl/"}
+    item["metadata"]["item_1617186476635"]["subitem_1522299639480"] = "open access"
+    item["metadata"]["item_1617186476635"][
+        "subitem_1600958577026"
+    ] = ACCESS_RIGHT_TYPE_URI["open access"]
+    item["metadata"]["item_1617265215918"]["subitem_1522305645492"] = "VoR"
+    item["metadata"]["item_1617265215918"][
+        "subitem_1600292170262"
+    ] = VERSION_TYPE_URI["VoR"]
+    item["metadata"]["item_1617258105262"]["resourcetype"] = "conference paper"
+    item["metadata"]["item_1617258105262"]["resourceuri"] = RESOURCE_TYPE_URI[
+        "conference paper"
+    ]
+    item["doi"] = "xyz.ndl/"
+    item["doi_ra"] = "NDL JaLC"
+    item["is_change_identifier"]=False
+    item["warnings"]=[]
+    item["errors"]=["Please specify DOI suffix."]
+    items_result.append(item)
+    item2 = copy.deepcopy(item)
+    item2["errors"] = []
+    del item2["metadata"]["item_1617186819068"]
+    item2["metadata"]["item_1617186476635"]["subitem_1600958577026"] = ""
+    item2["metadata"]["item_1617258105262"]["resourceuri"] = ""
+    items.append(item2)
+    
+    mock_record = MagicMock()
+    mock_doi = MagicMock()
+    mock_record.pid_doi=None
+    #mock_doi.pid_value=
     # with open("items.json","w") as f:
     #     json.dump(items,f)
 
@@ -1395,7 +1702,7 @@ def test_handle_fill_system_item(app, test_list_records, mocker):
     # filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data/handle_fill_system_item/items_result.json")
     # with open(filepath,encoding="utf-8") as f:
     #     items_result = json.load(f)
-
+    mocker.patch("weko_deposit.api.WekoRecord.get_record_by_pid",return_value=mock_record)
     with app.test_request_context():
         with set_locale("en"):
             handle_fill_system_item(items)
@@ -2635,3 +2942,25 @@ def test_handle_check_exist_record_issue35315(app, doi_records, id, uri, warning
         assert before_list != after_list
         result = handle_check_exist_record(before_list)
         assert after_list == result
+
+
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_conbine_aggs -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_conbine_aggs():
+    some_path = {"took": "215","time_out": False,"_shards": {"total": "1","successful": "1","skipped": "0","failed": "0"},"hits": {"total": "0","max_score": None,"hits": []},"aggregations": {"path_0": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []},"path_1": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": [{"key": "1234567891011","doc_count": "1","date_range": {"doc_count": "1","available": {"buckets": [{"key": "*-2023-07-25","to": "1690243200000.0","to_as_string": "2023-07-25","doc_count": "1"},{"key": "2023-07-25-*","from": "1690243200000.0","from_as_string": "2023-07-25","doc_count": "0"}]}},"Data Type": {"doc_count": "0","Data Type": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Distributor": {"doc_count": "0","Distributor": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Data Language": {"doc_count": "1","Data Language": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Temporal": {"doc_count": "1","Temporal": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Access": {"doc_count": "1","Access": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"no_available": {"doc_count": "0"},"Topic": {"doc_count": "1","Topic": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Location": {"doc_count": "1","Location": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}}}]},"path_2": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": [{"key": "1234567891012","doc_count": "2","date_range": {"doc_count": "2","available": {"buckets": [{"key": "*-2023-07-25","to": "1690243200000.0","to_as_string": "2023-07-25","doc_count": "2"},{"key": "2023-07-25-*","from": "1690243200000.0","from_as_string": "2023-07-25","doc_count": "0"}]}},"Data Type": {"doc_count": "0","Data Type": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Distributor": {"doc_count": "0","Distributor": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Data Language": {"doc_count": "1","Data Language": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Temporal": {"doc_count": "1","Temporal": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Access": {"doc_count": "1","Access": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"no_available": {"doc_count": "0"},"Topic": {"doc_count": "1","Topic": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Location": {"doc_count": "1","Location": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}}},{"key": "1234567891013","doc_count": "3","date_range": {"doc_count": "1","available": {"buckets": [{"key": "*-2023-07-25","to": "1690243200000.0","to_as_string": "2023-07-25","doc_count": "3"},{"key": "2023-07-25-*","from": "1690243200000.0","from_as_string": "2023-07-25","doc_count": "0"}]}},"Data Type": {"doc_count": "0","Data Type": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Distributor": {"doc_count": "0","Distributor": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Data Language": {"doc_count": "1","Data Language": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Temporal": {"doc_count": "1","Temporal": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Access": {"doc_count": "1","Access": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"no_available": {"doc_count": "0"},"Topic": {"doc_count": "1","Topic": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Location": {"doc_count": "1","Location": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}}}]}}}
+    test = {"took": "215","time_out": False,"_shards": {"total": "1","successful": "1","skipped": "0","failed": "0"},"hits": {"total": "0","max_score": None,"hits": []},"aggregations": {"path": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": [{"key": "1234567891011","doc_count": "1","date_range": {"doc_count": "1","available": {"buckets": [{"key": "*-2023-07-25","to": "1690243200000.0","to_as_string": "2023-07-25","doc_count": "1"},{"key": "2023-07-25-*","from": "1690243200000.0","from_as_string": "2023-07-25","doc_count": "0"}]}},"Data Type": {"doc_count": "0","Data Type": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Distributor": {"doc_count": "0","Distributor": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Data Language": {"doc_count": "1","Data Language": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Temporal": {"doc_count": "1","Temporal": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Access": {"doc_count": "1","Access": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"no_available": {"doc_count": "0"},"Topic": {"doc_count": "1","Topic": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Location": {"doc_count": "1","Location": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}}},{"key": "1234567891012","doc_count": "2","date_range": {"doc_count": "2","available": {"buckets": [{"key": "*-2023-07-25","to": "1690243200000.0","to_as_string": "2023-07-25","doc_count": "2"},{"key": "2023-07-25-*","from": "1690243200000.0","from_as_string": "2023-07-25","doc_count": "0"}]}},"Data Type": {"doc_count": "0","Data Type": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Distributor": {"doc_count": "0","Distributor": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Data Language": {"doc_count": "1","Data Language": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Temporal": {"doc_count": "1","Temporal": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Access": {"doc_count": "1","Access": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"no_available": {"doc_count": "0"},"Topic": {"doc_count": "1","Topic": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Location": {"doc_count": "1","Location": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}}},{"key": "1234567891013","doc_count": "3","date_range": {"doc_count": "1","available": {"buckets": [{"key": "*-2023-07-25","to": "1690243200000.0","to_as_string": "2023-07-25","doc_count": "3"},{"key": "2023-07-25-*","from": "1690243200000.0","from_as_string": "2023-07-25","doc_count": "0"}]}},"Data Type": {"doc_count": "0","Data Type": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Distributor": {"doc_count": "0","Distributor": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Data Language": {"doc_count": "1","Data Language": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Temporal": {"doc_count": "1","Temporal": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Access": {"doc_count": "1","Access": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"no_available": {"doc_count": "0"},"Topic": {"doc_count": "1","Topic": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Location": {"doc_count": "1","Location": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}}}]}}}
+    result = combine_aggs(some_path)
+    assert test == result
+    
+    one_path = {"took": "215","time_out": False,"_shards": {"total": "1","successful": "1","skipped": "0","failed": "0"},"hits": {"total": "0","max_score": None,"hits": []},"aggregations": {"path": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": [{"key": "1234567891011","doc_count": "1","date_range": {"doc_count": "1","available": {"buckets": [{"key": "*-2023-07-25","to": "1690243200000.0","to_as_string": "2023-07-25","doc_count": "1"},{"key": "2023-07-25-*","from": "1690243200000.0","from_as_string": "2023-07-25","doc_count": "0"}]}},"Data Type": {"doc_count": "0","Data Type": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Distributor": {"doc_count": "0","Distributor": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Data Language": {"doc_count": "1","Data Language": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Temporal": {"doc_count": "1","Temporal": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Access": {"doc_count": "1","Access": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"no_available": {"doc_count": "0"},"Topic": {"doc_count": "1","Topic": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Location": {"doc_count": "1","Location": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}}},{"key": "1234567891012","doc_count": "2","date_range": {"doc_count": "2","available": {"buckets": [{"key": "*-2023-07-25","to": "1690243200000.0","to_as_string": "2023-07-25","doc_count": "2"},{"key": "2023-07-25-*","from": "1690243200000.0","from_as_string": "2023-07-25","doc_count": "0"}]}},"Data Type": {"doc_count": "0","Data Type": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Distributor": {"doc_count": "0","Distributor": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Data Language": {"doc_count": "1","Data Language": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Temporal": {"doc_count": "1","Temporal": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Access": {"doc_count": "1","Access": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"no_available": {"doc_count": "0"},"Topic": {"doc_count": "1","Topic": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Location": {"doc_count": "1","Location": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}}},{"key": "1234567891013","doc_count": "3","date_range": {"doc_count": "1","available": {"buckets": [{"key": "*-2023-07-25","to": "1690243200000.0","to_as_string": "2023-07-25","doc_count": "3"},{"key": "2023-07-25-*","from": "1690243200000.0","from_as_string": "2023-07-25","doc_count": "0"}]}},"Data Type": {"doc_count": "0","Data Type": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Distributor": {"doc_count": "0","Distributor": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Data Language": {"doc_count": "1","Data Language": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Temporal": {"doc_count": "1","Temporal": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Access": {"doc_count": "1","Access": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"no_available": {"doc_count": "0"},"Topic": {"doc_count": "1","Topic": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Location": {"doc_count": "1","Location": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}}}]}}}
+    result = combine_aggs(one_path)
+    assert test == result
+    
+    not_agg = {"took": "215","time_out": False,"_shards": { "total": "1", "successful": "1", "skipped": "0", "failed": "0" },"hits": { "total": "0", "max_score": None, "hits": [] }}
+    test = {'took': '215', 'time_out': False, '_shards': {'total': '1', 'successful': '1', 'skipped': '0', 'failed': '0'}, 'hits': {'total': '0', 'max_score': None, 'hits': []}}
+    result = combine_aggs(not_agg)
+    assert test == result
+    
+    other_agg = {"took": "215","time_out": False,"_shards": { "total": "1", "successful": "1", "skipped": "0", "failed": "0" },"hits": { "total": "0", "max_score": None, "hits": [] },"aggregations":{"path_0":{"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": [],},"path_1":{"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets":[{"key": "1234567891011","doc_count": "1","date_range":{"doc_count": "1","available":{"buckets":[{"key": "*-2023-07-25","to": "1690243200000.0","to_as_string": "2023-07-25","doc_count": "1",},{"key": "2023-07-25-*","from": "1690243200000.0","from_as_string": "2023-07-25","doc_count": "0",},],},},"Data Type":{"doc_count": "0","Data Type":{"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": [],},},"Distributor":{"doc_count": "0","Distributor":{"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": [],},},"Data Language":{"doc_count": "1","Data Language":{"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": [],},},"Temporal":{"doc_count": "1","Temporal":{"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": [],},},"Access":{"doc_count": "1","Access":{"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": [],},},"no_available": { "doc_count": "0" },"Topic":{"doc_count": "1","Topic":{"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": [],},},"Location":{"doc_count": "1","Location":{"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": [],},},},],},"path_2":{"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets":[{"key": "1234567891012","doc_count": "2","date_range":{"doc_count": "2","available":{"buckets":[{"key": "*-2023-07-25","to": "1690243200000.0","to_as_string": "2023-07-25","doc_count": "2",},{"key": "2023-07-25-*","from": "1690243200000.0","from_as_string": "2023-07-25","doc_count": "0",},],},},"Data Type":{"doc_count": "0","Data Type":{"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": [],},},"Distributor":{"doc_count": "0","Distributor":{"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": [],},},"Data Language":{"doc_count": "1","Data Language":{"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": [],},},"Temporal":{"doc_count": "1","Temporal":{"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": [],},},"Access":{"doc_count": "1","Access":{"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": [],},},"no_available": { "doc_count": "0" },"Topic":{"doc_count": "1","Topic":{"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": [],},},"Location":{"doc_count": "1","Location":{"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": [],},},},{"key": "1234567891013","doc_count": "3","date_range":{"doc_count": "1","available":{"buckets":[{"key": "*-2023-07-25","to": "1690243200000.0","to_as_string": "2023-07-25","doc_count": "3",},{"key": "2023-07-25-*","from": "1690243200000.0","from_as_string": "2023-07-25","doc_count": "0",},],},},"Data Type":{"doc_count": "0","Data Type":{"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": [],},},"Distributor":{"doc_count": "0","Distributor":{"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": [],},},"Data Language":{"doc_count": "1","Data Language":{"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": [],},},"Temporal":{"doc_count": "1","Temporal":{"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": [],},},"Access":{"doc_count": "1","Access":{"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": [],},},"no_available": { "doc_count": "0" },"Topic":{"doc_count": "1","Topic":{"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": [],},},"Location":{"doc_count": "1","Location":{"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": [],},},},],},"other":{"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets":[{"key": "1234567891012","doc_count": "2","date_range":{"doc_count": "2","available":{"buckets":[{"key": "*-2023-07-25","to": "1690243200000.0","to_as_string": "2023-07-25","doc_count": "2",},{"key": "2023-07-25-*","from": "1690243200000.0","from_as_string": "2023-07-25","doc_count": "0",},],},},}]}},}
+    test = {"took": "215","time_out": False,"_shards": {"total": "1","successful": "1","skipped": "0","failed": "0"},"hits": {"total": "0","max_score": None,"hits": []},"aggregations": {"other": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": [{"key": "1234567891012","doc_count": "2","date_range": {"doc_count": "2","available": {"buckets": [{"key": "*-2023-07-25","to": "1690243200000.0","to_as_string": "2023-07-25","doc_count": "2"},{"key": "2023-07-25-*","from": "1690243200000.0","from_as_string": "2023-07-25","doc_count": "0"}]}}}]},"path": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": [{"key": "1234567891011","doc_count": "1","date_range": {"doc_count": "1","available": {"buckets": [{"key": "*-2023-07-25","to": "1690243200000.0","to_as_string": "2023-07-25","doc_count": "1"},{"key": "2023-07-25-*","from": "1690243200000.0","from_as_string": "2023-07-25","doc_count": "0"}]}},"Data Type": {"doc_count": "0","Data Type": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Distributor": {"doc_count": "0","Distributor": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Data Language": {"doc_count": "1","Data Language": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Temporal": {"doc_count": "1","Temporal": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Access": {"doc_count": "1","Access": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"no_available": {"doc_count": "0"},"Topic": {"doc_count": "1","Topic": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Location": {"doc_count": "1","Location": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}}},{"key": "1234567891012","doc_count": "2","date_range": {"doc_count": "2","available": {"buckets": [{"key": "*-2023-07-25","to": "1690243200000.0","to_as_string": "2023-07-25","doc_count": "2"},{"key": "2023-07-25-*","from": "1690243200000.0","from_as_string": "2023-07-25","doc_count": "0"}]}},"Data Type": {"doc_count": "0","Data Type": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Distributor": {"doc_count": "0","Distributor": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Data Language": {"doc_count": "1","Data Language": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Temporal": {"doc_count": "1","Temporal": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Access": {"doc_count": "1","Access": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"no_available": {"doc_count": "0"},"Topic": {"doc_count": "1","Topic": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Location": {"doc_count": "1","Location": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}}},{"key": "1234567891013","doc_count": "3","date_range": {"doc_count": "1","available": {"buckets": [{"key": "*-2023-07-25","to": "1690243200000.0","to_as_string": "2023-07-25","doc_count": "3"},{"key": "2023-07-25-*","from": "1690243200000.0","from_as_string": "2023-07-25","doc_count": "0"}]}},"Data Type": {"doc_count": "0","Data Type": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Distributor": {"doc_count": "0","Distributor": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Data Language": {"doc_count": "1","Data Language": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Temporal": {"doc_count": "1","Temporal": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Access": {"doc_count": "1","Access": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"no_available": {"doc_count": "0"},"Topic": {"doc_count": "1","Topic": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Location": {"doc_count": "1","Location": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}}}]}}}
+    result = combine_aggs(other_agg)
+    assert test == result

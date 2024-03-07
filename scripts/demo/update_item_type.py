@@ -1,13 +1,14 @@
 import json
 from datetime import datetime
 from sqlalchemy.orm.attributes import flag_modified
+from sqlalchemy.sql.expression import desc
 
 from properties.resource_type import resource_type
 from properties.property_func import get_select_value
 
 from invenio_db import db
-from weko_records.api import ItemTypes, ItemTypeProps
-from weko_records.models import ItemTypeProperty
+from weko_records.api import ItemTypes, ItemTypeProps 
+from weko_records.models import ItemTypeProperty, ItemTypeMapping
 
 # language
 lang_key = [
@@ -166,14 +167,73 @@ change_relation_text_key = [
 def main():
     print(datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'), '=== Update item type start. ===')
 
+    s_identifier_dc_data = {
+        'identifier': {
+            '@value': 'subitem_systemidt_identifier'
+        }
+    }
+    s_identifier_ddi_data = {
+        "stdyDscr": {
+            "citation": {
+                "holdings": {
+                    "@attributes": {
+                        "URI": "subitem_systemidt_identifier"
+                    }
+                }
+            }
+        }
+    }
     # item type
     itemtypes = ItemTypes.get_all(True)
     for it in itemtypes:
         try:
+            _mapping_update_falg = False
             _update_flag = False
             _schema = it.schema
             _form = it.form
             _render = it.render
+            _id = it.id
+            # mapping
+            try:
+                itMapping = ItemTypeMapping.query.filter_by(item_type_id=_id).order_by(desc(ItemTypeMapping.created)).first()
+                if itMapping:
+                    _mapping = itMapping.mapping
+                    if 'system_identifier_uri' in _mapping:
+                        if not _mapping['system_identifier_uri'].get('oai_dc_mapping'):
+                            _mapping['system_identifier_uri']['oai_dc_mapping'] = s_identifier_dc_data
+                            _mapping_update_falg = True
+                        if not _mapping['system_identifier_uri'].get('ddi_mapping'):
+                            _mapping['system_identifier_uri']['ddi_mapping'] = s_identifier_ddi_data
+                            _mapping_update_falg = True
+                    if 'system_identifier_doi' in _mapping:
+                        if not _mapping['system_identifier_doi'].get('oai_dc_mapping'):
+                            _mapping['system_identifier_doi']['oai_dc_mapping'] = s_identifier_dc_data
+                            _mapping_update_falg = True
+                        if not _mapping['system_identifier_doi'].get('ddi_mapping'):
+                            _mapping['system_identifier_doi']['ddi_mapping'] = s_identifier_ddi_data
+                            _mapping_update_falg = True
+                    if 'system_identifier_hdl' in _mapping:
+                        if not _mapping['system_identifier_hdl'].get('oai_dc_mapping'):
+                            _mapping['system_identifier_hdl']['oai_dc_mapping'] = s_identifier_dc_data
+                            _mapping_update_falg = True
+                        if not _mapping['system_identifier_hdl'].get('ddi_mapping'):
+                            _mapping['system_identifier_hdl']['ddi_mapping'] = s_identifier_ddi_data
+                            _mapping_update_falg = True
+                    if _mapping_update_falg:
+                        with db.session.begin_nested():
+                            itMapping.mapping = _mapping
+                            flag_modified(itMapping, 'mapping')
+                            db.session.merge(itMapping)
+                        db.session.commit()
+                        print(
+                            datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
+                            '* Update item type mapping {}({}) to db is success.'.format(it.item_type_name.name, it.id))
+            except Exception as e:
+                db.session.rollback()
+                print(
+                    datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
+                    '* Update item type mapping {}({}) to db is fail.'.format(it.item_type_name.name, it.id),
+                    e)
             # schema
             if 'properties' in _schema:
                 for k, v in _schema['properties'].items():
@@ -194,6 +254,28 @@ def main():
                 if 'form' in _render['table_row_map']:
                     for item_obj in _render['table_row_map']['form']:
                         _update_flag = _update_flag | update_form(item_obj)
+                if 'mapping' in _render['table_row_map']:
+                    if 'system_identifier_uri' in _render['table_row_map']['mapping']:
+                        if not _render['table_row_map']['mapping']['system_identifier_uri'].get('oai_dc_mapping'):
+                            _render['table_row_map']['mapping']['system_identifier_uri']['oai_dc_mapping'] = s_identifier_dc_data
+                            _update_flag = True
+                        if not _render['table_row_map']['mapping']['system_identifier_uri'].get('ddi_mapping'):
+                            _render['table_row_map']['mapping']['system_identifier_uri']['ddi_mapping'] = s_identifier_ddi_data
+                            _update_flag = True
+                    if 'system_identifier_doi' in _render['table_row_map']['mapping']:
+                        if not _render['table_row_map']['mapping']['system_identifier_doi'].get('oai_dc_mapping'):
+                            _render['table_row_map']['mapping']['system_identifier_doi']['oai_dc_mapping'] = s_identifier_dc_data
+                            _update_flag = True
+                        if not _render['table_row_map']['mapping']['system_identifier_doi'].get('ddi_mapping'):
+                            _render['table_row_map']['mapping']['system_identifier_doi']['ddi_mapping'] = s_identifier_ddi_data
+                            _update_flag = True
+                    if 'system_identifier_hdl' in _render['table_row_map']['mapping']:
+                        if not _render['table_row_map']['mapping']['system_identifier_hdl'].get('oai_dc_mapping'):
+                            _render['table_row_map']['mapping']['system_identifier_hdl']['oai_dc_mapping'] = s_identifier_dc_data
+                            _update_flag = True
+                        if not _render['table_row_map']['mapping']['system_identifier_hdl'].get('ddi_mapping'):
+                            _render['table_row_map']['mapping']['system_identifier_hdl']['ddi_mapping'] = s_identifier_ddi_data
+                            _update_flag = True
             if _update_flag:
                 try:
                     with db.session.begin_nested():

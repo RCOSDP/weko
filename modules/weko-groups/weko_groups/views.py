@@ -224,10 +224,16 @@ def new():
 
             group = Group.create(admins=[current_user], **formdata)
 
+            db.session.commit()
             flash(_('Group "%(name)s" created', name=group.name), 'success')
             return redirect(url_for(".index"))
         except IntegrityError:
+            db.session.rollback()
             flash(_('Group creation failure'), 'error')
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(e)
+            flash(e, 'error')
 
     return render_template(
         "weko_groups/new.html",
@@ -259,9 +265,11 @@ def manage(group_id):
             try:
                 formdata = remove_csrf(form)
                 group.update(**formdata)
+                db.session.commit()
                 flash(_('Group "%(name)s" was updated', name=group.name),
                       'success')
             except Exception as e:
+                db.session.rollback()
                 flash(str(e), 'error')
                 return render_template(
                     "weko_groups/new.html",
@@ -298,7 +306,9 @@ def delete(group_id):
     if group.can_edit(current_user):
         try:
             group.delete()
+            db.session.commit()
         except Exception as e:
+            db.session.rollback()
             flash(str(e), "error")
             return redirect(url_for(".index"))
 
@@ -379,7 +389,9 @@ def leave(group_id):
     if group.can_leave(current_user):
         try:
             group.remove_member(current_user)
+            db.session.commit()
         except Exception as e:
+            db.session.rollback()
             flash(str(e), "error")
             return redirect(url_for('.index'))
 
@@ -419,7 +431,9 @@ def approve(group_id, user_id):
     if group.can_edit(current_user):
         try:
             membership.accept()
+            db.session.commit()
         except Exception as e:
+            db.session.rollback()
             flash(str(e), 'error')
             return redirect(url_for('.requests', group_id=membership.group.id))
 
@@ -455,7 +469,9 @@ def remove(group_id, user_id):
     if group.can_edit(current_user):
         try:
             group.remove_member(user)
+            db.session.commit()
         except Exception as e:
+            db.session.rollback()
             flash(str(e), "error")
             return redirect(urlparse(request.referrer).path)
 
@@ -489,7 +505,9 @@ def accept(group_id):
 
     try:
         membership.accept()
+        db.session.commit()
     except Exception as e:
+        db.session.rollback()
         flash(str(e), 'error')
         return redirect(url_for('.invitations', group_id=membership.group.id))
 
@@ -517,7 +535,9 @@ def reject(group_id):
 
     try:
         membership.reject()
+        db.session.commit()
     except Exception as e:
+        db.session.rollback()
         flash(str(e), 'error')
         return redirect(url_for('.invitations', group_id=membership.group.id))
 

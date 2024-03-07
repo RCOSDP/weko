@@ -79,7 +79,7 @@ class TestAuthors:
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_models.py::TestAuthors::test_get_author_by_id -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
     def test_get_author_by_id(self, db):
         author = Authors(
-            json=json.dumps({"test_data":"value"})
+            json={"test_data":"value"}
         )
         db.session.add(author)
         db.session.commit()

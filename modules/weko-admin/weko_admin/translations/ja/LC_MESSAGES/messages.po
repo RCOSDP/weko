@@ -1164,6 +1164,14 @@ msgstr ""
 msgid "action_doing"
 msgstr ""
 
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:80
+msgid "Secret URL Download"
+msgstr "シークレットURLダウンロード"
+
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:81
+msgid "SecretURL Enabled"
+msgstr "機能有効化"
+
 #: weko_admin/templates/weko_admin/admin/search_management_settings.html:48
 #, fuzzy
 msgid "Search Author Setting"

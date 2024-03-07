@@ -550,7 +550,7 @@ msgid "Your session has timed out. Please login again."
 msgstr ""
 
 msgid "Restricted Access Flag"
-msgstr ""
+msgstr "Usage Application Flag"
 
 msgid "Enable Full"
 msgstr "Enable"

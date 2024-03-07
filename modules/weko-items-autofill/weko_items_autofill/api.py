@@ -114,7 +114,7 @@ class CrossRefOpenURL:
 class CiNiiURL:
     """The Class retrieves the metadata from CiNii."""
 
-    ENDPOINT = 'naid'
+    ENDPOINT = 'crid'
     POST_FIX = '.json'
     # Set default value
     _timeout = config.WEKO_ITEMS_AUTOFILL_REQUEST_TIMEOUT

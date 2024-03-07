@@ -88,7 +88,8 @@ def base_app(instance_path):
         TESTING=True,
         # SQLALCHEMY_DATABASE_URI=os.environ.get(
         #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
-        SQLALCHEMY_DATABASE_URI='postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest',
+        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
+                                           'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
         CACHE_REDIS_URL='redis://redis:6379/0',
         CACHE_REDIS_DB='0',
         CACHE_REDIS_HOST="redis",
@@ -322,7 +323,7 @@ def itemtypes(db):
         db.session.add(item_type_name2)
         db.session.add(item_type2)
         db.session.add(item_type_mapping2)
-    itemtype_name15 = ItemTypeName(name='テストアイテムタイプ3',
+    itemtype_name15 = ItemTypeName(id=3,name='テストアイテムタイプ3',
                                   has_site_license=True,
                                   is_active=True)
     with db.session.begin_nested():

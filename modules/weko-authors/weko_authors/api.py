@@ -21,6 +21,7 @@
 """Weko Authors API."""
 import json
 from copy import deepcopy
+import uuid
 
 from flask import current_app, json
 from invenio_db import db
@@ -54,32 +55,28 @@ class WekoAuthors(object):
             }
         )
 
-        es_id = RecordIndexer().client.index(
-            index=config_index,
-            doc_type=config_doc_type,
-            body=data
-        ).get('_id', '')
-
+        es_id = str(uuid.uuid4())
+        es_data = json.loads(json.dumps(data))
         try:
             with session.begin_nested():
                 data['id'] = es_id
-                author = Authors(id=new_id, json=json.dumps(data))
+                author = Authors(id=new_id, json=data)
                 session.add(author)
         except Exception as ex:
-            if es_id:
-                RecordIndexer().client.delete(
-                    index=config_index,
-                    doc_type=config_doc_type,
-                    id=es_id
-                )
             raise ex
+        else:
+            RecordIndexer().client.index(
+                index=config_index,
+                doc_type=config_doc_type,
+                id=es_id,
+                body=es_data
+            )
 
     @classmethod
     def update(cls, author_id, data):
         """Update author."""
-        def update_es_data(data):
+        def update_es_data(data, es_id):
             """Update author data in ES."""
-            es_id = None
             es_author = RecordIndexer().client.search(
                 index=config_index,
                 doc_type=config_doc_type,
@@ -92,24 +89,27 @@ class WekoAuthors(object):
                     "size": 1
                 }
             )
-
+            exist_flg = False
             if es_author['hits']['total'] > 0:
-                es_id = es_author['hits']['hits'][0].get('_id')
-
-            if es_id:
+                if es_author['hits']['hits'][0].get('_id') == es_id:
+                    exist_flg = True
+                    
+            if exist_flg:
                 RecordIndexer().client.update(
                     index=config_index,
                     doc_type=config_doc_type,
                     id=es_id,
                     body={'doc': data}
                 )
+                return False
             else:
-                es_id = RecordIndexer().client.index(
+                RecordIndexer().client.index(
                     index=config_index,
                     doc_type=config_doc_type,
+                    id=es_id,
                     body=data
-                ).get('_id', '')
-            return es_id
+                )
+                return True
             
         es_id = None
         config_index = current_app.config['WEKO_AUTHORS_ES_INDEX_NAME']
@@ -122,19 +122,15 @@ class WekoAuthors(object):
                     author.is_deleted = data.get('is_deleted', False)
                 else:
                     data['is_deleted'] = author.is_deleted
-                    
-                es_id = update_es_data(data)
+                es_id = author.json["id"] if author.json.get("id") else str(uuid.uuid4())
+                es_data = json.loads(json.dumps(data))
                 data['id'] = es_id
-                author.json = json.dumps(data)
+                author.json = data
                 db.session.merge(author)
         except Exception as ex:
-            if es_id:
-                RecordIndexer().client.delete(
-                    index=config_index,
-                    doc_type=config_doc_type,
-                    id=es_id
-                )
             raise ex
+        else:
+            update_es_data(es_data, es_id)
 
     @classmethod
     def get_all(cls, with_deleted=True, with_gather=True):
@@ -158,7 +154,7 @@ class WekoAuthors(object):
         for author in cls.get_all():
             existed_authors_id[str(author.id)] = not author.is_deleted \
                 and author.gather_flg == 0
-            metadata = json.loads(author.json)
+            metadata = author.json
             for authorIdInfo in metadata.get('authorIdInfo', {}):
                 idType = authorIdInfo.get('idType')
                 if idType and idType != '1':
@@ -198,7 +194,7 @@ class WekoAuthors(object):
             authors = cls.get_all(with_deleted=False, with_gather=False)
         if not schemes:
             schemes = cls.get_identifier_scheme_info()
-
+        
         # calc max item of multiple case and prepare header, label
         for mapping in mappings:
             if mapping.get('child'):
@@ -206,8 +202,7 @@ class WekoAuthors(object):
                     mapping['max'] = 1
                 else:
                     mapping['max'] = max(
-                        list(map(lambda x: len(json.loads(x.json).get(
-                            mapping['json_id'], [])), authors))
+                        list(map(lambda x: len(x.json.get(mapping['json_id'], [])), authors))
                     )
                     if mapping['max'] == 0:
                         mapping['max'] = 1
@@ -233,7 +228,7 @@ class WekoAuthors(object):
 
         # handle data rows
         for author in authors:
-            json_data = json.loads(author.json)
+            json_data = author.json
             row = []
             for mapping in mappings:
                 if mapping.get('child'):

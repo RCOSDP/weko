@@ -788,6 +788,11 @@ class TestSiteInfo:
         with patch("weko_admin.models.db.session.begin_nested",side_effect=SQLAlchemyError):
             result = SiteInfo.get()
             assert result == {}
+        with patch("weko_admin.models.db.session.begin_nested",side_effect=Exception("test_error")):
+            result = SiteInfo.get()
+            assert result == {}
+        
+        assert 1==2
         
 #    def update(cls, site_info):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_models.py::TestSiteInfo::test_update -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
@@ -1017,7 +1022,10 @@ class TestFacetSearchSetting:
             mapping="test_mapping",
             aggregations=None,
             name_jp=None,
-            active=None
+            active=None,
+            ui_type="test_ui_type",
+            display_number=1,
+            is_open=None
         )
         db.session.add(fss)
         db.session.commit()
@@ -1048,7 +1056,10 @@ class TestFacetSearchSetting:
             "name_jp":"テスト設定",
             "mapping":"test_mapping",
             "aggregations":[],
-            "active":True
+            "active":True,
+            "ui_type":"SelectBox",
+            "display_number":1,
+            "is_open":True
         }
         result = FacetSearchSetting.create(data)
         assert result.name_en == "test setting"

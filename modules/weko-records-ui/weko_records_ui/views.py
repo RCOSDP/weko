@@ -20,6 +20,7 @@
 
 """Blueprint for weko-records-ui."""
 
+from datetime import datetime
 import re
 import os
 import uuid
@@ -59,20 +60,22 @@ from weko_records.utils import custom_record_medata_for_export, \
     remove_weko2_special_character, selected_value_by_language
 from weko_search_ui.api import get_search_detail_keyword
 from weko_schema_ui.models import PublishStatus
+from weko_user_profiles.models import UserProfile
 from weko_workflow.api import WorkFlow
 
 from weko_records_ui.fd import add_signals_info
 from weko_records_ui.utils import check_items_settings, get_file_info_list
+from weko_workflow.utils import get_item_info, process_send_mail, set_mail_info
 
 from .ipaddr import check_site_license_permission
 from .models import FilePermission, PDFCoverPageSettings
 from .permissions import check_content_clickable, check_created_id, \
     check_file_download_permission, check_original_pdf_download_permission, \
     check_permission_period, file_permission_factory, get_permission
-from .utils import get_billing_file_download_permission, \
+from .utils import create_secret_url, get_billing_file_download_permission, \
     get_google_detaset_meta, get_google_scholar_meta, get_groups_price, \
     get_min_price_billing_file_download, get_record_permalink, hide_by_email, \
-    is_show_email_of_creator
+    delete_version
 from .utils import restore as restore_imp
 from .utils import soft_delete as soft_delete_imp
 
@@ -367,21 +370,22 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     :param kwargs: Additional view arguments based on URL rule.
     :returns: The rendered template.
     """
-    def _get_rights_title(result, rights_key, rights_values, current_lang, meta_options):
+    def _get_rights_title(result, rights_key_str, rights_values, current_lang, meta_options):
         """Get multi-lang rights title."""
-        item_key = rights_key.split('.')[0]
-        if item_key in meta_options:
-            if meta_options[item_key].get('title'):
-                item_title = meta_options[item_key]['title']
-            if meta_options[item_key]['title_i18n'].get(current_lang, None):
-                item_title = meta_options[item_key]['title_i18n'][current_lang]
-            elif meta_options[item_key]['title_i18n'].get('en', None):
-                item_title = meta_options[item_key]['title_i18n']['en']
-        if rights_values:
-            result[item_key] = {
-                'item_title': item_title,
-                'item_values': rights_values
-            }
+        for rights_key in rights_key_str.split(','):
+            item_key = rights_key.split('.')[0]
+            if item_key in meta_options:
+                if meta_options[item_key].get('title'):
+                    item_title = meta_options[item_key]['title']
+                if meta_options[item_key]['title_i18n'].get(current_lang, None):
+                    item_title = meta_options[item_key]['title_i18n'][current_lang]
+                elif meta_options[item_key]['title_i18n'].get('en', None):
+                    item_title = meta_options[item_key]['title_i18n']['en']
+            if rights_values:
+                result[item_key] = {
+                    'item_title': item_title,
+                    'item_values': rights_values
+                }
 
     # Check file permision if request is File Information page.
     file_order = int(request.args.get("file_order", -1))
@@ -426,7 +430,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     if not pid_ver.exists or pid_ver.is_last_child:
         abort(404)
     active_versions = list(pid_ver.children or [])
-    all_versions = list(pid_ver.get_children(ordered=True, pid_status=None)
+    all_versions = list(pid_ver.get_children(ordered=True, pid_status=PIDStatus.REGISTERED)
                         or [])
     try:
         if WekoRecord.get_record(id_=active_versions[-1].object_uuid)[
@@ -494,44 +498,77 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     current_lang = current_i18n.language \
         if hasattr(current_i18n, 'language') else None
     # get title name
-    from weko_records.utils import get_options_and_order_list
     from weko_search_ui.utils import get_data_by_property
-    from weko_records.utils import get_options_and_order_list
+    from weko_items_ui.utils import get_options_and_order_list, get_hide_list_by_schema_form
+    from weko_workflow.utils import get_sub_item_value
+
     title_name = ''
     rights_values = {}
     accessRight = ''
-    solst, meta_options = get_options_and_order_list(
+    meta_options, item_type_mapping = get_options_and_order_list(
         record.get('item_type_id'))
-    item_type_mapping = Mapping.get_record(record.get('item_type_id'))
-    item_map = get_mapping(item_type_mapping, 'jpcoar_mapping')
-    suffixes = '.@attributes.xml:lang'
-    for key in item_map:
-        prefix = key.replace(suffixes, '')
-        if prefix == 'title' and key.find(suffixes) != -1:
+    hide_list = get_hide_list_by_schema_form(record.get('item_type_id'))
+    item_map = get_mapping(record.get('item_type_id'), 'jpcoar_mapping')
+
+    # get title info
+    title_value_key = 'title.@value'
+    title_lang_key = 'title.@attributes.xml:lang'
+    if title_value_key in item_map:
+        title_languages = []
+        _title_key_str = ''
+        if title_lang_key in item_map:
             # get language
-            title_languages, _title_key = get_data_by_property(
-                record, item_map, key)
-            # get value
-            title_values, _title_key1 = get_data_by_property(
-                record, item_map, prefix + '.@value')
-            title_name = selected_value_by_language(
-                title_languages,
-                title_values,
-                _title_key,
-                _title_key1,
-                current_lang,
-                record)
-        elif key == 'rights.@value':
-            _rights_values, _rights_key = get_data_by_property(
-                record, item_map, key)
-            if _rights_key:
-                _get_rights_title(rights_values, _rights_key,
-                                  _rights_values, current_lang, meta_options)
-        elif key == 'accessRights.@value':
-            accessRights, _access_rights_key = get_data_by_property(
-                record, item_map, key)
-            if accessRights and len(accessRights) > 0:
-                accessRight = accessRights[0]
+            title_languages, _title_key_str = get_data_by_property(
+                record, item_map, title_lang_key)
+        # get value
+        title_values, _title_key1_str = get_data_by_property(
+            record, item_map, title_value_key)
+        title_name = selected_value_by_language(
+            title_languages,
+            title_values,
+            _title_key_str,
+            _title_key1_str,
+            current_lang,
+            record,
+            meta_options,
+            hide_list)
+    # get rights info
+    rights_value_key = 'rights.@value'
+    if rights_value_key in item_map:
+        key_list = item_map.get(rights_value_key)
+        for k in key_list.split(","):
+            subkey_list = k.split('.')
+            _rights_values = []
+            attribute = record.get(subkey_list[0])
+            if attribute:
+                data_result = get_sub_item_value(attribute, subkey_list[-1])
+                if data_result:
+                    if isinstance(data_result, list):
+                        for value in data_result:
+                            _rights_values.append(value)
+                    elif isinstance(data_result, str):
+                        _rights_values.append(data_result)
+            prop_hidden = meta_options.get(subkey_list[0], {}).get('option', {}).get('hidden', False)
+            if not prop_hidden and (subkey_list[0] not in hide_list or subkey_list[-1] not in hide_list):
+                _get_rights_title(rights_values, k, _rights_values,
+                                    current_lang, meta_options)
+    # get accessRights info
+    accessRights_value_key = 'accessRights.@value'
+    if accessRights_value_key in item_map:
+        key_list = item_map.get(accessRights_value_key)
+        for k in key_list.split(","):
+            subkey_list = k.split('.')
+            prop_hidden = meta_options.get(subkey_list[0], {}).get('option', {}).get('hidden', False)
+            attribute = record.get(subkey_list[0])
+            if attribute and not prop_hidden and (subkey_list[0] not in hide_list or subkey_list[-1] not in hide_list):
+                data_result = get_sub_item_value(attribute, subkey_list[-1])
+                if data_result:
+                    if isinstance(data_result, list) and len(data_result) > 0:
+                        accessRight = data_result[0]
+                        break
+                    elif isinstance(data_result, str):
+                        accessRight = data_result
+                        break
 
     pdfcoverpage_set_rec = PDFCoverPageSettings.find(1)
     # Check if user has the permission to download original pdf file
@@ -606,11 +643,8 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     # Hide email of creator in pdf cover page
     if record.get('item_type_id'):
         item_type_id = record['item_type_id']
-    is_show_email = is_show_email_of_creator(item_type_id)
-    if not is_show_email:
-        # list_hidden = get_ignore_item(record['item_type_id'])
-        # record = hide_by_itemtype(record, list_hidden)
-        record = hide_by_email(record)
+    
+    record = hide_by_email(record, False)
 
     # Get Facet search setting.
     display_facet_search = get_search_setting().get("display_control", {}).get(
@@ -680,11 +714,94 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         flg_display_itemtype = current_app.config.get('WEKO_RECORDS_UI_DISPLAY_ITEM_TYPE') ,
         flg_display_resourcetype = current_app.config.get('WEKO_RECORDS_UI_DISPLAY_RESOURCE_TYPE') ,
         search_author_flg=search_author_flg,
-        
+        show_secret_URL=_get_show_secret_url_button(record,filename),
         **ctx,
         **kwargs
     )
 
+
+def create_secret_url_and_send_mail(pid:PersistentIdentifier, record:WekoRecord, filename:str, **kwargs) -> str:
+    """on click button 'Secret URL' 
+    generate secret URL and send mail.
+    about entrypoint settings, see at .config RECORDS_UI_ENDPOINTS.recid_secret_url
+    
+    Args:
+        pid: PID object.
+        record: Record object.
+        filename: File name.
+
+    Returns:
+        result status and message text.
+    """
+    current_app.logger.info("pid:" + pid.pid_value)
+    current_app.logger.info("record:" + str(record.id))
+    current_app.logger.info("filename:" + filename)
+
+    #permission check
+    # "Someone who can show Secret URL button" can also use generate Secret URL function.
+    if not _get_show_secret_url_button(record ,filename):
+        abort(403)
+
+    userprof:UserProfile = UserProfile.get_by_userid(current_user.id)
+    restricted_fullname = userprof._displayname or '' if userprof else ''
+    restricted_data_name = record.get('item_title','')
+
+    #generate url and regist db(FileSecretDownload)
+    result = create_secret_url(pid.pid_value,filename,current_user.email , restricted_fullname , restricted_data_name)
+    
+    #send mail
+    mail_pattern_name:str = current_app.config.get('WEKO_RECORDS_UI_MAIL_TEMPLATE_SECRET_URL')
+
+    mail_info = set_mail_info(get_item_info(pid.object_uuid), type("" ,(object,),dict(activity_id = '')))
+    mail_info.update(result)
+    if process_send_mail( mail_info = mail_info, mail_pattern_name=mail_pattern_name) :
+        return _('Success Secret URL Generate')
+    else:
+        abort(500)
+
+def _get_show_secret_url_button(record : WekoRecord, filename :str) -> bool:
+    """ 
+        Args:
+            WekoRecord : records_metadata for target item
+            str : target content name
+        Returns:
+            bool : return true if be able to show Secret URL button. or false.
+    """
+
+    #1.check secret url function is enabled
+    restricted_access = AdminSettings.get('restricted_access', False)
+    if not restricted_access:
+        restricted_access = current_app.config[
+            'WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS']
+        
+    enable:bool = restricted_access.get('secret_URL_file_download',{}).get('secret_enable',False)
+
+    #2.check the user has permittion
+    has_parmission = False
+    # Registered user
+    user_id_list = [int(record['owner'])] if record.get('owner') else []
+    if current_user and current_user.is_authenticated and \
+        current_user.id in user_id_list:
+        has_parmission = True
+    # Super users
+    supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] 
+    for role in list(current_user.roles or []):
+        if role.name in supers:
+            has_parmission = True
+
+    #3.check the file's accessrole is "open_no" ,or "open_date" and not open yet.
+    is_secret_file = False
+    current_app.logger.info(record.get_file_data())
+    for content in record.get_file_data():
+        if content.get('filename') == filename:
+            if content.get('accessrole') == "open_no":
+                is_secret_file = True
+            elif content.get('accessrole') == "open_date" and \
+                datetime.now() < datetime.strptime(content.get('date',[{"dateValue" :'1970-01-01'}])[0].get("dateValue" ,'1970-01-01'), '%Y-%m-%d')  :
+                is_secret_file = True
+
+    # all true is show
+    return enable and has_parmission and is_secret_file
 
 @blueprint.route('/r/<parent_pid_value>', methods=['GET'])
 @blueprint.route('/r/<parent_pid_value>.<int:version>', methods=['GET'])
@@ -751,34 +868,37 @@ def set_pdfcoverpage_header():
 
     # Save PDF Cover Page Header settings
     if request.method == 'POST':
-        record = PDFCoverPageSettings.find(1)
-        avail = request.form.get('availability')
-        header_display_type = request.form.get('header-display')
-        header_output_string = request.form.get('header-output-string')
-        header_output_image_file = request.files.get('header-output-image')
-        header_output_image_filename = header_output_image_file.filename
-        header_output_image = record.header_output_image
-        if not header_output_image_filename == '':
-            upload_dir = current_app.instance_path + current_app.config.get(
-                'WEKO_RECORDS_UI_PDF_HEADER_IMAGE_DIR')
-            if not os.path.isdir(upload_dir):
-                os.makedirs(upload_dir)
-            header_output_image = upload_dir + header_output_image_filename
-            header_output_image_file.save(header_output_image)
-        header_display_position = request.form.get('header-display-position')
+        try:
+            record = PDFCoverPageSettings.find(1)
+            avail = request.form.get('availability')
+            header_display_type = request.form.get('header-display')
+            header_output_string = request.form.get('header-output-string')
+            header_output_image_file = request.files.get('header-output-image')
+            header_output_image_filename = header_output_image_file.filename
+            header_output_image = record.header_output_image
+            if not header_output_image_filename == '':
+                upload_dir = current_app.instance_path + current_app.config.get(
+                    'WEKO_RECORDS_UI_PDF_HEADER_IMAGE_DIR')
+                if not os.path.isdir(upload_dir):
+                    os.makedirs(upload_dir)
+                header_output_image = upload_dir + header_output_image_filename
+                header_output_image_file.save(header_output_image)
+            header_display_position = request.form.get('header-display-position')
 
-        # update PDF cover page settings
-        PDFCoverPageSettings.update(1,
-                                    avail,
-                                    header_display_type,
-                                    header_output_string,
-                                    header_output_image,
-                                    header_display_position
-                                    )
-
-        flash(_('PDF cover page settings have been updated.'),
-              category='success')
-        return redirect('/admin/pdfcoverpage')
+            # update PDF cover page settings
+            PDFCoverPageSettings.update(1,
+                                        avail,
+                                        header_display_type,
+                                        header_output_string,
+                                        header_output_image,
+                                        header_display_position
+                                        )
+            flash(_('PDF cover page settings have been updated.'),
+                  category='success')
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(e)
     
     return redirect('/admin/pdfcoverpage')
 
@@ -800,7 +920,11 @@ def file_version_update():
             if object_version:
                 # Do update the path on record
                 object_version.is_show = True if is_show == '1' else False
-                db.session.commit()
+                try:
+                    db.session.commit()
+                except Exception as e:
+                    db.session.rollback()
+                    current_app.logger.error(e)
 
                 return jsonify({'status': 1})
             else:
@@ -833,9 +957,15 @@ def soft_delete(recid):
     try:
         if not has_update_version_role(current_user):
             abort(403)
-        soft_delete_imp(recid)
+        if recid.startswith('del_ver_'):
+            recid = recid.replace('del_ver_', '')
+            delete_version(recid)
+        else:
+            soft_delete_imp(recid)
+        db.session.commit()
         return make_response('PID: ' + str(recid) + ' DELETED', 200)
     except Exception as ex:
+        db.session.rollback()
         current_app.logger.error(ex)
         if ex.args and len(ex.args) and isinstance(ex.args[0], dict) \
                 and ex.args[0].get('is_locked'):
@@ -873,11 +1003,13 @@ def init_permission(recid):
         permission = FilePermission.init_file_permission(user_id, recid,
                                                          file_name,
                                                          activity_id)
+        db.session.commit()
         if permission:
             return make_response(
                 'File permission: ' + file_name + 'of record: ' + recid
                 + ' CREATED', 200)
     except Exception as ex:
+        db.session.rollback()
         current_app.logger.debug(ex)
         abort(500)
 

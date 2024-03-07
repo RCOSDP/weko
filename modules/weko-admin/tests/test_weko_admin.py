@@ -156,3 +156,7 @@ def test_make_session_permanent(app,db,users):
     # path is /ping
     with app.test_request_context("/ping"):
         target_method()
+
+    # path is /admin/items/import/
+    with app.test_request_context("/admin/items/import/"):
+        target_method()

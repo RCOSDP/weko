@@ -148,6 +148,15 @@ def test_session_info_offline(client,session_lifetime):
     url = url_for("weko_admin.session_info_offline")
     res = client.get(url)
     assert response_data(res) == {"user_id":None,"session_id":"None","_app_lifetime":"1:40:00","current_app_name":"test_weko_admin_app","lifetime":"1:40:00"}
+
+def test_get_server_date(api):
+    url = url_for("weko_admin.get_server_date")
+    res = api.get(url)
+    result = response_data(res)
+    assert "year" in result
+    assert "month" in result
+    assert "day" in result
+
 #def get_lang_list():
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_views.py::test_get_lang_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
 def test_get_lang_list(api):
@@ -174,29 +183,38 @@ def test_save_lang_list_acl(api,users,index,is_permission):
     url = url_for("weko_admin.save_lang_list")
     login_user_via_session(client=api, email=users[index]["email"])
     with patch("weko_admin.views.update_admin_lang_setting", return_value=""):
-        res = api.post(url,data=json.dumps({}),
-                        content_type="application/json")
-        assert_role(res,is_permission)
+        with patch("weko_admin.views.delete_index_trees_from_redis"):
+            res = api.post(url,data=json.dumps({}),
+                            content_type="application/json")
+            assert_role(res,is_permission)
 
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_views.py::test_save_lang_list_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
 def test_save_lang_list_acl_guest(api, users):
     url = url_for("weko_admin.save_lang_list")
     with patch("weko_admin.views.update_admin_lang_setting", return_value=""):
-        res = api.post(url,data=json.dumps({}),
-                          content_type="application/json")
-        assert res.status_code == 302
+        with patch("weko_admin.views.delete_index_trees_from_redis"):
+            res = api.post(url,data=json.dumps({}),
+                              content_type="application/json")
+            assert res.status_code == 302
 
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_views.py::test_save_lang_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
-def test_save_lang_list(api, users):
+def test_save_lang_list(api, users, redis_connect):
+    import os
+    os.environ['INVENIO_WEB_HOST_NAME'] = "test"
     url = url_for("weko_admin.save_lang_list")
     login_user_via_session(client=api, email=users[0]["email"])
+    redis_connect.put("index_tree_view_test_ja","test_ja_index_tree".encode("UTF-8"),ttl_secs=30)
+    redis_connect.put("index_tree_view_test_en","test_en_index_tree".encode("UTF-8"),ttl_secs=30)
     # content_type != application/json
     res = api.post(url,data="test_data",content_type="plain/text")
     assert response_data(res) == {"msg":"Header Error"}
     
     # content_type = application/json
+    data = [{"lang_code":"ja","is_registered":True},{"lang_code":"en","is_registered":False}]
     with patch("weko_admin.views.update_admin_lang_setting",return_value="success"):
-        res = api.post(url,json={"key":"value"})
+        res = api.post(url,json=data)
+        assert redis_connect.redis.exists("index_tree_view_test_ja") == True
+        assert redis_connect.redis.exists("index_tree_view_test_en") == False
         assert response_data(res) == {"msg":"success"}
 
 

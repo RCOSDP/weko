@@ -47,6 +47,9 @@ from .models import Community, InclusionRequest
 @shared_task(ignore_result=True)
 def delete_expired_requests():
     """Delete expired inclusion requests."""
-    InclusionRequest.query.filter(
-        InclusionRequest.expires_at > datetime.utcnow()).delete()
-    db.session.commit()
+    try:
+        InclusionRequest.query.filter(
+            InclusionRequest.expires_at > datetime.utcnow()).delete()
+        db.session.commit()
+    except Exception as ex:
+        db.session.rollback()

@@ -23,6 +23,7 @@ import os,sys
 import shutil
 import tempfile
 import json
+import uuid
 from os.path import dirname, join
 
 from elasticsearch import Elasticsearch
@@ -135,19 +136,18 @@ class MockEs():
 
 
 @pytest.fixture()
-def base_app(instance_path,search_class):
+def base_app(request, instance_path,search_class):
     """Flask application fixture."""
     app_ = Flask('testapp', instance_path=instance_path)
     app_.config.update(
         SECRET_KEY='SECRET_KEY',
         TESTING=True,
         SERVER_NAME='app',
-        # SQLALCHEMY_DATABASE_URI=os.environ.get(
-        #    'SQLALCHEMY_DATABASE_URI',
-        #    'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/invenio'),
+        SQLALCHEMY_DATABASE_URI=os.environ.get(
+           'SQLALCHEMY_DATABASE_URI',
+           'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
         # SQLALCHEMY_DATABASE_URI=os.environ.get(
         #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
-        SQLALCHEMY_DATABASE_URI='postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest',
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         INDEX_IMG='indextree/36466818-image.jpg',
         SEARCH_UI_SEARCH_INDEX='test-weko',
@@ -162,6 +162,9 @@ def base_app(instance_path,search_class):
         CACHE_REDIS_URL='redis://redis:6379/0',
         CACHE_REDIS_DB='0',
         CACHE_REDIS_HOST="redis",
+        SEARCH_ELASTIC_HOSTS=os.environ.get("INVENIO_ELASTICSEARCH_HOST"),
+        SEARCH_INDEX_PREFIX="{}-".format('test'),
+        SEARCH_CLIENT_CONFIG=dict(timeout=120, max_retries=10),
     )
     Babel(app_)
     InvenioDB(app_)
@@ -172,9 +175,12 @@ def base_app(instance_path,search_class):
     InvenioAssets(app_)
     InvenioIndexer(app_)
     InvenioFilesREST(app_)
-    
-    search = InvenioSearch(app_, client=MockEs())
-    search.register_mappings(search_class.Meta.index, 'mock_module.mapping')
+    if hasattr(request, 'param'):
+        if 'is_es' in request.param:
+            search = InvenioSearch(app_)
+    else:
+        search = InvenioSearch(app_, client=MockEs())
+        search.register_mappings(search_class.Meta.index, 'mock_module.mapping')
     WekoTheme(app_)
     WekoAuthors(app_)
     WekoSearchUI(app_)
@@ -208,6 +214,22 @@ def client(app):
     """Get test client."""
     with app.test_client() as client:
         yield client
+
+from invenio_search import current_search_client
+@pytest.fixture()
+def esindex(app):
+    current_search_client.indices.delete(index='test-*')
+    with open("tests/mock_module/mapping/v6/authors/author-v1.0.0.json","r") as f:
+        mapping = json.load(f)
+    with app.test_request_context():
+        current_search_client.indices.create("test-authors-author-v1.0.0",body=mapping)
+        current_search_client.indices.put_alias(index="test-authors-author-v1.0.0", name=app.config["WEKO_AUTHORS_ES_INDEX_NAME"])
+
+    yield current_search_client
+
+    with app.test_request_context():
+        current_search_client.indices.delete_alias(index="test-authors-author-v1.0.0", name=app.config["WEKO_AUTHORS_ES_INDEX_NAME"])
+        current_search_client.indices.delete(index="test-authors-author-v1.0.0", ignore=[400, 404])
 
 
 @pytest.fixture()
@@ -345,16 +367,24 @@ def users(app, db):
 
 
 @pytest.fixture()
-def create_author(db):
+def create_author(app, db, esindex):
     def _create_author(data, next_id):
+        data["pk_id"] = str(next_id)
+        es_data = json.loads(json.dumps(data))
+        es_id = uuid.uuid4()
+        data["id"] = str(es_id)
         with db.session.begin_nested():
-            # new_id = Authors.get_sequence(db.session)
-            new_id = next_id
-            data["id"] = str(new_id)
-            data["pk_id"] = str(new_id)
-            author = Authors(id=new_id, json=json.dumps(data))
+            author = Authors(id=next_id, json=data)
             db.session.add(author)
-        return new_id
+        db.session.commit()
+            
+        current_search_client.index(
+            index=app.config["WEKO_AUTHORS_ES_INDEX_NAME"],
+            doc_type=app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
+            id=es_id,
+            body=es_data,
+            refresh='true')
+        return es_id
 
     # Return new author's id
     return _create_author
@@ -377,15 +407,24 @@ def json_data(filename):
 
 
 @pytest.fixture()
-def authors(db):
+def authors(app,db,esindex):
     datas = json_data("data/author.json")
     returns = list()
     for data in datas:
         returns.append(Authors(
             gather_flg=0,
             is_deleted=False,
-            json=json.dumps(data)
+            json=data
         ))
+        es_id = data["id"]
+        es_data = json.loads(json.dumps(data))
+        es_data["id"]=""
+        current_search_client.index(
+            index=app.config["WEKO_AUTHORS_ES_INDEX_NAME"],
+            doc_type=app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
+            id=es_id,
+            body=es_data,
+            refresh='true')
     
     db.session.add_all(returns)
     db.session.commit()

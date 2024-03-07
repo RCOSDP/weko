@@ -36,6 +36,7 @@ model.
 
 from __future__ import absolute_import, print_function
 
+import shutil
 import mimetypes
 import os
 import re
@@ -931,7 +932,23 @@ class FileInstance(db.Model, Timestamp):
                     file_type, '.pdf')
 
                 if not os.path.isfile(pdf_dir + pdf_filename):
-                    convert_to(pdf_dir, self.uri)
+                    convert_dir = path+"/convert_"+str(self.id)
+                    target_uri = self.uri
+                    if self.uri.startswith("s3://"):
+                        target_uri = convert_dir+"/"+self.uri.split("/")[-1]
+                        if os.path.exists(convert_dir):
+                            shutil.rmtree(convert_dir)
+                        os.makedirs(convert_dir)
+                        fp = self.storage(**kwargs).open(mode='rb')
+                        data = fp.read()
+                        fp.close()
+                        with open(target_uri,"wb") as f:
+                            f.write(data)
+
+                    convert_to(pdf_dir, target_uri)
+
+                    if os.path.exists(convert_dir):
+                        shutil.rmtree(convert_dir)
 
                 self.uri = pdf_dir + pdf_filename
                 self.size = os.path.getsize(pdf_dir + pdf_filename)

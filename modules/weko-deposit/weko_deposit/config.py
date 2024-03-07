@@ -28,17 +28,19 @@ WEKO_BUCKET_QUOTA_SIZE = 50 * 1024 * 1024 * 1024  # 50 GB
 """Maximum quota per bucket."""
 
 WEKO_MAX_FILE_SIZE = WEKO_BUCKET_QUOTA_SIZE
-WEKO_MAX_FILE_SIZE_FOR_ES = 1 * 1024 * 1024  # 1MB
 """Maximum file size accepted."""
 
 WEKO_MIMETYPE_WHITELIST_FOR_ES = [
     'text/plain',
     'application/msword',
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.oasis.opendocument.text',
     'application/vnd.ms-excel',
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.oasis.opendocument.spreadsheet',
     'application/vnd.ms-powerpoint',
     'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'application/vnd.oasis.opendocument.presentation',
     'application/pdf',
 ]
 
@@ -50,6 +52,9 @@ FILES_REST_UPLOAD_OWNER_FACTORIES = 'weko_deposit.serializer.file_uploaded_owner
 
 WEKO_DEPOSIT_ITEMS_CACHE_PREFIX = 'cache_itemsIndex_{pid_value}'
 """ cache items prifix info"""
+
+WEKO_DEPOSIT_ITEM_UPDATE_STATUS_TTL = 60 * 10
+""" cache default timeout (sec.)"""
 
 WEKO_DEPOSIT_ITEMS_CACHE_TTL = 300
 """ cache default timeout 5 minutes"""
@@ -128,6 +133,7 @@ RECORDS_REST_DEFAULT_UPDATE_PERMISSION_FACTORY = None
 DEPOSIT_JSONSCHEMAS_PREFIX = ''
 
 WEKO_DEPOSIT_SYS_CREATOR_KEY = {
+    'creator_type': 'creatorType', #? ADDED 20231017 CREATOR TYPE BUG FIX
     'creator_names': 'creatorNames',
     'creator_name': 'creatorName',
     'creator_lang': 'creatorNameLang',

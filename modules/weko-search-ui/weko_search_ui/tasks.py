@@ -29,6 +29,7 @@ from flask import current_app
 from weko_admin.api import TempDirInfo
 from weko_admin.utils import get_redis_cache
 from weko_redis.redis import RedisConnection
+from invenio_db import db
 
 from .utils import (
     check_import_items,
@@ -103,7 +104,7 @@ def delete_task_id_cache(task_id, cache_key):
             datastore.delete(cache_key)
 
 @shared_task
-def export_all_task(root_url, user_id, data):
+def export_all_task(root_url, user_id, data, timezone):
     """Export all items."""
     from weko_admin.utils import reset_redis_cache
 
@@ -119,7 +120,7 @@ def export_all_task(root_url, user_id, data):
         user_id=user_id
     )
 
-    uri = export_all(root_url, user_id, data)
+    uri = export_all(root_url, user_id, data, timezone)
     reset_redis_cache(_cache_key, uri)
     delete_exported_task.apply_async(
         args=(
@@ -138,7 +139,12 @@ def delete_exported_task(uri, cache_key, task_key):
     datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
     if datastore.redis.exists(cache_key):
         datastore.delete(task_key)
-    delete_exported(uri, cache_key)
+    try:
+        delete_exported(uri, cache_key)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(e)
 
 
 def is_import_running():

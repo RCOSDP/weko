@@ -130,9 +130,10 @@ def base_app(instance_path, cache_config,request ,search_class):
         SERVER_NAME='test_server',
         ACCOUNTS_USE_CELERY=False,
         SECRET_KEY='SECRET_KEY',
-        # SQLALCHEMY_DATABASE_URI=os.environ.get(
-        #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
-        SQLALCHEMY_DATABASE_URI='postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest',
+        SQLALCHEMY_DATABASE_URI=os.environ.get(
+             'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
+        #SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
+        #                                   'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
         SEARCH_ELASTIC_HOSTS=os.environ.get(
             'SEARCH_ELASTIC_HOSTS', None),
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
@@ -262,9 +263,8 @@ def admin_app(instance_path):
         SECRET_KEY='SECRET KEY',
         SESSION_TYPE='memcached',
         SERVER_NAME='test_server',
-        # SQLALCHEMY_DATABASE_URI=os.environ.get(
-        #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
-        SQLALCHEMY_DATABASE_URI='postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest',
+        SQLALCHEMY_DATABASE_URI=os.environ.get(
+            'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
         WEKO_ADMIN_FACET_SEARCH_SETTING={"name_en": "","name_jp": "","mapping": "","active": True,"aggregations": []},
         WEKO_ADMIN_FACET_SEARCH_SETTING_TEMPLATE="weko_admin/admin/facet_search_setting.html"
     )
@@ -482,6 +482,7 @@ def site_license(db):
     db.session.add(result)
     addr1 = SiteLicenseIpAddress(
         organization_id=0,
+        organization_no=0,
         start_ip_address="123.456.789.012",
         finish_ip_address="987.654.321.098"
     )
@@ -642,7 +643,7 @@ def authors(db):
     authors_data = json_data("data/test_authors.json")
     author_list = []
     for data in authors_data:
-        author_list.append(Authors(json=json.dumps(data)))
+        author_list.append(Authors(json=data))
     db.session.add_all(author_list)
     db.session.commit()
     return author_list
@@ -908,21 +909,30 @@ def facet_search_settings(db):
         name_jp="データの言語",
         mapping="language",
         aggregations=[],
-        active=True
+        active=True,
+        ui_type="SelectBox",
+        display_number=1,
+        is_open=True
     )
     access = FacetSearchSetting(
         name_en="Access",
         name_jp="アクセス制限",
         mapping="accessRights",
         aggregations=[],
-        active=False
+        active=False,
+        ui_type="SelectBox",
+        display_number=2,
+        is_open=True
     )
     data_type = FacetSearchSetting(
         name_en="Data Type",
         name_jp="データタイプ",
         mapping="description.value",
         aggregations=[{"agg_value":"Other","agg_mapping":"description.descriptionType"}],
-        active=True
+        active=True,
+        ui_type="SelectBox",
+        display_number=3,
+        is_open=True
     )
     
     fields_raw = FacetSearchSetting(
@@ -930,7 +940,10 @@ def facet_search_settings(db):
         name_jp="raw_test",
         mapping="test.fields.raw",
         aggregations=[],
-        active=True
+        active=True,
+        ui_type="SelectBox",
+        display_number=4,
+        is_open=True
     )
     db.session.add(language)
     db.session.add(access)

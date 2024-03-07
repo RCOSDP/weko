@@ -32,6 +32,8 @@ from invenio_records_rest.utils import obj_or_import_string
 from invenio_rest import ContentNegotiatedMethodView
 from invenio_db import db
 
+from weko_admin.models import AdminLangSettings
+
 from .api import Indexes
 from .errors import IndexAddedRESTError, IndexNotFoundRESTError, \
     IndexUpdatedRESTError, InvalidDataRESTError
@@ -243,8 +245,17 @@ class IndexActionResource(ContentNegotiatedMethodView):
             status = 201
             msg = 'Index created successfully.'
 
-            tree = self.record_class.get_index_tree()
-            save_index_trees_to_redis(tree)
+            langs = AdminLangSettings.get_registered_language()
+            if "ja" in [lang["lang_code"] for lang in langs]:
+                tree_ja = self.record_class.get_index_tree(lang="ja")
+            tree = self.record_class.get_index_tree(lang="other_lang")
+            for lang in langs:
+                lang_code = lang["lang_code"]
+                if lang_code == "ja":
+                    save_index_trees_to_redis(tree_ja, lang=lang_code)
+                else:
+                    save_index_trees_to_redis(tree, lang=lang_code)
+                
         return make_response(
             jsonify({'status': status, 'message': msg, 'errors': errors}),
             status)
@@ -252,47 +263,61 @@ class IndexActionResource(ContentNegotiatedMethodView):
     @need_record_permission('update_permission_factory')
     def put(self, index_id, **kwargs):
         """Update a new index."""
+        from weko_workflow.utils import get_cache_data
+
         data = self.loaders[request.mimetype]()
         if not data:
             raise InvalidDataRESTError()
         msg = ''
         delete_flag = False
         errors = []
-        public_state = data.get('public_state') and data.get(
-            'harvest_public_state')
         status = 200
-        if is_index_locked(index_id):
-            errors.append(_('Index Delete is in progress on another device.'))
-        elif not public_state and check_doi_in_index(index_id):
-            if not data.get('public_state'):
-                errors.append(_('The index cannot be kept private because '
-                                'there are links from items that have a DOI.'))
-            elif not data.get('harvest_public_state'):
-                errors.append(_('Index harvests cannot be kept private because'
-                                ' there are links from items that have a DOI.'
-                                ))
+        if get_cache_data("import_start_time"):
+            errors.append(_('The index cannot be updated becase '
+                            'import is in progress.'))
         else:
-            if data.get('thumbnail_delete_flag'):
-                delete_flag = True
-                filename = os.path.join(
-                    current_app.instance_path,
-                    current_app.config['WEKO_THEME_INSTANCE_DATA_DIR'],
-                    'indextree',
-                    data.get('image_name').split('/')[-1])
-                if os.path.isfile(filename):
-                    os.remove(filename)
-                data['image_name'] = ""
+            public_state = data.get('public_state') and data.get(
+                'harvest_public_state')
+            if is_index_locked(index_id):
+                errors.append(_('Index Delete is in progress on another device.'))
+            elif not public_state and check_doi_in_index(index_id):
+                if not data.get('public_state'):
+                    errors.append(_('The index cannot be kept private because '
+                                    'there are links from items that have a DOI.'))
+                elif not data.get('harvest_public_state'):
+                    errors.append(_('Index harvests cannot be kept private because'
+                                    ' there are links from items that have a DOI.'
+                                    ))
+            else:
+                if data.get('thumbnail_delete_flag'):
+                    delete_flag = True
+                    filename = os.path.join(
+                        current_app.instance_path,
+                        current_app.config['WEKO_THEME_INSTANCE_DATA_DIR'],
+                        'indextree',
+                        data.get('image_name').split('/')[-1])
+                    if os.path.isfile(filename):
+                        os.remove(filename)
+                    data['image_name'] = ""
 
-            if data.get('thumbnail_delete_flag') is not None:
-                del data['thumbnail_delete_flag']
-            if not self.record_class.update(index_id, **data):
-                raise IndexUpdatedRESTError()
-            msg = 'Index updated successfully.'
+                if data.get('thumbnail_delete_flag') is not None:
+                    del data['thumbnail_delete_flag']
+                if not self.record_class.update(index_id, **data):
+                    raise IndexUpdatedRESTError()
+                msg = 'Index updated successfully.'
 
             #roles = get_account_role()
             #for role in roles:
-            tree = self.record_class.get_index_tree()
-            save_index_trees_to_redis(tree)
+            langs = AdminLangSettings.get_registered_language()
+            if "ja" in [lang["lang_code"] for lang in langs]:
+                tree_ja = self.record_class.get_index_tree(lang="ja")
+            tree = self.record_class.get_index_tree(lang="other_lang")
+            for lang in langs:
+                lang_code = lang["lang_code"]
+                if lang_code == "ja":
+                    save_index_trees_to_redis(tree_ja, lang=lang_code)
+                else:
+                    save_index_trees_to_redis(tree, lang=lang_code)
 
         return make_response(jsonify(
             {'status': status, 'message': msg, 'errors': errors,
@@ -301,14 +326,30 @@ class IndexActionResource(ContentNegotiatedMethodView):
     @need_record_permission('delete_permission_factory')
     def delete(self, index_id, **kwargs):
         """Delete a index."""
+        from weko_workflow.utils import get_cache_data
+
+        errors = []
+        msg = ''
         if not index_id or index_id <= 0:
             raise IndexNotFoundRESTError()
 
-        action = request.values.get('action', 'all')
-        msg, errors = perform_delete_index(index_id, self.record_class, action)
+        if get_cache_data("import_start_time"):
+            errors.append(_('The index cannot be deleted becase '
+                            'import is in progress.'))
+        else:
+            action = request.values.get('action', 'all')
+            msg, errors = perform_delete_index(index_id, self.record_class, action)
 
-        tree = self.record_class.get_index_tree()
-        save_index_trees_to_redis(tree)
+        langs = AdminLangSettings.get_registered_language()
+        if "ja" in [lang["lang_code"] for lang in langs]:
+            tree_ja = self.record_class.get_index_tree(lang="ja")
+        tree = self.record_class.get_index_tree(lang="other_lang")
+        for lang in langs:
+            lang_code = lang["lang_code"]
+            if lang_code == "ja":
+                save_index_trees_to_redis(tree_ja, lang=lang_code)
+            else:
+                save_index_trees_to_redis(tree, lang=lang_code)
 
         return make_response(jsonify(
             {'status': 200, 'message': msg, 'errors': errors}), 200)
@@ -341,6 +382,23 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
 
     def get(self, **kwargs):
         """Get tree json."""
+        def _check_edit_permission(is_admin, tree, can_edit_indexes):
+            if is_admin:
+                for i in tree:
+                    i['settings']['can_edit'] = True
+                    if len(i['children']) > 0:
+                        _check_edit_permission(is_admin, i['children'], can_edit_indexes)
+            else:
+                for i in tree:
+                    i['settings']['can_edit'] = False
+                    if str(i['id']) in can_edit_indexes:
+                        i['settings']['can_edit'] = True
+                    elif str(i['id']) not in can_edit_indexes and \
+                            'settings' in i and i['settings'].get('checked', False):
+                        i['settings']['checked'] = False
+                    if len(i['children']) > 0:
+                        _check_edit_permission(is_admin, i['children'], can_edit_indexes)
+
         from invenio_communities.models import Community
         try:
             action = request.values.get('action')
@@ -359,7 +417,39 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
                     tree = self.record_class.get_contribute_tree(
                         pid, int(comm.root_node_id))
                 else:
-                    tree = self.record_class.get_contribute_tree(pid)
+                    tree = []
+                    role_ids = []
+                    can_edit_indexes = []
+                    is_admin = False
+                    if current_user and current_user.is_authenticated:
+                        for role in current_user.roles:
+                            if role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']:
+                                role_ids = []
+                                tree = self.record_class.get_contribute_tree(pid)
+                                is_admin = True
+                                break
+                            else:
+                                role_ids.append(role.id)
+                    if role_ids:
+                        from invenio_communities.models import Community
+                        comm_list = Community.query.filter(
+                            Community.id_role.in_(role_ids)
+                        ).all()
+                        root_id_list = []
+                        
+                        for comm in comm_list:
+                            index_list = Indexes.get_self_list(comm.root_node_id)
+                            if len(index_list) > 0:
+                                root_id = index_list[0].path.split('/')[0]
+                                if root_id not in root_id_list:
+                                    root_id_list.append(root_id)
+                            for index in index_list:
+                                if index.cid not in can_edit_indexes:
+                                    can_edit_indexes.append(str(index.cid))
+                        for index_id in root_id_list:
+                            tree += self.record_class.get_contribute_tree(pid, int(index_id))
+                    _check_edit_permission(is_admin, tree, can_edit_indexes)
+                    # tree = self.record_class.get_contribute_tree(pid)
             elif action and 'browsing' in action and comm_id is None:
                 if more_id_list is None:
                     tree = self.record_class.get_browsing_tree()
@@ -405,7 +495,6 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
                             if index_id not in check_list:
                                 tree += self.record_class.get_index_tree(index_id)
                                 check_list.append(index_id)
-                        
             return make_response(jsonify(tree), 200)
         except Exception as ex:
             current_app.logger.error('IndexTree Action Exception: ', ex)
@@ -414,19 +503,33 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
     @need_record_permission('update_permission_factory')
     def put(self, index_id, **kwargs):
         """Move a index."""
+        from weko_workflow.utils import get_cache_data
+
         data = self.loaders[request.mimetype]()
         if not data:
             raise InvalidDataRESTError()
-        # Moving
-        moved = self.record_class.move(index_id, **data)
-        if not moved or not moved.get('is_ok'):
+        if get_cache_data("import_start_time"):
             status = 202
-            msg = moved.get('msg')
+            msg = _('The index cannot be moved becase '
+                    'import is in progress.')
         else:
-            status = 201
-            msg = _('Index moved successfully.')
-
-            tree = self.record_class.get_index_tree()
-            save_index_trees_to_redis(tree)
+            # Moving
+            moved = self.record_class.move(index_id, **data)
+            if not moved or not moved.get('is_ok'):
+                status = 202
+                msg = moved.get('msg')
+            else:
+                status = 201
+                msg = _('Index moved successfully.')
+            langs = AdminLangSettings.get_registered_language()
+            if "ja" in [lang["lang_code"] for lang in langs]:
+                    tree_ja = self.record_class.get_index_tree(lang="ja")
+            tree = self.record_class.get_index_tree(lang="other_lang")
+            for lang in langs:
+                lang_code = lang["lang_code"]
+                if lang_code == "ja":
+                        save_index_trees_to_redis(tree_ja, lang=lang_code)
+                else:
+                    save_index_trees_to_redis(tree, lang=lang_code)
         return make_response(
             jsonify({'status': status, 'message': msg}), status)

@@ -1375,7 +1375,7 @@ def test_RestrictedAccessSettingView_index(client, users, admin_settings, mocker
     assert args[0] == "weko_admin/admin/restricted_access_settings.html"
     assert json.loads(kwargs["data"]) == {"content_file_download": {"expiration_date": 30,"expiration_date_unlimited_chk": False,"download_limit": 10,"download_limit_unlimited_chk": False,},"usage_report_workflow_access": {"expiration_date_access": 500,"expiration_date_access_unlimited_chk": False,},"terms_and_conditions": []}
     assert kwargs["items_per_page"] == 25
-    
+    assert kwargs["maxint"] == 9999999
     
     
 @pytest.fixture()
@@ -1447,7 +1447,10 @@ class TestFacetSearchSettingView:
             name_jp="データの言語",
             mapping="language",
             aggregations=[],
-            active=True
+            active=True,
+            ui_type="SelectBox",
+            display_number=1,
+            is_open=True
         )
         db.session.add(language)
         db.session.commit()
@@ -1465,7 +1468,10 @@ class TestFacetSearchSettingView:
                 "mapping": "language",
                 "active": True,
                 "aggregations": [],
-                "mapping_list": mapping_list
+                "mapping_list": mapping_list,
+                "display_number":1,
+                "is_open":True,
+                "ui_type":"SelectBox"
             }
             client.get(url)
             args, kwargs = mock_render.call_args
@@ -1489,7 +1495,10 @@ class TestFacetSearchSettingView:
             name_jp="データの言語",
             mapping="language",
             aggregations=[],
-            active=True
+            active=True,
+            ui_type="SelectBox",
+            display_number=1,
+            is_open=True
         )
         db.session.add(language)
         db.session.commit()
@@ -1507,7 +1516,10 @@ class TestFacetSearchSettingView:
                 "mapping": "language",
                 "active": True,
                 "aggregations": [],
-                "mapping_list": mapping_list
+                "mapping_list": mapping_list,
+                "display_number":1,
+                "is_open":True,
+                "ui_type":"SelectBox"
             }
             client.get(url)
             args, kwargs = mock_render.call_args
@@ -1532,7 +1544,10 @@ class TestFacetSearchSettingView:
             name_jp="データの言語",
             mapping="language",
             aggregations=[],
-            active=True
+            active=True,
+            ui_type="SelectBox",
+            display_number=1,
+            is_open=True
         )
         db.session.add(language)
         db.session.commit()
@@ -1556,6 +1571,9 @@ class TestFacetSearchSettingView:
                 "mapping": "language",
                 "active": True,
                 "aggregations": [],
+                "display_number":1,
+                "is_open":True,
+                "ui_type":"SelectBox"
             }
             client.get(url)
             args, kwargs = mock_render.call_args

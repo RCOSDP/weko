@@ -140,6 +140,15 @@ class TestItemTypeMetaDataView:
         res = client.post(url)
         mock_flash.assert_called_with("Cannot delete due to child existing item types.","error")
         assert json.loads(res.data)["code"] == -1#
+
+        with patch("weko_workflow.utils.get_cache_data", return_value=True):
+            mock_flash = mocker.patch("weko_itemtypes_ui.admin.flash")
+            url = url_for("itemtypesregister.delete_itemtype",item_type_id=item_type2.id)
+            res = client.post(url)
+            mock_flash.assert_called_with("Item type cannot be deleted becase import is in progress.")
+            assert json.loads(res.data)["code"] == -1
+
+
         mock_flash = mocker.patch("weko_itemtypes_ui.admin.flash")
         url = url_for("itemtypesregister.delete_itemtype",item_type_id=item_type2.id)
         res = client.post(url)
@@ -208,6 +217,13 @@ class TestItemTypeMetaDataView:
         with db.session.begin_nested():
             db.session.add(workflow)
         db.session.commit()
+
+        with patch("weko_workflow.utils.get_cache_data", return_value=True):
+            url = url_for("itemtypesregister.register",item_type_id=0)
+            res = client.post(url,json=data,headers={"Content-Type":"application/json"})
+            result = json.loads(res.data)
+            res.status_code == 400
+            assert result["msg"] == "Item type cannot be updated becase import is in progress."
         
         url = url_for("itemtypesregister.register",item_type_id=0)
         mocker.patch("weko_itemtypes_ui.admin.update_required_schema_not_exist_in_form",return_value=schema)

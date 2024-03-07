@@ -29,6 +29,7 @@ from __future__ import absolute_import, print_function
 
 from invenio_records.api import Record
 import pytest
+from mock import patch
 
 from invenio_communities.models import InclusionRequest
 from invenio_communities.tasks import delete_expired_requests
@@ -61,7 +62,7 @@ def test_community_delete_task(app, db, communities):
 #         assert delete_marked_communities()
     
     
-# .tox/c1/bin/pytest --cov=invenio_communities tests/test_tasks.py::test_delete_expired_requests -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp    
+# .tox/c1/bin/pytest --cov=invenio_communities tests/test_tasks.py::test_delete_expired_requests -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp
 # def delete_expired_requests(): do not work
 def test_delete_expired_requests(app, db, communities):
     (comm1, comm2, comm3) = communities
@@ -74,6 +75,12 @@ def test_delete_expired_requests(app, db, communities):
         record=rec1,
         notify=False,
         expires_at=now)
+    db.session.commit()
+    
+    with patch("invenio_communities.tasks.db.session.commit", side_effect=Exception('')):
+        delete_expired_requests()
+        assert len(InclusionRequest.query.filter_by(id_record=rec1.id).all()) == 1
+
     delete_expired_requests()
     result = InclusionRequest.query.filter_by(id_record=rec1.id).first()
     assert  result == None

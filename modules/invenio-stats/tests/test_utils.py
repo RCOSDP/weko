@@ -606,15 +606,9 @@ def test_query_record_view_report_helper_error(app, db):
 #     def get(cls, **kwargs):
 #     def merge_items_results(cls, results):
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_utils.py::test_query_item_reg_report_helper -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
-@pytest.mark.parametrize('aggregated_file_download_events',
-                         [dict(file_number=1,
-                               event_number=7,
-                               start_date=datetime.date(2022, 9, 1),
-                               end_date=datetime.date(2022, 9, 7))],
-                         indirect=['aggregated_file_download_events'])
-def test_query_item_reg_report_helper(app, db, event_queues, aggregated_file_download_events):
-    # need to fix
+def test_query_item_reg_report_helper(app, db, event_queues,es):
     # get
+    from invenio_search import current_search_client
     res = QueryItemRegReportHelper.get(target_report='1', unit='Day', start_date='2022-09-01', end_date='2022-09-15')
     assert res=={'num_page': 2, 'page': 1, 'data': [{'count': 0.0, 'start_date': '2022-09-01 00:00:00', 'end_date': '2022-09-01 23:59:59', 'is_restricted': False}, {'count': 0.0, 'start_date': '2022-09-02 00:00:00', 'end_date': '2022-09-02 23:59:59', 'is_restricted': False}, {'count': 0.0, 'start_date': '2022-09-03 00:00:00', 'end_date': '2022-09-03 23:59:59', 'is_restricted': False}, {'count': 0.0, 'start_date': '2022-09-04 00:00:00', 'end_date': '2022-09-04 23:59:59', 'is_restricted': False}, {'count': 0.0, 'start_date': '2022-09-05 00:00:00', 'end_date': '2022-09-05 23:59:59', 'is_restricted': False}, {'count': 0.0, 'start_date': '2022-09-06 00:00:00', 'end_date': '2022-09-06 23:59:59', 'is_restricted': False}, {'count': 0.0, 'start_date': '2022-09-07 00:00:00', 'end_date': '2022-09-07 23:59:59', 'is_restricted': False}, {'count': 0.0, 'start_date': '2022-09-08 00:00:00', 'end_date': '2022-09-08 23:59:59', 'is_restricted': False}, {'count': 0.0, 'start_date': '2022-09-09 00:00:00', 'end_date': '2022-09-09 23:59:59', 'is_restricted': False}, {'count': 0.0, 'start_date': '2022-09-10 00:00:00', 'end_date': '2022-09-10 23:59:59', 'is_restricted': False}]}
 
@@ -635,7 +629,7 @@ def test_query_item_reg_report_helper(app, db, event_queues, aggregated_file_dow
         assert res=={'num_page': 1, 'page': 1, 'data': [{'count': 1, 'start_date': '2022-10-01', 'end_date': '2022-10-01'}]}
 
     res = QueryItemRegReportHelper.get(target_report='1', unit='Week', start_date='2022-09-01', end_date='2022-09-15')
-    assert res=={'num_page': 1, 'page': 1, 'data': [{'start_date': '2022-09-01', 'end_date': '2022-09-07', 'is_restricted': False, 'count': 0.0}, {'start_date': '2022-09-08', 'end_date': '2022-09-14', 'is_restricted': False, 'count': 0.0}, {'start_date': '2022-09-15', 'end_date': '2022-09-15', 'is_restricted': False, 'count': 0.0}]}
+    assert res=={'num_page': 1, 'page': 1, 'data': [{'start_date': '2022-09-01 00:00:00', 'end_date': '2022-09-07 23:59:59', 'is_restricted': False, 'count': 0.0}, {'start_date': '2022-09-08 00:00:00', 'end_date': '2022-09-14 23:59:59', 'is_restricted': False, 'count': 0.0}, {'start_date': '2022-09-15 00:00:00', 'end_date': '2022-09-15 23:59:59', 'is_restricted': False, 'count': 0.0}]}
 
     _res = {
         'buckets': [
@@ -685,7 +679,7 @@ def test_query_item_reg_report_helper(app, db, event_queues, aggregated_file_dow
         assert res=={'num_page': 0, 'page': 1, 'data': [{'user_id': '1', 'count': 5}, {'user_id': '2', 'count': 4}]}
 
     res = QueryItemRegReportHelper.get(target_report='1', unit='Year', start_date='2022-09-01', end_date='2022-09-15')
-    assert res=={'num_page': 1, 'page': 1, 'data': [{'count': 0.0, 'start_date': '2022-01-01', 'end_date': '2022-12-31', 'year': 2022, 'is_restricted': False}]}
+    assert res=={'num_page': 1, 'page': 1, 'data': [{'count': 0.0, 'start_date': '2022-01-01 00:00:00', 'end_date': '2022-12-31 23:59:59', 'year': 2022, 'is_restricted': False}]}
 
     _res = {
         'buckets': [
@@ -703,12 +697,35 @@ def test_query_item_reg_report_helper(app, db, event_queues, aggregated_file_dow
         res = QueryItemRegReportHelper.get(target_report='1', unit='Year', start_date='0', end_date='0')
         assert res=={'num_page': 1, 'page': 1, 'data': [{'count': 1, 'start_date': '2022-01-01', 'end_date': '2022-12-31', 'year': 2022, 'is_restricted': False}]}
 
+    current_search_client.create(
+        index="test-stats-record-view",
+        doc_type="record-view-day-aggregation",
+        id=1,
+        body={
+          "timestamp" : "2022-09-15T01:00:00",
+          "unique_id" : "68a04d6c-fc25-39de-a9d6-31a24a46892c",
+          "count" : 14,
+          "unique_count" : 1,
+          "country" : None,
+          "hostname" : "None",
+          "remote_addr" : "192.168.56.1",
+          "record_id" : "1599b017-ac02-4155-a6c5-f8565e31f998",
+          "record_name" : "test_record1",
+          "record_index_names" : "test_index-/-index1",
+          "pid_type" : "recid",
+          "pid_value" : "5",
+          "cur_user_id" : "guest",
+          "site_license_name" : "",
+          "site_license_flag" : False
+        }
+    )
+    current_search_client.indices.refresh()
     res = QueryItemRegReportHelper.get(target_report='2', unit='Day', start_date='0', end_date='0')
-    assert res=={'data': [], 'num_page': 0, 'page': 1}
+    assert res=={'data': [{"count":14.0, "end_date":"2022-09-15","start_date":"2022-09-15"}], 'num_page': 1, 'page': 1}
     res = QueryItemRegReportHelper.get(target_report='2', unit='Item', start_date='2022-09-01', end_date='2022-09-15')
-    assert res=={'data': [], 'num_page': 0, 'page': 1}
+    assert res=={'data': [{"col1":"5","col2":"test_record1","col3":14.0}], 'num_page': 1, 'page': 1}
     res = QueryItemRegReportHelper.get(target_report='2', unit='Host', start_date='2022-09-01', end_date='2022-09-15')
-    assert res=={'data': [], 'num_page': 0, 'page': 1}
+    assert res=={'data': [{"count":14.0,"domain":"","end_date":"2022-09-15 23:59:59","ip":"192.168.56.1","start_date":"2022-09-01 00:00:00"}], 'num_page': 1, 'page': 1}
     res = QueryItemRegReportHelper.get(target_report='3', unit='Day', start_date='0', end_date='0')
     assert res=={'data': [], 'num_page': 0, 'page': 1}
 

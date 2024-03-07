@@ -24,7 +24,7 @@ import calendar
 import json
 import sys
 import time
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 from flask import Blueprint, Response, abort, current_app, flash, json, \
     jsonify, render_template, request
@@ -39,6 +39,7 @@ from invenio_db import db
 from sqlalchemy.orm import session
 from weko_accounts.utils import roles_required
 from weko_records.models import SiteLicenseInfo
+from weko_index_tree.utils import delete_index_trees_from_redis
 from werkzeug.local import LocalProxy
 
 from .api import send_site_license_mail
@@ -182,6 +183,17 @@ def session_info_offline():
                    _app_lifetime=str(_app.permanent_session_lifetime),
                    current_app_name=current_app.name)
 
+@blueprint_api.route('/get_server_date',methods=['GET'])
+def get_server_date():
+    now = datetime.now()
+    return jsonify(
+        year=now.year,
+        month=now.month,
+        day=now.day,
+        hour=now.hour,
+        minute=now.minute,
+        second=now.second
+    )
 
 @blueprint_api.route('/load_lang', methods=['GET'])
 def get_lang_list():
@@ -205,8 +217,17 @@ def save_lang_list():
     if request.headers['Content-Type'] != 'application/json':
         current_app.logger.debug(request.headers['Content-Type'])
         return jsonify(msg='Header Error')
+    result = 'success'
     data = request.get_json()
-    result = update_admin_lang_setting(data)
+    for lang_code in [lang["lang_code"] for lang in data if not lang["is_registered"]]:
+        delete_index_trees_from_redis(lang_code)
+        
+    try:
+        update_admin_lang_setting(data)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        result = str(e)
 
     return jsonify(msg=result)
 
