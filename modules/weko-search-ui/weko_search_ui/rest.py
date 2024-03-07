@@ -527,10 +527,10 @@ class GetFacetSearchConditions(ContentNegotiatedMethodView):
         req_key = request.values.get("key", '').strip()
         search_type = request.values.get("search_type", '')
         if not req_key:
-            current_app.logger.warning("Parameter 'key' is required.")
+            current_app.logger.info("Parameter 'key' is required.")
             abort(400)
         elif not search_type:
-            current_app.logger.warning("Parameter 'search_type' is required.")
+            current_app.logger.info("Parameter 'search_type' is required.")
             abort(400)
 
         keys = req_key.split(",")
@@ -551,9 +551,6 @@ class GetFacetSearchConditions(ContentNegotiatedMethodView):
                     if value:
                         params[param] = value
 
-            print(f"=== page: {page}")
-            print(f"=== size: {size}")
-            print(f"=== max_result_window: {self.max_result_window}")
             if page * size >= self.max_result_window:
                 raise MaxResultWindowRESTError()
             urlkwargs = dict()
