@@ -70,6 +70,7 @@ from weko_authors import WekoAuthors
 from weko_authors.models import Authors
 from weko_index_tree import WekoIndexTree
 from weko_index_tree.models import Index, IndexStyle
+from weko_items_ui.config import WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_MERGE_MODE_DEFAULT
 from weko_records_ui import WekoRecordsUI
 from weko_records import WekoRecords
 from weko_records.models import SiteLicenseInfo, SiteLicenseIpAddress,ItemType,ItemTypeName
@@ -162,6 +163,7 @@ def base_app(instance_path, cache_config,request ,search_class):
         WEKO_THEME_INSTANCE_DATA_DIR="data",
         SEARCH_INDEX_PREFIX="test-",
         INDEXER_DEFAULT_DOC_TYPE="item-v1.0.0",
+        WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_MERGE_MODE_DEFAULT=WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_MERGE_MODE_DEFAULT
     )
     app_.testing = True
     app_.login_manager = dict(_login_disabled=True)

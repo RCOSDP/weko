@@ -1834,6 +1834,21 @@ class TestCrisLinkageSettingView:
         client.post(url,data=data)
         mock_flash.assert_called_with('Please input at least one of client id key or private key',"error")
 
+        outlenge_str = 'a'
+        for i in range(10):
+            outlenge_str = outlenge_str + '1234567890'
+        data = {'researchmap_cidkey_contents':outlenge_str,'researchmap_pkey_contents':''}
+        client.post(url,data=data)
+        mock_flash.assert_called_with('client id key size too large.',"error")
+
+        outlenge_str = 'a'
+        for i in range(500):
+            outlenge_str = outlenge_str + '1234567890'
+        data = {'researchmap_cidkey_contents':'','researchmap_pkey_contents':outlenge_str}
+        client.post(url,data=data)
+        mock_flash.assert_called_with('private key size too large.',"error")
+
+
         with patch("weko_admin.admin.AdminSettings.get",return_value=""):
             data = {'researchmap_cidkey_contents':'test_cidkey','researchmap_pkey_contents':'test_pkey'}
             test = {'researchmap_cidkey_contents':'test_cidkey','researchmap_pkey_contents':'test_pkey','merge_mode':''}
