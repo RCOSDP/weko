@@ -44,17 +44,6 @@ from .api import SearchSetting
 from .permissions import search_permission
 
 
-def get_item_type_aggs(search_index):
-    """Get item types aggregations.
-
-    :return: aggs dict
-    """
-    from weko_admin.utils import get_facet_search_query
-
-    facets = get_facet_search_query(search_permission.can())
-    return facets.get(search_index).get("aggs", {})
-
-
 def get_permission_filter(index_id: str = None):
     """Check permission.
 
@@ -1169,9 +1158,6 @@ def item_path_search_factory(self, search, index_id=None):
         q = request.values.get("q") or "0" if index_id is None else index_id
 
         if q != "0":
-            # add item type aggs
-            query_q["aggs"]["path"]["aggs"].update(get_item_type_aggs(search._index[0]))
-
             if q:
                 mut, is_perm_paths = get_permission_filter(q)
             else:
@@ -1314,10 +1300,6 @@ def item_path_search_factory(self, search, index_id=None):
                         ]
                     }
                 })
-
-            query_not_q["aggs"]["path"]["aggs"].update(
-                get_item_type_aggs(search._index[0])
-            )
 
             if mut:
                 mut = list(map(lambda x: x.to_dict(), mut))
@@ -1599,3 +1581,23 @@ def feedback_email_search_factory(self, search):
     # debug elastic search query
     current_app.logger.debug(orjson.dumps((search.query()).to_dict()).decode())
     return search
+
+def facet_condition_search_factory(self, search, query_parser=None):
+    """Factory for get facet condition.
+
+    :param self:
+    :param search:
+    :param query_parser:
+    :return:
+    """
+    search_type = request.values.get("search_type")
+    q = str(request.values.get("q"))
+    if search_type == config.WEKO_SEARCH_TYPE_DICT["INDEX"] and re.fullmatch('\d+', q):
+        # index search
+        return item_path_search_factory(self, search, index_id=q)
+    else:
+        # full_text or keyword search
+        search_type = config.WEKO_SEARCH_TYPE_DICT["FULL_TEXT"] if search_type == config.WEKO_SEARCH_TYPE_DICT["INDEX"] else search_type
+        return default_search_factory(
+            self, search, query_parser, search_type=search_type
+        )

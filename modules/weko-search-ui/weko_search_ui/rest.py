@@ -22,8 +22,10 @@
 
 import pickle
 from functools import partial
+import re
 
-from flask import Blueprint, abort, current_app, jsonify, redirect, request, url_for
+from elasticsearch_dsl.search import AggsProxy
+from flask import Blueprint, abort, current_app, jsonify, redirect, request, url_for, make_response
 from invenio_db import db
 from invenio_files_rest.storage import PyFSFileStorage
 from invenio_i18n.ext import current_i18n
@@ -50,7 +52,8 @@ from invenio_rest import ContentNegotiatedMethodView
 from invenio_rest.views import create_api_errorhandler
 from webargs import fields
 from webargs.flaskparser import use_kwargs
-from weko_admin.models import SearchManagement as sm
+from weko_admin.models import FacetSearchSetting
+from weko_admin.utils import get_facet_search_query
 from weko_index_tree.api import Indexes
 from weko_index_tree.utils import count_items, recorrect_private_items_count
 from weko_records.models import ItemType
@@ -138,17 +141,25 @@ def create_blueprint(app, endpoints):
             max_result_window=options.get("max_result_window"),
         )
 
-        isr = IndexSearchResource.as_view(
-            IndexSearchResource.view_name.format(endpoint),
-            ctx=ctx,
-            search_serializers=search_serializers,
-            record_serializers=serializers,
-            default_media_type=options.get("default_media_type"),
-        )
+        if endpoint == 'facet_condition':
+            view_func = GetFacetSearchConditions.as_view(
+                GetFacetSearchConditions.view_name.format(endpoint),
+                ctx=ctx,
+                search_serializers=search_serializers,
+                default_media_type=options.get("default_media_type"),
+            )
+        else:
+            view_func = IndexSearchResource.as_view(
+                IndexSearchResource.view_name.format(endpoint),
+                ctx=ctx,
+                search_serializers=search_serializers,
+                record_serializers=serializers,
+                default_media_type=options.get("default_media_type"),
+            )
 
         blueprint.add_url_rule(
             options.pop("index_route"),
-            view_func=isr,
+            view_func=view_func,
             methods=['GET'],
         )
 
@@ -192,9 +203,6 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         :returns: the search result containing hits and aggregations as
         returned by invenio-search.
         """
-        from weko_admin.models import FacetSearchSetting
-        from weko_admin.utils import get_facet_search_query
-
         page = request.values.get("page", 1, type=int)
         size = request.values.get("size", 20, type=int) 
         is_search = request.values.get("is_search", 0 ,type=int ) #toppage and search_page is 1
@@ -478,3 +486,116 @@ def get_heading_info(data, lang, item_type):
         heading = heading_text
 
     return heading
+
+class GetFacetSearchConditions(ContentNegotiatedMethodView):
+    view_name = "{0}"
+
+    def __init__(
+            self, 
+            ctx,
+            search_serializers=None,
+            default_media_type=None,
+            **kwargs
+    ):
+        """Constructor."""
+        super(GetFacetSearchConditions, self).__init__(
+            method_serializers={
+                "GET": search_serializers,
+            },
+            default_method_media_type={
+                "GET": default_media_type,
+            },
+            default_media_type=default_media_type,
+            **kwargs
+        )
+        for key, value in ctx.items():
+            setattr(self, key, value)
+
+    def get(self, **kwargs):
+        """Get facet-search conditions API."""
+
+        def _set_facet_agg_query(search, facets, keys):
+            search_index = current_app.config["SEARCH_UI_SEARCH_INDEX"]
+            if facets and search_index and "aggs" in facets[search_index]:
+                aggs = facets[search_index]["aggs"]
+                for agg_key, agg_terms in aggs.items():
+                    if agg_key in keys:
+                        search.aggs[agg_key] = agg_terms if not callable(agg_terms) else agg_terms()
+            return search
+
+        # Check request params
+        req_key = request.values.get("key", '').strip()
+        search_type = request.values.get("search_type", '')
+        if not req_key:
+            current_app.logger.info("Parameter 'key' is required.")
+            abort(400)
+        elif not search_type:
+            current_app.logger.info("Parameter 'search_type' is required.")
+            abort(400)
+
+        keys = req_key.split(",")
+        query = request.values.get("q")
+        page = request.values.get("page", 1, type=int)
+        size = request.values.get("size", 20, type=int)
+
+        facets = get_facet_search_query()
+
+        if search_type == current_app.config["WEKO_SEARCH_TYPE_DICT"]["INDEX"] and re.fullmatch('\d+', query):
+            ### index search ###
+            params = {}
+            search_index = current_app.config["SEARCH_UI_SEARCH_INDEX"]
+            if facets and search_index and "post_filters" in facets[search_index]:
+                post_filters = facets[search_index]["post_filters"]
+                for param in post_filters:
+                    value = request.args.getlist(param)
+                    if value:
+                        params[param] = value
+
+            if page * size >= self.max_result_window:
+                raise MaxResultWindowRESTError()
+            urlkwargs = dict()
+            search_obj = self.search_class()
+            search = search_obj.with_preference_param().params(version=True)
+            search = search[(page - 1) * size : page * size]
+            search, qs_kwargs = self.search_factory(self, search)
+            query = request.values.get("q")
+            if query:
+                urlkwargs["q"] = query
+            
+            # Set facet search post filter
+            weko_faceted_search_mapping = FacetSearchSetting.get_activated_facets_mapping()
+            for param in params:
+                query_key = weko_faceted_search_mapping[param]
+                search = search.post_filter({"terms": {query_key: params[param]}})
+
+            # init aggs (delete aggs['path'])
+            search.aggs = AggsProxy(search)
+
+        else:
+            ### keyword search ###
+            urlkwargs = dict()
+            search_obj = self.search_class()
+            search = search_obj.with_preference_param().params(version=True)
+            search, qs_kwargs = self.search_factory(self, search)
+
+        # Set facets aggs
+        search = _set_facet_agg_query(search, facets, keys)
+
+        # Execute search
+        search_result = search.execute()
+        rd = search_result.to_dict()
+        aggs = rd.get('aggregations', {})
+
+        response = {}
+        for key in keys:
+            response[key] = []
+            if key in aggs:
+                buckets = aggs[key].get('buckets', [])
+                for bucket in buckets:
+                    condition = dict(
+                        name = bucket['key'],
+                        count = bucket['doc_count']
+                    )
+                    response[key].append(condition)
+
+        return make_response(jsonify(response), 200)

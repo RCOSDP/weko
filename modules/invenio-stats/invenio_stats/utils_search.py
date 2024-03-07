@@ -5,10 +5,10 @@ from flask_login import current_user
 from invenio_access import Permission, action_factory
 from invenio_records_rest.errors import InvalidQueryRESTError
 from weko_index_tree.api import Indexes
+from werkzeug.datastructures import MultiDict
 
 def billing_file_search_factory(search):
     """Create billing file searcher."""
-    from invenio_records_rest.facets import default_facets_factory
     from invenio_records_rest.sorter import default_sorter_factory
 
     # add  Permission filter by publish date and status
@@ -34,9 +34,8 @@ def billing_file_search_factory(search):
         raise InvalidQueryRESTError()
 
     search_index = search._index[0]
-    search, urlkwargs = default_facets_factory(search, search_index)
+    urlkwargs = MultiDict()
     search, sortkwargs = default_sorter_factory(search, search_index)
-
     urlkwargs.add("q", query_q)
     # debug elastic search query
     current_app.logger.debug("query: {}".format(orjson.dumps((search.query()).to_dict()).decode()))

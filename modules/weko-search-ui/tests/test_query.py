@@ -13,7 +13,6 @@ from weko_admin.config import WEKO_ADMIN_MANAGEMENT_OPTIONS
 from weko_search_ui.config import WEKO_SEARCH_KEYWORDS_DICT, WEKO_SEARCH_UI_OPENSEARCH_ID_PARAM
 
 from weko_search_ui.query import (
-    get_item_type_aggs,
     get_permission_filter,
     default_search_factory,
     item_path_search_factory,
@@ -22,13 +21,6 @@ from weko_search_ui.query import (
     item_search_factory,
     feedback_email_search_factory
 )
-
-# def get_item_type_aggs(search_index):
-# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_query.py::test_get_item_type_aggs -vv -s --cov-branch --cov-report=xml --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-def test_get_item_type_aggs(i18n_app, users, client_request_args, db_records2, records):
-    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
-        assert not get_item_type_aggs("test-weko")
-
 
 # def get_permission_filter(index_id: str = None):
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_query.py::test_get_permission_filter -vv -s --cov-branch --cov-report=xml --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
@@ -919,15 +911,14 @@ def test_item_path_search_factory(i18n_app, users, indices):
     i18n_app.config['OAISERVER_ES_MAX_CLAUSE_COUNT'] = 1
     i18n_app.config['WEKO_ADMIN_MANAGEMENT_OPTIONS'] = WEKO_ADMIN_MANAGEMENT_OPTIONS
     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
-        with patch("weko_search_ui.query.get_item_type_aggs", return_value={}):
-            mock_searchperm = MagicMock(side_effect=MockSearchPerm)
-            with patch('weko_search_ui.query.search_permission', mock_searchperm):
-                res = item_path_search_factory(self=None, search=search, index_id=33)
+        mock_searchperm = MagicMock(side_effect=MockSearchPerm)
+        with patch('weko_search_ui.query.search_permission', mock_searchperm):
+            res = item_path_search_factory(self=None, search=search, index_id=33)
+            assert res
+            _rv = ([Bool(must=[Terms(path=[])], should=[Match(weko_creator_id='5'), Match(weko_shared_id='5'), Bool(must=[Match(publish_status='0'), Range(publish_date={'lte': 'now/d'})])]), Bool(must=[Match(relation_version_is_last='true')])], ['3', '4', '5'])
+            with patch('weko_search_ui.query.get_permission_filter', return_value=_rv):
+                res = item_path_search_factory(self=None, search=search, index_id=None)
                 assert res
-                _rv = ([Bool(must=[Terms(path=[])], should=[Match(weko_creator_id='5'), Match(weko_shared_id='5'), Bool(must=[Match(publish_status='0'), Range(publish_date={'lte': 'now/d'})])]), Bool(must=[Match(relation_version_is_last='true')])], ['3', '4', '5'])
-                with patch('weko_search_ui.query.get_permission_filter', return_value=_rv):
-                    res = item_path_search_factory(self=None, search=search, index_id=None)
-                    assert res
 
 
 # def check_permission_user():
