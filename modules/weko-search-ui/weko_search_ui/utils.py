@@ -1208,7 +1208,6 @@ def register_item_metadata(item, root_path, owner, is_gakuninrdm=False):
         root_path   -- {str} path of the folder include files.
         is_gakuninrdm -- {bool} Is call by gakuninrdm api.
     """
-    # ! TEST - DR IMPORT - POSSIBLE FIX
     def clean_file_metadata(item_type_id, data):
         # clear metadata of file information
         is_cleaned = True
@@ -1293,32 +1292,13 @@ def register_item_metadata(item, root_path, owner, is_gakuninrdm=False):
         }
     )
 
-    # ! TEST - DR IMPORT - POSSIBLE FIX
-    # if item.get('doi') and item.get('doi_ra') and item.get('identifier_key'):
-    #     for new_data_key in new_data.keys():
-    #         if new_data.get(new_data_key,{}).get("subitem_identifier_reg_text") \
-    #                 and new_data.get(new_data_key,{}).get("subitem_identifier_reg_type"):
-    #             new_data[item.get('identifier_key')] = {}
-    #             new_data[item.get('identifier_key')]['subitem_identifier_reg_text'] = item.get('doi')
-    #             new_data[item.get('identifier_key')]['subitem_identifier_reg_type'] = item.get('doi_ra')
-
     if item.get('doi') and item.get('doi_ra') and item.get('identifier_key'):
         if not new_data.get(item.get('identifier_key')):
             new_data[item.get('identifier_key')] = {}
             new_data[item.get('identifier_key')]['subitem_identifier_reg_text'] = item.get('doi')
             new_data[item.get('identifier_key')]['subitem_identifier_reg_type'] = item.get('doi_ra')
 
-    current_app.logger.error("\n\n weko_search_ui/utils.py::clean_file_metadata_2")
-    current_app.logger.error(f'item.get("metadata") ~ {item.get("metadata")}')
-    current_app.logger.error(f'new_data ~ {new_data}')
-    current_app.logger.error(f'record ~ {record}')
-    current_app.logger.error("\n\n")
-
     new_data = escape_newline(new_data)
-
-    current_app.logger.error("\n\n weko_search_ui/utils.py::clean_file_metadata_3")
-    current_app.logger.error(f'new_data ~ {new_data}')
-    current_app.logger.error("\n\n")
 
     item_status = {
         "index": new_data["path"],
@@ -1373,16 +1353,10 @@ def register_item_metadata(item, root_path, owner, is_gakuninrdm=False):
                 deleted_items.append(metadata_id)
                 new_data["deleted_items"] = deleted_items
 
-    # TODO This will save the import item information
     deposit.update(item_status, new_data)
     deposit['_deposit']['owners'] = [int(owner)]
     deposit['_deposit']['created_by'] = int(owner)
     deposit['owner'] = str(owner)
-
-    # ! TEST - DR IMPORT
-    print("\n\n weko_search_ui/utils.py::register_item_metadata")
-    print(f"deposit ~ {deposit}")
-    print("\n\n ")
 
     deposit.commit()
 
@@ -1542,10 +1516,6 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
 
     """
 
-    # ! TEST - DR IMPORT - ERROR EVEN FOR NON-RESERVED DOIs
-    # TODO - Will build another environment and test import
-    current_app.logger.error(f"item 9999 ~ {item}")
-
     owner = -1
     if request_info and 'user_id' in request_info:
         owner = request_info['user_id']
@@ -1563,160 +1533,154 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
     else:
         bef_metadata = None
         bef_last_ver_metadata = None
-        # try:
-        # current_app.logger.debug("item: {0}".format(item))
-        status = item.get("status")
-        root_path = item.get("root_path", "")
-        if status == "new":
-            item_id = create_deposit(item.get("id"))
-            item["id"] = item_id["recid"]
-            item["pid"] = item_id.piddef 
-        else:
-            handle_check_item_is_locked(item)
-            # cache ES data for rollback
-            pid = PersistentIdentifier.query.filter_by(
-                pid_type="recid", pid_value=item["id"]
-            ).first()
-            item["pid"] = pid
-            bef_metadata = WekoIndexer().get_metadata_by_item_id(pid.object_uuid)
-            bef_last_ver_metadata = WekoIndexer().get_metadata_by_item_id(
-                PIDVersioning(child=pid).last_child.object_uuid
-            )
+        try:
+            # current_app.logger.debug("item: {0}".format(item))
+            status = item.get("status")
+            root_path = item.get("root_path", "")
+            if status == "new":
+                item_id = create_deposit(item.get("id"))
+                item["id"] = item_id["recid"]
+                item["pid"] = item_id.piddef 
+            else:
+                handle_check_item_is_locked(item)
+                # cache ES data for rollback
+                pid = PersistentIdentifier.query.filter_by(
+                    pid_type="recid", pid_value=item["id"]
+                ).first()
+                item["pid"] = pid
+                bef_metadata = WekoIndexer().get_metadata_by_item_id(pid.object_uuid)
+                bef_last_ver_metadata = WekoIndexer().get_metadata_by_item_id(
+                    PIDVersioning(child=pid).last_child.object_uuid
+                )
 
-        # ! TEST - DR IMPORT - ERROR EVEN FOR NON-RESERVED DOIs
-        # TODO - Will build another environment and test import
-        current_app.logger.error(f"item 8888 ~ {item}")
+            register_item_metadata(item, root_path, owner, is_gakuninrdm)
+            if not is_gakuninrdm:
+                if current_app.config.get("WEKO_HANDLE_ALLOW_REGISTER_CNRI"):
+                    register_item_handle(item)
+                register_item_doi(item)
 
-        register_item_metadata(item, root_path, owner, is_gakuninrdm)
-        if not is_gakuninrdm:
-            if current_app.config.get("WEKO_HANDLE_ALLOW_REGISTER_CNRI"):
-                register_item_handle(item)
-            register_item_doi(item)
+                status_number = WEKO_IMPORT_PUBLISH_STATUS.index(
+                    item.get("publish_status")
+                )
+                register_item_update_publish_status(item, str(status_number))
+                if item.get("status") == "new":
+                    # Send item_created event to ES.
+                    send_item_created_event_to_es(item, request_info)
+            db.session.commit()
 
-            status_number = WEKO_IMPORT_PUBLISH_STATUS.index(
-                item.get("publish_status")
-            )
-            register_item_update_publish_status(item, str(status_number))
-            if item.get("status") == "new":
-                # Send item_created event to ES.
-                send_item_created_event_to_es(item, request_info)
-        db.session.commit()
+            # clean unuse file content in keep mode if import success
+            cache_key = current_app.config[
+                "WEKO_SEARCH_UI_IMPORT_UNUSE_FILES_URI"
+            ].format(item["id"])
+            list_unuse_uri = get_cache_data(cache_key)
 
-        # clean unuse file content in keep mode if import success
-        cache_key = current_app.config[
-            "WEKO_SEARCH_UI_IMPORT_UNUSE_FILES_URI"
-        ].format(item["id"])
-        list_unuse_uri = get_cache_data(cache_key)
+            current_app.logger.error(f"list_unuse_uri ~ {list_unuse_uri}")
 
-        current_app.logger.error(f"list_unuse_uri ~ {list_unuse_uri}")
+            if list_unuse_uri:
+                for uri in list_unuse_uri:
+                    file = current_files_rest.storage_factory(fileurl=uri, size=1)
+                    fs, path = file._get_fs()
+                    if fs.exists(path):
+                        file.delete()
 
-        if list_unuse_uri:
-            for uri in list_unuse_uri:
-                file = current_files_rest.storage_factory(fileurl=uri, size=1)
-                fs, path = file._get_fs()
-                if fs.exists(path):
-                    file.delete()
+                delete_cache_data(cache_key)
 
-            # ! TEST - DR IMPORT
-            # TODO This deletes the record's reserved doi information
-            delete_cache_data(cache_key)
+        except SQLAlchemyError as ex:
+            current_app.logger.error("sqlalchemy error: ", ex)
+            db.session.rollback()
+            if item.get("id"):
+                pid = PersistentIdentifier.query.filter_by(
+                    pid_type="recid", pid_value=item["id"]
+                ).first()
+                bef_metadata = WekoIndexer().get_metadata_by_item_id(pid.object_uuid)
+                bef_last_ver_metadata = WekoIndexer().get_metadata_by_item_id(
+                    PIDVersioning(child=pid).last_child.object_uuid
+                )
+                handle_remove_es_metadata(item, bef_metadata, bef_last_ver_metadata)
+            current_app.logger.error("item id: %s update error." % item["id"])
+            traceback.print_exc(file=sys.stdout)
+            error_id = None
+            if (
+                ex.args
+                and len(ex.args)
+                and isinstance(ex.args[0], dict)
+                and ex.args[0].get("error_id")
+            ):
+                error_id = ex.args[0].get("error_id")
 
-        # except SQLAlchemyError as ex:
-        #     current_app.logger.error("sqlalchemy error: ", ex)
-        #     db.session.rollback()
-        #     if item.get("id"):
-        #         pid = PersistentIdentifier.query.filter_by(
-        #             pid_type="recid", pid_value=item["id"]
-        #         ).first()
-        #         bef_metadata = WekoIndexer().get_metadata_by_item_id(pid.object_uuid)
-        #         bef_last_ver_metadata = WekoIndexer().get_metadata_by_item_id(
-        #             PIDVersioning(child=pid).last_child.object_uuid
-        #         )
-        #         handle_remove_es_metadata(item, bef_metadata, bef_last_ver_metadata)
-        #     current_app.logger.error("item id: %s update error." % item["id"])
-        #     traceback.print_exc(file=sys.stdout)
-        #     error_id = None
-        #     if (
-        #         ex.args
-        #         and len(ex.args)
-        #         and isinstance(ex.args[0], dict)
-        #         and ex.args[0].get("error_id")
-        #     ):
-        #         error_id = ex.args[0].get("error_id")
+            return {"success": False, "error_id": error_id}
+        except ElasticsearchException as ex:
+            current_app.logger.error("elasticsearch  error: ", ex)
+            db.session.rollback()
+            if item.get("id"):
+                pid = PersistentIdentifier.query.filter_by(
+                    pid_type="recid", pid_value=item["id"]
+                ).first()
+                bef_metadata = WekoIndexer().get_metadata_by_item_id(pid.object_uuid)
+                bef_last_ver_metadata = WekoIndexer().get_metadata_by_item_id(
+                    PIDVersioning(child=pid).last_child.object_uuid
+                )
+                handle_remove_es_metadata(item, bef_metadata, bef_last_ver_metadata)
+            current_app.logger.error("item id: %s update error." % item["id"])
+            traceback.print_exc(file=sys.stdout)
+            error_id = None
+            if (
+                ex.args
+                and len(ex.args)
+                and isinstance(ex.args[0], dict)
+                and ex.args[0].get("error_id")
+            ):
+                error_id = ex.args[0].get("error_id")
 
-        #     return {"success": False, "error_id": error_id}
-        # except ElasticsearchException as ex:
-        #     current_app.logger.error("elasticsearch  error: ", ex)
-        #     db.session.rollback()
-        #     if item.get("id"):
-        #         pid = PersistentIdentifier.query.filter_by(
-        #             pid_type="recid", pid_value=item["id"]
-        #         ).first()
-        #         bef_metadata = WekoIndexer().get_metadata_by_item_id(pid.object_uuid)
-        #         bef_last_ver_metadata = WekoIndexer().get_metadata_by_item_id(
-        #             PIDVersioning(child=pid).last_child.object_uuid
-        #         )
-        #         handle_remove_es_metadata(item, bef_metadata, bef_last_ver_metadata)
-        #     current_app.logger.error("item id: %s update error." % item["id"])
-        #     traceback.print_exc(file=sys.stdout)
-        #     error_id = None
-        #     if (
-        #         ex.args
-        #         and len(ex.args)
-        #         and isinstance(ex.args[0], dict)
-        #         and ex.args[0].get("error_id")
-        #     ):
-        #         error_id = ex.args[0].get("error_id")
+            return {"success": False, "error_id": error_id}
+        except redis.RedisError as ex:
+            current_app.logger.error("redis  error: ", ex)
+            db.session.rollback()
+            if item.get("id"):
+                pid = PersistentIdentifier.query.filter_by(
+                    pid_type="recid", pid_value=item["id"]
+                ).first()
+                bef_metadata = WekoIndexer().get_metadata_by_item_id(pid.object_uuid)
+                bef_last_ver_metadata = WekoIndexer().get_metadata_by_item_id(
+                    PIDVersioning(child=pid).last_child.object_uuid
+                )
+                handle_remove_es_metadata(item, bef_metadata, bef_last_ver_metadata)
+            current_app.logger.error("item id: %s update error." % item["id"])
+            traceback.print_exc(file=sys.stdout)
+            error_id = None
+            if (
+                ex.args
+                and len(ex.args)
+                and isinstance(ex.args[0], dict)
+                and ex.args[0].get("error_id")
+            ):
+                error_id = ex.args[0].get("error_id")
 
-        #     return {"success": False, "error_id": error_id}
-        # except redis.RedisError as ex:
-        #     current_app.logger.error("redis  error: ", ex)
-        #     db.session.rollback()
-        #     if item.get("id"):
-        #         pid = PersistentIdentifier.query.filter_by(
-        #             pid_type="recid", pid_value=item["id"]
-        #         ).first()
-        #         bef_metadata = WekoIndexer().get_metadata_by_item_id(pid.object_uuid)
-        #         bef_last_ver_metadata = WekoIndexer().get_metadata_by_item_id(
-        #             PIDVersioning(child=pid).last_child.object_uuid
-        #         )
-        #         handle_remove_es_metadata(item, bef_metadata, bef_last_ver_metadata)
-        #     current_app.logger.error("item id: %s update error." % item["id"])
-        #     traceback.print_exc(file=sys.stdout)
-        #     error_id = None
-        #     if (
-        #         ex.args
-        #         and len(ex.args)
-        #         and isinstance(ex.args[0], dict)
-        #         and ex.args[0].get("error_id")
-        #     ):
-        #         error_id = ex.args[0].get("error_id")
+            return {"success": False, "error_id": error_id}
+        except BaseException as ex:
+            current_app.logger.error("Unexpected error: {}".format(ex))
+            db.session.rollback()
+            if item.get("id"):
+                pid = PersistentIdentifier.query.filter_by(
+                    pid_type="recid", pid_value=item["id"]
+                ).first()
+                bef_metadata = WekoIndexer().get_metadata_by_item_id(pid.object_uuid)
+                bef_last_ver_metadata = WekoIndexer().get_metadata_by_item_id(
+                    PIDVersioning(child=pid).last_child.object_uuid
+                )
+                handle_remove_es_metadata(item, bef_metadata, bef_last_ver_metadata)
+            current_app.logger.error("item id: %s update error." % item["id"])
+            traceback.print_exc(file=sys.stdout)
+            error_id = None
+            if (
+                ex.args
+                and len(ex.args)
+                and isinstance(ex.args[0], dict)
+                and ex.args[0].get("error_id")
+            ):
+                error_id = ex.args[0].get("error_id")
 
-        #     return {"success": False, "error_id": error_id}
-        # except BaseException as ex:
-        #     current_app.logger.error("Unexpected error: {}".format(ex))
-        #     db.session.rollback()
-        #     if item.get("id"):
-        #         pid = PersistentIdentifier.query.filter_by(
-        #             pid_type="recid", pid_value=item["id"]
-        #         ).first()
-        #         bef_metadata = WekoIndexer().get_metadata_by_item_id(pid.object_uuid)
-        #         bef_last_ver_metadata = WekoIndexer().get_metadata_by_item_id(
-        #             PIDVersioning(child=pid).last_child.object_uuid
-        #         )
-        #         handle_remove_es_metadata(item, bef_metadata, bef_last_ver_metadata)
-        #     current_app.logger.error("item id: %s update error." % item["id"])
-        #     traceback.print_exc(file=sys.stdout)
-        #     error_id = None
-        #     if (
-        #         ex.args
-        #         and len(ex.args)
-        #         and isinstance(ex.args[0], dict)
-        #         and ex.args[0].get("error_id")
-        #     ):
-        #         error_id = ex.args[0].get("error_id")
-
-        #     return {"success": False, "error_id": error_id}
+            return {"success": False, "error_id": error_id}
     return {"success": True, "recid": item["id"]}
 
 
@@ -2088,10 +2052,6 @@ def handle_check_doi_ra(list_record):
 
     """
 
-    # ! TEST - DR IMPORT
-    print("\n\n weko_search_ui/utils.py::handle_check_doi_ra".upper())
-    print("\n\n")
-
     def check_existed(item_id, doi_ra):
         error = None
         try:
@@ -2152,10 +2112,6 @@ def handle_check_doi_ra(list_record):
 
 
 def handle_check_doi(list_record):
-    # ! TEST - DR IMPORT
-    current_app.logger.error("\n\n\n handle_check_doi 9999".upper())
-    current_app.logger.error(f"")
-    current_app.logger.error("\n\n\n")
     """Check DOI.
 
     :argument
@@ -2183,10 +2139,9 @@ def handle_check_doi(list_record):
                 ):
                     error = _("Specified Prefix of {} is incorrect.").format("DOI")
         else:
-            # ! TEST - DR IMPORT - POSSIBLE FIX - START
+            # DOI RESERVATION FIX ------------ START
             if doi_ra in WEKO_IMPORT_DOI_TYPE:
                 pass
-                # ! TEST - DR IMPORT - POSSIBLE FIX - END          
             else:      
                 if len(split_doi) > 1 and not doi.endswith("/"):
                     error = _("{} cannot be set.").format("DOI")
@@ -2197,6 +2152,7 @@ def handle_check_doi(list_record):
                         doi_ra
                     ):
                         error = _("Specified Prefix of {} is incorrect.").format("DOI")
+            # DOI RESERVATION FIX ------------ END
         return error
 
     for item in list_record:
@@ -2942,13 +2898,6 @@ def handle_fill_system_item(list_record):
 
     """
 
-    # ! TEST - DR IMPORT
-    print("\n\n def handle_fill_system_item(list_record) - 1".upper())
-    # print(f"is_ndl ~ {is_ndl}")
-    # print(f"item_doi ~ {item_doi}")
-    # print(f"item_doi_suffix ~ {item_doi_suffix}")
-    print("\n\n")
-
     def recursive_sub(keys, node, uri_key, current_type):
         #current_app.logger.debug("recursive_sub")
         #current_app.logger.debug(keys)
@@ -3185,15 +3134,7 @@ def handle_fill_system_item(list_record):
                 elif item_doi_suffix is "":
                     errors.append(_('Please specify DOI suffix.'))
             else:
-                # ! TEST - DR IMPORT - POSSIBLE FIX - START
-                current_app.logger.error("\n\n weko_search_ui/utils.py::handle_fill_system_item".upper())
-                current_app.logger.error(f"is_ndl ~ {is_ndl}")
-                current_app.logger.error(f"item_doi ~ {item_doi}")
-                current_app.logger.error(f"item_doi_suffix ~ {item_doi_suffix}")
-                current_app.logger.error(f"existed_doi ~ {existed_doi}")
-                current_app.logger.error(f"list_record ~ {list_record}")
-                current_app.logger.error("\n\n")
-
+                # DOI RESERVATION FIX ------------ START
                 doi_reservation_record_from_list = [
                     reserved_doi
                     for reserved_doi in list_record
@@ -3204,8 +3145,7 @@ def handle_fill_system_item(list_record):
                     pass
                 elif item_doi_suffix and existed_doi is False: 
                     errors.append(_('Do not specify DOI suffix.'))
-                    # errors.append(_('This is the working hour.'))
-                # ! TEST - DR IMPORT - POSSIBLE FIX - END
+                # DOI RESERVATION FIX ------------ END
 
             if checked_item_doi_ra is False:
                 if item_doi_ra not in ("JaLC","Crossref","DataCite","NDL JaLC"):

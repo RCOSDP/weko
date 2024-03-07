@@ -594,17 +594,6 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     else:
         record['permalink_uri'] = permalink
 
-    # ! TEST - DR - START
-    test_doi = record.pid_doi
-    test_cnri = record.pid_cnri
-    print("\n\n weko_records_ui/views.py::default_view_method")
-    print(f"permalink ~ {permalink}")
-    print(f"record ~ {record}")
-    print(f"test_doi ~ {test_doi}")
-    print(f"test_cnri ~ {test_cnri}")
-    print("\n\n")
-    # ! TEST - DR - END
-
     can_update_version = has_update_version_role(current_user)
 
     display_setting = AdminSettings.get(name='display_stats_settings',

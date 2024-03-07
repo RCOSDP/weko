@@ -380,23 +380,14 @@ def check_publish_status(record):
     :param record:
     :return: record is public
     """
-    print("\n\n\n\n 999999999999999999")
-    print(f"record ~ {record}")
+    # DOI RESERVATION FIX ------------ START
     from .utils import is_future
     pst = record.get('publish_status')
     pdt = record.get('pubdate', {}).get('attribute_value')
-    # ! TEST - DR IMPORT - POSSIBLE FIX
-    print("\n\n\n\n 999999999999999999")
-    print(f"pst ~ {pst}")
-    print(f"pdt ~ {pdt}")
-    print(f"is_future(pdt) ~ {is_future(pdt)}")
-
     result = pst and ('0' in pst or not '1' in pst) and not is_future(pdt)
-    print(f"result ~ {result}")
-    print(f"'1' in pst ~ {'1' in pst}")
-    print('\n\n\n\n')
     return result
     # return pst and '0' in pst and not is_future(pdt)
+    # DOI RESERVATION FIX ------------ END
 
 
 # def check_created_id(record):

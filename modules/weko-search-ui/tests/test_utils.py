@@ -1010,7 +1010,85 @@ def test_handle_check_doi(app,identifier):
     handle_check_doi(item)
     assert item == test
 
+
+# ! TEST FOR DOI RESERVATION
+def test_handle_check_doi_for_doi_reservation(app,identifier):
+    filepath = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)),
+        "data",
+        "list_records",
+        "list_records.json",
+    )
+    with open(filepath, encoding="utf-8") as f:
+        list_record = json.load(f)
+    assert handle_check_doi(list_record) == None
+
+    # case new items with doi_ra
+    filepath = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)),
+        "data",
+        "list_records",
+        "b4_handle_check_doi.json",
+    )
+    with open(filepath, encoding="utf-8") as f:
+        list_record = json.load(f)
+    assert handle_check_doi(list_record) == None
+
+    # item = {
+    #     "doi_ra": "JaLC",
+    #     "is_change_identifier": True,
+    #     "status": "new"
+    # }
+    item = MagicMock()
+    with patch("weko_deposit.api.WekoRecord.get_record_by_pid", return_value="1"):
+        assert not handle_check_doi([item])
+
+    #item2 = {"doi_ra": "JaLC", "is_change_identifier": False, "status": "keep"}
+    #mock = MagicMock()
+    #mock2 = MagicMock()
+    #mock3 = MagicMock()
+    #mock2.object_uuid = mock3
+    #mock.pid_recid = mock2
+
+    ## def myfunc():
+    ##     return 1,2
+    ## mock.get_idt_registration_data = myfunc
+
+    #with patch("weko_deposit.api.WekoRecord.get_record_by_pid", return_value=mock):
+    #    # with patch("weko_workflow.utils.IdentifierHandle", return_value=mock):
+    #    assert not handle_check_doi([item2])
     
+    item = [
+        {"id":"1","doi":"","doi_ra":"JaLC","is_change_identifier":True},
+        {"id":"2","doi":"a"*300,"doi_ra":"JaLC","is_change_identifier":True},
+        {"id":"3","doi":"wrong_prefix/","doi_ra":"JaLC","is_change_identifier":True},
+        {"id":"4","doi":"xyz.jalc/","doi_ra":"JaLC","is_change_identifier":True},
+        {"id":"5","doi":"xyz.jalc/12345","doi_ra":"JaLC","is_change_identifier":True},
+        {"id":"6","status":"new","doi":"xyz.jalc/12345","doi_ra":"JaLC","is_change_identifier":False},
+        {"id":"7","status":"new","doi":"wrong_prefix/","doi_ra":"JaLC","is_change_identifier":False},
+        {"id":"8","status":"new","doi":"xyz.jalc/","doi_ra":"JaLC","is_change_identifier":False},
+        {"id":"9","status":"new","doi":"xyz.ndl","doi_ra":"NDL JaLC","is_change_identifier":False},
+        {"id":"10","status":"new","doi":"wrong_prefix/12345","doi_ra":"NDL JaLC","is_change_identifier":False},
+        {"id":"11","status":"new","doi":"xyz.ndl/12345","doi_ra":"NDL JaLC","is_change_identifier":False},
+    ]
+    test = [
+        {"id":"1","doi":"","doi_ra":"JaLC","is_change_identifier":True,"errors":["Please specify DOI."]},
+        {"id":"2","doi":"a"*300,"doi_ra":"JaLC","is_change_identifier":True,"errors":["The specified DOI exceeds the maximum length."]},
+        {"id":"3","doi":"wrong_prefix/","doi_ra":"JaLC","is_change_identifier":True,"errors":["Specified Prefix of DOI is incorrect."]},
+        {"id":"4","doi":"xyz.jalc/","doi_ra":"JaLC","is_change_identifier":True,"errors":["Please specify DOI suffix."]},
+        {"id":"5","doi":"xyz.jalc/12345","doi_ra":"JaLC","is_change_identifier":True},
+        {"id":"6","status":"new","doi":"xyz.jalc/12345","doi_ra":"JaLC","is_change_identifier":False,"errors":["DOI cannot be set."]},
+        {"id":"7","status":"new","doi":"wrong_prefix/","doi_ra":"JaLC","is_change_identifier":False,"doi_suffix_not_existed":True,"errors":["Specified Prefix of DOI is incorrect."]},
+        {"id":"8","status":"new","doi":"xyz.jalc/","doi_ra":"JaLC","is_change_identifier":False,"doi_suffix_not_existed":True},
+        {"id":"9","status":"new","doi":"xyz.ndl","doi_ra":"NDL JaLC","is_change_identifier":False,"errors":["DOI cannot be set."]},
+        {"id":"10","status":"new","doi":"wrong_prefix/12345","doi_ra":"NDL JaLC","is_change_identifier":False,"errors":["Specified Prefix of DOI is incorrect."]},
+        {"id":"11","status":"new","doi":"xyz.ndl/12345","doi_ra":"NDL JaLC","is_change_identifier":False},
+    ]
+    handle_check_doi(item)
+    assert item == test
+
+
+
 
 # def register_item_handle(item):
 def test_register_item_handle(i18n_app, es_item_file_pipeline, es_records):
@@ -1708,6 +1786,209 @@ def test_handle_fill_system_item(app, test_list_records,identifier, mocker):
             handle_fill_system_item(items)
             assert len(items) == len(items_result)
             assert items == items_result
+
+
+# ! TEST FOR DOI RESERVATION
+def test_handle_fill_system_item_for_doi_reservation(app, test_list_records,identifier, mocker):
+
+    filepath = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "data", "item_map.json"
+    )
+    with open(filepath, encoding="utf-8") as f:
+        item_map = json.load(f)
+
+    filepath = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "data", "item_type_mapping.json"
+    )
+    with open(filepath, encoding="utf-8") as f:
+        item_type_mapping = json.load(f)
+    #mocker.patch("weko_records.serializers.utils.get_mapping", return_value=item_map)
+    mocker.patch("weko_search_ui.utils.get_mapping", return_value=item_map)
+    #mocker.patch("weko_records.api.Mapping.get_record", return_value=item_type_mapping)
+    #mocker.patch("weko_search_ui.utils.get_record", return_value=item_type_mapping)
+
+    filepath = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)),
+        "data",
+        "list_records/list_records_fill_system.json",
+    )
+    with open(filepath, encoding="utf-8") as f:
+        list_record = json.load(f)
+
+    items = []
+    items_result = []
+
+    for a in VERSION_TYPE_URI:
+        item = copy.deepcopy(list_record[0])
+        item["metadata"]["item_1617265215918"]["subitem_1522305645492"] = a
+        item["metadata"]["item_1617265215918"][
+            "subitem_1600292170262"
+        ] = VERSION_TYPE_URI[a]
+        item["metadata"]["item_1617186476635"]["subitem_1522299639480"] = "open access"
+        item["metadata"]["item_1617186476635"][
+            "subitem_1600958577026"
+        ] = ACCESS_RIGHT_TYPE_URI["open access"]
+        item["metadata"]["item_1617258105262"]["resourcetype"] = "conference paper"
+        item["metadata"]["item_1617258105262"]["resourceuri"] = RESOURCE_TYPE_URI[
+            "conference paper"
+        ]
+        item["warnings"] = []
+        item["errors"] = []
+        items_result.append(item)
+        item2 = copy.deepcopy(item)
+        item2["metadata"]["item_1617265215918"]["subitem_1522305645492"] = a
+        item2["metadata"]["item_1617265215918"]["subitem_1600292170262"] = ""
+        items.append(item2)
+
+    for a in ACCESS_RIGHT_TYPE_URI:
+        item = copy.deepcopy(list_record[0])
+        item["metadata"]["item_1617265215918"]["subitem_1522305645492"] = "VoR"
+        item["metadata"]["item_1617265215918"][
+            "subitem_1600292170262"
+        ] = VERSION_TYPE_URI["VoR"]
+        item["metadata"]["item_1617186476635"]["subitem_1522299639480"] = a
+        item["metadata"]["item_1617186476635"][
+            "subitem_1600958577026"
+        ] = ACCESS_RIGHT_TYPE_URI[a]
+        item["metadata"]["item_1617258105262"]["resourcetype"] = "conference paper"
+        item["metadata"]["item_1617258105262"]["resourceuri"] = RESOURCE_TYPE_URI[
+            "conference paper"
+        ]
+        item["warnings"] = []
+        item["errors"] = []
+        items_result.append(item)
+        item2 = copy.deepcopy(item)
+        item2["metadata"]["item_1617186476635"]["subitem_1522299639480"] = a
+        item2["metadata"]["item_1617186476635"]["subitem_1600958577026"] = ""
+        items.append(item2)
+
+    for a in RESOURCE_TYPE_URI:
+        item = copy.deepcopy(list_record[0])
+        item["metadata"]["item_1617265215918"]["subitem_1522305645492"] = "VoR"
+        item["metadata"]["item_1617265215918"][
+            "subitem_1600292170262"
+        ] = VERSION_TYPE_URI["VoR"]
+        item["metadata"]["item_1617186476635"]["subitem_1522299639480"] = "open access"
+        item["metadata"]["item_1617186476635"][
+            "subitem_1600958577026"
+        ] = ACCESS_RIGHT_TYPE_URI["open access"]
+        item["metadata"]["item_1617258105262"]["resourcetype"] = a
+        item["metadata"]["item_1617258105262"]["resourceuri"] = RESOURCE_TYPE_URI[a]
+        item["warnings"] = []
+        item["errors"] = []
+        items_result.append(item)
+        item2 = copy.deepcopy(item)
+        item2["metadata"]["item_1617258105262"]["resourcetype"] = a
+        item2["metadata"]["item_1617258105262"]["resourceuri"] = ""
+        items.append(item2)
+    # identifier_type is NDL JaLC, not prefix/suffix
+    item = copy.deepcopy(list_record[0])
+    item["metadata"]["item_1617186819068"]={'subitem_identifier_reg_type':"NDL JaLC", 'subitem_identifier_reg_text': "xyz.ndl/123456"}
+    item["metadata"]["item_1617186476635"]["subitem_1522299639480"] = "open access"
+    item["metadata"]["item_1617186476635"][
+        "subitem_1600958577026"
+    ] = ACCESS_RIGHT_TYPE_URI["open access"]
+    item["metadata"]["item_1617265215918"]["subitem_1522305645492"] = "VoR"
+    item["metadata"]["item_1617265215918"][
+        "subitem_1600292170262"
+    ] = VERSION_TYPE_URI["VoR"]
+    item["metadata"]["item_1617258105262"]["resourcetype"] = "conference paper"
+    item["metadata"]["item_1617258105262"]["resourceuri"] = RESOURCE_TYPE_URI[
+        "conference paper"
+    ]
+    item["doi"] = "xyz.ndl/123456"
+    item["doi_ra"] = "NDL JaLC"
+    item["is_change_identifier"]=False
+    item["warnings"]=[]
+    item["errors"]=[]
+    items_result.append(item)
+    item2 = copy.deepcopy(item)
+    del item2["metadata"]["item_1617186819068"]
+    item2["metadata"]["item_1617186476635"]["subitem_1600958577026"] = ""
+    item2["metadata"]["item_1617258105262"]["resourceuri"] = ""
+    items.append(item2)
+    
+    # identifier_type is NDL JaLC, not suffix
+    item = copy.deepcopy(list_record[0])
+    item["metadata"]["item_1617186819068"]={'subitem_identifier_reg_type':"NDL JaLC", 'subitem_identifier_reg_text': ""}
+    item["metadata"]["item_1617186476635"]["subitem_1522299639480"] = "open access"
+    item["metadata"]["item_1617186476635"][
+        "subitem_1600958577026"
+    ] = ACCESS_RIGHT_TYPE_URI["open access"]
+    item["metadata"]["item_1617265215918"]["subitem_1522305645492"] = "VoR"
+    item["metadata"]["item_1617265215918"][
+        "subitem_1600292170262"
+    ] = VERSION_TYPE_URI["VoR"]
+    item["metadata"]["item_1617258105262"]["resourcetype"] = "conference paper"
+    item["metadata"]["item_1617258105262"]["resourceuri"] = RESOURCE_TYPE_URI[
+        "conference paper"
+    ]
+    item["doi"] = ""
+    item["doi_ra"] = "NDL JaLC"
+    item["is_change_identifier"]=False
+    item["warnings"]=[]
+    item["errors"]=["Please specify DOI prefix/suffix."]
+    items_result.append(item)
+    item2 = copy.deepcopy(item)
+    item2["errors"] = []
+    del item2["metadata"]["item_1617186819068"]
+    item2["metadata"]["item_1617186476635"]["subitem_1600958577026"] = ""
+    item2["metadata"]["item_1617258105262"]["resourceuri"] = ""
+    items.append(item2)
+    
+    # identifier_type is NDL JaLC, not suffix
+    item = copy.deepcopy(list_record[0])
+    item["metadata"]["item_1617186819068"]={'subitem_identifier_reg_type':"NDL JaLC", 'subitem_identifier_reg_text': "xyz.ndl/"}
+    item["metadata"]["item_1617186476635"]["subitem_1522299639480"] = "open access"
+    item["metadata"]["item_1617186476635"][
+        "subitem_1600958577026"
+    ] = ACCESS_RIGHT_TYPE_URI["open access"]
+    item["metadata"]["item_1617265215918"]["subitem_1522305645492"] = "VoR"
+    item["metadata"]["item_1617265215918"][
+        "subitem_1600292170262"
+    ] = VERSION_TYPE_URI["VoR"]
+    item["metadata"]["item_1617258105262"]["resourcetype"] = "conference paper"
+    item["metadata"]["item_1617258105262"]["resourceuri"] = RESOURCE_TYPE_URI[
+        "conference paper"
+    ]
+    item["doi"] = "xyz.ndl/"
+    item["doi_ra"] = "NDL JaLC"
+    item["is_change_identifier"]=False
+    item["warnings"]=[]
+    item["errors"]=["Please specify DOI suffix."]
+    items_result.append(item)
+    item2 = copy.deepcopy(item)
+    item2["errors"] = []
+    del item2["metadata"]["item_1617186819068"]
+    item2["metadata"]["item_1617186476635"]["subitem_1600958577026"] = ""
+    item2["metadata"]["item_1617258105262"]["resourceuri"] = ""
+    items.append(item2)
+    
+    mock_record = MagicMock()
+    mock_doi = MagicMock()
+    mock_record.pid_doi=None
+    #mock_doi.pid_value=
+    # with open("items.json","w") as f:
+    #     json.dump(items,f)
+
+    # with open("items_result.json","w") as f:
+    #     json.dump(items_result,f)
+
+    # filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data/handle_fill_system_item/items.json")
+    # with open(filepath,encoding="utf-8") as f:
+    #     items = json.load(f)
+
+    # filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data/handle_fill_system_item/items_result.json")
+    # with open(filepath,encoding="utf-8") as f:
+    #     items_result = json.load(f)
+    mocker.patch("weko_deposit.api.WekoRecord.get_record_by_pid",return_value=mock_record)
+    with app.test_request_context():
+        with set_locale("en"):
+            handle_fill_system_item(items)
+            assert len(items) == len(items_result)
+            assert items == items_result
+
+
 
 
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_fill_system_item3 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp

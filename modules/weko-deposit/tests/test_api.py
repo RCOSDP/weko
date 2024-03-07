@@ -1203,8 +1203,14 @@ class TestWekoRecord:
         record = WekoRecord({})
         with pytest.raises(AttributeError):
             record._get_pid('')
+    
+    # ! TEST FOR DOI RESERVATION
+    # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoRecord::test__get_pid_for_doi_reservation -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+    def test__get_pid_for_doi_reservation(self,es_records):
+        record = WekoRecord({})
+        with pytest.raises(AttributeError):
+            record._get_pid('')
         
-
 
     #     def update_item_link(self, pid_value):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoRecord::test_update_item_link -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp

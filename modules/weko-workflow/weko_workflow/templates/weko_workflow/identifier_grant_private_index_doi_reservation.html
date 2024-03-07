@@ -39,7 +39,6 @@
             {% include 'weko_workflow/identifier_grant_private_doi_reservation.html' %}
         {% else %}
             {%- if temporary_idf_grant >= 0 %} <!-- TODO IF Main S -->
-                <!-- ? TEST - DOI RESERVATION - START - MAIN -->
                 {% if "." in record['_deposit']['id'] %} <!-- TODO IF 1 S -->
                     {% if doi_information_key %} <!-- TODO IF 1.1 S -->
                         {% if record[doi_information_key]["attribute_name"] == "Identifier Registration" %} <!-- TODO IF 2 S -->
@@ -57,7 +56,6 @@
                 {% else %}
                     {% include 'weko_workflow/identifier_grant_form.html' %}
                 {% endif %} <!-- TODO IF 1 E -->
-            <!-- !?TEST - DOI RESERVATION - END - MAIN -->
             {%- elif temporary_idf_grant == -1 %}
                 {% include "weko_workflow/modal_withdraw_confirmation.html" %}
                 <div class="row h-100">

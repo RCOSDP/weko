@@ -904,6 +904,16 @@ def test_get_parent_pid_with_type(db_records):
     assert result == None
 
 
+# ! TEST FOR DOI RESERVATION
+def test_get_parent_pid_with_type_for_doi_reservation(db_records):
+    result = get_parent_pid_with_type("doi",db_records[0][2].id)
+    assert result == db_records[0][5]
+
+    result = get_parent_pid_with_type("hdl",db_records[4][2].id)
+    assert result == None
+
+
+
 # def filter_all_condition(all_args):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_filter_all_condition(app, mocker):
@@ -996,6 +1006,22 @@ def test_handle_finish_workflow(workflow, db_records, mocker):
     recid = None
     
     handle_finish_workflow(deposit,current_pid,recid)
+
+
+# ! TEST FOR DOI RESERVATION
+def test_handle_finish_workflow_for_doi_reservation(workflow, db_records, mocker):
+    result = handle_finish_workflow(None, None, None)
+    assert result == None
+    mocker.patch("weko_deposit.api.WekoDeposit.publish")
+    mocker.patch("weko_deposit.api.WekoDeposit.commit")
+    mocker.patch("weko_workflow.utils.update_records_sets.delay")
+    deposit = db_records[2][6]
+    current_pid = db_records[2][0]
+    recid = None
+    
+    handle_finish_workflow(deposit,current_pid,recid)
+
+
 # def delete_cache_data(key: str):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_delete_cache_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_delete_cache_data(client):

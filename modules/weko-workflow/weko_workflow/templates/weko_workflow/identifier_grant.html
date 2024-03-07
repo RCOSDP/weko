@@ -42,18 +42,12 @@ body=restrict_doi_msg)}}
         <span>{{_('Identifier Grant')}}</span>
     </div>
     <div class="panel-body" style="line-height: 1.6;">
-        <h1>index_is_private_state ~ {{ index_is_private_state }}</h1>
-        <h1>is_public_state ~ {{ is_public_state }}</h1>
-        <h1>pubdate_is_future ~ {{ pubdate_is_future }}</h1>
-        <hr>
-        <h1>{{ record }}</h1>
         {% if not is_public_state %} <!-- TODO IF Public State Check S -->
             {% include 'weko_workflow/identifier_grant_private_doi_reservation.html' %}
         {% elif is_public_state and index_is_private_state %}
             {% include 'weko_workflow/identifier_grant_private_doi_reservation.html' %}
         {% else %}
             {%- if temporary_idf_grant >= 0 %} <!-- TODO IF Main S -->
-                <!-- ? TEST - DOI RESERVATION - START - MAIN -->
                 {% if "." in record['_deposit']['id'] %} <!-- TODO IF 1 S -->
                     {% if doi_information_key %} <!-- TODO IF 1.1 S -->
                         {% if record[doi_information_key]["attribute_name"] == "Identifier Registration" %} <!-- TODO IF 2 S -->
@@ -71,7 +65,6 @@ body=restrict_doi_msg)}}
                 {% else %}
                     {% include 'weko_workflow/identifier_grant_form.html' %}
                 {% endif %} <!-- TODO IF 1 E -->
-            <!-- !?TEST - DOI RESERVATION - END - MAIN -->
             {%- elif temporary_idf_grant == -1 %}
                 {% include "weko_workflow/modal_withdraw_confirmation.html" %}
                 <div class="row h-100">

@@ -56,7 +56,7 @@ from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.errors import PIDDoesNotExistError,PIDDeletedError
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_rest import ContentNegotiatedMethodView
-from invenio_oaiserver.response import is_pubdate_in_future # ! TEST - DR
+from invenio_oaiserver.response import is_pubdate_in_future # DOI RESERVATION FIX
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import types,or_
 from sqlalchemy.exc import SQLAlchemyError
@@ -1037,66 +1037,37 @@ def display_activity(activity_id="0"):
     )
     _id = None
     
-    # ! TEST - DR IMPORT - 9999
-    print("\n\n weko_workflow/views.py::display_activity")
-    # print(f"record_detail_alt ~ {record_detail_alt}")
+    # DOI RESERVATION FIX ------------ START
+    from weko_deposit.api import WekoRecord
     from weko_index_tree.api import Indexes
     from weko_records_ui.permissions import check_publish_status
     from weko_records_ui.utils import is_private_index, is_future
-    # is_public_state = Indexes.is_public_state_and_not_in_future(record.get('id'))
-    
-
     
     index_is_private_state = None
     is_public_state = None
-
-    
-    
-    
-    print(f"approval_record ~ {approval_record}")
-    print(f"record ~ {record}")
+    pubdate_is_future = None
     
     if cur_step == "identifier_grant":
-        print("AAAA")
         if record:
             index_is_private_state = is_private_index(record)
             is_public_state = check_publish_status(record)
             adt = record.get('publish_date')
             pdt = record.get('pubdate', {}).get('attribute_value')
-            print("BBBB")
+            pubdate_is_future = is_future(pdt)
         elif approval_record:
             index_is_private_state = is_private_index(approval_record)
             is_public_state = check_publish_status(approval_record)
             adt = approval_record.get('publish_date')
             pdt = approval_record.get('pubdate', {}).get('attribute_value')
-            print("CCCC")
+            pubdate_is_future = is_future(pdt)
         else:
             pass
 
-    pubdate_is_future = is_future(pdt)
-
     doi_information_exists = False
     doi_information_key = None
-
-    # if record:
-    #     record_keys = [key for key in record.keys()]
-    #     doi_reserve_record = record
-    # else:
-    #     record_keys = [key for key in approval_record[0].keys()]
-    #     doi_reserve_record = approval_record[0]
-    from weko_deposit.api import WekoRecord
-    print(f"doi_information_key ~ {doi_information_key}")                               
-    print(f"doi_information_exists ~ {doi_information_exists}")
-    print(f"index_is_private_state ~ {index_is_private_state}")
-    print(f"is_public_state ~ {is_public_state}")
-    print(f"pubdate_is_future ~ {pubdate_is_future}")
-    print(f"pdt ~ {pdt}")
-    print(f"adt ~ {adt}")
-    print(f"record ~ {record}")
-    
-
     doi_reserve_record = record
     record_keys = [key for key in record.keys()]
+
     for key in record_keys:
         if isinstance(doi_reserve_record[key], dict):
             if "attribute_value_mlt" in doi_reserve_record[key].keys():
@@ -1108,9 +1079,7 @@ def display_activity(activity_id="0"):
                                     identifier_reg_type.get("subitem_identifier_reg_type"):
                                 doi_information_key = key
                                 doi_information_exists = True
-    
-
-    print("\n\n")
+    # DOI RESERVATION FIX ------------ END
 
     if recid:
         _id = re.sub("\.[0-9]+", "", recid.pid_value)
@@ -1119,11 +1088,11 @@ def display_activity(activity_id="0"):
 
     return render_template(
         'weko_workflow/activity_detail.html',
-        pubdate_is_future=pubdate_is_future,
-        is_public_state=is_public_state,
-        index_is_private_state=index_is_private_state,
-        doi_information_key=doi_information_key,
-        doi_information_exists=doi_information_exists,
+        pubdate_is_future=pubdate_is_future, # DOI RESERVATION FIX
+        is_public_state=is_public_state, # DOI RESERVATION FIX
+        index_is_private_state=index_is_private_state, # DOI RESERVATION FIX
+        doi_information_key=doi_information_key, # DOI RESERVATION FIX
+        doi_information_exists=doi_information_exists, # DOI RESERVATION FIX
         action_endpoint_key=current_app.config.get(
             'WEKO_ITEMS_UI_ACTION_ENDPOINT_KEY'),
         action_id=action_id,
@@ -1362,9 +1331,6 @@ def next_action(activity_id='0', action_id=0):
         return jsonify(res.data), 500
     action_order = activity_detail.action_order
 
-    # ! TEST - DR IMPORT - INDEX-TREE 
-    print("\n\n\n FINAL FANTASY XV HELLFIRE \n\n\n")
-
     try:
         schema = get_schema_action(action_id)
         if schema is None:
@@ -1377,9 +1343,6 @@ def next_action(activity_id='0', action_id=0):
         res = ResponseMessageSchema().load({"code":-1, "msg":str(err)})
         return jsonify(res.data), 500
     post_json = schema_load.data
-
-    # ! TEST - DR IMPORT - INDEX-TREE 
-    print("\n\n\n FINAL FANTASY XV SOMNUS ULTIMA \n\n\n")
 
     # A-20220808-00001
     # A-20220808-00001
@@ -1401,9 +1364,6 @@ def next_action(activity_id='0', action_id=0):
         commond=post_json.get('commond'),
         action_order=action_order
     )
-
-    # ! TEST - DR IMPORT - INDEX-TREE 
-    print("\n\n\n FINAL FANTASY XV SOMNUS \n\n\n")
 
     action = Action().get_action_detail(action_id)
     action_endpoint = action.action_endpoint
@@ -1642,33 +1602,13 @@ def next_action(activity_id='0', action_id=0):
             res = ResponseMessageSchema().load({"code":0,"msg":_("success")})
             return jsonify(res.data), 200
 
-    # ? TEST - DR - START
+    # DOI RESERVATION FIX ------------ START
     post_json_doi_reservation = request.get_json()
     is_doi_reservation_value = post_json_doi_reservation.get('is_doi_reservation_value')
     doi_reservation_date = post_json_doi_reservation.get('doi_reservation_date')
-    # identifier_grant = post_json.get('identifier_grant')
-    # identifier_grant_jalc_doi_suffix = post_json.get('identifier_grant_jalc_doi_suffix')
-    # identifier_grant_jalc_doi_link = post_json.get('identifier_grant_jalc_doi_link')
 
-    # print("\n\n is_doi_reservation_value and doi_reservation_date")
-    # print(f'is_doi_reservation_value ~ {is_doi_reservation_value}')
-    # print(f'doi_reservation_date ~ {doi_reservation_date}')
-    # print(f'identifier_grant ~ {identifier_grant}')
-    # print(f'identifier_grant_jalc_doi_suffix ~ {identifier_grant_jalc_doi_suffix}')
-    # print(f'identifier_grant_jalc_doi_link ~ {identifier_grant_jalc_doi_link}')
-    # print(f"post_json.get('identifier_grant') ~ {post_json.get('identifier_grant')}")
-    # print("\n\n")
-
-    # ! TEST - DR - START
     if is_doi_reservation_value == "Reserved":
-        print("\n\n 777777777777777777 \n\n")
-        print(f"post_json ~ {post_json}")
-        # doi_reservation_current_date = datetime.now().strftime("%Y-%m-%d")
-        # if doi_reservation_date == doi_reservation_current_date:
-                # len(doi_reservation_date) == 0:
-        
         if is_pubdate_in_future(record, True):
-            print("\n\n 8888888888888 \n\n")
             # save pidstore_identifier to ItemsMetadata
             identifier_select = post_json.get('identifier_grant')
             if 'identifier_grant' == action_endpoint \
@@ -1685,26 +1625,6 @@ def next_action(activity_id='0', action_id=0):
                     'action_identifier_ndl_jalc_doi': post_json.get(
                         'identifier_grant_ndl_jalc_doi_suffix')
                 }
-
-                print("\n\n identifier_grant 9999")
-                print(f"activity_id ~ {activity_id}")
-                print(f"action_id ~ {action_id}")
-                print(f"identifier_grant.get('action_identifier_select') ~ {identifier_grant.get('action_identifier_select')}")
-                print(f"identifier_grant.get('action_identifier_jalc_doi') ~ {identifier_grant.get('action_identifier_jalc_doi')}")
-                print(f"identifier_grant.get('action_identifier_jalc_cr_doi') ~ {identifier_grant.get('action_identifier_jalc_cr_doi')}")
-                print(f"identifier_grant.get('action_identifier_jalc_dc_doi') ~ {identifier_grant.get('action_identifier_jalc_dc_doi')}")
-                print(f"identifier_grant.get('action_identifier_ndl_jalc_doi') ~ {identifier_grant.get('action_identifier_ndl_jalc_doi')}")
-                print("\n\n")
-
-                # ! TEST - DR - START
-                # TODO - This is responsible for saving and activating DOI information
-                # work_activity.create_or_update_action_identifier(
-                #     activity_id=activity_id,
-                #     action_id=action_id,
-                #     identifier=identifier_grant,
-                #     record=record
-                # )
-                # ! TEST - DR - END
 
                 if post_json.get('temporary_save') == 1:
                     res = ResponseMessageSchema().load({"code":0, "msg":_("success")})
@@ -1761,7 +1681,6 @@ def next_action(activity_id='0', action_id=0):
                             activity_id=activity_id,
                             action_id=action_id,
                             req=-1)
-
         else:
             # save pidstore_identifier to ItemsMetadata
             identifier_select = post_json.get('identifier_grant')
@@ -1825,12 +1744,8 @@ def next_action(activity_id='0', action_id=0):
                     if not recid:
                         record_without_version = pid_without_ver.object_uuid
 
-                    # ! TEST - DR - START
-                    # TODO This saves the DOI information to the record.
-                    # TODO This still appears in the detail page even though DOI is not used
                     saving_doi_pidstore(item_id, record_without_version, post_json,
                                         int(identifier_select), True)
-                    # ! TEST - DR - END
                     
             elif 'identifier_grant' == action_endpoint \
                     and not post_json.get('temporary_save'):
@@ -1848,10 +1763,8 @@ def next_action(activity_id='0', action_id=0):
                             action_id=action_id,
                             req=-1)
         
-
+        # DOI RESERVATION FIX ------------ END
     else:
-        # ! TEST - DR - END
-
         # save pidstore_identifier to ItemsMetadata
         identifier_select = post_json.get('identifier_grant')
         if 'identifier_grant' == action_endpoint \
@@ -1868,21 +1781,6 @@ def next_action(activity_id='0', action_id=0):
                 'action_identifier_ndl_jalc_doi': post_json.get(
                     'identifier_grant_ndl_jalc_doi_suffix')
             }
-
-            # # ! TEST - DR - START
-            # if is_doi_reservation_value == "Reserved":
-            #     doi_reservation_current_date = datetime.now().strftime("%Y-%m-%d")
-            #     if doi_reservation_date == doi_reservation_current_date:
-            #         print("\n\n")
-            #         print("TODAY IS DR DAY 1")
-            #         print("\n\n")
-            #     else:
-            #         work_activity.create_or_update_action_identifier(
-            #             activity_id=activity_id,
-            #             action_id=action_id,
-            #             identifier=identifier_grant
-            #         )
-            # # ! TEST - DR - END
 
             work_activity.create_or_update_action_identifier(
                 activity_id=activity_id,
@@ -1929,10 +1827,8 @@ def next_action(activity_id='0', action_id=0):
                 if not recid:
                     record_without_version = pid_without_ver.object_uuid
 
-                # ! TEST - START
                 saving_doi_pidstore(item_id, record_without_version, post_json,
                                     int(identifier_select), True)
-                # ! TEST - END
 
         elif 'identifier_grant' == action_endpoint \
                 and not post_json.get('temporary_save'):
@@ -1949,7 +1845,6 @@ def next_action(activity_id='0', action_id=0):
                         activity_id=activity_id,
                         action_id=action_id,
                         req=-1)
-        # ? TEST - DR - END
 
     rtn = history.create_activity_history(activity, action_order)
     if not rtn:

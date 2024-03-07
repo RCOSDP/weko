@@ -402,6 +402,167 @@ def test_check_publish_status(app):
             pass
 
 
+# ! TEST FOR DOI RESERVATION
+def test_check_publish_status_for_doi_reservation(app):
+    with app.test_request_context(headers=[("Accept-Language", "en")]):
+        record = {
+            "_oai": {"id": "oai:weko3.example.org:00000001", "sets": ["1658073625012"]},
+            "path": ["1658073625012"],
+            "owner": "1",
+            "recid": "1",
+            "title": ["2022-07-18"],
+            "pubdate": {"attribute_name": "PubDate", "attribute_value": "2022-07-18"},
+            "_buckets": {"deposit": "e37da0e1-710d-413f-8af8-630e224131bb"},
+            "_deposit": {
+                "id": "1",
+                "pid": {"type": "depid", "value": "1", "revision_id": 0},
+                "owner": "1",
+                "owners": [1],
+                "status": "published",
+                "created_by": 1,
+                "owners_ext": {
+                    "email": "wekosoftware@nii.ac.jp",
+                    "username": "",
+                    "displayname": "",
+                },
+            },
+            "item_title": "2022-07-18",
+            "author_link": [],
+            "item_type_id": "15",
+            "publish_date": "2022-07-18",
+            "publish_status": "0",
+            "weko_shared_id": -1,
+            "item_1617186331708": {
+                "attribute_name": "Title",
+                "attribute_value_mlt": [
+                    {
+                        "subitem_1551255647225": "2022-07-18",
+                        "subitem_1551255648112": "ja",
+                    }
+                ],
+            },
+            "item_1617258105262": {
+                "attribute_name": "Resource Type",
+                "attribute_value_mlt": [
+                    {
+                        "resourceuri": "http://purl.org/coar/resource_type/c_5794",
+                        "resourcetype": "conference paper",
+                    }
+                ],
+            },
+            "relation_version_is_last": True,
+        }
+        app.config["BABEL_DEFAULT_TIMEZONE"] = "Asia/Tokyo"
+        # offset-naive
+        now = datetime.utcnow()
+        record["publish_status"] = "0"
+        record["pubdate"]["attribute_value"] = now.strftime("%Y-%m-%d")
+        assert record.get("publish_status") == "0"
+        assert record.get("pubdate", {}).get("attribute_value") == now.strftime(
+            "%Y-%m-%d"
+        )
+        assert check_publish_status(record) == True
+        
+        
+        record["publish_status"] = "1"
+        record["pubdate"]["attribute_value"] = now.strftime("%Y-%m-%d")
+        assert record.get("publish_status") == "1"
+        assert record.get("pubdate", {}).get("attribute_value") == now.strftime(
+            "%Y-%m-%d"
+        )
+        assert check_publish_status(record) == False
+
+        JST = timezone(timedelta(hours=+9), "JST")
+        # aware
+        now = datetime.now(JST)
+        record["publish_status"] = "0"
+        record["pubdate"]["attribute_value"] = now.strftime("%Y-%m-%d")
+        assert record.get("publish_status") == "0"
+        assert record.get("pubdate", {}).get("attribute_value") == now.strftime(
+            "%Y-%m-%d"
+        )
+        assert check_publish_status(record) == True
+        record["publish_status"] = "1"
+        record["pubdate"]["attribute_value"] = now.strftime("%Y-%m-%d")
+        assert record.get("publish_status") == "1"
+        assert record.get("pubdate", {}).get("attribute_value") == now.strftime(
+            "%Y-%m-%d"
+        )
+        assert check_publish_status(record) == False
+
+        now = datetime.now(JST) + timedelta(days=1)
+        record["publish_status"] = "0"
+        record["pubdate"]["attribute_value"] = now.strftime("%Y-%m-%d")
+        assert record.get("publish_status") == "0"
+        assert record.get("pubdate", {}).get("attribute_value") == now.strftime(
+            "%Y-%m-%d"
+        )
+        assert check_publish_status(record) == False
+        record["publish_status"] = "1"
+        record["pubdate"]["attribute_value"] = now.strftime("%Y-%m-%d")
+        assert record.get("publish_status") == "1"
+        assert record.get("pubdate", {}).get("attribute_value") == now.strftime(
+            "%Y-%m-%d"
+        )
+        assert check_publish_status(record) == False
+
+        now = datetime.now(JST) + timedelta(days=10)
+        record["publish_status"] = "0"
+        record["pubdate"]["attribute_value"] = now.strftime("%Y-%m-%d")
+        assert record.get("publish_status") == "0"
+        assert record.get("pubdate", {}).get("attribute_value") == now.strftime(
+            "%Y-%m-%d"
+        )
+        assert check_publish_status(record) == False
+        record["publish_status"] = "1"
+        record["pubdate"]["attribute_value"] = now.strftime("%Y-%m-%d")
+        assert record.get("publish_status") == "1"
+        assert record.get("pubdate", {}).get("attribute_value") == now.strftime(
+            "%Y-%m-%d"
+        )
+        assert check_publish_status(record) == False
+
+        now = datetime.now(JST) - timedelta(days=1)
+        record["publish_status"] = "0"
+        record["pubdate"]["attribute_value"] = now.strftime("%Y-%m-%d")
+        assert record.get("publish_status") == "0"
+        assert record.get("pubdate", {}).get("attribute_value") == now.strftime(
+            "%Y-%m-%d"
+        )
+        assert check_publish_status(record) == True
+        record["publish_status"] = "1"
+        record["pubdate"]["attribute_value"] = now.strftime("%Y-%m-%d")
+        assert record.get("publish_status") == "1"
+        assert record.get("pubdate", {}).get("attribute_value") == now.strftime(
+            "%Y-%m-%d"
+        )
+        assert check_publish_status(record) == False
+
+        now = datetime.now(JST) - timedelta(days=10)
+        record["publish_status"] = "0"
+        record["pubdate"]["attribute_value"] = now.strftime("%Y-%m-%d")
+        assert record.get("publish_status") == "0"
+        assert record.get("pubdate", {}).get("attribute_value") == now.strftime(
+            "%Y-%m-%d"
+        )
+        assert check_publish_status(record) == True
+        record["publish_status"] = "1"
+        record["pubdate"]["attribute_value"] = now.strftime("%Y-%m-%d")
+        assert record.get("publish_status") == "1"
+        assert record.get("pubdate", {}).get("attribute_value") == now.strftime(
+            "%Y-%m-%d"
+        )
+        assert check_publish_status(record) == False
+
+        # Exception coverage
+        record['pubdate']['attribute_value'] = 2
+        try:
+            assert check_publish_status(record) == False
+        except:
+            pass
+
+
+
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_permissions.py::test_check_publish_status2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 @pytest.mark.parametrize("publish_status,pubdate,expect_result",[

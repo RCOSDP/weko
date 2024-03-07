@@ -333,12 +333,6 @@ class ItemImportView(BaseView):
         
         form =FlaskForm(request.form)
 
-        # ! TEST - DR IMPORT
-        print("\n\n weko_search_ui/admin.py::ItemImportView.index".upper())
-        print(f"form ~ {form}")
-        print(f"workflows_js ~ {workflows_js}")
-        print("\n\n")
-
         return self.render(
             WEKO_ITEM_ADMIN_IMPORT_TEMPLATE,
             workflows=json.dumps(workflows_js),
@@ -394,13 +388,6 @@ class ItemImportView(BaseView):
                 ),
             )
 
-            # ! TEST - DR IMPORT
-            print("\n\n\n weko_search_ui/admin.py::check".upper())
-            print(f"task ~ {task}")
-            print(f"data ~ {data}")
-            print(f"jsonify(code=1, check_import_task_id=task.task_id) ~ {jsonify(code=1, check_import_task_id=task.task_id)}")
-            print("\n\n\n")
-
         return jsonify(code=1, check_import_task_id=task.task_id)
 
     @expose("/get_check_status", methods=["POST"])
@@ -409,20 +396,12 @@ class ItemImportView(BaseView):
         data = request.get_json()
         result = {}
 
-        # ! TEST - DR IMPORT
-        print("\n\n\n weko_search_ui/admin.py::get_check_status \n\n\n")
-
         if data and data.get("task_id"):
             task = import_item.AsyncResult(data.get("task_id"))
             task2 = import_item(item=data,request_info=None)
 
-            # ! TEST - DR IMPORT
             # from .utils import import_items_to_system
             # import_items_to_system
-            print("\n\n\n ~~~~~~~~~~~~~~~~ weko_search_ui/admin.py::get_check_status".upper())
-            print(f"data ~ {data}")
-            print(f"task.result ~ {task.result}")
-            print("~~~~~~~~~~~~~~~~ \n\n\n")
 
             if task and isinstance(task.result, dict):
                 start_date = task.result.get("start_date")

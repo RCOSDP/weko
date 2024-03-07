@@ -547,32 +547,11 @@ def is_pubdate_in_future(record, isReserved=False):
             doi_reservation_record_activity = post_workflow
             doi_reservation_record_activity_id = post_workflow.activity_id
             doi_reservation_record_action_identifier = ActionIdentifier.query.filter_by(activity_id=doi_reservation_record_activity_id).one_or_none()
-
             identifier_actionid = get_actionid('identifier_grant')
             work_activity = WorkActivity()
-
             activity_detail = work_activity.get_activity_detail(doi_reservation_record_activity_id)
-
             pid_id_hdn = IdentifierHandle(recid.object_uuid)
-
-            print("\n\n DIVENIRE")
-            print(f'record.get("id") ~ {record.get("_deposit", {}).get("id")}')
             pid_doi_ffxv = WekoRecord.get_record_by_pid(record.get("_deposit", {}).get("id"))
-            print(f"pid_doi_ffxv ~ {pid_doi_ffxv}")
-            print("\n\n")
-
-            print("\n\n pid_id_hdn")
-            print(f"activity_detail ~ {activity_detail}")
-            print(f"pid_id_hdn ~ {pid_id_hdn}")
-            print(f"pid_id_hdn.get_idt_registration_data() ~ {pid_id_hdn.get_idt_registration_data()}")
-            print(f"pid_id_hdn.get_pidstore() ~ {pid_id_hdn.get_pidstore()}")
-            print(f"pid_id_hdn.item_metadata ~ {pid_id_hdn.item_metadata}")
-            print(f"pid_id_hdn.item_record ~ {pid_id_hdn.item_record}")
-            print(f"pid_id_hdn.item_type_id ~ {pid_id_hdn.item_type_id}")
-            print(f"pid_id_hdn.item_uuid ~ {pid_id_hdn.item_uuid}")
-            print(f"pid_id_hdn.register_pidstore ~ {pid_id_hdn.register_pidstore}")
-            print(f"dir(pid_id_hdn) ~ {dir(pid_id_hdn)}")
-            print("\n\n")
 
             work_activity.create_or_update_action_identifier(
                 activity_id=doi_reservation_record_activity_id,
@@ -594,15 +573,7 @@ def is_pubdate_in_future(record, isReserved=False):
                                                                 object_type='rec',
                                                                 object_uuid=activity_detail.item_id)
 
-            print("\n\n current_pid".upper())
-            print(f"current_pid ~ {current_pid}")
-            print("\n\n")
-
             try:
-                print("\n\n MATCHA")
-                print(f"has_request_context ~ {has_request_context()}")
-                print(f"pid_value ~ {pid_value}")
-                print("\n\n")
                 if '.' not in pid_value and has_request_context():
                     user_id = activity_detail.activity_login_user if \
                         activity and activity_detail.activity_login_user else -1
@@ -612,20 +583,9 @@ def is_pubdate_in_future(record, isReserved=False):
                         item_id=current_pid,
                         item_title=record_title
                     )
-                    print("\n\n SENCHA")
-                    print(f"current_app._get_current_object() ~ {current_app._get_current_object()}")
-                    print(f"user_id ~ {user_id}")
-                    print(f"recid.pid_type ~ {recid.pid_type}")
-                    print(f"activity_detail.item_id ~ {activity_detail.item_id}")
-                    
-                    print("\n\n")
                     
             except BaseException:
-                print("\n\n MUGICHA")
-                print("\n\n")
                 abort(500, 'MAPPING_ERROR')
-
-            # ? TEST - DR - END
 
             flag = work_activity.upt_activity_action_status(
                 activity_id=doi_reservation_record_activity_id, action_id=identifier_actionid,
@@ -647,32 +607,10 @@ def is_pubdate_in_future(record, isReserved=False):
                 recid
             )
 
-            print("\n\n tokiochouetsu".upper())
-            print(f"doi_reserved_item_workflow ~ {doi_reserved_item_workflow}")
-            print("\n\n")
-
-
-            print("\n\n")
-            print(f"draft_pid ~ {draft_pid}")
-            print(f"pid_doi ~ {pid_doi}")
-            print(f"doi_reservation_record_activity ~ {doi_reservation_record_activity}")
-            print(f"doi_reservation_record_activity_id ~ {doi_reservation_record_activity_id}")
-            print(f"doi_reservation_record_action_identifier ~ {doi_reservation_record_action_identifier}")
-            print("\n\n")
-
-            print("\n")
-            print(f"action_identifier ~ {action_identifier}")
-            print("\n\n")
-
         else:
             return is_future(adt)
 
-    else:
-        print("ELSE")
-        print(is_future(adt))
-        
-    # ! TEST - DR - END~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
+    # DOI RESERVATION FIX ------------ END
     return is_future(adt)
 
 

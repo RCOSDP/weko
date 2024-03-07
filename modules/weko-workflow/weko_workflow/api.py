@@ -1032,37 +1032,10 @@ class WorkActivity(object):
         :return:
         """
 
-        # from invenio_oaiserver.response import is_pubdate_in_future # ! TEST - DR
-        # if record is not None:
-            # action_identifier = None
-            # record_keys = [key for key in record.keys()]
-            # for key in record_keys:
-            #     if "attribute_value_mlt" in record[key].keys():
-            #         if record[key].get("attribute_value_mlt"):
-            #             if record[key].get("attribute_value_mlt").get("subitem_identifier_reg_type"):
-            #                 action_identifier = record[key].get("attribute_value_mlt").get("subitem_identifier_reg_type")
-            # print(f"action_identifier ~ {action_identifier}")
-
-        #     is_pubdate_in_future(record)
-        #     identifier_grant = {
-        #         'action_identifier_select': identifier_select,
-        #         'action_identifier_jalc_doi': post_json.get(
-        #             'identifier_grant_jalc_doi_suffix'),
-        #         'action_identifier_jalc_cr_doi': post_json.get(
-        #             'identifier_grant_jalc_cr_doi_suffix'),
-        #         'action_identifier_jalc_dc_doi': post_json.get(
-        #             'identifier_grant_jalc_dc_doi_suffix'),
-        #         'action_identifier_ndl_jalc_doi': post_json.get(
-        #             'identifier_grant_ndl_jalc_doi_suffix')
-        #     }
-        # else:
-
         with db.session.begin_nested():
-            # ! TEST - DR - START
             action_identifier = ActionIdentifier.query.filter_by(
                 activity_id=activity_id,
                 action_id=action_id).one_or_none()
-            # ! TEST - DR - END
 
             if action_identifier:
                 action_identifier.action_identifier_select = identifier.get(
@@ -1081,12 +1054,6 @@ class WorkActivity(object):
                         'action_identifier_ndl_jalc_doi')
                 db.session.merge(action_identifier)
 
-                print("\n\n")
-                print("TEARS FOR FEARS")
-                print(f"identifier ~ {identifier}")
-                print(f"action_identifier ~ {action_identifier}")
-                print("\n\n")
-
             else:
                 new_action_identifier = ActionIdentifier(
                     activity_id=activity_id,
@@ -1104,18 +1071,8 @@ class WorkActivity(object):
                 )
                 db.session.add(new_action_identifier)
 
-                print("\n\n")
-                print("MODERN TALKING")
-                print(f"identifier ~ {identifier}")
-                print(f"new_action_identifier ~ {new_action_identifier}")
-                print("\n\n")
-
         db.session.commit()
 
-        print("\n\n")
-        print("WORKING HOUR")
-        print(f"action_identifier ~ {action_identifier}")
-        print("\n\n")
 
     def create_or_update_action_feedbackmail(self,
                                              activity_id,

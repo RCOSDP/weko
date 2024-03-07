@@ -872,20 +872,6 @@ def prepare_edit_item():
     pid_value = post_activity.get('pid_value')
     community = getargs.get('community', None)
 
-    # ! TEST - DR - START
-    # print("SOMNUS - APOCALYPSIS NOCTIS")
-
-    # if not post_activity and record is not None:
-    #     pid_value = record.get('_deposit').get('pid').get('value')
-    #     print('\n\n')
-    #     print("🚀 ~ pid_value:", pid_value)
-    #     print('\n\n')
-    # else:
-    #     print(f"post_activity ~ {post_activity}")
-    #     print(f"record ~ {record}")
-    # return("SOMETHING")
-    # ! TEST - DR - END
-
     # Cache Storage
     redis_connection = RedisConnection()
     sessionstorage = redis_connection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
@@ -906,15 +892,6 @@ def prepare_edit_item():
                             object_type='rec',
                             getter=record_class.get_record)
         recid, deposit = resolver.resolve(pid_value)
-
-        # ! TEST - DR - START
-        print("\n\n")
-        print("🚀 ~ prepare_edit_item")
-        print(f"pid_value ~ {pid_value}")
-        print(f"recid ~ {recid}")
-        print(f"deposit ~ {deposit}")
-        print("\n\n")
-        # ! TEST - DR - END
 
         authenticators = [str(deposit.get('owner')),
                           str(deposit.get('weko_shared_id'))]
@@ -1336,21 +1313,14 @@ def check_record_doi_indexes(pid_value='0'):
     Rises:
         invenio_pidstore.errors.PIDDoesNotExistError
     """    
-    # ! TEST - DR IMPORT - INDEX-TREE 
-    print("\n\n\n FINAL FANTASY XV SOMNUS ULTIMA")
     
-    
+    # DOI RESERVATION FIX ------------ START
     doi = int(request.args.get('doi', '0'))
     record = WekoRecord.get_record_by_pid(pid_value)
     doi_is_reserved = request.args.get('doi_is_reserved', 'false')
     adt = record.get('publish_date')
-    
-    print(f"request.args ~ {request.args}")
-    print(f"doi_is_reserved ~ {doi_is_reserved}")
-    print(f"doi ~ {doi}")
-    print(f"record ~ {record}")
+
     from weko_records_ui.utils import is_future
-    
 
     if doi_is_reserved == "true" and (record.pid_doi or doi > 0) and is_future(adt):
         pass
@@ -1359,8 +1329,7 @@ def check_record_doi_indexes(pid_value='0'):
         return jsonify({
             'code': -1
         })
-    
-    print('\n\n\n')
+    # DOI RESERVATION FIX ------------ END
 
     return jsonify({'code': 0})
 

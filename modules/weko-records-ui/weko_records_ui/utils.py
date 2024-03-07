@@ -84,9 +84,6 @@ def is_future(date):
                 res = to_utc(date) > dt.utcnow()
         except Exception as ex:
             current_app.logger.error(ex)
-        print("\n\n\n\n\n\n")
-        print(f"res ~ {res}")
-        print("\n\n\n\n\n\n")
     return res
 
 def check_items_settings(settings=None):
@@ -122,7 +119,6 @@ def get_record_permalink(record):
     doi = record.pid_doi
     cnri = record.pid_cnri
 
-    # ! TEST - DR - S
     if not doi:
         if record.get('system_identifier_doi') and \
             record.get('system_identifier_doi').get(
@@ -135,14 +131,6 @@ def get_record_permalink(record):
             record['permalink_uri'] = '{}records/{}'.format(
                 request.url_root, record.get("recid"))
     
-    print("\n\n")
-    print("🚀 ~ get_record_permalink")
-    print(f"doi ~ {doi}")
-    print(f"cnri ~ {cnri}")
-    print(f"record['permalink_uri'] ~ {record['permalink_uri']}")
-    print("\n\n")
-    # ! TEST - DR - E
-
     if doi or cnri:
         return doi.pid_value if doi else cnri.pid_value
 
@@ -1219,20 +1207,11 @@ def is_private_index(record):
     indexes = Indexes.get_path_list(list_index)
     publish_state = 6
     for index in indexes:
-        # ! TEST - DR IMPORT - POSSIBLE FIX
         if len(indexes) == 1:
-            print("1")
-            print(index[publish_state])
-            print(index)
-            print("1.5")
             if not index[publish_state]:
-                print("2")
-                print(f"index[publish_state] ~ {index[publish_state]}")
                 return True
         else:
             if index[publish_state]:
-                print("3")
-                print(f"index[publish_state] ~ {index[publish_state]}")
                 return False
     return False
 

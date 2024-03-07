@@ -21047,3 +21047,46 @@ def test_check_record_doi_indexes(
 
     with pytest.raises(PIDDoesNotExistError):
         res = client_api.get("{}?doi=1".format(url))
+
+
+# ! TEST FOR DOI RESERVATION
+@pytest.mark.parametrize(
+    "id, status_code",
+    [
+        (0, 200),
+    ],
+)
+def test_check_record_doi_indexes_for_doi_reservation(
+    client_api, users, db_records, db_sessionlifetime, id, status_code
+):
+    login_user_via_session(client=client_api, email=users[id]["email"])
+    url = url_for(
+        "weko_items_ui_api.check_record_doi_indexes", pid_value=1, _external=True
+    )
+    res = client_api.get(url)
+    assert res.status_code == status_code
+    assert json.loads(res.data) == {"code": 0}
+    res = client_api.get("{}?doi=1".format(url))
+    assert res.status_code == status_code
+    assert json.loads(res.data) == {"code": 0}
+
+    url = url_for(
+        "weko_items_ui_api.check_record_doi_indexes", pid_value=2, _external=True
+    )
+    res = client_api.get(url)
+    assert res.status_code == status_code
+    assert json.loads(res.data) == {"code": 0}
+    res = client_api.get("{}?doi=1".format(url))
+    assert res.status_code == status_code
+    assert json.loads(res.data) == {"code": -1}
+
+    url = url_for(
+        "weko_items_ui_api.check_record_doi_indexes", pid_value=0, _external=True
+    )
+    from invenio_pidstore.errors import PIDDoesNotExistError
+
+    with pytest.raises(PIDDoesNotExistError):
+        res = client_api.get(url)
+
+    with pytest.raises(PIDDoesNotExistError):
+        res = client_api.get("{}?doi=1".format(url))

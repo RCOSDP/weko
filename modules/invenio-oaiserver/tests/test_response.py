@@ -1476,7 +1476,8 @@ def test_is_pubdate_in_future():
         assert record['publish_date'] == now.strftime('%Y-%m-%d')
         assert is_pubdate_in_future(record)==False
 
-def test_is_pubdate_in_future_2(app):
+# ! TEST FOR DOI RESERVATION
+def test_is_pubdate_in_future_for_doi_reservation(app):
     record = {
         "_oai": {"id": "oai:weko3.example.org:00000002", "sets": ["1658073625012"]},
         "path": ["1658073625012"],

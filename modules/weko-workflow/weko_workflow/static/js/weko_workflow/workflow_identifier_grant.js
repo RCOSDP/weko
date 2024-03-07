@@ -79,7 +79,6 @@ require([
     $('#error-info').parent().hide();
   });
 
-  // ? TEST - DOI RESERVATION - START
   // prepare data for sending
   function preparePostData(tmp_save, actionButton) {
     let isSuffixFormat = true;
@@ -96,16 +95,14 @@ require([
     let identifier_grant_ndl_jalc_doi_link = $("span[name='idf_grant_link_4']").text() + getVal($("input[name='idf_grant_input_4']"));
     let identifier_grant_crni_link = $("span[name='idf_grant_link_5']").text();
 
-    // ! TEST - DOI RESERVATION - START
+    // DOI RESERVATION FIX ------------ START
     let is_doi_reservation = $("input[name='doi-reservation']").is(':checked');
     let is_doi_reservation_value = "Not Reserved"
     if (is_doi_reservation) {
       is_doi_reservation_value = "Reserved"
     }
     let doi_reservation_date = $("input[name='doi-reservation-date']").val();
-    alert(`is_doi_reservation_value ~ ${is_doi_reservation_value}`)
-    alert(`doi_reservation_date ~ ${doi_reservation_date}`)
-    // ! TEST - DOI RESERVATION - END
+    // DOI RESERVATION FIX ------------ END
 
     data_global.post_data = {
       identifier_grant: identifier_grant,
@@ -119,8 +116,8 @@ require([
       identifier_grant_ndl_jalc_doi_link: identifier_grant_ndl_jalc_doi_link,
       identifier_grant_crni_link: identifier_grant_crni_link,
       action_version: $('.cur_step').data('action-version'),
-      is_doi_reservation_value: is_doi_reservation_value, // ! TEST - DOI RESERVATION
-      doi_reservation_date: doi_reservation_date, // ! TEST - DOI RESERVATION
+      is_doi_reservation_value: is_doi_reservation_value, // DOI RESERVATION FIX
+      doi_reservation_date: doi_reservation_date, // DOI RESERVATION FIX
       commond: '',
       temporary_save: tmp_save
     };
@@ -155,7 +152,6 @@ require([
 
     return isSuffixFormat;
   }
-  // ? TEST - DOI RESERVATION - END - MAIN
 
   function validateLengDoi(arrayDoi, actionButton) {
     let msg = '';
@@ -403,19 +399,21 @@ require([
 
   function checkRestrictDoiIndexes(doi = 0, actionButton) {
     let result = true;
-    // ! TEST - DR - INDEX-TREE
+    
+    // DOI RESERVATION FIX ------------ START
     let doi_is_reserved = document.querySelector('#doi-reservation').checked;
     let data = {
       'doi_is_reserved': doi_is_reserved
     };
-    alert(`doi_is_reserved ~ ${doi_is_reserved}`)
+    // DOI RESERVATION FIX ------------ END
+
     startLoading(actionButton);
     $.ajax({
       url: '/api/items/check_record_doi_indexes/' + item_id + '?doi=' + doi,
       method: 'GET',
       async: false,
       contentType: 'application/json; charset=UTF-8',
-      data: data,
+      data: data, // DOI RESERVATION FIX
       dataType: "json",
       success: function (data, status) {
         if (-1 === data.code) {
