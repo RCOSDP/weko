@@ -2006,3 +2006,9 @@ msgstr "マージモードを入力してください"
 
 msgid "Registered"
 msgstr "登録済"
+
+msgid "client id key size too large."
+msgstr "client idキーのサイズが大きすぎます"
+
+msgid "private key size too large."
+msgstr "privateキーのサイズが大きすぎます"
