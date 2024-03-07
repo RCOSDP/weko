@@ -1,5 +1,7 @@
 
 import functools
+import re
+from flask_babelex import gettext as _
 from time import sleep
 from flask import current_app
 import jwt
@@ -65,13 +67,13 @@ class Researchmap:
         # settings_json = AdminSettings.get(current_app.config.get('WEKO_ADMIN_SETTINGS_RESEARCHMAP_LINKAGE_SETTINGS') )
         settings_json = AdminSettings.get('researchmap_linkage_settings' , False) 
         if not settings_json:
-            raise
+            raise Exception(_('Nothing API keys'))
 
         client_id = settings_json.get("researchmap_cidkey_contents" , '') # type: ignore
         key = settings_json.get("researchmap_pkey_contents" , '') # type: ignore
 
         if not client_id or not key:
-            raise
+            raise Exception(_('Nothing API keys'))
 
         payload_data = {
             "iss": client_id,
@@ -88,9 +90,9 @@ class Researchmap:
     
     
     @staticmethod
-    def get_reseacher(token , parmalink , achievement_type , achievement_id):
+    def get_reseacher(token , parmalink:str , achievement_type:str , achievement_id:str):
         base_url=current_app.config["WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_BASE_URL"] # type: ignore
-        response = requests.get('{}/{}/{}/{}'.format(base_url, parmalink , achievement_type,  achievement_id)
+        response = requests.get('{}/{}/{}/{}'.format(base_url, parmalink , achievement_type,  achievement_id).encode()
                                 , headers={"Authorization": "Bearer "+token+""
                                     ,"Accept": "application/ld+json,application/json,*/*;q=0.1"
                                     ,"Accept-Encoding": "gzip"}
@@ -121,6 +123,13 @@ class Researchmap:
 
 
     def get_data(self, parmalink , achievement_type , achievement_id):
+        if not re.match('^[0-9a-zA-Z -/:-@\[-~]{3,20}$', parmalink) \
+            or re.match('^(?=.*[\%|\#|\<|\>|\+|\¥|\"|\'|\&|\?|\=|\~|\:|\;|\,|\@|\$|\^|\||\]|\[|\!|\(|\)|\*|\/]).*$', parmalink) :# % # < > + ¥ " ' & ? = ~ : ; , @ $ ^ | ] [ ! ( ) * / を含む場合エラー
+            raise Exception(_('Invalid parmalink'))
+        if not re.match('^[0-9]+', achievement_id) :
+            raise Exception(_('Invalid achievement id'))
+
+
         def __get():
             token = self.get_token('get')
             return Researchmap.get_reseacher(token , parmalink , achievement_type , achievement_id)

@@ -1399,6 +1399,16 @@ class CrisLinkageSettingView(BaseView):
             flash(_('Please input at least one of client id key or private key') ,'error')
             return redirect(url_for('cris_linkage.index'))
 
+        if len(str(researchmap_cidkey_contents)) > 100: #valid about 20 
+            flash(_('Failurely Changed Settings.') ,'error')
+            flash(_('client id key size too large.') ,'error')
+            return redirect(url_for('cris_linkage.index'))
+        if len(str(researchmap_pkey_contents)) > 100*50: #valid about 30*70 
+            flash(_('Failurely Changed Settings.') ,'error')
+            flash(_('private key size too large.') ,'error')
+            return redirect(url_for('cris_linkage.index'))
+
+
         SETTINGS_NAME = current_app.config["WEKO_ADMIN_SETTINGS_RESEARCHMAP_LINKAGE_SETTINGS"]# type: ignore
         settings = AdminSettings.get(SETTINGS_NAME)
         if not settings :

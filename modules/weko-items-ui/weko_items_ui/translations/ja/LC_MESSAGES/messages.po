@@ -68,6 +68,15 @@ msgstr "Works(作品等)"
 msgid "others"
 msgstr "その他"
 
+msgid "Nothing API keys"
+msgstr "API キーが未設定です"
+
+msgid "Invalid parmalink"
+msgstr "parmalinkが不正です"
+
+msgid "Invalid achievement id"
+msgstr "業績IDが不正です"
+
 #: weko_items_ui/views.py:371
 #, fuzzy
 msgid "Invalid request"
