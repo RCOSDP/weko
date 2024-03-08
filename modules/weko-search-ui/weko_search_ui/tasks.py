@@ -32,7 +32,7 @@ from weko_redis.redis import RedisConnection
 from invenio_db import db
 
 from .utils import (
-    check_import_items,
+    check_tsv_import_items,
     delete_exported,
     export_all,
     get_lifetime,
@@ -48,7 +48,7 @@ def check_import_items_task(file_path, is_change_identifier: bool, host_url,
     with current_app.test_request_context(
         host_url, headers=[("Accept-Language", lang)]
     ):
-        check_result = check_import_items(file_path, is_change_identifier,
+        check_result, _ = check_tsv_import_items(file_path, is_change_identifier,
                                           all_index_permission=all_index_permission,
                                           can_edit_indexes=can_edit_indexes)
     # remove zip file
