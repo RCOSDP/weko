@@ -24,7 +24,7 @@ from weko_records.utils import get_keywords_data_load
 from weko_search_ui.api import get_search_detail_keyword
 
 from . import config
-from .views import blueprint
+from .views import blueprint, get_top_page_url
 
 
 class WekoTheme(object):
@@ -50,6 +50,7 @@ class WekoTheme(object):
         app.add_template_filter(
             get_search_detail_keyword,
             name='detail_conditions')
+        app.jinja_env.globals.update(get_top_page_url=get_top_page_url)
 
     def init_config(self, app):
         """Initialize configuration.
