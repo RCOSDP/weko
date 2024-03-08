@@ -30,6 +30,7 @@ import pytz
 import tempfile
 import traceback
 import uuid
+import xml.etree.ElementTree as ET
 import zipfile
 from collections import Callable, OrderedDict
 from datetime import datetime
@@ -58,6 +59,7 @@ from invenio_i18n.ext import current_i18n
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
+
 from invenio_records.api import Record
 from invenio_records.models import RecordMetadata
 from invenio_records_rest.errors import InvalidQueryRESTError
@@ -65,7 +67,7 @@ from invenio_search import RecordsSearch
 from jsonschema import Draft4Validator
 from sqlalchemy import func as _func
 from sqlalchemy.exc import SQLAlchemyError
-from weko_admin.models import SessionLifetime
+from weko_admin.models import AdminSettings, SessionLifetime
 from weko_admin.utils import get_redis_cache, reset_redis_cache
 from weko_authors.utils import check_email_existed
 from weko_deposit.api import WekoDeposit, WekoIndexer, WekoRecord
@@ -77,11 +79,12 @@ from weko_index_tree.utils import (
     check_restrict_doi_with_indexes,
 )
 from weko_indextree_journal.api import Journals
-from weko_records.api import FeedbackMailList, ItemTypes, Mapping
+from weko_records.api import FeedbackMailList, ItemTypeNames, ItemTypes, Mapping
 from weko_records.models import ItemMetadata
-from weko_records.serializers.utils import get_mapping
+from weko_records.serializers.utils import get_full_mapping, get_mapping
 from weko_redis.redis import RedisConnection
 from weko_schema_ui.models import PublishStatus
+from weko_search_ui.mapper import BaseMapper, JPCOARV2Mapper
 from weko_workflow.api import Flow, WorkActivity
 from weko_workflow.config import (
     IDENTIFIER_GRANT_LIST,
@@ -485,7 +488,7 @@ def parse_to_json_form(data: list, item_path_not_existed=[], include_empty=False
     return result
 
 
-def check_import_items(file, is_change_identifier: bool, is_gakuninrdm=False,
+def check_tsv_import_items(file, is_change_identifier: bool, is_gakuninrdm=False,
                        all_index_permission=True, can_edit_indexes=[]):
     """Validation importing zip file.
 
@@ -615,6 +618,110 @@ def check_import_items(file, is_change_identifier: bool, is_gakuninrdm=False,
     return result
 
 
+def check_xml_import_items(file, item_type_id, is_gakuninrdm=False):
+    """Validation importing zip file.
+
+    :argument
+        file_name -- file name.
+        item_id -- import item type id.
+        is_gakuninrdm -- Is call by gakuninrdm api.
+    :return
+        return       -- PID object if exist.
+
+    """
+    if isinstance(file, str):
+        filename = os.path.basename(file)
+    else:
+        filename = file.filename
+    if not is_gakuninrdm:
+        tmp_prefix = current_app.config["WEKO_SEARCH_UI_IMPORT_TMP_PREFIX"]
+    else:
+        tmp_prefix = "deposit_activity_"
+    tmp_dirname = tmp_prefix + datetime.utcnow().strftime(r"%Y%m%d%H%M%S")
+    data_path = os.path.join(tempfile.gettempdir(), tmp_dirname)
+    result = {"data_path": data_path}
+
+    try:
+        # Create temp dir for import data
+        os.mkdir(data_path)
+
+        with zipfile.ZipFile(file) as z:
+            for info in z.infolist():
+                try:
+                    info.filename = info.orig_filename.encode("cp437").decode("cp932")
+                    if os.sep != "/" and os.sep in info.filename:
+                        info.filename = info.filename.replace(os.sep, "/")
+                except Exception:
+                    current_app.logger.warning("-" * 60)
+                    traceback.print_exc(file=sys.stdout)
+                    current_app.logger.warning("-" * 60)
+                z.extract(info, path=data_path)
+
+        data_path += "/data"
+        list_record = []
+        # get settings from table
+        list_xml = list(filter(lambda filename: filename.endswith('.xml'), os.listdir(data_path)))
+
+        if not list_xml:
+            raise FileNotFoundError()
+        list_record.extend(generate_metadata_from_jpcoar(data_path, list_xml, item_type_id))
+
+        # current_app.logger.debug("list_record1: {}".format(list_record))
+
+        # add: {"id": null, "status": "new"}
+        list_record = handle_check_exist_record(list_record)
+        # current_app.logger.debug("list_record2: {}".format(list_record))
+
+        # add: {"item_title": "****"}
+        handle_item_title(list_record)
+        # current_app.logger.debug("list_record3: {}".format(list_record))
+
+        list_record = handle_check_date(list_record)
+        # current_app.logger.debug("list_record4: {}".format(list_record))
+
+        handle_check_id(list_record)
+
+        # add: {"filenames": [{"filename": "sample.pdf", "id": ".metadata.item_1617605131499[0].filename"}], "metadata": {"feedback_mail_list": [{"author_id": "", "email": "wekosoftware@nii.ac.jp"}], "path": [1031]} }
+        handle_check_file_metadata(list_record, data_path)
+        # current_app.logger.debug("list_record5: {}".format(list_record))
+
+        if not is_gakuninrdm:
+            handle_check_cnri(list_record)
+            handle_check_doi_indexes(list_record)
+            handle_check_doi_ra(list_record)
+            handle_check_doi(list_record)
+
+        result["list_record"] = list_record
+    except zipfile.BadZipFile as ex:
+        result["error"] =  _(
+            "The format of the specified file {} does not support import." \
+            " Please specify one of the following formats: zip, tar, gztar, bztar, xztar.").format(filename)
+        current_app.logger.error("-" * 60)
+        traceback.print_exc(file=sys.stdout)
+        current_app.logger.error("-" * 60)
+    except FileNotFoundError as ex:
+        result["error"] =  _(
+            "The xml file was not found in the specified file {}." \
+            " Check if the directory structure is correct.").format(filename)
+        current_app.logger.error("-" * 60)
+        traceback.print_exc(file=sys.stdout)
+        current_app.logger.error("-" * 60)
+    except UnicodeDecodeError as ex:
+        result["error"] =  ex.reason
+        current_app.logger.error("-" * 60)
+        traceback.print_exc(file=sys.stdout)
+        current_app.logger.error("-" * 60)
+    except Exception as ex:
+        error = _("Internal server error")
+        if (ex.args and len(ex.args) and isinstance(ex.args[0], dict) and ex.args[0].get("error_msg")):
+            error = ex.args[0].get("error_msg")
+        result["error"] = error
+        current_app.logger.error("-" * 60)
+        traceback.print_exc(file=sys.stdout)
+        current_app.logger.error("-" * 60)
+    return result
+
+
 def unpackage_import_file(data_path: str, file_name: str, file_format: str, force_new=False, is_change_identifier=False):
     """Getting record data from CSV/TSV file.
 
@@ -654,6 +761,43 @@ def unpackage_import_file(data_path: str, file_name: str, file_format: str, forc
 
     
 
+    return list_record
+
+
+def generate_metadata_from_jpcoar(data_path: str, filenames: list, item_type_id: int, is_change_identifier=False):
+    """Getting record data from CSV/TSV file.
+
+    :argument
+        data_path -- Path of xml file.
+        file_name -- XML file name.
+        item_type_id -- XML item type id.
+        is_change_identifier -- Change Identifier Mode.
+    :return
+        return -- List records.
+
+    """
+    # Get item type name from item type id
+    item_type_info = get_item_type(item_type_id)
+    if not item_type_info:
+        raise Exception(
+            {
+                "error_msg": _("The item type ID specified in the XML file does not exist.")
+            }
+        )
+    file_paths = [os.path.join(data_path, filename) for filename in filenames]
+    list_record = []
+    for file_path in file_paths:
+        data = read_jpcoar_xml_file(file_path, item_type_info)
+        list_record.extend(data.get('data_list'))
+
+        handle_set_change_identifier_flag(list_record, is_change_identifier)
+        # handle_fill_system_item(list_record)
+
+        list_record = handle_validate_item_import(
+            list_record, data.get("item_type_schema", {})
+        )
+
+    current_app.logger.debug('list_record: {}'.format(list_record))
     return list_record
 
 
@@ -857,6 +1001,47 @@ def read_stats_file(file_path: str, file_name: str, file_format: str) -> dict:
         except Exception as ex:
             raise ex
     result["data_list"] = data_list
+    return result
+
+def read_jpcoar_xml_file(file_path, item_type_info):
+    """Read JPCOAR(V2) metadata from xml file
+
+    Args:
+        file_path (str): XML file path
+        item_type_info (dict): Item type info of imported item.
+
+    Returns:
+        dict: item metadata
+    """
+    result = {"error": False, "error_code": 0, "data_list": [], "item_type_schema": {}}
+    enc = getEncode(file_path)
+    try:
+        # register namespace
+        namespaces = dict([node for _, node in ET.iterparse(file_path, events=['start-ns'])])
+        for key, value in namespaces.items():
+            ET.register_namespace(key, value)
+        tree = ET.parse(file_path)
+        # mapping
+        mapper = JPCOARV2Mapper(ET.tostring(tree.getroot()).decode(enc))
+        res = mapper.map(item_type_info['name'])
+
+        current_app.logger.warn(res)
+    except UnicodeDecodeError as ex:
+        ex.reason = _(
+            "The XML file could not be read. Make sure the file"
+            + " format is XML and that the file is"
+            + " UTF-8 encoded."
+        ).format(file_path)
+        raise ex
+    except Exception as ex:
+        raise ex
+    result["data_list"].append({
+        "$schema": item_type_info['schema'],
+        "metadata": res,
+        "item_type_name": item_type_info['name'],
+        "item_type_id": item_type_info['item_type_id'],
+    })
+    result['item_type_schema'] = item_type_info['schema']
     return result
 
 
