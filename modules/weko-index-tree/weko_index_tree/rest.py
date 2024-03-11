@@ -450,7 +450,7 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
             # create browsing tree data of guest for save
             reduce_index_by_role_guest(tree)
             # save browsing tree data of guest
-            save_filtered_index_trees_to_redis_guest(tree)
+            save_filtered_index_trees_to_redis_guest(tree=tree, pid=0)
 
         return make_response(
             jsonify({'status': status, 'message': msg}), status)

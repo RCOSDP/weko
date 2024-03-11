@@ -1106,18 +1106,17 @@ def save_filtered_index_trees_to_redis(tree, pid):
 
     """
     redis = __get_redis_store()
+    # if logout or session disconnected, do not save data
     if current_user.get_id() is not None:
         user_id = current_user.get_id()
-    else:
-        # logout or session disconnected
-        pass
-    key = "index_tree_by_role_" + os.environ.get('INVENIO_WEB_HOST_NAME') + "_" + current_i18n.language + "_" + str(user_id) + "_" + str(pid)
-    ttl = current_app.config.get('WEKO_INDEX_TREE_BROWSING_TREE_CACHE_TTL', 10)
-    try:
-        v = orjson.dumps(tree, default=default_isoformat_str)
-        redis.put(key,v,ttl)
-    except ConnectionError:
-        current_app.logger.error("Fail save index_tree to redis")
+        key = "index_tree_by_role_" + os.environ.get('INVENIO_WEB_HOST_NAME') + "_" + current_i18n.language + "_" + str(user_id) + "_" + str(pid)
+        ttl = current_app.config.get('WEKO_INDEX_TREE_BROWSING_TREE_CACHE_TTL', 10)
+        try:
+            v = orjson.dumps(tree, default=default_isoformat_str)
+            redis.put(key,v,ttl)
+        except ConnectionError:
+            current_app.logger.error("Fail save filtered_index_tree_data to redis")
+
 
 
 def save_filtered_index_trees_to_redis_guest(tree, pid):
