@@ -20,6 +20,7 @@
 
 """Module of weko-items-ui utils.."""
 
+import calendar
 import copy
 import csv
 import json
@@ -39,8 +40,10 @@ from redis import sentinel
 from elasticsearch.exceptions import NotFoundError
 from elasticsearch import exceptions as es_exceptions
 from flask import abort, current_app, flash, redirect, request, send_file, \
-    url_for,jsonify
+    url_for,jsonify, Flask
 from flask_babelex import gettext as _
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from flask_login import current_user
 from invenio_accounts.models import Role, userrole
 from invenio_db import db
@@ -69,6 +72,7 @@ from weko_index_tree.utils import check_index_permissions, get_index_id, \
 from weko_records.api import FeedbackMailList, ItemTypes, Mapping
 from weko_records.serializers.utils import get_item_type_name
 from weko_records.utils import replace_fqdn_of_file_metadata
+from weko_records_ui.errors import AvailableFilesNotFoundRESTError
 from weko_records_ui.permissions import check_created_id, \
     check_file_download_permission, check_publish_status
 from weko_redis.redis import RedisConnection
@@ -2128,10 +2132,11 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
                             str(idx)))
                         key_label.insert(0, '.ファイルパス[{}]'.format(
                             str(idx)))
-                        file_path = ""
+                        output_path = ""
                         if key_data[key_index]:
                             file_path = "recid_{}/{}".format(str(self.cur_recid), key_data[key_index])
-                        key_data.insert(0,file_path)
+                            output_path = file_path if os.path.exists(os.path.join(export_path,file_path)) else ""
+                        key_data.insert(0,output_path)
                         break
                     elif 'thumbnail_label' in key_list[key_index] \
                             and len(item_key_split) == 2:
@@ -4130,10 +4135,11 @@ def make_stats_file_with_permission(item_type_id, recids,
                             str(idx)))
                         key_label.insert(0, '.ファイルパス[{}]'.format(
                             str(idx)))
-                        file_path = ""
+                        output_path = ""
                         if key_data[key_index]:
                             file_path = "recid_{}/{}".format(str(self.cur_recid), key_data[key_index])
-                        key_data.insert(0,file_path)
+                            output_path = file_path if os.path.exists(os.path.join(export_path,file_path)) else ""
+                        key_data.insert(0,output_path)
                         break
                     elif 'thumbnail_label' in key_list[key_index] \
                             and len(item_key_split) == 2:
@@ -4451,3 +4457,92 @@ def has_permission_edit_item(record, recid):
     ).first()
     can_edit = True if pid == get_record_without_version(pid) else False
     return can_edit and permission
+
+
+def create_limmiter():
+    from .config import WEKO_ITEMS_UI_API_LIMIT_RATE_DEFAULT
+    return Limiter(app=Flask(__name__), key_func=get_remote_address, default_limits=WEKO_ITEMS_UI_API_LIMIT_RATE_DEFAULT)
+
+def get_file_download_data(item_id, record, filenames, query_date=None, size=None):
+    """Get file download data.
+
+    Args:
+        item_id (int): Item id
+        record (WekoRecord): Record
+        filenames (list[str]): Filenames
+        query_date (str): Period(yyyy-MM)
+        size (str): Ranking display number
+
+    Returns:
+        dict: Ranking result dict
+    """
+    result = {}
+
+    # Check available
+    available_filenames = []
+    target_files = [f for f in record.files if f.info().get('filename') in filenames]
+
+    for file in target_files:
+        if check_file_download_permission(record, file.info()):
+            available_filenames.append(file.info().get('filename'))
+    if not available_filenames:
+        raise AvailableFilesNotFoundRESTError()
+
+    result['ranking'] = [{'filename': f, 'download_total': 0} for f in available_filenames]
+
+    # Get root file ids
+    from invenio_files_rest.models import ObjectVersion
+    root_file_id_list = []
+    bucket_id = record.get('_buckets', {}).get('deposit')
+
+    for filename in available_filenames:
+        obv = ObjectVersion.get(bucket_id, filename)
+        root_file_id_list.append(str(obv.root_file_id) if obv else '')
+
+    # Set parameter
+    params = {
+        'item_id': str(item_id),
+        'root_file_id_list': root_file_id_list,
+    }
+
+    if query_date:
+        year = int(query_date[0: 4])
+        month = int(query_date[5: 7])
+        _, lastday = calendar.monthrange(year, month)
+        params.update({
+            'start_date': f'{query_date}-01',
+            'end_date': f'{query_date}-{str(lastday).zfill(2)}T23:59:59'
+        })
+
+    try:
+        try:
+            from invenio_stats.proxies import current_stats
+            # file download query
+            query_download_total_cfg = current_stats.queries['item-file-download-aggs']
+            query_download_total = query_download_total_cfg.query_class(**query_download_total_cfg.query_config)
+            res_download_total = query_download_total.run(**params)
+        except Exception as e:
+            current_app.logger.error(traceback.print_exc())
+            res_download_total = {'download_ranking': {'buckets': []}}
+
+        for b in res_download_total.get('download_ranking', {}).get('buckets'):
+            for r in result['ranking']:
+                if r.get('filename') == b.get('key'):
+                    r['download_total'] = b.get('doc_count')
+                    break
+
+        # Sort
+        result['ranking'].sort(key=lambda x:x['download_total'], reverse=True)
+        if size:
+            result['ranking'] = result['ranking'][:int(size)]
+
+    except Exception as e:
+        current_app.logger.error(traceback.print_exc())
+        current_app.logger.debug(e)
+
+    if query_date:
+        result['period'] = query_date
+    else:
+        result['period'] = 'total'
+
+    return result

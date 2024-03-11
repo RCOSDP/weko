@@ -90,6 +90,9 @@ setup(
         'invenio_base.apps': [
             'weko_accounts = weko_accounts:WekoAccounts',
         ],
+        'invenio_base.api_apps': [
+            'weko_accounts_rest = weko_accounts:WekoAccountsREST',
+        ],
         'invenio_admin.views': [
             'weko_accounts_shibboleth = weko_accounts.admin:shib_adminview',
         ],
@@ -105,6 +108,7 @@ setup(
             # 'weko_accounts.bundles:embedded_ds_P2_js',
             'weko_accounts_embedded_ds_multi_lang_js = '
             'weko_accounts.bundles:embedded_ds_multi_language_js',
+            'weko_accounts_css = weko_accounts.bundles:embedded_wayf_custom',
             'weko_accounts_suggest_js = weko_accounts.bundles:suggest_js',
         ],
     },

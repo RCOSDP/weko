@@ -79,7 +79,7 @@ from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
 from .api import GetCommunity, UpdateItem, WorkActivity, WorkActivityHistory, \
     WorkFlow , Flow
 from .config import DOI_VALIDATION_INFO, DOI_VALIDATION_INFO_CROSSREF, DOI_VALIDATION_INFO_DATACITE, IDENTIFIER_GRANT_SELECT_DICT, \
-    WEKO_SERVER_CNRI_HOST_LINK
+    WEKO_SERVER_CNRI_HOST_LINK, WEKO_STR_TRUE
 from .models import Action as _Action, Activity
 from .models import ActionStatusPolicy, ActivityStatusPolicy, GuestActivity,FlowAction 
 from .models import WorkFlow as _WorkFlow
@@ -4467,3 +4467,14 @@ def grant_access_rights_to_all_open_restricted_files(activity_id :str ,permissio
 
     #url_and_expired_date of a applyed content.
     return url_and_expired_date
+
+def check_pretty(pretty):
+    """
+    Check request parameter pretty.
+
+    :param pretty: boolean of string type.
+    """
+    if pretty.lower() in WEKO_STR_TRUE:
+        current_app.config['JSONIFY_PRETTYPRINT_REGULAR'] = True
+    else:
+        current_app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False

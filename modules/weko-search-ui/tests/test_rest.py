@@ -4,8 +4,10 @@
 import json
 import pytest
 from mock import patch, MagicMock
-from flask import current_app
+from flask import Response, current_app
+from flask_babelex import get_locale
 from elasticsearch_dsl import response, Search
+from elasticsearch.exceptions import ElasticsearchException
 from tests.conftest import json_data
 
 from invenio_records_rest.errors import MaxResultWindowRESTError
@@ -321,3 +323,139 @@ def test_get_heading_info(i18n_app):
 
     assert not subitem_heading_banner_headline in get_heading_info(data_1, "en", data_3)
     assert not subitem_heading_headline in get_heading_info(data_1, "en", data_3)
+
+
+class DummySearchResult:
+    def __init__(self, result):
+        self.result = result
+
+    def to_dict(self):
+        return self.result
+
+
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_rest.py::test_IndexSearchResourceAPI -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_IndexSearchResourceAPI(client_rest, db_register2, db_rocrate_mapping):
+    with open('tests/data/rocrate/search_result.json', 'r') as f:
+        search_result = json.load(f)
+
+    with patch('invenio_search.api.RecordsSearch.execute', return_value=DummySearchResult(search_result)):
+        res = client_rest.get(url('/v1/records'))
+        assert res.status_code == 200
+        data = json.loads(res.get_data())
+        assert data['search_results'][0]["metadata"]['@graph'][0]['title'][0] == 'メタボリックシンドロームモデルマウスの多臓器遺伝子発現量データ'
+        assert res.headers['Cache-Control'] == 'no-store'
+        assert res.headers['Pragma'] == 'no-cache'
+        assert res.headers['Expires'] == '0'
+
+        param = {'size': 2, 'page': 1}
+        res = client_rest.get(url('/v1/records', param))
+        assert res.status_code == 200
+
+        param = {'cursor': '1234567890123'}
+        res = client_rest.get(url('/v1/records', param))
+        assert res.status_code == 200
+
+        param = {'sort': 'controlnumber'}
+        res = client_rest.get(url('/v1/records', param))
+        assert res.status_code == 200
+        param = {'sort': '-controlnumber'}
+        res = client_rest.get(url('/v1/records', param))
+        assert res.status_code == 200
+
+
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_rest.py::test_IndexSearchResourceAPI_error -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_IndexSearchResourceAPI_error(client_rest, db_register2, db_rocrate_mapping):
+
+    res = client_rest.get(url('/v0/records'))
+    assert res.status_code == 400
+
+    param = {'size': 1000, 'page': 1000}
+    res = client_rest.get(url('/v1/records', param))
+    assert res.status_code == 400
+
+    with patch('invenio_search.api.RecordsSearch.execute', side_effect=ElasticsearchException()):
+        res = client_rest.get(url('/v1/records'))
+        assert res.status_code == 500
+
+    with patch('invenio_search.api.RecordsSearch.execute', side_effect=Exception()):
+        res = client_rest.get(url('/v1/records'))
+        assert res.status_code == 500
+
+
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_rest.py::test_IndexSearchResultList -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_IndexSearchResultList(client_rest, db_register2, db_rocrate_mapping):
+    target_url = url('/v1/records/list')
+    valid_json = [{
+        "id": 0,
+        "name": {
+            "i18n": "title",
+            "en": "Title",
+            "ja": "タイトル"
+        },
+        "roCrateKey": "name"
+    }]
+    with open('tests/data/rocrate/search_result.json', 'r') as f:
+        search_result = json.load(f)
+
+    with \
+        patch('invenio_search.api.RecordsSearch.execute', return_value=DummySearchResult(search_result)), \
+        patch('weko_search_ui.utils.result_download_ui', return_value=Response(status=200)):
+        # 1 POST request
+        res = client_rest.post(target_url, json=valid_json)
+        assert res.status_code == 200
+
+        # 2 Not exist Accept-Language
+        res = client_rest.post(target_url, json=valid_json)
+        assert get_locale().language == 'en'
+
+        # 3 Set Accept-Language 'en' or 'ja'
+        headers = {}
+        headers['Accept-Language'] = 'en'
+        res = client_rest.post(target_url, json=valid_json, headers=headers)
+        assert get_locale().language == 'en'
+
+        headers['Accept-Language'] = 'ja'
+        res = client_rest.post(target_url, json=valid_json, headers=headers)
+        assert get_locale().language == 'ja'
+
+        # 4 Set Accept-Language 'other-language'
+        headers['Accept-Language'] = 'other-language'
+        res = client_rest.post(target_url, json=valid_json, headers=headers)
+        assert get_locale().language == 'en'
+
+
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_rest.py::test_IndexSearchResultList_error -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_IndexSearchResultList_error(client_rest, db_register2, db_rocrate_mapping):
+    target_url = url('/v1/records/list')
+    valid_json = [{
+        "id": 0,
+        "name": {
+            "i18n": "title",
+            "en": "Title",
+            "ja": "タイトル"
+        },
+        "roCrateKey": "name"
+    }]
+    with open('tests/data/rocrate/search_result.json', 'r') as f:
+        search_result = json.load(f)
+
+    with \
+        patch('invenio_search.api.RecordsSearch.execute', return_value=DummySearchResult(search_result)), \
+        patch('weko_search_ui.utils.result_download_ui', return_value=Response(status=200)):
+        # 5 Invalid json
+        invalid_json = [{"Invalid Key": "Invalid Value"}]
+        res = client_rest.post(target_url, json=invalid_json)
+        assert res.status_code == 400
+
+        # 6 Empty json
+        invalid_json = [{}]
+        res = client_rest.post(target_url, json=invalid_json)
+        assert res.status_code == 400
+
+        # 7 Empty request body
+        res = client_rest.post(target_url, json=None)
+        assert res.status_code == 400
+
+        # 8 Invalid version
+        res = client_rest.post(url('/v0/records/list'), json=valid_json)
+        assert res.status_code == 400

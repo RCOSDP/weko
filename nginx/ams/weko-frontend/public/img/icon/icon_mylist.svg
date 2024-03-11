@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="22" height="15" viewBox="0 0 22 15">
+  <defs>
+    <clipPath id="clip-path">
+      <rect id="長方形_1431" data-name="長方形 1431" width="22" height="15" transform="translate(1143 23)" fill="#fff" stroke="#707070" stroke-width="1"/>
+    </clipPath>
+  </defs>
+  <g id="icon_mylist" transform="translate(-1143 -23)" clip-path="url(#clip-path)">
+    <path id="playlist_add_FILL0_wght400_GRAD0_opsz48" d="M120,346.446v-1.607h8.036v1.607Zm0-4.42V340.42h12.589v1.607Zm0-4.42V336h12.589v1.607ZM134.2,351v-4.554h-4.554v-1.607H134.2v-4.554H135.8v4.554h4.554v1.607H135.8V351Z" transform="translate(1023.822 -313)" fill="#fff"/>
+  </g>
+</svg>
