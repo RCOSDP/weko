@@ -206,8 +206,13 @@ RECORDS_UI_EXPORT_FORMATS = {
         #     serializer='weko_schema_ui.serializers.WekoCommonSchema',
         #     order=1,
         # ),
+        'jpcoar_2.0': dict(
+            title='JPCOAR 2.0',
+            serializer='weko_schema_ui.serializers.WekoCommonSchema',
+            order=1,
+        ),
         'jpcoar_1.0': dict(
-            title='JPCOAR',
+            title='JPCOAR 1.0',
             serializer='weko_schema_ui.serializers.WekoCommonSchema',
             order=2,
         ),
