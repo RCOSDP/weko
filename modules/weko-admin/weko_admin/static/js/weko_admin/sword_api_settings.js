@@ -84,8 +84,6 @@ function toggleMenu() {
 function isEmpty(value){
   if (!value){
     return true;
-  }else if(value === ''){
-    return true;
   }else{
     return false;
   }
@@ -121,14 +119,6 @@ function handleSubmit(event) {
   if(isEmpty(dataMenu.value)){
     NGList.push('Data Format');
   }
-  if(isEmpty(registerMenu.value)){
-    NGList.push('Register Format');
-  }
-if(registerMenu.value == "workflow"){
-  if(isEmpty(workflowMenu.value)){
-    NGList.push('Workflow');
-  }
-}
   if(NGList.length){
     return showMsg(item_required_alert + NGList , false);
   }
