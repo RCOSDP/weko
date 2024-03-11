@@ -1,97 +1,75 @@
-{#
-# This file is part of WEKO3.
-# Copyright (C) 2017 National Institute of Informatics.
-#
-# WEKO3 is free software; you can redistribute it
-# and/or modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; either version 2 of the
-# License, or (at your option) any later version.
-#
-# WEKO3 is distributed in the hope that it will be
-# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with WEKO3; if not, write to the
-# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-# MA 02111-1307, USA.
-#}
-{%- from "weko_workflow/helpers.html" import render_identifier_link with context -%}
-<input type="hidden" id="item_id" value="{{pid.pid_value}}" />
-<!-- Confirm Modal -->
-{% from "weko_theme/macros/modal_page.html" import approval_modal %}
+{% if "." in record['_deposit']['id'] and doi_information_exists %} <!-- TODO IF 1 S -->
+    {% if record[doi_information_key]["attribute_name"] == "Identifier Registration" %} <!-- TODO IF 2 S -->
+        <div class="row h-100">
+            <p class="text-center">
+                <button class="btn btn-danger withdraw-button" id="doi_is_reserved" disabled>
+                    {{_('DOI is reserved')}}
+                </button>
+            </p>
+        </div>
+    {% endif %} <!-- TODO IF 2 E -->
+{% else %}
+    <div class="form-group radio" style="display: inline-grid;">
+        <table>
+            <tr>
+                {%- set idf_link_data = idf_grant_input[0] %}
+                <td height="35">
+                    <label>
+                        <input type="radio" name="identifier_grant" value="{{ idf_link_data[0] }}" {%- if
+                            idf_link_data[0]==temporary_idf_grant %}checked{%- endif %}>
+                        {{ idf_link_data[1] }}
+                    </label>
+                </td>
+            </tr>
+            {%- if idf_grant_data %} <!-- TODO IF 3 S -->
+                {%- set item_id = activity.item_id %}
 
+                {%- if record %} <!-- TODO IF 4 S -->
+                    {%- set item_id = '%010d' % record['_deposit']['id']|int %}
+                {%- endif %} <!-- TODO IF 4 E -->
 
+                {%- if idf_grant_data["jalc_flag"] %} <!-- TODO IF 5 S -->
+                    {%- set idf_grant_labels = idf_grant_input[1] %}
+                    {{ render_identifier_link(idf_grant_labels[0], idf_grant_labels[1], idf_grant_labels[2],
+                    idf_grant_method, idf_grant_data["jalc_doi"], idf_grant_data["suffix"],item, item_id) }}
+                {%- endif %} <!-- TODO IF 5 E -->
 
-<div class="panel panel-default">
-    <div class="panel-heading">
-        <span>{{_('Identifier Grant')}}</span>
+                {%- if idf_grant_data["jalc_crossref_flag"] %} <!-- TODO IF 6 S -->
+                    {%- set idf_grant_labels = idf_grant_input[2] %}
+                    {{ render_identifier_link(idf_grant_labels[0], idf_grant_labels[1], idf_grant_labels[2],
+                    idf_grant_method, idf_grant_data["jalc_crossref_doi"], idf_grant_data["suffix"], item, item_id) }}
+                {%- endif %} <!-- TODO IF 6 E -->
+
+                {%- if idf_grant_data["jalc_datacite_flag"] %} <!-- TODO IF 7 S -->
+                    {%- set idf_grant_labels = idf_grant_input[3] %}
+                    {{ render_identifier_link(idf_grant_labels[0], idf_grant_labels[1], idf_grant_labels[2],
+                    idf_grant_method, idf_grant_data["jalc_datacite_doi"], idf_grant_data["suffix"], item, item_id) }}
+                {%- endif %} <!-- TODO IF 7 E -->
+
+                {%- if idf_grant_data["ndl_jalc_flag"] %} <!-- TODO IF 8 S -->
+                    {%- set idf_grant_labels = idf_grant_input[4] %}
+                    {{ render_identifier_link(idf_grant_labels[0], idf_grant_labels[1], idf_grant_labels[2],
+                    2, idf_grant_data["ndl_jalc_doi"], idf_grant_data["suffix"], item, item_id) }}
+                {%- endif %} <!-- TODO IF 8 E -->
+
+                <tr>
+                    <td height="35">
+                        <input type="checkbox" name="doi-reservation" id="doi-reservation" checked disabled>
+                        <span>{{ _('Register reservation') }}</span>
+                    </td>
+                    <!-- <td height="35">
+                        <label>
+                        <input type="date" name="doi-reservation-date" id="doi-reservation-date"">
+                        </label>
+                    </td> -->
+                </tr>
+
+                <input type="hidden" id="msg_format_doi"
+                    value="{{_('Its able to input only haft-width alphanumeric or half-width symbol.')}}" />
+                <input type="hidden" id="msg_length_doi" value="{{_('Input value exceeds 255 characters.')}}" />
+                <input type="hidden" id="msg_required_doi" value="{{_('DOI has not been entered.')}}" />
+                <input type="hidden" id="idf_grant_method" value="{{idf_grant_method}}" />
+            {%- endif %} <!-- TODO IF 3 E -->
+        </table>
     </div>
-    <div class="panel-body" style="line-height: 1.6;">
-        <h1>index_is_private_state ~ {{ index_is_private_state }}</h1>
-        <h1>is_public_state ~ {{ is_public_state }}</h1>
-        <h1>doi_information_key ~ {{ doi_information_key }}</h1>
-        <h1>cur_step ~ {{ cur_step }}</h1>
-        <hr>
-        <h1>{{ record }}</h1>
-        {% if not is_public_state %} <!-- TODO IF Public State Check S -->
-            {% include 'weko_workflow/identifier_grant_private_doi_reservation.html' %}
-        {% else %}
-            {%- if temporary_idf_grant >= 0 %} <!-- TODO IF Main S -->
-                {% if "." in record['_deposit']['id'] %} <!-- TODO IF 1 S -->
-                    {% if doi_information_key %} <!-- TODO IF 1.1 S -->
-                        {% if record[doi_information_key]["attribute_name"] == "Identifier Registration" %} <!-- TODO IF 2 S -->
-                        <div class="row h-100">
-                            <p class="text-center">
-                                <button class="btn btn-danger withdraw-button" id="doi_is_reserved" disabled>
-                                    {{_('DOI is reserved')}}
-                                </button>
-                            </p>
-                        </div>
-                        {% endif %} <!-- TODO IF 2 E -->
-                    {% else %}
-                        {% include 'weko_workflow/identifier_grant_form.html' %}
-                    {% endif %} <!-- TODO IF 1.1 E -->
-                {% else %}
-                    {% include 'weko_workflow/identifier_grant_form.html' %}
-                {% endif %} <!-- TODO IF 1 E -->
-            {%- elif temporary_idf_grant == -1 %}
-                {% include "weko_workflow/modal_withdraw_confirmation.html" %}
-                <div class="row h-100">
-                    <p class="text-center">
-                        <button class="btn btn-danger withdraw-button" id="btn_withdraw">
-                            {{_('Withdraw DOI')}}
-                        </button>
-                    </p>
-                </div>
-            {%- elif temporary_idf_grant == -2 %}
-                <div class="row h-100">
-                    <p class="text-center">
-                        <span>{{_('DOI was withdrawn.')}}</span>
-                    </p>
-                </div>
-            {%- else %}
-                <div class="row h-100">
-                    <p class="text-center">
-                        <span>{{_('Items for which a DOI has been withdrawn can not be granted a DOI.')}}</span>
-                    </p>
-                </div>
-            {%- endif %} <!-- TODO IF Main E -->
-        {% endif %} <!-- TODO IF Public State Check E -->
-    </div>
-</div>
-<br>
-<button type="button" class="btn btn-info action-button" id="btn-back">
-    <span class="glyphicon glyphicon-chevron-left"></span> {{_('Back')}}
-</button>
-<button type="button" class="btn btn-primary save-button" id="btn-draft"
-    style="width: 120px; height: 40px;font-size: 15px;">
-    <span class="glyphicon glyphicon-saved"></span> {{_('Save')}}
-</button>
-<button type="button" class="btn btn-info next-button" id="btn-finish">
-    {{_('Next')}} <span class="glyphicon glyphicon-chevron-right"></span>
-</button>
-<button ng-disabled="recordsVM.invenioRecordsLoading" class="btn btn-danger done-button pull-right" id="btn_quit">
-    <i class="fa fa-sign-out"></i> {{_('Quit_identifier_grand')}}
-</button>
+{% endif %} <!-- TODO IF 1 E -->

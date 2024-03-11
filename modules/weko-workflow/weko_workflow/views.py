@@ -1046,6 +1046,7 @@ def display_activity(activity_id="0"):
     index_is_private_state = None
     is_public_state = None
     pubdate_is_future = None
+    record_keys = None
     
     if cur_step == "identifier_grant":
         if record:
@@ -1054,31 +1055,34 @@ def display_activity(activity_id="0"):
             adt = record.get('publish_date')
             pdt = record.get('pubdate', {}).get('attribute_value')
             pubdate_is_future = is_future(pdt)
+            record_keys = [key for key in record.keys()]
+            doi_reserve_record = record
         elif approval_record:
             index_is_private_state = is_private_index(approval_record)
             is_public_state = check_publish_status(approval_record)
             adt = approval_record.get('publish_date')
             pdt = approval_record.get('pubdate', {}).get('attribute_value')
             pubdate_is_future = is_future(pdt)
+            record_keys = [key for key in approval_record.keys()]
+            doi_reserve_record = approval_record
         else:
             pass
 
     doi_information_exists = False
     doi_information_key = None
-    doi_reserve_record = record
-    record_keys = [key for key in record.keys()]
 
-    for key in record_keys:
-        if isinstance(doi_reserve_record[key], dict):
-            if "attribute_value_mlt" in doi_reserve_record[key].keys():
-                if doi_reserve_record[key].get("attribute_value_mlt") and \
-                        isinstance(doi_reserve_record[key].get("attribute_value_mlt"), list):
-                    for identifier_reg_type in doi_reserve_record[key].get("attribute_value_mlt"):
-                        if isinstance(identifier_reg_type, dict):
-                            if identifier_reg_type.get("subitem_identifier_reg_text") or \
-                                    identifier_reg_type.get("subitem_identifier_reg_type"):
-                                doi_information_key = key
-                                doi_information_exists = True
+    if (record or approval_record) and record_keys:
+        for key in record_keys:
+            if isinstance(doi_reserve_record[key], dict):
+                if "attribute_value_mlt" in doi_reserve_record[key].keys():
+                    if doi_reserve_record[key].get("attribute_value_mlt") and \
+                            isinstance(doi_reserve_record[key].get("attribute_value_mlt"), list):
+                        for identifier_reg_type in doi_reserve_record[key].get("attribute_value_mlt"):
+                            if isinstance(identifier_reg_type, dict):
+                                if identifier_reg_type.get("subitem_identifier_reg_text") or \
+                                        identifier_reg_type.get("subitem_identifier_reg_type"):
+                                    doi_information_key = key
+                                    doi_information_exists = True
     # DOI RESERVATION FIX ------------ END
 
     if recid:

@@ -369,7 +369,7 @@ def is_pubdate_in_future(record, isReserved=False):
             db.desc(PersistentIdentifier.created)
         ).first()
 
-        if (not isReserved and reserved_pid_doi is not None) or reserved_pid_doi is not None:
+        if ((not isReserved and reserved_pid_doi is not None) or reserved_pid_doi is not None) and not is_private_index(record):
             from weko_workflow.models import ActionIdentifier, Activity, ActionStatusPolicy
             from weko_workflow.config import IDENTIFIER_GRANT_SELECT_DICT
             from weko_workflow.utils import prepare_edit_workflow, get_actionid, IdentifierHandle, \
@@ -544,14 +544,13 @@ def is_pubdate_in_future(record, isReserved=False):
             post_activity['community'] = 'Root Index'
             post_activity['post_workflow'] = post_workflow
 
-            doi_reservation_record_activity = post_workflow
+            # doi_reservation_record_activity = post_workflow
             doi_reservation_record_activity_id = post_workflow.activity_id
-            doi_reservation_record_action_identifier = ActionIdentifier.query.filter_by(activity_id=doi_reservation_record_activity_id).one_or_none()
+            # doi_reservation_record_action_identifier = ActionIdentifier.query.filter_by(activity_id=doi_reservation_record_activity_id).one_or_none()
             identifier_actionid = get_actionid('identifier_grant')
             work_activity = WorkActivity()
             activity_detail = work_activity.get_activity_detail(doi_reservation_record_activity_id)
-            pid_id_hdn = IdentifierHandle(recid.object_uuid)
-            pid_doi_ffxv = WekoRecord.get_record_by_pid(record.get("_deposit", {}).get("id"))
+            # pid_id_hdn = IdentifierHandle(recid.object_uuid)
 
             work_activity.create_or_update_action_identifier(
                 activity_id=doi_reservation_record_activity_id,

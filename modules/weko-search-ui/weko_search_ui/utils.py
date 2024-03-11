@@ -501,9 +501,6 @@ def check_import_items(file, is_change_identifier: bool, is_gakuninrdm=False,
 
     """
 
-    print("\n\n\n weko_search_ui/utils.py::check_import_items".upper())
-    print("\n\n\n")
-
     if isinstance(file, str):
         filename = file.split("/")[-1]
     else:
@@ -2122,12 +2119,6 @@ def handle_check_doi(list_record):
     def _check_doi(doi_ra, doi, item):
         error = None
         split_doi = doi.split("/")
-
-        current_app.logger.error("\n\n\n handle_check_doi 9999".upper())
-        current_app.logger.error(f"doi ~ {doi}")
-        current_app.logger.error(f"doi_ra ~ {doi_ra}")
-        current_app.logger.error(f'split_doi ~ {split_doi}')
-        current_app.logger.error("\n\n\n")
 
         if doi_ra == "NDL JaLC":
             if len(split_doi) < 2 and not "/" in doi:

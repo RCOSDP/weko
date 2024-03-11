@@ -57,6 +57,7 @@ from weko_workflow.utils import check_an_item_is_locked, \
     get_record_by_root_ver, get_thumbnails, prepare_edit_workflow, \
     set_files_display_type
 from weko_schema_ui.models import PublishStatus
+from weko_records_ui.utils import is_future
 from werkzeug.utils import import_string
 from webassets.exceptions import BuildError
 from werkzeug.exceptions import BadRequest
@@ -1319,8 +1320,6 @@ def check_record_doi_indexes(pid_value='0'):
     record = WekoRecord.get_record_by_pid(pid_value)
     doi_is_reserved = request.args.get('doi_is_reserved', 'false')
     adt = record.get('publish_date')
-
-    from weko_records_ui.utils import is_future
 
     if doi_is_reserved == "true" and (record.pid_doi or doi > 0) and is_future(adt):
         pass

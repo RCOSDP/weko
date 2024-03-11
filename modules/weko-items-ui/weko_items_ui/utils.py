@@ -4244,6 +4244,7 @@ def make_stats_file_with_permission(item_type_id, recids,
         records.attr_output[recid].append(cnri)
 
         # DOI RESERVATION FIX ------------ START
+        identifier = IdentifierHandle(record.pid_recid.object_uuid)
         record_keys = [
             key for key in record.keys()
         ]
