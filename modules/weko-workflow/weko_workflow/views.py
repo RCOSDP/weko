@@ -2393,14 +2393,20 @@ def get_feedback_maillist(activity_id='0'):
             if not isinstance(mail_list, list):
                 res = ResponseMessageSchema().load({"code":-1,"msg":"mail_list is not list"})
                 return jsonify(res.data), 400
-            for mail in mail_list:
-                if mail.get('author_id'):
-                    email = Authors.get_first_email_by_id(
-                        mail.get('author_id'))
-                    if email:
-                        mail['email'] = email
-                    else:
-                        mail_list.remove(mail)
+            temp_list = []
+            added_user = []
+            for mail in mail_list.copy():
+                aid = mail.get('author_id')
+                if aid:
+                    mail_list.remove(mail)
+                    if aid not in added_user:
+                        emails = Authors.get_emails_by_id(aid)
+                        temp_list += [
+                            {'email': e, 'author_id': mail.get('author_id')}
+                            for e in emails
+                        ]
+                        added_user.append(aid)
+            mail_list += temp_list
             res = GetFeedbackMailListSchema().load({'code':1,'msg':_('Success'),'data':mail_list})
             return jsonify(res.data), 200
         else:
