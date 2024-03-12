@@ -660,6 +660,12 @@ class FeedbackMailList(db.Model, Timestamp):
     )
     """List of feedback mail in json format."""
 
+    account_author = db.Column(
+        db.Text,
+        nullable=False
+    )
+    """Author identifier."""
+
 
 class ItemReference(db.Model, Timestamp):
     """Model of item reference relations."""
