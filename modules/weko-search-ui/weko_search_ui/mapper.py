@@ -22,9 +22,7 @@
 import os
 import xmltodict
 from datetime import date
-from collections import OrderedDict
 from functools import partial
-from json import dumps, loads
 
 from flask import current_app
 
@@ -52,24 +50,15 @@ LANG = "@xml:lang"
 
 
 def get_subitem_text_key(*element_names):
-    if element_names is not None:
+    if element_names:
         return ".".join(list(element_names) + [TEXT])
     return ""
 
 
 def get_subitem_lang_key(*element_names):
-    if element_names is not None:
+    if element_names:
         return ".".join(list(element_names) + [LANG])
     return ""
-
-
-def map_field(schema):
-    """Get field map."""
-    res = {}
-    for field_name in schema.get("properties", []):
-        if field_name not in DEFAULT_FIELD:
-            res[schema["properties"][field_name]["title"]] = field_name
-    return res
 
 
 def subitem_recs(schema, keys, value, metadata):
@@ -112,12 +101,12 @@ def subitem_recs(schema, keys, value, metadata):
                             subitems.append({item_key: item})
                         else:
                             subitems.append({item_key: item.get(_v[1], "")})
-                elif isinstance(metadata.get(_v[0]), OrderedDict):
+                elif isinstance(metadata.get(_v[0]), dict):
                     subitems.append({item_key: metadata.get(_v[0], {}).get(_v[1], "")})
             else:
                 if isinstance(metadata, str) and value == TEXT:
                     subitems.append({item_key: metadata})
-                elif isinstance(metadata, OrderedDict):
+                elif isinstance(metadata, dict):
                     subitems.append({item_key: metadata.get(value, "")})
     elif schema.get("properties", {}).get(item_key):
         subitems = {}
@@ -145,12 +134,12 @@ def subitem_recs(schema, keys, value, metadata):
                     subitems[item_key] = metadata.get(_v[0])
                 elif isinstance(metadata.get(_v[0]), list):
                     subitems[item_key] = metadata.get(_v[0])[0].get(_v[1], "")
-                elif isinstance(metadata.get(_v[0]), OrderedDict):
+                elif isinstance(metadata.get(_v[0]), dict):
                     subitems[item_key] = metadata.get(_v[0], {}).get(_v[1], "")
             else:
                 if isinstance(metadata, str) and value == TEXT:
                     subitems[item_key] = metadata
-                elif isinstance(metadata, OrderedDict):
+                elif isinstance(metadata, dict):
                     subitems[item_key] = metadata.get(value, "")
     elif not item_key:
         if "." in value:
@@ -162,14 +151,14 @@ def subitem_recs(schema, keys, value, metadata):
                 subitems = metadata.get(_v[0])
             elif isinstance(metadata.get(_v[0]), list):
                 subitems = metadata.get(_v[0])[0].get(_v[1], "")
-            elif isinstance(metadata.get(_v[0]), OrderedDict):
+            elif isinstance(metadata.get(_v[0]), dict):
                 subitems = metadata.get(_v[0], {}).get(_v[1], "")
         else:
             if isinstance(metadata, str) and value == TEXT:
                 subitems = metadata
             if isinstance(metadata, list):
                 subitems = metadata[0]
-            elif isinstance(metadata, OrderedDict):
+            elif isinstance(metadata, dict):
                 subitems = metadata.get(value, "")
     else:
         current_app.logger.debug("item_key: {0}".format(item_key))
@@ -213,14 +202,17 @@ def parsing_metadata(mappin, props, patterns, metadata, res):
     else:
         mapping_keys.sort()
 
+    ret = []
     for item_key in mapping_keys:
         if item_key and props.get(item_key):
             is_item_type_array = ("items" in props[item_key].keys()) and \
                 (props[item_key]["type"] == "array")
             if is_item_type_array:
                 item_schema = props[item_key]["items"]["properties"]
-            else:
+            elif props[item_key]['type'] == 'object':
                 item_schema = props[item_key]["properties"]
+            else:
+                item_schema = props[item_key]
 
             ret = []
             for it in metadata:
@@ -302,7 +294,7 @@ def add_title(schema, mapping, res, metadata):
     if item_key and ret:
         if isinstance(metadata[0], str):
             res["title"] = metadata[0]
-        elif isinstance(metadata[0], OrderedDict):
+        elif isinstance(metadata[0], dict):
             res["title"] = metadata[0].get(TEXT)
 
 
@@ -400,8 +392,10 @@ def add_publisher_jpcoar(schema, mapping, res, metadata):
         ("publisher_jpcoar.publisherDescription.@attributes.xml:lang", get_subitem_lang_key("jpcoar:publisherDescription")),
         # dcndl:location
         ("publisher_jpcoar.location.@value", get_subitem_text_key("dcndl:location")),
+        ("publisher_jpcoar.location.@attributes.xml:lang", get_subitem_lang_key("dcndl:location")),
         # dcndl:publicationPlace
         ("publisher_jpcoar.publicationPlace.@value", get_subitem_text_key("dcndl:publicationPlace")),
+        ("publisher_jpcoar.publicationPlace.@attributes.xml:lang", get_subitem_lang_key("dcndl:publicationPlace"))
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
@@ -490,6 +484,7 @@ def add_date(schema, mapping, res, metadata):
 def add_date_dcterms(schema, mapping, res, metadata):
     patterns = [
         ("date_dcterms.@value", TEXT),
+        ("date_dcterms.@attributes.xml:lang", LANG),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
@@ -617,6 +612,8 @@ def add_version(schema, mapping, res, metadata):
         ("version.@value", TEXT),
     ]
 
+    parsing_metadata(mapping, schema, patterns, metadata, res)
+
 
 def add_version_type(schema, mapping, res, metadata):
     """Add version type."""
@@ -677,14 +674,15 @@ def add_file(schema, mapping, res, metadata):
     ]
 
     item_key, ret = parsing_metadata(mapping, schema, patterns, metadata, res)
-    for file_info in ret:
-        if not file_info.get("filename"):
-            file_info["filename"] = os.path.basename(
-                file_info.get("url", {}).get("url", "")
-            )
-    files_info = res.get("files_info", [])
-    files_info.append({"key": item_key, "items": ret})
-    res["files_info"] = files_info
+    if ret and item_key:
+        for file_info in ret:
+            if not file_info.get("filename"):
+                file_info["filename"] = os.path.basename(
+                    file_info.get("url", {}).get("url", "")
+                )
+        files_info = res.get("files_info", [])
+        files_info.append({"key": item_key, "items": ret})
+        res["files_info"] = files_info
 
 
 def add_identifier(schema, mapping, res, metadata):
@@ -959,39 +957,6 @@ def add_resource_type(schema, mapping, res, metadata):
     parsing_metadata(mapping, schema, patterns, metadata, res)
 
 
-def add_data_by_key(schema, res, resource_list, key):
-    """Add data by parent key.
-
-    :param schema:
-    :param res:
-    :param resource_list:
-    :param key:
-    :return:
-    """
-    if not isinstance(resource_list, list):
-        resource_list = [resource_list]
-    root_key = map_field(schema).get(key)
-    if not root_key:
-        return
-    if not res.get(root_key):
-        res[root_key] = []
-    temporal = map_field(schema["properties"][root_key]["items"])[key]
-    language = map_field(schema["properties"][root_key]["items"])["Language"]
-    for it in resource_list:
-        item = {}
-        if isinstance(it, str):
-            item[temporal] = it
-        elif isinstance(it, OrderedDict):
-            item[temporal] = it.get(TEXT)
-            item[language] = it.get(LANG)
-        res[root_key].append(item)
-
-
-def to_dict(input_ordered_dict):
-    """Convert OrderDict to Dict."""
-    return loads(dumps(input_ordered_dict))
-
-
 RESOURCE_TYPE_V2_MAP = {
     # Article
     "conference paper": "Conference Paper",
@@ -1097,29 +1062,19 @@ class BaseMapper:
     def __init__(self, xml):
         """Init."""
         self.xml = xml
-        self.json = xmltodict.parse(xml)
+        if not xml:
+            self.json = {}
+        else:
+            self.json = xmltodict.parse(xml)
+
         if not BaseMapper.itemtype_map:
             BaseMapper.update_itemtype_map()
 
+        self.itemtype = None
         for item in BaseMapper.itemtype_map:
             if "Others" == item or "Multiple" == item:
                 self.itemtype = BaseMapper.itemtype_map.get(item)
                 break
-
-    def map_itemtype(self, type_tag):
-        """Map itemtype."""
-        types = self.json[type_tag].get("dc:type")
-        if types is None:
-            return
-
-        types = types if isinstance(types, list) else [types]
-        for t in types:
-            if isinstance(t, OrderedDict):
-                t = t[TEXT]
-            if t.lower() in RESOURCE_TYPE_V2_MAP:
-                resource_type = RESOURCE_TYPE_V2_MAP.get(t.lower())
-                if BaseMapper.itemtype_map.get(resource_type):
-                    self.itemtype = BaseMapper.itemtype_map.get(resource_type)
 
 
 class JPCOARV2Mapper(BaseMapper):
@@ -1131,17 +1086,21 @@ class JPCOARV2Mapper(BaseMapper):
 
     def map(self, item_type_name):
         """Get map."""
+        default_metadata = {"pubdate": date.today().isoformat()}
         if not item_type_name:
-            return {"pubdate": date.today().isoformat()}
+            return default_metadata
 
         # get item type
         for item_type in ItemType.query.all():
-            if (item_type.item_type_name.name) == item_type_name:
+            if item_type.item_type_name.name == item_type_name:
                 self.itemtype = item_type
                 break
 
+        if not self.itemtype:
+            return default_metadata
+
         self.identifiers = []
-        res = {"$schema": self.itemtype.id, "pubdate": date.today().isoformat()}
+        res = {"$schema": self.itemtype.id, **default_metadata}
 
         item_type_mapping = Mapping.get_record(self.itemtype.id)
         item_map = get_full_mapping(item_type_mapping, "jpcoar_mapping")
