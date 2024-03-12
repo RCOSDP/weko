@@ -662,7 +662,8 @@ class FeedbackMailList(db.Model, Timestamp):
 
     account_author = db.Column(
         db.Text,
-        nullable=False
+        nullable=False,
+        default=''
     )
     """Author identifier."""
 
