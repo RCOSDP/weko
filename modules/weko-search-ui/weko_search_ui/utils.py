@@ -622,7 +622,7 @@ def check_xml_import_items(file, item_type_id, is_gakuninrdm=False):
     """Validation importing zip file.
 
     :argument
-        file_name -- file name.
+        file -- zip file path.
         item_id -- import item type id.
         is_gakuninrdm -- Is call by gakuninrdm api.
     :return
@@ -765,7 +765,7 @@ def unpackage_import_file(data_path: str, file_name: str, file_format: str, forc
 
 
 def generate_metadata_from_jpcoar(data_path: str, filenames: list, item_type_id: int, is_change_identifier=False):
-    """Getting record data from CSV/TSV file.
+    """Getting record data from JPCOAR file.
 
     :argument
         data_path -- Path of xml file.
@@ -797,7 +797,7 @@ def generate_metadata_from_jpcoar(data_path: str, filenames: list, item_type_id:
             list_record, data.get("item_type_schema", {})
         )
 
-    current_app.logger.debug('list_record: {}'.format(list_record))
+    # current_app.logger.debug('list_record: {}'.format(list_record))
     return list_record
 
 
@@ -1003,7 +1003,7 @@ def read_stats_file(file_path: str, file_name: str, file_format: str) -> dict:
     result["data_list"] = data_list
     return result
 
-def read_jpcoar_xml_file(file_path, item_type_info):
+def read_jpcoar_xml_file(file_path, item_type_info) -> dict:
     """Read JPCOAR(V2) metadata from xml file
 
     Args:
@@ -1024,8 +1024,6 @@ def read_jpcoar_xml_file(file_path, item_type_info):
         # mapping
         mapper = JPCOARV2Mapper(ET.tostring(tree.getroot()).decode(enc))
         res = mapper.map(item_type_info['name'])
-
-        current_app.logger.warn(res)
     except UnicodeDecodeError as ex:
         ex.reason = _(
             "The XML file could not be read. Make sure the file"
@@ -1177,7 +1175,7 @@ def handle_check_exist_record(list_record) -> list:
     current_app.logger.debug("handle_check_exist_record")
     for item in list_record:
         item = dict(**item, **{"status": "new"})
-        current_app.logger.debug("item:{}".format(item))
+        # current_app.logger.debug("item:{}".format(item))
         errors = item.get("errors") or []
         item_id = item.get("id")
         # current_app.logger.debug("item_id:{}".format(item_id))
@@ -3758,7 +3756,7 @@ def export_all(root_url, user_id, data, timezone):
             else:
                 fromid = item_id_range
                 toid = item_id_range
-        
+
         result = None
         if not fromid or not toid or (fromid and toid and int(fromid) <= int(toid)):
             result = _get_export_data(export_path, item_types, 0, fromid, toid)
