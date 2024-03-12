@@ -45,7 +45,7 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy.sql.expression import desc
 from werkzeug.local import LocalProxy
-
+from weko_authors.models import Authors
 
 
 from .fetchers import weko_record_fetcher
@@ -2178,6 +2178,69 @@ class FeedbackMailList(object):
         """
         for item_id in item_ids:
             cls.delete(item_id)
+
+    @classmethod
+    def get_feedback_mail_list(cls):
+        """Get feedback mail list for send mail."""
+        mail_list = []
+        checked_author_id = []
+
+        # get feedbak mail list from db
+        data = db.session.query(
+            _FeedbackMailList, PersistentIdentifier
+        ).join(
+            PersistentIdentifier,
+            _FeedbackMailList.item_id == PersistentIdentifier.object_uuid
+        ).filter(
+            PersistentIdentifier.pid_type == 'recid',
+            PersistentIdentifier.status == PIDStatus.REGISTERED
+        ).all()
+
+        for d in data:
+            item_id = str(d._FeedbackMailList.item_id)
+            emails_noid = []
+            list_author_id = d._FeedbackMailList.account_author.split(',')
+            for m in d._FeedbackMailList.mail_list:
+                if m.get("author_id"):
+                    list_author_id.append(m.get("author_id"))
+                else:
+                    emails_noid.append(m.get("email"))
+            for author_id in list(set(list_author_id)):
+                if not author_id:
+                    continue
+                if author_id in checked_author_id:
+                    emails = checked_author_id.get(author_id)
+                    for e in emails:
+                        mail_list[e]["items"].append(item_id)
+                else:
+                    emails = Authors.get_emails_by_id(author_id)
+                    for e in emails:
+                        if e and e not in mail_list:
+                            mail_list.append(
+                                {
+                                    e: {
+                                        "items": [item_id],
+                                        "author_id": author_id
+                                    }
+                                }
+                            )
+                    # added author info to checked_author_id list
+                    checked_author_id.append({author_id: emails})
+            for e in emails_noid:
+                if e:
+                    if e not in mail_list:
+                        mail_list.append(
+                            {
+                                e: {
+                                    "items": [item_id],
+                                    "author_id": ""
+                                }
+                            }
+                        )
+                    else:
+                        mail_list[e]["items"].append(item_id)
+
+        return mail_list
 
 
 class ItemLink(object):

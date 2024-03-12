@@ -569,7 +569,7 @@ class StatisticMail:
     @classmethod
     def send_mail_to_all(cls, list_mail_data=None, stats_date=None):
         """Send mail to all setting email."""
-        from weko_search_ui.utils import get_feedback_mail_list
+        from weko_records.api import FeedbackMailList
         from weko_workflow.utils import get_site_info_name
 
         # Load setting:
@@ -588,7 +588,7 @@ class StatisticMail:
         total_mail = 0
         try:
             if not list_mail_data:
-                list_mail_data = get_feedback_mail_list()
+                list_mail_data = FeedbackMailList.get_feedback_mail_list()
                 if not list_mail_data:
                     return
 
@@ -1439,7 +1439,7 @@ class FeedbackMail:
             dictionary -- resend mail data
 
         """
-        from weko_search_ui.utils import get_feedback_mail_list
+        from weko_records.api import FeedbackMailList
 
         result = {
             'data': dict(),
@@ -1454,7 +1454,7 @@ class FeedbackMail:
         if len(list_failed_mail) == 0:
             return None
 
-        list_mail_data = get_feedback_mail_list()
+        list_mail_data = FeedbackMailList.get_feedback_mail_list()
         if not list_mail_data:
             return None
 
