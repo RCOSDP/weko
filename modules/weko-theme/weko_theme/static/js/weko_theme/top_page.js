@@ -218,12 +218,16 @@ require([
     function getFacetParameter() {
         let result = "";
         let params = window.location.search.substring(1).split('&');
-        const conds = ['page', 'size', 'sort', 'timestamp', 'search_type', 'q', 'title', 'creator', 'date_range1_from', 'date_range1_to','time'];
+        // 既に稼働しており、ユーザーからは簡易、詳細検索は併用できると認識されている可能性があるため、暫定対応を行う。
+        // const conds = ['page', 'size', 'sort', 'timestamp', 'search_type', 'q', 'title', 'creator', 'date_range1_from', 'date_range1_to','time'];
+        const conds = ['page', 'size', 'sort', 'timestamp', 'search_type', 'q','time'];
         for (let i = 0; i < params.length; i++) {
             var keyValue = decodeURIComponent(params[i]).split('=');
             var key = keyValue[0];
             var value = keyValue[1];
-            if(key && !conds.includes(key) && !key.startsWith("text")) {
+            //  暫定対応
+            // if(key && !conds.includes(key) && !key.startsWith("text")) {
+            if(key && !conds.includes(key)) {
                 result += "&" + encodeURIComponent(key) + "=" + encodeURIComponent(value);
             }
         }
