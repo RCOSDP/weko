@@ -1,6 +1,8 @@
 import os
+import time
 import uuid
 import json
+import traceback
 from flask import current_app, url_for
 
 from invenio_db import db
@@ -15,7 +17,7 @@ from weko_deposit.api import WekoDeposit
 from weko_deposit.serializer import file_uploaded_owner
 from weko_search_ui.utils import check_tsv_import_items, check_xml_import_items
 from weko_workflow.api import WorkActivity
-from weko_workflow.models import WorkFlow
+from weko_workflow.models import ActionStatusPolicy, WorkFlow
 
 
 def check_import_items(file, is_change_identifier: bool = False):
@@ -26,6 +28,7 @@ def check_import_items(file, is_change_identifier: bool = False):
         check_tsv_result = check_tsv_import_items(file, is_change_identifier)
         if check_tsv_result.get("error"):
             # try xml
+            time.sleep(1)
             workflow_id = int(data_format.get("XML", {}).get("workflow", "-1"))
             workflow = WorkFlow.query.filter_by(id=workflow_id).first()
             item_type_id = workflow.itemtype_id
@@ -47,6 +50,7 @@ def check_import_items(file, is_change_identifier: bool = False):
         )
         if check_xml_result.get("error"):
             # try tsv
+            time.sleep(1)
             check_tsv_result = check_tsv_import_items(file, is_change_identifier)
             if check_tsv_result.get("error"):
                 return check_xml_result, None
@@ -71,8 +75,9 @@ def create_activity_from_jpcoar(check_result, data_path):
         "itemtype_id": workflow.itemtype_id,
     }
 
+    work_activity = WorkActivity()
+    activity =None
     try:
-        work_activity = WorkActivity()
         activity = work_activity.init_activity(workflow_data)
 
         # update by data
@@ -88,7 +93,7 @@ def create_activity_from_jpcoar(check_result, data_path):
         metadata = {"metainfo": record_metadata}
 
         if files_info:
-            pid, files_metadata, deposit = upload_jocoar_contents(data_path, files_info)
+            pid, files_metadata, deposit = upload_jpcoar_contents(data_path, files_info)
             # set item id
             activity.item_id = pid.object_uuid
             metadata["files"] = files_metadata
@@ -102,11 +107,25 @@ def create_activity_from_jpcoar(check_result, data_path):
     except Exception as ex:
         db.session.rollback()
         current_app.logger.exception(ex)
+        if activity:
+            try:
+                activity_data = dict(
+                    activity_id=activity.activity_id,
+                    action_id=activity.action_id,
+                    action_version=activity.action.action_version,
+                    action_status=ActionStatusPolicy.ACTION_CANCELED,
+                    commond="",
+                    action_order=activity.action_order
+                )
+                work_activity.quit_activity(activity_data)
+            except:
+                traceback.print_exc()
+                current_app.logger.exception("activity quit canceled.")
         raise ex
     return activity, deposit.get("recid")
 
 
-def upload_jocoar_contents(data_path, contents_data):
+def upload_jpcoar_contents(data_path, contents_data):
     record_data = {}
     # Create uuid for record
     record_uuid = uuid.uuid4()
@@ -127,7 +146,7 @@ def upload_jocoar_contents(data_path, contents_data):
             url = file_info.get("url", {}).get("url", "")
             file_path = os.path.join(data_path, url)
             if not url or not os.path.isfile(file_path):
-                raise FileNotFoundError
+                raise FileNotFoundError()
 
             # Check file size
             size_limit = bucket.size_limit

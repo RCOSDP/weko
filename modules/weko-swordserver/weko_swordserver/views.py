@@ -15,7 +15,7 @@ import shutil
 import sword3common
 from flask import Blueprint, current_app, jsonify, request, url_for
 from invenio_deposit.scopes import write_scope
-from invenio_oauth2server import require_api_auth, require_oauth_scopes
+from invenio_oauth2server import require_api_auth
 from invenio_oauth2server.ext import verify_oauth_token_and_set_current_user
 from invenio_oauth2server.provider import oauth2
 from sword3common import ServiceDocument, StatusDocument, constants
@@ -168,7 +168,7 @@ def post_service_document():
         * If the server does not accept packages in the format identified in the Packaging header, MUST respond with a 415 (PackagingFormatNotAcceptable)
         * If the Packaging header does not match the format found in the body content, SHOULD return 415 (FormatHeaderMismatch). Note that the server may not be able to inspect the package during the request-response, so MAY NOT return this response.
     """
-    
+
     """
     Check content-disposition
         Request format:
@@ -197,7 +197,7 @@ def post_service_document():
         if check_result.get('error'):
             errorType = ErrorType.ServerError
             check_result_msg = check_result.get('error')
-        elif item.get('errors'):
+        elif item and item.get('errors'):
             errorType = ErrorType.ContentMalformed
             check_result_msg = ', '.join(item.get('errors'))
         else:
@@ -223,11 +223,16 @@ def post_service_document():
         recid = import_result.get('recid')
         response = jsonify(_get_status_document(recid))
     elif register_format == 'Workflow':
-        activity, recid = create_activity_from_jpcoar(check_result, data_path)
+        try:
+            activity, recid = create_activity_from_jpcoar(check_result, data_path)
+        except:
+            raise WekoSwordserverException('Error in create_activity_from_jpcoar', ErrorType.ServerError)
         response = jsonify(_get_status_workflow_document(activity, recid))
 
-    shutil.rmtree(data_path)
-    TempDirInfo().delete(data_path)
+    if os.path.exists(data_path):
+        shutil.rmtree(data_path)
+        TempDirInfo().delete(data_path)
+
     return response
 
 @blueprint.route("/deposit/<recid>", methods=['GET'])
@@ -353,9 +358,6 @@ def _get_status_workflow_document(activity, recid):
     :returns: A :class:`sword3common.StatusDocument` instance.
     """
 
-    # Get record uri
-
-
     """
     Set raw data to StatusDocument
 
@@ -363,6 +365,10 @@ def _get_status_workflow_document(activity, recid):
         # "@context"
         # "@type"
     """
+    if not activity:
+        raise WekoSwordserverException("Activity created, but not found.", ErrorType.NotFound)
+
+    # Get record uri
     record_url = ''
     if recid:
         record_url = url_for('weko_swordserver.get_status_document', recid=recid, _external=True)
@@ -390,7 +396,7 @@ def _get_status_workflow_document(activity, recid):
             # "@id" : "",
             # "eTag" : ""
         },
-        "service" : url_for('weko_swordserver.get_service_document', _external=True),
+        "service" : url_for('weko_swordserver.get_service_document', _external=False),
         "state" : [
             {
                 "@id" : SwordState.inWorkflow,
