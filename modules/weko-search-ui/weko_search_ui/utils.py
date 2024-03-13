@@ -641,6 +641,12 @@ def check_xml_import_items(file, item_type_id, is_gakuninrdm=False):
     data_path = os.path.join(tempfile.gettempdir(), tmp_dirname)
     result = {"data_path": data_path}
 
+    # check item type id
+    item_type = ItemTypes.get_by_id(item_type_id)
+    if not item_type or item_type.is_deleted:
+        result["error"] =  _("The item type of the item to be imported is missing or has already been deleted.")
+        return result
+
     try:
         # Create temp dir for import data
         os.mkdir(data_path)
