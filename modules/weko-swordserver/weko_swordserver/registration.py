@@ -16,6 +16,7 @@ from weko_admin.models import AdminSettings
 from weko_deposit.api import WekoDeposit
 from weko_deposit.serializer import file_uploaded_owner
 from weko_search_ui.utils import check_tsv_import_items, check_xml_import_items
+from weko_swordserver.errors import ErrorType, WekoSwordserverException
 from weko_workflow.api import WorkActivity
 from weko_workflow.models import ActionStatusPolicy, WorkFlow
 
@@ -30,7 +31,9 @@ def check_import_items(file, is_change_identifier: bool = False):
             # try xml
             time.sleep(1)
             workflow_id = int(data_format.get("XML", {}).get("workflow", "-1"))
-            workflow = WorkFlow.query.filter_by(id=workflow_id).first()
+            workflow = WorkFlow.query.get(workflow_id)
+            if not workflow or workflow.is_deleted:
+                raise WekoSwordserverException("Workflow is not configured for importing xml.", ErrorType.ServerError)
             item_type_id = workflow.itemtype_id
             check_xml_result = check_xml_import_items(
                 file, item_type_id, is_gakuninrdm=False
@@ -43,7 +46,9 @@ def check_import_items(file, is_change_identifier: bool = False):
             return check_tsv_result, "Direct" # data_format['TSV']['register_format']
     elif default_format == "XML":
         workflow_id = int(data_format.get("XML", {}).get("workflow", "-1"))
-        workflow = WorkFlow.query.filter_by(id=workflow_id).first()
+        workflow = WorkFlow.query.get(workflow_id)
+        if not workflow or workflow.is_deleted:
+            raise WekoSwordserverException("Workflow is not configured for importing xml.", ErrorType.ServerError)
         item_type_id = workflow.itemtype_id
         check_xml_result = check_xml_import_items(
             file, item_type_id, is_gakuninrdm=False

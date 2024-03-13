@@ -9,8 +9,9 @@ from unittest.mock import PropertyMock
 from invenio_files_rest.errors import FileSizeError
 from invenio_files_rest.models import ObjectVersion
 from invenio_pidstore.models import PersistentIdentifier
+from weko_swordserver.errors import ErrorType, WekoSwordserverException
 from weko_swordserver.registration import check_import_items, create_activity_from_jpcoar, create_file_info, upload_jpcoar_contents
-from weko_workflow.models import Activity
+from weko_workflow.models import Activity, WorkFlow
 
 
 @pytest.fixture()
@@ -105,6 +106,64 @@ def test_check_import_items(app, admin_tsv_settings, admin_xml_settings):
         check_result, register_format = check_import_items(sample_files)
         assert check_result == {}
         assert register_format is None
+
+    # Case08: workflow not found (TSV)
+    admin_unknown_settings = {"default_format": "anonymous"}
+    with patch("weko_admin.admin.AdminSettings.get", return_value={
+        "default_format": "TSV",
+        "data_format": {
+            "TSV": {
+                "register_format": "Direct"
+            },
+            "XML": {
+                "workflow": "9999",
+                "register_format": "Workflow"
+            }
+        }
+    }):
+        with patch("weko_swordserver.registration.check_tsv_import_items", return_value=check_tsv_error_result):
+            with pytest.raises(WekoSwordserverException) as ex:
+                check_result, register_format = check_import_items(sample_files)
+                assert ex.value.errorType == ErrorType.ServerError
+                assert ex.value.message == "Workflow is not configured for importing xml."
+
+    # Case09: workflow not found (XML)
+    admin_unknown_settings = {"default_format": "anonymous"}
+    with patch("weko_admin.admin.AdminSettings.get", return_value={
+        "default_format": "XML",
+        "data_format": {
+            "TSV": {
+                "register_format": "Direct"
+            },
+            "XML": {
+                "workflow": "9999",
+                "register_format": "Workflow"
+            }
+        }
+    }):
+        with pytest.raises(WekoSwordserverException) as ex:
+            check_result, register_format = check_import_items(sample_files)
+            assert ex.errorType == ErrorType.ServerError
+            assert ex.message == "Workflow is not configured for importing xml."
+
+    # Case09: workflow has been deleted (TSV)
+    workflow = MagicMock(spec=WorkFlow)
+    workflow.is_deleted = True
+    with patch("weko_admin.admin.AdminSettings.get", return_value=admin_tsv_settings):
+        with patch("weko_swordserver.registration.check_tsv_import_items", return_value=check_tsv_error_result):
+            with patch("sqlalchemy.orm.Query.get", return_value=workflow):
+                with pytest.raises(WekoSwordserverException) as ex:
+                    check_result, register_format = check_import_items(sample_files)
+                    assert ex.value.errorType == ErrorType.ServerError
+                    assert ex.value.message == "Workflow is not configured for importing xml."
+
+    # Case10: workflow has been deleted (XML)
+    with patch("weko_admin.admin.AdminSettings.get", return_value=admin_xml_settings):
+        with patch("sqlalchemy.orm.Query.get", return_value=workflow):
+            with pytest.raises(WekoSwordserverException) as ex:
+                check_result, register_format = check_import_items(sample_files)
+                assert ex.value.errorType == ErrorType.ServerError
+                assert ex.value.message == "Workflow is not configured for importing xml."
 
 
 # def create_activity_from_jpcoar(check_result, data_path)
