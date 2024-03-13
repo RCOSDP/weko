@@ -207,6 +207,10 @@ msgstr "DOI_RAはJaLC,Crossref,DataCite,NDL JaLCのいずれかを設定して�
 msgid "PID does not meet the conditions."
 msgstr "PID付与の条件を満たしていません。"
 
+# weko_search_ui/utils.py:1915
+msgid "If there is a info of content file, terms of use cannot be set"
+msgstr "コンテンツファイル情報がある場合、利用規約は設定できません。"
+
 #: weko_search_ui/utils.py:1955
 msgid "Please specify the date with any format of YYYY-MM-DD, YYYY-MM, YYYY."
 msgstr "日付はYYYY-MM-DD、YYYY-MM、YYYYのいずれかで指定してください。"

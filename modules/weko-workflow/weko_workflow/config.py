@@ -361,6 +361,9 @@ WEKO_WORKFLOW_API_LIMIT_RATE_DEFAULT = ['100 per minute']
 
 WEKO_WORKFLOW_API_ACCEPT_LANGUAGES = ['en', 'ja']
 
+WEKO_WORKFLOW_APPROVAL_PREVIEW = True
+"""Setting preview function during approval"""
+
 WEKO_WORKFLOW_ITEM_REGISTRANT_ID = -2
 """Item registrant id."""
 
@@ -405,3 +408,5 @@ WEKO_WORKFLOW_ACTIVITYLOG_XLS_COLUMNS = [
     'action_name',
     'role_name'
 ]
+WEKO_WORKFLOW_REQUEST_MAIL_ID = -3
+"""Request mail id."""

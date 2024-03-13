@@ -32,7 +32,7 @@ import copy
 from collections import OrderedDict
 from werkzeug.exceptions import HTTPException
 import time
-from flask import session, current_app
+from flask import session, current_app, make_response
 from flask_login import login_user
 from flask_security import current_user, url_for_security
 import json
@@ -285,6 +285,15 @@ class TestWekoIndexer:
         feedback_mail= {'id': record.id, 'mail_list': [{'email': 'wekosoftware@nii.ac.jp', 'author_id': ''}]}
         ret = indexer.update_feedback_mail_list(feedback_mail)
         assert ret == {'_index': 'test-weko-item-v1.0.0', '_type': 'item-v1.0.0', '_id': '{}'.format(record.id), '_version': 3, 'result': 'updated', '_shards': {'total': 2, 'successful': 1, 'failed': 0}, '_seq_no': 9, '_primary_term': 1}
+
+    #     def update_request_mail_list(self, request_mail):
+    # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoIndexer::test_update_request_mail_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+    def test_update_request_mail_list(selft,es_records):
+        indexer, records = es_records
+        record = records[0]['record']
+        request_mail= {'id': record.id, 'mail_list': [{'email': 'wekosoftware@nii.ac.jp', 'author_id': ''}]}
+        ret = indexer.update_request_mail_list(request_mail)
+        assert ret['_id'] == '{}'.format(record.id) and ret['result'] == 'updated' and ret['_shards'] == {'total': 2, 'successful': 1, 'failed': 0}
 
 
     #     def update_author_link(self, author_link):
@@ -1016,6 +1025,28 @@ class TestWekoDeposit:
         record = records[0]
         deposit = record['deposit']
         assert deposit.remove_feedback_mail()==None
+
+    # def update_request_mail(self):
+    # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_update_request_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+    def test_update_request_mail(sel,app,db,location,es_records,mocker):
+        _, records = es_records
+        record = records[0]
+        deposit = record['deposit']
+        assert deposit.update_request_mail()==None
+        with patch("weko_deposit.api.RequestMailList.get_mail_list_by_item_id", return_value=[{'email': 'wekosoftware@nii.ac.jp', 'author_id': ''}]):
+            mock = mocker.patch('weko_deposit.api.WekoIndexer.update_request_mail_list' , return_value=make_response())
+            deposit.update_request_mail()
+            mock.assert_called()
+
+    # def remove_request_mail(self):
+    # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_remove_request_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+    def test_remove_request_mail(sel,app,db,location,es_records,mocker):
+        _, records = es_records
+        record = records[0]
+        deposit = record['deposit']
+        mock = mocker.patch('weko_deposit.api.WekoIndexer.update_request_mail_list' , return_value=make_response())
+        deposit.remove_request_mail()
+        mock.assert_called()
 
     # def clean_unuse_file_contents(self, item_id, pre_object_versions,
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_clean_unuse_file_contents -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp

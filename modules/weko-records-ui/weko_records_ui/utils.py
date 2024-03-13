@@ -49,7 +49,7 @@ from passlib.handlers.oracle import oracle10
 from weko_admin.models import AdminSettings
 from weko_admin.utils import UsageReport, get_restricted_access
 from weko_deposit.api import WekoDeposit
-from weko_records.api import FeedbackMailList, ItemTypes, Mapping
+from weko_records.api import FeedbackMailList, RequestMailList, ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
 from weko_records.utils import replace_fqdn
 from weko_workflow.api import WorkActivity, WorkFlow
@@ -272,6 +272,8 @@ def soft_delete(recid):
                 dep.indexer.update_es_data(dep, update_revision=False, field='publish_status')
                 FeedbackMailList.delete(ver.object_uuid)
                 dep.remove_feedback_mail()
+                RequestMailList.delete(ver.object_uuid)
+                dep.remove_request_mail()
                 for i in range(len(dep.files)):
                     if dep.files[i].file.uri not in del_files:
                         del_files[dep.files[i].file.uri] = dep.files[i].file.storage()
@@ -1105,7 +1107,7 @@ def get_valid_onetime_download(file_name: str, record_id: str,user_mail: str) ->
 
 
 def create_onetime_download_url(
-    activity_id: str, file_name: str, record_id: str, user_mail: str,
+    activity_id: str, file_name: str, record_id: str, user_mail: str, password_for_download:str,
     is_guest: bool = False
 ):
     """Create onetime download.
@@ -1124,7 +1126,8 @@ def create_onetime_download_url(
         extra_info = dict(
             usage_application_activity_id=activity_id,
             send_usage_report=True,
-            is_guest=is_guest
+            is_guest=is_guest,
+            password_for_download=password_for_download
         )
         file_onetime = FileOnetimeDownload.create(**{
             "file_name": file_name,

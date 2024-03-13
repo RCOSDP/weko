@@ -31,6 +31,7 @@ from time import sleep
 import pytest
 import requests
 from elasticsearch import Elasticsearch
+from elasticsearch import VERSION as ES_VERSION
 from elasticsearch.exceptions import RequestError
 from flask import Flask, url_for
 from flask_babelex import Babel
@@ -2372,6 +2373,18 @@ def es_records(app, db, db_index, location, db_itemtype, db_oaischema):
                     "attribute_name": "PubDate",
                     "attribute_value": "2022-08-20",
                 },
+                # "feedback_mail_list": [
+                # {
+                #     "email": "wekosoftware@nii.ac.jp",
+                #     "author_id": ""
+                # }
+                # ],
+                # "request_mail_list": [
+                # {
+                #     "email": "wekosoftware@nii.ac.jp",
+                #     "author_id": ""
+                # }
+                # ],
                 "_buckets": {"deposit": "3e99cfca-098b-42ed-b8a0-20ddd09b3e02"},
                 "_deposit": {
                     "id": "{}".format(i),
@@ -2579,6 +2592,230 @@ def es_records(app, db, db_index, location, db_itemtype, db_oaischema):
     # print(es.cat.indices())
     return {"indexer": indexer, "results": results}
 
+@pytest.fixture()
+def es_records2(app, db, db_index, location, db_itemtype, db_oaischema):
+    indexer = WekoIndexer()
+    indexer.get_es_index()
+    results = []
+    with app.test_request_context():
+        for i in range(1, 10):
+            record_data = {
+                "_oai": {
+                    "id": "oai:weko3.example.org:000000{:02d}".format(i),
+                    "sets": ["{}".format((i % 2) + 1)],
+                },
+                "path": ["{}".format((i % 2) + 1)],
+                "recid": "{}".format(i),
+                "pubdate": {
+                    "attribute_name": "PubDate",
+                    "attribute_value": "2022-08-20",
+                },
+                "_buckets": {"deposit": "3e99cfca-098b-42ed-b8a0-20ddd09b3e02"},
+                "_deposit": {
+                    "id": "{}".format(i),
+                    "owner": 1,
+                    "owners": [1],
+                    "status": "draft",
+                    "created_by": 1,
+                    "owners_ext": {
+                        "email": "wekosoftware@nii.ac.jp",
+                        "username": "",
+                        "displayname": "",
+                    },
+                },
+                "item_title": "title",
+                "author_link": [],
+                "item_type_id": "1",
+                "publish_date": "2022-08-20",
+                "publish_status": "1",
+                "weko_shared_ids": [],
+                "item_1617186331708": {
+                    "attribute_name": "Title",
+                    "attribute_value_mlt": [
+                        {
+                            "subitem_1551255647225": "タイトル",
+                            "subitem_1551255648112": "ja",
+                        },
+                        {
+                            "subitem_1551255647225": "title",
+                            "subitem_1551255648112": "en",
+                        },
+                    ],
+                },
+                "item_1617258105262": {
+                    "attribute_name": "Resource Type",
+                    "attribute_value_mlt": [
+                        {
+                            "resourceuri": "http://purl.org/coar/resource_type/c_5794",
+                            "resourcetype": "conference paper",
+                        }
+                    ],
+                },
+                "relation_version_is_last": True,
+                "item_1617605131499": {
+                    "attribute_name": "File",
+                    "attribute_type": "file",
+                    "attribute_value_mlt": [
+                        {
+                            "url": {
+                                "url": "https://weko3.example.org/record/{}/files/hello.txt".format(
+                                    i
+                                )
+                            },
+                            "date": [
+                                {"dateType": "Available", "dateValue": "2022-09-07"}
+                            ],
+                            "format": "plain/text",
+                            "filename": "hello.txt",
+                            "filesize": [{"value": "146 KB"}],
+                            "accessrole": "open_access",
+                            "version_id": "",
+                            "mimetype": "application/pdf",
+                            "file": "",
+                        }
+                    ],
+                }
+            }
+
+            item_data = {
+                "id": "{}".format(i),
+                "cnri": "cnricnricnri",
+                "cnri_suffix_not_existed": "cnri_suffix_not_existed",
+                "is_change_identifier": "is_change_identifier",
+                "pid": {"type": "depid", "value": "{}".format(i), "revision_id": 0},
+                "lang": "ja",
+                "publish_status": "public",
+                "owner": 1,
+                "title": "title",
+                "owners": [1],
+                "item_type_id": 1,
+                "status": "keep",
+                "$schema": "/items/jsonschema/1",
+                "item_title": "item_title",
+                "metadata": record_data,
+                "pubdate": "2022-08-20",
+                "created_by": 1,
+                "owners_ext": {
+                    "email": "wekosoftware@nii.ac.jp",
+                    "username": "",
+                    "displayname": "",
+                },
+                "shared_user_ids": [],
+                "item_1617186331708": [
+                    {"subitem_1551255647225": "タイトル", "subitem_1551255648112": "ja"},
+                    {"subitem_1551255647225": "title", "subitem_1551255648112": "en"},
+                ],
+                "item_1617258105262": {
+                    "resourceuri": "http://purl.org/coar/resource_type/c_5794",
+                    "resourcetype": "conference paper",
+                },
+                "item_1617187056579":{"lang":"ja"}
+            }
+
+            rec_uuid = uuid.uuid4()
+
+            recid = PersistentIdentifier.create(
+                "recid",
+                str(i),
+                object_type="rec",
+                object_uuid=rec_uuid,
+                status=PIDStatus.REGISTERED,
+            )
+            depid = PersistentIdentifier.create(
+                "depid",
+                str(i),
+                object_type="rec",
+                object_uuid=rec_uuid,
+                status=PIDStatus.REGISTERED,
+            )
+            rel = PIDRelation.create(recid, depid, 3)
+            db.session.add(rel)
+            parent = None
+            doi = None
+            parent = PersistentIdentifier.create(
+                "parent",
+                "parent:{}".format(i),
+                object_type="rec",
+                object_uuid=rec_uuid,
+                status=PIDStatus.REGISTERED,
+            )
+            rel = PIDRelation.create(parent, recid, 2, 0)
+            db.session.add(rel)
+            if i % 2 == 1:
+                doi = PersistentIdentifier.create(
+                    "doi",
+                    "https://doi.org/10.xyz/{}".format((str(i)).zfill(10)),
+                    object_type="rec",
+                    object_uuid=rec_uuid,
+                    status=PIDStatus.REGISTERED,
+                )
+                hdl = PersistentIdentifier.create(
+                    "hdl",
+                    "https://hdl.handle.net/0000/{}".format((str(i)).zfill(10)),
+                    object_type="rec",
+                    object_uuid=rec_uuid,
+                    status=PIDStatus.REGISTERED,
+                )
+
+            record = WekoRecord.create(record_data, id_=rec_uuid)
+            # from six import BytesIO
+            import base64
+
+            from invenio_files_rest.models import Bucket
+            from invenio_records_files.models import RecordsBuckets
+
+            bucket = Bucket.create()
+            record_buckets = RecordsBuckets.create(record=record.model, bucket=bucket)
+            stream = BytesIO(b"Hello, World")
+            # record.files['hello.txt'] = stream
+            # obj=ObjectVersion.create(bucket=bucket.id, key='hello.txt', stream=stream)
+            record["item_1617605131499"]["attribute_value_mlt"][0]["file"] = (
+                base64.b64encode(stream.getvalue())
+            ).decode("utf-8")
+            deposit = WekoDeposit(record, record.model)
+            deposit.commit()
+            # record['item_1617605131499']['attribute_value_mlt'][0]['version_id'] = str(obj.version_id)
+            record["item_1617605131499"]["attribute_value_mlt"][0]["version_id"] = "1"
+
+            record_data["content"] = [
+                {
+                    "date": [{"dateValue": "2021-07-12", "dateType": "Available"}],
+                    "accessrole": "open_access",
+                    "displaytype": "simple",
+                    "filename": "hello.txt",
+                    "attachment": {},
+                    "format": "text/plain",
+                    "mimetype": "text/plain",
+                    "filesize": [{"value": "1 KB"}],
+                    "version_id": "{}".format("1"),
+                    "url": {
+                        "url": "http://localhost/record/{}/files/hello.txt".format(i)
+                    },
+                    "file": (base64.b64encode(stream.getvalue())).decode("utf-8"),
+                }
+            ]
+            indexer.upload_metadata(record_data, rec_uuid, 1, False)
+            item = ItemsMetadata.create(item_data, id_=rec_uuid)
+
+            results.append(
+                {
+                    "depid": depid,
+                    "recid": recid,
+                    "parent": parent,
+                    "doi": doi,
+                    "hdl": hdl,
+                    "record": record,
+                    "record_data": record_data,
+                    "item": item,
+                    "item_data": item_data,
+                    "deposit": deposit,
+                }
+            )
+
+    sleep(3)
+    es = Elasticsearch("http://{}:9200".format(app.config["SEARCH_ELASTIC_HOSTS"]))
+    # print(es.cat.indices())
+    return {"indexer": indexer, "results": results}
 
 @pytest.fixture()
 def indextree(client, users):
@@ -2742,7 +2979,8 @@ def identifier(db):
     return doi_identifier
 
 
-def record_indexer_receiver(sender, json=None, record=None, index=None,
+@pytest.fixture()
+def record_indexer_receiver(app, json=None, record=None, index=None,
                             **kwargs):
     """Mock-receiver of a before_record_index signal."""
     if ES_VERSION[0] == 2:

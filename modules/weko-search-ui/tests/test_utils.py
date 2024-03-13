@@ -6,6 +6,7 @@ import os
 import unittest
 from datetime import datetime
 import uuid
+import zipfile
 
 import pytest
 from flask import current_app, make_response, request, url_for
@@ -22,6 +23,7 @@ from weko_admin.models import AdminLangSettings
 from weko_admin.config import WEKO_ADMIN_MANAGEMENT_OPTIONS
 from weko_deposit.api import WekoDeposit, WekoIndexer
 from weko_records.api import ItemsMetadata, WekoRecord
+from weko_workflow.models import WorkFlow
 
 from weko_search_ui import WekoSearchUI
 from weko_search_ui.config import (
@@ -74,6 +76,10 @@ from weko_search_ui.utils import (
     get_tree_items,
     getEncode,
     handle_check_and_prepare_feedback_mail,
+    handle_check_and_prepare_request_mail,
+    handle_check_and_prepare_item_application,
+    check_exists_file_name,
+    check_terms_in_system_for_item_application,
     handle_check_and_prepare_index_tree,
     handle_check_and_prepare_publish_status,
     handle_check_cnri,
@@ -370,6 +376,87 @@ def test_check_import_items(i18n_app):
     with pytest.raises(FileExistsError) as e:
         pass
     """
+
+
+@pytest.mark.parametrize('order_if', [1,2,3,4,5,6,7,8,9])
+#def check_import_items(file, is_change_identifier: bool, is_gakuninrdm=False):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_check_import_items2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_check_import_items2(app,test_importdata,mocker,db, order_if):
+    app.config['WEKO_SEARCH_UI_IMPORT_TMP_PREFIX'] = 'importtest'
+    filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "item_map.json")
+    print(filepath)
+    with open(filepath,encoding="utf-8") as f:
+        item_map = json.load(f)
+
+    mocker.patch("weko_records.serializers.utils.get_mapping",return_value=item_map)
+    with app.test_request_context():
+        with set_locale('en'):
+            mocker.patch("weko_search_ui.utils.unpackage_import_file", return_value={"item_type_id":1})
+            mocker.patch("weko_search_ui.utils.handle_check_exist_record", return_value={"item_type_id":1})
+            mocker.patch("weko_search_ui.utils.handle_item_title")
+            mocker.patch("weko_search_ui.utils.handle_check_date", return_value={"item_type_id":1})
+            mocker.patch("weko_search_ui.utils.handle_check_id")
+            mocker.patch("weko_search_ui.utils.handle_check_and_prepare_index_tree")
+            mocker.patch("weko_search_ui.utils.handle_check_and_prepare_publish_status")
+            mocker.patch("weko_search_ui.utils.handle_check_and_prepare_feedback_mail")
+            mocker.patch("weko_search_ui.utils.handle_check_and_prepare_request_mail")
+            mocker.patch("weko_search_ui.utils.handle_check_and_prepare_item_application")
+            mocker.patch("weko_search_ui.utils.handle_check_file_metadata")
+            mocker.patch("weko_search_ui.utils.handle_check_restricted_access_property")
+            mocker.patch("weko_search_ui.utils.handle_check_cnri")
+            mocker.patch("weko_search_ui.utils.handle_check_doi_indexes")
+            mocker.patch("weko_search_ui.utils.handle_check_doi_ra")
+            mocker.patch("weko_search_ui.utils.handle_check_doi")
+
+            for file in test_importdata:
+
+                # for exception
+                if order_if == 1:
+                    with patch("weko_search_ui.utils.zipfile.ZipFile.infolist",return_value=[1,2]):
+                        ret = check_import_items(file, False, False)
+
+                # for badzipfile exception
+                if order_if == 2:
+                    with patch("weko_search_ui.utils.zipfile.ZipFile",side_effect=zipfile.BadZipFile):
+                        ret = check_import_items(file, False, False)
+                        assert ret["error"] == 'The format of the specified file import00.zip does not support import. Please specify one of the following formats: zip, tar, gztar, bztar, xztar.'
+                
+                # for FileNotFoundError
+                if order_if == 3:
+                    with patch("weko_search_ui.utils.list",return_value=None):
+                        ret = check_import_items(file, False, False)
+                        assert ret["error"]=='The csv/tsv file was not found in the specified file import00.zip. Check if the directory structure is correct.'
+                
+                # for UnicodeDecodeError
+                if order_if == 4:
+                    with patch("weko_search_ui.utils.zipfile.ZipFile",side_effect=UnicodeDecodeError("uni", b'\xe3\x81\xad\xe3\x81\x93',2,4,"cp932 cant decode")):
+                        ret = check_import_items(file, False, False)
+
+                # for error is ex.args
+                if order_if == 5:
+                    with patch("weko_search_ui.utils.zipfile.ZipFile",side_effect=Exception({"error_msg":"エラーメッセージ"})):
+                        ret = check_import_items(file, False, False)
+
+                # for tsv
+                if order_if == 6:
+                    with patch("weko_search_ui.utils.list",return_value=['items.tsv']):
+                        check_import_items(file,False,False)==''
+                
+                # for gakuninrdm is False
+                if order_if == 7:
+                    check_import_items(file,False,False)==''
+                    
+                # for gakuninrdm is True
+                if order_if == 8:
+                    check_import_items(file,False,True)==''
+
+                # for os.sep is not "/"
+                if order_if == 9:
+                    with patch("weko_search_ui.utils.os") as o:
+                        with patch("weko_search_ui.utils.zipfile.ZipFile.infolist", return_value = [zipfile.ZipInfo(filename = filepath.replace("/","\\"))]):
+                            type(o).sep = "\\"
+                            check_import_items(file,False,False)
+
 
 # def unpackage_import_file(data_path: str, file_name: str, file_format: str, force_new=False):
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_unpackage_import_file -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
@@ -713,6 +800,50 @@ def test_register_item_metadata(i18n_app, es_item_file_pipeline, deposit, es_rec
 
     with patch("invenio_files_rest.utils.find_and_update_location_size"):
         assert register_item_metadata(item, root_path, is_gakuninrdm=False)
+        
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_register_item_metadata2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+@pytest.mark.parametrize('order_if', [1,2,3,4])
+def test_register_item_metadata2(i18n_app, es_item_file_pipeline, deposit, es_records2, db_index, es, db, mocker, order_if):
+    item = es_records2["results"][0]["item"]
+    root_path = os.path.dirname(os.path.abspath(__file__))
+    if order_if == 1:
+        with patch("weko_search_ui.utils.find_and_update_location_size", return_value=None):
+            with patch("weko_deposit.api.Indexes.get_path_list", return_value={"","",""}):
+                with patch("weko_search_ui.utils.WekoDeposit.commit", return_value=None):
+                    with patch("weko_search_ui.utils.WekoDeposit.publish_without_commit", return_value=None):
+                        remove_request = mocker.patch("weko_search_ui.utils.WekoDeposit.remove_request_mail")
+                        delete_item_application = mocker.patch("weko_search_ui.utils.ItemApplication.delete_without_commit")
+                        register_item_metadata(item, root_path, is_gakuninrdm=False)
+                        remove_request.assert_called()
+                        delete_item_application.assert_called()
+
+    item["metadata"]["request_mail_list"]={"email": "contributor@test.org", "author_id": ""}
+    item["metadata"]["feedback_mail_list"]={"email": "contributor@test.org", "author_id": ""}
+    item["item_application"]={"workflow":"1", "terms":"term_free", "terms_description":"利用規約自由入力"}
+    item["status"]="keep"
+    
+    item["identifier_key"]="item_1617186331708"
+    with patch("weko_search_ui.utils.find_and_update_location_size", return_value=None):
+        with patch("weko_deposit.api.Indexes.get_path_list", return_value={"","",""}):
+            with patch("weko_search_ui.utils.WekoDeposit.commit", return_value=None):
+                with patch("weko_search_ui.utils.WekoDeposit.publish_without_commit", return_value=None):
+                    if order_if == 2:
+                        mocker.patch("weko_search_ui.utils.WekoDeposit.get_file_data", return_value=[{"version_id":"1.2"}])
+                        item["pid"]=None
+                        register_item_metadata(item, root_path, is_gakuninrdm=False)
+                    if order_if == 3:
+                        mocker.patch("weko_search_ui.utils.WekoDeposit.get_file_data", return_value=[{"version_id":None}])
+                        register_item_metadata(item, root_path, is_gakuninrdm=False)
+                    if order_if == 4:
+                        mocker.patch("weko_search_ui.utils.WekoDeposit.update_feedback_mail")
+                        update_request = mocker.patch("weko_search_ui.utils.WekoDeposit.update_request_mail")
+                        update_item_application = mocker.patch("weko_search_ui.utils.ItemApplication.update")
+                        mocker.patch("weko_search_ui.utils.WekoDeposit.newversion", return_value = WekoDeposit(0))
+                        item["pid"]=None
+                        item["status"]="new" 
+                        register_item_metadata(item, root_path, is_gakuninrdm=False)
+                        update_request.assert_called()
+                        update_item_application = mocker.patch("weko_search_ui.utils.ItemApplication.update")
 
 
 # def update_publish_status(item_id, status):
@@ -880,6 +1011,115 @@ def test_handle_check_and_prepare_feedback_mail(i18n_app, record_with_metadata):
     # Doesn't return any value
     assert not handle_check_and_prepare_feedback_mail([record])
 
+# def handle_check_and_prepare_request_mail(list_record):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_check_and_prepare_request_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_handle_check_and_prepare_request_mail(i18n_app, record_with_metadata):
+    list_record = [record_with_metadata[0]]
+
+    # Doesn't return any value
+    assert not handle_check_and_prepare_request_mail(list_record)
+
+    record = {
+        "request_mail": ["wekosoftware@test.com"],
+        "metadata": {"request_mail_list": ""},
+    }
+
+    # Doesn't return any value
+    assert not handle_check_and_prepare_request_mail([record])
+    assert record["metadata"]["request_mail_list"] == [{'email': 'wekosoftware@test.com', 'author_id': ''}]
+
+    record["request_mail"] = ["test"]
+
+    # Doesn't return any value
+    assert not handle_check_and_prepare_request_mail([record])
+    assert record["errors"] ==['指定されたtestは不正です。']
+
+# def handle_check_and_prepare_item_application(list_record):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_check_and_prepare_item_application -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_handle_check_and_prepare_item_application(i18n_app, record_with_metadata):
+    list_record = [record_with_metadata[0]]
+
+    # Doesn't return any value
+    assert not handle_check_and_prepare_item_application(list_record)
+
+    # 正常系
+    workflow = WorkFlow(id=1)
+    with patch("weko_search_ui.utils.WorkFlowApi.get_workflow_list", return_value=[workflow]):
+        record = {"metadata":{}, "item_application":{"workflow":"1", "terms":"term_free", "terms_description":"利用規約自由入力"}}
+        handle_check_and_prepare_item_application([record])
+        assert record["metadata"]["item_application"] == {"workflow":"1", "terms":"term_free", "termsDescription":"利用規約自由入力"}
+
+    # 正常系 item_applicationのworkflowが存在しない
+    workflow = WorkFlow(id=1)
+    with patch("weko_search_ui.utils.WorkFlowApi.get_workflow_list", return_value=[workflow]):
+        record = {"metadata":{}, "item_application":{"terms":"term_free", "terms_description":"利用規約自由入力"}}
+        handle_check_and_prepare_item_application([record])
+        assert not record["metadata"].get("item_application", "")
+
+    # 正常系 item_applicationのtermsが存在しない。
+    workflow = WorkFlow(id=1)
+    with patch("weko_search_ui.utils.WorkFlowApi.get_workflow_list", return_value=[workflow]):
+        record = {"metadata":{}, "item_application":{"workflow":"1", "terms_description":"利用規約自由入力"}}
+        handle_check_and_prepare_item_application([record])
+        assert not record["metadata"].get("item_application", "")
+
+    # 異常系 ファイル情報を持っている。
+    record = {"metadata":{}, "file_path":"/recid15/test.txt", "item_application":{"workflow":"1", "terms":"term_free", "terms_description":"利用規約自由入力"}}
+    handle_check_and_prepare_item_application([record])
+    assert record["errors"][0] == "If there is a info of content file, terms of use cannot be set."
+
+    # 異常系 workflowが文字列である。
+    workflow = WorkFlow(id=1)
+    with patch("weko_search_ui.utils.WorkFlowApi.get_workflow_list", return_value=[workflow]):
+        record = {"metadata":{}, "item_application":{"workflow":"not_exist", "terms":"term_free", "terms_description":"利用規約自由入力"}}
+        handle_check_and_prepare_item_application([record])
+        assert record["errors"][0] == "指定する提供方法はシステムに存在しません。"
+
+    # 異常系 workflowがシステムに存在しないworkflowである。
+    workflow = WorkFlow(id=1)
+    with patch("weko_search_ui.utils.WorkFlowApi.get_workflow_list", return_value=[workflow]):
+        record = {"metadata":{}, "item_application":{"workflow":"999999999999", "terms":"term_free", "terms_description":"利用規約自由入力"}}
+        handle_check_and_prepare_item_application([record])
+        assert record["errors"][0] == "指定する提供方法はシステムに存在しません。"
+
+    # 異常系 termsが存在しないtermsである。
+    with patch("weko_search_ui.utils.WorkFlowApi.get_workflow_list", return_value=[workflow]):
+        record = {"metadata":{}, "item_application":{"workflow":"1", "terms":"not_exist", "terms_description":"利用規約自由入力"}}
+        handle_check_and_prepare_item_application([record])
+        assert record["errors"][0] == "指定する利用規約はシステムに存在しません。"
+
+
+# def check_exists_file_name(item):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_check_exists_file_name -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_check_exists_file_name(i18n_app, record_with_metadata):
+    item = record_with_metadata[0]
+    # *.filenameに値が存在する。
+    assert check_exists_file_name(item)
+
+    # *.filenameに値が存在しない。
+    item = {"metadata":{"filename_test":[{"filename":""}]}}
+    assert not check_exists_file_name(item)
+
+# def check_terms_in_system_for_item_application(terms):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_check_terms_in_system_for_item_application -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_check_terms_in_system_for_item_application():
+    terms_list = [{"key":"1234567890", "content":{"en":{},"ja":{}}}]
+    with patch("weko_search_ui.utils.get_restricted_access", return_value=terms_list):
+        # temrsが空文字
+        assert check_terms_in_system_for_item_application("")
+
+        # termsが自由入力
+        assert check_terms_in_system_for_item_application("term_free")
+
+        # termsが存在するkey
+        assert check_terms_in_system_for_item_application("1234567890")
+
+        # termsが存在しないkey
+        assert not check_terms_in_system_for_item_application("not_exists")
+
+    # get_restricted_accessがNoneを返す場合
+    with patch("weko_search_ui.utils.get_restricted_access", return_value=None):
+        assert not check_terms_in_system_for_item_application("1234567890")
 
 # def handle_set_change_identifier_flag(list_record, is_change_identifier):
 def test_handle_set_change_identifier_flag(i18n_app, record_with_metadata):
@@ -2289,6 +2529,11 @@ def test_check_provide_in_system(users, db_workflow, record_restricted):
     key = "item_1685583796047"
     item = record_restricted[7]
     assert check_provide_in_system(key, item) == True
+
+    key = "item_1685583796047"
+    item = record_restricted[9]
+    assert check_provide_in_system(key, item) == True
+    
 
 # def handle_check_file_path(paths, data_path, is_new=False, is_thumbnail=False, is_single_thumbnail=False):
 def test_handle_check_file_path(i18n_app):

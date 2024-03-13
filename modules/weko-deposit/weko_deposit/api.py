@@ -58,7 +58,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.attributes import flag_modified
 from weko_admin.models import AdminSettings
 from weko_index_tree.api import Indexes
-from weko_records.api import FeedbackMailList, ItemLink, ItemsMetadata, \
+from weko_records.api import FeedbackMailList, RequestMailList, ItemLink, ItemsMetadata, \
     ItemTypes, Mapping
 from weko_records.models import ItemMetadata, ItemReference
 from weko_records.utils import get_all_items, get_attribute_value_all_items, \
@@ -386,6 +386,27 @@ class WekoIndexer(RecordIndexer):
             index=self.es_index,
             doc_type=self.es_doc_type,
             id=str(feedback_mail.get('id')),
+            body=body
+        )
+
+    def update_request_mail_list(self, request_mail):
+        """Update request mail info.
+
+        Args:
+            request_mail (_type_): request_mail: mail list in json format. {'id': UUID('05fd7cbd-6aad-4c76-a62e-7947868cccf6'), 'mail_list': [{'email': 'wekosoftware@nii.ac.jp', 'author_id': ''}]}
+
+        Returns:
+            _type_: _request_mail_id
+        """
+
+        self.get_es_index()
+        pst = 'request_mail_list'
+        body = {'doc': {pst: request_mail.get('mail_list')}}
+
+        return self.client.update(
+            index=self.es_index,
+            doc_type=self.es_doc_type,
+            id=str(request_mail.get('id')),
             body=body
         )
 
@@ -1656,6 +1677,37 @@ class WekoDeposit(Deposit):
                 "author_link": author_link
             }
             self.indexer.update_author_link(author_link_info)
+
+    def update_request_mail(self):
+        """
+        Index request mail list.
+        Args:
+            None
+        Returns:
+            None
+        """
+        item_id = self.id
+        mail_list = RequestMailList.get_mail_list_by_item_id(item_id)
+        if mail_list:
+            request_mail = {
+                "id": item_id,
+                "mail_list": mail_list
+            }
+            self.indexer.update_request_mail_list(request_mail)
+
+    def remove_request_mail(self):
+        """
+        Remove request mail list.
+        Args:
+            None
+        Returns:
+            None
+        """
+        request_mail = {
+            "id": self.id,
+            "mail_list": []
+        }
+        self.indexer.update_request_mail_list(request_mail)
 
     def update_feedback_mail(self):
         """ 

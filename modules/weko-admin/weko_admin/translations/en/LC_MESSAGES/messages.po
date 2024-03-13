@@ -907,3 +907,6 @@ msgstr "Display Number must be an integer value from 1 to 99."
 #: weko_admin/templates/weko_admin/admin/facet_search_setting.html:65
 msgid "DisplayNumber Validation2"
 msgstr "If CheckboxList is selected, Display Number must be entered."
+
+msgid "password check function"
+msgstr "Password check function when downloading for guest user"

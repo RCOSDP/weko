@@ -22,6 +22,7 @@
 
 import inspect
 
+from email_validator import validate_email
 from flask import Flask, Blueprint, current_app, jsonify, make_response, request, abort, url_for
 from flask_babelex import get_locale
 from flask_babelex import gettext as _
@@ -29,6 +30,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_login import current_user
 from urllib import parse
+from redis import RedisError
 from invenio_db import db
 from invenio_oauth2server import require_api_auth, require_oauth_scopes
 from invenio_pidrelations.contrib.versioning import PIDVersioning
@@ -45,13 +47,14 @@ from sqlalchemy.exc import SQLAlchemyError
 from weko_deposit.api import WekoRecord
 from weko_records.api import ItemTypes
 from weko_records.serializers import citeproc_v1
+from weko_records_ui.api import create_captcha_image, send_request_mail, validate_captcha_answer
 from weko_workflow.api import WorkActivity, WorkFlow
 from weko_workflow.models import GuestActivity
 from weko_workflow.scopes import activity_scope
 from weko_workflow.utils import check_etag, check_pretty, init_activity_for_guest_user
 from werkzeug.http import generate_etag
 
-from .errors import ContentsNotFoundError, InternalServerError, InvalidEmailError, InvalidTokenError, InvalidWorkflowError, VersionNotFoundRESTError
+from .errors import ContentsNotFoundError, InternalServerError, InvalidEmailError, InvalidTokenError, InvalidWorkflowError,RequiredItemNotExistError, VersionNotFoundRESTError
 from .scopes import item_read_scope
 from .utils import create_limmiter
 from .views import escape_str, get_usage_workflow
@@ -115,6 +118,36 @@ def create_blueprint(endpoints):
         if endpoint == 'file_application':
             view_func = FileApplication.as_view(
                 FileApplication.view_name.format(endpoint),
+                default_media_type=options.get('default_media_type'),
+            )
+            blueprint.add_url_rule(
+                options.get('route'),
+                view_func=view_func,
+                methods=['POST'],
+            )
+        if endpoint == 'send_request_mail':
+            view_func = RequestMail.as_view(
+                RequestMail.view_name.format(endpoint),
+                default_media_type=options.get('default_media_type'),
+            )
+            blueprint.add_url_rule(
+                options.get('route'),
+                view_func=view_func,
+                methods=['POST'],
+            )
+        if endpoint == 'get_captcha_image':
+            view_func = CreateCaptchaImage.as_view(
+                CreateCaptchaImage.view_name.format(endpoint),
+                default_media_type=options.get('default_media_type'),
+            )
+            blueprint.add_url_rule(
+                options.get('route'),
+                view_func=view_func,
+                methods=['GET'],
+            )
+        if endpoint == 'validate_captcha_answer':
+            view_func = CaptchaAnswerValidation.as_view(
+                CaptchaAnswerValidation.view_name.format(endpoint),
                 default_media_type=options.get('default_media_type'),
             )
             blueprint.add_url_rule(
@@ -300,7 +333,7 @@ class GetFileTerms(ContentNegotiatedMethodView):
         # Get parameter
         param_pretty = str(request.values.get('pretty', 'false'))
         language = str(request.headers.get('Accept-Language', 'en'))
-        
+
         # Check pretty
         check_pretty(param_pretty)
 
@@ -383,10 +416,9 @@ class FileApplication(ContentNegotiatedMethodView):
         is_guest = False
         if not current_user.is_authenticated:
             try :
-                from email_validator import validate_email
                 validate_email(mail, check_deliverability=False)
                 is_guest = True
-            except Exception:
+            except Exception as ex:
                 # invalid email
                 raise InvalidEmailError() # 400 Error
 
@@ -464,7 +496,7 @@ class FileApplication(ContentNegotiatedMethodView):
                         activity_id = guest_activity[0].activity_id
                 else:
                     activity_id = activity.activity_id
-                
+
                 activity_url = activity_url.replace("/api", "", 1)
                 query_str = parse.urlparse(activity_url).query
                 query_dic = parse.parse_qs(query_str)
@@ -503,7 +535,7 @@ class FileApplication(ContentNegotiatedMethodView):
 
         # Get item_type schema
         item_type = ItemTypes.get_by_id(workflow.itemtype_id)
-        
+
         # Create response
         res_json = {
             "activity_id": activity_id,
@@ -550,3 +582,155 @@ class WekoRecordsCitesResource(ContentNegotiatedMethodView):
                 'Citation formatting for record {0} failed.'.format(
                     str(record.id)))
             return make_response(jsonify("Not found"), 404)
+
+
+class RequestMail(ContentNegotiatedMethodView):
+    view_name = 'records_ui_{0}'
+
+    def __init__(self, *args, **kwargs):
+        """Constructor."""
+        super(RequestMail, self).__init__(*args, **kwargs)
+
+    @limiter.limit('')
+    def post(self, **kwargs):
+        """
+        Post file application.
+
+        Returns:
+            Result json.
+        """
+        version = kwargs.get('version')
+        func_name = f'post_{version}'
+        if func_name in [func[0] for func in inspect.getmembers(self, inspect.ismethod)]:
+            return getattr(self, func_name)(**kwargs)
+        else:
+            raise VersionNotFoundRESTError() # 400 Error
+
+    def post_v1(self, **kwargs):
+        # Get parameter
+        language = str(request.headers.get('Accept-Language', 'en'))
+        param_pretty = str(request.values.get('pretty', 'false'))
+
+        # Check pretty
+        check_pretty(param_pretty)
+
+        # Setting language
+        if language in current_app.config.get('WEKO_RECORDS_UI_API_ACCEPT_LANGUAGES'):
+            get_locale().language = language
+
+        # Get record
+        pid_value = kwargs.get('pid_value')
+        pid = PersistentIdentifier.query.filter_by(
+            pid_type='recid', pid_value=str(pid_value)).first()
+
+        if not pid:
+            raise ContentsNotFoundError() # 404 Error
+
+        # Get request mail senders
+        request_body = request.get_json(force=True, silent=True)
+        msg_sender = request_body.get('from')
+        if not msg_sender:
+            raise RequiredItemNotExistError() # 400 Error
+
+        try:
+            # if is_guest:
+            #     __, res_json = send_request_mail(pid, request_body, mail_address=email)
+            # else:
+            __, res_json = send_request_mail(pid.object_uuid, request_body)
+        except SQLAlchemyError as ex:
+            current_app.logger.exception('DB access Error')
+            raise InternalServerError()
+
+        response = make_response(jsonify(res_json), 200)
+        return response
+
+
+class CreateCaptchaImage(ContentNegotiatedMethodView):
+    view_name = 'records_ui_{0}'
+
+    def __init__(self, *args, **kwargs):
+        """Constructor."""
+        super(CreateCaptchaImage, self).__init__(*args, **kwargs)
+
+    @limiter.limit('')
+    def get(self, **kwargs):
+        """
+        Post file application.
+
+        Returns:
+            Result json.
+        """
+        version = kwargs.get('version')
+        func_name = f'get_{version}'
+        if func_name in [func[0] for func in inspect.getmembers(self, inspect.ismethod)]:
+            return getattr(self, func_name)(**kwargs)
+        else:
+            raise VersionNotFoundRESTError() # 404 Error
+
+    def get_v1(self, **kwargs):
+        # Get parameter
+        language = str(request.headers.get('Accept-Language', 'en'))
+        param_pretty = str(request.values.get('pretty', 'false'))
+
+        # Check pretty
+        check_pretty(param_pretty)
+
+        # Setting language
+        if language in current_app.config.get('WEKO_RECORDS_UI_API_ACCEPT_LANGUAGES'):
+            get_locale().language = language
+
+        # Generate CAPTCHA image
+        result, res_json = create_captcha_image()
+
+        if not result:
+            current_app.logger.error(res_json)
+            raise InternalServerError()
+
+        response = make_response(jsonify(res_json), 200)
+        return response
+
+class CaptchaAnswerValidation(ContentNegotiatedMethodView):
+
+    view_name = 'records_ui_{0}'
+
+    def __init__(self, *args, **kwargs):
+        """Constructor."""
+        super(CaptchaAnswerValidation, self).__init__(*args, **kwargs)
+
+    @limiter.limit('')
+    def post(self, **kwargs):
+        """
+        Post file application.
+        Returns:
+            Result json.
+        """
+        version = kwargs.get('version')
+        func_name = f'post_{version}'
+        if func_name in [func[0] for func in inspect.getmembers(self, inspect.ismethod)]:
+            return getattr(self, func_name)(**kwargs)
+        else:
+            raise VersionNotFoundRESTError() # 400 Error
+
+    def post_v1(self, **kwargs):
+        # Get parameter
+        language = str(request.headers.get('Accept-Language', 'en'))
+        param_pretty = str(request.values.get('pretty', 'false'))
+
+        # Check pretty
+        check_pretty(param_pretty)
+
+        # Setting language
+        if language in current_app.config.get('WEKO_RECORDS_UI_API_ACCEPT_LANGUAGES'):
+            get_locale().language = language
+
+        # Get request mail senders
+        request_body = request.get_json(force=True, silent=True)
+
+        try:
+            __, res_json = validate_captcha_answer(request_body)
+        except RedisError as ex:
+            current_app.logger.exception('Redis access Error')
+            raise InternalServerError()
+
+        response = make_response(jsonify(res_json), 200)
+        return response

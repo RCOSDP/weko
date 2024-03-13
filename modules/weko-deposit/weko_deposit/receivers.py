@@ -11,7 +11,7 @@
 from flask import current_app
 from invenio_pidstore.models import PIDStatus
 from invenio_records.models import RecordMetadata
-from weko_records.api import FeedbackMailList
+from weko_records.api import FeedbackMailList, RequestMailList
 from weko_records.utils import json_loader
 
 from .api import WekoDeposit
@@ -68,6 +68,13 @@ def append_file_content(sender, json={}, record=None, index=None, **kwargs):
                 'feedback_mail_list': mail_list
             }
             json.update(feedback_mail)
+
+        request_mail_list = RequestMailList.get_mail_list_by_item_id(record.id)
+        if request_mail_list:
+            request_mail = {
+                'request_mail_list': request_mail_list
+            }
+            json.update(request_mail)
 
         current_app.logger.info('FINISHED reindex record: {0}'.format(
             im['control_number']))
