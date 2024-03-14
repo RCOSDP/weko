@@ -948,7 +948,7 @@ RELATION_ID_TYPE_LBL = [
     "PISSN",
     "EISSN",
     "ISSN【非推奨】",
-    "NAID",
+    "NAID【非推奨】",
     "NCID",
     "PMID【現在不使用】",
     "PURL",

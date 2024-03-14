@@ -1437,23 +1437,53 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
 
           switch (resourcetype) {
             // multiple
+            case 'commentary':
+              resourceuri = "http://purl.org/coar/resource_type/D97F-VB57/";
+              break;
+            case 'design':
+              resourceuri = "http://purl.org/coar/resource_type/542X-3S04/";
+              break;
+            case 'industrial design':
+              resourceuri = "http://purl.org/coar/resource_type/JBNF-DYAD/";
+              break;  
             case 'interactive resource':
               resourceuri = "http://purl.org/coar/resource_type/c_e9a0";
+              break;
+            case 'layout design':
+              resourceuri = "http://purl.org/coar/resource_type/BW7T-YM2G/";
               break;
             case 'learning object':
               resourceuri = "http://purl.org/coar/resource_type/c_e059";
               break;
+            case 'manuscript':
+              resourceuri = "http://purl.org/coar/resource_type/c_0040";
+              break;
             case 'musical notation':
               resourceuri = "http://purl.org/coar/resource_type/c_18cw";
               break;
-            case 'research proposal':
-              resourceuri = "http://purl.org/coar/resource_type/c_baaf";
+            case 'musical notation':
+              resourceuri = "http://purl.org/coar/resource_type/c_18cw";
               break;
+            case 'peer review':
+              resourceuri = "http://purl.org/coar/resource_type/H9BQ-739P/";
+              break;
+            case 'research proposal':
+                resourceuri = "http://purl.org/coar/resource_type/c_baaf";
+                break;
+            case 'research protocol':
+                resourceuri = "http://purl.org/coar/resource_type/YZ1N-ZFT9/";
+                break;
             case 'software':
               resourceuri = "http://purl.org/coar/resource_type/c_5ce6";
               break;
+            case 'source code':
+              resourceuri = "http://purl.org/coar/resource_type/QH80-2R4E/";
+              break;
             case 'technical documentation':
               resourceuri = "http://purl.org/coar/resource_type/c_71bd";
+              break;
+            case 'transcription':
+              resourceuri = "http://purl.org/coar/resource_type/6NC7-GK9S/";
               break;
             case 'workflow':
               resourceuri = "http://purl.org/coar/resource_type/c_393c";
@@ -1461,9 +1491,15 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
             case 'other':
               resourceuri = "http://purl.org/coar/resource_type/c_1843";
               break;
-            // conference
+            // Conference object
+            case 'conference output':
+              resourceuri = "http://purl.org/coar/resource_type/c_c94f";
+              break;
             case 'conference object':
               resourceuri = "http://purl.org/coar/resource_type/c_c94f";
+              break;
+            case 'conference presentation':
+              resourceuri = "http://purl.org/coar/resource_type/R60J-J5BD/";
               break;
             case 'conference proceedings':
               resourceuri = "http://purl.org/coar/resource_type/c_f744";
@@ -1472,9 +1508,30 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
               resourceuri = "http://purl.org/coar/resource_type/c_6670";
               break;
             // patent
+            case 'design patent':
+              resourceuri = "http://purl.org/coar/resource_type/C53B-JCY5/";
+              break;
             case 'patent':
               resourceuri = "http://purl.org/coar/resource_type/c_15cd";
               break;
+            case 'PCT application':
+              resourceuri = "http://purl.org/coar/resource_type/SB3Y-W4EH/";
+              break;
+            case 'plant patent':
+              resourceuri = "http://purl.org/coar/resource_type/Z907-YMBB/";
+              break;
+            case 'plant variety protection':
+              resourceuri = "http://purl.org/coar/resource_type/GPQ7-G5VE/";
+              break;
+            case 'software patent':
+              resourceuri = "http://purl.org/coar/resource_type/MW8G-3CR8/";
+              break;
+            case 'trademark':
+              resourceuri = "http://purl.org/coar/resource_type/H6QP-SC1X/";
+              break;
+            case 'utility model':
+              resourceuri = "http://purl.org/coar/resource_type/9DKX-KSAF/";
+              break; 
             // lecture
             case 'lecture':
               resourceuri = "http://purl.org/coar/resource_type/c_8544";
@@ -1487,8 +1544,47 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
               resourceuri = "http://purl.org/coar/resource_type/c_3248";
               break;
             // Dataset
+            case 'aggregated data':
+              resourceuri = "http://purl.org/coar/resource_type/ACF7-8YT9/";
+              break;
+            case 'clinical trial data':
+              resourceuri = "http://purl.org/coar/resource_type/c_cb28";
+              break;
+            case 'compiled data':
+              resourceuri = "http://purl.org/coar/resource_type/FXF3-D3G7/";
+              break;
             case 'dataset':
               resourceuri = "http://purl.org/coar/resource_type/c_ddb1";
+              break;
+            case 'encoded data':
+              resourceuri = "http://purl.org/coar/resource_type/AM6W-6QAW/";
+              break;
+            case 'experimental data':
+              resourceuri = "http://purl.org/coar/resource_type/63NG-B465/";
+              break;
+            case 'genomic data':
+              resourceuri = "http://purl.org/coar/resource_type/A8F1-NPV9/";
+              break;
+            case 'geospatial data':
+              resourceuri = "http://purl.org/coar/resource_type/2H0M-X761/";
+              break;
+            case 'laboratory notebook':
+              resourceuri = "http://purl.org/coar/resource_type/H41Y-FW7B/";
+              break;
+            case 'measurement and test data':
+              resourceuri = "http://purl.org/coar/resource_type/DD58-GFSX/";
+              break;
+            case 'observational data':
+              resourceuri = "http://purl.org/coar/resource_type/FF4C-28RK/";
+              break;
+            case 'recorded data':
+              resourceuri = "http://purl.org/coar/resource_type/CQMR-7K63/";
+              break;
+            case 'simulation data':
+              resourceuri = "http://purl.org/coar/resource_type/W2XT-7017/";
+              break;
+            case 'survey data':
+              resourceuri = "http://purl.org/coar/resource_type/NHD0-W6SY/";
               break;
             // Article
             case 'conference paper':
@@ -1503,14 +1599,26 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
             case 'editorial':
               resourceuri = "http://purl.org/coar/resource_type/c_b239";
               break;
+            case 'journal':
+              resourceuri = "http://purl.org/coar/resource_type/c_0640/";
+              break;
             case 'journal article':
               resourceuri = "http://purl.org/coar/resource_type/c_6501";
+              break;
+            case 'newspaper':
+              resourceuri = "http://purl.org/coar/resource_type/c_2fe3";
               break;
             case 'periodical':
               resourceuri = "http://purl.org/coar/resource_type/c_2659";
               break;
             case 'review article':
               resourceuri = "http://purl.org/coar/resource_type/c_dcae04bc";
+              break;
+            case 'other periodical':
+              resourceuri = "http://purl.org/coar/resource_type/QX5C-AR31";
+              break;
+            case 'software paper':
+              resourceuri = "http://purl.org/coar/resource_type/c_7bab";
               break;
             case 'article':
               resourceuri = "http://purl.org/coar/resource_type/c_6501";
@@ -1528,7 +1636,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
             case 'video':
               resourceuri = "http://purl.org/coar/resource_type/c_12ce";
               break;
-            // Cartographic
+            // Cartographic Material
             case 'cartographic material':
               resourceuri = "http://purl.org/coar/resource_type/c_12cc";
               break;
@@ -1560,6 +1668,9 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
               break;
             case 'working paper':
               resourceuri = "http://purl.org/coar/resource_type/c_8042";
+              break;
+            case 'data management plan':
+              resourceuri = "http://purl.org/coar/resource_type/c_ab20";
               break;
             // Thesis
             case 'thesis':

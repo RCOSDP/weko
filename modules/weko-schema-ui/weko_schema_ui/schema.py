@@ -1047,7 +1047,7 @@ class SchemaTree:
                             vlst_child = get_mapping_value(mpdic, atr_vm_item,
                                                            key_item_parent,
                                                            atr_name)
-                            if vlst_child[0]:
+                            if vlst_child and vlst_child[0]:
                                 vlst.extend(vlst_child)
                     else:
                         from weko_records.models import ItemType

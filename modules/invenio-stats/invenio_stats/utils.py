@@ -258,7 +258,7 @@ class QueryFileReportsHelper(object):
             elif i['userrole'] == 'Contributor':
                 data['reg'] += count
                 data['login'] += count
-            elif 'Administrator' in i['userrole']:
+            elif i['userrole'] in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']+ current_app.config["WEKO_PERMISSION_ROLE_COMMUNITY"]:
                 data['admin'] += count
                 data['login'] += count
             else:

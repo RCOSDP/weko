@@ -899,7 +899,7 @@ def prepare_edit_item():
         latest_pid = PIDVersioning(child=recid).last_child
 
         # ! Check User's Permissions
-        if user_id not in authenticators and not get_user_roles()[0]:
+        if user_id not in authenticators and not get_user_roles(is_super_role=True)[0]:
             return jsonify(
                 code=err_code,
                 msg=_("You are not allowed to edit this item.")
