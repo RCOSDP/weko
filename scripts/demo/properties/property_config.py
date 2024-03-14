@@ -948,7 +948,7 @@ RELATION_ID_TYPE_LBL = [
     "PISSN",
     "EISSN",
     "ISSN【非推奨】",
-    "NAID",
+    "NAID【非推奨】",
     "NCID",
     "PMID【現在不使用】",
     "PURL",
@@ -1004,3 +1004,5 @@ HOLDING_AGENT_NAMEID_SCHEMA_LBL = [
     "MARC",
     "OCLC",
 ]
+
+FUNDING_STREAM_IDENTIFIER_TYPE = ["Crossref Funder", "JGN_fundingStream"]

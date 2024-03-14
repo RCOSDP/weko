@@ -417,39 +417,7 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
                     tree = self.record_class.get_contribute_tree(
                         pid, int(comm.root_node_id))
                 else:
-                    tree = []
-                    role_ids = []
-                    can_edit_indexes = []
-                    is_admin = False
-                    if current_user and current_user.is_authenticated:
-                        for role in current_user.roles:
-                            if role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']:
-                                role_ids = []
-                                tree = self.record_class.get_contribute_tree(pid)
-                                is_admin = True
-                                break
-                            else:
-                                role_ids.append(role.id)
-                    if role_ids:
-                        from invenio_communities.models import Community
-                        comm_list = Community.query.filter(
-                            Community.id_role.in_(role_ids)
-                        ).all()
-                        root_id_list = []
-                        
-                        for comm in comm_list:
-                            index_list = Indexes.get_self_list(comm.root_node_id)
-                            if len(index_list) > 0:
-                                root_id = index_list[0].path.split('/')[0]
-                                if root_id not in root_id_list:
-                                    root_id_list.append(root_id)
-                            for index in index_list:
-                                if index.cid not in can_edit_indexes:
-                                    can_edit_indexes.append(str(index.cid))
-                        for index_id in root_id_list:
-                            tree += self.record_class.get_contribute_tree(pid, int(index_id))
-                    _check_edit_permission(is_admin, tree, can_edit_indexes)
-                    # tree = self.record_class.get_contribute_tree(pid)
+                    tree = self.record_class.get_contribute_tree(pid)
             elif action and 'browsing' in action and comm_id is None:
                 if more_id_list is None:
                     tree = self.record_class.get_browsing_tree()

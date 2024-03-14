@@ -49,7 +49,7 @@ def schema(title="", multi_flag=multiple_flag):
         _d = {
             "type": "object",
             "format": "object",
-            "title":"original_language",
+            "title": "original_language",
             "properties": {
                 "original_language": {
                     "type": "string",

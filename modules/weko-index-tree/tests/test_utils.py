@@ -151,14 +151,45 @@ def test_reset_tree(app, db, users):
 # def test_get_tree_json(i18n_app, db_records, indices, esindex):
 #     assert get_tree_json([indices['index_non_dict']], 0)
 
-
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_get_user_roles -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
 #+++ def get_user_roles():
 def test_get_user_roles(i18n_app, client_rest, users):
+    # sysadmin
     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
-        assert get_user_roles()[0]
+        result = get_user_roles(is_super_role=True)
+        assert result[0] == True
+        assert result[1] == [1]
+        
+        result = get_user_roles(is_super_role=False)
+        assert result[0] == True
+        assert result[1] == [1]
+        
+    # comadmin
+    with patch("flask_login.utils._get_user", return_value=users[4]['obj']):
+        result = get_user_roles(is_super_role=True)
+        assert result[0] == True
+        assert result[1] == [4]
+
+        result = get_user_roles(is_super_role=False)
+        assert result[0] == False
+        assert result[1] == [4]
+
+
+    # not admin user
+    with patch("flask_login.utils._get_user", return_value=users[1]['obj']):
+        result = get_user_roles(is_super_role=True)
+        assert result[0] == False
+        assert result[1] == [3]
+
+        result = get_user_roles(is_super_role=False)
+        assert result[0] == False
+        assert result[1] == [3]
 
     # User not authenticated
-    assert get_user_roles()[0] == False
+    result = get_user_roles()
+    assert result[0] == False
+    assert result[1] == None
+
 
 
 #+++ def get_user_groups():
@@ -175,16 +206,34 @@ def test_get_user_groups(i18n_app, client_rest, users, db):
     # User not authenticated
     assert len(get_user_groups()) == 0
 
-
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_check_roles -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
 #+++ def check_roles(user_role, roles):
 def test_check_roles(users):
-    with patch("flask_login.utils._get_user", return_value=users[-1]['obj']):
+    # admin user
+    user_role = (True, [])
+    roles = ["1","2"]
+    check_roles(user_role, roles)
     
-        user_role = [role.name for role in users[-1]['obj'].roles]
-        roles = (',').join(user_role)
-
-        assert check_roles(user_role, roles)
-
+    # not admin user
+    ## not login
+    ### not allow -99
+    user_role = (False,[])
+    roles = "1,2"
+    assert check_roles(user_role, roles) == False
+    ### allow -99
+    user_role = (False,[])
+    roles = "1,2,-99"
+    assert check_roles(user_role, roles) == True
+    ## login
+    with patch("flask_login.utils._get_user", return_value=users[-1]['obj']):
+    ### all allow
+        user_role = (False,["1", "2"])
+        roles = "1,2"
+        assert check_roles(user_role, roles) == True
+    ### exist deny
+        user_role = (False,["1", "2", "3"])
+        roles = "1,2"
+        assert check_roles(user_role, roles) == False
 
 #+++ def check_groups(user_group, groups):
 def test_check_groups(i18n_app, users, db):

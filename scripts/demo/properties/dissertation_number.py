@@ -39,7 +39,7 @@ def schema(title="", multi_flag=multiple_flag):
         """Schema text."""
         _d = {
             "type": "object",
-            "title":"dissertation_number",
+            "title": "dissertation_number",
             "properties": {
                 "subitem_dissertationnumber": {
                     "format": "text",
