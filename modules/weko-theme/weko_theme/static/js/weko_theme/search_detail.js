@@ -482,7 +482,7 @@
 
             // Reused the condition for using advanced search from top_page.js.
             var urlParams = new URLSearchParams(window.location.search);
-            var isDetailSearch = Array.from(urlParams.keys()).length > 5
+            var isDetailSearch = Array.from(urlParams.keys()).length > 6
             if (isDetailSearch) {
                 if (urlParams.has('cur_index_id')) {
                     isDetailSearch = false;
