@@ -21,6 +21,7 @@ from invenio_pidrelations.models import PIDRelation
 from weko_admin.config import WEKO_ADMIN_MANAGEMENT_OPTIONS
 from weko_deposit.api import WekoDeposit, WekoIndexer
 from weko_records.api import ItemsMetadata, WekoRecord
+from weko_records.models import ItemType
 
 from weko_search_ui import WekoSearchUI
 from weko_search_ui.config import (
@@ -406,6 +407,20 @@ def test_check_xml_import_items(i18n_app, db_itemtype_jpcoar):
             time.sleep(2)
             result = check_xml_import_items(file_path, item_type.id)
             assert result["error"] == "error_msg_sample"
+
+    # Case08: item_type is not found
+    with i18n_app.test_request_context():
+        result = check_xml_import_items(file_path, 9999)
+        assert result["error"] == "The item type of the item to be imported is missing or has already been deleted."
+
+    # Case09: item_type has been already deleted
+    with i18n_app.test_request_context():
+        item_type = MagicMock(spec=ItemType)
+        item_type.is_deleted = True
+
+        with patch("weko_search_ui.utils.ItemTypes.get_by_id", return_value=item_type):
+            result = check_xml_import_items(file_path, 9999)
+            assert result["error"] == "The item type of the item to be imported is missing or has already been deleted."
 
 
 # def unpackage_import_file(data_path: str, file_name: str, file_format: str, force_new=False):
