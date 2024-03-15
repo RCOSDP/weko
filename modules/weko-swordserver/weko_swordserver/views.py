@@ -121,8 +121,8 @@ def get_service_document():
 
 @blueprint.route("/service-document", methods=['POST'])
 @require_api_auth()
-@oauth2.require_oauth(write_scope.id)
-@oauth2.require_oauth(activity_scope.id)
+@require_oauth_scopes(write_scope.id)
+@require_oauth_scopes(activity_scope.id)
 @check_on_behalf_of()
 @check_package_contents()
 def post_service_document():
