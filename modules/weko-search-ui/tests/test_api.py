@@ -105,6 +105,7 @@ def test_get_nested_sorting(i18n_app, users, app):
 
 
 # def get_search_detail_keyword(str):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_api.py::test_get_search_detail_keyword -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_get_search_detail_keyword(i18n_app, users, db):
     from sqlalchemy.sql import func
     
@@ -135,6 +136,13 @@ def test_get_search_detail_keyword(i18n_app, users, db):
     with patch("weko_records.utils.get_keywords_data_load", return_value=data_1):
         with patch("weko_search_ui.api.get_childinfo", return_value=data_2):
             assert len(json.loads(get_search_detail_keyword("str")).get('condition_setting')) <= 0
+
+            with patch("flask_login.utils._get_user", return_value=users[3]['obj']): #sysadmin
+                assert get_search_detail_keyword("str")
+            with patch("flask_login.utils._get_user", return_value=users[0]['obj']): #noroleuser
+                assert get_search_detail_keyword("str")
+
+            assert get_search_detail_keyword("str")
 
 # def get_childinfo(index_tree, result_list=[], parename=""):
 def test_get_childinfo(i18n_app, users):
