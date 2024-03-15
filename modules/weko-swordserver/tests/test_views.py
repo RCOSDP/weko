@@ -34,7 +34,6 @@ def test_get_service_document(client,users,tokens):
 # def post_service_document():
 # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_views.py::test_post_service_document -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp
 def test_post_service_document(app,client,db,users,esindex,location,index,make_zip,tokens,item_type,doi_identifier,mocker,admin_settings, workflow):
-    login_user_via_session(client=client,email=users[0]["email"])
     token=tokens["import_token"].access_token
     url = url_for("weko_swordserver.post_service_document")
     headers = {
@@ -51,6 +50,7 @@ def test_post_service_document(app,client,db,users,esindex,location,index,make_z
     mocker.patch("weko_search_ui.utils.send_item_created_event_to_es")
     zip = make_zip()
     with patch("weko_swordserver.views.import_items_to_system", return_value={"success": True, "recid": 1}):
+        login_user_via_session(client=client,email=users[0]["email"])
         storage = FileStorage(filename="payload.zip",stream=zip)
         res = client.post(url, data=dict(file=storage),content_type="multipart/form-data",headers=headers)
         assert res.status_code == 200
@@ -69,6 +69,7 @@ def test_post_service_document(app,client,db,users,esindex,location,index,make_z
     prop_mock = PropertyMock(return_value=expected_activity_id)
     type(activity).activity_id = prop_mock
     with patch("weko_swordserver.views.create_activity_from_jpcoar", return_value=(activity, 1)):
+        login_user_via_session(client=client,email=users[0]["email"])
         file_data2 = FileStorage(
             stream=open("tests/data/workflow_data/sample_file_jpcoar_xml.zip", "rb"),
             filename="sample_file_jpcoar_xml.zip",
@@ -86,6 +87,7 @@ def test_post_service_document(app,client,db,users,esindex,location,index,make_z
     zip = make_zip()
     storage=FileStorage(filename="payload.zip",stream=zip)
     with app.test_request_context(url,method="POST",headers=headers,data=dict(file=storage)):
+        login_user(users[0]['obj'])
         # exist "error" in check_result
         checked = {"error":"test_check_error","list_record":["test_item"]}
         with patch("weko_swordserver.views.check_import_items",return_value=(checked, None)):
