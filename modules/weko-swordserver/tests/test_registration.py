@@ -7,7 +7,7 @@ from mock import patch, MagicMock
 from unittest.mock import PropertyMock
 
 from invenio_files_rest.errors import FileSizeError
-from invenio_files_rest.models import ObjectVersion
+from invenio_files_rest.models import Bucket, Location, ObjectVersion
 from invenio_pidstore.models import PersistentIdentifier
 from weko_swordserver.errors import ErrorType, WekoSwordserverException
 from weko_swordserver.registration import check_import_items, create_activity_from_jpcoar, create_file_info, upload_jpcoar_contents
@@ -328,6 +328,16 @@ def test_upload_jpcoar_contents(app, location, index, indexer):
             with patch("os.path.getsize", return_value=100*1024*1024*1024*1024):
                 with pytest.raises(FileSizeError):
                     upload_jpcoar_contents(data_path, contents_data)
+
+            bucket = MagicMock(spec=Bucket)
+            location_mock = MagicMock(spec=Location)
+            location_mock.max_file_size = 4096
+            bucket.location = location_mock
+            bucket.size_limit = 2048
+            with patch("os.path.getsize", return_value=100*1024*1024*1024*1024):
+                with patch("sqlalchemy.orm.Query.get", return_value=bucket):
+                    with pytest.raises(FileSizeError):
+                        upload_jpcoar_contents(data_path, contents_data)
 
             # Case05: bucket quota exceeded
             with patch("weko_swordserver.registration._location_has_quota", return_value=False):

@@ -1087,7 +1087,7 @@ class JPCOARV2Mapper(BaseMapper):
     def map(self, item_type_name):
         """Get map."""
         default_metadata = {"pubdate": date.today().isoformat()}
-        if not item_type_name:
+        if not item_type_name or not self.json or "jpcoar:jpcoar" not in self.json.keys():
             return default_metadata
 
         # get item type

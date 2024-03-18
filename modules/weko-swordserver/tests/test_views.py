@@ -1,4 +1,5 @@
 
+import os
 from unittest.mock import MagicMock, PropertyMock
 from flask import url_for,json,request,abort
 from flask_login.utils import login_user
@@ -137,6 +138,22 @@ def test_post_service_document(app,client,db,users,esindex,location,index,make_z
                     post_service_document()
                     assert e.errorType == ErrorType.ServerError
                     assert e.message == "Error in create_activity_from_jpcoar"
+
+        # invalid register format
+        checked = {"error":"","list_record":[{"status":"new","item_title":"new_item"}]}
+        with patch("weko_swordserver.views.check_import_items", return_value=(checked, "invalid")):
+            with pytest.raises(WekoSwordserverException) as e:
+                post_service_document()
+                assert e.errorType == ErrorType.ServerError
+                assert e.message == "Invalid register format has been set for admin setting"
+
+        checked = {"error":"","list_record":[{"status":"new","item_title":"new_item"}], "data_path": "test"}
+        with patch("weko_swordserver.views.check_import_items", return_value=(checked, "invalid")):
+            with pytest.raises(WekoSwordserverException) as e:
+                os.mkdir("test")
+                post_service_document()
+                assert e.errorType == ErrorType.ServerError
+                assert e.message == "Invalid register format has been set for admin setting"
 
 
 # def get_status_document(recid):

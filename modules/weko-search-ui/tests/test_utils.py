@@ -386,13 +386,22 @@ def test_check_xml_import_items(i18n_app, db_itemtype_jpcoar):
         assert result["error"] ==  "The xml file was not found in the specified file helloworld.zip." \
             " Check if the directory structure is correct."
 
+    with i18n_app.test_request_context():
+        failed_file_name = "no_jpcoar_xml_file.zip"
+        failed_file_path = os.path.join('tests', "data", "jpcoar", "v2", failed_file_name)
+        time.sleep(2)
+        print("Case04")
+        result = check_xml_import_items(failed_file_path, item_type.id)
+        assert result["error"] ==  "The xml file was not found in the specified file no_jpcoar_xml_file.zip." \
+            " Check if the directory structure is correct."
+
+
     # Case05: UnicodeDecodeError occured
     with i18n_app.test_request_context():
-        with patch("weko_search_ui.utils.handle_check_file_metadata", side_effect=lambda x: "foo".encode('utf-16').decode('utf-8')):
+        with patch("weko_search_ui.utils.handle_check_file_metadata", side_effect=lambda x,y: "foo".encode('utf-16').decode('utf-8')):
             time.sleep(2)
             result = check_xml_import_items(file_path, item_type.id)
-            assert "error" in result["error"]
-            print(result["error"])
+            assert result["error"] == "invalid start byte"
 
     # Case06: Other exception occured (without args)
     with i18n_app.test_request_context():
