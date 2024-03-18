@@ -1917,9 +1917,9 @@ def db_activity(db, db_records2, db_itemtype, db_workflow, users):
 
 @pytest.fixture()
 def db_itemtype(app, db, make_itemtype):
-    itemtype_id = 1
+    itemtype_id = 1000
     itemtype_data = {
-        "name": "テストアイテムタイプ",
+        "name": "テストアイテムタイプ_" + str(itemtype_id),
         "schema": "tests/data/itemtype_schema.json",
         "form": "tests/data/itemtype_form.json",
         "render": "tests/data/itemtype_render.json",

@@ -228,6 +228,11 @@ def post_service_document():
         except:
             raise WekoSwordserverException('Error in create_activity_from_jpcoar', ErrorType.ServerError)
         response = jsonify(_get_status_workflow_document(activity, recid))
+    else:
+        if os.path.exists(data_path):
+            shutil.rmtree(data_path)
+            TempDirInfo().delete(data_path)
+        raise WekoSwordserverException('Invalid register format has been set for admin setting', ErrorType.ServerError)
 
     if os.path.exists(data_path):
         shutil.rmtree(data_path)
