@@ -124,7 +124,8 @@
 {%- endmacro %}
 
 <!--Email Confirm Modal -->
-{% macro email_modal(modal_id="", button_id="", button_text="", title="") %}
+{% macro email_modal(modal_id="", button_id="", button_text="", title="", password_checkflag=false, with_files=false) %}
+<input id="password_checkflag" type="hidden" value='{{ password_checkflag }}'/>
   <div class="modal fade" tabindex="-1" role="dialog" id="{{ modal_id }}">
     <div class="modal-dialog" role="document">
       <div class="modal-content">
@@ -149,6 +150,27 @@
                    aria-describedby="emailHelp"
                    placeholder='{{ _("Email address(reconfirmation)") }}'>
           </div>
+          {%- if password_checkflag and with_files %}
+            <div class="form-group password">
+              <label class="control-label"
+                    for="password_for_download">{{ _('Password') }}</label>
+              <input type="password" class="form-control" id="password_for_download"
+                    aria-describedby="passHelp"
+                    placeholder='{{ _("Password") }}'>
+              <div class="password-rule">
+                <div>・{{_('password rule1')}}</br></div>
+                <div>・{{_('password rule2')}}</br></div>
+                <div>・{{_('available characters')}}（ @ ! # $ % &amp; = - + * / . , : ; [ ] | ) </div>
+              </div>
+            </div>
+            <div class="form-group user-mail">
+              <label class="control-label"
+                    for="password_for_download_confirm">{{ _('Password(reconfirmation)') }}</label>
+              <input type="password" class="form-control" id="password_for_download_confirm"
+                    aria-describedby="passHelp"
+                    placeholder='{{ _("Password(reconfirmation)") }}'>
+            </div>
+          {%- endif %}
         </div>
         <div class="modal-footer">
           <button id="{{ button_id }}" class="btn btn-primary save-button"

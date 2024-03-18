@@ -28,6 +28,7 @@ import unicodedata
 from flask import abort, current_app, render_template, request ,redirect ,url_for
 from flask_babelex import gettext as _
 from flask_login import current_user
+from flask_security.utils import hash_password
 from invenio_db import db
 from invenio_files_rest import signals
 from invenio_files_rest.models import FileInstance
@@ -36,6 +37,7 @@ from invenio_records_files.utils import record_file_factory
 from requests.sessions import session
 from sqlalchemy.exc import SQLAlchemyError
 from weko_accounts.views import _redirect_method
+from weko_admin.models import AdminSettings
 from weko_deposit.api import WekoRecord
 from weko_groups.api import Group
 from weko_records.api import FilesMetadata, ItemTypes
@@ -432,6 +434,11 @@ def file_download_onetime(pid, record,file_name=None, user_mail=None,login_flag=
         filename = kwargs.get("filename")
         token = request.args.get('token', type=str)
         mailaddress = request.args.get('mailaddress',None)
+        input_password = ""
+        if request.method == "POST":
+            input_pwd = request.get_json().get('input_password')
+            if input_pwd:
+                input_password = hash_password(input_pwd)
         # Parse token
         if not mailaddress:
             onetime_file_url = request.url
@@ -494,10 +501,17 @@ def file_download_onetime(pid, record,file_name=None, user_mail=None,login_flag=
     # Update download data
     if not update_onetime_download(**update_data):
         return __make_error_response(is_ajax, error_msg=_("Unexpected error occurred."))
- 
+
+    passcheck_function = True
+    restricted_access = AdminSettings.get(name='restricted_access',dict_to_object=False)
+    password_for_download = onetime_download.extra_info.get("password_for_download", "")
+    if restricted_access and restricted_access.get('password_enable', False):
+        if password_for_download and input_password != password_for_download:
+            passcheck_function = False
+
     #　Guest Mailaddress Check
     if not current_user.is_authenticated:
-        if mailaddress == user_mail:
+        if mailaddress == user_mail and passcheck_function:
             return _download_file(file_object, False, 'en', file_object.obj, pid,
                                 record)
         else:

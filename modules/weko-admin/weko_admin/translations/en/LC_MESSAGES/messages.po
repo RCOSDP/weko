@@ -821,3 +821,6 @@ msgstr "Enable"
 
 msgid "restricted_error_message"
 msgstr "Error Message"
+
+msgid "password check function"
+msgstr "Password check function when downloading for guest user"

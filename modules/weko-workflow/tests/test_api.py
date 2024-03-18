@@ -8,6 +8,7 @@ from flask_login.utils import login_user
 from invenio_accounts.models import Role, User
 from sqlalchemy import and_, or_, not_
 from weko_records.api import ItemsMetadata
+from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 
 from weko_workflow.api import Flow, WorkActivity
 from weko_workflow.models import Action as _Action
@@ -17,7 +18,9 @@ from weko_workflow.models import FlowAction as _FlowAction
 from weko_workflow.models import FlowActionRole as _FlowActionRole
 from weko_workflow.models import FlowDefine as _Flow
 from weko_workflow.models import WorkFlow as _WorkFlow
-from weko_workflow.models import ActionStatusPolicy, Activity, ActivityAction, FlowActionRole
+from weko_workflow.models import ActionStatusPolicy, Activity, ActivityAction, FlowActionRole, ActivityRequestMail, ActivityItemApplication
+from weko_records.models import RequestMailList as _RequestMailList
+from weko_records.models import ItemApplication as _ItemApplication
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_Flow_action -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_Flow_action(app, client, users, db, action_data):
@@ -163,6 +166,157 @@ def test_upt_flow_action(app, client, users, db, action_data, user_id, user_deny
         assert actual.specify_property is None
         assert actual.action_user_exclude == expected_action_user_exclude
         assert actual.action_item_registrant == expected_action_item_registrant
+        _flow_data = [
+            {
+                "id":"2",
+                "name":"End",
+                "date":"2022-12-09",
+                "version":"1.0.0",
+                "user":"2",
+                "user_deny": False,
+                "role":"0",
+                "role_deny": False,
+                "workflow_flow_action_id":8,
+                "send_mail_setting": {
+                    "request_approval": False,
+                    "inform_approval": False,
+                    "inform_reject": False},
+                "action":"ADD"
+            },
+            {
+                "id":"1",
+                "name":"Start",
+                "date":"2022-12-09",
+                "version":"1.0.0",
+                "user":"parentkey.subitem_restricted_access_guarantor_mail_address",
+                "user_deny": True,
+                "role":"0",
+                "role_deny": False,
+                "workflow_flow_action_id":db.session.query(FlowActionRole).get(2).flow_action_id,
+                "send_mail_setting": {
+                    "request_approval": False,
+                    "inform_approval": False,
+                    "inform_reject": False
+                },
+                "action":"UPDATE"
+            },
+            {
+                "id":"3",
+                "name":"Item Registration",
+                "date":"2022-12-9",
+                "version":"1.0.1",
+                "user":str(user_id),
+                "user_deny": user_deny,
+                "role":"0",
+                "role_deny": False,
+                "workflow_flow_action_id":actual.flow_action_id,
+                "send_mail_setting": {
+                    "request_approval": False,
+                    "inform_approval": False,
+                    "inform_reject": False
+                },
+                "action":"DEL"
+            }
+        ]
+        _flow.upt_flow_action(flow.flow_id, _flow_data)
+        actual =  db.session.query(FlowActionRole).get(3)
+        update_actual = db.session.query(FlowActionRole).get(5)
+        assert actual == None
+        assert update_actual.action_user_exclude == True
+        assert update_actual.specify_property == "parentkey.subitem_restricted_access_guarantor_mail_address"
+
+
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_upt_flow_action -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+@pytest.mark.parametrize('user_id, user_deny, expected_action_user, expected_action_user_exclude, expected_action_request_mail', [
+    (-3, True, None, True, True),
+    (-3, False, None, False, True),
+])
+def test_upt_flow_action_for_request_mail(app, client, users, db, action_data, user_id, user_deny, expected_action_user, expected_action_user_exclude, expected_action_request_mail):
+    with app.test_request_context():
+        login_user(users[2]["obj"])
+        _flow = Flow()
+        flow = _flow.create_flow({'flow_name': 'create_flow_test'})
+
+        _flow_data = [
+            {
+                "id":"2",
+                "name":"End",
+                "date":"2022-12-09",
+                "version":"1.0.0",
+                "user":"2",
+                "user_deny": False,
+                "role":"0",
+                "role_deny": False,
+                "workflow_flow_action_id":8,
+                "send_mail_setting": {
+                    "request_approval": False,
+                    "inform_approval": False,
+                    "inform_reject": False},
+                "action":"ADD"
+            },
+            {
+                "id":"1",
+                "name":"Start",
+                "date":"2022-12-09",
+                "version":"1.0.0",
+                "user":"2",
+                "user_deny": False,
+                "role":"0",
+                "role_deny": False,
+                "workflow_flow_action_id":7,
+                "send_mail_setting": {
+                    "request_approval": False,
+                    "inform_approval": False,
+                    "inform_reject": False
+                },
+                "action":"ADD"
+            },
+            {
+                "id":"3",
+                "name":"Item Registration",
+                "date":"2022-12-9",
+                "version":"1.0.1",
+                "user":str(user_id),
+                "user_deny": user_deny,
+                "role":"0",
+                "role_deny": False,
+                "workflow_flow_action_id":-1,
+                "send_mail_setting": {
+                    "request_approval": False,
+                    "inform_approval": False,
+                    "inform_reject": False
+                },
+                "action":"ADD"
+            },
+            {
+                "id":"4",
+                "name":"Request Mail",
+                "date":"2022-12-9",
+                "version":"1.0.1",
+                "user":str(user_id),
+                "user_deny": user_deny,
+                "role":"0",
+                "role_deny": False,
+                "workflow_flow_action_id":4,
+                "send_mail_setting": {
+                    "request_approval": False,
+                    "inform_approval": False,
+                    "inform_reject": False
+                },
+                "action":"ADD"
+            },
+        ]
+        _flow.upt_flow_action(flow.flow_id, _flow_data)
+
+        actual =  db.session.query(FlowActionRole).get(4)
+        if expected_action_user is None:
+            assert actual.action_user is None
+        else:
+            assert actual.action_user == expected_action_user
+        assert actual.specify_property is None
+        assert actual.action_user_exclude == expected_action_user_exclude
+        assert actual.action_request_mail == expected_action_request_mail
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_Flow_get_flow_action_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_Flow_get_flow_action_list(db,workflow):
@@ -450,6 +604,36 @@ def test_WorkActivity_get_activity_action_role(app, activity_with_roles, action_
     print(users)
     assert (owner_id in users[expected_index]) == expected_included
 
+# for roles
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_WorkActivity_get_activity_action_role2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+@pytest.mark.parametrize('action_id, action_order, expected_index, expected_included', [
+    (6, 3, 'allow', True),
+    (5, 4, 'deny', True),
+])
+def test_WorkActivity_get_activity_action_role2(app, activity_with_roles_for_request_mail, action_id, action_order, expected_index, expected_included):
+    activity = activity_with_roles_for_request_mail["activity"]
+    item_metadata = activity_with_roles_for_request_mail['itemMetadata']
+    owner_id = int(item_metadata['owner'])
+
+    workflow_activity = WorkActivity()
+    roles, _ = workflow_activity.get_activity_action_role(activity.id, action_id, action_order)
+    assert (owner_id in roles[expected_index]) == expected_included
+
+# for request_mail
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_WorkActivity_get_activity_action_role2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+@pytest.mark.parametrize('action_id, action_order, expected_index, expected_included', [
+    (7, 5, 'allow', True),
+    (4, 6, 'deny', True),
+    (3, 2, 'allow', True)
+])
+def test_WorkActivity_get_activity_action_role3(app, activity_with_roles_for_request_mail, action_id, action_order, expected_index, expected_included):
+    activity = activity_with_roles_for_request_mail["activity"]
+    item_metadata = activity_with_roles_for_request_mail['itemMetadata']
+    owner_id = int(item_metadata['owner'])
+
+    workflow_activity = WorkActivity()
+    _, users = workflow_activity.get_activity_action_role(activity.id, action_id, action_order)
+    assert (owner_id in users[expected_index]) == expected_included
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_WorkActivity_query_activities_by_tab_is_todo -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 @pytest.mark.parametrize('action_item_registrant, users_idx, expected_activity_included', [
@@ -490,7 +674,7 @@ def test_WorkActivity_query_activities_by_tab_is_todo(app, workflow, db, users, 
                     users[0]["obj"].id
                 ],
                 "status": "published",
-                "$schema": "/items/jsonschema/" + str(item_type.id),
+                "$schema": "/items/jsonschema/" + str(item_type[0].get("id")),
                 "pubdate": "2020-08-29",
                 "created_by": users[0]["obj"].id,
                 "owners_ext": {
@@ -510,7 +694,7 @@ def test_WorkActivity_query_activities_by_tab_is_todo(app, workflow, db, users, 
                     "resourcetype": "conference paper"
                 }
             },
-            item_type_id = item_type.id,
+            item_type_id = item_type[0].get("id"),
         )
 
         # set activity
@@ -559,3 +743,136 @@ def test_WorkActivity_query_activities_by_tab_is_all(app, users, activity_with_r
             Activity.query, False, [])
         actual = actual_query.all()
         assert (len(actual) > 0) == expected_included
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_request_mail_list_create_and_update -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_request_mail_list_create_and_update(app, workflow, db, mocker):
+    activity = WorkActivity()
+    _request_maillist1 = []
+    _request_maillist2 = [{"email": "test@example.com", "author_id": ""}]
+    activity.create_or_update_activity_request_mail("1", _request_maillist1, True)
+    assert activity.get_activity_request_mail("1")
+    activity.create_or_update_activity_request_mail("1", _request_maillist2, True)
+    assert activity.get_activity_request_mail("1").request_maillist == _request_maillist2
+    activity.create_or_update_activity_request_mail("1111111", _request_maillist1, "aaa")
+    assert activity.get_activity_request_mail("1").request_maillist == _request_maillist2
+
+# def get_user_ids_of_request_mails_by_activity_id
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_get_user_ids_of_request_mails_by_activity_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_get_user_ids_of_request_mails_by_activity_id(workflow, users, mocker):
+    activity = WorkActivity()
+    activityrequestmails = [
+        ActivityRequestMail(
+        id = 1,
+        activity_id = 1,
+        display_request_button = True,
+        request_maillist = []
+    ),
+        ActivityRequestMail(
+            id = 2,
+            activity_id = 2,
+            display_request_button = False,
+            request_maillist = [{}]
+    ),
+        ActivityRequestMail(
+            id = 3,
+            activity_id = 3,
+            display_request_button = True,
+            request_maillist = [{"email":"not_user","author_id":""},
+                                {"email":"user@test.org","author_id":""},
+                                {"email":"contributor@test.org","author_id":""}]
+    )]
+    with patch("weko_workflow.api.WorkActivity.get_activity_detail", return_value = _Activity(extra_info={"record_id":1, "is_restricted_access":True})):
+        mock = mocker.patch("weko_workflow.api.WorkActivity.get_user_ids_of_request_mails_by_record_id")
+        activity.get_user_ids_of_request_mails_by_activity_id(1)
+        mock.assert_called()
+    mocker.patch("weko_workflow.api.WorkActivity.get_activity_detail", return_value = _Activity(extra_info={}))
+    with patch("weko_workflow.api.WorkActivity.get_activity_request_mail", return_value = None):
+        assert activity.get_user_ids_of_request_mails_by_activity_id(1) == []
+    with patch("weko_workflow.api.WorkActivity.get_activity_request_mail", return_value = activityrequestmails[0]):
+        assert activity.get_user_ids_of_request_mails_by_activity_id(1) == []
+    with patch("weko_workflow.api.WorkActivity.get_activity_request_mail", return_value = activityrequestmails[1]):
+        assert activity.get_user_ids_of_request_mails_by_activity_id(2) == []
+    with patch("weko_workflow.api.WorkActivity.get_activity_request_mail", return_value = activityrequestmails[2]):
+        ids = activity.get_user_ids_of_request_mails_by_activity_id(3)
+        assert ids == [User.query.filter_by(email="contributor@test.org").one_or_none().id]
+
+# def get_user_ids_of_request_mails_by_record_id
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_get_user_ids_of_request_mails_by_record_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_get_user_ids_of_request_mails_by_record_id(workflow, users, mocker):
+    activity = WorkActivity()
+    requestmails = [[],[{}],[{"email":"not_user","author_id":""},
+                                {"email":"user@test.org","author_id":""},
+                                {"email":"contributor@test.org","author_id":""}]]
+    mocker.patch("weko_workflow.api.PersistentIdentifier.get")
+    mocker.patch("weko_workflow.api.PersistentIdentifier.get_assigned_object")
+    with patch("weko_workflow.api.RequestMailList.get_mail_list_by_item_id", return_value=None):
+        assert not activity.get_user_ids_of_request_mails_by_record_id(0)
+    with patch("weko_workflow.api.RequestMailList.get_mail_list_by_item_id", return_value=requestmails[0]):
+        assert not activity.get_user_ids_of_request_mails_by_record_id(0)
+    with patch("weko_workflow.api.RequestMailList.get_mail_list_by_item_id", return_value=requestmails[1]):
+        assert not activity.get_user_ids_of_request_mails_by_record_id(0)
+    with patch("weko_workflow.api.RequestMailList.get_mail_list_by_item_id", return_value=requestmails[2]):
+        ids = activity.get_user_ids_of_request_mails_by_record_id(0)
+        assert ids == [User.query.filter_by(email="contributor@test.org").one_or_none().id]
+    
+
+
+# def check_user_role_for_mail
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_check_user_role_for_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_check_user_role_for_mail(users):
+    activity = WorkActivity()
+    # user is admin
+    roles={'allow':[5],'deny':[]}
+    assert activity.check_user_role_for_mail(users[2]["id"], roles)
+
+    # user is cont, cont in allow 
+    roles={'allow':[3],'deny':[]}
+    assert activity.check_user_role_for_mail(users[0]["id"], roles)
+
+    # user is cont, cont not in allow
+    roles={'allow':[2],'deny':[]}
+    assert not activity.check_user_role_for_mail(users[0]["id"], roles)
+
+    # user is cont, cont in deny
+    roles={'allow':[],'deny':[3]}
+    assert not activity.check_user_role_for_mail(users[0]["id"], roles)
+
+    # user is cont, cont not in deny
+    roles={'allow':[],'deny':[2]}
+    assert activity.check_user_role_for_mail(users[0]["id"], roles)
+                             
+# def get_recirds_for_request_mail_by_mailaddress
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_get_recirds_for_request_mail_by_mailaddress -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_get_recirds_for_request_mail_by_mailaddress(db,mocker):
+    activity = WorkActivity()
+    request_mail_list=[
+        _RequestMailList(item_id="1234",mail_list=[{"email": "wekosoftware@nii.ac.jp", "author_id": ""}]),
+        _RequestMailList(item_id="1235",mail_list=[{"email": "wekosoftware@nii.ac.jp", "author_id": ""}])
+    ]
+    mocker.patch("weko_workflow.api.RequestMailList.get_request_mail_by_mailaddress",return_value = request_mail_list)
+    
+    with patch("weko_workflow.api.PersistentIdentifier.get_by_object", return_value = PersistentIdentifier(pid_value = 1)):
+        recids_list = activity.get_recids_for_request_mail_by_mailaddress("wekosoftware@nii.ac.jp")
+        assert recids_list
+    assert not activity.get_recids_for_request_mail_by_mailaddress("wekosoftware@nii.ac.jp")
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_item_application_create_and_update -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_item_application_create_and_update(app, workflow, db, mocker):
+    activity = WorkActivity()
+    _item_application1 = {}
+    _item_application2 = {"workflow":"1", "terms":"term_free", "termsDescription":"test"}
+
+    # create
+    activity.create_or_update_activity_item_application("1", _item_application1, True)
+    assert activity.get_activity_item_application("1")
+
+    # update
+    activity.create_or_update_activity_item_application("1", _item_application2, True)
+    assert activity.get_activity_item_application("1").item_application == _item_application2
+
+    # error
+    activity.create_or_update_activity_item_application("1111111", _item_application1, "aaaaa")
+    assert activity.get_activity_item_application("1").item_application == _item_application2
+
+    # not hit search
+    assert not activity.get_activity_item_application("1111")

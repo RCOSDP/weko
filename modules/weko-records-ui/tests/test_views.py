@@ -46,6 +46,7 @@ from weko_records_ui.views import (
     get_file_permission,
     check_content_file_clickable,
     get_usage_workflow,
+    get_item_usage_workflow,
     get_workflow_detail,
     preview_able,
     get_uri,
@@ -427,6 +428,33 @@ def test_get_usage_workflow(app, users, workflows):
         res = get_usage_workflow(_file_json)
         assert res=="3"
 
+# def get_item_usage_workflow(record)
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_get_item_usage_workflow -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_get_item_usage_workflow(records):
+    indexer, results = records
+    record = results[0]["record"]
+    provide_list = {"workflow":"1", "terms":"term_free", "termsDescription":"利用規約自由入力"}
+    with patch("weko_records_ui.views.get_item_provide_list",return_value=provide_list):
+        class Mocklocale:
+            id = 0
+            def get_language_name(self, bbb):
+                return "Japanese"
+        with patch("weko_records_ui.views.get_locale", return_value = Mocklocale()):
+            terms=["利用規約自由入力",  "Terms of Use Free Input"]
+            with patch("weko_records_ui.views.extract_term_description",return_value =terms):
+                terms, provide= get_item_usage_workflow(record)
+                assert terms == "利用規約自由入力"
+                assert provide == "1"
+
+    provide_list = {"workflow":"1", "terms":"1111111111"}
+    with patch("weko_records_ui.views.get_item_provide_list",return_value=provide_list):
+        with patch("weko_records_ui.views.get_locale") as pi:
+            terms=["",  "Terms of Use Free Input"]
+            with patch("weko_records_ui.views.extract_term_description",return_value =terms):
+                pi.get_language_name = MagicMock()
+                terms, provide= get_item_usage_workflow(record)
+                assert terms == "Terms of Use Free Input"
+                assert provide == "1" 
 
 # def get_workflow_detail(workflow_id):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_get_workflow_detail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -531,6 +559,10 @@ def test_default_view_method(app, records, itemtypes, indexstyle ,users):
                         restricted_errorMsg = {"content_file_download": {"expiration_date": 30,"expiration_date_unlimited_chk": False,"download_limit": 10,"download_limit_unlimited_chk": False,},"usage_report_workflow_access": {"expiration_date_access": 500,"expiration_date_access_unlimited_chk": False,},"terms_and_conditions": [],"error_msg":{"key" : "","content" : {"ja" : {"content" : "このデータは利用できません（権限がないため）。"},"en":{"content" : "This data is not available for this user"}}}}
                         with patch('weko_admin.utils.get_restricted_access' ,return_value = restricted_errorMsg):
                             assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
+                        
+                        with patch('weko_records_ui.views.AdminSettings.get'
+                                , side_effect=lambda name , dict_to_object : {'password_enable' : True,"terms_and_conditions":""} if name == 'restricted_access' else None):
+                            assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
 
 
 # def default_view_method(pid, record, filename=None, template=None, **kwargs):
@@ -541,7 +573,7 @@ def test_default_view_method2(app, records, itemtypes, indexstyle ,users,db_comm
     indexer, results = records
     record = results[0]["record"]
     recid = results[0]["recid"]
-    with app.test_request_context("/?file_order=0&community=community"):
+    with app.test_request_context("/?file_order=0&community=community&onetime_file_url=/extra_info"):
         with patch('weko_records_ui.views.check_original_pdf_download_permission', return_value=True):
             with patch("weko_records_ui.views.get_search_detail_keyword", return_value={}):
                 with patch("weko_records_ui.views.get_index_link_list", return_value=[]):

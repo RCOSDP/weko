@@ -660,8 +660,29 @@ msgstr "利用規約を印刷"
 msgid "Could not download file."
 msgstr "ファイルをダウンロードできませんでした"
 
-msgid "You must enter your email address to download the files below."
+msgid "To download the files below, you will need to enter your email address and password."
+msgstr "以下のファイルのダウンロードには、メールアドレスとパスワードの入力が必要です。"
+
+msgid "To download the files below, you will need to enter your email address."
 msgstr "以下のファイルのダウンロードには、メールアドレスの入力が必要です。"
+
+msgid "If you have not set a password, please apply again."
+msgstr "パスワード未設定の場合は、再度申請を行ってください。"
 
 msgid "File Name"
 msgstr "ファイル名"
+
+msgid "Please enter the calculation result"
+msgstr "計算結果を入力してください"
+
+msgid "The calculation results are different."
+msgstr "計算結果が違います。"
+
+msgid "Email sent successfully"
+msgstr "メールを送信しました。"
+
+msgid "The image has expired. Please enter the calculation result again."
+msgstr "画像の有効期限が切れています。再度計算結果を入力してください。"
+
+msgid "There is an error in the input item"
+msgstr "入力項目に誤りがあります"
