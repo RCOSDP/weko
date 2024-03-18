@@ -115,6 +115,7 @@
     <!-- リクエストメール -->
     <RequestMail
       v-if="renderFlag"
+      class="z-50"
       ref="requestMail"
       :item-id="currentNumber"
       @click-send="openLoading(false)"
