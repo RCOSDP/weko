@@ -1228,8 +1228,18 @@ def workflow(app, db, item_type, action_data, users):
                         open_restricted=False,
                         location_id=None,
                         is_gakuninrdm=False)
+    deleted_workflow = WorkFlow(flows_id=uuid.uuid4(),
+                        flows_name='test workflow02',
+                        itemtype_id=1,
+                        index_tree_id=None,
+                        flow_id=1,
+                        is_deleted=True,
+                        open_restricted=False,
+                        location_id=None,
+                        is_gakuninrdm=False)
     with db.session.begin_nested():
         db.session.add(workflow)
+        db.session.add(deleted_workflow)
     db.session.commit()
 
     return {
