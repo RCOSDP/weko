@@ -179,6 +179,7 @@ netaddr==0.8.0
 # raven==6.10.0
 marshmallow-sqlalchemy==0.23.1
 flask-marshmallow==0.14.0
+tika==2.6.0
 #
 # packages-invenio.txt
 #
