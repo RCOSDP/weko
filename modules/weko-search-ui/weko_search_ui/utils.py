@@ -67,6 +67,7 @@ from sqlalchemy import func as _func
 from sqlalchemy.exc import SQLAlchemyError
 from weko_admin.models import SessionLifetime
 from weko_admin.utils import get_redis_cache, reset_redis_cache
+from weko_authors.models import Authors
 from weko_authors.utils import check_email_existed
 from weko_deposit.api import WekoDeposit, WekoIndexer, WekoRecord
 from weko_deposit.pidstore import get_latest_version_id
@@ -130,7 +131,7 @@ from .config import (
     WEKO_SEARCH_UI_BULK_EXPORT_URI,
     WEKO_SYS_USER,
 )
-from .query import feedback_email_search_factory, item_path_search_factory
+from .query import item_path_search_factory
 
 
 class DefaultOrderedDict(OrderedDict):
@@ -295,51 +296,6 @@ def get_journal_info(index_id=0):
         current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
         abort(500)
     return result
-
-
-def get_feedback_mail_list():
-    """Get feedback items."""
-    records_search = RecordsSearch()
-    records_search = records_search.with_preference_param().params(version=False)
-    records_search._index[0] = current_app.config["SEARCH_UI_SEARCH_INDEX"]
-    ret = {}
-
-    try:
-        search_instance = feedback_email_search_factory(None, records_search)
-        aggr = (
-            search_instance.execute()
-            .to_dict()
-            .get("aggregations", {})
-            .get("feedback_mail_list", {})
-            .get("email_list", {})
-            .get("buckets", [])
-        )
-    except (NotFoundError, InvalidQueryRESTError):
-        current_app.logger.debug("FeedbackMail data cannot found!")
-        return ret
-
-    for item in aggr:
-        if item.get("doc_count"):
-            ret[item.get("key")] = {"items": {}, "author_id": ""}
-
-    for hit in search_instance.scan():
-        source = hit.to_dict()
-        for item in source.get("feedback_mail_list", []):
-            _email = ret.get(item.get("email"))
-            if _email:
-                _email["author_id"] = item.get("author_id", _email["author_id"])
-                _email["items"][source.get("control_number")] = hit.meta.id
-
-    for item in ret.values():
-        _items = []
-        _keys = list(item["items"].keys())
-        _keys = [int(x) for x in _keys]
-        _keys.sort()
-        for idx in _keys:
-            _items.append(item["items"][str(idx)])
-        item["items"] = _items
-
-    return ret
 
 
 def check_permission():
@@ -1337,6 +1293,8 @@ def register_item_metadata(item, root_path, owner, is_gakuninrdm=False):
                 deleted_items = new_data.get("deleted_items") or []
                 deleted_items.append(metadata_id)
                 new_data["deleted_items"] = deleted_items
+    if "feedback_mail_list" in new_data:
+        new_data.pop("feedback_mail_list")
 
     deposit.update(item_status, new_data)
     deposit['_deposit']['owners'] = [int(owner)]
@@ -1346,10 +1304,10 @@ def register_item_metadata(item, root_path, owner, is_gakuninrdm=False):
 
     feedback_mail_list = item["metadata"].get("feedback_mail_list")
     if feedback_mail_list:
+        item["metadata"].pop("feedback_mail_list")
         FeedbackMailList.update(
             item_id=deposit.id, feedback_maillist=feedback_mail_list
         )
-        deposit.update_feedback_mail()
     else:
         FeedbackMailList.delete_without_commit(deposit.id)
         deposit.remove_feedback_mail()
@@ -1375,7 +1333,6 @@ def register_item_metadata(item, root_path, owner, is_gakuninrdm=False):
                 FeedbackMailList.update(
                     item_id=_deposit.id, feedback_maillist=feedback_mail_list
                 )
-                _deposit.update_feedback_mail()
 
             # Update draft version
             _draft_pid = PersistentIdentifier.query.filter_by(

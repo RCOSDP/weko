@@ -27,7 +27,3 @@ def test_append_file_content(app, db, es_records):
     
     res = append_file_content(sender, json, es_records[1][0]['record'])
     assert res==None
-    
-    with patch("weko_deposit.receivers.FeedbackMailList.get_mail_list_by_item_id",side_effect=Exception("test_error")):
-        res = append_file_content(sender, json, es_records[1][0]['record'])
-        assert res==None
