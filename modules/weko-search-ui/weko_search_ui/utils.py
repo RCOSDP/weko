@@ -298,49 +298,6 @@ def get_journal_info(index_id=0):
     return result
 
 
-def get_feedback_mail_list():
-    """Get feedback items."""
-    records_search = RecordsSearch()
-    records_search = records_search.with_preference_param().params(version=False)
-    records_search._index[0] = current_app.config["SEARCH_UI_SEARCH_INDEX"]
-    ret = {}
-
-    try:
-        search_instance = feedback_email_search_factory(None, records_search)
-    except (NotFoundError, InvalidQueryRESTError):
-        current_app.logger.debug("FeedbackMail data cannot found!")
-        return ret
-
-    for hit in search_instance.scan():
-        source = hit.to_dict()
-        for item in source.get("feedback_mail_list", []):
-            _author_id = item.get("author_id", "")
-            _email = []
-            _email.append(item.get("email", ""))
-            if _author_id:
-                _email = Authors.get_emails_by_id(_author_id)
-            for e in _email:
-                if e:
-                    if e in ret:
-                        ret[e]["items"][source.get("control_number")] = hit.meta.id
-                    else:
-                        ret[e] = {
-                            "author_id": _author_id,
-                            "items": {source.get("control_number"): hit.meta.id}
-                        }
-
-    for item in ret.values():
-        _items = []
-        _keys = list(item["items"].keys())
-        _keys = [int(x) for x in _keys]
-        _keys.sort()
-        for idx in _keys:
-            _items.append(item["items"][str(idx)])
-        item["items"] = _items
-
-    return ret
-
-
 def check_permission():
     """Check user login is repo_user or sys_user."""
     from flask_security import current_user
