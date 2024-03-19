@@ -1,0 +1,996 @@
+{
+  "pubdate": {
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": { "date": { "@attributes": { "dateType": "pubdate" } } },
+    "junii2_mapping": "",
+    "oai_dc_mapping": "",
+    "display_lang_type": ""
+  },
+  "system_file": {
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "system_file": {
+        "URI": {
+          "@value": "subitem_systemfile_filename_uri",
+          "@attributes": {
+            "label": "subitem_systemfile_filename_label",
+            "objectType": "subitem_systemfile_filename_type"
+          }
+        },
+        "date": {
+          "@value": "subitem_systemfile_datetime_date",
+          "@attributes": { "dateType": "subitem_systemfile_datetime_type" }
+        },
+        "extent": { "@value": "subitem_systemfile_size" },
+        "version": { "@value": "subitem_systemfile_version" },
+        "mimeType": { "@value": "subitem_systemfile_mimetype" }
+      }
+    },
+    "junii2_mapping": "",
+    "oai_dc_mapping": "",
+    "display_lang_type": ""
+  },
+  "item_1551264308487": {
+    "ddi_mapping": {
+      "stdyDscr": {
+        "citation": {
+          "titlStmt": {
+            "titl": {
+              "@value": "subitem_1551255647225",
+              "@attributes": { "xml:lang": "subitem_1551255648112" }
+            }
+          }
+        }
+      }
+    },
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "title": {
+        "@value": "subitem_1551255647225",
+        "@attributes": { "xml:lang": "subitem_1551255648112" }
+      }
+    },
+    "junii2_mapping": "",
+    "oai_dc_mapping": "",
+    "display_lang_type": ""
+  },
+  "item_1551264326373": {
+    "ddi_mapping": {
+      "stdyDscr": {
+        "citation": {
+          "titlStmt": {
+            "altTitl": {
+              "@value": "subitem_1551255720400",
+              "@attributes": { "xml:lang": "subitem_1551255721061" }
+            }
+          }
+        }
+      }
+    },
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "alternative": {
+        "@value": "subitem_1551255720400",
+        "@attributes": { "xml:lang": "subitem_1551255721061" }
+      }
+    },
+    "junii2_mapping": "",
+    "oai_dc_mapping": "",
+    "display_lang_type": ""
+  },
+  "item_1551264340087": {
+    "ddi_mapping": {
+      "stdyDscr": {
+        "citation": {
+          "rspStmt": {
+            "AuthEnty": {
+              "@value": "subitem_1551255898956.subitem_1551255905565",
+              "@attributes": {
+                "ID": "subitem_1551255789000.subitem_1551255793478",
+                "xml:lang": "subitem_1551255898956.subitem_1551255907416",
+                "affiliation": "subitem_1551256087090.subitem_1551256229037.subitem_1551256259183"
+              }
+            }
+          }
+        }
+      }
+    },
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "creator": {
+        "givenName": {
+          "@value": "subitem_1551255991424.subitem_1551256006332",
+          "@attributes": {
+            "xml:lang": "subitem_1551255991424.subitem_1551256007414"
+          }
+        },
+        "familyName": {
+          "@value": "subitem_1551255929209.subitem_1551255938498",
+          "@attributes": {
+            "xml:lang": "subitem_1551255929209.subitem_1551255964991"
+          }
+        },
+        "affiliation": {
+          "nameIdentifier": {
+            "@value": "subitem_1551256087090.subitem_1551256089084.subitem_1551256097891",
+            "@attributes": {
+              "nameIdentifierURI": "subitem_1551256087090.subitem_1551256089084.subitem_1551256147368",
+              "nameIdentifierScheme": "subitem_1551256087090.subitem_1551256089084.subitem_1551256145018"
+            }
+          },
+          "affiliationName": {
+            "@value": "subitem_1551256087090.subitem_1551256229037.subitem_1551256259183",
+            "@attributes": {
+              "xml:lang": "subitem_1551256087090.subitem_1551256229037.subitem_1551256259899"
+            }
+          }
+        },
+        "creatorName": {
+          "@value": "subitem_1551255898956.subitem_1551255905565",
+          "@attributes": {
+            "xml:lang": "subitem_1551255898956.subitem_1551255907416"
+          }
+        },
+        "nameIdentifier": {
+          "@value": "subitem_1551255789000.subitem_1551255793478",
+          "@attributes": {
+            "nameIdentifierURI": "subitem_1551255789000.subitem_1551255795486",
+            "nameIdentifierScheme": "subitem_1551255789000.subitem_1551255794292"
+          }
+        },
+        "creatorAlternative": {
+          "@value": "subitem_1551256025394.subitem_1551256035730",
+          "@attributes": {
+            "xml:lang": "subitem_1551256025394.subitem_1551256055588"
+          }
+        }
+      }
+    },
+    "junii2_mapping": "",
+    "oai_dc_mapping": "",
+    "display_lang_type": ""
+  },
+  "item_1551264418667": {
+    "ddi_mapping": {
+      "stdyDscr": {
+        "method": {
+          "dataColl": {
+            "dataCollector": {
+              "@value": "subitem_1551257245638.subitem_1551257276108",
+              "@attributes": {
+                "xml:lang": "subitem_1551257245638.subitem_1551257279831",
+                "affiliation": "subitem_1551257419251.subitem_1551261534334.subitem_1551261542403"
+              }
+            }
+          }
+        },
+        "citation": {
+          "distStmt": {
+            "depositr": {
+              "@value": "subitem_1551257245638.subitem_1551257276108",
+              "@attributes": {
+                "xml:lang": "subitem_1551257245638.subitem_1551257279831",
+                "affiliation": "subitem_1551257419251.subitem_1551261534334.subitem_1551261542403"
+              }
+            },
+            "distrbtr": {
+              "@value": "subitem_1551257245638.subitem_1551257276108",
+              "@attributes": {
+                "xml:lang": "subitem_1551257245638.subitem_1551257279831",
+                "affiliation": "subitem_1551257419251.subitem_1551261534334.subitem_1551261542403"
+              }
+            }
+          }
+        }
+      }
+    },
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "contributor": {
+        "givenName": {
+          "@value": "subitem_1551257339190.subitem_1551257342360",
+          "@attributes": {
+            "xml:lang": "subitem_1551257339190.subitem_1551257343979"
+          }
+        },
+        "familyName": {
+          "@value": "subitem_1551257272214.subitem_1551257314588",
+          "@attributes": {
+            "xml:lang": "subitem_1551257272214.subitem_1551257316910"
+          }
+        },
+        "@attributes": { "contributorType": "subitem_1551257036415" },
+        "affiliation": {
+          "nameIdentifier": {
+            "@value": "subitem_1551257419251.subitem_1551257421633.subitem_1551261472867",
+            "@attributes": {
+              "nameIdentifierURI": "subitem_1551257419251.subitem_1551257421633.subitem_1551261493409",
+              "nameIdentifierScheme": "subitem_1551257419251.subitem_1551257421633.subitem_1551261485670"
+            }
+          },
+          "affiliationName": {
+            "@value": "subitem_1551257419251.subitem_1551261534334.subitem_1551261542403",
+            "@attributes": {
+              "xml:lang": "subitem_1551257419251.subitem_1551261534334.subitem_1551261546333"
+            }
+          }
+        },
+        "nameIdentifier": {
+          "@value": "subitem_1551257150927.subitem_1551257152742",
+          "@attributes": {
+            "nameIdentifierURI": "subitem_1551257150927.subitem_1551257228080",
+            "nameIdentifierScheme": "subitem_1551257150927.subitem_1551257172531"
+          }
+        },
+        "contributorName": {
+          "@value": "subitem_1551257245638.subitem_1551257276108",
+          "@attributes": {
+            "xml:lang": "subitem_1551257245638.subitem_1551257279831"
+          }
+        },
+        "contributorAlternative": {
+          "@value": "subitem_1551257372442.subitem_1551257374288",
+          "@attributes": {
+            "xml:lang": "subitem_1551257372442.subitem_1551257375939"
+          }
+        }
+      }
+    },
+    "junii2_mapping": "",
+    "oai_dc_mapping": "",
+    "display_lang_type": ""
+  },
+  "item_1551264447183": {
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "accessRights": {
+        "@value": "subitem_1551257553743",
+        "@attributes": { "rdf:resource": "subitem_1551257578398" }
+      }
+    },
+    "junii2_mapping": "",
+    "oai_dc_mapping": "",
+    "display_lang_type": ""
+  },
+  "item_1551264605515": {
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": { "apc": { "@value": "subitem_1551257776901" } },
+    "junii2_mapping": "",
+    "oai_dc_mapping": "",
+    "display_lang_type": ""
+  },
+  "item_1551264629907": {
+    "ddi_mapping": {
+      "stdyDscr": {
+        "citation": {
+          "prodStmt": {
+            "copyright": {
+              "@value": "subitem_1551257025236.subitem_1551257043769",
+              "@attributes": {
+                "xml:lang": "subitem_1551257025236.subitem_1551257047388"
+              }
+            }
+          }
+        }
+      }
+    },
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "rights": {
+        "@value": "subitem_1551257043769",
+        "@attributes": {
+          "xml:lang": "subitem_1551257047388",
+          "rdf:resource": "subitem_1551257030435"
+        }
+      }
+    },
+    "junii2_mapping": "",
+    "oai_dc_mapping": "",
+    "display_lang_type": ""
+  },
+  "item_1551264767789": {
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "rightsHolder": {
+        "nameIdentifier": {
+          "@value": "subitem_1551257143244.subitem_1551257145912",
+          "@attributes": {
+            "nameIdentifierURI": "subitem_1551257143244.subitem_1551257232980",
+            "nameIdentifierScheme": "subitem_1551257143244.subitem_1551257156244"
+          }
+        },
+        "rightsHolderName": {
+          "@value": "subitem_1551257249371.subitem_1551257255641",
+          "@attributes": {
+            "xml:lang": "subitem_1551257249371.subitem_1551257257683"
+          }
+        }
+      }
+    },
+    "junii2_mapping": "",
+    "oai_dc_mapping": "",
+    "display_lang_type": ""
+  },
+  "item_1551264822581": {
+    "ddi_mapping": {
+      "stdyDscr": {
+        "stdyInfo": {
+          "subject": {
+            "topcClas": {
+              "@value": "subitem_1551257315453",
+              "@attributes": { "xml:lang": "subitem_1551257323812" }
+            }
+          }
+        }
+      }
+    },
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "subject": {
+        "@value": "subitem_1551257315453",
+        "@attributes": {
+          "xml:lang": "subitem_1551257323812",
+          "subjectURI": "subitem_1551257343002",
+          "subjectScheme": "subitem_1551257329877"
+        }
+      }
+    },
+    "junii2_mapping": "",
+    "oai_dc_mapping": "",
+    "display_lang_type": ""
+  },
+  "item_1551264846237": {
+    "ddi_mapping": {
+      "stdyDscr": {
+        "stdyInfo": {
+          "abstract": {
+            "@value": "subitem_1551255577890",
+            "@attributes": { "xml:lang": "subitem_1551255592625" }
+          }
+        }
+      }
+    },
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "description": {
+        "@value": "subitem_1551255577890",
+        "@attributes": {
+          "xml:lang": "subitem_1551255592625",
+          "descriptionType": "subitem_1551255637472"
+        }
+      }
+    },
+    "junii2_mapping": "",
+    "oai_dc_mapping": "",
+    "display_lang_type": ""
+  },
+  "item_1551264917614": {
+    "ddi_mapping": {
+      "stdyDscr": {
+        "citation": {
+          "prodStmt": {
+            "producer": {
+              "@value": "subitem_1551255702686",
+              "@attributes": { "xml:lang": "subitem_1551255710277" }
+            }
+          }
+        }
+      }
+    },
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "publisher": {
+        "@value": "subitem_1551255702686",
+        "@attributes": { "xml:lang": "subitem_1551255710277" }
+      }
+    },
+    "junii2_mapping": "",
+    "oai_dc_mapping": "",
+    "display_lang_type": ""
+  },
+  "item_1551264974654": {
+    "ddi_mapping": {
+      "stdyDscr": {
+        "citation": {
+          "prodStmt": { "prodDate": { "@value": "subitem_1551255753471" } }
+        }
+      }
+    },
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "date": {
+        "@value": "subitem_1551255753471",
+        "@attributes": { "dateType": "subitem_1551255775519" }
+      }
+    },
+    "junii2_mapping": "",
+    "oai_dc_mapping": "",
+    "display_lang_type": ""
+  },
+  "item_1551265002099": {
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": { "language": { "@value": "subitem_1551255818386" } },
+    "junii2_mapping": "",
+    "oai_dc_mapping": "",
+    "display_lang_type": ""
+  },
+  "item_1551265032053": {
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "type": {
+        "@value": "resourcetype",
+        "@attributes": { "rdf:resource": "resourceuri" }
+      }
+    },
+    "junii2_mapping": "",
+    "oai_dc_mapping": "",
+    "display_lang_type": ""
+  },
+  "item_1551265075370": {
+    "ddi_mapping": {
+      "stdyDscr": {
+        "citation": {
+          "verStmt": { "version": { "@value": "subitem_1551255975405" } }
+        }
+      }
+    },
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": { "version": { "@value": "subitem_1551255975405" } },
+    "junii2_mapping": "",
+    "oai_dc_mapping": "",
+    "display_lang_type": ""
+  },
+  "item_1551265118680": {
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "versiontype": {
+        "@value": "subitem_1551256025676",
+        "@attributes": {
+          "rdf:resource": "subitem_1600292170262"
+        }
+      }
+    },
+    "junii2_mapping": "",
+    "oai_dc_mapping": "",
+    "display_lang_type": ""
+  },
+  "item_1551265227803": {
+    "ddi_mapping": {
+      "stdyDscr": {
+        "citation": {
+          "serStmt": {
+            "serName": {
+              "@value": "subitem_1551256480278.subitem_1551256498531",
+              "@attributes": {
+                "ID": "subitem_1551256465077.subitem_1551256478339",
+                "xml:lang": "subitem_1551256480278.subitem_1551256513476"
+              }
+            }
+          }
+        },
+        "othrStdyMat": {
+          "relPubl": {
+            "@value": "subitem_1551256480278.subitem_1551256498531",
+            "@attributes": {
+              "ID": "subitem_1551256465077.subitem_1551256478339",
+              "xml:lang": "subitem_1551256480278.subitem_1551256513476"
+            }
+          },
+          "relStdy": {
+            "@value": "subitem_1551256480278.subitem_1551256498531",
+            "@attributes": {
+              "ID": "subitem_1551256465077.subitem_1551256478339",
+              "xml:lang": "subitem_1551256480278.subitem_1551256513476"
+            }
+          }
+        }
+      }
+    },
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "relation": {
+        "@attributes": { "relationType": "subitem_1551256388439" },
+        "relatedTitle": {
+          "@value": "subitem_1551256480278.subitem_1551256498531",
+          "@attributes": {
+            "xml:lang": "subitem_1551256480278.subitem_1551256513476"
+          }
+        },
+        "relatedIdentifier": {
+          "@value": "subitem_1551256465077.subitem_1551256478339",
+          "@attributes": {
+            "identifierType": "subitem_1551256465077.subitem_1551256629524"
+          }
+        }
+      }
+    },
+    "junii2_mapping": "",
+    "oai_dc_mapping": "",
+    "display_lang_type": ""
+  },
+  "item_1551265302120": {
+    "ddi_mapping": {
+      "stdyDscr": {
+        "stdyInfo": {
+          "sumDscr": {
+            "timePrd": {
+              "@value": "subitem_1551256918211",
+              "@attributes": { "xml:lang": "subitem_1551256920086" }
+            }
+          }
+        }
+      }
+    },
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "temporal": {
+        "@value": "subitem_1551256918211",
+        "@attributes": { "xml:lang": "subitem_1551256920086" }
+      }
+    },
+    "junii2_mapping": "",
+    "oai_dc_mapping": "",
+    "display_lang_type": ""
+  },
+  "item_1551265385290": {
+    "ddi_mapping": {
+      "stdyDscr": {
+        "citation": {
+          "prodStmt": {
+            "fundAg": {
+              "@value": "subitem_1551256462220.subitem_1551256653656",
+              "@attributes": {
+                "ID": "subitem_1551256454316.subitem_1551256614960",
+                "xml:lang": "subitem_1551256462220.subitem_1551256657859"
+              }
+            },
+            "grantNo": {
+              "@value": "subitem_1551256665850.subitem_1551256671920"
+            }
+          }
+        }
+      }
+    },
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "fundingReference": {
+        "awardTitle": {
+          "@value": "subitem_1551256688098.subitem_1551256691232",
+          "@attributes": {
+            "xml:lang": "subitem_1551256688098.subitem_1551256694883"
+          }
+        },
+        "funderName": {
+          "@value": "subitem_1551256462220.subitem_1551256653656",
+          "@attributes": {
+            "xml:lang": "subitem_1551256462220.subitem_1551256657859"
+          }
+        },
+        "fundingStreamIdentifier": {
+          "@value": "subitem_1551256454317.subitem_1551256614961",
+          "@attributes": {
+            "fundingStreamIdentifierType": "subitem_1551256454317.subitem_1551256619709",
+            "fundingStreamIdentifierTypeURI": "subitem_1551256454317.subitem_1551256619708"
+          }
+        },
+        "fundingStream": {
+          "@value": "subitem_1551256462221.subitem_1551256653657",
+          "@attributes": {
+            "xml:lang": "subitem_1551256462221.subitem_1551256657860"
+          }
+        },
+        "awardNumber": {
+          "@value": "subitem_1551256665850.subitem_1551256671920",
+          "@attributes": {
+            "awardURI": "subitem_1551256665850.subitem_1551256679403",
+            "awardNumberType": "subitem_1551256665850.subitem_1551256671921"
+          }
+        },
+        "funderIdentifier": {
+          "@value": "subitem_1551256454316.subitem_1551256614960",
+          "@attributes": {
+            "funderIdentifierType": "subitem_1551256454316.subitem_1551256619706",
+            "funderIdentifierTypeURI": "subitem_1551256454316.subitem_1551256619707"
+          }
+        }
+      }
+    },
+    "junii2_mapping": "",
+    "oai_dc_mapping": "",
+    "display_lang_type": ""
+  },
+  "item_1551265409089": {
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "sourceIdentifier": {
+        "@value": "subitem_1551256405981",
+        "@attributes": { "identifierType": "subitem_1551256409644" }
+      }
+    },
+    "junii2_mapping": "",
+    "oai_dc_mapping": "",
+    "display_lang_type": ""
+  },
+  "item_1551265438256": {
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "sourceTitle": {
+        "@value": "subitem_1551256349044",
+        "@attributes": { "xml:lang": "subitem_1551256350188" }
+      }
+    },
+    "junii2_mapping": "",
+    "oai_dc_mapping": "",
+    "display_lang_type": ""
+  },
+  "item_1551265463411": {
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": { "volume": { "@value": "subitem_1551256328147" } },
+    "junii2_mapping": "",
+    "oai_dc_mapping": "",
+    "display_lang_type": ""
+  },
+  "item_1551265520160": {
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": { "issue": { "@value": "subitem_1551256294723" } },
+    "junii2_mapping": "",
+    "oai_dc_mapping": "",
+    "display_lang_type": ""
+  },
+  "item_1551265553273": {
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": { "numPages": { "@value": "subitem_1551256248092" } },
+    "junii2_mapping": "",
+    "oai_dc_mapping": "",
+    "display_lang_type": ""
+  },
+  "item_1551265569218": {
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": { "pageStart": { "@value": "subitem_1551256198917" } },
+    "junii2_mapping": "",
+    "oai_dc_mapping": "",
+    "display_lang_type": ""
+  },
+  "item_1551265603279": {
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": { "pageEnd": { "@value": "subitem_1551256185532" } },
+    "junii2_mapping": "",
+    "oai_dc_mapping": "",
+    "display_lang_type": ""
+  },
+  "item_1551265738931": {
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "dissertationNumber": { "@value": "subitem_1551256171004" }
+    },
+    "junii2_mapping": "",
+    "oai_dc_mapping": "",
+    "display_lang_type": ""
+  },
+  "item_1551265790591": {
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "degreeName": {
+        "@value": "subitem_1551256126428",
+        "@attributes": { "xml:lang": "subitem_1551256129013" }
+      }
+    },
+    "junii2_mapping": "",
+    "oai_dc_mapping": "",
+    "display_lang_type": ""
+  },
+  "item_1551265811989": {
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": { "dateGranted": { "@value": "subitem_1551256096004" } },
+    "junii2_mapping": "",
+    "oai_dc_mapping": "",
+    "display_lang_type": ""
+  },
+  "item_1551265903092": {
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "degreeGrantor": {
+        "nameIdentifier": {
+          "@value": "subitem_1551256015892.subitem_1551256027296",
+          "@attributes": {
+            "nameIdentifierScheme": "subitem_1551256015892.subitem_1551256029891"
+          }
+        },
+        "degreeGrantorName": {
+          "@value": "subitem_1551256037922.subitem_1551256042287",
+          "@attributes": {
+            "xml:lang": "subitem_1551256037922.subitem_1551256047619"
+          }
+        }
+      }
+    },
+    "junii2_mapping": "",
+    "oai_dc_mapping": "",
+    "display_lang_type": ""
+  },
+  "item_1551265973055": {
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "conference": {
+        "conferenceName": {
+          "@value": "subitem_1599711633003.subitem_1599711636923",
+          "@attributes": {
+            "xml:lang": "subitem_1599711633003.subitem_1599711645590"
+          }
+        },
+        "conferenceSequence": { "@value": "subitem_1599711655652" },
+        "conferenceSponsor": {
+          "@value": "subitem_1599711660052.subitem_1599711680082",
+          "@attributes": {
+            "xml:lang": "subitem_1599711660052.subitem_1599711686511"
+          }
+        },
+        "conferenceDate": {
+          "@value": "subitem_1599711699392.subitem_1599711704251",
+          "@attributes": {
+            "startDay": "subitem_1599711699392.subitem_1599711712451",
+            "startMonth": "subitem_1599711699392.subitem_1599711727603",
+            "startYear": "subitem_1599711699392.subitem_1599711731891",
+            "endDay": "subitem_1599711699392.subitem_1599711735410",
+            "endMonth": "subitem_1599711699392.subitem_1599711739022",
+            "endYear": "subitem_1599711699392.subitem_1599711743722",
+            "xml:lang": "subitem_1599711699392.subitem_1599711745532"
+          }
+        },
+        "conferenceVenue": {
+          "@value": "subitem_1599711758470.subitem_1599711769260",
+          "@attributes": {
+            "xml:lang": "subitem_1599711758470.subitem_1599711775943"
+          }
+        },
+        "conferencePlace": {
+          "@value": "subitem_1599711788485.subitem_1599711798761",
+          "@attributes": {
+            "xml:lang": "subitem_1599711788485.subitem_1599711803382"
+          }
+        },
+        "conferenceCountry": { "@value": "subitem_1599711813532" }
+      }
+    },
+    "junii2_mapping": "",
+    "oai_dc_mapping": "",
+    "display_lang_type": ""
+  },
+  "item_1570068313185": {
+    "ddi_mapping": {
+      "stdyDscr": {
+        "stdyInfo": {
+          "sumDscr": {
+            "geogCover": {
+              "@value": "subitem_1551256842196.subitem_1570008213846"
+            }
+          }
+        }
+      }
+    },
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "geoLocation": {
+        "geoLocationBox": {
+          "eastBoundLongitude": {
+            "@value": "subitem_1551256822219.subitem_1551256831892"
+          },
+          "northBoundLatitude": {
+            "@value": "subitem_1551256822219.subitem_1551256840435"
+          },
+          "southBoundLatitude": {
+            "@value": "subitem_1551256822219.subitem_1551256834732"
+          },
+          "westBoundLongitude": {
+            "@value": "subitem_1551256822219.subitem_1551256824945"
+          }
+        },
+        "geoLocationPlace": {
+          "@value": "subitem_1551256842196.subitem_1570008213846"
+        },
+        "geoLocationPoint": {
+          "pointLatitude": {
+            "@value": "subitem_1551256778926.subitem_1551256814806"
+          },
+          "pointLongitude": {
+            "@value": "subitem_1551256778926.subitem_1551256783928"
+          }
+        }
+      }
+    },
+    "junii2_mapping": "",
+    "oai_dc_mapping": "",
+    "display_lang_type": ""
+  },
+  "item_1570069138259": {
+    "ddi_mapping": {
+      "stdyDscr": {
+        "dataAccs": {
+          "setAvail": {
+            "accsPlac": {
+              "@value": "subitem_1551255558587.subitem_1551255570271"
+            }
+          }
+        }
+      }
+    },
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "file": {
+        "URI": {
+          "@value": "url.url",
+          "@attributes": {
+            "label": "url.label",
+            "objectType": "url.objectType"
+          }
+        },
+        "date": {
+          "@value": "subitem_1551255820788.subitem_1551255828320",
+          "@attributes": {
+            "dateType": "subitem_1551255820788.subitem_1551255833133"
+          }
+        },
+        "extent": { "@value": "subitem_1551255788530.subitem_1570068579439" },
+        "version": { "@value": "subitem_1551255854908" },
+        "mimeType": { "@value": "subitem_1551255750794" }
+      }
+    },
+    "junii2_mapping": "",
+    "oai_dc_mapping": "",
+    "display_lang_type": ""
+  },
+  "item_1581495499605": {
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "identifierRegistration": {
+        "@value": "subitem_1551256250276",
+        "@attributes": { "identifierType": "subitem_1551256259586" }
+      }
+    },
+    "junii2_mapping": "",
+    "oai_dc_mapping": "",
+    "display_lang_type": ""
+  },
+  "item_1617186783814": {
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "identifier": {
+        "@value": "subitem_identifier_uri",
+        "@attributes": {
+          "identifierType": "subitem_identifier_type"
+        }
+      }
+    },
+    "junii2_mapping": "",
+    "oai_dc_mapping": {
+      "identifier": {
+        "@value": "subitem_identifier_uri"
+      }
+    },
+    "display_lang_type": "",
+    "jpcoar_v1_mapping": {
+      "identifier": {
+        "@value": "subitem_identifier_uri",
+        "@attributes": {
+          "identifierType": "subitem_identifier_type"
+        }
+      }
+    }
+  },
+  "system_identifier_doi": {
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "identifier": {
+        "@value": "subitem_systemidt_identifier",
+        "@attributes": { "identifierType": "subitem_systemidt_identifier_type" }
+      }
+    },
+    "junii2_mapping": "",
+    "oai_dc_mapping": "",
+    "display_lang_type": ""
+  },
+  "system_identifier_hdl": {
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "identifier": {
+        "@value": "subitem_systemidt_identifier",
+        "@attributes": { "identifierType": "subitem_systemidt_identifier_type" }
+      }
+    },
+    "junii2_mapping": "",
+    "oai_dc_mapping": "",
+    "display_lang_type": ""
+  },
+  "system_identifier_uri": {
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "identifier": {
+        "@value": "subitem_systemidt_identifier",
+        "@attributes": { "identifierType": "subitem_systemidt_identifier_type" }
+      }
+    },
+    "junii2_mapping": "",
+    "oai_dc_mapping": "",
+    "display_lang_type": ""
+  }
+}

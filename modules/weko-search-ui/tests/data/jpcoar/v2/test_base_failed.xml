@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jpcoar:jpcoar xmlns:jpcoar="https://github.com/JPCOAR/schema/blob/master/2.0/"
+    xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/"
+    xmlns:datacite="https://schema.datacite.org/meta/kernel-4/"
+    xmlns:oaire="http://namespace.openaire.eu/schema/oaire/"
+    xmlns:dcndl="http://ndl.go.jp/dcndl/terms/"
+    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="https://github.com/JPCOAR/schema/blob/master/2.0/jpcoar_scm.xsd">
+    <dc:title xml:lang="ja">テスト用 フルアイテム</dc:title>
+    <dc:title xml:lang="ja-Kan">テストヨウ フルアイテム</dc:title>
+    <dc:title xml:lang="en">test full item</dc:title>
+    <dcterms:alternative xml:lang="ja">その他タイトル</dcterms:alternative>
+    <dcterms:alternative xml:lang="ja-Kana">ソノタタイトル</dcterms:alternative>
+    <dcterms:alternative xml:lang="en">other title</dcterms:alternative>
+    <jpcoar:creator>
+        <jpcoar:nameIdentifier nameIdentifierURI="https://orcid.org/1234"
+            nameIdentifierScheme="ORCID">1234</jpcoar:nameIdentifier>
+        <jpcoar:creatorName xml:lang="ja">テスト, 太郎</jpcoar:creatorName>
+        <jpcoar:creatorName xml:lang="en">test, tarou</jpcoar:creatorName>
+        <jpcoar:familyName xml:lang="ja">テスト</jpcoar:familyName>
+        <jpcoar:familyName xml:lang="en">test</jpcoar:familyName>
+        <jpcoar:givenName xml:lang="ja">太郎</jpcoar:givenName>
+        <jpcoar:givenName xml:lang="en">tarou</jpcoar:givenName>
+        <jpcoar:creatorAlternative xml:lang="ja">テスト 別郎</jpcoar:creatorAlternative>
+        <jpcoar:creatorAlternative xml:lang="en">test betsurou</jpcoar:creatorAlternative>
+        <jpcoar:affiliation>
+            <jpcoar:nameIdentifier nameIdentifierURI="http://www.isni.org/isni/5678"
+                nameIdentifierScheme="ISNI">5678</jpcoar:nameIdentifier>
+            <jpcoar:affiliationName xml:lang="ja">東京大学</jpcoar:affiliationName>
+            <jpcoar:affiliationName xml:lang="en">The University of Tokyo</jpcoar:affiliationName>
+        </jpcoar:affiliation>
+        <jpcoar:affiliation>
+            <jpcoar:nameIdentifier nameIdentifierURI="http://www.isni.org/isni/1111"
+                nameIdentifierScheme="ISNI">1111</jpcoar:nameIdentifier>
+            <jpcoar:affiliationName xml:lang="ja">東北大学</jpcoar:affiliationName>
+            <jpcoar:affiliationName xml:lang="en">The University of Tohoku</jpcoar:affiliationName>
+        </jpcoar:affiliation>
+    </jpcoar:creator>
+    <jpcoar:creator>
+        <jpcoar:nameIdentifier nameIdentifierURI="https://orcid.org/2345"
+            nameIdentifierScheme="ORCID">2345</jpcoar:nameIdentifier>
+        <jpcoar:creatorName xml:lang="ja">テスト, 次郎</jpcoar:creatorName>
+        <jpcoar:creatorName xml:lang="en">test, jiro</jpcoar:creatorName>
+        <jpcoar:familyName xml:lang="ja">テスト</jpcoar:familyName>
+        <jpcoar:familyName xml:lang="en">test</jpcoar:familyName>
+        <jpcoar:givenName xml:lang="ja">次郎</jpcoar:givenName>
+        <jpcoar:givenName xml:lang="en">jiro</jpcoar:givenName>
+        <jpcoar:creatorAlternative xml:lang="ja">テスト 別郎2</jpcoar:creatorAlternative>
+        <jpcoar:creatorAlternative xml:lang="en">test betsurou2</jpcoar:creatorAlternative>
+        <jpcoar:affiliation>
+            <jpcoar:nameIdentifier nameIdentifierURI="http://www.isni.org/isni/0018000"
+                nameIdentifierScheme="ISNI">0018000</jpcoar:nameIdentifier>
+            <jpcoar:affiliationName xml:lang="ja">京都大学</jpcoar:affiliationName>
+            <jpcoar:affiliationName xml:lang="en">The University of Kyoto</jpcoar:affiliationName>
+        </jpcoar:affiliation>
+    </jpcoar:creator>
+    <jpcoar:contributor contributorType="ContactPerson">
+        <jpcoar:nameIdentifier nameIdentifierURI="https://orcid.org/5678"
+            nameIdentifierScheme="ORCID">5678</jpcoar:nameIdentifier>
+        <jpcoar:contributorName xml:lang="en">test, smith</jpcoar:contributorName>
+        <jpcoar:familyName xml:lang="en">test</jpcoar:familyName>
+        <jpcoar:givenName xml:lang="en">smith</jpcoar:givenName>
+        <jpcoar:contributorAlternative xml:lang="en">other smith</jpcoar:contributorAlternative>
+        <jpcoar:affiliation>
+            <jpcoar:nameIdentifier nameIdentifierURI="http://www.isni.org/isni/1234"
+                nameIdentifierScheme="ISNI">1234</jpcoar:nameIdentifier>
+        </jpcoar:affiliation>
+    </jpcoar:contributor>
+    <dcterms:accessRights rdf:resource="http://purl.org/coar/access_right/c_14cb">metadata only access</dcterms:accessRights>
+    <dc:rights xml:lang="ja" rdf:resource="テスト権利情報Resource">テスト権利情報</dc:rights>
+    <dc:rights xml:lang="en" rdf:resource="https://creativecommons.org/licenses/by/4.0/deed.en">Creative Commons Attribution 4.0 International</dc:rights>
+    <dc:rights xml:lang="en">Copyright (c) 1997 American Physical Society</dc:rights>
+    <jpcoar:rightsHolder>
+        <jpcoar:nameIdentifier nameIdentifierScheme="ISNI" nameIdentifierURI="http://isni.org/isni/00000004043815">0000000404381592</jpcoar:nameIdentifier>
+        <jpcoar:nameIdentifier nameIdentifierScheme="ORCID" nameIdentifierURI="https://orcid.org/0000-0001-0002-0003">0000-0001-0003-0004</jpcoar:nameIdentifier>
+        <jpcoar:rightsHolderName xml:lang="ja">テスト 太郎</jpcoar:rightsHolderName>
+        <jpcoar:rightsHolderName xml:lang="ja-Kana">テスト タロウ</jpcoar:rightsHolderName>
+        <jpcoar:rightsHolderName xml:lang="en">test taro</jpcoar:rightsHolderName>
+    </jpcoar:rightsHolder>
+    <jpcoar:rightsHolder>
+        <jpcoar:nameIdentifier nameIdentifierScheme="VIAF" nameIdentifierURI="https://viaf.org/processed/NDL%7C00437663">NDL|00437663</jpcoar:nameIdentifier>
+        <jpcoar:nameIdentifier nameIdentifierScheme="ROR" nameIdentifierURI="https://ror.org/04z20hw90">04z20hw90</jpcoar:nameIdentifier>
+        <jpcoar:rightsHolderName xml:lang="ja">テスト 次郎</jpcoar:rightsHolderName>
+        <jpcoar:rightsHolderName xml:lang="ja-Kana">テスト ジロウ</jpcoar:rightsHolderName>
+        <jpcoar:rightsHolderName xml:lang="en">test jiro</jpcoar:rightsHolderName>
+    </jpcoar:rightsHolder>
+    <jpcoar:subject xml:lang="ja" subjectURI="http://bsh.com" subjectScheme="BSH">テスト主題</jpcoar:subject>
+    <jpcoar:subject xml:lang="ja" subjectScheme="NDLSH" subjectURI="https://id.ndl.go.jp/auth/ndlsh/01009109">社会情報学</jpcoar:subject>
+    <jpcoar:subject subjectScheme="NDC">007</jpcoar:subject>
+    <datacite:description xml:lang="en" descriptionType="Abstract">this is test abstract.</datacite:description>
+    <datacite:description descriptionType="TechnicalInfo">技術情報テスト</datacite:description>
+    <datacite:description xml:lang="en" descriptionType="Methods">this is test method.</datacite:description>
+    <dc:publisher xml:lang="ja">test publisher</dc:publisher>
+    <dc:publisher xml:lang="en">Elsevier</dc:publisher>
+    <dc:publisher xml:lang="ja">日本物理学会</dc:publisher>
+    <datacite:date dateType="Accepted">2022-10-20</datacite:date>
+    <datacite:date dateType="Issued">2022-10-19</datacite:date>
+    <datacite:date dateType="Collected">2023-03-02/2023-06-02</datacite:date>
+    <dc:language>eng</dc:language>
+    <dc:language>jpn</dc:language>
+    <dc:language>ger</dc:language>
+    <dc:type rdf:resource="http://purl.org/coar/resource_type/c_2fe3">newspaper</dc:type>
+    <datacite:version>1.1</datacite:version>
+    <oaire:version rdf:resource="http://purl.org/coar/version/c_b1a7d7d4d402bcce">AO</oaire:version>
+    <jpcoar:identifier identifierType="DOI">1111</jpcoar:identifier>
+    <jpcoar:identifier identifierType="DOI">https://doi.org/1234/0000000001</jpcoar:identifier>
+    <jpcoar:identifier identifierType="URI">https://192.168.56.103/records/1</jpcoar:identifier>
+    <jpcoar:identifierRegistration identifierType="JaLC">1234/0000000001</jpcoar:identifierRegistration>
+    <jpcoar:relation relationType="isVersionOf">
+        <jpcoar:relatedIdentifier identifierType="ARK">1111111</jpcoar:relatedIdentifier>
+        <jpcoar:relatedTitle xml:lang="ja">関連テスト</jpcoar:relatedTitle>
+        <jpcoar:relatedTitle xml:lang="en">relation test</jpcoar:relatedTitle>
+    </jpcoar:relation>
+    <jpcoar:relation relationType="isVersionOf">
+        <jpcoar:relatedIdentifier identifierType="URI">https://192.168.56.103/records/3</jpcoar:relatedIdentifier>
+    </jpcoar:relation>
+    <dcterms:temporal xml:lang="ja">1 to 2</dcterms:temporal>
+    <dcterms:temporal xml:lang="ja">奈良時代</dcterms:temporal>
+    <dcterms:temporal xml:lang="en">A.D. 1800 - A.D. 1850</dcterms:temporal>
+    <datacite:geoLocation>
+        <datacite:geoLocationPoint>
+            <datacite:pointLongitude>123.45</datacite:pointLongitude>
+            <datacite:pointLatitude>67.890</datacite:pointLatitude>
+        </datacite:geoLocationPoint>
+        <datacite:geoLocationBox>
+            <datacite:westBoundLongitude>123</datacite:westBoundLongitude>
+            <datacite:eastBoundLongitude>45.6</datacite:eastBoundLongitude>
+            <datacite:southBoundLatitude>78.9</datacite:southBoundLatitude>
+            <datacite:northBoundLatitude>111.2</datacite:northBoundLatitude>
+        </datacite:geoLocationBox>
+        <datacite:geoLocationPlace>テスト位置情報</datacite:geoLocationPlace>
+    </datacite:geoLocation>
+    <jpcoar:fundingReference>
+        <jpcoar:funderIdentifier funderIdentifierType="Crossref Funder">22222</jpcoar:funderIdentifier>
+        <jpcoar:funderName xml:lang="ja">テスト助成機関</jpcoar:funderName>
+        <jpcoar:awardNumber awardURI="https://test.research.com">1111</jpcoar:awardNumber>
+        <jpcoar:awardTitle xml:lang="ja">テスト研究</jpcoar:awardTitle>
+    </jpcoar:fundingReference>
+    <jpcoar:fundingReference>
+        <jpcoar:funderIdentifier funderIdentifierType ="Crossref Funder" funderIdentifierTypeURI="https://www.e-rad.go.jp/datasets/files/haibunkikan.csv">1020</jpcoar:funderIdentifier>
+        <jpcoar:funderName xml:lang="ja">国立研究開発法人科学技術振興機構（JST）</jpcoar:funderName>
+        <jpcoar:funderName xml:lang="en">Japan Science and Technology Agency（JST）</jpcoar:funderName>
+        <jpcoar:fundingStreamIdentifier fundingStreamIdentifierType="JGN_fundingStream" fundingStreamIdentifierTypeURI="https://sample/10.13039/501100020963">MJBF</jpcoar:fundingStreamIdentifier>
+        <jpcoar:fundingStream xml:lang="en">Belmont Forum</jpcoar:fundingStream>
+        <jpcoar:fundingStream xml:lang="ja">ベルモント・フォーラム</jpcoar:fundingStream>
+        <jpcoar:awardNumber awardURI="https://doi.org/10.52926/JPMJBF1801" awardNumberType="JGN" fundingStreamIdentifierTypeURI="https://sample/10.13039/501100020963">JPMJBF1801</jpcoar:awardNumber>
+        <jpcoar:awardTitle xml:lang="ja">実践としての変革(Transformation):気候変動の影響を受けやすい環境下での持続可能性に向けた公平かつ超学際的な方法論の開発(TAPESTRY)</jpcoar:awardTitle>
+        <jpcoar:awardTitle xml:lang="en">Transformation as Practice: Developing an equitable and transdisciplinary methodology for sustainability in climate change-sensitive environments.</jpcoar:awardTitle>
+    </jpcoar:fundingReference>
+    <jpcoar:sourceIdentifier identifierType="PISSN">test source Identifier</jpcoar:sourceIdentifier>
+    <jpcoar:sourceIdentifier identifierType="PISSN">1234-5678</jpcoar:sourceIdentifier>
+    <jpcoar:sourceIdentifier identifierType="NCID">AN12345678</jpcoar:sourceIdentifier>
+    <jpcoar:sourceTitle xml:lang="ja">test collectibles</jpcoar:sourceTitle>
+    <jpcoar:sourceTitle xml:lang="ja">test title book</jpcoar:sourceTitle>
+    <jpcoar:sourceTitle xml:lang="en">Journal of Comprehensive Nursing Research</jpcoar:sourceTitle>
+    <jpcoar:volume>5</jpcoar:volume>
+    <jpcoar:issue>2</jpcoar:issue>
+    <jpcoar:numPages>333</jpcoar:numPages>
+    <jpcoar:pageStart>123</jpcoar:pageStart>
+    <jpcoar:pageEnd>456</jpcoar:pageEnd>
+    <dcndl:dissertationNumber>甲第9999号</dcndl:dissertationNumber>
+    <dcndl:degreeName xml:lang="ja">テスト学位</dcndl:degreeName>
+    <dcndl:degreeName xml:lang="en">Doctor of Philosophy in Letters</dcndl:degreeName>
+    <dcndl:degreeName xml:lang="ja">博士（文学）</dcndl:degreeName>
+    <dcndl:dateGranted>2022-10-19</dcndl:dateGranted>
+    <jpcoar:degreeGrantor>
+        <jpcoar:nameIdentifier nameIdentifierScheme="kakenhi">学位授与機関識別子テスト1</jpcoar:nameIdentifier>
+        <jpcoar:degreeGrantorName xml:lang="ja">学位授与機関1</jpcoar:degreeGrantorName>
+        <jpcoar:degreeGrantorName xml:lang="en">degree grantor1</jpcoar:degreeGrantorName>
+    </jpcoar:degreeGrantor>
+    <jpcoar:degreeGrantor>
+        <jpcoar:nameIdentifier nameIdentifierScheme="kakenhi">学位授与機関識別子テスト2</jpcoar:nameIdentifier>
+        <jpcoar:degreeGrantorName xml:lang="ja">学位授与機関2</jpcoar:degreeGrantorName>
+        <jpcoar:degreeGrantorName xml:lang="en">degree grantor2</jpcoar:degreeGrantorName>
+    </jpcoar:degreeGrantor>
+    <jpcoar:conference>
+        <jpcoar:conferenceName xml:lang="ja">テスト会議1</jpcoar:conferenceName>
+        <jpcoar:conferenceName xml:lang="en">test conference1</jpcoar:conferenceName>
+        <jpcoar:conferenceSequence>12345</jpcoar:conferenceSequence>
+        <jpcoar:conferenceSponsor xml:lang="ja">テスト機関1</jpcoar:conferenceSponsor>
+        <jpcoar:conferenceSponsor xml:lang="en">test conference sponsor1</jpcoar:conferenceSponsor>
+        <jpcoar:conferenceDate endDay="1" endYear="2005" endMonth="12" startDay="11" xml:lang="ja"
+            startYear="2000" startMonth="4">12</jpcoar:conferenceDate>
+        <jpcoar:conferenceVenue xml:lang="ja">テスト会場1</jpcoar:conferenceVenue>
+        <jpcoar:conferenceVenue xml:lang="en">test conference venue1</jpcoar:conferenceVenue>
+        <jpcoar:conferencePlace xml:lang="ja">東京</jpcoar:conferencePlace>
+        <jpcoar:conferencePlace xml:lang="en">Tokyo</jpcoar:conferencePlace>
+        <jpcoar:conferenceCountry>JPN</jpcoar:conferenceCountry>
+    </jpcoar:conference>
+    <jpcoar:conference>
+        <jpcoar:conferenceName xml:lang="ja">テスト会議2</jpcoar:conferenceName>
+        <jpcoar:conferenceName xml:lang="en">test conference2</jpcoar:conferenceName>
+        <jpcoar:conferenceSequence>3456</jpcoar:conferenceSequence>
+        <jpcoar:conferenceSponsor xml:lang="ja">テスト機関2</jpcoar:conferenceSponsor>
+        <jpcoar:conferenceSponsor xml:lang="en">test conference sponsor2</jpcoar:conferenceSponsor>
+        <jpcoar:conferenceDate endDay="2" endYear="2005" endMonth="12" startDay="11" xml:lang="ja"
+            startYear="2000" startMonth="4">11</jpcoar:conferenceDate>
+        <jpcoar:conferenceVenue xml:lang="ja">テスト会場2</jpcoar:conferenceVenue>
+        <jpcoar:conferenceVenue xml:lang="en">test conference venue2</jpcoar:conferenceVenue>
+        <jpcoar:conferencePlace xml:lang="ja">名古屋</jpcoar:conferencePlace>
+        <jpcoar:conferencePlace xml:lang="en">Nagoya</jpcoar:conferencePlace>
+        <jpcoar:conferenceCountry>JPN</jpcoar:conferenceCountry>
+    </jpcoar:conference>
+    <jpcoar:file>
+        <jpcoar:URI label="test1.txt" objectType="abstract">https://weko3.example.org/record/1/files/test1.txt</jpcoar:URI>
+        <jpcoar:mimeType>text/plain</jpcoar:mimeType>
+        <jpcoar:extent>18 KB</jpcoar:extent>
+        <jpcoar:extent>18432 B</jpcoar:extent>
+        <datacite:date dateType="Accepted">2022-10-20</datacite:date>
+        <datacite:date dateType="Available">2022-10-21</datacite:date>
+        <datacite:date dateType="Collected">2004-03-02/2005-06-02</datacite:date>
+        <datacite:version>1.0</datacite:version>
+    </jpcoar:file>
+    <jpcoar:file>
+        <jpcoar:URI label="test2" objectType="dataset">https://weko3.example.org/record/1/files/test2</jpcoar:URI>
+        <jpcoar:mimeType>application/octet-stream</jpcoar:mimeType>
+        <jpcoar:extent>19 MB</jpcoar:extent>
+        <jpcoar:extent>19456 KB</jpcoar:extent>
+        <datacite:version>1.2</datacite:version>
+    </jpcoar:file>
+    <jpcoar:file>
+        <jpcoar:URI label="test3.png" objectType="fulltext">https://weko3.example.org/record/1/files/test3.png</jpcoar:URI>
+        <jpcoar:mimeType>image/png</jpcoar:mimeType>
+        <datacite:date dateType="Issued">2015-10-01</datacite:date>
+        <datacite:version>2.1</datacite:version>
+    </jpcoar:file>
+</jpcoar:jpcoar>

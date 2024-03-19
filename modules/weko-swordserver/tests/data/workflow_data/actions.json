@@ -1,0 +1,49 @@
+[
+    {
+        "action_name":"Start",
+        "action_desc":"",
+        "action_endpoint":"begin_action",
+        "action_version":"1.0.0",
+        "action_is_need_agree":false
+    },
+    {
+        "action_name":"End",
+        "action_desc":"",
+        "action_endpoint":"end_action",
+        "action_version":"1.0.0",
+        "action_is_need_agree":false
+    },
+    {
+        "action_name":"Item Registration",
+        "action_desc":"",
+        "action_endpoint":"item_login",
+        "action_version":"1.0.1",
+        "action_is_need_agree":false
+    },
+    {
+        "action_name":"Approval",
+        "action_desc":"",
+        "action_endpoint":"approval",
+        "action_version":"2.0.0",
+        "action_is_need_agree":false
+    },    {
+        "action_name":"Item Link",
+        "action_desc":"",
+        "action_endpoint":"item_link",
+        "action_version":"1.0.1",
+        "action_is_need_agree":false
+    },    {
+        "action_name":"OA Policy Confirmation",
+        "action_desc":"",
+        "action_endpoint":"oa_policy",
+        "action_version":"1.0.0",
+        "action_is_need_agree":false
+    },
+    {
+        "action_name":"Identifier Grant",
+        "action_desc":"",
+        "action_endpoint":"identifier_grant",
+        "action_version":"1.0.0",
+        "action_is_need_agree":false
+    }
+]

@@ -81,7 +81,11 @@ def check_package_contents():
             # Check Content-Type
             acceptArchiveFormat = current_app.config['WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_ARCHIVE_FORMAT']
             reqContentType = request.headers.get("Content-Type", None)
+            if reqContentType and (';' in reqContentType):
+                reqContentType = reqContentType.split(';')[0]
             filesContentType = file.headers.get('Content-Type', None)
+            if filesContentType and (';' in filesContentType):
+                filesContentType = filesContentType.split(';')[0]
             failedContentType = None
             if reqContentType not in acceptArchiveFormat:
                 failedContentType = reqContentType

@@ -428,6 +428,16 @@ class WorkFlow(object):
             query = _WorkFlow.query.filter_by(
                 is_deleted=False).order_by(asc(_WorkFlow.flows_id))
             return query.all()
+        
+    def get_deleted_workflow_list(self):
+        """Get workflow list info.
+
+        :return:
+        """
+        with db.session.no_autoflush:
+            query = _WorkFlow.query.filter_by(
+                is_deleted=True).order_by(asc(_WorkFlow.flows_id))
+            return query.all()
 
     def get_workflow_detail(self, workflow_id):
         """Get workflow detail info.

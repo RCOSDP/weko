@@ -973,6 +973,10 @@ msgid "Admin menu_Setting_Shibboleth"
 msgstr "Shibboleth"
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Setting_SWORD API"
+msgstr "SWORD API"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Setting_Others"
 msgstr "その他"
 
