@@ -111,6 +111,12 @@ setup(
         'invenio_access.actions': [
             'item_access = weko_items_ui.permissions:action_item_access',
         ],
+        'invenio_db.models': [
+            'weko_items_ui = weko_items_ui.models',
+        ],
+        'invenio_celery.tasks': [
+            'weko_items_ui = weko_items_ui.tasks',
+        ],
     },
     extras_require=extras_require,
     install_requires=install_requires,

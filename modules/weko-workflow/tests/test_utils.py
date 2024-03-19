@@ -2423,7 +2423,7 @@ def test___init_activity_detail_data_for_guest(app,db,users,db_register,mocker):
         mocker.patch("weko_workflow.utils.get_activity_display_info",return_value=display_info)
         mocker.patch("weko_workflow.utils.get_approval_keys",return_value=[])
         community_id=""
-        session['user_id'] = 'dummy user'
+        session['user_id'] = 1
         session["guest_email"] = "guest@test.org"
         user_profile = {
             "results":{
@@ -2500,6 +2500,25 @@ def test___init_activity_detail_data_for_guest(app,db,users,db_register,mocker):
             id=db_register["workflow"].itemtype_id,
         )
 
+        result = __init_activity_detail_data_for_guest(activity_id,community_id)
+        assert result == test
+
+        test_item_login_data = (
+            "weko_items_ui/iframe/item_edit.html",
+            True,
+            False,
+            item,
+            "/items/jsonschema/1",
+            "/items/schemaform/1",
+            "/items/iframe/model/save",
+            [],
+            {},
+            False,
+            [],
+            False,
+            {"researchmap" : False}
+        )
+        mocker.patch("weko_items_ui.api.item_login",return_value=test_item_login_data)
         result = __init_activity_detail_data_for_guest(activity_id,community_id)
         assert result == test
 

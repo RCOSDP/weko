@@ -19,6 +19,9 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.5.1\n"
 
+msgid "Running"
+msgstr "実行中"
+
 #: weko_workflow/admin.py:100
 #, fuzzy
 msgid "Updated flow successfully."

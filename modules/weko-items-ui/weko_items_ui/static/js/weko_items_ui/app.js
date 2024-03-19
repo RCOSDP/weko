@@ -1425,10 +1425,14 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           }
         }
       }
-      $scope.resourceTypeSelect = function () {
+      $scope.resourceTypeSelect = function (_recourceType) {
         $scope.accessRoleChange()
         let resourcetype = $("select[name$='resourcetype']").val();
-        resourcetype = resourcetype.split("string:").pop();
+        if (!_recourceType){
+          resourcetype = resourcetype.split("string:").pop();
+        } else {
+          resourcetype = _recourceType
+        }
         let resourceuri = "";
         if ($scope.resourceTypeKey) {
           if (!$("#resourceuri").prop('disabled')) {
@@ -3164,11 +3168,14 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         let autoFillID = $('#autofill_id_type').val();
         let value = $('#autofill_item_id').val();
         let itemTypeId = $("#autofill_item_type_id").val();
+        const parmalink = $("#parmalink").val();
+        const achievement_type = $("#achievement_type").val();
+        const achievement_id = $("#achievement_id").val();
         if (autoFillID === 'Default') {
           $scope.enableAutofillButton();
           this.setAutoFillErrorMessage($("#autofill_error_id").val());
           return;
-        } else if (!value.length) {
+        } else if (autoFillID !== "researchmap" && !value.length) {
           $scope.enableAutofillButton();
           this.setAutoFillErrorMessage($("#autofill_error_input_value").val());
           return;
@@ -3177,7 +3184,10 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         let param = {
           api_type: autoFillID,
           search_data: $.trim(value),
-          item_type_id: itemTypeId
+          item_type_id: itemTypeId,
+          parmalink,
+          achievement_type,
+          achievement_id
         }
         this.setRecordDataFromApi(param);
       }
@@ -3242,6 +3252,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
             } else if (!$.isEmptyObject(data.result)) {
               $scope.clearAllField();
               $scope.setRecordDataCallBack(data);
+              $scope.resourceTypeSelect(data.resource_type);
             } else {
               $scope.enableAutofillButton();
               $scope.setAutoFillErrorMessage($("#autofill_error_doi").val());
@@ -4483,7 +4494,8 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
             metainfo,
             {
               'files': $rootScope.filesVM.files,
-              'endpoints': $rootScope.filesVM.invenioFilesEndpoints
+              'endpoints': $rootScope.filesVM.invenioFilesEndpoints,
+              'cris_linkage' : {'researchmap' : $('#researchmap_chk').prop("checked")}
             }
           );
         }
