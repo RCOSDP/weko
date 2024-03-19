@@ -131,7 +131,7 @@ from .config import (
     WEKO_SEARCH_UI_BULK_EXPORT_URI,
     WEKO_SYS_USER,
 )
-from .query import feedback_email_search_factory, item_path_search_factory
+from .query import item_path_search_factory
 
 
 class DefaultOrderedDict(OrderedDict):
@@ -1336,6 +1336,8 @@ def register_item_metadata(item, root_path, owner, is_gakuninrdm=False):
                 deleted_items = new_data.get("deleted_items") or []
                 deleted_items.append(metadata_id)
                 new_data["deleted_items"] = deleted_items
+    if "feedback_mail_list" in new_data:
+        new_data.pop("feedback_mail_list")
 
     deposit.update(item_status, new_data)
     deposit['_deposit']['owners'] = [int(owner)]
@@ -1345,10 +1347,10 @@ def register_item_metadata(item, root_path, owner, is_gakuninrdm=False):
 
     feedback_mail_list = item["metadata"].get("feedback_mail_list")
     if feedback_mail_list:
+        item["metadata"].pop("feedback_mail_list")
         FeedbackMailList.update(
             item_id=deposit.id, feedback_maillist=feedback_mail_list
         )
-        deposit.update_feedback_mail()
     else:
         FeedbackMailList.delete_without_commit(deposit.id)
         deposit.remove_feedback_mail()
@@ -1374,7 +1376,6 @@ def register_item_metadata(item, root_path, owner, is_gakuninrdm=False):
                 FeedbackMailList.update(
                     item_id=_deposit.id, feedback_maillist=feedback_mail_list
                 )
-                _deposit.update_feedback_mail()
 
             # Update draft version
             _draft_pid = PersistentIdentifier.query.filter_by(

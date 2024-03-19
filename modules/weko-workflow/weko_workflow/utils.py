@@ -1880,7 +1880,6 @@ def handle_finish_workflow(deposit, current_pid, recid):
                     item_id=item_id,
                     feedback_maillist=feedback_mail_list
                 )
-                ver_attaching_deposit.update_feedback_mail()
             ver_attaching_deposit.publish()
 
             weko_record = WekoRecord.get_record_by_pid(new_deposit.pid.pid_value)
@@ -1916,7 +1915,6 @@ def handle_finish_workflow(deposit, current_pid, recid):
                     new_parent_record = maintain_deposit. \
                         merge_data_to_record_without_version(current_pid, True)
                     maintain_deposit.publish()
-                    new_parent_record.update_feedback_mail()
                     new_parent_record.commit()
                     updated_item.publish(new_parent_record)
                     # update item link info of main record
@@ -1935,7 +1933,6 @@ def handle_finish_workflow(deposit, current_pid, recid):
                     new_draft_record = draft_deposit. \
                         merge_data_to_record_without_version(current_pid)
                     draft_deposit.publish()
-                    new_draft_record.update_feedback_mail()
                     new_draft_record.commit()
                     updated_item.publish(new_draft_record)
                     # update item link info of draft record
@@ -1949,7 +1946,6 @@ def handle_finish_workflow(deposit, current_pid, recid):
                     pid_without_ver.pid_value)
                 if weko_record:
                     weko_record.update_item_link(current_pid.pid_value)
-                parent_record.update_feedback_mail()
                 parent_record.commit()
                 updated_item.publish(parent_record)
                 if ".0" in current_pid.pid_value and last_ver:
