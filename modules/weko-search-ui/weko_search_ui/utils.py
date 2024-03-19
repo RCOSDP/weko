@@ -2133,7 +2133,7 @@ def handle_check_doi(list_record):
             # DOI RESERVATION FIX ------------ START
             if doi_ra in WEKO_IMPORT_DOI_TYPE:
                 pass
-            else:      
+            else:
                 if len(split_doi) > 1 and not doi.endswith("/"):
                     error = _("{} cannot be set.").format("DOI")
                 else:

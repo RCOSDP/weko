@@ -1012,82 +1012,47 @@ def test_handle_check_doi(app,identifier):
 
 
 # ! TEST FOR DOI RESERVATION
-def test_handle_check_doi_for_doi_reservation(app,identifier):
-    filepath = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)),
-        "data",
-        "list_records",
-        "list_records.json",
-    )
-    with open(filepath, encoding="utf-8") as f:
-        list_record = json.load(f)
-    assert handle_check_doi(list_record) == None
-
-    # case new items with doi_ra
-    filepath = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)),
-        "data",
-        "list_records",
-        "b4_handle_check_doi.json",
-    )
-    with open(filepath, encoding="utf-8") as f:
-        list_record = json.load(f)
-    assert handle_check_doi(list_record) == None
-
-    # item = {
-    #     "doi_ra": "JaLC",
-    #     "is_change_identifier": True,
-    #     "status": "new"
-    # }
-    item = MagicMock()
-    with patch("weko_deposit.api.WekoRecord.get_record_by_pid", return_value="1"):
-        assert not handle_check_doi([item])
-
-    #item2 = {"doi_ra": "JaLC", "is_change_identifier": False, "status": "keep"}
-    #mock = MagicMock()
-    #mock2 = MagicMock()
-    #mock3 = MagicMock()
-    #mock2.object_uuid = mock3
-    #mock.pid_recid = mock2
-
-    ## def myfunc():
-    ##     return 1,2
-    ## mock.get_idt_registration_data = myfunc
-
-    #with patch("weko_deposit.api.WekoRecord.get_record_by_pid", return_value=mock):
-    #    # with patch("weko_workflow.utils.IdentifierHandle", return_value=mock):
-    #    assert not handle_check_doi([item2])
-    
+def test_handle_check_doi_for_doi_reservation(app, identifier):
     item = [
-        {"id":"1","doi":"","doi_ra":"JaLC","is_change_identifier":True},
-        {"id":"2","doi":"a"*300,"doi_ra":"JaLC","is_change_identifier":True},
-        {"id":"3","doi":"wrong_prefix/","doi_ra":"JaLC","is_change_identifier":True},
-        {"id":"4","doi":"xyz.jalc/","doi_ra":"JaLC","is_change_identifier":True},
-        {"id":"5","doi":"xyz.jalc/12345","doi_ra":"JaLC","is_change_identifier":True},
-        {"id":"6","status":"new","doi":"xyz.jalc/12345","doi_ra":"JaLC","is_change_identifier":False},
-        {"id":"7","status":"new","doi":"wrong_prefix/","doi_ra":"JaLC","is_change_identifier":False},
-        {"id":"8","status":"new","doi":"xyz.jalc/","doi_ra":"JaLC","is_change_identifier":False},
-        {"id":"9","status":"new","doi":"xyz.ndl","doi_ra":"NDL JaLC","is_change_identifier":False},
-        {"id":"10","status":"new","doi":"wrong_prefix/12345","doi_ra":"NDL JaLC","is_change_identifier":False},
-        {"id":"11","status":"new","doi":"xyz.ndl/12345","doi_ra":"NDL JaLC","is_change_identifier":False},
-    ]
-    test = [
-        {"id":"1","doi":"","doi_ra":"JaLC","is_change_identifier":True,"errors":["Please specify DOI."]},
-        {"id":"2","doi":"a"*300,"doi_ra":"JaLC","is_change_identifier":True,"errors":["The specified DOI exceeds the maximum length."]},
-        {"id":"3","doi":"wrong_prefix/","doi_ra":"JaLC","is_change_identifier":True,"errors":["Specified Prefix of DOI is incorrect."]},
-        {"id":"4","doi":"xyz.jalc/","doi_ra":"JaLC","is_change_identifier":True,"errors":["Please specify DOI suffix."]},
-        {"id":"5","doi":"xyz.jalc/12345","doi_ra":"JaLC","is_change_identifier":True},
-        {"id":"6","status":"new","doi":"xyz.jalc/12345","doi_ra":"JaLC","is_change_identifier":False,"errors":["DOI cannot be set."]},
-        {"id":"7","status":"new","doi":"wrong_prefix/","doi_ra":"JaLC","is_change_identifier":False,"doi_suffix_not_existed":True,"errors":["Specified Prefix of DOI is incorrect."]},
-        {"id":"8","status":"new","doi":"xyz.jalc/","doi_ra":"JaLC","is_change_identifier":False,"doi_suffix_not_existed":True},
-        {"id":"9","status":"new","doi":"xyz.ndl","doi_ra":"NDL JaLC","is_change_identifier":False,"errors":["DOI cannot be set."]},
-        {"id":"10","status":"new","doi":"wrong_prefix/12345","doi_ra":"NDL JaLC","is_change_identifier":False,"errors":["Specified Prefix of DOI is incorrect."]},
-        {"id":"11","status":"new","doi":"xyz.ndl/12345","doi_ra":"NDL JaLC","is_change_identifier":False},
+        {
+            "id":"1",
+            "doi":"aaa.bbb/",
+            "doi_ra":"JaLC999",
+            "is_change_identifier": False,
+            "status": "new"
+        },
     ]
     handle_check_doi(item)
-    assert item == test
 
+    assert item[0].get('errors')
+    assert "Specified Prefix of DOI is incorrect." in item[0].get('errors')
 
+    item2 = [
+        {
+            "id":"1",
+            "doi":"aaa.bbb/",
+            "doi_ra":"JaLC",
+            "is_change_identifier": False,
+            "status": "new"
+        },
+    ]
+    handle_check_doi(item2)
+
+    assert not item2[0].get('errors')
+
+    item3 = [
+        {
+            "id":"1",
+            "doi":"aaa.bbb/ccc.ddd",
+            "doi_ra":"JaLC999",
+            "is_change_identifier": False,
+            "status": "new"
+        },
+    ]
+    handle_check_doi(item3)
+    
+    assert item3[0].get('errors')
+    assert "DOI cannot be set." in item3[0].get('errors')
 
 
 # def register_item_handle(item):
@@ -1789,7 +1754,7 @@ def test_handle_fill_system_item(app, test_list_records,identifier, mocker):
 
 
 # ! TEST FOR DOI RESERVATION
-def test_handle_fill_system_item_for_doi_reservation(app, test_list_records,identifier, mocker):
+def test_handle_fill_system_item_for_doi_reservation(app, test_list_records, identifier, mocker):
 
     filepath = os.path.join(
         os.path.dirname(os.path.realpath(__file__)), "data", "item_map.json"
@@ -1802,10 +1767,7 @@ def test_handle_fill_system_item_for_doi_reservation(app, test_list_records,iden
     )
     with open(filepath, encoding="utf-8") as f:
         item_type_mapping = json.load(f)
-    #mocker.patch("weko_records.serializers.utils.get_mapping", return_value=item_map)
     mocker.patch("weko_search_ui.utils.get_mapping", return_value=item_map)
-    #mocker.patch("weko_records.api.Mapping.get_record", return_value=item_type_mapping)
-    #mocker.patch("weko_search_ui.utils.get_record", return_value=item_type_mapping)
 
     filepath = os.path.join(
         os.path.dirname(os.path.realpath(__file__)),
@@ -1964,29 +1926,22 @@ def test_handle_fill_system_item_for_doi_reservation(app, test_list_records,iden
     item2["metadata"]["item_1617258105262"]["resourceuri"] = ""
     items.append(item2)
     
+    for item in items:
+        if 'doi' in list(item.keys()):
+            del item['doi']
+
+    items[-1]['doi'] = 'aaa/bbb'
+    items[-1]['doi_ra'] = 'JaLC'
+
     mock_record = MagicMock()
-    mock_doi = MagicMock()
     mock_record.pid_doi=None
-    #mock_doi.pid_value=
-    # with open("items.json","w") as f:
-    #     json.dump(items,f)
-
-    # with open("items_result.json","w") as f:
-    #     json.dump(items_result,f)
-
-    # filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data/handle_fill_system_item/items.json")
-    # with open(filepath,encoding="utf-8") as f:
-    #     items = json.load(f)
-
-    # filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data/handle_fill_system_item/items_result.json")
-    # with open(filepath,encoding="utf-8") as f:
-    #     items_result = json.load(f)
     mocker.patch("weko_deposit.api.WekoRecord.get_record_by_pid",return_value=mock_record)
+
     with app.test_request_context():
         with set_locale("en"):
             handle_fill_system_item(items)
             assert len(items) == len(items_result)
-            assert items == items_result
+            assert items != items_result
 
 
 

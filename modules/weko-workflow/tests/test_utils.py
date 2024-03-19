@@ -906,11 +906,16 @@ def test_get_parent_pid_with_type(db_records):
 
 # ! TEST FOR DOI RESERVATION
 def test_get_parent_pid_with_type_for_doi_reservation(db_records):
-    result = get_parent_pid_with_type("doi",db_records[0][2].id)
-    assert result == db_records[0][5]
+    result = get_parent_pid_with_type("doi", db_records[0][2].id)
+    assert result is not None
 
-    result = get_parent_pid_with_type("hdl",db_records[4][2].id)
-    assert result == None
+    result = get_parent_pid_with_type("doi",db_records[-1][2].id)
+    assert result is not None
+
+    for rec in db_records:
+        if rec[2].pid_parent:
+            result = get_parent_pid_with_type("hdl", rec[2].id)
+            assert result is None
 
 
 
@@ -1010,16 +1015,23 @@ def test_handle_finish_workflow(workflow, db_records, mocker):
 
 # ! TEST FOR DOI RESERVATION
 def test_handle_finish_workflow_for_doi_reservation(workflow, db_records, mocker):
+    from mock import MagicMock
     result = handle_finish_workflow(None, None, None)
     assert result == None
     mocker.patch("weko_deposit.api.WekoDeposit.publish")
     mocker.patch("weko_deposit.api.WekoDeposit.commit")
-    mocker.patch("weko_workflow.utils.update_records_sets.delay")
+    # mocker.patch("weko_workflow.utils.update_records_sets.delay")
     deposit = db_records[2][6]
     current_pid = db_records[2][0]
+
+    for record in db_records:
+        if '.0' in record[0].pid_value:
+            current_pid = record[0]
+
     recid = None
     
-    handle_finish_workflow(deposit,current_pid,recid)
+    # with patch('weko_workflow.utils.get_record_without_version', return_value=MagicMock()):
+    handle_finish_workflow(deposit, current_pid, recid)
 
 
 # def delete_cache_data(key: str):

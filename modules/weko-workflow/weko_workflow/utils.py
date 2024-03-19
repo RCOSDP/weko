@@ -1425,7 +1425,6 @@ class IdentifierHandle(object):
             "identifierRegistration.@value")
         key_type = self.metadata_mapping.get_first_property_by_mapping(
             "identifierRegistration.@attributes.identifierType")
-        
         self.commit(key_id=key_value.split('.')[0],
                     key_val=key_value.split('.')[1],
                     key_typ=key_type.split('.')[1],
@@ -1670,7 +1669,6 @@ def get_parent_pid_with_type(pid_type, object_uuid):
         ).order_by(
             db.desc(PersistentIdentifier.created)
         ).first()
-        # DOI RESERVATION FIX ------------ END        
         
         with db.session.no_autoflush:
             pid_object = PersistentIdentifier.query.filter_by(
@@ -1685,6 +1683,7 @@ def get_parent_pid_with_type(pid_type, object_uuid):
                     return reserved_pid_doi
                 else:
                     return None
+        # DOI RESERVATION FIX ------------ END
 
     except PIDDoesNotExistError as pid_not_exist:
         current_app.logger.error(pid_not_exist)

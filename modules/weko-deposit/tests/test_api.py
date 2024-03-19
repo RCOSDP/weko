@@ -27,7 +27,7 @@ import json
 from datetime import datetime
 from typing_extensions import reveal_type
 import pytest
-from mock import patch
+from mock import patch, MagicMock
 import uuid
 import copy
 from collections import OrderedDict
@@ -1205,11 +1205,75 @@ class TestWekoRecord:
             record._get_pid('')
     
     # ! TEST FOR DOI RESERVATION
-    # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoRecord::test__get_pid_for_doi_reservation -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
-    def test__get_pid_for_doi_reservation(self,es_records):
-        record = WekoRecord({})
-        with pytest.raises(AttributeError):
-            record._get_pid('')
+    def test__get_pid_for_doi_reservation(self, es_records_for_doi_reservation):
+        indexer, records = es_records_for_doi_reservation
+        record_data = records[0]['record']
+        record_data['test'] = {
+            'attribute_value_mlt': [{
+                'subitem_identifier_reg_text': "test",
+            }]
+        }
+        record = WekoRecord(record_data)
+
+        def filter_by_func(
+                pid_type=None,
+                pid_value=None,
+                status=None,
+                object_uuid=None):
+            def first_func():
+                return 1
+            def first_none_func():
+                return None
+            filter_by_magic_mock = MagicMock()
+            filter_by_magic_mock.order_by = MagicMock()
+            if object_uuid is not None:
+                filter_by_magic_mock.order_by.first = first_func
+            else:
+                filter_by_magic_mock.order_by.first = first_none_func
+            return filter_by_magic_mock
+        
+        test_data = MagicMock()
+        test_data.created = True
+        test_data.pid_value = 1
+        test_data.object_uuid = 999
+        test_data.query = MagicMock()
+        test_data.query.filter_by = filter_by_func
+
+        def filter_by_func_2(
+                pid_type=None,
+                pid_value=None,
+                status=None,
+                object_uuid=None):
+            def first_func():
+                return 1
+            def first_none_func():
+                return None
+            filter_by_magic_mock = MagicMock()
+            filter_by_magic_mock.order_by = MagicMock()
+            if object_uuid is not None:
+                filter_by_magic_mock.order_by.first = first_none_func
+            else:
+                filter_by_magic_mock.order_by.first = first_func
+            return filter_by_magic_mock
+
+        test_data_2 = MagicMock()
+        test_data_2.created = True
+        test_data_2.pid_value = 1
+        test_data_2.object_uuid = 999
+        test_data_2.query = MagicMock()
+        test_data_2.query.filter_by = filter_by_func_2
+    
+        with patch("weko_deposit.api.WekoRecord.pid_recid", return_value=None):
+            with patch("weko_deposit.api.get_record_without_version", return_value=test_data):
+                with patch("weko_deposit.api.WekoRecord.get_record_by_pid", return_value=record_data):
+                    with patch("weko_deposit.api.PersistentIdentifier", test_data):
+                        assert record._get_pid('') is not None
+                    
+                    with patch("weko_deposit.api.PersistentIdentifier", test_data_2):
+                        assert record._get_pid('') is not None
+
+            with patch("weko_deposit.api.get_record_without_version", return_value=None):
+                    assert record._get_pid('') is None
         
 
     #     def update_item_link(self, pid_value):

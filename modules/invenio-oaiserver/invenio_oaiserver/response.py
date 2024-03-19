@@ -369,7 +369,8 @@ def is_pubdate_in_future(record, isReserved=False):
             db.desc(PersistentIdentifier.created)
         ).first()
 
-        if ((not isReserved and reserved_pid_doi is not None) or reserved_pid_doi is not None) and not is_private_index(record):
+        if ((not isReserved and doi_text) or (not reserved_pid_doi and doi_text)) \
+                    and not is_private_index(record):
             from weko_workflow.models import ActionIdentifier, Activity, ActionStatusPolicy
             from weko_workflow.config import IDENTIFIER_GRANT_SELECT_DICT
             from weko_workflow.utils import prepare_edit_workflow, get_actionid, IdentifierHandle, \

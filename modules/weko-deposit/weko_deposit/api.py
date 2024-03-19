@@ -2387,35 +2387,37 @@ class WekoRecord(Record):
         pid_without_ver = get_record_without_version(self.pid_recid)
 
         # DOI RESERVATION FIX ------------ START
-        # ! Responsible for giving record.pid_doi value
-        doi_target_record = self.get_record_by_pid(
-            pid_without_ver.pid_value
-        )
-        doi_target_record_keys = [
-            key for key in doi_target_record.keys()
-        ]
-        doi_text = ""
+        if pid_without_ver:
+            # ! Responsible for giving record.pid_doi value
+            doi_target_record = self.get_record_by_pid(
+                pid_without_ver.pid_value
+            )
+            doi_target_record_keys = [
+                key for key in doi_target_record.keys()
+            ]
+            doi_text = ""
 
-        for doi_item_key in doi_target_record_keys:
-            if isinstance(doi_target_record.get(doi_item_key), dict):
-                if doi_target_record.get(doi_item_key).get("attribute_value_mlt") and \
-                        isinstance(doi_target_record.get(doi_item_key).get("attribute_value_mlt"), list) and \
-                        doi_target_record.get(doi_item_key).get("attribute_value_mlt") is not None:
-                    if doi_target_record.get(doi_item_key).get("attribute_value_mlt")[0].get("subitem_identifier_reg_text"):
-                        doi_text = doi_target_record.get(doi_item_key) \
-                            .get("attribute_value_mlt")[0] \
-                            .get("subitem_identifier_reg_text")
-                            
-        reserved_pid_doi = PersistentIdentifier.query.filter_by(
-            pid_type=pid_type,
-            pid_value=f"https://doi.org/" + doi_text,
-            status=PIDStatus.REGISTERED
-        ).order_by(
-            db.desc(PersistentIdentifier.created)
-        ).first()
+            for doi_item_key in doi_target_record_keys:
+                if isinstance(doi_target_record.get(doi_item_key), dict):
+                    if doi_target_record.get(doi_item_key).get("attribute_value_mlt") and \
+                            isinstance(doi_target_record.get(doi_item_key).get("attribute_value_mlt"), list) and \
+                            doi_target_record.get(doi_item_key).get("attribute_value_mlt") is not None:
+                        if doi_target_record.get(doi_item_key).get("attribute_value_mlt")[0].get("subitem_identifier_reg_text"):
+                            doi_text = doi_target_record.get(doi_item_key) \
+                                .get("attribute_value_mlt")[0] \
+                                .get("subitem_identifier_reg_text")
+                                
+            reserved_pid_doi = PersistentIdentifier.query.filter_by(
+                pid_type=pid_type,
+                pid_value=f"https://doi.org/" + doi_text,
+                status=PIDStatus.REGISTERED
+            ).order_by(
+                db.desc(PersistentIdentifier.created)
+            ).first()
 
-        if not pid_without_ver:
+        elif not pid_without_ver:
             return None
+
         try:
             pid_doi = PersistentIdentifier.query.filter_by(
                 pid_type=pid_type,
