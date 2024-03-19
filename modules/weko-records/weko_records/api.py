@@ -2107,13 +2107,33 @@ class FeedbackMailList(object):
             query_object = _FeedbackMailList.query.filter_by(
                 item_id=item_id).one_or_none()
             if not query_object:
+                mail_list = []
+                account_author_set = set()
+                for d in feedback_maillist:
+                    author_id = d.get("author_id")
+                    email = d.get("email")
+                    if author_id:
+                        account_author_set.add(str(author_id))
+                    elif email:
+                        mail_list.append({"email": email})
                 query_object = _FeedbackMailList(
                     item_id=item_id,
-                    mail_list=feedback_maillist
+                    mail_list=mail_list,
+                    account_author=",".join(list(account_author_set))
                 )
                 db.session.add(query_object)
             else:
-                query_object.mail_list = feedback_maillist
+                mail_list = []
+                account_author_set = set()
+                for d in feedback_maillist:
+                    author_id = d.get("author_id")
+                    email = d.get("email")
+                    if author_id:
+                        account_author_set.add(str(author_id))
+                    elif email:
+                        mail_list.append({"email": email})
+                query_object.mail_list = mail_list
+                query_object.account_author = ",".join(list(account_author_set))
                 db.session.merge(query_object)
 
     @classmethod
@@ -2138,12 +2158,91 @@ class FeedbackMailList(object):
             with db.session.no_autoflush:
                 query_object = _FeedbackMailList.query.filter_by(
                     item_id=item_id).one_or_none()
-                if query_object and query_object.mail_list:
-                    return query_object.mail_list
+                if query_object:
+                    data = []
+                    list_author_id = []
+                    if query_object.account_author:
+                        list_author_id = query_object.account_author.split(',')
+                        for author_id in list_author_id:
+                            emails = Authors.get_emails_by_id(author_id)
+                            for e in emails:
+                                data.append({"email": e, "author_id": author_id})
+                    if query_object.mail_list:
+                        for m in query_object.mail_list:
+                            author_id = m.get("author_id")
+                            email = m.get("email")
+                            if author_id: # if there is author_id (obsolete data formats only)
+                                if author_id not in list_author_id:
+                                    emails = Authors.get_emails_by_id(author_id)
+                                    for e in emails:
+                                        data.append({"email": e, "author_id": author_id})
+                            else:
+                                if email:
+                                    data.append({"email": email, "author_id": ""})
+                    return data
                 else:
                     return []
-        except SQLAlchemyError:
+        except SQLAlchemyError as e:
+            current_app.logger.error(e)
             return []
+
+    @classmethod
+    def get_feedback_mail_list(cls):
+        """Get feedback mail list for send mail."""
+        mail_list = {}
+        checked_author_id = {}
+
+        # get feedbak mail list from db
+        data = db.session.query(
+            _FeedbackMailList, PersistentIdentifier
+        ).join(
+            PersistentIdentifier,
+            _FeedbackMailList.item_id == PersistentIdentifier.object_uuid
+        ).filter(
+            PersistentIdentifier.pid_type == 'recid',
+            PersistentIdentifier.status == PIDStatus.REGISTERED,
+            PersistentIdentifier.pid_value.notlike("%.%")
+        ).all()
+
+        # create return data
+        for d in data:
+            item_id = str(d.FeedbackMailList.item_id)
+            emails_no_authorid = []
+            list_author_id = d.FeedbackMailList.account_author.split(',')
+            for m in d.FeedbackMailList.mail_list:
+                if m.get("author_id"):
+                    list_author_id.append(m.get("author_id"))
+                else:
+                    emails_no_authorid.append(m.get("email"))
+            # there is author id
+            for author_id in list(set(list_author_id)):
+                if not author_id:
+                    continue
+                if author_id in checked_author_id:
+                    emails = checked_author_id.get(author_id)
+                    for e in emails:
+                        mail_list[e]["items"].append(item_id)
+                else:
+                    emails = Authors.get_emails_by_id(author_id)
+                    for e in emails:
+                        if e and e not in mail_list:
+                            mail_list[e] = {
+                                "items": [item_id],
+                                "author_id": author_id
+                            }
+                    checked_author_id[author_id] = emails
+            # if no author id
+            for e in emails_no_authorid:
+                if e:
+                    if e not in mail_list:
+                        mail_list[e] = {
+                            "items": [item_id],
+                            "author_id": ""
+                        }
+                    else:
+                        mail_list[e]["items"].append(item_id)
+
+        return mail_list
 
     @classmethod
     def delete(cls, item_id):
@@ -2178,65 +2277,6 @@ class FeedbackMailList(object):
         """
         for item_id in item_ids:
             cls.delete(item_id)
-
-    @classmethod
-    def get_feedback_mail_list(cls):
-        """Get feedback mail list for send mail."""
-        mail_list = {}
-        checked_author_id = {}
-
-        # get feedbak mail list from db
-        data = db.session.query(
-            _FeedbackMailList, PersistentIdentifier
-        ).join(
-            PersistentIdentifier,
-            _FeedbackMailList.item_id == PersistentIdentifier.object_uuid
-        ).filter(
-            PersistentIdentifier.pid_type == 'recid',
-            PersistentIdentifier.status == PIDStatus.REGISTERED,
-            PersistentIdentifier.pid_value.notlike("%.%")
-        ).all()
-
-        # create return data
-        for d in data:
-            item_id = str(d.FeedbackMailList.item_id)
-            emails_no_authorid = []
-            list_author_id = d.FeedbackMailList.account_author.split(',')
-            for m in d.FeedbackMailList.mail_list:
-                if m.get("author_id"):
-                    # if there is author_id (obsolete data formats only)
-                    list_author_id.append(m.get("author_id"))
-                else:
-                    # if there is not author_id
-                    emails_no_authorid.append(m.get("email"))
-            for author_id in list(set(list_author_id)):
-                if not author_id:
-                    continue
-                if author_id in checked_author_id:
-                    emails = checked_author_id.get(author_id)
-                    for e in emails:
-                        mail_list[e]["items"].append(item_id)
-                else:
-                    emails = Authors.get_emails_by_id(author_id)
-                    for e in emails:
-                        if e and e not in mail_list:
-                            mail_list[e] = {
-                                "items": [item_id],
-                                "author_id": author_id
-                            }
-                    # added author info to checked_author_id list
-                    checked_author_id[author_id] = emails
-            for e in emails_no_authorid:
-                if e:
-                    if e not in mail_list:
-                        mail_list[e] = {
-                            "items": [item_id],
-                            "author_id": ""
-                        }
-                    else:
-                        mail_list[e]["items"].append(item_id)
-
-        return mail_list
 
 
 class ItemLink(object):

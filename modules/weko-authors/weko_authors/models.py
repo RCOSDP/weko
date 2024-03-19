@@ -102,7 +102,7 @@ class Authors(db.Model, Timestamp):
         try:
             author = cls.query.filter_by(id=author_id).one_or_none()
             if not author:
-                return None
+                return []
             json_data = author.json
             email_info = json_data.get('emailInfo')
             return [e.get('email') for e in email_info if e.get('email')]
