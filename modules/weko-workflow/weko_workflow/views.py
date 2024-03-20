@@ -1658,6 +1658,30 @@ def next_action(activity_id='0', action_id=0):
                         action_id=action_id,
                         req=-1)
 
+                all_records = ItemMetadata.query.all()
+                existing_records_identifier_info = []
+                id_grant_select_info = {
+                    '1': 'identifier_grant_jalc_doi_link',
+                    '2': 'identifier_grant_jalc_cr_doi_link',
+                    '3': 'identifier_grant_jalc_dc_doi_link',
+                    '4': 'identifier_grant_ndl_jalc_doi_link',
+                }
+                current_record_identifier_info = post_json_doi_reservation.get(id_grant_select_info.get(identifier_select))
+                current_record_identifier_info = current_record_identifier_info[16:] if (current_record_identifier_info is not None) else current_record_identifier_info
+
+                for record in all_records:
+                    record_json_dict = json.loads(record.json) if isinstance(record.json, str) else record.json
+                    if isinstance(record_json_dict, dict):
+                        for record_json_key in list(record_json_dict.keys()):
+                            if isinstance(record_json_dict.get(record_json_key, {}), dict) and record_json_dict.get(record_json_key, {}).get('subitem_identifier_reg_text'):
+                                existing_records_identifier_info.append(
+                                    record_json_dict.get(record_json_key, {}).get('subitem_identifier_reg_text')
+                                )
+                doi_duplicate_check = current_record_identifier_info in existing_records_identifier_info
+
+                if doi_duplicate_check: \
+                    return jsonify(code=1, msg=_("DOI duplication error")), 200
+
                 record_without_version = item_id
                 if not recid:
                     record_without_version = pid_without_ver.object_uuid
