@@ -13,11 +13,11 @@ msgstr ""
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
 "Language-Team: ja <LL@li.org>\n"
-"Plural-Forms: nplurals=1; plural=0\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.5.1\n"
+"Generated-By: Babel 2.14.0\n"
 
 #: weko_workflow/admin.py:128
 #, fuzzy
@@ -213,6 +213,10 @@ msgid ""
 "\"When assigning a JaLC DOI through NDL, the resource type must be "
 "'doctor thesis'."
 msgstr "NDL JaLCに割り当てる場合、資源タイプは「doctoral thesis」である必要があります。"
+
+#: tests/test_views.py:1683
+msgid "Entered identifier already exists"
+msgstr "入力した識別子が既存しています"
 
 #: tests/test_views.py:1197 weko_workflow/utils.py:449
 msgid "Cannot register selected DOI for current Item Type of this item."
@@ -884,4 +888,10 @@ msgstr "選択したアクティビティを削除してもよろしいですか
 
 #~ msgid "Clear Confirm"
 #~ msgstr "削除の確認"
+
+#~ msgid "DOI duplication error"
+#~ msgstr "エラー"
+
+#~ msgid "Entered DOI already exists"
+#~ msgstr ""
 

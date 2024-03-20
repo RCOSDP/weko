@@ -1680,7 +1680,7 @@ def next_action(activity_id='0', action_id=0):
                 doi_duplicate_check = current_record_identifier_info in existing_records_identifier_info
 
                 if doi_duplicate_check: \
-                    return jsonify(code=1, msg=_("DOI duplication error")), 200
+                    return jsonify(code=1, msg=_("Entered identifier already exists")), 200
 
                 record_without_version = item_id
                 if not recid:
