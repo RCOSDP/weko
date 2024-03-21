@@ -1047,6 +1047,7 @@ def display_activity(activity_id="0"):
     is_public_state = None
     pubdate_is_future = None
     record_keys = None
+    doi_reserve_record = None
 
     if cur_step == "identifier_grant":
         if record or approval_record:
