@@ -42,15 +42,17 @@ body=restrict_doi_msg)}}
         <span>{{_('Identifier Grant')}}</span>
     </div>
     <div class="panel-body" style="line-height: 1.6;">
-        {% if not is_public_state %} <!-- TODO IF Public State Check S -->
+        {% if not is_public_state and record['publish_status'] != '2' %} <!-- TODO IF Public State Check S -->
             {% if index_is_private_state %}
                 {% include 'weko_workflow/identifier_grant_private_index_doi_reservation.html' %}
             {% else %}
                 {% include 'weko_workflow/identifier_grant_private_doi_reservation.html' %}
             {% endif %}
         {% elif is_public_state and index_is_private_state %}
+        <h1>2</h1>
             {% include 'weko_workflow/identifier_grant_private_index_doi_reservation.html' %}
         {% else %}
+        <h1>3</h1>
             {%- if temporary_idf_grant >= 0 %} <!-- TODO IF Main S -->
                 {% if "." in record['_deposit']['id'] %} <!-- TODO IF 1 S -->
                     {% if doi_information_key %} <!-- TODO IF 1.1 S -->
