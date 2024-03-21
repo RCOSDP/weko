@@ -1,5 +1,5 @@
-{% if "." in record['_deposit']['id'] and doi_information_exists %} <!-- TODO IF 1 S -->
-    {% if record[doi_information_key]["attribute_name"] == "Identifier Registration" %} <!-- TODO IF 2 S -->
+{% if "." in record['_deposit']['id'] and doi_information_exists %}
+    {% if record[doi_information_key]["attribute_name"] == "Identifier Registration" %}
         <div class="row h-100">
             <p class="text-center">
                 <button class="btn btn-danger withdraw-button" id="doi_is_reserved" disabled>
@@ -7,7 +7,7 @@
                 </button>
             </p>
         </div>
-    {% endif %} <!-- TODO IF 2 E -->
+    {% endif %}
 {% else %}
     <div class="form-group radio" style="display: inline-grid;">
         <table>
@@ -21,36 +21,36 @@
                     </label>
                 </td>
             </tr>
-            {%- if idf_grant_data %} <!-- TODO IF 3 S -->
+            {%- if idf_grant_data %}
                 {%- set item_id = activity.item_id %}
 
-                {%- if record %} <!-- TODO IF 4 S -->
+                {%- if record %}
                     {%- set item_id = '%010d' % record['_deposit']['id']|int %}
-                {%- endif %} <!-- TODO IF 4 E -->
+                {%- endif %}
 
-                {%- if idf_grant_data["jalc_flag"] %} <!-- TODO IF 5 S -->
+                {%- if idf_grant_data["jalc_flag"] %}
                     {%- set idf_grant_labels = idf_grant_input[1] %}
                     {{ render_identifier_link(idf_grant_labels[0], idf_grant_labels[1], idf_grant_labels[2],
                     idf_grant_method, idf_grant_data["jalc_doi"], idf_grant_data["suffix"],item, item_id) }}
-                {%- endif %} <!-- TODO IF 5 E -->
+                {%- endif %}
 
-                {%- if idf_grant_data["jalc_crossref_flag"] %} <!-- TODO IF 6 S -->
+                {%- if idf_grant_data["jalc_crossref_flag"] %}
                     {%- set idf_grant_labels = idf_grant_input[2] %}
                     {{ render_identifier_link(idf_grant_labels[0], idf_grant_labels[1], idf_grant_labels[2],
                     idf_grant_method, idf_grant_data["jalc_crossref_doi"], idf_grant_data["suffix"], item, item_id) }}
-                {%- endif %} <!-- TODO IF 6 E -->
+                {%- endif %}
 
-                {%- if idf_grant_data["jalc_datacite_flag"] %} <!-- TODO IF 7 S -->
+                {%- if idf_grant_data["jalc_datacite_flag"] %}
                     {%- set idf_grant_labels = idf_grant_input[3] %}
                     {{ render_identifier_link(idf_grant_labels[0], idf_grant_labels[1], idf_grant_labels[2],
                     idf_grant_method, idf_grant_data["jalc_datacite_doi"], idf_grant_data["suffix"], item, item_id) }}
-                {%- endif %} <!-- TODO IF 7 E -->
+                {%- endif %}
 
-                {%- if idf_grant_data["ndl_jalc_flag"] %} <!-- TODO IF 8 S -->
+                {%- if idf_grant_data["ndl_jalc_flag"] %}
                     {%- set idf_grant_labels = idf_grant_input[4] %}
                     {{ render_identifier_link(idf_grant_labels[0], idf_grant_labels[1], idf_grant_labels[2],
                     2, idf_grant_data["ndl_jalc_doi"], idf_grant_data["suffix"], item, item_id) }}
-                {%- endif %} <!-- TODO IF 8 E -->
+                {%- endif %}
 
                 <tr>
                     <td height="35">
@@ -69,7 +69,7 @@
                 <input type="hidden" id="msg_length_doi" value="{{_('Input value exceeds 255 characters.')}}" />
                 <input type="hidden" id="msg_required_doi" value="{{_('DOI has not been entered.')}}" />
                 <input type="hidden" id="idf_grant_method" value="{{idf_grant_method}}" />
-            {%- endif %} <!-- TODO IF 3 E -->
+            {%- endif %}
         </table>
     </div>
-{% endif %} <!-- TODO IF 1 E -->
+{% endif %}
