@@ -72,6 +72,8 @@ from invenio_stats.tasks import aggregate_events, process_events
 from invenio_stats.views import blueprint
 
 from tests.helpers import json_data, create_record
+from weko_index_tree.models import Index
+from weko_redis.redis import RedisConnection
 
 
 class TestSearch(RecordsSearch):
@@ -1143,3 +1145,37 @@ class CustomQuery:
         """Sample response."""
         return dict(bucket_id='test_bucket',
                     value=100)
+
+@pytest.fixture
+def redis_connect(app):
+    redis_connection = RedisConnection().connection(
+        db=app.config["CACHE_REDIS_DB"], kv=True
+    )
+    return redis_connection
+
+@pytest.fixture()
+def indextree(app, db, role_users, redis_connect):
+    app.config['WEKO_INDEX_TREE_DEFAULT_DISPLAY_NUMBER'] = 5
+    from weko_index_tree.api import Indexes
+    with patch("flask_login.utils._get_user", return_value=role_users[2]["obj"]):
+        for i in range(1, 5):
+            res =Indexes.create(0, {
+                "id": i,
+                "parent": 0,
+                "value": "index_{}".format(i),
+            })
+            index = Index.get_index_by_id(i)
+            index.public_state = True
+            index.harvest_public_state = True
+
+    # reset_index_tree_redis_data
+    key = "index_tree_view_" + os.environ.get('INVENIO_WEB_HOST_NAME') + "_"
+    redis_connect.delete(key+"en")
+    redis_connect.delete(key+"ja")
+
+    key = "index_tree_by_role_" + os.environ.get('INVENIO_WEB_HOST_NAME') + "_"
+    redis_connect.delete(key+"en_-99_0")
+    redis_connect.delete(key+"ja_-99_0")
+    for user in role_users:
+        redis_connect.delete(key+"en_" + str(user["id"]) + "_0")
+        redis_connect.delete(key+"ja_" + str(user["id"]) + "_0")
