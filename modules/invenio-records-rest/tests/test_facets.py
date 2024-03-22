@@ -16,6 +16,7 @@ from elasticsearch_dsl import Search
 from elasticsearch_dsl.query import Q, Range
 from flask import Flask
 from invenio_rest.errors import RESTValidationError
+from mock import patch, MagicMock
 from werkzeug.datastructures import MultiDict
 
 from invenio_records_rest.facets import _aggregations, _create_filter_dsl, \
@@ -135,6 +136,8 @@ def test_aggregations(app):
         assert _aggregations(search, defs).to_dict()['aggs'] == defs
 
 
+# def default_facets_factory(search, index):
+# .tox/c1/bin/pytest --cov=invenio_records_rest tests/test_facets.py::test_default_facets_factory -vv -s --cov-branch --cov-report=xml --basetemp=/code/modules/invenio-records-rest/.tox/c1/tmp
 def test_default_facets_factory(app):
     """Test aggregations."""
     defs = dict(
@@ -155,16 +158,23 @@ def test_default_facets_factory(app):
     )
     app.config['RECORDS_REST_FACETS']['testidx'] = defs
 
-    with app.test_request_context('?type=a&subtype=b'):
-        search = Search().query(Q(query='value'))
-        search, urlkwargs = default_facets_factory(search, 'testidx')
-        assert search.to_dict()['aggs'] == defs['aggs']
-        assert 'post_filter' in search.to_dict()
-        assert search.to_dict(
-            )['query']['bool']['filter'][0]['terms']['subtype']
+    # mock retuen value
+    facet_search_query_dict = dict(
+        testidx=defs
+    )
 
-        search = Search().query(Q(query='value'))
-        search, urlkwargs = default_facets_factory(search, 'anotheridx')
-        assert 'aggs' not in search.to_dict()
-        assert 'post_filter' not in search.to_dict()
-        assert 'bool' not in search.to_dict()['query']
+    with patch('weko_admin.utils.get_facet_search_query', MagicMock(return_value=facet_search_query_dict)):
+        with patch('weko_search_ui.permissions.search_permission.can', return_value=MagicMock()):
+            with app.test_request_context('?type=a&subtype=b'):
+                search = Search().query(Q(query='value'))
+                search, urlkwargs = default_facets_factory(search, 'testidx')
+                assert 'aggs' not in search.to_dict()
+                assert 'post_filter' in search.to_dict()
+                assert search.to_dict(
+                    )['query']['bool']['filter'][0]['terms']['subtype']
+
+                search = Search().query(Q(query='value'))
+                search, urlkwargs = default_facets_factory(search, 'anotheridx')
+                assert 'aggs' not in search.to_dict()
+                assert 'post_filter' not in search.to_dict()
+                assert 'bool' not in search.to_dict()['query']

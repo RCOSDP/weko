@@ -34,11 +34,11 @@ class MockSearchPerm:
 def test_get_permission_filter(i18n_app, users, client_request_args, indices):
     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
         res = get_permission_filter(33)
-        assert res==([Match(publish_status='0'), Range(publish_date={'lte': 'now/d','time_zone':'UTC'}), Terms(path=['33']), Bool(must=[Match(publish_status='0'), Match(relation_version_is_last='true')])], ['33','33/44'])
+        assert res==([Terms(publish_status=['0','1']), Range(publish_date={'lte': 'now/d','time_zone':'UTC'}), Terms(path=['33']), Bool(must=[Terms(publish_status=['0','1']), Match(relation_version_is_last='true')])], ['33','33/44'])
         mock_searchperm = MagicMock(side_effect=MockSearchPerm)
         with patch('weko_search_ui.query.search_permission', mock_searchperm):
             res = get_permission_filter()
-            assert res==([Bool(must=[Terms(path=['33','44'])], should=[Match(weko_creator_id='5'), Match(weko_shared_id='5'), Bool(must=[Match(publish_status='0'), Range(publish_date={'lte': 'now/d','time_zone':'UTC'})])]), Bool(must=[Match(relation_version_is_last='true')])], ['33','33/44'])
+            assert res==([Bool(must=[Terms(path=['33','44'])], should=[Bool(must=[Terms(publish_status=['0','1']), Match(weko_creator_id='5')]), Bool(must=[Terms(publish_status=['0','1']), Match(weko_shared_id='5')]), Bool(must=[Terms(publish_status=['0','1']), Range(publish_date={'lte': 'now/d','time_zone':'UTC'})])]), Bool(must=[Match(relation_version_is_last='true')])], ['33','33/44'])
 
 def is_exist_key(dictionary, key):
     for dic1 in dictionary:
@@ -973,7 +973,7 @@ def test_function_issue35902(app, users, communities, mocker):
         mocker.patch("weko_search_ui.query.search_permission",side_effect=MockSearchPerm)
         mocker.patch("weko_search_ui.permissions.search_permission",side_effect=MockSearchPerm)
         test = [
-            {"bool":{"should":[{"match":{"weko_creator_id":None}},{"match":{"weko_shared_id":None}},{"bool":{"must":[{"match":{"publish_status":"0"}},{"range":{"publish_date":{"lte":"now/d","time_zone":"UTC"}}}]}}],"must":[{"terms":{"path":[]}}]}},
+            {"bool":{"should":[{"bool":{"must":[{"terms":{"publish_status":["0","1"]}},{"match":{"weko_creator_id":None}}]}},{"bool":{"must":[{"terms":{"publish_status":["0","1"]}},{"match":{"weko_shared_id":None}}]}},{"bool":{"must":[{"terms":{"publish_status":["0"]}},{"range":{"publish_date":{"lte":"now/d","time_zone":"UTC"}}}]}}],"must":[{"terms":{"path":[]}}]}},
             {"bool":{"must":[{"match":{"relation_version_is_last":"true"}}]}},
         ]
         # not exist community
@@ -1043,7 +1043,7 @@ def test_function_issue35902(app, users, communities, mocker):
         
         # exist community
         test = [
-            {"bool":{"should":[{"match":{"weko_creator_id":None}},{"match":{"weko_shared_id":None}},{"bool":{"must":[{"match":{"publish_status":"0"}},{"range":{"publish_date":{"lte":"now/d","time_zone":"UTC"}}}]}}],"must":[{"bool":{}}]}},
+            {"bool":{"should":[{"bool":{"must":[{"terms":{"publish_status":["0","1"]}},{"match":{"weko_creator_id":None}}]}},{"bool":{"must":[{"terms":{"publish_status":["0","1"]}},{"match":{"weko_shared_id":None}}]}},{"bool":{"must":[{"terms":{"publish_status":["0"]}},{"range":{"publish_date":{"lte":"now/d","time_zone":"UTC"}}}]}}],"must":[{"bool":{}}]}},
             {"bool":{"must":[{"match":{"relation_version_is_last":"true"}}]}},
         ]
         # full text, detail search

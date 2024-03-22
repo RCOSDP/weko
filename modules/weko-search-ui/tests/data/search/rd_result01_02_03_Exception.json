@@ -91,7 +91,7 @@
                 "created": "2022-05-24T08:28:07.807702+00:00",
                 "id": 1,
                 "links": {
-                    "self": "http://localhost:8443/records/1"
+                    "self": "http://test_server/records/1"
                 },
                 "metadata": {
                     "_comment": [
@@ -891,7 +891,7 @@
                 "created": "2022-05-24T08:28:07.807702+00:00",
                 "id": 2,
                 "links": {
-                    "self": "http://localhost:8443/records/2"
+                    "self": "http://test_server/records/2"
                 },
                 "metadata": {
                     "_comment": [
@@ -1689,7 +1689,7 @@
                 "created": "2022-05-24T08:28:07.807702+00:00",
                 "id": 3,
                 "links": {
-                    "self": "http://localhost:8443/records/3"
+                    "self": "http://test_server/records/3"
                 },
                 "metadata": {
                     "_comment": [

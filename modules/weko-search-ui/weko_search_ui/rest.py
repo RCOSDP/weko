@@ -539,11 +539,12 @@ class GetFacetSearchConditions(ContentNegotiatedMethodView):
         size = request.values.get("size", 20, type=int)
 
         facets = get_facet_search_query()
+        search_index = current_app.config["SEARCH_UI_SEARCH_INDEX"]
+        active_facets = facets[search_index]["aggs"].keys() if facets and search_index and "aggs" in facets[search_index] else []
 
         if search_type == current_app.config["WEKO_SEARCH_TYPE_DICT"]["INDEX"] and re.fullmatch('\d+', query):
             ### index search ###
             params = {}
-            search_index = current_app.config["SEARCH_UI_SEARCH_INDEX"]
             if facets and search_index and "post_filters" in facets[search_index]:
                 post_filters = facets[search_index]["post_filters"]
                 for param in post_filters:
@@ -588,14 +589,16 @@ class GetFacetSearchConditions(ContentNegotiatedMethodView):
 
         response = {}
         for key in keys:
-            response[key] = []
-            if key in aggs:
-                buckets = aggs[key].get('buckets', [])
-                for bucket in buckets:
-                    condition = dict(
-                        name = bucket['key'],
-                        count = bucket['doc_count']
-                    )
-                    response[key].append(condition)
+            if key in active_facets:
+                response[key] = []
+                if key in aggs:
+                    target = aggs[key] if key not in aggs[key] else aggs[key][key]
+                    buckets = target.get('buckets', [])
+                    for bucket in buckets:
+                        condition = dict(
+                            name = bucket['key'],
+                            count = bucket['doc_count']
+                        )
+                        response[key].append(condition)
 
         return make_response(jsonify(response), 200)

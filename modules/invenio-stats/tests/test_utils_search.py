@@ -18,7 +18,7 @@ from invenio_stats.utils_search import (
 #   def get_permission_filter(index_id: str = None):
 #   def check_admin_user():
 # .tox/c1/bin/pytest -vv -s --basetemp=/code/modules/invenio-stats/.tox/c1/tmp --full-trace tests/test_utils_search.py::test_billing_file_search_factory --cov=invenio_stats --cov-branch --cov-report=term
-def test_billing_file_search_factory(i18n_app, role_users):
+def test_billing_file_search_factory(i18n_app, role_users, indextree):
     from os.path import join, dirname
     search = RecordsSearch()
     with patch("flask_login.utils._get_user", return_value=role_users[3]['obj']):
@@ -40,7 +40,7 @@ class MockSearchPerm:
     def can(self):
         return True
 
-def test_get_permission_filter(i18n_app, role_users):
+def test_get_permission_filter(i18n_app, role_users, indextree):
     with patch("flask_login.utils._get_user", return_value=role_users[3]['obj']):
         with patch('flask_principal.Permission.can', MagicMock(return_value=True)):
             res = get_permission_filter('33')
