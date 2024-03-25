@@ -295,7 +295,7 @@
                     <input id="mail-address-label" type="hidden" value="{{_('Mail address')}}" />
                     <input id="import-button-name" type="hidden" value="{{_('Feedback Mail Import')}}" />
                   {%- endblock feedback_mail_list %}
-
+<!--
                   {%- block none_contents_approval %}
                   <div id="none-contents-approval"></div>
                   <input id="no_file_approval_checkbox_label" type="hidden" value="{{_('Set usage application workflow for item')}}" />
@@ -303,7 +303,7 @@
                   <input id="terms_and_conditions_label" type="hidden" value="{{_('Terms and Conditions')}}" />
                   <input id="invalid-item-application-format" type="hidden" value="{{_('error message for item application')}}" />                  
                   {%- endblock none_contents_approval %}
-
+-->
                   {% if record|length %} <!-- Check Item Registration is edit mode then show version_management -->
                     {%- block radio_version_management %}
                     <div id="react-component-version">
