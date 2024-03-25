@@ -1301,9 +1301,20 @@ class IdentifierHandle(object):
         try:
             with db.session.no_autoflush:
                 if not chk_value:
+
+                    noctis = PersistentIdentifier.query.filter_by(
+                        pid_type=pid_type,
+                        object_uuid=self.item_uuid
+                    ).all()
+
                     return PersistentIdentifier.query.filter_by(
                         pid_type=pid_type,
                         object_uuid=self.item_uuid).all()
+                
+                lucis = PersistentIdentifier.query.filter_by(
+                    pid_type=pid_type,
+                    pid_value=chk_value).one_or_none()
+
                 return PersistentIdentifier.query.filter_by(
                     pid_type=pid_type,
                     pid_value=chk_value).one_or_none()
@@ -1324,6 +1335,7 @@ class IdentifierHandle(object):
         """
         try:
             prev_pidstore = self.check_pidstore_exist(pid_type, reg_value)
+
             if not prev_pidstore:
                 return PersistentIdentifier.create(
                     pid_type,
@@ -1419,6 +1431,7 @@ class IdentifierHandle(object):
                     atr_nam='Identifier Registration',
                     atr_val=input_value,
                     atr_typ=input_type)
+        
 
     def get_idt_registration_data(self):
         """Get Identifier Registration data.
@@ -1465,6 +1478,7 @@ class IdentifierHandle(object):
                          'actions': deposit.get('publish_status')}
                 deposit.update(index, self.item_metadata)
                 deposit.commit()
+
         except SQLAlchemyError as ex:
             current_app.logger.debug(ex)
             db.session.rollback()
@@ -1631,12 +1645,46 @@ def get_parent_pid_with_type(pid_type, object_uuid):
     """
     try:
         record = WekoRecord.get_record(object_uuid)
+
+        # DOI RESERVATION FIX ------------ START
+        record_keys = [
+            key for key in record.keys()
+        ]
+        doi_text = ""
+
+        for doi_item_key in record_keys:
+            if isinstance(record.get(doi_item_key), dict):
+                if record.get(doi_item_key).get("attribute_value_mlt") and \
+                        isinstance(record.get(doi_item_key).get("attribute_value_mlt"), list) and \
+                        record.get(doi_item_key).get("attribute_value_mlt") is not None:
+                    if record.get(doi_item_key).get("attribute_value_mlt")[0].get("subitem_identifier_reg_text"):
+                        doi_text = record.get(doi_item_key) \
+                            .get("attribute_value_mlt")[0] \
+                            .get("subitem_identifier_reg_text")
+                            
+        reserved_pid_doi = PersistentIdentifier.query.filter_by(
+            pid_type=pid_type,
+            pid_value=f"https://doi.org/" + doi_text,
+            status=PIDStatus.REGISTERED
+        ).order_by(
+            db.desc(PersistentIdentifier.created)
+        ).first()
+        
         with db.session.no_autoflush:
             pid_object = PersistentIdentifier.query.filter_by(
                 pid_type=pid_type,
                 object_uuid=record.pid_parent.object_uuid
             ).order_by(PersistentIdentifier.created.desc()).first()
-            return pid_object
+
+            if pid_object:
+                return pid_object
+            else:
+                if reserved_pid_doi:
+                    return reserved_pid_doi
+                else:
+                    return None
+        # DOI RESERVATION FIX ------------ END
+
     except PIDDoesNotExistError as pid_not_exist:
         current_app.logger.error(pid_not_exist)
         return None
@@ -1861,8 +1909,20 @@ def handle_finish_workflow(deposit, current_pid, recid):
     item_id = None
     try:
         pid_without_ver = get_record_without_version(current_pid)
+
+        # DOI RESERVATION FIX ------------ START
+        # if ".1" in current_pid.pid_value:
+        #     current_pid.pid_value = current_pid.pid_value[0:-2]
+        #     current_pid.pid_value = current_pid.pid_value + ".0"
+        #     print(f"IF current_pid.pid_value ~ {current_pid.pid_value}")
+        
         if ".0" in current_pid.pid_value:
             deposit.commit()
+
+        # else:
+        #     deposit.commit()
+        # DOI RESERVATION FIX ------------ END
+
         deposit.publish()
         updated_item = UpdateItem()
         # publish record without version ID when registering newly

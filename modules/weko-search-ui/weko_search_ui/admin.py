@@ -387,6 +387,7 @@ class ItemImportView(BaseView):
                     can_edit_indexes
                 ),
             )
+
         return jsonify(code=1, check_import_task_id=task.task_id)
 
     @expose("/get_check_status", methods=["POST"])
@@ -397,6 +398,11 @@ class ItemImportView(BaseView):
 
         if data and data.get("task_id"):
             task = import_item.AsyncResult(data.get("task_id"))
+            task2 = import_item(item=data,request_info=None)
+
+            # from .utils import import_items_to_system
+            # import_items_to_system
+
             if task and isinstance(task.result, dict):
                 start_date = task.result.get("start_date")
                 end_date = task.result.get("end_date")

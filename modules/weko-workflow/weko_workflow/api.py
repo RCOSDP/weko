@@ -1031,10 +1031,12 @@ class WorkActivity(object):
         :param identifier:
         :return:
         """
+
         with db.session.begin_nested():
             action_identifier = ActionIdentifier.query.filter_by(
                 activity_id=activity_id,
                 action_id=action_id).one_or_none()
+
             if action_identifier:
                 action_identifier.action_identifier_select = identifier.get(
                     'action_identifier_select')
@@ -1051,6 +1053,7 @@ class WorkActivity(object):
                     identifier.get(
                         'action_identifier_ndl_jalc_doi')
                 db.session.merge(action_identifier)
+
             else:
                 new_action_identifier = ActionIdentifier(
                     activity_id=activity_id,
@@ -1069,6 +1072,7 @@ class WorkActivity(object):
                 db.session.add(new_action_identifier)
 
         db.session.commit()
+
 
     def create_or_update_action_feedbackmail(self,
                                              activity_id,

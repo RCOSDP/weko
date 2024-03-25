@@ -1476,6 +1476,81 @@ def test_is_pubdate_in_future():
         assert record['publish_date'] == now.strftime('%Y-%m-%d')
         assert is_pubdate_in_future(record)==False
 
+# ! TEST FOR DOI RESERVATION
+def test_is_pubdate_in_future_for_doi_reservation(app, db_itemtype, db_records, workflow):
+    from sqlalchemy.exc import SQLAlchemyError
+    app.config['WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME'] = 'jpcoar_v1_mapping'
+    app.config['WEKO_SCHEMA_DDI_SCHEMA_NAME'] = 'ddi_mapping'
+
+    test_data = MagicMock()
+    test_data.first = lambda x: MagicMock()
+    test_data.files = MagicMock()
+    test_data.files.bucket = MagicMock()
+    test_data.files.bucket.id = 1
+    test_data.bucket = MagicMock()
+    test_data.bucket.id = MagicMock()
+    test_data.get = lambda x: False
+
+    with app.test_request_context():
+        with patch('invenio_oaiserver.response.is_private_index', return_value=False):
+            with patch('weko_workflow.api.WorkActivity.get_workflow_activity_by_item_id', return_value=MagicMock()):
+                with patch('weko_workflow.api.WorkActivity.get_activity_detail', return_value=MagicMock()):
+                    with patch('weko_workflow.api.WorkActivity.create_or_update_action_identifier', return_value=MagicMock()):
+                        with patch('invenio_pidstore.models.PersistentIdentifier.get_by_object', return_value=MagicMock()):
+                            assert is_pubdate_in_future(db_records[0][4])[-1] == 500
+
+                            with patch('weko_workflow.api.WorkActivity.upt_activity_action_status', return_value=MagicMock()):
+                                with patch('weko_workflow.api.WorkActivity.upt_activity_action_comment', return_value=MagicMock()):
+                                    with patch('weko_deposit.api.WekoDeposit.merge_data_to_record_without_version', return_value=''):
+                                        with patch('weko_deposit.api.WekoDeposit.update', return_value=''):
+                                            db_records[0][4]['item_1617186819068']['attribute_value_mlt'][0]['subitem_identifier_reg_type'] = 'Crossref'
+                                            is_pubdate_in_future(db_records[0][4])
+
+                            with patch('weko_deposit.api.WekoDeposit.merge_data_to_record_without_version', return_value=''):
+                                with patch('weko_deposit.api.WekoDeposit.update', return_value=''):
+                                    with patch('weko_deposit.api.WekoDeposit.publish', return_value=''):
+                                        with patch('flask.has_request_context', side_effect=BaseException):
+                                            with pytest.raises(BaseException) as e:
+                                                db_records[0][4]['item_1617186819068']['attribute_value_mlt'][0]['subitem_identifier_reg_type'] = 'DataCite'
+                                                assert is_pubdate_in_future(db_records[0][4])[-1] == 500
+
+                            with patch('invenio_oaiserver.response.is_private_index', return_value=True):
+                                assert is_pubdate_in_future(db_records[0][4]) == False
+
+                            with patch('weko_deposit.api.WekoDeposit.merge_data_to_record_without_version', return_value=''):
+                                with patch('weko_deposit.api.WekoDeposit.update', return_value=''):
+                                    with patch('weko_deposit.api.WekoDeposit.publish', return_value=''):
+                                        with patch('weko_deposit.api.WekoDeposit.files', test_data):
+                                            with patch('invenio_files_rest.models.Bucket', test_data):
+                                                with patch('invenio_records_files.models.RecordsBuckets.create', return_value=''):
+                                                    with pytest.raises(SQLAlchemyError) as e:
+                                                        db_records[0][4]['item_1617186819068']['attribute_value_mlt'][0]['subitem_identifier_reg_type'] = 'NDL JaLC'
+                                                        is_pubdate_in_future(db_records[0][4])
+
+
+def test_is_pubdate_in_future_for_doi_reservation_2(app, db_itemtype, db_records, workflow):
+    from sqlalchemy.exc import SQLAlchemyError
+    app.config['WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME'] = 'jpcoar_v1_mapping'
+    app.config['WEKO_SCHEMA_DDI_SCHEMA_NAME'] = 'ddi_mapping'
+
+    test_data = MagicMock()
+    test_data.first = lambda x: MagicMock()
+    test_data.files = MagicMock()
+    test_data.files.bucket = MagicMock()
+    test_data.files.bucket.id = 1
+    test_data.bucket = MagicMock()
+    test_data.bucket.id = MagicMock()
+    test_data.get = lambda x: False
+
+    with app.test_request_context():
+        with patch('invenio_oaiserver.response.is_private_index', return_value=False):
+            with patch('weko_workflow.api.WorkActivity.get_workflow_activity_by_item_id', return_value=None):
+                with patch('weko_workflow.api.WorkActivity.get_activity_detail', return_value=MagicMock()):
+                    with patch('weko_workflow.api.WorkActivity.create_or_update_action_identifier', return_value=MagicMock()):
+                        with patch('invenio_pidstore.models.PersistentIdentifier.get_by_object', return_value=MagicMock()):
+                            with pytest.raises(AttributeError) as e:
+                                is_pubdate_in_future(db_records[0][4])
+
 
 # def is_private_index(record):
 # .tox/c1/bin/pytest --cov=invenio_oaiserver tests/test_response.py::test_is_private_index -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiserver/.tox/c1/tmp

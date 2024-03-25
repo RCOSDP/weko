@@ -107,6 +107,7 @@ function getResultErrorMsg(error_id) {
 class MainLayout extends React.Component {
 
   constructor() {
+
     super()
     this.state = {
       tab: 'select',
@@ -285,6 +286,7 @@ class MainLayout extends React.Component {
     this.setState({
       is_import: true
     })
+
     $.ajax({
       url: urlImport,
       type: 'POST',
@@ -317,6 +319,7 @@ class MainLayout extends React.Component {
   getStatus() {
     const that = this
     const { tasks } = this.state
+
     $.ajax({
       url: urlCheckStatus,
       method: 'POST',

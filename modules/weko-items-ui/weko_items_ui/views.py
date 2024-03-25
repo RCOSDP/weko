@@ -57,6 +57,7 @@ from weko_workflow.utils import check_an_item_is_locked, \
     get_record_by_root_ver, get_thumbnails, prepare_edit_workflow, \
     set_files_display_type
 from weko_schema_ui.models import PublishStatus
+from weko_records_ui.utils import is_future
 from werkzeug.utils import import_string
 from webassets.exceptions import BuildError
 from werkzeug.exceptions import BadRequest
@@ -892,6 +893,7 @@ def prepare_edit_item():
                             object_type='rec',
                             getter=record_class.get_record)
         recid, deposit = resolver.resolve(pid_value)
+
         authenticators = [str(deposit.get('owner')),
                           str(deposit.get('weko_shared_id'))]
         user_id = str(get_current_user())
@@ -1312,13 +1314,21 @@ def check_record_doi_indexes(pid_value='0'):
     Rises:
         invenio_pidstore.errors.PIDDoesNotExistError
     """    
+    
+    # DOI RESERVATION FIX ------------ START
     doi = int(request.args.get('doi', '0'))
     record = WekoRecord.get_record_by_pid(pid_value)
-    if (record.pid_doi or doi > 0) and \
+    doi_is_reserved = request.args.get('doi_is_reserved', 'false')
+    adt = record.get('publish_date')
+
+    if doi_is_reserved == "true" and (record.pid_doi or doi > 0) and is_future(adt):
+        pass
+    elif (record.pid_doi or doi > 0) and \
             not check_index_permissions(record=record, is_check_doi=True):
         return jsonify({
             'code': -1
         })
+    # DOI RESERVATION FIX ------------ END
 
     return jsonify({'code': 0})
 

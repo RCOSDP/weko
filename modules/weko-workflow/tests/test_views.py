@@ -2062,6 +2062,26 @@ def test_next_action(client, db, users, db_register_fullaction, db_records, user
     assert data["code"] == 0
     assert data["msg"] == _("success")
 
+
+# ! TEST FOR DOI RESERVATION
+def test_next_action_for_doi_reservation(guest, client, db_register_fullaction):
+    input = {'action_version': 1, 'commond': 1}
+    url = url_for('weko_workflow.next_action',
+                  activity_id="1", action_id=1)
+    roles = {
+        'allow': [],
+        'deny': []
+    }
+    action_users = {
+        'allow': [],
+        'deny': []
+    }
+    with patch('weko_workflow.views.WorkActivity.get_activity_action_role',
+               return_value=(roles, action_users)):
+        res = guest.post(url, json=input)
+        assert res.status_code != 403
+
+
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_next_action_usage_application -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 @pytest.mark.parametrize('users_index, status_code', [
     (0, 200)
@@ -3739,6 +3759,92 @@ def test_display_activity(client, users, db_register,mocker,redis_connect,withou
                                 with patch("flask_login.utils._get_user",return_value=mock_user):
                                     res = client.post(url, query_string=input)
                                     mock_render_template.assert_called()
+
+
+# ! TEST FOR DOI RESERVATION
+def test_display_activity_for_doi_reservation(client, users, db_register, redis_connect, without_remove_session):
+    login(client=client, email=users[2]['email'])
+    workflow_detail = WorkFlow.query.filter_by(id=1).one_or_none()
+    mock_render_template = MagicMock(return_value=jsonify({}))
+    activity_detail = Activity.query.filter_by(activity_id='A-00000001-10001').one_or_none()
+    cur_action = activity_detail.action
+    action_endpoint = 'item_login'
+    action_id = cur_action.id
+    histories = 1
+    item_metadata = ItemMetadata()
+    item_metadata.id = '37075580-8442-4402-beee-05f62e6e1dc2'
+    item = None
+    steps = 1
+    temporary_comment = 1
+    test_pid = PersistentIdentifier()
+    test_pid.pid_value = '1'
+    test_comm= Community()
+    test_comm.id = 'test'
+    roles = {
+        'allow': [],
+        'deny': []
+    }
+    action_users = {
+        'allow': [],
+        'deny': []
+    }
+    identifier = {'action_identifier_select': '',
+                'action_identifier_jalc_doi': '',
+                'action_identifier_jalc_cr_doi': '',
+                'action_identifier_jalc_dc_doi': '',
+                'action_identifier_ndl_jalc_doi': ''
+                }
+    template_url = "weko_items_ui/iframe/item_edit.html"
+    need_file = False
+    need_billing_file = False
+    record = {}
+    json_schema = "test"
+    schema_form = "test"
+    item_save_uri = ""
+    files = []
+    endpoints = {}
+    need_thumbnail = False
+    files_thumbnail = []
+    allow_multi_thumbnail = False
+    license_list = []
+    record_detail_alt = dict(
+        record=None,
+        files=None,
+        files_thumbnail=None,
+        pid=None
+    )
+    # mocker.patch('weko_workflow.views.WorkActivity.get_activity_action_role',
+    #             return_value=(roles, action_users))
+    # mocker.patch('weko_workflow.views.WorkActivity.get_action_identifier_grant',return_value=identifier)
+    # mocker.patch('weko_workflow.views.check_authority_action',return_value=1)
+    # mocker.patch('weko_workflow.views.set_files_display_type',return_value=[])
+    # mocker.patch('weko_workflow.views.WorkActivity.get_action_journal')
+    # mocker.patch('weko_workflow.views.get_files_and_thumbnail',return_value=(["test1","test2"],files_thumbnail))
+    # mocker.patch('weko_workflow.views.get_usage_data')
+    # mocker.patch('weko_workflow.views.is_usage_application_item_type')
+    # mocker.patch('weko_theme.views.get_design_layout',return_value=(None,True))
+    # mocker.patch('weko_workflow.views.RedisConnection.connection',return_value=redis_connect)
+
+    url = url_for('weko_workflow.display_activity', activity_id='A-00000001-10001')
+    input = {'community': 'test'}
+    action_endpoint = 'identifier_grant'
+    item = item_metadata
+    record = {'_oai': {'id': 'oai:weko3.example.org:00000023.0', 'sets': ['1706063405437']}, 'path': ['1706063405437'], 'owner': '1', 'recid': '23.0', 'title': ['doi-test-15'], 'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2024-02-16'}, '_buckets': {'deposit': '5abd8cdc-1f15-4a9c-8c60-579de79053e1'}, '_deposit': {'id': '23.0', 'pid': {'type': 'depid', 'value': '23.0', 'revision_id': 0}, 'owner': '1', 'owners': [1], 'status': 'draft', 'created_by': 1}, 'item_title': 'doi-test-15', 'author_link': [], 'item_type_id': '15', 'publish_date': '2024-02-16', 'control_number': '23.0', 'publish_status': '0', 'weko_shared_id': -1, 'item_1617186331708': {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'doi-test-15', 'subitem_1551255648112': 'en'}]}, 'item_1617186819068': {'attribute_name': 'Identifier Registration', 'attribute_value_mlt': [{'subitem_identifier_reg_text': 'aaa/0000000023', 'subitem_identifier_reg_type': 'JaLC'}]}, 'item_1617187024783': {'attribute_name': 'Page Start', 'attribute_value_mlt': [{'subitem_1551256198917': '1'}]}, 'item_1617187056579': {'attribute_name': 'Bibliographic Information', 'attribute_value_mlt': [{'bibliographicPageStart': '1'}]}, 'item_1617258105262': {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_b239', 'resourcetype': 'editorial'}]}, 'item_1617605131499': {'attribute_name': 'File', 'attribute_type': 'file', 'attribute_value_mlt': [{'url': {'url': '/'}}]}, 'relation_version_is_last': True}
+
+    with patch('weko_workflow.views.get_activity_display_info',
+               return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
+               steps, temporary_comment, workflow_detail)):
+        with patch('weko_workflow.views.item_login',return_value=(template_url,
+                need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
+                files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
+            with patch('weko_workflow.views.get_pid_and_record', return_value=(test_pid, record)):
+                with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
+                    with patch('weko_records_ui.utils.get_list_licence',return_value=license_list):
+                        with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
+                            with patch('weko_workflow.views.render_template', mock_render_template):
+                                res = client.post(url, query_string=input)
+                                mock_render_template.assert_called()
+
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_check_authority_action -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_check_authority_action(app,db,users,db_register,db_records):

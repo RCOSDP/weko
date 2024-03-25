@@ -14,7 +14,9 @@ from __future__ import absolute_import, print_function
 import uuid
 import copy
 import mock
+import json
 import pkg_resources
+from os.path import dirname, join
 
 from dojson.contrib.marc21 import marc21
 from dojson.contrib.marc21.utils import load
@@ -36,6 +38,11 @@ from invenio_oaiserver.provider import OAIIDProvider
 from invenio_oaiserver.minters import oaiid_minter
 from invenio_oaiserver.models import OAISet
 from invenio_oaiserver.receivers import after_insert_oai_set
+
+
+def json_data(filename):
+    with open(join(dirname(__file__),filename), "r") as f:
+        return json.load(f)
 
 
 def load_records(app, filename, schema, tries=5):
@@ -161,3 +168,37 @@ def create_record2(record_data, item_data):
         #deposit.commit()
 
     return recid, depid, record, item, parent, oai
+
+def create_record_3(record_data, item_data):
+    """Create a test record."""
+    with db.session.begin_nested():
+        record_data = copy.deepcopy(record_data)
+        item_data = copy.deepcopy(item_data)
+        rec_uuid = uuid.uuid4()
+
+        recid = PersistentIdentifier.create('recid', record_data["recid"],object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
+        depid = PersistentIdentifier.create('depid', record_data["recid"],object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
+        rel = PIDRelation.create(recid,depid,3)
+        db.session.add(rel)
+        parent = None
+        doi = None
+        if not ('.' in record_data["recid"]):
+            parent = PersistentIdentifier.create('parent', "parent:{}".format(record_data["recid"]),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
+            rel = PIDRelation.create(parent,recid,2,0)
+            db.session.add(rel)
+            if(int(record_data["recid"])%2==1):
+                doi = PersistentIdentifier.create('doi', " https://doi.org/10.xyz/{}".format((str(record_data["recid"])).zfill(10)),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
+        else:
+            parent = PersistentIdentifier.get('parent','parent:{}'.format((str(record_data["recid"])).split('.')[0]))
+            rel = PIDRelation.create(parent,recid,2,(str(record_data["recid"])).split('.')[1])
+            db.session.add(rel)
+            
+        record = WekoRecord.create(record_data, id_=rec_uuid)
+        deposit = WekoDeposit(record, record.model)
+
+        deposit.commit()
+
+        item = ItemsMetadata.create(item_data, id_=rec_uuid)
+    
+    return depid, recid,parent,doi,record, item
+

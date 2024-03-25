@@ -338,10 +338,279 @@ def is_private_workflow(record):
     return str(record.get("publish_status")) == PublishStatus.PRIVATE.value
 
 
-def is_pubdate_in_future(record):
+def is_pubdate_in_future(record, isReserved=False):
     """Check pubdate of workflow is in future."""
     from weko_records_ui.utils import is_future
     adt = record.get('publish_date')
+
+    # DOI RESERVATION FIX ------------ START
+    if not is_future(adt):
+        from invenio_pidstore.models import PersistentIdentifier
+        record_keys = [
+            key for key in record.keys()
+        ]
+        doi_text = ""
+
+        for doi_item_key in record_keys:
+            if isinstance(record.get(doi_item_key), dict):
+                if record.get(doi_item_key).get("attribute_value_mlt") and \
+                        isinstance(record.get(doi_item_key).get("attribute_value_mlt"), list) and \
+                        record.get(doi_item_key).get("attribute_value_mlt") is not None:
+                    if record.get(doi_item_key).get("attribute_value_mlt")[0].get("subitem_identifier_reg_text"):
+                        doi_text = record.get(doi_item_key) \
+                            .get("attribute_value_mlt")[0] \
+                            .get("subitem_identifier_reg_text")
+                            
+        reserved_pid_doi = PersistentIdentifier.query.filter_by(
+            pid_type="doi",
+            pid_value=f"https://doi.org/" + doi_text,
+            status=PIDStatus.REGISTERED
+        ).order_by(
+            db.desc(PersistentIdentifier.created)
+        ).first()
+
+        if ((not isReserved and doi_text) or (not reserved_pid_doi and doi_text)) \
+                    and not is_private_index(record):
+            from weko_workflow.models import ActionIdentifier, Activity, ActionStatusPolicy
+            from weko_workflow.config import IDENTIFIER_GRANT_SELECT_DICT
+            from weko_workflow.utils import prepare_edit_workflow, get_actionid, IdentifierHandle, \
+                check_doi_validation_not_pass, convert_record_to_item_metadata, saving_doi_pidstore, \
+                handle_finish_workflow
+            from weko_workflow.api import WorkActivity
+            from weko_workflow.views import previous_action
+            from weko_items_ui.views import prepare_edit_item
+            from weko_items_ui.utils import get_workflow_by_item_type_id
+            from werkzeug.utils import import_string
+            from invenio_pidstore.resolver import Resolver
+            from weko_workflow.api import WorkActivity
+            from invenio_pidrelations.contrib.versioning import PIDVersioning
+            from weko_records.api import ItemTypes
+            from weko_records_ui.utils import get_record_permalink
+            from weko_workflow.schema.marshmallow import ResponseMessageSchema
+            from flask import jsonify, has_request_context, abort
+            from weko_deposit.signals import item_created
+
+            identifier_grant = {
+                'action_identifier_select': "",
+                'action_identifier_jalc_doi': "",
+                'action_identifier_jalc_cr_doi': "",
+                'action_identifier_jalc_dc_doi': "",
+                'action_identifier_ndl_jalc_doi': ""
+            }
+
+            doi_url = "https://doi.org/"
+
+            post_json = {
+                "identifier_grant_jalc_doi_link": "",
+                "identifier_grant_jalc_cr_doi_link": "",
+                "identifier_grant_jalc_dc_doi_link": "",
+                "identifier_grant_ndl_jalc_doi_link": "",
+            }
+            
+            record_title = record.get("title")[0]
+
+            action_identifier = {}
+            record_keys = [key for key in record.keys()]
+            for key in record_keys:
+                if isinstance(record[key], dict):
+                    if "attribute_value_mlt" in record[key].keys():
+                        if record[key].get("attribute_value_mlt") and \
+                                isinstance(record[key].get("attribute_value_mlt"), list):
+                            for identifier_reg_type in record[key].get("attribute_value_mlt"):
+                                if isinstance(identifier_reg_type, dict):
+                                    if identifier_reg_type.get("subitem_identifier_reg_text"):
+                                        action_identifier['subitem_identifier_reg_text'] = identifier_reg_type.get("subitem_identifier_reg_text")
+                                    if identifier_reg_type.get("subitem_identifier_reg_type"):
+                                        action_identifier['subitem_identifier_reg_type'] = identifier_reg_type.get("subitem_identifier_reg_type")
+                                        
+                                        if identifier_reg_type.get("subitem_identifier_reg_type") == "JaLC":
+                                            post_json["identifier_grant_jalc_doi_link"] = doi_url + identifier_reg_type.get("subitem_identifier_reg_text")
+                                        elif identifier_reg_type.get("subitem_identifier_reg_type") == "Crossref":
+                                            post_json["identifier_grant_jalc_doi_link"] = doi_url + identifier_reg_type.get("subitem_identifier_reg_text")
+                                        elif identifier_reg_type.get("subitem_identifier_reg_type") == "DataCite":
+                                            post_json["identifier_grant_jalc_doi_link"] = doi_url + identifier_reg_type.get("subitem_identifier_reg_text")
+                                        elif identifier_reg_type.get("subitem_identifier_reg_type") == "NDL JaLC":
+                                            post_json["identifier_grant_jalc_doi_link"] = doi_url + identifier_reg_type.get("subitem_identifier_reg_text")
+
+            if action_identifier.get("subitem_identifier_reg_type") == "JaLC":
+                identifier_grant["action_identifier_select"] = "1"
+            elif action_identifier.get("subitem_identifier_reg_type") == "Crossref":
+                identifier_grant["action_identifier_select"] = "2"
+            elif action_identifier.get("subitem_identifier_reg_type") == "DataCite":
+                identifier_grant["action_identifier_select"] = "3"
+            elif action_identifier.get("subitem_identifier_reg_type") == "NDL JaLC":
+                identifier_grant["action_identifier_select"] = "4"
+            
+            pid_value = record.get('_deposit', {}).get('pid', {}).get('value')
+            record_class = import_string('weko_deposit.api:WekoDeposit')
+            resolver = Resolver(
+                pid_type='recid',
+                object_type='rec',
+                getter=record_class.get_record
+            )
+            recid, deposit = resolver.resolve(pid_value)
+
+            draft_pid = PersistentIdentifier.query.filter_by(
+                pid_type='recid',
+                pid_value="{}.0".format(recid.pid_value)
+            ).one_or_none()
+
+            from sqlalchemy.exc import SQLAlchemyError
+            from weko_deposit.api import WekoDeposit
+            from invenio_files_rest.models import Bucket
+            from invenio_records_files.models import RecordsBuckets
+
+            if not draft_pid:
+                draft_record = deposit.prepare_draft_item(recid)
+                # create item link info of draft record from parent record
+                weko_record = WekoRecord.get_record_by_pid(
+                    draft_record.pid.pid_value)
+                if weko_record:
+                    weko_record.update_item_link(recid.pid_value)
+            else:
+                # Clone org bucket into draft record.
+                try:
+                    _parent = WekoDeposit.get_record(recid.object_uuid)
+                    _deposit = WekoDeposit.get_record(draft_pid.object_uuid)
+                    _deposit['path'] = _parent.get('path')
+                    _deposit.merge_data_to_record_without_version(recid, True)
+                    _deposit.publish()
+                    _bucket = Bucket.get(_deposit.files.bucket.id)
+
+                    if not _bucket:
+                        _bucket = Bucket.create(
+                            quota_size=current_app.config['WEKO_BUCKET_QUOTA_SIZE'],
+                            max_file_size=current_app.config['WEKO_MAX_FILE_SIZE'],
+                        )
+                        RecordsBuckets.create(record=_deposit.model, bucket=_bucket)
+                        _deposit.files.bucket.id = _bucket
+
+                    bucket = deposit.files.bucket
+
+                    sync_bucket = RecordsBuckets.query.filter_by(
+                        bucket_id=_deposit.files.bucket.id
+                    ).first()
+
+                    snapshot = bucket.snapshot(lock=False)
+                    snapshot.locked = False
+                    _bucket.locked = False
+
+                    sync_bucket.bucket_id = snapshot.id
+                    _deposit['_buckets']['deposit'] = str(snapshot.id)
+
+                    db.session.add(sync_bucket)
+                    _bucket.remove()
+
+                    _metadata = convert_record_to_item_metadata(deposit)
+                    _metadata['deleted_items'] = {}
+                    _cur_keys = [_key for _key in _metadata.keys()
+                                if 'item_' in _key]
+                    _drf_keys = [_key for _key in _deposit.item_metadata.keys()
+                                if 'item_' in _key]
+                    _metadata['deleted_items'] = list(set(_drf_keys) - set(_cur_keys))
+                    
+                    # _deposit.publish()
+
+                    index = {'index': _deposit.get('path', []),
+                            'actions': _deposit.get('publish_status')}
+                    args = [index, _metadata]
+                    _deposit.update(*args)
+                    _deposit.commit()
+
+                except SQLAlchemyError as ex:
+                    raise ex
+            
+            post_activity = {}
+            item_type_id = deposit.get('item_type_id')
+            item_type = ItemTypes.get_by_id(item_type_id)
+            activity = WorkActivity()
+            latest_pid = PIDVersioning(child=recid).last_child
+            item_uuid = latest_pid.object_uuid
+
+            post_workflow = activity.get_workflow_activity_by_item_id(item_uuid)
+
+            if not post_workflow:
+                post_workflow = activity.get_workflow_activity_by_item_id(
+                    recid.object_uuid
+                )
+
+            workflow = get_workflow_by_item_type_id(
+                item_type.name_id,
+                item_type_id
+            )
+            
+            post_activity['workflow_id'] = workflow.id
+            post_activity['flow_id'] = workflow.flow_id
+            post_activity['itemtype_id'] = item_type_id
+            post_activity['community'] = 'Root Index'
+            post_activity['post_workflow'] = post_workflow
+
+            # doi_reservation_record_activity = post_workflow
+            doi_reservation_record_activity_id = post_workflow.activity_id
+            # doi_reservation_record_action_identifier = ActionIdentifier.query.filter_by(activity_id=doi_reservation_record_activity_id).one_or_none()
+            identifier_actionid = get_actionid('identifier_grant')
+            work_activity = WorkActivity()
+            activity_detail = work_activity.get_activity_detail(doi_reservation_record_activity_id)
+            # pid_id_hdn = IdentifierHandle(recid.object_uuid)
+
+            work_activity.create_or_update_action_identifier(
+                activity_id=doi_reservation_record_activity_id,
+                action_id=identifier_actionid,
+                identifier=identifier_grant,
+            )
+
+            saving_doi_pidstore(
+                activity_detail.item_id,
+                activity_detail.item_id,
+                post_json,
+                int(identifier_grant["action_identifier_select"]),
+                False
+            )
+
+            pid_doi = IdentifierHandle(recid.object_uuid).get_pidstore()
+
+            current_pid = PersistentIdentifier.get_by_object(pid_type='recid',
+                                                                object_type='rec',
+                                                                object_uuid=activity_detail.item_id)
+
+            try:
+                if '.' not in pid_value and has_request_context():
+                    user_id = activity_detail.activity_login_user if \
+                        activity and activity_detail.activity_login_user else -1
+                    item_created.send(
+                        current_app._get_current_object(),
+                        user_id=user_id,
+                        item_id=current_pid,
+                        item_title=record_title
+                    )
+                    
+            except BaseException:
+                abort(500, 'MAPPING_ERROR')
+
+            flag = work_activity.upt_activity_action_status(
+                activity_id=doi_reservation_record_activity_id, action_id=identifier_actionid,
+                action_status=ActionStatusPolicy.ACTION_DONE,
+                action_order='6'
+            )
+            if not flag:
+                res = ResponseMessageSchema().load({"code":-2, "msg":""})
+                return jsonify(res.data), 500
+            work_activity.upt_activity_action_comment(
+                activity_id=doi_reservation_record_activity_id,
+                action_id=identifier_actionid,
+                comment='',
+                action_order='9'
+            )
+            doi_reserved_item_workflow = handle_finish_workflow(
+                deposit,
+                current_pid,
+                recid
+            )
+
+        else:
+            return is_future(adt)
+
+    # DOI RESERVATION FIX ------------ END
     return is_future(adt)
 
 

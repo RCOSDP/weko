@@ -21047,3 +21047,53 @@ def test_check_record_doi_indexes(
 
     with pytest.raises(PIDDoesNotExistError):
         res = client_api.get("{}?doi=1".format(url))
+
+
+# ! TEST FOR DOI RESERVATION
+@pytest.mark.parametrize(
+    "id, status_code",
+    [
+        (0, 200),
+    ],
+)
+def test_check_record_doi_indexes_for_doi_reservation(
+    client_api, users, db_records, db_sessionlifetime, id, status_code
+):
+    login_user_via_session(client=client_api, email=users[id]["email"])
+
+    url = url_for(
+        "weko_items_ui_api.check_record_doi_indexes",
+        pid_value=1,
+        _external=True,
+        doi_is_reserved="true"
+    )
+    
+    res = client_api.get("{}?doi=1".format(url))
+    assert res.status_code == status_code
+    assert json.loads(res.data) == {"code": 0}
+
+    url = url_for(
+        "weko_items_ui_api.check_record_doi_indexes",
+        pid_value=2,
+        _external=True,
+    )
+    res = client_api.get("{}?doi=1".format(url))
+    assert res.status_code == status_code
+    assert json.loads(res.data) == {"code": -1}
+
+    def test_func(item):
+        return True
+    
+    with patch("weko_items_ui.views.is_future", test_func):
+        url = url_for(
+            "weko_items_ui_api.check_record_doi_indexes",
+            pid_value=1,
+            _external=True,
+            doi_is_reserved="true"
+        )
+        res = client_api.get(url)
+
+        def test_func(item):
+            return True
+
+        assert res.status_code == status_code

@@ -500,6 +500,7 @@ def check_import_items(file, is_change_identifier: bool, is_gakuninrdm=False,
         return       -- PID object if exist.
 
     """
+
     if isinstance(file, str):
         filename = file.split("/")[-1]
     else:
@@ -1204,7 +1205,6 @@ def register_item_metadata(item, root_path, owner, is_gakuninrdm=False):
         root_path   -- {str} path of the folder include files.
         is_gakuninrdm -- {bool} Is call by gakuninrdm api.
     """
-
     def clean_file_metadata(item_type_id, data):
         # clear metadata of file information
         is_cleaned = True
@@ -1219,6 +1219,10 @@ def register_item_metadata(item, root_path, owner, is_gakuninrdm=False):
                 data["deleted_items"] = deleted_items
             else:
                 is_cleaned = False
+        current_app.logger.error("\n\n weko_search_ui/utils.py::clean_file_metadata_1")
+        current_app.logger.error(f"data ~ {data}")
+        current_app.logger.error(f"key ~ {key}")
+        current_app.logger.error("\n\n")
         return data, is_cleaned, file_key
 
     def autofill_thumbnail_metadata(item_type_id, data):
@@ -1284,7 +1288,15 @@ def register_item_metadata(item, root_path, owner, is_gakuninrdm=False):
             "title": item.get("item_title"),
         }
     )
+
+    if item.get('doi') and item.get('doi_ra') and item.get('identifier_key'):
+        if not new_data.get(item.get('identifier_key')):
+            new_data[item.get('identifier_key')] = {}
+            new_data[item.get('identifier_key')]['subitem_identifier_reg_text'] = item.get('doi')
+            new_data[item.get('identifier_key')]['subitem_identifier_reg_type'] = item.get('doi_ra')
+
     new_data = escape_newline(new_data)
+
     item_status = {
         "index": new_data["path"],
         "actions": "publish",
@@ -1342,6 +1354,7 @@ def register_item_metadata(item, root_path, owner, is_gakuninrdm=False):
     deposit['_deposit']['owners'] = [int(owner)]
     deposit['_deposit']['created_by'] = int(owner)
     deposit['owner'] = str(owner)
+
     deposit.commit()
 
     feedback_mail_list = item["metadata"].get("feedback_mail_list")
@@ -1524,7 +1537,7 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
             if status == "new":
                 item_id = create_deposit(item.get("id"))
                 item["id"] = item_id["recid"]
-                item["pid"] = item_id.pid
+                item["pid"] = item_id.piddef 
             else:
                 handle_check_item_is_locked(item)
                 # cache ES data for rollback
@@ -1557,12 +1570,16 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
                 "WEKO_SEARCH_UI_IMPORT_UNUSE_FILES_URI"
             ].format(item["id"])
             list_unuse_uri = get_cache_data(cache_key)
+
+            current_app.logger.error(f"list_unuse_uri ~ {list_unuse_uri}")
+
             if list_unuse_uri:
                 for uri in list_unuse_uri:
                     file = current_files_rest.storage_factory(fileurl=uri, size=1)
                     fs, path = file._get_fs()
                     if fs.exists(path):
                         file.delete()
+
                 delete_cache_data(cache_key)
 
         except SQLAlchemyError as ex:
@@ -2102,6 +2119,7 @@ def handle_check_doi(list_record):
     def _check_doi(doi_ra, doi, item):
         error = None
         split_doi = doi.split("/")
+
         if doi_ra == "NDL JaLC":
             if len(split_doi) < 2 and not "/" in doi:
                 error = _("{} cannot be set.").format("DOI")
@@ -2112,15 +2130,20 @@ def handle_check_doi(list_record):
                 ):
                     error = _("Specified Prefix of {} is incorrect.").format("DOI")
         else:
-            if len(split_doi) > 1 and not doi.endswith("/"):
-                error = _("{} cannot be set.").format("DOI")
+            # DOI RESERVATION FIX ------------ START
+            if doi_ra in WEKO_IMPORT_DOI_TYPE:
+                pass
             else:
-                prefix = re.sub("/$", "", doi)
-                item["doi_suffix_not_existed"] = True
-                if not item.get("ignore_check_doi_prefix") and prefix != get_doi_prefix(
-                    doi_ra
-                ):
-                    error = _("Specified Prefix of {} is incorrect.").format("DOI")
+                if len(split_doi) > 1 and not doi.endswith("/"):
+                    error = _("{} cannot be set.").format("DOI")
+                else:
+                    prefix = re.sub("/$", "", doi)
+                    item["doi_suffix_not_existed"] = True
+                    if not item.get("ignore_check_doi_prefix") and prefix != get_doi_prefix(
+                        doi_ra
+                    ):
+                        error = _("Specified Prefix of {} is incorrect.").format("DOI")
+            # DOI RESERVATION FIX ------------ END
         return error
 
     for item in list_record:
@@ -3102,8 +3125,18 @@ def handle_fill_system_item(list_record):
                 elif item_doi_suffix is "":
                     errors.append(_('Please specify DOI suffix.'))
             else:
-                if item_doi_suffix and existed_doi is False: 
+                # DOI RESERVATION FIX ------------ START
+                doi_reservation_record_from_list = [
+                    reserved_doi
+                    for reserved_doi in list_record
+                    if item_doi == reserved_doi.get("doi")
+                ]
+
+                if doi_reservation_record_from_list:
+                    pass
+                elif item_doi_suffix and existed_doi is False: 
                     errors.append(_('Do not specify DOI suffix.'))
+                # DOI RESERVATION FIX ------------ END
 
             if checked_item_doi_ra is False:
                 if item_doi_ra not in ("JaLC","Crossref","DataCite","NDL JaLC"):

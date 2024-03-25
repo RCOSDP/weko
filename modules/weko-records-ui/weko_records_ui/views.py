@@ -579,6 +579,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     # Get item meta data
     record['permalink_uri'] = None
     permalink = get_record_permalink(record)
+
     if not permalink:
         if record.get('system_identifier_doi') and \
             record.get('system_identifier_doi').get(

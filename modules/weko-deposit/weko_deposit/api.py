@@ -2385,16 +2385,57 @@ class WekoRecord(Record):
     def _get_pid(self, pid_type):
         """Return pid_value from persistent identifier."""
         pid_without_ver = get_record_without_version(self.pid_recid)
-        if not pid_without_ver:
+
+        # DOI RESERVATION FIX ------------ START
+        if pid_without_ver:
+            # ! Responsible for giving record.pid_doi value
+            doi_target_record = self.get_record_by_pid(
+                pid_without_ver.pid_value
+            )
+            doi_target_record_keys = [
+                key for key in doi_target_record.keys()
+            ]
+            doi_text = ""
+
+            for doi_item_key in doi_target_record_keys:
+                if isinstance(doi_target_record.get(doi_item_key), dict):
+                    if doi_target_record.get(doi_item_key).get("attribute_value_mlt") and \
+                            isinstance(doi_target_record.get(doi_item_key).get("attribute_value_mlt"), list) and \
+                            doi_target_record.get(doi_item_key).get("attribute_value_mlt") is not None:
+                        if doi_target_record.get(doi_item_key).get("attribute_value_mlt")[0].get("subitem_identifier_reg_text"):
+                            doi_text = doi_target_record.get(doi_item_key) \
+                                .get("attribute_value_mlt")[0] \
+                                .get("subitem_identifier_reg_text")
+                                
+            reserved_pid_doi = PersistentIdentifier.query.filter_by(
+                pid_type=pid_type,
+                pid_value=f"https://doi.org/" + doi_text,
+                status=PIDStatus.REGISTERED
+            ).order_by(
+                db.desc(PersistentIdentifier.created)
+            ).first()
+
+        elif not pid_without_ver:
             return None
+
         try:
-            return PersistentIdentifier.query.filter_by(
+            pid_doi = PersistentIdentifier.query.filter_by(
                 pid_type=pid_type,
                 object_uuid=pid_without_ver.object_uuid,
                 status=PIDStatus.REGISTERED
             ).order_by(
                 db.desc(PersistentIdentifier.created)
             ).first()
+
+            if pid_doi:
+                return pid_doi
+            else:
+                if reserved_pid_doi:
+                    return reserved_pid_doi
+                else:
+                    return None
+        
+            # DOI RESERVATION FIX ------------ END
         except PIDDoesNotExistError as pid_not_exist:
             current_app.logger.error(pid_not_exist)
         return None

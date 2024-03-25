@@ -109,6 +109,7 @@ def check_items_settings(settings=None):
 
 
 def get_record_permalink(record):
+    
     """
     Get latest doi/cnri's value of record.
 
@@ -118,6 +119,18 @@ def get_record_permalink(record):
     doi = record.pid_doi
     cnri = record.pid_cnri
 
+    if not doi:
+        if record.get('system_identifier_doi') and \
+            record.get('system_identifier_doi').get(
+                'attribute_value_mlt')[0]:
+            record['permalink_uri'] = \
+                record['system_identifier_doi'][
+                    'attribute_value_mlt'][0][
+                    'subitem_systemidt_identifier']
+        else:
+            record['permalink_uri'] = '{}records/{}'.format(
+                request.url_root, record.get("recid"))
+    
     if doi or cnri:
         return doi.pid_value if doi else cnri.pid_value
 

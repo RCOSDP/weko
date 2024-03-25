@@ -2176,8 +2176,11 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
         ret.append('.feedback_mail[{}]'.format(i))
         ret_label.append('.FEEDBACK_MAIL[{}]'.format(i))
 
-    ret.extend(['.cnri', '.doi_ra', '.doi', '.edit_mode'])
-    ret_label.extend(['.CNRI', '.DOI_RA', '.DOI', 'Keep/Upgrade Version'])
+    # DOI RESERVATION FIX ------------ START
+    ret.extend(['.cnri', '.doi_ra', '.doi', 'DOI Reservation Status', '.edit_mode'])
+    ret_label.extend(['.CNRI', '.DOI_RA', '.DOI', '.DOI_IS_RESERVED', 'Keep/Upgrade Version'])
+    # DOI RESERVATION FIX ------------ END
+
     has_pubdate = len([
         record for _, record in records.records.items()
         if record.get('pubdate')
@@ -2217,6 +2220,38 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
         doi_value, doi_type = identifier.get_idt_registration_data()
         doi_type_str = doi_type[0] if doi_type and doi_type[0] else ''
         doi_str = doi_value[0] if doi_value and doi_value[0] else ''
+
+        # DOI RESERVATION FIX ------------ START
+        record_keys = [
+            key for key in record.keys()
+        ]
+        doi_text = ""
+
+        for doi_item_key in record_keys:
+            if isinstance(record.get(doi_item_key), dict):
+                if record.get(doi_item_key).get("attribute_value_mlt") and \
+                        isinstance(record.get(doi_item_key).get("attribute_value_mlt"), list) and \
+                        record.get(doi_item_key).get("attribute_value_mlt") is not None:
+                    if record.get(doi_item_key).get("attribute_value_mlt")[0].get("subitem_identifier_reg_text"):
+                        doi_text = record.get(doi_item_key) \
+                            .get("attribute_value_mlt")[0] \
+                            .get("subitem_identifier_reg_text")
+        
+        pid_check_one = PersistentIdentifier.query.filter_by(
+            pid_type='doi',
+            object_uuid=identifier.item_uuid
+        ).all()
+                            
+        pid_check_two = PersistentIdentifier.query.filter_by(
+            pid_type='doi',
+            pid_value=doi_text).one_or_none()
+        
+        if pid_check_one or pid_check_two:
+            doi_reserve_status = "IsNotReserved"
+        else:
+            doi_reserve_status = "isReserved"
+        # DOI RESERVATION FIX ------------ END
+
         if doi_type_str and doi_str:
             doi_domain = ''
             if doi_type_str == WEKO_IMPORT_DOI_TYPE[0]:
@@ -2231,7 +2266,8 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
                 doi_str = doi_str.replace(doi_domain + '/', '', 1)
         records.attr_output[recid].extend([
             doi_type_str,
-            doi_str
+            doi_str, # DOI RESERVATION FIX ------------ START
+            doi_reserve_status # DOI RESERVATION FIX ------------ END
         ])
         # .edit Keep/Upgrade default is Keep
         records.attr_output[recid].append('Keep')
@@ -4178,8 +4214,11 @@ def make_stats_file_with_permission(item_type_id, recids,
         ret.append('.feedback_mail[{}]'.format(i))
         ret_label.append('.FEEDBACK_MAIL[{}]'.format(i))
 
-    ret.extend(['.cnri', '.doi_ra', '.doi', '.edit_mode'])
-    ret_label.extend(['.CNRI', '.DOI_RA', '.DOI', 'Keep/Upgrade Version'])
+    # DOI RESERVATION FIX ------------ START
+    ret.extend(['.cnri', '.doi_ra', '.doi', 'DOI Reservation Status', '.edit_mode'])
+    ret_label.extend(['.CNRI', '.DOI_RA', '.DOI', '.DOI_IS_RESERVED', 'Keep/Upgrade Version'])
+    # DOI RESERVATION FIX ------------ END
+
     ret.append('.metadata.pubdate')
     ret_label.append('公開日' if
                      permissions['current_language']() == 'ja' else 'PubDate')
@@ -4211,6 +4250,38 @@ def make_stats_file_with_permission(item_type_id, recids,
             cnri = pid_cnri.pid_value.replace(WEKO_SERVER_CNRI_HOST_LINK, '')
         records.attr_output[recid].append(cnri)
 
+        # DOI RESERVATION FIX ------------ START
+        identifier = IdentifierHandle(record.pid_recid.object_uuid)
+        record_keys = [
+            key for key in record.keys()
+        ]
+        doi_text = ""
+
+        for doi_item_key in record_keys:
+            if isinstance(record.get(doi_item_key), dict):
+                if record.get(doi_item_key).get("attribute_value_mlt") and \
+                        isinstance(record.get(doi_item_key).get("attribute_value_mlt"), list) and \
+                        record.get(doi_item_key).get("attribute_value_mlt") is not None:
+                    if record.get(doi_item_key).get("attribute_value_mlt")[0].get("subitem_identifier_reg_text"):
+                        doi_text = record.get(doi_item_key) \
+                            .get("attribute_value_mlt")[0] \
+                            .get("subitem_identifier_reg_text")
+        
+        pid_check_one = PersistentIdentifier.query.filter_by(
+            pid_type='doi',
+            object_uuid=identifier.item_uuid
+        ).all()
+                            
+        pid_check_two = PersistentIdentifier.query.filter_by(
+            pid_type='doi',
+            pid_value=doi_text).one_or_none()
+        
+        if pid_check_one or pid_check_two:
+            doi_reserve_status = "IsNotReserved"
+        else:
+            doi_reserve_status = "isReserved"
+        # DOI RESERVATION FIX ------------ END
+
         identifier = IdentifierHandle(record.pid_recid.object_uuid)
         doi_value, doi_type = identifier.get_idt_registration_data()
         doi_type_str = doi_type[0] if doi_type and doi_type[0] else ''
@@ -4229,7 +4300,8 @@ def make_stats_file_with_permission(item_type_id, recids,
                 doi_str = doi_str.replace(doi_domain + '/', '', 1)
         records.attr_output[recid].extend([
             doi_type_str,
-            doi_str
+            doi_str, # DOI RESERVATION FIX ------------ START
+            doi_reserve_status # DOI RESERVATION FIX ------------ END
         ])
 
         # .edit Keep or Upgrade. default is Keep

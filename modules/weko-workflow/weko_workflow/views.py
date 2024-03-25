@@ -56,6 +56,7 @@ from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.errors import PIDDoesNotExistError,PIDDeletedError
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_rest import ContentNegotiatedMethodView
+from invenio_oaiserver.response import is_pubdate_in_future # DOI RESERVATION FIX
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import types,or_
 from sqlalchemy.exc import SQLAlchemyError
@@ -1035,6 +1036,49 @@ def display_activity(activity_id="0"):
         )
     )
     _id = None
+    
+    # DOI RESERVATION FIX ------------ START
+    from weko_deposit.api import WekoRecord
+    from weko_index_tree.api import Indexes
+    from weko_records_ui.permissions import check_publish_status
+    from weko_records_ui.utils import is_private_index, is_future
+    
+    index_is_private_state = None
+    is_public_state = None
+    pubdate_is_future = None
+    record_keys = None
+    doi_reserve_record = None
+
+    if cur_step == "identifier_grant":
+        if record or approval_record:
+            doi_reserve_record = record or approval_record
+        if doi_reserve_record:
+            index_is_private_state = is_private_index(doi_reserve_record)
+            is_public_state = check_publish_status(doi_reserve_record)
+            adt = doi_reserve_record.get('publish_date')
+            pdt = doi_reserve_record.get('pubdate', {}).get('attribute_value')
+            pubdate_is_future = is_future(pdt)
+            record_keys = [key for key in doi_reserve_record.keys()]
+        else:
+            pass
+
+    doi_information_exists = False
+    doi_information_key = None
+
+    if (record or approval_record) and record_keys:
+        for key in record_keys:
+            if isinstance(doi_reserve_record[key], dict):
+                if "attribute_value_mlt" in doi_reserve_record[key].keys():
+                    if doi_reserve_record[key].get("attribute_value_mlt") and \
+                            isinstance(doi_reserve_record[key].get("attribute_value_mlt"), list):
+                        for identifier_reg_type in doi_reserve_record[key].get("attribute_value_mlt"):
+                            if isinstance(identifier_reg_type, dict):
+                                if identifier_reg_type.get("subitem_identifier_reg_text") or \
+                                        identifier_reg_type.get("subitem_identifier_reg_type"):
+                                    doi_information_key = key
+                                    doi_information_exists = True
+    # DOI RESERVATION FIX ------------ END
+
     if recid:
         _id = re.sub("\.[0-9]+", "", recid.pid_value)
     
@@ -1042,6 +1086,11 @@ def display_activity(activity_id="0"):
 
     return render_template(
         'weko_workflow/activity_detail.html',
+        pubdate_is_future=pubdate_is_future, # DOI RESERVATION FIX
+        is_public_state=is_public_state, # DOI RESERVATION FIX
+        index_is_private_state=index_is_private_state, # DOI RESERVATION FIX
+        doi_information_key=doi_information_key, # DOI RESERVATION FIX
+        doi_information_exists=doi_information_exists, # DOI RESERVATION FIX
         action_endpoint_key=current_app.config.get(
             'WEKO_ITEMS_UI_ACTION_ENDPOINT_KEY'),
         action_id=action_id,
@@ -1365,6 +1414,8 @@ def next_action(activity_id='0', action_id=0):
     if action_endpoint in ['item_login', 'item_login_application'] and (record.pid_cnri is None) and current_app.config.get('WEKO_HANDLE_ALLOW_REGISTER_CNRI'):
         register_hdl(activity_id)
 
+    
+
     flow = Flow()
     next_flow_action = flow.get_next_flow_action(
         activity_detail.flow_define.flow_id, action_id, action_order)
@@ -1549,82 +1600,192 @@ def next_action(activity_id='0', action_id=0):
             res = ResponseMessageSchema().load({"code":0,"msg":_("success")})
             return jsonify(res.data), 200
 
-    # save pidstore_identifier to ItemsMetadata
-    identifier_select = post_json.get('identifier_grant')
-    if 'identifier_grant' == action_endpoint \
-            and identifier_select is not None:
-        # If is action identifier_grant, then save to to database
-        identifier_grant = {
-            'action_identifier_select': identifier_select,
-            'action_identifier_jalc_doi': post_json.get(
-                'identifier_grant_jalc_doi_suffix'),
-            'action_identifier_jalc_cr_doi': post_json.get(
-                'identifier_grant_jalc_cr_doi_suffix'),
-            'action_identifier_jalc_dc_doi': post_json.get(
-                'identifier_grant_jalc_dc_doi_suffix'),
-            'action_identifier_ndl_jalc_doi': post_json.get(
-                'identifier_grant_ndl_jalc_doi_suffix')
-        }
-        work_activity.create_or_update_action_identifier(
-            activity_id=activity_id,
-            action_id=action_id,
-            identifier=identifier_grant
-        )
-        if post_json.get('temporary_save') == 1:
-            res = ResponseMessageSchema().load({"code":0, "msg":_("success")})
-            return jsonify(res.data), 200
+    # DOI RESERVATION FIX ------------ START
+    post_json_doi_reservation = request.get_json()
+    is_doi_reservation_value = post_json_doi_reservation.get('is_doi_reservation_value')
+    doi_reservation_date = post_json_doi_reservation.get('doi_reservation_date')
 
-        if identifier_select == IDENTIFIER_GRANT_SELECT_DICT['NotGrant']:
-            if item_id != pid_without_ver.object_uuid:
-                _old_idt = IdentifierHandle(pid_without_ver.object_uuid)
-                _new_idt = IdentifierHandle(item_id)
-                _old_v, _old_t = _old_idt.get_idt_registration_data()
-                _new_v, _new_t = _new_idt.get_idt_registration_data()
-                if not _old_v:
-                    _new_idt.remove_idt_registration_metadata()
-                elif _old_v != _new_v:
-                    _new_idt.update_idt_registration_metadata(
-                        _old_v,
-                        _old_t)
-            else:
-                _identifier = IdentifierHandle(item_id)
-                _value, _type = _identifier.get_idt_registration_data()
+    if is_doi_reservation_value == "Reserved" and is_pubdate_in_future(record, True):
+        # save pidstore_identifier to ItemsMetadata
+        identifier_select = post_json.get('identifier_grant')
 
-                if _value:
-                    _identifier.remove_idt_registration_metadata()
-        else:
+        if 'identifier_grant' == action_endpoint \
+                and identifier_select != '':
             # If is action identifier_grant, then save to to database
-            error_list = check_doi_validation_not_pass(
-                item_id, activity_id, identifier_select)
-            if isinstance(error_list, str):
-                res = ResponseMessageSchema().load({"code":-1, "msg":_(error_list)})
-                return jsonify(res.data), 500
-            elif error_list:
-                return previous_action(
-                    activity_id=activity_id,
-                    action_id=action_id,
-                    req=-1)
+            identifier_grant = {
+                'action_identifier_select': identifier_select,
+                'action_identifier_jalc_doi': post_json.get(
+                    'identifier_grant_jalc_doi_suffix'),
+                'action_identifier_jalc_cr_doi': post_json.get(
+                    'identifier_grant_jalc_cr_doi_suffix'),
+                'action_identifier_jalc_dc_doi': post_json.get(
+                    'identifier_grant_jalc_dc_doi_suffix'),
+                'action_identifier_ndl_jalc_doi': post_json.get(
+                    'identifier_grant_ndl_jalc_doi_suffix')
+            }
 
-            record_without_version = item_id
-            if not recid:
-                record_without_version = pid_without_ver.object_uuid
-            saving_doi_pidstore(item_id, record_without_version, post_json,
-                                int(identifier_select), True)
-    elif 'identifier_grant' == action_endpoint \
-            and not post_json.get('temporary_save'):
-        _value, _type = IdentifierHandle(item_id).get_idt_registration_data()
-        if _value and _type:
-            error_list = check_doi_validation_not_pass(
-                item_id, activity_id, IDENTIFIER_GRANT_SELECT_DICT[_type[0]],
-                pid_without_ver.object_uuid)
-            if isinstance(error_list, str):
-                res = ResponseMessageSchema().load({"code":-1, "msg":_(error_list)})
-                return jsonify(res.data), 500
-            elif error_list:
-                return previous_action(
-                    activity_id=activity_id,
-                    action_id=action_id,
-                    req=-1)
+            if post_json.get('temporary_save') == 1:
+                res = ResponseMessageSchema().load({"code":0, "msg":_("success")})
+                return jsonify(res.data), 200
+
+            if identifier_select == IDENTIFIER_GRANT_SELECT_DICT['NotGrant']:
+                if item_id != pid_without_ver.object_uuid:
+                    _old_idt = IdentifierHandle(pid_without_ver.object_uuid)
+                    _new_idt = IdentifierHandle(item_id)
+                    _old_v, _old_t = _old_idt.get_idt_registration_data()
+                    _new_v, _new_t = _new_idt.get_idt_registration_data()
+                    if not _old_v:
+                        _new_idt.remove_idt_registration_metadata()
+                    elif _old_v != _new_v:
+                        _new_idt.update_idt_registration_metadata(
+                            _old_v,
+                            _old_t)
+                else:
+                    _identifier = IdentifierHandle(item_id)
+                    _value, _type = _identifier.get_idt_registration_data()
+
+                    if _value:
+                        _identifier.remove_idt_registration_metadata()
+            else:
+                # If is action identifier_grant, then save to to database
+                error_list = check_doi_validation_not_pass(
+                    item_id, activity_id, identifier_select)
+                if isinstance(error_list, str):
+                    res = ResponseMessageSchema().load({"code":-1, "msg":_(error_list)})
+                    return jsonify(res.data), 500
+                elif error_list:
+                    return previous_action(
+                        activity_id=activity_id,
+                        action_id=action_id,
+                        req=-1)
+
+                all_records = ItemMetadata.query.all()
+                existing_records_identifier_info = []
+                id_grant_select_info = {
+                    '1': 'identifier_grant_jalc_doi_link',
+                    '2': 'identifier_grant_jalc_cr_doi_link',
+                    '3': 'identifier_grant_jalc_dc_doi_link',
+                    '4': 'identifier_grant_ndl_jalc_doi_link',
+                }
+                current_record_identifier_info = post_json_doi_reservation.get(id_grant_select_info.get(identifier_select))
+                current_record_identifier_info = current_record_identifier_info[16:] if (current_record_identifier_info is not None) else current_record_identifier_info
+
+                for record in all_records:
+                    record_json_dict = json.loads(record.json) if isinstance(record.json, str) else record.json
+                    if isinstance(record_json_dict, dict):
+                        for record_json_key in list(record_json_dict.keys()):
+                            if isinstance(record_json_dict.get(record_json_key, {}), dict) and record_json_dict.get(record_json_key, {}).get('subitem_identifier_reg_text'):
+                                existing_records_identifier_info.append(
+                                    record_json_dict.get(record_json_key, {}).get('subitem_identifier_reg_text')
+                                )
+                doi_duplicate_check = current_record_identifier_info in existing_records_identifier_info
+
+                if doi_duplicate_check: \
+                    return jsonify(code=1, msg=_("Entered identifier already exists")), 200
+
+                record_without_version = item_id
+                if not recid:
+                    record_without_version = pid_without_ver.object_uuid
+                saving_doi_pidstore(item_id, record_without_version, post_json,
+                                    int(identifier_select), True)
+        elif 'identifier_grant' == action_endpoint \
+                and not post_json.get('temporary_save'):
+            _value, _type = IdentifierHandle(item_id).get_idt_registration_data()
+            if _value and _type:
+                error_list = check_doi_validation_not_pass(
+                    item_id, activity_id, IDENTIFIER_GRANT_SELECT_DICT[_type[0]],
+                    pid_without_ver.object_uuid)
+                if isinstance(error_list, str):
+                    res = ResponseMessageSchema().load({"code":-1, "msg":_(error_list)})
+                    return jsonify(res.data), 500
+                elif error_list:
+                    return previous_action(
+                        activity_id=activity_id,
+                        action_id=action_id,
+                        req=-1)
+
+        # DOI RESERVATION FIX ------------ END
+    else:
+        # save pidstore_identifier to ItemsMetadata
+        identifier_select = post_json.get('identifier_grant')
+        if 'identifier_grant' == action_endpoint \
+                and identifier_select is not None:
+            # If is action identifier_grant, then save to to database
+            identifier_grant = {
+                'action_identifier_select': identifier_select,
+                'action_identifier_jalc_doi': post_json.get(
+                    'identifier_grant_jalc_doi_suffix'),
+                'action_identifier_jalc_cr_doi': post_json.get(
+                    'identifier_grant_jalc_cr_doi_suffix'),
+                'action_identifier_jalc_dc_doi': post_json.get(
+                    'identifier_grant_jalc_dc_doi_suffix'),
+                'action_identifier_ndl_jalc_doi': post_json.get(
+                    'identifier_grant_ndl_jalc_doi_suffix')
+            }
+
+            work_activity.create_or_update_action_identifier(
+                activity_id=activity_id,
+                action_id=action_id,
+                identifier=identifier_grant
+            )
+
+            if post_json.get('temporary_save') == 1:
+                res = ResponseMessageSchema().load({"code":0, "msg":_("success")})
+                return jsonify(res.data), 200
+
+            if identifier_select == IDENTIFIER_GRANT_SELECT_DICT['NotGrant']:
+                if item_id != pid_without_ver.object_uuid:
+                    _old_idt = IdentifierHandle(pid_without_ver.object_uuid)
+                    _new_idt = IdentifierHandle(item_id)
+                    _old_v, _old_t = _old_idt.get_idt_registration_data()
+                    _new_v, _new_t = _new_idt.get_idt_registration_data()
+                    if not _old_v:
+                        _new_idt.remove_idt_registration_metadata()
+                    elif _old_v != _new_v:
+                        _new_idt.update_idt_registration_metadata(
+                            _old_v,
+                            _old_t)
+                else:
+                    _identifier = IdentifierHandle(item_id)
+                    _value, _type = _identifier.get_idt_registration_data()
+
+                    if _value:
+                        _identifier.remove_idt_registration_metadata()
+            else:
+                # If is action identifier_grant, then save to to database
+                error_list = check_doi_validation_not_pass(
+                    item_id, activity_id, identifier_select)
+                if isinstance(error_list, str):
+                    res = ResponseMessageSchema().load({"code":-1, "msg":_(error_list)})
+                    return jsonify(res.data), 500
+                elif error_list:
+                    return previous_action(
+                        activity_id=activity_id,
+                        action_id=action_id,
+                        req=-1)
+
+                record_without_version = item_id
+                if not recid:
+                    record_without_version = pid_without_ver.object_uuid
+
+                saving_doi_pidstore(item_id, record_without_version, post_json,
+                                    int(identifier_select), True)
+
+        elif 'identifier_grant' == action_endpoint \
+                and not post_json.get('temporary_save'):
+            _value, _type = IdentifierHandle(item_id).get_idt_registration_data()
+            if _value and _type:
+                error_list = check_doi_validation_not_pass(
+                    item_id, activity_id, IDENTIFIER_GRANT_SELECT_DICT[_type[0]],
+                    pid_without_ver.object_uuid)
+                if isinstance(error_list, str):
+                    res = ResponseMessageSchema().load({"code":-1, "msg":_(error_list)})
+                    return jsonify(res.data), 500
+                elif error_list:
+                    return previous_action(
+                        activity_id=activity_id,
+                        action_id=action_id,
+                        req=-1)
 
     rtn = history.create_activity_history(activity, action_order)
     if not rtn:

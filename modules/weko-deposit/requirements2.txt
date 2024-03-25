@@ -64,7 +64,8 @@ Flask-Limiter==1.1.0
 Flask-Login==0.4.1
 Flask-Mail==0.9.1
 flask-marshmallow==0.14.0
-Flask-Menu==0.6.0
+# ! Flask-Menu==0.6.0 TEST
+Flask-Menu
 -e git+https://github.com/RCOSDP/flask-oauthlib.git@add-redissentinel#egg=Flask_OAuthlib
 Flask-Plugins==1.6.1
 Flask-Principal==0.4.0
@@ -77,7 +78,8 @@ flask-talisman==0.4.1
 Flask-WTF==0.14.3
 -e git+https://github.com/RCOSDP/pyfpdf.git@f9b032148283d535cabc7789858081c80de36fef#egg=fpdf
 frozendict==2.3.8
-fs==0.5.4
+# ! fs==0.5.4 TEST
+fs
 ftfy==4.4.3
 future==0.16.0
 github3.py==1.1.0
@@ -141,7 +143,8 @@ Jinja2==2.10.1
 jinja2-cli==0.6.0
 jinja2-time==0.2.0
 jmespath==0.10.0
-jsmin==2.2.2
+# ! jsmin==2.2.2 TEST
+jsmin
 jsonpatch==1.21
 jsonpath-ng==1.5.2
 jsonpointer==1.14
