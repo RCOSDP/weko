@@ -9128,11 +9128,11 @@ def test_save_title(app, db_itemtype, db_workflow, db_records, users):
             "$schema": "1",
             "item_1617186331708": [
                 {
-                    "subitem_1551255647225": "ja_conference paperITEM00000001(public_open_access_open_access_simple)",
+                    "subitem_1551255647225": "タイトル",
                     "subitem_1551255648112": "ja",
                 },
                 {
-                    "subitem_1551255647225": "en_conference paperITEM00000001(public_open_access_simple)",
+                    "subitem_1551255647225": "title",
                     "subitem_1551255648112": "en",
                 },
             ],
@@ -9580,10 +9580,38 @@ def test_save_title(app, db_itemtype, db_workflow, db_records, users):
     save_title("A-00000000-00000", request_data)
     activity = WorkActivity()
     db_activity = activity.get_activity_detail("A-00000000-00000")
-    assert (
-        db_activity.title
-        == "ja_conference paperITEM00000001(public_open_access_open_access_simple)"
-    )
+    assert db_activity.title == "タイトル"
+
+    request_data["metainfo"]["item_1617186331708"]["attribute_value_mlt"][0].pop("subitem_1551255648112")
+    request_data["metainfo"]["item_1617186331708"]["attribute_value_mlt"][1].pop("subitem_1551255648112")
+    save_title("A-00000000-00000", request_data)
+    db_activity = activity.get_activity_detail("A-00000000-00000")
+    assert db_activity.title == "タイトル"
+
+    request_data["metainfo"]["item_1617186331709"] = [
+        {
+            "subitem_1551255647226": "タイトル-2",
+            "subitem_1551255648113": "ja",
+        },
+        {
+            "subitem_1551255647226": "title-2",
+            "subitem_1551255648113": "en",
+        },
+    ]
+    save_title("A-00000000-00000", request_data)
+    db_activity = activity.get_activity_detail("A-00000000-00000")
+    assert db_activity.title == "タイトル"
+
+    request_data["metainfo"].pop("item_1617186331708")
+    save_title("A-00000000-00000", request_data)
+    db_activity = activity.get_activity_detail("A-00000000-00000")
+    assert db_activity.title == "タイトル-2"
+
+    request_data["metainfo"]["item_1617186331709"]["attribute_value_mlt"][0].pop("subitem_1551255648113")
+    request_data["metainfo"]["item_1617186331709"]["attribute_value_mlt"][1].pop("subitem_1551255648113")
+    save_title("A-00000000-00000", request_data)
+    db_activity = activity.get_activity_detail("A-00000000-00000")
+    assert db_activity.title == "タイトル-2"
 
 
 # def get_key_title_in_item_type_mapping(item_type_mapping):
