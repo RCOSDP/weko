@@ -270,7 +270,7 @@ class AdminLangSettings(db.Model):
 
     __tablename__ = 'admin_lang_settings'
 
-    lang_code = db.Column(db.String(3), primary_key=True, nullable=False,
+    lang_code = db.Column(db.String(5), primary_key=True, nullable=False,
                           unique=True)
 
     lang_name = db.Column(db.String(30), nullable=False)

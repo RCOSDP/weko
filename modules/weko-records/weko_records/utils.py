@@ -1984,7 +1984,7 @@ def selected_value_by_language(
     result = None
     lang_key_list = lang_key_str.split(",")
     val_key_list = val_key_str.split(",")
-    
+
     for val_key in val_key_list:
         val_parent_key = val_key.split(".")[0]
         val_sub_key = val_key.split(".")[-1]
@@ -2039,28 +2039,40 @@ def selected_value_by_language(
                             ):
                                 noreturn = True
                                 break
-                            if len(lg) > 0:
+                            if lg:
                                 value = check_info_in_metadata(
                                     lang_key, val_key, lg, _item_metadata
                                 )
                                 if value is not None:
                                     result = value
+                                    break
                         if noreturn:
                             result = None
                     # 1st value when registering without language
                     if not result and len(value_array) > 0:
                         result = check_info_in_metadata(lang_key, val_key, None, _item_metadata)
-            if not result:
+            if result:
                 break
-        if not result:
+        if result:
+            break
+
+    if not result:
+        for val_key in val_key_list:
+            val_parent_key = val_key.split(".")[0]
+            val_sub_key = val_key.split(".")[-1]
+            prop_hidden = meta_option.get(val_parent_key, {}).get('option', {}).get('hidden', False)
+            for h in hide_list:
+                if h.startswith(val_parent_key) and h.endswith(val_sub_key):
+                    prop_hidden = True
+
             if (
                 (value_array is not None and len(value_array) > 0)
                 and isinstance(lang_selected, str)
                 and not prop_hidden
             ):
                 result = check_info_in_metadata('', val_key, None, _item_metadata)
-        if result:
-            break
+            if result:
+                break
     return result
 
 
