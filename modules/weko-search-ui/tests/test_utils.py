@@ -2582,18 +2582,31 @@ def test_get_key_by_property(i18n_app):
 
 
 # def get_data_by_property(item_metadata, item_map, mapping_key):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_get_data_by_property -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_get_data_by_property(i18n_app):
     item_metadata = {}
     item_map = {"mapping_key": "test.test"}
     mapping_key = "mapping_key"
 
-    assert get_data_by_property(item_metadata, item_map, mapping_key)
-    assert get_data_by_property(item_metadata, {}, mapping_key)
+    data, key_list = get_data_by_property(item_metadata, item_map, mapping_key)
+    assert data == None
+    assert key_list == "test.test"
+    data, key_list = get_data_by_property(item_metadata, {}, mapping_key)
+    assert data == None
+    assert key_list == None
 
     with patch(
         "weko_workflow.utils.get_sub_item_value", return_value=[True, ["value"]]
     ):
-        assert get_data_by_property(item_metadata, item_map, mapping_key)
+        data, key_list = get_data_by_property(item_metadata, item_map, mapping_key)
+        assert data == ["value"]
+        assert key_list == "test.test"
+
+        item_map = {"mapping_key": "test.test,test1.test1"}
+        mapping_key = "mapping_key"
+        data, key_list = get_data_by_property(item_metadata, item_map, mapping_key)
+        assert data == ["value", "value"]
+        assert key_list == "test.test,test1.test1"
 
 
 # def get_filenames_from_metadata(metadata):
