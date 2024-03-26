@@ -1,5 +1,5 @@
 import pytest
-from weko_records_ui.utils import is_future, create_usage_report_for_user,get_data_usage_application_data,send_usage_report_mail_for_user,check_and_send_usage_report,update_onetime_download,create_onetime_download_url,get_onetime_download,validate_onetime_download_token,get_license_pdf,hide_item_metadata,get_pair_value,get_min_price_billing_file_download,parse_one_time_download_token,generate_one_time_download_url,validate_download_record,is_private_index,get_file_info_list,replace_license_free,is_show_email_of_creator,hide_by_itemtype,hide_by_email,hide_by_file,hide_item_metadata_email_only,get_workflows,get_billing_file_download_permission,get_list_licence,restore,soft_delete,is_billing_item,get_groups_price,get_record_permalink,get_google_detaset_meta,get_google_scholar_meta,display_oaiset_path,get_terms,get_roles,check_items_settings,get_valid_onetime_download,create_secret_url,_generate_secret_download_url,parse_secret_download_token,validate_secret_download_token,get_secret_download,_create_secret_download_url,update_secret_download
+from weko_records_ui.utils import is_future, create_usage_report_for_user,get_data_usage_application_data,send_usage_report_mail_for_user,check_and_send_usage_report,update_onetime_download,create_onetime_download_url,get_onetime_download,validate_onetime_download_token,get_license_pdf,hide_item_metadata,get_pair_value,get_min_price_billing_file_download,parse_one_time_download_token,generate_one_time_download_url,validate_download_record,is_private_index,get_file_info_list,replace_license_free,hide_by_itemtype,hide_by_email,hide_by_file,hide_item_metadata_email_only,get_workflows,get_billing_file_download_permission,get_list_licence,restore,soft_delete,is_billing_item,get_groups_price,get_record_permalink,get_google_detaset_meta,get_google_scholar_meta,display_oaiset_path,get_terms,get_roles,check_items_settings,get_valid_onetime_download,create_secret_url,_generate_secret_download_url,parse_secret_download_token,validate_secret_download_token,get_secret_download,_create_secret_download_url,update_secret_download,get_values_by_selected_lang
 import base64
 from unittest.mock import MagicMock
 import copy
@@ -248,8 +248,62 @@ def test_get_pair_value(app):
         name_keys = ['subitem_1551255647225', 'subitem_1551255647225']
         lang_keys = ['subitem_1551255648112', 'subitem_1551255647225']
         name,lang =  get_pair_value(name_keys,lang_keys,datas)
-        
 
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_get_values_by_selected_lang -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_get_values_by_selected_lang(app):
+    # cur_lang
+    cur_lang = "ja"
+    source_title = [('ja',''),('','test0'),('ja','テスト1'), ('en','test'), ('ja','テスト2')]
+    test = ['テスト1', 'テスト2']
+    result = get_values_by_selected_lang(source_title, cur_lang)
+    assert result == test
+    
+    # not cur_lang, none language is first
+    source_title = [('None Language', 'test1'), ('en', 'test2'), ('None Language', 'test3'), ('fr', 'test4')]
+    test = ['test1', 'test3']
+    result = get_values_by_selected_lang(source_title, cur_lang)
+    assert result == test
+    
+    # not cur_lang, none language is not first, exist ja-Latn
+    source_title = [('en', 'test1'), ('en', 'test2'), ('ja-Latn', 'test3'), ('ja-Latn', 'test4')]
+    test = ['test3', 'test4']
+    result = get_values_by_selected_lang(source_title, cur_lang)
+    assert result == test
+    
+    # not cur_lang, none language is not first, not exist ja-Latn, exist en
+    source_title = [('en', 'test1'), ('en', 'test2'), ('None Language', 'test3'), ('None Language', 'test4')]
+    test = ['test1', 'test2']
+    result = get_values_by_selected_lang(source_title, cur_lang)
+    assert result == test
+    
+    # cur_lang=en, exist title_data_langs
+    cur_lang = 'en'
+    source_title = [('fr','test1'),('ch','test2'),('ch','test3'),('fr','test4')]
+    test = ['test1', 'test4']
+    result = get_values_by_selected_lang(source_title, cur_lang)
+    assert result == test
+    
+    # cur_lang !=en, exist title_data_langs
+    cur_lang = "ja"
+    source_title = [('fr','test1'),('ch','test2'),('ch','test3'),('fr','test4')]
+    test = ['test1', 'test4']
+    result = get_values_by_selected_lang(source_title, cur_lang)
+    assert result == test
+    
+    # return title_data_langs_none
+    app.config["WEKO_RECORDS_UI_LANG_DISP_FLG"] = True
+    cur_lang = "en"
+    source_title = [('ja','test0'),('None Language', 'test1'),('None Language', 'test2')]
+    test = ['test1', 'test2']
+    result = get_values_by_selected_lang(source_title, cur_lang)
+    assert result == test
+    
+    # enとja-latnがない、noneがない、
+    cur_lang = 'en'
+    source_title = []
+    test = None
+    result = get_values_by_selected_lang(source_title, cur_lang)
+    assert result == test
 
 # def hide_item_metadata(record, settings=None, item_type_mapping=None,
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_hide_item_metadata -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
