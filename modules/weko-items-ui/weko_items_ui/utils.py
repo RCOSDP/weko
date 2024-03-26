@@ -3724,9 +3724,9 @@ def save_title(activity_id, request_data):
     if item_type_id:
         item_type_mapping = Mapping.get_record(item_type_id)
         # current_app.logger.debug("item_type_mapping:{}".format(item_type_mapping))
-        key, key_child = get_key_title_in_item_type_mapping(item_type_mapping)
-    if key and key_child:
-        title = get_title_in_request(request_data, key, key_child)
+        key_list, key_child_dict = get_key_title_in_item_type_mapping(item_type_mapping)
+    if key_list and key_child_dict:
+        title = get_title_in_request(request_data, key_list, key_child_dict)
         activity.update_title(activity_id, title)
 
 
@@ -3736,35 +3736,41 @@ def get_key_title_in_item_type_mapping(item_type_mapping):
     :param item_type_mapping: item type mapping.
     :return:
     """
+    key_list = []
+    key_child_dict = {}
     for mapping_key in item_type_mapping:
-        property_data = item_type_mapping.get(
-            mapping_key).get('jpcoar_mapping')
-        if isinstance(property_data,
-                      dict) and 'title' in property_data and property_data.get(
-                'title').get('@value'):
-            return mapping_key, property_data.get('title').get('@value')
-    return None, None
+        property_data = item_type_mapping.get(mapping_key).get('jpcoar_mapping')
+        if isinstance(property_data, dict) and \
+                'title' in property_data and \
+                property_data.get('title').get('@value'):
+            key_list.append(mapping_key)
+            key_child_dict[mapping_key] = property_data.get('title').get('@value')
+    return key_list, key_child_dict
 
 
-def get_title_in_request(request_data, key, key_child):
+def get_title_in_request(request_data, key_list, key_child_dict):
     """Get title in request.
 
     :param request_data: activity id.
-    :param key: key of title.
-    :param key_child: key child of title.
+    :param key_list: key of title.
+    :param key_child_dict: key child of title.
     :return:
     """
     result = ''
     try:
         title = request_data.get('metainfo')
-        if title and key in title:
-            title_value = title.get(key)
-            if isinstance(title_value, dict) and key_child in title_value:
-                result = title_value.get(key_child)
-            elif isinstance(title_value, list) and len(title_value) > 0:
-                title_value = title_value[0]
-                if key_child in title_value:
+        for key in key_list:
+            if title and key in title:
+                title_value = title.get(key)
+                key_child = key_child_dict.get(key)
+                if isinstance(title_value, dict) and key_child in title_value:
                     result = title_value.get(key_child)
+                elif isinstance(title_value, list) and len(title_value) > 0:
+                    title_value = title_value[0]
+                    if key_child in title_value:
+                        result = title_value.get(key_child)
+            if result:
+                break
     except Exception:
         pass
     return result
