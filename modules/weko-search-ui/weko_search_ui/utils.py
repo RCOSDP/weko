@@ -3969,13 +3969,13 @@ def get_data_by_property(item_metadata, item_map, mapping_key):
         return None, None
     for key in key_list.split(","):
         attribute = item_metadata.get(key.split(".")[0])
-        if not attribute:
-            return None, key_list
-        else:
+        if attribute:
             data_result = get_sub_item_value(attribute, key.split(".")[-1])
             if data_result:
                 for value in data_result:
                     data.append(value)
+    if data == []:
+        data = None
     return data, key_list
 
 
