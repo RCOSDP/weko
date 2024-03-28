@@ -70,6 +70,9 @@ OPEN_DATE_DISPLAY_VALUE = '1'
 OPEN_DATE_HIDE_VALUE = '0'
 # setting the release date if display
 
+DISPLAY_REQUEST_FORM = False
+# Default setting whether to display the request form
+
 # CSL Citation Formatter
 # ======================
 #: Styles Endpoint for CSL
@@ -168,6 +171,22 @@ RECORDS_UI_ENDPOINTS = dict(
         route='/record/<pid_value>/file/onetime/<string:filename>',
         view_imp='weko_records_ui.fd.file_download_onetime',
         record_class='weko_deposit.api:WekoRecord',
+        methods=['GET','POST'],
+    ),
+    recid_secret_url=dict(
+        pid_type='recid',
+        route='/records/<pid_value>/secret/<path:filename>',
+        view_imp='weko_records_ui.views.create_secret_url_and_send_mail',
+        record_class='weko_deposit.api:WekoRecord',
+        permission_factory_imp='weko_records_ui.permissions'
+                               ':page_permission_factory',
+        methods=['POST'],
+    ),
+    recid_secret_file_download=dict(
+        pid_type='recid',
+        route='/record/<pid_value>/file/secret/<string:filename>',
+        view_imp='weko_records_ui.fd.file_download_secret',
+        record_class='weko_deposit.api:WekoRecord',
     ),
 )
 
@@ -177,6 +196,14 @@ WEKO_RECORDS_UI_SECRET_KEY = "secret"
 WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN = \
     "filename={} record_id={} user_mail={} date={}"
 """Onetime download pattern."""
+
+WEKO_RECORDS_UI_SECRET_DOWNLOAD_PATTERN = \
+    "filename={} record_id={} id={} date={}"
+"""Secret URL download pattern."""
+
+WEKO_RECORDS_UI_MAIL_TEMPLATE_SECRET_URL = "email_pattern_send_secret_url.tpl"
+
+WEKO_RECORDS_UI_MAIL_TEMPLATE_SECRET_GENRE_ID = 1
 
 RECORDS_UI_EXPORT_FORMATS = {
     'recid': {
@@ -520,7 +547,7 @@ WEKO_RECORDS_UI_EMAIL_ITEM_KEYS = ['creatorMails', 'contributorMails', 'mails']
 RECORDS_UI_TOMBSTONE_TEMPLATE = 'weko_records_ui/tombstone.html'
 # Setting the template of showing deleted record
 
-WEKO_RECORDS_UI_LANG_DISP_FLG = False 
+WEKO_RECORDS_UI_LANG_DISP_FLG = False
 """ Enable function of switching metadata by language of metadata """
 
 WEKO_RECORDS_UI_GOOGLE_SCHOLAR_OUTPUT_RESOURCE_TYPE = [
@@ -610,8 +637,47 @@ WEKO_RECORDS_UI_DISPLAY_VERSION_BOX_FLG = True
 WEKO_RECORDS_UI_DISPLAY_EXPORT_BOX_FLG = True
 """ Display Export box on item detail. """
 
-WEKO_RECORDS_UI_DISPLAY_RESOURCE_TYPE = False 
+WEKO_RECORDS_UI_DISPLAY_RESOURCE_TYPE = False
 """ Display resource type on item detail. """
 
 WEKO_RECORDS_UI_DISPLAY_ITEM_TYPE = True
 """ Display item type name on item detail. """
+
+WEKO_RECORDS_UI_REST_ENDPOINTS = {
+    'need_restricted_access': {
+        'route': '/<string:version>/records/<int:pid_value>/need-restricted-access',
+        'default_media_type': 'application/json',
+    },
+    'get_file_terms': {
+        'route': '/<string:version>/records/<int:pid_value>/files/<string:file_name>/terms',
+        'default_media_type': 'application/json',
+    },
+    'file_application': {
+        'route': '/<string:version>/records/<int:pid_value>/files/<string:file_name>/application',
+        'default_media_type': 'application/json',
+    },
+    'send_request_mail': {
+        'route': '/<string:version>/records/<int:pid_value>/request-mail',
+        'default_media_type': 'application/json',
+    },
+    'get_captcha_image': {
+        'route': '/<string:version>/captcha/image',
+        'default_media_type': 'application/json',
+    },
+    'validate_captcha_answer': {
+        'route': '/<string:version>/captcha/validate',
+        'default_media_type': 'application/json',
+    },
+}
+
+WEKO_RECORDS_UI_API_LIMIT_RATE_DEFAULT = ['100 per minute']
+
+WEKO_RECORDS_UI_API_ACCEPT_LANGUAGES = ['en', 'ja']
+
+WEKO_RECORDS_UI_CAPTCHA_EXPIRATION_SECONDS = 900
+
+WEKO_RECORDS_UI_CAPTCHA_TTL_SECONDS = 600
+
+WEKO_RECORDS_UI_NOTIFICATION_MESSAGE = "以下の内容のリクエストメールをデータ提供者に送信しました。\n\n-----------------------------------------------------------------------------\n\n"
+
+WEKO_RECORDS_UI_REQUEST_MESSAGE = "様からリクエストメールが送信されました。\n\n-----------------------------------------------------------------------------\n\n"

@@ -112,6 +112,7 @@
     {%- if 'nameIdentifiers' in attribute_data -%}
     {%- for ni in attribute_data.get('nameIdentifiers') -%}
       {%- if 'nameIdentifierScheme' in ni and ni['nameIdentifierScheme']=="WEKO" and 'nameIdentifier' in ni -%}
+      <a href='/search?wid={{ ni["nameIdentifier"] }}'>{{ _('Search repository') }}</a>
       <a href='/search?q=&wid={{ ni["nameIdentifier"] }}'>{{ _('Search repository') }}</a>
       {%- endif -%}
     {%- endfor -%}

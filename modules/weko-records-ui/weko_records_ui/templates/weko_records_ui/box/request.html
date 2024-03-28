@@ -1,0 +1,81 @@
+<div class="well well2 request-mail">
+    <div>
+        <a id="request_mail_btn" class="btn btn-primary request-button btn-lg center-block">
+            <span class="glyphicon glyphicon-envelope icon-space" aria-hidden="true"></span>{{_('Request Mail')}}
+        </a>
+    </div>
+</div>
+<div id="request_mail_dialog" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span class="glyphicon glyphicon-remove"></span>
+                </button>
+                <h3 class="modal-title">{{_('Request Mail Form')}}
+                </h3>
+            </div>
+            <form id="request_mail_form" class="form-horizontal" method="post" action="">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="col-xs-2  control-label">{{_('To')}}</label>
+                        <div class="col-xs-10" style="padding-top: 7px;">
+                            <div>{{_('Contents Manager')}}</div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-xs-2 field-required control-label">{{_('From')}}</label>
+                        <div class="col-xs-10">
+                            <input type="email" class="form-control" name="request_mail_sender" id="request_mail_sender" value="">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-xs-2 field-required control-label">{{_('Subject')}}</label>
+                        <div class="col-xs-10">
+                            <input type="text" class="form-control" name="subject" id="subject" value="">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-xs-2 field-required control-label">{{_("Body")}}</label>
+                        <div class="col-xs-10">
+                            <textarea type="text" class="form-control" name="body" id="body" rows="20"
+                                form="request_mail_form"></textarea>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <label class="col-xs-2 control-label"></label>
+                        <div class="col-xs-10 container-fluid">
+                            <div class="row">
+                                <div class="col-sm-6">
+                                    <img id="request_captcha" class="img-responsive" width="200" height="" src="" />
+                                </div>
+                                <div class="col-sm-6">
+                                    <input type="text" class="form-control" name="calculation_result" id="calculation_result" value="" alt="image loading error...">
+                                </div>
+                            </div>
+                            <div class="row" id="calculation_message"></div>
+                        </div>
+                    </div>
+                    <input type="hidden" id="isGuest" name="isGuest" value="{{not current_user.is_authenticated}}" />
+                    <input type="hidden" id="key" value="" />
+                    <input type="hidden" id="ttl" value="" />
+                    <input type="hidden" id="dt" value="" />
+                    <input type="hidden" id="calculation_message_initial" value="{{_('Please enter the calculation result')}}"/>
+                    <input type="hidden" id="captcha_image_timeout" value="{{_('The image has expired. Please enter the calculation result again.')}}">
+                    <input type="hidden" id="failed_message" value="{{_('There is an error in the input item')}}"/>
+                    <input type="hidden" id="email_sent_successfully" value="{{_('Email sent successfully')}}"/>
+                </div>
+                <div class="modal-footer">
+                    <div class="form-actions">
+                        <button type="submit" id="confirm_send_button" class="btn btn-primary">
+                            <span class="glyphicon glyphicon-send icon-space"></span>{{_('Send') }}
+                        </button>
+                        <button type="button" class="btn btn-default" data-dismiss="modal">
+                            {{_('Cancel')}}
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

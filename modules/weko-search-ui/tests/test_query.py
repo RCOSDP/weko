@@ -3,7 +3,7 @@ import json
 import copy
 from flask import request, url_for
 from re import L
-from elasticsearch_dsl.query import Match, Range, Terms, Bool
+from elasticsearch_dsl.query import Match, Range, Terms, Bool, Exists
 from mock import patch, MagicMock
 from werkzeug import ImmutableMultiDict
 from werkzeug.datastructures import MultiDict, CombinedMultiDict
@@ -11,7 +11,7 @@ from invenio_accounts.testutils import login_user_via_session
 
 from invenio_search import RecordsSearch
 from weko_admin.config import WEKO_ADMIN_MANAGEMENT_OPTIONS
-from weko_search_ui.config import WEKO_SEARCH_KEYWORDS_DICT
+from weko_search_ui.config import WEKO_SEARCH_KEYWORDS_DICT, WEKO_SEARCH_TYPE_DICT
 
 from weko_search_ui.query import (
     get_item_type_aggs,
@@ -125,7 +125,7 @@ def test_item_path_search_factory(i18n_app, users, indices):
             with patch('weko_search_ui.query.search_permission', mock_searchperm):
                 res = item_path_search_factory(self=None, search=search, index_id=33)
                 assert res
-                _rv = ([Bool(must=[Terms(path=[])], should=[Match(weko_creator_id='5'), Match(weko_shared_id='5'), Bool(must=[Match(publish_status='0'), Range(publish_date={'lte': 'now/d'})])]), Bool(must=[Match(relation_version_is_last='true')])], ['3', '4', '5'])
+                _rv = ([Bool(must=[Terms(path=[])], should=[Match(weko_creator_id='5'), Match(weko_shared_ids=['5']), Bool(must=[Match(publish_status='0'), Range(publish_date={'lte': 'now/d'})])]), Bool(must=[Match(relation_version_is_last='true')])], ['3', '4', '5'])
                 with patch('weko_search_ui.query.get_permission_filter', return_value=_rv):
                     res = item_path_search_factory(self=None, search=search, index_id=None)
                     assert res

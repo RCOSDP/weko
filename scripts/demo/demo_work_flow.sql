@@ -374,7 +374,7 @@ CREATE TABLE public.workflow_activity (
     activity_community_id text,
     activity_confirm_term_of_use boolean,
     title text,
-    shared_user_id integer
+    shared_user_ids jsonb
 );
 
 
@@ -799,12 +799,12 @@ N	2020-12-10 16:56:44.689686	2020-12-10 16:56:44.68969	9	C	action_canceled	Indic
 -- Data for Name: workflow_activity; Type: TABLE DATA; Schema: public; Owner: invenio
 --
 
-COPY public.workflow_activity (status, created, updated, id, activity_id, activity_name, item_id, workflow_id, workflow_status, flow_id, action_id, action_status, activity_login_user, activity_update_user, activity_status, activity_start, activity_end, activity_community_id, activity_confirm_term_of_use, title, shared_user_id) FROM stdin;
+COPY public.workflow_activity (status, created, updated, id, activity_id, activity_name, item_id, workflow_id, workflow_status, flow_id, action_id, action_status, activity_login_user, activity_update_user, activity_status, activity_start, activity_end, activity_community_id, activity_confirm_term_of_use, title, shared_user_ids) FROM stdin;
 N	2020-12-10 17:38:46.057615	2020-12-10 17:38:46.071099	1	A-20201210-00001	\N	\N	1	\N	1	2	B	1	1	M	2020-12-10 17:38:46.05512	\N	\N	t	\N	\N
-N	2020-12-10 17:40:15.515309	2020-12-10 17:40:47.65665	2	A-20201210-00002	\N	2370d707-b92a-4313-a803-980861f76a90	1	\N	1	2	F	1	1	F	2020-12-10 17:40:15.514158	2020-12-10 17:40:47.655567	\N	t	s	-1
-N	2020-12-10 17:44:19.586797	2020-12-10 17:45:23.236078	3	A-20201210-00003	\N	2370d707-b92a-4313-a803-980861f76a90	1	\N	1	2	F	1	1	F	2020-12-10 17:44:19.585057	2020-12-10 17:45:23.235378	\N	t	s	-1
-N	2020-12-10 17:48:36.484473	2020-12-10 17:49:05.207873	4	A-20201210-00004	\N	2370d707-b92a-4313-a803-980861f76a90	1	\N	1	2	F	1	1	F	2020-12-10 17:48:36.483013	2020-12-10 17:49:05.206811	\N	t	s	-1
-N	2020-12-10 17:55:06.26716	2020-12-10 18:29:00.898479	5	A-20201210-00005	\N	2370d707-b92a-4313-a803-980861f76a90	1	\N	1	2	F	1	1	F	2020-12-10 17:55:06.265358	2020-12-10 18:29:00.897907	\N	t	s	-1
+N	2020-12-10 17:40:15.515309	2020-12-10 17:40:47.65665	2	A-20201210-00002	\N	2370d707-b92a-4313-a803-980861f76a90	1	\N	1	2	F	1	1	F	2020-12-10 17:40:15.514158	2020-12-10 17:40:47.655567	\N	t	s	[]
+N	2020-12-10 17:44:19.586797	2020-12-10 17:45:23.236078	3	A-20201210-00003	\N	2370d707-b92a-4313-a803-980861f76a90	1	\N	1	2	F	1	1	F	2020-12-10 17:44:19.585057	2020-12-10 17:45:23.235378	\N	t	s	[]
+N	2020-12-10 17:48:36.484473	2020-12-10 17:49:05.207873	4	A-20201210-00004	\N	2370d707-b92a-4313-a803-980861f76a90	1	\N	1	2	F	1	1	F	2020-12-10 17:48:36.483013	2020-12-10 17:49:05.206811	\N	t	s	[]
+N	2020-12-10 17:55:06.26716	2020-12-10 18:29:00.898479	5	A-20201210-00005	\N	2370d707-b92a-4313-a803-980861f76a90	1	\N	1	2	F	1	1	F	2020-12-10 17:55:06.265358	2020-12-10 18:29:00.897907	\N	t	s	[]
 \.
 
 

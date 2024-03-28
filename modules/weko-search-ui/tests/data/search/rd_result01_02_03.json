@@ -890,7 +890,7 @@
                         "publish_date": "2021-02-13",
                         "publish_status": "0",
                         "relation_version_is_last": true,
-                        "weko_shared_id": -1
+                        "weko_shared_ids": []
                     },
                     "_oai": {
                         "id": "oai:weko3.example.org:00000001"
@@ -964,7 +964,7 @@
                         "AO"
                     ],
                     "weko_creator_id": "1",
-                    "weko_shared_id": -1
+                    "weko_shared_ids": []
                 },
                 "updated": "2022-05-24T08:32:26.405052+00:00"
             },
@@ -1691,7 +1691,7 @@
                         "publish_date": "2021-02-13",
                         "publish_status": "0",
                         "relation_version_is_last": true,
-                        "weko_shared_id": -1
+                        "weko_shared_ids": []
                     },
                     "_oai": {
                         "id": "oai:weko3.example.org:00000002"
@@ -1766,7 +1766,7 @@
                         "AO"
                     ],
                     "weko_creator_id": "1",
-                    "weko_shared_id": -1
+                    "weko_shared_ids": []
                 },
                 "updated": "2022-05-24T08:32:26.405052+00:00"
             },
@@ -2493,7 +2493,7 @@
                         "publish_date": "2021-02-13",
                         "publish_status": "0",
                         "relation_version_is_last": true,
-                        "weko_shared_id": -1
+                        "weko_shared_ids": []
                     },
                     "_oai": {
                         "id": "oai:weko3.example.org:00000003"
@@ -2567,7 +2567,7 @@
                         "AO"
                     ],
                     "weko_creator_id": "1",
-                    "weko_shared_id": -1
+                    "weko_shared_ids": []
                 },
                 "updated": "2022-05-24T08:32:26.405052+00:00"
             }
