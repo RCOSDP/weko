@@ -26,7 +26,7 @@ import os
 import zipfile
 from datetime import datetime, timedelta
 from io import BytesIO, StringIO
-from typing import Dict, Tuple, Union
+from typing import Dict, Optional,Tuple, Union
 from invenio_search.api import RecordsSearch
 from elasticsearch.exceptions import NotFoundError
 from elasticsearch_dsl.query import QueryString
@@ -1719,16 +1719,18 @@ def get_init_display_index(init_disp_index: str) -> list:
     return init_display_indexes
 
 
-def get_restricted_access(key: str = None):
+def get_restricted_access(key: Optional[str] = None) -> Optional[dict]:
     """Get registered access settings.
 
     :param key:setting key.
     :return:
     """
-    restricted_access = AdminSettings.get('restricted_access', False)
+    restricted_access:dict = AdminSettings.get('restricted_access', False)
     if not restricted_access:
         restricted_access = current_app.config[
             'WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS']
+    if not 'error_msg' in restricted_access:
+            restricted_access['error_msg'] = config.WEKO_ADMIN_RESTRICTED_ACCESS_ERROR_MESSAGE
     if not key:
         return restricted_access
     elif key in restricted_access:
@@ -1741,11 +1743,36 @@ def update_restricted_access(restricted_access: dict):
 
     :param restricted_access:
     """
+    def parse_secret_URL_file_download():
+        if secret_URL_file_download.get('secret_expiration_date_unlimited_chk'):
+            secret_URL_file_download['secret_expiration_date'] = config.WEKO_ADMIN_RESTRICTED_ACCESS_MAX_INTEGER
+        if secret_URL_file_download.get('secret_download_limit_unlimited_chk'):
+            secret_URL_file_download['secret_download_limit'] = config.WEKO_ADMIN_RESTRICTED_ACCESS_MAX_INTEGER
+
+        secret_URL_file_download['secret_expiration_date'] = int(
+            secret_URL_file_download['secret_expiration_date'])
+        secret_URL_file_download['secret_download_limit'] = int(
+            secret_URL_file_download['secret_download_limit'])
+
+    def validate_secret_URL_file_download():
+        if not secret_URL_file_download.get(
+            'secret_expiration_date_unlimited_chk') and not secret_URL_file_download[
+            'secret_expiration_date'] or not secret_URL_file_download.get(
+            'secret_download_limit_unlimited_chk') and not \
+                secret_URL_file_download['secret_download_limit']:
+            return False
+        if secret_URL_file_download['secret_expiration_date'] and int(
+            secret_URL_file_download['secret_expiration_date']) < 1 or \
+            secret_URL_file_download['secret_download_limit'] and int(
+                secret_URL_file_download['secret_download_limit']) < 1:
+            return False
+        return True
+        
     def parse_content_file_download():
         if content_file_download.get('expiration_date_unlimited_chk'):
-            content_file_download['expiration_date'] = 9999999
+            content_file_download['expiration_date'] = config.WEKO_ADMIN_RESTRICTED_ACCESS_MAX_INTEGER
         if content_file_download.get('download_limit_unlimited_chk'):
-            content_file_download['download_limit'] = 9999999
+            content_file_download['download_limit'] = config.WEKO_ADMIN_RESTRICTED_ACCESS_MAX_INTEGER
 
         content_file_download['expiration_date'] = int(
             content_file_download['expiration_date'])
@@ -1778,10 +1805,17 @@ def update_restricted_access(restricted_access: dict):
 
     def parse_usage_report_wf_access():
         if usage_report_wf_access.get('expiration_date_access_unlimited_chk'):
-            usage_report_wf_access['expiration_date_access'] = 9999999
+            usage_report_wf_access['expiration_date_access'] = config.WEKO_ADMIN_RESTRICTED_ACCESS_MAX_INTEGER
 
         usage_report_wf_access['expiration_date_access'] = int(
             usage_report_wf_access['expiration_date_access'])
+
+    # Secret URL file download.
+    if 'secret_URL_file_download' in restricted_access:
+        secret_URL_file_download = restricted_access['secret_URL_file_download']
+        if not validate_secret_URL_file_download():
+            return False
+        parse_secret_URL_file_download()
 
     # Content file download.
     if 'content_file_download' in restricted_access:
@@ -1821,15 +1855,16 @@ class UsageReport:
         self.__page_number = 1
         self.__usage_report_activities_data = []
         self.__mail_key = {
-            "subitem_restricted_access_name": "restricted_fullname",
-            "subitem_restricted_access_mail_address": "restricted_mail_address",
-            "subitem_restricted_access_university/institution":
+            "subitem_fullname": "restricted_fullname",
+            "subitem_mail_address": "restricted_mail_address",
+            "subitem_university/institution":
                 "restricted_university_institution",
             "subitem_restricted_access_dataset_usage": "restricted_data_name",
             "subitem_restricted_access_application_date":
                 "restricted_application_date",
             "subitem_restricted_access_research_title":
-                "restricted_research_title"
+                "restricted_research_title",
+            "subitem_research_title": "restricted_research_title"
         }
         self.__mail_info_lst = []
 
@@ -1903,12 +1938,12 @@ class UsageReport:
         return activities
 
     def send_reminder_mail(self, activities_id: list,
-                           mail_template: str = None, activities: list = None):
+                           mail_id: str = None, activities: list = None, forced_send = False):
         """Send reminder email to user.
 
         Args:
             activities_id (list): Activity identifier list.
-            mail_template (str, optional): Mail template.
+            mail_id (str, optional): Mail template id.
             activities (list, optional): Activities list.
         """
         if not activities:
@@ -1918,8 +1953,10 @@ class UsageReport:
         site_url = current_app.config['THEME_SITEURL']
         site_name_en, site_name_ja = self.__get_site_info()
         site_mail = self.__get_default_mail_sender()
-        if not mail_template:
-            mail_template = current_app.config\
+        institution_name_ja = current_app.config['THEME_INSTITUTION_NAME']['ja']
+        institution_name_en = current_app.config['THEME_INSTITUTION_NAME']['en']
+        if not mail_id:
+            mail_id = current_app.config\
                 .get("WEKO_WORKFLOW_REQUEST_FOR_REGISTER_USAGE_REPORT")
 
         for activity in activities:
@@ -1937,6 +1974,8 @@ class UsageReport:
                     "restricted_site_url": site_url,
                     "restricted_site_name_ja": site_name_ja,
                     "restricted_site_name_en": site_name_en,
+                    "restricted_institution_name_ja": institution_name_ja,
+                    "restricted_institution_name_en": institution_name_en,
                     "restricted_site_mail": site_mail,
                     "restricted_usage_activity_id": activity.extra_info.get(
                         'usage_activity_id'),
@@ -1950,10 +1989,11 @@ class UsageReport:
             self.__mail_info_lst[-1]['mail_recipient'] = \
                 self.__mail_info_lst[-1]['restricted_mail_address']
         is_sendmail_success = True
-        for mail_info in self.__mail_info_lst:
-            if not self.__process_send_mail(mail_info, mail_template):
-                is_sendmail_success = False
-                break
+        if activity.extra_info.get('is_guest') or forced_send:
+            for mail_info in self.__mail_info_lst:
+                if not self.__process_send_mail(mail_info, mail_id):
+                    is_sendmail_success = False
+                    break
         return is_sendmail_success
 
     @staticmethod

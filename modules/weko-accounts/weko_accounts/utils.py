@@ -69,6 +69,8 @@ def get_remote_addr():
 
     current_app.logger.debug("IP Address:{}".format(address))
 
+    current_app.logger.debug("IP Address:{}".format(address))
+
     return address
 
 

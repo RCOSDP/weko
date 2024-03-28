@@ -51,6 +51,7 @@ class WekoAdmin(object):
             conf = current_app.config
             access_table = conf['WEKO_ADMIN_ACCESS_TABLE']
             system_admin = conf['WEKO_ADMIN_PERMISSION_ROLE_SYSTEM']
+            is_use_mail_templates = conf.get('WEKO_ADMIN_USE_MAIL_TEMPLATE_EDIT', True)
             try:
                 roles = db.session.query(Role).join(userrole).filter_by(
                     user_id=current_user.get_id()).all()
@@ -59,6 +60,8 @@ class WekoAdmin(object):
                     'Could not determine roles - returning False: {}'.format(e))
                 roles = []
             for role in roles:  # Check if role can view endpoint
+                if endpoint == 'mailtemplates' and not is_use_mail_templates:
+                    return False
                 access_list = access_table[role.name] if role.name in access_table \
                     else []
                 if endpoint in access_list or role.name == system_admin:

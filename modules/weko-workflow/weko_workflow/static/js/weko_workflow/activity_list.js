@@ -271,7 +271,7 @@ require([
     has_error = false;
     lstSelectCheckboxes.forEach(function (activity_id) {
       $.ajax({
-        url: '/workflow/send_mail/' + activity_id + '/' + mail_template,
+        url: '/workflow/send_mail/' + activity_id + '/' + mail_id,
         method: 'POST',
         success: function (data) {
           if (data.msg == "Error") {

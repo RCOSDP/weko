@@ -1,0 +1,599 @@
+[
+    {
+        "_oai": {
+            "id": "oai:weko3.example.org:00000011"
+        },
+        "path": [
+            "1557820367608"
+        ],
+        "owner": "5",
+        "recid": "11",
+        "title": [
+            "test1"
+        ],
+        "pubdate": {
+            "attribute_name": "PubDate",
+            "attribute_value": "2023-07-19"
+        },
+        "_buckets": {
+            "deposit": "7a035745-e174-40ab-b936-b9129752671a"
+        },
+        "_deposit": {
+            "id": "11",
+            "pid": {
+                "type": "depid",
+                "value": "11",
+                "revision_id": 0
+            },
+            "owner": "5",
+            "owners": [
+                5
+            ],
+            "status": "published",
+            "created_by": 5,
+            "owners_ext": {
+                "email": "wekosoftware@nii.ac.jp",
+                "username": "",
+                "displayname": ""
+            }
+        },
+        "item_title": "test1",
+        "author_link": [],
+        "item_type_id": "17",
+        "publish_date": "2023-07-19",
+        "publish_status": "0",
+        "weko_shared_ids": [],
+        "item_1617186331708": {
+            "attribute_name": "Title",
+            "attribute_value_mlt": [
+                {
+                    "subitem_1551255647225": "test1",
+                    "subitem_1551255648112": "ja"
+                }
+            ]
+        },
+        "item_1617258105262": {
+            "attribute_name": "Resource Type",
+            "attribute_value_mlt": [
+                {
+                    "resourceuri": "http://purl.org/coar/resource_type/c_6501",
+                    "resourcetype": "journal article"
+                }
+            ]
+        },
+        "item_1689228169922": {
+            "attribute_name": "Restricted",
+            "attribute_type": "file",
+            "attribute_value_mlt": [
+                {
+                    "url": {
+                        "url": "https://weko3.example.org/record/11/files/dummy.txt"
+                    },
+                    "date": [
+                        {
+                            "dateType": "Available",
+                            "dateValue": "2023-07-19"
+                        }
+                    ],
+                    "format": "text/plain",
+                    "filename": "dummy.txt",
+                    "filesize": [
+                        {
+                            "value": "5 B"
+                        }
+                    ],
+                    "accessrole": "open_access",
+                    "version_id": "d7c74a52-f232-427f-a5c8-780ec2e52d35"
+                }
+            ]
+        },
+        "relation_version_is_last": true
+    },
+    {
+        "_oai": {
+            "id": "oai:weko3.example.org:00000012"
+        },
+        "path": [
+            "1557820367608"
+        ],
+        "owner": "2",
+        "recid": "12",
+        "title": [
+            "test2"
+        ],
+        "pubdate": {
+            "attribute_name": "PubDate",
+            "attribute_value": "2023-07-19"
+        },
+        "_buckets": {
+            "deposit": "64368534-3022-4c2e-b667-49df9bc0d1a9"
+        },
+        "_deposit": {
+            "id": "12",
+            "pid": {
+                "type": "depid",
+                "value": "12",
+                "revision_id": 0
+            },
+            "owner": "2",
+            "owners": [
+                2
+            ],
+            "status": "published",
+            "created_by": 2,
+            "owners_ext": {
+                "email": "wekosoftware@nii.ac.jp",
+                "username": "",
+                "displayname": ""
+            }
+        },
+        "item_title": "test2",
+        "author_link": [],
+        "item_type_id": "17",
+        "publish_date": "2023-07-19",
+        "publish_status": "0",
+        "weko_shared_ids": [],
+        "item_1617186331708": {
+            "attribute_name": "Title",
+            "attribute_value_mlt": [
+                {
+                    "subitem_1551255647225": "test2",
+                    "subitem_1551255648112": "ja"
+                }
+            ]
+        },
+        "item_1617258105262": {
+            "attribute_name": "Resource Type",
+            "attribute_value_mlt": [
+                {
+                    "resourceuri": "http://purl.org/coar/resource_type/c_6501",
+                    "resourcetype": "journal article"
+                }
+            ]
+        },
+        "item_1689228169922": {
+            "attribute_name": "Restricted",
+            "attribute_type": "file",
+            "attribute_value_mlt": [
+                {
+                    "url": {
+                        "url": "https://weko3.example.org/record/12/files/dummy.txt"
+                    },
+                    "date": [
+                        {
+                            "dateType": "Available",
+                            "dateValue": "2023-07-19"
+                        }
+                    ],
+                    "format": "text/plain",
+                    "provide": [
+                        {
+                            "role": "2",
+                            "workflow": "3"
+                        },
+                        {
+                            "role": "none_loggin",
+                            "workflow": "3"
+                        },
+                        {
+                            "role": "1",
+                            "workflow": "99"
+                        },
+                        {
+                            "role": "3",
+                            "workflow": "3"
+                        }
+                    ],
+                    "terms"	:"term_free",
+                    "termsDescription":"利用規約本文",
+                    "terms_content":"利用規約本文",
+                    "filename": "dummy.txt",
+                    "filesize": [
+                        {
+                            "value": "5 B"
+                        }
+                    ],
+                    "accessrole": "open_restricted",
+                    "version_id": "30c80694-c212-43f0-aa58-d0d0d63c5184"
+                }
+            ]
+        },
+        "relation_version_is_last": true
+    },
+    {
+        "_oai": {
+            "id": "oai:weko3.example.org:00000013"
+        },
+        "path": [
+            "1557820367608"
+        ],
+        "owner": "5",
+        "recid": "13",
+        "title": [
+            "test3"
+        ],
+        "pubdate": {
+            "attribute_name": "PubDate",
+            "attribute_value": "2023-07-19"
+        },
+        "_buckets": {
+            "deposit": "29295268-561d-4498-91af-ee0bd27d4c24"
+        },
+        "_deposit": {
+            "id": "13",
+            "pid": {
+                "type": "depid",
+                "value": "13",
+                "revision_id": 0
+            },
+            "owner": "5",
+            "owners": [
+                5
+            ],
+            "status": "published",
+            "created_by": 5,
+            "owners_ext": {
+                "email": "wekosoftware@nii.ac.jp",
+                "username": "",
+                "displayname": ""
+            }
+        },
+        "item_title": "test3",
+        "author_link": [],
+        "item_type_id": "17",
+        "publish_date": "2023-07-19",
+        "publish_status": "0",
+        "weko_shared_ids": [],
+        "item_1617186331708": {
+            "attribute_name": "Title",
+            "attribute_value_mlt": [
+                {
+                    "subitem_1551255647225": "test3",
+                    "subitem_1551255648112": "ja"
+                }
+            ]
+        },
+        "item_1617258105262": {
+            "attribute_name": "Resource Type",
+            "attribute_value_mlt": [
+                {
+                    "resourceuri": "http://purl.org/coar/resource_type/c_6501",
+                    "resourcetype": "journal article"
+                }
+            ]
+        },
+        "item_1689228169922": {
+            "attribute_name": "Restricted",
+            "attribute_type": "file",
+            "attribute_value_mlt": [
+                {
+                    "url": {
+                        "url": "https://weko3.example.org/record/13/files/dummy.txt"
+                    },
+                    "date": [
+                        {
+                            "dateType": "Available",
+                            "dateValue": "2023-07-19"
+                        }
+                    ],
+                    "format": "text/plain",
+                    "provide": [
+                        {
+                            "role": "2",
+                            "workflow": "3"
+                        }
+                    ],
+                    "terms"	:"term_free",
+                    "termsDescription":"利用規約本文",
+                    "terms_content":"利用規約本文",
+                    "filename": "dummy.txt",
+                    "filesize": [
+                        {
+                            "value": "5 B"
+                        }
+                    ],
+                    "accessrole": "open_restricted",
+                    "version_id": "12634dbe-2b8d-46ad-b3c9-6cc8e55b1273"
+                }
+            ]
+        },
+        "relation_version_is_last": true
+    },
+    {
+        "_oai": {
+            "id": "oai:weko3.example.org:00000014"
+        },
+        "path": [
+            "1557820367608"
+        ],
+        "owner": "5",
+        "recid": "14",
+        "title": [
+            "test4"
+        ],
+        "pubdate": {
+            "attribute_name": "PubDate",
+            "attribute_value": "2023-07-19"
+        },
+        "_buckets": {
+            "deposit": "d94a7763-74a0-4567-9e20-6937eed6c959"
+        },
+        "_deposit": {
+            "id": "14",
+            "pid": {
+                "type": "depid",
+                "value": "14",
+                "revision_id": 0
+            },
+            "owner": "5",
+            "owners": [
+                5
+            ],
+            "status": "published",
+            "created_by": 5,
+            "owners_ext": {
+                "email": "wekosoftware@nii.ac.jp",
+                "username": "",
+                "displayname": ""
+            }
+        },
+        "item_title": "test4",
+        "author_link": [],
+        "item_type_id": "17",
+        "publish_date": "2023-07-19",
+        "publish_status": "0",
+        "weko_shared_ids": [],
+        "item_1617186331708": {
+            "attribute_name": "Title",
+            "attribute_value_mlt": [
+                {
+                    "subitem_1551255647225": "test4",
+                    "subitem_1551255648112": "ja"
+                }
+            ]
+        },
+        "item_1617258105262": {
+            "attribute_name": "Resource Type",
+            "attribute_value_mlt": [
+                {
+                    "resourceuri": "http://purl.org/coar/resource_type/c_6501",
+                    "resourcetype": "journal article"
+                }
+            ]
+        },
+        "item_1689228169922": {
+            "attribute_name": "Restricted",
+            "attribute_type": "file",
+            "attribute_value_mlt": [
+                {
+                    "url": {
+                        "url": "https://weko3.example.org/record/14/files/dummy.txt"
+                    },
+                    "date": [
+                        {
+                            "dateType": "Available",
+                            "dateValue": "2023-07-19"
+                        }
+                    ],
+                    "format": "text/plain",
+                    "provide": [
+                        {
+                            "role": "2",
+                            "workflow": "3"
+                        }
+                    ],
+                    "terms"	:"term_free",
+                    "termsDescription":"利用規約本文",
+                    "terms_content":"利用規約本文",
+                    "filename": "dummy.txt",
+                    "filesize": [
+                        {
+                            "value": "5 B"
+                        }
+                    ],
+                    "accessrole": "open_restricted",
+                    "version_id": "9ce83540-96ec-4c0f-9764-8650a0b15907"
+                }
+            ]
+        },
+        "relation_version_is_last": true
+    },
+    {
+        "_oai": {
+            "id": "oai:weko3.example.org:00000015"
+        },
+        "path": [
+            "1557820367608"
+        ],
+        "owner": "5",
+        "recid": "15",
+        "title": [
+            "test6"
+        ],
+        "pubdate": {
+            "attribute_name": "PubDate",
+            "attribute_value": "2023-07-19"
+        },
+        "_buckets": {
+            "deposit": "40656af4-41da-4359-a157-325e0862946d"
+        },
+        "_deposit": {
+            "id": "15",
+            "pid": {
+                "type": "depid",
+                "value": "15",
+                "revision_id": 0
+            },
+            "owner": "5",
+            "owners": [
+                5
+            ],
+            "status": "published",
+            "created_by": 5,
+            "owners_ext": {
+                "email": "wekosoftware@nii.ac.jp",
+                "username": "",
+                "displayname": ""
+            }
+        },
+        "item_title": "test5",
+        "author_link": [],
+        "item_type_id": "17",
+        "publish_date": "2023-07-19",
+        "publish_status": "0",
+        "weko_shared_ids": [],
+        "item_1617186331708": {
+            "attribute_name": "Title",
+            "attribute_value_mlt": [
+                {
+                    "subitem_1551255647225": "test5",
+                    "subitem_1551255648112": "ja"
+                }
+            ]
+        },
+        "item_1617258105262": {
+            "attribute_name": "Resource Type",
+            "attribute_value_mlt": [
+                {
+                    "resourceuri": "http://purl.org/coar/resource_type/c_6501",
+                    "resourcetype": "journal article"
+                }
+            ]
+        },
+        "item_1689228169922": {
+            "attribute_name": "Restricted",
+            "attribute_type": "file",
+            "attribute_value_mlt": [
+                {
+                    "url": {
+                        "url": "https://weko3.example.org/record/15/files/dummy.txt"
+                    },
+                    "date": [
+                        {
+                            "dateType": "Available",
+                            "dateValue": "2023-07-19"
+                        }
+                    ],
+                    "format": "text/plain",
+                    "provide": [
+                        {
+                            "role": "2",
+                            "workflow": "3"
+                        }
+                    ],
+                    "terms"	:"term_free",
+                    "termsDescription":"利用規約本文",
+                    "terms_content":"利用規約本文",
+                    "filename": "dummy.txt",
+                    "filesize": [
+                        {
+                            "value": "5 B"
+                        }
+                    ],
+                    "accessrole": "open_restricted",
+                    "version_id": "37790b92-d50c-4a83-ae82-713de1857fca"
+                }
+            ]
+        },
+        "relation_version_is_last": true
+    },
+    {
+        "_oai": {
+            "id": "oai:weko3.example.org:00000016"
+        },
+        "path": [
+            "1557820367608"
+        ],
+        "owner": "5",
+        "recid": "16",
+        "title": [
+            "test6"
+        ],
+        "pubdate": {
+            "attribute_name": "PubDate",
+            "attribute_value": "2023-07-19"
+        },
+        "_buckets": {
+            "deposit": "9d4dab27-e79a-40ff-aefa-1d91d160dd00"
+        },
+        "_deposit": {
+            "id": "16",
+            "pid": {
+                "type": "depid",
+                "value": "16",
+                "revision_id": 0
+            },
+            "owner": "5",
+            "owners": [
+                5
+            ],
+            "status": "published",
+            "created_by": 5,
+            "owners_ext": {
+                "email": "wekosoftware@nii.ac.jp",
+                "username": "",
+                "displayname": ""
+            }
+        },
+        "item_title": "test6",
+        "author_link": [],
+        "item_type_id": "17",
+        "publish_date": "2023-07-19",
+        "publish_status": "0",
+        "weko_shared_ids": [],
+        "item_1617186331708": {
+            "attribute_name": "Title",
+            "attribute_value_mlt": [
+                {
+                    "subitem_1551255647225": "test6",
+                    "subitem_1551255648112": "ja"
+                }
+            ]
+        },
+        "item_1617258105262": {
+            "attribute_name": "Resource Type",
+            "attribute_value_mlt": [
+                {
+                    "resourceuri": "http://purl.org/coar/resource_type/c_6501",
+                    "resourcetype": "journal article"
+                }
+            ]
+        },
+        "item_1689228169922": {
+            "attribute_name": "Restricted",
+            "attribute_type": "file",
+            "attribute_value_mlt": [
+                {
+                    "url": {
+                        "url": "https://weko3.example.org/record/16/files/dummy.txt"
+                    },
+                    "date": [
+                        {
+                            "dateType": "Available",
+                            "dateValue": "2023-07-19"
+                        }
+                    ],
+                    "format": "text/plain",
+                    "provide": [
+                        {
+                            "role": "2",
+                            "workflow": "3"
+                        }
+                    ],
+                    "terms"	:"term_free",
+                    "termsDescription":"利用規約本文",
+                    "terms_content":"利用規約本文",
+                    "filename": "dummy.txt",
+                    "filesize": [
+                        {
+                            "value": "5 B"
+                        }
+                    ],
+                    "accessrole": "open_restricted",
+                    "version_id": "4e3fd7f4-9326-4d2c-842a-df6b84e02254"
+                }
+            ]
+        },
+        "relation_version_is_last": true
+    }
+]

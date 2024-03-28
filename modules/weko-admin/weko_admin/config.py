@@ -1151,6 +1151,8 @@ WEKO_ADMIN_REPOSITORY_ACCESS_LIST = [
     'site_info',
     'location',
     'facet-search',
+    'restricted_access',
+    'mailtemplates'
     'community',
     'restricted_access'
 ] + WEKO_ADMIN_COMMUNITY_ACCESS_LIST
@@ -1227,7 +1229,25 @@ WEKO_INDEX_TREE_STYLE_OPTIONS = {
     'widths': ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11']
 }
 
+WEKO_ADMIN_RESTRICTED_ACCESS_ERROR_MESSAGE = {
+    "key" : "",
+    "content" : {
+        "ja" : {
+            "content" : "このデータは利用できません（権限がないため）。"
+        },
+        "en":{
+            "content" : "This data is not available for this user"
+        }
+    }
+}
+
 WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS = {
+    "secret_URL_file_download": {
+        "secret_expiration_date": 30,
+        "secret_expiration_date_unlimited_chk": False,
+        "secret_download_limit": 10,
+        "secret_download_limit_unlimited_chk": False,
+    },
     "content_file_download": {
         "expiration_date": 30,
         "expiration_date_unlimited_chk": False,
@@ -1238,9 +1258,14 @@ WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS = {
         "expiration_date_access": 500,
         "expiration_date_access_unlimited_chk": False,
     },
-    "terms_and_conditions": []
+    "terms_and_conditions": [],
+    "error_msg": WEKO_ADMIN_RESTRICTED_ACCESS_ERROR_MESSAGE
 }
 """Default restricted access settings."""
+
+WEKO_ADMIN_RESTRICTED_ACCESS_MAX_INTEGER = 9999999
+"""max value of expiration_date and download_limit. 
+    Any more than this and the datetime may overflow. """
 
 WEKO_ADMIN_ITEMS_PER_PAGE_USAGE_REPORT_REMINDER = 25
 """Default number of usage report activities results that display in one page."""
@@ -1277,3 +1302,6 @@ WEKO_ADMIN_CACHE_TEMP_DIR_INFO_KEY_DEFAULT = 'cache::temp_dir_info'
 
 WEKO_ADMIN_USE_REGEX_IN_CRAWLER_LIST = False
 """ If True, enable regex function in crawler list processing. """
+
+WEKO_ADMIN_USE_MAIL_TEMPLATE_EDIT = True
+"""Whether system can edit mail template or not."""

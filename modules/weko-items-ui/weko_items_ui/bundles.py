@@ -86,3 +86,15 @@ feedback_maillist_css = Bundle(
     'css/weko_items_ui/feedback.mail.css',
     output="gen/weko_items_ui_feedback_maillist.%(version)s.css",
 )
+
+request_maillist_js = Bundle(
+    'js/weko_items_ui/request_maillist.js',
+    filters='jsmin',
+    output="gen/weko_items_ui_request_maillist.%(version)s.js",
+)
+
+no_file_approval_js = Bundle(
+    'js/weko_items_ui/no_file_approval.js',
+    filters='jsmin',
+    output="gen/weko_items_ui_no_file_approval.%(version)s.js",
+)
