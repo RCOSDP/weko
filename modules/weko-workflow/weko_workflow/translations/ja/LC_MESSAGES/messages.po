@@ -677,7 +677,6 @@ msgstr "承認通知メール"
 msgid "Approval Rejection Notification Email"
 msgstr "承認却下通知メール"
 
-<<<<<<< HEAD
 msgid "Download"
 msgstr "ダウンロード"
 
@@ -695,7 +694,6 @@ msgstr "選択したアクティビティを削除してもよろしいですか
 
 msgid "Clear Confirm"
 msgstr "削除の確認"
-=======
 msgid "Send an email to the registrant"
 msgstr "登録者にメールを送信する"
 
@@ -710,4 +708,3 @@ msgstr "トップページへ戻る"
 
 msgid "Waiting for approval."
 msgstr "承認待ちです"
->>>>>>> feature/jgss-pre_v0.9.22
