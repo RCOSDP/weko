@@ -661,7 +661,7 @@ def display_guest_activity(file_name=""):
     @param file_name:File name
     @return:
     """
-    render_guest_workflow(file_name=file_name)
+    return render_guest_workflow(file_name=file_name)
 
 
 @workflow_blueprint.route('/activity/guest-user/recid/<string:record_id>', methods=['GET'])
@@ -670,7 +670,7 @@ def display_guest_activity_item_application(record_id=""):
     @param record_id:File name
     @return:
     """
-    render_guest_workflow(file_name='recid/' + record_id)
+    return render_guest_workflow(file_name='recid/' + record_id)
 
 
 def render_guest_workflow(file_name=""):
