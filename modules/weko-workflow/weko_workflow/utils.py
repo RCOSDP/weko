@@ -3668,8 +3668,11 @@ def get_usage_data(item_type_id, activity_detail, user_profile=None):
             return result
         __build_metadata_for_usage_report(rm.json, result)
         result['dataset_usage'] = rm.json.get('item_title')
-        result['item_title'] = related_activity_id + cfg.get(
-            'WEKO_WORKFLOW_USAGE_REPORT_ITEM_TITLE') + result['usage_data_name']
+        result['item_title'] = '{}_{}_{}'.format(
+            related_activity_id,
+            cfg.get('WEKO_WORKFLOW_USAGE_REPORT_ITEM_TITLE'),
+            result['usage_data_name']
+        )
 
     return result
 
