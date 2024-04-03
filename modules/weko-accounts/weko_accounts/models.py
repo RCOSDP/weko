@@ -102,3 +102,10 @@ class ShibbolethUser(db.Model):
         return cls.query.filter_by(
             shib_eppn=email,
         ).one_or_none()
+    
+    @classmethod
+    def get_user_by_user_id(cls, user_id, **kwargs):
+        """Get a user by user_id."""
+        return cls.query.filter_by(
+            weko_uid=user_id,
+        ).one_or_none()

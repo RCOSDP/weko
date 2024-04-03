@@ -1020,26 +1020,41 @@ def charge():
     file_url = current_app.config['THEME_SITEURL'] + f'/record/{item_id}/files/{file_name}'
 
     # 課金チェック
-    charge_result = check_charge(current_user.id, int(item_id), file_name)
-    if charge_result == 'already':
-        # 課金済みだったら課金しない
-        return jsonify({'status': 'already'})
+    try:
+        charge_result = check_charge(current_user.id, int(item_id))
+        if charge_result == 'already':
+            # 課金済みだったら課金しない
+            return jsonify({'status': 'already'})
+    except Exception as e:
+        current_app.logger.error(f'Error in check_charge: user: {current_user.id}, item_id: {item_id}')
+        current_app.logger.error(e)
+        return abort(500)
 
     # 課金予約
-    trade_id = create_charge(current_user.id, int(item_id), file_name, price, title, file_url)
-    if trade_id in ['connection_error', 'api_error']:
-        # 課金失敗
-        return jsonify({'status': 'error'})
-    if trade_id == 'credit_error':
-        # 課金失敗(クレジットカード情報の不備)
-        return jsonify({'status': 'credit_error'})
-    if trade_id == 'already':
-        # 課金済みだったら課金しない
-        return jsonify({'status': 'already'})
+    try:
+        trade_id = create_charge(current_user.id, int(item_id), price, title, file_url)
+        if trade_id in ['connection_error', 'api_error']:
+            # 課金失敗
+            return jsonify({'status': 'error'})
+        if trade_id == 'credit_error':
+            # 課金失敗(クレジットカード情報の不備)
+            return jsonify({'status': 'credit_error'})
+        if trade_id == 'already':
+            # 課金済みだったら課金しない
+            return jsonify({'status': 'already'})
+    except Exception as e:
+        current_app.logger.error(f'Error in create_charge: user: {current_user.id}, item_id: {item_id}, price: {price}, title: {title}, file_url: {file_url}')
+        current_app.logger.error(e)
+        return abort(500)
 
     # 課金確定
-    charge_result = close_charge(current_user.id, trade_id)
-    if charge_result:
-        return jsonify({'status': 'success'})
-    else:
-        return jsonify({'status': 'error'})
+    try: 
+        charge_result = close_charge(current_user.id, trade_id)
+        if charge_result:
+            return jsonify({'status': 'success'})
+        else:
+            return jsonify({'status': 'error'})
+    except Exception as e:
+        current_app.logger.error(f'Error in close_charge: user: {current_user.id}, trade_id: {trade_id}')
+        current_app.logger.error(e)
+        return abort(500)

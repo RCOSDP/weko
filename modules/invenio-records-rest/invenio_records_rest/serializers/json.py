@@ -51,6 +51,10 @@ class JSONSerializerMixin(SerializerMixinInterface):
         :param search_result: Elasticsearch search result.
         :param links: Dictionary of links to add to response.
         """
+
+        from weko_records_ui.utils import replace_license_free_for_opensearch
+        replace_license_free_for_opensearch(search_result)
+
         return orjson.dumps(dict(
             hits=dict(
                 hits=[self.transform_search_hit(

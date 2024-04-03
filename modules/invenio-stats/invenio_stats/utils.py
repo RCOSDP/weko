@@ -34,10 +34,13 @@ from geolite2 import geolite2
 from invenio_cache import current_cache
 from invenio_search import current_search_client
 from invenio_search.api import RecordsSearch
+from sqlalchemy import asc
 from invenio_accounts.models import Role
 from invenio_stats.utils_search import billing_file_search_factory
 from weko_accounts.utils import get_remote_addr
 from werkzeug.utils import import_string
+
+from weko_index_tree.models import Index
 
 from . import config
 from .models import StatsAggregation, StatsBookmark, StatsEvents
@@ -279,9 +282,42 @@ class QueryFileReportsHelper(object):
         search_result = search.execute().to_dict().get('hits', {}).get('hits', [])
         billing_file_metadata_list = [result.get('_source', {}) for result in search_result]
         mapper = {}
+        index_list = Index.query.order_by(asc(Index.id)).all()
+        # initialize billing file download stats.
+        for metadata in billing_file_metadata_list:
+            content = metadata.get('content', [{}])
+            file_key = ''
+            for content_meta in content:
+                if 'filename' in content_meta.keys():
+                    file_key = content_meta.get('filename')
+                    break
+            item_indices = [index for index in index_list if str(index.id) in metadata.get('path', [])]
+            index_key = '|'.join([item_index.index_name for item_index in item_indices])
+            if len(file_key) == 0 or len(index_key) == 0:
+                continue
+            key_str = '{}_{}'.format(file_key, index_key)
+            mapper[key_str] = len(data_list)
+            data = {
+                'group_counts': {},  # Keep track of downloads per group
+                'file_key': file_key,
+                'index_list': index_key,
+                'total': 0,
+                'admin': 0,
+                'reg': 0,
+                'login': 0,
+                'no_login': 0,
+                'site_license': 0,
+            }
+            for role_name in role_name_list:
+                data[role_name] = 0
+            data_list.append(data)
+
         # Aggregate billing file download stats.
         for bucket in res['buckets']:
-            key_str = '{}_{}'.format(bucket['file_key'], bucket['index_list'])
+            # convert index_list into index_key
+            indices_tree = bucket['index_list'].split('|')
+            index_key = '|'.join([node.split('-/-')[-1] for node in indices_tree])
+            key_str = '{}_{}'.format(bucket['file_key'], index_key)
             if key_str in mapper:
                 data = data_list[mapper[key_str]]
             else:

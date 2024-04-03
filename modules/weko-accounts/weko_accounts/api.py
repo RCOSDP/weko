@@ -81,6 +81,29 @@ class ShibUser(object):
         """
         return self.shib_attr.get('shib_ip_range_flag', False)
 
+    def _create_unknown_roles(self, role_names):
+        """
+        Create unknown roles.
+
+        :param roles: Role names
+        """
+        allow_create_role = current_app.config[
+            'WEKO_ACCOUNTS_SHIB_ALLOW_CREATE_GROUP_ROLE']
+        if allow_create_role:
+            exists_role_names = [role.name for role in Role.query.all()]
+            unknown_roles = [i for i in role_names if i and i not in exists_role_names]
+            if unknown_roles:
+                # Add new roles
+                try:
+                    with db.session.begin_nested():
+                        for new_role_name in unknown_roles:
+                            new_role = Role(name=new_role_name)
+                            db.session.add(new_role)
+                    db.session.commit()
+                except Exception as ex:
+                    current_app.logger.debug(ex)
+                    db.session.rollback()
+
     def get_relation_info(self):
         """
         Get weko user info by Shibboleth user info.
@@ -117,6 +140,10 @@ class ShibUser(object):
                     shib_user.shib_role_authority_name = self.shib_attr['shib_role_authority_name']
                 if self.shib_attr['shib_page_name']:
                     shib_user.shib_page_name = self.shib_attr['shib_page_name']
+                if self.shib_attr['shib_active_flag']:
+                    shib_user.shib_active_flag = self.shib_attr['shib_active_flag']
+                if self.shib_attr['shib_ip_range_flag']:
+                    shib_user.shib_ip_range_flag = self.shib_attr['shib_ip_range_flag']
             db.session.commit()
         except Exception as ex:
             current_app.logger.error(ex)
@@ -261,6 +288,9 @@ class ShibUser(object):
             _roles.append(shib_roles)
 
         if _roles:
+            # If `_roles` has unknown name, create role.
+            self._create_unknown_roles(_roles)
+
             ret = self._set_weko_user_role(_roles)
 
         if ret:

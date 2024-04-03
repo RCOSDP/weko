@@ -659,6 +659,39 @@ def replace_license_free(record_metadata, is_change_label=True):
                         del attr[_license_free]
 
 
+def replace_license_free_for_opensearch(search_result, is_change_label=True):
+    """Change the item name 'licensefree' to 'license_note'.
+
+    If 'licensefree' is not output as a value.
+    The value of 'licensetype' is 'license_note'.
+
+    :param search_result:
+    :param is_change_label:
+    :return: None
+    """
+    _license_type = 'licensetype'
+    _license_free = 'licensefree'
+    _license_note = 'license_note'
+    _license_type_free = 'license_free'
+    _attribute_type = 'file'
+    _attribute_value_mlt = 'attribute_value_mlt'
+
+    _license_dict = current_app.config['WEKO_RECORDS_UI_LICENSE_DICT']
+    if _license_dict:
+        _license_type_free = _license_dict[0].get('value')
+
+    for i in range(len(search_result['hits']['hits'])):
+      for val in search_result['hits']['hits'][i]['_source']['_item_metadata'].values():
+          if isinstance(val, dict) and \
+                  val.get('attribute_type') == _attribute_type:
+              for attr in val[_attribute_value_mlt]:
+                  if attr.get(_license_type) == _license_type_free:
+                      attr[_license_type] = _license_note
+                      if attr.get(_license_free) and is_change_label:
+                          attr[_license_note] = attr[_license_free]
+                          del attr[_license_free]
+
+
 def get_file_info_list(record):
     """File Information of all file in record.
 
@@ -725,7 +758,7 @@ def get_file_info_list(record):
             # 税込/税抜
             itemBilling = ItemBilling.query.filter_by(
                 item_id=record['_deposit']['id'], role_id=int(priceinfo['billingrole'])).one_or_none()
-            priceinfo['tax'] = 'include_tax' if itemBilling.include_tax else 'without_tax'
+            priceinfo['tax'] = 'include_tax' if itemBilling and itemBilling.include_tax else 'without_tax'
 
             # ロールIDをロール名に変換
             role = next(filter(lambda x: x['id'] == int(priceinfo['billingrole']), roles), None)

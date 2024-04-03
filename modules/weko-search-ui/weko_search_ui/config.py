@@ -373,6 +373,7 @@ WEKO_SEARCH_KEYWORDS_DICT = {
         "spatial": "geoLocation.geoLocationPlace",
         "temporal": "temporal",
         "version": "versionType",
+        "versiontype": "versiontype.raw",
         "dissno": "dissertationNumber",
         "degreename": ["degreeName", "degreeName.ja"],
         "dgname": ["dgName", "dgName.ja"],

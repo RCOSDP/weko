@@ -39,6 +39,14 @@ msgstr ""
 msgid "WEKO-Accounts"
 msgstr ""
 
+#: weko_accounts/views.py:296
+msgid "shib_active_flag_error"
+msgstr ""
+
+#: weko_accounts/views.py:301
+msgid "shib_ip_range_flag_error"
+msgstr ""
+
 #: weko_accounts/templates/weko_accounts/confirm_user.html:28
 msgid "confirm for account"
 msgstr ""

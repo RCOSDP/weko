@@ -20,6 +20,7 @@
 
 """Permissions for Detail Page."""
 
+import os
 import requests
 
 from datetime import datetime as dt
@@ -31,6 +32,8 @@ from flask_security import current_user
 from invenio_access import Permission, action_factory
 from invenio_accounts.models import User, Role
 from invenio_db import db
+from invenio_pidstore.models import PersistentIdentifier
+from weko_accounts.models import ShibbolethUser
 from weko_admin.models import AdminSettings
 from weko_groups.api import Group, Membership, MembershipState
 from weko_index_tree.utils import check_index_permissions, get_user_roles
@@ -546,7 +549,7 @@ def check_billing_file_permission(item_id, file_name, download_status={}):
         return False
 
     # 課金済みチェック
-    charge_result = check_charge(current_user.id, item_id, file_name)
+    charge_result = check_charge(current_user.id, item_id)
     download_status["charge_status"] = charge_result
     if charge_result == 'already':
         # 課金済みの場合はアクセス権限あり
@@ -616,13 +619,12 @@ def get_file_price(item_id):
     return file_price, unit
 
 
-def check_charge(user_id, item_id, file_name):
+def check_charge(user_id, item_id):
     """課金状態を確認する
 
     Args:
         user_id   : User ID
         item_id   : Item ID
-        file_name : File name
 
     Returns:
         str:
@@ -640,13 +642,13 @@ def check_charge(user_id, item_id, file_name):
     charge_user = repository_charge_settings.user
     charge_pass = repository_charge_settings.password
     sys_id = repository_charge_settings.sys_id
-    content_id = f'{item_id}_{file_name}'
+    content_id = _get_content_id_for_charge(item_id)
 
     url = f'{charge_protocol}://{charge_user}:{charge_pass}@{charge_fqdn}/charge/show'
     params = {
-        'sys_id': sys_id,
-        'user_id': user_id,
-        'content_id': content_id,
+        'sys_id': sys_id,                           # 機関ID
+        'user_id': _get_shib_user_name(user_id),    # 課金対象ログインユーザーのハッシュ化されたID
+        'content_id': content_id,                   # 課金対象コンテンツの識別子
     }
 
     # プロキシ設定
@@ -667,7 +669,9 @@ def check_charge(user_id, item_id, file_name):
             res = requests.get(url, params=params, timeout=10, proxies=proxies)
         else:
             res = requests.get(url, params=params, timeout=10)
-    except Exception:
+    except Exception as e:
+        current_app.logger.error(f'requests error in check_charge: url: {url}, params: {params}, proxies: {proxies if proxy_mode else ""}')
+        current_app.logger.error(e)
         return 'api_error'
 
     res_json = res.json()
@@ -693,13 +697,12 @@ def check_charge(user_id, item_id, file_name):
     return 'not_billed'
 
 
-def create_charge(user_id, item_id, file_name, price, title, file_url):
+def create_charge(user_id, item_id, price, title, file_url):
     """課金予約を行う
 
     Args:
         user_id   : User ID
         item_id   : Item ID
-        file_name : File name
         price     : File price
         title     : Item title
         file_url  : File download url
@@ -719,16 +722,17 @@ def create_charge(user_id, item_id, file_name, price, title, file_url):
     charge_user = repository_charge_settings.user
     charge_pass = repository_charge_settings.password
     sys_id = repository_charge_settings.sys_id
-    content_id = f'{item_id}_{file_name}'
+    content_id = _get_content_id_for_charge(item_id)
 
     url = f'{charge_protocol}://{charge_user}:{charge_pass}@{charge_fqdn}/charge/create'
     params = {
-        'sys_id': sys_id,
-        'user_id': user_id,
-        'content_id': content_id,
-        'price': price,
-        'title': title,
-        'uri': file_url,
+        'sys_id': sys_id,                           # 機関ID
+        'user_id': _get_shib_user_name(user_id),    # 課金対象ログインユーザーのハッシュ化されたID
+        'content_id': content_id,                   # 課金対象コンテンツの識別子
+        'price': price,                             # 請求額(税込)
+        'title': title,                             # 課金対象コンテンツのタイトル(明細に表示される)
+        'uri': file_url,                            # コンテンツ再表示用URL
+        # 'memo': '',                               # (未使用) 請求書の明細の補足欄に表示される
     }
 
     # プロキシ設定
@@ -749,19 +753,24 @@ def create_charge(user_id, item_id, file_name, price, title, file_url):
             res = requests.get(url, params=params, timeout=10, proxies=proxies)
         else:
             res = requests.get(url, params=params, timeout=10)
-    except Exception:
+    except Exception as e:
+        current_app.logger.error(f'requests error in create_charge: url: {url}, params: {params}, proxies: {proxies if proxy_mode else ""}')
+        current_app.logger.error(e)
         return 'api_error'
 
     res_json = res.json()
     if not res_json:
+        current_app.logger.error(f'no json error in create_charge: url: {url}, params: {params}, proxies: {proxies if proxy_mode else ""}')
         return 'api_error'
 
     if res.headers.get('WEKO_CHARGE_STATUS') == -128:
         # クレジットカード情報エラー(カード番号が未登録か無効)
+        current_app.logger.error(f'credit_error in create_charge: url: {url}, params: {params}, proxies: {proxies if proxy_mode else ""}')
         return 'credit_error'
 
     if res.headers.get('WEKO_CHARGE_STATUS') == -64:
         # GMO通信エラー
+        current_app.logger.error(f'connection_error in create_charge: url: {url}, params: {params}, proxies: {proxies if proxy_mode else ""}')
         return 'connection_error'
 
     if isinstance(res_json, dict):
@@ -772,10 +781,11 @@ def create_charge(user_id, item_id, file_name, price, title, file_url):
         # 課金予約成功
         return str(res_json.get('trade_id'))
 
+    current_app.logger.error(f'invalid response by charge API in create_charge: url: {url}, params: {params}, proxies: {proxies if proxy_mode else ""}, res_json: {res_json}')
     return 'api_error'
 
 
-def close_charge(user_id: int, trade_id: int):
+def close_charge(user_id, trade_id):
     """課金確定を行う
 
     Args:
@@ -797,9 +807,9 @@ def close_charge(user_id: int, trade_id: int):
 
     url = f'{charge_protocol}://{charge_user}:{charge_pass}@{charge_fqdn}/charge/close'
     params = {
-        'sys_id': sys_id,
-        'user_id': user_id,
-        'trade_id': trade_id,
+        'sys_id': sys_id,                           # 機関ID
+        'user_id': _get_shib_user_name(user_id),    # 課金対象ログインユーザーのハッシュ化されたID
+        'trade_id': trade_id,                       # 取引ID
     }
 
     # プロキシ設定
@@ -820,11 +830,14 @@ def close_charge(user_id: int, trade_id: int):
             res = requests.get(url, params=params, timeout=10, proxies=proxies)
         else:
             res = requests.get(url, params=params, timeout=10)
-    except Exception:
+    except Exception as e:
+        current_app.logger.error(f'requests error in close_charge: url: {url}, params: {params}, proxies: {proxies if proxy_mode else ""}')
+        current_app.logger.error(e)
         return False
 
     res_json = res.json()
     if not res_json:
+        current_app.logger.error(f'no json error in close_charge: url: {url}, params: {params}, proxies: {proxies if proxy_mode else ""}')
         return False
 
     if isinstance(res_json, dict):
@@ -832,4 +845,41 @@ def close_charge(user_id: int, trade_id: int):
             # 課金成功
             return True
 
+    current_app.logger.error(f'invalid response by charge API in close_charge: url: {url}, params: {params}, proxies: {proxies if proxy_mode else ""}, res_json: {res_json}')
     return False
+
+
+def _get_shib_user_name(user_id):
+    """ローカルのユーザIDからshib_user_name(UMSのwekoId属性)を取得する
+
+    :param user_id: User ID
+    :return: shib_user_name (`wekoId` from UMS)
+
+    """
+    shib_user_name = None
+    shib_user = ShibbolethUser.get_user_by_user_id(user_id)
+    if shib_user and shib_user.shib_user_name:
+        shib_user_name = shib_user.shib_user_name
+    return shib_user_name
+
+def _get_content_id_for_charge(item_id):
+    # Check item has Y_handle
+    try:
+        """
+        examle: 
+          Y_handle: "http://id.nii.ac.jp/1000/00000001"
+            --> content_id: "1000_00000001"
+        """
+        recid = PersistentIdentifier.get('recid', item_id)
+        yhdl = PersistentIdentifier.get_by_object('yhdl', 'rec', recid.object_uuid)
+        yhdl_value = yhdl.pid_value
+        yhdl_host = current_app.config['WEKO_RECORDS_UI_Y_HANDLE_HOST']
+        if yhdl_value.startswith(yhdl_host):
+            content_id = yhdl_value.replace(yhdl_host, '').strip('/').replace('/', '_')
+        else:
+            raise
+    except:
+        # Not has Y_handle
+        content_id = f'{os.environ.get("INVENIO_WEB_HOST_NAME")}_{item_id}'
+
+    return content_id

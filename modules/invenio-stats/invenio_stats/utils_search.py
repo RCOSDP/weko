@@ -22,7 +22,7 @@ def billing_file_search_factory(search):
 
     query_q = Q("bool", must=mst) if mst else Q()
 
-    search = search.source(includes=["content.filename", "_item_metadata.owner", "_oai.id"])
+    search = search.source(includes=['path', 'content.filename', '_item_metadata.owner', '_oai.id'])
 
     try:
         search = search.filter(query_q)
@@ -36,6 +36,7 @@ def billing_file_search_factory(search):
     search_index = search._index[0]
     urlkwargs = MultiDict()
     search, sortkwargs = default_sorter_factory(search, search_index)
+
     urlkwargs.add("q", query_q)
     # debug elastic search query
     current_app.logger.debug("query: {}".format(orjson.dumps((search.query()).to_dict()).decode()))

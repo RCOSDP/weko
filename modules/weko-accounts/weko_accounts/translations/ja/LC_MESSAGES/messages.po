@@ -40,6 +40,14 @@ msgstr "翻訳文字列"
 msgid "WEKO-Accounts"
 msgstr "WEKOアカウント"
 
+#: weko_accounts/views.py:296
+msgid "shib_active_flag_error"
+msgstr "アカウントが無効化の状態です．まだ，アカウントをアクティベートされていない場合は，ユーザ登録システムから送信された確認メール内のURLをクリックし，アカウントを有効化してください．このアカウントを他のアカウントに統合された場合は，統合先のアカウントをご利用下さい．"
+
+#: weko_accounts/views.py:301
+msgid "shib_ip_range_flag_error"
+msgstr "法人用の共有アカウントが、契約外のIPアドレスから利用されているためにログインできません。契約されている機関内のIPレンジからご利用下さい。"
+
 #: weko_accounts/templates/weko_accounts/confirm_user.html:28
 msgid "confirm for account"
 msgstr "アカウント認証"
