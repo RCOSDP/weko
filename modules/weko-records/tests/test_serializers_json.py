@@ -1,4 +1,5 @@
 import pytest
+import json
 from mock import patch, MagicMock
 from tests.helpers import json_data
 
@@ -56,7 +57,11 @@ def test_json_serializer(app, db, records, hit):
     assert _json_serializer.transform_search_hit(records[0][0], json_data(hit))
 
     # serialize_exporter
-    assert _json_serializer.serialize_exporter(records[0][0], json_data(hit))
+    ret_data = json.dumps(_json_serializer.transform_search_hit(records[0][0], json_data(hit))).encode('utf8') + b'\n'
+    ret = _json_serializer.serialize_exporter(records[0][0], json_data(hit))
+    assert ret
+    assert json.loads(ret) == json.loads(ret_data)
+    assert type(ret) == bytes
 
 
 params=[("data/record_hit/record_hit4.json")]

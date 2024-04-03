@@ -26,7 +26,7 @@
 
 from __future__ import absolute_import, print_function
 
-import json
+import orjson
 from copy import deepcopy
 from functools import partial
 
@@ -328,7 +328,7 @@ class DepositFilesResource(ContentNegotiatedMethodView):
         :returns: The files.
         """
         try:
-            ids = [data['id'] for data in json.loads(
+            ids = [data['id'] for data in orjson.loads(
                 request.data.decode('utf-8'))]
         except KeyError:
             raise WrongFile()
@@ -398,7 +398,7 @@ class DepositFileResource(ContentNegotiatedMethodView):
         :param key: Unique identifier for the file in the deposit.
         """
         try:
-            data = json.loads(request.data.decode('utf-8'))
+            data = orjson.loads(request.data.decode('utf-8'))
             new_key = data['filename']
         except KeyError:
             raise WrongFile()

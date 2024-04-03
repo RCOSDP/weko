@@ -21,9 +21,10 @@
 """WEKO3 module docstring."""
 
 import markupsafe
+import orjson
 from operator import index
 
-from flask import current_app, json
+from flask import current_app
 from flask_babelex import gettext as _
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
@@ -180,7 +181,7 @@ def get_search_detail_keyword(str):
         check_val.append(sub)
 
     check_val2 = []
-    index_browsing_tree = Indexes.get_browsing_tree()
+    index_browsing_tree = Indexes.get_browsing_tree_ignore_more()
     for indextree in index_browsing_tree:
         index_parelist = []
         index_list = get_childinfo(indextree, index_parelist)
@@ -195,7 +196,7 @@ def get_search_detail_keyword(str):
         # detail search for index
         elif k_v.get("id") == "iid":
             k_v["check_val"] = check_val2
-        
+
         if k_v.get("contents") == "":
             contents_value = k_v.get("contents_value")
             k_v["contents"] = contents_value["en"]
@@ -209,7 +210,7 @@ def get_search_detail_keyword(str):
 
     key_options["condition_setting"] = options
 
-    key_options_str = json.dumps(key_options)
+    key_options_str = orjson.dumps(key_options).decode()
     key_options_str.replace("False", "false")
     key_options_str.replace("True", "true")
 

@@ -22,13 +22,14 @@
 
 import pickle
 import os
+import orjson
 from copy import deepcopy
 from datetime import date, datetime
 from functools import partial
 from socketserver import DatagramRequestHandler
 
 from redis.exceptions import RedisError
-from flask import current_app, json
+from flask import current_app
 from flask_babelex import gettext as _
 from flask_login import current_user
 from invenio_accounts.models import Role
@@ -94,7 +95,7 @@ class Indexes(object):
 
             data["coverpage_state"] = False
             data["recursive_coverpage_check"] = False
-            
+
             group_list = ''
             groups = Group.query.all()
             for group in groups:
@@ -106,7 +107,7 @@ class Indexes(object):
             data["browsing_group"] = group_list
             data["contribute_group"] = group_list
 
-            
+
             if int(pid) == 0:
                 pid_info = cls.get_root_index_count()
                 data["position"] = 0 if not pid_info else \
@@ -570,7 +571,7 @@ class Indexes(object):
                 redis_connection = RedisConnection()
                 datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
                 v = datastore.get("index_tree_view_" + os.environ.get('INVENIO_WEB_HOST_NAME') + "_" + current_i18n.language).decode("UTF-8")
-                tree = json.loads(str(v))
+                tree = orjson.loads(str(v))
             except RedisError:
                 tree = cls.get_index_tree(pid)
                 save_index_trees_to_redis(tree)
@@ -579,14 +580,28 @@ class Indexes(object):
                 save_index_trees_to_redis(tree)
         else:
             tree = cls.get_index_tree(pid)
-        reset_tree(tree=tree)
+        reset_tree(tree=tree, pid=pid)
         return tree
 
     @classmethod
     def get_more_browsing_tree(cls, pid=0, more_ids=[]):
         """Get more browsing tree."""
-        tree = cls.get_index_tree(pid)
-        reset_tree(tree=tree, more_ids=more_ids)
+        if pid == 0:
+            try:
+                redis_connection = RedisConnection()
+                datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
+                v = datastore.get("index_tree_view_" + os.environ.get('INVENIO_WEB_HOST_NAME') + "_" + current_i18n.language).decode("UTF-8")
+                tree = orjson.loads(str(v))
+            except KeyError:
+                tree = cls.get_index_tree(pid)
+                save_index_trees_to_redis(tree)
+            except Exception as e:
+                current_app.logger.error("get_more_browsing_tree: {}".format(e))
+                tree = cls.get_index_tree(pid)
+                save_index_trees_to_redis(tree)
+        else:
+            tree = cls.get_index_tree(pid)
+        reset_tree(tree=tree, more_ids=more_ids, pid=pid)
         return tree
 
     @classmethod
@@ -597,7 +612,7 @@ class Indexes(object):
                 redis_connection = RedisConnection()
                 datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
                 v = datastore.get("index_tree_view_" + os.environ.get('INVENIO_WEB_HOST_NAME') + "_" + current_i18n.language).decode("UTF-8")
-                tree = json.loads(str(v))
+                tree = orjson.loads(str(v))
             except RedisError:
                 tree = cls.get_index_tree(pid)
                 save_index_trees_to_redis(tree)
@@ -606,7 +621,7 @@ class Indexes(object):
                 save_index_trees_to_redis(tree)
         else:
             tree = cls.get_index_tree(pid)
-        reset_tree(tree=tree, ignore_more=True)
+        reset_tree(tree=tree, ignore_more=True, pid=pid)
         return tree
 
     @classmethod
@@ -632,9 +647,9 @@ class Indexes(object):
         record = WekoRecord.get_record_by_pid(pid)
         tree = cls.get_index_tree(root_node_id)
         if record.get('_oai'):
-            reset_tree(tree=tree, path=record.get('path'))
+            reset_tree(tree=tree, path=record.get('path'), pid=root_node_id)
         else:
-            reset_tree(tree=tree, path=[])
+            reset_tree(tree=tree, path=[], pid=root_node_id)
 
         return tree
 
@@ -1431,8 +1446,8 @@ class Indexes(object):
             }
             es_index = current_app.config['SEARCH_UI_SEARCH_INDEX']
             es_doc_type = current_app.config['INDEXER_DEFAULT_DOCTYPE']
-            query_q = json.dumps(upd_item_sort_q).replace("@index", index_path)
-            query_q = json.loads(query_q)
+            query_q = orjson.dumps(upd_item_sort_q).decode().replace("@index", index_path)
+            query_q = orjson.loads(query_q)
             indexer = RecordIndexer()
             res = indexer.client.search(
                 index=es_index,

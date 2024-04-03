@@ -135,8 +135,12 @@ def default_facets_factory(search, index):
     facets = get_facet_search_query(search_permission.can()).get(index)
 
     if facets is not None:
-        # Aggregations.
-        search = _aggregations(search, facets.get("aggs", {}))
+        #####################
+        # This factory does not set facet Aggregations on the search object.
+        # If get facet aggregations, use API (/facet-search/condition).
+        #####################
+        # # Aggregations.
+        # search = _aggregations(search, facets.get("aggs", {}))
 
         # Query filter
         search, urlkwargs = _query_filter(

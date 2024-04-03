@@ -384,13 +384,17 @@ def test_update_widget_design_setting(i18n_app):
             }
         }
     }
+    json_data = [{"settings":"test","type":"test","created_date":"test","widget_id":"test","x":"test","y":"test","width":"test","height":"test","id":"test","name":"test","multiLangSetting":{"ja":"ja"}}]
     
     with patch("weko_gridlayout.services.WidgetItemServices.get_widget_data_by_widget_id", return_value=return_data):
         with patch("weko_gridlayout.utils.validate_main_widget_insertion", return_value="test"):
-            with patch("weko_gridlayout.utils.delete_widget_cache", return_value="test"):
-                with patch("weko_gridlayout.models.WidgetDesignPage.update_settings", return_value="test"):
+            with patch("weko_gridlayout.services.delete_widget_cache", return_value="test"):
+                magicmock = MagicMock(return_value="test")
+                with patch("weko_gridlayout.models.WidgetDesignPage.update_settings", magicmock):
                     with patch("weko_gridlayout.services.WidgetDesignSetting.select_by_repository_id", return_value="return_data"):
                         assert WidgetDesignServices.update_widget_design_setting(data)
+                        args, kwargs = magicmock.call_args
+                        assert json.loads(args[1]) == json_data
                         data["page_id"] = None
                         assert WidgetDesignServices.update_widget_design_setting(data)
         assert WidgetDesignServices.update_widget_design_setting(data)
@@ -403,8 +407,11 @@ def test_update_item_in_preview_widget_item(i18n_app):
     json_data = [{
         "widget_id": "1"
     }]
+    test_data = [{'widget_id': '1', 'background_color': None, 'label_enable': None, 'theme': None, 'frame_border_color': None, 'border_style': None, 'name': None, 'type': None, 'multiLangSetting': None}]
     with patch("weko_gridlayout.utils.update_general_item", return_value="test"):
-        assert WidgetDesignServices.update_item_in_preview_widget_item(widget_id=widget_id, data_result=data_result, json_data=json_data)
+        ret = WidgetDesignServices.update_item_in_preview_widget_item(widget_id=widget_id, data_result=data_result, json_data=json_data)
+        assert json.loads(ret) == test_data
+        assert type(ret) == str
 
 
 #     def handle_change_item_in_preview_widget_item(cls, widget_id, data_result):
@@ -418,12 +425,15 @@ def test_handle_change_item_in_preview_widget_item(i18n_app):
     with patch("weko_gridlayout.services.WidgetItemServices.get_widget_by_id", return_value=return_data):
         with patch("weko_gridlayout.models.WidgetDesignSetting.select_by_repository_id", return_value=return_data):
             with patch("weko_gridlayout.services.WidgetDesignPage.get_by_repository_id", return_value=[return_data]):
-                with patch("weko_gridlayout.services.WidgetDesignServices.update_item_in_preview_widget_item", return_value="test"):
+                magicmock = MagicMock(return_value="test")
+                with patch("weko_gridlayout.services.WidgetDesignServices.update_item_in_preview_widget_item", magicmock):
                     with patch("weko_gridlayout.models.WidgetDesignPage.update_settings", return_value=False):
                         assert not WidgetDesignServices.handle_change_item_in_preview_widget_item(widget_id, data_result)
                     with patch("weko_gridlayout.models.WidgetDesignPage.update_settings", return_value=True):
-                        with patch("weko_gridlayout.utils.delete_widget_cache", return_value="test"):
+                        with patch("weko_gridlayout.services.delete_widget_cache", return_value="test"):
                             assert WidgetDesignServices.handle_change_item_in_preview_widget_item(widget_id, data_result)
+                            args, kwargs = magicmock.call_args
+                            assert args[2] == 1
     assert not WidgetDesignServices.handle_change_item_in_preview_widget_item(widget_id, data_result)                            
 
 #     def is_used_in_widget_design(cls, widget_id):
@@ -504,10 +514,13 @@ def test__update_main_layout_page_id_for_widget_design(i18n_app):
         return widget_design
 
     i18n_app.config['WEKO_GRIDLAYOUT_MENU_WIDGET_TYPE'] = "type"
-
+    json_data = [{"type": "type"}]
     with patch("weko_gridlayout.services.WidgetDesignSetting.select_by_repository_id", widget_design):
-        with patch("weko_gridlayout.services.WidgetDesignSetting.update", return_value="widget_design"):
+        magicmock = MagicMock(return_value="widget_design")
+        with patch("weko_gridlayout.services.WidgetDesignSetting.update", magicmock):
             assert not WidgetDesignPageServices._update_main_layout_page_id_for_widget_design(repository_id, page_id)
+            args, kwargs = magicmock.call_args
+            assert json.loads(args[1]) == json_data
 
 
 #     def _update_page_id_for_widget_design_setting(cls, settings, page_id):
@@ -528,10 +541,13 @@ def test__update_page_id_for_widget_item_setting(i18n_app):
     widget_item.settings = {
         "menu_show_pages": ["0"]
     }
-
-    with patch("weko_gridlayout.models.WidgetItem.update_setting_by_id", return_value=""):
+    json_data = {'menu_show_pages': ['0']}
+    magicmock = MagicMock(return_value="")
+    with patch("weko_gridlayout.models.WidgetItem.update_setting_by_id", magicmock):
         # Doesn't return any value
         assert not WidgetDesignPageServices._update_page_id_for_widget_item_setting(page_id, widget_item)
+        args, kwargs = magicmock.call_args
+        assert json.loads(args[1]) == json_data
 
 
 #     def delete_page(cls, page_id):
@@ -639,16 +655,20 @@ def test_get_new_arrivals_data(i18n_app, widget_item):
         return {}
 
     def get_new_items_2(start_date, end_date, agg_size, must_not):
-        return {"res": "res"}
+        return {}
 
     res = MagicMock()
     res.get_new_items = get_new_items
     data4 = copy.deepcopy(data1)
     data4["settings"]["display_result"] = 999
-    
+    data4_json = [{"wildcard":{"control_number":"*.*"}}]
     with patch("weko_gridlayout.services.WidgetItemServices.get_widget_data_by_widget_id", return_value=data4):
         with patch("weko_gridlayout.services.QueryRankingHelper", res):
-            assert "Cannot search data" in w.get_new_arrivals_data(1)["error"]
+            magicmock = MagicMock(return_value={})
+            with patch("weko_gridlayout.services.QueryRankingHelper.get_new_items", magicmock):
+                assert "Cannot search data" in w.get_new_arrivals_data(1)["error"]
+                args, kwargs = magicmock.call_args
+                assert json.loads(kwargs['must_not']) == data4_json
 
     res.get_new_items = get_new_items_2
 

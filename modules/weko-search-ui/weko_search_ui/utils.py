@@ -22,6 +22,7 @@
 
 import csv
 import json
+import orjson
 import os
 import re
 import shutil
@@ -491,7 +492,7 @@ def parse_to_json_form(data: list, item_path_not_existed=[], include_empty=False
                 set_nested_item(result, key_path, value)
 
     convert_data(result)
-    result = json.loads(json.dumps(result))
+    result = orjson.loads(orjson.dumps(result))
     return result
 
 
@@ -2512,8 +2513,8 @@ def handle_check_date(list_record):
                             _value = datetime.strptime(value, "%Y/%m/%d").strftime(
                                 "%Y-%m-%d"
                             )
-                            attribute = json.loads(
-                                (json.dumps(attribute)).replace(value, _value)
+                            attribute = orjson.loads(
+                                (orjson.dumps(attribute).decode()).replace(value, _value)
                             )
                             record["metadata"][_keys[0]] = attribute
                             warnings.append(

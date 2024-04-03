@@ -23,6 +23,7 @@ from weko_items_ui.views import (
     to_links_js,
 )
 
+from weko_redis.redis import RedisConnection
 
 # def index(item_type_id=0):
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_index_acl_nologin -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
@@ -20260,6 +20261,30 @@ def test_items_index_acl(client, db_records, users, id, status_code):
     # assert res.status_code == status_code
     # assert res.data==""
 
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_items_index_orjson -v -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+@pytest.mark.parametrize(
+    "id, status_code",
+    [
+        (0, 200),
+    ],
+)
+def test_items_index_orjson(client, db_records, users, id, status_code, app):
+    login_user_via_session(client=client, email=users[id]["email"])
+    depid, recid, parent, doi, record, item = db_records[0]
+    url = url_for("weko_items_ui.items_index", pid_value=depid.id, _external=True)
+
+    json_data = {'index': 'index'}
+    redis_connection = RedisConnection()
+    sessionstore = redis_connection.connection(db=app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
+    sessionstore.put('item_index_{}'.format(depid.id), (json.dumps(json_data)).encode('utf-8'))
+    headers = {'content-type': 'application/json'}
+    res = client.put(url,data=json.dumps("{test}"),headers=headers)
+    assert res.status_code == status_code
+    assert res.data==b'"{test}"\n'
+
+    res = client.post(url,data=json.dumps("{test}"),headers=headers)
+    assert res.status_code == status_code
+    assert res.data==b'"{test}"\n'
 
 # def iframe_items_index(pid_value='0'):
 
@@ -20357,6 +20382,23 @@ def test_test_iframe_items_index(app, client, users, db_records, db_activity):
     # assert res.status_code == status_code
     # assert res.data==""
 
+def test_iframe_items_index_orjson(app, client, users, db_records, db_activity):
+    login_user_via_session(client=client, email=users[0]["email"])
+
+    url = url_for("weko_items_ui.iframe_items_index", pid_value=str(1), _external=True)
+
+    json_data = {'index': 'index'}
+    redis_connection = RedisConnection()
+    sessionstore = redis_connection.connection(db=app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
+    sessionstore.put('item_index_1', (json.dumps(json_data)).encode('utf-8'))
+    headers = {'content-type': 'application/json'}
+    res = client.put(url,data=json.dumps("{test}"),headers=headers)
+    assert res.status_code == 200
+    assert res.data==b'"{test}"\n'
+
+    res = client.post(url,data=json.dumps("{test}"),headers=headers)
+    assert res.status_code == 200
+    assert res.data==b'"{test}"\n'
 
 # def default_view_method(pid, record, template=None):
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_default_view_method -v -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
@@ -20365,6 +20407,20 @@ def test_default_view_method(app, db_records):
     with app.test_request_context():
         with patch("flask.templating._render", return_value=""):
             assert default_view_method(depid.id, record) == ""
+
+    with patch("weko_items_ui.views.ItemTypes.get_latest", return_value="test"):
+        moc_get_by_id = MagicMock()
+        moc_get_by_id.schema = ""
+        with patch("weko_items_ui.views.ItemTypes.get_by_id", moc_get_by_id):
+            with patch("weko_items_ui.views.to_files_js", return_value="test"):
+                moc_session = MagicMock(return_value="test")
+                moc_session.get = 1
+                with patch("weko_items_ui.views.session", moc_session):
+                    with patch("weko_items_ui.views.WorkActivity.get_activity_metadata", return_value=json.dumps({'metainfo': 'metainfo'})):
+                        with patch("weko_items_ui.views.to_links_js", return_value="test"):
+                            with patch("weko_items_ui.views.render_template", return_value=""):
+                                test_rec = MagicMock()
+                                assert default_view_method(depid.id, test_rec) == ""
 
 
 # def to_links_js(pid):
@@ -20787,6 +20843,25 @@ def test_check_validation_error_msg_acl_nologin(client_api, db_sessionlifetime):
     res = client_api.get(url)
     assert res.status_code == 302
 
+@pytest.mark.parametrize(
+    "id, status_code",
+    [
+        (0, 200),
+    ],
+)
+def test_check_validation_error_msg_orjson(client_api, users, id, status_code, app):
+    login_user_via_session(client=client_api, email=users[id]["email"])
+    url = url_for(
+        "weko_items_ui_api.check_validation_error_msg",
+        activity_id="A-00000000-00000",
+        external=True,
+    )
+    json_data = {'mapping': 'mapping'}
+    redis_connection = RedisConnection()
+    sessionstore = redis_connection.connection(db=app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
+    sessionstore.put('updated_json_schema_A-00000000-00000', (json.dumps(json_data)).encode('utf-8'))
+    res = client_api.get(url)
+    assert res.status_code == 200
 
 # def corresponding_activity_list():
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_corresponding_activity_list_acl_nologin -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp

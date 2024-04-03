@@ -26,7 +26,7 @@
 
 from __future__ import absolute_import, print_function
 
-import json
+import orjson
 
 from flask import current_app, request
 
@@ -45,13 +45,11 @@ def _format_args():
 
     if pretty_format:
         return dict(
-            indent=2,
-            separators=(', ', ': '),
+            option=orjson.OPT_INDENT_2
         )
     else:
         return dict(
-            indent=None,
-            separators=(',', ':'),
+            option=0
         )
 
 
@@ -81,7 +79,7 @@ def community_responsify(schema_class, mimetype):
             ).dump(data.items, many=True).data
 
         response = current_app.response_class(
-            json.dumps(response_data, **_format_args()),
+            orjson.dumps(response_data, **_format_args()).decode(),
             mimetype=mimetype)
         response.status_code = code
 

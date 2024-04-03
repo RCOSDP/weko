@@ -132,11 +132,16 @@ class TestItemImportView:
             res = client.get(url)
             assert res.status == '302 FOUND'
 
+        json_data = ['test','test','test','test']
         with patch("flask_login.utils._get_user", return_value=user):
-            with patch("flask.templating._render", return_value=""):
-                res = client.get(url)
-                assert res.status == '200 OK'
-                
+            magicmock = MagicMock(return_value="")
+            with patch("flask.templating._render", magicmock):
+                with patch("weko_search_ui.admin.WorkFlow.get_workflow_list", return_value='test'):
+                    with patch("weko_search_ui.admin.get_content_workflow", return_value='test'):
+                        res = client.get(url)
+                        assert res.status == '200 OK'
+                        args, kwargs = magicmock.call_args
+                        assert json.loads(args[1].get('workflows')) == json_data
 # def check(self) -> jsonify: ~ UnboundLocalError: local variable 'task' referenced before assignment request.form needed
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_admin.py::test_ItemImportView_check -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_ItemImportView_check(i18n_app, users, client,client_request_args):

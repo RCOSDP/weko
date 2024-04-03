@@ -99,6 +99,7 @@ nbformat==4.4.0
 node-semver==0.1.1
 oauthlib==2.1.0
 ordereddict==1.1
+orjson==3.6.1
 pandocfilters==1.4.2
 parso==0.1.0
 passlib==1.7.1
@@ -168,7 +169,6 @@ Sickle==0.6.4
 Sphinx==1.8.4
 pytest>=4.2.0
 mock==3.0.5
-pytest-mock==3.6.1
 numpy==1.16.1
 xmltodict==0.12.0
 ftfy==4.4.3

@@ -144,6 +144,10 @@ def test_marshmallow_errors(test_data):
     # assert __next__ method works
     assert next(me)
 
+    json_data = {"status":400,"message":"Validation error.","errors":[{"field":"_schema","message":"Invalid input type."}]}
+    ret = me.get_body(res.errors)
+    assert json.loads(ret) == json_data
+    assert type(ret) == str
 
 def test_json_pid_checker_loader(app, db, es, search_url, search_class):
     """Test loading using the record metadata schema."""

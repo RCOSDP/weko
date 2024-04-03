@@ -60,6 +60,9 @@ from invenio_accounts.models import User
 from weko_items_ui.config import WEKO_ITEMS_UI_MS_MIME_TYPE,WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT
 
 from tests.helpers import login
+
+from weko_redis.redis import RedisConnection
+import json
 # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
 
 class MockClient():
@@ -616,6 +619,16 @@ class TestWekoDeposit:
         assert ret1 == test1
         assert ret2 == test2
         
+        # no data
+        redis_connect = RedisConnection().connection(db=app.config['CACHE_REDIS_DB'], kv = True)
+        redis_connect.put("cache_itemsIndex_1", json.dumps(record_data).encode())
+        with patch("weko_deposit.api.RedisConnection.connection", return_value=redis_connect):
+            test1 = OrderedDict([('pubdate', {'attribute_name': 'PubDate', 'attribute_value': '2022-08-20'}), ('item_1617186331708', {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'タイトル', 'subitem_1551255648112': 'ja'}, {'subitem_1551255647225': 'title', 'subitem_1551255648112': 'en'}]}), ('item_1617258105262', {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}), ('item_title', 'title'), ('item_type_id', '1'), ('control_number', '1'), ('author_link', []), ('weko_shared_id', -1), ('owner', '1'), ('publish_date', '2022-08-20'), ('title', ['title']), ('relation_version_is_last', True), ('path', ['1']), ('publish_status','0')])
+            test2 = None
+            ret1, ret2 = deposit.convert_item_metadata(index_obj, {})
+            assert ret1 == test1
+            assert ret2 == test2
+
         with patch("weko_deposit.api.RedisConnection.connection",side_effect=BaseException("test_error")):
             with pytest.raises(HTTPException) as httperror:
                 ret = deposit.convert_item_metadata(index_obj,{})

@@ -19,7 +19,7 @@
 # MA 02111-1307, USA.
 
 """WEKO3 module docstring."""
-import json
+import orjson
 import ssl
 import traceback
 from datetime import datetime as dt
@@ -222,7 +222,7 @@ def get_list_records(resync_id):
     records = []
     if not resync_index.result:
         return records
-    records = json.loads(resync_index.result)
+    records = orjson.loads(resync_index.result)
     # current_app.logger.debug('{0} {1} {2}: {3}'.format(
     #     __file__, 'get_list_records()', 'records', records))
     return records
@@ -385,9 +385,9 @@ def process_sync(resync_id, counter):
                                        to_date=to_date)
             tmp = get_list_records(resync_id)
             tmp.extend(counter.get('list'))
-            new_result = list(map(json.loads, set(map(json.dumps, tmp))))
+            new_result = list(map(orjson.loads, set(map(orjson.dumps, tmp))))
             resync_index.update({
-                'result': json.dumps(new_result)
+                'result': orjson.dumps(new_result).decode()
             })
             return jsonify(success=True)
         elif mode == current_app.config.get(
@@ -411,7 +411,7 @@ def process_sync(resync_id, counter):
                 get_list_records(resync_id) + counter.get('list')
             ))
             resync_index.update({
-                'result': json.dumps(new_result)
+                'result': orjson.dumps(new_result).decode()
             })
             return jsonify(audit_result)
         elif mode == current_app.config.get(
@@ -433,7 +433,7 @@ def process_sync(resync_id, counter):
             new_result = list(
                 set(get_list_records(resync_id) + counter.get('list')))
             resync_index.update({
-                'result': json.dumps(new_result)
+                'result': orjson.dumps(new_result).decode()
             })
             return jsonify({'result': result})
     except Exception as e:

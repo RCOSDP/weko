@@ -20,7 +20,7 @@
 
 """Blueprint for schema rest."""
 
-import json
+import orjson
 import os.path
 import shutil
 import uuid
@@ -254,7 +254,7 @@ class SchemaFilesResource(ContentNegotiatedMethodView):
             links = dict(self=url)
             links['bucket'] = request.base_url + 'put/' + str(pid.object_uuid)
 
-            response = current_app.response_class(json.dumps({'links': links}),
+            response = current_app.response_class(orjson.dumps({'links': links}).decode(),
                                                   mimetype=request.mimetype)
             response.status_code = 201
             return response
@@ -286,7 +286,7 @@ class SchemaFilesResource(ContentNegotiatedMethodView):
         jd = {'key': fn, 'mimetype': request.mimetype, 'links': {},
               'size': bytes_written}
         data = dict(key=fn, mimetype='text/plain')
-        response = current_app.response_class(json.dumps(jd),
+        response = current_app.response_class(orjson.dumps(jd).decode(),
                                               mimetype='application/json')
         response.status_code = 200
         return response

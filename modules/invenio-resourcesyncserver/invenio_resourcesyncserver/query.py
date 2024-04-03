@@ -20,7 +20,7 @@
 
 """Query parser."""
 
-import json
+import orjson
 
 from flask import current_app
 from invenio_records_rest.errors import InvalidQueryRESTError
@@ -130,8 +130,8 @@ def item_path_search_factory(search, index_id="0"):
                 })
             # create search query
             try:
-                query_q = json.dumps(query_q).replace("@index", q)
-                query_q = json.loads(query_q)
+                query_q = orjson.dumps(query_q).decode().replace("@index", q)
+                query_q = orjson.loads(query_q)
             except BaseException:
                 pass
         else:
@@ -272,8 +272,8 @@ def item_changes_search_factory(search,
                 })
             # create search query
             try:
-                query_q = json.dumps(query_q).replace("@index", q)
-                query_q = json.loads(query_q)
+                query_q = orjson.dumps(query_q).decode().replace("@index", q)
+                query_q = orjson.loads(query_q)
             except BaseException:
                 pass
         else:

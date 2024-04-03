@@ -22,7 +22,7 @@
 
 import errno
 import io
-import json
+import orjson
 import os
 import tempfile
 import unicodedata
@@ -178,7 +178,7 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
     item_map = get_mapping(type_mapping, "jpcoar_mapping")
 
     with open(lang_file_path) as json_datafile:
-        lang_data = json.loads(json_datafile.read())
+        lang_data = orjson.loads(json_datafile.read())
 
     # Initialize Instance
     pdf = FPDF('P', 'mm', 'A4')

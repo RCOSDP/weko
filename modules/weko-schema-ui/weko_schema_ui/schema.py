@@ -22,6 +22,7 @@
 
 import copy
 import json
+import orjson
 from collections import Iterable, OrderedDict
 from functools import partial
 
@@ -60,7 +61,7 @@ class SchemaConverter:
 
     def to_dict(self):
         """To_dict."""
-        return json.dumps(self.schema)
+        return orjson.dumps(self.schema).decode()
 
     def create_schema(self, schema_file):
         """Create_schema."""
@@ -1861,7 +1862,7 @@ def cache_schema(schema_name, delete=False):
         try:
             schema = get_schema()
             if schema:
-                datastore.put(cache_key, json.dumps(schema))
+                datastore.put(cache_key, orjson.dumps(schema).decode())
         except BaseException:
             return get_schema()
         else:

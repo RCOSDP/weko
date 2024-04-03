@@ -6,6 +6,7 @@ from flask_admin import Admin
 from mock import patch
 from mock import MagicMock, patch
 import json
+import orjson
 from io import BytesIO
 import pytest
 from datetime import datetime
@@ -317,11 +318,14 @@ class TestReportView:
         data = {
             "report":json.dumps(stats_json),"year":"2022","month":"10","send_email":"False"
         }
-        mocker.patch("weko_admin.admin.package_reports",return_value=BytesIO())
+        magicmock = MagicMock(return_value=BytesIO())
+        mocker.patch("weko_admin.admin.package_reports", magicmock)
         result = client.post(url,data=data)
+        args, kwargs = magicmock.call_args
         assert result.headers["Content-Type"] == "application/x-zip-compressed"
         assert result.headers["Content-Disposition"] == "attachment; filename=logReport_2022-10.zip"
         assert result.data==b""
+        assert args[0] == {'file_download': {'all': [], 'all_groups': [], 'date': '2022-10', 'open_access': []}, 'file_preview': {'all': [], 'all_groups': [], 'date': '2022-10', 'open_access': []}, 'billing_file_download': {'all': [], 'all_groups': [], 'date': '2022-10', 'open_access': []}, 'billing_file_preview': {'all': [], 'all_groups': [], 'date': '2022-10', 'open_access': []}, 'detail_view': {'all': [{'index_names': '人文社会系 (Faculty of Humanities and Social Sciences)', 'pid_value': '3', 'record_id': '6f8da14f-5a24-4e07-a5cb-04e8ef1c11b3', 'record_name': 'test_doi', 'same_title': 'True', 'total_all': '2', 'total_not_login': '0'}, {'index_names': 'コンテンツタイプ (Contents Type)-/-会議発表論文, 人文社会系 (Faculty of Humanities and Social Sciences)', 'pid_value': '1', 'record_id': '99203669-c376-4f5a-ade3-8139e7785a9d', 'record_name': 'test full item', 'same_title': 'True', 'total_all': '2', 'total_not_login': '1'}], 'date': '2022-10-01-2022-10-31'}, 'index_access': {'all': [{'index_name': 'コンテンツタイプ (Contents Type)-/-会議発表論文', 'view_count': '2'}, {'index_name': '人文社会系 (Faculty of Humanities and Social Sciences)', 'view_count': '4'}], 'date': '2022-10', 'total': '6'}, 'file_using_per_user': {'all': {}, 'date': '2022-10'}, 'top_page_access': {'all': {'192.168.56.1': {'count': '17', 'host': 'None', 'ip': '192.168.56.1'}}, 'date': '2022-10'}, 'search_count': {'all': [], 'date': '2022-10'}, 'user_roles': {'all': [{'count': '1', 'role_name': 'Community Administrator'}, {'count': '1', 'role_name': 'Repository Administrator'}, {'count': '1', 'role_name': 'Contributor'}, {'count': '1', 'role_name': 'System Administrator'}, {'count': '4', 'role_name': 'Registered Users'}]}, 'site_access': {'date': '2022-10', 'institution_name': [], 'other': [{'file_download': '0', 'file_preview': '0', 'record_view': '4', 'search': '0', 'top_view': '17'}], 'site_license': [{'file_download': '0', 'file_preview': '0', 'record_view': '0', 'search': '0', 'top_view': '0'}]}}
         
         # send_email is "True"
         data = {
@@ -732,7 +736,7 @@ def test_SearchSettingsView_index(client,db,users,item_type,admin_settings,index
     args, kwargs = mock_render.call_args
     assert args[0] == "weko_admin/admin/search_management_settings.html"
     assert kwargs["widths"] == ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11']
-    assert kwargs["setting_data"] == json.dumps(test)
+    assert json.loads(kwargs["setting_data"]) == json.loads(json.dumps(test))
     assert [item.name for item in kwargs["lists"]] == ['テストアイテムタイプ1','テストアイテムタイプ2']
     # raise Exception
     with patch("weko_admin.admin.ItemTypes.get_latest",side_effect=BaseException("test_error")):
@@ -827,7 +831,7 @@ def test_SiteLicenseSettingsView_index(client,users,item_type,site_license,mocke
     assert result.status_code == 200
     mock_render.assert_called_with(
         "weko_admin/admin/site_license_settings.html",
-        result=json.dumps(response_json)
+        result=orjson.dumps(response_json).decode()
     )
     
     # raise Exception
@@ -1444,7 +1448,10 @@ class TestFacetSearchSettingView:
             name_jp="データの言語",
             mapping="language",
             aggregations=[],
-            active=True
+            active=True,
+            ui_type="",
+            display_number=0,
+            is_open=True
         )
         db.session.add(language)
         db.session.commit()
@@ -1462,7 +1469,10 @@ class TestFacetSearchSettingView:
                 "mapping": "language",
                 "active": True,
                 "aggregations": [],
-                "mapping_list": mapping_list
+                "mapping_list": mapping_list,
+                "ui_type": "",
+                "display_number": 0,
+                "is_open": True
             }
             client.get(url)
             args, kwargs = mock_render.call_args
@@ -1486,7 +1496,10 @@ class TestFacetSearchSettingView:
             name_jp="データの言語",
             mapping="language",
             aggregations=[],
-            active=True
+            active=True,
+            ui_type="",
+            display_number=0,
+            is_open=True
         )
         db.session.add(language)
         db.session.commit()
@@ -1504,7 +1517,10 @@ class TestFacetSearchSettingView:
                 "mapping": "language",
                 "active": True,
                 "aggregations": [],
-                "mapping_list": mapping_list
+                "mapping_list": mapping_list,
+                "ui_type": "",
+                "display_number": 0,
+                "is_open": True
             }
             client.get(url)
             args, kwargs = mock_render.call_args
@@ -1529,7 +1545,10 @@ class TestFacetSearchSettingView:
             name_jp="データの言語",
             mapping="language",
             aggregations=[],
-            active=True
+            active=True,
+            ui_type="",
+            display_number=0,
+            is_open=True
         )
         db.session.add(language)
         db.session.commit()
@@ -1553,6 +1572,9 @@ class TestFacetSearchSettingView:
                 "mapping": "language",
                 "active": True,
                 "aggregations": [],
+                "ui_type": "",
+                "display_number": 0,
+                "is_open": True
             }
             client.get(url)
             args, kwargs = mock_render.call_args

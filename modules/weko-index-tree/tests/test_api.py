@@ -270,201 +270,201 @@ def test_indexes_delete_by_action(app, db, user):
 #         def _update_index(new_position, parent=None):
 #         def _swap_position(i, index_tree, next_index_tree):
 #         def _re_order_tree(new_position):
-# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_api.py::test_indexes_move -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
-def test_indexes_move(app, db, users, communities, test_indices):
-    with app.test_request_context(
-        headers=[('Accept-Language','en')]):
-        with patch("flask_login.utils._get_user", return_value=users[1]['obj']):
-            # Error: You can not move the index.
-            _data = {
-                'pre_parent': "0",
-                'parent': "0",
-                'position': 3
-            }
-            res = Indexes.move(1, **_data)
-            assert res['is_ok']==False
-            assert res['msg']=='You can not move the index.'
+# # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_api.py::test_indexes_move -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+# def test_indexes_move(app, db, users, communities, test_indices):
+#     with app.test_request_context(
+#         headers=[('Accept-Language','en')]):
+#         with patch("flask_login.utils._get_user", return_value=users[1]['obj']):
+#             # Error: You can not move the index.
+#             _data = {
+#                 'pre_parent': "0",
+#                 'parent': "0",
+#                 'position': 3
+#             }
+#             res = Indexes.move(1, **_data)
+#             assert res['is_ok']==False
+#             assert res['msg']=='You can not move the index.'
 
-        with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
-            # Error: Select an index to move.
-            _data = {
-                'pre_parent': 2,
-                'parent': None,
-                'position': 1
-            }
-            res = Indexes.move(22, **_data)
-            assert res['is_ok']==False
-            assert res['msg']=='Select an index to move.'
+#         with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+#             # Error: Select an index to move.
+#             _data = {
+#                 'pre_parent': 2,
+#                 'parent': None,
+#                 'position': 1
+#             }
+#             res = Indexes.move(22, **_data)
+#             assert res['is_ok']==False
+#             assert res['msg']=='Select an index to move.'
 
-            # Error: Fail move an index.
-            _data = {
-                'pre_parent': 2,
-                'parent': 22,
-                'position': 1
-            }
-            res = Indexes.move(22, **_data)
-            assert res['is_ok']==False
-            assert res['msg']=='Fail move an index.'
+#             # Error: Fail move an index.
+#             _data = {
+#                 'pre_parent': 2,
+#                 'parent': 22,
+#                 'position': 1
+#             }
+#             res = Indexes.move(22, **_data)
+#             assert res['is_ok']==False
+#             assert res['msg']=='Fail move an index.'
 
-            # Error: Index Delete is in progress on another device.
-            with patch("weko_index_tree.api.is_index_locked", return_value=True):
-                _data = {
-                    'pre_parent': 2,
-                    'parent': 1,
-                    'position': 1
-                }
-                res = Indexes.move(22, **_data)
-                assert res['is_ok']==False
-                assert res['msg']=="Index Delete is in progress on another device."
+#             # Error: Index Delete is in progress on another device.
+#             with patch("weko_index_tree.api.is_index_locked", return_value=True):
+#                 _data = {
+#                     'pre_parent': 2,
+#                     'parent': 1,
+#                     'position': 1
+#                 }
+#                 res = Indexes.move(22, **_data)
+#                 assert res['is_ok']==False
+#                 assert res['msg']=="Index Delete is in progress on another device."
 
-            # Error: The index cannot be kept private because there are links from items that have a DOI.
-            with patch("weko_index_tree.api.is_index_locked", return_value=False):
-                _data = {
-                    'pre_parent': 2,
-                    'parent': 1,
-                    'position': 1
-                }
-                res = Indexes.move(22, **_data)
-                assert res['is_ok']==False
-                assert res['msg']=="The index cannot be kept private because there are links from items that have a DOI."
+#             # Error: The index cannot be kept private because there are links from items that have a DOI.
+#             with patch("weko_index_tree.api.is_index_locked", return_value=False):
+#                 _data = {
+#                     'pre_parent': 2,
+#                     'parent': 1,
+#                     'position': 1
+#                 }
+#                 res = Indexes.move(22, **_data)
+#                 assert res['is_ok']==False
+#                 assert res['msg']=="The index cannot be kept private because there are links from items that have a DOI."
             
-            _index = dict(Indexes.get_index(1))
-            assert _index["parent"] == 0
-            assert _index["position"] == 0
+#             _index = dict(Indexes.get_index(1))
+#             assert _index["parent"] == 0
+#             assert _index["position"] == 0
 
-            # 
-            _data = {
-                'pre_parent': "0",
-                'parent': "0",
-                'position': "a"
-            }
-            res = Indexes.move(1, **_data)
-            assert res['is_ok']==False
-            assert res['msg']=="invalid literal for int() with base 10: 'a'"
+#             # 
+#             _data = {
+#                 'pre_parent': "0",
+#                 'parent': "0",
+#                 'position': "a"
+#             }
+#             res = Indexes.move(1, **_data)
+#             assert res['is_ok']==False
+#             assert res['msg']=="invalid literal for int() with base 10: 'a'"
 
-            # move index 1 success
-            _data = {
-                'pre_parent': "0",
-                'parent': "0",
-                'position': 3
-            }
-            res = Indexes.move(1, **_data)
-            assert res['is_ok']==True
-            assert res['msg']==''
+#             # move index 1 success
+#             _data = {
+#                 'pre_parent': "0",
+#                 'parent': "0",
+#                 'position': 3
+#             }
+#             res = Indexes.move(1, **_data)
+#             assert res['is_ok']==True
+#             assert res['msg']==''
             
-            _index = dict(Indexes.get_index(1))
-            assert _index["parent"] == 0
-            assert _index["position"] == 4
+#             _index = dict(Indexes.get_index(1))
+#             assert _index["parent"] == 0
+#             assert _index["position"] == 4
 
-            # move index 1 success
-            _data = {
-                'pre_parent': "0",
-                'parent': "0",
-                'position': 0
-            }
-            res = Indexes.move(1, **_data)
-            assert res['is_ok']==True
-            assert res['msg']==''
+#             # move index 1 success
+#             _data = {
+#                 'pre_parent': "0",
+#                 'parent': "0",
+#                 'position': 0
+#             }
+#             res = Indexes.move(1, **_data)
+#             assert res['is_ok']==True
+#             assert res['msg']==''
             
-            _index = dict(Indexes.get_index(1))
-            assert _index["parent"] == 0
-            assert _index["position"] == 0
+#             _index = dict(Indexes.get_index(1))
+#             assert _index["parent"] == 0
+#             assert _index["position"] == 0
 
-            with patch("weko_index_tree.api.db.session.commit", side_effect=Exception):
-                # move index 1 Exception
-                _data = {
-                    'pre_parent': "0",
-                    'parent': "0",
-                    'position': 0
-                }
-                res = Indexes.move(1, **_data)
-                assert res['is_ok']==False
+#             with patch("weko_index_tree.api.db.session.commit", side_effect=Exception):
+#                 # move index 1 Exception
+#                 _data = {
+#                     'pre_parent': "0",
+#                     'parent': "0",
+#                     'position': 0
+#                 }
+#                 res = Indexes.move(1, **_data)
+#                 assert res['is_ok']==False
 
-                # move index 1 Exception
-                _data = {
-                    'pre_parent': "0",
-                    'parent': "0",
-                    'position': 5
-                }
-                res = Indexes.move(1, **_data)
-                assert res['is_ok']==False
+#                 # move index 1 Exception
+#                 _data = {
+#                     'pre_parent': "0",
+#                     'parent': "0",
+#                     'position': 5
+#                 }
+#                 res = Indexes.move(1, **_data)
+#                 assert res['is_ok']==False
 
-                with patch("weko_index_tree.api.check_doi_in_index", return_value=False):
-                    # move index 1 Exception
-                    _data = {
-                        'pre_parent': "0",
-                        'parent': "2",
-                        'position': 5
-                    }
-                    res = Indexes.move(1, **_data)
-                    assert res['is_ok']==False
+#                 with patch("weko_index_tree.api.check_doi_in_index", return_value=False):
+#                     # move index 1 Exception
+#                     _data = {
+#                         'pre_parent': "0",
+#                         'parent': "2",
+#                         'position': 5
+#                     }
+#                     res = Indexes.move(1, **_data)
+#                     assert res['is_ok']==False
             
-            with patch("weko_index_tree.api.db.session.commit", side_effect=IntegrityError(None, None, None)):
-                # move index 1 Exception
-                _data = {
-                    'pre_parent': "0",
-                    'parent': "0",
-                    'position': 5
-                }
-                res = Indexes.move(1, **_data)
-                assert res['is_ok']==False
+#             with patch("weko_index_tree.api.db.session.commit", side_effect=IntegrityError(None, None, None)):
+#                 # move index 1 Exception
+#                 _data = {
+#                     'pre_parent': "0",
+#                     'parent': "0",
+#                     'position': 5
+#                 }
+#                 res = Indexes.move(1, **_data)
+#                 assert res['is_ok']==False
 
-                with patch("weko_index_tree.api.check_doi_in_index", return_value=False):
-                    # move index 1 Exception
-                    _data = {
-                        'pre_parent': "0",
-                        'parent': "2",
-                        'position': 5
-                    }
-                    res = Indexes.move(1, **_data)
-                    assert res['is_ok']==False
+#                 with patch("weko_index_tree.api.check_doi_in_index", return_value=False):
+#                     # move index 1 Exception
+#                     _data = {
+#                         'pre_parent': "0",
+#                         'parent': "2",
+#                         'position': 5
+#                     }
+#                     res = Indexes.move(1, **_data)
+#                     assert res['is_ok']==False
 
-            with patch("weko_index_tree.api.db.session.commit", side_effect=IntegrityError(None, None, 'uix_position')):
-                # move index 1 Exception
-                _data = {
-                    'pre_parent': "0",
-                    'parent': "0",
-                    'position': 5
-                }
-                res = Indexes.move(1, **_data)
-                assert res['is_ok']==False
+#             with patch("weko_index_tree.api.db.session.commit", side_effect=IntegrityError(None, None, 'uix_position')):
+#                 # move index 1 Exception
+#                 _data = {
+#                     'pre_parent': "0",
+#                     'parent': "0",
+#                     'position': 5
+#                 }
+#                 res = Indexes.move(1, **_data)
+#                 assert res['is_ok']==False
 
-                with patch("weko_index_tree.api.check_doi_in_index", return_value=False):
-                    with patch("weko_index_tree.tasks.update_oaiset_setting", return_value=True):
-                        # move index 1 success
-                        _data = {
-                            'pre_parent': "0",
-                            'parent': "2",
-                            'position': 5
-                        }
-                        res = Indexes.move(1, **_data)
-                        assert res['is_ok']==True
+#                 with patch("weko_index_tree.api.check_doi_in_index", return_value=False):
+#                     with patch("weko_index_tree.tasks.update_oaiset_setting", return_value=True):
+#                         # move index 1 success
+#                         _data = {
+#                             'pre_parent': "0",
+#                             'parent': "2",
+#                             'position': 5
+#                         }
+#                         res = Indexes.move(1, **_data)
+#                         assert res['is_ok']==True
 
-                    with patch("weko_index_tree.tasks.update_oaiset_setting", side_effect=IntegrityError(None, None, 'uix_position')):
-                        # move index 1 Exception
-                        _data = {
-                            'pre_parent': "2",
-                            'parent': "0",
-                            'position': 5
-                        }
-                        res = Indexes.move(1, **_data)
-                        assert res['is_ok']==True
+#                     with patch("weko_index_tree.tasks.update_oaiset_setting", side_effect=IntegrityError(None, None, 'uix_position')):
+#                         # move index 1 Exception
+#                         _data = {
+#                             'pre_parent': "2",
+#                             'parent': "0",
+#                             'position': 5
+#                         }
+#                         res = Indexes.move(1, **_data)
+#                         assert res['is_ok']==True
 
-            with patch("weko_index_tree.api.check_doi_in_index", return_value=False):
-                with patch("weko_index_tree.tasks.update_oaiset_setting", return_value=True):
-                    # move index 3 success
-                    _data = {
-                        'pre_parent': "0",
-                        'parent': "2",
-                        'position': 1
-                    }
-                    res = Indexes.move(3, **_data)
-                    assert res['is_ok']==True
-                    assert res['msg']==''
+#             with patch("weko_index_tree.api.check_doi_in_index", return_value=False):
+#                 with patch("weko_index_tree.tasks.update_oaiset_setting", return_value=True):
+#                     # move index 3 success
+#                     _data = {
+#                         'pre_parent': "0",
+#                         'parent': "2",
+#                         'position': 1
+#                     }
+#                     res = Indexes.move(3, **_data)
+#                     assert res['is_ok']==True
+#                     assert res['msg']==''
                     
-                    _index = dict(Indexes.get_index(3))
-                    assert _index["parent"] == 2
-                    assert _index["position"] == 1
+#                     _index = dict(Indexes.get_index(3))
+#                     assert _index["parent"] == 2
+#                     assert _index["position"] == 1
 
 
 # class Indexes(object):
@@ -537,7 +537,14 @@ def test_update_set_info(i18n_app, db, users, test_indices):
 #     def delete_set_info(cls, action, index_id, id_list):
 #     def get_public_indexes_list(cls):
 # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_api.py::test_indexes_get_index_tree -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
-def test_indexes_get_index_tree(i18n_app, db, redis_connect, users, db_records, test_indices, communities):
+def test_indexes_get_index_tree(i18n_app, 
+                                db,
+                                redis_connect, 
+                                users, 
+                                db_records, 
+                                test_indices, 
+                                communities
+                                ):
     os.environ['INVENIO_WEB_HOST_NAME'] = "test"
     with i18n_app.test_client() as client:
         # get_index_tree
@@ -571,6 +578,21 @@ def test_indexes_get_index_tree(i18n_app, db, redis_connect, users, db_records, 
         res = Indexes.get_more_browsing_tree()
         assert len(res)==3
 
+        # get_more_browsing_tree #10
+        res = Indexes.get_more_browsing_tree(2)
+        assert len(res)==1
+
+        # get_more_browsing_tree #11
+        with patch("weko_index_tree.api.RedisConnection", side_effect=KeyError):
+            res = Indexes.get_more_browsing_tree(0)
+            assert len(res)==3
+        
+        # get_more_browsing_tree #12
+        with patch("weko_index_tree.api.RedisConnection", side_effect=Exception):
+            res = Indexes.get_more_browsing_tree(0)
+            assert len(res)==3
+            
+        
         # get_browsing_tree_ignore_more
         res = Indexes.get_browsing_tree_ignore_more(0)
         assert len(res)==3

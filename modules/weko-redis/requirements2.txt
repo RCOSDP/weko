@@ -65,7 +65,7 @@ Flask-Login==0.4.1
 Flask-Mail==0.9.1
 flask-marshmallow==0.14.0
 Flask-Menu==0.6.0
--e git+https://github.com/RCOSDP/flask-oauthlib.git@83148ee01e9da37a8a1134febe83bc32b95bac6e#egg=Flask_OAuthlib
+-e git+https://github.com/RCOSDP/flask-oauthlib.git@add-redissentinel#egg=Flask_OAuthlib
 Flask-Plugins==1.6.1
 Flask-Principal==0.4.0
 Flask-RESTful==0.3.8
@@ -169,6 +169,7 @@ node-semver==0.1.1
 numpy==1.16.1
 oauthlib==2.1.0
 ordereddict==1.1
+orjson==3.6.1
 packaging==21.3
 pandocfilters==1.4.2
 parso==0.1.0

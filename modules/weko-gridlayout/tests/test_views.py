@@ -455,6 +455,7 @@ def test__add_url_rule(app):
 
 
 # def get_access_counter_record(repository_id, current_language): 
+#.tox/c1/bin/pytest --cov=weko_gridlayout tests/test_views.py::test_get_access_counter_record -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-gridlayout/.tox/c1/tmp
 def test_get_access_counter_record(i18n_app):
     from datetime import date, timedelta
 
@@ -480,7 +481,7 @@ def test_get_access_counter_record(i18n_app):
 
     with i18n_app.test_client() as client:
         with patch("weko_gridlayout.views.WidgetDesignServices.get_widget_design_setting", return_value=widget_design_setting):
-            with patch("weko_gridlayout.views.QueryCommonReportsHelper.get", return_value={"all": {'count': {'count': 9999}}}):
+            with patch("weko_gridlayout.views.QueryAccessCounterHelper.get_top_page_access_counter", return_value={'date': '2024-01-01-2024-02-01', 'all':{"count":9999}}):
                 res = client.get(
                     url_for(
                         "weko_gridlayout_api.get_access_counter_record",

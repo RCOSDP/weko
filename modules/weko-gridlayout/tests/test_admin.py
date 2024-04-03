@@ -281,6 +281,7 @@ def test_edit_view_WidgetSettingView(i18n_app, view_instance):
 def test_get_detail_value_WidgetSettingView(i18n_app, view_instance):
     context = MagicMock()
     model = MagicMock()
+    model.settings = {"key": "value"}
     name = "text_color"
 
     assert not view_instance.get_detail_value(context, model, name)

@@ -19,7 +19,7 @@
 # MA 02111-1307, USA.
 
 """WEKO3 module docstring."""
-import json
+import orjson
 import os
 import signal
 import ssl
@@ -128,7 +128,7 @@ def run_sync_import(id):
                         records.remove(item)
 
                     resync_index.update({
-                        'result': json.dumps(records)
+                        'result': orjson.dumps(records).decode()
                     })
 
                 except Exception as ex:

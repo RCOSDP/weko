@@ -111,7 +111,7 @@ from weko_index_tree.scopes import create_index_scope
 from weko_search_ui import WekoSearchUI, WekoSearchREST
 from weko_search_ui.config import SEARCH_UI_SEARCH_INDEX
 from weko_redis.redis import RedisConnection
-from weko_admin.models import SessionLifetime
+from weko_admin.models import AdminLangSettings, SessionLifetime
 
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
@@ -157,9 +157,9 @@ def base_app(instance_path):
         INDEX_IMG='indextree/36466818-image.jpg',
         # SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
         #                                   'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/invenio'),
-        # SQLALCHEMY_DATABASE_URI=os.environ.get(
-        #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
-        SQLALCHEMY_DATABASE_URI='postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest',
+        SQLALCHEMY_DATABASE_URI=os.environ.get(
+            'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
+        # SQLALCHEMY_DATABASE_URI='postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest',
         SEARCH_ELASTIC_HOSTS=os.environ.get(
             'SEARCH_ELASTIC_HOSTS', 'elasticsearch'),
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
@@ -434,6 +434,7 @@ def base_app(instance_path):
         WEKO_INDEX_TREE_INDEX_ADMIN_TEMPLATE = 'weko_index_tree/admin/index_edit_setting.html',
         WEKO_INDEX_TREE_LIST_API = "/api/tree",
         WEKO_INDEX_TREE_API = "/api/tree/index/",
+        WEKO_THEME_INSTANCE_DATA_DIR="data",
     )
     app_.url_map.converters['pid'] = PIDConverter
 
@@ -486,6 +487,11 @@ def db(app):
     db_.drop_all()
     drop_alembic_version_table()
 
+@pytest.yield_fixture()
+def without_session_remove():
+    with patch("weko_search_ui.views.db.session.remove"):
+        with patch("weko_search_ui.rest.db.session.remove"):
+            yield
 
 @pytest.yield_fixture()
 def i18n_app(app):
@@ -1586,3 +1592,580 @@ def auth_headers(client_api, json_headers, create_token_user_1):
     It uses the token associated with the first user.
     """
     return fill_oauth2_headers(json_headers, create_token_user_1)
+
+@pytest.fixture()
+def admin_lang_setting(db):
+    AdminLangSettings.create("en","English", True, 0, True)
+    AdminLangSettings.create("ja","日本語", True, 1, True)
+    AdminLangSettings.create("zh","中文", False, 0, True)
+
+@pytest.fixture()
+def indextree_sample():
+    key_sample = [
+        {
+            "pid": 0,
+            "cid": 1616224532673,
+            "position": -99,
+            "name": "Data Usage Report",
+            "link_name": "New Index",
+            "index_link_enabled": False,
+            "public_state": False,
+            "public_date": None,
+            "browsing_role": "3,-98,-99",
+            "contribute_role": "1,2,3,4,-99",
+            "browsing_group": "",
+            "contribute_group": "",
+            "more_check": False,
+            "display_no": 5,
+            "coverpage_state": False,
+            "recursive_coverpage_check": False,
+            "id": "1616224532673",
+            "value": "Data Usage Report",
+            "emitLoadNextLevel": False,
+            "settings": {
+                "isCollapsedOnInit": True,
+                "checked": False
+            },
+            "children": []
+        },
+        {
+            "pid": 0,
+            "cid": 1710232204571,
+            "position": -98,
+            "name": "public_parent_index",
+            "link_name": "New Index",
+            "index_link_enabled": False,
+            "public_state": True,
+            "public_date": None,
+            "browsing_role": "3,-98,-99",
+            "contribute_role": "1,2,3,4,-98,-99",
+            "browsing_group": "",
+            "contribute_group": "",
+            "more_check": False,
+            "display_no": 5,
+            "coverpage_state": False,
+            "recursive_coverpage_check": False,
+            "id": "1710232204571",
+            "value": "public_parent_index",
+            "emitLoadNextLevel": False,
+            "settings": {
+                "isCollapsedOnInit": False,
+                "checked": False
+            },
+            "children": [
+                {
+                    "pid": 1710232204571,
+                    "cid": 1710232294539,
+                    "position": 0,
+                    "name": "public_child0",
+                    "link_name": "New Index",
+                    "index_link_enabled": False,
+                    "public_state": True,
+                    "public_date": None,
+                    "browsing_role": "3,-98,-99",
+                    "contribute_role": "1,2,3,4,-98,-99",
+                    "browsing_group": "",
+                    "contribute_group": "",
+                    "more_check": False,
+                    "display_no": 5,
+                    "coverpage_state": False,
+                    "recursive_coverpage_check": False,
+                    "parent": "1710232204571",
+                    "id": "1710232294539",
+                    "value": "public_child0",
+                    "emitLoadNextLevel": False,
+                    "settings": {
+                        "isCollapsedOnInit": True,
+                        "checked": False
+                    },
+                    "children": []
+                },
+                {
+                    "pid": 1710232204571,
+                    "cid": 1710232532518,
+                    "position": 1,
+                    "name": "public_child1_past_pubdate",
+                    "link_name": "New Index",
+                    "index_link_enabled": False,
+                    "public_state": True,
+                    "public_date": "2000-11-11T00:00:00",
+                    "browsing_role": "3,-98,-99",
+                    "contribute_role": "1,2,3,4,-98,-99",
+                    "browsing_group": "",
+                    "contribute_group": "",
+                    "more_check": False,
+                    "display_no": 5,
+                    "coverpage_state": False,
+                    "recursive_coverpage_check": False,
+                    "parent": "1710232204571",
+                    "id": "1710232532518",
+                    "value": "public_child1_past_pubdate",
+                    "emitLoadNextLevel": False,
+                    "settings": {
+                        "isCollapsedOnInit": True,
+                        "checked": False
+                    },
+                    "children": []
+                },
+                {
+                    "pid": 1710232204571,
+                    "cid": 1710232600215,
+                    "position": 2,
+                    "name": "public_child2_future_pubdate",
+                    "link_name": "New Index",
+                    "index_link_enabled": False,
+                    "public_state": True,
+                    "public_date": "2999-12-31T00:00:00",
+                    "browsing_role": "3,-98,-99",
+                    "contribute_role": "1,2,3,4,-98,-99",
+                    "browsing_group": "",
+                    "contribute_group": "",
+                    "more_check": False,
+                    "display_no": 5,
+                    "coverpage_state": False,
+                    "recursive_coverpage_check": False,
+                    "parent": "1710232204571",
+                    "id": "1710232600215",
+                    "value": "public_child2_future_pubdate",
+                    "emitLoadNextLevel": False,
+                    "settings": {
+                        "isCollapsedOnInit": False,
+                        "checked": False
+                    },
+                    "children": []
+                },
+                {
+                    "pid": 1710232204571,
+                    "cid": 1710232662773,
+                    "position": 3,
+                    "name": "public_child3_guest_not_authorized",
+                    "link_name": "New Index",
+                    "index_link_enabled": False,
+                    "public_state": True,
+                    "public_date": None,
+                    "browsing_role": "3,-98",
+                    "contribute_role": "1,2,3,4,-99",
+                    "browsing_group": "",
+                    "contribute_group": "",
+                    "more_check": False,
+                    "display_no": 5,
+                    "coverpage_state": False,
+                    "recursive_coverpage_check": False,
+                    "parent": "1710232204571",
+                    "id": "1710232662773",
+                    "value": "public_child3_guest_not_authorized",
+                    "emitLoadNextLevel": False,
+                    "settings": {
+                        "isCollapsedOnInit": True,
+                        "checked": False
+                    },
+                    "children": []
+                },
+                {
+                    "pid": 1710232204571,
+                    "cid": 1710232720205,
+                    "position": 4,
+                    "name": "public_child4_authenticated_user_not_authorized",
+                    "link_name": "New Index",
+                    "index_link_enabled": False,
+                    "public_state": True,
+                    "public_date": None,
+                    "browsing_role": "3,-99",
+                    "contribute_role": "1,2,3,4,-99",
+                    "browsing_group": "",
+                    "contribute_group": "",
+                    "more_check": False,
+                    "display_no": 5,
+                    "coverpage_state": False,
+                    "recursive_coverpage_check": False,
+                    "parent": "1710232204571",
+                    "id": "1710232720205",
+                    "value": "public_child4_authenticated_user_not_authorized",
+                    "emitLoadNextLevel": False,
+                    "settings": {
+                        "isCollapsedOnInit": True,
+                        "checked": False
+                    },
+                    "children": []
+                },
+                {
+                    "pid": 1710232204571,
+                    "cid": 1710232776118,
+                    "position": 5,
+                    "name": "public_child5_contributor_not_authorized",
+                    "link_name": "New Index",
+                    "index_link_enabled": False,
+                    "public_state": True,
+                    "public_date": None,
+                    "browsing_role": "-98,-99",
+                    "contribute_role": "1,2,3,4,-99",
+                    "browsing_group": "",
+                    "contribute_group": "",
+                    "more_check": False,
+                    "display_no": 5,
+                    "coverpage_state": False,
+                    "recursive_coverpage_check": False,
+                    "parent": "1710232204571",
+                    "id": "1710232776118",
+                    "value": "public_child5_contributor_not_authorized",
+                    "emitLoadNextLevel": False,
+                    "settings": {
+                        "isCollapsedOnInit": True,
+                        "checked": False
+                    },
+                    "children": []
+                },
+                {
+                    "pid": 1710232204571,
+                    "cid": 1710232921184,
+                    "position": 6,
+                    "name": "private_child_index0",
+                    "link_name": "New Index",
+                    "index_link_enabled": False,
+                    "public_state": False,
+                    "public_date": None,
+                    "browsing_role": "3,-98,-99",
+                    "contribute_role": "1,2,3,4,-98,-99",
+                    "browsing_group": "",
+                    "contribute_group": "",
+                    "more_check": False,
+                    "display_no": 1,
+                    "coverpage_state": False,
+                    "recursive_coverpage_check": False,
+                    "parent": "1710232204571",
+                    "id": "1710232921184",
+                    "value": "private_child_index0",
+                    "emitLoadNextLevel": False,
+                    "settings": {
+                        "isCollapsedOnInit": False,
+                        "checked": False
+                    },
+                    "children": [
+                        {
+                            "pid": 1710232921184,
+                            "cid": 1710235753123,
+                            "position": 0,
+                            "name": "public_child_of_private_parent",
+                            "link_name": "New Index",
+                            "index_link_enabled": False,
+                            "public_state": True,
+                            "public_date": None,
+                            "browsing_role": "3,-98,-99",
+                            "contribute_role": "1,2,3,4,-98,-99",
+                            "browsing_group": "",
+                            "contribute_group": "",
+                            "more_check": False,
+                            "display_no": 5,
+                            "coverpage_state": False,
+                            "recursive_coverpage_check": False,
+                            "parent": "1710232204571/1710232921184",
+                            "id": "1710235753123",
+                            "value": "public_child_of_private_parent",
+                            "emitLoadNextLevel": False,
+                            "settings": {
+                                "isCollapsedOnInit": True,
+                                "checked": False
+                            },
+                            "children": []
+                        },
+                        {
+                            "pid": 1710232921184,
+                            "cid": 1710235755777,
+                            "position": 1,
+                            "name": "private_child_of_private_parent",
+                            "link_name": "New Index",
+                            "index_link_enabled": False,
+                            "public_state": False,
+                            "public_date": None,
+                            "browsing_role": "3,-98,-99",
+                            "contribute_role": "1,2,3,4,-98,-99",
+                            "browsing_group": "",
+                            "contribute_group": "",
+                            "more_check": False,
+                            "display_no": 5,
+                            "coverpage_state": False,
+                            "recursive_coverpage_check": False,
+                            "parent": "1710232204571/1710232921184",
+                            "id": "1710235755777",
+                            "value": "private_child_of_private_parent",
+                            "emitLoadNextLevel": False,
+                            "settings": {
+                                "isCollapsedOnInit": True,
+                                "checked": False
+                            },
+                            "children": []
+                        }
+                    ]
+                },
+                {
+                    "pid": 1710232204571,
+                    "cid": 1710235213823,
+                    "position": 7,
+                    "name": "private_child_index1_past_pubdate",
+                    "link_name": "New Index",
+                    "index_link_enabled": False,
+                    "public_state": False,
+                    "public_date": "2000-11-11T00:00:00",
+                    "browsing_role": "3,-98,-99",
+                    "contribute_role": "1,2,3,4,-98,-99",
+                    "browsing_group": "",
+                    "contribute_group": "",
+                    "more_check": False,
+                    "display_no": 5,
+                    "coverpage_state": False,
+                    "recursive_coverpage_check": False,
+                    "parent": "1710232204571",
+                    "id": "1710235213823",
+                    "value": "private_child_index1_past_pubdate",
+                    "emitLoadNextLevel": False,
+                    "settings": {
+                        "isCollapsedOnInit": True,
+                        "checked": False
+                    },
+                    "children": []
+                },
+                {
+                    "pid": 1710232204571,
+                    "cid": 1710235219052,
+                    "position": 8,
+                    "name": "private_child_index2_future_pubdate",
+                    "link_name": "New Index",
+                    "index_link_enabled": False,
+                    "public_state": False,
+                    "public_date": "2040-12-31T00:00:00",
+                    "browsing_role": "3,-98,-99",
+                    "contribute_role": "1,2,3,4,-98,-99",
+                    "browsing_group": "",
+                    "contribute_group": "",
+                    "more_check": False,
+                    "display_no": 5,
+                    "coverpage_state": False,
+                    "recursive_coverpage_check": False,
+                    "parent": "1710232204571",
+                    "id": "1710235219052",
+                    "value": "private_child_index2_future_pubdate",
+                    "emitLoadNextLevel": False,
+                    "settings": {
+                        "isCollapsedOnInit": True,
+                        "checked": False
+                    },
+                    "children": []
+                },
+                {
+                    "pid": 1710232204571,
+                    "cid": 1710235219491,
+                    "position": 9,
+                    "name": "private_child_index3_guest_not_authorized",
+                    "link_name": "New Index",
+                    "index_link_enabled": False,
+                    "public_state": False,
+                    "public_date": None,
+                    "browsing_role": "3,-98",
+                    "contribute_role": "1,2,3,4,-98",
+                    "browsing_group": "",
+                    "contribute_group": "",
+                    "more_check": False,
+                    "display_no": 5,
+                    "coverpage_state": False,
+                    "recursive_coverpage_check": False,
+                    "parent": "1710232204571",
+                    "id": "1710235219491",
+                    "value": "private_child_index3_guest_not_authorized",
+                    "emitLoadNextLevel": False,
+                    "settings": {
+                        "isCollapsedOnInit": True,
+                        "checked": False
+                    },
+                    "children": []
+                },
+                {
+                    "pid": 1710232204571,
+                    "cid": 1710235219779,
+                    "position": 10,
+                    "name": "private_child_index4_authenticated_user_not_authorized",
+                    "link_name": "New Index",
+                    "index_link_enabled": False,
+                    "public_state": False,
+                    "public_date": None,
+                    "browsing_role": "3,-99",
+                    "contribute_role": "1,2,3,4,-98,-99",
+                    "browsing_group": "",
+                    "contribute_group": "",
+                    "more_check": False,
+                    "display_no": 5,
+                    "coverpage_state": False,
+                    "recursive_coverpage_check": False,
+                    "parent": "1710232204571",
+                    "id": "1710235219779",
+                    "value": "private_child_index4_authenticated_user_not_authorized",
+                    "emitLoadNextLevel": False,
+                    "settings": {
+                        "isCollapsedOnInit": True,
+                        "checked": False
+                    },
+                    "children": []
+                },
+                {
+                    "pid": 1710232204571,
+                    "cid": 1710235491407,
+                    "position": 11,
+                    "name": "private_child_index5_contributor_not_authorized",
+                    "link_name": "New Index",
+                    "index_link_enabled": False,
+                    "public_state": False,
+                    "public_date": None,
+                    "browsing_role": "-98,-99",
+                    "contribute_role": "1,2,3,4,-98,-99",
+                    "browsing_group": "",
+                    "contribute_group": "",
+                    "more_check": False,
+                    "display_no": 5,
+                    "coverpage_state": False,
+                    "recursive_coverpage_check": False,
+                    "parent": "1710232204571",
+                    "id": "1710235491407",
+                    "value": "private_child_index5_contributor_not_authorized",
+                    "emitLoadNextLevel": False,
+                    "settings": {
+                        "isCollapsedOnInit": True,
+                        "checked": False
+                    },
+                    "children": []
+                }
+            ]
+        },
+        {
+            "pid": 0,
+            "cid": 1710236116557,
+            "position": -97,
+            "name": "public_parent_index_more_func",
+            "link_name": "New Index",
+            "index_link_enabled": False,
+            "public_state": True,
+            "public_date": None,
+            "browsing_role": "3,-98,-99",
+            "contribute_role": "1,2,3,4,-98,-99",
+            "browsing_group": "",
+            "contribute_group": "",
+            "more_check": True,
+            "display_no": 1,
+            "coverpage_state": False,
+            "recursive_coverpage_check": False,
+            "id": "1710236116557",
+            "value": "public_parent_index_more_func",
+            "emitLoadNextLevel": False,
+            "settings": {
+                "isCollapsedOnInit": False,
+                "checked": False
+            },
+            "children": [
+                {
+                    "pid": 1710236116557,
+                    "cid": 1710236162576,
+                    "position": 0,
+                    "name": "public_child_of_more_func_parent1",
+                    "link_name": "New Index",
+                    "index_link_enabled": False,
+                    "public_state": True,
+                    "public_date": None,
+                    "browsing_role": "3,-98,-99",
+                    "contribute_role": "1,2,3,4,-98,-99",
+                    "browsing_group": "",
+                    "contribute_group": "",
+                    "more_check": False,
+                    "display_no": 5,
+                    "coverpage_state": False,
+                    "recursive_coverpage_check": False,
+                    "parent": "1710236116557",
+                    "id": "1710236162576",
+                    "value": "public_child_of_more_func_parent1",
+                    "emitLoadNextLevel": False,
+                    "settings": {
+                        "isCollapsedOnInit": True,
+                        "checked": False
+                    },
+                    "children": []
+                },
+                {
+                    "pid": 1710236116557,
+                    "cid": 1710236162880,
+                    "position": 1,
+                    "name": "public_child_of_more_func_parent2",
+                    "link_name": "New Index",
+                    "index_link_enabled": False,
+                    "public_state": True,
+                    "public_date": None,
+                    "browsing_role": "3,-98,-99",
+                    "contribute_role": "1,2,3,4,-98,-99",
+                    "browsing_group": "",
+                    "contribute_group": "",
+                    "more_check": False,
+                    "display_no": 5,
+                    "coverpage_state": False,
+                    "recursive_coverpage_check": False,
+                    "parent": "1710236116557",
+                    "id": "1710236162880",
+                    "value": "public_child_of_more_func_parent2",
+                    "emitLoadNextLevel": False,
+                    "settings": {
+                        "isCollapsedOnInit": True,
+                        "checked": False
+                    },
+                    "children": []
+                }
+            ]
+        },
+        {
+            "pid": 0,
+            "cid": 1710236245282,
+            "position": -96,
+            "name": "public_group_authorized_index",
+            "link_name": "New Index",
+            "index_link_enabled": False,
+            "public_state": True,
+            "public_date": None,
+            "browsing_role": "3,-98,-99",
+            "contribute_role": "1,2,3,4,-98,-99",
+            "browsing_group": "1",
+            "contribute_group": "",
+            "more_check": False,
+            "display_no": 5,
+            "coverpage_state": False,
+            "recursive_coverpage_check": False,
+            "id": "1710236245282",
+            "value": "public_group_authorized_index",
+            "emitLoadNextLevel": False,
+            "settings": {
+                "isCollapsedOnInit": True,
+                "checked": False
+            },
+            "children": []
+        },
+        {
+            "pid": 0,
+            "cid": 1710236246288,
+            "position": -95,
+            "name": "public_group_unauthorized_index",
+            "link_name": "New Index",
+            "index_link_enabled": False,
+            "public_state": True,
+            "public_date": None,
+            "browsing_role": "3,-98,-99",
+            "contribute_role": "1,2,3,4,-98,-99",
+            "browsing_group": "",
+            "contribute_group": "",
+            "more_check": False,
+            "display_no": 5,
+            "coverpage_state": False,
+            "recursive_coverpage_check": False,
+            "id": "1710236246288",
+            "value": "public_group_unauthorized_index",
+            "emitLoadNextLevel": False,
+            "settings": {
+                "isCollapsedOnInit": True,
+                "checked": False
+            },
+            "children": []
+        }
+    ]
+    return key_sample

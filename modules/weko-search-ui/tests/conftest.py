@@ -126,6 +126,7 @@ from invenio_stats.contrib.event_builders import (
 from weko_admin import WekoAdmin
 from weko_admin.config import WEKO_ADMIN_DEFAULT_ITEM_EXPORT_SETTINGS, WEKO_ADMIN_MANAGEMENT_OPTIONS
 from weko_admin.models import FacetSearchSetting, Identifier, SessionLifetime
+from weko_admin.utils import store_facet_search_query_in_redis
 from weko_deposit.api import WekoDeposit
 from weko_deposit.api import WekoDeposit as aWekoDeposit
 from weko_deposit.api import WekoIndexer, WekoRecord
@@ -135,6 +136,7 @@ from weko_index_tree import WekoIndexTree, WekoIndexTreeREST
 from weko_index_tree.api import Indexes
 from weko_index_tree.config import WEKO_INDEX_TREE_REST_ENDPOINTS as _WEKO_INDEX_TREE_REST_ENDPOINTS
 from weko_index_tree.models import Index, IndexStyle
+from weko_index_tree.utils import save_index_trees_to_redis
 from weko_items_ui.config import WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT, WEKO_ITEMS_UI_MS_MIME_TYPE
 from weko_records import WekoRecords
 from weko_records.api import ItemsMetadata, ItemTypes, Mapping
@@ -271,7 +273,7 @@ def base_app(instance_path, search_class, request):
         WEKO_INDEX_TREE_STATE_PREFIX="index_tree_expand_state",
         REDIS_PORT="6379",
         DEPOSIT_DEFAULT_JSONSCHEMA=DEPOSIT_DEFAULT_JSONSCHEMA,
-        SERVER_NAME="TEST_SERVER",
+        SERVER_NAME="test_server",
         LOGIN_DISABLED=False,
         INDEXER_DEFAULT_DOCTYPE="item-v1.0.0",
         WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME = 'jpcoar_v1_mapping',
@@ -631,6 +633,24 @@ def base_app(instance_path, search_class, request):
                 default_media_type="application/json",
                 max_result_window=10000,
             ),
+            facet_condition=dict(
+                pid_type="recid",
+                pid_minter="recid",
+                pid_fetcher="recid",
+                search_class=RecordsSearch,
+                indexer_class=RecordIndexer,
+                # search_index=SEARCH_UI_SEARCH_INDEX,
+                search_index="test-weko",
+                search_type="item-v1.0.0",
+                search_factory_imp="weko_search_ui.query.facet_condition_search_factory",
+                search_serializers={
+                    "application/json": ("weko_records.serializers" ":json_v1_search"),
+                },
+                index_route="/facet-search/condition",
+                links_factory_imp="weko_search_ui.links:default_links_factory",
+                default_media_type="application/json",
+                max_result_window=10000,
+            ),
         ),
         WEKO_INDEX_TREE_REST_ENDPOINTS=dict(
             tid=dict(
@@ -651,6 +671,8 @@ def base_app(instance_path, search_class, request):
             "widths": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"],
         },
         WEKO_SEARCH_TYPE_KEYWORD="keyword",
+        WEKO_SEARCH_TYPE_INDEX="index",
+        WEKO_SEARCH_TYPE_DICT={"FULL_TEXT": "0", "KEYWORD": "1", "INDEX": "2"},
         WEKO_SEARCH_UI_SEARCH_TEMPLATE="weko_search_ui/search.html",
         WEKO_INDEX_TREE_INDEX_ADMIN_TEMPLATE="weko_index_tree/admin/index_edit_setting.html",
         WEKO_INDEX_TREE_LIST_API="/api/tree",
@@ -975,7 +997,7 @@ def users(app, db):
 
 
 @pytest.fixture
-def indices(app, db):
+def indices(app, db, redis_connect):
     with db.session.begin_nested():
         # Create a test Indices
         testIndexOne = Index(
@@ -1019,6 +1041,14 @@ def indices(app, db):
 
         db.session.add(testIndexThree)
         db.session.add(testIndexThreeChild)
+    
+    key = "index_tree_view_" + os.environ.get('INVENIO_WEB_HOST_NAME') + "_"
+    redis_connect.delete(key+"en")
+    redis_connect.delete(key+"ja")
+
+    key = "index_tree_by_role_" + os.environ.get('INVENIO_WEB_HOST_NAME') + "_"
+    redis_connect.delete(key+"en_-99_0")
+    redis_connect.delete(key+"ja_-99_0")
 
     return {
         "index_dict": dict(testIndexThree),
@@ -3928,3 +3958,212 @@ def make_itemtype(app,db):
         
         return result
     return factory
+
+@pytest.fixture()
+def facet_test_data(app, db, users, facet_es_records, redis_connect):
+    # facet_search_setting
+    facet_search_setting_data = {
+        "Data Language":{
+            "name_en":"Data Language",
+            "name_jp":"データの言語",
+            "mapping":"language",
+            "ui_type":"SelectBox",
+            "display_number":1,
+            "aggregations":[],
+            "active":True,
+            "is_open":True
+        },
+        "Access":{
+            "name_en":"Access",
+            "name_jp":"アクセス制限",
+            "mapping":"accessRights",
+            "ui_type":"SelectBox",
+            "display_number":2,
+            "aggregations":[],
+            "active":True,
+            "is_open":True
+        },
+        "Topic":{
+            "name_en":"Topic",
+            "name_jp":"トピック",
+            "ui_type":"SelectBox",
+            "display_number":3,
+            "mapping":"subject.value",
+            "aggregations":[],
+            "active":False,
+            "is_open":True
+        }
+    }
+    facet_search_settings = []
+    for facet_search_setting in facet_search_setting_data:
+        facet_search_settings.append(FacetSearchSetting(**facet_search_setting_data[facet_search_setting]))
+    with db.session.begin_nested():
+        db.session.add_all(facet_search_settings)
+    store_facet_search_query_in_redis()
+
+    # indextree
+    from weko_index_tree.api import Indexes
+    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+        Indexes.create(0, {
+            "id": 1111,
+            "parent": 0,
+            "value": "public_viewable",
+        })
+        index = Index.get_index_by_id(1111)
+        index.public_state = True
+        index.harvest_public_state = True
+
+        Indexes.create(0, {
+            "id": 2222,
+            "parent": 0,
+            "value": "public_unviewable",
+        })
+        index = Index.get_index_by_id(2222)
+        index.public_state = True
+        index.harvest_public_state = True
+        index.browsing_role = ''
+
+        Indexes.create(0, {
+            "id": 3333,
+            "parent": 0,
+            "value": "private_viewable",
+        })
+        index = Index.get_index_by_id(3333)
+        index.public_state = False
+        index.harvest_public_state = False
+
+        Indexes.create(0, {
+            "id": 4444,
+            "parent": 0,
+            "value": "public_unviewable",
+        })
+        index = Index.get_index_by_id(4444)
+        index.public_state = False
+        index.harvest_public_state = False
+        index.browsing_role = ''
+
+    key = "index_tree_view_" + os.environ.get('INVENIO_WEB_HOST_NAME') + "_"
+    redis_connect.delete(key+"en")
+    redis_connect.delete(key+"ja")
+
+
+    key = "index_tree_by_role_" + os.environ.get('INVENIO_WEB_HOST_NAME') + "_"
+    redis_connect.delete(key+"en_-99_0")
+    redis_connect.delete(key+"ja_-99_0")
+    for user in users:
+        redis_connect.delete(key+"en_" + str(user["id"]) + "_0")
+        redis_connect.delete(key+"ja_" + str(user["id"]) + "_0")
+
+
+@pytest.fixture()
+def facet_es_records(app, db, users):
+    indexer = WekoIndexer()
+    indexer.get_es_index()
+    results = []
+    with app.test_request_context():
+        # {"email": contributor.email, "id": contributor.id, "obj": contributor}
+        contributor = users[1]
+        date_public = "2022-08-20"
+        date_private = "2999-12-31"
+        test_data_list = [
+            {"id": 1, "sets": 1111, "owner": contributor["id"], "email": contributor["email"], "publish_date": date_private, "publish_status": "0", "language": "ja", "accessRights": "access_A", "subject.value": "topic_A"},
+            {"id": 2, "sets": 1111, "owner": contributor["id"], "email": contributor["email"], "publish_date": date_public, "publish_status": "0", "language": "ja", "accessRights": "access_A", "subject.value": "topic_A"},
+            {"id": 3, "sets": 1111, "owner": contributor["id"], "email": contributor["email"], "publish_date": date_private, "publish_status": "1", "language": "ja", "accessRights": "access_A", "subject.value": "topic_A"},
+            {"id": 4, "sets": 1111, "owner": contributor["id"], "email": contributor["email"], "publish_date": date_public, "publish_status": "1", "language": "ja", "accessRights": "access_A", "subject.value": "topic_A"},
+            {"id": 5, "sets": 2222, "owner": contributor["id"], "email": contributor["email"], "publish_date": date_private, "publish_status": "0", "language": "ja", "accessRights": "access_A", "subject.value": "topic_A"},
+            {"id": 6, "sets": 2222, "owner": contributor["id"], "email": contributor["email"], "publish_date": date_public, "publish_status": "0", "language": "ja", "accessRights": "access_A", "subject.value": "topic_A"},
+            {"id": 7, "sets": 2222, "owner": contributor["id"], "email": contributor["email"], "publish_date": date_private, "publish_status": "1", "language": "ja", "accessRights": "access_A", "subject.value": "topic_A"},
+            {"id": 8, "sets": 2222, "owner": contributor["id"], "email": contributor["email"], "publish_date": date_public, "publish_status": "1", "language": "ja", "accessRights": "access_A", "subject.value": "topic_A"},
+            {"id": 9, "sets": 3333, "owner": contributor["id"], "email": contributor["email"], "publish_date": date_private, "publish_status": "0", "language": "ja", "accessRights": "access_A", "subject.value": "topic_A"},
+            {"id": 10, "sets": 3333, "owner": contributor["id"], "email": contributor["email"], "publish_date": date_public, "publish_status": "0", "language": "ja", "accessRights": "access_A", "subject.value": "topic_A"},
+            {"id": 11, "sets": 3333, "owner": contributor["id"], "email": contributor["email"], "publish_date": date_private, "publish_status": "1", "language": "ja", "accessRights": "access_A", "subject.value": "topic_A"},
+            {"id": 12, "sets": 3333, "owner": contributor["id"], "email": contributor["email"], "publish_date": date_public, "publish_status": "1", "language": "ja", "accessRights": "access_A", "subject.value": "topic_A"},
+            {"id": 13, "sets": 4444, "owner": contributor["id"], "email": contributor["email"], "publish_date": date_private, "publish_status": "0", "language": "ja", "accessRights": "access_A", "subject.value": "topic_A"},
+            {"id": 14, "sets": 4444, "owner": contributor["id"], "email": contributor["email"], "publish_date": date_public, "publish_status": "0", "language": "ja", "accessRights": "access_A", "subject.value": "topic_A"},
+            {"id": 15, "sets": 4444, "owner": contributor["id"], "email": contributor["email"], "publish_date": date_private, "publish_status": "1", "language": "ja", "accessRights": "access_A", "subject.value": "topic_A"},
+            {"id": 16, "sets": 4444, "owner": contributor["id"], "email": contributor["email"], "publish_date": date_public, "publish_status": "1", "language": "ja", "accessRights": "access_A", "subject.value": "topic_A"},
+            {"id": 17, "sets": 1111, "owner": contributor["id"], "email": contributor["email"], "publish_date": date_public, "publish_status": "0", "language": "en", "accessRights": "access_B", "subject.value": "topic_B"},
+            {"id": 18, "sets": 1111, "owner": contributor["id"], "email": contributor["email"], "publish_date": date_public, "publish_status": "0", "language": "en", "accessRights": "access_C", "subject.value": "topic_B"},
+            {"id": 19, "sets": 1111, "owner": contributor["id"], "email": contributor["email"], "publish_date": date_public, "publish_status": "0", "language": "en"},
+            {"id": 20, "sets": 1111, "owner": contributor["id"], "email": contributor["email"], "publish_date": date_public, "publish_status": "0", "language": "fr", "accessRights": "access_B", "description": "description_A"},
+            {"id": 21, "sets": 1111, "owner": contributor["id"], "email": contributor["email"], "publish_date": date_public, "publish_status": "0", "language": "fr", "accessRights": "access_C", "subject.value": "topic_B", "description": "description_A"},
+            {"id": 22, "sets": 1111, "owner": contributor["id"], "email": contributor["email"], "publish_date": date_public, "publish_status": "0", "language": "fr", "description": "description_A"},
+            {"id": 23, "sets": 1111, "owner": contributor["id"], "email": contributor["email"], "publish_date": date_public, "publish_status": "0", "accessRights": "access_B"},
+            {"id": 24, "sets": 1111, "owner": contributor["id"], "email": contributor["email"], "publish_date": date_public, "publish_status": "0", "accessRights": "access_C"},
+            {"id": 25, "sets": 1111, "owner": contributor["id"], "email": contributor["email"], "publish_date": date_public, "publish_status": "0"},
+        ]
+
+
+        for data in test_data_list:
+            record_data = {
+                "_oai": {
+                    "id": "oai:weko3.example.org:000000{:02d}".format(data["id"]),
+                    "sets": ["{}".format(data["sets"])],
+                },
+                "path": ["{}".format(data["sets"])],
+                "recid": "{}".format(data["id"]),
+                "pubdate": {
+                    "attribute_name": "PubDate",
+                    "attribute_value": data["publish_date"],
+                },
+                "_buckets": {"deposit": "3e99cfca-098b-42ed-b8a0-20ddd09b3e02"},
+                "_deposit": {
+                    "id": "{}".format(data["id"]),
+                    "pid": {"type": "depid", "value": "{}".format(data["id"]), "revision_id": 0},
+                    "owner": "{}".format(data["owner"]),
+                    "owners": [data["owner"]],
+                    "status": "draft",
+                    "created_by": data["owner"],
+                    "owners_ext": {
+                        "email": data["email"],
+                        "username": "",
+                        "displayname": "",
+                    },
+                },
+                "title": "item{:02d}".format(data["id"]),
+                "author_link": [],
+                "item_type_id": "1",
+                "publish_date": data["publish_date"],
+                "publish_status": data["publish_status"],
+                "weko_shared_id": -1,
+                "item_1617186331708": {
+                    "attribute_name": "Title",
+                    "attribute_value_mlt": [
+                        {
+                            "subitem_1551255647225": "タイトル{:02d}".format(data["id"]),
+                            "subitem_1551255648112": "ja",
+                        },
+                        {
+                            "subitem_1551255647225": "title{:02d}".format(data["id"]),
+                            "subitem_1551255648112": "en",
+                        },
+                    ],
+                },
+                "item_1617258105262": {
+                    "attribute_name": "Resource Type",
+                    "attribute_value_mlt": [
+                        {
+                            "resourceuri": "http://purl.org/coar/resource_type/c_5794",
+                            "resourcetype": "conference paper",
+                        }
+                    ],
+                },
+                "relation_version_is_last": True,
+            }
+            if "language" in data:
+                record_data["language"] = data["language"]
+            if "accessRights" in data:
+                record_data["accessRights"] = data["accessRights"]
+            if "subject.value" in data:
+                record_data["subject"] = [{"value": data["subject.value"]}]
+            if "description" in data:
+                record_data["description"] = [{"value" : data["description"]}]
+                
+
+            rec_uuid = uuid.uuid4()
+
+            indexer.upload_metadata(record_data, rec_uuid, 1, True)
+            results.append(rec_uuid)
+
+    sleep(3)
+    return {"indexer": indexer, "results": results}

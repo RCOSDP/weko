@@ -23,6 +23,7 @@ import copy
 import inspect
 import sys
 import uuid
+import orjson
 from collections import OrderedDict
 from datetime import datetime, timezone,date
 from typing import NoReturn, Union
@@ -33,7 +34,7 @@ from dictdiffer import dot_lookup
 from dictdiffer.merge import Merger, UnresolvedConflictsException
 from elasticsearch.exceptions import TransportError
 from elasticsearch.helpers import bulk
-from flask import abort, current_app, json, request, session
+from flask import abort, current_app, request, session
 from flask_security import current_user
 from invenio_db import db
 from invenio_deposit.api import Deposit, index, preserve
@@ -1308,7 +1309,7 @@ class WekoDeposit(Deposit):
                     data_str = datastore.get(cache_key)
                     if not index_obj.get('is_save_path'):
                         datastore.delete(cache_key)
-                    data = json.loads(data_str.decode('utf-8'))
+                    data = orjson.loads(data_str.decode('utf-8'))
         except BaseException:
             current_app.logger.error(
                 "Unexpected error: {}".format(sys.exc_info()))

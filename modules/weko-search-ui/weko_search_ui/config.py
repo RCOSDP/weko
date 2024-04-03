@@ -22,6 +22,7 @@
 
 import pickle
 
+from invenio_indexer.api import RecordIndexer
 from invenio_records_rest.config import RECORDS_REST_ENDPOINTS
 from invenio_records_rest.facets import terms_filter
 from invenio_records_rest.utils import allow_all
@@ -242,6 +243,23 @@ WEKO_SEARCH_REST_ENDPOINTS = dict(
             "application/json": ("weko_records.serializers" ":json_v1_search"),
         },
         index_route="/index/",
+        links_factory_imp="weko_search_ui.links:default_links_factory",
+        default_media_type="application/json",
+        max_result_window=10000,
+    ),
+    facet_condition=dict(
+        pid_type="recid",
+        pid_minter="recid",
+        pid_fetcher="recid",
+        search_class=RecordsSearch,
+        indexer_class=RecordIndexer,
+        search_index=SEARCH_UI_SEARCH_INDEX,
+        search_type="item-v1.0.0",
+        search_factory_imp="weko_search_ui.query.facet_condition_search_factory",
+        search_serializers={
+            "application/json": ("weko_records.serializers" ":json_v1_search"),
+        },
+        index_route="/facet-search/condition",
         links_factory_imp="weko_search_ui.links:default_links_factory",
         default_media_type="application/json",
         max_result_window=10000,

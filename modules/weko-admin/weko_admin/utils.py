@@ -21,7 +21,7 @@
 """Utilities for convert response json."""
 import copy
 import csv
-import json
+import orjson
 import math
 import os
 import zipfile
@@ -2194,11 +2194,11 @@ def store_facet_search_query_in_redis():
     has_permission_query, no_permission_query = create_facet_search_query()
     # Store query for has permission.
     key = get_query_key_by_permission(True)
-    value = json.dumps(has_permission_query)
+    value = orjson.dumps(has_permission_query).decode()
     reset_redis_cache(key, value)
     # Store query for no permission.
     key = get_query_key_by_permission(False)
-    value = json.dumps(no_permission_query)
+    value = orjson.dumps(no_permission_query).decode()
     reset_redis_cache(key, value)
 
 
@@ -2214,13 +2214,13 @@ def get_facet_search_query(has_permission=True):
     search_index = current_app.config['SEARCH_UI_SEARCH_INDEX']
     key = get_query_key_by_permission(has_permission)
     # Check query exists in redis.
-    query = json.loads(get_redis_cache(key) or '{}')
+    query = orjson.loads(get_redis_cache(key) or '{}')
     if not is_exists_key_or_empty_in_redis(key) \
             or query.get(search_index, {}).get('post_filters', {}) == {} \
             or query.get(search_index, {}).get('aggs', {}) == {}:
         store_facet_search_query_in_redis()
     # Get query on redis.
-    result = json.loads(get_redis_cache(key)) or {}
+    result = orjson.loads(get_redis_cache(key)) or {}
     # Update terms filter function for post filters.
     post_filters = result.get(search_index).get('post_filters')
     for k, v in post_filters.items():
@@ -2329,7 +2329,7 @@ def elasticsearch_reindex( is_db_to_es ):
     file_path = os.path.join(current_path, 'mappings', 'v6', 'weko', 'item-v1.0.0.json')
     with open(file_path,mode='r') as json_file:
         json_data = json_file.read()
-        base_index_definition = json.loads(json_data)
+        base_index_definition = orjson.loads(json_data)
 
     number_of_replicas = base_index_definition.get("settings").get("number_of_replicas")
     refresh_interval = base_index_definition.get("settings").get("refresh_interval")

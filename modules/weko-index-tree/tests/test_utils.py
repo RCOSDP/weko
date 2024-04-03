@@ -2,6 +2,7 @@ import copy
 import os
 
 from weko_index_tree.utils import (
+    default_isoformat_str,
     get_index_link_list,
     is_index_tree_updated,
     get_user_roles,
@@ -18,6 +19,9 @@ from weko_index_tree.utils import (
     check_doi_in_index_and_child_index,
     __get_redis_store,
     lock_all_child_index,
+    reduce_index_by_role_guest,
+    save_filtered_index_trees_to_redis,
+    save_filtered_index_trees_to_redis_guest,
     unlock_index,
     is_index_locked,
     validate_before_delete_index,
@@ -47,7 +51,7 @@ from invenio_accounts.testutils import login_user_via_session, client_authentica
 ######
 import json
 import pytest
-from mock import patch
+from mock import MagicMock, patch
 from datetime import date, datetime, timedelta
 from functools import wraps
 from operator import itemgetter
@@ -119,32 +123,335 @@ def test_cached_index_tree_json(i18n_app):
 
 
 # def reset_tree(tree, path=None, more_ids=None, ignore_more=False):
-# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_get_index_link_list -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
-def test_reset_tree(app, db, users):
-    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_reset_tree -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+def test_reset_tree(app, db, users ,indextree_sample):
+    with patch("weko_index_tree.utils.RedisConnection.connection" , return_value = MagicMock()):
+        with patch("flask_login.utils._get_user", return_value=users[3]['obj']): #sysadmin
+            with app.test_request_context(headers=[("Accept-Language", "en")]):
+                tree = []
+                reset_tree(tree)
+                assert tree==[]
+
+                tree = []
+                reset_tree(tree, ignore_more=True)
+                assert tree==[]
+
+                tree = []
+                reset_tree(tree, "10")
+                assert tree==[]
+
+                all_set = set(('Data Usage Report','public_parent_index','public_child0','public_child1_past_pubdate','public_child2_future_pubdate','public_child3_guest_not_authorized','public_child4_authenticated_user_not_authorized','public_child5_contributor_not_authorized','private_child_index0','private_child_index1_past_pubdate','private_child_index2_future_pubdate','private_child_index3_guest_not_authorized','private_child_index4_authenticated_user_not_authorized','private_child_index5_contributor_not_authorized','public_child_of_private_parent','private_child_of_private_parent','public_parent_index_more_func','public_child_of_more_func_parent1','public_child_of_more_func_parent2','public_group_authorized_index','public_group_unauthorized_index'))
+                with patch("weko_index_tree.utils.get_user_roles" ,return_value=(True ,[3])):
+                    with patch("weko_index_tree.utils.get_user_groups" ,return_value=[]):
+                        
+                        admin_default = {'public_parent_index'
+                                    ,'public_child0'
+                                    ,'public_child1_past_pubdate'
+                                    ,'public_child2_future_pubdate'
+                                    ,'public_child3_guest_not_authorized'
+                                    ,'public_child4_authenticated_user_not_authorized'
+                                    ,'public_child5_contributor_not_authorized'
+                                    ,'private_child_index0'
+                                    ,'private_child_index1_past_pubdate'
+                                    ,'private_child_index2_future_pubdate'
+                                    ,'private_child_index3_guest_not_authorized'
+                                    ,'private_child_index4_authenticated_user_not_authorized'
+                                    ,'private_child_index5_contributor_not_authorized'
+                                    ,'public_child_of_private_parent'
+                                    ,'private_child_of_private_parent'
+                                    ,'public_parent_index_more_func'
+                                    ,'public_child_of_more_func_parent1'
+                                    ,'public_group_authorized_index'
+                                    ,'public_group_unauthorized_index'
+                                    ,"Data Usage Report"
+                                    ,None
+                                    }
+                        #15
+                        tree = copy.deepcopy(indextree_sample)
+                        reset_tree(tree, pid = "0")
+                        assert __get_tree_data(tree) == admin_default
+                        #24
+                        tree = copy.deepcopy(indextree_sample)
+                        reset_tree(tree, path= [1710232204571] , pid = "0")
+                        assert __get_tree_data(tree) == all_set
+                        # 27
+                        tree = copy.deepcopy(indextree_sample)
+                        reset_tree(tree, path= [] , pid = "0")
+                        assert __get_tree_data(tree) == all_set
+                        admin_more_ids={'public_parent_index',
+                                        'public_child0',
+                                        'public_child1_past_pubdate',
+                                        'public_child2_future_pubdate',
+                                        'public_child3_guest_not_authorized',
+                                        'public_child4_authenticated_user_not_authorized',
+                                        'public_child5_contributor_not_authorized',
+                                        'private_child_index0',
+                                        'private_child_index1_past_pubdate',
+                                        'private_child_index2_future_pubdate',
+                                        'private_child_index3_guest_not_authorized',
+                                        'private_child_index4_authenticated_user_not_authorized',
+                                        'private_child_index5_contributor_not_authorized',
+                                        'public_child_of_private_parent',
+                                        'private_child_of_private_parent',
+                                        'public_parent_index_more_func',
+                                        'public_child_of_more_func_parent1',
+                                        'public_child_of_more_func_parent2',
+                                        'public_group_authorized_index',
+                                        'public_group_unauthorized_index',
+                                        "Data Usage Report"}
+                        #18
+                        tree = copy.deepcopy(indextree_sample)
+                        reset_tree(tree, pid = "0", more_ids=["1710236116557"])
+                        assert __get_tree_data(tree) == admin_more_ids
+                        #21
+                        tree = copy.deepcopy(indextree_sample)
+                        reset_tree(tree, pid = "0", ignore_more=True)
+                        assert __get_tree_data(tree) == all_set
+                    
+
+        with patch("flask_login.utils._get_user", return_value=users[0]['obj']): #noroleuser
+            with app.test_request_context(headers=[("Accept-Language", "en")]):
+                tree = []
+                reset_tree(tree, ignore_more=True)
+                assert tree==[]
+
+                tree = []
+                reset_tree(tree, ["10"], more_ids=["10"])
+                assert tree==[]
+
+                nouser_set=set(('public_parent_index'
+                                ,'public_child0'
+                                ,'public_child1_past_pubdate'
+                                ,'public_child3_guest_not_authorized'
+                                ,'public_child5_contributor_not_authorized'
+                                ,'public_parent_index_more_func'
+                                ,'public_child_of_more_func_parent1'
+                                ,'public_group_authorized_index'
+                                ,'public_group_unauthorized_index'
+                                ,None))
+                with patch("weko_index_tree.utils.get_user_roles" ,return_value=(False ,None)):
+                    with patch("weko_index_tree.utils.get_user_groups" ,return_value=[]):
+                        #16
+                        tree = copy.deepcopy(indextree_sample)
+                        reset_tree(tree, pid = "0")
+                        assert __get_tree_data(tree) == nouser_set
+                        #25
+                        nouser_path_set={'public_group_authorized_index', 'private_child_index4_authenticated_user_not_authorized', 'public_child_of_more_func_parent1', 'private_child_index2_future_pubdate', 'private_child_index3_guest_not_authorized', 'public_parent_index', 'private_child_index0', 'public_child_of_more_func_parent2', 'public_child1_past_pubdate', 'private_child_index5_contributor_not_authorized', 'public_child2_future_pubdate', 'public_group_unauthorized_index', 'public_parent_index_more_func', 'public_child_of_private_parent', 'private_child_of_private_parent', 'public_child0', 'private_child_index1_past_pubdate'}
+                        tree = copy.deepcopy(indextree_sample)
+                        reset_tree(tree, path= [1710232204571] , pid = "0")
+                        assert __get_tree_data(tree) == nouser_path_set
+                        #28
+                        tree = copy.deepcopy(indextree_sample)
+                        reset_tree(tree, path= [] , pid = "0")
+                        assert __get_tree_data(tree) == nouser_path_set
+                        #19
+                        nouser_more_ids_set={'public_parent_index',
+                                            'public_child0',
+                                            'public_child1_past_pubdate',
+                                            'public_child3_guest_not_authorized',
+                                            'public_child5_contributor_not_authorized',
+                                            'public_parent_index_more_func',
+                                            'public_child_of_more_func_parent1',
+                                            'public_child_of_more_func_parent2',
+                                            'public_group_authorized_index',
+                                            'public_group_unauthorized_index'}
+                        
+                        
+                        tree = copy.deepcopy(indextree_sample)
+                        reset_tree(tree, pid = "0", more_ids=["1710236116557"])
+                        assert __get_tree_data(tree) == nouser_more_ids_set
+                        #22
+                        tree = copy.deepcopy(indextree_sample)
+                        reset_tree(tree, pid = "0", ignore_more=True)
+                        assert __get_tree_data(tree) == nouser_more_ids_set
+                  
+                with patch("weko_index_tree.utils.orjson.loads", side_effect=KeyError("test_error")):
+                    with patch("weko_index_tree.utils.get_user_roles" ,return_value=(False ,[])):
+                        #30
+                        key_error_set = {'public_group_unauthorized_index',
+                                        'public_child0',
+                                        'public_child3_guest_not_authorized',
+                                        'public_child1_past_pubdate',
+                                        None,
+                                        'public_child_of_more_func_parent1',
+                                        'public_parent_index_more_func',
+                                        'public_group_authorized_index',
+                                        'public_child5_contributor_not_authorized',
+                                        'public_parent_index'}
+                        tree = copy.deepcopy(indextree_sample)
+                        reset_tree(tree, pid = "0")
+                        assert __get_tree_data(tree) == key_error_set
+                with patch("weko_index_tree.utils.orjson.loads", side_effect=Exception("test_error")):
+                    with patch("weko_index_tree.utils.get_user_roles" ,return_value=(False ,[])):
+                        #31
+                        tree = copy.deepcopy(indextree_sample)
+                        reset_tree(tree, pid = "0")
+                        assert __get_tree_data(tree) == {'public_parent_index'
+                                                            ,None
+                                                            ,'public_child0'
+                                                            ,'public_child1_past_pubdate'
+                                                            ,'public_child3_guest_not_authorized'
+                                                            ,'public_child5_contributor_not_authorized'
+                                                            ,'public_parent_index_more_func'
+                                                            ,'public_child_of_more_func_parent1'
+                                                            ,'public_group_authorized_index'
+                                                            ,'public_group_unauthorized_index'}
+            #34
+            with app.test_request_context(headers=[("Accept-Language", "ja")]):
+                tree = copy.deepcopy(indextree_sample)
+                reset_tree(tree,  pid = "0")
+                assert __get_tree_data(tree) == {'public_group_authorized_index', 'public_group_unauthorized_index', None, 'public_child_of_more_func_parent1', 'public_child0', 'public_child5_contributor_not_authorized', 'public_child1_past_pubdate', 'public_parent_index_more_func', 'public_child3_guest_not_authorized', 'public_parent_index'}
+        
+        # non login user
         with app.test_request_context(headers=[("Accept-Language", "en")]):
             tree = []
-            reset_tree(tree)
+            reset_tree(tree, ["10"])
             assert tree==[]
 
-            tree = []
-            reset_tree(tree, ignore_more=True)
-            assert tree==[]
+            with patch("weko_index_tree.utils.get_user_roles" ,return_value=(False ,[])):
+                with patch("weko_index_tree.utils.get_user_groups" ,return_value=[]):
+                    non_login_user_set = {'public_parent_index',
+                                        'public_child0',
+                                        'public_child1_past_pubdate',
+                                        'public_child4_authenticated_user_not_authorized',
+                                        'public_child5_contributor_not_authorized',
+                                        'public_parent_index_more_func',
+                                        'public_child_of_more_func_parent1',
+                                        'public_group_authorized_index',
+                                        'public_group_unauthorized_index',
+                                        None}
+                    #17
+                    tree = copy.deepcopy(indextree_sample)
+                    reset_tree(tree, pid = "0")
+                    assert __get_tree_data(tree) == non_login_user_set
+                    #26
+                    path_set={'private_child_index5_contributor_not_authorized',
+                            'public_child0',
+                            'public_group_unauthorized_index',
+                            'public_parent_index_more_func',
+                            'public_child_of_more_func_parent1',
+                            'public_child5_contributor_not_authorized',
+                            'public_child3_guest_not_authorized',
+                            'public_child_of_more_func_parent2',
+                            'private_child_index0',
+                            'private_child_of_private_parent',
+                            'public_parent_index',
+                            'private_child_index1_past_pubdate',
+                            'public_child2_future_pubdate',
+                            'private_child_index2_future_pubdate',
+                            'Data Usage Report',
+                            'public_child_of_private_parent',
+                            'private_child_index4_authenticated_user_not_authorized',
+                            'public_child4_authenticated_user_not_authorized',
+                            'public_group_authorized_index',
+                            'public_child1_past_pubdate'}
+                    tree = copy.deepcopy(indextree_sample)
+                    reset_tree(tree, path= [1710232204571] , pid = "0")
+                    assert __get_tree_data(tree) == path_set
+                    #29
+                    non_login_user_set = {'public_parent_index_more_func',
+                                            'public_child5_contributor_not_authorized',
+                                            'public_child_of_private_parent',
+                                            'private_child_index4_authenticated_user_not_authorized',
+                                            'Data Usage Report',
+                                            'private_child_index5_contributor_not_authorized',
+                                            'public_child0',
+                                            'public_parent_index',
+                                            'private_child_of_private_parent',
+                                            'public_group_unauthorized_index',
+                                            'public_child1_past_pubdate',
+                                            'public_child4_authenticated_user_not_authorized',
+                                            'public_child_of_more_func_parent2',
+                                            'public_child2_future_pubdate',
+                                            'private_child_index2_future_pubdate',
+                                            'public_child3_guest_not_authorized',
+                                            'private_child_index1_past_pubdate',
+                                            'private_child_index0',
+                                            'public_group_authorized_index',
+                                            'public_child_of_more_func_parent1'}
+                    tree = copy.deepcopy(indextree_sample)
+                    reset_tree(tree, path= [] , pid = "0")
+                    assert __get_tree_data(tree) == non_login_user_set
+                    #20
+                    non_login_user_more_ids_set = {'public_parent_index',
+                                                    'public_child0',
+                                                    'public_child1_past_pubdate',
+                                                    'public_child4_authenticated_user_not_authorized',
+                                                    'public_child5_contributor_not_authorized',
+                                                    'public_parent_index_more_func',
+                                                    'public_child_of_more_func_parent1',
+                                                    'public_child_of_more_func_parent2',
+                                                    'public_group_authorized_index',
+                                                    'public_group_unauthorized_index'}
+                    tree = copy.deepcopy(indextree_sample)
+                    reset_tree(tree, pid = "0", more_ids=["1710236116557"])
+                    assert __get_tree_data(tree) == non_login_user_more_ids_set
+                    #23
+                    non_login_user_ignore_more={'public_parent_index',
+                                            'public_child0',
+                                            'public_child1_past_pubdate',
+                                            'public_child4_authenticated_user_not_authorized',
+                                            'public_child5_contributor_not_authorized',
+                                            'public_parent_index_more_func',
+                                            'public_child_of_more_func_parent1',
+                                            'public_child_of_more_func_parent2',
+                                            'public_group_authorized_index',
+                                            'public_group_unauthorized_index'}
+                    tree = copy.deepcopy(indextree_sample)
+                    reset_tree(tree, pid = "0", ignore_more=True)
+                    assert __get_tree_data(tree) == non_login_user_ignore_more
+                
 
-            tree = []
-            reset_tree(tree, "10")
-            assert tree==[]
+            with patch("weko_index_tree.utils.orjson.loads", side_effect=KeyError("test_error")):
+                with patch("weko_index_tree.utils.get_user_roles" ,return_value=(False ,[])):
+                    #32
+                    tree = copy.deepcopy(indextree_sample)
+                    reset_tree(tree, pid = "0")
+                    non_login_user_set = {'public_parent_index',
+                                        'public_child0',
+                                        'public_child1_past_pubdate',
+                                        'public_child4_authenticated_user_not_authorized',
+                                        'public_child5_contributor_not_authorized',
+                                        'public_parent_index_more_func',
+                                        'public_child_of_more_func_parent1',
+                                        'public_group_authorized_index',
+                                        'public_group_unauthorized_index',
+                                        None}
+                    assert __get_tree_data(tree) == non_login_user_set
 
-    with patch("flask_login.utils._get_user", return_value=users[0]['obj']):
-        with app.test_request_context(headers=[("Accept-Language", "en")]):
-            tree = []
-            reset_tree(tree, ignore_more=True)
-            assert tree==[]
+            with patch("weko_index_tree.utils.orjson.loads", side_effect=Exception("test_error")):
+                with patch("weko_index_tree.utils.get_user_roles" ,return_value=(False ,[])):
+                    #33
+                    tree = copy.deepcopy(indextree_sample)
+                    reset_tree(tree, pid = "0")
+                    assert __get_tree_data(tree) == {None,
+                                                    'public_parent_index',
+                                                    'public_child0',
+                                                    'public_child1_past_pubdate',
+                                                    'public_child4_authenticated_user_not_authorized',
+                                                    'public_child5_contributor_not_authorized',
+                                                    'public_parent_index_more_func',
+                                                    'public_child_of_more_func_parent1',
+                                                    'public_group_authorized_index',
+                                                    'public_group_unauthorized_index'}
+        # non login user
+        #35
+        with app.test_request_context(headers=[("Accept-Language", "ja")]):
+            tree = copy.deepcopy(indextree_sample)
+            reset_tree(tree,  pid = "0")
+            assert __get_tree_data(tree) == {'public_child_of_more_func_parent1', 'public_parent_index', None, 'public_child0', 'public_child4_authenticated_user_not_authorized', 'public_group_unauthorized_index', 'public_parent_index_more_func', 'public_child5_contributor_not_authorized', 'public_child1_past_pubdate', 'public_group_authorized_index'}
 
-            tree = []
-            reset_tree(tree, ["10"], more_ids=["10"])
-            assert tree==[]
 
+def __get_tree_data(tree):
+    if tree is None:
+        return {None}
+    ret_val = set()
+    if len(tree) > 0:
+        for tr in tree:
+            ret_val.add(tr.get("name"))
+            ret_val.update(__get_tree_data(tr.get("children")))
+
+    return ret_val
 
 #*** def get_tree_json(index_list, root_id):
 # def test_get_tree_json(i18n_app, db_records, indices, esindex):
@@ -308,6 +615,97 @@ def test_reduce_index_by_role(app, db, users):
             new_tree = copy.deepcopy(tree)
             reduce_index_by_role(new_tree, user_roles, [], False, ["10", "12"])
             assert new_tree==[{'id': '10', 'children': [{'id': '11', 'children': [], 'settings': [], 'disabled': False}, {'id': '13', 'children': [], 'settings': [], 'disabled': False}], 'settings': {'checked': True}, 'disabled': False}]
+
+# def reduce_index_by_role
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_reduce_index_by_role -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+def test_reduce_index_by_role_guest(app, db, users):
+    """with db.session.begin_nested():
+        db.session.add(_base_index(100, 0, 1))
+        db.session.add(_base_index(110, 100, 1, public_date=datetime(2022, 1, 1), group="group_test1", browsing_role=None, contribute_role="1,2,3,4,-99"))
+    db.session.commit()"""
+
+    g1 = Group.create(name="group_test1").add_member(users[3]['obj'])
+    db.session.add(g1)
+    groups = [v for k,v in Group.get_group_list().items()]
+
+    admin_roles = (True, ["1"])
+    user_roles = (False, ["-98"])
+    #roles.append('contribute_role')
+    assert not reduce_index_by_role_guest({}, admin_roles, groups)
+    assert not reduce_index_by_role_guest([[]], admin_roles, groups)
+
+    # with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+    with app.test_request_context(headers=[("Accept-Language", "en")]):
+        tree = [{
+            "id": "10",
+            "contribute_role": "1,2,3,4,-98,-99",
+            "public_state": True,
+            "public_date": datetime(2022, 1, 1, 0, 0),
+            "browsing_role": "3,-98,-99",
+            "contribute_group": "",
+            "browsing_group": "",
+            "children": [
+                {
+                    "id": "11",
+                    "contribute_role": "1,2,3,4,-98,-99",
+                    "public_state": True,
+                    "public_date": datetime(2022, 1, 1, 0, 0),
+                    "browsing_role": "3,-98,-99",
+                    "contribute_group": "group_test1",
+                    "browsing_group": "group_test1",
+                    "children": [],
+                    "settings": []
+                },
+                {
+                    "id": "12",
+                    "contribute_role": "",
+                    "public_state": True,
+                    "public_date": "2022-01-01T00:00:00",
+                    "browsing_role": "",
+                    "contribute_group": "group_test1",
+                    "browsing_group": "group_test1",
+                    "children": [],
+                    "settings": []
+                },
+                {
+                    "id": "13",
+                    "contribute_role": "1,2,3,4,-98,-99",
+                    "public_state": True,
+                    "public_date": datetime(datetime.today().year + 1, 1, 1, 0, 0),
+                    "browsing_role": "3,-98,-99",
+                    "contribute_group": "group_test1",
+                    "browsing_group": "group_test1",
+                    "children": [],
+                    "settings": []
+                }
+            ],
+            "settings": {
+                "checked": False
+            }
+        }]
+        new_tree = copy.deepcopy(tree)
+        reduce_index_by_role_guest(new_tree, admin_roles, groups, True)
+        assert new_tree==[{'id': '10', 'children': [{'id': '11', 'children': [], 'settings': []}, {'id': '12', 'children': [], 'settings': []}], 'settings': {'checked': False}}]
+
+        new_tree = copy.deepcopy(tree)
+        reduce_index_by_role_guest(new_tree, user_roles, groups, True)
+        assert new_tree==[{'id': '10', 'children': [{'id': '11', 'children': [], 'settings': []}, {'id': '12', 'children': [], 'settings': []}], 'settings': {'checked': False}}]
+
+        new_tree = copy.deepcopy(tree)
+        reduce_index_by_role_guest(new_tree, user_roles, [], True)
+        assert new_tree==[{'id': '10', 'children': [{'id': '11', 'children': [], 'settings': []}], 'settings': {'checked': False}}]
+
+        new_tree = copy.deepcopy(tree)
+        reduce_index_by_role_guest(new_tree, admin_roles, groups, False)
+        assert new_tree==[{'id': '10', 'children': [{'id': '11', 'children': [], 'settings': [], 'disabled': False}, {'id': '12', 'children': [], 'settings': [], 'disabled': False}, {'id': '13', 'children': [], 'settings': [], 'disabled': False}], 'settings': {'checked': False}, 'disabled': False}]
+
+        new_tree = copy.deepcopy(tree)
+        reduce_index_by_role_guest(new_tree, user_roles, groups, False)
+        assert new_tree==[{'id': '10', 'children': [{'id': '11', 'children': [], 'settings': [], 'disabled': False}, {'id': '12', 'children': [], 'settings': [], 'disabled': False}, {'id': '13', 'children': [], 'settings': [], 'disabled': False}], 'settings': {'checked': False}, 'disabled': False}]
+
+        new_tree = copy.deepcopy(tree)
+        reduce_index_by_role_guest(new_tree, user_roles, [], False, ["10", "12"])
+        assert new_tree==[{'id': '10', 'children': [{'id': '11', 'children': [], 'settings': [], 'disabled': False}, {'id': '13', 'children': [], 'settings': [], 'disabled': False}], 'settings': {'checked': True}, 'disabled': False}]
 
 
 #+++ def get_index_id_list(indexes, id_list=None):
@@ -633,18 +1031,67 @@ def test_get_editing_items_in_index(app):
 
 # def save_index_trees_to_redis(tree):
 # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_save_index_trees_to_redis -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
-def test_save_index_trees_to_redis(app, redis_connect):
+def test_save_index_trees_to_redis(app, redis_connect ,indextree_sample):
     tree = [{"id": "1"}]
     os.environ['INVENIO_WEB_HOST_NAME'] = "test"
     with app.test_request_context(headers=[("Accept-Language", "en")]):
         assert not save_index_trees_to_redis(tree)
+        
+        mock = MagicMock()
+        with patch("weko_index_tree.utils.orjson.dumps", return_value=str(indextree_sample).encode()):
+            with patch("weko_index_tree.utils.__get_redis_store", return_value=mock):
+                save_index_trees_to_redis(indextree_sample)
+        mock.put.assert_called_once_with('index_tree_view_test_en',str(indextree_sample).encode())
+
+        with patch("weko_index_tree.utils.orjson.dumps", side_effect=ConnectionError):
+            save_index_trees_to_redis(indextree_sample)
+
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_save_filtered_index_trees_to_redis -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+def test_save_filtered_index_trees_to_redis(app,users,indextree_sample):
+    tree = [{"id": "1"}]
+    os.environ['INVENIO_WEB_HOST_NAME'] = "test"
+    mock = MagicMock()
+    with app.test_request_context(headers=[("Accept-Language", "en")]):
+        with patch("weko_index_tree.utils.__get_redis_store", return_value=mock):
+            assert not save_filtered_index_trees_to_redis(tree,  "303")
+            with patch("flask_login.utils._get_user", return_value=users[3]['obj']): #sysadmin
+                
+                    
+                with patch("weko_index_tree.utils.orjson.dumps", return_value=str(indextree_sample).encode()):
+                    save_filtered_index_trees_to_redis(indextree_sample, "303")
+                    mock.put.assert_called_once_with("index_tree_by_role_test_en_5_303",str(indextree_sample).encode() ,10)
+
+                with patch("weko_index_tree.utils.orjson.dumps", side_effect=ConnectionError):
+                    save_filtered_index_trees_to_redis(indextree_sample, "303")
+
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_save_filtered_index_trees_to_redis_guest -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+def test_save_filtered_index_trees_to_redis_guest(app,indextree_sample):
+    tree = [{"id": "1"}]
+    os.environ['INVENIO_WEB_HOST_NAME'] = "test"
+    with app.test_request_context(headers=[("Accept-Language", "en")]):
+        assert not save_filtered_index_trees_to_redis_guest(tree , "303")
+        
+        mock = MagicMock()
+        with patch("weko_index_tree.utils.orjson.dumps", return_value=str(indextree_sample).encode()):
+            with patch("weko_index_tree.utils.__get_redis_store", return_value=mock):
+                save_filtered_index_trees_to_redis_guest(indextree_sample, "303")
+        mock.put.assert_called_once_with("index_tree_by_role_test_en_-99_303",str(indextree_sample).encode())
+
+        with patch("weko_index_tree.utils.orjson.dumps", side_effect=ConnectionError):
+            save_filtered_index_trees_to_redis_guest(indextree_sample, "303")
+
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_default_isoformat_str -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+def test_default_isoformat_str():
+    dt = datetime.now()
+    assert dt.isoformat() == default_isoformat_str(dt)
+    assert "0" == default_isoformat_str(0)
 
 
 # def str_to_datetime(str_dt, format):
 # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_str_to_datetime -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
 def test_str_to_datetime():
-    date_str = "2022-01-01"
+    date_str = datetime(2022, 1, 1).isoformat()
     date_format1 = "%Y-%m-%d"
     date_format2 = "%Y-%m-%dT%H:%M:%S"
-    assert str_to_datetime(date_str, date_format1)==datetime(2022, 1, 1)
-    assert str_to_datetime(date_str, date_format2)==None
+    assert str_to_datetime(date_str, date_format1)==None
+    assert str_to_datetime(date_str, date_format2)==datetime(2022, 1, 1)

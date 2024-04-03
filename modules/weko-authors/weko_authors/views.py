@@ -21,8 +21,9 @@
 """Views for weko-authors."""
 
 import re
+import orjson
 
-from flask import Blueprint, current_app, json, jsonify, make_response, request
+from flask import Blueprint, current_app, jsonify, make_response, request
 from flask_babelex import gettext as _
 from flask_login import login_required
 from invenio_db import db
@@ -83,7 +84,7 @@ def create():
     author_data = dict()
 
     author_data["id"] = new_id
-    author_data["json"] = json.dumps(data)
+    author_data["json"] = orjson.dumps(data).decode()
 
     with session.begin_nested():
         author = Authors(**author_data)
@@ -108,20 +109,20 @@ def update_author():
     indexer.client.update(
         index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
         doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
-        id=json.loads(json.dumps(data))["id"],
+        id=orjson.loads(orjson.dumps(data))["id"],
         body=body
     )
 
     with db.session.begin_nested():
         author_data = Authors.query.filter_by(
-            id=json.loads(json.dumps(data))["pk_id"]).one()
-        author_data.json = json.dumps(data)
+            id=orjson.loads(orjson.dumps(data))["pk_id"]).one()
+        author_data.json = orjson.dumps(data).decode()
         db.session.merge(author_data)
     db.session.commit()
 
     from weko_deposit.tasks import update_items_by_authorInfo
     update_items_by_authorInfo.delay(
-        [json.loads(json.dumps(data))["pk_id"]], data)
+        [orjson.loads(orjson.dumps(data))["pk_id"]], data)
 
     return jsonify(msg=_('Success'))
 
@@ -144,15 +145,15 @@ def delete_author():
     try:
         with db.session.begin_nested():
             author_data = Authors.query.filter_by(
-                id=json.loads(json.dumps(data))["pk_id"]).one()
+                id=orjson.loads(orjson.dumps(data))["pk_id"]).one()
             author_data.is_deleted = True
-            json_data = json.loads(author_data.json)
+            json_data = orjson.loads(author_data.json)
             json_data['is_deleted'] = 'true'
-            author_data.json = json.dumps(json_data)
+            author_data.json = orjson.dumps(json_data).decode()
             db.session.merge(author_data)
 
             RecordIndexer().client.update(
-                id=json.loads(json.dumps(data))["Id"],
+                id=orjson.loads(orjson.dumps(data))["Id"],
                 index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
                 doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
                 body={'doc': {'is_deleted': 'true'}}
@@ -244,11 +245,11 @@ def get():
         author_id_info = es_hit['_source']['authorIdInfo']
         if author_id_info:
             author_id = author_id_info[0]['authorId']
-            temp_str = json.dumps(query_item).replace(
+            temp_str = orjson.dumps(query_item).decode().replace(
                 "@author_id", author_id)
             result_itemCnt = indexer.client.search(
                 index=current_app.config['SEARCH_UI_SEARCH_INDEX'],
-                body=json.loads(temp_str)
+                body=orjson.loads(temp_str)
             )
             if result_itemCnt \
                     and result_itemCnt['hits'] \
@@ -293,7 +294,7 @@ def getById():
         doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
         body=body
     )
-    return json.dumps(result)
+    return orjson.dumps(result).decode()
 
 
 @blueprint_api.route("/input", methods=['POST'])
@@ -430,7 +431,7 @@ def mapping():
         'author_affiliation')
     current_app.logger.debug([last])
 
-    return json.dumps([last])
+    return orjson.dumps([last]).decode()
 
 
 @blueprint_api.route("/gather", methods=['POST'])
@@ -472,8 +473,8 @@ def gatherById():
 
     indexer = RecordIndexer()
     for t in gatherFrom:
-        q = json.dumps(update_author_q).replace("@id", t)
-        q = json.loads(q)
+        q = orjson.dumps(update_author_q).decode().replace("@id", t)
+        q = orjson.loads(q)
         res = indexer.client.search(
             index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
             body=q
@@ -498,8 +499,8 @@ def gatherById():
             }
         }
     }
-    q = json.dumps(target_author_q).replace("@id", gatherTo)
-    q = json.loads(q)
+    q = orjson.dumps(target_author_q).decode().replace("@id", gatherTo)
+    q = orjson.loads(q)
     res = indexer.client.search(
         index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
         body=q

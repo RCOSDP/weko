@@ -8,7 +8,7 @@
 
 """Admin model views for records."""
 
-import json
+import orjson
 
 from flask import abort, current_app, flash, jsonify, redirect, url_for
 from flask_admin import expose
@@ -68,7 +68,7 @@ class RecordMetadataModelView(ModelView):
     column_formatters = dict(
         version_id=lambda v, c, m, p: m.version_id - 1,
         json=lambda v, c, m, p: Markup("<pre>{0}</pre>").format(
-            json.dumps(m.json, indent=2, sort_keys=True))
+            orjson.dumps(m.json, option=orjson.OPT_INDENT_2 | orjson.OPT_SORT_KEYS).decode())
     )
     column_filters = ('created', 'updated', )
     column_default_sort = ('updated', True)

@@ -27,6 +27,7 @@
 from __future__ import absolute_import, print_function
 
 import json
+import orjson
 from collections import OrderedDict
 
 from flask import current_app, render_template
@@ -42,7 +43,7 @@ def render(file):
         encoding = detect_encoding(fp, default='utf-8')
         file_content = fp.read().decode(encoding)
         json_data = json.loads(file_content, object_pairs_hook=OrderedDict)
-        return json.dumps(json_data, indent=4, separators=(',', ': '))
+        return json.dumps(json_data, indent=4, separators=(',', ': '), ensure_ascii=False)
 
 
 def validate_json(file):
@@ -54,7 +55,7 @@ def validate_json(file):
 
     with file.open() as fp:
         try:
-            json.loads(fp.read().decode('utf-8'))
+            orjson.loads(fp.read().decode('utf-8'))
             return True
         except BaseException:
             return False

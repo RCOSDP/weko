@@ -8,7 +8,7 @@
 
 """Factory for creating a blueprint for IIIF Presentatin layer."""
 
-import json
+import orjson
 from functools import partial
 
 from flask import Blueprint, abort, current_app, redirect, url_for
@@ -167,7 +167,7 @@ def manifest_view(
         response.status_code = 204
     else:
         response = current_app.response_class(
-            json.dumps(data), mimetype='application/json'
+            orjson.dumps(data).decode(), mimetype='application/json'
         )
 
     return response

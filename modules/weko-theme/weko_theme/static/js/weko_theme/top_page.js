@@ -54,22 +54,24 @@ require([
 
             // 詳細展開 値入力残
             if (btn) {
-                if (btn == 'detail-search') {
-                    if (IsParamKey($(this).attr('id')) || IsRec) {
+                // パフォーマンス改善改修による影響回避
+                // if (btn == 'detail-search') {
+                //     if (IsParamKey($(this).attr('id')) || IsRec) {
 
-                        if (input && input !== '') {
-                            //type is text
-                            $(this).val(input);
-                            if (!$('#search_detail').hasClass('expanded')) {
-                                $('#top-search-btn').addClass('hidden');
-                                $('#search_simple').removeClass('input-group');
-                                $('#search_detail_metadata').collapse('show');
-                            } else {
-                                $('#search_detail_metadata').collapse('hide');
-                            }
-                        }
-                    }
-                } else if (btn == 'simple-search' && sessionStorage.getItem('q', false)) {
+                //         if (input && input !== '') {
+                //             //type is text
+                //             $(this).val(input);
+                //             if (!$('#search_detail').hasClass('expanded')) {
+                //                 $('#top-search-btn').addClass('hidden');
+                //                 $('#search_simple').removeClass('input-group');
+                //                 $('#search_detail_metadata').collapse('show');
+                //             } else {
+                //                 $('#search_detail_metadata').collapse('hide');
+                //             }
+                //         }
+                //     }
+                // }
+                if (btn == 'simple-search' && sessionStorage.getItem('q', false)) {
                     $('#search_detail_metadata').collapse('hide');
                 }
             } else {
@@ -91,21 +93,23 @@ require([
 
             // 詳細展開 値入力残
             if (btn) {
-                if (btn == 'detail-search') {
-                    if (true || IsRec) {
-                        if (input && input !== '') {
-                            //type is checkbox
-                            $(this).attr('checked', true);
-                            if (!$('#search_detail').hasClass('expanded')) {
-                                $('#top-search-btn').addClass('hidden');
-                                $('#search_simple').removeClass('input-group');
-                                $('#search_detail_metadata').collapse('show');
-                            } else {
-                                $('#search_detail_metadata').collapse('hide');
-                            }
-                        }
-                    }
-                } else if (btn == 'simple-search' && sessionStorage.getItem('q', false)) {
+                // パフォーマンス改善改修による影響回避
+                // if (btn == 'detail-search') {
+                //     if (true || IsRec) {
+                //         if (input && input !== '') {
+                //             //type is checkbox
+                //             $(this).attr('checked', true);
+                //             if (!$('#search_detail').hasClass('expanded')) {
+                //                 $('#top-search-btn').addClass('hidden');
+                //                 $('#search_simple').removeClass('input-group');
+                //                 $('#search_detail_metadata').collapse('show');
+                //             } else {
+                //                 $('#search_detail_metadata').collapse('hide');
+                //             }
+                //         }
+                //     }
+                // }
+                if (btn == 'simple-search' && sessionStorage.getItem('q', false)) {
                     $('#search_detail_metadata').collapse('hide');
                 }
             } else {
@@ -214,12 +218,16 @@ require([
     function getFacetParameter() {
         let result = "";
         let params = window.location.search.substring(1).split('&');
-        const conds = ['page', 'size', 'sort', 'timestamp', 'search_type', 'q', 'title', 'creator', 'date_range1_from', 'date_range1_to','time'];
+        // 既に稼働しており、ユーザーからは簡易、詳細検索は併用できると認識されている可能性があるため、暫定対応を行う。
+        // const conds = ['page', 'size', 'sort', 'timestamp', 'search_type', 'q', 'title', 'creator', 'date_range1_from', 'date_range1_to','time'];
+        const conds = ['page', 'size', 'sort', 'timestamp', 'search_type', 'q','time'];
         for (let i = 0; i < params.length; i++) {
             var keyValue = decodeURIComponent(params[i]).split('=');
             var key = keyValue[0];
             var value = keyValue[1];
-            if(key && !conds.includes(key) && !key.startsWith("text")) {
+            //  暫定対応
+            // if(key && !conds.includes(key) && !key.startsWith("text")) {
+            if(key && !conds.includes(key)) {
                 result += "&" + encodeURIComponent(key) + "=" + encodeURIComponent(value);
             }
         }
@@ -277,7 +285,7 @@ require([
 
         // 詳細検索からページ遷移した場合、詳細検索のアコーディオンを開いた状態にして、ボタンのテキストを「閉じる」にセット
         var urlParams = new URLSearchParams(window.location.search);
-        var isDetailSearch = Array.from(urlParams.keys()).length > 6  // 6は簡易検索の際のクエリの数
+        var isDetailSearch = Array.from(urlParams.keys()).length > 6 // 6は簡易検索の際のクエリの数。urlに詳細検索の使用状況を管理するパラメータを作るなど、別の方法を考えるべき。
         if (isDetailSearch) {
             // インデックスを開いた状態での簡易検索の判定
             if (urlParams.has('cur_index_id')) {
@@ -295,7 +303,6 @@ require([
 
         // 簡易検索ボタン
         $('#top-search-btn').on('click', function () {
-            sessionStorage.removeItem('detail_search_conditions');
             sessionStorage.setItem('btn', 'simple-search');
             SearchSubmit();
         });
@@ -381,7 +388,7 @@ require([
         });
 
         // 詳細検索ボタン：フォームのテキスト入力でエンターキーを押したら検索する
-        $('.detail-search-text').keypress(function (event) {
+        $(document).on('keypress', '.detail-search-text', function (event) {
             // 13はエンターキー
             if (event.which == 13) {
               $('#detail-search-btn').click();

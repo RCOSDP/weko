@@ -57,14 +57,8 @@ def base_app(instance_path):
         SERVER_NAME="test_server",
         DB_VERSIONING=False,
         DB_VERSIONING_USER_MODEL=None,
-<<<<<<< HEAD
-        # SQLALCHEMY_DATABASE_URI=os.environ.get('SQLALCHEMY_DATABASE_URI',
-        #                                        'sqlite:///test.db')
-        SQLALCHEMY_DATABASE_URI='postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest',
-=======
         SQLALCHEMY_DATABASE_URI=os.environ.get(
             'SQLALCHEMY_DATABASE_URI','sqlite:///test.db')
->>>>>>> origin/feature/change-pub-status-enum
     )
     
     #InvenioDB(app_)

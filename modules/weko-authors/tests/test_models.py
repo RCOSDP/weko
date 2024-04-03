@@ -91,6 +91,7 @@ class TestAuthors:
         # find author
         result = Authors.get_author_by_id(1)
         assert result == {"test_data":"value"}
+        assert type(result) == dict
         
         # raise Exception
         with patch("flask_sqlalchemy._QueryProperty.__get__") as mock_query:

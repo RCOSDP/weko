@@ -14,7 +14,12 @@ from weko_search_ui.views import (
     get_child_list,
     get_path_name_dict,
     gettitlefacet,
-    get_last_item_id
+    get_last_item_id,
+    get_advanced_search_condition
+)
+
+from weko_search_ui.api import (
+    get_search_detail_keyword
 )
 
 
@@ -154,3 +159,9 @@ def test_gettitlefacet(i18n_app, users, client, facet_search_setting):
 def test_get_last_item_id(i18n_app, users, db_activity):
     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
         assert get_last_item_id()
+
+
+# def get_advanced_search_condition():
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_views.py::test_get_advanced_search_condition -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_get_advanced_search_condition(i18n_app, users, db_activity):
+    assert get_advanced_search_condition() == get_search_detail_keyword("")

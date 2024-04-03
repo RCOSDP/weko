@@ -1,5 +1,5 @@
 
-from mock import patch
+from mock import patch, MagicMock
 import copy
 import pytest
 from datetime import datetime
@@ -185,10 +185,98 @@ def test_get_index_state(app, db):
 #    def _check(index_id):
 # .tox/c1/bin/pytest --cov=invenio_oaiserver tests/test_utils.py::test_is_output_harvest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiserver/.tox/c1/tmp
 def test_is_output_harvest(app):
-    index_state = {
-        "1":{"parent":"0","msg":3},
-        "2":{"parent":"1","msg":1},
-    }
-    path_list = ["1","2","1000"]
-    result = is_output_harvest(path_list,index_state)
-    assert result == 3
+    # result is 0
+    # -> HARVEST_PRIVATE(2)
+    assert is_output_harvest([]) == 2
+
+    # index is not found
+    # -> HARVEST_PRIVATE(2)
+    idx0 = ""
+    with patch("invenio_oaiserver.utils.Indexes.get_index", return_value=idx0):
+        assert is_output_harvest(["0"]) == 2
+
+    # parent is None
+    # harvest_public_state is False
+    # -> HARVEST_PRIVATE(2)
+    idx1 = MagicMock()
+    idx1.id = 1
+    idx1.parent = None
+    idx1.harvest_public_state = False
+    with patch("invenio_oaiserver.utils.Indexes.get_index", return_value=idx1):
+        assert is_output_harvest(["a/1"]) == 2
+
+    # parent is 0
+    # harvest_public_state is False
+    # -> HARVEST_PRIVATE(2)
+    idx2 = MagicMock()
+    idx2.id = 2
+    idx2.parent = 0
+    idx2.harvest_public_state = False
+    with patch("invenio_oaiserver.utils.Indexes.get_index", return_value=idx2):
+        assert is_output_harvest(["2"]) == 2
+
+    # parent is 0
+    # harvest_public_state is not False
+    # -99 not in browsing_role
+    # -> PRIVATE_INDEX(1)
+    idx3 = MagicMock()
+    idx3.id = 3
+    idx3.parent = 0
+    idx3.harvest_public_state = True
+    idx3.browsing_role = "1,3,99"
+    idx3.public_state = True
+    idx3.public_date = None
+    with patch("invenio_oaiserver.utils.Indexes.get_index", return_value=idx3):
+        assert is_output_harvest(["3"]) == 1
+
+    # parent is 0
+    # harvest_public_state is not False
+    # public_state is False
+    # -> PRIVATE_INDEX(1)
+    idx4 = MagicMock()
+    idx4.id = 4
+    idx4.parent = 0
+    idx4.harvest_public_state = True
+    idx4.browsing_role = "1,3,-99"
+    idx4.public_state = False
+    idx4.public_date = None
+    with patch("invenio_oaiserver.utils.Indexes.get_index", return_value=idx4):
+        assert is_output_harvest(["4"]) == 1
+
+    # parent is 0
+    # harvest_public_state is not False
+    # public_date > now
+    # -> PRIVATE_INDEX(1)
+    idx5 = MagicMock()
+    idx5.id = 5
+    idx5.parent = 0
+    idx5.harvest_public_state = True
+    idx5.browsing_role = "1,3,-99"
+    idx5.public_state = True
+    idx5.public_date = datetime(2999,12,31)
+    with patch("invenio_oaiserver.utils.Indexes.get_index", return_value=idx5):
+        assert is_output_harvest(["5"]) == 1
+
+    # index is not found
+    # -> HARVEST_PRIVATE(2)
+    idx6 = ""
+    # parent is not 0
+    idx7 = MagicMock()
+    idx7.id = 7
+    idx7.parent = 8
+    # parent index
+    # parent is 0
+    # harvest_public_state is not False
+    # -99 in browsing_role
+    # public_state is not False
+    # public_date <= now
+    # -> OUTPUT_HARVEST(3) -> max
+    idx8 = MagicMock()
+    idx8.id = 8
+    idx8.parent = 0
+    idx8.harvest_public_state = True
+    idx8.browsing_role = "1,3,-99"
+    idx8.public_state = True
+    idx8.public_date = datetime(1900,1,1)
+    with patch("invenio_oaiserver.utils.Indexes.get_index", side_effect=[idx6, idx7, idx8]):
+        assert is_output_harvest(["6", "7"]) == 3

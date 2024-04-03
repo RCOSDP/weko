@@ -24,7 +24,7 @@ Set the templates and static folders as well as the test case by flask
 Blueprint.
 """
 
-import json
+import orjson
 import sys
 
 import redis
@@ -130,7 +130,7 @@ def shib_auto_login():
             datastore.delete(cache_key)
             return _redirect_method()
 
-        cache_val = json.loads(str(cache_val, encoding='utf-8'))
+        cache_val = orjson.loads(str(cache_val, encoding='utf-8'))
         shib_user = ShibUser(cache_val)
         if not is_auto_bind:
             shib_user.get_relation_info()
@@ -186,7 +186,7 @@ def confirm_user():
             datastore.delete(cache_key)
             return _redirect_method()
 
-        cache_val = json.loads(str(cache_val, encoding='utf-8'))
+        cache_val = orjson.loads(str(cache_val, encoding='utf-8'))
         shib_user = ShibUser(cache_val)
         account = request.form.get('WEKO_ATTR_ACCOUNT', None)
         password = request.form.get('WEKO_ATTR_PWD', None)
@@ -247,7 +247,7 @@ def shib_login():
             datastore.delete(cache_key)
             return _redirect_method()
 
-        cache_val = json.loads(str(cache_val, encoding='utf-8'))
+        cache_val = orjson.loads(str(cache_val, encoding='utf-8'))
         session['shib_session_id'] = shib_session_id
         csrf_random = generate_random_str(length=64)
         session['csrf_random'] = csrf_random
@@ -308,7 +308,7 @@ def shib_sp_login():
         datastore.put(
             current_app.config[
                 'WEKO_ACCOUNTS_SHIB_CACHE_PREFIX'] + shib_session_id,
-            bytes(json.dumps(shib_attr), encoding='utf-8'),
+            orjson.dumps(shib_attr),
             ttl_secs=ttl_sec)
 
         shib_user = ShibUser(shib_attr)

@@ -19,7 +19,7 @@
 # MA 02111-1307, USA.
 
 """API for weko-admin."""
-import json
+import orjson
 
 from flask import current_app
 from invenio_accounts.models import Role
@@ -74,7 +74,7 @@ class WidgetItems(object):
         data_object_settings["text_color"] = widget_items.get('text_color')
         data_object_settings["background_color"] = widget_items.get(
             'background_color')
-        widget_object['settings'] = json.dumps(data_object_settings)
+        widget_object['settings'] = orjson.dumps(data_object_settings).decode()
 
     @classmethod
     def build_object(cls, widget_items=None, is_update=False):
@@ -252,7 +252,7 @@ class WidgetItems(object):
 
         """
         record = dict()
-        settings = json.loads(in_result.settings)
+        settings = orjson.loads(in_result.settings)
         record['id'] = in_result.id
         record['repository_id'] = in_result.repository_id
         record['widget_type'] = in_result.widget_type

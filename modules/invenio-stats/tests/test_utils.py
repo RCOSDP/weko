@@ -33,6 +33,7 @@ from invenio_stats.utils import (
     QueryFileReportsHelper,
     QuerySearchReportHelper,
     QueryCommonReportsHelper,
+    QueryAccessCounterHelper,
     QueryRecordViewPerIndexReportHelper,
     QueryRecordViewReportHelper,
     QueryItemRegReportHelper,
@@ -513,6 +514,25 @@ def test_query_common_reports_helper_error(app):
     res = QueryCommonReportsHelper.get(event='')
     assert res==[]
 
+# class QueryAccessCounterHelper(object):
+#     def get_common_params(cls, **kwargs):
+#     def get_top_page_access_counter(cls, **kwargs):
+# .tox/c1/bin/pytest --cov=invenio_stats tests/test_utils.py::test_query_access_counter_helper -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
+def test_query_access_counter_helper(app, es):
+    # get_top_page_access_counter
+    _res = {
+    'start_date': '2022-10-01T00:00:00',
+    'end_date': '2022-10-10T23:59:59',
+    'value': 152.0
+}
+    with patch('invenio_stats.queries.ESTermsQuery.run', return_value=_res):
+        res = QueryAccessCounterHelper.get_top_page_access_counter(year=2022, month=10, start_date='2022-10-01', end_date='2022-10-10')
+        assert res=={'date': '2022-10-01-2022-10-10', 'all':{"count":152}}    
+# .tox/c1/bin/pytest --cov=invenio_stats tests/test_utils.py::test_query_access_counter_helper_error -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
+def test_query_access_counter_helper_error(app):
+    # get_top_page_access_counter
+    res = QueryAccessCounterHelper.get_top_page_access_counter()
+    assert res=={'date': '', 'all': {'count': None}}
 
 # class QueryRecordViewPerIndexReportHelper(object):
 #     def build_query(cls, start_date, end_date, after_key=None):
