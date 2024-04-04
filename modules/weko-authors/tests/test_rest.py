@@ -59,7 +59,7 @@ def test_create_blueprint(app):
 
 # def Authors(ContentNegotiatedMethodView):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_rest.py::test_Authors -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
-def test_Authors(app, mocker):
+def test_Authors(app):
     app.register_blueprint(create_blueprint(app.config['WEKO_AUTHORS_REST_ENDPOINTS']))
     with \
         app.test_client() as client, \
