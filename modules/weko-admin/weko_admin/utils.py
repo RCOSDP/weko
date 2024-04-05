@@ -1922,8 +1922,9 @@ class UsageReport:
             activities.append(
                 dict(
                     activity_id=activity.activity_id,
-                    item_name=activity.title or activity.temp_data.get("title",
-                                                                       ""),
+                    item_name=activity.title or ((type(activity.temp_data)==dict) and activity.temp_data.get("title" "")) or "",
+                    #item_name=activity.title or activity.temp_data.get("title",
+                    #                                                   ""),
                     workflow_name=activity.workflow.flows_name,
                     action_status=action_status,
                     user_mail=user_mail
