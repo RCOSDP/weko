@@ -1,9 +1,10 @@
 GLOB sdist-make: /code/modules/invenio-indexer/setup.py
 c1 create: /code/modules/invenio-indexer/.tox/c1
+c1 setuptools_version is setuptools==57.5.0
 c1 installdeps: pytest>=3, pytest-cov, -rrequirements2.txt
 c1 inst: /code/modules/invenio-indexer/.tox/.tmp/package/1/invenio-indexer-1.0.2.zip
-c1 installed: alabaster==0.7.13,alembic==0.9.6,amqp==2.6.0,angular-gettext-babel==0.3,aniso8601==8.0.0,arrow==0.12.1,asn1crypto==0.23.0,atomicwrites==1.4.1,attrs==17.4.0,b2handle==1.1.2,Babel==2.5.1,bagit==1.7.0,beautifulsoup4==4.9.3,bibtexparser==1.0.1,billiard==3.6.3.0,binaryornot==0.4.4,bleach==3.1.0,blinker==1.4,boto3==1.7.84,botocore==1.10.84,cachelib==0.1,cachetools==4.2.4,cchardet==2.1.1,celery==4.4.4,certifi==2017.11.5,cffi==1.11.2,chardet==3.0.4,citeproc-py==0.5.1,citeproc-py-styles==0.1.2,click==6.7,cookiecutter==1.6.0,counter-robots==2018.6,coverage==6.2,cryptography==2.1.4,datacite==1.0.1,DateTime==4.9,decorator==4.1.2,defusedxml==0.5.0,dictdiffer==0.7.0,distlib==0.3.6,dnspython==2.2.1,docutils==0.18.1,dojson==1.3.2,elasticsearch==6.1.1,elasticsearch-dsl==6.4.0,elementpath==1.0.6,email-validator==1.0.5,entrypoints==0.2.3,feedgen==0.7.0,filelock==3.4.1,Flask==1.1.0,Flask-Admin==1.5.3,Flask-Alembic==2.0.1,Flask-Assets==0.12,Flask-BabelEx==0.9.4,Flask-Breadcrumbs==0.5.0,Flask-Caching==1.10.1,Flask-CeleryExt==0.3.4,Flask-Collect==1.2.2,Flask-Cors==3.0.3,Flask-DebugToolbar==0.13.1,Flask-IIIF==0.6.1,Flask-KVSession==0.6.2,Flask-Limiter==1.1.0,Flask-Login==0.4.1,Flask-Mail==0.9.1,flask-marshmallow==0.14.0,Flask-Menu==0.6.0,-e git+https://github.com/RCOSDP/flask-oauthlib.git@98eb36e1dfc66256fa7ea62237e9879acb906e9d#egg=Flask_OAuthlib,Flask-Plugins==1.6.1,Flask-Principal==0.4.0,Flask-RESTful==0.3.8,Flask-Security==3.0.0,flask-shell-ipython==0.4.1,Flask-Sitemap==0.4.0,Flask-SQLAlchemy==2.3.2,flask-talisman==0.4.1,Flask-WTF==0.14.3,-e git+https://github.com/RCOSDP/pyfpdf.git@f9b032148283d535cabc7789858081c80de36fef#egg=fpdf,frozendict==2.3.8,fs==0.5.4,ftfy==4.4.3,future==0.16.0,github3.py==1.1.0,html5lib==1.0.1,idna==2.6,iiif-prezi==0.3.0,imagesize==1.4.1,importlib-metadata==4.8.3,importlib-resources==5.4.0,infinity==1.4,intervals==0.8.0,invenio-access==1.1.0,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=invenio_accounts&subdirectory=modules/invenio-accounts,invenio-admin==1.1.2,invenio-app==1.1.0,invenio-assets==1.0.0,invenio-base==1.0.2,invenio-cache==1.0.0,invenio-celery==1.1.3,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=invenio_communities&subdirectory=modules/invenio-communities,invenio-config==1.0.0,invenio-csl-rest==1.0.0a1,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=invenio_db&subdirectory=modules/invenio-db,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=invenio_deposit&subdirectory=modules/invenio-deposit,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=invenio_files_rest&subdirectory=modules/invenio-files-rest,invenio-formatter==1.0.0b3,invenio-i18n==1.0.0,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=invenio_iiif&subdirectory=modules/invenio-iiif,invenio-indexer @ file:///code/modules/invenio-indexer/.tox/.tmp/package/1/invenio-indexer-1.0.2.zip,invenio-jsonschemas==1.0.0,invenio-logging==1.0.0b3,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=invenio_mail&subdirectory=modules/invenio-mail,invenio-marc21==1.0.0a8,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=invenio_oaiharvester&subdirectory=modules/invenio-oaiharvester,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=invenio_oaiserver&subdirectory=modules/invenio-oaiserver,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=invenio_oauth2server&subdirectory=modules/invenio-oauth2server,invenio-oauthclient==1.0.0,invenio-pidrelations==1.0.0a4,invenio-pidstore==1.0.0,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=invenio_previewer&subdirectory=modules/invenio-previewer,invenio-query-parser==0.6.0,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=invenio_queues&subdirectory=modules/invenio-queues,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=invenio_records&subdirectory=modules/invenio-records,invenio-records-files==1.0.0a10,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=invenio_records_rest&subdirectory=modules/invenio-records-rest,invenio-records-ui==1.0.0,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=invenio_resourcesyncclient&subdirectory=modules/invenio-resourcesyncclient,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=invenio_resourcesyncserver&subdirectory=modules/invenio-resourcesyncserver,invenio-rest==1.1.2,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=invenio_s3&subdirectory=modules/invenio-s3,-e git+https://github.com/RCOSDP/invenio-search.git@cff9744c5dc651893a9c51672c5b8da9adc21e16#egg=invenio_search,-e git+https://github.com/RCOSDP/invenio-search-ui.git@74bd3b2990ff27b39e01b6b31be9a0b5fda3dd0f#egg=invenio_search_ui,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=invenio_stats&subdirectory=modules/invenio-stats,invenio-theme==1.0.0b4,ipaddress==1.0.19,ipython==6.2.1,ipython-genutils==0.2.0,itsdangerous==0.24,jedi==0.11.0,Jinja2==2.10.1,jinja2-cli==0.6.0,jinja2-time==0.2.0,jmespath==0.10.0,jsmin==2.2.2,jsonpatch==1.21,jsonpath-ng==1.5.2,jsonpointer==1.14,jsonref==0.1,jsonresolver==0.2.1,jsonschema==2.6.0,jupyter-client==5.2.2,jupyter-core==4.4.0,-e git+https://github.com/RCOSDP/kombu.git@f204fdf078d5e94393c86693f545e2d011f620f5#egg=kombu,limits==1.2.1,lxml==4.1.1,Mako==1.0.7,MarkupSafe==1.1.1,marshmallow==2.20.1,marshmallow-sqlalchemy==0.23.1,maxminddb==1.5.2,maxminddb-geolite2==2017.803,mistune==0.8.3,mock==5.0.2,more-itertools==8.10.0,msgpack==0.6.2,nbconvert==5.3.1,nbformat==4.4.0,netaddr==0.8.0,node-semver==0.1.1,numpy==1.16.1,oauthlib==2.1.0,ordereddict==1.1,packaging==21.3,pandocfilters==1.4.2,parso==0.1.0,passlib==1.7.1,pbr==5.11.1,pexpect==4.3.0,pickleshare==0.7.4,Pillow==5.4.1,platformdirs==2.4.0,pluggy==0.13.1,ply==3.11,poyo==0.4.1,prompt-toolkit==1.0.15,psycopg2==2.7.3.2,ptyprocess==0.5.2,py==1.11.0,pycparser==2.18,Pygments==2.2.0,PyJWT==1.5.3,PyLD==2.0.3,pyparsing==3.1.0,-e git+https://github.com/RCOSDP/PyPDF2.git@fefc684a3a74aff6f99e5dff24f9b4dd1c95169d#egg=PyPDF2,pyPEG2==2.15.2,pytest==4.2.0,pytest-cov==2.9.0,python-dateutil==2.6.1,python-editor==1.0.3,python-geoip==1.2,pytz==2017.3,pyzmq==17.0.0,redis==2.10.6,requests==2.18.4,requests-oauthlib==1.1.0,resync==1.0.9,s3fs==0.1.6,s3transfer==0.1.13,selenium==3.141.0,Sickle==0.6.4,simplegeneric==0.8.1,simplejson==3.12.0,simplekv==0.11.2,six==1.16.0,snowballstemmer==2.2.0,soupsieve==2.3.2.post1,speaklater==1.3,Sphinx==1.8.4,sphinxcontrib-serializinghtml==1.1.5,sphinxcontrib-websupport==1.2.4,SQLAlchemy==1.2.19,SQLAlchemy-Continuum==1.3.6,SQLAlchemy-Utils==0.35.0,stevedore==3.5.2,sword3common==0.1.1,testpath==0.3.1,toml==0.10.2,tornado==4.5.3,tox==3.28.0,traitlets==4.3.2,typing_extensions==4.1.1,ua-parser==0.7.3,uritemplate==4.1.1,uritools==2.1.0,urllib3==1.22,uWSGI==2.0.21,uwsgitop==0.11,validators==0.12.0,vine==1.3.0,virtualenv==20.17.1,virtualenv-clone==0.5.7,virtualenvwrapper==4.8.4,Wand==0.6.1,wcwidth==0.1.7,webargs==5.5.2,webassets==0.12.1,webencodings==0.5.1,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_accounts&subdirectory=modules/weko-accounts,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_admin&subdirectory=modules/weko-admin,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_authors&subdirectory=modules/weko-authors,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_bulkupdate&subdirectory=modules/weko-bulkupdate,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_deposit&subdirectory=modules/weko-deposit,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_gridlayout&subdirectory=modules/weko-gridlayout,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_groups&subdirectory=modules/weko-groups,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_handle&subdirectory=modules/weko-handle,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_index_tree&subdirectory=modules/weko-index-tree,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_indextree_journal&subdirectory=modules/weko-indextree-journal,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_items_autofill&subdirectory=modules/weko-items-autofill,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_items_ui&subdirectory=modules/weko-items-ui,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_itemtypes_ui&subdirectory=modules/weko-itemtypes-ui,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_logging&subdirectory=modules/weko-logging,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_records&subdirectory=modules/weko-records,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_records_ui&subdirectory=modules/weko-records-ui,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_redis&subdirectory=modules/weko-redis,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_schema_ui&subdirectory=modules/weko-schema-ui,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_search_ui&subdirectory=modules/weko-search-ui,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_sitemap&subdirectory=modules/weko-sitemap,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_swordserver&subdirectory=modules/weko-swordserver,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_theme&subdirectory=modules/weko-theme,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_user_profiles&subdirectory=modules/weko-user-profiles,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_workflow&subdirectory=modules/weko-workflow,Werkzeug==0.15.2,whichcraft==0.4.1,WTForms==2.1,WTForms-Alchemy==0.16.5,WTForms-Components==0.10.3,xmlschema==0.9.30,xmltodict==0.12.0,zipp==3.6.0,zope.interface==5.5.2
-c1 run-test-pre: PYTHONHASHSEED='3411940553'
+c1 installed: alabaster==0.7.13,alembic==0.9.6,amqp==2.6.0,angular-gettext-babel==0.3,aniso8601==8.0.0,arrow==0.12.1,asn1crypto==0.23.0,atomicwrites==1.4.1,attrs==17.4.0,b2handle==1.1.2,Babel==2.5.1,bagit==1.7.0,beautifulsoup4==4.9.3,bibtexparser==1.0.1,billiard==3.6.3.0,binaryornot==0.4.4,bleach==3.1.0,blinker==1.4,boto3==1.7.84,botocore==1.10.84,cachelib==0.1,cachetools==4.2.4,cchardet==2.1.1,celery==4.4.4,certifi==2017.11.5,cffi==1.11.2,chardet==3.0.4,citeproc-py==0.5.1,citeproc-py-styles==0.1.2,click==6.7,cookiecutter==1.6.0,counter-robots==2018.6,coverage==6.2,cryptography==2.1.4,datacite==1.0.1,DateTime==4.9,decorator==4.1.2,defusedxml==0.5.0,dictdiffer==0.7.0,distlib==0.3.6,dnspython==2.2.1,docutils==0.18.1,dojson==1.3.2,elasticsearch==6.1.1,elasticsearch-dsl==6.4.0,elementpath==1.0.6,email-validator==1.0.5,entrypoints==0.2.3,feedgen==0.7.0,filelock==3.4.1,Flask==1.1.0,Flask-Admin==1.5.3,Flask-Alembic==2.0.1,Flask-Assets==0.12,Flask-BabelEx==0.9.4,Flask-Breadcrumbs==0.5.0,Flask-Caching==1.10.1,Flask-CeleryExt==0.3.4,Flask-Collect==1.2.2,Flask-Cors==3.0.3,Flask-DebugToolbar==0.13.1,Flask-IIIF==0.6.1,Flask-KVSession==0.6.2,Flask-Limiter==1.1.0,Flask-Login==0.4.1,Flask-Mail==0.9.1,flask-marshmallow==0.14.0,Flask-Menu==0.6.0,-e git+https://github.com/RCOSDP/flask-oauthlib.git@98eb36e1dfc66256fa7ea62237e9879acb906e9d#egg=Flask_OAuthlib,Flask-Plugins==1.6.1,Flask-Principal==0.4.0,Flask-RESTful==0.3.8,Flask-Security==3.0.0,flask-shell-ipython==0.4.1,Flask-Sitemap==0.4.0,Flask-SQLAlchemy==2.3.2,flask-talisman==0.4.1,Flask-WTF==0.14.3,-e git+https://github.com/RCOSDP/pyfpdf.git@f9b032148283d535cabc7789858081c80de36fef#egg=fpdf,frozendict==2.3.8,fs==0.5.4,ftfy==4.4.3,future==0.16.0,github3.py==1.1.0,html5lib==1.0.1,idna==2.6,iiif-prezi==0.3.0,imagesize==1.4.1,importlib-metadata==4.8.3,importlib-resources==5.4.0,infinity==1.4,intervals==0.8.0,invenio-access==1.1.0,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=invenio_accounts&subdirectory=modules/invenio-accounts,invenio-admin==1.1.2,invenio-app==1.1.0,invenio-assets==1.0.0,invenio-base==1.0.2,invenio-cache==1.0.0,invenio-celery==1.1.3,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=invenio_communities&subdirectory=modules/invenio-communities,invenio-config==1.0.0,invenio-csl-rest==1.0.0a1,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=invenio_db&subdirectory=modules/invenio-db,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=invenio_deposit&subdirectory=modules/invenio-deposit,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=invenio_files_rest&subdirectory=modules/invenio-files-rest,invenio-formatter==1.0.0b3,invenio-i18n==1.0.0,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=invenio_iiif&subdirectory=modules/invenio-iiif,invenio-indexer @ file:///code/modules/invenio-indexer/.tox/.tmp/package/1/invenio-indexer-1.0.2.zip,invenio-jsonschemas==1.0.0,invenio-logging==1.0.0b3,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=invenio_mail&subdirectory=modules/invenio-mail,invenio-marc21==1.0.0a8,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=invenio_oaiharvester&subdirectory=modules/invenio-oaiharvester,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=invenio_oaiserver&subdirectory=modules/invenio-oaiserver,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=invenio_oauth2server&subdirectory=modules/invenio-oauth2server,invenio-oauthclient==1.0.0,invenio-pidrelations==1.0.0a4,invenio-pidstore==1.0.0,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=invenio_previewer&subdirectory=modules/invenio-previewer,invenio-query-parser==0.6.0,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=invenio_queues&subdirectory=modules/invenio-queues,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=invenio_records&subdirectory=modules/invenio-records,invenio-records-files==1.0.0a10,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=invenio_records_rest&subdirectory=modules/invenio-records-rest,invenio-records-ui==1.0.0,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=invenio_resourcesyncclient&subdirectory=modules/invenio-resourcesyncclient,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=invenio_resourcesyncserver&subdirectory=modules/invenio-resourcesyncserver,invenio-rest==1.1.2,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=invenio_s3&subdirectory=modules/invenio-s3,-e git+https://github.com/RCOSDP/invenio-search.git@cff9744c5dc651893a9c51672c5b8da9adc21e16#egg=invenio_search,-e git+https://github.com/RCOSDP/invenio-search-ui.git@74bd3b2990ff27b39e01b6b31be9a0b5fda3dd0f#egg=invenio_search_ui,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=invenio_stats&subdirectory=modules/invenio-stats,invenio-theme==1.0.0b4,ipaddress==1.0.19,ipython==6.2.1,ipython-genutils==0.2.0,itsdangerous==0.24,jedi==0.11.0,Jinja2==2.10.1,jinja2-cli==0.6.0,jinja2-time==0.2.0,jmespath==0.10.0,jsmin==2.2.2,jsonpatch==1.21,jsonpath-ng==1.5.2,jsonpointer==1.14,jsonref==0.1,jsonresolver==0.2.1,jsonschema==2.6.0,jupyter-client==5.2.2,jupyter-core==4.4.0,-e git+https://github.com/RCOSDP/kombu.git@f204fdf078d5e94393c86693f545e2d011f620f5#egg=kombu,limits==1.2.1,lxml==4.1.1,Mako==1.0.7,MarkupSafe==1.1.1,marshmallow==2.20.1,marshmallow-sqlalchemy==0.23.1,maxminddb==1.5.2,maxminddb-geolite2==2017.803,mistune==0.8.3,mock==5.0.2,more-itertools==8.10.0,msgpack==0.6.2,nbconvert==5.3.1,nbformat==4.4.0,netaddr==0.8.0,node-semver==0.1.1,numpy==1.16.1,oauthlib==2.1.0,ordereddict==1.1,packaging==21.3,pandocfilters==1.4.2,parso==0.1.0,passlib==1.7.1,pbr==5.11.1,pexpect==4.3.0,pickleshare==0.7.4,Pillow==5.4.1,platformdirs==2.4.0,pluggy==0.13.1,ply==3.11,poyo==0.4.1,prompt-toolkit==1.0.15,psycopg2==2.7.3.2,ptyprocess==0.5.2,py==1.11.0,pycparser==2.18,Pygments==2.2.0,PyJWT==1.5.3,PyLD==2.0.3,pyparsing==3.1.0,-e git+https://github.com/RCOSDP/PyPDF2.git@fefc684a3a74aff6f99e5dff24f9b4dd1c95169d#egg=PyPDF2,pyPEG2==2.15.2,pytest==4.2.0,pytest-cov==2.9.0,python-dateutil==2.6.1,python-editor==1.0.3,python-geoip==1.2,pytz==2017.3,pyzmq==17.0.0,redis==2.10.6,requests==2.18.4,requests-oauthlib==1.1.0,resync==1.0.9,s3fs==0.1.6,s3transfer==0.1.13,selenium==3.141.0,Sickle==0.6.4,simplegeneric==0.8.1,simplejson==3.12.0,simplekv==0.11.2,six==1.16.0,snowballstemmer==2.2.0,soupsieve==2.3.2.post1,speaklater==1.3,Sphinx==1.8.4,sphinxcontrib-serializinghtml==1.1.5,sphinxcontrib-websupport==1.2.4,SQLAlchemy==1.2.19,SQLAlchemy-Continuum==1.3.6,SQLAlchemy-Utils==0.35.0,stevedore==3.5.2,sword3common==0.1.1,testpath==0.3.1,tika==2.6.0,toml==0.10.2,tornado==4.5.3,tox==3.28.0,traitlets==4.3.2,typing_extensions==4.1.1,ua-parser==0.7.3,uritemplate==4.1.1,uritools==2.1.0,urllib3==1.22,uWSGI==2.0.21,uwsgitop==0.11,validators==0.12.0,vine==1.3.0,virtualenv==20.17.1,virtualenv-clone==0.5.7,virtualenvwrapper==4.8.4,Wand==0.6.1,wcwidth==0.1.7,webargs==5.5.2,webassets==0.12.1,webencodings==0.5.1,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_accounts&subdirectory=modules/weko-accounts,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_admin&subdirectory=modules/weko-admin,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_authors&subdirectory=modules/weko-authors,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_bulkupdate&subdirectory=modules/weko-bulkupdate,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_deposit&subdirectory=modules/weko-deposit,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_gridlayout&subdirectory=modules/weko-gridlayout,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_groups&subdirectory=modules/weko-groups,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_handle&subdirectory=modules/weko-handle,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_index_tree&subdirectory=modules/weko-index-tree,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_indextree_journal&subdirectory=modules/weko-indextree-journal,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_items_autofill&subdirectory=modules/weko-items-autofill,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_items_ui&subdirectory=modules/weko-items-ui,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_itemtypes_ui&subdirectory=modules/weko-itemtypes-ui,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_logging&subdirectory=modules/weko-logging,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_records&subdirectory=modules/weko-records,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_records_ui&subdirectory=modules/weko-records-ui,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_redis&subdirectory=modules/weko-redis,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_schema_ui&subdirectory=modules/weko-schema-ui,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_search_ui&subdirectory=modules/weko-search-ui,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_sitemap&subdirectory=modules/weko-sitemap,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_swordserver&subdirectory=modules/weko-swordserver,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_theme&subdirectory=modules/weko-theme,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_user_profiles&subdirectory=modules/weko-user-profiles,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_workflow&subdirectory=modules/weko-workflow,Werkzeug==0.15.2,whichcraft==0.4.1,WTForms==2.1,WTForms-Alchemy==0.16.5,WTForms-Components==0.10.3,xmlschema==0.9.30,xmltodict==0.12.0,zipp==3.6.0,zope.interface==5.5.2
+c1 run-test-pre: PYTHONHASHSEED='591553936'
 c1 run-test: commands[0] | pytest --cov=invenio_indexer tests -v -vv -s --cov-branch --cov-report=term --cov-report=xml --cov-report=html --basetemp=/code/modules/invenio-indexer/.tox/c1/tmp
 ============================= test session starts ==============================
 platform linux -- Python 3.6.15, pytest-4.2.0, py-1.11.0, pluggy-0.13.1 -- /code/modules/invenio-indexer/.tox/c1/bin/python
@@ -12,1163 +13,352 @@ rootdir: /code/modules/invenio-indexer, inifile:
 plugins: celery-4.4.4, cov-2.9.0
 collecting ... collected 19 items
 
-tests/test_api.py::test_indexer_bulk_index ERROR
-tests/test_api.py::test_delete_action ERROR
-tests/test_api.py::test_index_action ERROR
-tests/test_api.py::test_process_bulk_queue ERROR
-tests/test_api.py::test_process_bulk_queue_errors ERROR
-tests/test_api.py::test_index ERROR
-tests/test_api.py::test_delete ERROR
-tests/test_api.py::test_replace_refs ERROR
-tests/test_api.py::test_bulkrecordindexer_index_delete_by_record_id ERROR
-tests/test_api.py::test_bulkrecordindexer_index_delete_by_record ERROR
-tests/test_cli.py::test_run ERROR
-tests/test_cli.py::test_reindex ERROR
+tests/test_api.py::test_indexer_bulk_index PASSED
+tests/test_api.py::test_delete_action PASSED
+tests/test_api.py::test_index_action FAILED
+tests/test_api.py::test_process_bulk_queue Indexing ID:ce540b23-46c8-40a6-9b67-c1f9b54d8b78, Count:1
+count(success, error): (0, 0)
+FAILED
+tests/test_api.py::test_process_bulk_queue_errors Indexing ID:02acc2d6-7e10-4429-810b-9437a35f69ac, Count:1
+Indexing ID:ec723626-a238-46c8-afc7-985ce529cc90, Count:2
+count(success, error): (0, 0)
+FAILED
+tests/test_api.py::test_index PASSED
+tests/test_api.py::test_delete PASSED
+tests/test_api.py::test_replace_refs PASSED
+tests/test_api.py::test_bulkrecordindexer_index_delete_by_record_id PASSED
+tests/test_api.py::test_bulkrecordindexer_index_delete_by_record PASSED
+tests/test_cli.py::test_run PASSED
+tests/test_cli.py::test_reindex FAILED
 tests/test_examples_app.py::test_example_app SKIPPED
 tests/test_invenio_bulkindexer.py::test_version PASSED
 tests/test_invenio_bulkindexer.py::test_init PASSED
-tests/test_invenio_bulkindexer.py::test_hook_initialization ERROR
-tests/test_tasks.py::test_process_bulk_queue ERROR
-tests/test_tasks.py::test_index_record ERROR
-tests/test_tasks.py::test_delete_record ERROR
+tests/test_invenio_bulkindexer.py::test_hook_initialization FAILED
+tests/test_tasks.py::test_process_bulk_queue PASSED
+tests/test_tasks.py::test_index_record PASSED
+tests/test_tasks.py::test_delete_record PASSED
 
-==================================== ERRORS ====================================
-__________________ ERROR at setup of test_indexer_bulk_index ___________________
+=================================== FAILURES ===================================
+______________________________ test_index_action _______________________________
 
-request = <SubRequest 'base_app' for <Function test_indexer_bulk_index>>
+app = <Flask 'testapp'>
 
-    @pytest.fixture()
-    def base_app(request):
-        """Base application fixture."""
-        instance_path = tempfile.mkdtemp()
-        app = Flask('testapp', instance_path=instance_path)
-        app.config.update(
-            SEARCH_ELASTIC_HOSTS=os.environ.get(
-                    'SEARCH_ELASTIC_HOSTS', 'elasticsearch'),
-            BROKER_URL='amqp://guest:guest@rabbitmq:5672/',
-            CELERY_BROKER_URL = 'amqp://guest:guest@rabbitmq:5672/',
-            CELERY_ALWAYS_EAGER=True,
-            CELERY_CACHE_BACKEND='memory',
-            CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
-            CELERY_RESULT_BACKEND='cache',
-            JSONSCHEMAS_URL_SCHEME='http',
-            SECRET_KEY='CHANGE_ME',
-            SECURITY_PASSWORD_SALT='CHANGE_ME_ALSO',
-            INDEXER_DEFAULT_INDEX='records-default-v1.0.0',
-            INDEXER_DEFAULT_DOC_TYPE='default-v1.0.0',
-            INDEXER_MQ_QUEUE = Queue("indexer",
-                                     exchange=Exchange("indexer", type="direct"), routing_key="indexer",auto_delete=False,queue_arguments={"x-queue-type":"quorum"}),
-            # SQLALCHEMY_DATABASE_URI=os.environ.get(
-            #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
-            SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-                                              'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
-            SQLALCHEMY_TRACK_MODIFICATIONS=False,
-            TESTING=True,
-        )
-        FlaskCeleryExt(app)
->       InvenioDB(app)
+    def test_index_action(app):
+        """Test index action."""
+        with app.app_context():
+            record = Record.create({'title': 'Test'})
+            db.session.commit()
+    
+            def receiver(sender, json=None, record=None, arguments=None, **kwargs):
+                json['extra'] = 'extra'
+                arguments['pipeline'] = 'foobar'
+    
+            with before_record_index.connected_to(receiver):
+                action = RecordIndexer()._index_action(dict(
+                    id=str(record.id),
+>                   op='index',
+                ))
 
-tests/conftest.py:62: 
+tests/test_api.py:97: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-../invenio-db/invenio_db/ext.py:33: in __init__
-    self.init_app(app, **kwargs)
-../invenio-db/invenio_db/ext.py:38: in init_app
-    self.init_db(app, **kwargs)
-../invenio-db/invenio_db/ext.py:77: in init_db
-    base_entry.load()
-.tox/c1/lib/python3.6/site-packages/pkg_resources/__init__.py:2465: in load
-    return self.resolve()
-.tox/c1/lib/python3.6/site-packages/pkg_resources/__init__.py:2471: in resolve
-    module = __import__(self.module_name, fromlist=['__name__'], level=0)
-../weko-workflow/weko_workflow/__init__.py:23: in <module>
-    from .ext import WekoWorkflow
-../weko-workflow/weko_workflow/ext.py:23: in <module>
-    from weko_deposit.signals import item_created
-../weko-deposit/weko_deposit/__init__.py:23: in <module>
-    from .ext import WekoDeposit, WekoDepositREST
-../weko-deposit/weko_deposit/ext.py:26: in <module>
-    from .receivers import append_file_content
-../weko-deposit/weko_deposit/receivers.py:17: in <module>
-    from .api import WekoDeposit
+invenio_indexer/api.py:367: in _index_action
+    return self._index_action2(payload['id'], with_deleted=with_deleted)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-    """Weko Deposit API."""
-    import copy
-    import inspect
-    import sys
-    import uuid
-    from collections import OrderedDict
-    from datetime import datetime, timezone,date
-    from typing import NoReturn, Union
->   from tika import parser
-E   ModuleNotFoundError: No module named 'tika'
+self = <invenio_indexer.api.RecordIndexer object at 0x7f076befa4e0>
+id = '561575e9-fbc0-49e5-8232-df9dd0c47ca9', deleteFile = False
+with_deleted = False
 
-../weko-deposit/weko_deposit/api.py:29: ModuleNotFoundError
-_____________________ ERROR at setup of test_delete_action _____________________
+    def _index_action2(self, id,deleteFile=False,with_deleted=False):
+        """Bulk index action.
+    
+        :param payload: Decoded message body.
+        :returns: Dictionary defining an Elasticsearch bulk 'index' action.
+        """
+        record = Record.get_record(id)
+>       self.count = self.count + 1
+E       AttributeError: 'RecordIndexer' object has no attribute 'count'
 
-request = <SubRequest 'base_app' for <Function test_delete_action>>
+invenio_indexer/api.py:376: AttributeError
+___________________________ test_process_bulk_queue ____________________________
 
-    @pytest.fixture()
-    def base_app(request):
-        """Base application fixture."""
-        instance_path = tempfile.mkdtemp()
-        app = Flask('testapp', instance_path=instance_path)
-        app.config.update(
-            SEARCH_ELASTIC_HOSTS=os.environ.get(
-                    'SEARCH_ELASTIC_HOSTS', 'elasticsearch'),
-            BROKER_URL='amqp://guest:guest@rabbitmq:5672/',
-            CELERY_BROKER_URL = 'amqp://guest:guest@rabbitmq:5672/',
-            CELERY_ALWAYS_EAGER=True,
-            CELERY_CACHE_BACKEND='memory',
-            CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
-            CELERY_RESULT_BACKEND='cache',
-            JSONSCHEMAS_URL_SCHEME='http',
-            SECRET_KEY='CHANGE_ME',
-            SECURITY_PASSWORD_SALT='CHANGE_ME_ALSO',
-            INDEXER_DEFAULT_INDEX='records-default-v1.0.0',
-            INDEXER_DEFAULT_DOC_TYPE='default-v1.0.0',
-            INDEXER_MQ_QUEUE = Queue("indexer",
-                                     exchange=Exchange("indexer", type="direct"), routing_key="indexer",auto_delete=False,queue_arguments={"x-queue-type":"quorum"}),
-            # SQLALCHEMY_DATABASE_URI=os.environ.get(
-            #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
-            SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-                                              'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
-            SQLALCHEMY_TRACK_MODIFICATIONS=False,
-            TESTING=True,
-        )
-        FlaskCeleryExt(app)
->       InvenioDB(app)
+app = <Flask 'testapp'>
+queue = <unbound Queue indexer -> <unbound Exchange indexer(direct)> -> indexer>
 
-tests/conftest.py:62: 
+    def test_process_bulk_queue(app, queue):
+        """Test process indexing."""
+        with app.app_context():
+            # Create a test record
+            r = Record.create({'title': 'test'})
+            db.session.commit()
+            invalid_id2 = uuid.uuid4()
+    
+            RecordIndexer().bulk_index([r.id, invalid_id2])
+            RecordIndexer().bulk_delete([r.id, invalid_id2])
+    
+            ret = {}
+    
+            def _mock_bulk(client, actions_iterator, **kwargs):
+                ret['actions'] = list(actions_iterator)
+                return len(ret['actions'])
+    
+            with patch('invenio_indexer.api.bulk', _mock_bulk):
+                # Invalid actions are rejected
+>               assert RecordIndexer().process_bulk_queue() == 2
+E               assert (0, 0) == 2
+E                 -(0, 0)
+E                 +2
+
+tests/test_api.py:129: AssertionError
+------------------------------ Captured log call -------------------------------
+api.py                     273 ERROR    'int' object is not iterable
+api.py                     274 ERROR    Traceback (most recent call last):
+  File "/code/modules/invenio-indexer/invenio_indexer/api.py", line 218, in process_bulk_queue
+    **es_bulk_kwargs
+TypeError: 'int' object is not iterable
+________________________ test_process_bulk_queue_errors ________________________
+
+app = <Flask 'testapp'>
+queue = <unbound Queue indexer -> <unbound Exchange indexer(direct)> -> indexer>
+
+    def test_process_bulk_queue_errors(app, queue):
+        """Test error handling during indexing."""
+        with app.app_context():
+            # Create a test record
+            r1 = Record.create({
+                'title': 'invalid', 'reffail': {'$ref': '#/invalid'}})
+            r2 = Record.create({
+                'title': 'valid', })
+            db.session.commit()
+    
+            RecordIndexer().bulk_index([r1.id, r2.id])
+    
+            ret = {}
+    
+            def _mock_bulk(client, actions_iterator, **kwargs):
+                ret['actions'] = list(actions_iterator)
+                return len(ret['actions'])
+    
+            with patch('invenio_indexer.api.bulk', _mock_bulk):
+                # Exceptions are caught
+>               assert RecordIndexer().process_bulk_queue() == 1
+E               assert (0, 0) == 1
+E                 -(0, 0)
+E                 +1
+
+tests/test_api.py:154: AssertionError
+------------------------------ Captured log call -------------------------------
+api.py                     332 ERROR    Failed to index record 02acc2d6-7e10-4429-810b-9437a35f69ac
+Traceback (most recent call last):
+  File "/code/modules/invenio-indexer/.tox/c1/lib/python3.6/site-packages/proxytypes.py", line 207, in __subject__
+    return self.cache
+  File "/code/modules/invenio-indexer/.tox/c1/lib/python3.6/site-packages/proxytypes.py", line 131, in __getattribute__
+    return _oga(self, attr)
+AttributeError: 'JsonRef' object has no attribute 'cache'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/code/modules/invenio-indexer/.tox/c1/lib/python3.6/site-packages/jsonref.py", line 195, in resolve_pointer
+    document = document[part]
+KeyError: 'invalid'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/code/modules/invenio-indexer/invenio_indexer/api.py", line 324, in _actionsiter
+    yield self._index_action(payload, with_deleted=with_deleted)
+  File "/code/modules/invenio-indexer/invenio_indexer/api.py", line 367, in _index_action
+    return self._index_action2(payload['id'], with_deleted=with_deleted)
+  File "/code/modules/invenio-indexer/invenio_indexer/api.py", line 383, in _index_action2
+    body = self._prepare_record(record, index, doc_type, arguments)
+  File "/code/modules/invenio-indexer/invenio_indexer/api.py", line 418, in _prepare_record
+    data = copy.deepcopy(record.replace_refs())
+  File "/usr/local/lib/python3.6/copy.py", line 180, in deepcopy
+    y = _reconstruct(x, memo, *rv)
+  File "/usr/local/lib/python3.6/copy.py", line 306, in _reconstruct
+    value = deepcopy(value, memo)
+  File "/usr/local/lib/python3.6/copy.py", line 159, in deepcopy
+    copier = getattr(x, "__deepcopy__", None)
+  File "/code/modules/invenio-indexer/.tox/c1/lib/python3.6/site-packages/proxytypes.py", line 130, in __getattribute__
+    return getattr(self.__subject__, attr)
+  File "/code/modules/invenio-indexer/.tox/c1/lib/python3.6/site-packages/proxytypes.py", line 131, in __getattribute__
+    return _oga(self, attr)
+  File "/code/modules/invenio-indexer/.tox/c1/lib/python3.6/site-packages/proxytypes.py", line 91, in wrapper
+    return method(self, *args, **kwargs)
+  File "/code/modules/invenio-indexer/.tox/c1/lib/python3.6/site-packages/proxytypes.py", line 209, in __subject__
+    self.cache = super(LazyProxy, self).__subject__
+  File "/code/modules/invenio-indexer/.tox/c1/lib/python3.6/site-packages/proxytypes.py", line 91, in wrapper
+    return method(self, *args, **kwargs)
+  File "/code/modules/invenio-indexer/.tox/c1/lib/python3.6/site-packages/proxytypes.py", line 195, in __subject__
+    return self.callback()
+  File "/code/modules/invenio-indexer/.tox/c1/lib/python3.6/site-packages/proxytypes.py", line 91, in wrapper
+    return method(self, *args, **kwargs)
+  File "/code/modules/invenio-indexer/.tox/c1/lib/python3.6/site-packages/jsonref.py", line 159, in callback
+    result = self.resolve_pointer(self.store[uri], fragment)
+  File "/code/modules/invenio-indexer/.tox/c1/lib/python3.6/site-packages/proxytypes.py", line 91, in wrapper
+    return method(self, *args, **kwargs)
+  File "/code/modules/invenio-indexer/.tox/c1/lib/python3.6/site-packages/jsonref.py", line 197, in resolve_pointer
+    self._error("Unresolvable JSON pointer: %r" % pointer, cause=e)
+  File "/code/modules/invenio-indexer/.tox/c1/lib/python3.6/site-packages/proxytypes.py", line 91, in wrapper
+    return method(self, *args, **kwargs)
+  File "/code/modules/invenio-indexer/.tox/c1/lib/python3.6/site-packages/jsonref.py", line 207, in _error
+    cause=cause
+jsonref.JsonRefError: ("Unresolvable JSON pointer: '/invalid'", {'$ref': '#/invalid'})
+api.py                     273 ERROR    'int' object is not iterable
+api.py                     274 ERROR    Traceback (most recent call last):
+  File "/code/modules/invenio-indexer/invenio_indexer/api.py", line 218, in process_bulk_queue
+    **es_bulk_kwargs
+TypeError: 'int' object is not iterable
+_________________________________ test_reindex _________________________________
+
+app = <Flask 'testapp'>
+script_info = <flask.cli.ScriptInfo object at 0x7f076b8b9eb8>
+
+    def test_reindex(app, script_info):
+        """Test reindex."""
+        # load records
+        with app.test_request_context():
+            runner = CliRunner()
+    
+            id1 = uuid.uuid4()
+            id2 = uuid.uuid4()
+            record1 = Record.create(dict(title='Test 1', recid=1), id_=id1)
+            record2 = Record.create(dict(title='Test 2', recid=2), id_=id2)
+            PersistentIdentifier.create(
+                pid_type='recid',
+                pid_value=1,
+                object_type='rec',
+                object_uuid=id1,
+                status=PIDStatus.REGISTERED,
+            )
+            PersistentIdentifier.create(
+                pid_type='recid',
+                pid_value=2,
+                object_type='rec',
+                object_uuid=id2,
+                status=PIDStatus.REGISTERED,
+            )
+            db.session.commit()
+            indexer = RecordIndexer()
+            index, doc_type = indexer.record_to_index(record1)
+    
+            # Make sure the index doesn't exist at the beginning (it was not
+            # preserved by accident from some other tests)
+>           assert current_search_client.indices.exists(index) is False
+E           AssertionError: assert True is False
+E            +  where True = <bound method IndicesClient.exists of <elasticsearch.client.indices.IndicesClient object at 0x7f076b7e5780>>('records-default-v1.0.0')
+E            +    where <bound method IndicesClient.exists of <elasticsearch.client.indices.IndicesClient object at 0x7f076b7e5780>> = <elasticsearch.client.indices.IndicesClient object at 0x7f076b7e5780>.exists
+E            +      where <elasticsearch.client.indices.IndicesClient object at 0x7f076b7e5780> = current_search_client.indices
+
+tests/test_cli.py:67: AssertionError
+___________________________ test_hook_initialization ___________________________
+
+import_name = 'test_invenio_bulkindexer._global_magic_hook', silent = False
+
+    def import_string(import_name, silent=False):
+        """Imports an object based on a string.  This is useful if you want to
+        use import paths as endpoints or something similar.  An import path can
+        be specified either in dotted notation (``xml.sax.saxutils.escape``)
+        or with a colon as object delimiter (``xml.sax.saxutils:escape``).
+    
+        If `silent` is True the return value will be `None` if the import fails.
+    
+        :param import_name: the dotted name for the object to import.
+        :param silent: if set to `True` import errors are ignored and
+                       `None` is returned instead.
+        :return: imported object
+        """
+        # force the import name to automatically convert to strings
+        # __import__ is not able to handle unicode strings in the fromlist
+        # if the module is a package
+        import_name = str(import_name).replace(":", ".")
+        try:
+            try:
+                __import__(import_name)
+            except ImportError:
+                if "." not in import_name:
+                    raise
+            else:
+                return sys.modules[import_name]
+    
+            module_name, obj_name = import_name.rsplit(".", 1)
+>           module = __import__(module_name, globals(), locals(), [obj_name])
+E           ModuleNotFoundError: No module named 'test_invenio_bulkindexer'
+
+.tox/c1/lib/python3.6/site-packages/werkzeug/utils.py:555: ModuleNotFoundError
+
+During handling of the above exception, another exception occurred:
+
+base_app = <Flask 'testapp'>
+
+    def test_hook_initialization(base_app):
+        """Test hook initialization."""
+        app = base_app
+        magic_hook = MagicMock()
+        app.config['INDEXER_BEFORE_INDEX_HOOKS'] = [
+            magic_hook, 'test_invenio_bulkindexer:_global_magic_hook'
+        ]
+>       ext = InvenioIndexer(app)
+
+tests/test_invenio_bulkindexer.py:54: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-../invenio-db/invenio_db/ext.py:33: in __init__
-    self.init_app(app, **kwargs)
-../invenio-db/invenio_db/ext.py:38: in init_app
-    self.init_db(app, **kwargs)
-../invenio-db/invenio_db/ext.py:77: in init_db
-    base_entry.load()
-.tox/c1/lib/python3.6/site-packages/pkg_resources/__init__.py:2465: in load
-    return self.resolve()
-.tox/c1/lib/python3.6/site-packages/pkg_resources/__init__.py:2471: in resolve
-    module = __import__(self.module_name, fromlist=['__name__'], level=0)
-../weko-workflow/weko_workflow/__init__.py:23: in <module>
-    from .ext import WekoWorkflow
-../weko-workflow/weko_workflow/ext.py:23: in <module>
-    from weko_deposit.signals import item_created
-../weko-deposit/weko_deposit/__init__.py:23: in <module>
-    from .ext import WekoDeposit, WekoDepositREST
-../weko-deposit/weko_deposit/ext.py:26: in <module>
-    from .receivers import append_file_content
-../weko-deposit/weko_deposit/receivers.py:17: in <module>
-    from .api import WekoDeposit
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-
-    """Weko Deposit API."""
-    import copy
-    import inspect
-    import sys
-    import uuid
-    from collections import OrderedDict
-    from datetime import datetime, timezone,date
-    from typing import NoReturn, Union
->   from tika import parser
-E   ModuleNotFoundError: No module named 'tika'
-
-../weko-deposit/weko_deposit/api.py:29: ModuleNotFoundError
-_____________________ ERROR at setup of test_index_action ______________________
-
-request = <SubRequest 'base_app' for <Function test_index_action>>
-
-    @pytest.fixture()
-    def base_app(request):
-        """Base application fixture."""
-        instance_path = tempfile.mkdtemp()
-        app = Flask('testapp', instance_path=instance_path)
-        app.config.update(
-            SEARCH_ELASTIC_HOSTS=os.environ.get(
-                    'SEARCH_ELASTIC_HOSTS', 'elasticsearch'),
-            BROKER_URL='amqp://guest:guest@rabbitmq:5672/',
-            CELERY_BROKER_URL = 'amqp://guest:guest@rabbitmq:5672/',
-            CELERY_ALWAYS_EAGER=True,
-            CELERY_CACHE_BACKEND='memory',
-            CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
-            CELERY_RESULT_BACKEND='cache',
-            JSONSCHEMAS_URL_SCHEME='http',
-            SECRET_KEY='CHANGE_ME',
-            SECURITY_PASSWORD_SALT='CHANGE_ME_ALSO',
-            INDEXER_DEFAULT_INDEX='records-default-v1.0.0',
-            INDEXER_DEFAULT_DOC_TYPE='default-v1.0.0',
-            INDEXER_MQ_QUEUE = Queue("indexer",
-                                     exchange=Exchange("indexer", type="direct"), routing_key="indexer",auto_delete=False,queue_arguments={"x-queue-type":"quorum"}),
-            # SQLALCHEMY_DATABASE_URI=os.environ.get(
-            #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
-            SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-                                              'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
-            SQLALCHEMY_TRACK_MODIFICATIONS=False,
-            TESTING=True,
-        )
-        FlaskCeleryExt(app)
->       InvenioDB(app)
-
-tests/conftest.py:62: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-../invenio-db/invenio_db/ext.py:33: in __init__
-    self.init_app(app, **kwargs)
-../invenio-db/invenio_db/ext.py:38: in init_app
-    self.init_db(app, **kwargs)
-../invenio-db/invenio_db/ext.py:77: in init_db
-    base_entry.load()
-.tox/c1/lib/python3.6/site-packages/pkg_resources/__init__.py:2465: in load
-    return self.resolve()
-.tox/c1/lib/python3.6/site-packages/pkg_resources/__init__.py:2471: in resolve
-    module = __import__(self.module_name, fromlist=['__name__'], level=0)
-../weko-workflow/weko_workflow/__init__.py:23: in <module>
-    from .ext import WekoWorkflow
-../weko-workflow/weko_workflow/ext.py:23: in <module>
-    from weko_deposit.signals import item_created
-../weko-deposit/weko_deposit/__init__.py:23: in <module>
-    from .ext import WekoDeposit, WekoDepositREST
-../weko-deposit/weko_deposit/ext.py:26: in <module>
-    from .receivers import append_file_content
-../weko-deposit/weko_deposit/receivers.py:17: in <module>
-    from .api import WekoDeposit
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-
-    """Weko Deposit API."""
-    import copy
-    import inspect
-    import sys
-    import uuid
-    from collections import OrderedDict
-    from datetime import datetime, timezone,date
-    from typing import NoReturn, Union
->   from tika import parser
-E   ModuleNotFoundError: No module named 'tika'
-
-../weko-deposit/weko_deposit/api.py:29: ModuleNotFoundError
-__________________ ERROR at setup of test_process_bulk_queue ___________________
-
-request = <SubRequest 'base_app' for <Function test_process_bulk_queue>>
-
-    @pytest.fixture()
-    def base_app(request):
-        """Base application fixture."""
-        instance_path = tempfile.mkdtemp()
-        app = Flask('testapp', instance_path=instance_path)
-        app.config.update(
-            SEARCH_ELASTIC_HOSTS=os.environ.get(
-                    'SEARCH_ELASTIC_HOSTS', 'elasticsearch'),
-            BROKER_URL='amqp://guest:guest@rabbitmq:5672/',
-            CELERY_BROKER_URL = 'amqp://guest:guest@rabbitmq:5672/',
-            CELERY_ALWAYS_EAGER=True,
-            CELERY_CACHE_BACKEND='memory',
-            CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
-            CELERY_RESULT_BACKEND='cache',
-            JSONSCHEMAS_URL_SCHEME='http',
-            SECRET_KEY='CHANGE_ME',
-            SECURITY_PASSWORD_SALT='CHANGE_ME_ALSO',
-            INDEXER_DEFAULT_INDEX='records-default-v1.0.0',
-            INDEXER_DEFAULT_DOC_TYPE='default-v1.0.0',
-            INDEXER_MQ_QUEUE = Queue("indexer",
-                                     exchange=Exchange("indexer", type="direct"), routing_key="indexer",auto_delete=False,queue_arguments={"x-queue-type":"quorum"}),
-            # SQLALCHEMY_DATABASE_URI=os.environ.get(
-            #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
-            SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-                                              'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
-            SQLALCHEMY_TRACK_MODIFICATIONS=False,
-            TESTING=True,
-        )
-        FlaskCeleryExt(app)
->       InvenioDB(app)
-
-tests/conftest.py:62: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-../invenio-db/invenio_db/ext.py:33: in __init__
-    self.init_app(app, **kwargs)
-../invenio-db/invenio_db/ext.py:38: in init_app
-    self.init_db(app, **kwargs)
-../invenio-db/invenio_db/ext.py:77: in init_db
-    base_entry.load()
-.tox/c1/lib/python3.6/site-packages/pkg_resources/__init__.py:2465: in load
-    return self.resolve()
-.tox/c1/lib/python3.6/site-packages/pkg_resources/__init__.py:2471: in resolve
-    module = __import__(self.module_name, fromlist=['__name__'], level=0)
-../weko-workflow/weko_workflow/__init__.py:23: in <module>
-    from .ext import WekoWorkflow
-../weko-workflow/weko_workflow/ext.py:23: in <module>
-    from weko_deposit.signals import item_created
-../weko-deposit/weko_deposit/__init__.py:23: in <module>
-    from .ext import WekoDeposit, WekoDepositREST
-../weko-deposit/weko_deposit/ext.py:26: in <module>
-    from .receivers import append_file_content
-../weko-deposit/weko_deposit/receivers.py:17: in <module>
-    from .api import WekoDeposit
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-
-    """Weko Deposit API."""
-    import copy
-    import inspect
-    import sys
-    import uuid
-    from collections import OrderedDict
-    from datetime import datetime, timezone,date
-    from typing import NoReturn, Union
->   from tika import parser
-E   ModuleNotFoundError: No module named 'tika'
-
-../weko-deposit/weko_deposit/api.py:29: ModuleNotFoundError
-_______________ ERROR at setup of test_process_bulk_queue_errors _______________
-
-request = <SubRequest 'base_app' for <Function test_process_bulk_queue_errors>>
-
-    @pytest.fixture()
-    def base_app(request):
-        """Base application fixture."""
-        instance_path = tempfile.mkdtemp()
-        app = Flask('testapp', instance_path=instance_path)
-        app.config.update(
-            SEARCH_ELASTIC_HOSTS=os.environ.get(
-                    'SEARCH_ELASTIC_HOSTS', 'elasticsearch'),
-            BROKER_URL='amqp://guest:guest@rabbitmq:5672/',
-            CELERY_BROKER_URL = 'amqp://guest:guest@rabbitmq:5672/',
-            CELERY_ALWAYS_EAGER=True,
-            CELERY_CACHE_BACKEND='memory',
-            CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
-            CELERY_RESULT_BACKEND='cache',
-            JSONSCHEMAS_URL_SCHEME='http',
-            SECRET_KEY='CHANGE_ME',
-            SECURITY_PASSWORD_SALT='CHANGE_ME_ALSO',
-            INDEXER_DEFAULT_INDEX='records-default-v1.0.0',
-            INDEXER_DEFAULT_DOC_TYPE='default-v1.0.0',
-            INDEXER_MQ_QUEUE = Queue("indexer",
-                                     exchange=Exchange("indexer", type="direct"), routing_key="indexer",auto_delete=False,queue_arguments={"x-queue-type":"quorum"}),
-            # SQLALCHEMY_DATABASE_URI=os.environ.get(
-            #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
-            SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-                                              'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
-            SQLALCHEMY_TRACK_MODIFICATIONS=False,
-            TESTING=True,
-        )
-        FlaskCeleryExt(app)
->       InvenioDB(app)
-
-tests/conftest.py:62: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-../invenio-db/invenio_db/ext.py:33: in __init__
-    self.init_app(app, **kwargs)
-../invenio-db/invenio_db/ext.py:38: in init_app
-    self.init_db(app, **kwargs)
-../invenio-db/invenio_db/ext.py:77: in init_db
-    base_entry.load()
-.tox/c1/lib/python3.6/site-packages/pkg_resources/__init__.py:2465: in load
-    return self.resolve()
-.tox/c1/lib/python3.6/site-packages/pkg_resources/__init__.py:2471: in resolve
-    module = __import__(self.module_name, fromlist=['__name__'], level=0)
-../weko-workflow/weko_workflow/__init__.py:23: in <module>
-    from .ext import WekoWorkflow
-../weko-workflow/weko_workflow/ext.py:23: in <module>
-    from weko_deposit.signals import item_created
-../weko-deposit/weko_deposit/__init__.py:23: in <module>
-    from .ext import WekoDeposit, WekoDepositREST
-../weko-deposit/weko_deposit/ext.py:26: in <module>
-    from .receivers import append_file_content
-../weko-deposit/weko_deposit/receivers.py:17: in <module>
-    from .api import WekoDeposit
+invenio_indexer/ext.py:32: in __init__
+    self.init_app(app)
+invenio_indexer/ext.py:45: in init_app
+    hook = import_string(hook)
+.tox/c1/lib/python3.6/site-packages/werkzeug/utils.py:564: in import_string
+    ImportStringError, ImportStringError(import_name, e), sys.exc_info()[2]
+.tox/c1/lib/python3.6/site-packages/werkzeug/_compat.py:147: in reraise
+    raise value.with_traceback(tb)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-    """Weko Deposit API."""
-    import copy
-    import inspect
-    import sys
-    import uuid
-    from collections import OrderedDict
-    from datetime import datetime, timezone,date
-    from typing import NoReturn, Union
->   from tika import parser
-E   ModuleNotFoundError: No module named 'tika'
+import_name = 'test_invenio_bulkindexer._global_magic_hook', silent = False
 
-../weko-deposit/weko_deposit/api.py:29: ModuleNotFoundError
-_________________________ ERROR at setup of test_index _________________________
+    def import_string(import_name, silent=False):
+        """Imports an object based on a string.  This is useful if you want to
+        use import paths as endpoints or something similar.  An import path can
+        be specified either in dotted notation (``xml.sax.saxutils.escape``)
+        or with a colon as object delimiter (``xml.sax.saxutils:escape``).
+    
+        If `silent` is True the return value will be `None` if the import fails.
+    
+        :param import_name: the dotted name for the object to import.
+        :param silent: if set to `True` import errors are ignored and
+                       `None` is returned instead.
+        :return: imported object
+        """
+        # force the import name to automatically convert to strings
+        # __import__ is not able to handle unicode strings in the fromlist
+        # if the module is a package
+        import_name = str(import_name).replace(":", ".")
+        try:
+            try:
+                __import__(import_name)
+            except ImportError:
+                if "." not in import_name:
+                    raise
+            else:
+                return sys.modules[import_name]
+    
+            module_name, obj_name = import_name.rsplit(".", 1)
+>           module = __import__(module_name, globals(), locals(), [obj_name])
+E           werkzeug.utils.ImportStringError: import_string() failed for 'test_invenio_bulkindexer._global_magic_hook'. Possible reasons are:
+E           
+E           - missing __init__.py in a package;
+E           - package or module path not included in sys.path;
+E           - duplicated package or module name taking precedence in sys.path;
+E           - missing module, class, function or variable;
+E           
+E           Debugged import:
+E           
+E           - 'test_invenio_bulkindexer' not found.
+E           
+E           Original exception:
+E           
+E           ModuleNotFoundError: No module named 'test_invenio_bulkindexer'
 
-request = <SubRequest 'base_app' for <Function test_index>>
-
-    @pytest.fixture()
-    def base_app(request):
-        """Base application fixture."""
-        instance_path = tempfile.mkdtemp()
-        app = Flask('testapp', instance_path=instance_path)
-        app.config.update(
-            SEARCH_ELASTIC_HOSTS=os.environ.get(
-                    'SEARCH_ELASTIC_HOSTS', 'elasticsearch'),
-            BROKER_URL='amqp://guest:guest@rabbitmq:5672/',
-            CELERY_BROKER_URL = 'amqp://guest:guest@rabbitmq:5672/',
-            CELERY_ALWAYS_EAGER=True,
-            CELERY_CACHE_BACKEND='memory',
-            CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
-            CELERY_RESULT_BACKEND='cache',
-            JSONSCHEMAS_URL_SCHEME='http',
-            SECRET_KEY='CHANGE_ME',
-            SECURITY_PASSWORD_SALT='CHANGE_ME_ALSO',
-            INDEXER_DEFAULT_INDEX='records-default-v1.0.0',
-            INDEXER_DEFAULT_DOC_TYPE='default-v1.0.0',
-            INDEXER_MQ_QUEUE = Queue("indexer",
-                                     exchange=Exchange("indexer", type="direct"), routing_key="indexer",auto_delete=False,queue_arguments={"x-queue-type":"quorum"}),
-            # SQLALCHEMY_DATABASE_URI=os.environ.get(
-            #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
-            SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-                                              'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
-            SQLALCHEMY_TRACK_MODIFICATIONS=False,
-            TESTING=True,
-        )
-        FlaskCeleryExt(app)
->       InvenioDB(app)
-
-tests/conftest.py:62: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-../invenio-db/invenio_db/ext.py:33: in __init__
-    self.init_app(app, **kwargs)
-../invenio-db/invenio_db/ext.py:38: in init_app
-    self.init_db(app, **kwargs)
-../invenio-db/invenio_db/ext.py:77: in init_db
-    base_entry.load()
-.tox/c1/lib/python3.6/site-packages/pkg_resources/__init__.py:2465: in load
-    return self.resolve()
-.tox/c1/lib/python3.6/site-packages/pkg_resources/__init__.py:2471: in resolve
-    module = __import__(self.module_name, fromlist=['__name__'], level=0)
-../weko-workflow/weko_workflow/__init__.py:23: in <module>
-    from .ext import WekoWorkflow
-../weko-workflow/weko_workflow/ext.py:23: in <module>
-    from weko_deposit.signals import item_created
-../weko-deposit/weko_deposit/__init__.py:23: in <module>
-    from .ext import WekoDeposit, WekoDepositREST
-../weko-deposit/weko_deposit/ext.py:26: in <module>
-    from .receivers import append_file_content
-../weko-deposit/weko_deposit/receivers.py:17: in <module>
-    from .api import WekoDeposit
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-
-    """Weko Deposit API."""
-    import copy
-    import inspect
-    import sys
-    import uuid
-    from collections import OrderedDict
-    from datetime import datetime, timezone,date
-    from typing import NoReturn, Union
->   from tika import parser
-E   ModuleNotFoundError: No module named 'tika'
-
-../weko-deposit/weko_deposit/api.py:29: ModuleNotFoundError
-________________________ ERROR at setup of test_delete _________________________
-
-request = <SubRequest 'base_app' for <Function test_delete>>
-
-    @pytest.fixture()
-    def base_app(request):
-        """Base application fixture."""
-        instance_path = tempfile.mkdtemp()
-        app = Flask('testapp', instance_path=instance_path)
-        app.config.update(
-            SEARCH_ELASTIC_HOSTS=os.environ.get(
-                    'SEARCH_ELASTIC_HOSTS', 'elasticsearch'),
-            BROKER_URL='amqp://guest:guest@rabbitmq:5672/',
-            CELERY_BROKER_URL = 'amqp://guest:guest@rabbitmq:5672/',
-            CELERY_ALWAYS_EAGER=True,
-            CELERY_CACHE_BACKEND='memory',
-            CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
-            CELERY_RESULT_BACKEND='cache',
-            JSONSCHEMAS_URL_SCHEME='http',
-            SECRET_KEY='CHANGE_ME',
-            SECURITY_PASSWORD_SALT='CHANGE_ME_ALSO',
-            INDEXER_DEFAULT_INDEX='records-default-v1.0.0',
-            INDEXER_DEFAULT_DOC_TYPE='default-v1.0.0',
-            INDEXER_MQ_QUEUE = Queue("indexer",
-                                     exchange=Exchange("indexer", type="direct"), routing_key="indexer",auto_delete=False,queue_arguments={"x-queue-type":"quorum"}),
-            # SQLALCHEMY_DATABASE_URI=os.environ.get(
-            #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
-            SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-                                              'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
-            SQLALCHEMY_TRACK_MODIFICATIONS=False,
-            TESTING=True,
-        )
-        FlaskCeleryExt(app)
->       InvenioDB(app)
-
-tests/conftest.py:62: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-../invenio-db/invenio_db/ext.py:33: in __init__
-    self.init_app(app, **kwargs)
-../invenio-db/invenio_db/ext.py:38: in init_app
-    self.init_db(app, **kwargs)
-../invenio-db/invenio_db/ext.py:77: in init_db
-    base_entry.load()
-.tox/c1/lib/python3.6/site-packages/pkg_resources/__init__.py:2465: in load
-    return self.resolve()
-.tox/c1/lib/python3.6/site-packages/pkg_resources/__init__.py:2471: in resolve
-    module = __import__(self.module_name, fromlist=['__name__'], level=0)
-../weko-workflow/weko_workflow/__init__.py:23: in <module>
-    from .ext import WekoWorkflow
-../weko-workflow/weko_workflow/ext.py:23: in <module>
-    from weko_deposit.signals import item_created
-../weko-deposit/weko_deposit/__init__.py:23: in <module>
-    from .ext import WekoDeposit, WekoDepositREST
-../weko-deposit/weko_deposit/ext.py:26: in <module>
-    from .receivers import append_file_content
-../weko-deposit/weko_deposit/receivers.py:17: in <module>
-    from .api import WekoDeposit
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-
-    """Weko Deposit API."""
-    import copy
-    import inspect
-    import sys
-    import uuid
-    from collections import OrderedDict
-    from datetime import datetime, timezone,date
-    from typing import NoReturn, Union
->   from tika import parser
-E   ModuleNotFoundError: No module named 'tika'
-
-../weko-deposit/weko_deposit/api.py:29: ModuleNotFoundError
-_____________________ ERROR at setup of test_replace_refs ______________________
-
-request = <SubRequest 'base_app' for <Function test_replace_refs>>
-
-    @pytest.fixture()
-    def base_app(request):
-        """Base application fixture."""
-        instance_path = tempfile.mkdtemp()
-        app = Flask('testapp', instance_path=instance_path)
-        app.config.update(
-            SEARCH_ELASTIC_HOSTS=os.environ.get(
-                    'SEARCH_ELASTIC_HOSTS', 'elasticsearch'),
-            BROKER_URL='amqp://guest:guest@rabbitmq:5672/',
-            CELERY_BROKER_URL = 'amqp://guest:guest@rabbitmq:5672/',
-            CELERY_ALWAYS_EAGER=True,
-            CELERY_CACHE_BACKEND='memory',
-            CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
-            CELERY_RESULT_BACKEND='cache',
-            JSONSCHEMAS_URL_SCHEME='http',
-            SECRET_KEY='CHANGE_ME',
-            SECURITY_PASSWORD_SALT='CHANGE_ME_ALSO',
-            INDEXER_DEFAULT_INDEX='records-default-v1.0.0',
-            INDEXER_DEFAULT_DOC_TYPE='default-v1.0.0',
-            INDEXER_MQ_QUEUE = Queue("indexer",
-                                     exchange=Exchange("indexer", type="direct"), routing_key="indexer",auto_delete=False,queue_arguments={"x-queue-type":"quorum"}),
-            # SQLALCHEMY_DATABASE_URI=os.environ.get(
-            #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
-            SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-                                              'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
-            SQLALCHEMY_TRACK_MODIFICATIONS=False,
-            TESTING=True,
-        )
-        FlaskCeleryExt(app)
->       InvenioDB(app)
-
-tests/conftest.py:62: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-../invenio-db/invenio_db/ext.py:33: in __init__
-    self.init_app(app, **kwargs)
-../invenio-db/invenio_db/ext.py:38: in init_app
-    self.init_db(app, **kwargs)
-../invenio-db/invenio_db/ext.py:77: in init_db
-    base_entry.load()
-.tox/c1/lib/python3.6/site-packages/pkg_resources/__init__.py:2465: in load
-    return self.resolve()
-.tox/c1/lib/python3.6/site-packages/pkg_resources/__init__.py:2471: in resolve
-    module = __import__(self.module_name, fromlist=['__name__'], level=0)
-../weko-workflow/weko_workflow/__init__.py:23: in <module>
-    from .ext import WekoWorkflow
-../weko-workflow/weko_workflow/ext.py:23: in <module>
-    from weko_deposit.signals import item_created
-../weko-deposit/weko_deposit/__init__.py:23: in <module>
-    from .ext import WekoDeposit, WekoDepositREST
-../weko-deposit/weko_deposit/ext.py:26: in <module>
-    from .receivers import append_file_content
-../weko-deposit/weko_deposit/receivers.py:17: in <module>
-    from .api import WekoDeposit
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-
-    """Weko Deposit API."""
-    import copy
-    import inspect
-    import sys
-    import uuid
-    from collections import OrderedDict
-    from datetime import datetime, timezone,date
-    from typing import NoReturn, Union
->   from tika import parser
-E   ModuleNotFoundError: No module named 'tika'
-
-../weko-deposit/weko_deposit/api.py:29: ModuleNotFoundError
-______ ERROR at setup of test_bulkrecordindexer_index_delete_by_record_id ______
-
-request = <SubRequest 'base_app' for <Function test_bulkrecordindexer_index_delete_by_record_id>>
-
-    @pytest.fixture()
-    def base_app(request):
-        """Base application fixture."""
-        instance_path = tempfile.mkdtemp()
-        app = Flask('testapp', instance_path=instance_path)
-        app.config.update(
-            SEARCH_ELASTIC_HOSTS=os.environ.get(
-                    'SEARCH_ELASTIC_HOSTS', 'elasticsearch'),
-            BROKER_URL='amqp://guest:guest@rabbitmq:5672/',
-            CELERY_BROKER_URL = 'amqp://guest:guest@rabbitmq:5672/',
-            CELERY_ALWAYS_EAGER=True,
-            CELERY_CACHE_BACKEND='memory',
-            CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
-            CELERY_RESULT_BACKEND='cache',
-            JSONSCHEMAS_URL_SCHEME='http',
-            SECRET_KEY='CHANGE_ME',
-            SECURITY_PASSWORD_SALT='CHANGE_ME_ALSO',
-            INDEXER_DEFAULT_INDEX='records-default-v1.0.0',
-            INDEXER_DEFAULT_DOC_TYPE='default-v1.0.0',
-            INDEXER_MQ_QUEUE = Queue("indexer",
-                                     exchange=Exchange("indexer", type="direct"), routing_key="indexer",auto_delete=False,queue_arguments={"x-queue-type":"quorum"}),
-            # SQLALCHEMY_DATABASE_URI=os.environ.get(
-            #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
-            SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-                                              'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
-            SQLALCHEMY_TRACK_MODIFICATIONS=False,
-            TESTING=True,
-        )
-        FlaskCeleryExt(app)
->       InvenioDB(app)
-
-tests/conftest.py:62: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-../invenio-db/invenio_db/ext.py:33: in __init__
-    self.init_app(app, **kwargs)
-../invenio-db/invenio_db/ext.py:38: in init_app
-    self.init_db(app, **kwargs)
-../invenio-db/invenio_db/ext.py:77: in init_db
-    base_entry.load()
-.tox/c1/lib/python3.6/site-packages/pkg_resources/__init__.py:2465: in load
-    return self.resolve()
-.tox/c1/lib/python3.6/site-packages/pkg_resources/__init__.py:2471: in resolve
-    module = __import__(self.module_name, fromlist=['__name__'], level=0)
-../weko-workflow/weko_workflow/__init__.py:23: in <module>
-    from .ext import WekoWorkflow
-../weko-workflow/weko_workflow/ext.py:23: in <module>
-    from weko_deposit.signals import item_created
-../weko-deposit/weko_deposit/__init__.py:23: in <module>
-    from .ext import WekoDeposit, WekoDepositREST
-../weko-deposit/weko_deposit/ext.py:26: in <module>
-    from .receivers import append_file_content
-../weko-deposit/weko_deposit/receivers.py:17: in <module>
-    from .api import WekoDeposit
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-
-    """Weko Deposit API."""
-    import copy
-    import inspect
-    import sys
-    import uuid
-    from collections import OrderedDict
-    from datetime import datetime, timezone,date
-    from typing import NoReturn, Union
->   from tika import parser
-E   ModuleNotFoundError: No module named 'tika'
-
-../weko-deposit/weko_deposit/api.py:29: ModuleNotFoundError
-_______ ERROR at setup of test_bulkrecordindexer_index_delete_by_record ________
-
-request = <SubRequest 'base_app' for <Function test_bulkrecordindexer_index_delete_by_record>>
-
-    @pytest.fixture()
-    def base_app(request):
-        """Base application fixture."""
-        instance_path = tempfile.mkdtemp()
-        app = Flask('testapp', instance_path=instance_path)
-        app.config.update(
-            SEARCH_ELASTIC_HOSTS=os.environ.get(
-                    'SEARCH_ELASTIC_HOSTS', 'elasticsearch'),
-            BROKER_URL='amqp://guest:guest@rabbitmq:5672/',
-            CELERY_BROKER_URL = 'amqp://guest:guest@rabbitmq:5672/',
-            CELERY_ALWAYS_EAGER=True,
-            CELERY_CACHE_BACKEND='memory',
-            CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
-            CELERY_RESULT_BACKEND='cache',
-            JSONSCHEMAS_URL_SCHEME='http',
-            SECRET_KEY='CHANGE_ME',
-            SECURITY_PASSWORD_SALT='CHANGE_ME_ALSO',
-            INDEXER_DEFAULT_INDEX='records-default-v1.0.0',
-            INDEXER_DEFAULT_DOC_TYPE='default-v1.0.0',
-            INDEXER_MQ_QUEUE = Queue("indexer",
-                                     exchange=Exchange("indexer", type="direct"), routing_key="indexer",auto_delete=False,queue_arguments={"x-queue-type":"quorum"}),
-            # SQLALCHEMY_DATABASE_URI=os.environ.get(
-            #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
-            SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-                                              'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
-            SQLALCHEMY_TRACK_MODIFICATIONS=False,
-            TESTING=True,
-        )
-        FlaskCeleryExt(app)
->       InvenioDB(app)
-
-tests/conftest.py:62: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-../invenio-db/invenio_db/ext.py:33: in __init__
-    self.init_app(app, **kwargs)
-../invenio-db/invenio_db/ext.py:38: in init_app
-    self.init_db(app, **kwargs)
-../invenio-db/invenio_db/ext.py:77: in init_db
-    base_entry.load()
-.tox/c1/lib/python3.6/site-packages/pkg_resources/__init__.py:2465: in load
-    return self.resolve()
-.tox/c1/lib/python3.6/site-packages/pkg_resources/__init__.py:2471: in resolve
-    module = __import__(self.module_name, fromlist=['__name__'], level=0)
-../weko-workflow/weko_workflow/__init__.py:23: in <module>
-    from .ext import WekoWorkflow
-../weko-workflow/weko_workflow/ext.py:23: in <module>
-    from weko_deposit.signals import item_created
-../weko-deposit/weko_deposit/__init__.py:23: in <module>
-    from .ext import WekoDeposit, WekoDepositREST
-../weko-deposit/weko_deposit/ext.py:26: in <module>
-    from .receivers import append_file_content
-../weko-deposit/weko_deposit/receivers.py:17: in <module>
-    from .api import WekoDeposit
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-
-    """Weko Deposit API."""
-    import copy
-    import inspect
-    import sys
-    import uuid
-    from collections import OrderedDict
-    from datetime import datetime, timezone,date
-    from typing import NoReturn, Union
->   from tika import parser
-E   ModuleNotFoundError: No module named 'tika'
-
-../weko-deposit/weko_deposit/api.py:29: ModuleNotFoundError
-__________________________ ERROR at setup of test_run __________________________
-
-request = <SubRequest 'base_app' for <Function test_run>>
-
-    @pytest.fixture()
-    def base_app(request):
-        """Base application fixture."""
-        instance_path = tempfile.mkdtemp()
-        app = Flask('testapp', instance_path=instance_path)
-        app.config.update(
-            SEARCH_ELASTIC_HOSTS=os.environ.get(
-                    'SEARCH_ELASTIC_HOSTS', 'elasticsearch'),
-            BROKER_URL='amqp://guest:guest@rabbitmq:5672/',
-            CELERY_BROKER_URL = 'amqp://guest:guest@rabbitmq:5672/',
-            CELERY_ALWAYS_EAGER=True,
-            CELERY_CACHE_BACKEND='memory',
-            CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
-            CELERY_RESULT_BACKEND='cache',
-            JSONSCHEMAS_URL_SCHEME='http',
-            SECRET_KEY='CHANGE_ME',
-            SECURITY_PASSWORD_SALT='CHANGE_ME_ALSO',
-            INDEXER_DEFAULT_INDEX='records-default-v1.0.0',
-            INDEXER_DEFAULT_DOC_TYPE='default-v1.0.0',
-            INDEXER_MQ_QUEUE = Queue("indexer",
-                                     exchange=Exchange("indexer", type="direct"), routing_key="indexer",auto_delete=False,queue_arguments={"x-queue-type":"quorum"}),
-            # SQLALCHEMY_DATABASE_URI=os.environ.get(
-            #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
-            SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-                                              'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
-            SQLALCHEMY_TRACK_MODIFICATIONS=False,
-            TESTING=True,
-        )
-        FlaskCeleryExt(app)
->       InvenioDB(app)
-
-tests/conftest.py:62: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-../invenio-db/invenio_db/ext.py:33: in __init__
-    self.init_app(app, **kwargs)
-../invenio-db/invenio_db/ext.py:38: in init_app
-    self.init_db(app, **kwargs)
-../invenio-db/invenio_db/ext.py:77: in init_db
-    base_entry.load()
-.tox/c1/lib/python3.6/site-packages/pkg_resources/__init__.py:2465: in load
-    return self.resolve()
-.tox/c1/lib/python3.6/site-packages/pkg_resources/__init__.py:2471: in resolve
-    module = __import__(self.module_name, fromlist=['__name__'], level=0)
-../weko-workflow/weko_workflow/__init__.py:23: in <module>
-    from .ext import WekoWorkflow
-../weko-workflow/weko_workflow/ext.py:23: in <module>
-    from weko_deposit.signals import item_created
-../weko-deposit/weko_deposit/__init__.py:23: in <module>
-    from .ext import WekoDeposit, WekoDepositREST
-../weko-deposit/weko_deposit/ext.py:26: in <module>
-    from .receivers import append_file_content
-../weko-deposit/weko_deposit/receivers.py:17: in <module>
-    from .api import WekoDeposit
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-
-    """Weko Deposit API."""
-    import copy
-    import inspect
-    import sys
-    import uuid
-    from collections import OrderedDict
-    from datetime import datetime, timezone,date
-    from typing import NoReturn, Union
->   from tika import parser
-E   ModuleNotFoundError: No module named 'tika'
-
-../weko-deposit/weko_deposit/api.py:29: ModuleNotFoundError
-________________________ ERROR at setup of test_reindex ________________________
-
-request = <SubRequest 'base_app' for <Function test_reindex>>
-
-    @pytest.fixture()
-    def base_app(request):
-        """Base application fixture."""
-        instance_path = tempfile.mkdtemp()
-        app = Flask('testapp', instance_path=instance_path)
-        app.config.update(
-            SEARCH_ELASTIC_HOSTS=os.environ.get(
-                    'SEARCH_ELASTIC_HOSTS', 'elasticsearch'),
-            BROKER_URL='amqp://guest:guest@rabbitmq:5672/',
-            CELERY_BROKER_URL = 'amqp://guest:guest@rabbitmq:5672/',
-            CELERY_ALWAYS_EAGER=True,
-            CELERY_CACHE_BACKEND='memory',
-            CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
-            CELERY_RESULT_BACKEND='cache',
-            JSONSCHEMAS_URL_SCHEME='http',
-            SECRET_KEY='CHANGE_ME',
-            SECURITY_PASSWORD_SALT='CHANGE_ME_ALSO',
-            INDEXER_DEFAULT_INDEX='records-default-v1.0.0',
-            INDEXER_DEFAULT_DOC_TYPE='default-v1.0.0',
-            INDEXER_MQ_QUEUE = Queue("indexer",
-                                     exchange=Exchange("indexer", type="direct"), routing_key="indexer",auto_delete=False,queue_arguments={"x-queue-type":"quorum"}),
-            # SQLALCHEMY_DATABASE_URI=os.environ.get(
-            #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
-            SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-                                              'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
-            SQLALCHEMY_TRACK_MODIFICATIONS=False,
-            TESTING=True,
-        )
-        FlaskCeleryExt(app)
->       InvenioDB(app)
-
-tests/conftest.py:62: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-../invenio-db/invenio_db/ext.py:33: in __init__
-    self.init_app(app, **kwargs)
-../invenio-db/invenio_db/ext.py:38: in init_app
-    self.init_db(app, **kwargs)
-../invenio-db/invenio_db/ext.py:77: in init_db
-    base_entry.load()
-.tox/c1/lib/python3.6/site-packages/pkg_resources/__init__.py:2465: in load
-    return self.resolve()
-.tox/c1/lib/python3.6/site-packages/pkg_resources/__init__.py:2471: in resolve
-    module = __import__(self.module_name, fromlist=['__name__'], level=0)
-../weko-workflow/weko_workflow/__init__.py:23: in <module>
-    from .ext import WekoWorkflow
-../weko-workflow/weko_workflow/ext.py:23: in <module>
-    from weko_deposit.signals import item_created
-../weko-deposit/weko_deposit/__init__.py:23: in <module>
-    from .ext import WekoDeposit, WekoDepositREST
-../weko-deposit/weko_deposit/ext.py:26: in <module>
-    from .receivers import append_file_content
-../weko-deposit/weko_deposit/receivers.py:17: in <module>
-    from .api import WekoDeposit
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-
-    """Weko Deposit API."""
-    import copy
-    import inspect
-    import sys
-    import uuid
-    from collections import OrderedDict
-    from datetime import datetime, timezone,date
-    from typing import NoReturn, Union
->   from tika import parser
-E   ModuleNotFoundError: No module named 'tika'
-
-../weko-deposit/weko_deposit/api.py:29: ModuleNotFoundError
-__________________ ERROR at setup of test_hook_initialization __________________
-
-request = <SubRequest 'base_app' for <Function test_hook_initialization>>
-
-    @pytest.fixture()
-    def base_app(request):
-        """Base application fixture."""
-        instance_path = tempfile.mkdtemp()
-        app = Flask('testapp', instance_path=instance_path)
-        app.config.update(
-            SEARCH_ELASTIC_HOSTS=os.environ.get(
-                    'SEARCH_ELASTIC_HOSTS', 'elasticsearch'),
-            BROKER_URL='amqp://guest:guest@rabbitmq:5672/',
-            CELERY_BROKER_URL = 'amqp://guest:guest@rabbitmq:5672/',
-            CELERY_ALWAYS_EAGER=True,
-            CELERY_CACHE_BACKEND='memory',
-            CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
-            CELERY_RESULT_BACKEND='cache',
-            JSONSCHEMAS_URL_SCHEME='http',
-            SECRET_KEY='CHANGE_ME',
-            SECURITY_PASSWORD_SALT='CHANGE_ME_ALSO',
-            INDEXER_DEFAULT_INDEX='records-default-v1.0.0',
-            INDEXER_DEFAULT_DOC_TYPE='default-v1.0.0',
-            INDEXER_MQ_QUEUE = Queue("indexer",
-                                     exchange=Exchange("indexer", type="direct"), routing_key="indexer",auto_delete=False,queue_arguments={"x-queue-type":"quorum"}),
-            # SQLALCHEMY_DATABASE_URI=os.environ.get(
-            #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
-            SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-                                              'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
-            SQLALCHEMY_TRACK_MODIFICATIONS=False,
-            TESTING=True,
-        )
-        FlaskCeleryExt(app)
->       InvenioDB(app)
-
-tests/conftest.py:62: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-../invenio-db/invenio_db/ext.py:33: in __init__
-    self.init_app(app, **kwargs)
-../invenio-db/invenio_db/ext.py:38: in init_app
-    self.init_db(app, **kwargs)
-../invenio-db/invenio_db/ext.py:77: in init_db
-    base_entry.load()
-.tox/c1/lib/python3.6/site-packages/pkg_resources/__init__.py:2465: in load
-    return self.resolve()
-.tox/c1/lib/python3.6/site-packages/pkg_resources/__init__.py:2471: in resolve
-    module = __import__(self.module_name, fromlist=['__name__'], level=0)
-../weko-workflow/weko_workflow/__init__.py:23: in <module>
-    from .ext import WekoWorkflow
-../weko-workflow/weko_workflow/ext.py:23: in <module>
-    from weko_deposit.signals import item_created
-../weko-deposit/weko_deposit/__init__.py:23: in <module>
-    from .ext import WekoDeposit, WekoDepositREST
-../weko-deposit/weko_deposit/ext.py:26: in <module>
-    from .receivers import append_file_content
-../weko-deposit/weko_deposit/receivers.py:17: in <module>
-    from .api import WekoDeposit
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-
-    """Weko Deposit API."""
-    import copy
-    import inspect
-    import sys
-    import uuid
-    from collections import OrderedDict
-    from datetime import datetime, timezone,date
-    from typing import NoReturn, Union
->   from tika import parser
-E   ModuleNotFoundError: No module named 'tika'
-
-../weko-deposit/weko_deposit/api.py:29: ModuleNotFoundError
-__________________ ERROR at setup of test_process_bulk_queue ___________________
-
-request = <SubRequest 'base_app' for <Function test_process_bulk_queue>>
-
-    @pytest.fixture()
-    def base_app(request):
-        """Base application fixture."""
-        instance_path = tempfile.mkdtemp()
-        app = Flask('testapp', instance_path=instance_path)
-        app.config.update(
-            SEARCH_ELASTIC_HOSTS=os.environ.get(
-                    'SEARCH_ELASTIC_HOSTS', 'elasticsearch'),
-            BROKER_URL='amqp://guest:guest@rabbitmq:5672/',
-            CELERY_BROKER_URL = 'amqp://guest:guest@rabbitmq:5672/',
-            CELERY_ALWAYS_EAGER=True,
-            CELERY_CACHE_BACKEND='memory',
-            CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
-            CELERY_RESULT_BACKEND='cache',
-            JSONSCHEMAS_URL_SCHEME='http',
-            SECRET_KEY='CHANGE_ME',
-            SECURITY_PASSWORD_SALT='CHANGE_ME_ALSO',
-            INDEXER_DEFAULT_INDEX='records-default-v1.0.0',
-            INDEXER_DEFAULT_DOC_TYPE='default-v1.0.0',
-            INDEXER_MQ_QUEUE = Queue("indexer",
-                                     exchange=Exchange("indexer", type="direct"), routing_key="indexer",auto_delete=False,queue_arguments={"x-queue-type":"quorum"}),
-            # SQLALCHEMY_DATABASE_URI=os.environ.get(
-            #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
-            SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-                                              'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
-            SQLALCHEMY_TRACK_MODIFICATIONS=False,
-            TESTING=True,
-        )
-        FlaskCeleryExt(app)
->       InvenioDB(app)
-
-tests/conftest.py:62: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-../invenio-db/invenio_db/ext.py:33: in __init__
-    self.init_app(app, **kwargs)
-../invenio-db/invenio_db/ext.py:38: in init_app
-    self.init_db(app, **kwargs)
-../invenio-db/invenio_db/ext.py:77: in init_db
-    base_entry.load()
-.tox/c1/lib/python3.6/site-packages/pkg_resources/__init__.py:2465: in load
-    return self.resolve()
-.tox/c1/lib/python3.6/site-packages/pkg_resources/__init__.py:2471: in resolve
-    module = __import__(self.module_name, fromlist=['__name__'], level=0)
-../weko-workflow/weko_workflow/__init__.py:23: in <module>
-    from .ext import WekoWorkflow
-../weko-workflow/weko_workflow/ext.py:23: in <module>
-    from weko_deposit.signals import item_created
-../weko-deposit/weko_deposit/__init__.py:23: in <module>
-    from .ext import WekoDeposit, WekoDepositREST
-../weko-deposit/weko_deposit/ext.py:26: in <module>
-    from .receivers import append_file_content
-../weko-deposit/weko_deposit/receivers.py:17: in <module>
-    from .api import WekoDeposit
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-
-    """Weko Deposit API."""
-    import copy
-    import inspect
-    import sys
-    import uuid
-    from collections import OrderedDict
-    from datetime import datetime, timezone,date
-    from typing import NoReturn, Union
->   from tika import parser
-E   ModuleNotFoundError: No module named 'tika'
-
-../weko-deposit/weko_deposit/api.py:29: ModuleNotFoundError
-_____________________ ERROR at setup of test_index_record ______________________
-
-request = <SubRequest 'base_app' for <Function test_index_record>>
-
-    @pytest.fixture()
-    def base_app(request):
-        """Base application fixture."""
-        instance_path = tempfile.mkdtemp()
-        app = Flask('testapp', instance_path=instance_path)
-        app.config.update(
-            SEARCH_ELASTIC_HOSTS=os.environ.get(
-                    'SEARCH_ELASTIC_HOSTS', 'elasticsearch'),
-            BROKER_URL='amqp://guest:guest@rabbitmq:5672/',
-            CELERY_BROKER_URL = 'amqp://guest:guest@rabbitmq:5672/',
-            CELERY_ALWAYS_EAGER=True,
-            CELERY_CACHE_BACKEND='memory',
-            CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
-            CELERY_RESULT_BACKEND='cache',
-            JSONSCHEMAS_URL_SCHEME='http',
-            SECRET_KEY='CHANGE_ME',
-            SECURITY_PASSWORD_SALT='CHANGE_ME_ALSO',
-            INDEXER_DEFAULT_INDEX='records-default-v1.0.0',
-            INDEXER_DEFAULT_DOC_TYPE='default-v1.0.0',
-            INDEXER_MQ_QUEUE = Queue("indexer",
-                                     exchange=Exchange("indexer", type="direct"), routing_key="indexer",auto_delete=False,queue_arguments={"x-queue-type":"quorum"}),
-            # SQLALCHEMY_DATABASE_URI=os.environ.get(
-            #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
-            SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-                                              'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
-            SQLALCHEMY_TRACK_MODIFICATIONS=False,
-            TESTING=True,
-        )
-        FlaskCeleryExt(app)
->       InvenioDB(app)
-
-tests/conftest.py:62: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-../invenio-db/invenio_db/ext.py:33: in __init__
-    self.init_app(app, **kwargs)
-../invenio-db/invenio_db/ext.py:38: in init_app
-    self.init_db(app, **kwargs)
-../invenio-db/invenio_db/ext.py:77: in init_db
-    base_entry.load()
-.tox/c1/lib/python3.6/site-packages/pkg_resources/__init__.py:2465: in load
-    return self.resolve()
-.tox/c1/lib/python3.6/site-packages/pkg_resources/__init__.py:2471: in resolve
-    module = __import__(self.module_name, fromlist=['__name__'], level=0)
-../weko-workflow/weko_workflow/__init__.py:23: in <module>
-    from .ext import WekoWorkflow
-../weko-workflow/weko_workflow/ext.py:23: in <module>
-    from weko_deposit.signals import item_created
-../weko-deposit/weko_deposit/__init__.py:23: in <module>
-    from .ext import WekoDeposit, WekoDepositREST
-../weko-deposit/weko_deposit/ext.py:26: in <module>
-    from .receivers import append_file_content
-../weko-deposit/weko_deposit/receivers.py:17: in <module>
-    from .api import WekoDeposit
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-
-    """Weko Deposit API."""
-    import copy
-    import inspect
-    import sys
-    import uuid
-    from collections import OrderedDict
-    from datetime import datetime, timezone,date
-    from typing import NoReturn, Union
->   from tika import parser
-E   ModuleNotFoundError: No module named 'tika'
-
-../weko-deposit/weko_deposit/api.py:29: ModuleNotFoundError
-_____________________ ERROR at setup of test_delete_record _____________________
-
-request = <SubRequest 'base_app' for <Function test_delete_record>>
-
-    @pytest.fixture()
-    def base_app(request):
-        """Base application fixture."""
-        instance_path = tempfile.mkdtemp()
-        app = Flask('testapp', instance_path=instance_path)
-        app.config.update(
-            SEARCH_ELASTIC_HOSTS=os.environ.get(
-                    'SEARCH_ELASTIC_HOSTS', 'elasticsearch'),
-            BROKER_URL='amqp://guest:guest@rabbitmq:5672/',
-            CELERY_BROKER_URL = 'amqp://guest:guest@rabbitmq:5672/',
-            CELERY_ALWAYS_EAGER=True,
-            CELERY_CACHE_BACKEND='memory',
-            CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
-            CELERY_RESULT_BACKEND='cache',
-            JSONSCHEMAS_URL_SCHEME='http',
-            SECRET_KEY='CHANGE_ME',
-            SECURITY_PASSWORD_SALT='CHANGE_ME_ALSO',
-            INDEXER_DEFAULT_INDEX='records-default-v1.0.0',
-            INDEXER_DEFAULT_DOC_TYPE='default-v1.0.0',
-            INDEXER_MQ_QUEUE = Queue("indexer",
-                                     exchange=Exchange("indexer", type="direct"), routing_key="indexer",auto_delete=False,queue_arguments={"x-queue-type":"quorum"}),
-            # SQLALCHEMY_DATABASE_URI=os.environ.get(
-            #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
-            SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-                                              'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
-            SQLALCHEMY_TRACK_MODIFICATIONS=False,
-            TESTING=True,
-        )
-        FlaskCeleryExt(app)
->       InvenioDB(app)
-
-tests/conftest.py:62: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-../invenio-db/invenio_db/ext.py:33: in __init__
-    self.init_app(app, **kwargs)
-../invenio-db/invenio_db/ext.py:38: in init_app
-    self.init_db(app, **kwargs)
-../invenio-db/invenio_db/ext.py:77: in init_db
-    base_entry.load()
-.tox/c1/lib/python3.6/site-packages/pkg_resources/__init__.py:2465: in load
-    return self.resolve()
-.tox/c1/lib/python3.6/site-packages/pkg_resources/__init__.py:2471: in resolve
-    module = __import__(self.module_name, fromlist=['__name__'], level=0)
-../weko-workflow/weko_workflow/__init__.py:23: in <module>
-    from .ext import WekoWorkflow
-../weko-workflow/weko_workflow/ext.py:23: in <module>
-    from weko_deposit.signals import item_created
-../weko-deposit/weko_deposit/__init__.py:23: in <module>
-    from .ext import WekoDeposit, WekoDepositREST
-../weko-deposit/weko_deposit/ext.py:26: in <module>
-    from .receivers import append_file_content
-../weko-deposit/weko_deposit/receivers.py:17: in <module>
-    from .api import WekoDeposit
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-
-    """Weko Deposit API."""
-    import copy
-    import inspect
-    import sys
-    import uuid
-    from collections import OrderedDict
-    from datetime import datetime, timezone,date
-    from typing import NoReturn, Union
->   from tika import parser
-E   ModuleNotFoundError: No module named 'tika'
-
-../weko-deposit/weko_deposit/api.py:29: ModuleNotFoundError
+.tox/c1/lib/python3.6/site-packages/werkzeug/utils.py:555: ImportStringError
 =============================== warnings summary ===============================
 tests/test_api.py::test_indexer_bulk_index
 tests/test_api.py::test_delete_action
@@ -1209,395 +399,8 @@ tests/test_tasks.py::test_delete_record
     UserWarning
 
 tests/test_api.py::test_indexer_bulk_index
-  /code/modules/invenio-indexer/.tox/c1/lib/python3.6/site-packages/pkg_resources/_vendor/packaging/specifiers.py:276: DeprecationWarning: Creating a LegacyVersion has been deprecated and will be removed in the next major release
-    DeprecationWarning,
-
-tests/test_api.py::test_indexer_bulk_index
-tests/test_api.py::test_indexer_bulk_index
-tests/test_api.py::test_indexer_bulk_index
-tests/test_api.py::test_indexer_bulk_index
-tests/test_api.py::test_indexer_bulk_index
-tests/test_api.py::test_indexer_bulk_index
-tests/test_api.py::test_indexer_bulk_index
-tests/test_api.py::test_indexer_bulk_index
-tests/test_api.py::test_indexer_bulk_index
-tests/test_api.py::test_indexer_bulk_index
-tests/test_api.py::test_indexer_bulk_index
-tests/test_api.py::test_indexer_bulk_index
-tests/test_api.py::test_indexer_bulk_index
-tests/test_api.py::test_indexer_bulk_index
-tests/test_api.py::test_indexer_bulk_index
-tests/test_api.py::test_indexer_bulk_index
-tests/test_api.py::test_indexer_bulk_index
-tests/test_api.py::test_indexer_bulk_index
-tests/test_api.py::test_indexer_bulk_index
-tests/test_api.py::test_indexer_bulk_index
-tests/test_api.py::test_indexer_bulk_index
-tests/test_api.py::test_indexer_bulk_index
-tests/test_api.py::test_indexer_bulk_index
-tests/test_api.py::test_indexer_bulk_index
-tests/test_api.py::test_delete_action
-tests/test_api.py::test_delete_action
-tests/test_api.py::test_delete_action
-tests/test_api.py::test_delete_action
-tests/test_api.py::test_delete_action
-tests/test_api.py::test_delete_action
-tests/test_api.py::test_delete_action
-tests/test_api.py::test_delete_action
-tests/test_api.py::test_delete_action
-tests/test_api.py::test_delete_action
-tests/test_api.py::test_delete_action
-tests/test_api.py::test_delete_action
-tests/test_api.py::test_delete_action
-tests/test_api.py::test_delete_action
-tests/test_api.py::test_delete_action
-tests/test_api.py::test_delete_action
-tests/test_api.py::test_delete_action
-tests/test_api.py::test_delete_action
-tests/test_api.py::test_delete_action
-tests/test_api.py::test_delete_action
-tests/test_api.py::test_delete_action
-tests/test_api.py::test_delete_action
-tests/test_api.py::test_delete_action
-tests/test_api.py::test_delete_action
-tests/test_api.py::test_index_action
-tests/test_api.py::test_index_action
-tests/test_api.py::test_index_action
-tests/test_api.py::test_index_action
-tests/test_api.py::test_index_action
-tests/test_api.py::test_index_action
-tests/test_api.py::test_index_action
-tests/test_api.py::test_index_action
-tests/test_api.py::test_index_action
-tests/test_api.py::test_index_action
-tests/test_api.py::test_index_action
-tests/test_api.py::test_index_action
-tests/test_api.py::test_index_action
-tests/test_api.py::test_index_action
-tests/test_api.py::test_index_action
-tests/test_api.py::test_index_action
-tests/test_api.py::test_index_action
-tests/test_api.py::test_index_action
-tests/test_api.py::test_index_action
-tests/test_api.py::test_index_action
-tests/test_api.py::test_index_action
-tests/test_api.py::test_index_action
-tests/test_api.py::test_index_action
-tests/test_api.py::test_index_action
-tests/test_api.py::test_process_bulk_queue
-tests/test_api.py::test_process_bulk_queue
-tests/test_api.py::test_process_bulk_queue
-tests/test_api.py::test_process_bulk_queue
-tests/test_api.py::test_process_bulk_queue
-tests/test_api.py::test_process_bulk_queue
-tests/test_api.py::test_process_bulk_queue
-tests/test_api.py::test_process_bulk_queue
-tests/test_api.py::test_process_bulk_queue
-tests/test_api.py::test_process_bulk_queue
-tests/test_api.py::test_process_bulk_queue
-tests/test_api.py::test_process_bulk_queue
-tests/test_api.py::test_process_bulk_queue
-tests/test_api.py::test_process_bulk_queue
-tests/test_api.py::test_process_bulk_queue
-tests/test_api.py::test_process_bulk_queue
-tests/test_api.py::test_process_bulk_queue
-tests/test_api.py::test_process_bulk_queue
-tests/test_api.py::test_process_bulk_queue
-tests/test_api.py::test_process_bulk_queue
-tests/test_api.py::test_process_bulk_queue
-tests/test_api.py::test_process_bulk_queue
-tests/test_api.py::test_process_bulk_queue
-tests/test_api.py::test_process_bulk_queue
-tests/test_api.py::test_process_bulk_queue_errors
-tests/test_api.py::test_process_bulk_queue_errors
-tests/test_api.py::test_process_bulk_queue_errors
-tests/test_api.py::test_process_bulk_queue_errors
-tests/test_api.py::test_process_bulk_queue_errors
-tests/test_api.py::test_process_bulk_queue_errors
-tests/test_api.py::test_process_bulk_queue_errors
-tests/test_api.py::test_process_bulk_queue_errors
-tests/test_api.py::test_process_bulk_queue_errors
-tests/test_api.py::test_process_bulk_queue_errors
-tests/test_api.py::test_process_bulk_queue_errors
-tests/test_api.py::test_process_bulk_queue_errors
-tests/test_api.py::test_process_bulk_queue_errors
-tests/test_api.py::test_process_bulk_queue_errors
-tests/test_api.py::test_process_bulk_queue_errors
-tests/test_api.py::test_process_bulk_queue_errors
-tests/test_api.py::test_process_bulk_queue_errors
-tests/test_api.py::test_process_bulk_queue_errors
-tests/test_api.py::test_process_bulk_queue_errors
-tests/test_api.py::test_process_bulk_queue_errors
-tests/test_api.py::test_process_bulk_queue_errors
-tests/test_api.py::test_process_bulk_queue_errors
-tests/test_api.py::test_process_bulk_queue_errors
-tests/test_api.py::test_process_bulk_queue_errors
-tests/test_api.py::test_index
-tests/test_api.py::test_index
-tests/test_api.py::test_index
-tests/test_api.py::test_index
-tests/test_api.py::test_index
-tests/test_api.py::test_index
-tests/test_api.py::test_index
-tests/test_api.py::test_index
-tests/test_api.py::test_index
-tests/test_api.py::test_index
-tests/test_api.py::test_index
-tests/test_api.py::test_index
-tests/test_api.py::test_index
-tests/test_api.py::test_index
-tests/test_api.py::test_index
-tests/test_api.py::test_index
-tests/test_api.py::test_index
-tests/test_api.py::test_index
-tests/test_api.py::test_index
-tests/test_api.py::test_index
-tests/test_api.py::test_index
-tests/test_api.py::test_index
-tests/test_api.py::test_index
-tests/test_api.py::test_index
-tests/test_api.py::test_delete
-tests/test_api.py::test_delete
-tests/test_api.py::test_delete
-tests/test_api.py::test_delete
-tests/test_api.py::test_delete
-tests/test_api.py::test_delete
-tests/test_api.py::test_delete
-tests/test_api.py::test_delete
-tests/test_api.py::test_delete
-tests/test_api.py::test_delete
-tests/test_api.py::test_delete
-tests/test_api.py::test_delete
-tests/test_api.py::test_delete
-tests/test_api.py::test_delete
-tests/test_api.py::test_delete
-tests/test_api.py::test_delete
-tests/test_api.py::test_delete
-tests/test_api.py::test_delete
-tests/test_api.py::test_delete
-tests/test_api.py::test_delete
-tests/test_api.py::test_delete
-tests/test_api.py::test_delete
-tests/test_api.py::test_delete
-tests/test_api.py::test_delete
-tests/test_api.py::test_replace_refs
-tests/test_api.py::test_replace_refs
-tests/test_api.py::test_replace_refs
-tests/test_api.py::test_replace_refs
-tests/test_api.py::test_replace_refs
-tests/test_api.py::test_replace_refs
-tests/test_api.py::test_replace_refs
-tests/test_api.py::test_replace_refs
-tests/test_api.py::test_replace_refs
-tests/test_api.py::test_replace_refs
-tests/test_api.py::test_replace_refs
-tests/test_api.py::test_replace_refs
-tests/test_api.py::test_replace_refs
-tests/test_api.py::test_replace_refs
-tests/test_api.py::test_replace_refs
-tests/test_api.py::test_replace_refs
-tests/test_api.py::test_replace_refs
-tests/test_api.py::test_replace_refs
-tests/test_api.py::test_replace_refs
-tests/test_api.py::test_replace_refs
-tests/test_api.py::test_replace_refs
-tests/test_api.py::test_replace_refs
-tests/test_api.py::test_replace_refs
-tests/test_api.py::test_replace_refs
-tests/test_api.py::test_bulkrecordindexer_index_delete_by_record_id
-tests/test_api.py::test_bulkrecordindexer_index_delete_by_record_id
-tests/test_api.py::test_bulkrecordindexer_index_delete_by_record_id
-tests/test_api.py::test_bulkrecordindexer_index_delete_by_record_id
-tests/test_api.py::test_bulkrecordindexer_index_delete_by_record_id
-tests/test_api.py::test_bulkrecordindexer_index_delete_by_record_id
-tests/test_api.py::test_bulkrecordindexer_index_delete_by_record_id
-tests/test_api.py::test_bulkrecordindexer_index_delete_by_record_id
-tests/test_api.py::test_bulkrecordindexer_index_delete_by_record_id
-tests/test_api.py::test_bulkrecordindexer_index_delete_by_record_id
-tests/test_api.py::test_bulkrecordindexer_index_delete_by_record_id
-tests/test_api.py::test_bulkrecordindexer_index_delete_by_record_id
-tests/test_api.py::test_bulkrecordindexer_index_delete_by_record_id
-tests/test_api.py::test_bulkrecordindexer_index_delete_by_record_id
-tests/test_api.py::test_bulkrecordindexer_index_delete_by_record_id
-tests/test_api.py::test_bulkrecordindexer_index_delete_by_record_id
-tests/test_api.py::test_bulkrecordindexer_index_delete_by_record_id
-tests/test_api.py::test_bulkrecordindexer_index_delete_by_record_id
-tests/test_api.py::test_bulkrecordindexer_index_delete_by_record_id
-tests/test_api.py::test_bulkrecordindexer_index_delete_by_record_id
-tests/test_api.py::test_bulkrecordindexer_index_delete_by_record_id
-tests/test_api.py::test_bulkrecordindexer_index_delete_by_record_id
-tests/test_api.py::test_bulkrecordindexer_index_delete_by_record_id
-tests/test_api.py::test_bulkrecordindexer_index_delete_by_record_id
-tests/test_api.py::test_bulkrecordindexer_index_delete_by_record
-tests/test_api.py::test_bulkrecordindexer_index_delete_by_record
-tests/test_api.py::test_bulkrecordindexer_index_delete_by_record
-tests/test_api.py::test_bulkrecordindexer_index_delete_by_record
-tests/test_api.py::test_bulkrecordindexer_index_delete_by_record
-tests/test_api.py::test_bulkrecordindexer_index_delete_by_record
-tests/test_api.py::test_bulkrecordindexer_index_delete_by_record
-tests/test_api.py::test_bulkrecordindexer_index_delete_by_record
-tests/test_api.py::test_bulkrecordindexer_index_delete_by_record
-tests/test_api.py::test_bulkrecordindexer_index_delete_by_record
-tests/test_api.py::test_bulkrecordindexer_index_delete_by_record
-tests/test_api.py::test_bulkrecordindexer_index_delete_by_record
-tests/test_api.py::test_bulkrecordindexer_index_delete_by_record
-tests/test_api.py::test_bulkrecordindexer_index_delete_by_record
-tests/test_api.py::test_bulkrecordindexer_index_delete_by_record
-tests/test_api.py::test_bulkrecordindexer_index_delete_by_record
-tests/test_api.py::test_bulkrecordindexer_index_delete_by_record
-tests/test_api.py::test_bulkrecordindexer_index_delete_by_record
-tests/test_api.py::test_bulkrecordindexer_index_delete_by_record
-tests/test_api.py::test_bulkrecordindexer_index_delete_by_record
-tests/test_api.py::test_bulkrecordindexer_index_delete_by_record
-tests/test_api.py::test_bulkrecordindexer_index_delete_by_record
-tests/test_api.py::test_bulkrecordindexer_index_delete_by_record
-tests/test_api.py::test_bulkrecordindexer_index_delete_by_record
-tests/test_cli.py::test_run
-tests/test_cli.py::test_run
-tests/test_cli.py::test_run
-tests/test_cli.py::test_run
-tests/test_cli.py::test_run
-tests/test_cli.py::test_run
-tests/test_cli.py::test_run
-tests/test_cli.py::test_run
-tests/test_cli.py::test_run
-tests/test_cli.py::test_run
-tests/test_cli.py::test_run
-tests/test_cli.py::test_run
-tests/test_cli.py::test_run
-tests/test_cli.py::test_run
-tests/test_cli.py::test_run
-tests/test_cli.py::test_run
-tests/test_cli.py::test_run
-tests/test_cli.py::test_run
-tests/test_cli.py::test_run
-tests/test_cli.py::test_run
-tests/test_cli.py::test_run
-tests/test_cli.py::test_run
-tests/test_cli.py::test_run
-tests/test_cli.py::test_run
-tests/test_cli.py::test_reindex
-tests/test_cli.py::test_reindex
-tests/test_cli.py::test_reindex
-tests/test_cli.py::test_reindex
-tests/test_cli.py::test_reindex
-tests/test_cli.py::test_reindex
-tests/test_cli.py::test_reindex
-tests/test_cli.py::test_reindex
-tests/test_cli.py::test_reindex
-tests/test_cli.py::test_reindex
-tests/test_cli.py::test_reindex
-tests/test_cli.py::test_reindex
-tests/test_cli.py::test_reindex
-tests/test_cli.py::test_reindex
-tests/test_cli.py::test_reindex
-tests/test_cli.py::test_reindex
-tests/test_cli.py::test_reindex
-tests/test_cli.py::test_reindex
-tests/test_cli.py::test_reindex
-tests/test_cli.py::test_reindex
-tests/test_cli.py::test_reindex
-tests/test_cli.py::test_reindex
-tests/test_cli.py::test_reindex
-tests/test_cli.py::test_reindex
-tests/test_invenio_bulkindexer.py::test_hook_initialization
-tests/test_invenio_bulkindexer.py::test_hook_initialization
-tests/test_invenio_bulkindexer.py::test_hook_initialization
-tests/test_invenio_bulkindexer.py::test_hook_initialization
-tests/test_invenio_bulkindexer.py::test_hook_initialization
-tests/test_invenio_bulkindexer.py::test_hook_initialization
-tests/test_invenio_bulkindexer.py::test_hook_initialization
-tests/test_invenio_bulkindexer.py::test_hook_initialization
-tests/test_invenio_bulkindexer.py::test_hook_initialization
-tests/test_invenio_bulkindexer.py::test_hook_initialization
-tests/test_invenio_bulkindexer.py::test_hook_initialization
-tests/test_invenio_bulkindexer.py::test_hook_initialization
-tests/test_invenio_bulkindexer.py::test_hook_initialization
-tests/test_invenio_bulkindexer.py::test_hook_initialization
-tests/test_invenio_bulkindexer.py::test_hook_initialization
-tests/test_invenio_bulkindexer.py::test_hook_initialization
-tests/test_invenio_bulkindexer.py::test_hook_initialization
-tests/test_invenio_bulkindexer.py::test_hook_initialization
-tests/test_invenio_bulkindexer.py::test_hook_initialization
-tests/test_invenio_bulkindexer.py::test_hook_initialization
-tests/test_invenio_bulkindexer.py::test_hook_initialization
-tests/test_invenio_bulkindexer.py::test_hook_initialization
-tests/test_invenio_bulkindexer.py::test_hook_initialization
-tests/test_invenio_bulkindexer.py::test_hook_initialization
-tests/test_tasks.py::test_process_bulk_queue
-tests/test_tasks.py::test_process_bulk_queue
-tests/test_tasks.py::test_process_bulk_queue
-tests/test_tasks.py::test_process_bulk_queue
-tests/test_tasks.py::test_process_bulk_queue
-tests/test_tasks.py::test_process_bulk_queue
-tests/test_tasks.py::test_process_bulk_queue
-tests/test_tasks.py::test_process_bulk_queue
-tests/test_tasks.py::test_process_bulk_queue
-tests/test_tasks.py::test_process_bulk_queue
-tests/test_tasks.py::test_process_bulk_queue
-tests/test_tasks.py::test_process_bulk_queue
-tests/test_tasks.py::test_process_bulk_queue
-tests/test_tasks.py::test_process_bulk_queue
-tests/test_tasks.py::test_process_bulk_queue
-tests/test_tasks.py::test_process_bulk_queue
-tests/test_tasks.py::test_process_bulk_queue
-tests/test_tasks.py::test_process_bulk_queue
-tests/test_tasks.py::test_process_bulk_queue
-tests/test_tasks.py::test_process_bulk_queue
-tests/test_tasks.py::test_process_bulk_queue
-tests/test_tasks.py::test_process_bulk_queue
-tests/test_tasks.py::test_process_bulk_queue
-tests/test_tasks.py::test_process_bulk_queue
-tests/test_tasks.py::test_index_record
-tests/test_tasks.py::test_index_record
-tests/test_tasks.py::test_index_record
-tests/test_tasks.py::test_index_record
-tests/test_tasks.py::test_index_record
-tests/test_tasks.py::test_index_record
-tests/test_tasks.py::test_index_record
-tests/test_tasks.py::test_index_record
-tests/test_tasks.py::test_index_record
-tests/test_tasks.py::test_index_record
-tests/test_tasks.py::test_index_record
-tests/test_tasks.py::test_index_record
-tests/test_tasks.py::test_index_record
-tests/test_tasks.py::test_index_record
-tests/test_tasks.py::test_index_record
-tests/test_tasks.py::test_index_record
-tests/test_tasks.py::test_index_record
-tests/test_tasks.py::test_index_record
-tests/test_tasks.py::test_index_record
-tests/test_tasks.py::test_index_record
-tests/test_tasks.py::test_index_record
-tests/test_tasks.py::test_index_record
-tests/test_tasks.py::test_index_record
-tests/test_tasks.py::test_index_record
-tests/test_tasks.py::test_delete_record
-tests/test_tasks.py::test_delete_record
-tests/test_tasks.py::test_delete_record
-tests/test_tasks.py::test_delete_record
-tests/test_tasks.py::test_delete_record
-tests/test_tasks.py::test_delete_record
-tests/test_tasks.py::test_delete_record
-tests/test_tasks.py::test_delete_record
-tests/test_tasks.py::test_delete_record
-tests/test_tasks.py::test_delete_record
-tests/test_tasks.py::test_delete_record
-tests/test_tasks.py::test_delete_record
-tests/test_tasks.py::test_delete_record
-tests/test_tasks.py::test_delete_record
-tests/test_tasks.py::test_delete_record
-tests/test_tasks.py::test_delete_record
-tests/test_tasks.py::test_delete_record
-tests/test_tasks.py::test_delete_record
-tests/test_tasks.py::test_delete_record
-tests/test_tasks.py::test_delete_record
-tests/test_tasks.py::test_delete_record
-tests/test_tasks.py::test_delete_record
-tests/test_tasks.py::test_delete_record
-tests/test_tasks.py::test_delete_record
-  /code/modules/invenio-indexer/.tox/c1/lib/python3.6/site-packages/pkg_resources/_vendor/packaging/version.py:114: DeprecationWarning: Creating a LegacyVersion has been deprecated and will be removed in the next major release
-    DeprecationWarning,
+  /code/modules/invenio-indexer/.tox/c1/src/pypdf2/PyPDF2/generic.py:348: DeprecationWarning: invalid escape sequence \c
+    b_("c") : b_("\c"),
 
 -- Docs: https://docs.pytest.org/en/latest/warnings.html
 
@@ -1605,21 +408,21 @@ tests/test_tasks.py::test_delete_record
 Name                          Stmts   Miss Branch BrPart  Cover
 ---------------------------------------------------------------
 invenio_indexer/__init__.py       6      0      0      0   100%
-invenio_indexer/api.py          184    135     38      0    25%
-invenio_indexer/cli.py          107     63     26      0    33%
+invenio_indexer/api.py          184     38     38      4    77%
+invenio_indexer/cli.py          107     55     26      1    43%
 invenio_indexer/config.py        13      0      0      0   100%
-invenio_indexer/ext.py           26      4     12      1    82%
-invenio_indexer/proxies.py        6      1      0      0    83%
+invenio_indexer/ext.py           26      0     12      0   100%
+invenio_indexer/proxies.py        6      0      0      0   100%
 invenio_indexer/signals.py        6      0      0      0   100%
-invenio_indexer/tasks.py         11      3      0      0    73%
-invenio_indexer/utils.py         13     13      4      0     0%
+invenio_indexer/tasks.py         11      0      0      0   100%
+invenio_indexer/utils.py         13      0      4      0   100%
 invenio_indexer/version.py        3      0      0      0   100%
 ---------------------------------------------------------------
-TOTAL                           375    219     80      1    38%
+TOTAL                           375     93     80      5    72%
 Coverage HTML written to dir htmlcov
 Coverage XML written to file coverage.xml
 
-========= 2 passed, 1 skipped, 417 warnings, 16 error in 11.04 seconds =========
+========= 5 failed, 13 passed, 1 skipped, 33 warnings in 55.10 seconds =========
 ERROR: InvocationError for command /code/modules/invenio-indexer/.tox/c1/bin/pytest --cov=invenio_indexer tests -v -vv -s --cov-branch --cov-report=term --cov-report=xml --cov-report=html --basetemp=/code/modules/invenio-indexer/.tox/c1/tmp (exited with code 1)
 ___________________________________ summary ____________________________________
 ERROR:   c1: commands failed
