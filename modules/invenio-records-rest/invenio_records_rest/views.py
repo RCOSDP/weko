@@ -1146,6 +1146,7 @@ class RecordResource(ContentNegotiatedMethodView):
         except BaseException as e:
             db.session.rollback()
             current_app.logger.error(traceback.format_exc())
+            return self.make_response(None, None, 500)
 
         return self.make_response(
             pid, record, links_factory=self.links_factory)
