@@ -253,7 +253,7 @@ require([
     if(file_version_id != null) {
       startGuestWorkflowId = "#btn-start-guest-wf-" + file_version_id
       startNormalWorkflowId = "#btn-start-workflow-" + file_version_id
-      termsAndConditionModalId = "#term_and_condtion_modal-" + file_version_id
+      termsAndConditionModalId = "#term_and_condtion_modal_" + file_version_id
     }
     if (isGuest == "True" && isTermsOnly == "True") {
       const $btnStartGuestTermOnly=$(startGuestWorkflowId);
