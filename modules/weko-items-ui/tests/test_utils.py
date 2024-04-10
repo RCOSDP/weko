@@ -15,6 +15,8 @@ import uuid
 
 import pytest
 from flask_security.utils import login_user
+from invenio_stats.errors import UnknownQueryError
+from weko_records_ui.errors import AvailableFilesNotFoundRESTError
 from weko_redis.redis import RedisConnection
 from invenio_accounts.testutils import login_user_via_session
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
@@ -121,6 +123,7 @@ from weko_items_ui.utils import (
     validate_user_mail_and_index,
     write_bibtex_files,
     write_files,
+    get_file_download_data,
 )
 from weko_items_ui.config import WEKO_ITEMS_UI_DEFAULT_MAX_EXPORT_NUM,WEKO_ITEMS_UI_MAX_EXPORT_NUM_PER_ROLE
 
@@ -10291,3 +10294,124 @@ def test_has_permission_edit_item3(app, client, users, db_records):
         assert users[7]["email"] == "user@test.org"
         depid, recid, parent, doi, record, item = db_records[0]
         assert has_permission_edit_item(record, record.pid.pid_value) == True
+
+
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_get_file_download_data -vv -s --cov-branch --cov-report=html --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_get_file_download_data(app, client, records):
+    indexer, results = records
+
+    with app.test_request_context():
+        # 12 Can sort download_total
+        record = results[1]["record"]
+        filenames = ["helloworld.pdf", "helloworld.docx"]
+        for file in record.files:
+            file["accessrole"] = "open_access"
+            file["filename"] = file["key"]
+        return_value = {
+            'download_ranking': {
+                'doc_count_error_upper_bound': 0,
+                'sum_other_doc_count': 0,
+                'buckets': [
+                    {
+                        'key': filenames[1],
+                        'doc_count': 3
+                    },
+                    {
+                        'key': filenames[0],
+                        'doc_count': 5
+                    },
+                ]
+            }
+        }
+        with patch("invenio_stats.queries.ESWekoFileRankingQuery.run", return_value=return_value):
+            res = get_file_download_data(record.id, record, filenames)
+            assert res["ranking"][0]["download_total"] == 5
+            assert res["ranking"][1]["download_total"] == 3
+
+        # 13 Both accessrole
+        record = results[3]["record"]
+        filenames = ["helloworld.pdf", "helloworld.txt"]
+        accessrole_list = ["open_access", "open_no"]
+        for file, accessrole in zip(record.files, accessrole_list):
+            file["accessrole"] = accessrole
+            file["filename"] = file["key"]
+        return_value = {
+            'download_ranking': {
+                'doc_count_error_upper_bound': 0,
+                'sum_other_doc_count': 0,
+                'buckets': [
+                    {
+                        'key': filenames[0],
+                        'doc_count': 5
+                    },
+                    {
+                        'key': filenames[1],
+                        'doc_count': 3
+                    },
+                ]
+            }
+        }
+        with patch("invenio_stats.queries.ESWekoFileRankingQuery.run", return_value=return_value):
+            res = get_file_download_data(record.id, record, filenames)
+            assert len(res["ranking"]) == 1
+            assert res["ranking"][0]["filename"] == "helloworld.pdf"
+
+        # 14 Set date
+        with patch("invenio_stats.queries.ESWekoFileRankingQuery.run", return_value=return_value) as test_mock:
+            res = get_file_download_data(record.id, record, filenames, "2024-01")
+            assert test_mock.call_args[1]["start_date"] == "2024-01-01"
+            assert test_mock.call_args[1]["end_date"] == "2024-01-31T23:59:59"
+
+        # 15 Set size
+        record = results[1]["record"]
+        filenames = ["helloworld.pdf", "helloworld.docx"]
+        for file in record.files:
+            file["accessrole"] = "open_access"
+            file["filename"] = file["key"]
+        return_value = {
+            'download_ranking': {
+                'doc_count_error_upper_bound': 0,
+                'sum_other_doc_count': 0,
+                'buckets': [
+                    {
+                        'key': filenames[0],
+                        'doc_count': 3
+                    },
+                    {
+                        'key': filenames[1],
+                        'doc_count': 5
+                    },
+                ]
+            }
+        }
+        with patch("invenio_stats.queries.ESWekoFileRankingQuery.run", return_value=return_value):
+            res = get_file_download_data(record.id, record, filenames, size=1)
+            assert len(res["ranking"]) == 1
+            assert res["ranking"][0]["download_total"] == 5
+
+        # 16 Exeption in running query
+        with patch("invenio_stats.queries.ESWekoFileRankingQuery.run", side_effect=Exception):
+            res = get_file_download_data(record.id, record, filenames)
+            assert res["ranking"][0]["download_total"] \
+                    == res["ranking"][1]["download_total"] \
+                    == 0
+
+        with patch("invenio_stats.queries.ESWekoFileRankingQuery.run", return_value=Exception):
+            res = get_file_download_data(record.id, record, filenames)
+            assert res["ranking"][0]["download_total"] \
+                    == res["ranking"][1]["download_total"] \
+                    == 0
+
+        # 17 Only unavailable file
+        record = results[4]["record"]
+        filenames = ["helloworld.pdf"]
+        for file in record.files:
+            file["accessrole"] = "open_no"
+            file["filename"] = file["key"]
+        with pytest.raises(AvailableFilesNotFoundRESTError):
+            get_file_download_data(record.id, record, filenames)
+
+        # 18 Not exist file
+        record = results[5]["record"]
+        with pytest.raises(AvailableFilesNotFoundRESTError):
+            get_file_download_data(record.id, record, filenames)

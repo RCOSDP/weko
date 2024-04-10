@@ -50,6 +50,7 @@ from werkzeug.local import LocalProxy
 
 from .fetchers import weko_record_fetcher
 from .models import FeedbackMailList as _FeedbackMailList
+from .models import RequestMailList as _RequestMailList
 from .models import FileMetadata, ItemMetadata, ItemReference, ItemType
 from .models import ItemTypeEditHistory as ItemTypeEditHistoryModel
 from .models import ItemTypeMapping, ItemTypeName, ItemTypeProperty, \
@@ -2179,6 +2180,116 @@ class FeedbackMailList(object):
         for item_id in item_ids:
             cls.delete(item_id)
 
+
+class RequestMailList(object):
+    """Request-Mail List API."""
+
+    @classmethod
+    def update(cls, item_id, request_maillist):
+        """Create a new instance request_mail_list.
+
+        :param item_id: Item Identifier
+        :param request_maillist: list of request mail
+        :return boolean: True if success
+        """
+        try:
+            with db.session.begin_nested():
+                query_object = _RequestMailList.query.filter_by(
+                    item_id=item_id).one_or_none()
+                if not query_object:
+                    query_object = _RequestMailList(
+                        item_id=item_id,
+                        mail_list=request_maillist
+                    )
+                    db.session.add(query_object)
+                else:
+                    query_object.mail_list = request_maillist
+                    db.session.merge(query_object)
+            db.session.commit()
+        except SQLAlchemyError:
+            db.session.rollback()
+            return False
+        return True
+
+    @classmethod
+    def update_by_list_item_id(cls, item_ids, request_maillist):
+        """Create a new instance reqeust_mail_list.
+
+        :param item_ids: Item Identifiers
+        :param request_maillist: Request mail list
+        """
+        for item_id in item_ids:
+            cls.update(item_id, request_maillist)
+
+    @classmethod
+    def get_mail_list_by_item_id(cls, item_id):
+        """Get a RequestMail list by item_id.
+
+        :param item_id:
+        :return request_mail_list
+
+        """
+        try:
+            with db.session.no_autoflush:
+                query_object = _RequestMailList.query.filter_by(
+                    item_id=item_id).one_or_none()
+                if query_object and query_object.mail_list:
+                    return query_object.mail_list
+                else:
+                    return []
+        except SQLAlchemyError:
+            return []
+
+    @classmethod
+    def get_request_mail_by_mailaddress(cls, address):
+        """Get a RequestMail list by mailaddress
+        :param address: str, mailaddress
+        :return request_mail_list
+        """
+        try:
+            with db.session.no_autoflush:
+                query_object = _RequestMailList.query.filter(
+                    cast(_RequestMailList.mail_list, String).contains('"'+address+'"')).all()
+                if query_object:
+                    return query_object
+                else:
+                    return []
+        except SQLAlchemyError:
+            return []
+
+    @classmethod
+    def delete(cls, item_id):
+        """Delete a request_mail_list by item_id.
+
+        :param item_id: item_id of target request_mail_list
+        :return: bool: True if success
+        """
+        try:
+            cls.delete_without_commit(item_id)
+            db.session.commit()
+        except SQLAlchemyError:
+            db.session.rollback()
+            return False
+        return True
+
+    @classmethod
+    def delete_without_commit(cls, item_id):
+        """Delete a request_mail_list by item_id without commit.
+
+        :param item_id: item_id of target request_mail_list
+        :return: bool: True if success
+        """
+        with db.session.begin_nested():
+            _RequestMailList.query.filter_by(item_id=item_id).delete()
+
+    @classmethod
+    def delete_by_list_item_id(cls, item_ids):
+        """Delete a request_mail_list by item_id.
+
+        :param item_ids: item_id of target request_mail_list
+        """
+        for item_id in item_ids:
+            cls.delete(item_id)
 
 class ItemLink(object):
     """Item Link API."""

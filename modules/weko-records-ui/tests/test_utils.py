@@ -1,10 +1,12 @@
 import pytest
-from weko_records_ui.utils import is_future, create_usage_report_for_user,get_data_usage_application_data,send_usage_report_mail_for_user,check_and_send_usage_report,update_onetime_download,create_onetime_download_url,get_onetime_download,validate_onetime_download_token,get_license_pdf,hide_item_metadata,get_pair_value,get_min_price_billing_file_download,parse_one_time_download_token,generate_one_time_download_url,validate_download_record,is_private_index,get_file_info_list,replace_license_free,is_show_email_of_creator,hide_by_itemtype,hide_by_email,hide_by_file,hide_item_metadata_email_only,get_workflows,get_billing_file_download_permission,get_list_licence,restore,soft_delete,is_billing_item,get_groups_price,get_record_permalink,get_google_detaset_meta,get_google_scholar_meta,display_oaiset_path,get_terms,get_roles,check_items_settings,get_valid_onetime_download,create_secret_url,_generate_secret_download_url,parse_secret_download_token,validate_secret_download_token,get_secret_download,_create_secret_download_url,update_secret_download
+from weko_records_ui.utils import is_future, create_usage_report_for_user,get_data_usage_application_data,send_usage_report_mail_for_user,check_and_send_usage_report,check_and_create_usage_report,update_onetime_download,create_onetime_download_url,get_onetime_download,validate_onetime_download_token,get_license_pdf,hide_item_metadata,get_pair_value,get_min_price_billing_file_download,parse_one_time_download_token,generate_one_time_download_url,validate_download_record,is_private_index,get_file_info_list,replace_license_free,hide_by_itemtype,hide_by_email,hide_by_file,hide_item_metadata_email_only,get_workflows,get_billing_file_download_permission,get_list_licence,restore,soft_delete,is_billing_item,get_groups_price,get_record_permalink,get_google_detaset_meta,get_google_scholar_meta,display_oaiset_path,get_terms,get_roles,check_items_settings,RoCrateConverter,create_tsv
 import base64
 from unittest.mock import MagicMock
 import copy
 import pytest
 import io
+from datetime import datetime as dt
+from datetime import timedelta
 from lxml import etree
 from fpdf import FPDF
 from invenio_records_files.utils import record_file_factory
@@ -845,3 +847,99 @@ def test_get_data_usage_application_data(app ,db):
         assert len(res) == 1
         assert res[0].download_count == 100
 
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_RoCrateConverter_convert -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_RoCrateConverter_convert():
+    with open('tests/data/rocrate/rocrate_mapping.json', 'r') as f:
+        mapping = json.load(f)
+    with open('tests/data/rocrate/records_metadata.json', 'r') as f:
+        record_data = json.load(f)
+    converter = RoCrateConverter()
+    rocrate = converter.convert(record_data, mapping)
+    assert rocrate
+    assert type(rocrate) == dict
+
+    with open('tests/data/rocrate/test_mapping_rocrate_mapping.json', 'r') as f:
+        mapping = json.load(f)
+    with open('tests/data/rocrate/test_mapping_records_metadata.json', 'r') as f:
+        record_data = json.load(f)
+    rocrate = converter.convert(record_data, mapping)
+    assert rocrate['@graph'][0]['prop1'] == 'value1'
+    assert rocrate['@graph'][0]['prop2'] == ['value2']
+    assert rocrate['@graph'][0]['prop3'] == ['value3_1', 'value3_2']
+    assert rocrate['@graph'][0]['prop4_1'] == 'value4_1'
+    assert rocrate['@graph'][0]['prop4_2'] == 'value4_2'
+    assert 'prop4_3' not in rocrate['@graph'][0]
+    assert rocrate['@graph'][0]['prop5'] == ['value5_1', 'value5_2', 'value5_3']
+    assert rocrate['@graph'][0]['prop6'] == ['value6_2']
+    assert rocrate['@graph'][0]['prop7'] == ['value7_1']
+    assert 'prop8' not in rocrate['@graph'][0]
+    assert 'prop9' not in rocrate['@graph'][0]
+    assert rocrate['@graph'][0]['prop10'] == ['value10_1_en', 'value10_2_1_en']
+    assert rocrate['@graph'][0]['prop_static'] == 'value_static'
+    assert 'prop_none' not in rocrate['@graph'][0]
+    assert 'prop_none_lang' not in rocrate['@graph'][0]
+
+    assert rocrate['@graph'][5]['name'] == 'name_en'
+    assert rocrate['@graph'][5]['additionalType'] == 'tab'
+    assert rocrate['@graph'][2]['fileprop1'] == 'filevalue1_1'
+    assert rocrate['@graph'][2]['fileprop2'] == 'filevalue2_1'
+    assert rocrate['@graph'][2]['fileprop3'] == ['filevalue3_1_1', 'filevalue3_2_1_1_1', 'filevalue3_2_1_1_2']
+    assert rocrate['@graph'][2]['fileprop_static'] == 'filevalue_static'
+    assert rocrate['@graph'][3]['fileprop1'] == 'filevalue1_2'
+    assert rocrate['@graph'][3]['fileprop2'] == 'filevalue2_2'
+    assert rocrate['@graph'][3]['fileprop3'] == ['filevalue3_1_2', 'filevalue3_2_1_2_1', 'filevalue3_2_1_2_2']
+    assert rocrate['@graph'][3]['fileprop_static'] == 'filevalue_static'
+    assert rocrate['@graph'][4]['fileprop1'] == 'filevalue1_3'
+    assert rocrate['@graph'][4]['fileprop2'] == 'filevalue2_3'
+    assert rocrate['@graph'][4]['fileprop3'] == ['filevalue3_1_3', 'filevalue3_2_1_3_1', 'filevalue3_2_1_3_2']
+    assert rocrate['@graph'][4]['fileprop_static'] == 'filevalue_static'
+
+    rocrate = converter.convert(record_data, mapping, 'ja')
+    assert rocrate['@graph'][0]['prop6'] == ['value6_3']
+    assert rocrate['@graph'][0]['prop7'] == ['value7_2']
+    assert rocrate['@graph'][0]['prop10'] == ['value10_1_ja', 'value10_2_1_ja']
+    assert rocrate['@graph'][5]['name'] == 'name_ja'
+
+    rocrate = converter.convert(record_data, mapping, 'other')
+    assert rocrate['@graph'][0]['prop6'] == ['value6_2']
+    assert rocrate['@graph'][0]['prop7'] == ['value7_1']
+    assert rocrate['@graph'][0]['prop10'] == ['value10_1_en', 'value10_2_1_en']
+    assert rocrate['@graph'][5]['name'] == 'name'
+
+
+# def create_tsv(files, language='en'):
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_create_tsv -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_create_tsv(app, records):
+    from weko_records_ui.config import (
+        WEKO_RECORDS_UI_TSV_FIELD_NAMES_DEFAULT,
+        WEKO_RECORDS_UI_TSV_FIELD_NAMES_EN,
+        WEKO_RECORDS_UI_TSV_FIELD_NAMES_JA,
+    )
+    indexer, results = records
+    record = results[0]["record"]
+
+    # 16 set language en
+    res_tsv = create_tsv(record.files, 'en')
+    for field in WEKO_RECORDS_UI_TSV_FIELD_NAMES_EN:
+        assert field in res_tsv.getvalue()
+
+    # 17 set language ja
+    res_tsv = create_tsv(record.files, 'ja')
+    for field in WEKO_RECORDS_UI_TSV_FIELD_NAMES_JA:
+        assert field in res_tsv.getvalue()
+
+    # 18 shortage of fieldnames
+    fieldnames = ['名前', 'サイズ', 'ライセンス']
+    with patch("weko_records_ui.config.WEKO_RECORDS_UI_TSV_FIELD_NAMES_EN", fieldnames):
+        res_tsv = create_tsv(record.files)
+        for field in fieldnames:
+            assert field in res_tsv.getvalue()
+        assert WEKO_RECORDS_UI_TSV_FIELD_NAMES_DEFAULT[3] in res_tsv.getvalue()
+        assert WEKO_RECORDS_UI_TSV_FIELD_NAMES_DEFAULT[4] in res_tsv.getvalue()
+
+    # 19 not exist fieldnames
+    with patch("weko_records_ui.config.WEKO_RECORDS_UI_TSV_FIELD_NAMES_EN", None):
+        res_tsv = create_tsv(record.files)
+        for field in WEKO_RECORDS_UI_TSV_FIELD_NAMES_DEFAULT:
+            assert field in res_tsv.getvalue()

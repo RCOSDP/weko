@@ -23,8 +23,6 @@
 import pickle
 
 from invenio_records_rest.config import RECORDS_REST_ENDPOINTS
-from invenio_records_rest.facets import terms_filter
-from invenio_records_rest.utils import allow_all
 from invenio_search import RecordsSearch
 from invenio_stats.config import SEARCH_INDEX_PREFIX as index_prefix
 
@@ -236,6 +234,8 @@ WEKO_SEARCH_REST_ENDPOINTS = dict(
             "application/json": ("weko_records.serializers" ":json_v1_search"),
         },
         index_route="/index/",
+        search_api_route="/<string:version>/records",
+        search_result_list_route="/<string:version>/records/list",
         links_factory_imp="weko_search_ui.links:default_links_factory",
         default_media_type="application/json",
         max_result_window=10000,
@@ -731,3 +731,7 @@ CELERY_RESULT_PERSISTENT = True
 """ If set to True, result messages will be persistent. This means the messages will not be lost after a broker restart. The default is for the results to be transient."""
 CELERY_TASK_TRACK_STARTED=True
 """ If True the task will report its status as ‘started’ when the task is executed by a worker. """
+
+WEKO_SEARCH_UI_API_LIMIT_RATE_DEFAULT = ['100 per minute']
+
+WEKO_SEARCH_UI_RESULT_TMP_PREFIX = 'weko_search_result_list_'
