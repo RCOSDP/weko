@@ -236,6 +236,10 @@ RECORDS_UI_EXPORT_FORMATS = {
             serializer='weko_schema_ui.serializers.WekoCommonSchema',
             order=6,
         ),
+        'zip': dict(
+            title='ZIP',
+            order=7,
+        ),
     }
 }
 

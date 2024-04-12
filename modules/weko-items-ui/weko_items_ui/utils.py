@@ -2457,9 +2457,9 @@ def check_item_type_name(name):
 
 
 def export_items(post_data):
-    """Gather all the item data and export and return as a JSON or BIBTEX.
+    """Gather all the item data and export and return as a TSV or BIBTEX.
 
-    :return: JSON, BIBTEX
+    :return: TSV, BIBTEX
     """
     current_app.logger.debug("post_data:{}".format(post_data))
     include_contents = True if \
@@ -2473,11 +2473,28 @@ def export_items(post_data):
         invalid_record_ids = [invalid_record_ids]
     # Remove all invalid records
     record_ids = set(record_ids) - set(invalid_record_ids)
-    record_metadata = json.loads(post_data['record_metadata'])
+
     if len(record_ids) > _get_max_export_items():
         return abort(400)
     elif len(record_ids) == 0:
         return '',204
+
+    # Get records for export
+    record_recids = []
+    record_uuids = []
+    for record_id in record_ids:
+        recid = PersistentIdentifier.get('recid', str(record_id))
+        record_recids.append(recid)
+        record_uuids.append(str(recid.object_uuid))
+
+    records = WekoRecord.get_records(record_uuids)
+
+    from weko_records_ui.utils import export_preprocess
+    record_metadata = {}
+    for recid, record in zip(record_recids, records):
+        record_metadata[recid.pid_value] = json.loads(
+            export_preprocess(recid, record, 'json')
+        )
 
     result = {'items': []}
     temp_path = tempfile.TemporaryDirectory(

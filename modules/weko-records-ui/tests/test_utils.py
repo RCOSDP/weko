@@ -1,5 +1,5 @@
 import pytest
-from weko_records_ui.utils import is_future, create_usage_report_for_user,get_data_usage_application_data,send_usage_report_mail_for_user,check_and_send_usage_report,update_onetime_download,create_onetime_download_url,get_onetime_download,validate_onetime_download_token,get_license_pdf,hide_item_metadata,get_pair_value,get_min_price_billing_file_download,parse_one_time_download_token,generate_one_time_download_url,validate_download_record,is_private_index,get_file_info_list,replace_license_free,is_show_email_of_creator,hide_by_itemtype,hide_by_email,hide_by_file,hide_item_metadata_email_only,get_workflows,get_billing_file_download_permission,get_list_licence,restore,soft_delete,is_billing_item,get_groups_price,get_record_permalink,get_google_detaset_meta,get_google_scholar_meta,display_oaiset_path,get_terms,get_roles,check_items_settings,get_valid_onetime_download,create_secret_url,_generate_secret_download_url,parse_secret_download_token,validate_secret_download_token,get_secret_download,_create_secret_download_url,update_secret_download
+from weko_records_ui.utils import export_preprocess, is_future, create_usage_report_for_user,get_data_usage_application_data,send_usage_report_mail_for_user,check_and_send_usage_report,update_onetime_download,create_onetime_download_url,get_onetime_download,validate_onetime_download_token,get_license_pdf,hide_item_metadata,get_pair_value,get_min_price_billing_file_download,parse_one_time_download_token,generate_one_time_download_url,validate_download_record,is_private_index,get_file_info_list,replace_license_free,hide_by_itemtype,hide_by_email,hide_by_file,hide_item_metadata_email_only,get_workflows,get_billing_file_download_permission,get_list_licence,restore,soft_delete,is_billing_item,get_groups_price,get_record_permalink,get_google_detaset_meta,get_google_scholar_meta,display_oaiset_path,get_terms,get_roles,check_items_settings,get_valid_onetime_download,create_secret_url,_generate_secret_download_url,parse_secret_download_token,validate_secret_download_token,get_secret_download,_create_secret_download_url,update_secret_download
 import base64
 from unittest.mock import MagicMock
 import copy
@@ -22,6 +22,7 @@ from weko_records.serializers.utils import get_mapping
 from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName
 from flask_babelex import gettext as _
 from datetime import datetime ,timedelta
+from werkzeug.exceptions import Gone, NotFound
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 
@@ -845,3 +846,39 @@ def test_get_data_usage_application_data(app ,db):
         assert len(res) == 1
         assert res[0].download_count == 100
 
+
+# def update_secret_download(**kwargs) -> Optional[List[FileSecretDownload]]:
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_export_preprocess -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_export_preprocess(app, records, esindex):
+    indexer, results = records
+    record = results[0]["record"]
+    recid = results[0]["recid"]
+
+    with app.test_request_context():
+        schema_type = 'json'
+        # export json
+        res = export_preprocess(recid, record, schema_type)
+        res_dict = json.loads(res)
+        assert 'created' in res_dict
+        assert res_dict['id'] == 1
+        assert res_dict['links'] == {}
+        assert res_dict['metadata'] == record
+        assert 'updated' in res_dict
+
+        # export BibTeX
+        export_preprocess(recid, record, 'bibtex')
+
+        # record update '@export_schema_type'
+        export_preprocess(recid, record, 'jpcoar_2.0')
+
+        # fmt is False
+        mock_config = {'RECORDS_UI_EXPORT_FORMATS': {recid.pid_type: {schema_type: False}}}
+        with patch('flask.current_app.config', mock_config), \
+                pytest.raises(Gone):
+            export_preprocess(recid, record, schema_type)
+
+        # fmt is None
+        mock_config = {}
+        with patch('flask.current_app.config', mock_config), \
+                pytest.raises(NotFound):
+            export_preprocess(recid, record, schema_type)
