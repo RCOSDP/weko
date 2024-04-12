@@ -412,7 +412,7 @@ function itemExportCtrl($scope, $rootScope, $http, $location) {
       $('#invalid_record_ids').val(JSON.stringify([]));
       let exportBibtex = document.getElementById("export_format_radio_bibtex").checked
       if (exportBibtex) {
-        let invalidBibtexRecordIds = $scope.validateBibtexExport($rootScope.item_export_checkboxes.map(String));//Object.keys(export_metadata));
+        let invalidBibtexRecordIds = $scope.validateBibtexExport($rootScope.item_export_checkboxes.map(String));
         if (invalidBibtexRecordIds.length > 0) {
           $('#invalid_record_ids').val(JSON.stringify(invalidBibtexRecordIds));
           $scope.showErrMsgBibtex(invalidBibtexRecordIds);
