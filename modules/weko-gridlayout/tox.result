@@ -1,10 +1,7 @@
 GLOB sdist-make: /code/modules/weko-gridlayout/setup.py
-c1 create: /code/modules/weko-gridlayout/.tox/c1
-c1 setuptools_version is setuptools==57.5.0
-c1 installdeps: pytest>=3, pytest-cov, -rrequirements2.txt
-c1 inst: /code/modules/weko-gridlayout/.tox/.tmp/package/1/weko-gridlayout-1.0.0.dev20190000.zip
-c1 installed: alabaster==0.7.13,alembic==0.9.6,amqp==2.6.0,angular-gettext-babel==0.3,aniso8601==8.0.0,arrow==0.12.1,asn1crypto==0.23.0,atomicwrites==1.4.1,attrs==17.4.0,b2handle==1.1.2,Babel==2.5.1,bagit==1.7.0,beautifulsoup4==4.9.3,bibtexparser==1.0.1,billiard==3.6.3.0,binaryornot==0.4.4,bleach==3.1.0,blinker==1.4,boto3==1.7.84,botocore==1.10.84,cachelib==0.1,cachetools==4.2.4,cchardet==2.1.1,celery==4.4.4,certifi==2017.11.5,cffi==1.11.2,chardet==3.0.4,citeproc-py==0.5.1,citeproc-py-styles==0.1.2,click==6.7,cookiecutter==1.6.0,counter-robots==2018.6,coverage==6.2,cryptography==2.1.4,datacite==1.0.1,DateTime==4.9,decorator==4.1.2,defusedxml==0.5.0,dictdiffer==0.7.0,distlib==0.3.6,dnspython==2.2.1,docutils==0.18.1,dojson==1.3.2,elasticsearch==6.1.1,elasticsearch-dsl==6.4.0,elementpath==1.0.6,email-validator==1.0.5,entrypoints==0.2.3,feedgen==0.7.0,filelock==3.4.1,Flask==1.1.0,Flask-Admin==1.5.3,Flask-Alembic==2.0.1,Flask-Assets==0.12,Flask-BabelEx==0.9.4,Flask-Breadcrumbs==0.5.0,Flask-Caching==1.10.1,Flask-CeleryExt==0.3.4,Flask-Collect==1.2.2,Flask-Cors==3.0.3,Flask-DebugToolbar==0.13.1,Flask-IIIF==0.6.1,Flask-KVSession==0.6.2,Flask-Limiter==1.1.0,Flask-Login==0.4.1,Flask-Mail==0.9.1,flask-marshmallow==0.14.0,Flask-Menu==0.6.0,-e git+https://github.com/RCOSDP/flask-oauthlib.git@98eb36e1dfc66256fa7ea62237e9879acb906e9d#egg=Flask_OAuthlib,Flask-Plugins==1.6.1,Flask-Principal==0.4.0,Flask-RESTful==0.3.8,Flask-Security==3.0.0,flask-shell-ipython==0.4.1,Flask-Sitemap==0.4.0,Flask-SQLAlchemy==2.3.2,flask-talisman==0.4.1,Flask-WTF==0.14.3,-e git+https://github.com/RCOSDP/pyfpdf.git@f9b032148283d535cabc7789858081c80de36fef#egg=fpdf,frozendict==2.3.8,fs==0.5.4,ftfy==4.4.3,future==0.16.0,github3.py==1.1.0,html5lib==1.0.1,idna==2.6,iiif-prezi==0.3.0,imagesize==1.4.1,importlib-metadata==4.8.3,importlib-resources==5.4.0,infinity==1.4,intervals==0.8.0,invenio-access==1.1.0,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=invenio_accounts&subdirectory=modules/invenio-accounts,invenio-admin==1.1.2,invenio-app==1.1.0,invenio-assets==1.0.0,invenio-base==1.0.2,invenio-cache==1.0.0,invenio-celery==1.1.3,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=invenio_communities&subdirectory=modules/invenio-communities,invenio-config==1.0.0,invenio-csl-rest==1.0.0a1,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=invenio_db&subdirectory=modules/invenio-db,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=invenio_deposit&subdirectory=modules/invenio-deposit,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=invenio_files_rest&subdirectory=modules/invenio-files-rest,invenio-formatter==1.0.0b3,invenio-i18n==1.0.0,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=invenio_iiif&subdirectory=modules/invenio-iiif,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=invenio_indexer&subdirectory=modules/invenio-indexer,invenio-jsonschemas==1.0.0,invenio-logging==1.0.0b3,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=invenio_mail&subdirectory=modules/invenio-mail,invenio-marc21==1.0.0a8,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=invenio_oaiharvester&subdirectory=modules/invenio-oaiharvester,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=invenio_oaiserver&subdirectory=modules/invenio-oaiserver,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=invenio_oauth2server&subdirectory=modules/invenio-oauth2server,invenio-oauthclient==1.0.0,invenio-pidrelations==1.0.0a4,invenio-pidstore==1.0.0,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=invenio_previewer&subdirectory=modules/invenio-previewer,invenio-query-parser==0.6.0,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=invenio_queues&subdirectory=modules/invenio-queues,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=invenio_records&subdirectory=modules/invenio-records,invenio-records-files==1.0.0a10,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=invenio_records_rest&subdirectory=modules/invenio-records-rest,invenio-records-ui==1.0.0,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=invenio_resourcesyncclient&subdirectory=modules/invenio-resourcesyncclient,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=invenio_resourcesyncserver&subdirectory=modules/invenio-resourcesyncserver,invenio-rest==1.1.2,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=invenio_s3&subdirectory=modules/invenio-s3,-e git+https://github.com/RCOSDP/invenio-search.git@cff9744c5dc651893a9c51672c5b8da9adc21e16#egg=invenio_search,-e git+https://github.com/RCOSDP/invenio-search-ui.git@74bd3b2990ff27b39e01b6b31be9a0b5fda3dd0f#egg=invenio_search_ui,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=invenio_stats&subdirectory=modules/invenio-stats,invenio-theme==1.0.0b4,ipaddress==1.0.19,ipython==6.2.1,ipython-genutils==0.2.0,itsdangerous==0.24,jedi==0.11.0,Jinja2==2.10.1,jinja2-cli==0.6.0,jinja2-time==0.2.0,jmespath==0.10.0,jsmin==2.2.2,jsonpatch==1.21,jsonpath-ng==1.5.2,jsonpointer==1.14,jsonref==0.1,jsonresolver==0.2.1,jsonschema==2.6.0,jupyter-client==5.2.2,jupyter-core==4.4.0,-e git+https://github.com/RCOSDP/kombu.git@f204fdf078d5e94393c86693f545e2d011f620f5#egg=kombu,limits==1.2.1,lxml==4.1.1,Mako==1.0.7,MarkupSafe==1.1.1,marshmallow==2.20.1,marshmallow-sqlalchemy==0.23.1,maxminddb==1.5.2,maxminddb-geolite2==2017.803,mistune==0.8.3,mock==5.0.2,more-itertools==8.10.0,msgpack==0.6.2,nbconvert==5.3.1,nbformat==4.4.0,netaddr==0.8.0,node-semver==0.1.1,numpy==1.16.1,oauthlib==2.1.0,ordereddict==1.1,packaging==21.3,pandocfilters==1.4.2,parso==0.1.0,passlib==1.7.1,pbr==5.11.1,pexpect==4.3.0,pickleshare==0.7.4,Pillow==5.4.1,platformdirs==2.4.0,pluggy==0.13.1,ply==3.11,poyo==0.4.1,prompt-toolkit==1.0.15,psycopg2==2.7.3.2,ptyprocess==0.5.2,py==1.11.0,pycparser==2.18,Pygments==2.2.0,PyJWT==1.5.3,PyLD==2.0.3,pyparsing==3.1.0,-e git+https://github.com/RCOSDP/PyPDF2.git@fefc684a3a74aff6f99e5dff24f9b4dd1c95169d#egg=PyPDF2,pyPEG2==2.15.2,pytest==4.2.0,pytest-cov==2.9.0,pytest-flask==0.15.1,pytest-invenio==1.2.1,pytest-mock==3.2.0,python-dateutil==2.6.1,python-editor==1.0.3,python-geoip==1.2,pytz==2017.3,pyzmq==17.0.0,redis==2.10.6,requests==2.18.4,requests-oauthlib==1.1.0,resync==1.0.9,s3fs==0.1.6,s3transfer==0.1.13,selenium==3.141.0,Sickle==0.6.4,simplegeneric==0.8.1,simplejson==3.12.0,simplekv==0.11.2,six==1.16.0,snowballstemmer==2.2.0,soupsieve==2.3.2.post1,speaklater==1.3,Sphinx==1.8.4,sphinxcontrib-serializinghtml==1.1.5,sphinxcontrib-websupport==1.2.4,SQLAlchemy==1.2.19,SQLAlchemy-Continuum==1.3.6,SQLAlchemy-Utils==0.35.0,stevedore==3.5.2,sword3common==0.1.1,testpath==0.3.1,tika==2.6.0,toml==0.10.2,tornado==4.5.3,tox==3.28.0,traitlets==4.3.2,typing_extensions==4.1.1,ua-parser==0.7.3,uritemplate==4.1.1,uritools==2.1.0,urllib3==1.22,uWSGI==2.0.21,uwsgitop==0.11,validators==0.12.0,vine==1.3.0,virtualenv==20.17.1,virtualenv-clone==0.5.7,virtualenvwrapper==4.8.4,Wand==0.6.1,wcwidth==0.1.7,webargs==5.5.2,webassets==0.12.1,webencodings==0.5.1,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_accounts&subdirectory=modules/weko-accounts,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_admin&subdirectory=modules/weko-admin,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_authors&subdirectory=modules/weko-authors,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_bulkupdate&subdirectory=modules/weko-bulkupdate,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_deposit&subdirectory=modules/weko-deposit,weko-gridlayout @ file:///code/modules/weko-gridlayout/.tox/.tmp/package/1/weko-gridlayout-1.0.0.dev20190000.zip,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_groups&subdirectory=modules/weko-groups,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_handle&subdirectory=modules/weko-handle,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_index_tree&subdirectory=modules/weko-index-tree,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_indextree_journal&subdirectory=modules/weko-indextree-journal,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_items_autofill&subdirectory=modules/weko-items-autofill,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_items_ui&subdirectory=modules/weko-items-ui,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_itemtypes_ui&subdirectory=modules/weko-itemtypes-ui,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_logging&subdirectory=modules/weko-logging,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_records&subdirectory=modules/weko-records,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_records_ui&subdirectory=modules/weko-records-ui,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_redis&subdirectory=modules/weko-redis,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_schema_ui&subdirectory=modules/weko-schema-ui,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_search_ui&subdirectory=modules/weko-search-ui,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_sitemap&subdirectory=modules/weko-sitemap,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_swordserver&subdirectory=modules/weko-swordserver,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_theme&subdirectory=modules/weko-theme,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_user_profiles&subdirectory=modules/weko-user-profiles,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_workflow&subdirectory=modules/weko-workflow,Werkzeug==0.15.2,whichcraft==0.4.1,WTForms==2.1,WTForms-Alchemy==0.16.5,WTForms-Components==0.10.3,xmlschema==0.9.30,xmltodict==0.12.0,zipp==3.6.0,zope.interface==5.5.2
-c1 run-test-pre: PYTHONHASHSEED='2541330565'
+c1 inst-nodeps: /code/modules/weko-gridlayout/.tox/.tmp/package/1/weko-gridlayout-1.0.0.dev20190000.zip
+c1 installed: alabaster==0.7.13,alembic==0.9.6,amqp==2.6.0,angular-gettext-babel==0.3,aniso8601==8.0.0,arrow==0.12.1,asn1crypto==0.23.0,atomicwrites==1.4.1,attrs==17.4.0,b2handle==1.1.2,Babel==2.5.1,bagit==1.7.0,beautifulsoup4==4.9.3,bibtexparser==1.0.1,billiard==3.6.3.0,binaryornot==0.4.4,bleach==3.1.0,blinker==1.4,boto3==1.7.84,botocore==1.10.84,cachelib==0.1,cachetools==4.2.4,cchardet==2.1.1,celery==4.4.4,certifi==2017.11.5,cffi==1.11.2,chardet==3.0.4,citeproc-py==0.5.1,citeproc-py-styles==0.1.2,click==6.7,cookiecutter==1.6.0,counter-robots==2018.6,coverage==6.2,cryptography==2.1.4,datacite==1.0.1,DateTime==4.9,decorator==4.1.2,defusedxml==0.5.0,dictdiffer==0.7.0,distlib==0.3.6,dnspython==2.2.1,docutils==0.18.1,dojson==1.3.2,elasticsearch==6.1.1,elasticsearch-dsl==6.4.0,elementpath==1.0.6,email-validator==1.0.5,entrypoints==0.2.3,feedgen==0.7.0,filelock==3.4.1,Flask==1.1.0,Flask-Admin==1.5.3,Flask-Alembic==2.0.1,Flask-Assets==0.12,Flask-BabelEx==0.9.4,Flask-Breadcrumbs==0.5.0,Flask-Caching==1.10.1,Flask-CeleryExt==0.3.4,Flask-Collect==1.2.2,Flask-Cors==3.0.3,Flask-DebugToolbar==0.13.1,Flask-IIIF==0.6.1,Flask-KVSession==0.6.2,Flask-Limiter==1.1.0,Flask-Login==0.4.1,Flask-Mail==0.9.1,flask-marshmallow==0.14.0,Flask-Menu==0.6.0,-e git+https://github.com/RCOSDP/flask-oauthlib.git@98eb36e1dfc66256fa7ea62237e9879acb906e9d#egg=Flask_OAuthlib,Flask-Plugins==1.6.1,Flask-Principal==0.4.0,Flask-RESTful==0.3.8,Flask-Security==3.0.0,flask-shell-ipython==0.4.1,Flask-Sitemap==0.4.0,Flask-SQLAlchemy==2.3.2,flask-talisman==0.4.1,Flask-WTF==0.14.3,-e git+https://github.com/RCOSDP/pyfpdf.git@f9b032148283d535cabc7789858081c80de36fef#egg=fpdf,frozendict==2.3.8,fs==0.5.4,ftfy==4.4.3,future==0.16.0,github3.py==1.1.0,html5lib==1.0.1,idna==2.6,iiif-prezi==0.3.0,imagesize==1.4.1,importlib-metadata==4.8.3,importlib-resources==5.4.0,infinity==1.4,intervals==0.8.0,invenio-access==1.1.0,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=invenio_accounts&subdirectory=modules/invenio-accounts,invenio-admin==1.1.2,invenio-app==1.1.0,invenio-assets==1.0.0,invenio-base==1.0.2,invenio-cache==1.0.0,invenio-celery==1.1.3,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=invenio_communities&subdirectory=modules/invenio-communities,invenio-config==1.0.0,invenio-csl-rest==1.0.0a1,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=invenio_db&subdirectory=modules/invenio-db,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=invenio_deposit&subdirectory=modules/invenio-deposit,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=invenio_files_rest&subdirectory=modules/invenio-files-rest,invenio-formatter==1.0.0b3,invenio-i18n==1.0.0,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=invenio_iiif&subdirectory=modules/invenio-iiif,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=invenio_indexer&subdirectory=modules/invenio-indexer,invenio-jsonschemas==1.0.0,invenio-logging==1.0.0b3,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=invenio_mail&subdirectory=modules/invenio-mail,invenio-marc21==1.0.0a8,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=invenio_oaiharvester&subdirectory=modules/invenio-oaiharvester,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=invenio_oaiserver&subdirectory=modules/invenio-oaiserver,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=invenio_oauth2server&subdirectory=modules/invenio-oauth2server,invenio-oauthclient==1.0.0,invenio-pidrelations==1.0.0a4,invenio-pidstore==1.0.0,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=invenio_previewer&subdirectory=modules/invenio-previewer,invenio-query-parser==0.6.0,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=invenio_queues&subdirectory=modules/invenio-queues,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=invenio_records&subdirectory=modules/invenio-records,invenio-records-files==1.0.0a10,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=invenio_records_rest&subdirectory=modules/invenio-records-rest,invenio-records-ui==1.0.0,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=invenio_resourcesyncclient&subdirectory=modules/invenio-resourcesyncclient,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=invenio_resourcesyncserver&subdirectory=modules/invenio-resourcesyncserver,invenio-rest==1.1.2,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=invenio_s3&subdirectory=modules/invenio-s3,-e git+https://github.com/RCOSDP/invenio-search.git@cff9744c5dc651893a9c51672c5b8da9adc21e16#egg=invenio_search,-e git+https://github.com/RCOSDP/invenio-search-ui.git@74bd3b2990ff27b39e01b6b31be9a0b5fda3dd0f#egg=invenio_search_ui,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=invenio_stats&subdirectory=modules/invenio-stats,invenio-theme==1.0.0b4,ipaddress==1.0.19,ipython==6.2.1,ipython-genutils==0.2.0,itsdangerous==0.24,jedi==0.11.0,Jinja2==2.10.1,jinja2-cli==0.6.0,jinja2-time==0.2.0,jmespath==0.10.0,jsmin==2.2.2,jsonpatch==1.21,jsonpath-ng==1.5.2,jsonpointer==1.14,jsonref==0.1,jsonresolver==0.2.1,jsonschema==2.6.0,jupyter-client==5.2.2,jupyter-core==4.4.0,-e git+https://github.com/RCOSDP/kombu.git@f204fdf078d5e94393c86693f545e2d011f620f5#egg=kombu,limits==1.2.1,lxml==4.1.1,Mako==1.0.7,MarkupSafe==1.1.1,marshmallow==2.20.1,marshmallow-sqlalchemy==0.23.1,maxminddb==1.5.2,maxminddb-geolite2==2017.803,mistune==0.8.3,mock==5.0.2,more-itertools==8.10.0,msgpack==0.6.2,nbconvert==5.3.1,nbformat==4.4.0,netaddr==0.8.0,node-semver==0.1.1,numpy==1.16.1,oauthlib==2.1.0,ordereddict==1.1,packaging==21.3,pandocfilters==1.4.2,parso==0.1.0,passlib==1.7.1,pbr==5.11.1,pexpect==4.3.0,pickleshare==0.7.4,Pillow==5.4.1,platformdirs==2.4.0,pluggy==0.13.1,ply==3.11,poyo==0.4.1,prompt-toolkit==1.0.15,psycopg2==2.7.3.2,ptyprocess==0.5.2,py==1.11.0,pycparser==2.18,Pygments==2.2.0,PyJWT==1.5.3,PyLD==2.0.3,pyparsing==3.1.0,-e git+https://github.com/RCOSDP/PyPDF2.git@fefc684a3a74aff6f99e5dff24f9b4dd1c95169d#egg=PyPDF2,pyPEG2==2.15.2,pytest==4.2.0,pytest-cov==2.9.0,pytest-flask==0.15.1,pytest-invenio==1.2.1,pytest-mock==3.2.0,python-dateutil==2.6.1,python-editor==1.0.3,python-geoip==1.2,pytz==2017.3,pyzmq==17.0.0,redis==2.10.6,requests==2.18.4,requests-oauthlib==1.1.0,resync==1.0.9,s3fs==0.1.6,s3transfer==0.1.13,selenium==3.141.0,Sickle==0.6.4,simplegeneric==0.8.1,simplejson==3.12.0,simplekv==0.11.2,six==1.16.0,snowballstemmer==2.2.0,soupsieve==2.3.2.post1,speaklater==1.3,Sphinx==1.8.4,sphinxcontrib-serializinghtml==1.1.5,sphinxcontrib-websupport==1.2.4,SQLAlchemy==1.2.19,SQLAlchemy-Continuum==1.3.6,SQLAlchemy-Utils==0.35.0,stevedore==3.5.2,sword3common==0.1.1,testpath==0.3.1,tika==2.6.0,toml==0.10.2,tornado==4.5.3,tox==3.28.0,traitlets==4.3.2,typing_extensions==4.1.1,ua-parser==0.7.3,uritemplate==4.1.1,uritools==2.1.0,urllib3==1.22,uWSGI==2.0.21,uwsgitop==0.11,validators==0.12.0,vine==1.3.0,virtualenv==20.17.1,virtualenv-clone==0.5.7,virtualenvwrapper==4.8.4,Wand==0.6.1,wcwidth==0.1.7,webargs==5.5.2,webassets==0.12.1,webencodings==0.5.1,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_accounts&subdirectory=modules/weko-accounts,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_admin&subdirectory=modules/weko-admin,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_authors&subdirectory=modules/weko-authors,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_bulkupdate&subdirectory=modules/weko-bulkupdate,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_deposit&subdirectory=modules/weko-deposit,weko-gridlayout @ file:///code/modules/weko-gridlayout/.tox/.tmp/package/1/weko-gridlayout-1.0.0.dev20190000.zip,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_groups&subdirectory=modules/weko-groups,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_handle&subdirectory=modules/weko-handle,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_index_tree&subdirectory=modules/weko-index-tree,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_indextree_journal&subdirectory=modules/weko-indextree-journal,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_items_autofill&subdirectory=modules/weko-items-autofill,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_items_ui&subdirectory=modules/weko-items-ui,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_itemtypes_ui&subdirectory=modules/weko-itemtypes-ui,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_logging&subdirectory=modules/weko-logging,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_records&subdirectory=modules/weko-records,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_records_ui&subdirectory=modules/weko-records-ui,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_redis&subdirectory=modules/weko-redis,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_schema_ui&subdirectory=modules/weko-schema-ui,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_search_ui&subdirectory=modules/weko-search-ui,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_sitemap&subdirectory=modules/weko-sitemap,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_swordserver&subdirectory=modules/weko-swordserver,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_theme&subdirectory=modules/weko-theme,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_user_profiles&subdirectory=modules/weko-user-profiles,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_workflow&subdirectory=modules/weko-workflow,Werkzeug==0.15.2,whichcraft==0.4.1,WTForms==2.1,WTForms-Alchemy==0.16.5,WTForms-Components==0.10.3,xmlschema==0.9.30,xmltodict==0.12.0,zipp==3.6.0,zope.interface==5.5.2
+c1 run-test-pre: PYTHONHASHSEED='1165953970'
 c1 run-test: commands[0] | pytest --cov=weko_gridlayout tests -v --cov-branch --cov-report=term --cov-report=xml --cov-report=html --basetemp=/code/modules/weko-gridlayout/.tox/c1/tmp
 ============================= test session starts ==============================
 platform linux -- Python 3.6.15, pytest-4.2.0, py-1.11.0, pluggy-0.13.1 -- /code/modules/weko-gridlayout/.tox/c1/bin/python
@@ -272,7 +269,7 @@ tests/test_views.py::test_get_system_lang PASSED                         [ 95%]
 tests/test_views.py::test_get_new_arrivals_data PASSED                   [ 96%]
 tests/test_views.py::test_get_widget_page_endpoints PASSED               [ 96%]
 tests/test_views.py::test_view_widget_page PASSED                        [ 97%]
-tests/test_views.py::test_handle_not_found PASSED                        [ 97%]
+tests/test_views.py::test_handle_not_found FAILED                        [ 97%]
 tests/test_views.py::test__add_url_rule PASSED                           [ 97%]
 tests/test_views.py::test_get_access_counter_record PASSED               [ 98%]
 tests/test_views.py::test_upload_file PASSED                             [ 98%]
@@ -286,7 +283,7 @@ _____ test_index_view_editable_list_page_size_data[with list-without data] _____
 
 app = <Flask 'testapp'>, client = <FlaskClient <Flask 'testapp'>>
 admin_view = None
-view_instance = <weko_gridlayout.admin.WidgetSettingView object at 0x7fc0c1de7128>
+view_instance = <weko_gridlayout.admin.WidgetSettingView object at 0x7fcc4ce47c50>
 widget_items = [<WidgetItem 1>, <WidgetItem 2>, <WidgetItem 3>]
 condition1 = 'with list', condition2 = 'without data'
 
@@ -373,7 +370,7 @@ weko_gridlayout/admin.py:127: in index_view
     list_forms[self.get_pk_value(row)] = self.list_form(obj=row)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <weko_gridlayout.admin.WidgetSettingView object at 0x7fc0c1de7128>
+self = <weko_gridlayout.admin.WidgetSettingView object at 0x7fcc4ce47c50>
 obj = <WidgetItem 1>
 
     def list_form(self, obj=None):
@@ -390,7 +387,7 @@ ___________________________ test_sort_url[0-True-0] ____________________________
 
 app = <Flask 'testapp'>, client = <FlaskClient <Flask 'testapp'>>
 admin_view = None
-view_instance = <weko_gridlayout.admin.WidgetSettingView object at 0x7fc0c125d278>
+view_instance = <weko_gridlayout.admin.WidgetSettingView object at 0x7fcc47e95b70>
 widget_item = [<WidgetItem 1>], desc = 0, invert = True, sort_desc = 0
 
     @pytest.mark.parametrize("desc, invert, sort_desc",
@@ -430,7 +427,7 @@ __________________________ test_sort_url[0-True-None] __________________________
 
 app = <Flask 'testapp'>, client = <FlaskClient <Flask 'testapp'>>
 admin_view = None
-view_instance = <weko_gridlayout.admin.WidgetSettingView object at 0x7fc0c1cc4f28>
+view_instance = <weko_gridlayout.admin.WidgetSettingView object at 0x7fcc47e5e550>
 widget_item = [<WidgetItem 1>], desc = 0, invert = True, sort_desc = None
 
     @pytest.mark.parametrize("desc, invert, sort_desc",
@@ -470,7 +467,7 @@ __________________________ test_sort_url[None-True-0] __________________________
 
 app = <Flask 'testapp'>, client = <FlaskClient <Flask 'testapp'>>
 admin_view = None
-view_instance = <weko_gridlayout.admin.WidgetSettingView object at 0x7fc0c0aa5e10>
+view_instance = <weko_gridlayout.admin.WidgetSettingView object at 0x7fcc47a4ab00>
 widget_item = [<WidgetItem 1>], desc = None, invert = True, sort_desc = 0
 
     @pytest.mark.parametrize("desc, invert, sort_desc",
@@ -510,7 +507,7 @@ ________________________ test_sort_url[None-True-None] _________________________
 
 app = <Flask 'testapp'>, client = <FlaskClient <Flask 'testapp'>>
 admin_view = None
-view_instance = <weko_gridlayout.admin.WidgetSettingView object at 0x7fc0c073ca58>
+view_instance = <weko_gridlayout.admin.WidgetSettingView object at 0x7fcc47e553c8>
 widget_item = [<WidgetItem 1>], desc = None, invert = True, sort_desc = None
 
     @pytest.mark.parametrize("desc, invert, sort_desc",
@@ -549,7 +546,7 @@ tests/test_admin.py:151: AssertionError
 ______________________ test_index_view_WidgetSettingView _______________________
 
 i18n_app = <Flask 'testapp'>
-view_instance = <weko_gridlayout.admin.WidgetSettingView object at 0x7fc0c02acb38>
+view_instance = <weko_gridlayout.admin.WidgetSettingView object at 0x7fcc4700bfd0>
 
     def test_index_view_WidgetSettingView(i18n_app, view_instance):
 >       assert view_instance.index_view() != None
@@ -576,7 +573,7 @@ weko_gridlayout/admin.py:170: in index_view
     endpoint, values, method=method, force_external=external
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <werkzeug.routing.MapAdapter object at 0x7fc0c0281550>
+self = <werkzeug.routing.MapAdapter object at 0x7fcc47011d30>
 endpoint = 'weko_gridlayout.index_view', values = {}, method = None
 force_external = False, append_unknown = True
 
@@ -685,7 +682,7 @@ E           werkzeug.routing.BuildError: Could not build url for endpoint 'weko_
 ______________________ test_create_view_WidgetSettingView ______________________
 
 i18n_app = <Flask 'testapp'>
-view_instance = <weko_gridlayout.admin.WidgetSettingView object at 0x7fc0bff67438>
+view_instance = <weko_gridlayout.admin.WidgetSettingView object at 0x7fcc478b4278>
 
     def test_create_view_WidgetSettingView(i18n_app, view_instance):
         with patch("weko_gridlayout.admin.get_redirect_target", return_value="/"):
@@ -748,7 +745,7 @@ weko_gridlayout/templates/weko_gridlayout/admin/create_widget_settings.html:25: 
     self.fail(' '.join(message), lineno)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <jinja2.parser.Parser object at 0x7fc0c00f13c8>
+self = <jinja2.parser.Parser object at 0x7fcc473750b8>
 msg = "Encountered unknown tag 'assets'. Jinja was looking for the following tags: 'endblock'. The innermost block that needs to be closed is 'block'."
 lineno = 25, exc = <class 'jinja2.exceptions.TemplateSyntaxError'>
 
@@ -766,7 +763,7 @@ E       jinja2.exceptions.TemplateSyntaxError: Encountered unknown tag 'assets'.
 _____________________ test_details_view_WidgetSettingView ______________________
 
 i18n_app = <Flask 'testapp'>
-view_instance = <weko_gridlayout.admin.WidgetSettingView object at 0x7fc0c020f390>
+view_instance = <weko_gridlayout.admin.WidgetSettingView object at 0x7fcc47404da0>
 
     def test_details_view_WidgetSettingView(i18n_app, view_instance):
         def get_one(item):
@@ -818,8 +815,8 @@ weko_gridlayout/admin.py:354: in details_view
     return self._get_source_fast(environment, template)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <flask.templating.DispatchingJinjaLoader object at 0x7fc0c021eac8>
-environment = <flask.templating.Environment object at 0x7fc0c021e2b0>
+self = <flask.templating.DispatchingJinjaLoader object at 0x7fcc47b21198>
+environment = <flask.templating.Environment object at 0x7fcc476bd550>
 template = 'admin/model/details.html'
 
     def _get_source_fast(self, environment, template):
@@ -877,7 +874,7 @@ tests/test_api.py:189: in test_is_existed
     original, local = self.get_original()
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <mock.mock._patch object at 0x7fc0bf97f048>
+self = <mock.mock._patch object at 0x7fcc47b35978>
 
     def get_original(self):
         target = self.getter()
@@ -905,14 +902,14 @@ E           AttributeError: <class 'weko_gridlayout.models.WidgetItem'> does not
 .tox/c1/lib/python3.6/site-packages/mock/mock.py:1465: AttributeError
 ___________________________ test_WidgetType_create_2 ___________________________
 
-self = <sqlalchemy.engine.base.Connection object at 0x7fc0bf68dd30>
-dialect = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7fc0bf6a6d30>
+self = <sqlalchemy.engine.base.Connection object at 0x7fcc46aaba90>
+dialect = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7fcc46aafa90>
 constructor = <bound method DefaultExecutionContext._init_compiled of <class 'sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2'>>
 statement = 'INSERT INTO widget_type (type_id, type_name) VALUES (%(type_id)s, %(type_name)s)'
 parameters = {'type_id': 1, 'type_name': 'test'}
-args = (<sqlalchemy.dialects.postgresql.psycopg2.PGCompiler_psycopg2 object at 0x7fc0bf68dd68>, [{'type_id': 1, 'type_name': 'test'}])
-conn = <sqlalchemy.pool._ConnectionFairy object at 0x7fc0bf68d1d0>
-context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7fc0bf68dcf8>
+args = (<sqlalchemy.dialects.postgresql.psycopg2.PGCompiler_psycopg2 object at 0x7fcc46aabac8>, [{'type_id': 1, 'type_name': 'test'}])
+conn = <sqlalchemy.pool._ConnectionFairy object at 0x7fcc46aaff28>
+context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7fcc46aaba58>
 
     def _execute_context(
         self, dialect, constructor, statement, parameters, *args
@@ -1001,11 +998,11 @@ context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 o
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1236: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7fc0bf6a6d30>
-cursor = <cursor object at 0x7fc0c0683710; closed: -1>
+self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7fcc46aafa90>
+cursor = <cursor object at 0x7fcc4d377140; closed: -1>
 statement = 'INSERT INTO widget_type (type_id, type_name) VALUES (%(type_id)s, %(type_name)s)'
 parameters = {'type_id': 1, 'type_name': 'test'}
-context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7fc0bf68dcf8>
+context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7fcc46aaba58>
 
     def do_execute(self, cursor, statement, parameters, context=None):
 >       cursor.execute(statement, parameters)
@@ -1080,11 +1077,11 @@ weko_gridlayout/models.py:50: in create
     cursor, statement, parameters, context
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7fc0bf6a6d30>
-cursor = <cursor object at 0x7fc0c0683710; closed: -1>
+self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7fcc46aafa90>
+cursor = <cursor object at 0x7fcc4d377140; closed: -1>
 statement = 'INSERT INTO widget_type (type_id, type_name) VALUES (%(type_id)s, %(type_name)s)'
 parameters = {'type_id': 1, 'type_name': 'test'}
-context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7fc0bf68dcf8>
+context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7fcc46aaba58>
 
     def do_execute(self, cursor, statement, parameters, context=None):
 >       cursor.execute(statement, parameters)
@@ -1101,14 +1098,14 @@ LINE 1: INSERT INTO widget_type (type_id, type_name) VALUES (1, 'tes...
  [SQL: 'INSERT INTO widget_type (type_id, type_name) VALUES (%(type_id)s, %(type_name)s)'] [parameters: {'type_id': 1, 'type_name': 'test'}] (Background on this error at: http://sqlalche.me/e/f405)
 ______________________________ test_delete_by_id _______________________________
 
-self = <sqlalchemy.engine.base.Connection object at 0x7fc0bf2fbd30>
-dialect = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7fc0bf5d3ac8>
+self = <sqlalchemy.engine.base.Connection object at 0x7fcc46882b38>
+dialect = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7fcc4693e860>
 constructor = <bound method DefaultExecutionContext._init_compiled of <class 'sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2'>>
 statement = 'SELECT widget_items.created AS widget_items_created, widget_items.updated AS widget_items_updated, widget_items.widge... widget_items.locked_by_user AS widget_items_locked_by_user \nFROM widget_items \nWHERE widget_items.widget_id = false'
 parameters = {}
-args = (<sqlalchemy.dialects.postgresql.psycopg2.PGCompiler_psycopg2 object at 0x7fc0bf282908>, [immutabledict({})])
-conn = <sqlalchemy.pool._ConnectionFairy object at 0x7fc0bf2fba58>
-context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7fc0bf2828d0>
+args = (<sqlalchemy.dialects.postgresql.psycopg2.PGCompiler_psycopg2 object at 0x7fcc46882240>, [immutabledict({})])
+conn = <sqlalchemy.pool._ConnectionFairy object at 0x7fcc46882a90>
+context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7fcc46882400>
 
     def _execute_context(
         self, dialect, constructor, statement, parameters, *args
@@ -1197,11 +1194,11 @@ context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 o
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1236: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7fc0bf5d3ac8>
-cursor = <cursor object at 0x7fc0c2504af0; closed: -1>
+self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7fcc4693e860>
+cursor = <cursor object at 0x7fcc4d377ce0; closed: -1>
 statement = 'SELECT widget_items.created AS widget_items_created, widget_items.updated AS widget_items_updated, widget_items.widge... widget_items.locked_by_user AS widget_items_locked_by_user \nFROM widget_items \nWHERE widget_items.widget_id = false'
 parameters = {}
-context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7fc0bf2828d0>
+context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7fcc46882400>
 
     def do_execute(self, cursor, statement, parameters, context=None):
 >       cursor.execute(statement, parameters)
@@ -1254,11 +1251,11 @@ weko_gridlayout/models.py:121: in get_by_id
     cursor, statement, parameters, context
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7fc0bf5d3ac8>
-cursor = <cursor object at 0x7fc0c2504af0; closed: -1>
+self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7fcc4693e860>
+cursor = <cursor object at 0x7fcc4d377ce0; closed: -1>
 statement = 'SELECT widget_items.created AS widget_items_created, widget_items.updated AS widget_items_updated, widget_items.widge... widget_items.locked_by_user AS widget_items_locked_by_user \nFROM widget_items \nWHERE widget_items.widget_id = false'
 parameters = {}
-context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7fc0bf2828d0>
+context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7fcc46882400>
 
     def do_execute(self, cursor, statement, parameters, context=None):
 >       cursor.execute(statement, parameters)
@@ -1396,7 +1393,7 @@ i18n_app = <Flask 'testapp'>
                             with patch("weko_gridlayout.utils.delete_widget_cache", return_value="test"):
 >                               assert WidgetDesignServices.handle_change_item_in_preview_widget_item(widget_id, data_result)
 E                               AssertionError: assert False
-E                                +  where False = <bound method WidgetDesignServices.handle_change_item_in_preview_widget_item of <class 'weko_gridlayout.services.WidgetDesignServices'>>('1', <MagicMock id='140465797248896'>)
+E                                +  where False = <bound method WidgetDesignServices.handle_change_item_in_preview_widget_item of <class 'weko_gridlayout.services.WidgetDesignServices'>>('1', <MagicMock id='140515310893880'>)
 E                                +    where <bound method WidgetDesignServices.handle_change_item_in_preview_widget_item of <class 'weko_gridlayout.services.WidgetDesignServices'>> = WidgetDesignServices.handle_change_item_in_preview_widget_item
 
 tests/test_services.py:426: AssertionError
@@ -1662,14 +1659,14 @@ E                       AttributeError: 'NoneType' object has no attribute 'get'
 weko_gridlayout/utils.py:731: AttributeError
 _____________________ test_validate_main_widget_insertion ______________________
 
-self = <sqlalchemy.engine.base.Connection object at 0x7fc0bd2741d0>
-dialect = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7fc0bdb4ebe0>
+self = <sqlalchemy.engine.base.Connection object at 0x7fcc43eb17b8>
+dialect = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7fcc43a5abe0>
 constructor = <bound method DefaultExecutionContext._init_compiled of <class 'sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2'>>
 statement = 'SELECT widget_design_page.id AS widget_design_page_id, widget_design_page.title AS widget_design_page_title, widget_d...et_design_page_is_main_layout \nFROM widget_design_page \nWHERE widget_design_page.repository_id = %(repository_id_1)s'
 parameters = {'repository_id_1': 1}
-args = (<sqlalchemy.dialects.postgresql.psycopg2.PGCompiler_psycopg2 object at 0x7fc0be88e358>, [immutabledict({})])
-conn = <sqlalchemy.pool._ConnectionFairy object at 0x7fc0bd274400>
-context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7fc0be77ec88>
+args = (<sqlalchemy.dialects.postgresql.psycopg2.PGCompiler_psycopg2 object at 0x7fcc43a8dfd0>, [immutabledict({})])
+conn = <sqlalchemy.pool._ConnectionFairy object at 0x7fcc43eb16d8>
+context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7fcc43a8c080>
 
     def _execute_context(
         self, dialect, constructor, statement, parameters, *args
@@ -1758,11 +1755,11 @@ context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 o
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1236: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7fc0bdb4ebe0>
-cursor = <cursor object at 0x7fc0bd1b4af0; closed: -1>
+self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7fcc43a5abe0>
+cursor = <cursor object at 0x7fcc43be6238; closed: -1>
 statement = 'SELECT widget_design_page.id AS widget_design_page_id, widget_design_page.title AS widget_design_page_title, widget_d...et_design_page_is_main_layout \nFROM widget_design_page \nWHERE widget_design_page.repository_id = %(repository_id_1)s'
 parameters = {'repository_id_1': 1}
-context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7fc0be77ec88>
+context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7fcc43a8c080>
 
     def do_execute(self, cursor, statement, parameters, context=None):
 >       cursor.execute(statement, parameters)
@@ -1817,11 +1814,11 @@ weko_gridlayout/models.py:681: in get_by_repository_id
     cursor, statement, parameters, context
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7fc0bdb4ebe0>
-cursor = <cursor object at 0x7fc0bd1b4af0; closed: -1>
+self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7fcc43a5abe0>
+cursor = <cursor object at 0x7fcc43be6238; closed: -1>
 statement = 'SELECT widget_design_page.id AS widget_design_page_id, widget_design_page.title AS widget_design_page_title, widget_d...et_design_page_is_main_layout \nFROM widget_design_page \nWHERE widget_design_page.repository_id = %(repository_id_1)s'
 parameters = {'repository_id_1': 1}
-context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7fc0be77ec88>
+context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7fcc43a8c080>
 
     def do_execute(self, cursor, statement, parameters, context=None):
 >       cursor.execute(statement, parameters)
@@ -1848,7 +1845,7 @@ weko_gridlayout/utils.py:962: in delete_widget_cache
     cache_store = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <weko_redis.redis.RedisConnection object at 0x7fc0bd8d5d30>, db = '0'
+self = <weko_redis.redis.RedisConnection object at 0x7fcc44302128>, db = '0'
 kv = True
 
     def connection(self, db, kv = False):
@@ -1878,14 +1875,14 @@ E           UnboundLocalError: local variable 'store' referenced before assignme
 ../weko-redis/weko_redis/redis.py:47: UnboundLocalError
 ______________________________ test_preload_pages ______________________________
 
-self = <sqlalchemy.engine.base.Connection object at 0x7fc0bcb1e358>
-dialect = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7fc0bcb17940>
+self = <sqlalchemy.engine.base.Connection object at 0x7fcc43629898>
+dialect = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7fcc43623828>
 constructor = <bound method DefaultExecutionContext._init_compiled of <class 'sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2'>>
 statement = 'SELECT widget_design_page.id AS widget_design_page_id, widget_design_page.title AS widget_design_page_title, widget_d...design_page_settings, widget_design_page.is_main_layout AS widget_design_page_is_main_layout \nFROM widget_design_page'
 parameters = {}
-args = (<sqlalchemy.dialects.postgresql.psycopg2.PGCompiler_psycopg2 object at 0x7fc0bcb1e2e8>, [immutabledict({})])
-conn = <sqlalchemy.pool._ConnectionFairy object at 0x7fc0bcb17d68>
-context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7fc0bcb1e320>
+args = (<sqlalchemy.dialects.postgresql.psycopg2.PGCompiler_psycopg2 object at 0x7fcc43629828>, [immutabledict({})])
+conn = <sqlalchemy.pool._ConnectionFairy object at 0x7fcc43623e80>
+context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7fcc43629860>
 
     def _execute_context(
         self, dialect, constructor, statement, parameters, *args
@@ -1974,11 +1971,11 @@ context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 o
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1236: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7fc0bcb17940>
-cursor = <cursor object at 0x7fc0c2504be8; closed: -1>
+self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7fcc43623828>
+cursor = <cursor object at 0x7fcc4d377710; closed: -1>
 statement = 'SELECT widget_design_page.id AS widget_design_page_id, widget_design_page.title AS widget_design_page_title, widget_d...design_page_settings, widget_design_page.is_main_layout AS widget_design_page_is_main_layout \nFROM widget_design_page'
 parameters = {}
-context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7fc0bcb1e320>
+context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7fcc43629860>
 
     def do_execute(self, cursor, statement, parameters, context=None):
 >       cursor.execute(statement, parameters)
@@ -1999,7 +1996,7 @@ i18n_app = <Flask 'testapp'>
 
 tests/test_views.py:23: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-weko_gridlayout/views.py:72: in preload_pages
+weko_gridlayout/views.py:71: in preload_pages
     _add_url_rule([page.url for page in WidgetDesignPage.get_all()])
 weko_gridlayout/models.py:634: in get_all
     return db.session.query(cls).all()
@@ -2027,11 +2024,11 @@ weko_gridlayout/models.py:634: in get_all
     cursor, statement, parameters, context
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7fc0bcb17940>
-cursor = <cursor object at 0x7fc0c2504be8; closed: -1>
+self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7fcc43623828>
+cursor = <cursor object at 0x7fcc4d377710; closed: -1>
 statement = 'SELECT widget_design_page.id AS widget_design_page_id, widget_design_page.title AS widget_design_page_title, widget_d...design_page_settings, widget_design_page.is_main_layout AS widget_design_page_is_main_layout \nFROM widget_design_page'
 parameters = {}
-context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7fc0bcb1e320>
+context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7fcc43629860>
 
     def do_execute(self, cursor, statement, parameters, context=None):
 >       cursor.execute(statement, parameters)
@@ -2042,7 +2039,7 @@ E        [SQL: 'SELECT widget_design_page.id AS widget_design_page_id, widget_de
 
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/default.py:536: ProgrammingError
 ------------------------------ Captured log call -------------------------------
-views.py                    74 WARNING  Pages were not loaded.
+views.py                    73 WARNING  Pages were not loaded.
 ______________________ test_unlocked_widget_login[0-403] _______________________
 
 client = <FlaskClient <Flask 'testapp'>>
@@ -2411,6 +2408,61 @@ E             -200
 E             +403
 
 tests/test_views.py:240: AssertionError
+____________________________ test_handle_not_found _____________________________
+
+i18n_app = <Flask 'testapp'>
+
+    def test_handle_not_found(i18n_app):
+        from weko_gridlayout.views import handle_not_found
+        from werkzeug.exceptions import NotFound
+    
+        page = MagicMock()
+        page.settings = [{
+            "type": "Main contents"
+        }]
+        i18n_app.config['WEKO_GRIDLAYOUT_MAIN_TYPE'] = "Main contents"
+        i18n_app.config['THEME_FRONTPAGE_TEMPLATE'] = 'weko_theme/frontpage.html'
+        i18n_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS'] = {
+            'id': 'weko',
+            'widths': ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11']
+        }
+        notfound = NotFound()
+    
+        with patch('weko_gridlayout.views.WidgetDesignPage.get_by_url', return_value=page):
+>           with patch('weko_gridlayout.views.get_weko_contents', return_value={}):
+
+tests/test_views.py:432: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.tox/c1/lib/python3.6/site-packages/mock/mock.py:1491: in __enter__
+    original, local = self.get_original()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <mock.mock._patch object at 0x7fcc408659e8>
+
+    def get_original(self):
+        target = self.getter()
+        name = self.attribute
+    
+        original = DEFAULT
+        local = False
+    
+        try:
+            original = target.__dict__[name]
+        except (AttributeError, KeyError):
+            original = getattr(target, name, DEFAULT)
+        else:
+            local = True
+    
+        if name in _builtins and isinstance(target, ModuleType):
+            self.create = True
+    
+        if not self.create and original is DEFAULT:
+            raise AttributeError(
+>               "%s does not have the attribute %r" % (target, name)
+            )
+E           AttributeError: <module 'weko_gridlayout.views' from '/code/modules/weko-gridlayout/weko_gridlayout/views.py'> does not have the attribute 'get_weko_contents'
+
+.tox/c1/lib/python3.6/site-packages/mock/mock.py:1465: AttributeError
 ______________________________ test_uploaded_file ______________________________
 
 client = <FlaskClient <Flask 'testapp'>>, communities = <Community, ID: comm1>
@@ -2456,7 +2508,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
     response = BaseResponse(*_run_wsgi_app(response, environ))
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-app = <function test_uploaded_file.<locals>.get_file at 0x7fc0bc132f28>
+app = <function test_uploaded_file.<locals>.get_file at 0x7fcc40746400>
 environ = {'HTTP_HOST': 'TEST_SERVER', 'HTTP_USER_AGENT': 'werkzeug/0.15.2', 'PATH_INFO': '/widget/uploaded/file/comm1', 'QUERY_STRING': '', ...}
 buffered = False
 
@@ -2787,8 +2839,12 @@ tests/test_views.py::test_unlocked_widget
   /code/modules/weko-gridlayout/.tox/c1/lib/python3.6/site-packages/flask_sqlalchemy/__init__.py:794: FSADeprecationWarning: SQLALCHEMY_TRACK_MODIFICATIONS adds significant overhead and will be disabled by default in the future.  Set it to True or False to suppress this warning.
     'SQLALCHEMY_TRACK_MODIFICATIONS adds significant overhead and '
 
+tests/test_admin.py::test_index_view_can_delete[True]
+  /code/modules/weko-gridlayout/.tox/c1/lib/python3.6/site-packages/sickle/utils.py:20: DeprecationWarning: invalid escape sequence \{
+    return re.search('(\{.*\})', element.tag).group(1)
+
 tests/test_views.py::test_preload_pages
-  /code/modules/weko-gridlayout/weko_gridlayout/views.py:74: DeprecationWarning: The 'warn' method is deprecated, use 'warning' instead
+  /code/modules/weko-gridlayout/weko_gridlayout/views.py:73: DeprecationWarning: The 'warn' method is deprecated, use 'warning' instead
     current_app.logger.warn('Pages were not loaded.')
 
 tests/test_views.py::test_load_repository
@@ -2874,17 +2930,17 @@ weko_gridlayout/bundles.py       16     16      0      0     0%
 weko_gridlayout/cli.py           23     23      0      0     0%
 weko_gridlayout/config.py        34      0      0      0   100%
 weko_gridlayout/ext.py           24      0     12      1    97%
-weko_gridlayout/models.py       313     10     84      8    95%
+weko_gridlayout/models.py       313     11     84      8    95%
 weko_gridlayout/services.py     593     29    236     48    90%
 weko_gridlayout/utils.py        577     49    202     22    88%
 weko_gridlayout/version.py        3      0      0      0   100%
-weko_gridlayout/views.py        237     22     56     16    86%
+weko_gridlayout/views.py        240     39     56     13    78%
 ---------------------------------------------------------------
-TOTAL                          2157    175    710    109    88%
+TOTAL                          2160    193    710    106    88%
 Coverage HTML written to dir htmlcov
 Coverage XML written to file coverage.xml
 
-============ 42 failed, 225 passed, 334 warnings in 961.46 seconds =============
+============ 43 failed, 224 passed, 335 warnings in 969.98 seconds =============
 ERROR: InvocationError for command /code/modules/weko-gridlayout/.tox/c1/bin/pytest --cov=weko_gridlayout tests -v --cov-branch --cov-report=term --cov-report=xml --cov-report=html --basetemp=/code/modules/weko-gridlayout/.tox/c1/tmp (exited with code 1)
 ___________________________________ summary ____________________________________
 ERROR:   c1: commands failed

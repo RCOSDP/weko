@@ -1,10 +1,7 @@
 GLOB sdist-make: /code/modules/invenio-db/setup.py
-c1 create: /code/modules/invenio-db/.tox/c1
-c1 setuptools_version is setuptools==57.5.0
-c1 installdeps: pytest>=3, pytest-cov, -rrequirements2.txt
-c1 inst: /code/modules/invenio-db/.tox/.tmp/package/1/invenio-db-1.0.4.zip
-c1 installed: alabaster==0.7.13,alembic==0.9.6,amqp==2.6.0,angular-gettext-babel==0.3,aniso8601==8.0.0,arrow==0.12.1,asn1crypto==0.23.0,atomicwrites==1.4.1,attrs==17.4.0,b2handle==1.1.2,Babel==2.5.1,bagit==1.7.0,beautifulsoup4==4.9.3,bibtexparser==1.0.1,billiard==3.6.3.0,binaryornot==0.4.4,bleach==3.1.0,blinker==1.4,boto3==1.7.84,botocore==1.10.84,cachelib==0.1,cachetools==4.2.4,cchardet==2.1.1,celery==4.4.4,certifi==2017.11.5,cffi==1.11.2,chardet==3.0.4,citeproc-py==0.5.1,citeproc-py-styles==0.1.2,click==6.7,cookiecutter==1.6.0,counter-robots==2018.6,coverage==6.2,cryptography==2.1.4,datacite==1.0.1,DateTime==4.9,decorator==4.1.2,defusedxml==0.5.0,dictdiffer==0.7.0,distlib==0.3.6,dnspython==2.2.1,docutils==0.18.1,dojson==1.3.2,elasticsearch==6.1.1,elasticsearch-dsl==6.4.0,elementpath==1.0.6,email-validator==1.0.5,entrypoints==0.2.3,feedgen==0.7.0,filelock==3.4.1,Flask==1.1.0,Flask-Admin==1.5.3,Flask-Alembic==2.0.1,Flask-Assets==0.12,Flask-BabelEx==0.9.4,Flask-Breadcrumbs==0.5.0,Flask-Caching==1.10.1,Flask-CeleryExt==0.3.4,Flask-Collect==1.2.2,Flask-Cors==3.0.3,Flask-DebugToolbar==0.13.1,Flask-IIIF==0.6.1,Flask-KVSession==0.6.2,Flask-Limiter==1.1.0,Flask-Login==0.4.1,Flask-Mail==0.9.1,flask-marshmallow==0.14.0,Flask-Menu==0.6.0,-e git+https://github.com/RCOSDP/flask-oauthlib.git@98eb36e1dfc66256fa7ea62237e9879acb906e9d#egg=Flask_OAuthlib,Flask-Plugins==1.6.1,Flask-Principal==0.4.0,Flask-RESTful==0.3.8,Flask-Security==3.0.0,flask-shell-ipython==0.4.1,Flask-Sitemap==0.4.0,Flask-SQLAlchemy==2.3.2,flask-talisman==0.4.1,Flask-WTF==0.14.3,-e git+https://github.com/RCOSDP/pyfpdf.git@f9b032148283d535cabc7789858081c80de36fef#egg=fpdf,frozendict==2.3.8,fs==0.5.4,ftfy==4.4.3,future==0.16.0,github3.py==1.1.0,html5lib==1.0.1,idna==2.6,iiif-prezi==0.3.0,imagesize==1.4.1,importlib-metadata==4.8.3,importlib-resources==5.4.0,infinity==1.4,intervals==0.8.0,invenio-access==1.1.0,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=invenio_accounts&subdirectory=modules/invenio-accounts,invenio-admin==1.1.2,invenio-app==1.1.0,invenio-assets==1.0.0,invenio-base==1.0.2,invenio-cache==1.0.0,invenio-celery==1.1.3,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=invenio_communities&subdirectory=modules/invenio-communities,invenio-config==1.0.0,invenio-csl-rest==1.0.0a1,invenio-db @ file:///code/modules/invenio-db/.tox/.tmp/package/1/invenio-db-1.0.4.zip,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=invenio_deposit&subdirectory=modules/invenio-deposit,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=invenio_files_rest&subdirectory=modules/invenio-files-rest,invenio-formatter==1.0.0b3,invenio-i18n==1.0.0,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=invenio_iiif&subdirectory=modules/invenio-iiif,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=invenio_indexer&subdirectory=modules/invenio-indexer,invenio-jsonschemas==1.0.0,invenio-logging==1.0.0b3,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=invenio_mail&subdirectory=modules/invenio-mail,invenio-marc21==1.0.0a8,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=invenio_oaiharvester&subdirectory=modules/invenio-oaiharvester,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=invenio_oaiserver&subdirectory=modules/invenio-oaiserver,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=invenio_oauth2server&subdirectory=modules/invenio-oauth2server,invenio-oauthclient==1.0.0,invenio-pidrelations==1.0.0a4,invenio-pidstore==1.0.0,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=invenio_previewer&subdirectory=modules/invenio-previewer,invenio-query-parser==0.6.0,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=invenio_queues&subdirectory=modules/invenio-queues,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=invenio_records&subdirectory=modules/invenio-records,invenio-records-files==1.0.0a10,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=invenio_records_rest&subdirectory=modules/invenio-records-rest,invenio-records-ui==1.0.0,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=invenio_resourcesyncclient&subdirectory=modules/invenio-resourcesyncclient,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=invenio_resourcesyncserver&subdirectory=modules/invenio-resourcesyncserver,invenio-rest==1.1.2,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=invenio_s3&subdirectory=modules/invenio-s3,-e git+https://github.com/RCOSDP/invenio-search.git@cff9744c5dc651893a9c51672c5b8da9adc21e16#egg=invenio_search,-e git+https://github.com/RCOSDP/invenio-search-ui.git@74bd3b2990ff27b39e01b6b31be9a0b5fda3dd0f#egg=invenio_search_ui,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=invenio_stats&subdirectory=modules/invenio-stats,invenio-theme==1.0.0b4,ipaddress==1.0.19,ipython==6.2.1,ipython-genutils==0.2.0,itsdangerous==0.24,jedi==0.11.0,Jinja2==2.10.1,jinja2-cli==0.6.0,jinja2-time==0.2.0,jmespath==0.10.0,jsmin==2.2.2,jsonpatch==1.21,jsonpath-ng==1.5.2,jsonpointer==1.14,jsonref==0.1,jsonresolver==0.2.1,jsonschema==2.6.0,jupyter-client==5.2.2,jupyter-core==4.4.0,-e git+https://github.com/RCOSDP/kombu.git@f204fdf078d5e94393c86693f545e2d011f620f5#egg=kombu,limits==1.2.1,lxml==4.1.1,Mako==1.0.7,MarkupSafe==1.1.1,marshmallow==2.20.1,marshmallow-sqlalchemy==0.23.1,maxminddb==1.5.2,maxminddb-geolite2==2017.803,mistune==0.8.3,mock==5.0.2,more-itertools==8.10.0,msgpack==0.6.2,nbconvert==5.3.1,nbformat==4.4.0,netaddr==0.8.0,node-semver==0.1.1,numpy==1.16.1,oauthlib==2.1.0,ordereddict==1.1,packaging==21.3,pandocfilters==1.4.2,parso==0.1.0,passlib==1.7.1,pbr==5.11.1,pexpect==4.3.0,pickleshare==0.7.4,Pillow==5.4.1,platformdirs==2.4.0,pluggy==0.13.1,ply==3.11,poyo==0.4.1,prompt-toolkit==1.0.15,psycopg2==2.7.3.2,ptyprocess==0.5.2,py==1.11.0,pycparser==2.18,Pygments==2.2.0,PyJWT==1.5.3,PyLD==2.0.3,pyparsing==3.1.0,-e git+https://github.com/RCOSDP/PyPDF2.git@fefc684a3a74aff6f99e5dff24f9b4dd1c95169d#egg=PyPDF2,pyPEG2==2.15.2,pytest==4.2.0,pytest-cov==2.9.0,pytest-mock==3.2.0,python-dateutil==2.6.1,python-editor==1.0.3,python-geoip==1.2,pytz==2017.3,pyzmq==17.0.0,redis==2.10.6,requests==2.18.4,requests-oauthlib==1.1.0,resync==1.0.9,s3fs==0.1.6,s3transfer==0.1.13,selenium==3.141.0,Sickle==0.6.4,simplegeneric==0.8.1,simplejson==3.12.0,simplekv==0.11.2,six==1.16.0,snowballstemmer==2.2.0,soupsieve==2.3.2.post1,speaklater==1.3,Sphinx==1.8.4,sphinxcontrib-serializinghtml==1.1.5,sphinxcontrib-websupport==1.2.4,SQLAlchemy==1.2.19,SQLAlchemy-Continuum==1.3.6,SQLAlchemy-Utils==0.35.0,stevedore==3.5.2,sword3common==0.1.1,testpath==0.3.1,tika==2.6.0,toml==0.10.2,tornado==4.5.3,tox==3.28.0,traitlets==4.3.2,typing_extensions==4.1.1,ua-parser==0.7.3,uritemplate==4.1.1,uritools==2.1.0,urllib3==1.22,uWSGI==2.0.21,uwsgitop==0.11,validators==0.12.0,vine==1.3.0,virtualenv==20.17.1,virtualenv-clone==0.5.7,virtualenvwrapper==4.8.4,Wand==0.6.1,wcwidth==0.1.7,webargs==5.5.2,webassets==0.12.1,webencodings==0.5.1,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_accounts&subdirectory=modules/weko-accounts,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_admin&subdirectory=modules/weko-admin,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_authors&subdirectory=modules/weko-authors,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_bulkupdate&subdirectory=modules/weko-bulkupdate,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_deposit&subdirectory=modules/weko-deposit,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_gridlayout&subdirectory=modules/weko-gridlayout,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_groups&subdirectory=modules/weko-groups,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_handle&subdirectory=modules/weko-handle,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_index_tree&subdirectory=modules/weko-index-tree,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_indextree_journal&subdirectory=modules/weko-indextree-journal,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_items_autofill&subdirectory=modules/weko-items-autofill,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_items_ui&subdirectory=modules/weko-items-ui,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_itemtypes_ui&subdirectory=modules/weko-itemtypes-ui,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_logging&subdirectory=modules/weko-logging,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_records&subdirectory=modules/weko-records,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_records_ui&subdirectory=modules/weko-records-ui,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_redis&subdirectory=modules/weko-redis,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_schema_ui&subdirectory=modules/weko-schema-ui,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_search_ui&subdirectory=modules/weko-search-ui,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_sitemap&subdirectory=modules/weko-sitemap,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_swordserver&subdirectory=modules/weko-swordserver,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_theme&subdirectory=modules/weko-theme,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_user_profiles&subdirectory=modules/weko-user-profiles,-e git+https://github.com/RCOSDP/weko.git@a80ea63a516765e4fa4b2461552c9b20c76d07cd#egg=weko_workflow&subdirectory=modules/weko-workflow,Werkzeug==0.15.2,whichcraft==0.4.1,WTForms==2.1,WTForms-Alchemy==0.16.5,WTForms-Components==0.10.3,xmlschema==0.9.30,xmltodict==0.12.0,zipp==3.6.0,zope.interface==5.5.2
-c1 run-test-pre: PYTHONHASHSEED='4277249562'
+c1 inst-nodeps: /code/modules/invenio-db/.tox/.tmp/package/1/invenio-db-1.0.4.zip
+c1 installed: alabaster==0.7.13,alembic==0.9.6,amqp==2.6.0,angular-gettext-babel==0.3,aniso8601==8.0.0,arrow==0.12.1,asn1crypto==0.23.0,atomicwrites==1.4.1,attrs==17.4.0,b2handle==1.1.2,Babel==2.5.1,bagit==1.7.0,beautifulsoup4==4.9.3,bibtexparser==1.0.1,billiard==3.6.3.0,binaryornot==0.4.4,bleach==3.1.0,blinker==1.4,boto3==1.7.84,botocore==1.10.84,cachelib==0.1,cachetools==4.2.4,cchardet==2.1.1,celery==4.4.4,certifi==2017.11.5,cffi==1.11.2,chardet==3.0.4,citeproc-py==0.5.1,citeproc-py-styles==0.1.2,click==6.7,cookiecutter==1.6.0,counter-robots==2018.6,coverage==6.2,cryptography==2.1.4,datacite==1.0.1,DateTime==4.9,decorator==4.1.2,defusedxml==0.5.0,dictdiffer==0.7.0,distlib==0.3.6,dnspython==2.2.1,docutils==0.18.1,dojson==1.3.2,elasticsearch==6.1.1,elasticsearch-dsl==6.4.0,elementpath==1.0.6,email-validator==1.0.5,entrypoints==0.2.3,feedgen==0.7.0,filelock==3.4.1,Flask==1.1.0,Flask-Admin==1.5.3,Flask-Alembic==2.0.1,Flask-Assets==0.12,Flask-BabelEx==0.9.4,Flask-Breadcrumbs==0.5.0,Flask-Caching==1.10.1,Flask-CeleryExt==0.3.4,Flask-Collect==1.2.2,Flask-Cors==3.0.3,Flask-DebugToolbar==0.13.1,Flask-IIIF==0.6.1,Flask-KVSession==0.6.2,Flask-Limiter==1.1.0,Flask-Login==0.4.1,Flask-Mail==0.9.1,flask-marshmallow==0.14.0,Flask-Menu==0.6.0,-e git+https://github.com/RCOSDP/flask-oauthlib.git@98eb36e1dfc66256fa7ea62237e9879acb906e9d#egg=Flask_OAuthlib,Flask-Plugins==1.6.1,Flask-Principal==0.4.0,Flask-RESTful==0.3.8,Flask-Security==3.0.0,flask-shell-ipython==0.4.1,Flask-Sitemap==0.4.0,Flask-SQLAlchemy==2.3.2,flask-talisman==0.4.1,Flask-WTF==0.14.3,-e git+https://github.com/RCOSDP/pyfpdf.git@f9b032148283d535cabc7789858081c80de36fef#egg=fpdf,frozendict==2.3.8,fs==0.5.4,ftfy==4.4.3,future==0.16.0,github3.py==1.1.0,html5lib==1.0.1,idna==2.6,iiif-prezi==0.3.0,imagesize==1.4.1,importlib-metadata==4.8.3,importlib-resources==5.4.0,infinity==1.4,intervals==0.8.0,invenio-access==1.1.0,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=invenio_accounts&subdirectory=modules/invenio-accounts,invenio-admin==1.1.2,invenio-app==1.1.0,invenio-assets==1.0.0,invenio-base==1.0.2,invenio-cache==1.0.0,invenio-celery==1.1.3,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=invenio_communities&subdirectory=modules/invenio-communities,invenio-config==1.0.0,invenio-csl-rest==1.0.0a1,invenio-db @ file:///code/modules/invenio-db/.tox/.tmp/package/1/invenio-db-1.0.4.zip,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=invenio_deposit&subdirectory=modules/invenio-deposit,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=invenio_files_rest&subdirectory=modules/invenio-files-rest,invenio-formatter==1.0.0b3,invenio-i18n==1.0.0,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=invenio_iiif&subdirectory=modules/invenio-iiif,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=invenio_indexer&subdirectory=modules/invenio-indexer,invenio-jsonschemas==1.0.0,invenio-logging==1.0.0b3,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=invenio_mail&subdirectory=modules/invenio-mail,invenio-marc21==1.0.0a8,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=invenio_oaiharvester&subdirectory=modules/invenio-oaiharvester,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=invenio_oaiserver&subdirectory=modules/invenio-oaiserver,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=invenio_oauth2server&subdirectory=modules/invenio-oauth2server,invenio-oauthclient==1.0.0,invenio-pidrelations==1.0.0a4,invenio-pidstore==1.0.0,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=invenio_previewer&subdirectory=modules/invenio-previewer,invenio-query-parser==0.6.0,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=invenio_queues&subdirectory=modules/invenio-queues,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=invenio_records&subdirectory=modules/invenio-records,invenio-records-files==1.0.0a10,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=invenio_records_rest&subdirectory=modules/invenio-records-rest,invenio-records-ui==1.0.0,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=invenio_resourcesyncclient&subdirectory=modules/invenio-resourcesyncclient,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=invenio_resourcesyncserver&subdirectory=modules/invenio-resourcesyncserver,invenio-rest==1.1.2,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=invenio_s3&subdirectory=modules/invenio-s3,-e git+https://github.com/RCOSDP/invenio-search.git@cff9744c5dc651893a9c51672c5b8da9adc21e16#egg=invenio_search,-e git+https://github.com/RCOSDP/invenio-search-ui.git@74bd3b2990ff27b39e01b6b31be9a0b5fda3dd0f#egg=invenio_search_ui,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=invenio_stats&subdirectory=modules/invenio-stats,invenio-theme==1.0.0b4,ipaddress==1.0.19,ipython==6.2.1,ipython-genutils==0.2.0,itsdangerous==0.24,jedi==0.11.0,Jinja2==2.10.1,jinja2-cli==0.6.0,jinja2-time==0.2.0,jmespath==0.10.0,jsmin==2.2.2,jsonpatch==1.21,jsonpath-ng==1.5.2,jsonpointer==1.14,jsonref==0.1,jsonresolver==0.2.1,jsonschema==2.6.0,jupyter-client==5.2.2,jupyter-core==4.4.0,-e git+https://github.com/RCOSDP/kombu.git@f204fdf078d5e94393c86693f545e2d011f620f5#egg=kombu,limits==1.2.1,lxml==4.1.1,Mako==1.0.7,MarkupSafe==1.1.1,marshmallow==2.20.1,marshmallow-sqlalchemy==0.23.1,maxminddb==1.5.2,maxminddb-geolite2==2017.803,mistune==0.8.3,mock==5.0.2,more-itertools==8.10.0,msgpack==0.6.2,nbconvert==5.3.1,nbformat==4.4.0,netaddr==0.8.0,node-semver==0.1.1,numpy==1.16.1,oauthlib==2.1.0,ordereddict==1.1,packaging==21.3,pandocfilters==1.4.2,parso==0.1.0,passlib==1.7.1,pbr==5.11.1,pexpect==4.3.0,pickleshare==0.7.4,Pillow==5.4.1,platformdirs==2.4.0,pluggy==0.13.1,ply==3.11,poyo==0.4.1,prompt-toolkit==1.0.15,psycopg2==2.7.3.2,ptyprocess==0.5.2,py==1.11.0,pycparser==2.18,Pygments==2.2.0,PyJWT==1.5.3,PyLD==2.0.3,pyparsing==3.1.0,-e git+https://github.com/RCOSDP/PyPDF2.git@fefc684a3a74aff6f99e5dff24f9b4dd1c95169d#egg=PyPDF2,pyPEG2==2.15.2,pytest==4.2.0,pytest-cov==2.9.0,pytest-mock==3.2.0,python-dateutil==2.6.1,python-editor==1.0.3,python-geoip==1.2,pytz==2017.3,pyzmq==17.0.0,redis==2.10.6,requests==2.18.4,requests-oauthlib==1.1.0,resync==1.0.9,s3fs==0.1.6,s3transfer==0.1.13,selenium==3.141.0,Sickle==0.6.4,simplegeneric==0.8.1,simplejson==3.12.0,simplekv==0.11.2,six==1.16.0,snowballstemmer==2.2.0,soupsieve==2.3.2.post1,speaklater==1.3,Sphinx==1.8.4,sphinxcontrib-serializinghtml==1.1.5,sphinxcontrib-websupport==1.2.4,SQLAlchemy==1.2.19,SQLAlchemy-Continuum==1.3.6,SQLAlchemy-Utils==0.35.0,stevedore==3.5.2,sword3common==0.1.1,testpath==0.3.1,tika==2.6.0,toml==0.10.2,tornado==4.5.3,tox==3.28.0,traitlets==4.3.2,typing_extensions==4.1.1,ua-parser==0.7.3,uritemplate==4.1.1,uritools==2.1.0,urllib3==1.22,uWSGI==2.0.21,uwsgitop==0.11,validators==0.12.0,vine==1.3.0,virtualenv==20.17.1,virtualenv-clone==0.5.7,virtualenvwrapper==4.8.4,Wand==0.6.1,wcwidth==0.1.7,webargs==5.5.2,webassets==0.12.1,webencodings==0.5.1,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_accounts&subdirectory=modules/weko-accounts,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_admin&subdirectory=modules/weko-admin,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_authors&subdirectory=modules/weko-authors,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_bulkupdate&subdirectory=modules/weko-bulkupdate,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_deposit&subdirectory=modules/weko-deposit,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_gridlayout&subdirectory=modules/weko-gridlayout,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_groups&subdirectory=modules/weko-groups,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_handle&subdirectory=modules/weko-handle,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_index_tree&subdirectory=modules/weko-index-tree,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_indextree_journal&subdirectory=modules/weko-indextree-journal,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_items_autofill&subdirectory=modules/weko-items-autofill,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_items_ui&subdirectory=modules/weko-items-ui,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_itemtypes_ui&subdirectory=modules/weko-itemtypes-ui,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_logging&subdirectory=modules/weko-logging,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_records&subdirectory=modules/weko-records,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_records_ui&subdirectory=modules/weko-records-ui,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_redis&subdirectory=modules/weko-redis,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_schema_ui&subdirectory=modules/weko-schema-ui,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_search_ui&subdirectory=modules/weko-search-ui,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_sitemap&subdirectory=modules/weko-sitemap,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_swordserver&subdirectory=modules/weko-swordserver,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_theme&subdirectory=modules/weko-theme,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_user_profiles&subdirectory=modules/weko-user-profiles,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_workflow&subdirectory=modules/weko-workflow,Werkzeug==0.15.2,whichcraft==0.4.1,WTForms==2.1,WTForms-Alchemy==0.16.5,WTForms-Components==0.10.3,xmlschema==0.9.30,xmltodict==0.12.0,zipp==3.6.0,zope.interface==5.5.2
+c1 run-test-pre: PYTHONHASHSEED='57887947'
 c1 run-test: commands[0] | pytest --cov=invenio_db tests -v --cov-branch --cov-report=term --cov-report=xml --cov-report=html --basetemp=/code/modules/invenio-db/.tox/c1/tmp
 ============================= test session starts ==============================
 platform linux -- Python 3.6.15, pytest-4.2.0, py-1.11.0, pluggy-0.13.1 -- /code/modules/invenio-db/.tox/c1/bin/python
@@ -174,7 +171,7 @@ tests/conftest.py:38: FileNotFoundError
 ______________________ ERROR at teardown of test_destroy _______________________
 
 self = Engine(postgresql+psycopg2://invenio:***@postgresql:5432/wekotest)
-fn = <bound method Pool.connect of <sqlalchemy.pool.QueuePool object at 0x7f3a9c7439b0>>
+fn = <bound method Pool.connect of <sqlalchemy.pool.QueuePool object at 0x7fd581c5c860>>
 connection = None
 
     def _wrap_pool_connect(self, fn, connection):
@@ -185,7 +182,7 @@ connection = None
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:2228: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a9c7439b0>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd581c5c860>
 
     def connect(self):
         """Return a DBAPI connection from the pool.
@@ -202,7 +199,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a9c7439b0>
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 cls = <class 'sqlalchemy.pool._ConnectionFairy'>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a9c7439b0>, threadconns = None
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd581c5c860>, threadconns = None
 fairy = None
 
     @classmethod
@@ -214,7 +211,7 @@ fairy = None
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 cls = <class 'sqlalchemy.pool._ConnectionRecord'>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a9c7439b0>
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd581c5c860>
 
     @classmethod
     def checkout(cls, pool):
@@ -223,7 +220,7 @@ pool = <sqlalchemy.pool.QueuePool object at 0x7f3a9c7439b0>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:563: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a9c7439b0>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd581c5c860>
 
     def _do_get(self):
         use_overflow = self._max_overflow > -1
@@ -257,7 +254,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a9c7439b0>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:1259: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.util.langhelpers.safe_reraise object at 0x7f3a9c7e3cf8>
+self = <sqlalchemy.util.langhelpers.safe_reraise object at 0x7fd581c43080>
 type_ = None, value = None, traceback = None
 
     def __exit__(self, type_, value, traceback):
@@ -273,7 +270,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 tp = <class 'psycopg2.OperationalError'>
 value = OperationalError('FATAL:  database "wekotest" does not exist\n',)
-tb = <traceback object at 0x7f3a9c7c6648>, cause = None
+tb = <traceback object at 0x7fd581856348>, cause = None
 
     def reraise(tp, value, tb=None, cause=None):
         if cause is not None:
@@ -286,7 +283,7 @@ tb = <traceback object at 0x7f3a9c7c6648>, cause = None
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:277: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a9c7439b0>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd581c5c860>
 
     def _do_get(self):
         use_overflow = self._max_overflow > -1
@@ -317,7 +314,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a9c7439b0>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:1256: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a9c7439b0>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd581c5c860>
 
     def _create_connection(self):
         """Called by subclasses to create a new ConnectionRecord."""
@@ -327,8 +324,8 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a9c7439b0>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:379: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a9c7e3da0>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a9c7439b0>, connect = True
+self = <sqlalchemy.pool._ConnectionRecord object at 0x7fd581c43320>
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd581c5c860>, connect = True
 
     def __init__(self, pool, connect=True):
         self.__pool = pool
@@ -338,7 +335,7 @@ pool = <sqlalchemy.pool.QueuePool object at 0x7f3a9c7439b0>, connect = True
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:508: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a9c7e3da0>
+self = <sqlalchemy.pool._ConnectionRecord object at 0x7fd581c43320>
 first_connect_check = True
 
     def __connect(self, first_connect_check=False):
@@ -354,7 +351,7 @@ first_connect_check = True
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:710: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a9c7e3da0>
+connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7fd581c43320>
 
     def connect(connection_record=None):
         if dialect._has_events:
@@ -369,7 +366,7 @@ connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a9c7e3da0>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/strategies.py:114: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f3a9c7430f0>
+self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7fd581c5c668>
 cargs = ()
 cparams = {'database': 'wekotest', 'host': 'postgresql', 'password': 'dbpass123', 'port': 5432, ...}
 
@@ -562,7 +559,7 @@ E        (Background on this error at: http://sqlalche.me/e/e3q8)
 ________________________ ERROR at teardown of test_init ________________________
 
 self = Engine(postgresql+psycopg2://invenio:***@postgresql:5432/wekotest)
-fn = <bound method Pool.connect of <sqlalchemy.pool.QueuePool object at 0x7f3a9c34fb38>>
+fn = <bound method Pool.connect of <sqlalchemy.pool.QueuePool object at 0x7fd5810c0dd8>>
 connection = None
 
     def _wrap_pool_connect(self, fn, connection):
@@ -573,7 +570,7 @@ connection = None
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:2228: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a9c34fb38>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd5810c0dd8>
 
     def connect(self):
         """Return a DBAPI connection from the pool.
@@ -590,7 +587,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a9c34fb38>
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 cls = <class 'sqlalchemy.pool._ConnectionFairy'>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a9c34fb38>, threadconns = None
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd5810c0dd8>, threadconns = None
 fairy = None
 
     @classmethod
@@ -602,7 +599,7 @@ fairy = None
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 cls = <class 'sqlalchemy.pool._ConnectionRecord'>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a9c34fb38>
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd5810c0dd8>
 
     @classmethod
     def checkout(cls, pool):
@@ -611,7 +608,7 @@ pool = <sqlalchemy.pool.QueuePool object at 0x7f3a9c34fb38>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:563: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a9c34fb38>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd5810c0dd8>
 
     def _do_get(self):
         use_overflow = self._max_overflow > -1
@@ -645,7 +642,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a9c34fb38>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:1259: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.util.langhelpers.safe_reraise object at 0x7f3a9c42bc88>
+self = <sqlalchemy.util.langhelpers.safe_reraise object at 0x7fd581510eb8>
 type_ = None, value = None, traceback = None
 
     def __exit__(self, type_, value, traceback):
@@ -661,7 +658,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 tp = <class 'psycopg2.OperationalError'>
 value = OperationalError('FATAL:  database "wekotest" does not exist\n',)
-tb = <traceback object at 0x7f3a9c495408>, cause = None
+tb = <traceback object at 0x7fd5813a6788>, cause = None
 
     def reraise(tp, value, tb=None, cause=None):
         if cause is not None:
@@ -674,7 +671,7 @@ tb = <traceback object at 0x7f3a9c495408>, cause = None
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:277: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a9c34fb38>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd5810c0dd8>
 
     def _do_get(self):
         use_overflow = self._max_overflow > -1
@@ -705,7 +702,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a9c34fb38>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:1256: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a9c34fb38>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd5810c0dd8>
 
     def _create_connection(self):
         """Called by subclasses to create a new ConnectionRecord."""
@@ -715,8 +712,8 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a9c34fb38>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:379: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a9c42b908>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a9c34fb38>, connect = True
+self = <sqlalchemy.pool._ConnectionRecord object at 0x7fd581510b38>
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd5810c0dd8>, connect = True
 
     def __init__(self, pool, connect=True):
         self.__pool = pool
@@ -726,7 +723,7 @@ pool = <sqlalchemy.pool.QueuePool object at 0x7f3a9c34fb38>, connect = True
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:508: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a9c42b908>
+self = <sqlalchemy.pool._ConnectionRecord object at 0x7fd581510b38>
 first_connect_check = True
 
     def __connect(self, first_connect_check=False):
@@ -742,7 +739,7 @@ first_connect_check = True
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:710: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a9c42b908>
+connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7fd581510b38>
 
     def connect(connection_record=None):
         if dialect._has_events:
@@ -757,7 +754,7 @@ connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a9c42b908>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/strategies.py:114: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f3a9c34fe10>
+self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7fd5810c0828>
 cargs = ()
 cparams = {'database': 'wekotest', 'host': 'postgresql', 'password': 'dbpass123', 'port': 5432, ...}
 
@@ -950,7 +947,7 @@ E        (Background on this error at: http://sqlalche.me/e/e3q8)
 ______________________ ERROR at teardown of test_alembic _______________________
 
 self = Engine(postgresql+psycopg2://invenio:***@postgresql:5432/wekotest)
-fn = <bound method Pool.connect of <sqlalchemy.pool.QueuePool object at 0x7f3a9bef7860>>
+fn = <bound method Pool.connect of <sqlalchemy.pool.QueuePool object at 0x7fd5817417f0>>
 connection = None
 
     def _wrap_pool_connect(self, fn, connection):
@@ -961,7 +958,7 @@ connection = None
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:2228: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a9bef7860>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd5817417f0>
 
     def connect(self):
         """Return a DBAPI connection from the pool.
@@ -978,7 +975,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a9bef7860>
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 cls = <class 'sqlalchemy.pool._ConnectionFairy'>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a9bef7860>, threadconns = None
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd5817417f0>, threadconns = None
 fairy = None
 
     @classmethod
@@ -990,7 +987,7 @@ fairy = None
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 cls = <class 'sqlalchemy.pool._ConnectionRecord'>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a9bef7860>
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd5817417f0>
 
     @classmethod
     def checkout(cls, pool):
@@ -999,7 +996,7 @@ pool = <sqlalchemy.pool.QueuePool object at 0x7f3a9bef7860>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:563: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a9bef7860>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd5817417f0>
 
     def _do_get(self):
         use_overflow = self._max_overflow > -1
@@ -1033,7 +1030,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a9bef7860>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:1259: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.util.langhelpers.safe_reraise object at 0x7f3a9c105b38>
+self = <sqlalchemy.util.langhelpers.safe_reraise object at 0x7fd58153e710>
 type_ = None, value = None, traceback = None
 
     def __exit__(self, type_, value, traceback):
@@ -1049,7 +1046,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 tp = <class 'psycopg2.OperationalError'>
 value = OperationalError('FATAL:  database "wekotest" does not exist\n',)
-tb = <traceback object at 0x7f3a9bef1188>, cause = None
+tb = <traceback object at 0x7fd581616e08>, cause = None
 
     def reraise(tp, value, tb=None, cause=None):
         if cause is not None:
@@ -1062,7 +1059,7 @@ tb = <traceback object at 0x7f3a9bef1188>, cause = None
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:277: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a9bef7860>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd5817417f0>
 
     def _do_get(self):
         use_overflow = self._max_overflow > -1
@@ -1093,7 +1090,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a9bef7860>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:1256: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a9bef7860>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd5817417f0>
 
     def _create_connection(self):
         """Called by subclasses to create a new ConnectionRecord."""
@@ -1103,8 +1100,8 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a9bef7860>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:379: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a9c105748>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a9bef7860>, connect = True
+self = <sqlalchemy.pool._ConnectionRecord object at 0x7fd58153e470>
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd5817417f0>, connect = True
 
     def __init__(self, pool, connect=True):
         self.__pool = pool
@@ -1114,7 +1111,7 @@ pool = <sqlalchemy.pool.QueuePool object at 0x7f3a9bef7860>, connect = True
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:508: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a9c105748>
+self = <sqlalchemy.pool._ConnectionRecord object at 0x7fd58153e470>
 first_connect_check = True
 
     def __connect(self, first_connect_check=False):
@@ -1130,7 +1127,7 @@ first_connect_check = True
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:710: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a9c105748>
+connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7fd58153e470>
 
     def connect(connection_record=None):
         if dialect._has_events:
@@ -1145,7 +1142,7 @@ connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a9c105748>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/strategies.py:114: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f3a9bef7780>
+self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7fd5817416d8>
 cargs = ()
 cparams = {'database': 'wekotest', 'host': 'postgresql', 'password': 'dbpass123', 'port': 5432, ...}
 
@@ -1338,7 +1335,7 @@ E        (Background on this error at: http://sqlalche.me/e/e3q8)
 _________________ ERROR at teardown of test_naming_convention __________________
 
 self = Engine(postgresql+psycopg2://invenio:***@postgresql:5432/wekotest)
-fn = <bound method Pool.connect of <sqlalchemy.pool.QueuePool object at 0x7f3a9c525940>>
+fn = <bound method Pool.connect of <sqlalchemy.pool.QueuePool object at 0x7fd58165bf60>>
 connection = None
 
     def _wrap_pool_connect(self, fn, connection):
@@ -1349,7 +1346,7 @@ connection = None
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:2228: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a9c525940>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd58165bf60>
 
     def connect(self):
         """Return a DBAPI connection from the pool.
@@ -1366,7 +1363,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a9c525940>
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 cls = <class 'sqlalchemy.pool._ConnectionFairy'>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a9c525940>, threadconns = None
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd58165bf60>, threadconns = None
 fairy = None
 
     @classmethod
@@ -1378,7 +1375,7 @@ fairy = None
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 cls = <class 'sqlalchemy.pool._ConnectionRecord'>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a9c525940>
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd58165bf60>
 
     @classmethod
     def checkout(cls, pool):
@@ -1387,7 +1384,7 @@ pool = <sqlalchemy.pool.QueuePool object at 0x7f3a9c525940>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:563: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a9c525940>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd58165bf60>
 
     def _do_get(self):
         use_overflow = self._max_overflow > -1
@@ -1421,7 +1418,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a9c525940>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:1259: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.util.langhelpers.safe_reraise object at 0x7f3a9c4d44e0>
+self = <sqlalchemy.util.langhelpers.safe_reraise object at 0x7fd5815c8a90>
 type_ = None, value = None, traceback = None
 
     def __exit__(self, type_, value, traceback):
@@ -1437,7 +1434,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 tp = <class 'psycopg2.OperationalError'>
 value = OperationalError('FATAL:  database "wekotest" does not exist\n',)
-tb = <traceback object at 0x7f3a9c4c9848>, cause = None
+tb = <traceback object at 0x7fd5815d0488>, cause = None
 
     def reraise(tp, value, tb=None, cause=None):
         if cause is not None:
@@ -1450,7 +1447,7 @@ tb = <traceback object at 0x7f3a9c4c9848>, cause = None
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:277: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a9c525940>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd58165bf60>
 
     def _do_get(self):
         use_overflow = self._max_overflow > -1
@@ -1481,7 +1478,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a9c525940>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:1256: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a9c525940>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd58165bf60>
 
     def _create_connection(self):
         """Called by subclasses to create a new ConnectionRecord."""
@@ -1491,8 +1488,8 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a9c525940>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:379: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a9c4d42e8>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a9c525940>, connect = True
+self = <sqlalchemy.pool._ConnectionRecord object at 0x7fd5813ebb70>
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd58165bf60>, connect = True
 
     def __init__(self, pool, connect=True):
         self.__pool = pool
@@ -1502,7 +1499,7 @@ pool = <sqlalchemy.pool.QueuePool object at 0x7f3a9c525940>, connect = True
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:508: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a9c4d42e8>
+self = <sqlalchemy.pool._ConnectionRecord object at 0x7fd5813ebb70>
 first_connect_check = True
 
     def __connect(self, first_connect_check=False):
@@ -1518,7 +1515,7 @@ first_connect_check = True
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:710: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a9c4d42e8>
+connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7fd5813ebb70>
 
     def connect(connection_record=None):
         if dialect._has_events:
@@ -1533,7 +1530,7 @@ connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a9c4d42e8>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/strategies.py:114: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f3a9c525860>
+self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7fd58165be10>
 cargs = ()
 cparams = {'database': 'wekotest', 'host': 'postgresql', 'password': 'dbpass123', 'port': 5432, ...}
 
@@ -1726,7 +1723,7 @@ E        (Background on this error at: http://sqlalche.me/e/e3q8)
 ____________________ ERROR at teardown of test_transaction _____________________
 
 self = Engine(postgresql+psycopg2://invenio:***@postgresql:5432/wekotest)
-fn = <bound method Pool.connect of <sqlalchemy.pool.QueuePool object at 0x7f3a6fa745f8>>
+fn = <bound method Pool.connect of <sqlalchemy.pool.QueuePool object at 0x7fd55500a0b8>>
 connection = None
 
     def _wrap_pool_connect(self, fn, connection):
@@ -1737,7 +1734,7 @@ connection = None
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:2228: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a6fa745f8>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd55500a0b8>
 
     def connect(self):
         """Return a DBAPI connection from the pool.
@@ -1754,7 +1751,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a6fa745f8>
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 cls = <class 'sqlalchemy.pool._ConnectionFairy'>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a6fa745f8>, threadconns = None
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd55500a0b8>, threadconns = None
 fairy = None
 
     @classmethod
@@ -1766,7 +1763,7 @@ fairy = None
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 cls = <class 'sqlalchemy.pool._ConnectionRecord'>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a6fa745f8>
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd55500a0b8>
 
     @classmethod
     def checkout(cls, pool):
@@ -1775,7 +1772,7 @@ pool = <sqlalchemy.pool.QueuePool object at 0x7f3a6fa745f8>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:563: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a6fa745f8>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd55500a0b8>
 
     def _do_get(self):
         use_overflow = self._max_overflow > -1
@@ -1809,7 +1806,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a6fa745f8>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:1259: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.util.langhelpers.safe_reraise object at 0x7f3a6fa74908>
+self = <sqlalchemy.util.langhelpers.safe_reraise object at 0x7fd55500a3c8>
 type_ = None, value = None, traceback = None
 
     def __exit__(self, type_, value, traceback):
@@ -1825,7 +1822,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 tp = <class 'psycopg2.OperationalError'>
 value = OperationalError('FATAL:  database "wekotest" does not exist\n',)
-tb = <traceback object at 0x7f3a6fafd208>, cause = None
+tb = <traceback object at 0x7fd5550089c8>, cause = None
 
     def reraise(tp, value, tb=None, cause=None):
         if cause is not None:
@@ -1838,7 +1835,7 @@ tb = <traceback object at 0x7f3a6fafd208>, cause = None
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:277: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a6fa745f8>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd55500a0b8>
 
     def _do_get(self):
         use_overflow = self._max_overflow > -1
@@ -1869,7 +1866,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a6fa745f8>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:1256: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a6fa745f8>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd55500a0b8>
 
     def _create_connection(self):
         """Called by subclasses to create a new ConnectionRecord."""
@@ -1879,8 +1876,8 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a6fa745f8>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:379: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a6fa74748>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a6fa745f8>, connect = True
+self = <sqlalchemy.pool._ConnectionRecord object at 0x7fd55500a208>
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd55500a0b8>, connect = True
 
     def __init__(self, pool, connect=True):
         self.__pool = pool
@@ -1890,7 +1887,7 @@ pool = <sqlalchemy.pool.QueuePool object at 0x7f3a6fa745f8>, connect = True
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:508: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a6fa74748>
+self = <sqlalchemy.pool._ConnectionRecord object at 0x7fd55500a208>
 first_connect_check = True
 
     def __connect(self, first_connect_check=False):
@@ -1906,7 +1903,7 @@ first_connect_check = True
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:710: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a6fa74748>
+connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7fd55500a208>
 
     def connect(connection_record=None):
         if dialect._has_events:
@@ -1921,7 +1918,7 @@ connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a6fa74748>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/strategies.py:114: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f3a6fbed860>
+self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7fd555a7f7f0>
 cargs = ()
 cparams = {'database': 'wekotest', 'host': 'postgresql', 'password': 'dbpass123', 'port': 5432, ...}
 
@@ -2111,10 +2108,13 @@ E       sqlalchemy.exc.OperationalError: (psycopg2.OperationalError) FATAL:  dat
 E        (Background on this error at: http://sqlalche.me/e/e3q8)
 
 .tox/c1/lib/python3.6/site-packages/psycopg2/__init__.py:130: OperationalError
+------------------------------ Captured log call -------------------------------
+extension.py               549 ERROR    failed to configure view function weko_search_ui.rest.get (couldn't parse rate limit string '')
+extension.py               549 ERROR    failed to configure view function weko_search_ui.rest.post (couldn't parse rate limit string '')
 ____________________ ERROR at teardown of test_entry_points ____________________
 
 self = Engine(postgresql+psycopg2://invenio:***@postgresql:5432/wekotest)
-fn = <bound method Pool.connect of <sqlalchemy.pool.QueuePool object at 0x7f3a6f8d5080>>
+fn = <bound method Pool.connect of <sqlalchemy.pool.QueuePool object at 0x7fd5550eba58>>
 connection = None
 
     def _wrap_pool_connect(self, fn, connection):
@@ -2125,7 +2125,7 @@ connection = None
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:2228: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a6f8d5080>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd5550eba58>
 
     def connect(self):
         """Return a DBAPI connection from the pool.
@@ -2142,7 +2142,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a6f8d5080>
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 cls = <class 'sqlalchemy.pool._ConnectionFairy'>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a6f8d5080>, threadconns = None
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd5550eba58>, threadconns = None
 fairy = None
 
     @classmethod
@@ -2154,7 +2154,7 @@ fairy = None
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 cls = <class 'sqlalchemy.pool._ConnectionRecord'>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a6f8d5080>
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd5550eba58>
 
     @classmethod
     def checkout(cls, pool):
@@ -2163,7 +2163,7 @@ pool = <sqlalchemy.pool.QueuePool object at 0x7f3a6f8d5080>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:563: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a6f8d5080>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd5550eba58>
 
     def _do_get(self):
         use_overflow = self._max_overflow > -1
@@ -2197,7 +2197,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a6f8d5080>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:1259: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.util.langhelpers.safe_reraise object at 0x7f3a9c751b00>
+self = <sqlalchemy.util.langhelpers.safe_reraise object at 0x7fd554df2be0>
 type_ = None, value = None, traceback = None
 
     def __exit__(self, type_, value, traceback):
@@ -2213,7 +2213,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 tp = <class 'psycopg2.OperationalError'>
 value = OperationalError('FATAL:  database "wekotest" does not exist\n',)
-tb = <traceback object at 0x7f3a6faeb088>, cause = None
+tb = <traceback object at 0x7fd5550e9e08>, cause = None
 
     def reraise(tp, value, tb=None, cause=None):
         if cause is not None:
@@ -2226,7 +2226,7 @@ tb = <traceback object at 0x7f3a6faeb088>, cause = None
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:277: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a6f8d5080>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd5550eba58>
 
     def _do_get(self):
         use_overflow = self._max_overflow > -1
@@ -2257,7 +2257,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a6f8d5080>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:1256: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a6f8d5080>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd5550eba58>
 
     def _create_connection(self):
         """Called by subclasses to create a new ConnectionRecord."""
@@ -2267,8 +2267,8 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a6f8d5080>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:379: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a70b26a58>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a6f8d5080>, connect = True
+self = <sqlalchemy.pool._ConnectionRecord object at 0x7fd554df2ba8>
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd5550eba58>, connect = True
 
     def __init__(self, pool, connect=True):
         self.__pool = pool
@@ -2278,7 +2278,7 @@ pool = <sqlalchemy.pool.QueuePool object at 0x7f3a6f8d5080>, connect = True
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:508: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a70b26a58>
+self = <sqlalchemy.pool._ConnectionRecord object at 0x7fd554df2ba8>
 first_connect_check = True
 
     def __connect(self, first_connect_check=False):
@@ -2294,7 +2294,7 @@ first_connect_check = True
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:710: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a70b26a58>
+connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7fd554df2ba8>
 
     def connect(connection_record=None):
         if dialect._has_events:
@@ -2309,7 +2309,7 @@ connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a70b26a58>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/strategies.py:114: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f3a6f68df98>
+self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7fd5550ebac8>
 cargs = ()
 cparams = {'database': 'wekotest', 'host': 'postgresql', 'password': 'dbpass123', 'port': 5432, ...}
 
@@ -2502,7 +2502,7 @@ E        (Background on this error at: http://sqlalche.me/e/e3q8)
 ____________________ ERROR at teardown of test_local_proxy _____________________
 
 self = Engine(postgresql+psycopg2://invenio:***@postgresql:5432/wekotest)
-fn = <bound method Pool.connect of <sqlalchemy.pool.QueuePool object at 0x7f3a6f2ac828>>
+fn = <bound method Pool.connect of <sqlalchemy.pool.QueuePool object at 0x7fd554c36ba8>>
 connection = None
 
     def _wrap_pool_connect(self, fn, connection):
@@ -2513,7 +2513,7 @@ connection = None
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:2228: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a6f2ac828>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd554c36ba8>
 
     def connect(self):
         """Return a DBAPI connection from the pool.
@@ -2530,7 +2530,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a6f2ac828>
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 cls = <class 'sqlalchemy.pool._ConnectionFairy'>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a6f2ac828>, threadconns = None
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd554c36ba8>, threadconns = None
 fairy = None
 
     @classmethod
@@ -2542,7 +2542,7 @@ fairy = None
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 cls = <class 'sqlalchemy.pool._ConnectionRecord'>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a6f2ac828>
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd554c36ba8>
 
     @classmethod
     def checkout(cls, pool):
@@ -2551,7 +2551,7 @@ pool = <sqlalchemy.pool.QueuePool object at 0x7f3a6f2ac828>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:563: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a6f2ac828>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd554c36ba8>
 
     def _do_get(self):
         use_overflow = self._max_overflow > -1
@@ -2585,7 +2585,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a6f2ac828>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:1259: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.util.langhelpers.safe_reraise object at 0x7f3a6eead0f0>
+self = <sqlalchemy.util.langhelpers.safe_reraise object at 0x7fd554a2f2b0>
 type_ = None, value = None, traceback = None
 
     def __exit__(self, type_, value, traceback):
@@ -2601,7 +2601,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 tp = <class 'psycopg2.OperationalError'>
 value = OperationalError('FATAL:  database "wekotest" does not exist\n',)
-tb = <traceback object at 0x7f3a6f23ac88>, cause = None
+tb = <traceback object at 0x7fd5550e9e08>, cause = None
 
     def reraise(tp, value, tb=None, cause=None):
         if cause is not None:
@@ -2614,7 +2614,7 @@ tb = <traceback object at 0x7f3a6f23ac88>, cause = None
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:277: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a6f2ac828>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd554c36ba8>
 
     def _do_get(self):
         use_overflow = self._max_overflow > -1
@@ -2645,7 +2645,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a6f2ac828>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:1256: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a6f2ac828>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd554c36ba8>
 
     def _create_connection(self):
         """Called by subclasses to create a new ConnectionRecord."""
@@ -2655,8 +2655,8 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a6f2ac828>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:379: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a6eead0b8>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a6f2ac828>, connect = True
+self = <sqlalchemy.pool._ConnectionRecord object at 0x7fd554ceed68>
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd554c36ba8>, connect = True
 
     def __init__(self, pool, connect=True):
         self.__pool = pool
@@ -2666,7 +2666,7 @@ pool = <sqlalchemy.pool.QueuePool object at 0x7f3a6f2ac828>, connect = True
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:508: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a6eead0b8>
+self = <sqlalchemy.pool._ConnectionRecord object at 0x7fd554ceed68>
 first_connect_check = True
 
     def __connect(self, first_connect_check=False):
@@ -2682,7 +2682,7 @@ first_connect_check = True
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:710: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a6eead0b8>
+connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7fd554ceed68>
 
     def connect(connection_record=None):
         if dialect._has_events:
@@ -2697,7 +2697,7 @@ connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a6eead0b8>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/strategies.py:114: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f3a6f2ac748>
+self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7fd554a49e48>
 cargs = ()
 cparams = {'database': 'wekotest', 'host': 'postgresql', 'password': 'dbpass123', 'port': 5432, ...}
 
@@ -2890,7 +2890,7 @@ E        (Background on this error at: http://sqlalche.me/e/e3q8)
 _________ ERROR at teardown of TestSQLAlchemy.test_apply_driver_hacks __________
 
 self = Engine(postgresql+psycopg2://invenio:***@postgresql:5432/wekotest)
-fn = <bound method Pool.connect of <sqlalchemy.pool.QueuePool object at 0x7f3a6f2a3e10>>
+fn = <bound method Pool.connect of <sqlalchemy.pool.QueuePool object at 0x7fd554a490f0>>
 connection = None
 
     def _wrap_pool_connect(self, fn, connection):
@@ -2901,7 +2901,7 @@ connection = None
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:2228: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a6f2a3e10>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd554a490f0>
 
     def connect(self):
         """Return a DBAPI connection from the pool.
@@ -2918,7 +2918,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a6f2a3e10>
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 cls = <class 'sqlalchemy.pool._ConnectionFairy'>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a6f2a3e10>, threadconns = None
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd554a490f0>, threadconns = None
 fairy = None
 
     @classmethod
@@ -2930,7 +2930,7 @@ fairy = None
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 cls = <class 'sqlalchemy.pool._ConnectionRecord'>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a6f2a3e10>
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd554a490f0>
 
     @classmethod
     def checkout(cls, pool):
@@ -2939,7 +2939,7 @@ pool = <sqlalchemy.pool.QueuePool object at 0x7f3a6f2a3e10>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:563: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a6f2a3e10>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd554a490f0>
 
     def _do_get(self):
         use_overflow = self._max_overflow > -1
@@ -2973,7 +2973,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a6f2a3e10>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:1259: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.util.langhelpers.safe_reraise object at 0x7f3a6f7c52e8>
+self = <sqlalchemy.util.langhelpers.safe_reraise object at 0x7fd55487f470>
 type_ = None, value = None, traceback = None
 
     def __exit__(self, type_, value, traceback):
@@ -2989,7 +2989,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 tp = <class 'psycopg2.OperationalError'>
 value = OperationalError('FATAL:  database "wekotest" does not exist\n',)
-tb = <traceback object at 0x7f3a6f469208>, cause = None
+tb = <traceback object at 0x7fd55487ef88>, cause = None
 
     def reraise(tp, value, tb=None, cause=None):
         if cause is not None:
@@ -3002,7 +3002,7 @@ tb = <traceback object at 0x7f3a6f469208>, cause = None
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:277: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a6f2a3e10>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd554a490f0>
 
     def _do_get(self):
         use_overflow = self._max_overflow > -1
@@ -3033,7 +3033,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a6f2a3e10>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:1256: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a6f2a3e10>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd554a490f0>
 
     def _create_connection(self):
         """Called by subclasses to create a new ConnectionRecord."""
@@ -3043,8 +3043,8 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a6f2a3e10>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:379: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a6f0c3be0>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a6f2a3e10>, connect = True
+self = <sqlalchemy.pool._ConnectionRecord object at 0x7fd55487f438>
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd554a490f0>, connect = True
 
     def __init__(self, pool, connect=True):
         self.__pool = pool
@@ -3054,7 +3054,7 @@ pool = <sqlalchemy.pool.QueuePool object at 0x7f3a6f2a3e10>, connect = True
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:508: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a6f0c3be0>
+self = <sqlalchemy.pool._ConnectionRecord object at 0x7fd55487f438>
 first_connect_check = True
 
     def __connect(self, first_connect_check=False):
@@ -3070,7 +3070,7 @@ first_connect_check = True
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:710: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a6f0c3be0>
+connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7fd55487f438>
 
     def connect(connection_record=None):
         if dialect._has_events:
@@ -3085,7 +3085,7 @@ connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a6f0c3be0>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/strategies.py:114: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f3a6f2a3f28>
+self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7fd554a49d30>
 cargs = ()
 cparams = {'database': 'wekotest', 'host': 'postgresql', 'password': 'dbpass123', 'port': 5432, ...}
 
@@ -3278,7 +3278,7 @@ E        (Background on this error at: http://sqlalche.me/e/e3q8)
 _______ ERROR at teardown of TestSQLAlchemy.test_set_db_connection_pool ________
 
 self = Engine(postgresql+psycopg2://invenio:***@postgresql:5432/wekotest)
-fn = <bound method Pool.connect of <sqlalchemy.pool.QueuePool object at 0x7f3aa1203c18>>
+fn = <bound method Pool.connect of <sqlalchemy.pool.QueuePool object at 0x7fd5548cae48>>
 connection = None
 
     def _wrap_pool_connect(self, fn, connection):
@@ -3289,7 +3289,7 @@ connection = None
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:2228: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3aa1203c18>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd5548cae48>
 
     def connect(self):
         """Return a DBAPI connection from the pool.
@@ -3306,7 +3306,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3aa1203c18>
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 cls = <class 'sqlalchemy.pool._ConnectionFairy'>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3aa1203c18>, threadconns = None
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd5548cae48>, threadconns = None
 fairy = None
 
     @classmethod
@@ -3318,7 +3318,7 @@ fairy = None
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 cls = <class 'sqlalchemy.pool._ConnectionRecord'>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3aa1203c18>
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd5548cae48>
 
     @classmethod
     def checkout(cls, pool):
@@ -3327,7 +3327,7 @@ pool = <sqlalchemy.pool.QueuePool object at 0x7f3aa1203c18>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:563: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3aa1203c18>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd5548cae48>
 
     def _do_get(self):
         use_overflow = self._max_overflow > -1
@@ -3361,7 +3361,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3aa1203c18>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:1259: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.util.langhelpers.safe_reraise object at 0x7f3a6eea7550>
+self = <sqlalchemy.util.langhelpers.safe_reraise object at 0x7fd57c6a0358>
 type_ = None, value = None, traceback = None
 
     def __exit__(self, type_, value, traceback):
@@ -3377,7 +3377,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 tp = <class 'psycopg2.OperationalError'>
 value = OperationalError('FATAL:  database "wekotest" does not exist\n',)
-tb = <traceback object at 0x7f3a6eec0608>, cause = None
+tb = <traceback object at 0x7fd5545f2048>, cause = None
 
     def reraise(tp, value, tb=None, cause=None):
         if cause is not None:
@@ -3390,7 +3390,7 @@ tb = <traceback object at 0x7f3a6eec0608>, cause = None
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:277: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3aa1203c18>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd5548cae48>
 
     def _do_get(self):
         use_overflow = self._max_overflow > -1
@@ -3421,7 +3421,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3aa1203c18>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:1256: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3aa1203c18>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd5548cae48>
 
     def _create_connection(self):
         """Called by subclasses to create a new ConnectionRecord."""
@@ -3431,8 +3431,8 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3aa1203c18>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:379: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a6eea75f8>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3aa1203c18>, connect = True
+self = <sqlalchemy.pool._ConnectionRecord object at 0x7fd57c6a0320>
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd5548cae48>, connect = True
 
     def __init__(self, pool, connect=True):
         self.__pool = pool
@@ -3442,7 +3442,7 @@ pool = <sqlalchemy.pool.QueuePool object at 0x7f3aa1203c18>, connect = True
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:508: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a6eea75f8>
+self = <sqlalchemy.pool._ConnectionRecord object at 0x7fd57c6a0320>
 first_connect_check = True
 
     def __connect(self, first_connect_check=False):
@@ -3458,7 +3458,7 @@ first_connect_check = True
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:710: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a6eea75f8>
+connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7fd57c6a0320>
 
     def connect(connection_record=None):
         if dialect._has_events:
@@ -3473,7 +3473,7 @@ connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a6eea75f8>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/strategies.py:114: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f3aa12037f0>
+self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7fd5548ca470>
 cargs = ()
 cparams = {'database': 'wekotest', 'host': 'postgresql', 'password': 'dbpass123', 'port': 5432, ...}
 
@@ -3666,7 +3666,7 @@ E        (Background on this error at: http://sqlalche.me/e/e3q8)
 ____________ ERROR at teardown of test_rebuild_encrypted_properties ____________
 
 self = Engine(postgresql+psycopg2://invenio:***@postgresql:5432/wekotest)
-fn = <bound method Pool.connect of <sqlalchemy.pool.QueuePool object at 0x7f3a6f139c50>>
+fn = <bound method Pool.connect of <sqlalchemy.pool.QueuePool object at 0x7fd5545401d0>>
 connection = None
 
     def _wrap_pool_connect(self, fn, connection):
@@ -3677,7 +3677,7 @@ connection = None
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:2228: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a6f139c50>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd5545401d0>
 
     def connect(self):
         """Return a DBAPI connection from the pool.
@@ -3694,7 +3694,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a6f139c50>
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 cls = <class 'sqlalchemy.pool._ConnectionFairy'>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a6f139c50>, threadconns = None
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd5545401d0>, threadconns = None
 fairy = None
 
     @classmethod
@@ -3706,7 +3706,7 @@ fairy = None
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 cls = <class 'sqlalchemy.pool._ConnectionRecord'>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a6f139c50>
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd5545401d0>
 
     @classmethod
     def checkout(cls, pool):
@@ -3715,7 +3715,7 @@ pool = <sqlalchemy.pool.QueuePool object at 0x7f3a6f139c50>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:563: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a6f139c50>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd5545401d0>
 
     def _do_get(self):
         use_overflow = self._max_overflow > -1
@@ -3749,7 +3749,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a6f139c50>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:1259: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.util.langhelpers.safe_reraise object at 0x7f3a6edb41d0>
+self = <sqlalchemy.util.langhelpers.safe_reraise object at 0x7fd57c5c0588>
 type_ = None, value = None, traceback = None
 
     def __exit__(self, type_, value, traceback):
@@ -3765,7 +3765,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 tp = <class 'psycopg2.OperationalError'>
 value = OperationalError('FATAL:  database "wekotest" does not exist\n',)
-tb = <traceback object at 0x7f3a972fc2c8>, cause = None
+tb = <traceback object at 0x7fd57c5c6108>, cause = None
 
     def reraise(tp, value, tb=None, cause=None):
         if cause is not None:
@@ -3778,7 +3778,7 @@ tb = <traceback object at 0x7f3a972fc2c8>, cause = None
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:277: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a6f139c50>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd5545401d0>
 
     def _do_get(self):
         use_overflow = self._max_overflow > -1
@@ -3809,7 +3809,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a6f139c50>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:1256: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a6f139c50>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd5545401d0>
 
     def _create_connection(self):
         """Called by subclasses to create a new ConnectionRecord."""
@@ -3819,8 +3819,8 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a6f139c50>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:379: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a6edb4198>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a6f139c50>, connect = True
+self = <sqlalchemy.pool._ConnectionRecord object at 0x7fd57c5c0630>
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd5545401d0>, connect = True
 
     def __init__(self, pool, connect=True):
         self.__pool = pool
@@ -3830,7 +3830,7 @@ pool = <sqlalchemy.pool.QueuePool object at 0x7f3a6f139c50>, connect = True
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:508: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a6edb4198>
+self = <sqlalchemy.pool._ConnectionRecord object at 0x7fd57c5c0630>
 first_connect_check = True
 
     def __connect(self, first_connect_check=False):
@@ -3846,7 +3846,7 @@ first_connect_check = True
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:710: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a6edb4198>
+connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7fd57c5c0630>
 
     def connect(connection_record=None):
         if dialect._has_events:
@@ -3861,7 +3861,7 @@ connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a6edb4198>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/strategies.py:114: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f3a6f2e0b00>
+self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7fd5545400f0>
 cargs = ()
 cparams = {'database': 'wekotest', 'host': 'postgresql', 'password': 'dbpass123', 'port': 5432, ...}
 
@@ -4054,7 +4054,7 @@ E        (Background on this error at: http://sqlalche.me/e/e3q8)
 _____________ ERROR at teardown of test_versioning_model_classname _____________
 
 self = Engine(postgresql+psycopg2://invenio:***@postgresql:5432/wekotest)
-fn = <bound method Pool.connect of <sqlalchemy.pool.QueuePool object at 0x7f3a6f0413c8>>
+fn = <bound method Pool.connect of <sqlalchemy.pool.QueuePool object at 0x7fd554a114a8>>
 connection = None
 
     def _wrap_pool_connect(self, fn, connection):
@@ -4065,7 +4065,7 @@ connection = None
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:2228: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a6f0413c8>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd554a114a8>
 
     def connect(self):
         """Return a DBAPI connection from the pool.
@@ -4082,7 +4082,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a6f0413c8>
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 cls = <class 'sqlalchemy.pool._ConnectionFairy'>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a6f0413c8>, threadconns = None
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd554a114a8>, threadconns = None
 fairy = None
 
     @classmethod
@@ -4094,7 +4094,7 @@ fairy = None
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 cls = <class 'sqlalchemy.pool._ConnectionRecord'>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a6f0413c8>
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd554a114a8>
 
     @classmethod
     def checkout(cls, pool):
@@ -4103,7 +4103,7 @@ pool = <sqlalchemy.pool.QueuePool object at 0x7f3a6f0413c8>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:563: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a6f0413c8>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd554a114a8>
 
     def _do_get(self):
         use_overflow = self._max_overflow > -1
@@ -4137,7 +4137,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a6f0413c8>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:1259: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.util.langhelpers.safe_reraise object at 0x7f3a973d38d0>
+self = <sqlalchemy.util.langhelpers.safe_reraise object at 0x7fd5548771d0>
 type_ = None, value = None, traceback = None
 
     def __exit__(self, type_, value, traceback):
@@ -4153,7 +4153,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 tp = <class 'psycopg2.OperationalError'>
 value = OperationalError('FATAL:  database "wekotest" does not exist\n',)
-tb = <traceback object at 0x7f3a6eb9dec8>, cause = None
+tb = <traceback object at 0x7fd57c5772c8>, cause = None
 
     def reraise(tp, value, tb=None, cause=None):
         if cause is not None:
@@ -4166,7 +4166,7 @@ tb = <traceback object at 0x7f3a6eb9dec8>, cause = None
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:277: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a6f0413c8>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd554a114a8>
 
     def _do_get(self):
         use_overflow = self._max_overflow > -1
@@ -4197,7 +4197,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a6f0413c8>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:1256: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a6f0413c8>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd554a114a8>
 
     def _create_connection(self):
         """Called by subclasses to create a new ConnectionRecord."""
@@ -4207,8 +4207,8 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a6f0413c8>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:379: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a973d39e8>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a6f0413c8>, connect = True
+self = <sqlalchemy.pool._ConnectionRecord object at 0x7fd554877198>
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd554a114a8>, connect = True
 
     def __init__(self, pool, connect=True):
         self.__pool = pool
@@ -4218,7 +4218,7 @@ pool = <sqlalchemy.pool.QueuePool object at 0x7f3a6f0413c8>, connect = True
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:508: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a973d39e8>
+self = <sqlalchemy.pool._ConnectionRecord object at 0x7fd554877198>
 first_connect_check = True
 
     def __connect(self, first_connect_check=False):
@@ -4234,7 +4234,7 @@ first_connect_check = True
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:710: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a973d39e8>
+connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7fd554877198>
 
     def connect(connection_record=None):
         if dialect._has_events:
@@ -4249,7 +4249,7 @@ connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a973d39e8>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/strategies.py:114: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f3a6f041470>
+self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7fd5544a7f60>
 cargs = ()
 cparams = {'database': 'wekotest', 'host': 'postgresql', 'password': 'dbpass123', 'port': 5432, ...}
 
@@ -4442,7 +4442,7 @@ E        (Background on this error at: http://sqlalche.me/e/e3q8)
 ____________ ERROR at teardown of test_versioning_models_registered ____________
 
 self = Engine(postgresql+psycopg2://invenio:***@postgresql:5432/wekotest)
-fn = <bound method Pool.connect of <sqlalchemy.pool.QueuePool object at 0x7f3a6f041c88>>
+fn = <bound method Pool.connect of <sqlalchemy.pool.QueuePool object at 0x7fd554623278>>
 connection = None
 
     def _wrap_pool_connect(self, fn, connection):
@@ -4453,7 +4453,7 @@ connection = None
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:2228: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a6f041c88>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd554623278>
 
     def connect(self):
         """Return a DBAPI connection from the pool.
@@ -4470,7 +4470,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a6f041c88>
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 cls = <class 'sqlalchemy.pool._ConnectionFairy'>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a6f041c88>, threadconns = None
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd554623278>, threadconns = None
 fairy = None
 
     @classmethod
@@ -4482,7 +4482,7 @@ fairy = None
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 cls = <class 'sqlalchemy.pool._ConnectionRecord'>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a6f041c88>
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd554623278>
 
     @classmethod
     def checkout(cls, pool):
@@ -4491,7 +4491,7 @@ pool = <sqlalchemy.pool.QueuePool object at 0x7f3a6f041c88>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:563: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a6f041c88>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd554623278>
 
     def _do_get(self):
         use_overflow = self._max_overflow > -1
@@ -4525,7 +4525,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a6f041c88>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:1259: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.util.langhelpers.safe_reraise object at 0x7f3a975784a8>
+self = <sqlalchemy.util.langhelpers.safe_reraise object at 0x7fd5546a0278>
 type_ = None, value = None, traceback = None
 
     def __exit__(self, type_, value, traceback):
@@ -4541,7 +4541,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 tp = <class 'psycopg2.OperationalError'>
 value = OperationalError('FATAL:  database "wekotest" does not exist\n',)
-tb = <traceback object at 0x7f3a6edf1ec8>, cause = None
+tb = <traceback object at 0x7fd57c5c1648>, cause = None
 
     def reraise(tp, value, tb=None, cause=None):
         if cause is not None:
@@ -4554,7 +4554,7 @@ tb = <traceback object at 0x7f3a6edf1ec8>, cause = None
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:277: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a6f041c88>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd554623278>
 
     def _do_get(self):
         use_overflow = self._max_overflow > -1
@@ -4585,7 +4585,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a6f041c88>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:1256: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a6f041c88>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd554623278>
 
     def _create_connection(self):
         """Called by subclasses to create a new ConnectionRecord."""
@@ -4595,8 +4595,8 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a6f041c88>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:379: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a97578550>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a6f041c88>, connect = True
+self = <sqlalchemy.pool._ConnectionRecord object at 0x7fd5546a0240>
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd554623278>, connect = True
 
     def __init__(self, pool, connect=True):
         self.__pool = pool
@@ -4606,7 +4606,7 @@ pool = <sqlalchemy.pool.QueuePool object at 0x7f3a6f041c88>, connect = True
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:508: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a97578550>
+self = <sqlalchemy.pool._ConnectionRecord object at 0x7fd5546a0240>
 first_connect_check = True
 
     def __connect(self, first_connect_check=False):
@@ -4622,7 +4622,7 @@ first_connect_check = True
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:710: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a97578550>
+connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7fd5546a0240>
 
     def connect(connection_record=None):
         if dialect._has_events:
@@ -4637,7 +4637,7 @@ connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a97578550>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/strategies.py:114: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f3a6f041588>
+self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7fd554623dd8>
 cargs = ()
 cparams = {'database': 'wekotest', 'host': 'postgresql', 'password': 'dbpass123', 'port': 5432, ...}
 
@@ -4830,7 +4830,7 @@ E        (Background on this error at: http://sqlalche.me/e/e3q8)
 _________ ERROR at teardown of test_create_alembic_version_table[True] _________
 
 self = Engine(postgresql+psycopg2://invenio:***@postgresql:5432/wekotest)
-fn = <bound method Pool.connect of <sqlalchemy.pool.QueuePool object at 0x7f3a9715a710>>
+fn = <bound method Pool.connect of <sqlalchemy.pool.QueuePool object at 0x7fd55451a128>>
 connection = None
 
     def _wrap_pool_connect(self, fn, connection):
@@ -4841,7 +4841,7 @@ connection = None
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:2228: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a9715a710>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd55451a128>
 
     def connect(self):
         """Return a DBAPI connection from the pool.
@@ -4858,7 +4858,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a9715a710>
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 cls = <class 'sqlalchemy.pool._ConnectionFairy'>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a9715a710>, threadconns = None
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd55451a128>, threadconns = None
 fairy = None
 
     @classmethod
@@ -4870,7 +4870,7 @@ fairy = None
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 cls = <class 'sqlalchemy.pool._ConnectionRecord'>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a9715a710>
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd55451a128>
 
     @classmethod
     def checkout(cls, pool):
@@ -4879,7 +4879,7 @@ pool = <sqlalchemy.pool.QueuePool object at 0x7f3a9715a710>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:563: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a9715a710>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd55451a128>
 
     def _do_get(self):
         use_overflow = self._max_overflow > -1
@@ -4913,7 +4913,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a9715a710>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:1259: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.util.langhelpers.safe_reraise object at 0x7f3a6f0de470>
+self = <sqlalchemy.util.langhelpers.safe_reraise object at 0x7fd57c71fcf8>
 type_ = None, value = None, traceback = None
 
     def __exit__(self, type_, value, traceback):
@@ -4929,7 +4929,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 tp = <class 'psycopg2.OperationalError'>
 value = OperationalError('FATAL:  database "wekotest" does not exist\n',)
-tb = <traceback object at 0x7f3a9723a048>, cause = None
+tb = <traceback object at 0x7fd5540b7f48>, cause = None
 
     def reraise(tp, value, tb=None, cause=None):
         if cause is not None:
@@ -4942,7 +4942,7 @@ tb = <traceback object at 0x7f3a9723a048>, cause = None
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:277: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a9715a710>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd55451a128>
 
     def _do_get(self):
         use_overflow = self._max_overflow > -1
@@ -4973,7 +4973,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a9715a710>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:1256: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a9715a710>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd55451a128>
 
     def _create_connection(self):
         """Called by subclasses to create a new ConnectionRecord."""
@@ -4983,8 +4983,8 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a9715a710>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:379: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a6f0de0f0>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a9715a710>, connect = True
+self = <sqlalchemy.pool._ConnectionRecord object at 0x7fd57c71f978>
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd55451a128>, connect = True
 
     def __init__(self, pool, connect=True):
         self.__pool = pool
@@ -4994,7 +4994,7 @@ pool = <sqlalchemy.pool.QueuePool object at 0x7f3a9715a710>, connect = True
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:508: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a6f0de0f0>
+self = <sqlalchemy.pool._ConnectionRecord object at 0x7fd57c71f978>
 first_connect_check = True
 
     def __connect(self, first_connect_check=False):
@@ -5010,7 +5010,7 @@ first_connect_check = True
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:710: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a6f0de0f0>
+connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7fd57c71f978>
 
     def connect(connection_record=None):
         if dialect._has_events:
@@ -5025,7 +5025,7 @@ connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a6f0de0f0>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/strategies.py:114: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f3a9715ae10>
+self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7fd55451a278>
 cargs = ()
 cparams = {'database': 'wekotest', 'host': 'postgresql', 'password': 'dbpass123', 'port': 5432, ...}
 
@@ -5218,7 +5218,7 @@ E        (Background on this error at: http://sqlalche.me/e/e3q8)
 ________ ERROR at teardown of test_create_alembic_version_table[False] _________
 
 self = Engine(postgresql+psycopg2://invenio:***@postgresql:5432/wekotest)
-fn = <bound method Pool.connect of <sqlalchemy.pool.QueuePool object at 0x7f3a97494c18>>
+fn = <bound method Pool.connect of <sqlalchemy.pool.QueuePool object at 0x7fd5544f7320>>
 connection = None
 
     def _wrap_pool_connect(self, fn, connection):
@@ -5229,7 +5229,7 @@ connection = None
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:2228: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a97494c18>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd5544f7320>
 
     def connect(self):
         """Return a DBAPI connection from the pool.
@@ -5246,7 +5246,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a97494c18>
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 cls = <class 'sqlalchemy.pool._ConnectionFairy'>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a97494c18>, threadconns = None
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd5544f7320>, threadconns = None
 fairy = None
 
     @classmethod
@@ -5258,7 +5258,7 @@ fairy = None
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 cls = <class 'sqlalchemy.pool._ConnectionRecord'>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a97494c18>
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd5544f7320>
 
     @classmethod
     def checkout(cls, pool):
@@ -5267,7 +5267,7 @@ pool = <sqlalchemy.pool.QueuePool object at 0x7f3a97494c18>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:563: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a97494c18>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd5544f7320>
 
     def _do_get(self):
         use_overflow = self._max_overflow > -1
@@ -5301,7 +5301,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a97494c18>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:1259: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.util.langhelpers.safe_reraise object at 0x7f3a6ef4ab38>
+self = <sqlalchemy.util.langhelpers.safe_reraise object at 0x7fd554652630>
 type_ = None, value = None, traceback = None
 
     def __exit__(self, type_, value, traceback):
@@ -5317,7 +5317,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 tp = <class 'psycopg2.OperationalError'>
 value = OperationalError('FATAL:  database "wekotest" does not exist\n',)
-tb = <traceback object at 0x7f3a6f209448>, cause = None
+tb = <traceback object at 0x7fd57c4ceb48>, cause = None
 
     def reraise(tp, value, tb=None, cause=None):
         if cause is not None:
@@ -5330,7 +5330,7 @@ tb = <traceback object at 0x7f3a6f209448>, cause = None
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:277: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a97494c18>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd5544f7320>
 
     def _do_get(self):
         use_overflow = self._max_overflow > -1
@@ -5361,7 +5361,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a97494c18>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:1256: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a97494c18>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd5544f7320>
 
     def _create_connection(self):
         """Called by subclasses to create a new ConnectionRecord."""
@@ -5371,8 +5371,8 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a97494c18>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:379: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a6ef4aba8>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a97494c18>, connect = True
+self = <sqlalchemy.pool._ConnectionRecord object at 0x7fd5546525f8>
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd5544f7320>, connect = True
 
     def __init__(self, pool, connect=True):
         self.__pool = pool
@@ -5382,7 +5382,7 @@ pool = <sqlalchemy.pool.QueuePool object at 0x7f3a97494c18>, connect = True
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:508: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a6ef4aba8>
+self = <sqlalchemy.pool._ConnectionRecord object at 0x7fd5546525f8>
 first_connect_check = True
 
     def __connect(self, first_connect_check=False):
@@ -5398,7 +5398,7 @@ first_connect_check = True
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:710: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a6ef4aba8>
+connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7fd5546525f8>
 
     def connect(connection_record=None):
         if dialect._has_events:
@@ -5413,7 +5413,7 @@ connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a6ef4aba8>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/strategies.py:114: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f3a97494b38>
+self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7fd554209400>
 cargs = ()
 cparams = {'database': 'wekotest', 'host': 'postgresql', 'password': 'dbpass123', 'port': 5432, ...}
 
@@ -5606,7 +5606,7 @@ E        (Background on this error at: http://sqlalche.me/e/e3q8)
 _____________ ERROR at teardown of test_drop_alembic_version_table _____________
 
 self = Engine(postgresql+psycopg2://invenio:***@postgresql:5432/wekotest)
-fn = <bound method Pool.connect of <sqlalchemy.pool.QueuePool object at 0x7f3a6ead5400>>
+fn = <bound method Pool.connect of <sqlalchemy.pool.QueuePool object at 0x7fd5549267b8>>
 connection = None
 
     def _wrap_pool_connect(self, fn, connection):
@@ -5617,7 +5617,7 @@ connection = None
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:2228: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a6ead5400>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd5549267b8>
 
     def connect(self):
         """Return a DBAPI connection from the pool.
@@ -5634,7 +5634,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a6ead5400>
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 cls = <class 'sqlalchemy.pool._ConnectionFairy'>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a6ead5400>, threadconns = None
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd5549267b8>, threadconns = None
 fairy = None
 
     @classmethod
@@ -5646,7 +5646,7 @@ fairy = None
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 cls = <class 'sqlalchemy.pool._ConnectionRecord'>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a6ead5400>
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd5549267b8>
 
     @classmethod
     def checkout(cls, pool):
@@ -5655,7 +5655,7 @@ pool = <sqlalchemy.pool.QueuePool object at 0x7f3a6ead5400>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:563: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a6ead5400>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd5549267b8>
 
     def _do_get(self):
         use_overflow = self._max_overflow > -1
@@ -5689,7 +5689,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a6ead5400>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:1259: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.util.langhelpers.safe_reraise object at 0x7f3a6ef084a8>
+self = <sqlalchemy.util.langhelpers.safe_reraise object at 0x7fd581e43c18>
 type_ = None, value = None, traceback = None
 
     def __exit__(self, type_, value, traceback):
@@ -5705,7 +5705,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 tp = <class 'psycopg2.OperationalError'>
 value = OperationalError('FATAL:  database "wekotest" does not exist\n',)
-tb = <traceback object at 0x7f3a6f67f408>, cause = None
+tb = <traceback object at 0x7fd5549bdd08>, cause = None
 
     def reraise(tp, value, tb=None, cause=None):
         if cause is not None:
@@ -5718,7 +5718,7 @@ tb = <traceback object at 0x7f3a6f67f408>, cause = None
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:277: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a6ead5400>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd5549267b8>
 
     def _do_get(self):
         use_overflow = self._max_overflow > -1
@@ -5749,7 +5749,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a6ead5400>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:1256: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a6ead5400>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd5549267b8>
 
     def _create_connection(self):
         """Called by subclasses to create a new ConnectionRecord."""
@@ -5759,8 +5759,8 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a6ead5400>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:379: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a6ef08470>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a6ead5400>, connect = True
+self = <sqlalchemy.pool._ConnectionRecord object at 0x7fd554203d30>
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd5549267b8>, connect = True
 
     def __init__(self, pool, connect=True):
         self.__pool = pool
@@ -5770,7 +5770,7 @@ pool = <sqlalchemy.pool.QueuePool object at 0x7f3a6ead5400>, connect = True
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:508: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a6ef08470>
+self = <sqlalchemy.pool._ConnectionRecord object at 0x7fd554203d30>
 first_connect_check = True
 
     def __connect(self, first_connect_check=False):
@@ -5786,7 +5786,7 @@ first_connect_check = True
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:710: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a6ef08470>
+connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7fd554203d30>
 
     def connect(connection_record=None):
         if dialect._has_events:
@@ -5801,7 +5801,7 @@ connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a6ef08470>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/strategies.py:114: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f3a6f302588>
+self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7fd5548b66d8>
 cargs = ()
 cparams = {'database': 'wekotest', 'host': 'postgresql', 'password': 'dbpass123', 'port': 5432, ...}
 
@@ -5994,7 +5994,7 @@ E        (Background on this error at: http://sqlalche.me/e/e3q8)
 ________________ ERROR at teardown of test_disabled_versioning _________________
 
 self = Engine(postgresql+psycopg2://invenio:***@postgresql:5432/wekotest)
-fn = <bound method Pool.connect of <sqlalchemy.pool.QueuePool object at 0x7f3a97289fd0>>
+fn = <bound method Pool.connect of <sqlalchemy.pool.QueuePool object at 0x7fd55451a710>>
 connection = None
 
     def _wrap_pool_connect(self, fn, connection):
@@ -6005,7 +6005,7 @@ connection = None
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:2228: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a97289fd0>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd55451a710>
 
     def connect(self):
         """Return a DBAPI connection from the pool.
@@ -6022,7 +6022,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a97289fd0>
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 cls = <class 'sqlalchemy.pool._ConnectionFairy'>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a97289fd0>, threadconns = None
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd55451a710>, threadconns = None
 fairy = None
 
     @classmethod
@@ -6034,7 +6034,7 @@ fairy = None
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 cls = <class 'sqlalchemy.pool._ConnectionRecord'>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a97289fd0>
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd55451a710>
 
     @classmethod
     def checkout(cls, pool):
@@ -6043,7 +6043,7 @@ pool = <sqlalchemy.pool.QueuePool object at 0x7f3a97289fd0>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:563: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a97289fd0>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd55451a710>
 
     def _do_get(self):
         use_overflow = self._max_overflow > -1
@@ -6077,7 +6077,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a97289fd0>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:1259: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.util.langhelpers.safe_reraise object at 0x7f3a6eed1668>
+self = <sqlalchemy.util.langhelpers.safe_reraise object at 0x7fd57c6d4710>
 type_ = None, value = None, traceback = None
 
     def __exit__(self, type_, value, traceback):
@@ -6093,7 +6093,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 tp = <class 'psycopg2.OperationalError'>
 value = OperationalError('FATAL:  database "wekotest" does not exist\n',)
-tb = <traceback object at 0x7f3a6f1cd808>, cause = None
+tb = <traceback object at 0x7fd55436de48>, cause = None
 
     def reraise(tp, value, tb=None, cause=None):
         if cause is not None:
@@ -6106,7 +6106,7 @@ tb = <traceback object at 0x7f3a6f1cd808>, cause = None
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:277: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a97289fd0>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd55451a710>
 
     def _do_get(self):
         use_overflow = self._max_overflow > -1
@@ -6137,7 +6137,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a97289fd0>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:1256: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a97289fd0>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd55451a710>
 
     def _create_connection(self):
         """Called by subclasses to create a new ConnectionRecord."""
@@ -6147,8 +6147,8 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a97289fd0>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:379: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a97119dd8>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a97289fd0>, connect = True
+self = <sqlalchemy.pool._ConnectionRecord object at 0x7fd57c48ef28>
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd55451a710>, connect = True
 
     def __init__(self, pool, connect=True):
         self.__pool = pool
@@ -6158,7 +6158,7 @@ pool = <sqlalchemy.pool.QueuePool object at 0x7f3a97289fd0>, connect = True
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:508: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a97119dd8>
+self = <sqlalchemy.pool._ConnectionRecord object at 0x7fd57c48ef28>
 first_connect_check = True
 
     def __connect(self, first_connect_check=False):
@@ -6174,7 +6174,7 @@ first_connect_check = True
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:710: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a97119dd8>
+connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7fd57c48ef28>
 
     def connect(connection_record=None):
         if dialect._has_events:
@@ -6189,7 +6189,7 @@ connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a97119dd8>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/strategies.py:114: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f3a97289ef0>
+self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7fd55451ae10>
 cargs = ()
 cparams = {'database': 'wekotest', 'host': 'postgresql', 'password': 'dbpass123', 'port': 5432, ...}
 
@@ -6382,7 +6382,7 @@ E        (Background on this error at: http://sqlalche.me/e/e3q8)
 ________ ERROR at teardown of test_versioning_without_versioned_tables _________
 
 self = Engine(postgresql+psycopg2://invenio:***@postgresql:5432/wekotest)
-fn = <bound method Pool.connect of <sqlalchemy.pool.QueuePool object at 0x7f3a972a6898>>
+fn = <bound method Pool.connect of <sqlalchemy.pool.QueuePool object at 0x7fd5545a0cf8>>
 connection = None
 
     def _wrap_pool_connect(self, fn, connection):
@@ -6393,7 +6393,7 @@ connection = None
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:2228: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a972a6898>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd5545a0cf8>
 
     def connect(self):
         """Return a DBAPI connection from the pool.
@@ -6410,7 +6410,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a972a6898>
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 cls = <class 'sqlalchemy.pool._ConnectionFairy'>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a972a6898>, threadconns = None
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd5545a0cf8>, threadconns = None
 fairy = None
 
     @classmethod
@@ -6422,7 +6422,7 @@ fairy = None
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 cls = <class 'sqlalchemy.pool._ConnectionRecord'>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a972a6898>
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd5545a0cf8>
 
     @classmethod
     def checkout(cls, pool):
@@ -6431,7 +6431,7 @@ pool = <sqlalchemy.pool.QueuePool object at 0x7f3a972a6898>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:563: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a972a6898>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd5545a0cf8>
 
     def _do_get(self):
         use_overflow = self._max_overflow > -1
@@ -6465,7 +6465,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a972a6898>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:1259: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.util.langhelpers.safe_reraise object at 0x7f3a972a6f98>
+self = <sqlalchemy.util.langhelpers.safe_reraise object at 0x7fd5545a02e8>
 type_ = None, value = None, traceback = None
 
     def __exit__(self, type_, value, traceback):
@@ -6481,7 +6481,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 tp = <class 'psycopg2.OperationalError'>
 value = OperationalError('FATAL:  database "wekotest" does not exist\n',)
-tb = <traceback object at 0x7f3a6ef6da48>, cause = None
+tb = <traceback object at 0x7fd57c55f248>, cause = None
 
     def reraise(tp, value, tb=None, cause=None):
         if cause is not None:
@@ -6494,7 +6494,7 @@ tb = <traceback object at 0x7f3a6ef6da48>, cause = None
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:277: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a972a6898>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd5545a0cf8>
 
     def _do_get(self):
         use_overflow = self._max_overflow > -1
@@ -6525,7 +6525,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a972a6898>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:1256: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a972a6898>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd5545a0cf8>
 
     def _create_connection(self):
         """Called by subclasses to create a new ConnectionRecord."""
@@ -6535,8 +6535,8 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a972a6898>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:379: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a972a6be0>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a972a6898>, connect = True
+self = <sqlalchemy.pool._ConnectionRecord object at 0x7fd5545a0320>
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd5545a0cf8>, connect = True
 
     def __init__(self, pool, connect=True):
         self.__pool = pool
@@ -6546,7 +6546,7 @@ pool = <sqlalchemy.pool.QueuePool object at 0x7f3a972a6898>, connect = True
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:508: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a972a6be0>
+self = <sqlalchemy.pool._ConnectionRecord object at 0x7fd5545a0320>
 first_connect_check = True
 
     def __connect(self, first_connect_check=False):
@@ -6562,7 +6562,7 @@ first_connect_check = True
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:710: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a972a6be0>
+connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7fd5545a0320>
 
     def connect(connection_record=None):
         if dialect._has_events:
@@ -6577,7 +6577,7 @@ connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a972a6be0>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/strategies.py:114: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f3a972a65c0>
+self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7fd5545a0c50>
 cargs = ()
 cparams = {'database': 'wekotest', 'host': 'postgresql', 'password': 'dbpass123', 'port': 5432, ...}
 
@@ -6772,9 +6772,9 @@ __________________________________ test_init ___________________________________
 
 app = <Flask 'testapp'>
 db = <SQLAlchemy engine=postgresql+psycopg2://invenio:***@postgresql:5432/wekotest>
-script_info = <flask.cli.ScriptInfo object at 0x7f3a9c79b9b0>
+script_info = <flask.cli.ScriptInfo object at 0x7fd581bf45c0>
 mock_entry_points = None
-mocker = <pytest_mock.plugin.MockFixture object at 0x7f3aa11c85c0>
+mocker = <pytest_mock.plugin.MockFixture object at 0x7fd581c73080>
 
     def test_init(app,db,script_info, mock_entry_points, mocker):
         idb = InvenioDB(app)
@@ -6798,9 +6798,9 @@ _________________________________ test_destroy _________________________________
 
 app = <Flask 'testapp'>
 db = <SQLAlchemy engine=postgresql+psycopg2://invenio:***@postgresql:5432/wekotest>
-script_info = <flask.cli.ScriptInfo object at 0x7f3a9c7e3d68>
+script_info = <flask.cli.ScriptInfo object at 0x7fd581c426a0>
 mock_entry_points = None
-mocker = <pytest_mock.plugin.MockFixture object at 0x7f3a9c7e3b00>
+mocker = <pytest_mock.plugin.MockFixture object at 0x7fd581c422b0>
 
     def test_destroy(app,db,script_info,mock_entry_points,mocker):
         idb = InvenioDB(app)
@@ -6822,7 +6822,7 @@ tests/test_cli.py:98: AssertionError
 __________________________________ test_init ___________________________________
 
 self = Engine(postgresql+psycopg2://invenio:***@postgresql:5432/wekotest)
-fn = <bound method Pool.connect of <sqlalchemy.pool.QueuePool object at 0x7f3a9c34fb38>>
+fn = <bound method Pool.connect of <sqlalchemy.pool.QueuePool object at 0x7fd5810c0dd8>>
 connection = None
 
     def _wrap_pool_connect(self, fn, connection):
@@ -6833,7 +6833,7 @@ connection = None
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:2228: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a9c34fb38>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd5810c0dd8>
 
     def connect(self):
         """Return a DBAPI connection from the pool.
@@ -6850,7 +6850,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a9c34fb38>
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 cls = <class 'sqlalchemy.pool._ConnectionFairy'>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a9c34fb38>, threadconns = None
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd5810c0dd8>, threadconns = None
 fairy = None
 
     @classmethod
@@ -6862,7 +6862,7 @@ fairy = None
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 cls = <class 'sqlalchemy.pool._ConnectionRecord'>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a9c34fb38>
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd5810c0dd8>
 
     @classmethod
     def checkout(cls, pool):
@@ -6871,7 +6871,7 @@ pool = <sqlalchemy.pool.QueuePool object at 0x7f3a9c34fb38>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:563: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a9c34fb38>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd5810c0dd8>
 
     def _do_get(self):
         use_overflow = self._max_overflow > -1
@@ -6905,7 +6905,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a9c34fb38>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:1259: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.util.langhelpers.safe_reraise object at 0x7f3a9c34f5f8>
+self = <sqlalchemy.util.langhelpers.safe_reraise object at 0x7fd5810c0358>
 type_ = None, value = None, traceback = None
 
     def __exit__(self, type_, value, traceback):
@@ -6921,7 +6921,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 tp = <class 'psycopg2.OperationalError'>
 value = OperationalError('FATAL:  database "wekotest" does not exist\n',)
-tb = <traceback object at 0x7f3a9c092348>, cause = None
+tb = <traceback object at 0x7fd5814b4e48>, cause = None
 
     def reraise(tp, value, tb=None, cause=None):
         if cause is not None:
@@ -6934,7 +6934,7 @@ tb = <traceback object at 0x7f3a9c092348>, cause = None
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:277: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a9c34fb38>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd5810c0dd8>
 
     def _do_get(self):
         use_overflow = self._max_overflow > -1
@@ -6965,7 +6965,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a9c34fb38>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:1256: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a9c34fb38>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd5810c0dd8>
 
     def _create_connection(self):
         """Called by subclasses to create a new ConnectionRecord."""
@@ -6975,8 +6975,8 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a9c34fb38>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:379: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a9c34f5c0>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a9c34fb38>, connect = True
+self = <sqlalchemy.pool._ConnectionRecord object at 0x7fd5810c02b0>
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd5810c0dd8>, connect = True
 
     def __init__(self, pool, connect=True):
         self.__pool = pool
@@ -6986,7 +6986,7 @@ pool = <sqlalchemy.pool.QueuePool object at 0x7f3a9c34fb38>, connect = True
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:508: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a9c34f5c0>
+self = <sqlalchemy.pool._ConnectionRecord object at 0x7fd5810c02b0>
 first_connect_check = True
 
     def __connect(self, first_connect_check=False):
@@ -7002,7 +7002,7 @@ first_connect_check = True
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:710: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a9c34f5c0>
+connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7fd5810c02b0>
 
     def connect(connection_record=None):
         if dialect._has_events:
@@ -7017,7 +7017,7 @@ connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a9c34f5c0>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/strategies.py:114: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f3a9c34fe10>
+self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7fd5810c0828>
 cargs = ()
 cparams = {'database': 'wekotest', 'host': 'postgresql', 'password': 'dbpass123', 'port': 5432, ...}
 
@@ -7215,7 +7215,7 @@ E        (Background on this error at: http://sqlalche.me/e/e3q8)
 ____________________________ test_naming_convention ____________________________
 
 self = Engine(postgresql+psycopg2://invenio:***@postgresql:5432/wekotest)
-fn = <bound method Pool.connect of <sqlalchemy.pool.QueuePool object at 0x7f3a9c37a668>>
+fn = <bound method Pool.connect of <sqlalchemy.pool.QueuePool object at 0x7fd5812d0940>>
 connection = None
 
     def _wrap_pool_connect(self, fn, connection):
@@ -7226,7 +7226,7 @@ connection = None
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:2228: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a9c37a668>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd5812d0940>
 
     def connect(self):
         """Return a DBAPI connection from the pool.
@@ -7243,7 +7243,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a9c37a668>
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 cls = <class 'sqlalchemy.pool._ConnectionFairy'>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a9c37a668>, threadconns = None
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd5812d0940>, threadconns = None
 fairy = None
 
     @classmethod
@@ -7255,7 +7255,7 @@ fairy = None
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 cls = <class 'sqlalchemy.pool._ConnectionRecord'>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a9c37a668>
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd5812d0940>
 
     @classmethod
     def checkout(cls, pool):
@@ -7264,7 +7264,7 @@ pool = <sqlalchemy.pool.QueuePool object at 0x7f3a9c37a668>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:563: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a9c37a668>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd5812d0940>
 
     def _do_get(self):
         use_overflow = self._max_overflow > -1
@@ -7298,7 +7298,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a9c37a668>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:1259: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.util.langhelpers.safe_reraise object at 0x7f3a9c4fc3c8>
+self = <sqlalchemy.util.langhelpers.safe_reraise object at 0x7fd5812d0b70>
 type_ = None, value = None, traceback = None
 
     def __exit__(self, type_, value, traceback):
@@ -7314,7 +7314,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 tp = <class 'psycopg2.OperationalError'>
 value = OperationalError('FATAL:  database "wekotest" does not exist\n',)
-tb = <traceback object at 0x7f3a9c361f48>, cause = None
+tb = <traceback object at 0x7fd5810da288>, cause = None
 
     def reraise(tp, value, tb=None, cause=None):
         if cause is not None:
@@ -7327,7 +7327,7 @@ tb = <traceback object at 0x7f3a9c361f48>, cause = None
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:277: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a9c37a668>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd5812d0940>
 
     def _do_get(self):
         use_overflow = self._max_overflow > -1
@@ -7358,7 +7358,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a9c37a668>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:1256: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a9c37a668>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd5812d0940>
 
     def _create_connection(self):
         """Called by subclasses to create a new ConnectionRecord."""
@@ -7368,8 +7368,8 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a9c37a668>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:379: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a9c4fc390>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a9c37a668>, connect = True
+self = <sqlalchemy.pool._ConnectionRecord object at 0x7fd5812d0b38>
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd5812d0940>, connect = True
 
     def __init__(self, pool, connect=True):
         self.__pool = pool
@@ -7379,7 +7379,7 @@ pool = <sqlalchemy.pool.QueuePool object at 0x7f3a9c37a668>, connect = True
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:508: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a9c4fc390>
+self = <sqlalchemy.pool._ConnectionRecord object at 0x7fd5812d0b38>
 first_connect_check = True
 
     def __connect(self, first_connect_check=False):
@@ -7395,7 +7395,7 @@ first_connect_check = True
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:710: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a9c4fc390>
+connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7fd5812d0b38>
 
     def connect(connection_record=None):
         if dialect._has_events:
@@ -7410,7 +7410,7 @@ connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a9c4fc390>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/strategies.py:114: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f3a9c37a588>
+self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7fd5812d0668>
 cargs = ()
 cparams = {'database': 'wekotest', 'host': 'postgresql', 'password': 'dbpass123', 'port': 5432, ...}
 
@@ -7654,7 +7654,7 @@ ______________________________ test_entry_points _______________________________
 
 db = <SQLAlchemy engine=postgresql+psycopg2://invenio:***@postgresql:5432/wekotest>
 app = <Flask 'testapp'>
-script_info = <flask.cli.ScriptInfo object at 0x7f3a6f449c88>
+script_info = <flask.cli.ScriptInfo object at 0x7fd554e150f0>
 mock_entry_points = None
 
     def test_entry_points(db, app,script_info,mock_entry_points):
@@ -7671,7 +7671,7 @@ tests/test_db.py:272: AssertionError
 _______________________________ test_local_proxy _______________________________
 
 self = Engine(postgresql+psycopg2://invenio:***@postgresql:5432/wekotest)
-fn = <bound method Pool.connect of <sqlalchemy.pool.QueuePool object at 0x7f3a6f2ac828>>
+fn = <bound method Pool.connect of <sqlalchemy.pool.QueuePool object at 0x7fd554c36ba8>>
 connection = None
 
     def _wrap_pool_connect(self, fn, connection):
@@ -7682,7 +7682,7 @@ connection = None
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:2228: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a6f2ac828>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd554c36ba8>
 
     def connect(self):
         """Return a DBAPI connection from the pool.
@@ -7699,7 +7699,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a6f2ac828>
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 cls = <class 'sqlalchemy.pool._ConnectionFairy'>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a6f2ac828>, threadconns = None
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd554c36ba8>, threadconns = None
 fairy = None
 
     @classmethod
@@ -7711,7 +7711,7 @@ fairy = None
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 cls = <class 'sqlalchemy.pool._ConnectionRecord'>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a6f2ac828>
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd554c36ba8>
 
     @classmethod
     def checkout(cls, pool):
@@ -7720,7 +7720,7 @@ pool = <sqlalchemy.pool.QueuePool object at 0x7f3a6f2ac828>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:563: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a6f2ac828>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd554c36ba8>
 
     def _do_get(self):
         use_overflow = self._max_overflow > -1
@@ -7754,7 +7754,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a6f2ac828>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:1259: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.util.langhelpers.safe_reraise object at 0x7f3a6f2ac9b0>
+self = <sqlalchemy.util.langhelpers.safe_reraise object at 0x7fd554a3ac50>
 type_ = None, value = None, traceback = None
 
     def __exit__(self, type_, value, traceback):
@@ -7770,7 +7770,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 tp = <class 'psycopg2.OperationalError'>
 value = OperationalError('FATAL:  database "wekotest" does not exist\n',)
-tb = <traceback object at 0x7f3a6f2c5108>, cause = None
+tb = <traceback object at 0x7fd554a44a48>, cause = None
 
     def reraise(tp, value, tb=None, cause=None):
         if cause is not None:
@@ -7783,7 +7783,7 @@ tb = <traceback object at 0x7f3a6f2c5108>, cause = None
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:277: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a6f2ac828>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd554c36ba8>
 
     def _do_get(self):
         use_overflow = self._max_overflow > -1
@@ -7814,7 +7814,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a6f2ac828>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:1256: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a6f2ac828>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd554c36ba8>
 
     def _create_connection(self):
         """Called by subclasses to create a new ConnectionRecord."""
@@ -7824,8 +7824,8 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a6f2ac828>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:379: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a6f2ac978>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a6f2ac828>, connect = True
+self = <sqlalchemy.pool._ConnectionRecord object at 0x7fd554a3a1d0>
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd554c36ba8>, connect = True
 
     def __init__(self, pool, connect=True):
         self.__pool = pool
@@ -7835,7 +7835,7 @@ pool = <sqlalchemy.pool.QueuePool object at 0x7f3a6f2ac828>, connect = True
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:508: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a6f2ac978>
+self = <sqlalchemy.pool._ConnectionRecord object at 0x7fd554a3a1d0>
 first_connect_check = True
 
     def __connect(self, first_connect_check=False):
@@ -7851,7 +7851,7 @@ first_connect_check = True
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:710: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a6f2ac978>
+connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7fd554a3a1d0>
 
     def connect(connection_record=None):
         if dialect._has_events:
@@ -7866,7 +7866,7 @@ connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a6f2ac978>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/strategies.py:114: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f3a6f2ac748>
+self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7fd554a49e48>
 cargs = ()
 cparams = {'database': 'wekotest', 'host': 'postgresql', 'password': 'dbpass123', 'port': 5432, ...}
 
@@ -8159,7 +8159,7 @@ E               sqlalchemy.exc.InvalidRequestError: Table 'parent_version' is al
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/schema.py:451: InvalidRequestError
 ____________________ TestSQLAlchemy.test_apply_driver_hacks ____________________
 
-self = <tests.test_shared.TestSQLAlchemy object at 0x7f3a6f250588>
+self = <tests.test_shared.TestSQLAlchemy object at 0x7fd5542770b8>
 app = <Flask 'testapp'>
 db = <SQLAlchemy engine=postgresql+psycopg2://invenio:***@postgresql:5432/wekotest>
 mock_entry_points = None
@@ -8253,7 +8253,7 @@ E               sqlalchemy.exc.InvalidRequestError: Table 'parent_version' is al
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/schema.py:451: InvalidRequestError
 __________________ TestSQLAlchemy.test_set_db_connection_pool __________________
 
-self = <tests.test_shared.TestSQLAlchemy object at 0x7f3a97267400>
+self = <tests.test_shared.TestSQLAlchemy object at 0x7fd57c6b3b38>
 db = <SQLAlchemy engine=postgresql+psycopg2://invenio:***@postgresql:5432/wekotest>
 app = <Flask 'testapp'>, mock_entry_points = None
 
@@ -8629,7 +8629,7 @@ E               sqlalchemy.exc.InvalidRequestError: Table 'parent_version' is al
 ___________________ test_create_alembic_version_table[True] ____________________
 
 self = Engine(postgresql+psycopg2://invenio:***@postgresql:5432/wekotest)
-fn = <bound method Pool.unique_connection of <sqlalchemy.pool.QueuePool object at 0x7f3a9715a710>>
+fn = <bound method Pool.unique_connection of <sqlalchemy.pool.QueuePool object at 0x7fd55451a128>>
 connection = None
 
     def _wrap_pool_connect(self, fn, connection):
@@ -8640,7 +8640,7 @@ connection = None
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:2228: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a9715a710>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd55451a128>
 
     def unique_connection(self):
         """Produce a DBAPI connection that is not referenced by any
@@ -8659,7 +8659,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a9715a710>
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 cls = <class 'sqlalchemy.pool._ConnectionFairy'>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a9715a710>, threadconns = None
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd55451a128>, threadconns = None
 fairy = None
 
     @classmethod
@@ -8671,7 +8671,7 @@ fairy = None
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 cls = <class 'sqlalchemy.pool._ConnectionRecord'>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a9715a710>
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd55451a128>
 
     @classmethod
     def checkout(cls, pool):
@@ -8680,7 +8680,7 @@ pool = <sqlalchemy.pool.QueuePool object at 0x7f3a9715a710>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:563: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a9715a710>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd55451a128>
 
     def _do_get(self):
         use_overflow = self._max_overflow > -1
@@ -8714,7 +8714,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a9715a710>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:1259: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.util.langhelpers.safe_reraise object at 0x7f3a9715a198>
+self = <sqlalchemy.util.langhelpers.safe_reraise object at 0x7fd5549c87b8>
 type_ = None, value = None, traceback = None
 
     def __exit__(self, type_, value, traceback):
@@ -8730,7 +8730,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 tp = <class 'psycopg2.OperationalError'>
 value = OperationalError('FATAL:  database "wekotest" does not exist\n',)
-tb = <traceback object at 0x7f3a97150208>, cause = None
+tb = <traceback object at 0x7fd57c549488>, cause = None
 
     def reraise(tp, value, tb=None, cause=None):
         if cause is not None:
@@ -8743,7 +8743,7 @@ tb = <traceback object at 0x7f3a97150208>, cause = None
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:277: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a9715a710>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd55451a128>
 
     def _do_get(self):
         use_overflow = self._max_overflow > -1
@@ -8774,7 +8774,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a9715a710>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:1256: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a9715a710>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd55451a128>
 
     def _create_connection(self):
         """Called by subclasses to create a new ConnectionRecord."""
@@ -8784,8 +8784,8 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a9715a710>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:379: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a9715a0b8>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a9715a710>, connect = True
+self = <sqlalchemy.pool._ConnectionRecord object at 0x7fd5549c8780>
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd55451a128>, connect = True
 
     def __init__(self, pool, connect=True):
         self.__pool = pool
@@ -8795,7 +8795,7 @@ pool = <sqlalchemy.pool.QueuePool object at 0x7f3a9715a710>, connect = True
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:508: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a9715a0b8>
+self = <sqlalchemy.pool._ConnectionRecord object at 0x7fd5549c8780>
 first_connect_check = True
 
     def __connect(self, first_connect_check=False):
@@ -8811,7 +8811,7 @@ first_connect_check = True
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:710: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a9715a0b8>
+connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7fd5549c8780>
 
     def connect(connection_record=None):
         if dialect._has_events:
@@ -8826,7 +8826,7 @@ connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a9715a0b8>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/strategies.py:114: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f3a9715ae10>
+self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7fd55451a278>
 cargs = ()
 cparams = {'database': 'wekotest', 'host': 'postgresql', 'password': 'dbpass123', 'port': 5432, ...}
 
@@ -9008,7 +9008,7 @@ E        (Background on this error at: http://sqlalche.me/e/e3q8)
 ___________________ test_create_alembic_version_table[False] ___________________
 
 self = Engine(postgresql+psycopg2://invenio:***@postgresql:5432/wekotest)
-fn = <bound method Pool.unique_connection of <sqlalchemy.pool.QueuePool object at 0x7f3a97494c18>>
+fn = <bound method Pool.unique_connection of <sqlalchemy.pool.QueuePool object at 0x7fd5544f7320>>
 connection = None
 
     def _wrap_pool_connect(self, fn, connection):
@@ -9019,7 +9019,7 @@ connection = None
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:2228: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a97494c18>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd5544f7320>
 
     def unique_connection(self):
         """Produce a DBAPI connection that is not referenced by any
@@ -9038,7 +9038,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a97494c18>
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 cls = <class 'sqlalchemy.pool._ConnectionFairy'>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a97494c18>, threadconns = None
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd5544f7320>, threadconns = None
 fairy = None
 
     @classmethod
@@ -9050,7 +9050,7 @@ fairy = None
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 cls = <class 'sqlalchemy.pool._ConnectionRecord'>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a97494c18>
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd5544f7320>
 
     @classmethod
     def checkout(cls, pool):
@@ -9059,7 +9059,7 @@ pool = <sqlalchemy.pool.QueuePool object at 0x7f3a97494c18>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:563: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a97494c18>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd5544f7320>
 
     def _do_get(self):
         use_overflow = self._max_overflow > -1
@@ -9093,7 +9093,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a97494c18>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:1259: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.util.langhelpers.safe_reraise object at 0x7f3a97494dd8>
+self = <sqlalchemy.util.langhelpers.safe_reraise object at 0x7fd5544f7780>
 type_ = None, value = None, traceback = None
 
     def __exit__(self, type_, value, traceback):
@@ -9109,7 +9109,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 tp = <class 'psycopg2.OperationalError'>
 value = OperationalError('FATAL:  database "wekotest" does not exist\n',)
-tb = <traceback object at 0x7f3a9746bf88>, cause = None
+tb = <traceback object at 0x7fd57c5fc308>, cause = None
 
     def reraise(tp, value, tb=None, cause=None):
         if cause is not None:
@@ -9122,7 +9122,7 @@ tb = <traceback object at 0x7f3a9746bf88>, cause = None
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:277: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a97494c18>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd5544f7320>
 
     def _do_get(self):
         use_overflow = self._max_overflow > -1
@@ -9153,7 +9153,7 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a97494c18>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:1256: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool.QueuePool object at 0x7f3a97494c18>
+self = <sqlalchemy.pool.QueuePool object at 0x7fd5544f7320>
 
     def _create_connection(self):
         """Called by subclasses to create a new ConnectionRecord."""
@@ -9163,8 +9163,8 @@ self = <sqlalchemy.pool.QueuePool object at 0x7f3a97494c18>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:379: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a97494da0>
-pool = <sqlalchemy.pool.QueuePool object at 0x7f3a97494c18>, connect = True
+self = <sqlalchemy.pool._ConnectionRecord object at 0x7fd5544f7748>
+pool = <sqlalchemy.pool.QueuePool object at 0x7fd5544f7320>, connect = True
 
     def __init__(self, pool, connect=True):
         self.__pool = pool
@@ -9174,7 +9174,7 @@ pool = <sqlalchemy.pool.QueuePool object at 0x7f3a97494c18>, connect = True
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:508: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a97494da0>
+self = <sqlalchemy.pool._ConnectionRecord object at 0x7fd5544f7748>
 first_connect_check = True
 
     def __connect(self, first_connect_check=False):
@@ -9190,7 +9190,7 @@ first_connect_check = True
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/pool.py:710: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a97494da0>
+connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7fd5544f7748>
 
     def connect(connection_record=None):
         if dialect._has_events:
@@ -9205,7 +9205,7 @@ connection_record = <sqlalchemy.pool._ConnectionRecord object at 0x7f3a97494da0>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/strategies.py:114: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f3a97494b38>
+self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7fd554209400>
 cargs = ()
 cparams = {'database': 'wekotest', 'host': 'postgresql', 'password': 'dbpass123', 'port': 5432, ...}
 
@@ -9570,6 +9570,330 @@ E               sqlalchemy.exc.InvalidRequestError: Table 'parent_version' is al
 
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/schema.py:451: InvalidRequestError
 =============================== warnings summary ===============================
+.tox/c1/lib/python3.6/site-packages/babel/core.py:1130
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/babel/core.py:1130: DeprecationWarning: invalid escape sequence \s
+    """
+
+.tox/c1/lib/python3.6/site-packages/babel/dates.py:1158
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/babel/dates.py:1158: DeprecationWarning: invalid escape sequence \d
+    numbers = re.findall('(\d+)', string)
+
+.tox/c1/lib/python3.6/site-packages/babel/dates.py:1201
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/babel/dates.py:1201: DeprecationWarning: invalid escape sequence \d
+    numbers = re.findall('(\d+)', string)
+
+.tox/c1/lib/python3.6/site-packages/babel/localtime/_unix.py:103
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/babel/localtime/_unix.py:103: DeprecationWarning: invalid escape sequence \s
+    zone_re = re.compile('\s*ZONE\s*=\s*\"')
+
+.tox/c1/lib/python3.6/site-packages/babel/localtime/_unix.py:104
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/babel/localtime/_unix.py:104: DeprecationWarning: invalid escape sequence \s
+    timezone_re = re.compile('\s*TIMEZONE\s*=\s*\"')
+
+.tox/c1/lib/python3.6/site-packages/arrow/parser.py:24
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/arrow/parser.py:24: DeprecationWarning: invalid escape sequence \[
+    _ESCAPE_RE = re.compile('\[[^\[\]]*\]')
+
+.tox/c1/lib/python3.6/site-packages/arrow/parser.py:26
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/arrow/parser.py:26: DeprecationWarning: invalid escape sequence \d
+    _ONE_OR_MORE_DIGIT_RE = re.compile('\d+')
+
+.tox/c1/lib/python3.6/site-packages/arrow/parser.py:27
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/arrow/parser.py:27: DeprecationWarning: invalid escape sequence \d
+    _ONE_OR_TWO_DIGIT_RE = re.compile('\d{1,2}')
+
+.tox/c1/lib/python3.6/site-packages/arrow/parser.py:28
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/arrow/parser.py:28: DeprecationWarning: invalid escape sequence \d
+    _FOUR_DIGIT_RE = re.compile('\d{4}')
+
+.tox/c1/lib/python3.6/site-packages/arrow/parser.py:29
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/arrow/parser.py:29: DeprecationWarning: invalid escape sequence \d
+    _TWO_DIGIT_RE = re.compile('\d{2}')
+
+.tox/c1/lib/python3.6/site-packages/arrow/parser.py:30
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/arrow/parser.py:30: DeprecationWarning: invalid escape sequence \-
+    _TZ_RE = re.compile('[+\-]?\d{2}:?(\d{2})?')
+
+.tox/c1/lib/python3.6/site-packages/arrow/parser.py:31
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/arrow/parser.py:31: DeprecationWarning: invalid escape sequence \w
+    _TZ_NAME_RE = re.compile('\w[\w+\-/]+')
+
+.tox/c1/lib/python3.6/site-packages/arrow/parser.py:49
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/arrow/parser.py:49: DeprecationWarning: invalid escape sequence \d
+    'X': re.compile('\d+'),
+
+.tox/c1/lib/python3.6/site-packages/arrow/parser.py:310
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/arrow/parser.py:310: DeprecationWarning: invalid escape sequence \-
+    _TZINFO_RE = re.compile('([+\-])?(\d\d):?(\d\d)?')
+
+.tox/c1/lib/python3.6/site-packages/passlib/context.py:231
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/passlib/context.py:231: DeprecationWarning: invalid escape sequence \;
+    elif any(c in source for c in "\n\r\t") or not source.strip(" \t./\;:"):
+
+.tox/c1/lib/python3.6/site-packages/passlib/context.py:2240
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/passlib/context.py:2240: DeprecationWarning: invalid escape sequence \*
+    """
+
+.tox/c1/lib/python3.6/site-packages/passlib/context.py:2323
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/passlib/context.py:2323: DeprecationWarning: invalid escape sequence \*
+    """
+
+.tox/c1/lib/python3.6/site-packages/passlib/context.py:2406
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/passlib/context.py:2406: DeprecationWarning: invalid escape sequence \*
+    """
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/html.py:223
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/html.py:223: DeprecationWarning: invalid escape sequence \s
+    ('\s+', Text),
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/html.py:316
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/html.py:316: DeprecationWarning: invalid escape sequence \]
+    (r'(/)(\[' + _dot + '*?\])(' + _dot + r'*\n)',
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/html.py:333
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/html.py:333: DeprecationWarning: invalid escape sequence \}
+    (r'\{(,\n|' + _dot + ')*?\}', using(RubyLexer)),
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/html.py:334
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/html.py:334: DeprecationWarning: invalid escape sequence \]
+    (r'\[' + _dot + '*?\]', using(RubyLexer)),
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/html.py:343
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/html.py:343: DeprecationWarning: invalid escape sequence \}
+    (r'(#\{)(' + _dot + '*?)(\})',
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/html.py:376
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/html.py:376: DeprecationWarning: invalid escape sequence \}
+    (r'(#\{)(' + _dot + '*?)(\})',
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/html.py:425
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/html.py:425: DeprecationWarning: invalid escape sequence \]
+    (r'(/)(\[' + _dot + '*?\])(' + _dot + r'*\n)',
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/html.py:445
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/html.py:445: DeprecationWarning: invalid escape sequence \}
+    (r'\{(,\n|' + _dot + ')*?\}', using(ScalaLexer)),
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/html.py:446
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/html.py:446: DeprecationWarning: invalid escape sequence \]
+    (r'\[' + _dot + '*?\]', using(ScalaLexer)),
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/html.py:455
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/html.py:455: DeprecationWarning: invalid escape sequence \}
+    (r'(#\{)(' + _dot + '*?)(\})',
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/html.py:488
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/html.py:488: DeprecationWarning: invalid escape sequence \}
+    (r'(#\{)(' + _dot + '*?)(\})',
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/html.py:533
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/html.py:533: DeprecationWarning: invalid escape sequence \]
+    (r'(/)(\[' + _dot + '*?\])(' + _dot + r'*\n)',
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/html.py:554
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/html.py:554: DeprecationWarning: invalid escape sequence \}
+    (r'\{(,\n|' + _dot + ')*?\}', using(ScalaLexer)),
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/html.py:555
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/html.py:555: DeprecationWarning: invalid escape sequence \]
+    (r'\[' + _dot + '*?\]', using(ScalaLexer)),
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/html.py:564
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/html.py:564: DeprecationWarning: invalid escape sequence \}
+    (r'(#\{)(' + _dot + '*?)(\})',
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/html.py:597
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/html.py:597: DeprecationWarning: invalid escape sequence \}
+    (r'(#\{)(' + _dot + '*?)(\})',
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/javascript.py:538
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/javascript.py:538: DeprecationWarning: invalid escape sequence \s
+    if re.search('^(import.+(from\s+)?["\']|'
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/javascript.py:539
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/javascript.py:539: DeprecationWarning: invalid escape sequence \s
+    '(export\s*)?(interface|class|function)\s+)',
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/javascript.py:1018
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/javascript.py:1018: DeprecationWarning: invalid escape sequence \s
+    if re.search('^\s*@import\s+[<"]', text, re.MULTILINE):
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/jvm.py:260
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/jvm.py:260: DeprecationWarning: invalid escape sequence \d
+    letter_letter_digit = u'%s(?:%s|\d)*' % (letter, letter)
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/jvm.py:692
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/jvm.py:692: DeprecationWarning: invalid escape sequence \w
+    u'(?![\w!:?])', Name.Function),
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/jvm.py:1261
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/jvm.py:1261: DeprecationWarning: invalid escape sequence \w
+    ('`?[a-zA-Z_][\w$]*', Name),
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/ruby.py:406
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/ruby.py:406: DeprecationWarning: invalid escape sequence \(
+    _prompt_re = re.compile('irb\([a-zA-Z_]\w*\):\d{3}:\d+[>*"\'] '
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/ruby.py:407
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/ruby.py:407: DeprecationWarning: invalid escape sequence \?
+    '|>> |\?> ')
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/ruby.py:501
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/ruby.py:501: DeprecationWarning: invalid escape sequence \w
+    ('[A-Z]\w*', Name.Constant),
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/ruby.py:502
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/ruby.py:502: DeprecationWarning: invalid escape sequence \w
+    ('@[a-zA-Z_]\w*', Name.Variable.Instance),
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/ruby.py:503
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/ruby.py:503: DeprecationWarning: invalid escape sequence \w
+    ('@@[a-zA-Z_]\w*', Name.Variable.Class),
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/ruby.py:505
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/ruby.py:505: DeprecationWarning: invalid escape sequence \w
+    ('[a-zA-Z_]\w*', Name),
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/actionscript.py:128
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/actionscript.py:128: DeprecationWarning: invalid escape sequence \.
+    typeidentifier = identifier + '(?:\.<\w+>)?'
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/actionscript.py:235
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/actionscript.py:235: DeprecationWarning: invalid escape sequence \s
+    ('\s+', Text),
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/php.py:176
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/php.py:176: DeprecationWarning: invalid escape sequence \}
+    (r'\$\{\$+' + _ident_inner + '\}', Name.Variable),
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/php.py:217
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/php.py:217: DeprecationWarning: invalid escape sequence \[
+    (r'\$' + _ident_inner + '(\[\S+?\]|->' + _ident_inner + ')?',
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/webmisc.py:441
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/webmisc.py:441: DeprecationWarning: invalid escape sequence \(
+    (r'(' + qname + ')(\()?', bygroups(Name, Punctuation), 'operator'),
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/webmisc.py:646
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/webmisc.py:646: DeprecationWarning: invalid escape sequence \*
+    (ncname + ':\*', Name, 'operator'),
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/webmisc.py:647
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/webmisc.py:647: DeprecationWarning: invalid escape sequence \*
+    ('\*:'+ncname, Name.Tag, 'operator'),
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/webmisc.py:648
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/webmisc.py:648: DeprecationWarning: invalid escape sequence \*
+    ('\*', Name.Tag, 'operator'),
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/webmisc.py:875
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/webmisc.py:875: DeprecationWarning: invalid escape sequence \`
+    """
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/lisp.py:142
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/lisp.py:142: DeprecationWarning: invalid escape sequence \(
+    ("(?<=\()(%s)" % '|'.join(re.escape(entry) + ' ' for entry in builtins),
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/lisp.py:324
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/lisp.py:324: DeprecationWarning: invalid escape sequence \s
+    (r'#+nil' + terminated + '\s*\(', Comment.Preproc, 'commented-form'),
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/lisp.py:336
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/lisp.py:336: DeprecationWarning: invalid escape sequence \*
+    (r'\*' + symbol + '\*', Name.Variable.Global),
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/lisp.py:2157
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/lisp.py:2157: DeprecationWarning: invalid escape sequence \*
+    (r'\*' + symbol + '\*', Name.Variable.Global),
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/python.py:183
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/python.py:183: DeprecationWarning: invalid escape sequence \w
+    ('[a-zA-Z_]\w*', Name),
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/python.py:187
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/python.py:187: DeprecationWarning: invalid escape sequence \w
+    ('[a-zA-Z_]\w*', Name.Function, '#pop'),
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/python.py:191
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/python.py:191: DeprecationWarning: invalid escape sequence \w
+    ('[a-zA-Z_]\w*', Name.Class, '#pop')
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/python.py:268
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/python.py:268: DeprecationWarning: invalid escape sequence \w
+    '((\w+)((\.\w+)|(\[[^\]]+\]))*)?'  # field name
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/python.py:269
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/python.py:269: DeprecationWarning: invalid escape sequence \!
+    '(\![sra])?'                       # conversion
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/python.py:270
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/python.py:270: DeprecationWarning: invalid escape sequence \:
+    '(\:(.?[<>=\^])?[-+ ]?#?0?(\d+)?,?(\.\d+)?[E-GXb-gnosx%]?)?'
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/python.py:271
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/python.py:271: DeprecationWarning: invalid escape sequence \}
+    '\}', String.Interpol),
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/python.py:674
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/python.py:674: DeprecationWarning: invalid escape sequence \w
+    ('[a-zA-Z_]\w*', Name),
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/python.py:677
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/python.py:677: DeprecationWarning: invalid escape sequence \w
+    ('[a-zA-Z_]\w*', Name.Function, '#pop')
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/python.py:694
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/python.py:694: DeprecationWarning: invalid escape sequence \w
+    ('[a-zA-Z_]\w*', Name.Class, '#pop')
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/perl.py:211
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/perl.py:211: DeprecationWarning: invalid escape sequence \s
+    if re.search('(?:my|our)\s+[$@%(]', text):
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/perl.py:229
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/perl.py:229: DeprecationWarning: invalid escape sequence \w
+    PERL6_IDENTIFIER_RANGE = "['\w:-]"
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/perl.py:498
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/perl.py:498: DeprecationWarning: invalid escape sequence \s
+    (r'(regex|token|rule)(?!' + PERL6_IDENTIFIER_RANGE + ')(\s*' + PERL6_IDENTIFIER_RANGE + '+)?',
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/perl.py:594
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/perl.py:594: DeprecationWarning: invalid escape sequence \s
+    if re.search("(?:my|our|has)\s+(?:" + Perl6Lexer.PERL6_IDENTIFIER_RANGE +
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/perl.py:595
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/perl.py:595: DeprecationWarning: invalid escape sequence \s
+    "+\s+)?[$@%&(]", text):
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/perl.py:601
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/perl.py:601: DeprecationWarning: invalid escape sequence \s
+    if re.match('^\s*$', line):
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/perl.py:605
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/perl.py:605: DeprecationWarning: invalid escape sequence \s
+    if re.match('^\s*(?:use\s+)?v6(?:\.\d(?:\.\d)?)?;', line):
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/perl.py:608
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/perl.py:608: DeprecationWarning: invalid escape sequence \s
+    class_decl = re.match('^\s*(?:(?P<scope>my|our)\s+)?(?:module|class|role|enum|grammar)', line)
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/iolang.py:52
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/iolang.py:52: DeprecationWarning: invalid escape sequence \w
+    ('[a-zA-Z_]\w*', Name),
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/scripting.py:107
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/scripting.py:107: DeprecationWarning: invalid escape sequence \(
+    ('\(', Punctuation, '#pop'),
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/scripting.py:699
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/scripting.py:699: DeprecationWarning: invalid escape sequence \(
+    ('\(\*', Comment.Multiline, '#push'),
+
+.tox/c1/lib/python3.6/site-packages/pygments/lexers/scripting.py:700
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/pygments/lexers/scripting.py:700: DeprecationWarning: invalid escape sequence \*
+    ('\*\)', Comment.Multiline, '#pop'),
+
 tests/test_cli.py::test_drop[True]
 tests/test_cli.py::test_drop[False]
 tests/test_cli.py::test_init
@@ -9598,8 +9922,164 @@ tests/test_versioning.py::test_versioning_without_versioned_tables
     'SQLALCHEMY_TRACK_MODIFICATIONS adds significant overhead and '
 
 tests/test_db.py::test_transaction
-  /code/modules/invenio-db/.tox/c1/src/pypdf2/PyPDF2/generic.py:348: DeprecationWarning: invalid escape sequence \c
-    b_("c") : b_("\c"),
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/elasticsearch_dsl/document.py:215: DeprecationWarning: invalid escape sequence \s
+    """
+
+tests/test_db.py::test_transaction
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/elementpath/tdop_parser.py:434: DeprecationWarning: invalid escape sequence \s
+    s.replace(r'\ ', '\s+')
+
+tests/test_db.py::test_transaction
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/elementpath/tdop_parser.py:441: DeprecationWarning: invalid escape sequence \s
+    s = '%s\s*%s' % (s[:-4], s[-4:])
+
+tests/test_db.py::test_transaction
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/elementpath/tdop_parser.py:439: DeprecationWarning: invalid escape sequence \s
+    s = '%s\s*%s' % (s[:-2], s[-2:])
+
+tests/test_db.py::test_transaction
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/elementpath/xpath1_parser.py:32: DeprecationWarning: invalid escape sequence \-
+    XML_NCNAME_PATTERN = u"[{0}][\-.0-9\u00B7\u0300-\u036F\u203F-\u2040{0}]*".format(XML_NAME_CHARACTER)
+
+tests/test_db.py::test_transaction
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/elementpath/xpath1_parser.py:115: DeprecationWarning: invalid escape sequence \s
+    axis_pattern_template = '\\b%s(?=\s*\\:\\:|\s*\\(\\:.*\\:\\)\s*\\:\\:)'
+
+tests/test_db.py::test_transaction
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/elementpath/xpath1_parser.py:169: DeprecationWarning: invalid escape sequence \s
+    function_pattern_template = '\\b%s(?=\s*\\(|\s*\\(\\:.*\\:\\)\\()'
+
+tests/test_db.py::test_transaction
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/elementpath/xpath2_parser.py:1045: DeprecationWarning: invalid escape sequence \s
+    pattern='\\battribute(?=\s*\\:\\:|\s*\\(\\:.*\\:\\)\s*\\:\\:|\s*\\(|\s*\\(\\:.*\\:\\)\\()')
+
+tests/test_db.py::test_transaction
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/xmlschema/regex.py:39: DeprecationWarning: invalid escape sequence \-
+    u"\-.0-9:A-Z_a-z\u00B7\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u037D\u037F-\u1FFF\u200C-"
+
+tests/test_db.py::test_transaction
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/xmlschema/codepoints.py:31: DeprecationWarning: invalid escape sequence \%
+    return u'\%s' % unicode_chr(cp)
+
+tests/test_db.py::test_transaction
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/xmlschema/codepoints.py:35: DeprecationWarning: invalid escape sequence \%
+    start_char = u'\%s' % unicode_chr(cp[0])
+
+tests/test_db.py::test_transaction
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/xmlschema/codepoints.py:40: DeprecationWarning: invalid escape sequence \%
+    end_char = u'\%s' % unicode_chr(cp[1])
+
+tests/test_db.py::test_transaction
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/validators/url.py:5: DeprecationWarning: invalid escape sequence \.
+    ip_middle_octet = u"(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5]))"
+
+tests/test_db.py::test_transaction
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/validators/url.py:6: DeprecationWarning: invalid escape sequence \.
+    ip_last_octet = u"(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))"
+
+tests/test_db.py::test_transaction
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/validators/url.py:13: DeprecationWarning: invalid escape sequence \S
+    u"(?:\S+(?::\S*)?@)?"
+
+tests/test_db.py::test_transaction
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/validators/url.py:19: DeprecationWarning: invalid escape sequence \.
+    u"(?:(?:169\.254|192\.168)" + ip_middle_octet + ip_last_octet + u")|"
+
+tests/test_db.py::test_transaction
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/validators/url.py:20: DeprecationWarning: invalid escape sequence \.
+    u"(?:172\.(?:1[6-9]|2\d|3[0-1])" + ip_middle_octet + ip_last_octet + u"))"
+
+tests/test_db.py::test_transaction
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/validators/url.py:32: DeprecationWarning: invalid escape sequence \d
+    u"(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])"
+
+tests/test_db.py::test_transaction
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/validators/url.py:39: DeprecationWarning: invalid escape sequence \.
+    u"(?:\.(?:[a-z\u00a1-\uffff0-9]-?)*[a-z\u00a1-\uffff0-9]+)*"
+
+tests/test_db.py::test_transaction
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/validators/url.py:41: DeprecationWarning: invalid escape sequence \.
+    u"(?:\.(?:[a-z\u00a1-\uffff]{2,}))"
+
+tests/test_db.py::test_transaction
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/validators/url.py:44: DeprecationWarning: invalid escape sequence \d
+    u"(?::\d{2,5})?"
+
+tests/test_db.py::test_transaction
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/validators/url.py:46: DeprecationWarning: invalid escape sequence \S
+    u"(?:/\S*)?"
+
+tests/test_db.py::test_transaction
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/validators/url.py:48: DeprecationWarning: invalid escape sequence \?
+    u"(?:\?\S*)?"
+
+tests/test_db.py::test_transaction
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/jsonpath_ng/ext/string.py:18: DeprecationWarning: invalid escape sequence \(
+    SUB = re.compile("sub\(/(.*)/,\s+(.*)\)")
+
+tests/test_db.py::test_transaction
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/jsonpath_ng/ext/string.py:19: DeprecationWarning: invalid escape sequence \(
+    SPLIT = re.compile("split\((.),\s+(\d+),\s+(\d+|-1)\)")
+
+tests/test_db.py::test_transaction
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/jsonpath_ng/ext/string.py:20: DeprecationWarning: invalid escape sequence \(
+    STR = re.compile("str\(\)")
+
+tests/test_db.py::test_transaction
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/citeproc/formatter/rst.py:8: DeprecationWarning: invalid escape sequence \*
+    text = text.replace('*', '\*')
+
+tests/test_db.py::test_transaction
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/citeproc/formatter/rst.py:9: DeprecationWarning: invalid escape sequence \`
+    text = text.replace('`', '\`')
+
+tests/test_db.py::test_transaction
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/citeproc/model.py:671: DeprecationWarning: invalid escape sequence \d
+    m = re.search('\d+', first)
+
+tests/test_db.py::test_transaction
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/citeproc/source/bibtex/bibtex.py:156: DeprecationWarning: invalid escape sequence \d
+    RE_DAY = '(?P<day>\d+)'
+
+tests/test_db.py::test_transaction
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/citeproc/source/bibtex/bibtex.py:157: DeprecationWarning: invalid escape sequence \w
+    RE_MONTH = '(?P<month>\w+)'
+
+tests/test_db.py::test_transaction
+  /code/modules/invenio-db/.tox/c1/bin/bagit.py:926: DeprecationWarning: invalid escape sequence \c
+    """
+
+tests/test_db.py::test_transaction
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/b2handle/clientcredentials.py:102: DeprecationWarning: invalid escape sequence \*
+    '''
+
+tests/test_db.py::test_transaction
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/b2handle/handleexceptions.py:128: DeprecationWarning: invalid escape sequence \s
+    pat = re.compile('>[\s]+<')
+
+tests/test_db.py::test_transaction
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/past/types/oldstr.py:33: DeprecationWarning: invalid escape sequence \d
+    """
+
+tests/test_db.py::test_transaction
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/b2handle/handleclient.py:177: DeprecationWarning: invalid escape sequence \*
+    '''
+
+tests/test_db.py::test_transaction
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/b2handle/handleclient.py:197: DeprecationWarning: invalid escape sequence \*
+    '''
+
+tests/test_db.py::test_transaction
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/b2handle/handleclient.py:230: DeprecationWarning: invalid escape sequence \*
+    '''
+
+tests/test_db.py::test_transaction
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/b2handle/handleclient.py:248: DeprecationWarning: invalid escape sequence \*
+    '''
+
+tests/test_db.py::test_transaction
+  /code/modules/invenio-db/.tox/c1/lib/python3.6/site-packages/sickle/utils.py:20: DeprecationWarning: invalid escape sequence \{
+    return re.search('(\{.*\})', element.tag).group(1)
 
 -- Docs: https://docs.pytest.org/en/latest/warnings.html
 
@@ -9607,18 +10087,18 @@ tests/test_db.py::test_transaction
 Name                     Stmts   Miss Branch BrPart  Cover
 ----------------------------------------------------------
 invenio_db/__init__.py       6      0      0      0   100%
-invenio_db/cli.py           54      5     16      2    90%
+invenio_db/cli.py           54      6     16      3    87%
 invenio_db/config.py         5      0      0      0   100%
 invenio_db/ext.py           63      2     24      1    94%
 invenio_db/shared.py        44      5      8      3    85%
 invenio_db/utils.py         52     33     20      0    38%
 invenio_db/version.py        3      0      0      0   100%
 ----------------------------------------------------------
-TOTAL                      227     45     68      6    78%
+TOTAL                      227     46     68      7    77%
 Coverage HTML written to dir htmlcov
 Coverage XML written to file coverage.xml
 
-==== 16 failed, 9 passed, 3 skipped, 25 warnings, 20 error in 63.30 seconds ====
+=== 16 failed, 9 passed, 3 skipped, 145 warnings, 20 error in 68.28 seconds ====
 ERROR: InvocationError for command /code/modules/invenio-db/.tox/c1/bin/pytest --cov=invenio_db tests -v --cov-branch --cov-report=term --cov-report=xml --cov-report=html --basetemp=/code/modules/invenio-db/.tox/c1/tmp (exited with code 1)
 ___________________________________ summary ____________________________________
 ERROR:   c1: commands failed
