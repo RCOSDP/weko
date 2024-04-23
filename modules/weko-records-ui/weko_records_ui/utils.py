@@ -1971,7 +1971,7 @@ class RoCrateConverter:
             file_entity = self.crate.add_file(metadata_file.get('filename', ''))
             # TODO: RO-Crate Mapping画面のfileのkey項目一覧からaccessModeとdateCreatedを削除（下記で使用するから）
             file_entity['accessMode'] = metadata_file.get('accessrole', '')
-            file_entity['dateCreated'] = metadata_file.get('date', '')[0]['dateValue']
+            file_entity['dateCreated'] =  metadata_file.get('date')[0]['dateValue'] if isinstance(metadata_file.get('date', ''), list) else ''
             self.__add_file_properties(file_entity, map_file, metadata, index)
             file_entities.append(file_entity)
         self.crate.root_dataset['mainEntity'] = file_entities
@@ -2028,7 +2028,10 @@ class RoCrateConverter:
                 property_value = self.__get_property_value(keys, 0, metadata)
 
             if property_value:
-                entity[rocrate_property] = property_value
+                if isinstance(property_value, list):
+                    entity[rocrate_property] = property_value
+                else:
+                    entity[rocrate_property] = [property_value]
 
     def __add_properties(self, entity, map, metadata):
         """
@@ -2043,7 +2046,10 @@ class RoCrateConverter:
         for rocrate_property, item_property in map.items():
             property_value = self.__get_property(item_property, metadata)
             if property_value:
-                entity[rocrate_property] = property_value
+                if isinstance(property_value, list):
+                    entity[rocrate_property] = property_value
+                else:
+                    entity[rocrate_property] = [property_value]
 
     def __get_property(self, item_property, metadata):
         """
