@@ -50,6 +50,7 @@ from elasticsearch.exceptions import NotFoundError
 from flask import abort, current_app, has_request_context, request
 from flask_babelex import gettext as _
 from flask_login import current_user
+from invenio_accounts.models import Role
 from invenio_db import db
 from invenio_files_rest.models import FileInstance, Location, ObjectVersion
 from invenio_files_rest.proxies import current_files_rest
@@ -3818,8 +3819,10 @@ def handle_check_file_content(record, data_path):
     file_paths = record.get("file_path", [])
     # check consistence between file_path and filename
     filenames = get_filenames_from_metadata(record["metadata"])
+    accessrole_info,displaytype_info,billing_file,priceinfo = get_billinginfo_from_metadata(record["metadata"])
     record["filenames"] = filenames
     errors.extend(handle_check_filename_consistence(file_paths, filenames))
+    errors.extend(handle_check_billing_file(accessrole_info,displaytype_info,billing_file,priceinfo))
 
     # check if file_path exists
     error, warning = handle_check_file_path(
@@ -3952,6 +3955,75 @@ def get_filenames_from_metadata(metadata):
 
     return filenames
 
+def get_billinginfo_from_metadata(metadata):
+    """Get list billing info of file contents from metadata.
+
+    :argument
+        metadata -- {dict} record metadata.
+    :return
+        accessrole_info   -- {list} List accessrole info from metadata.
+        displaytype_info   -- {list} List displaytype info from metadata.
+        billing_file_info   -- {list} List billing file info from metadata.
+        priceinfo   -- {list} List billing price info from metadata.
+    """
+    file_meta_ids = []
+    accessrole_info = []
+    displaytype_info = []
+    billing_file = []
+    priceinfo = []
+    for key, val in metadata.items():
+        if isinstance(val, list):
+            for item in val:
+                if isinstance(item, dict):
+                    if "accessrole" in item:
+                        if not key in file_meta_ids:
+                            file_meta_ids.append(key)
+                    if "displaytype" in item:
+                        if not key in file_meta_ids:
+                            file_meta_ids.append(key)
+                    if "billing" in item:
+                        if not key in file_meta_ids:
+                            file_meta_ids.append(key)
+                    if "priceinfo" in item:
+                        if not key in file_meta_ids:
+                            file_meta_ids.append(key)
+                        break
+
+    count = 0
+    for _id in file_meta_ids:
+        for file in metadata[_id]:
+            accessrole_data = {
+                "id": ".metadata.{}[{}].accessrole".format(_id, count),
+                "accessrole": file.get("accessrole", ""),
+            }
+            displaytype_data = {
+                "id": ".metadata.{}[{}].displaytype".format(_id, count),
+                "displaytype": file.get("displaytype", ""),
+            }
+            billing_data = {
+                "id": ".metadata.{}[{}].billing".format(_id, count),
+                "billing": file.get("billing", ""),
+            }
+            priceinfo_data = {
+                "id": ".metadata.{}[{}].priceinfo".format(_id, count),
+                "priceinfo": file.get("priceinfo", ""),
+            }
+            
+            if not file.get("accessrole", None):
+                file["accessrole"] = "open_access"
+            accessrole_info.append(accessrole_data)
+            displaytype_info.append(displaytype_data)
+            billing_file.append(billing_data)
+            priceinfo.append(priceinfo_data)
+            count += 1
+
+        new_file_metadata = list(filter(lambda x: x, metadata[_id]))
+        if new_file_metadata:
+            metadata[_id] = new_file_metadata
+        else:
+            del metadata[_id]
+
+    return accessrole_info,displaytype_info,billing_file,priceinfo
 
 def handle_check_filename_consistence(file_paths, meta_filenames):
     """Check thumbnails metadata.
@@ -3968,5 +4040,69 @@ def handle_check_filename_consistence(file_paths, meta_filenames):
         meta_filename = meta_filenames[idx]
         if path and path.split("/")[-1] != meta_filename["filename"]:
             errors.append(msg.format("file_path[{}]".format(idx), meta_filename["id"]))
+
+    return errors
+
+def handle_check_billing_file(accessrole_info,displaytype_info,billing_file,priceinfo):
+    """Check billing metadata.
+
+    :argument
+        accessrole_info   -- {list} List accessrole info from metadata.
+        displaytype_info   -- {list} List displaytype info from metadata.
+        billing_file_info   -- {list} List billing file info from metadata.
+        priceinfo   -- {list} List billing price info from metadata.
+    :return
+        errors -- {list} List errors.
+    """
+    errors = []
+    billing_list  = []
+    displaytype_list = []
+    accessrole_list = []
+    msg = _("The following items is required. Please recheck and input.")
+    roles = Role.query.all()
+    role_id_list = [role.id for role in roles]
+
+    for item in billing_file:
+        billing_info = item.get("billing")
+        for billing in billing_info:
+            if billing == "billing_file":
+                billing_list.append(billing)
+    for item in displaytype_info:
+        displaytype = item.get("displaytype")
+        if displaytype == "preview":
+            displaytype_list.append(displaytype)
+    for item in accessrole_info:
+        accessrole = item.get("accessrole")
+        if accessrole == "open_access" or accessrole == "open_no":
+            accessrole_list.append(accessrole)
+    if billing_list:
+        if len(billing_list) > 1:
+            errors.append(_("multiple_billing_file_error"))
+        if displaytype_list:
+            errors.append(_("billing_file_display_type_error"))
+        if accessrole_list:
+            errors.append(_("One of the following metadata is required.<br/>{}<br/>").format("open_date, open_login"))
+        for priceinfo_item in priceinfo:
+            priceinfo_data = priceinfo_item.get("priceinfo","")
+            role_list = []
+            for item in priceinfo_data:
+                price = item.get("price","")
+                role = item.get("billingrole","")
+                role_list.append(role)
+                if not any([price,role]):
+                    errors.append(msg + "'role','price'")
+                elif not role:
+                    errors.append(msg + "'role'")
+                elif not price:
+                    errors.append(msg + "'price'")
+                if price and (not represents_int(price) or re.search(r"([０-９])", price)):
+                    errors.append(_("Please specify price by half-width number."))
+            if role_list:
+                if len(role_list) != len(set(role_list)):
+                    errors.append(_("billing_file_role_duplication_error"))
+                for role_id in role_list:
+                    if role_id:
+                        if int(role_id) not in role_id_list:
+                            errors.append(_("The specified {} does not exist in system.").format("role"))
 
     return errors
