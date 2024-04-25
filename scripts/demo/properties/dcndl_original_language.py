@@ -15,7 +15,7 @@ name_ja = "原文の言語"
 name_en = "Original Language"
 mapping = {
     "display_lang_type": "",
-    "jpcoar_v1_mapping": {},
+    "jpcoar_v1_mapping": "",
     "jpcoar_mapping": {
         "originalLanguage": {
             "@value": "original_language",
