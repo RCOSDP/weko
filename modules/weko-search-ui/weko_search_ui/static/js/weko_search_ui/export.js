@@ -5,6 +5,8 @@ const item_id_label = document.getElementById("item_id").value;
 const export_item_label = document.getElementById("export_item").value;
 const download_url_label = document.getElementById("download_url").value;
 const status_label = document.getElementById("status").value;
+const start_time_label = document.getElementById('start_time').value;
+const finish_time_label = document.getElementById('finish_time').value;
 const export_label = document.getElementById("export").value;
 const export_messaage = document.getElementById("export_messaage").value;
 const cancel_messaage = document.getElementById("cancel_messaage").value;
@@ -60,6 +62,8 @@ class ExportComponent extends React.Component {
       isDisableExport: false,
       isDisableCancel: true,
       taskStatus: "",
+      startTime: "",
+      finishTime: "",
       isExport: false,
       confirmMessage: "",
       last_item_id: "",
@@ -209,7 +213,8 @@ class ExportComponent extends React.Component {
         me.setState({
           isDisableExport: response.data.export_status,
           isDisableCancel: !response.data.export_status,
-          taskStatus: response.data.status
+          taskStatus: response.data.status,
+          startTime: response.data.start_time
         });
       },
       error: function () {
@@ -244,7 +249,9 @@ class ExportComponent extends React.Component {
             uriStatus: response.data.uri_status,
             isDisableExport: response.data.export_status || !response.data.celery_is_run,
             isDisableCancel: !response.data.export_status,
-            taskStatus: response.data.status
+            taskStatus: response.data.status,
+            startTime: response.data.start_time,
+            finishTime: response.data.finish_time
           });
           if (!response.data.celery_is_run) {
             $('#errors').append(
@@ -283,6 +290,8 @@ class ExportComponent extends React.Component {
       isDisableExport,
       isDisableCancel,
       taskStatus,
+      startTime,
+      finishTime,
       esportRunMessage,
       exportStatus,
       uriStatus,
@@ -342,6 +351,16 @@ class ExportComponent extends React.Component {
             <div className="row">
               <div className="col-xs-12">
                 <label>{status_label}: {taskStatus}</label>
+              </div>
+            </div>
+            <div className="row">
+              <div className="col-xs-12">
+                <label>{start_time_label}: {startTime}</label>
+              </div>
+            </div>
+            <div className="row">
+              <div className="col-xs-12">
+                <label>{finish_time_label}: {finishTime}</label>
               </div>
             </div>
             <div className="row">

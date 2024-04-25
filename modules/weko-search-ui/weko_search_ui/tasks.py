@@ -19,6 +19,9 @@
 # MA 02111-1307, USA.
 
 """WEKO3 module docstring."""
+import json
+import os
+import pickle
 import shutil
 from datetime import datetime, timedelta
 
@@ -27,13 +30,14 @@ from celery.result import AsyncResult
 from celery.task.control import inspect
 from flask import current_app
 from weko_admin.api import TempDirInfo
-from weko_admin.utils import get_redis_cache
+from weko_admin.utils import get_redis_cache, reset_redis_cache
 from weko_redis.redis import RedisConnection
 
 from .utils import (
     check_import_items,
     delete_exported,
     export_all,
+    write_files,
     get_lifetime,
     import_items_to_system,
 )
@@ -103,32 +107,51 @@ def delete_task_id_cache(task_id, cache_key):
             datastore.delete(cache_key)
 
 @shared_task
-def export_all_task(root_url, user_id, data):
+def export_all_task(root_url, user_id, data, start_time):
     """Export all items."""
-    from weko_admin.utils import reset_redis_cache
+    export_all(root_url, user_id, data, start_time)
 
-    _task_config = current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_URI"]
-    _expired_time = current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_EXPIRED_TIME"]
-    _cache_key = current_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
-        name=_task_config,
+
+@shared_task
+def write_files_task(export_path, pickle_file_name , user_id):
+    """Write files for export."""
+    _msg_config = current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_MSG"]
+    _msg_key = current_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
+        name=_msg_config,
         user_id=user_id
     )
-    _task_key_config = current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_TASK"]
-    _task_key = current_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
-        name=_task_key_config,
+    _file_create_config = current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_FILE_CREATE_RUN_MSG"]
+    _file_create_key = current_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
+        name=_file_create_config,
         user_id=user_id
     )
 
-    uri = export_all(root_url, user_id, data)
-    reset_redis_cache(_cache_key, uri)
-    delete_exported_task.apply_async(
-        args=(
-            uri,
-            _cache_key,
-            _task_key
-        ),
-        countdown=int(_expired_time) * 60,
-    )
+    def _update_redis_status(json_data, file_name, status):
+        "Update status in redis cache."
+        part_name = os.path.splitext(file_name)[1]
+        part_index = part_name.find('part')
+        part_number = part_name[part_index + 4:] if part_index != -1 else 1
+        json_data['write_file_status'][str(part_number)] = status
+        reset_redis_cache(_file_create_key, json.dumps(json_data))
+
+    with open(pickle_file_name, 'rb') as f:
+        import_datas = pickle.load(f)
+    json_data = json.loads(get_redis_cache(_file_create_key))
+    if not json_data['cancel_flg']:
+        _update_redis_status(json_data, import_datas['name'], 'started')
+        with open(pickle_file_name, 'rb') as f:
+            import_datas = pickle.load(f)
+        result = write_files(import_datas, export_path, user_id, 0)
+        json_data = json.loads(get_redis_cache(_file_create_key))
+        if result:
+            _update_redis_status(json_data, import_datas['name'], 'finished')  
+        else:
+            reset_redis_cache(_msg_key, "Export failed.")
+            json_data['cancel_flg'] = True
+            _update_redis_status(json_data, import_datas['name'], 'error')
+    else:
+        _update_redis_status(json_data, import_datas['name'], 'canceled')
+    os.remove(pickle_file_name)
 
 
 @shared_task

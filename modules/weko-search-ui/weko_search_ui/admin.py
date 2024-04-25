@@ -742,15 +742,16 @@ class ItemBulkExport(BaseView):
             name=_task_config,
             user_id=user_id
         )
-        export_status, download_uri, message, run_message, _ = get_export_status()
+        export_status, download_uri, message, run_message, _, _, _ = get_export_status()
+        start_time = datetime.now().strftime('%Y/%m/%d %H:%M:%S')
 
         if not export_status:
-            export_task = export_all_task.apply_async(args=(request.url_root, user_id, data))
+            export_task = export_all_task.apply_async(args=(request.url_root, user_id, data, start_time))
             reset_redis_cache(_cache_key, str(export_task.task_id))
 
         # return Response(status=200)
         check = check_celery_is_run()
-        export_status, download_uri, message, run_message, status = get_export_status()
+        export_status, download_uri, message, run_message, status, start_time, finish_time = get_export_status()
         return jsonify(
             data={
                 "export_status": export_status,
@@ -758,7 +759,9 @@ class ItemBulkExport(BaseView):
                 "celery_is_run": check,
                 "error_message": message,
                 "export_run_msg": run_message,
-                "status": status
+                "status": status,
+                "start_time": start_time,
+                "finish_time": finish_time
             }
         )
 
@@ -766,7 +769,7 @@ class ItemBulkExport(BaseView):
     def check_export_status(self):
         """Check export status."""
         check = check_celery_is_run()
-        export_status, download_uri, message, run_message, status = get_export_status()
+        export_status, download_uri, message, run_message, status, start_time, finish_time = get_export_status()
         return jsonify(
             data={
                 "export_status": export_status,
@@ -774,7 +777,9 @@ class ItemBulkExport(BaseView):
                 "celery_is_run": check,
                 "error_message": message,
                 "export_run_msg": run_message,
-                "status": status
+                "status": status,
+                "start_time": start_time,
+                "finish_time": finish_time
             }
         )
 
@@ -782,7 +787,7 @@ class ItemBulkExport(BaseView):
     def cancel_export(self):
         """Check export status."""
         result = cancel_export_all()
-        export_status, _, _, _, status = get_export_status()
+        export_status, _, _, _, status, _, _ = get_export_status()
         return jsonify(data={"cancel_status": result, "export_status":export_status, "status":status})
 
     @expose("/download", methods=["GET"])
@@ -791,7 +796,7 @@ class ItemBulkExport(BaseView):
 
         path: it was load from FileInstance
         """
-        export_status, download_uri, message, run_message, _ = get_export_status()
+        export_status, download_uri, message, run_message, _, _, _ = get_export_status()
         if not export_status and download_uri is not None:
             file_instance = FileInstance.get_by_uri(download_uri)
             return file_instance.send_file(
