@@ -1,11 +1,13 @@
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 
 import copy
+from io import StringIO
 import json
 import os
 import unittest
 from datetime import datetime
 import uuid
+from elasticsearch import NotFoundError
 
 import pytest
 from flask import current_app, make_response, request
@@ -16,6 +18,7 @@ from invenio_records.api import Record
 from mock import MagicMock, Mock, patch
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_pidrelations.models import PIDRelation
+from tests.test_rest import DummySearchResult
 from weko_admin.config import WEKO_ADMIN_MANAGEMENT_OPTIONS
 from weko_deposit.api import WekoDeposit, WekoIndexer
 from weko_records.api import ItemsMetadata, WekoRecord
@@ -118,8 +121,11 @@ from weko_search_ui.utils import (
     update_publish_status,
     validation_date_property,
     validation_file_open_date,
-    combine_aggs
+    result_download_ui,
+    search_results_to_tsv,
+    create_tsv_row,
 )
+from werkzeug.exceptions import NotFound
 
 FIXTURE_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
 
@@ -2964,3 +2970,89 @@ def test_conbine_aggs():
     test = {"took": "215","time_out": False,"_shards": {"total": "1","successful": "1","skipped": "0","failed": "0"},"hits": {"total": "0","max_score": None,"hits": []},"aggregations": {"other": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": [{"key": "1234567891012","doc_count": "2","date_range": {"doc_count": "2","available": {"buckets": [{"key": "*-2023-07-25","to": "1690243200000.0","to_as_string": "2023-07-25","doc_count": "2"},{"key": "2023-07-25-*","from": "1690243200000.0","from_as_string": "2023-07-25","doc_count": "0"}]}}}]},"path": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": [{"key": "1234567891011","doc_count": "1","date_range": {"doc_count": "1","available": {"buckets": [{"key": "*-2023-07-25","to": "1690243200000.0","to_as_string": "2023-07-25","doc_count": "1"},{"key": "2023-07-25-*","from": "1690243200000.0","from_as_string": "2023-07-25","doc_count": "0"}]}},"Data Type": {"doc_count": "0","Data Type": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Distributor": {"doc_count": "0","Distributor": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Data Language": {"doc_count": "1","Data Language": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Temporal": {"doc_count": "1","Temporal": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Access": {"doc_count": "1","Access": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"no_available": {"doc_count": "0"},"Topic": {"doc_count": "1","Topic": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Location": {"doc_count": "1","Location": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}}},{"key": "1234567891012","doc_count": "2","date_range": {"doc_count": "2","available": {"buckets": [{"key": "*-2023-07-25","to": "1690243200000.0","to_as_string": "2023-07-25","doc_count": "2"},{"key": "2023-07-25-*","from": "1690243200000.0","from_as_string": "2023-07-25","doc_count": "0"}]}},"Data Type": {"doc_count": "0","Data Type": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Distributor": {"doc_count": "0","Distributor": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Data Language": {"doc_count": "1","Data Language": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Temporal": {"doc_count": "1","Temporal": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Access": {"doc_count": "1","Access": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"no_available": {"doc_count": "0"},"Topic": {"doc_count": "1","Topic": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Location": {"doc_count": "1","Location": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}}},{"key": "1234567891013","doc_count": "3","date_range": {"doc_count": "1","available": {"buckets": [{"key": "*-2023-07-25","to": "1690243200000.0","to_as_string": "2023-07-25","doc_count": "3"},{"key": "2023-07-25-*","from": "1690243200000.0","from_as_string": "2023-07-25","doc_count": "0"}]}},"Data Type": {"doc_count": "0","Data Type": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Distributor": {"doc_count": "0","Distributor": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Data Language": {"doc_count": "1","Data Language": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Temporal": {"doc_count": "1","Temporal": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Access": {"doc_count": "1","Access": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"no_available": {"doc_count": "0"},"Topic": {"doc_count": "1","Topic": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Location": {"doc_count": "1","Location": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}}}]}}}
     result = combine_aggs(other_agg)
     assert test == result
+
+
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_result_download_ui -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_result_download_ui(app):
+    valid_json = [{
+        "id": 0,
+        "name": {
+            "i18n": "title",
+            "en": "Title",
+            "ja": "タイトル"
+        },
+        "roCrateKey": "title"
+    }]
+    with open('tests/data/rocrate/rocrate_list.json', 'r') as f:
+        search_result = json.load(f)
+
+    with app.test_request_context():
+        with patch('weko_search_ui.utils.search_results_to_tsv', return_value=StringIO('test')):
+            # 9 execute
+            res = result_download_ui(search_result, valid_json)
+            assert res.status_code == 200
+
+            # 10 Empty search_result
+            with pytest.raises(NotFound):
+                res = result_download_ui(None, valid_json)
+
+
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_search_results_to_tsv -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_search_results_to_tsv(app):
+    valid_json = [
+        {
+            "id": 0,
+            "name": {
+                "i18n": "title",
+                "en": "Title",
+                "ja": "タイトル"
+            },
+            "roCrateKey": "title"
+        },
+        {
+            "id": 1,
+            "name": {
+                "i18n": "field",
+                "en": "Field",
+                "ja": "分野"
+            },
+            "roCrateKey": "genre"
+        },
+    ]
+    with open('tests/data/rocrate/rocrate_list.json', 'r') as f:
+        search_result = json.load(f)
+
+    with app.test_request_context():
+        # 11 Execute
+        with patch('weko_search_ui.utils.create_tsv_row', return_value={"Title": "Sample Title","Field": "Sample Field"}):
+            res = search_results_to_tsv(search_result, valid_json)
+            assert res.getvalue() == "Title\tField\nSample Title\tSample Field\n"
+
+        # 12 Empty json
+        input_json = [{}]
+        with patch('weko_search_ui.utils.create_tsv_row', return_value={}):
+            try:
+                search_results_to_tsv(search_result, input_json)
+                assert True
+            except:
+                assert False
+
+
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_create_tsv_row -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_create_tsv_row(app):
+    field_rocrate_dict = {'Title': 'title', 'Field': 'genre'}
+    with open('tests/data/rocrate/rocrate_list.json', 'r') as f:
+        search_result = json.load(f)
+
+    data_response = [
+        graph for graph in search_result[0]['metadata']['@graph']
+        if graph.get('@id') == './'
+    ][0]
+
+    with app.test_request_context():
+        # 13 Execute
+        res = create_tsv_row(field_rocrate_dict, data_response)
+        assert res == {
+            'Title': 'メタボリックシンドロームモデルマウスの多臓器遺伝子発現量データ',
+            'Field': '生物学'
+        }

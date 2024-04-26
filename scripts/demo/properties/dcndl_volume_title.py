@@ -15,7 +15,7 @@ name_ja = "部編名"
 name_en = "Volume Title"
 mapping = {
     "display_lang_type": "",
-    "jpcoar_v1_mapping": {},
+    "jpcoar_v1_mapping": "",
     "jpcoar_mapping": {
         "volumeTitle": {
             "@value": "volume_title",

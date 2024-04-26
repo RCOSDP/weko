@@ -13,6 +13,7 @@ from weko_workflow.api import WorkFlow
 import traceback
 import copy
 import pickle
+import argparse
 import time
 from datetime import datetime
 import json
@@ -44,6 +45,7 @@ def checkRegisterdProperty(itemType, new_prop_ids):
 
 
 def main():
+
     new_prop_ids = [
         publisher_info.property_id,
         jpcoar_catalog.property_id,
@@ -136,6 +138,18 @@ def main():
                     Mapping.create(item_type_id=itemType.id,
                                mapping=table_row_map.get('mapping'))
                     print("session merged.")
+                else:
+                    for id in itemType.render["table_row_map"]["mapping"]:
+                        if id.startswith("item_"):
+                            _id = itemType.render["meta_list"][id]['input_type']
+                            _id = _id.replace("cus_","")
+                            if _id in new_prop_ids:
+                                itemType.render["table_row_map"]["mapping"][id]=new_prop_mapping[_id]
+                    flag_modified(itemType, "render")
+                    db.session.merge(itemType)
+                    Mapping.create(item_type_id=itemType.id,
+                               mapping=itemType.render["table_row_map"].get('mapping'))
+
         db.session.commit()
         
         

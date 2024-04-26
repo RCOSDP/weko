@@ -1,16 +1,34 @@
 import json
 import pytest
 from flask import current_app, url_for
-from mock import patch
 import os
+from mock import patch, MagicMock
+
 from invenio_accounts.testutils import login_user_via_session
-from invenio_records_rest.config import RECORDS_REST_ENDPOINTS
+from redis.exceptions import RedisError
+from sqlalchemy.exc import SQLAlchemyError
 
 from weko_admin.models import AdminLangSettings
 from weko_index_tree.rest import (
     need_record_permission,
-    create_blueprint  
+    create_blueprint
 )
+
+user_tree_action = [
+    (0, 403),
+    (1, 403),
+    (2, 202),
+    (3, 202),
+    (4, 202),
+    (5, 403),
+    (6, 403),
+]
+
+user_tree_action2 = [
+    (2, 201),
+    (3, 201),
+    (4, 201),
+]
 
 user_results_index = [
     (0, 403),
@@ -21,6 +39,37 @@ user_results_index = [
     (5, 403),
     (6, 403),
 ]
+
+user_create_results1 = [
+    (0, 403),
+    (1, 403),
+    (2, 400),
+    (3, 400),
+    (4, 400),
+    (5, 403),
+    (6, 403),
+]
+
+user_create_results2 = [
+    (0, 403),
+    (1, 403),
+    (2, 201),
+    (3, 201),
+    (4, 201),
+    (5, 403),
+    (6, 403),
+]
+
+user_results_tree = [
+    (0, 403),
+    (1, 403),
+    (2, 200),
+    (3, 200),
+    (4, 200),
+    (5, 200),
+    (6, 200),
+]
+
 
 # def need_record_permission(factory_name):
 def test_need_record_permission(i18n_app):
@@ -446,3 +495,64 @@ class TestIndexTreeActionResource:
             assert json.loads(res.data) == {'message': 'You can not move the index.', 'status': 202}
             assert redis_connect.redis.exists("index_tree_view_test_ja") == False
             assert redis_connect.redis.exists("index_tree_view_test_en") == False
+
+
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_rest.py::test_get_parent_index_tree -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko_index_tree/.tox/c1/tmp --full-trace
+def test_get_parent_index_tree(client_rest, users, test_indices):
+    os.environ['INVENIO_WEB_HOST_NAME'] = 'test'
+
+    res = client_rest.get('/v1/tree/index/11/parent')
+    assert res.status_code == 200
+    data = json.loads(res.get_data())
+    assert data['index']['name'] == 'Test index 11'
+    assert data['index']['parent']['name'] == 'Test index 1'
+
+    res = client_rest.get('/v1/tree/index/11/parent?pretty=true')
+    assert res.status_code == 200
+    str_data = res.get_data().decode('utf-8')
+    assert '    ' in str_data
+
+    headers = {}
+    headers['Accept-Language'] = 'ja'
+    res = client_rest.get('/v1/tree/index/11/parent', headers=headers)
+    assert res.status_code == 200
+    data = json.loads(res.get_data())
+    assert data['index']['name'] == 'テストインデックス 11'
+    assert data['index']['parent']['name'] == 'テストインデックス 1'
+
+
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_rest.py::test_get_parent_index_tree_error -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko_index_tree/.tox/c1/tmp --full-trace
+def test_get_parent_index_tree_error(client_rest, users, communities, test_indices):
+    os.environ['INVENIO_WEB_HOST_NAME'] = 'test'
+
+    res = client_rest.get('/v1/tree/index/11/parent')
+    etag = res.headers['Etag']
+    last_modified = res.headers['Last-Modified']
+
+    # Check Etag
+    headers = {}
+    headers['If-None-Match'] = etag
+    res = client_rest.get('/v1/tree/index/11/parent', headers=headers)
+    assert res.status_code == 304
+
+    # Check Last-Modified
+    headers = {}
+    headers['If-Modified-Since'] = last_modified
+    res = client_rest.get('/v1/tree/index/11/parent', headers=headers)
+    assert res.status_code == 304
+
+    # Invalid version
+    res = client_rest.get('/v0/tree/index/11/parent')
+    assert res.status_code == 400
+
+    # Access denied
+    res = client_rest.get('/v1/tree/index/31/parent')
+    assert res.status_code == 403
+
+    # Index not found
+    res = client_rest.get('/v1/tree/index/100/parent')
+    assert res.status_code == 404
+
+    with patch('weko_index_tree.api.Indexes.get_index_tree', MagicMock(side_effect=SQLAlchemyError())):
+        res = client_rest.get('/v1/tree/index/11/parent')
+        assert res.status_code == 500

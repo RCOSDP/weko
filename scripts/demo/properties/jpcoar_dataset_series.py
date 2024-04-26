@@ -15,7 +15,7 @@ name_ja = "データセットシリーズ"
 name_en = "Dataset Series"
 mapping = {
     "display_lang_type": "",
-    "jpcoar_v1_mapping": {},
+    "jpcoar_v1_mapping": "",
     "jpcoar_mapping": {"datasetSeries": {"@value": "jpcoar_dataset_series"}},
     "junii2_mapping": "",
     "lido_mapping": "",

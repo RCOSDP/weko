@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="10" height="7" viewBox="0 0 10 7">
+  <defs>
+    <clipPath id="clip-path">
+      <rect id="長方形_1367" data-name="長方形 1367" width="10" height="7" transform="translate(1091 30)" fill="#fff" stroke="#fff" stroke-width="1"/>
+    </clipPath>
+  </defs>
+  <g id="icon_down-arrow" transform="translate(-1091 -30)" clip-path="url(#clip-path)">
+    <path id="chevron_right_FILL0_wght400_GRAD0_opsz48" d="M332.811,343.1l-.811-.811,3.736-3.736L332,334.811l.811-.811,4.548,4.548Z" transform="translate(1434.526 -301.333) rotate(90)" fill="#fff"/>
+  </g>
+</svg>

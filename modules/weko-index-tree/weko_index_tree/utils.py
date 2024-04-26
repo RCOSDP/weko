@@ -1069,6 +1069,7 @@ def create_limmiter():
     from .config import WEKO_INDEX_TREE_API_LIMIT_RATE_DEFAULT
     return Limiter(app=Flask(__name__), key_func=get_remote_address, default_limits=WEKO_INDEX_TREE_API_LIMIT_RATE_DEFAULT)
 
+
 def register_cnri_for_index(index_id):
     """
     Register CNRI ID for indexes into Persistent Identifiers.

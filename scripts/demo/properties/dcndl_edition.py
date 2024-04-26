@@ -15,7 +15,7 @@ name_ja = "版"
 name_en = "Edition"
 mapping = {
     "display_lang_type": "",
-    "jpcoar_v1_mapping": {},
+    "jpcoar_v1_mapping": "",
     "jpcoar_mapping": {
         "edition": {
             "@value": "edition",
