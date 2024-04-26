@@ -111,6 +111,20 @@ def test_indexes_create(app, db, users, test_indices):
             assert res==None
 
 
+def test_indexes_create_for_ark_server(app, db, users, test_indices):
+    app.config['WEKO_INDEX_TREE_DEFAULT_DISPLAY_NUMBER'] = 5
+    app.config['WEKO_INDEX_USE_ARK_IDENTIER'] = True
+    app.config['WEKO_INDEX_USE_CNRI_IDENTIER'] = True
+    with app.test_client() as client:
+        with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+            res = Indexes.create(0, {
+                'id': 4,
+                'parent': 3,
+                'value': 'Create index test1',
+            })
+            assert res==True
+
+
 # class Indexes(object):
 #     def update(cls, index_id, **data):
 # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_api.py::test_indexes_update -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp

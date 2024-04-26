@@ -92,3 +92,19 @@ WEKO_INDEX_TREE_STATE_TIME_LIFE_SECONDS = 60
 
 WEKO_INDEX_TREE_INDEX_LOCK_KEY_PREFIX = "lock_index_"
 """Index lock key prefix."""
+
+# TODO ARK SERVER INDEX ~ Config file for Index ARK ID
+WEKO_INDEX_USE_ARK_IDENTIER = True
+"""Enables connection to EZID to generate an ARK Identifier for the corresponding index"""
+
+# TODO ARK SERVER INDEX ~ Config file for Index ARK ID
+WEKO_INDEX_USE_CNRI_IDENTIER = True
+"""Enables connection CNRI handle server to generate an CNRI Identifier for the corresponding index"""
+
+# TODO ARK SERVER INDEX ~ Config file for Index ARK ID
+WEKO_SERVER_ARK_HOST_LINK = 'http://0.0.0.0:8000/'
+"""Host server of ARK"""
+
+# TODO CNRI SERVER INDEX ~ Config file for Index CNRI ID
+WEKO_SERVER_CNRI_HOST_LINK = 'http://hdl.handle.net/'
+"""Host server of CNRI"""

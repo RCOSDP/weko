@@ -2062,6 +2062,109 @@ def test_next_action(client, db, users, db_register_fullaction, db_records, user
     assert data["code"] == 0
     assert data["msg"] == _("success")
 
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_next_action_for_ark_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+@pytest.mark.parametrize('users_index, status_code', [
+    (1, 200),
+])
+def test_next_action_for_ark_id(client, db, users, db_register_fullaction, db_records, users_index, status_code):
+    import mock
+
+    def update_activity_order(activity_id, action_id, action_order, item_id=None, extra_info={}):
+        with db.session.begin_nested():
+            activity=Activity.query.filter_by(activity_id=activity_id).one_or_none()
+            activity.activity_status=ActionStatusPolicy.ACTION_BEGIN
+            activity.action_id=action_id
+            activity.action_order=action_order
+            activity.action_status=None
+            activity.extra_info=extra_info
+            if item_id:
+                activity.item_id=item_id
+            db.session.merge(activity)
+            pid = PersistentIdentifier.query.filter(
+                PersistentIdentifier.object_uuid==activity.item_id,
+                PersistentIdentifier.object_type=='rec',
+                PersistentIdentifier.pid_type=='recid').one_or_none()
+            if pid:
+                pid.status=PIDStatus.NEW
+                db.session.merge(pid)
+        db.session.commit()
+
+    login(client=client, email=users[users_index]["email"])
+
+    with client.session_transaction() as session:
+        session['itemlogin_id'] = "test id"
+        session['itemlogin_activity'] = "test activity"
+        session['itemlogin_item'] = "test item"
+        session['itemlogin_steps'] = "test steps"
+        session['itemlogin_action_id'] = "test action_id"
+        session['itemlogin_cur_step'] = "test cur_step"
+        session['itemlogin_record'] = "test approval_record"
+        session['itemlogin_histories'] = "test histories"
+        session['itemlogin_res_check'] = "test res_check"
+        session['itemlogin_pid'] = "test recid"
+        session['itemlogin_community_id'] = "test community_id"
+
+    mock.patch("weko_workflow.views.IdentifierHandle.remove_idt_registration_metadata",return_value=None)
+    mock.patch("weko_workflow.views.IdentifierHandle.update_idt_registration_metadata",return_value=None)
+    mock.patch("weko_workflow.views.WekoDeposit.update_feedback_mail",return_value=True)
+    mock.patch("weko_workflow.views.FeedbackMailList.update_by_list_item_id")
+    mock.patch("weko_workflow.views.FeedbackMailList.delete_by_list_item_id")
+
+    mock_signal = mock.patch("weko_workflow.views.item_created.send")
+
+    mock.patch("weko_deposit.api.WekoDeposit.publish",return_value=True)
+    mock.patch("weko_deposit.api.WekoDeposit.merge_data_to_record_without_version",return_value=db_records[0][6])
+    mock.patch("weko_deposit.api.WekoDeposit.update_feedback_mail",return_value=True)
+    mock.patch("weko_deposit.api.WekoDeposit.commit",return_value=True)
+    mock.patch("weko_workflow.api.UpdateItem.publish",return_value=True)
+    mock.patch("invenio_oaiserver.tasks.update_records_sets.delay",return_value=True)
+
+    item_id = db_register_fullaction["activities"][1].item_id
+
+    # action: approval
+    def check_role_approval():
+        if users[users_index]["id"] in [2,6,7]:
+            return False
+        else:
+            return True
+
+    noauth_msg = _('Authorization required')
+    input = {
+        "temporary_save":0
+    }
+
+    with patch("weko_workflow.views.Flow.get_flow_action_detail", return_value=None):
+        url = url_for(
+            "weko_workflow.next_action",
+            activity_id="2",
+            action_id=4
+        )
+
+        update_activity_order(
+            "2",
+            4,
+            6,
+            item_id
+        )
+
+        result_1 = client.post(
+            url,
+            json=input
+        )
+
+        result_2 = client.post(
+            url,
+            json=input
+        )
+    
+        ark_record_pids = PersistentIdentifier.query.filter_by(
+            pid_type="ark",
+        ).all()
+
+        assert len(ark_record_pids) == 1
+
+
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_next_action_usage_application -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 @pytest.mark.parametrize('users_index, status_code', [
     (0, 200)

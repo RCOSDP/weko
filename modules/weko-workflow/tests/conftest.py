@@ -456,6 +456,7 @@ def base_app(instance_path, search_class, cache_config):
             'ms_powerpoint': 20,
             'ms_excel': 10
         },
+        WEKO_HANDLE_ALLOW_REGISTER_ARK = True,
         WEKO_ITEMS_UI_OUTPUT_REGISTRATION_TITLE="",
         WEKO_ITEMS_UI_MULTIPLE_APPROVALS=True,
         WEKO_THEME_DEFAULT_COMMUNITY="Root Index",

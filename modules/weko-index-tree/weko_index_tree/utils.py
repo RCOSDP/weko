@@ -34,15 +34,16 @@ from flask_login import current_user
 from invenio_cache import current_cache
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
-from invenio_pidstore.models import PersistentIdentifier
+from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_search import RecordsSearch
 from simplekv.memory.redisstore import RedisStore
 from weko_admin.utils import is_exists_key_in_redis
 from weko_groups.models import Group
 from weko_redis.redis import RedisConnection
 from weko_schema_ui.models import PublishStatus
+from weko_handle.api import Handle
 
-from .config import WEKO_INDEX_TREE_STATE_PREFIX
+from .config import WEKO_INDEX_TREE_STATE_PREFIX, WEKO_SERVER_ARK_HOST_LINK, WEKO_SERVER_CNRI_HOST_LINK
 from .errors import IndexBaseRESTError, IndexDeletedRESTError
 from .models import Index
 
@@ -1060,3 +1061,118 @@ def str_to_datetime(str_dt, format):
         return datetime.strptime(str_dt, format)
     except ValueError:
         return None
+
+
+def register_cnri_for_index(index_id):
+    """
+    Register CNRI ID for indexes into Persistent Identifiers.
+    """
+    weko_handle = Handle()
+    handle_server = WEKO_SERVER_CNRI_HOST_LINK
+    handle = weko_handle.get_cnri_identifier_from_cnri_server(
+        index_id=index_id,
+    )
+
+    if handle:
+        handle = handle_server + str(handle)
+
+        def _check_if_cnri_id_already_exists(cnri_handle):
+            existing_cnri_identifier = PersistentIdentifier.query.filter_by(
+                pid_value=cnri_handle
+            ).one_or_none()
+            if existing_cnri_identifier: \
+                return True
+            else: \
+                return False
+        
+        ark_id_exists = _check_if_cnri_id_already_exists(handle)
+
+        while ark_id_exists:
+            handle = weko_handle.get_cnri_identifier_from_cnri_server(
+                index_id=index_id,
+            )
+            handle = handle_server + str(handle)
+            ark_id_exists = _check_if_cnri_id_already_exists(handle)
+        else:
+            ark_id_exists = False
+
+        try:
+            # This is for index id and cnri identifier since there is no object uuid for index
+            PersistentIdentifier.create(
+                'I_cnri',
+                f'{str(index_id)}-{str(handle)}',
+                status=PIDStatus.REGISTERED
+            )
+
+            return PersistentIdentifier.create(
+                'index',
+                str(handle),
+                status=PIDStatus.REGISTERED
+            )
+        except Exception as ex:
+            current_app.logger.error(ex)
+        
+    else:
+        current_app.logger.info('Cannot connect to EZID ARK server!')
+
+    return handle
+
+
+def register_ark_for_index(index_id, index):
+    """
+    Register ARK ID for indexes into Persistent Identifiers.
+    """
+    
+    weko_handle = Handle()
+    handle_server = WEKO_SERVER_ARK_HOST_LINK
+    handle = weko_handle.get_ark_identifier_from_ark_server(
+        location=index_id,
+        index=index,
+        useArkIdentifier=True
+    )
+
+    if handle:
+        handle = handle_server + str(handle)
+
+        def _check_if_ark_id_already_exists(ark_handle):
+            existing_ark_identifier = PersistentIdentifier.query.filter_by(
+                pid_value=ark_handle
+            ).one_or_none()
+
+            if existing_ark_identifier: \
+                return True
+            else: \
+                return False
+        
+        ark_id_exists = _check_if_ark_id_already_exists(handle)
+
+        while ark_id_exists:
+            handle = weko_handle.get_ark_identifier_from_ark_server(
+                index_id=index_id,
+                index=index,
+                useArkIdentifier=True
+            )
+            handle = handle_server + str(handle)
+            ark_id_exists = _check_if_ark_id_already_exists(handle)
+
+        try:
+            # This is for index id and ark identifier since there is no object uuid for index
+            PersistentIdentifier.create(
+                'I_ark',
+                f'{str(index_id)}_{str(handle)}',
+                status=PIDStatus.REGISTERED
+            )
+
+            return PersistentIdentifier.create(
+                'index',
+                str(handle),
+                status=PIDStatus.REGISTERED
+            )
+        
+        except Exception as ex:
+            current_app.logger.error(ex)
+        
+    else:
+        current_app.logger.info('Cannot connect to EZID ARK server!')
+
+    return handle

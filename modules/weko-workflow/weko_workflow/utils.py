@@ -79,7 +79,7 @@ from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
 from .api import GetCommunity, UpdateItem, WorkActivity, WorkActivityHistory, \
     WorkFlow , Flow
 from .config import DOI_VALIDATION_INFO, DOI_VALIDATION_INFO_CROSSREF, DOI_VALIDATION_INFO_DATACITE, IDENTIFIER_GRANT_SELECT_DICT, \
-    WEKO_SERVER_CNRI_HOST_LINK
+    WEKO_SERVER_CNRI_HOST_LINK, WEKO_SERVER_ARK_HOST_LINK
 from .models import Action as _Action, Activity
 from .models import ActionStatusPolicy, ActivityStatusPolicy, GuestActivity,FlowAction 
 from .models import WorkFlow as _WorkFlow
@@ -251,6 +251,69 @@ def register_hdl(activity_id):
         identifier.register_pidstore('hdl', handle)
     else:
         current_app.logger.info('Cannot connect Handle server!')
+
+
+def register_ark(activity_id):
+    """
+    Register ARK into Persistent Identifiers.
+
+    :param activity_id: Workflow Activity Identifier
+    """
+
+    activity = WorkActivity().get_activity_detail(activity_id)
+    current_pid = PersistentIdentifier.get_by_object(
+        pid_type='recid',
+        object_type='rec',
+        object_uuid=activity.item_id
+    )
+    pid_without_ver = get_record_without_version(current_pid)
+    item_uuid  = pid_without_ver.object_uuid
+    current_app.logger.debug(
+        "register_ark: {0} {1}".format(activity_id, item_uuid)
+    )
+    record = WekoRecord.get_record(item_uuid)
+    deposit_id = record.pid_parent.pid_value.split('parent:')[1]
+    record_url = request.url.split('/workflow/')[0] \
+        + '/records/' + str(deposit_id)
+    weko_handle = Handle()
+    handle_server = WEKO_SERVER_ARK_HOST_LINK
+    handle = weko_handle.get_ark_identifier_from_ark_server(
+        location=record_url,
+        record=record,
+        useArkIdentifier=True
+    )
+
+    if handle:
+        handle = handle_server + str(handle)
+
+        def _check_if_ark_id_already_exists(ark_handle):
+            existing_ark_identifier = PersistentIdentifier.query.filter_by(
+                pid_value=ark_handle
+            ).one_or_none()
+            if existing_ark_identifier: \
+                return True
+            else: \
+                return False
+        
+        ark_id_exists = _check_if_ark_id_already_exists(handle)
+
+        while ark_id_exists:
+            handle = weko_handle.get_ark_identifier_from_ark_server(
+                location=record_url,
+                record=record,
+                useArkIdentifier=True
+            )
+            handle = handle_server + str(handle)
+            ark_id_exists = _check_if_ark_id_already_exists(handle)
+        else:
+            ark_id_exists = False
+        
+        identifier = IdentifierHandle(item_uuid)
+        identifier.register_pidstore('ark', handle)
+    else:
+        current_app.logger.info('Cannot connect to EZID ARK server!')
+
+    return handle
 
 
 def register_hdl_by_item_id(deposit_id, item_uuid, url_root):

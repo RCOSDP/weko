@@ -17,3 +17,12 @@ WEKO_HANDLE_CREDS_JSON_PATH = '/code/modules/resources/handle_creds.json'
 
 WEKO_HANDLE_ALLOW_REGISTER_CNRI = False
 """Allow registering CNRI."""
+
+WEKO_HANDLE_ALLOW_REGISTER_ARK = True
+"""Allow registering ARK."""
+
+BASE_ARK_ID_FOR_MINTER_USE = 'fk4w379'
+"""A random valid ARK base identifier which will be minted inside EZID"""
+
+WEKO_SERVER_CNRI_HOST_LINK = 'http://hdl.handle.net/'
+"""Host server of CNRI"""

@@ -270,6 +270,10 @@ DOI_VALIDATION_INFO_JALC = {
     'oaire:version': [['versiontype.@value', None],
                       ['versiontype.@attributes.rdf:resource', None]]
 }
+
+WEKO_SERVER_ARK_HOST_LINK = 'http://0.0.0.0:8000/'
+"""Host server of ARK"""
+
 WEKO_SERVER_CNRI_HOST_LINK = 'http://hdl.handle.net/'
 """Host server of CNRI"""
 

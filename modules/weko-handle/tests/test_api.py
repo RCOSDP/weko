@@ -39,6 +39,56 @@ def test_register_handle(app):
             pass
 
 
+# TODO ARK SERVER ~ test_handle_get_ark_identifier_from_ark_server
+def test_handle_get_ark_identifier_from_ark_server(app):
+    handleObject = Handle()
+
+    location = "http://test-location/test-item"
+
+    ark_id_prefix = "id/ark:/99999/"
+
+    result_1 = handleObject.get_ark_identifier_from_ark_server(
+        location=location
+    )
+
+    assert result_1 is None
+
+    recordData = {
+        "owner": "test_owner",
+        "item_title": "test_item_title",
+        "publish_date": "test_publish_date",
+    }
+
+    result_2 = handleObject.get_ark_identifier_from_ark_server(
+        location=location,
+        record=recordData,
+        useArkIdentifier=True
+    )
+
+    assert ark_id_prefix in result_2
+
+    indexData = {
+        "ezid_who": "test_ezid_who",
+        "ezid_what": "test_ezid_what",
+        "ezid_when": "test_ezid_when",
+    }
+
+    result_3 = handleObject.get_ark_identifier_from_ark_server(
+        location=location,
+        index=indexData,
+        useArkIdentifier=True
+    )
+    assert ark_id_prefix in result_3
+
+    with pytest.raises(Exception):
+        result_4 = handleObject.get_ark_identifier_from_ark_server(
+            location=location,
+            record="record"
+        )
+        assert result_4 is None
+        raise
+
+    
 # def get_prefix(self): 
 def test_get_prefix(app):
     sample = Handle()

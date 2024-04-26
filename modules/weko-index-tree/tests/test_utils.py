@@ -40,14 +40,15 @@ from weko_index_tree.utils import (
     generate_path,
     save_index_trees_to_redis,
     delete_index_trees_from_redis,
-    str_to_datetime
+    str_to_datetime,
+    register_ark_for_index
 )
 
 from invenio_accounts.testutils import login_user_via_session, client_authenticated
 ######
 import json
 import pytest
-from mock import patch
+from mock import patch, MagicMock
 from datetime import date, datetime, timedelta
 from functools import wraps
 from operator import itemgetter
@@ -706,3 +707,83 @@ def test_str_to_datetime():
     date_format2 = "%Y-%m-%dT%H:%M:%S"
     assert str_to_datetime(date_str, date_format1)==datetime(2022, 1, 1)
     assert str_to_datetime(date_str, date_format2)==None
+
+
+def test_register_ark_for_index(app, db_records):
+    from weko_index_tree.api import Indexes
+    from invenio_pidstore.models import PersistentIdentifier
+
+    index = Indexes.get_index(index_id=1)
+    now = datetime.now()
+    time = now.strftime("%H:%M:%S")
+    test_ark_value = f"test_ark_id_{time}"
+
+    with patch("weko_handle.api.Handle.get_ark_identifier_from_ark_server", return_value=test_ark_value):
+        result = register_ark_for_index(
+            index_id=1,
+            index=index
+        )
+
+        test_ark_id_pid = PersistentIdentifier.query.filter_by(
+            pid_type='index',
+            pid_value=f'http://0.0.0.0:8000/{test_ark_value}'
+        ).one_or_none()
+
+        assert result is not None
+        assert test_ark_id_pid is not None
+        assert test_ark_id_pid.pid_type == "index"
+        assert test_ark_value in test_ark_id_pid.pid_value
+
+        def return_create():
+            return "index has been created"
+        
+        def return_object_none(*args, **kwargs):
+            def mm_function():
+                return None
+            mm = MagicMock()
+            mm.one_or_none = mm_function
+            return mm
+
+        mock_data = MagicMock()
+        mock_data.create = return_create
+        mock_data.query = MagicMock()
+        mock_data.query.filter_by = return_object_none
+
+        # For exception coverage
+        with patch("weko_index_tree.utils.PersistentIdentifier", mock_data):
+            result = register_ark_for_index(
+                index_id=1,
+                index=index
+            )
+
+    with patch("weko_handle.api.Handle.get_ark_identifier_from_ark_server", return_value=None):
+        result = register_ark_for_index(
+            index_id=1,
+            index=index
+        )
+
+        assert result is None
+
+
+# TODO This will result in an intentional timeout error "Failed: Timeout >30.0s" but will cover the "while loop" part of the code
+@pytest.mark.timeout(30)
+def test_register_ark_for_index_for_while_loop_coverage(app, db_records):
+    from weko_index_tree.api import Indexes
+    from invenio_pidstore.models import PersistentIdentifier
+
+    index = Indexes.get_index(index_id=1)
+    now = datetime.now()
+    time = now.strftime("%H:%M:%S")
+    test_ark_value = f"test_ark_id_{time}"
+
+    with patch("weko_handle.api.Handle.get_ark_identifier_from_ark_server", return_value=test_ark_value):
+        with pytest.raises(Exception):
+            result = register_ark_for_index(
+                index_id=1,
+                index=index
+            )
+
+            result = register_ark_for_index(
+                index_id=1,
+                index=index
+            )

@@ -143,6 +143,9 @@ services:
         limits:
           memory: 8000m
 
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
   postgresql:
     restart: "always"
     image: postgres:12
