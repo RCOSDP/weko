@@ -57,7 +57,6 @@ class Handle(object):
                 '{} in HandleClient.retrieve_handle_record_json({})'.format(
                     e, handle))
 
-    # TODO ARK SERVER ~ weko_handle/api.py::Handle::get_ark_identifier_from_ark_server
     def get_ark_identifier_from_ark_server(self, location, record=None, index=None, useArkIdentifier=False):
         """Get ARK identifier using record metadata"""
         current_app.logger.debug(
@@ -115,7 +114,6 @@ class Handle(object):
             return None
 
 
-    # TODO CNRI SERVER ~ weko_handle/api.py::Handle::get_cnri_identifier_from_cnri_server
     def get_cnri_identifier_from_cnri_server(self, index_id=None):
         """Get CNRI identifier using index information"""
         current_app.logger.debug(

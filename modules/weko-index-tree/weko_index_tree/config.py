@@ -52,6 +52,9 @@ WEKO_INDEX_TREE_REST_ENDPOINTS = dict(
     tid=dict(
         record_class='weko_index_tree.api:Indexes',
         index_route='/tree/index/<int:index_id>',
+        get_index_tree='/<string:version>/tree/index/<int:index_id>',
+        get_index_root_tree='/<string:version>/tree/index',
+        get_parent_index_tree='/<string:version>/tree/index/<int:index_id>/parent',
         tree_route='/tree',
         item_tree_route='/tree/<string:pid_value>',
         index_move_route='/tree/move/<int:index_id>',
@@ -93,18 +96,16 @@ WEKO_INDEX_TREE_STATE_TIME_LIFE_SECONDS = 60
 WEKO_INDEX_TREE_INDEX_LOCK_KEY_PREFIX = "lock_index_"
 """Index lock key prefix."""
 
-# TODO ARK SERVER INDEX ~ Config file for Index ARK ID
+WEKO_INDEX_TREE_API_LIMIT_RATE_DEFAULT = ['100 per minute']
+
 WEKO_INDEX_USE_ARK_IDENTIER = True
 """Enables connection to EZID to generate an ARK Identifier for the corresponding index"""
 
-# TODO ARK SERVER INDEX ~ Config file for Index ARK ID
 WEKO_INDEX_USE_CNRI_IDENTIER = True
 """Enables connection CNRI handle server to generate an CNRI Identifier for the corresponding index"""
 
-# TODO ARK SERVER INDEX ~ Config file for Index ARK ID
 WEKO_SERVER_ARK_HOST_LINK = 'http://0.0.0.0:8000/'
 """Host server of ARK"""
 
-# TODO CNRI SERVER INDEX ~ Config file for Index CNRI ID
 WEKO_SERVER_CNRI_HOST_LINK = 'http://hdl.handle.net/'
 """Host server of CNRI"""

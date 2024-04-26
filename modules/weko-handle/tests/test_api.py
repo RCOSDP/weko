@@ -39,7 +39,6 @@ def test_register_handle(app):
             pass
 
 
-# TODO ARK SERVER ~ test_handle_get_ark_identifier_from_ark_server
 def test_handle_get_ark_identifier_from_ark_server(app):
     handleObject = Handle()
 
