@@ -63,7 +63,7 @@ from .permissions import admin_permission_factory ,superuser_access
 from .utils import get_facet_search, get_item_mapping_list, \
     get_response_json, get_restricted_access, get_search_setting
 from .utils import get_user_report_data as get_user_report
-from .utils import package_reports, str_to_bool 
+from .utils import get_reports, package_reports, str_to_bool 
 from .tasks import is_reindex_running ,reindex
 
 
@@ -447,16 +447,18 @@ class ReportView(BaseView):
     @expose('/stats_file_output', methods=['POST'])
     def get_file_stats_output(self):
         """Get file download/preview stats report."""
-        stats_json = orjson.loads(request.form.get('report'))
+        type = request.form.get('type')
         year = request.form.get('year')
         month = request.form.get('month').zfill(2)
+
+        reports = get_reports(type, year, month)
 
         # File Format: logReport__YYYY-MM.zip
         zip_date = str(year) + '-' + str(month).zfill(2)
         zip_name = 'logReport_' + zip_date + '.zip'
         try:
             # Dynamically create zip from StringIO data into BytesIO
-            zip_stream = package_reports(stats_json, year, month)
+            zip_stream = package_reports(reports, year, month)
 
             # Make the send email function a task so it
             if request.form.get('send_email') == 'True':

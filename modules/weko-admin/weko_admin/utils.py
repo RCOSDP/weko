@@ -45,6 +45,9 @@ from invenio_mail.models import MailConfig
 
 from invenio_records.models import RecordMetadata
 from invenio_records_rest.facets import terms_filter
+from invenio_stats.utils import QueryCommonReportsHelper, \
+    QueryFileReportsHelper, QueryRecordViewPerIndexReportHelper, \
+    QueryRecordViewReportHelper, QuerySearchReportHelper
 from invenio_stats.views import QueryFileStatsCount, QueryRecordViewCount
 from jinja2 import Template
 from sqlalchemy import func
@@ -335,6 +338,40 @@ def get_user_report_data():
     results['all'].append({'role_name': _('Registered Users'),
                            'count': total_users})
     return results
+
+
+def get_reports(type, year, month):
+    """Get report data from db and modify."""
+    target_types = []
+    file_report_types = ['file_download', 'file_preview', 'billing_file_download', 'file_using_per_user']
+    common_report_types = ['top_page_access', 'site_access']
+    result_reports = {}
+    if type == 'all':
+        target_types = current_app.config['WEKO_ADMIN_REPORT_TYPES']
+    else:
+        target_types.append(type)
+    
+    for target in target_types:
+        args = {
+            'event': target,
+            'year': int(year),
+            'month': int(month)
+        }
+        result = {}
+        if target in file_report_types:
+            result = QueryFileReportsHelper.get(**args)
+        elif target == 'detail_view':
+            result = QueryRecordViewReportHelper.get(**args)
+        elif target == 'index_access':
+            result = QueryRecordViewPerIndexReportHelper.get(**args)
+        elif target in common_report_types:
+            result = QueryCommonReportsHelper.get(**args)
+        elif target == 'search_count':
+            result = QuerySearchReportHelper.get(**args)
+        elif target == 'user_roles':
+            result = get_user_report_data()
+        result_reports[target] = result
+    return result_reports
 
 
 def package_reports(all_stats, year, month):
