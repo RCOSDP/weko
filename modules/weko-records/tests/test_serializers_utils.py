@@ -1,5 +1,6 @@
 import pytest
 import copy
+from lxml import etree
 from mock import patch, MagicMock
 from tests.helpers import json_data
 
@@ -18,11 +19,10 @@ from weko_records.serializers.utils import (
 
 # def get_mapping(item_type_mapping, mapping_type):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_serializers_utils.py::test_get_mapping -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
-def test_get_mapping():
-    mapping = json_data("data/item_type_mapping.json")
-    result = get_mapping(mapping, 'jpcoar_mapping')
-    data = json_data("data/get_mapping.json")
-    assert result == data
+def test_get_mapping(app, db, item_type, item_type_mapping):
+    # mapping = json_data("data/item_type_mapping.json")
+    result = get_mapping(1, 'jpcoar_mapping')
+    assert result == {"item.@value": "item_1.interim"}
 
 # def get_full_mapping(item_type_mapping, mapping_type):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_serializers_utils.py::test_get_full_mapping -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
@@ -160,28 +160,14 @@ sample = OpenSearchDetailData(
 
 # class OpenSearchDetailData:
 #     def output_open_search_detail_data(self): 
+# .tox/c1/bin/pytest --cov=weko_records tests/test_serializers_utils.py::test_output_open_search_detail_data -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
 def test_output_open_search_detail_data(app):
-    data0 = MagicMock()
-    data1 = MagicMock()
-    data1.query = MagicMock()
-    data1.args = {
-        "q": "test",
-        "index_id": 1,
-    }
-
-    def one_or_none():
-        return data0
-
-    data2 = MagicMock()
-    data2.one_or_none = one_or_none
-
-    def filter_by(item):
-        return data2
-
     with app.test_request_context():
-        with patch("weko_records.serializers.utils.request", return_value=data1):
-            with patch("weko_records.serializers.utils.Index", return_value=data1):
-                assert sample.output_open_search_detail_data() == None
+        assert_str = '<title xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/" xmlns:prism="http://prismstandard.org/namespaces/basic/2.0/">WEKO OpenSearch: </title>'
+        res = sample.output_open_search_detail_data()
+        _tree = etree.fromstring(res)
+        _record = str(etree.tostring(_tree.findall('title', namespaces=_tree.nsmap)[0]),"utf-8").replace('\n  ', '')
+        assert _record == str(etree.tostring(etree.fromstring(assert_str)),"utf-8")
 
 
 #     def _set_publication_date(self, fe, item_map, item_metadata):

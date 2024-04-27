@@ -41,7 +41,7 @@ def test_make_combined_pdf(app,records,itemtypes,pdfcoverpagesetting):
                 data1.header_display_position = "right"
                 assert make_combined_pdf(record.pid,data1,obj,None).status_code == 200
                 
-                with patch("weko_records_ui.pdf.WekoRecord.get_record_by_pid", return_value=data2):
+                with patch("weko_records_ui.pdf.WekoRecord.get_record_by_pid", return_value=record):
                     data1.header_display_position = "center"
                     assert make_combined_pdf(record.pid,data1,obj,None).status_code == 200
                 

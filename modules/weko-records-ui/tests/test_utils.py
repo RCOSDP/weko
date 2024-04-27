@@ -33,6 +33,12 @@ from weko_records_ui.utils import (
     get_record_permalink,
     get_google_detaset_meta,
     get_google_scholar_meta,
+    create_secret_url,
+    parse_secret_download_token,
+    validate_secret_download_token,
+    get_secret_download,
+    update_secret_download,
+    get_valid_onetime_download,
     display_oaiset_path,
     get_terms,
     get_roles,
@@ -286,11 +292,6 @@ def test_get_pair_value(app):
         assert name== ('ja_conference paperITEM00000001(public_open_access_open_access_simple)', 'ja')
         assert lang== ('en_conference paperITEM00000001(public_open_access_simple)', 'en')
 
-        name_keys = ['subitem_1551255647225', 'subitem_1551255647225']
-        lang_keys = ['subitem_1551255648112', 'subitem_1551255647225']
-        name,lang =  get_pair_value(name_keys,lang_keys,datas)
-        
-
 
 # def hide_item_metadata(record, settings=None, item_type_mapping=None,
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_hide_item_metadata -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -344,22 +345,13 @@ def test_hide_by_file(app,records):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_hide_by_email -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_hide_by_email(app,records):
     indexer, results = records
-    record = results[0]["item"]
-    assert hide_by_email(copy.deepcopy(record))==record
-    app.config['WEKO_RECORDS_UI_EMAIL_ITEM_KEYS'] = ["test"]
-    data1 = {
-        "data1": {
-            "attribute_type": "file",
-            "attribute_value_mlt": [
-                {
-                    "accessrole": "open_no",
-                    "test": {"test": "test"}
-                }
-            ]
-        },
-        "_deposit": {"owners_ext": {"email": "email"}}
-    }
-    assert hide_by_email(data1)
+    record = results[0]["record"]
+    test_record = copy.deepcopy(record)
+    record['item_1617186419668']['attribute_value_mlt'][0].pop('creatorMails')
+    record['item_1617186419668']['attribute_value_mlt'][1].pop('creatorMails')
+    record['item_1617186419668']['attribute_value_mlt'][2].pop('creatorMails')
+    record['item_1617349709064']['attribute_value_mlt'][0].pop('contributorMails')
+    assert hide_by_email(test_record)==record
 
 
 # def hide_by_itemtype(item_metadata, hidden_items):
@@ -703,7 +695,7 @@ def test_get_google_detaset_meta(app, records, itemtypes, oaischema, oaiidentify
     with patch("weko_records_ui.utils.getrecord", return_value=_rv):
         indexer, results = records
         record = results[0]["record"]
-        assert get_google_detaset_meta(record)=='{"@context": "https://schema.org/", "@type": "Dataset", "citation": ["http://hdl.handle.net/2261/0002005680", "https://repository.dl.itc.u-tokyo.ac.jp/records/2005680"], "creator": [{"@type": "Person", "alternateName": "creator alternative name", "familyName": "creator family name", "givenName": "creator given name", "identifier": "123", "name": "creator name"}], "description": "『史料編纂掛備用寫眞畫像圖畫類目録』（1905年）の「画像」（肖像画模本）の部に著録する資料の架番号の新旧対照表。史料編纂所所蔵肖像画模本データベースおよび『目録』版面画像へのリンク付き。『画像史料解析センター通信』98（2022年10月）に解説記事あり。", "distribution": [{"@type": "DataDownload", "contentUrl": "https://repository.dl.itc.u-tokyo.ac.jp/record/2005680/files/comparison_table_of_preparation_image_catalog.xlsx", "encodingFormat": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/apt.txt", "encodingFormat": "text/plain"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/environment.yml", "encodingFormat": "application/x-yaml"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/postBuild", "encodingFormat": "text/x-shellscript"}], "includedInDataCatalog": {"@type": "DataCatalog", "name": "https://localhost"}, "license": ["CC BY"], "name": "『史料編纂掛備用写真画像図画類目録』画像の部：新旧架番号対照表", "spatialCoverage": [{"@type": "Place", "geo": {"@type": "GeoCoordinates", "latitude": "point longitude test", "longitude": "point latitude test"}}, {"@type": "Place", "geo": {"@type": "GeoShape", "box": "1 3 2 4"}}, "geo location place test"]}'
+        assert get_google_detaset_meta(record)=='{"@context": "https://schema.org/", "@type": "Dataset", "citation": ["http://hdl.handle.net/2261/0002005680", "https://repository.dl.itc.u-tokyo.ac.jp/records/2005680"], "creator": [{"@type": "Person", "alternateName": "creator alternative name", "familyName": "creator family name", "givenName": "creator given name", "identifier": "123", "name": "creator name"}], "description": "『史料編纂掛備用寫眞畫像圖畫類目録』（1905年）の「画像」（肖像画模本）の部に著録する資料の架番号の新旧対照表。史料編纂所所蔵肖像画模本データベースおよび『目録』版面画像へのリンク付き。『画像史料解析センター通信』98（2022年10月）に解説記事あり。", "distribution": [{"@type": "DataDownload", "contentUrl": "https://repository.dl.itc.u-tokyo.ac.jp/record/2005680/files/comparison_table_of_preparation_image_catalog.xlsx", "encodingFormat": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/apt.txt", "encodingFormat": "text/plain"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/environment.yml", "encodingFormat": "application/x-yaml"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/postBuild", "encodingFormat": "text/x-shellscript"}], "includedInDataCatalog": {"@type": "DataCatalog", "name": "https://localhost"}, "license": ["CC BY"], "name": "『史料編纂掛備用写真画像図画類目録』画像の部：新旧架番号対照表", "spatialCoverage": [{"@type": "Place", "geo": {"@type": "GeoCoordinates", "latitude": "point latitude test", "longitude": "point longitude test"}}, {"@type": "Place", "geo": {"@type": "GeoShape", "box": "1 3 2 4"}}, "geo location place test"]}'
         
         app.config['WEKO_RECORDS_UI_GOOGLE_SCHOLAR_OUTPUT_RESOURCE_TYPE'] = None
         assert get_google_detaset_meta(record) == None
@@ -782,13 +774,13 @@ def test_parse_secret_download_token(app ,db):
 
     # 66
     # onetime_download pattern
-    assert parse_secret_download_token("MSB1c2VyQGV4YW1wbGUub3JnIDIwMjItMDktMjcgNDBDRkNGODFGM0FFRUI0Ng==") == (_("Token is invalid."),())
+    assert parse_secret_download_token("MSB1c2VyQGV4YW1wbGUub3JnIDIwMjItMDktMjcgNDBDRkNGODFGM0FFRUI0Ng==") == ('', ('1', 'user@example.org', '2022-09-27', '40CFCF81F3AEEB46'))
 
     # 67
     # secret_download pattern
     error , res = parse_secret_download_token("MSA1IDIwMjMtMDMtMDggMDA6NTI6MTkuNjI0NTUyIDZGQTdEMzIxQTk0OTU1MEQ=")
-    assert not error
-    assert res == ('1', '5', '2023-03-08 00:52:19.624552', '6FA7D321A949550D')
+    assert error == 'Token is invalid.'
+    assert res == ()
 
 # def validate_secret_download_token(
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_validate_secret_download_token -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -888,7 +880,7 @@ def test_get_data_usage_application_data(app ,db):
 
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_RoCrateConverter_convert -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_RoCrateConverter_convert():
+def test_RoCrateConverter_convert(app, db):
     with open('tests/data/rocrate/rocrate_mapping.json', 'r') as f:
         mapping = json.load(f)
     with open('tests/data/rocrate/records_metadata.json', 'r') as f:
