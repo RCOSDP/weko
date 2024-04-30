@@ -39,31 +39,41 @@ def main():
                 print("processing... item type id({}) mapping id({})".format(_id,item_type_mapping.id))
                 mapping = pickle.loads(pickle.dumps(item_type_mapping.mapping, -1))
                 for key in list(mapping.keys()):
-                    if "jpcoar_mapping" not in mapping[key] and "jpcoar_v1_mapping" in mapping[key]:
-                        mapping[key]["jpcoar_mapping"] = mapping[key][
+                    if "jpcoar_mapping" in mapping[key]: 
+                        if "catalog" in mapping[key]["jpcoar_mapping"]:
+                            continue
+                        elif "datasetSeries" in mapping[key]["jpcoar_mapping"]:
+                            continue
+                        elif "holdingAgent" in mapping[key]["jpcoar_mapping"]:
+                            continue
+                        elif "format" in mapping[key]["jpcoar_mapping"]:
+                            continue
+                        elif "extent" in mapping[key]["jpcoar_mapping"]:
+                            continue
+                        elif "originalLanguage" in mapping[key]["jpcoar_mapping"]:
+                            continue
+                        elif "volumeTitle" in mapping[key]["jpcoar_mapping"]:
+                            continue
+                        elif "edition" in mapping[key]["jpcoar_mapping"]:
+                            continue
+                        elif "date_dcterms" in mapping[key]["jpcoar_mapping"]:
+                            continue
+                        elif "publisher_jpcoar" in mapping[key]["jpcoar_mapping"]:
+                            continue
+                        elif "jpcoar_v1_mapping" in mapping[key]:
+                            mapping[key]["jpcoar_mapping"] =  item_type_mapping.mapping[key][
                                 "jpcoar_v1_mapping"
                             ]
-                    elif "jpcoar_mapping" not in mapping[key] and "jpcoar_v1_mapping" not in mapping[key] and ( "oai_dc_mapping" in mapping[key] or "ddi_mapping" in mapping[key]):
-                        mapping[key]["jpcoar_v1_mapping"] = ""
-                        mapping[key]["jpcoar_mapping"] = ""
+                        else:
+                            mapping[key]["jpcoar_v1_mapping"] = ""
                     else:
-                        mapping[key]={"display_lang_type": "","jpcoar_v1_mapping":"","jpcoar_mapping": "","junii2_mapping": "","lido_mapping": "","lom_mapping": "","oai_dc_mapping":"","spase_mapping": "",}
-
-                    if "jpcoar_v1_mapping" in mapping[key] and ((
-                            "catalog"
-                            or "datasetSeries"
-                            or "holdingAgent"
-                            or "format"
-                            or "extent"
-                            or "originalLanguage"
-                            or "volumeTitle"
-                            or "edition"
-                            or "date_dcterms"
-                            or "publisher_jpcoar"
-                        ) not in mapping[key]["jpcoar_mapping"]):
-                            mapping[key]["jpcoar_mapping"] = mapping[key][
+                        if "jpcoar_v1_mapping" in mapping[key]:
+                             mapping[key]["jpcoar_mapping"] = item_type_mapping.mapping[key][
                                 "jpcoar_v1_mapping"
                             ]
+                        else:
+                            mapping[key]["jpcoar_v1_mapping"] = ""
+                            mapping[key]["jpcoar_mapping"] = ""
                     
                 item_type_mapping.mapping = pickle.loads(pickle.dumps(mapping, -1))
                 flag_modified(item_type_mapping,"mapping")
