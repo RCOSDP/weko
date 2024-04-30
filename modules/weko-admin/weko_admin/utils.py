@@ -341,9 +341,23 @@ def get_user_report_data():
 
 
 def get_reports(type, year, month):
-    """Get report data from db and modify."""
+    """Get report data from db and modify.
+    
+    Args:
+        type (str): report's type
+        year (str): report's aggregation year
+        month (str): report's aggregation month
+    
+    Returns:
+        dict: report's data for selected types
+    """
     target_types = []
-    file_report_types = ['file_download', 'file_preview', 'billing_file_download', 'file_using_per_user']
+    file_report_types = [
+        'file_download',
+        'file_preview',
+        'billing_file_download',
+        'file_using_per_user'
+    ]
     common_report_types = ['top_page_access', 'site_access']
     result_reports = {}
     if type == 'all':
