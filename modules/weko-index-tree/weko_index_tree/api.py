@@ -42,7 +42,7 @@ from sqlalchemy.sql.expression import case, func, literal_column, and_
 from weko_groups.api import Group
 from weko_redis.redis import RedisConnection
 from .utils import register_ark_for_index, register_cnri_for_index
-from .config import WEKO_INDEX_USE_ARK_IDENTIER, WEKO_INDEX_USE_CNRI_IDENTIER
+from .config import WEKO_INDEX_USE_ARK_IDENTIFIER, WEKO_INDEX_USE_CNRI_IDENTIER
 
 from .models import Index
 from .utils import cached_index_tree_json, check_doi_in_index, \
@@ -108,7 +108,7 @@ class Indexes(object):
             data["browsing_group"] = group_list
             data["contribute_group"] = group_list
 
-            if WEKO_INDEX_USE_ARK_IDENTIER:
+            if WEKO_INDEX_USE_ARK_IDENTIFIER:
                 current_date = datetime.now().strftime("%Y/%m/%d")
 
                 ark_index_data = {

@@ -98,7 +98,7 @@ WEKO_INDEX_TREE_INDEX_LOCK_KEY_PREFIX = "lock_index_"
 
 WEKO_INDEX_TREE_API_LIMIT_RATE_DEFAULT = ['100 per minute']
 
-WEKO_INDEX_USE_ARK_IDENTIER = True
+WEKO_INDEX_USE_ARK_IDENTIFIER = True
 """Enables connection to EZID to generate an ARK Identifier for the corresponding index"""
 
 WEKO_INDEX_USE_CNRI_IDENTIER = True
