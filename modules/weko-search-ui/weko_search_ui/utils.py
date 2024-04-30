@@ -3238,12 +3238,13 @@ def handle_check_duplication_item_id(ids: list):
 
 
 def export_all(root_url, user_id, data, start_time):
-    """Gather all the item data and export and return as a JSON or BIBTEX.
+    """Prepare to gather all the item data and export and return as a JSON or BIBTEX.
 
     Parameter
-        path is the path if file temparory
-        post_data is the data items
-    :return: JSON, BIBTEX
+        root_url (str): this system's root url.
+        user_id (int): a user who processed file output.
+        data (json): export processing's status data.
+        start_time (str): processing start time.
     """
     from weko_search_ui.tasks import write_files_task
 
@@ -3258,7 +3259,8 @@ def export_all(root_url, user_id, data, start_time):
         name=_run_msg_config,
         user_id=user_id
     )
-    _file_create_config = current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_FILE_CREATE_RUN_MSG"]
+    _file_create_config = \
+        current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_FILE_CREATE_RUN_MSG"]
     _file_create_key = _cache_prefix.format(
         name=_file_create_config,
         user_id=user_id
@@ -3512,15 +3514,17 @@ def export_all(root_url, user_id, data, start_time):
 def write_files(item_datas, export_path, user_id, retrys):
     """Write TSV/CSV data to files.
 
-    :argument
-        item_datas - {json} data for file output
-        export_path - {string} file creation destination
-        user_id - {integer} performing user id
-        retrys - {integer} retry time
-    :returns result
-
+    Args:
+        item_datas (json): data for file output
+        export_path (str): file creation destination
+        user_id (int): performing user id
+        retrys (int): retry time
+    
+    Returns:
+        bool: task is success or failure.
     """
-    from weko_items_ui.utils import make_stats_file_with_permission, package_export_file
+    from weko_items_ui.utils import make_stats_file_with_permission, \
+        package_export_file
     _cache_prefix = current_app.config["WEKO_ADMIN_CACHE_PREFIX"]
     _run_msg_config = current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_RUN_MSG"]
     _run_msg_key = _cache_prefix.format(
@@ -3555,7 +3559,11 @@ def write_files(item_datas, export_path, user_id, retrys):
 
         os.makedirs(export_path, exist_ok=True)
 
-        file_full_path = "{}/{}.{}".format(export_path, item_type_data.get("name"), _file_format)
+        file_full_path = "{}/{}.{}".format(
+            export_path,
+            item_type_data.get("name"),
+            _file_format
+        )
         with open(file_full_path, "w", encoding="utf-8-sig") as file:
             file_output = package_export_file(item_type_data)
             file.write(file_output.getvalue())
@@ -3700,7 +3708,8 @@ def get_export_status():
             write_file_data = json.loads(write_file_info)
             write_file_status = _check_write_file_info(write_file_data)
             task = AsyncResult(task_id)
-            status_cond = (task.successful() or task.failed() or task.state == "REVOKED") and write_file_status != 'STARTED'
+            status_cond = (task.successful() or task.failed() or task.state == "REVOKED") \
+                and write_file_status != 'STARTED'
             status = write_file_status
             export_status = True if not status_cond else False
             start_time = write_file_data["start_time"]
@@ -3731,7 +3740,8 @@ def get_export_status():
     except Exception as ex:
         current_app.logger.error(ex)
         export_status = False
-    return export_status, download_uri, message, run_message, status, start_time, finish_time
+    return export_status, download_uri, message, run_message, \
+        status, start_time, finish_time
 
 
 def handle_check_item_is_locked(item):

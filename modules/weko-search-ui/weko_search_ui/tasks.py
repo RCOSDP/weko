@@ -114,13 +114,20 @@ def export_all_task(root_url, user_id, data, start_time):
 
 @shared_task
 def write_files_task(export_path, pickle_file_name , user_id):
-    """Write files for export."""
+    """Write files for export.
+    
+    Args:
+        export_path (str): path of files where csv/tsv export to.
+        pickle_file_name (str): pickle file's name
+        user_id (int): a user who processed file output.
+    """
     _msg_config = current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_MSG"]
     _msg_key = current_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
         name=_msg_config,
         user_id=user_id
     )
-    _file_create_config = current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_FILE_CREATE_RUN_MSG"]
+    _file_create_config = \
+        current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_FILE_CREATE_RUN_MSG"]
     _file_create_key = current_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
         name=_file_create_config,
         user_id=user_id
@@ -144,7 +151,7 @@ def write_files_task(export_path, pickle_file_name , user_id):
         result = write_files(import_datas, export_path, user_id, 0)
         json_data = json.loads(get_redis_cache(_file_create_key))
         if result:
-            _update_redis_status(json_data, import_datas['name'], 'finished')  
+            _update_redis_status(json_data, import_datas['name'], 'finished')
         else:
             reset_redis_cache(_msg_key, "Export failed.")
             json_data['cancel_flg'] = True
