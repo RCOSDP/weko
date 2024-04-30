@@ -1,4 +1,4 @@
-from weko_records.models import ItemTypeMapping
+from weko_records.models import ItemType,ItemTypeMapping
 from weko_records.api import Mapping, ItemTypes
 from sqlalchemy.sql import func
 from sqlalchemy import desc
@@ -25,17 +25,17 @@ from properties import (
 
 def main():
     try:
-        res = db.session.query(ItemTypeMapping.id).all()
+        res = db.session.query(ItemType.id).all()
         for _id in list(res):
             with db.session.begin_nested():
-                item_type = (
-                    ItemTypeMapping.query.filter(ItemTypeMapping.id == _id)
+                item_type_mapping = (
+                    ItemTypeMapping.query.filter(ItemTypeMapping.item_type_id == _id)
                     .order_by(desc(ItemTypeMapping.version_id))
                     .first()
                 )
-                print("processing item type: {}".format(item_type.id))
-                mapping = pickle.loads(pickle.dumps(item_type.mapping, -1))
-                itemType = ItemTypes.get_by_id(item_type.item_type_id)
+                print("processing... item type id({}) mapping id({})".format(_id,item_type_mapping.id))
+                mapping = pickle.loads(pickle.dumps(item_type_mapping.mapping, -1))
+                itemType = ItemTypes.get_by_id(item_type_mapping.item_type_id)
                 for key in list(mapping.keys()):
                     if "jpcoar_mapping" not in mapping[key] and "jpcoar_v1_mapping" in mapping[key]:
                         mapping[key]["jpcoar_mapping"] = mapping[key][
@@ -57,7 +57,8 @@ def main():
                                 "jpcoar_v1_mapping"
                             ]
                     
-                item_type.mapping = mapping
+                item_type_mapping.mapping = mapping
+                db.session.merge(item_type_mapping)
         db.session.commit()
     except Exception as ex:
         print(traceback.format_exc())
