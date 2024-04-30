@@ -1,22 +1,1680 @@
 GLOB sdist-make: /code/modules/weko-records/setup.py
-c1 create: /code/modules/weko-records/.tox/c1
-c1 installdeps: pytest>=3, pytest-cov, -rrequirements2.txt
-c1 inst: /code/modules/weko-records/.tox/.tmp/package/1/weko-records-0.1.0.dev20170000.zip
-c1 installed: alabaster==0.7.13,alembic==0.9.6,amqp==2.6.0,angular-gettext-babel==0.3,aniso8601==8.0.0,arrow==0.12.1,asn1crypto==0.23.0,atomicwrites==1.4.1,attrs==17.4.0,b2handle==1.1.2,Babel==2.5.1,bagit==1.7.0,beautifulsoup4==4.9.3,bibtexparser==1.0.1,billiard==3.6.3.0,binaryornot==0.4.4,bleach==3.1.0,blinker==1.4,boto3==1.7.84,botocore==1.10.84,cachelib==0.1,cachetools==4.2.4,cchardet==2.1.1,celery==4.4.4,certifi==2017.11.5,cffi==1.11.2,chardet==3.0.4,citeproc-py==0.5.1,citeproc-py-styles==0.1.2,click==6.7,cookiecutter==1.6.0,counter-robots==2018.6,coverage==6.2,cryptography==2.1.4,datacite==1.0.1,DateTime==4.9,decorator==4.1.2,defusedxml==0.5.0,dictdiffer==0.7.0,distlib==0.3.6,dnspython==2.2.1,docutils==0.18.1,dojson==1.3.2,elasticsearch==6.1.1,elasticsearch-dsl==6.4.0,elementpath==1.0.6,email-validator==1.0.5,entrypoints==0.2.3,feedgen==0.7.0,filelock==3.4.1,Flask==1.1.0,Flask-Admin==1.5.3,Flask-Alembic==2.0.1,Flask-Assets==0.12,Flask-BabelEx==0.9.4,Flask-Breadcrumbs==0.5.0,Flask-Caching==1.10.1,Flask-CeleryExt==0.3.4,Flask-Collect==1.2.2,Flask-Cors==3.0.3,Flask-DebugToolbar==0.13.1,Flask-IIIF==0.6.1,Flask-KVSession==0.6.2,Flask-Limiter==1.1.0,Flask-Login==0.4.1,Flask-Mail==0.9.1,flask-marshmallow==0.14.0,Flask-Menu==0.6.0,-e git+https://github.com/RCOSDP/flask-oauthlib.git@98eb36e1dfc66256fa7ea62237e9879acb906e9d#egg=Flask_OAuthlib,Flask-Plugins==1.6.1,Flask-Principal==0.4.0,Flask-RESTful==0.3.8,Flask-Security==3.0.0,flask-shell-ipython==0.4.1,Flask-Sitemap==0.4.0,Flask-SQLAlchemy==2.3.2,flask-talisman==0.4.1,Flask-WTF==0.14.3,-e git+https://github.com/RCOSDP/pyfpdf.git@f9b032148283d535cabc7789858081c80de36fef#egg=fpdf,frozendict==2.3.8,fs==0.5.4,ftfy==4.4.3,future==0.16.0,github3.py==1.1.0,html5lib==1.0.1,idna==2.6,iiif-prezi==0.3.0,imagesize==1.4.1,importlib-metadata==4.8.3,importlib-resources==5.4.0,infinity==1.4,intervals==0.8.0,invenio-access==1.1.0,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=invenio_accounts&subdirectory=modules/invenio-accounts,invenio-admin==1.1.2,invenio-app==1.1.0,invenio-assets==1.0.0,invenio-base==1.0.2,invenio-cache==1.0.0,invenio-celery==1.1.3,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=invenio_communities&subdirectory=modules/invenio-communities,invenio-config==1.0.0,invenio-csl-rest==1.0.0a1,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=invenio_db&subdirectory=modules/invenio-db,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=invenio_deposit&subdirectory=modules/invenio-deposit,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=invenio_files_rest&subdirectory=modules/invenio-files-rest,invenio-formatter==1.0.0b3,invenio-i18n==1.0.0,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=invenio_iiif&subdirectory=modules/invenio-iiif,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=invenio_indexer&subdirectory=modules/invenio-indexer,invenio-jsonschemas==1.0.0,invenio-logging==1.0.0b3,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=invenio_mail&subdirectory=modules/invenio-mail,invenio-marc21==1.0.0a8,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=invenio_oaiharvester&subdirectory=modules/invenio-oaiharvester,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=invenio_oaiserver&subdirectory=modules/invenio-oaiserver,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=invenio_oauth2server&subdirectory=modules/invenio-oauth2server,invenio-oauthclient==1.0.0,invenio-pidrelations==1.0.0a4,invenio-pidstore==1.0.0,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=invenio_previewer&subdirectory=modules/invenio-previewer,invenio-query-parser==0.6.0,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=invenio_queues&subdirectory=modules/invenio-queues,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=invenio_records&subdirectory=modules/invenio-records,invenio-records-files==1.0.0a10,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=invenio_records_rest&subdirectory=modules/invenio-records-rest,invenio-records-ui==1.0.0,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=invenio_resourcesyncclient&subdirectory=modules/invenio-resourcesyncclient,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=invenio_resourcesyncserver&subdirectory=modules/invenio-resourcesyncserver,invenio-rest==1.1.2,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=invenio_s3&subdirectory=modules/invenio-s3,-e git+https://github.com/RCOSDP/invenio-search.git@cff9744c5dc651893a9c51672c5b8da9adc21e16#egg=invenio_search,-e git+https://github.com/RCOSDP/invenio-search-ui.git@74bd3b2990ff27b39e01b6b31be9a0b5fda3dd0f#egg=invenio_search_ui,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=invenio_stats&subdirectory=modules/invenio-stats,invenio-theme==1.0.0b4,ipaddress==1.0.19,ipython==6.2.1,ipython-genutils==0.2.0,itsdangerous==0.24,jedi==0.11.0,Jinja2==2.10.1,jinja2-cli==0.6.0,jinja2-time==0.2.0,jmespath==0.10.0,jsmin==2.2.2,jsonpatch==1.21,jsonpath-ng==1.5.2,jsonpointer==1.14,jsonref==0.1,jsonresolver==0.2.1,jsonschema==2.6.0,jupyter-client==5.2.2,jupyter-core==4.4.0,-e git+https://github.com/RCOSDP/kombu.git@f204fdf078d5e94393c86693f545e2d011f620f5#egg=kombu,limits==1.2.1,lxml==4.1.1,Mako==1.0.7,MarkupSafe==1.1.1,marshmallow==2.20.1,marshmallow-sqlalchemy==0.23.1,maxminddb==1.5.2,maxminddb-geolite2==2017.803,mistune==0.8.3,mock==5.0.2,more-itertools==8.10.0,msgpack==0.6.2,nbconvert==5.3.1,nbformat==4.4.0,netaddr==0.8.0,node-semver==0.1.1,numpy==1.16.1,oauthlib==2.1.0,ordereddict==1.1,packaging==21.3,pandocfilters==1.4.2,parso==0.1.0,passlib==1.7.1,pbr==5.11.1,pexpect==4.3.0,pickleshare==0.7.4,Pillow==5.4.1,platformdirs==2.4.0,pluggy==0.13.1,ply==3.11,poyo==0.4.1,prompt-toolkit==1.0.15,psycopg2==2.7.3.2,ptyprocess==0.5.2,py==1.11.0,pycparser==2.18,Pygments==2.2.0,PyJWT==1.5.3,PyLD==2.0.3,pyparsing==3.1.0,-e git+https://github.com/RCOSDP/PyPDF2.git@fefc684a3a74aff6f99e5dff24f9b4dd1c95169d#egg=PyPDF2,pyPEG2==2.15.2,pytest==4.2.0,pytest-cov==2.9.0,pytest-flask==0.15.1,pytest-invenio==1.2.1,pytest-mock==3.2.0,python-dateutil==2.6.1,python-editor==1.0.3,python-geoip==1.2,pytz==2017.3,pyzmq==17.0.0,redis==2.10.6,requests==2.18.4,requests-oauthlib==1.1.0,resync==1.0.9,s3fs==0.1.6,s3transfer==0.1.13,selenium==3.141.0,Sickle==0.6.4,simplegeneric==0.8.1,simplejson==3.12.0,simplekv==0.11.2,six==1.16.0,snowballstemmer==2.2.0,soupsieve==2.3.2.post1,speaklater==1.3,Sphinx==1.8.4,sphinxcontrib-serializinghtml==1.1.5,sphinxcontrib-websupport==1.2.4,SQLAlchemy==1.2.19,SQLAlchemy-Continuum==1.3.6,SQLAlchemy-Utils==0.35.0,stevedore==3.5.2,sword3common==0.1.1,testpath==0.3.1,toml==0.10.2,tornado==4.5.3,tox==3.28.0,traitlets==4.3.2,typing_extensions==4.1.1,ua-parser==0.7.3,uritemplate==4.1.1,uritools==2.1.0,urllib3==1.22,uWSGI==2.0.21,uwsgitop==0.11,validators==0.12.0,vine==1.3.0,virtualenv==20.17.1,virtualenv-clone==0.5.7,virtualenvwrapper==4.8.4,Wand==0.6.1,wcwidth==0.1.7,webargs==5.5.2,webassets==0.12.1,webencodings==0.5.1,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_accounts&subdirectory=modules/weko-accounts,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_admin&subdirectory=modules/weko-admin,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_authors&subdirectory=modules/weko-authors,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_bulkupdate&subdirectory=modules/weko-bulkupdate,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_deposit&subdirectory=modules/weko-deposit,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_gridlayout&subdirectory=modules/weko-gridlayout,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_groups&subdirectory=modules/weko-groups,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_handle&subdirectory=modules/weko-handle,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_index_tree&subdirectory=modules/weko-index-tree,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_indextree_journal&subdirectory=modules/weko-indextree-journal,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_items_autofill&subdirectory=modules/weko-items-autofill,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_items_ui&subdirectory=modules/weko-items-ui,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_itemtypes_ui&subdirectory=modules/weko-itemtypes-ui,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_logging&subdirectory=modules/weko-logging,weko-records @ file:///code/modules/weko-records/.tox/.tmp/package/1/weko-records-0.1.0.dev20170000.zip,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_records_ui&subdirectory=modules/weko-records-ui,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_redis&subdirectory=modules/weko-redis,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_schema_ui&subdirectory=modules/weko-schema-ui,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_search_ui&subdirectory=modules/weko-search-ui,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_sitemap&subdirectory=modules/weko-sitemap,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_swordserver&subdirectory=modules/weko-swordserver,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_theme&subdirectory=modules/weko-theme,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_user_profiles&subdirectory=modules/weko-user-profiles,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_workflow&subdirectory=modules/weko-workflow,Werkzeug==0.15.2,whichcraft==0.4.1,WTForms==2.1,WTForms-Alchemy==0.16.5,WTForms-Components==0.10.3,xmlschema==0.9.30,xmltodict==0.12.0,zipp==3.6.0,zope.interface==5.5.2
-c1 run-test-pre: PYTHONHASHSEED='595659295'
+c1 inst-nodeps: /code/modules/weko-records/.tox/.tmp/package/1/weko-records-0.1.0.dev20170000.zip
+c1 installed: alabaster==0.7.13,alembic==0.9.6,amqp==2.6.0,angular-gettext-babel==0.3,aniso8601==8.0.0,arrow==0.12.1,asn1crypto==0.23.0,atomicwrites==1.4.1,attrs==17.4.0,b2handle==1.1.2,Babel==2.5.1,bagit==1.7.0,beautifulsoup4==4.9.3,bibtexparser==1.0.1,billiard==3.6.3.0,binaryornot==0.4.4,bleach==3.1.0,blinker==1.4,boto3==1.7.84,botocore==1.10.84,cachelib==0.1,cachetools==4.2.4,cchardet==2.1.1,celery==4.4.4,certifi==2017.11.5,cffi==1.11.2,chardet==3.0.4,citeproc-py==0.5.1,citeproc-py-styles==0.1.2,click==6.7,cookiecutter==1.6.0,counter-robots==2018.6,coverage==6.2,cryptography==2.1.4,datacite==1.0.1,DateTime==4.9,decorator==4.1.2,defusedxml==0.5.0,dictdiffer==0.7.0,distlib==0.3.6,dnspython==2.2.1,docutils==0.18.1,dojson==1.3.2,elasticsearch==6.1.1,elasticsearch-dsl==6.4.0,elementpath==1.0.6,email-validator==1.0.5,entrypoints==0.2.3,feedgen==0.7.0,filelock==3.4.1,Flask==1.1.0,Flask-Admin==1.5.3,Flask-Alembic==2.0.1,Flask-Assets==0.12,Flask-BabelEx==0.9.4,Flask-Breadcrumbs==0.5.0,Flask-Caching==1.10.1,Flask-CeleryExt==0.3.4,Flask-Collect==1.2.2,Flask-Cors==3.0.3,Flask-DebugToolbar==0.13.1,Flask-IIIF==0.6.1,Flask-KVSession==0.6.2,Flask-Limiter==1.1.0,Flask-Login==0.4.1,Flask-Mail==0.9.1,flask-marshmallow==0.14.0,Flask-Menu==0.6.0,-e git+https://github.com/RCOSDP/flask-oauthlib.git@98eb36e1dfc66256fa7ea62237e9879acb906e9d#egg=Flask_OAuthlib,Flask-Plugins==1.6.1,Flask-Principal==0.4.0,Flask-RESTful==0.3.8,Flask-Security==3.0.0,flask-shell-ipython==0.4.1,Flask-Sitemap==0.4.0,Flask-SQLAlchemy==2.3.2,flask-talisman==0.4.1,Flask-WTF==0.14.3,-e git+https://github.com/RCOSDP/pyfpdf.git@f9b032148283d535cabc7789858081c80de36fef#egg=fpdf,frozendict==2.3.8,fs==0.5.4,ftfy==4.4.3,future==0.16.0,github3.py==1.1.0,html5lib==1.0.1,idna==2.6,iiif-prezi==0.3.0,imagesize==1.4.1,importlib-metadata==4.8.3,importlib-resources==5.4.0,infinity==1.4,intervals==0.8.0,invenio-access==1.1.0,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=invenio_accounts&subdirectory=modules/invenio-accounts,invenio-admin==1.1.2,invenio-app==1.1.0,invenio-assets==1.0.0,invenio-base==1.0.2,invenio-cache==1.0.0,invenio-celery==1.1.3,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=invenio_communities&subdirectory=modules/invenio-communities,invenio-config==1.0.0,invenio-csl-rest==1.0.0a1,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=invenio_db&subdirectory=modules/invenio-db,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=invenio_deposit&subdirectory=modules/invenio-deposit,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=invenio_files_rest&subdirectory=modules/invenio-files-rest,invenio-formatter==1.0.0b3,invenio-i18n==1.0.0,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=invenio_iiif&subdirectory=modules/invenio-iiif,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=invenio_indexer&subdirectory=modules/invenio-indexer,invenio-jsonschemas==1.0.0,invenio-logging==1.0.0b3,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=invenio_mail&subdirectory=modules/invenio-mail,invenio-marc21==1.0.0a8,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=invenio_oaiharvester&subdirectory=modules/invenio-oaiharvester,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=invenio_oaiserver&subdirectory=modules/invenio-oaiserver,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=invenio_oauth2server&subdirectory=modules/invenio-oauth2server,invenio-oauthclient==1.0.0,invenio-pidrelations==1.0.0a4,invenio-pidstore==1.0.0,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=invenio_previewer&subdirectory=modules/invenio-previewer,invenio-query-parser==0.6.0,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=invenio_queues&subdirectory=modules/invenio-queues,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=invenio_records&subdirectory=modules/invenio-records,invenio-records-files==1.0.0a10,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=invenio_records_rest&subdirectory=modules/invenio-records-rest,invenio-records-ui==1.0.0,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=invenio_resourcesyncclient&subdirectory=modules/invenio-resourcesyncclient,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=invenio_resourcesyncserver&subdirectory=modules/invenio-resourcesyncserver,invenio-rest==1.1.2,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=invenio_s3&subdirectory=modules/invenio-s3,-e git+https://github.com/RCOSDP/invenio-search.git@cff9744c5dc651893a9c51672c5b8da9adc21e16#egg=invenio_search,-e git+https://github.com/RCOSDP/invenio-search-ui.git@74bd3b2990ff27b39e01b6b31be9a0b5fda3dd0f#egg=invenio_search_ui,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=invenio_stats&subdirectory=modules/invenio-stats,invenio-theme==1.0.0b4,ipaddress==1.0.19,ipython==6.2.1,ipython-genutils==0.2.0,itsdangerous==0.24,jedi==0.11.0,Jinja2==2.10.1,jinja2-cli==0.6.0,jinja2-time==0.2.0,jmespath==0.10.0,jsmin==2.2.2,jsonpatch==1.21,jsonpath-ng==1.5.2,jsonpointer==1.14,jsonref==0.1,jsonresolver==0.2.1,jsonschema==2.6.0,jupyter-client==5.2.2,jupyter-core==4.4.0,-e git+https://github.com/RCOSDP/kombu.git@f204fdf078d5e94393c86693f545e2d011f620f5#egg=kombu,limits==1.2.1,lxml==4.1.1,Mako==1.0.7,MarkupSafe==1.1.1,marshmallow==2.20.1,marshmallow-sqlalchemy==0.23.1,maxminddb==1.5.2,maxminddb-geolite2==2017.803,mistune==0.8.3,mock==5.0.2,more-itertools==8.10.0,msgpack==0.6.2,nbconvert==5.3.1,nbformat==4.4.0,netaddr==0.8.0,node-semver==0.1.1,numpy==1.16.1,oauthlib==2.1.0,ordereddict==1.1,packaging==21.3,pandocfilters==1.4.2,parso==0.1.0,passlib==1.7.1,pbr==5.11.1,pexpect==4.3.0,pickleshare==0.7.4,Pillow==5.4.1,platformdirs==2.4.0,pluggy==0.13.1,ply==3.11,poyo==0.4.1,prompt-toolkit==1.0.15,psycopg2==2.7.3.2,ptyprocess==0.5.2,py==1.11.0,pycparser==2.18,Pygments==2.2.0,PyJWT==1.5.3,PyLD==2.0.3,pyparsing==3.1.0,-e git+https://github.com/RCOSDP/PyPDF2.git@fefc684a3a74aff6f99e5dff24f9b4dd1c95169d#egg=PyPDF2,pyPEG2==2.15.2,pytest==4.2.0,pytest-cov==2.9.0,pytest-flask==0.15.1,pytest-invenio==1.2.1,pytest-mock==3.2.0,python-dateutil==2.6.1,python-editor==1.0.3,python-geoip==1.2,pytz==2017.3,pyzmq==17.0.0,redis==2.10.6,requests==2.18.4,requests-oauthlib==1.1.0,resync==1.0.9,s3fs==0.1.6,s3transfer==0.1.13,selenium==3.141.0,Sickle==0.6.4,simplegeneric==0.8.1,simplejson==3.12.0,simplekv==0.11.2,six==1.16.0,snowballstemmer==2.2.0,soupsieve==2.3.2.post1,speaklater==1.3,Sphinx==1.8.4,sphinxcontrib-serializinghtml==1.1.5,sphinxcontrib-websupport==1.2.4,SQLAlchemy==1.2.19,SQLAlchemy-Continuum==1.3.6,SQLAlchemy-Utils==0.35.0,stevedore==3.5.2,sword3common==0.1.1,testpath==0.3.1,tika==2.6.0,toml==0.10.2,tornado==4.5.3,tox==3.28.0,traitlets==4.3.2,typing_extensions==4.1.1,ua-parser==0.7.3,uritemplate==4.1.1,uritools==2.1.0,urllib3==1.22,uWSGI==2.0.21,uwsgitop==0.11,validators==0.12.0,vine==1.3.0,virtualenv==20.17.1,virtualenv-clone==0.5.7,virtualenvwrapper==4.8.4,Wand==0.6.1,wcwidth==0.1.7,webargs==5.5.2,webassets==0.12.1,webencodings==0.5.1,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_accounts&subdirectory=modules/weko-accounts,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_admin&subdirectory=modules/weko-admin,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_authors&subdirectory=modules/weko-authors,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_bulkupdate&subdirectory=modules/weko-bulkupdate,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_deposit&subdirectory=modules/weko-deposit,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_gridlayout&subdirectory=modules/weko-gridlayout,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_groups&subdirectory=modules/weko-groups,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_handle&subdirectory=modules/weko-handle,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_index_tree&subdirectory=modules/weko-index-tree,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_indextree_journal&subdirectory=modules/weko-indextree-journal,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_items_autofill&subdirectory=modules/weko-items-autofill,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_items_ui&subdirectory=modules/weko-items-ui,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_itemtypes_ui&subdirectory=modules/weko-itemtypes-ui,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_logging&subdirectory=modules/weko-logging,weko-records @ file:///code/modules/weko-records/.tox/.tmp/package/1/weko-records-0.1.0.dev20170000.zip,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_records_ui&subdirectory=modules/weko-records-ui,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_redis&subdirectory=modules/weko-redis,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_schema_ui&subdirectory=modules/weko-schema-ui,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_search_ui&subdirectory=modules/weko-search-ui,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_sitemap&subdirectory=modules/weko-sitemap,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_swordserver&subdirectory=modules/weko-swordserver,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_theme&subdirectory=modules/weko-theme,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_user_profiles&subdirectory=modules/weko-user-profiles,-e git+https://github.com/RCOSDP/weko.git@84633f34226891a4a701dee9c8eec64294b0446c#egg=weko_workflow&subdirectory=modules/weko-workflow,Werkzeug==0.15.2,whichcraft==0.4.1,WTForms==2.1,WTForms-Alchemy==0.16.5,WTForms-Components==0.10.3,xmlschema==0.9.30,xmltodict==0.12.0,zipp==3.6.0,zope.interface==5.5.2
+c1 run-test-pre: PYTHONHASHSEED='3746151505'
 c1 run-test: commands[0] | pytest --cov=weko_records tests -v -s -vv --cov-branch --cov-report=term --cov-report=xml --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
-ImportError while loading conftest '/code/modules/weko-records/tests/conftest.py'.
-tests/conftest.py:55: in <module>
-    from weko_deposit import WekoDeposit
-../weko-deposit/weko_deposit/__init__.py:23: in <module>
-    from .ext import WekoDeposit, WekoDepositREST
-../weko-deposit/weko_deposit/ext.py:26: in <module>
-    from .receivers import append_file_content
-../weko-deposit/weko_deposit/receivers.py:17: in <module>
-    from .api import WekoDeposit
-../weko-deposit/weko_deposit/api.py:29: in <module>
-    from tika import parser
-E   ModuleNotFoundError: No module named 'tika'
-ERROR: InvocationError for command /code/modules/weko-records/.tox/c1/bin/pytest --cov=weko_records tests -v -s -vv --cov-branch --cov-report=term --cov-report=xml --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp (exited with code 4)
+============================= test session starts ==============================
+platform linux -- Python 3.6.15, pytest-4.2.0, py-1.11.0, pluggy-0.13.1 -- /code/modules/weko-records/.tox/c1/bin/python
+cachedir: .tox/c1/.pytest_cache
+rootdir: /code/modules/weko-records, inifile:
+plugins: celery-4.4.4, flask-0.15.1, cov-2.9.0, mock-3.2.0, invenio-1.2.1
+collecting ... collected 226 items
+
+tests/test_api.py::test_recordbase PASSED
+tests/test_api.py::test_itemtypenames PASSED
+tests/test_api.py::test_itemtypes_create PASSED
+tests/test_api.py::test_itemtypes_update PASSED
+tests/test_api.py::test_itemtypes_update_item_type PASSED
+tests/test_api.py::test_itemtypes_get_record PASSED
+tests/test_api.py::test_itemtypes_get_records PASSED
+tests/test_api.py::test_itemtypes_get_by_id PASSED
+tests/test_api.py::test_itemtypes_get_by_name_id PASSED
+tests/test_api.py::test_itemtypes_get_records_by_name_id PASSED
+tests/test_api.py::test_itemtypes_get_latest PASSED
+tests/test_api.py::test_itemtypes_get_latest_with_item_type PASSED
+tests/test_api.py::test_itemtypes_get_latest_custorm_harvesting PASSED
+tests/test_api.py::test_itemtypes_get_all PASSED
+tests/test_api.py::test_patch_ItemTypes PASSED
+tests/test_api.py::test_itemtypes_commit PASSED
+tests/test_api.py::test_itemtypes_delete PASSED
+tests/test_api.py::test_itemtypes_revert PASSED
+tests/test_api.py::test_itemtypes_restore PASSED
+tests/test_api.py::test_revision_ItemTypes PASSED
+tests/test_api.py::test_item_type_edit_history PASSED
+tests/test_api.py::test_mapping_create PASSED
+tests/test_api.py::test_mapping_get_record PASSED
+tests/test_api.py::test_patch_Mapping PASSED
+tests/test_api.py::test_mapping_commit PASSED
+tests/test_api.py::test_mapping_delete PASSED
+tests/test_api.py::test_mapping_revert PASSED
+tests/test_api.py::test_revisions_Mapping PASSED
+tests/test_api.py::test_mapping_get_mapping_by_item_type_ids PASSED
+tests/test_api.py::test_item_type_props PASSED
+tests/test_api.py::test_revisions_ItemTypeProps PASSED
+tests/test_api.py::test_item_metadata_create PASSED
+tests/test_api.py::test_item_metadata_get_record PASSED
+tests/test_api.py::test_item_metadata_get_records PASSED
+tests/test_api.py::test_item_metadata_get_by_item_type_id PASSED
+tests/test_api.py::test_get_registered_item_metadata_ItemsMetadata PASSED
+tests/test_api.py::test_item_metadata_get_by_object_id PASSED
+tests/test_api.py::test_patch_ItemsMetadata PASSED
+tests/test_api.py::test_item_metadata_commit PASSED
+tests/test_api.py::test_item_metadata_delete PASSED
+tests/test_api.py::test_item_metadata_revert PASSED
+tests/test_api.py::test_revision_ItemsMetadata PASSED
+tests/test_api.py::test_files_metadata_create PASSED
+tests/test_api.py::test_files_metadata_get_record PASSED
+tests/test_api.py::test_files_metadata_get_records PASSED
+tests/test_api.py::test_patch_FilesMetadata PASSED
+tests/test_api.py::test_files_metadata_update_data PASSED
+tests/test_api.py::test_files_metadata_commit PASSED
+tests/test_api.py::test_files_metadata_delete PASSED
+tests/test_api.py::test_files_metadata_revert PASSED
+tests/test_api.py::test_revision_FilesMetadata PASSED
+tests/test_api.py::test_site_license_get_records PASSED
+tests/test_api.py::test_site_license_update PASSED
+tests/test_api.py::test_wekorecord_get_record PASSED
+tests/test_api.py::test_pid_WekoRecord PASSED
+tests/test_api.py::test_depid_WekoRecord PASSED
+tests/test_api.py::test_feedback_mail_list_create_and_update PASSED
+tests/test_api.py::test_feedback_mail_list_delete PASSED
+tests/test_api.py::test_item_link_update PASSED
+tests/test_api.py::test_item_link_bulk_create PASSED
+tests/test_api.py::test_item_link_bulk_update PASSED
+tests/test_api.py::test_item_link_bulk_delete PASSED
+tests/test_ext.py::test_init_config PASSED
+tests/test_fetchers.py::test_weko_record_fetcher PASSED
+tests/test_fetchers.py::test_weko_doi_fetcher PASSED
+tests/test_models.py::test_latest_edit_history PASSED
+tests/test_models.py::test_get_latest_by_item_type_id PASSED
+tests/test_models.py::test_get_src_references PASSED
+tests/test_models.py::test_get_dst_references PASSED
+tests/test_models.py::test_relation_exists FAILED
+tests/test_serializers_atom.py::test_serialize_search PASSED
+tests/test_serializers_csl.py::TestObjectType::test_get_openaire_subtype PASSED
+tests/test_serializers_dc.py::test_extend_atom PASSED
+tests/test_serializers_dc.py::test_extend_jpcoar PASSED
+tests/test_serializers_depositschema.py::test_dump_links PASSED
+tests/test_serializers_depositschema.py::test_remove_envelope PASSED
+tests/test_serializers_entry.py::test_weko_feed_entry PASSED
+tests/test_serializers_entry.py::test_atom_entry PASSED
+tests/test_serializers_entry.py::test_rss_entry PASSED
+tests/test_serializers_entry.py::test_id PASSED
+tests/test_serializers_entry.py::test_updated PASSED
+tests/test_serializers_entry.py::test_author PASSED
+tests/test_serializers_entry.py::test_content PASSED
+tests/test_serializers_entry.py::test_summary PASSED
+tests/test_serializers_entry.py::test_description PASSED
+tests/test_serializers_entry.py::test_category PASSED
+tests/test_serializers_entry.py::test_contributor PASSED
+tests/test_serializers_entry.py::test_load_extension PASSED
+tests/test_serializers_entry.py::test_register_extension PASSED
+tests/test_serializers_feed.py::test_weko_feed_entry PASSED
+tests/test_serializers_feed.py::test__create_atom PASSED
+tests/test_serializers_feed.py::test_atom_file PASSED
+tests/test_serializers_feed.py::test__create_rss PASSED
+tests/test_serializers_feed.py::test_rss_file PASSED
+tests/test_serializers_feed.py::test_updated PASSED
+tests/test_serializers_feed.py::test_lastBuildDate PASSED
+tests/test_serializers_feed.py::test_author PASSED
+tests/test_serializers_feed.py::test_category PASSED
+tests/test_serializers_feed.py::test_cloud PASSED
+tests/test_serializers_feed.py::test_contributor PASSED
+tests/test_serializers_feed.py::test_generator PASSED
+tests/test_serializers_feed.py::test_icon PASSED
+tests/test_serializers_feed.py::test_logo PASSED
+tests/test_serializers_feed.py::test_image PASSED
+tests/test_serializers_feed.py::test_rights PASSED
+tests/test_serializers_feed.py::test_copyright PASSED
+tests/test_serializers_feed.py::test_subtitle PASSED
+tests/test_serializers_feed.py::test_description PASSED
+tests/test_serializers_feed.py::test_docs PASSED
+tests/test_serializers_feed.py::test_language PASSED
+tests/test_serializers_feed.py::test_requestUrl PASSED
+tests/test_serializers_feed.py::test_items PASSED
+tests/test_serializers_feed.py::test_managingEditor PASSED
+tests/test_serializers_feed.py::test_pubDate PASSED
+tests/test_serializers_feed.py::test_rating PASSED
+tests/test_serializers_feed.py::test_skipHours PASSED
+tests/test_serializers_feed.py::test_skipDays PASSED
+tests/test_serializers_feed.py::test_textInput PASSED
+tests/test_serializers_feed.py::test_ttl PASSED
+tests/test_serializers_feed.py::test_webMaster PASSED
+tests/test_serializers_feed.py::test_add_entry PASSED
+tests/test_serializers_feed.py::test_add_item PASSED
+tests/test_serializers_feed.py::test_entry PASSED
+tests/test_serializers_feed.py::test_item PASSED
+tests/test_serializers_feed.py::test_remove_entry PASSED
+tests/test_serializers_feed.py::test_remove_item PASSED
+tests/test_serializers_feed.py::test_load_extension PASSED
+tests/test_serializers_feed.py::test_register_extension PASSED
+tests/test_serializers_jpcoar.py::test_jpcoar_serializer[data/record_hit/record_hit1.json] PASSED
+tests/test_serializers_json.py::test_json_serializer[data/record_hit/record_hit1.json] PASSED
+tests/test_serializers_json.py::test_json_serializer_2[data/record_hit/record_hit4.json] PASSED
+tests/test_serializers_json.py::test_json_serializer_3[data/record_hit/record_hit5.json] PASSED
+tests/test_serializers_opensearch.py::test_extend_atom_OpensearchBaseExtension PASSED
+tests/test_serializers_opensearch.py::test_extend_atom_OpensearchEntryExtension PASSED
+tests/test_serializers_opensearch_response.py::test_oepnsearch_responsify[data/record_hit/record_hit1.json] PASSED
+tests/test_serializers_opensearch_response.py::test_add_link_header PASSED
+tests/test_serializers_opensearchserializer.py::test_serialize_search_OpenSearchSerializer PASSED
+tests/test_serializers_pidrelations.py::test_serialize_related_identifiers PASSED
+tests/test_serializers_pidrelations.py::test_preprocess_related_identifiers PASSED
+tests/test_serializers_prism.py::test_serialize_search_PrismBaseExtension PASSED
+tests/test_serializers_prism.py::test_issn_PrismBaseExtension PASSED
+tests/test_serializers_prism.py::test_number_PrismBaseExtension PASSED
+tests/test_serializers_prism.py::test_serialize_search_PrismEntryExtension PASSED
+tests/test_serializers_rss.py::test_serialize_search PASSED
+tests/test_serializers_schemas_csl.py::test_record_schema_csljson[data/item_type/item_type_render1.json-data/item_type/item_type_form1.json-data/item_type/item_type_mapping1.json-data/record_hit/record_hit1.json-True] PASSED
+tests/test_serializers_schemas_csl.py::test_get_data_from_mapping PASSED
+tests/test_serializers_schemas_csl.py::test_get_version_RecordSchemaCSLJSON PASSED
+tests/test_serializers_schemas_csl.py::test_get_issue_date_RecordSchemaCSLJSON PASSED
+tests/test_serializers_schemas_csl.py::test_get_page_RecordSchemaCSLJSON PASSED
+tests/test_serializers_schemas_csl.py::test_get_doi_RecordSchemaCSLJSON PASSED
+tests/test_serializers_utils.py::test_get_mapping FAILED
+tests/test_serializers_utils.py::test_get_full_mapping PASSED
+tests/test_serializers_utils.py::test_get_mapping_inactive_show_list PASSED
+tests/test_serializers_utils.py::test_get_metadata_from_map PASSED
+tests/test_serializers_utils.py::test_get_attribute_schema PASSED
+tests/test_serializers_utils.py::test_get_item_type_name_id PASSED
+tests/test_serializers_utils.py::test_get_item_type_name PASSED
+tests/test_serializers_utils.py::test_open_search_detail_data[data/item_type/item_type_render1.json-data/item_type/item_type_form1.json-data/item_type/item_type_mapping1.json-data/record_hit/record_hit1.json-True] FAILED
+tests/test_serializers_utils.py::test_output_open_search_detail_data FAILED
+tests/test_serializers_utils.py::test__set_publication_date PASSED
+tests/test_serializers_utils.py::test__set_source_identifier PASSED
+tests/test_serializers_utils.py::test__set_author_info PASSED
+tests/test_serializers_utils.py::test__set_publisher PASSED
+tests/test_serializers_utils.py::test__set_description PASSED
+tests/test_utils.py::test_json_loader FAILED
+tests/test_utils.py::test_copy_field_test PASSED
+tests/test_utils.py::test_convert_range_value PASSED
+tests/test_utils.py::test_convert_date_range_value PASSED
+tests/test_utils.py::test_makeDateRangeValue PASSED
+tests/test_utils.py::test_get_value_from_dict PASSED
+tests/test_utils.py::test_get_values_from_dict PASSED
+tests/test_utils.py::test_copy_value_xml_path PASSED
+tests/test_utils.py::test_copy_value_json_path PASSED
+tests/test_utils.py::test_copy_values_json_path PASSED
+tests/test_utils.py::test_set_timestamp PASSED
+tests/test_utils.py::test_sort_records PASSED
+tests/test_utils.py::test_sort_op PASSED
+tests/test_utils.py::test_find_items PASSED
+tests/test_utils.py::test_get_all_items PASSED
+tests/test_utils.py::test_get_all_items2 PASSED
+tests/test_utils.py::test_to_orderdict PASSED
+tests/test_utils.py::test_get_options_and_order_list PASSED
+tests/test_utils.py::test_sort_meta_data_by_options[data/item_type/item_type_render1.json-data/item_type/item_type_form1.json-data/item_type/item_type_mapping1.json-data/record_hit/record_hit1.json-True] PASSED
+tests/test_utils.py::test_sort_meta_data_by_options[data/item_type/item_type_render2.json-data/item_type/item_type_form2.json-data/item_type/item_type_mapping2.json-data/record_hit/record_hit2.json-False] PASSED
+tests/test_utils.py::test_sort_meta_data_by_options[data/item_type/item_type_render3.json-data/item_type/item_type_form3.json-data/item_type/item_type_mapping2.json-data/record_hit/record_hit3.json-False] PASSED
+tests/test_utils.py::test_sort_meta_data_by_options[data/item_type/item_type_render_title.json-data/item_type/item_type_form_title.json-data/item_type/item_type_mapping_title.json-data/record_hit/record_hit_title1.json-False] PASSED
+tests/test_utils.py::test_sort_meta_data_by_options[data/item_type/item_type_render_title.json-data/item_type/item_type_form_title.json-data/item_type/item_type_mapping_title.json-data/record_hit/record_hit_title2.json-False] PASSED
+tests/test_utils.py::test_sort_meta_data_by_options[data/item_type/item_type_render_title.json-data/item_type/item_type_form_title.json-data/item_type/item_type_mapping_title.json-data/record_hit/record_hit_title3.json-False] PASSED
+tests/test_utils.py::test_sort_meta_data_by_options_exception PASSED
+tests/test_utils.py::test_sort_meta_data_by_options_no_item_type_id PASSED
+tests/test_utils.py::test_sort_meta_data_by_options_sample_1 PASSED
+tests/test_utils.py::test_get_keywords_data_load PASSED
+tests/test_utils.py::test_is_valid_openaire_type PASSED
+tests/test_utils.py::test_check_has_attribute_value PASSED
+tests/test_utils.py::test_set_file_date PASSED
+tests/test_utils.py::test_get_attribute_value_all_items PASSED
+tests/test_utils.py::test_check_input_value PASSED
+tests/test_utils.py::test_remove_key PASSED
+tests/test_utils.py::test_remove_keys PASSED
+tests/test_utils.py::test_remove_multiple PASSED
+tests/test_utils.py::test_check_to_upgrade_version PASSED
+tests/test_utils.py::test_remove_weko2_special_character FAILED
+tests/test_utils.py::test_selected_value_by_language FAILED
+tests/test_utils.py::test_selected_value_by_language_3 FAILED
+tests/test_utils.py::test_selected_value_by_language_2 PASSED
+tests/test_utils.py::test_check_info_in_metadata PASSED
+tests/test_utils.py::test_get_value_and_lang_by_key PASSED
+tests/test_utils.py::test_get_value_by_selected_lang PASSED
+tests/test_utils.py::test_get_show_list_author FAILED
+tests/test_utils.py::test_get_show_list_author_test0 FAILED
+tests/test_utils.py::test_format_creates FAILED
+tests/test_utils.py::test_get_creator PASSED
+tests/test_utils.py::test_get_creator_by_languages PASSED
+tests/test_utils.py::test_get_affiliation PASSED
+tests/test_utils.py::test_get_author_has_language FAILED
+tests/test_utils.py::test_add_author PASSED
+tests/test_utils.py::test_add_author_test PASSED
+tests/test_utils.py::test_convert_bibliographic PASSED
+tests/test_utils.py::test_add_biographic PASSED
+tests/test_utils.py::test_custom_record_medata_for_export PASSED
+tests/test_utils.py::test_replace_fqdn PASSED
+tests/test_utils.py::test_replace_fqdn_of_file_metadata PASSED
+tests/test_weko_records.py::test_version PASSED
+tests/test_weko_records.py::test_init PASSED
+tests/test_weko_records.py::test_feed_entry PASSED
+tests/test_weko_records.py::test_weko_feed_generator PASSED
+
+=================================== FAILURES ===================================
+_____________________________ test_relation_exists _____________________________
+
+self = <sqlalchemy.engine.base.Connection object at 0x7f65eb1d29e8>
+dialect = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f65eb2a8908>
+constructor = <bound method DefaultExecutionContext._init_compiled of <class 'sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2'>>
+statement = 'SELECT count(*) AS count_1 \nFROM (SELECT item_reference.created AS item_reference_created, item_reference.updated AS...D item_reference.dst_item_pid = %(dst_item_pid_1)s AND item_reference.reference_type = %(reference_type_1)s) AS anon_1'
+parameters = {'dst_item_pid_1': '1', 'reference_type_1': 'reference_type', 'src_item_pid_1': 1}
+args = (<sqlalchemy.dialects.postgresql.psycopg2.PGCompiler_psycopg2 object at 0x7f65eb1d2898>, [immutabledict({})])
+conn = <sqlalchemy.pool._ConnectionFairy object at 0x7f65eb2e01d0>
+context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7f65eb2182e8>
+
+    def _execute_context(
+        self, dialect, constructor, statement, parameters, *args
+    ):
+        """Create an :class:`.ExecutionContext` and execute, returning
+        a :class:`.ResultProxy`."""
+    
+        try:
+            try:
+                conn = self.__connection
+            except AttributeError:
+                # escape "except AttributeError" before revalidating
+                # to prevent misleading stacktraces in Py3K
+                conn = None
+            if conn is None:
+                conn = self._revalidate_connection()
+    
+            context = constructor(dialect, self, conn, *args)
+        except BaseException as e:
+            self._handle_dbapi_exception(
+                e, util.text_type(statement), parameters, None, None
+            )
+    
+        if context.compiled:
+            context.pre_exec()
+    
+        cursor, statement, parameters = (
+            context.cursor,
+            context.statement,
+            context.parameters,
+        )
+    
+        if not context.executemany:
+            parameters = parameters[0]
+    
+        if self._has_events or self.engine._has_events:
+            for fn in self.dispatch.before_cursor_execute:
+                statement, parameters = fn(
+                    self,
+                    cursor,
+                    statement,
+                    parameters,
+                    context,
+                    context.executemany,
+                )
+    
+        if self._echo:
+            self.engine.logger.info(statement)
+            self.engine.logger.info(
+                "%r", sql_util._repr_params(parameters, batches=10)
+            )
+    
+        evt_handled = False
+        try:
+            if context.executemany:
+                if self.dialect._has_events:
+                    for fn in self.dialect.dispatch.do_executemany:
+                        if fn(cursor, statement, parameters, context):
+                            evt_handled = True
+                            break
+                if not evt_handled:
+                    self.dialect.do_executemany(
+                        cursor, statement, parameters, context
+                    )
+            elif not parameters and context.no_parameters:
+                if self.dialect._has_events:
+                    for fn in self.dialect.dispatch.do_execute_no_params:
+                        if fn(cursor, statement, context):
+                            evt_handled = True
+                            break
+                if not evt_handled:
+                    self.dialect.do_execute_no_params(
+                        cursor, statement, context
+                    )
+            else:
+                if self.dialect._has_events:
+                    for fn in self.dialect.dispatch.do_execute:
+                        if fn(cursor, statement, parameters, context):
+                            evt_handled = True
+                            break
+                if not evt_handled:
+                    self.dialect.do_execute(
+>                       cursor, statement, parameters, context
+                    )
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1236: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f65eb2a8908>
+cursor = <cursor object at 0x7f65f0b82048; closed: -1>
+statement = 'SELECT count(*) AS count_1 \nFROM (SELECT item_reference.created AS item_reference_created, item_reference.updated AS...D item_reference.dst_item_pid = %(dst_item_pid_1)s AND item_reference.reference_type = %(reference_type_1)s) AS anon_1'
+parameters = {'dst_item_pid_1': '1', 'reference_type_1': 'reference_type', 'src_item_pid_1': 1}
+context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7f65eb2182e8>
+
+    def do_execute(self, cursor, statement, parameters, context=None):
+>       cursor.execute(statement, parameters)
+E       psycopg2.ProgrammingError: operator does not exist: character varying = integer
+E       LINE 4: WHERE item_reference.src_item_pid = 1 AND item_reference.dst...
+E                                                 ^
+E       HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/default.py:536: ProgrammingError
+
+The above exception was the direct cause of the following exception:
+
+app = <Flask 'testapp'>
+db = <SQLAlchemy engine=postgresql+psycopg2://invenio:***@postgresql:5432/wekotest>
+
+    def test_relation_exists(app, db):
+        db.session.add(test)
+        db.session.commit()
+    
+>       assert test.relation_exists(1,"1","reference_type") != None
+
+tests/test_models.py:65: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+weko_records/models.py:749: in relation_exists
+    reference_type=reference_type).count() > 0
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/query.py:3318: in count
+    return self.from_self(col).scalar()
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/query.py:3069: in scalar
+    ret = self.one()
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/query.py:3039: in one
+    ret = self.one_or_none()
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/query.py:3008: in one_or_none
+    ret = list(self)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/query.py:3081: in __iter__
+    return self._execute_and_instances(context)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/query.py:3106: in _execute_and_instances
+    result = conn.execute(querycontext.statement, self._params)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:980: in execute
+    return meth(self, multiparams, params)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/elements.py:273: in _execute_on_connection
+    return connection._execute_clauseelement(self, multiparams, params)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1099: in _execute_clauseelement
+    distilled_params,
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1240: in _execute_context
+    e, statement, parameters, cursor, context
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1458: in _handle_dbapi_exception
+    util.raise_from_cause(sqlalchemy_exception, exc_info)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:296: in raise_from_cause
+    reraise(type(exception), exception, tb=exc_tb, cause=cause)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:276: in reraise
+    raise value.with_traceback(tb)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1236: in _execute_context
+    cursor, statement, parameters, context
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f65eb2a8908>
+cursor = <cursor object at 0x7f65f0b82048; closed: -1>
+statement = 'SELECT count(*) AS count_1 \nFROM (SELECT item_reference.created AS item_reference_created, item_reference.updated AS...D item_reference.dst_item_pid = %(dst_item_pid_1)s AND item_reference.reference_type = %(reference_type_1)s) AS anon_1'
+parameters = {'dst_item_pid_1': '1', 'reference_type_1': 'reference_type', 'src_item_pid_1': 1}
+context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7f65eb2182e8>
+
+    def do_execute(self, cursor, statement, parameters, context=None):
+>       cursor.execute(statement, parameters)
+E       sqlalchemy.exc.ProgrammingError: (psycopg2.ProgrammingError) operator does not exist: character varying = integer
+E       LINE 4: WHERE item_reference.src_item_pid = 1 AND item_reference.dst...
+E                                                 ^
+E       HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
+E        [SQL: 'SELECT count(*) AS count_1 \nFROM (SELECT item_reference.created AS item_reference_created, item_reference.updated AS item_reference_updated, item_reference.src_item_pid AS item_reference_src_item_pid, item_reference.dst_item_pid AS item_reference_dst_item_pid, item_reference.reference_type AS item_reference_reference_type \nFROM item_reference \nWHERE item_reference.src_item_pid = %(src_item_pid_1)s AND item_reference.dst_item_pid = %(dst_item_pid_1)s AND item_reference.reference_type = %(reference_type_1)s) AS anon_1'] [parameters: {'src_item_pid_1': 1, 'dst_item_pid_1': '1', 'reference_type_1': 'reference_type'}] (Background on this error at: http://sqlalche.me/e/f405)
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/default.py:536: ProgrammingError
+_______________________________ test_get_mapping _______________________________
+
+self = <sqlalchemy.util._collections.ScopedRegistry object at 0x7f661f9e94e0>
+
+    def __call__(self):
+        key = self.scopefunc()
+        try:
+>           return self.registry[key]
+E           KeyError: 140076708185920
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/_collections.py:1005: KeyError
+
+During handling of the above exception, another exception occurred:
+
+    def test_get_mapping():
+        mapping = json_data("data/item_type_mapping.json")
+>       result = get_mapping(mapping, 'jpcoar_mapping')
+
+tests/test_serializers_utils.py:23: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+weko_records/serializers/utils.py:61: in get_mapping
+    item_type_mapping = Mapping.get_record(item_type_id)
+weko_records/api.py:1101: in get_record
+    with db.session.no_autoflush:
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/scoping.py:176: in get
+    return getattr(self.registry(), name)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/_collections.py:1007: in __call__
+    return self.registry.setdefault(key, self.createfunc())
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/session.py:3181: in __call__
+    return self.class_(**local_kw)
+.tox/c1/lib/python3.6/site-packages/flask_sqlalchemy/__init__.py:141: in __init__
+    self.app = app = db.get_app()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <SQLAlchemy engine=None>, reference_app = None
+
+    def get_app(self, reference_app=None):
+        """Helper method that implements the logic to look up an
+        application."""
+    
+        if reference_app is not None:
+            return reference_app
+    
+        if current_app:
+            return current_app._get_current_object()
+    
+        if self.app is not None:
+            return self.app
+    
+        raise RuntimeError(
+>           'No application found. Either work inside a view function or push'
+            ' an application context. See'
+            ' http://flask-sqlalchemy.pocoo.org/contexts/.'
+        )
+E       RuntimeError: No application found. Either work inside a view function or push an application context. See http://flask-sqlalchemy.pocoo.org/contexts/.
+
+.tox/c1/lib/python3.6/site-packages/flask_sqlalchemy/__init__.py:912: RuntimeError
+_ test_open_search_detail_data[data/item_type/item_type_render1.json-data/item_type/item_type_form1.json-data/item_type/item_type_mapping1.json-data/record_hit/record_hit1.json-True] _
+
+app = <Flask 'testapp'>
+db = <SQLAlchemy engine=postgresql+psycopg2://invenio:***@postgresql:5432/wekotest>
+db_index = None, render = 'data/item_type/item_type_render1.json'
+form = 'data/item_type/item_type_form1.json'
+mapping = 'data/item_type/item_type_mapping1.json'
+hit = 'data/record_hit/record_hit1.json', licence = True
+
+    @pytest.mark.parametrize("render, form, mapping, hit, licence", params)
+    def test_open_search_detail_data(app, db, db_index, render, form, mapping, hit, licence):
+        def fetcher(obj_uuid, data):
+            assert obj_uuid in ['a', 'b']
+            return PersistentIdentifier(pid_type='recid', pid_value=data['pid'])
+    
+        _item_type_name=ItemTypeName(name="test")
+        _item_type = ItemTypes.create(
+            name="test",
+            item_type_name=_item_type_name,
+            schema=json_data("data/item_type/item_type_schema.json"),
+            render=json_data(render),
+            form=json_data(form),
+            tag=1
+        )
+        _item_type_mapping = Mapping.create(
+            item_type_id=_item_type.id,
+            mapping=json_data(mapping)
+        )
+        _search_result = {'hits': {'total': 1, 'hits': [json_data(hit)]}}
+        data = OpenSearchDetailData(fetcher, _search_result, 'rss')
+        with app.test_request_context():
+>           assert data.output_open_search_detail_data()
+
+tests/test_serializers_utils.py:150: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+weko_records/serializers/utils.py:355: in output_open_search_detail_data
+    item_map = get_mapping(item_type_id, 'jpcoar_mapping')
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+item_type_id = '1', mapping_type = 'jpcoar_mapping'
+
+    def get_mapping(item_type_id, mapping_type):
+        """Format itemtype mapping data.
+    
+        [Key:Schema, Value:ItemId]
+        :param item_type_id:
+        :param mapping_type:
+        :return:
+        """
+        def get_schema_key_info(schema, parent_key, schema_json={}):
+    
+            for k, v in schema.items():
+                key = parent_key + '.' + k if parent_key else k
+                if isinstance(v, dict):
+                    child_key = pickle.loads(pickle.dumps(key, -1))
+                    get_schema_key_info(v, child_key, schema_json)
+                else:
+                    schema_json[key] = v
+    
+            return schema_json
+    
+        schema = {}
+        item_type_mapping = Mapping.get_record(item_type_id)
+        item_type_list = ItemTypes.get_by_id(item_type_id).render.get('table_row')
+>       for item_id in item_type_list:
+E       TypeError: 'NoneType' object is not iterable
+
+weko_records/serializers/utils.py:63: TypeError
+_____________________ test_output_open_search_detail_data ______________________
+
+app = <Flask 'testapp'>
+
+    def test_output_open_search_detail_data(app):
+        data0 = MagicMock()
+        data1 = MagicMock()
+        data1.query = MagicMock()
+        data1.args = {
+            "q": "test",
+            "index_id": 1,
+        }
+    
+        def one_or_none():
+            return data0
+    
+        data2 = MagicMock()
+        data2.one_or_none = one_or_none
+    
+        def filter_by(item):
+            return data2
+    
+        with app.test_request_context():
+            with patch("weko_records.serializers.utils.request", return_value=data1):
+                with patch("weko_records.serializers.utils.Index", return_value=data1):
+>                   assert sample.output_open_search_detail_data() == None
+
+tests/test_serializers_utils.py:184: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+weko_records/serializers/utils.py:618: in output_open_search_detail_data
+    return fg.atom_str(pretty=True)
+weko_records/serializers/feed.py:239: in atom_str
+    feed, doc = self._create_atom(extensions=extensions)
+weko_records/serializers/feed.py:121: in _create_atom
+    self.__atom_feed_xml_lang
+src/lxml/etree.pyx:2419: in lxml.etree._Attrib.__setitem__ (src/lxml/etree.c:71036)
+    ???
+src/lxml/apihelpers.pxi:575: in lxml.etree._setAttributeValue (src/lxml/etree.c:24335)
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+>   ???
+E   TypeError: Argument must be bytes or unicode, got 'MagicMock'
+
+src/lxml/apihelpers.pxi:1442: TypeError
+_______________________________ test_json_loader _______________________________
+
+app = <Flask 'testapp'>
+db = <SQLAlchemy engine=postgresql+psycopg2://invenio:***@postgresql:5432/wekotest>
+item_type = {'properties': {'item_1': {'type': 'string', 'title': 'item_1', 'format': 'text'}}}
+item_type2 = {'properties': {'item_1': {'type': 'string', 'title': 'item_1', 'format': 'text'}}}
+item_type_mapping2 = {'item_1': {'jpcoar_mapping': {'item': {'@value': 'interim'}}}}
+records = [(<PersistentIdentifier recid:1 / rec:d39c0cd4-618e-41d5-a1a5-0d37e5d287a6 (R)>, {'recid': '1', 'year': 2015, 'stars':...': '4', 'year': 4242, 'stars': 5, 'title': ['Unknown film'], 'item_title': 'Unknown film'}, {'title': 'Unknown film'})]
+users = [{'email': 'sysadmin@test.org', 'id': 5, 'obj': <User 5>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>}, ...eneraluser@test.org', 'id': 6, 'obj': <User 6>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+mocker = <pytest_mock.plugin.MockFixture object at 0x7f65ea51fd30>
+
+    def test_json_loader(app, db, item_type, item_type2, item_type_mapping2, records, users, mocker):
+        from weko_admin.config import WEKO_ADMIN_MANAGEMENT_OPTIONS
+    
+        item_type_scheme={"properties":{"control_number":{"type":"string"},"item_1":{"title":"item_1","type":"string"},"item_2":{"title":"item_2","type":"string"},"item_3":{"title":"item_3","type":"object","properties":{"item_3_1":{"title":"item_3_1","type":"string"},"iscreator":{"type":"string"}}},"item_4":{"title":"item_4","type":"object","properties":{"item_4_1":{"title":"item_4_1","type":"string"}}},"item_5":{"title":"item_5","type":"array","items":{"properties":{"filename":{"type":"string","title":"filename"},"iscreator":{"type":"string"}}},},"item_6":{"title":"item_6","type":"array","items":{"properties":{"item_6_1":{"title":"item_6_1","type":"string"}}},},"item_7":{"title":"item_7","type":"array","items":{"properties":{"nameIdentifiers":{"type":"array","items":{"properties":{"nameIdentifier":{"title":"name identifier","type":"string"},"nameIdentifierScheme":{"title":"name identifier scheme","type":"string"}}}}}}},"item_8":{"title":"item_8","type": "object","properties":{"nameIdentifiers":{"type":"array","items":{"properties":{"nameIdentifier":{"title":"name identifier","type":"string"},"nameIdentifierScheme":{"title":"name identifier scheme","type":"string"}}}}}}}}
+        item_type_mapping = {"control_number":{},"item_1":{"jpcoar_mapping":""},"item_2":{"jpcoar_mapping":""},"item_3":{"jpcoar_mapping":{"item_3":{"@value":"item_3_1"}}},"item_4":{"jpcoar_mapping":{"item_4":{"@value":"item_4_1"}}},"item_5":{"jpcoar_mapping":{"item_5":{"@value":"filename"}}},"item_6":{"jpcoar_mapping":{"item_6":{"@value":"item_6_1"}}},"item_7":{"jpcoar_mapping":{"creator1":{"nameIdentifier":{"@value":"nameIdentifiers.nameIdentifier","@attributes":{"nameIdentifierScheme":"nameIdentifiers.nameIdentifierScheme"}}}}},"item_8":{"jpcoar_mapping":{"creator1":{"nameIdentifier":{"@value":"nameIdentifiers.nameIdentifier","@attributes":{"nameIdentifierScheme":"nameIdentifiers.nameIdentifierScheme"}}}}}}
+        _pid = records[0][0]
+    
+        # not exist $schema
+        data1={}
+        result = json_loader(data1, _pid)
+        assert result==None
+    
+        # not exist scheme, mapping
+        data2={
+            '$schema': 'http://schema/1/A-test'
+        }
+        with pytest.raises(Exception) as e:
+            json_loader(data2, _pid)
+        assert e.type==RuntimeError
+        assert str(e.value)=="Item Type 1 does not exist."
+    
+    
+        ItemTypes.create(
+            name='test10',
+            item_type_name=ItemTypeName(name='test10'),
+            schema=item_type_scheme,
+            render={},
+            tag=1
+        )
+        class MockMapping:
+            def dumps(self):
+                return item_type_mapping
+        mocker.patch("weko_records.utils.Mapping.get_record",return_value=MockMapping())
+    
+    
+        # weko_shared_id!=-1, shared_user_id=-1, exist control_number
+        data3={
+            '$schema': 'http://schema/3',
+            "pubdate":"2023-08-08",
+            "title":"test_item1",
+            "control_number":1,
+            "weko_creator_id":1,
+            "owner":"1",
+            "weko_shared_id":1,
+            "shared_user_id":-1,
+            "item_1":"item_1_v",
+            "item_2":"",
+            "item_3":{"item_3_1":"item_3_1_v"},
+            "item_4":{"item_4_1":"item_4_1_v"},
+            "item_5":[{"filename":"item_5"}],
+            "item_6":[],
+            "item_7":[{},{"nameIdentifiers":[{"nameIdentifierScheme":"WEKO","nameIdentifier":"1234"}]}],
+            "item_8":{"nameIdentifiers":[{"nameIdentifierScheme":"WEKO","nameIdentifier":"5678"}]}
+        }
+        app.config['WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME'] = 'jpcoar_v1_mapping'
+        app.config['WEKO_SCHEMA_DDI_SCHEMA_NAME'] = 'ddi_mapping'
+>       dc, jrc, is_edit = json_loader(data3,_pid)
+
+tests/test_utils.py:125: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+weko_records/utils.py:183: in json_loader
+    jrc = SchemaTree.get_jpcoar_json(jpcoar)
+../weko-schema-ui/weko_schema_ui/schema.py:408: in get_jpcoar_json
+    obj.__get_value_list())))
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <weko_schema_ui.schema.SchemaTree object at 0x7f65ea628a58>
+remove_empty = False
+
+    def __get_value_list(self, remove_empty=False):
+        """Find values to a list."""
+        def analysis(field):
+            exp = (',',)
+            return exp[0], field.split(exp[0])
+    
+        def set_value(nd, nv):
+            """
+            set_value [summary]
+    
+            [extended_summary]
+    
+            Args:
+                nd ([type]): [description]
+                nv ([type]): [description]
+            """
+            # current_app.logger.debug("nd: {0}".format(nd))
+            # nd: {'date': {'@value': '=hogehoge', '@attributes': {'dateType': '=hoge'}}}
+            # current_app.logger.debug("nv: {0}".format(nv))
+            # nv: [['2021-12-01']]
+            if isinstance(nd, dict):
+                for ke, va in nd.items():
+                    # current_app.logger.debug("ke:{0}".format(ke))
+                    # ke:@value
+                    # current_app.logger.debug("va:{0}".format(va))
+                    # va:=hogehoge
+                    if ke != self._atr:
+                        if isinstance(va, str):
+                            nd[ke] = nv if ke == self._v else {self._v: nv}
+                            # current_app.logger.debug(
+                            #     "self._v:{0}".format(self._v))
+                            # self._v:@value
+                            # current_app.logger.debug("nv:{0}".format(nv))
+                            # nv:[['2021-12-01']]
+                            # current_app.logger.debug("ke:{0}".format(ke))
+                            # ke:@value
+                            # current_app.logger.debug("nd:{0}".format(nd))
+                            # nd:{'@value': [['2021-12-01']], '@attributes': {'dateType': '=hoge'}}
+                            return
+                        else:
+                            if len(va) == 0 or \
+                                (va.get(self._atr)
+                                 and not va.get(self._v) and len(va) == 1):
+                                # current_app.logger.debug(
+                                #     "self._v".format(self._v))
+                                # current_app.logger.debug("nv".format(nv))
+                                va.update({self._v: nv})
+                                return
+    
+                        set_value(va, nv)
+    
+        # def get_sub_item_value(atr_vm, key, p=None):
+        #     # current_app.logger.debug("atr_vm:{0}".format(atr_vm))
+        #     # current_app.logger.debug("key:{0}".format(key))
+        #     # current_app.logger.debug("p:{0}".format(p))
+        #     if isinstance(atr_vm, dict):
+        #         for ke, va in atr_vm.items():
+        #             if key == ke:
+        #                 yield va, id(p)
+        #             else:
+        #                 for z, w in get_sub_item_value(va, key, atr_vm):
+        #                     yield z, w
+        #     elif isinstance(atr_vm, list):
+        #         for n in atr_vm:
+        #             for k, x in get_sub_item_value(n, key, atr_vm):
+        #                 yield k, x
+    
+        def get_value_from_content_by_mapping_key(atr_vm, list_key):
+            # current_app.logger.debug("atr_vm: {0}".format(atr_vm))
+            #atr_vm: {'subitem_systemidt_identifier': 'https://localhost:8443/records/2', 'subitem_systemidt_identifier_type': 'URI'}
+            #atr_vm: {'subitem_1551255647225': 'dd', 'subitem_1551255648112': 'ja'}
+            #atr_vm: {'subitem_1551255647225': 'dd', 'subitem_1551255648112': 'ja'}
+            #atr_vm: {'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}
+            # current_app.logger.debug("list_key:{0}".format(list_key))
+            # list_key:['subitem_systemidt_identifier']
+            # list_key:['=dddddd']
+            # list_key:['=ddd']
+            # list_key:['resourcetype']
+    
+            # In case has more than 1 key
+            # for ex:"subitem_1551257025236.subitem_1551257043769"
+            if isinstance(list_key, list) and len(list_key) > 1:
+                key = list_key.pop(0)
+                if isinstance(atr_vm, dict):
+                    if atr_vm.get(key):
+                        for a, b in get_value_from_content_by_mapping_key(
+                                atr_vm.get(key), list_key):
+                            yield a, b
+                    else:
+                        if list_key[-1].startswith("="):
+                            yield list_key[-1][1:], id(list_key[-1])
+                elif isinstance(atr_vm, list):
+                    if key not in set([x for atr_ in atr_vm for x in list(atr_.keys())]):
+                        if list_key[-1].startswith("="):
+                            yield list_key[-1][1:], id(list_key[-1])
+                    else:
+                        for i in atr_vm:
+                            if isinstance(i, dict) and i.get(key):
+                                for a, b in get_value_from_content_by_mapping_key(
+                                        i.get(key), list_key):
+                                    yield a, b
+            elif isinstance(list_key, list) and len(list_key) == 1:
+                try:
+                    key = list_key[0]
+                    if key.startswith("="):
+                        # mapping by fixed value
+                        # current_app.logger.debug(
+                        #     "key[1:] :{0}".format(key[1:]))
+                        # current_app.logger.debug(
+                        #     "id(key) :{0}".format(id(key)))
+                        yield key[1:], id(key)
+                    elif isinstance(atr_vm, dict):
+                        if atr_vm.get(key) is None:
+                            yield None, id(key)
+                        else:
+                            # In case of checkboxes, stored data will be
+                            # [a,b,c]
+                            if isinstance(atr_vm[key], list):
+                                for i in atr_vm[key]:
+                                    yield i, id(key)
+                            else:
+                                yield atr_vm[key], id(key)
+                    elif isinstance(atr_vm, list):
+                        for i in atr_vm:
+                            if i.get(key) is None:
+                                yield None, id(key)
+                            else:
+                                yield i[key], id(key)
+                except Exception:
+                    import traceback
+                    traceback.print_exc()
+    
+        def get_url(z, key, val):
+            # current_app.logger.debug("z:{0}".format(z))
+            # z:{'@value': 'resourcetype', '@attributes': {'rdf:resource': 'resourceuri'}}
+            # current_app.logger.debug("key:{0}".format(key))
+            # key:item_1617258105262
+            # current_app.logger.debug("val:{0}".format(val))
+            # val:conference paper
+            # If related to file, process, otherwise return row value
+            if key and 'filemeta' in key:
+                attr = z.get(self._atr, {})
+                attr = attr.get(
+                    'jpcoar:objectType', '') or attr.get(
+                    'objectType', '')
+                if 'fulltext' in attr:
+                    pid = self._record.get('control_number')
+                    if pid:
+                        return request.host_url[:-1] + url_for(
+                            'invenio_records_ui.recid_files', pid_value=pid,
+                            filename=val)
+                    else:
+                        return val
+                else:
+                    return val
+            else:
+                return val
+    
+        def get_key_value(nd, key=None):
+            # current_app.logger.debug("nd:{0}".format(nd))
+            # nd:{'@value': '=dddddd', '@attributes': {'xml:lang': '=ddd'}}
+            # current_app.logger.debug("key:{0}".format(key))
+            # key:None
+            if isinstance(nd, dict):
+                for ke, va in nd.items():
+                    if ke == self._v or isinstance(va, str):
+                        yield nd, key
+                    else:
+                        for z, y in get_key_value(va, ke):
+                            yield z, y
+    
+        def get_exp_value(atr_list):
+            # current_app.logger.debug("atr_list:{0}".format(atr_list))
+            if isinstance(atr_list, list):
+                for lst in atr_list:
+                    if isinstance(lst, list):
+                        for x, y in get_exp_value(lst):
+                            yield x, y
+                    elif isinstance(lst, str):
+                        yield lst, atr_list
+    
+        def get_items_value_lst(atr_vm, key, rlst, z=None, kn=None):
+            # current_app.logger.debug("atr_vm:{0}".format(atr_vm))
+            # atr_vm:{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}
+            # current_app.logger.debug("key:{0}".format(key))
+            # key:resourceuri
+            # current_app.logger.debug("rlst:{0}".format(rlst))
+            # rlst:['conference paper']
+            # current_app.logger.debug("z:{0}".format(z))
+            # z:None
+            # current_app.logger.debug("kn:{0}".format(kn))
+            # kn:None
+            klst = []
+            blst = []
+            parent_id = 0
+            list_subitem_key = []
+            if '.' in key:
+                list_subitem_key = key.split('.')
+            else:
+                list_subitem_key.append(key)
+            for value, identify in get_value_from_content_by_mapping_key(
+                    atr_vm.copy(), list_subitem_key):
+                if list_subitem_key[-1] == 'licensetype':
+                    # Convert license value to license code
+                    for lic in current_app.config[
+                            'WEKO_RECORDS_UI_LICENSE_DICT']:
+                        if lic.get('value') == value:
+                            value = lic.get('code')
+                            break
+                if parent_id != identify and parent_id != 0:
+                    klst.append(blst)
+                    blst = []
+                rlst.append(value)
+                # something related to FILE
+                blst.append(get_url(z, kn, value))
+                parent_id = identify
+            if blst:
+                klst.append(blst)
+            return klst
+    
+        def analyze_value_with_exp(nlst, exp):
+            """Get many value with exp."""
+            # current_app.logger.debug("nlst:{0}".format(nlst))
+            # current_app.logger.debug("exp:{0}".format(exp))
+            is_next = True
+            glst = []
+            for lst in nlst:
+                glst.append(get_exp_value(lst))
+            mlst = []
+            vst = []
+            exp = '\\' + exp
+            while is_next:
+                cnt = 0
+                ava = ""
+                for g in glst:
+                    try:
+                        _eval, _ = next(g)
+                        ava = ava + exp + _eval
+                    except StopIteration:
+                        cnt += 1
+    
+                if cnt == len(glst):
+                    is_next = False
+                    mlst.append(vst)
+                else:
+                    if ava:
+                        if exp in ava:
+                            ava_arr = ava.split(exp)
+                            for av in ava_arr:
+                                if av:
+                                    vst.append(av)
+                        else:
+                            vst.append(ava[1:])
+            return mlst
+    
+        def get_atr_value_lst(node, atr_vm, rlst):
+            # current_app.logger.debug("node:{0}".format(node))
+            # node:{'rdf:resource': 'resourceuri'}
+            # current_app.logger.debug('atr_vm:{0}'.format(atr_vm))
+            # atr_vm:{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}
+            # current_app.logger.debug('rlst:{0}'.format(rlst))
+            # rlst:['conference paper']
+    
+            for k1, v1 in node.items():
+                # if 'item' not in v1:
+                #     continue
+                if isinstance(v1, str):
+                    exp, lk = analysis(v1)
+                    if len(lk) == 1:
+                        klst = get_items_value_lst(atr_vm, v1, rlst)
+                        if klst:
+                            node[k1] = klst
+                    elif len(lk) > 1:
+                        nlst = []
+                        for val in lk:
+                            klst = get_items_value_lst(atr_vm, val, rlst)
+                            if klst:
+                                nlst.append(klst)
+                        node[k1] = analyze_value_with_exp(nlst, exp)
+    
+        def get_mapping_value(mpdic, atr_vm, k, atr_name):
+            # current_app.logger.debug('mpdic:{0}'.format(mpdic))
+            # mpdic:{'type': {'@value': 'resourcetype', '@attributes': {'rdf:resource': 'resourceuri'}}}
+            # current_app.logger.debug('atr_vm:{0}'.format(atr_vm))
+            # atr_vm:{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}
+            # current_app.logger.debug('k:{0}'.format(k))
+            # k:item_1617258105262
+            # current_app.logger.debug('atr_name:{0}'.format(atr_name))
+            # atr_name:Resource Type
+    
+            remain_keys = []
+    
+            def remove_empty_tag(mp):
+                if isinstance(mp, str) and (not mp or mp not in remain_keys):
+                    return True
+                elif isinstance(mp, dict):
+                    remove_list = []
+                    for it in mp:
+                        if remove_empty_tag(mp[it]):
+                            remove_list.append(it)
+                    for it in remove_list:
+                        mp.pop(it)
+                elif isinstance(mp, list):
+                    for it in mp:
+                        if remove_empty_tag(it):
+                            mp.remove(it)
+                return False
+    
+            def get_type_item(item_type_mapping, atr_name):
+                type_item = None
+                if atr_name == 'contributor':
+                    type_item = 'contributorType'
+                elif atr_name == 'relation':
+                    type_item = 'relationType'
+                for k, v in self.item_type_mapping.items():
+                    jpcoar = v.get('jpcoar_mapping')
+                    if isinstance(jpcoar, dict) and atr_name in jpcoar.keys():
+                        value = jpcoar[atr_name]
+                        if self._atr in value.keys():
+                            attr = value[self._atr]
+                            if type_item in attr:
+                                return attr[type_item]
+    
+            def get_item_by_type(temporary, type_item):
+                """Get Contributor and Relation by Type."""
+                key_level_1 = None
+                key_level_2 = None
+                key_level_3 = None
+                if type_item == "Distributor":
+                    key_level_1 = 'citation'
+                    key_level_2 = 'distStmt'
+                    key_level_3 = 'distrbtr'
+                elif type_item == 'Other':
+                    key_level_1 = 'citation'
+                    key_level_2 = 'distStmt'
+                    key_level_3 = 'depositr'
+                elif type_item == "DataCollector":
+                    key_level_1 = 'method'
+                    key_level_2 = 'dataColl'
+                    key_level_3 = 'dataCollector'
+                elif type_item == 'isReferencedBy':
+                    key_level_1 = 'othrStdyMat'
+                    key_level_2 = 'relPubl'
+                elif type_item == 'isSupplementedBy':
+                    key_level_1 = 'othrStdyMat'
+                    key_level_2 = 'relStdy'
+                elif type_item == 'isPartOf':
+                    key_level_1 = 'citation'
+                    key_level_2 = 'serStmt'
+                    key_level_3 = 'serName'
+    
+                if isinstance(temporary, dict):
+                    if key_level_3:
+                        for k, v in temporary.items():
+                            if k == key_level_1:
+                                value_of_stdydscr = {k: v}
+                                if key_level_3 in \
+                                    value_of_stdydscr[key_level_1][
+                                        key_level_2].keys():
+                                    value_of_stdydscr[key_level_1][
+                                        key_level_2] = {
+                                        key_level_3:
+                                            value_of_stdydscr[key_level_1][
+                                                key_level_2][key_level_3]}
+                                    temporary = value_of_stdydscr
+                                    return temporary
+                    else:
+                        for k, v in temporary.items():
+                            if k == key_level_1:
+                                value_of_stdydscr = {k: v}
+                                if key_level_2 in value_of_stdydscr[
+                                        key_level_1].keys():
+                                    value_of_stdydscr[key_level_1] = {
+                                        key_level_2:
+                                            value_of_stdydscr[key_level_1][
+                                                key_level_2]}
+                                    temporary = value_of_stdydscr
+                                    return temporary
+    
+            def handle_type_ddi(atr_name, list_type, vlst):
+                key_item_type = get_type_item(
+                    self.item_type_mapping, atr_name.lower())
+                if key_item_type in atr_vm.keys():
+                    item_type = atr_vm[key_item_type]
+                    if item_type in list_type:
+                        vlst['stdyDscr'] = get_item_by_type(
+                            vlst['stdyDscr'], item_type)
+                    else:
+                        vlst['stdyDscr'] = {}
+                else:
+                    vlst['stdyDscr'] = {}
+                return vlst['stdyDscr']
+    
+            def clean_none_value(dct):
+                # current_app.logger.debug("dct:{0}".format(dct))
+                # dct:{'type': {'@value': [['conference paper']], '@attributes': {'rdf:resource': [['http://purl.org/coar/resource_type/c_5794']]}}}
+                clean = {}
+                for k, v in dct.items():
+                    if isinstance(v, dict):
+                        # check if @value has value
+                        ddi_schema = self._schema_name == current_app.config[
+                            'WEKO_SCHEMA_DDI_SCHEMA_NAME']
+                        node_val = v.get(self._v, None)
+                        node_att = v.get(self._atr, None)
+                        if isinstance(node_val, list) and node_val[0]:
+                            # get index of None value
+                            lst_none_idx = [idx for idx, val in
+                                            enumerate(node_val[0]) if
+                                            val is None or val == '']
+                            if not ddi_schema:
+                                if len(lst_none_idx) > 0:
+                                    # delete all None element in @value
+                                    lst_val_idx = list(set(
+                                        range(len(node_val[0])))
+                                        - set(lst_none_idx))
+                                    node_val[0] = [val for idx, val in
+                                                   enumerate(node_val[0])
+                                                   if idx in lst_val_idx]
+                                    # delete all None element in all
+                                    # @attributes
+                                    for key, val in v.get(self._atr,
+                                                          {}).items():
+                                        if(type(val[0]) is not str):
+                                            val[0] = [val for idx, val
+                                                      in enumerate(val[0])
+                                                      if idx in lst_val_idx]
+                            else:
+                                if not v.get(self._atr, {}).items():
+                                    lst_val_idx = \
+                                        list(set(range(len(node_val[0])))
+                                             - set(lst_none_idx))
+                                    node_val[0] = [v for idx, v
+                                                   in enumerate(node_val[0])
+                                                   if idx in lst_val_idx]
+                            clean[k] = v
+                        elif ddi_schema and not node_val and node_att and \
+                                node_att[next(iter(node_att))][0]:
+                            # Add len(node_att) None elements to value
+                            # in order to display att later
+                            v[self._v] = [[None] * len(
+                                node_att[next(iter(node_att))][0])]
+                            clean[k] = v
+                        else:
+                            nested = clean_none_value(v)
+                            if len(nested.keys()) > 0:
+                                clean[k] = nested
+                return clean
+    
+            vlst = []
+            for ky, vl in mpdic.items():
+                vlc = copy.deepcopy(vl)
+                for node_result, node_result_key in get_key_value(vlc):
+                    if node_result_key == self._atr:
+                        get_atr_value_lst(node_result, atr_vm, remain_keys)
+                    else:
+                        if not node_result.get(self._v):
+                            continue
+    
+                        # check expression or formula
+                        # exp = ,
+                        # lk = subitem_1551255702686
+                        exp, lk = analysis(node_result.get(self._v))
+                        # if not have expression or formula
+                        if len(lk) == 1:
+                            nlst = get_items_value_lst(
+                                atr_vm.copy(), lk[0].strip(), remain_keys,
+                                node_result, k)
+                            if nlst:
+                                # [['Update PDF 3']]
+                                node_result[self._v] = nlst
+                            else:
+                                continue
+                        else:
+                            nlst = []
+                            for val in lk:
+                                klst = get_items_value_lst(
+                                    atr_vm, val.strip(), remain_keys,
+                                    node_result, k)
+                                nlst.append(klst)
+    
+                            if nlst:
+                                node_result[self._v] = analyze_value_with_exp(
+                                    nlst, exp)
+                if remove_empty:
+                    remove_empty_tag(vlc)
+                vlst.append({ky: vlc})
+    
+            for vlist_item in vlst:
+                attr_of_parent_item = {}
+                for k, v in vlist_item.items():
+                    # get attribute of parent Node if any
+                    if v is not None and self._atr in v:
+                        attr_of_parent_item = {self._atr: v[self._atr]}
+                # remove None value
+                # for ddi_mapping, we need to keep attribute data
+                # even if value data is None
+                vlist_item = clean_none_value(vlist_item)
+    
+                if vlist_item:
+                    for k, v in vlist_item.items():
+                        if attr_of_parent_item:
+                            v.update(attr_of_parent_item)
+    
+                if isinstance(atr_vm, dict) and isinstance(vlist_item, dict) \
+                        and 'stdyDscr' in vlist_item.keys():
+                    if atr_name == 'Contributor':
+                        list_contributor_type = ['Distributor', 'Other',
+                                                 'DataCollector']
+                        vlist_item['stdyDscr'] = handle_type_ddi(
+                            atr_name,
+                            list_contributor_type,
+                            vlist_item
+                        )
+                    elif atr_name == 'Relation':
+                        list_relation_type = ['isReferencedBy',
+                                              'isSupplementedBy',
+                                              'isPartOf']
+                        vlist_item['stdyDscr'] = handle_type_ddi(
+                            atr_name,
+                            list_relation_type,
+                            vlist_item)
+            return vlst
+    
+        def remove_hide_data(obj, parentkey):
+            """Remove all item that is set as hide."""
+            # current_app.logger.debug("obj:{0}".format(obj))
+            # obj:{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}
+            # current_app.logger.debug("parentkey:{0}".format(parentkey))
+            # parentkey:item_1617258105262
+    
+            if isinstance(obj, dict):
+                for k, v in obj.items():
+                    if self._ignore_list_all.get(parentkey + "." + k, None):
+                        obj[k] = None
+                    elif isinstance(v, dict):
+                        remove_hide_data(v, parentkey + "." + k)
+                    elif isinstance(v, list):
+                        for i in v:
+                            remove_hide_data(i, parentkey + "." + k)
+    
+        def replace_resource_type_for_jpcoar_v1(atr_vm_item):
+            # current_app.logger.debug('atr_vm_item:{0}'.format(atr_vm_item))
+            # atr_vm_item:{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}
+            if 'resourcetype' in atr_vm_item and \
+                    'resourceuri' in atr_vm_item and \
+                    atr_vm_item['resourcetype'] in current_app.config[
+                        'WEKO_SCHEMA_JPCOAR_V1_RESOURCE_TYPE_REPLACE']:
+                new_type = current_app.config[
+                    'WEKO_SCHEMA_JPCOAR_V1_RESOURCE_TYPE_REPLACE'][atr_vm_item['resourcetype']]
+                atr_vm_item['resourcetype'] = new_type
+                atr_vm_item['resourceuri'] = current_app.config[
+                    'RESOURCE_TYPE_URI'][new_type]
+    
+        def replace_resource_type_for_jpcoar_v2(atr_vm_item):
+            # current_app.logger.debug('atr_vm_item:{0}'.format(atr_vm_item))
+            # atr_vm_item:{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}
+            if 'resourcetype' in atr_vm_item and \
+                    'resourceuri' in atr_vm_item and \
+                    atr_vm_item['resourcetype'] in current_app.config[
+                        'WEKO_SCHEMA_JPCOAR_V2_RESOURCE_TYPE_REPLACE']:
+                new_type = current_app.config[
+                    'WEKO_SCHEMA_JPCOAR_V2_RESOURCE_TYPE_REPLACE'][atr_vm_item['resourcetype']]
+                atr_vm_item['resourcetype'] = new_type
+                atr_vm_item['resourceuri'] = current_app.config[
+                    'RESOURCE_TYPE_URI'][new_type]
+    
+        def replace_nameIdentifierScheme_for_jpcoar_v1(atr_vm_item):
+            if 'nameIdentifiers' in atr_vm_item:
+                for idx,val in enumerate(atr_vm_item['nameIdentifiers']):
+                    if val['nameIdentifierScheme'] in current_app.config['WEKO_SCHEMA_JPCOAR_V1_NAMEIDSCHEME_REPLACE']:
+                        new_type = current_app.config[
+                        'WEKO_SCHEMA_JPCOAR_V1_NAMEIDSCHEME_REPLACE'][val['nameIdentifierScheme']]
+                        val['nameIdentifierScheme'] = new_type
+    
+        def replace_nameIdentifierScheme_for_jpcoar_v2(atr_vm_item):
+            if 'nameIdentifiers' in atr_vm_item:
+                for idx,val in enumerate(atr_vm_item['nameIdentifiers']):
+                    if val['nameIdentifierScheme'] in current_app.config['WEKO_SCHEMA_JPCOAR_V2_NAMEIDSCHEME_REPLACE']:
+                        new_type = current_app.config[
+                        'WEKO_SCHEMA_JPCOAR_V2_NAMEIDSCHEME_REPLACE'][val['nameIdentifierScheme']]
+                        val['nameIdentifierScheme'] = new_type
+    
+    
+    
+        vlst = []
+        for key_item_parent, value_item_parent in sorted(self._record.items()):
+            if isinstance(value_item_parent, dict):
+                # Dict
+                # get value of the combination between record and \
+                # mapping data that is inited at __init__ function
+                mpdic = value_item_parent.get(
+                    self._schema_name) \
+                    if self._schema_name in value_item_parent else ''
+                if mpdic == "" or (
+                    self._ignore_list and key_item_parent
+                        in self._ignore_list):
+                    continue
+                # List or string
+                atr_v = value_item_parent.get('attribute_value')
+                # List of dict
+                atr_vm = value_item_parent.get('attribute_value_mlt',[])
+                # attr of name
+                atr_name = value_item_parent.get('attribute_name')
+    
+                # current_app.logger.debug("mpdic:{0}".format(mpdic))
+                # mpdic:{'date': {'@value': '=hogehoge', '@attributes': {'dateType': '=hoge'}}}
+                # current_app.logger.debug("atr_v:{0}".format(atr_v))
+                # atr_v:2021-12-01
+                # current_app.logger.debug("atr_vm:{0}".format(atr_vm))
+                # atr_vm:None
+                # current_app.logger.debug("atr_name:{0}".format(atr_name))
+                # atr_name:PubDate
+    
+                if atr_v:
+                    if isinstance(atr_v, list):
+                        atr_v = [atr_v]
+                    elif isinstance(atr_v, str):
+                        atr_v = [[atr_v]]
+                    set_value(mpdic, atr_v)
+                    # current_app.logger.debug("mpdic:{0}".format(mpdic))
+                    vlst.append(mpdic)
+                elif isinstance(atr_vm, list) and isinstance(mpdic, dict):
+                    if len(atr_vm) > 0:
+                        for atr_vm_item in atr_vm:
+                            if self._ignore_list_all:
+                                remove_hide_data(atr_vm_item, key_item_parent)
+                            if self._schema_name == current_app.config[
+                                    'WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME']:
+                                replace_resource_type_for_jpcoar_v1(atr_vm_item)
+                                replace_nameIdentifierScheme_for_jpcoar_v1(atr_vm_item)
+                            if self._schema_name == current_app.config[
+>                                   'WEKO_SCHEMA_JPCOAR_V2_SCHEMA_NAME']:
+E                                   KeyError: 'WEKO_SCHEMA_JPCOAR_V2_SCHEMA_NAME'
+
+../weko-schema-ui/weko_schema_ui/schema.py:1044: KeyError
+_____________________ test_remove_weko2_special_character ______________________
+
+    def test_remove_weko2_special_character():
+        assert remove_weko2_special_character("HOGE")=="HOGE"
+        assert remove_weko2_special_character("HOGE&EMPTY&HOGE")=="HOGEHOGE"
+        assert remove_weko2_special_character("HOGE,&EMPTY&")=="HOGE"
+        assert remove_weko2_special_character("&EMPTY&,HOGE")=="HOGE"
+        assert remove_weko2_special_character("HOGE,&EMPTY&,HOGE")=="HOGE,,HOGE"
+    
+        with patch("re.sub", return_value=","):
+>           assert remove_weko2_special_character(",,,,") == None
+E           AssertionError: assert '' == None
+E             -''
+E             +None
+
+tests/test_utils.py:1182: AssertionError
+_______________________ test_selected_value_by_language ________________________
+
+app = <Flask 'testapp'>
+meta = [{'control_number': '870', 'item_1551264308487': {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255...item_1551257036415': 'Distributor', 'subitem_1551257245638': [{...}, {...}], 'subitem_1551257339190': [{...}]}]}, ...}]
+
+    def test_selected_value_by_language(app, meta):
+        res = selected_value_by_language([], [], '', '', None, {})
+        assert res==None
+        _lang_id = 'item_1551264308487.subitem_1551255648112'
+        _val_id = 'item_1551264308487.subitem_1551255647225'
+        res = selected_value_by_language(['ja', 'en'], ['タイトル日本語', 'Title'], _lang_id, _val_id, 'en', meta[0])
+        assert res=='Title'
+        app.config['WEKO_RECORDS_UI_LANG_DISP_FLG'] = False
+        _lang_id = 'item_1551264340087.subitem_1551255898956.subitem_1551255907416'
+        _val_id = 'item_1551264340087.subitem_1551255898956.subitem_1551255905565'
+        res = selected_value_by_language(['ja'], ['作者'], _lang_id, _val_id, 'en', meta[0])
+        assert res=='作者'
+        app.config['WEKO_RECORDS_UI_LANG_DISP_FLG'] = True
+        res = selected_value_by_language(['en'], ['Creator'], _lang_id, _val_id, 'en', meta[0])
+>       assert res=='Creator'
+E       AssertionError: assert '作者' == 'Creator'
+E         - 作者
+E         + Creator
+
+tests/test_utils.py:1203: AssertionError
+______________________ test_selected_value_by_language_3 _______________________
+
+app = <Flask 'testapp'>
+
+    def test_selected_value_by_language_3(app):
+        _lang_id = 'item_titles.subitem_title_language'
+        _val_id = 'item_titles.subitem_title'
+        meta = {'item_titles': {'attribute_name': 'タイトル', 'attribute_value_mlt': [{'subitem_title': 'title_with_nolang'}, {'subitem_title': 'title_en', 'subitem_title_language': 'en'}]}}
+        res = selected_value_by_language(["en"], ['title_with_nolang','title_en'], _lang_id, _val_id, 'ja', meta)
+        assert res!='title_en'
+        assert res=='title_with_nolang'
+    
+    
+        with patch("weko_records.utils.check_info_in_metadata", return_value="en"):
+>           res = selected_value_by_language(["ja-Latn"], ['ja-Latn'], _lang_id, _val_id, 'en', meta[0])
+E           KeyError: 0
+
+tests/test_utils.py:1228: KeyError
+__________________________ test_get_show_list_author ___________________________
+
+i18n_app = <Flask 'testapp'>
+
+    def test_get_show_list_author(i18n_app):
+        _solst_dict_array = [
+            {
+                'key': 'create.creatorNames[].creatorName',
+                'option': {
+                    'show_list': True,
+                    'hide': False
+                },
+                'parent_option': {
+                    'show_list': True,
+                    'hide': False
+                }
+            },
+            {
+                'key': 'create.creatorNames[].creatorNameLang',
+                'option': {
+                    'show_list': False,
+                    'hide': True
+                },
+                'parent_option': {
+                    'show_list': False,
+                    'hide': True
+                }
+            },
+            {
+                'key': 'create.creatorMails[].creatorMail',
+                'option': {
+                    'show_list': True,
+                    'hide': False
+                },
+                'parent_option': {
+                    'show_list': True,
+                    'hide': False
+                }
+            },
+            {
+                'key': 'create.familyNames[].familyName',
+                'option': {
+                    'show_list': True,
+                    'hide': False
+                },
+                'parent_option': {
+                    'show_list': True,
+                    'hide': False
+                }
+            },
+            {
+                'key': 'create.familyNames[].familyNameLang',
+                'option': {
+                    'show_list': False,
+                    'hide': True
+                },
+                'parent_option': {
+                    'show_list': False,
+                    'hide': True
+                }
+            }
+        ]
+        _author_key = 'create'
+        _creates = [{
+            'creatorNames': [
+                {
+                    'creatorName': 'ja_name',
+                    'creatorNameLang': 'ja'
+                },
+                {
+                    'creatorName': 'en_name',
+                    'creatorNameLang': 'en'
+                },
+                {
+                    'creatorName': 'no_lang_name'
+                }
+            ],
+            'familyNames': [
+                {
+                    'familyName': 'no_lang_fname',
+                },
+                {
+                    'familyName': 'en_fname',
+                    'familyNameLang': 'en'
+                }
+            ],
+            'creatorMails': [{
+                'creatorMail': 'nii@mail.co.jp'
+            }]
+        }]
+    
+        res = get_show_list_author(_solst_dict_array, False, _author_key, _creates)
+>       assert res=={'creatorName': ['en_name'], 'familyName': ['en_fname']}
+E       AssertionError: assert [{'creatorNam...['en_fname']}] == {'creatorName'... ['en_fname']}
+E         -[{'creatorName': ['en_name'], 'familyName': ['en_fname']}]
+E         +{'creatorName': ['en_name'], 'familyName': ['en_fname']}
+E         Full diff:
+E         - [{'creatorName': ['en_name'], 'familyName': ['en_fname']}]
+E         ? -                                                        -
+E         + {'creatorName': ['en_name'], 'familyName': ['en_fname']}
+
+tests/test_utils.py:1440: AssertionError
+_______________________ test_get_show_list_author_test0 ________________________
+
+i18n_app = <Flask 'testapp'>
+
+    def test_get_show_list_author_test0(i18n_app):
+        solst_dict_array=[{'key': 'pubdate', 'title': 'PubDate', 'title_ja': 'PubDate', 'option': {'required': True, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'crtf': False, 'hidden': False, 'multiple': False, 'required': True, 'showlist': False}, 'value': ''}, {'key': 'item_1617186331708', 'title': 'Title', 'title_ja': 'Title', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': True, 'showlist': False}, 'value': ''}, {'key': 'item_1617186331708.subitem_1551255647225', 'title': 'Title', 'title_ja': 'Title', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': True, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': '0-private-nooai-guest-4-0-public-oai-guest-1-ja-,- 0-private-nooai-guest-4-0-public-oai-guest-1-en'}, {'key': 'item_1617186331708.subitem_1551255648112', 'title': 'Language', 'title_ja': 'Language', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': True, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': 'ja-,- en'}, {'key': 'item_1617186385884', 'title': 'Alternative Title', 'title_ja': 'Alternative Title', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': False}, 'value': ''}, {'key': 'item_1617186385884.subitem_1551255720400', 'title': 'Alternative Title', 'title_ja': 'Alternative Title', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': 'Alternative Title-,- Alternative Title'}, {'key': 'item_1617186385884.subitem_1551255721061', 'title': 'Language', 'title_ja': 'Language', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': 'en-,- ja'}, {'key': 'item_1617186419668', 'title': 'Creator', 'title_ja': 'Creator', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'crtf': True, 'hidden': False, 'oneline': True, 'multiple': True, 'required': False, 'showlist': True}, 'value': ''}, {'key': 'item_1617186419668.authorInputButton', 'title': '著者DBから入力', 'title_ja': '著者DBから入力', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617186419668.nameIdentifiers', 'title': '作成者識別子', 'title_ja': 'Creator Identifier', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617186419668.nameIdentifiers.nameIdentifierScheme', 'title': '作成者識別子Scheme', 'title_ja': 'Creator Identifier Scheme', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': True, 'specify_newline': True, 'hide': False}, 'value': 'WEKO-,- ORCID-,- CiNii-,- KAKEN2-,- ORCID-,- CiNii-,- KAKEN2-,- ORCID-,- CiNii-,- KAKEN2'}, {'key': 'item_1617186419668.nameIdentifiers.nameIdentifierURI', 'title': '作成者識別子URI', 'title_ja': 'Creator Identifier URI', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': True, 'specify_newline': True, 'hide': False}, 'value': 'https://orcid.org/-,- https://ci.nii.ac.jp/-,- https://nrid.nii.ac.jp/nrid/xxxxxxx-,- https://orcid.org/yyyyyy-,- https://ci.nii.ac.jp/author/yyyyyy-,- https://nrid.nii.ac.jp/nrid/yyyyyy-,- https://orcid.org/zzzzzzz-,- https://ci.nii.ac.jp/author/zzzzzzz-,- https://kaken.nii.ac.jp/'}, {'key': 'item_1617186419668.nameIdentifiers.nameIdentifier', 'title': '作成者識別子', 'title_ja': 'Creator Identifier', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': True, 'specify_newline': True, 'hide': False}, 'value': '4-,- xxxxxxx-,- xxxxxxx-,- xxxxxxx-,- yyyyyy-,- yyyyyy-,- yyyyyy-,- zzzzzzz-,- zzzzzzz-,- zzzzzzz'}, {'key': 'item_1617186419668.creatorNames', 'title': '作成者姓名', 'title_ja': 'Creator Name', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617186419668.creatorNames.creatorName', 'title': '姓名', 'title_ja': 'Name', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': True, 'specify_newline': True, 'hide': False}, 'value': '情報, 太郎-,- ジョウホウ\t タロウ-,- Joho\t Taro-,- 情報, 太郎-,- ジョウホウ\t タロウ-,- Joho\t Taro-,- 情報, 太郎-,- ジョウホウ\t タロウ-,- Joho\t Taro'}, {'key': 'item_1617186419668.creatorNames.creatorNameLang', 'title': '言語', 'title_ja': 'Language', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': True, 'specify_newline': True, 'hide': False}, 'value': 'ja-,- ja-Kana-,- en-,- ja-,- ja-Kana-,- en-,- ja-,- ja-Kana-,- en'}, {'key': 'item_1617186419668.familyNames', 'title': '作成者姓', 'title_ja': 'Creator Family Name', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617186419668.familyNames.familyName', 'title': '姓', 'title_ja': 'Family Name', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': True, 'specify_newline': True, 'hide': False}, 'value': '情報-,- ジョウホウ-,- Joho-,- 情報-,- ジョウホウ-,- Joho-,- 情報-,- ジョウホウ-,- Joho'}, {'key': 'item_1617186419668.familyNames.familyNameLang', 'title': '言語', 'title_ja': 'Language', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': True, 'specify_newline': True, 'hide': False}, 'value': 'ja-,- ja-Kana-,- en-,- ja-,- ja-Kana-,- en-,- ja-,- ja-Kana-,- en'}, {'key': 'item_1617186419668.givenNames', 'title': '作成者名', 'title_ja': 'Creator Given Name', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617186419668.givenNames.givenName', 'title': '名', 'title_ja': 'Given Name', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': True, 'specify_newline': True, 'hide': False}, 'value': '太郎-,- タロウ-,- Taro-,- 太郎-,- タロウ-,- Taro-,- 太郎-,- タロウ-,- Taro'}, {'key': 'item_1617186419668.givenNames.givenNameLang', 'title': '言語', 'title_ja': 'Language', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': True, 'specify_newline': True, 'hide': False}, 'value': 'ja-,- ja-Kana-,- en-,- ja-,- ja-Kana-,- en-,- ja-,- ja-Kana-,- en'}, {'key': 'item_1617186419668.creatorAlternatives', 'title': '作成者別名', 'title_ja': 'Creator Alternative Name', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617186419668.creatorAlternatives.creatorAlternative', 'title': '別名', 'title_ja': 'Alternative Name', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617186419668.creatorAlternatives.creatorAlternativeLang', 'title': '言語', 'title_ja': 'Language', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617186419668.creatorMails', 'title': '作成者メールアドレス', 'title_ja': 'Creator Email Address', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617186419668.creatorMails.creatorMail', 'title': 'メールアドレス', 'title_ja': 'Email Address', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': True, 'specify_newline': True, 'hide': False}, 'value': 'wekosoftware@nii.ac.jp-,- wekosoftware@nii.ac.jp-,- wekosoftware@nii.ac.jp'}, {'key': 'item_1617186419668.creatorAffiliations', 'title': '作成者所属', 'title_ja': 'Affiliation Name Identifier', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617186419668.creatorAffiliations.affiliationNameIdentifiers', 'title': '所属機関識別子', 'title_ja': 'Affiliation Name Identifier', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617186419668.creatorAffiliations.affiliationNameIdentifiers.affiliationNameIdentifier', 'title': '所属機関識別子', 'title_ja': 'Affiliation Name Identifier', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': True, 'specify_newline': True, 'hide': False}, 'value': '0000000121691048'}, {'key': 'item_1617186419668.creatorAffiliations.affiliationNameIdentifiers.affiliationNameIdentifierScheme', 'title': '所属機関識別子スキーマ', 'title_ja': 'Affiliation Name Identifier Scheme', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': True, 'specify_newline': True, 'hide': False}, 'value': 'ISNI'}, {'key': 'item_1617186419668.creatorAffiliations.affiliationNameIdentifiers.affiliationNameIdentifierURI', 'title': '所属機関識別子URI', 'title_ja': 'Affiliation Name Identifier URI', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': True, 'specify_newline': True, 'hide': False}, 'value': 'http://isni.org/isni/0000000121691048'}, {'key': 'item_1617186419668.creatorAffiliations.affiliationNames', 'title': '所属機関名', 'title_ja': 'Affiliation Name', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617186419668.creatorAffiliations.affiliationNames.affiliationName', 'title': '所属機関名', 'title_ja': 'Affiliation Name', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': True, 'specify_newline': True, 'hide': False}, 'value': 'University'}, {'key': 'item_1617186419668.creatorAffiliations.affiliationNames.affiliationNameLang', 'title': '言語', 'title_ja': 'Language', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': True, 'specify_newline': True, 'hide': False}, 'value': 'en'}, {'key': 'item_1617349709064', 'title': 'Contributor', 'title_ja': 'Contributor', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': False}, 'value': ''}, {'key': 'item_1617349709064.contributorType', 'title': '寄与者タイプ', 'title_ja': 'Contributor Type', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': 'ContactPerson'}, {'key': 'item_1617349709064.nameIdentifiers', 'title': '寄与者識別子', 'title_ja': 'Contributor Identifier', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617349709064.nameIdentifiers.nameIdentifierScheme', 'title': '寄与者識別子Scheme', 'title_ja': 'Contributor Identifier Scheme', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': 'ORCID-,- CiNii-,- KAKEN2'}, {'key': 'item_1617349709064.nameIdentifiers.nameIdentifierURI', 'title': '寄与者識別子URI', 'title_ja': 'Contributor Identifier URI', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': 'https://orcid.org/-,- https://ci.nii.ac.jp/-,- https://kaken.nii.ac.jp/'}, {'key': 'item_1617349709064.nameIdentifiers.nameIdentifier', 'title': '寄与者識別子', 'title_ja': 'Contributor Identifier', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': 'xxxxxxx-,- xxxxxxx-,- xxxxxxx'}, {'key': 'item_1617349709064.contributorNames', 'title': '寄与者姓名', 'title_ja': 'Contributor Name', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617349709064.contributorNames.contributorName', 'title': '姓名', 'title_ja': 'Name', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': '情報, 太郎-,- ジョウホウ\t タロウ-,- Joho\t Taro'}, {'key': 'item_1617349709064.contributorNames.lang', 'title': '言語', 'title_ja': 'Language', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': 'ja-,- ja-Kana-,- en'}, {'key': 'item_1617349709064.familyNames', 'title': '寄与者姓', 'title_ja': 'Contributor Family Name', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617349709064.familyNames.familyName', 'title': '姓', 'title_ja': 'Family Name', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': '情報-,- ジョウホウ-,- Joho'}, {'key': 'item_1617349709064.familyNames.familyNameLang', 'title': '言語', 'title_ja': 'Language', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': 'ja-,- ja-Kana-,- en'}, {'key': 'item_1617349709064.givenNames', 'title': '寄与者名', 'title_ja': 'Contributor Given Name', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617349709064.givenNames.givenName', 'title': '名', 'title_ja': 'Given Name', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': '太郎-,- タロウ-,- Taro'}, {'key': 'item_1617349709064.givenNames.givenNameLang', 'title': '言語', 'title_ja': 'Language', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': 'ja-,- ja-Kana-,- en'}, {'key': 'item_1617349709064.contributorAlternatives', 'title': '寄与者別名', 'title_ja': 'Contributor Alternative Name', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617349709064.contributorAlternatives.contributorAlternative', 'title': '別名', 'title_ja': 'Alternative Name', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617349709064.contributorAlternatives.contributorAlternativeLang', 'title': '言語', 'title_ja': 'Language', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617349709064.contributorAffiliations', 'title': '寄与者所属', 'title_ja': 'Affiliation Name Identifier', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617349709064.contributorAffiliations.contributorAffiliationNameIdentifiers', 'title': '所属機関識別子', 'title_ja': 'Affiliation Name Identifier', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617349709064.contributorAffiliations.contributorAffiliationNameIdentifiers.contributorAffiliationNameIdentifier', 'title': '所属機関識別子', 'title_ja': 'Affiliation Name Identifier', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617349709064.contributorAffiliations.contributorAffiliationNameIdentifiers.contributorAffiliationScheme', 'title': '所属機関識別子スキーマ', 'title_ja': 'Affiliation Name Identifier Scheme', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617349709064.contributorAffiliations.contributorAffiliationNameIdentifiers.contributorAffiliationURI', 'title': '所属機関識別子URI', 'title_ja': 'Affiliation Name Identifier URI', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617349709064.contributorAffiliations.contributorAffiliationNames', 'title': '所属機関名', 'title_ja': 'Affiliation Name', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617349709064.contributorAffiliations.contributorAffiliationNames.contributorAffiliationName', 'title': '所属機関名', 'title_ja': 'Affiliation Name', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617349709064.contributorAffiliations.contributorAffiliationNames.contributorAffiliationNameLang', 'title': '言語', 'title_ja': 'Language', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617349709064.contributorMails', 'title': '寄与者メールアドレス', 'title_ja': 'Contributor Email Address', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617349709064.contributorMails.contributorMail', 'title': 'メールアドレス', 'title_ja': 'Email Address', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': 'wekosoftware@nii.ac.jp'}, {'key': 'item_1617349709064.authorInputButton', 'title': '著者DBから入力', 'title_ja': '著者DBから入力', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617186476635', 'title': 'Access Rights', 'title_ja': 'Access Rights', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': False, 'required': False, 'showlist': False}, 'value': ''}, {'key': 'item_1617186476635.subitem_1522299639480', 'title': 'アクセス権', 'title_ja': 'Access Rights', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': 'open access'}, {'key': 'item_1617186476635.subitem_1600958577026', 'title': 'アクセス権URI', 'title_ja': 'Access Rights URI', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': 'http://purl.org/coar/access_right/c_abf2'}, {'key': 'item_1617351524846', 'title': 'APC', 'title_ja': 'APC', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': False, 'required': False, 'showlist': False}, 'value': ''}, {'key': 'item_1617351524846.subitem_1523260933860', 'title': 'APC', 'title_ja': 'APC', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': 'Unknown'}, {'key': 'item_1617186499011', 'title': 'Rights', 'title_ja': 'Rights', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'crtf': False, 'hidden': False, 'oneline': True, 'multiple': True, 'required': False, 'showlist': False}, 'value': ''}, {'key': 'item_1617186499011.subitem_1522650717957', 'title': '言語', 'title_ja': 'Language', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': 'ja'}, {'key': 'item_1617186499011.subitem_1522650727486', 'title': '権利情報Resource', 'title_ja': 'Rights Information Resource', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': 'http://localhost'}, {'key': 'item_1617186499011.subitem_1522651041219', 'title': '権利情報', 'title_ja': 'Rights Information', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': 'Rights Information'}, {'key': 'item_1617610673286', 'title': 'Rights Holder', 'title_ja': 'Rights Holder', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': False}, 'value': ''}, {'key': 'item_1617610673286.nameIdentifiers', 'title': '権利者識別子', 'title_ja': 'Right Holder Identifier', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617610673286.nameIdentifiers.nameIdentifierScheme', 'title': '権利者識別子Scheme', 'title_ja': 'Right Holder Identifier Scheme', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': 'ORCID'}, {'key': 'item_1617610673286.nameIdentifiers.nameIdentifierURI', 'title': '権利者識別子URI', 'title_ja': 'Right Holder Identifier URI', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': 'https://orcid.org/'}, {'key': 'item_1617610673286.nameIdentifiers.nameIdentifier', 'title': '権利者識別子', 'title_ja': 'Right Holder Identifier', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': 'xxxxxx'}, {'key': 'item_1617610673286.rightHolderNames', 'title': '権利者名', 'title_ja': 'Right Holder Name', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617610673286.rightHolderNames.rightHolderLanguage', 'title': '言語', 'title_ja': 'Language', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': 'ja'}, {'key': 'item_1617610673286.rightHolderNames.rightHolderName', 'title': '権利者名', 'title_ja': 'Right Holder Name', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': 'Right Holder Name'}, {'key': 'item_1617186609386', 'title': 'Subject', 'title_ja': 'Subject', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': False}, 'value': ''}, {'key': 'item_1617186609386.subitem_1522299896455', 'title': '言語', 'title_ja': 'Language', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': 'ja'}, {'key': 'item_1617186609386.subitem_1522300014469', 'title': '主題Scheme', 'title_ja': 'Subject Scheme', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': 'Other'}, {'key': 'item_1617186609386.subitem_1522300048512', 'title': '主題URI', 'title_ja': 'Subject URI', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': 'http://localhost/'}, {'key': 'item_1617186609386.subitem_1523261968819', 'title': '主題', 'title_ja': 'Subject', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': 'Sibject1'}, {'key': 'item_1617186626617', 'title': 'Description', 'title_ja': 'Description', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': False}, 'value': ''}, {'key': 'item_1617186626617.subitem_description_type', 'title': '内容記述タイプ', 'title_ja': 'Description Type', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': 'Abstract-,- Abstract'}, {'key': 'item_1617186626617.subitem_description', 'title': '内容記述', 'title_ja': 'Description', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': 'Description\nDescription\nDescription-,- 概要\n概要\n概要\n概要'}, {'key': 'item_1617186626617.subitem_description_language', 'title': '言語', 'title_ja': 'Language', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': 'en-,- ja'}, {'key': 'item_1617186643794', 'title': 'Publisher', 'title_ja': 'Publisher', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': False}, 'value': ''}, {'key': 'item_1617186643794.subitem_1522300295150', 'title': '言語', 'title_ja': 'Language', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': 'en'}, {'key': 'item_1617186643794.subitem_1522300316516', 'title': '出版者', 'title_ja': 'Publisher', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': 'Publisher'}, {'key': 'item_1617186660861', 'title': 'Date', 'title_ja': 'Date', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'crtf': False, 'hidden': True, 'oneline': False, 'multiple': True, 'required': False, 'showlist': False}, 'value': ''}, {'key': 'item_1617186660861.subitem_1522300695726', 'title': '日付タイプ', 'title_ja': 'Date Type', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': True, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': True}, 'value': 'Available'}, {'key': 'item_1617186660861.subitem_1522300722591', 'title': '日付', 'title_ja': 'Date', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': True, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': True}, 'value': '2021-06-30'}, {'key': 'item_1617186702042', 'title': 'Language', 'title_ja': 'Language', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': False}, 'value': ''}, {'key': 'item_1617186702042.subitem_1551255818386', 'title': 'Language', 'title_ja': 'Language', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': 'jpn'}, {'key': 'item_1617258105262', 'title': 'Resource Type', 'title_ja': 'Resource Type', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': False, 'required': True, 'showlist': False}, 'value': ''}, {'key': 'item_1617258105262.resourcetype', 'title': '資源タイプ', 'title_ja': 'Resource Type', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': True, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': 'conference paper'}, {'key': 'item_1617258105262.resourceuri', 'title': '資源タイプ識別子', 'title_ja': 'Resource Type Identifier', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': True, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': 'http://purl.org/coar/resource_type/c_5794'}, {'key': 'item_1617349808926', 'title': 'Version', 'title_ja': 'Version', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': False, 'required': False, 'showlist': False}, 'value': ''}, {'key': 'item_1617349808926.subitem_1523263171732', 'title': 'バージョン情報', 'title_ja': 'Version', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': 'Version'}, {'key': 'item_1617265215918', 'title': 'Version Type', 'title_ja': 'Version Type', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': False, 'required': False, 'showlist': False}, 'value': ''}, {'key': 'item_1617265215918.subitem_1522305645492', 'title': '出版タイプ', 'title_ja': 'Version Type', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': 'AO'}, {'key': 'item_1617265215918.subitem_1600292170262', 'title': '出版タイプResource', 'title_ja': 'Version Type Resource', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': 'http://purl.org/coar/version/c_b1a7d7d4d402bcce'}, {'key': 'item_1617186783814', 'title': 'Identifier', 'title_ja': 'Identifier', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': False}, 'value': ''}, {'key': 'item_1617186783814.subitem_identifier_uri', 'title': '識別子', 'title_ja': 'Identifier', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': 'http://localhost'}, {'key': 'item_1617186783814.subitem_identifier_type', 'title': '識別子タイプ', 'title_ja': 'Identifier Type', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': 'URI'}, {'key': 'item_1617186819068', 'title': 'Identifier Registration', 'title_ja': 'Identifier Registration', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': False, 'required': False, 'showlist': False}, 'value': ''}, {'key': 'item_1617186819068.subitem_identifier_reg_text', 'title': 'ID登録', 'title_ja': 'Identifier Registration', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617186819068.subitem_identifier_reg_type', 'title': 'ID登録タイプ', 'title_ja': 'Identifier Registration Type', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617353299429', 'title': 'Relation', 'title_ja': 'Relation', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': False}, 'value': ''}, {'key': 'item_1617353299429.subitem_1522306207484', 'title': '関連タイプ', 'title_ja': 'Relation Type', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': 'isVersionOf'}, {'key': 'item_1617353299429.subitem_1522306287251', 'title': '関連識別子', 'title_ja': 'Relation Identifier', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617353299429.subitem_1522306287251.subitem_1522306382014', 'title': '識別子タイプ', 'title_ja': 'Identifier Type', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': 'arXiv'}, {'key': 'item_1617353299429.subitem_1522306287251.subitem_1522306436033', 'title': '関連識別子', 'title_ja': 'Relation Identifier', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': 'xxxxx'}, {'key': 'item_1617353299429.subitem_1523320863692', 'title': '関連名称', 'title_ja': 'Related Title', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617353299429.subitem_1523320863692.subitem_1523320867455', 'title': '言語', 'title_ja': 'Language', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': 'en'}, {'key': 'item_1617353299429.subitem_1523320863692.subitem_1523320909613', 'title': '関連名称', 'title_ja': 'Related Title', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': 'Related Title'}, {'key': 'item_1617186859717', 'title': 'Temporal', 'title_ja': 'Temporal', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': False}, 'value': ''}, {'key': 'item_1617186859717.subitem_1522658018441', 'title': '言語', 'title_ja': 'Language', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': 'en'}, {'key': 'item_1617186859717.subitem_1522658031721', 'title': '時間的範囲', 'title_ja': 'Temporal', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': 'Temporal'}, {'key': 'item_1617186882738', 'title': 'Geo Location', 'title_ja': 'Geo Location', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': False}, 'value': ''}, {'key': 'item_1617186882738.subitem_geolocation_point', 'title': '位置情報（点）', 'title_ja': 'Geo Location Point', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617186882738.subitem_geolocation_point.subitem_point_longitude', 'title': '経度', 'title_ja': 'Point Longitude', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617186882738.subitem_geolocation_point.subitem_point_latitude', 'title': '緯度', 'title_ja': 'Point Latitude', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617186882738.subitem_geolocation_box', 'title': '位置情報（空間）', 'title_ja': 'Geo Location Box', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617186882738.subitem_geolocation_box.subitem_west_longitude', 'title': '西部経度', 'title_ja': 'West Bound Longitude', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617186882738.subitem_geolocation_box.subitem_east_longitude', 'title': '東部経度', 'title_ja': 'East Bound Longitude', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617186882738.subitem_geolocation_box.subitem_south_latitude', 'title': '南部緯度', 'title_ja': 'South Bound Latitude', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617186882738.subitem_geolocation_box.subitem_north_latitude', 'title': '北部緯度', 'title_ja': 'North Bound Latitude', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617186882738.subitem_geolocation_place', 'title': '位置情報（自由記述）', 'title_ja': 'Geo Location Place', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617186882738.subitem_geolocation_place.subitem_geolocation_place_text', 'title': '位置情報（自由記述）', 'title_ja': 'Geo Location Place', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': 'Japan'}, {'key': 'item_1617186901218', 'title': 'Funding Reference', 'title_ja': 'Funding Reference', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': False}, 'value': ''}, {'key': 'item_1617186901218.subitem_1522399143519', 'title': '助成機関識別子', 'title_ja': 'Funder Identifier', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617186901218.subitem_1522399143519.subitem_1522399281603', 'title': '助成機関識別子タイプ', 'title_ja': 'Funder Identifier Type', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': 'ISNI'}, {'key': 'item_1617186901218.subitem_1522399143519.subitem_1522399333375', 'title': '助成機関識別子', 'title_ja': 'Funder Identifier', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': 'http://xxx'}, {'key': 'item_1617186901218.subitem_1522399412622', 'title': '助成機関名', 'title_ja': 'Funder Name', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617186901218.subitem_1522399412622.subitem_1522399416691', 'title': '言語', 'title_ja': 'Language', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': 'en'}, {'key': 'item_1617186901218.subitem_1522399412622.subitem_1522737543681', 'title': '助成機関名', 'title_ja': 'Funder Name', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': 'Funder Name'}, {'key': 'item_1617186901218.subitem_1522399571623', 'title': '研究課題番号', 'title_ja': 'Award Number', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617186901218.subitem_1522399571623.subitem_1522399585738', 'title': '研究課題URI', 'title_ja': 'Award URI', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': 'Award URI'}, {'key': 'item_1617186901218.subitem_1522399571623.subitem_1522399628911', 'title': '研究課題番号', 'title_ja': 'Award Number', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': 'Award Number'}, {'key': 'item_1617186901218.subitem_1522399651758', 'title': '研究課題名', 'title_ja': 'Award Title', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617186901218.subitem_1522399651758.subitem_1522721910626', 'title': '言語', 'title_ja': 'Language', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': 'en'}, {'key': 'item_1617186901218.subitem_1522399651758.subitem_1522721929892', 'title': '研究課題名', 'title_ja': 'Award Title', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': 'Award Title'}, {'key': 'item_1617186920753', 'title': 'Source Identifier', 'title_ja': 'Source Identifier', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': False}, 'value': ''}, {'key': 'item_1617186920753.subitem_1522646500366', 'title': '収録物識別子タイプ', 'title_ja': 'Source Identifier Type', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': 'ISSN'}, {'key': 'item_1617186920753.subitem_1522646572813', 'title': '収録物識別子', 'title_ja': 'Source Identifier', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': 'xxxx-xxxx-xxxx'}, {'key': 'item_1617186941041', 'title': 'Source Title', 'title_ja': 'Source Title', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': True}, 'value': ''}, {'key': 'item_1617186941041.subitem_1522650068558', 'title': '言語', 'title_ja': 'Language', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': True, 'specify_newline': False, 'hide': False}, 'value': 'en'}, {'key': 'item_1617186941041.subitem_1522650091861', 'title': '収録物名', 'title_ja': 'Source Title', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': True, 'specify_newline': False, 'hide': False}, 'value': 'Source Title'}, {'key': 'item_1617186959569', 'title': 'Volume Number', 'title_ja': 'Volume Number', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': False, 'required': False, 'showlist': True}, 'value': ''}, {'key': 'item_1617186959569.subitem_1551256328147', 'title': 'Volume Number', 'title_ja': 'Volume Number', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': True, 'specify_newline': False, 'hide': False}, 'value': '1'}, {'key': 'item_1617186981471', 'title': 'Issue Number', 'title_ja': 'Issue Number', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': False, 'required': False, 'showlist': True}, 'value': ''}, {'key': 'item_1617186981471.subitem_1551256294723', 'title': 'Issue Number', 'title_ja': 'Issue Number', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': True, 'specify_newline': False, 'hide': False}, 'value': '111'}, {'key': 'item_1617186994930', 'title': 'Number of Pages', 'title_ja': 'Number of Pages', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': False, 'required': False, 'showlist': True}, 'value': ''}, {'key': 'item_1617186994930.subitem_1551256248092', 'title': 'Number of Pages', 'title_ja': 'Number of Pages', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': True, 'specify_newline': False, 'hide': False}, 'value': '12'}, {'key': 'item_1617187024783', 'title': 'Page Start', 'title_ja': 'Page Start', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': False, 'required': False, 'showlist': True}, 'value': ''}, {'key': 'item_1617187024783.subitem_1551256198917', 'title': 'Page Start', 'title_ja': 'Page Start', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': True, 'specify_newline': False, 'hide': False}, 'value': '1'}, {'key': 'item_1617187045071', 'title': 'Page End', 'title_ja': 'Page End', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': False, 'required': False, 'showlist': True}, 'value': ''}, {'key': 'item_1617187045071.subitem_1551256185532', 'title': 'Page End', 'title_ja': 'Page End', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': True, 'specify_newline': False, 'hide': False}, 'value': '3'}, {'key': 'item_1617187056579', 'title': 'Bibliographic Information', 'title_ja': 'Bibliographic Information', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': False, 'required': False, 'showlist': True}, 'value': ''}, {'key': 'item_1617187056579.bibliographic_titles', 'title': '雑誌名', 'title_ja': 'Journal Title', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617187056579.bibliographic_titles.bibliographic_title', 'title': 'タイトル', 'title_ja': 'Title', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617187056579.bibliographic_titles.bibliographic_titleLang', 'title': '言語', 'title_ja': 'Language', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617187056579.bibliographicVolumeNumber', 'title': '巻', 'title_ja': 'Volume Number', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617187056579.bibliographicIssueNumber', 'title': '号', 'title_ja': 'Issue Number', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617187056579.bibliographicPageStart', 'title': '開始ページ', 'title_ja': 'Page Start', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617187056579.bibliographicPageEnd', 'title': '終了ページ', 'title_ja': 'Page End', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617187056579.bibliographicNumberOfPages', 'title': 'ページ数', 'title_ja': 'Number of Page', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617187056579.bibliographicIssueDates', 'title': '発行日', 'title_ja': 'Issue Date', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617187056579.bibliographicIssueDates.bibliographicIssueDate', 'title': '日付', 'title_ja': 'Date', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617187056579.bibliographicIssueDates.bibliographicIssueDateType', 'title': '日付タイプ', 'title_ja': 'Date Type', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617187087799', 'title': 'Dissertation Number', 'title_ja': 'Dissertation Number', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': False, 'required': False, 'showlist': True}, 'value': ''}, {'key': 'item_1617187087799.subitem_1551256171004', 'title': 'Dissertation Number', 'title_ja': 'Dissertation Number', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617187112279', 'title': 'Degree Name', 'title_ja': 'Degree Name', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': True}, 'value': ''}, {'key': 'item_1617187112279.subitem_1551256126428', 'title': 'Degree Name', 'title_ja': 'Degree Name', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': True, 'specify_newline': False, 'hide': False}, 'value': 'Degree Name'}, {'key': 'item_1617187112279.subitem_1551256129013', 'title': 'Language', 'title_ja': 'Language', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': True, 'specify_newline': False, 'hide': False}, 'value': 'en'}, {'key': 'item_1617187136212', 'title': 'Date Granted', 'title_ja': 'Date Granted', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': False, 'required': False, 'showlist': True}, 'value': ''}, {'key': 'item_1617187136212.subitem_1551256096004', 'title': 'Date Granted', 'title_ja': 'Date Granted', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': True, 'specify_newline': False, 'hide': False}, 'value': '2021-06-30'}, {'key': 'item_1617944105607', 'title': 'Degree Grantor', 'title_ja': 'Degree Grantor', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': True}, 'value': ''}, {'key': 'item_1617944105607.subitem_1551256015892', 'title': 'Degree Grantor Name Identifier', 'title_ja': 'Degree Grantor Name Identifier', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617944105607.subitem_1551256015892.subitem_1551256027296', 'title': 'Degree Grantor Name Identifier', 'title_ja': 'Degree Grantor Name Identifier', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': True, 'specify_newline': False, 'hide': False}, 'value': 'xxxxxx'}, {'key': 'item_1617944105607.subitem_1551256015892.subitem_1551256029891', 'title': 'Degree Grantor Name Identifier Scheme', 'title_ja': 'Degree Grantor Name Identifier Scheme', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': True, 'specify_newline': False, 'hide': False}, 'value': 'kakenhi'}, {'key': 'item_1617944105607.subitem_1551256037922', 'title': 'Degree Grantor Name', 'title_ja': 'Degree Grantor Name', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617944105607.subitem_1551256037922.subitem_1551256042287', 'title': 'Degree Grantor Name', 'title_ja': 'Degree Grantor Name', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': True, 'specify_newline': False, 'hide': False}, 'value': 'Degree Grantor Name'}, {'key': 'item_1617944105607.subitem_1551256037922.subitem_1551256047619', 'title': 'Language', 'title_ja': 'Language', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': True, 'specify_newline': False, 'hide': False}, 'value': 'en'}, {'key': 'item_1617187187528', 'title': 'Conference', 'title_ja': 'Conference', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'crtf': True, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': True}, 'value': ''}, {'key': 'item_1617187187528.subitem_1599711633003', 'title': 'Conference Name', 'title_ja': 'Conference Name', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617187187528.subitem_1599711633003.subitem_1599711636923', 'title': 'Conference Name', 'title_ja': 'Conference Name', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': True, 'specify_newline': True, 'hide': False}, 'value': 'Conference Name'}, {'key': 'item_1617187187528.subitem_1599711633003.subitem_1599711645590', 'title': 'Language', 'title_ja': 'Language', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': True, 'specify_newline': True, 'hide': False}, 'value': 'ja'}, {'key': 'item_1617187187528.subitem_1599711655652', 'title': 'Conference Sequence', 'title_ja': 'Conference Sequence', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': True, 'specify_newline': True, 'hide': False}, 'value': '1'}, {'key': 'item_1617187187528.subitem_1599711660052', 'title': 'Conference Sponsor', 'title_ja': 'Conference Sponsor', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617187187528.subitem_1599711660052.subitem_1599711680082', 'title': 'Conference Sponsor', 'title_ja': 'Conference Sponsor', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': True, 'specify_newline': True, 'hide': False}, 'value': 'Sponsor'}, {'key': 'item_1617187187528.subitem_1599711660052.subitem_1599711686511', 'title': 'Language', 'title_ja': 'Language', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': True, 'specify_newline': True, 'hide': False}, 'value': 'ja'}, {'key': 'item_1617187187528.subitem_1599711699392', 'title': 'Conference Date', 'title_ja': 'Conference Date', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617187187528.subitem_1599711699392.subitem_1599711731891', 'title': 'Start Year', 'title_ja': 'Start Year', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': True, 'specify_newline': True, 'hide': False}, 'value': '2000'}, {'key': 'item_1617187187528.subitem_1599711699392.subitem_1599711727603', 'title': 'Start Month', 'title_ja': 'Start Month', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': True, 'specify_newline': True, 'hide': False}, 'value': '12'}, {'key': 'item_1617187187528.subitem_1599711699392.subitem_1599711712451', 'title': 'Start Day', 'title_ja': 'Start Day', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': True, 'specify_newline': True, 'hide': False}, 'value': '1'}, {'key': 'item_1617187187528.subitem_1599711699392.subitem_1599711743722', 'title': 'End Year', 'title_ja': 'End Year', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': True, 'specify_newline': True, 'hide': False}, 'value': '2020'}, {'key': 'item_1617187187528.subitem_1599711699392.subitem_1599711739022', 'title': 'End Month', 'title_ja': 'End Month', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': True, 'specify_newline': True, 'hide': False}, 'value': '12'}, {'key': 'item_1617187187528.subitem_1599711699392.subitem_1599711704251', 'title': 'Conference Date', 'title_ja': 'Conference Date', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': True, 'specify_newline': True, 'hide': False}, 'value': '2020/12/11'}, {'key': 'item_1617187187528.subitem_1599711699392.subitem_1599711735410', 'title': 'End Day', 'title_ja': 'End Day', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': True, 'specify_newline': True, 'hide': False}, 'value': '1'}, {'key': 'item_1617187187528.subitem_1599711699392.subitem_1599711745532', 'title': 'Language', 'title_ja': 'Language', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': True, 'specify_newline': True, 'hide': False}, 'value': 'ja'}, {'key': 'item_1617187187528.subitem_1599711758470', 'title': 'Conference Venue', 'title_ja': 'Conference Venue', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617187187528.subitem_1599711758470.subitem_1599711769260', 'title': 'Conference Venue', 'title_ja': 'Conference Venue', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': True, 'specify_newline': True, 'hide': False}, 'value': 'Conference Venue'}, {'key': 'item_1617187187528.subitem_1599711758470.subitem_1599711775943', 'title': 'Language', 'title_ja': 'Language', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': True, 'specify_newline': True, 'hide': False}, 'value': 'ja'}, {'key': 'item_1617187187528.subitem_1599711788485', 'title': 'Conference Place', 'title_ja': 'Conference Place', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617187187528.subitem_1599711788485.subitem_1599711798761', 'title': 'Conference Place', 'title_ja': 'Conference Place', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': True, 'specify_newline': True, 'hide': False}, 'value': 'Conference Place'}, {'key': 'item_1617187187528.subitem_1599711788485.subitem_1599711803382', 'title': 'Language', 'title_ja': 'Language', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': True, 'specify_newline': True, 'hide': False}, 'value': 'ja'}, {'key': 'item_1617187187528.subitem_1599711813532', 'title': 'Conference Country', 'title_ja': 'Conference Country', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': True, 'specify_newline': True, 'hide': False}, 'value': 'JPN'}, {'key': 'item_1617605131499', 'title': 'File', 'title_ja': 'File', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': True}, 'value': ''}, {'key': 'item_1617605131499.filename', 'title': '表示名', 'title_ja': 'FileName', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617605131499.url', 'title': '本文URL', 'title_ja': 'Text URL', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617605131499.url.url', 'title': '本文URL', 'title_ja': 'Text URL', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617605131499.url.label', 'title': 'ラベル', 'title_ja': 'Label', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617605131499.url.objectType', 'title': 'オブジェクトタイプ', 'title_ja': 'Object Type', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617605131499.format', 'title': 'フォーマット', 'title_ja': 'Format', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617605131499.filesize', 'title': 'サイズ', 'title_ja': 'Size', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617605131499.filesize.value', 'title': 'サイズ', 'title_ja': 'Size', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617605131499.fileDate', 'title': '日付', 'title_ja': 'Date', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617605131499.fileDate.fileDateType', 'title': '日付タイプ', 'title_ja': 'Date Type', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617605131499.fileDate.fileDateValue', 'title': '日付', 'title_ja': 'Date', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617605131499.version', 'title': 'バージョン情報', 'title_ja': 'Version Information', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617605131499.displaytype', 'title': '表示形式', 'title_ja': 'Preview', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617605131499.licensetype', 'title': 'ライセンス', 'title_ja': 'License', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617605131499.licensefree', 'title': '', 'title_ja': '自由ライセンス', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617605131499.accessrole', 'title': 'アクセス', 'title_ja': 'Access', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617605131499.date[0].dateValue', 'title': '公開日', 'title_ja': 'Opendate', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617605131499.groups', 'title': 'グループ', 'title_ja': 'Group', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'item_1617620223087', 'title': 'Heading', 'title_ja': 'Heading', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': False}, 'value': ''}, {'key': 'item_1617620223087.subitem_1565671149650', 'title': 'Language', 'title_ja': 'Language', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': 'ja-,- en'}, {'key': 'item_1617620223087.subitem_1565671169640', 'title': 'Banner Headline', 'title_ja': 'Banner Headline', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': 'Banner Headline-,- Banner Headline'}, {'key': 'item_1617620223087.subitem_1565671178623', 'title': 'Subheading', 'title_ja': 'Subheading', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False}, 'value': 'Subheading-,- Subheding'}, {'key': 'system_identifier_doi', 'title': 'Persistent Identifier(DOI)', 'title_ja': 'Persistent Identifier(DOI)', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'parentkey.subitem_systemidt_identifier', 'title': 'SYSTEMIDT Identifier', 'title_ja': 'SYSTEMIDT Identifier', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'parentkey.subitem_systemidt_identifier_type', 'title': 'SYSTEMIDT Identifier Type', 'title_ja': 'SYSTEMIDT Identifier Type', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'system_identifier_hdl', 'title': 'Persistent Identifier(HDL)', 'title_ja': 'Persistent Identifier(HDL)', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'parentkey.subitem_systemidt_identifier', 'title': 'SYSTEMIDT Identifier', 'title_ja': 'SYSTEMIDT Identifier', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'parentkey.subitem_systemidt_identifier_type', 'title': 'SYSTEMIDT Identifier Type', 'title_ja': 'SYSTEMIDT Identifier Type', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'system_identifier_uri', 'title': 'Persistent Identifier(URI)', 'title_ja': 'Persistent Identifier(URI)', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'parentkey.subitem_systemidt_identifier', 'title': 'SYSTEMIDT Identifier', 'title_ja': 'SYSTEMIDT Identifier', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'parentkey.subitem_systemidt_identifier_type', 'title': 'SYSTEMIDT Identifier Type', 'title_ja': 'SYSTEMIDT Identifier Type', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'system_file', 'title': 'File Information', 'title_ja': 'File Information', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'parentkey.subitem_systemfile_filename', 'title': 'SYSTEMFILE Filename', 'title_ja': 'SYSTEMFILE Filename', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'parentkey.subitem_systemfile_filename.subitem_systemfile_filename_label', 'title': 'SYSTEMFILE Filename Label', 'title_ja': 'SYSTEMFILE Filename Label', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'parentkey.subitem_systemfile_filename.subitem_systemfile_filename_type', 'title': 'SYSTEMFILE Filename Type', 'title_ja': 'SYSTEMFILE Filename Type', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'parentkey.subitem_systemfile_filename.subitem_systemfile_filename_uri', 'title': 'SYSTEMFILE Filename URI', 'title_ja': 'SYSTEMFILE Filename URI', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'parentkey.subitem_systemfile_mimetype', 'title': 'SYSTEMFILE MimeType', 'title_ja': 'SYSTEMFILE MimeType', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'parentkey.subitem_systemfile_size', 'title': 'SYSTEMFILE Size', 'title_ja': 'SYSTEMFILE Size', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'parentkey.subitem_systemfile_datetime', 'title': 'SYSTEMFILE DateTime', 'title_ja': 'SYSTEMFILE DateTime', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'parentkey.subitem_systemfile_datetime.subitem_systemfile_datetime_date', 'title': 'SYSTEMFILE DateTime Date', 'title_ja': 'SYSTEMFILE DateTime Date', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'parentkey.subitem_systemfile_datetime.subitem_systemfile_datetime_type', 'title': 'SYSTEMFILE DateTime Type', 'title_ja': 'SYSTEMFILE DateTime Type', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}, {'key': 'parentkey.subitem_systemfile_version', 'title': 'SYSTEMFILE Version', 'title_ja': 'SYSTEMFILE Version', 'option': {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, 'parent_option': None, 'value': ''}]
+        hide_email_flag=False
+        author_key='item_1617186419668'
+        creates=[{'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ\t タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho\t Taro', 'creatorNameLang': 'en'}], 'creatorAffiliations': [{'affiliationNames': [{'affiliationName': 'University', 'affiliationNameLang': 'en'}], 'affiliationNameIdentifiers': [{'affiliationNameIdentifierURI': 'http://isni.org/isni/0000000121691048', 'affiliationNameIdentifier': '0000000121691048', 'affiliationNameIdentifierScheme': 'ISNI'}]}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '4'}, {'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/', 'nameIdentifier': 'xxxxxxx'}, {'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/', 'nameIdentifier': 'xxxxxxx'}, {'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://nrid.nii.ac.jp/nrid/xxxxxxx', 'nameIdentifier': 'xxxxxxx'}]}, {'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ\t タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho\t Taro', 'creatorNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/yyyyyy', 'nameIdentifier': 'yyyyyy'}, {'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/author/yyyyyy', 'nameIdentifier': 'yyyyyy'}, {'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://nrid.nii.ac.jp/nrid/yyyyyy', 'nameIdentifier': 'yyyyyy'}]}, {'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ\t タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho\t Taro', 'creatorNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/zzzzzzz', 'nameIdentifier': 'zzzzzzz'}, {'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/author/zzzzzzz', 'nameIdentifier': 'zzzzzzz'}, {'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/', 'nameIdentifier': 'zzzzzzz'}]}]
+        res = get_show_list_author(solst_dict_array, hide_email_flag, author_key, creates)
+>       assert res=={'creatorName': ['Joho\t Taro', 'Joho\t Taro', 'Joho\t Taro'], 'familyName': ['Joho', 'Joho', 'Joho'], 'givenName': ['Taro', 'Taro', 'Taro'], 'affiliationName': ['University']}
+E       AssertionError: assert [{'affiliatio...e': ['Taro']}] == {'affiliationN...aro', 'Taro']}
+E         -[{'creatorName': ['Joho\t Taro'], 'familyName': ['Joho'], 'givenName': ['Taro'], 'affiliationName': ['University']}, {'creatorName': ['Joho\t Taro'], 'familyName': ['Joho'], 'givenName': ['Taro']}, {'creatorName': ['Joho\t Taro'], 'familyName': ['Joho'], 'givenName': ['Taro']}]
+E         +{'creatorName': ['Joho\t Taro', 'Joho\t Taro', 'Joho\t Taro'], 'familyName': ['Joho', 'Joho', 'Joho'], 'givenName': ['Taro', 'Taro', 'Taro'], 'affiliationName': ['University']}
+E         Full diff:
+E         - [{'affiliationName': ['University'],
+E         ? -
+E         + {'affiliationName': ['University'],
+E         +  'creatorName': ['Joho\t Taro', 'Joho\t Taro', 'Joho\t Taro'],
+E         +  'familyName': ['Joho', 'Joho', 'Joho'],
+E         +  'givenName': ['Taro', 'Taro', 'Taro']}
+E         -   'creatorName': ['Joho\t Taro'],
+E         -   'familyName': ['Joho'],
+E         -   'givenName': ['Taro']},
+E         -  {'creatorName': ['Joho\t Taro'],
+E         -   'familyName': ['Joho'],
+E         -   'givenName': ['Taro']},
+E         -  {'creatorName': ['Joho\t Taro'],
+E         -   'familyName': ['Joho'],
+E         -   'givenName': ['Taro']}]
+
+tests/test_utils.py:1449: AssertionError
+_____________________________ test_format_creates ______________________________
+
+i18n_app = <Flask 'testapp'>
+
+    def test_format_creates(i18n_app):
+        _creates = [{
+            'creatorNames': [
+                {
+                    'creatorName': 'ja_name',
+                    'creatorNameLang': 'ja'
+                },
+                {
+                    'creatorName': 'en_name',
+                    'creatorNameLang': 'en'
+                },
+                {
+                    'creatorName': 'no_lang_name'
+                }
+            ],
+            'familyNames': [
+                {
+                    'familyName': 'no_lang_fname',
+                },
+                {
+                    'familyName': 'en_fname',
+                    'familyNameLang': 'en'
+                }
+            ],
+            'creatorAlternatives': [
+                {
+                    'creatorAlternative': 'en_al',
+                    'al_lang': 'en'
+                },
+                {
+                    'creatorAlternative': 'ja_al',
+                    'al_lang': 'ja'
+                }
+            ],
+            'creatorAffiliations': [{
+                'affiliationNames': [
+                    {
+                        'affiliationName': 'en_af',
+                        'af_lang': 'en'
+                    },
+                    {
+                        'affiliationName': 'ja_af',
+                        'af_lang': 'ja'
+                    }
+                ]
+            }]
+        }]
+        _hide_creator_keys = ['familyNames']
+    
+        res = format_creates(_creates, _hide_creator_keys)
+>       assert res=={'creatorName': ['en_name'], 'affiliationName': ['en_af'], 'creatorAlternative': ['en_al']}
+E       AssertionError: assert [{'affiliatio... ['en_name']}] == {'affiliationN...: ['en_name']}
+E         -[{'creatorName': ['en_name'], 'creatorAlternative': ['en_al'], 'affiliationName': ['en_af']}]
+E         +{'creatorName': ['en_name'], 'affiliationName': ['en_af'], 'creatorAlternative': ['en_al']}
+E         Full diff:
+E         - [{'affiliationName': ['en_af'],
+E         ? -
+E         + {'affiliationName': ['en_af'],
+E         -   'creatorAlternative': ['en_al'],
+E         ? -
+E         +  'creatorAlternative': ['en_al'],
+E         -   'creatorName': ['en_name']}]
+E         ? -                            -
+E         +  'creatorName': ['en_name']}
+
+tests/test_utils.py:1503: AssertionError
+_________________________ test_get_author_has_language _________________________
+
+app = <Flask 'testapp'>
+
+    def test_get_author_has_language(app):
+        _create = [
+            {
+                'affiliationName': 'en_af',
+                'af_lang': 'en'
+            },
+            {
+                'affiliationName': 'ja_af',
+                'af_lang': 'ja'
+            }
+        ]
+        res = get_author_has_language(_create, {}, 'en', ['affiliationName', 'af_lang'])
+        assert res=={'affiliationName': ['en_af']}
+    
+        res = get_author_has_language(_create, {}, 'fr', ['affiliationName', 'af_lang'])
+        assert res=={'affiliationName': ['en_af']}
+    
+        res = get_author_has_language(_create, {}, 'en', ['affiliationName', 'af_lang2'])
+        assert res=={'affiliationName': ['en_af']}
+    
+        res = get_author_has_language(_create, {}, 'en', ['affiliationName2', 'af_lang2'])
+        assert res=={}
+    
+        with patch("weko_records.utils.get_value_by_selected_lang", return_value="test"):
+            res = get_author_has_language(_create, {}, 'en', ['test1', 'test1'])
+>           assert res=={}
+E           AssertionError: assert {'test1': ['test']} == {}
+E             Left contains more items:
+E             {'test1': ['test']}
+E             Full diff:
+E             - {'test1': ['test']}
+E             + {}
+
+tests/test_utils.py:1636: AssertionError
+=============================== warnings summary ===============================
+tests/test_api.py::test_recordbase
+  /code/modules/weko-records/.tox/c1/lib/python3.6/site-packages/sickle/utils.py:20: DeprecationWarning: invalid escape sequence \{
+    return re.search('(\{.*\})', element.tag).group(1)
+
+tests/test_api.py::test_recordbase
+  /code/modules/weko-records/.tox/c1/src/pypdf2/PyPDF2/generic.py:348: DeprecationWarning: invalid escape sequence \c
+    b_("c") : b_("\c"),
+
+tests/test_api.py::test_itemtypenames
+tests/test_api.py::test_itemtypes_delete
+  /code/modules/weko-records/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:763: SAWarning: Can't resolve label reference 'item_type.tag'; converting to text() (this warning may be suppressed after 10 occurrences)
+    util.ellipses_string(element.element),
+
+tests/test_serializers_entry.py::test_weko_feed_entry
+tests/test_serializers_feed.py::test_weko_feed_entry
+  /code/modules/weko-records/weko_records/serializers/entry.py:686: UserWarning: pubdate(... is deprecated and may be removed in feedgen > 0.8. Use pubDate(...) instead.
+    warnings.warn('pubdate(... is deprecated and may be removed in feedgen '
+
+tests/test_utils.py::test_sort_meta_data_by_options[data/item_type/item_type_render1.json-data/item_type/item_type_form1.json-data/item_type/item_type_mapping1.json-data/record_hit/record_hit1.json-True]
+tests/test_utils.py::test_sort_meta_data_by_options[data/item_type/item_type_render2.json-data/item_type/item_type_form2.json-data/item_type/item_type_mapping2.json-data/record_hit/record_hit2.json-False]
+tests/test_utils.py::test_sort_meta_data_by_options[data/item_type/item_type_render3.json-data/item_type/item_type_form3.json-data/item_type/item_type_mapping2.json-data/record_hit/record_hit3.json-False]
+tests/test_utils.py::test_sort_meta_data_by_options[data/item_type/item_type_render_title.json-data/item_type/item_type_form_title.json-data/item_type/item_type_mapping_title.json-data/record_hit/record_hit_title1.json-False]
+tests/test_utils.py::test_sort_meta_data_by_options[data/item_type/item_type_render_title.json-data/item_type/item_type_form_title.json-data/item_type/item_type_mapping_title.json-data/record_hit/record_hit_title2.json-False]
+tests/test_utils.py::test_sort_meta_data_by_options[data/item_type/item_type_render_title.json-data/item_type/item_type_form_title.json-data/item_type/item_type_mapping_title.json-data/record_hit/record_hit_title3.json-False]
+  /code/modules/weko-records/.tox/c1/lib/python3.6/site-packages/_pytest/python.py:166: RuntimeWarning: coroutine 'test_sort_meta_data_by_options' was never awaited
+    testfunction(**testargs)
+
+tests/test_utils.py::test_sort_meta_data_by_options_exception
+  /code/modules/weko-records/.tox/c1/lib/python3.6/site-packages/_pytest/python.py:166: RuntimeWarning: coroutine 'test_sort_meta_data_by_options_exception' was never awaited
+    testfunction(**testargs)
+
+tests/test_utils.py::test_sort_meta_data_by_options_no_item_type_id
+  /code/modules/weko-records/.tox/c1/lib/python3.6/site-packages/_pytest/python.py:166: RuntimeWarning: coroutine 'test_sort_meta_data_by_options_no_item_type_id' was never awaited
+    testfunction(**testargs)
+
+tests/test_utils.py::test_sort_meta_data_by_options_sample_1
+  /code/modules/weko-records/.tox/c1/lib/python3.6/site-packages/_pytest/python.py:166: RuntimeWarning: coroutine 'test_sort_meta_data_by_options_sample_1' was never awaited
+    testfunction(**testargs)
+
+-- Docs: https://docs.pytest.org/en/latest/warnings.html
+
+---------- coverage: platform linux, python 3.6.15-final-0 -----------
+Name                                               Stmts   Miss Branch BrPart  Cover
+------------------------------------------------------------------------------------
+weko_records/__init__.py                               4      0      0      0   100%
+weko_records/api.py                                  951    197    336     27    78%
+weko_records/config.py                                25      0      0      0   100%
+weko_records/ext.py                                   15      0     10      0   100%
+weko_records/fetchers.py                               7      0      0      0   100%
+weko_records/models.py                               142      1     68     11    94%
+weko_records/serializers/__init__.py                  21      0      0      0   100%
+weko_records/serializers/atom.py                       7      0      2      0   100%
+weko_records/serializers/csl.py                       57      5     18      3    89%
+weko_records/serializers/dc.py                        51     21     28      2    48%
+weko_records/serializers/depositschema.py             20      0      6      2    92%
+weko_records/serializers/entry.py                    387      8    231     54    90%
+weko_records/serializers/feed.py                     564     12    316     80    90%
+weko_records/serializers/jpcoar.py                    36      0      4      0   100%
+weko_records/serializers/json.py                      38      1     14      2    94%
+weko_records/serializers/opensearch.py                60      3     30     10    86%
+weko_records/serializers/opensearchresponse.py        32      2     20      5    87%
+weko_records/serializers/opensearchserializer.py      25      0      8      0   100%
+weko_records/serializers/pidrelations.py              35      0     18      4    92%
+weko_records/serializers/prism.py                    132     68     78      8    38%
+weko_records/serializers/rss.py                        7      0      2      0   100%
+weko_records/serializers/schemas/__init__.py           1      0      0      0   100%
+weko_records/serializers/schemas/csl.py              135      2     90     16    92%
+weko_records/serializers/searchserializer.py           5      1      2      0    86%
+weko_records/serializers/utils.py                    471    185    302     40    55%
+weko_records/utils.py                               1479    588    934     88    58%
+weko_records/version.py                                2      0      0      0   100%
+------------------------------------------------------------------------------------
+TOTAL                                               4709   1094   2517    352    72%
+Coverage HTML written to dir htmlcov
+Coverage XML written to file coverage.xml
+
+============= 12 failed, 214 passed, 15 warnings in 489.02 seconds =============
+ERROR: InvocationError for command /code/modules/weko-records/.tox/c1/bin/pytest --cov=weko_records tests -v -s -vv --cov-branch --cov-report=term --cov-report=xml --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp (exited with code 1)
 ___________________________________ summary ____________________________________
 ERROR:   c1: commands failed

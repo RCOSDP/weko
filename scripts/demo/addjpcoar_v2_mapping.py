@@ -38,6 +38,10 @@ def main():
                 itemType = ItemTypes.get_by_id(item_type.item_type_id)
                 for key in list(mapping.keys()):
                     if "jpcoar_v1_mapping" in mapping[key]:
+                        if "jpcoar_mapping" not in mapping[key]:
+                            mapping[key]["jpcoar_mapping"] = mapping[key][
+                                "jpcoar_v1_mapping"
+                            ]
                         # jpcoar_catalog,
                         if (
                             "catalog"

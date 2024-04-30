@@ -1,0 +1,240 @@
+[
+  {
+    "id": 1,
+    "comment": "公開区分",
+    "i18n": "publicRange",
+    "query": null,
+    "type": "checkbox",
+    "default": false,
+    "data": [
+      {
+        "id": 1,
+        "comment": "一般公開",
+        "i18n": "openPublic",
+        "query": null,
+        "value": false
+      },
+      {
+        "id": 2,
+        "comment": "グループ内公開",
+        "i18n": "openGroup",
+        "query": null,
+        "value": false
+      },
+      {
+        "id": 3,
+        "comment": "制限公開",
+        "i18n": "openRestricted",
+        "query": null,
+        "value": false
+      },
+      {
+        "id": 4,
+        "comment": "非公開",
+        "i18n": "openPrivate",
+        "query": null,
+        "value": false
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "comment": "ダウンロード区分",
+    "i18n": "downloadRange",
+    "query": null,
+    "type": "checkbox",
+    "default": false,
+    "data": [
+      {
+        "id": 1,
+        "comment": "無制限",
+        "i18n": "downloadUnlimited",
+        "query": null,
+        "value": false
+      },
+      {
+        "id": 2,
+        "comment": "利用許可申請必要",
+        "i18n": "downloadPermission",
+        "query": null,
+        "value": false
+      },
+      {
+        "id": 3,
+        "comment": "守秘義務契約必要",
+        "i18n": "downloadAgreement",
+        "query": null,
+        "value": false
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "comment": "タイトル",
+    "i18n": "title",
+    "query": "title",
+    "type": "text",
+    "default": true,
+    "data": null
+  },
+  {
+    "id": 4,
+    "comment": "作成者",
+    "i18n": "creater",
+    "query": "creator",
+    "type": "text",
+    "default": true,
+    "data": null
+  },
+  {
+    "id": 5,
+    "comment": "コンテンツ作成日",
+    "i18n": "contentsDate",
+    "query": "fd_attr",
+    "queryFrom": "filedate_from",
+    "queryTo": "filedate_to",
+    "type": "date",
+    "default": false,
+    "checkbox": [
+      {
+        "id": 1,
+        "comment": "掲載日",
+        "i18n": "publishDate",
+        "query": "Issued",
+        "value": false
+      },
+      {
+        "id": 2,
+        "comment": "作成日",
+        "i18n": "createdDate",
+        "query": "Created",
+        "value": false
+      },
+      {
+        "id": 3,
+        "comment": "更新日",
+        "i18n": "updatedDate",
+        "query": "Updated",
+        "value": false
+      }
+    ],
+    "data": null
+  },
+  {
+    "id": 6,
+    "comment": "インデックス",
+    "i18n": "index",
+    "query": "iid",
+    "type": "checkbox",
+    "default": false,
+    "data": null
+  },
+  {
+    "id": 7,
+    "comment": "ライセンス",
+    "i18n": "license",
+    "query": "license",
+    "type": "checkbox",
+    "default": false,
+    "data": [
+      {
+        "id": 1,
+        "comment": "CC0",
+        "i18n": false,
+        "query": "license_12",
+        "value": false
+      },
+      {
+        "id": 2,
+        "comment": "CC BY 3.0",
+        "i18n": false,
+        "query": "license_6",
+        "value": false
+      },
+      {
+        "id": 3,
+        "comment": "CC BY 4.0",
+        "i18n": false,
+        "query": "license_0",
+        "value": false
+      },
+      {
+        "id": 4,
+        "comment": "CC BY-SA 3.0",
+        "i18n": false,
+        "query": "license_7",
+        "value": false
+      },
+      {
+        "id": 5,
+        "comment": "CC BY-SA 4.0",
+        "i18n": false,
+        "query": "license_1",
+        "value": false
+      },
+      {
+        "id": 6,
+        "comment": "CC BY-ND 3.0",
+        "i18n": false,
+        "query": "license_8",
+        "value": false
+      },
+      {
+        "id": 7,
+        "comment": "CC BY-ND 4.0",
+        "i18n": false,
+        "query": "license_2",
+        "value": false
+      },
+      {
+        "id": 8,
+        "comment": "CC BY-NC 3.0",
+        "i18n": false,
+        "query": "license_9",
+        "value": false
+      },
+      {
+        "id": 9,
+        "comment": "CC BY-NC 4.0",
+        "i18n": false,
+        "query": "license_3",
+        "value": false
+      },
+      {
+        "id": 10,
+        "comment": "CC BY-NC-SA 3.0",
+        "i18n": false,
+        "query": "license_10",
+        "value": false
+      },
+      {
+        "id": 11,
+        "comment": "CC BY-NC-SA 4.0",
+        "i18n": false,
+        "query": "license_4",
+        "value": false
+      },
+      {
+        "id": 12,
+        "comment": "CC BY-NC-ND 3.0",
+        "i18n": false,
+        "query": "license_11",
+        "value": false
+      },
+      {
+        "id": 13,
+        "comment": "CC BY-NC-ND 4.0",
+        "i18n": false,
+        "query": "license_5",
+        "value": false
+      },
+      {
+        "id": 14,
+        "comment": "others",
+        "i18n": false,
+        "query": "license_free",
+        "value": false
+      }
+    ]
+  }
+]

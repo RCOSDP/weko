@@ -166,7 +166,7 @@ def base_app(instance_path):
         OAUTH2_CACHE_TYPE="simple",
         ACCOUNTS_JWT_ENABLE=False,
         INDEXER_DEFAULT_INDEX="{}-weko-item-v1.0.0".format("test"),
-        SEARCH_UI_SEARCH_INDEX="{}-weko".format("test"),
+        SEARCH_UI_SEARCH_INDEX="{}-weko-item-v1.0.0".format("test"),
         INDEXER_DEFAULT_DOCTYPE="item-v1.0.0",
         INDEXER_DEFAULT_DOC_TYPE="item-v1.0.0",
         INDEXER_FILE_DOC_TYPE="content",
@@ -193,6 +193,14 @@ def base_app(instance_path):
             "Repository Administrator",
         ],
         WEKO_PERMISSION_ROLE_COMMUNITY=["Community Administrator"],
+        WEKO_SCHEMA_JPCOAR_V2_SCHEMA_NAME='jpcoar_mapping',
+        WEKO_SCHEMA_JPCOAR_V2_RESOURCE_TYPE_REPLACE={
+            'periodical':'journal',
+            'interview':'other',
+            'internal report':'other',
+            'report part':'other',
+            'conference object':'conference output',
+        },
     )
     # with ESTestServer(timeout=30) as server:
     Babel(app_)
@@ -501,9 +509,8 @@ def deposit(app, location):
         deleted=False,
         location=location,
     )
-    with patch("weko_deposit.api.Bucket.create", return_value=bucket):
-        deposit = aWekoDeposit.create({})
-        return deposit.pid.pid_value
+    deposit = aWekoDeposit.create({})
+    return deposit.pid.pid_value
 
 
 @pytest.fixture()
