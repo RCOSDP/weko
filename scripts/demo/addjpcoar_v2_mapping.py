@@ -37,13 +37,11 @@ def main():
                 mapping = pickle.loads(pickle.dumps(item_type.mapping, -1))
                 itemType = ItemTypes.get_by_id(item_type.item_type_id)
                 for key in list(mapping.keys()):
-                    if "jpcoar_v1_mapping" in mapping[key]:
-                        # if "jpcoar_mapping" not in mapping[key]:
-                        #     mapping[key]["jpcoar_mapping"] = mapping[key][
-                        #         "jpcoar_v1_mapping"
-                        #     ]
-                        # jpcoar_catalog,
-                        if ("jpcoar_mapping" not in mapping[key]) or ((
+                    if "jpcoar_mapping" not in mapping[key] and "jpcoar_v1_mapping" in mapping[key]:
+                        mapping[key]["jpcoar_mapping"] = mapping[key][
+                                "jpcoar_v1_mapping"
+                            ]
+                    if "jpcoar_v1_mapping" in mapping[key] and ((
                             "catalog"
                             or "datasetSeries"
                             or "holdingAgent"
@@ -58,147 +56,7 @@ def main():
                             mapping[key]["jpcoar_mapping"] = mapping[key][
                                 "jpcoar_v1_mapping"
                             ]
-
-                        # creator
-                        # if "creator" in mapping[key]["jpcoar_mapping"]:
-                            # if (
-                            #     'items' in itemType.schema["properties"][key] and 
-                            #     "iscreator"
-                            #     in itemType.schema["properties"][key]["items"][
-                            #         "properties"
-                            #     ]
-                            # ):
-                            #     if (
-                            #         "@attributes"
-                            #         not in mapping[key]["jpcoar_mapping"]["creator"]
-                            #     ):
-                            #         mapping[key]["jpcoar_mapping"]["creator"][
-                            #             "@attributes"
-                            #         ] = {"creatorType": "creatorType"}
-                            #     if (
-                            #         "creatorName"
-                            #         in mapping[key]["jpcoar_mapping"]["creator"]
-                            #     ):
-                            #         if (
-                            #             "@attributes"
-                            #             in mapping[key]["jpcoar_mapping"]["creator"][
-                            #                 "creatorName"
-                            #             ]
-                            #         ):
-                            #             mapping[key]["jpcoar_mapping"]["creator"][
-                            #                 "creatorName"
-                            #             ]["@attributes"].update(
-                            #                 {"nameType": "creatorNames.creatorNameType"}
-                            #             )
-                            #         else:
-                            #             mapping[key]["jpcoar_mapping"]["creator"][
-                            #                 "creatorName"
-                            #             ] = {
-                            #                 "@attributes": {
-                            #                     "nameType": "creatorNames.creatorNameType"
-                            #                 }
-                            #             }
-                                    # print("creatorNames.creatorNameType")
-                        # contributor
-                        # if "contributor" in mapping[key]["jpcoar_mapping"]:
-                        #     if (
-                        #         'items' in itemType.schema["properties"][key] and 
-                        #         "contributorNames"
-                        #         in itemType.schema["properties"][key]["items"][
-                        #             "properties"
-                        #         ]
-                        #     ):
-                        #         if (
-                        #             "contributorName"
-                        #             in mapping[key]["jpcoar_mapping"]["contributor"]
-                        #         ):
-                        #             if (
-                        #                 "@attributes"
-                        #                 in mapping[key]["jpcoar_mapping"][
-                        #                     "contributor"
-                        #                 ]["contributorName"]
-                        #             ):
-                        #                 mapping[key]["jpcoar_mapping"]["contributor"][
-                        #                     "contributorName"
-                        #                 ]["@attributes"].update(
-                        #                     {"nameType": "contributorName.nameType"}
-                        #                 )
-                        #             else:
-                        #                 mapping[key]["jpcoar_mapping"]["contributor"][
-                        #                     "contributorName"
-                        #                 ] = {
-                        #                     "@attributes": {
-                        #                         "nameType": "contributorName.nameType"
-                        #                     }
-                        #                 }
-                                    # print("contributorName.nameType")
-                        # funding_reference,
-                        # if "fundingReference" in mapping[key]["jpcoar_mapping"]:
-                        #     if (
-                        #         'items' in itemType.schema["properties"][key] and 
-                        #         "subitem_funder_names"
-                        #         in itemType.schema["properties"][key]["items"][
-                        #             "properties"
-                        #         ]
-                        #     ):
-                        #         if (
-                        #             "funderIdentifier"
-                        #             in mapping[key]["jpcoar_mapping"][
-                        #                 "fundingReference"
-                        #             ]
-                        #         ):
-                        #             if (
-                        #                 "@attributes"
-                        #                 in mapping[key]["jpcoar_mapping"][
-                        #                     "fundingReference"
-                        #                 ]["funderIdentifier"]
-                        #             ):
-                        #                 mapping[key]["jpcoar_mapping"][
-                        #                     "fundingReference"
-                        #                 ]["funderIdentifier"]["@attributes"].update(
-                        #                     {
-                        #                         "funderIdentifierTypeURI": "subitem_funder_identifiers.subitem_funder_identifier_type_uri"
-                        #                     }
-                        #                 )
-                        #             else:
-                        #                 mapping[key]["jpcoar_mapping"][
-                        #                     "fundingReference"
-                        #                 ]["funderIdentifier"] = {
-                        #                     "@attributes": {
-                        #                         "funderIdentifierTypeURI": "subitem_funder_identifiers.subitem_funder_identifier_type_uri"
-                        #                     }
-                        #                 }
-                        #             # print("subitem_funder_identifiers.subitem_funder_identifier_type_uri")
-
-                        #         if (
-                        #             "awardNumber"
-                        #             in mapping[key]["jpcoar_mapping"][
-                        #                 "fundingReference"
-                        #             ]
-                        #         ):
-                        #             if (
-                        #                 "@attributes"
-                        #                 in mapping[key]["jpcoar_mapping"][
-                        #                     "fundingReference"
-                        #                 ]["awardNumber"]
-                        #             ):
-                        #                 mapping[key]["jpcoar_mapping"][
-                        #                     "fundingReference"
-                        #                 ]["awardNumber"]["@attributes"].update(
-                        #                     {
-                        #                         "awardNumberType": "subitem_award_numbers.subitem_award_number_type"
-                        #                     }
-                        #                 )
-                        #             else:
-                        #                 mapping[key]["jpcoar_mapping"][
-                        #                     "fundingReference"
-                        #                 ]["awardNumber"] = {
-                        #                     "@attributes": {
-                        #                         "awardNumberType": "subitem_award_numbers.subitem_award_number_type"
-                        #                     }
-                        #                 }
-                                    # print("subitem_award_numbers.subitem_award_number_type")
-
+                    
                 item_type.mapping = mapping
         db.session.commit()
     except Exception as ex:
