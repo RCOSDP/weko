@@ -68,8 +68,18 @@ class Handle(object):
             target = ''
 
             if record:
-                who = record.get('_oai', {}).get('id')
-                what = record.get('item_title')
+                reg_text = None
+                reg_type = None
+
+                for key in list(record.keys()):
+                    if isinstance(record.get(key), dict):
+                        id_reg = record.get(key, {}).get('attribute_name', '').lower()
+                        if id_reg == 'identifier_registration' or id_reg == 'identifier registration':
+                            reg_text = record.get(key, {}).get('attribute_value_mlt', [{}])[0].get('subitem_identifier_reg_text')
+                            reg_type = record.get(key, {}).get('attribute_value_mlt', [{}])[0].get('subitem_identifier_reg_type')
+
+                who = reg_text or record.get('_oai', {}).get('id')
+                what = reg_type or record.get('item_title')
                 when = record.get('publish_date')
                 target = str(location)
             elif index:

@@ -56,6 +56,15 @@ def test_handle_get_ark_identifier_from_ark_server(app):
         "owner": "test_owner",
         "item_title": "test_item_title",
         "publish_date": "test_publish_date",
+            "item_1617186819068": {
+                "attribute_name": "Identifier Registration",
+                "attribute_value_mlt": [
+                    {
+                        "subitem_identifier_reg_text" :"test/0000000001",
+                        "subitem_identifier_reg_type": "JaLC"
+                    }
+                ]
+        },
     }
 
     result_2 = handleObject.get_ark_identifier_from_ark_server(

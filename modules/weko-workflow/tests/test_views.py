@@ -2120,7 +2120,7 @@ def test_next_action_for_ark_id(client, db, users, db_register_fullaction, db_re
     mock.patch("weko_workflow.api.UpdateItem.publish",return_value=True)
     mock.patch("invenio_oaiserver.tasks.update_records_sets.delay",return_value=True)
 
-    item_id = db_register_fullaction["activities"][1].item_id
+    item_id = db_register_fullaction["activities"][0].item_id
 
     # action: approval
     def check_role_approval():

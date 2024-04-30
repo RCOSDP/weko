@@ -79,7 +79,8 @@ from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
 from .api import GetCommunity, UpdateItem, WorkActivity, WorkActivityHistory, \
     WorkFlow , Flow
 from .config import DOI_VALIDATION_INFO, DOI_VALIDATION_INFO_CROSSREF, DOI_VALIDATION_INFO_DATACITE, IDENTIFIER_GRANT_SELECT_DICT, \
-    WEKO_SERVER_CNRI_HOST_LINK, WEKO_STR_TRUE, WEKO_SERVER_ARK_HOST_LINK
+    WEKO_SERVER_CNRI_HOST_LINK, WEKO_SERVER_ARK_HOST_LINK
+    # WEKO_SERVER_CNRI_HOST_LINK, WEKO_STR_TRUE, WEKO_SERVER_ARK_HOST_LINK
 from .models import Action as _Action, Activity
 from .models import ActionStatusPolicy, ActivityStatusPolicy, GuestActivity,FlowAction 
 from .models import WorkFlow as _WorkFlow
