@@ -42,7 +42,7 @@ from sqlalchemy.sql.expression import case, func, literal_column, and_
 from weko_groups.api import Group
 from weko_redis.redis import RedisConnection
 from .utils import register_ark_for_index, register_cnri_for_index
-from .config import WEKO_INDEX_USE_ARK_IDENTIFIER, WEKO_INDEX_USE_CNRI_IDENTIER
+from .config import WEKO_INDEX_USE_ARK_IDENTIFIER, WEKO_INDEX_USE_CNRI_IDENTIFIER
 
 from .models import Index
 from .utils import cached_index_tree_json, check_doi_in_index, \
@@ -123,7 +123,7 @@ class Indexes(object):
                     index=ark_index_data,
                 )
             
-            if WEKO_INDEX_USE_CNRI_IDENTIER:
+            if WEKO_INDEX_USE_CNRI_IDENTIFIER:
                 # Request CNRI identifier from CNRI handle server and store in pidstore_pid table in DB
                 register_cnri_for_index(
                     index_id=indexes.get('id'),

@@ -101,7 +101,7 @@ WEKO_INDEX_TREE_API_LIMIT_RATE_DEFAULT = ['100 per minute']
 WEKO_INDEX_USE_ARK_IDENTIFIER = True
 """Enables connection to EZID to generate an ARK Identifier for the corresponding index"""
 
-WEKO_INDEX_USE_CNRI_IDENTIER = True
+WEKO_INDEX_USE_CNRI_IDENTIFIER = True
 """Enables connection CNRI handle server to generate an CNRI Identifier for the corresponding index"""
 
 WEKO_SERVER_ARK_HOST_LINK = 'http://0.0.0.0:8000/'
