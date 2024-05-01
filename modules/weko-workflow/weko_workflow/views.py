@@ -78,7 +78,7 @@ from weko_search_ui.utils import check_import_items, import_items_to_system
 from weko_user_profiles.config import \
     WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
-
+from invenio_oaiserver.response import is_pubdate_in_future
 from .api import Action, Flow, GetCommunity, WorkActivity, \
     WorkActivityHistory, WorkFlow
 from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SELECT_DICT, \
@@ -106,7 +106,7 @@ from .utils import IdentifierHandle, auto_fill_title, \
     is_usage_application_item_type, prepare_data_for_guest_activity, \
     prepare_doi_link_workflow, process_send_approval_mails, \
     process_send_notification_mail, process_send_reminder_mail, register_hdl, \
-    save_activity_data, saving_doi_pidstore, \
+    register_ark, save_activity_data, saving_doi_pidstore, \
     send_usage_application_mail_for_guest_user, set_files_display_type, \
     update_approval_date, update_cache_data, validate_guest_activity_expired, \
     validate_guest_activity_token, make_activitylog_tsv
@@ -1361,6 +1361,49 @@ def next_action(activity_id='0', action_id=0):
         res = ResponseMessageSchema().load({"code":-1, "msg":"can not get record"})
         return jsonify(res.data), 500
     current_app.logger.debug("record: {0}".format(record.pid_cnri))
+
+    # Get ARK identifier from EZID (Ark server)
+    if action_endpoint in ['approval'] and current_app.config.get('WEKO_HANDLE_ALLOW_REGISTER_ARK'):
+
+        identifier_registration_exists = False
+        reg_text = None
+        reg_type = None
+
+        for key in list(record.keys()):
+            if isinstance(record.get(key), dict):
+                id_reg = record.get(key, {}).get('attribute_name', '').lower()
+                if id_reg == 'identifier_registration' or id_reg == 'identifier registration':
+                    identifier_registration_exists = True
+                    reg_text = record.get(key, {}).get('attribute_value_mlt', [{}])[0].get('subitem_identifier_reg_text')
+                    reg_type = record.get(key, {}).get('attribute_value_mlt', [{}])[0].get('subitem_identifier_reg_type')
+
+        if identifier_registration_exists and reg_text and reg_type:
+            record_oai_id = record.get('_oai', {}).get('id')
+            record_rec_id = record.get('recid')
+            ark_record_pid = None
+            record_pid_uui = None
+
+            if record_oai_id:
+                record_pid = PersistentIdentifier.query.filter_by(
+                    pid_type="oai",
+                    pid_value=record_oai_id,
+                ).one_or_none() or PersistentIdentifier.query.filter_by(
+                    pid_type="recid",
+                    pid_value=record_rec_id,
+                ).one_or_none()
+
+                if record_pid: \
+                    record_pid_uui = record_pid.object_uuid
+
+                # This will check if there is an ARK id in pidstore associated to the current record
+                if record_pid_uui: \
+                    ark_record_pid = PersistentIdentifier.query.filter_by(
+                        pid_type="ark",
+                        object_uuid=record_pid_uui
+                    ).one_or_none()
+
+                if not ark_record_pid: \
+                    register_ark(activity_id)
 
     if action_endpoint in ['item_login', 'item_login_application'] and (record.pid_cnri is None) and current_app.config.get('WEKO_HANDLE_ALLOW_REGISTER_CNRI'):
         register_hdl(activity_id)

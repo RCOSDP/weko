@@ -41,6 +41,8 @@ from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy.sql.expression import case, func, literal_column, and_
 from weko_groups.api import Group
 from weko_redis.redis import RedisConnection
+from .utils import register_ark_for_index, register_cnri_for_index
+from .config import WEKO_INDEX_USE_ARK_IDENTIFIER, WEKO_INDEX_USE_CNRI_IDENTIFIER
 
 from .models import Index
 from .utils import cached_index_tree_json, check_doi_in_index, \
@@ -106,7 +108,27 @@ class Indexes(object):
             data["browsing_group"] = group_list
             data["contribute_group"] = group_list
 
+            if WEKO_INDEX_USE_ARK_IDENTIFIER:
+                current_date = datetime.now().strftime("%Y/%m/%d")
+
+                ark_index_data = {
+                    'ezid_who': '',
+                    'ezid_what': '',
+                    'ezid_when': current_date,
+                }
+
+                # Request ARK identifier from EZID and store in pidstore_pid table in DB
+                register_ark_for_index(
+                    index_id=indexes.get('id'),
+                    index=ark_index_data,
+                )
             
+            if WEKO_INDEX_USE_CNRI_IDENTIFIER:
+                # Request CNRI identifier from CNRI handle server and store in pidstore_pid table in DB
+                register_cnri_for_index(
+                    index_id=indexes.get('id'),
+                )
+
             if int(pid) == 0:
                 pid_info = cls.get_root_index_count()
                 data["position"] = 0 if not pid_info else \

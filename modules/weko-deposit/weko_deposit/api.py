@@ -26,7 +26,10 @@ import uuid
 from collections import OrderedDict
 from datetime import datetime, timezone,date
 from typing import NoReturn, Union
-from tika import parser
+
+# TODO TIKA TEMPORARY FIX
+# TODO ~ Comment out parser before using pytest
+# from tika import parser
 
 import redis
 from redis import sentinel

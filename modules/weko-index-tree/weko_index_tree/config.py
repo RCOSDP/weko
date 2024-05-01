@@ -97,3 +97,15 @@ WEKO_INDEX_TREE_INDEX_LOCK_KEY_PREFIX = "lock_index_"
 """Index lock key prefix."""
 
 WEKO_INDEX_TREE_API_LIMIT_RATE_DEFAULT = ['100 per minute']
+
+WEKO_INDEX_USE_ARK_IDENTIFIER = True
+"""Enables connection to EZID to generate an ARK Identifier for the corresponding index"""
+
+WEKO_INDEX_USE_CNRI_IDENTIFIER = True
+"""Enables connection CNRI handle server to generate an CNRI Identifier for the corresponding index"""
+
+WEKO_SERVER_ARK_HOST_LINK = 'http://0.0.0.0:8000/'
+"""Host server of ARK"""
+
+WEKO_SERVER_CNRI_HOST_LINK = 'http://hdl.handle.net/'
+"""Host server of CNRI"""

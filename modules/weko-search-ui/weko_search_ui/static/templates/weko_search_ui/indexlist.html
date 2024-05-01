@@ -54,7 +54,11 @@
               <p>{{journal_info.publisher_name}}</p>
               <p>{{journal_info.language}}</p>
               <p>{{journal_info.online_identifier}}</p>
-              <p ng-bind-html="display_comment(vm.invenioSearchResults.aggregations.path.buckets[0][0].comment) | sanitize" style="width: 100%; word-wrap: break-word;"></p>
+              <!-- <p ng-bind-html="display_comment(vm.invenioSearchResults.aggregations.path.buckets[0][0].comment) | sanitize" style="width: 100%; word-wrap: break-word;"></p> -->
+
+              <!-- TODO ARK SERVER INDEX -->
+              <p ng-bind-html="display_comment('Eleanor Rigby') | sanitize" style="width: 100%; word-wrap: break-word;"></p>
+
               <p style="margin: 20px 0;">URL: <a
                   href="{{journal_info.openSearchUrl}}">{{journal_info.openSearchUrl}}</a></p>
             </div>
@@ -119,7 +123,11 @@
             </div>
           </a>
           <div style="padding-left: 14px">
-            <p ng-bind-html="display_comment(vm.invenioSearchResults.aggregations.path.buckets[0][0].comment) | sanitize" style="width: 100%; word-wrap: break-word;"></p>
+            <!-- <p ng-bind-html="display_comment(vm.invenioSearchResults.aggregations.path.buckets[0][0].comment) | sanitize" style="width: 100%; word-wrap: break-word;"></p> -->
+
+            <!-- TODO ARK SERVER INDEX -->
+            <p ng-bind-html="display_comment('Hey Jude')" style="width: 100%; word-wrap: break-word;"></p>
+
           </div>
           <span ng-if="index_path.rss_status" style="position: absolute;top: 9px;right: 15px;">
             <a ng-href="/api/rss.xml?index_id={{ index_path.key.split('/').pop() }}&page=1&count=20&term=14&lang=en"

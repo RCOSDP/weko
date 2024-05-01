@@ -22,6 +22,8 @@
 
 import sys
 import traceback
+import requests
+import os
 
 from b2handle.clientcredentials import PIDClientCredentials
 from b2handle.handleclient import EUDATHandleClient
@@ -29,6 +31,9 @@ from b2handle.handleexceptions import CredentialsFormatError, \
     GenericHandleError, HandleAuthenticationError, \
     HandleAlreadyExistsException
 from flask import current_app, jsonify
+
+from invenio_pidstore.models import PersistentIdentifier
+from weko_handle.config import BASE_ARK_ID_FOR_MINTER_USE, WEKO_SERVER_CNRI_HOST_LINK
 
 
 class Handle(object):
@@ -51,6 +56,111 @@ class Handle(object):
             current_app.logger.error(
                 '{} in HandleClient.retrieve_handle_record_json({})'.format(
                     e, handle))
+
+    def get_ark_identifier_from_ark_server(self, location, record=None, index=None, useArkIdentifier=False):
+        """Get ARK identifier using record metadata"""
+        current_app.logger.debug(
+            "location:{0} hdl:{1}".format(location, 'ark'))
+        try:
+            who = ''
+            what = ''
+            when = ''
+            target = ''
+
+            if record:
+                reg_text = None
+                reg_type = None
+
+                for key in list(record.keys()):
+                    if isinstance(record.get(key), dict):
+                        id_reg = record.get(key, {}).get('attribute_name', '').lower()
+                        if id_reg == 'identifier_registration' or id_reg == 'identifier registration':
+                            reg_text = record.get(key, {}).get('attribute_value_mlt', [{}])[0].get('subitem_identifier_reg_text')
+                            reg_type = record.get(key, {}).get('attribute_value_mlt', [{}])[0].get('subitem_identifier_reg_type')
+
+                who = reg_text or record.get('_oai', {}).get('id')
+                what = reg_type or record.get('item_title')
+                when = record.get('publish_date')
+                target = str(location)
+            elif index:
+                who = index.get('ezid_who')
+                what = index.get('ezid_what')
+                when = index.get('ezid_when')
+                target = str(location)
+            
+            headers_post = {
+                'Content-Type': 'text/plain',
+            }
+
+            params = {
+                '_profile': 'erc',
+                'erc.who': who,
+                'erc.what': what,
+                'erc.when': when,
+                '_target': target,
+                '_export': 'yes'
+            }
+            os.environ['NO_PROXY'] = '127.0.0.1'
+            url_post = f'http://host.docker.internal:8000/id/ark:/99999/{BASE_ARK_ID_FOR_MINTER_USE}'
+            response_post = requests.post(url_post, json=params, headers=headers_post)
+            ark_identifier = None
+
+            if response_post.text:
+                ark_identifier = response_post.text.split(':')
+                ark_identifier = ark_identifier[-1]
+                ark_identifier = f"id/ark:{ark_identifier}"
+
+            if useArkIdentifier and ark_identifier:
+                current_app.logger.info(
+                    f'EZID ARK identifier successfully generated pid:{ark_identifier}'
+                )
+                return ark_identifier
+            else:
+                return None
+            
+        except Exception as e:
+            current_app.logger.error(traceback.format_exc())
+            current_app.logger.error(e)
+            return None
+
+
+    def get_cnri_identifier_from_cnri_server(self, index_id=None):
+        """Get CNRI identifier using index information"""
+        current_app.logger.debug(
+            f"index_id:{index_id} hdl:cnri"
+        )
+
+        try:
+            # In case json header will be needed
+            headers_application_json = {
+                'Content-Type': 'application/json',
+            }
+
+            # This prefix is from modules/resources/handle_creds.json
+            prefix = "20.500.12345"
+
+            url_post = f'{WEKO_SERVER_CNRI_HOST_LINK}/{prefix}/{index_id}'
+            response_post = requests.post(url_post)
+            cnri_identifier = None
+
+            # TODO This snippet will be edited once CNRI handle server is usable
+            if response_post.text:
+                cnri_identifier = response_post.text
+
+            if response_post:
+                current_app.logger.info(
+                    f'CNRI identifier successfully generated: {cnri_identifier}'
+                )
+                return cnri_identifier
+            else:
+                return None
+            
+        except Exception as e:
+            current_app.logger.error(traceback.format_exc())
+            current_app.logger.error(e)
+            return None
+
+
 
     def register_handle(self, location, hdl="", overwrite=False):
         """Register a handle."""

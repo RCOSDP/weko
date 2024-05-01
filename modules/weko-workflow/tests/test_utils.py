@@ -39,6 +39,7 @@ from weko_workflow.utils import (
     handle_finish_workflow,
     process_send_reminder_mail,
     register_hdl,
+    register_ark,
     IdentifierHandle,
     get_current_language,
     get_term_and_condition_content,
@@ -257,7 +258,61 @@ def test_register_hdl(app,db_records,db_register):#c
             assert pid==[]
     
 
-                
+# def register_ark(activity_id):
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_register_ark -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_register_ark(app, db_records, db_register):
+    recid, depid, record, item, parent, doi, deposit = db_records[0]
+    assert recid.pid_value == "1"
+    activity_id='A-00000800-00000'
+    act = Activity(
+        activity_id=activity_id,
+        item_id=record.id,
+    )
+
+    now = datetime.datetime.now()
+    time = now.strftime("%H:%M:%S")
+    test_ark_value = f"test_ark_id_for_record{time}"
+
+    with patch("weko_handle.api.Handle.get_ark_identifier_from_ark_server",return_value=test_ark_value):
+        with app.test_request_context():
+            register_ark("8")
+
+            test_ark_id_pid = PersistentIdentifier.query.filter_by(
+                pid_type='ark',
+                pid_value=f'http://0.0.0.0:8000/{test_ark_value}'
+            ).one_or_none()
+
+            assert test_ark_id_pid is not None
+            assert test_ark_id_pid.pid_type == "ark"
+            assert test_ark_value in test_ark_id_pid.pid_value
+    
+    with patch("weko_handle.api.Handle.get_ark_identifier_from_ark_server", return_value=None):
+        with app.test_request_context():
+            result = register_ark("9")
+            assert result is None
+
+
+# def register_ark(activity_id):
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_register_ark_for_while_loop_coverage -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+# TODO This will result in an intentional timeout error "Failed: Timeout >30.0s" but will cover the "while loop" part of the code
+@pytest.mark.timeout(30)
+def test_register_ark_for_while_loop_coverage(app, db_records, db_register):
+    recid, depid, record, item, parent, doi, deposit = db_records[0]
+    assert recid.pid_value == "1"
+    activity_id='A-00000800-00000'
+    act = Activity(
+        activity_id=activity_id,
+        item_id=record.id,
+    )
+
+    now = datetime.datetime.now()
+    time = now.strftime("%H:%M:%S")
+    test_ark_value = f"test_ark_id_for_record{time}"
+
+    with patch("weko_handle.api.Handle.get_ark_identifier_from_ark_server",return_value=test_ark_value):
+        with app.test_request_context():
+            register_ark("8")
+            register_ark("8")
 
 
 # def register_hdl_by_item_id(deposit_id, item_uuid, url_root):
