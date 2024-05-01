@@ -2045,7 +2045,7 @@ class TestUsageReport:
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::TestUsageReport::test_build_user_info -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
     def test_build_user_info(self):
         record_data = {
-            "subitem_restricted_access_name":"test_value",
+            "subitem_fullname":"test_value",
             "subitem_test_item":["subitem_test_item1"]
         }
         usage_report = UsageReport()

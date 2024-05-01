@@ -1305,12 +1305,12 @@ def test_set_mail_info(app, db_register, mocker, records_restricted, db_records,
         "subitem_title":"test_sub_title",
         "subitem_advisor_university/institution":"test advisor university",
         "subitem_guarantor_university/institution":"test guarantor university",
-        "subitem_restricted_access_name":"test access name",
-        'subitem_restricted_access_university/institution':"test_restricted_institution",
+        "subitem_fullname":"test access name",
+        'subitem_university/institution':"test_restricted_institution",
         "subitem_restricted_access_research_title":"test_restricted_research_title",
         "subitem_restricted_access_dataset_usage":"test_restricted_dataset",
         "subitem_restricted_access_application_date":"test_restricted_date",
-        "subitem_restricted_access_mail_address":"restricted@test.org",
+        "subitem_mail_address":"restricted@test.org",
         "subitem_restricted_access_research_plan":"restricted_research_plan"
     }
 

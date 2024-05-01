@@ -16,7 +16,7 @@ access = [
 ]
 lnag = [
     None,
-    "jp"
+    "ja"
 ]
 
 

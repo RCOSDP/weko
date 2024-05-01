@@ -851,7 +851,7 @@ def activities(db,flows,records,users):
                     activity_community_id=3,
                     activity_confirm_term_of_use=True,
                     title='test item1', shared_user_ids=[], 
-                    extra_info={"usage_activity_id":"3","usage_application_record_data":{"subitem_restricted_access_name":"test_access_name",}},
+                    extra_info={"usage_activity_id":"3","usage_application_record_data":{"subitem_fullname":"test_access_name",}},
                     action_order=1,
                     )
     db.session.add(activity_usage)

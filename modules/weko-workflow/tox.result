@@ -2059,12 +2059,12 @@ mocker = <pytest_mock.plugin.MockerFixture object at 0x7fc9b6fd6b38>
             "subitem_advisor_mail_address":"advisor@test.org",
             "subitem_guarantor_mail_address":"guarantor@test.org",
             "subitem_title":"test_sub_title",
-            "subitem_restricted_access_name":"test access name",
-            'subitem_restricted_access_university/institution':"test_restricted_institution",
+            "subitem_fullname":"test access name",
+            'subitem_university/institution':"test_restricted_institution",
             "subitem_restricted_access_research_title":"test_restricted_research_title",
             "subitem_restricted_access_dataset_usage":"test_restricted_dataset",
             "subitem_restricted_access_application_date":"test_restricted_date",
-            "subitem_restricted_access_mail_address":"restricted@test.org",
+            "subitem_mail_address":"restricted@test.org",
         }
         activity_id = db_register["activities"][0].activity_id
         test = {
