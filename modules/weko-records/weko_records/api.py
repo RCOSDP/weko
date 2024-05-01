@@ -979,7 +979,7 @@ class ItemTypes(RecordBase):
             _a = [p for p in data.get("table_row") if p in mapping]
             if len(_a) is not len(data.get("table_row")):
                 mapping.model.mapping = table_row_map.get('mapping')
-                flag_modified(mapping, 'mapping')
+                flag_modified(mapping.model, 'mapping')
                 db.session.add(mapping.model)
         
         ItemTypeEditHistory.create_or_update(
