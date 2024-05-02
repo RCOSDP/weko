@@ -810,7 +810,7 @@ def test_indices(app, db):
         db.session.add(base_index(11, 1, 0))
         db.session.add(base_index(21, 2, 0))
         db.session.add(base_index(22, 2, 1))
-        db.session.add(base_index(31, 0, 3, public_state=False))
+        db.session.add(base_index(31, 3, 3, public_state=False))
     db.session.commit()
 
 @pytest.yield_fixture

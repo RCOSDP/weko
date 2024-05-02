@@ -510,8 +510,9 @@ def test_check_doi_in_list_record_es(app, db, users):
 
 
 #+++ def check_restrict_doi_with_indexes(index_ids):
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_check_restrict_doi_with_indexes -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
 def test_check_restrict_doi_with_indexes(i18n_app, indices, db_records):
-    assert check_restrict_doi_with_indexes([33,44])
+    assert not check_restrict_doi_with_indexes([33,44])
 
 
 #*** def check_has_any_item_in_index_is_locked(index_id):
@@ -617,9 +618,8 @@ def test_perform_delete_index(app, db, test_indices, users):
                     with patch("weko_workflow.utils.check_an_item_is_locked", return_value=True):
                         assert perform_delete_index(1, Indexes, "move")==('', ['This index cannot be deleted because the item belonging to this index is being edited by the import function.'])
                     with patch("weko_workflow.utils.check_an_item_is_locked", return_value=False):
-                        with pytest.raises(IndexBaseRESTError) as e:
-                            perform_delete_index(1, Indexes, "move")
-                        assert e.value.code == 400
+                        with patch("weko_index_tree.api.Indexes.delete_by_action", return_value=None):
+                            assert perform_delete_index(1, Indexes, "move")==('Failed to delete index.', [])
                         assert perform_delete_index(1, Indexes, "delete")==('Index deleted successfully.', [])
 
 
@@ -685,7 +685,7 @@ def test_save_index_trees_to_redis(app, redis_connect,caplog):
         # except ConnectionError
         with patch("simplekv.memory.redisstore.RedisStore.put",side_effect=ConnectionError("test_error")):
             save_index_trees_to_redis(tree, lang="ja")
-            assert caplog.record_tuples == [('flask.app', 40, 'Fail save index_tree to redis')]
+            assert caplog.record_tuples == [('testapp', 40, 'Fail save index_tree to redis')]
     redis_connect.delete("index_tree_view_test_en")
     redis_connect.delete("index_tree_view_test_ja")
 

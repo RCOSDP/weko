@@ -489,6 +489,7 @@ class TestIndexTreeActionResource:
         
             # move failed
         with patch("flask_login.utils._get_user", return_value=users[4]['obj']):
+            AdminLangSettings.update_lang(lang_code="en",is_registered=False,sequence=0)
             data = {"pre_parent":"0","parent":"0","position":"0"}
             res = client_rest.put(url,json=data)
             assert res.status_code == 202
