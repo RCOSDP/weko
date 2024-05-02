@@ -74,6 +74,12 @@ def init_menu():
         order=100)
 
 
+@blueprint.before_request
+def set_next_session():
+    """Set the URL of the page to redirect after login."""
+    session['next'] = request.args.get('next', '/')
+
+
 def _redirect_method(has_next=False):
     """Redirect method for instance login to IdP."""
     shib_login = current_app.config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED']
