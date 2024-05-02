@@ -3819,10 +3819,10 @@ def handle_check_file_content(record, data_path):
     file_paths = record.get("file_path", [])
     # check consistence between file_path and filename
     filenames = get_filenames_from_metadata(record["metadata"])
-    accessrole_info,displaytype_info,billing_file,priceinfo = get_billinginfo_from_metadata(record["metadata"])
+    billing_info = get_billinginfo_from_metadata(record["metadata"])
     record["filenames"] = filenames
     errors.extend(handle_check_filename_consistence(file_paths, filenames))
-    errors.extend(handle_check_billing_file(accessrole_info,displaytype_info,billing_file,priceinfo))
+    errors.extend(handle_check_billing_file(billing_info))
 
     # check if file_path exists
     error, warning = handle_check_file_path(
@@ -3961,16 +3961,14 @@ def get_billinginfo_from_metadata(metadata):
     :argument
         metadata -- {dict} record metadata.
     :return
-        accessrole_info   -- {list} List accessrole info from metadata.
-        displaytype_info   -- {list} List displaytype info from metadata.
-        billing_file_info   -- {list} List billing file info from metadata.
-        priceinfo   -- {list} List billing price info from metadata.
+        billing_info   -- {dict} Dict billing info from metadata.
     """
     file_meta_ids = []
     accessrole_info = []
     displaytype_info = []
     billing_file = []
     priceinfo = []
+    billing_info = {}
     for key, val in metadata.items():
         if isinstance(val, list):
             for item in val:
@@ -4022,8 +4020,11 @@ def get_billinginfo_from_metadata(metadata):
             metadata[_id] = new_file_metadata
         else:
             del metadata[_id]
-
-    return accessrole_info,displaytype_info,billing_file,priceinfo
+    billing_info["accessrole_info"] = accessrole_info
+    billing_info["displaytype_info"] = displaytype_info
+    billing_info["billing_file"] = billing_file
+    billing_info["priceinfo"] = priceinfo
+    return billing_info
 
 def handle_check_filename_consistence(file_paths, meta_filenames):
     """Check thumbnails metadata.
@@ -4043,17 +4044,18 @@ def handle_check_filename_consistence(file_paths, meta_filenames):
 
     return errors
 
-def handle_check_billing_file(accessrole_info,displaytype_info,billing_file,priceinfo):
+def handle_check_billing_file(billing_info):
     """Check billing metadata.
 
     :argument
-        accessrole_info   -- {list} List accessrole info from metadata.
-        displaytype_info   -- {list} List displaytype info from metadata.
-        billing_file_info   -- {list} List billing file info from metadata.
-        priceinfo   -- {list} List billing price info from metadata.
+        billing_info   -- {dict} Dict billing info from metadata.
     :return
         errors -- {list} List errors.
     """
+    accessrole_info = billing_info["accessrole_info"]
+    displaytype_info = billing_info["displaytype_info"]
+    billing_file = billing_info["billing_file"]
+    priceinfo = billing_info["priceinfo"]
     errors = []
     billing_list  = []
     displaytype_list = []
@@ -4076,7 +4078,7 @@ def handle_check_billing_file(accessrole_info,displaytype_info,billing_file,pric
         if accessrole == "open_access" or accessrole == "open_no":
             accessrole_list.append(accessrole)
     if billing_list:
-        if len(billing_list) > 1:
+        if len(billing_file) > 1:
             errors.append(_("multiple_billing_file_error"))
         if displaytype_list:
             errors.append(_("billing_file_display_type_error"))
