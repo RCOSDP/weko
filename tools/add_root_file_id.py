@@ -30,9 +30,9 @@ def add_root_file_id(index):
         if "bucket_id" in source:
             with db.session.begin_nested():
                 file = None
-                if "file_id" in source and source['file_id'] is not "":
+                if "file_id" in source and source['file_id'] is not None and source['file_id'] is not "":
                     file = ObjectVersion.query.filter_by(file_id=source["file_id"],bucket_id=source['bucket_id']).first() 
-                elif "file_key" in source and source['file_key'] is not "":
+                elif "file_key" in source and source['file_key'] is not None and source['file_key'] is not "":
                     file = ObjectVersion.query.filter_by(key=source["file_key"],bucket_id=source['bucket_id']).first() 
                 else:
                     file = ObjectVersion.query.filter_by(bucket_id=source["bucket_id"]).first()
