@@ -34,6 +34,8 @@ def add_root_file_id(index):
                 file = ObjectVersion.query.filter_by(file_id=source["file_id"]).order_by(ObjectVersion.updated.desc()).first() 
             elif "file_key" in source and source['file_key'] is not None and source['file_key'] is not "":
                 file = ObjectVersion.query.filter_by(key=source["file_key"],bucket_id=source["bucket_id"]).order_by(ObjectVersion.updated.desc()).first() 
+            else:
+                file = ObjectVersion.query.filter_by(bucket_id=source["bucket_id"]).order_by(ObjectVersion.updated.desc()).first() 
             if file:
                 _body = {"file_keys":file.key,"root_file_id":file.root_file_id,"file_id":file.file_id}
                 _bulk.append({'_op_type': 'update',"_index":_index,"_type":_type,"_id":id,"doc":_body,"doc_as_upsert" : True})
