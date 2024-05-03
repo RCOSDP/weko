@@ -28,25 +28,24 @@ def add_root_file_id(index):
         _index = r.get('_index')
         _type = r.get('_type')
         _body = None
-        if "file_id" in source:
-            with db.session.begin_nested():
-                file = None
-                if "file_id" in source and source['file_id'] is not None and source['file_id'] is not "":
-                    file = ObjectVersion.query.filter_by(file_id=source["file_id"],bucket_id=source['bucket_id']).first() 
-                    _body = {"file_id": source['file_id']}
-                elif "file_key" in source and source['file_key'] is not None and source['file_key'] is not "":
-                    file = ObjectVersion.query.filter_by(key=source["file_key"],bucket_id=source['bucket_id']).first() 
-                else:
-                    file = ObjectVersion.query.filter_by(bucket_id=source["bucket_id"]).first()
-                if file:
-                    _body = {"file_keys":file.key,"root_file_id":file.root_file_id,"file_id":file.file_id}
-                    _bulk.append({'_op_type': 'update',"_index":_index,"_type":_type,"_id":id,"doc":_body,"doc_as_upsert" : True})
-                    updated.append(id)
-                elif _body is not None:
-                    _bulk.append({'_op_type': 'update',"_index":_index,"_type":_type,"_id":id,"doc":_body,"doc_as_upsert" : True})
-                    updated.append(id)
-                else:
-                    errors.append(id)
+        with db.session.begin_nested():
+            file = None
+            if "file_id" in source and source['file_id'] is not None and source['file_id'] is not "":
+                file = ObjectVersion.query.filter_by(file_id=source["file_id"],bucket_id=source['bucket_id']).first() 
+                _body = {"root_file_id": source['file_id']}
+            elif "file_key" in source and source['file_key'] is not None and source['file_key'] is not "":
+                file = ObjectVersion.query.filter_by(key=source["file_key"],bucket_id=source['bucket_id']).first() 
+            else:
+                file = ObjectVersion.query.filter_by(bucket_id=source["bucket_id"]).first()
+            if file:
+                _body = {"file_keys":file.key,"root_file_id":file.root_file_id,"file_id":file.file_id}
+                _bulk.append({'_op_type': 'update',"_index":_index,"_type":_type,"_id":id,"doc":_body,"doc_as_upsert" : True})
+                updated.append(id)
+            elif _body is not None:
+                _bulk.append({'_op_type': 'update',"_index":_index,"_type":_type,"_id":id,"doc":_body,"doc_as_upsert" : True})
+                updated.append(id)
+            else:
+                errors.append(id)
     if len(_bulk)>0:
         try:
             res = helpers.bulk(es, _bulk)
