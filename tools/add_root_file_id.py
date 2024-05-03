@@ -40,13 +40,13 @@ def add_root_file_id(index):
                     updated.append(id)
                 else:
                     errors.append(id)
-        if len(_bulk)>0:
-            try:
-                res = helpers.bulk(es, _bulk)
-                print("update: {}".format(updated))
-                print("result: {}".format(res))
-            except Exception as e:
-                errors.append(e)
+    if len(_bulk)>0:
+        try:
+            res = helpers.bulk(es, _bulk)
+            print("update: {}".format(updated))
+            print("result: {}".format(res))
+        except Exception as e:
+            errors.append(e)
     return errors
 
     
