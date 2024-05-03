@@ -28,7 +28,7 @@ def add_root_file_id(index):
         _index = r.get('_index')
         _type = r.get('_type')
         if "bucket_id" in source:
-            with db.session.no_autoflush:
+            with db.session.begin_nested():
                 file = None
                 if "file_key" in source and source['file_key'] is not "":
                     file = ObjectVersion.query.filter_by(key=source["file_key"],bucket_id=source['bucket_id']).first() 
@@ -40,7 +40,6 @@ def add_root_file_id(index):
                     updated.append(id)
                 else:
                     errors.append(id)
-                db.session.close()
         if len(_bulk)>0:
             try:
                 res = helpers.bulk(es, _bulk)
