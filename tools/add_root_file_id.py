@@ -40,10 +40,10 @@ def add_root_file_id(index):
                     file = ObjectVersion.query.filter_by(bucket_id=source["bucket_id"]).first()
                 if file:
                     _body = {"file_keys":file.key,"root_file_id":file.root_file_id,"file_id":file.file_id}
-                    _bulk.append({'_op_type': 'update',"_index":_index,"_type":_type,"_id":id,"doc":_body,"doc_as_upsert" : true})
+                    _bulk.append({'_op_type': 'update',"_index":_index,"_type":_type,"_id":id,"doc":_body,"doc_as_upsert" : True})
                     updated.append(id)
                 elif _body is not None:
-                    _bulk.append({'_op_type': 'update',"_index":_index,"_type":_type,"_id":id,"doc":_body,"doc_as_upsert" : true)
+                    _bulk.append({'_op_type': 'update',"_index":_index,"_type":_type,"_id":id,"doc":_body,"doc_as_upsert" : True})
                     updated.append(id)
                 else:
                     errors.append(id)
