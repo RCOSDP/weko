@@ -14,7 +14,8 @@ es = Elasticsearch(
 def add_root_file_id(index):
     errors = []
     updated = []
-    _query = '{"query":{"bool":{"should":[{"bool":{"must_not":{"exists":{"field":"root_file_id"}}}},{"term":{"root_file_id":""}}]}}}'
+    # _query = '{"query":{"bool":{"should":[{"bool":{"must_not":{"exists":{"field":"root_file_id"}}}},{"term":{"root_file_id":""}}]}}}'
+    _query = '{"query":{"bool":{"should":[{"bool":{"must_not":{"exists":{"field":"root_file_id"}}}},{"bool":{"must":[{"exists":{"field":"root_file_id"}}],"must_not":[{"wildcard":{"root_file_id":"*"}}]}}]}}}'
     results = helpers.scan(
             es,
             index=index,
