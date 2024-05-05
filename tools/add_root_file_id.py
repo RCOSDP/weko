@@ -70,19 +70,19 @@ if __name__ == "__main__":
     print("# {}".format(index))
     errors = add_root_file_id(index)
     print("raise error item: {}".format(len(errors)))
-    print("raise error items: {}".format(errors))
+    print("{}".format(errors))
     index_event = os.environ.get("SEARCH_INDEX_PREFIX", "tenant1") + "-events-stats-file-download"
     print("# {}".format(index_event))
     errors = add_root_file_id(index_event)
     print("raise error item: {}".format(len(errors)))
-    print("raise error items: {}".format(errors))
+    print("{}".format(errors))
     index_event = os.environ.get("SEARCH_INDEX_PREFIX", "tenant1") + "-events-stats-file-preview"
     print("# {}".format(index_event))
     errors = add_root_file_id(index_event)
     print("raise error item: {}".format(len(errors)))
-    print("raise error items: {}".format(errors))
+    print("{}".format(errors))
     index_event = os.environ.get("SEARCH_INDEX_PREFIX", "tenant1") + "-events-stats-file-preview"
     print("# {}".format(index_event))
     errors = add_root_file_id(index_event)
     print("raise error item: {}".format(len(errors)))
-    print("raise error items: {}".format(errors))
+    print("{}".format(errors))
