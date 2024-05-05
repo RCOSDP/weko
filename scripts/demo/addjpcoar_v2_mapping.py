@@ -36,48 +36,51 @@ def main():
                     .order_by(desc(ItemTypeMapping.id))
                     .first()
                 )
-                print("processing... item type id({}) mapping id({})".format(_id,item_type_mapping.id))
-                mapping = pickle.loads(pickle.dumps(item_type_mapping.mapping, -1))
-                for key in list(mapping.keys()):
-                    if "jpcoar_mapping" in mapping[key]: 
-                        if "catalog" in mapping[key]["jpcoar_mapping"]:
-                            continue
-                        elif "datasetSeries" in mapping[key]["jpcoar_mapping"]:
-                            continue
-                        elif "holdingAgent" in mapping[key]["jpcoar_mapping"]:
-                            continue
-                        elif "format" in mapping[key]["jpcoar_mapping"]:
-                            continue
-                        elif "extent" in mapping[key]["jpcoar_mapping"]:
-                            continue
-                        elif "originalLanguage" in mapping[key]["jpcoar_mapping"]:
-                            continue
-                        elif "volumeTitle" in mapping[key]["jpcoar_mapping"]:
-                            continue
-                        elif "edition" in mapping[key]["jpcoar_mapping"]:
-                            continue
-                        elif "date_dcterms" in mapping[key]["jpcoar_mapping"]:
-                            continue
-                        elif "publisher_jpcoar" in mapping[key]["jpcoar_mapping"]:
-                            continue
-                        elif "jpcoar_v1_mapping" in mapping[key]:
-                            mapping[key]["jpcoar_mapping"] =  item_type_mapping.mapping[key][
-                                "jpcoar_v1_mapping"
-                            ]
+                if item_type_mapping is not None:
+                    print("processing... item type id({}) mapping id({})".format(_id,item_type_mapping.id))
+                    mapping = pickle.loads(pickle.dumps(item_type_mapping.mapping, -1))
+                    for key in list(mapping.keys()):
+                        if "jpcoar_mapping" in mapping[key]: 
+                            if "catalog" in mapping[key]["jpcoar_mapping"]:
+                                continue
+                            elif "datasetSeries" in mapping[key]["jpcoar_mapping"]:
+                                continue
+                            elif "holdingAgent" in mapping[key]["jpcoar_mapping"]:
+                                continue
+                            elif "format" in mapping[key]["jpcoar_mapping"]:
+                                continue
+                            elif "extent" in mapping[key]["jpcoar_mapping"]:
+                                continue
+                            elif "originalLanguage" in mapping[key]["jpcoar_mapping"]:
+                                continue
+                            elif "volumeTitle" in mapping[key]["jpcoar_mapping"]:
+                                continue
+                            elif "edition" in mapping[key]["jpcoar_mapping"]:
+                                continue
+                            elif "date_dcterms" in mapping[key]["jpcoar_mapping"]:
+                                continue
+                            elif "publisher_jpcoar" in mapping[key]["jpcoar_mapping"]:
+                                continue
+                            elif "jpcoar_v1_mapping" in mapping[key]:
+                                mapping[key]["jpcoar_mapping"] =  item_type_mapping.mapping[key][
+                                    "jpcoar_v1_mapping"
+                                ]
+                            else:
+                                mapping[key]["jpcoar_v1_mapping"] = ""
                         else:
-                            mapping[key]["jpcoar_v1_mapping"] = ""
-                    else:
-                        if "jpcoar_v1_mapping" in mapping[key]:
-                             mapping[key]["jpcoar_mapping"] = item_type_mapping.mapping[key][
-                                "jpcoar_v1_mapping"
-                            ]
-                        else:
-                            mapping[key]["jpcoar_v1_mapping"] = ""
-                            mapping[key]["jpcoar_mapping"] = ""
-                    
-                item_type_mapping.mapping = pickle.loads(pickle.dumps(mapping, -1))
-                flag_modified(item_type_mapping,"mapping")
-                db.session.merge(item_type_mapping)
+                            if "jpcoar_v1_mapping" in mapping[key]:
+                                mapping[key]["jpcoar_mapping"] = item_type_mapping.mapping[key][
+                                    "jpcoar_v1_mapping"
+                                ]
+                            else:
+                                mapping[key]["jpcoar_v1_mapping"] = ""
+                                mapping[key]["jpcoar_mapping"] = ""
+                        
+                    item_type_mapping.mapping = pickle.loads(pickle.dumps(mapping, -1))
+                    flag_modified(item_type_mapping,"mapping")
+                    db.session.merge(item_type_mapping)
+                else:
+                    print("No mapping: {}".format(_id))
         db.session.commit()
     except Exception as ex:
         print(traceback.format_exc())
