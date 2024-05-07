@@ -204,6 +204,32 @@ def is_billing_item(record: Dict) -> bool:
     return False
 
 
+def is_open_access(record: Dict) -> bool:
+    """Checks if item is a open access item based on its meta data schema.
+
+    Args:
+        record (dict): item's meta data
+    
+    Returns:
+        bool: open access item or not
+    
+    """
+    for value in record.values():
+        if not isinstance(value, dict):
+            continue
+        if value.get('attribute_type', '') != 'file':
+            continue
+        for file in value.get('attribute_value_mlt', []):
+            access_role = file.get('accessrole')
+            open_access_date = dt.strptime(file.get('date')[0].get('dateValue'),
+                                           '%Y-%m-%d').date()
+            if access_role == 'open_access':
+                return True
+            elif access_role == 'open_date' and open_access_date <= dt.now().date():
+                return True
+    return False
+
+
 def soft_delete(recid):
     """Soft delete item."""
     def get_cache_data(key: str):

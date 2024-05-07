@@ -283,8 +283,11 @@ class QueryFileReportsHelper(object):
         billing_file_metadata_list = [result.get('_source', {}) for result in search_result]
         mapper = {}
         index_list = Index.query.order_by(asc(Index.id)).all()
+        target_file_list = list(set([d.get('file_key') for d in res['buckets']]))
         # initialize billing file download stats.
         for metadata in billing_file_metadata_list:
+            if not metadata['content'][0]['filename'] in target_file_list:
+                continue
             content = metadata.get('content', [{}])
             file_key = ''
             for content_meta in content:
@@ -419,7 +422,7 @@ class QueryFileReportsHelper(object):
                       'end_date':
                       query_month + '-' + str(lastday).zfill(2)
                       + 'T23:59:59',
-                      'accessrole': 'open_access'}
+                      'is_open_access': True}
 
             all_query_name = ''
             open_access_query_name = ''
@@ -432,6 +435,9 @@ class QueryFileReportsHelper(object):
             elif event == 'billing_file_download':
                 all_params['is_billing_item'] = True
                 all_query_name = 'get-' + event.replace('_', '-') + '-report'
+                params['is_billing_item'] = True
+                open_access_query_name \
+                    = 'get-' + event.replace('_', '-') + '-open-access-report'
 
             # all
             all_query_cfg = current_stats.queries[all_query_name]
@@ -439,7 +445,7 @@ class QueryFileReportsHelper(object):
             all_res = all_query.run(**all_params)
             cls.Calculation(all_res, all_list, event=event, all_groups=all_groups)
 
-            # open access -- Only run for non-billed items
+            # open access
             if open_access_query_name:
                 open_access_query_cfg = current_stats.queries[open_access_query_name]
                 open_access = open_access_query_cfg.query_class(
