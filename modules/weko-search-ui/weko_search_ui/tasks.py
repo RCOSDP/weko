@@ -19,7 +19,7 @@
 # MA 02111-1307, USA.
 
 """WEKO3 module docstring."""
-import json
+import orjson
 import os
 import pickle
 import shutil
@@ -139,17 +139,17 @@ def write_files_task(export_path, pickle_file_name , user_id):
         part_index = part_name.find('part')
         part_number = part_name[part_index + 4:] if part_index != -1 else 1
         json_data['write_file_status'][str(part_number)] = status
-        reset_redis_cache(_file_create_key, json.dumps(json_data))
+        reset_redis_cache(_file_create_key, orjson.dumps(json_data).decode())
 
     with open(pickle_file_name, 'rb') as f:
         import_datas = pickle.load(f)
-    json_data = json.loads(get_redis_cache(_file_create_key))
+    json_data = orjson.loads(get_redis_cache(_file_create_key))
     if not json_data['cancel_flg']:
         _update_redis_status(json_data, import_datas['name'], 'started')
         with open(pickle_file_name, 'rb') as f:
             import_datas = pickle.load(f)
         result = write_files(import_datas, export_path, user_id, 0)
-        json_data = json.loads(get_redis_cache(_file_create_key))
+        json_data = orjson.loads(get_redis_cache(_file_create_key))
         if result:
             _update_redis_status(json_data, import_datas['name'], 'finished')
         else:

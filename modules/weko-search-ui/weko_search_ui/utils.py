@@ -3381,7 +3381,7 @@ def export_all(root_url, user_id, data, start_time):
                     write_file_json['write_file_status'][str(i + 1)] = 'waiting'
                 reset_redis_cache(
                     _file_create_key,
-                    json.dumps(write_file_json)
+                    orjson.dumps(write_file_json).decode()
                 )
                 for recid, uuid in record_ids:
                     if counter % WEKO_SEARCH_UI_BULK_EXPORT_LIMIT == 0 and item_datas:
@@ -3498,9 +3498,9 @@ def export_all(root_url, user_id, data, start_time):
             if result:
                 db.session.commit()
             else:
-                json_data = json.loads(get_redis_cache(_file_create_key))
+                json_data = orjson.loads(get_redis_cache(_file_create_key))
                 json_data['cancel_flg'] = True
-                reset_redis_cache(_file_create_key, json.dumps(json_data))
+                reset_redis_cache(_file_create_key, orjson.dumps(json_data).decode())
                 reset_redis_cache(_msg_key, "Export failed.")
         else:
             reset_redis_cache(_msg_key, "Export failed. Please check item id range.")
@@ -3640,9 +3640,9 @@ def cancel_export_all():
                 ),
                 countdown=int(_expired_time) * 60
             )
-            json_data = json.loads(get_redis_cache(_file_create_key))
+            json_data = orjson.loads(get_redis_cache(_file_create_key))
             json_data['cancel_flg'] = True
-            reset_redis_cache(_file_create_key, json.dumps(json_data))
+            reset_redis_cache(_file_create_key, orjson.dumps(json_data).decode())
         return True
     except Exception as ex:
         current_app.logger.error(ex)
@@ -3705,7 +3705,7 @@ def get_export_status():
         run_message = get_redis_cache(run_msg)
         write_file_info = get_redis_cache(file_msg)
         if task_id:
-            write_file_data = json.loads(write_file_info)
+            write_file_data = orjson.loads(write_file_info)
             write_file_status = _check_write_file_info(write_file_data)
             task = AsyncResult(task_id)
             status_cond = (task.successful() or task.failed() or task.state == "REVOKED") \
@@ -3726,7 +3726,7 @@ def get_export_status():
                     download_uri = src.uri
                     finish_time = datetime.now().strftime('%Y/%m/%d %H:%M:%S')
                     write_file_data["finish_time"] = finish_time
-                    reset_redis_cache(file_msg, json.dumps(write_file_data))
+                    reset_redis_cache(file_msg, orjson.dumps(write_file_data).decode())
                     reset_redis_cache(cache_uri, download_uri)
                     reset_redis_cache(run_msg, "")
                     delete_exported_task.apply_async(
