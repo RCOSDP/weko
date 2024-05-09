@@ -3958,9 +3958,10 @@ def get_filenames_from_metadata(metadata):
 def get_billinginfo_from_metadata(metadata):
     """Get list billing info of file contents from metadata.
 
-    :argument
+    Args:
         metadata -- {dict} record metadata.
-    :return
+    
+    Returns:
         billing_info   -- {dict} Dict billing info from metadata.
     """
     file_meta_ids = []
@@ -4047,9 +4048,10 @@ def handle_check_filename_consistence(file_paths, meta_filenames):
 def handle_check_billing_file(billing_info):
     """Check billing metadata.
 
-    :argument
+    Args:
         billing_info   -- {dict} Dict billing info from metadata.
-    :return
+
+    Returns:
         errors -- {list} List errors.
     """
     accessrole_info = billing_info["accessrole_info"]
