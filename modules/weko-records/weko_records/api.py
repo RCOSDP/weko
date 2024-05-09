@@ -982,6 +982,11 @@ class ItemTypes(RecordBase):
                 mapping.model.mapping = table_row_map.get('mapping')
                 flag_modified(mapping.model, 'mapping')
                 db.session.add(mapping.model)
+        else:
+            mapping = Mapping.create(itemtype_id,table_row_map.get('mapping'))
+            flag_modified(mapping.model, 'mapping')
+            db.session.add(mapping.model)
+
         
         ItemTypeEditHistory.create_or_update(
             item_type_id=record.model.id,
