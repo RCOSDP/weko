@@ -74,12 +74,6 @@ def init_menu():
         order=100)
 
 
-@blueprint.before_request
-def set_next_session():
-    """Set the URL of the page to redirect after login."""
-    session['next'] = request.args.get('next', '/')
-
-
 def _redirect_method(has_next=False):
     """Redirect method for instance login to IdP."""
     shib_login = current_app.config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED']
@@ -282,6 +276,7 @@ def shib_sp_login():
     _shib_enable = current_app.config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED']
     _shib_username_config = current_app.config[
         'WEKO_ACCOUNTS_SHIB_ALLOW_USERNAME_INST_EPPN']
+    session['next'] = request.args.get('next', '/')
     try:
         shib_session_id = request.form.get('SHIB_ATTR_SESSION_ID', None)
         if not shib_session_id and not _shib_enable:
@@ -350,7 +345,9 @@ def shib_stub_login():
 
     # LOGIN USING JAIROCLOUD PAGE
     if current_app.config['WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED']:
-        return redirect(_shib_login_url.format(request.url_root))
+        return redirect(_shib_login_url.format(request.url_root)
+                        + '?next='
+                        + request.args.get('next', '/'))
     else:
         return render_template(
             current_app.config[
