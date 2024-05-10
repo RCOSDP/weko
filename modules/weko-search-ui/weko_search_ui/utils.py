@@ -3959,10 +3959,10 @@ def get_billinginfo_from_metadata(metadata):
     """Get list billing info of file contents from metadata.
 
     Args:
-        metadata(dict): record metadata.
+        metadata (dict): record metadata.
     
     Returns:
-        billing_info(dict): Dict billing info from metadata.
+        billing_info (dict): Dict billing info from metadata.
     """
     file_meta_ids = []
     accessrole_info = []
@@ -4049,10 +4049,10 @@ def handle_check_billing_file(billing_info):
     """Check billing metadata.
 
     Args:
-        billing_info(dict): Dict billing info from metadata.
+        billing_info (dict): Dict billing info from metadata.
 
     Returns:
-        errors(list): List errors.
+        errors (list): List errors.
     """
     accessrole_info = billing_info["accessrole_info"]
     displaytype_info = billing_info["displaytype_info"]
