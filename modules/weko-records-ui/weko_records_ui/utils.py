@@ -724,11 +724,10 @@ def hide_by_email(item_metadata, force_flag=False):
         meta_options, type_mapping = get_options_and_order_list(item_type_id)
         hide_list = get_hide_list_by_schema_form(item_type_id)
 
-        # Hidden owners_ext.email
+        # Hidden owners_ext info
         if item_metadata.get('_deposit') and \
-            item_metadata['_deposit'].get('owners_ext') and item_metadata['_deposit']['owners_ext'].get('email'):
-            if force_flag or not show_email_flag:
-                del item_metadata['_deposit']['owners_ext']['email']
+                item_metadata['_deposit'].get('owners_ext'):
+            del item_metadata['_deposit']['owners_ext']
 
         for item in item_metadata:
             _item = item_metadata[item]

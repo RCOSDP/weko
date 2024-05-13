@@ -686,6 +686,7 @@ def index_upload():
 
 
 @blueprint_api.route('/get_search_data/<data_type>', methods=['GET'])
+@login_required
 def get_search_data(data_type=''):
     """get_search_data.
 
@@ -791,10 +792,11 @@ def validate_user_info():
 
 @blueprint_api.route('/get_user_info/<int:owner>/<int:shared_user_id>',
                      methods=['GET'])
+@login_required
 def get_user_info(owner, shared_user_id):
     """get_user_info.
 
-    Get username and password by querying user id
+    Get username and email by querying user id
 
     param:
         user_id: The user ID
