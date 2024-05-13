@@ -515,12 +515,14 @@ def hide_by_file(item_metadata):
     return item_metadata
 
 
-def hide_by_email(item_metadata):
+def hide_by_email(item_metadata, force_flag=False):
     """Hiding emails.
 
     :param item_metadata:
     :return:
     """
+    from weko_items_ui.utils import get_options_and_order_list, get_hide_list_by_schema_form
+    show_email_flag = item_setting_show_email()
     subitem_keys = current_app.config['WEKO_RECORDS_UI_EMAIL_ITEM_KEYS']
 
     # Hidden owners_ext.email
