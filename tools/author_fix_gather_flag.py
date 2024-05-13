@@ -35,33 +35,26 @@ def get_connection(db_name):
 
 def fix_gather_flag(grouped_data):
     try:
-        conn = []
-        cur = []
-        for i, (db_name, weko_id_list) in enumerate(grouped_data.items()):
-            conn.append(get_connection(db_name))
-            cur.append(conn[i].cursor())
+        for db_name, weko_id_list in grouped_data.items():
+            update_logs = []
+            with get_connection(db_name) as conn, \
+                    conn.cursor() as cur:
+                stmt_formats = ','.join(['%s'] * len(weko_id_list))
+                cur.execute('SELECT id, gather_flg, json FROM authors WHERE id IN (%s)'%stmt_formats, tuple(weko_id_list))
+                authors = cur.fetchall()
 
-            stmt_formats = ','.join(['%s'] * len(weko_id_list))
-            cur[i].execute('SELECT id, gather_flg, json FROM authors WHERE id IN (%s)'%stmt_formats, tuple(weko_id_list))
-            authors = cur[i].fetchall()
+                for author in authors:
+                    if author[1] == GATHER_FLAG_BEFORE and author[2].get('gather_flg') == GATHER_FLAG_AFTER:
+                        cur.execute(f'UPDATE authors SET updated = CURRENT_TIMESTAMP, gather_flg = {GATHER_FLAG_AFTER} WHERE id = {author[0]}')
+                        update_logs.append(f"{db_name},{author[0]},{author[1]},{author[2].get('gather_flg')},{author[0]},{GATHER_FLAG_AFTER}")
 
-            for author in authors:
-                if author[1] == GATHER_FLAG_BEFORE and author[2].get('gather_flg') == GATHER_FLAG_AFTER:
-                    cur[i].execute(f'UPDATE authors SET updated = CURRENT_TIMESTAMP, gather_flg = {GATHER_FLAG_AFTER} WHERE id = {author[0]}')
-                    print(f"{db_name},{author[0]},{author[1]},{author[2].get('gather_flg')},{author[0]},{GATHER_FLAG_AFTER}")
-
-        for i in range(len(conn)):
-            conn[i].commit()
+                for log in update_logs:
+                    print(log)
 
     except:
-        for i in range(len(conn)):
-            conn[i].rollback()
         print(traceback.print_exc())
-
-    finally:
-        for i in range(len(conn)):
-            cur[i].close()
-            conn[i].close()
+        for log in update_logs:
+            print("rollback: "+log)
 
 if __name__ == '__main__':
     args = sys.argv
