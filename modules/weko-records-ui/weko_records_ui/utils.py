@@ -47,7 +47,7 @@ from passlib.handlers.oracle import oracle10
 from weko_admin.models import AdminSettings
 from weko_admin.utils import UsageReport, get_restricted_access
 from weko_deposit.api import WekoDeposit, WekoRecord
-from weko_records.api import FeedbackMailList, ItemTypes
+from weko_records.api import FeedbackMailList, ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
 from weko_records.utils import replace_fqdn
 from weko_records.models import ItemReference
@@ -786,6 +786,44 @@ def item_setting_show_email():
         is_display = False
     return is_display
 
+def is_show_email_of_creator(item_type_id):
+    """Check setting show/hide email for 'Detail' and 'PDF Cover Page' screen.
+
+    :param item_type_id: item type id of current record.
+    :return: True/False, True: show, False: hide.
+    """
+    def get_creator_id(item_type_id):
+        type_mapping = Mapping.get_record(item_type_id)
+        item_map = get_mapping(type_mapping, "jpcoar_mapping")
+        creator = 'creator.creatorName.@value'
+        creator_id = None
+        if creator in item_map:
+            creator_id = item_map[creator].split('.')[0]
+        return creator_id
+
+    def item_type_show_email(item_type_id):
+        # Get flag of creator's email hide from item type.
+        creator_id = get_creator_id(item_type_id)
+        if not creator_id:
+            return None
+        item_type = ItemTypes.get_by_id(item_type_id)
+        schema_editor = item_type.render.get('schemaeditor', {})
+        schema = schema_editor.get('schema', {})
+        creator = schema.get(creator_id)
+        if not creator:
+            return None
+        properties = creator.get('properties', {})
+        creator_mails = properties.get('creatorMails', {})
+        items = creator_mails.get('items', {})
+        properties = items.get('properties', {})
+        creator_mail = properties.get('creatorMail', {})
+        is_hide = creator_mail.get('isHide', None)
+        return is_hide
+
+    is_hide = item_type_show_email(item_type_id)
+    is_display = item_setting_show_email()
+
+    return not is_hide and is_display
 
 def replace_license_free(record_metadata, is_change_label=True):
     """Change the item name 'licensefree' to 'license_note'.
