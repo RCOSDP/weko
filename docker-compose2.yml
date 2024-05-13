@@ -166,9 +166,12 @@ services:
 
   worker:
     restart: "always"
-    build:
-      context: .
-      #target: stage_1
+    # build:
+    #   context: .
+    #   #target: stage_1
+    image: weko-web
+    depends_on:
+      - web
     sysctls:
       net.core.somaxconn: 1024
     command: bash /code/scripts/entrypoint_worker.sh
