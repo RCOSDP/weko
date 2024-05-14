@@ -46,6 +46,7 @@ from passlib.handlers.oracle import oracle10
 from weko_admin.models import AdminSettings
 from weko_admin.utils import UsageReport, get_restricted_access
 from weko_deposit.api import WekoDeposit
+from weko_index_tree.api import Indexes
 from weko_records.api import FeedbackMailList, ItemTypes, Mapping
 from weko_records.models import ItemBilling
 from weko_records.serializers.utils import get_mapping
@@ -214,19 +215,23 @@ def is_open_access(record: Dict) -> bool:
         bool: open access item or not
     
     """
-    for value in record.values():
-        if not isinstance(value, dict):
-            continue
-        if value.get('attribute_type', '') != 'file':
-            continue
-        for file in value.get('attribute_value_mlt', []):
-            access_role = file.get('accessrole')
-            open_access_date = dt.strptime(file.get('date')[0].get('dateValue'),
-                                           '%Y-%m-%d').date()
-            if access_role == 'open_access':
-                return True
-            elif access_role == 'open_date' and open_access_date <= dt.now().date():
-                return True
+    target_index_list = record['path']
+    public_index_list = Indexes.get_public_indexes_list()
+
+    if not set(public_index_list).isdisjoint(set(target_index_list)):
+        for value in record.values():
+            if not isinstance(value, dict):
+                continue
+            if value.get('attribute_type', '') != 'file':
+                continue
+            for file in value.get('attribute_value_mlt', []):
+                access_role = file.get('accessrole')
+                open_access_date = dt.strptime(file.get('date')[0].get('dateValue'),
+                                                '%Y-%m-%d').date()
+                if access_role == 'open_access':
+                    return True
+                elif access_role == 'open_date' and open_access_date <= dt.now().date():
+                    return True
     return False
 
 
