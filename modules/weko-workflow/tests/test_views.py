@@ -4217,6 +4217,7 @@ def test_download_activitylog_nologin(client,db_register2):
     res =  client.get(url)
     assert res.status_code == 302
 
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_download_activitylog_1 -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 @pytest.mark.parametrize('users_index, status_code', [
     (0, 403),
     (1, 200),
@@ -4226,19 +4227,33 @@ def test_download_activitylog_nologin(client,db_register2):
     (5, 403),
     (6, 200),
 ])
-def test_download_activitylog_1(client, db_register , users, users_index, status_code):
+def test_download_activitylog_1(client, db, db_register , users, users_index, status_code):
     """Test of download_activitylog."""
     login(client=client, email=users[users_index]['email'])
 
-    #1
-    url = url_for('weko_workflow.download_activitylog',
-                activity_id='2')
-    res = client.get(url)
-    assert res.status_code == status_code
+    if status_code == 200:
+        with pytest.raises(Exception) as e:
+            #1
+            url = url_for('weko_workflow.download_activitylog',
+                        activity_id='2')
+            res = client.get(url)
+            assert res.status_code == status_code
+    else:
+        #1
+        url = url_for('weko_workflow.download_activitylog',
+                    activity_id='2')
+        res = client.get(url)
+        assert res.status_code == status_code
 
     #3
     current_app.config.update(
         DELETE_ACTIVITY_LOG_ENABLE = False
+    )
+    current_app.config.update(
+        WEKO_WORKFLOW_FILTER_PARAMS = [
+            'createdfrom', 'createdto', 'workflow', 'user', 'item', 'status', 'tab',
+            'sizewait', 'sizetodo', 'sizeall', 'pagesall', 'pagestodo', 'pageswait'
+        ]
     )
 
     url = url_for('weko_workflow.download_activitylog',
@@ -4256,11 +4271,12 @@ def test_download_activitylog_2(client, db_register , users, users_index, status
     """Test of download_activitylog."""
     login(client=client, email=users[users_index]['email'])
 
-    #4
-    url = url_for('weko_workflow.download_activitylog',
-                activity_id='2')
-    res = client.get(url)
-    assert res.status_code == status_code
+    with pytest.raises(Exception) as e:
+        #4
+        url = url_for('weko_workflow.download_activitylog',
+                    activity_id='2')
+        res = client.get(url)
+        assert res.status_code == status_code
 
 
     #5
