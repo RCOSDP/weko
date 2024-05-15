@@ -1,4 +1,5 @@
 import json
+import pickle
 from datetime import datetime
 from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy.sql.expression import desc
@@ -197,7 +198,8 @@ def main():
             try:
                 itMapping = ItemTypeMapping.query.filter_by(item_type_id=_id).order_by(desc(ItemTypeMapping.created)).first()
                 if itMapping:
-                    _mapping = itMapping.mapping
+                    _mapping = pickle.loads(pickle.dumps(itMapping.mapping, -1))
+                    
                     if 'system_identifier_uri' in _mapping:
                         if not _mapping['system_identifier_uri'].get('oai_dc_mapping'):
                             _mapping['system_identifier_uri']['oai_dc_mapping'] = s_identifier_dc_data
