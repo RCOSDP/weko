@@ -608,6 +608,7 @@ def index_upload():
 
 
 @blueprint_api.route('/get_search_data/<data_type>', methods=['GET'])
+@item_permission.require(http_exception=403)
 def get_search_data(data_type=''):
     """get_search_data.
 
@@ -713,6 +714,7 @@ def validate_user_info():
 
 @blueprint_api.route('/get_user_info/<int:owner>/<int:shared_user_id>',
                      methods=['GET'])
+@item_permission.require(http_exception=403)
 def get_user_info(owner, shared_user_id):
     """get_user_info.
 
