@@ -28,7 +28,12 @@ mapping = {
     "junii2_mapping": "",
     "lido_mapping": "",
     "lom_mapping": "",
-    "oai_dc_mapping": "",
+    "oai_dc_mapping": {
+        "system_identifier": {
+            "@value": "subitem_systemidt_identifier",
+            "@attributes": {"identifierType": "subitem_systemidt_identifier_type"},
+        }
+    },
     "spase_mapping": "",
 }
 id_type = ["DOI", "HDL", "URI"]
