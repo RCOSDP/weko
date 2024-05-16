@@ -40,6 +40,8 @@ class JSONSerializerMixin(SerializerMixinInterface):
         :param record: Record instance.
         :param links_factory: Factory function for record links.
         """
+        from weko_records_ui.utils import hide_by_email
+        record = hide_by_email(record, True)
         return json.dumps(
             self.transform_record(pid, record, links_factory, **kwargs),
             **self._format_args())
