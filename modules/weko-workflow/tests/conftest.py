@@ -60,7 +60,6 @@ from invenio_jsonschemas import InvenioJSONSchemas
 from invenio_records_ui import InvenioRecordsUI
 from weko_search_ui.config import WEKO_SYS_USER
 from weko_records_ui import WekoRecordsUI
-from weko_theme import WekoTheme
 from weko_admin import WekoAdmin
 from weko_admin.models import SessionLifetime,Identifier 
 from weko_admin.views import blueprint as weko_admin_blueprint
@@ -555,7 +554,6 @@ def base_app(instance_path, search_class, cache_config):
     search.register_mappings(search_class.Meta.index, 'mock_module.mappings')
     # InvenioCommunities(app_)
     # WekoAdmin(app_)
-    WekoTheme(app_)
     WekoSearchUI(app_)
     WekoWorkflow(app_)
     WekoUserProfiles(app_)
@@ -2134,7 +2132,7 @@ def db_register_usage_application(app, db, db_records, users, action_data, item_
         ,user_mail = 'aaa@test.org'
         ,file_name = "aaa.txt"
         ,token="abc"
-        ,expiration_date=datetime.now()
+        ,expiration_date=5
         ,is_usage_report=False
     )
     with db.session.begin_nested():

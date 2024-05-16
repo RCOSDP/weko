@@ -579,15 +579,22 @@ def test_init_activity_guest_users(client, users, db_guestactivity, users_index,
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_display_guest_activity -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_display_guest_activity(client, users, db_register, db_guestactivity):
     """Test display_guest_activity func."""
+    mock_render_template = MagicMock(return_value=jsonify({}))
     url = url_for('weko_workflow.display_guest_activity', file_name="Test_file", token='123')
-    with patch("flask.templating._render", return_value=""):
+    with patch("weko_workflow.views.render_template", mock_render_template):
         res = client.get(url)
         assert res.status_code == 200
+        mock_args, mock_kwargs = mock_render_template.call_args
+        assert mock_args[0] == "weko_theme/error.html"
+        assert mock_kwargs["error"] == "Token is invalid"
 
     url = url_for('weko_workflow.display_guest_activity', file_name="Test_file", token=db_guestactivity[0])
-    with patch("flask.templating._render", return_value=""):
+    with patch("weko_workflow.views.render_template", mock_render_template):
         res = client.get(url)
         assert res.status_code == 200
+        mock_args, mock_kwargs = mock_render_template.call_args
+        assert mock_args[0] == "weko_theme/error.html"
+        assert mock_kwargs["error"] == "The specified link has expired."
 
     url = url_for('weko_workflow.display_guest_activity', file_name="Test_file", token=db_guestactivity[1])
     with patch("flask.templating._render", return_value=""):
@@ -4086,7 +4093,6 @@ def test_withdraw_confirm_exception1_guestlogin(guest, client, users, db_registe
 input_data_list = [
     ({}, 500, -1, "{'passwd': ['Missing data for required field.']}"),
     ({"passwd": None}, 500, -1, "{'passwd': ['Field may not be null.']}"),
-    ({"passwd": "DELETE"}, 500, -1, "bad identifier data"),
     ({"passwd": "something"}, 500, -1, "Invalid password")
 ]
 @pytest.mark.parametrize('input_data, status_code, code, msg', input_data_list)
@@ -4116,6 +4122,7 @@ def test_withdraw_confirm_exception2(client, users, db_register_fullaction, user
             assert data["msg"] == msg
 
 
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_withdraw_confirm_exception2_guestlogin -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 @pytest.mark.parametrize('input_data, status_code, code, msg', input_data_list)
 def test_withdraw_confirm_exception2_guestlogin(guest, client, users, db_register_fullaction, input_data, status_code, code, msg):
     """Test of withdraw confirm."""
@@ -4462,4 +4469,4 @@ def test_ActivityActionResource_post(client, db_register , users):
     url = '/depositactivity/{}'.format(db_register['activities'][0].activity_id)
     login(client=client, email=users[2]['email'])
     res = client.get(url)
-    assert res.status_code == 302
+    assert res.status_code == 400

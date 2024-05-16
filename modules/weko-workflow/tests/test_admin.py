@@ -301,13 +301,13 @@ class TestWorkFlowSettingView:
 
     # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestWorkFlowSettingView::test_index_acl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
     @pytest.mark.parametrize('users_index, status_code', [
-        # (0, 403),
+        (0, 403),
         (1, 200),
-        # (2, 200),
-        # (3, 200),
-        # (4, 200),
-        # (5, 200),
-        # (6, 200),
+        (2, 200),
+        (3, 403),
+        (4, 403),
+        (5, 403),
+        (6, 200),
     ])
     def test_index_acl(self,client,db_register2,users,users_index,status_code):
         login(client=client, email=users[users_index]['email'])
