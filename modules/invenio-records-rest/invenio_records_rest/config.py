@@ -10,7 +10,7 @@
 
 from __future__ import absolute_import, print_function
 
-from flask import request
+from flask import request,current_app
 from invenio_indexer.api import RecordIndexer
 from invenio_search import RecordsSearch
 
@@ -22,7 +22,7 @@ def _(x):
     """Identity function for string extraction."""
     return x
 
-
+        
 RECORDS_REST_ENDPOINTS = dict(
     recid=dict(
         pid_type='recid',
