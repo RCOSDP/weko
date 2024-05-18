@@ -42,6 +42,7 @@ class JSONSerializerMixin(SerializerMixinInterface):
         :param links_factory: Factory function for record links.
         """
         from weko_records_ui.utils import hide_by_email
+
         record = hide_by_email(record, True)
         return json.dumps(
             self.transform_record(pid, record, links_factory, **kwargs),
@@ -56,13 +57,33 @@ class JSONSerializerMixin(SerializerMixinInterface):
         :param links: Dictionary of links to add to response.
         """
         from weko_records_ui.utils import hide_by_email
-        if 'hits' in search_result:
-            if 'hits' in search_result['hits']:
-                for hit in search_result['hits']['hits']:
-                    if '_source' in hit and '_item_metadata' in hit['_source']:
-                        hit['_source']['_item_metadata'] = hide_by_email(hit['_source']['_item_metadata'], True)
-                    if '_source' in hit and len(hit['_source'].get('feedback_mail_list', [])) > 0:
-                        hit['_source']['feedback_mail_list'] = []
+        from weko_deposit.api import WekoRecord
+        from weko_records_ui.permissions import check_publish_status,check_created_id
+        from weko_index_tree.utils import get_user_roles
+
+        for hit in search_result['hits']['hits']:
+            if '_source' in hit and '_item_metadata' in hit['_source']:
+                hit['_source']['_item_metadata'] = hide_by_email(hit['_source']['_item_metadata'], True)
+            if '_source' in hit and len(hit['_source'].get('feedback_mail_list', [])) > 0:
+                hit['_source']['feedback_mail_list'] = []
+            if '_source' in hit and '_item_metadata' in hit['_source'] and hit['_source']['_item_metadata']:
+                if 'control_number' in hit['_source']['_item_metadata']:
+                    control_number=hit['_source']['_item_metadata']['control_number']
+                    record = WekoRecord.get_record_by_pid(control_number)
+                    is_admin = False
+                    is_owner = False
+                    roles = get_user_roles()
+                    if roles[0]:
+                        is_admin = True
+                    if check_created_id(record):
+                        is_owner = True
+                    is_public = check_publish_status(record)
+                    if check_created_id(record):
+                        is_owner = True
+                    is_public = check_publish_status(record)
+                    if not is_public and not is_admin and not is_owner:
+                        hit['_source']['_item_metadata']={}
+
         return json.dumps(dict(
             hits=dict(
                 hits=[self.transform_search_hit(
