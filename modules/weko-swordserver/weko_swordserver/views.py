@@ -192,7 +192,7 @@ def post_service_document():
         if check_result.get('error'):
             errorType = ErrorType.ServerError
             check_result_msg = check_result.get('error')
-        elif item.get('errors'):
+        elif item and item.get('errors'):
             errorType = ErrorType.ContentMalformed
             check_result_msg = ', '.join(item.get('errors'))
         else:
