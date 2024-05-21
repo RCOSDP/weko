@@ -457,7 +457,7 @@ def hide_item_metadata(record, settings=None, item_type_mapping=None,
                 del record['_deposit']['owners_ext']['email']
 
         if hide_email and not current_app.config['EMAIL_DISPLAY_FLG']:
-            record = hide_by_email(record)
+            record = hide_by_email(record,True)
 
 
         record = hide_by_file(record)
@@ -487,7 +487,7 @@ def hide_item_metadata_email_only(record):
             del record['_deposit']['owners_ext']['email']
 
     if hide_email and not current_app.config['EMAIL_DISPLAY_FLG']:
-        record = hide_by_email(record)
+        record = hide_by_email(record,True)
         return True
 
     record.pop('weko_creator_id')
@@ -514,28 +514,40 @@ def hide_by_file(item_metadata):
     return item_metadata
 
 
-def hide_by_email(item_metadata):
+def hide_by_email(item_metadata, force_flag=False):
     """Hiding emails.
 
     :param item_metadata:
     :return:
     """
+    from weko_items_ui.utils import get_options_and_order_list, get_hide_list_by_schema_form
+    show_email_flag = item_setting_show_email()
     subitem_keys = current_app.config['WEKO_RECORDS_UI_EMAIL_ITEM_KEYS']
 
-    # Hidden owners_ext.email
-    if item_metadata.get('_deposit') and \
-        item_metadata['_deposit'].get('owners_ext') and item_metadata['_deposit']['owners_ext'].get('email'):
-        del item_metadata['_deposit']['owners_ext']['email']
+    item_type_id = item_metadata.get('item_type_id')
 
-    for item in item_metadata:
-        _item = item_metadata[item]
-        if isinstance(_item, dict) and \
-                _item.get('attribute_value_mlt'):
-            for _idx, _value in enumerate(_item['attribute_value_mlt']):
-                if _value is not None:
-                    for key in subitem_keys:
-                        if key in _value.keys():
-                            del _item['attribute_value_mlt'][_idx][key]
+    if item_type_id:
+        meta_options, type_mapping = get_options_and_order_list(item_type_id)
+        hide_list = get_hide_list_by_schema_form(item_type_id)
+
+        # delete owners_ext.email
+        if item_metadata.get('_deposit') and \
+                item_metadata['_deposit'].get('owners_ext'):
+            del item_metadata['_deposit']['owners_ext']
+
+        for item in item_metadata:
+            _item = item_metadata[item]
+            prop_hidden = meta_options.get(item, {}).get('option', {}).get('hidden', False)
+            if isinstance(_item, dict) and \
+                    _item.get('attribute_value_mlt'):
+                for _idx, _value in enumerate(_item['attribute_value_mlt']):
+                    if _value is not None:
+                        for key in subitem_keys:
+                            for h in hide_list:
+                                if h.startswith(item) and h.endswith(key):
+                                    prop_hidden = True
+                            if key in _value.keys() and (force_flag or not show_email_flag or prop_hidden):
+                                del _item['attribute_value_mlt'][_idx][key]
 
     return item_metadata
 
@@ -574,6 +586,14 @@ def hide_by_itemtype(item_metadata, hidden_items):
 
     return item_metadata
 
+def item_setting_show_email():
+    # Display email from setting item admin.
+    settings = AdminSettings.get('items_display_settings',dict_to_object=False)
+    if settings and 'items_display_email' in settings:
+        is_display = settings['items_display_email']
+    else:
+        is_display = False
+    return is_display
 
 def is_show_email_of_creator(item_type_id):
     """Check setting show/hide email for 'Detail' and 'PDF Cover Page' screen.
@@ -609,19 +629,11 @@ def is_show_email_of_creator(item_type_id):
         is_hide = creator_mail.get('isHide', None)
         return is_hide
 
-    def item_setting_show_email():
-        # Display email from setting item admin.
-        settings = AdminSettings.get('items_display_settings',dict_to_object=False)
-        if settings and 'items_display_email' in settings:
-            is_display = settings['items_display_email']
-        else:
-            is_display = False
-        return is_display
-
     is_hide = item_type_show_email(item_type_id)
     is_display = item_setting_show_email()
     
     return not is_hide and is_display
+
 
 
 def replace_license_free(record_metadata, is_change_label=True):
