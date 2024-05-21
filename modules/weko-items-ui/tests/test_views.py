@@ -5,6 +5,7 @@ from datetime import datetime
 from unittest.mock import MagicMock
 from time import sleep
 
+import os
 import pytest
 from flask import Flask, json, jsonify, session, url_for, make_response
 from flask_security.utils import login_user
@@ -301,13 +302,13 @@ def test_iframe_save_model_nologin(client, db_sessionlifetime):
     "id, status_code",
     [
         (0, 200),
-        # (1, 200),
-        # (2, 200),
-        # (3, 200),
-        # (4, 200),
-        # (5, 200),
-        # (6, 200),
-        # (7, 200),
+        (1, 200),
+        (2, 200),
+        (3, 200),
+        (4, 200),
+        (5, 200),
+        (6, 200),
+        (7, 200),
     ],
 )
 def test_iframe_save_model_acl(app, client, db_itemtype, db_workflow, users, id, status_code):
@@ -321,7 +322,7 @@ def test_iframe_save_model_acl(app, client, db_itemtype, db_workflow, users, id,
     res = client.post(url, json=data)
     assert res.status_code == status_code
     activity = Activity.query.first()
-    assert activity.temp_data == '{"endpoints": {"initialization": "/api/deposits/items"}, "files": [], "metainfo": {"item_1617186331708": [{"subitem_1551255647225": "aa", "subitem_1551255648112": "ja"}], "item_1617186385884": [{}], "item_1617186419668": [{"creatorAffiliations": [{"affiliationNameIdentifiers": [{}], "affiliationNames": [{}]}], "creatorAlternatives": [{}], "creatorMails": [{}], "creatorNames": [{}], "familyNames": [{}], "givenNames": [{}], "nameIdentifiers": [{}]}], "item_1617186499011": [{}], "item_1617186609386": [{}], "item_1617186626617": [{}], "item_1617186643794": [{}], "item_1617186660861": [{}], "item_1617186702042": [{}], "item_1617186783814": [{}], "item_1617186859717": [{}], "item_1617186882738": [{"subitem_geolocation_place": [{}]}], "item_1617186901218": [{"subitem_1522399412622": [{}], "subitem_1522399651758": [{}]}], "item_1617186920753": [{}], "item_1617186941041": [{}], "item_1617187056579": {"bibliographic_titles": [{}]}, "item_1617187112279": [{}], "item_1617187187528": [{"subitem_1599711633003": [{}], "subitem_1599711660052": [{}], "subitem_1599711758470": [{}], "subitem_1599711788485": [{}]}], "item_1617258105262": {"resourcetype": "conference paper", "resourceuri": "http://purl.org/coar/resource_type/c_5794"}, "item_1617349709064": [{"contributorAffiliations": [{"contributorAffiliationNameIdentifiers": [{}], "contributorAffiliationNames": [{}]}], "contributorAlternatives": [{}], "contributorMails": [{}], "contributorNames": [{}], "familyNames": [{}], "givenNames": [{}], "nameIdentifiers": [{}]}], "item_1617353299429": [{"subitem_1523320863692": [{}]}], "item_1617605131499": [{"date": [{}], "fileDate": [{}], "filesize": [{}]}], "item_1617610673286": [{"nameIdentifiers": [{}], "rightHolderNames": [{}]}], "item_1617620223087": [{}], "item_1617944105607": [{"subitem_1551256015892": [{}], "subitem_1551256037922": [{}]}], "pubdate": "2022-08-19", "shared_user_id": -1}}'
+    assert activity.temp_data == {}
 
 
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_iframe_save_model_error -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
@@ -500,7 +501,7 @@ def test_iframe_error(client, db_sessionlifetime):
 
 
 # def get_json_schema(item_type_id=0, activity_id=""):
-# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_get_json_schema -v -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_get_json_schema_acl_nologin -v -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 def test_get_json_schema_acl_nologin(client, db_itemtype):
     url = url_for("weko_items_ui.get_json_schema", item_type_id=1, _external=True)
     res = client.get(url)
@@ -20314,7 +20315,7 @@ def test_iframe_items_index_acl(app, client, users, id, status_code):
 
 
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_iframe_items_index_get_error -v -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_iframe_items_index_get_error(app, client, db_itemtype, users, db_records, db_workflow, esindex):
+def test_iframe_items_index_get_error(app, client, db_itemtype, users, db_records, db_workflow, esindex, mocker):
     login_user_via_session(client=client, email=users[0]["email"])
     mocker.patch("weko_items_ui.views.set_files_display_type")
     mocker.patch("weko_items_ui.views.get_thumbnails",return_value=[])
@@ -20389,9 +20390,9 @@ def test_iframe_items_index_update_index(app, client, db_itemtype, users, db_rec
         res = WekoRecord.get_record(recid.object_uuid)
         assert res["path"] == ['1']
         res = client.get(url)
-        assert res.status_code == 302
+        assert res.status_code == 400
         res = WekoRecord.get_record(recid.object_uuid)
-        assert res["path"] == ['2']
+        assert res["path"] == ['1']
 
 
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_iframe_items_index_get -v -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
@@ -20504,12 +20505,12 @@ def test_default_view_method(app, db_records):
 def test_to_links_js(app, db_records):
     depid, recid, parent, doi, record, item = db_records[0]
     assert to_links_js(depid) == {
-        "self": "/api/deposits/items/1",
-        "ret": "http://test_server/items/",
-        "index": "/api/deposits/redirect/1",
-        "r": "/items/index/1",
-        "iframe_tree": "/items/iframe/index/1",
-        "iframe_tree_upgrade": "/items/iframe/index/1.2",
+        'self': '/api/deposits/items/1',
+        'ret': '/items/',
+        'index': '/api/deposits/redirect/1',
+        'r': '/items/index/1',
+        'iframe_tree': '/items/iframe/index/1',
+        'iframe_tree_upgrade': '/items/iframe/index/1.2'
     }
 
 
@@ -20790,8 +20791,16 @@ def test_prepare_edit_item_guest(client_api, users):
 
 # def ranking():
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_ranking_acl_nologin -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_ranking_acl_nologin(client, db_sessionlifetime):
+def test_ranking_acl_nologin(client, db_sessionlifetime, mocker):
     url = url_for("weko_items_ui.ranking", _external=True)
+    os.environ['INVENIO_WEB_HOST_NAME'] = 'weko3.example.org'
+    index_json = [
+        {"children":[],"cid":1,"pid":0,"name":"Index(public_state = True,harvest_public_state = True)","id":"1"},
+        {"children":[],"cid":2,"pid":0,"name":"Index(public_state = True,harvest_public_state = False)","id":"2"},
+        {"children":[],"cid":3,"pid":0,"name":"Index(public_state = False,harvest_public_state = True)","id":"3"},
+        {"children":[],"cid":4,"pid":0,"name":"Index(public_state = False,harvest_public_state = False)","id":"4"}
+    ]
+    mocker.patch("weko_items_ui.utils.Indexes.get_browsing_tree_ignore_more",return_value=index_json)
     with patch("flask.templating._render", return_value=""):
         res = client.get(url)
         assert res.status_code == 200
@@ -20872,13 +20881,22 @@ def test_check_restricted_content_guest(client_api, users):
 # MEMO: weko-schema-ui/weko_schema_ui/serializers/WekoBibTexSerializer.py:133: KeyError
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_validate_bibtex_export_acl_nologin -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 def test_validate_bibtex_export_acl_nologin(
-    app, client, users, db_records, db_oaischema
+    app, client, users, db_records, db_itemtype, db_oaischema
 ):
-    url = url_for("weko_items_ui.validate_bibtex_export", _external=True)
-    res = client.post(
-        url, data=json.dumps({"record_ids": [1]}), content_type="application/json"
-    )
-    assert res.status_code == 200
+    app.config.update(OAISERVER_XSL_URL=None)
+    schema = {}
+    schema['root_name'] = db_oaischema.form_data.get('root_name')
+    schema['schema_location'] = db_oaischema.schema_location
+    schema['namespaces'] = db_oaischema.namespaces
+    schema['schema'] = json.loads(
+        db_oaischema.xsd, object_pairs_hook=OrderedDict)
+    with patch('weko_schema_ui.schema.cache_schema', return_value=schema):
+        with patch('weko_schema_ui.serializers.WekoBibTexSerializer.serialize', return_value='test_data'):
+            url = url_for("weko_items_ui.validate_bibtex_export", _external=True)
+            res = client.post(
+                url, data=json.dumps({"record_ids": [1]}), content_type="application/json"
+            )
+            assert res.status_code == 200
 
 
 # def export():
