@@ -207,6 +207,18 @@ def base_app(instance_path, cache_config,request ,search_class):
                             _('Number Of File download'),
                             _('Number Of File Regeneration')]
         },
+        WEKO_ADMIN_REPORT_TYPES = [
+            'file_download',
+            'file_preview',
+            'billing_file_download',
+            'detail_view',
+            'index_access',
+            'file_using_per_user',
+            'top_page_access',
+            'search_count',
+            'user_roles',
+            'site_access'
+        ],
     )
     app_.testing = True
     app_.login_manager = dict(_login_disabled=True)

@@ -41,7 +41,6 @@ from weko_gridlayout.utils import get_widget_design_page_with_main, \
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import Index, IndexStyle
 from weko_index_tree.utils import get_index_link_list
-from weko_items_ui.utils import get_ranking
 from weko_records_ui.ipaddr import check_site_license_permission
 from weko_search_ui.api import SearchSetting
 from weko_search_ui.utils import check_permission, get_journal_info
