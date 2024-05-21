@@ -257,7 +257,7 @@ def get_license_icon(license_type):
         else current_i18n.language
     src, lic, href = '', '', '#'
     for item in list_license_dict:
-        if item['value'] != "license_free" and license_type \
+        if item['value'] != "license_note" and license_type \
                 and item['value'] in license_type:
             src = item['src']
             lic = item['name']

@@ -4317,7 +4317,7 @@ def test_get_json_schema(client, users, db_itemtype, db_itemtype5, id, status_co
                             "title": "グループ",
                             "type": ["null", "string"],
                         },
-                        "licensefree": {
+                        "licensenote": {
                             "format": "textarea",
                             "title": "自由ライセンス",
                             "title_i18n": {"en": "自由ライセンス", "ja": "自由ライセンス"},
@@ -8631,7 +8631,7 @@ def test_get_json_schema(client, users, db_itemtype, db_itemtype5, id, status_co
                             "title": "グループ",
                             "type": ["null", "string"],
                         },
-                        "licensefree": {
+                        "licensenote": {
                             "format": "textarea",
                             "title": "自由ライセンス",
                             "title_i18n": {"en": "自由ライセンス", "ja": "自由ライセンス"},
@@ -13238,7 +13238,7 @@ def test_get_json_schema(client, users, db_itemtype, db_itemtype5, id, status_co
                             "title_i18n": {"en": "", "ja": ""},
                             "type": "string",
                         },
-                        "licensefree": {
+                        "licensenote": {
                             "format": "textarea",
                             "title": "自由ライセンス",
                             "title_i18n": {"en": "自由ライセンス", "ja": "自由ライセンス"},
@@ -16583,8 +16583,8 @@ def test_get_schema_form(client, users, db_itemtype, db_itemtype5, id, status_co
                     "type": "select",
                 },
                 {
-                    "condition": "model.item_1617605131499[arrayIndex].licensetype == 'license_free'",
-                    "key": "item_1617605131499[].licensefree",
+                    "condition": "model.item_1617605131499[arrayIndex].licensetype == 'license_note'",
+                    "key": "item_1617605131499[].licensenote",
                     "notitle": True,
                     "title": "自由ライセンス",
                     "title_i18n": {"en": "自由ライセンス", "ja": "自由ライセンス"},
@@ -19969,8 +19969,8 @@ def test_get_schema_form(client, users, db_itemtype, db_itemtype5, id, status_co
                     "type": "select",
                 },
                 {
-                    "condition": "model.item_1662131464500[arrayIndex].licensetype == 'license_free'",
-                    "key": "item_1662131464500[].licensefree",
+                    "condition": "model.item_1662131464500[arrayIndex].licensetype == 'license_note'",
+                    "key": "item_1662131464500[].licensenote",
                     "notitle": True,
                     "title": "自由ライセンス",
                     "title_i18n": {"en": "自由ライセンス", "ja": "自由ライセンス"},

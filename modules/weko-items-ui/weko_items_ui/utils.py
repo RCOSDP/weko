@@ -2676,14 +2676,11 @@ def _custom_export_metadata(record_metadata: dict, hide_item: bool = True,
         hide_item (bool): Hide item flag.
         replace_license (bool): Replace license flag.
     """
-    from weko_records_ui.utils import hide_item_metadata, replace_license_free
+    from weko_records_ui.utils import hide_item_metadata
     # current_app.logger.error("record_metadata:{}".format(record_metadata))
     # Hide private metadata
     if hide_item:
         hide_item_metadata(record_metadata)
-    # Change the item name 'licensefree' to 'license_note'.
-    if replace_license:
-        replace_license_free(record_metadata, False)
 
     for k, v in record_metadata.items():
         if isinstance(v, dict) and v.get('attribute_type') == 'file':

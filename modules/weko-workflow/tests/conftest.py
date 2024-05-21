@@ -234,7 +234,7 @@ def base_app(instance_path, search_class, cache_config):
         WEKO_RECORDS_UI_LICENSE_DICT=[
             {
                 'name': _('write your own license'),
-                'value': 'license_free',
+                'value': 'license_note',
             },
             # version 0
             {

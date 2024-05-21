@@ -56,3 +56,5 @@ class WekoRecords(object):
         for k in dir(config):
             if k.startswith('WEKO_RECORDS_'):
                 app.config.setdefault(k, getattr(config, k))
+        
+        print(app.config['PIDSTORE_OBJECT_ENDPOINTS'])

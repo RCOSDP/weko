@@ -5329,10 +5329,10 @@
         "title_i18n_temp": { "en": "License", "ja": "ライセンス" }
       },
       {
-        "key": "item_1600078832557[].licensefree",
+        "key": "item_1600078832557[].licensenote",
         "type": "textarea",
         "notitle": true,
-        "condition": "model.item_1600078832557[arrayIndex].licensetype == ''license_free''",
+        "condition": "model.item_1600078832557[arrayIndex].licensetype == ''license_note''",
         "title_i18n": { "en": "", "ja": "" }
       },
       {

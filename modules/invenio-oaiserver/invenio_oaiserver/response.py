@@ -35,7 +35,7 @@ from .provider import OAIIDProvider
 from .query import get_records
 from .resumption_token import serialize
 from .utils import HARVEST_PRIVATE, OUTPUT_HARVEST, PRIVATE_INDEX, \
-    datetime_to_datestamp, get_index_state, handle_license_free, \
+    datetime_to_datestamp, get_index_state, handle_license_note, \
     is_output_harvest, serializer
 
 NS_OAIPMH = 'http://www.openarchives.org/OAI/2.0/'
@@ -456,8 +456,8 @@ def getrecord(**kwargs):
     if not etree_record.get('system_identifier_doi', None):
         etree_record['system_identifier_doi'] = get_identifier(record)
 
-    # Merge licensetype and licensefree
-    etree_record = handle_license_free(etree_record)
+    # Merge licensetype and licensenote
+    etree_record = handle_license_note(etree_record)
 
     root = record_dumper(pid_object, {'_source': etree_record})
 
@@ -649,8 +649,8 @@ def listrecords(**kwargs):
                     etree_record['system_identifier_doi'] = get_identifier(
                         record)
 
-                # Merge licensetype and licensefree
-                etree_record = handle_license_free(etree_record)
+                # Merge licensetype and licensenote
+                etree_record = handle_license_note(etree_record)
                 e_metadata.append(record_dumper(
                     pid, {'_source': etree_record}))
 

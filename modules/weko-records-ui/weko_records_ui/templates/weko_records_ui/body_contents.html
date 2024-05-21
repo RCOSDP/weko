@@ -239,10 +239,10 @@
                         <!-- Creative Commons Licenses -->
                         <div>
                             {%- if not 'simple' in file.displaytype -%}
-                            {%- if 'license_free' == file.licensetype -%}
+                            {%- if 'license_note' == file.licensetype -%}
                               {% autoescape false %}
                               <div id="square" style="width: 1px; height: 1px;"></div>
-                              <span class="break-word">{{ file.licensefree | escape_str }}</span>
+                              <span class="break-word">{{ file.licensenote | escape_str }}</span>
                               {% endautoescape %}
                             {%- else %}
                               {% set lst = file.licensetype | get_license_icon %}

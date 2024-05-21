@@ -3412,7 +3412,7 @@
             "format": "select",
             "currentEnum": ["detail", "simple", "preview"]
           },
-          "licensefree": {
+          "licensenote": {
             "type": "string",
             "title": "自由ライセンス",
             "format": "textarea"

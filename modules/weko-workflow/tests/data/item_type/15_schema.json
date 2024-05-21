@@ -4385,7 +4385,7 @@
                             "preview"
                         ]
                     },
-                    "licensefree": {
+                    "licensenote": {
                         "type": "string",
                         "title": "自由ライセンス",
                         "format": "textarea",

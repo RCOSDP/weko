@@ -683,7 +683,7 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
              {'id': 'license_3', 'contents': 'CC BY-NC 4.0'},
              {'id': 'license_4', 'contents': 'CC BY-NC-SA 4.0'},
              {'id': 'license_5', 'contents': 'CC BY-NC-ND 4.0'},
-             {'id': 'license_free', 'contents': 'Other'},
+             {'id': 'license_note', 'contents': 'Other'},
         ], 'default_display': True, 'inputType': 'checkbox_list', 'inputVal': '', 'mappingFlg': False, 'mappingName': ''},
         {'id': 'text1',
          'contents': '',
