@@ -16,6 +16,9 @@ def set_session(client,data):
     with client.session_transaction() as session:
         for k, v in data.items():
             session[k] = v
+def get_session(client,key):
+    with client.session_transaction() as session:
+        return session[key]
 #def _has_admin_access():
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_views.py::test_has_admin_access -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 #def test_has_admin_access(request_context,users):
@@ -359,6 +362,24 @@ def test_shib_sp_login(client, redis_connect,mocker):
         assert res.status_code == 200
         #assert res == "/weko/auto/login?SHIB_ATTR_SESSION_ID=1111&_method=GET"
     
+    # next is /
+    with patch("weko_accounts.views.ShibUser.get_relation_info", return_value=None):
+        res = client.post(url + "?next=/", data=form)
+        assert res.status_code == 200
+        assert get_session(client, "next") == "/"
+    
+    # next is /next_page
+    with patch("weko_accounts.views.ShibUser.get_relation_info", return_value=None):
+        res = client.post(url + "?next=/next_page", data=form)
+        assert res.status_code == 200
+        assert get_session(client, "next") == "/next_page"
+    
+    # next is None
+    with patch("weko_accounts.views.ShibUser.get_relation_info", return_value=None):
+        res = client.post(url, data=form)
+        assert res.status_code == 200
+        assert get_session(client, "next") == "/"
+    
     # raise BaseException
     with patch("weko_accounts.views.flash",side_effect=BaseException("test_error")):
         mock_redirect_ = mocker.patch("weko_accounts.views._redirect_method",return_value=make_response())
@@ -367,7 +388,7 @@ def test_shib_sp_login(client, redis_connect,mocker):
 #def shib_stub_login():
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_views.py::test_shib_stub_login -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_shib_stub_login(client,mocker):
-    url = url_for("weko_accounts.shib_stub_login")+"?next=/next_page"
+    url = url_for("weko_accounts.shib_stub_login")
     
     # WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED is false
     res = client.get(url)
@@ -377,16 +398,25 @@ def test_shib_stub_login(client,mocker):
         WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED=True
     )
     # WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED is true
+    # next is /
     mock_redirect = mocker.patch("weko_accounts.views.redirect",return_value=make_response())
+    res = client.get(url+"?next=/")
+    mock_redirect.assert_called_with("http://test_server.localdomain/secure/login.php?next=/")
+
+    # next is /next_page
+    res = client.get(url+"?next=/next_page")
+    mock_redirect.assert_called_with("http://test_server.localdomain/secure/login.php?next=/next_page")
+
+    # next is None
     res = client.get(url)
-    mock_redirect.assert_called_with("http://test_server.localdomain/secure/login.php")
+    mock_redirect.assert_called_with("http://test_server.localdomain/secure/login.php?next=/")
     
     current_app.config.update(
         WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED=False
     )
     # WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED is true
     mock_render_template = mocker.patch("weko_accounts.views.render_template",return_value=make_response())
-    res = client.get(url)
+    res = client.get(url+"?next=/next_page")
     mock_render_template.assert_called_with('weko_accounts/login_shibuser_pattern_1.html',module_name="WEKO-Accounts")
     
 #def shib_logout():
