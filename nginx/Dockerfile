@@ -37,7 +37,7 @@ RUN cd nginx-1.20.1 && dpkg-buildpackage -b
 FROM ubuntu:focal AS nginx-stage_1
 
 ENV DEBIAN_FRONTEND=noninteractive
-RUN apt-get update && apt-get install -y openssl wget curl unzip supervisor shibboleth-sp-common shibboleth-sp-utils php-fpm php-curl
+RUN apt-get update && apt-get install -y openssl wget curl unzip supervisor shibboleth-sp-common shibboleth-sp-utils php-fpm php-curl logrotate
 
 WORKDIR /tmp
 #COPY --from=nginx-with-shib /tmp/nginx_1.18.0-2~focal_amd64.deb .
@@ -63,6 +63,7 @@ RUN rm /etc/nginx/conf.d/default.conf
 RUN rm /etc/nginx/nginx.conf
 ADD weko.conf /etc/nginx/conf.d/
 ADD nginx.conf /etc/nginx/nginx.conf
+ADD nginx-logrotate /etc/logrotate.d/nginx
 ADD ./keys/server.crt /etc/nginx/server.crt
 ADD ./keys/server.key /etc/nginx/server.key
 ADD ./idp-metadata.xml /etc/shibboleth/idp-metadata.xml

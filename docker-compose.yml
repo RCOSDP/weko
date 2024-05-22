@@ -130,31 +130,37 @@ services:
     logging:
       driver: "json-file"
       options:
-        max-size: "10m"
+        max-size: "200m"
     ports:
       - "5001:5000"
     #privileged: true
     # pscap apt-get install libcap-ng-utils
     #cap_add:
     #  - SYS_ADMIN
-    oom_kill_disable: true
+    # oom_kill_disable: true
     deploy:
       resources:
         limits:
-          memory: 8000m
+          memory: 2000m
 
   postgresql:
     restart: "always"
     image: postgres:12
 #    command: postgres -c log_destination=stderr -c log_statement=all -c log_connections=on -c log_disconnections=on
+    command: -c shared_buffers=2GB -c max_parallel_workers=4
     environment:
       - POSTGRES_USER=invenio
       - POSTGRES_DB=invenio
       - POSTGRES_PASSWORD=dbpass123
     volumes:
       - pgsql-data:/var/lib/postgresql/data
+      - pgbackup:/var/lib/postgresql/backup
     ports:
       - "25401:5432"
+    deploy:
+      resources:
+        limits:
+          memory: 8g
 
   redis:
     restart: "always"
@@ -164,7 +170,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 100m
+          memory: 500m
 
   elasticsearch:
     restart: "always"
@@ -178,12 +184,17 @@ services:
         - ELASTICSEARCH_S3_BUCKET=${ELASTICSEARCH_S3_BUCKET}
     volumes:
       - es-data:/usr/share/elasticsearch/data
+      - esbackup:/usr/share/elasticsearch/backups
     environment:
       - "discovery.type=single-node"
-      - "ES_JAVA_OPTS=-Xms2048m -Xmx2048m"
+      - "ES_JAVA_OPTS=-Xms4g -Xmx4g"
     ports:
       - "29201:9200"
       - "29301:9300"
+    deploy:
+      resources:
+        limits:
+          memory: 8g
 
   rabbitmq:
     restart: "always"
@@ -203,6 +214,7 @@ services:
     volumes:
       - static_data:/home/invenio/.virtualenvs/invenio/var/instance/static
       - data_data:/home/invenio/.virtualenvs/invenio/var/instance/data
+      - nginx-log:/var/log/nginx
 #      - letsencrypt_etc:/etc/letsencrypt
 #      - letsencrypt_html:/var/www/html
     links:
@@ -247,8 +259,40 @@ volumes:
   static_data:
   data_data:
   conf_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /conf_data
   pgsql-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /pgsql-data
   es-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /es-data
+  pgbackup:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /pgbackup
+  esbackup:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /esbackup
+  nginx-log:
+    driver_opts:
+      type: none
+      o: bind
+      device: /nginx-log
 #  letsencrypt_etc:
 #  letsencrypt_html:
 
