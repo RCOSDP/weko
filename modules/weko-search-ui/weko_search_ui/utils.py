@@ -133,7 +133,6 @@ from .config import (
     WEKO_IMPORT_VALIDATE_MESSAGE,
     WEKO_REPO_USER,
     WEKO_SEARCH_TYPE_DICT,
-    WEKO_SEARCH_UI_BULK_EXPORT_LIMIT,
     WEKO_SEARCH_UI_BULK_EXPORT_MSG,
     WEKO_SEARCH_UI_BULK_EXPORT_RUN_MSG,
     WEKO_SEARCH_UI_BULK_EXPORT_FILE_CREATE_RUN_MSG,
@@ -3369,7 +3368,7 @@ def export_all(root_url, user_id, data, start_time):
                 record_ids = [(recid.pid_value, recid.object_uuid) 
                     for recid in recids if 'publish_status' in recid.json 
                     and recid.json['publish_status'] in [PublishStatus.PUBLIC.value, PublishStatus.PRIVATE.value]]
-                file_count = math.ceil(len(record_ids) / WEKO_SEARCH_UI_BULK_EXPORT_LIMIT)
+                file_count = math.ceil(len(record_ids) / current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_LIMIT"])
                 write_file_json = {
                     'start_time': start_time,
                     'finish_time': '',
@@ -3384,7 +3383,7 @@ def export_all(root_url, user_id, data, start_time):
                     orjson.dumps(write_file_json).decode()
                 )
                 for recid, uuid in record_ids:
-                    if counter % WEKO_SEARCH_UI_BULK_EXPORT_LIMIT == 0 and item_datas:
+                    if counter % current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_LIMIT"] == 0 and item_datas:
                         # Create export info file
                         item_datas["name"] = "{}.part{}".format(
                             item_datas["name"], file_part
@@ -3459,7 +3458,7 @@ def export_all(root_url, user_id, data, start_time):
 
     reset_redis_cache(_msg_key, "")
     reset_redis_cache(_run_msg_key, "")
-    reset_redis_cache(_file_create_key, "")
+    reset_redis_cache(_file_create_key, orjson.dumps({}).decode())
     temp_path = tempfile.TemporaryDirectory(
         prefix=current_app.config["WEKO_ITEMS_UI_EXPORT_TMP_PREFIX"]
     )
