@@ -40,6 +40,9 @@ class JSONSerializerMixin(SerializerMixinInterface):
         :param record: Record instance.
         :param links_factory: Factory function for record links.
         """
+        from weko_records_ui.utils import hide_by_email
+
+        record = hide_by_email(record)
         return json.dumps(
             self.transform_record(pid, record, links_factory, **kwargs),
             **self._format_args())
@@ -52,6 +55,13 @@ class JSONSerializerMixin(SerializerMixinInterface):
         :param search_result: Elasticsearch search result.
         :param links: Dictionary of links to add to response.
         """
+        from weko_records_ui.utils import hide_by_email
+
+        for hit in search_result['hits']['hits']:
+            if '_source' in hit and '_item_metadata' in hit['_source']:
+                hit['_source']['_item_metadata'] = hide_by_email(hit['_source']['_item_metadata'])
+            if '_source' in hit and len(hit['_source'].get('feedback_mail_list', [])) > 0:
+                hit['_source']['feedback_mail_list'] = []
         return json.dumps(dict(
             hits=dict(
                 hits=[self.transform_search_hit(
