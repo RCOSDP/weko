@@ -10,7 +10,12 @@ if(!$_SERVER['HTTP_WEKOSOCIETYAFFILIATION']){
   //header("HTTP/1.1 403 Forbidden");
   //header("Location: ".$base);
 }else{
-  $url = $base."/weko/shib/login?next=%2F";
+  if(isset($_REQUEST['next'])){
+    $next=$_REQUEST['next'];
+  }else{
+    $next='%2F'
+  }
+  $url = $base."/weko/shib/login?next=".$next;
   $curl = curl_init();
   $post_args=[];
   $post_args['SHIB_ATTR_USER_NAME']=$_SERVER['HTTP_WEKOID'];

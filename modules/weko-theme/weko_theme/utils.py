@@ -35,9 +35,6 @@ from invenio_i18n.ext import current_i18n
 from invenio_search import RecordsSearch
 from weko_admin.models import AdminSettings, RankingSettings, SearchManagement
 from weko_admin.utils import get_search_setting
-from weko_gridlayout.services import WidgetDesignServices
-from weko_gridlayout.utils import get_widget_design_page_with_main, \
-    main_design_has_main_widget
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import Index, IndexStyle
 from weko_index_tree.utils import get_index_link_list
@@ -123,7 +120,9 @@ def get_design_layout(repository_id):
 
     Returns:
         _type_: page, render_widgets
-    """    
+    """
+    from weko_gridlayout.utils import get_widget_design_page_with_main, \
+        main_design_has_main_widget
     if not repository_id:
         return None, False
 
@@ -147,6 +146,7 @@ def has_widget_design(repository_id, current_language):
     :param current_language: Current language
     :return:
     """
+    from weko_gridlayout.services import WidgetDesignServices
     widget_design_setting = WidgetDesignServices.get_widget_design_setting(
         repository_id, current_language)
     if widget_design_setting and widget_design_setting.get('widget-settings'):

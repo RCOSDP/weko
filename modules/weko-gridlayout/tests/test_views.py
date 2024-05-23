@@ -429,14 +429,14 @@ def test_handle_not_found(i18n_app):
     notfound = NotFound()
 
     with patch('weko_gridlayout.views.WidgetDesignPage.get_by_url', return_value=page):
-        with patch('weko_gridlayout.views.get_weko_contents', return_value={}):
+        with patch('weko_theme.utils.get_weko_contents', return_value={}):
             with patch('weko_gridlayout.views.render_template', return_value={}):
                 assert handle_not_found(exception=notfound) != None
     
     extra = MagicMock()
 
     with patch('weko_gridlayout.views.WidgetDesignPage.get_by_url', return_value=None):
-        with patch('weko_gridlayout.views.get_weko_contents', return_value={}):
+        with patch('weko_theme.utils.get_weko_contents', return_value={}):
             with patch('weko_gridlayout.views.render_template', return_value={}):
                 assert handle_not_found(exception=notfound, current_handler=extra) != None
     # Exception coverage
