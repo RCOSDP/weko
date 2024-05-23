@@ -818,3 +818,9 @@ msgstr "ロールの権限が足りずこのインデックスにアイテム登
 #~ msgid "Execute"
 #~ msgstr "実行"
 
+msgid "Start Time"
+msgstr ""
+
+msgid "Finish Time"
+msgstr ""
+

@@ -732,6 +732,9 @@ WEKO_SEARCH_UI_TO_NUMBER_FORMAT = "99999999999999.99"
 WEKO_SEARCH_UI_BULK_EXPORT_RUN_MSG = "RUN_MSG_EXPORT_ALL"
 """Bulk export running message."""
 
+WEKO_SEARCH_UI_BULK_EXPORT_FILE_CREATE_RUN_MSG = "RUN_MSG_EXPORT_ALL_FILE_CREATE"
+"""Bulk export file create running message."""
+
 WEKO_SEARCH_UI_BULK_EXPORT_EXPIRED_TIME = 3
 """Template for the Admin Bulk Export page."""
 
