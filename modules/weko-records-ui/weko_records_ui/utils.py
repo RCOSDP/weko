@@ -720,28 +720,28 @@ def hide_by_email(item_metadata, force_flag=False):
     subitem_keys = current_app.config['WEKO_RECORDS_UI_EMAIL_ITEM_KEYS']
 
     item_type_id = item_metadata.get('item_type_id')
-    meta_options, type_mapping = get_options_and_order_list(item_type_id)
-    hide_list = get_hide_list_by_schema_form(item_type_id)
+    if item_type_id:
+        meta_options, type_mapping = get_options_and_order_list(item_type_id)
+        hide_list = get_hide_list_by_schema_form(item_type_id)
 
-    # Hidden owners_ext.email
-    if item_metadata.get('_deposit') and \
-        item_metadata['_deposit'].get('owners_ext') and item_metadata['_deposit']['owners_ext'].get('email'):
-        if force_flag or not show_email_flag:
-            del item_metadata['_deposit']['owners_ext']['email']
+        # Hidden owners_ext info
+        if item_metadata.get('_deposit') and \
+                item_metadata['_deposit'].get('owners_ext'):
+            del item_metadata['_deposit']['owners_ext']
 
-    for item in item_metadata:
-        _item = item_metadata[item]
-        prop_hidden = meta_options.get(item, {}).get('option', {}).get('hidden', False)
-        if isinstance(_item, dict) and \
-                _item.get('attribute_value_mlt'):
-            for _idx, _value in enumerate(_item['attribute_value_mlt']):
-                if _value is not None:
-                    for key in subitem_keys:
-                        for h in hide_list:
-                            if h.startswith(item) and h.endswith(key):
-                                prop_hidden = True
-                        if key in _value.keys() and (force_flag or not show_email_flag or prop_hidden):
-                            del _item['attribute_value_mlt'][_idx][key]
+        for item in item_metadata:
+            _item = item_metadata[item]
+            prop_hidden = meta_options.get(item, {}).get('option', {}).get('hidden', False)
+            if isinstance(_item, dict) and \
+                    _item.get('attribute_value_mlt'):
+                for _idx, _value in enumerate(_item['attribute_value_mlt']):
+                    if _value is not None:
+                        for key in subitem_keys:
+                            for h in hide_list:
+                                if h.startswith(item) and h.endswith(key):
+                                    prop_hidden = True
+                            if key in _value.keys() and (force_flag or not show_email_flag or prop_hidden):
+                                del _item['attribute_value_mlt'][_idx][key]
 
     return item_metadata
 

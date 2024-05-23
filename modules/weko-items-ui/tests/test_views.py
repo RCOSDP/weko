@@ -20545,26 +20545,27 @@ def test_index_upload_acl(client, db_sessionlifetime, users, id, status_code):
 
 
 # def get_search_data(data_type=''):
-# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_get_search_data_acl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_get_search_data_acl(client_api, db_sessionlifetime):
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_get_search_data_acl_nologin -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_get_search_data_acl_nologin(client_api, db_sessionlifetime):
     url = url_for(
         "weko_items_ui_api.get_search_data", data_type="username", _external=True
     )
     res = client_api.get(url)
-    assert res.status_code == 200
+    assert res.status_code == 403
     url = url_for(
         "weko_items_ui_api.get_search_data", data_type="email", _external=True
     )
     res = client_api.get(url)
-    assert res.status_code == 200
+    assert res.status_code == 403
 
     url = url_for("weko_items_ui_api.get_search_data", data_type="hoge", _external=True)
     res = client_api.get(url)
-    assert res.status_code == 200
+    assert res.status_code == 403
 
 
-# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_get_search_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_get_search_data(client_api, users, db_userprofile, db_sessionlifetime):
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_get_search_data_acl_user0 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_get_search_data_acl_user0(client_api, users, db_userprofile, db_sessionlifetime):
+    login_user_via_session(client=client_api, email=users[0]["email"])
     url = url_for(
         "weko_items_ui_api.get_search_data", data_type="username", _external=True
     )
@@ -20574,7 +20575,6 @@ def test_get_search_data(client_api, users, db_userprofile, db_sessionlifetime):
         "error": "",
         "results": [
             "user",
-            "contributor",
             "comadmin",
             "repoadmin",
             "sysadmin",
@@ -20592,7 +20592,6 @@ def test_get_search_data(client_api, users, db_userprofile, db_sessionlifetime):
         "error": "",
         "results": [
             "user@test.org",
-            "contributor@test.org",
             "comadmin@test.org",
             "repoadmin@test.org",
             "sysadmin@test.org",
@@ -20606,6 +20605,176 @@ def test_get_search_data(client_api, users, db_userprofile, db_sessionlifetime):
     res = client_api.get(url)
     assert res.status_code == 200
     assert json.loads(res.data) == {"error": "Invaid method", "results": ""}
+
+
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_get_search_data_acl_user1 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_get_search_data_acl_user1(client_api, users, db_userprofile, db_sessionlifetime):
+    login_user_via_session(client=client_api, email=users[1]["email"])
+    url = url_for(
+        "weko_items_ui_api.get_search_data", data_type="username", _external=True
+    )
+    res = client_api.get(url)
+    assert res.status_code == 200
+    assert json.loads(res.data) == {
+        "error": "",
+        "results": [
+            "user",
+            "contributor",
+            "comadmin",
+            "sysadmin",
+            "generaluser",
+            "originalroleuser",
+            "originalroleuser2",
+        ],
+    }
+    url = url_for(
+        "weko_items_ui_api.get_search_data", data_type="email", _external=True
+    )
+    res = client_api.get(url)
+    assert res.status_code == 200
+    assert json.loads(res.data) == {
+        "error": "",
+        "results": [
+            "user@test.org",
+            "contributor@test.org",
+            "comadmin@test.org",
+            "sysadmin@test.org",
+            "generaluser@test.org",
+            "originalroleuser@test.org",
+            "originalroleuser2@test.org",
+        ],
+    }
+
+    url = url_for("weko_items_ui_api.get_search_data", data_type="hoge", _external=True)
+    res = client_api.get(url)
+    assert res.status_code == 200
+    assert json.loads(res.data) == {"error": "Invaid method", "results": ""}
+
+
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_get_search_data_acl_user2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_get_search_data_acl_user2(client_api, users, db_userprofile, db_sessionlifetime):
+    login_user_via_session(client=client_api, email=users[2]["email"])
+    url = url_for(
+        "weko_items_ui_api.get_search_data", data_type="username", _external=True
+    )
+    res = client_api.get(url)
+    assert res.status_code == 200
+    assert json.loads(res.data) == {
+        "error": "",
+        "results": [
+            "user",
+            "contributor",
+            "comadmin",
+            "repoadmin",
+            "generaluser",
+            "originalroleuser",
+            "originalroleuser2",
+        ],
+    }
+    url = url_for(
+        "weko_items_ui_api.get_search_data", data_type="email", _external=True
+    )
+    res = client_api.get(url)
+    assert res.status_code == 200
+    assert json.loads(res.data) == {
+        "error": "",
+        "results": [
+            "user@test.org",
+            "contributor@test.org",
+            "comadmin@test.org",
+            "repoadmin@test.org",
+            "generaluser@test.org",
+            "originalroleuser@test.org",
+            "originalroleuser2@test.org",
+        ],
+    }
+
+    url = url_for("weko_items_ui_api.get_search_data", data_type="hoge", _external=True)
+    res = client_api.get(url)
+    assert res.status_code == 200
+    assert json.loads(res.data) == {"error": "Invaid method", "results": ""}
+
+
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_get_search_data_acl_user3 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_get_search_data_acl_user3(client_api, users, db_userprofile, db_sessionlifetime):
+    login_user_via_session(client=client_api, email=users[3]["email"])
+    url = url_for(
+        "weko_items_ui_api.get_search_data", data_type="username", _external=True
+    )
+    res = client_api.get(url)
+    assert res.status_code == 200
+    assert json.loads(res.data) == {
+        "error": "",
+        "results": [
+            "user",
+            "contributor",
+            "repoadmin",
+            "sysadmin",
+            "generaluser",
+            "originalroleuser",
+            "originalroleuser2",
+        ],
+    }
+    url = url_for(
+        "weko_items_ui_api.get_search_data", data_type="email", _external=True
+    )
+    res = client_api.get(url)
+    assert res.status_code == 200
+    assert json.loads(res.data) == {
+        "error": "",
+        "results": [
+            "user@test.org",
+            "contributor@test.org",
+            "repoadmin@test.org",
+            "sysadmin@test.org",
+            "generaluser@test.org",
+            "originalroleuser@test.org",
+            "originalroleuser2@test.org",
+        ],
+    }
+
+    url = url_for("weko_items_ui_api.get_search_data", data_type="hoge", _external=True)
+    res = client_api.get(url)
+    assert res.status_code == 200
+    assert json.loads(res.data) == {"error": "Invaid method", "results": ""}
+
+
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_get_search_data_acl_user4 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_get_search_data_acl_user4(client_api, users, db_userprofile, db_sessionlifetime):
+    login_user_via_session(client=client_api, email=users[4]["email"])
+    url = url_for(
+        "weko_items_ui_api.get_search_data", data_type="username", _external=True
+    )
+    res = client_api.get(url)
+    assert res.status_code == 403
+    url = url_for(
+        "weko_items_ui_api.get_search_data", data_type="email", _external=True
+    )
+    res = client_api.get(url)
+    assert res.status_code == 403
+
+    url = url_for("weko_items_ui_api.get_search_data", data_type="hoge", _external=True)
+    res = client_api.get(url)
+    assert res.status_code == 403
+
+
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_get_search_data_acl_user -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_get_search_data_acl_user(client_api, users, db_userprofile, db_sessionlifetime):
+    login_user_via_session(client=client_api, email=users[-1]["email"])
+    url = url_for(
+        "weko_items_ui_api.get_search_data", data_type="username", _external=True
+    )
+    res = client_api.get(url)
+    assert res.status_code == 403
+    url = url_for(
+        "weko_items_ui_api.get_search_data", data_type="email", _external=True
+    )
+    res = client_api.get(url)
+    assert res.status_code == 403
+
+    url = url_for("weko_items_ui_api.get_search_data", data_type="hoge", _external=True)
+    res = client_api.get(url)
+    assert res.status_code == 403
 
 
 # def validate_user_email_and_index():
@@ -20689,7 +20858,7 @@ def test_get_user_info_acl_nologin(client_api, db_sessionlifetime):
         "weko_items_ui_api.get_user_info", owner=1, shared_user_id=1, _external=True
     )
     res = client_api.get(url)
-    assert res.status_code == 200
+    assert res.status_code == 403
 
 
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_get_user_info_acl -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
@@ -20700,10 +20869,10 @@ def test_get_user_info_acl_nologin(client_api, db_sessionlifetime):
         (1, 200),
         (2, 200),
         (3, 200),
-        (4, 200),
-        (5, 200),
+        (4, 403),
+        (5, 403),
         (6, 200),
-        (7, 200),
+        (7, 403),
     ],
 )
 def test_get_user_info_acl(client_api, db_sessionlifetime, users, id, status_code):
