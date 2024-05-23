@@ -447,7 +447,7 @@ def need_record_permission(factory_name):
             # FIXME use context instead
             request._methodview = self
 
-            if permission_factory:
+            if permission_factory and record:
                 verify_record_permission(permission_factory, record)
             return f(self, record=record, *args, **kwargs)
         return need_record_permission_decorator
