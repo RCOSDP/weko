@@ -1179,3 +1179,16 @@ def indextree(app, db, role_users, redis_connect):
     for user in role_users:
         redis_connect.delete(key+"en_" + str(user["id"]) + "_0")
         redis_connect.delete(key+"ja_" + str(user["id"]) + "_0")
+
+@pytest.fixture()
+def index(app, db):
+    app.config['WEKO_INDEX_TREE_DEFAULT_DISPLAY_NUMBER'] = 5
+    from weko_index_tree.api import Indexes
+    for i in range(1, 5):
+        Indexes.create(0, {
+            "id": i,
+            "parent": 0,
+            "value": "index_{}".format(i)
+        })
+    
+    return Index.query.all()

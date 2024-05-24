@@ -10,7 +10,7 @@ from weko_records_ui.utils import (
     get_onetime_download, get_pair_value, get_record_permalink, get_roles,
     get_terms, get_workflows, hide_by_email, hide_by_file, hide_by_itemtype,
     hide_item_metadata, hide_item_metadata_email_only, is_billing_item,
-    is_private_index, is_show_email_of_creator,
+    is_open_access, is_private_index, is_show_email_of_creator,
     parse_one_time_download_token, replace_license_free, restore,
     send_usage_report_mail_for_user, soft_delete, update_onetime_download,
     validate_download_record, validate_onetime_download_token, replace_license_free_for_opensearch
@@ -190,6 +190,34 @@ def test_is_billing_item(i18n_app,records, mock_es_execute):
 
     assert is_billing_item(non_billing_record)==False
     assert is_billing_item(billing_record)==True
+
+
+# def is_open_access(record: Dict) -> bool:
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_is_open_access -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_is_open_access(records_open_access, mocker):
+    def mock_strptime(date_string, format):
+        return dt.strptime(date_string, format)
+
+    _, results = records_open_access
+    with patch("weko_records_ui.utils.Indexes.get_public_indexes_list", return_value=["2", "4", "6"]):
+        # all indexes are not public
+        assert not is_open_access(results[0]['record'])
+
+        # some indexes are public and accessrole is open_access
+        assert is_open_access(results[1]['record'])
+
+        # all indexes are public, accessrole is open_date and now is before public_date
+        mock_datetime = mocker.patch("weko_records_ui.utils.dt")
+        mock_datetime.now.return_value = dt(2024, 5, 19, 12, 55, 32)
+        mock_datetime.strptime.side_effect=mock_strptime
+        assert not is_open_access(results[2]['record'])
+        
+        # all indexes are public, accessrole is open_date and now is after public_date
+        mock_datetime.now.return_value = dt(2024, 5, 20, 12, 55, 32)
+        assert is_open_access(results[3]['record'])
+        
+        # all indexes are public and accessrole is login_user
+        assert not is_open_access(results[4]['record'])
 
 
 # def soft_delete(recid):

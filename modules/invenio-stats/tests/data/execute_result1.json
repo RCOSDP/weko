@@ -2,13 +2,13 @@
     "took": 137,
     "timed_out": false,
     "_shards": {
-        "total": 3,
-        "successful": 3,
+        "total": 5,
+        "successful": 5,
         "skipped": 0,
         "failed": 0
     },
     "hits": {
-        "total": 3,
+        "total": 5,
         "max_score": 1,
         "hits": [
             {
@@ -27,7 +27,8 @@
                         {
                             "filename": "test1.pdf"
                         }
-                    ]
+                    ],
+                    "path": [ "1" ]
                 }
             },
             {
@@ -65,6 +66,42 @@
                         {
                             "filename": "test3.pdf"
                         }
+                    ]
+                }
+            },
+            {
+                "_index": "tenant1-weko-item-v1.0.0",
+                "_type": "item-v1.0.0",
+                "_id": "f7d87c57-e3d0-4f8a-a40e-cd8167690462",
+                "_score": 1,
+                "_source": {
+                    "_item_metadata": {
+                        "owner": "1"
+                    },
+                    "_oai": {
+                        "id": "oai:weko3.example.org:00000001"
+                    },
+                    "content": [
+                        {
+                            "filename": "test4.pdf"
+                        }
+                    ]
+                }
+            },
+            {
+                "_index": "tenant1-weko-item-v1.0.0",
+                "_type": "item-v1.0.0",
+                "_id": "f7d87c57-e3d0-4f8a-a40e-cd8167690462",
+                "_score": 1,
+                "_source": {
+                    "_item_metadata": {
+                        "owner": "1"
+                    },
+                    "_oai": {
+                        "id": "oai:weko3.example.org:00000001"
+                    },
+                    "content": [
+                        {}
                     ]
                 }
             }

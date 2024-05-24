@@ -157,30 +157,38 @@ def test__download_file(app,records,itemtypes,users):
 # def add_signals_info(record, obj):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_fd.py::test_add_signals_info -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_add_signals_info(i18n_app,records,itemtypes,users,mock_es_execute):
+    class MockUser():
+        def __init__(self):
+            self.is_authenticated = ''
+
     _, results = records
     with i18n_app.test_request_context():
         with patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
             with patch('flask_principal.Permission.can', MagicMock(return_value=True)):
                 with patch('elasticsearch_dsl.Search.execute', return_value=mock_es_execute('tests/data/execute_result2.json')):
-                    recid = results[0]["recid"]
-                    record = results[0]["record"]
-                    fileobj = record_file_factory(recid,record,"helloworld.pdf")
-                    obj = fileobj.obj
-                    add_signals_info(record,obj)
-                    assert obj.item_title == 'ja_conference paperITEM00000009(public_open_access_open_access_simple)'
-                    assert obj.is_billing_item == False
-                    assert obj.userrole == 'Repository Administrator'
-                    assert obj.billing_file_price == ''
+                    with patch('weko_records_ui.fd.is_open_access', return_value=True):
+                        recid = results[0]["recid"]
+                        record = results[0]["record"]
+                        fileobj = record_file_factory(recid,record,"helloworld.pdf")
+                        obj = fileobj.obj
+                        add_signals_info(record,obj)
+                        assert obj.item_title == 'ja_conference paperITEM00000009(public_open_access_open_access_simple)'
+                        assert obj.is_billing_item == False
+                        assert obj.userrole == 'Repository Administrator'
+                        assert obj.billing_file_price == ''
+                        assert obj.is_open_access
                 with patch('elasticsearch_dsl.Search.execute', return_value=mock_es_execute('tests/data/execute_result1.json')):
-                    recid = results[3]["recid"]
-                    record = results[3]["record"]
-                    fileobj = record_file_factory(recid,record,"helloworld_billing.pdf")
-                    obj = fileobj.obj
-                    add_signals_info(record,obj)
-                    assert obj.item_title == 'ja_conference paperITEM00000009(public_open_access_open_access_simple)_billing'
-                    assert obj.is_billing_item == True
-                    assert obj.userrole == 'Repository Administrator'
-                    assert obj.billing_file_price == '400'
+                    with patch('weko_records_ui.fd.is_open_access', return_value=False):
+                        recid = results[3]["recid"]
+                        record = results[3]["record"]
+                        fileobj = record_file_factory(recid,record,"helloworld_billing.pdf")
+                        obj = fileobj.obj
+                        add_signals_info(record,obj)
+                        assert obj.item_title == 'ja_conference paperITEM00000009(public_open_access_open_access_simple)_billing'
+                        assert obj.is_billing_item == True
+                        assert obj.userrole == 'Repository Administrator'
+                        assert obj.billing_file_price == '400'
+                        assert not obj.is_open_access
 
         data1 = MagicMock()
         def all_func():
@@ -193,18 +201,45 @@ def test_add_signals_info(i18n_app,records,itemtypes,users,mock_es_execute):
 
 
         with patch("weko_records_ui.fd.is_billing_item", return_value=False):
-            with patch("weko_records_ui.fd.Group.query_by_user", return_value=data1):
-                with patch("flask_login.utils._get_user", return_value=data1):
-                    add_signals_info(record,obj)
-                data1.roles = [data1, data2]
+            with patch('weko_records_ui.fd.is_open_access', return_value=False):
+                with patch("weko_records_ui.fd.Group.query_by_user", return_value=data1):
+                    with patch("flask_login.utils._get_user", return_value=data1):
+                        add_signals_info(record,obj)
+                    data1.roles = [data1, data2]
 
-                with patch("flask_login.utils._get_user", return_value=data1):
-                    add_signals_info(record,obj)
+                    with patch("flask_login.utils._get_user", return_value=data1):
+                        add_signals_info(record,obj)
 
         with patch("weko_records_ui.fd.is_billing_item", return_value=True):
-            with patch("weko_records_ui.fd.Group.query_by_user", return_value=data1):
-                with patch("flask_login.utils._get_user", return_value=data1):
-                    add_signals_info(record,obj)
+            with patch('weko_records_ui.fd.is_open_access', return_value=True):
+                with patch("weko_records_ui.fd.Group.query_by_user", return_value=data1):
+                    with patch("flask_login.utils._get_user", return_value=data1):
+                        add_signals_info(record,obj)
+
+
+        with patch("weko_records_ui.fd.is_billing_item", return_value=False):
+            with patch('weko_records_ui.fd.is_open_access', return_value=False):
+                with patch("weko_records_ui.fd.Group.query_by_user", return_value=data1):
+                    user = MockUser()
+                    with patch("flask_login.utils._get_user", return_value=user):
+                        # current_user doesn't have attribute 'id'
+                        add_signals_info(record, obj)
+                        assert obj.userid == 0
+                        assert obj.userrole == 'guest'
+                    user.id = 1
+                    user.name = 'testrole'
+                    user2 = MockUser()
+                    user2.id = 0
+                    user.roles = [user, user2]
+                    with patch("flask_login.utils._get_user", return_value=user):
+                        # current_user's roles has two or more roles and last role's id is 0
+                        add_signals_info(record, obj)
+                        assert obj.userid == 1
+                        assert obj.userrole == 'testrole'
+                    record = results[4]["record"]
+                    # record.navi has no item
+                    add_signals_info(record, obj)
+                    assert obj.index_list == ''
 
 
 # def file_download_onetime(pid, record, _record_file_factory=None, **kwargs):

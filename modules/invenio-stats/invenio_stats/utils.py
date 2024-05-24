@@ -286,14 +286,14 @@ class QueryFileReportsHelper(object):
         target_file_list = list(set([d.get('file_key') for d in res['buckets']]))
         # initialize billing file download stats.
         for metadata in billing_file_metadata_list:
-            if not metadata['content'][0]['filename'] in target_file_list:
-                continue
             content = metadata.get('content', [{}])
             file_key = ''
             for content_meta in content:
                 if 'filename' in content_meta.keys():
                     file_key = content_meta.get('filename')
                     break
+            if not file_key in target_file_list:
+                continue
             item_indices = [index for index in index_list if str(index.id) in metadata.get('path', [])]
             index_key = '|'.join([item_index.index_name for item_index in item_indices])
             if len(file_key) == 0 or len(index_key) == 0:
@@ -446,12 +446,11 @@ class QueryFileReportsHelper(object):
             cls.Calculation(all_res, all_list, event=event, all_groups=all_groups)
 
             # open access
-            if open_access_query_name:
-                open_access_query_cfg = current_stats.queries[open_access_query_name]
-                open_access = open_access_query_cfg.query_class(
-                    **open_access_query_cfg.query_config)
-                open_access_res = open_access.run(**params)
-                cls.Calculation(open_access_res, open_access_list)
+            open_access_query_cfg = current_stats.queries[open_access_query_name]
+            open_access = open_access_query_cfg.query_class(
+                **open_access_query_cfg.query_config)
+            open_access_res = open_access.run(**params)
+            cls.Calculation(open_access_res, open_access_list, event=event)
         except Exception as e:
             current_app.logger.debug(e)
 
