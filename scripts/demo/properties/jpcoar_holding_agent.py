@@ -15,7 +15,7 @@ name_ja = "所蔵機関"
 name_en = "Holding Agent"
 mapping = {
     "display_lang_type": "",
-    "jpcoar_v1_mapping": {},
+    "jpcoar_v1_mapping": "",
     "jpcoar_mapping": {
         "holdingAgent": {
             "holdingAgentName": {
