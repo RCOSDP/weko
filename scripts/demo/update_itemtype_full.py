@@ -13,6 +13,7 @@ from weko_workflow.api import WorkFlow
 import traceback
 import copy
 import pickle
+import argparse
 import time
 from datetime import datetime
 import json
@@ -44,6 +45,7 @@ def checkRegisterdProperty(itemType, new_prop_ids):
 
 
 def main():
+
     new_prop_ids = [
         publisher_info.property_id,
         jpcoar_catalog.property_id,
@@ -82,6 +84,7 @@ def main():
             if itemType:
                 cur_prop_ids = checkRegisterdProperty(itemType, new_prop_ids)
                 _render = pickle.loads(pickle.dumps(itemType.render, -1))
+                _mapping = Mapping.get_record(itemType.id)
                 for id in cur_prop_ids:
                     _prop = ItemTypeProps.get_record(id)
                     _prop_id = "item_{}".format(int(datetime(2023,10,30,0,0).strftime('%s')) + i)
@@ -104,8 +107,9 @@ def main():
                             json.dumps(_prop.form).replace("parentkey", _prop_id)
                         )
                         _render["table_row_map"]["form"].append(_form)
-                        _render["table_row_map"]["mapping"][_prop_id] = new_prop_mapping.get(str(id),"")
+                        _render["table_row_map"]["mapping"][_prop_id] = pickle.loads(pickle.dumps(new_prop_mapping.get(str(id),""),-1))
                         _render["table_row"].append(_prop_id)
+                        _mapping[_prop_id] = pickle.loads(pickle.dumps(_render["table_row_map"]["mapping"][_prop_id],-1))
                         print("property cus_{} has been registerd.".format(id))
 
                 if len(cur_prop_ids) > 0:
@@ -133,9 +137,11 @@ def main():
                     flag_modified(itemType, "form")
                     flag_modified(itemType, "render")
                     db.session.merge(itemType)
+                    db.session.merge(_mapping.model)
                     Mapping.create(item_type_id=itemType.id,
-                               mapping=table_row_map.get('mapping'))
+                               mapping=_mapping)
                     print("session merged.")
+
         db.session.commit()
         
         
