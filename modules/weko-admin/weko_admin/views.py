@@ -24,7 +24,7 @@ import calendar
 import orjson
 import sys
 import time
-from datetime import timedelta, datetime
+from datetime import timedelta
 
 from flask import Blueprint, Response, abort, current_app, flash, \
     jsonify, render_template, request
@@ -34,9 +34,7 @@ from flask_login import current_user, login_required
 from flask_menu import register_menu
 from flask_wtf import Form,FlaskForm
 from invenio_admin.proxies import current_admin
-from invenio_stats.utils import QueryCommonReportsHelper, \
-    QueryFileReportsHelper, QueryRecordViewPerIndexReportHelper, \
-    QueryRecordViewReportHelper, QuerySearchReportHelper,QuerySitelicenseReportsHelper
+from invenio_stats.utils import QuerySitelicenseReportsHelper
 from invenio_db import db
 from sqlalchemy.orm import session
 from weko_accounts.utils import roles_required
