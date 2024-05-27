@@ -58,7 +58,8 @@ from weko_workflow.api import WorkActivity, WorkFlow
 from .models import FileOnetimeDownload, FilePermission
 from .permissions import check_create_usage_report, \
     check_file_download_permission, check_user_group_permission, \
-    is_open_restricted, get_file_price
+    is_open_restricted, get_file_price, check_charge
+from .ipaddr import check_site_license_permission
 
 
 
@@ -726,8 +727,12 @@ def replace_license_free_for_opensearch(search_result, is_change_label=True):
 def get_file_info_list(record):
     """File Information of all file in record.
 
-    :param record: all metadata of a record.
-    :return: json files.
+    Args:
+        record (dict): all metadata of a record.
+
+    Returns:
+        is_display_file_preview (boolean): True if file is preview.
+        files (dict): metadata of files.
     """
     def get_file_size(p_file):
         """Get file size and convert to byte."""
@@ -772,8 +777,44 @@ def get_file_info_list(record):
         for item in array_json:
             if str(item.get('id')) == str(key):
                 return item.get(get_key)
+            
+    def is_price_highlight(p_file):
+        """"Rerturn True if price is highlighted
+        
+        Args:
+            p_file (dict): all metadata of a record.
 
-    def add_billing_info(p_file):
+        Returns:
+            bool: rerturn True if price is highlighted.
+        
+        """
+        min_price = p_file['min_price']
+        user_flag = True
+        user_id_list = [int(record['owner'])] if record.get('owner') else []
+        obj = ItemTypes.get_by_id(record.get('item_type_id'))
+        if record.get('weko_shared_id'):
+            user_id_list.append(record.get('weko_shared_id'))
+        if not current_user.is_authenticated:
+            user_flag = False
+        elif current_user and current_user.get_id() in user_id_list:
+            user_flag = False
+        else:
+            super_users = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] + \
+                current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
+            for role in list(current_user.roles or []):
+                if role.name in super_users:
+                    user_flag = False
+        if obj.item_type_name.has_site_license:
+                sitelicense_flag = check_site_license_permission()
+        if user_flag and not sitelicense_flag and not p_file['accessrole'] == 'open_access':
+            for priceinfo in p_file['priceinfo']:
+                is_highlight = False
+                if not priceinfo['billingrole'] == '非会員' and\
+                    priceinfo['has_role'] and min_price == priceinfo['price']:
+                    is_highlight = True
+                priceinfo['is_highlight'] = is_highlight
+
+    def add_billing_info(p_file,min_price):
         '''ファイル情報に課金ファイルに関する情報を追加する'''
 
         # 課金ファイルのアクセス権限
@@ -798,6 +839,17 @@ def get_file_info_list(record):
 
             # ユーザーがこのロールをもっているかどうか
             priceinfo['has_role'] = priceinfo['billingrole'] in user_role_name_list
+
+            #購入済かどうか
+            if current_user.is_authenticated and priceinfo['has_role']:
+                if check_charge(current_user.get_id(), record['_deposit']['id']) == 'already':
+                    priceinfo['purchased'] = '[' + _('Purchased') + ']'
+
+            #最安値
+            if priceinfo['has_role'] and\
+                (not min_price or min_price > priceinfo['price']):
+                min_price = priceinfo['price']
+        p_file['min_price'] = min_price
 
     workflows = get_workflows()
     roles = get_roles()
@@ -866,7 +918,9 @@ def get_file_info_list(record):
                                     role, roles, 'name')
                     f['file_order'] = file_order
                     if 'billing' in f:
-                        add_billing_info(f)
+                        min_price = None
+                        add_billing_info(f,min_price)
+                        is_price_highlight(f)
                     files.append(f)
                 file_order += 1
     return is_display_file_preview, files
