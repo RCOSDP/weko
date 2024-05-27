@@ -337,6 +337,10 @@ msgstr ""
 msgid "Access Number Breakdown By Site License"
 msgstr ""
 
+#: weko_admin/config.py:158
+msgid "Open-Access No. Of Paid File Downloads"
+msgstr ""
+
 #: weko_admin/config.py:152 weko_admin/config.py:157
 msgid "File Name"
 msgstr ""

@@ -530,7 +530,7 @@ def test_package_reports(client,mocker):
 
 # def make_stats_file(raw_stats, file_type, year, month):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_make_stats_file -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
-def test_make_stats_file(client,mocker):
+def test_make_stats_file(client,mocker, users):
     current_app.config.update(WEKO_ADMIN_OUTPUT_FORMAT="csv")
     mocker.patch("weko_admin.utils.write_report_file_rows")
     raw_stats=""
@@ -559,7 +559,7 @@ def test_make_stats_file(client,mocker):
         'Aggregation Month,2022-10\n'\
         '""\n'\
         'No. Of Paid File Downloads\n'\
-        'File Name,Registered Index Name,No. Of Times Downloaded,Non-Logged In User,System Administrator,Repository Administrator,Contributor,Community Administrator,General,Original Role,Student,Site License,Admin,Registrar\n'
+        'File Name,Registered Index Name,No. Of Times Downloaded,Non-Logged in User,System Administrator,Repository Administrator,Contributor,Community Administrator,General,Original Role,Student,Site License,Admin,Registrar\n'
     result = make_stats_file(raw_stats,file_type,year,month)
     assert result.getvalue() == test
 

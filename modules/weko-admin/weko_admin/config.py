@@ -168,7 +168,8 @@ WEKO_ADMIN_REPORT_HEADERS = {
 WEKO_ADMIN_REPORT_SUB_HEADERS = {
     'file_download': _('Open-Access No. Of File Downloads'),
     'file_preview': _('Open-Access No. Of File Previews'),
-    'site_access': _('Access Number Breakdown By Site License')
+    'site_access': _('Access Number Breakdown By Site License'),
+    'billing_file_download': _('Open-Access No. Of Paid File Downloads')
 }
 """Sub-Headers for the report .csv files"""
 

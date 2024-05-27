@@ -467,7 +467,7 @@ def make_stats_file(raw_stats, file_type, year, month):
         writer.writerows([[''], [sub_header_row]])
         if 'open_access' in raw_stats:
             writer.writerow(cols)
-            write_report_file_rows(writer, raw_stats.get('open_access'))
+            write_report_file_rows(writer, raw_stats.get('open_access'), file_type)
         elif 'institution_name' in raw_stats:
             writer.writerow([_('Institution Name')] + cols)
             write_report_file_rows(writer,

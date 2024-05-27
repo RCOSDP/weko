@@ -317,6 +317,10 @@ msgstr "オープンアクセスファイルダウンロード数"
 msgid "Open-Access No. Of File Previews"
 msgstr "オープンアクセスファイルプレビュー数"
 
+#: weko_admin/config.py:158
+msgid "Open-Access No. Of Paid File Downloads"
+msgstr "オープンアクセス課金ファイルダウンロード数"
+
 #: weko_admin/config.py:146
 msgid "Access Number Breakdown By Site License"
 msgstr "サイトライセンス別アクセス数内訳"

@@ -1,6 +1,7 @@
 import pytest
 import tempfile
 from datetime import datetime
+from mock import patch
 from six import BytesIO
 
 from werkzeug.datastructures import ImmutableMultiDict
@@ -98,13 +99,18 @@ def test_file_download_event_builder(app, request_headers, db):
     _obj.is_billing_item = False
     _obj.billing_file_price = 0
     _obj.user_group_list = []
+    _obj.is_open_access = True
     with app.test_request_context(headers=request_headers['user']):
         # file_download_event_builder
         res = file_download_event_builder({}, app, _obj)
-        assert res=={'accessrole': '', 'billing_file_price': 0, 'bucket_id': str(_bucket.id), 'cur_user_id': 0, 'file_id': str(_obj.file_id), 'file_key': 'LICENSE', 'index_list': [], 'ip_address': None, 'is_billing_item': False, 'item_id': 1, 'item_title': 'test title', 'referrer': None, 'remote_addr': None, 'root_file_id': str(_obj.root_file_id), 'session_id': None, 'site_license_flag': False, 'site_license_name': '', 'size': 12, 'timestamp': res['timestamp'], 'user_agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko)Chrome/45.0.2454.101 Safari/537.36', 'user_group_list': [], 'user_id': None, 'userrole': 'guest'}
+        assert res=={'accessrole': '', 'billing_file_price': 0, 'bucket_id': str(_bucket.id), 'cur_user_id': 0, 'file_id': str(_obj.file_id), 'file_key': 'LICENSE', 'index_list': [], 'ip_address': None, 'is_billing_item': False, 'is_open_access': True, 'item_id': 1, 'item_title': 'test title', 'referrer': None, 'remote_addr': None, 'root_file_id': str(_obj.root_file_id), 'session_id': None, 'site_license_flag': False, 'site_license_name': '', 'size': 12, 'timestamp': res['timestamp'], 'user_agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko)Chrome/45.0.2454.101 Safari/537.36', 'user_group_list': [], 'user_id': None, 'userrole': 'guest'}
         # file_preview_event_builder
         res = file_preview_event_builder({}, app, _obj)
         assert res=={'accessrole': '', 'billing_file_price': 0, 'bucket_id': str(_bucket.id), 'cur_user_id': 0, 'file_id': str(_obj.file_id), 'file_key': 'LICENSE', 'index_list': [], 'ip_address': None, 'is_billing_item': False, 'item_id': 1, 'item_title': 'test title', 'referrer': None, 'remote_addr': None, 'root_file_id': str(_obj.root_file_id), 'session_id': None, 'site_license_flag': False, 'site_license_name': '', 'size': 12, 'timestamp': res['timestamp'], 'user_agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko)Chrome/45.0.2454.101 Safari/537.36', 'user_group_list': [], 'user_id': None, 'userrole': 'guest'}
+        # is_valid_access is False
+        with patch("invenio_stats.contrib.event_builders.is_valid_access", return_value=False):
+            res = file_download_event_builder({}, app, _obj)
+            assert res==None
 
 
 # def build_celery_task_unique_id(doc):
