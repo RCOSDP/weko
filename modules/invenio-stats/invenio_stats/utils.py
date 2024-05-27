@@ -14,9 +14,11 @@ import calendar
 import operator
 import os
 import re
+import pickle
 from base64 import b64encode
 from datetime import datetime, timedelta
 from math import ceil
+from dateutil.relativedelta import relativedelta
 from typing import Generator, NoReturn, Union
 
 import click
@@ -41,6 +43,7 @@ from weko_accounts.utils import get_remote_addr
 from werkzeug.utils import import_string
 
 from weko_index_tree.models import Index
+from weko_index_tree.api import Indexes
 
 from . import config
 from .models import StatsAggregation, StatsBookmark, StatsEvents
@@ -750,6 +753,180 @@ class QueryCommonReportsHelper(object):
         result['date'] = query_date
         result['all'] = data_list
         return result
+
+class QuerySitelicenseReportsHelper(object):
+    """SitelicenseReportReports helper class."""
+    @classmethod
+    def get_common_params(cls, **kwargs):
+        """Get common params.
+        Args:
+            **kwargs (dict): start date,end_date.
+        
+        Returns:
+            string: Aggregation date.
+            dict: Param by Elaticsearch Aggregation.
+            list: List Aggregation date by month.
+        
+        """
+        start_date = kwargs.get('start_date')
+        end_date = kwargs.get('end_date')
+        params = {'start_date': start_date,
+                    'end_date': end_date + 'T23:59:59',
+                    'agg_size': kwargs.get('agg_size', 0),
+                    'agg_sort': kwargs.get('agg_sort', {'_term': 'desc'}),
+                    'interval': 'month'}
+        start = datetime.strptime(start_date,'%Y-%m-%d')
+        end = datetime.strptime(end_date,'%Y-%m-%d')
+        span = (end.year - start.year) * 12 + end.month - start.month
+        datelist = []
+        for i in range(span + 1):
+            datelist.append((start + relativedelta(months=+i)).strftime('%Y-%m'))
+        if len(datelist) > 1:
+            query_date = start.strftime('%Y-%m') + '-' + end.strftime('%Y-%m')
+        else:
+            query_date = start.strftime('%Y-%m')
+        return query_date, params, datelist
+
+    @classmethod
+    def get(cls, **kwargs):
+        """Get Site license feedback reports."""
+        event = kwargs.get('event')
+        if event == 'sitelicense_download':
+            return cls.get_site_license_report(**kwargs)
+        else:
+            return []
+
+    @classmethod
+    def get_site_license_report(cls, **kwargs):
+        """Get site license download report.
+        Args:
+            **kwargs (dict): start date,end_date.
+        
+        Returns:
+            dict: Dict calculation data.
+        """
+        def Calculation(query_list, all_res, datelist):
+            """Calculation.
+            
+            Args:
+                query_list (list): List query name.
+                all_res (dict): Dict Aggregation data.
+                datelist (list): List Aggregation date by month.
+            """
+            index_issn_list = Index.get_all_by_is_issn()
+            date_dict = {}
+            for date in datelist:
+                date_dict[date] = index_dict.get(date,0)
+            for i in index_issn_list:
+                spec = Indexes.get_full_path(i['id'])
+                set_spec = spec.replace('/', ':')
+                spec_list.append(set_spec)
+                index_info[set_spec] = {'name':i['index_name'], 'issn':i['issn']}
+                index_dict[set_spec] = pickle.loads(pickle.dumps(date_dict, -1))
+            for k in query_list:
+                if k == 'search':
+                    result_format[k] = pickle.loads(pickle.dumps(date_dict, -1))
+                elif k == 'record_view':
+                    result_format[k] = pickle.loads(pickle.dumps(index_dict, -1))
+                else:
+                    result_format[k] = pickle.loads(pickle.dumps(index_dict, -1))
+                    result_format[k]['all_journals'] = pickle.loads(pickle.dumps(date_dict, -1))
+
+            for k in query_list:
+                items = all_res.get(k)
+                if items:
+                    for i in items['buckets']:
+                        i_date = datetime.fromtimestamp(i['date'] / 10 ** 3)
+                        date = i_date.strftime('%Y-%m')
+                        if not k == 'search':
+                            if k == "record_view":
+                                record_index_id = i['record_index_id']
+                            else:
+                                record_index_id = i['index_id']
+                            index = Index.get_index_by_id(record_index_id)
+                            index_issn = index.online_issn
+                            index_id = Indexes.get_full_path(index.id)
+                            set_index = index_id.replace('/', ':')
+
+                        if not i['site_license_name'] == '':
+                            if i['site_license_name'] in result:
+                                if k == 'search':
+                                    result[i['site_license_name']]['search'][date] += i['count']
+                                elif index_issn:
+                                    result[i['site_license_name']][k][set_index][str(date)] += i['count']
+                            else:
+                                result[i['site_license_name']] = pickle.loads(pickle.dumps(result_format, -1))
+                                if k == 'search':
+                                    result[i['site_license_name']]['search'][date] += i['count']
+                                elif index_issn:
+                                    result[i['site_license_name']][k][set_index][str(date)] += i['count']
+                            if k == 'file_download' or k == 'file_preview':
+                                for key in result[i['site_license_name']][k]['all_journals'].keys():
+                                    if key == date:
+                                        result[i['site_license_name']][k]['all_journals'][key] += i['count']
+
+        all_res = {}
+        query_month = ''
+        data = {}
+        spec_list = []
+        result_format= {}
+        index_dict = {}
+        index_info = {}
+        result = {}
+
+        query_list = ['file_download', 'file_preview', 'search', 'record_view']
+        try:
+            query_month, params, datelist = cls.get_common_params(**kwargs)
+            for q in query_list:
+                if q == 'search':
+                    query_cfg = current_stats.queries['get-search-per-site-license']
+                else:
+                    query_cfg = current_stats.queries['get-feedback-mail-' + q.replace('_', '-')
+                                                  + '-per-site-license']
+                query = query_cfg.query_class(**query_cfg.query_config)
+                all_res[q] = query.run(**params)
+            Calculation(query_list, all_res, datelist)
+
+            no_data = pickle.loads(pickle.dumps(result_format, -1))
+
+            #total
+            if len(datelist) > 1:
+                datelist.insert(0,'total')
+                for name,items in result.items():
+                    for query,item in items.items():
+                        if query == 'search':
+                            result[name][query]['total'] = sum(item.values())
+                            no_data[query]['total'] = 0
+                        else:
+                            for k,i in item.items():
+                                if k == 'all_journals':
+                                    continue
+                                else:
+                                    result[name][query][k]['total'] = sum(i.values())
+                                    no_data[query][k]['total'] = 0
+
+            for spec in spec_list:
+                no_data['record_view'][spec]['file_download_count'] = no_data['file_download'][spec]
+
+            #file_download_count by record_view
+            for name, items in result.items():
+                for query,item in items.items():
+                    if query == 'search':
+                        continue
+                    for k,i in item.items():
+                        if k == 'all_journals':
+                            continue
+                        else:
+                            result[name]['record_view'][k]['file_download_count'] = result[name]['file_download'][k]
+
+            data['date'] = query_month
+            data['datelist'] = datelist
+            data['result'] = result
+            data['no_data'] = no_data
+            data['index_info'] = pickle.loads(pickle.dumps(index_info, -1))
+        except Exception as e:
+            current_app.logger.debug(e)
+        return data
 
 class QueryAccessCounterHelper(object):
     """AccessCounter helper class."""

@@ -68,6 +68,7 @@ def file_download_event_builder(event, sender_app, obj=None, **kwargs):
             site_license_name=obj.site_license_name,
             site_license_flag=obj.site_license_flag,
             index_list=obj.index_list,
+            index_id=obj.index_id,
             cur_user_id=obj.userid,
             item_id=obj.item_id,
             item_title=obj.item_title,
@@ -100,6 +101,7 @@ def file_preview_event_builder(event, sender_app, obj=None, **kwargs):
             site_license_name=obj.site_license_name,
             site_license_flag=obj.site_license_flag,
             index_list=obj.index_list,
+            index_id=obj.index_id,
             cur_user_id=obj.userid,
             item_id=obj.item_id,
             item_title=obj.item_title,
@@ -166,6 +168,25 @@ def copy_record_index_list(doc, aggregation_data=None):
                 record_index_names = ", ".join(agg_record_index_list)
     return record_index_names
 
+def copy_record_index(doc, aggregation_data=None):
+    """Copy record index list.
+    Args:
+        doc (dict): document of record_view.
+        aggregation_data (date): aggregation data.
+    
+    Returns:
+        string: record index id.
+    """
+    record_index_id = ''
+    list = doc['record_index_list']
+    if list:
+        agg_record_index_list = []
+        for index in list:
+            index_id = index.get('index_id', '')
+            if index_id is not None:
+                agg_record_index_list.append(index_id)
+                record_index_id = ", ".join(agg_record_index_list)
+    return record_index_id
 
 def copy_user_group_list(doc, aggregation_data=None):
     """Copy record index list."""

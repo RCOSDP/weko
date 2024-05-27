@@ -388,6 +388,7 @@ def add_signals_info(record, obj):
             else:
                 index_list += index[4] + '|'
     obj.index_list = index_list[:len(index_list) - 1]
+    obj.index_id = record["path"][0]
 
     # Add item info to send_obj
     obj.item_title = record['item_title']

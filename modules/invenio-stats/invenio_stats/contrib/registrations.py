@@ -15,7 +15,7 @@ from invenio_stats.contrib.event_builders import build_celery_task_unique_id, \
     build_file_unique_id, build_item_create_unique_id, \
     build_record_unique_id, build_search_detail_condition, \
     build_search_unique_id, build_top_unique_id, copy_record_index_list, \
-    copy_search_keyword, copy_search_type, copy_user_group_list
+    copy_search_keyword, copy_search_type, copy_user_group_list, copy_record_index
 from invenio_stats.processors import EventsIndexer, anonymize_user, \
     flag_restricted, flag_robots
 from invenio_stats.queries import ESDateHistogramQuery, ESTermsQuery, \
@@ -201,6 +201,7 @@ def register_aggregations():
                 accessrole='accessrole',
                 userrole='userrole',
                 index_list='index_list',
+                index_id='index_id',
                 is_billing_item='is_billing_item',
                 billing_file_price='billing_file_price',
                 user_group_names=copy_user_group_list,
@@ -238,6 +239,7 @@ def register_aggregations():
                 accessrole='accessrole',
                 userrole='userrole',
                 index_list='index_list',
+                index_id='index_id',
                 is_billing_item='is_billing_item',
                 billing_file_price='billing_file_price',
                 user_group_names=copy_user_group_list,
@@ -294,6 +296,7 @@ def register_aggregations():
                 record_id='record_id',
                 record_name='record_name',
                 record_index_names=copy_record_index_list,
+                record_index_id=copy_record_index,
                 pid_type='pid_type',
                 pid_value='pid_value',
                 cur_user_id='cur_user_id',
@@ -842,6 +845,33 @@ def register_queries():
                 index='{}-stats-file-preview'.format(search_index_prefix),
                 doc_type='file-preview-day-aggregation',
                 group_fields=['site_license_name', 'count'],
+            )
+        ),
+        dict(
+            query_name='get-feedback-mail-record-view-per-site-license',
+            query_class=ESTermsQuery,
+            query_config=dict(
+                index='{}-stats-record-view'.format(search_index_prefix),
+                doc_type='record-view-day-aggregation',
+                group_fields=['site_license_name', 'count', 'record_index_id'],
+            )
+        ),
+        dict(
+            query_name='get-feedback-mail-file-download-per-site-license',
+            query_class=ESTermsQuery,
+            query_config=dict(
+                index='{}-stats-file-download'.format(search_index_prefix),
+                doc_type='file-download-day-aggregation',
+                group_fields=['site_license_name', 'count', 'index_id'],
+            )
+        ),
+        dict(
+            query_name='get-feedback-mail-file-preview-per-site-license',
+            query_class=ESTermsQuery,
+            query_config=dict(
+                index='{}-stats-file-preview'.format(search_index_prefix),
+                doc_type='file-preview-day-aggregation',
+                group_fields=['site_license_name', 'count', 'index_id'],
             )
         ),
         dict(

@@ -91,6 +91,10 @@
           "type": "keyword",
           "index": true
         },
+        "index_id": {
+          "type": "keyword",
+          "index": true
+        },
         "collection": {
           "type": "keyword",
           "index": true
