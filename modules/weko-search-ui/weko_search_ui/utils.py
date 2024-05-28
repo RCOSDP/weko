@@ -780,7 +780,7 @@ def read_stats_file(file_path: str, file_name: str, file_format: str) -> dict:
                             }
                         )
                     if check_item_type:
-                        current_app.logger.error("item:{}".format(check_item_type))
+                        current_app.logger.debug("item:{}".format(check_item_type))
                         mapping_ids = handle_get_all_id_in_item_type(
                             check_item_type.get("item_type_id")
                         )

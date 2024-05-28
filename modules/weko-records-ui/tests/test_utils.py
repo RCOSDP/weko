@@ -353,6 +353,65 @@ def test_hide_by_email(app,records):
     record['item_1617349709064']['attribute_value_mlt'][0].pop('contributorMails')
     assert hide_by_email(test_record)==record
 
+    record = {
+        "item_type_id": "1",
+        "_deposit": {
+            "owners": [1],
+            "owners_ext": {
+                "username": "test username",
+                "displayname": "test displayname",
+                "email": "test@test.com"
+            }
+        },
+        "publish_date": "2021-08-06",
+        "publish_status": "0",
+        "item_1617186331708": {
+            "attribute_name": "Title",
+            "attribute_value_mlt": [
+                {
+                    "subitem_1551255647225": "test title ja",
+                    "subitem_1551255648112": "ja",
+                },
+                {
+                    "subitem_1551255647225": "test title en",
+                    "subitem_1551255648112": "en",
+                },
+            ],
+        }
+    }
+    record['_deposit'].pop("owners_ext")
+    test_record = copy.deepcopy(record)
+    assert hide_by_email(test_record)==record
+
+    record = {
+        "item_type_id": None,
+        "_deposit": {
+            "owners": [1],
+            "owners_ext": {
+                "username": "test username",
+                "displayname": "test displayname",
+                "email": "test@test.com"
+            }
+        },
+        "publish_date": "2021-08-06",
+        "publish_status": "0",
+        "item_1617186331708": {
+            "attribute_name": "Title",
+            "attribute_value_mlt": [
+                {
+                    "subitem_1551255647225": "test title ja",
+                    "subitem_1551255648112": "ja",
+                },
+                {
+                    "subitem_1551255647225": "test title en",
+                    "subitem_1551255648112": "en",
+                },
+            ],
+        }
+    }
+    test_record = copy.deepcopy(record)
+    assert hide_by_email(test_record)==record
+
 
 # def hide_by_itemtype(item_metadata, hidden_items):
 #     def del_hide_sub_metadata(keys, metadata):
