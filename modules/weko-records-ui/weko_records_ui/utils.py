@@ -806,7 +806,8 @@ def get_file_info_list(record):
                     user_flag = False
         if obj.item_type_name.has_site_license:
                 sitelicense_flag = check_site_license_permission()
-        if user_flag and not sitelicense_flag and not p_file['accessrole'] == 'open_access':
+        is_open_access = p_file['download_status']['is_open_access']
+        if user_flag and not sitelicense_flag and not is_open_access:
             for priceinfo in p_file['priceinfo']:
                 is_highlight = False
                 if not priceinfo['billingrole'] == '非会員' and\

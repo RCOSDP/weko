@@ -358,9 +358,7 @@
                             <span class="price-bold">{{_('open_access')}}</span>
                           {%- else -%}
                             {%- for priceinfo in file.priceinfo -%}
-                              {%- if priceinfo.has_role and file.billing_file_permission -%}
-                                {%- set price = priceinfo.price|int -%}
-                              {%- elif 'tax' in priceinfo and priceinfo.tax == 'include_tax' -%}
+                              {%- if 'tax' in priceinfo and priceinfo.tax == 'include_tax' -%}
                                 {%- set price = priceinfo.price|int -%}
                               {%- else -%}
                                 {%- set price = priceinfo.price|int + ((priceinfo.price|int) * billing_settings['tax_rate'])|int -%}
