@@ -205,11 +205,12 @@ def is_billing_item(record: Dict) -> bool:
     return False
 
 
-def is_open_access(record: Dict) -> bool:
+def is_open_access(record: Dict, file_name: str) -> bool:
     """Checks if item is a open access item based on its meta data schema.
 
     Args:
         record (dict): item's meta data
+        file_name (str): target file name
     
     Returns:
         bool: open access item or not
@@ -225,6 +226,8 @@ def is_open_access(record: Dict) -> bool:
             if value.get('attribute_type', '') != 'file':
                 continue
             for file in value.get('attribute_value_mlt', []):
+                if file.get('filename') != file_name:
+                    continue
                 access_role = file.get('accessrole')
                 open_access_date = dt.strptime(file.get('date')[0].get('dateValue'),
                                                 '%Y-%m-%d').date()
