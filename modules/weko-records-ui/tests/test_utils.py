@@ -198,26 +198,63 @@ def test_is_open_access(records_open_access, mocker):
     def mock_strptime(date_string, format):
         return dt.strptime(date_string, format)
 
-    _, results = records_open_access
+    _, results, file_name_list = records_open_access
     with patch("weko_records_ui.utils.Indexes.get_public_indexes_list", return_value=["2", "4", "6"]):
         # all indexes are not public
-        assert not is_open_access(results[0]['record'])
+        assert not is_open_access(results[0]['record'], file_name_list[0])
 
         # some indexes are public and accessrole is open_access
-        assert is_open_access(results[1]['record'])
+        assert is_open_access(results[1]['record'], file_name_list[1])
 
         # all indexes are public, accessrole is open_date and now is before public_date
         mock_datetime = mocker.patch("weko_records_ui.utils.dt")
         mock_datetime.now.return_value = dt(2024, 5, 19, 12, 55, 32)
         mock_datetime.strptime.side_effect=mock_strptime
-        assert not is_open_access(results[2]['record'])
+        assert not is_open_access(results[2]['record'], file_name_list[2])
         
         # all indexes are public, accessrole is open_date and now is after public_date
         mock_datetime.now.return_value = dt(2024, 5, 20, 12, 55, 32)
-        assert is_open_access(results[3]['record'])
+        assert is_open_access(results[3]['record'], file_name_list[3])
         
         # all indexes are public and accessrole is login_user
-        assert not is_open_access(results[4]['record'])
+        assert not is_open_access(results[4]['record'], file_name_list[4])
+
+        # item has some contents, item is public, target is No.1, accessrole is open_access
+        assert is_open_access(results[5]['record'], file_name_list[5][0])
+
+        # item has some contents, item is public, target is No.2, accessrole is open_date and now is before public_date
+        mock_datetime.now.return_value = dt(2024, 5, 19, 12, 55, 32)
+        assert not is_open_access(results[5]['record'], file_name_list[5][1])
+
+        # item has some contents, item is public, target is No.3, accessrole is open_date and now is after public_date
+        mock_datetime.now.return_value = dt(2024, 5, 20, 12, 55, 32)
+        assert is_open_access(results[5]['record'], file_name_list[5][2])
+
+        # item has some contents, item is public, target is No.4, accessrole is login_user
+        assert not is_open_access(results[5]['record'], file_name_list[5][3])
+
+        # item is public, now is after item's public_date, accessrole is open_access
+        record = results[1]['record']
+        record['path'] = ['2']
+        record['publish_status'] = '0'
+        record['pubdate']['attribute_value'] = '2024-05-20'
+        mock_datetime_permission = mocker.patch('weko_records_ui.permissions.dt')
+        mock_datetime_permission.utcnow.return_value = dt(2024, 5, 20, 12, 55, 32)
+        mock_datetime_permission.strptime.side_effect=mock_strptime
+        assert is_open_access(record, file_name_list[1])
+
+        # item is public, now is before item's public_date, accessrole is open_access
+        record['pubdate']['attribute_value'] = '2024-05-21'
+        assert not is_open_access(record, file_name_list[1])
+
+        # item is private, now is after item's public_date, accessrole is open_access
+        record['publish_status'] = '1'
+        record['pubdate']['attribute_value'] = '2024-05-20'
+        assert not is_open_access(record, file_name_list[1])
+
+        # item is private, now is before item's public_date, accessrole is open_access
+        record['pubdate']['attribute_value'] = '2024-05-21'
+        assert not is_open_access(record, file_name_list[1])
 
 
 # def soft_delete(recid):

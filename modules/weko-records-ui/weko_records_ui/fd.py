@@ -394,7 +394,7 @@ def add_signals_info(record, obj):
     obj.item_id = record['_deposit']['id']
     
     # Check whether open access file or not
-    obj.is_open_access = is_open_access(record)
+    obj.is_open_access = is_open_access(record, obj.key)
 
 
 def file_download_onetime(pid, record, _record_file_factory=None, **kwargs):

@@ -52,6 +52,7 @@ from weko_records.models import ItemBilling
 from weko_records.serializers.utils import get_mapping
 from weko_records.utils import replace_fqdn
 from weko_records_ui.models import InstitutionName
+from weko_records_ui.permissions import check_publish_status
 from weko_schema_ui.models import PublishStatus
 from weko_workflow.api import WorkActivity, WorkFlow
 
@@ -205,11 +206,12 @@ def is_billing_item(record: Dict) -> bool:
     return False
 
 
-def is_open_access(record: Dict) -> bool:
+def is_open_access(record: Dict, file_name: str) -> bool:
     """Checks if item is a open access item based on its meta data schema.
 
     Args:
         record (dict): item's meta data
+        file_name (str): target file name
     
     Returns:
         bool: open access item or not
@@ -218,13 +220,16 @@ def is_open_access(record: Dict) -> bool:
     target_index_list = record['path']
     public_index_list = Indexes.get_public_indexes_list()
 
-    if not set(public_index_list).isdisjoint(set(target_index_list)):
+    if not set(public_index_list).isdisjoint(set(target_index_list)) \
+        and check_publish_status(record):
         for value in record.values():
             if not isinstance(value, dict):
                 continue
             if value.get('attribute_type', '') != 'file':
                 continue
             for file in value.get('attribute_value_mlt', []):
+                if file.get('filename') != file_name:
+                    continue
                 access_role = file.get('accessrole')
                 open_access_date = dt.strptime(file.get('date')[0].get('dateValue'),
                                                 '%Y-%m-%d').date()
