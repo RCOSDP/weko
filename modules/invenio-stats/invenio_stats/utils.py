@@ -836,34 +836,37 @@ class QuerySitelicenseReportsHelper(object):
                 items = all_res.get(k)
                 if items:
                     for i in items['buckets']:
-                        i_date = datetime.fromtimestamp(i['date'] / 10 ** 3)
-                        date = i_date.strftime('%Y-%m')
-                        if not k == 'search':
-                            if k == "record_view":
-                                record_index_id = i['record_index_id']
-                            else:
-                                record_index_id = i['index_id']
-                            index = Index.get_index_by_id(record_index_id)
-                            index_issn = index.online_issn
-                            index_id = Indexes.get_full_path(index.id)
-                            set_index = index_id.replace('/', ':')
-
                         if not i['site_license_name'] == '':
-                            if i['site_license_name'] in result:
-                                if k == 'search':
+                            i_date = datetime.fromtimestamp(i['date'] / 10 ** 3)
+                            date = i_date.strftime('%Y-%m')
+                            if k == 'search':
+                                if i['site_license_name'] in result:
                                     result[i['site_license_name']]['search'][date] += i['count']
-                                elif index_issn:
-                                    result[i['site_license_name']][k][set_index][str(date)] += i['count']
+                                else:
+                                    result[i['site_license_name']] = pickle.loads(pickle.dumps(result_format, -1))
+                                    result[i['site_license_name']]['search'][date] += i['count']
                             else:
-                                result[i['site_license_name']] = pickle.loads(pickle.dumps(result_format, -1))
-                                if k == 'search':
-                                    result[i['site_license_name']]['search'][date] += i['count']
-                                elif index_issn:
-                                    result[i['site_license_name']][k][set_index][str(date)] += i['count']
-                            if k == 'file_download' or k == 'file_preview':
-                                for key in result[i['site_license_name']][k]['all_journals'].keys():
-                                    if key == date:
-                                        result[i['site_license_name']][k]['all_journals'][key] += i['count']
+                                if k == "record_view":
+                                    index_path = i['record_index_id']
+                                else:
+                                    index_path = i['index_path']
+                                path_list = index_path.split('|')
+                                for path in path_list:
+                                    cid = path.split('/')[-1]
+                                    index_issn = Index.get_index_by_id(cid).online_issn
+                                    if index_issn:
+                                        if k == "record_view":
+                                            path = Indexes.get_full_path(path)
+                                        set_index = path.replace('/', ':')
+                                        if i['site_license_name'] in result:
+                                            result[i['site_license_name']][k][set_index][str(date)] += i['count']
+                                        else:
+                                            result[i['site_license_name']] = pickle.loads(pickle.dumps(result_format, -1))
+                                            result[i['site_license_name']][k][set_index][str(date)] += i['count']
+                                        if not k == 'record_view':
+                                            for key in result[i['site_license_name']][k]['all_journals'].keys():
+                                                if key == date:
+                                                    result[i['site_license_name']][k]['all_journals'][key] += i['count']
 
         all_res = {}
         query_month = ''
@@ -925,7 +928,7 @@ class QuerySitelicenseReportsHelper(object):
             data['no_data'] = no_data
             data['index_info'] = pickle.loads(pickle.dumps(index_info, -1))
         except Exception as e:
-            current_app.logger.debug(e)
+            current_app.logger.error(e)
         return data
 
 class QueryAccessCounterHelper(object):

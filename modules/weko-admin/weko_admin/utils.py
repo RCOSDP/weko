@@ -555,8 +555,7 @@ def write_sitelicense_report_file_rows(writer, records, file_type=None, result=N
         file_type (String): file type data.
         result (dict): Dict calculation data.
     """
-    from .config import WEKO_ADMIN_SITELICENSE_REPORT_INTERFACE_NAME
-    interface_name = WEKO_ADMIN_SITELICENSE_REPORT_INTERFACE_NAME
+    interface_name = current_app.config['WEKO_ADMIN_SITELICENSE_REPORT_INTERFACE_NAME']
     search_count = [_('WEKO database'),interface_name]
     if records is None:
         return
@@ -606,15 +605,12 @@ def package_site_access_stats_file(stats, agg_date, result):
         zip_stream (ZipFile): ZipFile by site license name.
     """
 
-    from .config import WEKO_ADMIN_OUTPUT_FORMAT,\
-        WEKO_ADMIN_SITELICENSE_REPORT_FILE_NAMES
-
     zip_stream = BytesIO()
     output_files = []
     try:
         for stats_type, stat in stats.items():
-            file_format = WEKO_ADMIN_OUTPUT_FORMAT.lower()
-            setting_file_name = WEKO_ADMIN_SITELICENSE_REPORT_FILE_NAMES.get(
+            file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
+            setting_file_name = current_app.config['WEKO_ADMIN_SITELICENSE_REPORT_FILE_NAMES'].get(
                 stats_type, '_')
             file_name = setting_file_name + '_' + agg_date + '.' + file_format
             output_files.append({
@@ -635,19 +631,24 @@ def package_site_access_stats_file(stats, agg_date, result):
 
 
 def make_site_access_stats_file(stats, stats_type, agg_date, result):
-    """Make tsv site access report file for 1 organization."""
+    """Make tsv site access report file for 1 organization.
 
-    from .config import WEKO_ADMIN_OUTPUT_FORMAT, \
-                        WEKO_ADMIN_SITELICENSE_REPORT_REPOSYTORY_NAME,\
-                        WEKO_ADMIN_SITELICENSE_REPORT_COLS,\
-                        WEKO_ADMIN_SITELICENSE_REPORT_COUNT_COLS
+    Args:
+        stats (dict): calculation data by site license name.
+        stats_type (string): calculation data type.
+        agg_date (date): aggregation date.
+        result (dict): calculation data.
+    
+    Returns:
+        StringIO: output files stream.
+    """
 
-    reposytory_name = WEKO_ADMIN_SITELICENSE_REPORT_REPOSYTORY_NAME
+    reposytory_name = current_app.config.get('WEKO_ADMIN_SITELICENSE_REPORT_REPOSYTORY_NAME')
     dt = datetime.now()
     now_date = dt.date()
 
     file_output = StringIO()
-    file_format = WEKO_ADMIN_OUTPUT_FORMAT.lower()
+    file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
     file_delimiter = '\t' if file_format == 'tsv' else ','
     writer = csv.writer(file_output, delimiter=file_delimiter, lineterminator="\n")
 
@@ -656,8 +657,8 @@ def make_site_access_stats_file(stats, stats_type, agg_date, result):
                       [_('month'), agg_date],
                       ['']])
 
-    cols = WEKO_ADMIN_SITELICENSE_REPORT_COLS.get(stats_type, [])
-    count_cols = WEKO_ADMIN_SITELICENSE_REPORT_COUNT_COLS.get(stats_type,[])
+    cols = current_app.config['WEKO_ADMIN_SITELICENSE_REPORT_COLS'].get(stats_type, [])
+    count_cols = current_app.config['WEKO_ADMIN_SITELICENSE_REPORT_COUNT_COLS'].get(stats_type,[])
 
     for col in count_cols:
         for date in result['datelist']:

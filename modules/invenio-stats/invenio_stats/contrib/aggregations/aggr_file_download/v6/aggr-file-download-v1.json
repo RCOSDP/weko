@@ -91,7 +91,7 @@
           "type": "keyword",
           "index": true
         },
-        "index_id": {
+        "index_path": {
           "type": "keyword",
           "index": true
         },
