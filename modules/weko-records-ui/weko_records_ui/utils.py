@@ -52,6 +52,7 @@ from weko_records.models import ItemBilling
 from weko_records.serializers.utils import get_mapping
 from weko_records.utils import replace_fqdn
 from weko_records_ui.models import InstitutionName
+from weko_records_ui.permissions import check_publish_status
 from weko_schema_ui.models import PublishStatus
 from weko_workflow.api import WorkActivity, WorkFlow
 
@@ -219,7 +220,8 @@ def is_open_access(record: Dict, file_name: str) -> bool:
     target_index_list = record['path']
     public_index_list = Indexes.get_public_indexes_list()
 
-    if not set(public_index_list).isdisjoint(set(target_index_list)):
+    if not set(public_index_list).isdisjoint(set(target_index_list)) \
+        and check_publish_status(record):
         for value in record.values():
             if not isinstance(value, dict):
                 continue
