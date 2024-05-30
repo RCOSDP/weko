@@ -138,6 +138,10 @@ msgstr ""
 msgid "Item cannot be deleted because the import is in progress."
 msgstr ""
 
+#: weko_records_ui/utils.py:782
+msgid "Purchased"
+msgstr "購入済"
+
 #: weko_records_ui/templates/weko_records_ui/box/preview_carousel.html:113
 #: weko_records_ui/utils.py:570
 msgid "Restricted Access"
@@ -569,9 +573,6 @@ msgstr ""
 msgid "Previous"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/box/preview_carousel.html:47
-msgid "Next"
-msgstr ""
 
 #: weko_records_ui/templates/weko_records_ui/box/preview_carousel.html:51
 msgid "Last"
