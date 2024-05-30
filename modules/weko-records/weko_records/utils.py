@@ -2519,12 +2519,10 @@ def custom_record_medata_for_export(record_metadata: dict):
     """
     from weko_records_ui.utils import (
         display_oaiset_path,
-        hide_item_metadata,
-        replace_license_free,
+        hide_item_metadata
     )
 
     hide_item_metadata(record_metadata)
-    replace_license_free(record_metadata)
     display_oaiset_path(record_metadata)
 
 

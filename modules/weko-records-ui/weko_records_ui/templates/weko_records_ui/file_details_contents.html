@@ -123,8 +123,8 @@
                       </td>
                       <td>
                         {%- if not 'simple' in file.displaytype -%}
-                          {%- if 'license_free' == file.licensetype -%}
-                            <span class="break-word">{{ file.licensefree }}</span>
+                          {%- if 'license_note' == file.licensetype -%}
+                            <span class="break-word">{{ file.licensenote }}</span>
                           {%- else %}
                             {% set lst = file.licensetype | get_license_icon %}
                             {%- if lst[0] -%}

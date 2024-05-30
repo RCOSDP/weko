@@ -13,7 +13,7 @@ from invenio_oaiserver.utils import (
     dumps_etree,
     datetime_to_datestamp,
     eprints_description,
-    handle_license_free,
+    handle_license_note,
     get_index_state,
     is_output_harvest
 )
@@ -95,21 +95,21 @@ def test_eprints_description():
 #    For the full specification and schema definition visit:
 #def friends_description(baseURLs):
 #    For the schema definition visit:
-#def handle_license_free(record_metadata):
-# .tox/c1/bin/pytest --cov=invenio_oaiserver tests/test_utils.py::test_handle_license_free -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiserver/.tox/c1/tmp
-def test_handle_license_free(app):
+#def handle_license_note(record_metadata):
+# .tox/c1/bin/pytest --cov=invenio_oaiserver tests/test_utils.py::test_handle_license_note -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiserver/.tox/c1/tmp
+def test_handle_license_note(app):
     data = {
         "item_1617605131499": {
             "attribute_name": "File",
             "attribute_type": "file",
             "attribute_value_mlt": [
                 {
-                    "licensefree": "own license",
-                    "licensetype": "license_free"
+                    "licensenote": "own license",
+                    "licensetype": "license_note"
                 },
                 {
-                    "licensefree": "",
-                    "licensetype": "license_free"
+                    "licensenote": "",
+                    "licensetype": "license_note"
                 },
                 {
                     "licensetype": "license_12"
@@ -125,17 +125,17 @@ def test_handle_license_free(app):
             "attribute_name":"File","attribute_type":"file",
             "attribute_value_mlt": [
                 {"licensetype": "own license"},
-                {"licensefree": ""},
+                {"licensenote": ""},
                 {"licensetype": "license_12"},
             ]
         },
         "item_1617186331708": {"attribute_name": "Title"}
     }
     data1 = copy.deepcopy(data)
-    result = handle_license_free(data1)
+    result = handle_license_note(data1)
     assert result == test
     current_app.config.update(WEKO_RECORDS_UI_LICENSE_DICT=[])
-    handle_license_free(data)
+    handle_license_note(data)
     
 #def get_index_state():
 # .tox/c1/bin/pytest --cov=invenio_oaiserver tests/test_utils.py::test_get_index_state -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiserver/.tox/c1/tmp

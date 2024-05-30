@@ -326,9 +326,9 @@ $(document).ready(function () {
             licensetype: {
               type: "string",
               title: "License",
-              enum: ["license_free","license_0","license_1","license_2","license_3","license_4","license_5"]
+              enum: ["license_note","license_0","license_1","license_2","license_3","license_4","license_5"]
             },
-            licensefree: {
+            licensenote: {
               type: "string"
             },
             accessrole: {
@@ -378,7 +378,7 @@ $(document).ready(function () {
             title:" License",
             title_i18n:{ja:"ライセンス",en:"License"},
             titleMap: [
-              {value: "license_free", name: "License Free" },
+              {value: "license_note", name: "License Note"},
               {value: "license_0", name: "Creative Commons : Attribution" },
               {value: "license_1", name: "Creative Commons : Attribution-Share-Alike" },
               {value: "license_2", name: "Creative Commons : Attribution-No-Derivatives" },
@@ -388,10 +388,10 @@ $(document).ready(function () {
             ]
           },
           {
-            key: "filemeta[].licensefree",
+            key: "filemeta[].licensenote",
             type: "textarea",
             notitle: true,
-            condition: "model.filemeta[arrayIndex].licensetype == 'license_free'"
+            condition: "model.filemeta[arrayIndex].licensetype == 'license_note'"
           },
           {
             title: "Check Plagiarism",

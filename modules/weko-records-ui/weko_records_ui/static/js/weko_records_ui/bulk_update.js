@@ -83,7 +83,7 @@ require([
       var selected = $(this).val();
       var des = $($(this).parent().find('.licence-des'));
 
-      if(selected === 'license_free') {
+      if(selected === 'license_note') {
         des.removeAttr("hidden");
       } else {
         des.attr('hidden', 'hidden');
@@ -175,7 +175,7 @@ require([
         // Licence
         }else if(field.prop('value') === '2') {
           licence = $($(row).find('select[name="licence_sel"]')[0]).prop('value');
-          if(licence === 'license_free') {
+          if(licence === 'license_note') {
             licenceDes = $($(row).find('textarea[name="licence_des"]')[0]).prop('value');
           }
         }
@@ -250,7 +250,7 @@ require([
         // Licence
         }else if(field.prop('value') === '2') {
           licence = $($(row).find('select[name="licence_sel"]')[0]).prop('value');
-          if(licence === 'license_free') {
+          if(licence === 'license_note') {
             licenceDes = $($(row).find('textarea[name="licence_des"]')[0]).prop('value');
           }
         }
@@ -287,8 +287,8 @@ require([
                     value['licensetype'] = licence;
                   }
                   // Licence Description
-                  if(licenceDes !== '' && licence === 'license_free') {
-                    value['licensefree'] = licenceDes;
+                  if(licenceDes !== '' && licence === 'license_note') {
+                    value['licensenote'] = licenceDes;
                   }
                 });
                 itemsMeta[pid].meta[contentKey] = contentsMeta;

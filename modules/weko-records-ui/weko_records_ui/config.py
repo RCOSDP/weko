@@ -380,7 +380,7 @@ WEKO_RECORDS_UI_LICENSE_ICON_PDF_LOCATION = "static/images/creative_commons"
 WEKO_RECORDS_UI_LICENSE_DICT = [
     {
         'name': _('write your own license'),
-        'value': 'license_free',
+        'value': 'license_note'
     },
     # version 0
     {

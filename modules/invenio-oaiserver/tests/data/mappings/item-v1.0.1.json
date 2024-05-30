@@ -2411,7 +2411,7 @@
                       },
                       "copy_to": ["search_string"]
                     },
-                    "licensefree": {
+                    "licensenote": {
                       "type": "text",
                       "index": false,
                       "fields": {
@@ -3924,7 +3924,7 @@
             "license_notation": {
               "type": "text"
             },
-            "licensefree": {
+            "licensenote": {
               "type": "text",
               "index": false,
               "fields": {

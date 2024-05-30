@@ -92,6 +92,9 @@ setup(
     include_package_data=True,
     platforms='any',
     entry_points={
+        'invenio_admin.views':[
+            'invenio_records = weko_records.admin:record_adminview',
+        ],
         'invenio_base.apps': [
             'weko_records = weko_records:WekoRecords',
         ],

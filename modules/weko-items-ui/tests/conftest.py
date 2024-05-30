@@ -4755,7 +4755,7 @@ def db_itemtype_15(app, db):
                             "title": "グループ",
                             "type": ["null", "string"],
                         },
-                        "licensefree": {
+                        "licensenote": {
                             "format": "textarea",
                             "title": "自由ライセンス",
                             "title_i18n": {"en": "自由ライセンス", "ja": "自由ライセンス"},
@@ -8274,8 +8274,8 @@ def db_itemtype_15(app, db):
                     "type": "select",
                 },
                 {
-                    "condition": "model.item_1617605131499[arrayIndex].licensetype == 'license_free'",
-                    "key": "item_1617605131499[].licensefree",
+                    "condition": "model.item_1617605131499[arrayIndex].licensetype == 'license_note'",
+                    "key": "item_1617605131499[].licensenote",
                     "notitle": True,
                     "title_i18n": {"en": "自由ライセンス", "ja": "自由ライセンス"},
                     "type": "textarea",
@@ -12742,7 +12742,7 @@ def db_itemtype_15(app, db):
                             "title": "グループ",
                             "type": ["null", "string"],
                         },
-                        "licensefree": {
+                        "licensenote": {
                             "format": "textarea",
                             "title": "自由ライセンス",
                             "title_i18n": {"en": "自由ライセンス", "ja": "自由ライセンス"},
@@ -16364,8 +16364,8 @@ def db_itemtype_15(app, db):
                             "type": "select",
                         },
                         {
-                            "condition": "model.item_1617605131499[arrayIndex].licensetype == 'license_free'",
-                            "key": "item_1617605131499[].licensefree",
+                            "condition": "model.item_1617605131499[arrayIndex].licensetype == 'license_note'",
+                            "key": "item_1617605131499[].licensenote",
                             "notitle": True,
                             "title_i18n": {"en": "自由ライセンス", "ja": "自由ライセンス"},
                             "type": "textarea",
@@ -21089,7 +21089,7 @@ def db_itemtype_15(app, db):
                                     "title": "グループ",
                                     "type": ["null", "string"],
                                 },
-                                "licensefree": {
+                                "licensenote": {
                                     "format": "textarea",
                                     "title": "自由ライセンス",
                                     "title_i18n": {"en": "自由ライセンス", "ja": "自由ライセンス"},

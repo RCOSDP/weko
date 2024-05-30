@@ -570,8 +570,8 @@ def get_license_pdf(license, item_metadata_json, pdf, file_item_id, footer_w,
     from .views import blueprint
     license_icon_pdf_location = \
         current_app.config['WEKO_RECORDS_UI_LICENSE_ICON_PDF_LOCATION']
-    if license == 'license_free':
-        txt = item_metadata_json[file_item_id][0].get('licensefree')
+    if license == 'license_note':
+        txt = item_metadata_json[file_item_id][0].get('licensenote')
         if txt is None:
             txt = ''
         pdf.multi_cell(footer_w, footer_h, txt, 0, 'L', False)
@@ -789,38 +789,6 @@ def item_setting_show_email():
     else:
         is_display = False
     return is_display
-
-
-def replace_license_free(record_metadata, is_change_label=True):
-    """Change the item name 'licensefree' to 'license_note'.
-
-    If 'licensefree' is not output as a value.
-    The value of 'licensetype' is 'license_note'.
-
-    :param record_metadata:
-    :param is_change_label:
-    :return: None
-    """
-    _license_type = 'licensetype'
-    _license_free = 'licensefree'
-    _license_note = 'license_note'
-    _license_type_free = 'license_free'
-    _attribute_type = 'file'
-    _attribute_value_mlt = 'attribute_value_mlt'
-
-    _license_dict = current_app.config['WEKO_RECORDS_UI_LICENSE_DICT']
-    if _license_dict:
-        _license_type_free = _license_dict[0].get('value')
-
-    for val in record_metadata.values():
-        if isinstance(val, dict) and \
-                val.get('attribute_type') == _attribute_type:
-            for attr in val[_attribute_value_mlt]:
-                if attr.get(_license_type) == _license_type_free:
-                    attr[_license_type] = _license_note
-                    if attr.get(_license_free) and is_change_label:
-                        attr[_license_note] = attr[_license_free]
-                        del attr[_license_free]
 
 
 def get_file_info_list(record):

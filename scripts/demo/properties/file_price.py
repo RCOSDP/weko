@@ -159,7 +159,7 @@ def schema(title="", multi_flag=multiple_flag):
                     "enum": [],
                     "title": "ファイル名",
                 },
-                "licensefree": {
+                "licensenote": {
                     "format": "textarea",
                     "title": "自由ライセンス",
                     "type": "string",
@@ -216,8 +216,8 @@ def form(
             condition = "model.{}.accessrole == 'open_date'".format(temp_key)
         elif item_name == "groupsprice":
             condition = "model.{}.accessrole == 'open_login'".format(temp_key)
-        elif item_name == "licensefree":
-            condition = "model.{}.licensetype == 'license_free'".format(temp_key)
+        elif item_name == "licensenote":
+            condition = "model.{}.licensetype == 'license_note'".format(temp_key)
         return condition
 
     def _form(key):
@@ -290,8 +290,8 @@ def form(
                     "type": "select",
                 },
                 {
-                    "condition": _condition(key, "licensefree"),
-                    "key": "{}.licensefree".format(key),
+                    "condition": _condition(key, "licensenote"),
+                    "key": "{}.licensenote".format(key),
                     "notitle": True,
                     "type": "textarea",
                 },

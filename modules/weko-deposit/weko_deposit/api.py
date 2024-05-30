@@ -2184,7 +2184,7 @@ class WekoRecord(Record):
                 # Get file with current version id.
                 file_metadata_temp = []
                 exclude_attr = [
-                    'displaytype', 'accessrole', 'licensetype', 'licensefree']
+                    'displaytype', 'accessrole', 'licensetype', 'licensenote']
                 filename = request.args.get("filename", None)
                 file_order = int(request.args.get("file_order", -1))
                 for idx, f in enumerate(mlt):

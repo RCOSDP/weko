@@ -278,7 +278,7 @@ def test_get_license_icon(app):
             "Creative Commons CC0 1.0 Universal Public Domain Designation",
             "https://creativecommons.org/publicdomain/zero/1.0/",
         )
-        assert get_license_icon("license_free") == ("", "", "#")
+        assert get_license_icon("license_note") == ("", "", "#")
 
 
 #     # In case of current lang is not JA, set to default.

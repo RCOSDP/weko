@@ -177,33 +177,33 @@ def friends_description(baseURLs):
     return etree.tostring(friends, pretty_print=True)
 
 
-def handle_license_free(record_metadata):
-    """Merge licensetype and licensefree.
+def handle_license_note(record_metadata):
+    """Merge licensetype and licensenote.
 
-    Delete licensetype when licensetype equal 'license_free'
-    but licensefree is empty.
+    Delete licensetype when licensetype equal 'license_note'
+    but licensenote is empty.
 
     :param record_metadata: Record's Metadata.
     :returns: Directed edit.
     """
     _license_type = 'licensetype'
-    _license_free = 'licensefree'
-    _license_type_free = 'license_free'
+    _license_note = 'licensenote'
+    _license_type_note = 'license_note'
     _attribute_type = 'file'
     _attribute_value_mlt = 'attribute_value_mlt'
 
     _license_dict = current_app.config['WEKO_RECORDS_UI_LICENSE_DICT']
     if _license_dict:
-        _license_type_free = _license_dict[0].get('value')
+        _license_type_note = _license_dict[0].get('value')
 
     for val in record_metadata.values():
         if isinstance(val, dict) and \
                 val.get('attribute_type') == _attribute_type:
             for attr in val.get(_attribute_value_mlt, {}):
-                if attr.get(_license_type) == _license_type_free:
-                    if attr.get(_license_free):
-                        attr[_license_type] = attr.get(_license_free)
-                        del attr[_license_free]
+                if attr.get(_license_type) == _license_type_note:
+                    if attr.get(_license_note):
+                        attr[_license_type] = attr.get(_license_note)
+                        del attr[_license_note]
                     else:
                         del attr[_license_type]
 
