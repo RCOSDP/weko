@@ -3973,20 +3973,9 @@ def get_billinginfo_from_metadata(metadata):
     for key, val in metadata.items():
         if isinstance(val, list):
             for item in val:
-                if isinstance(item, dict):
-                    if "accessrole" in item:
-                        if not key in file_meta_ids:
-                            file_meta_ids.append(key)
-                    if "displaytype" in item:
-                        if not key in file_meta_ids:
-                            file_meta_ids.append(key)
-                    if "billing" in item:
-                        if not key in file_meta_ids:
-                            file_meta_ids.append(key)
-                    if "priceinfo" in item:
-                        if not key in file_meta_ids:
-                            file_meta_ids.append(key)
-                        break
+                if isinstance(item, dict) and "billing" in item:
+                    file_meta_ids.append(key)
+                    break
 
     count = 0
     for _id in file_meta_ids:
@@ -4003,28 +3992,24 @@ def get_billinginfo_from_metadata(metadata):
                 "id": ".metadata.{}[{}].billing".format(_id, count),
                 "billing": file.get("billing", ""),
             }
-            priceinfo_data = {
-                "id": ".metadata.{}[{}].priceinfo".format(_id, count),
-                "priceinfo": file.get("priceinfo", ""),
-            }
+            second_count = 0
+            for info in file.get("priceinfo", ""):
+                priceinfo_data = {
+                    "id": ".metadata.{}[{}].priceinfo[{}]".format(_id, count, second_count),
+                    "priceinfo": info,
+                }
+                priceinfo.append(priceinfo_data)
+                second_count += 1
             
-            if not file.get("accessrole", None):
-                file["accessrole"] = "open_access"
             accessrole_info.append(accessrole_data)
             displaytype_info.append(displaytype_data)
             billing_file.append(billing_data)
-            priceinfo.append(priceinfo_data)
             count += 1
 
-        new_file_metadata = list(filter(lambda x: x, metadata[_id]))
-        if new_file_metadata:
-            metadata[_id] = new_file_metadata
-        else:
-            del metadata[_id]
     billing_info["accessrole_info"] = accessrole_info
     billing_info["displaytype_info"] = displaytype_info
     billing_info["billing_file"] = billing_file
-    billing_info["priceinfo"] = priceinfo
+    billing_info["price_info"] = priceinfo
     return billing_info
 
 def handle_check_filename_consistence(file_paths, meta_filenames):
@@ -4057,7 +4042,7 @@ def handle_check_billing_file(billing_info):
     accessrole_info = billing_info["accessrole_info"]
     displaytype_info = billing_info["displaytype_info"]
     billing_file = billing_info["billing_file"]
-    priceinfo = billing_info["priceinfo"]
+    priceinfo = billing_info["price_info"]
     errors = []
     billing_list  = []
     displaytype_list = []
@@ -4086,27 +4071,27 @@ def handle_check_billing_file(billing_info):
             errors.append(_("billing_file_display_type_error"))
         if accessrole_list:
             errors.append(_("One of the following metadata is required.<br/>{}<br/>").format("open_date, open_login"))
-        for priceinfo_item in priceinfo:
-            priceinfo_data = priceinfo_item.get("priceinfo","")
-            role_list = []
-            for item in priceinfo_data:
-                price = item.get("price","")
-                role = item.get("billingrole","")
-                role_list.append(role)
-                if not any([price,role]):
-                    errors.append(msg + "'role','price'")
-                elif not role:
-                    errors.append(msg + "'role'")
-                elif not price:
-                    errors.append(msg + "'price'")
-                if price and (not represents_int(price) or re.search(r"([０-９])", price)):
-                    errors.append(_("Please specify price by half-width number."))
-            if role_list:
-                if len(role_list) != len(set(role_list)):
-                    errors.append(_("billing_file_role_duplication_error"))
-                for role_id in role_list:
-                    if role_id:
-                        if int(role_id) not in role_id_list:
-                            errors.append(_("The specified {} does not exist in system.").format("role"))
+        role_list = []
+        for info in priceinfo:
+            id = info.get("id")
+            priceinfo = info.get("priceinfo","")
+            price = priceinfo.get("price","")
+            billingrole = priceinfo.get("billingrole","")
+            role_list.append(billingrole)
+            if not any([price,billingrole]):
+                errors.append(msg + "[" + id + ".billingrole," + id + ".price]")
+            elif not billingrole:
+                errors.append(msg + "[" + id + ".billingrole]")
+            elif not price:
+                errors.append(msg + "[" + id + ".price]")
+            if price and (not represents_int(price) or re.search(r"([０-９])", price)):
+                errors.append(_("Please specify price by half-width number."))
+        if role_list:
+            if len(role_list) != len(set(role_list)):
+                errors.append(_("billing_file_role_duplication_error"))
+            for role_id in role_list:
+                if role_id:
+                    if int(role_id) not in role_id_list:
+                        errors.append(_("The specified {} does not exist in system.").format("role"))
 
     return errors

@@ -857,6 +857,16 @@ def location(app, db):
     db.session.commit()
     return location
 
+@pytest.fixture()
+def roles(app,db):
+    roles = [
+        Role(id="10001", name="test role1"),
+        Role(id="10002", name="test role2"),
+        Role(id="10003", name="test role3"),
+        Role(id="10004", name="test role4"),
+        Role(id="10005", name="test role5"),
+    ]
+    db.session.add_all(roles)
 
 @pytest.fixture()
 def user(app, db):
@@ -2218,6 +2228,10 @@ def record_with_metadata():
     data = json_data("data/list_records/list_records_new_item_doira.json")
     return data
 
+@pytest.fixture()
+def record_with_billing_metadata():
+    data = json_data("data/list_records/list_billing_info.json")
+    return data
 
 @pytest.fixture()
 def item_render():
