@@ -1,8 +1,4 @@
-"""
-ログ例
-* データベース名,WEKO_ID(authors.id),authors.gather_flag(修正前),authors.json->gather_flag(修正前),WEKO_ID,authors.gather_flag(修正後)
-"""
-import csv, psycopg2, sys, traceback
+import csv, json, psycopg2, sys, traceback
 from os import getenv
 from os.path import dirname, join
 
@@ -44,9 +40,13 @@ def fix_gather_flag(grouped_data):
                 authors = cur.fetchall()
 
                 for author in authors:
-                    if author[1] == GATHER_FLAG_BEFORE and author[2].get('gather_flg') == GATHER_FLAG_AFTER:
-                        cur.execute(f'UPDATE authors SET updated = CURRENT_TIMESTAMP, gather_flg = {GATHER_FLAG_AFTER} WHERE id = {author[0]}')
-                        update_logs.append(f"{db_name},{author[0]},{author[1]},{author[2].get('gather_flg')},{author[0]},{GATHER_FLAG_AFTER}")
+                    author_json = author[2]
+                    if isinstance(author_json, str):
+                        author_json = json.loads(author_json)
+
+                    if author[1] == GATHER_FLAG_BEFORE and author_json.get('gather_flg') == GATHER_FLAG_AFTER:
+                        cur.execute('UPDATE authors SET updated = CURRENT_TIMESTAMP, gather_flg = %s WHERE id = %s', (GATHER_FLAG_AFTER, author[0]))
+                        update_logs.append(f"{db_name},{author[0]},{author[1]},{author_json.get('gather_flg')},{author[0]},{GATHER_FLAG_AFTER}")
 
                 for log in update_logs:
                     print(log)
