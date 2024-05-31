@@ -4086,12 +4086,11 @@ def handle_check_billing_file(billing_info):
                 errors.append(msg + "[" + id + ".price]")
             if price and (not represents_int(price) or re.search(r"([０-９])", price)):
                 errors.append(_("Please specify price by half-width number."))
-        if role_list:
-            if len(role_list) != len(set(role_list)):
-                errors.append(_("billing_file_role_duplication_error"))
-            for role_id in role_list:
-                if role_id:
-                    if int(role_id) not in role_id_list:
-                        errors.append(_("The specified {} does not exist in system.").format("role"))
+        if len(role_list) != len(set(role_list)):
+            errors.append(_("billing_file_role_duplication_error"))
+        for role_id in role_list:
+            if role_id:
+                if int(role_id) not in role_id_list:
+                    errors.append(_("The specified {} does not exist in system.").format("role"))
 
     return errors
