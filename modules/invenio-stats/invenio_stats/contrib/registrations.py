@@ -209,6 +209,7 @@ def register_aggregations():
                 cur_user_id='cur_user_id',
                 hostname='hostname',
                 remote_addr='remote_addr',
+                is_open_access='is_open_access',
             ),
             metric_aggregation_fields={
                 'unique_count': ('cardinality', 'unique_session_id',
@@ -245,6 +246,7 @@ def register_aggregations():
                 cur_user_id='cur_user_id',
                 hostname='hostname',
                 remote_addr='remote_addr',
+                is_open_access='is_open_access',
             ),
             metric_aggregation_fields={
                 'unique_count': ('cardinality', 'unique_session_id',
@@ -388,7 +390,23 @@ def register_queries():
                 group_fields=['file_key', 'index_list', 'userrole',
                               'site_license_flag', 'count'],
                 required_filters=dict(
-                    accessrole='accessrole',
+                    is_open_access='is_open_access',
+                ),
+            )
+        ),
+        dict(
+            query_name='get-billing-file-download-open-access-report',
+            query_class=ESTermsQuery,
+            query_config=dict(
+                index='{}-stats-file-download'.format(search_index_prefix),
+                doc_type='file-download-day-aggregation',
+                group_fields=['file_key', 'index_list',
+                              'userrole', 'site_license_flag',
+                              'user_group_names', 'cur_user_id',
+                              'count'],
+                required_filters=dict(
+                    is_billing_item='is_billing_item',
+                    is_open_access='is_open_access',
                 ),
             )
         ),
@@ -425,7 +443,7 @@ def register_queries():
                 group_fields=['file_key', 'index_list', 'userrole',
                               'site_license_flag', 'count'],
                 required_filters=dict(
-                    accessrole='accessrole',
+                    is_open_access='is_open_access'
                     # is_billing_item='is_billing_item',
                 ),
             )

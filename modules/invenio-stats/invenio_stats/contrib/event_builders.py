@@ -75,6 +75,7 @@ def file_download_event_builder(event, sender_app, obj=None, **kwargs):
             is_billing_item=obj.is_billing_item,
             billing_file_price=obj.billing_file_price,
             user_group_list=obj.user_group_list,
+            is_open_access=obj.is_open_access,
             # Who:
             **get_user()
         ))
@@ -106,6 +107,7 @@ def file_preview_event_builder(event, sender_app, obj=None, **kwargs):
             is_billing_item=obj.is_billing_item,
             billing_file_price=obj.billing_file_price,
             user_group_list=obj.user_group_list,
+            is_open_access=obj.is_open_access,
             # Who:
             **get_user()
         ))

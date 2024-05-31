@@ -4,7 +4,6 @@ from elasticsearch_dsl import Q
 from flask_login import current_user
 from invenio_access import Permission, action_factory
 from invenio_records_rest.errors import InvalidQueryRESTError
-from weko_index_tree.api import Indexes
 from werkzeug.datastructures import MultiDict
 
 def billing_file_search_factory(search):
@@ -54,6 +53,7 @@ def get_permission_filter(index_id: str = None):
         List: Query command.
 
     """
+    from weko_index_tree.api import Indexes
     is_perm = Permission(action_factory("search-access")).can()
     match = Q("match", publish_status="0")
     version = Q("match", relation_version_is_last="true")

@@ -114,6 +114,7 @@ STATS_QUERIES = {
     'get-file-preview-report': {},
     'get-file-preview-open-access-report': {},
     'get-billing-file-download-report': {},
+    'get-billing-file-download-open-access-report': {},
     'get-billing-file-preview-report': {},
     # 'bucket-celery-task-histogram': {},
     # 'bucket-celery-task-total': {},

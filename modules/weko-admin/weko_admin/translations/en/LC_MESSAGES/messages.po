@@ -39,6 +39,10 @@ msgstr "Number of File Previews"
 msgid "Open-Access No. Of File Previews"
 msgstr "Number of Open-Access File Previews"
 
+#: weko_admin/config.py:158
+msgid "Open-Access No. Of Paid File Downloads"
+msgstr "Number of Open-Access Paid File Downloads"
+
 #: weko_admin/admin.py:301
 msgid "Aggregation Monh"
 msgstr ""

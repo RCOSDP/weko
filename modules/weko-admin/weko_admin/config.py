@@ -137,6 +137,20 @@ WEKO_ADMIN_CACHE_PREFIX = 'admin_cache_{name}_{user_id}'
 WEKO_ADMIN_OUTPUT_FORMAT = 'tsv'
 """Output file format."""
 
+WEKO_ADMIN_REPORT_TYPES = [
+    'file_download',
+    'file_preview',
+    'billing_file_download',
+    'detail_view',
+    'index_access',
+    'file_using_per_user',
+    'top_page_access',
+    'search_count',
+    'user_roles',
+    'site_access'
+]
+"""Types for the report"""
+
 WEKO_ADMIN_REPORT_HEADERS = {
     'file_download': _('No. Of File Downloads'),
     'file_preview': _('No. Of File Previews'),
@@ -154,7 +168,8 @@ WEKO_ADMIN_REPORT_HEADERS = {
 WEKO_ADMIN_REPORT_SUB_HEADERS = {
     'file_download': _('Open-Access No. Of File Downloads'),
     'file_preview': _('Open-Access No. Of File Previews'),
-    'site_access': _('Access Number Breakdown By Site License')
+    'site_access': _('Access Number Breakdown By Site License'),
+    'billing_file_download': _('Open-Access No. Of Paid File Downloads')
 }
 """Sub-Headers for the report .csv files"""
 
