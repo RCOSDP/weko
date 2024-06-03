@@ -1,12 +1,12 @@
 {
     "_oai": {
-        "id": "oai:weko3.example.org:00000013"
+        "id": "oai:weko3.example.org:00000015"
     },
     "path": [
         "1557819692844"
     ],
     "owner": "1",
-    "recid": "13",
+    "recid": "15",
     "title": [
         "課金ファイル_Contributor"
     ],
@@ -21,7 +21,7 @@
         "id": "1",
         "pid": {
             "type": "depid",
-            "value": "13",
+            "value": "15",
             "revision_id": 0
         },
         "owner": "1",
@@ -66,7 +66,7 @@
         "attribute_value_mlt": [
             {
                 "url": {
-                    "url": "https://weko3.example.org/record/13/files/課金ファイル.txt"
+                    "url": "https://weko3.example.org/record/15/files/課金ファイル.txt"
                 },
                 "date": [
                     {
@@ -90,7 +90,21 @@
                             "include_tax"
                         ],
                         "price": "110",
-                        "billingrole": "1"
+                        "billingrole": "3"
+                    },
+                    {
+                        "tax": [
+                            "include_tax"
+                        ],
+                        "price": "30",
+                        "billingrole": "5"
+                    },
+                    {
+                        "tax": [
+                            "include_tax"
+                        ],
+                        "price": "1000",
+                        "billingrole": "6"
                     }
                 ],
                 "accessrole": "open_login",
