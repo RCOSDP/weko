@@ -546,6 +546,8 @@ def test_replace_license_free_for_opensearch(app):
 #     def get_file_size(p_file):
 #     def set_message_for_file(p_file):
 #     def get_data_by_key_array_json(key, array_json, get_key):
+#     def is_price_highlight(p_file):
+#     def add_billing_info(pfile,min_price):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_get_file_info_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 @pytest.mark.parametrize(
     "id, result",
@@ -561,9 +563,16 @@ def test_replace_license_free_for_opensearch(app):
         (8, True),
     ],
 )
-def test_get_file_info_list(app,records,users,id,result,db_item_billing):
+def test_get_file_info_list(app,records,users,id,result,db_item_billing,itemtypes_without_site_license):
     indexer, results = records
     record = results[0]["record"]
+    is_open_access = False
+    def set_file_data(file_name):
+        with open("tests/data/" + file_name, "r") as f:
+            return json.load(f)
+    def mock_check_file_download_permission(record, fjson, is_display_file_info=False, check_billing_file=False, download_status={}):
+        download_status['is_open_access'] = is_open_access
+        return test_send_usage_report_mail_for_user
     
     # record_data = {
     #     "_oai": {"id": "oai:weko3.example.org:000000{:02d}".format(i), "sets": ["{}".format((i % 2) + 1)]},
@@ -1134,12 +1143,125 @@ def test_get_file_info_list(app,records,users,id,result,db_item_billing):
         with app.test_request_context(headers=[("Accept-Language", "en")]):
             with open("tests/data/record_d.json","r") as f:
                 record_d = json.load(f)
-            with patch("weko_records_ui.utils.check_file_download_permission", return_value=True):
+            with patch("weko_records_ui.utils.check_file_download_permission", side_effect=mock_check_file_download_permission):
                 is_display_file_preview, files = get_file_info_list(record_d)
                 priceinfo = files[0]['priceinfo']
                 billing_file_permission = files[0]['billing_file_permission']
                 assert priceinfo[0]['has_role'] != None
                 assert billing_file_permission != None
+    
+    with patch("flask_login.utils._get_user", return_value=users[9]["obj"]):
+        with patch("weko_records_ui.utils.check_file_download_permission", side_effect=mock_check_file_download_permission):
+            # billing file has already been purchased
+            with patch("weko_records_ui.utils.check_charge", return_value='already'):
+                record_e = set_file_data("record_e.json")
+                is_display_file_preview, files = get_file_info_list(record_e)
+                assert files[0]['priceinfo'][0]['purchased'] == '[Purchased]'
+            
+            # billing file has not yet been purchased
+            with patch("weko_records_ui.utils.check_charge", return_value='not_billed'):
+                record_e = set_file_data("record_e.json")
+                is_display_file_preview, files = get_file_info_list(record_e)
+                assert 'purchased' not in files[0]['priceinfo'][0]
+            
+            # billing file has one price info, min_price is that price
+            record_e = set_file_data("record_e.json")
+            is_display_file_preview, files = get_file_info_list(record_e)
+            assert files[0]['min_price'] == '110'
+
+            # billing file has three price info, min_price is No.2's price
+            record_f = set_file_data("record_f.json")
+            is_display_file_preview, files = get_file_info_list(record_f)
+            assert files[0]['min_price'] == '30'
+        
+    with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
+        # user_flag is True, sitelicense_flag is False, is_open_access is False, billing file's price is equal to min_price
+        record_e = set_file_data("record_e.json")
+        is_display_file_preview, files = get_file_info_list(record_e)
+        assert files[0]['priceinfo'][0]['is_highlight']
+        
+        # is_open_access is True
+        record_e = set_file_data("record_e.json")
+        is_open_access = True
+        with patch("weko_records_ui.utils.check_file_download_permission", side_effect=mock_check_file_download_permission):
+            is_display_file_preview, files = get_file_info_list(record_e)
+            assert 'is_highlight' not in files[0]['priceinfo'][0]
+        
+        # sitelicense_flag is True
+        record_e = set_file_data("record_e.json")
+        with patch("weko_records_ui.utils.check_site_license_permission", return_value=True):
+            is_display_file_preview, files = get_file_info_list(record_e)
+            assert 'is_highlight' not in files[0]['priceinfo'][0]
+    
+    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+        # user_flag is False(user is Administrator)
+        record_e = set_file_data("record_e.json")
+        is_display_file_preview, files = get_file_info_list(record_e)
+        assert 'is_highlight' not in files[0]['priceinfo'][0]
+    
+    with patch("flask_login.utils._get_user", return_value=users[7]["obj"]):
+        # user_flag is False(user is registrant)
+        record_e = set_file_data("record_e.json")
+        is_display_file_preview, files = get_file_info_list(record_e)
+        assert 'is_highlight' not in files[0]['priceinfo'][0]
+    
+    with patch("flask_login.utils._get_user", return_value=users[9]["obj"]):
+        # user_flag is True, sitelicense_flag is False, is_open_access is False, billing file has some price info(No.2 info is highlight)
+        record_f = set_file_data("record_f.json")
+        is_display_file_preview, files = get_file_info_list(record_f)
+        assert not files[0]['priceinfo'][0]['is_highlight']
+        assert files[0]['priceinfo'][1]['is_highlight']
+        assert not files[0]['priceinfo'][2]['is_highlight']
+    
+    # url does not exist, filesize error, role does not exist
+    record = copy.deepcopy(results[0]["record"])
+    record['item_1617605131499']['attribute_value_mlt'][0]['filesize'][0]['value'] = 'filesize B'
+    record['item_1617605131499']['attribute_value_mlt'][0].pop('url')
+    record['item_1617605131499']['attribute_value_mlt'][0]['provide'][0].pop('role')
+    is_display_file_preview, files = get_file_info_list(record)
+    assert not is_display_file_preview
+    assert files[0]['size'] == -1
+    assert 'url' not in files[0]
+    assert 'role' not in files[0]['provide'][0]
+
+    # billingrole does not exist in accounts_role, filesize's type is integer
+    record_e = set_file_data("record_e.json")
+    record_e['item_1617605131499']['attribute_value_mlt'][0]['priceinfo'][0]['billingrole'] = 0
+    record_e['item_1617605131499']['attribute_value_mlt'][0]['filesize'][0]['value'] = 100
+    is_display_file_preview, files = get_file_info_list(record_e)
+    assert files[0]['priceinfo'][0]['billingrole'] == 0
+    assert files[0]['size'] == 100
+
+    # file's date is undefined
+    record = copy.deepcopy(results[0]['record'])
+    record['item_1617605131499']['attribute_value_mlt'][0].pop('date')
+    is_display_file_preview, files = get_file_info_list(record)
+    assert 'future_date_message' is not files[0]
+    assert 'download_preview_message' is not files[0]
+
+    # file's dateValue is after now
+    record = copy.deepcopy(results[0]['record'])
+    record['item_1617605131499']['attribute_value_mlt'][0]['date'][0]['dateValue'] = (dt.now() + timedelta(days=-2)).strftime('%Y-%m-%d')
+    is_display_file_preview, files = get_file_info_list(record)
+    assert 'future_date_message' is not files[0]
+    assert 'download_preview_message' is not files[0]
+
+    # weko_shared_id does not exist, item_type_name does not have site_license
+    with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
+        record_e = set_file_data("record_e.json")
+        record_e['item_type_id'] = '2'
+        record_e.pop('weko_shared_id')
+        is_display_file_preview, files = get_file_info_list(record_e)
+        assert files[0]['priceinfo'][0]['is_highlight']
+    
+    # check_file_download_premission is false, is_open_restricted is false
+    with patch('weko_records_ui.utils.check_file_download_permission', return_value=False):
+        with patch('weko_records_ui.utils.is_open_restricted', return_value=False):
+            record = results[0]['record']
+            is_display_file_preview, files = get_file_info_list(record)
+            assert not is_display_file_preview
+            assert len(files) == 0
+
 
 # def check_and_create_usage_report(record, file_object):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_check_and_create_usage_report -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp

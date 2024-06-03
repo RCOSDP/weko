@@ -795,13 +795,14 @@ def get_file_info_list(record):
         """
         min_price = p_file['min_price']
         user_flag = True
+        sitelicense_flag = False
         user_id_list = [int(record['owner'])] if record.get('owner') else []
         obj = ItemTypes.get_by_id(record.get('item_type_id'))
         if record.get('weko_shared_id'):
             user_id_list.append(record.get('weko_shared_id'))
         if not current_user.is_authenticated:
             user_flag = False
-        elif current_user and current_user.get_id() in user_id_list:
+        elif current_user and int(current_user.get_id()) in user_id_list:
             user_flag = False
         else:
             super_users = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] + \
@@ -853,7 +854,7 @@ def get_file_info_list(record):
 
             #最安値
             if priceinfo['has_role'] and\
-                (not min_price or min_price > priceinfo['price']):
+                (not min_price or int(min_price) > int(priceinfo['price'])):
                 min_price = priceinfo['price']
         p_file['min_price'] = min_price
 
