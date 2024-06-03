@@ -51,6 +51,7 @@ from elasticsearch.exceptions import NotFoundError
 from flask import abort, current_app, has_request_context, request
 from flask_babelex import gettext as _
 from flask_login import current_user
+from invenio_accounts.models import Role
 from invenio_db import db
 from invenio_files_rest.models import FileInstance, Location, ObjectVersion
 from invenio_files_rest.proxies import current_files_rest
@@ -3934,8 +3935,10 @@ def handle_check_file_content(record, data_path):
     file_paths = record.get("file_path", [])
     # check consistence between file_path and filename
     filenames = get_filenames_from_metadata(record["metadata"])
+    billing_info = get_billinginfo_from_metadata(record["metadata"])
     record["filenames"] = filenames
     errors.extend(handle_check_filename_consistence(file_paths, filenames))
+    errors.extend(handle_check_billing_file(billing_info))
 
     # check if file_path exists
     error, warning = handle_check_file_path(
@@ -4069,6 +4072,64 @@ def get_filenames_from_metadata(metadata):
     return filenames
 
 
+def get_billinginfo_from_metadata(metadata):
+    """Get list billing info of file contents from metadata.
+
+    Args:
+        metadata (dict): record metadata.
+    
+    Returns:
+        billing_info (dict): Dict billing info from metadata.
+    """
+    file_meta_ids = []
+    accessrole_info = []
+    displaytype_info = []
+    billing_file = []
+    priceinfo = []
+    billing_info = {}
+    for key, val in metadata.items():
+        if isinstance(val, list):
+            for item in val:
+                if isinstance(item, dict) and "billing" in item:
+                    file_meta_ids.append(key)
+                    break
+
+    count = 0
+    for _id in file_meta_ids:
+        for file in metadata[_id]:
+            accessrole_data = {
+                "id": ".metadata.{}[{}].accessrole".format(_id, count),
+                "accessrole": file.get("accessrole", ""),
+            }
+            displaytype_data = {
+                "id": ".metadata.{}[{}].displaytype".format(_id, count),
+                "displaytype": file.get("displaytype", ""),
+            }
+            billing_data = {
+                "id": ".metadata.{}[{}].billing".format(_id, count),
+                "billing": file.get("billing", ""),
+            }
+            second_count = 0
+            for info in file.get("priceinfo", ""):
+                priceinfo_data = {
+                    "id": ".metadata.{}[{}].priceinfo[{}]".format(_id, count, second_count),
+                    "priceinfo": info,
+                }
+                priceinfo.append(priceinfo_data)
+                second_count += 1
+            
+            accessrole_info.append(accessrole_data)
+            displaytype_info.append(displaytype_data)
+            billing_file.append(billing_data)
+            count += 1
+
+    billing_info["accessrole_info"] = accessrole_info
+    billing_info["displaytype_info"] = displaytype_info
+    billing_info["billing_file"] = billing_file
+    billing_info["price_info"] = priceinfo
+    return billing_info
+
+
 def handle_check_filename_consistence(file_paths, meta_filenames):
     """Check thumbnails metadata.
 
@@ -4086,3 +4147,70 @@ def handle_check_filename_consistence(file_paths, meta_filenames):
             errors.append(msg.format("file_path[{}]".format(idx), meta_filename["id"]))
 
     return errors
+
+
+def handle_check_billing_file(billing_info):
+    """Check billing metadata.
+
+    Args:
+        billing_info (dict): Dict billing info from metadata.
+
+    Returns:
+        errors (list): List errors.
+    """
+    accessrole_info = billing_info["accessrole_info"]
+    displaytype_info = billing_info["displaytype_info"]
+    billing_file = billing_info["billing_file"]
+    priceinfo = billing_info["price_info"]
+    errors = []
+    billing_list  = []
+    displaytype_list = []
+    accessrole_list = []
+    msg = _("The following items is required. Please recheck and input.")
+    roles = Role.query.all()
+    role_id_list = [role.id for role in roles]
+
+    for item in billing_file:
+        billing_info = item.get("billing")
+        for billing in billing_info:
+            if billing == "billing_file":
+                billing_list.append(billing)
+    for item in displaytype_info:
+        displaytype = item.get("displaytype")
+        if displaytype == "preview":
+            displaytype_list.append(displaytype)
+    for item in accessrole_info:
+        accessrole = item.get("accessrole")
+        if accessrole == "open_access" or accessrole == "open_no":
+            accessrole_list.append(accessrole)
+    if billing_list:
+        if len(billing_file) > 1:
+            errors.append(_("multiple_billing_file_error"))
+        if displaytype_list:
+            errors.append(_("billing_file_display_type_error"))
+        if accessrole_list:
+            errors.append(_("One of the following metadata is required.<br/>{}<br/>").format("open_date, open_login"))
+        role_list = []
+        for info in priceinfo:
+            id = info.get("id")
+            priceinfo = info.get("priceinfo","")
+            price = priceinfo.get("price","")
+            billingrole = priceinfo.get("billingrole","")
+            role_list.append(billingrole)
+            if not any([price,billingrole]):
+                errors.append(msg + "[" + id + ".billingrole," + id + ".price]")
+            elif not billingrole:
+                errors.append(msg + "[" + id + ".billingrole]")
+            elif not price:
+                errors.append(msg + "[" + id + ".price]")
+            if price and (not represents_int(price) or re.search(r"([０-９])", price)):
+                errors.append(_("Please specify price by half-width number."))
+        if len(role_list) != len(set(role_list)):
+            errors.append(_("billing_file_role_duplication_error"))
+        for role_id in role_list:
+            if role_id:
+                if int(role_id) not in role_id_list:
+                    errors.append(_("The specified {} does not exist in system.").format("billingrole"))
+
+    return errors
+

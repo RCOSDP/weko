@@ -61,6 +61,7 @@ from weko_search_ui.utils import (
     get_feedback_mail_list,
     get_file_name,
     get_filenames_from_metadata,
+    get_billinginfo_from_metadata,
     get_item_type,
     get_journal_info,
     get_key_by_property,
@@ -75,6 +76,7 @@ from weko_search_ui.utils import (
     handle_check_and_prepare_feedback_mail,
     handle_check_and_prepare_index_tree,
     handle_check_and_prepare_publish_status,
+    handle_check_billing_file,
     handle_check_cnri,
     handle_check_consistence_with_mapping,
     handle_check_date,
@@ -2418,6 +2420,40 @@ def test_get_filenames_from_metadata(i18n_app, record_with_metadata):
     metadata["_id"] = [{"test": "test"}]
     assert not get_filenames_from_metadata(metadata)
 
+# def get_billinginfo_from_metadata(metadata):
+#.tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_get_billinginfo_from_metadata -vv -s --cov-branch --cov-report=term --basetemp=/modules/weko-search-ui/.tox/c1/tmp
+def test_get_billinginfo_from_metadata(i18n_app, record_with_metadata,record_with_billing_metadata):
+    metadata = record_with_metadata[0]["metadata"]
+    billing_metadata = record_with_billing_metadata[0]["metadata"]
+    assert  get_billinginfo_from_metadata(metadata)
+
+    metadata = {
+        "item_1712310680597": [{
+            "accessrole": "open_login", 
+            "billing": ["billing_file"], 
+            "displaytype": "detail",
+            "priceinfo": [{"billingrole": "10005", "price": "100", "tax": ["include_tax"]}]
+            }]
+    }
+    assert get_billinginfo_from_metadata(metadata) == billing_metadata[10]
+
+# def handle_check_billing_file(billing_info):
+#.tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_check_billing_file -vv -s --cov-branch --cov-report=term --basetemp=/modules/weko-search-ui/.tox/c1/tmp
+def test_handle_check_billing_file(i18n_app, record_with_billing_metadata, db,roles):
+    metadata = record_with_billing_metadata[0]["metadata"]
+
+    assert handle_check_billing_file(metadata[0]) == ["課金ファイルに複数のファイルを登録することはできません。"]
+    assert handle_check_billing_file(metadata[1]) == ["課金ファイルの表示形式にプレビューを指定することはできません。"]
+    assert handle_check_billing_file(metadata[2]) == ["以下の項目が入力必須となります。ご確認の上、再度入力してください。[.metadata.item_1712310680589[0].priceinfo[0].billingrole]"]
+    assert handle_check_billing_file(metadata[3]) == ["以下の項目が入力必須となります。ご確認の上、再度入力してください。[.metadata.item_1712310680590[0].priceinfo[0].price]"]
+    assert handle_check_billing_file(metadata[4]) == ["以下の項目が入力必須となります。ご確認の上、再度入力してください。[.metadata.item_1712310680591[0].priceinfo[0].billingrole,.metadata.item_1712310680591[0].priceinfo[0].price]"]
+    assert handle_check_billing_file(metadata[5]) == ["同じロールに複数の価格を設定することはできません。"]
+    assert handle_check_billing_file(metadata[6]) == ["価格は半角数字で指定してください。"]
+    assert handle_check_billing_file(metadata[7]) == ["指定されたbillingroleはシステムに存在しません。"]
+    assert handle_check_billing_file(metadata[8]) == ["open_date, open_loginのいずれかを設定してください。"]
+    assert handle_check_billing_file(metadata[9]) == ["open_date, open_loginのいずれかを設定してください。"]
+    assert handle_check_billing_file(metadata[10]) == []
+    assert handle_check_billing_file(metadata[11]) == []
 
 # def handle_check_filename_consistence(file_paths, meta_filenames):
 def test_handle_check_filename_consistence(i18n_app):
