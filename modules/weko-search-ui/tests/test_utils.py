@@ -2449,7 +2449,7 @@ def test_handle_check_billing_file(i18n_app, record_with_billing_metadata, db,ro
     assert handle_check_billing_file(metadata[4]) == ["以下の項目が入力必須となります。ご確認の上、再度入力してください。[.metadata.item_1712310680591[0].priceinfo[0].billingrole,.metadata.item_1712310680591[0].priceinfo[0].price]"]
     assert handle_check_billing_file(metadata[5]) == ["同じロールに複数の価格を設定することはできません。"]
     assert handle_check_billing_file(metadata[6]) == ["価格は半角数字で指定してください。"]
-    assert handle_check_billing_file(metadata[7]) == ["指定されたroleはシステムに存在しません。"]
+    assert handle_check_billing_file(metadata[7]) == ["指定されたbillingroleはシステムに存在しません。"]
     assert handle_check_billing_file(metadata[8]) == ["open_date, open_loginのいずれかを設定してください。"]
     assert handle_check_billing_file(metadata[9]) == ["open_date, open_loginのいずれかを設定してください。"]
     assert handle_check_billing_file(metadata[10]) == []

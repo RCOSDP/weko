@@ -4207,7 +4207,7 @@ def handle_check_billing_file(billing_info):
         for role_id in role_list:
             if role_id:
                 if int(role_id) not in role_id_list:
-                    errors.append(_("The specified {} does not exist in system.").format("role"))
+                    errors.append(_("The specified {} does not exist in system.").format("billingrole"))
 
     return errors
 
