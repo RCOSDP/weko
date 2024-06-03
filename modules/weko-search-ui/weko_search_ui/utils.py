@@ -3935,8 +3935,10 @@ def handle_check_file_content(record, data_path):
     file_paths = record.get("file_path", [])
     # check consistence between file_path and filename
     filenames = get_filenames_from_metadata(record["metadata"])
+    billing_info = get_billinginfo_from_metadata(record["metadata"])
     record["filenames"] = filenames
     errors.extend(handle_check_filename_consistence(file_paths, filenames))
+    errors.extend(handle_check_billing_file(billing_info))
 
     # check if file_path exists
     error, warning = handle_check_file_path(
