@@ -1838,7 +1838,7 @@ def make_record(db, indexer, i, filepath, filename, mimetype, file_head):
             "file": (base64.b64encode(stream.getvalue())).decode("utf-8"),
         }
     ]
-    indexer.upload_metadata(record_data, rec_uuid, 1, False)
+    indexer.upload_metadata(record_data, rec_uuid, 1, True)
     item = ItemsMetadata.create(item_data, id_=rec_uuid, item_type_id=1)
 
     record_v1 = WekoRecord.create(record_data, id_=rec_uuid2)
@@ -1876,7 +1876,7 @@ def make_record(db, indexer, i, filepath, filename, mimetype, file_head):
             "file": (base64.b64encode(stream.getvalue())).decode("utf-8"),
         }
     ]
-    indexer.upload_metadata(record_data_v1, rec_uuid2, 1, False)
+    indexer.upload_metadata(record_data_v1, rec_uuid2, 1, True)
     item_v1 = ItemsMetadata.create(item_data, id_=rec_uuid2, item_type_id=1)
 
     # db.session.expunge_all()
