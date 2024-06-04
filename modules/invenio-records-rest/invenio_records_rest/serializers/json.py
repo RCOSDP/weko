@@ -59,7 +59,8 @@ class JSONSerializerMixin(SerializerMixinInterface):
         :param search_result: Elasticsearch search result.
         :param links: Dictionary of links to add to response.
         """
-        from weko_records_ui.utils import hide_by_email,get_ignore_item,hide_by_itemtype
+        from weko_records_ui.utils import hide_by_email,hide_by_itemtype
+        from weko_items_ui.utils import get_ignore_item                     
         from weko_deposit.api import WekoRecord
         from weko_records_ui.permissions import check_publish_status,check_created_id
         from weko_index_tree.utils import get_user_roles
