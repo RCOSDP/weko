@@ -248,6 +248,7 @@ def register_aggregations():
                 cur_user_id='cur_user_id',
                 hostname='hostname',
                 remote_addr='remote_addr',
+                is_open_access='is_open_access',
             ),
             metric_aggregation_fields={
                 'unique_count': ('cardinality', 'unique_session_id',
@@ -445,7 +446,7 @@ def register_queries():
                 group_fields=['file_key', 'index_list', 'userrole',
                               'site_license_flag', 'count'],
                 required_filters=dict(
-                    accessrole='accessrole',
+                    is_open_access='is_open_access'
                     # is_billing_item='is_billing_item',
                 ),
             )

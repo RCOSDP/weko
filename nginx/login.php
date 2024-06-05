@@ -3,7 +3,7 @@
 $base =  $_SERVER['REQUEST_SCHEME']."://".$_SERVER['SERVER_NAME'];
 
 // ERROR
-if(!$_SERVER['HTTP_WEKOSOCIETYAFFILIATION']){
+if(!$_SERVER['HTTP_WEKOSOCIETYAFFILIATION'] && $_SERVER['NO_CHECK_WEKOSOCIETYAFFILIATION'] != "TRUE"){
   echo "<script type='text/javascript'>
   window.alert('Permission is invalid');
   window.location.href='".$base."';</script>";

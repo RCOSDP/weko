@@ -133,6 +133,9 @@
         "remote_addr": {
           "type": "keyword",
           "index": true
+        },
+        "is_open_access": {
+          "type": "boolean"
         }
       }
     }
