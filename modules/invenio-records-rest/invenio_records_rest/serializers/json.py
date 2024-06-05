@@ -60,7 +60,7 @@ class JSONSerializerMixin(SerializerMixinInterface):
         :param links: Dictionary of links to add to response.
         """
         from weko_records_ui.utils import hide_by_email,hide_by_itemtype
-        from weko_items_ui.utils import get_ignore_item                     
+        from weko_items_ui.utils import get_ignore_item, get_ignore_item_from_mapping, hide_meta_data_for_role
         from weko_deposit.api import WekoRecord
         from weko_records_ui.permissions import check_publish_status,check_created_id
         from weko_index_tree.utils import get_user_roles
@@ -68,8 +68,16 @@ class JSONSerializerMixin(SerializerMixinInterface):
         for hit in search_result['hits']['hits']:
             if '_source' in hit and '_item_metadata' in hit['_source']:
                 hit['_source']['_item_metadata'] = hide_by_email(hit['_source']['_item_metadata'], True)
-                list_hidden = get_ignore_item(hit['_source']['_item_metadata']['item_type_id'])
-                hit['_source']['_item_metadata'] = hide_by_itemtype(hit['_source']['_item_metadata'], list_hidden)
+                
+                item_roles = {
+                    'weko_creator_id': hit['_source'].get('weko_creator_id'),
+                    'weko_shared_id':hit['_source'].get('weko_shared_id')
+                }
+                if hide_meta_data_for_role(item_roles) and 'item_type_id' in hit['_source']['_item_metadata']:
+                    list_hidden = get_ignore_item(hit['_source']['_item_metadata']['item_type_id'])
+                    hit['_source']['_item_metadata'] = hide_by_itemtype(hit['_source']['_item_metadata'], list_hidden)
+                    list_hidden_mapping = get_ignore_item_from_mapping(hit['_source']['_item_metadata']['item_type_id'])
+                    hit['_source'] = hide_by_itemtype(hit['_source'], list_hidden_mapping)
             if '_source' in hit and len(hit['_source'].get('feedback_mail_list', [])) > 0:
                 hit['_source']['feedback_mail_list'] = []
             if '_source' in hit and '_item_metadata' in hit['_source'] and hit['_source']['_item_metadata']:
