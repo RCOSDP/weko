@@ -42,11 +42,11 @@ class JSONSerializerMixin(SerializerMixinInterface):
         :param links_factory: Factory function for record links.
         """
         from weko_records_ui.utils import hide_by_email,hide_by_itemtype
-
         record = hide_by_email(record, True)
-        from weko_items_ui.utils import get_ignore_item
-        list_hidden = get_ignore_item(record['item_type_id'])
-        record = hide_by_itemtype(record, list_hidden)
+        if 'item_type_id' in record:
+            from weko_items_ui.utils import get_ignore_item
+            list_hidden = get_ignore_item(record['item_type_id'])
+            record = hide_by_itemtype(record, list_hidden)
         return json.dumps(
             self.transform_record(pid, record, links_factory, **kwargs),
             **self._format_args())
