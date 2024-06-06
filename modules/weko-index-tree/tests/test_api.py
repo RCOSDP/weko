@@ -749,6 +749,14 @@ def test_indexes_get_index_tree(i18n_app,
         res = Indexes.get_public_indexes_list()
         assert res==['1', '2', '3', '11', '21', '22']
 
+        # get_public_indexes_list with target_date
+        res = Indexes.get_public_indexes_list(datetime(1999, 1, 1))
+        assert res==['2', '3', '21', '22']
+        res = Indexes.get_public_indexes_list(datetime(2022, 1, 1))
+        assert res==['1', '2', '3', '11', '21', '22']
+        res = Indexes.get_public_indexes_list(datetime(2030, 1, 1))
+        assert res==['1', '2', '3', '11', '21', '22']
+
         # have_children
         res = Indexes.have_children(1)
         assert res==True
