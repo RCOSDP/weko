@@ -24,7 +24,7 @@ import pickle
 import os
 import orjson
 from copy import deepcopy
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from functools import partial
 from socketserver import DatagramRequestHandler
 
@@ -1763,10 +1763,15 @@ class Indexes(object):
             delete_oaiset_setting.delay(id_list)
 
     @classmethod
-    def get_public_indexes_list(cls):
-        """Get list id of public indexes.
+    def get_public_indexes_list(cls, target_date=datetime.now(timezone.utc)):
+        """Get list id of public indexes at target date.
 
-        :return: path.
+        Args:
+            target_date (datetime): (Optional)
+                Check by public or not, at this datetime.
+                Defaults to `datetime.now(timezone.utc)`.
+        Returns:
+            list: public index id list
         """
         recursive_t = db.session.query(
             Index.parent.label("pid"),
@@ -1776,7 +1781,7 @@ class Indexes(object):
             Index.public_state.is_(True)
         ).filter(
             db.or_(Index.public_date.is_(None),
-                   Index.public_date < datetime.utcnow())
+                   Index.public_date <= target_date)
         ).cte(name="recursive_t", recursive=True)
 
         rec_alias = aliased(recursive_t, name="rec")
@@ -1790,7 +1795,7 @@ class Indexes(object):
                 test_alias.public_state.is_(True)
             ).filter(
                 db.or_(test_alias.public_date.is_(None),
-                       test_alias.public_date < datetime.utcnow()))
+                       test_alias.public_date <= target_date))
         )
 
         ids = []
