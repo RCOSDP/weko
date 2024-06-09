@@ -209,7 +209,8 @@ def test_default_facets_factory(app, db, search_user, redis_connect):
         active=True,
         ui_type="SelectBox",
         display_number=1,
-        is_open=True
+        is_open=True,
+        search_condition="AND"
     )
     subtype_setting = FacetSearchSetting(
         name_en="subtype",
@@ -219,7 +220,8 @@ def test_default_facets_factory(app, db, search_user, redis_connect):
         active=True,
         ui_type="SelectBox",
         display_number=2,
-        is_open=True
+        is_open=True,
+        search_condition="AND"
     )
     db.session.add(type_setting)
     db.session.add(subtype_setting)

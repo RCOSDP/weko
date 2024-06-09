@@ -327,7 +327,7 @@
                     url = '/admin/items' + url + '&item_management=delete';
                 } else {
                     let searchParam = window.facetSearchFunctions && window.facetSearchFunctions.getFacetSearchCondition ? 
-                        window.facetSearchFunctions.getFacetSearchCondition() : new URLSearchParams(window.location.search);
+                        window.facetSearchFunctions.getFacetSearchCondition() : new URLSearchParams();
                     for(var entry of new URLSearchParams(query_str).entries()) {
                         searchParam.set(entry[0], entry[1]);
                     }
