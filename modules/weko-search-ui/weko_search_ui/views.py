@@ -402,7 +402,9 @@ def gettitlefacet():
             "isOpens": isOpens,
             "displayNumbers": displayNumbers,
             "searchConditions": searchConditions
-        }
+        },
+        "isFacetLangDisplay":
+            current_app.config["WEKO_SEARCH_UI_FACET_LANG_DISP_FLG"]
     }
     return jsonify(result), 200
 

@@ -489,13 +489,16 @@ def makeDateRangeValue(start, end):
     b = None
     if p2.match(start):
         a = time.strptime(start, "%Y-%m-%d")
-        b = time.strptime(end, "%Y-%m-%d")
-
     elif p3.match(start):
         a = time.strptime(start, "%Y-%m")
-        b = time.strptime(end, "%Y-%m")
     elif p4.match(start):
         a = time.strptime(start, "%Y")
+        
+    if p2.match(end):
+        b = time.strptime(end, "%Y-%m-%d")
+    elif p3.match(end):
+        b = time.strptime(end, "%Y-%m")
+    elif p4.match(end):
         b = time.strptime(end, "%Y")
 
     if a is not None and b is not None:

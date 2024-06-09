@@ -2073,16 +2073,16 @@ def test_get_facet_search(client,facet_search_settings):
         "mapping": "",
         "active": True,
         "aggregations": [],
-        "ui_type": "",
-        "display_naumber": "",
-        "is_open": "",
-        "search_condition": ""
+        "ui_type": "CheckboxList",
+        "display_number": 5,
+        "is_open": True,
+        "search_condition": "OR"
     }
     result = get_facet_search(None)
     assert result == test
     
     result  = get_facet_search(1)
-    assert result == {"name_en":"Data Language","name_jp":"データの言語","mapping":"language","aggregations":[],"active":True, "display_number": 5, "is_open": True, 'search_condition': 'OR', 'ui_type': 'CheckboxList'}
+    assert result == {"name_en":"Data Language","name_jp":"データの言語","mapping":"language","aggregations":[],"active":True, "display_number": 1, "is_open": True, 'search_condition': 'OR', 'ui_type': 'SelectBox'}
 
 
 # def get_item_mapping_list():
@@ -2106,9 +2106,10 @@ def test_create_facet_search_query(facet_search_settings):
             "aggs":{"Data Language":{"terms":{"field":"language","size":1000}},
                     "Data Type":{"aggs":{"Data Type":{"terms":{"field":"description.value","size":1000}}},
                                  "filter":{"bool":{"must":[{"term":{"description.descriptionType":"Other"}}]}}},
-                    "raw_test": {"terms": {"field": "test.fields.raw","size": 1000}}
+                    "Time Period(s)": {"terms": {"field": "temporal","size": 1000}},
+                    "raw_test": {"terms": {"field": "fields.raw","size": 1000}}
             },
-            "post_filters":{"Data Language":"language","Data Type":"description.value","raw_test":"test.raw"}
+            "post_filters":{"Data Language":"language","Data Type":"description.value","Time Period(s)":"temporal","raw_test": "fields.raw"}
         }
     }
     test_no_permission = {
@@ -2117,12 +2118,16 @@ def test_create_facet_search_query(facet_search_settings):
                                         'filter': {'bool': {'must': [{'term': {'publish_status': '0'}}]}}},
                     'Data Type': {'aggs': {'Data Type': {'terms': {'field': 'description.value','size': 1000}}},
                                 'filter': {'bool': {'must': [{'term': {'description.descriptionType': 'Other'}},{'term': {'publish_status': '0'}}]}}},
-                    'raw_test': {'aggs': {'raw_test': {'terms':{'field': 'test.fields.raw','size':1000}}},
+                    'Time Period(s)': {'aggs': {'Time Period(s)': {'terms':{'field': 'temporal','size':1000}}},
+                                 'filter':{'bool':{'must':[{'term':{'publish_status':'0'}}]}}},
+                    'raw_test': {'aggs': {'raw_test': {'terms':{'field': 'fields.raw','size':1000}}},
                                  'filter':{'bool':{'must':[{'term':{'publish_status':'0'}}]}}}
                     },
                    'post_filters': {'Data Language': 'language',
                                     'Data Type': 'description.value',
-                                    'raw_test':'test.raw'}},
+                                    'Time Period(s)':'temporal',
+                                    "raw_test": "fields.raw"
+                                    }},
     }
     assert has_permission == test_has_permission
     assert no_permission == test_no_permission
@@ -2178,7 +2183,7 @@ def test_get_facet_search_query(app,mocker):
           "Time Period(s)": {"filter": {"bool": {"must": [{ "term": { "temporal": "Other" } },{ "term": { "publish_status": "0" } }]}},
             "aggs": {"Time Period(s)": {"terms": { "field": "temporal", "size": 1000 }}}},
           "raw_test": {"filter": {"bool": { "must": [{ "term": { "publish_status": "0" } }] }},
-            "aggs": {"raw_test": { "terms": { "field": "test.fields.raw", "size": 1000 } }}}
+            "aggs": {"raw_test": { "terms": { "field": "fields.raw", "size": 1000 } }}}
         },
         "post_filters": {"Data Language": "language","Data Type": "description.value","raw_test": "test.raw","Time Period(s)": "temporal"}
       }
@@ -2197,33 +2202,6 @@ def test_get_facet_search_query(app,mocker):
                 with patch("weko_admin.utils.get_redis_cache", side_effect=[cache_data, cache_data]):
                     result = get_facet_search_query()
                     assert result
-
-# def test_get_facet_search_query_facet(i18n_app,client_rest, db, users, item_type, facet_search_setting):
-#     i18n_app.config['WEKO_SEARCH_TYPE_INDEX'] = 'index'
-#     sname = current_app.config["SERVER_NAME"]
-#     def dummy_response(data):
-#         if isinstance(data, str):
-#             data = json_data(data)
-#         dummy=response.Response(Search(), data)
-#         return dummy
-#     param = {"page":"1",
-#             "size":"20",
-#             "sort":"wtl",
-#             "Data Language":"jpn",
-#             "Time Period(s)":"1899--2018",
-#             "Data Type":"公的統計: 集計データ、統計表",
-#             "is_facet_search":"true"}
-#     titleFacet={},{},{},{},{},{'Data Language': 'OR', 'Access': 'OR', 'Location': 'OR', 'Time Period(s)': 'AND', 'Topic': 'OR', 'Distributor': 'OR', 'Data Type': 'AND'}
-#     facets_mapping={'Data Language': 'language', 'Access': 'accessRights', 'Location': 'geoLocation.geoLocationPlace', 'Time Period(s)': 'temporal', 'Topic': 'subject.value', 'Distributor': 'contributor.contributorName', 'Data Type': 'description.value'}
-#     facet = json_data("data/search/facet_02.json")
-#     with patch("weko_admin.utils.get_facet_search_query", return_value=facet):
-#         with patch("weko_search_ui.rest.Indexes.get_self_list",side_effect=mock_path(**path1)):
-#             with patch("weko_admin.utils.get_title_facets", return_value=titleFacet):
-#                 with patch("weko_admin.models.FacetSearchSetting.get_activated_facets_mapping", return_value=facets_mapping):
-#                     with patch("invenio_search.api.RecordsSearch.execute", return_value=dummy_response("data/search/execute_result01_02_03.json")):
-#                         res =  client_rest.get(url("/index/", param))
-#                         assert res.status_code == 200
-
 
 # def get_title_facets():
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_get_title_facets -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp

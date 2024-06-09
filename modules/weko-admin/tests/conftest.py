@@ -939,7 +939,7 @@ def facet_search_settings(db):
     fields_raw = FacetSearchSetting(
         name_en="raw_test",
         name_jp="raw_test",
-        mapping="test.fields.raw",
+        mapping="fields.raw",
         aggregations=[],
         active=True,
         ui_type='CheckboxList',
@@ -947,9 +947,8 @@ def facet_search_settings(db):
         is_open=True,
         search_condition='AND'
     )
-
         
-    fields_raw = FacetSearchSetting(
+    temporal = FacetSearchSetting(
         name_en="Time Period(s)",
         name_jp="対象時期",
         mapping="temporal",
@@ -964,6 +963,7 @@ def facet_search_settings(db):
     db.session.add(access)
     db.session.add(data_type)
     db.session.add(fields_raw)
+    db.session.add(temporal)
     db.session.commit()
 
 @pytest.fixture()

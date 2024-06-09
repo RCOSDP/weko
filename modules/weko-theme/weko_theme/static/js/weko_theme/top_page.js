@@ -191,17 +191,14 @@ require([
                 window.location.href = "/admin/items/search" + search;
             } else {
                 let searchParam = window.facetSearchFunctions && window.facetSearchFunctions.getFacetSearchCondition ? 
-                    window.facetSearchFunctions.getFacetSearchCondition() : new URLSearchParams(window.location.search);
+                    window.facetSearchFunctions.getFacetSearchCondition() : new URLSearchParams();
                 let appendSearchParam = new URLSearchParams(search);
                 searchParam.set('search_type', appendSearchParam.get('search_type'));
                 searchParam.set('q', appendSearchParam.get('q'));
 
                 if(window.invenioSearchFunctions) {
                     window.invenioSearchFunctions.reSearchInvenio(searchParam);
-<<<<<<< HEAD
-=======
                     $('#search-form').off('submit');
->>>>>>> ee18dd837 (202309 JDCAT Requirements)
                 }else{
                     window.location.href = "/search?" + searchParam;
                 }

@@ -133,6 +133,10 @@ def eval_field(field, asc, nested_sorting=None):
                 sorting = {"_script":{"type":"number",
                     "script":{"lang":"painless","source":"def x = params._source.date_range1;SimpleDateFormat format = new SimpleDateFormat(); if (x != null && !x.isEmpty() ) { def value = x.get(0).get(\"lte\"); if(value != null && !value.equals(\"\")) { if(value.length() > 7) { format.applyPattern(\"yyyy-MM-dd\"); } else if(value.length() > 4) { format.applyPattern(\"yyyy-MM\");  } else { format.applyPattern(\"yyyy\"); } try { return format.parse(value).getTime(); } catch(Exception e) {} } } format.applyPattern(\"yyyy\"); return format.parse(\"0\").getTime();"},"order": 'desc'}}
 
+        if "control_number" in key:
+            sorting = {"_script":{"type":"number", "script": "Float.parseFloat(doc['control_number'].value)", "order": "asc" if key_asc else "desc"}}
+
+
         if nested_sorting:
             sorting[key].update({'nested': nested_sorting})
         return sorting

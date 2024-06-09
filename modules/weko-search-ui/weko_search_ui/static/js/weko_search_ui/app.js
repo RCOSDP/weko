@@ -137,22 +137,53 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
   $rootScope.pageSizes = [20, 50, 75, 100];
   $rootScope.vm.invenioPageSize = 20;
   $rootScope.handlePageSizeChange = function handlePageSizeChange() {
-      $rootScope.vm.invenioSearchArgs.size = $rootScope.vm.invenioPageSize;
-      $rootScope.vm.invenioSearchArgs.page = 1;
-      let search = new URLSearchParams(window.location.search);
-      search.set('size', $rootScope.vm.invenioSearchArgs.size);
-      search.set('page', 1);
+    $rootScope.vm.invenioSearchArgs.size = $rootScope.vm.invenioPageSize;
+    $rootScope.vm.invenioSearchArgs.page = 1;
+    let search = new URLSearchParams(window.location.search);
+    search.set('size', $rootScope.vm.invenioSearchArgs.size);
+    search.set('page', 1);
+    if(window.invenioSearchFunctions) {
       window.history.pushState(null,document.title,window.location.pathname + '?' + search);
       if($rootScope.vm.invenioSearchHiddenParams.size) {
         $rootScope.vm.invenioSearchHiddenParams.size = $rootScope.vm.invenioSearchArgs.size;
       }else {
         $rootScope.vm.invenioSearchCurrentArgs.params.size = $rootScope.vm.invenioSearchArgs.size;
       }
+    }else{
+      window.location.href = "/search?" + search;
+    }
   }
   function onCurrentPageSizeChange(newValue, oldValue) {
     if(newValue) $rootScope.vm.invenioPageSize = parseInt(newValue);
   }
   $rootScope.$watch('vm.invenioSearchArgs.size', onCurrentPageSizeChange);
+
+  /**
+   * This process is performed when searching without loading the full screen.
+   * In this process, the search is reflected only in the search results,
+   * but in the event [invenio.search.finished] after the search,
+   * the search results are also reflected in the facet items.
+   * 
+   * @param {URLSearchParams} search Search Conditions.
+   */
+  $rootScope.reSearchInvenio = (search) => {
+
+    //TODO PAGE と TimeStampを入れ替える。
+    search.set('page','1');
+    search.set('size', $scope.vm.invenioSearchArgs.size);
+    search.set('sort', $scope.vm.invenioSearchArgs.sort);
+    search.set('timestamp',Date.now().toString());
+    window.history.pushState(null,document.title,"/search?" + search);
+    
+    let url = search.get('search_type') == 2 ? "/api/index/" : "/api/records/";
+
+    $rootScope.$apply(function() {
+      $rootScope.vm.invenioSearchCurrentArgs.url = url;
+      $rootScope.vm.invenioSearchArgs.page = 1;
+      $rootScope.vm.invenioSearchLoading = true;
+      $rootScope.vm.invenioSearchHiddenParams = [];
+    })
+  }
 
   $rootScope.getSettingDefault = function () {
     let data = null;
@@ -181,6 +212,12 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
             size: data.dlt_dis_num_selected,
             sort: descOrEsc + key_sort
           };
+
+          // fetch_select
+          if(response.enable_fetch_select) {
+            window.invenioSearchFunctions = {};
+            window.invenioSearchFunctions.reSearchInvenio = $scope.reSearchInvenio;
+          }
 
           // If initial display setting is root index
           if (data.init_disp_setting.init_disp_index === "0") {
@@ -380,35 +417,6 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
         
     }
   });
-
-  /**
-   * This process is performed when searching without loading the full screen.
-   * In this process, the search is reflected only in the search results,
-   * but in the event [invenio.search.finished] after the search,
-   * the search results are also reflected in the facet items.
-   * 
-   * @param {URLSearchParams} search Search Conditions.
-   */
-  $rootScope.reSearchInvenio = (search) => {
-
-    //TODO PAGE と TimeStampを入れ替える。
-    search.set('page','1');
-    search.set('size', $scope.vm.invenioSearchArgs.size);
-    search.set('sort', $scope.vm.invenioSearchArgs.sort);
-    search.set('timestamp',Date.now().toString());
-    window.history.pushState(null,document.title,"/search?" + search);
-    
-    let url = search.get('search_type') == 2 ? "/api/index/" : "/api/records/";
-
-    $rootScope.$apply(function() {
-      $rootScope.vm.invenioSearchCurrentArgs.url = url;
-      $rootScope.vm.invenioSearchArgs.page = 1;
-      $rootScope.vm.invenioSearchLoading = true;
-      $rootScope.vm.invenioSearchHiddenParams = [];
-    })
-  }
-  window.invenioSearchFunctions = {};
-  window.invenioSearchFunctions.reSearchInvenio = $scope.reSearchInvenio;
 }
 
 // Item export controller
