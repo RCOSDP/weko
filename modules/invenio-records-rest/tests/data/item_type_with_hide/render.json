@@ -41,7 +41,7 @@
             "title": "資源タイプ",
             "option": {
                 "crtf": false,
-                "hidden": false,
+                "hidden": true,
                 "oneline": false,
                 "multiple": false,
                 "required": true,
@@ -60,7 +60,7 @@
             "title": "作成者",
             "option": {
                 "crtf": false,
-                "hidden": true,
+                "hidden": false,
                 "oneline": false,
                 "multiple": true,
                 "required": false,
@@ -1320,11 +1320,13 @@
                     {
                         "add": "New",
                         "key": "item_1717569452044[].creatorNames",
+                        "isHide":true,
                         "items": [
                             {
                                 "key": "item_1717569452044[].creatorNames[].creatorName",
                                 "type": "text",
                                 "title": "姓名",
+                                "isHide":true,
                                 "title_i18n": {
                                     "en": "Name",
                                     "ja": "姓名"
@@ -1338,6 +1340,7 @@
                                 "key": "item_1717569452044[].creatorNames[].creatorNameLang",
                                 "type": "select",
                                 "title": "言語",
+                                "isHide":true,
                                 "titleMap": [
                                     {
                                         "name": "ja",
@@ -1421,6 +1424,7 @@
                                 "key": "item_1717569452044[].creatorNames[].creatorNameType",
                                 "type": "select",
                                 "title": "名前タイプ",
+                                "isHide":true,
                                 "titleMap": [
                                     {
                                         "name": "Personal",

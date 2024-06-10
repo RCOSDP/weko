@@ -64,6 +64,20 @@ class JSONSerializerMixin(SerializerMixinInterface):
         from weko_deposit.api import WekoRecord
         from weko_records_ui.permissions import check_publish_status,check_created_id
         from weko_index_tree.utils import get_user_roles
+        def del_hide_sub_metadata(keys, metadata):
+            """Delete hide metadata."""
+            if isinstance(metadata, dict):
+                data = metadata.get(keys[0])
+                if data:
+                    if len(keys) > 1:
+                        del_hide_sub_metadata(keys[1:], data)
+                    else:
+                        del metadata[keys[0]]
+            elif isinstance(metadata, list):
+                count = len(metadata)
+                for index in range(count):
+                    del_hide_sub_metadata(keys[1:] if len(
+                        keys) > 1 else keys, metadata[index])
 
         for hit in search_result['hits']['hits']:
             if '_source' in hit and '_item_metadata' in hit['_source']:
@@ -77,7 +91,13 @@ class JSONSerializerMixin(SerializerMixinInterface):
                     list_hidden = get_ignore_item(hit['_source']['_item_metadata']['item_type_id'])
                     hit['_source']['_item_metadata'] = hide_by_itemtype(hit['_source']['_item_metadata'], list_hidden)
                     list_hidden_mapping = get_ignore_item_from_mapping(hit['_source']['_item_metadata']['item_type_id'])
-                    hit['_source'] = hide_by_itemtype(hit['_source'], list_hidden_mapping)
+                    for hide_key in list_hidden_mapping:
+                        if isinstance(hide_key, str) \
+                                and hit['_source'].get(hide_key):
+                            del hit['_source'][hide_key]
+                        elif isinstance(hide_key, list):
+                            del_hide_sub_metadata(
+                                hide_key, hit['_source'])
             if '_source' in hit and len(hit['_source'].get('feedback_mail_list', [])) > 0:
                 hit['_source']['feedback_mail_list'] = []
             if '_source' in hit and '_item_metadata' in hit['_source'] and hit['_source']['_item_metadata']:
