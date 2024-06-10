@@ -47,7 +47,7 @@
         {%- for s in sitelicenses %}
           <tr>
             <td align="center" valign="middle">
-              <input type="checkbox" name={{s.organization_name}} id="send_mail_flag_{{s.organization_id}}"
+              <input type="checkbox" name="{{s.organization_name}}" id="send_mail_flag_{{s.organization_id}}"
                 {% if s.receive_mail_flag == 'T' and s.mail_address %}
                   checked
                 {% endif %}
