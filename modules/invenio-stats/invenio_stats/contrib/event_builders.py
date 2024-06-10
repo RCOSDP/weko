@@ -179,7 +179,7 @@ def copy_record_index(doc, aggregation_data=None):
         string: record index id.
     """
     record_index_id = ''
-    list = doc['record_index_list']
+    list = doc.get('record_index_list')
     if list:
         agg_record_index_list = []
         for index in list:

@@ -136,24 +136,24 @@ def test_is_crawler2(client,log_crawler_list,restricted_ip_addr,mocker):
 
 #def send_site_license_mail(organization_name, mail_list, agg_date, data):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_api.py::test_send_site_license_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
-def test_send_site_license_mail(client,mocker):
+def test_send_site_license_mail(client,mocker,roles):
     mocker.patch("weko_admin.api.get_system_default_language",return_value="en")
     organization_name="ORCID"
     mail_list=["test1@test.org","test2@test.org"]
-    agg_date="2022-10"
-    data=["test_data"]
+    result = {"date":"2024-04-2024-05","datelist":["total","2024-04","2024-05"],"index_info":{"1616224532673":{"issn":12345,"name":"利用報告"},"1714029010533":{"issn":23456,"name":"New Index"},"1714029010533:1715825846862":{"issn":678594,"name":"New New Index"}},"no_data":{"file_download":{"1616224532673":{"2024-04":0,"2024-05":0,"total":0},"1714029010533":{"2024-04":0,"2024-05":0,"total":0},"1714029010533:1715825846862":{"2024-04":0,"2024-05":0,"total":0},"all_journals":{"2024-04":0,"2024-05":0}},"file_preview":{"1616224532673":{"2024-04":0,"2024-05":0,"total":0},"1714029010533":{"2024-04":0,"2024-05":0,"total":0},"1714029010533:1715825846862":{"2024-04":0,"2024-05":0,"total":0},"all_journals":{"2024-04":0,"2024-05":0}},"search":{"2024-04":0,"2024-05":0,"total":0},"record_view":{"1616224532673":{"2024-04":0,"2024-05":0,"total":0,"file_download_count":{"2024-04":0,"2024-05":0,"total":0}},"1714029010533":{"2024-04":0,"2024-05":0,"total":0,"file_download_count":{"2024-04":0,"2024-05":0,"total":0}},"1714029010533:1715825846862":{"2024-04":0,"2024-05":0,"total":0,"file_download_count":{"2024-04":0,"2024-05":0,"total":0}}}},"result":{"ORCID":{"file_download":{"1616224532673":{"2024-04":1,"2024-05":22,"total":23},"1714029010533":{"2024-04":0,"2024-05":0,"total":0},"1714029010533:1715825846862":{"2024-04":19,"2024-05":10,"total":29},"all_journals":{"2024-04":20,"2024-05":32}},"file_preview":{"1616224532673":{"2024-04":1,"2024-05":15,"total":16},"1714029010533":{"2024-04":0,"2024-05":0,"total":0},"1714029010533:1715825846862":{"2024-04":19,"2024-05":27,"total":46},"all_journals":{"2024-04":20,"2024-05":42}},"search":{"2024-04":3,"2024-05":12,"total":15},"record_view":{"1616224532673":{"2024-04":27,"2024-05":15,"total":42,"file_download_count":{"2024-04":1,"2024-05":22,"total":23}},"1714029010533":{"2024-04":9,"2024-05":0,"total":9,"file_download_count":{"2024-04":0,"2024-05":0,"total":0}},"1714029010533:1715825846862":{"2024-04":0,"2024-05":23,"total":23,"file_download_count":{"2024-04":19,"2024-05":10,"total":29}}}}}}
+    data={"file_download":{"1616224532673":{"2024-04":1,"2024-05":22,"total":23},"1714029010533":{"2024-04":0,"2024-05":0,"total":0},"1714029010533:1715825846862":{"2024-04":19,"2024-05":10,"total":29},"all_journals":{"2024-04":20,"2024-05":32}},"file_preview":{"1616224532673":{"2024-04":1,"2024-05":15,"total":16},"1714029010533":{"2024-04":0,"2024-05":0,"total":0},"1714029010533:1715825846862":{"2024-04":19,"2024-05":27,"total":46},"all_journals":{"2024-04":20,"2024-05":42}},"search":{"2024-04":3,"2024-05":12,"total":15},"record_view":{"1616224532673":{"2024-04":27,"2024-05":15,"total":42,"file_download_count":{"2024-04":1,"2024-05":22,"total":23}},"1714029010533":{"2024-04":9,"2024-05":0,"total":9,"file_download_count":{"2024-04":0,"2024-05":0,"total":0}},"1714029010533:1715825846862":{"2024-04":0,"2024-05":23,"total":23,"file_download_count":{"2024-04":19,"2024-05":10,"total":29}}}}
     mock_send = mocker.patch("weko_admin.api.send_mail")
     mock_render = mocker.patch("weko_admin.api.render_template",return_value=make_response())
-    send_site_license_mail(organization_name,mail_list,agg_date,data)
-    mock_send.assert_called_with("[ORCID] 2022-10 statistics report",mail_list,body="<Response 0 bytes [200 OK]>")
+    send_site_license_mail(organization_name,mail_list,result,data)
+    mock_send.assert_called_with("[Weko3] 2024-04-2024-05 site license statistics",mail_list,attachments=mocker.ANY,body="<<class 'pytest_flask.plugin.JSONResponse'> 0 bytes [200 OK]>")
     mock_render.assert_called_with(
         'weko_admin/email_templates/site_license_report.html',
-        agg_date="2022-10",
-        data=["test_data"],
-        lang_code="en"
+        administrator=None,
+        agg_date="2024-04-2024-05",
+        organization_name='ORCID'
     )
     with patch("weko_admin.api.get_system_default_language",side_effect=Exception("test_error")):
-        send_site_license_mail(organization_name,mail_list,agg_date,data)
+        send_site_license_mail(organization_name,mail_list,result,data)
 
 class MockRedisHash:
     def __init__(self):

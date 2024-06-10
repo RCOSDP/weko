@@ -1192,3 +1192,39 @@ def index(app, db):
         })
     
     return Index.query.all()
+
+@pytest.fixture()
+def index_issn(app,db):
+    from weko_index_tree.api import Indexes
+    index_metadata1 = Index(
+        id = 1616224532673,
+        parent = 0,
+        index_name = "利用報告",
+        online_issn = 12345,
+        position = 10
+    )
+    index_metadata2 = Index(
+        id = 1714029010533,
+        parent = 0,
+        index_name = "New Index",
+        online_issn = 23456,
+        position = 11
+    )
+    index_metadata3 = Index(
+        id = 1715825846862,
+        parent = 1714029010533,
+        index_name = "New New Index",
+        online_issn = 678594,
+        position = 12
+    )
+    index_metadata4 = Index(
+        id = 1715825656540,
+        parent = 0,
+        index_name = "No ISSN Index",
+        position = 13
+    )
+
+    db.session.add(index_metadata1)
+    db.session.add(index_metadata2)
+    db.session.add(index_metadata3)
+    db.session.add(index_metadata4)

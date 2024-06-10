@@ -43,7 +43,6 @@ from weko_accounts.utils import get_remote_addr
 from werkzeug.utils import import_string
 
 from weko_index_tree.models import Index
-from weko_index_tree.api import Indexes
 
 from . import config
 from .models import StatsAggregation, StatsBookmark, StatsEvents
@@ -813,6 +812,7 @@ class QuerySitelicenseReportsHelper(object):
                 all_res (dict): Dict Aggregation data.
                 datelist (list): List Aggregation date by month.
             """
+            from weko_index_tree.api import Indexes
             index_issn_list = Index.get_all_by_is_issn()
             date_dict = {}
             for date in datelist:
@@ -895,18 +895,23 @@ class QuerySitelicenseReportsHelper(object):
             #total
             if len(datelist) > 1:
                 datelist.insert(0,'total')
+                for query, item in no_data.items():
+                    if query == "search":
+                        item['total'] =0
+                    else:
+                        for k,i in item.items():
+                                if not k == 'all_journals':
+                                    i['total'] = 0
                 for name,items in result.items():
                     for query,item in items.items():
                         if query == 'search':
                             result[name][query]['total'] = sum(item.values())
-                            no_data[query]['total'] = 0
                         else:
                             for k,i in item.items():
                                 if k == 'all_journals':
                                     continue
                                 else:
                                     result[name][query][k]['total'] = sum(i.values())
-                                    no_data[query][k]['total'] = 0
 
             for spec in spec_list:
                 no_data['record_view'][spec]['file_download_count'] = no_data['file_download'][spec]

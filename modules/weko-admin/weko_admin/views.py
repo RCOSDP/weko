@@ -494,11 +494,12 @@ def manual_send_site_license_mail(start_month, end_month):
         for s in send_list:
             mail_list = s.mail_address.split('\n')
             send_flag = False
-            for key, item in res['result'].items():
-                if s.organization_name == key:
-                    send_site_license_mail(key, mail_list, res, item)
-                    send_flag = True
-                    break
+            if res['result']:
+                for key, item in res['result'].items():
+                    if s.organization_name == key:
+                        send_site_license_mail(key, mail_list, res, item)
+                        send_flag = True
+                        break
             if not send_flag:
                 send_site_license_mail(s.organization_name,
                                        mail_list, res, res['no_data'])

@@ -546,7 +546,7 @@ def write_report_file_rows(writer, records, file_type=None, other_info=None):
                                  record.get('file_download'),
                                  record.get('file_preview')])
 
-def write_sitelicense_report_file_rows(writer, records, file_type=None, result=None):
+def write_sitelicense_report_file_rows(writer, records, file_type, result):
     """Write tsv/csv rows for stats.
     
     Args:
@@ -585,8 +585,7 @@ def write_sitelicense_report_file_rows(writer, records, file_type=None, result=N
                 data = [result['index_info'][id]['name'], id, interface_name, result['index_info'][id]['issn']]
             for date in result['datelist']:
                 value = record[date]
-                if isinstance(value, int):
-                    data.append(value)
+                data.append(value)
             if record.get('file_download_count',0):
                 file_download_count = record.get('file_download_count',0)
                 for date in result['datelist']:
