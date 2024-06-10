@@ -177,6 +177,7 @@ def test_add_signals_info(i18n_app,records,itemtypes,users,mock_es_execute):
                         assert obj.userrole == 'Repository Administrator'
                         assert obj.billing_file_price == ''
                         assert obj.is_open_access
+                        assert obj.index_path == '2'
                 with patch('elasticsearch_dsl.Search.execute', return_value=mock_es_execute('tests/data/execute_result1.json')):
                     with patch('weko_records_ui.fd.is_open_access', return_value=False):
                         recid = results[3]["recid"]
@@ -189,6 +190,7 @@ def test_add_signals_info(i18n_app,records,itemtypes,users,mock_es_execute):
                         assert obj.userrole == 'Repository Administrator'
                         assert obj.billing_file_price == '400'
                         assert not obj.is_open_access
+                        assert obj.index_path == '1'
 
         data1 = MagicMock()
         def all_func():
@@ -240,6 +242,7 @@ def test_add_signals_info(i18n_app,records,itemtypes,users,mock_es_execute):
                     # record.navi has no item
                     add_signals_info(record, obj)
                     assert obj.index_list == ''
+                    assert obj.index_path == ''
 
 
 # def file_download_onetime(pid, record, _record_file_factory=None, **kwargs):

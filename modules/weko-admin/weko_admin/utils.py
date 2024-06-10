@@ -546,24 +546,81 @@ def write_report_file_rows(writer, records, file_type=None, other_info=None):
                                  record.get('file_download'),
                                  record.get('file_preview')])
 
+def write_sitelicense_report_file_rows(writer, records, file_type, result):
+    """Write tsv/csv rows for stats.
+    
+    Args:
+        writer (csv.writer): csv.writer.
+        records (dict): Dict calculation data by site license name.
+        file_type (String): file type data.
+        result (dict): Dict calculation data.
+    """
+    interface_name = current_app.config['WEKO_ADMIN_SITELICENSE_REPORT_INTERFACE_NAME']
+    search_count = [_('WEKO database'),interface_name]
+    if records is None:
+        return
 
-def package_site_access_stats_file(stats, agg_date):
-    """Package the tsv files into one zip file."""
+    #all_journals
+    if file_type == 'file_preview' or file_type == 'file_download':
+        all_journals = records['all_journals']
+        all_journals_data = ['Total for all journals', '', interface_name, '', '']
+        for date in result['datelist']:
+            if date == 'total':
+                continue
+            else:
+                all_journals_value = all_journals[date]
+                all_journals_data.append(all_journals_value)
+        writer.writerow(all_journals_data)
 
-    from .config import WEKO_ADMIN_OUTPUT_FORMAT
+    #count
+    if file_type == 'search':
+        for date in result['datelist']:
+            search_count.append(records[date])
+        writer.writerow(search_count)
+    else:
+        for id, record in records.items():
+            if id == 'all_journals':
+                continue
+            else:
+                data = [result['index_info'][id]['name'], id, interface_name, result['index_info'][id]['issn']]
+            for date in result['datelist']:
+                value = record[date]
+                data.append(value)
+            if record.get('file_download_count',0):
+                file_download_count = record.get('file_download_count',0)
+                for date in result['datelist']:
+                    data.append(file_download_count[date])
+            writer.writerow(data)
+
+def package_site_access_stats_file(stats, agg_date, result):
+    """Package the tsv files into one zip file.
+    
+    Args:
+        stats (dict): Dict calculation data by site license name.
+        agg_date (string): Aggregation date.
+        result (dict): Dict calculation data.
+    
+    Returns:
+        zip_stream (ZipFile): ZipFile by site license name.
+    """
 
     zip_stream = BytesIO()
+    output_files = []
     try:
-        # Create file name
-        file_format = WEKO_ADMIN_OUTPUT_FORMAT.lower()
-        file_name = 'SiteAccess_' + agg_date + '.' + file_format
-
-        # Create stats file
-        stream = make_site_access_stats_file(stats, agg_date)
+        for stats_type, stat in stats.items():
+            file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
+            setting_file_name = current_app.config['WEKO_ADMIN_SITELICENSE_REPORT_FILE_NAMES'].get(
+                stats_type, '_')
+            file_name = setting_file_name + '_' + agg_date + '.' + file_format
+            output_files.append({
+                'file_name': file_name,
+                'stream': make_site_access_stats_file(stat, stats_type, agg_date, result)})
 
         # Package zip file
         report_zip = zipfile.ZipFile(zip_stream, 'w')
-        report_zip.writestr(file_name, stream.getvalue().encode('utf-8-sig'))
+        for f in output_files:
+            report_zip.writestr(f['file_name'],
+                                f['stream'].getvalue().encode('utf-8-sig'))
         report_zip.close()
     except Exception as e:
         current_app.logger.error('Unexpected error: ', e)
@@ -572,30 +629,44 @@ def package_site_access_stats_file(stats, agg_date):
     return zip_stream
 
 
-def make_site_access_stats_file(stats, agg_date):
-    """Make tsv site access report file for 1 organization."""
+def make_site_access_stats_file(stats, stats_type, agg_date, result):
+    """Make tsv site access report file for 1 organization.
 
-    from .config import WEKO_ADMIN_REPORT_HEADERS, \
-                        WEKO_ADMIN_OUTPUT_FORMAT, \
-                        WEKO_ADMIN_REPORT_COLS
+    Args:
+        stats (dict): calculation data by site license name.
+        stats_type (string): calculation data type.
+        agg_date (date): aggregation date.
+        result (dict): calculation data.
+    
+    Returns:
+        StringIO: output files stream.
+    """
 
-    file_type = 'site_access'
-    header_row = WEKO_ADMIN_REPORT_HEADERS.get(file_type)
+    reposytory_name = current_app.config.get('WEKO_ADMIN_SITELICENSE_REPORT_REPOSYTORY_NAME')
+    dt = datetime.now()
+    now_date = dt.date()
 
     file_output = StringIO()
-    file_format = WEKO_ADMIN_OUTPUT_FORMAT.lower()
+    file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
     file_delimiter = '\t' if file_format == 'tsv' else ','
     writer = csv.writer(file_output, delimiter=file_delimiter, lineterminator="\n")
 
-    writer.writerows([[header_row],
-                      [_('Aggregation Month'), agg_date],
+    writer.writerows([[_('Site name'), reposytory_name],
+                      [_('Creation date'), now_date],
+                      [_('month'), agg_date],
                       ['']])
 
-    cols = WEKO_ADMIN_REPORT_COLS.get(file_type, [])
-    cols = [[_('Institution Name')] + cols]
-    writer.writerows(cols)
+    cols = current_app.config['WEKO_ADMIN_SITELICENSE_REPORT_COLS'].get(stats_type, [])
+    count_cols = current_app.config['WEKO_ADMIN_SITELICENSE_REPORT_COUNT_COLS'].get(stats_type,[])
 
-    write_report_file_rows(writer, [stats], file_type)
+    for col in count_cols:
+        for date in result['datelist']:
+            count_col = col + '(' + _(date) + ')'
+            cols.append(count_col)
+
+    writer.writerows([cols])
+    
+    write_sitelicense_report_file_rows(writer, stats, stats_type, result)
 
     return file_output
 

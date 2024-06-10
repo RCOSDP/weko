@@ -219,6 +219,42 @@ def base_app(instance_path, cache_config,request ,search_class):
             'user_roles',
             'site_access'
         ],
+        WEKO_ADMIN_SITELICENSE_REPORT_FILE_NAMES = {
+            'file_download': 'FileDownloadReport',
+            'file_preview': 'FileViewReport',
+            'record_view': 'UsagestatisticsReport',
+            'search': 'SearchReport'
+        },
+        WEKO_ADMIN_SITELICENSE_REPORT_INTERFACE_NAME = 'WEKO3 v0.9.26_hiroba',
+        WEKO_ADMIN_SITELICENSE_REPORT_REPOSYTORY_NAME = 'WEKO3 v0.9.26_hiroba',
+        WEKO_ADMIN_SITELICENSE_REPORT_COLS = {
+            'file_download':[
+                '', _('SetSpec'), _('Interface name'), _('ONLINE ISSN')
+            ],
+            'file_preview':[
+                '', _('SetSpec'), _('Interface name'), _('ONLINE ISSN')
+            ],
+            'search':[
+                '',_('Interface name')
+            ],
+            'record_view':[
+                '', _('SetSpec'), _('Interface name'), _('ONLINE ISSN')
+            ]
+        },
+        WEKO_ADMIN_SITELICENSE_REPORT_COUNT_COLS = {
+            'file_download':[
+                _('FileDownload')
+            ],
+            'file_preview':[
+                _('FileView')
+            ],
+            'search':[
+                _('Searches')
+            ],
+            'record_view':[
+                _('DetailView'),  _('FileDownload')
+            ]
+        }
     )
     app_.testing = True
     app_.login_manager = dict(_login_disabled=True)
@@ -1257,3 +1293,7 @@ def facet_search_setting(db):
         settings.append(FacetSearchSetting(**datas[setting]))
     with db.session.begin_nested():
         db.session.add_all(settings)
+
+@pytest.fixture()
+def no_records_sitelicense():
+    return {"date":"2024-04-2024-05","datelist":["total","2024-04","2024-05"],"result":{},"no_data":{"file_download":{"1616224532673":{"2024-04":0,"2024-05":0,"total":0},"1714029010533":{"2024-04":0,"2024-05":0,"total":0},"1714029010533:1715825846862":{"2024-04":0,"2024-05":0,"total":0},"all_journals":{"2024-04":0,"2024-05":0}},"file_preview":{"1616224532673":{"2024-04":0,"2024-05":0,"total":0},"1714029010533":{"2024-04":0,"2024-05":0,"total":0},"1714029010533:1715825846862":{"2024-04":0,"2024-05":0,"total":0},"all_journals":{"2024-04":0,"2024-05":0}},"search":{"2024-04":0,"2024-05":0,"total":0},"record_view":{"1616224532673":{"2024-04":0,"2024-05":0,"total":0,"file_download_count":{"2024-04":0,"2024-05":0,"total":0}},"1714029010533":{"2024-04":0,"2024-05":0,"total":0,"file_download_count":{"2024-04":0,"2024-05":0,"total":0}},"1714029010533:1715825846862":{"2024-04":0,"2024-05":0,"total":0,"file_download_count":{"2024-04":0,"2024-05":0,"total":0}}}},"index_info":{"1616224532673":{"name":"利用報告","issn":12345},"1714029010533":{"name":"New Index","issn":23456},"1714029010533:1715825846862":{"name":"New New Index","issn":678594}}}

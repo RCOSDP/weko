@@ -420,6 +420,7 @@ def users(app, db, roles):
         originalroleuser = create_test_user(email="originalroleuser@test.org")
         originalroleuser2 = create_test_user(email="originalroleuser2@test.org")
         originalroleuser3 = create_test_user(email="originalroleuser3@test.org")
+        originalroleuser4 = create_test_user(email="originalroleuser4@test.org")
     else:
         user = User.query.filter_by(email="user@test.org").first()
         contributor = User.query.filter_by(email="contributor@test.org").first()
@@ -430,6 +431,7 @@ def users(app, db, roles):
         originalroleuser = create_test_user(email="originalroleuser@test.org")
         originalroleuser2 = create_test_user(email="originalroleuser2@test.org")
         originalroleuser3 = create_test_user(email="originalroleuser3@test.org")
+        originalroleuser4 = create_test_user(email="originalroleuser4@test.org")
 
     # Assign access authorization
     with db.session.begin_nested():
@@ -501,6 +503,9 @@ def users(app, db, roles):
         ds.add_role_to_user(originalroleuser3, roles['Repository Administrator'])
         ds.add_role_to_user(originalroleuser3, roles['Contributor'])
         ds.add_role_to_user(originalroleuser3, roles['Community Administrator'])
+        ds.add_role_to_user(originalroleuser4, roles['Contributor'])
+        ds.add_role_to_user(originalroleuser4, roles['General'])
+        ds.add_role_to_user(originalroleuser4, roles['Original Role'])
 
     return [
         {"email": contributor.email, "id": contributor.id, "obj": contributor, "shib": True},
@@ -526,6 +531,12 @@ def users(app, db, roles):
             "id": originalroleuser3.id,
             "obj": originalroleuser3,
             "shib": False,
+        },
+        {
+            "email": originalroleuser4.email,
+            "id": originalroleuser4.id,
+            "obj": originalroleuser4,
+            "shib": False
         },
     ]
 
@@ -667,6 +678,52 @@ def itemtypes(app, db):
     )
 
     item_type_mapping = ItemTypeMapping(id=1, item_type_id=1, mapping=item_type_mapping)
+
+    with db.session.begin_nested():
+        db.session.add(item_type_name)
+        db.session.add(item_type)
+        db.session.add(item_type_mapping)
+
+    return {
+        "item_type_name": item_type_name,
+        "item_type": item_type,
+        "item_type_mapping": item_type_mapping,
+    }
+
+@pytest.fixture()
+def itemtypes_without_site_license(app, db):
+    item_type_name = ItemTypeName(
+        id=2, name="テストアイテムタイプ2", has_site_license=False, is_active=True
+    )
+    item_type_schema = dict()
+    with open("tests/data/itemtype_schema.json", "r") as f:
+        item_type_schema = json.load(f)
+
+    item_type_form = dict()
+    with open("tests/data/itemtype_form.json", "r") as f:
+        item_type_form = json.load(f)
+
+    item_type_render = dict()
+    with open("tests/data/itemtype_render.json", "r") as f:
+        item_type_render = json.load(f)
+
+    item_type_mapping = dict()
+    with open("tests/data/itemtype_mapping.json", "r") as f:
+        item_type_mapping = json.load(f)
+
+    item_type = ItemType(
+        id=2,
+        name_id=2,
+        harvesting_type=True,
+        schema=item_type_schema,
+        form=item_type_form,
+        render=item_type_render,
+        tag=1,
+        version_id=1,
+        is_deleted=False,
+    )
+
+    item_type_mapping = ItemTypeMapping(id=2, item_type_id=2, mapping=item_type_mapping)
 
     with db.session.begin_nested():
         db.session.add(item_type_name)

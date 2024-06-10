@@ -485,6 +485,38 @@ msgstr "サイトアクセス"
 msgid "TopPageAccess_"
 msgstr "トップページへのアクセス"
 
+#: weko_admin/config.py:195
+msgid "SetSpec"
+msgstr "セット階層名"
+
+#: weko_admin/config.py:195
+msgid "Interface name"
+msgstr "インターフェース名"
+
+#: weko_admin/config.py:195
+msgid "ONLINE ISSN"
+msgstr "ONLINE ISSN"
+
+#: weko_admin/config.py:216
+msgid "Searches"
+msgstr "キーワード検索数"
+
+#: weko_admin/config.py:216
+msgid "DetailView"
+msgstr "閲覧回数"
+
+#: weko_admin/config.py:216
+msgid "FileDownload"
+msgstr "ファイルダウンロード回数"
+
+#: weko_admin/config.py:216
+msgid "FileView"
+msgstr "ファイル再生回数"
+
+#: weko_admin/config.py:216
+msgid "total"
+msgstr "合計"
+
 #: weko_admin/ext.py:74
 msgid "A translation string"
 msgstr "翻訳文字列"
@@ -521,6 +553,18 @@ msgstr "サイトライセンス以外"
 #: weko_admin/utils.py:411
 msgid "Institution Name"
 msgstr "機関名"
+
+#: weko_admin/utils.py:502
+msgid "WEKO database"
+msgstr "WEKOデータベース"
+
+#: weko_admin/utils.py:576
+msgid "Creation date"
+msgstr "レポート作成日"
+
+#: weko_admin/utils.py:576
+msgid "Site name"
+msgstr "リポジトリ名"
 
 #: weko_admin/utils.py:1198
 msgid "Cannot update Feedback email settings."

@@ -9,6 +9,10 @@ from weko_index_tree.models import Index, IndexStyle
 #     def have_children(cls, id):
 #     def get_all(cls):
 #     def get_index_by_id(cls, index):
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_models.py::test_none_index -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+def test_none_get_all_by_is_issn(app,db):
+    res = Index.get_all_by_is_issn()
+    assert res == []
 # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_models.py::test_Index -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
 def test_Index(app, db, test_indices):
     # get_all
@@ -26,6 +30,9 @@ def test_Index(app, db, test_indices):
     with app.test_request_context(headers=[("Accept-Language", "ja")]):
         assert str(res) == "Index <id=1, name=Test index 1>"
 
+    # get_all_by_is_issn
+    res = Index.get_all_by_is_issn()
+    assert res == [{'id': 1, 'index_name': 'Test index 1', 'issn': '1234-5678'}]
 
 # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_models.py::test_Index_get_all -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
 def test_Index_get_all(app, db):
