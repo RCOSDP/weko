@@ -35,6 +35,9 @@ from weko_admin.utils import (
     package_reports,
     make_stats_file,
     write_report_file_rows,
+    package_site_access_stats_file,
+    write_sitelicense_report_file_rows,
+    make_site_access_stats_file,
     reset_redis_cache,
     is_exists_key_or_empty_in_redis,
     get_redis_cache,
@@ -762,7 +765,118 @@ def test_write_report_file_rows(db,users):
     write_report_file_rows(writer,record,"site_access")
     assert output.getvalue() == "test_name,test_top_view,test_search,test_record_view,test_file_download,test_file_preview\n"
     
+# def write_sitelicense_report_file_rows(writer, records, file_type=None, other_info=None):
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_write_sitelicense_report_file_rows -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+def test_write_sitelicense_report_file_rows(db,users):
+    record={}
+    file_type=""
+    other_info=""
+    result={"date":"2024-04-2024-05","datelist":["total","2024-04","2024-05"],"index_info":{"1616224532673":{"issn":12345,"name":"利用報告"},"1714029010533":{"issn":23456,"name":"New Index"},"1714029010533:1715825846862":{"issn":678594,"name":"New New Index"}},"no_data":{"file_download":{"1616224532673":{"2024-04":0,"2024-05":0,"total":0},"1714029010533":{"2024-04":0,"2024-05":0,"total":0},"1714029010533:1715825846862":{"2024-04":0,"2024-05":0,"total":0},"all_journals":{"2024-04":0,"2024-05":0}},"file_preview":{"1616224532673":{"2024-04":0,"2024-05":0,"total":0},"1714029010533":{"2024-04":0,"2024-05":0,"total":0},"1714029010533:1715825846862":{"2024-04":0,"2024-05":0,"total":0},"all_journals":{"2024-04":0,"2024-05":0}},"search":{"2024-04":0,"2024-05":0,"total":0},"record_view":{"1616224532673":{"2024-04":0,"2024-05":0,"total":0,"file_download_count":{"2024-04":0,"2024-05":0,"total":0}},"1714029010533":{"2024-04":0,"2024-05":0,"total":0,"file_download_count":{"2024-04":0,"2024-05":0,"total":0}},"1714029010533:1715825846862":{"2024-04":0,"2024-05":0,"total":0,"file_download_count":{"2024-04":0,"2024-05":0,"total":0}}}},"result":{"test":{"file_download":{"1616224532673":{"2024-04":1,"2024-05":22,"total":23},"1714029010533":{"2024-04":0,"2024-05":0,"total":0},"1714029010533:1715825846862":{"2024-04":19,"2024-05":10,"total":29},"all_journals":{"2024-04":20,"2024-05":32}},"file_preview":{"1616224532673":{"2024-04":1,"2024-05":15,"total":16},"1714029010533":{"2024-04":0,"2024-05":0,"total":0},"1714029010533:1715825846862":{"2024-04":19,"2024-05":27,"total":46},"all_journals":{"2024-04":20,"2024-05":42}},"search":{"2024-04":3,"2024-05":12,"total":15},"record_view":{"1616224532673":{"2024-04":27,"2024-05":15,"total":42,"file_download_count":{"2024-04":1,"2024-05":22,"total":23}},"1714029010533":{"2024-04":9,"2024-05":0,"total":9,"file_download_count":{"2024-04":0,"2024-05":0,"total":0}},"1714029010533:1715825846862":{"2024-04":0,"2024-05":23,"total":23,"file_download_count":{"2024-04":19,"2024-05":10,"total":29}}}}}}
+    
+    # records is None
+    output = StringIO()
+    writer = csv.writer(output,delimiter=",",lineterminator="\n")
+    result = write_sitelicense_report_file_rows(writer,None,file_type,result)
+    assert result == None
+    
+    # filetype is search
+    output = StringIO()
+    writer = csv.writer(output,delimiter=",",lineterminator="\n")
+    record = {"2024-04":3,"2024-05":0,"total":3}
+    result={"date":"2024-04-2024-05","datelist":["total","2024-04","2024-05"],"index_info":{"1616224532673":{"issn":12345,"name":"利用報告"},"1714029010533":{"issn":23456,"name":"New Index"},"1714029010533:1715825846862":{"issn":678594,"name":"New New Index"}},"no_data":{"file_download":{"1616224532673":{"2024-04":0,"2024-05":0,"total":0},"1714029010533":{"2024-04":0,"2024-05":0,"total":0},"1714029010533:1715825846862":{"2024-04":0,"2024-05":0,"total":0},"all_journals":{"2024-04":0,"2024-05":0}},"file_preview":{"1616224532673":{"2024-04":0,"2024-05":0,"total":0},"1714029010533":{"2024-04":0,"2024-05":0,"total":0},"1714029010533:1715825846862":{"2024-04":0,"2024-05":0,"total":0},"all_journals":{"2024-04":0,"2024-05":0}},"search":{"2024-04":0,"2024-05":0,"total":0},"record_view":{"1616224532673":{"2024-04":0,"2024-05":0,"total":0,"file_download_count":{"2024-04":0,"2024-05":0,"total":0}},"1714029010533":{"2024-04":0,"2024-05":0,"total":0,"file_download_count":{"2024-04":0,"2024-05":0,"total":0}},"1714029010533:1715825846862":{"2024-04":0,"2024-05":0,"total":0,"file_download_count":{"2024-04":0,"2024-05":0,"total":0}}}},"result":{"test":{"file_download":{"1616224532673":{"2024-04":1,"2024-05":22,"total":23},"1714029010533":{"2024-04":0,"2024-05":0,"total":0},"1714029010533:1715825846862":{"2024-04":19,"2024-05":10,"total":29},"all_journals":{"2024-04":20,"2024-05":32}},"file_preview":{"1616224532673":{"2024-04":1,"2024-05":15,"total":16},"1714029010533":{"2024-04":0,"2024-05":0,"total":0},"1714029010533:1715825846862":{"2024-04":19,"2024-05":27,"total":46},"all_journals":{"2024-04":20,"2024-05":42}},"search":{"2024-04":3,"2024-05":12,"total":15},"record_view":{"1616224532673":{"2024-04":27,"2024-05":15,"total":42,"file_download_count":{"2024-04":1,"2024-05":22,"total":23}},"1714029010533":{"2024-04":9,"2024-05":0,"total":9,"file_download_count":{"2024-04":0,"2024-05":0,"total":0}},"1714029010533:1715825846862":{"2024-04":0,"2024-05":23,"total":23,"file_download_count":{"2024-04":19,"2024-05":10,"total":29}}}}}}
+    write_sitelicense_report_file_rows(writer,record,"search",result)
+    assert output.getvalue() == "WEKO database,WEKO3 v0.9.26_hiroba,3,3,0\n"
 
+    # filetype is file_download
+    record = {"1616224532673":{"2024-04":1,"2024-05":0,"total":1},"1714029010533":{"2024-04":2,"2024-05":2,"total":4},"all_journals":{"2024-04":3,"2024-05":2}}
+    output = StringIO()
+    writer = csv.writer(output,delimiter=",",lineterminator="\n")
+    write_sitelicense_report_file_rows(writer,record,"file_download",result)
+    assert output.getvalue() == "Total for all journals,,WEKO3 v0.9.26_hiroba,,,3,2\n利用報告,1616224532673,WEKO3 v0.9.26_hiroba,12345,1,1,0\nNew Index,1714029010533,WEKO3 v0.9.26_hiroba,23456,4,2,2\n"
+
+    # filetype is file_preview
+    record = {"1616224532673":{"2024-04":1,"2024-05":0,"total":1},"1714029010533":{"2024-04":2,"2024-05":2,"total":4},"all_journals":{"2024-04":3,"2024-05":2}}
+    output = StringIO()
+    writer = csv.writer(output,delimiter=",",lineterminator="\n")
+    write_sitelicense_report_file_rows(writer,record,"file_preview",result)
+    assert output.getvalue() == "Total for all journals,,WEKO3 v0.9.26_hiroba,,,3,2\n利用報告,1616224532673,WEKO3 v0.9.26_hiroba,12345,1,1,0\nNew Index,1714029010533,WEKO3 v0.9.26_hiroba,23456,4,2,2\n"
+
+    # filetype is record_view
+    record = {"1616224532673":{"2024-04":27,"2024-05":0,"total":27,"file_download_count":{"2024-04":1,"2024-05":0,"total":1}},"1714029010533":{"2024-04":9,"2024-05":0,"total":9,"file_download_count":{"2024-04":2,"2024-05":2,"total":4}}}
+    output = StringIO()
+    writer = csv.writer(output,delimiter=",",lineterminator="\n")
+    write_sitelicense_report_file_rows(writer,record,"record_view",result)
+    assert output.getvalue() == "利用報告,1616224532673,WEKO3 v0.9.26_hiroba,12345,27,27,0,1,1,0\nNew Index,1714029010533,WEKO3 v0.9.26_hiroba,23456,9,9,0,4,2,2\n"
+
+# def package_site_access_stats_file(all_stats, year, month):
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_package_site_access_stats_file -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+def test_package_site_access_stats_file(client,mocker):
+    stats = {"file_download":{"1616224532673":{"2024-04":1,"2024-05":22,"total":23},"1714029010533":{"2024-04":0,"2024-05":0,"total":0},"1714029010533:1715825846862":{"2024-04":19,"2024-05":10,"total":29},"all_journals":{"2024-04":20,"2024-05":32}},"file_preview":{"1616224532673":{"2024-04":1,"2024-05":15,"total":16},"1714029010533":{"2024-04":0,"2024-05":0,"total":0},"1714029010533:1715825846862":{"2024-04":19,"2024-05":27,"total":46},"all_journals":{"2024-04":20,"2024-05":42}},"search":{"2024-04":3,"2024-05":12,"total":15},"record_view":{"1616224532673":{"2024-04":27,"2024-05":15,"total":42,"file_download_count":{"2024-04":1,"2024-05":22,"total":23}},"1714029010533":{"2024-04":9,"2024-05":0,"total":9,"file_download_count":{"2024-04":0,"2024-05":0,"total":0}},"1714029010533:1715825846862":{"2024-04":0,"2024-05":23,"total":23,"file_download_count":{"2024-04":19,"2024-05":10,"total":29}}}}
+    agg_date = "2024-04-2024-05"
+    result = {"date":"2024-04-2024-05","datelist":["total","2024-04","2024-05"],"index_info":{"1616224532673":{"issn":12345,"name":"利用報告"},"1714029010533":{"issn":23456,"name":"New Index"},"1714029010533:1715825846862":{"issn":678594,"name":"New New Index"}},"no_data":{"file_download":{"1616224532673":{"2024-04":0,"2024-05":0,"total":0},"1714029010533":{"2024-04":0,"2024-05":0,"total":0},"1714029010533:1715825846862":{"2024-04":0,"2024-05":0,"total":0},"all_journals":{"2024-04":0,"2024-05":0}},"file_preview":{"1616224532673":{"2024-04":0,"2024-05":0,"total":0},"1714029010533":{"2024-04":0,"2024-05":0,"total":0},"1714029010533:1715825846862":{"2024-04":0,"2024-05":0,"total":0},"all_journals":{"2024-04":0,"2024-05":0}},"search":{"2024-04":0,"2024-05":0,"total":0},"record_view":{"1616224532673":{"2024-04":0,"2024-05":0,"total":0,"file_download_count":{"2024-04":0,"2024-05":0,"total":0}},"1714029010533":{"2024-04":0,"2024-05":0,"total":0,"file_download_count":{"2024-04":0,"2024-05":0,"total":0}},"1714029010533:1715825846862":{"2024-04":0,"2024-05":0,"total":0,"file_download_count":{"2024-04":0,"2024-05":0,"total":0}}}},"result":{"test":{"file_download":{"1616224532673":{"2024-04":1,"2024-05":22,"total":23},"1714029010533":{"2024-04":0,"2024-05":0,"total":0},"1714029010533:1715825846862":{"2024-04":19,"2024-05":10,"total":29},"all_journals":{"2024-04":20,"2024-05":32}},"file_preview":{"1616224532673":{"2024-04":1,"2024-05":15,"total":16},"1714029010533":{"2024-04":0,"2024-05":0,"total":0},"1714029010533:1715825846862":{"2024-04":19,"2024-05":27,"total":46},"all_journals":{"2024-04":20,"2024-05":42}},"search":{"2024-04":3,"2024-05":12,"total":15},"record_view":{"1616224532673":{"2024-04":27,"2024-05":15,"total":42,"file_download_count":{"2024-04":1,"2024-05":22,"total":23}},"1714029010533":{"2024-04":9,"2024-05":0,"total":9,"file_download_count":{"2024-04":0,"2024-05":0,"total":0}},"1714029010533:1715825846862":{"2024-04":0,"2024-05":23,"total":23,"file_download_count":{"2024-04":19,"2024-05":10,"total":29}}}}}}
+    mock_stream = StringIO()
+    mock_stream.write("test")
+    mocker.patch("weko_admin.utils.make_site_access_stats_file",return_value=mock_stream)
+    result = package_site_access_stats_file(stats, agg_date, result)
+
+    # raise Exception
+    mocker.patch("weko_admin.utils.make_site_access_stats_file",side_effect=Exception("test_error"))
+    with pytest.raises(Exception) as e:
+        result = package_site_access_stats_file(stats, agg_date, result)
+
+# def make_site_access_stats_file(raw_stats, file_type, year, month):
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_make_site_access_stats_file -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+def test_make_site_access_stats_file(client,mocker, users):
+    current_app.config.update(WEKO_ADMIN_OUTPUT_FORMAT="csv")
+    mocker.patch("weko_admin.utils.write_sitelicense_report_file_rows")
+    stats={"file_download":{"1616224532673":{"2024-04":1,"2024-05":22,"total":23},"1714029010533":{"2024-04":0,"2024-05":0,"total":0},"1714029010533:1715825846862":{"2024-04":19,"2024-05":10,"total":29},"all_journals":{"2024-04":20,"2024-05":32}},"file_preview":{"1616224532673":{"2024-04":1,"2024-05":15,"total":16},"1714029010533":{"2024-04":0,"2024-05":0,"total":0},"1714029010533:1715825846862":{"2024-04":19,"2024-05":27,"total":46},"all_journals":{"2024-04":20,"2024-05":42}},"search":{"2024-04":3,"2024-05":12,"total":15},"record_view":{"1616224532673":{"2024-04":27,"2024-05":15,"total":42,"file_download_count":{"2024-04":1,"2024-05":22,"total":23}},"1714029010533":{"2024-04":9,"2024-05":0,"total":9,"file_download_count":{"2024-04":0,"2024-05":0,"total":0}},"1714029010533:1715825846862":{"2024-04":0,"2024-05":23,"total":23,"file_download_count":{"2024-04":19,"2024-05":10,"total":29}}}}
+    file_type = ""
+    agg_date = "2024-04-2024-05"
+    result = {"date":"2024-04-2024-05","datelist":["total","2024-04","2024-05"],"index_info":{"1616224532673":{"issn":12345,"name":"利用報告"},"1714029010533":{"issn":23456,"name":"New Index"},"1714029010533:1715825846862":{"issn":678594,"name":"New New Index"}},"no_data":{"file_download":{"1616224532673":{"2024-04":0,"2024-05":0,"total":0},"1714029010533":{"2024-04":0,"2024-05":0,"total":0},"1714029010533:1715825846862":{"2024-04":0,"2024-05":0,"total":0},"all_journals":{"2024-04":0,"2024-05":0}},"file_preview":{"1616224532673":{"2024-04":0,"2024-05":0,"total":0},"1714029010533":{"2024-04":0,"2024-05":0,"total":0},"1714029010533:1715825846862":{"2024-04":0,"2024-05":0,"total":0},"all_journals":{"2024-04":0,"2024-05":0}},"search":{"2024-04":0,"2024-05":0,"total":0},"record_view":{"1616224532673":{"2024-04":0,"2024-05":0,"total":0,"file_download_count":{"2024-04":0,"2024-05":0,"total":0}},"1714029010533":{"2024-04":0,"2024-05":0,"total":0,"file_download_count":{"2024-04":0,"2024-05":0,"total":0}},"1714029010533:1715825846862":{"2024-04":0,"2024-05":0,"total":0,"file_download_count":{"2024-04":0,"2024-05":0,"total":0}}}},"result":{"test":{"file_download":{"1616224532673":{"2024-04":1,"2024-05":22,"total":23},"1714029010533":{"2024-04":0,"2024-05":0,"total":0},"1714029010533:1715825846862":{"2024-04":19,"2024-05":10,"total":29},"all_journals":{"2024-04":20,"2024-05":32}},"file_preview":{"1616224532673":{"2024-04":1,"2024-05":15,"total":16},"1714029010533":{"2024-04":0,"2024-05":0,"total":0},"1714029010533:1715825846862":{"2024-04":19,"2024-05":27,"total":46},"all_journals":{"2024-04":20,"2024-05":42}},"search":{"2024-04":3,"2024-05":12,"total":15},"record_view":{"1616224532673":{"2024-04":27,"2024-05":15,"total":42,"file_download_count":{"2024-04":1,"2024-05":22,"total":23}},"1714029010533":{"2024-04":9,"2024-05":0,"total":9,"file_download_count":{"2024-04":0,"2024-05":0,"total":0}},"1714029010533:1715825846862":{"2024-04":0,"2024-05":23,"total":23,"file_download_count":{"2024-04":19,"2024-05":10,"total":29}}}}}}
+
+    # filetype = file_download
+    file_type = "file_download"
+    test = \
+        'Site name,WEKO3 v0.9.26_hiroba\n'\
+        'Creation date,2024-06-07\n'\
+        'month,2024-04-2024-05\n'\
+        '""\n'\
+        ',SetSpec,Interface name,ONLINE ISSN,FileDownload(total),FileDownload(2024-04),FileDownload(2024-05)\n'
+    res = make_site_access_stats_file(stats,file_type,agg_date,result)
+    assert res.getvalue() == test
+
+    # filetype = file_preview
+    file_type = "file_preview"
+    test = \
+        'Site name,WEKO3 v0.9.26_hiroba\n'\
+        'Creation date,2024-06-07\n'\
+        'month,2024-04-2024-05\n'\
+        '""\n'\
+        ',SetSpec,Interface name,ONLINE ISSN,FileView(total),FileView(2024-04),FileView(2024-05)\n'
+    res = make_site_access_stats_file(stats,file_type,agg_date,result)
+    assert res.getvalue() == test
+
+    # filetype = search
+    file_type = "search"
+    test = \
+        'Site name,WEKO3 v0.9.26_hiroba\n'\
+        'Creation date,2024-06-07\n'\
+        'month,2024-04-2024-05\n'\
+        '""\n'\
+        ',Interface name,Searches(total),Searches(2024-04),Searches(2024-05)\n'
+    res = make_site_access_stats_file(stats,file_type,agg_date,result)
+    assert res.getvalue() == test
+    
+    # filetype = record_view
+    file_type = "record_view"
+    test = \
+        'Site name,WEKO3 v0.9.26_hiroba\n'\
+        'Creation date,2024-06-07\n'\
+        'month,2024-04-2024-05\n'\
+        '""\n'\
+        ',SetSpec,Interface name,ONLINE ISSN,DetailView(total),DetailView(2024-04),DetailView(2024-05),FileDownload(total),FileDownload(2024-04),FileDownload(2024-05)\n'
+    res = make_site_access_stats_file(stats,file_type,agg_date,result)
+    assert res.getvalue() == test
 
 # def reset_redis_cache(cache_key, value, ttl=None):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_reset_redis_cache -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp

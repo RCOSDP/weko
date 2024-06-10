@@ -123,15 +123,23 @@ def _is_crawler(user_info):
     return False
 
 
-def send_site_license_mail(organization_name, mail_list, agg_date, data):
-    """Send site license statistics mail."""
+def send_site_license_mail(organization_name, mail_list, result, data):
+    """Send site license statistics mail.
+    
+    Args:
+        organization_name (String): organization name.
+        mail_list (list): send mail list.
+        result (dict): Dict calculation data.
+        data (dict): Dict calculation data by organization name.
+    """
+    agg_date = result['date']
     try:
         # mail title
         subject = '[Weko3] ' + agg_date + ' site license statistics'
 
         # Create attached file
-        file_name = 'SiteAccess_' + agg_date + '.zip'
-        zip_stream = package_site_access_stats_file(data, agg_date)
+        file_name = 'SiteLicenseUserReport_' + agg_date + '.zip'
+        zip_stream = package_site_access_stats_file(data, agg_date, result)
         attachment = Attachment(file_name,
                                 'application/x-zip-compressed',
                                 zip_stream.getvalue())

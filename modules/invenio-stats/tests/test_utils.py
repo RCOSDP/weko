@@ -33,6 +33,7 @@ from invenio_stats.utils import (
     QueryFileReportsHelper,
     QuerySearchReportHelper,
     QueryCommonReportsHelper,
+    QuerySitelicenseReportsHelper,
     QueryAccessCounterHelper,
     QueryRecordViewPerIndexReportHelper,
     QueryRecordViewReportHelper,
@@ -558,6 +559,54 @@ def test_query_common_reports_helper_error(app):
     assert res=={'all': [], 'date': ''}
     res = QueryCommonReportsHelper.get(event='')
     assert res==[]
+
+# class QuerySitelicenseReportsHelper(object):
+#     def get_common_params(cls, **kwargs):
+#     def get(cls, **kwargs):
+#     def get_site_license_report(cls, **kwargs):
+#.tox/c1/bin/pytest --cov=invenio_stats tests/test_utils.py::test_querysitelicensereports_get -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
+def test_querysitelicensereports_get(app,db,es,index_issn):
+    from weko_index_tree.models import Index
+    res = QuerySitelicenseReportsHelper.get(event='')
+    assert res == []
+
+    date, params, datelist = QuerySitelicenseReportsHelper.get_common_params(start_date="2024-04-01", end_date="2024-05-31")
+    assert date == "2024-04-2024-05"
+    assert params ==  {'start_date': '2024-04-01', 'end_date': '2024-05-31T23:59:59', 'agg_size': 0, 'agg_sort': {'_term': 'desc'}, 'interval': 'month'}
+    assert datelist == ['2024-04', '2024-05']
+
+    date, params, datelist = QuerySitelicenseReportsHelper.get_common_params(start_date="2024-04-01", end_date="2024-04-30")
+    assert date == "2024-04"
+    assert params ==  {'start_date': '2024-04-01', 'end_date': '2024-04-30T23:59:59', 'agg_size': 0, 'agg_sort': {'_term': 'desc'}, 'interval': 'month'}
+    assert datelist == ['2024-04']
+
+    file_download = {"start_date":"2024-04-01T00:00:00","end_date":"2024-05-31T23:59:59","value":57,"buckets":[{"date":1711929600000,"site_license_name":"test","count":19,"index_path":"1714029010533/1715825846862"},{"date":1711929600000,"site_license_name":"","count":1,"index_path":"1715825656540"},{"date":1711929600000,"site_license_name":"test","count":1,"index_path":"1616224532673"},{"date":1714521600000,"site_license_name":"test","count":12,"index_path":"1616224532673"},{"date":1714521600000,"site_license_name":"test","count":10,"index_path":"1616224532673|1714029010533/1715825846862"}]}
+    file_preview = {"start_date":"2024-04-01T00:00:00","end_date":"2024-05-31T23:59:59","value":24,"buckets":[{"date":1711929600000,"site_license_name":"test","count":1,"index_path":"1616224532673"},{"date":1711929600000,"site_license_name":"test","count":19,"index_path":"1714029010533/1715825846862"},{"date":1714521600000,"site_license_name":"test","count":12,"index_path":"1715825656540"},{"date":1714521600000,"site_license_name":"test","count":12,"index_path":"1714029010533/1715825846862"},{"date":1714521600000,"site_license_name":"test","count":15,"index_path":"1616224532673|1714029010533/1715825846862"}]}
+    search = {"start_date":"2024-04-01T00:00:00","end_date":"2024-05-31T23:59:59","value":8,"buckets":[{"date":1711929600000,"site_license_name":"","count":2},{"date":1711929600000,"site_license_name":"test","count":3},{"date":1714521600000,"site_license_name":"test","count":12}]}
+    record_view = {"start_date":"2024-04-01T00:00:00","end_date":"2024-05-31T23:59:59","value":217,"buckets":[{"date":1711929600000,"site_license_name":"","count":3,"record_index_id":"1616224532673"},{"date":1711929600000,"site_license_name":"test","count":27,"record_index_id":"1616224532673"},{"date":1711929600000,"site_license_name":"test","count":9,"record_index_id":"1714029010533"},{"date":1714521600000,"site_license_name":"test","count":12,"record_index_id":"1715825656540"},{"date":1714521600000,"site_license_name":"test","count":8,"record_index_id":"1715825846862"},{"date":1714521600000,"site_license_name":"test","count":15,"record_index_id":"1616224532673|1715825846862"}]}
+    with patch('invenio_stats.queries.ESTermsQuery.run') as m:
+        m.side_effect = [file_download, file_preview, search, record_view]
+        res = QuerySitelicenseReportsHelper.get(event='sitelicense_download', start_date='2024-04-01', end_date='2024-05-31')
+        assert res=={"date":"2024-04-2024-05","datelist":["total","2024-04","2024-05"],"index_info":{"1616224532673":{"issn":12345,"name":"利用報告"},"1714029010533":{"issn":23456,"name":"New Index"},"1714029010533:1715825846862":{"issn":678594,"name":"New New Index"}},"no_data":{"file_download":{"1616224532673":{"2024-04":0,"2024-05":0,"total":0},"1714029010533":{"2024-04":0,"2024-05":0,"total":0},"1714029010533:1715825846862":{"2024-04":0,"2024-05":0,"total":0},"all_journals":{"2024-04":0,"2024-05":0}},"file_preview":{"1616224532673":{"2024-04":0,"2024-05":0,"total":0},"1714029010533":{"2024-04":0,"2024-05":0,"total":0},"1714029010533:1715825846862":{"2024-04":0,"2024-05":0,"total":0},"all_journals":{"2024-04":0,"2024-05":0}},"search":{"2024-04":0,"2024-05":0,"total":0},"record_view":{"1616224532673":{"2024-04":0,"2024-05":0,"total":0,"file_download_count":{"2024-04":0,"2024-05":0,"total":0}},"1714029010533":{"2024-04":0,"2024-05":0,"total":0,"file_download_count":{"2024-04":0,"2024-05":0,"total":0}},"1714029010533:1715825846862":{"2024-04":0,"2024-05":0,"total":0,"file_download_count":{"2024-04":0,"2024-05":0,"total":0}}}},"result":{"test":{"file_download":{"1616224532673":{"2024-04":1,"2024-05":22,"total":23},"1714029010533":{"2024-04":0,"2024-05":0,"total":0},"1714029010533:1715825846862":{"2024-04":19,"2024-05":10,"total":29},"all_journals":{"2024-04":20,"2024-05":32}},"file_preview":{"1616224532673":{"2024-04":1,"2024-05":15,"total":16},"1714029010533":{"2024-04":0,"2024-05":0,"total":0},"1714029010533:1715825846862":{"2024-04":19,"2024-05":27,"total":46},"all_journals":{"2024-04":20,"2024-05":42}},"search":{"2024-04":3,"2024-05":12,"total":15},"record_view":{"1616224532673":{"2024-04":27,"2024-05":15,"total":42,"file_download_count":{"2024-04":1,"2024-05":22,"total":23}},"1714029010533":{"2024-04":9,"2024-05":0,"total":9,"file_download_count":{"2024-04":0,"2024-05":0,"total":0}},"1714029010533:1715825846862":{"2024-04":0,"2024-05":23,"total":23,"file_download_count":{"2024-04":19,"2024-05":10,"total":29}}}}}}
+
+    no_res = {'start_date': '2024-04-01T00:00:00', 'end_date': '2024-05-31T23:59:59', 'value': 0.0, 'buckets': []}
+    with patch('invenio_stats.queries.ESTermsQuery.run', return_value = no_res):
+        res = QuerySitelicenseReportsHelper.get(event='sitelicense_download', start_date='2024-04-01', end_date='2024-05-31')
+        assert res == {"date":"2024-04-2024-05","datelist":["total","2024-04","2024-05"],"result":{},"no_data":{"file_download":{"1616224532673":{"2024-04":0,"2024-05":0,"total":0},"1714029010533":{"2024-04":0,"2024-05":0,"total":0},"1714029010533:1715825846862":{"2024-04":0,"2024-05":0,"total":0},"all_journals":{"2024-04":0,"2024-05":0}},"file_preview":{"1616224532673":{"2024-04":0,"2024-05":0,"total":0},"1714029010533":{"2024-04":0,"2024-05":0,"total":0},"1714029010533:1715825846862":{"2024-04":0,"2024-05":0,"total":0},"all_journals":{"2024-04":0,"2024-05":0}},"search":{"2024-04":0,"2024-05":0,"total":0},"record_view":{"1616224532673":{"2024-04":0,"2024-05":0,"total":0,"file_download_count":{"2024-04":0,"2024-05":0,"total":0}},"1714029010533":{"2024-04":0,"2024-05":0,"total":0,"file_download_count":{"2024-04":0,"2024-05":0,"total":0}},"1714029010533:1715825846862":{"2024-04":0,"2024-05":0,"total":0,"file_download_count":{"2024-04":0,"2024-05":0,"total":0}}}},"index_info":{"1616224532673":{"name":"利用報告","issn":12345},"1714029010533":{"name":"New Index","issn":23456},"1714029010533:1715825846862":{"name":"New New Index","issn":678594}}}
+
+    search = {"start_date":"2024-04-01T00:00:00","end_date":"2024-04-30T23:59:59","value":8,"buckets":[{"date":1711929600000,"site_license_name":"","count":2},{"date":1711929600000,"site_license_name":"test","count":3}]}
+    no_res = {'start_date': '2024-04-01T00:00:00', 'end_date': '2024-04-30T23:59:59', 'value': 0.0, 'buckets': []}
+    with patch('invenio_stats.queries.ESTermsQuery.run') as m:
+        m.side_effect = [no_res, no_res, search, no_res]
+        res = QuerySitelicenseReportsHelper.get(event='sitelicense_download', start_date='2024-04-01', end_date='2024-04-30')
+        assert res=={"date":"2024-04","datelist":["2024-04"],"index_info":{"1616224532673":{"issn":12345,"name":"利用報告"},"1714029010533":{"issn":23456,"name":"New Index"},"1714029010533:1715825846862":{"issn":678594,"name":"New New Index"}},"no_data":{"file_download":{"1616224532673":{"2024-04":0},"1714029010533":{"2024-04":0},"1714029010533:1715825846862":{"2024-04":0},"all_journals":{"2024-04":0}},"file_preview":{"1616224532673":{"2024-04":0},"1714029010533":{"2024-04":0},"1714029010533:1715825846862":{"2024-04":0},"all_journals":{"2024-04":0}},"search":{"2024-04":0},"record_view":{"1616224532673":{"2024-04":0,"file_download_count":{"2024-04":0}},"1714029010533":{"2024-04":0,"file_download_count":{"2024-04":0}},"1714029010533:1715825846862":{"2024-04":0,"file_download_count":{"2024-04":0}}}},"result":{"test":{"file_download":{"1616224532673":{"2024-04":0},"1714029010533":{"2024-04":0},"1714029010533:1715825846862":{"2024-04":0},"all_journals":{"2024-04":0}},"file_preview":{"1616224532673":{"2024-04":0},"1714029010533":{"2024-04":0},"1714029010533:1715825846862":{"2024-04":0},"all_journals":{"2024-04":0}},"search":{"2024-04":3},"record_view":{"1616224532673":{"2024-04":0,"file_download_count":{"2024-04":0}},"1714029010533":{"2024-04":0,"file_download_count":{"2024-04":0}},"1714029010533:1715825846862":{"2024-04":0,"file_download_count":{"2024-04":0}}}}}}
+
+    with patch('invenio_stats.queries.ESTermsQuery.run', return_value = {}):
+        res = QuerySitelicenseReportsHelper.get(event='sitelicense_download', start_date='2024-04-01', end_date='2024-04-30')
+        assert res=={"date":"2024-04","datelist":["2024-04"],"index_info":{"1616224532673":{"issn":12345,"name":"利用報告"},"1714029010533":{"issn":23456,"name":"New Index"},"1714029010533:1715825846862":{"issn":678594,"name":"New New Index"}},"no_data":{"file_download":{"1616224532673":{"2024-04":0},"1714029010533":{"2024-04":0},"1714029010533:1715825846862":{"2024-04":0},"all_journals":{"2024-04":0}},"file_preview":{"1616224532673":{"2024-04":0},"1714029010533":{"2024-04":0},"1714029010533:1715825846862":{"2024-04":0},"all_journals":{"2024-04":0}},"search":{"2024-04":0},"record_view":{"1616224532673":{"2024-04":0,"file_download_count":{"2024-04":0}},"1714029010533":{"2024-04":0,"file_download_count":{"2024-04":0}},"1714029010533:1715825846862":{"2024-04":0,"file_download_count":{"2024-04":0}}}},"result":{}}
+
+    res = QuerySitelicenseReportsHelper.get_site_license_report()
+    assert res=={}
 
 # class QueryAccessCounterHelper(object):
 #     def get_common_params(cls, **kwargs):

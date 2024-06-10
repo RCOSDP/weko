@@ -34,7 +34,7 @@ from flask_login import current_user, login_required
 from flask_menu import register_menu
 from flask_wtf import Form,FlaskForm
 from invenio_admin.proxies import current_admin
-from invenio_stats.utils import QueryCommonReportsHelper
+from invenio_stats.utils import QuerySitelicenseReportsHelper
 from invenio_db import db
 from sqlalchemy.orm import session
 from weko_accounts.utils import roles_required
@@ -473,7 +473,15 @@ def resend_failed_mail():
 @roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
                  WEKO_ADMIN_PERMISSION_ROLE_REPO])
 def manual_send_site_license_mail(start_month, end_month):
-    """Send site license mail by manual."""
+    """Send site license mail by manual.
+    
+    Args:
+        start_month (int): Aggregation start month.
+        end_month (int); Aggregation end month.
+    
+    Returns:
+        string: finish sending mail code.
+    """
     send_list = SiteLicenseInfo.query.filter_by(receive_mail_flag='T').all()
     if send_list:
         start_date = start_month + '-01'
@@ -481,30 +489,24 @@ def manual_send_site_license_mail(start_month, end_month):
                                          int(end_month[5:]))
         end_date = end_month + '-' + str(lastday).zfill(2)
 
-        agg_date = start_month.replace('-', '.') + '-' + \
-            end_month.replace('-', '.')
-        res = QueryCommonReportsHelper.get(start_date=start_date,
-                                           end_date=end_date,
-                                           event='site_access')
+        res = QuerySitelicenseReportsHelper.get(
+                start_date=start_date,end_date=end_date, event='sitelicense_download')
         for s in send_list:
             mail_list = s.mail_address.split('\n')
             send_flag = False
-            for r in res['institution_name']:
-                if s.organization_name == r['name']:
-                    send_site_license_mail(r['name'], mail_list, agg_date, r)
-                    send_flag = True
-                    break
+            if res['result']:
+                for key, item in res['result'].items():
+                    if s.organization_name == key:
+                        send_site_license_mail(key, mail_list, res, item)
+                        send_flag = True
+                        break
             if not send_flag:
-                data = {'file_download': 0,
-                        'file_preview': 0,
-                        'name': s.organization_name,
-                        'record_view': 0,
-                        'search': 0,
-                        'top_view': 0}
                 send_site_license_mail(s.organization_name,
-                                       mail_list, agg_date, data)
+                                       mail_list, res, res['no_data'])
 
         return 'finished'
+    else:
+        current_app.logger.error('send list is not exist.')
 
 
 @blueprint_api.route('/update_site_info', methods=['POST'])

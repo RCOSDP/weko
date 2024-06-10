@@ -15,6 +15,7 @@ from invenio_stats.contrib.event_builders import (
     build_file_unique_id,
     build_record_unique_id,
     copy_record_index_list,
+    copy_record_index,
     copy_user_group_list,
     copy_search_keyword,
     copy_search_type,
@@ -93,6 +94,7 @@ def test_file_download_event_builder(app, request_headers, db):
     _obj.site_license_name = ''
     _obj.site_license_flag = False
     _obj.index_list = []
+    _obj.index_path = '1234'
     _obj.userid = 0
     _obj.item_id = 1
     _obj.item_title = 'test title'
@@ -103,10 +105,10 @@ def test_file_download_event_builder(app, request_headers, db):
     with app.test_request_context(headers=request_headers['user']):
         # file_download_event_builder
         res = file_download_event_builder({}, app, _obj)
-        assert res=={'accessrole': '', 'billing_file_price': 0, 'bucket_id': str(_bucket.id), 'cur_user_id': 0, 'file_id': str(_obj.file_id), 'file_key': 'LICENSE', 'index_list': [], 'ip_address': None, 'is_billing_item': False, 'is_open_access': True, 'item_id': 1, 'item_title': 'test title', 'referrer': None, 'remote_addr': None, 'root_file_id': str(_obj.root_file_id), 'session_id': None, 'site_license_flag': False, 'site_license_name': '', 'size': 12, 'timestamp': res['timestamp'], 'user_agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko)Chrome/45.0.2454.101 Safari/537.36', 'user_group_list': [], 'user_id': None, 'userrole': 'guest'}
+        assert res=={'accessrole': '', 'billing_file_price': 0, 'bucket_id': str(_bucket.id), 'cur_user_id': 0, 'file_id': str(_obj.file_id), 'file_key': 'LICENSE', 'index_list': [], 'index_path':'1234', 'ip_address': None, 'is_billing_item': False, 'is_open_access': True, 'item_id': 1, 'item_title': 'test title', 'referrer': None, 'remote_addr': None, 'root_file_id': str(_obj.root_file_id), 'session_id': None, 'site_license_flag': False, 'site_license_name': '', 'size': 12, 'timestamp': res['timestamp'], 'user_agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko)Chrome/45.0.2454.101 Safari/537.36', 'user_group_list': [], 'user_id': None, 'userrole': 'guest'}
         # file_preview_event_builder
         res = file_preview_event_builder({}, app, _obj)
-        assert res=={'accessrole': '', 'billing_file_price': 0, 'bucket_id': str(_bucket.id), 'cur_user_id': 0, 'file_id': str(_obj.file_id), 'file_key': 'LICENSE', 'index_list': [], 'ip_address': None, 'is_billing_item': False, 'is_open_access': True, 'item_id': 1, 'item_title': 'test title', 'referrer': None, 'remote_addr': None, 'root_file_id': str(_obj.root_file_id), 'session_id': None, 'site_license_flag': False, 'site_license_name': '', 'size': 12, 'timestamp': res['timestamp'], 'user_agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko)Chrome/45.0.2454.101 Safari/537.36', 'user_group_list': [], 'user_id': None, 'userrole': 'guest'}
+        assert res=={'accessrole': '', 'billing_file_price': 0, 'bucket_id': str(_bucket.id), 'cur_user_id': 0, 'file_id': str(_obj.file_id), 'file_key': 'LICENSE', 'index_list': [], 'index_path':'1234', 'ip_address': None, 'is_billing_item': False, 'is_open_access': True, 'item_id': 1, 'item_title': 'test title', 'referrer': None, 'remote_addr': None, 'root_file_id': str(_obj.root_file_id), 'session_id': None, 'site_license_flag': False, 'site_license_name': '', 'size': 12, 'timestamp': res['timestamp'], 'user_agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko)Chrome/45.0.2454.101 Safari/537.36', 'user_group_list': [], 'user_id': None, 'userrole': 'guest'}
         # is_valid_access is False
         with patch("invenio_stats.contrib.event_builders.is_valid_access", return_value=False):
             res = file_download_event_builder({}, app, _obj)
@@ -147,6 +149,25 @@ def test_copy_record_index_list(app):
     res = copy_record_index_list(_doc)
     assert res=='Index A, Index B, '
 
+# def copy_record_index(doc, aggregation_data=None):
+# .tox/c1/bin/pytest --cov=invenio_stats tests/test_event_builders.py::test_copy_record_index -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
+def test_copy_record_index(app):
+    _doc = {
+        'record_index_list': [
+            {'index_id': '1234'},
+            {'index_id': '5678'}
+        ]
+    }
+    res = copy_record_index(_doc)
+    assert res=='1234|5678'
+
+    _not_id_doc = {
+        'record_index_list':[{'index_id': None}]
+    }
+    assert copy_record_index(_not_id_doc) == ''
+
+    _none_doc = {}
+    assert copy_record_index(_none_doc) == ''
 
 # def copy_user_group_list(doc, aggregation_data=None):
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_event_builders.py::test_copy_user_group_list -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp

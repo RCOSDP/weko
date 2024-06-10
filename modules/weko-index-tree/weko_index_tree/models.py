@@ -239,6 +239,25 @@ class Index(db.Model, Timestamp):
         query_result = cls.query.filter_by(id=index).one_or_none()
         return query_result
 
+    @classmethod
+    def get_all_by_is_issn(cls):
+        """Get all Indexes issn existing.
+        
+        Returns:
+            all Indexes issn existing.
+        """
+        query_result = cls.query.all()
+        result = []
+        if query_result:
+            for index in query_result:
+                if index.online_issn:
+                    data = {
+                        'id': index.id,
+                        'index_name': index.index_name,
+                        'issn' : index.online_issn
+                    }
+                    result.append(data)
+        return result if result else []
 
 class IndexStyle(db.Model, Timestamp):
     """Index style."""

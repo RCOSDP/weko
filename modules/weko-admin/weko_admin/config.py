@@ -137,6 +137,10 @@ WEKO_ADMIN_CACHE_PREFIX = 'admin_cache_{name}_{user_id}'
 WEKO_ADMIN_OUTPUT_FORMAT = 'tsv'
 """Output file format."""
 
+WEKO_ADMIN_SITELICENSE_REPORT_INTERFACE_NAME = 'WEKO3 v0.9.26_hiroba'
+
+WEKO_ADMIN_SITELICENSE_REPORT_REPOSYTORY_NAME = WEKO_ADMIN_SITELICENSE_REPORT_INTERFACE_NAME
+
 WEKO_ADMIN_REPORT_TYPES = [
     'file_download',
     'file_preview',
@@ -203,6 +207,36 @@ WEKO_ADMIN_REPORT_COLS = {
 }
 """Columns for the report .csv files"""
 
+WEKO_ADMIN_SITELICENSE_REPORT_COLS = {
+    'file_download':[
+        '', _('SetSpec'), _('Interface name'), _('ONLINE ISSN')
+    ],
+    'file_preview':[
+        '', _('SetSpec'), _('Interface name'), _('ONLINE ISSN')
+    ],
+    'search':[
+        '',_('Interface name')
+    ],
+    'record_view':[
+        '', _('SetSpec'), _('Interface name'), _('ONLINE ISSN')
+    ]
+}
+
+WEKO_ADMIN_SITELICENSE_REPORT_COUNT_COLS = {
+    'file_download':[
+         _('FileDownload')
+    ],
+    'file_preview':[
+        _('FileView')
+    ],
+    'search':[
+        _('Searches')
+    ],
+    'record_view':[
+        _('DetailView'),  _('FileDownload')
+    ]
+}
+
 WEKO_ADMIN_REPORT_FILE_NAMES = {
     'file_download': 'FileDownload_',
     'file_preview': 'FilePreview_',
@@ -214,6 +248,14 @@ WEKO_ADMIN_REPORT_FILE_NAMES = {
     'user_roles': 'UserAffiliate_',
     'site_access': 'SiteAccess_',
     'top_page_access': 'TopPageAccess_',
+}
+"""File names for the report .csv files"""
+
+WEKO_ADMIN_SITELICENSE_REPORT_FILE_NAMES = {
+    'file_download': 'FileDownloadReport',
+    'file_preview': 'FileViewReport',
+    'record_view': 'UsagestatisticsReport',
+    'search': 'SearchReport'
 }
 """File names for the report .csv files"""
 
