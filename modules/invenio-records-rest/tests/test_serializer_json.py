@@ -120,8 +120,7 @@ def test_serialize(db):
         'item_type_id':'1',
         'publish_status':'0',
         'item_1717569423159': {'attribute_name': 'Title','attribute_value_mlt': [{'subitem_title': 'hide作成者2','subitem_title_language': 'ja'}]},
-        'item_1717569433997': {'attribute_name': '資源タイプ','attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794','resourcetype': 'conference paper'}]},
-        'item_1717639687882': {'attribute_name':'URL','attribute_value_mlt':[{'subitem_link_url':'https://test.com','subitem_link_language':'en'}]},
+        'item_1717569452044': {'attribute_name':'作成者','attribute_type':'creator','attribute_value_mlt':[{'givenNames': [{'givenName': '太郎','givenNameLang': 'ja'}],'familyNames': [{'familyName': 'テスト','familyNameLang': 'ja'}],'creatorNames': [{}],'nameIdentifiers': [{'nameIdentifier': '1','nameIdentifierScheme': 'WEKO'}]},{'givenNames': [{'givenName': '次郎','givenNameLang': 'ja'},{'givenName': 'ziro','givenNameLang': 'en'}],'familyNames': [{'familyName': 'テスト','familyNameLang': 'ja'},{'familyName': 'test','familyNameLang': 'en'}],'creatorNames': [{},{}],'nameIdentifiers': [{'nameIdentifier': '2','nameIdentifierScheme': 'WEKO'}]}]},        'item_1717639687882': {'attribute_name':'URL','attribute_value_mlt':[{'subitem_link_url':'https://test.com','subitem_link_language':'en'}]},
         'relation_version_is_last': True
     }
     hide_item_type(db)
@@ -228,9 +227,10 @@ def test_serialize_search(app, db):
         assert data['aggregations'] == {}
         assert 'links' in data
         res_metadata = data['hits']['hits'][0]
-        assert 'creator' not in res_metadata['metadata']
-        assert 'item_1717569452044' not in res_metadata['metadata']['_item_metadata']
+        assert res_metadata['metadata']['_item_metadata']['item_1717569452044']['attribute_value_mlt'][0]['creatorNames'][0] == {}
+        assert 'creatorName' not in res_metadata['metadata']['creator']
         assert 'subitem_link_text' not in res_metadata['metadata']['_item_metadata']['item_1717639687882']['attribute_value_mlt'][0]
+        assert 'type' not in res_metadata['metadata']
         assert res_metadata['metadata']['feedback_mail_list'] == []
         
         # has permission
@@ -245,9 +245,10 @@ def test_serialize_search(app, db):
         assert data['aggregations'] == {}
         assert 'links' in data
         res_metadata = data['hits']['hits'][0]
-        assert 'creator' in res_metadata['metadata']
-        assert 'item_1717569452044' in res_metadata['metadata']['_item_metadata']
+        assert res_metadata['metadata']['_item_metadata']['item_1717569452044']['attribute_value_mlt'][0]['creatorNames'][0] != {}
+        assert 'creatorName' in res_metadata['metadata']['creator']
         assert 'subitem_link_text' in res_metadata['metadata']['_item_metadata']['item_1717639687882']['attribute_value_mlt'][0]
+        assert 'type' in res_metadata['metadata']
         assert res_metadata['metadata']['feedback_mail_list'] == []
 
 
