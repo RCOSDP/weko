@@ -1606,10 +1606,8 @@ class Indexes(object):
         :param online_issn: Online ISSN
         """
         Index.query.filter_by(parent=index_id). \
-            update({Index.online_issn: online_issn},
-                synchronize_session='fetch')
-        Index.query.filter_by(parent=index_id). \
-            update({Index.biblio_flag: biblio_flag},
+            update({Index.online_issn: online_issn,
+                    Index.biblio_flag: biblio_flag},
                 synchronize_session='fetch')
         for index in Index.query.filter_by(parent=index_id).all():
             cls.set_online_issn_resc(index.id, online_issn, biblio_flag)
