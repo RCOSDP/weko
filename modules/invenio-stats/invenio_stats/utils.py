@@ -858,11 +858,12 @@ class QuerySitelicenseReportsHelper(object):
                                         if k == "record_view":
                                             path = Indexes.get_full_path(path)
                                         set_index = path.replace('/', ':')
-                                        if i['site_license_name'] in result:
-                                            result[i['site_license_name']][k][set_index][str(date)] += i['count']
-                                        else:
-                                            result[i['site_license_name']] = pickle.loads(pickle.dumps(result_format, -1))
-                                            result[i['site_license_name']][k][set_index][str(date)] += i['count']
+                                        if result[i['site_license_name']][k].get(set_index):
+                                            if i['site_license_name'] in result:
+                                                result[i['site_license_name']][k][set_index][str(date)] += i['count']
+                                            else:
+                                                result[i['site_license_name']] = pickle.loads(pickle.dumps(result_format, -1))
+                                                result[i['site_license_name']][k][set_index][str(date)] += i['count']
                                         if not k == 'record_view':
                                             for key in result[i['site_license_name']][k]['all_journals'].keys():
                                                 if key == date:
