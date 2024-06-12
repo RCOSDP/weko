@@ -1096,11 +1096,12 @@ class FeedbackMail:
         for author_id in list_author_id:
             if not author_id:
                 continue
-            email = Authors.get_first_email_by_id(author_id)
-            new_data = dict()
-            new_data['author_id'] = author_id
-            new_data['email'] = email
-            list_data.append(new_data)
+            emails = Authors.get_emails_by_id(author_id)
+            for e in emails:
+                new_data = dict()
+                new_data['author_id'] = author_id
+                new_data['email'] = e
+                list_data.append(new_data)
         if list_manual_mail:
             for mail in list_manual_mail:
                 new_data = dict()
@@ -1174,11 +1175,11 @@ class FeedbackMail:
         """
         if not isinstance(data, list):
             return None
-        result = ''
+        result = set()
         for item in data:
             if item.get(keyword):
-                result = result + ',' + item.get(keyword)
-        return result[1:]
+                result.add(str(item.get(keyword)))
+        return ','.join(list(result))
 
     @classmethod
     def get_list_manual_email(cls, data):
