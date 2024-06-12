@@ -23,6 +23,7 @@
 
 """Tests for user profile views."""
 
+import pytest
 from flask import url_for, json,make_response, current_app, g, jsonify
 from mock import patch
 from flask_breadcrumbs import current_breadcrumbs
@@ -340,13 +341,14 @@ def test_userprofile(db,users,user_profiles):
 
 # def get_profile_info():
 # .tox/c1/bin/pytest --cov=weko_user_profiles tests/test_views.py::test_get_profile_info -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-user-profiles/.tox/c1/tmp
-def test_get_profile_info(client,app,admin_app,register_bp,users,mocker):
+def test_get_profile_info(client,app,admin_app,register_bp,users,mocker,user_profiles):
     with patch("sqlalchemy.orm.scoping.scoped_session.remove", return_value=None):
         url = url_for("weko_user_profiles_api_init.get_profile_info")
 
         res = client.get(url)
         assert json.loads(res.data) == {"positions":"","results":"","error":"'AnonymousUser' object has no attribute 'id'"}
 
+        current_app.config['WEKO_USERPROFILES_POSITION_LIST'] = [('', ''), ('Professor', 'Professor')]
         with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
             profile_info = {
                 "subitem_fullname":"test taro",
@@ -365,7 +367,7 @@ def test_get_profile_info(client,app,admin_app,register_bp,users,mocker):
             }
             test = {
                 "results":profile_info,
-                "positions":WEKO_USERPROFILES_POSITION_LIST,
+                "positions":current_app.config["WEKO_USERPROFILES_POSITION_LIST"],
                 "error":""
             }
             mocker.patch("weko_user_profiles.views.get_user_profile_info",return_value=profile_info)
@@ -382,6 +384,8 @@ def test_profile(client,register_bp,users,mocker):
         # no login
         res = client.get(url)
         assert res.status_code == 302
+        user = User.query.filter_by(email=users[0]["email"]).first()
+        mocker.patch("invenio_accounts.models.User.get_id", return_value=users[0]["id"])
         login_user_via_session(client=client,email=users[0]["email"])
 
         mocker.patch("weko_user_profiles.views.profile_form_factory")

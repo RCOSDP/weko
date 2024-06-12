@@ -90,3 +90,12 @@ msgstr ""
 msgid "Send"
 msgstr ""
 
+# Mail template genre table
+msgid "Notification of secret URL provision"
+msgstr ""
+
+msgid "Guidance to the application form"
+msgstr ""
+
+msgid "Others"
+msgstr ""

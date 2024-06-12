@@ -941,7 +941,7 @@ def make_record(db, indexer, i, filepath, filename, mimetype):
             "sets": ["{}".format((i % 2) + 1)],
         },
         "path": ["{}".format((i % 2) + 1)],
-        "owner": "1",
+        "owner": 1,
         "recid": "{}".format(i),
         "title": [
             "ja_conference paperITEM00000009(public_open_access_open_access_simple)"
@@ -959,7 +959,7 @@ def make_record(db, indexer, i, filepath, filename, mimetype):
         "item_type_id": "1",
         "publish_date": "2021-08-06",
         "publish_status": "0",
-        "weko_shared_id": -1,
+        "weko_shared_ids": [],
         "item_1617186331708": {
             "attribute_name": "Title",
             "attribute_value_mlt": [
@@ -1672,7 +1672,7 @@ def make_record(db, indexer, i, filepath, filename, mimetype):
         "id": "{}".format(i),
         "pid": {"type": "recid", "value": "{}".format(i), "revision_id": 0},
         "path": ["{}".format((i % 2) + 1)],
-        "owner": "1",
+        "owner": 1,
         "title": "ja_conference paperITEM00000009(public_open_access_open_access_simple)",
         "owners": [1],
         "status": "draft",

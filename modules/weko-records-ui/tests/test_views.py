@@ -2,24 +2,14 @@ from unittest.mock import MagicMock
 import uuid
 import pytest
 import io
-from flask import Flask, json, jsonify, session, url_for ,make_response
-from flask_security.utils import login_user
+from flask import json, url_for ,make_response
 from invenio_accounts.testutils import login_user_via_session
-from invenio_files_rest.models import ObjectVersion
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from mock import patch
 from lxml import etree
 from weko_deposit.api import WekoRecord
-from werkzeug.exceptions import NotFound, InternalServerError ,Forbidden
-from sqlalchemy.orm.exc import MultipleResultsFound
-from jinja2.exceptions import TemplatesNotFound
+from werkzeug.exceptions import NotFound ,Forbidden
 from weko_workflow.models import (
-    Action,
-    ActionStatus,
-    ActionStatusPolicy,
-    Activity,
-    FlowAction,
-    FlowDefine,
     WorkFlow,
 )
 from weko_records_ui.models import PDFCoverPageSettings, FilePermission
@@ -32,26 +22,20 @@ from weko_records_ui.views import (
     get_license_icon,
     json_string_escape,
     pid_value_version,
-    publish,
-    restore,
     check_file_permission,
     record_from_pid,
     default_view_method,
     url_to_link,
     xml_string_escape,
     escape_str,
-    init_permission,
     file_version_update,
-    set_pdfcoverpage_header,
-    parent_view_method,
-    doi_ish_view_method,
     check_file_permission_period,
     get_file_permission,
     check_content_file_clickable,
     get_usage_workflow,
+    get_item_usage_workflow,
     get_workflow_detail,
     preview_able,
-    get_uri,
 )
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -430,16 +414,43 @@ def test_get_usage_workflow(app, users, workflows):
         res = get_usage_workflow(_file_json)
         assert res=="3"
 
+# def get_item_usage_workflow(record)
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_get_item_usage_workflow -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_get_item_usage_workflow(records):
+    indexer, results = records
+    record = results[0]["record"]
+    provide_list = {"workflow":"1", "terms":"term_free", "termsDescription":"利用規約自由入力"}
+    with patch("weko_records_ui.views.get_item_provide_list",return_value=provide_list):
+        class Mocklocale:
+            id = 0
+            def get_language_name(self, bbb):
+                return "Japanese"
+        with patch("weko_records_ui.views.get_locale", return_value = Mocklocale()):
+            terms=["利用規約自由入力",  "Terms of Use Free Input"]
+            with patch("weko_records_ui.views.extract_term_description",return_value =terms):
+                terms, provide= get_item_usage_workflow(record)
+                assert terms == "利用規約自由入力"
+                assert provide == "1"
+
+    provide_list = {"workflow":"1", "terms":"1111111111"}
+    with patch("weko_records_ui.views.get_item_provide_list",return_value=provide_list):
+        with patch("weko_records_ui.views.get_locale") as pi:
+            terms=["",  "Terms of Use Free Input"]
+            with patch("weko_records_ui.views.extract_term_description",return_value =terms):
+                pi.get_language_name = MagicMock()
+                terms, provide= get_item_usage_workflow(record)
+                assert terms == "Terms of Use Free Input"
+                assert provide == "1" 
 
 # def get_workflow_detail(workflow_id):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_get_workflow_detail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_get_workflow_detail(app,workflows):
     wf = workflows['workflow']
-    ret = get_workflow_detail(wf.id)
-    assert isinstance(wf,WorkFlow)
+    ret,isterm = get_workflow_detail(wf.id)
+    assert isinstance(ret,WorkFlow) and isinstance(isterm,bool)
 
     with pytest.raises(NotFound):
-        ret = get_workflow_detail(0)
+        ret,isterm = get_workflow_detail(0)
     
 
 # def default_view_method(pid, record, filename=None, template=None, **kwargs):
@@ -527,7 +538,44 @@ def test_default_view_method(app, records, itemtypes, indexstyle ,users):
                         index.index_name_english ="index"
                         with patch('weko_records_ui.views.Indexes.get_index',return_value=index):
                             assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
-                   
+
+                        #test No.6(W2023-22 3-5)
+                        restricted_errorMsg = {"content_file_download": {"expiration_date": 30,"expiration_date_unlimited_chk": False,"download_limit": 10,"download_limit_unlimited_chk": False,},"usage_report_workflow_access": {"expiration_date_access": 500,"expiration_date_access_unlimited_chk": False,},"terms_and_conditions": [],"error_msg":{"key" : "","content" : {"ja" : {"content" : "このデータは利用できません（権限がないため）。"},"en":{"content" : "This data is not available for this user"}}}}
+                        with patch('weko_admin.utils.get_restricted_access' ,return_value = restricted_errorMsg):
+                            assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
+                        
+                        with patch('weko_records_ui.views.AdminSettings.get'
+                                , side_effect=lambda name , dict_to_object : {'password_enable' : True,"terms_and_conditions":""} if name == 'restricted_access' else None):
+                            assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
+
+
+# def default_view_method(pid, record, filename=None, template=None, **kwargs):
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_default_view_method2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+#     """Display default view.
+#     def _get_rights_title(result, rights_key, rights_values, current_lang, meta_options):
+def test_default_view_method2(app, records, itemtypes, indexstyle ,users,db_community):
+    indexer, results = records
+    record = results[0]["record"]
+    recid = results[0]["recid"]
+    with app.test_request_context("/?file_order=0&community=community&onetime_file_url=/extra_info"):
+        with patch('weko_records_ui.views.check_original_pdf_download_permission', return_value=True):
+            with patch("weko_records_ui.views.get_search_detail_keyword", return_value={}):
+                with patch("weko_records_ui.views.get_index_link_list", return_value=[]):
+                    with patch("weko_records_ui.views.render_template", return_value=make_response()):
+                        
+                        assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
+
+                        with patch('weko_workflow.api.GetCommunity.get_community_by_id',return_value=[]):
+                            with pytest.raises(AttributeError):
+                                default_view_method(recid, record ,'[No FileName]')
+                        
+                        del record["item_1617605131499"]["attribute_value_mlt"][0]["filename"]
+                        with pytest.raises(NotFound) : #404
+                            default_view_method(recid, record ,'helloworld.pdf')
+                        
+                        del record["item_1617605131499"] # files
+                        with pytest.raises(NotFound) : #404
+                            default_view_method(recid, record ,'helloworld.pdf')
 
 
 # def doi_ish_view_method(parent_pid_value=0, version=0):
@@ -968,9 +1016,10 @@ def test_default_view_method_fix35133(app, records, itemtypes, indexstyle,mocker
                         {'name': 'citation_abstract_html_url','data': 'http://TEST_SERVER/records/1'},
                     ]
                 assert kwargs["google_dataset_meta"] == '{"@context": "https://schema.org/", "@type": "Dataset", "citation": ["http://hdl.handle.net/2261/0002005680", "https://repository.dl.itc.u-tokyo.ac.jp/records/2005680"], "creator": [{"@type": "Person", "alternateName": "creator alternative name", "familyName": "creator family name", "givenName": "creator given name", "identifier": "123", "name": "creator name"}], "description": "『史料編纂掛備用寫眞畫像圖畫類目録』（1905年）の「画像」（肖像画模本）の部に著録する資料の架番号の新旧対照表。史料編纂所所蔵肖像画模本データベースおよび『目録』版面画像へのリンク付き。『画像史料解析センター通信』98（2022年10月）に解説記事あり。", "distribution": [{"@type": "DataDownload", "contentUrl": "https://repository.dl.itc.u-tokyo.ac.jp/record/2005680/files/comparison_table_of_preparation_image_catalog.xlsx", "encodingFormat": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/apt.txt", "encodingFormat": "text/plain"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/environment.yml", "encodingFormat": "application/x-yaml"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/postBuild", "encodingFormat": "text/x-shellscript"}], "includedInDataCatalog": {"@type": "DataCatalog", "name": "https://localhost"}, "license": ["CC BY"], "name": "『史料編纂掛備用写真画像図画類目録』画像の部：新旧架番号対照表", "spatialCoverage": [{"@type": "Place", "geo": {"@type": "GeoCoordinates", "latitude": "point latitude test", "longitude": "point longitude test"}}, {"@type": "Place", "geo": {"@type": "GeoShape", "box": "1 3 2 4"}}, "geo location place test"]}' 
+
 # def create_secret_url_and_send_mail(pid:PersistentIdentifier, record:WekoRecord, filename:str, **kwargs) -> str:
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_create_secret_url_and_send_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_create_secret_url_and_send_mail(app,client,db,users,records):
+def test_create_secret_url_and_send_mail(app,client,db,users,records,db_restricted_access_secret,db_mailTemplateGenre,db_mailtemplates):
     app.config['WEKO_WORKFLOW_DATE_FORMAT'] = "%Y-%m-%d"
     indexer, results = records
     record = results[1]
@@ -984,20 +1033,42 @@ def test_create_secret_url_and_send_mail(app,client,db,users,records):
     with patch('weko_records_ui.views._get_show_secret_url_button',return_value = True):
         with patch('weko_records_ui.views.process_send_mail',return_value = True):
             # with app.test_request_context():
+            #W2023-22-2 TestNo.7
             res = client.get(secret_file_url)
             assert res.status_code == 405
             
+            #W2023-22-2 TestNo.4
             res = client.post(secret_file_url ,data=json.dumps({}), content_type='application/json')
             assert res.status_code == 200
         with patch('weko_records_ui.views.process_send_mail',return_value = False):
             with patch("flask.templating._render", return_value=""):
                 res = client.post(secret_file_url ,data=json.dumps({}), content_type='application/json')
                 assert res.status_code == 500
+
+    #W2023-22-2 TestNo.6
     with patch('weko_records_ui.views._get_show_secret_url_button',return_value = False):
         with patch('weko_records_ui.views.process_send_mail',return_value = True):
             with patch("flask.templating._render", return_value=""):
                 res = client.post(secret_file_url ,data=json.dumps({}), content_type='application/json')
                 assert res.status_code == 403
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_create_secret_url_and_send_mail_2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_create_secret_url_and_send_mail_2(app,client,db,users,records,db_restricted_access_secret):
+    indexer, results = records
+    record = results[1]
+            
+    # 79
+    id = 1 #repoadmin
+    secret_file_url = url_for("invenio_records_ui.recid_secret_url"
+                                ,pid_value=results[1]["recid"].pid_value
+                                ,filename=results[1]["filename"])
+    login_user_via_session(client=client, user=users[id]["obj"] ,email=users[id]["email"])
+    with patch('weko_records_ui.views._get_show_secret_url_button',return_value = True):
+        #W2023-22-2 TestNo.5
+            with patch('weko_records_ui.views.process_send_mail',return_value = False):
+                with patch("flask.templating._render", return_value=""):
+                    res = client.post(secret_file_url ,data=json.dumps({}), content_type='application/json')
+                    assert res.status_code == 500
 
 # def create_secret_url_and_send_mail(pid:PersistentIdentifier, record:WekoRecord, filename:str, **kwargs) -> str:
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test__get_show_secret_url_button -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -1005,23 +1076,23 @@ def test_create_secret_url_and_send_mail(app,client,db,users,records):
     "id, is_show",
     [
         (0, False), #contributor
-        (1, False), #repoadmin
-        (2, False), #sysadmin
+        (1, True), #repoadmin
+        (2, True), #sysadmin
         (3, False), #comadmin
         (4, False), #generaluser
-        (5, False), #originalroleuser (owner)
-        (6, False), #originalroleuser2 (repoadmin)
+        (5, True), #originalroleuser (owner)
+        (6, True), #originalroleuser2 (repoadmin)
         (7, False), #user (weko_shared owner)
     ],
 )
-def test__get_show_secret_url_button(users,records,id ,is_show):
+def test__get_show_secret_url_button(users, records, db_restricted_access_secret, id, is_show):
     indexer, results = records
     # 80
     i = 0
     role = ["open_access" , "open_no" ,"open_date"]
     for record in results:
         record["record"]['owner'] = users[5]["id"]
-        record["record"]['weko_shared_id'] = users[7]["id"]
+        record["record"]['weko_shared_ids'] = [users[7]["id"]]
         file_data = record["record"].get_file_data()
         if len(file_data) > 0:
             file_data[0].update({'accessrole':role[i%3]})
@@ -1054,7 +1125,7 @@ def test__get_show_secret_url_button2(users,records ,id,is_show):
     role = ["open_access" , "open_no" ,"open_date"]
     for record in results:
         record["record"]['owner'] = users[5]["id"]
-        record["record"]['weko_shared_id'] = users[7]["id"]
+        record["record"]['weko_shared_ids'] = [users[7]["id"]]
         file_data = record["record"].get_file_data()
         if len(file_data) > 0:
             file_data[0].update({'accessrole':role[i%3]})
@@ -1075,17 +1146,17 @@ def test__get_show_secret_url_button2(users,records ,id,is_show):
 @pytest.mark.parametrize(
     "id, is_show",
     [
-        (1, False), #repoadmin
+        (1, True), #repoadmin
     ],
 )
-def test__get_show_secret_url_button3(users,records,id,is_show):
+def test__get_show_secret_url_button3(users, records, db_restricted_access_secret, id, is_show):
     indexer, results = records
     # 80
     i = 0
     role = ["open_access" , "open_no" ,"open_date"]
     for record in results:
         record["record"]['owner'] = users[5]["id"]
-        record["record"]['weko_shared_id'] = users[7]["id"]
+        record["record"]['weko_shared_ids'] = [users[7]["id"]]
         file_data = record["record"].get_file_data()
         if len(file_data) > 0:
             file_data[0].update({'accessrole':role[i%3]})

@@ -179,7 +179,7 @@ def test_get_issue_date_RecordSchemaCSLJSON(i18n_app,users):
             'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2023-04-13', 'attribute_name_i18n': 'PubDate'}, 
             '_buckets': {'deposit': 'c7ab74b7-b0ce-4a1a-a186-e13fe2e33cc3'}, 
             '_deposit': {'id': '16', 'pid': {'type': 'depid', 'value': '16', 'revision_id': 0}, 'owner': '1', 'owners': [1], 'status': 'published', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}}, 
-            'item_title': 'test bug item', 'author_link': [], 'item_type_id': '15', 'publish_date': '2023-04-13', 'control_number': '16', 'publish_status': '0', 'weko_shared_id': -1, 
+            'item_title': 'test bug item', 'author_link': [], 'item_type_id': '15', 'publish_date': '2023-04-13', 'control_number': '16', 'publish_status': '0', 'weko_shared_ids': [],
             'item_1617186331708': {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'test bug item', 'subitem_1551255648112': 'en'}]},
             'item_1617187056579': {
                 'attribute_name': 'Bibliographic Information', 

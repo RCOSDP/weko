@@ -67,6 +67,9 @@ OPEN_DATE_DISPLAY_VALUE = '1'
 OPEN_DATE_HIDE_VALUE = '0'
 # setting the release date if display
 
+DISPLAY_REQUEST_FORM = False
+# Default setting whether to display the request form
+
 # CSL Citation Formatter
 # ======================
 #: Styles Endpoint for CSL
@@ -182,6 +185,7 @@ RECORDS_UI_ENDPOINTS = dict(
         route='/record/<pid_value>/file/onetime/<string:filename>',
         view_imp='weko_records_ui.fd.file_download_onetime',
         record_class='weko_deposit.api:WekoRecord',
+        methods=['GET','POST'],
     ),
     recid_secret_url=dict(
         pid_type='recid',
@@ -212,6 +216,8 @@ WEKO_RECORDS_UI_SECRET_DOWNLOAD_PATTERN = \
 """Secret URL download pattern."""
 
 WEKO_RECORDS_UI_MAIL_TEMPLATE_SECRET_URL = "email_pattern_send_secret_url.tpl"
+
+WEKO_RECORDS_UI_MAIL_TEMPLATE_SECRET_GENRE_ID = 1
 
 RECORDS_UI_EXPORT_FORMATS = {
     'recid': {
@@ -672,6 +678,18 @@ WEKO_RECORDS_UI_DISPLAY_ITEM_TYPE = True
 """ Display item type name on item detail. """
 
 WEKO_RECORDS_UI_REST_ENDPOINTS = {
+    'need_restricted_access': {
+        'route': '/<string:version>/records/<int:pid_value>/need-restricted-access',
+        'default_media_type': 'application/json',
+    },
+    'get_file_terms': {
+        'route': '/<string:version>/records/<int:pid_value>/files/<string:file_name>/terms',
+        'default_media_type': 'application/json',
+    },
+    'file_application': {
+        'route': '/<string:version>/records/<int:pid_value>/files/<string:file_name>/application',
+        'default_media_type': 'application/json',
+    },
     'send_request_mail': {
         'route': '/<string:version>/records/<int:pid_value>/request-mail',
         'default_media_type': 'application/json',
@@ -683,7 +701,7 @@ WEKO_RECORDS_UI_REST_ENDPOINTS = {
     'validate_captcha_answer': {
         'route': '/<string:version>/captcha/validate',
         'default_media_type': 'application/json',
-    }
+    },
 }
 
 WEKO_RECORDS_UI_API_LIMIT_RATE_DEFAULT = ['100 per minute']

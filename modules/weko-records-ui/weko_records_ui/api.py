@@ -5,10 +5,12 @@ from email_validator import validate_email
 from flask import current_app
 from flask_mail import Message
 import hashlib
+from invenio_db import db
 from invenio_mail.admin import _load_mail_cfg_from_db, _set_flask_mail_cfg
 
 
 from weko_records.api import RequestMailList
+from weko_records.models import ItemApplication
 from weko_records_ui.captcha import get_captcha_info
 from weko_records_ui.errors import AuthenticationRequiredError, ContentsNotFoundError, InternalServerError, InvalidCaptchaError, InvalidEmailError, RequiredItemNotExistError
 from weko_redis.redis import RedisConnection
@@ -41,7 +43,6 @@ def send_request_mail(item_id, mail_info):
     msg_message = mail_info.get('message')
     if not msg_sender or not msg_subject or not msg_message:
         raise RequiredItemNotExistError()
-
     msg_body = msg_sender + current_app.config.get("WEKO_RECORDS_UI_REQUEST_MESSAGE") + mail_info['message']
 
     # Validate request mail sender
@@ -79,7 +80,6 @@ def send_request_mail(item_id, mail_info):
     }
     return True, res_json
 
-
 def validate_captcha_answer(captcha_answer):
 
     expiration_seconds = current_app.config.get('WEKO_RECORDS_UI_CAPTCHA_EXPIRATION_SECONDS', 900)
@@ -112,7 +112,6 @@ def validate_captcha_answer(captcha_answer):
     }
     return True, res_json
 
-
 def create_captcha_image():
 
     expiration_seconds = current_app.config.get('WEKO_RECORDS_UI_CAPTCHA_EXPIRATION_SECONDS', 900)
@@ -144,3 +143,20 @@ def create_captcha_image():
         'ttl': ttl
     }
     return True, res_json
+
+def get_item_provide_list(item_id):
+    if not item_id:
+        return {}
+
+    item_application_info = None
+    try:
+        with db.session.no_autoflush:
+            item_application_info = db.session.query(ItemApplication) \
+                .filter_by(item_id=item_id).first()
+    except Exception:
+        current_app.logger.exception('Item provide list query failed.')
+
+    if item_application_info:
+        return item_application_info.item_application
+    else:
+        return {}

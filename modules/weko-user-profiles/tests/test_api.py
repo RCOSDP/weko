@@ -30,6 +30,10 @@ from mock import patch
 from flask import url_for,g,current_app
 from flask_login.utils import login_user
 
+# def test_logged_out_user_has_anonymous_profile(app):
+#     """Anonymoususer should have AnonymousUserProfile."""
+#     with app.test_request_context():
+#         profile_url = url_for('invenio_userprofiles.profile')
 
 from weko_user_profiles.api import _get_current_userprofile, localize_time
 from weko_user_profiles.models import AnonymousUserProfile,UserProfile

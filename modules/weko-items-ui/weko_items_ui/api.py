@@ -16,7 +16,6 @@
 """API for item login."""
 
 from flask import current_app, json, session, url_for
-from weko_accounts.utils import login_required_customize
 from weko_records.api import ItemTypes
 from weko_records.utils import find_items
 from weko_workflow.api import WorkActivity
@@ -32,13 +31,17 @@ def item_login(item_type_id: int = 0):
 
     Returns:
         _type_: _description_
-    """    
+    """
     activity_id = None
     allow_multi_thumbnail = False
     endpoints = {}
     files = []
     files_thumbnail = []
-    item_save_uri = url_for("weko_items_ui.iframe_save_model")
+    item_save_uri = ""
+    try:
+        item_save_uri = url_for("weko_items_ui.iframe_save_model")
+    except:
+        pass
     json_schema = ""
     need_billing_file = False
     need_file = False
