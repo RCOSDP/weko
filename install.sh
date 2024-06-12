@@ -16,6 +16,8 @@ docker-compose exec postgresql psql -U invenio -d invenio -f /tmp/indextree.sql
 docker-compose run --rm web invenio workflow init action_status,Action
 docker cp scripts/demo/defaultworkflow.sql $(docker-compose ps -q postgresql):/tmp/defaultworkflow.sql
 docker-compose exec postgresql psql -U invenio -d invenio -f /tmp/defaultworkflow.sql
+docker cp scripts/demo/doi_identifier.sql $(docker-compose ps -q postgresql):/tmp/doi_identifier.sql
+docker-compose exec postgresql psql -U invenio -d invenio -f /tmp/doi_identifier.sql
 # docker cp scripts/demo/resticted_access.sql $(docker-compose ps -q postgresql):/tmp/resticted_access.sql
 # docker-compose exec postgresql psql -U invenio -d invenio -f /tmp/resticted_access.sql
 #docker-compose run --rm web invenio workflow init gakuninrdm_data
