@@ -22,14 +22,29 @@
                         <li class="list-group-item {{ form.fieldHtmlClass }}"
                             ng-class="{'deposit-inline': form.inline}"
                             ng-repeat="item in modelArray track by $index">
-                            <div class="close-container" ng-class="{'clear-form': !form.inline}">
-                                <button ng-hide="form.readonly || form.remove === null"
-                                        ng-click="deleteFromArray($index)"
-                                        ng-disabled="form.schema.minItems >= modelArray.length"
-                                        style="position: relative; z-index: 20;"
-                                        type="button" class="close pull-right">
-                                    <span aria-hidden="true">&times;</span><span class="sr-only">Close</span>
-                                </button>
+                            <div ng-controller="FileNameCheckCtrl" ng-if="form.schema.items.properties.filename">
+                                <div class="close-container" ng-class="{'clear-form': !form.inline}">
+                                    <button ng-hide="form.readonly || form.remove === null"
+                                            ng-click="deleteFromArrayFile($index, modelArray)"
+                                            ng-disabled="form.schema.minItems >= modelArray.length"
+                                            style="position: relative; z-index: 20;"
+                                            type="button" class="close pull-right"
+                                            >
+                                        <span aria-hidden="true">&times;</span><span class="sr-only">Close</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div ng-if="!form.schema.items.properties.filename">
+                                <div class="close-container" ng-class="{'clear-form': !form.inline}">
+                                    <button ng-hide="form.readonly || form.remove === null"
+                                            ng-click="deleteFromArray($index)"
+                                            ng-disabled="form.schema.minItems >= modelArray.length"
+                                            style="position: relative; z-index: 20;"
+                                            type="button" class="close pull-right"
+                                            >
+                                        <span aria-hidden="true">&times;</span><span class="sr-only">Close</span>
+                                    </button>
+                                </div>
                             </div>
                             <sf-decorator ng-init="arrayIndex = $index" form="copyWithIndex($index)"></sf-decorator>
                         </li>
