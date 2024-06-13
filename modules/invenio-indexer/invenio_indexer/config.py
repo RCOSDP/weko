@@ -58,3 +58,5 @@ INDEXER_RECORD_TO_INDEX = "invenio_indexer.utils.default_record_to_index"
 
 INDEXER_BEFORE_INDEX_HOOKS = []
 """List of automatically connected hooks (function or importable string)."""
+
+INDEXER_MAX_BODY_SIZE = 62914560
