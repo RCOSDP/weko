@@ -1426,7 +1426,7 @@ $(document).ready(function () {
       //Show message changed properties.
       if(changedProperties.length > 0){
         let message = '<div class="alert alert-info alert-dismissable">' +
-        '<button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>'
+        '<button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>' +
         '<p>' + changedProperties.join('</p><p>') + '</p></div>';
         $('section.content-header').prepend(message);
       }
