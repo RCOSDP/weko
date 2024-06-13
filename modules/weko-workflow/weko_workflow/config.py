@@ -425,10 +425,10 @@ WEKO_WORKFLOW_APPROVE_USAGE_REPORT = ""
 WEKO_WORKFLOW_APPROVE_OUTPUT_REGISTRATION = ""
 """Approve Output Registration mail template's filename"""
 
-WEKO_WORKFLOW_ACCESS_ACTIVITY_URL = ""
+WEKO_WORKFLOW_ACCESS_ACTIVITY_URL = "1"
 """Template access the URL"""
 
-WEKO_WORKFLOW_USAGE_REPORT_ACTIVITY_URL = ""
+WEKO_WORKFLOW_USAGE_REPORT_ACTIVITY_URL = "6"
 """Template access the URL"""
 
 WEKO_WORKFLOW_DATE_FORMAT = "%Y-%m-%d"
@@ -456,16 +456,7 @@ WEKO_WORKFLOW_FILTER_PARAMS = [
 WEKO_WORKFLOW_ACTIVITY_TOKEN_PATTERN = "activity={} file_name={} date={} email={}"
 """Token pattern."""
 
-WEKO_WORKFLOW_APPROVE_DONE = 'email_pattern_approval_done.tpl'
-"""Mail template for Done Approval"""
-
-WEKO_WORKFLOW_APPROVE_REJECTED = 'email_pattern_approval_rejected.tpl'
-"""Mail template for Rejected Approval"""
-
-WEKO_WORKFLOW_REQUEST_APPROVAL = 'email_pattern_request_approval.tpl'
-"""Mail template for Requested Approval"""
-
-WEKO_WORKFLOW_REQUEST_FOR_REGISTER_USAGE_REPORT = 'email_pattern_request_for_register_usage_report.tpl'
+WEKO_WORKFLOW_REQUEST_FOR_REGISTER_USAGE_REPORT = "7"
 """Mail template for Request for register Data Usage Report"""
 
 WEKO_WORKFLOW_USAGE_APPLICATION_ITEM_TYPES_LIST = [31001, 31002, 31004, 31005, 31006, 31007, 31008]

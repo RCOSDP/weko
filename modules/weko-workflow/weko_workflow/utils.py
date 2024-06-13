@@ -2248,7 +2248,7 @@ def send_mail_reminder(mail_info):
     """
     subject, body = get_mail_data(mail_info.get('mail_id'))
     if not body:
-        raise ValueError('Cannot get email template')
+        raise ValueError('Cannot get email body')
     body = replace_characters(mail_info, body)
     if not send_mail(subject, mail_info.get('mail_address'), body):
         raise ValueError('Cannot send mail')
@@ -2768,7 +2768,7 @@ def process_send_reminder_mail(activity_detail, mail_id):
 
     if update_user.get('fullname') != '':
         mail_info['fullname'] = update_user.get('fullname')
-    mail_info['template'] = mail_template
+    mail_info['mail_id'] = mail_id
     try:
         send_mail_reminder(mail_info)
     except ValueError as val:
@@ -3272,7 +3272,7 @@ def send_mail_url_guest_user(mail_info: dict) -> bool:
 
     :mail_info: object
     """
-    subject, body = get_mail_data(mail_info.get('template'))
+    subject, body = get_mail_data(mail_info.get('mail_id'))
     if not body:
         return False
     body = replace_characters(mail_info, body)
@@ -3384,12 +3384,16 @@ def send_usage_application_mail_for_guest_user(guest_mail: str, temp_url: str, d
     site_name_en, site_name_ja = get_site_info_name()
     site_mail = get_default_mail_sender()
     site_url = current_app.config['THEME_SITEURL']
+    institution_name_ja = current_app.config['THEME_INSTITUTION_NAME']['ja']
+    institution_name_en = current_app.config['THEME_INSTITUTION_NAME']['en']
     mail_info = {
-        'template': current_app.config.get("WEKO_WORKFLOW_ACCESS_ACTIVITY_URL"),
+        'mail_id': current_app.config.get("WEKO_WORKFLOW_ACCESS_ACTIVITY_URL"),
         'mail_address': guest_mail,
         'url_guest_user': temp_url,
         "restricted_site_name_ja": site_name_ja,
         "restricted_site_name_en": site_name_en,
+        "restricted_institution_name_ja": institution_name_ja,
+        "restricted_institution_name_en": institution_name_en,
         "restricted_site_mail": site_mail,
         "restricted_site_url": site_url,
     }
