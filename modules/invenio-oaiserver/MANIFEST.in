@@ -33,3 +33,7 @@ recursive-include tests *.py
 recursive-include tests *.xml
 recursive-include .github/workflows *.yml
 include .git-blame-ignore-revs
+
+# added by check-manifest
+include *.properties
+include tox.ini
