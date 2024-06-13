@@ -2,30 +2,29 @@
 #
 # This file is part of Invenio.
 # Copyright (C) 2015-2018 CERN.
+# Copyright (C) 2022 Graz University of Technology.
 #
 # Invenio is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
 
 """OAI-PMH 2.0 server."""
 
-from __future__ import absolute_import
-
-from flask import Blueprint, make_response,current_app
+from flask import Blueprint, make_response
 from invenio_pidstore.errors import PIDDoesNotExistError
 from itsdangerous import BadSignature
-from invenio_db import db
 from lxml import etree
 from marshmallow.exceptions import ValidationError
 from webargs.flaskparser import use_args
 
 from .. import response as xml
+from ..errors import OAINoRecordsMatchError
 from ..verbs import make_request_validator
 
 blueprint = Blueprint(
-    'invenio_oaiserver',
+    "invenio_oaiserver",
     __name__,
-    static_folder='../static',
-    template_folder='../templates',
+    static_folder="../static",
+    template_folder="../templates",
 )
 
 
@@ -33,81 +32,87 @@ blueprint = Blueprint(
 @blueprint.errorhandler(422)
 def validation_error(exception):
     """Return formatter validation error."""
-    messages = getattr(exception, 'messages', [])
-    if not messages:
-        messages = getattr(exception, 'data', {'messages': []})['messages']
-
+    messages = getattr(exception, "messages", None)
+    if messages is None:
+        messages = getattr(exception, "data", {"messages": None})["messages"]
 
     def extract_errors():
         """Extract errors from exception."""
         if isinstance(messages, dict):
             for field, message in messages.items():
-                error_code = 'badArgument'
-                if field == 'verb':
-                    error_code = 'badVerb'
-
-                if isinstance(message, list) and field == 'metadataPrefix':
-                    for item in message:
-                        if isinstance(item, dict) \
-                                and item.get('cannotDisseminateFormat'):
-                            error_code = 'cannotDisseminateFormat'
-                            message = item.get(error_code)
-
-                yield error_code, '\n'.join(message)
+                if field == "verb":
+                    yield "badVerb", "\n".join(message)
+                else:
+                    yield "badArgument", "\n".join(message)
         else:
             for field in exception.field_names:
-                if field == 'verb':
-                    yield 'badVerb', '\n'.join(messages)
+                if field == "verb":
+                    yield "badVerb", "\n".join(messages)
                 else:
-                    yield 'badArgument', '\n'.join(messages)
+                    yield "badArgument", "\n".join(messages)
 
             if not exception.field_names:
-                yield 'badArgument', '\n'.join(messages)
+                yield "badArgument", "\n".join(messages)
 
-    return (etree.tostring(xml.error(extract_errors())),
-            422,
-            {'Content-Type': 'text/xml'})
+    return (
+        etree.tostring(xml.error(extract_errors())),
+        422,
+        {"Content-Type": "text/xml"},
+    )
 
 
 @blueprint.errorhandler(PIDDoesNotExistError)
 def pid_error(exception):
     """Handle PID Exceptions."""
-    return (etree.tostring(xml.error([('idDoesNotExist',
-                                       'No matching identifier')])),
-            422,
-            {'Content-Type': 'text/xml'})
+    return (
+        etree.tostring(xml.error([("idDoesNotExist", "No matching identifier")])),
+        422,
+        {"Content-Type": "text/xml"},
+    )
 
 
 @blueprint.errorhandler(BadSignature)
 def resumptiontoken_error(exception):
     """Handle resumption token exceptions."""
-    return (etree.tostring(xml.error([(
-        'badResumptionToken',
-        'The value of the resumptionToken argument is invalid or expired.')
-    ])), 422, {'Content-Type': 'text/xml'})
+    return (
+        etree.tostring(
+            xml.error(
+                [
+                    (
+                        "badResumptionToken",
+                        "The value of the resumptionToken argument is invalid or expired.",
+                    )
+                ]
+            )
+        ),
+        422,
+        {"Content-Type": "text/xml"},
+    )
 
 
-@blueprint.route('/oai', methods=['GET', 'POST'])
+@blueprint.errorhandler(OAINoRecordsMatchError)
+def no_records_error(exception):
+    """Handle no records match Exceptions."""
+    return (
+        etree.tostring(xml.error([("noRecordsMatch", "")])),
+        422,
+        {"Content-Type": "text/xml"},
+    )
+
+
+@blueprint.route("/oai2d", methods=["GET", "POST"])
 @use_args(make_request_validator)
 def response(args):
     """Response endpoint."""
-    e_tree = getattr(xml, args['verb'].lower())(**args)
+    e_tree = getattr(xml, args["verb"].lower())(**args)
 
-    response = make_response(etree.tostring(
-        e_tree,
-        pretty_print=True,
-        xml_declaration=True,
-        encoding='UTF-8'
-    ))
-    response.headers['Content-Type'] = 'text/xml'
+    response = make_response(
+        etree.tostring(
+            e_tree,
+            pretty_print=True,
+            xml_declaration=True,
+            encoding="UTF-8",
+        )
+    )
+    response.headers["Content-Type"] = "text/xml"
     return response
-
-@blueprint.teardown_request
-def dbsession_clean(exception):
-    current_app.logger.debug("invenio_oaiserver dbsession_clean: {}".format(exception))
-    if exception is None:
-        try:
-            db.session.commit()
-        except:
-            db.session.rollback()
-    db.session.remove()

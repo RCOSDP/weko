@@ -25,6 +25,7 @@ var/
 *.egg-info/
 .installed.cfg
 *.egg
+.pytest_cache/
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -43,12 +44,11 @@ htmlcov/
 .coverage.*
 .cache
 nosetests.xml
-#coverage.xml
+coverage.xml
 *,cover
 
 # Translations
 *.mo
-*.pot
 
 # Django stuff:
 *.log
@@ -62,8 +62,7 @@ target/
 # Vim swapfiles
 .*.sw?
 
-# Example app
+# examples
 examples/instance/
+examples/app.db
 
-# Test DB
-tests/test.db

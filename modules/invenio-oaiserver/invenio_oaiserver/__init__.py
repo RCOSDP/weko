@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # This file is part of Invenio.
-# Copyright (C) 2015-2018 CERN.
+# Copyright (C) 2015-2022 CERN.
 #
 # Invenio is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
@@ -15,73 +15,87 @@ OAIServer consists of:
 
 - OAI-PMH 2.0 compatible endpoint.
 - Persistent identifier minters, fetchers and providers.
-- Backend for formatting Elasticsearch results.
+- Backend for formatting Search results.
 
 Initialization
 --------------
 
 .. note::
-   You need to have Elasticsearch and a message queue service (e.g. RabbitMQ)
+   You need to have Search and a message queue service (e.g. RabbitMQ)
    running and available on their default ports at 127.0.0.1.
 
 First create a Flask application (Flask-CLI is not needed for Flask
 version 1.0+):
 
->>> from flask import Flask
->>> app = Flask('myapp')
->>> app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite://'
->>> app.config['CELERY_ALWAYS_EAGER'] = True
->>> if not hasattr(app, 'cli'):
-...     from flask_cli import FlaskCLI
-...     ext_cli = FlaskCLI(app)
+.. code-block:: python
+
+    from flask import Flask
+    app = Flask('myapp')
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite://'
+    app.config['CELERY_ALWAYS_EAGER'] = True
+    if not hasattr(app, 'cli'):
+        from flask_cli import FlaskCLI
+        ext_cli = FlaskCLI(app)
 
 There are several dependencies that should be initialized in order to make
 OAIServer work correctly.
 
->>> from invenio_db import InvenioDB
->>> from invenio_indexer import InvenioIndexer
->>> from invenio_pidstore import InvenioPIDStore
->>> from invenio_records import InvenioRecords
->>> from invenio_search import InvenioSearch
->>> from flask_celeryext import FlaskCeleryExt
->>> ext_db = InvenioDB(app)
->>> ext_indexer = InvenioIndexer(app)
->>> ext_pidstore = InvenioPIDStore(app)
->>> ext_records = InvenioRecords(app)
->>> ext_search = InvenioSearch(app)
->>> ext_celery = FlaskCeleryExt(app)
+.. code-block:: python
+
+    from invenio_db import InvenioDB
+    from invenio_indexer import InvenioIndexer
+    from invenio_pidstore import InvenioPIDStore
+    from invenio_records import InvenioRecords
+    from invenio_search import InvenioSearch
+    from flask_celeryext import FlaskCeleryExt
+    ext_db = InvenioDB(app)
+    ext_indexer = InvenioIndexer(app)
+    ext_pidstore = InvenioPIDStore(app)
+    ext_records = InvenioRecords(app)
+    ext_search = InvenioSearch(app)
+    ext_celery = FlaskCeleryExt(app)
 
 Then you can initialize OAIServer like a normal Flask extension, however
 you need to set following configuration options first:
 
->>> app.config['OAISERVER_RECORD_INDEX'] = 'marc21',
->>> app.config['OAISERVER_ID_PREFIX'] = 'oai:example:',
->>> from invenio_oaiserver import InvenioOAIServer
->>> ext_oaiserver = InvenioOAIServer(app)
+.. code-block:: python
+
+    app.config['OAISERVER_RECORD_INDEX'] = 'marc21',
+    app.config['OAISERVER_ID_PREFIX'] = 'oai:example:',
+    from invenio_oaiserver import InvenioOAIServer
+    ext_oaiserver = InvenioOAIServer(app)
 
 Register the Flask Blueprint for OAIServer. If you use InvenioOAIServer as
 part of the invenio-base setup, the Blueprint will be registered automatically
 through an entry point.
 
->>> from invenio_oaiserver.views.server import blueprint
->>> app.register_blueprint(blueprint)
+.. code-block:: python
+
+    from invenio_oaiserver.views.server import blueprint
+    app.register_blueprint(blueprint)
 
 In order for the following examples to work, you need to work within an
 Flask application context so let's push one:
 
->>> ctx = app.app_context()
->>> ctx.push()
+.. code-block:: python
+
+    ctx = app.app_context()
+    ctx.push()
 
 Also, for the examples to work we need to create the database and tables (note,
 in this example we use an in-memory SQLite database):
 
->>> from invenio_db import db
->>> db.create_all()
+.. code-block:: python
 
-And create the indices on Elasticsearch.
+    from invenio_db import db
+    db.create_all()
 
->>> indices = list(ext_search.create(ignore=[400]))
->>> ext_search.flush_and_refresh('_all')
+And create the indices on Search.
+
+.. code-block:: python
+
+    indices = list(ext_search.create(ignore=[400]))
+    ext_search.flush_and_refresh('_all')
 
 Creating OAI sets
 -----------------
@@ -89,22 +103,24 @@ Creating OAI sets
 selective harvesting" [OAISet]_. The easiest way to create new OAI set is
 using database model.
 
->>> from invenio_oaiserver.models import OAISet
->>> oaiset = OAISet(spec='higgs', name='Higgs', description='...')
->>> oaiset.search_pattern = 'title:higgs'
->>> db.session.add(oaiset)
->>> db.session.commit()
+.. code-block:: python
+
+    from invenio_oaiserver.models import OAISet
+    oaiset = OAISet(spec='higgs', name='Higgs', description='...')
+    oaiset.search_pattern = 'title:higgs'
+    db.session.add(oaiset)
+    db.session.commit()
 
 The above set will group all records that contain word "higgs" in the title.
 
 We can now see the set by using verb ``ListSets``:
 
->>> with app.test_client() as client:
-...     res = client.get('/oai?verb=ListSets')
->>> res.status_code
-200
->>> b'Higgs' in res.data
-True
+.. code-block:: python
+
+    with app.test_client() as client:
+        res = client.get('/oai2d?verb=ListSets')
+    res.status_code # 200
+    b'Higgs' in res.data # True
 
 .. [OAISet] https://www.openarchives.org/OAI/openarchivesprotocol.html#Set
 
@@ -166,10 +182,9 @@ repository
 (GPLv3 licensed).
 """
 
-from __future__ import absolute_import, print_function
-
 from .ext import InvenioOAIServer
 from .proxies import current_oaiserver
-from .version import __version__
 
-__all__ = ('__version__', 'InvenioOAIServer', 'current_oaiserver')
+__version__ = "2.2.1"
+
+__all__ = ("__version__", "InvenioOAIServer", "current_oaiserver")
