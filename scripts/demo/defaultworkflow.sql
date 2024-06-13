@@ -55,14 +55,14 @@ SELECT pg_catalog.setval('public.workflow_flow_action_id_seq', 6, true);
 -- Name: workflow_flow_define_id_seq; Type: SEQUENCE SET; Schema: public; Owner: invenio
 --
 
-SELECT pg_catalog.setval('public.workflow_flow_define_id_seq', 1, true);
+SELECT pg_catalog.setval('public.workflow_flow_define_id_seq', 1000, true);
 
 
 --
 -- Name: workflow_workflow_id_seq; Type: SEQUENCE SET; Schema: public; Owner: invenio
 --
 
-SELECT pg_catalog.setval('public.workflow_workflow_id_seq', 2, true);
+SELECT pg_catalog.setval('public.workflow_workflow_id_seq', 1000, true);
 
 
 --
