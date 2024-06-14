@@ -544,7 +544,10 @@ def update_site_info():
     if validate.get('error'):
         return jsonify(validate)
     else:
+        print("check0:{}".format(db.session.is_active))
         site_info = SiteInfo.update(format_data)
+        print("type:{}".format(type(site_info)))
+        print("check4:{}".format(db.session.is_active))
         overwrite_the_memory_config_with_db(current_app, site_info)
         return jsonify(format_data)
 
@@ -566,10 +569,6 @@ def get_site_info():
                 'GOOGLE_TRACKING_ID_USER']
         except BaseException:
             pass
-        try:
-            result['addthis_user_id'] = current_app.config['ADDTHIS_USER_ID']
-        except BaseException:
-            pass
         return jsonify(result)
 
     result['copy_right'] = site_info.copy_right
@@ -580,7 +579,6 @@ def get_site_info():
     result['site_name'] = site_info.site_name
     result['notify'] = site_info.notify
     result['google_tracking_id_user'] = site_info.google_tracking_id_user
-    result['addthis_user_id'] = site_info.addthis_user_id
     
     if site_info.ogp_image and site_info.ogp_image_name:
         ts = time.time()
