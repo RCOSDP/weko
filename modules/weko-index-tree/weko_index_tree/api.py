@@ -227,12 +227,14 @@ class Indexes(object):
                         getattr(index, "contribute_role")),
                     'biblio_flag': partial(
                         cls.set_online_issn_resc, index_id,
-                        getattr(index, "online_issn"))
+                        getattr(index, "online_issn"),
+                        getattr(index, "biblio_flag"))
                 }
                 for recur_key, recur_update_func in recs_group.items():
                     if getattr(index, recur_key):
                         recur_update_func()
-                    setattr(index, recur_key, False)
+                    if not recur_key == "biblio_flag":
+                        setattr(index, recur_key, False)
                 index.owner_user_id = current_user.get_id()
                 db.session.merge(index)
             db.session.commit()
@@ -1596,7 +1598,7 @@ class Indexes(object):
             cls.set_browsing_group_resc(index.id, browsing_group)
 
     @classmethod
-    def set_online_issn_resc(cls, index_id, online_issn):
+    def set_online_issn_resc(cls, index_id, online_issn, biblio_flag):
         """
         Set Online ISSN for all index's children.
 
@@ -1604,10 +1606,11 @@ class Indexes(object):
         :param online_issn: Online ISSN
         """
         Index.query.filter_by(parent=index_id). \
-            update({Index.online_issn: online_issn},
-                   synchronize_session='fetch')
+            update({Index.online_issn: online_issn,
+                    Index.biblio_flag: biblio_flag},
+                synchronize_session='fetch')
         for index in Index.query.filter_by(parent=index_id).all():
-            cls.set_online_issn_resc(index.id, online_issn)
+            cls.set_online_issn_resc(index.id, online_issn, biblio_flag)
 
     @classmethod
     def get_index_count(cls):

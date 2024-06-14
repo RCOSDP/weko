@@ -13,6 +13,16 @@ from weko_index_tree.models import Index, IndexStyle
 def test_none_get_all_by_is_issn(app,db):
     res = Index.get_all_by_is_issn()
     assert res == []
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_models.py::test_get_all_by_is_issn -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+def test_get_all_by_is_issn(app, db, index_issn):
+    from datetime import date, datetime
+    # get_all_by_is_issn
+    res = Index.get_all_by_is_issn()
+    assert res == [{'id': 1616224532673, 'updated':datetime(2022, 1, 1),'index_name': '利用報告', 'issn': '1234-987A'},
+                    {'id': 1714029010533, 'updated':datetime(2022, 1, 1),'index_name': 'New Index', 'issn': '1234-567X'},
+                    {'id': 1715825846862, 'updated':datetime(2022, 1, 1),'index_name': 'New New Index', 'issn': '1234-567X'},
+                    {'id': 1715825846999, 'updated':datetime(2020, 1, 1),'index_name': 'Updated Index', 'issn': '1234-567X'},
+                   ]
 # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_models.py::test_Index -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
 def test_Index(app, db, test_indices):
     # get_all
@@ -30,9 +40,6 @@ def test_Index(app, db, test_indices):
     with app.test_request_context(headers=[("Accept-Language", "ja")]):
         assert str(res) == "Index <id=1, name=Test index 1>"
 
-    # get_all_by_is_issn
-    res = Index.get_all_by_is_issn()
-    assert res == [{'id': 1, 'index_name': 'Test index 1', 'issn': '1234-5678'}]
 
 # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_models.py::test_Index_get_all -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
 def test_Index_get_all(app, db):

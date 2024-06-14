@@ -250,9 +250,10 @@ class Index(db.Model, Timestamp):
         result = []
         if query_result:
             for index in query_result:
-                if index.online_issn:
+                if index.online_issn and index.biblio_flag:
                     data = {
                         'id': index.id,
+                        'updated': index.updated,
                         'index_name': index.index_name,
                         'issn' : index.online_issn
                     }
