@@ -201,7 +201,7 @@ def register_aggregations():
                 accessrole='accessrole',
                 userrole='userrole',
                 index_list='index_list',
-                index_path='index_path',
+                index_id='index_id',
                 is_billing_item='is_billing_item',
                 billing_file_price='billing_file_price',
                 user_group_names=copy_user_group_list,
@@ -239,7 +239,7 @@ def register_aggregations():
                 accessrole='accessrole',
                 userrole='userrole',
                 index_list='index_list',
-                index_path='index_path',
+                index_id='index_id',
                 is_billing_item='is_billing_item',
                 billing_file_price='billing_file_price',
                 user_group_names=copy_user_group_list,
@@ -863,7 +863,7 @@ def register_queries():
             query_config=dict(
                 index='{}-stats-file-download'.format(search_index_prefix),
                 doc_type='file-download-day-aggregation',
-                group_fields=['site_license_name', 'count', 'index_path'],
+                group_fields=['site_license_name', 'count', 'index_id'],
             )
         ),
         dict(
@@ -872,7 +872,7 @@ def register_queries():
             query_config=dict(
                 index='{}-stats-file-preview'.format(search_index_prefix),
                 doc_type='file-preview-day-aggregation',
-                group_fields=['site_license_name', 'count', 'index_path'],
+                group_fields=['site_license_name', 'count', 'index_id'],
             )
         ),
         dict(
