@@ -384,13 +384,13 @@ def add_signals_info(record, obj):
     if len(record_navs) > 0:
         for index in record_navs:
             current_app.logger.debug(index)
-            index_id_list += index[2] + '|'
+            index_id_list += str(index[1]) + '|'
             if index[3] is not None:
                 index_list += index[3] + '|'
             else:
                 index_list += index[4] + '|'
     obj.index_list = index_list[:len(index_list) - 1]
-    obj.index_path = index_id_list[:len(index_id_list) - 1]
+    obj.index_id = index_id_list[:len(index_id_list) - 1]
 
     # Add item info to send_obj
     obj.item_title = record['item_title']
