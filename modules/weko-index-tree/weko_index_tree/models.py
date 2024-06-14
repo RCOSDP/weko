@@ -253,6 +253,7 @@ class Index(db.Model, Timestamp):
                 if index.online_issn and index.biblio_flag:
                     data = {
                         'id': index.id,
+                        'updated': index.updated,
                         'index_name': index.index_name,
                         'issn' : index.online_issn
                     }

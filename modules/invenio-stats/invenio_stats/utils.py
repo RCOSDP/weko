@@ -813,16 +813,36 @@ class QuerySitelicenseReportsHelper(object):
                 datelist (list): List Aggregation date by month.
             """
             from weko_index_tree.api import Indexes
-            index_issn_list = Index.get_all_by_is_issn()
+            index_list = Index.get_all_by_is_issn()
             date_dict = {}
+            min_set_spec = None
+            min_index = None
+            min_index_dict = {}
+            index_issn_list =[]
             for date in datelist:
                 date_dict[date] = index_dict.get(date,0)
-            for i in index_issn_list:
+            for i in index_list:
                 spec = Indexes.get_full_path(i['id'])
                 set_spec = spec.replace('/', ':')
-                spec_list.append(set_spec)
-                index_info[set_spec] = {'name':i['index_name'], 'issn':i['issn']}
-                index_dict[set_spec] = pickle.loads(pickle.dumps(date_dict, -1))
+                len_spec = len(set_spec.split(':'))
+                if i['issn'] in min_index_dict.keys():
+                    for issn, value in min_index_dict.items():
+                        if i['issn'] == issn:
+                            if value['min_spec'] >= len_spec and value['index']['updated'] < i['updated']:
+                                min_index = i
+                                min_set_spec = set_spec
+                                min_index_dict[i['issn']]['index'] = i
+                                min_index_dict[i['issn']]['min_spec'] = len_spec
+                else:
+                    min_index = i
+                    min_set_spec = set_spec
+                    min_index_dict[i['issn']] = {}
+                    min_index_dict[i['issn']]['index'] = i
+                    min_index_dict[i['issn']]['min_spec'] = len_spec
+                index_issn_list.append(i['issn'])
+                index_info[min_index['issn']] = {'name':min_index['index_name'], 'id':min_set_spec}
+                index_dict[min_index['issn']] = pickle.loads(pickle.dumps(date_dict, -1))
+            issn_list.extend(list(set(index_issn_list)))
             for k in query_list:
                 if k == 'search':
                     result_format[k] = pickle.loads(pickle.dumps(date_dict, -1))
@@ -847,32 +867,29 @@ class QuerySitelicenseReportsHelper(object):
                                     result[i['site_license_name']]['search'][date] += i['count']
                             else:
                                 if k == "record_view":
-                                    index_path = i['record_index_id']
+                                    index_id = i['record_index_id']
                                 else:
-                                    index_path = i['index_path']
-                                path_list = index_path.split('|')
-                                for path in path_list:
-                                    cid = path.split('/')[-1]
-                                    index_issn = Index.get_index_by_id(cid).online_issn
-                                    if index_issn:
-                                        if k == "record_view":
-                                            path = Indexes.get_full_path(path)
-                                        set_index = path.replace('/', ':')
-                                        if result[i['site_license_name']][k].get(set_index):
+                                    index_id = i['index_id']
+                                if index_id:
+                                    id_list = index_id.split('|')
+                                    for id in id_list:
+                                        cid = id.split('/')[-1]
+                                        index_issn = Index.get_index_by_id(cid).online_issn
+                                        if index_issn in issn_list:
                                             if i['site_license_name'] in result:
-                                                result[i['site_license_name']][k][set_index][str(date)] += i['count']
+                                                result[i['site_license_name']][k][index_issn][str(date)] += i['count']
                                             else:
                                                 result[i['site_license_name']] = pickle.loads(pickle.dumps(result_format, -1))
-                                                result[i['site_license_name']][k][set_index][str(date)] += i['count']
-                                        if not k == 'record_view':
-                                            for key in result[i['site_license_name']][k]['all_journals'].keys():
-                                                if key == date:
-                                                    result[i['site_license_name']][k]['all_journals'][key] += i['count']
+                                                result[i['site_license_name']][k][index_issn][str(date)] += i['count']
+                                            if not k == 'record_view':
+                                                for key in result[i['site_license_name']][k]['all_journals'].keys():
+                                                    if key == date:
+                                                        result[i['site_license_name']][k]['all_journals'][key] += i['count']
 
         all_res = {}
         query_month = ''
         data = {}
-        spec_list = []
+        issn_list = []
         result_format= {}
         index_dict = {}
         index_info = {}
@@ -913,9 +930,8 @@ class QuerySitelicenseReportsHelper(object):
                                     continue
                                 else:
                                     result[name][query][k]['total'] = sum(i.values())
-
-            for spec in spec_list:
-                no_data['record_view'][spec]['file_download_count'] = no_data['file_download'][spec]
+            for issn in issn_list:
+                no_data['record_view'][issn]['file_download_count'] = no_data['file_download'][issn]
 
             #file_download_count by record_view
             for name, items in result.items():

@@ -578,11 +578,11 @@ def write_sitelicense_report_file_rows(writer, records, file_type, result):
             search_count.append(records[date])
         writer.writerow(search_count)
     else:
-        for id, record in records.items():
-            if id == 'all_journals':
+        for key, record in records.items():
+            if key == 'all_journals':
                 continue
             else:
-                data = [result['index_info'][id]['name'], id, interface_name, result['index_info'][id]['issn']]
+                data = [result['index_info'][key]['name'], result['index_info'][key]['id'], interface_name, key]
             for date in result['datelist']:
                 value = record[date]
                 data.append(value)
