@@ -137,6 +137,7 @@ def publish(pid, record, template=None, **kwargs):
     from weko_deposit.api import WekoIndexer
     status = request.values.get('status')
     publish_status = record.get('publish_status')
+    comm_id = request.values.get('community')
 
     pid_ver = PIDVersioning(child=pid)
     last_record = WekoRecord.get_record_by_pid(pid_ver.last_child.pid_value)
@@ -156,7 +157,10 @@ def publish(pid, record, template=None, **kwargs):
     indexer.update_es_data(record, update_revision=False, field='publish_status')
     indexer.update_es_data(last_record, update_revision=False, field='publish_status')
 
-    return redirect(url_for('.recid', pid_value=pid.pid_value))
+    if comm_id:
+        return redirect(url_for('.recid', pid_value=pid.pid_value, community=comm_id))
+    else:
+        return redirect(url_for('.recid', pid_value=pid.pid_value))
 
 
 def export(pid, record, template=None, **kwargs):
