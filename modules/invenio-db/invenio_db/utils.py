@@ -51,15 +51,19 @@ def rebuild_encrypted_properties(old_key, model, properties):
         current_app.secret_key = new_secret_key
         db.session.expunge_all()
 
-    for old_row in old_rows:
-        primary_keys, old_entries = (
-            old_row[: len(primary_key_names)],
-            old_row[len(primary_key_names) :],
-        )
-        primary_key_fields = dict(zip(primary_key_names, primary_keys))
-        update_values = dict(zip(properties, old_entries))
-        model.query.filter_by(**primary_key_fields).update(update_values)
-    db.session.commit()
+    try:
+        for old_row in old_rows:
+            primary_keys, old_entries = (
+                old_row[: len(primary_key_names)],
+                old_row[len(primary_key_names) :],
+            )
+            primary_key_fields = dict(zip(primary_key_names, primary_keys))
+            update_values = dict(zip(properties, old_entries))
+            model.query.filter_by(**primary_key_fields).update(update_values)
+        db.session.commit()
+    except Exception as e:
+        current_app.logger.error(e)
+        db.session.rollback()
 
 
 def create_alembic_version_table():

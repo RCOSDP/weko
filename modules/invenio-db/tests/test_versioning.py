@@ -17,6 +17,12 @@ from test_db import _mock_entry_points
 
 from invenio_db import InvenioDB
 
+#@patch('pkg_resources.iter_entry_points', _mock_entry_points)
+def test_disabled_versioning(db, app,mock_entry_points):
+    """Test SQLAlchemy-Continuum with disabled versioning."""
+    InvenioDB(app, entry_point_group='invenio_db.models_a')
+    with app.app_context():
+        assert 3 == len(db.metadata.tables)
 
 @patch("importlib_metadata.entry_points", _mock_entry_points("invenio_db.models_a"))
 def test_disabled_versioning(db, app):
@@ -25,7 +31,6 @@ def test_disabled_versioning(db, app):
 
     with app.app_context():
         assert 2 == len(db.metadata.tables)
-
 
 @pytest.mark.parametrize("versioning,tables", [(False, 1), (True, 3)])
 def test_disabled_versioning_with_custom_table(db, app, versioning, tables):
