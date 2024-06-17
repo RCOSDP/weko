@@ -11,3 +11,4 @@
 -e git+https://github.com/kvesteri/sqlalchemy-utils.git#egg=sqlalchemy-utils
 -e git+https://github.com/mitsuhiko/flask-sqlalchemy.git#egg=flask-sqlalchemy
 -e git+https://github.com/zzzeek/sqlalchemy.git#egg=sqlalchemy
+-e git+https://github.com/inveniosoftware/invenio-base.git#egg=invenio-base

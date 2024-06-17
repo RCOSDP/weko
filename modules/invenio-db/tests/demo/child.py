@@ -8,14 +8,14 @@
 
 """Child model."""
 
-from __future__ import absolute_import
-
 from invenio_db import db
 
 from .parent import Parent
 
 
 class Child(db.Model):
-    __tablename__ = 'child'
+    """Child demo model."""
+
+    __tablename__ = "child"
     pk = db.Column(db.Integer, primary_key=True)
     fk = db.Column(db.Integer, db.ForeignKey(Parent.pk))
