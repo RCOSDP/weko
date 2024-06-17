@@ -35,3 +35,22 @@ Signals
 -------
 .. automodule:: invenio_records.signals
    :members:
+
+Dumpers/Loaders
+---------------
+.. automodule:: invenio_records.dumpers
+   :members:
+
+Extensions
+----------
+.. automodule:: invenio_records.extensions
+   :members:
+   :special-members:
+   :exclude-members: __weakref__
+
+System Fields
+-------------
+.. automodule:: invenio_records.systemfields
+   :members:
+   :special-members:
+   :exclude-members: __weakref__

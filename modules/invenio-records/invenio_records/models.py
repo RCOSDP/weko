@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # This file is part of Invenio.
-# Copyright (C) 2015-2018 CERN.
+# Copyright (C) 2015-2020 CERN.
 #
 # Invenio is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
@@ -9,13 +9,13 @@
 """Record models."""
 
 import uuid
+from copy import deepcopy
 from datetime import datetime
 
 from invenio_db import db
-from invenio_pidstore.models import PersistentIdentifier
 from sqlalchemy.dialects import mysql, postgresql
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.sql import and_, select
+from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy_utils.types import JSONType, UUIDType
 
 
@@ -29,16 +29,16 @@ class Timestamp(object):
     created = db.Column(
         db.DateTime().with_variant(mysql.DATETIME(fsp=6), "mysql"),
         default=datetime.utcnow,
-        nullable=False
+        nullable=False,
     )
     updated = db.Column(
         db.DateTime().with_variant(mysql.DATETIME(fsp=6), "mysql"),
         default=datetime.utcnow,
-        nullable=False
+        nullable=False,
     )
 
 
-@db.event.listens_for(Timestamp, 'before_update', propagate=True)
+@db.event.listens_for(Timestamp, "before_update", propagate=True)
 def timestamp_before_update(mapper, connection, target):
     """Update `updated` property with current time on `before_update` event."""
     target.updated = datetime.utcnow()
@@ -51,8 +51,13 @@ class RecordMetadataBase(Timestamp):
     properties that are automatically updated.
     """
 
-    # Enables SQLAlchemy-Continuum versioning
-    __versioned__ = {}
+    encoder = None
+    """"Class-level attribute to set a JSON data encoder/decoder.
+
+    This allows customizing you to e.g. convert specific entries to complex
+    Python objects. For instance you could convert ISO-formatted datetime
+    objects into Python datetime objects.
+    """
 
     id = db.Column(
         UUIDType,
@@ -62,18 +67,21 @@ class RecordMetadataBase(Timestamp):
     """Record identifier."""
 
     json = db.Column(
-        db.JSON().with_variant(
+        db.JSON()
+        .with_variant(
             postgresql.JSONB(none_as_null=True),
-            'postgresql',
-        ).with_variant(
+            "postgresql",
+        )
+        .with_variant(
             JSONType(),
-            'sqlite',
-        ).with_variant(
+            "sqlite",
+        )
+        .with_variant(
             JSONType(),
-            'mysql',
+            "mysql",
         ),
         default=lambda: dict(),
-        nullable=True
+        nullable=True,
     )
     """Store metadata in JSON format.
 
@@ -82,33 +90,80 @@ class RecordMetadataBase(Timestamp):
     record metadata has been deleted.
     """
 
+    # Enables SQLAlchemy version counter (not the same as SQLAlchemy-Continuum)
     version_id = db.Column(db.Integer, nullable=False)
     """Used by SQLAlchemy for optimistic concurrency control."""
 
-    __mapper_args__ = {
-        'version_id_col': version_id
-    }
+    __mapper_args__ = {"version_id_col": version_id}
+
+    def __init__(self, data=None, **kwargs):
+        """Initialize the model specifically by setting the."""
+        if data is not None:
+            self.data = data
+        super(RecordMetadataBase, self).__init__(self, **kwargs)
+
+    @hybrid_property
+    def is_deleted(self):
+        """Boolean flag to determine if a record is soft deleted."""
+        return self.json == None  # noqa
+
+    @is_deleted.setter
+    def is_deleted(self, value):
+        """Boolean flag to set record as soft deleted.
+
+        This propert sets the JSON colum to None. The hybrid property *cannot*
+        be used to undelete a record by setting the property to False.
+        """
+        if value is True:
+            self.json = None
+        else:
+            self.json = {}
+
+    @property
+    def data(self):
+        """Get data by decoding the JSON.
+
+        This allows a subclass to override
+        """
+        # We make a deepcopy in order to completely disconnect updates on the
+        # record dict from the model's JSON. Otherwise changes made by the
+        # encoder/decode, and updates by users are propagated to the model's
+        # json field (circumventing the encoder) and likely causing the JSON
+        # serialization errors when saving to the DB.
+        return self.decode(self.json)
+
+    @data.setter
+    def data(self, value):
+        """Set data by encoding the JSON.
+
+        This allows a subclass to override
+        """
+        self.json = self.encode(value)
+        flag_modified(self, "json")
+
+    @classmethod
+    def encode(cls, value):
+        """Encode a JSON document."""
+        data = deepcopy(value)
+        return cls.encoder.encode(data) if cls.encoder else data
+
+    @classmethod
+    def decode(cls, json):
+        """Decode a JSON document."""
+        data = deepcopy(json)
+        return cls.encoder.decode(data) if cls.encoder else data
 
 
 class RecordMetadata(db.Model, RecordMetadataBase):
     """Represent a record metadata."""
 
-    __tablename__ = 'records_metadata'
+    __tablename__ = "records_metadata"
 
-    @hybrid_property
-    def status(self):
-        """Status."""
-        return PersistentIdentifier.query.filter_by(
-            pid_type='recid', object_uuid=self.id).first().status
-
-    @status.expression
-    def status(cls):
-        return select([PersistentIdentifier.status]).\
-            select_from(PersistentIdentifier).where(and_(
-                PersistentIdentifier.pid_type == 'recid',
-                PersistentIdentifier.object_uuid == cls.id))
+    # Enables SQLAlchemy-Continuum versioning
+    __versioned__ = {}
 
 
 __all__ = (
-    'RecordMetadata',
+    "RecordMetadata",
+    "RecordMetadataBase",
 )

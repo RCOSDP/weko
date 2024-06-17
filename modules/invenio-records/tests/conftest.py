@@ -9,100 +9,105 @@
 
 """Pytest configuration."""
 
-from __future__ import absolute_import, print_function
-
-import os
-import shutil
-import tempfile
-
 import pytest
 from flask import Flask
-from flask_celeryext import FlaskCeleryExt
+from invenio_celery import InvenioCelery
 from invenio_db import InvenioDB
-from invenio_db import db as db_
-from invenio_pidstore import InvenioPIDStore
+from invenio_i18n import InvenioI18N
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.schema import DropConstraint, DropSequence, DropTable
-from sqlalchemy_utils.functions import create_database, database_exists
 
 from invenio_records import InvenioRecords
+from invenio_records.api import Record
+from invenio_records.systemfields import SystemFieldsMixin
+
+pytest_plugins = ("celery.contrib.pytest",)
 
 
-@compiles(DropTable, 'postgresql')
+@compiles(DropTable, "postgresql")
 def _compile_drop_table(element, compiler, **kwargs):
-    return compiler.visit_drop_table(element) + ' CASCADE'
+    return compiler.visit_drop_table(element) + " CASCADE"
 
 
-@compiles(DropConstraint, 'postgresql')
+@compiles(DropConstraint, "postgresql")
 def _compile_drop_constraint(element, compiler, **kwargs):
-    return compiler.visit_drop_constraint(element) + ' CASCADE'
+    return compiler.visit_drop_constraint(element) + " CASCADE"
 
 
-@compiles(DropSequence, 'postgresql')
+@compiles(DropSequence, "postgresql")
 def _compile_drop_sequence(element, compiler, **kwargs):
-    return compiler.visit_drop_sequence(element) + ' CASCADE'
+    return compiler.visit_drop_sequence(element) + " CASCADE"
+
+
+@pytest.fixture(scope="module")
+def create_app(instance_path):
+    """Application factory fixture for use with pytest-invenio."""
+
+    def _create_app(**config):
+        app_ = Flask(
+            __name__,
+            instance_path=instance_path,
+        )
+        app_.config.update(config)
+        InvenioCelery(app_)
+        InvenioDB(app_)
+        InvenioRecords(app_)
+        InvenioI18N(app_)
+        return app_
+
+    return _create_app
+
+
+@pytest.fixture(scope="module")
+def testapp(base_app, database):
+    """Application with just a database.
+
+    Pytest-Invenio also initialises ES with the app fixture.
+    """
+    yield base_app
 
 
 @pytest.fixture()
-def app(request):
-    """Flask application fixture."""
-    instance_path = tempfile.mkdtemp()
-    app_ = Flask(__name__, instance_path=instance_path)
-    app_.config.update(
-        CELERY_ALWAYS_EAGER=True,
-        CELERY_CACHE_BACKEND="memory",
-        CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
-        CELERY_RESULT_BACKEND="cache",
-        SECRET_KEY="CHANGE_ME",
-        SECURITY_PASSWORD_SALT="CHANGE_ME_ALSO",
-        # SQLALCHEMY_DATABASE_URI=os.environ.get(
-        #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
-        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-                                          'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
-        SQLALCHEMY_TRACK_MODIFICATIONS=True,
-        TESTING=True,
+def languages(db):
+    """Languages fixture."""
+
+    class Language(Record, SystemFieldsMixin):
+        pass
+
+    languages_data = (
+        {
+            "title": "English",
+            "iso": "en",
+            "information": {"native_speakers": "400 million", "ethnicity": "English"},
+        },
+        {
+            "title": "French",
+            "iso": "fr",
+            "information": {"native_speakers": "76.8 million", "ethnicity": "French"},
+        },
+        {
+            "title": "Spanish",
+            "iso": "es",
+            "information": {"native_speakers": "489 million", "ethnicity": "Spanish"},
+        },
+        {
+            "title": "Italian",
+            "iso": "it",
+            "information": {"native_speakers": "67 million", "ethnicity": "Italians"},
+        },
+        {
+            "title": "Old English",
+            "iso": "oe",
+            "information": {
+                "native_speakers": "400 million",
+                "ethnicity": ["English", "Old english"],
+            },
+        },
     )
-    FlaskCeleryExt(app_)
-    InvenioDB(app_)
-    InvenioRecords(app_)
-    InvenioPIDStore(app_)
 
-    with app_.app_context():
-        yield app_
-
-    shutil.rmtree(instance_path)
-
-
-@pytest.fixture()
-def db(app):
-    """Database fixture."""
-    if not database_exists(str(db_.engine.url)):
-        create_database(str(db_.engine.url))
-    db_.create_all()
-    yield db_
-    db_.session.remove()
-    db_.drop_all()
-
-
-@pytest.fixture()
-def CustomMetadata(app):
-    """Class for custom metadata."""
-    from invenio_records.models import RecordMetadataBase
-
-    class CustomMetadata(db_.Model, RecordMetadataBase):
-        """Custom Record Metadata Model."""
-
-        __tablename__ = 'custom_metadata'
-    return CustomMetadata
-
-
-@pytest.fixture()
-def custom_db(app, CustomMetadata):
-    """Database fixture."""
-    InvenioDB(app)
-    if not database_exists(str(db_.engine.url)):
-        create_database(str(db_.engine.url))
-    db_.create_all()
-    yield db_
-    db_.session.remove()
-    db_.drop_all()
+    languages = {}
+    for lang in languages_data:
+        lang_rec = Language.create(lang)
+        languages[lang["iso"]] = lang_rec
+    db.session.commit()
+    return Language, languages

@@ -43,7 +43,7 @@ htmlcov/
 .coverage.*
 .cache
 nosetests.xml
-#coverage.xml
+coverage.xml
 *,cover
 
 # Translations
@@ -66,4 +66,7 @@ target/
 examples/instance/
 
 # Test DB
+test.db
 tests/test.db
+.vscode
+**.DS_Store
