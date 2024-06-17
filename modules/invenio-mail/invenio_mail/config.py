@@ -19,3 +19,6 @@ MAIL_DEFAULT_REPLY_TO = None
 
 MAIL_MAX_ATTACHMENT_SIZE = 1000000
 """Max size of inline attachments, in bytes."""
+
+INVENIO_MAIL_BASE_TEMPLATE = 'invenio_mail/base.html'
+INVENIO_MAIL_SETTING_TEMPLATE = 'invenio_mail/mail_setting.html'

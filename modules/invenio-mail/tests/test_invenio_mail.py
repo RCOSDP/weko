@@ -11,7 +11,7 @@
 import sys
 
 from flask import Flask
-from flask_mail import Message
+from flask_mail import Message, Mail
 
 from invenio_mail import InvenioMail
 
@@ -41,6 +41,25 @@ def test_init():
     assert "invenio-mail" not in app.extensions
     ext.init_app(app)
     assert "invenio-mail" in app.extensions
+
+# .tox/c1/bin/pytest --cov=invenio_mail tests/test_invenio_mail.py::test_init -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-mail/.tox/c1/tmp
+def test_init(mocker):
+    """Test extension initialization."""
+    app = Flask('testapp')
+    ext = InvenioMail(app)
+    assert 'invenio-mail' in app.extensions
+
+    app = Flask('testapp')
+    ext = InvenioMail()
+    assert 'invenio-mail' not in app.extensions
+    ext.init_app(app)
+    assert 'invenio-mail' in app.extensions
+    
+    # exist mail in app.extentions
+    app = Flask('testapp')
+    Mail(app)
+    ext = InvenioMail(app)
+    assert 'invenio-mail' in app.extensions
 
 
 def test_print_email():

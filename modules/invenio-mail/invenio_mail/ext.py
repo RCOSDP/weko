@@ -14,6 +14,8 @@ import threading
 from flask_mail import Mail, email_dispatched
 
 from . import config
+from .views import blueprint
+from .api import DomainMail
 
 
 def print_email(message, app):
@@ -63,9 +65,10 @@ class InvenioMail(object):
         """
         self.init_config(app)
         if "mail" not in app.extensions:
-            Mail(app)
+            DomainMail(app)
         if app.config.get("MAIL_SUPPRESS_SEND", False) or app.debug:
             email_dispatched.connect(print_email)
+        app.register_blueprint(blueprint)
         app.extensions["invenio-mail"] = self
 
     @staticmethod
@@ -77,5 +80,5 @@ class InvenioMail(object):
         app.config.setdefault("MAIL_DEBUG", app.debug)
         app.config.setdefault("MAIL_SUPPRESS_SEND", app.debug or app.testing)
         for k in dir(config):
-            if k.startswith("MAIL_"):
+            if k.startswith('INVENIO_MAIL_'):
                 app.config.setdefault(k, getattr(config, k))

@@ -1,0 +1,188 @@
+{# -*- coding: utf-8 -*-
+#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
+{%- extends admin_base_template %}
+
+{% from "weko_admin/settings/_macros.html" import render_field, form_errors %}
+
+{% set panel_title = _("Life Time") %}
+{% set panel_icon = "fa fa-user" %}
+
+{%- block body %}
+{%- set cur_lifetime = current_lifetime %}
+{%- set lifetime_map = map_lifetime %}
+
+<div class="panel panel-info">
+  <div class="panel-heading">
+    <div class="panel-title">
+      <h4>Mail Setting<h4>
+    </div>
+  </div>
+  <div class="panel-body">
+<form method="POST" name="mail_setting_form" action={{url_for('mail.index')}}>
+  <div class="row">
+    <div class="col-sm-2 text-right">
+      <label>{{_("Server")}}</label>
+    </div>
+    <div class="col-xs-2">
+      <input type="text" class="form-control" name="mail_server" id="mail_server" value={{mail_cfg['mail_server']}}>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-sm-2 text-right">
+      <label>{{_("Port")}}</label>
+    </div>
+    <div class="col-xs-2">
+      <input type="number" class="form-control" min="0" max="65535" name="mail_port" id="mail_port" value={{mail_cfg['mail_port']}}>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-sm-2 text-right">
+      <label>{{_("Use TLS")}}</label>
+    </div>
+    <div class="col-xs-2">
+      <input type="checkbox" name="mail_use_tls" id="mail_use_tls"
+        {% if mail_cfg['mail_use_tls'] == True %}
+          checked
+        {% endif %}
+      >
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-sm-2 text-right">
+      <label>{{_("Use SSL")}}</label>
+    </div>
+    <div class="col-xs-2">
+      <input type="checkbox" name="mail_use_ssl" id="mail_use_ssl"
+        {% if mail_cfg['mail_use_ssl'] == True %}
+          checked
+        {% endif %}
+      >
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-sm-2 text-right">
+      <label>{{_("Username")}}</label>
+    </div>
+    <div class="col-xs-2">
+      <input type="text" class="form-control" name="mail_username" id="mail_username"
+        {% if mail_cfg['mail_username'] %}
+            value={{mail_cfg['mail_username']}}
+        {% endif %}
+      >
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-sm-2 text-right">
+      <label>{{_("Password")}}</label>
+    </div>
+    <div class="col-xs-2">
+      <input type="password" class="form-control" name="mail_password" 
+            id="mail_password" autocomplete="new-password" 
+        {% if mail_cfg['mail_password'] %}
+            value={{mail_cfg['mail_password']}}
+        {% endif %}
+      >
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-sm-2 text-right">
+      <label>Domain</label>
+    </div>
+    <div class="col-xs-2">
+      <input type="text" class="form-control" name="mail_local_hostname" id="mail_local_hostname"
+        {% if mail_cfg['mail_local_hostname'] %}
+            value={{mail_cfg['mail_local_hostname']}}
+        {% endif %}
+      >
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-sm-2 text-right">
+      <label>{{_("Default sender")}}</label>
+    </div>
+    <div class="col-xs-2">
+      <input type="text" class="form-control" name="mail_default_sender" id="mail_default_sender"
+        {% if mail_cfg['mail_default_sender'] %}
+            value={{mail_cfg['mail_default_sender']}}
+        {% endif %}
+      >
+    </div>
+  </div>
+  <div class="row">
+    <div class="form-actions">
+      <button type="submit" name="submit" value="mail_setting_form" class="btn btn-default"
+              style="width: 130px; height: 40px; font-size: 15px;">
+        <span class="glyphicon glyphicon-edit"></span> 
+            {{ _('Update') }}
+      </button>
+    </div>
+  </div>
+</form>
+  </div>
+</div>
+</br>
+<div class="panel panel-info">
+  <div class="panel-heading">
+    <div class="panel-title">
+      <h4>Send Test Mail<h4>
+    </div>
+  </div>
+  <div class="panel-body">
+<form method="POST" name="mail_testing_form" id="mail_testing_form"
+    action={{url_for('mail.send_test_mail')}}>
+  <div class="row">
+    <div class="col-sm-2 text-right">
+      <label>{{_("Recipient")}}</label>
+    </div>
+    <div class="col-xs-4">
+      <input type="text" class="form-control" name="recipient" id="recipient" value={{test_form['recipient']}}>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-sm-2 text-right">
+      <label>{{_("Subject")}}</label>
+    </div>
+    <div class="col-xs-4">
+      <input type="text" class="form-control" name="subject" id="subject" value={{test_form['subject']}}>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-sm-2 text-right">
+      <label>{{_("Body")}}</label>
+    </div>
+    <div class="col-xs-4">
+        <textarea type="text" class="form-control" name="body" id="body" rows="5" form="mail_testing_form">{{test_form['body']}}</textarea>
+    </div>
+  </div>
+  <div class="row">
+    <div class="form-actions">
+      <button type="submit" name="test" value="mail_testing_form" class="btn
+          btn-light" style="background-color: #32CD32;border-color: #808000;color: white;width: 120px;height: 40px;
+          font-size: 15px;">
+        <span class="glyphicon glyphicon-send"></span> {{_('Send') }}</button>
+    </div>
+  </div>
+</form>
+  </div>
+</div>
+{%- endblock body %}
+
