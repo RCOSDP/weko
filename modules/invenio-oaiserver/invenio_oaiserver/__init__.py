@@ -118,7 +118,7 @@ We can now see the set by using verb ``ListSets``:
 .. code-block:: python
 
     with app.test_client() as client:
-        res = client.get('/oai2d?verb=ListSets')
+        res = client.get('/oai?verb=ListSets')
     res.status_code # 200
     b'Higgs' in res.data # True
 

@@ -12,7 +12,7 @@
 import invenio_search
 import pkg_resources
 
-OAISERVER_PAGE_SIZE = 10
+OAISERVER_PAGE_SIZE = 100
 """Define maximum length of list responses.
 
 Request with verbs ``ListRecords``, ``ListIdentifiers``, and ``ListSets``
@@ -31,6 +31,7 @@ OAISERVER_RECORD_INDEX = "records"
 
 # The version of the OAI-PMH supported by the repository.
 OAISERVER_PROTOCOL_VERSION = "2.0"
+"""The version of the OAI-PMH supported by the repository."""
 
 OAISERVER_ADMIN_EMAILS = [
     "info@inveniosoftware.org",
@@ -52,7 +53,8 @@ The legitimate values are ``YYYY-MM-DD`` and ``YYYY-MM-DDThh:mm:ssZ``
 with meanings as defined in ISO8601.
 """
 
-OAISERVER_RESUMPTION_TOKEN_EXPIRE_TIME = 1 * 60
+OAISERVER_RESUMPTION_TOKEN_EXPIRE_TIME = 24 * 60 * 60
+
 """The expiration time of a resumption token in seconds.
 
 **Default: 60 seconds = 1 minute**.
@@ -152,6 +154,10 @@ OAISERVER_CACHE_KEY = "DynamicOAISets::"
 OAISERVER_CELERY_TASK_CHUNK_SIZE = 100
 """Specify the maximum number of records each task will update."""
 
+OAISERVER_CONTROL_NUMBER_LEN = 8
+"""adds zeros (0) at the beginning of the the OAI ID control number,
+until it reaches the specified length."""
+
 OAISERVER_CONTROL_NUMBER_FETCHER = "recid"
 """PIDStore fetcher for the OAI ID control number."""
 
@@ -227,3 +233,33 @@ repository
 <https://raw.githubusercontent.com/eprints/eprints/3.3/lib/static/oai2.xsl>`_
 (GPLv3 licensed).
 """
+
+OAISERVER_SYSTEM_IDENTIFIER_MAPPING = {
+    "system_identifier.@value":
+        "subitem_systemidt_identifier",
+    "system_identifier.@attributes.identifierType":
+        "subitem_systemidt_identifier_type",
+}
+"""Config used to specify system identifier mapping of jpcoar"""
+
+OAISERVER_SYSTEM_FILE_MAPPING = {
+    "system_file.URI.@value":
+        "subitem_systemfile_filename_uri"
+}
+
+OAISERVER_FILE_PROPS_MAPPING = {
+    "jpcoar": "file.URI.@value",
+    "ddi": "stdyDscr.dataAccs.setAvail.accsPlac.@value"
+}
+"""Config used to specify file mapping"""
+
+OAISERVER_CODE_NO_RECORDS_MATCH = "noRecordsMatch"
+"""Code of error when output xml error"""
+
+OAISERVER_MESSAGE_NO_RECORDS_MATCH = "The combination of the values of the " \
+                                     "from, until, set and metadataPrefix " \
+                                     "arguments results in an empty list."
+"""Message of error when output xml error"""
+
+OAISERVER_ES_MAX_CLAUSE_COUNT = 1024
+"""The number of clauses a Lucene BooleanQuery can have."""

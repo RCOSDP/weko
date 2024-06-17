@@ -9,9 +9,10 @@
 
 """OAI-PMH 2.0 server."""
 
-from flask import Blueprint, make_response
+from flask import Blueprint, make_response, current_app
 from invenio_pidstore.errors import PIDDoesNotExistError
 from itsdangerous import BadSignature
+from invenio_db import db
 from lxml import etree
 from marshmallow.exceptions import ValidationError
 from webargs.flaskparser import use_args
@@ -32,18 +33,24 @@ blueprint = Blueprint(
 @blueprint.errorhandler(422)
 def validation_error(exception):
     """Return formatter validation error."""
-    messages = getattr(exception, "messages", None)
-    if messages is None:
-        messages = getattr(exception, "data", {"messages": None})["messages"]
+    messages = getattr(exception, "messages", [])
+    if not messages:
+        messages = getattr(exception, "data", {"messages": []})["messages"]
 
     def extract_errors():
         """Extract errors from exception."""
         if isinstance(messages, dict):
             for field, message in messages.items():
-                if field == "verb":
-                    yield "badVerb", "\n".join(message)
-                else:
-                    yield "badArgument", "\n".join(message)
+                error_code = "badVerb"
+
+                if isinstance(message, list) and field == "metadataPrefix":
+                    for item in message:
+                        if isinstance(item, dict) \
+                                and item.get("cannotDisseminateFormat"):
+                            error_code = "cannotDisseminateFormat"
+                            message = item.get(error_code)
+
+                yield error_code, "\n".join(message)
         else:
             for field in exception.field_names:
                 if field == "verb":
@@ -100,7 +107,7 @@ def no_records_error(exception):
     )
 
 
-@blueprint.route("/oai2d", methods=["GET", "POST"])
+@blueprint.route("/oai", methods=["GET", "POST"])
 @use_args(make_request_validator)
 def response(args):
     """Response endpoint."""
@@ -111,8 +118,18 @@ def response(args):
             e_tree,
             pretty_print=True,
             xml_declaration=True,
-            encoding="UTF-8",
+            encoding="UTF-8"
         )
     )
     response.headers["Content-Type"] = "text/xml"
     return response
+
+@blueprint.teardown_request
+def dbsession_clean(exception):
+    current_app.logger.debug("invenio_oaiserver dbsession_clean: {}".format(exception))
+    if exception is None:
+        try:
+            db.session.commit()
+        except:
+            db.session.rollback()
+    db.session.remove()

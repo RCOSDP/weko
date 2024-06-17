@@ -17,6 +17,8 @@ from invenio_base.utils import obj_or_import_string
 from lxml import etree
 from lxml.builder import E
 from lxml.etree import Element
+from weko_index_tree.api import Indexes
+from weko_schema_ui.schema import get_oai_metadata_formats
 
 from .proxies import current_oaiserver
 
@@ -40,6 +42,9 @@ NS_FRIENDS = {None: "http://www.openarchives.org/OAI/2.0/friends/"}
 FRIENDS_SCHEMA_LOCATION = "http://www.openarchives.org/OAI/2.0/friends/"
 FRIENDS_SCHEMA_LOCATION_XSD = "http://www.openarchives.org/OAI/2.0/friends/.xsd"
 
+OUTPUT_HARVEST = 3
+HARVEST_PRIVATE = 2
+PRIVATE_INDEX = 1
 
 @lru_cache(maxsize=100)
 def serializer(metadata_prefix):
@@ -48,7 +53,7 @@ def serializer(metadata_prefix):
     :param metadata_prefix: One of the metadata identifiers configured in
         ``OAISERVER_METADATA_FORMATS``.
     """
-    metadataFormats = current_app.config["OAISERVER_METADATA_FORMATS"]
+    metadataFormats = get_oai_metadata_formats(current_app)
     serializer_ = metadataFormats[metadata_prefix]["serializer"]
     if isinstance(serializer_, tuple):
         return partial(obj_or_import_string(serializer_[0]), **serializer_[1])
@@ -181,7 +186,7 @@ def sanitize_unicode(value):
 
 
 def record_sets_fetcher(record):
-    """Fetch a record's sets."""
+    """Fetch a record"s sets."""
     return record.get("_oai", {}).get("sets", [])
 
 
@@ -191,3 +196,82 @@ def getrecord_fetcher(record_uuid):
     record_dict = record.dumps()
     record_dict["updated"] = record.updated
     return record_dict
+
+def handle_license_free(record_metadata):
+    """Merge licensetype and licensefree.
+
+    Delete licensetype when licensetype equal "license_free"
+    but licensefree is empty.
+
+    :param record_metadata: Record"s Metadata.
+    :returns: Directed edit.
+    """
+    _license_type = "licensetype"
+    _license_free = "licensefree"
+    _license_type_free = "license_free"
+    _attribute_type = "file"
+    _attribute_value_mlt = "attribute_value_mlt"
+
+    _license_dict = current_app.config["WEKO_RECORDS_UI_LICENSE_DICT"]
+    if _license_dict:
+        _license_type_free = _license_dict[0].get("value")
+
+    for val in record_metadata.values():
+        if isinstance(val, dict) and \
+                val.get("attribute_type") == _attribute_type:
+            for attr in val.get(_attribute_value_mlt, {}):
+                if attr.get(_license_type) == _license_type_free:
+                    if attr.get(_license_free):
+                        attr[_license_type] = attr.get(_license_free)
+                        del attr[_license_free]
+                    else:
+                        del attr[_license_type]
+
+    return record_metadata
+
+
+def get_index_state():
+    from weko_records_ui.utils import is_future
+    index_state = {}
+    ids = Indexes.get_all_indexes()
+    for index in ids:
+        index_id = str(index.id)
+        if not index.harvest_public_state:
+            index_state[index_id] = {
+                "parent": None,
+                "msg": HARVEST_PRIVATE
+            }
+        elif "-99" not in index.browsing_role \
+                or not index.public_state \
+                or (index.public_date and
+                    is_future(index.public_date)):
+            index_state[index_id] = {
+                "parent": None,
+                "msg": PRIVATE_INDEX
+            }
+        else:
+            index_state[index_id] = {
+                "parent": str(index.parent),
+                "msg": OUTPUT_HARVEST
+            }
+    return index_state
+
+
+def is_output_harvest(path_list, index_state):
+    def _check(index_id):
+        if index_id in index_state:
+            if not index_state[index_id]["parent"] \
+                    or index_state[index_id]["parent"] == "0":
+                return index_state[index_id]["msg"]
+            else:
+                return _check(index_state[index_id]["parent"])
+        else:
+            return HARVEST_PRIVATE
+
+    result = 0
+    for path in path_list:
+        current_app.logger.debug(path)
+        index_id = path.split("/")[-1]
+        result = max([result, _check(index_id)])
+    return result if result != 0 else HARVEST_PRIVATE
+

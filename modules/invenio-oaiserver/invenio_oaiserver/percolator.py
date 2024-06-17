@@ -17,6 +17,10 @@ from invenio_search import current_search, current_search_client
 from invenio_search.engine import search
 from invenio_search.utils import build_index_name
 
+from weko_search_ui.config import INDEXER_DEFAULT_INDEX
+
+from flask import current_app
+
 from invenio_oaiserver.query import query_string_parser
 
 
@@ -54,7 +58,7 @@ def _new_percolator(spec, search_pattern):
         oai_records_index = current_app.config["OAISERVER_RECORD_INDEX"]
         for index, mapping_path in current_search.mappings.items():
             # Skip indices/mappings not used by OAI-PMH
-            if not index.startswith(oai_records_index):
+            if not index == INDEXER_DEFAULT_INDEX:
                 continue
             # Create the percolator doc_type in the existing index for >= ES5
             # TODO: Consider doing this only once in app initialization
@@ -75,7 +79,7 @@ def _delete_percolator(spec, search_pattern):
     # Create the percolator doc_type in the existing index for >= ES5
     for index, mapping_path in current_search.mappings.items():
         # Skip indices/mappings not used by OAI-PMH
-        if not index.startswith(oai_records_index):
+        if not index == INDEXER_DEFAULT_INDEX:
             continue
         current_search_client.delete(
             index=_build_percolator_index_name(index),

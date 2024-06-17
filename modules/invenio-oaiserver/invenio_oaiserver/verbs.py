@@ -10,11 +10,15 @@
 
 """OAI-PMH verbs."""
 
+from datetime import datetime, timedelta
+
 from flask import current_app, request
 from invenio_rest.serializer import BaseSchema
 from marshmallow import ValidationError, fields, validates_schema
 from marshmallow.fields import DateTime as _DateTime
 from marshmallow.utils import isoformat
+
+from weko_schema_ui.schema import get_oai_metadata_formats
 
 from .resumption_token import ResumptionTokenSchema
 
@@ -25,12 +29,25 @@ def validate_metadata_prefix(value, **kwargs):
     :param value: One of the metadata identifiers configured in
         ``OAISERVER_METADATA_FORMATS``.
     """
-    metadataFormats = current_app.config["OAISERVER_METADATA_FORMATS"]
-    if value not in metadataFormats:
-        raise ValidationError(
-            "metadataPrefix does not exist", field_names=["metadataPrefix"]
-        )
+    metadata_formats = get_oai_metadata_formats(current_app)
+    message = 'The metadataPrefix "{0}" is not supported ' \
+              'by this repository.'.format(value)
+    # if "jpcoar" in metadata_formats.keys():
+    #     del metadata_formats["jpcoar"]
+    if value not in metadata_formats:
+        raise ValidationError({"cannotDisseminateFormat": [message]},
+                              field_names=["metadataPrefix"])
 
+def validate_duplicate_argument(field_name):
+    """Check duplicate of argument.
+
+    :param field_name: name of field.
+    """
+    all_verbs = set(request.args.getlist(field_name))
+    if len(all_verbs) > 1:
+        raise ValidationError(
+            'Illegal duplicate of argument "{0}".'.format(field_name),
+            field_names=[field_name])
 
 class DateTime(_DateTime):
     """DateTime with a permissive deserializer."""
@@ -75,7 +92,10 @@ class DateTime(_DateTime):
 class OAISchema(BaseSchema):
     """Base OAI argument schema."""
 
-    verb = fields.Str(required=True, load_only=True)
+    verb = fields.Str(
+        required=True,
+        load_only=True,
+        error_messages={"required": 'Missing data for required field "verb".'})
 
     class Meta:
         """Schema configuration."""
@@ -95,6 +115,18 @@ class OAISchema(BaseSchema):
         if "from_" in data and "until" in data and data["from_"] > data["until"]:
             raise ValidationError('Date "from" must be before "until".')
 
+        # Set "until" time to 23:59:59 when "until" time is 00:00:00
+        if "until" in data and isinstance(data["until"], datetime) and \
+            data["until"].hour == 0 and data["until"].minute == 0 and \
+                data["until"].second == 0:
+            data["until"] = data["until"] + timedelta(hours=23,
+                                                      minutes=59,
+                                                      seconds=59)
+            
+        list_argument = [f.load_from or f.name for f in self.fields.values()]
+    
+        for arg in list_argument:
+            validate_duplicate_argument(arg)
 
 class Verbs(object):
     """List valid verbs and its arguments."""
@@ -102,8 +134,11 @@ class Verbs(object):
     class GetRecord(OAISchema):
         """Arguments for GetRecord verb."""
 
-        identifier = fields.Str(required=True)
-        metadataPrefix = fields.Str(required=True, validate=validate_metadata_prefix)
+        identifier = fields.Str(required=True, error_messages={"required":
+                                    'Missing data for required field "identifier".'})
+        metadataPrefix = fields.Str(required=True, validate=validate_metadata_prefix, 
+                                    error_messages={"required": 'Missing data for required'
+                                    ' field "metadataPrefix".'})
 
     class GetMetadata(OAISchema):
         """Arguments for GetMetadata verb."""
@@ -124,7 +159,9 @@ class Verbs(object):
         )
         until = DateTime(format="permissive")
         set = fields.Str()
-        metadataPrefix = fields.Str(required=True, validate=validate_metadata_prefix)
+        metadataPrefix = fields.Str(required=True, validate=validate_metadata_prefix,
+                                    error_messages={"required": 'Missing data for required'
+                                    ' field "metadataPrefix".'})
 
     class ListMetadataFormats(OAISchema):
         """Arguments for ListMetadataFormats verb."""
@@ -143,6 +180,7 @@ class ResumptionVerbs(Verbs):
 
     class ListIdentifiers(OAISchema, ResumptionTokenSchema):
         """Arguments for ListIdentifiers verb."""
+        
 
     class ListRecords(OAISchema, ResumptionTokenSchema):
         """Arguments for ListRecords verb."""

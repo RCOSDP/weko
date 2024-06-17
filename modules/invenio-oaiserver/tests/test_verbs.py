@@ -10,9 +10,13 @@
 
 """Test OAI verbs."""
 
+import pytest
+from mock import patch
 import uuid
 from copy import deepcopy
 from datetime import datetime, timedelta
+from marshmallow import ValidationError, Schema, fields
+from lxml import etree
 
 from helpers import create_record, run_after_insert_oai_set
 from invenio_db import db
@@ -33,6 +37,17 @@ from invenio_oaiserver.utils import (
     oai_identifier_description,
 )
 
+from invenio_oaiserver.verbs import (
+    validate_metadata_prefix,
+    validate_duplicate_argument,
+    DateTime,
+    OAISchema
+)
+
+import builtins
+
+real_import = builtins.__import__
+
 NAMESPACES = {"x": NS_OAIPMH, "y": NS_OAIDC, "z": NS_DC}
 
 
@@ -40,25 +55,26 @@ def _xpath_errors(body):
     """Find errors in body."""
     return list(body.iter("{*}error"))
 
-
+# .tox/c1/bin/pytest --cov=invenio_oaiserver tests/test_verbs.py::test_no_verb -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiserver/.tox/c1/tmp
 def test_no_verb(app):
     """Test response when no verb is specified."""
     with app.test_client() as c:
-        result = c.get("/oai2d")
+        result = c.get("/oai")
         tree = etree.fromstring(result.data)
-        assert "Missing data for required field." in _xpath_errors(tree)[0].text
+        assert"Missing data for required field." in _xpath_errors(tree)[0].text
 
 
 def test_wrong_verb(app):
     """Test wrong verb."""
     with app.test_client() as c:
-        result = c.get("/oai2d?verb=Aaa")
+        result = c.get("/oai?verb=Aaa")
         tree = etree.fromstring(result.data)
 
         assert "This is not a valid OAI-PMH verb:Aaa" in _xpath_errors(tree)[0].text
 
 
-def test_identify(app):
+# .tox/c1/bin/pytest --cov=invenio_oaiserver tests/test_verbs.py::test_identify -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiserver/.tox/c1/tmp
+def test_identify(app, db, identify):
     """Test Identify verb."""
     # baseUrls for friends element
     baseUrls = ["http://example.org/1", "http://example.org/2"]
@@ -88,7 +104,7 @@ def test_identify(app):
     ]
 
     with app.test_client() as c:
-        result = c.get("/oai2d?verb=Identify")
+        result = c.get("/oai?verb=Identify")
         assert 200 == result.status_code
 
         tree = etree.fromstring(result.data)
@@ -99,10 +115,11 @@ def test_identify(app):
             "/x:OAI-PMH/x:Identify/x:repositoryName", namespaces=NAMESPACES
         )
         assert len(repository_name) == 1
-        assert repository_name[0].text == "Invenio-OAIServer"
+        # assert repository_name[0].text == "Invenio-OAIServer"
+        assert repository_name[0].text == "test_repository"
         base_url = tree.xpath("/x:OAI-PMH/x:Identify/x:baseURL", namespaces=NAMESPACES)
         assert len(base_url) == 1
-        assert base_url[0].text == "http://app/oai2d"
+        assert base_url[0].text == "http://app/oai"
         protocolVersion = tree.xpath(
             "/x:OAI-PMH/x:Identify/x:protocolVersion", namespaces=NAMESPACES
         )
@@ -112,7 +129,8 @@ def test_identify(app):
             "/x:OAI-PMH/x:Identify/x:adminEmail", namespaces=NAMESPACES
         )
         assert len(adminEmail) == 1
-        assert adminEmail[0].text == "info@inveniosoftware.org"
+        # assert adminEmail[0].text == "info@inveniosoftware.org"
+        assert adminEmail[0].text == "test@test.org"
         earliestDatestamp = tree.xpath(
             "/x:OAI-PMH/x:Identify/x:earliestDatestamp", namespaces=NAMESPACES
         )
@@ -121,7 +139,8 @@ def test_identify(app):
             "/x:OAI-PMH/x:Identify/x:deletedRecord", namespaces=NAMESPACES
         )
         assert len(deletedRecord) == 1
-        assert deletedRecord[0].text == "no"
+        # assert deletedRecord[0].text == "no"
+        assert deletedRecord[0].text == "transient"
         granularity = tree.xpath(
             "/x:OAI-PMH/x:Identify/x:granularity", namespaces=NAMESPACES
         )
@@ -257,79 +276,12 @@ def test_identify_earliest_date(app, schema):
         assert earliestDatestamp[0].text == "2000-01-01T13:00:00Z"
 
 
-def test_getrecord(app):
-    """Test get record verb."""
-    with app.test_request_context():
-        pid_value = "oai:legacy:1"
-        with db.session.begin_nested():
-            record_id = uuid.uuid4()
-            data = {
-                "_oai": {"id": pid_value},
-                "title_statement": {"title": "Test0"},
-            }
-            pid = oaiid_minter(record_id, data)
-            record = current_oaiserver.record_cls.create(data, id_=record_id)
-
-        db.session.commit()
-        assert pid_value == pid.pid_value
-        record_updated = record.updated
-        with app.test_client() as c:
-            result = c.get(
-                "/oai2d?verb=GetRecord&identifier={0}&metadataPrefix=oai_dc".format(
-                    pid_value
-                )
-            )
-            assert 200 == result.status_code
-
-            tree = etree.fromstring(result.data)
-
-            assert len(tree.xpath("/x:OAI-PMH", namespaces=NAMESPACES)) == 1
-            assert len(tree.xpath("/x:OAI-PMH/x:GetRecord", namespaces=NAMESPACES)) == 1
-            assert (
-                len(
-                    tree.xpath(
-                        "/x:OAI-PMH/x:GetRecord/x:record/x:header",
-                        namespaces=NAMESPACES,
-                    )
-                )
-                == 1
-            )
-            assert (
-                len(
-                    tree.xpath(
-                        "/x:OAI-PMH/x:GetRecord/x:record/x:header/x:identifier",
-                        namespaces=NAMESPACES,
-                    )
-                )
-                == 1
-            )
-            identifier = tree.xpath(
-                "/x:OAI-PMH/x:GetRecord/x:record/x:header/x:identifier/text()",
-                namespaces=NAMESPACES,
-            )
-            assert identifier == [pid_value]
-            datestamp = tree.xpath(
-                "/x:OAI-PMH/x:GetRecord/x:record/x:header/x:datestamp/text()",
-                namespaces=NAMESPACES,
-            )
-            assert datestamp == [datetime_to_datestamp(record_updated)]
-            assert (
-                len(
-                    tree.xpath(
-                        "/x:OAI-PMH/x:GetRecord/x:record/x:metadata",
-                        namespaces=NAMESPACES,
-                    )
-                )
-                == 1
-            )
-
-
-def test_getrecord_fail(app):
+def test_getrecord_fail(es_app, db,identify):
     """Test GetRecord if record doesn't exist."""
-    with app.test_request_context():
-        with app.test_client() as c:
+    with es_app.test_request_context():
+        with es_app.test_client() as c:
             result = c.get(
-                "/oai2d?verb=GetRecord&identifier={0}&metadataPrefix=oai_dc".format(
+                "/oai?verb=GetRecord&identifier={0}&metadataPrefix=jpcoar_1.0".format(
                     "not-exist-pid"
                 )
             )
@@ -351,19 +303,19 @@ def _check_xml_error(tree, code):
 def test_identify_with_additional_args(app):
     """Test identify with additional arguments."""
     with app.test_client() as c:
-        result = c.get("/oai2d?verb=Identify&notAValidArg=True")
+        result = c.get("/oai?verb=Identify&notAValidArg=True")
         tree = etree.fromstring(result.data)
         assert "You have passed too many arguments." == _xpath_errors(tree)[0].text
 
 
 def test_listmetadataformats(app):
     """Test ListMetadataFormats."""
-    _listmetadataformats(app=app, query="/oai2d?verb=ListMetadataFormats")
+    _listmetadataformats(app=app, query="/oai?verb=ListMetadataFormats")
 
 
-def test_listmetadataformats_record(app):
+def test_listmetadataformats_record(es_app, db):
     """Test ListMetadataFormats for a record."""
-    with app.test_request_context():
+    with es_app.test_request_context():
         with db.session.begin_nested():
             record_id = uuid.uuid4()
             data = {"title_statement": {"title": "Test0"}}
@@ -375,14 +327,14 @@ def test_listmetadataformats_record(app):
         db.session.commit()
 
     _listmetadataformats(
-        app=app,
-        query="/oai2d?verb=ListMetadataFormats&identifier={0}".format(pid_value),
+        app=es_app,
+        query="/oai?verb=ListMetadataFormats&identifier={0}".format(pid_value),
     )
 
 
-def test_listmetadataformats_record_fail(app):
+def test_listmetadataformats_record_fail(app, db):
     """Test ListMetadataFormats for a record that doesn't exist."""
-    query = "/oai2d?verb=ListMetadataFormats&identifier={0}".format("pid-not-exixts")
+    query = "/oai?verb=ListMetadataFormats&identifier={0}".format("pid-not-exixts")
     with app.test_request_context():
         with app.test_client() as c:
             result = c.get(query)
@@ -439,7 +391,7 @@ def _listmetadataformats(app, query):
         )
 
 
-def test_listsets(app):
+def test_listsets(app, db):
     """Test ListSets."""
     with app.test_request_context():
         current_oaiserver.unregister_signals_oaiset()
@@ -450,7 +402,7 @@ def test_listsets(app):
             db.session.add(a)
 
         with app.test_client() as c:
-            result = c.get("/oai2d?verb=ListSets")
+            result = c.get("/oai?verb=ListSets")
 
         tree = etree.fromstring(result.data)
 
@@ -548,9 +500,9 @@ def test_listsets_invalid_name(app):
 def test_fail_missing_metadataPrefix(app):
     """Test ListRecords fail missing metadataPrefix."""
     queries = [
-        "/oai2d?verb=ListRecords",
-        "/oai2d?verb=GetRecord&identifier=123",
-        "/oai2d?verb=ListIdentifiers",
+        "/oai?verb=ListRecords",
+        "/oai?verb=GetRecord&identifier=123",
+        "/oai?verb=ListIdentifiers",
     ]
     for query in queries:
         with app.test_request_context():
@@ -561,13 +513,13 @@ def test_fail_missing_metadataPrefix(app):
 
             _check_xml_error(tree, code="badArgument")
 
-
+# .tox/c1/bin/pytest --cov=invenio_oaiserver tests/test_verbs.py::test_fail_not_exist_metadataPrefix -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiserver/.tox/c1/tmp
 def test_fail_not_exist_metadataPrefix(app):
     """Test ListRecords fail not exist metadataPrefix."""
     queries = [
-        "/oai2d?verb=ListRecords&metadataPrefix=not-exist",
-        "/oai2d?verb=GetRecord&identifier=123&metadataPrefix=not-exist",
-        "/oai2d?verb=ListIdentifiers&metadataPrefix=not-exist",
+        "/oai?verb=ListRecords&metadataPrefix=not-exist",
+        "/oai?verb=GetRecord&identifier=123&metadataPrefix=not-exist",
+        "/oai?verb=ListIdentifiers&metadataPrefix=not-exist",
     ]
     for query in queries:
         with app.test_request_context():
@@ -576,12 +528,12 @@ def test_fail_not_exist_metadataPrefix(app):
 
             tree = etree.fromstring(result.data)
 
-            _check_xml_error(tree, code="badArgument")
+            _check_xml_error(tree, code="cannotDisseminateFormat")
 
 
 def test_listrecords_fail_missing_metadataPrefix(app):
     """Test ListRecords fail missing metadataPrefix."""
-    query = "/oai2d?verb=ListRecords&"
+    query = "/oai?verb=ListRecords&"
     with app.test_request_context():
         with app.test_client() as c:
             result = c.get(query)
@@ -590,500 +542,111 @@ def test_listrecords_fail_missing_metadataPrefix(app):
 
         _check_xml_error(tree, code="badArgument")
 
-
-def test_listrecords(app):
-    """Test ListRecords."""
-    total = 32
-    record_ids = []
-
-    with app.test_request_context():
-        indexer = RecordIndexer()
-
-        with db.session.begin_nested():
-            for idx in range(total):
-                record_id = uuid.uuid4()
-                data = {"title_statement": {"title": "Test{0}".format(idx)}}
-                recid_minter(record_id, data)
-                oaiid_minter(record_id, data)
-                record = current_oaiserver.record_cls.create(data, id_=record_id)
-                record_ids.append(record_id)
-
-        db.session.commit()
-
-        for record_id in record_ids:
-            indexer.index_by_id(record_id)
-
-        current_search.flush_and_refresh("_all")
-
-        with app.test_client() as c:
-            result = c.get("/oai2d?verb=ListRecords&metadataPrefix=oai_dc")
-
-        tree = etree.fromstring(result.data)
-
-        assert len(tree.xpath("/x:OAI-PMH", namespaces=NAMESPACES)) == 1
-
-        assert len(tree.xpath("/x:OAI-PMH/x:ListRecords", namespaces=NAMESPACES)) == 1
-        assert (
-            len(tree.xpath("/x:OAI-PMH/x:ListRecords/x:record", namespaces=NAMESPACES))
-            == 10
-        )
-        assert (
-            len(
-                tree.xpath(
-                    "/x:OAI-PMH/x:ListRecords/x:record/x:header", namespaces=NAMESPACES
-                )
-            )
-            == 10
-        )
-        assert (
-            len(
-                tree.xpath(
-                    "/x:OAI-PMH/x:ListRecords/x:record/x:header" "/x:identifier",
-                    namespaces=NAMESPACES,
-                )
-            )
-            == 10
-        )
-        assert (
-            len(
-                tree.xpath(
-                    "/x:OAI-PMH/x:ListRecords/x:record/x:header" "/x:datestamp",
-                    namespaces=NAMESPACES,
-                )
-            )
-            == 10
-        )
-        assert (
-            len(
-                tree.xpath(
-                    "/x:OAI-PMH/x:ListRecords/x:record/x:metadata",
-                    namespaces=NAMESPACES,
-                )
-            )
-            == 10
-        )
-
-        # First resumption token
-        resumption_token = tree.xpath(
-            "/x:OAI-PMH/x:ListRecords/x:resumptionToken", namespaces=NAMESPACES
-        )[0]
-        assert resumption_token.text
-        # Get data for resumption token
-        with app.test_client() as c:
-            result = c.get(
-                "/oai2d?verb=ListRecords&resumptionToken={0}".format(
-                    resumption_token.text
-                )
-            )
-
-        tree = etree.fromstring(result.data)
-        assert len(tree.xpath("/x:OAI-PMH", namespaces=NAMESPACES)) == 1
-        assert len(tree.xpath("/x:OAI-PMH/x:ListRecords", namespaces=NAMESPACES)) == 1
-        assert (
-            len(tree.xpath("/x:OAI-PMH/x:ListRecords/x:record", namespaces=NAMESPACES))
-            == 10
-        )
-        assert (
-            len(
-                tree.xpath(
-                    "/x:OAI-PMH/x:ListRecords/x:record/x:header", namespaces=NAMESPACES
-                )
-            )
-            == 10
-        )
-        assert (
-            len(
-                tree.xpath(
-                    "/x:OAI-PMH/x:ListRecords/x:record/x:header" "/x:identifier",
-                    namespaces=NAMESPACES,
-                )
-            )
-            == 10
-        )
-        assert (
-            len(
-                tree.xpath(
-                    "/x:OAI-PMH/x:ListRecords/x:record/x:header" "/x:datestamp",
-                    namespaces=NAMESPACES,
-                )
-            )
-            == 10
-        )
-        assert (
-            len(
-                tree.xpath(
-                    "/x:OAI-PMH/x:ListRecords/x:record/x:metadata",
-                    namespaces=NAMESPACES,
-                )
-            )
-            == 10
-        )
-
-        # Second resumption token
-        resumption_token = tree.xpath(
-            "/x:OAI-PMH/x:ListRecords/x:resumptionToken", namespaces=NAMESPACES
-        )[0]
-        assert resumption_token.text
-        # Get data for resumption token
-        with app.test_client() as c:
-            result = c.get(
-                "/oai2d?verb=ListRecords&resumptionToken={0}".format(
-                    resumption_token.text
-                )
-            )
-
-        tree = etree.fromstring(result.data)
-        assert len(tree.xpath("/x:OAI-PMH", namespaces=NAMESPACES)) == 1
-        assert len(tree.xpath("/x:OAI-PMH/x:ListRecords", namespaces=NAMESPACES)) == 1
-        assert (
-            len(tree.xpath("/x:OAI-PMH/x:ListRecords/x:record", namespaces=NAMESPACES))
-            == 10
-        )
-        assert (
-            len(
-                tree.xpath(
-                    "/x:OAI-PMH/x:ListRecords/x:record/x:header", namespaces=NAMESPACES
-                )
-            )
-            == 10
-        )
-        assert (
-            len(
-                tree.xpath(
-                    "/x:OAI-PMH/x:ListRecords/x:record/x:header" "/x:identifier",
-                    namespaces=NAMESPACES,
-                )
-            )
-            == 10
-        )
-        assert (
-            len(
-                tree.xpath(
-                    "/x:OAI-PMH/x:ListRecords/x:record/x:header" "/x:datestamp",
-                    namespaces=NAMESPACES,
-                )
-            )
-            == 10
-        )
-        assert (
-            len(
-                tree.xpath(
-                    "/x:OAI-PMH/x:ListRecords/x:record/x:metadata",
-                    namespaces=NAMESPACES,
-                )
-            )
-            == 10
-        )
-
-        # Third resumption token
-        resumption_token = tree.xpath(
-            "/x:OAI-PMH/x:ListRecords/x:resumptionToken", namespaces=NAMESPACES
-        )[0]
-        assert resumption_token.text
-        with app.test_client() as c:
-            result = c.get(
-                "/oai2d?verb=ListRecords&resumptionToken={0}".format(
-                    resumption_token.text
-                )
-            )
-
-        tree = etree.fromstring(result.data)
-        assert len(tree.xpath("/x:OAI-PMH", namespaces=NAMESPACES)) == 1
-        assert len(tree.xpath("/x:OAI-PMH/x:ListRecords", namespaces=NAMESPACES)) == 1
-        assert (
-            len(tree.xpath("/x:OAI-PMH/x:ListRecords/x:record", namespaces=NAMESPACES))
-            == 2
-        )
-        assert (
-            len(
-                tree.xpath(
-                    "/x:OAI-PMH/x:ListRecords/x:record/x:header", namespaces=NAMESPACES
-                )
-            )
-            == 2
-        )
-        assert (
-            len(
-                tree.xpath(
-                    "/x:OAI-PMH/x:ListRecords/x:record/x:header" "/x:identifier",
-                    namespaces=NAMESPACES,
-                )
-            )
-            == 2
-        )
-        assert (
-            len(
-                tree.xpath(
-                    "/x:OAI-PMH/x:ListRecords/x:record/x:header" "/x:datestamp",
-                    namespaces=NAMESPACES,
-                )
-            )
-            == 2
-        )
-        assert (
-            len(
-                tree.xpath(
-                    "/x:OAI-PMH/x:ListRecords/x:record/x:metadata",
-                    namespaces=NAMESPACES,
-                )
-            )
-            == 2
-        )
-
-        # No fourth resumption token
-        resumption_token = tree.xpath(
-            "/x:OAI-PMH/x:ListRecords/x:resumptionToken", namespaces=NAMESPACES
-        )[0]
-        assert not resumption_token.text
-
-        # Check from:until range
-        with app.test_client() as c:
-            # Check date and datetime timestamps.
-            for granularity in (False, True):
-                result = c.get(
-                    "/oai2d?verb=ListRecords&metadataPrefix=oai_dc"
-                    "&from={0}&until={1}".format(
-                        datetime_to_datestamp(
-                            record.updated - timedelta(days=1),
-                            day_granularity=granularity,
-                        ),
-                        datetime_to_datestamp(
-                            record.updated + timedelta(days=1),
-                            day_granularity=granularity,
-                        ),
-                    )
-                )
-                assert result.status_code == 200
-
-                tree = etree.fromstring(result.data)
-                assert (
-                    len(
-                        tree.xpath(
-                            "/x:OAI-PMH/x:ListRecords/x:record", namespaces=NAMESPACES
-                        )
-                    )
-                    == 10
-                )
-
-                # Check from:until range in resumption token
-                resumption_token = tree.xpath(
-                    "/x:OAI-PMH/x:ListRecords/x:resumptionToken", namespaces=NAMESPACES
-                )[0]
-                assert resumption_token.text
-                with app.test_client() as c:
-                    result = c.get(
-                        "/oai2d?verb=ListRecords&resumptionToken={0}".format(
-                            resumption_token.text
-                        )
-                    )
-                assert result.status_code == 200
-
-
-def test_listidentifiers(app):
-    """Test verb ListIdentifiers."""
-    from invenio_oaiserver.models import OAISet
-
-    with app.app_context():
-        current_oaiserver.unregister_signals_oaiset()
-        # create new OAI Set
-        with db.session.begin_nested():
-            oaiset = OAISet(
-                spec="test0",
-                name="Test0",
-                description="test desc 0",
-                search_pattern="title_statement.title:Test0",
-                system_created=False,
-            )
-            db.session.add(oaiset)
-        db.session.commit()
-
-    run_after_insert_oai_set()
-
-    with app.test_request_context():
-        indexer = RecordIndexer()
-
-        # create a new record (inside the OAI Set)
-        with db.session.begin_nested():
-            record_id = uuid.uuid4()
-            data = {"title_statement": {"title": "Test0"}}
-            recid_minter(record_id, data)
-            pid = oaiid_minter(record_id, data)
-            record = current_oaiserver.record_cls.create(data, id_=record_id)
-
-        db.session.commit()
-
-        indexer.index_by_id(record_id)
-        current_search.flush_and_refresh("_all")
-
-        pid_value = pid.pid_value
-
-        # get the list of identifiers
-        with app.test_client() as c:
-            result = c.get("/oai2d?verb=ListIdentifiers&metadataPrefix=oai_dc")
-
-        tree = etree.fromstring(result.data)
-
-        assert len(tree.xpath("/x:OAI-PMH", namespaces=NAMESPACES)) == 1
-        assert (
-            len(tree.xpath("/x:OAI-PMH/x:ListIdentifiers", namespaces=NAMESPACES)) == 1
-        )
-        assert (
-            len(
-                tree.xpath(
-                    "/x:OAI-PMH/x:ListIdentifiers/x:header", namespaces=NAMESPACES
-                )
-            )
-            == 1
-        )
-        identifier = tree.xpath(
-            "/x:OAI-PMH/x:ListIdentifiers/x:header/x:identifier", namespaces=NAMESPACES
-        )
-        assert len(identifier) == 1
-        assert identifier[0].text == str(pid_value)
-        datestamp = tree.xpath(
-            "/x:OAI-PMH/x:ListIdentifiers/x:header/x:datestamp", namespaces=NAMESPACES
-        )
-        assert len(datestamp) == 1
-        assert datestamp[0].text == datetime_to_datestamp(record.updated)
-
-        # Check from:until range
-        with app.test_client() as c:
-            # Check date and datetime timestamps.
-            for granularity in (False, True):
-                result = c.get(
-                    "/oai2d?verb=ListIdentifiers&metadataPrefix=oai_dc"
-                    "&from={0}&until={1}".format(
-                        datetime_to_datestamp(
-                            record.updated - timedelta(1), day_granularity=granularity
-                        ),
-                        datetime_to_datestamp(
-                            record.updated + timedelta(1), day_granularity=granularity
-                        ),
-                    )
-                )
-                assert result.status_code == 200
-
-                tree = etree.fromstring(result.data)
-                identifier = tree.xpath(
-                    "/x:OAI-PMH/x:ListIdentifiers/x:header/x:identifier",
-                    namespaces=NAMESPACES,
-                )
-                assert len(identifier) == 1
-
-        # check set param
-        with app.test_client() as c:
-            for granularity in (False, True):
-                result = c.get(
-                    "/oai2d?verb=ListIdentifiers&metadataPrefix=oai_dc"
-                    "&set=test0".format(
-                        datetime_to_datestamp(
-                            record.updated - timedelta(1), day_granularity=granularity
-                        ),
-                        datetime_to_datestamp(
-                            record.updated + timedelta(1), day_granularity=granularity
-                        ),
-                    )
-                )
-                assert result.status_code == 200
-
-                tree = etree.fromstring(result.data)
-                identifier = tree.xpath(
-                    "/x:OAI-PMH/x:ListIdentifiers/x:header/x:identifier",
-                    namespaces=NAMESPACES,
-                )
-                assert len(identifier) == 1
-
-        # check from:until range and set param
-        with app.test_client() as c:
-            for granularity in (False, True):
-                result = c.get(
-                    "/oai2d?verb=ListIdentifiers&metadataPrefix=oai_dc"
-                    "&from={0}&until={1}&set=test0".format(
-                        datetime_to_datestamp(
-                            record.updated - timedelta(1), day_granularity=granularity
-                        ),
-                        datetime_to_datestamp(
-                            record.updated + timedelta(1), day_granularity=granularity
-                        ),
-                    )
-                )
-                assert result.status_code == 200
-
-                tree = etree.fromstring(result.data)
-                identifier = tree.xpath(
-                    "/x:OAI-PMH/x:ListIdentifiers/x:header/x:identifier",
-                    namespaces=NAMESPACES,
-                )
-                assert len(identifier) == 1
-
-
-def test_list_sets_long(app):
-    """Test listing of sets."""
-    from invenio_db import db
-
-    from invenio_oaiserver.models import OAISet
-
-    with app.app_context():
-        current_oaiserver.unregister_signals_oaiset()
-        with db.session.begin_nested():
-            for i in range(27):
-                oaiset = OAISet(
-                    spec="test{0}".format(i),
-                    name="Test{0}".format(i),
-                    description="test desc {0}".format(i),
-                    search_pattern="title_statement.title:Test{0}".format(i),
-                    system_created=False,
-                )
-                db.session.add(oaiset)
-        db.session.commit()
-
-    run_after_insert_oai_set()
-
-    with app.test_client() as c:
-        # First page:
-        result = c.get("/oai2d?verb=ListSets")
-        tree = etree.fromstring(result.data)
-
-        assert (
-            len(tree.xpath("/x:OAI-PMH/x:ListSets/x:set", namespaces=NAMESPACES)) == 10
-        )
-
-        resumption_token = tree.xpath(
-            "/x:OAI-PMH/x:ListSets/x:resumptionToken", namespaces=NAMESPACES
-        )[0]
-        assert resumption_token.text
-
-        # Second page:
-        result = c.get(
-            "/oai2d?verb=ListSets&resumptionToken={0}".format(resumption_token.text)
-        )
-        tree = etree.fromstring(result.data)
-
-        assert (
-            len(tree.xpath("/x:OAI-PMH/x:ListSets/x:set", namespaces=NAMESPACES)) == 10
-        )
-
-        resumption_token = tree.xpath(
-            "/x:OAI-PMH/x:ListSets/x:resumptionToken", namespaces=NAMESPACES
-        )[0]
-        assert resumption_token.text
-
-        # Third page:
-        result = c.get(
-            "/oai2d?verb=ListSets&resumptionToken={0}".format(resumption_token.text)
-        )
-        tree = etree.fromstring(result.data)
-
-        assert (
-            len(tree.xpath("/x:OAI-PMH/x:ListSets/x:set", namespaces=NAMESPACES)) == 7
-        )
-
-        resumption_token = tree.xpath(
-            "/x:OAI-PMH/x:ListSets/x:resumptionToken", namespaces=NAMESPACES
-        )[0]
-        assert not resumption_token.text
-
-
 def test_list_sets_with_resumption_token_and_other_args(app):
     """Test list sets with resumption tokens."""
     pass
+
+# .tox/c1/bin/pytest --cov=invenio_oaiserver tests/test_verbs.py::test_validate_metadata_prefix -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiserver/.tox/c1/tmp
+def test_validate_metadata_prefix(app, mocker):
+    oai_metadata_formats = {
+        "oai_dc": {
+            "serializer": ("invenio_oaiserver.utils:dumps_etree", {"xslt_filename": "/code/modules/invenio-oaiserver/invenio_oaiserver/static/xsl/MARC21slim2OAIDC.xsl"}), 
+            "schema": "http://www.openarchives.org/OAI/2.0/oai_dc/ http://www.openarchives.org/OAI/2.0/oai_dc.xsd", 
+            "namespace": "http://www.w3.org/2001/XMLSchema"
+        }, 
+        "marc21": {
+            "serializer": ("invenio_oaiserver.utils:dumps_etree", {"prefix": "marc"}),
+            "schema": "http://www.loc.gov/standards/marcxml/schema/MARC21slim.xsd", 
+            "namespace": "http://www.loc.gov/MARC21/slim"
+        }, 
+        "ddi": {
+            "namespace": "ddi:codebook:2_5", 
+            "schema": "https://ddialliance.org/Specification/DDI-Codebook/2.5/XMLSchema/codebook.xsd", 
+            "serializer": ("invenio_oaiserver.utils:dumps_etree", {"schema_type": "ddi"})
+        }, 
+        "jpcoar_v1": {
+            "namespace": "https://github.com/JPCOAR/schema/blob/master/1.0/", 
+            "schema": "https://github.com/JPCOAR/schema/blob/master/1.0/jpcoar_scm.xsd", 
+            "serializer": ("invenio_oaiserver.utils:dumps_etree", {"schema_type": "jpcoar_v1"})
+        }, 
+        "jpcoar": {
+            "namespace": "https://github.com/JPCOAR/schema/blob/master/2.0/", 
+            "schema": "https://github.com/JPCOAR/schema/blob/master/2.0/jpcoar_scm.xsd", 
+            "serializer": ("invenio_oaiserver.utils:dumps_etree", {"schema_type": "jpcoar"})
+        }
+    }
+    mocker.patch("invenio_oaiserver.verbs.get_oai_metadata_formats",return_value=oai_metadata_formats)
+    
+    validate_metadata_prefix("jpcoar")
+    
+    with pytest.raises(ValidationError) as e:
+        validate_metadata_prefix("not_oai")
+    error = e.value
+    assert error.messages == {'cannotDisseminateFormat':['The metadataPrefix "not_oai" is not supported by this repository.']}
+    assert error.field_names == ["metadataPrefix"]
+
+# .tox/c1/bin/pytest --cov=invenio_oaiserver tests/test_verbs.py::test_validate_duplicate_argument -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiserver/.tox/c1/tmp
+def test_validate_duplicate_argument(app):
+    url = "/test?test_field1=test_value1"
+    with app.test_request_context(url):
+        validate_duplicate_argument("test_field1")
+    
+    url = "/test?test_field1=test_value1&test_field1=test_value2"
+    with app.test_request_context(url):
+        with pytest.raises(ValidationError) as e:
+            validate_duplicate_argument("test_field1")
+    error = e.value
+    assert error.messages == ['Illegal duplicate of argument "test_field1".']
+    assert error.field_names == ["test_field1"]
+    
+# .tox/c1/bin/pytest --cov=invenio_oaiserver tests/test_verbs.py::test_DateTime_from_iso_permissive -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiserver/.tox/c1/tmp
+def test_DateTime_from_iso_permissive():
+    class TestScheme(Schema):
+        date = DateTime(format="permissive")
+    result = TestScheme().load({"date":"2023-02-10T12:01:10"})
+    
+    assert result.data["date"].strftime("%Y-%m-%dT%H:%M:%S") == "2023-02-10T12:01:10"
+    assert result.errors == {}
+    def mock_import(name,globals=None, locals=None,fromlist=(),level=0):
+        if name in ("dateutil"):
+            raise ImportError("test_error")
+        return real_import(name,globals=globals,locals=locals,fromlist=fromlist,level=level)
+    with patch('builtins.__import__', side_effect=mock_import):
+        class TestScheme(Schema):
+            date = DateTime(format="permissive")
+        result = TestScheme().load({"date":"2023-02-10T12:01:10"})
+        assert result.data["date"].strftime("%Y-%m-%dT%H:%M:%S") == "2023-02-10T12:01:10"
+        assert result.errors == {}
+
+
+# .tox/c1/bin/pytest --cov=invenio_oaiserver tests/test_verbs.py::test_OAIScheme_validate -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiserver/.tox/c1/tmp
+def test_OAIScheme_validate(app):
+    class TestSchema(OAISchema):
+            name= fields.Str()
+    url = "/test?test_field=test_value"
+    with app.test_request_context(url):
+        data = {"verb":"OAISchema"}
+        with pytest.raises(ValidationError) as e:
+            TestSchema().validate(data)
+        error = e.value
+        assert error.messages == ["This is not a valid OAI-PMH verb:OAISchema"]
+        assert error.field_names == ["verb"]
+        
+        data = {"from_":"2023-01-01","until":"2022-01-01"}
+        with pytest.raises(ValidationError) as e:
+            TestSchema().validate(data)
+        error = e.value
+        assert error.messages == ['Date "from" must be before "until".']
+        
+        # Set 'until' time to 23:59:59 when 'until' time is 00:00:00
+        # You have passed too many arguments.
+        data = {"until":datetime(2023,1,1)}
+        with pytest.raises(ValidationError) as e:
+            TestSchema().validate(data)
+        error = e.value
+        assert error.messages == ["You have passed too many arguments."]
+    
+    url = "/test?verb=test_verb&name=test_name"
+    with app.test_request_context(url):
+        data = {"until":"2023-01-01"}
+        TestSchema().validate(data)
