@@ -21,6 +21,7 @@ recursive-include docs *.py
 recursive-include docs *.rst
 recursive-include docs Makefile
 recursive-include examples *.py
+recursive-include .github/workflows *.yml
 recursive-include invenio_mail *.mo *.po
 recursive-include misc *.py
 recursive-include misc *.rst
@@ -28,11 +29,4 @@ recursive-include tests *.html
 recursive-include tests *.py
 recursive-include tests *.svg
 recursive-include tests *.txt
-
-# added by check_manifest.py
-recursive-include invenio_mail *.html
-recursive-include invenio_mail *.pot
-
-# added by check-manifest
-include *.properties
-include tox.ini
+include .git-blame-ignore-revs

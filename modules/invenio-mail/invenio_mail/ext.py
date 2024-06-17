@@ -8,16 +8,12 @@
 
 """Invenio mail module."""
 
-from __future__ import absolute_import, print_function
-
 import sys
 import threading
 
 from flask_mail import Mail, email_dispatched
 
 from . import config
-from .views import blueprint
-from .api import DomainMail
 
 
 def print_email(message, app):
@@ -29,10 +25,9 @@ def print_email(message, app):
     :param message: Message object.
     :param app: Flask application object.
     """
-    invenio_mail = app.extensions['invenio-mail']
+    invenio_mail = app.extensions["invenio-mail"]
     with invenio_mail._lock:
-        invenio_mail.stream.write(
-            '{0}\n{1}\n'.format(message.as_string(), '-' * 79))
+        invenio_mail.stream.write("{0}\n{1}\n".format(message.as_string(), "-" * 79))
         invenio_mail.stream.flush()
 
 
@@ -67,12 +62,11 @@ class InvenioMail(object):
         :param app: Flask application object.
         """
         self.init_config(app)
-        if 'mail' not in app.extensions:
-            DomainMail(app)
-        if app.config.get('MAIL_SUPPRESS_SEND', False) or app.debug:
+        if "mail" not in app.extensions:
+            Mail(app)
+        if app.config.get("MAIL_SUPPRESS_SEND", False) or app.debug:
             email_dispatched.connect(print_email)
-        app.register_blueprint(blueprint)
-        app.extensions['invenio-mail'] = self
+        app.extensions["invenio-mail"] = self
 
     @staticmethod
     def init_config(app):
@@ -80,9 +74,8 @@ class InvenioMail(object):
 
         :param app: Flask application object.
         """
-        app.config.setdefault('MAIL_DEBUG', app.debug)
-        app.config.setdefault('MAIL_SUPPRESS_SEND', app.debug or app.testing)
+        app.config.setdefault("MAIL_DEBUG", app.debug)
+        app.config.setdefault("MAIL_SUPPRESS_SEND", app.debug or app.testing)
         for k in dir(config):
-            if k.startswith('INVENIO_MAIL_'):
+            if k.startswith("MAIL_"):
                 app.config.setdefault(k, getattr(config, k))
-
