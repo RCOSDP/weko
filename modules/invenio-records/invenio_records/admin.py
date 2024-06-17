@@ -11,13 +11,16 @@
 
 import json
 
-from flask import flash
+from flask import abort, current_app, flash, jsonify, redirect, url_for
+from flask_admin import expose
 from flask_admin.contrib.sqla import ModelView
 from invenio_admin.filters import FilterConverter
 from invenio_db import db
 from invenio_i18n import gettext as _
 from markupsafe import Markup
 from sqlalchemy.exc import SQLAlchemyError
+from weko_records_ui.utils import restore as restore_imp
+from weko_records_ui.utils import soft_delete as soft_delete_imp
 
 from .api import Record
 from .models import RecordMetadata
@@ -26,6 +29,32 @@ from .models import RecordMetadata
 class RecordMetadataModelView(ModelView):
     """Records admin model view."""
 
+    @expose("/soft_delete/<string:id>")
+    def soft_delete(self, id):
+        """Soft delete."""
+        try:
+            soft_delete_imp(id)
+            db.session.commit()
+            return jsonify(code=1, msg="PID: " + str(id) + " DELETED")
+        except Exception as ex:
+            db.session.rollback()
+            current_app.logger.error(ex)
+            if ex.args and len(ex.args) and isinstance(ex.args[0], dict) \
+                    and ex.args[0].get("is_locked"):
+                return jsonify(
+                    code=-1,
+                    is_locked=True,
+                    msg=str(ex.args[0].get("msg", ""))
+                )
+            abort(500)
+
+    @expose("/restore/<string:id>")
+    def restore(self, id):
+        """Restore."""
+        restore_imp(id)
+        return redirect(url_for("recordmetadata.details_view") + "?id=" + id)
+
+
     filter_converter = FilterConverter()
     can_create = False
     can_edit = False
@@ -33,11 +62,13 @@ class RecordMetadataModelView(ModelView):
     can_view_details = True
     column_list = (
         "id",
+        "status",
         "version_id",
         "updated",
         "created",
     )
-    column_details_list = ("id", "version_id", "updated", "created", "json")
+    column_details_list = ("id", "status", "version_id", "updated", "created", "json")
+    column_sortable_list = ("status", "version_id", "updated", "created")
     column_labels = dict(
         id=_("UUID"),
         version_id=_("Revision"),
@@ -55,6 +86,7 @@ class RecordMetadataModelView(ModelView):
     )
     column_default_sort = ("updated", True)
     page_size = 25
+    details_template = "invenio_records/details.html"
 
     def delete_model(self, model):
         """Delete a record."""

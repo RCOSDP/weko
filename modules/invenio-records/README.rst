@@ -15,6 +15,9 @@
 .. image:: https://github.com/inveniosoftware/invenio-records/workflows/CI/badge.svg
         :target: https://github.com/inveniosoftware/invenio-records/actions
 
+.. image:: https://travis-ci.org/inveniosoftware/invenio-records.svg?branch=master
+        :target: https://travis-ci.org/inveniosoftware/invenio-records
+
 .. image:: https://img.shields.io/coveralls/inveniosoftware/invenio-records.svg
         :target: https://coveralls.io/r/inveniosoftware/invenio-records
 

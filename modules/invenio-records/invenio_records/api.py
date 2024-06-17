@@ -118,18 +118,18 @@ class RecordBase(dict):
             >>> from jsonschema import FormatChecker
             >>> from jsonschema.validators import validate
             >>> checker = FormatChecker()
-            >>> checker.checks('foo')(lambda el: el.startswith('foo'))
+            >>> checker.checks("foo")(lambda el: el.startswith("foo"))
             <function <lambda> at ...>
-            >>> validate('foo', {'format': 'foo'}, format_checker=checker)
+            >>> validate("foo", {"format": "foo"}, format_checker=checker)
 
             returns ``None``, which means that the validation was successful,
             while
 
-            >>> validate('bar', {'format': 'foo'},
+            >>> validate("bar", {"format": "foo"},
             ...    format_checker=checker)  # doctest: +IGNORE_EXCEPTION_DETAIL
             Traceback (most recent call last):
               ...
-            ValidationError: 'bar' is not a 'foo'
+            ValidationError: "bar" is not a "foo"
               ...
 
             raises a :class:`jsonschema.exceptions.ValidationError`.
@@ -142,17 +142,17 @@ class RecordBase(dict):
             >>> from jsonschema.validators import extend, Draft4Validator
             >>> NoRequiredValidator = extend(
             ...     Draft4Validator,
-            ...     validators={'required': lambda v, r, i, s: None}
+            ...     validators={"required": lambda v, r, i, s: None}
             ... )
             >>> schema = {
-            ...     'type': 'object',
-            ...     'properties': {
-            ...         'name': { 'type': 'string' },
-            ...         'email': { 'type': 'string' },
-            ...         'address': {'type': 'string' },
-            ...         'telephone': { 'type': 'string' }
+            ...     "type": "object",
+            ...     "properties": {
+            ...         "name": { "type": "string" },
+            ...         "email": { "type": "string" },
+            ...         "address": {"type": "string" },
+            ...         "telephone": { "type": "string" }
             ...     },
-            ...     'required': ['name', 'email']
+            ...     "required": ["name", "email"]
             ... }
             >>> from jsonschema.validators import validate
             >>> validate({}, schema, NoRequiredValidator)
@@ -163,7 +163,7 @@ class RecordBase(dict):
             >>> validate({}, schema)  # doctest: +IGNORE_EXCEPTION_DETAIL
             Traceback (most recent call last):
             ...
-            ValidationError: 'name' is a required property
+            ValidationError: "name" is a required property
             ...
 
             raises a :class:`jsonschema.exceptions.ValidationError`.
@@ -381,7 +381,20 @@ class Record(RecordBase):
             if not with_deleted:
                 query = query.filter(cls.model_cls.is_deleted != True)  # noqa
             obj = query.one()
+            cls.__custom_record_metadata(obj.json)
             return cls(obj.data, model=obj)
+        
+    @classmethod
+    def __custom_record_metadata(cls, record_metadata: dict):
+        """Custom record metadata.
+
+        Args:
+            record_metadata (dict): Record metadata.
+        """
+        from weko_records.utils import replace_fqdn_of_file_metadata
+        for k, v in record_metadata.items():
+            if isinstance(v, dict) and v.get("attribute_type") == "file":
+                replace_fqdn_of_file_metadata(v.get("attribute_value_mlt", []))
 
     @classmethod
     def get_records(cls, ids, with_deleted=False):

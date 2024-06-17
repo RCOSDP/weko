@@ -23,6 +23,7 @@ from invenio_records.errors import RecordsRefResolverConfigError
 from invenio_records.resolver import urljoin_with_custom_scheme
 
 from . import config
+from .views import blueprint
 from .validators import _create_validator
 
 
@@ -32,6 +33,7 @@ class _RecordsState(object):
     def __init__(self, app, entry_point_group=None):
         """Initialize state."""
         self.app = app
+        self.app.register_blueprint(blueprint)
         self.resolver = JSONResolver(entry_point_group=entry_point_group)
         self.refresolver_cls = ref_resolver_factory(self.resolver)
         self.refresolver_store = None

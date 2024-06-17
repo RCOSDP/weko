@@ -13,7 +13,10 @@ from copy import deepcopy
 from datetime import datetime
 
 from invenio_db import db
+from invenio_pidstore.models import PersistentIdentifier
 from sqlalchemy.dialects import mysql, postgresql
+from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.sql import and_, select
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy_utils.types import JSONType, UUIDType
@@ -158,6 +161,19 @@ class RecordMetadata(db.Model, RecordMetadataBase):
     """Represent a record metadata."""
 
     __tablename__ = "records_metadata"
+
+    @hybrid_property
+    def status(self):
+        """Status."""
+        return PersistentIdentifier.query.filter_by(
+            pid_type="recid", object_uuid=self.id).first().status
+
+    @status.expression
+    def status(cls):
+        return select([PersistentIdentifier.status]).\
+            select_from(PersistentIdentifier).where(and_(
+                PersistentIdentifier.pid_type == "recid",
+                PersistentIdentifier.object_uuid == cls.id))
 
     # Enables SQLAlchemy-Continuum versioning
     __versioned__ = {}
