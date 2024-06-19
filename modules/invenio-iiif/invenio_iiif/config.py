@@ -2,7 +2,7 @@
 #
 # This file is part of Invenio.
 # Copyright (C) 2018, 2019 CERN.
-# Copyright (C) 2019 Esteban J. G. Gabancho.
+# Copyright (C) 2019 Esteban J. G. Gabancho
 #
 # Invenio is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
@@ -34,3 +34,9 @@ IIIF_MANIFEST_ENDPOINTS = {
 
 }
 """Default manifest endpoint."""
+
+IIIF_API_DECORATOR_HANDLER = 'invenio_iiif.handlers:protect_api'
+"""Image opener handler decorator."""
+
+IIIF_IMAGE_OPENER_HANDLER = 'invenio_iiif.handlers:image_opener'
+"""Image opener handler function."""
