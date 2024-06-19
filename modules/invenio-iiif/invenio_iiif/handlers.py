@@ -13,6 +13,7 @@ import tempfile
 import pkg_resources
 from flask import g
 from invenio_files_rest.views import ObjectResource
+from invenio_files_rest.models import ObjectVersion
 
 try:
     pkg_resources.get_distribution('wand')
@@ -33,7 +34,9 @@ def protect_api(uuid=None, **kwargs):
     using the Invenio-Files-REST permission factory.
     """
     bucket, version_id, key = uuid.split(':', 2)
-    g.obj = ObjectResource.get_object(bucket, key, version_id)
+    # skip Invenio-Files-REST permission factory
+    g.obj = ObjectVersion.get(bucket, key, version_id=version_id)
+    #g.obj = ObjectResource.get_object(bucket, key, version_id)
     return g.obj
 
 

@@ -33,7 +33,7 @@ for reqs in extras_require.values():
     extras_require['all'].extend(reqs)
 
 setup_requires = [
-    'pytest-runner>=2.6.2',
+    'pytest-runner>=3.0.0,<5',
 ]
 
 install_requires = [
@@ -44,6 +44,7 @@ install_requires = [
     'invenio-files-rest>=1.3.0',
     'invenio-records-files>=1.0.0',
     'Wand>=0.4.4',
+    'iiif-prezi==0.3.0', # FIXME: probably this needs some work or fork
 ]
 
 packages = find_packages()
@@ -78,6 +79,9 @@ setup(
         ],
         'invenio_base.blueprints': [
             'invenio_iiif = invenio_iiif.previewer:blueprint',
+        ],
+        'invenio_base.api_blueprints': [
+            'invenio_iiif = invenio_iiif.views:create_blueprint_from_app',
         ],
         'invenio_celery.tasks': [
             'invenio_iiif = invenio_iiif.tasks',
