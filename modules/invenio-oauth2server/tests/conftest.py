@@ -23,7 +23,7 @@ from flask.cli import ScriptInfo
 from flask.views import MethodView
 from flask_mail import Mail
 from flask_menu import Menu
-from helpers import create_oauth_client, patch_request
+from .helpers import create_oauth_client, patch_request
 from invenio_accounts import InvenioAccountsREST, InvenioAccountsUI
 from invenio_accounts.models import User
 from invenio_accounts.views.settings import (
@@ -65,10 +65,12 @@ def app(request):
             SECURITY_PASSWORD_SINGLE_HASH=["plaintext"],
             SECURITY_PASSWORD_SALT="CHANGE_ME_ALSO",
             SECURITY_PASSWORD_SCHEMES=["plaintext"],
-            SQLALCHEMY_DATABASE_URI=os.getenv(
-                "SQLALCHEMY_DATABASE_URI",
-                "sqlite:///" + os.path.join(instance_path, "test.db"),
-            ),
+            # SQLALCHEMY_DATABASE_URI=os.getenv(
+            #     "SQLALCHEMY_DATABASE_URI",
+            #     "sqlite:///" + os.path.join(instance_path, "test.db"),
+            # ),
+            SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
+                                          'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
             SQLALCHEMY_TRACK_MODIFICATIONS=True,
             TESTING=True,
             WTF_CSRF_ENABLED=False,

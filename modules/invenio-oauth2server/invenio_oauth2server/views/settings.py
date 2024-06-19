@@ -12,7 +12,7 @@
 
 from functools import wraps
 
-from flask import Blueprint, abort, redirect, render_template, request, session, url_for
+from flask import Blueprint, abort, redirect, render_template, request, session, url_for, current_app
 from flask_login import current_user, login_required
 from invenio_db import db
 
@@ -135,11 +135,15 @@ def client_new():
     form = ClientForm(request.form)
 
     if form.validate_on_submit():
-        c = Client(user_id=current_user.get_id())
-        c.gen_salt()
-        form.populate_obj(c)
-        db.session.add(c)
-        db.session.commit()
+        try:
+            c = Client(user_id=current_user.get_id())
+            c.gen_salt()
+            form.populate_obj(c)
+            db.session.add(c)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(e)
         return redirect(url_for(".client_view", client_id=c.client_id))
 
     return render_template(
@@ -160,8 +164,12 @@ def client_view(client):
 
     form = ClientForm(request.form, obj=client)
     if form.validate_on_submit():
-        form.populate_obj(client)
-        db.session.commit()
+        try:
+            form.populate_obj(client)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(e)
 
     return render_template(
         "invenio_oauth2server/settings/client_view.html",
@@ -176,8 +184,12 @@ def client_view(client):
 def client_reset(client):
     """Reset client's secret."""
     if request.form.get("reset") == "yes":
-        client.reset_client_secret()
-        db.session.commit()
+        try:
+            client.reset_client_secret()
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(e)
     return redirect(url_for(".client_view", client_id=client.client_id))
 
 
@@ -192,10 +204,14 @@ def token_new():
     form.scopes.choices = current_oauth2server.scope_choices()
 
     if form.validate_on_submit():
-        t = Token.create_personal(
-            form.data["name"], current_user.get_id(), scopes=form.scopes.data
-        )
-        db.session.commit()
+        try:
+            t = Token.create_personal(
+                form.data["name"], current_user.get_id(), scopes=form.scopes.data
+            )
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(e)
         session["show_personal_access_token"] = True
         return redirect(url_for(".token_view", token_id=t.id))
 
@@ -214,8 +230,12 @@ def token_new():
 def token_view(token):
     """Show token details."""
     if request.method == "POST" and "delete" in request.form:
-        db.session.delete(token)
-        db.session.commit()
+        try:
+            db.session.delete(token)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(e)
         return redirect(url_for(".index"))
 
     show_token = session.pop("show_personal_access_token", False)
@@ -250,8 +270,12 @@ def token_view(token):
 @token_getter(is_personal=False, is_internal=False)
 def token_revoke(token):
     """Revoke Authorized Application token."""
-    db.session.delete(token)
-    db.session.commit()
+    try:
+        db.session.delete(token)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(e)
     return redirect(url_for(".index"))
 
 
@@ -271,3 +295,13 @@ def token_permission_view(token):
         token=token,
         scopes=scopes,
     )
+
+@blueprint.teardown_request
+def dbsession_clean(exception):
+    current_app.logger.debug("invenio_oauth2server dbsession_clean: {}".format(exception))
+    if exception is None:
+        try:
+            db.session.commit()
+        except:
+            db.session.rollback()
+    db.session.remove()

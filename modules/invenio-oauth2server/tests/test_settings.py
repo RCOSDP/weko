@@ -10,7 +10,7 @@
 """Test settings views."""
 
 from flask import url_for
-from helpers import login
+from tests.helpers import login
 from invenio_i18n import gettext as _
 
 from invenio_oauth2server.models import Client, Token
