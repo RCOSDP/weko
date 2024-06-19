@@ -415,7 +415,7 @@ def getrecord(**kwargs):
     record_dumper = serializer(kwargs["metadataPrefix"])
 
     pid_object = OAIIDProvider.get(pid_value=kwargs["identifier"]).pid
-    record = WekoRecord.get_record_by_uuid(pid_object.object_uuid)
+    record = current_oaiserver.record_fetcher(pid_object.object_uuid)
     set_identifier(record, record)
 
     e_tree, e_getrecord = verb(**kwargs)
@@ -468,7 +468,7 @@ def getrecord(**kwargs):
         sets=_sets
     )
     e_metadata = SubElement(e_record, etree.QName(NS_OAIPMH, "metadata"))
-    e_metadata.append(record_dumper(pid, {"_source": record}))
+    e_metadata.append(record_dumper(pid_object, {"_source": record}))
 
     etree_record = pickle.loads(pickle.dumps(record, -1))
 
