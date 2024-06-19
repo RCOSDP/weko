@@ -137,6 +137,10 @@ msgstr ""
 msgid "Title is required item."
 msgstr ""
 
+#: weko_search_ui/utils.py:2496
+msgid "One of the following required values ​​has not been registered.<br/>{}<br/>"
+msgstr ""
+
 #: weko_search_ui/utils.py:1276
 msgid "{} is required item."
 msgstr ""
