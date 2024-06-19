@@ -10,13 +10,18 @@
 
 from __future__ import absolute_import, print_function
 
+from urllib.parse import quote
+
 from flask import current_app
 from invenio_files_rest.models import ObjectVersion
-from six.moves.urllib_parse import quote
 
 
 def iiif_image_key(obj):
-    """Generate the IIIF image key."""
+    """Generate a unique IIIF image key, using the images DB location.
+
+    :param obj: File object instance.
+    :returns: Image key 'u'(str)
+    """
     if isinstance(obj, ObjectVersion):
         bucket_id = obj.bucket_id
         version_id = obj.version_id
@@ -34,7 +39,11 @@ def iiif_image_key(obj):
 
 def ui_iiif_image_url(obj, version='v2', region='full', size='full',
                       rotation=0, quality='default', image_format='png'):
-    """Generate IIIF image URL from the UI application."""
+    """Generate IIIF image URL from the UI application.
+
+    :param obj: File object instance.
+    :returns: URL to retrieve the processed image from.
+    """
     return u'{prefix}{version}/{identifier}/{region}/{size}/{rotation}/' \
         u'{quality}.{image_format}'.format(
             prefix=current_app.config['IIIF_UI_URL'],

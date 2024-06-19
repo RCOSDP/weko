@@ -13,7 +13,6 @@ from __future__ import absolute_import, print_function
 from copy import deepcopy
 
 from flask import Blueprint, current_app, render_template
-from invenio_db import db
 
 from .utils import ui_iiif_image_url
 
@@ -28,13 +27,24 @@ blueprint = Blueprint(
 
 
 def can_preview(file):
-    """Determine if the given file can be previewed."""
+    """Determine if the given file can be previewed by its extension.
+
+    :param file: The file to be previewed.
+    :returns: Boolean
+    """
     supported_extensions = ('.jpg', '.jpeg', '.png', '.tif', '.tiff')
     return file.has_extensions(*supported_extensions)
 
 
 def preview(file):
-    """Render appropriate template with embed flag."""
+    """Render appropriate template with embed flag.
+
+    .. note::
+        Any non .png image is treated as .jpg
+
+    :param file: The file to be previewed.
+    :returns: Template with the preview of the provided file.
+    """
     params = deepcopy(current_app.config['IIIF_PREVIEWER_PARAMS'])
     if 'image_format' not in params:
         params['image_format'] = \
@@ -47,13 +57,3 @@ def preview(file):
             **params
         )
     )
-
-@blueprint.teardown_request
-def dbsession_clean(exception):
-    current_app.logger.debug("invenio_iiif dbsession_clean: {}".format(exception))
-    if exception is None:
-        try:
-            db.session.commit()
-        except:
-            db.session.rollback()
-    db.session.remove()
