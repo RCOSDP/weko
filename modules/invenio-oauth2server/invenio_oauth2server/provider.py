@@ -10,10 +10,12 @@
 
 from datetime import datetime, timedelta
 
-from flask import current_app
+from flask import current_app, g
 from flask_login import current_user
 from flask_oauthlib.provider import OAuth2Provider
+from flask_principal import Identity, identity_changed
 from flask_security.utils import verify_password
+from importlib_metadata import version
 from invenio_db import db
 from werkzeug.local import LocalProxy
 
@@ -21,7 +23,7 @@ from .models import Client, Token
 from .scopes import email_scope
 
 oauth2 = OAuth2Provider()
-datastore = LocalProxy(lambda: current_app.extensions['security'].datastore)
+datastore = LocalProxy(lambda: current_app.extensions["security"].datastore)
 
 
 @oauth2.usergetter
@@ -53,18 +55,16 @@ def get_token(access_token=None, refresh_token=None):
     """
     if access_token:
         t = Token.query.filter_by(access_token=access_token).first()
-        if t and t.is_personal and t.user.active:
-            t.expires = datetime.utcnow() + timedelta(
-                seconds=int(current_app.config.get(
-                    'OAUTH2_PROVIDER_TOKEN_EXPIRES_IN'
-                ))
-            )
     elif refresh_token:
-        t = Token.query.join(Token.client).filter(
-            Token.refresh_token == refresh_token,
-            Token.is_personal == False,  # noqa
-            Client.is_confidential == True,
-        ).first()
+        t = (
+            Token.query.join(Token.client)
+            .filter(
+                Token.refresh_token == refresh_token,
+                Token.is_personal == False,  # noqa
+                Client.is_confidential == True,
+            )
+            .first()
+        )
     else:
         return None
     return t if t and t.user.active else None
@@ -101,11 +101,11 @@ def save_token(token, request, *args, **kwargs):
     # Add user information in token endpoint response.
     # Currently, this is the only way to have the access to the user of the
     # token as well as the token response.
-    token.update(user={'id': user.get_id()})
+    token.update(user={"id": user.get_id()})
 
     # Add email if scope granted.
     if email_scope.id in token.scopes:
-        token['user'].update(
+        token["user"].update(
             email=user.email,
             email_verified=user.confirmed_at is not None,
         )
@@ -116,33 +116,45 @@ def save_token(token, request, *args, **kwargs):
         is_personal=False,
     )
 
-    try:
-        # make sure that every client has only one token connected to a user
-        if tokens:
-            for tk in tokens:
-                db.session.delete(tk)
+    # make sure that every client has only one token connected to a user
+    if tokens:
+        for tk in tokens:
+            db.session.delete(tk)
         db.session.commit()
-    except Exception as e:
-        db.session.rollback()
-        current_app.logger.error(e)
 
-    expires_in = token.get('expires_in')
+    expires_in = token.get("expires_in")
     expires = datetime.utcnow() + timedelta(seconds=int(expires_in))
 
-    try:
-        tok = Token(
-            access_token=token['access_token'],
-            refresh_token=token.get('refresh_token'),
-            token_type=token['token_type'],
-            _scopes=token['scope'],
-            expires=expires,
-            client_id=request.client.client_id,
-            user_id=user.id,
-            is_personal=False,
-        )
-        db.session.add(tok)
-        db.session.commit()
-    except Exception as e:
-        db.session.rollback()
-        current_app.logger.error(e)
+    tok = Token(
+        access_token=token["access_token"],
+        refresh_token=token.get("refresh_token"),
+        token_type=token["token_type"],
+        _scopes=token["scope"],
+        expires=expires,
+        client_id=request.client.client_id,
+        user_id=user.id,
+        is_personal=False,
+    )
+    db.session.add(tok)
+    db.session.commit()
     return tok
+
+
+@oauth2.after_request
+def login_oauth2_user(valid, oauth):
+    """Log in a user after having been verified."""
+    if valid:
+        oauth.user.login_via_oauth2 = True
+        # Flask-login==0.6.2 changed the way the user is saved i.e uses `flask.g`
+        # To keep backwards compatibility we fallback to the previous implementation
+        # for earlier versions.
+        if version("flask-login") <= "0.6.1":
+            from flask import _request_ctx_stack
+
+            _request_ctx_stack.top.user = oauth.user
+        else:
+            g._login_user = oauth.user
+        identity_changed.send(
+            current_app._get_current_object(), identity=Identity(oauth.user.id)
+        )
+    return valid, oauth
