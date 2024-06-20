@@ -2146,7 +2146,7 @@ def test_next_action(client, db, users, db_register_fullaction, db_records, user
     ## exist requestmail
     ### exist feedbackmail, exist maillist
     update_activity_order("2",4,6)
-    adminsetting = AdminSettings(id=1,name='items_display_settings',settings={"display_request_form": True})
+    adminsetting = {"display_request_form": True}
     with patch("weko_workflow.views.AdminSettings.get",return_value = adminsetting):
         request_mail = ActivityRequestMail(id = 1, activity_id =1, request_maillist=[{"mail":"test@test.org"}])
         with patch("weko_workflow.views.WorkActivity.get_activity_request_mail", return_value = request_mail):
@@ -2164,7 +2164,7 @@ def test_next_action(client, db, users, db_register_fullaction, db_records, user
 
     ### exist requestmail, not maillistxxx
     update_activity_order("2",4,6)
-    adminsetting = AdminSettings(id=1,name='items_display_settings',settings={"display_request_form": True})
+    adminsetting = {"display_request_form": True}
     with patch("weko_workflow.views.AdminSettings.get",return_value = adminsetting):
         with patch("weko_workflow.views.WorkActivity.get_activity_request_mail", return_value = None):
             with patch("weko_workflow.views.WekoDeposit.update_request_mail"):
@@ -3550,7 +3550,7 @@ def test_save_activity_guestlogin(guest,db_register2):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_display_activity_nologin -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko_workflow/.tox/c1/tmp
 def test_display_activity_nologin(client,db_register2,mocker):
     """Test of display activity."""
-    adminsetting = AdminSettings(id=1,name='items_display_settings',settings={"display_request_form": True})
+    adminsetting = {"display_request_form": True}
     mocker.patch("weko_workflow.views.AdminSettings.get",return_value = adminsetting)
     url = url_for('weko_workflow.display_activity', activity_id='1')
     input = {}
@@ -3563,7 +3563,7 @@ def test_display_activity_nologin(client,db_register2,mocker):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_display_activity_guestlogin -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko_workflow/.tox/c1/tmp
 def test_display_activity_guestlogin(app, db_register, guest, mocker):
     """Test of display activity."""
-    adminsetting = AdminSettings(id=1,name='items_display_settings',settings={"display_request_form": True})
+    adminsetting = {"display_request_form": True}
     mocker.patch("weko_workflow.views.AdminSettings.get",return_value = adminsetting)
     url = url_for('weko_workflow.display_activity', activity_id='1')
     input = {}
@@ -3649,7 +3649,7 @@ def test_display_activity_users(client, users, db_register, users_index, status_
     Test of display activity.
     Expected: users[0]: AssertionError
     """
-    adminsetting = AdminSettings(id=1,name='items_display_settings',settings={"display_request_form": True})
+    adminsetting = {"display_request_form": True}
     mocker.patch("weko_workflow.views.AdminSettings.get",return_value = adminsetting)
     login(client=client, email=users[users_index]['email'])
     url = url_for('weko_workflow.display_activity', activity_id='1')
@@ -3714,7 +3714,7 @@ def test_display_activity(client, users, db_register,mocker,redis_connect,withou
             if session.get('itemlogin_community_id'):
                 del session['itemlogin_community_id']
     login(client=client, email=users[2]['email'])
-    adminsetting = AdminSettings(id=1,name='items_display_settings',settings={"display_request_form": True})
+    adminsetting = {"display_request_form": True}
     mocker.patch("weko_workflow.views.AdminSettings.get",return_value = adminsetting)
 
     workflow_detail = WorkFlow.query.filter_by(id=1).one_or_none()
@@ -4280,7 +4280,7 @@ def test_display_activity(client, users, db_register,mocker,redis_connect,withou
 
     #action_endpoint is approval
     #test No.2 (W2023-22 3(4))
-    app.config.update(WEKO_WORKFLOW_APPROVAL_PREVIEW = False)
+    mocker.patch("weko_workflow.views.AdminSettings.get",return_value = True)
     url = url_for('weko_workflow.display_activity', activity_id='A-00000001-10001')
     input = {}
     action_endpoint = 'approval'

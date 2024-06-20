@@ -123,3 +123,8 @@ label.field-required::after {
 .popup-mail-modal {
   width: 70%;
 }
+
+.settings_checkbox {
+  margin-right: 5px !important;
+  margin-left: 15px !important;
+}
