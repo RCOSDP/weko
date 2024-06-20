@@ -1,0 +1,82 @@
+{# -*- coding: utf-8 -*-
+
+  This file is part of Invenio.
+  Copyright (C) 2015-2020 CERN.
+
+  Invenio is free software; you can redistribute it and/or modify it
+  under the terms of the MIT License; see LICENSE file for more details.
+#}
+
+{% macro render_field(field, icon='', placeholder='', errormsg=True, autofocus=False) %}
+  {%- if field.widget.input_type == 'hidden' %}
+    {{ field() }}
+  {%- else %}
+    <div class="field">
+      <label>{{ field.label }}</label>
+      <div class="ui right icon input">
+        {%- if icon %}
+          <i class="{{icon}}" aria-hidden="true" ></i>
+        {%- endif %}
+
+        {%- set extras = dict(autofocus='') if autofocus else dict() %}
+        {{ field(placeholder=_(field.label.text | string), **extras) }}
+      </div>
+
+      {%- if field.description %}
+        <small>{{ field.description }}</small>
+      {%- endif %}
+
+      {%- if field.errors and errormsg %} -->
+        <div class="ui pointing red basic label">
+          {%- for error in field.errors %}
+          <p>{{error}}</p>
+          {%- endfor %}
+        </div>
+      {%- endif %}
+    </div>
+  {%- endif %}
+{% endmacro %}
+
+{% macro render_scopes_field(field) %}
+<div class="field">
+  <label>{{ field.label }}</label>
+  <div class="ui grid">
+    <div class="four column stackable tablet-mobile row">
+      {% for value, label, checked in field.iter_choices() %}
+        {%- set choice_id = field.id ~ "-" ~ value %}
+        <div class="column">
+          <div class="inline field">
+            <div class="ui checkbox">
+              <input
+                id="{{ choice_id }}"
+                aria-describedby="scopes-field-help-text"
+                {% if checked %} checked {% endif %}
+                value="{{ value }}"
+                name="{{ field.name }}"
+                type="checkbox"
+              >
+              <label for="{{ choice_id }}">
+                {{ value }}
+                <small class="block">{{ label.help_text }}</small>
+              </label>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+  {%- if field.description %}
+    <p id="scopes-field-help-text" class="rel-mt-1">
+      <small>{{ field.description }}</small>
+    </p>
+  {%- endif %}
+
+  {%- if field.errors and errormsg %} -->
+    <div class="ui pointing red basic label">
+      {%- for error in field.errors %}
+        <p>{{error}}</p>
+      {%- endfor %}
+    </div>
+  {%- endif %}
+</div>
+{% endmacro %}

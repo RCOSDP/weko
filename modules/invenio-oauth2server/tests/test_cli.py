@@ -2,16 +2,17 @@
 #
 # This file is part of Invenio.
 # Copyright (C) 2018 CERN.
+# Copyright (C) 2023 Graz University of Technology.
 #
 # Invenio is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
 
 from click.testing import CliRunner
+
 from invenio_db import db
 
 from invenio_oauth2server.cli import tokens_create, tokens_delete
 from invenio_oauth2server.models import Client, Token
-
 
 """
 $ invenio tokens create "my-token" \
@@ -36,15 +37,15 @@ def test_cli_tokens(app, script_info, settings_fixture):
 
     result = runner.invoke(
         tokens_create,
-        ['--name', 'test-token',
-         '--user', 'info@inveniosoftware.org'],
-        obj=script_info)
+        ["--name", "test-token", "--user", "info@inveniosoftware.org"],
+        obj=script_info,
+    )
     assert result.exit_code == 0
     access_token = result.output.strip()
 
     with app.app_context():
         client = Client.query.one()
-        assert client.user.email == 'info@inveniosoftware.org'
+        assert client.user.email == "info@inveniosoftware.org"
 
         token = Token.query.one()
         assert token.access_token == access_token
@@ -52,10 +53,9 @@ def test_cli_tokens(app, script_info, settings_fixture):
 
     result = runner.invoke(
         tokens_delete,
-        ['--name', 'test-token',
-         '--user', 'info@inveniosoftware.org',
-         '--force'],
-        obj=script_info)
+        ["--name", "test-token", "--user", "info@inveniosoftware.org", "--force"],
+        obj=script_info,
+    )
     assert result.exit_code == 0
 
     with app.app_context():

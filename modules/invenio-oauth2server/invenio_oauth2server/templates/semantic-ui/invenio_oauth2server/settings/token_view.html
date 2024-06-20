@@ -1,0 +1,64 @@
+{# -*- coding: utf-8 -*-
+
+  This file is part of Invenio.
+  Copyright (C) 2015-2020 CERN.
+
+  Invenio is free software; you can redistribute it and/or modify it
+  under the terms of the MIT License; see LICENSE file for more details.
+#}
+
+{%- extends "invenio_oauth2server/settings/index.html" %}
+
+{%- import "invenio_oauth2server/settings/helpers.html" as helpers with context %}
+{%- from "invenio_oauth2server/settings/_macros.html" import render_field, render_scopes_field with context %}
+
+{% block settings_content %}
+  {{ helpers.panel_start(
+      _('%(name)s', name=token.client.name),
+      breadcrumb_path=url_for('.index'),
+      breadcrumb_title=_('Applications'),
+      with_body=False,
+  ) }}
+  {% if show_token %}
+  <div class="ui segment">
+    <h3 class="ui small header">{{ _('Access token') }}</h3>
+    <code class="word-break-all">{{ token.access_token }}</code>
+
+    <p class="ui icon info message">
+      <i class="bullhorn large icon" aria-hidden="true"></i>
+      {{ _("Please copy the personal access token now. You won't see it again!") }}
+    </p>
+
+    <p class="ui icon negative message">
+      <i class="exclamation triangle large icon" aria-hidden="true"></i>
+      {{ _('Do not share this personal access token. It gives full access to your account.') }}
+    </p>
+
+    {%- block token_footer_text %}{%- endblock %}
+  </div>
+
+  {% endif %}
+  <div class="ui segment">
+    {% if not show_token %}
+      <p class="ui warning message">
+        {{ _("If you've lost or forgotten this token please create a new one. Be aware that any scripts or applications using this token will need to be updated.") }}
+      </p>
+    {% endif %}
+
+    <form class="ui form" method="POST" role="form" action="">
+      {{ render_field(form.name, autofocus=True) }}
+      {{ render_scopes_field(form.scopes) }}
+      {{ form.csrf_token }}
+
+      <div class="rel-mt-2">
+        <button type="submit" name="delete" class="ui labeled icon button negative">
+          <i class="icon trash" aria-hidden="true"></i> {{ _('Delete') }}
+        </button>
+        <button type="submit" name="save" class="ui labeled icon button primary">
+          <i class="icon check" aria-hidden="true"></i> {{ _('Save') }}
+        </button>
+      </div>
+    </form>
+  </div>
+  {{helpers.panel_end(with_body=False)}}
+{% endblock %}

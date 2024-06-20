@@ -2,22 +2,18 @@
 #
 # This file is part of Invenio.
 # Copyright (C) 2015-2018 CERN.
+# Copyright (C) 2023 Graz University of Technology.
 #
 # Invenio is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
 
 """OAuth2Server configuration variables."""
 
-from datetime import timedelta
-
-OAUTH2_CACHE_TYPE = 'redis' #redis or redissentinl
+OAUTH2_CACHE_TYPE = "redis" #redis or redissentinl
 """Type of cache to use for storing the temporary grant token."""
 
-OAUTH2_PROVIDER_ERROR_ENDPOINT = 'invenio_oauth2server.errors'
+OAUTH2_PROVIDER_ERROR_ENDPOINT = "invenio_oauth2server.errors"
 """Error view endpoint."""
-
-OAUTH2_PROVIDER_TOKEN_EXPIRES_IN = 3600
-"""Life time of an access token."""
 
 OAUTH2SERVER_CLIENT_ID_SALT_LEN = 40
 """Length of client id."""
@@ -29,7 +25,9 @@ OAUTH2SERVER_TOKEN_PERSONAL_SALT_LEN = 60
 """Length of the personal access token."""
 
 OAUTH2SERVER_ALLOWED_GRANT_TYPES = {
-    'authorization_code', 'client_credentials', 'refresh_token',
+    "authorization_code",
+    "client_credentials",
+    "refresh_token",
 }
 """A set of allowed grant types.
 
@@ -40,7 +38,8 @@ password of the resource owner.
 """
 
 OAUTH2SERVER_ALLOWED_RESPONSE_TYPES = {
-    'code', 'token',
+    "code",
+    "token",
 }
 """A set of allowed response types.
 
@@ -50,7 +49,7 @@ The allowed values are ``code`` and ``token``.
 - ``token`` is used for implicit grant types
 """
 
-OAUTH2SERVER_ALLOWED_URLENCODE_CHARACTERS = '=&;:%+~,*@!()/?'
+OAUTH2SERVER_ALLOWED_URLENCODE_CHARACTERS = "=&;:%+~,*@!()/?"
 """A string of special characters that should be valid inside a query string.
 
 .. seealso::
@@ -60,7 +59,7 @@ OAUTH2SERVER_ALLOWED_URLENCODE_CHARACTERS = '=&;:%+~,*@!()/?'
     for a full explanation.
 """
 
-OAUTH2SERVER_JWT_AUTH_HEADER = 'Authorization'
+OAUTH2SERVER_JWT_AUTH_HEADER = "Authorization"
 """Header for the JWT.
 
 .. note::
@@ -68,7 +67,7 @@ OAUTH2SERVER_JWT_AUTH_HEADER = 'Authorization'
     Authorization: Bearer xxx
 """
 
-OAUTH2SERVER_JWT_AUTH_HEADER_TYPE = 'Bearer'
+OAUTH2SERVER_JWT_AUTH_HEADER_TYPE = "Bearer"
 """Header Authorization type.
 
 .. note::
@@ -77,8 +76,7 @@ OAUTH2SERVER_JWT_AUTH_HEADER_TYPE = 'Bearer'
     `JWT  <https://jwt.io>`_
 """
 
-OAUTH2SERVER_JWT_VERYFICATION_FACTORY = 'invenio_oauth2server.utils:' \
-    'jwt_verify_token'
+OAUTH2SERVER_JWT_VERIFICATION_FACTORY = "invenio_oauth2server.utils:" "jwt_verify_token"
 """Import path of factory used to verify JWT.
 
 The ``request.headers`` should be passed as parameter.

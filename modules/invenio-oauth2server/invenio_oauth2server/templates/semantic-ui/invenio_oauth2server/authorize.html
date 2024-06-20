@@ -1,0 +1,73 @@
+{# -*- coding: utf-8 -*-
+
+  This file is part of Invenio.
+  Copyright (C) 2015-2020 CERN.
+  Copyright (C)      2021 Graz University of Technology.
+
+  Invenio is free software; you can redistribute it and/or modify it
+  under the terms of the MIT License; see LICENSE file for more details.
+#}
+
+{%- extends config.OAUTH2SERVER_COVER_TEMPLATE %}
+
+{%- import "invenio_oauth2server/settings/helpers.html" as helpers with context %}
+
+{% block page_body %}
+<div class="ui segments">
+  <div class="ui segment secondary">
+    <strong><i class="icon shield"></i> {{ _('Authorize application') }}</strong>
+  </div>
+  <div class="ui padded segment">
+    <h1 class="ui header center aligned">{{ _('Authorize application') }}</h1>
+    <h3 class="ui header center aligned">
+      {{ _("Application '%(client_name)s' by '%(client_user)s' wants permission to access your '%(current_user)s' account.",
+          client_name=client.name,
+          client_user=client.user.nickname or client.user.email,
+          current_user=current_user.nickname or current_user.email,
+          )
+      }}
+    </h3>
+    <div class="ui divider"></div>
+
+    <div class="ui left aligned grid">
+      <div class="ten wide column">
+        <h4>{{ _('Review permissions') }}</h4>
+        {%- for group in scopes|groupby('group') %}
+          {%- if loop.first %}<div class="ui list">{% endif %}
+            <div class="item">
+              <div class="header">{{ group.grouper }}</div>
+              <div class="list">
+                {% for scope in group.list %}
+                  <div class="item">{{ scope.help_text }}</div>
+                {% endfor %}
+              </div>
+            </div>
+          {%- if loop.last %}</div>{% endif %}
+        {%- else %}
+          <p><em>{{ _('No permissions granted.') }}</em></p>
+        {%- endfor %}
+      </div>
+
+      <div class="six wide column">
+        <div class="ui segment secondary">
+          {{ _('Application') }}
+          <h3 class="ui header">{{ client.name }}</h3>
+          {%- if client.description %}<p>{{ client.description }}</p>{% endif %}
+          {%- if client.website %}<p><a href="{{ client.website }}">{{ _('Visit application website') }}</a></p>{% endif %}
+          <p>
+            <i class="icon users"></i> {{ client.get_users }} {{ 'user' if client.get_users == 1 else 'users' }}
+          </p>
+        </div>
+      </div>
+    </div>
+    <div class="ui divider"></div>
+
+    <form action="" method="POST">
+      <button type="submit" value="yes" name="confirm" class="ui button positive"><i class="icon check"></i> {{ _('Authorize application') }}</button>
+      <button type="submit" value="no" name="confirm" class="ui button negative"><i class="icon ban"></i> {{ _('Reject') }}</button>
+    </form>
+</div>
+
+{{ helpers.panel_end() }}
+
+{% endblock %}

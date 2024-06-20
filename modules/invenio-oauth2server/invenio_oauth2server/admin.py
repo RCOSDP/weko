@@ -2,6 +2,7 @@
 #
 # This file is part of Invenio.
 # Copyright (C) 2016-2018 CERN.
+# Copyright (C) 2024 Graz University of Technology.
 #
 # Invenio is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
@@ -27,16 +28,20 @@ class ClientView(ModelView):
     can_view_details = True
     column_display_all_relations = True
 
-    list_all = ('name', 'description', 'website', 'user_id', 'client_id', )
+    list_all = (
+        "name",
+        "description",
+        "website",
+        "user_id",
+        "client_id",
+    )
 
-    column_list = \
-        column_searchable_list = \
-        column_sortable_list = \
-        column_details_list = \
-        list_all
+    column_list = column_searchable_list = column_sortable_list = (
+        column_details_list
+    ) = list_all
 
     column_list = list_all
-    column_default_sort = ('client_id', True)
+    column_default_sort = ("client_id", True)
 
 
 class TokenView(ModelView):
@@ -45,33 +50,37 @@ class TokenView(ModelView):
     can_delete = True
     can_create = False
     can_view_details = True
-    list_all = ('id', 'client_id', 'user_id', 'token_type', 'expires', )
-    column_list = \
-        column_searchable_list = \
-        column_sortable_list = \
-        column_details_list = \
-        list_all
+    list_all = (
+        "id",
+        "client_id",
+        "user_id",
+        "token_type",
+        "expires",
+    )
+    column_list = column_searchable_list = column_sortable_list = (
+        column_details_list
+    ) = list_all
 
 
 oauth2server_clients_adminview = {
-    'view_class': ClientView,
-    'args': [Client, db.session],
-    'kwargs': {
-        'name': _('OAuth Applications'),
-        'category': _('User Management'),
-    }
+    "view_class": ClientView,
+    "args": [Client, db.session],
+    "kwargs": {
+        "name": _("OAuth Applications"),
+        "category": _("User Management"),
+    },
 }
 
 oauth2server_tokens_adminview = {
-    'view_class': TokenView,
-    'args': [Token, db.session],
-    'kwargs': {
-        'name': _('OAuth Application Tokens'),
-        'category': _('User Management'),
-    }
+    "view_class": TokenView,
+    "args": [Token, db.session],
+    "kwargs": {
+        "name": _("OAuth Application Tokens"),
+        "category": _("User Management"),
+    },
 }
 
 __all__ = (
-    'oauth2server_clients_adminview',
-    'oauth2server_tokens_adminview',
+    "oauth2server_clients_adminview",
+    "oauth2server_tokens_adminview",
 )

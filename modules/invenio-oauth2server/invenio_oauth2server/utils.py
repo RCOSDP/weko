@@ -16,8 +16,12 @@ from invenio_accounts.errors import JWTExpiredToken as _JWTExpiredToken
 from invenio_accounts.utils import jwt_decode_token
 from invenio_db.utils import rebuild_encrypted_properties
 
-from .errors import JWTDecodeError, JWTExpiredToken, JWTInvalidHeaderError, \
-    JWTInvalidIssuer
+from .errors import (
+    JWTDecodeError,
+    JWTExpiredToken,
+    JWTInvalidHeaderError,
+    JWTInvalidIssuer,
+)
 from .models import Token
 
 
@@ -28,9 +32,8 @@ def rebuild_access_tokens(old_key):
 
     :param old_key: the old SECRET_KEY.
     """
-    current_app.logger.info('rebuilding Token.access_token...')
-    rebuild_encrypted_properties(old_key, Token,
-                                 ['access_token', 'refresh_token'])
+    current_app.logger.info("rebuilding Token.access_token...")
+    rebuild_encrypted_properties(old_key, Token, ["access_token", "refresh_token"])
 
 
 def jwt_verify_token(headers):
@@ -41,14 +44,11 @@ def jwt_verify_token(headers):
     :rtype: dict
     """
     # Get the token from headers
-    token = headers.get(
-        current_app.config['OAUTH2SERVER_JWT_AUTH_HEADER']
-    )
+    token = headers.get(current_app.config["OAUTH2SERVER_JWT_AUTH_HEADER"])
     if token is None:
         raise JWTInvalidHeaderError
     # Get authentication type
-    authentication_type = \
-        current_app.config['OAUTH2SERVER_JWT_AUTH_HEADER_TYPE']
+    authentication_type = current_app.config["OAUTH2SERVER_JWT_AUTH_HEADER_TYPE"]
     # Check if the type should be checked
     if authentication_type is not None:
         # Get the prefix and the token
@@ -61,7 +61,7 @@ def jwt_verify_token(headers):
         # Get the token data
         decode = jwt_decode_token(token)
         # Check the integrity of the user
-        if current_user.get_id() != decode.get('sub'):
+        if current_user.get_id() != decode.get("sub"):
             raise JWTInvalidIssuer
         return decode
     except _JWTDecodeError as exc:

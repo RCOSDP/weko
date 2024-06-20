@@ -12,6 +12,6 @@ from flask import current_app
 from werkzeug.local import LocalProxy
 
 current_oauth2server = LocalProxy(
-    lambda: current_app.extensions['invenio-oauth2server']
+    lambda: current_app.extensions["invenio-oauth2server"]
 )
 """Return current state of the OAuth2 server extension."""

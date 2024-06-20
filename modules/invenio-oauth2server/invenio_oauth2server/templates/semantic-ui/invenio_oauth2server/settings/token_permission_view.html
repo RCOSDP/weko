@@ -1,0 +1,53 @@
+{# -*- coding: utf-8 -*-
+
+  This file is part of Invenio.
+  Copyright (C) 2017-2020 CERN.
+  Copyright (C)      2021 Graz University of Technology.
+
+  Invenio is free software; you can redistribute it and/or modify it
+  under the terms of the MIT License; see LICENSE file for more details.
+#}
+
+{%- extends "invenio_oauth2server/settings/index.html" %}
+
+{%- import "invenio_oauth2server/settings/helpers.html" as helpers with context %}
+
+{% block settings_content %}
+  {{ helpers.panel_start(
+      _('Authorized application: %(client_name)s',
+      client_name=token.client.name), with_body=False,
+      btn_href2=url_for('.token_revoke', token_id=token.id),
+      btn_icon2='icon times circle', btn2='Revoke'
+  ) }}
+  <div class="ui segment">
+    <p>{{token.client.description}}</p>
+    <div class="ui grid">
+      <div class="ten wide column">
+        <h4>{{ _('Review permissions') }}</h4>
+        {%- for group in scopes|groupby('group') %}
+          {%- if loop.first %}<div class="ui list">{% endif %}
+            <div class="item">
+              <div class="header">{{ group.grouper }}</div>
+              <div class="list">
+                {% for scope in group.list %}
+                  <div class="item">{{ scope.help_text }}</div>
+                {% endfor %}
+              </div>
+            </div>
+          {%- if loop.last %}</div>{% endif %}
+        {%- else %}
+          <p><em>{{ _('No permissions granted.') }}</em></p>
+        {%- endfor %}
+      </div>
+      <div class="six wide column">
+        <div class="ui segment secondary">
+          {{ _('Application') }}
+          <h3 class="ui header">{{ token.client.name }}</h3>
+          {%- if token.client.description %}<p>{{ token.client.description }}</p>{% endif %}
+          {%- if token.client.website %}<p><a href="{{ token.client.website }}">{{ _('Visit application website') }}</a></p>{% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+  {{helpers.panel_end(with_body=False)}}
+{% endblock %}

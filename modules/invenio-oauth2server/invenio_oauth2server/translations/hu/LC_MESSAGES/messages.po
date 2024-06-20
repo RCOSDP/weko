@@ -1,0 +1,480 @@
+# Translations template for invenio-oauth2server.
+# Copyright (C) 2022 CERN
+# This file is distributed under the same license as the
+# invenio-oauth2server project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2022.
+# 
+# Translators:
+# Dorottya Szemigán, 2023
+# Andrea Dömötör, 2023
+# 
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: invenio-oauth2server 1.3.7\n"
+"Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
+"POT-Creation-Date: 2022-10-12 09:26+0000\n"
+"PO-Revision-Date: 2016-08-18 08:03+0000\n"
+"Last-Translator: Andrea Dömötör, 2023\n"
+"Language-Team: Hungarian (https://app.transifex.com/inveniosoftware/teams/23537/hu/)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.10.3\n"
+"Language: hu\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: invenio_oauth2server/admin.py:68
+msgid "OAuth Applications"
+msgstr "OAuth Alkalmazások"
+
+#: invenio_oauth2server/admin.py:69 invenio_oauth2server/admin.py:78
+msgid "User Management"
+msgstr "Felhasználók kezelése"
+
+#: invenio_oauth2server/admin.py:77
+msgid "OAuth Application Tokens"
+msgstr "OAuth alkalmazás tokenek"
+
+#: invenio_oauth2server/forms.py:103
+#, python-format
+msgid "Invalid redirect URIs: %(urls)s"
+msgstr "Érvénytelen átirányítás URI-kra:  %(urls)s"
+
+#: invenio_oauth2server/forms.py:135
+msgid "Redirect URIs (one per line)"
+msgstr "Átirányítás URI-kra (soronként egy)"
+
+#: invenio_oauth2server/forms.py:136
+msgid ""
+"One redirect URI per line. This is your application's authorization callback"
+" URLs. HTTPS must be used for all hosts except localhost (for testing "
+"purposes)."
+msgstr ""
+"Egy átirányító URI soronként. Ez az ön alkalmazásának engedélyezési URL-je. "
+"A HTTPS-t minden gazdagéphez használni kell, kivéve a localhostot "
+"(tesztelési célból)."
+
+#: invenio_oauth2server/forms.py:155
+msgid "Client type"
+msgstr "Ügyfél típus"
+
+#: invenio_oauth2server/forms.py:156
+msgid ""
+"Select confidential if your application is capable of keeping the issued "
+"client secret confidential (e.g. a web application), select public if your "
+"application cannot (e.g. a browser-based JavaScript application). If you "
+"select public, your application MUST validate the redirect URI."
+msgstr ""
+"Válassza a Bizalmas lehetőséget, ha az Ön alkalmazása képes a kiadott kliens"
+" titkosítására (pl. webes alkalmazás), egyébként (pl. böngésző alapú "
+"JavaScript alkalmazás) válassza a Nyilvános lehetőséget. Ha a Nyilvános "
+"lehetőséget választja, az alkalmazásnak érvényesíteni KELL az átirányítási "
+"URI-t."
+
+#: invenio_oauth2server/forms.py:164
+msgid "Confidential"
+msgstr "Titkos"
+
+#: invenio_oauth2server/forms.py:164
+msgid "Public"
+msgstr "Nyilvános"
+
+#: invenio_oauth2server/forms.py:174
+msgid "Name of personal access token."
+msgstr "Személyes hozzáférési token neve"
+
+#: invenio_oauth2server/forms.py:178
+msgid "The name must be less than 40 characters long."
+msgstr "A névnek kevesebb, mint 40 karakterből kell állnia."
+
+#: invenio_oauth2server/forms.py:186
+msgid ""
+"Scopes assign permissions to your personal access token. A personal access "
+"token works just like a normal OAuth  access token for authentication "
+"against the API."
+msgstr ""
+"A hatókörök engedélyeket rendelnek hozzá az ön személyes hozzáférési "
+"tokenjéhez. A személyes hozzáférési token ugyanúgy működik API-"
+"hitelesítésre, mint egy normál OAuth hozzáférési token."
+
+#: invenio_oauth2server/models.py:122
+msgid "Name"
+msgstr "Név"
+
+#: invenio_oauth2server/models.py:123
+msgid "Name of application (displayed to users)."
+msgstr "Alkalmazás neve (megjelenítve a felhasználók számára)"
+
+#: invenio_oauth2server/models.py:133
+msgid "Description"
+msgstr "Leírás"
+
+#: invenio_oauth2server/models.py:134
+msgid "Optional. Description of the application (displayed to users)."
+msgstr "Opcionális. Alkalmazás leírása (megjelenítve a felhasználók számára)."
+
+#: invenio_oauth2server/models.py:144
+msgid "Website URL"
+msgstr "Weboldal URL"
+
+#: invenio_oauth2server/models.py:145
+msgid "URL of your application (displayed to users)."
+msgstr "Az ön alkalmazásának URL-je (a felhasználók számára megjelenítve)"
+
+#: invenio_oauth2server/scopes.py:20
+msgid "Allow access to email address (read-only)."
+msgstr "Hozzáférés engedélyezése az email címnek (csak olvasás)."
+
+#: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:19
+#: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:20
+#: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:59
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/authorize.html:18
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/authorize.html:21
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/authorize.html:66
+#: invenio_oauth2server/views/server.py:67
+msgid "Authorize application"
+msgstr "Alkalmazás engedélyezése"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:21
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/authorize.html:23
+#, python-format
+msgid ""
+"Application '%(client_name)s' by '%(client_user)s' wants permission to "
+"access your '%(current_user)s' account."
+msgstr ""
+"'%(client_user)s' '%(client_name)s' alkalmazása szeretne hozzáférni az Ön "
+"'%(current_user)s' fiókjához."
+
+#: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:28
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_permission_view.html:30
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/authorize.html:34
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/token_permission_view.html:26
+msgid "Review permissions"
+msgstr "Jogosultságok áttekintése"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:37
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_permission_view.html:39
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/authorize.html:47
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/token_permission_view.html:39
+msgid "No permissions granted."
+msgstr "Nem kapott engedélyeket."
+
+#: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:44
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_permission_view.html:44
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/authorize.html:53
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/token_permission_view.html:44
+msgid "Application"
+msgstr "Alkalmazás"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:47
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_permission_view.html:47
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/authorize.html:56
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/token_permission_view.html:47
+msgid "Visit application website"
+msgstr "Ugrás az alkalmazás weboldalára"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:60
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/authorize.html:67
+msgid "Reject"
+msgstr "Elutasítás"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/errors.html:18
+#: invenio_oauth2server/templates/invenio_oauth2server/errors.html:22
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/errors.html:17
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/errors.html:20
+msgid "Invalid authorization request"
+msgstr "Érvénytelen engedélyezési kérés"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/errors.html:24
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/errors.html:22
+#, python-format
+msgid ""
+"The service that redirected your here made an invalid authorization request "
+"(error code: %(x_error)s)."
+msgstr ""
+"A szolgáltató, amelyik ide irányította önt, érvénytelen azonosítási kérést "
+"küldött (hibakód: %(x_error)s).I "
+
+#: invenio_oauth2server/templates/invenio_oauth2server/errors.html:31
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/errors.html:28
+msgid "Get me out of here!"
+msgstr "Léptessen ki!"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_new.html:17
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_new.html:17
+msgid "New OAuth Application"
+msgstr "Új OAuth alkalmazás"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_new.html:25
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_new.html:26
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_new.html:24
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/token_new.html:25
+msgid "Cancel"
+msgstr "Mégsem"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_new.html:26
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_new.html:27
+msgid "Register"
+msgstr "Regisztráció"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:17
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:18
+#, python-format
+msgid "Application / %(client_name)s"
+msgstr "Alkalmazás / %(client_name)s"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:22
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:30
+msgid "Client ID"
+msgstr "Kliens ID"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:23
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:36
+msgid "Client Secret"
+msgstr "Ügyféltitok"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:24
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:39
+msgid "Do not share the client secret with anyone!"
+msgstr "Az ügyféltitok megosztása másokkal nem ajánlatos!"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:30
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:26
+msgid "Reset client secret"
+msgstr "Ügyféltitok visszaállítása"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:47
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_view.html:48
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:51
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/token_view.html:49
+msgid "Delete"
+msgstr "Törlés"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:48
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_view.html:49
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:54
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/token_view.html:52
+msgid "Save"
+msgstr "Mentés"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:55
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:60
+msgid "OAuth 2.0 Endpoints"
+msgstr "OAuth 2.0 Endpoints"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:59
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:65
+msgid "Authorize URL (GET)"
+msgstr "URL engedélyezése (GET)"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:62
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:71
+msgid "Query parameters"
+msgstr "Keresési beállítások"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:69
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:78
+msgid "example request"
+msgstr "példa kérés"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:72
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:89
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:81
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:102
+msgid "required, use"
+msgstr "kötelező, használja"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:73
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:87
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:88
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:82
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:100
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:101
+msgid "required"
+msgstr "kötelező"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:74
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:83
+msgid "required, space separate list of scopes"
+msgstr "kötelező, hatókörök listája space-szel elválasztva"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:75
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:84
+msgid "required, URL encoded"
+msgstr "kötelező, URL-kódolt"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:76
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:85
+msgid "recommended, for CSRF protection"
+msgstr "CSRF védelemhez ajánlott"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:83
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:93
+msgid "Access token URL (POST)"
+msgstr "Hozzáférési token URL (POST)"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:85
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:98
+msgid "Request body parameters:"
+msgstr "Szövegtörzs paraméterek kérése:"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:90
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:91
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:92
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:103
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:104
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:105
+msgid "required for grant_type"
+msgstr "szükséges ehhez: grant_type"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/index.html:17
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/index.html:17
+msgid "Developer Applications"
+msgstr "Fejlesztői alkalmazások"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/index.html:18
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/index.html:18
+msgid "New application"
+msgstr "Új alkalmazás"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/index.html:25
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/index.html:25
+#, python-format
+msgid "You have registered these applications to use the %(site_name)s API:"
+msgstr "Ezeket az alkalmazásokat regisztrálta a(z) %(site_name)s API-hoz:"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/index.html:36
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/index.html:37
+#, python-format
+msgid ""
+"You have not yet registered any applications. Click the 'New application' "
+"button to create an application to access the %(site_name)s API."
+msgstr ""
+"Még egy alkalmazást sem regisztrált. Kattintson az \"Új alkalmazás\" gombra,"
+" és hozzon létre egy alkalmazást, amellyel hozzáférhet a(z) %(site_name)s "
+"API-hoz."
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/index.html:41
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/index.html:43
+msgid "Personal access tokens"
+msgstr "Személyes hozzáférési tokenek"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/index.html:42
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/index.html:44
+msgid "New token"
+msgstr "Új token"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/index.html:49
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/index.html:51
+#, python-format
+msgid "Following are personal tokens used to access the %(site_name)s API:"
+msgstr "Ezek személyes hozzáférési tokenek a(z) %(site_name)s API-hoz:"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/index.html:60
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/index.html:69
+msgid ""
+"You have not yet created any personal access tokens. Click the 'New token' "
+"button to create a personal access token."
+msgstr ""
+"Ön még nem hozott létre személyes hozzáférési tokent. Kattintson az \"Új "
+"token\" gombra egy új személyes hozzáférési token létrehozásához!"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/index.html:65
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/index.html:74
+msgid "Authorized applications"
+msgstr "Engedélyezett alkalmazások"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/index.html:70
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/index.html:79
+msgid "You have granted the following application access to your account:"
+msgstr "A következő alkalmazásnak adott hozzáférést a felhasználói fiókhoz:"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/index.html:76
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/index.html:84
+msgid "Revoke"
+msgstr "Visszavonás"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/index.html:84
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/index.html:94
+msgid ""
+"You have not yet granted any external applications access to your account."
+msgstr ""
+"Ön nem engedélyezett hozzáférést a felhasználói fiókhoz külső alkalmazások "
+"számára."
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_new.html:18
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/token_new.html:18
+msgid "New personal access token"
+msgstr "Új személyes hozzáférési token"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_new.html:27
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/token_new.html:28
+msgid "Create"
+msgstr "Létrehozás"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_permission_view.html:17
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/token_permission_view.html:17
+#, python-format
+msgid "Authorized application: %(client_name)s"
+msgstr "Engedélyezett alkalmazás: %(client_name)s"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_view.html:17
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/token_view.html:17
+#, python-format
+msgid "Personal access token / %(name)s"
+msgstr "Személyes hozzáférési token / %(name)s"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_view.html:24
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/token_view.html:24
+msgid "Access token"
+msgstr "Hozzáférési token"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_view.html:26
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/token_view.html:30
+msgid "Please copy the personal access token now. You won't see it again!"
+msgstr ""
+"Kérjük, másolja le az egyéni hozzáférési tokent most! Később nem lesz "
+"látható!"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_view.html:29
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/token_view.html:33
+msgid ""
+"Do not share this personal access token. It gives full access to your "
+"account."
+msgstr ""
+"Ne ossza meg ezt a személyes hozzáférési tokent! Ez teljes hozzáférést ad a "
+"felhasználói fiókjához."
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_view.html:40
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/token_view.html:41
+msgid ""
+"If you've lost or forgotten this token please create a new one. Be aware "
+"that any scripts or applications using this token will need to be updated."
+msgstr ""
+"Ha elvesztette vagy elfelejtette ezt a tokent, kérjük, hozzon létre egy "
+"újat. Ne feledje, hogy minden olyan szkriptet vagy alkalmazást frissítenie "
+"kell, amely használta ezt a tokent."
+
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:81
+msgid "or"
+msgstr "vagy"
+
+#: invenio_oauth2server/views/settings.py:105
+#, python-format
+msgid "%(icon)s Applications"
+msgstr "%(icon)sAlkalmazások"
+
+#: invenio_oauth2server/views/settings.py:110
+msgid "Applications"
+msgstr "Alkalmazások"
+
+#: invenio_oauth2server/views/settings.py:151
+#: invenio_oauth2server/views/settings.py:212
+msgid "New"
+msgstr "Új"
+
+#: invenio_oauth2server/views/settings.py:174
+#: invenio_oauth2server/views/settings.py:238
+msgid "Edit"
+msgstr "Szerkesztés"

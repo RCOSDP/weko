@@ -1,0 +1,32 @@
+{# -*- coding: utf-8 -*-
+
+  This file is part of Invenio.
+  Copyright (C) 2015-2020 CERN.
+
+  Invenio is free software; you can redistribute it and/or modify it
+  under the terms of the MIT License; see LICENSE file for more details.
+#}
+
+{%- extends config.OAUTH2SERVER_COVER_TEMPLATE %}
+
+{%- import "invenio_oauth2server/settings/helpers.html" as helpers with context %}
+
+{%- block page_body %}
+<div class="ui segments">
+  <div class="ui segment secondary">
+    <strong><i class="icon exclamation triangle"></i> {{ _('Invalid authorization request') }}</strong>
+  </div>
+  <div class="ui padded segment">
+    <h1 class="ui header center aligned">{{ _('Invalid authorization request') }}</h1>
+    <h3 class="ui header center aligned">
+      {{ _('The service that redirected your here made an invalid authorization request (error code: %(x_error)s).',
+       x_error=error.error) }}
+    </h3>
+    <div class="ui divider"></div>
+
+    <a href="/" class="ui button primary">
+      {{ _('Get me out of here!') }}
+    </a>
+  </div>
+</div>
+{%- endblock %}

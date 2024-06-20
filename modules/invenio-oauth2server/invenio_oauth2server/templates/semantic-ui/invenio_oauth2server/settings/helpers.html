@@ -1,0 +1,122 @@
+{# -*- coding: utf-8 -*-
+
+  This file is part of Invenio.
+  Copyright (C) 2015-2020 CERN.
+
+  Invenio is free software; you can redistribute it and/or modify it
+  under the terms of the MIT License; see LICENSE file for more details.
+#}
+
+{%- macro panel_start(
+    title,
+    breadcrumb_path='',
+    breadcrumb_title='',
+    icon='',
+    btn_text='',
+    btn='',
+    btn_icon='',
+    btn_href='',
+    btn_class='basic',
+    btn_name='',
+    btn2='',
+    btn_icon2='',
+    btn_href2='',
+    btn_class2='basic',
+    btn_name2='',
+    id="",
+    with_body=True,
+    panel_extra_class="secondary"
+  )
+%}
+
+  {%- block panel_start scoped %}
+  <section aria-label="{{ _(title) }}" class="ui segments" {% if id %} id="{{ id }}" {% endif %}>
+
+    {%- block panel_heading scoped %}
+      <div class="ui segment {{panel_extra_class}}">
+
+        <div class="ui two column grid">
+          <div class="middle aligned column">
+            {% if breadcrumb_path and breadcrumb_title %}
+              <span class="ui tiny header">
+                <a
+                  href="{{ breadcrumb_path }}"
+                  aria-label="Back to {{ breadcrumb_title }}"
+                >
+                  {{ breadcrumb_title }}
+                </a>
+                <span aria-hidden="true">/</span>
+              </span>
+            {% endif %}
+
+            {%if icon %}
+              <i class="{{ icon }}" aria-hidden="true"></i>
+            {% endif %}
+            <h2 class="ui tiny header inline-block m-0">{{ title }}</h2>
+          </div>
+
+          <div class="right aligned column">
+            {%- if btn and (btn_href or btn_text) -%}
+              {%- if btn_href %}
+                <a class="ui compact tiny button {{ 'icon' if btn_icon }} {{ btn_class }}" href="{{ btn_href }}">
+                  {% if btn_icon %}
+                    <i class="{{ btn_icon }}" aria-hidden="true"></i>
+                  {% endif %}
+                  {{ btn }}
+                </a>
+
+              {%- elif btn_name %}
+                <button name="{{ btn_name }}" class="ui compact tiny button {{ 'icon' if btn_icon }} {{ btn_class }}">
+                  {% if btn_icon %}
+                    <i class="{{ btn_icon }}" aria-hidden="true"></i>
+                  {% endif %}
+                  {{ btn }}
+                </button>
+              {%- endif %}
+            {%- endif -%}
+
+            {%- if btn2 and btn_href2 -%}
+              {%- if btn_href2 %}
+                <a
+                  class="ui compact tiny button {{ 'icon' if btn_icon2 }} {{ btn_class2 }}"
+                  href="{{ btn_href2 }}"
+                >
+                  {% if btn_icon2 %}
+                    <i class="{{ btn_icon2 }}" aria-hidden="true"></i>
+                  {% endif %}
+                  {{ btn2 }}
+                </a>
+
+              {%- elif btn_name2 %}
+                <button
+                  name="{{ btn_name2 }}"
+                  class="ui compact tiny button {{ btn_class2 }} {{ 'icon' if btn_icon2 }}"
+                >
+                  {% if btn_icon2 %}
+                    <i class="{{ btn_icon2 }}" aria-hidden="true"></i>
+                  {% endif %}
+                  {{ btn2 }}
+                </button>
+              {%- endif %}
+            {%- endif -%}
+          </div>
+        </div>
+      </div>
+    {%- endblock %}
+
+    {%- if with_body %}
+      <div class="ui segment">
+    {%- endif %}
+
+  {%- endblock %}
+{%- endmacro %}
+
+
+{%- macro panel_end(with_body=True) %}
+  {%- block panel_end scoped %}
+    {%- if with_body %}
+      </div>
+    {%- endif %}
+    </section>
+  {%- endblock %}
+{%- endmacro %}

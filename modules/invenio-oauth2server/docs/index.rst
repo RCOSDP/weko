@@ -20,7 +20,6 @@ Invenio-OAuth2Server.
    installation
    configuration
    usage
-   examplesapp
 
 
 API Reference

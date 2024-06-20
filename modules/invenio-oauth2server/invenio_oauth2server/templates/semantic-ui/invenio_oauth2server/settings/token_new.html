@@ -1,0 +1,34 @@
+{# -*- coding: utf-8 -*-
+
+  This file is part of Invenio.
+  Copyright (C) 2015-2020 CERN.
+
+  Invenio is free software; you can redistribute it and/or modify it
+  under the terms of the MIT License; see LICENSE file for more details.
+#}
+
+
+{%- extends "invenio_oauth2server/settings/index.html" %}
+
+{%- import "invenio_oauth2server/settings/helpers.html" as helpers with context %}
+{%- from "invenio_oauth2server/settings/_macros.html" import render_field, render_scopes_field with context %}
+
+{% block settings_content %}
+{{ helpers.panel_start(
+    _('New personal access token'),
+    breadcrumb_path=url_for('.index'),
+    breadcrumb_title=_('Applications'),
+) }}
+<form class="ui form" role="form" method="POST">
+  {{ render_field(form.name, autofocus=True) }}
+  {{ render_scopes_field(form.scopes) }}
+  {{ form.csrf_token }}
+  <a href="{{ url_for('.index') }}" class="ui labeled icon button">
+    <i class="icon x" aria-hidden="true"></i> {{ _('Cancel') }}
+  </a>
+  <button type="submit" class="ui labeled icon button primary">
+    <i class="icon check" aria-hidden="true"></i> {{ _('Create') }}
+  </button>
+</form>
+{{helpers.panel_end()}}
+{% endblock %}

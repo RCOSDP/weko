@@ -40,7 +40,6 @@ def test_rebuilding_access_tokens(models_fixture):
         rebuild_access_tokens(old_secret_key)
         tokens_after = Token.query.order_by(Token.id).all()
 
-        for token_before, token_after in list(zip(tokens_before,
-                                                  tokens_after)):
+        for token_before, token_after in list(zip(tokens_before, tokens_after)):
             assert token_before.access_token == token_after.access_token
             assert token_before.refresh_token == token_after.refresh_token

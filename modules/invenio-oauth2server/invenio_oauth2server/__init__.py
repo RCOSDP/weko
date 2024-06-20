@@ -2,6 +2,7 @@
 #
 # This file is part of Invenio.
 # Copyright (C) 2015-2018 CERN.
+# Copyright (C) 2023-2024 Graz University of Technology.
 #
 # Invenio is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
@@ -94,9 +95,6 @@ So, finally, with this example, we would allow any authenticated client with
 rights to use the ``homepage_scope`` to read the homepage but, prevent from
 reading the email if they do not have rights for using the ``email_scope``.
 
-To test this features you can build your own application or use the provided
-:doc:`example app </examplesapp>` as boilerplate.
-
 Access control
 --------------
 
@@ -109,18 +107,21 @@ For more information about access control in Invenio you can visit
 
 """
 
-from __future__ import absolute_import, print_function
+from invenio_oauth2server._compat import monkey_patch_werkzeug  # noqa isort:skip
 
-from .ext import InvenioOAuth2Server, InvenioOAuth2ServerREST
-from .proxies import current_oauth2server
-from .version import __version__
-from .decorators import require_api_auth, require_oauth_scopes
+monkey_patch_werkzeug()  # noqa isort:skip
+
+from .decorators import require_api_auth, require_oauth_scopes  # noqa isort:skip
+from .ext import InvenioOAuth2Server, InvenioOAuth2ServerREST  # noqa isort:skip
+from .proxies import current_oauth2server  # noqa isort:skip
+
+__version__ = "2.3.0"
 
 __all__ = (
-    '__version__',
-    'InvenioOAuth2Server',
-    'InvenioOAuth2ServerREST',
-    'require_api_auth',
-    'require_oauth_scopes',
-    'current_oauth2server',
+    "__version__",
+    "InvenioOAuth2Server",
+    "InvenioOAuth2ServerREST",
+    "require_api_auth",
+    "require_oauth_scopes",
+    "current_oauth2server",
 )

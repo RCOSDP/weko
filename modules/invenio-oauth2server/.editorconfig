@@ -16,16 +16,6 @@ insert_final_newline = true
 trim_trailing_whitespace = true
 charset = utf-8
 
-# Python files
-[*.py]
-indent_size = 4
-# isort plugin configuration
-known_third_party = flask_oauthlib,invenio_accounts,invenio_db,oauthlib
-known_first_party = invenio_oauth2server
-multi_line_output = 2
-default_section = THIRDPARTY
-skip = .eggs
-
 # RST files (used by sphinx)
 [*.rst]
 indent_size = 4
@@ -34,8 +24,8 @@ indent_size = 4
 [*.{css,html,js,json,yml}]
 indent_size = 2
 
-# Matches the exact files either package.json or .travis.yml
-[{package.json,.travis.yml}]
+# Matches the exact files either package.json or .github/workflows/*.yml
+[{package.json,.github/workflows/*.yml}]
 indent_size = 2
 
 # Dockerfile
