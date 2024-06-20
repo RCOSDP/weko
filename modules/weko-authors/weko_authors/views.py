@@ -483,7 +483,11 @@ def gatherById():
     )
     target_data = res.get("hits").get("hits")[0].get("_source")
 
-    update_cache_data("update_items_by_authorInfo_{}".format(user_id), gatherTo, 0)
+    update_cache_data(
+        "update_items_by_authorInfo_{}".format(user_id),
+        gatherTo,
+        current_app.config['WEKO_DEPOSIT_ITEM_UPDATE_TASK_TTL']
+    )
     update_items_by_authorInfo.delay(user_id, target_data,gatherFromPkId, gatherFrom,  True)
 
     return jsonify({'code': 0, 'msg': 'Success'})
