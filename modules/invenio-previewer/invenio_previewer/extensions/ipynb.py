@@ -1,62 +1,74 @@
 # -*- coding: utf-8 -*-
 #
 # This file is part of Invenio.
-# Copyright (C) 2016 CERN.
+# Copyright (C) 2016-2019 CERN.
+# Copyright (C) 2021 Northwestern University.
 #
-# Invenio is free software; you can redistribute it
-# and/or modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; either version 2 of the
-# License, or (at your option) any later version.
-#
-# Invenio is distributed in the hope that it will be
-# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Invenio; if not, write to the
-# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-# MA 02111-1307, USA.
-#
-# In applying this license, CERN does not
-# waive the privileges and immunities granted to it by virtue of its status
-# as an Intergovernmental Organization or submit itself to any jurisdiction.
+# Invenio is free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
 
-"""IPython notebooks previewer."""
+"""Jupyter Notebook previewer."""
 
-from __future__ import absolute_import, unicode_literals
+import os
 
 import nbformat
-from flask import render_template
+from flask import current_app, render_template
+from invenio_i18n import gettext as _
 from nbconvert import HTMLExporter
+from traitlets.config import Config
+
+from ..proxies import current_previewer
+
+previewable_extensions = ["ipynb"]
+
+# relative paths to the extra CSS of the default `lab` theme
+NBCONVERT_THEME_LAB_EXTRA_CSS = [
+    os.path.join("nbconvert", "templates", "lab", "static", "index.css"),
+    os.path.join("nbconvert", "templates", "lab", "static", "theme-light.css"),
+]
 
 
 def render(file):
     """Generate the result HTML."""
-    fp = file.open()
-    content = fp.read()
-    fp.close()
+    with file.open() as fp:
+        content = fp.read()
+    try:
+        notebook = nbformat.reads(content.decode("utf-8"), as_version=4)
+    except nbformat.reader.NotJSONError:
+        return _("Error: Not a ipynb/json file"), {}
 
-    notebook = nbformat.reads(content.decode('utf-8'), as_version=4)
-
-    html_exporter = HTMLExporter()
-    html_exporter.template_file = 'basic'
-    (body, resources) = html_exporter.from_notebook_node(notebook)
+    c = Config()
+    c.HTMLExporter.preprocessors = ["nbconvert.preprocessors.sanitize.SanitizeHTML"]
+    c.SanitizeHTML.tags = current_app.config.get("ALLOWED_HTML_TAGS", [])
+    c.SanitizeHTML.attributes = current_app.config.get("ALLOWED_HTML_ATTRS", {})
+    c.SanitizeHTML.strip = True
+    html_exporter = HTMLExporter(config=c, embed_images=True)
+    html_exporter.template_file = "base"
+    body, resources = html_exporter.from_notebook_node(notebook)
     return body, resources
 
 
 def can_preview(file):
     """Determine if file can be previewed."""
-    return file.is_local() and file.has_extensions('.ipynb')
+    return file.is_local() and file.has_extensions(".ipynb")
 
 
 def preview(file):
     """Render the IPython Notebook."""
     body, resources = render(file)
-    default_ipython_style = resources['inlining']['css'][1]
+    default_jupyter_nb_style = ""
+    if "inlining" in resources:
+        default_jupyter_nb_style += resources["inlining"]["css"][0]
+    # the include_css func will load extra CSS from disk
+    if "include_css" in resources:
+        fn = resources["include_css"]
+        for extra_css_path in NBCONVERT_THEME_LAB_EXTRA_CSS:
+            default_jupyter_nb_style += fn(extra_css_path)
     return render_template(
-        'invenio_previewer/ipynb.html',
+        "invenio_previewer/ipynb.html",
         file=file,
         content=body,
-        style=default_ipython_style
+        inline_style=default_jupyter_nb_style,
+        js_bundles=current_previewer.js_bundles,
+        css_bundles=current_previewer.css_bundles,
     )
