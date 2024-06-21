@@ -1,0 +1,58 @@
+{# -*- coding: utf-8 -*-
+#
+# This file is part of WEKO3.
+# Copyright (C) 2020 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# Invenio is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Invenio; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#
+# In applying this license, CERN does not
+# waive the privileges and immunities granted to it by virtue of its status
+# as an Intergovernmental Organization or submit itself to any jurisdiction.
+#}
+
+{%- extends config.PREVIEWER_ABSTRACT_TEMPLATE %}
+
+
+{% block panel %}
+<link rel="stylesheet" type="text/css" href="../../../static/js/uv/uv.css">
+<style>
+  #uv {
+      height: 600px;
+  }
+</style>
+<script src="../../../static/js/uv/lib/offline.js"></script>
+<script src="../../../static/js/uv/helpers.js"></script>
+<div id="uv" class="uv"></div>
+<script>
+  var myUV;
+  window.addEventListener('uvLoaded', function (e) {
+      myUV = createUV('#uv', {
+          iiifResourceUri: '{{ file }}',
+          root: '../../../static/js/uv',
+          configUri: '../../../static/js/iiif_presentation/uv-config.json'
+      }, new UV.URLDataProvider());
+
+      myUV.on("created", function(obj) {
+          console.log('parsed metadata', myUV.extension.helper.manifest.getMetadata());
+          console.log('raw jsonld', myUV.extension.helper.manifest.__jsonld);
+      });
+  }, false);
+</script>
+
+<script src="../../../static/js/uv/uv.js"></script>
+{% endblock %}
+
+

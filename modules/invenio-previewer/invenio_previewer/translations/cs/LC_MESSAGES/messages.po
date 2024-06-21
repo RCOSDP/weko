@@ -25,6 +25,23 @@ msgstr ""
 "Language: cs\n"
 "Plural-Forms: nplurals=4; plural=(n == 1 && n % 1 == 0) ? 0 : (n >= 2 && n <= 4 && n % 1 == 0) ? 1: (n % 1 != 0 ) ? 2 : 3;\n"
 
+#: invenio_previewer/api.py:153
+msgid "The storage path is incorrect."
+msgstr ""
+
+#: invenio_previewer/api.py:155 invenio_previewer/api.py:162
+#: invenio_previewer/api.py:169 invenio_previewer/api.py:185
+msgid "Please contact the administrator."
+msgstr ""
+
+#: invenio_previewer/api.py:160 invenio_previewer/api.py:183
+msgid "The storage location cannot be accessed."
+msgstr ""
+
+#: invenio_previewer/api.py:168
+msgid "There is not enough storage space."
+msgstr ""
+
 #: invenio_previewer/templates/invenio_previewer/base.html:12
 #: invenio_previewer/templates/invenio_previewer/macros.html:46
 #: invenio_previewer/templates/semantic-ui/invenio_previewer/base.html:12

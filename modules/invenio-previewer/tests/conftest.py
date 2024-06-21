@@ -18,6 +18,7 @@ from zipfile import ZipFile
 import pytest
 from flask import Flask
 from flask_webpackext import current_webpack
+from invenio_accounts import InvenioAccounts
 from invenio_app import InvenioApp
 from invenio_assets import InvenioAssets
 from invenio_config import InvenioConfigDefault
@@ -34,6 +35,63 @@ from invenio_records_ui.views import create_blueprint_from_app
 from six import BytesIO
 
 from invenio_previewer import InvenioPreviewer
+
+@pytest.yield_fixture(scope='session', autouse=True)
+def app():
+    """Flask application fixture with database initialization."""
+    instance_path = tempfile.mkdtemp()
+
+    app_ = Flask(
+        'testapp', static_folder=instance_path, instance_path=instance_path)
+    app_.config.update(
+        TESTING=True,
+        # SQLALCHEMY_DATABASE_URI=os.environ.get(
+        #     'SQLALCHEMY_DATABASE_URI',
+        #     'sqlite:///:memory:'),
+        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
+                                          'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
+        SQLALCHEMY_TRACK_MODIFICATIONS=True,
+        RECORDS_UI_DEFAULT_PERMISSION_FACTORY=None,
+        RECORDS_UI_ENDPOINTS=dict(
+            recid=dict(
+                pid_type='recid',
+                route='/records/<pid_value>',
+                template='invenio_records_ui/detail.html',
+            ),
+            recid_previewer=dict(
+                pid_type='recid',
+                route='/records/<pid_value>/preview/<filename>',
+                view_imp='invenio_previewer.views:preview',
+                record_class='invenio_records_files.api:Record',
+            ),
+            recid_files=dict(
+                pid_type='recid',
+                route='/record/<pid_value>/files/<filename>',
+                view_imp='invenio_records_files.utils.file_download_ui',
+                record_class='invenio_records_files.api:Record',
+            ),
+        ),
+        SERVER_NAME='localhost'
+    )
+    Babel(app_)
+    assets_ext = InvenioAssets(app_)
+    InvenioDB(app_)
+    InvenioRecords(app_)
+    previewer = InvenioPreviewer(app_)._state
+    InvenioRecordsUI(app_)
+    InvenioFilesREST(app_)
+    InvenioAccounts(app_)
+
+    # Add base assets bundles for jQuery and Bootstrap
+    # Note: These bundles aren't included by default since package consumers
+    # should handle assets and their dependencies manually.
+    # assets_ext.env.register(previewer.js_bundles[0], previewer_base_js)
+    # assets_ext.env.register(previewer.css_bundles[0], previewer_base_css)
+
+    with app_.app_context():
+        yield app_
+
+    shutil.rmtree(instance_path)
 
 
 @pytest.fixture(scope="module")

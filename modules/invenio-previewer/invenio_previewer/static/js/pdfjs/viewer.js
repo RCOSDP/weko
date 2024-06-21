@@ -44,7 +44,7 @@ var DISABLE_AUTO_FETCH_LOADING_BAR_TIMEOUT = 5000;
 
 PDFJS.imageResourcesPath = '/static/js/pdfjs/web/images/';
 PDFJS.workerSrc = '/static/node_modules/pdfjs-dist/build/pdf.worker.js';
-PDFJS.cMapUrl = '/static/node_modules/pdfjs-dist/cmaps/pdfjs/';
+PDFJS.cMapUrl = '/static/node_modules/pdfjs-dist/cmaps/';
 PDFJS.cMapPacked = true;
 
 var mozL10n = document.mozL10n || document.webL10n;

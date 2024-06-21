@@ -41,3 +41,9 @@ recursive-include invenio_previewer *.scss
 recursive-include invenio_previewer *.svg
 recursive-include tests *.py
 include .git-blame-ignore-revs
+
+# added by check-manifest
+include *.properties
+include tox.ini
+recursive-include invenio_previewer *.json
+recursive-include invenio_previewer *.map

@@ -9,6 +9,7 @@
 """View method for Invenio-Records-UI for previewing files."""
 
 from flask import Blueprint, abort, current_app, request
+from invenio_db import db
 
 from .api import PreviewFile
 from .extensions import default
@@ -77,3 +78,13 @@ def preview(pid, record, template=None, **kwargs):
 def is_previewable(extension):
     """Test if a file can be previewed checking its extension."""
     return extension in current_previewer.previewable_extensions
+
+@blueprint.teardown_request
+def dbsession_clean(exception):
+    current_app.logger.debug("invenio_previewer dbsession_clean: {}".format(exception))
+    if exception is None:
+        try:
+            db.session.commit()
+        except:
+            db.session.rollback()
+    db.session.remove()

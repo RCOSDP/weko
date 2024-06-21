@@ -33,6 +33,8 @@ PREVIEWER_ZIP_MAX_FILES = 1000
 """Max number of files showed in the ZIP previewer."""
 
 PREVIEWER_PREFERENCE = [
+	"iiif_image",
+    "iiif_presentation",
     "csv_papaparsejs",
     "simple_image",
     "json_prismjs",
@@ -44,6 +46,7 @@ PREVIEWER_PREFERENCE = [
     "ipynb",
     "zip",
     "txt",
+    "threejs",
 ]
 """Decides which previewers are available and their priority."""
 
@@ -58,3 +61,9 @@ PREVIEWER_BASE_JS_BUNDLES = ["previewer_theme.js"]
 
 PREVIEWER_RECORD_FILE_FACOTRY = None
 """Factory for extracting files from records."""
+
+PREVIEWER_CONVERT_PDF_RETRY_COUNT = 5
+"""Retry convert office file to pdf count."""
+
+PREVIEWER_CONVERT_PDF_TIMEOUT = 80
+""""Timout of converting file to PDF."""

@@ -1,0 +1,3 @@
+invenio-access>=1.0.0a4
+invenio-accounts>=1.0.0a9
+invenio-db>=1.0.0a9
