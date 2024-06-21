@@ -421,13 +421,16 @@ def update_items_by_authorInfo(user_id, target, origin_pkid_list=[], origin_id_l
             update_db_es_data(origin_pkid_list, origin_id_list)
     except (DisconnectionError, TimeoutError, ConnectionError) as e:
         db.session.rollback()
-        if update_items_by_authorInfo.request.retries < current_app.config['WEKO_DEPOSIT_ITEM_UPDATE_RETRY_COUNT']:
+        retry_count = update_items_by_authorInfo.request.retries
+        countdown = current_app.config['WEKO_DEPOSIT_ITEM_UPDATE_RETRY_COUNTDOWN']
+        if retry_count < current_app.config['WEKO_DEPOSIT_ITEM_UPDATE_RETRY_COUNT']:
             current_app.logger.exception('Retry due to connection error. err:{0}'.format(e))
+            countdown *= current_app.config['WEKO_DEPOSIT_ITEM_UPDATE_RETRY_BACKOFF_RATE'] ** retry_count
         else:
             current_app.logger.exception('Failed to update items by author data. err:{0}'.format(e))
             process_counter[SUCCESS_LABEL] = []
             process_counter[FAIL_LABEL] = [{"record_id": "ALL", "author_ids": [], "message": str(e)}]
-        update_items_by_authorInfo.retry(countdown=3, exc=e, max_retries=current_app.config['WEKO_DEPOSIT_ITEM_UPDATE_RETRY_COUNT'])
+        update_items_by_authorInfo.retry(countdown=countdown, exc=e, max_retries=current_app.config['WEKO_DEPOSIT_ITEM_UPDATE_RETRY_COUNT'])
     except SQLAlchemyError as e:
         process_counter[SUCCESS_LABEL] = []
         process_counter[FAIL_LABEL] = [{"record_id": "ALL", "author_ids": [], "message": str(e)}]
