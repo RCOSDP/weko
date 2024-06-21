@@ -8,11 +8,7 @@
 
 """Celery tasks for Invenio-Files-REST."""
 
-from __future__ import absolute_import, print_function
-
-import glob
 import math
-import os
 import uuid
 from datetime import date, datetime, timedelta
 
@@ -23,12 +19,10 @@ from celery.states import state
 from celery.utils.log import get_task_logger
 from flask import current_app
 from invenio_db import db
-from sqlalchemy.exc import IntegrityError, SQLAlchemyError
-from weko_admin.models import AdminSettings
+from sqlalchemy.exc import IntegrityError
 
-from .api import send_alert_mail
 from .models import FileInstance, Location, MultipartObject, ObjectVersion
-from .storage.pyfs import remove_dir_with_file
+from .signals import file_uploaded
 from .utils import obj_or_import_string
 
 logger = get_task_logger(__name__)
@@ -37,44 +31,48 @@ logger = get_task_logger(__name__)
 def progress_updater(size, total):
     """Progress reporter for checksum verification."""
     current_task.update_state(
-        state=state('PROGRESS'),
-        meta=dict(size=size, total=total)
+        state=state("PROGRESS"), meta=dict(size=size, total=total)
     )
 
 
 @shared_task(ignore_result=True)
-def verify_checksum(file_id, pessimistic=False, chunk_size=None, throws=True,
-                    checksum_kwargs=None):
+def verify_checksum(
+    file_id, pessimistic=False, chunk_size=None, throws=True, checksum_kwargs=None
+):
     """Verify checksum of a file instance.
 
     :param file_id: The file ID.
     """
-    try:
-        f = FileInstance.query.get(uuid.UUID(file_id))
+    f = FileInstance.query.get(uuid.UUID(file_id))
 
-        # Anything might happen during the task, so being pessimistic and marking
-        # the file as unchecked is a reasonable precaution
-        if pessimistic:
-            f.clear_last_check()
-        f.verify_checksum(
-            progress_callback=progress_updater, chunk_size=chunk_size,
-            throws=throws, checksum_kwargs=checksum_kwargs)
+    # Anything might happen during the task, so being pessimistic and marking
+    # the file as unchecked is a reasonable precaution
+    if pessimistic:
+        f.clear_last_check()
         db.session.commit()
-    except Exception as e:
-        db.session.rollback()
-        current_app.logger.error(e)
+    f.verify_checksum(
+        progress_callback=progress_updater,
+        chunk_size=chunk_size,
+        throws=throws,
+        checksum_kwargs=checksum_kwargs,
+    )
+    db.session.commit()
 
 
 def default_checksum_verification_files_query():
-    """Return a query of valid FileInstances for checksum verficiation."""
+    """Return a query of valid FileInstances for checksum verification."""
     return FileInstance.query
 
 
 @shared_task(ignore_result=True)
-def schedule_checksum_verification(frequency=None, batch_interval=None,
-                                   max_count=None, max_size=None,
-                                   files_query=None,
-                                   checksum_kwargs=None):
+def schedule_checksum_verification(
+    frequency=None,
+    batch_interval=None,
+    max_count=None,
+    max_size=None,
+    files_query=None,
+    checksum_kwargs=None,
+):
     """Schedule a batch of files for checksum verification.
 
     The purpose of this task is to be periodically called through `celerybeat`,
@@ -106,20 +104,24 @@ def schedule_checksum_verification(frequency=None, batch_interval=None,
     if batch_interval:
         batch_interval = timedelta(**batch_interval)
     else:
-        celery_schedule = current_celery.conf.get('CELERYBEAT_SCHEDULE', {})
+        celery_schedule = current_celery.conf.get("CELERYBEAT_SCHEDULE", {})
         batch_interval = batch_interval or next(
-            (v['schedule'] for v in celery_schedule.values()
-             if v.get('task') == schedule_checksum_verification.name), None)
+            (
+                v["schedule"]
+                for v in celery_schedule.values()
+                if v.get("task") == schedule_checksum_verification.name
+            ),
+            None,
+        )
     if not batch_interval or not isinstance(batch_interval, timedelta):
-        raise Exception(u'No "batch_interval" could be decided')
+        raise Exception('No "batch_interval" could be decided')
 
-    total_batches = int(
-        frequency.total_seconds() / batch_interval.total_seconds())
+    total_batches = int(frequency.total_seconds() / batch_interval.total_seconds())
 
     files = obj_or_import_string(
-        files_query, default=default_checksum_verification_files_query)()
-    files = files.order_by(
-        sa.func.coalesce(FileInstance.last_check_at, date.min))
+        files_query, default=default_checksum_verification_files_query
+    )()
+    files = files.order_by(sa.func.coalesce(FileInstance.last_check_at, date.min))
 
     if max_count is not None:
         all_files_count = files.count()
@@ -127,23 +129,26 @@ def schedule_checksum_verification(frequency=None, batch_interval=None,
         max_count = min_count if max_count == 0 else max_count
         if max_count < min_count:
             current_app.logger.warning(
-                u'The "max_count" you specified ({0}) is smaller than the '
-                'minimum batch file count required ({1}) in order to achieve '
-                'the file checks over the specified period ({2}).'
-                .format(max_count, min_count, frequency))
+                'The "max_count" you specified ({0}) is smaller than the '
+                "minimum batch file count required ({1}) in order to achieve "
+                "the file checks over the specified period ({2}).".format(
+                    max_count, min_count, frequency
+                )
+            )
         files = files.limit(max_count)
 
     if max_size is not None:
-        all_files_size = db.session.query(
-            sa.func.sum(FileInstance.size)).scalar()
+        all_files_size = db.session.query(sa.func.sum(FileInstance.size)).scalar()
         min_size = int(math.ceil(all_files_size / total_batches))
         max_size = min_size if max_size == 0 else max_size
         if max_size < min_size:
             current_app.logger.warning(
-                u'The "max_size" you specified ({0}) is smaller than the '
-                'minimum batch total file size required ({1}) in order to '
-                'achieve the file checks over the specified period ({2}).'
-                .format(max_size, min_size, frequency))
+                'The "max_size" you specified ({0}) is smaller than the '
+                "minimum batch total file size required ({1}) in order to "
+                "achieve the file checks over the specified period ({2}).".format(
+                    max_size, min_size, frequency
+                )
+            )
 
     files = files.yield_per(1000)
     scheduled_file_ids = []
@@ -156,8 +161,11 @@ def schedule_checksum_verification(frequency=None, batch_interval=None,
             break
     group(
         verify_checksum.s(
-            file_id, pessimistic=True, throws=False,
-            checksum_kwargs=(checksum_kwargs or {}))
+            file_id,
+            pessimistic=True,
+            throws=False,
+            checksum_kwargs=(checksum_kwargs or {}),
+        )
         for file_id in scheduled_file_ids
     ).apply_async()
 
@@ -174,26 +182,30 @@ def migrate_file(src_id, location_name, post_fixity_check=False):
     :param post_fixity_check: Verify checksum after migration.
         (Default: ``False``)
     """
-    try:
-        location = Location.get_by_name(location_name)
-        f_src = FileInstance.get(src_id)
+    location = Location.get_by_name(location_name)
+    f_src = FileInstance.get(src_id)
 
-        # Create destination
-        f_dst = FileInstance.create()
-    
+    # Create destination
+    f_dst = FileInstance.create()
+    db.session.commit()
+
+    try:
         # Copy contents
         f_dst.copy_contents(
             f_src,
             progress_callback=progress_updater,
             default_location=location.uri,
         )
-
-        # Update all objects pointing to file.
-        ObjectVersion.relink_all(f_src, f_dst)
         db.session.commit()
-    except Exception as e:
-        db.session.rollback()
-        current_app.logger.error(e)
+    except Exception:
+        # Remove destination file instance if an error occurred.
+        db.session.delete(f_dst)
+        db.session.commit()
+        raise
+
+    # Update all objects pointing to file.
+    ObjectVersion.relink_all(f_src, f_dst)
+    db.session.commit()
 
     # Start a fixity check
     if post_fixity_check:
@@ -201,12 +213,14 @@ def migrate_file(src_id, location_name, post_fixity_check=False):
 
 
 @shared_task(ignore_result=True)
-def remove_file_data(file_id, silent=True):
+def remove_file_data(file_id, silent=True, force=False):
     """Remove file instance and associated data.
 
     :param file_id: The :class:`invenio_files_rest.models.FileInstance` ID.
-    :param silent: It stops propagation of a possible arised IntegrityError
+    :param silent: It stops propagation of a possible raised IntegrityError
         exception. (Default: ``True``)
+    :param force: Whether to delete the file even if the file instance is not
+        marked as writable.
     :raises sqlalchemy.exc.IntegrityError: Raised if the database removal goes
         wrong and silent is set to ``False``.
     """
@@ -214,8 +228,7 @@ def remove_file_data(file_id, silent=True):
         # First remove FileInstance from database and commit transaction to
         # ensure integrity constraints are checked and enforced.
         f = FileInstance.get(file_id)
-        if not f.writable:
-            db.session.commit()
+        if not f.writable and not force:
             return
         f.delete()
         db.session.commit()
@@ -224,12 +237,8 @@ def remove_file_data(file_id, silent=True):
         # disk file removal doesn't work.
         f.storage().delete()
     except IntegrityError:
-        db.session.rollback()
         if not silent:
             raise
-    except Exception as e:
-        db.session.rollback()
-        current_app.logger.error(e)
 
 
 @shared_task()
@@ -245,16 +254,14 @@ def merge_multipartobject(upload_id, version_id=None):
     """
     mp = MultipartObject.query.filter_by(upload_id=upload_id).one_or_none()
     if not mp:
-        raise RuntimeError('Upload ID does not exists.')
+        raise RuntimeError("Upload ID does not exists.")
     if not mp.completed:
-        raise RuntimeError('MultipartObject is not completed.')
+        raise RuntimeError("MultipartObject is not completed.")
 
     try:
-        obj = mp.merge_parts(
-            version_id=version_id,
-            progress_callback=progress_updater
-        )
+        obj = mp.merge_parts(version_id=version_id, progress_callback=progress_updater)
         db.session.commit()
+        file_uploaded.send(current_app._get_current_object(), obj=obj)
         return str(obj.version_id)
     except Exception:
         db.session.rollback()
@@ -264,7 +271,7 @@ def merge_multipartobject(upload_id, version_id=None):
 @shared_task(ignore_result=True)
 def remove_expired_multipartobjects():
     """Remove expired multipart objects."""
-    delta = current_app.config['FILES_REST_MULTIPART_EXPIRES']
+    delta = current_app.config["FILES_REST_MULTIPART_EXPIRES"]
     expired_dt = datetime.utcnow() - delta
 
     file_ids = []
@@ -277,42 +284,51 @@ def remove_expired_multipartobjects():
 
 
 @shared_task(ignore_result=True)
-def check_send_alert_mail():
-    """Check storage use rate and send alert mail by celery schedule."""
-    settings = AdminSettings.get('storage_check_settings')
+def clear_orphaned_files(force_delete_check=lambda file_instance: False, limit=1000):
+    """Delete orphaned files from DB and storage.
 
-    if settings:
-        now = datetime.utcnow()
-        locations = Location.all()
-        for location in locations:
-            if location.quota_size \
-                and location.size / location.quota_size * 100 \
-                    >= settings.threshold_rate:
-                if (settings.cycle == 'daily') or \
-                        (settings.cycle == 'weekly'
-                         and settings.day == now.weekday()) \
-                        or (settings.cycle == 'monthly'
-                            and settings.day == now.day):
-                    send_alert_mail(settings.threshold_rate, location.name,
-                                    location.size / location.quota_size,
-                                    location.size, location.quota_size)
+    .. note::
 
+        Orphan files are files
+        (:class:`invenio_files_rest.models.FileInstance` objects and their
+        on-disk counterparts) that do not have any
+        :class:`invenio_files_rest.models.ObjectVersion` objects associated
+        with them (anymore).
 
-@shared_task(ignore_result=True)
-def check_file_storage_time():
-    """Check the storage time of the ms office preview file."""
-    settings = AdminSettings.get('convert_pdf_settings')
+    The celery beat configuration for scheduling this task may set values for
+    this task's parameters:
 
-    if settings:
-        path = settings.path
-        ttl = settings.pdf_ttl
-    else:
-        path = current_app.config.get('FILES_REST_DEFAULT_PDF_SAVE_PATH',
-                                      '/var/tmp')
-        ttl = current_app.config.get('FILES_REST_DEFAULT_PDF_TTL', 1 * 60 * 60)
-    # Delete file if file creation time exceeded TTL
-    now = datetime.utcnow()
-    for d in glob.glob(path + "/pdf_dir/**"):
-        tLog = os.path.getmtime(d)
-        if (now - datetime.utcfromtimestamp(tLog)).total_seconds() >= ttl:
-            remove_dir_with_file(d)
+    .. code-block:: python
+
+        "clear-orphan-files": {
+            "task": "invenio_files_rest.tasks.clear_orphaned_files",
+            "schedule": 60 * 60 * 24,
+            "kwargs": {
+                "force_delete_check": lambda file: False,
+                "limit": 500,
+            }
+        }
+
+    :param force_delete_check: A function to be called on each orphan file instance
+                               to check if its deletion should be forced (bypass the
+                               check of its ``writable`` flag).
+                               For example, this function can be used to force-delete
+                               files only if they are located on the local file system.
+                               Signature: The function should accept a
+                               :class:`invenio_files_rest.models.FileInstance` object
+                               and return a boolean value.
+                               Default: Never force-delete any orphan files
+                               (``lambda file_instance: False``).
+    :param limit: Limit for the number of orphan files considered for deletion in each
+                  task execution (and thus the number of generated celery tasks).
+                  A value of zero (0) or lower disables the limit.
+    """
+    # with the tilde (~) operator, we get all file instances that *don't*
+    # have any associated object versions
+    query = FileInstance.query.filter(~FileInstance.objects.any())
+    if limit > 0:
+        query = query.limit(limit)
+
+    for orphan in query:
+        # note: the ID is cast to str because serialization of UUID objects can fail
+        remove_file_data.delay(str(orphan.id), force=force_delete_check(orphan))

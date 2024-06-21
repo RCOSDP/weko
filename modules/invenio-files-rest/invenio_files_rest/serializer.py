@@ -9,7 +9,6 @@
 """REST API serializers."""
 
 import json
-import warnings
 from time import sleep
 
 from flask import current_app, request, url_for
@@ -18,7 +17,6 @@ from marshmallow import fields, missing, post_dump
 
 from .errors import FilesException
 from .models import Bucket, MultipartObject, ObjectVersion, Part
-from .proxies import current_files_rest
 
 
 class BaseSchema(InvenioRestBaseSchema):
@@ -26,7 +24,7 @@ class BaseSchema(InvenioRestBaseSchema):
 
     created = fields.DateTime(dump_only=True)
     updated = fields.DateTime(dump_only=True)
-    links = fields.Method('dump_links', dump_only=True)
+    links = fields.Method("dump_links", dump_only=True)
 
     def dump_links(self, o):
         """Get base links."""
@@ -45,11 +43,11 @@ class BucketSchema(BaseSchema):
     def dump_links(self, o):
         """Dump links."""
         return {
-            'self': url_for('.bucket_api', bucket_id=o.id, _external=True),
-            'versions': url_for(
-                '.bucket_api', bucket_id=o.id, _external=True) + '?versions',
-            'uploads': url_for(
-                '.bucket_api', bucket_id=o.id, _external=True) + '?uploads',
+            "self": url_for(".bucket_api", bucket_id=o.id, _external=True),
+            "versions": url_for(".bucket_api", bucket_id=o.id, _external=True)
+            + "?versions",
+            "uploads": url_for(".bucket_api", bucket_id=o.id, _external=True)
+            + "?uploads",
         }
 
 
@@ -60,21 +58,10 @@ class ObjectVersionSchema(BaseSchema):
     version_id = fields.UUID()
     is_head = fields.Boolean()
     mimetype = fields.Str()
-    size = fields.Integer(attribute='file.size')
-    checksum = fields.String(attribute='file.checksum')
-    delete_marker = fields.Boolean(attribute='deleted')
-    created_user_id = fields.Integer()
-    updated_user_id = fields.Integer()
-    uploaded_owners = fields.Method('upload_owners', dump_only=True)
-    is_show = fields.Boolean()
-    is_thumbnail = fields.Boolean()
-    tags = fields.Method('dump_tags', dump_only=True)
-
-    def upload_owners(self, o):
-        """Get upload owner information."""
-        upload_func = current_files_rest.upload_file_owner_factory()
-
-        return upload_func(o.created_user_id, o.updated_user_id)
+    size = fields.Integer(attribute="file.size")
+    checksum = fields.String(attribute="file.checksum")
+    delete_marker = fields.Boolean(attribute="deleted")
+    tags = fields.Method("dump_tags", dump_only=True)
 
     def dump_tags(self, o):
         """Dump tags."""
@@ -82,50 +69,33 @@ class ObjectVersionSchema(BaseSchema):
 
     def dump_links(self, o):
         """Dump links."""
-        params = {'versionId': o.version_id}
+        params = {"versionId": o.version_id}
+        data = {
+            "self": url_for(
+                ".object_api",
+                bucket_id=o.bucket_id,
+                key=o.key,
+                _external=True,
+                **(params if not o.is_head or o.deleted else {})
+            ),
+            "version": url_for(
+                ".object_api",
+                bucket_id=o.bucket_id,
+                key=o.key,
+                _external=True,
+                **params
+            ),
+        }
 
-        show_links = False
-
-        from flask_login import current_user
-        if o.is_head:
-            show_links = True
-        elif o.is_show:
-            show_links = True
-        elif current_user.is_authenticated:
-            from .permissions import has_update_version_role
-            show_links = has_update_version_role(current_user)
-
-        if not show_links:
-            data = {
-                'self': '',
-                'version': '',
-                'uploads': '',
-            }
-        else:
-            data = {
-                'self': url_for(
-                    '.object_api',
-                    bucket_id=o.bucket_id,
-                    key=o.key,
-                    _external=True,
-                    **(params if not o.is_head or o.deleted else {})
-                ),
-                'version': url_for(
-                    '.object_api',
-                    bucket_id=o.bucket_id,
-                    key=o.key,
-                    _external=True,
-                    **params
-                )
-            }
-
-            if o.is_head and not o.deleted:
-                data.update({'uploads': url_for(
-                    '.object_api',
-                    bucket_id=o.bucket_id,
-                    key=o.key,
-                    _external=True
-                ) + '?uploads', })
+        if o.is_head and not o.deleted:
+            data.update(
+                {
+                    "uploads": url_for(
+                        ".object_api", bucket_id=o.bucket_id, key=o.key, _external=True
+                    )
+                    + "?uploads",
+                }
+            )
 
         return data
 
@@ -135,8 +105,8 @@ class ObjectVersionSchema(BaseSchema):
         if not many:
             return data
         else:
-            data = {'contents': data}
-            bucket = self.context.get('bucket')
+            data = {"contents": data}
+            bucket = self.context.get("bucket")
             if bucket:
                 data.update(BucketSchema().dump(bucket).data)
             return data
@@ -145,56 +115,60 @@ class ObjectVersionSchema(BaseSchema):
 class MultipartObjectSchema(BaseSchema):
     """Schema for ObjectVersions."""
 
-    _endpoint = '.object_api'
+    _endpoint = ".object_api"
 
-    id = fields.UUID(attribute='upload_id', dump_only=True)
-    bucket = fields.UUID(attribute='bucket_id', dump_only=True)
+    id = fields.UUID(attribute="upload_id", dump_only=True)
+    bucket = fields.UUID(attribute="bucket_id", dump_only=True)
     key = fields.Str(dump_only=True)
     completed = fields.Boolean(dump_only=True)
     size = fields.Integer()
-    part_size = fields.Integer(attribute='chunk_size')
+    part_size = fields.Integer(attribute="chunk_size")
     last_part_number = fields.Integer(dump_only=True)
     last_part_size = fields.Integer(dump_only=True)
 
     def dump_links(self, o):
         """Dump links."""
         links = {
-            'self': url_for(
-                '.object_api',
+            "self": url_for(
+                ".object_api",
                 bucket_id=o.bucket_id,
                 key=o.key,
                 uploadId=o.upload_id,
                 _external=True,
             ),
-            'object': url_for(
-                '.object_api',
+            "object": url_for(
+                ".object_api",
                 bucket_id=o.bucket_id,
                 key=o.key,
                 _external=True,
             ),
         }
 
-        version_id = self.context.get('object_version_id')
+        version_id = self.context.get("object_version_id")
         if version_id:
-            links.update({
-                'object_version': url_for(
-                    '.object_api',
-                    bucket_id=o.bucket_id,
-                    key=o.key,
-                    versionId=version_id,
-                    _external=True,
-                )
-            })
+            links.update(
+                {
+                    "object_version": url_for(
+                        ".object_api",
+                        bucket_id=o.bucket_id,
+                        key=o.key,
+                        versionId=version_id,
+                        _external=True,
+                    )
+                }
+            )
 
-        bucket = self.context.get('bucket')
+        bucket = self.context.get("bucket")
         if bucket:
-            links.update({
-                'bucket': url_for(
-                    '.bucket_api',
-                    bucket_id=o.bucket_id,
-                    _external=True,
-                )
-            })
+            links.update(
+                {
+                    "bucket": url_for(
+                        ".bucket_api",
+                        bucket_id=o.bucket_id,
+                        _external=True,
+                    )
+                }
+            )
 
         return links
 
@@ -215,11 +189,14 @@ class PartSchema(BaseSchema):
         if not many:
             return data
         else:
-            data = {'parts': data}
-            multipart = self.context.get('multipart')
+            data = {"parts": data}
+            multipart = self.context.get("multipart")
             if multipart:
-                data.update(MultipartObjectSchema(context={
-                    'bucket': multipart.bucket}).dump(multipart).data)
+                data.update(
+                    MultipartObjectSchema(context={"bucket": multipart.bucket})
+                    .dump(multipart)
+                    .data
+                )
             return data
 
 
@@ -231,25 +208,25 @@ serializer_mapping = {
 }
 
 
-def schema_from_context(context):
+def schema_from_context(context, serializer_mapping):
     """Determine which schema to use."""
-    item_class = context.get('class')
+    item_class = context.get("class")
     return (
         serializer_mapping[item_class] if item_class else BaseSchema,
-        context.get('many', False)
+        context.get("many", False),
     )
 
 
 def _format_args():
-    if request and request.args.get('prettyprint'):
+    if request and request.args.get("prettyprint"):
         return dict(
             indent=2,
-            separators=(', ', ': '),
+            separators=(", ", ": "),
         )
     else:
         return dict(
             indent=None,
-            separators=(',', ':'),
+            separators=(",", ":"),
         )
 
 
@@ -280,26 +257,30 @@ def wait_for_taskresult(task_result, content, interval, max_rounds):
                 if task_result.successful():
                     yield content
                 else:
-                    yield FilesException(
-                        description='Job failed.'
-                    ).get_body()
+                    yield FilesException(description="Job failed.").get_body()
             else:
                 # Send whitespace to prevent connection from closing.
                 current += 1
                 sleep(interval)
-                yield b' '
+                yield b" "
 
         # Timed-out reached
         if current == max_rounds:
-            yield FilesException(
-                description='Job timed out.'
-            ).get_body()
+            yield FilesException(description="Job timed out.").get_body()
 
     return _whitespace_waiting()
 
 
-def json_serializer(data=None, code=200, headers=None, context=None,
-                    etag=None, task_result=None):
+def json_serializer(
+    data=None,
+    code=200,
+    headers=None,
+    context=None,
+    etag=None,
+    task_result=None,
+    serializer_mapping=serializer_mapping,
+    view_name=None,
+):
     """Build a json flask response using the given data.
 
     :param data: The data to serialize. (Default: ``None``)
@@ -309,31 +290,44 @@ def json_serializer(data=None, code=200, headers=None, context=None,
     :param etag: The ETag header. (Default: ``None``)
     :param task_result: Optionally you can pass async task to wait for.
         (Default: ``None``)
+    :param serializer_mapping: Optionally provide the serializer with a
+        different mapping.
+    :param view_name: Optionally push to the marshmallow context the view
+        name prefix,usefull in case of multiple routes pointing to the same
+        blueprint.
     :returns: A Flask response with json data.
     :rtype: :py:class:`flask.Response`
     """
-    schema_class, many = schema_from_context(context or {})
+    context = context or {}
+    if view_name:
+        context.update({"view_name": view_name})
+    schema_class, many = schema_from_context(context, serializer_mapping)
 
     if data is not None:
         # Generate JSON response
         data = json.dumps(
-            schema_class(context=context).dump(data, many=many).data,
-            **_format_args()
+            schema_class(context=context).dump(data, many=many).data, **_format_args()
         )
 
-        interval = current_app.config['FILES_REST_TASK_WAIT_INTERVAL']
+        interval = current_app.config["FILES_REST_TASK_WAIT_INTERVAL"]
         max_rounds = int(
-            current_app.config['FILES_REST_TASK_WAIT_MAX_SECONDS'] // interval
+            current_app.config["FILES_REST_TASK_WAIT_MAX_SECONDS"] // interval
         )
 
         response = current_app.response_class(
             # Stream response if waiting for task result.
-            data if task_result is None else wait_for_taskresult(
-                task_result, data, interval, max_rounds, ),
-            mimetype='application/json'
+            data
+            if task_result is None
+            else wait_for_taskresult(
+                task_result,
+                data,
+                interval,
+                max_rounds,
+            ),
+            mimetype="application/json",
         )
     else:
-        response = current_app.response_class(mimetype='application/json')
+        response = current_app.response_class(mimetype="application/json")
 
     response.status_code = code
     if headers is not None:
@@ -343,24 +337,3 @@ def json_serializer(data=None, code=200, headers=None, context=None,
         response.set_etag(etag)
 
     return response
-
-
-def file_uploaded_owner(created_user_id=0, updated_user_id=0):
-    """Build upload file owners.
-
-    :param created_user_id: The created user id. (Default: ``0``)
-    :param updated_user_id: The updated user id. (Default: ``0``)
-    :returns: A response with json data.
-    """
-    return {
-        'created_user': {
-            'user_id': created_user_id,
-            'username': '',
-            'displayname': '',
-        },
-        'updated_user': {
-            'user_id': updated_user_id,
-            'username': '',
-            'displayname': '',
-        }
-    }

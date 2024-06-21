@@ -1,0 +1,37 @@
+# Created with https://dbdiagram.io/
+
+Table Bucket as files_bucket {
+  id uuid [primary key]
+  default_location integer
+  default_storage_class varchar(255)
+  locked boolean
+  deleted boolean
+
+}
+
+Table ObjectVersion as files_object{
+  version_id uuid [primary key]
+  file_id uuid
+  bucket_id uuid
+  key varchar(255)
+  is_head boolean
+}
+
+Table FileInstance as files_files{
+  id uuid [primary key]
+  uri varchar(255)
+  storage_class varchar(1)
+  size integer
+  checksum varchar(255)
+}
+
+Table Location as files_location {
+  id integer [primary key]
+  name varchar(20)
+  uri varchar(255)
+  default boolean
+}
+
+Ref: ObjectVersion.bucket_id > Bucket.id
+Ref: ObjectVersion.file_id - FileInstance.id
+Ref: Location.id - Bucket.default_location
