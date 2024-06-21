@@ -1,31 +1,32 @@
 ..
     This file is part of Invenio.
-    Copyright (C) 2016 CERN.
+    Copyright (C) 2016-2019 CERN.
 
-    Invenio is free software; you can redistribute it
-    and/or modify it under the terms of the GNU General Public License as
-    published by the Free Software Foundation; either version 2 of the
-    License, or (at your option) any later version.
+    Invenio is free software; you can redistribute it and/or modify it
+    under the terms of the MIT License; see LICENSE file for more details.
 
-    Invenio is distributed in the hope that it will be
-    useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-    General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with Invenio; if not, write to the
-    Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-    MA 02111-1307, USA.
-
-    In applying this license, CERN does not
-    waive the privileges and immunities granted to it by virtue of its status
-    as an Intergovernmental Organization or submit itself to any jurisdiction.
 
 
 API Docs
 ========
 
 .. automodule:: invenio_previewer.ext
+   :members:
+   :undoc-members:
+
+
+API
+---
+
+.. automodule:: invenio_previewer.api
+   :members:
+   :undoc-members:
+
+
+Utils
+-----
+
+.. automodule:: invenio_previewer.utils
    :members:
    :undoc-members:
 
@@ -37,13 +38,22 @@ Views
    :members:
    :undoc-members:
 
+
+Webpack
+-------
+
+.. automodule:: invenio_previewer.webpack
+   :members:
+   :undoc-members:
+
+
 Previewers
 ----------
 
-CSV (d3.js)
-~~~~~~~~~~~
+CSV (Papaparser)
+~~~~~~~~~~~~~~~~
 
-.. automodule:: invenio_previewer.extensions.csv_dthreejs
+.. automodule:: invenio_previewer.extensions.csv_papaparsejs
    :members:
    :undoc-members:
 
@@ -93,13 +103,5 @@ ZIP
 ~~~
 
 .. automodule:: invenio_previewer.extensions.zip
-   :members:
-   :undoc-members:
-
-
-Bundles
--------
-
-.. automodule:: invenio_previewer.bundles
    :members:
    :undoc-members:

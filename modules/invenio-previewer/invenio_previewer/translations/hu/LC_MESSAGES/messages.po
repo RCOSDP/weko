@@ -1,0 +1,391 @@
+# Translations template for invenio-previewer.
+# Copyright (C) 2022 CERN
+# This file is distributed under the same license as the invenio-previewer
+# project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2022.
+# 
+# Translators:
+# Dorottya Szemigán, 2023
+# Andrea Dömötör, 2023
+# 
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: invenio-previewer 1.3.7\n"
+"Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
+"POT-Creation-Date: 2022-10-12 12:00+0000\n"
+"PO-Revision-Date: 2016-08-25 14:09+0000\n"
+"Last-Translator: Andrea Dömötör, 2023\n"
+"Language-Team: Hungarian (https://app.transifex.com/inveniosoftware/teams/23537/hu/)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.10.3\n"
+"Language: hu\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: invenio_previewer/templates/invenio_previewer/base.html:12
+#: invenio_previewer/templates/invenio_previewer/macros.html:46
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/base.html:12
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/macros.html:46
+msgid "Preview"
+msgstr "Előnézet"
+
+#: invenio_previewer/templates/invenio_previewer/bottom.html:19
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/bottom.html:24
+msgid "Embed code"
+msgstr "Kód beágyazása"
+
+#: invenio_previewer/templates/invenio_previewer/bottom.html:29
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:221
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:286
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:221
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:286
+msgid "Close"
+msgstr "Bezárás"
+
+#: invenio_previewer/templates/invenio_previewer/bottom.html:72
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/bottom.html:41
+msgid "Previewing"
+msgstr "Előnézet"
+
+#: invenio_previewer/templates/invenio_previewer/bottom.html:74
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/bottom.html:43
+msgid "Embed"
+msgstr "Beágyazás"
+
+#: invenio_previewer/templates/invenio_previewer/bottom.html:75
+#: invenio_previewer/templates/invenio_previewer/macros.html:51
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:76
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:77
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:146
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:147
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/bottom.html:44
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/macros.html:51
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:76
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:77
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:146
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:147
+msgid "Download"
+msgstr "Letöltés"
+
+#: invenio_previewer/templates/invenio_previewer/csv_bar.html:17
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/csv_bar.html:17
+msgid "Show more"
+msgstr "Mutasson többet"
+
+#: invenio_previewer/templates/invenio_previewer/default.html:17
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/default.html:19
+msgid "Cannot preview file"
+msgstr "A fájl nem jeleníthető meg"
+
+#: invenio_previewer/templates/invenio_previewer/default.html:18
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/default.html:20
+msgid "Sorry, we are unfortunately not able to preview this file."
+msgstr "Sajnos nem tudjuk megjeleníteni a fájlt."
+
+#: invenio_previewer/templates/invenio_previewer/macros.html:23
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/macros.html:23
+msgid "Name"
+msgstr "Név"
+
+#: invenio_previewer/templates/invenio_previewer/macros.html:24
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/macros.html:24
+msgid "Size"
+msgstr "Méret"
+
+#: invenio_previewer/templates/invenio_previewer/macros.html:39
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/macros.html:37
+msgid ""
+"This is the file fingerprint (checksum), which can be used to verify the "
+"file integrity."
+msgstr ""
+"Ez a fájl ujjlenyomata (ellenőrző összeg), amely a fájl integritásának "
+"ellenőrzésére használható."
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:30
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:30
+msgid "Thumbnails"
+msgstr "Miniatűrképek"
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:33
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:33
+msgid "Document Outline"
+msgstr "Dokumentum áttekintése"
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:47
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:47
+msgid "Find:"
+msgstr "Keresés:"
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:51
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:125
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:51
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:125
+msgid "Previous"
+msgstr "Előző"
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:55
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:129
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:55
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:129
+msgid "Next"
+msgstr "Következő"
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:59
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:59
+msgid "Highlight all"
+msgstr "Mindent kiemel"
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:61
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:61
+msgid "Match case"
+msgstr "Kisbetű/nagybetű érzékeny"
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:68
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:138
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:68
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:138
+msgid "Switch to Full Screen Mode"
+msgstr "Váltás teljes képernyős módba"
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:69
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:139
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:69
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:139
+msgid "Full Screen Mode"
+msgstr "Teljes képernyős mód"
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:72
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:73
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:142
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:143
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:72
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:73
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:142
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:143
+msgid "Print"
+msgstr "Nyomtatás"
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:82
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:83
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:82
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:83
+msgid "Go to First Page"
+msgstr "Ugrás az első oldalra"
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:85
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:86
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:85
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:86
+msgid "Go to Last Page"
+msgstr "Ugrás az utolsó oldalra"
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:91
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:92
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:91
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:92
+msgid "Rotate Clockwise"
+msgstr "Forgatás jobbra"
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:94
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:95
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:94
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:95
+msgid "Rotate Counterclockwise"
+msgstr "Forgatás balra"
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:101
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:101
+msgid "Enable hand tool"
+msgstr "Kézi eszköz engedélyezése"
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:106
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:107
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:106
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:107
+msgid "Document Properties"
+msgstr "Dokumentum tulajdonságai"
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:116
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:117
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:116
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:117
+msgid "Toggle Sidebar"
+msgstr "Oldalsáv-kapcsoló"
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:120
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:120
+msgid "Find in Document"
+msgstr "Keresés a dokumentumban"
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:121
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:121
+msgid "Find"
+msgstr "Keresés"
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:124
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:124
+msgid "Previous Page"
+msgstr "Előző oldal"
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:128
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:128
+msgid "Next Page"
+msgstr "Következő oldal"
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:132
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:132
+msgid "Page:"
+msgstr "Oldal:"
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:152
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:153
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:152
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:153
+msgid "Tools"
+msgstr "Eszközök"
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:159
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:160
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:159
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:160
+msgid "Zoom Out"
+msgstr "Kicsinyítés"
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:163
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:164
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:163
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:164
+msgid "Zoom In"
+msgstr "Nagyítás"
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:168
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:168
+msgid "Zoom"
+msgstr "Nagyítás"
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:169
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:169
+msgid "Automatic Zoom"
+msgstr "Automatikus nagyítás"
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:170
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:170
+msgid "Actual Size"
+msgstr "Valós méret"
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:171
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:171
+msgid "Fit Page"
+msgstr "Oldalmérethez illeszt"
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:172
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:172
+msgid "Full Width"
+msgstr "Teljes szélesség"
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:195
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:195
+msgid "First Page"
+msgstr "Első oldal"
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:213
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:213
+msgid "More Information"
+msgstr "További információ"
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:216
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:216
+msgid "Less Information"
+msgstr "Kevesebb információ"
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:233
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:233
+msgid "Enter the password to open this PDF file:"
+msgstr "Adja meg a jelszót a PDF megnyitásához:"
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:240
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:240
+msgid "Cancel"
+msgstr "Mégsem"
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:241
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:241
+msgid "OK"
+msgstr "OK"
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:248
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:248
+msgid "File name:"
+msgstr "Fájlnév:"
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:251
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:251
+msgid "File size:"
+msgstr "Fájl mérete:"
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:255
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:255
+msgid "Title:"
+msgstr "Cím:"
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:258
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:258
+msgid "Author:"
+msgstr "Szerző:"
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:261
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:261
+msgid "Subject:"
+msgstr "Tárgy:"
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:264
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:264
+msgid "Keywords:"
+msgstr "Kulcsszavak:"
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:267
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:267
+msgid "Creation Date:"
+msgstr "Létrehozás dátuma:"
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:270
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:270
+msgid "Modification Date:"
+msgstr "Módosítás dátuma:"
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:273
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:273
+msgid "Creator:"
+msgstr "Létrehozó:"
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:277
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:277
+msgid "PDF Producer:"
+msgstr "PDF készítő:"
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:280
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:280
+msgid "PDF Version:"
+msgstr "PDF verzió:"
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:283
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:283
+msgid "Page Count:"
+msgstr "Oldalak száma:"
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:296
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:296
+msgid "Preparing document for printing..."
+msgstr "Dokumentum előkészítése nyomtatásra..."
+
+#: invenio_previewer/templates/invenio_previewer/zip.html:54
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/zip.html:23
+msgid "Full screen"
+msgstr "Teljes képernyő"
+
+#: invenio_previewer/templates/invenio_previewer/zip.html:61
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/zip.html:29
+msgid "The previewer is not showing all the files."
+msgstr "Az előnézet nem mutatja az összes fájlt."

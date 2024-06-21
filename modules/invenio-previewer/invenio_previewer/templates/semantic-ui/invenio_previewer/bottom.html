@@ -1,0 +1,49 @@
+{# -*- coding: utf-8 -*-
+
+  This file is part of Invenio.
+  Copyright (C) 2015-2020 CERN.
+
+  Invenio is free software; you can redistribute it and/or modify it
+  under the terms of the MIT License; see LICENSE file for more details.
+#}
+
+{# Creates the bottom for embed and base previews #}
+
+{%- from "invenio_previewer/macros.html" import preview_file %}
+
+{%- block css %}
+  {{ webpack['bottom_css.css'] }}
+{%- endblock css %}
+      
+
+
+{# Modal for embed code, hidden unless called upon #}
+<div id="embedModal" class="ui modal">
+  <div>
+    
+    <h3 id="embedModalLabel"><i class="close icon link" id="close-btn"></i>{{_('Embed code')}}</h3>
+  </div>
+  <div class="content centered">
+    <textarea style="width:90%;height:100px;">
+    {% autoescape on %}
+      {{ preview_file(file) }}
+    {% endautoescape %}
+    </textarea>
+  </div>
+</div>
+
+
+
+{# Bottom: determines whether to have view or embed button
+# based on embed flag #}
+<div id="bottom">
+  <div class="ui grid container ">
+    <div class="row"><h3>{{_('Previewing')}}: {{ file.filename }}</h3></div>
+    <div class="row">
+      <button id='dd' role="button" class="ui button embed-btn">{{_('Embed')}}&nbsp;&nbsp<i class="share alternate icon"></i></button>
+      <a role="button" class="ui button" href="{{ file.uri }}" download>{{_('Download')}}&nbsp;&nbsp<i class="download icon"></i></a>
+    </div>
+  </div>
+</div>
+
+{{ webpack['bottom_js.js'] }}

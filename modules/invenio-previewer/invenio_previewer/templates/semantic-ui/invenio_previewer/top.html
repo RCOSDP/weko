@@ -1,0 +1,36 @@
+{# -*- coding: utf-8 -*-
+
+  This file is part of Invenio.
+  Copyright (C) 2015-2020 CERN.
+
+  Invenio is free software; you can redistribute it and/or modify it
+  under the terms of the MIT License; see LICENSE file for more details.
+#}
+
+{# Creates the top for base previews #}
+<style type="text/css">
+  #top {
+    height: 60px;
+  }
+  #top {
+    background-color: #f5f5f5;
+  }
+  @media (max-width: 767px) {
+    #top {
+      margin-left: -20px;
+      margin-right: -20px;
+      padding-left: 20px;
+      padding-right: 20px;
+    }
+  }
+</style>
+
+<div id="top">
+  <div class="ui container">
+    <div class="ui grid one column">
+      <div class="column">
+        <h2>{{ file.filename }}</h2>
+      </div>
+    </div>
+  </div>
+</div>

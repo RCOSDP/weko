@@ -1,0 +1,22 @@
+{# -*- coding: utf-8 -*-
+
+  This file is part of Invenio.
+  Copyright (C) 2015-2023 CERN.
+
+  Invenio is free software; you can redistribute it and/or modify it
+  under the terms of the MIT License; see LICENSE file for more details.
+#}
+
+{%- extends config.PREVIEWER_ABSTRACT_TEMPLATE %}
+
+{% block panel %}
+<div id="app" data-csv-source="{{ file.uri }}" data-csv-size="{{file.size}}">
+  <table class="ui selectable celled table unstackable">
+    <thead id="table-header">
+    </thead>
+    <tbody id="table-body">
+    </tbody>
+  </table>
+  <button id="show-more" class="ui button m-10" >{{_('Show more')}}</button>
+</div>
+{% endblock %}

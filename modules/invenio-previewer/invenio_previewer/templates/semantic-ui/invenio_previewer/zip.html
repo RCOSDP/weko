@@ -1,0 +1,61 @@
+{# -*- coding: utf-8 -*-
+
+  This file is part of Invenio.
+  Copyright (C) 2015-2024 CERN.
+
+  Invenio is free software; you can redistribute it and/or modify it
+  under the terms of the MIT License; see LICENSE file for more details.
+#}
+
+{%- extends config.PREVIEWER_ABSTRACT_TEMPLATE %}
+
+{%- block head %}
+{{super()}}
+{%- endblock %}
+
+{%- block panel %}
+{% if error %}
+  <div class="ui top attached negative message"><i class="exclamation icon"></i>{{ _(error) }}</div>
+{% else %}
+  <div class="ui equal width grid">
+    <div class="row">
+      <div class="no-padding fourteen wide column"><h4 class="blue-bg ui attached inverted header"><span><i class="file archive outline icon"></i> {{ file.filename }}</span></h4></div>
+      <div class="no-padding right aligned two wide column stretched"><h4 class="blue-bg ui attached inverted header"><span><i id="fullScreenMode" title="{{ _('Full screen') }}" class="expand arrows alternate link icon inverted"></i></span></h4></div>
+    </div>
+  </div>
+  {%- if limit_reached %}
+  <div class="ui attached negative message">
+    <i class="exclamation icon"></i>
+    {{ _('The previewer is not showing all the files.') }}
+  </div>
+  {%- endif %}
+  <div class="ui basic segment">
+    <ul class="tree list-unstyled">
+      {%- for t in tree recursive %}
+      {%- set folder_identifier = t.id %}
+      <li>
+        {%- if t.type != 'folder' %}
+        <div class="ui equal width grid">
+        <div class="row">
+          <div class="no-padding left floated column"><span><i class="file outline icon"></i></i> {{ t.name }}</span></div>
+          <div class="no-padding right aligned column">{{ t.size|filesizeformat }}</div>
+        </div>
+      </div>
+        {%- else %}
+        <div class="ui equal width grid">
+          <div class="row">
+          <i class="folder icon"></i> <a href="#tree_{{ folder_identifier }}">{{ t.name }} </a>
+        </div>
+      </div>
+        {%- endif %}
+        {%- if t.children -%}
+        <ul id="tree_{{ folder_identifier }}">
+          {{ loop(t.children) }}
+        </ul>
+        {%- endif %}
+      </li>
+      {%- endfor %}
+    </ul>
+   </div>
+  {%- endif %}
+{%- endblock %}

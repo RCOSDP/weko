@@ -1,0 +1,18 @@
+/*
+ * This file is part of Invenio.
+ * Copyright (C) 2023 Northwestern University.
+ *
+ * Invenio is free software; you can redistribute it and/or modify it
+ * under the terms of the MIT License; see LICENSE file for more details.
+ */
+
+@import '~video.js/dist/video-js.min.css';
+
+
+.inveniordm-audio-previewer-dimensions {
+    width: unset;
+}
+
+body {
+    justify-content: center;
+}

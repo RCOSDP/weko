@@ -1,27 +1,11 @@
 {# -*- coding: utf-8 -*-
-#
-# This file is part of Invenio.
-# Copyright (C) 2016 CERN.
-#
-# Invenio is free software; you can redistribute it
-# and/or modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; either version 2 of the
-# License, or (at your option) any later version.
-#
-# Invenio is distributed in the hope that it will be
-# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Invenio; if not, write to the
-# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-# MA 02111-1307, USA.
-#
-# In applying this license, CERN does not
-# waive the privileges and immunities granted to it by virtue of its status
-# as an Intergovernmental Organization or submit itself to any jurisdiction.
--#}
+
+  This file is part of Invenio.
+  Copyright (C) 2016-2019 CERN.
+
+  Invenio is free software; you can redistribute it and/or modify it
+  under the terms of the MIT License; see LICENSE file for more details.
+#}
 
 {%- macro preview_file(preview_endpoint, pid, filename, id='preview-iframe', width='100%', height='400' ) %}
   <iframe
@@ -32,29 +16,37 @@
    src="{{ url_for(preview_endpoint, pid_value=pid.pid_value, filename=filename) }}"></iframe>
 {%- endmacro %}
 
-{%- macro file_list(files) %}
+{%- macro file_list(files, pid, sort_by='key', with_preview=true, download_endpoint='invenio_records_ui.recid_files', preview_endpoint='invenio_records_ui.recid_previewer') %}
   <table class="table table-striped">
     <thead>
-      <tr class="">
+      <tr>
         <th>{{_('Name')}}</th>
-        <th>{{_('Date')}}</th>
         <th>{{_('Size')}}</th>
-       <th>{{_('Action')}}</th>
       </tr>
     </thead>
     <tbody>
-    {% for file in files %}
-      <tr class="">
+    {% for file in files|sort(attribute=sort_by) %}
+      {%- set file_url_download = url_for(download_endpoint, pid_value=pid.pid_value, filename=file.key, download=1) %}
+      {%- set file_url_preview = url_for(preview_endpoint, pid_value=pid.pid_value, filename=file.key) %}
+      {%- set file_type = file.key.split('.')[-1] %}
+      <tr>
         <td>
-          <a class="forcewrap" href="{{ file.uri }}">
-            {{ file.key }}
-          </a>
+          {%- if with_preview %}
+            <a class="filename preview-link" href="#preview" data-url="{{file_url_preview}}">{{ file.key }}</a>
+          {%- else %}
+            <a class="forcewrap" href="{{ file_url_download }}">{{ file.key }}</a>
+          {%- endif %}
+          <br/><small class="text-muted nowrap">{{file.checksum}} <i class="fa fa-question-circle text-muted" data-toggle="tooltip" tooltip data-placement="top" title="{{_('This is the file fingerprint (checksum), which can be used to verify the file integrity.')}}"></i></small>
         </td>
-        <td class="nowrap">{{ file.date }}</td>
-        <td class="nowrap">{{ file.size }}</td>
+        <td class="nowrap">{{ file.size|filesizeformat }}</td>
         <td class="nowrap">
           <span class="pull-right">
-            <a class="btn btn-xs btn-default" href="{{ file.uri }}">
+            {% if with_preview and file_type is previewable %}
+              <button class="btn preview-link btn-xs btn-default" data-url="{{file_url_preview}}">
+                <i class="fa fa-eye"></i> {{_("Preview")}}
+              </button>
+            {% endif %}
+            <a class="btn btn-xs btn-default" href="{{ file_url_download }}">
               <i class="fa fa-download"></i>
               {{_('Download')}}
             </a>

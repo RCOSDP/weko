@@ -1,3 +1,10 @@
+/*
+ * This file is part of Invenio.
+ * Copyright (C) 2016-2019 CERN.
+ *
+ * Invenio is free software; you can redistribute it and/or modify it
+ * under the terms of the MIT License; see LICENSE file for more details.
+ */
 /* Copyright 2012 Mozilla Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");

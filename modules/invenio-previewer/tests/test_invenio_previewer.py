@@ -1,30 +1,12 @@
 # -*- coding: utf-8 -*-
 #
 # This file is part of Invenio.
-# Copyright (C) 2016 CERN.
+# Copyright (C) 2016-2019 CERN.
 #
-# Invenio is free software; you can redistribute it
-# and/or modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; either version 2 of the
-# License, or (at your option) any later version.
-#
-# Invenio is distributed in the hope that it will be
-# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Invenio; if not, write to the
-# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-# MA 02111-1307, USA.
-#
-# In applying this license, CERN does not
-# waive the privileges and immunities granted to it by virtue of its status
-# as an Intergovernmental Organization or submit itself to any jurisdiction.
+# Invenio is free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
 
 """Module tests."""
-
-from __future__ import absolute_import, print_function
 
 import importlib
 
@@ -46,14 +28,14 @@ class MockEntryPoint(EntryPoint):
 def _mock_entry_points(group=None):
     """Mocking funtion of entrypoints."""
     data = {
-        'invenio_previewer.previewers': [
+        "invenio_previewer.previewers": [
             MockEntryPoint(
-                'default',
-                'invenio_previewer.extensions.default',
+                "default",
+                "invenio_previewer.extensions.default",
             ),
             MockEntryPoint(
-                'zip',
-                'invenio_previewer.extensions.zip',
+                "zip",
+                "invenio_previewer.extensions.zip",
             ),
         ],
     }
@@ -66,20 +48,21 @@ def _mock_entry_points(group=None):
 def test_version():
     """Test version import."""
     from invenio_previewer import __version__
+
     assert __version__
 
 
 def test_init():
     """Test extension initialization."""
-    app = Flask('testapp')
+    app = Flask("testapp")
     InvenioPreviewer(app)
-    assert 'invenio-previewer' in app.extensions
+    assert "invenio-previewer" in app.extensions
 
 
-@patch('pkg_resources.iter_entry_points', _mock_entry_points)
+@patch("pkg_resources.iter_entry_points", _mock_entry_points)
 def test_entrypoint_previewer():
     """Test the entry points."""
-    app = Flask('testapp')
+    app = Flask("testapp")
     ext = InvenioPreviewer(app)
-    ext.load_entry_point_group('invenio_previewer.previewers')
+    ext.load_entry_point_group("invenio_previewer.previewers")
     assert len(ext.previewers) == 2
