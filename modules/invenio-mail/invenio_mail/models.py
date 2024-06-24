@@ -27,6 +27,8 @@ from sqlalchemy import or_
 from flask_babelex import gettext as _
 
 
+from invenio_mail.config import INVENIO_MAIL_DEFAULT_TEMPLATE_CATEGORY_ID
+
 class MailConfig(db.Model):
     """Mail Config."""
 
@@ -91,8 +93,8 @@ class MailTemplates(db.Model):
     mail_body = db.Column(db.Text, nullable=True)
     default_mail = db.Column(db.Boolean, default=False)
     mail_genre_id = db.Column('genre_id', db.Integer,
-                              db.ForeignKey('mail_template_genres.id', onupdate='CASCADE', ondelete='RESTRICT'), nullable=False)
-
+                              db.ForeignKey('mail_template_genres.id', onupdate='CASCADE', ondelete='RESTRICT'),
+                              nullable=False, default=INVENIO_MAIL_DEFAULT_TEMPLATE_CATEGORY_ID)
     def toDict(self):
         """model object to dict"""
         return {
@@ -145,7 +147,7 @@ class MailTemplates(db.Model):
             obj = cls.get_by_id(data['key'])
         else:
             obj = cls()
-            obj.genre_id = current_app.config["INVENIO_MAIL_DEFAULT_TEMPLATE_ID"]
+            obj.genre_id = current_app.config["INVENIO_MAIL_DEFAULT_TEMPLATE_CATEGORY_ID"]
         obj.mail_subject = data['content']['subject']
         obj.mail_body = data['content']['body']
         try:
@@ -154,5 +156,7 @@ class MailTemplates(db.Model):
             else:
                 db.session.add(obj)
             db.session.commit()
+            return True
         except:
             db.session.rollback()
+            return False
