@@ -368,7 +368,7 @@ def link_error_handler(request, exc, traceback):
 
 def is_harvest_running(id, task_id):
     """Check harvest running."""
-    actives = inspect().active()
+    actives = inspect(timeout=current_app.config.get("CELERY_GET_STATUS_TIMEOUT", 3.0)).active()
     for worker in actives:
         for task in actives[worker]:
             if task['name'] == 'invenio_oaiharvester.tasks.run_harvesting':
