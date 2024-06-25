@@ -16,6 +16,7 @@ from . import config
 from .cli import files as files_cmd
 from .errors import MultipartNoPart
 from .utils import load_or_import_from_config, obj_or_import_string
+from .views import admin_blueprint, api_blueprint
 
 
 class _FilesRESTState(object):
@@ -24,6 +25,12 @@ class _FilesRESTState(object):
     def __init__(self, app):
         """Initialize state."""
         self.app = app
+    
+    def upload_file_owner_factory(self):
+        """Load default upload file owner factory."""
+        return load_or_import_from_config(
+            'FILES_REST_UPLOAD_OWNER_FACTORIES', app=self.app
+        )
 
     @cached_property
     def storage_factory(self):
@@ -100,6 +107,8 @@ class InvenioFilesREST(object):
         self.init_config(app)
         if hasattr(app, "cli"):
             app.cli.add_command(files_cmd)
+        app.register_blueprint(admin_blueprint)
+        app.register_blueprint(api_blueprint)
         app.extensions["invenio-files-rest"] = _FilesRESTState(app)
 
     def init_config(self, app):

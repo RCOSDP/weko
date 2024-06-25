@@ -13,11 +13,17 @@ import uuid
 from flask import current_app, flash, url_for
 from flask_admin.actions import action
 from flask_admin.contrib.sqla import ModelView
+from flask_admin.form import SecureForm
+from flask_security import current_user
 from flask_wtf import FlaskForm
 from invenio_admin.filters import FilterConverter
 from invenio_admin.forms import LazyChoices
 from markupsafe import Markup
+from wtforms.fields import PasswordField
+from wtforms.fields import StringField
+from wtforms.fields import BooleanField
 from wtforms.validators import ValidationError
+from wtforms.widgets import PasswordInput
 
 from .models import (
     Bucket,
@@ -55,18 +61,21 @@ class LocationModelView(ModelView):
     """ModelView for the locations."""
 
     filter_converter = FilterConverter()
-    can_create = True
-    can_edit = False
-    can_delete = True
     can_view_details = True
     column_formatters = dict(
         buckets=link("Buckets", lambda o: url_for("bucket.index_view", flt2_2=o.name))
     )
-    column_details_list = ("name", "uri", "default", "created", "updated", "buckets")
-    column_list = ("name", "uri", "default", "created", "updated", "buckets")
+    column_details_list = ("type", "name", "uri", "default", "size", "quota_size", "created", "updated", "buckets")
+    column_list = ("type", "name", "uri", "default", "size", "quota_size", "created", "updated", "buckets")
     column_labels = dict(
         id=_("ID"),
         uri=_("URI"),
+        size=_("Size"),
+        quota_size=_("Quota Size"),
+        access_key=_("Access Key"),
+        secret_key=_("Secret Key"),
+        s3_endpoint_url=_("S3_ENDPOINT_URL"),
+        s3_send_file_directly=_("S3_SEND_FILE_DIRECTLY")
     )
     column_filters = (
         "default",
@@ -76,9 +85,44 @@ class LocationModelView(ModelView):
     column_searchable_list = ("uri", "name")
     column_default_sort = "name"
     form_base_class = FlaskForm
-    form_columns = ("name", "uri", "default")
+    form_columns = (
+        "name", "uri", "type", "access_key", "secret_key",
+        "s3_endpoint_url", "s3_send_file_directly",
+        "quota_size", "default")
+    form_choices = {
+        "type": LazyChoices(
+            lambda: current_app.config["FILES_REST_LOCATION_TYPE_LIST"])
+    }
+    form_extra_fields = {
+        "access_key": PasswordField("access_key",
+                                    widget=PasswordInput(hide_value=False)),
+        "secret_key": PasswordField("secret_key",
+                                    widget=PasswordInput(hide_value=False)),
+        "s3_endpoint_url": StringField("endpoint_url"),
+        "s3_send_file_directly": BooleanField("send_file_directly")
+    }
     form_args = dict(name=dict(validators=[require_slug]))
     page_size = 25
+    edit_template = "admin/location_edit.html"
+    create_template = "admin/location_edit.html"
+
+    _system_role = os.environ.get("INVENIO_ROLE_SYSTEM",
+                                  "System Administrator")
+
+    @property
+    def can_create(self):
+        """Check permission for creating."""
+        return self._system_role in [role.name for role in current_user.roles]
+
+    @property
+    def can_edit(self):
+        """Check permission for Editing."""
+        return self._system_role in [role.name for role in current_user.roles]
+
+    @property
+    def can_delete(self):
+        """Check permission for Deleting."""
+        return self._system_role in [role.name for role in current_user.roles]
 
 
 class BucketModelView(ModelView):
@@ -208,7 +252,6 @@ class ObjectModelView(ModelView):
         "version_id",
         "file.uri",
         "is_head",
-        "is_deleted",
         "file.size",
         "created",
         "updated",

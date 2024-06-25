@@ -219,7 +219,8 @@ def make_path(base_uri, path, filename, path_dimensions, split_length):
     uri_parts.append(path)
     uri_parts.append(filename)
 
-    return os.path.join(base_uri, *uri_parts)
+    url = os.path.join(base_uri, *uri_parts)
+    return url.replace("\\", "/") if os.sys.platform == 'win32' else url
 
 
 def compute_md5_checksum(stream, **kwargs):
@@ -247,7 +248,7 @@ def compute_checksum(
     chunk_size = chunk_size_or_default(chunk_size)
 
     bytes_read = 0
-    while 1:
+    while True:
         chunk = stream.read(chunk_size)
         if not chunk:
             if progress_callback:

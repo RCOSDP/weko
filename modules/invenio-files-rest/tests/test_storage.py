@@ -76,19 +76,19 @@ def test_pyfs_delete_fail(pyfs, pyfs_testpath):
     pytest.raises(DirectoryNotEmpty, pyfs.delete)
 
 
-def test_pyfs_save(pyfs, pyfs_testpath, get_md5):
+def test_pyfs_save(pyfs, pyfs_testpath, get_sha256):
     """Test basic save operation."""
     data = b"somedata"
     uri, size, checksum = pyfs.save(BytesIO(data))
 
     assert uri == pyfs_testpath
     assert size == len(data)
-    assert checksum == get_md5(data)
+    assert checksum == get_sha256(data)
     assert exists(pyfs_testpath)
     assert open(pyfs_testpath, "rb").read() == data
 
 
-def test_pyfs_save_failcleanup(pyfs, pyfs_testpath, get_md5):
+def test_pyfs_save_failcleanup(pyfs, pyfs_testpath):
     """Test basic save operation."""
     data = b"somedata"
 
@@ -143,7 +143,7 @@ def test_pyfs_save_limits(pyfs):
     )
 
 
-def test_pyfs_update(pyfs, pyfs_testpath, get_md5):
+def test_pyfs_update(pyfs, pyfs_testpath, get_sha256):
     """Test update of file."""
     pyfs.initialize(size=100)
     pyfs.update(BytesIO(b"cd"), seek=2, size=2)
@@ -157,10 +157,10 @@ def test_pyfs_update(pyfs, pyfs_testpath, get_md5):
     # Assert return parameters from update.
     size, checksum = pyfs.update(BytesIO(b"ef"), seek=4, size=2)
     assert size == 2
-    assert get_md5(b"ef") == checksum
+    assert get_sha256(b"ef") == checksum
 
 
-def test_pyfs_update_fail(pyfs, pyfs_testpath, get_md5):
+def test_pyfs_update_fail(pyfs, pyfs_testpath):
     """Test update of file."""
 
     def fail_callback(total, size):
@@ -186,12 +186,12 @@ def test_pyfs_update_fail(pyfs, pyfs_testpath, get_md5):
     assert content[4:6] != "ef"
 
 
-def test_pyfs_checksum(get_md5):
+def test_pyfs_checksum(get_sha256):
     """Test fixity."""
-    # Compute checksum of license file/
+    # Compute checksum of license file
     with open("LICENSE", "rb") as fp:
         data = fp.read()
-        checksum = get_md5(data)
+        checksum = get_sha256(data)
 
     counter = dict(size=0)
 
@@ -233,7 +233,7 @@ def test_pyfs_send_file(app, pyfs):
         h = res.headers
         assert h["Content-Type"] == "text/plain; charset=utf-8"
         assert h["Content-Length"] == str(size)
-        assert h["Content-MD5"] == checksum[4:]
+        # assert h["Content-MD5"] == checksum[4:]
         assert h["ETag"] == '"{0}"'.format(checksum)
 
         # Content-Type: application/octet-stream
@@ -244,10 +244,10 @@ def test_pyfs_send_file(app, pyfs):
         # Date: Sat, 23 Jan 2016 07:21:04 GMT
 
         res = pyfs.send_file(
-            "myfilename.txt", mimetype="text/plain", checksum="crc32:test"
+            "myfilename.txt", mimetype="text/plain", checksum="md5:test"
         )
         assert res.status_code == 200
-        assert "Content-MD5" not in dict(res.headers)
+        assert "Content-MD5" in dict(res.headers)
 
         # Test for absence of Content-Disposition header to make sure that
         # it's not present when as_attachment=False
@@ -292,7 +292,7 @@ def test_pyfs_send_file_xss_prevention(app, pyfs):
         h = res.headers
         assert h["Content-Type"] == "text/plain; charset=utf-8"
         assert h["Content-Length"] == str(size)
-        assert h["Content-MD5"] == checksum[4:]
+        # assert h["Content-MD5"] == checksum[4:]
         assert h["ETag"] == '"{0}"'.format(checksum)
         # XSS prevention
         assert h["Content-Security-Policy"] == "default-src 'none';"

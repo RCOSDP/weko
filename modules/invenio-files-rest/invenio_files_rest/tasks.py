@@ -8,7 +8,9 @@
 
 """Celery tasks for Invenio-Files-REST."""
 
+import glob
 import math
+import os
 import uuid
 from datetime import date, datetime, timedelta
 
@@ -19,10 +21,13 @@ from celery.states import state
 from celery.utils.log import get_task_logger
 from flask import current_app
 from invenio_db import db
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from weko_admin.models import AdminSettings
 
+from .api import send_alert_mail
 from .models import FileInstance, Location, MultipartObject, ObjectVersion
 from .signals import file_uploaded
+from .storage.pyfs import remove_dir_with_file
 from .utils import obj_or_import_string
 
 logger = get_task_logger(__name__)
@@ -43,20 +48,23 @@ def verify_checksum(
 
     :param file_id: The file ID.
     """
-    f = FileInstance.query.get(uuid.UUID(file_id))
+    try:
+        f = FileInstance.query.get(uuid.UUID(file_id))
 
-    # Anything might happen during the task, so being pessimistic and marking
-    # the file as unchecked is a reasonable precaution
-    if pessimistic:
-        f.clear_last_check()
+        # Anything might happen during the task, so being pessimistic and marking
+        # the file as unchecked is a reasonable precaution
+        if pessimistic:
+            f.clear_last_check()
+        f.verify_checksum(
+            progress_callback=progress_updater,
+            chunk_size=chunk_size,
+            throws=throws,
+            checksum_kwargs=checksum_kwargs,
+        )
         db.session.commit()
-    f.verify_checksum(
-        progress_callback=progress_updater,
-        chunk_size=chunk_size,
-        throws=throws,
-        checksum_kwargs=checksum_kwargs,
-    )
-    db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(e)
 
 
 def default_checksum_verification_files_query():
@@ -182,14 +190,14 @@ def migrate_file(src_id, location_name, post_fixity_check=False):
     :param post_fixity_check: Verify checksum after migration.
         (Default: ``False``)
     """
-    location = Location.get_by_name(location_name)
-    f_src = FileInstance.get(src_id)
-
-    # Create destination
-    f_dst = FileInstance.create()
-    db.session.commit()
 
     try:
+        location = Location.get_by_name(location_name)
+        f_src = FileInstance.get(src_id)
+
+        # Create destination
+        f_dst = FileInstance.create()
+
         # Copy contents
         f_dst.copy_contents(
             f_src,
@@ -197,15 +205,12 @@ def migrate_file(src_id, location_name, post_fixity_check=False):
             default_location=location.uri,
         )
         db.session.commit()
-    except Exception:
-        # Remove destination file instance if an error occurred.
-        db.session.delete(f_dst)
-        db.session.commit()
-        raise
-
     # Update all objects pointing to file.
-    ObjectVersion.relink_all(f_src, f_dst)
-    db.session.commit()
+        ObjectVersion.relink_all(f_src, f_dst)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(e)
 
     # Start a fixity check
     if post_fixity_check:
@@ -229,6 +234,7 @@ def remove_file_data(file_id, silent=True, force=False):
         # ensure integrity constraints are checked and enforced.
         f = FileInstance.get(file_id)
         if not f.writable and not force:
+            db.session.commit()
             return
         f.delete()
         db.session.commit()
@@ -237,8 +243,12 @@ def remove_file_data(file_id, silent=True, force=False):
         # disk file removal doesn't work.
         f.storage().delete()
     except IntegrityError:
+        db.session.rollback()
         if not silent:
             raise
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(e)
 
 
 @shared_task()
@@ -332,3 +342,44 @@ def clear_orphaned_files(force_delete_check=lambda file_instance: False, limit=1
     for orphan in query:
         # note: the ID is cast to str because serialization of UUID objects can fail
         remove_file_data.delay(str(orphan.id), force=force_delete_check(orphan))
+
+@shared_task(ignore_result=True)
+def check_send_alert_mail():
+    """Check storage use rate and send alert mail by celery schedule."""
+    settings = AdminSettings.get("storage_check_settings")
+
+    if settings:
+        now = datetime.utcnow()
+        locations = Location.all()
+        for location in locations:
+            if location.quota_size \
+                and location.size / location.quota_size * 100 \
+                    >= settings.threshold_rate:
+                if (settings.cycle == "daily") or \
+                        (settings.cycle == "weekly"
+                         and settings.day == now.weekday()) \
+                        or (settings.cycle == "monthly"
+                            and settings.day == now.day):
+                    send_alert_mail(settings.threshold_rate, location.name,
+                                    location.size / location.quota_size,
+                                    location.size, location.quota_size)
+
+
+@shared_task(ignore_result=True)
+def check_file_storage_time():
+    """Check the storage time of the ms office preview file."""
+    settings = AdminSettings.get("convert_pdf_settings")
+
+    if settings:
+        path = settings.path
+        ttl = settings.pdf_ttl
+    else:
+        path = current_app.config.get("FILES_REST_DEFAULT_PDF_SAVE_PATH",
+                                      "/var/tmp")
+        ttl = current_app.config.get("FILES_REST_DEFAULT_PDF_TTL", 1 * 60 * 60)
+    # Delete file if file creation time exceeded TTL
+    now = datetime.utcnow()
+    for d in glob.glob(path + "/pdf_dir/**"):
+        tLog = os.path.getmtime(d)
+        if (now - datetime.utcfromtimestamp(tLog)).total_seconds() >= ttl:
+            remove_dir_with_file(d)

@@ -17,6 +17,7 @@ from marshmallow import fields, missing, post_dump
 
 from .errors import FilesException
 from .models import Bucket, MultipartObject, ObjectVersion, Part
+from .proxies import current_files_rest
 
 
 class BaseSchema(InvenioRestBaseSchema):
@@ -62,6 +63,17 @@ class ObjectVersionSchema(BaseSchema):
     checksum = fields.String(attribute="file.checksum")
     delete_marker = fields.Boolean(attribute="deleted")
     tags = fields.Method("dump_tags", dump_only=True)
+    created_user_id = fields.Integer()
+    updated_user_id = fields.Integer()
+    uploaded_owners = fields.Method("upload_owners", dump_only=True)
+    is_show = fields.Boolean()
+    is_thumbnail = fields.Boolean()
+
+    def upload_owners(self, o):
+        """Get upload owner information."""
+        upload_func = current_files_rest.upload_file_owner_factory()
+
+        return upload_func(o.created_user_id, o.updated_user_id)
 
     def dump_tags(self, o):
         """Dump tags."""
@@ -70,32 +82,49 @@ class ObjectVersionSchema(BaseSchema):
     def dump_links(self, o):
         """Dump links."""
         params = {"versionId": o.version_id}
-        data = {
-            "self": url_for(
-                ".object_api",
-                bucket_id=o.bucket_id,
-                key=o.key,
-                _external=True,
-                **(params if not o.is_head or o.deleted else {})
-            ),
-            "version": url_for(
-                ".object_api",
-                bucket_id=o.bucket_id,
-                key=o.key,
-                _external=True,
-                **params
-            ),
-        }
 
-        if o.is_head and not o.deleted:
-            data.update(
-                {
-                    "uploads": url_for(
-                        ".object_api", bucket_id=o.bucket_id, key=o.key, _external=True
-                    )
-                    + "?uploads",
-                }
-            )
+        show_links = False
+
+        from flask_login import current_user
+        if o.is_head:
+            show_links = True
+        elif o.is_show:
+            show_links = True
+        elif current_user.is_authenticated:
+            from .permissions import has_update_version_role
+            show_links = has_update_version_role(current_user)
+
+        if not show_links:
+            data = {
+                "self": "",
+                "version": "",
+                "uploads": "",
+            }
+        else:
+            data = {
+                "self": url_for(
+                    ".object_api",
+                    bucket_id=o.bucket_id,
+                    key=o.key,
+                    _external=True,
+                    **(params if not o.is_head or o.deleted else {})
+                ),
+                "version": url_for(
+                    ".object_api",
+                    bucket_id=o.bucket_id,
+                    key=o.key,
+                    _external=True,
+                    **params
+                )
+            }
+
+            if o.is_head and not o.deleted:
+                data.update({"uploads": url_for(
+                    ".object_api",
+                    bucket_id=o.bucket_id,
+                    key=o.key,
+                    _external=True
+                ) + "?uploads", })
 
         return data
 
@@ -337,3 +366,23 @@ def json_serializer(
         response.set_etag(etag)
 
     return response
+
+def file_uploaded_owner(created_user_id=0, updated_user_id=0):
+    """Build upload file owners.
+
+    :param created_user_id: The created user id. (Default: ``0``)
+    :param updated_user_id: The updated user id. (Default: ``0``)
+    :returns: A response with json data.
+    """
+    return {
+        "created_user": {
+            "user_id": created_user_id,
+            "username": "",
+            "displayname": "",
+        },
+        "updated_user": {
+            "user_id": updated_user_id,
+            "username": "",
+            "displayname": "",
+        }
+    }

@@ -8,12 +8,17 @@
 
 """Storage related module."""
 
+import base64
+import hashlib
+import shutil
+
+import cchardet as chardet
 from flask import current_app
 from fs.opener import open_fs as opendir
 from fs.path import basename, dirname, split
 
 from ..helpers import make_path
-from .base import FileStorage
+from .base import FileStorage, StorageError
 
 
 class PyFSFileStorage(FileStorage):
@@ -156,6 +161,67 @@ class PyFSFileStorage(FileStorage):
             fp.close()
 
         return bytes_written, checksum
+    
+    # For weko storage
+    def _init_hash(self):
+        """Initialize message digest object.
+
+        Overwrite this method if you want to use different checksum
+        algorithm for your storage backend.
+        """
+        return "sha256", hashlib.sha256()
+
+    def upload_file(self, fjson):
+        """Upload file."""
+        if fjson is None or len(fjson) == 0:
+            return
+
+        try:
+            fp = self.open(mode="rb")
+        except Exception as e:
+            raise StorageError("Could not send file: {}".format(e))
+
+        mime = fjson.get("mimetype", "")
+        if "text" in mime:
+            s = fp.read()
+            ecd = chardet.detect(s).get("encoding")
+            if ecd and "UTF-8" not in ecd:
+                try:
+                    s = s.decode(ecd).encode("utf-8")
+                except BaseException:
+                    pass
+            strb = base64.b64encode(s).decode("utf-8")
+        else:
+            strb = base64.b64encode(fp.read()).decode("utf-8")
+        fp.close()
+
+        fjson.update({"file": strb})
+
+    def read_file(self, fjson):
+        """Read file."""
+        if fjson is None or len(fjson) == 0:
+            return
+
+        try:
+            fp = self.open(mode="rb")
+        except Exception as e:
+            raise StorageError("Could not send file: {}".format(e))
+
+        mime = fjson.get("mimetype", "")
+        if "text" in mime:
+            s = fp.read()
+            ecd = chardet.detect(s).get("encoding")
+            if ecd and "UTF-8" not in ecd:
+                try:
+                    s = s.decode(ecd).encode("utf-8")
+                except BaseException:
+                    pass
+            strb = base64.b64encode(s).decode("utf-8")
+        else:
+            strb = base64.b64encode(fp.read()).decode("utf-8")
+        fp.close()
+
+        return strb
 
 
 def pyfs_storage_factory(
@@ -195,3 +261,11 @@ def pyfs_storage_factory(
             )
 
     return filestorage_class(fileurl, size=size, modified=modified, clean_dir=clean_dir)
+
+
+def remove_dir_with_file(path):
+    """Remove the directory that contains the all files in the directory."""
+    try:
+        shutil.rmtree(path)
+    except OSError as e:
+        current_app.logger.error(e)

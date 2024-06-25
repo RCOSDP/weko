@@ -7,6 +7,8 @@
 # under the terms of the MIT License; see LICENSE file for more details.
 
 """Permissions for files using Invenio-Access."""
+import os
+from functools import partial
 
 from invenio_access import Permission, action_factory
 
@@ -134,3 +136,21 @@ def permission_factory(obj, action):
         raise RuntimeError("Unknown object")
 
     return Permission(need_class(arg))
+
+def has_update_version_role(user):
+    """Check if user has the version update role when working on object_version.
+
+    :param user: User to check the role.
+    :return Boolean value.
+    """
+    if user is not None and user.is_authenticated:
+        roles_user = []
+        from flask import current_app
+        roles_env = current_app.config.get("FILES_REST_ROLES_ENV", [])
+        for role_env in roles_env:
+            if role_env in os.environ:
+                roles_user.append(os.environ.get(role_env))
+        for lst in list(user.roles or []):
+            if lst.name in roles_user:
+                return True
+    return False

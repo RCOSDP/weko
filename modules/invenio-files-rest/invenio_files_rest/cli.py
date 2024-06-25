@@ -37,9 +37,13 @@ def touch():
     """Create new bucket."""
     from .models import Bucket
 
-    bucket = Bucket.create()
-    db.session.commit()
-    click.secho(str(bucket), fg="green")
+    try:
+        bucket = Bucket.create()
+        db.session.commit()
+        click.secho(str(bucket), fg="green")
+    except Exception as e:
+        db.session.rollback()
+        click.secho(e, fg="red")
 
 
 @bucket.command()
@@ -53,11 +57,15 @@ def cp(source, bucket, checksum, key_prefix):
     from .helpers import populate_from_path
     from .models import Bucket
 
-    for object_version in populate_from_path(
-        Bucket.get(bucket), source, checksum=checksum, key_prefix=key_prefix
-    ):
-        click.secho(str(object_version))
-    db.session.commit()
+    try:
+        for object_version in populate_from_path(
+            Bucket.get(bucket), source, checksum=checksum, key_prefix=key_prefix
+        ):
+            click.secho(str(object_version))
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        click.secho(e, fg='red')
 
 
 def _unset_default_location():
@@ -92,9 +100,13 @@ def create(name, uri, default):
         if default:
             _unset_default_location()
 
-        location = Location(name=name, uri=uri, default=default)
-        db.session.add(location)
-        db.session.commit()
+        try:
+            location = Location(name=name, uri=uri, default=default)
+            db.session.add(location)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            click.secho(e, fg='red')
         click.secho(
             "Location {} {} as default {} stored in database".format(
                 location.name, location.uri, str(location.default)
@@ -127,9 +139,13 @@ def set_default(name):
     """
     location = Location.get_by_name(name)
     if location is not None:
-        _unset_default_location()
-        location.default = True
-        db.session.commit()
+        try:
+            _unset_default_location()
+            location.default = True
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            click.secho(e, fg='red')
         click.secho(
             "Location {} {} set as default ({})".format(
                 location.name, location.uri, str(location.default)

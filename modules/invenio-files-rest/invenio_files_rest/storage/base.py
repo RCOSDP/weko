@@ -231,7 +231,7 @@ class FileStorage(object):
         algo, m = self._init_hash()
         bytes_written = 0
 
-        while 1:
+        while True:
             # Check that size limits aren't bypassed
             check_sizelimit(size_limit, bytes_written, size)
 

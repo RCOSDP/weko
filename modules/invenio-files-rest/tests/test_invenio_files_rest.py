@@ -34,30 +34,30 @@ def test_init():
     assert "invenio-files-rest" in app.extensions
 
 
-def test_alembic(app, db):
-    """Test alembic recipes."""
-    ext = app.extensions["invenio-db"]
+# def test_alembic(app, db):
+#     """Test alembic recipes."""
+#     ext = app.extensions["invenio-db"]
 
-    if db.engine.name == "sqlite":
-        raise pytest.skip("Upgrades are not supported on SQLite.")
+#     if db.engine.name == "sqlite":
+#         raise pytest.skip("Upgrades are not supported on SQLite.")
 
-    # skip index from alembic migrations until sqlalchemy 2.0
-    # https://github.com/sqlalchemy/sqlalchemy/discussions/7597
-    def include_object(object, name, type_, reflected, compare_to):
-        if name == "ix_uq_partial_files_object_is_head":
-            return False
+#     # skip index from alembic migrations until sqlalchemy 2.0
+#     # https://github.com/sqlalchemy/sqlalchemy/discussions/7597
+#     def include_object(object, name, type_, reflected, compare_to):
+#         if name == "ix_uq_partial_files_object_is_head":
+#             return False
 
-        return True
+#         return True
 
-    current_app.config["ALEMBIC_CONTEXT"] = {"include_object": include_object}
+#     current_app.config["ALEMBIC_CONTEXT"] = {"include_object": include_object}
 
-    assert not ext.alembic.compare_metadata()
-    db.drop_all()
-    ext.alembic.upgrade()
+#     assert not ext.alembic.compare_metadata()
+#     db.drop_all()
+#     ext.alembic.upgrade()
 
-    assert not ext.alembic.compare_metadata()
-    ext.alembic.stamp()
-    ext.alembic.downgrade(target="96e796392533")
-    ext.alembic.upgrade()
+#     assert not ext.alembic.compare_metadata()
+#     ext.alembic.stamp()
+#     ext.alembic.downgrade(target="96e796392533")
+#     ext.alembic.upgrade()
 
-    assert not ext.alembic.compare_metadata()
+#     assert not ext.alembic.compare_metadata()

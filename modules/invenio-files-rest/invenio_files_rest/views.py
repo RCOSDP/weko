@@ -13,9 +13,10 @@ import uuid
 from functools import partial, wraps
 from urllib.parse import parse_qsl
 
-from flask import Blueprint, abort, current_app, request
+from flask import Blueprint, abort, current_app, jsonify, request, session
 from flask_login import current_user
 from invenio_db import db
+from invenio_records.models import RecordMetadata
 from invenio_rest import ContentNegotiatedMethodView
 from marshmallow import missing
 from webargs import fields
@@ -29,22 +30,41 @@ from .errors import (
     MissingQueryParameter,
     MultipartInvalidChunkSize,
 )
-from .models import Bucket, MultipartObject, ObjectVersion, ObjectVersionTag, Part
+from .models import Bucket, Location, MultipartObject, ObjectVersion, \
+    ObjectVersionTag, Part
 from .proxies import current_files_rest, current_permission_factory
 from .serializer import json_serializer
-from .signals import file_deleted, file_downloaded, file_uploaded
+from .signals import file_deleted, file_downloaded, file_uploaded, file_previewed
 from .tasks import merge_multipartobject, remove_file_data
+from .utils import _location_has_quota, delete_file_instance
 
 blueprint = Blueprint(
     "invenio_files_rest",
     __name__,
     url_prefix="/files",
+    template_folder="templates",
+    static_folder="static",
 )
 
+admin_blueprint = Blueprint(
+    "invenio_files_rest_admin",
+    __name__,
+    template_folder="templates",
+    static_folder="static",
+)
 
+api_blueprint = Blueprint(
+    "invenio_files_rest_api",
+    __name__,
+    url_prefix="/adm",
+    template_folder="templates",
+    static_folder="static",
+)
 #
 # Helpers
 #
+
+
 def as_uuid(value):
     """Convert value to UUID."""
     try:
@@ -354,6 +374,8 @@ def check_permission(permission, hidden=True):
         hide or reveal the existence of a particular object).
     """
     if permission is not None and not permission.can():
+        if is_guest_login_can_access_file(permission):
+            return
         if hidden:
             abort(404)
         else:
@@ -397,6 +419,27 @@ need_bucket_permission = partial(
     need_permissions, lambda *args, **kwargs: kwargs.get("bucket")
 )
 
+def is_guest_login_can_access_file(permission):
+    """Check guest login upload file.
+
+    Args:
+        permission: The permission to check.
+
+    Returns:
+        [boolean]: True if the guest user can upload file.
+
+    """
+    if session and session.get("guest_token") is not None:
+        guest_access_file_actions = [
+            "files-rest-object-read", "files-rest-bucket-update",
+            "files-rest-object-delete", "files-rest-object-delete-version",
+        ]
+        for need in permission.needs:
+            if need.method == "action" and \
+                    need.value in guest_access_file_actions:
+                return True
+    return False
+
 
 #
 # REST resources
@@ -411,9 +454,12 @@ class LocationResource(ContentNegotiatedMethodView):
     @need_location_permission("location-update", hidden=False)
     def post(self):
         """Create bucket."""
-        with db.session.begin_nested():
+        try:
             bucket = Bucket.create()
-        db.session.commit()
+            db.session.commit()
+        except Exception as e:
+            current_app.logger.error(e)
+            db.session.rollback()
         return self.make_response(
             data=bucket,
             context={
@@ -590,9 +636,15 @@ class ObjectResource(ContentNegotiatedMethodView):
     # ObjectVersion helpers
     #
     @staticmethod
-    def check_object_permission(obj):
+    def check_object_permission(obj, file_access_permission=False):
         """Retrieve object and abort if it doesn't exists."""
-        check_permission(current_permission_factory(obj, "object-read"))
+        # Check for guest user (not login)
+        # If not login => has permission
+        if not file_access_permission:
+            check_permission(current_permission_factory(
+                obj,
+                "object-read"
+            ))
         if not obj.is_head:
             check_permission(
                 current_permission_factory(obj, "object-read-version"), hidden=False
@@ -610,19 +662,47 @@ class ObjectResource(ContentNegotiatedMethodView):
         :param version_id: The version ID.
         :returns: A :class:`invenio_files_rest.models.ObjectVersion` instance.
         """
+        from invenio_records_files.models import RecordsBuckets
+        from weko_records_ui.permissions import check_file_download_permission
+
+        from invenio_files_rest.models import as_bucket_id
+
+        # Get record metadata (table records_metadata) from bucket_id.
+        bucket_id = as_bucket_id(bucket)
+        rb = RecordsBuckets.query.filter_by(bucket_id=bucket_id).first()
+        rm = RecordMetadata.query.filter_by(id=rb.record_id).first()
+        # Check and file_access_permission of file in this record metadata.
+        file_access_permission = False
+        flag = False
+        for k, v in rm.json.items():
+            if isinstance(v, dict) and v.get("attribute_type") == "file":
+                for item in v.get("attribute_value_mlt", []):
+                    is_this_version = item.get("version_id") == version_id
+                    is_preview = item.get("displaytype") == "preview"
+                    if is_this_version and is_preview:
+                        file_access_permission = \
+                            check_file_download_permission(rm.json, item)
+                        flag = True
+                        break
+            if flag:
+                break
+        # Get and check exists of current bucket info.
         obj = ObjectVersion.get(bucket, key, version_id=version_id)
         if not obj:
             abort(404, "Object does not exists.")
 
-        cls.check_object_permission(obj)
+        # Check permission. if it is not permission, return None.
+        cls.check_object_permission(obj, file_access_permission)
 
         return obj
 
-    def create_object(self, bucket, key):
+    def create_object(self, bucket, key,
+                      is_thumbnail=None, replace_version_id=None):
         """Create a new object.
 
         :param bucket: The bucket (instance or id) to get the object from.
         :param key: The file key.
+        :param is_thumbnail: for thumbnail.
         :returns: A Flask response.
         """
         # Initial validation of size based on Content-Length.
@@ -632,32 +712,53 @@ class ObjectResource(ContentNegotiatedMethodView):
         stream, content_length, content_md5, tags = current_files_rest.upload_factory()
 
         size_limit = bucket.size_limit
+        location_limit = bucket.location.max_file_size
+        if location_limit is not None:
+            size_limit = min(size_limit, location_limit)
         if content_length and size_limit and content_length > size_limit:
             desc = (
                 "File size limit exceeded."
                 if isinstance(size_limit, int)
                 else size_limit.reason
             )
+            current_app.logger.error(desc)
             raise FileSizeError(description=desc)
 
-        with db.session.begin_nested():
-            obj = ObjectVersion.create(bucket, key)
-            obj.set_contents(stream, size=content_length, size_limit=size_limit)
+        if not _location_has_quota(bucket, content_length):
+            desc = "Location has no quota"
+            current_app.logger.error(desc)
+            raise FileSizeError(description=desc)
+        try:
+            obj = ObjectVersion.create(bucket, key, is_thumbnail=is_thumbnail)
+            obj.set_contents(stream, size=content_length, size_limit=size_limit, replace_version_id=replace_version_id)
             # Check add tags
             if tags:
                 for key, value in tags.items():
                     ObjectVersionTag.create(obj, key, value)
 
-        db.session.commit()
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(e)
         file_uploaded.send(current_app._get_current_object(), obj=obj)
-        return self.make_response(
+        _response = self.make_response(
             data=obj,
             context={
                 "class": ObjectVersion,
                 "bucket": bucket,
             },
-            etag=obj.file.checksum,
+            etag=obj.file.checksum
         )
+        if replace_version_id:
+            _response.data = _response.data.replace(
+                bytes('"key":"{}"'.format(_response.json["key"]), "utf-8"),
+                bytes(
+                    '"key":"'
+                    + _response.json['key'] + '?replace_version_id='
+                    + replace_version_id + '"',
+                    'utf-8')
+            )
+        return _response
 
     @need_permissions(
         lambda self, bucket, obj, *args: obj,
@@ -673,28 +774,32 @@ class ObjectResource(ContentNegotiatedMethodView):
         :param version_id: The version ID.
         :returns: A Flask response.
         """
-        if version_id is None:
-            # Create a delete marker.
-            with db.session.begin_nested():
-                ObjectVersion.delete(bucket, obj.key)
-        else:
-            # Permanently delete specific object version.
-            check_permission(
-                current_permission_factory(bucket, "object-delete-version"),
-                hidden=False,
-            )
-            obj.remove()
-            # Set newest object as head
-            if obj.is_head:
-                latest = ObjectVersion.get_versions(
-                    obj.bucket, obj.key, desc=True
-                ).first()
-                if latest:
-                    latest.is_head = True
+        try:
+            if version_id is None:
+                # Create a delete marker.
+                with db.session.begin_nested():
+                    ObjectVersion.delete(bucket, obj.key)
+            else:
+                # Permanently delete specific object version.
+                check_permission(
+                    current_permission_factory(bucket, "object-delete-version"),
+                    hidden=False,
+                )
+                obj.remove()
+                # Set newest object as head
+                if obj.is_head:
+                    latest = ObjectVersion.get_versions(
+                        obj.bucket, obj.key, desc=True
+                    ).first()
+                    if latest:
+                        latest.is_head = True
 
-            if obj.file_id:
-                remove_file_data.delay(str(obj.file_id))
-        db.session.commit()
+                if obj.file_id and not delete_file_instance(obj.file_id):
+                    remove_file_data.delay(str(obj.file_id))
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(e)
         file_deleted.send(current_app._get_current_object(), obj=obj)
         return self.make_response("", 204)
 
@@ -706,14 +811,19 @@ class ObjectResource(ContentNegotiatedMethodView):
         logger_data=None,
         restricted=True,
         as_attachment=False,
+        is_preview=False,
+        convert_to_pdf=False
     ):
         """Send an object for a given bucket.
 
+        :param is_preview: Determine the type of event.
+            True: file-preview, False: file-download
         :param bucket: The bucket (instance or id) to get the object from.
         :param obj: A :class:`invenio_files_rest.models.ObjectVersion`
             instance.
         :params expected_chksum: Expected checksum.
         :param logger_data: The python logger.
+        :param convert_to_pdf: Preview file convert to PDF flag.
         :param kwargs: Keyword arguments passed to ``Object.send_file()``
         :returns: A Flask response.
         """
@@ -727,8 +837,14 @@ class ObjectResource(ContentNegotiatedMethodView):
                 "File checksum mismatch detected.", extra=logger_data
             )
 
-        file_downloaded.send(current_app._get_current_object(), obj=obj)
-        return obj.send_file(restricted=restricted, as_attachment=as_attachment)
+        if is_preview:
+            allow_aggs = bool(request.args
+                              and request.args.get("allow_aggs", "") == "True")
+            if allow_aggs:
+                file_previewed.send(current_app._get_current_object(), obj=obj)
+        else:
+            file_downloaded.send(current_app._get_current_object(), obj=obj)
+        return obj.send_file(restricted=restricted, as_attachment=as_attachment, convert_to_pdf=convert_to_pdf)
 
     #
     # MultipartObject helpers
@@ -770,8 +886,12 @@ class ObjectResource(ContentNegotiatedMethodView):
             raise MissingQueryParameter("size")
         if part_size is None:
             raise MissingQueryParameter("partSize")
-        multipart = MultipartObject.create(bucket, key, size, part_size)
-        db.session.commit()
+        try:
+            multipart = MultipartObject.create(bucket, key, size, part_size)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(e)
         return self.make_response(
             data=multipart,
             context={
@@ -835,8 +955,12 @@ class ObjectResource(ContentNegotiatedMethodView):
             instance.
         :returns: A Flask response.
         """
-        multipart.complete()
-        db.session.commit()
+        try:
+            multipart.complete()
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(e)
 
         version_id = str(uuid.uuid4())
 
@@ -867,10 +991,14 @@ class ObjectResource(ContentNegotiatedMethodView):
             instance.
         :returns: A Flask response.
         """
-        multipart.delete()
-        db.session.commit()
-        if multipart.file_id:
-            remove_file_data.delay(str(multipart.file_id))
+        try:
+            multipart.delete()
+            db.session.commit()
+            if multipart.file_id:
+                remove_file_data.delay(str(multipart.file_id))
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(e)
         return self.make_response("", 204)
 
     #
@@ -933,19 +1061,23 @@ class ObjectResource(ContentNegotiatedMethodView):
     @pass_bucket
     @need_bucket_permission("bucket-update")
     @ensure_input_stream_is_not_exhausted
-    def put(self, bucket=None, key=None, upload_id=None):
+    def put(self, bucket=None, is_thumbnail=None, key=None, upload_id=None):
         """Update a new object or upload a part of a multipart upload.
 
         :param bucket: The bucket (instance or id) to get the object from.
             (Default: ``None``)
         :param key: The file key. (Default: ``None``)
+        :param is_thumbnail: for thumbnail.
         :param upload_id: The upload ID. (Default: ``None``)
         :returns: A Flask response.
         """
         if upload_id is not None:
             return self.multipart_uploadpart(bucket, key, upload_id)
         else:
-            return self.create_object(bucket, key)
+            is_thumbnail = True if is_thumbnail is not None else False
+            replace_version_id = request.args.get("replace_version_id")
+            return self.create_object(bucket, key, is_thumbnail=is_thumbnail,
+                                      replace_version_id=replace_version_id)
 
     @use_kwargs(delete_args)
     @pass_bucket
@@ -968,6 +1100,34 @@ class ObjectResource(ContentNegotiatedMethodView):
             return self.delete_object(bucket, obj, version_id)
 
 
+class LocationUsageAmountInfo(ContentNegotiatedMethodView):
+    """REST API resource providing location usage amount."""
+
+    def __init__(self, *args, **kwargs):
+        """Instatiate content negotiated view."""
+        super(LocationUsageAmountInfo, self).__init__(*args, **kwargs)
+
+    def get(self, **kwargs):
+        """Get location usage amount."""
+        result = []
+
+        locations = Location.query.order_by(Location.name.asc()).all()
+        for location in locations:
+            data = {}
+            data["name"] = location.name
+            data["default"] = location.default
+            data["size"] = location.size
+            data["quota_size"] = location.quota_size
+            # number of registered files
+            buckets = Bucket.query.with_entities(
+                Bucket.id).filter_by(location=location)
+            data["files"] = ObjectVersion.query.filter(
+                ObjectVersion.bucket_id.in_(buckets.subquery())).count()
+
+            result.append(data)
+
+        return jsonify(result)
+
 #
 # Blueprint definition
 #
@@ -989,6 +1149,18 @@ object_view = ObjectResource.as_view(
         "application/json": json_serializer,
     },
 )
+object_thumbnail_view = ObjectResource.as_view(
+    "object_thumbnail_api",
+    serializers={
+        "application/json": json_serializer,
+    }
+)
+location_usage_amount = LocationUsageAmountInfo.as_view(
+    "location_usage_amount_info",
+    serializers={
+        "application/json": json_serializer,
+    }
+)
 
 blueprint.add_url_rule(
     "",
@@ -1002,3 +1174,24 @@ blueprint.add_url_rule(
     "/<string:bucket_id>/<path:key>",
     view_func=object_view,
 )
+blueprint.add_url_rule(
+    "/<string:is_thumbnail>/<string:bucket_id>/<path:key>",
+    view_func=object_thumbnail_view,
+)
+api_blueprint.add_url_rule(
+    "/locations",
+    view_func=location_usage_amount,
+)
+
+
+@blueprint.teardown_request
+@admin_blueprint.teardown_request
+@api_blueprint.teardown_request
+def dbsession_clean(exception):
+    current_app.logger.debug("invenio_files_rest dbsession_clean: {}".format(exception))
+    if exception is None:
+        try:
+            db.session.commit()
+        except:
+            db.session.rollback()
+    db.session.remove()
