@@ -143,7 +143,7 @@
           </td>
         </tr>
       {% endif %}
-      {% if m_record.pubdate and m_is_top_page and m_is_logged_in %}
+      {% if m_record.publish_status and m_is_top_page and m_is_logged_in %}
         <tr>
           <th scope="row" colspan="6">{{ _('Publish Status') }}</th>
             {%- set public_status = m_record.get('publish_status','1') -%}
