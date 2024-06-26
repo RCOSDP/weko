@@ -23,14 +23,14 @@ def reindex_and_add_items():
             'http://' + os.environ.get('INVENIO_ELASTICSEARCH_HOST', 'localhost') + ':9200')
         
         # インデックス一覧の取得
-        record_view_indices = es.cat.indices(index='*-record-view-*', h='index').splitlines()
+        record_view_indices = es.cat.indices(index='*-record-view-*', h='index',s='creation.date.string').splitlines()
         stats_record_view_indices = [index for index in record_view_indices if not 'events' in index]
 
-        file_download_indices = es.cat.indices(index='*-file-download-*', h='index').splitlines()
+        file_download_indices = es.cat.indices(index='*-file-download-*', h='index',s='creation.date.string').splitlines()
         stats_file_download_indices = [index for index in file_download_indices if not 'events' in index]
         events_stats_file_download_indices = [index for index in file_download_indices if 'events' in index]
 
-        file_preview_indices = es.cat.indices(index='*-file-preview-*', h='index').splitlines()
+        file_preview_indices = es.cat.indices(index='*-file-preview-*', h='index',s='creation.date.string').splitlines()
         stats_file_preview_indices = [index for index in file_preview_indices if not 'events' in index]
         events_stats_file_preview_indices = [index for index in file_preview_indices if 'events' in index]
 
@@ -50,26 +50,29 @@ def reindex_and_add_items():
         current_app.logger.info('stats_record_view_indices:', stats_record_view_indices)
 
         all_reindex_targets = {}
+        last_index = {}
 
         for key, reindex_target_list in reindex_target_dict.items():
             all_reindex_targets[key] = {}
             for index in reindex_target_list:
                 if key == 'stats-record-view':
-                    all_reindex_targets[key][index] = {'index':index,'alias_name':index + 'aliasname','file_path':'/aggregations/aggr_record_view/v6/aggr-record-view-v1.json','refresh_interval':'1m'}
+                    all_reindex_targets[key][index] = {'index':index,'file_path':'/aggregations/aggr_record_view/v6/aggr-record-view-v1.json','refresh_interval':'1m'}
                 if key == 'stats-file-download':
-                    all_reindex_targets[key][index] = {'index':index,'alias_name':index + 'aliasname','file_path':'/aggregations/aggr_file_download/v6/aggr-file-download-v1.json','refresh_interval':'1m'}
+                    all_reindex_targets[key][index] = {'index':index,'file_path':'/aggregations/aggr_file_download/v6/aggr-file-download-v1.json','refresh_interval':'1m'}
                 if key == 'events-stats-file-download':
-                    all_reindex_targets[key][index] = {'index':index,'alias_name':index + 'aliasname','file_path':'/file_download/v6/file-download-v1.json','refresh_interval':'5s'}
+                    all_reindex_targets[key][index] = {'index':index,'file_path':'/file_download/v6/file-download-v1.json','refresh_interval':'5s'}
                 if key == 'stats-file-preview':
-                    all_reindex_targets[key][index] = {'index':index,'alias_name':index + 'aliasname','file_path':'/aggregations/aggr_file_preview/v6/aggr-file-preview-v1.json','refresh_interval':'1m'}
+                    all_reindex_targets[key][index] = {'index':index,'file_path':'/aggregations/aggr_file_preview/v6/aggr-file-preview-v1.json','refresh_interval':'1m'}
                 if key == 'events-stats-file-preview':
-                    all_reindex_targets[key][index] = {'index':index,'alias_name':index + 'aliasname','file_path':'/file_preview/v6/file-preview-v1.json','refresh_interval':'5s'}
+                    all_reindex_targets[key][index] = {'index':index,'file_path':'/file_preview/v6/file-preview-v1.json','refresh_interval':'5s'}
+                last_index[key] = index
         current_app.logger.info('all_reindex_targets',all_reindex_targets)
+        current_app.logger.info("last_index",last_index)
 
         # reindex
         for key, reindex_target in all_reindex_targets.items():
             current_app.logger.info('reindex call key', key)
-            elasticsearch_reindex(reindex_target)
+            elasticsearch_reindex(key,reindex_target,last_index[key])
 
         current_app.logger.info("called reindex completed")
 
@@ -263,7 +266,7 @@ def reindex_and_add_items():
 
 
 
-def elasticsearch_reindex(reindex_target):
+def elasticsearch_reindex(key,reindex_target,last_index):
     """ 
     reindex *-record-view-*,*-file-download-*,*-file-preview-* of elasticsearch index
 
@@ -278,8 +281,8 @@ def elasticsearch_reindex(reindex_target):
         In case of the response code from ElasticSearch is not 200,
         Subsequent processing is interrupted.
     """
-    for key, value in reindex_target.items():
-        current_app.logger.info('reindex call', key)
+    for index_name, value in reindex_target.items():
+        current_app.logger.info('reindex call index', index_name)
         # consts
         elasticsearch_host = os.environ.get('INVENIO_ELASTICSEARCH_HOST') 
         base_url = 'http://' + elasticsearch_host + ':9200/'
@@ -290,7 +293,12 @@ def elasticsearch_reindex(reindex_target):
         tmpindex = "{}-tmp".format(index)
         
         # alias format(prefix)
-        alias_name = value['alias_name']
+        alias_name = os.environ.get('SEARCH_INDEX_PREFIX', 'tenant1') + '-' + key
+
+        # is_write_index
+        is_write_index = False
+        if last_index == index:
+            is_write_index = True
 
         file_path = './modules/invenio-stats/invenio_stats/contrib' + value['file_path']
         with open(file_path,mode='r') as json_file:
@@ -318,7 +326,7 @@ def elasticsearch_reindex(reindex_target):
         }
         json_data_set_alias = {
             "actions" : [
-                { "add" : { "index" : index, "alias" : alias_name } }
+                { "add" : { "index" : index, "alias" : alias_name, "is_write_index" : is_write_index } }
             ]
         }
 
