@@ -18,42 +18,40 @@ from .models import Bucket, MultipartObject, ObjectVersion
 # Action needs
 #
 
-LocationUpdate = action_factory('files-rest-location-update', parameter=True)
+LocationUpdate = action_factory("files-rest-location-update", parameter=True)
 """Action needed: location update."""
 
-BucketRead = action_factory('files-rest-bucket-read', parameter=True)
+BucketRead = action_factory("files-rest-bucket-read", parameter=True)
 """Action needed: list objects in bucket."""
 
-BucketReadVersions = action_factory(
-    'files-rest-bucket-read-versions', parameter=True)
+BucketReadVersions = action_factory("files-rest-bucket-read-versions", parameter=True)
 """Action needed: list object versions in bucket."""
 
-BucketUpdate = action_factory('files-rest-bucket-update', parameter=True)
+BucketUpdate = action_factory("files-rest-bucket-update", parameter=True)
 """Action needed: create objects and multipart uploads in bucket."""
 
 BucketListMultiparts = action_factory(
-    'files-rest-bucket-listmultiparts', parameter=True)
+    "files-rest-bucket-listmultiparts", parameter=True
+)
 """Action needed: list multipart uploads in bucket."""
 
-ObjectRead = action_factory('files-rest-object-read', parameter=True)
+ObjectRead = action_factory("files-rest-object-read", parameter=True)
 """Action needed: get object in bucket."""
 
-ObjectReadVersion = action_factory(
-    'files-rest-object-read-version', parameter=True)
+ObjectReadVersion = action_factory("files-rest-object-read-version", parameter=True)
 """Action needed: get object version in bucket."""
 
-ObjectDelete = action_factory('files-rest-object-delete', parameter=True)
+ObjectDelete = action_factory("files-rest-object-delete", parameter=True)
 """Action needed: delete object in bucket."""
 
-ObjectDeleteVersion = action_factory(
-    'files-rest-object-delete-version', parameter=True)
+ObjectDeleteVersion = action_factory("files-rest-object-delete-version", parameter=True)
 """Action needed: permanently delete specific object version in bucket."""
 
 
-MultipartRead = action_factory('files-rest-multipart-read', parameter=True)
+MultipartRead = action_factory("files-rest-multipart-read", parameter=True)
 """Action needed: list parts of a multipart upload in a bucket."""
 
-MultipartDelete = action_factory('files-rest-multipart-delete', parameter=True)
+MultipartDelete = action_factory("files-rest-multipart-delete", parameter=True)
 """Action needed: abort a multipart upload."""
 
 
@@ -96,17 +94,17 @@ multipart_delete_all = MultipartDelete(None)
 
 
 _action2need_map = {
-    'location-update': LocationUpdate,
-    'bucket-read': BucketRead,
-    'bucket-read-versions': BucketReadVersions,
-    'bucket-update': BucketUpdate,
-    'bucket-listmultiparts': BucketListMultiparts,
-    'object-read': ObjectRead,
-    'object-read-version': ObjectReadVersion,
-    'object-delete': ObjectDelete,
-    'object-delete-version': ObjectDeleteVersion,
-    'multipart-read': MultipartRead,
-    'multipart-delete': MultipartDelete,
+    "location-update": LocationUpdate,
+    "bucket-read": BucketRead,
+    "bucket-read-versions": BucketReadVersions,
+    "bucket-update": BucketUpdate,
+    "bucket-listmultiparts": BucketListMultiparts,
+    "object-read": ObjectRead,
+    "object-read-version": ObjectReadVersion,
+    "object-delete": ObjectDelete,
+    "object-delete-version": ObjectDeleteVersion,
+    "multipart-read": MultipartRead,
+    "multipart-delete": MultipartDelete,
 }
 """Mapping of action names to action needs."""
 
@@ -135,10 +133,9 @@ def permission_factory(obj, action):
     elif isinstance(obj, MultipartObject):
         arg = str(obj.bucket_id)
     else:
-        raise RuntimeError('Unknown object')
+        raise RuntimeError("Unknown object")
 
     return Permission(need_class(arg))
-
 
 def has_update_version_role(user):
     """Check if user has the version update role when working on object_version.
@@ -149,7 +146,7 @@ def has_update_version_role(user):
     if user is not None and user.is_authenticated:
         roles_user = []
         from flask import current_app
-        roles_env = current_app.config.get('FILES_REST_ROLES_ENV', [])
+        roles_env = current_app.config.get("FILES_REST_ROLES_ENV", [])
         for role_env in roles_env:
             if role_env in os.environ:
                 roles_user.append(os.environ.get(role_env))

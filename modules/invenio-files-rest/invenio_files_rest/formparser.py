@@ -8,8 +8,6 @@
 
 """Werkzeug form data parser customization."""
 
-from __future__ import absolute_import, print_function
-
 from werkzeug import exceptions
 from werkzeug.formparser import FormDataParser as WerkzeugFormDataParser
 
@@ -34,14 +32,15 @@ class FormDataParser(WerkzeugFormDataParser):
         if parse_func is not None:
             # Check content length only if we are actually going to parse
             # the data.
-            if self.max_content_length is not None and \
-                    content_length is not None and \
-                    content_length > self.max_content_length:
+            if (
+                self.max_content_length is not None
+                and content_length is not None
+                and content_length > self.max_content_length
+            ):
                 raise exceptions.RequestEntityTooLarge()
 
             try:
-                return parse_func(self, stream, mimetype,
-                                  content_length, options)
+                return parse_func(self, stream, mimetype, content_length, options)
             except ValueError:
                 if not self.silent:
                     raise

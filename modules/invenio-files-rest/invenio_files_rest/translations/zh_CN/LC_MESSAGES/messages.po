@@ -1,0 +1,120 @@
+# Translations template for invenio-files-rest.
+# Copyright (C) 2022 CERN
+# This file is distributed under the same license as the invenio-files-rest
+# project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2022.
+# 
+# Translators:
+# Kalven Richie, 2022
+# 
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: invenio-files-rest 1.3.3\n"
+"Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
+"POT-Creation-Date: 2022-05-27 10:09+0200\n"
+"PO-Revision-Date: 2016-08-25 08:03+0000\n"
+"Last-Translator: Kalven Richie, 2022\n"
+"Language-Team: Chinese (China) (https://app.transifex.com/inveniosoftware/teams/23537/zh_CN/)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.10.1\n"
+"Language: zh_CN\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: invenio_files_rest/admin.py:34
+msgid "Invalid location name."
+msgstr "位置名称无效。"
+
+#: invenio_files_rest/admin.py:62 invenio_files_rest/admin.py:184
+#: invenio_files_rest/admin.py:240
+msgid "ID"
+msgstr "身份证明"
+
+#: invenio_files_rest/admin.py:63 invenio_files_rest/admin.py:142
+#: invenio_files_rest/admin.py:185
+msgid "URI"
+msgstr "统一资源标识符"
+
+#: invenio_files_rest/admin.py:100
+msgid "UUID"
+msgstr "通用唯一识别码"
+
+#: invenio_files_rest/admin.py:101
+msgid "Location"
+msgstr "位置"
+
+#: invenio_files_rest/admin.py:102
+msgid "Storage Class"
+msgstr "储存类别"
+
+#: invenio_files_rest/admin.py:140
+msgid "Version"
+msgstr "版本"
+
+#: invenio_files_rest/admin.py:141
+msgid "File UUID"
+msgstr "通用唯一识别码文件"
+
+#: invenio_files_rest/admin.py:143
+msgid "Size"
+msgstr "规模"
+
+#: invenio_files_rest/admin.py:144
+msgid "Deleted"
+msgstr "已删除"
+
+#: invenio_files_rest/admin.py:145
+msgid "Checksum"
+msgstr "校验和"
+
+#: invenio_files_rest/admin.py:146
+msgid "Readable"
+msgstr "可读的"
+
+#: invenio_files_rest/admin.py:147
+msgid "Storage class"
+msgstr "储存类别"
+
+#: invenio_files_rest/admin.py:148
+msgid "Objects"
+msgstr "对象"
+
+#: invenio_files_rest/admin.py:149 invenio_files_rest/admin.py:242
+msgid "File"
+msgstr "文件"
+
+#: invenio_files_rest/admin.py:186
+msgid "Fixity"
+msgstr "固定性"
+
+#: invenio_files_rest/admin.py:187
+msgid "Checked"
+msgstr "选中的"
+
+#: invenio_files_rest/admin.py:205
+msgid "Run fixity check"
+msgstr "固定性运行检查"
+
+#: invenio_files_rest/admin.py:214
+msgid "Cannot find file instance."
+msgstr "找不到文件实例。"
+
+#: invenio_files_rest/admin.py:218
+msgid "Fixity check(s) sent to queue."
+msgstr "发送到队列的固定性检查。"
+
+#: invenio_files_rest/admin.py:223
+msgid "Failed to run fixity checks."
+msgstr "无法运行固定性检查。"
+
+#: invenio_files_rest/admin.py:241
+msgid "Complete"
+msgstr "完成"
+
+#: invenio_files_rest/admin.py:257 invenio_files_rest/admin.py:261
+#: invenio_files_rest/admin.py:265 invenio_files_rest/admin.py:269
+#: invenio_files_rest/admin.py:273
+msgid "Files"
+msgstr "文件"

@@ -7,10 +7,10 @@
 # under the terms of the MIT License; see LICENSE file for more details.
 
 """Implementation of various utility functions."""
+
 import mimetypes
 
 import base64
-import six
 import sqlalchemy as sa
 import tempfile
 from flask import current_app
@@ -22,10 +22,10 @@ from invenio_files_rest.models import Bucket, FileInstance, Location, \
     ObjectVersion
 
 ENCODING_MIMETYPES = {
-    'gzip': 'application/gzip',
-    'compress': 'application/gzip',
-    'bzip2': 'application/x-bzip2',
-    'xz': 'application/x-xz',
+    "gzip": "application/gzip",
+    "compress": "application/gzip",
+    "bzip2": "application/x-bzip2",
+    "xz": "application/x-xz",
 }
 """Mapping encoding to MIME types which are not in mimetypes.types_map."""
 
@@ -37,7 +37,7 @@ def obj_or_import_string(value, default=None):
     :params default: Default object to return if the import fails.
     :returns: The imported object.
     """
-    if isinstance(value, six.string_types):
+    if isinstance(value, str):
         return import_string(value)
     elif value:
         return value
@@ -62,8 +62,7 @@ def guess_mimetype(filename):
     m, encoding = mimetypes.guess_type(filename)
     if encoding:
         m = ENCODING_MIMETYPES.get(encoding, None)
-    return m or 'application/octet-stream'
-
+    return m or "application/octet-stream"
 
 def _location_has_quota(bucket, content_length):
     quota = bucket.location.quota_size
@@ -138,7 +137,7 @@ def find_and_update_location_size():
         sa.func.sum(FileInstance.size),
         Location.size
     ).filter(
-        FileInstance.uri.like(sa.func.concat(Location.uri, '%'))
+        FileInstance.uri.like(sa.func.concat(Location.uri, "%"))
     ).group_by(Location.id)
 
     for row in ret:
@@ -152,11 +151,11 @@ def find_and_update_location_size():
 def update_ogp_image(ogp_image, file_uri):
     """Update ogp image in FileInstances."""
     temp_file = tempfile.NamedTemporaryFile(delete=False)
-    base64_files = ogp_image.split(',')
-    file_content = base64_files[-1] if len(base64_files) >= 2 else ''
+    base64_files = ogp_image.split(",")
+    file_content = base64_files[-1] if len(base64_files) >= 2 else ""
     temp_file.write(base64.b64decode(file_content))
     temp_file.flush()
-    with open(temp_file.name, 'rb') as file:
+    with open(temp_file.name, "rb") as file:
         if not file_uri:
             src = FileInstance.create()
             src.set_contents(file, default_location=Location.get_default().uri)

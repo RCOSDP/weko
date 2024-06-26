@@ -8,8 +8,6 @@
 
 """File size limiting functionality for Invenio-Files-REST."""
 
-from __future__ import absolute_import, print_function
-
 
 def file_size_limiters(bucket):
     """Get default file size limiters.
@@ -23,11 +21,11 @@ def file_size_limiters(bucket):
     return [
         FileSizeLimit(
             bucket.quota_left,
-            'Bucket quota exceeded.',
+            "Bucket quota exceeded.",
         ),
         FileSizeLimit(
             bucket.max_file_size,
-            'Maximum file size exceeded.',
+            "Maximum file size exceeded.",
         ),
     ]
 
@@ -36,8 +34,9 @@ class FileSizeLimit(object):
     """File size limiter."""
 
     not_implemented_error = NotImplementedError(
-        'FileSizeLimit supports only comparisons with integers and other '
-        'FileSizeLimits.')
+        "FileSizeLimit supports only comparisons with integers and other "
+        "FileSizeLimits."
+    )
 
     def __init__(self, limit, reason):
         """Instantiate a new file size limit.

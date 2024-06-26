@@ -42,6 +42,8 @@ Tasks
 
 .. automodule:: invenio_files_rest.tasks
    :members:
+   :undoc-members:
+    .. for `undoc-members`, see https://github.com/celery/celery/pull/5135
 
 Exceptions
 ----------
@@ -59,12 +61,6 @@ Permissions
 -----------
 
 .. automodule:: invenio_files_rest.permissions
-   :members:
-
-Serializers
------------
-
-.. automodule:: invenio_files_rest.serializer
    :members:
 
 Views

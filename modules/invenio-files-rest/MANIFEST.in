@@ -17,17 +17,22 @@ include babel.ini
 include docs/requirements.txt
 include pytest.ini
 recursive-include docs *.bat
+recursive-include docs *.png
 recursive-include docs *.py
 recursive-include docs *.rst
+recursive-include docs *.source
 recursive-include docs Makefile
-recursive-include examples *.py *.sh *.txt
 recursive-include invenio_files_rest *.html
 recursive-include invenio_files_rest *.css
 recursive-include invenio_files_rest *.js
 recursive-include invenio_files_rest *.po *.pot *.mo
 recursive-include invenio_files_rest *.py
 recursive-include tests *.py
+recursive-include .github/workflows *.yml
+recursive-exclude docs/_build *
+include .git-blame-ignore-revs
 
 # added by check-manifest
 include *.properties
 include tox.ini
+

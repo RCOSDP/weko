@@ -8,8 +8,6 @@
 
 """File storage base module."""
 
-from __future__ import absolute_import, print_function
-
 import hashlib
 from calendar import timegm
 from functools import partial
@@ -30,14 +28,16 @@ def check_sizelimit(size_limit, bytes_written, total_size):
         written are major than the limit size.
     """
     if size_limit is not None and bytes_written > size_limit:
-        desc = 'File size limit exceeded.' \
-            if isinstance(size_limit, int) else size_limit.reason
+        desc = (
+            "File size limit exceeded."
+            if isinstance(size_limit, int)
+            else size_limit.reason
+        )
         raise FileSizeError(description=desc)
 
     # Never write more than advertised
     if total_size is not None and bytes_written > total_size:
-        raise UnexpectedFileSizeError(
-            description='File is bigger than expected.')
+        raise UnexpectedFileSizeError(description="File is bigger than expected.")
 
 
 def check_size(bytes_written, total_size):
@@ -49,8 +49,7 @@ def check_size(bytes_written, total_size):
         written exceed the total size.
     """
     if total_size and bytes_written < total_size:
-        raise UnexpectedFileSizeError(
-            description='File is smaller than expected.')
+        raise UnexpectedFileSizeError(description="File is smaller than expected.")
 
 
 class FileStorage(object):
@@ -76,33 +75,52 @@ class FileStorage(object):
         """Initialize the file on the storage + truncate to the given size."""
         raise NotImplementedError
 
-    def save(self, incoming_stream, size_limit=None, size=None,
-             chunk_size=None, progress_callback=None):
+    def save(
+        self,
+        incoming_stream,
+        size_limit=None,
+        size=None,
+        chunk_size=None,
+        progress_callback=None,
+    ):
         """Save incoming stream to file storage."""
         raise NotImplementedError
 
-    def update(self, incoming_stream, seek=0, size=None, chunk_size=None,
-               progress_callback=None):
+    def update(
+        self,
+        incoming_stream,
+        seek=0,
+        size=None,
+        chunk_size=None,
+        progress_callback=None,
+    ):
         """Update part of file with incoming stream."""
         raise NotImplementedError
 
     #
     # Default implementation
     #
-    def send_file(self, filename, mimetype=None, restricted=True,
-                  checksum=None, trusted=False, chunk_size=None,
-                  as_attachment=False):
+    def send_file(
+        self,
+        filename,
+        mimetype=None,
+        restricted=True,
+        checksum=None,
+        trusted=False,
+        chunk_size=None,
+        as_attachment=False,
+    ):
         """Send the file to the client."""
         try:
-            fp = self.open(mode='rb')
+            fp = self.open(mode="rb")
         except Exception as e:
-            raise StorageError('Could not send file: {}'.format(e))
+            raise StorageError("Could not send file: {}".format(e))
 
         try:
             md5_checksum = None
             if checksum:
-                algo, value = checksum.split(':')
-                if algo == 'md5':
+                algo, value = checksum.split(":")
+                if algo == "md5":
                     md5_checksum = value
 
             # Send stream is responsible for closing the file.
@@ -121,15 +139,18 @@ class FileStorage(object):
             )
         except Exception as e:
             fp.close()
-            raise StorageError('Could not send file: {}'.format(e))
+            raise StorageError("Could not send file: {}".format(e))
 
     def checksum(self, chunk_size=None, progress_callback=None, **kwargs):
         """Compute checksum of file."""
-        fp = self.open(mode='rb')
+        fp = self.open(mode="rb")
         try:
             value = self._compute_checksum(
-                fp, size=self._size, chunk_size=None,
-                progress_callback=progress_callback)
+                fp,
+                size=self._size,
+                chunk_size=None,
+                progress_callback=progress_callback,
+            )
         except StorageError:
             raise
         finally:
@@ -142,10 +163,11 @@ class FileStorage(object):
         :param src: Source stream.
         :param chunk_size: Chunk size to read from source stream.
         """
-        fp = src.open(mode='rb')
+        fp = src.open(mode="rb")
         try:
             return self.save(
-                fp, chunk_size=chunk_size, progress_callback=progress_callback)
+                fp, chunk_size=chunk_size, progress_callback=progress_callback
+            )
         finally:
             fp.close()
 
@@ -158,10 +180,11 @@ class FileStorage(object):
         Overwrite this method if you want to use different checksum
         algorithm for your storage backend.
         """
-        return 'md5', hashlib.md5()
+        return "md5", hashlib.md5()
 
-    def _compute_checksum(self, stream, size=None, chunk_size=None,
-                          progress_callback=None, **kwargs):
+    def _compute_checksum(
+        self, stream, size=None, chunk_size=None, progress_callback=None, **kwargs
+    ):
         """Get helper method to compute checksum from a stream.
 
         Naive implementation that can be overwritten by subclasses in order to
@@ -175,17 +198,25 @@ class FileStorage(object):
         try:
             algo, m = self._init_hash()
             return compute_checksum(
-                stream, algo, m,
+                stream,
+                algo,
+                m,
                 chunk_size=chunk_size,
                 progress_callback=progress_callback,
                 **kwargs
             )
         except Exception as e:
-            raise StorageError(
-                'Could not compute checksum of file: {0}'.format(e))
+            raise StorageError("Could not compute checksum of file: {0}".format(e))
 
-    def _write_stream(self, src, dst, size=None, size_limit=None,
-                      chunk_size=None, progress_callback=None):
+    def _write_stream(
+        self,
+        src,
+        dst,
+        size=None,
+        size_limit=None,
+        chunk_size=None,
+        progress_callback=None,
+    ):
         """Get helper to save stream from src to dest + compute checksum.
 
         :param src: Source stream.
@@ -223,5 +254,4 @@ class FileStorage(object):
 
         check_size(bytes_written, size)
 
-        return bytes_written, '{0}:{1}'.format(
-            algo, m.hexdigest()) if m else None
+        return bytes_written, "{0}:{1}".format(algo, m.hexdigest()) if m else None

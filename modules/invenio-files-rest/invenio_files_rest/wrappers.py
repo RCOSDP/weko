@@ -8,8 +8,6 @@
 
 """Request wrapper."""
 
-from __future__ import absolute_import, print_function
-
 from flask.wrappers import Request as RequestBase
 
 from .formparser import FormDataParser

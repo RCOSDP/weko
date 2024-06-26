@@ -1,4 +1,3 @@
-
 # -*- coding: utf-8 -*-
 #
 # This file is part of Invenio.
@@ -9,19 +8,20 @@
 
 """Storage module tests."""
 
-from __future__ import absolute_import, print_function
-
 import errno
 import os
+from io import BytesIO
 from os.path import dirname, exists, getsize, join
+from unittest.mock import patch
 
 import pytest
-from fs.errors import DirectoryNotEmptyError, ResourceNotFoundError
-from mock import patch
-from six import BytesIO
+from fs.errors import DirectoryNotEmpty, FSError
 
-from invenio_files_rest.errors import FileSizeError, StorageError, \
-    UnexpectedFileSizeError
+from invenio_files_rest.errors import (
+    FileSizeError,
+    StorageError,
+    UnexpectedFileSizeError,
+)
 from invenio_files_rest.limiters import FileSizeLimit
 from invenio_files_rest.storage import FileStorage, PyFSFileStorage
 
@@ -54,7 +54,7 @@ def test_pyfs_initialize(pyfs, pyfs_testpath):
 
 def test_pyfs_delete(app, db, dummy_location):
     """Test init of files."""
-    testurl = join(dummy_location.uri, 'subpath/data')
+    testurl = join(dummy_location.uri, "subpath/data")
     s = PyFSFileStorage(testurl)
     s.initialize(size=100)
     assert exists(testurl)
@@ -62,41 +62,46 @@ def test_pyfs_delete(app, db, dummy_location):
     s.delete()
     assert not exists(testurl)
 
-    s = PyFSFileStorage(join(dummy_location.uri, 'anotherpath/data'))
-    pytest.raises(ResourceNotFoundError, s.delete)
+    s = PyFSFileStorage(join(dummy_location.uri, "anotherpath/data"))
+
+    # this used to raise a ResourceNotFound, but fs>=2.0 raises CreateFailed
+    # FSError is their last common ancestor
+    pytest.raises(FSError, s.delete)
 
 
 def test_pyfs_delete_fail(pyfs, pyfs_testpath):
     """Test init of files."""
-    pyfs.save(BytesIO(b'somedata'))
-    os.rename(pyfs_testpath, join(dirname(pyfs_testpath), 'newname'))
-    pytest.raises(DirectoryNotEmptyError, pyfs.delete)
+    pyfs.save(BytesIO(b"somedata"))
+    os.rename(pyfs_testpath, join(dirname(pyfs_testpath), "newname"))
+    pytest.raises(DirectoryNotEmpty, pyfs.delete)
 
 
 def test_pyfs_save(pyfs, pyfs_testpath, get_sha256):
     """Test basic save operation."""
-    data = b'somedata'
+    data = b"somedata"
     uri, size, checksum = pyfs.save(BytesIO(data))
 
     assert uri == pyfs_testpath
     assert size == len(data)
     assert checksum == get_sha256(data)
     assert exists(pyfs_testpath)
-    assert open(pyfs_testpath, 'rb').read() == data
+    assert open(pyfs_testpath, "rb").read() == data
 
 
 def test_pyfs_save_failcleanup(pyfs, pyfs_testpath):
     """Test basic save operation."""
-    data = b'somedata'
+    data = b"somedata"
 
     def fail_callback(total, size):
         assert exists(pyfs_testpath)
-        raise Exception('Something bad happened')
+        raise Exception("Something bad happened")
 
     pytest.raises(
         Exception,
         pyfs.save,
-        BytesIO(data), chunk_size=4, progress_callback=fail_callback
+        BytesIO(data),
+        chunk_size=4,
+        progress_callback=fail_callback,
     )
     assert not exists(pyfs_testpath)
     assert not exists(dirname(pyfs_testpath))
@@ -104,22 +109,21 @@ def test_pyfs_save_failcleanup(pyfs, pyfs_testpath):
 
 def test_pyfs_save_callback(pyfs):
     """Test progress callback."""
-    data = b'somedata'
+    data = b"somedata"
 
     counter = dict(size=0)
 
     def callback(total, size):
-        counter['size'] = size
+        counter["size"] = size
 
-    uri, size, checksum = pyfs.save(
-        BytesIO(data), progress_callback=callback)
+    uri, size, checksum = pyfs.save(BytesIO(data), progress_callback=callback)
 
-    assert counter['size'] == len(data)
+    assert counter["size"] == len(data)
 
 
 def test_pyfs_save_limits(pyfs):
     """Test progress callback."""
-    data = b'somedata'
+    data = b"somedata"
     uri, size, checksum = pyfs.save(BytesIO(data), size=len(data))
     assert size == len(data)
 
@@ -127,46 +131,48 @@ def test_pyfs_save_limits(pyfs):
     assert size == len(data)
 
     # Size doesn't match
-    pytest.raises(
-        UnexpectedFileSizeError, pyfs.save, BytesIO(data), size=len(data) - 1)
-    pytest.raises(
-        UnexpectedFileSizeError, pyfs.save, BytesIO(data), size=len(data) + 1)
+    pytest.raises(UnexpectedFileSizeError, pyfs.save, BytesIO(data), size=len(data) - 1)
+    pytest.raises(UnexpectedFileSizeError, pyfs.save, BytesIO(data), size=len(data) + 1)
 
     # Exceeds size limits
     pytest.raises(
-        FileSizeError, pyfs.save, BytesIO(data),
-        size_limit=FileSizeLimit(len(data) - 1, 'bla'))
+        FileSizeError,
+        pyfs.save,
+        BytesIO(data),
+        size_limit=FileSizeLimit(len(data) - 1, "bla"),
+    )
 
 
 def test_pyfs_update(pyfs, pyfs_testpath, get_sha256):
     """Test update of file."""
     pyfs.initialize(size=100)
-    pyfs.update(BytesIO(b'cd'), seek=2, size=2)
-    pyfs.update(BytesIO(b'ab'), seek=0, size=2)
+    pyfs.update(BytesIO(b"cd"), seek=2, size=2)
+    pyfs.update(BytesIO(b"ab"), seek=0, size=2)
 
     with open(pyfs_testpath) as fp:
         content = fp.read()
-    assert content[0:4] == 'abcd'
+    assert content[0:4] == "abcd"
     assert len(content) == 100
 
     # Assert return parameters from update.
-    size, checksum = pyfs.update(BytesIO(b'ef'), seek=4, size=2)
+    size, checksum = pyfs.update(BytesIO(b"ef"), seek=4, size=2)
     assert size == 2
-    assert get_sha256(b'ef') == checksum
+    assert get_sha256(b"ef") == checksum
 
 
 def test_pyfs_update_fail(pyfs, pyfs_testpath):
     """Test update of file."""
+
     def fail_callback(total, size):
         assert exists(pyfs_testpath)
-        raise Exception('Something bad happened')
+        raise Exception("Something bad happened")
 
     pyfs.initialize(size=100)
-    pyfs.update(BytesIO(b'ab'), seek=0, size=2)
+    pyfs.update(BytesIO(b"ab"), seek=0, size=2)
     pytest.raises(
         Exception,
         pyfs.update,
-        BytesIO(b'cdef'),
+        BytesIO(b"cdef"),
         seek=2,
         size=4,
         chunk_size=2,
@@ -176,59 +182,59 @@ def test_pyfs_update_fail(pyfs, pyfs_testpath):
     # Partial file can be written to disk!
     with open(pyfs_testpath) as fp:
         content = fp.read()
-    assert content[0:4] == 'abcd'
-    assert content[4:6] != 'ef'
+    assert content[0:4] == "abcd"
+    assert content[4:6] != "ef"
 
 
 def test_pyfs_checksum(get_sha256):
     """Test fixity."""
     # Compute checksum of license file
-    with open('LICENSE', 'rb') as fp:
+    with open("LICENSE", "rb") as fp:
         data = fp.read()
         checksum = get_sha256(data)
 
     counter = dict(size=0)
 
     def callback(total, size):
-        counter['size'] = size
+        counter["size"] = size
 
     # Now do it with storage interface
-    s = PyFSFileStorage('LICENSE', size=getsize('LICENSE'))
+    s = PyFSFileStorage("LICENSE", size=getsize("LICENSE"))
     assert checksum == s.checksum(chunk_size=2, progress_callback=callback)
-    assert counter['size'] == getsize('LICENSE')
+    assert counter["size"] == getsize("LICENSE")
 
     # No size provided, means progress callback isn't called
-    counter['size'] = 0
-    s = PyFSFileStorage('LICENSE')
+    counter["size"] = 0
+    s = PyFSFileStorage("LICENSE")
     assert checksum == s.checksum(chunk_size=2, progress_callback=callback)
-    assert counter['size'] == 0
+    assert counter["size"] == 0
 
 
 def test_pyfs_checksum_fail():
     """Test fixity problems."""
+
     # Raise an error during checksum calculation
     def callback(total, size):
         raise OSError(errno.EPERM, "Permission")
 
-    s = PyFSFileStorage('LICENSE', size=getsize('LICENSE'))
+    s = PyFSFileStorage("LICENSE", size=getsize("LICENSE"))
 
     pytest.raises(StorageError, s.checksum, progress_callback=callback)
 
 
 def test_pyfs_send_file(app, pyfs):
     """Test send file."""
-    data = b'sendthis'
+    data = b"sendthis"
     uri, size, checksum = pyfs.save(BytesIO(data))
 
     with app.test_request_context():
-        res = pyfs.send_file(
-            'myfilename.txt', mimetype='text/plain', checksum=checksum)
+        res = pyfs.send_file("myfilename.txt", mimetype="text/plain", checksum=checksum)
         assert res.status_code == 200
         h = res.headers
-        assert h['Content-Type'] == 'text/plain; charset=utf-8'
-        assert h['Content-Length'] == str(size)
-#        assert h['Content-MD5'] == checksum[4:]
-        assert h['ETag'] == '"{0}"'.format(checksum)
+        assert h["Content-Type"] == "text/plain; charset=utf-8"
+        assert h["Content-Length"] == str(size)
+        # assert h["Content-MD5"] == checksum[4:]
+        assert h["ETag"] == '"{0}"'.format(checksum)
 
         # Content-Type: application/octet-stream
         # ETag: "b234ee4d69f5fce4486a80fdaf4a4263"
@@ -238,31 +244,41 @@ def test_pyfs_send_file(app, pyfs):
         # Date: Sat, 23 Jan 2016 07:21:04 GMT
 
         res = pyfs.send_file(
-            'myfilename.txt', mimetype='text/plain', checksum='md5:test')
+            "myfilename.txt", mimetype="text/plain", checksum="md5:test"
+        )
         assert res.status_code == 200
-        assert 'Content-MD5' in dict(res.headers)
+        assert "Content-MD5" in dict(res.headers)
 
         # Test for absence of Content-Disposition header to make sure that
         # it's not present when as_attachment=False
-        res = pyfs.send_file('myfilename.txt', mimetype='text/plain',
-                             checksum=checksum, as_attachment=False)
+        res = pyfs.send_file(
+            "myfilename.txt",
+            mimetype="text/plain",
+            checksum=checksum,
+            as_attachment=False,
+        )
         assert res.status_code == 200
-        assert 'attachment' not in res.headers['Content-Disposition']
+        assert "attachment" not in res.headers["Content-Disposition"]
 
 
 def test_pyfs_send_file_for_download(app, pyfs):
     """Test send file."""
-    data = b'sendthis'
+    data = b"sendthis"
     uri, size, checksum = pyfs.save(BytesIO(data))
 
     with app.test_request_context():
         # Test for presence of Content-Disposition header to make sure that
         # it's present when as_attachment=True
-        res = pyfs.send_file('myfilename.txt', mimetype='text/plain',
-                             checksum=checksum, as_attachment=True)
+        res = pyfs.send_file(
+            "myfilename.txt",
+            mimetype="text/plain",
+            checksum=checksum,
+            as_attachment=True,
+        )
         assert res.status_code == 200
-        assert (res.headers['Content-Disposition'] ==
-                'attachment; filename=myfilename.txt')
+        assert (
+            res.headers["Content-Disposition"] == "attachment; filename=myfilename.txt"
+        )
 
 
 def test_pyfs_send_file_xss_prevention(app, pyfs):
@@ -271,80 +287,82 @@ def test_pyfs_send_file_xss_prevention(app, pyfs):
     uri, size, checksum = pyfs.save(BytesIO(data))
 
     with app.test_request_context():
-        res = pyfs.send_file(
-            'myfilename.html', mimetype='text/html', checksum=checksum)
+        res = pyfs.send_file("myfilename.html", mimetype="text/html", checksum=checksum)
         assert res.status_code == 200
         h = res.headers
-        assert h['Content-Type'] == 'text/plain; charset=utf-8'
-        assert h['Content-Length'] == str(size)
-#        assert h['Content-MD5'] == checksum[4:]
-        assert h['ETag'] == '"{0}"'.format(checksum)
+        assert h["Content-Type"] == "text/plain; charset=utf-8"
+        assert h["Content-Length"] == str(size)
+        # assert h["Content-MD5"] == checksum[4:]
+        assert h["ETag"] == '"{0}"'.format(checksum)
         # XSS prevention
-        assert h['Content-Security-Policy'] == 'default-src \'none\';'
-        assert h['X-Content-Type-Options'] == 'nosniff'
-        assert h['X-Download-Options'] == 'noopen'
-        assert h['X-Permitted-Cross-Domain-Policies'] == 'none'
-        assert h['X-Frame-Options'] == 'deny'
-        assert h['X-XSS-Protection'] == '1; mode=block'
-        assert h['Content-Disposition'] == 'inline'
+        assert h["Content-Security-Policy"] == "default-src 'none';"
+        assert h["X-Content-Type-Options"] == "nosniff"
+        assert h["X-Download-Options"] == "noopen"
+        assert h["X-Permitted-Cross-Domain-Policies"] == "none"
+        assert h["X-Frame-Options"] == "deny"
+        assert h["X-XSS-Protection"] == "1; mode=block"
+        assert h["Content-Disposition"] == "inline"
 
         # Image
-        h = pyfs.send_file('image.png', mimetype='image/png').headers
-        assert h['Content-Type'] == 'image/png'
-        assert h['Content-Disposition'] == 'inline'
+        h = pyfs.send_file("image.png", mimetype="image/png").headers
+        assert h["Content-Type"] == "image/png"
+        assert h["Content-Disposition"] == "inline"
 
         # README text file
-        h = pyfs.send_file('README').headers
-        assert h['Content-Type'] == 'text/plain; charset=utf-8'
-        assert h['Content-Disposition'] == 'inline'
+        h = pyfs.send_file("README").headers
+        assert h["Content-Type"] == "text/plain; charset=utf-8"
+        assert h["Content-Disposition"] == "inline"
 
         # Zip
-        h = pyfs.send_file('archive.zip').headers
-        assert h['Content-Type'] == 'application/octet-stream'
-        assert h['Content-Disposition'] == 'attachment; filename=archive.zip'
+        h = pyfs.send_file("archive.zip").headers
+        assert h["Content-Type"] == "application/octet-stream"
+        assert h["Content-Disposition"] == "attachment; filename=archive.zip"
 
         # PDF
-        h = pyfs.send_file('doc.pdf').headers
-        assert h['Content-Type'] == 'application/octet-stream'
-        assert h['Content-Disposition'] == 'attachment; filename=doc.pdf'
+        h = pyfs.send_file("doc.pdf").headers
+        assert h["Content-Type"] == "application/octet-stream"
+        assert h["Content-Disposition"] == "attachment; filename=doc.pdf"
 
 
 def test_pyfs_send_file_fail(app, pyfs):
     """Test send file."""
-    pyfs.save(BytesIO(b'content'))
+    pyfs.save(BytesIO(b"content"))
 
-    with patch('invenio_files_rest.storage.base.send_stream') as send_stream:
+    with patch("invenio_files_rest.storage.base.send_stream") as send_stream:
         send_stream.side_effect = OSError(errno.EPERM, "Permission problem")
         with app.test_request_context():
-            pytest.raises(StorageError, pyfs.send_file, 'test.txt')
+            pytest.raises(StorageError, pyfs.send_file, "test.txt")
 
 
 def test_pyfs_copy(pyfs, dummy_location):
     """Test send file."""
-    s = PyFSFileStorage(join(dummy_location.uri, 'anotherpath/data'))
-    s.save(BytesIO(b'otherdata'))
+    s = PyFSFileStorage(join(dummy_location.uri, "anotherpath/data"))
+    s.save(BytesIO(b"otherdata"))
 
     pyfs.copy(s)
     fp = pyfs.open()
-    assert fp.read() == b'otherdata'
+    assert fp.read() == b"otherdata"
 
 
 def test_non_unicode_filename(app, pyfs):
     """Test sending the non-unicode filename in the header."""
-    data = b'HelloWorld'
+    data = b"HelloWorld"
     uri, size, checksum = pyfs.save(BytesIO(data))
 
     with app.test_request_context():
         res = pyfs.send_file(
-            u'żółć.dat', mimetype='application/octet-stream',
-            checksum=checksum)
+            "żółć.dat", mimetype="application/octet-stream", checksum=checksum
+        )
         assert res.status_code == 200
-        assert set(res.headers['Content-Disposition'].split('; ')) == \
-            set(["attachment", "filename=zoc.dat",
-                 "filename*=UTF-8''%C5%BC%C3%B3%C5%82%C4%87.dat"])
+        assert set(res.headers["Content-Disposition"].split("; ")) == set(
+            [
+                "attachment",
+                "filename=zoc.dat",
+                "filename*=UTF-8''%C5%BC%C3%B3%C5%82%C4%87.dat",
+            ]
+        )
 
     with app.test_request_context():
-        res = pyfs.send_file(
-            'żółć.txt', mimetype='text/plain', checksum=checksum)
+        res = pyfs.send_file("żółć.txt", mimetype="text/plain", checksum=checksum)
         assert res.status_code == 200
-        assert res.headers['Content-Disposition'] == 'inline'
+        assert res.headers["Content-Disposition"] == "inline"

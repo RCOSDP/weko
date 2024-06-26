@@ -7,3 +7,4 @@
 # under the terms of the MIT License; see LICENSE file for more details.
 
 -e git+https://github.com/marshmallow-code/marshmallow#egg=marshmallow
+-e git+https://github.com/inveniosoftware/invenio-base#egg=invenio-base

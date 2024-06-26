@@ -8,15 +8,25 @@
 
 """Models for Invenio-Files-REST."""
 
-from __future__ import absolute_import, print_function
-
 from blinker import Namespace
 
 _signals = Namespace()
 
-file_downloaded = _signals.signal('file-downloaded')
-file_previewed = _signals.signal('file-previewed')
+file_downloaded = _signals.signal("file-downloaded")
+file_previewed = _signals.signal("file-previewed")
 """File downloaded signal.
 
 Sent when a file is downloaded.
+"""
+
+file_uploaded = _signals.signal("file-uploaded")
+"""File uploaded signal.
+
+Sent when a file is uploaded.
+"""
+
+file_deleted = _signals.signal("file-deleted")
+"""File deleted signal.
+
+Sent when a file is deleted.
 """
