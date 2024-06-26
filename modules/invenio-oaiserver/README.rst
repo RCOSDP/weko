@@ -12,8 +12,8 @@
 .. image:: https://img.shields.io/github/license/inveniosoftware/invenio-oaiserver.svg
         :target: https://github.com/inveniosoftware/invenio-oaiserver/blob/master/LICENSE
 
-.. image:: https://img.shields.io/travis/inveniosoftware/invenio-oaiserver.svg
-        :target: https://travis-ci.org/inveniosoftware/invenio-oaiserver
+.. image:: https://github.com/inveniosoftware/invenio-oaiserver/workflows/CI/badge.svg
+        :target: https://github.com/inveniosoftware/invenio-oaiserver/actions?query=workflow%3ACI
 
 .. image:: https://img.shields.io/coveralls/inveniosoftware/invenio-oaiserver.svg
         :target: https://coveralls.io/r/inveniosoftware/invenio-oaiserver

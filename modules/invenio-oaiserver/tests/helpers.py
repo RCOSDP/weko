@@ -9,13 +9,10 @@
 
 """Utilities for loading test records."""
 
-from __future__ import absolute_import, print_function
-
 import uuid
 import copy
 import mock
 import pkg_resources
-
 from dojson.contrib.marc21 import marc21
 from dojson.contrib.marc21.utils import load
 from invenio_db import db
@@ -28,11 +25,12 @@ from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_records import Record
 from invenio_records.models import RecordMetadata
 from invenio_search import current_search, current_search_client
+
 from weko_records.api import ItemsMetadata
 from weko_deposit.api import WekoDeposit, WekoIndexer,WekoRecord
 
-
 from invenio_oaiserver.provider import OAIIDProvider
+from invenio_oaiserver import current_oaiserver
 from invenio_oaiserver.minters import oaiid_minter
 from invenio_oaiserver.models import OAISet
 from invenio_oaiserver.receivers import after_insert_oai_set
@@ -43,19 +41,19 @@ def load_records(app, filename, schema, tries=5):
     indexer = RecordIndexer()
     records = []
     with app.app_context():
-        with mock.patch('invenio_records.api.Record.validate',
-                        return_value=None):
-            data_filename = pkg_resources.resource_filename(
-                'invenio_records', filename)
+        with mock.patch("invenio_records.api.Record.validate", return_value=None):
+            data_filename = pkg_resources.resource_filename("invenio_records", filename)
             records_data = load(data_filename)
             with db.session.begin_nested():
                 for item in records_data:
                     record_id = uuid.uuid4()
                     item_dict = dict(marc21.do(item))
-                    item_dict['$schema'] = schema
+                    item_dict["$schema"] = schema
                     recid = recid_minter(record_id, item_dict)
                     oaiid_minter(record_id, item_dict)
-                    record = Record.create(item_dict, id_=record_id)
+                    record = current_oaiserver.record_cls.create(
+                        item_dict, id_=record_id
+                    )
                     indexer.index(record)
                     records.append(record.id)
             db.session.commit()
@@ -63,9 +61,9 @@ def load_records(app, filename, schema, tries=5):
         # Wait for indexer to finish
         for i in range(tries):
             response = current_search_client.search()
-            if response['hits']['total'] >= len(records):
+            if response["hits"]["total"] >= len(records):
                 break
-            current_search.flush_and_refresh('_all')
+            current_search.flush_and_refresh("_all")
 
     return records
 
@@ -77,8 +75,7 @@ def remove_records(app, record_ids):
         for r_id in record_ids:
             record = RecordMetadata.query.get(r_id)
             indexer.delete_by_id(r_id)
-            pids = PersistentIdentifier.query.filter_by(
-                object_uuid=r_id).all()
+            pids = PersistentIdentifier.query.filter_by(object_uuid=r_id).all()
             for pid in pids:
                 db.session.delete(pid)
             db.session.delete(record)
@@ -100,11 +97,10 @@ def create_record(app, item_dict, mint_oaiid=True):
         recid = recid_minter(record_id, item_dict)
         if mint_oaiid:
             oaiid_minter(record_id, item_dict)
-        record = Record.create(item_dict, id_=record_id)
+        record = current_oaiserver.record_cls.create(item_dict, id_=record_id)
         with patch("invenio_indexer.api.RecordIndexer.record_to_index",return_value=("test-weko-item-v1.0.0","item-v1.0.0")):
             indexer.index(record)
         return record
-
 
 def create_record_oai(record_data, item_data):
     """Create a test record."""

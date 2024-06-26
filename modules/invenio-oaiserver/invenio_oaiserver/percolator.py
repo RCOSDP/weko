@@ -1,29 +1,34 @@
 # -*- coding: utf-8 -*-
 #
 # This file is part of Invenio.
-# Copyright (C) 2017-2018 CERN.
+# Copyright (C) 2017-2022 CERN.
+# Copyright (C) 2022 Graz University of Technology.
 #
 # Invenio is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
 
 """Percolator."""
 
-from __future__ import absolute_import, print_function
+import json
 
-from elasticsearch import VERSION as ES_VERSION
+from flask import current_app
 from invenio_indexer.api import RecordIndexer
 from invenio_search import current_search, current_search_client
-from invenio_search.utils import schema_to_index
-from weko_search_ui.config import INDEXER_DEFAULT_INDEX
+from invenio_search.engine import search
+from invenio_search.utils import build_index_name
 
 from flask import current_app
 
-from .models import OAISet
-from .proxies import current_oaiserver
-from .query import query_string_parser
+from invenio_oaiserver.query import query_string_parser
 
 
-def _create_percolator_mapping(index, doc_type):
+def _build_percolator_index_name(index):
+    """Build percolator index name."""
+    suffix = "-percolators"
+    return build_index_name(index, suffix=suffix, app=current_app)
+
+
+def _create_percolator_mapping(index, mapping_path=None):
     """Update mappings with the percolator field.
 
     .. note::
@@ -31,117 +36,155 @@ def _create_percolator_mapping(index, doc_type):
         This is only needed from ElasticSearch v5 onwards, because percolators
         are now just a special type of field inside mappings.
     """
-    if ES_VERSION[0] >= 5:
-        current_search_client.indices.put_mapping(
-            index=index, doc_type=doc_type,
-            body=PERCOLATOR_MAPPING, ignore=[400, 404])
-
-
-def _percolate_query(index, doc_type, percolator_doc_type, document):
-    """Get results for a percolate query."""
-    if ES_VERSION[0] in (2, 5):
-        results = current_search_client.percolate(
-            index=index, doc_type=doc_type, allow_no_indices=True,
-            ignore_unavailable=True, body={'doc': document}
-        )
-        return results['matches']
-    elif ES_VERSION[0] == 6:
-        results = current_search_client.search(
-            index=index, doc_type=percolator_doc_type, allow_no_indices=True,
-            ignore_unavailable=True, body={
-                'query': {
-                    'percolate': {
-                        'field': 'query',
-                        'document_type': percolator_doc_type,
-                        'document': document,
-                    }
-                }
-            }
-        )
-        return results['hits']['hits']
-
-
-def _get_percolator_doc_type(index):
-    es_ver = ES_VERSION[0]
-    if es_ver == 2:
-        return '.percolator'
-    elif es_ver == 5:
-        return 'percolators'
-    elif es_ver == 6:
+    percolator_index = _build_percolator_index_name(index)
+    if not mapping_path:
         mapping_path = current_search.mappings[index]
-        _, doc_type = schema_to_index(mapping_path)
-        return doc_type
+    if not current_search_client.indices.exists(percolator_index):
+        with open(mapping_path, "r") as body:
+            mapping = json.load(body)
+            mapping["mappings"]["properties"].update(PERCOLATOR_MAPPING["properties"])
+            current_search_client.indices.create(index=percolator_index, body=mapping)
 
 
-PERCOLATOR_MAPPING = {
-    'properties': {'query': {'type': 'percolator'}}
-}
+PERCOLATOR_MAPPING = {"properties": {"query": {"type": "percolator"}}}
 
 
 def _new_percolator(spec, search_pattern):
     """Create new percolator associated with the new set."""
     if spec and search_pattern:
         query = query_string_parser(search_pattern=search_pattern).to_dict()
-        for index in current_search.mappings.keys():
+        oai_records_index = current_app.config["OAISERVER_RECORD_INDEX"]
+        for index, mapping_path in current_search.mappings.items():
+            # Skip indices/mappings not used by OAI-PMH
             # Create the percolator doc_type in the existing index for >= ES5
             # TODO: Consider doing this only once in app initialization
-            if index == INDEXER_DEFAULT_INDEX:
-                percolator_doc_type = _get_percolator_doc_type(index)
-                _create_percolator_mapping(index, percolator_doc_type)
+            try:
+                _create_percolator_mapping(index, mapping_path)
                 current_search_client.index(
-                    index=index, doc_type=percolator_doc_type,
-                    id='oaiset-{}'.format(spec),
-                    body={'query': query}
+                    index=_build_percolator_index_name(index),
+                    # index=index, doc_type=percolator_doc_type,
+                    id="oaiset-{}".format(spec),
+                    body={"query": query},
                 )
+            except Exception as e:
+                current_app.logger.warning(e)
 
 
 def _delete_percolator(spec, search_pattern):
-    """Delete percolator associated with the new oaiset."""
-    if spec:
-        for index in current_search.mappings.keys():
-            # Create the percolator doc_type in the existing index for >= ES5
-            if index == INDEXER_DEFAULT_INDEX:
-                percolator_doc_type = _get_percolator_doc_type(index)
-                _create_percolator_mapping(index, percolator_doc_type)
-                current_search_client.delete(
-                    index=index, doc_type=percolator_doc_type,
-                    id='oaiset-{}'.format(spec), ignore=[404]
+    """Delete percolator associated with the removed/updated oaiset."""
+    oai_records_index = current_app.config["OAISERVER_RECORD_INDEX"]
+    # Create the percolator doc_type in the existing index for >= ES5
+    for index, mapping_path in current_search.mappings.items():
+        # Skip indices/mappings not used by OAI-PMH
+        current_search_client.delete(
+            index=_build_percolator_index_name(index),
+            # index=index, doc_type=percolator_doc_type,
+            id="oaiset-{}".format(spec),
+            ignore=[404],
+        )
+
+
+def create_percolate_query(
+    percolator_ids=None,
+    documents=None,
+    document_search_ids=None,
+    document_search_indices=None,
+):
+    """Create percolate query for provided arguments."""
+    queries = []
+    # documents or (document_search_ids and document_search_indices) has to be set
+    # TODO: discuss if this is needed or documents alone is enough.
+    if documents is not None:
+        queries.append(
+            {
+                "percolate": {
+                    "field": "query",
+                    "documents": documents,
+                }
+            }
+        )
+    elif (
+        document_search_ids is not None
+        and document_search_indices is not None
+        and len(document_search_ids) == len(document_search_indices)
+    ):
+        queries.extend(
+            [
+                {
+                    "percolate": {
+                        "field": "query",
+                        "index": search_index,
+                        "id": search_id,
+                        "name": f"{search_index}:{search_id}",
+                    }
+                }
+                for (search_id, search_index) in zip(
+                    document_search_ids, document_search_indices
                 )
+            ]
+        )
+    else:
+        raise Exception(
+            "Either documents or (document_search_ids and document_search_indices) must be specified."
+        )
+
+    if percolator_ids:
+        queries.append({"ids": {"values": percolator_ids}})
+
+    query = {"query": {"bool": {"must": queries}}}
+    return query
 
 
-def _build_cache():
-    """Build sets cache."""
-    sets = current_oaiserver.sets
-    if sets is None:
-        # build sets cache
-        sets = current_oaiserver.sets = [
-            oaiset.spec for oaiset in OAISet.query.filter(
-                OAISet.search_pattern.is_(None)).all()]
-    return sets
+def percolate_query(
+    percolator_index,
+    percolator_ids=None,
+    documents=None,
+    document_search_ids=None,
+    document_search_indices=None,
+):
+    """Get results for a percolate query."""
+    query = create_percolate_query(
+        percolator_ids=percolator_ids,
+        documents=documents,
+        document_search_ids=document_search_ids,
+        document_search_indices=document_search_indices,
+    )
+    result = search.helpers.scan(
+        current_search_client,
+        index=percolator_index,
+        query=query,
+        scroll="1m",
+    )
+    return result
 
 
-def get_record_sets(record):
-    """Find matching sets."""
-    # get lists of sets with search_pattern equals to None but already in the
-    # set list inside the record
-    record_sets = set(record.get('_oai', {}).get('sets', []))
-    for spec in _build_cache():
-        if spec in record_sets:
-            yield spec
+def sets_search_all(records):
+    """Retrieve sets for provided records."""
+    if not records:
+        return []
 
-    # get list of sets that match using percolator
-    index, doc_type = RecordIndexer().record_to_index(record)
-    document = record.dumps()
+    # TODO: records should all have the same index. maybe add index as parameter?
+    record_index = RecordIndexer()._record_to_index(records[0])
+    _create_percolator_mapping(record_index)
+    percolator_index = _build_percolator_index_name(record_index)
+    record_sets = [[] for _ in range(len(records))]
 
-    percolator_doc_type = _get_percolator_doc_type(index)
-    _create_percolator_mapping(index, percolator_doc_type)
-    results = _percolate_query(index, doc_type, percolator_doc_type, document)
-    prefix = 'oaiset-'
+    result = percolate_query(percolator_index, documents=records)
+
+    prefix = "oaiset-"
     prefix_len = len(prefix)
-    for match in results:
-        set_name = match['_id']
-        if set_name.startswith(prefix):
-            name = set_name[prefix_len:]
-            yield name.split(':')[-1]
 
-    raise StopIteration
+    for s in result:
+        set_index_id = s["_id"]
+        if set_index_id.startswith(prefix):
+            set_spec = set_index_id[prefix_len:]
+            for record_index in s.get("fields", {}).get(
+                "_percolator_document_slot", []
+            ):
+                record_sets[record_index].append(set_spec)
+    return record_sets
+
+
+def find_sets_for_record(record):
+    """Fetch a record's sets."""
+    return sets_search_all([record])[0]
