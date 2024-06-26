@@ -263,7 +263,7 @@ class IndexActionResource(ContentNegotiatedMethodView):
     @need_record_permission('update_permission_factory')
     def put(self, index_id, **kwargs):
         """Update a new index."""
-        from weko_workflow.utils import get_cache_data
+        from weko_search_ui.tasks import is_import_running
 
         data = self.loaders[request.mimetype]()
         if not data:
@@ -272,7 +272,8 @@ class IndexActionResource(ContentNegotiatedMethodView):
         delete_flag = False
         errors = []
         status = 200
-        if get_cache_data("import_start_time"):
+        check = is_import_running()
+        if check == "is_import_running":
             errors.append(_('The index cannot be updated becase '
                             'import is in progress.'))
         else:
@@ -326,14 +327,15 @@ class IndexActionResource(ContentNegotiatedMethodView):
     @need_record_permission('delete_permission_factory')
     def delete(self, index_id, **kwargs):
         """Delete a index."""
-        from weko_workflow.utils import get_cache_data
+        from weko_search_ui.tasks import is_import_running
 
         errors = []
         msg = ''
         if not index_id or index_id <= 0:
             raise IndexNotFoundRESTError()
 
-        if get_cache_data("import_start_time"):
+        check = is_import_running()
+        if check == "is_import_running":
             errors.append(_('The index cannot be deleted becase '
                             'import is in progress.'))
         else:
@@ -471,12 +473,14 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
     @need_record_permission('update_permission_factory')
     def put(self, index_id, **kwargs):
         """Move a index."""
-        from weko_workflow.utils import get_cache_data
+        from weko_search_ui.tasks import is_import_running
 
         data = self.loaders[request.mimetype]()
         if not data:
             raise InvalidDataRESTError()
-        if get_cache_data("import_start_time"):
+
+        check = is_import_running()
+        if check == "is_import_running":
             status = 202
             msg = _('The index cannot be moved becase '
                     'import is in progress.')

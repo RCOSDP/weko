@@ -38,6 +38,7 @@ from weko_records.api import ItemsMetadata, ItemTypeEditHistory, \
 from weko_records.serializers.utils import get_mapping_inactive_show_list
 from weko_schema_ui.api import WekoSchema
 from weko_search_ui.utils import get_key_by_property
+from weko_search_ui.tasks import is_import_running
 from weko_workflow.api import WorkFlow
 
 from .config import WEKO_BILLING_FILE_ACCESS, WEKO_BILLING_FILE_PROP_ATT, \
@@ -118,9 +119,8 @@ class ItemTypeMetaDataView(BaseView):
     @item_type_permission.require(http_exception=403)
     def delete_itemtype(self, item_type_id=0):
         """Soft-delete an item type."""
-        from weko_workflow.utils import get_cache_data
-
-        if get_cache_data("import_start_time"):
+        check = is_import_running()
+        if check == "is_import_running":
             flash(_('Item type cannot be deleted becase import is in progress.'), 'error')
             return jsonify(code=-1)
         
@@ -174,13 +174,12 @@ class ItemTypeMetaDataView(BaseView):
     @item_type_permission.require(http_exception=403)
     def register(self, item_type_id=0):
         """Register an item type."""
-        from weko_workflow.utils import get_cache_data
-
         if request.headers['Content-Type'] != 'application/json':
             current_app.logger.debug(request.headers['Content-Type'])
             return jsonify(msg=_('Header Error'))
 
-        if get_cache_data("import_start_time"):
+        check = is_import_running()
+        if check == "is_import_running":
             response = jsonify(msg=_('Item type cannot be updated becase '
                                      'import is in progress.'))
             response.status_code = 400
