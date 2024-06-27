@@ -107,3 +107,4 @@ class Queue(object):
         with self.create_consumer() as consumer:
             for msg in consumer.iterqueue():
                 yield msg.payload if payload else msg
+            consumer.close()
