@@ -20,6 +20,7 @@ tests_require = [
     'invenio-db[all]>=1.0.9',
     'moto>=1.3.7',
     'redis>=2.10.5',
+    'responses',
 ]
 
 extras_require = {

@@ -12,6 +12,7 @@ import warnings
 
 import boto3
 from flask import current_app
+from invenio_files_rest.models import Location
 from werkzeug.utils import cached_property
 
 from . import config
@@ -62,10 +63,17 @@ class InvenioS3(object):
             },
         )
 
-        s3_endpoint = current_app.config.get('S3_ENDPOINT_URL', None)
-        if s3_endpoint:
-            info['client_kwargs']['endpoint_url'] = s3_endpoint
-
+        s3_endpoint_url = current_app.config.get('S3_ENDPOINT_URL', None)
+        if s3_endpoint_url:
+            info['client_kwargs']['endpoint_url'] = s3_endpoint_url
+        default_location = Location.query.filter_by(default=True).first()
+        if default_location.type == 's3':
+            if default_location.access_key != '':
+                info['key'] = default_location.access_key
+            if default_location.secret_key != '':
+                info['secret'] = default_location.secret_key
+            if default_location.s3_endpoint_url != '':
+                info['client_kwargs']['endpoint_url'] = default_location.s3_endpoint_url
         region_name = current_app.config.get('S3_REGION_NAME', None)
         if region_name:
             info['client_kwargs']['region_name'] = region_name
