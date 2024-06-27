@@ -1,26 +1,10 @@
 # -*- coding: utf-8 -*-
 #
 # This file is part of Invenio.
-# Copyright (C) 2016, 2017 CERN.
+# Copyright (C) 2016-2019 CERN.
 #
-# Invenio is free software; you can redistribute it
-# and/or modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; either version 2 of the
-# License, or (at your option) any later version.
-#
-# Invenio is distributed in the hope that it will be
-# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Invenio; if not, write to the
-# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-# MA 02111-1307, USA.
-#
-# In applying this license, CERN does not
-# waive the privileges and immunities granted to it by virtue of its status
-# as an Intergovernmental Organization or submit itself to any jurisdiction.
+# Invenio is free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
 
 """Deposit actions."""
 
@@ -76,17 +60,6 @@ def create_blueprint(endpoints):
         __name__,
         url_prefix='',
     )
-    
-    @blueprint.teardown_request
-    def dbsession_clean(exception):
-        current_app.logger.debug("invenio_deposit dbsession_clean: {}".format(exception))
-        if exception is None:
-            try:
-                db.session.commit()
-            except:
-                db.session.rollback()
-        db.session.remove()
-    
     create_error_handlers(blueprint)
 
     for endpoint, options in (endpoints or {}).items():
@@ -284,25 +257,19 @@ class DepositFilesResource(ContentNegotiatedMethodView):
         :param pid: Pid object (from url).
         :param record: Record object resolved from the pid.
         """
-        try:
-            # load the file
-            uploaded_file = request.files['file']
-            # file name
-            key = secure_filename(
-                request.form.get('name') or uploaded_file.filename
-            )
-            # check if already exists a file with this name
-            if key in record.files:
-                raise FileAlreadyExists()
-            # add it to the deposit
-            record.files[key] = uploaded_file.stream
-            record.commit()
-            db.session.commit()
-        except Exception as e:
-            db.session.rollback()
-            current_app.logger.error(e)
-            raise WrongFile()
-
+        # load the file
+        uploaded_file = request.files['file']
+        # file name
+        key = secure_filename(
+            request.form.get('name') or uploaded_file.filename
+        )
+        # check if already exists a file with this name
+        if key in record.files:
+            raise FileAlreadyExists()
+        # add it to the deposit
+        record.files[key] = uploaded_file.stream
+        record.commit()
+        db.session.commit()
         return self.make_response(
             obj=record.files[key].obj, pid=pid, record=record, status=201)
 
@@ -339,15 +306,9 @@ class DepositFilesResource(ContentNegotiatedMethodView):
         except KeyError:
             raise WrongFile()
 
-        try:
-            record.files.sort_by(*ids)
-            record.commit()
-            db.session.commit()
-        except Exception as e:
-            db.session.rollback()
-            current_app.logger.error(e)
-            raise WrongFile()
-
+        record.files.sort_by(*ids)
+        record.commit()
+        db.session.commit()
         return self.make_response(obj=record.files, pid=pid, record=record)
 
 
@@ -377,7 +338,7 @@ class DepositFileResource(ContentNegotiatedMethodView):
     @use_kwargs(get_args)
     @pass_record
     @need_record_permission('read_permission_factory')
-    def get(self, pid, record, key, version_id, **kwargs):
+    def get(self, pid, record, key, version_id=None, **kwargs):
         """Get file.
 
         Permission required: `read_permission_factory`.
@@ -421,14 +382,8 @@ class DepositFileResource(ContentNegotiatedMethodView):
             obj = record.files.rename(str(key), new_key_secure)
         except KeyError:
             abort(404)
-        try:
-            record.commit()
-            db.session.commit()
-        except Exception as e:
-            db.session.rollback()
-            current_app.logger.error(e)
-            raise WrongFile()
-
+        record.commit()
+        db.session.commit()
         return self.make_response(obj=obj, pid=pid, record=record)
 
     @require_api_auth()
@@ -450,9 +405,5 @@ class DepositFileResource(ContentNegotiatedMethodView):
             db.session.commit()
             return make_response('', 204)
         except KeyError:
-            db.session.rollback()
             abort(404, 'The specified object does not exist or has already '
                   'been deleted.')
-        except Exception as e:
-            db.session.rollback()
-            abort(404, 'Delete fail.')

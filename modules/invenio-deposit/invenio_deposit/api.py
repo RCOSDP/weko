@@ -1,30 +1,13 @@
 # -*- coding: utf-8 -*-
 #
 # This file is part of Invenio.
-# Copyright (C) 2016, 2017 CERN.
+# Copyright (C) 2016-2019 CERN.
 #
-# Invenio is free software; you can redistribute it
-# and/or modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; either version 2 of the
-# License, or (at your option) any later version.
-#
-# Invenio is distributed in the hope that it will be
-# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Invenio; if not, write to the
-# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-# MA 02111-1307, USA.
-#
-# In applying this license, CERN does not
-# waive the privileges and immunities granted to it by virtue of its status
-# as an Intergovernmental Organization or submit itself to any jurisdiction.
+# Invenio is free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
 
 """Deposit API."""
 
-import inspect
 import uuid
 from contextlib import contextmanager
 from copy import deepcopy
@@ -208,7 +191,7 @@ class Deposit(Record):
 
     @classmethod
     @index
-    def create(cls, data, id_=None, recid=None):
+    def create(cls, data, id_=None):
         """Create a deposit.
 
         Initialize the follow information inside the deposit:
@@ -233,15 +216,10 @@ class Deposit(Record):
         ))
         if '_deposit' not in data:
             id_ = id_ or uuid.uuid4()
-            if not recid:
-                cls.deposit_minter(id_, data)
-            else:
-                cls.deposit_minter(id_, data, recid=recid)
+            cls.deposit_minter(id_, data)
 
         data['_deposit'].setdefault('owners', list())
-        if not current_user:
-            data['_deposit']['owners'].append(1)
-        elif current_user.is_authenticated:
+        if current_user and current_user.is_authenticated:
             creator_id = int(current_user.get_id())
 
             if creator_id not in data['_deposit']['owners']:
@@ -346,12 +324,7 @@ class Deposit(Record):
         self['_deposit']['status'] = 'published'
 
         if self['_deposit'].get('pid') is None:  # First publishing
-            # self._publish_new(id_=id_)
-            self['_deposit']['pid'] = {
-                'type': pid.pid_type,
-                'value': pid.pid_value,
-                'revision_id': 0,
-            }
+            self._publish_new(id_=id_)
         else:  # Update after edit
             record = self._publish_edited()
             record.commit()

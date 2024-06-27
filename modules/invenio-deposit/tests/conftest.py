@@ -1,26 +1,10 @@
 # -*- coding: utf-8 -*-
 #
 # This file is part of Invenio.
-# Copyright (C) 2016 CERN.
+# Copyright (C) 2016-2019 CERN.
 #
-# Invenio is free software; you can redistribute it
-# and/or modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; either version 2 of the
-# License, or (at your option) any later version.
-#
-# Invenio is distributed in the hope that it will be
-# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Invenio; if not, write to the
-# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-# MA 02111-1307, USA.
-#
-# In applying this license, CERN does not
-# waive the privileges and immunities granted to it by virtue of its status
-# as an Intergovernmental Organization or submit itself to any jurisdiction.
+# Invenio is free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
 
 
 """Pytest configuration."""
@@ -36,13 +20,12 @@ from time import sleep
 import pytest
 from elasticsearch.exceptions import RequestError
 from flask import Flask
-from flask.cli import ScriptInfo
 from flask_babelex import Babel
 from flask_breadcrumbs import Breadcrumbs
 from flask_celeryext import FlaskCeleryExt
 from flask_oauthlib.provider import OAuth2Provider
 from flask_security import login_user
-from .helpers import fill_oauth2_headers, make_pdf_fixture
+from helpers import fill_oauth2_headers, make_pdf_fixture
 from invenio_access import InvenioAccess
 from invenio_access.models import ActionUsers
 from invenio_accounts import InvenioAccounts
@@ -61,9 +44,13 @@ from invenio_pidstore import InvenioPIDStore
 from invenio_records import InvenioRecords
 from invenio_records_rest import InvenioRecordsREST
 from invenio_records_rest.utils import PIDConverter
+from invenio_records_rest.views import \
+    create_blueprint_from_app as records_rest_bp
 from invenio_records_ui import InvenioRecordsUI
+from invenio_records_ui.views import create_blueprint_from_app as records_ui_bp
 from invenio_rest import InvenioREST
 from invenio_search import InvenioSearch, current_search, current_search_client
+from invenio_search.errors import IndexAlreadyExistsError
 from invenio_search_ui import InvenioSearchUI
 from six import BytesIO, get_method_self
 from sqlalchemy import inspect
@@ -74,7 +61,7 @@ from werkzeug.wsgi import DispatcherMiddleware
 from invenio_deposit import InvenioDeposit, InvenioDepositREST
 from invenio_deposit.api import Deposit
 from invenio_deposit.scopes import write_scope
-from kombu import Exchange, Queue
+
 
 def object_as_dict(obj):
     """Make a dict from SQLAlchemy object."""
@@ -89,8 +76,6 @@ def base_app(request):
 
     def init_app(app_):
         app_.config.update(
-            BROKER_URL='amqp://guest:guest@rabbitmq:5672/',
-            CELERY_BROKER_URL = 'amqp://guest:guest@rabbitmq:5672/',
             CELERY_ALWAYS_EAGER=True,
             CELERY_CACHE_BACKEND='memory',
             CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
@@ -98,12 +83,8 @@ def base_app(request):
             JSONSCHEMAS_URL_SCHEME='http',
             SECRET_KEY='CHANGE_ME',
             SECURITY_PASSWORD_SALT='CHANGE_ME_ALSO',
-            # SQLALCHEMY_DATABASE_URI=os.environ.get(
-            #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
-            SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-                                          'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
-            SEARCH_ELASTIC_HOSTS=os.environ.get(
-                'SEARCH_ELASTIC_HOSTS', 'elasticsearch'),
+            SQLALCHEMY_DATABASE_URI=os.environ.get(
+                'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
             SQLALCHEMY_TRACK_MODIFICATIONS=True,
             SQLALCHEMY_ECHO=False,
             TESTING=True,
@@ -115,11 +96,6 @@ def base_app(request):
             OAUTHLIB_INSECURE_TRANSPORT=True,
             OAUTH2_CACHE_TYPE='simple',
             ACCOUNTS_JWT_ENABLE=False,
-            INDEXER_DEFAULT_INDEX='records-default-v1.0.0',
-            INDEXER_DEFAULT_DOC_TYPE='default-v1.0.0',
-            INDEXER_MQ_QUEUE = Queue("indexer", 
-                                 exchange=Exchange("indexer", type="direct"), routing_key="indexer",auto_delete=False,queue_arguments={"x-queue-type":"quorum"}),
-        
         )
         Babel(app_)
         FlaskCeleryExt(app_)
@@ -134,7 +110,8 @@ def base_app(request):
         InvenioFilesREST(app_)
         InvenioPIDStore(app_)
         InvenioRecords(app_)
-        InvenioSearch(app_)
+        search = InvenioSearch(app_)
+        search.register_mappings('deposits', 'invenio_deposit.mappings')
 
     api_app = Flask('testapiapp', instance_path=instance_path)
     api_app.url_map.converters['pid'] = PIDConverter
@@ -156,6 +133,8 @@ def base_app(request):
     InvenioAssets(app)
     InvenioSearchUI(app)
     InvenioRecordsUI(app)
+    app.register_blueprint(records_ui_bp(app))
+    app.register_blueprint(records_rest_bp(app))
     app.wsgi_app = DispatcherMiddleware(app.wsgi_app, {
         '/api': api_app.wsgi_app
     })
@@ -185,6 +164,7 @@ def app(base_app):
 def api(base_app):
     """Yield the REST API application in its context."""
     api = get_method_self(base_app.wsgi_app.mounts['/api'])
+    api.register_blueprint(records_rest_bp(api))
     with api.app_context():
         yield api
 
@@ -296,7 +276,7 @@ def es(app):
     """Elasticsearch fixture."""
     try:
         list(current_search.create())
-    except RequestError:
+    except (RequestError, IndexAlreadyExistsError):
         list(current_search.delete(ignore=[404]))
         list(current_search.create(ignore=[400]))
     current_search_client.indices.refresh()
@@ -335,36 +315,32 @@ def deposit(app, es, users, location):
 @pytest.fixture()
 def files(app, deposit):
     """Add a file to the deposit."""
-    # content = b'### Testing textfile ###'
-    # stream = BytesIO(content)
-    # key = 'hello.txt'
-    # deposit.files[key] = stream
-    # deposit.commit()
-    # db.session.commit()
-    return []
+    content = b'### Testing textfile ###'
+    stream = BytesIO(content)
+    key = 'hello.txt'
+    deposit.files[key] = stream
+    deposit.commit()
+    db.session.commit()
+    return list(deposit.files)
 
 
 @pytest.fixture()
 def pdf_file(app):
     """Create a test pdf file."""
-    # return {'file': make_pdf_fixture('test.pdf'), 'name': 'test.pdf'}
-    return None
+    return {'file': make_pdf_fixture('test.pdf'), 'name': 'test.pdf'}
 
 
 @pytest.fixture()
 def pdf_file2(app):
     """Create a test pdf file."""
-    # return {'file': make_pdf_fixture('test2.pdf', 'test'),
-    #  'name': 'test2.pdf'}
-    return None
+    return {'file': make_pdf_fixture('test2.pdf', 'test'), 'name': 'test2.pdf'}
 
 
 @pytest.fixture()
 def pdf_file2_samename(app):
     """Create a test pdf file."""
-    # return {'file': make_pdf_fixture('test2.pdf', 'test same'),
-    #         'name': 'test2.pdf'}
-    return None
+    return {'file': make_pdf_fixture('test2.pdf', 'test same'),
+            'name': 'test2.pdf'}
 
 
 @pytest.fixture()
@@ -390,8 +366,3 @@ def oauth2_headers_user_2(app, json_headers, write_token_user_2):
     It uses the token associated with the second user.
     """
     return fill_oauth2_headers(json_headers, write_token_user_2)
-
-@pytest.fixture()
-def script_info(app):
-    """Get ScriptInfo object for testing CLI."""
-    return ScriptInfo(create_app=lambda info: app)

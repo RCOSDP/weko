@@ -1,26 +1,10 @@
 # -*- coding: utf-8 -*-
 #
 # This file is part of Invenio.
-# Copyright (C) 2016 CERN.
+# Copyright (C) 2016-2019 CERN.
 #
-# Invenio is free software; you can redistribute it
-# and/or modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; either version 2 of the
-# License, or (at your option) any later version.
-#
-# Invenio is distributed in the hope that it will be
-# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Invenio; if not, write to the
-# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-# MA 02111-1307, USA.
-#
-# In applying this license, CERN does not
-# waive the privileges and immunities granted to it by virtue of its status
-# as an Intergovernmental Organization or submit itself to any jurisdiction.
+# Invenio is free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
 
 """Deposit UI."""
 
@@ -29,7 +13,6 @@ from __future__ import absolute_import, print_function
 from copy import deepcopy
 
 from flask import Blueprint, current_app, render_template, request
-from invenio_db import db
 from flask_login import login_required
 from invenio_pidstore.errors import PIDDeletedError
 from invenio_records_ui.signals import record_viewed
@@ -54,16 +37,6 @@ def create_blueprint(endpoints):
         template_folder='../templates',
         url_prefix='',
     )
-    
-    @blueprint.teardown_request
-    def dbsession_clean(exception):
-        current_app.logger.debug("invenio_deposit dbsession_clean: {}".format(exception))
-        if exception is None:
-            try:
-                db.session.commit()
-            except:
-                db.session.rollback()
-        db.session.remove()
 
     @blueprint.errorhandler(PIDDeletedError)
     def tombstone_errorhandler(error):

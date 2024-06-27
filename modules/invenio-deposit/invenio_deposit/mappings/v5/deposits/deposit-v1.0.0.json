@@ -1,19 +1,15 @@
 {
   "mappings": {
     "deposit-v1.0.0": {
-      "date_detection": false,
-      "numeric_detection": false,
       "properties": {
         "$schema": {
-            "type": "keyword",
-            "index": true
+          "type": "keyword"
         },
         "_deposit": {
           "type": "object",
           "properties": {
             "id": {
-              "type": "keyword",
-              "index": true
+              "type": "keyword"
             },
             "pid": {
               "type": "object",
@@ -25,8 +21,7 @@
                   "type": "text"
                 },
                 "value": {
-                  "type": "keyword",
-                  "index": true
+                  "type": "keyword"
                 }
               }
             },
@@ -34,10 +29,10 @@
               "type": "integer"
             },
             "owners": {
-                "type": "integer"
+              "type": "integer"
             },
             "status": {
-              "type": "text"
+              "type": "keyword"
             }
           }
         },
@@ -45,19 +40,16 @@
           "type": "object",
           "properties": {
             "key": {
-              "type": "keyword",
-              "index": true
+              "type": "keyword"
             },
             "bucket": {
-              "type": "keyword",
-              "index": true
+              "type": "keyword"
             },
             "size": {
               "type": "integer"
             },
             "version_id": {
-              "type": "keyword",
-              "index": true
+              "type": "keyword"
             }
           }
         },
