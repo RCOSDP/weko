@@ -7,8 +7,8 @@
  Invenio-S3
 ============
 
-.. image:: https://img.shields.io/travis/inveniosoftware/invenio-s3.svg
-        :target: https://travis-ci.org/inveniosoftware/invenio-s3
+.. image:: https://github.com/inveniosoftware/invenio-s3/workflows/CI/badge.svg
+        :target: https://github.com/inveniosoftware/invenio-s3/actions
 
 .. image:: https://img.shields.io/coveralls/inveniosoftware/invenio-s3.svg
         :target: https://coveralls.io/r/inveniosoftware/invenio-s3

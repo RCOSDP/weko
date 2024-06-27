@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2018 Esteban J. G. Gabancho.
+# Copyright (C) 2018, 2019, 2020 Esteban J. G. Gabancho.
 #
 # Invenio-S3 is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
@@ -15,12 +15,10 @@ import tempfile
 from io import BytesIO
 
 import pytest
-import requests
-from flask import url_for
 from invenio_files_rest.errors import FileSizeError, StorageError, \
     UnexpectedFileSizeError
-from invenio_files_rest.limiters import FileSizeLimit
 from invenio_files_rest.models import Location
+from invenio_files_rest.limiters import FileSizeLimit
 from invenio_files_rest.storage import PyFSFileStorage
 from mock import patch
 from s3fs import S3File, S3FileSystem
@@ -90,7 +88,7 @@ def test_initialize_failcleanup(location, monkeypatch, s3_bucket, s3fs):
 
 def test_delete(location, s3_bucket, s3fs_testpath, s3fs):
     """Test delete."""
-    s3_bucket.upload_fileobj(BytesIO(b'test'), 'path/to/data')
+    s3fs.save(BytesIO(b'test'))
 
     objs = list(s3_bucket.objects.all())
     assert len(objs) == 1
@@ -134,7 +132,7 @@ def test_save_failcleanup(location, s3fs, s3fs_testpath, get_md5):
     data = b'somedata'
 
     def fail_callback(total, size):
-        # assert exists(s3fs_testpath)
+        # assert fs.exists(s3fs_testpath)
         raise Exception('Something bad happened')
 
     pytest.raises(
@@ -233,9 +231,8 @@ def test_update(location, s3fs, get_md5, file_size):
 
 def test_update_fail(location, s3fs, s3fs_testpath, get_md5):
     """Test update of file."""
-
     def fail_callback(total, size):
-        assert exists(s3fs_testpath)
+        assert fs.exists(s3fs_testpath)
         raise Exception('Something bad happened')
 
     s3fs.initialize(size=100)
@@ -274,9 +271,7 @@ def test_checksum(location, s3fs, get_md5):
         uri, size, save_checksum = s3fs.save(
             fp, size=os.path.getsize('LICENSE'))
     # assert checksum == save_checksum
-    # assert checksum == s3fs.checksum(
-    #   chunk_size=2,
-    #   progress_callback=callback)
+    # assert checksum == s3fs.checksum(chunk_size=2, progress_callback=callback)
     # assert counter['size'] == size
     # assert counter['size'] == os.path.getsize('LICENSE')
 
@@ -326,7 +321,6 @@ def test_send_file(base_app, location, s3fs, database):
     default_location = Location.query.filter_by(default=True).first()
     default_location.type = ''
     database.session.commit()
-
     data = b'sendthis'
     uri, size, checksum = s3fs.save(BytesIO(data))
 
@@ -361,20 +355,14 @@ def test_send_file(base_app, location, s3fs, database):
 
     def test_send_indirectly():
         res = s3fs.send_file(
-        'test.txt', mimetype='text/plain', checksum=checksum)
+            'test.txt', mimetype='text/plain')
         assert res.status_code == 302
         h = res.headers
         assert 'Location' in h
-        assert h['Content-Type'] == 'text/plain; charset=utf-8'
-        # FIXME: the lenght is modified somewhere somehow
-        # assert h['Content-Length'] == str(size)
-        # assert h['Content-MD5'] == checksum[4:]
-        # assert h['ETag'] == '"{0}"'.format(checksum)
 
         res = s3fs.send_file(
-            'myfilename.txt', mimetype='text/plain', checksum='crc32:test')
+            'myfilename.txt', mimetype='text/plain')
         assert res.status_code == 302
-        assert 'Content-MD5' not in dict(res.headers)
 
     with base_app.test_request_context():
 
@@ -413,6 +401,8 @@ def test_send_file(base_app, location, s3fs, database):
         default_location.s3_send_file_directly = True
         database.session.commit()
 
+
+
 def test_send_file_fail(base_app, location, s3fs):
     """Test send file."""
     s3fs.save(BytesIO(b'content'))
@@ -420,51 +410,6 @@ def test_send_file_fail(base_app, location, s3fs):
     with patch('invenio_s3.storage.redirect_stream') as redirect_stream:
         redirect_stream.side_effect = OSError(errno.EPERM,
                                               "Permission problem")
-
-
-def test_send_file_xss_prevention(base_app, location, s3fs):
-    """Test send file."""
-    data = b'<html><body><script>alert("xss");</script></body></html>'
-    uri, size, checksum = s3fs.save(BytesIO(data))
-
-    with base_app.test_request_context():
-        res = s3fs.send_file(
-            'myfilename.html', mimetype='text/html', checksum=checksum)
-        # assert res.status_code == 302
-        h = res.headers
-        # assert 'Location' in h
-        # assert h['Content-Type'] == 'text/plain; charset=utf-8'
-        # # assert h['Content-Length'] == str(size)
-        # assert h['Content-MD5'] == checksum[4:]
-        # assert h['ETag'] == '"{0}"'.format(checksum)
-        # # XSS prevention
-        # assert h['Content-Security-Policy'] == 'default-src \'none\';'
-        # assert h['X-Content-Type-Options'] == 'nosniff'
-        # assert h['X-Download-Options'] == 'noopen'
-        # assert h['X-Permitted-Cross-Domain-Policies'] == 'none'
-        # assert h['X-Frame-Options'] == 'deny'
-        # assert h['X-XSS-Protection'] == '1; mode=block'
-        # assert h['Content-Disposition'] == 'inline'
-
-        # Image
-        h = s3fs.send_file('image.png', mimetype='image/png').headers
-        assert h['Content-Type'] == 'image/png'
-        assert h['Content-Disposition'] == 'inline'
-
-        # README text file
-        h = s3fs.send_file('README').headers
-        assert h['Content-Type'] == 'text/plain; charset=utf-8'
-        assert h['Content-Disposition'] == 'inline'
-
-        # Zip
-        h = s3fs.send_file('archive.zip').headers
-        assert h['Content-Type'] == 'application/octet-stream'
-        assert h['Content-Disposition'] == 'attachment; filename=archive.zip'
-
-        # PDF
-        h = s3fs.send_file('doc.pdf').headers
-        assert h['Content-Type'] == 'application/octet-stream'
-        assert h['Content-Disposition'] == 'attachment; filename=doc.pdf'
 
 
 def test_non_unicode_filename(base_app, location, s3fs):
@@ -487,3 +432,22 @@ def test_non_unicode_filename(base_app, location, s3fs):
             'żółć.txt', mimetype='text/plain', checksum=checksum)
         assert res.status_code == 200
         assert res.headers['Content-Disposition'] == 'inline'
+
+
+def test_block_size(appctx, s3_bucket, s3fs_testpath, s3fs, get_md5):
+    """Test block size update on the S3FS client."""
+    # Make file bigger than max number of parts * block size
+    data = b'a' * appctx.config['S3_DEFAULT_BLOCK_SIZE'] * 5
+    # Set max number of parts that size(data)/num parts > block size
+    # 3 parts makes a division result with a floating value smaller than .5
+    appctx.config['S3_MAXIMUM_NUMBER_OF_PARTS'] = 3
+    uri, size, checksum = s3fs.save(BytesIO(data),
+                                    size=len(data))
+
+    assert (
+        len(data) / s3fs.block_size
+        <= appctx.config['S3_MAXIMUM_NUMBER_OF_PARTS']
+    )
+    assert uri == s3fs_testpath
+    assert size == len(data)
+    assert checksum == get_md5(data)

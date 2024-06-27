@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2018 Esteban J. G. Gabancho.
+# Copyright (C) 2018, 2019 Esteban J. G. Gabancho.
 #
 # Invenio-S3 is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
@@ -15,6 +15,7 @@ import tempfile
 import boto3
 import pytest
 from flask import Flask, current_app
+from invenio_app.factory import create_api
 from invenio_db import InvenioDB
 from invenio_db import db as db_
 from invenio_files_rest import InvenioFilesREST
@@ -28,10 +29,11 @@ from invenio_s3 import InvenioS3, S3FSFileStorage
 @pytest.fixture(scope='module')
 def app_config(app_config):
     """Customize application configuration."""
-    app_config['FILES_REST_STORAGE_FACTORY'] = 'invenio_s3:s3_storage_factory'
+    app_config[
+        'FILES_REST_STORAGE_FACTORY'] = 'invenio_s3.s3fs_storage_factory'
     app_config['S3_ENDPOINT_URL'] = None
-    app_config['S3_ACCCESS_KEY_ID'] = ''
-    app_config['S3_SECRECT_ACCESS_KEY'] = ''
+    app_config['S3_ACCESS_KEY_ID'] = 'test'
+    app_config['S3_SECRECT_ACCESS_KEY'] = 'test'
     # app_config['SQLALCHEMY_DATABASE_URI'] = os.environ.get(
     #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db')
     app_config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI',
@@ -44,18 +46,7 @@ def app_config(app_config):
 @pytest.fixture(scope='module')
 def create_app():
     """Application factory fixture."""
-    def factory(**config):
-        app = Flask('testapp')
-        app.config.update(**config)
-
-        InvenioDB(app)
-        InvenioFilesREST(app)
-        InvenioS3(app)
-
-        return app
-
-    return factory
-
+    return create_api
 
 @pytest.fixture(scope='module')
 def location_path():
@@ -88,7 +79,7 @@ def s3_bucket(appctx):
     """S3 bucket fixture."""
     with mock_s3():
         session = boto3.Session(
-            aws_access_key_id=current_app.config.get('S3_ACCCESS_KEY_ID'),
+            aws_access_key_id=current_app.config.get('S3_ACCESS_KEY_ID'),
             aws_secret_access_key=current_app.config.get(
                 'S3_SECRECT_ACCESS_KEY'),
         )
