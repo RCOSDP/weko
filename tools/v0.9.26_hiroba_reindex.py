@@ -109,6 +109,9 @@ def reindex_and_add_items():
                 )
                 current_app.logger.info("count",count)
 
+                if count['count'] > 10000:
+                    count['count'] = 10000
+
                 #add index_id
                 current_app.logger.info('add index_id')
 
@@ -116,12 +119,27 @@ def reindex_and_add_items():
                 search_result = es.search(
                     index=index,
                     _source=['item_id','bucket_id'],
-                    size=count['count']
+                    size=count['count'],
+                    scroll='10m',
+                    body={'query': {'match_all': {}}, 'sort': {'timestamp': 'asc'}}
                 )
 
                 # 取得結果のドキュメント部のみを抽出
                 hits_documents = search_result['hits']['hits']
 
+                sid = search_result.get('_scroll_id')
+
+                scroll_size = len(search_result['hits']['hits'])
+
+                while (scroll_size > 0):
+                    page = es.scroll(scroll_id=sid, scroll='10m')
+                    sid = page['_scroll_id']
+                    scroll_size = len(page['hits']['hits'])
+                    hits_documents.extend(page['hits']['hits'])
+
+                es.clear_scroll(scroll_id=sid)
+
+                #add index_id
                 for document in hits_documents:
                     if not 'index_id' in document['_source']:
                         # buckets_idからindex_idを取得
