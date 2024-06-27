@@ -922,6 +922,7 @@ class ItemTypes(RecordBase):
             itemtype_id (_type_): _description_
         """
         # with db.session.begin_nested():
+        result = {"msg":"Update ItemType({})".format(itemtype_id),"code":0}
         item_type = ItemTypes.get_by_id(itemtype_id)
         old_render = pickle.loads(pickle.dumps(item_type.render, -1))
         data = pickle.loads(pickle.dumps(item_type.render, -1))
@@ -981,6 +982,8 @@ class ItemTypes(RecordBase):
                 mapping.model.mapping = table_row_map.get('mapping')
                 flag_modified(mapping.model, 'mapping')
                 db.session.add(mapping.model)
+                result['msg'] = "Fix ItemType({}) mapping".format(itemtype_id)
+                result['code'] = 0  
         
         ItemTypeEditHistory.create_or_update(
             item_type_id=record.model.id,
@@ -988,7 +991,7 @@ class ItemTypes(RecordBase):
             notes=data.get('edit_notes', {})
         )
             
-        # return record
+        return result
 
 
 

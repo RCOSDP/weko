@@ -61,20 +61,22 @@ def main():
                                 continue
                             elif "publisher_jpcoar" in mapping[key]["jpcoar_mapping"]:
                                 continue
+                            elif "=" in str(mapping[key]["jpcoar_mapping"]):
+                                continue
                             elif "jpcoar_v1_mapping" in mapping[key]:
                                 mapping[key]["jpcoar_mapping"] =  item_type_mapping.mapping[key][
                                     "jpcoar_v1_mapping"
                                 ]
                             else:
-                                mapping[key]["jpcoar_v1_mapping"] = ""
+                                mapping[key]["jpcoar_v1_mapping"] = {}
                         else:
                             if "jpcoar_v1_mapping" in mapping[key]:
                                 mapping[key]["jpcoar_mapping"] = item_type_mapping.mapping[key][
                                     "jpcoar_v1_mapping"
                                 ]
                             else:
-                                mapping[key]["jpcoar_v1_mapping"] = ""
-                                mapping[key]["jpcoar_mapping"] = ""
+                                mapping[key]["jpcoar_v1_mapping"] = {}
+                                mapping[key]["jpcoar_mapping"] = {}
                         
                     item_type_mapping.mapping = pickle.loads(pickle.dumps(mapping, -1))
                     flag_modified(item_type_mapping,"mapping")
