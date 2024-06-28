@@ -109,7 +109,7 @@ def main():
                         _render["table_row_map"]["form"].append(_form)
                         _render["table_row_map"]["mapping"][_prop_id] = pickle.loads(pickle.dumps(new_prop_mapping.get(str(id),""),-1))
                         _render["table_row"].append(_prop_id)
-                        if _mapping[_prop_id] and "=" not in _mapping[_prop_id]:
+                        if _prop_id in _mapping and _mapping[_prop_id] and "=" not in _mapping[_prop_id]:
                             _mapping[_prop_id] = pickle.loads(pickle.dumps(_render["table_row_map"]["mapping"][_prop_id],-1))
                         print("property cus_{} has been registerd.".format(id))
 
