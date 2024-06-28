@@ -9,247 +9,282 @@
 """CLI tests."""
 
 import datetime
+from unittest.mock import patch
 
 import pytest
-from mock import patch
 from click.testing import CliRunner
-from tests.conftest import _create_file_download_event, _create_record_view_event
-from elasticsearch_dsl import Search
+from conftest import _create_file_download_event, _create_record_view_event
+from helpers import mock_date
+from invenio_search import current_search
+from invenio_search.engine import dsl
 
 from invenio_stats import current_stats
 from invenio_stats.cli import stats
 
-# def _events_process(event_types=None, eager=False):
-# .tox/c1/bin/pytest --cov=invenio_stats tests/test_cli.py::test_events_process -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
-def test_events_process(app, script_info, es, event_queues):
+
+def test_events_process(search_clear, script_info, event_queues):
     """Test "events process" CLI command."""
-    search = Search(using=es)
+    search_obj = dsl.Search(using=search_clear)
     runner = CliRunner()
 
     # Invalid argument
     result = runner.invoke(
-        stats, ['events', 'process', 'invalid-event-type', '--eager'],
-        obj=script_info)
+        stats, ["events", "process", "invalid-event-type", "--eager"], obj=script_info
+    )
     assert result.exit_code == 2
-    assert 'Invalid event type(s):' in result.output
+    assert "Invalid event type(s):" in result.output
 
     current_stats.publish(
-        'file-download',
-        [_create_file_download_event(date) for date in
-         [(2018, 1, 1, 10), (2018, 1, 1, 12), (2018, 1, 1, 14)]])
+        "file-download",
+        [
+            _create_file_download_event(date)
+            for date in [(2018, 1, 1, 10), (2018, 1, 1, 12), (2018, 1, 1, 14)]
+        ],
+    )
     current_stats.publish(
-        'record-view',
-        [_create_record_view_event(date) for date in
-         [(2018, 1, 1, 10), (2018, 1, 1, 12), (2018, 1, 1, 14)]])
+        "record-view",
+        [
+            _create_record_view_event(date)
+            for date in [(2018, 1, 1, 10), (2018, 1, 1, 12), (2018, 1, 1, 14)]
+        ],
+    )
 
     result = runner.invoke(
-        stats, ['events', 'process', 'file-download', '--eager'],
-        obj=script_info)
+        stats, ["events", "process", "file-download", "--eager"], obj=script_info
+    )
     assert result.exit_code == 0
 
-    es.indices.refresh(index='test-*')
+    current_search.flush_and_refresh(index="*")
 
-    assert not es.indices.exists('events-stats-record-view-2018-01-01')
-    assert not es.indices.exists_alias(name='events-stats-record-view')
+    assert search_obj.index("events-stats-file-download-2018-01").count() == 3
+    assert search_obj.index("events-stats-file-download").count() == 3
+    assert not search_clear.indices.exists("events-stats-record-view-2018-01")
+    assert not search_clear.indices.exists_alias(name="events-stats-record-view")
 
     result = runner.invoke(
-        stats, ['events', 'process', 'record-view', '--eager'],
-        obj=script_info)
+        stats, ["events", "process", "record-view", "--eager"], obj=script_info
+    )
     assert result.exit_code == 0
 
-    es.indices.refresh(index='test-*')
+    current_search.flush_and_refresh(index="*")
+    assert search_obj.index("events-stats-file-download-2018-01").count() == 3
+    assert search_obj.index("events-stats-file-download").count() == 3
+    assert search_obj.index("events-stats-record-view-2018-01").count() == 3
+    assert search_obj.index("events-stats-record-view").count() == 3
 
     # Create some more events
     current_stats.publish(
-        'file-download', [_create_file_download_event((2018, 2, 1, 12))])
-    current_stats.publish(
-        'record-view', [_create_record_view_event((2018, 2, 1, 10))])
+        "file-download", [_create_file_download_event((2018, 2, 1, 12))]
+    )
+    current_stats.publish("record-view", [_create_record_view_event((2018, 2, 1, 10))])
 
+    current_search.flush_and_refresh(index="*")
     # Process all event types via a celery task
-    result = runner.invoke(
-        stats, ['events', 'process'], obj=script_info)
+    result = runner.invoke(stats, ["events", "process"], obj=script_info)
     assert result.exit_code == 0
 
-    es.indices.refresh(index='test-*')
+    current_search.flush_and_refresh(index="*")
+    assert search_obj.index("events-stats-file-download-2018-01").count() == 3
+    assert search_obj.index("events-stats-file-download-2018-02").count() == 1
+    assert search_obj.index("events-stats-file-download").count() == 4
+    assert search_obj.index("events-stats-record-view-2018-01").count() == 3
+    assert search_obj.index("events-stats-record-view-2018-02").count() == 1
+    assert search_obj.index("events-stats-record-view").count() == 4
 
-# def _events_delete(event_types, start_date, end_date, force, verbose):
-# def _events_restore(event_types, start_date, end_date, force, verbose):
-# .tox/c1/bin/pytest --cov=invenio_stats tests/test_cli.py::test_events_delete_restore -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
-def test_events_delete_restore(app, script_info, es, event_queues):
-    search = Search(using=es)
-    runner = CliRunner()
 
-    current_stats.publish(
-        'file-download',
-        [_create_file_download_event(date) for date in
-         [(2018, 1, 1, 10), (2018, 1, 2, 12), (2018, 1, 3, 14)]])
-    current_stats.publish(
-        'record-view',
-        [_create_record_view_event(date) for date in
-         [(2018, 1, 1, 10), (2018, 1, 2, 12), (2018, 1, 3, 14)]])
-
-    result = runner.invoke(
-        stats, ['events', 'delete', 'file-download', '--start-date=2018-01-01', '--end-date=2018-01-02', '--force', '--verbose', '--yes-i-know'],
-        obj=script_info)
-    assert result
-    result = runner.invoke(
-        stats, ['events', 'restore', 'file-download', '--start-date=2018-01-01', '--end-date=2018-01-02', '--force', '--verbose'],
-        obj=script_info)
-    assert result
-
-# def _aggregations_process(aggregation_types=None, start_date=None, end_date=None, update_bookmark=False, eager=False):
-# .tox/c1/bin/pytest --cov=invenio_stats tests/test_cli.py::test_aggregations_process -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
-@pytest.mark.parametrize('indexed_file_download_events',
-                         [dict(file_number=1,
-                               event_number=1,
-                               robot_event_number=0,
-                               start_date=datetime.date(2018, 1, 1),
-                               end_date=datetime.date(2018, 2, 15))],
-                         indirect=['indexed_file_download_events'])
-def test_aggregations_process(script_info, event_queues, es, indexed_file_download_events):
+@pytest.mark.parametrize(
+    "indexed_events",
+    [
+        {
+            "file_number": 1,
+            "event_number": 1,
+            "robot_event_number": 0,
+            "start_date": datetime.date(2018, 1, 1),
+            "end_date": datetime.date(2018, 2, 15),
+        }
+    ],
+    indirect=["indexed_events"],
+)
+def test_aggregations_process(script_info, event_queues, search_clear, indexed_events):
     """Test "aggregations process" CLI command."""
-    search = Search(using=es)
+    search_obj = dsl.Search(using=search_clear)
     runner = CliRunner()
 
     # Invalid argument
     result = runner.invoke(
-        stats, ['aggregations', 'process', 'invalid-aggr-type', '--eager'],
-        obj=script_info)
+        stats,
+        ["aggregations", "process", "invalid-aggr-type", "--eager"],
+        obj=script_info,
+    )
     assert result.exit_code == 2
-    assert 'Invalid aggregation type(s):' in result.output
+    assert "Invalid aggregation type(s):" in result.output
 
     result = runner.invoke(
-        stats, ['aggregations', 'process', 'file-download-agg',
-                '--start-date=2018-01-01', '--end-date=2018-01-10',
-                '--eager'],
-        obj=script_info)
-    assert result.exit_code == 1
+        stats,
+        [
+            "aggregations",
+            "process",
+            "file-download-agg",
+            "--start-date=2018-01-01",
+            "--end-date=2018-01-10",
+            "--eager",
+        ],
+        obj=script_info,
+    )
+    assert result.exit_code == 0
 
-    agg_alias = search.index('stats-file-download')
+    agg_alias = search_obj.index("stats-file-download")
 
-    es.indices.refresh(index='test-*')
+    current_search.flush_and_refresh(index="*")
+    assert agg_alias.count() == 10
+    assert search_clear.indices.exists(
+        "stats-bookmarks"
+    )  # the bookmark indexed is created
+    assert (
+        search_obj.index("stats-bookmarks").count() == 0
+    )  # And it should not have any entries
+    assert search_obj.index("stats-file-download-2018-01").count() == 10
 
     # Run again over same period, but update the bookmark
     result = runner.invoke(
-        stats, ['aggregations', 'process', 'file-download-agg',
-                '--start-date=2018-01-01', '--end-date=2018-01-10',
-                '--eager', '--update-bookmark'],
-        obj=script_info)
-    assert result.exit_code == 1
+        stats,
+        [
+            "aggregations",
+            "process",
+            "file-download-agg",
+            "--start-date=2018-01-01",
+            "--end-date=2018-01-10",
+            "--eager",
+            "--update-bookmark",
+        ],
+        obj=script_info,
+    )
+    assert result.exit_code == 0
 
-    es.indices.refresh(index='test-*')
+    current_search.flush_and_refresh(index="*")
+    assert agg_alias.count() == 10
+    assert search_obj.index("stats-file-download-2018-01").count() == 10
+    assert (
+        search_obj.index("stats-bookmarks").count() == 1
+    )  # There is a single bookmark per run
 
     # Run over all the events via celery task
-    result = runner.invoke(
-        stats, ['aggregations', 'process', 'file-download-agg',
-                '--update-bookmark'],
-        obj=script_info)
-    assert result
+    with patch("invenio_stats.aggregations.datetime", mock_date(2018, 2, 15)):
+        result = runner.invoke(
+            stats,
+            ["aggregations", "process", "file-download-agg", "--update-bookmark"],
+            obj=script_info,
+        )
+        assert result.exit_code == 0
 
-    es.indices.refresh(index='test-*')
+    current_search.flush_and_refresh(index="*")
+    assert agg_alias.count() == 46
+    assert (
+        search_obj.index("stats-bookmarks").count() == 2
+    )  # This time there are two, since we had two different dates
+    assert search_obj.index("stats-file-download-2018-01").count() == 31
+    assert search_obj.index("stats-file-download-2018-02").count() == 15
 
 
-# def _aggregations_delete(aggregation_types=None, start_date=None, end_date=None):
-# .tox/c1/bin/pytest --cov=invenio_stats tests/test_cli.py::test_aggregations_delete -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
-@pytest.mark.parametrize('aggregated_file_download_events',
-                         [dict(file_number=1,
-                               event_number=1,
-                               robot_event_number=0,
-                               start_date=datetime.date(2018, 1, 1),
-                               end_date=datetime.date(2018, 1, 31))],
-                         indirect=['aggregated_file_download_events'])
-def test_aggregations_delete(script_info, event_queues, es, aggregated_file_download_events):
-    search = Search(using=es)
+@pytest.mark.parametrize(
+    "aggregated_events",
+    [
+        {
+            "file_number": 1,
+            "event_number": 1,
+            "robot_event_number": 0,
+            "start_date": datetime.date(2018, 1, 1),
+            "end_date": datetime.date(2018, 1, 31),
+        }
+    ],
+    indirect=["aggregated_events"],
+)
+def test_aggregations_delete(
+    script_info, event_queues, search_clear, aggregated_events
+):
+    """Test "aggregations process" CLI command."""
+    search_obj = dsl.Search(using=search_clear)
     runner = CliRunner()
 
-    es.indices.refresh(index='test-*')
-    agg_alias = search.index('stats-file-download')
+    current_search.flush_and_refresh(index="*")
+    agg_alias = search_obj.index("stats-file-download")
+    assert agg_alias.count() == 31
+    assert (
+        search_obj.index("stats-bookmarks").count() == 1
+    )  # There is a single bookmark per run
+    assert search_obj.index("stats-file-download-2018-01").count() == 31
 
     result = runner.invoke(
-        stats, ['aggregations', 'delete', 'file-download-agg',
-                '--start-date=2018-01-01', '--end-date=2018-01-10', '--yes'],
-        obj=script_info)
-    assert result
+        stats,
+        [
+            "aggregations",
+            "delete",
+            "file-download-agg",
+            "--start-date=2018-01-01",
+            "--end-date=2018-01-10",
+            "--yes",
+        ],
+        obj=script_info,
+    )
+    assert result.exit_code == 0
 
-    es.indices.refresh(index='test-*')
-    agg_alias = search.index('stats-file-download')
+    current_search.flush_and_refresh(index="*")
+    agg_alias = search_obj.index("stats-file-download")
+
+    assert agg_alias.count() == 21
+    assert search_obj.index("stats-bookmarks").count() == 1
+    assert search_obj.index("stats-file-download-2018-01").count() == 21
 
     # Delete all aggregations
     result = runner.invoke(
-        stats, ['aggregations', 'delete', '--yes'],
-        obj=script_info)
-    assert result
+        stats, ["aggregations", "delete", "file-download-agg", "--yes"], obj=script_info
+    )
+    assert result.exit_code == 0
 
-    es.indices.refresh(index='test-*')
-    agg_alias = search.index('stats-file-download')
+    current_search.flush_and_refresh(index="*")
+    agg_alias = search_obj.index("stats-file-download")
+    assert agg_alias.count() == 0
+    assert search_obj.index("stats-file-download-2018-01").count() == 0
 
 
-# def _aggregations_list_bookmarks(aggregation_types=None, start_date=None, end_date=None, limit=None):
-# .tox/c1/bin/pytest --cov=invenio_stats tests/test_cli.py::test_aggregations_list_bookmarks -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
-@pytest.mark.parametrize('aggregated_file_download_events',
-                         [dict(file_number=1,
-                               event_number=1,
-                               robot_event_number=0,
-                               start_date=datetime.date(2018, 1, 1),
-                               end_date=datetime.date(2018, 1, 31))],
-                         indirect=['aggregated_file_download_events'])
-def test_aggregations_list_bookmarks(script_info, event_queues, es,
-                                     aggregated_file_download_events):
+@pytest.mark.parametrize(
+    "aggregated_events",
+    [
+        {
+            "file_number": 1,
+            "event_number": 1,
+            "robot_event_number": 0,
+            "start_date": datetime.date(2018, 1, 1),
+            "end_date": datetime.date(2018, 1, 31),
+        }
+    ],
+    indirect=["aggregated_events"],
+)
+def test_aggregations_list_bookmarks(
+    script_info, event_queues, search_clear, aggregated_events
+):
     """Test "aggregations list-bookmarks" CLI command."""
-    search = Search(using=es)
+    search_obj = dsl.Search(using=search_clear)
     runner = CliRunner()
 
-    es.indices.refresh(index='test-*')
-    agg_alias = search.index('stats-file-download')
+    current_search.flush_and_refresh(index="*")
+    agg_alias = search_obj.index("stats-file-download")
+    assert agg_alias.count() == 31
+    assert search_obj.index("stats-bookmarks").count() == 1
+    assert search_obj.index("stats-file-download-2018-01").count() == 31
+
+    bookmarks = [b.date for b in search_obj.index("stats-bookmarks").scan()]
 
     result = runner.invoke(
-        stats, ['aggregations', 'list-bookmarks', 'file-download-agg'],
-        obj=script_info)
-    assert result
-
-# def _aggregations_delete_index(aggregation_types=None, bookmark=False, start_date=None, end_date=None, force=False, verbose=False
-# def _aggregations_restore(aggregation_types=None, bookmark=False, start_date=None, end_date=None, force=False, verbose=False):
-# .tox/c1/bin/pytest --cov=invenio_stats tests/test_cli.py::test_aggregations_deleteindex_restore -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
-def test_aggregations_deleteindex_restore(app, script_info, event_queues, es):
-    search = Search(using=es)
-    runner = CliRunner()
+        stats,
+        ["aggregations", "list-bookmarks", "file-download-agg", "--limit", "31"],
+        obj=script_info,
+    )
+    assert result.exit_code == 0
+    assert all(b in result.output for b in bookmarks)
 
     result = runner.invoke(
-        stats, ['aggregations', 'delete-index', 'file-download-agg', '--start-date=2018-01-01', '--end-date=2018-01-10', '--force', '--verbose', '--yes-i-know'],
-        obj=script_info)
-    assert result
-
-    result = runner.invoke(
-        stats, ['aggregations', 'restore', 'file-download-agg', '--start-date=2018-01-01', '--end-date=2018-01-10', '--force', '--verbose'],
-        obj=script_info)
-    assert result
-
-
-# def _partition_create(year, month):
-# .tox/c1/bin/pytest --cov=invenio_stats tests/test_cli.py::test_partition_create -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
-def test_partition_create(db, script_info, event_queues, es):
-    search = Search(using=es)
-    runner = CliRunner()
-
-    with patch("invenio_stats.cli.get_stats_events_partition_tables",return_value=['stats_events_202201', 'stats_events_202202']):
-        with patch("invenio_stats.cli.make_stats_events_partition_table",return_value='stats_events_202201'):
-            result = runner.invoke(
-                stats, ['partition', 'create', '2022', '1'],
-                obj=script_info)
-            assert result
-
-            result = runner.invoke(
-                stats, ['partition', 'create', '2022'],
-                obj=script_info)
-            assert result
-
-            result = runner.invoke(
-                stats, ['partition', 'create', '20220', '1'],
-                obj=script_info)
-            assert result
-
-        with patch("invenio_stats.cli.make_stats_events_partition_table",return_value='stats_events_202203'):
-            result = runner.invoke(
-                stats, ['partition', 'create', '2022', '3'],
-                obj=script_info)
-            assert result
+        stats, ["aggregations", "list-bookmarks", "file-download-agg"], obj=script_info
+    )
+    assert result.exit_code == 0
+    assert all(b in result.output for b in sorted(bookmarks)[-5:])

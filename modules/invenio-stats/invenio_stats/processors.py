@@ -1,31 +1,28 @@
 # -*- coding: utf-8 -*-
 #
 # This file is part of Invenio.
-# Copyright (C) 2017-2018 CERN.
+# Copyright (C) 2017-2019 CERN.
+# Copyright (C)      2022 TU Wien.
 #
 # Invenio is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
 
 """Events indexer."""
 
-from __future__ import absolute_import, print_function
-
 import hashlib
-from itertools import tee
+from datetime import datetime
 from time import mktime
 
-import arrow
-import elasticsearch
 from counter_robots import is_machine, is_robot
 from dateutil import parser
 from flask import current_app
+from invenio_base.utils import obj_or_import_string
 from invenio_search import current_search_client
+from invenio_search.engine import search
+from invenio_search.utils import prefix_index
 from pytz import utc
-from weko_admin.api import is_restricted_user
-from weko_admin.utils import get_redis_cache, reset_redis_cache, is_exists_key_in_redis
 
-from .models import StatsEvents
-from .utils import get_anonymization_salt, get_geoip, obj_or_import_string
+from .utils import get_anonymization_salt, get_geoip
 
 
 def anonymize_user(doc):
@@ -50,64 +47,44 @@ def anonymize_user(doc):
     address as a ISO 3166-1 alpha-2 two-letter country code (e.g. "CH" for
     Switzerland).
     """
-    ip = doc.pop('ip_address', None)
+    ip = doc.pop("ip_address", None)
     if ip:
-        doc.update({'country': get_geoip(ip)})
+        doc.update({"country": get_geoip(ip)})
 
-    user_id = doc.pop('user_id', '')
-    session_id = doc.pop('session_id', '')
-    user_agent = doc.pop('user_agent', '')
+    user_id = doc.pop("user_id", "")
+    session_id = doc.pop("session_id", "")
+    user_agent = doc.pop("user_agent", "")
 
     # A 'User Session' is defined as activity by a user in a period of
     # one hour. timeslice represents the hour of the day in which
     # the event has been generated and together with user info it determines
     # the 'User Session'
-    timestamp = arrow.get(doc.get('timestamp'))
-    timeslice = timestamp.strftime('%Y%m%d%H')
+    timestamp = parser.parse(doc.get("timestamp"))
+    timeslice = timestamp.strftime("%Y%m%d%H")
     salt = get_anonymization_salt(timestamp)
 
-    visitor_id = hashlib.sha224(salt.encode('utf-8'))
-    # TODO: include random salt here, that changes once a day.
-    # m.update(random_salt)
+    visitor_id = hashlib.sha224(salt.encode("utf-8"))
+    unique_session_id = hashlib.sha224(salt.encode("utf-8"))
+
     if user_id:
-        visitor_id.update(user_id.encode('utf-8'))
+        visitor_id.update(user_id.encode("utf-8"))
+        sid = "{}|{}".format(user_id, timeslice)
+        unique_session_id.update(sid.encode("utf-8"))
     elif session_id:
-        visitor_id.update(session_id.encode('utf-8'))
+        visitor_id.update(session_id.encode("utf-8"))
+        sid = "{}|{}".format(session_id, timeslice)
+        unique_session_id.update(sid.encode("utf-8"))
     elif ip and user_agent:
-        vid = '{}|{}|{}'.format(ip, user_agent, timeslice)
-        visitor_id.update(vid.encode('utf-8'))
-    else:
-        # TODO: add random data?
-        pass
+        vsid = "{}|{}|{}".format(ip, user_agent, timeslice)
+        visitor_id.update(vsid.encode("utf-8"))
+        unique_session_id.update(vsid.encode("utf-8"))
 
-    unique_session_id = hashlib.sha224(salt.encode('utf-8'))
-    if user_id:
-        sid = '{}|{}'.format(user_id, timeslice)
-        unique_session_id.update(sid.encode('utf-8'))
-    elif session_id:
-        sid = '{}|{}'.format(session_id, timeslice)
-        unique_session_id.update(sid.encode('utf-8'))
-    elif ip and user_agent:
-        sid = '{}|{}|{}'.format(ip, user_agent, timeslice)
-        unique_session_id.update(sid.encode('utf-8'))
-
-    doc.update(dict(
-        visitor_id=visitor_id.hexdigest(),
-        unique_session_id=unique_session_id.hexdigest()
-    ))
-
-    return doc
-
-
-def flag_restricted(doc):
-    """Mark restricted access."""
-    doc['is_restricted'] = False
-    if 'ip_address' in doc and 'user_agent' in doc:
-        user_data = {
-            'ip_address': doc['ip_address'],
-            'user_agent': doc['user_agent']
+    doc.update(
+        {
+            "visitor_id": visitor_id.hexdigest(),
+            "unique_session_id": unique_session_id.hexdigest(),
         }
-        doc['is_restricted'] = is_restricted_user(user_data)
+    )
     return doc
 
 
@@ -121,7 +98,7 @@ def flag_robots(doc):
     into robots and machines by `the Make Data Count project
     <https://github.com/CDLUC3/Make-Data-Count/tree/master/user-agents>`_.
     """
-    doc['is_robot'] = 'user_agent' in doc and is_robot(doc['user_agent'])
+    doc["is_robot"] = "user_agent" in doc and is_robot(doc["user_agent"])
     return doc
 
 
@@ -136,18 +113,19 @@ def flag_machines(doc):
     <https://github.com/CDLUC3/Make-Data-Count/tree/master/user-agents>`_.
 
     """
-    doc['is_machine'] = 'user_agent' in doc and is_machine(doc['user_agent'])
+    doc["is_machine"] = "user_agent" in doc and is_machine(doc["user_agent"])
     return doc
 
 
 def hash_id(iso_timestamp, msg):
-    """Generate event id, optimized for ES."""
-    return '{0}-{1}'.format(iso_timestamp,
-                            hashlib.sha1(
-                                msg.get('unique_id').encode('utf-8')
-                                + str(msg.get('visitor_id')).
-                                encode('utf-8')).
-                            hexdigest())
+    """Generate event id, optimized for the search engine."""
+    return "{0}-{1}".format(
+        iso_timestamp,
+        hashlib.sha1(
+            msg.get("unique_id").encode("utf-8")
+            + str(msg.get("visitor_id")).encode("utf-8")
+        ).hexdigest(),
+    )
 
 
 class EventsIndexer(object):
@@ -159,15 +137,22 @@ class EventsIndexer(object):
     default_preprocessors = [flag_robots, anonymize_user]
     """Default preprocessors ran on every event."""
 
-    def __init__(self, queue, prefix='events', suffix='%Y-%m-%d', client=None,
-                 preprocessors=None, double_click_window=10):
+    def __init__(
+        self,
+        queue,
+        prefix="events",
+        suffix="%Y-%m",
+        client=None,
+        preprocessors=None,
+        double_click_window=10,
+    ):
         """Initialize indexer.
 
-        :param prefix: prefix appended to elasticsearch indices' name.
-        :param suffix: suffix appended to elasticsearch indices' name.
+        :param prefix: prefix appended to search indices' name.
+        :param suffix: suffix appended to search indices' name.
         :param double_click_window: time window during which similar events are
             deduplicated (counted as one occurence).
-        :param client: elasticsearch client.
+        :param client: search client.
         :param preprocessors: a list of functions which are called on every
             event before it is indexed. Each function should return the
             processed event. If it returns None, the event is filtered and
@@ -175,16 +160,15 @@ class EventsIndexer(object):
         """
         self.queue = queue
         self.client = client or current_search_client
-        self.doctype = queue.routing_key
-        self.search_index_prefix = current_app.config['SEARCH_INDEX_PREFIX'] \
-            .strip('-')
-        self.index = '{0}-{1}-{2}'.format(self.search_index_prefix, prefix,
-                                          self.queue.routing_key)
+        self.index = prefix_index("{0}-{1}".format(prefix, self.queue.routing_key))
         self.suffix = suffix
+
         # load the preprocessors
-        self.preprocessors = [
-            obj_or_import_string(preproc) for preproc in preprocessors
-        ] if preprocessors is not None else self.default_preprocessors
+        self.preprocessors = (
+            [obj_or_import_string(preproc) for preproc in preprocessors]
+            if preprocessors is not None
+            else self.default_preprocessors
+        )
         self.double_click_window = double_click_window
 
     def actionsiter(self):
@@ -197,48 +181,32 @@ class EventsIndexer(object):
                         break
                 if msg is None:
                     continue
-                
-                # msg:
-                # {'timestamp': '2022-07-28T05:06:38.082518', 'record_id': '1857c219-6ff1-45c0-8e3c-85e1fb15305c', 'record_name': 'ja_conference paperITEM00000010(public_open_access_open_access_simple)', 'record_index_list': [{'index_id': '1658073625012', 'index_name': 'IndexB', 'index_name_en': 'IndexB'}, {'index_id': '1658883231990', 'index_name': 'IndexA', 'index_name_en': 'IndexA'}], 'pid_type': 'recid', 'pid_value': '10', 'referrer': 'https://localhost:8443/?page=1&size=20&sort=controlnumber', 'cur_user_id': 'guest', 'remote_addr': '10.0.2.2', 'site_license_flag': False, 'site_license_name': '', 'is_restricted': False, 'is_robot': False, 'country': None, 'visitor_id': '7d9fad5b86c69dce8f011e041be8852f2ab8a41ad8c46c290c7c82ce', 'unique_session_id': '7d9fad5b86c69dce8f011e041be8852f2ab8a41ad8c46c290c7c82ce', 'unique_id': '033103b8-2793-3d95-8c8f-d06abfda7ce4', 'hostname': '_gateway'}
-                # suffix: %Y
-                # double_click_window: 30
-                suffix = arrow.get(msg.get('timestamp')).strftime(self.suffix)
-                ts = parser.parse(msg.get('timestamp'))
-                
-                # Truncate timestamp to keep only seconds. This is to improve
-                # elasticsearch performances.
+
+                ts = parser.parse(msg.get("timestamp"))
+                suffix = ts.strftime(self.suffix)
+
+                # Truncate timestamp to keep only seconds.
+                # This is to improve search engine performances.
                 ts = ts.replace(microsecond=0)
-                
-                msg['timestamp'] = ts.isoformat()
-                # apply timestamp windowing in order to group events too close
-                # in time
+                msg["timestamp"] = ts.isoformat()
+                msg["updated_timestamp"] = datetime.utcnow().isoformat()
+                # apply timestamp windowing in order to group events too close in time
                 if self.double_click_window > 0:
                     timestamp = mktime(utc.localize(ts).utctimetuple())
                     ts = ts.fromtimestamp(
-                        timestamp // self.double_click_window
-                        * self.double_click_window
+                        timestamp // self.double_click_window * self.double_click_window
                     )
-
-                rtn_data = dict(
-                    _id=hash_id(ts.isoformat(), msg),
-                    _op_type='index',
-                    _index='{0}'.format(self.index),
-                    _type=self.doctype,
-                    _source=msg,
-                )
-                if current_app.config['STATS_WEKO_DB_BACKUP_EVENTS']:
-                    # Save stats event into Database.
-                    StatsEvents.save(rtn_data, True)
-
-                yield rtn_data
+                yield {
+                    "_id": hash_id(ts.isoformat(), msg),
+                    "_op_type": "index",
+                    "_index": "{0}-{1}".format(self.index, suffix),
+                    "_source": msg,
+                }
             except Exception:
-                current_app.logger.exception(u'Error while processing event')
+                current_app.logger.exception("Error while processing event")
 
     def run(self):
         """Process events queue."""
-        return elasticsearch.helpers.bulk(
-            self.client,
-            self.actionsiter(),
-            stats_only=True,
-            chunk_size=50
+        return search.helpers.bulk(
+            self.client, self.actionsiter(), stats_only=True, chunk_size=50
         )
