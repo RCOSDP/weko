@@ -1,4 +1,4 @@
-from weko_records.models import ItemType,ItemTypeMapping
+from weko_records.models import ItemType, ItemTypeMapping
 from weko_records.api import Mapping, ItemTypes
 from sqlalchemy.sql import func
 from sqlalchemy.orm.attributes import flag_modified
@@ -37,10 +37,14 @@ def main():
                     .first()
                 )
                 if item_type_mapping is not None:
-                    print("processing... item type id({}) mapping id({})".format(_id,item_type_mapping.id))
+                    print(
+                        "processing... item type id({}) mapping id({})".format(
+                            _id, item_type_mapping.id
+                        )
+                    )
                     mapping = pickle.loads(pickle.dumps(item_type_mapping.mapping, -1))
                     for key in list(mapping.keys()):
-                        if "jpcoar_mapping" in mapping[key]: 
+                        if "jpcoar_mapping" in mapping[key]:
                             if "catalog" in mapping[key]["jpcoar_mapping"]:
                                 continue
                             elif "datasetSeries" in mapping[key]["jpcoar_mapping"]:
@@ -64,22 +68,28 @@ def main():
                             elif "=" in str(mapping[key]["jpcoar_mapping"]):
                                 continue
                             elif "jpcoar_v1_mapping" in mapping[key]:
-                                mapping[key]["jpcoar_mapping"] =  item_type_mapping.mapping[key][
-                                    "jpcoar_v1_mapping"
-                                ]
-                            else:
-                                mapping[key]["jpcoar_v1_mapping"] = {}
+                                mapping[key][
+                                    "jpcoar_mapping"
+                                ] = item_type_mapping.mapping[key]["jpcoar_v1_mapping"]
                         else:
                             if "jpcoar_v1_mapping" in mapping[key]:
-                                mapping[key]["jpcoar_mapping"] = item_type_mapping.mapping[key][
-                                    "jpcoar_v1_mapping"
-                                ]
+                                mapping[key][
+                                    "jpcoar_mapping"
+                                ] = item_type_mapping.mapping[key]["jpcoar_v1_mapping"]
                             else:
-                                mapping[key]["jpcoar_v1_mapping"] = {}
-                                mapping[key]["jpcoar_mapping"] = {}
-                        
+                                mapping[key] = {
+                                    "display_lang_type": "",
+                                    "jpcoar_v1_mapping": "",
+                                    "jpcoar_mapping": "",
+                                    "junii2_mapping": "",
+                                    "lido_mapping": "",
+                                    "lom_mapping": "",
+                                    "oai_dc_mapping": "",
+                                    "spase_mapping": "",
+                                }
+
                     item_type_mapping.mapping = pickle.loads(pickle.dumps(mapping, -1))
-                    flag_modified(item_type_mapping,"mapping")
+                    flag_modified(item_type_mapping, "mapping")
                     db.session.merge(item_type_mapping)
                 else:
                     print("No mapping: {}".format(_id))
