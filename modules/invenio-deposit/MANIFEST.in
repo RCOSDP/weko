@@ -32,3 +32,7 @@ recursive-include invenio_deposit *.js
 recursive-include invenio_deposit *.json
 recursive-include invenio_deposit *.po *.pot *.mo
 recursive-include tests *.py
+
+# added by check-manifest
+include *.properties
+include tox.ini

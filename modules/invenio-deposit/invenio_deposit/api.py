@@ -8,6 +8,7 @@
 
 """Deposit API."""
 
+import inspect
 import uuid
 from contextlib import contextmanager
 from copy import deepcopy
@@ -191,7 +192,7 @@ class Deposit(Record):
 
     @classmethod
     @index
-    def create(cls, data, id_=None):
+    def create(cls, data, id_=None, recid=None):
         """Create a deposit.
 
         Initialize the follow information inside the deposit:
@@ -216,10 +217,15 @@ class Deposit(Record):
         ))
         if '_deposit' not in data:
             id_ = id_ or uuid.uuid4()
-            cls.deposit_minter(id_, data)
+            if not recid:
+                cls.deposit_minter(id_, data)
+            else:
+                cls.deposit_minter(id_, data, recid=recid)
 
         data['_deposit'].setdefault('owners', list())
-        if current_user and current_user.is_authenticated:
+        if not current_user:
+            data['_deposit']['owners'].append(1)
+        elif current_user.is_authenticated:
             creator_id = int(current_user.get_id())
 
             if creator_id not in data['_deposit']['owners']:
@@ -324,7 +330,12 @@ class Deposit(Record):
         self['_deposit']['status'] = 'published'
 
         if self['_deposit'].get('pid') is None:  # First publishing
-            self._publish_new(id_=id_)
+            # self._publish_new(id_=id_)
+            self['_deposit']['pid'] = {
+                'type': pid.pid_type,
+                'value': pid.pid_value,
+                'revision_id': 0,
+            }
         else:  # Update after edit
             record = self._publish_edited()
             record.commit()

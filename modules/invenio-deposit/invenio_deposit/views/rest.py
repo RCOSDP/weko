@@ -62,6 +62,16 @@ def create_blueprint(endpoints):
     )
     create_error_handlers(blueprint)
 
+    @blueprint.teardown_request
+    def dbsession_clean(exception):
+        current_app.logger.debug("invenio_deposit dbsession_clean: {}".format(exception))
+        if exception is None:
+            try:
+                db.session.commit()
+            except:
+                db.session.rollback()
+        db.session.remove()
+
     for endpoint, options in (endpoints or {}).items():
         options = deepcopy(options)
 
@@ -257,19 +267,25 @@ class DepositFilesResource(ContentNegotiatedMethodView):
         :param pid: Pid object (from url).
         :param record: Record object resolved from the pid.
         """
-        # load the file
-        uploaded_file = request.files['file']
-        # file name
-        key = secure_filename(
-            request.form.get('name') or uploaded_file.filename
-        )
-        # check if already exists a file with this name
-        if key in record.files:
-            raise FileAlreadyExists()
-        # add it to the deposit
-        record.files[key] = uploaded_file.stream
-        record.commit()
-        db.session.commit()
+        try:
+            # load the file
+            uploaded_file = request.files['file']
+            # file name
+            key = secure_filename(
+                request.form.get('name') or uploaded_file.filename
+            )
+            # check if already exists a file with this name
+            if key in record.files:
+                raise FileAlreadyExists()
+            # add it to the deposit
+            record.files[key] = uploaded_file.stream
+            record.commit()
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(e)
+            raise WrongFile()
+
         return self.make_response(
             obj=record.files[key].obj, pid=pid, record=record, status=201)
 
@@ -306,9 +322,15 @@ class DepositFilesResource(ContentNegotiatedMethodView):
         except KeyError:
             raise WrongFile()
 
-        record.files.sort_by(*ids)
-        record.commit()
-        db.session.commit()
+        try:
+            record.files.sort_by(*ids)
+            record.commit()
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(e)
+            raise WrongFile()
+
         return self.make_response(obj=record.files, pid=pid, record=record)
 
 
@@ -382,8 +404,13 @@ class DepositFileResource(ContentNegotiatedMethodView):
             obj = record.files.rename(str(key), new_key_secure)
         except KeyError:
             abort(404)
-        record.commit()
-        db.session.commit()
+        try:
+            record.commit()
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(e)
+            raise WrongFile()
         return self.make_response(obj=obj, pid=pid, record=record)
 
     @require_api_auth()
@@ -405,5 +432,9 @@ class DepositFileResource(ContentNegotiatedMethodView):
             db.session.commit()
             return make_response('', 204)
         except KeyError:
+            db.session.rollback()
             abort(404, 'The specified object does not exist or has already '
                   'been deleted.')
+        except Exception as e:
+            db.session.rollback()
+            abort(404, 'Delete fail.')

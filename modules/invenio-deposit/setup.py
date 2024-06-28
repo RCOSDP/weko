@@ -27,6 +27,7 @@ tests_require = [
     'pytest-pep8>=1.0.6',
     'pytest>=3.0.4',
     'reportlab>=3.3.0',
+    'responses',
 ]
 
 invenio_search_version = '1.2.0'
@@ -61,7 +62,7 @@ for name, reqs in extras_require.items():
 
 setup_requires = [
     'Babel>=1.3',
-    'pytest-runner>=2.6.2',
+    'pytest-runner>=3.0.0,<5',
 ]
 
 install_requires = [

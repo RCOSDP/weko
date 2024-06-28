@@ -178,7 +178,7 @@ DEPOSIT_UI_JSTEMPLATE_ERROR = \
 """Template for <invenio-records-error> defined by `invenio-records-js`."""
 
 DEPOSIT_UI_JSTEMPLATE_FORM = \
-    'node_modules/invenio-records-js/dist/templates/form.html'
+    'templates/invenio_deposit/form.html'
 """Template for <invenio-records-form> defined by `invenio-records-js`."""
 
 DEPOSIT_UI_SEARCH_INDEX = 'deposits'
@@ -190,7 +190,7 @@ DEPOSIT_DEFAULT_STORAGE_CLASS = 'S'
 DEPOSIT_REGISTER_SIGNALS = True
 """Enable the signals registration."""
 
-DEPOSIT_FORM_TEMPLATES_BASE = 'node_modules/invenio-records-js/dist/templates'
+DEPOSIT_FORM_TEMPLATES_BASE = 'templates/invenio_deposit/decorators'
 """Angular Schema Form temmplates location."""
 
 DEPOSIT_FORM_TEMPLATES = {
