@@ -273,8 +273,6 @@ class RecordIndexer(object):
                         current_app.logger.error(e)
                         current_app.logger.error(traceback.format_exc())
                         break
-                    finally:
-                        consumer.close()
                 
         count = (success,fail)
         click.secho("count(success, error): {}".format(count),fg='green')              
