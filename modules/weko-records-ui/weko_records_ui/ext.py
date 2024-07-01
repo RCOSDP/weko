@@ -23,6 +23,7 @@
 from . import config
 from weko_admin import config as admin_config
 
+
 class WekoRecordsUI(object):
     """weko-records-ui extension."""
 
@@ -101,6 +102,7 @@ class WekoRecordsREST(object):
         for k in dir(admin_config):
             if k.startswith('WEKO_ADMIN_'):
                 app.config.setdefault(k, getattr(admin_config, k))
+
 
 class WekoRecordsCitesREST(object):
     """weko-record-ui-rest extension."""

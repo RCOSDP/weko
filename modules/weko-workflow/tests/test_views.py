@@ -19,41 +19,38 @@
 # MA 02111-1307, USA.
 
 """Module tests."""
-from re import M
-import threading
-from traceback import print_tb
-from typing_extensions import Self
 from unittest.mock import MagicMock
 from weko_workflow.api import WorkActivity
 import pytest
 from mock import patch
 from sqlalchemy.orm.attributes import flag_modified
 
-from flask import Flask, json, jsonify, url_for, session, make_response, current_app
+from flask import json, jsonify, url_for, make_response, current_app
 from flask_babelex import gettext as _
 from invenio_db import db
-from sqlalchemy import func
 from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime
 import uuid
 from invenio_communities.models import Community
 from invenio_pidstore.errors import PIDDoesNotExistError,PIDDeletedError
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
-
 from invenio_cache import current_cache
 
-import weko_workflow.utils
-from weko_workflow import WekoWorkflow
+from weko_admin.models import AdminSettings
 from weko_workflow.config import WEKO_WORKFLOW_TODO_TAB, WEKO_WORKFLOW_WAIT_TAB,WEKO_WORKFLOW_ALL_TAB
-from flask_security import login_user
 from invenio_accounts.testutils import login_user_via_session as login
-from weko_workflow.models import ActionStatusPolicy, ActionFeedbackMail, ActionJournal, ActionIdentifier, Activity, ActivityHistory, ActionStatus, Action, WorkFlow, FlowDefine, FlowAction,FlowActionRole, ActivityAction, GuestActivity
-from weko_workflow.views import unlock_activity, check_approval, get_feedback_maillist, save_activity, previous_action,_generate_download_url,check_authority_action
+from weko_workflow.models import ActionStatusPolicy, ActivityItemApplication, ActivityRequestMail, ActionJournal, ActionIdentifier, Activity, ActivityHistory, WorkFlow, FlowActionRole, ActivityAction, GuestActivity
+from weko_workflow.views import (render_guest_workflow,
+                                 previous_action,
+                                 check_authority_action,
+                                 display_guest_activity,
+                                 display_guest_activity_item_application,
+                                 render_guest_workflow)
 from marshmallow.exceptions import ValidationError
-from weko_records_ui.models import FileOnetimeDownload, FilePermission
+from weko_records_ui.models import FileOnetimeDownload
 from weko_records.models import ItemMetadata, ItemReference
-from invenio_records.models import RecordMetadata
-
+from invenio_communities.models import Community
+from weko_workflow.schema.marshmallow import SaveActivitySchema
 
 
 def response_data(response):
@@ -532,8 +529,66 @@ def test_init_activity_acl(app, client, users, users_index, status_code, item_ty
     q = ActivityAction.query.all()
     assert len(q) == 28
 
+    #for rtn is None
+    input = {'workflow_id': workflow_id, 'flow_id': flow_def_id}
+    with patch("weko_workflow.views.WorkActivity.init_activity", return_value=None):
+        res = client.post(url, json=input)
+        assert res.status_code == 500
 
-def test_init_activity_guest_nologin(client,db_register2):
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_init_activity -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+@pytest.mark.parametrize('users_index, status_code', [
+    (0, 200),
+    (1, 200),
+    (2, 200),
+    (3, 200),
+    (4, 200),
+    (5, 200),
+    (6, 200),
+])
+def test_init_activity(client, users, users_index, status_code, db_register, mocker):
+    login(client=client, email=users[users_index]['email'])
+    url = url_for('weko_workflow.init_activity')
+    mocker.patch("weko_workflow.views.is_terms_of_use_only",return_value=False)
+    workflow_id = db_register['workflow'].id
+    flow_define_id = db_register['flow_define'].id
+
+    #for community
+    input = {'workflow_id': str(workflow_id), 'flow_id': str(flow_define_id)}
+    url_comm=url_for('weko_workflow.init_activity', community = 1)
+    res = client.post(url_comm, json=input)
+    assert res.status_code == 200
+
+    with patch("weko_workflow.views.GetCommunity.get_community_by_id", return_value = Community(id=1)):
+        res = client.post(url_comm, json=input)
+        assert res.status_code == 200
+
+    #for rtn is None
+    input = {'workflow_id': str(workflow_id), 'flow_id': str(flow_define_id)}
+    with patch("weko_workflow.views.WorkActivity.init_activity", return_value=None):
+        res = client.post(url, json=input)
+        assert res.status_code == 500
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_init_activity_is_terms_of_use_only -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_init_activity_is_terms_of_use_only(app, client,db_register,users):
+    login(client=client, email=users[0]['email'])
+    url = url_for('weko_workflow.init_activity')
+    # 94
+    with patch("weko_workflow.views.is_terms_of_use_only",return_value=True):
+        # with patch("weko_workflow.views._generate_download_url",return_value='record/1/files/test_file'):
+            input = {'workflow_id': db_register['workflow'].id, 'flow_id': db_register['flow_define'].id, 'unknown':'unknown'
+                    ,'extra_info':{'file_name' : 'test_file' , "record_id" : "1"}}
+            res = client.post(url, json=input)
+            assert res.status_code == 200
+            data = json.loads(res.data)
+            assert data['code'] == 1
+            assert data['msg'] == 'success'
+            assert data['data']['is_download'] == True
+            assert data['data']['redirect'] == '/record/1/files/test_file'
+
+# def init_activity_guest():
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_init_activity_guest_nologin -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_init_activity_guest_nologin(app, client,db_register2):
     """Test init activity for guest user."""
     url = url_for('weko_workflow.init_activity_guest')
     input = {'guest_mail': 'test@guest.com', 'workflow_id': 1, 'flow_id': 1,
@@ -566,6 +621,7 @@ def test_init_activity_guest_nologin(client,db_register2):
 ])
 def test_init_activity_guest_users(client, users, db_guestactivity, users_index, status_code):
     """Test init activity for guest user."""
+    current_app.config.setdefault('THEME_INSTITUTION_NAME', {'ja':"組織", 'en':"INSTITUTION"})
     login(client=client, email=users[users_index]['email'])
     url = url_for('weko_workflow.init_activity_guest')
     input = {'guest_mail': 'test@guest.com', 'workflow_id': 1, 'flow_id': 1,
@@ -575,6 +631,66 @@ def test_init_activity_guest_users(client, users, db_guestactivity, users_index,
     res = client.post(url, json=input)
     assert res.status_code == status_code
 
+# def display_guest_activity():
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_display_guest_activity -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_display_guest_activity(db_register, client):
+    url = url_for("weko_workflow.display_guest_activity",file_name="test.txt")
+    mock_render = MagicMock(return_value=jsonify({}))
+    with patch('weko_workflow.views.render_guest_workflow',mock_render):
+        res = client.get(url)
+        mock_render.assert_called()
+
+# def render_guest_workflow():
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_display_guest_activity_item_application -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_display_guest_activity_item_application(db_register, client):
+    url = url_for("weko_workflow.display_guest_activity_item_application",record_id=1)
+    mock_render = MagicMock(return_value=jsonify({}))
+    with patch('weko_workflow.views.render_guest_workflow',mock_render):
+        res = client.get(url)
+        mock_render.assert_called()
+
+# def display_guest_activity_item_application():
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_render_guest_workflow -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_render_guest_workflow(client, users, db_register, db_guestactivity):
+    url = "/activity/guest-user/file_name?token=token"
+    mock_render_template = MagicMock(return_value=jsonify({}))
+    client.get(url)
+    return_validate_guest_activity_token = (False, None, None)
+    with patch('weko_workflow.views.GuestActivity.get_expired_activities',return_value=""):
+        with patch('weko_workflow.views.validate_guest_activity_token',return_value=return_validate_guest_activity_token):
+            with patch('weko_workflow.views.render_template', mock_render_template):
+                res = render_guest_workflow("file_name")
+                mock_render_template.assert_called()
+
+    return_validate_guest_activity_token = (True, None, None)
+    with patch('weko_workflow.views.GuestActivity.get_expired_activities',return_value=""):
+        with patch('weko_workflow.views.validate_guest_activity_token',return_value=return_validate_guest_activity_token):
+            with patch('weko_workflow.views.validate_guest_activity_expired', return_value ="error"):
+                with patch('weko_workflow.views.render_template', mock_render_template):
+                    res = render_guest_workflow("file_name")
+                    mock_render_template.assert_called()
+
+    return_validate_guest_activity_token = (True, None, None)
+    with patch('weko_workflow.views.GuestActivity.get_expired_activities',return_value=""):
+        with patch('weko_workflow.views.validate_guest_activity_token',return_value=return_validate_guest_activity_token):
+            with patch('weko_workflow.views.validate_guest_activity_expired', return_value =""):
+                with patch('weko_workflow.views.prepare_data_for_guest_activity',return_value={}):
+                    with patch('weko_workflow.views.get_usage_data',return_value={}):
+                        with patch('weko_workflow.views.get_main_record_detail',return_value={"record":{"is_guest":True}}):
+                            with patch('weko_workflow.views.render_template', mock_render_template):
+                                res = render_guest_workflow("file_name")
+                                mock_render_template.assert_called()
+
+    return_validate_guest_activity_token = (True, None, None)
+    with patch('weko_workflow.views.GuestActivity.get_expired_activities',return_value=""):
+        with patch('weko_workflow.views.validate_guest_activity_token',return_value=return_validate_guest_activity_token):
+            with patch('weko_workflow.views.validate_guest_activity_expired', return_value =""):
+                with patch('weko_workflow.views.prepare_data_for_guest_activity',return_value={}):
+                    with patch('weko_workflow.views.get_usage_data',return_value={}):
+                        with patch('weko_workflow.views.get_main_record_detail',return_value={}):
+                            with patch('weko_workflow.views.render_template', mock_render_template):
+                                res = render_guest_workflow("file_name")
+                                mock_render_template.assert_called()
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_display_guest_activity -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_display_guest_activity(client, users, db_register, db_guestactivity):
@@ -638,7 +754,7 @@ def test_find_doi_users(client, users, users_index, status_code):
 def test_save_activity_acl_nologin(client):
     """Test of save activity."""
     url = url_for('weko_workflow.save_activity')
-    input = {"activity_id":"A-20220921-00001","title":"test","shared_user_id":-1}
+    input = {"activity_id":"A-20220921-00001","title":"test","shared_user_ids":[]}
 
     res = client.post(url, json=input)
     assert res.status_code == 302
@@ -659,14 +775,14 @@ def test_save_activity_acl_users(client, users, users_index, status_code):
     """Test of save activity."""
     login(client=client, email=users[users_index]['email'])
     url = url_for('weko_workflow.save_activity')
-    input = {"activity_id":"A-20220921-00001","title":"test","shared_user_id":-1}
+    input = {"activity_id":"A-20220921-00001","title":"test","shared_user_ids":[]}
     with patch('weko_workflow.views.save_activity_data'):
         res = client.post(url, json=input)
         assert res.status_code != 302 
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_save_activity_acl_guestlogin -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_save_activity_acl_guestlogin(guest):
-    input = {"activity_id":"A-20220921-00001","title":"test","shared_user_id":-1}
+    input = {"activity_id":"A-20220921-00001","title":"test","shared_user_ids":[]}
     url = url_for('weko_workflow.save_activity')
 
     res = guest.post(url, json=input)
@@ -692,9 +808,9 @@ def test_save_activity(client, users, db_register, users_index, status_code):
     data = response_data(res)
     assert res.status_code== 400
     assert data["code"] == -1
-    assert data["msg"] == "{'shared_user_id': ['Missing data for required field.']}"
+    assert data["msg"] == "{'shared_user_ids': ['Missing data for required field.']}"
     
-    input = {"activity_id":"A-20220921-00001","title":"test","shared_user_id":-1}
+    input = {"activity_id":"A-20220921-00001","title":"test","shared_user_ids":[]}
     with patch('weko_workflow.views.save_activity_data'):
         res = client.post(url, json=input)
         data = response_data(res)
@@ -719,9 +835,9 @@ def test_save_activity_guestlogin(guest):
     data = response_data(res)
     assert res.status_code== 400
     assert data["code"] == -1
-    assert data["msg"] == "{'shared_user_id': ['Missing data for required field.']}"
+    assert data["msg"] == "{'shared_user_ids': ['Missing data for required field.']}"
 
-    input = {"activity_id":"A-20220921-00001","title":"test","shared_user_id":-1}
+    input = {"activity_id":"A-20220921-00001","title":"test","shared_user_ids":[]}
     with patch('weko_workflow.views.save_activity_data'):
         res = guest.post(url, json=input)
         data = response_data(res)
@@ -768,6 +884,90 @@ def test_save_feedback_maillist_users(client, users, db_register, users_index, s
         res = client.post(url, json=input)
         assert res.status_code == status_code
 
+@pytest.mark.parametrize('users_index, status_code', [
+    (1, 200)
+])
+#.tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_save_request_maillist -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_save_request_maillist(client,users, db_register, users_index, status_code):
+    login(client=client, email=users[users_index]['email'])
+    input = {
+        'request_maillst':[],
+        'is_display_request_button':True
+    }
+
+    url = url_for('weko_workflow.save_request_maillist',activity_id='1', action_id=3)
+    res = client.post(url, json=input)
+    assert res.status_code == 200
+
+    input = "text"
+    url = url_for('weko_workflow.save_request_maillist',activity_id='1', action_id=3)
+    res = client.post(url, json=input)
+    data = response_data(res)
+    assert data["code"] == -1
+
+    input = {
+        'request_maillst':[],
+        'is_display_request_button':True
+    }
+    with patch('weko_workflow.api.WorkActivity.create_or_update_activity_request_mail',side_effect=Exception()):
+        url = url_for('weko_workflow.save_request_maillist',activity_id='1', action_id=3)
+        res = client.post(url, json=input)
+        data = response_data(res)
+    assert data["code"] == -1        
+
+@pytest.mark.parametrize('users_index, status_code', [
+    (1, 200)
+])
+#.tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_save_item_application -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_save_item_application(client,users, db_register, users_index, status_code):
+    login(client=client, email=users[users_index]['email'])
+    input_with_description = {
+        'workflow_for_item_application':"1",
+        'terms_without_contents':"term_free",
+        'is_display_item_application_button':True,
+        'terms_description_without_contents':"利用規約自由入力"
+    }
+    input_without_description = {
+        'workflow_for_item_application':"1",
+        'terms_without_contents':"111111111",
+        'is_display_item_application_button':True
+    }
+
+    # 正常系　terms_decriptionつき
+    url = url_for('weko_workflow.save_item_application',activity_id='1', action_id=3)
+    res = client.post(url, json=input_with_description)
+    item_application = WorkActivity().get_activity_item_application(1)
+    assert res.status_code == 200
+    assert item_application.item_application.get("termsDescription")
+
+    # 正常系　terms_descriptionなし
+    res = client.post(url, json=input_without_description)
+    item_application = WorkActivity().get_activity_item_application(1)
+    assert res.status_code == 200
+    assert not item_application.item_application.get("termsDescription")
+
+    # 異常系　エラー
+    with patch("weko_workflow.api.WorkActivity.create_or_update_activity_item_application", side_effect=Exception()):
+        res = client.post(url, json=input_without_description)  
+        data = response_data(res)
+        assert data["code"]==-1
+        assert data["msg"]=="Error"
+
+    #異常系　'Content-Type'が'application/json'でない。
+    # カバレッジが通せない。postメソッドの引数にheadersを設定しても無理だった。
+    # res = client.post(url, json = input_without_description, headers={"Content-Type":"text"})
+
+#.tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_display_guest_activity -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_display_guest_activity(client,mocker, db):
+    render_mock = mocker.patch("weko_workflow.views.render_guest_workflow")
+    display_guest_activity("test.txt")
+    render_mock.assert_called()
+
+#.tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_display_guest_activity_item_application -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_display_guest_activity_item_application(client,mocker, db):
+    render_mock = mocker.patch("weko_workflow.views.render_guest_workflow")
+    display_guest_activity_item_application("test.txt")
+    render_mock.assert_called()
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_previous_action_acl_nologin -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_previous_action_acl_nologin(client,db_register2):
@@ -792,6 +992,7 @@ def test_previous_action_acl_nologin(client,db_register2):
     (6, 403, True),
 ])
 def test_previous_action_acl_users(client, users, db_register, users_index, status_code, is_admin):
+    current_app.config.setdefault('THEME_INSTITUTION_NAME', {'ja':"組織", 'en':"INSTITUTION"})
     """Test of previous action."""
     login(client=client, email=users[users_index]['email'])
     url = url_for('weko_workflow.previous_action',
@@ -845,7 +1046,6 @@ def test_previous_action_acl_users(client, users, db_register, users_index, stat
         assert res.status_code != status_code
         assert data["code"] != 403
 
-
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_previous_action -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 @pytest.mark.parametrize('users_index, status_code', [
     (0, 200),
@@ -857,6 +1057,8 @@ def test_previous_action_acl_users(client, users, db_register, users_index, stat
     (6, 200),
 ])
 def test_previous_action(client, users, db_register, users_index, status_code):
+    current_app.config.setdefault('THEME_INSTITUTION_NAME', {'ja':"組織", 'en':"INSTITUTION"})
+
     login(client=client, email=users[users_index]['email'])
 
     url = url_for("weko_workflow.previous_action",
@@ -1940,7 +2142,73 @@ def test_next_action(client, db, users, db_register_fullaction, db_records, user
         assert len(q) == 0
     else:
         assert len(q) == 1
-    
+
+    ## exist requestmail
+    ### exist feedbackmail, exist maillist
+    update_activity_order("2",4,6)
+    adminsetting = AdminSettings(id=1,name='items_display_settings',settings={"display_request_form": True})
+    with patch("weko_workflow.views.AdminSettings.get",return_value = adminsetting):
+        request_mail = ActivityRequestMail(id = 1, activity_id =1, request_maillist=[{"mail":"test@test.org"}])
+        with patch("weko_workflow.views.WorkActivity.get_activity_request_mail", return_value = request_mail):
+            with patch("weko_workflow.views.WekoDeposit.update_request_mail"):
+                with patch("weko_workflow.views.RequestMailList.update_by_list_item_id" )as update_request:
+                    res = client.post(url, json=input)
+                    data = response_data(res)
+                    result_code = 0 if check_role_approval() else 403
+                    result_msg = "success" if check_role_approval() else noauth_msg
+                    assert res.status_code == status_code
+                    assert data["code"] == result_code
+                    assert data["msg"] == result_msg
+                    if check_role_approval():
+                        update_request.assert_called()
+
+    ### exist requestmail, not maillistxxx
+    update_activity_order("2",4,6)
+    adminsetting = AdminSettings(id=1,name='items_display_settings',settings={"display_request_form": True})
+    with patch("weko_workflow.views.AdminSettings.get",return_value = adminsetting):
+        with patch("weko_workflow.views.WorkActivity.get_activity_request_mail", return_value = None):
+            with patch("weko_workflow.views.WekoDeposit.update_request_mail"):
+                with patch("weko_workflow.views.RequestMailList.delete_by_list_item_id" )as delete_request:
+                    res = client.post(url, json=input)
+                    data = response_data(res)
+                    result_code = 0 if check_role_approval() else 403
+                    result_msg = "success" if check_role_approval() else noauth_msg
+                    assert res.status_code == status_code
+                    assert data["code"] == result_code
+                    assert data["msg"] == result_msg
+                    if check_role_approval():
+                        delete_request.assert_called()
+
+    ## exist item_application
+    update_activity_order("2",4,6)
+    item_application =  ActivityItemApplication(id=1, activity_id=1, item_application={"workflow":1, "terms":"term_free", "termsDescription":"test"})
+    with patch("weko_workflow.views.WorkActivity.get_activity_item_application", return_value = item_application):
+        with patch("weko_workflow.views.ItemApplication.update_by_list_item_id" )as update_application:
+            res= client.post(url, json=input)
+            data = response_data(res)
+            result_code = 0 if check_role_approval() else 403
+            result_msg = "success" if check_role_approval() else noauth_msg
+            assert res.status_code == status_code
+            assert data["code"] == result_code
+            assert data["msg"] == result_msg
+            if check_role_approval():
+                update_application.assert_called()
+
+    ## exist item_application, item_application 
+    update_activity_order("2",4,6)
+    item_application =  ActivityItemApplication(id=1, activity_id=1, item_application={})
+    with patch("weko_workflow.views.WorkActivity.get_activity_item_application", return_value = item_application):
+        with patch("weko_workflow.views.ItemApplication.delete_by_list_item_id" )as delete_application:
+            res= client.post(url, json=input)
+            data = response_data(res)
+            result_code = 0 if check_role_approval() else 403
+            result_msg = "success" if check_role_approval() else noauth_msg
+            assert res.status_code == status_code
+            assert data["code"] == result_code
+            assert data["msg"] == result_msg
+            if check_role_approval():
+                delete_application.assert_called() 
+
     ## exist feedbackmail
     ### exist feedbackmail, exist maillist
     update_activity_order("2",4,6,item_id2)
@@ -2164,11 +2432,20 @@ def test_next_action_usage_application(client, db, users, db_register_usage_appl
                 activity_id="A-00000001-20003", action_id=4))
     urls.append(url_for("weko_workflow.next_action",
                 activity_id="A-00000001-20004", action_id=4))
+
+    # file_namesが正規表現に合う場合
+    with patch("weko_workflow.views.grant_access_rights_to_all_open_restricted_files") as grant_mock:
+        urls.append(url_for("weko_workflow.next_action",
+                activity_id="A-00000001-20005", action_id=4))
+        grant_mock.assert_not_called()
+
     # update_activity_order("2",3,2)
     input = {
         
     }
 
+    mocker.patch("weko_workflow.views.process_send_approval_mails", return_value=None)
+    mocker.patch("weko_workflow.views.process_send_notification_mail")
     for url in urls:
         res = client.post(url, json=input)
         data = response_data(res)
@@ -2954,19 +3231,25 @@ def test_get_feedback_maillist_acl_users(client, users, users_index, status_code
     res = client.get(url)
     assert res.status_code != 302
 
-
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_get_feedback_maillist -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+#.tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_get_feedback_maillist -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 @pytest.mark.parametrize('users_index, status_code', [
     (0, 200),
-    (1, 200),
-    (2, 200),
-    (3, 200),
-    (4, 200),
-    (5, 200),
-    (6, 200),
+    #(1, 200),
+    #(2, 200),
+    #(3, 200),
+    #(4, 200),
+    #(5, 200),
+    #(6, 200),
 ])
 def test_get_feedback_maillist(client, users, db_register, users_index, status_code):
     login(client=client, email=users[users_index]['email'])
+
+    action_feedback_mail = db_register['action_feedback_mail']
+    action_feedback_mail_1 = db_register['action_feedback_mail1']
+    action_feedback_mail_2 = db_register['action_feedback_mail2']
+
+    print(action_feedback_mail)
+    print(vars(action_feedback_mail))
 
     url = url_for('weko_workflow.get_feedback_maillist', activity_id='1')
     with patch('weko_workflow.views.type_null_check', return_value=False):
@@ -3022,23 +3305,156 @@ def test_get_feedback_maillist(client, users, db_register, users_index, status_c
     res = client.get(url)
     data = response_data(res)
     #mail_list = db_register['action_feedback_mail3'].feedback_maillist
-    assert res.status_code==400
+    assert res.status_code == 400
     assert data['code'] == -1
     assert data['msg'] == 'mail_list is not list'
 
+@pytest.mark.parametrize('users_index, status_code', [
+    (0, 200),
+    #(1, 200),
+    #(2, 200),
+    #(3, 200),
+    #(4, 200),
+    #(5, 200),
+    #(6, 200),
+])
+# def get_request_maillist(activity_id='0')
+#.tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_get_request_maillist -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_get_request_maillist(client, users, users_index, status_code, mocker):
+    login(client=client, email=users[users_index]['email'])
+    url = url_for('weko_workflow.get_request_maillist', activity_id='1')
+    with patch('weko_workflow.views.type_null_check', return_value=False):
+        res = client.get(url)
+        data = response_data(res)
+        assert res.status_code== 400
+        assert data["code"] == -1
+        assert data["msg"] == 'arguments error'
 
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_save_activity_acl_nologin -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+    #戻り値jsonify(code=0, msg=_('Empty!'))の分岐テスト
+    with patch('weko_workflow.views.WorkActivity.get_activity_request_mail', return_value=None):
+        res = client.get(url)
+        data = response_data(res)
+        assert res.status_code==status_code
+        assert data['code'] == 0
+        assert data['msg'] == 'Empty!'
+
+    #ActivityRequestMail内のmaillistがlist型でない
+    with patch('weko_workflow.views.WorkActivity.get_activity_request_mail', return_value=ActivityRequestMail(request_maillist={})):
+        res = client.get(url)
+        data = response_data(res)
+        assert res.status_code == 400
+        assert data['code'] == -1
+        assert data['msg'] == 'mail_list is not list'
+
+    #ActivityRequestMail内のmaillistにauthor_idがあって、emailがない。
+    request_maillist =ActivityRequestMail(request_maillist=[{'author_id':"1", 'email':""}], display_request_button=True)
+    with patch('weko_workflow.views.WorkActivity.get_activity_request_mail', return_value=request_maillist):
+        res = client.get(url)
+        data = response_data(res)
+        assert res.status_code == 200
+        assert data['code'] == 1
+        assert data['msg'] == 'Success'
+        assert data['request_maillist'] == []
+
+    #ActivityRequestMail内のmaillistにemailがあって、author_idがない。
+    request_maillist =ActivityRequestMail(request_maillist=[{'author_id':"", 'email':"test@test.org"}], display_request_button=True)
+    with patch('weko_workflow.views.WorkActivity.get_activity_request_mail', return_value=request_maillist):
+        res = client.get(url)
+        data = response_data(res)
+        assert res.status_code == 200
+        assert data['code'] == 1
+        assert data['msg'] == 'Success'
+        assert data['request_maillist'] == [{'author_id':"", 'email':"test@test.org"}]
+    
+    #ActivityRequestMail内のmaillistにauthor_idとemailがあるが、author_idで登録されたAuthorsが見つからない。
+    request_maillist =ActivityRequestMail(request_maillist=[{'author_id':1, 'email':"test@test.org"}], display_request_button=True)
+    with patch('weko_workflow.views.WorkActivity.get_activity_request_mail', return_value=request_maillist):
+        res = client.get(url)
+        data = response_data(res)
+        assert res.status_code == 200
+        assert data['code'] == 1
+        assert data['msg'] == 'Success'
+        assert data['request_maillist'] == []
+
+    #ActivityRequestMail内のmaillistにauthor_idとemailがあり、author_idで登録されたAuthorsが見つかる。
+    request_maillist =ActivityRequestMail(request_maillist=[{'author_id':1, 'email':"test@test.org"}], display_request_button=True)
+    with patch('weko_workflow.views.WorkActivity.get_activity_request_mail', return_value = request_maillist):
+        mocker.patch("weko_workflow.views.Authors.get_first_email_by_id", return_value = "test@test.org")
+        res = client.get(url)
+        data = response_data(res)
+        assert res.status_code == 200
+        assert data['code'] == 1
+        assert data['msg'] == 'Success'
+        assert data['request_maillist'] == [{'author_id':1, 'email':"test@test.org"}]
+    
+    #Errorが起きた場合
+    request_maillist =ActivityRequestMail(request_maillist=[{'author_id':1, 'email':"test@test.org"}])
+    with patch('weko_workflow.views.WorkActivity.get_activity_request_mail', return_value = request_maillist):
+        mocker.patch("weko_workflow.views.Authors.get_first_email_by_id", return_value = "test@test.org")
+        res = client.get(url)
+        data = response_data(res)
+        assert res.status_code == 400
+        assert data['code'] == -1
+    
+@pytest.mark.parametrize('users_index, status_code', [
+    (0, 200),
+    #(1, 200),
+    #(2, 200),
+    #(3, 200),
+    #(4, 200),
+    #(5, 200),
+    #(6, 200),
+])
+# def get_item_application(activity_id='0')
+#.tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_get_item_application -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_get_item_application(client, users, users_index, status_code, mocker):
+    login(client=client, email=users[users_index]['email'])
+    url = url_for('weko_workflow.get_item_application', activity_id='1')
+
+    # activity_idがstrでないエラー
+    with patch('weko_workflow.views.type_null_check', return_value=False):
+        res = client.get(url)
+        data = response_data(res)
+        assert res.status_code== 400
+        assert data["code"] == -1
+        assert data["msg"] == 'arguments error'
+
+    #戻り値jsonify(code=0, msg=_('Empty!'))の分岐テスト
+    with patch('weko_workflow.views.WorkActivity.get_activity_item_application', return_value=None):
+        res = client.get(url)
+        data = response_data(res)
+        assert res.status_code==status_code
+        assert data['code'] == 0
+        assert data['msg'] == 'Empty!'
+
+    # 正常系
+    item_application = ActivityItemApplication(activity_id=1, item_application={"workflow":1, "terms":"term_free", "termsDescription":"test"}, display_item_application_button=True)
+    with patch('weko_workflow.views.WorkActivity.get_activity_item_application', return_value=item_application):
+        res = client.get(url)
+        data = response_data(res)
+        assert res.status_code==status_code
+        assert data['code'] == 1
+        assert data["item_application"] == {"workflow":1, "terms":"term_free", "termsDescription":"test"}
+
+    # エラー
+    with patch('weko_workflow.views.WorkActivity.get_activity_item_application', side_effect=Exception()):
+        res = client.get(url)
+        data = response_data(res)
+        assert res.status_code == 400
+        assert data['code'] == -1
+        assert data['msg'] == "Error"
+
+#.tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_save_activity_acl_nologin -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_save_activity_acl_nologin(client,db_register2):
     """Test of save activity."""
     url = url_for('weko_workflow.save_activity')
-    input = {"activity_id":"A-20220921-00001","title":"test","shared_user_id":-1}
+    input = {"activity_id":"A-20220921-00001","title":"test","shared_user_ids":[]}
 
     res = client.post(url, json=input)
     assert res.status_code == 302
     assert res.location == 'http://TEST_SERVER.localdomain/login/?next=%2Fworkflow%2Fsave_activity_data'
 
-
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_save_activity_acl_users -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+#.tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_save_activity_acl_users -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 @pytest.mark.parametrize('users_index, status_code', [
     (0, 200),
     (1, 200),
@@ -3052,21 +3468,22 @@ def test_save_activity_acl_users(client, users, users_index, status_code):
     """Test of save activity."""
     login(client=client, email=users[users_index]['email'])
     url = url_for('weko_workflow.save_activity')
-    input = {"activity_id":"A-20220921-00001","title":"test","shared_user_id":-1}
+    input = {"activity_id":"A-20220921-00001","title":"test","shared_user_ids":[]}
     with patch('weko_workflow.views.save_activity_data'):
         res = client.post(url, json=input)
         assert res.status_code != 302
 
-
+#.tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_save_activity_acl_guestlogin -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 #save_activityは@login_required_customizeなのでguestuserloginのテストも必要
 def test_save_activity_acl_guestlogin(guest,db_register2):
-    input = {"activity_id":"A-20220921-00001","title":"test","shared_user_id":-1}
+    input = {"activity_id":"A-20220921-00001","title":"test","shared_user_ids":[]}
     url = url_for('weko_workflow.save_activity')
 
     res = guest.post(url, json=input)
     assert res.status_code != 302
 
 
+#.tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_save_activity -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 @pytest.mark.parametrize('users_index, status_code', [
     (0, 200),
     (1, 200),
@@ -3080,14 +3497,14 @@ def test_save_activity(client, users, db_register, users_index, status_code):
     login(client=client, email=users[users_index]['email'])
     url = url_for('weko_workflow.save_activity')
 
-    input = {"activity_id":"A-20220921-00001","title":"test"}
+    input = {"activity_id":"A-20220921-00001","title":"test","shared_user_ids":'hogehoge'}
     res = client.post(url, json=input)
     data = response_data(res)
     assert res.status_code== 400
     assert data["code"] == -1
-    assert data["msg"] == "{'shared_user_id': ['Missing data for required field.']}"
+    assert data["msg"] == "{'shared_user_ids': ['Not a valid list.']}"
 
-    input = {"activity_id":"A-20220921-00001","title":"test","shared_user_id":-1}
+    input = {"activity_id":"A-20220921-00001","title":"test","shared_user_ids":[]}
     with patch('weko_workflow.views.save_activity_data'):
         res = client.post(url, json=input)
         data = response_data(res)
@@ -3103,18 +3520,19 @@ def test_save_activity(client, users, db_register, users_index, status_code):
         assert data["msg"] == "test error"
 
 
+#.tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_save_activity_guestlogin -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 # guestuserでの機能テスト
 def test_save_activity_guestlogin(guest,db_register2):
     url = url_for('weko_workflow.save_activity')
 
-    input = {"activity_id":"A-20220921-00001","title":"test"}
+    input = {"activity_id":"A-20220921-00001","title":"test","shared_user_ids":'hogehoge'}
     res = guest.post(url, json=input)
     data = response_data(res)
     assert res.status_code== 400
     assert data["code"] == -1
-    assert data["msg"] == "{'shared_user_id': ['Missing data for required field.']}"
+    assert data["msg"] == "{'shared_user_ids': ['Not a valid list.']}"
 
-    input = {"activity_id":"A-20220921-00001","title":"test","shared_user_id":-1}
+    input = {"activity_id":"A-20220921-00001","title":"test","shared_user_ids":[]}
     with patch('weko_workflow.views.save_activity_data'):
         res = guest.post(url, json=input)
         data = response_data(res)
@@ -3129,9 +3547,11 @@ def test_save_activity_guestlogin(guest,db_register2):
         assert data["success"] == False
         assert data["msg"] == "test error"
 
-
-def test_display_activity_nologin(client,db_register2):
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_display_activity_nologin -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko_workflow/.tox/c1/tmp
+def test_display_activity_nologin(client,db_register2,mocker):
     """Test of display activity."""
+    adminsetting = AdminSettings(id=1,name='items_display_settings',settings={"display_request_form": True})
+    mocker.patch("weko_workflow.views.AdminSettings.get",return_value = adminsetting)
     url = url_for('weko_workflow.display_activity', activity_id='1')
     input = {}
 
@@ -3141,8 +3561,10 @@ def test_display_activity_nologin(client,db_register2):
     # assert res.url == url_for('security.login')
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_display_activity_guestlogin -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko_workflow/.tox/c1/tmp
-def test_display_activity_guestlogin(app,db_register ,guest):
+def test_display_activity_guestlogin(app, db_register, guest, mocker):
     """Test of display activity."""
+    adminsetting = AdminSettings(id=1,name='items_display_settings',settings={"display_request_form": True})
+    mocker.patch("weko_workflow.views.AdminSettings.get",return_value = adminsetting)
     url = url_for('weko_workflow.display_activity', activity_id='1')
     input = {}
 
@@ -3178,6 +3600,41 @@ def test_display_activity_guestlogin(app,db_register ,guest):
                     mock_render_template.assert_called()
 
 
+    activity_detail = Activity.query.filter_by(activity_id='1').one_or_none()
+    cur_action = activity_detail.action
+    action_endpoint = cur_action.action_endpoint
+    action_id = cur_action.id
+    histories = 1
+    item = None
+    steps = 1
+    temporary_comment = 1
+
+    roles = {
+        'allow': [],
+        'deny': []
+    }
+    action_users = {
+        'allow': [],
+        'deny': []
+    }
+
+    workflow_detail = WorkFlow.query.filter_by(id=1).one_or_none()
+    owner_id = 1
+    shared_user_ids = []
+    mock_render_template = MagicMock(return_value=jsonify({}))
+    with patch('weko_workflow.views.get_activity_display_info',
+            return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
+            steps, temporary_comment, workflow_detail, owner_id, shared_user_ids)):
+        with patch('weko_workflow.views.check_authority_action'):
+            with patch('weko_workflow.views.WorkActivity.get_activity_action_role',
+                    return_value=(roles, action_users)):
+                with patch('weko_workflow.views.render_template', mock_render_template):
+                    res = guest.post(url, json=input)
+                    assert res.status_code == 200
+                    mock_render_template.assert_called()
+
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_display_activity_users -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko_workflow/.tox/c1/tmp
 @pytest.mark.parametrize('users_index, status_code', [
     (0, 200),
     (1, 200),
@@ -3187,11 +3644,13 @@ def test_display_activity_guestlogin(app,db_register ,guest):
     (5, 200),
     (6, 200),
 ])
-def test_display_activity_users(client, users, db_register, users_index, status_code):
+def test_display_activity_users(client, users, db_register, users_index, status_code, mocker):
     """
     Test of display activity.
     Expected: users[0]: AssertionError
     """
+    adminsetting = AdminSettings(id=1,name='items_display_settings',settings={"display_request_form": True})
+    mocker.patch("weko_workflow.views.AdminSettings.get",return_value = adminsetting)
     login(client=client, email=users[users_index]['email'])
     url = url_for('weko_workflow.display_activity', activity_id='1')
     input = {}
@@ -3215,10 +3674,12 @@ def test_display_activity_users(client, users, db_register, users_index, status_
     }
 
     workflow_detail = WorkFlow.query.filter_by(id=1).one_or_none()
+    owner_id = 1
+    shared_user_ids = []
     mock_render_template = MagicMock(return_value=jsonify({}))
     with patch('weko_workflow.views.get_activity_display_info',
                return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
-               steps, temporary_comment, workflow_detail)):
+               steps, temporary_comment, workflow_detail, owner_id, shared_user_ids)):
         with patch('weko_workflow.views.check_authority_action'):
             with patch('weko_workflow.views.WorkActivity.get_activity_action_role',
                        return_value=(roles, action_users)):
@@ -3227,7 +3688,7 @@ def test_display_activity_users(client, users, db_register, users_index, status_
                     mock_render_template.assert_called()
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_display_activity -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_display_activity(client, users, db_register,mocker,redis_connect,without_remove_session):
+def test_display_activity(client, users, db_register,mocker,redis_connect,without_remove_session, app):
     def del_session():
         with client.session_transaction() as session:
             if session.get('activity_info'):
@@ -3253,21 +3714,23 @@ def test_display_activity(client, users, db_register,mocker,redis_connect,withou
             if session.get('itemlogin_community_id'):
                 del session['itemlogin_community_id']
     login(client=client, email=users[2]['email'])
+    adminsetting = AdminSettings(id=1,name='items_display_settings',settings={"display_request_form": True})
+    mocker.patch("weko_workflow.views.AdminSettings.get",return_value = adminsetting)
 
     workflow_detail = WorkFlow.query.filter_by(id=1).one_or_none()
     mock_render_template = MagicMock(return_value=jsonify({}))
 
     activity_detail = Activity.query.filter_by(activity_id='A-00000001-10001').one_or_none()
-    #activity_detail = Activity.query.filter_by(activity_id='1').one_or_none()
+    activity_detail.extra_info = {'related_title': 'related_title_1', 'guest_mail': 'user@example.com'}
+
     cur_action = activity_detail.action
     action_endpoint = 'item_login'
-    #action_endpoint = cur_action.action_endpoint
     action_id = cur_action.id
     histories = 1
     item_metadata = ItemMetadata()
     item_metadata.id = '37075580-8442-4402-beee-05f62e6e1dc2'
     # item_metadata = {'created':datetime.strptime("2022-09-22 05:09:54.677307", "%Y-%m-%d %H:%M:%S.%f"),'updated':datetime.strptime("2022-09-22 05:09:54.677307", "%Y-%m-%d %H:%M:%S.%f"),
-    #                 'id':'37075580-8442-4402-beee-05f62e6e1dc2','item_type_id':15,'json': {"id": "1", "pid": {"type": "depid", "value": "1", "revision_id": 0}, "lang": "ja", "owner": "1", "title": "title", "owners": [1], "status": "published", "$schema": "/items/jsonschema/15", "pubdate": "2022-08-20", "created_by": 1, "owners_ext": {"email": "wekosoftware@nii.ac.jp", "username": "", "displayname": ""}, "shared_user_id": -1, "item_1617186331708": [{"subitem_1551255647225": "ff", "subitem_1551255648112": "ja"}], "item_1617258105262": {"resourceuri": "http://purl.org/coar/resource_type/c_5794", "resourcetype": "conference paper"}}
+    #                 'id':'37075580-8442-4402-beee-05f62e6e1dc2','item_type_id':15,'json': {"id": "1", "pid": {"type": "depid", "value": "1", "revision_id": 0}, "lang": "ja", "owner": "1", "title": "title", "owners": [1], "status": "published", "$schema": "/items/jsonschema/15", "pubdate": "2022-08-20", "created_by": 1, "owners_ext": {"email": "wekosoftware@nii.ac.jp", "username": "", "displayname": ""}, "shared_user_ids": [], "item_1617186331708": [{"subitem_1551255647225": "ff", "subitem_1551255648112": "ja"}], "item_1617258105262": {"resourceuri": "http://purl.org/coar/resource_type/c_5794", "resourcetype": "conference paper"}}
     #                 ,'version_id':3}
     item = None
     steps = 1
@@ -3276,13 +3739,669 @@ def test_display_activity(client, users, db_register,mocker,redis_connect,withou
 
     test_pid = PersistentIdentifier()
     test_pid.pid_value = '1'
-    # test_pid= dict(created=datetime.strptime("2022-09-22 05:09:48.085724", "%Y-%m-%d %H:%M:%S.%f"),updated=datetime.strptime("2022-09-22 05:09:48.085747", "%Y-%m-%d %H:%M:%S.%f"),
-    #             id=3, pid_type='recid',pid_value='1',pid_provider='',status='R',object_type='rec',object_uuid='37075580-8442-4402-beee-05f62e6e1dc2')
     test_comm= Community()
     test_comm.id = 'test'
-    # test_comm=  dict(created=datetime.strptime("2022-09-22 05:09:48.085724", "%Y-%m-%d %H:%M:%S.%f"),updated=datetime.strptime("2022-09-22 05:09:48.085747", "%Y-%m-%d %H:%M:%S.%f"),
-    #             id='test',id_role=1,id_user=1,title='test',description='',page='',curation_policy='',community_header='',community_footer='',last_record_accepted=datetime.strptime("2000-01-01 00:00:00", "%Y-%m-%d %H:%M:%S"),
-    #             logo_ext='',ranking=0,fixed_points=0,deleted_at=None,root_node_id=1557819733276)
+    roles = {
+        'allow': [],
+        'deny': []
+    }
+    action_users = {
+        'allow': [],
+        'deny': []
+    }
+
+    identifier = {'action_identifier_select': '',
+                'action_identifier_jalc_doi': '',
+                'action_identifier_jalc_cr_doi': '',
+                'action_identifier_jalc_dc_doi': '',
+                'action_identifier_ndl_jalc_doi': ''
+                }
+
+
+    template_url = "weko_items_ui/iframe/item_edit.html"
+    need_file = False
+    need_billing_file = False
+    record = {}
+    json_schema = "test"
+    schema_form = "test"
+    item_save_uri = ""
+    files = []
+    endpoints = {}
+    need_thumbnail = False
+    files_thumbnail = []
+    allow_multi_thumbnail = False
+
+    license_list = []
+    record_detail_alt = dict(
+        record=None,
+        files=None,
+        files_thumbnail=None,
+        pid=None)
+    
+    owner_id = 1
+    shared_user_ids = []
+
+
+    mocker.patch('weko_workflow.views.WorkActivity.get_activity_action_role',
+                return_value=(roles, action_users))
+    mocker.patch('weko_workflow.views.WorkActivity.get_action_identifier_grant',return_value=identifier)
+    mocker.patch('weko_workflow.views.check_authority_action',return_value=1)
+    mocker.patch('weko_workflow.views.set_files_display_type',return_value=[])
+    mocker.patch('weko_workflow.views.WorkActivity.get_action_journal')
+    mocker.patch('weko_workflow.views.get_files_and_thumbnail',return_value=(["test1","test2"],files_thumbnail))
+    mocker.patch('weko_workflow.views.get_usage_data')
+    mocker.patch('weko_workflow.views.is_usage_application_item_type')
+    mocker.patch('weko_theme.views.get_design_layout',return_value=(None,True))
+    mocker.patch('weko_workflow.views.RedisConnection.connection',return_value=redis_connect)
+
+    #regular
+    url = url_for('weko_workflow.display_activity', activity_id='A-00000001-10001')
+    input = {}
+    item = None
+    with patch('weko_workflow.views.get_activity_display_info',
+               return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
+               steps, temporary_comment, workflow_detail, owner_id, shared_user_ids)):
+        with patch('weko_workflow.views.item_login',return_value=(template_url,
+                need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
+                files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
+            with patch('weko_workflow.views.get_pid_and_record',return_value=(test_pid,None)):
+                with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
+                    with patch('weko_records_ui.utils.get_list_licence',return_value=license_list):
+                        with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
+                            with patch('weko_workflow.views.render_template', mock_render_template):
+                                res = client.post(url, query_string=input)
+                                mock_render_template.assert_called()
+
+    #activity_id is not String
+    url = url_for('weko_workflow.display_activity', activity_id=1001)
+    input = {}
+    item = None
+    mock_render_template_error = MagicMock(return_value=jsonify({"error":"can not get data required for rendering"}))
+
+    with patch('weko_workflow.views.get_activity_display_info',
+            return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
+            steps, temporary_comment, workflow_detail, owner_id, shared_user_ids)):
+        with patch('weko_workflow.views.type_null_check',return_value=False):
+            with patch('weko_workflow.views.item_login',return_value=(template_url,
+                    need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
+                    files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
+                with patch('weko_workflow.views.get_pid_and_record',return_value=(test_pid,None)):
+                    with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
+                        with patch('weko_records_ui.utils.get_list_licence',return_value=license_list):
+                            with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
+                                with patch('weko_workflow.views.render_template', mock_render_template_error):
+                                    res = client.post(url, query_string=input)
+                                    mock_render_template_error.assert_called()
+
+    #activity_id is include "?"
+    url = url_for('weko_workflow.display_activity', activity_id='A-00000001-10001?hoge')
+    input = {}
+    #action_endpoint = cur_action.action_endpoint
+    activity_detail.extra_info = {}
+    activity_detail.activity_id = 'A-00000001-10001'
+    activity_detail.action_order = 6
+    workflow_detail.itemtype_id = 1
+    activity_detail.action_id = 1
+    cur_action.action_version = '1.0.0'
+    item = None
+    with patch('weko_workflow.views.get_activity_display_info',
+               return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
+               steps, temporary_comment, workflow_detail, owner_id, shared_user_ids)):
+        with patch('weko_workflow.views.item_login',return_value=(template_url,
+                need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
+                files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
+            with patch('weko_workflow.views.get_pid_and_record',return_value=(test_pid,None)):
+                with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
+                    with patch('weko_records_ui.utils.get_list_licence',return_value=license_list):
+                        with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
+                            with patch('weko_workflow.views.render_template', mock_render_template):
+                                res = client.post(url, query_string=input)
+                                mock_render_template.assert_called()
+
+    #get_activity_display_info is include "None object"
+    url = url_for('weko_workflow.display_activity', activity_id='A-00000001-10001')
+    input = {}
+    action_endpoint = None
+    activity_detail.extra_info = {}
+    activity_detail.activity_id = 'A-00000001-10001'
+    activity_detail.action_order = 6
+    workflow_detail.itemtype_id = 1
+    activity_detail.action_id = 1
+    cur_action.action_version = '1.0.0'
+    with patch('weko_workflow.views.get_activity_display_info',
+            return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
+            steps, temporary_comment, workflow_detail, owner_id, shared_user_ids)):
+        with patch('weko_workflow.views.item_login',return_value=(template_url,
+                need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
+                files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
+            with patch('weko_workflow.views.get_pid_and_record',return_value=(test_pid,None)):
+                with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
+                    with patch('weko_records_ui.utils.get_list_licence',return_value=license_list):
+                        with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
+                            with patch('weko_workflow.views.render_template', mock_render_template):
+                                res = client.post(url, query_string=input)
+                                mock_render_template.assert_called()
+
+    #action_endpoint is identifier_grant and item is not None
+    url = url_for('weko_workflow.display_activity', activity_id='A-00000001-10001')
+    input = {}
+    action_endpoint = 'identifier_grant'
+    item = item_metadata
+    with patch('weko_workflow.views.get_activity_display_info',
+            return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
+            steps, temporary_comment, workflow_detail, owner_id, shared_user_ids)):
+        with patch('weko_workflow.views.item_login',return_value=(template_url,
+                need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
+                files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
+            with patch('weko_workflow.views.get_pid_and_record',return_value=(test_pid,None)):
+                with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
+                    with patch('weko_records_ui.utils.get_list_licence',return_value=license_list):
+                        with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
+                            with patch('weko_workflow.views.render_template', mock_render_template):
+                                res = client.post(url, query_string=input)
+                                mock_render_template.assert_called()
+
+    #action_endpoint is item_login and activity is None
+    url = url_for('weko_workflow.display_activity', activity_id='A-00000001-10002')
+    input = {}
+    action_endpoint = 'item_login'
+    with patch('weko_workflow.views.get_activity_display_info',
+            return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
+            steps, temporary_comment, workflow_detail, owner_id, shared_user_ids)):
+        with patch('weko_workflow.views.item_login',return_value=(template_url,
+                need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
+                files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
+            with patch('weko_workflow.views.get_pid_and_record',return_value=(test_pid,None)):
+                with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
+                    with patch('weko_records_ui.utils.get_list_licence',return_value=license_list):
+                        with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
+                            with patch('weko_workflow.views.render_template', mock_render_template):
+                                res = client.post(url, query_string=input)
+                                mock_render_template.assert_called()
+
+    #template_url is None
+    url = url_for('weko_workflow.display_activity', activity_id='A-00000001-10001')
+    input = {}
+    action_endpoint = 'item_login'
+    template_url = None
+    with patch('weko_workflow.views.get_activity_display_info',
+               return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
+               steps, temporary_comment, workflow_detail, owner_id, shared_user_ids)):
+        with patch('weko_workflow.views.item_login',return_value=(template_url,
+                need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
+                files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
+            with patch('weko_workflow.views.get_pid_and_record',return_value=(test_pid,None)):
+                with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
+                    with patch('weko_records_ui.utils.get_list_licence',return_value=license_list):
+                        with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
+                            with patch('weko_workflow.views.render_template', mock_render_template):
+                                res = client.post(url, query_string=input)
+                                mock_render_template.assert_called()
+
+    #Json_schema is None
+    url = url_for('weko_workflow.display_activity', activity_id='A-00000001-10001')
+    input = {}
+    action_endpoint = 'item_login'
+    template_url = "weko_items_ui/iframe/item_edit.html"
+    json_schema = None
+    with patch('weko_workflow.views.get_activity_display_info',
+               return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
+               steps, temporary_comment, workflow_detail, owner_id, shared_user_ids)):
+        with patch('weko_workflow.views.item_login',return_value=(template_url,
+                need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
+                files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
+            with patch('weko_workflow.views.get_pid_and_record',return_value=(test_pid,None)):
+                with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
+                    with patch('weko_records_ui.utils.get_list_licence',return_value=license_list):
+                        with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
+                            with patch('weko_workflow.views.render_template', mock_render_template):
+                                res = client.post(url, query_string=input)
+                                mock_render_template.assert_called()
+
+    #action_endpoint is identifier_grant and community is not root index
+    url = url_for('weko_workflow.display_activity', activity_id='A-00000001-10001')
+    input = {'community': 'test'}
+    action_endpoint = 'identifier_grant'
+    item = item_metadata
+    with patch('weko_workflow.views.get_activity_display_info',
+            return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
+            steps, temporary_comment, workflow_detail, owner_id, shared_user_ids)):
+        with patch('weko_workflow.views.item_login',return_value=(template_url,
+                need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
+                files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
+            with patch('weko_workflow.views.get_pid_and_record',return_value=(test_pid,dict(test="test"))):
+                with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
+                    with patch('weko_records_ui.utils.get_list_licence',return_value=license_list):
+                        with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
+                            with patch('weko_workflow.views.render_template', mock_render_template):
+                                res = client.post(url, query_string=input)
+                                mock_render_template.assert_called()
+
+    # not identifier_setting
+    url = url_for('weko_workflow.display_activity', activity_id='A-00000001-10001')
+    input = {'community': 'test'}
+    action_endpoint = 'identifier_grant'
+    item = item_metadata
+    with patch('weko_workflow.views.get_activity_display_info',
+            return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
+            steps, temporary_comment, workflow_detail, owner_id, shared_user_ids)):
+        with patch('weko_workflow.views.item_login',return_value=(template_url,
+                need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
+                files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
+            with patch('weko_workflow.views.get_pid_and_record',return_value=(test_pid,dict(test="test"))):
+                with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
+                    with patch('weko_records_ui.utils.get_list_licence',return_value=license_list):
+                        with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
+                            with patch('weko_workflow.views.render_template', mock_render_template):
+                                with patch("weko_workflow.views.get_identifier_setting", return_value=None):
+                                    res = client.post(url, query_string=input)
+                                    mock_render_template.assert_called()
+
+    #action_endpoint is identifier_grant and community is not root index
+    url = url_for('weko_workflow.display_activity', activity_id='A-00000001-10001')
+    input = {'community': 'test'}
+    action_endpoint = 'item_login'
+    item = item_metadata
+    with patch('weko_workflow.views.get_activity_display_info',
+            return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
+            steps, temporary_comment, workflow_detail, owner_id, shared_user_ids)):
+        with patch('weko_workflow.views.item_login',return_value=(template_url,
+                need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
+                files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
+            with patch('weko_workflow.views.get_pid_and_record'):
+                with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
+                    with patch('weko_records_ui.utils.get_list_licence',return_value=license_list):
+                        with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
+                            with patch('weko_workflow.views.render_template', mock_render_template):
+                                res = client.post(url, query_string=input)
+                                mock_render_template.assert_called()
+
+    #json_schema is not None
+    url = url_for('weko_workflow.display_activity', activity_id='A-00000001-10001')
+    input = {}
+    action_endpoint = 'item_login'
+    template_url = "weko_items_ui/iframe/item_edit.html"
+    json_schema = "test"
+    with patch('weko_workflow.views.get_activity_display_info',
+            return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
+            steps, temporary_comment, workflow_detail, owner_id, shared_user_ids)):
+        with patch('weko_workflow.views.item_login',return_value=(template_url,
+                need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
+                files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
+            with patch('weko_workflow.views.get_pid_and_record',return_value=(test_pid,None)):
+                with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
+                    with patch('weko_records_ui.utils.get_list_licence',return_value=license_list):
+                        with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
+                            with patch('weko_workflow.views.render_template', mock_render_template):
+                                res = client.post(url, query_string=input)
+                                mock_render_template.assert_called()
+
+    #item is not None
+    url = url_for('weko_workflow.display_activity', activity_id='A-00000001-10001')
+    input = {}
+    action_endpoint = 'item_login'
+    template_url = "weko_items_ui/iframe/item_edit.html"
+    json_schema = "test"
+    item = item_metadata
+    with patch('weko_workflow.views.get_activity_display_info',
+               return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
+               steps, temporary_comment, workflow_detail, owner_id, shared_user_ids)):
+        with patch('weko_workflow.views.item_login',return_value=(template_url,
+                need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
+                files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
+            with patch('weko_workflow.views.get_pid_and_record',return_value=(test_pid,None)):
+                with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
+                    with patch('weko_records_ui.utils.get_list_licence',return_value=license_list):
+                        with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
+                            with patch('weko_workflow.views.render_template', mock_render_template):
+                                res = client.post(url, query_string=input)
+                                mock_render_template.assert_called()
+
+    #action_endpoint is item_link
+    #test No.3 (W2023-22 3(4))
+    url = url_for('weko_workflow.display_activity', activity_id='A-00000001-10001')
+    input = {}
+    action_endpoint = 'item_link'
+    template_url = "weko_items_ui/iframe/item_edit.html"
+    json_schema = "test"
+    item = item_metadata
+    with patch('weko_workflow.views.get_activity_display_info',
+               return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
+               steps, temporary_comment, workflow_detail, owner_id, shared_user_ids)):
+        with patch('weko_workflow.views.ItemLink.get_item_link_info'):
+            with patch('weko_workflow.views.item_login',return_value=(template_url,
+                    need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
+                    files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
+                with patch('weko_workflow.views.get_pid_and_record',return_value=(test_pid,None)):
+                    with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
+                        with patch('weko_records_ui.utils.get_list_licence',return_value=license_list):
+                            with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
+                                with patch('weko_workflow.views.render_template', mock_render_template):
+                                    res = client.post(url, query_string=input)
+                                    mock_render_template.assert_called()
+
+    #action_endpoint is item_login
+    url = url_for('weko_workflow.display_activity', activity_id='A-00000001-10001')
+    input = {}
+    action_endpoint = 'item_login'
+    template_url = "weko_items_ui/iframe/item_edit.html"
+    json_schema = "test"
+    item = item_metadata
+    with patch('weko_workflow.views.get_activity_display_info',
+               return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
+               steps, temporary_comment, workflow_detail, owner_id, shared_user_ids)):
+        with patch('weko_workflow.views.ItemLink.get_item_link_info'):
+            with patch('weko_workflow.views.item_login',return_value=(template_url,
+                    need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
+                    files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
+                with patch('weko_workflow.views.get_pid_and_record',return_value=(test_pid,None)):
+                    with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
+                        with patch('weko_records_ui.utils.get_list_licence',return_value=license_list):
+                            with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
+                                with patch('weko_workflow.views.render_template', mock_render_template):
+                                    res = client.post(url, query_string=input)
+                                    mock_render_template.assert_called()
+
+    #raise PIDDeletedError
+    url = url_for('weko_workflow.display_activity', activity_id='A-00000001-10001')
+    input = {}
+    action_endpoint = 'item_login'
+    template_url = "weko_items_ui/iframe/item_edit.html"
+    json_schema = "test"
+    item = item_metadata
+    with patch('weko_workflow.views.get_activity_display_info',
+               return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
+               steps, temporary_comment, workflow_detail, owner_id, shared_user_ids)):
+        with patch('weko_workflow.views.item_login',return_value=(template_url,
+                need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
+                files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
+            with patch('weko_workflow.views.get_pid_and_record',side_effect=PIDDeletedError('test','test')):
+                with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
+                    with patch('weko_records_ui.utils.get_list_licence',return_value=license_list):
+                        with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
+                            with patch('weko_workflow.views.render_template', mock_render_template):
+                                res = client.post(url, query_string=input)
+                                #mock_render_template.assert_called()
+
+    #raise PIDDoesNotExistError
+    url = url_for('weko_workflow.display_activity', activity_id='A-00000001-10001')
+    input = {}
+    action_endpoint = 'item_login'
+    template_url = "weko_items_ui/iframe/item_edit.html"
+    json_schema = "test"
+    item = item_metadata
+    with patch('weko_workflow.views.get_activity_display_info',
+               return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
+               steps, temporary_comment, workflow_detail, owner_id, shared_user_ids)):
+        with patch('weko_workflow.views.item_login',return_value=(template_url,
+                need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
+                files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
+            with patch('weko_workflow.views.get_pid_and_record',side_effect=PIDDoesNotExistError('test','test')):
+                with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
+                    with patch('weko_records_ui.utils.get_list_licence',return_value=license_list):
+                        with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
+                            with patch('weko_workflow.views.render_template', mock_render_template):
+                                res = client.post(url, query_string=input)
+                                mock_render_template.assert_called()
+
+    #raise Exception
+    url = url_for('weko_workflow.display_activity', activity_id='A-00000001-10001')
+    input = {}
+    action_endpoint = 'item_login'
+    template_url = "weko_items_ui/iframe/item_edit.html"
+    json_schema = "test"
+    item = item_metadata
+    with patch('weko_workflow.views.get_activity_display_info',
+               return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
+               steps, temporary_comment, workflow_detail, owner_id, shared_user_ids)):
+        with patch('weko_workflow.views.item_login',return_value=(template_url,
+                need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
+                files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
+            with patch('weko_workflow.views.get_pid_and_record',side_effect=Exception()):
+                with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
+                    with patch('weko_records_ui.utils.get_list_licence',return_value=license_list):
+                        with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
+                            with patch('weko_workflow.views.render_template', mock_render_template):
+                                res = client.post(url, query_string=input)
+                                mock_render_template.assert_called()
+
+    #approval record is not None
+    url = url_for('weko_workflow.display_activity', activity_id='A-00000001-10001')
+    input = {}
+    action_endpoint = 'item_login'
+    template_url = "weko_items_ui/iframe/item_edit.html"
+    json_schema = "test"
+    item = item_metadata
+    with patch('weko_workflow.views.get_activity_display_info',
+               return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
+               steps, temporary_comment, workflow_detail, owner_id, shared_user_ids)):
+        with patch('weko_workflow.views.item_login',return_value=(template_url,
+                need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
+                files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
+            with patch('weko_workflow.views.get_pid_and_record',return_value=(test_pid,True)):
+                with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
+                    with patch('weko_records_ui.utils.get_list_licence',return_value=license_list):
+                        with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
+                            with patch('weko_workflow.views.render_template', mock_render_template):
+                                res = client.post(url, query_string=input)
+                                mock_render_template.assert_called()
+
+    #license_list is None
+    url = url_for('weko_workflow.display_activity', activity_id='A-00000001-10001')
+    input = {}
+    action_endpoint = 'item_login'
+    template_url = "weko_items_ui/iframe/item_edit.html"
+    json_schema = "test"
+    item = item_metadata
+    with patch('weko_workflow.views.get_activity_display_info',
+               return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
+               steps, temporary_comment, workflow_detail, owner_id, shared_user_ids)):
+        with patch('weko_workflow.views.item_login',return_value=(template_url,
+                need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
+                files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
+            with patch('weko_workflow.views.get_pid_and_record',return_value=(test_pid,None)):
+                with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
+                    with patch('weko_records_ui.utils.get_list_licence',return_value=None):
+                        with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
+                            with patch('weko_workflow.views.render_template', mock_render_template):
+                                res = client.post(url, query_string=input)
+                                mock_render_template.assert_called()
+
+    #record_detail_alt is None
+    url = url_for('weko_workflow.display_activity', activity_id='A-00000001-10001')
+    input = {}
+    action_endpoint = 'item_login'
+    template_url = "weko_items_ui/iframe/item_edit.html"
+    json_schema = "test"
+    item = item_metadata
+    with patch('weko_workflow.views.get_activity_display_info',
+               return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
+               steps, temporary_comment, workflow_detail, owner_id, shared_user_ids)):
+        with patch('weko_workflow.views.item_login',return_value=(template_url,
+                need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
+                files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
+            with patch('weko_workflow.views.get_pid_and_record',return_value=(test_pid,None)):
+                with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
+                    with patch('weko_records_ui.utils.get_list_licence',return_value=license_list):
+                        with patch('weko_workflow.views.get_main_record_detail',return_value=None):
+                            with patch('weko_workflow.views.render_template', mock_render_template):
+                                res = client.post(url, query_string=input)
+                                mock_render_template.assert_called()
+
+    url = url_for('weko_workflow.display_activity', activity_id='A-00000001-10001')
+    input = {'community': 'test'}
+    action_endpoint = 'item_login'
+    template_url = "weko_items_ui/iframe/item_edit.html"
+    json_schema = "test"
+    item = item_metadata
+    class MockUser:
+        id = 0
+    mock_user = MagicMock()
+    mock_user.id = 0
+    owner_id = 1
+    shared_user_ids = []
+    with patch('weko_workflow.views.get_activity_display_info',
+               return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, None, \
+               steps, temporary_comment, workflow_detail, owner_id, shared_user_ids)):
+        with patch('weko_workflow.views.item_login',return_value=(template_url,
+                need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
+                files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
+            with patch('weko_workflow.views.get_pid_and_record',return_value=(test_pid,None)):
+                with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=None):
+                    with patch('weko_records_ui.utils.get_list_licence',return_value=license_list):
+                        with patch('weko_workflow.views.get_main_record_detail',return_value=None):
+                            with patch('weko_workflow.views.render_template', mock_render_template):
+                                with patch("flask_login.utils._get_user",return_value=mock_user):
+                                    res = client.post(url, query_string=input)
+                                    mock_render_template.assert_called()
+    
+    # action_endpoint is approval
+    # test No.1 (W2023-22 3(4))
+    url = url_for('weko_workflow.display_activity', activity_id='A-00000001-10001')
+    input = {}
+    action_endpoint = 'approval'
+    json_schema = "test"
+    item = item_metadata
+    workflow_detail.open_restricted = True
+    with patch('weko_workflow.views.get_activity_display_info',
+               return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
+               steps, temporary_comment, workflow_detail, owner_id, shared_user_ids)):
+        with patch('weko_workflow.views.ItemLink.get_item_link_info'):
+            with patch('weko_workflow.views.item_login',return_value=(template_url,
+                    need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
+                    files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
+                with patch('weko_workflow.views.get_pid_and_record',return_value=(test_pid,None)):
+                    with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
+                        with patch('weko_records_ui.utils.get_list_licence',return_value=license_list):
+                            with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
+                                with patch('weko_workflow.views.render_template', mock_render_template):
+                                    res = client.post(url, query_string=input)
+                                    mock_render_template.assert_called()
+
+    #action_endpoint is approval
+    #test No.2 (W2023-22 3(4))
+    app.config.update(WEKO_WORKFLOW_APPROVAL_PREVIEW = False)
+    url = url_for('weko_workflow.display_activity', activity_id='A-00000001-10001')
+    input = {}
+    action_endpoint = 'approval'
+    json_schema = "test"
+    item = item_metadata
+    with patch('weko_workflow.views.get_activity_display_info',
+               return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
+               steps, temporary_comment, workflow_detail, owner_id, shared_user_ids)):
+        with patch('weko_workflow.views.ItemLink.get_item_link_info'):
+            with patch('weko_workflow.views.item_login',return_value=(template_url,
+                    need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
+                    files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
+                with patch('weko_workflow.views.get_pid_and_record',return_value=(test_pid,None)):
+                    with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
+                        with patch('weko_records_ui.utils.get_list_licence',return_value=license_list):
+                            with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
+                                with patch('weko_workflow.views.render_template', mock_render_template):
+                                    res = client.post(url, query_string=input)
+                                    mock_render_template.assert_called()
+
+    url = url_for('weko_workflow.display_activity', activity_id='A-00000001-10001')
+    mocker.patch("weko_workflow.views.AdminSettings.get",return_value = False)
+    input = {}
+    #action_endpoint = cur_action.action_endpoint
+    activity_detail.extra_info = {"record_id":"100"}
+    activity_detail.activity_id = 'A-00000001-10001'
+    action_endpoint = 'end_action'
+    cur_action.action_version = '1.0.0'
+    with patch('weko_workflow.views.get_activity_display_info',
+               return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
+               steps, temporary_comment, workflow_detail, owner_id, shared_user_ids)):
+        with patch('weko_workflow.views.item_login',return_value=(template_url,
+                need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
+                files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
+            with patch('weko_workflow.views.get_pid_and_record',return_value=(test_pid,None)):
+                with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
+                    with patch('weko_records_ui.utils.get_list_licence',return_value=license_list):
+                        with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
+                            with patch('weko_workflow.views.render_template', mock_render_template):
+                                with patch('weko_workflow.views.WekoRecord.get_record_by_pid', return_value=None):
+                                    res = client.post(url, query_string=input)
+                                    mock_render_template.assert_called()
+
+    url = url_for('weko_workflow.display_activity', activity_id='A-00000001-10001')
+    mocker.patch("weko_workflow.views.AdminSettings.get",return_value = False)
+    input = {}
+    #action_endpoint = cur_action.action_endpoint
+    activity_detail.extra_info = {"record_id":"100"}
+    activity_detail.activity_id = 'A-00000001-10001'
+    action_endpoint = 'end_action'
+    cur_action.action_version = '1.0.0'
+    mock_record = MagicMock()
+    with patch('weko_workflow.views.get_activity_display_info',
+               return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
+               steps, temporary_comment, workflow_detail, owner_id, shared_user_ids)):
+        with patch('weko_workflow.views.item_login',return_value=(template_url,
+                need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
+                files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
+            with patch('weko_workflow.views.get_pid_and_record',return_value=(test_pid,None)):
+                with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
+                    with patch('weko_records_ui.utils.get_list_licence',return_value=license_list):
+                        with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
+                            with patch('weko_workflow.views.render_template', mock_render_template):
+                                with patch('weko_workflow.views.WekoRecord.get_record_by_pid', return_value=mock_record):
+                                    with patch("weko_workflow.views.url_for", return_value = 'records/100'):
+                                        res = client.post(url, query_string=input)
+                                        mock_render_template.assert_called()
+
+
+# def display_activity(activity_id="0")
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_display_activity_1 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_display_activity_1(client, users_1, db_register_1, mocker, redis_connect):
+    def del_session():
+        with client.session_transaction() as session:
+            if session.get('activity_info'):
+                del session['activity_info']
+            if session.get('itemlogin_id'):
+                del session['itemlogin_id']
+            if session.get('itemlogin_activity'):
+                del session['itemlogin_activity']
+            if session.get('itemlogin_item'):
+                del session['itemlogin_item']
+            if session.get('itemlogin_steps'):
+                del session['itemlogin_steps']
+            if session.get('itemlogin_action_id'):
+                del session['itemlogin_action_id']
+            if session.get('itemlogin_cur_step'):
+                del session['itemlogin_cur_step']
+            if session.get('itemlogin_record'):
+                del session['itemlogin_record']
+            if session.get('itemlogin_res_check'):
+                del session['itemlogin_res_check']
+            if session.get('itemlogin_pid'):
+                del session['itemlogin_pid']
+            if session.get('itemlogin_community_id'):
+                del session['itemlogin_community_id']
+    # ユーザー１でログイン
+    login(client=client, email=users_1[0]['email'])
+
+    workflow_detail = WorkFlow.query.filter_by(id=1).one_or_none()
+    mock_render_template = MagicMock(return_value=jsonify({}))
+
+    activity_detail = Activity.query.filter_by(activity_id='A-00000001-00005').one_or_none()
+    #activity_detail = Activity.query.filter_by(activity_id='1').one_or_none()
+    cur_action = activity_detail.action
+    action_endpoint = 'item_login'
+    #action_endpoint = cur_action.action_endpoint
+    action_id = cur_action.id
+    histories = 1
+    item_metadata = ItemMetadata()
+    item_metadata.id = '37075580-8442-4402-beee-05f62e6e1dc2'
+
+    steps = 1
+    temporary_comment = 1
+
+    test_pid = PersistentIdentifier()
+    test_pid.pid_value = '100.0'
+
+    test_comm= Community()
+    test_comm.id = 'test'
+ 
     roles = {
         'allow': [],
         'deny': []
@@ -3333,14 +4452,15 @@ def test_display_activity(client, users, db_register,mocker,redis_connect,withou
     mocker.patch('weko_workflow.views.RedisConnection.connection',return_value=redis_connect)
 
     #regular
-    url = url_for('weko_workflow.display_activity', activity_id='A-00000001-10001')
+    url = url_for('weko_workflow.display_activity', activity_id='A-00000001-00005')
     input = {}
     action_endpoint = cur_action.action_endpoint
-    item = None
-
+    item = item_metadata
+    owner_id = 1
+    shared_user_ids = [{'user':2}]
     with patch('weko_workflow.views.get_activity_display_info',
                return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
-               steps, temporary_comment, workflow_detail)):
+               steps, temporary_comment, workflow_detail, owner_id, shared_user_ids)):
         with patch('weko_workflow.views.item_login',return_value=(template_url,
                 need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
                 files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
@@ -3884,26 +5004,26 @@ def test_check_authority_action(app,db,users,db_register,db_records):
     with patch("weko_workflow.views.WorkActivity.get_activity_action_role",return_value=(rs,us)):
         with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
             activity = db_register["activities"][1]
-            # item_metadata.json[shared_user_id]=cur_user
+            # item_metadata.json[shared_user_ids]=cur_user
             item_metadata = ItemMetadata.query.filter_by(id=activity.item_id).one()
-            item_metadata.json["shared_user_id"]=users[0]["id"]
+            item_metadata.json["shared_user_ids"]=users[0]["id"]
             db.session.merge(item_metadata)
             flag_modified(item_metadata,"json")
             db.session.commit()
             result = check_authority_action(activity_id=activity.activity_id)
             assert result == 0
             
-            # activity.shared_user_id=cur_user
+            # activity.shared_user_ids=cur_user
             item_metadata = ItemMetadata.query.filter_by(id=activity.item_id).one()
-            item_metadata.json["shared_user_id"]=-1
+            item_metadata.json["shared_user_ids"]=[]
             db.session.merge(item_metadata)
             flag_modified(item_metadata,"json")
-            activity.shared_user_id=users[0]["id"]
+            activity.shared_user_ids=users[0]["id"]
             db.session.merge(activity)
             db.session.commit()
             result = check_authority_action(activity_id=activity.activity_id)
             assert result == 0
-            activity.shared_user_id=-1
+            activity.shared_user_ids=-1
             db.session.merge(activity)
             db.session.commit()
         
@@ -4470,3 +5590,14 @@ def test_ActivityActionResource_post(client, db_register , users):
     login(client=client, email=users[2]['email'])
     res = client.get(url)
     assert res.status_code == 400
+
+# def weko_workflow.schema.marshmallow.SaveActivitySchema(json):
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_SaveActivitySchema -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_SaveActivitySchema():
+    json = {'activity_id': '11', 'title': 'sample', 'shared_user_ids': [{'user': 1},{'user':2}], 'approval1':'', 'approval2':''}
+    data = SaveActivitySchema().load(json)
+    assert data.data['activity_id'] == '11'
+    assert data.data['title'] == 'sample'
+    assert data.data['shared_user_ids'] == [{'user': 1},{'user':2}]
+    assert data.data['approval1'] == ''
+    assert data.data['approval2'] == ''

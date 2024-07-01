@@ -24,27 +24,30 @@ import math
 from typing import List
 import urllib.parse
 import uuid
+import json
 import traceback
-from datetime import date,datetime, timedelta
+from datetime import date, datetime, timedelta
 
 from flask import abort, current_app, request, session, url_for
 from flask_login import current_user
 from invenio_accounts.models import Role, User, userrole
 from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
-from sqlalchemy import and_, asc, desc, func, or_
+from sqlalchemy import and_, asc, desc, func, or_, not_, cast, String
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.exc import NoResultFound
 from weko_deposit.api import WekoDeposit
 from weko_records.serializers.utils import get_item_type_name
 from weko_schema_ui.models import PublishStatus
 from weko_index_tree.api import Indexes
+from weko_records.models import ItemMetadata as _ItemMetadata
+from weko_records.api import RequestMailList
 
 from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SUFFIX_METHOD, \
     WEKO_WORKFLOW_ALL_TAB, WEKO_WORKFLOW_TODO_TAB, WEKO_WORKFLOW_WAIT_TAB
 from .models import Action as _Action
-from .models import ActionCommentPolicy, ActionFeedbackMail, \
-    ActionIdentifier, ActionJournal, ActionStatusPolicy
+from .models import ActionCommentPolicy, ActionFeedbackMail, ActivityRequestMail,\
+    ActionIdentifier, ActionJournal, ActionStatusPolicy, ActivityItemApplication
 from .models import Activity as _Activity
 from .models import ActivityAction, ActivityHistory, ActivityStatusPolicy
 from .models import FlowAction as _FlowAction
@@ -249,6 +252,38 @@ class Flow(object):
                             'user_deny') if '0' != action.get(
                                 'user') else False
                     )
+                elif action.get('user') == str(current_app.config.get("WEKO_WORKFLOW_ITEM_REGISTRANT_ID")):
+                    flowactionrole = _FlowActionRole(
+                        flow_action_id=flowaction.id,
+                        action_role=action.get(
+                            'role') if '0' != action.get('role') else None,
+                        action_role_exclude=action.get(
+                            'role_deny') if '0' != action.get(
+                            'role') else False,
+                        action_user= None,
+                        specify_property=None,
+                        action_user_exclude=action.get(
+                            'user_deny') if '0' != action.get(
+                                'user') else False,
+                        action_item_registrant = True if '0' != action.get(
+                                'user') else False
+                    )
+                elif action.get('user') == str(current_app.config.get("WEKO_WORKFLOW_REQUEST_MAIL_ID")):
+                    flowactionrole = _FlowActionRole(
+                        flow_action_id=flowaction.id,
+                        action_role=action.get(
+                            'role') if '0' != action.get('role') else None,
+                        action_role_exclude=action.get(
+                            'role_deny') if '0' != action.get(
+                            'role') else False,
+                        action_user= None,
+                        specify_property=None,
+                        action_user_exclude=action.get(
+                            'user_deny') if '0' != action.get(
+                                'user') else False,
+                        action_request_mail = True if '0' != action.get(
+                                'user') else False
+                    )
                 else:
                     flowactionrole = _FlowActionRole(
                         flow_action_id=flowaction.id,
@@ -264,7 +299,8 @@ class Flow(object):
                             'user_deny') if '0' != action.get('user') else False
                     )
                 if flowactionrole.action_role or flowactionrole.action_user or \
-                        flowactionrole.specify_property:
+                        flowactionrole.specify_property or flowactionrole.action_item_registrant or \
+                        flowactionrole.action_request_mail:
                     db.session.add(flowactionrole)
         db.session.commit()
 
@@ -1100,6 +1136,61 @@ class WorkActivity(object):
             db.session.rollback()
             current_app.logger.exception(str(ex))
 
+    def create_or_update_activity_request_mail(self,
+                                             activity_id,
+                                             request_maillist,
+                                             is_display_request_button):
+        """Create or update action ActivityRequestMail's model.
+
+        :param activity_id: activity identifier
+        :param request_maillist: list of request mail in json format
+        :param is_display_request_button: whether display request button on the item detail page.
+        :return:
+        """
+        try:
+            with db.session.begin_nested():
+                activity_request_mail = ActivityRequestMail.query.filter_by(
+                    activity_id=activity_id).one_or_none()
+                if activity_request_mail:
+                    activity_request_mail.request_maillist = request_maillist
+                    activity_request_mail.display_request_button = is_display_request_button
+                    db.session.merge(activity_request_mail)
+                else:
+                    activity_request_mail = ActivityRequestMail(
+                        activity_id=activity_id,
+                        display_request_button=is_display_request_button,
+                        request_maillist=request_maillist
+                    )
+                    db.session.add(activity_request_mail)
+            db.session.commit()
+        except SQLAlchemyError as ex:
+            db.session.rollback()
+            current_app.logger.exception(str(ex))
+
+    def create_or_update_activity_item_application(self,
+                                                activity_id,
+                                                item_application,
+                                                is_display_item_application_button):
+        try:
+            with db.session.begin_nested():
+                activity_item_application = ActivityItemApplication.query.filter_by(
+                    activity_id=activity_id).one_or_none()
+                if activity_item_application:
+                    activity_item_application.item_application = item_application
+                    activity_item_application.display_item_application_button = is_display_item_application_button
+                    db.session.merge(activity_item_application)
+                else:
+                    activity_item_application = ActivityItemApplication(
+                        activity_id=activity_id,
+                        display_item_application_button=is_display_item_application_button,
+                        item_application=item_application
+                    )
+                    db.session.add(activity_item_application)
+            db.session.commit()
+        except SQLAlchemyError as ex:
+            db.session.rollback()
+            current_app.logger.exception(str(ex))
+
     def get_action_journal(self, activity_id, action_id):
         """Get action journal info.
 
@@ -1144,6 +1235,12 @@ class WorkActivity(object):
             else:
                 identifier = action_identifier
         return identifier
+    
+    def get_activity_item_application(self, activity_id):
+        with db.session.no_autoflush:
+            item_application = ActivityItemApplication.query.filter_by(
+                activity_id=activity_id).one_or_none()
+            return item_application
 
     def get_action_feedbackmail(self, activity_id, action_id):
         """Get ActionFeedbackMail object from model base on activity's id.
@@ -1156,6 +1253,17 @@ class WorkActivity(object):
             action_feedbackmail = ActionFeedbackMail.query.filter_by(
                 activity_id=activity_id).one_or_none()
             return action_feedbackmail
+
+    def get_activity_request_mail(self, activity_id):
+        """Get ActivityRequestMail object from model base on activity's id.
+
+        :param activity_id: acitivity identifier
+        :return:    object's model or none
+        """
+        with db.session.no_autoflush:
+            activity_request_mail = ActivityRequestMail.query.filter_by(
+                activity_id=activity_id).one_or_none()
+            return activity_request_mail
 
     def get_activity_action_status(self, activity_id, action_id, action_order):
         """Get activity action status."""
@@ -1455,6 +1563,7 @@ class WorkActivity(object):
         :return:
         """
         self_user_id = int(current_user.get_id())
+        self_user_id_json = json.dumps({"user" : self_user_id})
         self_group_ids = [role.id for role in current_user.roles]
         query = query \
             .filter(_FlowAction.action_id == _Activity.action_id) \
@@ -1490,7 +1599,9 @@ class WorkActivity(object):
                 .filter(
                     or_(
                         _Activity.activity_login_user == self_user_id,
-                        _Activity.shared_user_id == self_user_id
+                        cast(_Activity.shared_user_ids, String).contains(self_user_id_json),
+                        _Activity.temp_data.op("#>>")("{'metainfo', 'shared_user_ids'}").contains(self_user_id_json),
+                        _Activity.temp_data.op("#>>")("{'metainfo', 'owner'}") == str(self_user_id),
                     )
                 ) \
                 .filter(
@@ -1498,25 +1609,39 @@ class WorkActivity(object):
                         and_(
                             _FlowActionRole.action_user != self_user_id,
                             _FlowActionRole.action_user_exclude == '0',
-                            _Activity.shared_user_id != self_user_id
+                            not_(cast(_Activity.shared_user_ids, String).contains(self_user_id_json)),
+                            not_(_Activity.temp_data.op("#>>")("{'metainfo', 'shared_user_ids'}").contains(self_user_id_json),),
+                            not_(_Activity.temp_data.op("#>>")("{'metainfo', 'owner'}") == str(self_user_id)),
                         ),
                         and_(
                             _FlowActionRole.action_role.notin_(self_group_ids),
                             _FlowActionRole.action_role_exclude == '0',
-                            _Activity.shared_user_id != self_user_id
+                            not_(cast(_Activity.shared_user_ids, String).contains(self_user_id_json)),
+                            not_(_Activity.temp_data.op("#>>")("{'metainfo', 'shared_user_ids'}").contains(self_user_id_json),),
+                            not_(_Activity.temp_data.op("#>>")("{'metainfo', 'owner'}") == str(self_user_id)),
                         ),
                         and_(
                             ActivityAction.action_handler != self_user_id,
-                            _Activity.shared_user_id != self_user_id
+                            not_(cast(_Activity.shared_user_ids, String).contains(self_user_id_json)),
+                            not_(_Activity.temp_data.op("#>>")("{'metainfo', 'shared_user_ids'}").contains(self_user_id_json),),
+                            not_(_Activity.temp_data.op("#>>")("{'metainfo', 'owner'}") == str(self_user_id)),
                         ),
                         and_(
-                            _Activity.shared_user_id == self_user_id,
+                            or_(
+                                cast(_Activity.shared_user_ids, String).contains(self_user_id_json),
+                                _Activity.temp_data.op("#>>")("{'metainfo', 'shared_user_ids'}").contains(self_user_id_json),
+                                _Activity.temp_data.op("#>>")("{'metainfo', 'owner'}") == str(self_user_id),
+                            ),
                             _FlowActionRole.action_user 
                             != _Activity.activity_login_user,
                             _FlowActionRole.action_user_exclude == '0'
                         ),
                         and_(
-                            _Activity.shared_user_id == self_user_id,
+                            or_(
+                                cast(_Activity.shared_user_ids, String).contains(self_user_id_json),
+                                _Activity.temp_data.op("#>>")("{'metainfo', 'shared_user_ids'}").contains(self_user_id_json),
+                                _Activity.temp_data.op("#>>")("{'metainfo', 'owner'}") == str(self_user_id),
+                            ),
                             ActivityAction.action_handler 
                             != _Activity.activity_login_user
                         ),
@@ -1539,7 +1664,9 @@ class WorkActivity(object):
         :return:
         """
         self_user_id = int(current_user.get_id())
+        self_user_id_json = json.dumps({"user" : self_user_id})
         self_group_ids = [role.id for role in current_user.roles]
+        recid_list= WorkActivity().get_recids_for_request_mail_by_mailaddress(current_user.email)
         if is_community_admin:
             query = query \
                 .filter(_Activity.activity_login_user.in_(community_user_ids))
@@ -1569,9 +1696,22 @@ class WorkActivity(object):
                         _FlowActionRole.action_role_exclude == '0'
                     ),
                     and_(
-                        _Activity.shared_user_id == self_user_id,
+                        or_(
+                            cast(_Activity.shared_user_ids, String).contains(self_user_id_json),
+                            _Activity.temp_data.op("#>>")("{'metainfo', 'shared_user_ids'}").contains(self_user_id_json),
+                            _Activity.temp_data.op("#>>")("{'metainfo', 'owner'}") == str(self_user_id),
+                        ),
                         _FlowAction.action_id != 4
                     ),
+                    and_(
+                        _FlowActionRole.action_item_registrant == True,
+                        _ItemMetadata.json.op('->>')('owner') == current_user.get_id()
+                    ),
+                    and_(
+                        _FlowActionRole.action_request_mail == True,
+                        cast(ActivityRequestMail.request_maillist, String).contains('"'+current_user.email+'"')
+                    ),
+                    _Activity.extra_info.op("->>")('record_id').in_(recid_list)
                 )
             )
 
@@ -1617,7 +1757,9 @@ class WorkActivity(object):
         if not is_admin or current_app.config[
                 'WEKO_WORKFLOW_ENABLE_SHOW_ACTIVITY']:
             self_user_id = int(current_user.get_id())
+            self_user_id_json = json.dumps({"user" : self_user_id})
             self_group_ids = [role.id for role in current_user.roles]
+            recid_list= WorkActivity().get_recids_for_request_mail_by_mailaddress(current_user.email)
             query = query \
                 .filter(
                     or_(
@@ -1633,8 +1775,18 @@ class WorkActivity(object):
                             _FlowActionRole.id.is_(None)
                         ),
                         and_(
-                            _Activity.shared_user_id == self_user_id,
+                            or_(
+                                cast(_Activity.shared_user_ids, String).contains(self_user_id_json),
+                                _Activity.temp_data.op("#>>")("{'metainfo', 'shared_user_ids'}").contains(self_user_id_json),
+                                _Activity.temp_data.op("#>>")("{'metainfo', 'owner'}")== str(self_user_id),
+                            )
                         ),
+                        and_(
+                             _FlowActionRole.action_item_registrant == True,
+                        ),
+                        and_(
+                            _FlowActionRole.action_request_mail == True,
+                        )
                     )
                 )\
                 .filter(_FlowAction.action_id == _Activity.action_id) \
@@ -1656,11 +1808,31 @@ class WorkActivity(object):
                             _FlowActionRole.action_role_exclude == '0'
                         ),
                         and_(
-                            _Activity.shared_user_id == self_user_id,
+                            or_(
+                                cast(_Activity.shared_user_ids, String).contains(self_user_id_json),
+                                _Activity.temp_data.op("#>>")("{'metainfo', 'shared_user_ids'}").contains(self_user_id_json),
+                                _Activity.temp_data.op("#>>")("{'metainfo', 'owner'}") == str(self_user_id),
+                            )
                         ),
+                        and_(
+                            _FlowActionRole.action_item_registrant == True,
+                            _ItemMetadata.json.op('->>')('owner') == current_user.get_id() 
+                        ),
+                        and_(
+                        _FlowActionRole.action_request_mail == True,
+                        cast(ActivityRequestMail.request_maillist, String).contains('"'+current_user.email+'"'),
+                        or_(_FlowActionRole.action_role.in_(self_group_ids),
+                            _FlowActionRole.action_role == None
+                            )
+                        ),
+                        and_(
+                            _Activity.extra_info.op("->>")('record_id').in_(recid_list),
+                            or_(_FlowActionRole.action_role.in_(self_group_ids),
+                                _FlowActionRole.action_role == None
+                            )
+                        )
                     )
                 )
-
         return query
 
     @staticmethod
@@ -1687,6 +1859,7 @@ class WorkActivity(object):
                 )
             ).outerjoin(_Action) \
             .outerjoin(_FlowAction).outerjoin(_FlowActionRole) \
+            .outerjoin(ActivityRequestMail,and_(ActivityRequestMail.activity_id == _Activity.activity_id))\
             .outerjoin(
                 ActivityAction,
                 and_(
@@ -1706,7 +1879,10 @@ class WorkActivity(object):
                 ) \
                 .outerjoin(
                     userrole, and_(User.id == userrole.c.user_id)
-                ).outerjoin(Role, and_(userrole.c.role_id == Role.id))
+                ).outerjoin(Role, and_(userrole.c.role_id == Role.id)
+                ).outerjoin(
+                    _ItemMetadata, and_( _ItemMetadata.id == _Activity.item_id)
+                )
         else:
             common_query = common_query \
                 .outerjoin(
@@ -1714,6 +1890,8 @@ class WorkActivity(object):
                     and_(
                         _Activity.activity_update_user == User.id,
                     )
+                ).outerjoin(
+                    _ItemMetadata, and_( _ItemMetadata.id == _Activity.item_id)
                 )
         return common_query
     
@@ -1888,7 +2066,7 @@ class WorkActivity(object):
                     activities, max_page, name_param, page,
                     query_action_activities, size, tab, is_community_admin, is_get_all
                 )
-            return activities, max_page, size, page, name_param
+            return activities, max_page, size, page, name_param, count
 
     def __get_activity_list_per_page(
         self, activities, max_page, name_param,
@@ -2054,6 +2232,7 @@ class WorkActivity(object):
 
     def get_activity_action_role(self, activity_id, action_id, action_order):
         """Get activity action."""
+        from weko_records.api import ItemsMetadata
         roles = {
             'allow': [],
             'deny': []
@@ -2080,7 +2259,125 @@ class WorkActivity(object):
                     users['deny'].append(action_role.action_user)
                 elif action_role.action_user:
                     users['allow'].append(action_role.action_user)
+                if action_role.action_user_exclude and action_role.action_item_registrant:
+                    item_metadata = ItemsMetadata.get_record(activity.item_id)
+                    owner_id = item_metadata["owner"]
+                    if owner_id:
+                        users['deny'].append(int(owner_id))
+                elif not action_role.action_user_exclude and action_role.action_item_registrant:
+                    item_metadata = ItemsMetadata.get_record(activity.item_id)
+                    owner_id = item_metadata["owner"]
+                    if owner_id:
+                        users['allow'].append(int(owner_id))
+                if action_role.action_user_exclude and action_role.action_request_mail:
+                    approval_ids = self.get_user_ids_of_request_mails_by_activity_id(activity_id)
+                    for id in approval_ids:
+                        users['deny'].append(id)
+                elif not action_role.action_user_exclude and action_role.action_request_mail:
+                    approval_ids = self.get_user_ids_of_request_mails_by_activity_id(activity_id)
+                    for id in approval_ids:
+                        users['allow'].append(id)
             return roles, users
+
+    def get_user_ids_of_request_mails_by_activity_id(self, activity_id):
+        """
+        Get user information of request_mails by activity_id
+        :param activity_id: int, Id number of item
+        :return: return ids of request mails that set to item
+        """
+        activity_detail = self.get_activity_detail(activity_id)
+        #制限公開アイテムに対して利用申請を出している場合、extra_infoがついているのでそれから制限公開アイテムのrecidをとる。
+        restricted_record_id = activity_detail.extra_info.get("record_id") if activity_detail.extra_info else None
+        #extra_infoがあった場合、このactivity_idは利用申請系ワークフローであるので紐づいている制限公開アイテムのIDで別のメソッドを回す。
+        if activity_detail.extra_info and activity_detail.extra_info.get("is_restricted_access", "") and restricted_record_id :
+            return self.get_user_ids_of_request_mails_by_record_id(restricted_record_id)
+        #request_mail_listをactivity_idでworkflow_activity_request_mailテーブルから引っ張ってくる。
+        request_mails = self.get_activity_request_mail(activity_id)
+        #該当するactivity_idがなかった場合、空リストを返す
+        if not request_mails:
+            return []
+        #request_maillistが空リストかworkflow_activity_request_mailのdisplay_request_buttonがFalseなら空リストを返す
+        if not request_mails.request_maillist or not request_mails.display_request_button:
+            return []
+        maillist=request_mails.request_maillist
+        user_ids=[]
+        for mail in maillist:
+            #リクエスト送信先のメールアドレスでユーザーが登録されているか
+            temp_user_info = db.session.query(User).filter_by(email=mail["email"]).first()
+            if not temp_user_info:
+                continue
+            #ユーザーロールがあるか否か
+            user_role = db.session.query(Role).join(userrole).filter_by(user_id=temp_user_info.id).all()
+            if not user_role:
+                continue
+            user_ids.append(temp_user_info.id)
+        return user_ids
+    
+    def get_user_ids_of_request_mails_by_record_id(self, record_id):
+        """
+        Get user information of request_mails by record_id
+        :param record_id: int, Id number of record
+        :return: return ids of request mails that set to item
+        """
+        #request_mail_listはuuidでメールリストと紐づいているのでrecidをuuidに変換する。
+        record_uuid = PersistentIdentifier.get("recid",record_id).get_assigned_object()
+        #request_mail_listをuuidで引っ張ってくる。
+        request_mails = RequestMailList.get_mail_list_by_item_id(record_uuid)
+        #該当するuuidがなかった場合、空リストを返す
+        if not request_mails:
+            return []
+        user_ids=[]
+        for mail in request_mails:
+            if not mail:
+                continue
+            #リクエスト送信先のメールアドレスでユーザーが登録されているか
+            temp_user_info = db.session.query(User).filter_by(email=mail["email"]).first()
+            if not temp_user_info:
+                continue
+            #ユーザーロールがあるか否か
+            user_role = db.session.query(Role).join(userrole).filter_by(user_id=temp_user_info.id).all()
+            if not user_role:
+                continue
+            user_ids.append(temp_user_info.id)
+        return user_ids
+
+    def check_user_role_for_mail(self, user_id, roles):
+        """
+        Check user_id's role in roles
+        :param record_id: int, user's id
+               roles: get_activity_action_role's return,ex: roles={'allow':[1],'deny':[]} 
+        :return: return ids of request mails that set to item  
+        """
+        user_role = db.session.query(Role).join(userrole).filter_by(user_id=user_id).all()
+        is_approver = True
+        supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']
+        for role in list(user_role or []):
+            if role.name in supers:
+                return True
+        for role in user_role:
+            if roles['deny'] and role.id in roles['deny']:
+                is_approver = False
+                break
+            elif roles['deny'] and role.id not in roles['deny']:
+                is_approver = True
+            if roles['allow'] and role.id in roles['allow']:
+                is_approver = True
+                break
+            elif roles['allow'] and role.id not in roles['allow']:
+                is_approver = False
+        return is_approver
+    
+    def get_recids_for_request_mail_by_mailaddress(self, address):   
+        request_mail_list =  RequestMailList.get_request_mail_by_mailaddress(address)
+        recid_list=[]
+        for request_mail in request_mail_list:
+            try:
+                tmp_uuid = request_mail.item_id
+                tmp_recid = PersistentIdentifier.get_by_object("recid","rec",tmp_uuid).pid_value
+                recid_list.append(tmp_recid)
+            except Exception as ex:
+                current_app.logger.exception(str(ex))
+        return recid_list
 
     def del_activity(self, activity_id):
         """Delete activity info.
@@ -2456,8 +2753,9 @@ class WorkActivity(object):
                 _Activity.activity_id.in_(activities_id)
             )
         else:
-            query = query.filter(
-                _Activity.workflow_id == 31001
+            query = query.join(_WorkFlow).filter(
+                _WorkFlow.flows_name
+                == current_app.config.get('WEKO_WORKFLOW_USAGE_REPORT_WORKFLOW_NAME')
             )
         query = query.filter(
             or_(_Activity.activity_status
@@ -2488,8 +2786,9 @@ class WorkActivity(object):
                 _Activity.activity_id.in_(activities_id)
             )
         else:
-            query = query.filter(
-                _Activity.workflow_id == 31001
+            query = query.join(_WorkFlow).filter(
+                _WorkFlow.flows_name
+                == current_app.config.get('WEKO_WORKFLOW_USAGE_REPORT_WORKFLOW_NAME')
             )
         activities_number = query.filter(
             or_(_Activity.activity_status

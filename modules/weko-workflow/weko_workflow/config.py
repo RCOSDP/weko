@@ -371,7 +371,7 @@ WEKO_WORKFLOW_CONTINUE_APPROVAL = False
 
 WEKO_WORKFLOW_ENGLISH_MAIL_TEMPLATE_FOLDER_PATH = ''
 WEKO_WORKFLOW_JAPANESE_MAIL_TEMPLATE_FOLDER_PATH = ''
-WEKO_WORKFLOW_MAIL_TEMPLATE_FOLDER_PATH = ''
+WEKO_WORKFLOW_MAIL_TEMPLATE_FOLDER_PATH = 'modules/weko-workflow/weko_workflow/templates/weko_workflow/email_templates/'
 """Email template path"""
 
 WEKO_WORKFLOW_RECEIVE_USAGE_APP_BESIDE_PERFECTURE_AND_LOCATION_DATA_OF_GENERAL_USER = ''
@@ -425,10 +425,10 @@ WEKO_WORKFLOW_APPROVE_USAGE_REPORT = ""
 WEKO_WORKFLOW_APPROVE_OUTPUT_REGISTRATION = ""
 """Approve Output Registration mail template's filename"""
 
-WEKO_WORKFLOW_ACCESS_ACTIVITY_URL = ""
+WEKO_WORKFLOW_ACCESS_ACTIVITY_URL = "1"
 """Template access the URL"""
 
-WEKO_WORKFLOW_USAGE_REPORT_ACTIVITY_URL = ""
+WEKO_WORKFLOW_USAGE_REPORT_ACTIVITY_URL = "6"
 """Template access the URL"""
 
 WEKO_WORKFLOW_DATE_FORMAT = "%Y-%m-%d"
@@ -456,21 +456,12 @@ WEKO_WORKFLOW_FILTER_PARAMS = [
 WEKO_WORKFLOW_ACTIVITY_TOKEN_PATTERN = "activity={} file_name={} date={} email={}"
 """Token pattern."""
 
-WEKO_WORKFLOW_APPROVE_DONE = 'email_pattern_approval_done.tpl'
-"""Mail template for Done Approval"""
-
-WEKO_WORKFLOW_APPROVE_REJECTED = 'email_pattern_approval_rejected.tpl'
-"""Mail template for Rejected Approval"""
-
-WEKO_WORKFLOW_REQUEST_APPROVAL = 'email_pattern_request_approval.tpl'
-"""Mail template for Requested Approval"""
-
-WEKO_WORKFLOW_REQUEST_FOR_REGISTER_USAGE_REPORT = 'email_pattern_request_for_register_usage_report.tpl'
+WEKO_WORKFLOW_REQUEST_FOR_REGISTER_USAGE_REPORT = "7"
 """Mail template for Request for register Data Usage Report"""
 
-WEKO_WORKFLOW_USAGE_APPLICATION_ITEM_TYPES_LIST = [31001, 31002]
+WEKO_WORKFLOW_USAGE_APPLICATION_ITEM_TYPES_LIST = [31001, 31002, 31004, 31005, 31006, 31007, 31008]
 
-WEKO_WORKFLOW_USAGE_REPORT_ITEM_TYPES_LIST = [31003]
+WEKO_WORKFLOW_USAGE_REPORT_ITEM_TYPES_LIST = [3007, 31003]
 
 WEKO_WORKFLOW_USAGE_APPLICATION_ITEM_TITLE = '利用申請'
 
@@ -502,6 +493,8 @@ WEKO_WORKFLOW_GAKUNINRDM_DATA = [
 WEKO_WORKFLOW_GAKUNINRDM_PREFIX = 'GakuninRDM'
 """GekuninRDM prefix for logging."""
 
+WEKO_ITEMS_UI_MULTIPLE_APPROVALS = True
+
 WEKO_STR_TRUE = ['true', 't', 'yes', '1']
 
 WEKO_WORKFLOW_ACTIVITYLOG_ROLE_ENABLE = ["System Administrator","Repository Administrator"]
@@ -529,7 +522,7 @@ WEKO_WORKFLOW_ACTIVITYLOG_XLS_COLUMNS = [
     'title',
     'action_status',
     'activity_id',
-    'shared_user_id',
+    'shared_user_ids',
     'activity_login_user',
     'activity_name',
     'temp_data',
@@ -543,3 +536,35 @@ WEKO_WORKFLOW_ACTIVITYLOG_XLS_COLUMNS = [
     'action_name',
     'role_name'
 ]
+
+WEKO_WORKFLOW_REST_ENDPOINTS = dict(
+    activities=dict(
+        activities_route='/<string:version>/workflow/activities',
+        default_media_type='application/json',
+    ),
+    approve=dict(
+        route='/<string:version>/workflow/activities/<string:activity_id>/approve',
+        default_media_type='application/json',
+    ),
+    throw_out=dict(
+        route='/<string:version>/workflow/activities/<string:activity_id>/throw-out',
+        default_media_type='application/json',
+    ),
+    file_application=dict(
+        route='/<string:version>/workflow/activities/<string:activity_id>/application',
+        default_media_type='application/json',
+    ),
+)
+
+WEKO_WORKFLOW_API_LIMIT_RATE_DEFAULT = ['100 per minute']
+
+WEKO_WORKFLOW_API_ACCEPT_LANGUAGES = ['en', 'ja']
+
+WEKO_WORKFLOW_APPROVAL_PREVIEW = True
+"""Setting preview function during approval"""
+
+WEKO_WORKFLOW_ITEM_REGISTRANT_ID = -2
+"""Item registrant id."""
+
+WEKO_WORKFLOW_REQUEST_MAIL_ID = -3
+"""Request mail id."""

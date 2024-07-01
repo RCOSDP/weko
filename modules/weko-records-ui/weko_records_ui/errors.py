@@ -24,6 +24,7 @@
 
 """Records Error"""
 from flask_babelex import gettext as _
+from flask_babelex import get_locale
 from invenio_rest.errors import RESTException, RESTValidationError
 
 
@@ -31,7 +32,7 @@ class VersionNotFoundRESTError(RESTException):
     """API Version error."""
 
     code = 400
-    description = 'This API version does not found'
+    description = _('This API version does not found.')
 
 
 class DateFormatRESTError(RESTException):
@@ -53,6 +54,12 @@ class InvalidEmailError(RESTException):
     code = 400
     description = _('Invalid mailaddress.')
 
+class InvalidTokenError(RESTException):
+    """Invalid Token Error error."""
+
+    code = 400
+    description = _('Invalid Tokens.')
+
 class RequiredItemNotExistError(RESTValidationError):
     """Required Item not exists in request body error."""
 
@@ -62,7 +69,7 @@ class InvalidCaptchaError(RESTException):
     """Invalid CAPTCHA calculation result error."""
 
     code = 400
-    description = _('Invalid CAPTCHA')
+    description = _('The calculation results are different.')
 
 class InvalidRequestError(RESTException):
     """Invalid Request error."""
@@ -100,6 +107,25 @@ class FilesNotFoundRESTError(RESTException):
     code = 404
     description = 'This File does not found'
 
+class InvalidWorkflowError(RESTException):
+    """Contents not found error."""
+
+    def __init__(self, errors=None, **kwargs):
+        """Initialize RESTException."""
+        super(InvalidWorkflowError, self).__init__(errors, **kwargs)
+
+        self.code = 403
+        self.description = self.get_this_message()
+
+    def get_this_message(self):
+        from weko_admin.utils import get_restricted_access
+
+        locale = get_locale()
+        restricted_error_msg = get_restricted_access('error_msg')
+        if locale.get_language_name('en') == 'Japanese':
+            return restricted_error_msg['content']['ja']['content']
+        return restricted_error_msg['content']['en']['content']
+
 class ContentsNotFoundError(RESTException):
     """Contents not found error."""
 
@@ -110,4 +136,4 @@ class InternalServerError(RESTException):
     """Internal Server Error."""
 
     code = 500
-    description = 'Internal Server Error'
+    description = _('Internal Server Error.')
