@@ -9,6 +9,7 @@ def main():
         for itemtype in itemtypes:
             ret = ItemTypes.reload(itemtype.id)
             print("itemtype id:{}, itemtype name:{}".format(itemtype.id,itemtype.item_type_name.name))
+            print(ret['msg'])
         db.session.commit()
     except Exception as e:
         print(traceback.format_exc())

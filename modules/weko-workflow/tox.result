@@ -1,52 +1,418 @@
 GLOB sdist-make: /code/modules/weko-workflow/setup.py
 c1 create: /code/modules/weko-workflow/.tox/c1
+c1 setuptools_version is setuptools==57.5.0
 c1 installdeps: pytest>=3, pytest-cov, -rrequirements2.txt
 c1 inst: /code/modules/weko-workflow/.tox/.tmp/package/1/weko-workflow-0.1.0.dev20170000.zip
-c1 installed: alabaster==0.7.13,alembic==0.9.6,amqp==2.6.0,angular-gettext-babel==0.3,aniso8601==8.0.0,arrow==0.12.1,asn1crypto==0.23.0,atomicwrites==1.4.1,attrs==17.4.0,b2handle==1.1.2,Babel==2.5.1,bagit==1.7.0,beautifulsoup4==4.9.3,bibtexparser==1.0.1,billiard==3.6.3.0,binaryornot==0.4.4,bleach==3.1.0,blinker==1.4,boto3==1.7.84,botocore==1.10.84,cachelib==0.1,cachetools==4.2.4,cchardet==2.1.1,celery==4.4.4,certifi==2017.11.5,cffi==1.11.2,chardet==3.0.4,citeproc-py==0.5.1,citeproc-py-styles==0.1.2,click==6.7,cookiecutter==1.6.0,counter-robots==2018.6,coverage==6.2,cryptography==2.1.4,datacite==1.0.1,DateTime==4.9,decorator==4.1.2,defusedxml==0.5.0,dictdiffer==0.7.0,distlib==0.3.6,dnspython==2.2.1,docutils==0.18.1,dojson==1.3.2,elasticsearch==6.1.1,elasticsearch-dsl==6.4.0,elementpath==1.0.6,email-validator==1.0.5,entrypoints==0.2.3,feedgen==0.7.0,filelock==3.4.1,Flask==1.1.0,Flask-Admin==1.5.3,Flask-Alembic==2.0.1,Flask-Assets==0.12,Flask-BabelEx==0.9.4,Flask-Breadcrumbs==0.5.0,Flask-Caching==1.10.1,Flask-CeleryExt==0.3.4,Flask-Collect==1.2.2,Flask-Cors==3.0.3,Flask-DebugToolbar==0.13.1,Flask-IIIF==0.6.1,Flask-KVSession==0.6.2,Flask-Limiter==1.1.0,Flask-Login==0.4.1,Flask-Mail==0.9.1,flask-marshmallow==0.14.0,Flask-Menu==0.6.0,-e git+https://github.com/RCOSDP/flask-oauthlib.git@98eb36e1dfc66256fa7ea62237e9879acb906e9d#egg=Flask_OAuthlib,Flask-Plugins==1.6.1,Flask-Principal==0.4.0,Flask-RESTful==0.3.8,Flask-Security==3.0.0,flask-shell-ipython==0.4.1,Flask-Sitemap==0.4.0,Flask-SQLAlchemy==2.3.2,flask-talisman==0.4.1,Flask-WTF==0.14.3,-e git+https://github.com/RCOSDP/pyfpdf.git@f9b032148283d535cabc7789858081c80de36fef#egg=fpdf,frozendict==2.3.8,fs==0.5.4,ftfy==4.4.3,future==0.16.0,github3.py==1.1.0,html5lib==1.0.1,idna==2.6,iiif-prezi==0.3.0,imagesize==1.4.1,importlib-metadata==4.8.3,importlib-resources==5.4.0,infinity==1.4,iniconfig==1.1.1,intervals==0.8.0,invenio-access==1.1.0,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=invenio_accounts&subdirectory=modules/invenio-accounts,invenio-admin==1.1.2,invenio-app==1.1.0,invenio-assets==1.0.0,invenio-base==1.0.2,invenio-cache==1.0.0,invenio-celery==1.1.3,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=invenio_communities&subdirectory=modules/invenio-communities,invenio-config==1.0.0,invenio-csl-rest==1.0.0a1,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=invenio_db&subdirectory=modules/invenio-db,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=invenio_deposit&subdirectory=modules/invenio-deposit,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=invenio_files_rest&subdirectory=modules/invenio-files-rest,invenio-formatter==1.0.0b3,invenio-i18n==1.0.0,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=invenio_iiif&subdirectory=modules/invenio-iiif,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=invenio_indexer&subdirectory=modules/invenio-indexer,invenio-jsonschemas==1.0.0,invenio-logging==1.0.0b3,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=invenio_mail&subdirectory=modules/invenio-mail,invenio-marc21==1.0.0a8,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=invenio_oaiharvester&subdirectory=modules/invenio-oaiharvester,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=invenio_oaiserver&subdirectory=modules/invenio-oaiserver,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=invenio_oauth2server&subdirectory=modules/invenio-oauth2server,invenio-oauthclient==1.0.0,invenio-pidrelations==1.0.0a4,invenio-pidstore==1.0.0,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=invenio_previewer&subdirectory=modules/invenio-previewer,invenio-query-parser==0.6.0,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=invenio_queues&subdirectory=modules/invenio-queues,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=invenio_records&subdirectory=modules/invenio-records,invenio-records-files==1.0.0a10,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=invenio_records_rest&subdirectory=modules/invenio-records-rest,invenio-records-ui==1.0.0,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=invenio_resourcesyncclient&subdirectory=modules/invenio-resourcesyncclient,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=invenio_resourcesyncserver&subdirectory=modules/invenio-resourcesyncserver,invenio-rest==1.1.2,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=invenio_s3&subdirectory=modules/invenio-s3,-e git+https://github.com/RCOSDP/invenio-search.git@cff9744c5dc651893a9c51672c5b8da9adc21e16#egg=invenio_search,-e git+https://github.com/RCOSDP/invenio-search-ui.git@74bd3b2990ff27b39e01b6b31be9a0b5fda3dd0f#egg=invenio_search_ui,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=invenio_stats&subdirectory=modules/invenio-stats,invenio-theme==1.0.0b4,ipaddress==1.0.19,ipython==6.2.1,ipython-genutils==0.2.0,itsdangerous==0.24,jedi==0.11.0,Jinja2==2.10.1,jinja2-cli==0.6.0,jinja2-time==0.2.0,jmespath==0.10.0,jsmin==2.2.2,jsonpatch==1.21,jsonpath-ng==1.5.2,jsonpointer==1.14,jsonref==0.1,jsonresolver==0.2.1,jsonschema==2.6.0,jupyter-client==5.2.2,jupyter-core==4.4.0,-e git+https://github.com/RCOSDP/kombu.git@f204fdf078d5e94393c86693f545e2d011f620f5#egg=kombu,limits==1.2.1,lxml==4.1.1,Mako==1.0.7,MarkupSafe==1.1.1,marshmallow==2.20.1,marshmallow-sqlalchemy==0.23.1,maxminddb==1.5.2,maxminddb-geolite2==2017.803,mistune==0.8.3,mock==5.0.2,more-itertools==8.10.0,msgpack==0.6.2,nbconvert==5.3.1,nbformat==4.4.0,netaddr==0.8.0,node-semver==0.1.1,numpy==1.16.1,oauthlib==2.1.0,ordereddict==1.1,packaging==21.3,pandocfilters==1.4.2,parso==0.1.0,passlib==1.7.1,pbr==5.11.1,pexpect==4.3.0,pickleshare==0.7.4,Pillow==5.4.1,platformdirs==2.4.0,pluggy==0.13.1,ply==3.11,poyo==0.4.1,prompt-toolkit==1.0.15,psycopg2==2.7.3.2,ptyprocess==0.5.2,py==1.11.0,pycparser==2.18,Pygments==2.2.0,PyJWT==1.5.3,PyLD==2.0.3,pyparsing==3.1.0,-e git+https://github.com/RCOSDP/PyPDF2.git@fefc684a3a74aff6f99e5dff24f9b4dd1c95169d#egg=PyPDF2,pyPEG2==2.15.2,pytest==6.1.2,pytest-cov==4.0.0,pytest-flask==0.15.1,pytest-invenio==1.3.1,pytest-mock==3.6.1,python-dateutil==2.6.1,python-editor==1.0.3,python-geoip==1.2,pytz==2017.3,pyzmq==17.0.0,redis==2.10.6,requests==2.18.4,requests-oauthlib==1.1.0,resync==1.0.9,s3fs==0.1.6,s3transfer==0.1.13,selenium==3.141.0,Sickle==0.6.4,simplegeneric==0.8.1,simplejson==3.12.0,simplekv==0.11.2,six==1.16.0,snowballstemmer==2.2.0,soupsieve==2.3.2.post1,speaklater==1.3,Sphinx==1.8.4,sphinxcontrib-serializinghtml==1.1.5,sphinxcontrib-websupport==1.2.4,SQLAlchemy==1.2.19,SQLAlchemy-Continuum==1.3.6,SQLAlchemy-Utils==0.35.0,stevedore==3.5.2,sword3common==0.1.1,testpath==0.3.1,toml==0.10.2,tomli==1.2.3,tornado==4.5.3,tox==3.28.0,traitlets==4.3.2,typing_extensions==4.1.1,ua-parser==0.7.3,uritemplate==4.1.1,uritools==2.1.0,urllib3==1.22,uWSGI==2.0.21,uwsgitop==0.11,validators==0.12.0,vine==1.3.0,virtualenv==20.17.1,virtualenv-clone==0.5.7,virtualenvwrapper==4.8.4,Wand==0.6.1,wcwidth==0.1.7,webargs==5.5.2,webassets==0.12.1,webencodings==0.5.1,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_accounts&subdirectory=modules/weko-accounts,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_admin&subdirectory=modules/weko-admin,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_authors&subdirectory=modules/weko-authors,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_bulkupdate&subdirectory=modules/weko-bulkupdate,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_deposit&subdirectory=modules/weko-deposit,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_gridlayout&subdirectory=modules/weko-gridlayout,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_groups&subdirectory=modules/weko-groups,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_handle&subdirectory=modules/weko-handle,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_index_tree&subdirectory=modules/weko-index-tree,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_indextree_journal&subdirectory=modules/weko-indextree-journal,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_items_autofill&subdirectory=modules/weko-items-autofill,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_items_ui&subdirectory=modules/weko-items-ui,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_itemtypes_ui&subdirectory=modules/weko-itemtypes-ui,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_logging&subdirectory=modules/weko-logging,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_records&subdirectory=modules/weko-records,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_records_ui&subdirectory=modules/weko-records-ui,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_redis&subdirectory=modules/weko-redis,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_schema_ui&subdirectory=modules/weko-schema-ui,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_search_ui&subdirectory=modules/weko-search-ui,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_sitemap&subdirectory=modules/weko-sitemap,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_swordserver&subdirectory=modules/weko-swordserver,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_theme&subdirectory=modules/weko-theme,-e git+https://github.com/RCOSDP/weko.git@2e33db91047d62a161687c8fef10a8e2dd670b28#egg=weko_user_profiles&subdirectory=modules/weko-user-profiles,weko-workflow @ file:///code/modules/weko-workflow/.tox/.tmp/package/1/weko-workflow-0.1.0.dev20170000.zip,Werkzeug==0.15.2,whichcraft==0.4.1,WTForms==2.1,WTForms-Alchemy==0.16.5,WTForms-Components==0.10.3,xmlschema==0.9.30,xmltodict==0.12.0,zipp==3.6.0,zope.interface==5.5.2
-c1 run-test-pre: PYTHONHASHSEED='952794307'
+c1 installed: alabaster==0.7.13,alembic==0.9.6,amqp==2.6.0,angular-gettext-babel==0.3,aniso8601==8.0.0,arrow==0.12.1,asn1crypto==0.23.0,atomicwrites==1.4.1,attrs==17.4.0,b2handle==1.1.2,Babel==2.5.1,bagit==1.7.0,beautifulsoup4==4.9.3,bibtexparser==1.0.1,billiard==3.6.3.0,binaryornot==0.4.4,bleach==3.1.0,blinker==1.4,boto3==1.7.84,botocore==1.10.84,cachelib==0.1,cachetools==4.2.4,cchardet==2.1.1,celery==4.4.4,certifi==2017.11.5,cffi==1.11.2,chardet==3.0.4,citeproc-py==0.5.1,citeproc-py-styles==0.1.2,click==6.7,cookiecutter==1.6.0,counter-robots==2018.6,coverage==6.2,cryptography==2.1.4,datacite==1.0.1,DateTime==4.9,decorator==4.1.2,defusedxml==0.5.0,dictdiffer==0.7.0,distlib==0.3.6,dnspython==2.2.1,docutils==0.18.1,dojson==1.3.2,elasticsearch==6.1.1,elasticsearch-dsl==6.4.0,elementpath==1.0.6,email-validator==1.0.5,entrypoints==0.2.3,feedgen==0.7.0,filelock==3.4.1,Flask==1.1.0,Flask-Admin==1.5.3,Flask-Alembic==2.0.1,Flask-Assets==0.12,Flask-BabelEx==0.9.4,Flask-Breadcrumbs==0.5.0,Flask-Caching==1.10.1,Flask-CeleryExt==0.3.4,Flask-Collect==1.2.2,Flask-Cors==3.0.3,Flask-DebugToolbar==0.13.1,Flask-IIIF==0.6.1,Flask-KVSession==0.6.2,Flask-Limiter==1.1.0,Flask-Login==0.4.1,Flask-Mail==0.9.1,flask-marshmallow==0.14.0,Flask-Menu==0.6.0,-e git+https://github.com/RCOSDP/flask-oauthlib.git@98eb36e1dfc66256fa7ea62237e9879acb906e9d#egg=Flask_OAuthlib,Flask-Plugins==1.6.1,Flask-Principal==0.4.0,Flask-RESTful==0.3.8,Flask-Security==3.0.0,flask-shell-ipython==0.4.1,Flask-Sitemap==0.4.0,Flask-SQLAlchemy==2.3.2,flask-talisman==0.4.1,Flask-WTF==0.14.3,-e git+https://github.com/RCOSDP/pyfpdf.git@f9b032148283d535cabc7789858081c80de36fef#egg=fpdf,frozendict==2.3.8,fs==0.5.4,ftfy==4.4.3,future==0.16.0,github3.py==1.1.0,html5lib==1.0.1,idna==2.6,iiif-prezi==0.3.0,imagesize==1.4.1,importlib-metadata==4.8.3,importlib-resources==5.4.0,infinity==1.4,iniconfig==1.1.1,intervals==0.8.0,invenio-access==1.1.0,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=invenio_accounts&subdirectory=modules/invenio-accounts,invenio-admin==1.1.2,invenio-app==1.1.0,invenio-assets==1.0.0,invenio-base==1.0.2,invenio-cache==1.0.0,invenio-celery==1.1.3,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=invenio_communities&subdirectory=modules/invenio-communities,invenio-config==1.0.0,invenio-csl-rest==1.0.0a1,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=invenio_db&subdirectory=modules/invenio-db,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=invenio_deposit&subdirectory=modules/invenio-deposit,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=invenio_files_rest&subdirectory=modules/invenio-files-rest,invenio-formatter==1.0.0b3,invenio-i18n==1.0.0,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=invenio_iiif&subdirectory=modules/invenio-iiif,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=invenio_indexer&subdirectory=modules/invenio-indexer,invenio-jsonschemas==1.0.0,invenio-logging==1.0.0b3,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=invenio_mail&subdirectory=modules/invenio-mail,invenio-marc21==1.0.0a8,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=invenio_oaiharvester&subdirectory=modules/invenio-oaiharvester,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=invenio_oaiserver&subdirectory=modules/invenio-oaiserver,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=invenio_oauth2server&subdirectory=modules/invenio-oauth2server,invenio-oauthclient==1.0.0,invenio-pidrelations==1.0.0a4,invenio-pidstore==1.0.0,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=invenio_previewer&subdirectory=modules/invenio-previewer,invenio-query-parser==0.6.0,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=invenio_queues&subdirectory=modules/invenio-queues,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=invenio_records&subdirectory=modules/invenio-records,invenio-records-files==1.0.0a10,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=invenio_records_rest&subdirectory=modules/invenio-records-rest,invenio-records-ui==1.0.0,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=invenio_resourcesyncclient&subdirectory=modules/invenio-resourcesyncclient,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=invenio_resourcesyncserver&subdirectory=modules/invenio-resourcesyncserver,invenio-rest==1.1.2,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=invenio_s3&subdirectory=modules/invenio-s3,-e git+https://github.com/RCOSDP/invenio-search.git@cff9744c5dc651893a9c51672c5b8da9adc21e16#egg=invenio_search,-e git+https://github.com/RCOSDP/invenio-search-ui.git@74bd3b2990ff27b39e01b6b31be9a0b5fda3dd0f#egg=invenio_search_ui,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=invenio_stats&subdirectory=modules/invenio-stats,invenio-theme==1.0.0b4,ipaddress==1.0.19,ipython==6.2.1,ipython-genutils==0.2.0,itsdangerous==0.24,jedi==0.11.0,Jinja2==2.10.1,jinja2-cli==0.6.0,jinja2-time==0.2.0,jmespath==0.10.0,jsmin==2.2.2,jsonpatch==1.21,jsonpath-ng==1.5.2,jsonpointer==1.14,jsonref==0.1,jsonresolver==0.2.1,jsonschema==2.6.0,jupyter-client==5.2.2,jupyter-core==4.4.0,-e git+https://github.com/RCOSDP/kombu.git@f204fdf078d5e94393c86693f545e2d011f620f5#egg=kombu,limits==1.2.1,lxml==4.1.1,Mako==1.0.7,MarkupSafe==1.1.1,marshmallow==2.20.1,marshmallow-sqlalchemy==0.23.1,maxminddb==1.5.2,maxminddb-geolite2==2017.803,mistune==0.8.3,mock==5.0.2,more-itertools==8.10.0,msgpack==0.6.2,nbconvert==5.3.1,nbformat==4.4.0,netaddr==0.8.0,node-semver==0.1.1,numpy==1.16.1,oauthlib==2.1.0,ordereddict==1.1,packaging==21.3,pandocfilters==1.4.2,parso==0.1.0,passlib==1.7.1,pbr==5.11.1,pexpect==4.3.0,pickleshare==0.7.4,Pillow==5.4.1,platformdirs==2.4.0,pluggy==0.13.1,ply==3.11,poyo==0.4.1,prompt-toolkit==1.0.15,psycopg2==2.7.3.2,ptyprocess==0.5.2,py==1.11.0,pycparser==2.18,Pygments==2.2.0,PyJWT==1.5.3,PyLD==2.0.3,pyparsing==3.1.0,-e git+https://github.com/RCOSDP/PyPDF2.git@fefc684a3a74aff6f99e5dff24f9b4dd1c95169d#egg=PyPDF2,pyPEG2==2.15.2,pytest==6.1.2,pytest-cov==4.0.0,pytest-flask==0.15.1,pytest-invenio==1.3.1,pytest-mock==3.6.1,python-dateutil==2.6.1,python-editor==1.0.3,python-geoip==1.2,pytz==2017.3,pyzmq==17.0.0,redis==2.10.6,requests==2.18.4,requests-oauthlib==1.1.0,resync==1.0.9,s3fs==0.1.6,s3transfer==0.1.13,selenium==3.141.0,Sickle==0.6.4,simplegeneric==0.8.1,simplejson==3.12.0,simplekv==0.11.2,six==1.16.0,snowballstemmer==2.2.0,soupsieve==2.3.2.post1,speaklater==1.3,Sphinx==1.8.4,sphinxcontrib-serializinghtml==1.1.5,sphinxcontrib-websupport==1.2.4,SQLAlchemy==1.2.19,SQLAlchemy-Continuum==1.3.6,SQLAlchemy-Utils==0.35.0,stevedore==3.5.2,sword3common==0.1.1,testpath==0.3.1,tika==2.6.0,toml==0.10.2,tomli==1.2.3,tornado==4.5.3,tox==3.28.0,traitlets==4.3.2,typing_extensions==4.1.1,ua-parser==0.7.3,uritemplate==4.1.1,uritools==2.1.0,urllib3==1.22,uWSGI==2.0.21,uwsgitop==0.11,validators==0.12.0,vine==1.3.0,virtualenv==20.17.1,virtualenv-clone==0.5.7,virtualenvwrapper==4.8.4,Wand==0.6.1,wcwidth==0.1.7,webargs==5.5.2,webassets==0.12.1,webencodings==0.5.1,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_accounts&subdirectory=modules/weko-accounts,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_admin&subdirectory=modules/weko-admin,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_authors&subdirectory=modules/weko-authors,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_bulkupdate&subdirectory=modules/weko-bulkupdate,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_deposit&subdirectory=modules/weko-deposit,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_gridlayout&subdirectory=modules/weko-gridlayout,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_groups&subdirectory=modules/weko-groups,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_handle&subdirectory=modules/weko-handle,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_index_tree&subdirectory=modules/weko-index-tree,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_indextree_journal&subdirectory=modules/weko-indextree-journal,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_items_autofill&subdirectory=modules/weko-items-autofill,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_items_ui&subdirectory=modules/weko-items-ui,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_itemtypes_ui&subdirectory=modules/weko-itemtypes-ui,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_logging&subdirectory=modules/weko-logging,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_records&subdirectory=modules/weko-records,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_records_ui&subdirectory=modules/weko-records-ui,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_redis&subdirectory=modules/weko-redis,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_schema_ui&subdirectory=modules/weko-schema-ui,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_search_ui&subdirectory=modules/weko-search-ui,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_sitemap&subdirectory=modules/weko-sitemap,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_swordserver&subdirectory=modules/weko-swordserver,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_theme&subdirectory=modules/weko-theme,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_user_profiles&subdirectory=modules/weko-user-profiles,weko-workflow @ file:///code/modules/weko-workflow/.tox/.tmp/package/1/weko-workflow-0.1.0.dev20170000.zip,Werkzeug==0.15.2,whichcraft==0.4.1,WTForms==2.1,WTForms-Alchemy==0.16.5,WTForms-Components==0.10.3,xmlschema==0.9.30,xmltodict==0.12.0,zipp==3.6.0,zope.interface==5.5.2
+c1 run-test-pre: PYTHONHASHSEED='909040002'
 c1 run-test: commands[0] | pytest --cov=weko_workflow tests -v -s -vv --cov-branch --cov-report=term --cov-report=xml --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-ImportError while loading conftest '/code/modules/weko-workflow/tests/conftest.py'.
-tests/conftest.py:57: in <module>
-    from invenio_communities.views.ui import blueprint as invenio_communities_blueprint
-../invenio-communities/invenio_communities/views/ui.py:44: in <module>
-    from weko_search_ui.api import SearchSetting, get_search_detail_keyword
-../weko-search-ui/weko_search_ui/__init__.py:23: in <module>
-    from .ext import WekoSearchREST, WekoSearchUI
-../weko-search-ui/weko_search_ui/ext.py:25: in <module>
-    from .views import blueprint
-../weko-search-ui/weko_search_ui/views.py:38: in <module>
-    from weko_gridlayout.utils import (
-../weko-gridlayout/weko_gridlayout/__init__.py:12: in <module>
-    from .ext import WekoGridLayout
-../weko-gridlayout/weko_gridlayout/ext.py:16: in <module>
-    from .views import handle_not_found
-../weko-gridlayout/weko_gridlayout/views.py:22: in <module>
-    from weko_theme.utils import get_community_id, get_weko_contents
-../weko-theme/weko_theme/__init__.py:23: in <module>
-    from .ext import WekoTheme
-../weko-theme/weko_theme/ext.py:27: in <module>
-    from .views import blueprint
-../weko-theme/weko_theme/views.py:33: in <module>
-    from weko_records_ui.ipaddr import check_site_license_permission
-../weko-records-ui/weko_records_ui/__init__.py:23: in <module>
-    from .ext import WekoRecordsCitesREST, WekoRecordsUI
-../weko-records-ui/weko_records_ui/ext.py:23: in <module>
-    from . import config
-../weko-records-ui/weko_records_ui/config.py:27: in <module>
-    from .views import blueprint
-../weko-records-ui/weko_records_ui/views.py:40: in <module>
-    from invenio_oaiserver.response import getrecord
-../invenio-oaiserver/invenio_oaiserver/response.py:26: in <module>
-    from weko_deposit.api import WekoRecord
-../weko-deposit/weko_deposit/__init__.py:23: in <module>
-    from .ext import WekoDeposit, WekoDepositREST
-../weko-deposit/weko_deposit/ext.py:26: in <module>
-    from .receivers import append_file_content
-../weko-deposit/weko_deposit/receivers.py:17: in <module>
-    from .api import WekoDeposit
-../weko-deposit/weko_deposit/api.py:29: in <module>
-    from tika import parser
-E   ModuleNotFoundError: No module named 'tika'
-ERROR: InvocationError for command /code/modules/weko-workflow/.tox/c1/bin/pytest --cov=weko_workflow tests -v -s -vv --cov-branch --cov-report=term --cov-report=xml --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-workflow/.tox/c1/tmp (exited with code 4)
-___________________________________ summary ____________________________________
-ERROR:   c1: commands failed
+============================= test session starts ==============================
+platform linux -- Python 3.6.15, pytest-6.1.2, py-1.11.0, pluggy-0.13.1 -- /code/modules/weko-workflow/.tox/c1/bin/python
+cachedir: .tox/c1/.pytest_cache
+rootdir: /code/modules/weko-workflow
+plugins: celery-4.4.4, flask-0.15.1, cov-4.0.0, mock-3.6.1, invenio-1.3.1
+collecting ... collected 464 items
+
+tests/test_admin.py::TestFlowSettingView::test_index_acl_guest PASSED
+tests/test_admin.py::TestFlowSettingView::test_index_acl[0-403] PASSED
+tests/test_admin.py::TestFlowSettingView::test_flow_detail_acl_guest PASSED
+tests/test_admin.py::TestFlowSettingView::test_flow_detail_acl[1-200] PASSED
+tests/test_admin.py::TestFlowSettingView::test_flow_detail_update_delete PASSED
+tests/test_admin.py::TestFlowSettingView::test_get_specified_properties PASSED
+tests/test_admin.py::TestFlowSettingView::test_new_flow PASSED
+tests/test_admin.py::TestFlowSettingView::test_new_flow2 FAILED
+tests/test_admin.py::TestFlowSettingView::test_del_flow PASSED
+tests/test_admin.py::TestFlowSettingView::test_get_actions FAILED
+tests/test_admin.py::TestFlowSettingView::test_upt_flow_action PASSED
+tests/test_admin.py::TestFlowSettingView::test_upt_flow_action2 FAILED
+tests/test_admin.py::TestFlowSettingView::test__check_auth PASSED
+tests/test_admin.py::TestWorkFlowSettingView::test_index_acl_guest PASSED
+tests/test_admin.py::TestWorkFlowSettingView::test_index_acl[1-200] FAILED
+tests/test_admin.py::TestWorkFlowSettingView::test_workflow_detail_acl_guest PASSED
+tests/test_admin.py::TestWorkFlowSettingView::test_workflow_detail_acl[1-200] PASSED
+tests/test_admin.py::TestWorkFlowSettingView::test_workflow_detail_acl[2-200] PASSED
+tests/test_admin.py::TestWorkFlowSettingView::test_update_workflow_acl_guest PASSED
+tests/test_admin.py::TestWorkFlowSettingView::test_update_workflow_acl[1-200] FAILED
+tests/test_admin.py::TestWorkFlowSettingView::test_update_workflow PASSED
+tests/test_admin.py::TestWorkFlowSettingView::test_delete_workflow_acl_guest PASSED
+tests/test_admin.py::TestWorkFlowSettingView::test_delete_workflow_acl[1-200] PASSED
+tests/test_admin.py::TestWorkFlowSettingView::test_get_name_display_hide PASSED
+tests/test_admin.py::TestWorkFlowSettingView::test_get_displays PASSED
+tests/test_admin.py::TestWorkFlowSettingView::test_save_workflow_role FAILED
+tests/test_admin.py::TestWorkFlowSettingView::test_get_language_workflows FAILED
+tests/test_api.py::test_Flow_action PASSED
+tests/test_api.py::test_Flow_get_flow_action_list PASSED
+tests/test_api.py::test_WorkActivity_filter_by_date PASSED
+tests/test_api.py::test_WorkActivity_get_all_activity_list PASSED
+tests/test_api.py::test_WorkActivity_get_activity_index_search FAILED
+tests/test_api.py::test_WorkActivity_upt_activity_detail FAILED
+tests/test_api.py::test_WorkActivity_get_corresponding_usage_activities PASSED
+tests/test_cli.py::test_workflow PASSED
+tests/test_cli.py::test_init_workflow_tables FAILED
+tests/test_romeo.py::test_search_romeo_jtitles PASSED
+tests/test_romeo.py::test_search_romeo_issn PASSED
+tests/test_romeo.py::test_search_romeo_jtitle PASSED
+tests/test_sessions.py::test_upt_activity_item PASSED
+tests/test_tasks.py::test_cancel_expired_usage_report_activities FAILED
+tests/test_utils.py::test_get_current_language PASSED
+tests/test_utils.py::test_get_term_and_condition_content PASSED
+tests/test_utils.py::test_get_identifier_setting PASSED
+tests/test_utils.py::test_saving_doi_pidstore PASSED
+tests/test_utils.py::test_register_hdl PASSED
+tests/test_utils.py::test_item_metadata_validation PASSED
+tests/test_utils.py::test_item_metadata_validation_2 FAILED
+tests/test_utils.py::test_merge_doi_error_list PASSED
+tests/test_utils.py::test_validation_item_property PASSED
+tests/test_utils.py::test_handle_check_required_data PASSED
+tests/test_utils.py::test_handle_check_required_pattern_and_either FAILED
+tests/test_utils.py::test_check_required_data PASSED
+tests/test_utils.py::test_get_activity_id_of_record_without_version PASSED
+tests/test_utils.py::test_check_suffix_identifier PASSED
+tests/test_utils.py::test_get_sub_item_value PASSED
+tests/test_utils.py::test_get_item_value_in_deep PASSED
+tests/test_utils.py::test_delete_bucket FAILED
+tests/test_utils.py::test_merge_buckets_by_records[True] PASSED
+tests/test_utils.py::test_merge_buckets_by_records[False] PASSED
+tests/test_utils.py::test_merge_buckets_by_records_error PASSED
+tests/test_utils.py::test_set_bucket_default_size FAILED
+tests/test_utils.py::test_is_show_autofill_metadata PASSED
+tests/test_utils.py::test_is_hidden_pubdate PASSED
+tests/test_utils.py::test_get_parent_pid_with_type FAILED
+tests/test_utils.py::test_filter_all_condition PASSED
+tests/test_utils.py::test_filter_condition PASSED
+tests/test_utils.py::test_get_actionid PASSED
+tests/test_utils.py::test_convert_record_to_item_metadata PASSED
+tests/test_utils.py::test_prepare_edit_workflow FAILED
+tests/test_utils.py::test_handle_finish_workflow FAILED
+tests/test_utils.py::test_delete_cache_data PASSED
+tests/test_utils.py::test_update_cache_data PASSED
+tests/test_utils.py::test_get_cache_data PASSED
+tests/test_utils.py::test_check_an_item_is_locked PASSED
+tests/test_utils.py::test_get_accoutn_info PASSED
+tests/test_utils.py::test_check_existed_doi PASSED
+tests/test_utils.py::test_get_url_root FAILED
+tests/test_utils.py::test_get_record_by_root_ver PASSED
+tests/test_utils.py::test_get_disptype_and_ver_in_metainfo PASSED
+tests/test_utils.py::test_set_files_display_type PASSED
+tests/test_utils.py::test_get_thumbnails PASSED
+tests/test_utils.py::test_get_allow_multi_thumbnail PASSED
+tests/test_utils.py::test_is_usage_application_item_type PASSED
+tests/test_utils.py::test_is_usage_application PASSED
+tests/test_utils.py::test_send_mail_reminder PASSED
+tests/test_utils.py::test_send_mail_approval_done PASSED
+tests/test_utils.py::test_send_mail_registration_done PASSED
+tests/test_utils.py::test_send_mail_request_approval PASSED
+tests/test_utils.py::test_send_mail PASSED
+tests/test_utils.py::test_email_pattern_registration_done PASSED
+tests/test_utils.py::test_email_pattern_request_approval PASSED
+tests/test_utils.py::test_email_pattern_approval_done PASSED
+tests/test_utils.py::test_get_mail_data PASSED
+tests/test_utils.py::test_get_subject_and_content PASSED
+tests/test_utils.py::test_get_file_path PASSED
+tests/test_utils.py::test_replace_characters PASSED
+tests/test_utils.py::test_register_info PASSED
+tests/test_utils.py::test_get_approval_dates PASSED
+tests/test_utils.py::test_get_item_info FAILED
+tests/test_utils.py::test_get_site_info_name PASSED
+tests/test_utils.py::test_get_default_mail_sender PASSED
+tests/test_utils.py::test_set_mail_info PASSED
+tests/test_utils.py::test_process_send_reminder_mail PASSED
+tests/test_utils.py::test_process_send_notification_mail PASSED
+tests/test_utils.py::test_get_application_and_approval_date PASSED
+tests/test_utils.py::test_get_workflow_item_type_names PASSED
+tests/test_utils.py::test_create_usage_report PASSED
+tests/test_utils.py::test_create_record_metadata PASSED
+tests/test_utils.py::test_modify_item_metadata PASSED
+tests/test_utils.py::test_replace_title_subitem PASSED
+tests/test_utils.py::test_get_schema_dict PASSED
+tests/test_utils.py::test_create_deposit PASSED
+tests/test_utils.py::test_update_activity_action PASSED
+tests/test_utils.py::test_check_continue PASSED
+tests/test_utils.py::test_autofill_title PASSED
+tests/test_utils.py::test_exclude_admin_workflow PASSED
+tests/test_utils.py::test_is_enable_item_name_link PASSED
+tests/test_utils.py::test_save_activity_data PASSED
+tests/test_utils.py::test_send_mail_url_guest_user PASSED
+tests/test_utils.py::test_generate_guest_activity_token_value PASSED
+tests/test_utils.py::test_init_activity_for_guest_user PASSED
+tests/test_utils.py::test_send_usage_application_mail_for_guest_user PASSED
+tests/test_utils.py::test_validate_guest_activity_token PASSED
+tests/test_utils.py::test_validate_guest_activity_expired PASSED
+tests/test_utils.py::test_create_onetime_download_url_to_guest PASSED
+tests/test_utils.py::test_delete_guest_activity FAILED
+tests/test_utils.py::test_get_activity_display_info PASSED
+tests/test_utils.py::test___init_activity_detail_data_for_guest FAILED
+tests/test_utils.py::test_prepare_data_for_guest_activity PASSED
+tests/test_utils.py::test_recursive_get_specified_properties PASSED
+tests/test_utils.py::test_get_approval_keys PASSED
+tests/test_utils.py::test_process_send_mail PASSED
+tests/test_utils.py::test_cancel_expired_usage_reports PASSED
+tests/test_utils.py::test_process_send_approval_mails PASSED
+tests/test_utils.py::test_get_usage_data PASSED
+tests/test_utils.py::test_update_approval_date PASSED
+tests/test_utils.py::test_create_record_metadata_for_user PASSED
+tests/test_utils.py::test_get_current_date PASSED
+tests/test_utils.py::test_get_sub_key_by_system_property_key PASSED
+tests/test_utils.py::test_update_system_data_for_item_metadata PASSED
+tests/test_utils.py::test_update_approval_date_for_deposit PASSED
+tests/test_utils.py::test_update_system_data_for_activity FAILED
+tests/test_utils.py::test_get_record_first_version PASSED
+tests/test_utils.py::test_prepare_doi_link_workflow FAILED
+tests/test_utils.py::test_get_index_id FAILED
+tests/test_utils.py::test_make_activitylog_tsv FAILED
+tests/test_utils.py::test_is_terms_of_use_only FAILED
+tests/test_utils.py::test_grant_access_rights_to_all_open_restricted_files FAILED
+tests/test_views.py::test_index_acl_nologin FAILED
+tests/test_views.py::test_index_acl[0-200] FAILED
+tests/test_views.py::test_index_acl[1-200] FAILED
+tests/test_views.py::test_index_acl[2-200] FAILED
+tests/test_views.py::test_index_acl[3-200] FAILED
+tests/test_views.py::test_index_acl[4-200] FAILED
+tests/test_views.py::test_index_acl[5-200] FAILED
+tests/test_views.py::test_index_acl[6-200] FAILED
+tests/test_views.py::test_iframe_success PASSED
+tests/test_views.py::test_init_activity_acl_nologin PASSED
+tests/test_views.py::test_init_activity_acl[0-200] FAILED
+tests/test_views.py::test_init_activity_acl[1-200] FAILED
+tests/test_views.py::test_init_activity_acl[2-200] FAILED
+tests/test_views.py::test_init_activity_acl[3-200] FAILED
+tests/test_views.py::test_init_activity_acl[4-200] FAILED
+tests/test_views.py::test_init_activity_acl[5-200] FAILED
+tests/test_views.py::test_init_activity_acl[6-200] FAILED
+tests/test_views.py::test_init_activity_guest_nologin PASSED
+tests/test_views.py::test_init_activity_guest_users[0-200] FAILED
+tests/test_views.py::test_init_activity_guest_users[1-200] FAILED
+tests/test_views.py::test_init_activity_guest_users[2-200] FAILED
+tests/test_views.py::test_init_activity_guest_users[3-200] FAILED
+tests/test_views.py::test_init_activity_guest_users[4-200] FAILED
+tests/test_views.py::test_init_activity_guest_users[5-200] FAILED
+tests/test_views.py::test_init_activity_guest_users[6-200] FAILED
+tests/test_views.py::test_display_guest_activity PASSED
+tests/test_views.py::test_find_doi_nologin PASSED
+tests/test_views.py::test_find_doi_users[0-200] PASSED
+tests/test_views.py::test_find_doi_users[1-200] PASSED
+tests/test_views.py::test_find_doi_users[2-200] PASSED
+tests/test_views.py::test_find_doi_users[3-200] PASSED
+tests/test_views.py::test_find_doi_users[4-200] PASSED
+tests/test_views.py::test_find_doi_users[5-200] PASSED
+tests/test_views.py::test_find_doi_users[6-200] PASSED
+tests/test_views.py::test_save_feedback_maillist_users[0-200] PASSED
+tests/test_views.py::test_save_feedback_maillist_users[1-200] PASSED
+tests/test_views.py::test_save_feedback_maillist_users[2-200] PASSED
+tests/test_views.py::test_save_feedback_maillist_users[3-200] PASSED
+tests/test_views.py::test_save_feedback_maillist_users[4-200] PASSED
+tests/test_views.py::test_save_feedback_maillist_users[5-200] PASSED
+tests/test_views.py::test_save_feedback_maillist_users[6-200] PASSED
+tests/test_views.py::test_previous_action_acl_nologin FAILED
+tests/test_views.py::test_previous_action_acl_users[0-403-False] PASSED
+tests/test_views.py::test_previous_action_acl_users[1-403-True] PASSED
+tests/test_views.py::test_previous_action_acl_users[2-403-True] PASSED
+tests/test_views.py::test_previous_action_acl_users[3-403-True] PASSED
+tests/test_views.py::test_previous_action_acl_users[4-403-False] PASSED
+tests/test_views.py::test_previous_action_acl_users[5-403-False] PASSED
+tests/test_views.py::test_previous_action_acl_users[6-403-True] PASSED
+tests/test_views.py::test_previous_action[0-200] FAILED
+tests/test_views.py::test_previous_action[1-200] PASSED
+tests/test_views.py::test_previous_action[2-200] PASSED
+tests/test_views.py::test_previous_action[3-200] FAILED
+tests/test_views.py::test_previous_action[4-200] FAILED
+tests/test_views.py::test_previous_action[5-200] FAILED
+tests/test_views.py::test_previous_action[6-200] PASSED
+tests/test_views.py::test_next_action_acl_nologin PASSED
+tests/test_views.py::test_next_action_acl_users[0-200-False] PASSED
+tests/test_views.py::test_next_action_acl_users[1-200-True] PASSED
+tests/test_views.py::test_next_action_acl_users[2-200-True] PASSED
+tests/test_views.py::test_next_action_acl_users[3-200-True] PASSED
+tests/test_views.py::test_next_action_acl_users[4-200-False] PASSED
+tests/test_views.py::test_next_action_acl_users[5-200-False] PASSED
+tests/test_views.py::test_next_action_acl_users[6-200-True] PASSED
+tests/test_views.py::test_next_action_acl_guestlogin PASSED
+tests/test_views.py::test_next_action[1-200] FAILED
+tests/test_views.py::test_next_action[2-200] FAILED
+tests/test_views.py::test_next_action[6-200] FAILED
+tests/test_views.py::test_next_action_usage_application[0-200] ERROR
+tests/test_views.py::test_cancel_action_acl_nologin FAILED
+tests/test_views.py::test_cancel_action_acl_users[0-403-False] PASSED
+tests/test_views.py::test_cancel_action_acl_users[1-403-True] PASSED
+tests/test_views.py::test_cancel_action_acl_users[2-403-True] PASSED
+tests/test_views.py::test_cancel_action_acl_users[3-403-True] PASSED
+tests/test_views.py::test_cancel_action_acl_users[4-403-False] PASSED
+tests/test_views.py::test_cancel_action_acl_users[5-403-False] PASSED
+tests/test_views.py::test_cancel_action_acl_users[6-403-True] PASSED
+tests/test_views.py::test_cancel_action_acl_guestlogin PASSED
+tests/test_views.py::test_cancel_action[1-200] PASSED
+tests/test_views.py::test_cancel_action[2-200] PASSED
+tests/test_views.py::test_cancel_action[6-200] PASSED
+tests/test_views.py::test_cancel_action2[0-200] FAILED
+tests/test_views.py::test_cancel_action2[1-200] FAILED
+tests/test_views.py::test_cancel_action2[2-200] FAILED
+tests/test_views.py::test_cancel_action2[3-200] FAILED
+tests/test_views.py::test_cancel_action2[4-200] FAILED
+tests/test_views.py::test_cancel_action2[5-200] FAILED
+tests/test_views.py::test_cancel_action2[6-200] FAILED
+tests/test_views.py::test_cancel_action_guest PASSED
+tests/test_views.py::test_send_mail_nologin PASSED
+tests/test_views.py::test_send_mail_users[0-200] PASSED
+tests/test_views.py::test_send_mail_users[1-200] PASSED
+tests/test_views.py::test_send_mail_users[2-200] PASSED
+tests/test_views.py::test_send_mail_users[3-200] PASSED
+tests/test_views.py::test_send_mail_users[4-200] PASSED
+tests/test_views.py::test_send_mail_users[5-200] PASSED
+tests/test_views.py::test_send_mail_users[6-200] PASSED
+tests/test_views.py::test_is_user_locked_nologin FAILED
+tests/test_views.py::test_is_user_locked_acl[0] PASSED
+tests/test_views.py::test_is_user_locked_acl[1] PASSED
+tests/test_views.py::test_is_user_locked_acl[2] PASSED
+tests/test_views.py::test_is_user_locked_acl[3] PASSED
+tests/test_views.py::test_is_user_locked_acl[4] PASSED
+tests/test_views.py::test_is_user_locked_acl[5] PASSED
+tests/test_views.py::test_is_user_locked_acl[6] PASSED
+tests/test_views.py::test_is_user_locked FAILED
+tests/test_views.py::test_user_lock_activity_nologin PASSED
+tests/test_views.py::test_user_lock_activity_acl[0] PASSED
+tests/test_views.py::test_user_lock_activity_acl[1] PASSED
+tests/test_views.py::test_user_lock_activity_acl[2] PASSED
+tests/test_views.py::test_user_lock_activity_acl[3] PASSED
+tests/test_views.py::test_user_lock_activity_acl[4] PASSED
+tests/test_views.py::test_user_lock_activity_acl[5] PASSED
+tests/test_views.py::test_user_lock_activity_acl[6] PASSED
+tests/test_views.py::test_user_lock_activity PASSED
+tests/test_views.py::test_user_unlock_activity_nologin PASSED
+tests/test_views.py::test_user_unlock_activity_acl[0] FAILED
+tests/test_views.py::test_user_unlock_activity_acl[1] FAILED
+tests/test_views.py::test_user_unlock_activity_acl[2] FAILED
+tests/test_views.py::test_user_unlock_activity_acl[3] FAILED
+tests/test_views.py::test_user_unlock_activity_acl[4] FAILED
+tests/test_views.py::test_user_unlock_activity_acl[5] FAILED
+tests/test_views.py::test_user_unlock_activity_acl[6] FAILED
+tests/test_views.py::test_user_unlock_activity FAILED
+tests/test_views.py::test_lock_activity_nologin PASSED
+tests/test_views.py::test_lock_activity_users[0-200] PASSED
+tests/test_views.py::test_lock_activity_users[1-200] PASSED
+tests/test_views.py::test_lock_activity_users[2-200] PASSED
+tests/test_views.py::test_lock_activity_users[3-200] PASSED
+tests/test_views.py::test_lock_activity_users[4-200] PASSED
+tests/test_views.py::test_lock_activity_users[5-200] PASSED
+tests/test_views.py::test_lock_activity_users[6-200] PASSED
+tests/test_views.py::test_lock_activity PASSED
+tests/test_views.py::test_unlock_activity_acl_nologin FAILED
+tests/test_views.py::test_unlock_activity_acl_users[0-200] PASSED
+tests/test_views.py::test_unlock_activity_acl_users[1-200] PASSED
+tests/test_views.py::test_unlock_activity_acl_users[2-200] PASSED
+tests/test_views.py::test_unlock_activity_acl_users[3-200] PASSED
+tests/test_views.py::test_unlock_activity_acl_users[4-200] PASSED
+tests/test_views.py::test_unlock_activity_acl_users[5-200] PASSED
+tests/test_views.py::test_unlock_activity_acl_users[6-200] PASSED
+tests/test_views.py::test_unlock_activity[0-200] PASSED
+tests/test_views.py::test_unlock_activity[1-200] PASSED
+tests/test_views.py::test_unlock_activity[2-200] PASSED
+tests/test_views.py::test_unlock_activity[3-200] PASSED
+tests/test_views.py::test_unlock_activity[4-200] PASSED
+tests/test_views.py::test_unlock_activity[5-200] PASSED
+tests/test_views.py::test_unlock_activity[6-200] PASSED
+tests/test_views.py::test_check_approval_acl_nologin FAILED
+tests/test_views.py::test_check_approval_acl_users[0-200] PASSED
+tests/test_views.py::test_check_approval_acl_users[1-200] PASSED
+tests/test_views.py::test_check_approval_acl_users[2-200] PASSED
+tests/test_views.py::test_check_approval_acl_users[3-200] PASSED
+tests/test_views.py::test_check_approval_acl_users[4-200] PASSED
+tests/test_views.py::test_check_approval_acl_users[5-200] PASSED
+tests/test_views.py::test_check_approval_acl_users[6-200] PASSED
+tests/test_views.py::test_check_approval[0-200] PASSED
+tests/test_views.py::test_check_approval[1-200] PASSED
+tests/test_views.py::test_check_approval[2-200] PASSED
+tests/test_views.py::test_check_approval[3-200] PASSED
+tests/test_views.py::test_check_approval[4-200] PASSED
+tests/test_views.py::test_check_approval[5-200] PASSED
+tests/test_views.py::test_check_approval[6-200] PASSED
+tests/test_views.py::test_get_feedback_maillist_acl_nologin FAILED
+tests/test_views.py::test_get_feedback_maillist_acl_users[0-200] PASSED
+tests/test_views.py::test_get_feedback_maillist_acl_users[1-200] PASSED
+tests/test_views.py::test_get_feedback_maillist_acl_users[2-200] PASSED
+tests/test_views.py::test_get_feedback_maillist_acl_users[3-200] PASSED
+tests/test_views.py::test_get_feedback_maillist_acl_users[4-200] PASSED
+tests/test_views.py::test_get_feedback_maillist_acl_users[5-200] PASSED
+tests/test_views.py::test_get_feedback_maillist_acl_users[6-200] PASSED
+tests/test_views.py::test_get_feedback_maillist[0-200] FAILED
+tests/test_views.py::test_get_feedback_maillist[1-200] FAILED
+tests/test_views.py::test_get_feedback_maillist[2-200] FAILED
+tests/test_views.py::test_get_feedback_maillist[3-200] FAILED
+tests/test_views.py::test_get_feedback_maillist[4-200] FAILED
+tests/test_views.py::test_get_feedback_maillist[5-200] FAILED
+tests/test_views.py::test_get_feedback_maillist[6-200] FAILED
+tests/test_views.py::test_save_activity_acl_nologin FAILED
+tests/test_views.py::test_save_activity_acl_users[0-200] PASSED
+tests/test_views.py::test_save_activity_acl_users[1-200] PASSED
+tests/test_views.py::test_save_activity_acl_users[2-200] PASSED
+tests/test_views.py::test_save_activity_acl_users[3-200] PASSED
+tests/test_views.py::test_save_activity_acl_users[4-200] PASSED
+tests/test_views.py::test_save_activity_acl_users[5-200] PASSED
+tests/test_views.py::test_save_activity_acl_users[6-200] PASSED
+tests/test_views.py::test_save_activity_acl_guestlogin PASSED
+tests/test_views.py::test_save_activity[0-200] PASSED
+tests/test_views.py::test_save_activity[1-200] PASSED
+tests/test_views.py::test_save_activity[2-200] PASSED
+tests/test_views.py::test_save_activity[3-200] PASSED
+tests/test_views.py::test_save_activity[4-200] PASSED
+tests/test_views.py::test_save_activity[5-200] PASSED
+tests/test_views.py::test_save_activity[6-200] PASSED
+tests/test_views.py::test_save_activity_guestlogin PASSED
+tests/test_views.py::test_display_activity_nologin PASSED
+tests/test_views.py::test_display_activity_guestlogin PASSED
+tests/test_views.py::test_display_activity_users[0-200] PASSED
+tests/test_views.py::test_display_activity_users[1-200] PASSED
+tests/test_views.py::test_display_activity_users[2-200] PASSED
+tests/test_views.py::test_display_activity_users[3-200] PASSED
+tests/test_views.py::test_display_activity_users[4-200] PASSED
+tests/test_views.py::test_display_activity_users[5-200] PASSED
+tests/test_views.py::test_display_activity_users[6-200] PASSED
+tests/test_views.py::test_display_activity PASSED
+tests/test_views.py::test_check_authority_action PASSED
+tests/test_views.py::test_withdraw_confirm_nologin FAILED
+tests/test_views.py::test_withdraw_confirm_users[0-403-False] PASSED
+tests/test_views.py::test_withdraw_confirm_users[1-403-True] PASSED
+tests/test_views.py::test_withdraw_confirm_users[2-403-True] PASSED
+tests/test_views.py::test_withdraw_confirm_users[3-403-True] PASSED
+tests/test_views.py::test_withdraw_confirm_users[4-403-False] PASSED
+tests/test_views.py::test_withdraw_confirm_users[5-403-False] PASSED
+tests/test_views.py::test_withdraw_confirm_users[6-403-True] PASSED
+tests/test_views.py::test_withdraw_confirm_guestlogin PASSED
+tests/test_views.py::test_withdraw_confirm_exception1[0] PASSED
+tests/test_views.py::test_withdraw_confirm_exception1[1] PASSED
+tests/test_views.py::test_withdraw_confirm_exception1[2] PASSED
+tests/test_views.py::test_withdraw_confirm_exception1[3] PASSED
+tests/test_views.py::test_withdraw_confirm_exception1[4] PASSED
+tests/test_views.py::test_withdraw_confirm_exception1[5] PASSED
+tests/test_views.py::test_withdraw_confirm_exception1[6] PASSED
+tests/test_views.py::test_withdraw_confirm_exception1_guestlogin PASSED
+tests/test_views.py::test_withdraw_confirm_exception2[0-input_data0-500--1-{'passwd': ['Missing data for required field.']}] PASSED
+tests/test_views.py::test_withdraw_confirm_exception2[0-input_data1-500--1-{'passwd': ['Field may not be null.']}] PASSED
+tests/test_views.py::test_withdraw_confirm_exception2[0-input_data2-500--1-bad identifier data] FAILED
+tests/test_views.py::test_withdraw_confirm_exception2[0-input_data3-500--1-Invalid password] PASSED
+tests/test_views.py::test_withdraw_confirm_exception2[1-input_data0-500--1-{'passwd': ['Missing data for required field.']}] PASSED
+tests/test_views.py::test_withdraw_confirm_exception2[1-input_data1-500--1-{'passwd': ['Field may not be null.']}] PASSED
+tests/test_views.py::test_withdraw_confirm_exception2[1-input_data2-500--1-bad identifier data] FAILED
+tests/test_views.py::test_withdraw_confirm_exception2[1-input_data3-500--1-Invalid password] PASSED
+tests/test_views.py::test_withdraw_confirm_exception2[2-input_data0-500--1-{'passwd': ['Missing data for required field.']}] PASSED
+tests/test_views.py::test_withdraw_confirm_exception2[2-input_data1-500--1-{'passwd': ['Field may not be null.']}] PASSED
+tests/test_views.py::test_withdraw_confirm_exception2[2-input_data2-500--1-bad identifier data] FAILED
+tests/test_views.py::test_withdraw_confirm_exception2[2-input_data3-500--1-Invalid password] PASSED
+tests/test_views.py::test_withdraw_confirm_exception2[3-input_data0-500--1-{'passwd': ['Missing data for required field.']}] PASSED
+tests/test_views.py::test_withdraw_confirm_exception2[3-input_data1-500--1-{'passwd': ['Field may not be null.']}] PASSED
+tests/test_views.py::test_withdraw_confirm_exception2[3-input_data2-500--1-bad identifier data] FAILED
+tests/test_views.py::test_withdraw_confirm_exception2[3-input_data3-500--1-Invalid password] PASSED
+tests/test_views.py::test_withdraw_confirm_exception2[4-input_data0-500--1-{'passwd': ['Missing data for required field.']}] PASSED
+tests/test_views.py::test_withdraw_confirm_exception2[4-input_data1-500--1-{'passwd': ['Field may not be null.']}] PASSED
+tests/test_views.py::test_withdraw_confirm_exception2[4-input_data2-500--1-bad identifier data] FAILED
+tests/test_views.py::test_withdraw_confirm_exception2[4-input_data3-500--1-Invalid password] PASSED
+tests/test_views.py::test_withdraw_confirm_exception2[5-input_data0-500--1-{'passwd': ['Missing data for required field.']}] PASSED
+tests/test_views.py::test_withdraw_confirm_exception2[5-input_data1-500--1-{'passwd': ['Field may not be null.']}] PASSED
+tests/test_views.py::test_withdraw_confirm_exception2[5-input_data2-500--1-bad identifier data] FAILED
+tests/test_views.py::test_withdraw_confirm_exception2[5-input_data3-500--1-Invalid password] PASSED
+tests/test_views.py::test_withdraw_confirm_exception2[6-input_data0-500--1-{'passwd': ['Missing data for required field.']}] PASSED
+tests/test_views.py::test_withdraw_confirm_exception2[6-input_data1-500--1-{'passwd': ['Field may not be null.']}] PASSED
+tests/test_views.py::test_withdraw_confirm_exception2[6-input_data2-500--1-bad identifier data] FAILED
+tests/test_views.py::test_withdraw_confirm_exception2[6-input_data3-500--1-Invalid password] PASSED
+tests/test_views.py::test_withdraw_confirm_exception2_guestlogin[input_data0-500--1-{'passwd': ['Missing data for required field.']}] PASSED
+tests/test_views.py::test_withdraw_confirm_exception2_guestlogin[input_data1-500--1-{'passwd': ['Field may not be null.']}] PASSED
+tests/test_views.py::test_withdraw_confirm_exception2_guestlogin[input_data2-500--1-bad identifier data] 
