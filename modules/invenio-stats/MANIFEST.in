@@ -14,6 +14,7 @@ include .editorconfig
 include .tx/config
 include LICENSE
 include pytest.ini
+include .git-blame-ignore-revs
 prune docs/_build
 recursive-include docs *.bat
 recursive-include docs *.py
@@ -25,6 +26,7 @@ recursive-include invenio_stats *.html
 recursive-include invenio_stats *.po *.pot *.mo
 recursive-include invenio_stats *.json
 recursive-include tests *.py
+recursive-include .github/workflows *.yml
 
 # added by check-manifest
 include *.properties

@@ -1,6 +1,6 @@
 #!/bin/sh -e
 
-# clean elasticsearch
+# clean search indices & templates
 curl -XDELETE localhost:9200/_template/* && curl -XDELETE localhost:9200/*
 
 flask index init

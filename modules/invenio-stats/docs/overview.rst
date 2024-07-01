@@ -21,9 +21,9 @@ The main parts are:
 * **the generation of events** which can be later processed.
 
 * **the processing of events**. *Example: filtering out downloads made by bots,
-  and then indexing remaining events in Elasticsearch.*
+  and then indexing remaining events in the search engine.*
 
-* **the compression of events**. Querying too many events in an Elasticsearch
+* **the compression of events**. Querying too many events in a search
   cluster can put a big strain on it. Thus doing a compression of events makes
   later queries faster. *Example: aggregating the number of downloads per day*.
 
@@ -68,16 +68,16 @@ file downloads, record views) by plugging multiple components like this:
         }
     }
     Queue [label="Message Queue\n(RabbitMQ)", margin=0.2, shape="cds"];
-    Elasticsearch [label="Elasticsearch", shape="cylinder", height=2];
+    Search [label="Search Engine\n(ES or OS)", shape="cylinder", height=2];
 
     Emitter -> Queue [label="(2) events"];
 
     Queue -> Processor [label="(3) events"];
 
-    Processor -> Elasticsearch [label="(4) processed events"];
+    Processor -> Search [label="(4) processed events"];
 
-    Aggregator -> Elasticsearch [label="(5) processed events" dir=back];
-    Aggregator -> Elasticsearch [label="(6) aggregated statistics"];
+    Aggregator -> Search [label="(5) processed events" dir=back];
+    Aggregator -> Search [label="(6) aggregated statistics"];
     }
 
 Invenio-Stats provides an easy way to generate events whenever a signal is
@@ -121,13 +121,13 @@ The statistics are accessible via REST API.
         REST -> Query [label="(2) query"];
         Query -> REST [label="(5) statistics"];
     }
-    Elasticsearch [label="Elasticsearch", shape="cylinder", height=2];
-    Query -> Elasticsearch [label="(3) query"];
-    Elasticsearch -> Query [label="(4) stats"];
+    Search [label="Search Engine", shape="cylinder", height=2];
+    Query -> Search [label="(3) query"];
+    Search -> Query [label="(4) stats"];
     }
 
-Not every statistic of interest has to be derived from Elasticsearch. It is
-possible to retrieve statistics by just running and SQL query on the database.
+Not every statistic of interest has to be derived from the search engine.
+It is possible to retrieve statistics by just running and SQL query on the database.
 Examples:
 
 * number of users per community.
@@ -138,6 +138,6 @@ Examples:
 
 * number of new files per month.
 
-Elasticsearch is mainly used for events which happen very often and thus
+The search engine is mainly used for events which happen very often and thus
 generate a big volume of data. Invenio-Stats provide components to easily
-generate statistics out of events previously aggregated in Elasticsearch.
+generate statistics out of events previously aggregated in the search engine.

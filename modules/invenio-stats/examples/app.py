@@ -2,6 +2,7 @@
 #
 # This file is part of Invenio.
 # Copyright (C) 2016-2018 CERN.
+# Copyright (C)      2022 TU Wien.
 #
 # Invenio is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
@@ -10,9 +11,9 @@
 
 SPHINX-START
 
-This example requires that you have an elasticsearch server running
+This example requires that you have a search server (ES/OS) running
 on localost:9200.
-WARNING: This will remove all data from your elasticsearch server.
+WARNING: This will remove all data from your search server.
 
 You should also have the `Redis` running on your machine. To know how to
 install and run `redis`, please refer to the
@@ -41,13 +42,35 @@ Request a histogram of the number of downloads for a file:
 
 .. code-block:: console
 
-$ curl -XPOST localhost:5000/stats -H "Content-Type: application/json" -d '{"mystat": {"stat": "bucket-file-download-histogram", "params": {"start_date":"2016-12-18", "end_date":"2016-12-19", "interval": "day", "bucket_id": 20, "file_key": "file1.txt"}}}'
+    $ curl -XPOST localhost:5000/stats -H "Content-Type: application/json"
+    -d '{
+        "mystat":{
+            "stat": "bucket-file-download-histogram",
+            "params": {
+                "start_date":"2016-12-18",
+                "end_date":"2016-12-19",
+                "interval": "day",
+                "bucket_id": 20,
+                "file_key": "file1.txt"
+            }
+        }
+    }'
 
 Request a histogram of the number of downloads for a file:
 
 .. code-block:: console
 
-    $ curl -v -XPOST localhost:5000/stats -H "Content-Type: application/json" -d '{"mystat": {"stat": "bucket-file-download-total", "params": {"start_date":"2016-12-18", "end_date":"2016-12-19", "bucket_id": 20}}}'
+    $ curl -v -XPOST localhost:5000/stats -H "Content-Type: application/json"
+    -d '{
+        "mystat": {
+            "stat": "bucket-file-download-total",
+            "params": {
+                "start_date":"2016-12-18",
+                "end_date":"2016-12-19",
+                "bucket_id": 20
+            }
+        }
+    }'
 
 To remove the example application data run:
 
@@ -57,8 +80,6 @@ To remove the example application data run:
 
 SPHINX-END
 """
-
-from __future__ import absolute_import, print_function
 
 import os.path
 import random
@@ -76,19 +97,21 @@ from invenio_stats.views import blueprint
 
 # Create Flask application
 app = Flask(__name__)
-app.config.update(dict(
-    BROKER_URL='redis://',
-    CELERY_RESULT_BACKEND='redis://',
-    DATADIR=os.path.join(os.path.dirname(__file__), 'data'),
-    FILES_REST_MULTIPART_CHUNKSIZE_MIN=4,
-    REST_ENABLE_CORS=True,
-    SECRET_KEY='CHANGEME',
-    SQLALCHEMY_ECHO=False,
-    SQLALCHEMY_DATABASE_URI=os.environ.get(
-        'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'
-    ),
-    SQLALCHEMY_TRACK_MODIFICATIONS=True,
-))
+app.config.update(
+    {
+        "BROKER_URL": "redis://",
+        "CELERY_RESULT_BACKEND": "redis://",
+        "DATADIR": os.path.join(os.path.dirname(__file__), "data"),
+        "FILES_REST_MULTIPART_CHUNKSIZE_MIN": 4,
+        "REST_ENABLE_CORS": True,
+        "SECRET_KEY": "CHANGEME",
+        "SQLALCHEMY_ECHO": False,
+        "SQLALCHEMY_DATABASE_URI": os.environ.get(
+            "SQLALCHEMY_DATABASE_URI", "sqlite:///test.db"
+        ),
+        "SQLALCHEMY_TRACK_MODIFICATIONS": True,
+    }
+)
 
 InvenioREST(app)
 InvenioStats(app)
@@ -103,20 +126,23 @@ def fixtures():
     """Command for working with test data."""
 
 
-def publish_filedownload(nb_events, user_id, file_key,
-                         file_id, bucket_id, date):
-    current_stats.publish('file-download', [dict(
-        # When:
-        timestamp=(
-            date + timedelta(minutes=idx)
-        ).isoformat(),
-        # What:
-        bucket_id=str(bucket_id),
-        file_key=file_key,
-        file_id=file_id,
-        # Who:
-        user_id=str(user_id)
-    ) for idx in range(nb_events)])
+def publish_filedownload(nb_events, user_id, file_key, file_id, bucket_id, date):
+    current_stats.publish(
+        "file-download",
+        [
+            {
+                # When:
+                "timestamp": (date + timedelta(minutes=idx)).isoformat(),
+                # What:
+                "bucket_id": str(bucket_id),
+                "file_key": file_key,
+                "file_id": file_id,
+                # Who:
+                "user_id": str(user_id),
+            }
+            for idx in range(nb_events)
+        ],
+    )
 
 
 @fixtures.command()
@@ -127,19 +153,21 @@ def events():
     max_events = 10
     random.seed(42)
     for _ in range(nb_days):
-        publish_filedownload(random.randrange(1, max_events),
-                             1, 'file1.txt', 1, 20, day)
-        publish_filedownload(random.randrange(1, max_events),
-                             1, 'file2.txt', 2, 20, day)
+        publish_filedownload(
+            random.randrange(1, max_events), 1, "file1.txt", 1, 20, day
+        )
+        publish_filedownload(
+            random.randrange(1, max_events), 1, "file2.txt", 2, 20, day
+        )
         day = day + timedelta(days=1)
 
-    process_events(['file-download'])
-    # flush elasticsearch indices so that the events become searchable
-    current_search_client.indices.flush(index='*')
+    process_events(["file-download"])
+    # flush search indices so that the events become searchable
+    current_search_client.indices.flush(index="*")
 
 
 @fixtures.command()
 def aggregations():
-    aggregate_events(['file-download-agg'])
-    # flush elasticsearch indices so that the aggregations become searchable
-    current_search_client.indices.flush(index='*')
+    aggregate_events(["file-download-agg"])
+    # flush search indices so that the aggregations become searchable
+    current_search_client.indices.flush(index="*")
