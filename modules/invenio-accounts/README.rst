@@ -12,8 +12,8 @@
 .. image:: https://img.shields.io/github/license/inveniosoftware/invenio-accounts.svg
         :target: https://github.com/inveniosoftware/invenio-accounts/blob/master/LICENSE
 
-.. image:: https://img.shields.io/travis/inveniosoftware/invenio-accounts.svg
-        :target: https://travis-ci.org/inveniosoftware/invenio-accounts
+.. image:: https://github.com/inveniosoftware/invenio-accounts/workflows/CI/badge.svg
+        :target: https://github.com/inveniosoftware/invenio-accounts/actions?query=workflow%3ACI
 
 .. image:: https://img.shields.io/coveralls/inveniosoftware/invenio-accounts.svg
         :target: https://coveralls.io/r/inveniosoftware/invenio-accounts
@@ -28,8 +28,7 @@ Features:
 - User and role management.
 - User registration, password reset/recovery and email verification.
 - Administration interface and CLI for managing users.
-- Session based authentication with session theft protection as well as
-  "remember me" support.
+- Session based authentication with session theft protection support.
 - Strong cryptographic password hashing with support for migrating password
   hashes (including Invenio v1.x) to new stronger algorithms.
 - Session activity tracking allowing users to e.g. logout of all devices.
