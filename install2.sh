@@ -21,7 +21,7 @@ docker-compose -f docker-compose2.yml exec postgresql psql -U invenio -d invenio
 docker-compose -f docker-compose2.yml exec postgresql psql -U invenio -d invenio -c "SELECT update_v0927();"
 
 docker-compose -f docker-compose2.yml run --rm web invenio shell scripts/demo/register_oai_schema.py overwrite_all
-docker-compose -f docker-compose2.yml run --rm web invenio shell tools/update/addjpcoar_v1_mapping.py
+# docker-compose -f docker-compose2.yml run --rm web invenio shell tools/update/addjpcoar_v1_mapping.py
 docker-compose -f docker-compose2.yml run --rm web invenio shell scripts/demo/update_jpcoar_2_0.py only_specified
 docker cp postgresql/update/2023_Q4.sql $(docker-compose -f docker-compose2.yml ps -q postgresql):/tmp/2023_Q4.sql
 docker-compose -f docker-compose2.yml exec postgresql psql -U invenio -d invenio -f /tmp/2023_Q4.sql

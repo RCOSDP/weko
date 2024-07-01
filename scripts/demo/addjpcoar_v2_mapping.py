@@ -33,7 +33,7 @@ def main():
                 # itemtypemappingはversion_idがあるにもかかわらず、idが優先される。
                 item_type_mapping = (
                     ItemTypeMapping.query.filter(ItemTypeMapping.item_type_id == _id)
-                    .order_by(desc(ItemTypeMapping.id))
+                    .order_by(desc(ItemTypeMapping.created))
                     .first()
                 )
                 if item_type_mapping is not None:
@@ -65,8 +65,8 @@ def main():
                                 continue
                             elif "publisher_jpcoar" in mapping[key]["jpcoar_mapping"]:
                                 continue
-                            elif "=" in str(mapping[key]["jpcoar_mapping"]):
-                                continue
+                            # elif "=" in str(mapping[key]["jpcoar_mapping"]):
+                            #     continue
                             elif "jpcoar_v1_mapping" in mapping[key]:
                                 mapping[key][
                                     "jpcoar_mapping"
@@ -91,6 +91,11 @@ def main():
                     item_type_mapping.mapping = pickle.loads(pickle.dumps(mapping, -1))
                     flag_modified(item_type_mapping, "mapping")
                     db.session.merge(item_type_mapping)
+                    item_type = ItemTypes.get_by_id(_id)
+                    item_type.render['table_row_map']['mapping']=pickle.loads(pickle.dumps(mapping, -1))
+                    flag_modified(item_type, "render")
+                    db.session.merge(item_type)
+
                 else:
                     print("No mapping: {}".format(_id))
         db.session.commit()
