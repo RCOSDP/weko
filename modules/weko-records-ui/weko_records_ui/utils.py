@@ -793,8 +793,7 @@ def is_show_email_of_creator(item_type_id):
     :return: True/False, True: show, False: hide.
     """
     def get_creator_id(item_type_id):
-        type_mapping = Mapping.get_record(item_type_id)
-        item_map = get_mapping(type_mapping, "jpcoar_mapping")
+        item_map = get_mapping(item_type_id, "jpcoar_mapping")
         creator = 'creator.creatorName.@value'
         creator_id = None
         if creator in item_map:
