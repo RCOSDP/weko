@@ -9,9 +9,12 @@
 
 """Proxy to the current stats module."""
 
+import os
+
+from flask_babelex import get_timezone
 from kombu import Exchange
 
-from .utils import default_permission_factory
+from .utils import default_permission_factory, weko_permission_factory
 
 STATS_REGISTER_RECEIVERS = True
 """Enable the registration of signal receivers.
@@ -21,6 +24,10 @@ The signal receivers are functions which will listen to the signals listed in
 by the ``STATS_EVENTS`` config variable. An event will be generated for each
 signal sent.
 """
+
+PROVIDE_PERIOD_YEAR = 5
+
+REPORTS_PER_PAGE = 10
 
 STATS_EVENTS = {}
 """Enabled Events.
@@ -43,6 +50,8 @@ is the name of the emitted event.
 You can find a sampe of STATS_EVENT configuration in the `registrations.py`
 """
 
+STATS_EXCLUDED_ADDRS = []
+"""Fill IP Addresses which will be excluded from stats in `[]`"""
 
 STATS_AGGREGATIONS = {}
 
@@ -50,7 +59,7 @@ STATS_AGGREGATIONS = {}
 STATS_QUERIES = {}
 
 
-STATS_PERMISSION_FACTORY = default_permission_factory
+STATS_PERMISSION_FACTORY = weko_permission_factory
 """Permission factory used by the statistics REST API.
 
 This is a function which returns a permission granting or forbidding access
@@ -70,3 +79,44 @@ STATS_MQ_EXCHANGE = Exchange(
     delivery_mode="transient",  # in-memory queue
 )
 """Default exchange used for the message queues."""
+
+TARGET_REPORTS = {
+    'Item Registration': '1',
+    'Item Detail': '2',
+    'Contents Download': '3',
+}
+
+STATS_ES_INTEGER_MAX_VALUE = 6000
+"""Since ES2 using size=0 has been prohibited, so in order to accomplish
+the same thing, Integer.MAX_VALUE is used to retrieve agg buckets.
+In ES2, size=0 was internally replaced by this value, so we have effectively
+mimicked the same functonality.
+
+Changed from 2147483647 to 6000. (refs. weko#23741)
+"""
+
+SEARCH_INDEX_PREFIX = os.environ.get('SEARCH_INDEX_PREFIX', '')
+"""Search index prefix which is set in weko config."""
+
+WEKO_STATS_UNKNOWN_LABEL = 'UNKNOWN'
+"""Label using for missing of view or file-download stats."""
+
+STATS_EVENT_STRING = 'events'
+"""Stats event string."""
+
+STATS_AGGREGATION_INDEXES = []
+"""Stats aggregation indexes."""
+
+
+STATS_WEKO_DEFAULT_TIMEZONE = get_timezone
+"""Bucketing should use a different time zone."""
+
+STATS_WEKO_DB_BACKUP_EVENTS = True
+"""Enable DB backup of events."""
+
+STATS_WEKO_DB_BACKUP_AGGREGATION = False
+"""Enable DB backup of aggregation."""
+
+STATS_WEKO_DB_BACKUP_BOOKMARK = False
+"""Enable DB backup of bookmark."""
+

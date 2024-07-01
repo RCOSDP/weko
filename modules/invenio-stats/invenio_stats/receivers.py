@@ -69,7 +69,12 @@ def register_receivers(app, config):
     for event_name, event_config in config.items():
         event_emitter = build_event_emitter(event_name, config)
         signal = obj_or_import_string(event_config["signal"])
-        signal.connect(event_emitter, sender=app, weak=False)
+        if isinstance(signal, list):
+            for sig in signal:
+                sig = obj_or_import_string(sig)
+                signal.connect(event_emitter, sender=app, weak=False)
+        else:
+            signal.connect(event_emitter, sender=app, weak=False)
 
 
 # for backwards compatibility

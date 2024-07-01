@@ -11,12 +11,27 @@
 
 import math
 from datetime import datetime
+import pickle
+from functools import wraps
 
+from celery.utils.log import get_task_logger
 from dateutil import parser
 from dateutil.relativedelta import relativedelta
+from elasticsearch import VERSION as ES_VERSION
+from flask import current_app
 from invenio_search import current_search_client
 from invenio_search.engine import dsl, search
 from invenio_search.utils import prefix_index
+
+from .models import StatsAggregation, StatsBookmark
+from .utils import get_doctype
+
+SUPPORTED_INTERVALS = OrderedDict([
+    ('hour', '%Y-%m-%dT%H'),
+    ('day', '%Y-%m-%d'),
+    ('month', '%Y-%m'),
+    ('year', '%Y')
+])
 
 from .bookmark import SUPPORTED_INTERVALS, BookmarkAPI, format_range_dt
 from .utils import get_bucket_size
@@ -37,6 +52,129 @@ INTERVAL_DELTAS = {
 def filter_robots(query):
     """Modify a search query so that robot events are filtered out."""
     return query.filter("term", is_robot=False)
+
+def filter_restricted(query):
+    """Add term filter to query for checking restricted users."""
+    return query.filter('term', is_restricted=False)
+
+
+def format_range_dt(dt, interval):
+    """Format range filter datetime to the closest aggregation interval."""
+    dt_rounding_map = {
+        'hour': 'h', 'day': 'd', 'month': 'M', 'year': 'y'}
+
+    if not isinstance(dt, six.string_types):
+        dt = dt.replace(microsecond=0).isoformat()
+    return '{0}||/{1}'.format(dt, dt_rounding_map[interval])
+
+
+class BookmarkAPI:
+    """Bookmark API class.
+
+    It provides an interface that lets us interact with a bookmark.
+    """
+
+    # NOTE: these work up to ES_6
+    MAPPINGS = {
+        "mappings": {
+            "aggregation-bookmark": {
+                "date_detection": False,
+                "properties": {
+                    "date": {
+                        "type": "date",
+                        "format": "date_optional_time"
+                    },
+                    "aggregation_type": {
+                        "type": "keyword"
+                    }
+                }
+            }
+        }
+    }
+
+    # NOTE: For ES7 mappings need one-level of less nesting
+    MAPPINGS_ES7 = {
+        "mappings": pickle.loads(pickle.dumps(MAPPINGS['mappings']['aggregation-bookmark'], -1))
+    }
+
+    def __init__(self, client, agg_type, agg_interval):
+        """Construct bookmark instance.
+
+        :param client: elasticsearch client
+        :param agg_type: aggregation type for the bookmark
+        """
+        # NOTE: doc_type is going to be deprecated with ES_7
+        self.doc_type = get_doctype('aggregation-bookmark')
+        self.bookmark_index = prefix_index(current_app, 'stats-bookmarks')
+        self.client = client
+        self.agg_type = agg_type
+        self.agg_interval = agg_interval
+
+    def _ensure_index_exists(func):
+        """Decorator for ensuring the bookmarks index exists."""
+        @wraps(func)
+        def wrapped(self, *args, **kwargs):
+            if not Index(self.bookmark_index, using=self.client).exists():
+                self.client.indices.create(
+                    index=self.bookmark_index, body=BookmarkAPI.MAPPINGS
+                    if ES_VERSION[0] < 7 else BookmarkAPI.MAPPINGS_ES7)
+            return func(self, *args, **kwargs)
+        return wrapped
+
+    @_ensure_index_exists
+    def set_bookmark(self, value):
+        """Set bookmark for starting next aggregation."""
+        _id = self.agg_type
+        _source = {'date': value, 'aggregation_type': self.agg_type}
+        if current_app.config['STATS_WEKO_DB_BACKUP_BOOKMARK']:
+            # Save stats bookmark into Database.
+            StatsBookmark.save(dict(
+                _id=_id,
+                _index=self.bookmark_index,
+                _type=self.doc_type,
+                _source=_source,
+            ), delete=True)
+
+        self.client.index(
+            id=_id,
+            index=self.bookmark_index,
+            doc_type=self.doc_type,
+            body=_source,
+        )
+
+    @_ensure_index_exists
+    def get_bookmark(self):
+        """Get last aggregation date."""
+        # retrieve the oldest bookmark
+        query_bookmark = (
+            Search(using=self.client, index=self.bookmark_index)
+            .filter('term', aggregation_type=self.agg_type)
+            .sort({'date': {'order': 'desc'}})[0:1]  # fetch one document only
+        )
+        bookmark = next(iter(query_bookmark.execute()), None)
+        if bookmark:
+            return datetime.datetime.strptime(
+                bookmark.date, SUPPORTED_INTERVALS[self.agg_interval])
+
+    @_ensure_index_exists
+    def list_bookmarks(self, start_date=None, end_date=None, limit=None):
+        """List bookmarks."""
+        query = Search(
+            using=self.client,
+            index=self.bookmark_index,
+        ).filter(
+            'term', aggregation_type=self.agg_type
+        ).sort({'date': {'order': 'desc'}})
+
+        range_args = {}
+        if start_date:
+            range_args['gte'] = format_range_dt(start_date, self.agg_interval)
+        if end_date:
+            range_args['lte'] = format_range_dt(end_date, self.agg_interval)
+        if range_args:
+            query = query.filter('range', date=range_args)
+
+        return query[0:limit].execute() if limit else query.scan()
 
 
 ALLOWED_METRICS = {
@@ -135,6 +273,10 @@ class StatAggregator(object):
         )
         self.bookmark_api = BookmarkAPI(self.client, self.name, self.interval)
         self.max_bucket_size = max_bucket_size
+        self.search_index_prefix = current_app.config['SEARCH_INDEX_PREFIX']. \
+            strip('-')
+        self.bookmark_alias = '{0}-stats-{1}-bookmark'.format(
+            self.search_index_prefix, self.event)
 
         if any(v not in ALLOWED_METRICS for k, (v, _, _) in self.metric_fields.items()):
             raise (
@@ -151,6 +293,7 @@ class StatAggregator(object):
             raise (
                 ValueError("Aggregation interval should be shorter than index interval")
             )
+        
 
     def _get_oldest_event_timestamp(self):
         """Search for the oldest event timestamp."""
@@ -294,16 +437,18 @@ class StatAggregator(object):
             datetime.utcnow(),
         )
 
-    def run(self, start_date=None, end_date=None, update_bookmark=True):
+    def run(self, start_date=None, end_date=None, update_bookmark=True, manual=False):
         """Calculate statistics aggregations."""
         # If no events have been indexed there is nothing to aggregate
         if not dsl.Index(self.event_index, using=self.client).exists():
             return
 
+        logger = get_task_logger(__name__)
         previous_bookmark = self.bookmark_api.get_bookmark()
         lower_limit = (
             start_date or previous_bookmark or self._get_oldest_event_timestamp()
         )
+        logger.debug("lower_limit: {}".format(lower_limit))
         # Stop here if no bookmark could be estimated.
         if lower_limit is None:
             return
@@ -316,6 +461,7 @@ class StatAggregator(object):
             end_date = datetime.utcnow().isoformat()
 
         results = []
+        logger.debug("upper_limit: {}".format(upper_limit))
         for dt_key, dt in sorted(dates.items()):
             results.append(
                 search.helpers.bulk(
@@ -326,7 +472,10 @@ class StatAggregator(object):
                 )
             )
         if update_bookmark:
-            self.bookmark_api.set_bookmark(end_date)
+            self.bookmark_api.set_bookmark(
+                    upper_limit.strftime(self.doc_id_suffix)
+                    or datetime.datetime.utcnow().strftime(self.doc_id_suffix)
+                )
         return results
 
     def list_bookmarks(self, start_date=None, end_date=None, limit=None):

@@ -27,3 +27,7 @@ recursive-include invenio_stats *.po *.pot *.mo
 recursive-include invenio_stats *.json
 recursive-include tests *.py
 recursive-include .github/workflows *.yml
+
+# added by check-manifest
+include *.properties
+include tox.ini

@@ -1,0 +1,54 @@
+{
+  "took": 20,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 3,
+    "max_score": 0.0,
+    "hits": []
+  },
+  "aggregations": {
+    "my_buckets": {
+      "buckets": [
+        {
+          "key": {
+            "remote_addr": "192.168.56.1",
+            "hostname": "None",
+            "count": 1,
+            "search_key":"test_key01",
+            "value":49
+          },
+          "doc_count": 5
+        },
+        {
+          "key": {
+            "remote_addr": "192.168.56.1",
+            "hostname": "None",
+            "count": 2,
+            "search_key":"test_key02",
+            "value":23
+          },
+          "doc_count": 1
+        },
+        {
+          "key": {
+            "remote_addr": "192.168.56.1",
+            "hostname": "None",
+            "count": 3,
+            "search_key":"test_key03",
+            "value":21
+          },
+          "doc_count": 1
+        }
+      ]
+    },
+    "value": {
+      "value": 10.0
+    }
+  }
+}
