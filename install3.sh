@@ -11,7 +11,6 @@ docker-compose -f docker-compose2.yml exec postgresql psql -U invenio -d invenio
 docker cp scripts/demo/indextree.sql $(docker-compose -f docker-compose2.yml ps -q postgresql):/tmp/indextree.sql
 docker-compose -f docker-compose2.yml exec postgresql psql -U invenio -d invenio -f /tmp/indextree.sql
 docker-compose -f docker-compose2.yml run --rm web invenio workflow init action_status,Action
-# docker-compose -f docker-compose2.yml run --rm web invenio workflow init gakuninrdm_data
 docker cp scripts/demo/defaultworkflow.sql $(docker-compose -f docker-compose2.yml ps -q postgresql):/tmp/defaultworkflow.sql
 docker-compose -f docker-compose2.yml exec postgresql psql -U invenio -d invenio -f /tmp/defaultworkflow.sql
 docker cp scripts/demo/doi_identifier.sql $(docker-compose -f docker-compose2.yml ps -q postgresql):/tmp/doi_identifier.sql
