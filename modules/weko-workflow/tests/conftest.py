@@ -500,23 +500,6 @@ def base_app(instance_path, search_class, cache_config):
         WEKO_WORKFLOW_ACTION_GUARANTOR=WEKO_WORKFLOW_ACTION_GUARANTOR,
         WEKO_WORKFLOW_ACTION_ADVISOR=WEKO_WORKFLOW_ACTION_ADVISOR,
         WEKO_WORKFLOW_ACTION_ADMINISTRATOR=WEKO_WORKFLOW_ACTION_ADMINISTRATOR,
-        WEKO_WORKFLOW_GAKUNINRDM_DATA=[
-            {
-                'workflow_id': -1,
-                'workflow_name': 'GRDM_デフォルトワークフロー',
-                'item_type_id': 1,
-                'flow_id': -1,
-                'flow_name': 'GRDM_デフォルトフロー',
-                'action_endpoint_list': [
-                    'begin_action',
-                    'item_login',
-                    'item_link',
-                    'identifier_grant',
-                    'approval',
-                    'end_action'
-                ]
-            }
-        ],
         DELETE_ACTIVITY_LOG_ENABLE=True,
         WEKO_WORKFLOW_ACTIVITYLOG_XLS_COLUMNS=WEKO_WORKFLOW_ACTIVITYLOG_XLS_COLUMNS,
         WEKO_WORKFLOW_GAKUNINRDM_DATA=WEKO_WORKFLOW_GAKUNINRDM_DATA,

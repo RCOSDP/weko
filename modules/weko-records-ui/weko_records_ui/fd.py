@@ -587,7 +587,8 @@ def file_download_secret(pid, record, _record_file_factory=None, **kwargs):
 
     # Validate token
     is_valid, error = validate_secret_download_token(
-        secret_download, filename, pid.pid_value, id, secret_download.created, secret_token)
+        secret_download, filename, pid.pid_value, id,
+        secret_download.created.isoformat(), secret_token)
     if not is_valid:
         return render_template(error_template, error=error)
     _record_file_factory = _record_file_factory or record_file_factory
