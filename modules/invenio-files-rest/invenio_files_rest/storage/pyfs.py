@@ -16,7 +16,7 @@ import shutil
 
 import cchardet as chardet
 from flask import current_app
-from fs.opener import opener
+from fs.opener import open_fs as opendir
 from fs.path import basename, dirname
 
 from ..helpers import make_path
@@ -50,7 +50,7 @@ class PyFSFileStorage(FileStorage):
         filename = basename(self.fileurl)
 
         return (
-            opener.opendir(filedir, writeable=True, create_dir=create_dir),
+            opendir(filedir, writeable=True, create_dir=create_dir),
             filename
         )
 

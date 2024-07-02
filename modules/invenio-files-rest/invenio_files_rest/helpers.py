@@ -18,7 +18,7 @@ from time import time
 
 from flask import current_app, request
 from werkzeug.datastructures import Headers
-from werkzeug.urls import url_quote
+from urllib.parse import quote as url_quote
 from werkzeug.wsgi import FileWrapper
 
 MIMETYPE_TEXTFILES = {

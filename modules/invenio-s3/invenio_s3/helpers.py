@@ -12,8 +12,7 @@ from time import time
 from flask import current_app, request
 from invenio_files_rest.helpers import chunk_size_or_default, sanitize_mimetype
 from werkzeug.datastructures import Headers
-from werkzeug.urls import url_quote
-
+from urllib.parse import quote as url_quote
 
 def redirect_stream(url,
                     filename,

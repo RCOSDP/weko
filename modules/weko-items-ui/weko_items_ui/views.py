@@ -36,7 +36,7 @@ from flask_security import current_user
 from flask_wtf import FlaskForm
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
-from invenio_pidrelations.contrib.versioning import PIDVersioning
+from invenio_pidrelations.contrib.versioning import PIDNodeVersioning
 from invenio_pidstore.resolver import Resolver
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_records_ui.signals import record_viewed
@@ -898,7 +898,7 @@ def prepare_edit_item():
                           str(deposit.get('weko_shared_id'))]
         user_id = str(get_current_user())
         activity = WorkActivity()
-        latest_pid = PIDVersioning(child=recid).last_child
+        latest_pid = PIDNodeVersioning(child=recid).last_child
 
         # ! Check User's Permissions
         if user_id not in authenticators and not get_user_roles(is_super_role=True)[0]:

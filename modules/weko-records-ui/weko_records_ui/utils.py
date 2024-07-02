@@ -44,7 +44,7 @@ from invenio_cache import current_cache
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_oaiserver.response import getrecord
-from invenio_pidrelations.contrib.versioning import PIDVersioning
+from invenio_pidrelations.contrib.versioning import PIDNodeVersioning
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.models import RecordMetadata
 from lxml import etree
@@ -310,7 +310,7 @@ def delete_version(recid):
         for p in pids:
             p.status = PIDStatus.DELETED
     # delete file if only in the version
-    versioning = PIDVersioning(child=pid)
+    versioning = PIDNodeVersioning(child=pid)
     if versioning.exists:
         all_ver = versioning.children.all()
         for ver in all_ver:
@@ -441,7 +441,7 @@ def soft_delete(recid):
                         'the import is in progress.')
         })
 
-    versioning = PIDVersioning(child=pid)
+    versioning = PIDNodeVersioning(child=pid)
     if not versioning.exists:
         return
     all_ver = versioning.children.all()
@@ -494,7 +494,7 @@ def restore(recid):
         if pid.status != PIDStatus.DELETED:
             return
 
-        versioning = PIDVersioning(child=pid)
+        versioning = PIDNodeVersioning(child=pid)
         if not versioning.exists:
             return
         all_ver = versioning.get_children(

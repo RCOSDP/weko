@@ -47,11 +47,11 @@ fi
 export DEBIAN_FRONTEND=noninteractive
 
 provision_web_common_ubuntu14 () {
-
+    echo "111"
     # sphinxdoc-install-useful-system-tools-ubuntu14-begin
     # update list of available packages:
     $sudo apt-get -y update --allow-releaseinfo-change
-
+    echo "111-1"
     # install useful system tools:
     $sudo apt-get -y install \
          curl \
@@ -62,18 +62,18 @@ provision_web_common_ubuntu14 () {
          gnupg \
 	 libpcre3-dev
     # sphinxdoc-install-useful-system-tools-ubuntu14-end
-
+    echo "111-2"
     # sphinxdoc-add-nodejs-external-repository-ubuntu14-begin
     if [[ ! -f /etc/apt/sources.list.d/nodesource.list ]]; then
         curl -sL https://deb.nodesource.com/setup_4.x | $sudo bash -
     fi
     # sphinxdoc-add-nodejs-external-repository-ubuntu14-end
-
+    echo "111-3"
 
     # Added in order to accomidate Debians Version 9 -> 10 update
     # See: https://github.com/nodesource/distributions/issues/866
     $sudo printf "\nPackage: *\nPin: origin deb.nodesource.com\nPin-Priority: 600" >> /etc/apt/preferences.d/nodesource
-
+    echo "111-4"
     # sphinxdoc-install-web-common-ubuntu14-begin
     $sudo apt-get -y install \
          libffi-dev \
@@ -90,10 +90,11 @@ provision_web_common_ubuntu14 () {
          python-dev \
          python-pip
     # sphinxdoc-install-web-common-ubuntu14-end
+    echo "111-5"
 }
 
 provision_web_libpostgresql_ubuntu14 () {
-
+    echo "222"
     # sphinxdoc-install-web-libpostgresql-ubuntu14-begin
     $sudo apt-get -y install \
          libpq-dev
@@ -150,7 +151,7 @@ provision_web_libpostgresql_centos7 () {
 }
 
 setup_npm_and_css_js_filters () {
-
+    echo "333"
     # sphinxdoc-install-npm-and-css-js-filters-begin
     # $sudo su -c "npm install -g npm"
     $sudo su -c "npm install -g node-sass@3.8.0 clean-css@3.4.12 requirejs uglify-js"
@@ -159,7 +160,7 @@ setup_npm_and_css_js_filters () {
 }
 
 setup_virtualenvwrapper () {
-
+    echo "444"
     # disable quitting on errors due to virtualenvrapper:
     set +o errexit
     set +o nounset
@@ -242,6 +243,7 @@ setup_nginx_centos7 () {
 }
 
 setup_libreoffice_ubuntu14 () {
+    echo "555"
     # sphinxdoc-install-web-libreoffice-ubuntu14-begin
     set +o errexit
     $sudo mkdir -p /usr/share/man/man1
@@ -264,6 +266,7 @@ setup_libreoffice_centos7 () {
 }
 
 cleanup_web_ubuntu14 () {
+    echo "666"
     # sphinxdoc-install-web-cleanup-ubuntu14-begin
     $sudo apt-get -y autoremove && $sudo apt-get -y clean
     # sphinxdoc-install-web-cleanup-ubuntu14-end
@@ -294,7 +297,8 @@ main () {
         os_distribution="UNDETECTED"
         os_release="UNDETECTED"
     fi
-
+    echo "os_distribution: $os_distribution"
+    echo "os_release: $os_release"
     # call appropriate provisioning functions:
     if [ -f /.dockerinit ] || [ -f /.dockerenv ]; then
         # running inside Docker

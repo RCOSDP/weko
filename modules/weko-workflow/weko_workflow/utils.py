@@ -42,7 +42,7 @@ from invenio_files_rest.models import Bucket, ObjectVersion
 from invenio_i18n.ext import current_i18n
 from invenio_mail.admin import MailSettingView
 from invenio_mail.models import MailConfig
-from invenio_pidrelations.contrib.versioning import PIDVersioning
+from invenio_pidrelations.contrib.versioning import PIDNodeVersioning
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.models import PersistentIdentifier, \
     PIDDoesNotExistError, PIDStatus
@@ -1900,8 +1900,8 @@ def handle_finish_workflow(deposit, current_pid, recid):
                     merge_data_to_record_without_version(current_pid)
                 _deposit.publish()
 
-                pv = PIDVersioning(child=pid_without_ver)
-                last_ver = PIDVersioning(parent=pv.parent,child=pid_without_ver).get_children(
+                pv = PIDNodeVersioning(child=pid_without_ver)
+                last_ver = PIDNodeVersioning(parent=pv.parent,child=pid_without_ver).get_children(
                     pid_status=PIDStatus.REGISTERED
                 ).filter(PIDRelation.relation_type == 2).order_by(
                     PIDRelation.index.desc()).first()

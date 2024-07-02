@@ -165,15 +165,15 @@ def queue():
     """Manage indexing queue."""
 
 
-@queue.resultcallback()
-@with_appcontext
-def process_actions(actions):
-    """Process queue actions."""
-    queue = current_app.config['INDEXER_MQ_QUEUE']
-    with establish_connection() as c:
-        q = queue(c)
-        for action in actions:
-            q = action(q)
+#@queue.resultcallback()
+#@with_appcontext
+#def process_actions(actions):
+#    """Process queue actions."""
+#    queue = current_app.config['INDEXER_MQ_QUEUE']
+#    with establish_connection() as c:
+#        q = queue(c)
+#        for action in actions:
+#            q = action(q)
 
 
 @queue.command('init')

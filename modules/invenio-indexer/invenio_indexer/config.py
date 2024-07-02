@@ -10,7 +10,7 @@
 
 from __future__ import absolute_import, print_function
 
-from kombu import Exchange, Queue
+from kombu.entity import Exchange, Queue
 
 INDEXER_DEFAULT_INDEX = "records-record-v1.0.0"
 """Default index to use if no schema is defined."""

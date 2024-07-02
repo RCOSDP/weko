@@ -26,14 +26,14 @@
 
 from __future__ import absolute_import, print_function
 
-from invenio_pidrelations.contrib.versioning import PIDVersioning
+from invenio_pidrelations.contrib.versioning import PIDNodeVersioning
 from invenio_pidstore.models import PersistentIdentifier
 from weko_deposit.api import WekoDeposit
 
 
 def serialize_related_identifiers(pid):
     """Serialize PID Versioning relations as related_identifiers metadata."""
-    pv = PIDVersioning(child=pid)
+    pv = PIDNodeVersioning(child=pid)
     related_identifiers = []
     if pv.exists:
 
@@ -71,7 +71,7 @@ def serialize_related_identifiers(pid):
         #         'identifier': rec['doi']
         #     }
         #     related_identifiers.append(ri)
-    pv = PIDVersioning(parent=pid)
+    pv = PIDNodeVersioning(parent=pid)
     if pv.exists:
         for p in pv.children:
             rec = WekoDeposit.get_record(p.get_assigned_object())
@@ -99,9 +99,9 @@ def preprocess_related_identifiers(pid, record, result):
              PersistentIdentifier.get(pid_type='recid', pid_value=recid_value))
 
     if recid.pid_value == record.get('conceptrecid'):
-        pv = PIDVersioning(parent=recid)
+        pv = PIDNodeVersioning(parent=recid)
     else:
-        pv = PIDVersioning(child=recid)
+        pv = PIDNodeVersioning(child=recid)
 
     # Serialize PID versioning as related identifiers
     if pv.exists:
