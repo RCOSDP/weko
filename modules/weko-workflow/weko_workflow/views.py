@@ -1652,10 +1652,10 @@ def next_action(activity_id='0', action_id=0):
             restricted_access_settings = AdminSettings.get("restricted_access", dict_to_object=False)
             if restricted_access_settings:
                 enable_request_maillist = restricted_access_settings.get("display_request_form", False)
-                enable_item_application = restricted_access_settings.get("item_application", {})\
-                    .get("item_application_enable", False)
-                application_item_types = restricted_access_settings.get("item_applcation", {}).get("application_item_types", [])
-                can_register_item_application = (activity_detail.workflow.itemtype_id in application_item_types) and enable_item_application
+                item_application_settings = restricted_access_settings.get("item_application", {})
+                enable_item_application = item_application_settings.get("item_application_enable", False)
+                application_item_types = item_application_settings.get("application_item_types", [])
+                can_register_item_application = enable_item_application and (activity_detail.workflow.itemtype_id in application_item_types)
 
             if activity_request_mail and activity_request_mail.request_maillist and enable_request_maillist:
                 RequestMailList.update_by_list_item_id(
