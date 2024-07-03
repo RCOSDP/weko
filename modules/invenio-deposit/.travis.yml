@@ -17,10 +17,6 @@ notifications:
 
 sudo: false
 
-services:
-  - postgresql
-  - redis-server
-
 language: python
 
 matrix:
@@ -34,8 +30,7 @@ cache:
 
 services:
   - postgresql
-  - redis
-  - rabbitmq
+  - redis-server
 
 
 env:

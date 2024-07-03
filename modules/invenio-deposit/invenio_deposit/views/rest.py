@@ -60,7 +60,6 @@ def create_blueprint(endpoints):
         __name__,
         url_prefix='',
     )
-    create_error_handlers(blueprint)
 
     @blueprint.teardown_request
     def dbsession_clean(exception):
@@ -71,6 +70,8 @@ def create_blueprint(endpoints):
             except:
                 db.session.rollback()
         db.session.remove()
+
+    create_error_handlers(blueprint)
 
     for endpoint, options in (endpoints or {}).items():
         options = deepcopy(options)
