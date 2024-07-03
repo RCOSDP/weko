@@ -119,9 +119,13 @@ def get_records(**kwargs):
         )
 
         if "set" in kwargs:
-            search = search.query(
-                current_oaiserver.set_records_query_fetcher(kwargs["set"])
-            )
+            if ":" in kwargs["set"]:
+                sets = kwargs["set"].split(":")[-1]
+            else:
+                sets = kwargs["set"]
+            #search = search.query("match", **{"path": kwargs["set"]})
+            search = search.query("match", **{"_oai.sets": sets})
+            #search = search.query("terms", **{"_oai.sets": sets})
 
         time_range = {}
         if "from_" in kwargs:
