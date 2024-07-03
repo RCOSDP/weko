@@ -291,7 +291,7 @@ def schema(title="", multi_flag=multiple_flag):
                                                 "ja": "所属機関識別子Scheme",
                                             },
                                         },
-                                        "": {
+                                        "affiliationNameIdentifier": {
                                             "format": "text",
                                             "title": "所属機関識別子",
                                             "title_i18n": {
