@@ -1411,7 +1411,10 @@ class WekoDeposit(Deposit):
         try:
             deposit_owners = self.get('_deposit', {}).get('owners')
             owner_id = str(deposit_owners[0] if deposit_owners else 1)
-            dc, jrc, is_edit = json_loader(data, self.pid, owner_id=owner_id)
+            if str(self.pid.pid_value).endswith(".0"):
+                dc, jrc, is_edit = json_loader(data, self.pid, owner_id=owner_id,replace_field=False)
+            else:
+                dc, jrc, is_edit = json_loader(data, self.pid, owner_id=owner_id)
             dc['publish_date'] = data.get('pubdate')
             dc['title'] = [data.get('title')]
             dc['relation_version_is_last'] = True
