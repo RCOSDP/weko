@@ -153,10 +153,6 @@ def identify(**kwargs):
     )
     e_protocolVersion.text = cfg["OAISERVER_PROTOCOL_VERSION"]
 
-    for adminEmail in cfg["OAISERVER_ADMIN_EMAILS"]:
-        e = SubElement(e_identify, etree.QName(NS_OAIPMH, "adminEmail"))
-        e.text = adminEmail
-
     e_earliestDatestamp = SubElement(
         e_identify, etree.QName(NS_OAIPMH, "earliestDatestamp")
     )
@@ -468,7 +464,6 @@ def getrecord(**kwargs):
         sets=_sets
     )
     e_metadata = SubElement(e_record, etree.QName(NS_OAIPMH, "metadata"))
-    e_metadata.append(record_dumper(pid_object, {"_source": record}))
 
     etree_record = pickle.loads(pickle.dumps(record, -1))
 

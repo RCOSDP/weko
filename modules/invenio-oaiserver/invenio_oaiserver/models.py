@@ -9,6 +9,7 @@
 
 """Models for storing information about OAIServer state."""
 
+from datetime import datetime
 import sqlalchemy as sa
 from invenio_db import db
 from invenio_i18n import lazy_gettext as _
@@ -82,6 +83,11 @@ class OAISet(db.Model, Timestamp):
     #     if self.spec and self.spec != value:
     #         raise OAISetSpecUpdateError("Updating spec is not allowed.")
     #     return value
+
+    @classmethod
+    def get_set_by_spec(cls, spec):
+        """Get OAISet object by spec info."""
+        return cls.query.filter_by(spec=spec).one_or_none()
 
 
 __all__ = ("OAISet",)

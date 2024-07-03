@@ -180,6 +180,8 @@ class ResumptionVerbs(Verbs):
 
     class ListIdentifiers(OAISchema, ResumptionTokenSchema):
         """Arguments for ListIdentifiers verb."""
+        metadataPrefix = fields.Str(load_only=True,
+                                    validate=validate_metadata_prefix)
         
 
     class ListRecords(OAISchema, ResumptionTokenSchema):
