@@ -23,6 +23,7 @@ import copy
 import inspect
 import sys
 import uuid
+import io
 from collections import OrderedDict
 from datetime import datetime, timezone,date
 from typing import NoReturn, Union
@@ -1138,8 +1139,13 @@ class WekoDeposit(Deposit):
                                 attachment = {}
                                 if file.obj.mimetype in mimetypes:
                                     try:
-                                        reader = parser.from_file(file.obj.file.uri)
-                                        attachment["content"] = "".join(reader["content"].splitlines())
+                                        if file.obj.file.uri.startswith("s3://"):
+                                           with file.obj.file.storage().open(mode='rb') as fp:
+                                                reader = parser.from_buffer(fp.read())
+                                                attachment["content"] = "".join(reader["content"].splitlines())
+                                        else:
+                                            reader = parser.from_file(file.obj.file.uri)
+                                            attachment["content"] = "".join(reader["content"].splitlines())
                                     except FileNotFoundError as se:
                                         current_app.logger.error("FileNotFoundError: {}".format(se))
                                         current_app.logger.error("file.obj: {}".format(file.obj))
