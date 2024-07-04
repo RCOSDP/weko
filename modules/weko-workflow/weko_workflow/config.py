@@ -428,8 +428,8 @@ WEKO_WORKFLOW_APPROVE_OUTPUT_REGISTRATION = ""
 WEKO_WORKFLOW_ACCESS_ACTIVITY_URL = "1"
 """Template access the URL"""
 
-WEKO_WORKFLOW_USAGE_REPORT_ACTIVITY_URL = "6"
-"""Template access the URL"""
+WEKO_WORKFLOW_USAGE_REPORT_REMINDER_MAIL_TEMPLATE_ID = "6"
+"""Usage Repost reminder mail template id"""
 
 WEKO_WORKFLOW_DATE_FORMAT = "%Y-%m-%d"
 """Date format string."""
@@ -559,9 +559,6 @@ WEKO_WORKFLOW_REST_ENDPOINTS = dict(
 WEKO_WORKFLOW_API_LIMIT_RATE_DEFAULT = ['100 per minute']
 
 WEKO_WORKFLOW_API_ACCEPT_LANGUAGES = ['en', 'ja']
-
-WEKO_WORKFLOW_APPROVAL_PREVIEW = True
-"""Setting preview function during approval"""
 
 WEKO_WORKFLOW_ITEM_REGISTRANT_ID = -2
 """Item registrant id."""

@@ -31,7 +31,7 @@ class TestFlowSettingView:
         # (5, 200),
         # (6, 200),
     ])
-    def test_index_acl(self,client,db_register2,users,users_index,status_code,db):                
+    def test_index_acl(self,client,db_register2,users,users_index,status_code,db):
         adminsetting=AdminSettings(id=1,name='items_display_settings',settings={})
         # Adminsettings display_request_form is None
         with db.session.begin_nested():
@@ -41,7 +41,7 @@ class TestFlowSettingView:
         login(client=client, email=users[users_index]['email'])
         url = url_for('flowsetting.index',_external=True)
         res =  client.get(url)
-        assert res.status_code == status_code  
+        assert res.status_code == status_code
 
 #     def flow_detail(self, flow_id='0'):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestFlowSettingView::test_flow_detail_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp

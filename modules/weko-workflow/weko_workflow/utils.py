@@ -2754,7 +2754,7 @@ def process_send_reminder_mail(activity_detail, mail_id):
     """Process send reminder mail.
 
     :activity_detail: object
-    :mail_template: string
+    :mail_id: string
     """
     item_info = get_item_info(activity_detail.item_id)
     mail_info = set_mail_info(item_info, activity_detail)
@@ -3832,19 +3832,21 @@ def get_approval_keys():
     return approval_keys
 
 
-def process_send_mail(mail_info, mail_pattern_name):
+def process_send_mail(mail_info, mail_id):
     """Send mail approval rejected.
 
     :mail_info: object
+    :mail_id: mail template id
     """
     if not mail_info.get("mail_recipient"):
         current_app.logger.error('Mail address is not defined')
         return
 
-    subject, body = get_mail_data(mail_pattern_name)
+    subject, body = get_mail_data(mail_id)
     if body and subject:
         body = replace_characters(mail_info, body)
         return send_mail(subject, mail_info['mail_recipient'], body)
+
 
 def process_send_mail_tpl(mail_info, mail_pattern_name):
     """Send mail approval rejected.

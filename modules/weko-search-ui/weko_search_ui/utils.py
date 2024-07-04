@@ -67,7 +67,7 @@ from invenio_search import RecordsSearch
 from jsonschema import Draft4Validator
 from sqlalchemy import func as _func
 from sqlalchemy.exc import SQLAlchemyError
-from weko_admin.models import SessionLifetime
+from weko_admin.models import AdminSettings, SessionLifetime
 from weko_admin.utils import get_redis_cache, reset_redis_cache, get_restricted_access
 from weko_authors.utils import check_email_existed
 from weko_deposit.api import WekoDeposit, WekoIndexer, WekoRecord
@@ -1366,8 +1366,18 @@ def register_item_metadata(item, root_path, owner, is_gakuninrdm=False):
         FeedbackMailList.delete_without_commit(deposit.id)
         deposit.remove_feedback_mail()
 
+    # check restricted access settings
+    can_import_request_mail = False
+    can_import_item_application = False
+    restricted_access_settings = AdminSettings.get("restricted_access", dict_to_object=False)
+    if restricted_access_settings:
+        can_import_request_mail = restricted_access_settings.get("display_request_form", False)
+        item_application_settings = restricted_access_settings.get("item_application", {})
+        can_import_item_application = item_application_settings.get("item_application_enable", False) \
+            and item.get("item_type_id", 0) in item_application_settings.get("application_item_types", [])
+
     request_mail_list = item["metadata"].get("request_mail_list")
-    if request_mail_list:
+    if request_mail_list and can_import_request_mail:
         RequestMailList.update(
             item_id = deposit.id, request_maillist=request_mail_list
         )
@@ -1377,7 +1387,7 @@ def register_item_metadata(item, root_path, owner, is_gakuninrdm=False):
         deposit.remove_request_mail()
 
     item_application = item.get("item_application")
-    if item_application:
+    if item_application and can_import_item_application:
         if item_application.get("termsDescription", ""):
             item_application["termsDescription"]=item_application.pop("termsDescription", "")
         ItemApplication.update(item_id = deposit.id, item_application = item_application)
@@ -1420,13 +1430,13 @@ def register_item_metadata(item, root_path, owner, is_gakuninrdm=False):
                     pid, keep_version=True, is_import=True
                 )
 
-            if request_mail_list:
+            if request_mail_list and can_import_request_mail:
                 RequestMailList.update(
                     item_id=_deposit.id, request_maillist=request_mail_list
                 )
                 _deposit.update_request_mail()
 
-            if item_application:
+            if item_application and can_import_item_application:
                 ItemApplication.update(item_id=_deposit.id, item_application=item_application)
 
 

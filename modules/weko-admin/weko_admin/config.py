@@ -1262,7 +1262,15 @@ WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS = {
         "expiration_date_access_unlimited_chk": False,
     },
     "terms_and_conditions": [],
-    "error_msg": WEKO_ADMIN_RESTRICTED_ACCESS_ERROR_MESSAGE
+    "error_msg": WEKO_ADMIN_RESTRICTED_ACCESS_ERROR_MESSAGE,
+    "edit_mail_templates_enable": False,
+    "item_application": {
+        "application_item_types": [],
+        "item_application_enable": False,
+    },
+    "password_enable": False,
+    "preview_workflow_approval_enable": False,
+    "display_request_form": False,
 }
 """Default restricted access settings."""
 
@@ -1305,6 +1313,3 @@ WEKO_ADMIN_CACHE_TEMP_DIR_INFO_KEY_DEFAULT = 'cache::temp_dir_info'
 
 WEKO_ADMIN_USE_REGEX_IN_CRAWLER_LIST = False
 """ If True, enable regex function in crawler list processing. """
-
-WEKO_ADMIN_USE_MAIL_TEMPLATE_EDIT = True
-"""Whether system can edit mail template or not."""

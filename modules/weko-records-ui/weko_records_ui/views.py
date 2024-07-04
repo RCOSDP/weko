@@ -691,11 +691,6 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     
     mailcheckflag=request.args.get("v")
 
-    password_checkflag = False
-    restricted_access = AdminSettings.get(name='restricted_access',dict_to_object=False)
-    if restricted_access and restricted_access.get('password_enable', False):
-        password_checkflag = True
-
     with_files = False
     for content in record.get_file_data():
         if content.get('filename'):
@@ -714,14 +709,23 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
 
     # Get Settings
     enable_request_maillist = False
-    items_display_settings = AdminSettings.get(name='items_display_settings',
-                                        dict_to_object=False)
-    if items_display_settings:
-        enable_request_maillist = items_display_settings.get('display_request_form', False)
+    is_no_content_item_application = False
+    password_checkflag = False
+    restricted_access_settings = AdminSettings.get(name="restricted_access", dict_to_object=False)
+    if restricted_access_settings:
+        # enable password
+        password_checkflag = restricted_access_settings.get('password_enable', False)
 
-    # Get request recipients
-    request_recipients = RequestMailList.get_mail_list_by_item_id(pid.object_uuid)
-    is_display_request_form = enable_request_maillist and (True if request_recipients else False)
+        # Check request form permission
+        enable_request_maillist = restricted_access_settings.get('display_request_form', False)
+        # Get request recipients
+        request_recipients = RequestMailList.get_mail_list_by_item_id(pid.object_uuid)
+        is_display_request_form = enable_request_maillist and (True if request_recipients else False)
+
+        # Check item application permission
+        item_application_settings = restricted_access_settings.get("item_application", {})
+        is_no_content_item_application = item_application_settings.get("item_application_enable", False) \
+            and int(item_type_id) in item_application_settings.get("application_item_types", [])
 
     return render_template(
         template,
@@ -756,6 +760,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         password_checkflag=password_checkflag,
         path_name_dict=path_name_dict,
         is_display_file_preview=is_display_file_preview,
+        is_no_content_item_application=is_no_content_item_application,
         # experimental implementation 20210502
         title_name=title_name,
         rights_values=rights_values,

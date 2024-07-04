@@ -32,7 +32,6 @@ from invenio_db import db
 from invenio_files_rest.models import Location
 from invenio_i18n.ext import current_i18n
 from invenio_mail.models import MailTemplates
-from weko_admin.config import WEKO_ADMIN_USE_MAIL_TEMPLATE_EDIT
 from weko_admin.models import AdminSettings
 from weko_index_tree.models import Index
 from weko_records.api import ItemTypes
@@ -69,8 +68,9 @@ class FlowSettingView(BaseView):
         roles = Role.query.all()
         actions = self.get_actions()
         mail_templates = MailTemplates.get_templates()
-        use_restricted_item = current_app.config.get('WEKO_ADMIN_USE_MAIL_TEMPLATE_EDIT', WEKO_ADMIN_USE_MAIL_TEMPLATE_EDIT)
-        display_request_form = AdminSettings.get('items_display_settings', {}).get("display_request_form", False)
+        restricted_access_settings = AdminSettings.get("restricted_access", dict_to_object=False) or {}
+        use_restricted_item = restricted_access_settings.get("edit_mail_templates_enable", False)
+        display_request_form = restricted_access_settings.get("display_request_form", False)
         if '0' == flow_id:
             flow = None
             return self.render(

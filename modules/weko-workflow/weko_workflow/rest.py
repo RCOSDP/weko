@@ -805,7 +805,7 @@ class FileApplicationActivity(ContentNegotiatedMethodView):
             try:
                 # get record data for the first time access to editing item screen
                 recid, approval_record = get_pid_and_record(item.id)
-                files, files_thumbnail = get_files_and_thumbnail(activity_id, item)
+                files, files_thumbnail = get_files_and_thumbnail(activity_id, item.id)
             except Exception:
                 raise Exception() # 404
         

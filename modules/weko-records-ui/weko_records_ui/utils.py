@@ -1052,7 +1052,7 @@ def send_usage_report_mail_for_user(guest_mail: str, temp_url: str):
     # Mail information
     mail_info = {
         'template': current_app.config.get(
-            "WEKO_WORKFLOW_USAGE_REPORT_ACTIVITY_URL"),
+            "WEKO_WORKFLOW_USAGE_REPORT_REMINDER_MAIL_TEMPLATE_ID"),
         'mail_address': guest_mail,
         'url_guest_user': temp_url
     }
@@ -1074,12 +1074,12 @@ def check_and_send_usage_report(extra_info:dict, user_mail:str ,record:dict, fil
     if not extra_info.get('send_usage_report'):
         return
     activity = create_usage_report_for_user(extra_info)
-    mail_template = current_app.config.get(
-        "WEKO_WORKFLOW_USAGE_REPORT_ACTIVITY_URL")
+    mail_template_id = current_app.config.get(
+        "WEKO_WORKFLOW_USAGE_REPORT_REMINDER_MAIL_TEMPLATE_ID")
     usage_report = UsageReport()
     if not activity:
         return _("Unexpected error occurred.")
-    if not usage_report.send_reminder_mail([], mail_template, [activity]):
+    if not usage_report.send_reminder_mail([], mail_template_id, [activity]):
         return _("Failed to send mail.")
     extra_info['send_usage_report'] = False
 

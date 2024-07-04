@@ -1078,10 +1078,6 @@ def display_activity(activity_id="0"):
     
     form = FlaskForm(request.form)
 
-    approval_preview = False
-    if action_endpoint == 'approval' and current_app.config.get('WEKO_WORKFLOW_APPROVAL_PREVIEW'):
-        approval_preview = workflow_detail.open_restricted
-    
     approval_pending = False
     if action_endpoint == 'approval' and workflow_detail.open_restricted:
         approval_pending = True
@@ -1097,11 +1093,17 @@ def display_activity(activity_id="0"):
             application_approved = True
 
     # Get Settings
+    approval_preview = False
     enable_request_maillist = False
-    items_display_settings = AdminSettings.get(name='items_display_settings',
-                                        dict_to_object=False)
-    if items_display_settings:
-        enable_request_maillist = items_display_settings.get('display_request_form', False)
+    is_no_content_item_application = False
+    restricted_access_settings = AdminSettings.get(name="restricted_access", dict_to_object=False)
+    if restricted_access_settings:
+        if action_endpoint == 'approval' and restricted_access_settings.get("preview_workflow_approval_enable", False):
+            approval_preview = workflow_detail.open_restricted
+        enable_request_maillist = restricted_access_settings.get('display_request_form', False)
+        item_application_settings = restricted_access_settings.get("item_application", {})
+        is_no_content_item_application = item_application_settings.get("item_application_enable", False) \
+            and workflow_detail.itemtype_id in item_application_settings.get("application_item_types", [])
 
     return render_template(
         'weko_workflow/activity_detail.html',
@@ -1140,6 +1142,7 @@ def display_activity(activity_id="0"):
             action_endpoint, item_type_name),
         is_hidden_pubdate=is_hidden_pubdate_value,
         is_show_autofill_metadata=show_autofill_metadata,
+        is_no_content_item_application=is_no_content_item_application,
         item_save_uri=item_save_uri,
         item=item,
         jsonschema=json_schema,
@@ -1524,7 +1527,7 @@ def next_action(activity_id='0', action_id=0):
                 action_id=next_action_id,
                 action_order=next_action_order).one_or_none()
             if current_flow_action and current_flow_action.action_roles and current_flow_action.action_roles[0].action_request_mail:
-                is_request_enabled = AdminSettings.get('items_display_settings',{})\
+                is_request_enabled = AdminSettings.get("restricted_access", dict_to_object=False) \
                     .get("display_request_form", False)
                 #リクエスト機能がAdmin画面で無効化されている場合、メールは送信しない。
                 if is_request_enabled :
@@ -1645,10 +1648,14 @@ def next_action(activity_id='0', action_id=0):
                 FeedbackMailList.delete_by_list_item_id(item_ids)
 
             enable_request_maillist = False
-            items_display_settings = AdminSettings.get(name='items_display_settings',
-                                        dict_to_object=False)
-            if items_display_settings:
-                enable_request_maillist = items_display_settings.get('display_request_form', False)         
+            enable_item_application = False
+            restricted_access_settings = AdminSettings.get("restricted_access", dict_to_object=False)
+            if restricted_access_settings:
+                enable_request_maillist = restricted_access_settings.get("display_request_form", False)
+                item_application_settings = restricted_access_settings.get("item_application", {})
+                enable_item_application = item_application_settings.get("item_application_enable", False)
+                application_item_types = item_application_settings.get("application_item_types", [])
+                can_register_item_application = enable_item_application and (activity_detail.workflow.itemtype_id in application_item_types)
 
             if activity_request_mail and activity_request_mail.request_maillist and enable_request_maillist:
                 RequestMailList.update_by_list_item_id(
@@ -1658,7 +1665,7 @@ def next_action(activity_id='0', action_id=0):
             else:
                 RequestMailList.delete_by_list_item_id(item_ids)
 
-            if activity_item_application and activity_item_application.item_application:
+            if activity_item_application and activity_item_application.item_application and can_register_item_application:
                 ItemApplication.update_by_list_item_id(
                     item_ids=item_ids,
                     item_application=activity_item_application.item_application
@@ -2821,7 +2828,7 @@ def get_request_maillist(activity_id='0'):
 def get_item_application(activity_id='0'):
     check_flg = type_null_check(activity_id, str)
     if not check_flg:
-        current_app.logger.error("get_request_maillist: argument error")
+        current_app.logger.error("get_item_application: argument error")
         res = ResponseMessageSchema().load({"code":-1, "msg":"arguments error"})
         return jsonify(res.data), 400
     try:
