@@ -1623,3 +1623,27 @@ msgstr "本処理の実行にはかなりの時間がかかることが予想さ
 #: weko_admin/admin/reindex_elasticsearch.html
 msgid "completed"
 msgstr "処理が完了しました。"
+
+msgid "restricted_error_message"
+msgstr ""
+
+msgid "password check function"
+msgstr ""
+
+msgid "application for use of items without content"
+msgstr ""
+
+msgid "item types available for application"
+msgstr ""
+
+msgid "item type not available for use application"
+msgstr ""
+
+msgid "file preview in approval actions"
+msgstr ""
+
+msgid "edit mail templates"
+msgstr ""
+
+msgid "display request form"
+msgstr ""

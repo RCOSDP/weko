@@ -26,8 +26,8 @@ from invenio_db import db
 from sqlalchemy import or_
 from flask_babelex import gettext as _
 
-
 from invenio_mail.config import INVENIO_MAIL_DEFAULT_TEMPLATE_CATEGORY_ID
+
 
 class MailConfig(db.Model):
     """Mail Config."""
@@ -95,6 +95,7 @@ class MailTemplates(db.Model):
     mail_genre_id = db.Column('genre_id', db.Integer,
                               db.ForeignKey('mail_template_genres.id', onupdate='CASCADE', ondelete='RESTRICT'),
                               nullable=False, default=INVENIO_MAIL_DEFAULT_TEMPLATE_CATEGORY_ID)
+
     def toDict(self):
         """model object to dict"""
         return {
@@ -115,9 +116,9 @@ class MailTemplates(db.Model):
         from weko_admin.models import AdminSettings
         result = []
         # get secret mail enabled
-        restricted_access = AdminSettings.get('restricted_access', False)
+        restricted_access = AdminSettings.get('restricted_access', dict_to_object=False)
         if not restricted_access:
-            restricted_access = current_app.config['WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS']         
+            restricted_access = current_app.config['WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS']
         secret_enabled:bool = restricted_access.get('secret_URL_file_download',{}).get('secret_enable',False)
 
         try:
@@ -157,6 +158,19 @@ class MailTemplates(db.Model):
                 db.session.add(obj)
             db.session.commit()
             return True
-        except:
+        except Exception as ex:
             db.session.rollback()
+            current_app.logger.error(ex)
+            return False
+
+    @classmethod
+    def delete_by_id(cls, id):
+        """Delete mail template."""
+        try:
+            cls.query.filter_by(id=id).delete()
+            db.session.commit()
+            return True
+        except Exception as ex:
+            db.session.rollback()
+            current_app.logger.error(ex)
             return False
