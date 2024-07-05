@@ -1201,6 +1201,7 @@ def index_issn(app,db):
         parent = 0,
         updated = datetime.date(2022, 10, 1),
         index_name = "利用報告",
+        index_name_english = "Data Report",
         online_issn = "1234-987A",
         position = 10,
         biblio_flag = True
@@ -1210,6 +1211,7 @@ def index_issn(app,db):
         parent = 0,
         updated = datetime.date(2022, 10, 1),
         index_name = "Updated Index",
+        index_name_english = "Updated Index",
         online_issn = "1234-567X",
         position = 11,
         biblio_flag = True
@@ -1219,6 +1221,7 @@ def index_issn(app,db):
         parent = 1714029010533,
         updated = datetime.date(2022, 10, 1),
         index_name = "New New Index",
+        index_name_english = "New New Index",
         online_issn = "1234-567X",
         position = 12,
         biblio_flag = True
@@ -1228,6 +1231,7 @@ def index_issn(app,db):
         parent = 0,
         updated = datetime.date(2022, 10, 1),
         index_name = "No ISSN Index",
+        index_name_english = "No ISSN Index",
         position = 13,
         biblio_flag = False
     )
@@ -1236,6 +1240,7 @@ def index_issn(app,db):
         parent = 0,
         updated = datetime.date(2022, 10, 1),
         index_name = "No biblio flag",
+        index_name_english = "No biblio flag",
         position = 14,
         online_issn = 909090,
         biblio_flag = False
@@ -1245,6 +1250,7 @@ def index_issn(app,db):
         parent = 0,
         updated = datetime.date(2024, 10, 1),
         index_name = "New Index",
+        index_name_english = "New Index",
         online_issn = "1234-567X",
         position = 15,
         biblio_flag = True
