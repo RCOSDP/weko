@@ -840,7 +840,7 @@ class QuerySitelicenseReportsHelper(object):
                     min_index_dict[i['issn']]['index'] = i
                     min_index_dict[i['issn']]['min_spec'] = len_spec
                 index_issn_list.append(i['issn'])
-                index_info[min_index['issn']] = {'name':min_index['index_name'], 'id':min_set_spec}
+                index_info[min_index['issn']] = {'name':min_index['index_name'], 'name_en':i['index_name_english'], 'id':min_set_spec}
                 index_dict[min_index['issn']] = pickle.loads(pickle.dumps(date_dict, -1))
             issn_list.extend(list(set(index_issn_list)))
             for k in query_list:

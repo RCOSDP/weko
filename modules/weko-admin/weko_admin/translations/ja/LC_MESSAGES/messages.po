@@ -263,6 +263,10 @@ msgstr "ファセット検索一覧"
 msgid "statistics report"
 msgstr "統計設定"
 
+#: weko_admin/api.py:157
+msgid "Site License Usage Statistics Report"
+msgstr "サイトライセンス利用統計"
+
 #: weko_admin/config.py:129
 msgid "No. Of File Downloads"
 msgstr "ファイルダウンロード回数"
@@ -565,6 +569,10 @@ msgstr "レポート作成日"
 #: weko_admin/utils.py:576
 msgid "Site name"
 msgstr "リポジトリ名"
+
+#: weko_admin/utils.py:656
+msgid "site_license_month"
+msgstr "集計年月"
 
 #: weko_admin/utils.py:1198
 msgid "Cannot update Feedback email settings."
