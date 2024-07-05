@@ -288,6 +288,8 @@ def parsing_metadata(mappin, props, patterns, metadata, res):
         ret = []
         for it in metadata:
             items = {}
+            if not it:
+                continue
             for elem, value in patterns:
                 mapping = mappin.get(elem)
                 #if not mappin.get(elem) or not value:
