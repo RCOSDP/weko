@@ -1139,13 +1139,18 @@ class WekoDeposit(Deposit):
                                 attachment = {}
                                 if file.obj.mimetype in mimetypes:
                                     try:
-                                        if file.obj.file.uri.startswith("s3://"):
-                                           with file.obj.file.storage().open(mode='rb') as fp:
+                                        with file.obj.file.storage().open(mode='rb') as fp:
+                                            data = ""
+                                            if file.obj.mimetype in current_app.config['WEKO_DEPOSIT_TEXTMIMETYPE_WHITELIST_FOR_ES']:
+                                                data = fp.read()
+                                            else:
                                                 reader = parser.from_buffer(fp.read())
-                                                attachment["content"] = "".join(reader["content"].splitlines())
-                                        else:
-                                            reader = parser.from_file(file.obj.file.uri)
-                                            attachment["content"] = "".join(reader["content"].splitlines())
+                                                if reader is not None and "content" in reader and reader["content"] is not None:
+                                                    data = "".join(reader["content"].splitlines())
+                                            if len(data) > current_app.config['WEKO_DEPOSIT_FILESIZE_LIMIT']:
+                                                data = data[0:current_app.config['WEKO_DEPOSIT_FILESIZE_LIMIT']]
+                                            attachment["content"] = data
+                                            current_app.logger.error("attachment[]: {}".format(attachment["content"]))
                                     except FileNotFoundError as se:
                                         current_app.logger.error("FileNotFoundError: {}".format(se))
                                         current_app.logger.error("file.obj: {}".format(file.obj))

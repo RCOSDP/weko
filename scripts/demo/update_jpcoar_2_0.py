@@ -1,5 +1,6 @@
 import properties
 import sys
+import time
 from properties import property_config
 from sqlalchemy.dialects.postgresql import Insert
 from invenio_db import db
@@ -19,6 +20,7 @@ def main():
     update_item_type_main()
     print("run addjpcoar_v2_mapping")
     addjpcoar_v2_mapping_main()
+    time.sleep(2)
     print("run renew_all_item_types")
     renew_all_item_types_main()
 

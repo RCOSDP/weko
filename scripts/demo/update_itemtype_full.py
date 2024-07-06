@@ -78,9 +78,9 @@ def main():
         i = 1
         with db.session.begin_nested():
             # itemType = ItemTypes.get_by_name('デフォルトアイテムタイプ（フル）')
-            itemType = ItemTypes.get_by_id(30002)
+            itemType = ItemTypes.get_by_id(30002,with_deleted=True)
             if itemType is None:
-                itemType = ItemTypes.get_by_id(15)
+                itemType = ItemTypes.get_by_id(,with_deleted=True)
                 if itemType is None:
                     raise Exception("itemType is not found.")
             if itemType:
