@@ -158,7 +158,10 @@ class WekoIndexer(RecordIndexer):
         es_info = dict(id=str(item_id),
                        index=self.es_index,
                        doc_type=self.es_doc_type)
-        body = dict(version=revision_id + 1,
+        # body = dict(version=revision_id + 1,
+        #             version_type=self._version_type,
+        #             body=jrc)
+        body = dict(version=revision_id,
                     version_type=self._version_type,
                     body=jrc)
 
@@ -1150,7 +1153,6 @@ class WekoDeposit(Deposit):
                                             if len(data) > current_app.config['WEKO_DEPOSIT_FILESIZE_LIMIT']:
                                                 data = data[0:current_app.config['WEKO_DEPOSIT_FILESIZE_LIMIT']]
                                             attachment["content"] = data
-                                            current_app.logger.error("attachment[]: {}".format(attachment["content"]))
                                     except FileNotFoundError as se:
                                         current_app.logger.error("FileNotFoundError: {}".format(se))
                                         current_app.logger.error("file.obj: {}".format(file.obj))

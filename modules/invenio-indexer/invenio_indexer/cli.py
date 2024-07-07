@@ -54,16 +54,19 @@ def abort_if_false(ctx, param, value):
 @click.option('--max-retries',type=int,default=0,help='maximum number of times a document will be retired when 429 is received, set to 0 (default) for no retries on 429')
 @click.option('--initial_backoff',type=int,default=2,help='number of secconds we should wait before the first retry.')
 @click.option('--max-backoff',type=int,default=600,help='maximim number of seconds a retry will wait')
+@click.option(
+    '--with_deleted', type=bool,default=True,
+    help='Include deleted records in the indexing process.')
 @with_appcontext
 def run(delayed, concurrency, version_type=None, queue=None,
-        raise_on_error=True,raise_on_exception=True,chunk_size=500,max_chunk_bytes=104857600,max_retries=0,initial_backoff=2,max_backoff=600):
+        raise_on_error=True,raise_on_exception=True,chunk_size=500,max_chunk_bytes=104857600,max_retries=0,initial_backoff=2,max_backoff=600, with_deleted=True):
     """Run bulk record indexing."""
     if delayed:
         celery_kwargs = {
             'kwargs': {
                 'version_type': version_type,
                 'es_bulk_kwargs': {'raise_on_error': raise_on_error,'chunk_size':chunk_size,'max_chunk_bytes':max_chunk_bytes,'max_retries': max_retries,'initial_backoff': initial_backoff,'max_backoff': max_backoff},
-                'with_deleted': True
+                'with_deleted': with_deleted
             }
         }
         
@@ -84,7 +87,7 @@ def run(delayed, concurrency, version_type=None, queue=None,
                             'max_retries': max_retries,
                             'initial_backoff': initial_backoff,
                             'max_backoff': max_backoff},
-            with_deleted=True)
+            with_deleted=with_deleted)
 
 
 
