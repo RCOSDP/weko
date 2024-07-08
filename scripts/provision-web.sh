@@ -60,12 +60,13 @@ provision_web_common_ubuntu14 () {
          screen \
          vim \
          gnupg \
-	 libpcre3-dev
+         libpcre3-dev
     # sphinxdoc-install-useful-system-tools-ubuntu14-end
     echo "111-2"
     # sphinxdoc-add-nodejs-external-repository-ubuntu14-begin
+    #cat /etc/apt/sources.list.d/nodesource.list -> no such file or directory
     if [[ ! -f /etc/apt/sources.list.d/nodesource.list ]]; then
-        curl -sL https://deb.nodesource.com/setup_4.x | $sudo bash -
+        curl -sL https://deb.nodesource.com/setup_6.x | $sudo bash -
     fi
     # sphinxdoc-add-nodejs-external-repository-ubuntu14-end
     echo "111-3"
@@ -87,8 +88,8 @@ provision_web_common_ubuntu14 () {
          libzip-dev \
          libjpeg-dev \
          nodejs \
-         python-dev \
-         python-pip
+         python-dev-is-python3 \
+         python3-pip
     # sphinxdoc-install-web-common-ubuntu14-end
     echo "111-5"
 }

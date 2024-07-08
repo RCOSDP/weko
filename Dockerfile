@@ -25,7 +25,9 @@
 
 # Use Python-3.6:
 #FROM python:3.6-slim-buster as stage_1
-FROM python:3.12.0b1-buster as stage_1
+#FROM python:3.12.0b1-buster as stage_1
+#FROM python:3.12.4-slim-bookworm as stage_1
+FROM python:3.12-slim-bullseye as stage_1
 
 # Configure Weko instance:
 ENV INVENIO_WEB_HOST=127.0.0.1
