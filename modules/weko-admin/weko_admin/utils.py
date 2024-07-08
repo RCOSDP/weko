@@ -25,6 +25,7 @@ import orjson
 import math
 import os
 import zipfile
+import pickle
 from datetime import datetime, timedelta
 from io import BytesIO, StringIO
 from typing import Dict, Tuple, Union
@@ -563,7 +564,10 @@ def write_sitelicense_report_file_rows(writer, records, file_type, result):
     #all_journals
     if file_type == 'file_preview' or file_type == 'file_download':
         all_journals = records['all_journals']
-        all_journals_data = ['Total for all journals', '', interface_name, '', '']
+        if len(result["datelist"]) > 1:
+            all_journals_data = ['Total for all journals', '', interface_name, '', '']
+        else:
+            all_journals_data = ['Total for all journals', '', interface_name,'']
         for date in result['datelist']:
             if date == 'total':
                 continue
@@ -583,6 +587,10 @@ def write_sitelicense_report_file_rows(writer, records, file_type, result):
                 continue
             else:
                 data = [result['index_info'][key]['name'], result['index_info'][key]['id'], interface_name, key]
+                if current_i18n.language == 'ja' and result['index_info'][key]['name']:
+                    data = [result['index_info'][key]['name'], result['index_info'][key]['id'], interface_name, key]
+                else:
+                    data = [result['index_info'][key]['name_en'], result['index_info'][key]['id'], interface_name, key]
             for date in result['datelist']:
                 value = record[date]
                 data.append(value)
@@ -641,6 +649,8 @@ def make_site_access_stats_file(stats, stats_type, agg_date, result):
     Returns:
         StringIO: output files stream.
     """
+    cols = []
+    count_cols = []
 
     reposytory_name = current_app.config.get('WEKO_ADMIN_SITELICENSE_REPORT_REPOSYTORY_NAME')
     dt = datetime.now()
@@ -653,10 +663,11 @@ def make_site_access_stats_file(stats, stats_type, agg_date, result):
 
     writer.writerows([[_('Site name'), reposytory_name],
                       [_('Creation date'), now_date],
-                      [_('month'), agg_date],
+                      [_('site_license_month'), agg_date],
                       ['']])
 
-    cols = current_app.config['WEKO_ADMIN_SITELICENSE_REPORT_COLS'].get(stats_type, [])
+    cols_setting = current_app.config['WEKO_ADMIN_SITELICENSE_REPORT_COLS'].get(stats_type, [])
+    cols = pickle.loads(pickle.dumps(cols_setting, -1))
     count_cols = current_app.config['WEKO_ADMIN_SITELICENSE_REPORT_COUNT_COLS'].get(stats_type,[])
 
     for col in count_cols:

@@ -13,6 +13,7 @@ from weko_admin.api import (
     TempDirInfo,
     validate_csrf_header
 )
+from weko_admin.models import SiteInfo
 
 
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_api.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
@@ -137,20 +138,83 @@ def test_is_crawler2(client,log_crawler_list,restricted_ip_addr,mocker):
 #def send_site_license_mail(organization_name, mail_list, agg_date, data):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_api.py::test_send_site_license_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
 def test_send_site_license_mail(client,mocker,roles):
+    SiteInfo.query.delete()
+    data1 = {
+        "site_name":[
+            {"index":"new_index1","name":"new_name1","language":"en"},
+            {"index":"new_index2","name":"new_name2","language":"ja"}
+        ],
+        "notify":[
+            {"notify_name":"new_notify1","language":"en"},
+            {"notify_name":"new_notify2","language":"ja"}
+        ],
+        "copy_right":"new_copyright","description":"this is new description","keyword":"test new keyword","favicon":"test,favicon",
+        "favicon_name":"test favicon","google_tracking_id_user":"test_tracking","addthis_user_id":"test_addthis_user",
+        "ogp_image":""
+    }
+    data2 = {
+        "site_name":[
+            {"index":"new_index1","name":"new_name2","language":"ja"}
+        ],
+        "notify":[
+            {"notify_name":"new_notify1","language":"en"},
+            {"notify_name":"new_notify2","language":"ja"}
+        ],
+        "copy_right":"new_copyright","description":"this is new description","keyword":"test new keyword","favicon":"test,favicon",
+        "favicon_name":"test favicon","google_tracking_id_user":"test_tracking","addthis_user_id":"test_addthis_user",
+        "ogp_image":""
+    }
+    data3 = {
+        "site_name":[
+            {"index":"new_index1","name":"new_name1","language":"en"}
+        ],
+        "notify":[
+            {"notify_name":"new_notify1","language":"en"},
+            {"notify_name":"new_notify2","language":"ja"}
+        ],
+        "copy_right":"new_copyright","description":"this is new description","keyword":"test new keyword","favicon":"test,favicon",
+        "favicon_name":"test favicon","google_tracking_id_user":"test_tracking","addthis_user_id":"test_addthis_user",
+        "ogp_image":""
+    }
+    SiteInfo.update(data1)
     mocker.patch("weko_admin.api.get_system_default_language",return_value="en")
     organization_name="ORCID"
     mail_list=["test1@test.org","test2@test.org"]
-    result = {"date":"2024-04-2024-05","datelist":["total","2024-04","2024-05"],"index_info":{"1234-987A":{"name":"利用報告","id":"1616224532673"},"1234-567X":{"name":"New Index","id":"1714029010533"}},"no_data":{"file_download":{"1234-987A":{"2024-04":0,"2024-05":0,"total":0},"1234-567X":{"2024-04":0,"2024-05":0,"total":0},"all_journals":{"2024-04":0,"2024-05":0}},"file_preview":{"1234-987A":{"2024-04":0,"2024-05":0,"total":0},"1234-567X":{"2024-04":0,"2024-05":0,"total":0},"all_journals":{"2024-04":0,"2024-05":0}},"search":{"2024-04":0,"2024-05":0,"total":0},"record_view":{"1234-987A":{"2024-04":0,"2024-05":0,"total":0,"file_download_count":{"2024-04":0,"2024-05":0,"total":0}},"1234-567X":{"2024-04":0,"2024-05":0,"total":0,"file_download_count":{"2024-04":0,"2024-05":0,"total":0}}}},"result":{"test":{"file_download":{"1234-987A":{"2024-04":0,"2024-05":2,"total":2},"1234-567X":{"2024-04":0,"2024-05":5,"total":5},"all_journals":{"2024-04":0,"2024-05":7}},"file_preview":{"1234-987A":{"2024-04":0,"2024-05":3,"total":3},"1234-567X":{"2024-04":0,"2024-05":0,"total":0},"all_journals":{"2024-04":0,"2024-05":3}},"search":{"2024-04":3,"2024-05":0,"total":3},"record_view":{"1234-987A":{"2024-04":26,"2024-05":0,"total":26,"file_download_count":{"2024-04":0,"2024-05":2,"total":2}},"1234-567X":{"2024-04":9,"2024-05":8,"total":17,"file_download_count":{"2024-04":0,"2024-05":5,"total":5}}}},"New Test":{"file_download":{"1234-987A":{"2024-04":0,"2024-05":0,"total":0},"1234-567X":{"2024-04":0,"2024-05":0,"total":0},"all_journals":{"2024-04":0,"2024-05":0}},"file_preview":{"1234-987A":{"2024-04":0,"2024-05":0,"total":0},"1234-567X":{"2024-04":0,"2024-05":0,"total":0},"all_journals":{"2024-04":0,"2024-05":0}},"search":{"2024-04":0,"2024-05":3,"total":3},"record_view":{"1234-987A":{"2024-04":0,"2024-05":1,"total":1,"file_download_count":{"2024-04":0,"2024-05":0,"total":0}},"1234-567X":{"2024-04":0,"2024-05":39,"total":39,"file_download_count":{"2024-04":0,"2024-05":0,"total":0}}}}}}
+    result = {"date":"2024-04-2024-05","datelist":["total","2024-04","2024-05"],"index_info":{"1234-987A":{"name":"利用報告","id":"1616224532673","name_en":"Data Report"},"1234-567X":{"name":"New Index","id":"1714029010533","name_en":"New Index"}},"no_data":{"file_download":{"1234-987A":{"2024-04":0,"2024-05":0,"total":0},"1234-567X":{"2024-04":0,"2024-05":0,"total":0},"all_journals":{"2024-04":0,"2024-05":0}},"file_preview":{"1234-987A":{"2024-04":0,"2024-05":0,"total":0},"1234-567X":{"2024-04":0,"2024-05":0,"total":0},"all_journals":{"2024-04":0,"2024-05":0}},"search":{"2024-04":0,"2024-05":0,"total":0},"record_view":{"1234-987A":{"2024-04":0,"2024-05":0,"total":0,"file_download_count":{"2024-04":0,"2024-05":0,"total":0}},"1234-567X":{"2024-04":0,"2024-05":0,"total":0,"file_download_count":{"2024-04":0,"2024-05":0,"total":0}}}},"result":{"test":{"file_download":{"1234-987A":{"2024-04":0,"2024-05":2,"total":2},"1234-567X":{"2024-04":0,"2024-05":5,"total":5},"all_journals":{"2024-04":0,"2024-05":7}},"file_preview":{"1234-987A":{"2024-04":0,"2024-05":3,"total":3},"1234-567X":{"2024-04":0,"2024-05":0,"total":0},"all_journals":{"2024-04":0,"2024-05":3}},"search":{"2024-04":3,"2024-05":0,"total":3},"record_view":{"1234-987A":{"2024-04":26,"2024-05":0,"total":26,"file_download_count":{"2024-04":0,"2024-05":2,"total":2}},"1234-567X":{"2024-04":9,"2024-05":8,"total":17,"file_download_count":{"2024-04":0,"2024-05":5,"total":5}}}},"New Test":{"file_download":{"1234-987A":{"2024-04":0,"2024-05":0,"total":0},"1234-567X":{"2024-04":0,"2024-05":0,"total":0},"all_journals":{"2024-04":0,"2024-05":0}},"file_preview":{"1234-987A":{"2024-04":0,"2024-05":0,"total":0},"1234-567X":{"2024-04":0,"2024-05":0,"total":0},"all_journals":{"2024-04":0,"2024-05":0}},"search":{"2024-04":0,"2024-05":3,"total":3},"record_view":{"1234-987A":{"2024-04":0,"2024-05":1,"total":1,"file_download_count":{"2024-04":0,"2024-05":0,"total":0}},"1234-567X":{"2024-04":0,"2024-05":39,"total":39,"file_download_count":{"2024-04":0,"2024-05":0,"total":0}}}}}}
     data={"file_download":{"1234-987A":{"2024-04":0,"2024-05":2,"total":2},"1234-567X":{"2024-04":0,"2024-05":5,"total":5},"all_journals":{"2024-04":0,"2024-05":7}},"file_preview":{"1234-987A":{"2024-04":0,"2024-05":3,"total":3},"1234-567X":{"2024-04":0,"2024-05":0,"total":0},"all_journals":{"2024-04":0,"2024-05":3}},"search":{"2024-04":3,"2024-05":0,"total":3},"record_view":{"1234-987A":{"2024-04":26,"2024-05":0,"total":26,"file_download_count":{"2024-04":0,"2024-05":2,"total":2}},"1234-567X":{"2024-04":9,"2024-05":8,"total":17,"file_download_count":{"2024-04":0,"2024-05":5,"total":5}}}}
     mock_send = mocker.patch("weko_admin.api.send_mail")
     mock_render = mocker.patch("weko_admin.api.render_template",return_value=make_response())
     send_site_license_mail(organization_name,mail_list,result,data)
-    mock_send.assert_called_with("[Weko3] 2024-04-2024-05 site license statistics",mail_list,attachments=mocker.ANY,body="<<class 'pytest_flask.plugin.JSONResponse'> 0 bytes [200 OK]>")
+    mock_send.assert_called_with("[new_name1]2024-04-2024-05 Site License Usage Statistics Report",mail_list,attachments=mocker.ANY,body="<<class 'pytest_flask.plugin.JSONResponse'> 0 bytes [200 OK]>")
     mock_render.assert_called_with(
         'weko_admin/email_templates/site_license_report.html',
         administrator=None,
         agg_date="2024-04-2024-05",
-        organization_name='ORCID'
+        organization_name='ORCID',
+        site_name_en='new_name1', 
+        site_name_ja='new_name2'
+    )
+    SiteInfo.update(data2)
+    send_site_license_mail(organization_name,mail_list,result,data)
+    mock_send.assert_called_with("[new_name2]2024-04-2024-05 Site License Usage Statistics Report",mail_list,attachments=mocker.ANY,body="<<class 'pytest_flask.plugin.JSONResponse'> 0 bytes [200 OK]>")
+    mock_render.assert_called_with(
+        'weko_admin/email_templates/site_license_report.html',
+        administrator=None,
+        agg_date="2024-04-2024-05",
+        organization_name='ORCID',
+        site_name_en='new_name2', 
+        site_name_ja='new_name2'
+    )
+    SiteInfo.update(data3)
+    send_site_license_mail(organization_name,mail_list,result,data)
+    mock_send.assert_called_with("[new_name1]2024-04-2024-05 Site License Usage Statistics Report",mail_list,attachments=mocker.ANY,body="<<class 'pytest_flask.plugin.JSONResponse'> 0 bytes [200 OK]>")
+    mock_render.assert_called_with(
+        'weko_admin/email_templates/site_license_report.html',
+        administrator=None,
+        agg_date="2024-04-2024-05",
+        organization_name='ORCID',
+        site_name_en='new_name1', 
+        site_name_ja='new_name1'
     )
     with patch("weko_admin.api.get_system_default_language",side_effect=Exception("test_error")):
         send_site_license_mail(organization_name,mail_list,result,data)

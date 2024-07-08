@@ -107,6 +107,10 @@ msgstr ""
 msgid "Specified repository is already registered."
 msgstr ""
 
+#: weko_admin/api.py:157
+msgid "Site License Usage Statistics Report"
+msgstr ""
+
 #: weko_admin/config.py:195
 msgid "SetSpec"
 msgstr ""
@@ -150,6 +154,10 @@ msgstr ""
 #: weko_admin/utils.py:576
 msgid "Site name"
 msgstr ""
+
+#: weko_admin/utils.py:656
+msgid "site_license_month"
+msgstr "month"
 
 #: weko_admin/ext.py:42
 msgid "A translation string"

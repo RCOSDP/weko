@@ -255,6 +255,7 @@ class Index(db.Model, Timestamp):
                         'id': index.id,
                         'updated': index.updated,
                         'index_name': index.index_name,
+                        'index_name_english': index.index_name_english,
                         'issn' : index.online_issn
                     }
                     result.append(data)
