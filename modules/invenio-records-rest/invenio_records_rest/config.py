@@ -1,21 +1,19 @@
 # -*- coding: utf-8 -*-
 #
 # This file is part of Invenio.
-# Copyright (C) 2016-2018 CERN.
+# Copyright (C) 2016-2019 CERN.
 #
 # Invenio is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
 
 """Invenio-Records-REST configuration."""
 
-from __future__ import absolute_import, print_function
-
 from flask import request
 from invenio_indexer.api import RecordIndexer
 from invenio_search import RecordsSearch
 
 from .facets import terms_filter
-from .utils import allow_all, check_elasticsearch, deny_all
+from .utils import allow_all, check_search, deny_all
 
 
 def _(x):
@@ -25,24 +23,24 @@ def _(x):
 
 RECORDS_REST_ENDPOINTS = dict(
     recid=dict(
-        pid_type='recid',
-        pid_minter='recid',
-        pid_fetcher='recid',
+        pid_type="recid",
+        pid_minter="recid",
+        pid_fetcher="recid",
         search_class=RecordsSearch,
         indexer_class=RecordIndexer,
         search_index=None,
-        search_type=None,
+        search_query_parser=None,
         record_serializers={
-            'application/json': ('invenio_records_rest.serializers'
-                                 ':json_v1_response'),
+            "application/json": (
+                "invenio_records_rest.serializers" ":json_v1_response"
+            ),
         },
         search_serializers={
-            'application/json': ('invenio_records_rest.serializers'
-                                 ':json_v1_search'),
+            "application/json": ("invenio_records_rest.serializers" ":json_v1_search"),
         },
-        list_route='/records/',
-        item_route='/records/<pid(recid):pid_value>',
-        default_media_type='application/json',
+        list_route="/records/",
+        item_route="/records/<pid(recid):pid_value>",
+        default_media_type="application/json",
         max_result_window=10000,
         error_handlers=dict(),
     ),
@@ -83,6 +81,12 @@ The structure of the dictionary is as follows:
             'message': error.description,
             'removal_reason': record.get('removal_reason')}), 410)
 
+    def query_parser_with_and(qstr=None):
+        if qstr:
+            return dsl.Q("query_string", query=qstr, default_operator="AND")
+        return dsl.Q()
+
+
     RECORDS_REST_ENDPOINTS = {
         'endpoint-prefix': {
             'create_permission_factory_imp': permission_check_factory(),
@@ -107,18 +111,24 @@ The structure of the dictionary is as follows:
             'record_serializers': {
                 'application/json': 'mypackage.utils:my_json_serializer'
             },
+            'record_serializers_aliases': {
+                'json': 'application/json'
+            },
             'search_class': 'mypackage.utils:mysearchclass',
             'search_factory_imp': search_factory(),
-            'search_index': 'elasticsearch-index-name',
+            'search_index': 'search-index-name',
+            'search_query_parser': query_parser_with_and,
             'search_serializers': {
                 'application/json': 'mypackage.utils:my_json_search_serializer'
             },
-            'search_type': 'elasticsearch-doc-type',
+            'search_serializers_aliases': {
+                'json': 'application/json'
+            },
             'suggesters': {
                 'my_url_param_to_complete': {
                     '_source': ['specified_source_filtered_field'],
                     'completion': {
-                        'field': 'suggest_byyear_elasticsearch_field',
+                        'field': 'suggest_byyear_search_field',
                         'size': 10,
                         'context': 'year'
                     }
@@ -171,39 +181,49 @@ The structure of the dictionary is as follows:
 :param record_class: A record API class or importable string.
 
 :param record_loaders: It contains the list of record deserializers for
-    supperted formats.
+    supported formats.
 
 :param record_serializers: It contains the list of record serializers for
     supported formats.
+
+:param record_serializers_aliases: A mapping of values of the defined query arg
+    (see `config.REST_MIMETYPE_QUERY_ARG_NAME`) to valid mimetypes for record
+    item serializers: dict(alias -> mimetype).
 
 :param search_class: Import path or class object for the object in charge of
     execute the search queries. The default search class is
     :class:`invenio_search.api.RecordsSearch`.
     For more information about resource loading, see the `Search
     <http://elasticsearch-dsl.readthedocs.io/en/latest/search_dsl.html>` of the
-    ElasticSearch DSL library.
+    the search engine DSL library.
 
-:param search_factory_imp: Factory to parse quieries.
+:param search_factory_imp: Factory to parse queries.
 
 :param search_index: Name of the search index used when searching records.
+
+:param search_query_parser: Name of the function that will be used to parse the
+    query. The default parser does an 'OR' of all the terms that have been
+    specified. This could be used to do, as an example, and 'AND' of the terms.
 
 :param search_serializers: It contains the list of records serializers for all
     supported format. This configuration differ from the previous because in
     this case it handle a list of records resulted by a search query instead of
     a single record.
 
-:param search_type: Name of the search type used when searching records.
+:param search_serializers_aliases: A mapping of values of the defined query arg
+    (see `config.REST_MIMETYPE_QUERY_ARG_NAME`) to valid mimetypes for records
+    search serializers: dict(alias -> mimetype).
 
 :param suggesters: Suggester fields configuration. Any element of the
     dictionary represents a suggestion field. For each suggestion field we can
     optionally specify the source filtering (appropriate for ES5) by using
     ``_source``. The key of the dictionary element is used to identify the url
     query parameter. The ``field`` parameter identifies the suggester field
-    name in your elasticsearch schema.
+    name in your search engine schema.
     To have more information about suggestion configuration, you can read
-    suggesters section on ElasticSearch documentation.
+    suggesters section on the search engine documentation.
 
-    .. note:: Only completion suggessters are supported.
+    .. note:: Only completion suggesters are supported.
 
 :param update_permission_factory_imp: Import path to factory that creates a
     update permission object for a given record.
@@ -220,8 +240,8 @@ The structure of the dictionary is as follows:
 """
 
 RECORDS_REST_DEFAULT_LOADERS = {
-    'application/json': lambda: request.get_json(),
-    'application/json-patch+json': lambda: request.get_json(force=True),
+    "application/json": lambda: request.get_json(),
+    "application/json-patch+json": lambda: request.get_json(force=True),
 }
 """Default data loaders per request mime type.
 
@@ -244,15 +264,15 @@ This option can be overritten in each REST endpoint as follows:
 RECORDS_REST_SORT_OPTIONS = dict(
     records=dict(
         bestmatch=dict(
-            title=_('Best match'),
-            fields=['_score'],
-            default_order='desc',
+            title=_("Best match"),
+            fields=["_score"],
+            default_order="desc",
             order=1,
         ),
         mostrecent=dict(
-            title=_('Most recent'),
-            fields=['-_created'],
-            default_order='asc',
+            title=_("Most recent"),
+            fields=["-_created"],
+            default_order="asc",
             order=2,
         ),
     )
@@ -277,7 +297,7 @@ Each search field can be either:
 
 - A string of the form ``'<field name>'`` (ascending) or ``'-<field name>'``
   (descending).
-- A dictionary with Elasicsearch sorting syntax (e.g.
+- A dictionary with search engine sorting syntax (e.g.
   ``{'price' : {'order' : 'asc', 'mode' : 'avg'}}``).
 - A callable taking one boolean parameter (``True`` for ascending and ``False``
   for descending) and returning a dictionary like above. This is useful if you
@@ -286,8 +306,8 @@ Each search field can be either:
 
 RECORDS_REST_DEFAULT_SORT = dict(
     records=dict(
-        query='bestmatch',
-        noquery='mostrecent',
+        query="bestmatch",
+        noquery="mostrecent",
     )
 )
 """Default sort option per index with/without query string.
@@ -306,12 +326,10 @@ The structure of the dictionary is as follows:
 
 RECORDS_REST_FACETS = dict(
     records=dict(
-        aggs=dict(
-            type=dict(terms=dict(field='type'))
-        ),
+        aggs=dict(type=dict(terms=dict(field="type"))),
         post_filters=dict(
-            type=terms_filter('type'),
-        )
+            type=terms_filter("type"),
+        ),
     )
 )
 """Facets per index for the default facets factory.
@@ -338,12 +356,16 @@ The structure of the dictionary is as follows:
     }
 """
 
+RECORDS_REST_FACETS_POST_FILTERS_PROPAGATE = False
+"""Define if the post_filters facets in one category should be applied as filters to all the other categories"""
+
 RECORDS_REST_DEFAULT_CREATE_PERMISSION_FACTORY = deny_all
 """Default create permission factory: reject any request."""
 
 RECORDS_REST_DEFAULT_LIST_PERMISSION_FACTORY = allow_all
 """Default list permission factory: allow all requests"""
 
+#RECORDS_REST_DEFAULT_READ_PERMISSION_FACTORY = check_search
 RECORDS_REST_DEFAULT_READ_PERMISSION_FACTORY = \
     'weko_records_ui.permissions:page_permission_factory'
 """Default read permission factory: check if the record exists."""
@@ -354,17 +376,14 @@ RECORDS_REST_DEFAULT_UPDATE_PERMISSION_FACTORY = deny_all
 RECORDS_REST_DEFAULT_DELETE_PERMISSION_FACTORY = deny_all
 """Default delete permission factory: reject any request."""
 
-RECORDS_REST_ELASTICSEARCH_ERROR_HANDLERS = {
-    'query_parsing_exception': (
-        'invenio_records_rest.views'
-        ':elasticsearch_query_parsing_exception_handler'
+RECORDS_REST_SEARCH_ERROR_HANDLERS = {
+    "query_parsing_exception": (
+        "invenio_records_rest.views" ":search_query_parsing_exception_handler"
     ),
-    'query_shard_exception': (
-        'invenio_records_rest.views'
-        ':elasticsearch_query_parsing_exception_handler'
+    "query_shard_exception": (
+        "invenio_records_rest.views" ":search_query_parsing_exception_handler"
     ),
 }
-"""Handlers for ElasticSearch error codes."""
 
 RECORDS_REST_DEFAULT_RESULTS_SIZE = 10
 """Default search results size."""

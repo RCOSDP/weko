@@ -14,9 +14,11 @@ try:  # Python 3 way of inspecting functions
     def wrap_links_factory(links_factory):
         """Test if the links_factory function accepts kwargs."""
         sign = signature(links_factory)
-        kwargs_param = [p for p in sign.parameters.values()
-                        if p.kind == Parameter.VAR_KEYWORD]
+        kwargs_param = [
+            p for p in sign.parameters.values() if p.kind == Parameter.VAR_KEYWORD
+        ]
         return len(kwargs_param) == 0
+
 except ImportError:  # Python 2 way of inspecting functions
     from inspect import getargspec
 
