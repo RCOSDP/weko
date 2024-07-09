@@ -724,7 +724,7 @@ def hide_by_email(item_metadata, force_flag=False):
 
         # Hidden owners_ext info
         if item_metadata.get('_deposit') and \
-                item_metadata['_deposit'].get('owners_ext'):
+                item_metadata['_deposit'].get('owners_ext') and item_metadata['_deposit']['owners_ext'].get('email'):
             del item_metadata['_deposit']['owners_ext']
 
         for item in item_metadata:
