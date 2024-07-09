@@ -28,7 +28,7 @@ import unicodedata
 from flask import abort, current_app, render_template, request ,redirect ,url_for
 from flask_babelex import gettext as _
 from flask_login import current_user
-from flask_security.utils import hash_password
+from flask_security.utils import verify_password
 from invenio_db import db
 from invenio_files_rest import signals
 from invenio_files_rest.models import FileInstance
@@ -436,9 +436,7 @@ def file_download_onetime(pid, record,file_name=None, user_mail=None,login_flag=
         mailaddress = request.args.get('mailaddress',None)
         input_password = ""
         if request.method == "POST":
-            input_pwd = request.get_json().get('input_password')
-            if input_pwd:
-                input_password = hash_password(input_pwd)
+            input_password = request.get_json().get("input_password", "")
         # Parse token
         if not mailaddress:
             onetime_file_url = request.url
@@ -506,7 +504,7 @@ def file_download_onetime(pid, record,file_name=None, user_mail=None,login_flag=
     restricted_access = AdminSettings.get(name='restricted_access',dict_to_object=False)
     password_for_download = onetime_download.extra_info.get("password_for_download", "")
     if restricted_access and restricted_access.get('password_enable', False):
-        if password_for_download and input_password != password_for_download:
+        if password_for_download and not verify_password(input_password, password_for_download):
             passcheck_function = False
 
     #　Guest Mailaddress Check
