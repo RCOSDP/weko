@@ -172,6 +172,9 @@ class WekoIndexer(RecordIndexer):
         # hfix merge
         # current_app.logger.debug(full_body)
         # self.client.index(**full_body)
+        # current_app.logger.error("client:{}".format(self.client.__dict__))
+        # current_app.logger.error("es_info:{}".format(es_info))
+        # current_app.logger.error("body:{}".format(body))
 
         self.client.index(**{**es_info, **body})
 
@@ -961,28 +964,20 @@ class WekoDeposit(Deposit):
                     self.indexer.upload_metadata(self.jrc,
                                                  self.pid.object_uuid,
                                                  self.revision_id)
+                except TransportError as err:    
+                    if self.jrc.get('content'):
+                        for content in self.jrc['content']:
+                            if 'attachment' in content and 'content' in content.get('attachment'):
+                                del content['attachment']['content']
+            
+                try:
                     feedback_mail_list = FeedbackMailList.get_mail_list_by_item_id(self.id)
                     if feedback_mail_list:
                         self.update_feedback_mail()
                     else:
                         self.remove_feedback_mail()
-                except TransportError as err:
-                    err_passing_config = current_app.config.get(
-                        'WEKO_DEPOSIT_ES_PARSING_ERROR_PROCESS_ENABLE')
-                    parse_err = current_app.config.get(
-                        'WEKO_DEPOSIT_ES_PARSING_ERROR_KEYWORD')
-                    if err_passing_config and \
-                            parse_err in err.info["error"]["reason"]:
-                        self.delete_content_files()
-                        self.indexer.upload_metadata(self.jrc,
-                                                     self.pid.object_uuid,
-                                                     self.revision_id,
-                                                     True)
-                        record_id = self['_deposit']['id']
-                        message = 'Failed to parse file from item {}'
-                        current_app.logger.warn(message.format(record_id))
-                    else:
-                        raise err
+                except TransportError as err:    
+                    raise err
 
                 # Remove large base64 files for release memory
                 if self.jrc.get('content'):
@@ -1145,13 +1140,11 @@ class WekoDeposit(Deposit):
                                         with file.obj.file.storage().open(mode='rb') as fp:
                                             data = ""
                                             if file.obj.mimetype in current_app.config['WEKO_DEPOSIT_TEXTMIMETYPE_WHITELIST_FOR_ES']:
-                                                data = fp.read()
+                                                data = fp.read(current_app.config['WEKO_DEPOSIT_FILESIZE_LIMIT'])
                                             else:
-                                                reader = parser.from_buffer(fp.read())
+                                                reader = parser.from_buffer(fp.read(current_app.config['WEKO_DEPOSIT_FILESIZE_LIMIT']))
                                                 if reader is not None and "content" in reader and reader["content"] is not None:
                                                     data = "".join(reader["content"].splitlines())
-                                            if len(data) > current_app.config['WEKO_DEPOSIT_FILESIZE_LIMIT']:
-                                                data = data[0:current_app.config['WEKO_DEPOSIT_FILESIZE_LIMIT']]
                                             attachment["content"] = data
                                     except FileNotFoundError as se:
                                         current_app.logger.error("FileNotFoundError: {}".format(se))

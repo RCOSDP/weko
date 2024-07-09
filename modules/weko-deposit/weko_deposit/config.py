@@ -47,7 +47,7 @@ WEKO_MIMETYPE_WHITELIST_FOR_ES = [
 
 
 
-WEKO_DEPOSIT_FILESIZE_LIMIT = 90 * 1024 * 1024
+WEKO_DEPOSIT_FILESIZE_LIMIT = 2 * 1024 * 1024
 """ The file size(Byte) limit for extracting text from a file. """
 
 FILES_REST_STORAGE_FACTORY = 'weko_deposit.storage.pyfs_storage_factory'
@@ -210,8 +210,4 @@ WEKO_DEPOSIT_BIBLIOGRAPHIC_INFO_SYS_KEY = [
 ]
 """Bibliographic information sys key."""
 
-WEKO_DEPOSIT_ES_PARSING_ERROR_PROCESS_ENABLE = True
-"""Allow reindex data when catching parsing error from ElasticSearch."""
 
-WEKO_DEPOSIT_ES_PARSING_ERROR_KEYWORD = 'ElasticsearchParseException'
-"""Parsing error's Keyword in Elasticsearch exception info."""
