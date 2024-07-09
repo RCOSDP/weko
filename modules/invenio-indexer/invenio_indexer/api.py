@@ -312,7 +312,7 @@ class RecordIndexer(object):
                     try:
                         _success,_fail  = bulk(
                             self.client,
-                            self._actionsiter(consumer.iterqueue(limit=bulk_index_max_items)),
+                            self._actionsiter(consumer.iterqueue(limit=bulk_index_max_items),with_deleted=with_deleted),
                             stats_only=True,
                             request_timeout=req_timeout,
                             expand_action_callback=search.helpers.expand_action,
