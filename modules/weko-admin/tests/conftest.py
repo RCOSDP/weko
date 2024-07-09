@@ -202,7 +202,7 @@ def base_app(instance_path, cache_config,request ,search_class):
             'top_page_access': [_('Host'), _('IP Address'),
                                 _('WEKO Top Page Access Count')],
             'user_roles': [_('Role'), _('Number Of Users')],
-            'site_access': [_('WEKO Top Page Access Count'),
+            'site_access': ['',_('WEKO Top Page Access Count'),
                             _('Number Of Searches'), _('Number Of Views'),
                             _('Number Of File download'),
                             _('Number Of File Regeneration')]

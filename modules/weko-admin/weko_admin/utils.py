@@ -427,9 +427,14 @@ def make_stats_file(raw_stats, file_type, year, month):
     file_delimiter = '\t' if file_format == 'tsv' else ','
     writer = csv.writer(file_output, delimiter=file_delimiter,
                         lineterminator="\n")
-    writer.writerows([[header_row],
+    if file_type == 'site_access':
+        writer.writerows([[header_row],
                       [_('Aggregation Month'), year + '-' + month],
-                      [''], [header_row]])
+                      ['']])
+    else:
+        writer.writerows([[header_row],
+                        [_('Aggregation Month'), year + '-' + month],
+                        [''], [header_row]])
 
     if file_type == 'billing_file_download':
         col_dict_key = file_type.split('_', 1)[1]
@@ -438,7 +443,8 @@ def make_stats_file(raw_stats, file_type, year, month):
         role_name_list = [role.name for role in roles]
         cols = cols_base[:4] + role_name_list + cols_base[5:]
     else:
-        cols = current_app.config['WEKO_ADMIN_REPORT_COLS'].get(file_type, [])
+        cols_setting = current_app.config['WEKO_ADMIN_REPORT_COLS'].get(file_type, [])
+        cols = pickle.loads(pickle.dumps(cols_setting, -1))
     writer.writerow(cols)
 
     # Special cases:
@@ -470,7 +476,9 @@ def make_stats_file(raw_stats, file_type, year, month):
             writer.writerow(cols)
             write_report_file_rows(writer, raw_stats.get('open_access'), file_type)
         elif 'institution_name' in raw_stats:
-            writer.writerow([_('Institution Name')] + cols)
+            print("institution_name in raw")
+            cols[0] = _('Institution Name')
+            writer.writerow(cols)
             write_report_file_rows(writer,
                                   raw_stats.get('institution_name'),
                                   file_type)
