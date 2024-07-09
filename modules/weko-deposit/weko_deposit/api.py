@@ -24,6 +24,7 @@ import inspect
 import sys
 import uuid
 import io
+import chardet
 from collections import OrderedDict
 from datetime import datetime, timezone,date
 from typing import NoReturn, Union
@@ -1141,6 +1142,8 @@ class WekoDeposit(Deposit):
                                             data = ""
                                             if file.obj.mimetype in current_app.config['WEKO_DEPOSIT_TEXTMIMETYPE_WHITELIST_FOR_ES']:
                                                 data = fp.read(current_app.config['WEKO_DEPOSIT_FILESIZE_LIMIT'])
+                                                inf = chardet.detect(data)
+                                                data = data.decode(inf['encoding'], errors='replace')
                                             else:
                                                 reader = parser.from_buffer(fp.read(current_app.config['WEKO_DEPOSIT_FILESIZE_LIMIT']))
                                                 if reader is not None and "content" in reader and reader["content"] is not None:
