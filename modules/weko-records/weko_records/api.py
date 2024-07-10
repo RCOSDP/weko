@@ -471,7 +471,7 @@ class ItemTypes(RecordBase):
             result = []
             for key in _delete_list:
                 prop_mapping = item_type_mapping.get(key, {}).get("jpcoar_mapping", {})
-                if prop_mapping:
+                if prop_mapping and isinstance(prop_mapping, dict):
                     result.extend(list(prop_mapping.keys()))
             return result
 

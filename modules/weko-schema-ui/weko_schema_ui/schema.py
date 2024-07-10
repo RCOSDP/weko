@@ -302,10 +302,11 @@ class SchemaTree:
                     mp = mjson.dumps()
                     if isinstance(mp, dict):
                         for k, v in mp.items():
-                            if k in self._record:
-                                self._record[k].update({self._schema_name: v.get(self._schema_name)})
-                            else:
-                                self._record[k] = {self._schema_name: v.get(self._schema_name)}
+                            if isinstance(v, dict):
+                                if k in self._record:
+                                    self._record[k].update({self._schema_name: v.get(self._schema_name)})
+                                else:
+                                    self._record[k] = {self._schema_name: v.get(self._schema_name)}
                 return _id
 
 
