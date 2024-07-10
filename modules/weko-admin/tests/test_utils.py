@@ -574,11 +574,10 @@ def test_make_stats_file(client,mocker, users):
         'Access Count By Site License\n'\
         'Aggregation Month,2022-10\n'\
         '""\n'\
-        'Access Count By Site License\n'\
-        'WEKO Top Page Access Count,Number Of Searches,Number Of Views,Number Of File download,Number Of File Regeneration\n'\
+        ',WEKO Top Page Access Count,Number Of Searches,Number Of Views,Number Of File download,Number Of File Regeneration\n'\
         '""\n'\
         'Access Number Breakdown By Site License\n'\
-        'WEKO Top Page Access Count,Number Of Searches,Number Of Views,Number Of File download,Number Of File Regeneration\n'
+        ',WEKO Top Page Access Count,Number Of Searches,Number Of Views,Number Of File download,Number Of File Regeneration\n'
     result = make_stats_file(raw_stats,file_type,year,month)
     assert result.getvalue() == test
     
@@ -589,8 +588,7 @@ def test_make_stats_file(client,mocker, users):
         'Access Count By Site License\n'\
         'Aggregation Month,2022-10\n'\
         '""\n'\
-        'Access Count By Site License\n'\
-        'WEKO Top Page Access Count,Number Of Searches,Number Of Views,Number Of File download,Number Of File Regeneration\n'\
+        ',WEKO Top Page Access Count,Number Of Searches,Number Of Views,Number Of File download,Number Of File Regeneration\n'\
         '""\n'\
         'Access Number Breakdown By Site License\n'\
         'Institution Name,WEKO Top Page Access Count,Number Of Searches,Number Of Views,Number Of File download,Number Of File Regeneration\n'
@@ -604,8 +602,7 @@ def test_make_stats_file(client,mocker, users):
         'Access Count By Site License\n'\
         'Aggregation Month,2022-10\n'\
         '""\n'\
-        'Access Count By Site License\n'\
-        'WEKO Top Page Access Count,Number Of Searches,Number Of Views,Number Of File download,Number Of File Regeneration\n'\
+        ',WEKO Top Page Access Count,Number Of Searches,Number Of Views,Number Of File download,Number Of File Regeneration\n'\
         '""\n'\
         'Access Number Breakdown By Site License\n'
     result = make_stats_file(raw_stats,file_type,year,month)
