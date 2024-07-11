@@ -451,7 +451,7 @@ def item_metadata_validation(item_id, identifier_type, record=None,
                 # 'identifier',
                 # 'identifierRegistration',
                 'pageStart',
-                'fileURI',
+                # 'fileURI',
             ]
             # remove 20220207
             # either_properties = ['version']
@@ -471,7 +471,7 @@ def item_metadata_validation(item_id, identifier_type, record=None,
                 # 'identifier',
                 # 'identifierRegistration',
                 'pageStart',
-                'fileURI',
+                # 'fileURI',
             ]
             # いずれか必須が動いていない
             # either_properties = ['date','degreeGrantor']
@@ -486,7 +486,7 @@ def item_metadata_validation(item_id, identifier_type, record=None,
                 'type',
                 # 'identifier',
                 # 'identifierRegistration',
-                'fileURI',
+                # 'fileURI',
             ]
             # いずれか必須が動いていない
             # either_properties = ['date','publisher']
@@ -501,7 +501,7 @@ def item_metadata_validation(item_id, identifier_type, record=None,
                 'type',
                 # 'identifier',
                 # 'identifierRegistration',
-                'fileURI',
+                # 'fileURI',
             ]
             # いずれか必須が動いていない
             # either_properties = ['date','publisher']
@@ -518,7 +518,7 @@ def item_metadata_validation(item_id, identifier_type, record=None,
                 'type',
                 # 'identifier',
                 # 'identifierRegistration',
-                'fileURI',
+                # 'fileURI',
             ]
             # いずれか必須が動いていない
             # either_properties = ['givenName','date','publisher']
@@ -536,7 +536,7 @@ def item_metadata_validation(item_id, identifier_type, record=None,
                 'type',
                 # 'identifier',
                 # 'identifierRegistration',
-                'fileURI',
+                # 'fileURI',
             ]
             # いずれか必須が動いていない
             # either_properties = ['date','publisher']
@@ -556,7 +556,7 @@ def item_metadata_validation(item_id, identifier_type, record=None,
                 # 'identifierRegistration',
                 'sourceIdentifier',
                 'sourceTitle',
-                'fileURI',
+                # 'fileURI',
             ]
             # いずれか必須が動いていない
             # either_properties = ['date','publisher']
@@ -571,7 +571,7 @@ def item_metadata_validation(item_id, identifier_type, record=None,
                 'type',
                 # 'identifier',
                 # 'identifierRegistration',
-                'fileURI',
+                # 'fileURI',
             ]
             # いずれか必須が動いていない
             # either_properties = ['date','publisher']
@@ -589,7 +589,7 @@ def item_metadata_validation(item_id, identifier_type, record=None,
                 'type',
                 # 'identifier',
                 # 'identifierRegistration',
-                'fileURI',
+                # 'fileURI',
             ]
             # いずれか必須が動いていない
             # either_properties = ['givenName','date','publisher']
