@@ -51,8 +51,10 @@ class WekoAdmin(object):
             conf = current_app.config
             access_table = conf['WEKO_ADMIN_ACCESS_TABLE']
             system_admin = conf['WEKO_ADMIN_PERMISSION_ROLE_SYSTEM']
+            is_use_mail_templates = False
             restricted_access_settings = AdminSettings.get("restricted_access", dict_to_object=False)
-            is_use_mail_templates = restricted_access_settings.get("edit_mail_templates_enable", False)
+            if restricted_access_settings:
+                is_use_mail_templates = restricted_access_settings.get("edit_mail_templates_enable", False)
             try:
                 roles = db.session.query(Role).join(userrole).filter_by(
                     user_id=current_user.get_id()).all()
