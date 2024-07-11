@@ -1994,7 +1994,7 @@ def handle_check_and_prepare_item_application(list_record):
             #コンテンツファイル情報の有無をチェック
             file_paths = item.get("file_path", [])
             # リストfile_pathsの空文字列を削除
-            file_paths = [a for a in file_paths if a != '' or a != None]
+            file_paths = [a for a in file_paths if a != '' and a != None]
             exists_filepath = len(file_paths)!=0
             exists_filename = check_exists_file_name(item)
             has_contents_file= exists_filepath or exists_filename

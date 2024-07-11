@@ -417,7 +417,11 @@ $('#mailaddress_confirm_download').click(function () {
       success: function (response) {
           let link = document.createElement("a");
           link.download = "";
-          link.href = get_uri;
+          if (!!response.guest_token) {
+            link.href = get_uri + "&guest-token=" + response.guest_token;
+          } else {
+            link.href = get_uri;
+          }
           link.click();
           $('#mailcheck_download_modal').modal('hide');
           document.location.href = item_detailes_url;

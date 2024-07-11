@@ -20,9 +20,12 @@
 
 """Utilities for download file."""
 
+import hashlib
 import mimetypes
 import os
+import random
 import shutil
+import string
 import tempfile
 import unicodedata
 from datetime import datetime
@@ -44,6 +47,7 @@ from weko_deposit.api import WekoRecord
 from weko_groups.api import Group
 from weko_records.api import FilesMetadata, ItemTypes
 from weko_records_ui.errors import AvailableFilesNotFoundRESTError
+from weko_redis.redis import RedisConnection
 from weko_user_profiles.models import UserProfile
 from weko_workflow.utils import is_terms_of_use_only
 from werkzeug.datastructures import Headers
@@ -502,12 +506,32 @@ def file_download_onetime(pid, record,file_name=None, user_mail=None,login_flag=
     if not update_onetime_download(**update_data):
         return __make_error_response(is_ajax, error_msg=_("Unexpected error occurred."))
 
-    passcheck_function = True
     restricted_access = AdminSettings.get(name='restricted_access',dict_to_object=False)
     password_for_download = onetime_download.extra_info.get("password_for_download", "")
-    if restricted_access and restricted_access.get('password_enable', False):
-        if password_for_download and not verify_password(input_password, password_for_download):
-            passcheck_function = False
+    enable_check_password_for_guest = restricted_access and restricted_access.get('password_enable', False)
+
+    passcheck_function = True
+    if enable_check_password_for_guest and user_mail:
+        redis_connection = RedisConnection()
+        datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'])
+        if request.method == "POST":
+            # check password
+            if password_for_download and not verify_password(input_password, password_for_download):
+                passcheck_function = False
+            else:
+                # Set calculation answer and authorization token
+                random_salt = ''.join([random.choice(string.ascii_letters + string.digits) for _ in range(10)])
+                token = hashlib.sha1((datetime.now().strftime('%Y/%m/%d-%H:%M:%S') + random_salt).encode()).hexdigest()
+                datastore.hset(user_mail, 'download_authorization_token', token)
+                datastore.expire(user_mail, 10)
+                return {"guest_token": token}
+        elif request.method == "GET":
+            token_info = datastore.hgetall(user_mail)
+            encoded_token = token_info.get('download_authorization_token'.encode())
+            guest_token = request.args.get('guest-token', type=str)
+            passcheck_function = encoded_token and guest_token and \
+                (encoded_token.decode() == guest_token)
+            datastore.delete(user_mail)
 
     #　Guest Mailaddress Check
     if not current_user.is_authenticated:
