@@ -10,7 +10,6 @@ class NoneContentsApproval extends React.Component{
             terms: [],
             termsDescription: null,
             showNoneContentsApproval:false,
-            showTextareaForTerms:false,
             selected_workflow: null,
             selected_term: null,
         }
@@ -42,14 +41,6 @@ class NoneContentsApproval extends React.Component{
                     })
                 }})
             .catch(error => alert(error));
-    }
-
-    TextareaForTerms(){
-        let term_id = $('#terms_without_contents').val();
-        if(term_id == "term_free"){
-            return true
-        }
-        return false
     }
 
     render() {
@@ -87,7 +78,7 @@ class NoneContentsApproval extends React.Component{
                         {TERMS_AND_CONDITIONS_LABEL}
                     </label>
                     <div class="col-sm-9">
-                        <select class="form-control" id="terms_without_contents" onChange={() => {this.setState({showTextareaForTerms : this.TextareaForTerms()})}} > 
+                        <select class="form-control" id="terms_without_contents" onChange={(e) => {this.setState({selected_term : e.target.value})}} >
                             <option value=""></option>
                             {this.state.terms.map((Terms, index) => {
                                 const selected = (Terms.id === this.state.selected_term) ? 'selected' : '';
@@ -95,11 +86,11 @@ class NoneContentsApproval extends React.Component{
                             })}
                         </select>
                     </div>
-                <div className={`row ${this.state.showTextareaForTerms ? 'show': 'hidden'}`}>
+                <div className={`row ${this.state.selected_term === "term_free" ? 'show': 'hidden'}`}>
                     <div className="col-sm-12 form-group schema-form-textarea">
                         <label className="control-label col-sm-3"></label>
                         <div class="col-sm-9">
-                            <textarea class="form-control" id="termsDescription" onChange={() => {this.setState({termsDescription: this.value})}}>{this.state.termsDescription}</textarea>
+                            <textarea class="form-control" id="termsDescription" onChange={() => {this.setState({termsDescription: this.value})}} value={this.state.termsDescription} />
                         </div>
                     </div>
                 </div>
