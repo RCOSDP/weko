@@ -325,21 +325,37 @@ class WekoIndexer(RecordIndexer):
                                           body=search_query)
         return search_result.get('count')
 
-    def get_pid_by_es_scroll(self, path):
+    def get_pid_by_es_scroll(self, path, only_latest_version=False):
         """Get pid by es scroll.
 
         :param path:
+        :param only_latest_version:
         :return: _scroll_id
         """
         search_query = {
             "query": {
-                "match": {
-                    "path.tree": path
+                "bool": {
+                    "must": [
+                        {
+                            "match": {
+                                "path.tree": path
+                            }
+                        }
+                    ]
                 }
             },
             "_source": "_id",
             "size": 3000
         }
+
+        if only_latest_version:
+            search_query["query"]["bool"]["must"].append(
+                {
+                    "match": {
+                        "relation_version_is_last": "true"
+                    }
+                }
+            )
 
         def get_result(result):
             if result:
@@ -1590,19 +1606,18 @@ class WekoDeposit(Deposit):
         """
         if index_id:
             index_id = str(index_id)
-        obj_ids = next((cls.indexer.get_pid_by_es_scroll(index_id)), [])
+        obj_ids = next((cls.indexer.get_pid_by_es_scroll(index_id, only_latest_version=True)), [])
         for obj_uuid in obj_ids:
             r = RecordMetadata.query.filter_by(id=obj_uuid).first()
-            if r.json['recid'].split('.')[0] in ignore_items:
+            if r.json['recid'] in ignore_items:
                 continue
             r.json['path'].remove(index_id)
             flag_modified(r, 'json')
+            dep = WekoDeposit(r.json, r)
+            dep.indexer.update_es_data(dep, update_revision=False)
             if r.json and not r.json['path']:
                 from weko_records_ui.utils import soft_delete
                 soft_delete(obj_uuid)
-            else:
-                dep = WekoDeposit(r.json, r)
-                dep.indexer.update_es_data(dep, update_revision=False)
 
     def update_pid_by_index_tree_id(self, path):
         """ 
