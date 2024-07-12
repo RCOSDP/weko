@@ -100,7 +100,7 @@ from weko_records_ui.ext import WekoRecordsREST
 from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName, SiteLicenseInfo, SiteLicenseIpAddress, RequestMailList
 from weko_records_ui.config import WEKO_ADMIN_PDFCOVERPAGE_TEMPLATE,RECORDS_UI_ENDPOINTS,WEKO_RECORDS_UI_SECRET_KEY,WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN
 from weko_records_ui.models import PDFCoverPageSettings,FileOnetimeDownload, FilePermission, RocrateMapping
-from weko_records_ui.scopes import item_read_scope
+from weko_items_ui.scopes import item_read_scope
 
 from weko_schema_ui.config import (
     WEKO_SCHEMA_DDI_SCHEMA_NAME,
