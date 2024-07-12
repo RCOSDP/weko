@@ -11,6 +11,7 @@
 from __future__ import absolute_import, print_function
 
 from datetime import datetime, timezone
+import pytz
 from functools import partial
 
 from flask import current_app
@@ -211,15 +212,19 @@ def handle_license_free(record_metadata):
 
 
 def is_output_harvest(path_list):
+    utc = pytz.timezone('UTC')
     def _check(index_id):
         _idx = Indexes.get_index(index_id)
         if _idx:
+            if _idx.public_date:
+                date = _idx.public_date
+                public_date = date.astimezone(utc)
             if not _idx.harvest_public_state:
                 return HARVEST_PRIVATE
             elif '-99' not in _idx.browsing_role \
                     or not _idx.public_state \
                     or (_idx.public_date and
-                        _idx.public_date > datetime.now(timezone.utc)):
+                        public_date > datetime.now(timezone.utc)):
                 return PRIVATE_INDEX
             else:
                 if not _idx.parent or _idx.parent == 0:
