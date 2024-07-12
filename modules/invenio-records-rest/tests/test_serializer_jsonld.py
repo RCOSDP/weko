@@ -48,10 +48,10 @@ def test_serialize(db):
             )
         )
 
-        #assert data == {
-        #    "@id": "http://localhost/record/2",
-        #    "http://purl.org/dc/terms/title": [{"@value": "mytitle"}],
-        #}
+        assert data == {
+            "@id": "http://localhost/record/2",
+            "http://purl.org/dc/terms/title": [{"@value": "mytitle"}],
+        }
 
     with pytest.raises(Exception):
         data = json.loads(
@@ -61,16 +61,16 @@ def test_serialize(db):
             )
         )
 
-        #assert data == {
-        #    "@context": {
-        #        "@base": "http://localhost/record/",
-        #        "dct": "http://purl.org/dc/terms/",
-        #        "recid": "@id",
-        #        "title": "dct:title",
-        #    },
-        #    "recid": "2",
-        #    "title": "mytitle",
-        #}
+        assert data == {
+            "@context": {
+                "@base": "http://localhost/record/",
+                "dct": "http://purl.org/dc/terms/",
+                "recid": "@id",
+                "title": "dct:title",
+            },
+            "recid": "2",
+            "title": "mytitle",
+        }
 
 
 def test_serialize_search():
@@ -108,21 +108,21 @@ def test_serialize_search():
             )
         )
 
-        #assert data["aggregations"] == {}
-        #assert "links" in data
-        #assert data["hits"] == dict(
-        #    hits=[
-        #        {
-        #            "@id": "http://localhost/record/1",
-        #            "http://purl.org/dc/terms/title": [{"@value": "title1"}],
-        #        },
-        #        {
-        #            "@id": "http://localhost/record/2",
-        #           "http://purl.org/dc/terms/title": [{"@value": "title2"}],
-        #       },
-        #   ],
-        #   total=2,
-        #)
+        assert data["aggregations"] == {}
+        assert "links" in data
+        assert data["hits"] == dict(
+            hits=[
+                {
+                    "@id": "http://localhost/record/1",
+                    "http://purl.org/dc/terms/title": [{"@value": "title1"}],
+                },
+                {
+                    "@id": "http://localhost/record/2",
+                   "http://purl.org/dc/terms/title": [{"@value": "title2"}],
+               },
+           ],
+           total=2,
+        )
 
 
 def test_transform_jsonld(indexed_10records, mocker):
