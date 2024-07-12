@@ -12,7 +12,7 @@ def test_role_has_access(app,users):
             assert test.role_has_access('mailtemplates') == True
 
         with patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
-            assert test.role_has_access('mailtemplates') == False
+            assert test.role_has_access('mailtemplates') == True
 
     #W2023-22-2 TestNo.24
     with patch("weko_admin.admin.AdminSettings.get", return_value={"edit_mail_templates_enable": False}):

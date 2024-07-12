@@ -93,7 +93,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy_utils.functions import create_database, database_exists
 from weko_admin import WekoAdmin
 from weko_admin.config import WEKO_ADMIN_DEFAULT_ITEM_EXPORT_SETTINGS
-from weko_admin.models import SessionLifetime,RankingSettings
+from weko_admin.models import AdminSettings, SessionLifetime,RankingSettings
 from weko_deposit import WekoDeposit
 from weko_deposit.api import WekoIndexer, WekoRecord
 from weko_deposit.api import WekoDeposit as aWekoDeposit
@@ -459,9 +459,9 @@ def users(app, db):
         comadmin = User.query.filter_by(email="comadmin@test.org").first()
         repoadmin = User.query.filter_by(email="repoadmin@test.org").first()
         sysadmin = User.query.filter_by(email="sysadmin@test.org").first()
-        generaluser = User.query.filter_by(email="generaluser@test.org")
-        originalroleuser = User.query.filter_by(email="originalroleuser@test.org")
-        originalroleuser2 = User.query.filter_by(email="originalroleuser2@test.org")
+        generaluser = User.query.filter_by(email="generaluser@test.org").first()
+        originalroleuser = User.query.filter_by(email="originalroleuser@test.org").first()
+        originalroleuser2 = User.query.filter_by(email="originalroleuser2@test.org").first()
 
     role_count = Role.query.filter_by(name="System Administrator").count()
     if role_count != 1:
@@ -23372,3 +23372,11 @@ def make_record(db, indexer, i, files, thumbnail=None):
         "deposit": deposit,
         "files": files,
     }
+
+@pytest.fixture()
+def restricted_settings(db):
+    AdminSettings.update(
+        "restricted_access",
+        {"item_application": {"application_item_types": [1], "item_application_enable": True}, "display_request_form": True},
+        id=10
+    )

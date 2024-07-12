@@ -832,7 +832,7 @@ msgid "item types available for application"
 msgstr "Item types available for application"
 
 msgid "item type not available for use application"
-msgstr "Item type not available for use application"
+msgstr "Item types not available for application"
 
 msgid "file preview in approval actions"
 msgstr "File preview in approval actions"
