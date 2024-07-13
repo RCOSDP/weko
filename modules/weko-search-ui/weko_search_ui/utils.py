@@ -2492,6 +2492,7 @@ def handle_doi_required_check(record):
 
         if error_list:
             errors = []
+            current_app.logger.error("error_list: {0}".format(error_list))
             if error_list.get("pattern"):
                 pattern_err_msg = _("One of the following required values ​​has not been registered.<br/>{}<br/>")
                 errors.append(
