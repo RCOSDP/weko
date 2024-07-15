@@ -1,10 +1,7 @@
 GLOB sdist-make: /code/modules/weko-deposit/setup.py
-c1 create: /code/modules/weko-deposit/.tox/c1
-c1 setuptools_version is setuptools==57.5.0
-c1 installdeps: pytest>=3, pytest-cov, -rrequirements2.txt
-c1 inst: /code/modules/weko-deposit/.tox/.tmp/package/1/weko-deposit-0.1.0.dev20170000.zip
-c1 installed: alabaster==0.7.13,alembic==0.9.6,amqp==2.6.0,angular-gettext-babel==0.3,aniso8601==8.0.0,arrow==0.12.1,asn1crypto==0.23.0,atomicwrites==1.4.1,attrs==17.4.0,b2handle==1.1.2,Babel==2.5.1,bagit==1.7.0,beautifulsoup4==4.9.3,bibtexparser==1.0.1,billiard==3.6.3.0,binaryornot==0.4.4,bleach==3.1.0,blinker==1.4,boto3==1.7.84,botocore==1.10.84,cachelib==0.1,cachetools==4.2.4,cchardet==2.1.1,celery==4.4.4,certifi==2017.11.5,cffi==1.11.2,chardet==3.0.4,citeproc-py==0.5.1,citeproc-py-styles==0.1.2,click==6.7,cookiecutter==1.6.0,counter-robots==2018.6,coverage==6.2,cryptography==2.1.4,datacite==1.0.1,DateTime==4.9,decorator==4.1.2,defusedxml==0.5.0,dictdiffer==0.7.0,distlib==0.3.6,dnspython==2.2.1,docutils==0.18.1,dojson==1.3.2,elasticsearch==6.1.1,elasticsearch-dsl==6.4.0,elementpath==1.0.6,email-validator==1.0.5,entrypoints==0.2.3,feedgen==0.7.0,filelock==3.4.1,Flask==1.1.0,Flask-Admin==1.5.3,Flask-Alembic==2.0.1,Flask-Assets==0.12,Flask-BabelEx==0.9.4,Flask-Breadcrumbs==0.5.0,Flask-Caching==1.10.1,Flask-CeleryExt==0.3.4,Flask-Collect==1.2.2,Flask-Cors==3.0.3,Flask-DebugToolbar==0.13.1,Flask-IIIF==0.6.1,Flask-KVSession==0.6.2,Flask-Limiter==1.1.0,Flask-Login==0.4.1,Flask-Mail==0.9.1,flask-marshmallow==0.14.0,Flask-Menu==0.6.0,-e git+https://github.com/RCOSDP/flask-oauthlib.git@98eb36e1dfc66256fa7ea62237e9879acb906e9d#egg=Flask_OAuthlib,Flask-Plugins==1.6.1,Flask-Principal==0.4.0,Flask-RESTful==0.3.8,Flask-Security==3.0.0,flask-shell-ipython==0.4.1,Flask-Sitemap==0.4.0,Flask-SQLAlchemy==2.3.2,flask-talisman==0.4.1,Flask-WTF==0.14.3,-e git+https://github.com/RCOSDP/pyfpdf.git@f9b032148283d535cabc7789858081c80de36fef#egg=fpdf,frozendict==2.3.8,fs==0.5.4,ftfy==4.4.3,future==0.16.0,github3.py==1.1.0,html5lib==1.0.1,idna==2.6,iiif-prezi==0.3.0,imagesize==1.4.1,importlib-metadata==4.8.3,importlib-resources==5.4.0,infinity==1.4,intervals==0.8.0,invenio-access==1.1.0,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=invenio_accounts&subdirectory=modules/invenio-accounts,invenio-admin==1.1.2,invenio-app==1.1.0,invenio-assets==1.0.0,invenio-base==1.0.2,invenio-cache==1.0.0,invenio-celery==1.1.3,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=invenio_communities&subdirectory=modules/invenio-communities,invenio-config==1.0.0,invenio-csl-rest==1.0.0a1,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=invenio_db&subdirectory=modules/invenio-db,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=invenio_deposit&subdirectory=modules/invenio-deposit,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=invenio_files_rest&subdirectory=modules/invenio-files-rest,invenio-formatter==1.0.0b3,invenio-i18n==1.0.0,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=invenio_iiif&subdirectory=modules/invenio-iiif,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=invenio_indexer&subdirectory=modules/invenio-indexer,invenio-jsonschemas==1.0.0,invenio-logging==1.0.0b3,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=invenio_mail&subdirectory=modules/invenio-mail,invenio-marc21==1.0.0a8,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=invenio_oaiharvester&subdirectory=modules/invenio-oaiharvester,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=invenio_oaiserver&subdirectory=modules/invenio-oaiserver,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=invenio_oauth2server&subdirectory=modules/invenio-oauth2server,invenio-oauthclient==1.0.0,invenio-pidrelations==1.0.0a4,invenio-pidstore==1.0.0,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=invenio_previewer&subdirectory=modules/invenio-previewer,invenio-query-parser==0.6.0,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=invenio_queues&subdirectory=modules/invenio-queues,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=invenio_records&subdirectory=modules/invenio-records,invenio-records-files==1.0.0a10,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=invenio_records_rest&subdirectory=modules/invenio-records-rest,invenio-records-ui==1.0.0,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=invenio_resourcesyncclient&subdirectory=modules/invenio-resourcesyncclient,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=invenio_resourcesyncserver&subdirectory=modules/invenio-resourcesyncserver,invenio-rest==1.1.2,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=invenio_s3&subdirectory=modules/invenio-s3,-e git+https://github.com/RCOSDP/invenio-search.git@cff9744c5dc651893a9c51672c5b8da9adc21e16#egg=invenio_search,-e git+https://github.com/RCOSDP/invenio-search-ui.git@74bd3b2990ff27b39e01b6b31be9a0b5fda3dd0f#egg=invenio_search_ui,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=invenio_stats&subdirectory=modules/invenio-stats,invenio-theme==1.0.0b4,ipaddress==1.0.19,ipython==6.2.1,ipython-genutils==0.2.0,itsdangerous==0.24,jedi==0.11.0,Jinja2==2.10.1,jinja2-cli==0.6.0,jinja2-time==0.2.0,jmespath==0.10.0,jsmin==2.2.2,jsonpatch==1.21,jsonpath-ng==1.5.2,jsonpointer==1.14,jsonref==0.1,jsonresolver==0.2.1,jsonschema==2.6.0,jupyter-client==5.2.2,jupyter-core==4.4.0,-e git+https://github.com/RCOSDP/kombu.git@f204fdf078d5e94393c86693f545e2d011f620f5#egg=kombu,limits==1.2.1,lxml==4.1.1,Mako==1.0.7,MarkupSafe==1.1.1,marshmallow==2.20.1,marshmallow-sqlalchemy==0.23.1,maxminddb==1.5.2,maxminddb-geolite2==2017.803,mistune==0.8.3,mock==5.0.2,more-itertools==8.10.0,msgpack==0.6.2,nbconvert==5.3.1,nbformat==4.4.0,netaddr==0.8.0,node-semver==0.1.1,numpy==1.16.1,oauthlib==2.1.0,ordereddict==1.1,packaging==21.3,pandocfilters==1.4.2,parso==0.1.0,passlib==1.7.1,pbr==5.11.1,pexpect==4.3.0,pickleshare==0.7.4,Pillow==5.4.1,platformdirs==2.4.0,pluggy==0.13.1,ply==3.11,poyo==0.4.1,prompt-toolkit==1.0.15,psycopg2==2.7.3.2,ptyprocess==0.5.2,py==1.11.0,pycparser==2.18,Pygments==2.2.0,PyJWT==1.5.3,PyLD==2.0.3,pyparsing==3.1.0,-e git+https://github.com/RCOSDP/PyPDF2.git@fefc684a3a74aff6f99e5dff24f9b4dd1c95169d#egg=PyPDF2,pyPEG2==2.15.2,pytest==4.2.0,pytest-cov==2.9.0,pytest-flask==0.15.1,pytest-invenio==1.2.1,pytest-mock==3.2.0,python-dateutil==2.6.1,python-editor==1.0.3,python-geoip==1.2,pytz==2017.3,pyzmq==17.0.0,redis==2.10.6,requests==2.18.4,requests-oauthlib==1.1.0,resync==1.0.9,s3fs==0.1.6,s3transfer==0.1.13,selenium==3.141.0,Sickle==0.6.4,simplegeneric==0.8.1,simplejson==3.12.0,simplekv==0.11.2,six==1.16.0,snowballstemmer==2.2.0,soupsieve==2.3.2.post1,speaklater==1.3,Sphinx==1.8.4,sphinxcontrib-serializinghtml==1.1.5,sphinxcontrib-websupport==1.2.4,SQLAlchemy==1.2.19,SQLAlchemy-Continuum==1.3.6,SQLAlchemy-Utils==0.35.0,stevedore==3.5.2,sword3common==0.1.1,testpath==0.3.1,tika==2.6.0,toml==0.10.2,tornado==4.5.3,tox==3.28.0,traitlets==4.3.2,typing_extensions==4.1.1,ua-parser==0.7.3,uritemplate==4.1.1,uritools==2.1.0,urllib3==1.22,uWSGI==2.0.21,uwsgitop==0.11,validators==0.12.0,vine==1.3.0,virtualenv==20.17.1,virtualenv-clone==0.5.7,virtualenvwrapper==4.8.4,Wand==0.6.1,wcwidth==0.1.7,webargs==5.5.2,webassets==0.12.1,webencodings==0.5.1,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_accounts&subdirectory=modules/weko-accounts,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_admin&subdirectory=modules/weko-admin,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_authors&subdirectory=modules/weko-authors,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_bulkupdate&subdirectory=modules/weko-bulkupdate,weko-deposit @ file:///code/modules/weko-deposit/.tox/.tmp/package/1/weko-deposit-0.1.0.dev20170000.zip,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_gridlayout&subdirectory=modules/weko-gridlayout,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_groups&subdirectory=modules/weko-groups,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_handle&subdirectory=modules/weko-handle,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_index_tree&subdirectory=modules/weko-index-tree,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_indextree_journal&subdirectory=modules/weko-indextree-journal,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_items_autofill&subdirectory=modules/weko-items-autofill,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_items_ui&subdirectory=modules/weko-items-ui,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_itemtypes_ui&subdirectory=modules/weko-itemtypes-ui,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_logging&subdirectory=modules/weko-logging,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_records&subdirectory=modules/weko-records,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_records_ui&subdirectory=modules/weko-records-ui,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_redis&subdirectory=modules/weko-redis,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_schema_ui&subdirectory=modules/weko-schema-ui,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_search_ui&subdirectory=modules/weko-search-ui,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_sitemap&subdirectory=modules/weko-sitemap,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_swordserver&subdirectory=modules/weko-swordserver,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_theme&subdirectory=modules/weko-theme,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_user_profiles&subdirectory=modules/weko-user-profiles,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_workflow&subdirectory=modules/weko-workflow,Werkzeug==0.15.2,whichcraft==0.4.1,WTForms==2.1,WTForms-Alchemy==0.16.5,WTForms-Components==0.10.3,xmlschema==0.9.30,xmltodict==0.12.0,zipp==3.6.0,zope.interface==5.5.2
-c1 run-test-pre: PYTHONHASHSEED='503563017'
+c1 inst-nodeps: /code/modules/weko-deposit/.tox/.tmp/package/1/weko-deposit-0.1.0.dev20170000.zip
+c1 installed: alabaster==0.7.13,alembic==0.9.6,amqp==2.6.0,angular-gettext-babel==0.3,aniso8601==8.0.0,arrow==0.12.1,asn1crypto==0.23.0,atomicwrites==1.4.1,attrs==17.4.0,b2handle==1.1.2,Babel==2.5.1,bagit==1.7.0,beautifulsoup4==4.9.3,bibtexparser==1.0.1,billiard==3.6.3.0,binaryornot==0.4.4,bleach==3.1.0,blinker==1.4,boto3==1.7.84,botocore==1.10.84,cachelib==0.1,cachetools==4.2.4,cchardet==2.1.1,celery==4.4.4,certifi==2017.11.5,cffi==1.11.2,chardet==3.0.4,citeproc-py==0.5.1,citeproc-py-styles==0.1.2,click==6.7,cookiecutter==1.6.0,counter-robots==2018.6,coverage==6.2,cryptography==2.1.4,datacite==1.0.1,DateTime==4.9,decorator==4.1.2,defusedxml==0.5.0,dictdiffer==0.7.0,distlib==0.3.6,dnspython==2.2.1,docutils==0.18.1,dojson==1.3.2,elasticsearch==6.1.1,elasticsearch-dsl==6.4.0,elementpath==1.0.6,email-validator==1.0.5,entrypoints==0.2.3,feedgen==0.7.0,filelock==3.4.1,Flask==1.1.0,Flask-Admin==1.5.3,Flask-Alembic==2.0.1,Flask-Assets==0.12,Flask-BabelEx==0.9.4,Flask-Breadcrumbs==0.5.0,Flask-Caching==1.10.1,Flask-CeleryExt==0.3.4,Flask-Collect==1.2.2,Flask-Cors==3.0.3,Flask-DebugToolbar==0.13.1,Flask-IIIF==0.6.1,Flask-KVSession==0.6.2,Flask-Limiter==1.1.0,Flask-Login==0.4.1,Flask-Mail==0.9.1,flask-marshmallow==0.14.0,Flask-Menu==0.6.0,-e git+https://github.com/RCOSDP/flask-oauthlib.git@98eb36e1dfc66256fa7ea62237e9879acb906e9d#egg=Flask_OAuthlib,Flask-Plugins==1.6.1,Flask-Principal==0.4.0,Flask-RESTful==0.3.8,Flask-Security==3.0.0,flask-shell-ipython==0.4.1,Flask-Sitemap==0.4.0,Flask-SQLAlchemy==2.3.2,flask-talisman==0.4.1,Flask-WTF==0.14.3,-e git+https://github.com/RCOSDP/pyfpdf.git@f9b032148283d535cabc7789858081c80de36fef#egg=fpdf,frozendict==2.3.8,fs==0.5.4,ftfy==4.4.3,future==0.16.0,github3.py==1.1.0,html5lib==1.0.1,idna==2.6,iiif-prezi==0.3.0,imagesize==1.4.1,importlib-metadata==4.8.3,importlib-resources==5.4.0,infinity==1.4,intervals==0.8.0,invenio-access==1.1.0,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=invenio_accounts&subdirectory=modules/invenio-accounts,invenio-admin==1.1.2,invenio-app==1.1.0,invenio-assets==1.0.0,invenio-base==1.0.2,invenio-cache==1.0.0,invenio-celery==1.1.3,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=invenio_communities&subdirectory=modules/invenio-communities,invenio-config==1.0.0,invenio-csl-rest==1.0.0a1,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=invenio_db&subdirectory=modules/invenio-db,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=invenio_deposit&subdirectory=modules/invenio-deposit,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=invenio_files_rest&subdirectory=modules/invenio-files-rest,invenio-formatter==1.0.0b3,invenio-i18n==1.0.0,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=invenio_iiif&subdirectory=modules/invenio-iiif,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=invenio_indexer&subdirectory=modules/invenio-indexer,invenio-jsonschemas==1.0.0,invenio-logging==1.0.0b3,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=invenio_mail&subdirectory=modules/invenio-mail,invenio-marc21==1.0.0a8,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=invenio_oaiharvester&subdirectory=modules/invenio-oaiharvester,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=invenio_oaiserver&subdirectory=modules/invenio-oaiserver,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=invenio_oauth2server&subdirectory=modules/invenio-oauth2server,invenio-oauthclient==1.0.0,invenio-pidrelations==1.0.0a4,invenio-pidstore==1.0.0,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=invenio_previewer&subdirectory=modules/invenio-previewer,invenio-query-parser==0.6.0,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=invenio_queues&subdirectory=modules/invenio-queues,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=invenio_records&subdirectory=modules/invenio-records,invenio-records-files==1.0.0a10,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=invenio_records_rest&subdirectory=modules/invenio-records-rest,invenio-records-ui==1.0.0,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=invenio_resourcesyncclient&subdirectory=modules/invenio-resourcesyncclient,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=invenio_resourcesyncserver&subdirectory=modules/invenio-resourcesyncserver,invenio-rest==1.1.2,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=invenio_s3&subdirectory=modules/invenio-s3,-e git+https://github.com/RCOSDP/invenio-search.git@cff9744c5dc651893a9c51672c5b8da9adc21e16#egg=invenio_search,-e git+https://github.com/RCOSDP/invenio-search-ui.git@74bd3b2990ff27b39e01b6b31be9a0b5fda3dd0f#egg=invenio_search_ui,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=invenio_stats&subdirectory=modules/invenio-stats,invenio-theme==1.0.0b4,ipaddress==1.0.19,ipython==6.2.1,ipython-genutils==0.2.0,itsdangerous==0.24,jedi==0.11.0,Jinja2==2.10.1,jinja2-cli==0.6.0,jinja2-time==0.2.0,jmespath==0.10.0,jsmin==2.2.2,jsonpatch==1.21,jsonpath-ng==1.5.2,jsonpointer==1.14,jsonref==0.1,jsonresolver==0.2.1,jsonschema==2.6.0,jupyter-client==5.2.2,jupyter-core==4.4.0,-e git+https://github.com/RCOSDP/kombu.git@f204fdf078d5e94393c86693f545e2d011f620f5#egg=kombu,limits==1.2.1,lxml==4.1.1,Mako==1.0.7,MarkupSafe==1.1.1,marshmallow==2.20.1,marshmallow-sqlalchemy==0.23.1,maxminddb==1.5.2,maxminddb-geolite2==2017.803,mistune==0.8.3,mock==5.0.2,more-itertools==8.10.0,msgpack==0.6.2,nbconvert==5.3.1,nbformat==4.4.0,netaddr==0.8.0,node-semver==0.1.1,numpy==1.16.1,oauthlib==2.1.0,ordereddict==1.1,packaging==21.3,pandocfilters==1.4.2,parso==0.1.0,passlib==1.7.1,pbr==5.11.1,pexpect==4.3.0,pickleshare==0.7.4,Pillow==5.4.1,platformdirs==2.4.0,pluggy==0.13.1,ply==3.11,poyo==0.4.1,prompt-toolkit==1.0.15,psycopg2==2.7.3.2,ptyprocess==0.5.2,py==1.11.0,pycparser==2.18,Pygments==2.2.0,PyJWT==1.5.3,PyLD==2.0.3,pyparsing==3.1.0,-e git+https://github.com/RCOSDP/PyPDF2.git@fefc684a3a74aff6f99e5dff24f9b4dd1c95169d#egg=PyPDF2,pyPEG2==2.15.2,pytest==4.2.0,pytest-cov==2.9.0,pytest-flask==0.15.1,pytest-invenio==1.2.1,pytest-mock==3.2.0,python-dateutil==2.6.1,python-editor==1.0.3,python-geoip==1.2,pytz==2017.3,pyzmq==17.0.0,redis==2.10.6,requests==2.18.4,requests-oauthlib==1.1.0,resync==1.0.9,s3fs==0.1.6,s3transfer==0.1.13,selenium==3.141.0,Sickle==0.6.4,simplegeneric==0.8.1,simplejson==3.12.0,simplekv==0.11.2,six==1.16.0,snowballstemmer==2.2.0,soupsieve==2.3.2.post1,speaklater==1.3,Sphinx==1.8.4,sphinxcontrib-serializinghtml==1.1.5,sphinxcontrib-websupport==1.2.4,SQLAlchemy==1.2.19,SQLAlchemy-Continuum==1.3.6,SQLAlchemy-Utils==0.35.0,stevedore==3.5.2,sword3common==0.1.1,testpath==0.3.1,tika==2.6.0,toml==0.10.2,tornado==4.5.3,tox==3.28.0,traitlets==4.3.2,typing_extensions==4.1.1,ua-parser==0.7.3,uritemplate==4.1.1,uritools==2.1.0,urllib3==1.22,uWSGI==2.0.21,uwsgitop==0.11,validators==0.12.0,vine==1.3.0,virtualenv==20.17.1,virtualenv-clone==0.5.7,virtualenvwrapper==4.8.4,Wand==0.6.1,wcwidth==0.1.7,webargs==5.5.2,webassets==0.12.1,webencodings==0.5.1,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=weko_accounts&subdirectory=modules/weko-accounts,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=weko_admin&subdirectory=modules/weko-admin,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=weko_authors&subdirectory=modules/weko-authors,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=weko_bulkupdate&subdirectory=modules/weko-bulkupdate,weko-deposit @ file:///code/modules/weko-deposit/.tox/.tmp/package/1/weko-deposit-0.1.0.dev20170000.zip,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=weko_gridlayout&subdirectory=modules/weko-gridlayout,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=weko_groups&subdirectory=modules/weko-groups,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=weko_handle&subdirectory=modules/weko-handle,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=weko_index_tree&subdirectory=modules/weko-index-tree,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=weko_indextree_journal&subdirectory=modules/weko-indextree-journal,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=weko_items_autofill&subdirectory=modules/weko-items-autofill,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=weko_items_ui&subdirectory=modules/weko-items-ui,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=weko_itemtypes_ui&subdirectory=modules/weko-itemtypes-ui,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=weko_logging&subdirectory=modules/weko-logging,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=weko_records&subdirectory=modules/weko-records,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=weko_records_ui&subdirectory=modules/weko-records-ui,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=weko_redis&subdirectory=modules/weko-redis,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=weko_schema_ui&subdirectory=modules/weko-schema-ui,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=weko_search_ui&subdirectory=modules/weko-search-ui,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=weko_sitemap&subdirectory=modules/weko-sitemap,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=weko_swordserver&subdirectory=modules/weko-swordserver,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=weko_theme&subdirectory=modules/weko-theme,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=weko_user_profiles&subdirectory=modules/weko-user-profiles,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=weko_workflow&subdirectory=modules/weko-workflow,Werkzeug==0.15.2,whichcraft==0.4.1,WTForms==2.1,WTForms-Alchemy==0.16.5,WTForms-Components==0.10.3,xmlschema==0.9.30,xmltodict==0.12.0,zipp==3.6.0,zope.interface==5.5.2
+c1 run-test-pre: PYTHONHASHSEED='1875753727'
 c1 run-test: commands[0] | pytest --cov=weko_deposit tests -v --cov-branch --cov-report=term --cov-report=xml --cov-report=html --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
 ============================= test session starts ==============================
 platform linux -- Python 3.6.15, pytest-4.2.0, py-1.11.0, pluggy-0.13.1 -- /code/modules/weko-deposit/.tox/c1/bin/python
@@ -19,17 +16,17 @@ tests/test_api.py::TestWekoFileObject::test_file_preview_able PASSED     [  1%]
 tests/test_api.py::TestWekoIndexer::test_get_es_index PASSED             [  2%]
 tests/test_api.py::TestWekoIndexer::test_upload_metadata PASSED          [  3%]
 tests/test_api.py::TestWekoIndexer::test_delete_file_index PASSED        [  3%]
-tests/test_api.py::TestWekoIndexer::test_update_relation_version_is_last PASSED [  4%]
-tests/test_api.py::TestWekoIndexer::test_update_es_data PASSED           [  5%]
+tests/test_api.py::TestWekoIndexer::test_update_relation_version_is_last FAILED [  4%]
+tests/test_api.py::TestWekoIndexer::test_update_es_data FAILED           [  5%]
 tests/test_api.py::TestWekoIndexer::test_index PASSED                    [  5%]
 tests/test_api.py::TestWekoIndexer::test_delete PASSED                   [  6%]
 tests/test_api.py::TestWekoIndexer::test_delete_by_id PASSED             [  7%]
 tests/test_api.py::TestWekoIndexer::test_get_count_by_index_id PASSED    [  7%]
 tests/test_api.py::TestWekoIndexer::test_get_pid_by_es_scroll PASSED     [  8%]
 tests/test_api.py::TestWekoIndexer::test_get_metadata_by_item_id PASSED  [  9%]
-tests/test_api.py::TestWekoIndexer::test_update_feedback_mail_list PASSED [  9%]
-tests/test_api.py::TestWekoIndexer::test_update_author_link PASSED       [ 10%]
-tests/test_api.py::TestWekoIndexer::test_update_jpcoar_identifier PASSED [ 11%]
+tests/test_api.py::TestWekoIndexer::test_update_feedback_mail_list FAILED [  9%]
+tests/test_api.py::TestWekoIndexer::test_update_author_link FAILED       [ 10%]
+tests/test_api.py::TestWekoIndexer::test_update_jpcoar_identifier FAILED [ 11%]
 tests/test_api.py::TestWekoIndexer::test_bulk_update PASSED              [ 11%]
 tests/test_api.py::TestWekoDeposit::test_item_metadata PASSED            [ 12%]
 tests/test_api.py::TestWekoDeposit::test_is_published PASSED             [ 13%]
@@ -168,9 +165,137 @@ tests/test_weko_deposit.py::test_init PASSED                             [ 99%]
 tests/test_weko_deposit.py::test_ItemResource_put PASSED                 [100%]
 
 =================================== FAILURES ===================================
+_____________ TestWekoIndexer.test_update_relation_version_is_last _____________
+
+self = <tests.test_api.TestWekoIndexer object at 0x7fc52e8eb160>
+es_records = (<weko_deposit.api.WekoIndexer object at 0x7fc52e4065c0>, [{'depid': <PersistentIdentifier depid:1 / rec:3967d625-ca0f...stentIdentifier hdl:https://hdl.handle.net/0000/0000000005 / rec:07736110-e8c2-4ec3-a936-4bb6a4d26ac0 (R)>, ...}, ...])
+
+    def test_update_relation_version_is_last(self,es_records):
+        indexer, records = es_records
+        version = records[0]['record']
+        pid = records[0]['recid']
+        relations = serialize_relations(pid)
+        relations_ver = relations['version'][0]
+        relations_ver['id'] = pid.object_uuid
+        relations_ver['is_last'] = relations_ver.get('index') == 0
+>       assert indexer.update_relation_version_is_last(relations_ver)=={'_index': 'test-weko-item-v1.0.0', '_type': 'item-v1.0.0', '_id': '{}'.format(pid.object_uuid), '_version': 2, 'result': 'noop', '_shards': {'total': 0, 'successful': 0, 'failed': 0}}
+E       AssertionError: assert {'_id': '3967...-v1.0.0', ...} == {'_id': '3967d...-v1.0.0', ...}
+E         Omitting 5 identical items, use -vv to show
+E         Differing items:
+E         {'_version': 1} != {'_version': 2}
+E         Full diff:
+E         {'_id': '3967d625-ca0f-405f-974c-7ce845f40a4a',
+E         '_index': 'test-weko-item-v1.0.0',
+E         '_shards': {'failed': 0, 'successful': 0, 'total': 0},...
+E         
+E         ...Full output truncated (7 lines hidden), use '-vv' to show
+
+tests/test_api.py:204: AssertionError
+------------------------------ Captured log setup ------------------------------
+ext.py                     255 WARNING  JSONSCHEMAS_HOST is set to localhost
+_____________________ TestWekoIndexer.test_update_es_data ______________________
+
+self = <tests.test_api.TestWekoIndexer object at 0x7fc52eb5fcc0>
+es_records = (<weko_deposit.api.WekoIndexer object at 0x7fc52d941ba8>, [{'depid': <PersistentIdentifier depid:1 / rec:ba299dcb-a9d2...stentIdentifier hdl:https://hdl.handle.net/0000/0000000005 / rec:c07a7eb4-dedc-481a-98d6-ef0b890f8e44 (R)>, ...}, ...])
+
+    def test_update_es_data(self,es_records):
+        indexer, records = es_records
+        record = records[0]['record']
+>       assert indexer.update_es_data(record, update_revision=False,update_oai=False, is_deleted=False)=={'_index': 'test-weko-item-v1.0.0', '_type': 'item-v1.0.0', '_id': '{}'.format(record.id), '_version': 3, 'result': 'updated', '_shards': {'total': 2, 'successful': 1, 'failed': 0}, '_seq_no': 9, '_primary_term': 1}
+E       AssertionError: assert {'_id': 'ba29...q_no': 9, ...} == {'_id': 'ba299...q_no': 9, ...}
+E         Omitting 7 identical items, use -vv to show
+E         Differing items:
+E         {'_version': 2} != {'_version': 3}
+E         Full diff:
+E         {'_id': 'ba299dcb-a9d2-4d2a-948a-2005eabb33e4',
+E         '_index': 'test-weko-item-v1.0.0',
+E         '_primary_term': 1,...
+E         
+E         ...Full output truncated (9 lines hidden), use '-vv' to show
+
+tests/test_api.py:211: AssertionError
+------------------------------ Captured log setup ------------------------------
+ext.py                     255 WARNING  JSONSCHEMAS_HOST is set to localhost
+________________ TestWekoIndexer.test_update_feedback_mail_list ________________
+
+selft = <tests.test_api.TestWekoIndexer object at 0x7fc52d689d68>
+es_records = (<weko_deposit.api.WekoIndexer object at 0x7fc52ca6f940>, [{'depid': <PersistentIdentifier depid:1 / rec:e0a92862-4dda...stentIdentifier hdl:https://hdl.handle.net/0000/0000000005 / rec:db231413-1ab2-43b3-9b1c-8ec5ebad9b7f (R)>, ...}, ...])
+
+    def test_update_feedback_mail_list(selft,es_records):
+        indexer, records = es_records
+        record = records[0]['record']
+        feedback_mail= {'id': record.id, 'mail_list': [{'email': 'wekosoftware@nii.ac.jp', 'author_id': ''}]}
+        ret = indexer.update_feedback_mail_list(feedback_mail)
+>       assert ret == {'_index': 'test-weko-item-v1.0.0', '_type': 'item-v1.0.0', '_id': '{}'.format(record.id), '_version': 3, 'result': 'updated', '_shards': {'total': 2, 'successful': 1, 'failed': 0}, '_seq_no': 9, '_primary_term': 1}
+E       AssertionError: assert {'_id': 'e0a9...q_no': 9, ...} == {'_id': 'e0a92...q_no': 9, ...}
+E         Omitting 7 identical items, use -vv to show
+E         Differing items:
+E         {'_version': 2} != {'_version': 3}
+E         Full diff:
+E         {'_id': 'e0a92862-4dda-46ff-acd6-d19de66bcd55',
+E         '_index': 'test-weko-item-v1.0.0',
+E         '_primary_term': 1,...
+E         
+E         ...Full output truncated (9 lines hidden), use '-vv' to show
+
+tests/test_api.py:281: AssertionError
+------------------------------ Captured log setup ------------------------------
+ext.py                     255 WARNING  JSONSCHEMAS_HOST is set to localhost
+___________________ TestWekoIndexer.test_update_author_link ____________________
+
+self = <tests.test_api.TestWekoIndexer object at 0x7fc52d338c88>
+es_records = (<weko_deposit.api.WekoIndexer object at 0x7fc52ffc5dd8>, [{'depid': <PersistentIdentifier depid:1 / rec:656e14e3-0ede...stentIdentifier hdl:https://hdl.handle.net/0000/0000000005 / rec:790aa3ba-2065-4dcd-87c3-0f9b75cbd949 (R)>, ...}, ...])
+
+    def test_update_author_link(self,es_records):
+        indexer, records = es_records
+        record = records[0]['record']
+        author_link_info = {
+                "id": record.id,
+                "author_link": ['1']
+            }
+        ret = indexer.update_author_link(author_link_info)
+>       assert ret == {'_index': 'test-weko-item-v1.0.0', '_type': 'item-v1.0.0', '_id': '{}'.format(record.id), '_version': 3, 'result': 'updated', '_shards': {'total': 2, 'successful': 1, 'failed': 0}, '_seq_no': 9, '_primary_term': 1}
+E       AssertionError: assert {'_id': '656e...q_no': 9, ...} == {'_id': '656e1...q_no': 9, ...}
+E         Omitting 7 identical items, use -vv to show
+E         Differing items:
+E         {'_version': 2} != {'_version': 3}
+E         Full diff:
+E         {'_id': '656e14e3-0ede-4902-9404-0b0937f96382',
+E         '_index': 'test-weko-item-v1.0.0',
+E         '_primary_term': 1,...
+E         
+E         ...Full output truncated (9 lines hidden), use '-vv' to show
+
+tests/test_api.py:294: AssertionError
+------------------------------ Captured log setup ------------------------------
+ext.py                     255 WARNING  JSONSCHEMAS_HOST is set to localhost
+________________ TestWekoIndexer.test_update_jpcoar_identifier _________________
+
+self = <tests.test_api.TestWekoIndexer object at 0x7fc52c599828>
+es_records = (<weko_deposit.api.WekoIndexer object at 0x7fc52c191e80>, [{'depid': <PersistentIdentifier depid:1 / rec:606224b6-8106...stentIdentifier hdl:https://hdl.handle.net/0000/0000000005 / rec:7e328468-2faa-48a8-a527-b69ef6b1b858 (R)>, ...}, ...])
+
+    def test_update_jpcoar_identifier(self,es_records):
+        indexer, records = es_records
+        record_data = records[0]['record_data']
+        record = records[0]['record']
+>       assert indexer.update_jpcoar_identifier(record_data,record.id)=={'_index': 'test-weko-item-v1.0.0', '_type': 'item-v1.0.0', '_id': '{}'.format(record.id), '_version': 3, 'result': 'updated', '_shards': {'total': 2, 'successful': 1, 'failed': 0}, '_seq_no': 9, '_primary_term': 1}
+E       AssertionError: assert {'_id': '6062...q_no': 9, ...} == {'_id': '60622...q_no': 9, ...}
+E         Omitting 7 identical items, use -vv to show
+E         Differing items:
+E         {'_version': 2} != {'_version': 3}
+E         Full diff:
+E         {'_id': '606224b6-8106-4d24-beb4-fccd331b36ad',
+E         '_index': 'test-weko-item-v1.0.0',
+E         '_primary_term': 1,...
+E         
+E         ...Full output truncated (9 lines hidden), use '-vv' to show
+
+tests/test_api.py:304: AssertionError
+------------------------------ Captured log setup ------------------------------
+ext.py                     255 WARNING  JSONSCHEMAS_HOST is set to localhost
 _________________________ TestWekoDeposit.test_commit __________________________
 
-self = {'_buckets': {'deposit': '0eff2fc6-c132-4427-89c6-c4ae21e0349a'}, '$schema': 'http://localhost/schemas/deposits/deposit-v1.0.0.json', 'recid': '2', '_deposit': {'id': '2', 'status': 'draft', 'owners': []}}
+self = {'_buckets': {'deposit': 'd81b17ce-6997-46e0-bbbd-fe5f4f2366bd'}, '$schema': 'http://localhost/schemas/deposits/deposit-v1.0.0.json', 'recid': '2', '_deposit': {'id': '2', 'status': 'draft', 'owners': []}}
 index_obj = {'actions': 'private', 'index': ['1']}
 data = {'$schema': '/items/jsonschema/1', 'deleted_items': ['item_1617186385884', 'item_1617186419668', 'item_1617186499011',..._1617258105262': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, ...}
 
@@ -239,15 +364,18 @@ data = {'$schema': '/items/jsonschema/1', 'deleted_items': ['item_1617186385884'
         try:
             deposit_owners = self.get('_deposit', {}).get('owners')
             owner_id = str(deposit_owners[0] if deposit_owners else 1)
->           dc, jrc, is_edit = json_loader(data, self.pid, owner_id=owner_id)
+            if str(self.pid.pid_value).endswith(".0"):
+                dc, jrc, is_edit = json_loader(data, self.pid, owner_id=owner_id,replace_field=False)
+            else:
+>               dc, jrc, is_edit = json_loader(data, self.pid, owner_id=owner_id)
 
-weko_deposit/api.py:1414: 
+weko_deposit/api.py:1426: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 data = {'$schema': '/items/jsonschema/1', 'deleted_items': ['item_1617186385884', 'item_1617186419668', 'item_1617186499011',..._1617258105262': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, ...}
-pid = '2', owner_id = '1', with_deleted = False
+pid = '2', owner_id = '1', with_deleted = False, replace_field = True
 
-    def json_loader(data, pid, owner_id=None, with_deleted=False):
+    def json_loader(data, pid, owner_id=None, with_deleted=False, replace_field=True):
         """Convert the item data and mapping to jpcoar.
     
         :param data: json from item form post.
@@ -382,17 +510,17 @@ pid = '2', owner_id = '1', with_deleted = False
             jpcoar[k] = item.copy()
     
         # convert to es jpcoar mapping data
->       jrc = SchemaTree.get_jpcoar_json(jpcoar)
+>       jrc = SchemaTree.get_jpcoar_json(jpcoar,replace_field=replace_field)
 
 ../weko-records/weko_records/utils.py:183: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 cls = <class 'weko_schema_ui.schema.SchemaTree'>
 records = OrderedDict([('pubdate', {'attribute_name': 'PubDate', 'attribute_value': '2023-12-07'}), ('item_1617186331708', {'att...ype': '', 'jpcoar_v1_mapping': {'type': {'@value': 'resourcetype', '@attributes': {'rdf:resource': 'resourceuri'}}}})])
-schema_name = 'jpcoar_mapping'
+schema_name = 'jpcoar_mapping', replace_field = True
 
     @classmethod
-    def get_jpcoar_json(cls, records, schema_name="jpcoar_mapping"):
+    def get_jpcoar_json(cls, records, schema_name="jpcoar_mapping", replace_field=True):
         """
         Find elements values and return a jpcoar json.
     
@@ -408,15 +536,15 @@ schema_name = 'jpcoar_mapping'
         obj._ignore_list_all = []
         vlst = list(map(obj.__converter,
                         filter(lambda x: isinstance(x, dict),
->                              obj.__get_value_list())))
+>                              obj.__get_value_list(replace_field=replace_field))))
 
 ../weko-schema-ui/weko_schema_ui/schema.py:408: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <weko_schema_ui.schema.SchemaTree object at 0x7f1b33f10390>
-remove_empty = False
+self = <weko_schema_ui.schema.SchemaTree object at 0x7fc528f9e2b0>
+remove_empty = False, replace_field = True
 
-    def __get_value_list(self, remove_empty=False):
+    def __get_value_list(self, remove_empty=False, replace_field=True):
         """Find values to a list."""
         def analysis(field):
             exp = (',',)
@@ -985,7 +1113,7 @@ remove_empty = False
         def replace_nameIdentifierScheme_for_jpcoar_v1(atr_vm_item):
             if 'nameIdentifiers' in atr_vm_item:
                 for idx,val in enumerate(atr_vm_item['nameIdentifiers']):
-                    if val['nameIdentifierScheme'] in current_app.config['WEKO_SCHEMA_JPCOAR_V1_NAMEIDSCHEME_REPLACE']:
+                    if 'nameIdentifierScheme' in val and val['nameIdentifierScheme'] in current_app.config['WEKO_SCHEMA_JPCOAR_V1_NAMEIDSCHEME_REPLACE']:
                         new_type = current_app.config[
                         'WEKO_SCHEMA_JPCOAR_V1_NAMEIDSCHEME_REPLACE'][val['nameIdentifierScheme']]
                         val['nameIdentifierScheme'] = new_type
@@ -993,7 +1121,7 @@ remove_empty = False
         def replace_nameIdentifierScheme_for_jpcoar_v2(atr_vm_item):
             if 'nameIdentifiers' in atr_vm_item:
                 for idx,val in enumerate(atr_vm_item['nameIdentifiers']):
-                    if val['nameIdentifierScheme'] in current_app.config['WEKO_SCHEMA_JPCOAR_V2_NAMEIDSCHEME_REPLACE']:
+                    if 'nameIdentifierScheme' in val and val['nameIdentifierScheme'] in current_app.config['WEKO_SCHEMA_JPCOAR_V2_NAMEIDSCHEME_REPLACE']:
                         new_type = current_app.config[
                         'WEKO_SCHEMA_JPCOAR_V2_NAMEIDSCHEME_REPLACE'][val['nameIdentifierScheme']]
                         val['nameIdentifierScheme'] = new_type
@@ -1043,18 +1171,18 @@ remove_empty = False
                             if self._ignore_list_all:
                                 remove_hide_data(atr_vm_item, key_item_parent)
                             if self._schema_name == current_app.config[
-                                    'WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME']:
+                                    'WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME'] and replace_field:
                                 replace_resource_type_for_jpcoar_v1(atr_vm_item)
                                 replace_nameIdentifierScheme_for_jpcoar_v1(atr_vm_item)
                             if self._schema_name == current_app.config[
->                                   'WEKO_SCHEMA_JPCOAR_V2_SCHEMA_NAME']:
+>                                   'WEKO_SCHEMA_JPCOAR_V2_SCHEMA_NAME'] and replace_field:
 E                                   KeyError: 'WEKO_SCHEMA_JPCOAR_V2_SCHEMA_NAME'
 
 ../weko-schema-ui/weko_schema_ui/schema.py:1044: KeyError
 
 During handling of the above exception, another exception occurred:
 
-sel = <tests.test_api.TestWekoDeposit object at 0x7f1b3445bfd0>
+sel = <tests.test_api.TestWekoDeposit object at 0x7fc529822c18>
 app = <Flask 'testapp'>
 db = <SQLAlchemy engine=postgresql+psycopg2://invenio:***@postgresql:5432/wekotest>
 location = testloc, db_index = None
@@ -1082,15 +1210,15 @@ tests/test_api.py:541:
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 ../invenio-deposit/invenio_deposit/api.py:122: in wrapper
     result_ = method(self, *args, **kwargs)
-weko_deposit/api.py:819: in update
+weko_deposit/api.py:827: in update
     dc, deleted_items = self.convert_item_metadata(args[0], args[1])
-weko_deposit/api.py:1427: in convert_item_metadata
+weko_deposit/api.py:1439: in convert_item_metadata
     abort(500, 'MAPPING_ERROR')
 .tox/c1/lib/python3.6/site-packages/werkzeug/exceptions.py:752: in abort
     return _aborter(status, *args, **kwargs)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <werkzeug.exceptions.Aborter object at 0x7f1b6c951e80>, code = 500
+self = <werkzeug.exceptions.Aborter object at 0x7fc561d48b00>, code = 500
 args = ('MAPPING_ERROR',), kwargs = {}
 
     def __call__(self, code, *args, **kwargs):
@@ -1105,23 +1233,23 @@ E       werkzeug.exceptions.InternalServerError: 500 Internal Server Error: MAPP
 ------------------------------ Captured log setup ------------------------------
 ext.py                     255 WARNING  JSONSCHEMAS_HOST is set to localhost
 ------------------------------ Captured log call -------------------------------
-api.py                    1426 ERROR    Traceback (most recent call last):
-  File "/code/modules/weko-deposit/weko_deposit/api.py", line 1414, in convert_item_metadata
+api.py                    1438 ERROR    Traceback (most recent call last):
+  File "/code/modules/weko-deposit/weko_deposit/api.py", line 1426, in convert_item_metadata
     dc, jrc, is_edit = json_loader(data, self.pid, owner_id=owner_id)
   File "/code/modules/weko-records/weko_records/utils.py", line 183, in json_loader
-    jrc = SchemaTree.get_jpcoar_json(jpcoar)
+    jrc = SchemaTree.get_jpcoar_json(jpcoar,replace_field=replace_field)
   File "/code/modules/weko-schema-ui/weko_schema_ui/schema.py", line 408, in get_jpcoar_json
-    obj.__get_value_list())))
+    obj.__get_value_list(replace_field=replace_field))))
   File "/code/modules/weko-schema-ui/weko_schema_ui/schema.py", line 1044, in __get_value_list
-    'WEKO_SCHEMA_JPCOAR_V2_SCHEMA_NAME']:
+    'WEKO_SCHEMA_JPCOAR_V2_SCHEMA_NAME'] and replace_field:
 KeyError: 'WEKO_SCHEMA_JPCOAR_V2_SCHEMA_NAME'
 _______________________ TestWekoDeposit.test_newversion ________________________
 
-sel = <tests.test_api.TestWekoDeposit object at 0x7f1b341aab00>
+sel = <tests.test_api.TestWekoDeposit object at 0x7fc529391898>
 app = <Flask 'testapp'>
 db = <SQLAlchemy engine=postgresql+psycopg2://invenio:***@postgresql:5432/wekotest>
 location = testloc
-es_records = (<weko_deposit.api.WekoIndexer object at 0x7f1b3378ffd0>, [{'depid': <PersistentIdentifier depid:1 / rec:51215748-547a...stentIdentifier hdl:https://hdl.handle.net/0000/0000000005 / rec:25002dda-86db-41dc-acab-2fa5c956f7f7 (R)>, ...}, ...])
+es_records = (<weko_deposit.api.WekoIndexer object at 0x7fc528ed82e8>, [{'depid': <PersistentIdentifier depid:1 / rec:edbd1e46-8a93...stentIdentifier hdl:https://hdl.handle.net/0000/0000000005 / rec:9ba92f2d-786e-4cfc-8ad6-3f62bba3e35b (R)>, ...}, ...])
 
     def test_newversion(sel,app,db,location,es_records):
         indexer, records = es_records
@@ -1135,7 +1263,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
     original, local = self.get_original()
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <mock.mock._patch object at 0x7f1b33d92f98>
+self = <mock.mock._patch object at 0x7fc52a1ace48>
 
     def get_original(self):
         target = self.getter()
@@ -1165,7 +1293,7 @@ E           AttributeError: <class 'weko_deposit.ext.WekoDeposit'> does not have
 ext.py                     255 WARNING  JSONSCHEMAS_HOST is set to localhost
 __________________ TestWekoDeposit.test_convert_item_metadata __________________
 
-self = {'_oai': {'id': 'oai:weko3.example.org:00000001', 'sets': ['2']}, 'path': ['2'], 'owner': '1', 'recid': '1', 'title': ...218371f418dc136f2d19ac1fbe8a5', 'key': 'hello.txt', 'size': 12, 'version_id': 'ec609c8c-f95f-4297-ac7f-8004672ae9a0'}]}
+self = {'_oai': {'id': 'oai:weko3.example.org:00000001', 'sets': ['2']}, 'path': ['2'], 'owner': '1', 'recid': '1', 'title': ...218371f418dc136f2d19ac1fbe8a5', 'key': 'hello.txt', 'size': 12, 'version_id': '63193bf4-7f79-47fd-a2f0-57b496c0e9f1'}]}
 index_obj = {'actions': '1', 'index': ['1']}
 data = {'$schema': '/items/jsonschema/1', 'created_by': 1, 'id': '1', 'item_1617186331708': [{'subitem_1551255647225': 'タイトル', 'subitem_1551255648112': 'ja'}, {'subitem_1551255647225': 'title', 'subitem_1551255648112': 'en'}], ...}
 
@@ -1234,15 +1362,18 @@ data = {'$schema': '/items/jsonschema/1', 'created_by': 1, 'id': '1', 'item_1617
         try:
             deposit_owners = self.get('_deposit', {}).get('owners')
             owner_id = str(deposit_owners[0] if deposit_owners else 1)
->           dc, jrc, is_edit = json_loader(data, self.pid, owner_id=owner_id)
+            if str(self.pid.pid_value).endswith(".0"):
+                dc, jrc, is_edit = json_loader(data, self.pid, owner_id=owner_id,replace_field=False)
+            else:
+>               dc, jrc, is_edit = json_loader(data, self.pid, owner_id=owner_id)
 
-weko_deposit/api.py:1414: 
+weko_deposit/api.py:1426: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 data = {'$schema': '/items/jsonschema/1', 'created_by': 1, 'id': '1', 'item_1617186331708': [{'subitem_1551255647225': 'タイトル', 'subitem_1551255648112': 'ja'}, {'subitem_1551255647225': 'title', 'subitem_1551255648112': 'en'}], ...}
-pid = '1', owner_id = '1', with_deleted = False
+pid = '1', owner_id = '1', with_deleted = False, replace_field = True
 
-    def json_loader(data, pid, owner_id=None, with_deleted=False):
+    def json_loader(data, pid, owner_id=None, with_deleted=False, replace_field=True):
         """Convert the item data and mapping to jpcoar.
     
         :param data: json from item form post.
@@ -1377,17 +1508,17 @@ pid = '1', owner_id = '1', with_deleted = False
             jpcoar[k] = item.copy()
     
         # convert to es jpcoar mapping data
->       jrc = SchemaTree.get_jpcoar_json(jpcoar)
+>       jrc = SchemaTree.get_jpcoar_json(jpcoar,replace_field=replace_field)
 
 ../weko-records/weko_records/utils.py:183: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 cls = <class 'weko_schema_ui.schema.SchemaTree'>
 records = OrderedDict([('pubdate', {'attribute_name': 'PubDate', 'attribute_value': '2022-08-20'}), ('item_1617186331708', {'att...ype': '', 'jpcoar_v1_mapping': {'type': {'@value': 'resourcetype', '@attributes': {'rdf:resource': 'resourceuri'}}}})])
-schema_name = 'jpcoar_mapping'
+schema_name = 'jpcoar_mapping', replace_field = True
 
     @classmethod
-    def get_jpcoar_json(cls, records, schema_name="jpcoar_mapping"):
+    def get_jpcoar_json(cls, records, schema_name="jpcoar_mapping", replace_field=True):
         """
         Find elements values and return a jpcoar json.
     
@@ -1403,15 +1534,15 @@ schema_name = 'jpcoar_mapping'
         obj._ignore_list_all = []
         vlst = list(map(obj.__converter,
                         filter(lambda x: isinstance(x, dict),
->                              obj.__get_value_list())))
+>                              obj.__get_value_list(replace_field=replace_field))))
 
 ../weko-schema-ui/weko_schema_ui/schema.py:408: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <weko_schema_ui.schema.SchemaTree object at 0x7f1b329d6c50>
-remove_empty = False
+self = <weko_schema_ui.schema.SchemaTree object at 0x7fc52933db70>
+remove_empty = False, replace_field = True
 
-    def __get_value_list(self, remove_empty=False):
+    def __get_value_list(self, remove_empty=False, replace_field=True):
         """Find values to a list."""
         def analysis(field):
             exp = (',',)
@@ -1980,7 +2111,7 @@ remove_empty = False
         def replace_nameIdentifierScheme_for_jpcoar_v1(atr_vm_item):
             if 'nameIdentifiers' in atr_vm_item:
                 for idx,val in enumerate(atr_vm_item['nameIdentifiers']):
-                    if val['nameIdentifierScheme'] in current_app.config['WEKO_SCHEMA_JPCOAR_V1_NAMEIDSCHEME_REPLACE']:
+                    if 'nameIdentifierScheme' in val and val['nameIdentifierScheme'] in current_app.config['WEKO_SCHEMA_JPCOAR_V1_NAMEIDSCHEME_REPLACE']:
                         new_type = current_app.config[
                         'WEKO_SCHEMA_JPCOAR_V1_NAMEIDSCHEME_REPLACE'][val['nameIdentifierScheme']]
                         val['nameIdentifierScheme'] = new_type
@@ -1988,7 +2119,7 @@ remove_empty = False
         def replace_nameIdentifierScheme_for_jpcoar_v2(atr_vm_item):
             if 'nameIdentifiers' in atr_vm_item:
                 for idx,val in enumerate(atr_vm_item['nameIdentifiers']):
-                    if val['nameIdentifierScheme'] in current_app.config['WEKO_SCHEMA_JPCOAR_V2_NAMEIDSCHEME_REPLACE']:
+                    if 'nameIdentifierScheme' in val and val['nameIdentifierScheme'] in current_app.config['WEKO_SCHEMA_JPCOAR_V2_NAMEIDSCHEME_REPLACE']:
                         new_type = current_app.config[
                         'WEKO_SCHEMA_JPCOAR_V2_NAMEIDSCHEME_REPLACE'][val['nameIdentifierScheme']]
                         val['nameIdentifierScheme'] = new_type
@@ -2038,21 +2169,21 @@ remove_empty = False
                             if self._ignore_list_all:
                                 remove_hide_data(atr_vm_item, key_item_parent)
                             if self._schema_name == current_app.config[
-                                    'WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME']:
+                                    'WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME'] and replace_field:
                                 replace_resource_type_for_jpcoar_v1(atr_vm_item)
                                 replace_nameIdentifierScheme_for_jpcoar_v1(atr_vm_item)
                             if self._schema_name == current_app.config[
->                                   'WEKO_SCHEMA_JPCOAR_V2_SCHEMA_NAME']:
+>                                   'WEKO_SCHEMA_JPCOAR_V2_SCHEMA_NAME'] and replace_field:
 E                                   KeyError: 'WEKO_SCHEMA_JPCOAR_V2_SCHEMA_NAME'
 
 ../weko-schema-ui/weko_schema_ui/schema.py:1044: KeyError
 
 During handling of the above exception, another exception occurred:
 
-sel = <tests.test_api.TestWekoDeposit object at 0x7f1b32889a90>
+sel = <tests.test_api.TestWekoDeposit object at 0x7fc52721cb00>
 app = <Flask 'testapp'>
 db = <SQLAlchemy engine=postgresql+psycopg2://invenio:***@postgresql:5432/wekotest>
-es_records = (<weko_deposit.api.WekoIndexer object at 0x7f1b3351ee80>, [{'depid': <PersistentIdentifier depid:1 / rec:6de137b9-dd16...stentIdentifier hdl:https://hdl.handle.net/0000/0000000005 / rec:e5425497-d5dc-4582-8139-766843002852 (R)>, ...}, ...])
+es_records = (<weko_deposit.api.WekoIndexer object at 0x7fc5294890b8>, [{'depid': <PersistentIdentifier depid:1 / rec:bce8328b-dbd1...stentIdentifier hdl:https://hdl.handle.net/0000/0000000005 / rec:6eb75554-e891-490b-869f-8760ca6d5c54 (R)>, ...}, ...])
 
     def test_convert_item_metadata(sel,app,db,es_records):
         indexer, records = es_records
@@ -2066,13 +2197,13 @@ es_records = (<weko_deposit.api.WekoIndexer object at 0x7f1b3351ee80>, [{'depid'
 
 tests/test_api.py:719: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-weko_deposit/api.py:1427: in convert_item_metadata
+weko_deposit/api.py:1439: in convert_item_metadata
     abort(500, 'MAPPING_ERROR')
 .tox/c1/lib/python3.6/site-packages/werkzeug/exceptions.py:752: in abort
     return _aborter(status, *args, **kwargs)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <werkzeug.exceptions.Aborter object at 0x7f1b6c951e80>, code = 500
+self = <werkzeug.exceptions.Aborter object at 0x7fc561d48b00>, code = 500
 args = ('MAPPING_ERROR',), kwargs = {}
 
     def __call__(self, code, *args, **kwargs):
@@ -2087,19 +2218,19 @@ E       werkzeug.exceptions.InternalServerError: 500 Internal Server Error: MAPP
 ------------------------------ Captured log setup ------------------------------
 ext.py                     255 WARNING  JSONSCHEMAS_HOST is set to localhost
 ------------------------------ Captured log call -------------------------------
-api.py                    1426 ERROR    Traceback (most recent call last):
-  File "/code/modules/weko-deposit/weko_deposit/api.py", line 1414, in convert_item_metadata
+api.py                    1438 ERROR    Traceback (most recent call last):
+  File "/code/modules/weko-deposit/weko_deposit/api.py", line 1426, in convert_item_metadata
     dc, jrc, is_edit = json_loader(data, self.pid, owner_id=owner_id)
   File "/code/modules/weko-records/weko_records/utils.py", line 183, in json_loader
-    jrc = SchemaTree.get_jpcoar_json(jpcoar)
+    jrc = SchemaTree.get_jpcoar_json(jpcoar,replace_field=replace_field)
   File "/code/modules/weko-schema-ui/weko_schema_ui/schema.py", line 408, in get_jpcoar_json
-    obj.__get_value_list())))
+    obj.__get_value_list(replace_field=replace_field))))
   File "/code/modules/weko-schema-ui/weko_schema_ui/schema.py", line 1044, in __get_value_list
-    'WEKO_SCHEMA_JPCOAR_V2_SCHEMA_NAME']:
+    'WEKO_SCHEMA_JPCOAR_V2_SCHEMA_NAME'] and replace_field:
 KeyError: 'WEKO_SCHEMA_JPCOAR_V2_SCHEMA_NAME'
 __________ TestWekoDeposit.test_merge_data_to_record_without_version ___________
 
-self = {'_oai': {'id': 'oai:weko3.example.org:00000001', 'sets': ['2']}, 'path': ['2'], 'owner': '1', 'recid': '1', 'title': ...218371f418dc136f2d19ac1fbe8a5', 'key': 'hello.txt', 'size': 12, 'version_id': '51c610d7-39de-4f9d-a0c4-5cab136775fa'}]}
+self = {'_oai': {'id': 'oai:weko3.example.org:00000001', 'sets': ['2']}, 'path': ['2'], 'owner': '1', 'recid': '1', 'title': ...218371f418dc136f2d19ac1fbe8a5', 'key': 'hello.txt', 'size': 12, 'version_id': 'b53b81ac-01a8-4561-96eb-17502fd1c89b'}]}
 index_obj = {'actions': '0', 'index': ['2']}
 data = {'$schema': '/items/jsonschema/1', 'created_by': 1, 'item_1617186331708': [{'subitem_1551255647225': 'タイトル', 'subitem_..._1617258105262': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, ...}
 
@@ -2168,15 +2299,18 @@ data = {'$schema': '/items/jsonschema/1', 'created_by': 1, 'item_1617186331708':
         try:
             deposit_owners = self.get('_deposit', {}).get('owners')
             owner_id = str(deposit_owners[0] if deposit_owners else 1)
->           dc, jrc, is_edit = json_loader(data, self.pid, owner_id=owner_id)
+            if str(self.pid.pid_value).endswith(".0"):
+                dc, jrc, is_edit = json_loader(data, self.pid, owner_id=owner_id,replace_field=False)
+            else:
+>               dc, jrc, is_edit = json_loader(data, self.pid, owner_id=owner_id)
 
-weko_deposit/api.py:1414: 
+weko_deposit/api.py:1426: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 data = {'$schema': '/items/jsonschema/1', 'created_by': 1, 'item_1617186331708': [{'subitem_1551255647225': 'タイトル', 'subitem_..._1617258105262': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, ...}
-pid = '1', owner_id = '1', with_deleted = False
+pid = '1', owner_id = '1', with_deleted = False, replace_field = True
 
-    def json_loader(data, pid, owner_id=None, with_deleted=False):
+    def json_loader(data, pid, owner_id=None, with_deleted=False, replace_field=True):
         """Convert the item data and mapping to jpcoar.
     
         :param data: json from item form post.
@@ -2311,17 +2445,17 @@ pid = '1', owner_id = '1', with_deleted = False
             jpcoar[k] = item.copy()
     
         # convert to es jpcoar mapping data
->       jrc = SchemaTree.get_jpcoar_json(jpcoar)
+>       jrc = SchemaTree.get_jpcoar_json(jpcoar,replace_field=replace_field)
 
 ../weko-records/weko_records/utils.py:183: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 cls = <class 'weko_schema_ui.schema.SchemaTree'>
 records = OrderedDict([('pubdate', {'attribute_name': 'PubDate', 'attribute_value': '2022-08-20'}), ('item_1617186331708', {'att...ype': '', 'jpcoar_v1_mapping': {'type': {'@value': 'resourcetype', '@attributes': {'rdf:resource': 'resourceuri'}}}})])
-schema_name = 'jpcoar_mapping'
+schema_name = 'jpcoar_mapping', replace_field = True
 
     @classmethod
-    def get_jpcoar_json(cls, records, schema_name="jpcoar_mapping"):
+    def get_jpcoar_json(cls, records, schema_name="jpcoar_mapping", replace_field=True):
         """
         Find elements values and return a jpcoar json.
     
@@ -2337,15 +2471,15 @@ schema_name = 'jpcoar_mapping'
         obj._ignore_list_all = []
         vlst = list(map(obj.__converter,
                         filter(lambda x: isinstance(x, dict),
->                              obj.__get_value_list())))
+>                              obj.__get_value_list(replace_field=replace_field))))
 
 ../weko-schema-ui/weko_schema_ui/schema.py:408: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <weko_schema_ui.schema.SchemaTree object at 0x7f1b2fcf2cf8>
-remove_empty = False
+self = <weko_schema_ui.schema.SchemaTree object at 0x7fc52530c438>
+remove_empty = False, replace_field = True
 
-    def __get_value_list(self, remove_empty=False):
+    def __get_value_list(self, remove_empty=False, replace_field=True):
         """Find values to a list."""
         def analysis(field):
             exp = (',',)
@@ -2914,7 +3048,7 @@ remove_empty = False
         def replace_nameIdentifierScheme_for_jpcoar_v1(atr_vm_item):
             if 'nameIdentifiers' in atr_vm_item:
                 for idx,val in enumerate(atr_vm_item['nameIdentifiers']):
-                    if val['nameIdentifierScheme'] in current_app.config['WEKO_SCHEMA_JPCOAR_V1_NAMEIDSCHEME_REPLACE']:
+                    if 'nameIdentifierScheme' in val and val['nameIdentifierScheme'] in current_app.config['WEKO_SCHEMA_JPCOAR_V1_NAMEIDSCHEME_REPLACE']:
                         new_type = current_app.config[
                         'WEKO_SCHEMA_JPCOAR_V1_NAMEIDSCHEME_REPLACE'][val['nameIdentifierScheme']]
                         val['nameIdentifierScheme'] = new_type
@@ -2922,7 +3056,7 @@ remove_empty = False
         def replace_nameIdentifierScheme_for_jpcoar_v2(atr_vm_item):
             if 'nameIdentifiers' in atr_vm_item:
                 for idx,val in enumerate(atr_vm_item['nameIdentifiers']):
-                    if val['nameIdentifierScheme'] in current_app.config['WEKO_SCHEMA_JPCOAR_V2_NAMEIDSCHEME_REPLACE']:
+                    if 'nameIdentifierScheme' in val and val['nameIdentifierScheme'] in current_app.config['WEKO_SCHEMA_JPCOAR_V2_NAMEIDSCHEME_REPLACE']:
                         new_type = current_app.config[
                         'WEKO_SCHEMA_JPCOAR_V2_NAMEIDSCHEME_REPLACE'][val['nameIdentifierScheme']]
                         val['nameIdentifierScheme'] = new_type
@@ -2972,22 +3106,22 @@ remove_empty = False
                             if self._ignore_list_all:
                                 remove_hide_data(atr_vm_item, key_item_parent)
                             if self._schema_name == current_app.config[
-                                    'WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME']:
+                                    'WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME'] and replace_field:
                                 replace_resource_type_for_jpcoar_v1(atr_vm_item)
                                 replace_nameIdentifierScheme_for_jpcoar_v1(atr_vm_item)
                             if self._schema_name == current_app.config[
->                                   'WEKO_SCHEMA_JPCOAR_V2_SCHEMA_NAME']:
+>                                   'WEKO_SCHEMA_JPCOAR_V2_SCHEMA_NAME'] and replace_field:
 E                                   KeyError: 'WEKO_SCHEMA_JPCOAR_V2_SCHEMA_NAME'
 
 ../weko-schema-ui/weko_schema_ui/schema.py:1044: KeyError
 
 During handling of the above exception, another exception occurred:
 
-sel = <tests.test_api.TestWekoDeposit object at 0x7f1b307872e8>
+sel = <tests.test_api.TestWekoDeposit object at 0x7fc527939550>
 app = <Flask 'testapp'>
 db = <SQLAlchemy engine=postgresql+psycopg2://invenio:***@postgresql:5432/wekotest>
 location = testloc
-es_records = (<weko_deposit.api.WekoIndexer object at 0x7f1b2fe2e668>, [{'depid': <PersistentIdentifier depid:1 / rec:9af7e857-8121...stentIdentifier hdl:https://hdl.handle.net/0000/0000000005 / rec:b1c31c99-b7a3-4426-9043-c9ba70f0cdf4 (R)>, ...}, ...])
+es_records = (<weko_deposit.api.WekoIndexer object at 0x7fc5254ebc88>, [{'depid': <PersistentIdentifier depid:1 / rec:4e111501-f177...stentIdentifier hdl:https://hdl.handle.net/0000/0000000005 / rec:4f24d46d-b617-4427-b042-832e130aa54e (R)>, ...}, ...])
 
     def test_merge_data_to_record_without_version(sel,app,db,location,es_records):
         indexer, records = es_records
@@ -2999,19 +3133,19 @@ es_records = (<weko_deposit.api.WekoIndexer object at 0x7f1b2fe2e668>, [{'depid'
 
 tests/test_api.py:892: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-weko_deposit/api.py:1826: in merge_data_to_record_without_version
+weko_deposit/api.py:1838: in merge_data_to_record_without_version
     self.update(*args)
 ../invenio-deposit/invenio_deposit/api.py:122: in wrapper
     result_ = method(self, *args, **kwargs)
-weko_deposit/api.py:819: in update
+weko_deposit/api.py:827: in update
     dc, deleted_items = self.convert_item_metadata(args[0], args[1])
-weko_deposit/api.py:1427: in convert_item_metadata
+weko_deposit/api.py:1439: in convert_item_metadata
     abort(500, 'MAPPING_ERROR')
 .tox/c1/lib/python3.6/site-packages/werkzeug/exceptions.py:752: in abort
     return _aborter(status, *args, **kwargs)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <werkzeug.exceptions.Aborter object at 0x7f1b6c951e80>, code = 500
+self = <werkzeug.exceptions.Aborter object at 0x7fc561d48b00>, code = 500
 args = ('MAPPING_ERROR',), kwargs = {}
 
     def __call__(self, code, *args, **kwargs):
@@ -3026,23 +3160,23 @@ E       werkzeug.exceptions.InternalServerError: 500 Internal Server Error: MAPP
 ------------------------------ Captured log setup ------------------------------
 ext.py                     255 WARNING  JSONSCHEMAS_HOST is set to localhost
 ------------------------------ Captured log call -------------------------------
-api.py                    1426 ERROR    Traceback (most recent call last):
-  File "/code/modules/weko-deposit/weko_deposit/api.py", line 1414, in convert_item_metadata
+api.py                    1438 ERROR    Traceback (most recent call last):
+  File "/code/modules/weko-deposit/weko_deposit/api.py", line 1426, in convert_item_metadata
     dc, jrc, is_edit = json_loader(data, self.pid, owner_id=owner_id)
   File "/code/modules/weko-records/weko_records/utils.py", line 183, in json_loader
-    jrc = SchemaTree.get_jpcoar_json(jpcoar)
+    jrc = SchemaTree.get_jpcoar_json(jpcoar,replace_field=replace_field)
   File "/code/modules/weko-schema-ui/weko_schema_ui/schema.py", line 408, in get_jpcoar_json
-    obj.__get_value_list())))
+    obj.__get_value_list(replace_field=replace_field))))
   File "/code/modules/weko-schema-ui/weko_schema_ui/schema.py", line 1044, in __get_value_list
-    'WEKO_SCHEMA_JPCOAR_V2_SCHEMA_NAME']:
+    'WEKO_SCHEMA_JPCOAR_V2_SCHEMA_NAME'] and replace_field:
 KeyError: 'WEKO_SCHEMA_JPCOAR_V2_SCHEMA_NAME'
 __________________ TestWekoDeposit.test_delete_content_files ___________________
 
-sel = <tests.test_api.TestWekoDeposit object at 0x7f1b30cf09b0>
+sel = <tests.test_api.TestWekoDeposit object at 0x7fc527658048>
 app = <Flask 'testapp'>
 db = <SQLAlchemy engine=postgresql+psycopg2://invenio:***@postgresql:5432/wekotest>
 location = testloc
-es_records = (<weko_deposit.api.WekoIndexer object at 0x7f1b2fb0dc50>, [{'depid': <PersistentIdentifier depid:1 / rec:ce77193e-0950...stentIdentifier hdl:https://hdl.handle.net/0000/0000000005 / rec:41796462-4d19-49ef-aaa5-89080d14f94a (R)>, ...}, ...])
+es_records = (<weko_deposit.api.WekoIndexer object at 0x7fc524f7b828>, [{'depid': <PersistentIdentifier depid:1 / rec:00f243b2-8c29...stentIdentifier hdl:https://hdl.handle.net/0000/0000000005 / rec:e03b5295-e2c2-438c-a929-8fc0ebfbc534 (R)>, ...}, ...])
 
     def test_delete_content_files(sel,app,db,location,es_records):
         indexer, records = es_records
@@ -3070,9 +3204,9 @@ tests/test_api.py:916: AssertionError
 ext.py                     255 WARNING  JSONSCHEMAS_HOST is set to localhost
 ________________________ TestWekoRecord.test_get_titles ________________________
 
-self = <tests.test_api.TestWekoRecord object at 0x7f1b3020def0>
+self = <tests.test_api.TestWekoRecord object at 0x7fc525c1beb8>
 app = <Flask 'testapp'>
-es_records = (<weko_deposit.api.WekoIndexer object at 0x7f1b304f8080>, [{'depid': <PersistentIdentifier depid:1 / rec:c1366608-5d3d...stentIdentifier hdl:https://hdl.handle.net/0000/0000000005 / rec:ef105e89-9bdc-438b-a4b2-d3bbf56ec33f (R)>, ...}, ...])
+es_records = (<weko_deposit.api.WekoIndexer object at 0x7fc528eaddd8>, [{'depid': <PersistentIdentifier depid:1 / rec:3633e8e1-6ebf...stentIdentifier hdl:https://hdl.handle.net/0000/0000000005 / rec:464ee339-85f4-49c0-998d-972e08a71779 (R)>, ...}, ...])
 db_itemtype = {'item_type': <ItemType 1>, 'item_type_mapping': <ItemTypeMapping 1>, 'item_type_name': <ItemTypeName 1>}
 db_oaischema = None
 
@@ -3088,7 +3222,7 @@ tests/test_api.py:1043: Failed
 ext.py                     255 WARNING  JSONSCHEMAS_HOST is set to localhost
 ____________ Test_FormatSysCreator.test__get_creator_to_show_popup _____________
 
-self = <tests.test_api.Test_FormatSysCreator object at 0x7f1b2b9ae940>
+self = <tests.test_api.Test_FormatSysCreator object at 0x7fc5210cd7f0>
 app = <Flask 'testapp'>
 prepare_creator = {'creatorAffiliations': [{'affiliationNameIdentifiers': [{'affiliationNameIdentifier': 'xxxxxx', 'affiliationNameIdent...ng': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], ...}
 
@@ -3211,7 +3345,7 @@ _____________________________ test_depid_item_put ______________________________
 
 client = <FlaskClient <Flask 'testapp'>>
 users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 5>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
-es_records = (<weko_deposit.api.WekoIndexer object at 0x7f1b22dbdb38>, [{'depid': <[DetachedInstanceError("Instance <PersistentIden...is error at: http://sqlalche.me/e/bhk3)") raised in repr()] PersistentIdentifier object at 0x7f1b22cb49b0>, ...}, ...])
+es_records = (<weko_deposit.api.WekoIndexer object at 0x7fc5181ebfd0>, [{'depid': <[DetachedInstanceError("Instance <PersistentIden...is error at: http://sqlalche.me/e/bhk3)") raised in repr()] PersistentIdentifier object at 0x7fc5180dd748>, ...}, ...])
 
     def test_depid_item_put(client, users,es_records):
         login_user_via_session(client=client, email=users[2]['email'])
@@ -3266,15 +3400,15 @@ tests/test_rest.py:189: AssertionError
 ------------------------------ Captured log setup ------------------------------
 ext.py                     255 WARNING  JSONSCHEMAS_HOST is set to localhost
 ------------------------------ Captured log call -------------------------------
-api.py                    1426 ERROR    Traceback (most recent call last):
-  File "/code/modules/weko-deposit/weko_deposit/api.py", line 1414, in convert_item_metadata
+api.py                    1438 ERROR    Traceback (most recent call last):
+  File "/code/modules/weko-deposit/weko_deposit/api.py", line 1426, in convert_item_metadata
     dc, jrc, is_edit = json_loader(data, self.pid, owner_id=owner_id)
   File "/code/modules/weko-records/weko_records/utils.py", line 183, in json_loader
-    jrc = SchemaTree.get_jpcoar_json(jpcoar)
+    jrc = SchemaTree.get_jpcoar_json(jpcoar,replace_field=replace_field)
   File "/code/modules/weko-schema-ui/weko_schema_ui/schema.py", line 408, in get_jpcoar_json
-    obj.__get_value_list())))
+    obj.__get_value_list(replace_field=replace_field))))
   File "/code/modules/weko-schema-ui/weko_schema_ui/schema.py", line 1044, in __get_value_list
-    'WEKO_SCHEMA_JPCOAR_V2_SCHEMA_NAME']:
+    'WEKO_SCHEMA_JPCOAR_V2_SCHEMA_NAME'] and replace_field:
 KeyError: 'WEKO_SCHEMA_JPCOAR_V2_SCHEMA_NAME'
 
 rest.py                    286 ERROR    Unexpected error: 500 Internal Server Error: MAPPING_ERROR
@@ -8210,12 +8344,12 @@ tests/test_weko_deposit.py::test_ItemResource_put
 Name                         Stmts   Miss Branch BrPart  Cover
 --------------------------------------------------------------
 weko_deposit/__init__.py         4      0      0      0   100%
-weko_deposit/api.py           1471    235    736    113    81%
+weko_deposit/api.py           1481    243    746    115    80%
 weko_deposit/config.py          30      0      0      0   100%
 weko_deposit/ext.py             29      1     14      2    93%
 weko_deposit/links.py           18      0      0      0   100%
 weko_deposit/pidstore.py        42      0     12      1    98%
-weko_deposit/receivers.py       50     21     10      0    58%
+weko_deposit/receivers.py       58     24     14      2    58%
 weko_deposit/rest.py           140     29     48      8    77%
 weko_deposit/serializer.py      31      0     10      3    93%
 weko_deposit/signals.py          4      0      0      0   100%
@@ -8224,11 +8358,11 @@ weko_deposit/tasks.py          273    154    124      9    39%
 weko_deposit/version.py          2      0      0      0   100%
 weko_deposit/views.py            3      0      0      0   100%
 --------------------------------------------------------------
-TOTAL                         2149    445    968    138    76%
+TOTAL                         2167    456    982    142    76%
 Coverage HTML written to dir htmlcov
 Coverage XML written to file coverage.xml
 
-=========== 20 failed, 133 passed, 4026 warnings in 2470.64 seconds ============
+=========== 25 failed, 128 passed, 4026 warnings in 2481.68 seconds ============
 ERROR: InvocationError for command /code/modules/weko-deposit/.tox/c1/bin/pytest --cov=weko_deposit tests -v --cov-branch --cov-report=term --cov-report=xml --cov-report=html --basetemp=/code/modules/weko-deposit/.tox/c1/tmp (exited with code 1)
 ___________________________________ summary ____________________________________
 ERROR:   c1: commands failed

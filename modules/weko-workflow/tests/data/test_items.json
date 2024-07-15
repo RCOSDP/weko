@@ -181,5 +181,30 @@
         "resourceuri": "http://purl.org/coar/resource_type/c_5794",
         "resourcetype": "conference paper"
       }
+    },
+    {
+      "id": "3",
+      "pid": { "type": "depid", "value": "3", "revision_id": 0 },
+      "lang": "ja",
+      "owner": "1",
+      "title": "title3",
+      "owners": [1],
+      "status": "draft",
+      "$schema": "/items/jsonschema/15",
+      "pubdate": "2022-08-20",
+      "created_by": 1,
+      "owners_ext": {
+        "email": "wekosoftware@nii.ac.jp",
+        "username": "",
+        "displayname": ""
+      },
+      "shared_user_id": -1,
+      "item_1617186331708": [
+        { "subitem_1551255647225": "ff", "subitem_1551255648112": "ja" }
+      ],
+      "item_1617258105262": {
+        "resourceuri": "http://purl.org/coar/resource_type/c_5794",
+        "resourcetype": "conference paper"
+      }
     }
   ]
