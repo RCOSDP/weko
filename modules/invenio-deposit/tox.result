@@ -3,15 +3,15 @@ c1 create: /code/modules/invenio-deposit/.tox/c1
 c1 setuptools_version is setuptools==57.5.0
 c1 installdeps: pytest>=3, pytest-cov, -rrequirements2.txt
 c1 inst: /code/modules/invenio-deposit/.tox/.tmp/package/1/invenio-deposit-1.0.0a9.zip
-c1 installed: alabaster==0.7.13,alembic==0.9.6,amqp==2.6.0,angular-gettext-babel==0.3,aniso8601==8.0.0,arrow==0.12.1,asn1crypto==0.23.0,atomicwrites==1.4.1,attrs==17.4.0,b2handle==1.1.2,Babel==2.5.1,bagit==1.7.0,beautifulsoup4==4.9.3,bibtexparser==1.0.1,billiard==3.6.3.0,binaryornot==0.4.4,bleach==3.1.0,blinker==1.4,boto3==1.7.84,botocore==1.10.84,cachelib==0.1,cachetools==4.2.4,cchardet==2.1.1,celery==4.4.4,certifi==2017.11.5,cffi==1.11.2,chardet==3.0.4,citeproc-py==0.5.1,citeproc-py-styles==0.1.2,click==6.7,cookiecutter==1.6.0,counter-robots==2018.6,coverage==6.2,cryptography==2.1.4,datacite==1.0.1,DateTime==4.9,decorator==4.1.2,defusedxml==0.5.0,dictdiffer==0.7.0,distlib==0.3.6,dnspython==2.2.1,docutils==0.18.1,dojson==1.3.2,elasticsearch==6.1.1,elasticsearch-dsl==6.4.0,elementpath==1.0.6,email-validator==1.0.5,entrypoints==0.2.3,feedgen==0.7.0,filelock==3.4.1,Flask==1.1.0,Flask-Admin==1.5.3,Flask-Alembic==2.0.1,Flask-Assets==0.12,Flask-BabelEx==0.9.4,Flask-Breadcrumbs==0.5.0,Flask-Caching==1.10.1,Flask-CeleryExt==0.3.4,Flask-Collect==1.2.2,Flask-Cors==3.0.3,Flask-DebugToolbar==0.13.1,Flask-IIIF==0.6.1,Flask-KVSession==0.6.2,Flask-Limiter==1.1.0,Flask-Login==0.4.1,Flask-Mail==0.9.1,flask-marshmallow==0.14.0,Flask-Menu==0.6.0,-e git+https://github.com/RCOSDP/flask-oauthlib.git@98eb36e1dfc66256fa7ea62237e9879acb906e9d#egg=Flask_OAuthlib,Flask-Plugins==1.6.1,Flask-Principal==0.4.0,Flask-RESTful==0.3.8,Flask-Security==3.0.0,flask-shell-ipython==0.4.1,Flask-Sitemap==0.4.0,Flask-SQLAlchemy==2.3.2,flask-talisman==0.4.1,Flask-WTF==0.14.3,-e git+https://github.com/RCOSDP/pyfpdf.git@f9b032148283d535cabc7789858081c80de36fef#egg=fpdf,frozendict==2.3.8,fs==0.5.4,ftfy==4.4.3,future==0.16.0,github3.py==1.1.0,html5lib==1.0.1,idna==2.6,iiif-prezi==0.3.0,imagesize==1.4.1,importlib-metadata==4.8.3,importlib-resources==5.4.0,infinity==1.4,intervals==0.8.0,invenio-access==1.1.0,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=invenio_accounts&subdirectory=modules/invenio-accounts,invenio-admin==1.1.2,invenio-app==1.1.0,invenio-assets==1.0.0,invenio-base==1.0.2,invenio-cache==1.0.0,invenio-celery==1.1.3,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=invenio_communities&subdirectory=modules/invenio-communities,invenio-config==1.0.0,invenio-csl-rest==1.0.0a1,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=invenio_db&subdirectory=modules/invenio-db,invenio-deposit @ file:///code/modules/invenio-deposit/.tox/.tmp/package/1/invenio-deposit-1.0.0a9.zip,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=invenio_files_rest&subdirectory=modules/invenio-files-rest,invenio-formatter==1.0.0b3,invenio-i18n==1.0.0,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=invenio_iiif&subdirectory=modules/invenio-iiif,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=invenio_indexer&subdirectory=modules/invenio-indexer,invenio-jsonschemas==1.0.0,invenio-logging==1.0.0b3,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=invenio_mail&subdirectory=modules/invenio-mail,invenio-marc21==1.0.0a8,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=invenio_oaiharvester&subdirectory=modules/invenio-oaiharvester,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=invenio_oaiserver&subdirectory=modules/invenio-oaiserver,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=invenio_oauth2server&subdirectory=modules/invenio-oauth2server,invenio-oauthclient==1.0.0,invenio-pidrelations==1.0.0a4,invenio-pidstore==1.0.0,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=invenio_previewer&subdirectory=modules/invenio-previewer,invenio-query-parser==0.6.0,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=invenio_queues&subdirectory=modules/invenio-queues,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=invenio_records&subdirectory=modules/invenio-records,invenio-records-files==1.0.0a10,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=invenio_records_rest&subdirectory=modules/invenio-records-rest,invenio-records-ui==1.0.0,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=invenio_resourcesyncclient&subdirectory=modules/invenio-resourcesyncclient,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=invenio_resourcesyncserver&subdirectory=modules/invenio-resourcesyncserver,invenio-rest==1.1.2,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=invenio_s3&subdirectory=modules/invenio-s3,-e git+https://github.com/RCOSDP/invenio-search.git@cff9744c5dc651893a9c51672c5b8da9adc21e16#egg=invenio_search,-e git+https://github.com/RCOSDP/invenio-search-ui.git@74bd3b2990ff27b39e01b6b31be9a0b5fda3dd0f#egg=invenio_search_ui,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=invenio_stats&subdirectory=modules/invenio-stats,invenio-theme==1.0.0b4,ipaddress==1.0.19,ipython==6.2.1,ipython-genutils==0.2.0,itsdangerous==0.24,jedi==0.11.0,Jinja2==2.10.1,jinja2-cli==0.6.0,jinja2-time==0.2.0,jmespath==0.10.0,jsmin==2.2.2,jsonpatch==1.21,jsonpath-ng==1.5.2,jsonpointer==1.14,jsonref==0.1,jsonresolver==0.2.1,jsonschema==2.6.0,jupyter-client==5.2.2,jupyter-core==4.4.0,-e git+https://github.com/RCOSDP/kombu.git@f204fdf078d5e94393c86693f545e2d011f620f5#egg=kombu,limits==1.2.1,lxml==4.1.1,Mako==1.0.7,MarkupSafe==1.1.1,marshmallow==2.20.1,marshmallow-sqlalchemy==0.23.1,maxminddb==1.5.2,maxminddb-geolite2==2017.803,mistune==0.8.3,mock==5.0.2,more-itertools==8.10.0,msgpack==0.6.2,nbconvert==5.3.1,nbformat==4.4.0,netaddr==0.8.0,node-semver==0.1.1,numpy==1.16.1,oauthlib==2.1.0,ordereddict==1.1,packaging==21.3,pandocfilters==1.4.2,parso==0.1.0,passlib==1.7.1,pbr==5.11.1,pexpect==4.3.0,pickleshare==0.7.4,Pillow==5.4.1,platformdirs==2.4.0,pluggy==0.13.1,ply==3.11,poyo==0.4.1,prompt-toolkit==1.0.15,psycopg2==2.7.3.2,ptyprocess==0.5.2,py==1.11.0,pycparser==2.18,Pygments==2.2.0,PyJWT==1.5.3,PyLD==2.0.3,pyparsing==3.1.0,-e git+https://github.com/RCOSDP/PyPDF2.git@fefc684a3a74aff6f99e5dff24f9b4dd1c95169d#egg=PyPDF2,pyPEG2==2.15.2,pytest==4.2.0,pytest-cov==2.9.0,python-dateutil==2.6.1,python-editor==1.0.3,python-geoip==1.2,pytz==2017.3,pyzmq==17.0.0,redis==2.10.6,requests==2.18.4,requests-oauthlib==1.1.0,resync==1.0.9,s3fs==0.1.6,s3transfer==0.1.13,selenium==3.141.0,Sickle==0.6.4,simplegeneric==0.8.1,simplejson==3.12.0,simplekv==0.11.2,six==1.16.0,snowballstemmer==2.2.0,soupsieve==2.3.2.post1,speaklater==1.3,Sphinx==1.8.4,sphinxcontrib-serializinghtml==1.1.5,sphinxcontrib-websupport==1.2.4,SQLAlchemy==1.2.19,SQLAlchemy-Continuum==1.3.6,SQLAlchemy-Utils==0.35.0,stevedore==3.5.2,sword3common==0.1.1,testpath==0.3.1,tika==2.6.0,toml==0.10.2,tornado==4.5.3,tox==3.28.0,traitlets==4.3.2,typing_extensions==4.1.1,ua-parser==0.7.3,uritemplate==4.1.1,uritools==2.1.0,urllib3==1.22,uWSGI==2.0.21,uwsgitop==0.11,validators==0.12.0,vine==1.3.0,virtualenv==20.17.1,virtualenv-clone==0.5.7,virtualenvwrapper==4.8.4,Wand==0.6.1,wcwidth==0.1.7,webargs==5.5.2,webassets==0.12.1,webencodings==0.5.1,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_accounts&subdirectory=modules/weko-accounts,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_admin&subdirectory=modules/weko-admin,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_authors&subdirectory=modules/weko-authors,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_bulkupdate&subdirectory=modules/weko-bulkupdate,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_deposit&subdirectory=modules/weko-deposit,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_gridlayout&subdirectory=modules/weko-gridlayout,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_groups&subdirectory=modules/weko-groups,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_handle&subdirectory=modules/weko-handle,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_index_tree&subdirectory=modules/weko-index-tree,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_indextree_journal&subdirectory=modules/weko-indextree-journal,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_items_autofill&subdirectory=modules/weko-items-autofill,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_items_ui&subdirectory=modules/weko-items-ui,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_itemtypes_ui&subdirectory=modules/weko-itemtypes-ui,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_logging&subdirectory=modules/weko-logging,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_records&subdirectory=modules/weko-records,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_records_ui&subdirectory=modules/weko-records-ui,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_redis&subdirectory=modules/weko-redis,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_schema_ui&subdirectory=modules/weko-schema-ui,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_search_ui&subdirectory=modules/weko-search-ui,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_sitemap&subdirectory=modules/weko-sitemap,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_swordserver&subdirectory=modules/weko-swordserver,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_theme&subdirectory=modules/weko-theme,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_user_profiles&subdirectory=modules/weko-user-profiles,-e git+https://github.com/RCOSDP/weko.git@9e2ff42cef3fe897016441f305f67d5a18580e9c#egg=weko_workflow&subdirectory=modules/weko-workflow,Werkzeug==0.15.2,whichcraft==0.4.1,WTForms==2.1,WTForms-Alchemy==0.16.5,WTForms-Components==0.10.3,xmlschema==0.9.30,xmltodict==0.12.0,zipp==3.6.0,zope.interface==5.5.2
-c1 run-test-pre: PYTHONHASHSEED='2677215674'
+c1 installed: alabaster==0.7.13,alembic==0.9.6,amqp==2.6.0,angular-gettext-babel==0.3,aniso8601==8.0.0,arrow==0.12.1,asn1crypto==0.23.0,atomicwrites==1.4.1,attrs==17.4.0,b2handle==1.1.2,Babel==2.5.1,bagit==1.7.0,beautifulsoup4==4.9.3,bibtexparser==1.0.1,billiard==3.6.3.0,binaryornot==0.4.4,bleach==3.1.0,blinker==1.4,boto3==1.7.84,botocore==1.10.84,cachelib==0.1,cachetools==4.2.4,cchardet==2.1.1,celery==4.4.4,certifi==2017.11.5,cffi==1.11.2,chardet==3.0.4,citeproc-py==0.5.1,citeproc-py-styles==0.1.2,click==6.7,cookiecutter==1.6.0,counter-robots==2018.6,coverage==6.2,cryptography==2.1.4,datacite==1.0.1,DateTime==4.9,decorator==4.1.2,defusedxml==0.5.0,dictdiffer==0.7.0,distlib==0.3.6,dnspython==2.2.1,docutils==0.18.1,dojson==1.3.2,elasticsearch==6.1.1,elasticsearch-dsl==6.4.0,elementpath==1.0.6,email-validator==1.0.5,entrypoints==0.2.3,feedgen==0.7.0,filelock==3.4.1,Flask==1.1.0,Flask-Admin==1.5.3,Flask-Alembic==2.0.1,Flask-Assets==0.12,Flask-BabelEx==0.9.4,Flask-Breadcrumbs==0.5.0,Flask-Caching==1.10.1,Flask-CeleryExt==0.3.4,Flask-Collect==1.2.2,Flask-Cors==3.0.3,Flask-DebugToolbar==0.13.1,Flask-IIIF==0.6.1,Flask-KVSession==0.6.2,Flask-Limiter==1.1.0,Flask-Login==0.4.1,Flask-Mail==0.9.1,flask-marshmallow==0.14.0,Flask-Menu==0.6.0,-e git+https://github.com/RCOSDP/flask-oauthlib.git@98eb36e1dfc66256fa7ea62237e9879acb906e9d#egg=Flask_OAuthlib,Flask-Plugins==1.6.1,Flask-Principal==0.4.0,Flask-RESTful==0.3.8,Flask-Security==3.0.0,flask-shell-ipython==0.4.1,Flask-Sitemap==0.4.0,Flask-SQLAlchemy==2.3.2,flask-talisman==0.4.1,Flask-WTF==0.14.3,-e git+https://github.com/RCOSDP/pyfpdf.git@f9b032148283d535cabc7789858081c80de36fef#egg=fpdf,frozendict==2.3.8,fs==0.5.4,ftfy==4.4.3,future==0.16.0,github3.py==1.1.0,html5lib==1.0.1,idna==2.6,iiif-prezi==0.3.0,imagesize==1.4.1,importlib-metadata==4.8.3,importlib-resources==5.4.0,infinity==1.4,intervals==0.8.0,invenio-access==1.1.0,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=invenio_accounts&subdirectory=modules/invenio-accounts,invenio-admin==1.1.2,invenio-app==1.1.0,invenio-assets==1.0.0,invenio-base==1.0.2,invenio-cache==1.0.0,invenio-celery==1.1.3,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=invenio_communities&subdirectory=modules/invenio-communities,invenio-config==1.0.0,invenio-csl-rest==1.0.0a1,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=invenio_db&subdirectory=modules/invenio-db,invenio-deposit @ file:///code/modules/invenio-deposit/.tox/.tmp/package/1/invenio-deposit-1.0.0a9.zip,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=invenio_files_rest&subdirectory=modules/invenio-files-rest,invenio-formatter==1.0.0b3,invenio-i18n==1.0.0,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=invenio_iiif&subdirectory=modules/invenio-iiif,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=invenio_indexer&subdirectory=modules/invenio-indexer,invenio-jsonschemas==1.0.0,invenio-logging==1.0.0b3,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=invenio_mail&subdirectory=modules/invenio-mail,invenio-marc21==1.0.0a8,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=invenio_oaiharvester&subdirectory=modules/invenio-oaiharvester,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=invenio_oaiserver&subdirectory=modules/invenio-oaiserver,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=invenio_oauth2server&subdirectory=modules/invenio-oauth2server,invenio-oauthclient==1.0.0,invenio-pidrelations==1.0.0a4,invenio-pidstore==1.0.0,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=invenio_previewer&subdirectory=modules/invenio-previewer,invenio-query-parser==0.6.0,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=invenio_queues&subdirectory=modules/invenio-queues,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=invenio_records&subdirectory=modules/invenio-records,invenio-records-files==1.0.0a10,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=invenio_records_rest&subdirectory=modules/invenio-records-rest,invenio-records-ui==1.0.0,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=invenio_resourcesyncclient&subdirectory=modules/invenio-resourcesyncclient,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=invenio_resourcesyncserver&subdirectory=modules/invenio-resourcesyncserver,invenio-rest==1.1.2,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=invenio_s3&subdirectory=modules/invenio-s3,-e git+https://github.com/RCOSDP/invenio-search.git@cff9744c5dc651893a9c51672c5b8da9adc21e16#egg=invenio_search,-e git+https://github.com/RCOSDP/invenio-search-ui.git@74bd3b2990ff27b39e01b6b31be9a0b5fda3dd0f#egg=invenio_search_ui,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=invenio_stats&subdirectory=modules/invenio-stats,invenio-theme==1.0.0b4,ipaddress==1.0.19,ipython==6.2.1,ipython-genutils==0.2.0,itsdangerous==0.24,jedi==0.11.0,Jinja2==2.10.1,jinja2-cli==0.6.0,jinja2-time==0.2.0,jmespath==0.10.0,jsmin==2.2.2,jsonpatch==1.21,jsonpath-ng==1.5.2,jsonpointer==1.14,jsonref==0.1,jsonresolver==0.2.1,jsonschema==2.6.0,jupyter-client==5.2.2,jupyter-core==4.4.0,-e git+https://github.com/RCOSDP/kombu.git@f204fdf078d5e94393c86693f545e2d011f620f5#egg=kombu,limits==1.2.1,lxml==4.1.1,Mako==1.0.7,MarkupSafe==1.1.1,marshmallow==2.20.1,marshmallow-sqlalchemy==0.23.1,maxminddb==1.5.2,maxminddb-geolite2==2017.803,mistune==0.8.3,mock==5.0.2,more-itertools==8.10.0,msgpack==0.6.2,nbconvert==5.3.1,nbformat==4.4.0,netaddr==0.8.0,node-semver==0.1.1,numpy==1.16.1,oauthlib==2.1.0,ordereddict==1.1,packaging==21.3,pandocfilters==1.4.2,parso==0.1.0,passlib==1.7.1,pbr==5.11.1,pexpect==4.3.0,pickleshare==0.7.4,Pillow==5.4.1,platformdirs==2.4.0,pluggy==0.13.1,ply==3.11,poyo==0.4.1,prompt-toolkit==1.0.15,psycopg2==2.7.3.2,ptyprocess==0.5.2,py==1.11.0,pycparser==2.18,Pygments==2.2.0,PyJWT==1.5.3,PyLD==2.0.3,pyparsing==3.1.0,-e git+https://github.com/RCOSDP/PyPDF2.git@fefc684a3a74aff6f99e5dff24f9b4dd1c95169d#egg=PyPDF2,pyPEG2==2.15.2,pytest==4.2.0,pytest-cov==2.9.0,python-dateutil==2.6.1,python-editor==1.0.3,python-geoip==1.2,pytz==2017.3,pyzmq==17.0.0,redis==2.10.6,requests==2.18.4,requests-oauthlib==1.1.0,resync==1.0.9,s3fs==0.1.6,s3transfer==0.1.13,selenium==3.141.0,Sickle==0.6.4,simplegeneric==0.8.1,simplejson==3.12.0,simplekv==0.11.2,six==1.16.0,snowballstemmer==2.2.0,soupsieve==2.3.2.post1,speaklater==1.3,Sphinx==1.8.4,sphinxcontrib-serializinghtml==1.1.5,sphinxcontrib-websupport==1.2.4,SQLAlchemy==1.2.19,SQLAlchemy-Continuum==1.3.6,SQLAlchemy-Utils==0.35.0,stevedore==3.5.2,sword3common==0.1.1,testpath==0.3.1,tika==2.6.0,toml==0.10.2,tornado==4.5.3,tox==3.28.0,traitlets==4.3.2,typing_extensions==4.1.1,ua-parser==0.7.3,uritemplate==4.1.1,uritools==2.1.0,urllib3==1.22,uWSGI==2.0.21,uwsgitop==0.11,validators==0.12.0,vine==1.3.0,virtualenv==20.17.1,virtualenv-clone==0.5.7,virtualenvwrapper==4.8.4,Wand==0.6.1,wcwidth==0.1.7,webargs==5.5.2,webassets==0.12.1,webencodings==0.5.1,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=weko_accounts&subdirectory=modules/weko-accounts,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=weko_admin&subdirectory=modules/weko-admin,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=weko_authors&subdirectory=modules/weko-authors,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=weko_bulkupdate&subdirectory=modules/weko-bulkupdate,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=weko_deposit&subdirectory=modules/weko-deposit,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=weko_gridlayout&subdirectory=modules/weko-gridlayout,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=weko_groups&subdirectory=modules/weko-groups,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=weko_handle&subdirectory=modules/weko-handle,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=weko_index_tree&subdirectory=modules/weko-index-tree,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=weko_indextree_journal&subdirectory=modules/weko-indextree-journal,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=weko_items_autofill&subdirectory=modules/weko-items-autofill,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=weko_items_ui&subdirectory=modules/weko-items-ui,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=weko_itemtypes_ui&subdirectory=modules/weko-itemtypes-ui,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=weko_logging&subdirectory=modules/weko-logging,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=weko_records&subdirectory=modules/weko-records,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=weko_records_ui&subdirectory=modules/weko-records-ui,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=weko_redis&subdirectory=modules/weko-redis,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=weko_schema_ui&subdirectory=modules/weko-schema-ui,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=weko_search_ui&subdirectory=modules/weko-search-ui,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=weko_sitemap&subdirectory=modules/weko-sitemap,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=weko_swordserver&subdirectory=modules/weko-swordserver,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=weko_theme&subdirectory=modules/weko-theme,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=weko_user_profiles&subdirectory=modules/weko-user-profiles,-e git+https://github.com/RCOSDP/weko.git@ae2e1abe9b2666157a8d8a5ea83dba052235fb68#egg=weko_workflow&subdirectory=modules/weko-workflow,Werkzeug==0.15.2,whichcraft==0.4.1,WTForms==2.1,WTForms-Alchemy==0.16.5,WTForms-Components==0.10.3,xmlschema==0.9.30,xmltodict==0.12.0,zipp==3.6.0,zope.interface==5.5.2
+c1 run-test-pre: PYTHONHASHSEED='1032477392'
 c1 run-test: commands[0] | pytest --cov=invenio_deposit tests -v --cov-branch --cov-report=term --cov-report=xml --cov-report=html --basetemp=/code/modules/invenio-deposit/.tox/c1/tmp
 ============================= test session starts ==============================
 platform linux -- Python 3.6.15, pytest-4.2.0, py-1.11.0, pluggy-0.13.1 -- /code/modules/invenio-deposit/.tox/c1/bin/python
 cachedir: .tox/c1/.pytest_cache
 rootdir: /code/modules/invenio-deposit, inifile:
 plugins: celery-4.4.4, cov-2.9.0
-collecting ... collected 39 items
+collecting ... collected 40 items
 
 tests/test_api.py::test_schemas PASSED                                   [  2%]
 tests/test_api.py::test_simple_flow PASSED                               [  5%]
@@ -19,40 +19,40 @@ tests/test_api.py::test_delete PASSED                                    [  7%]
 tests/test_api.py::test_files_property PASSED                            [ 10%]
 tests/test_api.py::test_publish_revision_changed_mergeable PASSED        [ 12%]
 tests/test_api.py::test_publish_revision_changed_not_mergeable PASSED    [ 15%]
-tests/test_cli.py::test_reindex FAILED                                   [ 17%]
+tests/test_cli.py::test_reindex PASSED                                   [ 17%]
 tests/test_examples_app.py::test_example_app ERROR                       [ 20%]
-tests/test_invenio_deposit.py::test_version PASSED                       [ 23%]
+tests/test_invenio_deposit.py::test_version PASSED                       [ 22%]
 tests/test_invenio_deposit.py::test_bundles PASSED                       [ 25%]
-tests/test_invenio_deposit.py::test_init PASSED                          [ 28%]
+tests/test_invenio_deposit.py::test_init PASSED                          [ 27%]
 tests/test_invenio_deposit.py::test_conflict_in_endpoint_prefixes PASSED [ 30%]
-tests/test_invenio_deposit.py::test_template PASSED                      [ 33%]
+tests/test_invenio_deposit.py::test_template PASSED                      [ 32%]
 tests/test_views_rest.py::test_publish_merge_conflict PASSED             [ 35%]
-tests/test_views_rest.py::test_edit_deposit_users[None-401] PASSED       [ 38%]
-tests/test_views_rest.py::test_edit_deposit_users[user_info1-200] FAILED [ 41%]
-tests/test_views_rest.py::test_edit_deposit_users[user_info2-403] PASSED [ 43%]
-tests/test_views_rest.py::test_edit_deposit_by_good_oauth2_token FAILED  [ 46%]
-tests/test_views_rest.py::test_edit_deposit_by_bad_oauth2_token PASSED   [ 48%]
-tests/test_views_rest.py::test_delete_deposit_users[None-401] PASSED     [ 51%]
-tests/test_views_rest.py::test_delete_deposit_users[user_info1-204] PASSED [ 53%]
-tests/test_views_rest.py::test_delete_deposit_users[user_info2-403] PASSED [ 56%]
-tests/test_views_rest.py::test_links_html_link_missing FAILED            [ 58%]
-tests/test_views_rest.py::test_delete_deposit_by_good_oauth2_token PASSED [ 61%]
-tests/test_views_rest.py::test_delete_deposit_by_bad_oauth2_token PASSED [ 64%]
-tests/test_views_rest.py::test_deposition_file_operations FAILED         [ 66%]
-tests/test_views_rest.py::test_simple_rest_flow FAILED                   [ 69%]
-tests/test_views_rest_files.py::test_created_by_population PASSED        [ 71%]
-tests/test_views_rest_files.py::test_files_get PASSED                    [ 74%]
-tests/test_views_rest_files.py::test_files_get_oauth2 PASSED             [ 76%]
-tests/test_views_rest_files.py::test_files_get_without_files PASSED      [ 79%]
-tests/test_views_rest_files.py::test_files_post_oauth2 PASSED            [ 82%]
-tests/test_views_rest_files.py::test_files_post PASSED                   [ 84%]
-tests/test_views_rest_files.py::test_files_put PASSED                    [ 87%]
-tests/test_views_rest_files.py::test_file_get_not_found PASSED           [ 89%]
-tests/test_views_rest_files.py::test_file_put_not_found_bucket_not_exist PASSED [ 92%]
-tests/test_views_rest_files.py::test_file_put_not_found_file_not_exist PASSED [ 94%]
-tests/test_views_ui.py::test_index_new FAILED                            [ 97%]
+tests/test_views_rest.py::test_edit_deposit_users[None-401] PASSED       [ 37%]
+tests/test_views_rest.py::test_edit_deposit_users[user_info1-200] PASSED [ 40%]
+tests/test_views_rest.py::test_edit_deposit_users[user_info2-403] PASSED [ 42%]
+tests/test_views_rest.py::test_edit_deposit_by_good_oauth2_token PASSED  [ 45%]
+tests/test_views_rest.py::test_edit_deposit_by_bad_oauth2_token PASSED   [ 47%]
+tests/test_views_rest.py::test_delete_deposit_users[None-401] PASSED     [ 50%]
+tests/test_views_rest.py::test_delete_deposit_users[user_info1-204] PASSED [ 52%]
+tests/test_views_rest.py::test_delete_deposit_users[user_info2-403] PASSED [ 55%]
+tests/test_views_rest.py::test_links_html_link_missing FAILED            [ 57%]
+tests/test_views_rest.py::test_delete_deposit_by_good_oauth2_token PASSED [ 60%]
+tests/test_views_rest.py::test_delete_deposit_by_bad_oauth2_token PASSED [ 62%]
+tests/test_views_rest.py::test_deposition_file_operations FAILED         [ 65%]
+tests/test_views_rest.py::test_simple_rest_flow FAILED                   [ 67%]
+tests/test_views_rest_files.py::test_created_by_population PASSED        [ 70%]
+tests/test_views_rest_files.py::test_files_get PASSED                    [ 72%]
+tests/test_views_rest_files.py::test_files_get_oauth2 PASSED             [ 75%]
+tests/test_views_rest_files.py::test_files_get_without_files PASSED      [ 77%]
+tests/test_views_rest_files.py::test_files_post_oauth2 PASSED            [ 80%]
+tests/test_views_rest_files.py::test_files_post PASSED                   [ 82%]
+tests/test_views_rest_files.py::test_files_put PASSED                    [ 85%]
+tests/test_views_rest_files.py::test_file_get_not_found PASSED           [ 87%]
+tests/test_views_rest_files.py::test_file_put_not_found_bucket_not_exist PASSED [ 90%]
+tests/test_views_rest_files.py::test_file_put_not_found_file_not_exist PASSED [ 92%]
+tests/test_views_ui.py::test_index_new_guest PASSED                      [ 95%]
+tests/test_views_ui.py::test_index_new PASSED                            [ 97%]
 tests/test_views_ui.py::test_edit PASSED                                 [100%]
-tests/test_views_ui.py::test_edit ERROR                                  [100%]
 
 ==================================== ERRORS ====================================
 ______________________ ERROR at setup of test_example_app ______________________
@@ -83,12 +83,12 @@ Requirement already satisfied: invenio-i18n>=1.0.0b1 in /code/modules/invenio-de
 Requirement already satisfied: invenio-pidstore>=1.0.0a9 in /code/modules/invenio-deposit/.tox/c1/lib/python3.6/site-packages (from -r requirements.txt (line 30)) (1.0.0)
 Requirement already satisfied: invenio-rest[cors]>=1.0.0a9 in /code/modules/invenio-deposit/.tox/c1/lib/python3.6/site-packages (from -r requirements.txt (line 31)) (1.1.2)
 Requirement already satisfied: invenio-theme>=1.0.0a17 in /code/modules/invenio-deposit/.tox/c1/lib/python3.6/site-packages (from -r requirements.txt (line 32)) (1.0.0b4)
-Requirement already satisfied: click>=5.0.0 in /code/modules/invenio-deposit/.tox/c1/lib/python3.6/site-packages (from dojson>=1.0.0->-r requirements.txt (line 25)) (6.7)
 Requirement already satisfied: lxml>=3.4 in /code/modules/invenio-deposit/.tox/c1/lib/python3.6/site-packages (from dojson>=1.0.0->-r requirements.txt (line 25)) (4.1.1)
+Requirement already satisfied: click>=5.0.0 in /code/modules/invenio-deposit/.tox/c1/lib/python3.6/site-packages (from dojson>=1.0.0->-r requirements.txt (line 25)) (6.7)
 Requirement already satisfied: simplejson>=3.8.1 in /code/modules/invenio-deposit/.tox/c1/lib/python3.6/site-packages (from dojson>=1.0.0->-r requirements.txt (line 25)) (3.12.0)
+Requirement already satisfied: six>=1.10 in /code/modules/invenio-deposit/.tox/c1/lib/python3.6/site-packages (from invenio-access>=1.0.0a9->-r requirements.txt (line 26)) (1.16.0)
 Requirement already satisfied: Flask-BabelEx>=0.9.3 in /code/modules/invenio-deposit/.tox/c1/lib/python3.6/site-packages (from invenio-access>=1.0.0a9->-r requirements.txt (line 26)) (0.9.4)
 Requirement already satisfied: Flask>=0.11.1 in /code/modules/invenio-deposit/.tox/c1/lib/python3.6/site-packages (from invenio-access>=1.0.0a9->-r requirements.txt (line 26)) (1.1.0)
-Requirement already satisfied: six>=1.10 in /code/modules/invenio-deposit/.tox/c1/lib/python3.6/site-packages (from invenio-access>=1.0.0a9->-r requirements.txt (line 26)) (1.16.0)
 Requirement already satisfied: cryptography>=2.1.4 in /code/modules/invenio-deposit/.tox/c1/lib/python3.6/site-packages (from invenio-accounts>=1.0.0a13->-r requirements.txt (line 27)) (2.1.4)
 Requirement already satisfied: email-validator>=1.0.5 in /code/modules/invenio-deposit/.tox/c1/lib/python3.6/site-packages (from invenio-accounts>=1.0.0a13->-r requirements.txt (line 27)) (1.0.5)
 Requirement already satisfied: Flask-Breadcrumbs>=0.4.0 in /code/modules/invenio-deposit/.tox/c1/lib/python3.6/site-packages (from invenio-accounts>=1.0.0a13->-r requirements.txt (line 27)) (0.5.0)
@@ -109,30 +109,30 @@ Requirement already satisfied: SQLAlchemy-Utils>=0.31.0 in /code/modules/invenio
 Requirement already satisfied: ua-parser>=0.7.3 in /code/modules/invenio-deposit/.tox/c1/lib/python3.6/site-packages (from invenio-accounts>=1.0.0a13->-r requirements.txt (line 27)) (0.7.3)
 Requirement already satisfied: werkzeug>=0.15 in /code/modules/invenio-deposit/.tox/c1/lib/python3.6/site-packages (from invenio-accounts>=1.0.0a13->-r requirements.txt (line 27)) (0.15.2)
 Requirement already satisfied: Flask-Principal>=0.4.0 in /code/modules/invenio-deposit/.tox/c1/lib/python3.6/site-packages (from invenio-admin>=1.0.0a3->-r requirements.txt (line 28)) (0.4.0)
-Requirement already satisfied: invenio-db>=1.0.0 in /code/modules/invenio-db (from invenio-admin>=1.0.0a3->-r requirements.txt (line 28)) (1.0.4)
 Requirement already satisfied: Flask-Admin>=1.5.3 in /code/modules/invenio-deposit/.tox/c1/lib/python3.6/site-packages (from invenio-admin>=1.0.0a3->-r requirements.txt (line 28)) (1.5.3)
+Requirement already satisfied: invenio-db>=1.0.0 in /code/modules/invenio-db (from invenio-admin>=1.0.0a3->-r requirements.txt (line 28)) (1.0.4)
 Requirement already satisfied: webargs>=5.5.0 in /code/modules/invenio-deposit/.tox/c1/lib/python3.6/site-packages (from invenio-rest[cors]>=1.0.0a9->-r requirements.txt (line 31)) (5.5.2)
 Requirement already satisfied: marshmallow>=2.15.2 in /code/modules/invenio-deposit/.tox/c1/lib/python3.6/site-packages (from invenio-rest[cors]>=1.0.0a9->-r requirements.txt (line 31)) (2.20.1)
 Requirement already satisfied: Flask-CORS>=2.1.0 in /code/modules/invenio-deposit/.tox/c1/lib/python3.6/site-packages (from invenio-rest[cors]>=1.0.0a9->-r requirements.txt (line 31)) (3.0.3)
 Requirement already satisfied: jsmin>=2.1.6 in /code/modules/invenio-deposit/.tox/c1/lib/python3.6/site-packages (from invenio-theme>=1.0.0a17->-r requirements.txt (line 32)) (2.2.2)
 Requirement already satisfied: invenio-assets>=1.0.0b6 in /code/modules/invenio-deposit/.tox/c1/lib/python3.6/site-packages (from invenio-theme>=1.0.0a17->-r requirements.txt (line 32)) (1.0.0)
-Requirement already satisfied: cffi>=1.7 in /code/modules/invenio-deposit/.tox/c1/lib/python3.6/site-packages (from cryptography>=2.1.4->invenio-accounts>=1.0.0a13->-r requirements.txt (line 27)) (1.11.2)
 Requirement already satisfied: idna>=2.1 in /code/modules/invenio-deposit/.tox/c1/lib/python3.6/site-packages (from cryptography>=2.1.4->invenio-accounts>=1.0.0a13->-r requirements.txt (line 27)) (2.6)
 Requirement already satisfied: asn1crypto>=0.21.0 in /code/modules/invenio-deposit/.tox/c1/lib/python3.6/site-packages (from cryptography>=2.1.4->invenio-accounts>=1.0.0a13->-r requirements.txt (line 27)) (0.23.0)
+Requirement already satisfied: cffi>=1.7 in /code/modules/invenio-deposit/.tox/c1/lib/python3.6/site-packages (from cryptography>=2.1.4->invenio-accounts>=1.0.0a13->-r requirements.txt (line 27)) (1.11.2)
 Requirement already satisfied: dnspython>=1.15.0 in /code/modules/invenio-deposit/.tox/c1/lib/python3.6/site-packages (from email-validator>=1.0.5->invenio-accounts>=1.0.0a13->-r requirements.txt (line 27)) (2.2.1)
 Requirement already satisfied: itsdangerous>=0.24 in /code/modules/invenio-deposit/.tox/c1/lib/python3.6/site-packages (from Flask>=0.11.1->invenio-access>=1.0.0a9->-r requirements.txt (line 26)) (0.24)
 Requirement already satisfied: Jinja2>=2.10.1 in /code/modules/invenio-deposit/.tox/c1/lib/python3.6/site-packages (from Flask>=0.11.1->invenio-access>=1.0.0a9->-r requirements.txt (line 26)) (2.10.1)
 Requirement already satisfied: wtforms in /code/modules/invenio-deposit/.tox/c1/lib/python3.6/site-packages (from Flask-Admin>=1.5.3->invenio-admin>=1.0.0a3->-r requirements.txt (line 28)) (2.1)
-Requirement already satisfied: speaklater>=1.2 in /code/modules/invenio-deposit/.tox/c1/lib/python3.6/site-packages (from Flask-BabelEx>=0.9.3->invenio-access>=1.0.0a9->-r requirements.txt (line 26)) (1.3)
 Requirement already satisfied: Babel>=1.0 in /code/modules/invenio-deposit/.tox/c1/lib/python3.6/site-packages (from Flask-BabelEx>=0.9.3->invenio-access>=1.0.0a9->-r requirements.txt (line 26)) (2.5.1)
+Requirement already satisfied: speaklater>=1.2 in /code/modules/invenio-deposit/.tox/c1/lib/python3.6/site-packages (from Flask-BabelEx>=0.9.3->invenio-access>=1.0.0a9->-r requirements.txt (line 26)) (1.3)
 Requirement already satisfied: blinker in /code/modules/invenio-deposit/.tox/c1/lib/python3.6/site-packages (from Flask-Mail>=0.9.1->invenio-accounts>=1.0.0a13->-r requirements.txt (line 27)) (1.4)
-Requirement already satisfied: Flask-Collect==1.2.2 in /code/modules/invenio-deposit/.tox/c1/lib/python3.6/site-packages (from invenio-assets>=1.0.0b6->invenio-theme>=1.0.0a17->-r requirements.txt (line 32)) (1.2.2)
-Requirement already satisfied: node-semver<0.2.0,>=0.1.1 in /code/modules/invenio-deposit/.tox/c1/lib/python3.6/site-packages (from invenio-assets>=1.0.0b6->invenio-theme>=1.0.0a17->-r requirements.txt (line 32)) (0.1.1)
 Requirement already satisfied: webassets>=0.12 in /code/modules/invenio-deposit/.tox/c1/lib/python3.6/site-packages (from invenio-assets>=1.0.0b6->invenio-theme>=1.0.0a17->-r requirements.txt (line 32)) (0.12.1)
 Requirement already satisfied: Flask-Assets>=0.12 in /code/modules/invenio-deposit/.tox/c1/lib/python3.6/site-packages (from invenio-assets>=1.0.0b6->invenio-theme>=1.0.0a17->-r requirements.txt (line 32)) (0.12)
-Requirement already satisfied: Flask-CeleryExt>=0.3.4 in /code/modules/invenio-deposit/.tox/c1/lib/python3.6/site-packages (from invenio-celery>=1.1.2->invenio-accounts>=1.0.0a13->-r requirements.txt (line 27)) (0.3.4)
-Requirement already satisfied: celery!=4.3,>=4.2.1 in /code/modules/invenio-deposit/.tox/c1/lib/python3.6/site-packages (from invenio-celery>=1.1.2->invenio-accounts>=1.0.0a13->-r requirements.txt (line 27)) (4.4.4)
+Requirement already satisfied: Flask-Collect==1.2.2 in /code/modules/invenio-deposit/.tox/c1/lib/python3.6/site-packages (from invenio-assets>=1.0.0b6->invenio-theme>=1.0.0a17->-r requirements.txt (line 32)) (1.2.2)
+Requirement already satisfied: node-semver<0.2.0,>=0.1.1 in /code/modules/invenio-deposit/.tox/c1/lib/python3.6/site-packages (from invenio-assets>=1.0.0b6->invenio-theme>=1.0.0a17->-r requirements.txt (line 32)) (0.1.1)
 Requirement already satisfied: msgpack>=0.6.2 in /code/modules/invenio-deposit/.tox/c1/lib/python3.6/site-packages (from invenio-celery>=1.1.2->invenio-accounts>=1.0.0a13->-r requirements.txt (line 27)) (0.6.2)
+Requirement already satisfied: celery!=4.3,>=4.2.1 in /code/modules/invenio-deposit/.tox/c1/lib/python3.6/site-packages (from invenio-celery>=1.1.2->invenio-accounts>=1.0.0a13->-r requirements.txt (line 27)) (4.4.4)
+Requirement already satisfied: Flask-CeleryExt>=0.3.4 in /code/modules/invenio-deposit/.tox/c1/lib/python3.6/site-packages (from invenio-celery>=1.1.2->invenio-accounts>=1.0.0a13->-r requirements.txt (line 27)) (0.3.4)
 Requirement already satisfied: Flask-Alembic>=2.0.1 in /code/modules/invenio-deposit/.tox/c1/lib/python3.6/site-packages (from invenio-db>=1.0.0->invenio-admin>=1.0.0a3->-r requirements.txt (line 28)) (2.0.1)
 Requirement already satisfied: Flask-SQLAlchemy>=2.1 in /code/modules/invenio-deposit/.tox/c1/lib/python3.6/site-packages (from invenio-db>=1.0.0->invenio-admin>=1.0.0a3->-r requirements.txt (line 28)) (2.3.2)
 Requirement already satisfied: SQLAlchemy>=1.0 in /code/modules/invenio-deposit/.tox/c1/lib/python3.6/site-packages (from invenio-db>=1.0.0->invenio-admin>=1.0.0a3->-r requirements.txt (line 28)) (1.2.19)
@@ -145,9 +145,9 @@ Requirement already satisfied: pycparser in /code/modules/invenio-deposit/.tox/c
 Requirement already satisfied: alembic>=0.8 in /code/modules/invenio-deposit/.tox/c1/lib/python3.6/site-packages (from Flask-Alembic>=2.0.1->invenio-db>=1.0.0->invenio-admin>=1.0.0a3->-r requirements.txt (line 28)) (0.9.6)
 Requirement already satisfied: MarkupSafe>=0.23 in /code/modules/invenio-deposit/.tox/c1/lib/python3.6/site-packages (from Jinja2>=2.10.1->Flask>=0.11.1->invenio-access>=1.0.0a9->-r requirements.txt (line 26)) (1.1.1)
 Requirement already satisfied: setuptools in /code/modules/invenio-deposit/.tox/c1/lib/python3.6/site-packages (from node-semver<0.2.0,>=0.1.1->invenio-assets>=1.0.0b6->invenio-theme>=1.0.0a17->-r requirements.txt (line 32)) (57.5.0)
-Requirement already satisfied: python-dateutil in /code/modules/invenio-deposit/.tox/c1/lib/python3.6/site-packages (from alembic>=0.8->Flask-Alembic>=2.0.1->invenio-db>=1.0.0->invenio-admin>=1.0.0a3->-r requirements.txt (line 28)) (2.6.1)
 Requirement already satisfied: python-editor>=0.3 in /code/modules/invenio-deposit/.tox/c1/lib/python3.6/site-packages (from alembic>=0.8->Flask-Alembic>=2.0.1->invenio-db>=1.0.0->invenio-admin>=1.0.0a3->-r requirements.txt (line 28)) (1.0.3)
 Requirement already satisfied: Mako in /code/modules/invenio-deposit/.tox/c1/lib/python3.6/site-packages (from alembic>=0.8->Flask-Alembic>=2.0.1->invenio-db>=1.0.0->invenio-admin>=1.0.0a3->-r requirements.txt (line 28)) (1.0.7)
+Requirement already satisfied: python-dateutil in /code/modules/invenio-deposit/.tox/c1/lib/python3.6/site-packages (from alembic>=0.8->Flask-Alembic>=2.0.1->invenio-db>=1.0.0->invenio-admin>=1.0.0a3->-r requirements.txt (line 28)) (2.6.1)
 Requirement already satisfied: amqp<2.7,>=2.6.0 in /code/modules/invenio-deposit/.tox/c1/lib/python3.6/site-packages (from kombu<4.7,>=4.6.10->celery!=4.3,>=4.2.1->invenio-celery>=1.1.2->invenio-accounts>=1.0.0a13->-r requirements.txt (line 27)) (2.6.0)
 Requirement already satisfied: importlib-metadata>=0.18 in /code/modules/invenio-deposit/.tox/c1/lib/python3.6/site-packages (from kombu<4.7,>=4.6.10->celery!=4.3,>=4.2.1->invenio-celery>=1.1.2->invenio-accounts>=1.0.0a13->-r requirements.txt (line 27)) (4.8.3)
 Requirement already satisfied: typing-extensions>=3.6.4 in /code/modules/invenio-deposit/.tox/c1/lib/python3.6/site-packages (from importlib-metadata>=0.18->kombu<4.7,>=4.6.10->celery!=4.3,>=4.2.1->invenio-celery>=1.1.2->invenio-accounts>=1.0.0a13->-r requirements.txt (line 27)) (4.1.1)
@@ -158,350 +158,35 @@ npm ERR! Linux 4.18.0-477.27.1.el8_8.x86_64
 npm ERR! argv "/usr/bin/node" "/usr/bin/npm" "install" "-g" "node-sass" "clean-css@3" "requirejs" "uglify-js"
 npm ERR! node v4.8.7
 npm ERR! npm  v2.15.11
-npm ERR! path /usr/bin/uglifyjs
+npm ERR! path /usr/bin/r.js
 npm ERR! code EACCES
 npm ERR! errno -13
 npm ERR! syscall unlink
 
-npm ERR! Error: EACCES: permission denied, unlink '/usr/bin/uglifyjs'
+npm ERR! Error: EACCES: permission denied, unlink '/usr/bin/r.js'
 npm ERR!     at Error (native)
-npm ERR!  { [Error: EACCES: permission denied, unlink '/usr/bin/uglifyjs']
+npm ERR!  { [Error: EACCES: permission denied, unlink '/usr/bin/r.js']
 npm ERR!   errno: -13,
 npm ERR!   code: 'EACCES',
 npm ERR!   syscall: 'unlink',
-npm ERR!   path: '/usr/bin/uglifyjs' }
+npm ERR!   path: '/usr/bin/r.js' }
 npm ERR! 
 npm ERR! Please try running this command again as root/Administrator.
-npm ERR! error rolling back Error: EACCES: permission denied, unlink '/usr/bin/uglifyjs'
+npm ERR! error rolling back Error: EACCES: permission denied, unlink '/usr/bin/r.js'
 npm ERR! error rolling back     at Error (native)
-npm ERR! error rolling back  { [Error: EACCES: permission denied, unlink '/usr/bin/uglifyjs']
+npm ERR! error rolling back  { [Error: EACCES: permission denied, unlink '/usr/bin/r.js']
 npm ERR! error rolling back   errno: -13,
 npm ERR! error rolling back   code: 'EACCES',
 npm ERR! error rolling back   syscall: 'unlink',
-npm ERR! error rolling back   path: '/usr/bin/uglifyjs' }
+npm ERR! error rolling back   path: '/usr/bin/r.js' }
 
 npm ERR! Please include the following file with any support request:
 npm ERR!     /code/modules/invenio-deposit/examples/npm-debug.log
-________________________ ERROR at teardown of test_edit ________________________
-
-tp = <class 'RuntimeError'>, value = None, tb = None
-
-    def reraise(tp, value, tb=None):
-        try:
-            if value is None:
-                value = tp()
-            if value.__traceback__ is not tb:
-                raise value.with_traceback(tb)
->           raise value
-
-../.tox/c1/lib/python3.6/site-packages/six.py:719: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-../.tox/c1/lib/python3.6/site-packages/six.py:719: in reraise
-    raise value
-../.tox/c1/lib/python3.6/site-packages/six.py:719: in reraise
-    raise value
-../tests/conftest.py:196: in test_client
-    yield client_
-../.tox/c1/lib/python3.6/site-packages/flask/testing.py:247: in __exit__
-    top.pop()
-../.tox/c1/lib/python3.6/site-packages/flask/ctx.py:415: in pop
-    self.app.do_teardown_request(exc)
-../.tox/c1/lib/python3.6/site-packages/flask/app.py:2299: in do_teardown_request
-    func(exc)
-../invenio_deposit/views/ui.py:60: in dbsession_clean
-    current_app.logger.debug("invenio_deposit dbsession_clean: {}".format(exception))
-../.tox/c1/lib/python3.6/site-packages/werkzeug/local.py:348: in __getattr__
-    return getattr(self._get_current_object(), name)
-../.tox/c1/lib/python3.6/site-packages/werkzeug/local.py:307: in _get_current_object
-    return self.__local()
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-
-    def _find_app():
-        top = _app_ctx_stack.top
-        if top is None:
->           raise RuntimeError(_app_ctx_err_msg)
-E           RuntimeError: Working outside of application context.
-E           
-E           This typically means that you attempted to use functionality that needed
-E           to interface with the current application object in some way. To solve
-E           this, set up an application context with app.app_context().  See the
-E           documentation for more information.
-
-../.tox/c1/lib/python3.6/site-packages/flask/globals.py:52: RuntimeError
------------------------------- Captured log setup ------------------------------
-ext.py                     255 WARNING  JSONSCHEMAS_HOST is set to localhost
-ext.py                     255 WARNING  JSONSCHEMAS_HOST is set to localhost
 =================================== FAILURES ===================================
-_________________________________ test_reindex _________________________________
-
-app = <Flask 'testapp'>
-script_info = <flask.cli.ScriptInfo object at 0x7f377af7d198>
-
-    def test_reindex(app, script_info):
-        """Test reindex."""
-        # load records
-        with app.test_request_context():
-            runner = CliRunner()
-    
-            id1 = uuid.uuid4()
-            record1 = Record.create(dict(title='Test 1', recid=1), id_=id1)
-            PersistentIdentifier.create(
-                pid_type='recid',
-                pid_value=1,
-                object_type='rec',
-                object_uuid=id1,
-                status=PIDStatus.REGISTERED,
-            )
-            db.session.commit()
-    
-            res = runner.invoke(cli.reindex,
-                                ['-r',id1],
-                                obj=script_info)
-            assert 0 == res.exit_code
-    
->           res = current_search_client.get(index=app.config.get("INDEXER_DEFAULT_INDEX"),doc_type=app.config.get("INDEXER_DEFAULT_DOC_TYPE"),id=id1)
-
-tests/test_cli.py:50: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-.tox/c1/lib/python3.6/site-packages/elasticsearch/client/utils.py:76: in _wrapped
-    return func(*args, params=params, **kwargs)
-.tox/c1/lib/python3.6/site-packages/elasticsearch/client/__init__.py:411: in get
-    doc_type, id), params=params)
-.tox/c1/lib/python3.6/site-packages/elasticsearch/transport.py:314: in perform_request
-    status, headers_response, data = connection.perform_request(method, url, params, body, headers=headers, ignore=ignore, timeout=timeout)
-.tox/c1/lib/python3.6/site-packages/elasticsearch/connection/http_requests.py:90: in perform_request
-    self._raise_error(response.status_code, raw_data)
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-
-self = <RequestsHttpConnection: http://elasticsearch:9200>, status_code = 404
-raw_data = '{"error":{"root_cause":[{"type":"index_not_found_exception","reason":"no such index","resource.type":"index_expressio...expression","resource.id":"records-default-v1.0.0","index_uuid":"_na_","index":"records-default-v1.0.0"},"status":404}'
-
-    def _raise_error(self, status_code, raw_data):
-        """ Locate appropriate exception and raise it. """
-        error_message = raw_data
-        additional_info = None
-        try:
-            if raw_data:
-                additional_info = json.loads(raw_data)
-                error_message = additional_info.get('error', error_message)
-                if isinstance(error_message, dict) and 'type' in error_message:
-                    error_message = error_message['type']
-        except (ValueError, TypeError) as err:
-            logger.warning('Undecodable raw error response from server: %s', err)
-    
->       raise HTTP_EXCEPTIONS.get(status_code, TransportError)(status_code, error_message, additional_info)
-E       elasticsearch.exceptions.NotFoundError: TransportError(404, 'index_not_found_exception', 'no such index')
-
-.tox/c1/lib/python3.6/site-packages/elasticsearch/connection/base.py:125: NotFoundError
------------------------------- Captured log setup ------------------------------
-ext.py                     255 WARNING  JSONSCHEMAS_HOST is set to localhost
-ext.py                     255 WARNING  JSONSCHEMAS_HOST is set to localhost
------------------------------- Captured log call -------------------------------
-base.py                     97 WARNING  GET http://elasticsearch:9200/records-default-v1.0.0/default-v1.0.0/2ff9ecee-2fc7-477b-b7ce-3463478b76ac [status:404 request:0.015s]
-___________________ test_edit_deposit_users[user_info1-200] ____________________
-
-api = <Flask 'testapiapp'>, es = <Elasticsearch([{'host': 'elasticsearch'}])>
-users = [{'active': True, 'confirmed_at': None, 'current_login_at': None, 'current_login_ip': None, ...}, {'active': True, 'confirmed_at': None, 'current_login_at': None, 'current_login_ip': None, ...}]
-location = <function location at 0x7f377d9f2158>
-deposit = {'title': 'fuu', '$schema': 'http://localhost/schemas/deposits/deposit-v1.0.0.json', '_deposit': {'id': 'e3c3c12e59d54436931f06e7cd10b831', 'status': 'draft', 'owners': [1], 'created_by': 1}}
-json_headers = [('Content-Type', 'application/json'), ('Accept', 'application/json')]
-user_info = {'email': 'info@inveniosoftware.org', 'password': 'tester'}
-status = 200
-
-    @pytest.mark.parametrize('user_info,status', [
-        # anonymous user
-        (None, 401),
-        # owner
-        (dict(email='info@inveniosoftware.org', password='tester'), 200),
-        # user that not have permissions
-        (dict(email='test@inveniosoftware.org', password='tester2'), 403),
-    ])
-    def test_edit_deposit_users(api, es, users, location, deposit,
-                                json_headers, user_info, status):
-        """Test edit deposit by the owner."""
-        deposit_id = deposit['_deposit']['id']
-        with api.test_request_context():
-            with api.test_client() as client:
-                if user_info:
-                    # login
-                    res = client.post(url_for_security('login'), data=user_info)
-                res = client.put(
-                    url_for('invenio_deposit_rest.depid_item',
-                            pid_value=deposit_id),
-                    data=json.dumps({"title": "bar"}),
->                   headers=json_headers
-                )
-
-../tests/test_views_rest.py:112: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-../.tox/c1/lib/python3.6/site-packages/werkzeug/test.py:1049: in put
-    return self.open(*args, **kw)
-../.tox/c1/lib/python3.6/site-packages/flask/testing.py:227: in open
-    follow_redirects=follow_redirects,
-../.tox/c1/lib/python3.6/site-packages/werkzeug/test.py:993: in open
-    response = self.run_wsgi_app(environ.copy(), buffered=buffered)
-../.tox/c1/lib/python3.6/site-packages/werkzeug/test.py:884: in run_wsgi_app
-    rv = run_wsgi_app(self.application, environ, buffered=buffered)
-../.tox/c1/lib/python3.6/site-packages/werkzeug/test.py:1119: in run_wsgi_app
-    app_rv = app(environ, start_response)
-../.tox/c1/lib/python3.6/site-packages/flask/app.py:2463: in __call__
-    return self.wsgi_app(environ, start_response)
-../.tox/c1/lib/python3.6/site-packages/flask/app.py:2449: in wsgi_app
-    response = self.handle_exception(e)
-../.tox/c1/lib/python3.6/site-packages/flask/app.py:1866: in handle_exception
-    reraise(exc_type, exc_value, tb)
-../.tox/c1/lib/python3.6/site-packages/flask/_compat.py:39: in reraise
-    raise value
-../.tox/c1/lib/python3.6/site-packages/flask/app.py:2446: in wsgi_app
-    response = self.full_dispatch_request()
-../.tox/c1/lib/python3.6/site-packages/flask/app.py:1951: in full_dispatch_request
-    rv = self.handle_user_exception(e)
-../.tox/c1/lib/python3.6/site-packages/flask/app.py:1820: in handle_user_exception
-    reraise(exc_type, exc_value, tb)
-../.tox/c1/lib/python3.6/site-packages/flask/_compat.py:39: in reraise
-    raise value
-../.tox/c1/lib/python3.6/site-packages/flask/app.py:1949: in full_dispatch_request
-    rv = self.dispatch_request()
-../.tox/c1/lib/python3.6/site-packages/flask/app.py:1935: in dispatch_request
-    return self.view_functions[rule.endpoint](**req.view_args)
-../.tox/c1/lib/python3.6/site-packages/flask/views.py:89: in view
-    return self.dispatch_request(*args, **kwargs)
-../.tox/c1/lib/python3.6/site-packages/invenio_rest/views.py:240: in dispatch_request
-    *args, **kwargs
-../.tox/c1/lib/python3.6/site-packages/flask/views.py:163: in dispatch_request
-    return meth(*args, **kwargs)
-../../invenio-records-rest/invenio_records_rest/views.py:395: in inner
-    return f(self, pid=pid, record=record, *args, **kwargs)
-../../invenio-records-rest/invenio_records_rest/views.py:454: in need_record_permission_decorator
-    return f(self, record=record, *args, **kwargs)
-../../invenio-records-rest/invenio_records_rest/views.py:1151: in put
-    pid, record, links_factory=self.links_factory)
-../.tox/c1/lib/python3.6/site-packages/invenio_rest/views.py:221: in make_response
-    return serializer(*args, **kwargs)
-../../invenio-records-rest/invenio_records_rest/serializers/response.py:35: in view
-    serializer.serialize(pid, record, links_factory=links_factory),
-../../invenio-records-rest/invenio_records_rest/serializers/json.py:45: in serialize
-    record = hide_by_email(record, True)
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-
-item_metadata = {'_deposit': {'id': 'e3c3c12e59d54436931f06e7cd10b831', 'owners': [1], 'status': 'draft', 'created_by': 1}, 'title': 'bar'}
-force_flag = True
-
-    def hide_by_email(item_metadata, force_flag=False):
-        """Hiding emails.
-    
-        :param item_metadata:
-        :param force_flag: force to hide
-        :return:
-        """
-        from weko_items_ui.utils import get_options_and_order_list, get_hide_list_by_schema_form
-        show_email_flag = item_setting_show_email()
->       subitem_keys = current_app.config['WEKO_RECORDS_UI_EMAIL_ITEM_KEYS']
-E       KeyError: 'WEKO_RECORDS_UI_EMAIL_ITEM_KEYS'
-
-../../weko-records-ui/weko_records_ui/utils.py:715: KeyError
------------------------------- Captured log setup ------------------------------
-ext.py                     255 WARNING  JSONSCHEMAS_HOST is set to localhost
-ext.py                     255 WARNING  JSONSCHEMAS_HOST is set to localhost
-____________________ test_edit_deposit_by_good_oauth2_token ____________________
-
-api = <Flask 'testapiapp'>, es = <Elasticsearch([{'host': 'elasticsearch'}])>
-users = [{'active': True, 'confirmed_at': None, 'current_login_at': None, 'current_login_ip': None, ...}, {'active': True, 'confirmed_at': None, 'current_login_at': None, 'current_login_ip': None, ...}]
-location = <function location at 0x7f377d9f2158>
-deposit = {'title': 'fuu', '$schema': 'http://localhost/schemas/deposits/deposit-v1.0.0.json', '_deposit': {'id': '392007231ffa4e1aa3fb9b50522bd550', 'status': 'draft', 'owners': [1], 'created_by': 1}}
-write_token_user_1 = <Token 1>
-oauth2_headers_user_1 = [('Content-Type', 'application/json'), ('Accept', 'application/json'), ('Authorization', 'Bearer dev_access_1')]
-
-    def test_edit_deposit_by_good_oauth2_token(api, es, users, location,
-                                               deposit, write_token_user_1,
-                                               oauth2_headers_user_1):
-        """Test edit deposit with a correct oauth2 token."""
-        deposit_id = deposit['_deposit']['id']
-        with api.test_request_context():
-            # with oauth2
-            with api.test_client() as client:
-                res = client.put(
-                    url_for('invenio_deposit_rest.depid_item',
-                            pid_value=deposit_id),
-                    data=json.dumps({"title": "bar"}),
->                   headers=oauth2_headers_user_1
-                )
-
-../tests/test_views_rest.py:129: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-../.tox/c1/lib/python3.6/site-packages/werkzeug/test.py:1049: in put
-    return self.open(*args, **kw)
-../.tox/c1/lib/python3.6/site-packages/flask/testing.py:227: in open
-    follow_redirects=follow_redirects,
-../.tox/c1/lib/python3.6/site-packages/werkzeug/test.py:993: in open
-    response = self.run_wsgi_app(environ.copy(), buffered=buffered)
-../.tox/c1/lib/python3.6/site-packages/werkzeug/test.py:884: in run_wsgi_app
-    rv = run_wsgi_app(self.application, environ, buffered=buffered)
-../.tox/c1/lib/python3.6/site-packages/werkzeug/test.py:1119: in run_wsgi_app
-    app_rv = app(environ, start_response)
-../.tox/c1/lib/python3.6/site-packages/flask/app.py:2463: in __call__
-    return self.wsgi_app(environ, start_response)
-../.tox/c1/lib/python3.6/site-packages/flask/app.py:2449: in wsgi_app
-    response = self.handle_exception(e)
-../.tox/c1/lib/python3.6/site-packages/flask/app.py:1866: in handle_exception
-    reraise(exc_type, exc_value, tb)
-../.tox/c1/lib/python3.6/site-packages/flask/_compat.py:39: in reraise
-    raise value
-../.tox/c1/lib/python3.6/site-packages/flask/app.py:2446: in wsgi_app
-    response = self.full_dispatch_request()
-../.tox/c1/lib/python3.6/site-packages/flask/app.py:1951: in full_dispatch_request
-    rv = self.handle_user_exception(e)
-../.tox/c1/lib/python3.6/site-packages/flask/app.py:1820: in handle_user_exception
-    reraise(exc_type, exc_value, tb)
-../.tox/c1/lib/python3.6/site-packages/flask/_compat.py:39: in reraise
-    raise value
-../.tox/c1/lib/python3.6/site-packages/flask/app.py:1949: in full_dispatch_request
-    rv = self.dispatch_request()
-../.tox/c1/lib/python3.6/site-packages/flask/app.py:1935: in dispatch_request
-    return self.view_functions[rule.endpoint](**req.view_args)
-../.tox/c1/lib/python3.6/site-packages/flask/views.py:89: in view
-    return self.dispatch_request(*args, **kwargs)
-../.tox/c1/lib/python3.6/site-packages/invenio_rest/views.py:240: in dispatch_request
-    *args, **kwargs
-../.tox/c1/lib/python3.6/site-packages/flask/views.py:163: in dispatch_request
-    return meth(*args, **kwargs)
-../../invenio-records-rest/invenio_records_rest/views.py:395: in inner
-    return f(self, pid=pid, record=record, *args, **kwargs)
-../../invenio-records-rest/invenio_records_rest/views.py:454: in need_record_permission_decorator
-    return f(self, record=record, *args, **kwargs)
-../../invenio-records-rest/invenio_records_rest/views.py:1151: in put
-    pid, record, links_factory=self.links_factory)
-../.tox/c1/lib/python3.6/site-packages/invenio_rest/views.py:221: in make_response
-    return serializer(*args, **kwargs)
-../../invenio-records-rest/invenio_records_rest/serializers/response.py:35: in view
-    serializer.serialize(pid, record, links_factory=links_factory),
-../../invenio-records-rest/invenio_records_rest/serializers/json.py:45: in serialize
-    record = hide_by_email(record, True)
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-
-item_metadata = {'_deposit': {'id': '392007231ffa4e1aa3fb9b50522bd550', 'owners': [1], 'status': 'draft', 'created_by': 1}, 'title': 'bar'}
-force_flag = True
-
-    def hide_by_email(item_metadata, force_flag=False):
-        """Hiding emails.
-    
-        :param item_metadata:
-        :param force_flag: force to hide
-        :return:
-        """
-        from weko_items_ui.utils import get_options_and_order_list, get_hide_list_by_schema_form
-        show_email_flag = item_setting_show_email()
->       subitem_keys = current_app.config['WEKO_RECORDS_UI_EMAIL_ITEM_KEYS']
-E       KeyError: 'WEKO_RECORDS_UI_EMAIL_ITEM_KEYS'
-
-../../weko-records-ui/weko_records_ui/utils.py:715: KeyError
------------------------------- Captured log setup ------------------------------
-ext.py                     255 WARNING  JSONSCHEMAS_HOST is set to localhost
-ext.py                     255 WARNING  JSONSCHEMAS_HOST is set to localhost
 _________________________ test_links_html_link_missing _________________________
 
 api = <Flask 'testapiapp'>, es = <Elasticsearch([{'host': 'elasticsearch'}])>
-location = <function location at 0x7f377d9f2158>, fake_schemas = None
+location = <function location at 0x7f5fdf0561e0>, fake_schemas = None
 users = [{'active': True, 'confirmed_at': None, 'current_login_at': None, 'current_login_ip': None, ...}, {'active': True, 'confirmed_at': None, 'current_login_at': None, 'current_login_ip': None, ...}]
 json_headers = [('Content-Type', 'application/json'), ('Accept', 'application/json')]
 
@@ -520,21 +205,19 @@ json_headers = [('Content-Type', 'application/json'), ('Accept', 'application/js
                 # try create deposit as logged in user
                 res = client.post(url_for('invenio_deposit_rest.depid_list'),
                                   data=json.dumps({}), headers=json_headers)
->               assert res.status_code == 200
-E               assert 500 == 200
-E                 -500
-E                 +200
+>               assert res.status_code == 403
+E               assert 200 == 403
+E                 -200
+E                 +403
 
-../tests/test_views_rest.py:192: AssertionError
+../tests/test_views_rest.py:193: AssertionError
 ------------------------------ Captured log setup ------------------------------
 ext.py                     255 WARNING  JSONSCHEMAS_HOST is set to localhost
 ext.py                     255 WARNING  JSONSCHEMAS_HOST is set to localhost
------------------------------- Captured log call -------------------------------
-views.py                   928 ERROR    'WEKO_RECORDS_UI_EMAIL_ITEM_KEYS'
 _______________________ test_deposition_file_operations ________________________
 
 api = <Flask 'testapiapp'>, es = <Elasticsearch([{'host': 'elasticsearch'}])>
-location = <function location at 0x7f377d9f2158>
+location = <function location at 0x7f5fdf0561e0>
 users = [{'active': True, 'confirmed_at': None, 'current_login_at': None, 'current_login_ip': None, ...}, {'active': True, 'confirmed_at': None, 'current_login_at': None, 'current_login_ip': None, ...}]
 write_token_user_1 = <Token 1>, pdf_file = None, pdf_file2 = None
 pdf_file2_samename = None
@@ -550,25 +233,24 @@ oauth2_headers_user_1 = [('Content-Type', 'application/json'), ('Accept', 'appli
                 res = client.post(url_for('invenio_deposit_rest.depid_list'),
                                   data=json.dumps({}),
                                   headers=oauth2_headers_user_1)
->               assert res.status_code == 200
-E               assert 500 == 200
-E                 -500
-E                 +200
+>               assert res.status_code == 403
+E               assert 200 == 403
+E                 -200
+E                 +403
 
 ../tests/test_views_rest.py:243: AssertionError
 ------------------------------ Captured log setup ------------------------------
 ext.py                     255 WARNING  JSONSCHEMAS_HOST is set to localhost
 ext.py                     255 WARNING  JSONSCHEMAS_HOST is set to localhost
------------------------------- Captured log call -------------------------------
-views.py                   928 ERROR    'WEKO_RECORDS_UI_EMAIL_ITEM_KEYS'
 ____________________________ test_simple_rest_flow _____________________________
 
+app = <Flask 'testapp'>, test_client = <FlaskClient <Flask 'testapp'>>
 api = <Flask 'testapiapp'>, es = <Elasticsearch([{'host': 'elasticsearch'}])>
-location = <function location at 0x7f377d9f2158>, fake_schemas = None
+location = <function location at 0x7f5fdf0561e0>, fake_schemas = None
 users = [{'active': True, 'confirmed_at': None, 'current_login_at': None, 'current_login_ip': None, ...}, {'active': True, 'confirmed_at': None, 'current_login_at': None, 'current_login_ip': None, ...}]
 json_headers = [('Content-Type', 'application/json'), ('Accept', 'application/json')]
 
-    def test_simple_rest_flow(api, es, location, fake_schemas, users,
+    def test_simple_rest_flow(app, test_client, api, es, location, fake_schemas, users,
                               json_headers):
         """Test simple flow using REST API."""
         api.config['RECORDS_REST_ENDPOINTS']['recid'][
@@ -576,6 +258,7 @@ json_headers = [('Content-Type', 'application/json'), ('Accept', 'application/js
             'invenio_records_rest.utils:allow_all'
         api.config['RECORDS_REST_DEFAULT_READ_PERMISSION_FACTORY'] = \
             'invenio_records_rest.utils:allow_all'
+        user_mail = users[0]['email']
     
         with api.test_request_context():
             with api.test_client() as client:
@@ -586,73 +269,19 @@ json_headers = [('Content-Type', 'application/json'), ('Accept', 'application/js
     
                 # login
                 client.post(url_for_security('login'), data=dict(
-                    email=users[0]['email'],
+                    email=user_mail,
                     password="tester"
                 ))
     
                 # try create deposit as logged in user
                 res = client.post(url_for('invenio_deposit_rest.depid_list'),
                                   data=json.dumps({}), headers=json_headers)
->               assert res.status_code == 200
-E               assert 500 == 200
-E                 -500
-E                 +200
+>               assert res.status_code == 403
+E               assert 200 == 403
+E                 -200
+E                 +403
 
-../tests/test_views_rest.py:454: AssertionError
------------------------------- Captured log setup ------------------------------
-ext.py                     255 WARNING  JSONSCHEMAS_HOST is set to localhost
-ext.py                     255 WARNING  JSONSCHEMAS_HOST is set to localhost
------------------------------- Captured log call -------------------------------
-views.py                   928 ERROR    'WEKO_RECORDS_UI_EMAIL_ITEM_KEYS'
-________________________________ test_index_new ________________________________
-
-base_app = <Flask 'testapp'>, test_client = <FlaskClient <Flask 'testapp'>>
-users = [{'active': True, 'confirmed_at': None, 'current_login_at': None, 'current_login_ip': None, ...}, {'active': True, 'confirmed_at': None, 'current_login_at': None, 'current_login_ip': None, ...}]
-
-    def test_index_new(base_app, test_client, users):
-        """Test index view."""
-        with base_app.test_request_context():
-            index_url = url_for('invenio_deposit_ui.index')
-            new_url = url_for('invenio_deposit_ui.new')
-    
-        for u in [index_url, new_url]:
-            res = test_client.get(u)
-            assert res.status_code == 302
-            assert '/login/' in res.location
-    
->       login_user_via_session(test_client, email=users[0]['email'])
-
-../tests/test_views_ui.py:45: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-../../invenio-accounts/invenio_accounts/testutils.py:65: in login_user_via_session
-    sess['user_id'] = user.get_id()
-../.tox/c1/lib/python3.6/site-packages/flask_login/mixins.py:37: in get_id
-    return text_type(self.id)
-../.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/attributes.py:275: in __get__
-    return self.impl.get(instance_state(instance), dict_)
-../.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/attributes.py:669: in get
-    value = state._load_expired(state, passive)
-../.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/state.py:632: in _load_expired
-    self.manager.deferred_scalar_loader(self, toload)
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-
-mapper = <Mapper at 0x7f37a886c080; User>
-state = <sqlalchemy.orm.state.InstanceState object at 0x7f379b4d42b0>
-attribute_names = {'active', 'confirmed_at', 'current_login_at', 'current_login_ip', 'email', 'id', ...}
-
-    def load_scalar_attributes(mapper, state, attribute_names):
-        """initiate a column-based attribute refresh operation."""
-    
-        # assert mapper is _state_mapper(state)
-        session = state.session
-        if not session:
-            raise orm_exc.DetachedInstanceError(
-                "Instance %s is not bound to a Session; "
->               "attribute refresh operation cannot proceed" % (state_str(state))
-            )
-E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <User at 0x7f379b4d4278> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: http://sqlalche.me/e/bhk3)
-
-../.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/loading.py:913: DetachedInstanceError
+../tests/test_views_rest.py:456: AssertionError
 ------------------------------ Captured log setup ------------------------------
 ext.py                     255 WARNING  JSONSCHEMAS_HOST is set to localhost
 ext.py                     255 WARNING  JSONSCHEMAS_HOST is set to localhost
@@ -690,6 +319,7 @@ tests/test_views_rest_files.py::test_files_put
 tests/test_views_rest_files.py::test_file_get_not_found
 tests/test_views_rest_files.py::test_file_put_not_found_bucket_not_exist
 tests/test_views_rest_files.py::test_file_put_not_found_file_not_exist
+tests/test_views_ui.py::test_index_new_guest
 tests/test_views_ui.py::test_index_new
 tests/test_views_ui.py::test_edit
   /code/modules/invenio-deposit/.tox/c1/lib/python3.6/site-packages/flask_celeryext/app.py:36: UserWarning: Celery v4 installed, but detected Celery v3 configuration CELERY_ALWAYS_EAGER (use CELERY_TASK_ALWAYS_EAGER instead).
@@ -728,6 +358,7 @@ tests/test_views_rest_files.py::test_files_put
 tests/test_views_rest_files.py::test_file_get_not_found
 tests/test_views_rest_files.py::test_file_put_not_found_bucket_not_exist
 tests/test_views_rest_files.py::test_file_put_not_found_file_not_exist
+tests/test_views_ui.py::test_index_new_guest
 tests/test_views_ui.py::test_index_new
 tests/test_views_ui.py::test_edit
   /code/modules/invenio-deposit/.tox/c1/lib/python3.6/site-packages/flask_celeryext/app.py:36: UserWarning: Celery v4 installed, but detected Celery v3 configuration CELERY_EAGER_PROPAGATES_EXCEPTIONS (use CELERY_TASK_EAGER_PROPAGATES instead).
@@ -769,9 +400,10 @@ tests/test_views_rest_files.py::test_files_put
 tests/test_views_rest_files.py::test_file_get_not_found
 tests/test_views_rest_files.py::test_file_put_not_found_bucket_not_exist
 tests/test_views_rest_files.py::test_file_put_not_found_file_not_exist
+tests/test_views_ui.py::test_index_new_guest
 tests/test_views_ui.py::test_index_new
 tests/test_views_ui.py::test_edit
-  /code/modules/invenio-deposit/tests/conftest.py:160: DeprecationWarning: 'werkzeug.wsgi.DispatcherMiddleware' has moved to 'werkzeug.middleware.dispatcher.DispatcherMiddleware'. This import is deprecated as of version 0.15 and will be removed in version 1.0.
+  /code/modules/invenio-deposit/tests/conftest.py:164: DeprecationWarning: 'werkzeug.wsgi.DispatcherMiddleware' has moved to 'werkzeug.middleware.dispatcher.DispatcherMiddleware'. This import is deprecated as of version 0.15 and will be removed in version 1.0.
     '/api': api_app.wsgi_app
 
 tests/test_views_rest.py::test_edit_deposit_users[user_info1-200]
@@ -829,7 +461,7 @@ invenio_deposit/errors.py                    12      0      6      0   100%
 invenio_deposit/ext.py                       55      1     32      3    95%
 invenio_deposit/fetchers.py                   6      0      0      0   100%
 invenio_deposit/jsonschemas/__init__.py       1      0      0      0   100%
-invenio_deposit/links.py                     21     14      6      0    26%
+invenio_deposit/links.py                     21      0      6      0   100%
 invenio_deposit/mappings/__init__.py          1      0      0      0   100%
 invenio_deposit/mappings/v2/__init__.py       1      1      0      0     0%
 invenio_deposit/mappings/v5/__init__.py       1      1      0      0     0%
@@ -847,13 +479,13 @@ invenio_deposit/utils.py                     27      0      6      0   100%
 invenio_deposit/version.py                    3      0      0      0   100%
 invenio_deposit/views/__init__.py             2      0      0      0   100%
 invenio_deposit/views/rest.py               186     59     38      5    69%
-invenio_deposit/views/ui.py                  39      5      4      1    86%
+invenio_deposit/views/ui.py                  39      2      4      1    93%
 ---------------------------------------------------------------------------
-TOTAL                                       798    185    168     19    76%
+TOTAL                                       798    168    168     19    79%
 Coverage HTML written to dir htmlcov
 Coverage XML written to file coverage.xml
 
-========= 7 failed, 31 passed, 143 warnings, 2 error in 346.71 seconds =========
+========= 3 failed, 36 passed, 146 warnings, 1 error in 352.89 seconds =========
 ERROR: InvocationError for command /code/modules/invenio-deposit/.tox/c1/bin/pytest --cov=invenio_deposit tests -v --cov-branch --cov-report=term --cov-report=xml --cov-report=html --basetemp=/code/modules/invenio-deposit/.tox/c1/tmp (exited with code 1)
 ___________________________________ summary ____________________________________
 ERROR:   c1: commands failed

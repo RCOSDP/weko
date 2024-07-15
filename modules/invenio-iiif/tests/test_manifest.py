@@ -36,11 +36,12 @@ class TestIIIFManifest:
 
 #     def dumps(self):
 # .tox/c1/bin/pytest --cov=invenio_iiif tests/test_manifest.py::TestIIIFManifest::test_dumps -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio_iiif/.tox/c1/tmp
-    def test_dumps(self,records):
+    def test_dumps(self,app,records):
         record = records[0][2]
-        obj = IIIFManifest(record)
-        result = obj.dumps()
-        assert result == {}
+        with app.test_request_context("/test"):
+            obj = IIIFManifest(record)
+            result = obj.dumps()
+            assert result == {}
 
 # class ManifestFactory(PrezyManifestFactory):
 #     def image(self, ident, label="", iiif=False, region='full', size='full'):
