@@ -108,6 +108,7 @@ def base_app():
     InvenioDB(app_)
     Babel(app_)
     Menu(app_)
+    InvenioPreviewer(app_)
 
     return app_
 

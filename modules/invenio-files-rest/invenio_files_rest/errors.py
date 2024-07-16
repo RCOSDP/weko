@@ -10,6 +10,8 @@
 
 from invenio_rest.errors import RESTException
 
+import six
+
 
 class FilesException(RESTException):
     """Base exception for all errors."""
@@ -25,7 +27,7 @@ class StorageError(FilesException):
 
         :returns: A string with the error message.
         """
-        if isinstance(self.errors, str):
+        if isinstance(self.errors, six.string_types):
             return self.errors
         return super(StorageError, self).get_errors()
 

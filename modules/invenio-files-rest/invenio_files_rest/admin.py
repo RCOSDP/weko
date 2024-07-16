@@ -8,6 +8,7 @@
 
 """Admin model views for PersistentIdentifier."""
 
+import os
 import uuid
 
 from flask import current_app, flash, url_for
@@ -189,7 +190,7 @@ class BucketModelView(ModelView):
         "updated",
     )
     column_default_sort = ("updated", True)
-    form_base_class = FlaskForm
+    form_base_class = SecureForm
     form_columns = (
         "default_storage_class",
         "locked",
