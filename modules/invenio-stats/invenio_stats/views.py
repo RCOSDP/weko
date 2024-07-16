@@ -61,7 +61,7 @@ class WekoQuery(ContentNegotiatedMethodView):
             **kwargs
         )
 
-class StatsQueryResource(ContentNegotiatedMethodView):
+class StatsQueryResource(WekoQuery):
     """REST API resource providing access to statistics."""
 
     view_name = "stat_query"

@@ -9,10 +9,9 @@
 """CLI tests."""
 
 import datetime
-from unittest.mock import patch
 
 import pytest
-from mock import patch
+from unittest.mock import patch
 from click.testing import CliRunner
 from tests.conftest import _create_file_download_event, _create_record_view_event
 from elasticsearch_dsl import Search

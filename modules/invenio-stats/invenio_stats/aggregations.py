@@ -14,6 +14,7 @@ from datetime import datetime
 import pickle
 from functools import wraps
 
+import six
 from celery.utils.log import get_task_logger
 from dateutil import parser
 from dateutil.relativedelta import relativedelta
@@ -24,7 +25,6 @@ from invenio_search.engine import dsl, search
 from invenio_search.utils import prefix_index
 
 from .models import StatsAggregation, StatsBookmark
-from .utils import get_doctype
 
 SUPPORTED_INTERVALS = OrderedDict([
     ('hour', '%Y-%m-%dT%H'),
@@ -34,7 +34,7 @@ SUPPORTED_INTERVALS = OrderedDict([
 ])
 
 from .bookmark import SUPPORTED_INTERVALS, BookmarkAPI, format_range_dt
-from .utils import get_bucket_size
+from .utils import get_doctype, get_bucket_size
 
 INTERVAL_ROUNDING = {
     "hour": ("minute", "second", "microsecond"),
@@ -258,7 +258,6 @@ class StatAggregator(object):
         """
         self.name = name
         self.event = event
-        self.event_index = prefix_index(f"events-stats-{event}")
         self.client = client or current_search_client
         self.index = prefix_index(f"stats-{event}")
         self.field = field
@@ -276,6 +275,8 @@ class StatAggregator(object):
         self.search_index_prefix = current_app.config['SEARCH_INDEX_PREFIX']. \
             strip('-')
         self.bookmark_alias = '{0}-stats-{1}-bookmark'.format(
+            self.search_index_prefix, self.event)
+        self.event_index = '{0}-events-stats-{1}'.format(
             self.search_index_prefix, self.event)
 
         if any(v not in ALLOWED_METRICS for k, (v, _, _) in self.metric_fields.items()):

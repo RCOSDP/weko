@@ -91,6 +91,18 @@ def anonymize_user(doc):
     return doc
 
 
+def flag_restricted(doc):
+    """Mark restricted access."""
+    doc['is_restricted'] = False
+    if 'ip_address' in doc and 'user_agent' in doc:
+        user_data = {
+            'ip_address': doc['ip_address'],
+            'user_agent': doc['user_agent']
+        }
+        doc['is_restricted'] = is_restricted_user(user_data)
+    return doc
+
+
 def flag_robots(doc):
     """Flag events which are created by robots.
 
@@ -165,7 +177,8 @@ class EventsIndexer(object):
         self.client = client or current_search_client
         self.search_index_prefix = current_app.config['SEARCH_INDEX_PREFIX'] \
             .strip('-')
-        self.index = prefix_index("{0}-{1}".format(prefix, self.queue.routing_key))
+        self.index = '{0}-{1}-{2}'.format(self.search_index_prefix, prefix,
+                                          self.queue.routing_key)
         self.suffix = suffix
 
         # load the preprocessors
@@ -205,12 +218,17 @@ class EventsIndexer(object):
                     ts = ts.fromtimestamp(
                         timestamp // self.double_click_window * self.double_click_window
                     )
-                yield {
+                rtn_data = {
                     "_id": hash_id(ts.isoformat(), msg),
                     "_op_type": "index",
                     "_index": "{0}".format(self.index),
                     "_source": msg,
                 }
+                if current_app.config['STATS_WEKO_DB_BACKUP_EVENTS']:
+                    # Save stats event into Database.
+                    StatsEvents.save(rtn_data, True)
+
+                yield rtn_data
             except Exception:
                 current_app.logger.exception("Error while processing event")
 

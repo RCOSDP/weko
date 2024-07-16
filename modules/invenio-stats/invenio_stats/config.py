@@ -29,7 +29,51 @@ PROVIDE_PERIOD_YEAR = 5
 
 REPORTS_PER_PAGE = 10
 
-STATS_EVENTS = {}
+STATS_EVENTS = {
+    'celery-task': {
+        'signal': ['invenio_oaiharvester.signals.oaiharvest_finished',
+                   'weko_sitemap.signals.sitemap_finished'],
+        'event_builders': [
+            'invenio_stats.contrib.event_builders.celery_task_event_builder'
+        ]
+    },
+    'file-download': {
+        'signal': 'invenio_files_rest.signals.file_downloaded',
+        'event_builders': [
+            'invenio_stats.contrib.event_builders.file_download_event_builder'
+        ]
+    },
+    'file-preview': {
+        'signal': 'invenio_files_rest.signals.file_previewed',
+        'event_builders': [
+            'invenio_stats.contrib.event_builders.file_preview_event_builder'
+        ]
+    },
+    'item-create': {
+        'signal': 'weko_deposit.signals.item_created',
+        'event_builders': [
+            'invenio_stats.contrib.event_builders.item_create_event_builder'
+        ]
+    },
+    'record-view': {
+        'signal': 'invenio_records_ui.signals.record_viewed',
+        'event_builders': [
+            'invenio_stats.contrib.event_builders.record_view_event_builder'
+        ]
+    },
+    'top-view': {
+        'signal': 'weko_theme.views.top_viewed',
+        'event_builders': [
+            'invenio_stats.contrib.event_builders.top_view_event_builder'
+        ]
+    },
+    'search': {
+        'signal': 'weko_search_ui.views.searched',
+        'event_builders': [
+            'invenio_stats.contrib.event_builders.search_event_builder'
+        ]
+    }
+}
 """Enabled Events.
 
 Each key is the name of an event. A queue will be created for each event.
@@ -53,10 +97,56 @@ You can find a sampe of STATS_EVENT configuration in the `registrations.py`
 STATS_EXCLUDED_ADDRS = []
 """Fill IP Addresses which will be excluded from stats in `[]`"""
 
-STATS_AGGREGATIONS = {}
+STATS_AGGREGATIONS = {
+    'celery-task-agg': {},
+    'file-download-agg': {},
+    'file-preview-agg': {},
+    'record-view-agg': {},
+    'item-create-agg': {},
+    'search-agg': {},
+    'top-view-agg': {},
+}
 
 
-STATS_QUERIES = {}
+STATS_QUERIES = {
+    'get-celery-task-report': {},
+    'get-search-report': {},
+    'get-file-download-report': {},
+    'get-file-download-open-access-report': {},
+    'get-file-preview-report': {},
+    'get-file-preview-open-access-report': {},
+    'get-billing-file-download-report': {},
+    'get-billing-file-preview-report': {},
+    # 'bucket-celery-task-histogram': {},
+    # 'bucket-celery-task-total': {},
+    'bucket-file-download-histogram': {},
+    'bucket-file-download-total': {},
+    'bucket-file-preview-histogram': {},
+    'bucket-file-preview-total': {},
+    'get-file-download-per-user-report': {},
+    'get-file-preview-per-user-report': {},
+    'get-record-view-report': {},
+    'bucket-record-view-histogram': {},
+    'bucket-record-view-total': {},
+    'item-create-total': {},
+    'item-create-per-date': {},
+    'item-create-histogram': {},
+    'item-detail-total': {},
+    'item-detail-item-total': {},
+    'bucket-item-detail-view-histogram': {},
+    'get-file-download-per-host-report': {},
+    'get-file-download-per-item-report': {},
+    'get-file-download-per-time-report': {},
+    'top-view-total': {},
+    'top-view-total-per-host': {},
+    'get-top-view-per-site-license': {},
+    'get-record-view-per-site-license': {},
+    'get-search-per-site-license': {},
+    'get-file-download-per-site-license': {},
+    'get-file-preview-per-site-license': {},
+    'get-ranking-data': {},
+    'get-new-items-data': {}
+}
 
 
 STATS_PERMISSION_FACTORY = weko_permission_factory

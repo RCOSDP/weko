@@ -17,7 +17,6 @@ from base64 import b64encode
 from datetime import datetime, timedelta
 from math import ceil
 from typing import Generator, NoReturn, Union
-from math import ceil
 
 import click
 import netaddr
@@ -121,7 +120,7 @@ AllowAllPermission = type(
 def default_permission_factory(query_name, params):
     """Default permission factory.
 
-    It enables by default the statistics if they dot have a dedicated
+    It enables by default the statistics if they don't have a dedicated
     permission factory.
     """
     from invenio_stats import current_stats

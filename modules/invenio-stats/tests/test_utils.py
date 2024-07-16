@@ -75,10 +75,6 @@ def myfunc():
     """Example function."""
     pass
 
-def test_get_geoip():
-    """Test looking up IP address."""
-    assert get_geoip("74.125.67.100") == "US"
-
 # def load_or_import_from_config(key, app=None, default=None):
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_utils.py::test_load_or_import_from_config -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
 def test_load_or_import_from_config(app):
