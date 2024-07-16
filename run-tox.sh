@@ -11,7 +11,7 @@ pip install tox-setuptools-version
 for module_path in modules/*/; do
   if [[ ${module_path} =~ ^modules/(invenio-|weko-).+$ ]] && [[ -d ${module_path}tests ]]; then
     echo "### Running tests for ${module_path%?} ###"
-    (cd ${module_path} && tox > tox.result; rm -rf .tox)
+    (cd ${module_path} && tox > tox.result;gzip tox.result; rm -rf .tox)
     echo
   fi
 done

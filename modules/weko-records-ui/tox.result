@@ -1,7 +1,0 @@
-GLOB sdist-make: /code/modules/weko-records-ui/setup.py
-c1 create: /code/modules/weko-records-ui/.tox/c1
-c1 setuptools_version is setuptools==57.5.0
-c1 installdeps: pytest>=3, pytest-cov, -rrequirements2.txt
-ERROR: got KeyboardInterrupt signal
-___________________________________ summary ____________________________________
-ERROR:   c1: keyboardinterrupt
