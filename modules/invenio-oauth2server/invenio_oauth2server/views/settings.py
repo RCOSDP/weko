@@ -158,8 +158,12 @@ def client_new():
 def client_view(client):
     """Show client's detail."""
     if request.method == "POST" and "delete" in request.form:
-        db.session.delete(client)
-        db.session.commit()
+        try:
+            db.session.delete(client)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(e)
         return redirect(url_for(".index"))
 
     form = ClientForm(request.form, obj=client)
@@ -245,9 +249,13 @@ def token_view(token):
     form.scopes.data = token.scopes
 
     if form.validate_on_submit():
-        token.client.name = form.data["name"]
-        token.scopes = form.data["scopes"]
-        db.session.commit()
+        try:
+            token.client.name = form.data["name"]
+            token.scopes = form.data["scopes"]
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(e)
 
     if len(current_oauth2server.scope_choices()) == 0:
         del form.scopes
