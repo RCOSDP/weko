@@ -18,7 +18,6 @@ See the search engine reference manual for full details of sorting capabilities:
 https://www.elastic.co/guide/en/elasticsearch/reference/7.0/search-request-sort.html
 """
 
-import copy
 import pickle
 import six
 from flask import current_app, request
