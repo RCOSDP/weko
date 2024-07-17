@@ -726,7 +726,7 @@ def hide_by_email(item_metadata, force_flag=False):
             del item_metadata['_deposit']['owners_ext']
 
         for item in item_metadata:
-            _item = item
+            _item = item_metadata[item]
             prop_hidden = meta_options.get(item, {}).get('option', {}).get('hidden', False)
             if isinstance(_item, dict) and \
                     _item.get('attribute_value_mlt'):
