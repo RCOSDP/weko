@@ -510,8 +510,8 @@ def test_post_complete(
             # Multipart object no longer exists
             assert client.get(multipart_url).status_code == 404
 
-            # # Object exists
-            # assert client.get(data["links"]["object"]).status_code == 200
+            # Object exists
+            assert client.get(data["links"]["object"]).status_code == 200
 
 # .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_views_multipart.py::test_post_complete_fail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
 def test_post_complete_fail(
@@ -539,8 +539,8 @@ def test_post_complete_fail(
         data = get_json(client.get(multipart_url), code=200)
         assert data["completed"] is True
 
-        # # Object doesn't exists yet.
-        # assert client.get(data["links"]["object"]).status_code == 404
+        # Object doesn't exists yet.
+        assert client.get(data["links"]["object"]).status_code == 404
 
 
 def test_post_complete_timeout(
@@ -572,8 +572,8 @@ def test_post_complete_timeout(
         data = get_json(client.get(multipart_url), code=200)
         assert data["completed"] is True
 
-        # # Object doesn't exists yet.
-        # assert client.get(data["links"]["object"]).status_code == 404
+        # Object doesn't exists yet.
+        assert client.get(data["links"]["object"]).status_code == 404
 
 
 @pytest.mark.parametrize(
@@ -687,8 +687,8 @@ def test_already_exhausted_input_stream(app, client, db, bucket, admin_user):
         input_stream=BytesIO(data),
     )
     assert resp.status_code == 400
-    # resp = client.post(
-    #     object_url,
-    #     input_stream=BytesIO(data),
-    # )
-    # assert resp.status_code == 500
+    resp = client.post(
+        object_url,
+        input_stream=BytesIO(data),
+    )
+    assert resp.status_code == 500
