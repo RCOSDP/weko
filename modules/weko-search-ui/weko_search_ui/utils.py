@@ -103,6 +103,7 @@ from weko_workflow.models import FlowAction, FlowDefine, WorkFlow
 from weko_workflow.utils import (
     IdentifierHandle,
     check_existed_doi,
+    create_or_update_item_billing,
     delete_cache_data,
     get_cache_data,
     get_identifier_setting,
@@ -1329,6 +1330,9 @@ def register_item_metadata(item, root_path, owner, is_gakuninrdm=False):
     deposit['_deposit']['owners'] = [int(owner)]
     deposit['_deposit']['created_by'] = int(owner)
     deposit['owner'] = str(owner)
+
+    create_or_update_item_billing(deposit)
+
     deposit.commit()
 
     feedback_mail_list = item["metadata"].get("feedback_mail_list")
