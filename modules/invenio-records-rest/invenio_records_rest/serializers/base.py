@@ -253,9 +253,9 @@ class PreprocessorMixin(PreprocessorMixinInterface):
         links_factory = links_factory or (lambda x, **k: dict())
         record = dict(
             pid=pid,
-            metadata=record_hit["_source"],
+            metadata=record_hit.get("_source"),
             links=links_factory(pid, record_hit=record_hit, **kwargs),
-            revision=record_hit["_version"],
+            revision=record_hit.get("_version"),
             created=None,
             updated=None,
         )

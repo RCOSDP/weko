@@ -9,7 +9,7 @@
 
 """REST API resources."""
 
-import copy
+import pickle
 import traceback
 import json
 import math
@@ -27,6 +27,7 @@ from flask import (
     url_for,
 )
 from flask.views import MethodView
+from flask_security import current_user
 from invenio_db import db
 from invenio_i18n import gettext as _
 from invenio_indexer.api import RecordIndexer
@@ -420,7 +421,6 @@ def verify_record_permission(permission_factory, record):
     # Note, cannot be done in one line due overloading of boolean
     # operations permission object.
     if not permission_factory(record=record).can():
-        from flask_login import current_user
 
         if not current_user.is_authenticated:
             abort(401)
@@ -687,7 +687,6 @@ class RecordsListResource(ContentNegotiatedMethodView):
         search, qs_kwargs = self.search_factory(search, self.search_query_parser)
         urlkwargs.update(qs_kwargs)
 
-        from flask_security import current_user
         from invenio_accounts.models import User
 
         query = request.values.get('q')
@@ -1294,7 +1293,7 @@ class SuggestResource(MethodView):
             val = request.values.get(k)
             if val:
                 # Get completion suggestions
-                opts = copy.deepcopy(self.suggesters[k])
+                opts = pickle.loads(pickle.dumps(self.suggesters[k], -1))
                 # Context suggester compatibility adjustment
                 if "context" in opts.get("completion", {}):
                     context_key = "context"

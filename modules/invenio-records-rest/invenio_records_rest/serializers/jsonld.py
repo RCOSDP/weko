@@ -9,7 +9,6 @@
 
 """Marshmallow based JSON-LD serializer for records."""
 
-import copy
 import pickle
 from flask import request
 from pyld import jsonld
