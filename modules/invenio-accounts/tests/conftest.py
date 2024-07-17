@@ -24,6 +24,8 @@ from flask_webpackext.manifest import (
     JinjaManifestLoader,
 )
 from invenio_assets import InvenioAssets
+from invenio_access import InvenioAccess
+from invenio_access.models import ActionRoles, ActionUsers
 from invenio_db import InvenioDB, db
 from invenio_i18n import Babel, InvenioI18N
 from invenio_rest import InvenioREST
@@ -35,6 +37,7 @@ from werkzeug.exceptions import NotFound
 
 from invenio_accounts import InvenioAccounts, InvenioAccountsREST
 from invenio_accounts.admin import role_adminview, session_adminview, user_adminview
+from invenio_accounts.models import Role
 from invenio_accounts.testutils import create_test_user
 from invenio_accounts.views.rest import RegisterView, create_rest_blueprint, use_kwargs
 from invenio_accounts.views.settings import create_settings_blueprint
@@ -112,6 +115,8 @@ def _app_factory(config=None):
         #),
         SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
                                           'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
+        DB_VERSIONING=False,
+        DB_VERSIONING_USER_MODEL=None,
         SERVER_NAME="example.com",
         TESTING=True,
         WTF_CSRF_ENABLED=False,
@@ -120,6 +125,8 @@ def _app_factory(config=None):
         ACCOUNTS_SETTINGS_TEMPLATE="invenio_accounts/settings/base.html",
         ACCOUNTS_COVER_TEMPLATE="invenio_accounts/base_cover.html",
         WEBPACKEXT_MANIFEST_LOADER=MockManifestLoader,
+        ACCOUNTS_JWT_ALOGORITHM = 'HS256',
+        ACCOUNTS_JWT_SECRET_KEY = 'None'
     )
 
     app.config.update(config or {})
@@ -192,6 +199,7 @@ def app(request):
     """Flask application fixture with Invenio Accounts."""
     app = _app_factory()
     app.config.update(ACCOUNTS_USERINFO_HEADERS=True)
+    InvenioAccess(app)
     InvenioAccounts(app)
 
     app.register_blueprint(create_settings_blueprint(app))
@@ -325,6 +333,26 @@ def users(app):
     """Create users."""
     user1 = create_test_user(email="INFO@inveniosoftware.org", password="tester")
     user2 = create_test_user(email="info2@invenioSOFTWARE.org", password="tester2")
+    user3 = create_test_user(email="admin1@inveniosoftware.org",password="tester3")
+    
+    ds = app.extensions["invenio-accounts"].datastore
+    role_count = Role.query.filter_by(name="System Administrator").count()
+    if role_count != 1:
+        sysadmin_role = ds.create_role(name="System Administrator")
+    else:
+        sysadmin_role = Role.query.filter_by(name="System Administrator").first()
+    
+    # Assign access authorization
+    with db.session.begin_nested():
+        action_users = [
+            ActionUsers(action="superuser-access", user=user3),
+        ]
+        db.session.add_all(action_users)
+        action_roles = [
+            ActionRoles(action="superuser-access", role=sysadmin_role)
+        ]
+        db.session.add_all(action_roles)
+        ds.add_role_to_user(user3, sysadmin_role)
 
     return [
         {
@@ -339,4 +367,10 @@ def users(app):
             "password": user2.password_plaintext,
             "obj": user2,
         },
+        {
+            "email": user3.email,
+            "id": user3.id,
+            "password": user3.password_plaintext,
+            "obj": user3
+        }
     ]

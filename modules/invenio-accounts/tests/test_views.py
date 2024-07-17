@@ -96,7 +96,9 @@ def test_view_list_sessions(app):
     """Test view list sessions."""
     with app.test_request_context():
         user1 = create_test_user(email="user1@invenio-software.org")
+        user1_id = user1.id
         user2 = create_test_user(email="user2@invenio-software.org")
+        user2_id = user2.id
 
     with app.test_client() as client:
         client.post(
@@ -122,33 +124,35 @@ def test_view_list_sessions(app):
         assert res.status_code == 200
 
         # check session for user 1 is not in the list
-        sessions_1 = SessionActivity.query.filter_by(user_id=user1.id).all()
+        sessions_1 = SessionActivity.query.filter_by(user_id=user1_id).all()
+        user1_sid = sessions_1[0].sid_s
         assert len(sessions_1) == 1
         assert sessions_1[0].sid_s not in res.data.decode("utf-8")
 
         # check session for user 2 is in the list
-        sessions_2 = SessionActivity.query.filter_by(user_id=user2.id).all()
+        sessions_2 = SessionActivity.query.filter_by(user_id=user2_id).all()
+        user2_sid = sessions_2[0].sid_s
         assert len(sessions_2) == 1
         assert sessions_2[0].sid_s in res.data.decode("utf-8")
 
         # test user 2 to delete user 1 session
         url = url_for("invenio_accounts.revoke_session")
-        res = client.post(url, data={"sid_s": sessions_1[0].sid_s})
+        res = client.post(url, data={"sid_s": user1_sid})
         assert res.status_code == 302
         assert (
             SessionActivity.query.filter_by(
-                user_id=user1.id, sid_s=sessions_1[0].sid_s
+                user_id=user1_id, sid_s=user1_sid
             ).count()
             == 1
         )
 
         # test user 2 to delete user 1 session
         url = url_for("invenio_accounts.revoke_session")
-        res = client.post(url, data={"sid_s": sessions_2[0].sid_s})
+        res = client.post(url, data={"sid_s": user2_sid})
         assert res.status_code == 302
         assert (
             SessionActivity.query.filter_by(
-                user_id=user1.id, sid_s=sessions_2[0].sid_s
+                user_id=user1_id, sid_s=user2_sid
             ).count()
             == 0
         )

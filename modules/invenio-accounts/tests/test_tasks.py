@@ -11,6 +11,7 @@
 
 from datetime import datetime, timedelta
 from time import sleep
+from mock import patch
 
 from flask import url_for
 from flask_login import login_required
