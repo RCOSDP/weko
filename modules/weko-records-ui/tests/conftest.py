@@ -108,7 +108,7 @@ from weko_records.api import ItemsMetadata, FilesMetadata
 from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName, SiteLicenseInfo, FeedbackMailList,SiteLicenseIpAddress
 from weko_records.utils import get_options_and_order_list
 from weko_records_ui.config import WEKO_ADMIN_PDFCOVERPAGE_TEMPLATE,RECORDS_UI_ENDPOINTS,WEKO_RECORDS_UI_SECRET_KEY,WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN
-from weko_records_ui.models import PDFCoverPageSettings,FileOnetimeDownload, FilePermission, RocrateMapping
+from weko_records_ui.models import PDFCoverPageSettings,FileOnetimeDownload, FilePermission #RocrateMapping
 from weko_schema_ui.config import (
     WEKO_SCHEMA_DDI_SCHEMA_NAME,
     WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME,
