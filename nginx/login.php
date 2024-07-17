@@ -13,7 +13,7 @@ if(!$_SERVER['HTTP_WEKOSOCIETYAFFILIATION'] && $_SERVER['NO_CHECK_WEKOSOCIETYAFF
   if(isset($_REQUEST['next'])){
     $next=$_REQUEST['next'];
   }else{
-    $next='%2F'
+    $next='%2F';
   }
   $url = $base."/weko/shib/login?next=".$next;
   $curl = curl_init();
