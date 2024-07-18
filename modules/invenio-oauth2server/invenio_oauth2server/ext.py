@@ -2,30 +2,37 @@
 #
 # This file is part of Invenio.
 # Copyright (C) 2015-2018 CERN.
+# Copyright (C) 2022 RERO.
+# Copyright (C) 2023-2024 Graz University of Technology.
 #
 # Invenio is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
 
 """Invenio module that implements OAuth 2 server."""
 
-from __future__ import absolute_import, print_function
-
 import os
 import warnings
 
+import importlib_metadata
 import oauthlib.common as oauthlib_commmon
-import pkg_resources
 import six
-from flask import abort, current_app, request, session
-from flask_kvsession import KVSessionInterface
+from flask import abort, request
 from flask_login import current_user
-from flask_oauthlib.contrib.oauth2 import bind_cache_grant
+from flask_menu import current_menu
+from invenio_i18n import LazyString
+from invenio_i18n import lazy_gettext as _
+from invenio_rest.csrf import csrf
 from werkzeug.utils import cached_property, import_string
 from weko_redis.redis import RedisConnectionExtension
 
 from . import config
 from .models import OAuthUserProxy, Scope
 from .provider import oauth2
+
+from invenio_oauth2server._compat import monkey_patch_werkzeug  # noqa isort:skip
+
+monkey_patch_werkzeug()  # noqa isort:skip
+from flask_oauthlib.contrib.oauth2 import bind_cache_grant  # noqa isort:skip
 
 
 class _OAuth2ServerState(object):
@@ -40,19 +47,19 @@ class _OAuth2ServerState(object):
         oauth2.init_app(app)
 
         # Flask-OAuthlib does not support CACHE_REDIS_URL
-        if app.config['OAUTH2_CACHE_TYPE'] == 'redissentinel' and app.config.get(
-                'CACHE_REDIS_SENTINELS'):
+        if app.config["OAUTH2_CACHE_TYPE"] == "redissentinel" and app.config.get(
+                "CACHE_REDIS_SENTINELS"):
 
             redis_connection = RedisConnectionExtension()
-            if app.config['CACHE_TYPE'] == 'redis':
+            if app.config["CACHE_TYPE"] == "redis":
                 app.config.setdefault(
-                    'OAUTH2_CACHE_REDIS_HOST',
-                    redis_connection.redis_connection(app.config['CACHE_REDIS_HOST'], app.config['REDIS_PORT'], app.config['CACHE_REDIS_DB'], kv = False)
+                    "OAUTH2_CACHE_REDIS_HOST",
+                    redis_connection.redis_connection(app.config["CACHE_REDIS_HOST"], app.config["REDIS_PORT"], app.config["CACHE_REDIS_DB"], kv = False)
                 )
-            elif app.config['CACHE_TYPE'] == 'redissentinel':
+            elif app.config["CACHE_TYPE"] == "redissentinel":
                 app.config.setdefault(
-                    'OAUTH2_CACHE_REDIS_HOST',
-                    redis_connection.sentinel_connection(app.config['CACHE_REDIS_SENTINELS'], app.config['CACHE_REDIS_SENTINEL_MASTER'], app.config['CACHE_REDIS_DB'], kv = False)
+                    "OAUTH2_CACHE_REDIS_HOST",
+                    redis_connection.sentinel_connection(app.config["CACHE_REDIS_SENTINELS"], app.config["CACHE_REDIS_SENTINEL_MASTER"], app.config["CACHE_REDIS_DB"], kv = False)
                 )
 
         # Configures an OAuth2Provider instance to use configured caching
@@ -61,7 +68,7 @@ class _OAuth2ServerState(object):
 
         # Disables oauthlib's secure transport detection in in debug mode.
         if app.debug or app.testing:
-            os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+            os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 
         if entry_point_group:
             self.load_entry_point_group(entry_point_group)
@@ -74,7 +81,8 @@ class _OAuth2ServerState(object):
         :returns: A list of tuples (id, scope).
         """
         return [
-            (k, scope) for k, scope in sorted(self.scopes.items())
+            (k, scope)
+            for k, scope in sorted(self.scopes.items())
             if not exclude_internal or not scope.is_internal
         ]
 
@@ -93,7 +101,7 @@ class _OAuth2ServerState(object):
 
         :param entry_point_group: The entrypoint group name to load plugins.
         """
-        for ep in pkg_resources.iter_entry_points(group=entry_point_group):
+        for ep in set(importlib_metadata.entry_points(group=entry_point_group)):
             self.register_scope(ep.load())
 
     def load_obj_or_import_string(self, value):
@@ -110,11 +118,9 @@ class _OAuth2ServerState(object):
             return imp
 
     @cached_property
-    def jwt_veryfication_factory(self):
-        """Load default JWT veryfication factory."""
-        return self.load_obj_or_import_string(
-            'OAUTH2SERVER_JWT_VERYFICATION_FACTORY'
-        )
+    def jwt_verification_factory(self):
+        """Load default JWT verification factory."""
+        return self.load_obj_or_import_string("OAUTH2SERVER_JWT_VERIFICATION_FACTORY")
 
 
 class InvenioOAuth2Server(object):
@@ -128,8 +134,7 @@ class InvenioOAuth2Server(object):
         if app:
             self._state = self.init_app(app, **kwargs)
 
-    def init_app(self, app, entry_point_group='invenio_oauth2server.scopes',
-                 **kwargs):
+    def init_app(self, app, entry_point_group="invenio_oauth2server.scopes", **kwargs):
         """Flask application initialization.
 
         :param app: An instance of :class:`flask.Flask`.
@@ -137,10 +142,9 @@ class InvenioOAuth2Server(object):
             (Default: ``'invenio_oauth2server.scopes'``)
         """
         self.init_config(app)
-
         state = _OAuth2ServerState(app, entry_point_group=entry_point_group)
 
-        app.extensions['invenio-oauth2server'] = state
+        app.extensions["invenio-oauth2server"] = state
         return state
 
     def init_config(self, app):
@@ -149,20 +153,22 @@ class InvenioOAuth2Server(object):
         :param app: An instance of :class:`flask.Flask`.
         """
         app.config.setdefault(
-            'OAUTH2SERVER_BASE_TEMPLATE',
-            app.config.get('BASE_TEMPLATE',
-                           'invenio_oauth2server/base.html'))
+            "OAUTH2SERVER_BASE_TEMPLATE",
+            app.config.get("BASE_TEMPLATE", "invenio_oauth2server/base.html"),
+        )
         app.config.setdefault(
-            'OAUTH2SERVER_COVER_TEMPLATE',
-            app.config.get('COVER_TEMPLATE',
-                           'invenio_oauth2server/base.html'))
+            "OAUTH2SERVER_COVER_TEMPLATE",
+            app.config.get("COVER_TEMPLATE", "invenio_oauth2server/base.html"),
+        )
         app.config.setdefault(
-            'OAUTH2SERVER_SETTINGS_TEMPLATE',
-            app.config.get('SETTINGS_TEMPLATE',
-                           'invenio_oauth2server/settings/base.html'))
+            "OAUTH2SERVER_SETTINGS_TEMPLATE",
+            app.config.get(
+                "SETTINGS_TEMPLATE", "invenio_oauth2server/settings/base.html"
+            ),
+        )
 
         for k in dir(config):
-            if k.startswith('OAUTH2SERVER_') or k.startswith('OAUTH2_'):
+            if k.startswith("OAUTH2SERVER_") or k.startswith("OAUTH2_"):
                 app.config.setdefault(k, getattr(config, k))
 
     def __getattr__(self, name):
@@ -179,33 +185,43 @@ def verify_oauth_token_and_set_current_user():
 
         app.before_request(verify_oauth_token_and_set_current_user)
     """
+    # Since this function can be evoked multiple times
+    # we add a check to not run it if it has already run.
+    if hasattr(request, "oauth_verify_has_run"):
+        return
+
     for func in oauth2._before_request_funcs:
         func()
 
-    if not hasattr(request, 'oauth') or not request.oauth:
+    if not hasattr(request, "oauth") or not request.oauth:
         scopes = []
         try:
             valid = False
             req = request
-            if 'Authorization' in request.headers:
-                header = request.headers['Authorization']
-                authType = header.split(' ')[0].lower()
-                if authType == 'basic':
+            if "Authorization" in request.headers:
+                header = request.headers["Authorization"]
+                authType = header.split(" ")[0].lower()
+                if authType == "basic":
                     valid = False
-                elif authType == 'digest':
+                elif authType == "digest":
                     valid = False
                 else:
                     valid, req = oauth2.verify_request(scopes)
             else:
                 valid, req = oauth2.verify_request(scopes)
         except ValueError:
-            abort(400, 'Error trying to decode a non urlencoded string.')
+            abort(400, "Error trying to decode a non urlencoded string.")
 
         for func in oauth2._after_request_funcs:
             valid, req = func(valid, req)
 
         if valid:
             request.oauth = req
+
+    if hasattr(request, "oauth"):
+        request.skip_csrf_check = True
+
+    request.oauth_verify_has_run = True
 
 
 class InvenioOAuth2ServerREST(object):
@@ -227,17 +243,22 @@ class InvenioOAuth2ServerREST(object):
         self.init_config(app)
 
         allowed_urlencode_chars = app.config.get(
-            'OAUTH2SERVER_ALLOWED_URLENCODE_CHARACTERS')
+            "OAUTH2SERVER_ALLOWED_URLENCODE_CHARACTERS"
+        )
         if allowed_urlencode_chars:
             InvenioOAuth2ServerREST.monkeypatch_oauthlib_urlencode_chars(
-                allowed_urlencode_chars)
+                allowed_urlencode_chars
+            )
+        # add check to skip csrf validation if oauth request
+        csrf.before_csrf_protect(verify_oauth_token_and_set_current_user)
         app.before_request(verify_oauth_token_and_set_current_user)
 
     def init_config(self, app):
         """Initialize configuration."""
         app.config.setdefault(
-            'OAUTH2SERVER_ALLOWED_URLENCODE_CHARACTERS',
-            getattr(config, 'OAUTH2SERVER_ALLOWED_URLENCODE_CHARACTERS'))
+            "OAUTH2SERVER_ALLOWED_URLENCODE_CHARACTERS",
+            getattr(config, "OAUTH2SERVER_ALLOWED_URLENCODE_CHARACTERS"),
+        )
 
     @staticmethod
     def monkeypatch_oauthlib_urlencode_chars(chars):
@@ -280,8 +301,25 @@ class InvenioOAuth2ServerREST(object):
         if modified_chars != original_special_chars:
             warnings.warn(
                 'You are overriding the default OAuthlib "URL encoded" set of '
-                'valid characters. Make sure that the characters defined in '
-                'oauthlib.common.urlencoded are indeed limitting your needs.',
-                RuntimeWarning
+                "valid characters. Make sure that the characters defined in "
+                "oauthlib.common.urlencoded are indeed limitting your needs.",
+                RuntimeWarning,
             )
             oauthlib_commmon.urlencoded = always_safe | modified_chars
+
+
+def finalize_app(app):
+    """Finalize app."""
+    icons = app.extensions["invenio-theme"].icons
+
+    current_menu.submenu("settings.applications").register(
+        endpoint="invenio_oauth2server_settings.index",
+        text=_(
+            "%(icon)s Applications",
+            icon=LazyString(lambda: f'<i class="{icons.codepen}"></i>'),
+        ),
+        order=5,
+        active_when=lambda: request.endpoint.startswith(
+            "invenio_oauth2server_settings."
+        ),
+    )

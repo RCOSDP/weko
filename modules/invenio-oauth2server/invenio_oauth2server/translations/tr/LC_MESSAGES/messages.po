@@ -1,0 +1,479 @@
+# Translations template for invenio-oauth2server.
+# Copyright (C) 2022 CERN
+# This file is distributed under the same license as the
+# invenio-oauth2server project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2022.
+# 
+# Translators:
+# Berat Aldemir <berataldemir@gmail.com>, 2021
+# Ben Translation and Interpreting Services <info@bentercume.com>, 2021
+# 
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: invenio-oauth2server 1.3.7\n"
+"Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
+"POT-Creation-Date: 2022-10-12 09:26+0000\n"
+"PO-Revision-Date: 2016-08-18 08:03+0000\n"
+"Last-Translator: Ben Translation and Interpreting Services <info@bentercume.com>, 2021\n"
+"Language-Team: Turkish (https://app.transifex.com/inveniosoftware/teams/23537/tr/)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.10.3\n"
+"Language: tr\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#: invenio_oauth2server/admin.py:68
+msgid "OAuth Applications"
+msgstr "OAuth Uygulamaları"
+
+#: invenio_oauth2server/admin.py:69 invenio_oauth2server/admin.py:78
+msgid "User Management"
+msgstr "Kullanıcı Yönetimi"
+
+#: invenio_oauth2server/admin.py:77
+msgid "OAuth Application Tokens"
+msgstr "OAuth Uygulama Belirteçleri"
+
+#: invenio_oauth2server/forms.py:103
+#, python-format
+msgid "Invalid redirect URIs: %(urls)s"
+msgstr "Geçersiz yönlendirme URI'leri: %(urls)s"
+
+#: invenio_oauth2server/forms.py:135
+msgid "Redirect URIs (one per line)"
+msgstr "Yönlendirme URI'leri (her satıra bir tane)"
+
+#: invenio_oauth2server/forms.py:136
+msgid ""
+"One redirect URI per line. This is your application's authorization callback"
+" URLs. HTTPS must be used for all hosts except localhost (for testing "
+"purposes)."
+msgstr ""
+"Satır başına bir yönlendirme URI'si. Bunlar, uygulamanızın yetki geri "
+"çağırma URL'leridir. Localhost dışındaki tüm ana bilgisayarlar için HTTPS "
+"kullanılmalıdır (test amacıyla)."
+
+#: invenio_oauth2server/forms.py:155
+msgid "Client type"
+msgstr "İstemci türü"
+
+#: invenio_oauth2server/forms.py:156
+msgid ""
+"Select confidential if your application is capable of keeping the issued "
+"client secret confidential (e.g. a web application), select public if your "
+"application cannot (e.g. a browser-based JavaScript application). If you "
+"select public, your application MUST validate the redirect URI."
+msgstr ""
+"Uygulamanız verilen istemci sırrını gizli tutabiliyorsa (örneğin bir web "
+"uygulaması) gizli seçeneğini seçin, uygulamanız bunu yapamıyorsa (örneğin "
+"tarayıcı tabanlı bir JavaScript uygulaması) genel seçeneğini seçin. Genel'i "
+"seçtiğiniz taktirde, uygulamanız yeniden yönlendirme URI'sini doğrulamak "
+"ZORUNDADIR."
+
+#: invenio_oauth2server/forms.py:164
+msgid "Confidential"
+msgstr "Gizli"
+
+#: invenio_oauth2server/forms.py:164
+msgid "Public"
+msgstr "Herkese açık"
+
+#: invenio_oauth2server/forms.py:174
+msgid "Name of personal access token."
+msgstr "Kişisel Erişim Belirtecinin adı."
+
+#: invenio_oauth2server/forms.py:178
+msgid "The name must be less than 40 characters long."
+msgstr "Ad 40 karakterden kısa olmalıdır."
+
+#: invenio_oauth2server/forms.py:186
+msgid ""
+"Scopes assign permissions to your personal access token. A personal access "
+"token works just like a normal OAuth  access token for authentication "
+"against the API."
+msgstr ""
+"Kapsamlar, kişisel erişim belirtecinize izinler atar. Kişisel erişim "
+"belirteci, API'ye karşı kimlik doğrulaması için normal bir OAuth erişim "
+"belirteci gibi çalışır."
+
+#: invenio_oauth2server/models.py:122
+msgid "Name"
+msgstr "Ad"
+
+#: invenio_oauth2server/models.py:123
+msgid "Name of application (displayed to users)."
+msgstr "Uygulamanın adı (kullanıcılara gösterilir)."
+
+#: invenio_oauth2server/models.py:133
+msgid "Description"
+msgstr "Tanım"
+
+#: invenio_oauth2server/models.py:134
+msgid "Optional. Description of the application (displayed to users)."
+msgstr "İsteğe bağlı. Uygulamanın açıklaması (kullanıcılara gösterilir)."
+
+#: invenio_oauth2server/models.py:144
+msgid "Website URL"
+msgstr "Web Sitesi URL'si"
+
+#: invenio_oauth2server/models.py:145
+msgid "URL of your application (displayed to users)."
+msgstr "Uygulamanızın URL'si (kullanıcılara gösterilir)."
+
+#: invenio_oauth2server/scopes.py:20
+msgid "Allow access to email address (read-only)."
+msgstr "E-posta adresine erişime izin ver (salt okunur)."
+
+#: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:19
+#: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:20
+#: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:59
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/authorize.html:18
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/authorize.html:21
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/authorize.html:66
+#: invenio_oauth2server/views/server.py:67
+msgid "Authorize application"
+msgstr "Uygulamayı yetkilendir"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:21
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/authorize.html:23
+#, python-format
+msgid ""
+"Application '%(client_name)s' by '%(client_user)s' wants permission to "
+"access your '%(current_user)s' account."
+msgstr ""
+" '%(client_name)s' uygulaması  '%(client_user)s' kullanıcıları ile, "
+"'%(current_user)s' hesabınıza erişmek için izin istiyor."
+
+#: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:28
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_permission_view.html:30
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/authorize.html:34
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/token_permission_view.html:26
+msgid "Review permissions"
+msgstr "İzinleri gözden geçir"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:37
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_permission_view.html:39
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/authorize.html:47
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/token_permission_view.html:39
+msgid "No permissions granted."
+msgstr "Hiçbir izin verilmedi."
+
+#: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:44
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_permission_view.html:44
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/authorize.html:53
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/token_permission_view.html:44
+msgid "Application"
+msgstr "Uygulama"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:47
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_permission_view.html:47
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/authorize.html:56
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/token_permission_view.html:47
+msgid "Visit application website"
+msgstr "Uygulama web sitesini ziyaret edin"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:60
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/authorize.html:67
+msgid "Reject"
+msgstr "Reddet"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/errors.html:18
+#: invenio_oauth2server/templates/invenio_oauth2server/errors.html:22
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/errors.html:17
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/errors.html:20
+msgid "Invalid authorization request"
+msgstr "Geçersiz yetkilendirme isteği"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/errors.html:24
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/errors.html:22
+#, python-format
+msgid ""
+"The service that redirected your here made an invalid authorization request "
+"(error code: %(x_error)s)."
+msgstr ""
+"Sizi buraya yönlendiren hizmet geçersiz bir yetkilendirme isteğinde bulundu "
+"(hata kodu: %(x_error)s)."
+
+#: invenio_oauth2server/templates/invenio_oauth2server/errors.html:31
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/errors.html:28
+msgid "Get me out of here!"
+msgstr "Beni buradan çıkar!"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_new.html:17
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_new.html:17
+msgid "New OAuth Application"
+msgstr "Yeni OAuth Uygulaması"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_new.html:25
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_new.html:26
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_new.html:24
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/token_new.html:25
+msgid "Cancel"
+msgstr "İptal"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_new.html:26
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_new.html:27
+msgid "Register"
+msgstr "Kayıt ol"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:17
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:18
+#, python-format
+msgid "Application / %(client_name)s"
+msgstr "Uygulama / %(client_name)s"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:22
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:30
+msgid "Client ID"
+msgstr "İstemci Kimliği"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:23
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:36
+msgid "Client Secret"
+msgstr "İstemci Sırrı"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:24
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:39
+msgid "Do not share the client secret with anyone!"
+msgstr "İstemci sırrını kimseyle paylaşmayın!"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:30
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:26
+msgid "Reset client secret"
+msgstr "İstemci sırrını sıfırla"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:47
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_view.html:48
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:51
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/token_view.html:49
+msgid "Delete"
+msgstr "Sil"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:48
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_view.html:49
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:54
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/token_view.html:52
+msgid "Save"
+msgstr "Kaydet"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:55
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:60
+msgid "OAuth 2.0 Endpoints"
+msgstr "OAuth 2.0 Uç Noktaları"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:59
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:65
+msgid "Authorize URL (GET)"
+msgstr "URL'yi yetkilendir (GET)"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:62
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:71
+msgid "Query parameters"
+msgstr "Sorgu parametreleri"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:69
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:78
+msgid "example request"
+msgstr "örnek istek"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:72
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:89
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:81
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:102
+msgid "required, use"
+msgstr "gerekli, kullan"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:73
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:87
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:88
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:82
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:100
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:101
+msgid "required"
+msgstr "gerekli"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:74
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:83
+msgid "required, space separate list of scopes"
+msgstr "gerekli, boşlukla ayrılmış kapsamların listesi"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:75
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:84
+msgid "required, URL encoded"
+msgstr "gerekli, URL şifrelenmiş"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:76
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:85
+msgid "recommended, for CSRF protection"
+msgstr "önerilir, CSRF koruması için"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:83
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:93
+msgid "Access token URL (POST)"
+msgstr "Erişim belirteci URL'si (POST)"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:85
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:98
+msgid "Request body parameters:"
+msgstr "İstek gövde parametreleri: "
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:90
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:91
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:92
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:103
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:104
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:105
+msgid "required for grant_type"
+msgstr "hibe_türü (grant_type) için gerekli"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/index.html:17
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/index.html:17
+msgid "Developer Applications"
+msgstr "Geliştirici Uygulamaları"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/index.html:18
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/index.html:18
+msgid "New application"
+msgstr "Yeni uygulama"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/index.html:25
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/index.html:25
+#, python-format
+msgid "You have registered these applications to use the %(site_name)s API:"
+msgstr "%(site_name)s API'sini kullanmak için şu uygulamaları kaydettiniz:"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/index.html:36
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/index.html:37
+#, python-format
+msgid ""
+"You have not yet registered any applications. Click the 'New application' "
+"button to create an application to access the %(site_name)s API."
+msgstr ""
+"Henüz herhangi bir başvuru kaydetmediniz. %(site_name)s API'sine erişmek "
+"üzere bir uygulama oluşturmak için 'Yeni uygulama' butonuna tıklayın."
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/index.html:41
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/index.html:43
+msgid "Personal access tokens"
+msgstr "Kişisel erişim belirteçleri"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/index.html:42
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/index.html:44
+msgid "New token"
+msgstr "Yeni belirteç"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/index.html:49
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/index.html:51
+#, python-format
+msgid "Following are personal tokens used to access the %(site_name)s API:"
+msgstr ""
+"%(site_name)s API'sine erişmek için kullanılan kişisel belirteçler "
+"şunlardır:"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/index.html:60
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/index.html:69
+msgid ""
+"You have not yet created any personal access tokens. Click the 'New token' "
+"button to create a personal access token."
+msgstr ""
+"Henüz herhangi bir kişisel erişim belirteci oluşturmadınız. Kişisel bir "
+"erişim belirteci oluşturmak için 'Yeni belirteç' butonuna tıklayın."
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/index.html:65
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/index.html:74
+msgid "Authorized applications"
+msgstr "Yetkilendirilmiş uygulamalar"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/index.html:70
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/index.html:79
+msgid "You have granted the following application access to your account:"
+msgstr "Aşağıdaki uygulamaya hesabınıza erişim izni verdiniz:"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/index.html:76
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/index.html:84
+msgid "Revoke"
+msgstr "Kaldır"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/index.html:84
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/index.html:94
+msgid ""
+"You have not yet granted any external applications access to your account."
+msgstr ""
+"Henüz herhangi bir harici uygulamaya hesabınıza erişim izni vermediniz."
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_new.html:18
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/token_new.html:18
+msgid "New personal access token"
+msgstr "Yeni kişisel erişim belirteci"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_new.html:27
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/token_new.html:28
+msgid "Create"
+msgstr "Oluştur"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_permission_view.html:17
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/token_permission_view.html:17
+#, python-format
+msgid "Authorized application: %(client_name)s"
+msgstr "Yetkilendirilmiş uygulama: %(client_name)s"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_view.html:17
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/token_view.html:17
+#, python-format
+msgid "Personal access token / %(name)s"
+msgstr "Kişisel erişim belirteci / %(name)s"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_view.html:24
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/token_view.html:24
+msgid "Access token"
+msgstr "Erişim belirteci"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_view.html:26
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/token_view.html:30
+msgid "Please copy the personal access token now. You won't see it again!"
+msgstr ""
+"Lütfen kişisel erişim belirtecini şimdi kopyalayın. Onu tekrar göremezsiniz!"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_view.html:29
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/token_view.html:33
+msgid ""
+"Do not share this personal access token. It gives full access to your "
+"account."
+msgstr ""
+"Bu kişisel erişim belirtecini kimseyle paylaşmayın. Hesabınıza tam erişim "
+"sağlar."
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_view.html:40
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/token_view.html:41
+msgid ""
+"If you've lost or forgotten this token please create a new one. Be aware "
+"that any scripts or applications using this token will need to be updated."
+msgstr ""
+"Bu belirteci kaybettiyseniz veya unuttuysanız, lütfen yeni bir tane "
+"oluşturun. Bu belirteci kullanan tüm komut dosyalarının veya uygulamaların "
+"güncellenmesi gerekeceğini unutmayın."
+
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:81
+msgid "or"
+msgstr "veya"
+
+#: invenio_oauth2server/views/settings.py:105
+#, python-format
+msgid "%(icon)s Applications"
+msgstr "%(icon)s Uygulamalar"
+
+#: invenio_oauth2server/views/settings.py:110
+msgid "Applications"
+msgstr "Uygulamalar"
+
+#: invenio_oauth2server/views/settings.py:151
+#: invenio_oauth2server/views/settings.py:212
+msgid "New"
+msgstr "Yeni"
+
+#: invenio_oauth2server/views/settings.py:174
+#: invenio_oauth2server/views/settings.py:238
+msgid "Edit"
+msgstr "Düzenle"
