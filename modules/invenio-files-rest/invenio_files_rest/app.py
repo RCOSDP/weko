@@ -21,8 +21,6 @@ parser is installed by using the custom Flask application class provided
 provided in this module.
 """
 
-from __future__ import absolute_import, print_function
-
 from flask import Flask as FlaskBase
 
 from .wrappers import Request
