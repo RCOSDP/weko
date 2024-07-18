@@ -61,7 +61,7 @@ class PreviewFile(object):
             ".{0}_files".format(self.pid.pid_type),
             pid_value=self.pid.pid_value,
             filename=self.file.key,
-        )
+            allow_aggs=self.allow_aggs) 
 
     def is_local(self):
         """Check if file is local."""
