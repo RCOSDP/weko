@@ -2,12 +2,13 @@
 #
 # This file is part of Invenio.
 # Copyright (C) 2017-2018 CERN.
-# Copyright (C)      2022 TU Wien.
 #
 # Invenio is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
 
 """Errors used in Invenio-Stats."""
+
+from __future__ import absolute_import, print_function
 
 from invenio_rest.errors import RESTException
 
@@ -35,7 +36,6 @@ class DuplicateAggregationError(Exception):
 class DuplicateQueryError(Exception):
     """Error raised when a duplicate aggregation is detected."""
 
-
 ##
 #  Aggregation errors
 ##
@@ -48,7 +48,6 @@ class NotSupportedInterval(Exception):
 ##
 #  Query errors
 ##
-
 
 class InvalidRequestInputError(RESTException):
     """Error raised when the request input is invalid."""
@@ -71,6 +70,5 @@ class UnknownQueryError(RESTException):
         """
         super(RESTException, self).__init__()
         self.query_name = query_name
-        self.description = "Unknown statistic '{}'".format(query_name)
-
+        self.description = 'Unknown statistic \'{}\''.format(query_name)
     code = 400

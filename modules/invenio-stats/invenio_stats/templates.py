@@ -12,12 +12,13 @@ from .proxies import current_stats
 
 
 def register_templates():
-    """Register search templates for events."""
-    event_templates = [
-        event["templates"] for event in current_stats.events_config.values()
-    ]
-    aggregation_templates = [
-        agg["templates"] for agg in current_stats.aggregations_config.values()
-    ]
-
+    """Register elasticsearch templates for events."""
+    event_templates = [current_stats._events_config[e]
+                       ['templates']
+                       for e in
+                       current_stats._events_config]
+    aggregation_templates = [current_stats._aggregations_config[a]
+                             ['templates']
+                             for a in
+                             current_stats._aggregations_config]
     return event_templates + aggregation_templates

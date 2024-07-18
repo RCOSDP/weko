@@ -2,12 +2,13 @@
 #
 # This file is part of Invenio.
 # Copyright (C) 2016-2018 CERN.
-# Copyright (C)      2022 TU Wien.
 #
 # Invenio is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
 
 """Proxy to the current stats module."""
+
+from __future__ import absolute_import, print_function
 
 import os
 
@@ -90,8 +91,6 @@ is the name of the emitted event.
     can update it. Keep in mind that these functions will run synchronously
     during the creation of the event, meaning that if the signal is sent during
     a request they will increase the response time.
-
-You can find a sampe of STATS_EVENT configuration in the `registrations.py`
 """
 
 STATS_EXCLUDED_ADDRS = []
@@ -106,7 +105,6 @@ STATS_AGGREGATIONS = {
     'search-agg': {},
     'top-view-agg': {},
 }
-
 
 STATS_QUERIES = {
     'get-celery-task-report': {},
@@ -148,7 +146,6 @@ STATS_QUERIES = {
     'get-new-items-data': {}
 }
 
-
 STATS_PERMISSION_FACTORY = weko_permission_factory
 """Permission factory used by the statistics REST API.
 
@@ -162,11 +159,10 @@ See Invenio-access and Flask-principal for a better understanding of the
 access control mechanisms.
 """
 
-
 STATS_MQ_EXCHANGE = Exchange(
-    "events",
-    type="direct",
-    delivery_mode="transient",  # in-memory queue
+    'events',
+    type='direct',
+    delivery_mode='transient',  # in-memory queue
 )
 """Default exchange used for the message queues."""
 
@@ -194,7 +190,15 @@ WEKO_STATS_UNKNOWN_LABEL = 'UNKNOWN'
 STATS_EVENT_STRING = 'events'
 """Stats event string."""
 
-STATS_AGGREGATION_INDEXES = []
+STATS_AGGREGATION_INDEXES = [
+    'celery-task',
+    'file-download',
+    'file-preview',
+    'record-view',
+    'item-create',
+    'search',
+    'top-view',
+]
 """Stats aggregation indexes."""
 
 
@@ -209,4 +213,3 @@ STATS_WEKO_DB_BACKUP_AGGREGATION = False
 
 STATS_WEKO_DB_BACKUP_BOOKMARK = False
 """Enable DB backup of bookmark."""
-

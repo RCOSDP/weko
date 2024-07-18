@@ -1,29 +1,16 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2017-2020 CERN.
-# Copyright (C) 2022      TU Wien.
+# This file is part of Invenio.
+# Copyright (C) 2017-2018 CERN.
 #
 # Invenio is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
 
-# Quit on errors
-set -o errexit
+export PYTEST_ADDOPTS='docs tests invenio_stats'
 
-# Quit on unbound symbols
-set -o nounset
-
-# Always bring down docker services
-function cleanup() {
-    eval "$(docker-services-cli down --env)"
-}
-trap cleanup EXIT
-
-python -m check_manifest
-python -m sphinx.cmd.build -qnNW docs docs/_build/html
-eval "$(docker-services-cli up --search ${SEARCH:-opensearch} --mq ${MQ:-rabbitmq} --cache ${CACHE:-redis} --env)"
-# Note: expansion of pytest_args looks like below to not cause an unbound
-# variable error when 1) "nounset" and 2) the array is empty.
-python -m pytest ${pytest_args[@]+"${pytest_args[@]}"}
-tests_exit_code=$?
-exit "$tests_exit_code"
+pydocstyle invenio_stats tests docs && \
+isort -rc -c -df && \
+check-manifest --ignore ".travis-*" && \
+sphinx-build -qnNW docs docs/_build/html && \
+python setup.py test

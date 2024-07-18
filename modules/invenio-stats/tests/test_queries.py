@@ -16,6 +16,7 @@ import copy
 from mock import patch
 
 from invenio_stats.aggregations import filter_robots
+from invenio_stats.contrib.registrations import register_queries
 from invenio_stats.errors import InvalidRequestInputError
 from invenio_stats.queries import (
     ESQuery,
@@ -44,8 +45,9 @@ def test_query(app):
 
 # class ESDateHistogramQuery(ESQuery):
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_queries.py::test_date_histogram_query -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
-def test_date_histogram_query(app, query_configs):
+def test_date_histogram_query(app):
     config_num = 8      # query_name='bucket-file-download-histogram'
+    query_configs = register_queries()
     histogram_config = query_configs[config_num]['query_config']
     # __init__
     with pytest.raises(ValueError):
@@ -167,8 +169,9 @@ def test_date_histogram_query(app, query_configs):
                            16,
                            "tests/data/ESTermsQuery_result03.json")])
 def test_terms_query(app,mock_es_execute, event_queues,
-                     aggregated_file_download_events, mock_execute, config_num, res_file, query_configs):
+                     aggregated_file_download_events, mock_execute, config_num, res_file):
     """Test that the terms query returns the correct total count."""
+    query_configs = register_queries()
     terms_query = ESTermsQuery(query_name='test_total_count',
                                **query_configs[config_num]['query_config'])
 
@@ -182,8 +185,9 @@ def test_terms_query(app,mock_es_execute, event_queues,
         assert results == data
 
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_queries.py::test_terms_query2 -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
-def test_terms_query2(app, query_configs):
+def test_terms_query2(app):
     config_num = 0        # query_name='get-celery-task-report'
+    query_configs = register_queries()
     terms_config = query_configs[config_num]['query_config']
     
     # validate_arguments
@@ -267,8 +271,9 @@ def test_terms_query2(app, query_configs):
 
 
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_queries.py::test_weko_file_stats_query -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
-def test_weko_file_stats_query(app, query_configs):
+def test_weko_file_stats_query(app):
     config_num = 9        # query_name='bucket-file-download-total'
+    query_configs = register_queries()
     filestats_config = query_configs[config_num]['query_config']
 
     # build_query
@@ -293,8 +298,9 @@ def test_weko_file_stats_query(app, query_configs):
 
 
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_queries.py::test_weko_terms_query -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
-def test_weko_terms_query(app, query_configs):
+def test_weko_terms_query(app):
     config_num = 1        # query_name='get-search-report'
+    query_configs = register_queries()
     weko_terms_config = query_configs[config_num]['query_config']
 
     # build_query

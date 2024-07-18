@@ -1,0 +1,52 @@
+{
+  "template": "events-stats-record-view-*",
+  "settings": {
+    "index.mapper.dynamic": false,
+    "index": {
+      "refresh_interval": "5s"
+    }
+  },
+  "mappings": {
+    "stats-record-view": {
+      "_all": {
+        "enabled": false
+      },
+      "date_detection": false,
+      "dynamic": false,
+      "numeric_detection": false,
+      "properties": {
+        "timestamp": {
+          "type": "date",
+          "format": "strict_date_hour_minute_second"
+        },
+        "record_id": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "pid_type": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "pid_value": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "labels": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "country": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "visitor_id": {
+          "type": "string",
+          "index": "not_analyzed"
+        }
+      }
+    }
+  },
+  "aliases": {
+    "events-stats-record-view": {}
+  }
+}
