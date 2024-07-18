@@ -58,7 +58,7 @@ class PreviewFile(object):
             view ``invenio_records_ui.<pid_type>_files``.
         """
         return url_for(
-            ".{0}_files".format(self.pid.pid_type),
+            ".{0}_file_preview".format(self.pid.pid_type),
             pid_value=self.pid.pid_value,
             filename=self.file.key,
             allow_aggs=self.allow_aggs) 
