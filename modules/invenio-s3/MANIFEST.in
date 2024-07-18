@@ -21,6 +21,7 @@ recursive-include docs Makefile
 recursive-include examples *.py
 recursive-include examples *.sh
 recursive-include tests *.py
+recursive-include .github/workflows *.yml
 
 # added by check-manifest
 include *.properties
