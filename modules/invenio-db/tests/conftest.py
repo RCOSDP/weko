@@ -9,8 +9,6 @@
 
 """Pytest configuration."""
 
-from __future__ import absolute_import, print_function
-
 import os, sys
 import shutil
 import tempfile
@@ -22,13 +20,17 @@ from os.path import dirname, join
 from pkg_resources import EntryPoint
 from werkzeug.utils import import_string
 
-sys.path.append(os.path.dirname(__file__))
 
+from invenio_db.utils import alembic_test_context
+
+sys.path.append(os.path.dirname(__file__))
 
 @pytest.yield_fixture()
 def db(app):
+    """Database fixture with session sharing."""
     import invenio_db
     from invenio_db import shared
+
     db = invenio_db.db = shared.db = shared.SQLAlchemy(
         metadata=shared.MetaData(naming_convention=shared.NAMING_CONVENTION)
     )
@@ -61,6 +63,7 @@ def base_app(instance_path):
         #     'SQLALCHEMY_DATABASE_URI','sqlite:///test.db')
         SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
                                           'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
+        ALEMBIC_CONTEXT=alembic_test_context(),
     )
     
     #InvenioDB(app_)

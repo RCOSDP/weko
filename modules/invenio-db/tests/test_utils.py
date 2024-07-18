@@ -16,9 +16,14 @@ from sqlalchemy_continuum import remove_versioning
 from sqlalchemy_utils.types import EncryptedType
 
 from invenio_db import InvenioDB
-from invenio_db.utils import rebuild_encrypted_properties, \
-    versioning_model_classname, versioning_models_registered,\
-        create_alembic_version_table,drop_alembic_version_table
+	from invenio_db.utils import (
+	    rebuild_encrypted_properties,
+	    versioning_model_classname,
+	    versioning_models_registered,
+	    create_alembic_version_table,
+	    drop_alembic_version_table,
+	)
+
 
 # .tox/c1/bin/pytest --cov=invenio_db tests/test_utils.py::test_rebuild_encrypted_properties -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-db/.tox/c1/tmp
 def test_rebuild_encrypted_properties(db, app):
@@ -27,10 +32,10 @@ def test_rebuild_encrypted_properties(db, app):
     app.secret_key = old_secret_key
 
     def _secret_key():
-        return app.config.get('SECRET_KEY').encode('utf-8')
+        return app.config.get("SECRET_KEY").encode("utf-8")
 
     class Demo(db.Model):
-        __tablename__ = 'demo'
+        __tablename__ = "demo"
         pk = db.Column(sa.Integer, primary_key=True)
         et = db.Column(
             EncryptedType(type_in=db.Unicode, key=_secret_key), nullable=False
@@ -50,13 +55,13 @@ def test_rebuild_encrypted_properties(db, app):
         with pytest.raises(ValueError):
             db.session.query(Demo).all()
         with pytest.raises(AttributeError):
-            rebuild_encrypted_properties(old_secret_key, Demo, ['nonexistent'])
+            rebuild_encrypted_properties(old_secret_key, Demo, ["nonexistent"])
         assert app.secret_key == new_secret_key
 
     with app.app_context():
         with pytest.raises(ValueError):
             db.session.query(Demo).all()
-        rebuild_encrypted_properties(old_secret_key, Demo, ['et'])
+        rebuild_encrypted_properties(old_secret_key, Demo, ["et"])
         d1_after = db.session.query(Demo).first()
         assert d1_after.et == "something"
 
@@ -66,19 +71,18 @@ def test_rebuild_encrypted_properties(db, app):
 
 def test_versioning_model_classname(db, app):
     """Test the versioning model utilities."""
+
     class FooClass(db.Model):
         __versioned__ = {}
         pk = db.Column(db.Integer, primary_key=True)
 
-    app.config['DB_VERSIONING'] = True
+    app.config["DB_VERSIONING"] = True
     idb = InvenioDB(app)
     manager = idb.versioning_manager
-    manager.options['use_module_name'] = True
-    result = versioning_model_classname(manager, FooClass)
-    assert  result== 'TestsTest_UtilsFooClassVersion'
-    manager.options['use_module_name'] = False
-    assert versioning_model_classname(
-        manager, FooClass) == 'FooClassVersion'
+    manager.options["use_module_name"] = True
+    assert versioning_model_classname(manager, FooClass) == "Test_UtilsFooClassVersion"
+    manager.options["use_module_name"] = False
+    assert versioning_model_classname(manager, FooClass) == "FooClassVersion"
     assert versioning_models_registered(manager, db.Model)
     remove_versioning(manager=manager)
 
