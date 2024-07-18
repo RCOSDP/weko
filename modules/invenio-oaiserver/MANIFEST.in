@@ -21,7 +21,7 @@ recursive-include docs *.py
 recursive-include docs *.rst
 recursive-include docs Makefile
 recursive-include examples *.json
-recursive-include examples *.py *.txt *.sh
+recursive-include examples *.py *.sh
 recursive-include invenio_oaiserver *.html
 recursive-include invenio_oaiserver *.json
 recursive-include invenio_oaiserver *.po *.pot *.mo
@@ -31,6 +31,8 @@ recursive-include invenio_oaiserver *.xsl
 recursive-include tests *.json
 recursive-include tests *.py
 recursive-include tests *.xml
+recursive-include .github/workflows *.yml
+include .git-blame-ignore-revs
 
 # added by check-manifest
 include *.properties

@@ -19,7 +19,6 @@ Invenio-OAIServer.
    installation
    configuration
    usage
-   examplesapp
 
 
 API Reference
