@@ -9,10 +9,7 @@
 
 """Marshmallow based JSON-LD serializer for records."""
 
-from __future__ import absolute_import, print_function
-
 import pickle
-
 from flask import request
 from pyld import jsonld
 
@@ -37,16 +34,16 @@ class JSONLDTransformerMixin(TransformerMixinInterface):
         """
         self.context = context
         self._expanded = expanded
-        super(JSONLDTransformerMixin, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     @property
     def expanded(self):
         """Get JSON-LD expanded state."""
         # Ensure we can run outside a application/request context.
         if request:
-            if 'expanded' in request.args:
+            if "expanded" in request.args:
                 return True
-            elif 'compacted' in request.args:
+            elif "compacted" in request.args:
                 return False
         return self._expanded
 
@@ -62,17 +59,12 @@ class JSONLDTransformerMixin(TransformerMixinInterface):
 
     def transform_record(self, pid, record, links_factory=None, **kwargs):
         """Transform record into an intermediate representation."""
-        result = super(JSONLDTransformerMixin, self).transform_record(
-            pid, record, links_factory, **kwargs
-        )
+        result = super().transform_record(pid, record, links_factory, **kwargs)
         return self.transform_jsonld(result)
 
-    def transform_search_hit(self, pid, record_hit, links_factory=None,
-                             **kwargs):
+    def transform_search_hit(self, pid, record_hit, links_factory=None, **kwargs):
         """Transform search result hit into an intermediate representation."""
-        result = super(JSONLDTransformerMixin, self).transform_search_hit(
-            pid, record_hit, links_factory, **kwargs
-        )
+        result = super().transform_search_hit(pid, record_hit, links_factory, **kwargs)
         return self.transform_jsonld(result)
 
 

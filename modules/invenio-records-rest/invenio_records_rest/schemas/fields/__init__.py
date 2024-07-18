@@ -17,13 +17,13 @@ from .sanitizedunicode import SanitizedUnicode
 from .trimmedstring import TrimmedString
 
 __all__ = (
-    'DateString',
-    'Function',
-    'GenFunction',
-    'GenMethod',
-    'Method',
-    'PersistentIdentifier',
-    'SanitizedHTML',
-    'SanitizedUnicode',
-    'TrimmedString',
+    "DateString",
+    "Function",
+    "GenFunction",
+    "GenMethod",
+    "Method",
+    "PersistentIdentifier",
+    "SanitizedHTML",
+    "SanitizedUnicode",
+    "TrimmedString",
 )
