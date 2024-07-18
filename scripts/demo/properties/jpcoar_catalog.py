@@ -15,7 +15,7 @@ name_ja = "カタログ"
 name_en = "Catalog"
 mapping = {
     "display_lang_type": "",
-    "jpcoar_v1_mapping": {},
+    "jpcoar_v1_mapping": "",
     "jpcoar_mapping": {
         "catalog": {
             "accessRights": {

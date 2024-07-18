@@ -1,0 +1,176 @@
+{
+    "key1": {
+        "subkey1": {
+            "subkey1_1": "value1"
+        }
+    },
+    "key2": {
+        "attribute_value_mlt": [
+            {
+                "subkey2": {
+                    "subkey2_1": "value2"
+                }
+            }
+        ]
+    },
+    "key3": {
+        "subkey3": [
+            {
+                "subkey3_1": "value3_1"
+            },
+            {
+                "subkey3_1": "value3_2"
+            }
+        ]
+    },
+    "key4": {
+        "subkey4": [
+            {
+                "subkey4_1": "value4_1"
+            },
+            {
+                "subkey4_1": "value4_2"
+            }
+        ]
+    },
+    "key5_1": {
+        "subkey5_1": [
+            {
+                "subkey5_1_1": "value5_1"
+            },
+            {
+                "subkey5_1_1": "value5_2"
+            }
+        ]
+    },
+    "key5_2": {
+        "subkey5_2": {
+            "subkey5_2_1": "value5_3"
+        }
+    },
+    "key6": {
+        "subkey6": [
+            {
+                "subkey6_value": "value6_1",
+                "subkey6_lang": "de"
+            },
+            {
+                "subkey6_value": "value6_2",
+                "subkey6_lang": "en"
+            },
+            {
+                "subkey6_value": "value6_3",
+                "subkey6_lang": "ja"
+            }
+        ]
+    },
+    "key7": {
+        "subkey7": [
+            {
+                "subkey7_value": "value7_1",
+                "subkey7_lang": "de"
+            },
+            {
+                "subkey7_value": "value7_2",
+                "subkey7_lang": "ja"
+            }
+        ]
+    },
+    "key8_1": {
+        "subkey8_1": [
+            {
+                "subkey8_1_1": "value8_1"
+            },
+            {
+                "subkey8_1_1": "value8_2"
+            }
+        ]
+    },
+    "key8_2": {
+        "subkey8_2": [
+            {
+                "subkey8_2_1": "ja"
+            }
+        ]
+    },
+    "key9": {
+        "subkey9": "value9"
+    },
+    "key10": {
+        "subkey10_1": [
+            {
+                "subkey10_1_value": "value10_1_ja",
+                "subkey10_1_lang": "ja"
+            },
+            {
+                "subkey10_1_value": "value10_1_en",
+                "subkey10_1_lang": "en"
+            }
+        ],
+        "subkey10_2": [
+            {
+                "subkey10_2_1": [
+                    {
+                        "subkey10_2_1_value": "value10_2_1_en",
+                        "subkey10_2_1_lang": "en"
+                    },
+                    {
+                        "subkey10_2_1_value": "value10_2_1_ja",
+                        "subkey10_2_1_lang": "ja"
+                    }
+                ]
+            }
+        ]
+    },
+    "file": {
+        "attribute_name": "File",
+        "attribute_type": "file",
+        "attribute_value_mlt": [
+            {
+                "filekey1": "filevalue1_1",
+                "filekey2": {
+                    "filekey2_1": "filevalue2_1"
+                },
+                "filekey3_1": "filevalue3_1_1",
+                "filekey3_2": [
+                    {
+                        "filekey3_2_1": "filevalue3_2_1_1_1"
+                    },
+                    {
+                        "filekey3_2_1": "filevalue3_2_1_1_2"
+                    }
+                ]
+            },
+            {
+                "filekey1": "filevalue1_2",
+                "filekey2": {
+                    "filekey2_1": "filevalue2_2"
+                },
+                "filekey3_1": "filevalue3_1_2",
+                "filekey3_2": [
+                    {
+                        "filekey3_2_1": "filevalue3_2_1_2_1"
+                    },
+                    {
+                        "filekey3_2_1": "filevalue3_2_1_2_2"
+                    }
+                ]
+            },
+            {
+                "filekey1": "filevalue1_3",
+                "filekey2": {
+                    "filekey2_1": "filevalue2_3"
+                },
+                "filekey3_1": "filevalue3_1_3",
+                "filekey3_2": [
+                    {
+                        "filekey3_2_1": "filevalue3_2_1_3_1"
+                    },
+                    {
+                        "filekey3_2_1": "filevalue3_2_1_3_2"
+                    }
+                ]
+            }
+        ]
+    }
+}

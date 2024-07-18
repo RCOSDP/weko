@@ -1,0 +1,43 @@
+{# -*- coding: utf-8 -*-
+
+  This file is part of Invenio.
+  Copyright (C) 2015-2020 CERN.
+
+  Invenio is free software; you can redistribute it and/or modify it
+  under the terms of the MIT License; see LICENSE file for more details.
+#}
+
+{% macro render_field(field, icon="", autofocus=False, errormsg=True) %}
+  <div class="field {% if field.errors and errormsg %} error{% endif %}">
+    {%- set extras = dict(autofocus="") if autofocus else dict() %}
+    <div class="ui right icon input">
+      {%- if icon %}
+      <i class="{{icon}}" aria-hidden="true" ></i>
+      {%- endif%}
+      {{field(class_="", placeholder=_(field.label.text | string), **extras)}}
+    </div>
+    {%- if field.errors and errormsg %}
+      <div class="ui pointing red basic label">
+        {%- for error in field.errors %}
+        <p>{{error}}</p>
+        {%- endfor %}
+      </div>
+    {%- endif %}
+  </div>
+{% endmacro %}
+
+{% macro form_errors(form) %}
+  {%- if form.errors %}
+    <div class="ui negative message">
+      {%- for key,err_obj in form.errors.items() recursive%}
+        {%  if err_obj is mapping %}
+          {{  loop(err_obj.items()) }}
+        {% else %}
+          {% for single_message in err_obj %}
+            <p>{{ single_message }}</p>
+          {% endfor %}
+        {% endif %}
+      {%- endfor %}
+    </div>
+  {%- endif %}
+{% endmacro %}

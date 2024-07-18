@@ -1,0 +1,4 @@
+<p>{{ _('Your password has been changed.') }}</p>
+{% if security.recoverable %}
+<p>{{ _('If you did not change your password,') }} <a href="{{ reset_password_link }}">{{ _('click here to reset it.') }}</a></p>
+{% endif %}

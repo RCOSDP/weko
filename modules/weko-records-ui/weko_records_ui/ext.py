@@ -21,9 +21,7 @@
 """Flask extension for weko-records-ui."""
 
 from . import config
-from .rest import create_blueprint
-from .views import blueprint
-
+from weko_admin import config as admin_config
 
 class WekoRecordsUI(object):
     """weko-records-ui extension."""
@@ -41,6 +39,7 @@ class WekoRecordsUI(object):
 
         :param app: The Flask application.
         """
+        from .views import blueprint
         self.init_config(app)
         app.register_blueprint(blueprint)
         app.extensions['weko-records-ui'] = self
@@ -64,6 +63,44 @@ class WekoRecordsUI(object):
         app.config.setdefault('EMAIL_DISPLAY_FLG',
                               getattr(config, 'EMAIL_DISPLAY_FLG'))
 
+class WekoRecordsREST(object):
+    """weko-record-ui-rest extension."""
+
+    def __init__(self, app=None):
+        """Extension initialization.
+
+        :param app: An instance of :class:`flask.Flask`.
+        """
+        if app:
+            self.init_app(app)
+
+    def init_app(self, app):
+        """Flask application initialization.
+
+        Initialize the REST endpoints. Connect all signals if
+        `DEPOSIT_REGISTER_SIGNALS` is True.
+
+        :param app: An instance of :class:`flask.Flask`.
+        """
+        from .rest import create_blueprint
+        self.init_config(app)
+        blueprint = create_blueprint(
+            app.config['WEKO_RECORDS_UI_REST_ENDPOINTS']
+        )
+        app.register_blueprint(blueprint)
+        app.extensions['weko-records-ui-rest'] = self
+
+    def init_config(self, app):
+        """Initialize configuration.
+
+        :param app: An instance of :class:`flask.Flask`.
+        """
+        for k in dir(config):
+            if k.startswith('WEKO_RECORDS_UI_'):
+                app.config.setdefault(k, getattr(config, k))
+        for k in dir(admin_config):
+            if k.startswith('WEKO_ADMIN_'):
+                app.config.setdefault(k, getattr(admin_config, k))
 
 class WekoRecordsCitesREST(object):
     """weko-record-ui-rest extension."""
@@ -84,8 +121,9 @@ class WekoRecordsCitesREST(object):
 
         :param app: An instance of :class:`flask.Flask`.
         """
+        from .rest import create_blueprint_cites
         self.init_config(app)
-        blueprint = create_blueprint(
+        blueprint = create_blueprint_cites(
             app.config['WEKO_RECORDS_UI_CITES_REST_ENDPOINTS']
         )
         app.register_blueprint(blueprint)

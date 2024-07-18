@@ -83,6 +83,12 @@ Marshmallow
 .. automodule:: invenio_records_rest.serializers.marshmallow
    :members:
 
+CSV
+~~~
+
+.. automodule:: invenio_records_rest.serializers.csv
+   :members:
+
 Response
 ~~~~~~~~
 
@@ -135,12 +141,11 @@ Views
 Permissions
 -----------
 
-Permissions are handled by the following decorator, which is used in the
-record's REST resources:
+Permissions are handled by the decorator
+:py:meth:`invenio_records_rest.views.need_record_permission`, which is used in
+the record's REST resources.
 
-.. autofunction:: invenio_records_rest.views.need_record_permission
-
-each resource method is checking the permissions through this decorator, with
+Each resource method is checking the permissions through this decorator, with
 ``read_permission_factory``, ``create_permission_factory``,
 ``update_permission_factory`` and ``delete_permission_factory`` as argument,
 where the implementation of each can be configured for each REST

@@ -47,14 +47,17 @@ from celery.result import AsyncResult
 from celery.task.control import revoke
 from elasticsearch import ElasticsearchException
 from elasticsearch.exceptions import NotFoundError
-from flask import abort, current_app, has_request_context, request
+from flask import abort, current_app, has_request_context, request, Flask, send_file
 from flask_babelex import gettext as _
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from flask_login import current_user
 from invenio_db import db
 from invenio_files_rest.models import FileInstance, Location, ObjectVersion
 from invenio_files_rest.proxies import current_files_rest
 from invenio_files_rest.utils import find_and_update_location_size
 from invenio_i18n.ext import current_i18n
+from invenio_indexer.api import RecordIndexer
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
@@ -212,6 +215,7 @@ def delete_records(index_tree_id, ignore_items):
     hits = get_tree_items(index_tree_id)
     result = []
 
+    from weko_records_ui.utils import soft_delete
     for hit in hits:
         recid = hit.get("_id")
         record = Record.get_record(recid)
@@ -776,7 +780,7 @@ def read_stats_file(file_path: str, file_name: str, file_format: str) -> dict:
                             }
                         )
                     if check_item_type:
-                        current_app.logger.error("item:{}".format(check_item_type))
+                        current_app.logger.debug("item:{}".format(check_item_type))
                         mapping_ids = handle_get_all_id_in_item_type(
                             check_item_type.get("item_type_id")
                         )
@@ -4043,3 +4047,94 @@ def combine_aggs(data, target="path"):
                 new_agg["buckets"].extend(bucket)
         data["aggregations"][target] = new_agg
     return data
+
+def create_limmiter():
+    from .config import WEKO_SEARCH_UI_API_LIMIT_RATE_DEFAULT
+    return Limiter(app=Flask(__name__), key_func=get_remote_address, default_limits=WEKO_SEARCH_UI_API_LIMIT_RATE_DEFAULT)
+
+
+def result_download_ui(search_results, input_json, language='en'):
+    """Search Result Download Ui.
+
+    Args:
+        search_results (list): Search result (RO-Crate list)
+        input_json (list): Input json
+        language (str): Language
+
+    Returns:
+        Response
+    """
+    if not search_results:
+        abort(404)
+
+    # Set export folder
+    temp_path = tempfile.TemporaryDirectory(
+        prefix=current_app.config.get('WEKO_SEARCH_UI_RESULT_TMP_PREFIX')
+    )
+    export_path = temp_path.name + '/' + datetime.utcnow().strftime("%Y%m%d%H%M%S")
+    os.makedirs(export_path)
+
+    # Create TSV file
+    with open(f'{export_path}/search_result.tsv', 'w', encoding="utf-8") as tsv_file:
+        tsv_file.write(search_results_to_tsv(search_results, input_json, language).getvalue())
+
+    return send_file(
+        f'{export_path}/search_result.tsv',
+        as_attachment=True,
+        attachment_filename='search_result.tsv',
+        mimetype='text/tab-separated-values'
+    )
+
+
+def search_results_to_tsv(search_results, input_json, language='en'):
+    """Create TSV file from search results.
+
+    Args:
+        search_results (list): Search result (RO-Crate list)
+        input_json (list): Input json
+        language (str): Language
+
+    Returns:
+        _io.StringIO: TSV file
+    """
+    # Dict {TSV header : RO-Crate key}
+    dict = {}
+    for n in input_json:
+        dict[n.get('name', {}).get(language)] = n.get('roCrateKey')
+
+    # Create TSV
+    file_output = StringIO()
+    file_writer = csv.DictWriter(
+        file_output,
+        fieldnames=dict.keys(),
+        delimiter='\t',
+        lineterminator='\n'
+    )
+    file_writer.writeheader()
+    for result in search_results:
+        metadata = result.get('metadata')
+        data_response = [graph for graph in metadata.get('@graph') if graph.get('@id') == './']
+        data_response = data_response[0] if data_response else {}
+        file_writer.writerow(
+            create_tsv_row(dict, data_response)
+        )
+
+    StringIO().close()
+    return file_output
+
+
+def create_tsv_row(dict, data_response):
+    """Create TSV row
+
+    Args:
+        dict (dict): {Field name : RO-Crate key}
+        data_response (dict): Data response
+
+    Returns:
+        dict: TSV row
+    """
+    result_row = {}
+    for key in dict.keys():
+        result_row[key] = data_response.get(dict[key], [None])[0]
+
+    return result_row

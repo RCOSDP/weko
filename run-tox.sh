@@ -6,6 +6,8 @@
 # :license: BSD, see LICENSE for details.
 
 date --iso-8601="minutes"
+pip install tox
+pip install tox-setuptools-version
 for module_path in modules/*/; do
   if [[ ${module_path} =~ ^modules/(invenio-|weko-).+$ ]] && [[ -d ${module_path}tests ]]; then
     echo "### Running tests for ${module_path%?} ###"

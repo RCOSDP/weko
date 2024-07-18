@@ -1,0 +1,57 @@
+{# -*- coding: utf-8 -*-
+
+  This file is part of Invenio.
+  Copyright (C) 2015-2020 CERN.
+  Copyright (C)      2021 TU Wien.
+
+  Invenio is free software; you can redistribute it and/or modify it
+  under the terms of the MIT License; see LICENSE file for more details.
+#}
+{%- extends config.ACCOUNTS_COVER_TEMPLATE %}
+{% from "invenio_accounts/_macros.html" import render_field, form_errors %}
+
+{% block page_body %}
+  <div class="ui padded segments big form">
+    <div class="ui login segment padded">
+      <div class="divider hidden"></div>
+      {%- block form_header %}
+        <h1 class="ui small login header">{{ _('Log in to account') }}</h1>
+      {%- endblock form_header %}
+
+      {%- block form_outer %}
+        {%- if config.ACCOUNTS_LOCAL_LOGIN_ENABLED %}
+          {%- with form = login_user_form %}
+            <form action="{{ url_for_security('login') }}" method="POST"
+                  name="login_user_form" class="ui big form">
+              {{ form.hidden_tag() }}
+              {{ render_field(form.email, icon="user icon", autofocus=True, errormsg='email' in form.errors) }}
+              {{ render_field(form.password, icon="lock icon", errormsg='password' in form.errors) }}
+              <button type="submit" class="ui fluid large submit primary button">
+                <i class="ui sign-in icon" aria-hidden="true"></i>{{ _('Log in') }}
+              </button>
+            </form>
+          {%- endwith %}
+        {%- endif %}
+      {%- endblock form_outer %}
+      <div class="divider hidden"></div>
+    </div>
+
+    {%- block registerable %}
+      {%- if security.registerable %}
+        <p class="ui primary segment padded text-muted">
+            {% trans sitename=config.ACCOUNTS_SITENAME %}New to {{ sitename }}?{% endtrans %}
+            <a href="{{ url_for_security('register', next=request.args.get('next')) }}">{{ _('Sign up') }}</a>
+        </p>
+      {%- endif %}
+    {%- endblock registerable %}
+  </div>
+
+  {%- block recoverable %}
+    {%- if security.recoverable %}
+      <div class="ui basic segment padded">
+        <a class="ui inverted header tiny"
+           href="{{ url_for_security('forgot_password') }}">{{ _('Forgot password?') }}</a>
+      </div>
+    {%- endif %}
+  {%- endblock recoverable %}
+{% endblock page_body %}

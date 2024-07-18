@@ -30,7 +30,7 @@ def create_record(data):
     with db.session.begin_nested():
         data = copy.deepcopy(data)
         rec_uuid = uuid.uuid4()
-        pid = current_pidstore.minters['recid'](rec_uuid, data)
+        pid = current_pidstore.minters["recid"](rec_uuid, data)
         record = Record.create(data, id_=rec_uuid)
     return pid, record
 
@@ -38,7 +38,7 @@ def create_record(data):
 def assert_hits_len(res, hit_length):
     """Assert number of hits."""
     assert res.status_code == 200
-    assert len(get_json(res)['hits']['hits']) == hit_length
+    assert len(get_json(res)["hits"]["hits"]) == hit_length
 
 
 def parse_url(url):
@@ -49,10 +49,10 @@ def parse_url(url):
     """
     parsed = urlparse(url)
     return {
-        'scheme': parsed.scheme,
-        'netloc': parsed.netloc,
-        'path': parsed.path,
-        'qs': parse_qs(parsed.query),
+        "scheme": parsed.scheme,
+        "netloc": parsed.netloc,
+        "path": parsed.path,
+        "qs": parse_qs(parsed.query),
     }
 
 
@@ -63,22 +63,28 @@ def to_relative_url(url):
     external urls.
     """
     parsed = urlparse(url)
-    return parsed.path + '?' + '&'.join([
-        '{0}={1}'.format(param, val[0]) for
-        param, val in parse_qs(parsed.query).items()
-    ])
+    return (
+        parsed.path
+        + "?"
+        + "&".join(
+            [
+                "{0}={1}".format(param, val[0])
+                for param, val in parse_qs(parsed.query).items()
+            ]
+        )
+    )
 
 
 def record_url(pid):
     """Get URL to a record."""
-    if hasattr(pid, 'pid_value'):
+    if hasattr(pid, "pid_value"):
         val = pid.pid_value
     else:
         val = pid
 
-    return url_for('invenio_records_rest.recid_item', pid_value=val)
+    return url_for("invenio_records_rest.recid_item", pid_value=val)
 
 
-def _mock_validate_fail(self):
+def _mock_validate_fail(self, **kwargs):
     """Simulate a validation fail."""
     raise ValidationError("")

@@ -9,8 +9,6 @@
 
 """Tests for template context processors."""
 
-from __future__ import absolute_import, print_function
-
 from flask import render_template_string
 
 
@@ -21,7 +19,7 @@ def test_context_processor_jwt(app):
     """
     with app.test_request_context():
         html = render_template_string(template)
-        assert 'authorized_token' in html
+        assert "authorized_token" in html
 
 
 def test_context_processor_jwt_token(app):

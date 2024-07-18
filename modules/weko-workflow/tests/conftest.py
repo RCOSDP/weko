@@ -60,7 +60,6 @@ from invenio_jsonschemas import InvenioJSONSchemas
 from invenio_records_ui import InvenioRecordsUI
 from weko_search_ui.config import WEKO_SYS_USER
 from weko_records_ui import WekoRecordsUI
-from weko_theme import WekoTheme
 from weko_admin import WekoAdmin
 from weko_admin.models import SessionLifetime,Identifier 
 from weko_admin.views import blueprint as weko_admin_blueprint
@@ -74,7 +73,7 @@ from weko_workflow import WekoWorkflow
 from weko_search_ui import WekoSearchUI
 from weko_workflow.models import Activity, ActionStatus, Action, ActivityAction, WorkFlow, FlowDefine, FlowAction, ActionFeedbackMail, ActionIdentifier,FlowActionRole, ActivityHistory,GuestActivity, WorkflowRole
 from weko_workflow.views import workflow_blueprint as weko_workflow_blueprint
-from weko_workflow.config import WEKO_WORKFLOW_GAKUNINRDM_DATA,WEKO_WORKFLOW_ACTION_START,WEKO_WORKFLOW_ACTION_END,WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION,WEKO_WORKFLOW_ACTION_APPROVAL,WEKO_WORKFLOW_ACTION_ITEM_LINK,WEKO_WORKFLOW_ACTION_OA_POLICY_CONFIRMATION,WEKO_WORKFLOW_ACTION_IDENTIFIER_GRANT,WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION_USAGE_APPLICATION,WEKO_WORKFLOW_ACTION_GUARANTOR,WEKO_WORKFLOW_ACTION_ADVISOR,WEKO_WORKFLOW_ACTION_ADMINISTRATOR,WEKO_WORKFLOW_ACTIVITYLOG_XLS_COLUMNS
+from weko_workflow.config import WEKO_WORKFLOW_ACTION_START,WEKO_WORKFLOW_ACTION_END,WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION,WEKO_WORKFLOW_ACTION_APPROVAL,WEKO_WORKFLOW_ACTION_ITEM_LINK,WEKO_WORKFLOW_ACTION_OA_POLICY_CONFIRMATION,WEKO_WORKFLOW_ACTION_IDENTIFIER_GRANT,WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION_USAGE_APPLICATION,WEKO_WORKFLOW_ACTION_GUARANTOR,WEKO_WORKFLOW_ACTION_ADVISOR,WEKO_WORKFLOW_ACTION_ADMINISTRATOR,WEKO_WORKFLOW_ACTIVITYLOG_XLS_COLUMNS, DOI_VALIDATION_INFO, DOI_VALIDATION_INFO_CROSSREF, DOI_VALIDATION_INFO_DATACITE, DOI_VALIDATION_INFO_JALC
 from weko_workflow.utils import generate_guest_activity_token_value
 from weko_theme.views import blueprint as weko_theme_blueprint
 from simplekv.memory.redisstore import RedisStore
@@ -489,7 +488,23 @@ def base_app(instance_path, search_class, cache_config):
         WEKO_WORKFLOW_ACTION_GUARANTOR=WEKO_WORKFLOW_ACTION_GUARANTOR,
         WEKO_WORKFLOW_ACTION_ADVISOR=WEKO_WORKFLOW_ACTION_ADVISOR,
         WEKO_WORKFLOW_ACTION_ADMINISTRATOR=WEKO_WORKFLOW_ACTION_ADMINISTRATOR,
-        WEKO_WORKFLOW_GAKUNINRDM_DATA=WEKO_WORKFLOW_GAKUNINRDM_DATA,
+        WEKO_WORKFLOW_GAKUNINRDM_DATA=[
+            {
+                'workflow_id': -1,
+                'workflow_name': 'GRDM_デフォルトワークフロー',
+                'item_type_id': 1,
+                'flow_id': -1,
+                'flow_name': 'GRDM_デフォルトフロー',
+                'action_endpoint_list': [
+                    'begin_action',
+                    'item_login',
+                    'item_link',
+                    'identifier_grant',
+                    'approval',
+                    'end_action'
+                ]
+            }
+        ],
         DELETE_ACTIVITY_LOG_ENABLE=True,
         WEKO_WORKFLOW_ACTIVITYLOG_XLS_COLUMNS=WEKO_WORKFLOW_ACTIVITYLOG_XLS_COLUMNS,
         WEKO_SYS_USER=WEKO_SYS_USER,
@@ -512,6 +527,8 @@ def base_app(instance_path, search_class, cache_config):
                 record_class='invenio_records_files.api:Record',
             ),
         ),
+        DOI_VALIDATION_INFO_JALC=DOI_VALIDATION_INFO_JALC,
+        WEKO_WORKFLOW_IDENTIFIER_GRANT_IS_WITHDRAWING = -2,
     )
     
     app_.testing = True
@@ -530,14 +547,13 @@ def base_app(instance_path, search_class, cache_config):
     InvenioPIDRelations(app_)
     InvenioJSONSchemas(app_)
     InvenioPIDStore(app_)
-    InvenioRecords
+    InvenioRecords(app_)
     InvenioRecordsUI(app_)
     WekoRecordsUI(app_)
     search = InvenioSearch(app_, client=MockEs())
     search.register_mappings(search_class.Meta.index, 'mock_module.mappings')
     # InvenioCommunities(app_)
     # WekoAdmin(app_)
-    WekoTheme(app_)
     WekoSearchUI(app_)
     WekoWorkflow(app_)
     WekoUserProfiles(app_)
@@ -2116,7 +2132,7 @@ def db_register_usage_application(app, db, db_records, users, action_data, item_
         ,user_mail = 'aaa@test.org'
         ,file_name = "aaa.txt"
         ,token="abc"
-        ,expiration_date=datetime.now()
+        ,expiration_date=5
         ,is_usage_report=False
     )
     with db.session.begin_nested():

@@ -52,13 +52,6 @@ Models
    :members:
 
 
-Proxies
--------
-
-.. automodule:: invenio_accounts.proxies
-   :members:
-
-
 Utils
 -----
 

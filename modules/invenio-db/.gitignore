@@ -55,15 +55,13 @@ nosetests.xml
 
 # Sphinx documentation
 docs/_build/
+docs/.doctrees/
 
 # PyBuilder
 target/
 
 # Tests
-tests/test.db
-
-# Examples
-examples/test.db
+test.db
 
 # Vim swapfiles
 .*.sw?

@@ -8,10 +8,6 @@
 
 """Error handler tests."""
 
-# .tox/c1/bin/pytest --cov=invenio_records_rest tests/test_error_handlers.py -vv -s -v --cov-branch --cov-report=term --basetemp=/code/modules/invenio-records-rest/.tox/c1/tmp
-
-from __future__ import absolute_import, print_function
-
 import json
 
 import pytest
@@ -23,51 +19,66 @@ from invenio_records_rest.proxies import current_records_rest
 
 def custom_error_handler(error):
     """Test error handler."""
-    return make_response(jsonify({
-        'status': error.code,
-        'message': error.description,
-        'info': {
-            'pid_value': error.pid_error.pid_value,
-            'pid_type': error.pid_error.pid_type,
-        }
-    }), error.code)
+    return make_response(
+        jsonify(
+            {
+                "status": error.code,
+                "message": error.description,
+                "info": {
+                    "pid_value": error.pid_error.pid_value,
+                    "pid_type": error.pid_error.pid_type,
+                },
+            }
+        ),
+        error.code,
+    )
 
 
-@pytest.mark.parametrize('app', [dict(
-    endpoint=dict(error_handlers={
-        PIDDoesNotExistRESTError: custom_error_handler,
-    }),
-)], indirect=['app'])
+@pytest.mark.parametrize(
+    "app",
+    [
+        dict(
+            endpoint=dict(
+                error_handlers={
+                    PIDDoesNotExistRESTError: custom_error_handler,
+                }
+            ),
+        )
+    ],
+    indirect=["app"],
+)
 def test_custom_error_handlers(app, db, test_data):
     """Test custom error handlers for endpoints."""
     with app.test_client() as client:
         HEADERS = [
-            ('Accept', 'application/json'),
-            ('Content-Type', 'application/json'),
+            ("Accept", "application/json"),
+            ("Content-Type", "application/json"),
         ]
 
         # Test the custom handler
         res = client.get(
-            url_for('invenio_records_rest.recid_item', pid_value='1'),
-            headers=HEADERS)
+            url_for("invenio_records_rest.recid_item", pid_value="1"), headers=HEADERS
+        )
         assert res.status_code == 404
         data = json.loads(res.get_data(as_text=True))
         assert data == {
-            'status': 404,
-            'message': 'PID does not exist.',
-            'info': {'pid_value': '1', 'pid_type': 'recid'}
+            "status": 404,
+            "message": "PID does not exist.",
+            "info": {"pid_value": "1", "pid_type": "recid"},
         }
 
         # Check that the default handlers still work
         res = client.post(
-            url_for('invenio_records_rest.recid_list'),
-            data='{invalid-json',
-            headers=HEADERS)
+            url_for("invenio_records_rest.recid_list"),
+            data="{invalid-json",
+            headers=HEADERS,
+        )
         assert res.status_code == 400
         data = json.loads(res.get_data(as_text=True))
         assert data == {
-            'message': (
-                'The browser (or proxy) sent a request that this server could '
-                'not understand.'),
-            'status': 400
+            "message": (
+                "The browser (or proxy) sent a request that this server could "
+                "not understand."
+            ),
+            "status": 400,
         }
