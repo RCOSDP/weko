@@ -8,8 +8,8 @@
 
 """Template based messages."""
 
-from __future__ import absolute_import, print_function
-
+from flask import render_template
+from flask_mail import Message
 import smtplib
 from flask import current_app, render_template
 from flask_mail import Message, _MailMixin, _Mail, Mail, Connection
@@ -20,8 +20,7 @@ from .admin import _load_mail_cfg_from_db, _set_flask_mail_cfg
 class TemplatedMessage(Message):
     """Siplify creation of templated messages."""
 
-    def __init__(self, template_body=None, template_html=None, ctx=None,
-                 **kwargs):
+    def __init__(self, template_body=None, template_html=None, ctx=None, **kwargs):
         r"""Build message body and HTML based on provided templates.
 
         Provided templates can use keyword arguments ``body`` and ``html``
@@ -34,13 +33,14 @@ class TemplatedMessage(Message):
         :param \*\*kwargs: Keyword arguments as defined in
             :class:`flask_mail.Message`.
         """
+        ctx = ctx if ctx else {}
         if template_body:
-            kwargs['body'] = render_template(
-                template_body, body=kwargs.get('body'), **ctx
+            kwargs["body"] = render_template(
+                template_body, body=kwargs.get("body"), **ctx
             )
         if template_html:
-            kwargs['html'] = render_template(
-                template_html, html=kwargs.get('html'), **ctx
+            kwargs["html"] = render_template(
+                template_html, html=kwargs.get("html"), **ctx
             )
         super(TemplatedMessage, self).__init__(**kwargs)
 
