@@ -15,8 +15,6 @@ of an application context. If pytest-flask is installed you don't have to worry
 about this.
 """
 
-from __future__ import absolute_import, print_function
-
 import flask
 import flask_login
 from flask import current_app
@@ -26,10 +24,10 @@ from flask_security.utils import hash_password
 from werkzeug.local import LocalProxy
 
 # "Convenient references" (lifted from flask_security source)
-_datastore = LocalProxy(lambda: current_app.extensions['security'].datastore)
+_datastore = LocalProxy(lambda: current_app.extensions["security"].datastore)
 
 
-def create_test_user(email, password='123456', **kwargs):
+def create_test_user(email, password="123456", **kwargs):
     """Create a user in the datastore, bypassing the registration process.
 
     Accesses the application's datastore. An error is thrown if called from
@@ -43,9 +41,8 @@ def create_test_user(email, password='123456', **kwargs):
     :returns: A :class:`invenio_accounts.models.User` instance.
     """
     assert flask.current_app.testing
-    hashed_password = hash_password(password)
-    user = _datastore.create_user(email=email, password=hashed_password,
-                                  **kwargs)
+    hashed_password = hash_password(password) if password else None
+    user = _datastore.create_user(email=email, password=hashed_password, **kwargs)
     _datastore.commit()
     user.password_plaintext = password
     return user
@@ -62,11 +59,13 @@ def login_user_via_session(client, user=None, email=None):
     if not user:
         user = _datastore.find_user(email=email)
     with client.session_transaction() as sess:
-        sess['user_id'] = user.get_id()
+        # Flask-Login <0.5
+        sess["user_id"] = user.get_id()
+        # Flask-Login >=0.5
+        sess["_user_id"] = user.get_id()
 
 
-def login_user_via_view(client, email=None, password=None, user=None,
-                        login_url=None):
+def login_user_via_view(client, email=None, password=None, user=None, login_url=None):
     r"""Attempt to log the given user in via the 'login' view on the client.
 
     :param client: client to send the request from.
@@ -84,9 +83,11 @@ def login_user_via_view(client, email=None, password=None, user=None,
     if user is not None:
         email = user.email
         password = user.password_plaintext
-    return client.post(login_url or url_for_security('login'),
-                       data={'email': email, 'password': password},
-                       environ_base={'REMOTE_ADDR': '127.0.0.1'})
+    return client.post(
+        login_url or url_for_security("login"),
+        data={"email": email, "password": password},
+        environ_base={"REMOTE_ADDR": "127.0.0.1"},
+    )
     # If the REMOTE_ADDR isn't set it'll throw out a ValueError as it attempts
     # to update the User model in the database with 'untrackable' as the new
     # `last_login_ip`.
@@ -101,10 +102,9 @@ def client_authenticated(client, test_url=None):
         redirected and ``flask_login.current_user`` is not anonymous \
         after requesting the page.
     """
-    response = client.get(test_url or url_for_security('change_password'))
+    response = client.get(test_url or url_for_security("change_password"))
 
-    return (response.status_code == 200 and
-            not flask_login.current_user.is_anonymous)
+    return response.status_code == 200 and not flask_login.current_user.is_anonymous
 
 
 def webdriver_authenticated(webdriver, test_url=None):
@@ -114,11 +114,10 @@ def webdriver_authenticated(webdriver, test_url=None):
     """
     save_url = webdriver.current_url
 
-    webdriver.get(test_url or flask.url_for('security.change_password',
-                                            _external=True))
+    webdriver.get(test_url or flask.url_for("security.change_password", _external=True))
     result_url = webdriver.current_url
     webdriver.get(save_url)
-    return (flask.url_for('security.login', _external=True) not in result_url)
+    return flask.url_for("security.login", _external=True) not in result_url
 
 
 def unserialize_session(sid_s):

@@ -9,154 +9,150 @@
 
 """Module tests."""
 
-from __future__ import absolute_import, print_function
+from invenio_accounts.cli import (
+    roles_add,
+    roles_create,
+    roles_remove,
+    users_activate,
+    users_create,
+    users_deactivate,
+)
 
-from click.testing import CliRunner
 
-from invenio_accounts.cli import roles_add, roles_create, roles_remove, \
-    users_activate, users_create, users_deactivate
-
-
-def test_cli_createuser(script_info):
+def test_cli_createuser(app):
     """Test create user CLI."""
-    runner = CliRunner()
+    runner = app.test_cli_runner()
 
     # Missing params
-    result = runner.invoke(
-        users_create, input='1234\n1234\n', obj=script_info)
+    result = runner.invoke(users_create, input="1234\n1234\n")
     assert result.exit_code != 0
 
     # Create user with invalid email
+    result = runner.invoke(users_create, ["not-an-email", "--password", "123456"])
+    assert result.exit_code == 2
+
+    # Create user with profile
     result = runner.invoke(
         users_create,
-        ['not-an-email', '--password', '123456'],
-        obj=script_info
+        [
+            "--password",
+            "AValidPassword66!",
+            "--profile",
+            '{"full_name" : "Test User"}',
+            "test1@example.com",
+        ],
     )
-    assert result.exit_code == 2
+    assert result.exit_code == 0
+
+    # Create user with profile that is not valid JSON
+    result = runner.invoke(
+        users_create,
+        [
+            "--password",
+            "AValidPassword66!",
+            "--profile",
+            "<json>profile</json>",
+            "test2@example.com",
+        ],
+    )
+    assert result.exit_code != 0
+
+    # Create user with JSON profile that will not validate
+    result = runner.invoke(
+        users_create,
+        [
+            "--password",
+            "AValidPassword66!",
+            "--profile",
+            '{"full_name" : "test_user", "extra_data" : "not_allowed"}',
+            "test3@example.com",
+        ],
+    )
+    assert result.exit_code != 0
 
     # Create user
     result = runner.invoke(
-        users_create,
-        ['info@inveniosoftware.org', '--password', '123456'],
-        obj=script_info
+        users_create, ["info@inveniosoftware.org", "--password", "123456"]
     )
     assert result.exit_code == 0
 
 
-def test_cli_createrole(script_info):
+def test_cli_createrole(app):
     """Test create user CLI."""
-    runner = CliRunner()
+    runner = app.test_cli_runner()
 
     # Missing params
-    result = runner.invoke(
-        roles_create, ['-d', 'Test description'],
-        obj=script_info)
+    result = runner.invoke(roles_create, ["-d", "Test description"])
     assert result.exit_code != 0
 
     # Create role
-    result = runner.invoke(
-        roles_create,
-        ['superusers', '-d', 'Test description'],
-        obj=script_info)
+    result = runner.invoke(roles_create, ["superusers", "-d", "Test description"])
     assert result.exit_code == 0
 
 
-def test_cli_addremove_role(script_info):
+def test_cli_addremove_role(app):
     """Test add/remove role."""
-    runner = CliRunner()
+    runner = app.test_cli_runner()
 
     # Create a user and a role
-    result = runner.invoke(
-        users_create,
-        ['a@example.org', '--password', '123456'],
-        obj=script_info
-    )
+    result = runner.invoke(users_create, ["a@test.org", "--password", "123456"])
     assert result.exit_code == 0
-    result = runner.invoke(roles_create, ['superuser'], obj=script_info)
+    result = runner.invoke(roles_create, ["superuser"])
     assert result.exit_code == 0
 
     # User not found
-    result = runner.invoke(
-        roles_add, ['inval@example.org', 'superuser'],
-        obj=script_info)
+    result = runner.invoke(roles_add, ["inval@test.org", "superuser"])
     assert result.exit_code != 0
 
     # Add:
-    result = runner.invoke(
-        roles_add, ['a@example.org', 'invalid'],
-        obj=script_info)
+    result = runner.invoke(roles_add, ["a@test.org", "invalid"])
     assert result.exit_code != 0
 
-    result = runner.invoke(
-        roles_remove, ['inval@example.org', 'superuser'],
-        obj=script_info)
+    result = runner.invoke(roles_remove, ["inval@test.org", "superuser"])
     assert result.exit_code != 0
 
     # Remove:
-    result = runner.invoke(
-        roles_remove, ['a@example.org', 'invalid'],
-        obj=script_info)
+    result = runner.invoke(roles_remove, ["a@test.org", "invalid"])
     assert result.exit_code != 0
 
-    result = runner.invoke(
-        roles_remove, ['b@example.org', 'superuser'],
-        obj=script_info)
+    result = runner.invoke(roles_remove, ["b@test.org", "superuser"])
     assert result.exit_code != 0
 
-    result = runner.invoke(
-        roles_remove, ['a@example.org', 'superuser'],
-        obj=script_info)
+    result = runner.invoke(roles_remove, ["a@test.org", "superuser"])
     assert result.exit_code != 0
 
     # Add:
-    result = runner.invoke(roles_add,
-                           ['a@example.org', 'superuser'],
-                           obj=script_info)
+    result = runner.invoke(roles_add, ["a@test.org", "superuser"])
     assert result.exit_code == 0
-    result = runner.invoke(
-        roles_add,
-        ['a@example.org', 'superuser'],
-        obj=script_info)
+    result = runner.invoke(roles_add, ["a@test.org", "superuser"])
     assert result.exit_code != 0
 
     # Remove:
-    result = runner.invoke(
-        roles_remove, ['a@example.org', 'superuser'],
-        obj=script_info)
+    result = runner.invoke(roles_remove, ["a@test.org", "superuser"])
     assert result.exit_code == 0
 
 
-def test_cli_activate_deactivate(script_info):
+def test_cli_activate_deactivate(app):
     """Test create user CLI."""
-    runner = CliRunner()
+    runner = app.test_cli_runner()
 
     # Create a user
-    result = runner.invoke(
-        users_create,
-        ['a@example.org', '--password', '123456'],
-        obj=script_info
-    )
+    result = runner.invoke(users_create, ["a@test.org", "--password", "123456"])
     assert result.exit_code == 0
 
     # Activate
-    result = runner.invoke(users_activate, ['in@valid.org'],
-                           obj=script_info)
+    result = runner.invoke(users_activate, ["in@valid.org"])
     assert result.exit_code != 0
-    result = runner.invoke(users_deactivate, ['in@valid.org'],
-                           obj=script_info)
+    result = runner.invoke(users_deactivate, ["in@valid.org"])
     assert result.exit_code != 0
 
-    result = runner.invoke(users_activate, ['a@example.org'],
-                           obj=script_info)
+    result = runner.invoke(users_activate, ["a@test.org"])
     assert result.exit_code == 0
-    result = runner.invoke(users_activate, ['a@example.org'],
-                           obj=script_info)
+    result = runner.invoke(users_activate, ["a@test.org"])
     assert result.exit_code == 0
 
     # Deactivate
-    result = runner.invoke(users_deactivate,
-                           ['a@example.org'], obj=script_info)
+    result = runner.invoke(users_deactivate, ["a@test.org"])
     assert result.exit_code == 0
-    result = runner.invoke(users_deactivate,
-                           ['a@example.org'], obj=script_info)
+    result = runner.invoke(users_deactivate, ["a@test.org"])
     assert result.exit_code == 0
