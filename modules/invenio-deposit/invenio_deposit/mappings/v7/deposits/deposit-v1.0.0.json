@@ -1,0 +1,63 @@
+{
+  "mappings": {
+    "properties": {
+      "$schema": {
+          "type": "keyword"
+      },
+      "_deposit": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "keyword"
+          },
+          "pid": {
+            "type": "object",
+            "properties": {
+              "revision_id": {
+                "type": "integer"
+              },
+              "type": {
+                "type": "text"
+              },
+              "value": {
+                "type": "keyword"
+              }
+            }
+          },
+          "created_by": {
+            "type": "integer"
+          },
+          "owners": {
+              "type": "integer"
+          },
+          "status": {
+            "type": "keyword"
+          }
+        }
+      },
+      "_files": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "keyword"
+          },
+          "bucket": {
+            "type": "keyword"
+          },
+          "size": {
+            "type": "integer"
+          },
+          "version_id": {
+            "type": "keyword"
+          }
+        }
+      },
+      "title": {
+        "type": "text"
+      },
+      "control_number": {
+        "type": "text"
+      }
+    }
+  }
+}
