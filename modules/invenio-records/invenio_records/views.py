@@ -5,13 +5,13 @@ from flask import Blueprint
 from werkzeug.local import LocalProxy
 from invenio_db import db
 
-_app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
+_app = LocalProxy(lambda: current_app.extensions["weko-admin"].app)
 
 blueprint = Blueprint(
-    'invenio_records',
+    "invenio_records",
     __name__,
-    template_folder='templates',
-    static_folder='static',
+    template_folder="templates",
+    static_folder="static",
 )
 
 @blueprint.teardown_request
