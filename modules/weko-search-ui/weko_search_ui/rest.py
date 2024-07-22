@@ -20,10 +20,16 @@
 
 """Blueprint for Index Search rest."""
 
+from datetime import datetime
+import inspect
+import json
 import pickle
+import traceback
 from functools import partial
 
-from flask import Blueprint, abort, current_app, jsonify, redirect, request, url_for
+from flask import Blueprint, abort, current_app, jsonify, redirect, request, url_for, Response
+from flask_babelex import get_locale
+from elasticsearch.exceptions import ElasticsearchException
 from invenio_db import db
 from invenio_files_rest.storage import PyFSFileStorage
 from invenio_i18n.ext import current_i18n
@@ -51,10 +57,21 @@ from invenio_rest.views import create_api_errorhandler
 from webargs import fields
 from webargs.flaskparser import use_kwargs
 from weko_admin.models import SearchManagement as sm
+from werkzeug.http import generate_etag
+from werkzeug.exceptions import NotFound
 from weko_index_tree.api import Indexes
 from weko_index_tree.utils import count_items, recorrect_private_items_count
+from weko_items_ui.scopes import item_read_scope
+from weko_records.api import ItemTypes
 from weko_records.models import ItemType
 from werkzeug.utils import secure_filename
+
+from .error import InvalidRequestError, VersionNotFoundRESTError, InternalServerError
+from .api import SearchSetting
+from .query import default_search_factory
+from .utils import create_limmiter
+
+limiter = create_limmiter()
 
 
 def create_blueprint(app, endpoints):
@@ -146,10 +163,38 @@ def create_blueprint(app, endpoints):
             default_media_type=options.get("default_media_type"),
         )
 
+        isr_api = IndexSearchResourceAPI.as_view(
+            IndexSearchResourceAPI.view_name.format(endpoint),
+            ctx=ctx,
+            search_serializers=search_serializers,
+            record_serializers=serializers,
+            default_media_type=options.get("default_media_type"),
+        )
+
+        isrlg = IndexSearchResultList.as_view(
+            IndexSearchResultList.view_name.format(endpoint),
+            ctx=ctx,
+            search_serializers=search_serializers,
+            record_serializers=serializers,
+            default_media_type=options.get("default_media_type"),
+        )
+
         blueprint.add_url_rule(
-            options.pop("index_route"),
+            options.get("index_route"),
             view_func=isr,
             methods=['GET'],
+        )
+
+        blueprint.add_url_rule(
+            options.get("search_api_route"),
+            view_func=isr_api,
+            methods=['GET'],
+        )
+
+        blueprint.add_url_rule(
+            options.get("search_result_list_route"),
+            view_func=isrlg,
+            methods=['POST'],
         )
 
     return blueprint
@@ -226,6 +271,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
             search = search.post_filter({"terms": {query_key: params[param]}})
 
         search_result = search.execute()
+
         # Generate links for prev/next
         urlkwargs.update(
             size=size,
@@ -480,3 +526,340 @@ def get_heading_info(data, lang, item_type):
         heading = heading_text
 
     return heading
+
+
+class IndexSearchResourceAPI(ContentNegotiatedMethodView):
+    """Resource for records searching."""
+
+    view_name = '{0}_searchapi'
+
+    def __init__(
+        self,
+        ctx,
+        search_serializers=None,
+        record_serializers=None,
+        default_media_type=None,
+        **kwargs
+    ):
+        """Constructor."""
+        super(IndexSearchResourceAPI, self).__init__(
+            method_serializers={
+                'GET': search_serializers,
+            },
+            default_method_media_type={
+                'GET': default_media_type,
+            },
+            default_media_type=default_media_type,
+            **kwargs
+        )
+        for key, value in ctx.items():
+            setattr(self, key, value)
+
+        self.pid_fetcher = current_pidstore.fetchers[self.pid_fetcher]
+        self.search_factory = default_search_factory
+
+    @require_api_auth(allow_anonymous=True)
+    @require_oauth_scopes(item_read_scope.id)
+    @limiter.limit('')
+    def get(self, **kwargs):
+        """Search records.
+
+        :returns: Search result containing hits and aggregations as returned by invenio-search.
+        """
+        version = kwargs.get('version')
+        func_name = f'get_{version}'
+        if func_name in [func[0] for func in inspect.getmembers(self, inspect.ismethod)]:
+            return getattr(self, func_name)(**kwargs)
+        else:
+            raise VersionNotFoundRESTError()
+
+    def get_v1(self, **kwargs):
+        try:
+            # Language setting
+            language = request.headers.get('Accept-Language')
+            if language:
+                get_locale().language = language
+
+            # Generate Search Query Class
+            search_obj = self.search_class()
+            search = search_obj.with_preference_param().params(version=True)
+
+            # Pagenation Setting
+            page = request.values.get('page', type=int)
+            cursor = request.values.get('cursor')
+            size = request.values.get('size', 20, type=int)
+            if not page and cursor:
+                cursor = cursor.split(',')
+                search._extra.update(dict(search_after=cursor))
+                search._extra.update(dict(size=size))
+            else:
+                if not page:
+                    page = 1
+                if page * size >= self.max_result_window:
+                    raise MaxResultWindowRESTError()
+                search = search[(page - 1) * size: page * size]
+
+            # filter by registered item type in RocrateMapping
+            from weko_records_ui.models import RocrateMapping
+            mapping = RocrateMapping.query.all()
+            item_type_ids = [x.item_type_id for x in mapping]
+            item_types = ItemTypes.get_records(item_type_ids)
+            additional_params = {
+                'itemtype': ','.join([x.model.item_type_name.name for x in item_types])
+            }
+
+            # Query Generate
+            search, qs_kwargs = self.search_factory(self, search, additional_params=additional_params)
+
+            # Sort Setting
+            sort = request.values.get('sort')
+            sort_query = []
+            is_id_sort = False
+            if sort:
+                sort = sort.split(',')
+                for sort_key_element in sort:
+                    order = 'asc'
+                    if sort_key_element.startswith('-'):
+                        sort_key_element = sort_key_element.lstrip('-')
+                        order = 'desc'
+
+                    key_filed = SearchSetting.get_sort_key(sort_key_element)
+                    if key_filed:
+                        sort_element = {}
+                        sort_element[key_filed] = {'order': order, 'unmapped_type': 'long'}
+                        sort_query.append(sort_element)
+                        if sort_key_element == 'controlnumber':
+                            is_id_sort = True
+
+            if not is_id_sort:
+                sort_element = {}
+                sort_element['controlnumber'] = {'order': 'asc', 'unmapped_type': 'long'}
+                sort_query.append(sort_element)
+
+            search._sort = sort_query
+
+            # Facet Setting
+            # from weko_admin.models import FacetSearchSetting
+            # from weko_admin.utils import get_facet_search_query
+            # params = {}
+            # facets = get_facet_search_query()
+            # search_index = current_app.config['SEARCH_UI_SEARCH_INDEX']
+            # if facets and search_index and 'post_filters' in facets[search_index]:
+            #     post_filters = facets[search_index]['post_filters']
+            #     for param in post_filters:
+            #         value = request.args.getlist(param)
+            #         if value:
+            #             params[param] = value
+            # weko_faceted_search_mapping = FacetSearchSetting.get_activated_facets_mapping()
+            # for param in params:
+            #     query_key = weko_faceted_search_mapping[param]
+            #     search = search.post_filter({'terms': {query_key: params[param]}})
+
+            # Execute search
+            search_results = search.execute()
+            search_results = search_results.to_dict()
+
+            # Convert RO-Crate format
+            from weko_records_ui.utils import RoCrateConverter
+            converter = RoCrateConverter()
+            rocrate_list = []
+            for search_result in search_results['hits']['hits']:
+                metadata = search_result['_source']['_item_metadata']
+                item_type_id = metadata['item_type_id']
+                mapping = RocrateMapping.query.filter_by(item_type_id=item_type_id).one_or_none()
+                rocrate = converter.convert(metadata, mapping.mapping, language)
+                rocrate_list.append({
+                    'id': search_result['_source']['control_number'],
+                    'metadata': rocrate,
+                })
+
+            # Check pretty
+            indent = 4 if request.args.get('pretty') == 'true' else None
+
+            cursor = None
+            if len(search_results['hits']['hits']) > 0:
+                sort_key = search_results['hits']['hits'][-1].get('sort')
+                if sort_key:
+                    cursor = sort_key[0]
+
+            # Create result
+            result = {
+                'total_results': search_results['hits']['total'],
+                'count_results': len(rocrate_list),
+                'cursor': cursor,
+                'page': page,
+                'search_results': rocrate_list,
+            }
+            res = Response(
+                response=json.dumps(result, indent=indent),
+                status=200,
+                content_type='application/json')
+
+            # Response header setting
+            res.headers['Cache-Control'] = 'no-store'
+            res.headers['Pragma'] = 'no-cache'
+            res.headers['Expires'] = 0
+
+            return res
+
+        except MaxResultWindowRESTError:
+            raise MaxResultWindowRESTError()
+
+        except ElasticsearchException:
+            raise InternalServerError()
+
+        except Exception:
+            current_app.logger.error(traceback.print_exc())
+            raise InternalServerError()
+
+
+class IndexSearchResultList(ContentNegotiatedMethodView):
+    """Get resource for records searching."""
+
+    view_name = '{0}_search_result_get'
+
+    def __init__(
+        self,
+        ctx,
+        search_serializers=None,
+        record_serializers=None,
+        default_media_type=None,
+        **kwargs
+    ):
+        """Constructor."""
+        super(IndexSearchResultList, self).__init__(
+            method_serializers={
+                'POST': search_serializers,
+            },
+            default_method_media_type={
+                'POST': default_media_type,
+            },
+            default_media_type=default_media_type,
+            **kwargs
+        )
+        for key, value in ctx.items():
+            setattr(self, key, value)
+
+        self.pid_fetcher = current_pidstore.fetchers[self.pid_fetcher]
+        self.search_factory = default_search_factory
+
+    @require_api_auth(allow_anonymous=True)
+    @require_oauth_scopes(item_read_scope.id)
+    @limiter.limit('')
+    def post(self, **kwargs):
+        """Search records.
+
+        :returns: Search result containing hits and aggregations as returned by invenio-search.
+        """
+        version = kwargs.get('version')
+        func_name = f'post_{version}'
+        if func_name in [func[0] for func in inspect.getmembers(self, inspect.ismethod)]:
+            return getattr(self, func_name)(**kwargs)
+        else:
+            raise VersionNotFoundRESTError()
+
+    def post_v1(self, **kwargs):
+        try:
+            # Language setting
+            from weko_user_profiles.config import USERPROFILES_LANGUAGE_LIST
+            language = request.headers.get('Accept-Language')
+            if not language in [lang[0] for lang in USERPROFILES_LANGUAGE_LIST[1:]]:
+                language = 'en'
+            get_locale().language = language
+
+            # Get input json
+            try:
+                input_json = request.json
+                for input_header in input_json:
+                    if not(type(input_header["name"]) == dict and input_header["roCrateKey"]):
+                        raise InvalidRequestError()
+            except:
+                raise InvalidRequestError()
+            if not input_json:
+                raise InvalidRequestError()
+
+            # Generate Search Query Class
+            search_obj = self.search_class()
+            search = search_obj.with_preference_param().params(version=True)
+            search._extra.update(dict(size=10000))
+
+            # filter by registered item type in RocrateMapping
+            from weko_records_ui.models import RocrateMapping
+            mapping = RocrateMapping.query.all()
+            item_type_ids = [x.item_type_id for x in mapping]
+            item_types = ItemTypes.get_records(item_type_ids)
+            additional_params = {
+                'itemtype': ','.join([x.model.item_type_name.name for x in item_types])
+            }
+
+            # Query Generate
+            search, qs_kwargs = self.search_factory(self, search, additional_params=additional_params)
+
+            # Sort Setting
+            sort = request.values.get('sort')
+            sort_query = []
+            is_id_sort = False
+            if sort:
+                sort = sort.split(',')
+                for sort_key_element in sort:
+                    order = 'asc'
+                    if sort_key_element.startswith('-'):
+                        sort_key_element = sort_key_element.lstrip('-')
+                        order = 'desc'
+
+                    key_filed = SearchSetting.get_sort_key(sort_key_element)
+                    if key_filed:
+                        sort_element = {}
+                        sort_element[key_filed] = {'order': order, 'unmapped_type': 'long'}
+                        sort_query.append(sort_element)
+                        if sort_key_element == 'controlnumber':
+                            is_id_sort = True
+
+            if not is_id_sort:
+                sort_element = {}
+                sort_element['controlnumber'] = {'order': 'asc', 'unmapped_type': 'long'}
+                sort_query.append(sort_element)
+
+            search._sort = sort_query
+
+            # Execute search
+            search_results = search.execute()
+            search_results = search_results.to_dict()
+
+            # Convert RO-Crate format
+            from weko_records_ui.utils import RoCrateConverter
+            converter = RoCrateConverter()
+            rocrate_list = []
+            update_time_list = []
+            for search_result in search_results['hits']['hits']:
+                source = search_result['_source']
+                metadata = source['_item_metadata']
+                item_type_id = metadata['item_type_id']
+                mapping = RocrateMapping.query.filter_by(item_type_id=item_type_id).one_or_none()
+                rocrate = converter.convert(metadata, mapping.mapping, language)
+                rocrate_list.append({
+                    'id': search_result['_source']['control_number'],
+                    'metadata': rocrate,
+                })
+                update_time_list.append(source["_updated"])
+
+            # Create TSV
+            from .utils import result_download_ui
+            dl_response = result_download_ui(rocrate_list, input_json, language)
+
+            # Check Etag
+            hash_str = str(search_result) + str(input_json)
+            etag = generate_etag(hash_str.encode('utf-8'))
+            self.check_etag(etag, weak=True)
+
+            return dl_response
+
+        except (InvalidRequestError, NotFound) as e:
+            raise e
+
+        except ElasticsearchException:
+            raise InternalServerError()
+
+        except Exception:
+            current_app.logger.error(traceback.print_exc())
+            raise InternalServerError()

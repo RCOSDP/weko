@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="15" height="22" viewBox="0 0 15 22">
+  <g id="icon_index" transform="translate(-223 -323)">
+    <line id="線_6" data-name="線 6" y2="17" transform="translate(225.5 325)" fill="none" stroke="#fff" stroke-width="1"/>
+    <path id="パス_15" data-name="パス 15" d="M10,0C7.016,6.309,0,6.5,0,6.5" transform="translate(225.5 335.5)" fill="none" stroke="#fff" stroke-width="1"/>
+    <g id="楕円形_6" data-name="楕円形 6" transform="translate(223 323)" fill="#fff" stroke="#fff" stroke-width="1">
+      <circle cx="2.5" cy="2.5" r="2.5" stroke="none"/>
+      <circle cx="2.5" cy="2.5" r="2" fill="none"/>
+    </g>
+    <g id="楕円形_7" data-name="楕円形 7" transform="translate(223 340)" fill="#fff" stroke="#fff" stroke-width="1">
+      <circle cx="2.5" cy="2.5" r="2.5" stroke="none"/>
+      <circle cx="2.5" cy="2.5" r="2" fill="none"/>
+    </g>
+    <g id="楕円形_8" data-name="楕円形 8" transform="translate(233 333)" fill="#fff" stroke="#fff" stroke-width="1">
+      <circle cx="2.5" cy="2.5" r="2.5" stroke="none"/>
+      <circle cx="2.5" cy="2.5" r="2" fill="none"/>
+    </g>
+  </g>
+</svg>

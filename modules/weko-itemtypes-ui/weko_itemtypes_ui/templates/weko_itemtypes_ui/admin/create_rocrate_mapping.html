@@ -1,0 +1,543 @@
+{#
+ # This file is part of WEKO3.
+ # Copyright (C) 2017 National Institute of Informatics.
+ #
+ # WEKO3 is free software; you can redistribute it
+ # and/or modify it under the terms of the GNU General Public License as
+ # published by the Free Software Foundation; either version 2 of the
+ # License, or (at your option) any later version.
+ #
+ # WEKO3 is distributed in the hope that it will be
+ # useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+ # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ # General Public License for more details.
+ #
+ # You should have received a copy of the GNU General Public License
+ # along with WEKO3; if not, write to the
+ # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ # MA 02111-1307, USA.
+ #}
+
+{%- extends admin_base_template %}
+
+{%- block css %}
+{{ super() }}
+{% assets "weko_rocrate_mapping_ui_css" %}
+<link href="{{ ASSET_URL }}" rel="stylesheet">
+{% endassets %}
+{% assets "weko_theme_css_buttons" %}
+<link href="{{ ASSET_URL }}" rel="stylesheet">
+{% endassets %}
+{% assets "weko_admin_css" %}
+<link href="{{ ASSET_URL }}" rel="stylesheet">
+{% endassets %}
+{%- endblock css %}
+
+{%- block javascript %}
+{{ super() }}
+{% assets "weko_itemtypes_rocrate_mapping_ui_js" %}
+<script src="{{ ASSET_URL }}"></script>
+{% endassets %}
+{%- endblock javascript %}
+
+{%- block body %}
+<pre class="hide" id="item-properties">{{item_properties|tojson}}</pre>
+<pre class="hide" id="rocrate-mapping">{{rocrate_mapping|tojson}}</pre>
+<pre class="hide" id="confirm-title">{{_('Confirmation')}}</pre>
+<pre class="hide" id="confirm-body">{{_('Would you like to cancel your changes?')}}</pre>
+
+<div id="alerts"></div>
+<div id="errors"></div>
+
+<div class="row">
+  <div class="col-sm-12">
+    <!-- Item type -->
+    <div id="area-item-type" class="panel panel-info panel-body">
+      <label>{{_('Item Type')}}</label>
+
+      <div class="form-inline">
+        <select id="select-item-type" class="form-control">
+          {%- for item_type_name in item_type_names -%}
+          <option value="{{item_type_name.item_type.0.id}}" {% if item_type_name.item_type.0.id==item_type_id %}{{"selected"}}{% endif %}>
+            {{item_type_name.name}}({{item_type_name.item_type.0.tag}})
+          </option>
+          {%- endfor -%}
+        </select>
+      </div>
+    </div>
+
+    <!-- Layer -->
+    <div id="area-layer" class="panel panel-info panel-body">
+      <label>{{_('Layer')}}</label>
+
+      <div class="form-inline">
+        <label for="layer-num">{{_('Number of layers')}}</label>
+        <input type="number" id="layer-num" class="form-control" value="0" min="0">
+      </div>
+
+      <div class="template">
+        <div id="template-layer-name">
+          <!-- layer template -->
+          <ul name="layer-ul">
+            <li name="layer-li">
+              <div class="list-group-item inline-block">
+                <input type="text" name="layer-name" class="form-control">
+                <div name="layer-name-message" class="alert alert-danger error-message inline-block hide">
+                  <strong>{{_('Error')}} : {{_('Layer name is blank.')}}</strong>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="form-inline">
+        <ul id="layer-base">
+          <li name="layer-li">
+            <div class="list-group-item inline-block">
+              <input type="text" name="layer-name" class="form-control" value="root" disabled>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Tree structure -->
+    <div id="area-tree-structure" class="panel panel-info panel-body">
+      <label>{{_('Tree structure')}}</label>
+
+      <div class="template">
+        <!-- node template -->
+        <ul id="template-node-ul" class="nested active">
+          <li name="node-li">
+            <div name="node-contents" class="node-flex">
+              <span class="arrow arrow-down"></span>
+              <div name="node" class="list-group-item node-flex">
+                <input type="radio" name="select-node" class="margin-r-ten">
+                <input type="text" name="node-name" class="form-control">
+                <div name="node-name-message" class="alert alert-danger error-message inline-block hide ten-pixel-left-margin">
+                  <strong>{{_('Error')}} : {{_('Node name is blank.')}}</strong>
+                </div>
+                <div class="pull-right ten-pixel-left-margin">
+                  <button type="button" class="btn btn-danger" data-action="del-node">
+                    <span class="glyphicon glyphicon-remove"></span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <ul class="nested active">
+              <li name="button-li">
+                <div class="list-group-item inline-block button-node ten-pixel-left-margin">
+                  <button type="button" class="btn btn-success" data-action="add-node">
+                    <span class="glyphicon glyphicon-plus"></span>&nbsp; {{_('Add')}}
+                  </button>
+                </div>
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+
+      <div class="form-inline">
+        <ul id="tree-base" class="nested active">
+          <li name="root-node-li" data-id="root">
+            <!-- root node -->
+            <div name="node-contents" class="node-flex">
+              <span class="arrow arrow-down"></span>
+              <div name="node" class="list-group-item node-flex">
+                <input type="radio" name="select-node" class="margin-r-ten">
+                <input type="text" name="node-name" class="form-control" value="root" disabled>
+              </div>
+            </div>
+
+            <ul class="nested active">
+              <li name="file-node-li" data-id="file">
+                <!-- file node -->
+                <div name="node-contents" class="node-flex">
+                  <span class="arrow arrow-down invisible"></span>
+                  <div name="node" class="list-group-item node-flex">
+                    <input type="radio" name="select-node" class="margin-r-ten">
+                    <input type="text" name="node-name" class="form-control" value="file" disabled>
+                  </div>
+                </div>
+              </li>
+
+              <li name="button-li">
+                <div class="list-group-item inline-block button-node ten-pixel-left-margin">
+                  <button type="button" class="btn btn-success" data-action="add-node">
+                    <span class="glyphicon glyphicon-plus"></span>&nbsp; {{_('Add')}}
+                  </button>
+                </div>
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Node -->
+    <div id="area-node" class="panel panel-info panel-body">
+      <!-- Node name -->
+      <div id="node-name-setting">
+        <div class="form-inline">
+          <label>{{_('Node name')}}</label>
+        </div>
+        <div class="form-inline ten-pixel-bottom-margin">
+          <input type="text" id="node-name" class="form-control" disabled>
+          <div name="node-name-message" class="alert alert-danger error-message inline-block hide ten-pixel-left-margin">
+            <strong>{{_('Error')}} : {{_('Node name is blank.')}}</strong>
+          </div>
+        </div>
+        <div class="form-inline">
+          <label>Localization Settings</label>
+        </div>
+        <div class="form-inline">
+          <table class="lang-table">
+            {%- for language in registered_languages -%}
+              <tr>
+                <td>
+                  <label>{{language.lang_name}}</label>
+                </td>
+                <td>
+                  <input type="text" name="node-name-i18n" class="form-control" data-lang="{{language.lang_code}}" disabled>
+                </td>
+              </tr>
+            {%- endfor -%}
+          </table>
+        </div>
+      </div>
+
+      <hr>
+
+      <!-- Mapping -->
+      <div id="mapping-setting">
+        <!-- Mapping -->
+        <label>{{_('Mapping')}}</label>
+
+        <div class="template">
+          <!-- Template: Mapping table row -->
+          <div id="template-mapping-row">
+            <div name="mapping-row" class="row margin-h-none flex">
+              <!-- RO-Crate property -->
+              <div name="rocrate-property-cell" class="padding-h-none flex">
+                <div name="rocrate-property" class="padding-h-none">
+                  <div class="form-group">
+                    <select name="select-rocrate-property" class="form-control">
+                      <option value=""></option>
+                      {%- for value in rocrate_dataset_properties -%}
+                      <option value="{{value}}">{{value}}</option>
+                      {%- endfor -%}
+                    </select>
+                    <div name="rocrate-property-name-message" class="alert alert-danger error-message hide">
+                      <strong>{{_('Error')}} : {{_('RO-Crate property is blank.')}}</strong>
+                    </div>
+                  </div>
+                </div>
+                <div class="pull-right ten-pixel-left-margin">
+                  <button type="button" class="btn btn-danger" data-action="del-mapping">
+                    <span class="glyphicon glyphicon-remove"></span>
+                  </button>
+                </div>
+              </div>
+              <!-- Item property -->
+              <div name="item-property-cell" class="col-sm-9 padding-h-none">
+                <div name="button-row" class="row margin-h-none">
+                  <div class="col-sm-12">
+                    <button type="button" class="btn btn-success" data-action="add-item-property">
+                      <span class="glyphicon glyphicon-plus"></span>&nbsp;{{_('Add')}}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Template: item property input area -->
+          <div id="template-item-property-row">
+            <div name="item-property-row" class="row margin-h-none margin-b-ten flex-col">
+              <div class="row col-sm-12 margin-h-none">
+                <label><input type="checkbox" name="check-language">{{_('Specify language')}}</label>
+              </div>
+              <div name="item-property" class="row margin-h-none flex width-fit">
+                <div class="col-sm-11 item-property">
+                  <div name="item-property-field" class="form-group ten-pixel-right-margin">
+                    <select name="select-item-property" class="form-control inline-block">
+                      <option value=""></option>
+                      {%- for key, value in item_properties.items() -%}
+                      <option value="{{key}}">{{value['title']}}</option>
+                      {%- endfor -%}
+                    </select>
+                    <input type="number" name="list-index" class="form-control inline-block invisible" min="0">
+                    <div name="item-property-name-message" class="alert alert-danger error-message hide">
+                      <strong>{{_('Error')}} : {{_('Item property is blank.')}}</strong>
+                    </div>
+                    <div name="item-property-index-message" class="alert alert-danger error-message hide">
+                      <strong>{{_('Error')}} : {{_('Item property index is blank.')}}</strong>
+                    </div>
+                    <label class="check block invisible"><input type="checkbox" name="check-list-index">{{_('Specify list index')}}</label>
+                  </div>
+                </div>
+                <div class="col-sm-1">
+                  <div class="pull-right">
+                    <button type="button" class="btn btn-danger" data-action="del-item-property">
+                      <span class="glyphicon glyphicon-remove"></span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div name="item-property-with-lang" class="row margin-h-none flex width-fit hide">
+                <div class="col-sm-11 item-property">
+                  <div>
+                    <label class="lang-label padding-h-none block">{{_('Value')}}</label>
+                    <label class="lang-label padding-h-none block">{{_('Language')}}</label>
+                  </div>
+                  <div name="item-property-field-with-lang">
+                    <div class="form-group block ten-pixel-right-margin">
+                      <select name="select-item-property-value" class="form-control">
+                        <option value=""></option>
+                        {%- for key, value in item_properties.items() -%}
+                        <option value="{{key}}">{{value['title']}}</option>
+                        {%- endfor -%}
+                      </select>
+                      <div name="item-property-name-message" class="alert alert-danger error-message hide">
+                        <strong>{{_('Error')}} : {{_('Item property is blank.')}}</strong>
+                      </div>
+                    </div>
+                    <div class="form-group block ten-pixel-right-margin">
+                      <select name="select-item-property-lang" class="form-control">
+                        <option value=""></option>
+                        {%- for key, value in item_properties.items() -%}
+                        <option value="{{key}}">{{value['title']}}</option>
+                        {%- endfor -%}
+                      </select>
+                      <div name="item-property-name-message" class="alert alert-danger error-message hide">
+                        <strong>{{_('Error')}} : {{_('Item property is blank.')}}</strong>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-sm-1">
+                  <div class="pull-right">
+                    <button type="button" class="btn btn-danger" data-action="del-item-property">
+                      <span class="glyphicon glyphicon-remove"></span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Template: Sub item area -->
+          <div id="template-item-property-field">
+            <div name="item-property-field" class="form-group ten-pixel-right-margin">
+              <select name="select-item-property" class="form-control inline-block">
+                <option value=""></option>
+              </select>
+              <input type="number" name="list-index" class="form-control inline-block invisible" min="0">
+              <div name="item-property-name-message" class="alert alert-danger error-message hide">
+                <strong>{{_('Error')}} : {{_('Item property is blank.')}}</strong>
+              </div>
+              <div name="item-property-index-message" class="alert alert-danger error-message hide">
+                <strong>{{_('Error')}} : {{_('Item property index is blank.')}}</strong>
+              </div>
+              <label class="check block invisible"><input type="checkbox" name="check-list-index">{{_('Specify list index')}}</label>
+            </div>
+          </div>
+
+          <!-- Template: Sub item area (specify language) -->
+          <div id="template-item-property-field-with-lang">
+            <div name="item-property-field-with-lang">
+              <div class="form-group block ten-pixel-right-margin">
+                <select name="select-item-property-value" class="form-control invisible">
+                  <option value=""></option>
+                </select>
+                <div name="item-property-name-message" class="alert alert-danger error-message hide">
+                  <strong>{{_('Error')}} : {{_('Item property is blank.')}}</strong>
+                </div>
+              </div>
+              <div class="form-group block ten-pixel-right-margin">
+                <select name="select-item-property-lang" class="form-control invisible">
+                  <option value=""></option>
+                </select>
+                <div name="item-property-name-message" class="alert alert-danger error-message hide">
+                  <strong>{{_('Error')}} : {{_('Item property is blank.')}}</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Template: Mapping table row (for file property) -->
+          <div id="template-mapping-row-file">
+            <div name="mapping-row" class="row margin-h-none flex">
+              <!-- RO-Crate property -->
+              <div name="rocrate-property-cell" class="padding-h-none flex">
+                <div name="rocrate-property" class="padding-h-none">
+                  <div class="form-group">
+                    <select name="select-rocrate-property" class="form-control">
+                      <option value=""></option>
+                      {%- for value in rocrate_file_properties -%}
+                      <option value="{{value}}">{{value}}</option>
+                      {%- endfor -%}
+                    </select>
+                    <div name="rocrate-property-name-message" class="alert alert-danger error-message hide">
+                      <strong>{{_('Error')}} : {{_('RO-Crate property is blank.')}}</strong>
+                    </div>
+                  </div>
+                </div>
+                <div class="pull-right ten-pixel-left-margin">
+                  <button type="button" class="btn btn-danger" data-action="del-mapping">
+                    <span class="glyphicon glyphicon-remove"></span>
+                  </button>
+                </div>
+              </div>
+              <!-- Item property -->
+              <div name="item-property-cell" class="col-sm-9 padding-h-none">
+                <div name="button-row" class="row margin-h-none">
+                  <div class="col-sm-12">
+                    <button type="button" class="btn btn-success" data-action="add-item-property">
+                      <span class="glyphicon glyphicon-plus"></span>&nbsp;{{_('Add')}}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Template: Item property input area (for file property) -->
+          <div id="template-item-property-row-file">
+            <div name="item-property-row" class="row margin-h-none margin-b-ten flex-col">
+              <div name="item-property" class="row margin-h-none flex width-fit">
+                <div class="col-sm-11 item-property">
+                  <div name="item-property-field" class="form-group ten-pixel-right-margin">
+                    <select name="select-item-property-file" class="form-control inline-block">
+                      <option value=""></option>
+                      {%- for key, value in item_properties.items() -%}
+                      <option value="{{key}}">{{value['title']}}</option>
+                      {%- endfor -%}
+                    </select>
+                    <div name="item-property-name-message" class="alert alert-danger error-message hide">
+                      <strong>{{_('Error')}} : {{_('Item property is blank.')}}</strong>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-sm-1">
+                  <div class="pull-right">
+                    <button type="button" class="btn btn-danger" data-action="del-item-property">
+                      <span class="glyphicon glyphicon-remove"></span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Template: Sub item area (for file property) -->
+          <div id="template-item-property-field-file">
+            <div name="item-property-field" class="form-group ten-pixel-right-margin">
+              <select name="select-item-property-file" class="form-control inline-block">
+                <option value=""></option>
+              </select>
+              <div name="item-property-name-message" class="alert alert-danger error-message hide">
+                <strong>{{_('Error')}} : {{_('Item property is blank.')}}</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- Template: Mapping table row (for static value) -->
+          <div id="template-mapping-static-row">
+            <div name="mapping-row" class="row margin-h-none flex">
+              <!-- RO-Crate property -->
+              <div name="rocrate-property-cell" class="padding-h-none flex">
+                <div name="rocrate-property" class="padding-h-none">
+                </div>
+                <div class="pull-right ten-pixel-left-margin">
+                  <button type="button" class="btn btn-danger" data-action="del-mapping">
+                    <span class="glyphicon glyphicon-remove"></span>
+                  </button>
+                </div>
+              </div>
+              <!-- Static value -->
+              <div name="item-property-cell" class="col-sm-9 padding-h-none">
+                <div name="item-property-row" class="row margin-h-none flex-col">
+                  <div class="row col-sm-12 margin-h-none">
+                    <div name="static-value" class="form-group">
+                      <input type="text" name="text-static-value" class="form-control">
+                      <div name="static-value-message" class="alert alert-danger error-message hide">
+                        <strong>{{_('Error')}} : {{_('Static value is blank.')}}</strong>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Table header -->
+        <div id="mapping-table-header" class="panel-body header-mapping-list">
+          <!-- RO-Crate property -->
+          <div class="col-sm-3 padding-h-none">
+            <label id="rocrate-property-label"></label>
+          </div>
+          <!-- Item property -->
+          <div class="col-sm-9 padding-h-none">
+            <label id="item-property-label"></label>
+            <div class="pull-right ten-pixel-left-margin">
+              <button type="button" class="btn btn-success" data-action="add-mapping-static" disabled>
+                <span class="glyphicon glyphicon-plus"></span>&nbsp;{{_('Add static value')}}
+              </button>
+              <button type="button" class="btn btn-success ten-pixel-left-margin" data-action="add-mapping" disabled>
+                <span class="glyphicon glyphicon-plus"></span>&nbsp;{{_('Add')}}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Table body -->
+        <input type="hidden" id="editing-node" value="">
+        <div id="mapping-table-body" class="panel-body body-mapping-list x-scroll">
+        </div>
+      </div>
+    </div>
+
+    <!-- Button -->
+    <div id="area-button">
+      <div class="pull-right ten-pixel-left-margin">
+        <button id="mapping-submit" class="btn btn-primary">
+          <span class="glyphicon glyphicon-save"></span>&nbsp;{{_('Save')}}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- modal -->
+<div id="message-modal" class="modal fade" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <h4 class="modal-title">{{_('Result')}}</h4>
+      </div>
+      <div class="modal-body">
+        <p>One fine body&hellip;</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="btn-confirm" class="btn btn-primary hide">
+          {{_('OK')}}
+        </button>
+        <button type="button" id="btn-submit" class="btn btn-primary hide">
+          <span class="glyphicon glyphicon-save"></span>&nbsp; {{_('Save')}}
+        </button>
+        <button type="button" class="btn btn-default" data-dismiss="modal">
+          <span class="glyphicon glyphicon-remove"></span>&nbsp; {{_('Close')}}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{%- endblock body %}

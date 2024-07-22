@@ -39,20 +39,36 @@ def test_item_get(app, test_records):
         assert data == get_json(res)
 
 
-def test_item_get_etag(app, test_records):
+def test_item_get_etag(app, db, test_records):
     """Test VALID record get request (GET .../records/<record_id>)."""
     with app.test_client() as client:
         pid, record = test_records[0]
 
         res = client.get(record_url(pid))
         assert res.status_code == 200
-        etag = res.headers['ETag']
-        last_modified = res.headers['Last-Modified']
+
+def test_item_get_etag2(app, db, test_records):
+    """Test VALID record get request (GET .../records/<record_id>)."""
+    with app.test_client() as client:
+        pid, record = test_records[0]
+
+        res = client.get(record_url(pid))
+        assert res.status_code == 200
 
         # Test request via etag
+        etag = res.headers['ETag']
         res = client.get(record_url(pid), headers={'If-None-Match': etag})
         assert res.status_code == 304
 
+def test_item_get_etag3(app, db, test_records):
+    """Test VALID record get request (GET .../records/<record_id>)."""
+    with app.test_client() as client:
+        pid, record = test_records[0]
+
+        res = client.get(record_url(pid))
+        assert res.status_code == 200
+
+        last_modified = res.headers['Last-Modified']
         # Test request via last-modified.
         res = client.get(
             record_url(pid), headers={'If-Modified-Since': last_modified})

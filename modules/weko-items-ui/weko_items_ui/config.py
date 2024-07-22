@@ -257,3 +257,16 @@ WEKO_ITEMS_UI_RANKING_QUERY = dict(
         )
     )
 )
+
+WEKO_ITEMS_UI_REST_ENDPOINTS = {
+    'ranking': {
+        'rank_route': '/<string:version>/ranking/<string:ranking_type>',
+        'rank_files_route': '/<string:version>/ranking/<int:pid_value>/files',
+        'default_media_type': 'application/json',
+        'max_result_window': 10000,
+    },
+}
+
+WEKO_ITEMS_UI_API_LIMIT_RATE_DEFAULT = ['100 per minute']
+
+WEKO_ITEMS_UI_SHARED_USER_ROLE_ID_LIST = [1,2,3]

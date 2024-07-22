@@ -1,21 +1,17 @@
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 
 
-from unittest.mock import MagicMock
 import uuid
 import pytest
 import uuid
 from mock import patch
-from flask import Flask, json, jsonify, url_for, session, make_response
+from flask import json, url_for, make_response
 from invenio_accounts.testutils import login_user_via_session as login
-from werkzeug.exceptions import InternalServerError ,NotFound,Forbidden
+from werkzeug.exceptions import InternalServerError ,Forbidden
 from weko_workflow.admin import FlowSettingView,WorkFlowSettingView
-<<<<<<< HEAD
 from weko_workflow.models import FlowDefine, FlowAction, FlowActionRole, WorkFlow, WorkflowRole
+from weko_admin.models import AdminSettings
 
-=======
-from weko_workflow.models import FlowDefine, WorkFlow
->>>>>>> pr1362
 # class FlowSettingView(BaseView):
 class TestFlowSettingView:
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestFlowSettingView::test_index_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -35,15 +31,27 @@ class TestFlowSettingView:
         # (5, 200),
         # (6, 200),
     ])
-    def test_index_acl(self,client,db_register2,users,users_index,status_code):
+    def test_index_acl(self,client,db_register2,users,users_index,status_code,db):
+        adminsetting=AdminSettings(id=1,name='items_display_settings',settings={})
+        # Adminsettings display_request_form is None
+        with db.session.begin_nested():
+            db.session.add(adminsetting)
+        db.session.commit()
+
         login(client=client, email=users[users_index]['email'])
         url = url_for('flowsetting.index',_external=True)
         res =  client.get(url)
-        assert res.status_code == status_code  
+        assert res.status_code == status_code
 
 #     def flow_detail(self, flow_id='0'):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestFlowSettingView::test_flow_detail_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-    def test_flow_detail_acl_guest(self,client,db_register2):
+    def test_flow_detail_acl_guest(self,client,db_register2,db):
+        adminsetting=AdminSettings(id=1,name='items_display_settings',settings={})
+        # Adminsettings display_request_form is None
+        with db.session.begin_nested():
+            db.session.add(adminsetting)
+        db.session.commit()
+
         url = url_for('flowsetting.index',flow_id=str(1),_external=True)
         res =  client.get(url)
         assert res.status_code == 302
@@ -58,31 +66,52 @@ class TestFlowSettingView:
         # (5, 200),
         # (6, 200),
     ])
-    def test_flow_detail_acl(self,client,workflow,db_register2,users,users_index,status_code):
+    def test_flow_detail_acl(self,client,workflow,db_register2,users,users_index,status_code,db):
+        adminsetting=AdminSettings(id=1,name='items_display_settings',settings={})
+        # Adminsettings display_request_form is None
+        with db.session.begin_nested():
+            db.session.add(adminsetting)
+        db.session.commit()
+
         flow_define = workflow['flow']
         login(client=client, email=users[users_index]['email'])
-<<<<<<< HEAD
+        #test No.8(W2023-22 2)
         url = '/admin/flowsetting/{}'.format(0)
-=======
-        url = '/admin/workflowsetting/{}'.format(0)
-        url = '/admin/flowsetting/{}'.format(0)
-        print(url)
->>>>>>> pr1362
         with patch("flask.templating._render", return_value=""):
             res =  client.get(url)
             assert res.status_code == status_code
-        
-        
+
+        #test No.9(W2023-22 2)
         url = '/admin/flowsetting/{}'.format(flow_define.flow_id)
         with patch("flask.templating._render", return_value=""):
             res =  client.get(url)
-            assert res.status_code == status_code  
+            assert res.status_code == status_code
+
+        #test No.10(W2023-22 2)
+        url = '/admin/flowsetting/{}'.format("hoge")
+        with patch("flask.templating._render", return_value=""):
+            res =  client.get(url)
+            assert res.status_code == 404
+
+        #test No.11(W2023-22 2)
+        login(client=client, email=users[users_index]['email'])
+        url = '/admin/flowsetting/{}'.format(flow_define.flow_id)
+        with patch("weko_workflow.admin.FlowSettingView._check_auth",return_value = False):
+            with patch("flask.templating._render", return_value=""):
+                res =  client.get(url)
+                assert res.status_code == 403
 
     # def flow_detail(self, flow_id='0'):
     # def new_flow(self, flow_id='0'):
     # def del_flow(self, flow_id='0'):
     # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestFlowSettingView::test_flow_detail_update_delete -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-    def test_flow_detail_update_delete(self,app,client,users,workflow ,workflow_open_restricted):
+    def test_flow_detail_update_delete(self,app,client,users,workflow ,workflow_open_restricted,db):
+        adminsetting=AdminSettings(id=1,name='items_display_settings',settings={})
+        # Adminsettings display_request_form is None
+        with db.session.begin_nested():
+            db.session.add(adminsetting)
+        db.session.commit()
+
         #repoadmin
         login(client=client, email=users[1]['email'])
         url = '/admin/flowsetting/{}'.format(workflow_open_restricted[1]["flow"].flow_id)
@@ -101,8 +130,7 @@ class TestFlowSettingView:
             url = '/admin/flowsetting/{}'.format("hoge")
             res =  client.get(url)
             assert res.status_code == 404
-            
-    
+
 #     def get_specified_properties():
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestFlowSettingView::test_get_specified_properties -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
     def test_get_specified_properties(self,app,item_type):
@@ -112,7 +140,6 @@ class TestFlowSettingView:
 #     def update_flow(flow_id):
 #     def new_flow(self, flow_id='0'):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestFlowSettingView::test_new_flow -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-<<<<<<< HEAD
     def test_new_flow(self,app,client,action_data,users):
         login(client=client, email=users[1]['email'])
         url = '/admin/flowsetting/{}'.format(0)
@@ -195,8 +222,8 @@ class TestFlowSettingView:
             assert res.status_code == 500
         q = FlowDefine.query.first()
         assert q.flow_name == 'test2'
-=======
-    def test_new_flow(self,app,workflow):
+
+    def test_new_flow_with_workflow(self,app,workflow):
         with app.test_request_context( "/admin/workflowsetting/"+str(workflow["flow"].flow_id), method="POST",headers={"Content-Type": "application/json"} ,data='{"flow_name": "flow_name1"}'):
             with patch('weko_workflow.admin.FlowSettingView._check_auth',return_value=False):
                 with pytest.raises(Forbidden):
@@ -211,8 +238,6 @@ class TestFlowSettingView:
             with patch('weko_workflow.admin.Flow.create_flow',side_effect=ValueError ):
                 res = FlowSettingView().new_flow("0")
                 assert res.status_code == 400
-            
->>>>>>> pr1362
 
 #     def del_flow(self, flow_id='0'):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestFlowSettingView::test_del_flow -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -234,10 +259,9 @@ class TestFlowSettingView:
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestFlowSettingView::test_get_actions -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
     def test_get_actions(self,app,workflow):
         with app.test_request_context():
-            assert FlowSettingView.get_actions()==""
+            assert len(FlowSettingView.get_actions())==6
  
 #     def upt_flow_action(self, flow_id=0):
-<<<<<<< HEAD
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestFlowSettingView::test_upt_flow_action -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
     def test_upt_flow_action(self,app,client,workflow,users):
         flow_define = workflow['flow']
@@ -318,9 +342,7 @@ class TestFlowSettingView:
         assert len(q) == 7
         q = FlowActionRole.query.all()
         assert len(q) == 1
-=======
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestFlowSettingView::test_index_acl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-    def test_upt_flow_action(self,app,workflow):
+
         with app.test_request_context("/admin/workflowsetting/action/"+str(workflow["flow"].flow_id), method="POST",headers={"Content-Type": "application/json"} ,data='{"flow_name": "flow_name1"}'):
             with patch('weko_workflow.admin.FlowSettingView._check_auth',return_value=False):
                 with pytest.raises(Forbidden):
@@ -328,7 +350,7 @@ class TestFlowSettingView:
             with patch('weko_workflow.admin.FlowSettingView._check_auth',return_value=True):
                 with patch('weko_workflow.admin.Flow.upt_flow_action',return_value=True):
                     assert json.loads(FlowSettingView().upt_flow_action(str(workflow["flow"].flow_id)).data).get("code","")  == 0
-            
+
 # def _check_auth(flow_id:str ):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestFlowSettingView::test__check_auth -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
     def test__check_auth(self,app,users,workflow ,workflow_open_restricted):
@@ -355,7 +377,6 @@ class TestFlowSettingView:
                 #103
                 assert not FlowSettingView._check_auth(workflow_open_restricted[1]["flow"].flow_id)
                 
->>>>>>> pr1362
 
 # class WorkFlowSettingView(BaseView):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestWorkFlowSettingView -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -369,19 +390,19 @@ class TestWorkFlowSettingView:
 
     # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestWorkFlowSettingView::test_index_acl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
     @pytest.mark.parametrize('users_index, status_code', [
-        # (0, 403),
+        (0, 403),
         (1, 200),
-        # (2, 200),
-        # (3, 200),
-        # (4, 200),
-        # (5, 200),
-        # (6, 200),
+        (2, 200),
+        (3, 403),
+        (4, 403),
+        (5, 403),
+        (6, 200),
     ])
     def test_index_acl(self,client,db_register2,users,users_index,status_code):
         login(client=client, email=users[users_index]['email'])
         url = url_for('workflowsetting.index',_external=True)
         res =  client.get(url)
-        assert res.status_code == status_code  
+        assert res.status_code == status_code
 
     #     def workflow_detail(self, workflow_id='0'):
     # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestWorkFlowSettingView::test_workflow_detail_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -431,7 +452,6 @@ class TestWorkFlowSettingView:
             res =  client.get(url)
             assert res.status_code == status_code
 
-        
 
     #     def update_workflow(self, workflow_id='0'):
     # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestWorkFlowSettingView::test_update_workflow_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -479,7 +499,6 @@ class TestWorkFlowSettingView:
         login(client=client, email=users[users_index]['email'])
         url = '/admin/workflowsetting/{}'.format(uuid.uuid4())
         with patch("flask.templating._render", return_value=""):
-<<<<<<< HEAD
             res = client.post(url, data=json.dumps(data), headers=[('Content-Type', 'application/json')])
         assert res.status_code == 200
 
@@ -502,7 +521,7 @@ class TestWorkFlowSettingView:
         url = '/admin/workflowsetting/{}'.format(workflow['workflow'].flows_id)
         with patch("flask.templating._render", return_value=""):
             res = client.post(url, data=json.dumps(data), headers=[('Content-Type', 'application/json')])
-        assert res.status_code == 400
+        assert res.status_code == 200
         q = WorkFlow.query.first()
         assert q.open_restricted == False
         assert q.is_gakuninrdm == False
@@ -553,10 +572,7 @@ class TestWorkFlowSettingView:
         assert res.status_code == 200
         q = WorkFlow.query.all()
         assert len(q) == 2
-=======
-            res =  client.put(url)
-            assert res.status_code == status_code  
-    
+
     #     def update_workflow(self, workflow_id='0'):
     # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestWorkFlowSettingView::test_update_workflow -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
     def test_update_workflow(self,client,db,db_register2,users,workflow):
@@ -584,8 +600,6 @@ class TestWorkFlowSettingView:
                                                     ,'flows_id' : wflow.flows_id
                                                     ,'is_gakuninrdm' : False})
                                     )
->>>>>>> pr1362
-
 
     #  def delete_workflow(self, workflow_id='0'):
     # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestWorkFlowSettingView::test_delete_workflow_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -649,22 +663,24 @@ class TestWorkFlowSettingView:
         wf = workflow['workflow']
         
         with app.test_request_context():
-            assert WorkFlowSettingView.save_workflow_role(wf.id,[role0.id,role1.id,role2.id,role3.id,role4.id])
+            WorkFlowSettingView.save_workflow_role(wf.id,[role0.id,role1.id,role2.id,role3.id,role4.id])
+            res = WorkflowRole.query.all()
+            assert len(res) == 5
 
     # def get_language_workflows(cls, key):
     # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestWorkFlowSettingView::test_get_language_workflows -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-    def test_get_language_workflows(self,users):
-        with self.test_request_context():
-            assert self.get_language_workflows("display")=="Display"
+    def test_get_language_workflows(self, app, users):
+        with app.test_request_context():
+            assert WorkFlowSettingView.get_language_workflows("display")=="Display"
             assert WorkFlowSettingView.get_language_workflows("hide")=="Hide"
             assert WorkFlowSettingView.get_language_workflows("display_hide")=="Display/Hide"
             
-        with self.test_request_context(headers=[("Accept-Language", "en")]):
+        with app.test_request_context(headers=[("Accept-Language", "en")]):
             assert WorkFlowSettingView.get_language_workflows("display")=="Display"
             assert WorkFlowSettingView.get_language_workflows("hide")=="Hide"
             assert WorkFlowSettingView.get_language_workflows("display_hide")=="Display/Hide"
         
-        with self.test_request_context(headers=[("Accept-Language", "ja")]):
+        with app.test_request_context(headers=[("Accept-Language", "ja")]):
             assert WorkFlowSettingView.get_language_workflows("display")=="表示"
             assert WorkFlowSettingView.get_language_workflows("hide")=="非表示"
             assert WorkFlowSettingView.get_language_workflows("display_hide")=="表示/非表示"

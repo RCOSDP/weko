@@ -395,6 +395,7 @@ msgstr "DOI not provided"
 #~ msgid "item type"
 #~ msgstr ""
 
+#: weko_workflow/templates/weko_workflow/item_login_sucess.html:288
 #~ msgid "Back"
 #~ msgstr ""
 
@@ -581,6 +582,7 @@ msgid "Quit_Approval"
 msgstr "Quit"
 
 #: weko_workflow/templates/weko_workflow/activity_detail.html:381
+#: weko_workflow/templates/weko_workflow/item_login_sucess.html:295
 msgid "The activity is forcibly canceled because the workflow settings have changed and the next step was not found."
 msgstr ""
 
@@ -596,14 +598,6 @@ msgstr "Next"
 msgid "Quit_identifier_grand"
 msgstr "Quit"
 
-#: weko_workflow/templates/weko_workflow/item_login_sucess.html:288
-msgid "Back"
-msgstr "Back"
-
-#: weko_workflow/templates/weko_workflow/item_login_sucess.html:295
-msgid "The activity is forcibly canceled because the workflow settings have changed and the next step was not found."
-msgstr ""
-
 msgid "The specified link has expired."
 msgstr ""
 
@@ -612,6 +606,21 @@ msgstr "Specify Property"
 
 msgid "Specify property"
 msgstr "Specify Property"
+
+msgid "Item registrant"
+msgstr "Item registrant"
+
+msgid "Request mail"
+msgstr "Request mail"
+
+msgid "Guest User"
+msgstr ""
+
+msgid "Login User"
+msgstr ""
+
+msgid "Notification Email Setting"
+msgstr ""
 
 msgid "Approval Request Notification Email"
 msgstr ""
@@ -642,4 +651,16 @@ msgid "Are you sure you want to delete the filtered activity?"
 msgstr ""
 
 msgid "Clear Confirm"
+msgstr ""
+
+msgid "Send an email to item registrants when applying for use"
+msgstr ""
+
+msgid "Application approved."
+msgstr ""
+
+msgid "Back to Top page"
+msgstr ""
+
+msgid "Waiting for approval."
 msgstr ""

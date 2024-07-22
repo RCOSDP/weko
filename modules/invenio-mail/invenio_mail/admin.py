@@ -2,15 +2,16 @@
 
 """Admin model views for Mail sets."""
 
+import json
 import sys
 
-from flask import abort, current_app, flash, request
+from flask import abort, current_app, flash, jsonify, request
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from flask_mail import Message
 from werkzeug.local import LocalProxy
 
-from invenio_mail.models import MailConfig
+from invenio_mail.models import MailConfig, MailTemplates
 
 from . import config
 
@@ -35,7 +36,7 @@ def _set_flask_mail_cfg(cfg):
     current_app.extensions['mail'].use_ssl = cfg.get('mail_use_ssl', '')
     current_app.extensions['mail'].default_sender = cfg.get('mail_default_sender', '')
     current_app.extensions['mail'].debug = 0
-    current_app.extensions['mail'].local_hostname = cfg['mail_local_hostname']
+    current_app.extensions['mail'].local_hostname = cfg.get('mail_local_hostname', '')
 
 
 class MailSettingView(BaseView):
@@ -138,6 +139,69 @@ class MailSettingView(BaseView):
             return False
 
 
+class MailTemplatesView(BaseView):
+    @expose('/', methods=['GET'])
+    def index(self):
+        """Mail template top page."""
+        mts = MailTemplates.get_templates()
+        return self.render(config.INVENIO_MAIL_TEMPLATES_TEMPLATE,
+                           data=json.dumps({"mail_templates": mts}))
+
+    @expose('help', methods=['GET'])
+    def help(self):
+        """Get help of mail template."""
+        return self.render(config.INVENIO_MAIL_HELP_TEMPLATE,
+                           data=config.INVENIO_MAIL_VARIABLE_HELP)
+
+    @expose('/save', methods=['POST'])
+    def save_mail_template(self):
+        """Save mail template.
+
+        :return:
+        """
+
+        mail_templates = request.get_json()['mail_templates']
+        status = True
+        for m in mail_templates:
+            status = status and MailTemplates.save_and_update(m)
+        if status:
+            result = {
+                "status": status,
+                "msg": _("Mail template was successfully updated."),
+                "data": MailTemplates.get_templates()
+            }
+        else:
+            result = {
+                "status": status,
+                "msg": _("Mail template update failed."),
+                "data": MailTemplates.get_templates()
+            }
+        return jsonify(result), 200
+
+    @expose('/delete', methods=['DELETE'])
+    def delete_mail_template(self):
+        """Delete mail template.
+
+        :return:
+        """
+
+        template_id = request.get_json()['template_id']
+        status = MailTemplates.delete_by_id(template_id)
+        if status:
+            result = {
+                "status": status,
+                "msg": _("Mail template was successfully deleted."),
+                "data": MailTemplates.get_templates()
+            }
+        else:
+            result = {
+                "status": status,
+                "msg": _("Mail template delete failed."),
+                "data": MailTemplates.get_templates()
+            }
+        return jsonify(result), 200
+
+
 mail_adminview = {
     'view_class': MailSettingView,
     'kwargs': {
@@ -147,7 +211,16 @@ mail_adminview = {
     }
 }
 
+mail_templates_adminview = {
+    'view_class': MailTemplatesView,
+    'kwargs': {
+        'category': _('Setting'),
+        'name': _('Mail Templates'),
+        'endpoint': 'mailtemplates'
+    }
+}
 
 __all__ = (
     'mail_adminview',
+    'mail_templates_adminview'
 )

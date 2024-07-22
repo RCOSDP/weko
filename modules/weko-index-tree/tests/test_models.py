@@ -13,18 +13,18 @@ from weko_index_tree.models import Index, IndexStyle
 def test_Index(app, db, test_indices):
     # get_all
     res = Index.get_all()
-    assert len(res) == 6
+    assert len(res) == 7
 
     # get_index_by_id
     res = Index.get_index_by_id(1)
     assert res.id == 1
-    assert res.index_name == "Test index 1_ja"
+    assert res.index_name == "テストインデックス 1"
 
     # __str__
     with app.test_request_context(headers=[("Accept-Language", "en")]):
-        assert str(res) == "Index <id=1, name=Test index 1_en>"
+        assert str(res) == "Index <id=1, name=Test index 1>"
     with app.test_request_context(headers=[("Accept-Language", "ja")]):
-        assert str(res) == "Index <id=1, name=Test index 1_ja>"
+        assert str(res) == "Index <id=1, name=テストインデックス 1>"
 
 
 # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_models.py::test_Index_get_all -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp

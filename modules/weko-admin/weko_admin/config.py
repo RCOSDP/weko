@@ -1144,6 +1144,7 @@ WEKO_ADMIN_REPOSITORY_ACCESS_LIST = [
     'sitelicensesettings',
     'itemtypesregister',
     'itemtypesmapping',
+    'itemtypesrocratemapping',
     'itemtypes/mapping',
     'items/bulk-export',
     'feedbackmail',
@@ -1154,8 +1155,9 @@ WEKO_ADMIN_REPOSITORY_ACCESS_LIST = [
     'site_info',
     'location',
     'facet-search',
-    'community',
-    # 'restricted_access'
+    'restricted_access',
+    'mailtemplates',
+    'community'
 ] + WEKO_ADMIN_COMMUNITY_ACCESS_LIST
 """Classes Repository Administrator can access."""
 
@@ -1230,6 +1232,18 @@ WEKO_INDEX_TREE_STYLE_OPTIONS = {
     'widths': ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11']
 }
 
+WEKO_ADMIN_RESTRICTED_ACCESS_ERROR_MESSAGE = {
+    "key" : "",
+    "content" : {
+        "ja" : {
+            "content" : "このデータは利用できません（権限がないため）。"
+        },
+        "en":{
+            "content" : "This data is not available for this user"
+        }
+    }
+}
+
 WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS = {
     "secret_URL_file_download": {
         "secret_expiration_date": 30,
@@ -1247,11 +1261,22 @@ WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS = {
         "expiration_date_access": 500,
         "expiration_date_access_unlimited_chk": False,
     },
-    "terms_and_conditions": []
+    "terms_and_conditions": [],
+    "error_msg": WEKO_ADMIN_RESTRICTED_ACCESS_ERROR_MESSAGE,
+    "edit_mail_templates_enable": False,
+    "item_application": {
+        "application_item_types": [],
+        "item_application_enable": False,
+    },
+    "password_enable": False,
+    "preview_workflow_approval_enable": False,
+    "display_request_form": False,
 }
 """Default restricted access settings."""
 
 WEKO_ADMIN_RESTRICTED_ACCESS_MAX_INTEGER = 9999999
+"""max value of expiration_date and download_limit. 
+    Any more than this and the datetime may overflow. """
 
 WEKO_ADMIN_ITEMS_PER_PAGE_USAGE_REPORT_REMINDER = 25
 """Default number of usage report activities results that display in one page."""

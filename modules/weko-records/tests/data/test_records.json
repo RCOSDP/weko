@@ -31,5 +31,76 @@
       "stars": 5,
       "title": ["Unknown film"],
       "item_title": "Unknown film"
+    },
+    {
+      "recid": "5",
+      "year": 1900,
+      "stars": 5,
+      "title": ["weko_shared_ids_1"],
+      "item_title": "weko_shared_ids_1",
+      "system_file":"exists",
+      "item_1": {
+        "attribute_name": "item_1",
+        "attribute_value": "Item"
+      },
+      "owner": 1,
+      "shared_user_ids": []
+    },
+    {
+      "recid": "6",
+      "year": 1900,
+      "stars": 6,
+      "title": ["weko_shared_ids_2"],
+      "item_title": "weko_shared_ids_2",
+      "system_file":"exists",
+      "item_1": {
+        "attribute_name": "item_1",
+        "attribute_value": "Item"
+      },
+      "owner": 1,
+      "weko_creator_id": 1,
+      "shared_user_ids": [1,2]
+    },
+    {
+      "recid": "7",
+      "year": 1900,
+      "stars": 7,
+      "title": ["weko_shared_ids_3"],
+      "item_title": "weko_shared_ids_3",
+      "system_file":"exists",
+      "item_1": {
+        "attribute_name": "item_1",
+        "attribute_value": "Item"
+      },
+      "shared_user_ids": [1,2]
+    },
+    {
+      "recid": "8",
+      "year": 1900,
+      "stars": 8,
+      "title": ["weko_shared_ids_4"],
+      "item_title": "weko_shared_ids_4",
+      "system_file":"exists",
+      "item_1": {
+        "attribute_name": "item_1",
+        "attribute_value": "Item"
+      },
+      "owner": 1,
+      "shared_user_ids": [1,2]
+    },
+    {
+      "recid": "9",
+      "year": 1900,
+      "stars": 5,
+      "title": ["weko_shared_ids_1"],
+      "item_title": "weko_shared_ids_1",
+      "system_file":"exists",
+      "pubdate": {
+        "attribute_name": "PubDate",
+        "attribute_value": "2023-12-31"
+      },
+      "owner": 1,
+      "weko_creator_id": 1,
+      "shared_user_ids": []
     }
 ]

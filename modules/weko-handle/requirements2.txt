@@ -19,6 +19,7 @@ blinker==1.4
 boto3==1.7.84
 botocore==1.10.84
 cachelib==0.1
+captcha==0.4
 cachetools==4.2.4
 cchardet==2.1.1
 celery==4.4.4
@@ -177,7 +178,6 @@ passlib==1.7.1
 pbr==5.11.1
 pexpect==4.3.0
 pickleshare==0.7.4
-Pillow==5.4.1
 platformdirs==2.4.0
 pluggy==0.13.1
 ply==3.11
@@ -196,7 +196,7 @@ pyPEG2==2.15.2
 pytest==4.2.0
 pytest-mock
 pytest-invenio
-python-dateutil==2.6.1
+python-dateutil==2.8.2
 python-editor==1.0.3
 python-geoip==1.2
 pytz==2017.3
@@ -204,10 +204,12 @@ pyzmq==17.0.0
 redis==2.10.6
 requests==2.18.4
 requests-oauthlib==1.1.0
+rocrate==0.6.0
 resync==1.0.9
 s3fs==0.1.6
 s3transfer==0.1.13
 selenium
+Pillow==8.1.2
 Sickle==0.6.4
 simplegeneric==0.8.1
 simplejson==3.12.0

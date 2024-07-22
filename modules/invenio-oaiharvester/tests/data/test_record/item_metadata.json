@@ -15,7 +15,7 @@
         "username": "",
         "displayname": ""
       },
-      "shared_user_id": -1,
+      "shared_user_ids": [],
       "item_1551264308487": [
         { "subitem_1551255647225": "test_title1", "subitem_1551255648112": "ja" }
       ],
