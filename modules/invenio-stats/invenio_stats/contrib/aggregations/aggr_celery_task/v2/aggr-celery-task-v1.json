@@ -1,5 +1,5 @@
 {
-  "template": "stats-item-create-*",
+  "template": "stats-celery-task-*",
   "settings": {
     "index.mapper.dynamic": false,
     "index": {
@@ -7,7 +7,20 @@
     }
   },
   "mappings": {
-    "item-create-day-aggregation": {
+    "_default_": {
+      "dynamic_templates": [
+        {
+          "date_fields": {
+            "match_mapping_type": "date",
+            "mapping": {
+              "type": "date",
+              "format": "date_optional_time"
+            }
+          }
+        }
+      ]
+    },
+    "celery-task-day-aggregation": {
       "_all": {
         "enabled": false
       },
@@ -19,10 +32,6 @@
           "type": "date",
           "format": "date_optional_time"
         },
-        "unique_id": {
-          "type": "string",
-          "index": "not_analyzed"
-        },
         "count": {
           "type": "integer",
           "index": "not_analyzed"
@@ -31,37 +40,53 @@
           "type": "integer",
           "index": "not_analyzed"
         },
+        "volume": {
+          "type": "double",
+          "index": "not_analyzed"
+        },
+        "unique_id": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
         "country": {
           "type": "string",
           "index": "not_analyzed"
         },
-        "cur_user_id": {
-          "type": "integer",
-          "index": "not_analyzed"
-        },
-        "hostname": {
+        "task_id": {
           "type": "string",
           "index": "not_analyzed"
         },
-        "remote_addr": {
+        "task_name": {
           "type": "string",
           "index": "not_analyzed"
         },
-        "pid_value": {
+        "task_state": {
           "type": "string",
           "index": "not_analyzed"
         },
-        "record_name": {
+        "start_time": {
           "type": "string",
           "index": "not_analyzed"
         },
-        "collection": {
+        "end_time": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "total_records": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "repository_name": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "execution_time": {
           "type": "string",
           "index": "not_analyzed"
         }
       }
     },
-    "item-create-agg-bookmark": {
+    "celery-task-agg-bookmark": {
       "date_detection": false,
       "properties": {
         "date": {
@@ -72,6 +97,6 @@
     }
   },
   "aliases": {
-    "stats-item-create": {}
+    "stats-celery-task": {}
   }
 }

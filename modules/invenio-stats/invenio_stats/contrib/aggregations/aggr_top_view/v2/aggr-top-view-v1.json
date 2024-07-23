@@ -1,5 +1,5 @@
 {
-  "template": "stats-item-create-*",
+  "template": "stats-top-view-*",
   "settings": {
     "index.mapper.dynamic": false,
     "index": {
@@ -7,7 +7,7 @@
     }
   },
   "mappings": {
-    "item-create-day-aggregation": {
+    "top-view-day-aggregation": {
       "_all": {
         "enabled": false
       },
@@ -35,10 +35,6 @@
           "type": "string",
           "index": "not_analyzed"
         },
-        "cur_user_id": {
-          "type": "integer",
-          "index": "not_analyzed"
-        },
         "hostname": {
           "type": "string",
           "index": "not_analyzed"
@@ -47,21 +43,21 @@
           "type": "string",
           "index": "not_analyzed"
         },
-        "pid_value": {
-          "type": "string",
-          "index": "not_analyzed"
-        },
-        "record_name": {
-          "type": "string",
-          "index": "not_analyzed"
-        },
         "collection": {
           "type": "string",
+          "index": "not_analyzed"
+        },
+        "site_license_name": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "site_license_flag": {
+          "type": "boolean",
           "index": "not_analyzed"
         }
       }
     },
-    "item-create-agg-bookmark": {
+    "top-view-agg-bookmark": {
       "date_detection": false,
       "properties": {
         "date": {
@@ -72,6 +68,6 @@
     }
   },
   "aliases": {
-    "stats-item-create": {}
+    "stats-top-view": {}
   }
 }
