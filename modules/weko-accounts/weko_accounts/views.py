@@ -110,6 +110,7 @@ def shib_auto_login():
     try:
         is_auto_bind = False
         shib_session_id = request.args.get('SHIB_ATTR_SESSION_ID', None)
+        session['next'] = request.args.get('next', '/')
 
         if not shib_session_id:
             shib_session_id = session['shib_session_id']
@@ -223,6 +224,7 @@ def shib_login():
     """
     try:
         shib_session_id = request.args.get('SHIB_ATTR_SESSION_ID', None)
+        session['next'] = request.args.get('next', '/')
 
         if not shib_session_id:
             current_app.logger.error(_("Missing SHIB_ATTR_SESSION_ID!"))
@@ -276,7 +278,7 @@ def shib_sp_login():
     _shib_enable = current_app.config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED']
     _shib_username_config = current_app.config[
         'WEKO_ACCOUNTS_SHIB_ALLOW_USERNAME_INST_EPPN']
-    session['next'] = request.args.get('next', '/')
+    next = request.args.get('next', '/')
     try:
         shib_session_id = request.form.get('SHIB_ATTR_SESSION_ID', None)
         if not shib_session_id and not _shib_enable:
@@ -323,6 +325,7 @@ def shib_sp_login():
 
         query_string = {
             'SHIB_ATTR_SESSION_ID': shib_session_id,
+            'next': next,
             '_method': 'GET'
         }
         return url_for(next_url, **query_string)
