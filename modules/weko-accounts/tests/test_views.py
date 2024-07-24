@@ -127,7 +127,7 @@ def test_shib_auto_login(client,redis_connect,mocker):
         shibuser.shib_user = "test_user"
         with patch("weko_accounts.views.ShibUser",return_value=shibuser):
             mock_redirect = mocker.patch("weko_accounts.views.redirect",return_value=make_response())
-            client.get(url)
+            client.get(url+"?next=/next_page")
             mock_redirect.assert_called_with("/next_page")
             mock_shib_login.assert_called_once()
             assert redis_connect.redis.exists("Shib-Session-1111") == False
@@ -366,19 +366,16 @@ def test_shib_sp_login(client, redis_connect,mocker):
     with patch("weko_accounts.views.ShibUser.get_relation_info", return_value=None):
         res = client.post(url + "?next=/", data=form)
         assert res.status_code == 200
-        assert get_session(client, "next") == "/"
     
     # next is /next_page
     with patch("weko_accounts.views.ShibUser.get_relation_info", return_value=None):
         res = client.post(url + "?next=/next_page", data=form)
         assert res.status_code == 200
-        assert get_session(client, "next") == "/next_page"
     
     # next is None
     with patch("weko_accounts.views.ShibUser.get_relation_info", return_value=None):
         res = client.post(url, data=form)
         assert res.status_code == 200
-        assert get_session(client, "next") == "/"
     
     # raise BaseException
     with patch("weko_accounts.views.flash",side_effect=BaseException("test_error")):

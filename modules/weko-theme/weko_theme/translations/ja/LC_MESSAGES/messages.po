@@ -237,6 +237,10 @@ msgstr "ログイン"
 msgid "Sign up"
 msgstr "サインアップ"
 
+#: weko_theme/templates/weko_theme/header_login.html:35
+msgid "Sign up for Shibboleth"
+msgstr "新規登録"
+
 #: weko_theme/templates/weko_theme/header_login.html:45
 #: weko_theme/templates/weko_theme/header_login.html:49
 msgid "Log out"
