@@ -237,6 +237,10 @@ msgstr ""
 msgid "Sign up"
 msgstr ""
 
+#: weko_theme/templates/weko_theme/header_login.html:35
+msgid "Sign up for Shibboleth"
+msgstr "Sign up"
+
 #: weko_theme/templates/weko_theme/header_login.html:45
 #: weko_theme/templates/weko_theme/header_login.html:49
 msgid "Log out"
