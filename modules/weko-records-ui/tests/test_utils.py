@@ -547,6 +547,7 @@ def test_replace_license_free_for_opensearch(app):
 #     def set_message_for_file(p_file):
 #     def get_data_by_key_array_json(key, array_json, get_key):
 #     def is_price_highlight(p_file):
+#     def is_display_purchased(p_file):
 #     def add_billing_info(pfile,min_price):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_get_file_info_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 @pytest.mark.parametrize(
@@ -1173,6 +1174,14 @@ def test_get_file_info_list(app,records,users,id,result,db_item_billing,itemtype
             record_f = set_file_data("record_f.json")
             is_display_file_preview, files = get_file_info_list(record_f)
             assert files[0]['min_price'] == '30'
+
+            # display purhased
+            with patch("weko_records_ui.utils.check_charge", return_value='already'):
+                record_f = set_file_data("record_f.json")
+                is_display_file_preview, files = get_file_info_list(record_f)
+                assert files[0]['priceinfo'][0].get("purchased","") == ""
+                assert files[0]['priceinfo'][1].get("purchased","") == '[Purchased]'
+                assert files[0]['priceinfo'][2].get("purchased","") == ""
         
     with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
         # user_flag is True, sitelicense_flag is False, is_open_access is False, billing file's price is equal to min_price
