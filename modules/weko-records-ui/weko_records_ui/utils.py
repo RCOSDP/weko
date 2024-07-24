@@ -820,6 +820,17 @@ def get_file_info_list(record):
                     priceinfo['has_role'] and min_price == priceinfo['price']:
                     is_highlight = True
                 priceinfo['is_highlight'] = is_highlight
+    
+    def is_display_purchased(p_file):
+        """"Remove purchased from roles that do not have min_price
+        Args:
+            p_file (dict): all metadata of a record.
+        """
+        min_price = p_file['min_price']
+        for priceinfo in p_file["priceinfo"]:
+            if priceinfo.get("purchased") and priceinfo["price"] != min_price:
+                del priceinfo["purchased"]
+
 
     def add_billing_info(p_file,min_price):
         '''ファイル情報に課金ファイルに関する情報を追加する'''
@@ -928,6 +939,7 @@ def get_file_info_list(record):
                         min_price = None
                         add_billing_info(f,min_price)
                         is_price_highlight(f)
+                        is_display_purchased(f)
                     files.append(f)
                 file_order += 1
     return is_display_file_preview, files
