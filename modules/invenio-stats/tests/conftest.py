@@ -352,6 +352,87 @@ def role_users(app, db):
 
 
 @pytest.fixture()
+def queries_config(app, custom_permission_factory):
+    """Queries config for the tests."""
+    stats_queries = deepcopy(QUERIES_CONFIG)
+    stats_queries.update(
+        {
+            "test-query": {
+                "cls": CustomQuery,
+                "params": {
+                    "index": "stats-file-download",
+                    "copy_fields": {
+                        "bucket_id": "bucket_id",
+                    },
+                    "required_filters": {
+                        "bucket_id": "bucket_id",
+                    },
+                },
+                "permission_factory": custom_permission_factory,
+            },
+            "test-query2": {
+                "cls": CustomQuery,
+                "params": {
+                    "index": "stats-file-download",
+                    "copy_fields": {
+                        "bucket_id": "bucket_id",
+                    },
+                    "required_filters": {
+                        "bucket_id": "bucket_id",
+                    },
+                },
+                "permission_factory": custom_permission_factory,
+            },
+        }
+    )
+
+    # store the original config value
+    original_value = app.config.get("STATS_QUERIES")
+    app.config["STATS_QUERIES"] = stats_queries
+    yield stats_queries
+    # set the original value back
+    app.config["STATS_QUERIES"] = original_value
+
+
+@pytest.fixture(scope="module")
+def app_config(app_config, db_uri, events_config, aggregations_config):
+    """Application configuration."""
+    app_config.update(
+        {
+            "SQLALCHEMY_DATABASE_URI": db_uri,
+            "STATS_MQ_EXCHANGE": Exchange(
+                "test_events",
+                type="direct",
+                delivery_mode="transient",  # in-memory queue
+                durable=True,
+            ),
+            "STATS_QUERIES": {},
+            "STATS_EVENTS": events_config,
+            "STATS_AGGREGATIONS": aggregations_config,
+        }
+    )
+    return app_config
+
+
+@pytest.fixture(scope="module")
+def create_app(instance_path, entry_points):
+    """Application factory fixture."""
+    return _create_api
+
+
+@pytest.fixture(scope="function")
+def search_clear(search_clear):
+    """Clear search indices after test finishes (function scope)."""
+    current_search_client.indices.delete(index="*")
+    current_search_client.indices.delete_template("*")
+    list(current_search.create())
+    list(current_search.put_templates())
+    yield search_clear
+    current_search_client.indices.delete(index="*")
+    current_search_client.indices.delete_template("*")
+
+
+@pytest.fixture()
 def db():
     """Recreate db at each test that requires it."""
     if not database_exists(str(db_.engine.url)):
