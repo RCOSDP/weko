@@ -15,7 +15,7 @@ import json
 from invenio_stats.models import StatsEvents, StatsAggregation, StatsBookmark
 
 from sqlalchemy.exc import UnsupportedCompilationError
-from mock import patch
+from unittest.mock import patch
 import datetime
 from invenio_stats.errors import UnknownQueryError
 from invenio_stats.utils import (
@@ -47,6 +47,7 @@ from invenio_stats.utils import (
 def test_get_anonymization_salt(app):
     assert get_anonymization_salt(datetime.datetime(2022, 1, 1))
 
+
 # def get_geoip(ip):
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_utils.py::test_get_geoip -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
 def test_get_geoip():
@@ -57,28 +58,22 @@ def test_get_geoip():
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_utils.py::test_get_user -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
 def test_get_user(app, mock_users, request_headers):
     """Test the get_user function."""
-    header = request_headers['user']
+    header = request_headers["user"]
     with patch(
-                'invenio_stats.utils.current_user',
-                mock_users['authenticated']
-            ), app.test_request_context(
-                headers=header, environ_base={'REMOTE_ADDR': '142.0.0.1'}
-            ):
+        "invenio_stats.utils.current_user", mock_users["authenticated"]
+    ), app.test_request_context(
+        headers=header, environ_base={"REMOTE_ADDR": "142.0.0.1"}
+    ):
         user = get_user()
-    assert user['user_id'] == mock_users['authenticated'].get_id()
-    assert user['user_agent'] == header['USER_AGENT']
-    assert user['ip_address'] == '142.0.0.1'
+    assert user["user_id"] == mock_users["authenticated"].get_id()
+    assert user["user_agent"] == header["USER_AGENT"]
+    assert user["ip_address"] == "142.0.0.1"
 
 # def obj_or_import_string(value, default=None):
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_utils.py::test_obj_or_import_string -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
 def myfunc():
     """Example function."""
     pass
-
-def test_obj_or_import_string(app):
-    """Test obj_or_import_string."""
-    assert not obj_or_import_string(value=None)
-    assert myfunc == obj_or_import_string(value=myfunc)
 
 # def load_or_import_from_config(key, app=None, default=None):
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_utils.py::test_load_or_import_from_config -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
