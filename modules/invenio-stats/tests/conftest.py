@@ -137,84 +137,83 @@ def aggregations_config():
 
 
 @pytest.fixture()
-def queries_config(app, custom_permission_factory):
-    """Queries config for the tests."""
-    stats_queries = deepcopy(QUERIES_CONFIG)
-    stats_queries.update(
-        {
-            "test-query": {
-                "cls": CustomQuery,
-                "params": {
-                    "index": "stats-file-download",
-                    "copy_fields": {
-                        "bucket_id": "bucket_id",
-                    },
-                    "required_filters": {
-                        "bucket_id": "bucket_id",
-                    },
-                },
-                "permission_factory": custom_permission_factory,
-            },
-            "test-query2": {
-                "cls": CustomQuery,
-                "params": {
-                    "index": "stats-file-download",
-                    "copy_fields": {
-                        "bucket_id": "bucket_id",
-                    },
-                    "required_filters": {
-                        "bucket_id": "bucket_id",
-                    },
-                },
-                "permission_factory": custom_permission_factory,
-            },
+def base_app(instance_path, mock_gethostbyaddr):
+    """Flask application fixture without InvenioStats."""
+    app_ = Flask('testapp', instance_path=instance_path)
+    stats_events = {
+        'file-download': deepcopy(STATS_EVENTS['file-download']),
+        'record-view': {
+            'signal': 'invenio_records_ui.signals.record_viewed',
+            'event_builders': ['invenio_stats.contrib.event_builders'
+                               '.record_view_event_builder']
         }
-    )
+    }
+    stats_events.update({'event_{}'.format(idx): {} for idx in range(5)})
+    app_.config.update(dict(
+        CELERY_ALWAYS_EAGER=True,
+        CELERY_TASK_ALWAYS_EAGER=True,
+        CELERY_CACHE_BACKEND='memory',
+        CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
+        CELERY_TASK_EAGER_PROPAGATES=True,
+        CELERY_RESULT_BACKEND='cache',
+        CACHE_REDIS_URL="redis://redis:6379/0",
+        CACHE_REDIS_DB=0,
+        CACHE_REDIS_HOST="redis",
+        QUEUES_BROKER_URL="amqp://guest:guest@rabbitmq:5672//",
+        # SQLALCHEMY_DATABASE_URI=os.environ.get(
+        #     'SQLALCHEMY_DATABASE_URI', 'sqlite://'),
+        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
+                                           'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
+        SEARCH_ELASTIC_HOSTS=os.environ.get(
+            'SEARCH_ELASTIC_HOSTS', 'elasticsearch'),
+        SQLALCHEMY_TRACK_MODIFICATIONS=True,
+        TESTING=True,
+        OAUTH2SERVER_CLIENT_ID_SALT_LEN=64,
+        OAUTH2SERVER_CLIENT_SECRET_SALT_LEN=60,
+        OAUTH2SERVER_TOKEN_PERSONAL_SALT_LEN=60,
+        OAUTH2_CACHE_TYPE="simple",
+        SEARCH_INDEX_PREFIX='test-',
+        STATS_MQ_EXCHANGE=Exchange(
+            'test_events',
+            type='direct',
+            delivery_mode='transient',  # in-memory queue
+            durable=True,
+        ),
+        SECRET_KEY='asecretkey',
+        SERVER_NAME='localhost',
+        PIDRELATIONS_RELATION_TYPES=PIDRELATIONS_RELATION_TYPES,
+        STATS_QUERIES=STATS_QUERIES,
+        STATS_EVENTS=stats_events,
+        STATS_AGGREGATIONS=STATS_AGGREGATIONS,
+        INDEXER_MQ_QUEUE = Queue("indexer", exchange=Exchange("indexer", type="direct"), routing_key="indexer",queue_arguments={"x-queue-type":"quorum"}),
+        INDEXER_DEFAULT_INDEX="test-events-stats-file-download-0001"
+    ))
+    FlaskCeleryExt(app_)
+    InvenioAccess(app_)
+    InvenioAccounts(app_)
+    InvenioAccountsREST(app_)
+    InvenioDB(app_)
+    InvenioRecords(app_)
+    InvenioFilesREST(app_)
+    InvenioPIDStore(app_)
+    InvenioCache(app_)
+    InvenioQueues(app_)
+    InvenioIndexer(app_)
+    InvenioOAuth2Server(app_)
+    InvenioOAuth2ServerREST(app_)
+    InvenioMARC21(app_)
+    InvenioSearch(app_, entry_point_group=None, client=Elasticsearch("http://elasticsearch:9200"))
 
-    # store the original config value
-    original_value = app.config.get("STATS_QUERIES")
-    app.config["STATS_QUERIES"] = stats_queries
-    yield stats_queries
-    # set the original value back
-    app.config["STATS_QUERIES"] = original_value
+    current_stats = LocalProxy(lambda: app_.extensions["invenio-stats"])
+    return app_
 
 
-@pytest.fixture(scope="module")
-def app_config(app_config, db_uri, events_config, aggregations_config):
-    """Application configuration."""
-    app_config.update(
-        {
-            "SQLALCHEMY_DATABASE_URI": db_uri,
-            "STATS_MQ_EXCHANGE": Exchange(
-                "test_events",
-                type="direct",
-                delivery_mode="transient",  # in-memory queue
-                durable=True,
-            ),
-            "STATS_QUERIES": {},
-            "STATS_EVENTS": events_config,
-            "STATS_AGGREGATIONS": aggregations_config,
-        }
-    )
-    return app_config
-
-
-@pytest.fixture(scope="module")
-def create_app(instance_path, entry_points):
-    """Application factory fixture."""
-    return _create_api
-
-
-@pytest.fixture(scope="function")
-def search_clear(search_clear):
-    """Clear search indices after test finishes (function scope)."""
-    current_search_client.indices.delete(index="*")
-    current_search_client.indices.delete_template("*")
-    list(current_search.create())
-    list(current_search.put_templates())
-    yield search_clear
-    current_search_client.indices.delete(index="*")
-    current_search_client.indices.delete_template("*")
+@pytest.yield_fixture()
+def app(base_app):
+    """Flask application fixture with InvenioStats."""
+    InvenioStats(base_app)
+    with base_app.app_context():
+        yield base_app
 
 
 @pytest.yield_fixture()
@@ -857,4 +856,25 @@ class CustomQuery:
 
     def run(self, *args, **kwargs):
         """Sample response."""
-        return {"bucket_id": "test_bucket", "value": 100}
+        return dict(bucket_id='test_bucket',
+                    value=100)
+
+
+@pytest.fixture()
+def esindex(app):
+    from invenio_search import current_search_client as client
+    index_name = app.config["INDEXER_DEFAULT_INDEX"]
+    alias_name = "test-events-stats-file-download"
+
+    with open("tests/data/mappings/stats-file-download.json","r") as f:
+        mapping = json.load(f)
+
+    with app.test_request_context():
+        client.indices.create(index=index_name, body=mapping, ignore=[400])
+        client.indices.put_alias(index=index_name, name=alias_name)
+
+    yield client
+
+    with app.test_request_context():
+        client.indices.delete_alias(index=index_name, name=alias_name)
+        client.indices.delete(index=index_name, ignore=[400, 404])
