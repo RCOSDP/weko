@@ -328,11 +328,6 @@ $(function() {
     handleConfirmButton();
     handleChargeBillingFile();
 });
-if ($('#highlight').val() == 'True') {
-    priceDisplay = document.getElementById('price_display');
-    priceDisplay.style.backgroundColor ='#ADD8E6';
-    priceDisplay.style.fontWeight = 'bolder'; 
-}
 
 function handleDownloadBillingFile(isVersionTable) {
     if (isVersionTable === undefined) {

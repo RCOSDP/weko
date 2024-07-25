@@ -367,8 +367,7 @@
                               {%- if loop.index != 1 -%}
                                 {{', '}}
                               {%- endif -%}
-                              <input type="hidden" id="highlight" value='{{priceinfo.is_highlight}}'>
-                              <span class="price-default" id="price_display">
+                              <span class="price-default {% if priceinfo.is_highlight %} price-highlight {% endif %}">
                                 {%-if priceinfo.purchased-%}
                                   {{priceinfo.billingrole}}：{{billing_settings['currency_unit']|safe}}{{price}}{{ priceinfo.purchased }}
                                 {%-else-%}
