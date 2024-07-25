@@ -73,7 +73,7 @@ from .permissions import check_content_clickable, check_created_id, \
 from .utils import get_billing_file_download_permission, \
     get_google_detaset_meta, get_google_scholar_meta, get_groups_price, \
     get_min_price_billing_file_download, get_record_permalink, hide_by_email, \
-    is_show_email_of_creator
+    is_show_email_of_creator,hide_by_itemtype
 from .utils import restore as restore_imp
 from .utils import soft_delete as soft_delete_imp
 
@@ -610,6 +610,11 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         # list_hidden = get_ignore_item(record['item_type_id'])
         # record = hide_by_itemtype(record, list_hidden)
         record = hide_by_email(record)
+    
+    # Remove hide item
+    from weko_items_ui.utils import get_ignore_item
+    list_hidden = get_ignore_item(record['item_type_id'])
+    record = hide_by_itemtype(record, list_hidden)
 
     # Get Facet search setting.
     display_facet_search = get_search_setting().get("display_control", {}).get(
