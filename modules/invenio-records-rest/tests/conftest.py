@@ -28,6 +28,7 @@ from flask import Flask, url_for, Response
 from flask_login import LoginManager, UserMixin
 from tests.helpers import create_record
 from invenio_access import InvenioAccess
+from invenio_accounts import InvenioAccounts
 from invenio_db import InvenioDB
 from invenio_db import db as db_
 from invenio_indexer import InvenioIndexer
@@ -41,6 +42,7 @@ from invenio_search import InvenioSearch, RecordsSearch, current_search, \
 from sqlalchemy_utils.functions import create_database, database_exists
 from weko_records import WekoRecords
 from weko_records.models import ItemTypeMapping
+from weko_records_ui import WekoRecordsUI
 
 from invenio_records_rest import InvenioRecordsREST, config
 from invenio_records_rest.facets import terms_filter
@@ -171,6 +173,7 @@ def app(request, search_class):
     instance_path = tempfile.mkdtemp()
     app = Flask('testapp', instance_path=instance_path)
     app.config.update(
+        SECRET_KEY="SECRET_KEY",
         ACCOUNTS_JWT_ENABLE=False,
         INDEXER_DEFAULT_DOC_TYPE='testrecord',
         INDEXER_DEFAULT_INDEX=search_class.Meta.index,
@@ -205,6 +208,8 @@ def app(request, search_class):
         SQLALCHEMY_DATABASE_URI='postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest',
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         TESTING=True,
+        WEKO_PERMISSION_SUPER_ROLE_USER = ['System Administrator','Repository Administrator'],
+        WEKO_PERMISSION_ROLE_COMMUNITY=["Community Administrator"],
         CACHE_TYPE="redis",
         ACCOUNTS_SESSION_REDIS_DB_NO=1,
         CACHE_REDIS_HOST=os.environ.get("INVENIO_REDIS_HOST"),
@@ -230,12 +235,14 @@ def app(request, search_class):
 
     app.url_map.converters['pid'] = PIDConverter
     InvenioAccess(app)
+    InvenioAccounts(app)
     InvenioDB(app)
     InvenioREST(app)
     InvenioRecords(app)
     InvenioIndexer(app)
     InvenioPIDStore(app)
     WekoRecords(app)
+    WekoRecordsUI(app)
     search = InvenioSearch(app, client=MockEs())
     search.register_mappings(search_class.Meta.index, 'mock_module.mappings')
     InvenioRecordsREST(app)
