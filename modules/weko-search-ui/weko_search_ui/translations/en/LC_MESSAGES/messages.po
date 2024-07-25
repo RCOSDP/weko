@@ -816,8 +816,8 @@ msgstr ""
 #~ msgid "Execute"
 #~ msgstr ""
 
-msgid "Start Time"
-msgstr ""
+msgid "Bulk Export Start Time"
+msgstr "Start Time"
 
 msgid "Finish Time"
 msgstr ""

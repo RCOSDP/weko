@@ -367,15 +367,13 @@
                               {%- if loop.index != 1 -%}
                                 {{', '}}
                               {%- endif -%}
-                              {%- if priceinfo.is_highlight -%}
-                                <span class="price-default" style="background-color: #ADD8E6"><b>
+                              <span class="price-default {% if priceinfo.is_highlight %} price-highlight {% endif %}">
+                                {%-if priceinfo.purchased-%}
                                   {{priceinfo.billingrole}}：{{billing_settings['currency_unit']|safe}}{{price}}{{ priceinfo.purchased }}
-                                </b></span>
-                              {%- else -%}
-                                <span class="price-default">
-                                  {{priceinfo.billingrole}}：{{billing_settings['currency_unit']|safe}}{{price}}{{ priceinfo.purchased }}
-                                </span>
-                              {%- endif -%}
+                                {%-else-%}
+                                  {{priceinfo.billingrole}}：{{billing_settings['currency_unit']|safe}}{{price}}
+                                {%-endif-%}
+                              </span>
                             {%- endfor -%}
                           {%- endif -%}
                         </td>
