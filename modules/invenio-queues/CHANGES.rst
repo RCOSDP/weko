@@ -1,6 +1,6 @@
 ..
     This file is part of Invenio.
-    Copyright (C) 2017-2020 CERN.
+    Copyright (C) 2017-2023 CERN.
 
     Invenio is free software; you can redistribute it and/or modify it
     under the terms of the MIT License; see LICENSE file for more details.
@@ -8,6 +8,11 @@
 
 Changes
 =======
+
+Version 1.0.1 (release 2024-01-15)
+----------------------------------
+
+- Fix consumer and producer connection closing
 
 Version 1.0.0a2 (release 2020-10-08)
 ------------------------------------
