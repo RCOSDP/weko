@@ -1,4 +1,5 @@
 Flask-Collect==1.2.2
+Flask-Collect-Invenio==1.4.0
 Flask-Assets>=0.12
 Flask-Admin>=1.5.0
 Flask-Menu>=0.6.0
