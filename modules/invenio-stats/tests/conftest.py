@@ -1179,3 +1179,86 @@ def indextree(app, db, role_users, redis_connect):
     for user in role_users:
         redis_connect.delete(key+"en_" + str(user["id"]) + "_0")
         redis_connect.delete(key+"ja_" + str(user["id"]) + "_0")
+
+@pytest.fixture()
+def index(app, db):
+    app.config['WEKO_INDEX_TREE_DEFAULT_DISPLAY_NUMBER'] = 5
+    from weko_index_tree.api import Indexes
+    for i in range(1, 5):
+        Indexes.create(0, {
+            "id": i,
+            "parent": 0,
+            "value": "index_{}".format(i)
+        })
+    
+    return Index.query.all()
+
+@pytest.fixture()
+def index_issn(app,db):
+    from weko_index_tree.api import Indexes
+    index_metadata1 = Index(
+        id = 1616224532673,
+        parent = 0,
+        updated = datetime.date(2022, 10, 1),
+        index_name = "利用報告",
+        index_name_english = "Data Report",
+        online_issn = "1234-987A",
+        position = 10,
+        biblio_flag = True
+    )
+    index_metadata2 = Index(
+        id = 1715825846999,
+        parent = 0,
+        updated = datetime.date(2022, 10, 1),
+        index_name = "Updated Index",
+        index_name_english = "Updated Index",
+        online_issn = "1234-567X",
+        position = 11,
+        biblio_flag = True
+    )
+    index_metadata3 = Index(
+        id = 1715825846862,
+        parent = 1714029010533,
+        updated = datetime.date(2022, 10, 1),
+        index_name = "New New Index",
+        index_name_english = "New New Index",
+        online_issn = "1234-567X",
+        position = 12,
+        biblio_flag = True
+    )
+    index_metadata4 = Index(
+        id = 1715825656540,
+        parent = 0,
+        updated = datetime.date(2022, 10, 1),
+        index_name = "No ISSN Index",
+        index_name_english = "No ISSN Index",
+        position = 13,
+        biblio_flag = False
+    )
+    index_metadata5 = Index(
+        id = 1715825656549,
+        parent = 0,
+        updated = datetime.date(2022, 10, 1),
+        index_name = "No biblio flag",
+        index_name_english = "No biblio flag",
+        position = 14,
+        online_issn = 909090,
+        biblio_flag = False
+    )
+    index_metadata6 = Index(
+        id = 1714029010533,
+        parent = 0,
+        updated = datetime.date(2024, 10, 1),
+        index_name = "New Index",
+        index_name_english = "New Index",
+        online_issn = "1234-567X",
+        position = 15,
+        biblio_flag = True
+    )
+
+    db.session.add(index_metadata1)
+    db.session.add(index_metadata2)
+    db.session.add(index_metadata3)
+    db.session.add(index_metadata4)
+    db.session.add(index_metadata5)
+    db.session.add(index_metadata6)

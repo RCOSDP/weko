@@ -33,6 +33,7 @@ from invenio_stats.utils import (
     QueryFileReportsHelper,
     QuerySearchReportHelper,
     QueryCommonReportsHelper,
+    QuerySitelicenseReportsHelper,
     QueryAccessCounterHelper,
     QueryRecordViewPerIndexReportHelper,
     QueryRecordViewReportHelper,
@@ -173,7 +174,7 @@ def test_is_valid_access(app):
 #     def get_file_per_using_report(cls, **kwargs):
 #     def get(cls, **kwargs):
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_utils.py::test_query_file_reports_helper -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
-def test_query_file_reports_helper(i18n_app, roles, mock_es_execute):
+def test_query_file_reports_helper(i18n_app, roles, mock_es_execute, index):
     # calc_per_group_counts
     res = QueryFileReportsHelper.calc_per_group_counts('test1, test1, test2', {}, 1)
     assert res=={'test1': 2, 'test2': 1}
@@ -216,21 +217,23 @@ def test_query_file_reports_helper(i18n_app, roles, mock_es_execute):
     }
     _data_list = []
     _all_group = set()
-    QueryFileReportsHelper.Calculation(_res, _data_list, all_groups=_all_group)
-    assert _data_list==[
+    _expect_data_list = [
         {'admin': 0, 'file_key': 'test1.pdf', 'group_counts': {'test1': 1, 'test2': 1}, 'index_list': 'index1', 'login': 0, 'no_login': 1, 'reg': 0, 'site_license': 1, 'total': 1},
         {'admin': 0, 'file_key': 'test2.pdf', 'group_counts': {'test2': 2, 'test3': 2}, 'index_list': 'index2', 'login': 2, 'no_login': 0, 'reg': 2, 'site_license': 0, 'total': 2},
-        {'admin': 3, 'file_key': 'test3.pdf', 'group_counts': {'test3': 3}, 'index_list': 'index3', 'login': 3, 'no_login': 0, 'reg': 0, 'site_license': 0, 'total': 3}]
+        {'admin': 3, 'file_key': 'test3.pdf', 'group_counts': {'test3': 3}, 'index_list': 'index3', 'login': 7, 'no_login': 0, 'reg': 0, 'site_license': 0, 'total': 7}
+    ]
+    QueryFileReportsHelper.Calculation(_res, _data_list, all_groups=_all_group)
+    assert _data_list==_expect_data_list
     assert _all_group=={'test1', 'test2', 'test3'}
 
     # Calculation(check billing file download stats)
     _data_list = []
     _all_group = set()
-    _res = {
+    _billing_res = {
         'buckets': [
             {
                 'file_key': 'test1.pdf',
-                'index_list': 'index1',
+                'index_list': 'index_1',
                 'count': 1,
                 'site_license_flag': 1,
                 'userrole': 'guest',
@@ -239,7 +242,7 @@ def test_query_file_reports_helper(i18n_app, roles, mock_es_execute):
             },
             {
                 'file_key': 'test2.pdf',
-                'index_list': 'index2',
+                'index_list': 'index_2',
                 'count': 2,
                 'site_license_flag': 0,
                 'userrole': 'Contributor',
@@ -248,7 +251,7 @@ def test_query_file_reports_helper(i18n_app, roles, mock_es_execute):
             },
             {
                 'file_key': 'test3.pdf',
-                'index_list': 'index3',
+                'index_list': 'index_3',
                 'count': 3,
                 'site_license_flag': 0,
                 'userrole': 'System Administrator',
@@ -257,7 +260,7 @@ def test_query_file_reports_helper(i18n_app, roles, mock_es_execute):
             },
             {
                 'file_key': 'test1.pdf',
-                'index_list': 'index1',
+                'index_list': 'index_1',
                 'count': 1,
                 'site_license_flag': 0,
                 'cur_user_id': '4',
@@ -265,16 +268,19 @@ def test_query_file_reports_helper(i18n_app, roles, mock_es_execute):
             }
         ]
     }
+    _expect_billing_data_list = [
+        {'admin': 1, 'file_key': 'test1.pdf', 'group_counts': {'test1': 1, 'test2': 1}, 'index_list': 'index_1', 'login': 1, 'no_login': 1, 'reg': 1, 'site_license': 1, 'guest': 1, 'System Administrator': 1, 'Repository Administrator': 0, 'Contributor': 0, 'Community Administrator': 0, 'total': 2},
+        {'admin': 0, 'file_key': 'test2.pdf', 'group_counts': {'test2': 2, 'test3': 2}, 'index_list': 'index_2', 'login': 2, 'no_login': 0, 'reg': 0, 'site_license': 0, 'guest': 0, 'System Administrator': 0, 'Repository Administrator': 0, 'Contributor': 2, 'Community Administrator': 0, 'total': 2},
+        {'admin': 3, 'file_key': 'test3.pdf', 'group_counts': {'test3': 3}, 'index_list': 'index_3', 'login': 3, 'no_login': 0, 'reg': 0, 'site_license': 0, 'guest': 0, 'System Administrator': 3, 'Repository Administrator': 0, 'Contributor': 0, 'Community Administrator': 0, 'total': 3}
+    ]
     with patch('flask_principal.Permission.can', MagicMock(return_value=True)):
-        with patch('elasticsearch_dsl.Search.execute', return_value=mock_es_execute('tests/data/execute_result1.json')):
-            QueryFileReportsHelper.Calculation(_res, _data_list, all_groups=_all_group, event='billing_file_download')
-            assert _data_list==[
-                {'admin': 1, 'file_key': 'test1.pdf', 'group_counts': {'test1': 1, 'test2': 1}, 'index_list': 'index1', 'login': 1, 'no_login': 1, 'reg': 1, 'site_license': 1, 'guest': 1, 'System Administrator': 1, 'Repository Administrator': 0, 'Contributor': 0, 'Community Administrator': 0, 'total': 2},
-                {'admin': 0, 'file_key': 'test2.pdf', 'group_counts': {'test2': 2, 'test3': 2}, 'index_list': 'index2', 'login': 2, 'no_login': 0, 'reg': 0, 'site_license': 0, 'guest': 0, 'System Administrator': 0, 'Repository Administrator': 0, 'Contributor': 2, 'Community Administrator': 0, 'total': 2},
-                {'admin': 3, 'file_key': 'test3.pdf', 'group_counts': {'test3': 3}, 'index_list': 'index3', 'login': 3, 'no_login': 0, 'reg': 0, 'site_license': 0, 'guest': 0, 'System Administrator': 3, 'Repository Administrator': 0, 'Contributor': 0, 'Community Administrator': 0, 'total': 3}]
+        execute_data = mock_es_execute('tests/data/execute_result1.json')
+        with patch('elasticsearch_dsl.Search.execute', return_value=execute_data):
+            QueryFileReportsHelper.Calculation(_billing_res, _data_list, all_groups=_all_group, event='billing_file_download')
+            assert _data_list==_expect_billing_data_list
             assert _all_group=={'test1', 'test2', 'test3'}
 
-    _res = {
+    _report_res = {
         'get-file-download-per-user-report': {
             'buckets': [
                 {
@@ -310,21 +316,61 @@ def test_query_file_reports_helper(i18n_app, roles, mock_es_execute):
         'get-file-preview-per-user-report': None},
         _data_list)
     assert _data_list=={} 
-    QueryFileReportsHelper.Calculation(_res, _data_list)
+    QueryFileReportsHelper.Calculation(_report_res, _data_list)
     assert _data_list=={
         1: {'cur_user_id': 1, 'total_download': 2, 'total_preview': 5},
         2: {'cur_user_id': 2, 'total_download': 3},
         3: {'cur_user_id': 3, 'total_download': 4},
         4: {'cur_user_id': 4, 'total_preview': 1}}
     
+    expect_all_groups = []
+    def mock_Calculation(res, data_list, all_groups=set(), event=None):
+        if event == 'billing_file_download':
+            expect_list = _expect_billing_data_list
+        else:
+            expect_list = _expect_data_list
+        nonlocal expect_all_groups
+        for data in expect_list:
+            data_list.append(data)
+        add_list = ['test1', 'test2', 'test3']
+        for al in add_list:
+            all_groups.add(al)
+        expect_all_groups = list(all_groups)
 
     # get_file_stats_report
-    res = QueryFileReportsHelper.get_file_stats_report(event='file_downlaod', year=2022, month=10)   
-    assert res=={'all': [], 'all_groups': [], 'date': '2022-10', 'open_access': []} 
-    res = QueryFileReportsHelper.get_file_stats_report(event='file_preview', year=2022, month=10)
-    assert res=={'all': [], 'all_groups': [], 'date': '2022-10', 'open_access': []} 
-    res = QueryFileReportsHelper.get_file_stats_report(event='billing_file_download', year=2022, month=10) 
-    assert res=={'all': [], 'all_groups': [], 'date': '2022-10', 'open_access': []} 
+    with patch("invenio_stats.utils.QueryFileReportsHelper.Calculation", side_effect=mock_Calculation):
+        with patch("invenio_stats.queries.ESTermsQuery.run", return_value=_res):
+            res = QueryFileReportsHelper.get_file_stats_report(event='file_download', year=2022, month=10) 
+            assert res=={
+                'all': _expect_data_list,
+                'all_groups': expect_all_groups,
+                'date': '2022-10',
+                'open_access': _expect_data_list
+            }
+        with patch("invenio_stats.queries.ESTermsQuery.run", return_value=_res):
+            res = QueryFileReportsHelper.get_file_stats_report(event='file_preview', year=2022, month=10)
+            assert res=={
+                'all': _expect_data_list,
+                'all_groups': expect_all_groups,
+                'date': '2022-10',
+                'open_access': _expect_data_list
+            }
+        with patch("invenio_stats.queries.ESTermsQuery.run", return_value=_billing_res):
+            res = QueryFileReportsHelper.get_file_stats_report(event='billing_file_download', year=2022, month=10) 
+            assert res=={
+                'all': _expect_billing_data_list,
+                'all_groups': expect_all_groups,
+                'date': '2022-10',
+                'open_access': _expect_billing_data_list
+            }
+        with patch("invenio_stats.queries.ESTermsQuery.run", return_value=_res):
+            res = QueryFileReportsHelper.get_file_stats_report(event='test_event', year=2022, month=10)
+            assert res=={
+                'all': [],
+                'all_groups': [],
+                'date': '2022-10',
+                'open_access': []
+            }
 
     # get_file_per_using_report
     res = QueryFileReportsHelper.get_file_per_using_report(year=2022, month=10)
@@ -513,6 +559,54 @@ def test_query_common_reports_helper_error(app):
     assert res=={'all': [], 'date': ''}
     res = QueryCommonReportsHelper.get(event='')
     assert res==[]
+
+# class QuerySitelicenseReportsHelper(object):
+#     def get_common_params(cls, **kwargs):
+#     def get(cls, **kwargs):
+#     def get_site_license_report(cls, **kwargs):
+#.tox/c1/bin/pytest --cov=invenio_stats tests/test_utils.py::test_querysitelicensereports_get -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
+def test_querysitelicensereports_get(app,db,es,index_issn):
+    from weko_index_tree.models import Index
+    res = QuerySitelicenseReportsHelper.get(event='')
+    assert res == []
+
+    date, params, datelist = QuerySitelicenseReportsHelper.get_common_params(start_date="2024-04-01", end_date="2024-05-31")
+    assert date == "2024-04-2024-05"
+    assert params ==  {'start_date': '2024-04-01', 'end_date': '2024-05-31T23:59:59', 'agg_size': 0, 'agg_sort': {'_term': 'desc'}, 'interval': 'month'}
+    assert datelist == ['2024-04', '2024-05']
+
+    date, params, datelist = QuerySitelicenseReportsHelper.get_common_params(start_date="2024-04-01", end_date="2024-04-30")
+    assert date == "2024-04"
+    assert params ==  {'start_date': '2024-04-01', 'end_date': '2024-04-30T23:59:59', 'agg_size': 0, 'agg_sort': {'_term': 'desc'}, 'interval': 'month'}
+    assert datelist == ['2024-04']
+
+    file_download = {"start_date":"2024-04-01T00:00:00","end_date":"2024-05-31T23:59:59","value":23,"buckets":[{"date":1714521600000,"site_license_name":"test","count":2,"index_id":""},{"date":1714521600000,"site_license_name":"test","count":2,"index_id":"1715825656540"},{"date":1714521600000,"site_license_name":"test","count":2,"index_id":"1715825656549"},{"date":1714521600000,"site_license_name":"test","count":2,"index_id":"1616224532673"},{"date":1714521600000,"site_license_name":"test","count":3,"index_id":"1714029010533"},{"date":1714521600000,"site_license_name":"test","count":2,"index_id":"1715825846862"}]}
+    file_preview = {"start_date":"2024-04-01T00:00:00","end_date":"2024-05-31T23:59:59","value":13,"buckets":[{"date":1714521600000,"site_license_name":"test","count":3,"index_id":"1616224532673"}]}
+    search = {"start_date":"2024-04-01T00:00:00","end_date":"2024-05-31T23:59:59","value":8,"buckets":[{"date":1711929600000,"site_license_name":"","count":2},{"date":1711929600000,"site_license_name":"test","count":3}]}
+    record_view = {"start_date":"2024-04-01T00:00:00","end_date":"2024-05-31T23:59:59","value":86,"buckets":[{"date":1711929600000,"site_license_name":"","count":3,"record_index_id":"1616224532673"},{"date":1711929600000,"site_license_name":"test","count":26,"record_index_id":"1616224532673"},{"date":1711929600000,"site_license_name":"test","count":9,"record_index_id":"1714029010533"},{"date":1714521600000,"site_license_name":"test","count":8,"record_index_id":"1715825846862"}]}
+    with patch('invenio_stats.queries.ESTermsQuery.run') as m:
+        m.side_effect = [file_download, file_preview, search, record_view]
+        res = QuerySitelicenseReportsHelper.get(event='sitelicense_download', start_date='2024-04-01', end_date='2024-05-31')
+        assert res=={"date":"2024-04-2024-05","datelist":["total","2024-04","2024-05"],"index_info":{"1234-987A":{"name":"利用報告","id":"1616224532673","name_en":"Data Report"},"1234-567X":{"name":"New Index","id":"1714029010533","name_en":"New Index"}},"no_data":{"file_download":{"1234-987A":{"2024-04":0,"2024-05":0,"total":0},"1234-567X":{"2024-04":0,"2024-05":0,"total":0},"all_journals":{"2024-04":0,"2024-05":0}},"file_preview":{"1234-987A":{"2024-04":0,"2024-05":0,"total":0},"1234-567X":{"2024-04":0,"2024-05":0,"total":0},"all_journals":{"2024-04":0,"2024-05":0}},"search":{"2024-04":0,"2024-05":0,"total":0},"record_view":{"1234-987A":{"2024-04":0,"2024-05":0,"total":0,"file_download_count":{"2024-04":0,"2024-05":0,"total":0}},"1234-567X":{"2024-04":0,"2024-05":0,"total":0,"file_download_count":{"2024-04":0,"2024-05":0,"total":0}}}},"result":{"test":{"file_download":{"1234-987A":{"2024-04":0,"2024-05":2,"total":2},"1234-567X":{"2024-04":0,"2024-05":5,"total":5},"all_journals":{"2024-04":0,"2024-05":7}},"file_preview":{"1234-987A":{"2024-04":0,"2024-05":3,"total":3},"1234-567X":{"2024-04":0,"2024-05":0,"total":0},"all_journals":{"2024-04":0,"2024-05":3}},"search":{"2024-04":3,"2024-05":0,"total":3},"record_view":{"1234-987A":{"2024-04":26,"2024-05":0,"total":26,"file_download_count":{"2024-04":0,"2024-05":2,"total":2}},"1234-567X":{"2024-04":9,"2024-05":8,"total":17,"file_download_count":{"2024-04":0,"2024-05":5,"total":5}}}}}}
+
+    no_res = {'start_date': '2024-04-01T00:00:00', 'end_date': '2024-05-31T23:59:59', 'value': 0.0, 'buckets': []}
+    with patch('invenio_stats.queries.ESTermsQuery.run', return_value = no_res):
+        res = QuerySitelicenseReportsHelper.get(event='sitelicense_download', start_date='2024-04-01', end_date='2024-05-31')
+        assert res == {"date":"2024-04-2024-05","datelist":["total","2024-04","2024-05"],"result":{},"no_data":{"file_download":{"1234-987A":{"2024-04":0,"2024-05":0,"total":0},"1234-567X":{"2024-04":0,"2024-05":0,"total":0},"all_journals":{"2024-04":0,"2024-05":0}},"file_preview":{"1234-987A":{"2024-04":0,"2024-05":0,"total":0},"1234-567X":{"2024-04":0,"2024-05":0,"total":0},"all_journals":{"2024-04":0,"2024-05":0}},"search":{"2024-04":0,"2024-05":0,"total":0},"record_view":{"1234-987A":{"2024-04":0,"2024-05":0,"total":0,"file_download_count":{"2024-04":0,"2024-05":0,"total":0}},"1234-567X":{"2024-04":0,"2024-05":0,"total":0,"file_download_count":{"2024-04":0,"2024-05":0,"total":0}}}},"index_info":{"1234-987A":{"name":"利用報告","id":"1616224532673","name_en":"Data Report"},"1234-567X":{"name":"New Index","id":"1714029010533","name_en":"New Index"}}}
+
+    search = {"start_date":"2024-04-01T00:00:00","end_date":"2024-05-31T23:59:59","value":8,"buckets":[{"date":1711929600000,"site_license_name":"","count":2},{"date":1711929600000,"site_license_name":"test","count":3}]}
+    no_res = {'start_date': '2024-04-01T00:00:00', 'end_date': '2024-04-30T23:59:59', 'value': 0.0, 'buckets': []}
+    with patch('invenio_stats.queries.ESTermsQuery.run') as m:
+        m.side_effect = [no_res, no_res, search, no_res]
+        res = QuerySitelicenseReportsHelper.get(event='sitelicense_download', start_date='2024-04-01', end_date='2024-04-30')
+        assert res=={"date":"2024-04","datelist":["2024-04"],"index_info":{"1234-987A":{"name":"利用報告","id":"1616224532673","name_en":"Data Report"},"1234-567X":{"name":"New Index","id":"1714029010533","name_en":"New Index"}},"no_data":{"file_download":{"1234-987A":{"2024-04":0},"1234-567X":{"2024-04":0},"all_journals":{"2024-04":0}},"file_preview":{"1234-987A":{"2024-04":0},"1234-567X":{"2024-04":0},"all_journals":{"2024-04":0}},"search":{"2024-04":0},"record_view":{"1234-987A":{"2024-04":0,"file_download_count":{"2024-04":0}},"1234-567X":{"2024-04":0,"file_download_count":{"2024-04":0}}}},"result":{"test":{"file_download":{"1234-987A":{"2024-04":0},"1234-567X":{"2024-04":0},"all_journals":{"2024-04":0}},"file_preview":{"1234-987A":{"2024-04":0},"1234-567X":{"2024-04":0},"all_journals":{"2024-04":0}},"search":{"2024-04":3},"record_view":{"1234-987A":{"2024-04":0,"file_download_count":{"2024-04":0}},"1234-567X":{"2024-04":0,"file_download_count":{"2024-04":0}}}}}}
+
+    with patch('invenio_stats.queries.ESTermsQuery.run', return_value = {}):
+        res = QuerySitelicenseReportsHelper.get(event='sitelicense_download', start_date='2024-04-01', end_date='2024-04-30')
+        assert res=={"date":"2024-04","datelist":["2024-04"],"index_info":{"1234-987A":{"name":"利用報告","id":"1616224532673","name_en":"Data Report"},"1234-567X":{"name":"New Index","id":"1714029010533","name_en":"New Index"}},"no_data":{"file_download":{"1234-987A":{"2024-04":0},"1234-567X":{"2024-04":0},"all_journals":{"2024-04":0}},"file_preview":{"1234-987A":{"2024-04":0},"1234-567X":{"2024-04":0},"all_journals":{"2024-04":0}},"search":{"2024-04":0},"record_view":{"1234-987A":{"2024-04":0,"file_download_count":{"2024-04":0}},"1234-567X":{"2024-04":0,"file_download_count":{"2024-04":0}}}},"result":{}}
+
+    res = QuerySitelicenseReportsHelper.get_site_license_report()
+    assert res=={}
 
 # class QueryAccessCounterHelper(object):
 #     def get_common_params(cls, **kwargs):

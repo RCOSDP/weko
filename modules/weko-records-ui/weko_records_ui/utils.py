@@ -46,18 +46,21 @@ from passlib.handlers.oracle import oracle10
 from weko_admin.models import AdminSettings
 from weko_admin.utils import UsageReport, get_restricted_access
 from weko_deposit.api import WekoDeposit
+from weko_index_tree.api import Indexes
 from weko_records.api import FeedbackMailList, ItemTypes, Mapping
 from weko_records.models import ItemBilling
 from weko_records.serializers.utils import get_mapping
 from weko_records.utils import replace_fqdn
 from weko_records_ui.models import InstitutionName
+from weko_records_ui.permissions import check_publish_status
 from weko_schema_ui.models import PublishStatus
 from weko_workflow.api import WorkActivity, WorkFlow
 
 from .models import FileOnetimeDownload, FilePermission
 from .permissions import check_create_usage_report, \
     check_file_download_permission, check_user_group_permission, \
-    is_open_restricted, get_file_price
+    is_open_restricted, get_file_price, check_charge
+from .ipaddr import check_site_license_permission
 
 
 
@@ -201,6 +204,40 @@ def is_billing_item(record: Dict) -> bool:
                 if file.get('priceinfo'):
                     return True
 
+    return False
+
+
+def is_open_access(record: Dict, file_name: str) -> bool:
+    """Checks if item is a open access item based on its meta data schema.
+
+    Args:
+        record (dict): item's meta data
+        file_name (str): target file name
+    
+    Returns:
+        bool: open access item or not
+    
+    """
+    target_index_list = record['path']
+    public_index_list = Indexes.get_public_indexes_list()
+
+    if not set(public_index_list).isdisjoint(set(target_index_list)) \
+        and check_publish_status(record):
+        for value in record.values():
+            if not isinstance(value, dict):
+                continue
+            if value.get('attribute_type', '') != 'file':
+                continue
+            for file in value.get('attribute_value_mlt', []):
+                if file.get('filename') != file_name:
+                    continue
+                access_role = file.get('accessrole')
+                open_access_date = dt.strptime(file.get('date')[0].get('dateValue'),
+                                                '%Y-%m-%d').date()
+                if access_role == 'open_access':
+                    return True
+                elif access_role == 'open_date' and open_access_date <= dt.now().date():
+                    return True
     return False
 
 
@@ -517,28 +554,39 @@ def hide_by_file(item_metadata):
     return item_metadata
 
 
-def hide_by_email(item_metadata):
+def hide_by_email(item_metadata, force_flag=False):
     """Hiding emails.
 
     :param item_metadata:
     :return:
     """
+    from weko_items_ui.utils import get_options_and_order_list, get_hide_list_by_schema_form
+    show_email_flag = item_setting_show_email()
     subitem_keys = current_app.config['WEKO_RECORDS_UI_EMAIL_ITEM_KEYS']
 
-    # Hidden owners_ext.email
-    if item_metadata.get('_deposit') and \
-        item_metadata['_deposit'].get('owners_ext') and item_metadata['_deposit']['owners_ext'].get('email'):
-        del item_metadata['_deposit']['owners_ext']['email']
+    item_type_id = item_metadata.get('item_type_id')
 
-    for item in item_metadata:
-        _item = item_metadata[item]
-        if isinstance(_item, dict) and \
-                _item.get('attribute_value_mlt'):
-            for _idx, _value in enumerate(_item['attribute_value_mlt']):
-                if _value is not None:
-                    for key in subitem_keys:
-                        if key in _value.keys():
-                            del _item['attribute_value_mlt'][_idx][key]
+    if item_type_id:
+        meta_options, type_mapping = get_options_and_order_list(item_type_id)
+        hide_list = get_hide_list_by_schema_form(item_type_id)
+
+        # Hidden owners_ext info
+        if item_metadata.get('_deposit') and item_metadata['_deposit'].get('owners_ext'):
+            del item_metadata['_deposit']['owners_ext']
+
+        for item in item_metadata:
+            _item = item_metadata[item]
+            prop_hidden = meta_options.get(item, {}).get('option', {}).get('hidden', False)
+            if isinstance(_item, dict) and \
+                    _item.get('attribute_value_mlt'):
+                for _idx, _value in enumerate(_item['attribute_value_mlt']):
+                    if _value is not None:
+                        for key in subitem_keys:
+                            for h in hide_list:
+                                if h.startswith(item) and h.endswith(key):
+                                    prop_hidden = True
+                            if key in _value.keys() and (force_flag or not show_email_flag or prop_hidden):
+                                del _item['attribute_value_mlt'][_idx][key]
 
     return item_metadata
 
@@ -578,6 +626,15 @@ def hide_by_itemtype(item_metadata, hidden_items):
     return item_metadata
 
 
+def item_setting_show_email():
+    # Display email from setting item admin.
+    settings = AdminSettings.get('items_display_settings',dict_to_object=False)
+    if settings and 'items_display_email' in settings:
+        is_display = settings['items_display_email']
+    else:
+        is_display = False
+    return is_display
+
 def is_show_email_of_creator(item_type_id):
     """Check setting show/hide email for 'Detail' and 'PDF Cover Page' screen.
 
@@ -612,20 +669,10 @@ def is_show_email_of_creator(item_type_id):
         is_hide = creator_mail.get('isHide', None)
         return is_hide
 
-    def item_setting_show_email():
-        # Display email from setting item admin.
-        settings = AdminSettings.get('items_display_settings',dict_to_object=False)
-        if settings and 'items_display_email' in settings:
-            is_display = settings['items_display_email']
-        else:
-            is_display = False
-        return is_display
-
     is_hide = item_type_show_email(item_type_id)
     is_display = item_setting_show_email()
-    
-    return not is_hide and is_display
 
+    return not is_hide and is_display
 
 def replace_license_free(record_metadata, is_change_label=True):
     """Change the item name 'licensefree' to 'license_note'.
@@ -695,8 +742,12 @@ def replace_license_free_for_opensearch(search_result, is_change_label=True):
 def get_file_info_list(record):
     """File Information of all file in record.
 
-    :param record: all metadata of a record.
-    :return: json files.
+    Args:
+        record (dict): all metadata of a record.
+
+    Returns:
+        is_display_file_preview (boolean): True if file is preview.
+        files (dict): metadata of files.
     """
     def get_file_size(p_file):
         """Get file size and convert to byte."""
@@ -741,8 +792,57 @@ def get_file_info_list(record):
         for item in array_json:
             if str(item.get('id')) == str(key):
                 return item.get(get_key)
+            
+    def is_price_highlight(p_file):
+        """"Rerturn True if price is highlighted
+        
+        Args:
+            p_file (dict): all metadata of a record.
 
-    def add_billing_info(p_file):
+        Returns:
+            bool: rerturn True if price is highlighted.
+        
+        """
+        min_price = p_file['min_price']
+        user_flag = True
+        sitelicense_flag = False
+        user_id_list = [int(record['owner'])] if record.get('owner') else []
+        obj = ItemTypes.get_by_id(record.get('item_type_id'))
+        if record.get('weko_shared_id'):
+            user_id_list.append(record.get('weko_shared_id'))
+        if not current_user.is_authenticated:
+            user_flag = False
+        elif current_user and int(current_user.get_id()) in user_id_list:
+            user_flag = False
+        else:
+            super_users = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] + \
+                current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
+            for role in list(current_user.roles or []):
+                if role.name in super_users:
+                    user_flag = False
+        if obj.item_type_name.has_site_license:
+                sitelicense_flag = check_site_license_permission()
+        is_open_access = p_file['download_status']['is_open_access']
+        if user_flag and not sitelicense_flag and not is_open_access:
+            for priceinfo in p_file['priceinfo']:
+                is_highlight = False
+                if not priceinfo['billingrole'] == '非会員' and\
+                    priceinfo['has_role'] and min_price == priceinfo['price']:
+                    is_highlight = True
+                priceinfo['is_highlight'] = is_highlight
+    
+    def is_display_purchased(p_file):
+        """"Remove purchased from roles that do not have min_price
+        Args:
+            p_file (dict): all metadata of a record.
+        """
+        min_price = p_file['min_price']
+        for priceinfo in p_file["priceinfo"]:
+            if priceinfo.get("purchased") and priceinfo["price"] != min_price:
+                del priceinfo["purchased"]
+
+
+    def add_billing_info(p_file,min_price):
         '''ファイル情報に課金ファイルに関する情報を追加する'''
 
         # 課金ファイルのアクセス権限
@@ -767,6 +867,17 @@ def get_file_info_list(record):
 
             # ユーザーがこのロールをもっているかどうか
             priceinfo['has_role'] = priceinfo['billingrole'] in user_role_name_list
+
+            #購入済かどうか
+            if current_user.is_authenticated and priceinfo['has_role']:
+                if check_charge(current_user.get_id(), record['_deposit']['id']) == 'already':
+                    priceinfo['purchased'] = '[' + _('Purchased') + ']'
+
+            #最安値
+            if priceinfo['has_role'] and\
+                (not min_price or int(min_price) > int(priceinfo['price'])):
+                min_price = priceinfo['price']
+        p_file['min_price'] = min_price
 
     workflows = get_workflows()
     roles = get_roles()
@@ -835,7 +946,10 @@ def get_file_info_list(record):
                                     role, roles, 'name')
                     f['file_order'] = file_order
                     if 'billing' in f:
-                        add_billing_info(f)
+                        min_price = None
+                        add_billing_info(f,min_price)
+                        is_price_highlight(f)
+                        is_display_purchased(f)
                     files.append(f)
                 file_order += 1
     return is_display_file_preview, files

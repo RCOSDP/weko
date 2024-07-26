@@ -202,11 +202,59 @@ def base_app(instance_path, cache_config,request ,search_class):
             'top_page_access': [_('Host'), _('IP Address'),
                                 _('WEKO Top Page Access Count')],
             'user_roles': [_('Role'), _('Number Of Users')],
-            'site_access': [_('WEKO Top Page Access Count'),
+            'site_access': ['',_('WEKO Top Page Access Count'),
                             _('Number Of Searches'), _('Number Of Views'),
                             _('Number Of File download'),
                             _('Number Of File Regeneration')]
         },
+        WEKO_ADMIN_REPORT_TYPES = [
+            'file_download',
+            'file_preview',
+            'billing_file_download',
+            'detail_view',
+            'index_access',
+            'file_using_per_user',
+            'top_page_access',
+            'search_count',
+            'user_roles',
+            'site_access'
+        ],
+        WEKO_ADMIN_SITELICENSE_REPORT_FILE_NAMES = {
+            'file_download': 'FileDownloadReport',
+            'file_preview': 'FileViewReport',
+            'record_view': 'UsagestatisticsReport',
+            'search': 'SearchReport'
+        },
+        WEKO_ADMIN_SITELICENSE_REPORT_INTERFACE_NAME = 'WEKO3 v0.9.26_hiroba',
+        WEKO_ADMIN_SITELICENSE_REPORT_REPOSYTORY_NAME = 'WEKO3 v0.9.26_hiroba',
+        WEKO_ADMIN_SITELICENSE_REPORT_COLS = {
+            'file_download':[
+                '', _('SetSpec'), _('Interface name'), _('ONLINE ISSN')
+            ],
+            'file_preview':[
+                '', _('SetSpec'), _('Interface name'), _('ONLINE ISSN')
+            ],
+            'search':[
+                '',_('Interface name')
+            ],
+            'record_view':[
+                '', _('SetSpec'), _('Interface name'), _('ONLINE ISSN')
+            ]
+        },
+        WEKO_ADMIN_SITELICENSE_REPORT_COUNT_COLS = {
+            'file_download':[
+                _('FileDownload')
+            ],
+            'file_preview':[
+                _('FileView')
+            ],
+            'search':[
+                _('Searches')
+            ],
+            'record_view':[
+                _('DetailView'),  _('FileDownload')
+            ]
+        }
     )
     app_.testing = True
     app_.login_manager = dict(_login_disabled=True)
@@ -1245,3 +1293,7 @@ def facet_search_setting(db):
         settings.append(FacetSearchSetting(**datas[setting]))
     with db.session.begin_nested():
         db.session.add_all(settings)
+
+@pytest.fixture()
+def no_records_sitelicense():
+    return {"date":"2024-04-2024-05","datelist":["total","2024-04","2024-05"],"index_info":{"1234-987A":{"name":"利用報告","id":"1616224532673"},"1234-567X":{"name":"New Index","id":"1714029010533"}},"no_data":{"file_download":{"1234-987A":{"2024-04":0,"2024-05":0,"total":0},"1234-567X":{"2024-04":0,"2024-05":0,"total":0},"all_journals":{"2024-04":0,"2024-05":0}},"file_preview":{"1234-987A":{"2024-04":0,"2024-05":0,"total":0},"1234-567X":{"2024-04":0,"2024-05":0,"total":0},"all_journals":{"2024-04":0,"2024-05":0}},"search":{"2024-04":0,"2024-05":0,"total":0},"record_view":{"1234-987A":{"2024-04":0,"2024-05":0,"total":0,"file_download_count":{"2024-04":0,"2024-05":0,"total":0}},"1234-567X":{"2024-04":0,"2024-05":0,"total":0,"file_download_count":{"2024-04":0,"2024-05":0,"total":0}}}},"result":{}}

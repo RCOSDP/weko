@@ -114,6 +114,7 @@ STATS_QUERIES = {
     'get-file-preview-report': {},
     'get-file-preview-open-access-report': {},
     'get-billing-file-download-report': {},
+    'get-billing-file-download-open-access-report': {},
     'get-billing-file-preview-report': {},
     # 'bucket-celery-task-histogram': {},
     # 'bucket-celery-task-total': {},
@@ -143,6 +144,9 @@ STATS_QUERIES = {
     'get-search-per-site-license': {},
     'get-file-download-per-site-license': {},
     'get-file-preview-per-site-license': {},
+    'get-feedback-mail-record-view-per-site-license': {},
+    'get-feedback-mail-file-download-per-site-license': {},
+    'get-feedback-mail-file-preview-per-site-license': {},
     'get-ranking-data': {},
     'get-new-items-data': {}
 }

@@ -201,6 +201,92 @@ def test_indexes_update(app, db, users, test_indices):
         "recursive_public_state": True,
         "rss_status": True
     }
+    index_metadata2 = {
+        "biblio_flag": True,
+        "browsing_group": {
+            "allow": [],
+            "deny": []
+        },
+        "browsing_role": {
+            "allow": [
+            {
+                "id": 3,
+                "name": "Contributor"
+            },
+            {
+                "id": -98,
+                "name": "Authenticated User"
+            },
+            {
+                "id": -99,
+                "name": "Guest"
+            }
+            ],
+            "deny": []
+        },
+        "can_edit": True,
+        "comment": "",
+        "contribute_group": {
+            "allow": [],
+            "deny": []
+        },
+        "contribute_role": {
+            "allow": [
+            {
+                "id": 1,
+                "name": "System Administrator"
+            },
+            {
+                "id": 2,
+                "name": "Repository Administrator"
+            },
+            {
+                "id": 3,
+                "name": "Contributor"
+            },
+            {
+                "id": 4,
+                "name": "Community Administrator"
+            },
+            {
+                "id": -98,
+                "name": "Authenticated User"
+            },
+            {
+                "id": -99,
+                "name": "Guest"
+            }
+            ],
+            "deny": []
+        },
+        "coverpage_state": False,
+        "display_format": "1",
+        "display_no": 5,
+        "harvest_public_state": True,
+        "harvest_spec": "",
+        "have_children": False,
+        "id": 1,
+        "image_name": "",
+        "index_link_enabled": False,
+        "index_link_name": "Test index 1 new",
+        "index_link_name_english": "Test index 1 new",
+        "index_name": "Test index 1 new",
+        "index_name_english": "Test index 1 new",
+        "more_check": False,
+        "online_issn": "1234-567A",
+        "owner_user_id": 3,
+        "parent": 0,
+        "position": 0,
+        "public_date": "20220201",
+        "public_state": True,
+        "recursive_browsing_group": True,
+        "recursive_browsing_role": True,
+        "recursive_contribute_group": True,
+        "recursive_contribute_role": True,
+        "recursive_coverpage_check": False,
+        "recursive_public_state": True,
+        "rss_status": True
+    }
     with app.test_client() as client:
         res = Indexes.update(2)
         assert res==None
@@ -224,6 +310,15 @@ def test_indexes_update(app, db, users, test_indices):
                 assert res.id==1
                 assert res.index_name=="Test index 1 new"
                 assert res.public_date==None
+
+                res = Indexes.update(1, **index_metadata2)
+                index11 = Index.query.filter_by(id=11).first()
+                assert res.id==1
+                assert res.index_name=="Test index 1 new"
+                assert res.biblio_flag==True
+                assert res.online_issn=="1234-567A"
+                assert index11.biblio_flag==True
+                assert index11.online_issn=="1234-567A"
 
 
 # class Indexes(object):
@@ -747,6 +842,14 @@ def test_indexes_get_index_tree(i18n_app,
 
         # get_public_indexes_list
         res = Indexes.get_public_indexes_list()
+        assert res==['1', '2', '3', '11', '21', '22']
+
+        # get_public_indexes_list with target_date
+        res = Indexes.get_public_indexes_list(datetime(1999, 1, 1))
+        assert res==['2', '3', '21', '22']
+        res = Indexes.get_public_indexes_list(datetime(2022, 1, 1))
+        assert res==['1', '2', '3', '11', '21', '22']
+        res = Indexes.get_public_indexes_list(datetime(2030, 1, 1))
         assert res==['1', '2', '3', '11', '21', '22']
 
         # have_children

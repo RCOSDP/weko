@@ -271,6 +271,9 @@ class ESTermsQuery(ESQuery):
         _apply_metric_aggs(base_agg)
         if self.group_fields:
             sources = []
+            if kwargs.get('interval'):
+                interval = kwargs.get('interval')
+                sources.append({'date':{'date_histogram':{'field':'timestamp','interval':interval}}})
             for f in self.group_fields:
                 sources.append({f: A('terms', field=f)})
             if kwargs.get('after_key'):

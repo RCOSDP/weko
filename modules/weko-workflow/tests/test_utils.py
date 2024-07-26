@@ -20,6 +20,7 @@ from invenio_cache import current_cache
 from invenio_accounts.testutils import login_user_via_session as login
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from flask_login.utils import login_user,logout_user
+from sqlalchemy.exc import SQLAlchemyError
 from tests.helpers import json_data
 from invenio_mail.models import MailConfig
 from weko_admin.models import SiteInfo
@@ -2740,7 +2741,7 @@ def test_get_index_id():
 
 # def create_or_update_item_billing(deposit):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_create_or_update_item_billing -vv -s --cov-branch --cov-report=term --basetemp=.tox/c1/tmp
-def test_create_or_update_item_billing(db_register_item_billing):
+def test_create_or_update_item_billing(db_register_item_billing,mocker):
     deposit = dict()
     with open('tests/data/records_metadata.json', 'r') as f:
         deposit = json.load(f)
@@ -2757,6 +2758,36 @@ def test_create_or_update_item_billing(db_register_item_billing):
 
     deleted = ItemBilling.query.filter_by(item_id=10, role_id=3).one_or_none()
     assert deleted is None
+
+    # not pid
+    deposit["_deposit"]["pid"] = None
+    create_or_update_item_billing(deposit)
+
+    #not priceinfo
+    deposit["item_1617605131499"]["attribute_value_mlt"][0]["priceinfo"] = None
+    create_or_update_item_billing(deposit)
+
+    # not billing
+    with open('tests/data/not_billing_records_metadata.json', 'r') as f:
+        not_billing_deposit = json.load(f)
+    create_or_update_item_billing(not_billing_deposit)
+    created = ItemBilling.query.filter_by(item_id=20, role_id=1).one_or_none()
+    assert created is None
+
+    # not attribute_value_mlt
+    not_billing_deposit["item_1617605131499"]["attribute_value_mlt"] = None
+    create_or_update_item_billing(not_billing_deposit)
+    created = ItemBilling.query.filter_by(item_id=20, role_id=1).one_or_none()
+    assert created is None
+
+    # not attribute_type
+    not_billing_deposit["item_1617605131499"]["attribute_type"] = ""
+    create_or_update_item_billing(not_billing_deposit)
+    created = ItemBilling.query.filter_by(item_id=20, role_id=1).one_or_none()
+    assert created is None
+
+    with mocker.patch("weko_workflow.utils.db.session.commit", side_effect=SQLAlchemyError):
+        create_or_update_item_billing(not_billing_deposit)
 
 
 def test_make_activitylog_tsv(db_register,db_records):

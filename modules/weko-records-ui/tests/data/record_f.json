@@ -1,0 +1,118 @@
+{
+    "_oai": {
+        "id": "oai:weko3.example.org:00000015"
+    },
+    "path": [
+        "1557819692844"
+    ],
+    "owner": "1",
+    "recid": "15",
+    "title": [
+        "課金ファイル_Contributor"
+    ],
+    "pubdate": {
+        "attribute_name": "PubDate",
+        "attribute_value": "2022-12-20"
+    },
+    "_buckets": {
+        "deposit": "4af67619-5afb-40b8-aab6-a0994d5ecd04"
+    },
+    "_deposit": {
+        "id": "1",
+        "pid": {
+            "type": "depid",
+            "value": "15",
+            "revision_id": 0
+        },
+        "owner": "1",
+        "owners": [
+            1
+        ],
+        "status": "published",
+        "created_by": 1,
+        "owners_ext": {
+            "email": "wekosoftware@nii.ac.jp",
+            "username": "",
+            "displayname": ""
+        }
+    },
+    "item_title": "課金ファイル_Contributor",
+    "author_link": [],
+    "item_type_id": "1",
+    "publish_date": "2022-12-20",
+    "publish_status": "0",
+    "weko_shared_id": -1,
+    "item_1617186331708": {
+        "attribute_name": "Title",
+        "attribute_value_mlt": [
+            {
+                "subitem_1551255647225": "課金ファイル_Contributor",
+                "subitem_1551255648112": "ja"
+            }
+        ]
+    },
+    "item_1617258105262": {
+        "attribute_name": "Resource Type",
+        "attribute_value_mlt": [
+            {
+                "resourceuri": "http://purl.org/coar/resource_type/c_6501",
+                "resourcetype": "departmental bulletin paper"
+            }
+        ]
+    },
+    "item_1617605131499": {
+        "attribute_name": "File",
+        "attribute_type": "file",
+        "attribute_value_mlt": [
+            {
+                "url": {
+                    "url": "https://weko3.example.org/record/15/files/課金ファイル.txt"
+                },
+                "date": [
+                    {
+                        "dateType": "Available",
+                        "dateValue": "2022-12-20"
+                    }
+                ],
+                "format": "text/plain",
+                "billing": [
+                    "billing_file"
+                ],
+                "filename": "課金ファイル.txt",
+                "filesize": [
+                    {
+                        "value": "137 B"
+                    }
+                ],
+                "priceinfo": [
+                    {
+                        "tax": [
+                            "include_tax"
+                        ],
+                        "price": "110",
+                        "billingrole": "3"
+                    },
+                    {
+                        "tax": [
+                            "include_tax"
+                        ],
+                        "price": "30",
+                        "billingrole": "5"
+                    },
+                    {
+                        "tax": [
+                            "include_tax"
+                        ],
+                        "price": "1000",
+                        "billingrole": "6"
+                    }
+                ],
+                "accessrole": "open_login",
+                "version_id": "e92fc726-6752-4c13-affd-088dc4f6e45e"
+            }
+        ]
+    },
+    "relation_version_is_last": true,
+    "relation": {},
+    "permalink_uri": "https://192.168.56.103/records/13"
+}

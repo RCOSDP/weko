@@ -4052,7 +4052,10 @@ def create_or_update_item_billing(deposit):
     '''
     try:
         with db.session.begin_nested():
-            item_id = int(float(deposit.get('_deposit').get('pid').get('value')))
+            if deposit.get('_deposit').get('pid'):
+                item_id = int(float(deposit.get('_deposit').get('pid').get('value')))
+            else:
+                item_id = int(float(deposit.get('_deposit').get('id')))
 
             itemBillings = ItemBilling.query.filter_by(item_id=item_id).all()
             roles = [itemBilling.role_id for itemBilling in itemBillings]

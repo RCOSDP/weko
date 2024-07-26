@@ -135,7 +135,7 @@ services:
 
   worker:
     restart: "always"
-    image: weko3_b_web
+    image: weko-web
     depends_on:
       - web
     sysctls:

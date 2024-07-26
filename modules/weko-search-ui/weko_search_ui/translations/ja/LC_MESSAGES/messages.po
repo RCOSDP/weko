@@ -254,6 +254,10 @@ msgstr "（{}）に指定したファイルが存在しません。<br/>ファ�
 msgid "The file name specified in {} and {} do not match."
 msgstr "{}に指定されたファイル名と{}が一致しません。"
 
+#: weko_search_ui/utils.py:4106
+msgid "Please specify price by half-width number."
+msgstr "価格は半角数字で指定してください。"
+
 #: weko_search_ui/static/js/weko_search_ui/moment.min.js:1
 msgid ": , "
 msgstr ""
@@ -817,4 +821,10 @@ msgstr "ロールの権限が足りずこのインデックスにアイテム登
 
 #~ msgid "Execute"
 #~ msgstr "実行"
+
+msgid "Bulk Export Start Time"
+msgstr "Start Time"
+
+msgid "Finish Time"
+msgstr ""
 

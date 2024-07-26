@@ -51,7 +51,7 @@ from .utils import check_and_create_usage_report, \
     get_groups_price, get_min_price_billing_file_download, \
     get_onetime_download, is_billing_item, parse_one_time_download_token, \
     update_onetime_download, validate_download_record, \
-    validate_onetime_download_token, get_billing_role
+    validate_onetime_download_token, get_billing_role, is_open_access
 
 
 def weko_view_method(pid, record, template=None, **kwargs):
@@ -379,19 +379,25 @@ def add_signals_info(record, obj):
 
     # Add index list info to send_obj
     index_list = ''
+    index_id_list = ''
     record_navs = record.navi
     if len(record_navs) > 0:
         for index in record_navs:
             current_app.logger.debug(index)
+            index_id_list += str(index[1]) + '|'
             if index[3] is not None:
                 index_list += index[3] + '|'
             else:
                 index_list += index[4] + '|'
     obj.index_list = index_list[:len(index_list) - 1]
+    obj.index_id = index_id_list[:len(index_id_list) - 1]
 
     # Add item info to send_obj
     obj.item_title = record['item_title']
     obj.item_id = record['_deposit']['id']
+    
+    # Check whether open access file or not
+    obj.is_open_access = is_open_access(record, obj.key)
 
 
 def file_download_onetime(pid, record, _record_file_factory=None, **kwargs):

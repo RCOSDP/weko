@@ -350,3 +350,17 @@ def test_weko_ranking_query(app):
     )
     ret = query.build_query(bucket_id='test_id', file_key='test_file', root_file_id='root_test_id', must_not='{"match": {}}')
     assert ret.to_dict() == {'query': {'bool': {'must_not': [{'match': {}}]}}, 'match': 'match', 'key': 'key', 'file_key': 'file_key', 'bucket_id': 'bucket_id', 'root_file_id': 'root_file_id'}
+
+# .tox/c1/bin/pytest --cov=invenio_stats tests/test_queries.py::test_sitelicense_query -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
+def test_sitelicense_query(app):
+    config_num = 36        # query_name='get-file-download-per-site-license'
+    query_configs = register_queries()
+    weko_sitelicense_config = query_configs[config_num]['query_config']
+
+    # build_query
+    test_config = copy.deepcopy(weko_sitelicense_config)
+    query = ESTermsQuery(
+        query_name='test_total_count',
+        **test_config
+    )
+    assert query.build_query(start_date=datetime.datetime(2024, 4, 1), end_date=datetime.datetime(2024, 5, 31,23,59,59),interval="month").to_dict() == {'query': {'bool': {'filter': [{'range': {'timestamp': {'gte': '2024-04-01T00:00:00', 'lte': '2024-05-31T23:59:59', 'time_zone': 'Asia/Tokyo'}}}]}}, 'aggs': {'value': {'sum': {'field': 'count'}}, 'my_buckets': {'composite': {'size': 6000, 'sources': [{'date': {'date_histogram': {'field': 'timestamp', 'interval': 'month'}}}, {'site_license_name': {'terms': {'field': 'site_license_name'}}}, {'count': {'terms': {'field': 'count'}}}, {'index_id': {'terms': {'field': 'index_id'}}}]}}}, 'from': 0, 'size': 0}

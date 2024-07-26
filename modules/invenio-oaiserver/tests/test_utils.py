@@ -264,6 +264,9 @@ def test_is_output_harvest(app):
     idx7 = MagicMock()
     idx7.id = 7
     idx7.parent = 8
+    idx7.public_state = True
+    idx7.browsing_role = "1,3,-99"
+    idx7.public_date = datetime(1900,1,1)
     # parent index
     # parent is 0
     # harvest_public_state is not False

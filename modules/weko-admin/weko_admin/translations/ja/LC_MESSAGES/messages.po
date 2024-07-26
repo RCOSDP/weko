@@ -263,6 +263,10 @@ msgstr "ファセット検索一覧"
 msgid "statistics report"
 msgstr "統計設定"
 
+#: weko_admin/api.py:157
+msgid "Site License Usage Statistics Report"
+msgstr "サイトライセンス利用統計"
+
 #: weko_admin/config.py:129
 msgid "No. Of File Downloads"
 msgstr "ファイルダウンロード回数"
@@ -316,6 +320,10 @@ msgstr "オープンアクセスファイルダウンロード数"
 #: weko_admin/config.py:145
 msgid "Open-Access No. Of File Previews"
 msgstr "オープンアクセスファイルプレビュー数"
+
+#: weko_admin/config.py:158
+msgid "Open-Access No. Of Paid File Downloads"
+msgstr "オープンアクセス課金ファイルダウンロード数"
 
 #: weko_admin/config.py:146
 msgid "Access Number Breakdown By Site License"
@@ -481,6 +489,38 @@ msgstr "サイトアクセス"
 msgid "TopPageAccess_"
 msgstr "トップページへのアクセス"
 
+#: weko_admin/config.py:195
+msgid "SetSpec"
+msgstr "セット階層名"
+
+#: weko_admin/config.py:195
+msgid "Interface name"
+msgstr "インターフェース名"
+
+#: weko_admin/config.py:195
+msgid "ONLINE ISSN"
+msgstr "ONLINE ISSN"
+
+#: weko_admin/config.py:216
+msgid "Searches"
+msgstr "キーワード検索数"
+
+#: weko_admin/config.py:216
+msgid "DetailView"
+msgstr "閲覧回数"
+
+#: weko_admin/config.py:216
+msgid "FileDownload"
+msgstr "ファイルダウンロード回数"
+
+#: weko_admin/config.py:216
+msgid "FileView"
+msgstr "ファイル再生回数"
+
+#: weko_admin/config.py:216
+msgid "total"
+msgstr "合計"
+
 #: weko_admin/ext.py:74
 msgid "A translation string"
 msgstr "翻訳文字列"
@@ -517,6 +557,22 @@ msgstr "サイトライセンス以外"
 #: weko_admin/utils.py:411
 msgid "Institution Name"
 msgstr "機関名"
+
+#: weko_admin/utils.py:502
+msgid "WEKO database"
+msgstr "WEKOデータベース"
+
+#: weko_admin/utils.py:576
+msgid "Creation date"
+msgstr "レポート作成日"
+
+#: weko_admin/utils.py:576
+msgid "Site name"
+msgstr "リポジトリ名"
+
+#: weko_admin/utils.py:656
+msgid "site_license_month"
+msgstr "集計年月"
 
 #: weko_admin/utils.py:1198
 msgid "Cannot update Feedback email settings."

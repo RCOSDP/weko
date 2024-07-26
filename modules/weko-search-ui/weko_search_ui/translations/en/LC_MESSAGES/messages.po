@@ -254,6 +254,10 @@ msgstr ""
 msgid "The file name specified in {} and {} do not match."
 msgstr ""
 
+#: weko_search_ui/utils.py:4106
+msgid "Please specify price by half-width number."
+msgstr ""
+
 #: weko_search_ui/static/js/weko_search_ui/moment.min.js:1
 msgid ": , "
 msgstr ""
@@ -811,4 +815,10 @@ msgstr ""
 
 #~ msgid "Execute"
 #~ msgstr ""
+
+msgid "Bulk Export Start Time"
+msgstr "Start Time"
+
+msgid "Finish Time"
+msgstr ""
 

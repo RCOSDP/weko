@@ -10,7 +10,8 @@
 
 from __future__ import absolute_import, print_function
 
-from datetime import datetime
+from datetime import datetime, timezone
+import pytz
 from functools import partial
 
 from flask import current_app
@@ -210,48 +211,26 @@ def handle_license_free(record_metadata):
     return record_metadata
 
 
-def get_index_state():
-    index_state = {}
-    ids = Indexes.get_all_indexes()
-    for index in ids:
-        index_id = str(index.id)
-        if not index.harvest_public_state:
-            index_state[index_id] = {
-                'parent': None,
-                'msg': HARVEST_PRIVATE
-            }
-        elif '-99' not in index.browsing_role \
-                or not index.public_state \
-                or (index.public_date and
-                    index.public_date > datetime.utcnow()):
-            index_state[index_id] = {
-                'parent': None,
-                'msg': PRIVATE_INDEX
-            }
-        else:
-            index_state[index_id] = {
-                'parent': str(index.parent),
-                'msg': OUTPUT_HARVEST
-            }
-    return index_state
-
-
 def is_output_harvest(path_list):
+    utc = pytz.timezone('UTC')
     def _check(index_id):
         _idx = Indexes.get_index(index_id)
         if _idx:
-            if not _idx.parent or _idx.parent == 0:
-                if not _idx.harvest_public_state:
-                    return HARVEST_PRIVATE
-                elif '-99' not in _idx.browsing_role \
-                        or not _idx.public_state \
-                        or (_idx.public_date and
-                            _idx.public_date > datetime.utcnow()):
-                    return PRIVATE_INDEX
-                else:
-                    return OUTPUT_HARVEST
+            if _idx.public_date:
+                date = _idx.public_date
+                public_date = date.astimezone(utc)
+            if not _idx.harvest_public_state:
+                return HARVEST_PRIVATE
+            elif '-99' not in _idx.browsing_role \
+                    or not _idx.public_state \
+                    or (_idx.public_date and
+                        public_date > datetime.now(timezone.utc)):
+                return PRIVATE_INDEX
             else:
-                return _check(_idx.parent)
+                if not _idx.parent or _idx.parent == 0:
+                    return OUTPUT_HARVEST
+                else:
+                    return _check(_idx.parent)
         else:
             return HARVEST_PRIVATE
 

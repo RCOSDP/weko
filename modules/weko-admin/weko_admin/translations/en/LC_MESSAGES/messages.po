@@ -39,6 +39,10 @@ msgstr "Number of File Previews"
 msgid "Open-Access No. Of File Previews"
 msgstr "Number of Open-Access File Previews"
 
+#: weko_admin/config.py:158
+msgid "Open-Access No. Of Paid File Downloads"
+msgstr "Number of Open-Access Paid File Downloads"
+
 #: weko_admin/admin.py:301
 msgid "Aggregation Monh"
 msgstr ""
@@ -102,6 +106,58 @@ msgstr ""
 #: weko_admin/admin.py:917
 msgid "Specified repository is already registered."
 msgstr ""
+
+#: weko_admin/api.py:157
+msgid "Site License Usage Statistics Report"
+msgstr ""
+
+#: weko_admin/config.py:195
+msgid "SetSpec"
+msgstr ""
+
+#: weko_admin/config.py:195
+msgid "Interface name"
+msgstr ""
+
+#: weko_admin/config.py:195
+msgid "ONLINE ISSN"
+msgstr ""
+
+#: weko_admin/config.py:216
+msgid "Searches"
+msgstr ""
+
+#: weko_admin/config.py:216
+msgid "DetailView"
+msgstr ""
+
+#: weko_admin/config.py:216
+msgid "FileDownload"
+msgstr ""
+
+#: weko_admin/config.py:216
+msgid "FileView"
+msgstr ""
+
+#: weko_admin/config.py:216
+msgid "total"
+msgstr ""
+
+#: weko_admin/utils.py:502
+msgid "WEKO database"
+msgstr ""
+
+#: weko_admin/utils.py:576
+msgid "Creation date"
+msgstr ""
+
+#: weko_admin/utils.py:576
+msgid "Site name"
+msgstr ""
+
+#: weko_admin/utils.py:656
+msgid "site_license_month"
+msgstr "month"
 
 #: weko_admin/ext.py:42
 msgid "A translation string"

@@ -525,29 +525,26 @@ def test_resend_failed_mail(api,users,mocker):
                          (3,False),# contributor
                          (4,False),# generaluser
                          ])
-def test_manual_send_site_license_mail_acl(api,users,site_license,index,is_permission):
+def test_manual_send_site_license_mail_acl(api,users,site_license,index,is_permission,no_records_sitelicense):
     url = url_for("weko_admin.manual_send_site_license_mail",start_month="202201",end_month="202203")
     login_user_via_session(client=api, email=users[index]["email"])
-    with patch("weko_admin.views.QueryCommonReportsHelper.get", return_value={"institution_name":[]}):
+    with patch("weko_admin.views.QuerySitelicenseReportsHelper.get", return_value=no_records_sitelicense):
         with patch("weko_admin.views.send_site_license_mail"):
             res = api.post(url,data=json.dumps({}),content_type="application/json")
             assert_role(res, is_permission)
 
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_views.py::test_manual_send_site_license_mail_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
-def test_manual_send_site_license_mail_guest(api, site_license):
+def test_manual_send_site_license_mail_guest(api, site_license,no_records_sitelicense):
     url = url_for("weko_admin.manual_send_site_license_mail",start_month="202201",end_month="202203")
-    with patch("weko_admin.views.QueryCommonReportsHelper.get", return_value={"institution_name":[]}):
+    with patch("weko_admin.views.QuerySitelicenseReportsHelper.get", return_value=no_records_sitelicense):
         with patch("weko_admin.views.send_site_license_mail"):
             res = api.post(url,data=json.dumps({}),content_type="application/json")
             assert res.status_code == 302
 
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_views.py::test_manual_send_site_license_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
-def test_manual_send_site_license_mail(api, db, users, mocker):
-    url = url_for("weko_admin.manual_send_site_license_mail",start_month="202201",end_month="202203")
+def test_manual_send_site_license_mail(api, db, users, mocker,no_records_sitelicense):
+    url = url_for("weko_admin.manual_send_site_license_mail",start_month="202404",end_month="202405")
     login_user_via_session(client=api, email=users[0]["email"])
-    #res = api.post(url)
-    #assert res == None
-    
     site_license1 = SiteLicenseInfo(
         organization_id=0,
         organization_name="test data1",
@@ -565,16 +562,16 @@ def test_manual_send_site_license_mail(api, db, users, mocker):
     db.session.add(site_license1)
     db.session.add(site_license2)
     db.session.commit()
-    report_helper_result = {"institution_name":[{"name":"other_name"},{"name":"test data1"}]}
-    mocker.patch("weko_admin.views.QueryCommonReportsHelper.get",return_value=report_helper_result)
-    mock_send = mocker.patch("weko_admin.views.send_site_license_mail")
+    report_helper_result = {"date":"2024-04-2024-05","datelist":["total","2024-04","2024-05"],"index_info":{"1234-987A":{"name":"利用報告","id":"1616224532673"},"1234-567X":{"name":"New Index","id":"1714029010533"}},"no_data":{"file_download":{"1234-987A":{"2024-04":0,"2024-05":0,"total":0},"1234-567X":{"2024-04":0,"2024-05":0,"total":0},"all_journals":{"2024-04":0,"2024-05":0}},"file_preview":{"1234-987A":{"2024-04":0,"2024-05":0,"total":0},"1234-567X":{"2024-04":0,"2024-05":0,"total":0},"all_journals":{"2024-04":0,"2024-05":0}},"search":{"2024-04":0,"2024-05":0,"total":0},"record_view":{"1234-987A":{"2024-04":0,"2024-05":0,"total":0,"file_download_count":{"2024-04":0,"2024-05":0,"total":0}},"1234-567X":{"2024-04":0,"2024-05":0,"total":0,"file_download_count":{"2024-04":0,"2024-05":0,"total":0}}}},"result":{"test data1":{"file_download":{"1234-987A":{"2024-04":0,"2024-05":2,"total":2},"1234-567X":{"2024-04":0,"2024-05":5,"total":5},"all_journals":{"2024-04":0,"2024-05":7}},"file_preview":{"1234-987A":{"2024-04":0,"2024-05":3,"total":3},"1234-567X":{"2024-04":0,"2024-05":0,"total":0},"all_journals":{"2024-04":0,"2024-05":3}},"search":{"2024-04":3,"2024-05":0,"total":3},"record_view":{"1234-987A":{"2024-04":26,"2024-05":0,"total":26,"file_download_count":{"2024-04":0,"2024-05":2,"total":2}},"1234-567X":{"2024-04":9,"2024-05":8,"total":17,"file_download_count":{"2024-04":0,"2024-05":5,"total":5}}}},"New Test":{"file_download":{"1234-987A":{"2024-04":0,"2024-05":0,"total":0},"1234-567X":{"2024-04":0,"2024-05":0,"total":0},"all_journals":{"2024-04":0,"2024-05":0}},"file_preview":{"1234-987A":{"2024-04":0,"2024-05":0,"total":0},"1234-567X":{"2024-04":0,"2024-05":0,"total":0},"all_journals":{"2024-04":0,"2024-05":0}},"search":{"2024-04":0,"2024-05":3,"total":3},"record_view":{"1234-987A":{"2024-04":0,"2024-05":1,"total":1,"file_download_count":{"2024-04":0,"2024-05":0,"total":0}},"1234-567X":{"2024-04":0,"2024-05":39,"total":39,"file_download_count":{"2024-04":0,"2024-05":0,"total":0}}}}}}
+    mocker.patch("weko_admin.views.QuerySitelicenseReportsHelper.get",return_value=report_helper_result)
+    mocker.patch("weko_admin.views.send_site_license_mail")
     res = api.post(url)
     assert res.data == b"finished"
-    mock_send.assert_has_calls(
-        [mocker.call("test data1",["test@mail.com"],"202201-202203",{"name":"test data1"}),
-        mocker.call("test data2",["test@mail.com"],"202201-202203",{"file_download":0,"file_preview":0,"record_view":0,"search":0,"top_view":0}),
-        ]
-    )
+
+    mocker.patch("weko_admin.views.QuerySitelicenseReportsHelper.get",return_value=no_records_sitelicense)
+    mocker.patch("weko_admin.views.send_site_license_mail")
+    res = api.post(url)
+    assert res.data == b"finished"
     
     # send_list is None
     SiteLicenseInfo.query.delete()

@@ -60,6 +60,10 @@
           "type": "keyword",
           "index": true
         },
+        "record_index_id": {
+          "type": "keyword",
+          "index": true
+        },
         "record_index_list": {
           "type": "nested",
           "properties": {

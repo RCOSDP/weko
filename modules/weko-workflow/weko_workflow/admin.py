@@ -61,7 +61,18 @@ class FlowSettingView(BaseView):
         :param flow_id:
         :return:
         """
-        users = User.query.filter_by(active=True).all()
+        # ==========
+        # Provisional measures for display to too many flow-action-user at hiroba.
+        #   - Display only the user who has the role of 1, 2, 3, 4.
+        #     (1: System Administrator, 2: Repository Administrator, 3: Contributor, 4: Community Administrator)
+        # -----
+        users = User.query.filter(
+            User.roles.any(Role.id.in_([1, 2, 3, 4]))
+        ).filter_by(active=True).all()
+        # ==========
+        # Original code
+        # -----
+        # users = User.query.filter_by(active=True).all()
         roles = Role.query.all()
         actions = self.get_actions()
         if '0' == flow_id:

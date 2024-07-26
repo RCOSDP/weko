@@ -25,6 +25,7 @@ import orjson
 import math
 import os
 import zipfile
+import pickle
 from datetime import datetime, timedelta
 from io import BytesIO, StringIO
 from typing import Dict, Tuple, Union
@@ -45,6 +46,9 @@ from invenio_mail.models import MailConfig
 
 from invenio_records.models import RecordMetadata
 from invenio_records_rest.facets import terms_filter
+from invenio_stats.utils import QueryCommonReportsHelper, \
+    QueryFileReportsHelper, QueryRecordViewPerIndexReportHelper, \
+    QueryRecordViewReportHelper, QuerySearchReportHelper
 from invenio_stats.views import QueryFileStatsCount, QueryRecordViewCount
 from jinja2 import Template
 from sqlalchemy import func
@@ -337,6 +341,54 @@ def get_user_report_data():
     return results
 
 
+def get_reports(type, year, month):
+    """Get report data from db and modify.
+    
+    Args:
+        type (str): report's type
+        year (str): report's aggregation year
+        month (str): report's aggregation month
+    
+    Returns:
+        dict: report's data for selected types
+    """
+    target_types = []
+    file_report_types = [
+        'file_download',
+        'file_preview',
+        'billing_file_download',
+        'file_using_per_user'
+    ]
+    common_report_types = ['top_page_access', 'site_access']
+    result_reports = {}
+    if type == 'all':
+        target_types = current_app.config['WEKO_ADMIN_REPORT_TYPES']
+    else:
+        target_types.append(type)
+    
+    for target in target_types:
+        args = {
+            'event': target,
+            'year': int(year),
+            'month': int(month)
+        }
+        result = {}
+        if target in file_report_types:
+            result = QueryFileReportsHelper.get(**args)
+        elif target == 'detail_view':
+            result = QueryRecordViewReportHelper.get(**args)
+        elif target == 'index_access':
+            result = QueryRecordViewPerIndexReportHelper.get(**args)
+        elif target in common_report_types:
+            result = QueryCommonReportsHelper.get(**args)
+        elif target == 'search_count':
+            result = QuerySearchReportHelper.get(**args)
+        elif target == 'user_roles':
+            result = get_user_report_data()
+        result_reports[target] = result
+    return result_reports
+
+
 def package_reports(all_stats, year, month):
     """Package the .csv files into one zip file."""
     output_files = []
@@ -375,9 +427,14 @@ def make_stats_file(raw_stats, file_type, year, month):
     file_delimiter = '\t' if file_format == 'tsv' else ','
     writer = csv.writer(file_output, delimiter=file_delimiter,
                         lineterminator="\n")
-    writer.writerows([[header_row],
+    if file_type == 'site_access':
+        writer.writerows([[header_row],
                       [_('Aggregation Month'), year + '-' + month],
-                      [''], [header_row]])
+                      ['']])
+    else:
+        writer.writerows([[header_row],
+                        [_('Aggregation Month'), year + '-' + month],
+                        [''], [header_row]])
 
     if file_type == 'billing_file_download':
         col_dict_key = file_type.split('_', 1)[1]
@@ -386,7 +443,8 @@ def make_stats_file(raw_stats, file_type, year, month):
         role_name_list = [role.name for role in roles]
         cols = cols_base[:4] + role_name_list + cols_base[5:]
     else:
-        cols = current_app.config['WEKO_ADMIN_REPORT_COLS'].get(file_type, [])
+        cols_setting = current_app.config['WEKO_ADMIN_REPORT_COLS'].get(file_type, [])
+        cols = pickle.loads(pickle.dumps(cols_setting, -1))
     writer.writerow(cols)
 
     # Special cases:
@@ -416,9 +474,10 @@ def make_stats_file(raw_stats, file_type, year, month):
         writer.writerows([[''], [sub_header_row]])
         if 'open_access' in raw_stats:
             writer.writerow(cols)
-            write_report_file_rows(writer, raw_stats.get('open_access'))
+            write_report_file_rows(writer, raw_stats.get('open_access'), file_type)
         elif 'institution_name' in raw_stats:
-            writer.writerow([_('Institution Name')] + cols)
+            cols[0] = _('Institution Name')
+            writer.writerow(cols)
             write_report_file_rows(writer,
                                   raw_stats.get('institution_name'),
                                   file_type)
@@ -495,24 +554,88 @@ def write_report_file_rows(writer, records, file_type=None, other_info=None):
                                  record.get('file_download'),
                                  record.get('file_preview')])
 
+def write_sitelicense_report_file_rows(writer, records, file_type, result):
+    """Write tsv/csv rows for stats.
+    
+    Args:
+        writer (csv.writer): csv.writer.
+        records (dict): Dict calculation data by site license name.
+        file_type (String): file type data.
+        result (dict): Dict calculation data.
+    """
+    interface_name = current_app.config['WEKO_ADMIN_SITELICENSE_REPORT_INTERFACE_NAME']
+    search_count = [_('WEKO database'),interface_name]
+    if records is None:
+        return
 
-def package_site_access_stats_file(stats, agg_date):
-    """Package the tsv files into one zip file."""
+    #all_journals
+    if file_type == 'file_preview' or file_type == 'file_download':
+        all_journals = records['all_journals']
+        if len(result["datelist"]) > 1:
+            all_journals_data = ['Total for all journals', '', interface_name, '', '']
+        else:
+            all_journals_data = ['Total for all journals', '', interface_name,'']
+        for date in result['datelist']:
+            if date == 'total':
+                continue
+            else:
+                all_journals_value = all_journals[date]
+                all_journals_data.append(all_journals_value)
+        writer.writerow(all_journals_data)
 
-    from .config import WEKO_ADMIN_OUTPUT_FORMAT
+    #count
+    if file_type == 'search':
+        for date in result['datelist']:
+            search_count.append(records[date])
+        writer.writerow(search_count)
+    else:
+        for key, record in records.items():
+            if key == 'all_journals':
+                continue
+            else:
+                data = [result['index_info'][key]['name'], result['index_info'][key]['id'], interface_name, key]
+                if current_i18n.language == 'ja' and result['index_info'][key]['name']:
+                    data = [result['index_info'][key]['name'], result['index_info'][key]['id'], interface_name, key]
+                else:
+                    data = [result['index_info'][key]['name_en'], result['index_info'][key]['id'], interface_name, key]
+            for date in result['datelist']:
+                value = record[date]
+                data.append(value)
+            if record.get('file_download_count',0):
+                file_download_count = record.get('file_download_count',0)
+                for date in result['datelist']:
+                    data.append(file_download_count[date])
+            writer.writerow(data)
+
+def package_site_access_stats_file(stats, agg_date, result):
+    """Package the tsv files into one zip file.
+    
+    Args:
+        stats (dict): Dict calculation data by site license name.
+        agg_date (string): Aggregation date.
+        result (dict): Dict calculation data.
+    
+    Returns:
+        zip_stream (ZipFile): ZipFile by site license name.
+    """
 
     zip_stream = BytesIO()
+    output_files = []
     try:
-        # Create file name
-        file_format = WEKO_ADMIN_OUTPUT_FORMAT.lower()
-        file_name = 'SiteAccess_' + agg_date + '.' + file_format
-
-        # Create stats file
-        stream = make_site_access_stats_file(stats, agg_date)
+        for stats_type, stat in stats.items():
+            file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
+            setting_file_name = current_app.config['WEKO_ADMIN_SITELICENSE_REPORT_FILE_NAMES'].get(
+                stats_type, '_')
+            file_name = setting_file_name + '_' + agg_date + '.' + file_format
+            output_files.append({
+                'file_name': file_name,
+                'stream': make_site_access_stats_file(stat, stats_type, agg_date, result)})
 
         # Package zip file
         report_zip = zipfile.ZipFile(zip_stream, 'w')
-        report_zip.writestr(file_name, stream.getvalue().encode('utf-8-sig'))
+        for f in output_files:
+            report_zip.writestr(f['file_name'],
+                                f['stream'].getvalue().encode('utf-8-sig'))
         report_zip.close()
     except Exception as e:
         current_app.logger.error('Unexpected error: ', e)
@@ -521,30 +644,47 @@ def package_site_access_stats_file(stats, agg_date):
     return zip_stream
 
 
-def make_site_access_stats_file(stats, agg_date):
-    """Make tsv site access report file for 1 organization."""
+def make_site_access_stats_file(stats, stats_type, agg_date, result):
+    """Make tsv site access report file for 1 organization.
 
-    from .config import WEKO_ADMIN_REPORT_HEADERS, \
-                        WEKO_ADMIN_OUTPUT_FORMAT, \
-                        WEKO_ADMIN_REPORT_COLS
+    Args:
+        stats (dict): calculation data by site license name.
+        stats_type (string): calculation data type.
+        agg_date (date): aggregation date.
+        result (dict): calculation data.
+    
+    Returns:
+        StringIO: output files stream.
+    """
+    cols = []
+    count_cols = []
 
-    file_type = 'site_access'
-    header_row = WEKO_ADMIN_REPORT_HEADERS.get(file_type)
+    reposytory_name = current_app.config.get('WEKO_ADMIN_SITELICENSE_REPORT_REPOSYTORY_NAME')
+    dt = datetime.now()
+    now_date = dt.date()
 
     file_output = StringIO()
-    file_format = WEKO_ADMIN_OUTPUT_FORMAT.lower()
+    file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
     file_delimiter = '\t' if file_format == 'tsv' else ','
     writer = csv.writer(file_output, delimiter=file_delimiter, lineterminator="\n")
 
-    writer.writerows([[header_row],
-                      [_('Aggregation Month'), agg_date],
+    writer.writerows([[_('Site name'), reposytory_name],
+                      [_('Creation date'), now_date],
+                      [_('site_license_month'), agg_date],
                       ['']])
 
-    cols = WEKO_ADMIN_REPORT_COLS.get(file_type, [])
-    cols = [[_('Institution Name')] + cols]
-    writer.writerows(cols)
+    cols_setting = current_app.config['WEKO_ADMIN_SITELICENSE_REPORT_COLS'].get(stats_type, [])
+    cols = pickle.loads(pickle.dumps(cols_setting, -1))
+    count_cols = current_app.config['WEKO_ADMIN_SITELICENSE_REPORT_COUNT_COLS'].get(stats_type,[])
 
-    write_report_file_rows(writer, [stats], file_type)
+    for col in count_cols:
+        for date in result['datelist']:
+            count_col = col + '(' + _(date) + ')'
+            cols.append(count_col)
+
+    writer.writerows([cols])
+    
+    write_sitelicense_report_file_rows(writer, stats, stats_type, result)
 
     return file_output
 
