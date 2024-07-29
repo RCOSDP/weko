@@ -11,6 +11,7 @@ from flask_babelex import gettext as _
 from flask_mail import Message
 from werkzeug.local import LocalProxy
 
+from invenio_accounts.models import User
 from invenio_mail.models import MailConfig, MailTemplates
 
 from . import config
@@ -131,7 +132,9 @@ class MailSettingView(BaseView):
             msg = Message()
             msg.subject = rf['subject']
             msg.body = rf['body']
-            msg.recipients = [rf['recipient']]
+            msg.recipients = rf['recipients']
+            msg.cc = rf['cc', []]
+            msg.bcc = rf['bcc', []]
             current_app.extensions['mail'].send(msg)
             return True
         except Exception as ex:
@@ -161,6 +164,29 @@ class MailTemplatesView(BaseView):
         """
 
         mail_templates = request.get_json()['mail_templates']
+        invalid_emails_info = {}
+        for m in mail_templates:
+            recipients = m['content'].get('recipients', '').split(',') if m['content'].get('recipients') else []
+            cc = m['content'].get('cc', '').split(',') if m['content'].get('cc') else []
+            bcc = m['content'].get('bcc', '').split(',') if m['content'].get('bcc') else []
+            emails = recipients
+            emails.extend(cc)
+            emails.extend(bcc)
+            if emails:
+                invalid_emails = get_invalid_emails(emails)
+                if invalid_emails:
+                    invalid_emails_info[m['key']] = invalid_emails
+
+        if invalid_emails_info:
+            invalid_emails_message = _("Invalid email addresses ({emails}) detected. Please correct them to match the addresses which are registered in WEKO.").format(emails=", ".join([email for sublist in invalid_emails_info.values() for email in sublist]))
+            result = {
+                "status": False,
+                "msg": invalid_emails_message,
+                "data": MailTemplates.get_templates(),
+                "anoymas_list": invalid_emails_info,
+            }
+            return jsonify(result), 200
+
         status = True
         for m in mail_templates:
             status = status and MailTemplates.save_and_update(m)
@@ -200,6 +226,15 @@ class MailTemplatesView(BaseView):
                 "data": MailTemplates.get_templates()
             }
         return jsonify(result), 200
+
+
+def get_invalid_emails(emails):
+    invalid_emails = []
+    for m in emails:
+        user_mail = User.query.filter_by(email=m).first()
+        if not user_mail:
+            invalid_emails.append(m)
+    return invalid_emails
 
 
 mail_adminview = {

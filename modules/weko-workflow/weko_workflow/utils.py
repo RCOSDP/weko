@@ -2246,11 +2246,22 @@ def send_mail_reminder(mail_info):
 
     :mail_info: object
     """
-    subject, body = get_mail_data(mail_info.get('mail_id'))
-    if not body:
+    mail_data = get_mail_data(mail_info.get('mail_id'))
+
+    subject = mail_data.get('mail_subject')
+    body = mail_data.get('mail_body')
+    recipients = mail_data.get('mail_recipients')
+
+    if not subject and body:
         raise ValueError('Cannot get email body')
-    body = replace_characters(mail_info, body)
-    if not send_mail(subject, mail_info.get('mail_address'), body):
+    else:
+        body = replace_characters(mail_info, body)
+        recipients += [mail_info.get('register_user_mail')]
+
+    mail_data['mail_body'] = body
+    mail_data['mail_recipients'] = recipients
+
+    if not send_mail(mail_data):
         raise ValueError('Cannot send mail')
 
 
@@ -2259,11 +2270,18 @@ def send_mail_approval_done(mail_info):
 
     :mail_info: object
     """
-    subject, body = email_pattern_approval_done(
-        mail_info.get('item_type_name'))
-    if body and subject:
+    mail_data = email_pattern_approval_done(mail_info.get('item_type_name'))
+
+    subject = mail_data.get('mail_subject')
+    body = mail_data.get('mail_body')
+    recipients = mail_data.get('mail_recipients')
+
+    if subject and body:
         body = replace_characters(mail_info, body)
-        send_mail(subject, mail_info.get('register_user_mail'), body)
+        recipients += [mail_info.get('register_user_mail')]
+        mail_data['mail_body'] = body
+        mail_data['mail_recipients'] = recipients
+        send_mail(mail_data)
 
 
 def send_mail_registration_done(mail_info, mail_id):
@@ -2271,10 +2289,18 @@ def send_mail_registration_done(mail_info, mail_id):
 
     :mail_info: object
     """
-    subject, body = get_mail_data(mail_id)
-    if body and subject:
+    mail_data = get_mail_data(mail_info.get('mail_id'))
+
+    subject = mail_data.get('mail_subject')
+    body = mail_data.get('mail_body')
+    recipients = mail_data.get('mail_recipients')
+
+    if subject and body:
         body = replace_characters(mail_info, body)
-        send_mail(subject, mail_info.get('register_user_mail'), body)
+        recipients += [mail_info.get('register_user_mail')]
+        mail_data['mail_body'] = body
+        mail_data['mail_recipients'] = recipients
+        send_mail(mail_data)
 
 
 def send_mail_request_approval(mail_info):
@@ -2290,26 +2316,36 @@ def send_mail_request_approval(mail_info):
         elif next_step == 'approval_guarantor':
             approver_mail = mail_info.get('guarantor_mail_address')
         if approver_mail:
-            subject, body = email_pattern_request_approval(
+            mail_data = email_pattern_request_approval(
                 mail_info.get('item_type_name'), next_step)
-        if body and subject:
+        subject = mail_data.get('mail_subject')
+        body = mail_data.get('mail_body')
+        recipients = mail_data.get('mail_recipients')
+        if subject and body:
             subject = replace_characters(mail_info, subject)
             body = replace_characters(mail_info, body)
-            send_mail(subject, approver_mail, body)
+            recipients += [approver_mail]
+            mail_data['mail_subject'] = subject
+            mail_data['mail_body'] = body
+            mail_data['mail_recipients'] = recipients
+            send_mail(mail_data)
 
 
-def send_mail(subject, recipient, body):
+def send_mail(mail_data):
     """Send an email via the Flask-Mail extension.
 
     :subject: Email subject
-    :recipient: Email recipient
+    :recipients: Email recipients
     :body: content of email
     """
-    if recipient:
+
+    if mail_data:
         rf = {
-            'subject': subject,
-            'body': body,
-            'recipient': recipient
+            'subject': mail_data.get('mail_subject'),
+            'recipients': mail_data.get('mail_recipients'),
+            'cc': mail_data.get('mail_cc'),
+            'bcc': mail_data.get('mail_bcc'),
+            'body': mail_data.get('mail_body')
         }
         return MailSettingView.send_statistic_mail(rf)
 
@@ -2363,9 +2399,22 @@ def get_mail_data(mail_id):
     """
     mt = MailTemplates.get_by_id(mail_id)
     if mt:
-        return mt.mail_subject, mt.mail_body
+        return {
+            "mail_subject": mt.mail_subject,
+            "mail_body": mt.mail_body,
+            "mail_recipients": mt.mail_recipients.split(',') if mt.mail_recipients else [],
+            "mail_cc": mt.mail_cc.split(',') if mt.mail_cc else [],
+            "mail_bcc": mt.mail_bcc.split(',') if mt.mail_bcc else []
+        }
     else:
-        return "", ""
+        return {
+            "mail_subject": "",
+            "mail_body": "",
+            "mail_recipients": [],
+            "mail_cc": [],
+            "mail_bcc": []
+        }
+
 
 def get_mail_data_tpl(file_name):
     """Get data of a email.
@@ -2417,53 +2466,6 @@ def get_file_path(file_name):
     else:
         return ""
 
-def get_mail_data_tpl(file_name):
-    """Get data of a email.
-
-    :file_name: file name template
-    """
-    file_path = get_file_path(file_name)
-    return get_subject_and_content(file_path)
-
-def get_subject_and_content(file_path):
-    """Get mail subject and content from template file.
-
-    :file_path: this is a full path
-    """
-    import os
-    if not os.path.exists(file_path):
-        return None, None
-    file = open(file_path, 'r')
-    subject = body = ''
-    index = 0
-    """ Get subject and content body from template file """
-    """ The first line is mail subject """
-    """ Exclude the first line is mail content """
-    for line in file:
-        if index == 0:
-            subject = line
-        else:
-            body += line
-        index += 1
-    """ Custom subject (remove 'Subject：' from subject) """
-    subject = subject.replace('Subject：', '')
-    subject = subject.replace('\n', '')
-    return subject, body
-
-def get_file_path(file_name):
-    """Get file path from file name.
-
-    :file_name: file name
-    """
-    config = current_app.config
-    template_folder_path = \
-        config.get("WEKO_WORKFLOW_MAIL_TEMPLATE_FOLDER_PATH")
-  
-    # Get file path (template path + file name)
-    if template_folder_path is not None and file_name is not None:        
-        return os.path.join(template_folder_path, file_name)
-    else:       
-        return ""
 
 def replace_characters(data, content):
     """Replace character for content.
@@ -3267,16 +3269,28 @@ def save_activity_data(data: dict) -> NoReturn:
     if activity_id:
         WorkActivity().update_activity(activity_id, activity_data)
 
-def send_mail_url_guest_user(mail_info: dict) -> bool:
+def send_mail_url_guest_user(mail_info):
     """Send mail url guest_user.
 
     :mail_info: object
     """
-    subject, body = get_mail_data(mail_info.get('mail_id'))
-    if not body:
+    mail_data = get_mail_data(mail_info.get('mail_id'))
+
+    subject  = mail_data.get('mail_subject')
+    body = mail_data.get('mail_body')
+    recipients = mail_data.get('mail_recipients')
+    current_app.logger.warning(mail_data)
+    current_app.logger.warning(mail_info)
+
+    if not subject and body:
         return False
-    body = replace_characters(mail_info, body)
-    if not send_mail(subject, mail_info.get('mail_address'), body):
+    else:
+        body = replace_characters(mail_info, body)
+        recipients += [mail_info.get('mail_address')]
+        mail_data['mail_body'] = body
+        mail_data['mail_recipients'] = recipients
+
+    if not send_mail(mail_data):
         return False
     else:
         return True
@@ -3842,10 +3856,18 @@ def process_send_mail(mail_info, mail_id):
         current_app.logger.error('Mail address is not defined')
         return
 
-    subject, body = get_mail_data(mail_id)
-    if body and subject:
+    mail_data = get_mail_data(mail_id)
+
+    subject = mail_data.get('mail_subject')
+    body = mail_data.get('mail_body')
+    recipients = mail_data.get('mail_resipients')
+
+    if subject and body:
         body = replace_characters(mail_info, body)
-        return send_mail(subject, mail_info['mail_recipient'], body)
+        recipients += [mail_info.get('mail_recipient')]
+        mail_data['mail_body'] = body
+        mail_data['mail_resipients'] = recipients
+        send_mail(mail_data)
 
 
 def process_send_mail_tpl(mail_info, mail_pattern_name):

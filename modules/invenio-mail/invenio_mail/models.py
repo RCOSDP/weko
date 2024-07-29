@@ -91,6 +91,9 @@ class MailTemplates(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     mail_subject = db.Column(db.String(255), default='')
     mail_body = db.Column(db.Text, nullable=True)
+    mail_recipients = db.Column(db.String(255), default='')
+    mail_cc = db.Column(db.String(255), default='')
+    mail_bcc = db.Column(db.String(255), default='')
     default_mail = db.Column(db.Boolean, default=False)
     mail_genre_id = db.Column('genre_id', db.Integer,
                               db.ForeignKey('mail_template_genres.id', onupdate='CASCADE', ondelete='RESTRICT'),
@@ -103,7 +106,10 @@ class MailTemplates(db.Model):
             "flag": self.default_mail,
             "content": {
                 "subject": self.mail_subject,
-                "body": self.mail_body
+                "body": self.mail_body,
+                "recipients": self.mail_recipients,
+                "cc": self.mail_cc,
+                "bcc": self.mail_bcc
             },
             'genre_order': self.genre.id if self.genre else None,
             'genre_key': self.genre.name if self.genre else None,
@@ -151,6 +157,9 @@ class MailTemplates(db.Model):
             obj.genre_id = current_app.config["INVENIO_MAIL_DEFAULT_TEMPLATE_CATEGORY_ID"]
         obj.mail_subject = data['content']['subject']
         obj.mail_body = data['content']['body']
+        obj.mail_recipients = data['content']['recipients']
+        obj.mail_cc = data['content']['cc']
+        obj.mail_bcc = data['content']['bcc']
         try:
             if data['key']:
                 db.session.merge(obj)
