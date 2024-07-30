@@ -101,7 +101,7 @@ msgid "Others"
 msgstr ""
 
 # Mail template editing
-msdid "Subject"
+msgid "Subject"
 msgstr ""
 
 msgid "Recipients"

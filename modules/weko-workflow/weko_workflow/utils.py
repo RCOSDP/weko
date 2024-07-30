@@ -2289,7 +2289,7 @@ def send_mail_registration_done(mail_info, mail_id):
 
     :mail_info: object
     """
-    mail_data = get_mail_data(mail_info.get('mail_id'))
+    mail_data = get_mail_data(mail_id)
 
     subject = mail_data.get('mail_subject')
     body = mail_data.get('mail_body')
@@ -3279,8 +3279,6 @@ def send_mail_url_guest_user(mail_info):
     subject  = mail_data.get('mail_subject')
     body = mail_data.get('mail_body')
     recipients = mail_data.get('mail_recipients')
-    current_app.logger.warning(mail_data)
-    current_app.logger.warning(mail_info)
 
     if not subject and body:
         return False

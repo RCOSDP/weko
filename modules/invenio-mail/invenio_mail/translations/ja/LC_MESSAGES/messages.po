@@ -102,7 +102,7 @@ msgid "Others"
 msgstr "その他テンプレート"
 
 # Mail templates editing
-msdid "Subject"
+msgid "Subject"
 msgstr "件名"
 
 msgid "Recipients"

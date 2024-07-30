@@ -133,8 +133,8 @@ class MailSettingView(BaseView):
             msg.subject = rf['subject']
             msg.body = rf['body']
             msg.recipients = rf['recipients']
-            msg.cc = rf['cc', []]
-            msg.bcc = rf['bcc', []]
+            msg.cc = rf.get('cc', [])
+            msg.bcc = rf.get('bcc', [])
             current_app.extensions['mail'].send(msg)
             return True
         except Exception as ex:
