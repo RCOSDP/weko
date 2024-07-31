@@ -63,6 +63,22 @@
         null,
         "所属しているアイテムのメタデータを外部に公開しない場合はチェックをOFFにしてください"
     ],
+    "Harvest_check_message": [
+        null,
+        "公開設定を有効にすると、インデックスに登録されているアイテムの個人情報が公開されます。公開設定を有効化しますか。"
+    ],
+    "Harvest_checkbox": [
+        null,
+        "公開設定を有効化する"
+    ],
+    "btn_message_enable": [
+        null,
+        "変更する"
+    ],
+    "btn_message_close": [
+        null,
+        "閉じる"
+    ],
     "Online_Issn": [
         null,
         "ONLINE ISSN"

@@ -63,6 +63,22 @@
         null,
         "Please turn off the check if you do not want to open the metadata of the belonging items to public"
     ],
+    "Harvest_checkbox": [
+        null,
+        "Harvest to the public"
+    ],
+    "Harvest_check_message": [
+        null,
+        "If you enable public settings, personal information about the items in the index will be made public. Do you want to enable public settings?"
+    ],
+    "btn_message_enable": [
+        null,
+        "enable"
+    ],
+    "btn_message_close": [
+        null,
+        "close"
+    ],
     "Online_Issn": [
         null,
         "Online ISSN"
