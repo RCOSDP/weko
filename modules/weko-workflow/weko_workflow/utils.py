@@ -2252,11 +2252,13 @@ def send_mail_reminder(mail_info):
     body = mail_data.get('mail_body')
     recipients = mail_data.get('mail_recipients')
 
-    if not subject and body:
+    if not subject:
+        raise ValueError('Cannot get email subject')
+    elif not body:
         raise ValueError('Cannot get email body')
     else:
         body = replace_characters(mail_info, body)
-        recipients += [mail_info.get('register_user_mail')]
+        recipients += [mail_info.get('mail_address')]
 
     mail_data['mail_body'] = body
     mail_data['mail_recipients'] = recipients
@@ -3280,7 +3282,7 @@ def send_mail_url_guest_user(mail_info):
     body = mail_data.get('mail_body')
     recipients = mail_data.get('mail_recipients')
 
-    if not subject and body:
+    if not subject or not body:
         return False
     else:
         body = replace_characters(mail_info, body)

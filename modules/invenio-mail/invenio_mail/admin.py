@@ -173,7 +173,7 @@ class MailTemplatesView(BaseView):
             emails.extend(cc)
             emails.extend(bcc)
             if emails:
-                invalid_emails = get_invalid_emails(emails)
+                invalid_emails = self.get_invalid_emails(emails)
                 if invalid_emails:
                     invalid_emails_info[m['key']] = invalid_emails
 
@@ -183,7 +183,6 @@ class MailTemplatesView(BaseView):
                 "status": False,
                 "msg": invalid_emails_message,
                 "data": MailTemplates.get_templates(),
-                "anoymas_list": invalid_emails_info,
             }
             return jsonify(result), 200
 
@@ -228,13 +227,13 @@ class MailTemplatesView(BaseView):
         return jsonify(result), 200
 
 
-def get_invalid_emails(emails):
-    invalid_emails = []
-    for m in emails:
-        user_mail = User.query.filter_by(email=m).first()
-        if not user_mail:
-            invalid_emails.append(m)
-    return invalid_emails
+    def get_invalid_emails(self, emails):
+        invalid_emails = []
+        for m in emails:
+            user_mail = User.query.filter_by(email=m).first()
+            if not user_mail:
+                invalid_emails.append(m)
+        return invalid_emails
 
 
 mail_adminview = {
