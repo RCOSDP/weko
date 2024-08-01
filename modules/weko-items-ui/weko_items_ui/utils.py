@@ -3013,11 +3013,12 @@ def make_stats_file_with_permission(item_type_id, recids,
                         new_label += '[{}]'
                         if isinstance(data, dict):
                             data = [data]
-                        if data and data[idx].get(key):
-                            for idx_c in range(len(data[idx][key])):
-                                key_list.append(new_key.format(idx_c))
-                                key_label.append(new_label.format(idx_c))
-                                key_data.append(data[idx][key][idx_c])
+                        if data and len(data) > idx:
+                            if data[idx].get(key):
+                                for idx_c in range(len(data[idx][key])):
+                                    key_list.append(new_key.format(idx_c))
+                                    key_label.append(new_label.format(idx_c))
+                                    key_data.append(data[idx][key][idx_c])
                         else:
                             key_list.append(new_key.format('0'))
                             key_label.append(new_label.format('0'))
