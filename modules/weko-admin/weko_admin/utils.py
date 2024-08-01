@@ -659,7 +659,7 @@ def make_site_access_stats_file(stats, stats_type, agg_date, result):
     cols = []
     count_cols = []
 
-    reposytory_name = current_app.config.get('WEKO_ADMIN_SITELICENSE_REPORT_REPOSYTORY_NAME')
+    reposytory_name = current_app.config.get('WEKO_ADMIN_SITELICENSE_REPORT_REPOSITORY_NAME')
     dt = datetime.now()
     now_date = dt.date()
 
