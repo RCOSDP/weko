@@ -704,6 +704,9 @@ def handle_check_required_data(mapping_data, mapping_key):
         _requirements = check_required_data(value, key, True)
         if _requirements:
             requirements.extend(_requirements)
+        else:
+            requirements = []
+            break
 
     return requirements, keys, values
 
