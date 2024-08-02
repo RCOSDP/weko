@@ -19,7 +19,7 @@ import six
 from celery.utils.log import get_task_logger
 from dateutil import parser
 from dateutil.relativedelta import relativedelta
-from elasticsearch import VERSION as ES_VERSION
+from invenio_search.engine import search
 from flask import current_app
 from invenio_search import current_search_client
 from invenio_search.engine import dsl, search
@@ -118,7 +118,7 @@ class BookmarkAPI:
             if not Index(self.bookmark_index, using=self.client).exists():
                 self.client.indices.create(
                     index=self.bookmark_index, body=BookmarkAPI.MAPPINGS
-                    if ES_VERSION[0] < 7 else BookmarkAPI.MAPPINGS_ES7)
+                    if search.VERSION[0] < 7 else BookmarkAPI.MAPPINGS_ES7)
             return func(self, *args, **kwargs)
         return wrapped
 

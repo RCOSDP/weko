@@ -21,17 +21,13 @@ from typing import Generator, NoReturn, Union
 import click
 import netaddr
 from dateutil import parser
-from elasticsearch import VERSION as ES_VERSION
-from elasticsearch import exceptions as es_exceptions
-from elasticsearch_dsl.aggs import A
-from elasticsearch.helpers import bulk
-from elasticsearch_dsl import Search
+
 from flask import current_app, request, session
 from flask_login import current_user
 from geolite2 import geolite2
 from invenio_cache import current_cache
 from invenio_search import current_search_client
-from invenio_search.engine import dsl
+from invenio_search.engine import dsl, search
 from weko_accounts.utils import get_remote_addr
 
 from . import config
@@ -188,11 +184,6 @@ def parse_bucket_response(raw_res, pretty_result=dict()):
             raw_res["buckets"][0], pretty_result)
     else:
         return pretty_result
-
-
-def get_doctype(doc_type):
-    """Configure doc_type value according to ES version."""
-    return doc_type if ES_VERSION[0] < 7 else "_doc"
 
 
 def is_valid_access():
@@ -456,7 +447,7 @@ class QuerySearchReportHelper(object):
                 all.append(current_report)
             all = sorted(all, key=lambda x:x["count"], reverse=True) 
             result["all"] = all
-        except es_exceptions.NotFoundError as e:
+        except search.exceptions.NotFoundError as e:
             current_app.logger.debug(
                 "Indexes do not exist yet:" + str(e.info["error"]))
             result["all"] = []
@@ -664,11 +655,10 @@ class QueryRecordViewPerIndexReportHelper(object):
     @classmethod
     def build_query(cls, start_date, end_date, after_key=None):
         """Get nested aggregation by index id."""
-        agg_query = Search(
+        agg_query = dsl.Search(
             using=current_search_client,
             index="{}-events-stats-record-view".format(
-                current_app.config["SEARCH_INDEX_PREFIX"].strip("-")),
-            doc_type="stats-record-view")[0:0]  # FIXME: Get ALL results
+                current_app.config["SEARCH_INDEX_PREFIX"].strip("-")))[0:0]  # FIXME: Get ALL results
 
         if start_date is not None and end_date is not None:
             time_range = {}
@@ -679,8 +669,8 @@ class QueryRecordViewPerIndexReportHelper(object):
                 "term", **{"is_restricted": False})
 
         size = current_app.config["STATS_ES_INTEGER_MAX_VALUE"]
-        sources = [{cls.index_id_field: A("terms", field=cls.index_id_field)},
-                   {cls.index_name_field: A("terms", field=cls.index_name_field)}]
+        sources = [{cls.index_id_field: dsl.aggs.A("terms", field=cls.index_id_field)},
+                   {cls.index_name_field: dsl.aggs.A("terms", field=cls.index_name_field)}]
 
         base_agg = agg_query.aggs.bucket(cls.nested_path, "nested", path=cls.nested_path)
         if after_key:
@@ -847,7 +837,7 @@ class QueryRecordViewReportHelper(object):
             all_res = all_query.run(**params)
             cls.Calculation(all_res, all_list)
 
-        except es_exceptions.NotFoundError as e:
+        except search.exceptions.NotFoundError as e:
             current_app.logger.debug(e)
             result["all"] = []
         except Exception as e:
@@ -1190,7 +1180,7 @@ class QueryItemRegReportHelper(object):
                                         reverse=True)
                 else:
                     result = []
-            except es_exceptions.NotFoundError as e:
+            except search.exceptions.NotFoundError as e:
                 current_app.logger.debug(e)
                 result = []
             except Exception as e:
@@ -1261,7 +1251,7 @@ class QueryRankingHelper(object):
 
             cls.Calculation(all_res, result)
 
-        except es_exceptions.NotFoundError as e:
+        except search.exceptions.NotFoundError as e:
             current_app.logger.debug(e)
         except Exception as e:
             current_app.logger.debug(e)
@@ -1291,7 +1281,7 @@ class QueryRankingHelper(object):
                 if r.get("_source", {}).get("path"):
                     result.append(r["_source"])
 
-        except es_exceptions.NotFoundError as e:
+        except search.exceptions.NotFoundError as e:
             current_app.logger.debug(e)
         except Exception as e:
             current_app.logger.debug(e)
@@ -1342,8 +1332,8 @@ class StatsCliUtil:
 
         :param bookmark: set True if delete bookmark
         """
-        for _index, _type in self.__prepare_es_indexes(delete=True):
-            self.__cli_delete_es_index(_index, _type)
+        for _index in self.__prepare_es_indexes(delete=True):
+            self.__cli_delete_es_index(_index)
         if bookmark:
             if self.verbose:
                 click.secho(
@@ -1352,8 +1342,8 @@ class StatsCliUtil:
                 )
             _bookmark_index = "{}-stats-bookmarks".format(
                 self._search_index_prefix)
-            _bookmark_doc_type = get_doctype("aggregation-bookmark")
-            self.__cli_delete_es_index(_bookmark_index, _bookmark_doc_type)
+
+            self.__cli_delete_es_index(_bookmark_index)
 
     def restore_data(self, bookmark: bool = False) -> NoReturn:
         """Restore stats data.
@@ -1395,7 +1385,6 @@ class StatsCliUtil:
             # In case prepare indexes for the stats bookmark
             if bookmark_index:
                 _index = "{}-stats-bookmarks".format(search_index_prefix)
-                _doc_type = get_doctype("aggregation-bookmark")
             # In case prepare indexes for the stats event
             elif self.index_prefix:
                 _index = "{0}-{1}-{2}".format(
@@ -1403,14 +1392,12 @@ class StatsCliUtil:
                     self.index_prefix,
                     search_type
                 )
-                _doc_type = search_type
             else:
                 _index = "{0}-{1}".format(search_index_prefix, search_type)
-                _doc_type = "{0}-{1}-aggregation".format(_type, "day")
             if not delete:
                 yield _index
             else:
-                yield _index, _doc_type
+                yield _index
 
     def __build_es_data(self, data_list: list) -> Generator:
         """Build Elasticsearch data.
@@ -1494,7 +1481,7 @@ class StatsCliUtil:
         :param flush_indices:
         """
         if restore_data:
-            success, failed = bulk(
+            success, failed = search.helpers.bulk(
                 current_search_client,
                 restore_data,
                 stats_only=self.force,
@@ -1512,16 +1499,14 @@ class StatsCliUtil:
                 click.secho("There is no stats data from Database.",
                             fg="yellow")
 
-    def __cli_delete_es_index(self, _index: str, doc_type: str) -> NoReturn:
+    def __cli_delete_es_index(self, _index: str) -> NoReturn:
         """Delete ES index.
 
         :param _index: Elasticsearch index.
-        :param doc_type: document type.
         """
-        query = Search(
+        query = dsl.Search(
             using=current_search_client,
-            index=_index,
-            doc_type=doc_type,
+            index=_index
         ).params(raise_on_error=False, ignore=[400, 404])
         range_args = {}
         if self.start_date:
@@ -1537,13 +1522,12 @@ class StatsCliUtil:
                     self.affected_indices.add(doc.meta.index)
                 yield dict(_index=doc.meta.index,
                            _op_type="delete",
-                           _id=doc.meta.id,
-                           _type=doc.meta.doc_type)
+                           _id=doc.meta.id)
             if self.affected_indices is not None:
                 current_search_client.indices.flush(
                     index=",".join(self.affected_indices), wait_if_ongoing=True)
 
-        success, failed = bulk(
+        success, failed = search.helpers.bulk(
             current_search_client,
             _delete_actions(),
             stats_only=self.force,
