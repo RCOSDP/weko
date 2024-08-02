@@ -659,7 +659,7 @@ def make_site_access_stats_file(stats, stats_type, agg_date, result):
     cols = []
     count_cols = []
 
-    reposytory_name = current_app.config.get('WEKO_ADMIN_SITELICENSE_REPORT_REPOSITORY_NAME')
+    repository_name = current_app.config.get('WEKO_ADMIN_SITELICENSE_REPORT_REPOSITORY_NAME')
     dt = datetime.now()
     now_date = dt.date()
 
@@ -668,7 +668,7 @@ def make_site_access_stats_file(stats, stats_type, agg_date, result):
     file_delimiter = '\t' if file_format == 'tsv' else ','
     writer = csv.writer(file_output, delimiter=file_delimiter, lineterminator="\n")
 
-    writer.writerows([[_('Site name'), reposytory_name],
+    writer.writerows([[_('Site name'), repository_name],
                       [_('Creation date'), now_date],
                       [_('site_license_month'), agg_date],
                       ['']])
