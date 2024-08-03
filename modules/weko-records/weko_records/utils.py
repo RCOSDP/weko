@@ -2081,6 +2081,7 @@ def check_info_in_metadata(str_key_lang, str_key_val, str_lang, metadata):
     ):
         if "." in str_key_lang:
             str_key_lang = str_key_lang.split(".")
+
         if "." in str_key_val:
             str_key_val = str_key_val.split(".")
         metadata = (
@@ -2091,6 +2092,7 @@ def check_info_in_metadata(str_key_lang, str_key_val, str_lang, metadata):
             if not isinstance(obj,list):
                 obj = obj.get("attribute_value_mlt")
             save = obj
+
             for ob in str_key_val:
                 if (
                     ob not in str_key_val[0]
@@ -2099,6 +2101,7 @@ def check_info_in_metadata(str_key_lang, str_key_val, str_lang, metadata):
                     for x in save:
                         if x.get(ob):
                             save = x.get(ob)
+
             for s in save:
                 if s is not None and str_lang is None:
                     value = s
@@ -2108,7 +2111,6 @@ def check_info_in_metadata(str_key_lang, str_key_val, str_lang, metadata):
                             value.strip()
                             if len(value) > 0:
                                 return value
-                
                 if (
                     s and str_key_lang 
                     and isinstance(s, dict)
@@ -2121,6 +2123,36 @@ def check_info_in_metadata(str_key_lang, str_key_val, str_lang, metadata):
                         and len(s.get(str_key_val[-1]).strip()) > 0
                     ):
                         return s.get(str_key_val[-1])
+
+                if (
+                    s and str_key_lang 
+                    and isinstance(s, dict)
+                    and s.get(str_key_lang[-1])
+                    and s.get(str_key_val[-1])
+                ):
+                    if (
+                        s.get(str_key_lang[-1]).strip() == str_lang.strip()
+                        and str_key_val[-1] in s
+                        and len(s.get(str_key_val[-1]).strip()) > 0
+                    ):
+                        return s.get(str_key_val[-1])
+
+                if (
+                    s and str_key_lang 
+                    and isinstance(s, dict)
+                    and (str_key_lang[-1]).startswith("=")
+                    and s.get(str_key_val[-1])
+                ):
+                    _vals = s.values()
+                    _lang = ((str_key_lang[-1]).replace("=","")).strip()
+                    if (
+                        _lang == str_lang.strip()
+                        and _lang in _vals
+                        and str_key_val[-1] in s
+                        and len(s.get(str_key_val[-1]).strip()) > 0
+                    ):
+                        return s.get(str_key_val[-1])
+                                    
     return None
 
 
