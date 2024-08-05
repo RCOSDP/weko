@@ -54,13 +54,13 @@ provision_web_common_ubuntu14 () {
 
     # install useful system tools:
     $sudo apt-get -y install \
-         curl \
-         git \
-         rlwrap \
-         screen \
-         vim \
-         gnupg \
-	 libpcre3-dev
+         curl=8.7.1-5 \
+         git=1:2.45.1-1 \
+         rlwrap=0.46.1-1 \
+         screen=4.9.1-1 \
+         vim=2:9.1.0377-1 \
+         gnupg=2.2.43-6 \
+	 libpcre3-dev=2:8.39-15
     # sphinxdoc-install-useful-system-tools-ubuntu14-end
 
     # sphinxdoc-add-nodejs-external-repository-ubuntu14-begin
@@ -76,19 +76,19 @@ provision_web_common_ubuntu14 () {
 
     # sphinxdoc-install-web-common-ubuntu14-begin
     $sudo apt-get -y install \
-         libffi-dev \
-         libfreetype6-dev \
-         libjpeg-dev \
-         libmsgpack-dev \
-         libssl-dev \
-         libtiff-dev \
-         libxml2-dev \
+         libffi-dev=3.4.6-1 \
+         libfreetype6-dev=2.13.2+dfsg-1 \
+         libjpeg-dev=1:2.1.5-3 \
+         libmsgpack-dev=4.0.0-3 \
+         libssl-dev=3.2.1-3 \
+         libtiff-dev=4.5.1+git230720-4 \
+         libxml2-dev=2.9.14+dfsg-1.3 \
          libxslt-dev \
-         libzip-dev \
-         libjpeg-dev \
-         nodejs \
-         python-dev \
-         python-pip
+         libzip-dev=1.7.3-1.1 \
+         libjpeg-dev=1:2.1.5-3 \
+         nodejs=20.13.1+dfsg-2 \
+         python-dev=2.7.18-3 \
+         python-pip=24.0+dfsg-2
     # sphinxdoc-install-web-common-ubuntu14-end
 }
 
@@ -96,7 +96,7 @@ provision_web_libpostgresql_ubuntu14 () {
 
     # sphinxdoc-install-web-libpostgresql-ubuntu14-begin
     $sudo apt-get -y install \
-         libpq-dev
+         libpq-dev=16.3-1
     # sphinxdoc-install-web-libpostgresql-ubuntu14-end
 }
 
@@ -108,11 +108,11 @@ provision_web_common_centos7 () {
 
     # install useful system tools:
     $sudo yum install -y \
-         curl \
-         git \
-         rlwrap \
-         screen \
-         vim
+         curl=8.7.1-5 \
+         git=1:2.45.1-1 \
+         rlwrap=0.46.1-1 \
+         screen=4.9.1-1 \
+         vim=2:9.1.0377-1
     # sphinxdoc-install-useful-system-tools-centos7-end
 
     # sphinxdoc-add-nodejs-external-repository-centos7-begin
@@ -245,11 +245,11 @@ setup_libreoffice_ubuntu14 () {
     # sphinxdoc-install-web-libreoffice-ubuntu14-begin
     set +o errexit
     $sudo mkdir -p /usr/share/man/man1
-    $sudo apt-get install default-jre libreoffice-java-common
-    $sudo apt-get install -y libreoffice
+    $sudo apt-get install default-jre=0.75 libreoffice-java-common=4:24.2.3-1
+    $sudo apt-get install -y libreoffice=4:24.2.3-1
     #$sudo apt-get install -y libreoffice-core --no-install-recommends
-    $sudo apt-get install -y fonts-ipafont fonts-ipaexfont # japanese fonts
-    $sudo apt-get install -y supervisor
+    $sudo apt-get install -y fonts-ipafont=00303-23 fonts-ipaexfont=00401-5 # japanese fonts
+    $sudo apt-get install -y supervisor=4.2.5-1
     set -o errexit
     # sphinxdoc-install-web-libreoffice-ubuntu14-end
 }

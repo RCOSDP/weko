@@ -54,7 +54,7 @@ provision_elasticsearch_ubuntu14 () {
 
     # sphinxdoc-install-elasticsearch-ubuntu14-begin
     # install curl:
-    sudo apt-get -y install curl
+    sudo apt-get -y install curl=8.3.0-6
 
     # add external Elasticsearch repository:
     if [[ ! -f /etc/apt/sources.list.d/elasticsearch-2.x.list ]]; then
