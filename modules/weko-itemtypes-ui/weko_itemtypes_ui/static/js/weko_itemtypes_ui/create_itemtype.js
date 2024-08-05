@@ -1,6 +1,9 @@
 // require(["jquery", "bootstrap"],function() {});
 $(document).ready(function () {
   var checkboxTemplate = "/static/templates/weko_deposit/checkboxes.html";
+  $('#txt_title_item').val('Publish Date');
+  $('#txt_title_ja_item').val('公開日');
+  $('#txt_title_en_item').val('PubDate');
 // Number of callbacks(requests) when rendering the page, When add a new callback,
 // please increase/decrease appropriately
   var requestNum = 0;
@@ -204,6 +207,9 @@ $(document).ready(function () {
   });
 
   function create_itemtype_schema(){
+    var titleItem = $('#txt_title_item').val();
+    var titleJa = $('#txt_title_ja_item').val();
+    var titleEn = $('#txt_title_en_item').val();
     page_global.table_row_map['name'] = $('#itemtype_name').val();
     page_global.table_row_map['action'] = $('[name=radio_versionup]:checked').val();
 
@@ -438,14 +444,18 @@ $(document).ready(function () {
 
     page_global.table_row_map.schema.properties["pubdate"] = {
       type: "string",
-      title: "PubDate",
+      title: titleItem,
+      title_i18n: { ja: titleJa, en: titleEn },
       format: "datetime"
     };
     page_global.table_row_map.form.push({
       key: "pubdate",
       type: "template",
-      title: "PubDate",
-      title_i18n: { ja: "公開日", en: "PubDate" },
+      title: titleItem, // 編集されたタイトル
+        title_i18n: { 
+            ja: titleJa,  // 編集された日本語タイトル
+            en: titleEn   // 編集された英語タイトル
+        },
       required: true,
       format: "yyyy-MM-dd",
       templateUrl: "/static/templates/weko_deposit/datepicker.html"
@@ -827,11 +837,11 @@ $(document).ready(function () {
       page_global.meta_list[row_id] = tmp;
     });
     //公開日
-    var tmp_pubdate = {}
-    tmp_pubdate.title = "PubDate";
+    var tmp_pubdate = {};
+    tmp_pubdate.title = $('#txt_title_item').val();    
     tmp_pubdate.title_i18n = {}
-    tmp_pubdate.title_i18n.ja = "公開日";
-    tmp_pubdate.title_i18n.en = "PubDate";
+    tmp_pubdate.title_i18n.ja = $('#txt_title_ja_item').val();
+    tmp_pubdate.title_i18n.en = $('#txt_title_en_item').val();
     tmp_pubdate.input_type = "datetime";
     tmp_pubdate.input_value = "";
     tmp_pubdate.option = {};
@@ -844,12 +854,20 @@ $(document).ready(function () {
     page_global.meta_system = add_meta_system()
     page_global.table_row_map.form = page_global.table_row_map.form.concat(get_form_system())
     add_system_schema_property()
+    console.log(tmp_pubdate.title);
+    console.log(tmp_pubdate.title_i18n.ja);
+    console.log(tmp_pubdate.title_i18n.en);
   }
-
-  // add new meta table row
+  
+ 
   $('#btn_new_itemtype_meta').on('click', function(){
     new_meta_row('item_' + $.now(), propertyOptions);
   });
+   // ボタンがクリックされたときの処理
+   $('.btn-link-item').click(function() {
+    // クリックされたボタンの隣にある多言語設定領域を表示・非表示を切り替える
+    $(this).closest('td').find('.text-title-JaEn').toggleClass('hide');
+    });
 
   function new_meta_row(row_id, option_list, isDisableChangeInputType=false) {
     let isDisable = isDisableChangeInputType ? 'disabled' : '';
@@ -1996,7 +2014,17 @@ $(document).ready(function () {
   function loadPubdateOptions(data){
     if (data.hasOwnProperty("meta_fix") && data.meta_fix.hasOwnProperty("pubdate")){
       let options = data.meta_fix.pubdate.option;
+      let tmp_pubdate = {
+        title: data.meta_fix.pubdate.title,
+        title_i18n: {
+            ja: data.meta_fix.pubdate.title_i18n.ja,
+            en: data.meta_fix.pubdate.title_i18n.en
+        }
+      };
       if(options) {
+        $('#txt_title_item').val(tmp_pubdate.title);    
+        $('#txt_title_ja_item').val(tmp_pubdate.title_i18n.ja);
+        $('#txt_title_en_item').val(tmp_pubdate.title_i18n.en);
         $('#chk_pubdate_1').prop('checked', options.multiple);
         $('#chk_pubdate_2').prop('checked', options.showlist);
         $('#chk_pubdate_3').prop('checked', options.crtf);
