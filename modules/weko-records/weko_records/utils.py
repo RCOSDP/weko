@@ -62,6 +62,7 @@ def json_loader(data, pid, owner_id=None, with_deleted=False, replace_field=True
                     "nameIdentifiers" in v
                     and len(v["nameIdentifiers"]) > 0
                     and "nameIdentifierScheme" in v["nameIdentifiers"][0]
+                    and "nameIdentifier" in v["nameIdentifiers"][0]
                     and v["nameIdentifiers"][0]["nameIdentifierScheme"] == "WEKO"
                 ):
                     author_link.append(v["nameIdentifiers"][0]["nameIdentifier"])
@@ -70,6 +71,7 @@ def json_loader(data, pid, owner_id=None, with_deleted=False, replace_field=True
             and "nameIdentifiers" in value
             and len(value["nameIdentifiers"]) > 0
             and "nameIdentifierScheme" in value["nameIdentifiers"][0]
+            and "nameIdentifier" in value["nameIdentifiers"][0]
             and value["nameIdentifiers"][0]["nameIdentifierScheme"] == "WEKO"
         ):
             author_link.append(value["nameIdentifiers"][0]["nameIdentifier"])
