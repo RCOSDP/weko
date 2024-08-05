@@ -55,6 +55,10 @@
         null,
         "Set the publication date of child indexes recursively"
     ],
+    "example": [
+        null,
+        "E.g:20180628"
+    ],
     "Harvest_Publish": [
         null,
         "Harvest Publish"
