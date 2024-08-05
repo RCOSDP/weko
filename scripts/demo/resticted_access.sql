@@ -157,14 +157,22 @@ N	2023-12-26 11:11:49.404000	2023-12-26 11:11:49.404000	31004	5
 \.
 
 --
--- Delete data mail template genres.
+-- Delete FROM data mail template genres.  
 --
 
-DELETE FROM public.mail_template_genres;
+DELETE FROM public.mail_template_genres WHERE id >= 1 and id <= 3;
 
 --
 -- Data for Name: mail_genres; Type: TABLE DATA; Schema: public; Owner: invenio
 --
+
+-- truncate public.mail_template_genres;
+
+CREATE TABLE public.mail_template_genres (
+	id serial NOT NULL,
+	name varchar(255) NOT NULL,
+	CONSTRAINT pk_mail_template_genres PRIMARY KEY (id)
+);
 
 COPY public.mail_template_genres (id, name) FROM stdin;
 1	Notification of secret URL provision
@@ -176,7 +184,12 @@ COPY public.mail_template_genres (id, name) FROM stdin;
 -- PostgreSQL database dump complete
 --
 
-DELETE FROM public.mail_templates;
+DELETE FROM public.mail_template_genres WHERE id >= 1 and id <= 15;
+
+truncate public.mail_templates;
+
+ALTER TABLE public.mail_templates ADD genre_id int NOT NULL DEFAULT 3;
+ALTER TABLE public.mail_templates ADD CONSTRAINT mail_templates_fk FOREIGN KEY (genre_id) REFERENCES public.mail_template_genres(id) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 --
 -- Data for Name: mail_templates; Type: TABLE DATA; Schema: public; Owner: invenio
