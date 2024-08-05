@@ -41,7 +41,6 @@ class WekoAuthors(object):
         """Create new author."""
         session = db.session
         config_index = current_app.config['WEKO_AUTHORS_ES_INDEX_NAME']
-        config_doc_type = current_app.config['WEKO_AUTHORS_ES_DOC_TYPE']
 
         new_id = Authors.get_sequence(session)
         data["pk_id"] = str(new_id)
@@ -67,7 +66,6 @@ class WekoAuthors(object):
         else:
             RecordIndexer().client.index(
                 index=config_index,
-                doc_type=config_doc_type,
                 id=es_id,
                 body=es_data
             )
@@ -79,7 +77,6 @@ class WekoAuthors(object):
             """Update author data in ES."""
             es_author = RecordIndexer().client.search(
                 index=config_index,
-                doc_type=config_doc_type,
                 body={
                     "query": {
                         'term': {
@@ -90,14 +87,13 @@ class WekoAuthors(object):
                 }
             )
             exist_flg = False
-            if es_author['hits']['total'] > 0:
+            if es_author['hits']['total']['value'] > 0:
                 if es_author['hits']['hits'][0].get('_id') == es_id:
                     exist_flg = True
                     
             if exist_flg:
                 RecordIndexer().client.update(
                     index=config_index,
-                    doc_type=config_doc_type,
                     id=es_id,
                     body={'doc': data}
                 )
@@ -105,7 +101,6 @@ class WekoAuthors(object):
             else:
                 RecordIndexer().client.index(
                     index=config_index,
-                    doc_type=config_doc_type,
                     id=es_id,
                     body=data
                 )
@@ -113,7 +108,6 @@ class WekoAuthors(object):
             
         es_id = None
         config_index = current_app.config['WEKO_AUTHORS_ES_INDEX_NAME']
-        config_doc_type = current_app.config['WEKO_AUTHORS_ES_DOC_TYPE']
 
         try:
             with db.session.begin_nested():

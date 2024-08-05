@@ -86,11 +86,10 @@ def check_email_existed(email: str):
     indexer = RecordIndexer()
     result = indexer.client.search(
         index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
-        doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
         body=body
     )
 
-    if result['hits']['total']:
+    if result['hits']['total']['value']:
         return {
             'email': email,
             'author_id': result['hits']['hits'][0]['_source']['pk_id']
@@ -613,8 +612,8 @@ def get_count_item_link(pk_id):
     if result_itemCnt \
             and 'hits' in result_itemCnt \
             and 'total' in result_itemCnt['hits'] \
-            and result_itemCnt['hits']['total'] > 0:
-        count = result_itemCnt['hits']['total']
+            and result_itemCnt['hits']['total']['value'] > 0:
+        count = result_itemCnt['hits']['total']['value'] 
     return count
 
 
@@ -631,7 +630,6 @@ def count_authors():
     indexer = RecordIndexer()
     result = indexer.client.count(
         index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
-        doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
         body={'query': query}
     )
 
