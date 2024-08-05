@@ -415,13 +415,13 @@ class ReportView(BaseView):
             if aggs_results and aggs_results.get(
                     'aggregations', {}).get('aggs_public'):
                 result = {
-                    'total': aggs_results['hits']['total'],
+                    'total': aggs_results['hits']['total']['value'],
                     'open': aggs_results['aggregations'][
                         'aggs_public']['doc_count']
                 }
                 result['private'] = result['total'] - result['open']
-            
-            
+
+                       
             current_schedule = AdminSettings.get(
                 name='report_email_schedule_settings',
                 dict_to_object=False)

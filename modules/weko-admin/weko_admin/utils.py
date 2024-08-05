@@ -1034,7 +1034,6 @@ class FeedbackMail:
         indexer = RecordIndexer()
         result = indexer.client.search(
             index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
-            doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
             body=body
         )
 
@@ -2359,7 +2358,7 @@ def elasticsearch_reindex( is_db_to_es ):
     assert response.status_code == 200 ,response.text
     current_app.logger.info("add setting percolator") 
 
-    _create_percolator_mapping(tmpindex, "item-v1.0.0")
+    _create_percolator_mapping(tmpindex)
     current_app.logger.info("END create tmpindex") 
     
     # 高速化を期待してインデックスの設定を変更。
@@ -2404,7 +2403,7 @@ def elasticsearch_reindex( is_db_to_es ):
     current_app.logger.info(response.text)
     assert response.status_code == 200 ,response.text
     current_app.logger.info("add setting percolator") 
-    _create_percolator_mapping(index, "item-v1.0.0")
+    _create_percolator_mapping(index)
     current_app.logger.info("END create index") 
 
     # 高速化を期待してインデックスの設定を変更。
