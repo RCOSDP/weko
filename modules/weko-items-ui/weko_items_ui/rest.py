@@ -27,7 +27,6 @@ import traceback
 
 from flask import Blueprint, current_app, request, Response
 from werkzeug.http import generate_etag
-from elasticsearch.exceptions import ElasticsearchException
 from invenio_oauth2server import require_api_auth, require_oauth_scopes
 from invenio_pidstore.errors import PIDInvalidAction, PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier

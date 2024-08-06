@@ -291,7 +291,7 @@ class SearchComponent extends React.Component {
       contentType: 'application/json',
       data: JSON.stringify(request),
       success: function (result) {
-        this.props.getListUser(result.hits.hits, result.hits.total);
+        this.props.getListUser(result.hits.hits, result.hits.total.value);
       },
       error: function (error) {
         console.log(error);
