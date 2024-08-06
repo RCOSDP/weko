@@ -45,8 +45,8 @@ import redis
 from redis import sentinel
 from celery.result import AsyncResult
 from celery.task.control import revoke
-from elasticsearch import ElasticsearchException
-from elasticsearch.exceptions import NotFoundError
+from opensearchpy.exceptions import OpenSearchException
+from invenio_search.engine import search
 from flask import abort, current_app, has_request_context, request, Flask, send_file
 from flask_babelex import gettext as _
 from flask_limiter import Limiter
@@ -318,7 +318,7 @@ def get_feedback_mail_list():
             .get("email_list", {})
             .get("buckets", [])
         )
-    except (NotFoundError, InvalidQueryRESTError):
+    except (search.exceptions.NotFoundError, InvalidQueryRESTError):
         current_app.logger.debug("FeedbackMail data cannot found!")
         return ret
 
@@ -1593,7 +1593,7 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
                 error_id = ex.args[0].get("error_id")
 
             return {"success": False, "error_id": error_id}
-        except ElasticsearchException as ex:
+        except OpenSearchException as ex:
             current_app.logger.error("elasticsearch  error: ", ex)
             db.session.rollback()
             if item.get("id"):

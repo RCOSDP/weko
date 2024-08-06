@@ -29,7 +29,7 @@ from functools import partial
 
 from flask import Blueprint, abort, current_app, jsonify, redirect, request, url_for, Response
 from flask_babelex import get_locale
-from elasticsearch.exceptions import ElasticsearchException
+from opensearchpy.exceptions import OpenSearchException
 from invenio_db import db
 from invenio_files_rest.storage import PyFSFileStorage
 from invenio_i18n.ext import current_i18n
@@ -122,7 +122,6 @@ def create_blueprint(app, endpoints):
 
         search_class_kwargs = {}
         search_class_kwargs["index"] = options.get("search_index")
-        search_class_kwargs["doc_type"] = options.get("search_type")
         search_class = partial(search_class, **search_class_kwargs)
 
         ctx = dict(
@@ -284,7 +283,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                 "weko_search_rest.recid_index", page=page - 1, **urlkwargs
             )
         if (
-            size * page < search_result.hits.total
+            size * page < search_result.hits.total.value
             and size * page < self.max_result_window
         ):
             links["next"] = url_for(
@@ -683,7 +682,7 @@ class IndexSearchResourceAPI(ContentNegotiatedMethodView):
 
             # Create result
             result = {
-                'total_results': search_results['hits']['total'],
+                'total_results': search_results['hits']['total']['value'],
                 'count_results': len(rocrate_list),
                 'cursor': cursor,
                 'page': page,
@@ -704,7 +703,7 @@ class IndexSearchResourceAPI(ContentNegotiatedMethodView):
         except MaxResultWindowRESTError:
             raise MaxResultWindowRESTError()
 
-        except ElasticsearchException:
+        except OpenSearchException:
             raise InternalServerError()
 
         except Exception:
@@ -856,7 +855,7 @@ class IndexSearchResultList(ContentNegotiatedMethodView):
         except (InvalidRequestError, NotFound) as e:
             raise e
 
-        except ElasticsearchException:
+        except OpenSearchException:
             raise InternalServerError()
 
         except Exception:
