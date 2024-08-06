@@ -31,7 +31,7 @@ from xml.etree.ElementTree import tostring
 
 import redis
 from redis import sentinel
-from elasticsearch.exceptions import NotFoundError
+from invenio_search.engine import search
 from flask import Markup, Response, abort, current_app, jsonify, request
 from flask_babelex import gettext as _
 from invenio_cache import current_cache
@@ -791,7 +791,7 @@ def get_elasticsearch_result_by_date(start_date, end_date, query_with_publish_st
             query_with_publish_status, False)
         search_result = search_instance.execute()
         result = search_result.to_dict()
-    except NotFoundError:
+    except search.exceptions.NotFoundError:
         current_app.logger.debug('Indexes do not exist yet!')
 
     return result
