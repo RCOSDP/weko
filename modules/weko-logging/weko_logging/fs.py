@@ -108,8 +108,8 @@ class WekoLoggingFS(WekoLoggingBase):
             )
         )
         handler.setLevel(app.config["WEKO_LOGGING_FS_LEVEL"])
-        # Add handler to application logger
-        app.logger.addHandler(handler)
+        # do not use this handler
+        # app.logger.addHandler(handler)
         # default_handler.setLevel(app.config['WEKO_LOGGING_FS_LEVEL'])
         # formatter2 = logging.Formatter(
         #         '[%(asctime)s] - %(levelname)s - %(filename)s - %(name)s - %(funcName)s - %(message)s '
