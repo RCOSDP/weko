@@ -12,7 +12,7 @@ from flask_mail import Message
 from werkzeug.local import LocalProxy
 
 from invenio_accounts.models import User
-from invenio_mail.models import MailConfig, MailTemplates
+from invenio_mail.models import MailConfig, MailTemplates, MailTemplateUsers
 
 from . import config
 
@@ -166,12 +166,17 @@ class MailTemplatesView(BaseView):
         mail_templates = request.get_json()['mail_templates']
         invalid_emails_info = {}
         for m in mail_templates:
-            recipients = m['content'].get('recipients', '').split(',') if m['content'].get('recipients') else []
-            cc = m['content'].get('cc', '').split(',') if m['content'].get('cc') else []
-            bcc = m['content'].get('bcc', '').split(',') if m['content'].get('bcc') else []
-            emails = recipients
-            emails.extend(cc)
-            emails.extend(bcc)
+            recipients = m['content'].get('recipients', '')
+            cc = m['content'].get('cc', '')
+            bcc = m['content'].get('bcc', '')
+
+            recipients_list = [r.strip() for r in recipients.split(",") if r.strip()]
+            cc_list = [c.strip() for c in cc.split(",") if c.strip()]
+            bcc_list = [b.strip() for b in bcc.split(",") if b.strip()]
+            emails = recipients_list
+            emails.extend(cc_list)
+            emails.extend(bcc_list)
+
             if emails:
                 invalid_emails = self.get_invalid_emails(emails)
                 if invalid_emails:
@@ -189,6 +194,7 @@ class MailTemplatesView(BaseView):
         status = True
         for m in mail_templates:
             status = status and MailTemplates.save_and_update(m)
+            status = status and MailTemplateUsers.save_and_update(m)
         if status:
             result = {
                 "status": status,
@@ -230,8 +236,8 @@ class MailTemplatesView(BaseView):
     def get_invalid_emails(self, emails):
         invalid_emails = []
         for m in emails:
-            user_mail = User.query.filter_by(email=m).first()
-            if not user_mail:
+            valid_mail = User.query.filter_by(email=m, active=True).first()
+            if not valid_mail:
                 invalid_emails.append(m)
         return invalid_emails
 

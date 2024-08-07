@@ -42,7 +42,7 @@ from invenio_db import db
 from invenio_files_rest.models import Bucket, ObjectVersion
 from invenio_i18n.ext import current_i18n
 from invenio_mail.admin import MailSettingView
-from invenio_mail.models import MailConfig, MailTemplates
+from invenio_mail.models import MailConfig, MailTemplates, MailType, MailTemplateUsers
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.models import PersistentIdentifier, \
@@ -2400,13 +2400,36 @@ def get_mail_data(mail_id):
     :mail_id: mail template id in db
     """
     mt = MailTemplates.get_by_id(mail_id)
+    subject = mt.mail_subject
+    body = mt.mail_body
+
+    recipients = []
+    cc = []
+    bcc = []
+    invalid_ids = []
+    records = MailTemplateUsers.query.filter_by(template_id=mail_id).all()
+    for record in records:
+        user = User.query.filter_by(id=record.user_id, active=True).first()
+        if not user:
+            invalid_ids.append(record.user_id)
+        if record.mail_type == MailType.RECIPIENT:
+            recipients.append(user.email)
+        elif record.mail_type == MailType.CC:
+            cc.append(user.email)
+        elif record.mail_type == MailType.BCC:
+            bcc.append(user.email)
+
+    if invalid_ids:
+        for id in invalid_ids:
+            MailTemplateUsers.delete_by_user_id(id)
+
     if mt:
         return {
-            "mail_subject": mt.mail_subject,
-            "mail_body": mt.mail_body,
-            "mail_recipients": mt.mail_recipients.split(',') if mt.mail_recipients else [],
-            "mail_cc": mt.mail_cc.split(',') if mt.mail_cc else [],
-            "mail_bcc": mt.mail_bcc.split(',') if mt.mail_bcc else []
+            "mail_subject": subject,
+            "mail_body": body,
+            "mail_recipients": recipients,
+            "mail_cc": cc,
+            "mail_bcc": bcc
         }
     else:
         return {
@@ -3860,13 +3883,13 @@ def process_send_mail(mail_info, mail_id):
 
     subject = mail_data.get('mail_subject')
     body = mail_data.get('mail_body')
-    recipients = mail_data.get('mail_resipients')
+    recipients = mail_data.get('mail_recipients')
 
     if subject and body:
         body = replace_characters(mail_info, body)
         recipients += [mail_info.get('mail_recipient')]
         mail_data['mail_body'] = body
-        mail_data['mail_resipients'] = recipients
+        mail_data['mail_recipients'] = recipients
         send_mail(mail_data)
 
 
