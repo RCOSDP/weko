@@ -60,3 +60,49 @@ class DeleteActivityFailedRESTError(RESTException):
 
     code = 404
     description = _('登録アクティビティを削除エラー。')
+
+
+"""Custom exceptions for weko_workflow."""
+
+class WekoWorkflowError(Exception):
+    def __init__(self, ex=None, msg=None):
+        if ex:
+            self.exception = ex
+        if not msg:
+            msg = "Some error has occurred in weko_workflow."
+        super().__init__(msg)
+
+
+class WekoWorkflowNameError(WekoWorkflowError):
+    def __init__(self, ex=None, msg=None):
+        super().__init__(ex, msg)
+
+
+class WekoWorkflowMailError(WekoWorkflowError):
+    def __init__(self, ex=None, msg=None):
+        super().__init__(ex, msg)
+
+
+class WekoActionError(WekoWorkflowError):
+    def __init__(self, ex=None, msg=None):
+        if not msg:
+            msg = "Some action error has occurred in weko_workflow."
+        super().__init__(ex, msg)
+
+
+class WekoActivityError(WekoWorkflowError):
+    def __init__(self, ex=None, msg=None):
+        if not msg:
+            msg = "Some activity error has occurred in weko_workflow."
+        super().__init__(ex, msg)
+
+
+class WekoActivityHistoryError(WekoActivityError):
+    def __init__(self, ex=None, msg=None):
+        super().__init__(ex, msg)
+
+
+class WekoActivityValidationError(WekoActivityError):
+    def __init__(self, ex=None, msg=None):
+        super().__init__(ex, msg)
+

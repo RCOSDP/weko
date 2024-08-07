@@ -111,3 +111,20 @@ class InternalServerError(RESTException):
 
     code = 500
     description = 'Internal Server Error'
+
+"""Custom exceptions for weko_records_ui."""
+
+class WekoRecordsUiError(Exception):
+    def __init__(self, ex=None, msg=None):
+        if ex:
+            self.exception = ex
+        if not msg:
+            msg = "Some error has occurred in weko_records_ui."
+        super().__init__(msg)
+
+
+class WekoRecordsUiFileError(WekoRecordsUiError):
+    def __init__(self, ex=None, msg=None):
+        super().__init__(ex, msg)
+
+

@@ -76,3 +76,14 @@ class JournalMovedRESTError(RESTException):
 
     code = 400
     description = 'Could not move data.'
+
+
+"""Custom exceptions for weko_indextree_journal."""
+
+class WekoJournalError(Exception):
+    def __init__(self, ex=None, msg=None):
+        if ex:
+            self.exception = ex
+        if not msg:
+            msg = "Some error has occurred in weko_indextree_journal."
+        super().__init__(msg)

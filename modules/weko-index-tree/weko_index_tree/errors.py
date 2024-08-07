@@ -106,3 +106,28 @@ class InternalServerError(RESTException):
 
     code = 500
     description = 'Internal Server Error'
+
+"""Custom exceptions for weko_index_tree."""
+
+class WekoIndexTreeError(Exception):
+    def __init__(self, ex=None, msg=None):
+        if ex:
+            self.exception = ex
+        if not msg:
+            msg = "Some error has occurred in weko_index_tree."
+        super().__init__(msg)
+
+
+class WekoIndexTreeSettingError(WekoIndexTreeError):
+    def __init__(self, ex=None, msg=None):
+        super().__init__(ex, msg)
+
+
+class WekoIndexStyleError(WekoIndexTreeError):
+    def __init__(self, ex=None, msg=None):
+        super().__init__(ex, msg)
+
+
+class WekoIndexBrowsingError(WekoIndexTreeError):
+    def __init__(self, ex=None, msg=None):
+        super().__init__(ex, msg)

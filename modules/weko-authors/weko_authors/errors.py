@@ -38,3 +38,23 @@ class AuthorNotFoundRESTError(RESTException):
 
     code = 404
     description = 'This author does not found.'
+
+"""Custom exceptions for weko_authors."""
+
+class WekoAuthorsError(Exception):
+    def __init__(self, ex=None, msg=None):
+        if ex:
+            self.exception = ex
+        if not msg:
+            msg = "Some error has occurred in weko_authors."
+        super().__init__(msg)
+
+
+class WekoAuthorsSettingsError(WekoAuthorsError):
+    def __init__(self, ex=None, msg=None):
+        super().__init__(ex, msg)
+
+
+class WekoAuthorsImportError(WekoAuthorsError):
+    def __init__(self, ex=None, msg=None):
+        super().__init__(ex, msg)

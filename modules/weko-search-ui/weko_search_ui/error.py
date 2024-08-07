@@ -49,3 +49,24 @@ class UnhandledElasticsearchError(RESTException):
     code = 500
     description = 'An internal server error occurred when handling the ' \
                   'request.'
+
+
+"""Custom exceptions for weko_search_ui."""
+
+class WekoSearchUiError(Exception):
+    def __init__(self, ex=None, msg=None):
+        if ex:
+            self.exception = ex
+        if not msg:
+            msg = "Some error has occurred in weko_search_ui."
+        super().__init__(msg)
+
+
+class WekoSearchManagementError(WekoSearchUiError):
+    def __init__(self, ex=None, msg=None):
+        super().__init__(ex, msg)
+
+
+class WekoSearchUiDateError(WekoSearchUiError):
+    def __init__(self, ex=None, msg=None):
+        super().__init__(ex, msg)

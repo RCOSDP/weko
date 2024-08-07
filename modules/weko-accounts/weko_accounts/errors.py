@@ -60,3 +60,40 @@ class DisabledUserError(RESTException):
 
     code = 403
     description = 'Account is disabled.'
+
+
+"""Weko Accounts Errors"""
+
+class WekoAccountsError(Exception):
+    def __init__(self, ex=None, msg=None):
+        if ex:
+            self.exception = ex
+        if not msg:
+            msg = "Some error has occurred in weko_accounts."
+        super().__init__(msg)
+
+
+class WekoAccountsShibSettingError(WekoAccountsError):
+    def __init__(self, ex=None, msg=None):
+        super().__init__(ex, msg)
+
+
+class WekoAccountsShibUserError(WekoAccountsError):
+    def __init__(self, ex=None, msg=None):
+        super().__init__(ex, msg)
+
+
+class WekoAccountsSessionError(WekoAccountsError):
+    def __init__(self, ex=None, msg=None):
+        super().__init__(ex, msg)
+
+
+class WekoAccountsKeyError(WekoAccountsError):
+    def __init__(self, ex=None, msg=None):
+        super().__init__(ex, msg)
+
+
+class WekoAccountsAttributeError(WekoAccountsError):
+    def __init__(self, ex=None, msg=None):
+        super().__init__(ex, msg)
+

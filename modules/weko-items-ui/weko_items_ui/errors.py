@@ -54,3 +54,16 @@ class InternalServerError(RESTException):
 
     code = 500
     description = 'Internal Server Error'
+
+
+    """Custom exceptions for weko_items_ui."""
+
+class WekoItemsUiError(Exception):
+    def __init__(self, ex=None, msg=None):
+        if ex:
+            self.exception = ex
+        if not msg:
+            msg = "Some error has occurred in weko_items_ui."
+        super().__init__(msg)
+
+
