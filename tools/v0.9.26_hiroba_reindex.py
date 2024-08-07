@@ -18,21 +18,22 @@ def reindex_and_add_items():
     """
 
     try:
+        index_prefix = os.environ.get('SEARCH_INDEX_PREFIX', 'tenant1')
 
         es = Elasticsearch(
             'http://' + os.environ.get('INVENIO_ELASTICSEARCH_HOST', 'localhost') + ':9200')
         
         # インデックス一覧の取得
         record_view_indices = es.cat.indices(index='*-record-view-*', h='index',s='creation.date.string').splitlines()
-        stats_record_view_indices = [index for index in record_view_indices if not 'events' in index]
+        stats_record_view_indices = [index for index in record_view_indices if not 'events' in index and index_prefix in index]
 
         file_download_indices = es.cat.indices(index='*-file-download-*', h='index',s='creation.date.string').splitlines()
-        stats_file_download_indices = [index for index in file_download_indices if not 'events' in index]
-        events_stats_file_download_indices = [index for index in file_download_indices if 'events' in index]
+        stats_file_download_indices = [index for index in file_download_indices if not 'events' in index and index_prefix in index]
+        events_stats_file_download_indices = [index for index in file_download_indices if 'events' in index and index_prefix in index]
 
         file_preview_indices = es.cat.indices(index='*-file-preview-*', h='index',s='creation.date.string').splitlines()
-        stats_file_preview_indices = [index for index in file_preview_indices if not 'events' in index]
-        events_stats_file_preview_indices = [index for index in file_preview_indices if 'events' in index]
+        stats_file_preview_indices = [index for index in file_preview_indices if not 'events' in index and index_prefix in index]
+        events_stats_file_preview_indices = [index for index in file_preview_indices if 'events' in index and index_prefix in index]
 
         reindex_target_dict = {}
 
