@@ -83,26 +83,17 @@ class Queue(object):
             no_ack=self.no_ack,
         )
 
-    @contextmanager
-    def create_producer(self):
-        """Context manager that yields an instance of ``Producer``."""
-        with self.connection_pool.acquire(block=True) as conn:
-            yield self.producer(conn)
-
-    def create_consumer(self):
-        """Context manager that yields an instance of ``Consumer``."""
-        with self.connection_pool.acquire(block=True) as conn:
-            return self.consumer(conn)
-
     def publish(self, events):
         """Publish events."""
         assert len(events) > 0
-        with self.create_producer() as producer:
-            for event in events:
-                producer.publish(event)
+        with self.connection_pool.acquire(block=True) as conn:
+            with self.producer(conn) as producer:
+                for event in events:
+                    producer.publish(event)
 
     def consume(self, payload=True):
         """Consume events."""
-        with self.create_consumer() as consumer:
-            for msg in consumer.iterqueue():
-                yield msg.payload if payload else msg
+        with self.connection_pool.acquire(block=True) as conn:
+            with self.consumer(conn) as consumer:
+                for msg in consumer.iterqueue():
+                    yield msg.payload if payload else msg
