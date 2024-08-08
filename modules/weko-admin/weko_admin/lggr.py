@@ -1,6 +1,6 @@
-"""Resource for weko-admin log messages."""
+"""Resource for weko_admin log messages."""
 
-WEKO_ACCOUNTS_MESSAGE = {
+WEKO_ADMIN_MESSAGE = {
     'WEKO_ADMIN_FEEDBACK_ADDRESS_SET': {
         'msgid': 'WEKO_ADMIN_INFO_0101',
         'msgstr': "Feedback email address set.",

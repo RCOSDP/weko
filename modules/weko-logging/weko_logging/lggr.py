@@ -1,6 +1,6 @@
 """Resource for all modules log messages."""
 
-WEKO_ACCOUNTS_MESSAGE = {
+WEKO_COMMON_MESSAGE = {
     'WEKO_COMMON_FAILED_DBCONNECTION': {
         'msgid': 'WEKO_COMMON_ERROR_9001',
         'msgstr': "FAILED database connection.",
@@ -67,13 +67,13 @@ import traceback
 from flask import Flask, current_app
 from weko_logging.ext import app
 
-from weko_logging.ext import CustomLogFilter
+from weko_logging.ext import WekoLoggingFilter
 def weko_logger(key=None, ex=None, **kwargs):
     # Add custom filter to log user_id and ip_address
-    app.logger.addFilter(CustomLogFilter())
+    app.logger.addFilter(WekoLoggingFilter())
 
 
-    param = WEKO_ACCOUNTS_MESSAGE.get(key, None)
+    param = WEKO_COMMON_MESSAGE.get(key, None)
     if not param:
         return
 

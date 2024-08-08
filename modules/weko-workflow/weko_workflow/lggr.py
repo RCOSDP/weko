@@ -1,6 +1,6 @@
 """Resource for weko-workflow log messages."""
 
-WEKO_ACCOUNTS_MESSAGE = {
+WEKO_WORKFLOW_MESSAGE = {
     'WEKO_WORKFLOW_CREATE_WORKFLOW': {
         'msgid': 'WEKO_WORKFLOW_INFO_2301',
         'msgstr': "Create workflow: {workflowid}",

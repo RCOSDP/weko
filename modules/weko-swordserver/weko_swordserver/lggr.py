@@ -1,6 +1,6 @@
 """Resource for weko-swordserver log messages."""
 
-WEKO_ACCOUNTS_MESSAGE = {
+WEKO_SWORDSERVER_MESSAGE = {
     'WEKO_SWORDSERVER_RETRIEVE_FILE': {
         'msgid': 'WEKO_SWORDSERVER_INFO_2001',
         'msgstr': "{filename} file retrieved.",

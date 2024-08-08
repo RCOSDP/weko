@@ -1,6 +1,6 @@
 """Resource for weko-redis log messages."""
 
-WEKO_ACCOUNTS_MESSAGE = {
+WEKO_REDIS_MESSAGE = {
     'WEKO_REDIS_SUCCESS_DIRECT_REDIS_CONNECT': {
         'msgid': 'WEKO_REDIS_INFO_1601',
         'msgstr': "Direct Redis connection established successfully.",

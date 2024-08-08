@@ -1,6 +1,6 @@
-"""Resource for weko-authors log messages."""
+"""Resource for weko_authors log messages."""
 
-WEKO_ACCOUNTS_MESSAGE = {
+WEKO_AUTHORS_MESSAGE = {
     'WEKO_AUTHORS_ADD_AUTHOR': {
         'msgid': 'WEKO_AUTHORS_INFO_0201',
         'msgstr': "Author added: {authorid}",

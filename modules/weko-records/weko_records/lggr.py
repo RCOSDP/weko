@@ -1,6 +1,6 @@
 """Resource for weko-records log messages."""
 
-WEKO_ACCOUNTS_MESSAGE = {
+WEKO_RECORDS_MESSAGE = {
     'WEKO_RECORDS_SEARCH_ITEM': {
         'msgid': 'WEKO_RECORDS_INFO_1401',
         'msgstr': "Search item: {query}, result: {num}",

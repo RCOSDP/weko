@@ -1,6 +1,6 @@
 """Resource for weko-gridlayout log messages."""
 
-WEKO_ACCOUNTS_MESSAGE = {
+WEKO_GRIDLAYOUT_MESSAGE = {
     'WEKO_GRIDLAYOUT_ENABLED_RSS_FEEDS': {
         'msgid': 'WEKO_GRIDLAYOUT_INFO_0401',
         'msgstr': "RSS feeds are now enabled.",

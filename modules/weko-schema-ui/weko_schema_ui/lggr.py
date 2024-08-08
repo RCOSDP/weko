@@ -1,6 +1,6 @@
 """Resource for weko-schema-ui log messages."""
 
-WEKO_ACCOUNTS_MESSAGE = {
+WEKO_SCHEMA_UI_MESSAGE = {
     'WEKO_SCHEMA_UI_ADD_SEARCH_CONDITION': {
         'msgid': 'WEKO_SCHEMA_UI_INFO_1701',
         'msgstr': "Search condition added.",

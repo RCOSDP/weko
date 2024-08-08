@@ -1,6 +1,6 @@
 """Resource for weko-groups log messages."""
 
-WEKO_ACCOUNTS_MESSAGE = {
+WEKO_GROUPS_MESSAGE = {
     'WEKO_GROUPS_LOGIN_SUCCESSED': {
         'msgid': 'WEKO_GROUPS_INFO_0501',
         'msgstr': "Login request SUCCESSED",

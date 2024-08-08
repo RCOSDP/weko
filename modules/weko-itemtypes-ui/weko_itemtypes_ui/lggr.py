@@ -1,6 +1,6 @@
 """Resource for weko-itemtypes-ui log messages."""
 
-WEKO_ACCOUNTS_MESSAGE = {
+WEKO_ITEMTYPES_UI_MESSAGE = {
     'WEKO_ITEMTYPES_UI_UPDATE_ITEM': {
         'msgid': 'WEKO_ITEMTYPES_UI_INFO_1101',
         'msgstr': "Update item: {pid}",

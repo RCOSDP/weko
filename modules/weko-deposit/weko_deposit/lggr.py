@@ -1,6 +1,6 @@
 """Resource for weko-deposit log messages."""
 
-WEKO_ACCOUNTS_MESSAGE = {
+WEKO_DEPOSIT_MESSAGE = {
     'WEKO_DEPOSIT_UPDATE_ITEM': {
         'msgid': 'WEKO_DEPOSIT_INFO_0301',
         'msgstr': "Update item: {pid}",

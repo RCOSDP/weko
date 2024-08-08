@@ -1,6 +1,6 @@
 """Resource for weko-user-profiles log messages."""
 
-WEKO_ACCOUNTS_MESSAGE = {
+WEKO_USER_PROFILES_MESSAGE = {
     'WEKO_USER_PROFILE_SENT_CONFIRMATION_EMAIL': {
         'msgid': 'WEKO_USER_PROFILE_INFO_2201',
         'msgstr': "Confirmation email has been sent.",

@@ -1,6 +1,6 @@
 """Resource for weko-items-autofill log messages."""
 
-WEKO_ACCOUNTS_MESSAGE = {
+WEKO_ITEMS_AUTOFILL_MESSAGE = {
     'WEKO_ITEMS_AUTOFILL_SET_WEB_API_ACCOUNT_INFO': {
         'msgid': 'WEKO_ITEMS_AUTOFILL_INFO_0901',
         'msgstr': "Web API account information has been set. Itemid: {pid}",

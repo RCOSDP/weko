@@ -1,6 +1,6 @@
 """Resource for weko-indextree-journal log messages."""
 
-WEKO_ACCOUNTS_MESSAGE = {
+WEKO_INDEXTREE_JOURNAL_MESSAGE = {
     'WEKO_INDEX_TREE_JOURNAL_DISPLAY_SETTINGS_JOURNAL_INFO': {
         'msgid': 'WEKO_INDEX_TREE_JOURNAL_INFO_0801',
         'msgstr': "Display settings of index {index_name} for journal information has been changed to {conf_value}.",

@@ -1,6 +1,6 @@
 """Resource for weko-index-tree log messages."""
 
-WEKO_ACCOUNTS_MESSAGE = {
+WEKO_INDEX_TREE_MESSAGE = {
     'WEKO_INDEX_TREE_INDEX_SEARCH_RESULT': {
         'msgid': 'WEKO_INDEX_TREE_INFO_0701',
         'msgstr': "index search : {srch_cntnt}, results: {num} items",

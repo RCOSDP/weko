@@ -1,6 +1,6 @@
 """Resource for weko-search-ui log messages."""
 
-WEKO_ACCOUNTS_MESSAGE = {
+WEKO_SEARCH_UI_MESSAGE = {
     'WEKO_SEARCH_UI_SEARCH_ITEM': {
         'msgid': 'WEKO_SEARCH_UI_INFO_1801',
         'msgstr': "Search item: {query}, result: {num}",
