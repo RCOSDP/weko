@@ -129,14 +129,14 @@ class WekoFileObject(FileObject):
 
 
 class WekoIndexer(RecordIndexer):
-    """Provide an interface for indexing records in Elasticsearch."""
+    """Provide an interface for indexing records in search engine."""
 
     def get_es_index(self):
-        """Elastic search settings."""
+        """Search engine settings."""
         self.es_index = current_app.config['SEARCH_UI_SEARCH_INDEX']
 
     def upload_metadata(self, jrc, item_id, revision_id, skip_files=False):
-        """Upload the item data to ElasticSearch.
+        """Upload the item data to search engine.
 
         Args:
             jrc (_type_): _description_
@@ -167,7 +167,7 @@ class WekoIndexer(RecordIndexer):
         self.client.index(**{**es_info, **body})
 
     def delete_file_index(self, body, parent_id):
-        """Delete file index in Elastic search.
+        """Delete file index in search engine.
 
         :param body:
         :param parent_id: Parent item id.
@@ -395,7 +395,7 @@ class WekoIndexer(RecordIndexer):
         )
 
     def __build_bulk_es_data(self, updated_data):
-        """Build ElasticSearch data.
+        """Build search engine data.
 
         :param updated_data: Records data.
         """
@@ -875,7 +875,7 @@ class WekoDeposit(Deposit):
         Store changes on current instance in database and index it.
         1. Get deposit's bucket then set the workflow's storage location to the bucket's default location.
         2. Update the item metadata in the database.
-        3. Register the item metadata in elasticsearch.
+        3. Register the item metadata in search engine.
         4. Update the version_id of records_metadata in the database.
         
         Args:
@@ -886,7 +886,7 @@ class WekoDeposit(Deposit):
             None
 
         Raises:
-            TransportError: fail upload metadata to elasticsearch
+            TransportError: fail upload metadata to search engine
         """ 
         super(WekoDeposit, self).commit(*args, **kwargs)
         record = RecordMetadata.query.get(self.pid.object_uuid)
@@ -924,14 +924,14 @@ class WekoDeposit(Deposit):
                     if setspec_list:
                         # self.jrc['_oai'].update(dict(sets=setspec_list.spec))
                         self.jrc['_oai'].update(dict(sets=setspec_list))
-                # upload item metadata to Elasticsearch
+                # upload item metadata to search engine
                 set_timestamp(self.jrc, self.created, self.updated)
 
                 # Get file contents
                 self.get_content_files()
 
                 try:
-                    # Upload file content to Elasticsearch
+                    # Upload file content to search engine
                     self.indexer.upload_metadata(self.jrc,
                                                  self.pid.object_uuid,
                                                  self.revision_id)
@@ -978,7 +978,7 @@ class WekoDeposit(Deposit):
         Create a new version of the deposit.
             1. Check if a newer version than the pid that is passed as an argument exists.
             2. Update the draft_id then call the create() method to generate a new deposit.
-            3. Update both the database and elasticsearch.
+            3. Update both the database and search engine.
         Args:
             pid(dict): 
                 Used to check for the lastest pid
@@ -1108,7 +1108,7 @@ class WekoDeposit(Deposit):
                             # update file_files's json
                             file.obj.file.update_json(lst)
 
-                            # upload file metadata to Elasticsearch
+                            # upload file metadata to search engine
                             try:
                                 mimetypes = current_app.config[
                                     'WEKO_MIMETYPE_WHITELIST_FOR_ES']

@@ -511,7 +511,7 @@ def build_rss_xml(data=None, index_id=0, page=1, count=20, term=0, lang=''):
     """Build RSS data as XML format.
 
     Arguments:
-        data {dictionary} -- Elastic search data
+        data {dictionary} -- search engine data
         term {int} -- The term
 
     Returns:
@@ -634,10 +634,10 @@ def build_rss_xml(data=None, index_id=0, page=1, count=20, term=0, lang=''):
 
 
 def find_rss_value(data, keyword):
-    """Analyze rss data from elasticsearch data.
+    """Analyze rss data from search engine data.
 
     Arguments:
-        data {dictionary} -- elasticsearch data
+        data {dictionary} -- search engine data
         keyword {string} -- The keyword
 
     Returns:
@@ -769,7 +769,7 @@ def get_rss_data_source(source, keyword):
 
 
 def get_elasticsearch_result_by_date(start_date, end_date, query_with_publish_status=False):
-    """Get data from elastic search.
+    """Get data from search engine.
 
     Arguments:
         start_date {string} -- start date
@@ -777,7 +777,7 @@ def get_elasticsearch_result_by_date(start_date, end_date, query_with_publish_st
         query_with_publish_status {bool} -- Only query public items
 
     Returns:
-        dictionary -- elastic search data
+        dictionary -- search engine data
 
     """
     records_search = RecordsSearch()

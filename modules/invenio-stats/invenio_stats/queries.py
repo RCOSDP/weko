@@ -431,7 +431,7 @@ class ESWekoFileStatsQuery(ESTermsQuery):
         self.main_query = main_query or {}
 
     def build_query(self, start_date, end_date, **kwargs):
-        """Build the elasticsearch query."""
+        """Build the search engine query."""
         agg_query = dsl.Search(using=self.client, index=self.index)[0:0]
                            
         if self.main_query:
@@ -497,7 +497,7 @@ class ESWekoTermsQuery(ESTermsQuery):
     """Weko ES Terms Query."""
 
     def build_query(self, start_date, end_date, **kwargs):
-        """Build the elasticsearch query with."""
+        """Build the search engine query with."""
         agg_query = dsl.Search(using=self.client, index=self.index)[0:0]
 
         if start_date is not None or end_date is not None:
@@ -578,7 +578,7 @@ class ESWekoRankingQuery(ESTermsQuery):
         self.main_query = main_query or {}
 
     def build_query(self, **kwargs):
-        """Build the elasticsearch query."""
+        """Build the search engine query."""
         search_index_prefix = current_app.config["SEARCH_INDEX_PREFIX"].strip("-")
         es_index = self.index.format(search_index_prefix, kwargs.get("event_type"))
         agg_query = dsl.Search(using=self.client, index=es_index)[0:0]
@@ -633,7 +633,7 @@ class ESWekoFileRankingQuery(ESTermsQuery):
         self.main_query = main_query or {}
 
     def build_query(self, start_date, end_date, **kwargs):
-        """Build the elasticsearch query."""
+        """Build the search engine query."""
         agg_query = dsl.Search(using=self.client, index=self.index)[0:0]
         if self.main_query:
             query_q = self.main_query

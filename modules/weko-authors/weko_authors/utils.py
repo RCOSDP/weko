@@ -618,7 +618,7 @@ def get_count_item_link(pk_id):
 
 
 def count_authors():
-    """Count authors from Elasticsearch."""
+    """Count authors from search engine."""
     should = [
         {'bool': {'must': [{'term': {'is_deleted': {'value': 'false'}}}]}},
         {'bool': {'must_not': {'exists': {'field': 'is_deleted'}}}}

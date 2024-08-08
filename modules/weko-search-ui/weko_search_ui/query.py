@@ -131,7 +131,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
     """Parse query using Weko-Query-Parser. MetaData Search.
 
     :param self: REST view.
-    :param search: Elastic search DSL search instance.
+    :param search: search engine DSL search instance.
     :param query_parser: Query parser. (Default: ``None``)
     :param search_type: Search type. (Default: ``None``)
     :returns: Tuple with search instance and URL arguments.
@@ -653,7 +653,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
         return dsl.Q("bool", should=[nested_content, multi_q])
 
     def _default_parser(qstr=None):
-        """Default parser that uses the Q() from elasticsearch_dsl.
+        """Default parser that uses the Q() from search engine.
 
            Full text Search.
            Detail Search.
@@ -678,7 +678,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
         return dsl.Q("bool", must=mst) if mst else dsl.Q()
 
     def _default_parser_community(community_id, qstr=None):
-        """Default parser that uses the Q() from elasticsearch_dsl.
+        """Default parser that uses the Q() from search engine.
 
            Full text Search.
            Detail Search.
@@ -816,7 +816,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
             urlkwargs.add("sort", sort_key)
 
     urlkwargs.add("q", query_q)
-    # debug elastic search query
+    # debug search engine query
     current_app.logger.debug("query: {}".format(json.dumps((search.query()).to_dict())))
     # {"query": {"bool": {"filter": [{"bool": {"must": [{"match": {"publish_status": "0"}}, {"range": {"publish_date": {"lte": "now/d"}}}, {"terms": {"path": ["1031", "1029", "1025", "952", "953", "943", "940", "1017", "1015", "1011", "881", "893", "872", "869", "758", "753", "742", "530", "533", "502", "494", "710", "702", "691", "315", "351", "288", "281", "759", "754", "744", "531", "534", "503", "495", "711", "704", "692", "316", "352", "289", "282", "773", "771", "767", "538", "539", "519", "510", "756", "745", "733", "337", "377", "308", "299", "2063", "2061", "2057", "1984", "1985", "1975", "1972", "2049", "2047", "2043", "1913", "1925", "1904", "1901", "1790", "1785", "1774", "1562", "1565", "1534", "1526", "1742", "1734", "1723", "1347", "1383", "1320", "1313", "1791", "1786", "1776", "1563", "1566", "1535", "1527", "1743", "1736", "1724", "1348", "1384", "1321", "1314", "1805", "1803", "1799", "1570", "1571", "1551", "1542", "1788", "1777", "1765", "1369", "1409", "1340", "1331", "4127", "4125", "4121", "4048", "4049", "4039", "4036", "4113", "4111", "4107", "3977", "3989", "3968", "3965", "3854", "3849", "3838", "3626", "3629", "3598", "3590", "3806", "3798", "3787", "3411", "3447", "3384", "3377", "3855", "3850", "3840", "3627", "3630", "3599", "3591", "3807", "3800", "3788", "3412", "3448", "3385", "3378", "3869", "3867", "3863", "3634", "3635", "3615", "3606", "3852", "3841", "3829", "3433", "3473", "3404", "3395"]}}, {"bool": {"must": [{"match": {"publish_status": "0"}}, {"match": {"relation_version_is_last": "true"}}]}}]}}], "must": [{"match_all": {}}]}}, "aggs": {"Data Language": {"filter": {"bool": {"must": [{"term": {"publish_status": "0"}}]}}, "aggs": {"Data Language": {"terms": {"field": "language", "size": 1000}}}}, "Access": {"filter": {"bool": {"must": [{"term": {"publish_status": "0"}}]}}, "aggs": {"Access": {"terms": {"field": "accessRights", "size": 1000}}}}, "Location": {"filter": {"bool": {"must": [{"term": {"publish_status": "0"}}]}}, "aggs": {"Location": {"terms": {"field": "geoLocation.geoLocationPlace", "size": 1000}}}}, "Temporal": {"filter": {"bool": {"must": [{"term": {"publish_status": "0"}}]}}, "aggs": {"Temporal": {"terms": {"field": "temporal", "size": 1000}}}}, "Topic": {"filter": {"bool": {"must": [{"term": {"publish_status": "0"}}]}}, "aggs": {"Topic": {"terms": {"field": "subject.value", "size": 1000}}}}, "Distributor": {"filter": {"bool": {"must": [{"term": {"contributor.@attributes.contributorType": "Distributor"}}, {"term": {"publish_status": "0"}}]}}, "aggs": {"Distributor": {"terms": {"field": "contributor.contributorName", "size": 1000}}}}, "Data Type": {"filter": {"bool": {"must": [{"term": {"description.descriptionType": "Other"}}, {"term": {"publish_status": "0"}}]}}, "aggs": {"Data Type": {"terms": {"field": "description.value", "size": 1000}}}}}, "from": 0, "size": 20, "_source": {"excludes": ["content"]}}
     # {"query": {"bool": {"filter": [{"bool": {"must": [{"match": {"publish_status": "0"}}, {"range": {"publish_date": {"lte": "now/d"}}}, {"terms": {"path": ["1031", "1029", "1025", "952", "953", "943", "940", "1017", "1015", "1011", "881", "893", "872", "869", "758", "753", "742", "530", "533", "502", "494", "710", "702", "691", "315", "351", "288", "281", "759", "754", "744", "531", "534", "503", "495", "711", "704", "692", "316", "352", "289", "282", "773", "771", "767", "538", "539", "519", "510", "756", "745", "733", "337", "377", "308", "299", "2063", "2061", "2057", "1984", "1985", "1975", "1972", "2049", "2047", "2043", "1913", "1925", "1904", "1901", "1790", "1785", "1774", "1562", "1565", "1534", "1526", "1742", "1734", "1723", "1347", "1383", "1320", "1313", "1791", "1786", "1776", "1563", "1566", "1535", "1527", "1743", "1736", "1724", "1348", "1384", "1321", "1314", "1805", "1803", "1799", "1570", "1571", "1551", "1542", "1788", "1777", "1765", "1369", "1409", "1340", "1331", "4127", "4125", "4121", "4048", "4049", "4039", "4036", "4113", "4111", "4107", "3977", "3989", "3968", "3965", "3854", "3849", "3838", "3626", "3629", "3598", "3590", "3806", "3798", "3787", "3411", "3447", "3384", "3377", "3855", "3850", "3840", "3627", "3630", "3599", "3591", "3807", "3800", "3788", "3412", "3448", "3385", "3378", "3869", "3867", "3863", "3634", "3635", "3615", "3606", "3852", "3841", "3829", "3433", "3473", "3404", "3395"]}}, {"bool": {"must": [{"match": {"publish_status": "0"}}, {"match": {"relation_version_is_last": "true"}}]}}]}}], "must": [{"match_all": {}}]}}, "aggs": {"Data Language": {"filter": {"bool": {"must": [{"term": {"publish_status": "0"}}]}}, "aggs": {"Data Language": {"terms": {"field": "language", "size": 1000}}}}, "Access": {"filter": {"bool": {"must": [{"term": {"publish_status": "0"}}]}}, "aggs": {"Access": {"terms": {"field": "accessRights", "size": 1000}}}}, "Location": {"filter": {"bool": {"must": [{"term": {"publish_status": "0"}}]}}, "aggs": {"Location": {"terms": {"field": "geoLocation.geoLocationPlace", "size": 1000}}}}, "Temporal": {"filter": {"bool": {"must": [{"term": {"publish_status": "0"}}]}}, "aggs": {"Temporal": {"terms": {"field": "temporal", "size": 1000}}}}, "Topic": {"filter": {"bool": {"must": [{"term": {"publish_status": "0"}}]}}, "aggs": {"Topic": {"terms": {"field": "subject.value", "size": 1000}}}}, "Distributor": {"filter": {"bool": {"must": [{"term": {"contributor.@attributes.contributorType": "Distributor"}}, {"term": {"publish_status": "0"}}]}}, "aggs": {"Distributor": {"terms": {"field": "contributor.contributorName", "size": 1000}}}}, "Data Type": {"filter": {"bool": {"must": [{"term": {"description.descriptionType": "Other"}}, {"term": {"publish_status": "0"}}]}}, "aggs": {"Data Type": {"terms": {"field": "description.value", "size": 1000}}}}}, "sort": [{"date_range1.gte": {"order": "asc", "unmapped_type": "date"}}], "from": 0, "size": 20, "_source": {"excludes": ["content"]}}
@@ -830,7 +830,7 @@ def item_path_search_factory(self, search, index_id=None):
     """Parse query using Weko-Query-Parser.
 
     :param self: REST view.
-    :param search: Elastic search DSL search instance.
+    :param search: search engine DSL search instance.
     :param index_id: Index Identifier contains item's path
     :returns: Tuple with search instance and URL arguments.
     """
@@ -1147,7 +1147,7 @@ def item_path_search_factory(self, search, index_id=None):
 
     urlkwargs.add("q", query_q)
     urlkwargs.add("is_perm_paths", is_perm_paths)
-    # debug elastic search query
+    # debug search engine query
     current_app.logger.debug(json.dumps((search.query()).to_dict()))
     return search, urlkwargs
 
@@ -1266,7 +1266,7 @@ def item_search_factory(
             "Failed parsing query: {0}".format(query_q), exc_info=True
         )
         raise InvalidQueryRESTError()
-    # debug elastic search query
+    # debug search engine query
     current_app.logger.debug(json.dumps((search.query()).to_dict()))
     return search, urlkwargs
 
@@ -1333,6 +1333,6 @@ def feedback_email_search_factory(self, search):
             "Failed parsing query: {0}".format(query_q), exc_info=True
         )
         raise InvalidQueryRESTError()
-    # debug elastic search query
+    # debug search engine query
     current_app.logger.debug(json.dumps((search.query()).to_dict()))
     return search

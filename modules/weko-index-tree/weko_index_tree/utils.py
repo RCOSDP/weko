@@ -446,13 +446,13 @@ def get_admin_coverpage_setting():
 
 
 def get_elasticsearch_records_data_by_indexes(index_ids, start_date, end_date):
-    """Get data from elastic search.
+    """Get data from search engine.
 
     Arguments:
         index_ids -- index tree identifier list
 
     Returns:
-        dictionary -- elastic search data
+        dictionary -- search engine data
 
     """
     records_search = RecordsSearch()
@@ -480,13 +480,13 @@ def get_elasticsearch_records_data_by_indexes(index_ids, start_date, end_date):
 
 
 def generate_path(index_ids):
-    """Get data from elastic search.
+    """Get data from search engine.
 
     Arguments:
         index_ids -- index tree identifier
 
     Returns:
-        dictionary -- elastic search data
+        dictionary -- search engine data
 
     """
     from .api import Indexes

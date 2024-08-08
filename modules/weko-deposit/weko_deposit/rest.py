@@ -267,10 +267,10 @@ class ItemResource(ContentNegotiatedMethodView):
             abort(400, "Failed to register item!")
 
         except OpenSearchException as ex:
-            current_app.logger.error('opensearch error: %s', ex)
+            current_app.logger.error('search engine error: %s', ex)
             db.session.rollback()
 
-            # elasticseacrh remove
+            # search engine remove
             # dammy()
 
             abort(400, "Failed to register item!")
@@ -278,7 +278,7 @@ class ItemResource(ContentNegotiatedMethodView):
             current_app.logger.error('redis error: %s', ex)
             db.session.rollback()
 
-            # elasticseacrh remove
+            # search engine remove
             # dammy()
 
             abort(400, "Failed to register item!")
