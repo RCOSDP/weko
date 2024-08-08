@@ -2,6 +2,14 @@
 
 class WekoHandleError(Exception):
     def __init__(self, ex=None, msg=None):
+        """
+
+        weko handle error initialization.
+
+        :Args:
+            ex (Exception): Original exception object
+            msg (str): Error message
+        """
         if ex:
             self.exception = ex
         if not msg:

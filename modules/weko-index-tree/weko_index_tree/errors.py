@@ -111,6 +111,14 @@ class InternalServerError(RESTException):
 
 class WekoIndexTreeError(Exception):
     def __init__(self, ex=None, msg=None):
+        """
+
+        weko index-tree error initialization.
+
+        :Args:
+            ex (Exception): Original exception object
+            msg (str): Error message
+        """
         if ex:
             self.exception = ex
         if not msg:

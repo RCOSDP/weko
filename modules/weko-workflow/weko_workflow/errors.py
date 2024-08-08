@@ -66,6 +66,14 @@ class DeleteActivityFailedRESTError(RESTException):
 
 class WekoWorkflowError(Exception):
     def __init__(self, ex=None, msg=None):
+        """
+
+        weko worlflow error initialization.
+
+        :Args:
+            ex (Exception): Original exception object
+            msg (str): Error message
+        """
         if ex:
             self.exception = ex
         if not msg:

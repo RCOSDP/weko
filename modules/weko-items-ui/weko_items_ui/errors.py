@@ -56,10 +56,18 @@ class InternalServerError(RESTException):
     description = 'Internal Server Error'
 
 
-    """Custom exceptions for weko_items_ui."""
+"""Custom exceptions for weko_items_ui."""
 
 class WekoItemsUiError(Exception):
     def __init__(self, ex=None, msg=None):
+        """
+
+        weko item ui error initialization.
+
+        :Args:
+            ex (Exception): Original exception object
+            msg (str): Error message
+        """
         if ex:
             self.exception = ex
         if not msg:
