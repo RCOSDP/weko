@@ -77,8 +77,8 @@ COPY public.item_type_property (created, updated, id, name, schema, form, forms,
 -- Data for Name: index; Type: TABLE DATA; Schema: public; Owner: invenio
 --
 
-COPY public.index (created, updated, id, parent, "position", index_name, index_name_english, index_link_name, index_link_name_english, harvest_spec, index_link_enabled, comment, more_check, display_no, harvest_public_state, display_format, image_name, public_state, public_date, recursive_public_state, rss_status, coverpage_state, recursive_coverpage_check, browsing_role, recursive_browsing_role, contribute_role, recursive_contribute_role, browsing_group, recursive_browsing_group, contribute_group, recursive_contribute_group, owner_user_id, item_custom_sort, biblio_flag, online_issn) FROM stdin;
-2021-03-20 07:15:32.798837	2021-03-20 07:15:55.192712	1616224532673	0	-99	利用報告	Data Usage Report		New Index		f		f	5	t	1		f	\N	f	f	f	f	3,-98,-99	f	1,2,3,4,-98,-99	f		f		f	1	{}	f	f
+COPY public.index (created, updated, id, parent, "position", index_name, index_name_english, index_link_name, index_link_name_english, harvest_spec, index_link_enabled, comment, more_check, display_no, harvest_public_state, display_format, image_name, public_state, public_date, recursive_public_state, rss_status, coverpage_state, recursive_coverpage_check, browsing_role, recursive_browsing_role, contribute_role, recursive_contribute_role, browsing_group, recursive_browsing_group, contribute_group, recursive_contribute_group, owner_user_id, item_custom_sort, biblio_flag, online_issn, is_deleted) FROM stdin;
+2021-03-20 07:15:32.798837	2021-03-20 07:15:55.192712	1616224532673	0	-99	利用報告	Data Usage Report		New Index		f		f	5	t	1		f	\N	f	f	f	f	3,-98,-99	f	1,2,3,4,-98,-99	f		f		f	1	{}	f	f	f
 \.
 
 
