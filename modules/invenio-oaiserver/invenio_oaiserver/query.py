@@ -84,7 +84,8 @@ def get_records(**kwargs):
         query = Index.query.filter(
             Index.public_state.is_(True),
             Index.public_date > datetime.now(),
-            Index.harvest_public_state.is_(True)
+            Index.harvest_public_state.is_(True),
+            Index.is_deleted.is_(False),
         )
         indexes = []
         indexes = query.yield_per(1000)
@@ -126,7 +127,7 @@ def get_records(**kwargs):
     scroll_id = kwargs.get('resumptionToken', {}).get('scroll_id')
 
     if not scroll_id:
-        indexes = Indexes.get_harverted_index_list()
+        indexes = Indexes.get_harvested_index_list()
 
         search = OAIServerSearch(
             index=current_app.config['INDEXER_DEFAULT_INDEX'],

@@ -75,7 +75,7 @@ def test_get_affected_records(es_app):
 # .tox/c1/bin/pytest --cov=invenio_oaiserver tests/test_query.py::test_get_records -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiserver/.tox/c1/tmp
 def test_get_records(es_app,db, mock_execute):
     indexes = list()
-    for i in range(10):
+    for i in range(11):
         indexes.append(
             Index(
                 parent=0,
@@ -88,6 +88,8 @@ def test_get_records(es_app,db, mock_execute):
                 browsing_role="3,-99"
             )
         )
+    indexes[-1].is_deleted = True
+
     rec_uuid1 = uuid.uuid4()
     identifier1 = PersistentIdentifier.create('doi', "https://doi.org/00001",object_type='rec', object_uuid=rec_uuid1,status=PIDStatus.REGISTERED)
 

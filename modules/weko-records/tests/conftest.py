@@ -313,16 +313,24 @@ def user():
 @pytest.fixture()
 def db_index(app, db):
     index_metadata = {
-            'id': 1,
-            'parent': 0,
-            'value': 'IndexA',
-        }
+        'id': 1,
+        'parent': 0,
+        'value': 'IndexA',
+    }
+    index_metadata_deleted = {
+        'id': 99,
+        'parent': 0,
+        'value': 'Deleted Index',
+    }
 
     app.config['WEKO_INDEX_TREE_DEFAULT_DISPLAY_NUMBER'] = 5
     with app.app_context():
         user = create_test_user('test@example.org')
         with patch("flask_login.utils._get_user", return_value=user):
             Indexes.create(0, index_metadata)
+            Indexes.create(0, index_metadata_deleted)
+            Indexes.delete(99, True)
+            db.session.commit()
 
 
 @pytest.fixture()
