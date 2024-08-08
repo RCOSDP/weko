@@ -1,0 +1,97 @@
+ul.leaders {
+    max-width: 100%;
+    padding: 0;
+    overflow-x: hidden;
+    list-style: none
+}
+
+ul.leaders li:after {
+    float: left;
+    width: 0;
+    white-space: nowrap;
+    color:#d3d3d3;
+    height:100%;
+    content:
+    "● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● "
+    "● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● "
+    "● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● "
+    "● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● "
+    "● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● "
+    "● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● "
+    "● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● "
+    "● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● "
+    "● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● "
+    "● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● "
+}
+
+ul.leaders span:first-child {
+  padding-right: 5px;
+  background: #ffffff;
+  height:100%;
+  max-width: 80%;
+  display:inline-block;
+}
+
+ul.leaders span + span {
+  float: right;
+  padding-left: 5px;
+  background: transparent;
+  position: relative;
+  z-index: 1;
+  height:100%;
+  background-color: #ffffff
+}
+
+.bg-color-white {
+  background-color: #ffffff !important;
+}
+
+.border-color-transparent {
+  border-color: transparent !important;
+}
+
+.extention-button, 
+.extention-button:active, 
+.extention-button:focus, 
+.extention-button:hover,
+.dot-button, 
+.dot-button:active, 
+.dot-button:focus, 
+.dot-button:hover {
+  color: #23527c;
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
+  padding: 5px;
+}
+
+.extention-button {
+  border: solid gray 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 991px) { 
+  .extention-button, .dot-button{
+    width: 100%;
+  }
+}
+
+@media (min-width: 992px) and (max-width: 1199px) { 
+  .extention-button, .dot-button{
+    width: 80px;
+  }
+}
+
+@media (min-width: 1199px) { 
+  .extention-button, .dot-button{
+    width: 100px;
+  }
+}
+
+td.fitwidth {
+  width: 1px;
+  white-space: nowrap;
+  padding-right: 10px;
+}
