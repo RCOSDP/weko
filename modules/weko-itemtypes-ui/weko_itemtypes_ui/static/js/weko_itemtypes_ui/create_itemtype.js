@@ -11,21 +11,22 @@ $(document).ready(function () {
   src_mapping = {};
   page_global = {
     upload_file: false,
-    table_row: [],
-    table_row_map: {},
-    meta_list: {},
+    table_row: [],        // 追加した行番号を保存する元々順番()
+    table_row_map: {},    // 生成したschemaとformの情報を保存する
+    meta_list: {},        // 追加した行の情報を保存する(セットした詳細情報)
     meta_fix: {},
-    schemaeditor: {
-      schema:{}
+    schemaeditor: {       // objectの場合
+      schema:{}           //   生成したschemaの情報を保存する
     },
-    edit_notes: {}
+    edit_notes: {}         // Map of notes for each attribute, keep seperate
   };
-  properties_obj = {}
+  properties_obj = {}     // 作成したメタデータ項目タイプ
   propertyOptions = '';
   textPropertyOptions = '';
-  page_json_editor = {}
+  page_json_editor = {}   //   一時的editorオブジェクトの保存
   url_update_schema = '/admin/itemtypes/register';
   rename_subitem_config = false;
+
   mapping_value = {
     "display_lang_type": "",
     "oai_dc_mapping": "",
