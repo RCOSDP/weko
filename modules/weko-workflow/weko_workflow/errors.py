@@ -62,55 +62,63 @@ class DeleteActivityFailedRESTError(RESTException):
     description = _('登録アクティビティを削除エラー。')
 
 
-"""Custom exceptions for weko_workflow."""
+"""Custom errors for weko workflow."""
 
 class WekoWorkflowError(Exception):
     def __init__(self, ex=None, msg=None):
-        """
+        """Constructor.
 
-        weko worlflow error initialization.
+        Initialize theweko workflow error.
 
-        :Args:
+        Args:
             ex (Exception): Original exception object
             msg (str): Error message
         """
-        if ex:
+        if ex is not None:
             self.exception = ex
-        if not msg:
+        if msg is None:
             msg = "Some error has occurred in weko_workflow."
         super().__init__(msg)
 
 
 class WekoWorkflowNameError(WekoWorkflowError):
     def __init__(self, ex=None, msg=None):
+        if msg is None:
+            msg = "Some name error has occurred in weko_workflow."
         super().__init__(ex, msg)
 
 
 class WekoWorkflowMailError(WekoWorkflowError):
     def __init__(self, ex=None, msg=None):
+        if msg is None:
+            msg = "Some mail error has occurred in weko_workflow."
         super().__init__(ex, msg)
 
 
 class WekoActionError(WekoWorkflowError):
     def __init__(self, ex=None, msg=None):
-        if not msg:
+        if msg is None:
             msg = "Some action error has occurred in weko_workflow."
         super().__init__(ex, msg)
 
 
 class WekoActivityError(WekoWorkflowError):
     def __init__(self, ex=None, msg=None):
-        if not msg:
+        if msg is None:
             msg = "Some activity error has occurred in weko_workflow."
         super().__init__(ex, msg)
 
 
 class WekoActivityHistoryError(WekoActivityError):
     def __init__(self, ex=None, msg=None):
+        if msg is None:
+            msg = "Some activity history error has occurred in weko_workflow."
         super().__init__(ex, msg)
 
 
 class WekoActivityValidationError(WekoActivityError):
     def __init__(self, ex=None, msg=None):
+        if msg is None:
+            msg = "Some activity validation error has occurred in weko_workflow."
         super().__init__(ex, msg)
 

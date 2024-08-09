@@ -112,27 +112,35 @@ class InternalServerError(RESTException):
     code = 500
     description = 'Internal Server Error'
 
-"""Custom exceptions for weko_records_ui."""
+"""Custom errors for weko records ui."""
 
 class WekoRecordsUiError(Exception):
     def __init__(self, ex=None, msg=None):
-        """
+        """Constructor.
 
-        weko records ui error initialization.
+        Initialize theweko records ui error.
 
-        :Args:
+        Args:
             ex (Exception): Original exception object
             msg (str): Error message
         """
-        if ex:
+        if ex is not None:
             self.exception = ex
-        if not msg:
+        if msg is None:
             msg = "Some error has occurred in weko_records_ui."
         super().__init__(msg)
 
 
 class WekoRecordsUiFileError(WekoRecordsUiError):
     def __init__(self, ex=None, msg=None):
+        if msg is None:
+            msg = "Some file error has occurred in weko_records_ui."
         super().__init__(ex, msg)
 
+
+class WekoRecordsUiPermissionError(WekoRecordsUiError):
+    def __init__(self, ex=None, msg=None):
+        if msg is None:
+            msg = "Some permission error has occurred in weko_records_ui."
+        super().__init__(ex, msg)
 

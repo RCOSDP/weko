@@ -107,35 +107,43 @@ class InternalServerError(RESTException):
     code = 500
     description = 'Internal Server Error'
 
-"""Custom exceptions for weko_index_tree."""
+
+"""Custom errors for weko index-tree."""
 
 class WekoIndexTreeError(Exception):
     def __init__(self, ex=None, msg=None):
-        """
+        """Constructor.
 
-        weko index-tree error initialization.
+        Initialize theweko index-tree error.
 
-        :Args:
+        Args:
             ex (Exception): Original exception object
             msg (str): Error message
         """
-        if ex:
+        if ex is not None:
             self.exception = ex
-        if not msg:
+        if msg is None:
             msg = "Some error has occurred in weko_index_tree."
         super().__init__(msg)
 
 
 class WekoIndexTreeSettingError(WekoIndexTreeError):
     def __init__(self, ex=None, msg=None):
+        if msg is None:
+            msg = "Some setting error has occurred in weko_index_tree."
         super().__init__(ex, msg)
 
 
 class WekoIndexStyleError(WekoIndexTreeError):
     def __init__(self, ex=None, msg=None):
+        if msg is None:
+            msg = "Some style error has occurred in weko_index_tree."
         super().__init__(ex, msg)
 
 
 class WekoIndexBrowsingError(WekoIndexTreeError):
     def __init__(self, ex=None, msg=None):
+        if msg is None:
+            msg = "Some browsing setting error has occurred in weko_index_tree."
         super().__init__(ex, msg)
+

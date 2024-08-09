@@ -39,30 +39,49 @@ class AuthorNotFoundRESTError(RESTException):
     code = 404
     description = 'This author does not found.'
 
-"""Custom exceptions for weko_authors."""
+"""Custom errors for weko authors."""
 
 class WekoAuthorsError(Exception):
     def __init__(self, ex=None, msg=None):
-        """
+        """Constructor.
 
-        weko authors error initialization.
+        Initialize theweko authors error.
 
-        :Args:
+        Args:
             ex (Exception): Original exception object
             msg (str): Error message
         """
-        if ex:
+        if ex is not None:
             self.exception = ex
-        if not msg:
+        if msg is None:
             msg = "Some error has occurred in weko_authors."
         super().__init__(msg)
 
 
+class WekoAuthorsManagementError(WekoAuthorsError):
+    def __init__(self, ex=None, msg=None):
+        if msg is None:
+            msg = "Some management error has occurred in weko_authors."
+        super().__init__(ex, msg)
+
+
 class WekoAuthorsSettingsError(WekoAuthorsError):
     def __init__(self, ex=None, msg=None):
+        if msg is None:
+            msg = "Some setting error has occurred in weko_authors."
         super().__init__(ex, msg)
 
 
 class WekoAuthorsImportError(WekoAuthorsError):
     def __init__(self, ex=None, msg=None):
+        if msg is None:
+            msg = "Some import error has occurred in weko_authors."
         super().__init__(ex, msg)
+
+
+class WekoAuthorsExportError(WekoAuthorsError):
+    def __init__(self, ex=None, msg=None):
+        if msg is None:
+            msg = "Some export error has occurred in weko_authors."
+        super().__init__(ex, msg)
+

@@ -56,22 +56,35 @@ class InternalServerError(RESTException):
     description = 'Internal Server Error'
 
 
-"""Custom exceptions for weko_items_ui."""
+"""Custom errors for weko items ui."""
 
 class WekoItemsUiError(Exception):
     def __init__(self, ex=None, msg=None):
-        """
+        """Constructor.
 
-        weko item ui error initialization.
+        Initialize theweko items ui error.
 
-        :Args:
+        Args:
             ex (Exception): Original exception object
             msg (str): Error message
         """
-        if ex:
+        if ex is not None:
             self.exception = ex
-        if not msg:
+        if msg is None:
             msg = "Some error has occurred in weko_items_ui."
         super().__init__(msg)
 
+
+class WekoItemsUiQueryRankingError(WekoItemsUiError):
+    def __init__(self, ex=None, msg=None):
+        if msg is None:
+            msg = "Some error has occurred in weko_items_ui."
+        super().__init__(ex, msg)
+
+
+class WekoItemsUiExportError(WekoItemsUiError):
+    def __init__(self, ex=None, msg=None):
+        if msg is None:
+            msg = "Some export error has occurred in weko_items_ui."
+        super().__init__(ex, msg)
 

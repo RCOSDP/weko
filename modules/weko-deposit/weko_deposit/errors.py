@@ -1,29 +1,39 @@
-"""Custom exceptions for weko-deposit."""
+"""Custom errors for weko deposit."""
 
 class WekoDepositError(Exception):
     def __init__(self, ex=None, msg=None):
-        """
+        """Constructor.
 
-        weko deposit error initialization.
+        Initialize theweko deposit error.
 
-        :Args:
+        Args:
             ex (Exception): Original exception object
             msg (str): Error message
         """
-        if ex:
+        if ex is not None:
             self.exception = ex
-        if not msg:
-            msg = "Some error has occurred in weko-deposit."
+        if msg is None:
+            msg = "Some error has occurred in weko_deposit."
         super().__init__(msg)
 
 
 class WekoDepositIndexerError(WekoDepositError):
     def __init__(self, ex=None, msg=None):
+        if msg is None:
+            msg = "Some indexer error has occurred in weko_deposit."
         super().__init__(ex, msg)
 
 
-class WekoDepositRegistrarionError(WekoDepositError):
+class WekoDepositRegistrationError(WekoDepositError):
     def __init__(self, ex=None, msg=None):
+        if msg is None:
+            msg = "Some registration error has occurred in weko_deposit."
         super().__init__(ex, msg)
 
+
+class WekoDepositStorageError(WekoDepositError):
+    def __init__(self, ex=None, msg=None):
+        if msg is None:
+            msg = "Some storage error has occurred in weko_deposit."
+        super().__init__(ex, msg)
 

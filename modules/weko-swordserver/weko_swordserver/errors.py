@@ -59,9 +59,10 @@ class WekoSwordserverException(Exception):
             ex (Exception): Exception.
             **kwargs: Arbitrary keyword arguments.
         """
+        if msg is None:
+            msg = "Some error has occurred in weko_swordserver."
         super(Exception, self).__init__(msg, **kwargs)
         self.message = msg
         if errorType is not None:
             self.errorType = errorType
-
 

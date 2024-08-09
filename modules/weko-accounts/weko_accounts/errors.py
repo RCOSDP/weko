@@ -62,46 +62,35 @@ class DisabledUserError(RESTException):
     description = 'Account is disabled.'
 
 
-"""Weko Accounts Errors"""
+"""Custom errors for weko assounts."""
 
 class WekoAccountsError(Exception):
     def __init__(self, ex=None, msg=None):
-        """
+        """Constructor.
 
-        weko accounts error initialization.
+        Initialize theweko assounts error.
 
-        :Args:
+        Args:
             ex (Exception): Original exception object
             msg (str): Error message
         """
-        if ex:
+        if ex is not None:
             self.exception = ex
-        if not msg:
+        if msg is None:
             msg = "Some error has occurred in weko_accounts."
         super().__init__(msg)
 
 
 class WekoAccountsShibSettingError(WekoAccountsError):
     def __init__(self, ex=None, msg=None):
+        if msg is None:
+            msg = "Some shibboleth setting error has occurred in weko_accounts."
         super().__init__(ex, msg)
 
 
 class WekoAccountsShibUserError(WekoAccountsError):
     def __init__(self, ex=None, msg=None):
-        super().__init__(ex, msg)
-
-
-class WekoAccountsSessionError(WekoAccountsError):
-    def __init__(self, ex=None, msg=None):
-        super().__init__(ex, msg)
-
-
-class WekoAccountsKeyError(WekoAccountsError):
-    def __init__(self, ex=None, msg=None):
-        super().__init__(ex, msg)
-
-
-class WekoAccountsAttributeError(WekoAccountsError):
-    def __init__(self, ex=None, msg=None):
+        if msg is None:
+            msg = "Some shibboleth user error has occurred in weko_accounts."
         super().__init__(ex, msg)
 
