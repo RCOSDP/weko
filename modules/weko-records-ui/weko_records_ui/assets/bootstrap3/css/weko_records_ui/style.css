@@ -1,0 +1,104 @@
+@import url('node_modules/angular-loading-bar/build/loading-bar.css');
+@import url('node_modules/typeahead.js-bootstrap-css/typeaheadjs.css');
+@import url('node_modules/bootstrap-switch/dist/css/bootstrap3/bootstrap-switch.css');
+
+.nowrap {
+  white-space: nowrap;
+}
+
+.wrap {
+  word-break: break-all;
+}
+
+.twitter-typeahead .tt-suggestion {
+  white-space: normal !important;
+}
+
+#invenio-csl .ng-binding {
+  word-break: break-all;
+}
+
+#invenio-csl span.twitter-typeahead .tt-menu {
+  overflow-y: scroll;
+  max-height: 200px;
+}
+
+.dropdown button {
+  background: #fff;
+  color: black;
+}
+
+#views-num {
+  font-size: x-large;
+}
+
+.fa-eye {
+  vertical-align: -5px;
+}
+
+#views-txt {
+  vertical-align: -5px;
+}
+
+#mark-break {
+  margin-left: 0.25em;
+  margin-right: 0.25em;
+}
+
+.carousel-control.left, .carousel-control.right {
+    background-image: none !important;
+}
+
+.carousel-control {
+    font-size: 20px;
+    color: #ffffff;
+    position: unset;
+}
+
+.weko-carousel-navbar {
+  background-color: #3b3838;
+  /* height: 26px; */
+  -webkit-box-shadow: 0 5px 1px -1px #ccc;
+  -moz-box-shadow: 0 5px 1px -1px #ccc;
+  box-shadow: 0 2px 1px -1px #ccc;
+}
+
+.carousel-indicators li {
+  background-color: #949494;
+}
+
+.carousel-indicators .active {
+  background-color: #333333;
+}
+
+.filecheck-td {
+  width: 10%;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.action-button {
+  margin-top: 5px;
+  margin-bottom: 5px;
+  margin-right: auto;
+  margin-left: auto;
+  font-size: 13px;
+  line-height: 12px;
+  height: 27px;
+}
+
+.action-anchor {
+  color: #333333;
+  text-decoration: none;
+}
+
+.action-icon {
+  float:left;
+  margin-left:1px;
+}
+
+.language-button {
+  border-radius: 5px;
+  background-color: #f7f7f7 !important;
+  border: 1px solid #ebebeb;
+}
