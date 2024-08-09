@@ -1685,6 +1685,7 @@ def handle_item_title(list_record):
         title_data, _title_key = get_data_by_property(
             item["metadata"], item_map, "title.@value"
         )
+        
         title_lang_data, _title_lang_key = get_data_by_property(
             item["metadata"], item_map, "title.@attributes.xml:lang"
         )
@@ -1700,6 +1701,7 @@ def handle_item_title(list_record):
                     for h in hide_list:
                         if h.startswith(val_parent_key) and h.endswith(val_sub_key):
                             prop_hidden = True
+
                     if (
                         title_lang_data is not None
                         and title_data is not None
