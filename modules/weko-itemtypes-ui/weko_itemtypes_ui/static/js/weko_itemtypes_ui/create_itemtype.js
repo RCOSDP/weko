@@ -11,22 +11,21 @@ $(document).ready(function () {
   src_mapping = {};
   page_global = {
     upload_file: false,
-    table_row: [],        // 追加した行番号を保存する元々順番()
-    table_row_map: {},    // 生成したschemaとformの情報を保存する
-    meta_list: {},        // 追加した行の情報を保存する(セットした詳細情報)
+    table_row: [],
+    table_row_map: {},
+    meta_list: {},
     meta_fix: {},
-    schemaeditor: {       // objectの場合
-      schema:{}           //   生成したschemaの情報を保存する
+    schemaeditor: {
+      schema:{}
     },
-    edit_notes: {}         // Map of notes for each attribute, keep seperate
+    edit_notes: {}
   };
-  properties_obj = {}     // 作成したメタデータ項目タイプ
+  properties_obj = {}
   propertyOptions = '';
   textPropertyOptions = '';
-  page_json_editor = {}   //   一時的editorオブジェクトの保存
+  page_json_editor = {}
   url_update_schema = '/admin/itemtypes/register';
   rename_subitem_config = false;
-  // デフォルトマッピングのテンプレート
   mapping_value = {
     "display_lang_type": "",
     "oai_dc_mapping": "",
@@ -854,18 +853,13 @@ $(document).ready(function () {
     page_global.meta_system = add_meta_system()
     page_global.table_row_map.form = page_global.table_row_map.form.concat(get_form_system())
     add_system_schema_property()
-    console.log(tmp_pubdate.title);
-    console.log(tmp_pubdate.title_i18n.ja);
-    console.log(tmp_pubdate.title_i18n.en);
   }
   
- 
+  //add new meta table row
   $('#btn_new_itemtype_meta').on('click', function(){
     new_meta_row('item_' + $.now(), propertyOptions);
   });
-   // ボタンがクリックされたときの処理
    $('.btn-link-item').click(function() {
-    // クリックされたボタンの隣にある多言語設定領域を表示・非表示を切り替える
     $(this).closest('td').find('.text-title-JaEn').toggleClass('hide');
     });
 
