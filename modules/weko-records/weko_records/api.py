@@ -942,6 +942,14 @@ class ItemTypes(RecordBase):
                             if multiple_flg:
                                 data['table_row_map']['schema']['properties'][_prop_id]['items']=pickle.loads(pickle.dumps(_prop.schema, -1))
                                 data['table_row_map']['schema']['properties'][_prop_id]['type']="array"
+                                if 'maxItems' not in data['table_row_map']['schema']['properties'][_prop_id]:
+                                    data['table_row_map']['schema']['properties'][_prop_id]['maxItems']=9999
+                                if 'minItems' not in data['table_row_map']['schema']['properties'][_prop_id]:
+                                    data['table_row_map']['schema']['properties'][_prop_id]['minItems']=1
+                                if 'properties' in data['table_row_map']['schema']['properties'][_prop_id]:
+                                    data['table_row_map']['schema']['properties'][_prop_id].pop('properties')
+                                if 'format' in data['table_row_map']['schema']['properties'][_prop_id]:
+                                    data['table_row_map']['schema']['properties'][_prop_id].pop('format')
                                 _forms = json.loads(json.dumps(pickle.loads(pickle.dumps(_prop.forms, -1))).replace('parentkey',_prop_id))
                                 data['table_row_map']['form'][idx]=pickle.loads(pickle.dumps(_forms, -1))
                             else:
