@@ -351,7 +351,6 @@ def delete_version(recid):
             )
         parent_deposit["relation_version_is_last"] = True
         parent_deposit.publish()
-        new_parent_record.update_feedback_mail()
         new_parent_record.commit()
         updated_item.publish(new_parent_record)
         weko_record = WekoRecord.get_record_by_pid(
@@ -377,7 +376,6 @@ def delete_version(recid):
             )
         draft_deposit["relation_version_is_last"] = True
         draft_deposit.publish()
-        new_draft_record.update_feedback_mail()
         new_draft_record.commit()
         updated_item.publish(new_draft_record)
         # update item link info of draft record

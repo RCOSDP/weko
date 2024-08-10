@@ -523,6 +523,13 @@ class TestWekoDeposit:
     # def commit(self, *args, **kwargs):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_commit -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test_commit(sel,app,db,location, db_index, db_itemtype):
+        app.config["WEKO_SCHEMA_JPCOAR_V2_SCHEMA_NAME"] = 'jpcoar_mapping'
+        app.config["WEKO_SCHEMA_JPCOAR_V2_RESOURCE_TYPE_REPLACE"] = {
+            'periodical':'journal',
+            'interview':'other',
+            'internal report':'other',
+            'report part':'other',
+        }
         with app.test_request_context():
             deposit = WekoDeposit.create({})
             assert deposit['_deposit']['id']=="1"
@@ -539,17 +546,18 @@ class TestWekoDeposit:
             index_obj = {'index': ['1'], 'actions': 'private'}
             data = {'pubdate': '2023-12-07', 'item_1617186331708': [{'subitem_1551255647225': 'test', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, 'shared_user_id': -1, 'title': 'test', 'lang': 'ja', 'deleted_items': ['item_1617186385884', 'item_1617186419668', 'item_1617186499011', 'item_1617186609386', 'item_1617186626617', 'item_1617186643794', 'item_1617186660861', 'item_1617186702042', 'item_1617186783814', 'item_1617186859717', 'item_1617186882738', 'item_1617186901218', 'item_1617186920753', 'item_1617186941041', 'item_1617187112279', 'item_1617187187528', 'item_1617349709064', 'item_1617353299429', 'item_1617605131499', 'item_1617610673286', 'item_1617620223087', 'item_1617944105607', 'item_1617187056579', 'approval1', 'approval2'], '$schema': '/items/jsonschema/1'}
             deposit.update(index_obj,data)
-            FeedbackMailList.update(item_id,[{"email":"test.taro@test.org","author_id":"1"}])
-            db.session.commit()
             deposit.commit()
-            es_data = deposit.indexer.get_metadata_by_item_id(item_id)
-            assert es_data["_source"]["feedback_mail_list"] == [{"email":"test.taro@test.org","author_id":"1"}]
+            FeedbackMailList.update(item_id,[{"email":"test.taro@test.org","author_id":""}])
+            db.session.commit()
+            fd = FeedbackMailList.get_mail_list_by_item_id(item_id)
+            assert fd == [{"email":"test.taro@test.org","author_id":""}]
  
             # not exist feedback_mail_list
             FeedbackMailList.delete(item_id)
             deposit.commit()
-            es_data = deposit.indexer.get_metadata_by_item_id(item_id)
-            assert es_data["_source"]["feedback_mail_list"] == []
+            db.session.commit()
+            fd = FeedbackMailList.get_mail_list_by_item_id(item_id)
+            assert fd == []
 
 
     # def newversion(self, pid=None, is_draft=False):
@@ -846,14 +854,6 @@ class TestWekoDeposit:
         deposit = record['deposit']
         assert deposit.update_author_link({})==None
 
-
-    # def update_feedback_mail(self):
-    # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_update_feedback_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
-    def test_update_feedback_mail(sel,app,db,location,es_records):
-        indexer, records = es_records
-        record = records[0]
-        deposit = record['deposit']
-        assert deposit.update_feedback_mail()==None
 
     # def remove_feedback_mail(self):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_remove_feedback_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp

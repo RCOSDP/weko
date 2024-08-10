@@ -62,8 +62,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.attributes import flag_modified
 from weko_admin.models import AdminSettings
 from weko_index_tree.api import Indexes
-from weko_records.api import FeedbackMailList, ItemLink, ItemsMetadata, \
-    ItemTypes
+from weko_records.api import ItemLink, ItemsMetadata, ItemTypes,FeedbackMailList
 from weko_records.models import ItemMetadata, ItemReference
 from weko_records.utils import get_all_items, get_attribute_value_all_items, \
     get_options_and_order_list, json_loader, remove_weko2_special_character, \
@@ -1693,27 +1692,6 @@ class WekoDeposit(Deposit):
                 "author_link": author_link
             }
             self.indexer.update_author_link(author_link_info)
-
-    def update_feedback_mail(self):
-        """ 
-
-        Index feedback mail list.
-
-        Args:
-            None
-
-        Returns:
-            None
-
-        """
-        item_id = self.id
-        mail_list = FeedbackMailList.get_mail_list_by_item_id(item_id)
-        if mail_list:
-            feedback_mail = {
-                "id": item_id,
-                "mail_list": mail_list
-            }
-            self.indexer.update_feedback_mail_list(feedback_mail)
 
     def remove_feedback_mail(self):
         """ 

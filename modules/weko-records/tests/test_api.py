@@ -27,6 +27,7 @@ import json
 from elasticsearch.exceptions import RequestError
 from invenio_records.api import Record
 from invenio_records.errors import MissingModelError
+from invenio_pidstore.models import PersistentIdentifier
 from weko_deposit.api import WekoDeposit
 from weko_index_tree.models import Index
 from mock import patch,MagicMock
@@ -1687,8 +1688,8 @@ def test_feedback_mail_list_create_and_update(app, db):
     _item_id1 = uuid.uuid4()
     _item_id2 = uuid.uuid4()
     _feedback_maillist1 = []
-    _feedback_maillist2 = ['nii2@nii.co.jp']
-    _feedback_maillist3 = ['nii3@nii.co.jp']
+    _feedback_maillist2 = [{'email': 'nii2@nii.co.jp'}]
+    _feedback_maillist3 = [{'email': 'nii3@nii.co.jp', 'author_id': '1'}]
 
     FeedbackMailList.update(_item_id0, _feedback_maillist1)
     db.session.commit()
@@ -1703,12 +1704,51 @@ def test_feedback_mail_list_create_and_update(app, db):
     FeedbackMailList.update(_item_id1, _feedback_maillist2)
     db.session.commit()
     record1 = FeedbackMailList.get_mail_list_by_item_id(_item_id1)
-    assert record1==['nii2@nii.co.jp']
+    assert record1==[{'email': 'nii2@nii.co.jp', 'author_id': ''}]
     FeedbackMailList.update_by_list_item_id([_item_id1, _item_id2], _feedback_maillist3)
-    record1 = FeedbackMailList.get_mail_list_by_item_id(_item_id1)
-    record2 = FeedbackMailList.get_mail_list_by_item_id(_item_id2)
-    assert record1==['nii3@nii.co.jp']
-    assert record2==['nii3@nii.co.jp']
+    with patch('weko_records.api.Authors.get_emails_by_id', return_value=['nii3@nii.co.jp']):
+        record1 = FeedbackMailList.get_mail_list_by_item_id(_item_id1)
+        record2 = FeedbackMailList.get_mail_list_by_item_id(_item_id2)
+        assert record1==[{'email': 'nii3@nii.co.jp', 'author_id': '1'}]
+        assert record2==[{'email': 'nii3@nii.co.jp', 'author_id': '1'}]
+
+
+# class FeedbackMailList(object):
+#     def get_feedback_mail_list(cls):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_get_feedback_mail_list -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_get_feedback_mail_list(app, db):
+    def _create_pid(id, uuid):
+        pid = PersistentIdentifier()
+        pid.created = datetime.utcnow()
+        pid.updated = datetime.utcnow()
+        pid.id = id
+        pid.pid_type = 'recid'
+        pid.pid_value = str(id)
+        pid.status = 'R'
+        pid.object_type = 'rec'
+        pid.object_uuid = uuid
+        return pid
+
+    _item_id0 = uuid.uuid4()
+    _item_id1 = uuid.uuid4()
+    _item_id2 = uuid.uuid4()
+    _feedback_maillist0 = [{'email': 'nii0@nii.co.jp'}]
+    _feedback_maillist1 = [{'email': 'nii1@nii.co.jp', 'author_id': '1'}]
+    _feedback_maillist2 = [{'email': 'nii1@nii.co.jp', 'author_id': '1'}, {'email': 'nii0@nii.co.jp', 'author_id': ''}]
+
+    FeedbackMailList.update(_item_id0, _feedback_maillist0)
+    FeedbackMailList.update(_item_id1, _feedback_maillist1)
+    FeedbackMailList.update(_item_id2, _feedback_maillist2)
+
+    db.session.add(_create_pid(1, _item_id0))
+    db.session.add(_create_pid(2, _item_id1))
+    db.session.add(_create_pid(3, _item_id2))
+    db.session.commit()
+    with patch('weko_records.api.Authors.get_emails_by_id', return_value=['nii1@nii.co.jp']):
+        data = FeedbackMailList.get_feedback_mail_list()
+        assert data=={'nii0@nii.co.jp': {'items': [str(_item_id0), str(_item_id2)], 'author_id': ''},
+                      'nii1@nii.co.jp': {'items': [str(_item_id1), str(_item_id2)], 'author_id': '1'}}
+
 
 # class FeedbackMailList(object):
 #     def delete(cls, item_id):

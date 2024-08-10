@@ -1109,7 +1109,6 @@ def test_next_action(client, db, users, db_register_fullaction, db_records, user
 
     mocker.patch("weko_workflow.views.IdentifierHandle.remove_idt_registration_metadata",return_value=None)
     mocker.patch("weko_workflow.views.IdentifierHandle.update_idt_registration_metadata",return_value=None)
-    mocker.patch("weko_workflow.views.WekoDeposit.update_feedback_mail",return_value=True)
     mocker.patch("weko_workflow.views.FeedbackMailList.update_by_list_item_id")
     mocker.patch("weko_workflow.views.FeedbackMailList.delete_by_list_item_id")
     mock_signal = mocker.patch("weko_workflow.views.item_created.send")
@@ -1117,7 +1116,6 @@ def test_next_action(client, db, users, db_register_fullaction, db_records, user
     # mocker.patch("weko_workflow.views.handle_finish_workflow",return_value=new_item)
     mocker.patch("weko_deposit.api.WekoDeposit.publish",return_value=True)
     mocker.patch("weko_deposit.api.WekoDeposit.merge_data_to_record_without_version",return_value=db_records[0][6])
-    mocker.patch("weko_deposit.api.WekoDeposit.update_feedback_mail",return_value=True)
     mocker.patch("weko_deposit.api.WekoDeposit.commit",return_value=True)
     mocker.patch("weko_workflow.api.UpdateItem.publish",return_value=True)
     mocker.patch("invenio_oaiserver.tasks.update_records_sets.delay",return_value=True)
@@ -2148,7 +2146,6 @@ def test_next_action_usage_application(client, db, users, db_register_usage_appl
 
     mocker.patch("weko_workflow.views.IdentifierHandle.remove_idt_registration_metadata",return_value=None)
     mocker.patch("weko_workflow.views.IdentifierHandle.update_idt_registration_metadata",return_value=None)
-    mocker.patch("weko_workflow.views.WekoDeposit.update_feedback_mail")
     mocker.patch("weko_workflow.views.FeedbackMailList.update_by_list_item_id")
     mocker.patch("weko_workflow.views.FeedbackMailList.delete_by_list_item_id")
     mock_signal = mocker.patch("weko_workflow.views.item_created.send")
