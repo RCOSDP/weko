@@ -1,0 +1,1 @@
+ALTER TABLE public.feedback_mail_list ADD COLUMN account_author text;
