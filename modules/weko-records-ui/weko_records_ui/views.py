@@ -787,9 +787,10 @@ def _get_show_secret_url_button(record : WekoRecord, filename :str) -> bool:
     #2.check the user has permittion
     has_parmission = False
     # Registered user
-    user_id_list = [int(record['owner'])] if record.get('owner') else []
+    owner_user_id = [int(record['owner'])] if record.get('owner') else []
+    shared_user_id = [int(record['weko_shared_id'])] if int(record.get('weko_shared_id', -1)) != -1 else []
     if current_user and current_user.is_authenticated and \
-        current_user.id in user_id_list:
+        current_user.id in owner_user_id + shared_user_id:
         has_parmission = True
     # Super users
     supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] 
