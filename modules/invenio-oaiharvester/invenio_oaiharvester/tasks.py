@@ -143,7 +143,7 @@ def map_indexes(index_specs, parent_id):
     res = []
     for spec in index_specs:
         idx = Index.query.filter_by(
-            harvest_spec=spec, parent=parent_id).first()
+            harvest_spec=spec, parent=parent_id, is_deleted=False).first()
         res.append(idx.id) if idx else None
     return res
 
