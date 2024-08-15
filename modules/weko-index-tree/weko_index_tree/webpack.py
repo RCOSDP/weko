@@ -1,6 +1,6 @@
 from invenio_assets.webpack import WebpackThemeBundle
 
-weko_record_ui = WebpackThemeBundle(
+weko_index_tree = WebpackThemeBundle(
     __name__,
     "assets",
     default="bootstrap3",
