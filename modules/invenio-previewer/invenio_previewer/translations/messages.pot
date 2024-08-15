@@ -1,94 +1,397 @@
 # Translations template for invenio-previewer.
-# Copyright (C) 2021 CERN
+# Copyright (C) 2024 CERN
 # This file is distributed under the same license as the invenio-previewer
 # project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2021.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2024.
 #
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: invenio-previewer 1.0.0a11\n"
+"Project-Id-Version: invenio-previewer 2.2.1\n"
 "Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
-"POT-Creation-Date: 2021-01-29 06:36+0000\n"
+"POT-Creation-Date: 2024-08-06 08:55+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.5.1\n"
+"Generated-By: Babel 2.15.0\n"
 
-#: invenio_previewer/api.py:153
-msgid "The storage path is incorrect."
+#: invenio_previewer/extensions/ipynb.py:38
+msgid "Error: Not a ipynb/json file"
 msgstr ""
 
-#: invenio_previewer/api.py:155 invenio_previewer/api.py:162
-#: invenio_previewer/api.py:169 invenio_previewer/api.py:185
-msgid "Please contact the administrator."
+#: invenio_previewer/extensions/xml_prismjs.py:31
+msgid "Error decoding the file. Are you sure it is '{encoding}'?"
 msgstr ""
 
-#: invenio_previewer/api.py:160 invenio_previewer/api.py:183
-msgid "The storage location cannot be accessed."
+#: invenio_previewer/templates/invenio_previewer/base.html:12
+#: invenio_previewer/templates/invenio_previewer/macros.html:46
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/base.html:12
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/macros.html:46
+msgid "Preview"
 msgstr ""
 
-#: invenio_previewer/api.py:168
-msgid "There is not enough storage space."
-msgstr ""
-
-#: invenio_previewer/templates/invenio_previewer/bottom.html:35
+#: invenio_previewer/templates/invenio_previewer/bottom.html:19
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/bottom.html:24
 msgid "Embed code"
 msgstr ""
 
-#: invenio_previewer/templates/invenio_previewer/bottom.html:45
+#: invenio_previewer/templates/invenio_previewer/bottom.html:29
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:223
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:288
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:223
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:288
 msgid "Close"
 msgstr ""
 
-#: invenio_previewer/templates/invenio_previewer/bottom.html:88
+#: invenio_previewer/templates/invenio_previewer/bottom.html:72
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/bottom.html:41
 msgid "Previewing"
 msgstr ""
 
-#: invenio_previewer/templates/invenio_previewer/bottom.html:90
+#: invenio_previewer/templates/invenio_previewer/bottom.html:74
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/bottom.html:43
 msgid "Embed"
 msgstr ""
 
-#: invenio_previewer/templates/invenio_previewer/bottom.html:91
-#: invenio_previewer/templates/invenio_previewer/macros.html:59
+#: invenio_previewer/templates/invenio_previewer/bottom.html:75
+#: invenio_previewer/templates/invenio_previewer/macros.html:51
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:78
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:79
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:148
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:149
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/bottom.html:44
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/macros.html:51
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:78
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:79
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:148
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:149
 msgid "Download"
 msgstr ""
 
-#: invenio_previewer/templates/invenio_previewer/csv_bar.html:33
+#: invenio_previewer/templates/invenio_previewer/csv_bar.html:20
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/csv_bar.html:20
 msgid "Show more"
 msgstr ""
 
-#: invenio_previewer/templates/invenio_previewer/default.html:33
+#: invenio_previewer/templates/invenio_previewer/default.html:17
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/default.html:19
 msgid "Cannot preview file"
 msgstr ""
 
-#: invenio_previewer/templates/invenio_previewer/default.html:34
+#: invenio_previewer/templates/invenio_previewer/default.html:18
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/default.html:20
 msgid "Sorry, we are unfortunately not able to preview this file."
 msgstr ""
 
-#: invenio_previewer/templates/invenio_previewer/macros.html:39
+#: invenio_previewer/templates/invenio_previewer/macros.html:23
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/macros.html:23
 msgid "Name"
 msgstr ""
 
-#: invenio_previewer/templates/invenio_previewer/macros.html:40
-msgid "Date"
-msgstr ""
-
-#: invenio_previewer/templates/invenio_previewer/macros.html:41
+#: invenio_previewer/templates/invenio_previewer/macros.html:24
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/macros.html:24
 msgid "Size"
 msgstr ""
 
-#: invenio_previewer/templates/invenio_previewer/macros.html:42
-msgid "Action"
+#: invenio_previewer/templates/invenio_previewer/macros.html:39
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/macros.html:37
+msgid ""
+"This is the file fingerprint (checksum), which can be used to verify the "
+"file integrity."
 msgstr ""
 
-#: invenio_previewer/templates/invenio_previewer/zip.html:70
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:31
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:31
+msgid "Thumbnails"
+msgstr ""
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:34
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:34
+msgid "Document Outline"
+msgstr ""
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:49
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:49
+msgid "Find:"
+msgstr ""
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:53
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:127
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:53
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:127
+msgid "Previous"
+msgstr ""
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:57
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:131
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:57
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:131
+msgid "Next"
+msgstr ""
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:61
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:61
+msgid "Highlight all"
+msgstr ""
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:63
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:63
+msgid "Match case"
+msgstr ""
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:70
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:140
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:70
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:140
+msgid "Switch to Full Screen Mode"
+msgstr ""
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:71
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:141
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:71
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:141
+msgid "Full Screen Mode"
+msgstr ""
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:74
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:75
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:144
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:145
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:74
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:75
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:144
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:145
+msgid "Print"
+msgstr ""
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:84
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:85
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:84
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:85
+msgid "Go to First Page"
+msgstr ""
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:87
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:88
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:87
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:88
+msgid "Go to Last Page"
+msgstr ""
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:93
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:94
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:93
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:94
+msgid "Rotate Clockwise"
+msgstr ""
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:96
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:97
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:96
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:97
+msgid "Rotate Counterclockwise"
+msgstr ""
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:103
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:103
+msgid "Enable hand tool"
+msgstr ""
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:108
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:109
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:108
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:109
+msgid "Document Properties"
+msgstr ""
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:118
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:119
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:118
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:119
+msgid "Toggle Sidebar"
+msgstr ""
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:122
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:122
+msgid "Find in Document"
+msgstr ""
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:123
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:123
+msgid "Find"
+msgstr ""
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:126
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:126
+msgid "Previous Page"
+msgstr ""
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:130
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:130
+msgid "Next Page"
+msgstr ""
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:134
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:134
+msgid "Page:"
+msgstr ""
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:154
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:155
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:154
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:155
+msgid "Tools"
+msgstr ""
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:161
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:162
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:161
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:162
+msgid "Zoom Out"
+msgstr ""
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:165
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:166
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:165
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:166
+msgid "Zoom In"
+msgstr ""
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:170
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:170
+msgid "Zoom"
+msgstr ""
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:171
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:171
+msgid "Automatic Zoom"
+msgstr ""
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:172
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:172
+msgid "Actual Size"
+msgstr ""
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:173
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:173
+msgid "Fit Page"
+msgstr ""
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:174
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:174
+msgid "Full Width"
+msgstr ""
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:197
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:197
+msgid "First Page"
+msgstr ""
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:215
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:215
+msgid "More Information"
+msgstr ""
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:218
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:218
+msgid "Less Information"
+msgstr ""
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:235
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:235
+msgid "Enter the password to open this PDF file:"
+msgstr ""
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:242
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:242
+msgid "Cancel"
+msgstr ""
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:243
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:243
+msgid "OK"
+msgstr ""
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:250
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:250
+msgid "File name:"
+msgstr ""
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:253
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:253
+msgid "File size:"
+msgstr ""
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:257
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:257
+msgid "Title:"
+msgstr ""
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:260
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:260
+msgid "Author:"
+msgstr ""
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:263
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:263
+msgid "Subject:"
+msgstr ""
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:266
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:266
+msgid "Keywords:"
+msgstr ""
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:269
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:269
+msgid "Creation Date:"
+msgstr ""
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:272
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:272
+msgid "Modification Date:"
+msgstr ""
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:275
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:275
+msgid "Creator:"
+msgstr ""
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:279
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:279
+msgid "PDF Producer:"
+msgstr ""
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:282
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:282
+msgid "PDF Version:"
+msgstr ""
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:285
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:285
+msgid "Page Count:"
+msgstr ""
+
+#: invenio_previewer/templates/invenio_previewer/pdfjs.html:298
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/pdfjs.html:298
+msgid "Preparing document for printing..."
+msgstr ""
+
+#: invenio_previewer/templates/invenio_previewer/txt.html:16
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/txt.html:16
+msgid "Preview of large file truncated"
+msgstr ""
+
+#: invenio_previewer/templates/invenio_previewer/zip.html:54
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/zip.html:23
 msgid "Full screen"
 msgstr ""
 
-#: invenio_previewer/templates/invenio_previewer/zip.html:77
-msgid "The previewer is not showing all the files"
+#: invenio_previewer/templates/invenio_previewer/zip.html:61
+#: invenio_previewer/templates/semantic-ui/invenio_previewer/zip.html:29
+msgid "The previewer is not showing all the files."
 msgstr ""
 
