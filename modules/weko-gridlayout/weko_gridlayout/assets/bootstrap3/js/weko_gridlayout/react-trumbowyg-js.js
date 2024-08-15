@@ -1,0 +1,10 @@
+import 'js/weko_gridlayout/trumbowyg_plugin/base64/trumbowyg.base64.min.js';
+import 'js/weko_gridlayout/trumbowyg_plugin/pasteimage/';
+import 'trumbowyg.pasteimage.min.js';
+import 'js/weko_gridlayout/trumbowyg_plugin/fontfamily/';
+import 'trumbowyg.fontfamily.min.js';
+import 'js/weko_gridlayout/trumbowyg_plugin/fontsize/trumbowyg.fontsize.min.js';
+import 'js/weko_gridlayout/trumbowyg_plugin/colors/trumbowyg.colors.min.js';
+import 'js/weko_gridlayout/trumbowyg_plugin/table/trumbowyg.table.min.js';
+import 'js/weko_gridlayout/trumbowyg_plugin/upload/trumbowyg.upload.min.js';
+import 'js/weko_gridlayout/react-trumbowyg.js';
