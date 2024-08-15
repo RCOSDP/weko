@@ -102,7 +102,7 @@ install_requires = [
     'invenio-records>=1.2.0',
     'invenio-rest[cors]>=1.0.0',
     # 'invenio-search>=1.0.0a9',
-    'marshmallow>=2.15.0,<3',
+    #'marshmallow>=2.15.0,<3',
 ]
 
 packages = find_packages()

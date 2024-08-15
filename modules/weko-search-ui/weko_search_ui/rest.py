@@ -142,7 +142,10 @@ def create_blueprint(app, endpoints):
             search_class=search_class,
             record_loaders=obj_or_import_string(
                 options.get("record_loaders"),
-                default=app.config["RECORDS_REST_DEFAULT_LOADERS"],
+                default=app.config.get("RECORDS_REST_DEFAULT_LOADERS",{
+                    'application/json': lambda: request.get_json(),
+                    'application/json-patch+json': lambda: request.get_json(force=True),
+                }),
             ),
             search_factory=search_factory,
             links_factory=obj_or_import_string(

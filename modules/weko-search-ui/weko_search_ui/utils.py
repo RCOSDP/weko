@@ -45,7 +45,7 @@ import bagit
 import redis
 from redis import sentinel
 from celery.result import AsyncResult
-from celery.task.control import revoke
+from celery.worker.control import revoke
 from elasticsearch import ElasticsearchException
 from elasticsearch.exceptions import NotFoundError
 from flask import abort, current_app, has_request_context, request, Flask, send_file
@@ -59,6 +59,7 @@ from invenio_files_rest.proxies import current_files_rest
 from invenio_files_rest.utils import find_and_update_location_size
 from invenio_i18n.ext import current_i18n
 from invenio_indexer.api import RecordIndexer
+#from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.contrib.versioning import PIDNodeVersioning
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
@@ -75,7 +76,7 @@ from weko_authors.utils import check_email_existed
 from weko_deposit.api import WekoDeposit, WekoIndexer, WekoRecord
 from weko_deposit.pidstore import get_latest_version_id
 from weko_deposit.signals import item_created
-from weko_handle.api import Handle
+#from weko_handle.api import Handle
 from weko_index_tree.utils import (
     check_index_permissions,
     check_restrict_doi_with_indexes,
@@ -1366,7 +1367,8 @@ def register_item_metadata(item, root_path, owner, is_gakuninrdm=False):
                 _deposit = deposit.newversion(pid)
                 _deposit.publish_without_commit()
             else:    # Update last version
-                _pid = PIDNodeVersioning(child=pid).last_child
+                parent_pid = PIDNodeVersioning(pid=pid).parents.one_or_none()
+                _pid = PIDNodeVersioning(pid=parent_pid).last_child
                 _record = WekoDeposit.get_record(_pid.object_uuid)
                 _deposit = WekoDeposit(_record, _record.model)
                 _deposit["path"] = new_data.get("path")
@@ -1538,8 +1540,9 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
                 ).first()
                 item["pid"] = pid
                 bef_metadata = WekoIndexer().get_metadata_by_item_id(pid.object_uuid)
+                parent_pid = PIDNodeVersioning(pid=pid).parents.one_or_none()
                 bef_last_ver_metadata = WekoIndexer().get_metadata_by_item_id(
-                    PIDNodeVersioning(child=pid).last_child.object_uuid
+                    PIDNodeVersioning(pid=parent_pid).last_child.object_uuid
                 )
 
             register_item_metadata(item, root_path, owner, is_gakuninrdm)
@@ -1578,8 +1581,9 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
                     pid_type="recid", pid_value=item["id"]
                 ).first()
                 bef_metadata = WekoIndexer().get_metadata_by_item_id(pid.object_uuid)
+                parent_pid = PIDNodeVersioning(pid=pid).parents.one_or_none()
                 bef_last_ver_metadata = WekoIndexer().get_metadata_by_item_id(
-                    PIDNodeVersioning(child=pid).last_child.object_uuid
+                    PIDNodeVersioning(pid=parent_pid).last_child.object_uuid
                 )
                 handle_remove_es_metadata(item, bef_metadata, bef_last_ver_metadata)
             current_app.logger.error("item id: %s update error." % item["id"])
@@ -1602,8 +1606,9 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
                     pid_type="recid", pid_value=item["id"]
                 ).first()
                 bef_metadata = WekoIndexer().get_metadata_by_item_id(pid.object_uuid)
+                parent_pid = PIDNodeVersioning(pid=pid).parents.one_or_none()
                 bef_last_ver_metadata = WekoIndexer().get_metadata_by_item_id(
-                    PIDNodeVersioning(child=pid).last_child.object_uuid
+                    PIDNodeVersioning(pid=parent_pid).last_child.object_uuid
                 )
                 handle_remove_es_metadata(item, bef_metadata, bef_last_ver_metadata)
             current_app.logger.error("item id: %s update error." % item["id"])
@@ -1626,8 +1631,9 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
                     pid_type="recid", pid_value=item["id"]
                 ).first()
                 bef_metadata = WekoIndexer().get_metadata_by_item_id(pid.object_uuid)
+                parent_pid = PIDNodeVersioning(pid=pid).parents.one_or_none()
                 bef_last_ver_metadata = WekoIndexer().get_metadata_by_item_id(
-                    PIDNodeVersioning(child=pid).last_child.object_uuid
+                    PIDNodeVersioning(pid=parent_pid).last_child.object_uuid
                 )
                 handle_remove_es_metadata(item, bef_metadata, bef_last_ver_metadata)
             current_app.logger.error("item id: %s update error." % item["id"])
@@ -1650,8 +1656,9 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
                     pid_type="recid", pid_value=item["id"]
                 ).first()
                 bef_metadata = WekoIndexer().get_metadata_by_item_id(pid.object_uuid)
+                parent_pid = PIDNodeVersioning(pid=pid).parents.one_or_none()
                 bef_last_ver_metadata = WekoIndexer().get_metadata_by_item_id(
-                    PIDNodeVersioning(child=pid).last_child.object_uuid
+                    PIDNodeVersioning(pid=parent_pid).last_child.object_uuid
                 )
                 handle_remove_es_metadata(item, bef_metadata, bef_last_ver_metadata)
             current_app.logger.error("item id: %s update error." % item["id"])
@@ -1956,8 +1963,8 @@ def handle_check_cnri(list_record):
                     if not suffix:
                         item["cnri_suffix_not_existed"] = True
 
-                    if prefix != Handle().get_prefix():
-                        error = _("Specified Prefix of {} is incorrect.").format("CNRI")
+                    #if prefix != Handle().get_prefix():
+                    #    error = _("Specified Prefix of {} is incorrect.").format("CNRI")
         else:
             if (
                 item.get("status") == "new"
@@ -3736,8 +3743,9 @@ def handle_remove_es_metadata(item, bef_metadata, bef_last_ver_metadata):
             indexer.delete_by_id(pid.object_uuid)
         else:
             aft_metadata = indexer.get_metadata_by_item_id(pid.object_uuid)
+            parent_pid = PIDNodeVersioning(pid=pid).parents.one_or_none()
             aft_last_ver_metadata = indexer.get_metadata_by_item_id(
-                PIDNodeVersioning(child=pid).last_child.object_uuid
+                PIDNodeVersioning(pid=parent_pid).last_child.object_uuid
             )
 
             # revert to previous data in ES

@@ -82,6 +82,9 @@ setup(
     include_package_data=True,
     platforms='any',
     entry_points={
+        'invenio_assets.webpack': [
+            'weko_theme = weko_theme.webpack:weko_theme'
+        ],
         'invenio_assets.bundles': [
             'weko_theme_css = weko_theme.bundles:css',
             'weko_theme_css_bootstrap = weko_theme.bundles:css_bootstrap',

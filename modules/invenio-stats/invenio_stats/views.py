@@ -15,6 +15,7 @@ from functools import wraps
 
 from elasticsearch.exceptions import NotFoundError
 from flask import Blueprint, abort, current_app, jsonify, request
+#from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.contrib.versioning import PIDNodeVersioning
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_rest.views import ContentNegotiatedMethodView
@@ -189,11 +190,11 @@ class QueryRecordViewCount(WekoQuery):
             object_uuid=record_id).first()
 
         if recid:
-            versioning = PIDNodeVersioning(child=recid)
-
-            if not versioning.exists:
+            parent_pid = PIDNodeVersioning(pid=recid).parents.one_or_none()
+            if parent_pid is None:
+            #if not versioning.exists:
                 return self._get_data(record_id, query_date, get_period)
-
+            versioning = PIDNodeVersioning(pid=parent_pid)
             _data = list(self._get_data(
                 record_id=child.object_uuid,
                 query_date=query_date,
@@ -221,11 +222,12 @@ class QueryRecordViewCount(WekoQuery):
             pid_value=pid_value).first()
 
         if recid:
-            versioning = PIDNodeVersioning(child=recid)
-
-            if not versioning.exists:
+            
+            parent_pid = PIDNodeVersioning(pid=recid).parents.one_or_none()
+            if parent_pid is None:
+            #if not versioning.exists:
                 return self._get_data(recid.object_uuid, query_date, get_period)
-
+            versioning = PIDNodeVersioning(pid=parent_pid)
             _data = list(self._get_data(
                 record_id=child.object_uuid,
                 query_date=query_date,

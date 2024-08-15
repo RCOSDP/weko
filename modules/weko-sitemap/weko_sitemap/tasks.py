@@ -12,7 +12,7 @@ from datetime import datetime
 from itertools import islice, zip_longest
 from typing_extensions import Self
 
-from celery import shared_task, task
+from celery import shared_task
 from celery.utils.log import get_task_logger
 from flask import current_app
 from flask_sitemap import sitemap_page_needed

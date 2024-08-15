@@ -1,0 +1,342 @@
+// This file is part of WEKO3.
+// Copyright (C) 2017 National Institute of Informatics.
+//
+// WEKO3 is free software; you can redistribute it
+// and/or modify it under the terms of the GNU General Public License as
+// published by the Free Software Foundation; either version 2 of the
+// License, or (at your option) any later version.
+//
+// WEKO3 is distributed in the hope that it will be
+// useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with WEKO3; if not, write to the
+// Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+// MA 02111-1307, USA.
+@import "../../scss/invenio_theme/variables";
+@import "../../../data/_variables";
+// Setting the path to fonts files.
+$icon-font-path: "/static/node_modules/bootstrap-sass/assets/fonts/bootstrap/";
+$fa-font-path: "/static/node_modules/font-awesome/fonts";
+@import "../../node_modules/bootstrap-sass/assets/stylesheets/_bootstrap";
+@import "../../node_modules/font-awesome/scss/font-awesome";
+@import "../../scss/invenio_theme/type";
+@import "../../scss/invenio_theme/navbar";
+@import "../../scss/invenio_theme/body";
+@import "../../scss/invenio_theme/cover";
+@import "../../scss/invenio_theme/header";
+@import "../../scss/invenio_theme/footer";
+@import "../../scss/invenio_theme/input-icon";
+@import "../../scss/invenio_communities/variables";
+// CSS code to allow `ng-csp="no-inline-css"`
+[ng\:cloak],
+[ng-cloak],
+[data-ng-cloak],
+[x-ng-cloak],
+.ng-cloak,
+.x-ng-cloak,
+.ng-hide:not(.ng-hide-animate) {
+    display: none !important;
+}
+
+ng\:form {
+    display: block;
+}
+
+.ng-animate-shim {
+    visibility: hidden;
+}
+
+.ng-anchor {
+    position: absolute;
+}
+
+#footer {
+    background-color: $footer-default-bg;
+}
+
+.bg-transparent {
+    background-color: $input-bg-transparent;
+    border-color: $input-bg-transparent;
+}
+
+// For ngStrap modal animation
+.modal-backdrop.am-fade {
+    opacity: .5;
+    transition: opacity .15s linear;
+    &.ng-enter {
+        opacity: 0;
+        &.ng-enter-active {
+            opacity: .5;
+        }
+    }
+    &.ng-leave {
+        opacity: .5;
+        &.ng-leave-active {
+            opacity: 0;
+        }
+    }
+}
+
+// Loader Spinner - Use for all page loading
+.loader {
+    display: flex;
+    height: 60vh;
+    justify-content: center;
+    align-items: center;
+}
+
+.spinner-wheel {
+    height: 25vh;
+    width: 25vh;
+    border: 3px solid rgba(0, 0, 0, 0.2);
+    border-top-color: rgba(0, 174, 239, 0.8);
+    border-radius: 100%;
+    animation: rotation 1.5s infinite linear 0.25s;
+    opacity: 0;
+}
+
+.checkbox-input:nth-child(3n+1) {
+    clear: both;
+}
+
+@keyframes rotation {
+    from {
+        opacity: 1;
+        transform: rotate(0deg);
+    }
+    to {
+        opacity: 1;
+        transform: rotate(359deg);
+    }
+}
+
+.detail-table th {
+    background-color: #f9f9f9 !important;
+    white-space: normal !important;
+}
+
+.detail-table td {
+    background-color: #ffffff !important;
+    word-break: break-word;
+    white-space: normal !important;
+}
+
+.detail-table td.multiple-line {
+    white-space: pre-wrap !important;
+}
+
+.detail-table {
+    table-layout: fixed;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+}
+
+.detail-table tr th:nth-child(1) {
+    width: 30%;
+}
+
+.detail-table td.multiple-line {
+    white-space: pre-wrap !important;
+}
+
+.scroll_y {
+    max-height: 350px;
+    overflow-y: auto;
+}
+
+#popup_approve .col_empty {
+    display: none;
+}
+
+.label_email {
+    padding-top: 8px;
+    padding-right: 0;
+    font-weight: bold;
+}
+
+.table-mt {
+    margin: 15px 0 0;
+}
+
+.btn_close {
+    border: none;
+    background: none;
+    opacity: 0.7;
+    font-size: 20px;
+    margin-top: -10px;
+}
+
+.btn_close:hover,
+.btn_close:focus {
+    opacity: 1;
+    font-weight: bold;
+    outline: none;
+}
+
+.send-mail-modal {
+    width: 750px;
+    .modal-footer {
+        padding: 15px 15px 0;
+    }
+}
+
+.popup_notice {
+    width: 30%;
+    margin-top: 14%;
+}
+
+#loading {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(168, 168, 168, 0.5);
+}
+
+#icon_loading {
+    margin: 30px auto;
+    width: 200px;
+    height: 200px;
+}
+
+#btn_success {
+    margin-top: 30px;
+}
+
+.options {
+    margin: 5px 0px 0px 0px;
+    float: left;
+}
+
+.pagination a {
+    color: black;
+    float: left;
+    padding: 8px 12px;
+    text-decoration: none;
+    transition: background-color .3s;
+    border: 1px solid #ddd;
+}
+
+.pagination a:hover:not(.active-page) {
+    background-color: #ddd;
+}
+
+.pagination>.active-page,
+.pagination>.active-page:hover,
+.pagination>.active-page:focus {
+    z-index: 3;
+    color: #ffffff;
+    background-color: #337ab7;
+    border-color: #337ab7;
+    cursor: default;
+}
+
+.spinner {
+    border: 10px solid #d4d4d4;
+    border-radius: 50%;
+    border-top: 10px solid #000000;
+    width: 30px;
+    height: 30px;
+    -webkit-animation: spin 1s linear infinite;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+}
+
+.checkbox-input:nth-child(3n+1) {
+    clear: both;
+}
+
+@-webkit-keyframes spin {
+    0% {
+        -webkit-transform: rotate(0deg);
+    }
+    100% {
+        -webkit-transform: rotate(360deg);
+    }
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.row-0{ margin-left:0px;  margin-right:0px}
+.row-0 >div{ padding-right:0px;  padding-left:0px}
+.row-4{ margin-left:-2px;  margin-right:-2px}
+.row-4 >div{ padding-right:2px;  padding-left:2px}
+.row-10{ margin-left:-5px;  margin-right:-5px}
+.row-10 >div{ padding-right:5px;  padding-left:5px}
+.row-20{ margin-left:-10px;  margin-right:-10px}
+.row-20 >div{ padding-right:10px;  padding-left:10px}
+.row-30{ margin-left:-15px;  margin-right:-15px}
+.row-30 >div{ padding-right:15px;  padding-left:15px}
+.row-40{ margin-left:-20px;  margin-right:-20px}
+.row-40 >div{ padding-right:20px;  padding-left:20px}
+.row-50{ margin-left:-25px;  margin-right:-25px}
+.row-50 >div{ padding-right:25px;  padding-left:25px}
+
+.panel-default-2{ margin-bottom: 2px;}
+
+.panel-body2 {padding: 2px 2px;}
+
+.well2 {margin-bottom: 0px;}
+
+
+
+// a:link { color: #0000ff; }
+// a:visited { color: #000080; }
+// a:hover { color: #ff0000; }
+// a:active { color: #ff8000; }
+
+// login, sign up button
+.navbar-form2 {
+    margin-top: 0px; margin-bottom: 0px;
+    padding: 0px;
+}
+.navbar-form2 > a {
+    font-size: 12px;
+    padding-left: 10px;
+    padding-right: 10px;
+    width: auto;
+}
+
+.navbar-form2 > .login-button, .signup-button {
+    height: auto !important;
+}
+
+// language selector
+.form-group2 {
+    height: auto !important;
+    font-size: 12px !important;
+}
+.form-group2 > .form-control {
+    height: auto !important;
+    font-size: 12px !important;
+    padding-left: 10px;
+    padding-right: 10px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+}
+
+.container-fluid2 {padding-left: 15px; padding-right: 15px;}
+
+.navbar-nav > a {
+    padding-bottom: 15px !important;
+    padding-top: 15px !important;
+}
+
+.detail-table > tbody > tr > th {
+    padding: 2px;
+}
+
+.detail-table > tbody > tr > td {
+    padding: 2px;
+}

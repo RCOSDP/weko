@@ -26,6 +26,7 @@
 
 from __future__ import absolute_import, print_function
 
+#from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.contrib.versioning import PIDNodeVersioning
 from invenio_pidstore.models import PersistentIdentifier
 from weko_deposit.api import WekoDeposit
@@ -33,9 +34,9 @@ from weko_deposit.api import WekoDeposit
 
 def serialize_related_identifiers(pid):
     """Serialize PID Versioning relations as related_identifiers metadata."""
-    pv = PIDNodeVersioning(child=pid)
+    pv = PIDNodeVersioning(pid=pid).parents.one_or_none()
     related_identifiers = []
-    if pv.exists:
+    if pv is not None:
 
         rec = WekoDeposit.get_record(pid.get_assigned_object())
         # External DOI records don't have Concept DOI
@@ -71,17 +72,16 @@ def serialize_related_identifiers(pid):
         #         'identifier': rec['doi']
         #     }
         #     related_identifiers.append(ri)
-    pv = PIDNodeVersioning(parent=pid)
-    if pv.exists:
-        for p in pv.children:
-            rec = WekoDeposit.get_record(p.get_assigned_object())
-            if 'doi' in rec:
-                relation_info = {
-                    'scheme': 'doi',
-                    'relation': 'hasVersion',
-                    'identifier': rec['doi']
-                }
-                related_identifiers.append(relation_info)
+    pv = PIDNodeVersioning(pid=pid)
+    for p in pv.children:
+        rec = WekoDeposit.get_record(p.get_assigned_object())
+        if 'doi' in rec:
+            relation_info = {
+                'scheme': 'doi',
+                'relation': 'hasVersion',
+                'identifier': rec['doi']
+            }
+            related_identifiers.append(relation_info)
     return related_identifiers
 
 
@@ -98,15 +98,13 @@ def preprocess_related_identifiers(pid, record, result):
     recid = (pid if pid.pid_value == recid_value else
              PersistentIdentifier.get(pid_type='recid', pid_value=recid_value))
 
-    if recid.pid_value == record.get('conceptrecid'):
-        pv = PIDNodeVersioning(parent=recid)
-    else:
-        pv = PIDNodeVersioning(child=recid)
-
+    if recid.pid_value != record.get('conceptrecid'):
+        parent_pid = PIDNodeVersioning(pid=recid).parents.one_or_none()
+        if parent_pid is None:
+            return result
     # Serialize PID versioning as related identifiers
-    if pv.exists:
-        rels = serialize_related_identifiers(recid)
-        if rels:
-            result['metadata'].setdefault(
-                'related_identifiers', []).extend(rels)
+    rels = serialize_related_identifiers(recid)
+    if rels:
+        result['metadata'].setdefault(
+            'related_identifiers', []).extend(rels)
     return result

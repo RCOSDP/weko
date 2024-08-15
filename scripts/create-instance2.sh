@@ -124,6 +124,7 @@ set -o nounset
 mkdir -p "var/instance/"
 mkdir -p "var/instance/data"
 mkdir -p "var/instance/conf"
+mkdir -p "var/instance/static"
 pip install "jinja2-cli>=0.6.0"
 jinja2 "/code/scripts/instance.cfg" > "var/instance/conf/${INVENIO_WEB_INSTANCE}.cfg"
 ln -s "$(pwd)/var/instance/conf/${INVENIO_WEB_INSTANCE}.cfg" "var/instance/${INVENIO_WEB_INSTANCE}.cfg"
@@ -131,24 +132,46 @@ cp -pf "/code/scripts/uwsgi.ini" "var/instance/conf/"
 cp -pf "/code/modules/weko-theme/weko_theme/static/css/weko_theme/_variables.scss" "var/instance/data/"
 cp -prf "/code/modules/weko-index-tree/weko_index_tree/static/indextree" "var/instance/data/"
 # sphinxdoc-customise-instance-end
-pip install --upgrade pip
-#pip install pip==20.2.4
-pip install --upgrade setuptools
+pip install pip==24.1.2
+pip install setuptools==71.0.3
+echo 333333
+## sphinxdoc-run-npm-begin
+#${INVENIO_WEB_INSTANCE} npm
+#cdvirtualenv "var/instance/static"
+#CI=true npm install "https://github.com/RCOSDP/invenio-search-js.git#feature/changePaginationForSearchAfterUse" --save
+#CI=true npm install angular-schema-form@0.8.13
+#CI=true npm install
+### for install ckeditor plugins
+#cdvirtualenv "var/instance/static/node_modules/ckeditor/plugins"
+#CI=true git clone https://github.com/RCOSDP/base64image.git
+###
+## sphinxdoc-run-npm-end
+#
+## sphinxdoc-collect-and-build-assets-begin
+#${INVENIO_WEB_INSTANCE} collect -v
+#${INVENIO_WEB_INSTANCE} assets build
+## sphinxdoc-collect-and-build-assets-end
+
 # sphinxdoc-run-npm-begin
-${INVENIO_WEB_INSTANCE} npm
-cdvirtualenv "var/instance/static"
-CI=true npm install "https://github.com/RCOSDP/invenio-search-js.git#feature/changePaginationForSearchAfterUse" --save
-CI=true npm install angular-schema-form@0.8.13
-CI=true npm install
+${INVENIO_WEB_INSTANCE} webpack create
+cdvirtualenv "var/instance/assets"
+#CI=true npm install "https://github.com/RCOSDP/invenio-search-js.git#feature/changePaginationForSearchAfterUse" --save
+CI=true npm install --legacy-peer-deps
+CI=true npm install angular-schema-form@0.8.13 --legacy-peer-deps
 ## for install ckeditor plugins
-cdvirtualenv "var/instance/static/node_modules/ckeditor/plugins"
+cdvirtualenv "var/instance/assets/node_modules/ckeditor/plugins"
 CI=true git clone https://github.com/RCOSDP/base64image.git
 ##
 # sphinxdoc-run-npm-end
+cdvirtualenv "var/instance/assets/node_modules"
+rm -rf invenio-search-js
+git clone --branch feature/changePaginationForSearchAfterUse https://github.com/RCOSDP/invenio-search-js.git
 
+cdvirtualenv "var/instance/assets"
+ln -s ../static/templates templates
 # sphinxdoc-collect-and-build-assets-begin
 ${INVENIO_WEB_INSTANCE} collect -v
-${INVENIO_WEB_INSTANCE} assets build
+${INVENIO_WEB_INSTANCE} webpack build
 # sphinxdoc-collect-and-build-assets-end
 
 # gunicorn uwsgi - begin

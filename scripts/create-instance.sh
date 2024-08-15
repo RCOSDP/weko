@@ -123,12 +123,14 @@ set -o errexit
 set -o nounset
 
 # fix build error (weko#23031)
-#pip install setuptools==57.5.0
-pip install --upgrade pip
 #pip install pip==20.2.4
-pip install --upgrade setuptools
-
-
+#pip install setuptools==57.5.0
+pip install pip==24.1.2
+pip install setuptools==71.0.3
+#pip cache purge
+pip_version=$(pip --version)
+setuptool_version=$(pip show setuptools | grep Version)
+echo "pip version: ${pip_version}, setuptools version: ${setuptool_version}"
 if [[ "$@" != *"--devel"* ]]; then
 # sphinxdoc-install-invenio-full-begin
     pip install -r "$scriptpathname/../packages.txt"

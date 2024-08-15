@@ -19,11 +19,8 @@ recursive-include docs *.bat
 recursive-include docs *.py
 recursive-include docs *.rst
 recursive-include docs Makefile
-recursive-include examples *.py
 recursive-include invenio_db *.mako
 recursive-include invenio_db *.py
 recursive-include tests *.py
-
-# added by check-manifest
-include *.properties
-include tox.ini
+recursive-include .github/workflows *.yml
+include .git-blame-ignore-revs

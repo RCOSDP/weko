@@ -30,7 +30,7 @@ from datetime import datetime
 
 import dateutil
 from celery import current_task, shared_task
-from celery.task.control import inspect
+from celery.app.control import Inspect
 from celery.utils.log import get_task_logger
 from flask import current_app
 from flask_babelex import gettext as _
@@ -368,7 +368,7 @@ def link_error_handler(request, exc, traceback):
 
 def is_harvest_running(id, task_id):
     """Check harvest running."""
-    actives = inspect().active()
+    actives = Inspect().active()
     for worker in actives:
         for task in actives[worker]:
             if task['name'] == 'invenio_oaiharvester.tasks.run_harvesting':

@@ -72,9 +72,9 @@ setup(
         'invenio_base.apps': [
             'weko_handle = weko_handle:WekoHandle',
         ],
-        'invenio_base.blueprints': [
-            'weko_handle = weko_handle.views:blueprint',
-        ],
+        #'invenio_base.blueprints': [
+        #    'weko_handle = weko_handle.views:blueprint',
+        #],
         'invenio_i18n.translations': [
             'messages = weko_handle',
         ],

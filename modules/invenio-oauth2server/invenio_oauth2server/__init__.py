@@ -113,9 +113,9 @@ from __future__ import absolute_import, print_function
 
 from .ext import InvenioOAuth2Server, InvenioOAuth2ServerREST
 from .proxies import current_oauth2server
-from .version import __version__
+#from .version import __version__
 from .decorators import require_api_auth, require_oauth_scopes
-
+__version__ = "2.3.0"
 __all__ = (
     '__version__',
     'InvenioOAuth2Server',

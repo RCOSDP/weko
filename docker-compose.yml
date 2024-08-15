@@ -21,13 +21,16 @@
 version: "3.2"
 
 services:
-  web:
+  web2:
     restart: "always"
     build:
       context: .
       #target: stage_1
+      args:
+        - INVENIO_APP_THEME=['semantic-ui']
     sysctls:
       net.core.somaxconn: 1024
+    #tty: true
     #command: /bin/bash -c "rm -f /code/celeryd.pid; celery worker -A invenio_app.celery --loglevel=INFO -B -D -f /code/celeryd.log && uwsgi --ini /home/invenio/.virtualenvs/invenio/var/instance/conf/uwsgi.ini"
     #command: /bin/bash -c "jinja2 /code/scripts/instance.cfg > /home/invenio/.virtualenvs/invenio/var/instance/conf/invenio.cfg; rm -f /code/celeryd.pid; celery worker -A invenio_app.celery --loglevel=DEBUG -B -D -f /code/celeryd.log && uwsgi --ini /home/invenio/.virtualenvs/invenio/var/instance/conf/uwsgi.ini"
     command: bash /code/scripts/entrypoint.sh
@@ -39,6 +42,7 @@ services:
       - INVENIO_WEB_VENV=invenio
       - INVENIO_WEB_HOST_NAME=weko3.example.org
       - INVENIO_WEB_PROTOCOL=https
+      - INVENIO_APP_THEME=['semantic-ui']
       - INVENIO_USER_EMAIL=wekosoftware@nii.ac.jp
       - INVENIO_USER_PASS=uspass123
       - INVENIO_POSTGRESQL_HOST=postgresql
@@ -215,7 +219,7 @@ services:
 #      - letsencrypt_etc:/etc/letsencrypt
 #      - letsencrypt_html:/var/www/html
     links:
-      - web
+      - web2
     deploy:
       resources:
         limits:

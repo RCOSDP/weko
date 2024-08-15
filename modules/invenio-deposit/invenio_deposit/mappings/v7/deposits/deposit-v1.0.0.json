@@ -1,0 +1,72 @@
+{
+  "mappings": {
+      "date_detection": false,
+      "numeric_detection": false,
+      "properties": {
+        "$schema": {
+            "type": "keyword",
+            "index": true
+        },
+        "_deposit": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "keyword",
+              "index": true
+            },
+            "pid": {
+              "type": "object",
+              "properties": {
+                "revision_id": {
+                  "type": "integer"
+                },
+                "type": {
+                  "type": "text"
+                },
+                "value": {
+                  "type": "keyword",
+                  "index": true
+                }
+              }
+            },
+            "created_by": {
+              "type": "integer"
+            },
+            "owners": {
+                "type": "integer"
+            },
+            "status": {
+              "type": "text"
+            }
+          }
+        },
+        "_files": {
+          "type": "object",
+          "properties": {
+            "key": {
+              "type": "keyword",
+              "index": true
+            },
+            "bucket": {
+              "type": "keyword",
+              "index": true
+            },
+            "size": {
+              "type": "integer"
+            },
+            "version_id": {
+              "type": "keyword",
+              "index": true
+            }
+          }
+        },
+        "title": {
+          "type": "text"
+        },
+        "control_number": {
+          "type": "keyword"
+        }
+      }
+    }
+  }
+

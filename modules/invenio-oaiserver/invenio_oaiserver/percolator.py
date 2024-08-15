@@ -13,7 +13,7 @@ from __future__ import absolute_import, print_function
 from elasticsearch import VERSION as ES_VERSION
 from invenio_indexer.api import RecordIndexer
 from invenio_search import current_search, current_search_client
-from invenio_search.utils import schema_to_index
+#from invenio_search.utils import schema_to_index
 from weko_search_ui.config import INDEXER_DEFAULT_INDEX
 
 from flask import current_app
@@ -60,7 +60,7 @@ def _percolate_query(index, doc_type, percolator_doc_type, document):
         )
         return results['hits']['hits']
 
-
+import os
 def _get_percolator_doc_type(index):
     es_ver = ES_VERSION[0]
     if es_ver == 2:
@@ -69,7 +69,9 @@ def _get_percolator_doc_type(index):
         return 'percolators'
     elif es_ver == 6:
         mapping_path = current_search.mappings[index]
-        _, doc_type = schema_to_index(mapping_path)
+        parts=mapping_path.split("/")
+        doc_type=os.path.splitext(parts[-1])
+        #_, doc_type = schema_to_index(mapping_path)
         return doc_type
 
 

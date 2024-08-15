@@ -24,7 +24,7 @@ from datetime import datetime, timedelta
 
 from celery import shared_task
 from celery.result import AsyncResult
-from celery.task.control import inspect
+from celery.app.control import Inspect
 from flask import current_app
 from weko_admin.api import TempDirInfo
 from weko_admin.utils import get_redis_cache
@@ -152,13 +152,13 @@ def is_import_running():
     if not check_celery_is_run():
         return "celery_not_run"
 
-    active = inspect().active()
+    active = Inspect().active()
     for worker in active:
         for task in active[worker]:
             if task["name"] == "weko_search_ui.tasks.import_item":
                 return "is_import_running"
 
-    reserved = inspect().reserved()
+    reserved = Inspect().reserved()
     for worker in reserved:
         for task in reserved[worker]:
             if task["name"] == "weko_search_ui.tasks.import_item":
@@ -167,7 +167,7 @@ def is_import_running():
 
 def check_celery_is_run():
     """Check celery is running, or not."""
-    if not inspect().ping():
+    if not Inspect().ping():
         return False
     else:
         return True

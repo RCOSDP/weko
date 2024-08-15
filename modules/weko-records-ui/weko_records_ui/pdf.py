@@ -33,6 +33,7 @@ from flask_babelex import gettext as _
 from fpdf import FPDF
 from invenio_files_rest.views import ObjectResource
 from invenio_i18n.ext import current_i18n
+#from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.contrib.versioning import PIDNodeVersioning
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
@@ -123,10 +124,9 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
 
     def get_pid_object(pid_value):
         pid_object = PersistentIdentifier.get('recid', pid_value)
-        pv = PIDNodeVersioning(child=pid_object)
-        latest_pid = PIDNodeVersioning(parent=pv.parent, child=pid_object).get_children(
-            pid_status=PIDStatus.REGISTERED).filter(
-            PIDRelation.relation_type == 2).order_by(
+        parent_pid = PIDNodeVersioning(pid=pid_object).parents.one_or_none()
+        pv = PIDNodeVersioning(pid=parent_pid)
+        latest_pid = pv.children.order_by(
             PIDRelation.index.desc()).first()
         cur_pid = pid_object if '.' in pid_value else latest_pid
 

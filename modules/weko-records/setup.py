@@ -64,7 +64,8 @@ install_requires = [
     'invenio-access>=1.0.0b1',
     'invenio-i18n>=1.0.0b4',
     'invenio-db>=1.0.0b4',
-    'invenio-pidrelations>=1.0.0a3',
+    #'invenio-pidrelations>=1.0.0a3',
+    'invenio-pidrelations>=0.2.0',
     'invenio-records>=1.0.0b4',
 ]
 

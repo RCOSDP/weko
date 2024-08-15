@@ -1,0 +1,39 @@
+{# -*- coding: utf-8 -*-
+
+  This file is part of Invenio.
+  Copyright (C) 2015-2020 CERN.
+
+  Invenio is free software; you can redistribute it and/or modify it
+  under the terms of the MIT License; see LICENSE file for more details.
+#}
+{%- extends config.ACCOUNTS_COVER_TEMPLATE %}
+
+{% from "invenio_accounts/_macros.html" import render_field, form_errors %}
+
+{% block page_body %}
+
+  <div class="ui padded segments big form">
+    <div class="ui login segment padded">
+      <div class="divider hidden"></div>
+      {%- block form_header %}
+        <h1 class="ui small login header">{{ _('Resend confirmation email') }}</h1>
+      {%- endblock form_header %}
+
+      {%- block form_outer %}
+          {%- with form = send_confirmation_form %}
+            <form action="{{ url_for_security('send_confirmation') }}" method="POST"
+                  name="send_confirmation_form" class="ui big form">
+              {{ form.hidden_tag() }}
+              {{ render_field(form.email, icon="icon user", autofocus=True, errormsg='email' in form.errors) }}
+              <button type="submit" class="ui fluid large submit primary button">
+                <i class="ui send icon" aria-hidden="true"></i>{{ _('Send') }}
+              </button>
+            </form>
+          {%- endwith %}
+      {%- endblock form_outer %}
+      <div class="divider hidden"></div>
+    </div>
+
+  </div>
+
+{% endblock page_body %}

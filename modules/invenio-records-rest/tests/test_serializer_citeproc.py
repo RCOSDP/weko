@@ -8,8 +8,6 @@
 
 """Citeproc serializer tests."""
 
-from __future__ import absolute_import, print_function
-
 import json
 
 import pytest
@@ -18,20 +16,25 @@ from invenio_records import Record
 from werkzeug.exceptions import BadRequest
 
 from invenio_records_rest.errors import StyleNotFoundRESTError
-from invenio_records_rest.serializers.citeproc import CiteprocSerializer, \
-    StyleNotFoundError
+from invenio_records_rest.serializers.citeproc import (
+    CiteprocSerializer,
+    StyleNotFoundError,
+)
 
 
 def get_test_data():
-    pid = PersistentIdentifier(pid_type='recid', pid_value='1')
-    record = Record({
-        'title': 'Citeproc test', 'type': 'book',
-        'creators': [
-            {'family_name': 'Doe', 'given_name': 'John'},
-            {'family_name': 'Smith', 'given_name': 'Jane'}
-        ],
-        'publication_date': [2016, 1, 1]
-    })
+    pid = PersistentIdentifier(pid_type="recid", pid_value="1")
+    record = Record(
+        {
+            "title": "Citeproc test",
+            "type": "book",
+            "creators": [
+                {"family_name": "Doe", "given_name": "John"},
+                {"family_name": "Smith", "given_name": "Jane"},
+            ],
+            "publication_date": [2016, 1, 1],
+        }
+    )
     return pid, record
 
 
@@ -40,13 +43,14 @@ class TestSerializer(object):
 
     def serialize(self, pid, record, links_factory=None):
         csl_json = {}
-        csl_json['id'] = pid.pid_value
-        csl_json['type'] = record['type']
-        csl_json['title'] = record['title']
-        csl_json['author'] = [{'family': a['family_name'],
-                               'given': a['given_name']}
-                              for a in record['creators']]
-        csl_json['issued'] = {'date-parts': [record['publication_date']]}
+        csl_json["id"] = pid.pid_value
+        csl_json["type"] = record["type"]
+        csl_json["title"] = record["title"]
+        csl_json["author"] = [
+            {"family": a["family_name"], "given": a["given_name"]}
+            for a in record["creators"]
+        ]
+        csl_json["issued"] = {"date-parts": [record["publication_date"]]}
         return json.dumps(csl_json)
 
 
@@ -56,10 +60,10 @@ def test_serialize():
 
     serializer = CiteprocSerializer(TestSerializer())
     data = serializer.serialize(pid, record)
-    assert 'Citeproc test' in data
-    assert 'Doe, J.' in data
-    assert '& Smith, J.' in data
-    assert '2016.' in data
+    assert "Citeproc test" in data
+    assert "Doe, J." in data
+    assert "and Smith, J." in data
+    assert "(2016)" in data
 
 
 def test_serializer_args():
@@ -67,12 +71,12 @@ def test_serializer_args():
     pid, record = get_test_data()
 
     serializer = CiteprocSerializer(TestSerializer())
-    data = serializer.serialize(pid, record, style='science')
-    assert '1.' in data
-    assert 'J. Doe,' in data
-    assert 'J. Smith,' in data
-    assert 'Citeproc test' in data
-    assert '(2016)' in data
+    data = serializer.serialize(pid, record, style="science")
+    assert "1." in data
+    assert "J. Doe," in data
+    assert "J. Smith," in data
+    assert "Citeproc test" in data
+    assert "(2016)" in data
 
 
 def test_nonexistent_style():
@@ -81,7 +85,7 @@ def test_nonexistent_style():
 
     serializer = CiteprocSerializer(TestSerializer())
     with pytest.raises(StyleNotFoundError):
-        serializer.serialize(pid, record, style='non-existent')
+        serializer.serialize(pid, record, style="non-existent")
 
 
 def test_serializer_in_request(app):
@@ -90,14 +94,14 @@ def test_serializer_in_request(app):
 
     serializer = CiteprocSerializer(TestSerializer())
 
-    with app.test_request_context(query_string={'style': 'science'}):
+    with app.test_request_context(query_string={"style": "science"}):
         data = serializer.serialize(pid, record)
-        assert '1.' in data
-        assert 'J. Doe,' in data
-        assert 'J. Smith,' in data
-        assert 'Citeproc test' in data
-        assert '(2016)' in data
+        assert "1." in data
+        assert "J. Doe," in data
+        assert "J. Smith," in data
+        assert "Citeproc test" in data
+        assert "(2016)" in data
 
-    with app.test_request_context(query_string={'style': 'non-existent'}):
+    with app.test_request_context(query_string={"style": "non-existent"}):
         with pytest.raises(StyleNotFoundRESTError):
-            serializer.serialize(pid, record, style='non-existent')
+            serializer.serialize(pid, record, style="non-existent")

@@ -44,7 +44,9 @@ from invenio_cache import current_cache
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_oaiserver.response import getrecord
+#from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.contrib.versioning import PIDNodeVersioning
+from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.models import RecordMetadata
 from lxml import etree
@@ -310,8 +312,9 @@ def delete_version(recid):
         for p in pids:
             p.status = PIDStatus.DELETED
     # delete file if only in the version
-    versioning = PIDNodeVersioning(child=pid)
-    if versioning.exists:
+    parent_pid = PIDNodeVersioning(pid=pid)
+    if parent_pid is not None:
+        versioning = PIDNodeVersioning(pid=parent_pid)
         all_ver = versioning.children.all()
         for ver in all_ver:
             if '.' not in ver.pid_value and is_latest_version:
@@ -441,9 +444,10 @@ def soft_delete(recid):
                         'the import is in progress.')
         })
 
-    versioning = PIDNodeVersioning(child=pid)
-    if not versioning.exists:
+    parent_pid = PIDNodeVersioning(pid=pid).parents.one_or_none()
+    if parent_pid is None:
         return
+    versioning = PIDNodeVersioning(pid=parent_pid)
     all_ver = versioning.children.all()
     draft_pid = PersistentIdentifier.query.filter_by(
         pid_type='recid',
@@ -493,12 +497,11 @@ def restore(recid):
                 pid_type='recid', object_uuid=recid).first()
         if pid.status != PIDStatus.DELETED:
             return
-
-        versioning = PIDNodeVersioning(child=pid)
-        if not versioning.exists:
+        parent_pid = PIDNodeVersioning(pid=pid).parents.one_or_none()
+        versioning = PIDNodeVersioning(pid=parent_pid)
+        if parent_pid is None:
             return
-        all_ver = versioning.get_children(
-            pid_status=PIDStatus.DELETED, ordered=True).all()
+        all_ver = super(PIDNodeVersioning,versioning).children.status(PIDStatus.DELETED).order_by(PIDRelation.index.desc()).all()
         draft_pid = PersistentIdentifier.query.filter_by(
             pid_type='recid',
             pid_value="{}.0".format(pid.pid_value.split(".")[0])

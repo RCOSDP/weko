@@ -15,6 +15,7 @@ from datetime import datetime, timedelta
 from flask import current_app, request
 from marshmallow import Schema, ValidationError, fields, validates_schema
 from marshmallow.fields import DateTime as _DateTime
+from marshmallow.utils import isoformat
 from weko_schema_ui.schema import get_oai_metadata_formats
 
 from .resumption_token import ResumptionTokenSchema
@@ -73,10 +74,18 @@ class DateTime(_DateTime):
             return datetime.datetime.strptime(datestring[:19],
                                               '%Y-%m-%dT%H:%M:%S')
 
-    DATEFORMAT_DESERIALIZATION_FUNCS = dict(
-        _DateTime.DATEFORMAT_DESERIALIZATION_FUNCS,
-        permissive=from_iso_permissive
-    )
+    try:
+        DATEFORMAT_DESERIALIZATION_FUNCS = dict(
+            _DateTime.DATEFORMAT_DESERIALIZATION_FUNCS, permissive=from_iso_permissive
+        )
+        DATEFORMAT_SERIALIZATION_FUNCS = dict(
+            _DateTime.DATEFORMAT_SERIALIZATION_FUNCS, permissive=isoformat
+        )
+    except AttributeError:
+        DESERIALIZATION_FUNCS = dict(
+            _DateTime.DESERIALIZATION_FUNCS, permissive=from_iso_permissive
+        )
+        SERIALIZATION_FUNCS = dict(_DateTime.SERIALIZATION_FUNCS, permissive=isoformat)
 
 
 class OAISchema(Schema):

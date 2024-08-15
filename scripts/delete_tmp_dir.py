@@ -7,7 +7,7 @@ import ast
 import glob, re
 import redis
 from celery import Celery
-from celery.task.control import inspect
+from celery.worker.control import inspect
 
 glob._ishidden = lambda x: False
 

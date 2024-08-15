@@ -24,7 +24,7 @@ from __future__ import absolute_import, print_function
 
 import json
 from celery import group, states
-from celery.task.control import revoke
+from celery.worker.control import revoke
 from flask import abort, current_app, request, session
 from flask.helpers import url_for
 from flask.json import jsonify

@@ -39,7 +39,7 @@ from weko_admin.api import TempDirInfo
 from .models import AdminSettings, StatisticsEmail
 from .utils import StatisticMail, get_user_report_data, package_reports ,elasticsearch_reindex
 from .views import manual_send_site_license_mail 
-from celery.task.control import inspect
+from celery.app.control import Inspect
 from weko_search_ui.tasks import check_celery_is_run
 from .config import WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS,\
     WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS_HAS_ERRORED
@@ -90,8 +90,8 @@ def is_reindex_running():
     if not check_celery_is_run():
         return False
 
-    reserved = inspect().reserved()
-    active = inspect().active()
+    reserved = Inspect().reserved()
+    active = Inspect().active()
     for worker in active:
         for task in active[worker]:
             current_app.logger.debug("active")

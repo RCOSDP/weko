@@ -174,7 +174,7 @@ class Community(db.Model, Timestamp):
     """Id of the community."""
 
     id_role = db.Column(
-        db.Integer,
+        db.String(80),
         db.ForeignKey(Role.id),
         nullable=False
     )

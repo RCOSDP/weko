@@ -28,11 +28,13 @@
 #FROM python:3.12.0b1-buster as stage_1
 #FROM python:3.12.4-slim-bookworm as stage_1
 FROM python:3.12-slim-bullseye as stage_1
-
+#FROM python:3.11.9-slim-bullseye as stage_1
+ARG INVENIO_APP_THEME
 # Configure Weko instance:
 ENV INVENIO_WEB_HOST=127.0.0.1
 ENV INVENIO_WEB_INSTANCE=invenio
 ENV INVENIO_WEB_VENV=invenio
+ENV INVENIO_APP_THEME=${INVENIO_APP_THEME}
 ENV INVENIO_WEB_HOST_NAME=invenio
 ENV INVENIO_USER_EMAIL=wekosoftware@nii.ac.jp
 ENV INVENIO_USER_PASS=uspass123
@@ -72,6 +74,7 @@ USER invenio
 COPY --chown=invenio:invenio scripts /code/scripts
 COPY --chown=invenio:invenio tools /code/tools
 COPY --chown=invenio:invenio modules /code/modules
+#COPY --chown=invenio:invenio others /code/others
 COPY --chown=invenio:invenio packages.txt /code/packages.txt
 COPY --chown=invenio:invenio packages-invenio.txt /code/packages-invenio.txt
 COPY --chown=invenio:invenio requirements-weko-modules.txt /code/requirements-weko-modules.txt

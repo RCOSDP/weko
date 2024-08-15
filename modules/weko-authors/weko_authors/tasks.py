@@ -23,7 +23,7 @@ from datetime import datetime
 
 from celery import shared_task, states
 from celery.result import GroupResult
-from celery.task.control import inspect
+from celery.app.control import Inspect
 from flask import current_app
 from weko_workflow.utils import delete_cache_data, get_cache_data
 
@@ -74,7 +74,7 @@ def check_is_import_available(group_task_id=None):
         'is_available': True
     }
 
-    if not inspect().ping():
+    if not Inspect().ping():
         result['is_available'] = False
         result['celery_not_run'] = True
     else:

@@ -51,6 +51,7 @@ from invenio_accounts.models import Role, User, userrole
 from invenio_db import db
 from invenio_files_rest.utils import remove_file_cancel_action
 from invenio_oauth2server import require_api_auth, require_oauth_scopes
+#from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.contrib.versioning import PIDNodeVersioning
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.errors import PIDDoesNotExistError,PIDDeletedError
@@ -1504,10 +1505,9 @@ def next_action(activity_id='0', action_id=0):
             item_ids = [item_id]
             if not recid:
                 if ".0" in current_pid.pid_value:
-                    pv = PIDNodeVersioning(child=pid_without_ver)
-                    last_ver = PIDNodeVersioning(parent=pv.parent,child=pid_without_ver).get_children(
-                        pid_status=PIDStatus.REGISTERED
-                    ).filter(PIDRelation.relation_type == 2).order_by(
+                    parent_pid = PIDNodeVersioning(pid=pid_without_ver).parents.one_or_none()
+                    pv = PIDNodeVersioning(pid=parent_pid)
+                    last_ver = pv.children.order_by(
                         PIDRelation.index.desc()).first()
                     if last_ver is None:
                         res = ResponseMessageSchema().load({"code":-1, "msg":"can not get last_ver"})
@@ -2097,17 +2097,18 @@ def cancel_action(activity_id='0', action_id=0):
                         current_app.logger.error("cancel_action: can not get PersistentIdentifier")
                         res = ResponseMessageSchema().load({"code":-1, "msg":"can not get PersistentIdentifier"})
                         return jsonify(res.data), 500
-                    cancel_pv = PIDNodeVersioning(child=cancel_pid)
+                    parent_pid = PIDNodeVersioning(pid=cancel_pid).parents.one_or_none()
+                    cancel_pv = PIDNodeVersioning(pid=parent_pid)
 
-                    if cancel_pv.exists:
-                        parent_pid = deepcopy(cancel_pv.parent)
+                    if parent_pid is not None:
+                        parent_pid_ = deepcopy(parent_pid)
                         cancel_pv.remove_child(cancel_pid)
                         # rollback parent info
-                        cancel_pv.parent.status = parent_pid.status
-                        cancel_pv.parent.object_type = \
-                            parent_pid.object_type
-                        cancel_pv.parent.object_uuid = \
-                            parent_pid.object_uuid
+                        parent_pid.status = parent_pid_.status
+                        parent_pid.object_type = \
+                            parent_pid_.object_type
+                        parent_pid.object_uuid = \
+                            parent_pid_.object_uuid
 
                 pids = PersistentIdentifier.query.filter_by(
                     object_uuid=cancel_item_id)

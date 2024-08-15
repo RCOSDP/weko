@@ -1,60 +1,34 @@
 # -*- coding: utf-8 -*-
 #
 # This file is part of Invenio.
-# Copyright (C) 2016 CERN.
+# Copyright (C) 2016-2019 CERN.
 #
-# Invenio is free software; you can redistribute it
-# and/or modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; either version 2 of the
-# License, or (at your option) any later version.
-#
-# Invenio is distributed in the hope that it will be
-# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Invenio; if not, write to the
-# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-# MA 02111-1307, USA.
-#
-# In applying this license, CERN does not
-# waive the privileges and immunities granted to it by virtue of its status
-# as an Intergovernmental Organization or submit itself to any jurisdiction.
+# Invenio is free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
 
 """File reader utility."""
 
-from __future__ import absolute_import, print_function
-
-import errno
-import os
-import re
-import shutil
-import subprocess
 from os.path import basename, splitext
-from time import sleep
 
-from flask import current_app, flash, redirect, request, url_for
-from flask_babelex import gettext as _
+from flask import url_for
 
 
 class PreviewFile(object):
     """Preview file default implementation."""
 
-    def __init__(self, pid, record, fileobj, allow_aggs=True):
-        """Default constructor.
+    def __init__(self, pid, record, fileobj):
+        """Initialize object.
 
         :param file: ObjectVersion instance from Invenio-Files-REST.
         """
         self.file = fileobj
         self.pid = pid
         self.record = record
-        self.allow_aggs = allow_aggs
 
     @property
     def size(self):
         """Get file size."""
-        return self.file['size']
+        return self.file["size"]
 
     @property
     def filename(self):
@@ -76,10 +50,10 @@ class PreviewFile(object):
             view ``invenio_records_ui.<pid_type>_files``.
         """
         return url_for(
-            '.{0}_file_preview'.format(self.pid.pid_type),
+            ".{0}_files".format(self.pid.pid_type),
             pid_value=self.pid.pid_value,
             filename=self.file.key,
-            allow_aggs=self.allow_aggs)
+        )
 
     def is_local(self):
         """Check if file is local."""
@@ -87,18 +61,21 @@ class PreviewFile(object):
 
     def has_extensions(self, *exts):
         """Check if file has one of the extensions."""
-        file_ext = splitext(self.filename)[1]
-        file_ext = file_ext.lower()
-
-        for e in exts:
-            if file_ext == e:
-                return True
-        return False
+        file_ext = splitext(self.filename)[1].lower()
+        return file_ext in exts
 
     def open(self):
         """Open the file."""
         return self.file.file.storage().open()
 
+from flask import current_app, flash, redirect, request, url_for
+import os
+import shutil
+import subprocess
+from time import sleep
+import errno
+from flask_babelex import gettext as _
+import re
 
 def convert_to(folder, source):
     """Convert file to pdf."""
@@ -199,7 +176,6 @@ def convert_to(folder, source):
         raise LibreOfficeError(process.stdout.decode())
     else:
         return filename.group(1)
-
 
 class LibreOfficeError(Exception):
     """Libreoffice process error."""

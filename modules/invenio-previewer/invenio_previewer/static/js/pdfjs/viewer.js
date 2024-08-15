@@ -1,3 +1,10 @@
+/*
+ * This file is part of Invenio.
+ * Copyright (C) 2016-2019 CERN.
+ *
+ * Invenio is free software; you can redistribute it and/or modify it
+ * under the terms of the MIT License; see LICENSE file for more details.
+ */
 /* Copyright 2012 Mozilla Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,7 +44,7 @@ var DISABLE_AUTO_FETCH_LOADING_BAR_TIMEOUT = 5000;
 
 PDFJS.imageResourcesPath = '/static/js/pdfjs/web/images/';
 PDFJS.workerSrc = '/static/node_modules/pdfjs-dist/build/pdf.worker.js';
-PDFJS.cMapUrl = '/static/node_modules/pdfjs-dist/cmaps/';
+PDFJS.cMapUrl = '/static/node_modules/pdfjs-dist/cmaps/pdfjs/';
 PDFJS.cMapPacked = true;
 
 var mozL10n = document.mozL10n || document.webL10n;

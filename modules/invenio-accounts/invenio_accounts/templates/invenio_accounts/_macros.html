@@ -8,7 +8,7 @@
 #}
 
 {% macro render_field(field, icon="", autofocus=False, errormsg=True, size="form-group-lg") %}
-  <div class="form-group {{size}}{% if icon %} has-feedback{% endif %}{% if field.errors %} has-error{% endif %}">
+  <div class="form-group {{size}}{% if icon %} has-feedback{% endif %}{% if field.errors and errormsg %} has-error{% endif %}">
     {%- set extras = dict(autofocus="") if autofocus else dict() %}
     {{field(class_="form-control", placeholder=_(field.label.text | string), **extras)}}
     {%- if icon %}

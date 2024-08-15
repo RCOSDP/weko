@@ -30,6 +30,7 @@ from datetime import timedelta
 
 from flask import current_app, request, send_file
 from invenio_db import db
+#from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.contrib.versioning import PIDNodeVersioning
 from invenio_pidstore.models import PersistentIdentifier
 from resync import Resource, ResourceList
@@ -738,7 +739,8 @@ class ChangeListHandler(object):
                     'recid',
                     data.get('record_id')
                 )
-                latest_pid = PIDNodeVersioning(child=pid_object).last_child
+                parent_pid = PIDNodeVersioning(pid=pid_object).parents.one_or_none()
+                latest_pid = PIDNodeVersioning(pid=parent_pid).last_child
                 is_latest = str(latest_pid.pid_value) == "{}.{}".format(
                     data.get('record_id'),
                     data.get('record_version')

@@ -590,7 +590,7 @@ class FlowActionRole(db.Model, TimestampMixin):
         nullable=False, unique=False, index=True)
     """the id of flow_action."""
 
-    action_role = db.Column(db.Integer(), db.ForeignKey(Role.id),
+    action_role = db.Column(db.String(80), db.ForeignKey(Role.id),
                             nullable=True, unique=False)
 
     action_role_exclude = db.Column(
@@ -1035,7 +1035,7 @@ class WorkflowRole(db.Model, TimestampMixin):
         unique=False)
 
     role_id = db.Column(
-        db.Integer(),
+        db.String(80),
         db.ForeignKey(Role.id, ondelete='CASCADE'), primary_key=True,
         nullable=True, unique=False)
 

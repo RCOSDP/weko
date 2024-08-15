@@ -66,7 +66,7 @@ provision_web_common_ubuntu14 () {
     # sphinxdoc-add-nodejs-external-repository-ubuntu14-begin
     #cat /etc/apt/sources.list.d/nodesource.list -> no such file or directory
     if [[ ! -f /etc/apt/sources.list.d/nodesource.list ]]; then
-        curl -sL https://deb.nodesource.com/setup_6.x | $sudo bash -
+        curl -sL https://deb.nodesource.com/setup_20.x | $sudo bash -
     fi
     # sphinxdoc-add-nodejs-external-repository-ubuntu14-end
     echo "111-3"
@@ -155,7 +155,8 @@ setup_npm_and_css_js_filters () {
     echo "333"
     # sphinxdoc-install-npm-and-css-js-filters-begin
     # $sudo su -c "npm install -g npm"
-    $sudo su -c "npm install -g node-sass@3.8.0 clean-css@3.4.12 requirejs uglify-js"
+    #$sudo su -c "npm install -g node-sass@3.8.0 clean-css@3.4.12 requirejs uglify-js"
+    $sudo su -c "npm install -g node-sass@9.0.0 clean-css@3.4.12 requirejs uglify-js"
     # sphinxdoc-install-npm-and-css-js-filters-end
 
 }
@@ -167,6 +168,7 @@ setup_virtualenvwrapper () {
     set +o nounset
 
     # sphinxdoc-install-virtualenvwrapper-begin
+    #$sudo pip install -U setuptools==71.0.1 pip==24.1.2
     $sudo pip install -U setuptools pip
     $sudo pip install -U virtualenvwrapper
     if ! grep -q virtualenvwrapper ~/.bashrc; then

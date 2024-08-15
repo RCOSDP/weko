@@ -42,9 +42,9 @@ setup_requires = [
 ]
 
 install_requires = [
-    'boto3==1.7.84',  # See https://github.com/spulec/moto/issues/1793
-    's3fs>=0.1.5',
-    'invenio-files-rest>=1.0.0a23'
+    'boto3>=1.9.91',  # See https://github.com/spulec/moto/issues/1793
+    's3fs>=0.3.0',
+    'invenio-files-rest>=1.3.0'
 ]
 
 packages = find_packages()
