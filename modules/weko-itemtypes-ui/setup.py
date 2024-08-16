@@ -104,22 +104,16 @@ setup(
         'invenio_i18n.translations': [
             'messages = weko_itemtypes_ui',
         ],
-        'invenio_assets.bundles': [
-            'weko_itemtypes_ui_js = weko_itemtypes_ui.bundles:js',
-            'weko_itemtypes_mapping_ui_js'
-            ' = weko_itemtypes_ui.bundles:js_mapping',
-            'weko_itemtypes_property_ui_js'
-            ' = weko_itemtypes_ui.bundles:js_property',
-            'weko_itemtypes_rocrate_mapping_ui_js'
-            ' = weko_itemtypes_ui.bundles:js_rocrate_mapping',
-            'weko_itemtypes_ui_dependencies_js'
-            ' = weko_itemtypes_ui.bundles:js_dependencies',
-            'weko_itemtypes_ui_schema_editor_js'
-            ' = weko_itemtypes_ui.bundles:js_schema_editor',
-            'weko_mapping_ui_css = weko_itemtypes_ui.bundles:style_mapping',
-            'weko_itemtypes_ui_css = weko_itemtypes_ui.bundles:style',
-            'weko_rocrate_mapping_ui_css'
-            ' = weko_itemtypes_ui.bundles:style_rocrate_mapping',
+        'invenio_assets.webpack': [
+            'itemstypes_ui_css_style = weko_itemtypes_ui.webpack:itemstypes_ui_css_style',
+            'itemstypes_ui_css_style_mapping = weko_itemtypes_ui.webpack:itemstypes_ui_css_style_mapping',
+            'itemstypes_ui_css_style_rocrate_mapping = weko_itemtypes_ui.webpack:itemstypes_ui_css_style_rocrate_mapping',
+            'itemstypes_ui_js_dependencies_schema_editor = weko_itemtypes_ui.webpack:itemstypes_ui_js_dependencies_schema_editor',
+            'itemstypes_ui_js_schema_editor = weko_itemtypes_ui.webpack:itemstypes_ui_js_schema_editor',
+            'itemstypes_ui_js_js = weko_itemtypes_ui.webpack:itemstypes_ui_js_js',
+            'itemstypes_ui_js_js_property = weko_itemtypes_ui.webpack:itemstypes_ui_js_js_property',
+            'itemstypes_ui_js_js_mapping = weko_itemtypes_ui.webpack:itemstypes_ui_js_js_mapping',
+            'itemstypes_ui_js_js_rocrate_mapping = weko_itemtypes_ui.webpack:itemstypes_ui_js_js_rocrate_mapping',
         ],
         'invenio_access.actions': [
             'item_type_access = '

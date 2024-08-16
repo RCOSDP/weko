@@ -95,21 +95,17 @@ setup(
         'invenio_base.api_blueprints': [
             'weko_items_ui = weko_items_ui.views:blueprint_api',
         ],
-        'invenio_assets.bundles': [
-            'weko_items_ui_indextree_css = '
-            'weko_items_ui.bundles:indextree_style',
-            'weko_items_ui_js_dependencies = '
-            'weko_items_ui.bundles:js_dependencies',
-            'weko_items_ui_js = weko_items_ui.bundles:js',
-            'weko_items_ui_upload_js = weko_items_ui.bundles:upload_js',
-            'weko_items_authors_search_css = '
-            'weko_items_ui.bundles:items_author_search_css',
-            'weko_items_authors_search_js = '
-            'weko_items_ui.bundles:items_author_search_js',
-            'weko_items_ui_feedback_maillist_js = '
-            'weko_items_ui.bundles:feedback_maillist_js',
-            'weko_items_ui_feedback_maillist_css = '
-            'weko_items_ui.bundles:feedback_maillist_css',
+        'invenio_assets.webpack': [
+            'items_ui_css_indextree_style = weko_items_ui.webpack:items_ui_css_indextree_style',
+            'items_ui_js_dependencies_angularjs = weko_items_ui.webpack:items_ui_js_dependencies_angularjs',
+            'items_ui_js_angular_ui = weko_items_ui.webpack:items_ui_js_angular_ui',
+            'items_ui_css_items_author_search = weko_items_ui.webpack:items_ui_css_items_author_search',
+            'items_ui_js_items_author_search = weko_items_ui.webpack:items_ui_js_items_author_search',
+            'items_ui_js_app = weko_items_ui.webpack:items_ui_js_app',
+            'items_ui_js_upload = weko_items_ui.webpack:items_ui_js_upload',
+            'items_ui_js_feedback_maillist = weko_items_ui.webpack:items_ui_js_feedback_maillist',
+            'items_ui_css_feedback_maillist = weko_items_ui.webpack:items_ui_css_feedback_maillist',
+
         ],
         'invenio_access.actions': [
             'item_access = weko_items_ui.permissions:action_item_access',

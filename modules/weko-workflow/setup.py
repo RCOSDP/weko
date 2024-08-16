@@ -99,26 +99,19 @@ setup(
             'weko_workflow = weko_workflow.admin:workflow_adminview',
             'weko_flow = weko_workflow.admin:flow_adminview',
         ],
-        'invenio_assets.bundles': [
-            'workflow_js = weko_workflow.bundles:js_workflow',
-            'workflow_item_link_js = weko_workflow.bundles:js_item_link',
-            'workflow_activity_list_js = '
-            'weko_workflow.bundles:js_activity_list',
-            'workflow_iframe_js = weko_workflow.bundles:js_iframe',
-            'workflow_oa_policy_js = weko_workflow.bundles:js_oa_policy',
-            'workflow_css = weko_workflow.bundles:css_workflow',
-            'workflow_datepicker_css ='
-            ' weko_workflow.bundles:css_datepicker_workflow',
-            'workflow_identifier_grant_js = '
-            'weko_workflow.bundles:js_identifier_grant',
-            'workflow_quit_confirmation_js = '
-            'weko_workflow.bundles:js_quit_confirmation',
-            'workflow_lock_activity_js = '
-            'weko_workflow.bundles:js_lock_activity',
-            'workflow_detail_admin_js = '
-            'weko_workflow.bundles:js_admin_workflow_detail',
-            'flow_detail_admin_js = '
-            'weko_workflow.bundles:js_admin_flow_detail',
+        'invenio_assets.webpack': [
+            'workflow-detail = weko_workflow.webpack:workflow-detail',
+            'workflow-item-link = weko_workflow.webpack:workflow-item-link',
+            'activity-list = weko_workflow.webpack:activity-list',
+            'bootstrap-datepicker = weko_workflow.webpack:bootstrap-datepicker',
+            'iframe-pop = weko_workflow.webpack:iframe-pop',
+            'workflow-oa-policy = weko_workflow.webpack:workflow-oa-policy',
+            'workflow-identifier-grant = weko_workflow.webpack:workflow-identifier-grant',
+            'quit-confirmation = weko_workflow.webpack:quit-confirmation',
+            'lock-activity = weko_workflow.webpack:lock-activity',
+            'theme-flow-detail = weko_workflow.webpack:theme-flow-detail',
+            'theme-workflow = weko_workflow.webpack:theme-workflow',
+            'theme-datepicker = weko_workflow.webpack:theme-datepicker',
         ],
         'invenio_i18n.translations': [
             'messages = weko_workflow',

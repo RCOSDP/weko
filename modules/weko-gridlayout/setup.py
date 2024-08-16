@@ -102,30 +102,19 @@ setup(
         # TODO: Edit these entry points to fit your needs.
         # 'invenio_access.actions': [],
         # 'invenio_admin.actions': [],
-        'invenio_assets.bundles': [
-            'weko_gridlayout_widget_design_js_lib = '
-            'weko_gridlayout.bundles:widget_design_js_lib',
-            'weko_gridlayout_widget_design_reactjs_lib = '
-            'weko_gridlayout.bundles:widget_design_reactjs_lib',
-            'weko_gridlayout_widget_design_js = '
-            'weko_gridlayout.bundles:widget_design_js',
-            'weko_gridlayout_widget_setting_js = '
-            'weko_gridlayout.bundles:widget_setting_js',
-            'weko_gridlayout_widget_design_css = '
-            'weko_gridlayout.bundles:widget_design_css',
-            'weko_gridlayout_widget_setting_css = '
-            'weko_gridlayout.bundles:widget_setting_css',
-            'weko_gridlayout_katex_min_css = '
-            'weko_gridlayout.bundles:katex_min_css',
-            'weko_gridlayout_katex_min_js = '
-            'weko_gridlayout.bundles:katex_min_js',
-            'weko_gridlayout_prop_types_js = '
-            'weko_gridlayout.bundles:prop_types_js',
-            'weko_gridlayout_react_quill_js = '
-            'weko_gridlayout.bundles:react_quill_js',
-            'widget_trumbowyg_css = weko_gridlayout.bundles:trumbowyg_css',
-            'widget_react_trumbowyg_js = '
-            'weko_gridlayout.bundles:react_trumbowyg_js',
+        'invenio_assets.webpack': [
+            'gridlayout_js_widget_design_js_lib = weko_gridlayout.webpack:gridlayout_js_widget_design_js_lib',
+            'gridlayout_js_widget_design_reactjs_lib = weko_gridlayout.webpack:gridlayout_js_widget_design_reactjs_lib',
+            'gridlayout_js_widget_design_js = weko_gridlayout.webpack:gridlayout_js_widget_design_js',
+            'gridlayout_js_widget_setting_js = weko_gridlayout.webpack:gridlayout_js_widget_setting_js',
+            'gridlayout_css_widget_design_css = weko_gridlayout.webpack:gridlayout_css_widget_design_css',
+            'gridlayout_css_widget_setting_css = weko_gridlayout.webpack:gridlayout_css_widget_setting_css',
+            'gridlayout_css_katex_min_css = weko_gridlayout.webpack:gridlayout_css_katex_min_css',
+            'gridlayout_css_trumbowyg_css = weko_gridlayout.webpack:gridlayout_css_trumbowyg_css',
+            'gridlayout_js_katex_min_js = weko_gridlayout.webpack:gridlayout_js_katex_min_js',
+            'gridlayout_js_prop_types_js = weko_gridlayout.webpack:gridlayout_js_prop_types_js',
+            'gridlayout_js_react_quill_js = weko_gridlayout.webpack:gridlayout_js_react_quill_js',
+            'gridlayout_js_trumbowyg_js_plugin = weko_gridlayout.webpack:gridlayout_js_trumbowyg_js_plugin',
         ],
         # 'invenio_base.api_apps': [],
         # 'invenio_base.blueprints': [],

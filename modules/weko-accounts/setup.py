@@ -99,16 +99,10 @@ setup(
         'invenio_i18n.translations': [
             'messages = weko_accounts',
         ],
-        'invenio_assets.bundles': [
-            # 'weko_accounts_embedded_wayf_config_js = weko_accounts.bundles:embedded_wayf_config_js',
-            'weko_accounts_css = weko_accounts.bundles:embedded_wayf_custom',
-            # 'weko_accounts_embedded_ds_P1_js = '
-            # 'weko_accounts.bundles:embedded_ds_P1_js',
-            # 'weko_accounts_embedded_ds_P2_js = '
-            # 'weko_accounts.bundles:embedded_ds_P2_js',
-            'weko_accounts_embedded_ds_multi_lang_js = '
-            'weko_accounts.bundles:embedded_ds_multi_language_js',
-            'weko_accounts_suggest_js = weko_accounts.bundles:suggest_js',
+        'invenio_assets.webpack': [
+            'accounts_css_embedded_wayf_custom = weko_theme.webpack:accounts_css_embedded_wayf_custom',
+            'accounts_js_embedded_ds_multi_language_js = weko_theme.webpack:accounts_js_embedded_ds_multi_language_js',
+            'accounts_js_suggest_js = weko_theme.webpack:accounts_js_suggest_js',
         ],
     },
     extras_require=extras_require,
