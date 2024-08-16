@@ -16,7 +16,6 @@ weko_workflow = WebpackThemeBundle(
                 'workflow-identifier-grant':'js/weko_workflow/workflow_identifier_grant.js',
                 'quit-confirmation':'js/weko_workflow/quit_confirmation.js',
                 'lock-activity':'js/weko_workflow/lock_activity.js',
-                'workflow-detail':'js/weko_workflow/admin/workflow_detail.js',
                 'theme-flow-detail':'js/weko_workflow/admin/flow_detail.js',
                 'theme-workflow':'css/weko_workflow/style.css',
                 'theme-datepicker': 'css/weko_workflow/bootstrap-datepicker3.standalone.min.css',
