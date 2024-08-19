@@ -130,7 +130,7 @@ pip install setuptools==71.0.3
 #pip cache purge
 pip_version=$(pip --version)
 setuptool_version=$(pip show setuptools | grep Version)
-echo "pip version: ${pip_version}, setuptools version: ${setuptool_version}"
+
 if [[ "$@" != *"--devel"* ]]; then
 # sphinxdoc-install-invenio-full-begin
     pip install -r "$scriptpathname/../packages.txt"

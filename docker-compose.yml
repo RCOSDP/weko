@@ -21,7 +21,7 @@
 version: "3.2"
 
 services:
-  web2:
+  web:
     restart: "always"
     build:
       context: .
@@ -219,7 +219,7 @@ services:
 #      - letsencrypt_etc:/etc/letsencrypt
 #      - letsencrypt_html:/var/www/html
     links:
-      - web2
+      - web
     deploy:
       resources:
         limits:

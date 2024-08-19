@@ -134,7 +134,6 @@ cp -prf "/code/modules/weko-index-tree/weko_index_tree/static/indextree" "var/in
 # sphinxdoc-customise-instance-end
 pip install pip==24.1.2
 pip install setuptools==71.0.3
-echo 333333
 ## sphinxdoc-run-npm-begin
 #${INVENIO_WEB_INSTANCE} npm
 #cdvirtualenv "var/instance/static"
