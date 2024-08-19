@@ -3,8 +3,8 @@
   "_version": "1",
   "_source":{
     "pid": "1",
-    "_created": "2021-09-01T00:00:00.000000+00:00",
-    "_updated": "2021-10-26T00:00:00.000000+00:00",
+    "_created": "",
+    "_updated": "",
     "_oai": {
       "id": "0001"
     },
@@ -84,30 +84,31 @@
             "url":{
               "test":"open and not exist label"
             },
-            "accessrole":"open_restricted",
-            "format": "application/pdf" 
+            "accessrole":"open_restricted"
           },
           {
-            "url":{
-              "url":"not label, but version_id"
-            },
+            "url":[
+              {
+                "url":"not label, but version_id"
+              },
+              {
+                "url":"not label, but version_id2"
+              }
+            ],
             "version_id":"1.0",
-            "filename":"test.txt",
-            "format": "application/pdf" 
+            "filename":"test.txt"
           },
           {
             "url":{
               "label":"not file url"
             },
             "version_id":"1.0",
-            "filename":"test_not_extension",
-            "format": "application/pdf" 
+            "filename":"test_not_extension"
           },
           {
             "url":{
               "test":"not open and not label"
-            },
-            "format": "application/pdf" 
+            }
           }
         ]
       },
@@ -116,6 +117,10 @@
         "attribute_value_mlt": [{
           "resourcetype": "test type",
           "resourceuri": "http://nii.co.jp/resource_type/01"
+        },
+        {
+          "resourcetype": "test type2",
+          "resourceuri": "http://nii.co.jp/resource_type/02"
         }]
       },
       "item_description": {
@@ -226,12 +231,22 @@
               {
                 "bibliographic_titleLang":"en",
                 "bibliographic_title":"this is test bibliographic title"
+              },
+              {
+                "bibliographic_titleLang":"ja",
+                "bibliographic_title":"this is test bibliographic title_ja"
               }
             ],
             "bibliographic_volume": "10",
             "bibliographic_issue": "7",
             "bibliographic_pageStart": "1",
             "bibliographic_pageEnd": "11"
+          },
+          {
+            "bibliographic_volume": "20",
+            "bibliographic_issue": "8",
+            "bibliographic_pageStart": "2",
+            "bibliographic_pageEnd": "12"
           }
         ]
       },
@@ -260,7 +275,7 @@
       }
     },
     "file": {
-      "URI": [{"value": "http://localhost/records/1/file"}]
+      "URI": [{"value": "http://localhost/records/1/file"}, {"value": "http://localhost/records/2/file"}]
     },
     "title":[
       "this is dummy title",

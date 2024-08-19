@@ -3,6 +3,7 @@ import uuid
 import json
 import base64
 import copy
+from lxml import etree
 from tests.helpers import json_data
 from mock import patch, MagicMock
 from werkzeug import ImmutableMultiDict
@@ -192,9 +193,12 @@ def test_open_search_detail_data(app, db, db_index, record1, render, form, mappi
         assert True if cnt == 3 else False
 
     _data = {
-        'lang': 'en'
+        'lang': 'en',
+        'index_id': "1"
     }
-    _search_result = {'hits': {'total': 1, 'hits': [hit_data]}}
+    hit_data1 = copy.deepcopy(hit_data)
+    hit_data1['_source']['_item_metadata']['pubdate']['attribute_value'] = ""
+    _search_result = {'hits': {'total': 1, 'hits': [hit_data1]}}
     detail = OpenSearchDetailData(fetcher, _search_result, 'rss')
     with app.test_request_context(headers=[('Accept-Language','en')], query_string=_data):
         res = detail.output_open_search_detail_data()
@@ -204,10 +208,74 @@ def test_open_search_detail_data(app, db, db_index, record1, render, form, mappi
         cnt += 1 if res.find('wekolog:download') == -1 else 0
         assert True if cnt == 3 else False
 
-    _search_result = {'hits': {'total': 1, 'hits': [json_data(hit)]}}
+    _search_result = {'hits': {'total': 0, 'hits': []}}
     data = OpenSearchDetailData(fetcher, _search_result, 'rss')
     with app.test_request_context():
         assert data.output_open_search_detail_data()
+
+    # test for atom
+    _data = {
+        'lang': 'en',
+        'index_id': 1,
+    }
+    _search_result = {'hits': {'total': 2, 'hits': [hit_data, hit_data]}}
+    data = OpenSearchDetailData(fetcher, _search_result, 'atom')
+    with app.test_request_context(headers=[('Accept-Language','en')], query_string=_data):
+        assert data.output_open_search_detail_data()
+        with patch("weko_records.api.Mapping.get_record", return_value=dict()):
+            assert data.output_open_search_detail_data()
+        with patch("weko_records.serializers.utils.get_metadata_from_map", return_value=None):
+            assert data.output_open_search_detail_data()
+
+    hit_data2 = json_data("data/record_hit/record_hit1_2.json")
+    _search_result = {'hits': {'total': 1, 'hits': [hit_data2]}}
+    data = OpenSearchDetailData(fetcher, _search_result, 'atom')
+    with app.test_request_context(headers=[('Accept-Language','en')], query_string=_data):
+        assert data.output_open_search_detail_data()
+
+    hit_data3 = copy.deepcopy(hit_data)
+    hit_data3['_source']['_item_metadata'] = {
+        "item_type_id":"1",
+        "control_number": "1",
+        "item_title":"Test title",
+    }
+    _search_result = {'hits': {'total': 1, 'hits': [hit_data3]}}
+    data = OpenSearchDetailData(fetcher, _search_result, 'atom')
+    with app.test_request_context(headers=[('Accept-Language','en')], query_string=_data):
+        assert data.output_open_search_detail_data()
+
+    _data = {
+        'lang': 'ja',
+        'index_id': "aaa",
+        'idx': "bbb",
+    }
+    hit_data4 = copy.deepcopy(hit_data)
+    hit_data4['_source']['_item_metadata']['path'] = ["9999"]
+    _search_result = {'hits': {'total': 1, 'hits': [hit_data4]}}
+    data = OpenSearchDetailData(fetcher, _search_result, 'atom')
+    with app.test_request_context(headers=[('Accept-Language','ja')], query_string=_data):
+        assert data.output_open_search_detail_data()
+    
+    # test for atom with Yhandle
+    _data = {
+        'lang': 'ja',
+        'index_id': "1",
+        'idx': "bbb",
+    }
+    _search_result = {'hits': {'total': 1, 'hits': [hit_data]}}
+    data = OpenSearchDetailData(fetcher, _search_result, 'atom')
+    with app.test_request_context(headers=[('Accept-Language','ja')], query_string=_data):
+        with patch("invenio_pidstore.models.PersistentIdentifier.get_by_object", return_value=PersistentIdentifier(pid_type='yhdl', pid_value="http://test.com/1000/00000001/")):
+            res = data.output_open_search_detail_data()
+            res = res.decode('utf-8')
+            assert res.find('<link href="http://test.com/1000/00000001/"/>') > 0
+    _data['index_id'] = "aaa"
+    with app.test_request_context(headers=[('Accept-Language','ja')], query_string=_data):
+        with patch("invenio_pidstore.models.PersistentIdentifier.get_by_object", return_value=PersistentIdentifier(pid_type='yhdl', pid_value="http://test.com/1000/00000001")):
+            res = data.output_open_search_detail_data()
+            res = res.decode('utf-8')
+            assert res.find('<link href="http://test.com/1000/00000001/"/>') > 0
+
 
 sample = OpenSearchDetailData(
     pid_fetcher = MagicMock(),
@@ -221,27 +289,12 @@ sample = OpenSearchDetailData(
 # class OpenSearchDetailData:
 #     def output_open_search_detail_data(self): 
 def test_output_open_search_detail_data(app):
-    data0 = MagicMock()
-    data1 = MagicMock()
-    data1.query = MagicMock()
-    data1.args = {
-        "q": "test",
-        "index_id": 1,
-    }
-
-    def one_or_none():
-        return data0
-
-    data2 = MagicMock()
-    data2.one_or_none = one_or_none
-
-    def filter_by(item):
-        return data2
-
     with app.test_request_context():
-        with patch("weko_records.serializers.utils.request", return_value=data1):
-            with patch("weko_records.serializers.utils.Index", return_value=data1):
-                assert sample.output_open_search_detail_data() == None
+        assert_str = '<title xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/" xmlns:prism="http://prismstandard.org/namespaces/basic/2.0/"  xmlns:wekolog="http://wekolog.org/namespaces/basic/1.0/">WEKO OpenSearch: </title>'
+        res = sample.output_open_search_detail_data()
+        _tree = etree.fromstring(res)
+        _record = str(etree.tostring(_tree.findall('title', namespaces=_tree.nsmap)[0]),"utf-8").replace('\n  ', '')
+        assert _record == str(etree.tostring(etree.fromstring(assert_str)),"utf-8")
 
 
 #     def _set_publication_date(self, fe, item_map, item_metadata):

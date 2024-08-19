@@ -129,6 +129,7 @@
   },
   "item_test6_bibliographic":{
     "jpcoar_mapping":{
+      "issue": "bibliographic_issue",
       "volume": "bibliographic_volume",
       "pageStart": "bibliographic_pageStart",
       "pageEnd": "bibliographic_pageEnd",

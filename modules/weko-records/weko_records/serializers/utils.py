@@ -26,6 +26,7 @@ from datetime import datetime
 import pytz
 from flask import request
 from invenio_db import db
+from invenio_pidstore.models import PersistentIdentifier
 from invenio_records.models import RecordMetadata
 from invenio_records_rest.views import RecordsListResource
 from invenio_stats.views import QueryRecordViewCount, QueryFileStatsCount
@@ -422,6 +423,17 @@ class OpenSearchDetailData:
 
                 # Set id
                 fe.id(item_url)
+
+                # Set Y-handle URL
+                try:
+                    recid = PersistentIdentifier.get('recid', _pid)
+                    yhdl = PersistentIdentifier.get_by_object('yhdl', 'rec', recid.object_uuid)
+                    yhdl_value = yhdl.pid_value
+                    if not yhdl_value.endswith('/'):
+                        yhdl_value += '/'
+                    fe.link(href=yhdl_value, rel='alternate', type='text/html')
+                except:
+                    pass
             else:
                 # Set oai
                 _oai = hit['_source']['_oai']['id']
@@ -513,6 +525,7 @@ class OpenSearchDetailData:
             else:
                 index_id = item_metadata['path'][0]
 
+                index_name = None
                 if index_id in index_meta:
                     index_name = index_meta[index_id]
                 else:
@@ -523,8 +536,8 @@ class OpenSearchDetailData:
                         else:
                             index_name = index.index_name
                         index_meta[index_id] = index_name
-
-                fe.dc.dc_subject(index_name)
+                if index_name:
+                    fe.dc.dc_subject(index_name)
 
             # Set publicationName
             _source_title_value = 'sourceTitle.@value'
@@ -584,7 +597,7 @@ class OpenSearchDetailData:
                         item_metadata[item_id], item_id)
 
                     issues = None
-                    if isinstance(issue_metadata):
+                    if isinstance(issue_metadata, dict):
                         issues = issue_metadata.get(issue_key)
 
                     if issues:
