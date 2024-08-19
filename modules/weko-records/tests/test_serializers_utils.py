@@ -256,7 +256,7 @@ def test_open_search_detail_data(app, db, db_index, record1, render, form, mappi
     with app.test_request_context(headers=[('Accept-Language','ja')], query_string=_data):
         assert data.output_open_search_detail_data()
     
-    # test for atom with Yhand
+    # test for atom with Yhandle
     _data = {
         'lang': 'ja',
         'index_id': "1",
@@ -265,16 +265,16 @@ def test_open_search_detail_data(app, db, db_index, record1, render, form, mappi
     _search_result = {'hits': {'total': 1, 'hits': [hit_data]}}
     data = OpenSearchDetailData(fetcher, _search_result, 'atom')
     with app.test_request_context(headers=[('Accept-Language','ja')], query_string=_data):
-        with patch("invenio_pidstore.models.PersistentIdentifier.get_by_object", return_value=PersistentIdentifier(pid_type='yhdl', pid_value="http://test.com/1000/00000001")):
+        with patch("invenio_pidstore.models.PersistentIdentifier.get_by_object", return_value=PersistentIdentifier(pid_type='yhdl', pid_value="http://test.com/1000/00000001/")):
             res = data.output_open_search_detail_data()
             res = res.decode('utf-8')
-            assert res.find('<link href="http://test.com/1000/00000001"/>') > 0
+            assert res.find('<link href="http://test.com/1000/00000001/"/>') > 0
     _data['index_id'] = "aaa"
     with app.test_request_context(headers=[('Accept-Language','ja')], query_string=_data):
         with patch("invenio_pidstore.models.PersistentIdentifier.get_by_object", return_value=PersistentIdentifier(pid_type='yhdl', pid_value="http://test.com/1000/00000001")):
             res = data.output_open_search_detail_data()
             res = res.decode('utf-8')
-            assert res.find('<link href="http://test.com/1000/00000001"/>') > 0
+            assert res.find('<link href="http://test.com/1000/00000001/"/>') > 0
 
 
 sample = OpenSearchDetailData(
