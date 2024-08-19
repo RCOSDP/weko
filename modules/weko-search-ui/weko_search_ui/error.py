@@ -54,10 +54,10 @@ class UnhandledElasticsearchError(RESTException):
 """Custom errors for weko search ui."""
 
 class WekoSearchUiError(Exception):
-    def __init__(self, ex=None, msg=None):
+    def __init__(self, ex=None, msg=None, *args):
         """Constructor.
 
-        Initialize theweko search ui error.
+        Initialize the weko search ui error.
 
         Args:
             ex (Exception): Original exception object
@@ -67,40 +67,40 @@ class WekoSearchUiError(Exception):
             self.exception = ex
         if msg is None:
             msg = "Some error has occurred in weko_search_ui."
-        super().__init__(msg)
+        super().__init__(msg, *args)
 
 
 class WekoSearchManagementError(WekoSearchUiError):
-    def __init__(self, ex=None, msg=None):
+    def __init__(self, ex=None, msg=None, *args):
         if msg is None:
             msg = "Some management error has occurred in weko_search_ui."
-        super().__init__(ex, msg)
+        super().__init__(ex, msg, *args)
 
 
 class WekoSearchUiDateError(WekoSearchUiError):
-    def __init__(self, ex=None, msg=None):
+    def __init__(self, ex=None, msg=None, *args):
         if msg is None:
             msg = "Some date error has occurred in weko_search_ui."
-        super().__init__(ex, msg)
+        super().__init__(ex, msg, *args)
 
 
 class WekoSearchUiSortError(WekoSearchUiError):
-    def __init__(self, ex=None, msg=None):
+    def __init__(self, ex=None, msg=None, *args):
         if msg is None:
             msg = "Some sort error has occurred in weko_search_ui."
-        super().__init__(ex, msg)
+        super().__init__(ex, msg, *args)
 
 
 class WekoSearchUiSettingError(WekoSearchUiError):
-    def __init__(self, ex=None, msg=None):
+    def __init__(self, ex=None, msg=None, *args):
         if msg is None:
             msg = "Some setting error has occurred in weko_search_ui."
-        super().__init__(ex, msg)
+        super().__init__(ex, msg, *args)
 
 
 class WekoIndexSearchUiError(WekoSearchUiError):
-    def __init__(self, ex=None, msg=None):
+    def __init__(self, ex=None, msg=None, *args):
         if msg is None:
             msg = "Some index search error has occurred in weko_search_ui."
-        super().__init__(ex, msg)
+        super().__init__(ex, msg, *args)
 

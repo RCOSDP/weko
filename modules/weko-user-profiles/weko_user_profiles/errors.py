@@ -1,10 +1,10 @@
 """Custom errors for weko user profiles."""
 
 class WekoUserProfilesError(Exception):
-    def __init__(self, ex=None, msg=None):
+    def __init__(self, ex=None, msg=None, *args):
         """Constructor.
 
-        Initialize theweko user profiles error.
+        Initialize the weko user profiles error.
 
         Args:
             ex (Exception): Original exception object
@@ -14,12 +14,12 @@ class WekoUserProfilesError(Exception):
             self.exception = ex
         if msg is None:
             msg = "Some error has occurred in weko_user_profiles."
-        super().__init__(msg)
+        super().__init__(msg, *args)
 
 
 class WekoUserProfilesEditError(WekoUserProfilesError):
-    def __init__(self, ex=None, msg=None):
+    def __init__(self, ex=None, msg=None, *args):
         if msg is None:
             msg = "Some edit error has occurred in weko_user_profiles."
-        super().__init__(ex, msg)
+        super().__init__(ex, msg, *args)
 

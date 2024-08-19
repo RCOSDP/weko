@@ -81,10 +81,10 @@ class JournalMovedRESTError(RESTException):
 """Custom errors for weko index-tree journal."""
 
 class WekoJournalError(Exception):
-    def __init__(self, ex=None, msg=None):
+    def __init__(self, ex=None, msg=None, *args):
         """Constructor.
 
-        Initialize theweko index-tree journal error.
+        Initialize the weko index-tree journal error.
 
         Args:
             ex (Exception): Original exception object
@@ -94,26 +94,26 @@ class WekoJournalError(Exception):
             self.exception = ex
         if msg is None:
             msg = "Some error has occurred in weko_indextree_journal."
-        super().__init__(msg)
+        super().__init__(msg, *args)
 
 
 class WekoJournalSettingError(WekoJournalError):
-    def __init__(self, ex=None, msg=None):
+    def __init__(self, ex=None, msg=None, *args):
         if msg is None:
             msg = "Some setting error has occurred in weko_indextree_journal."
-        super().__init__(ex, msg)
+        super().__init__(ex, msg, *args)
 
 
 class WekoJournalExportError(WekoJournalError):
-    def __init__(self, ex=None, msg=None):
+    def __init__(self, ex=None, msg=None, *args):
         if msg is None:
             msg = "Some export error has occurred in weko_indextree_journal."
-        super().__init__(ex, msg)
+        super().__init__(ex, msg, *args)
 
 
 class WekoJournalRegistrarionError(WekoJournalError):
-    def __init__(self, ex=None, msg=None):
+    def __init__(self, ex=None, msg=None, *args):
         if msg is None:
             msg = "Some registration error has occurred in weko_indextree_journal."
-        super().__init__(ex, msg)
+        super().__init__(ex, msg, *args)
 

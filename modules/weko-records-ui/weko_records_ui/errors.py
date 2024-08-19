@@ -115,10 +115,10 @@ class InternalServerError(RESTException):
 """Custom errors for weko records ui."""
 
 class WekoRecordsUiError(Exception):
-    def __init__(self, ex=None, msg=None):
+    def __init__(self, ex=None, msg=None, *args):
         """Constructor.
 
-        Initialize theweko records ui error.
+        Initialize the weko records ui error.
 
         Args:
             ex (Exception): Original exception object
@@ -128,19 +128,19 @@ class WekoRecordsUiError(Exception):
             self.exception = ex
         if msg is None:
             msg = "Some error has occurred in weko_records_ui."
-        super().__init__(msg)
+        super().__init__(msg, *args)
 
 
 class WekoRecordsUiFileError(WekoRecordsUiError):
-    def __init__(self, ex=None, msg=None):
+    def __init__(self, ex=None, msg=None, *args):
         if msg is None:
             msg = "Some file error has occurred in weko_records_ui."
-        super().__init__(ex, msg)
+        super().__init__(ex, msg, *args)
 
 
 class WekoRecordsUiPermissionError(WekoRecordsUiError):
-    def __init__(self, ex=None, msg=None):
+    def __init__(self, ex=None, msg=None, *args):
         if msg is None:
             msg = "Some permission error has occurred in weko_records_ui."
-        super().__init__(ex, msg)
+        super().__init__(ex, msg, *args)
 

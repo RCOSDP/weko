@@ -1,10 +1,10 @@
 """Custom errors for weko items autofill."""
 
 class WekoItemsAutoFillError(Exception):
-    def __init__(self, ex=None, msg=None):
+    def __init__(self, ex=None, msg=None, *args):
         """Constructor.
 
-        Initialize theweko items autofill error.
+        Initialize the weko items autofill error.
 
         Args:
             ex (Exception): Original exception object
@@ -14,26 +14,26 @@ class WekoItemsAutoFillError(Exception):
             self.exception = ex
         if msg is None:
             msg = "Some error has occurred in weko_items_autofill."
-        super().__init__(msg)
+        super().__init__(msg, *args)
 
 
 class WekoItemsAutoFillURLError(WekoItemsAutoFillError):
-    def __init__(self, ex=None, msg=None):
+    def __init__(self, ex=None, msg=None, *args):
         if msg is None:
             msg = "Some url error has occurred in weko_items_autofill."
-        super().__init__(ex, msg)
+        super().__init__(ex, msg, *args)
 
 
 class WekoItemsAutoFillGettingError(WekoItemsAutoFillError):
-    def __init__(self, ex=None, msg=None):
+    def __init__(self, ex=None, msg=None, *args):
         if msg is None:
             msg = "Some convertion date error has occurred in weko_items_autofill."
-        super().__init__(ex, msg)
+        super().__init__(ex, msg, *args)
 
 
 class WekoItemsAutoFillConvertionError(WekoItemsAutoFillError):
-    def __init__(self, ex=None, msg=None):
+    def __init__(self, ex=None, msg=None, *args):
         if msg is None:
             msg = "Some getting date error has occurred in weko_items_autofill."
-        super().__init__(ex, msg)
+        super().__init__(ex, msg, *args)
 

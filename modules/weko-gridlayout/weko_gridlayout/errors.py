@@ -1,10 +1,10 @@
 """Custom errors for weko gridlayout."""
 
 class WekoGridLayoutError(Exception):
-    def __init__(self, ex=None, msg=None):
+    def __init__(self, ex=None, msg=None, *args):
         """Constructor.
 
-        Initialize theweko gridlayout error.
+        Initialize the weko gridlayout error.
 
         Args:
             ex (Exception): Original exception object
@@ -14,26 +14,26 @@ class WekoGridLayoutError(Exception):
             self.exception = ex
         if msg is None:
             msg = "Some error has occurred in weko_gridlayout."
-        super().__init__(msg)
+        super().__init__(msg, *args)
 
 
 class WekoWidgetLayoutError(WekoGridLayoutError):
-    def __init__(self, ex=None, msg=None):
+    def __init__(self, ex=None, msg=None, *args):
         if msg is None:
             msg = "Some layout of wedget error has occurred in weko_gridlayout."
-        super().__init__(ex, msg)
+        super().__init__(ex, msg, *args)
 
 
 class WekoWidgetDataError(WekoGridLayoutError):
-    def __init__(self, ex=None, msg=None):
+    def __init__(self, ex=None, msg=None, *args):
         if msg is None:
             msg = "Some date error has occurred in weko_gridlayout."
-        super().__init__(ex, msg)
+        super().__init__(ex, msg, *args)
 
 
 class WekoWidgetSettingError(WekoGridLayoutError):
-    def __init__(self, ex=None, msg=None):
+    def __init__(self, ex=None, msg=None, *args):
         if msg is None:
             msg = "Some setting error has occurred in weko_gridlayout."
-        super().__init__(ex, msg)
+        super().__init__(ex, msg, *args)
 

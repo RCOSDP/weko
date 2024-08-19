@@ -42,10 +42,10 @@ class AuthorNotFoundRESTError(RESTException):
 """Custom errors for weko authors."""
 
 class WekoAuthorsError(Exception):
-    def __init__(self, ex=None, msg=None):
+    def __init__(self, ex=None, msg=None, *args):
         """Constructor.
 
-        Initialize theweko authors error.
+        Initialize the weko authors error.
 
         Args:
             ex (Exception): Original exception object
@@ -55,33 +55,33 @@ class WekoAuthorsError(Exception):
             self.exception = ex
         if msg is None:
             msg = "Some error has occurred in weko_authors."
-        super().__init__(msg)
+        super().__init__(msg, *args)
 
 
 class WekoAuthorsManagementError(WekoAuthorsError):
-    def __init__(self, ex=None, msg=None):
+    def __init__(self, ex=None, msg=None, *args):
         if msg is None:
             msg = "Some management error has occurred in weko_authors."
-        super().__init__(ex, msg)
+        super().__init__(ex, msg, *args)
 
 
 class WekoAuthorsSettingsError(WekoAuthorsError):
-    def __init__(self, ex=None, msg=None):
+    def __init__(self, ex=None, msg=None, *args):
         if msg is None:
             msg = "Some setting error has occurred in weko_authors."
-        super().__init__(ex, msg)
+        super().__init__(ex, msg, *args)
 
 
 class WekoAuthorsImportError(WekoAuthorsError):
-    def __init__(self, ex=None, msg=None):
+    def __init__(self, ex=None, msg=None, *args):
         if msg is None:
             msg = "Some import error has occurred in weko_authors."
-        super().__init__(ex, msg)
+        super().__init__(ex, msg, *args)
 
 
 class WekoAuthorsExportError(WekoAuthorsError):
-    def __init__(self, ex=None, msg=None):
+    def __init__(self, ex=None, msg=None, *args):
         if msg is None:
             msg = "Some export error has occurred in weko_authors."
-        super().__init__(ex, msg)
+        super().__init__(ex, msg, *args)
 

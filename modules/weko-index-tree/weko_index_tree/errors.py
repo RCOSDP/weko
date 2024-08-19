@@ -111,10 +111,10 @@ class InternalServerError(RESTException):
 """Custom errors for weko index-tree."""
 
 class WekoIndexTreeError(Exception):
-    def __init__(self, ex=None, msg=None):
+    def __init__(self, ex=None, msg=None, *args):
         """Constructor.
 
-        Initialize theweko index-tree error.
+        Initialize the weko index-tree error.
 
         Args:
             ex (Exception): Original exception object
@@ -124,26 +124,26 @@ class WekoIndexTreeError(Exception):
             self.exception = ex
         if msg is None:
             msg = "Some error has occurred in weko_index_tree."
-        super().__init__(msg)
+        super().__init__(msg, *args)
 
 
 class WekoIndexTreeSettingError(WekoIndexTreeError):
-    def __init__(self, ex=None, msg=None):
+    def __init__(self, ex=None, msg=None, *args):
         if msg is None:
             msg = "Some setting error has occurred in weko_index_tree."
-        super().__init__(ex, msg)
+        super().__init__(ex, msg, *args)
 
 
 class WekoIndexStyleError(WekoIndexTreeError):
-    def __init__(self, ex=None, msg=None):
+    def __init__(self, ex=None, msg=None, *args):
         if msg is None:
             msg = "Some style error has occurred in weko_index_tree."
-        super().__init__(ex, msg)
+        super().__init__(ex, msg, *args)
 
 
 class WekoIndexBrowsingError(WekoIndexTreeError):
-    def __init__(self, ex=None, msg=None):
+    def __init__(self, ex=None, msg=None, *args):
         if msg is None:
             msg = "Some browsing setting error has occurred in weko_index_tree."
-        super().__init__(ex, msg)
+        super().__init__(ex, msg, *args)
 
