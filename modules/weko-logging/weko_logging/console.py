@@ -106,9 +106,13 @@ class WekoLoggingConsole(WekoLoggingBase):
         Returns:
             None
         """
-        import inspect
-        import traceback
+        from inspect import stack
+        from traceback import print_exc
         from flask import current_app
+
+        # check if console logging is enabled
+        if not current_app.config["WEKO_LOGGING_CONSOLE"]:
+            return
 
         # get message parameters from common resource
         if not param:
@@ -123,7 +127,7 @@ class WekoLoggingConsole(WekoLoggingBase):
         msg = msgid + ' : ' + msgstr
 
         # get pathname, lineno, funcName of caller
-        frame = inspect.stack()[2]
+        frame = stack()[2]
         extra = {
             'wpathname': frame.filename,
             'wlineno': frame.lineno,
@@ -133,7 +137,7 @@ class WekoLoggingConsole(WekoLoggingBase):
         # output log by msglvl
         if msglvl == 'ERROR':
             current_app.logger.error(msg.format(**kwargs), extra=extra)
-        elif msglvl == 'WARNING':
+        elif msglvl == 'WARN':
             current_app.logger.warning(msg.format(**kwargs), extra=extra)
         elif msglvl == 'INFO':
             current_app.logger.info(msg.format(**kwargs), extra=extra)
@@ -145,6 +149,6 @@ class WekoLoggingConsole(WekoLoggingBase):
         if ex:
             current_app.logger.error(
                 ex.__class__.__name__ + ": " + str(ex), extra=extra)
-            traceback.print_exc()
+            print_exc()
 
 

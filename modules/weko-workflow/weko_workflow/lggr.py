@@ -231,7 +231,8 @@ WEKO_WORKFLOW_MESSAGE = {
     },
 }
 
-from weko_logging.lggr import weko_logger_base
+from weko_logging.console import WekoLoggingConsole
+weko_logger_base = WekoLoggingConsole.weko_logger_base
 
 def weko_logger(key=None, ex=None, **kwargs):
     """Log message with key.
