@@ -98,9 +98,9 @@ setup(
             'messages = weko_index_tree',
         ],
         'invenio_assets.webpack': [
-            'index_tree_css_style = weko_index_tree.webpack:index_tree_css_style',
-            'index_tree_js_treeview = weko_index_tree.webpack:index_tree_js_treeview',
-            'index_tree_js_js = weko_index_tree.webpack:index_tree_js_js',
+            'index_tree_css_style = weko_index_tree.webpack:weko_index_tree',
+            'index_tree_js_treeview = weko_index_tree.webpack:weko_index_tree',
+            'index_tree_js_js = weko_index_tree.webpack:weko_index_tree',
         ],
         'invenio_db.alembic': [
             'weko_index_tree = weko_index_tree:alembic',
