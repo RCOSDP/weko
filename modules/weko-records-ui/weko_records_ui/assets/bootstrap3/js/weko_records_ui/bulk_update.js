@@ -1,7 +1,16 @@
+<<<<<<< HEAD
 require([
   "jquery",
   "bootstrap"
 ], function() {
+=======
+//require([
+//    "jquery",
+//    "bootstrap"
+//], function () {
+  import "bootstrap";
+  import $ from "jquery";
+>>>>>>> feature/resolve_conflict_invenio_assets_akaike
     $(document).ready( function() {
       $($('.field-row-default').find('input[name="access_date"]')[0]).val(getDate());
       addField();
@@ -529,4 +538,8 @@ require([
         '<button type="button" class="close" data-dismiss="alert" aria-hidden="true">' +
         '&times;</button>' + message + '</div>');
     }
+<<<<<<< HEAD
 });
+=======
+;
+>>>>>>> feature/resolve_conflict_invenio_assets_akaike

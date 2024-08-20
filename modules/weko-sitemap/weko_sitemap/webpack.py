@@ -4,14 +4,13 @@ weko_sitemap = WebpackThemeBundle(
     __name__,
     "assets",
     default="bootstrap3",
-    themes = {
+    themes={
         "bootstrap3": dict(
-            entry = {
-                "weko-sitemap": 'js/weko_sitemap/sitemap.js',
-                "theme-weko-sitemap": 'css/weko_sitemap/styles.css',
+            entry={
+                'sitemap-js-js': 'js/weko_sitemap/sitemap.js',
+                'sitemap-css-css': 'css/weko_sitemap/styles.css',
             },
-            dependencies = {
-                
+            dependencies={
             }
         )
     }

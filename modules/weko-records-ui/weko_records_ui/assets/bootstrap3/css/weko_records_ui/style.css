@@ -1,7 +1,13 @@
+<<<<<<< HEAD
 
 @import "~angular-loading-bar/build/loading-bar.css";
 @import "~typeahead.js-bootstrap-css/typeaheadjs.css";
 @import "~bootstrap-switch/dist/css/bootstrap3/bootstrap-switch.css";
+=======
+@import url('node_modules/angular-loading-bar/build/loading-bar.css');
+@import url('node_modules/typeahead.js-bootstrap-css/typeaheadjs.css');
+@import url('node_modules/bootstrap-switch/dist/css/bootstrap3/bootstrap-switch.css');
+>>>>>>> feature/resolve_conflict_invenio_assets_akaike
 
 .nowrap {
   white-space: nowrap;
@@ -81,12 +87,18 @@
 .action-button {
   margin-top: 5px;
   margin-bottom: 5px;
+<<<<<<< HEAD
 //  display: block;
+=======
+>>>>>>> feature/resolve_conflict_invenio_assets_akaike
   margin-right: auto;
   margin-left: auto;
   font-size: 13px;
   line-height: 12px;
+<<<<<<< HEAD
 //  background-color: #D3D3D3;
+=======
+>>>>>>> feature/resolve_conflict_invenio_assets_akaike
   height: 27px;
 }
 

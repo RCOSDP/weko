@@ -1,0 +1,190 @@
+#wayf_div div, input {
+	-webkit-box-sizing: border-box; /* Chrome, Safari */
+	-moz-box-sizing: border-box;    /* Firefox */
+	box-sizing: border-box;         /* IE8+, Opera */
+}
+
+/* base in IdP list display area */
+#view_incsearch_base {
+	position: relative;
+}
+
+/* IdP list display animation area */
+#view_incsearch_animate {
+	position: absolute;
+	display: none;
+	height: 150px;
+	width: 100%;
+}
+
+/* IdP list display scroll area */
+#view_incsearch_scroll {
+        position: absolute;
+        display: block;
+        background-color: #FFFFFF;
+        border: 1px solid #CCCCFF;
+        height: 150px;
+        width: 100%;
+        overflow-y: scroll;
+        overflow-x: auto;
+}
+
+/* IdP list display area */
+#view_incsearch {
+	position: absolute;
+	display: block;
+}
+
+/* div in IdP list display area */
+#view_incsearch div {
+	display: block;
+	width: 100%;
+	white-space: nowrap;
+}
+
+/* IdP list: select */
+#view_incsearch div.select {
+	color: white;
+	background-color: #3366FF;
+}
+
+/* IdP list: mouseover */
+#view_incsearch div.over {
+	color: black;
+	background-color: #99CCFF;
+	cursor: pointer;
+}
+
+/* IdP list: group title */
+div.list_group {
+	color: white;
+	background-color: indianred;
+	font-weight: bold;
+	font-size: 75%;
+	text-align: left;
+}
+
+/* IdP list: IdP name */
+div.list_idp {
+	color: black;
+	background-color: white;
+	font-weight: normal;
+	font-size: 100%;
+	text-align: left;
+}
+
+/* IdP list favorite: group title */
+div.list_group_favorite {
+	color: white;
+	background-color: forestgreen;
+	font-weight: bold;
+	font-size: 75%;
+	text-align: left;
+}
+
+/* IdP list favorite: IdP name */
+div.list_idp_favorite {
+	color: black;
+	background-color: #EEFFDD;
+	font-weight: normal;
+	font-size: 100%;
+	text-align: left;
+}
+
+/* IdP list hint: group title */
+div.list_group_hint {
+        color: white;
+        background-color: chocolate;
+        font-weight: bold;
+        font-size: 75%;
+        text-align: left;
+}
+
+/* IdP list hint: IdP name */
+div.list_idp_hint {
+        color: black;
+        background-color: #FFFF99;
+        font-weight: normal;
+        font-size: 100%;
+        text-align: left;
+}
+
+/* dropdown image */
+#dropdown_img {
+	cursor: pointer;
+}
+
+/* clear */
+#clear_a {
+	font-size: 70%;
+	text-decoration: underline;
+	white-space: nowrap;
+	cursor: pointer;
+}
+
+/* clear color: default */
+div.default {
+	 color: blue;
+}
+
+/* clear color: focus or mouseover */
+div.active {
+	 color: red;
+}
+
+/* Customize form wayf */
+.shiboleth-wrap {
+    font-size: 12px;
+}
+
+.shiboleth-wrap-header {
+    margin-bottom: 15px;
+}
+
+.wayf-text-des {
+    width: 345px;
+    margin: 0 auto;
+}
+
+label#wayf_remember_checkbox_label {
+    font-weight: normal;
+}
+
+.login-link {
+    color: white;
+}
+
+#wayf_div_intro {
+    padding-top: 100px;
+}
+
+#div_type_name,
+#div_categories {
+    width: 100%;
+    display: flex;
+    margin-top: -85px;
+}
+
+#div_categories {
+    margin-top: 10px;
+}
+
+.radio_box_intro {
+    min-width: 90px;
+    display: flex;
+    margin-bottom: 0px;
+}
+
+.wayf-radio-inline {
+    position: relative;
+    display: inline-block;
+    padding-left: 10px;
+    margin-bottom: 0;
+    font-weight: 400;
+    vertical-align: middle;
+    cursor: pointer;
+}
+
+input[type="radio"] {
+    margin: 0 4px;
+}

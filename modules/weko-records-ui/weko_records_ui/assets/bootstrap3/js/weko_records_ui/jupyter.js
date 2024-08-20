@@ -48,4 +48,8 @@ $(document).ready(function(){
       $('#jupyter_multiple').addClass('disabled');
     }
   });
+<<<<<<< HEAD
 })
+=======
+})
+>>>>>>> feature/resolve_conflict_invenio_assets_akaike

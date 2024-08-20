@@ -98,8 +98,8 @@ setup(
         'invenio_i18n.translations': [
             'messages = weko_schema_ui',
         ],
-        'invenio_assets.bundles': [
-            'weko_schema_ui_js = weko_schema_ui.bundles:js',
+        'invenio_assets.webpack': [
+            'weko_schema_ui = weko_schema_ui.webpack:weko_schema_ui',
         ],
         'invenio_search.mappings': [
             'weko = weko_schema_ui.mappings',

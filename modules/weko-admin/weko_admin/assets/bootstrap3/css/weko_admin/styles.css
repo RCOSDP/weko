@@ -1,0 +1,120 @@
+.width_400px{
+  width:400px !important;
+}
+.width_100{
+  width:100% !important;
+}
+.width_20{
+  width:20% !important;
+}
+.width_50{
+  width:50% !important;
+}
+.width_60{
+  width:60% !important;
+}
+.width_15{
+  width:15% !important;
+}
+.btnMiddle{
+   text-align:center !important;
+   vertical-align: middle !important;
+}
+.width_45{
+  width:45% !important;
+}
+.width_10{
+  width:10% !important;
+}
+.height_70{
+   height:70% !important;
+}
+.page > li {
+  cursor: pointer;
+}
+.page > li:disabled {
+  cursor: pointer;
+}
+.margin_0 {
+  margin-left: 0px !important;
+  margin-right: 0px !important;
+}
+.alert-info {
+  background-color: #00a65a !important;
+  border-color: #008d4c !important;
+  border-radius: 3px;
+}
+
+.initial-display-index {
+  border: 1px solid #f4f4f4;
+  min-height: 300px;
+  margin-top: 10px;
+  overflow: auto;
+}
+
+.no-border {
+  border: none;
+}
+
+.width_250px {
+  width: 250px;
+}
+
+.scrollbar {
+  overflow-y: scroll;
+  overflow-x: hidden
+}
+
+.both {
+  border: 1px solid;
+  border-color: #ddd;
+  height: auto;
+  min-height: 504px;
+  max-height: 504px;
+  margin-left: 10px;
+}
+
+.textarea_height {
+  min-height: 200px;
+  height: auto;
+}
+
+.padding-top{
+  padding-top: 10px;
+}
+
+.margin-top {
+  margin-top: 10px;
+}
+
+.glyphicon-remove-term {
+  cursor: pointer;
+  z-index: 999;
+  position: absolute;
+  color: black;
+  right: 25px;
+  top: 15px;
+}
+
+.tree-list {
+  list-style-type: none;
+  position: inherit;
+}
+
+.btn-add {
+  margin: auto;
+  display: block;
+}
+.btn-apply {
+  margin-right: 16px;
+  margin-bottom: 2px;
+}
+
+label.field-required::after {
+  content: "*";
+  color: red;
+}
+
+.popup-mail-modal {
+  width: 70%;
+}

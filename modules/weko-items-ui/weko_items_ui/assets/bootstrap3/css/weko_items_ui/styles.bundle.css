@@ -1,0 +1,3 @@
+.Mymodal{position:fixed;z-index:1000;padding-top:25px;left:25%;top:20%;width:50%;
+    /* height: 40%; */overflow:auto
+    /* background-color: rgb(117, 116, 116); */}

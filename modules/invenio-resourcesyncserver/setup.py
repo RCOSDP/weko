@@ -87,20 +87,13 @@ setup(
             'invenio_admin_change_list = '
             'invenio_resourcesyncserver.admin:invenio_admin_change_list',
         ],
-        'invenio_assets.bundles': [
-            'invenio_admin_resource_js = '
-            'invenio_resourcesyncserver.bundles:invenio_admin_resource_js',
-            'invenio_admin_resource_css = '
-            'invenio_resourcesyncserver.bundles:invenio_admin_resource_css',
-            'invenio_admin_change_list_js = '
-            'invenio_resourcesyncserver.bundles:invenio_admin_change_list_js',
-            'invenio_admin_change_list_css = '
-            'invenio_resourcesyncserver.bundles:invenio_admin_change_list_css',
+        'invenio_assets.webpack': [
+            'invenio_resourcesyncserver = invenio_resourcesyncserver.webpack:invenio_resourcesyncserver',
         ],
         'invenio_db.models': [
             'invenio_resourcesyncserver = invenio_resourcesyncserver.models',
         ],
-         'invenio_db.alembic': [
+        'invenio_db.alembic': [
             'invenio_resourcesyncserver = invenio_resourcesyncserver:alembic',
         ],
         # TODO: Edit these entry points to fit your needs.

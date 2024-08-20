@@ -95,21 +95,8 @@ setup(
         'invenio_base.api_blueprints': [
             'weko_items_ui = weko_items_ui.views:blueprint_api',
         ],
-        'invenio_assets.bundles': [
-            'weko_items_ui_indextree_css = '
-            'weko_items_ui.bundles:indextree_style',
-            'weko_items_ui_js_dependencies = '
-            'weko_items_ui.bundles:js_dependencies',
-            'weko_items_ui_js = weko_items_ui.bundles:js',
-            'weko_items_ui_upload_js = weko_items_ui.bundles:upload_js',
-            'weko_items_authors_search_css = '
-            'weko_items_ui.bundles:items_author_search_css',
-            'weko_items_authors_search_js = '
-            'weko_items_ui.bundles:items_author_search_js',
-            'weko_items_ui_feedback_maillist_js = '
-            'weko_items_ui.bundles:feedback_maillist_js',
-            'weko_items_ui_feedback_maillist_css = '
-            'weko_items_ui.bundles:feedback_maillist_css',
+        'invenio_assets.webpack': [
+            'weko_items_ui = weko_items_ui.webpack:weko_items_ui',
         ],
         'invenio_access.actions': [
             'item_access = weko_items_ui.permissions:action_item_access',

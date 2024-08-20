@@ -84,9 +84,8 @@ setup(
         # TODO: Edit these entry points to fit your needs.
         # 'invenio_access.actions': [],
         # 'invenio_admin.actions': [],
-        'invenio_assets.bundles': [
-            'weko_sitemap_js = weko_sitemap.bundles:js',
-            'weko_sitemap_css = weko_sitemap.bundles:css',
+        'invenio_assets.webpack': [
+            'weko_sitemap = weko_sitemap.webpack:weko_sitemap',
         ],
         # 'invenio_base.api_apps': [],
         # 'invenio_base.api_blueprints': [],

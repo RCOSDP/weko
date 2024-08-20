@@ -143,29 +143,8 @@ setup(
         'invenio_db.alembic': [
             'weko_admin = weko_admin:alembic',
         ],
-        'invenio_assets.bundles': [
-            'weko_admin_js = weko_admin.bundles:js',
-            'weko_admin_search_js = weko_admin.bundles:search_management_js',
-            'weko_admin_stats_report_js = weko_admin.bundles:stats_report_js',
-            'weko_admin_react_bootstrap_js = weko_admin.bundles:react_bootstrap_js',
-            'weko_admin_css = weko_admin.bundles:css',
-            'weko_admin_quill_css = weko_admin.bundles:weko_admin_quill_sknow_css',
-            'weko_admin_feedback_mail_css = weko_admin.bundles:weko_admin_feedback_mail_css',
-            'weko_admin_date_picker_js = weko_admin.bundles:date_picker_js',
-            'weko_admin_date_picker_css = weko_admin.bundles:date_picker_css',
-            'weko_admin_custom_report = weko_admin.bundles:custom_report_js',
-            'weko_admin_feedback_mail = weko_admin.bundles:feedback_mail_js',
-            'weko_admin_statistics_reactjs_lib = weko_admin.bundles:statistics_reactjs_lib',
-            'weko_admin_log_analysis_js = weko_admin.bundles:log_analysis_js',
-            'weko_admin_admin_lte_js_dependecies = weko_admin.bundles:admin_lte_js_dependecies',
-            'weko_admin_admin_lte_js = weko_admin.bundles:admin_lte_js',
-            'weko_admin_angular_js = weko_admin.bundles:angular_js',
-            'weko_admin_site_info = weko_admin.bundles:weko_admin_site_info_js',
-            'weko_admin_site_info_css = weko_admin.bundles:weko_admin_site_info_css',
-            'weko_admin_ng_js_tree = weko_admin.bundles:weko_admin_ng_js_tree_js',
-            'weko_admin_restricted_access = weko_admin.bundles:weko_admin_restricted_access_js',
-            'weko_admin_facet_search = weko_admin.bundles:weko_admin_facet_search_js',
-            'weko_admin_reindex_elasticsearch_js = weko_admin.bundles:reindex_elasticsearch_js'
+        'invenio_assets.webpack': [
+            'weko_admin = weko_admin.webpack:weko_admin',
         ],
         'invenio_db.models': [
             'weko_admin = weko_admin.models',
