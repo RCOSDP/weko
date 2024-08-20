@@ -98,9 +98,9 @@ setup(
             'weko_indextree_journal.permissions:action_indextree_journal_access',
         ],
         'invenio_assets.webpack': [
-            'indextree_journal_css_style = weko_indextree_journal.webpack:indextree_journal_css_style',
-            'indextree_journal_js_treeview = weko_indextree_journal.webpack:indextree_journal_js_treeview',
-            'indextree_journal_js_js = weko_indextree_journal.webpack:indextree_journal_js_js',
+            'indextree_journal_css_style = weko_indextree_journal.webpack:weko_indextree_journal',
+            'indextree_journal_js_treeview = weko_indextree_journal.webpack:weko_indextree_journal',
+            'indextree_journal_js_js = weko_indextree_journal.webpack:weko_indextree_journal',
         ],
         'invenio_celery.tasks': [
             'weko_indextree_journal = weko_indextree_journal.tasks',
