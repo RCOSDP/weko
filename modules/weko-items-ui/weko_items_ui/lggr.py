@@ -1,3 +1,10 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2024 National Institute of Informatics.
+#
+# WEKO-Items-Ui is free software; you can redistribute it and/or modify
+# it under the terms of the MIT License; see LICENSE file for more details.
+
 """Resource for weko-items_ui log messages."""
 
 WEKO_ITEMS_UI_MESSAGE = {
@@ -33,7 +40,8 @@ WEKO_ITEMS_UI_MESSAGE = {
     },
     'WEKO_ITEMS_UI_FAILED_OUTPUT_RSS_DOCUMENT': {
         'msgid': 'WEKO_ITEMS_UI_E_0007',
-        'msgstr': "Failed to output RSS for the item corresponding to the search result.",
+        'msgstr': "Failed to output RSS for the item corresponding to the "\
+            "search result.",
         'msglvl': 'ERROR',
     },
     'WEKO_ITEMS_UI_FAILED_OUTPUT_RSS_DOCUMENT': {
@@ -53,17 +61,20 @@ WEKO_ITEMS_UI_MESSAGE = {
     },
     'WEKO_ITEMS_UI_FAILED_POPULATE_AUTO_METADATA_CROSSREF': {
         'msgid': 'WEKO_ITEMS_UI_E_0011',
-        'msgstr': "FAILED to automatically populate metadata via CrossRef. Itemid: {pid}",
+        'msgstr': "FAILED to automatically populate metadata via CrossRef. "\
+            "Itemid: {pid}",
         'msglvl': 'ERROR',
     },
     'WEKO_ITEMS_UI_FAILED_POPULATE_AUTO_METADATA_CINII': {
         'msgid': 'WEKO_ITEMS_UI_E_0012',
-        'msgstr': "FAILED to automatically populate metadata via CiNii. Itemid: {pid}",
+        'msgstr': "FAILED to automatically populate metadata via CiNii. "\
+            "Itemid: {pid}",
         'msglvl': 'ERROR',
     },
     'WEKO_ITEMS_UI_FAILED_POPULATE_AUTO_METADATA_WEKOID': {
         'msgid': 'WEKO_ITEMS_UI_E_0013',
-        'msgstr': "FAILED to automatically populate metadata via WEKOID. Itemid: {pid}",
+        'msgstr': "FAILED to automatically populate metadata via WEKOID. "\
+            "Itemid: {pid}",
         'msglvl': 'ERROR',
     },
     'WEKO_ITEMS_UI_FAILED_EXPORT_ITEM_IN_JSON': {
@@ -138,7 +149,8 @@ WEKO_ITEMS_UI_MESSAGE = {
     },
     'WEKO_ITEMS_UI_CHANGE_DISPLAY_SETTINGS_SEARCH_RESULTS': {
         'msgid': 'WEKO_ITEMS_UI_I_0009',
-        'msgstr': "The display setting for search results has been changed to {conf_value}.",
+        'msgstr': "The display setting for search results has been changed "\
+            "to {conf_value}.",
         'msglvl': 'INFO',
     },
     'WEKO_ITEMS_UI_ENABLE_ITEM_EXPORT': {
@@ -163,17 +175,20 @@ WEKO_ITEMS_UI_MESSAGE = {
     },
     'WEKO_ITEMS_UI_POPULATE_AUTO_METADATA_CROSSREF': {
         'msgid': 'WEKO_ITEMS_UI_I_0014',
-        'msgstr': "Metadata was automatically populated via CrossRef. Itemid: {pid}",
+        'msgstr': "Metadata was automatically populated via CrossRef. "\
+            "Itemid: {pid}",
         'msglvl': 'INFO',
     },
     'WEKO_ITEMS_UI_POPULATE_AUTO_METADATA_CINII': {
         'msgid': 'WEKO_ITEMS_UI_I_0015',
-        'msgstr': "Metadata was automatically populated via CiNii. Itemid: {pid}",
+        'msgstr': "Metadata was automatically populated via CiNii. "\
+            "Itemid: {pid}",
         'msglvl': 'INFO',
     },
     'WEKO_ITEMS_UI_POPULATE_AUTO_METADATA_WEKOID': {
         'msgid': 'WEKO_ITEMS_UI_I_0016',
-        'msgstr': "Metadata was automatically populated via WEKOID. Itemid: {pid}",
+        'msgstr': "Metadata was automatically populated via WEKOID. "\
+            "Itemid: {pid}",
         'msglvl': 'INFO',
     },
     'WEKO_ITEMS_UI_EXPORT_ITEM_IN_JSON': {
@@ -188,12 +203,14 @@ WEKO_ITEMS_UI_MESSAGE = {
     },
     'WEKO_ITEMS_UI_EXPORT_ITEM_IN_JSON_WITH_FILE_CONTENTS': {
         'msgid': 'WEKO_ITEMS_UI_I_0019',
-        'msgstr': "Selected items have been exported in json format with File Contents.",
+        'msgstr': "Selected items have been exported in json format with "\
+            "File Contents.",
         'msglvl': 'INFO',
     },
     'WEKO_ITEMS_UI_EXPORT_ITEM_IN_BIBTEX_WITH_FILE_CONTENTS': {
         'msgid': 'WEKO_ITEMS_UI_I_0020',
-        'msgstr': "Selected items have been exported in bibtex format with File Contents.",
+        'msgstr': "Selected items have been exported in bibtex format with "\
+            "File Contents.",
         'msglvl': 'INFO',
     },
     'WEKO_ITEMS_UI_ASSIGN_PROXY_CONTRIBUTOR': {
@@ -244,7 +261,8 @@ def weko_logger(key=None, ex=None, **kwargs):
 
     * Log message with key and parameters::
 
-        weko_logger(key='WEKO_COMMON_SAMPLE', param1='param1', param2='param2')
+        weko_logger(key='WEKO_COMMON_SAMPLE', param1='param1', \
+param2='param2')
 
     * Log message with key and exception::
 
@@ -252,7 +270,8 @@ def weko_logger(key=None, ex=None, **kwargs):
 
     * Log message with key, parameters and exception::
 
-        weko_logger(key='WEKO_COMMON_SAMPLE', param1='param1', param2='param2', ex=ex)
+        weko_logger(key='WEKO_COMMON_SAMPLE', param1='param1', \
+param2='param2', ex=ex)
     """
     # get message parameters from resource
     param = WEKO_ITEMS_UI_MESSAGE.get(key, None)

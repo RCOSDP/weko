@@ -1,6 +1,13 @@
-"""Resource for weko-user-profile log messages."""
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2024 National Institute of Informatics.
+#
+# WEKO-User-Profiles is free software; you can redistribute it and/or modify
+# it under the terms of the MIT License; see LICENSE file for more details.
 
-WEKO_USER_PROFILE_MESSAGE = {
+"""Resource for weko-user-profiles log messages."""
+
+WEKO_USER_PROFILES_MESSAGE = {
     'WEKO_USER_PROFILE_FAILED_UPDATE_USER_PROFILE': {
         'msgid': 'WEKO_USER_PROFILE_E_0001',
         'msgstr': "FAILED to update user {userid} profile.",
@@ -54,7 +61,8 @@ def weko_logger(key=None, ex=None, **kwargs):
 
     * Log message with key and parameters::
 
-        weko_logger(key='WEKO_COMMON_SAMPLE', param1='param1', param2='param2')
+        weko_logger(key='WEKO_COMMON_SAMPLE', param1='param1', \
+param2='param2')
 
     * Log message with key and exception::
 
@@ -62,10 +70,11 @@ def weko_logger(key=None, ex=None, **kwargs):
 
     * Log message with key, parameters and exception::
 
-        weko_logger(key='WEKO_COMMON_SAMPLE', param1='param1', param2='param2', ex=ex)
+        weko_logger(key='WEKO_COMMON_SAMPLE', param1='param1', \
+param2='param2', ex=ex)
     """
     # get message parameters from resource
-    param = WEKO_USER_PROFILE_MESSAGE.get(key, None)
+    param = WEKO_USER_PROFILES_MESSAGE.get(key, None)
     if param:
         weko_logger_base(param=param, ex=ex, **kwargs)
     else:

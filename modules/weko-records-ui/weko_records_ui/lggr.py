@@ -1,3 +1,10 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2024 National Institute of Informatics.
+#
+# WEKO-Records-ui is free software; you can redistribute it and/or modify
+# it under the terms of the MIT License; see LICENSE file for more details.
+
 """Resource for weko-records_ui log messages."""
 
 WEKO_RECORDS_UI_MESSAGE = {
@@ -38,7 +45,8 @@ WEKO_RECORDS_UI_MESSAGE = {
     },
     'WEKO_RECORDS_UI_CHANGE_DISPLAY_SETTINGS_SEARCH_RESULTS': {
         'msgid': 'WEKO_RECORDS_UI_I_0002',
-        'msgstr': "The display setting for search results has been changed to {conf_value}.",
+        'msgstr': "The display setting for search results has been changed "\
+            "to {conf_value}.",
         'msglvl': 'INFO',
     },
     'WEKO_RECORDS_UI_UPDATE_ITEM': {
@@ -68,7 +76,8 @@ WEKO_RECORDS_UI_MESSAGE = {
     },
     'WEKO_RECORDS_UI_CHANGE_SETTINGS_MULTIPART_UPLOAD': {
         'msgid': 'WEKO_RECORDS_UI_I_0008',
-        'msgstr': "The multipart upload function setting has been changed to {conf_value}.",
+        'msgstr': "The multipart upload function setting has been changed "\
+            "to {conf_value}.",
         'msglvl': 'INFO',
     },
     'WEKO_RECORDS_UI_USER_AUTH_EXISTS': {
@@ -109,7 +118,8 @@ def weko_logger(key=None, ex=None, **kwargs):
 
     * Log message with key and parameters::
 
-        weko_logger(key='WEKO_COMMON_SAMPLE', param1='param1', param2='param2')
+        weko_logger(key='WEKO_COMMON_SAMPLE', param1='param1', \
+param2='param2')
 
     * Log message with key and exception::
 
@@ -117,7 +127,8 @@ def weko_logger(key=None, ex=None, **kwargs):
 
     * Log message with key, parameters and exception::
 
-        weko_logger(key='WEKO_COMMON_SAMPLE', param1='param1', param2='param2', ex=ex)
+        weko_logger(key='WEKO_COMMON_SAMPLE', param1='param1', \
+param2='param2', ex=ex)
     """
     # get message parameters from resource
     param = WEKO_RECORDS_UI_MESSAGE.get(key, None)

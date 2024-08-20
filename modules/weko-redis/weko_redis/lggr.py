@@ -1,3 +1,10 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2024 National Institute of Informatics.
+#
+# WEKO-Redis is free software; you can redistribute it and/or modify
+# it under the terms of the MIT License; see LICENSE file for more details.
+
 """Resource for weko-redis log messages."""
 
 WEKO_REDIS_MESSAGE = {
@@ -59,7 +66,8 @@ def weko_logger(key=None, ex=None, **kwargs):
 
     * Log message with key and parameters::
 
-        weko_logger(key='WEKO_COMMON_SAMPLE', param1='param1', param2='param2')
+        weko_logger(key='WEKO_COMMON_SAMPLE', param1='param1', \
+param2='param2')
 
     * Log message with key and exception::
 
@@ -67,7 +75,8 @@ def weko_logger(key=None, ex=None, **kwargs):
 
     * Log message with key, parameters and exception::
 
-        weko_logger(key='WEKO_COMMON_SAMPLE', param1='param1', param2='param2', ex=ex)
+        weko_logger(key='WEKO_COMMON_SAMPLE', param1='param1', \
+param2='param2', ex=ex)
     """
     # get message parameters from resource
     param = WEKO_REDIS_MESSAGE.get(key, None)

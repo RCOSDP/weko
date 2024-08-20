@@ -1,34 +1,47 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2024 National Institute of Informatics.
+#
+# WEKO-Index-Tree-Journal is free software; you can redistribute it and/or modify
+# it under the terms of the MIT License; see LICENSE file for more details.
+
 """Resource for weko-index_tree_journal log messages."""
 
 WEKO_INDEX_TREE_JOURNAL_MESSAGE = {
     'WEKO_INDEX_TREE_JOURNAL_FAILED_DISPLAY_SETTINGS_JOURNAL_INFO': {
         'msgid': 'WEKO_INDEX_TREE_JOURNAL_E_0001',
-        'msgstr': "FAILED to change display settings of index {index_name} for journal information to {conf_value}.",
+        'msgstr': "FAILED to change display settings of index {index_name} "\
+            "for journal information to {conf_value}.",
         'msglvl': 'ERROR',
     },
     'WEKO_INDEX_TREE_JOURNAL_FAILED_SAVE_JOURNAL_INFO': {
         'msgid': 'WEKO_INDEX_TREE_JOURNAL_E_0002',
-        'msgstr': "FAILED to save journal information. Index name: {index_name}",
+        'msgstr': "FAILED to save journal information. "\
+            "Index name: {index_name}",
         'msglvl': 'ERROR',
     },
     'WEKO_INDEX_TREE_JOURNAL_FAILED_OUTPUT _JOURNAL_INFO': {
         'msgid': 'WEKO_INDEX_TREE_JOURNAL_E_0003',
-        'msgstr': "FAILED to output journal information. Index name: {index_name}",
+        'msgstr': "FAILED to output journal information. "\
+            "Index name: {index_name}",
         'msglvl': 'ERROR',
     },
     'WEKO_INDEX_TREE_JOURNAL_FAILED_CREATE_NEW_JOURNAL_INFO': {
         'msgid': 'WEKO_INDEX_TREE_JOURNAL_E_0004',
-        'msgstr': "FAILED to create new journal information. Index name: {index_name}",
+        'msgstr': "FAILED to create new journal information. "\
+            "Index name: {index_name}",
         'msglvl': 'ERROR',
     },
     'WEKO_INDEX_TREE_JOURNAL_FAILED_DELETE_JOURNAL_INFO': {
         'msgid': 'WEKO_INDEX_TREE_JOURNAL_E_0005',
-        'msgstr': "FAILED to delete journal information. Index name: {index_name}",
+        'msgstr': "FAILED to delete journal information. "\
+            "Index name: {index_name}",
         'msglvl': 'ERROR',
     },
     'WEKO_INDEX_TREE_JOURNAL_DISPLAY_SETTINGS_JOURNAL_INFO': {
         'msgid': 'WEKO_INDEX_TREE_JOURNAL_I_0001',
-        'msgstr': "Display settings of index {index_name} for journal information has been changed to {conf_value}.",
+        'msgstr': "Display settings of index {index_name} for "\
+            "journal information has been changed to {conf_value}.",
         'msglvl': 'INFO',
     },
     'WEKO_INDEX_TREE_JOURNAL_SAVE_JOURNAL_INFO': {
@@ -38,17 +51,20 @@ WEKO_INDEX_TREE_JOURNAL_MESSAGE = {
     },
     'WEKO_INDEX_TREE_JOURNAL_OUTPUT _JOURNAL_INFO': {
         'msgid': 'WEKO_INDEX_TREE_JOURNAL_I_0003',
-        'msgstr': "Journal information has been output. Index name: {index_name}",
+        'msgstr': "Journal information has been output. "\
+            "Index name: {index_name}",
         'msglvl': 'INFO',
     },
     'WEKO_INDEX_TREE_JOURNAL_CREATE_NEW_JOURNAL_INFO': {
         'msgid': 'WEKO_INDEX_TREE_JOURNAL_I_0004',
-        'msgstr': "New journal information has been created. Index name: {index_name}",
+        'msgstr': "New journal information has been created. "\
+            "Index name: {index_name}",
         'msglvl': 'INFO',
     },
     'WEKO_INDEX_TREE_JOURNAL_DELETE_JOURNAL_INFO': {
         'msgid': 'WEKO_INDEX_TREE_JOURNAL_I_0005',
-        'msgstr': "Journal information has been deleted. Index name: {index_name}",
+        'msgstr': "Journal information has been deleted. "\
+            "Index name: {index_name}",
         'msglvl': 'INFO',
     },
 }
@@ -79,7 +95,8 @@ def weko_logger(key=None, ex=None, **kwargs):
 
     * Log message with key and parameters::
 
-        weko_logger(key='WEKO_COMMON_SAMPLE', param1='param1', param2='param2')
+        weko_logger(key='WEKO_COMMON_SAMPLE', param1='param1', \
+param2='param2')
 
     * Log message with key and exception::
 
@@ -87,7 +104,8 @@ def weko_logger(key=None, ex=None, **kwargs):
 
     * Log message with key, parameters and exception::
 
-        weko_logger(key='WEKO_COMMON_SAMPLE', param1='param1', param2='param2', ex=ex)
+        weko_logger(key='WEKO_COMMON_SAMPLE', param1='param1', \
+param2='param2', ex=ex)
     """
     # get message parameters from resource
     param = WEKO_INDEX_TREE_JOURNAL_MESSAGE.get(key, None)

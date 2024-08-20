@@ -1,3 +1,10 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2024 National Institute of Informatics.
+#
+# WEKO-Items-Autofill is free software; you can redistribute it and/or modify
+# it under the terms of the MIT License; see LICENSE file for more details.
+
 """Resource for weko-items_autofill log messages."""
 
 WEKO_ITEMS_AUTOFILL_MESSAGE = {
@@ -8,17 +15,20 @@ WEKO_ITEMS_AUTOFILL_MESSAGE = {
     },
     'WEKO_ITEMS_AUTOFILL_FAILED_POPULATE_AUTO_METADATA_CROSSREF': {
         'msgid': 'WEKO_ITEMS_AUTOFILL_E_0002',
-        'msgstr': "FAILED to automatically populate metadata via CrossRef. Itemid: {pid}",
+        'msgstr': "FAILED to automatically populate metadata via CrossRef. "\
+            "Itemid: {pid}",
         'msglvl': 'ERROR',
     },
     'WEKO_ITEMS_AUTOFILL_FAILED_POPULATE_AUTO_METADATA_CINII': {
         'msgid': 'WEKO_ITEMS_AUTOFILL_E_0003',
-        'msgstr': "FAILED to automatically populate metadata via CiNii. Itemid: {pid}",
+        'msgstr': "FAILED to automatically populate metadata via CiNii. "\
+            "Itemid: {pid}",
         'msglvl': 'ERROR',
     },
     'WEKO_ITEMS_AUTOFILL_FAILED_POPULATE_AUTO_METADATA_WEKOID': {
         'msgid': 'WEKO_ITEMS_AUTOFILL_E_0004',
-        'msgstr': "FAILED to automatically populate metadata via WEKOID. Itemid: {pid}",
+        'msgstr': "FAILED to automatically populate metadata via WEKOID. "\
+            "Itemid: {pid}",
         'msglvl': 'ERROR',
     },
     'WEKO_ITEMS_AUTOFILL_SET_WEB_API_ACCOUNT_INFO': {
@@ -28,17 +38,20 @@ WEKO_ITEMS_AUTOFILL_MESSAGE = {
     },
     'WEKO_ITEMS_AUTOFILL_POPULATE_AUTO_METADATA_CROSSREF': {
         'msgid': 'WEKO_ITEMS_AUTOFILL_I_0002',
-        'msgstr': "Metadata was automatically populated via CrossRef. Itemid: {pid}",
+        'msgstr': "Metadata was automatically populated via CrossRef. "\
+            "Itemid: {pid}",
         'msglvl': 'INFO',
     },
     'WEKO_ITEMS_AUTOFILL_POPULATE_AUTO_METADATA_CINII': {
         'msgid': 'WEKO_ITEMS_AUTOFILL_I_0003',
-        'msgstr': "Metadata was automatically populated via CiNii. Itemid: {pid}",
+        'msgstr': "Metadata was automatically populated via CiNii. "\
+            "Itemid: {pid}",
         'msglvl': 'INFO',
     },
     'WEKO_ITEMS_AUTOFILL_POPULATE_AUTO_METADATA_WEKOID': {
         'msgid': 'WEKO_ITEMS_AUTOFILL_I_0004',
-        'msgstr': "Metadata was automatically populated via WEKOID. Itemid: {pid}",
+        'msgstr': "Metadata was automatically populated via WEKOID. "\
+            "Itemid: {pid}",
         'msglvl': 'INFO',
     },
 }
@@ -69,7 +82,8 @@ def weko_logger(key=None, ex=None, **kwargs):
 
     * Log message with key and parameters::
 
-        weko_logger(key='WEKO_COMMON_SAMPLE', param1='param1', param2='param2')
+        weko_logger(key='WEKO_COMMON_SAMPLE', param1='param1', \
+param2='param2')
 
     * Log message with key and exception::
 
@@ -77,7 +91,8 @@ def weko_logger(key=None, ex=None, **kwargs):
 
     * Log message with key, parameters and exception::
 
-        weko_logger(key='WEKO_COMMON_SAMPLE', param1='param1', param2='param2', ex=ex)
+        weko_logger(key='WEKO_COMMON_SAMPLE', param1='param1', \
+param2='param2', ex=ex)
     """
     # get message parameters from resource
     param = WEKO_ITEMS_AUTOFILL_MESSAGE.get(key, None)

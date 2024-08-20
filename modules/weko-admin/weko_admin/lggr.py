@@ -1,3 +1,10 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2024 National Institute of Informatics.
+#
+# WEKO-Admin is free software; you can redistribute it and/or modify
+# it under the terms of the MIT License; see LICENSE file for more details.
+
 """Resource for weko-admin log messages."""
 
 WEKO_ADMIN_MESSAGE = {
@@ -63,7 +70,8 @@ WEKO_ADMIN_MESSAGE = {
     },
     'WEKO_ADMIN_FAILED_DOWNLOAD_ITEM_ON_SCREEN': {
         'msgid': 'WEKO_ADMIN_E_0013',
-        'msgstr': "FAILED to download list of items displayed on the screen in TSV format.",
+        'msgstr': "FAILED to download list of items displayed on the screen "\
+            "in TSV format.",
         'msglvl': 'ERROR',
     },
     'WEKO_ADMIN_FAILED_REFERENCE_NUM_ITEMS_REGISTERED': {
@@ -178,7 +186,8 @@ WEKO_ADMIN_MESSAGE = {
     },
     'WEKO_ADMIN_DOWNLOAD_ITEM_ON_SCREEN': {
         'msgid': 'WEKO_ADMIN_I_0013',
-        'msgstr': "List of items displayed on the screen has been downloaded in TSV format.",
+        'msgstr': "List of items displayed on the screen has been downloaded "\
+            "in TSV format.",
         'msglvl': 'INFO',
     },
     'WEKO_ADMIN_REFERENCE_NUM_ITEMS_REGISTERED': {
@@ -203,7 +212,8 @@ WEKO_ADMIN_MESSAGE = {
     },
     'WEKO_ADMIN_CHANGE_FEEDBACK_EMAIL_DETAIL_SETTING': {
         'msgid': 'WEKO_ADMIN_I_0018',
-        'msgstr': "Feedback email setting has been changed {section}to {conf_value}.",
+        'msgstr': "Feedback email setting has been changed {section} to "\
+            "{conf_value}.",
         'msglvl': 'INFO',
     },
     'WEKO_ADMIN_SENT_EMAIL': {
@@ -213,12 +223,14 @@ WEKO_ADMIN_MESSAGE = {
     },
     'WEKO_ADMIN_CHANGE_ITEM_USAGE_DISPLAY_SETTING': {
         'msgid': 'WEKO_ADMIN_I_0020',
-        'msgstr': "The display setting for item usage stats has been changed to {conf_value}.",
+        'msgstr': "The display setting for item usage stats has been changed "\
+            "to {conf_value}.",
         'msglvl': 'INFO',
     },
     'WEKO_ADMIN_CHANGE_ITEM_USAGE_DISPLAY_DETAIL_SETTING': {
         'msgid': 'WEKO_ADMIN_I_0021',
-        'msgstr': "The display setting for item usage stats has been changed {section} to {conf_value}.",
+        'msgstr': "The display setting for item usage stats has been changed "\
+            "{section} to {conf_value}.",
         'msglvl': 'INFO',
     },
     'WEKO_ADMIN_SAVED_ITEM_IDENTIFIER': {
@@ -233,17 +245,20 @@ WEKO_ADMIN_MESSAGE = {
     },
     'WEKO_ADMIN_CHANGE_FILE_OUTPUT_SETTINGS': {
         'msgid': 'WEKO_ADMIN_I_0024',
-        'msgstr': "Content file output settings have been changed to {set_value}.",
+        'msgstr': "Content file output settings have been changed to "\
+            "{set_value}.",
         'msglvl': 'INFO',
     },
     'WEKO_ADMIN_EXCLUDED_IPADDRESS': {
         'msgid': 'WEKO_ADMIN_I_0025',
-        'msgstr': "IP address: {ip_address} was excluded from the aggregate usage statistics.",
+        'msgstr': "IP address: {ip_address} was excluded from the aggregate "\
+            "usage statistics.",
         'msglvl': 'INFO',
     },
     'WEKO_ADMIN_EXCLUDED_USERID': {
         'msgid': 'WEKO_ADMIN_I_0026',
-        'msgstr': "User: {user_id} was excluded from the aggregate usage statistics.",
+        'msgstr': "User: {user_id} was excluded from the aggregate usage "\
+            "statistics.",
         'msglvl': 'INFO',
     },
     'WEKO_ADMIN_CHANGED_SEARCH_AUTHOR_SETTINGS': {
@@ -253,7 +268,8 @@ WEKO_ADMIN_MESSAGE = {
     },
     'WEKO_ADMIN_CHANGED_SEARCH_SETTINGS': {
         'msgid': 'WEKO_ADMIN_I_0028',
-        'msgstr': "Index tree/facet search setting has been changed to {set_value}.",
+        'msgstr': "Index tree/facet search setting has been changed to "\
+            "{set_value}.",
         'msglvl': 'INFO',
     },
     'WEKO_ADMIN_CHANGED_OTHER_SEARCH_SETTINGS': {
@@ -278,7 +294,8 @@ WEKO_ADMIN_MESSAGE = {
     },
     'WEKO_ADMIN_SEARCH_FACETED_SEARCH_ITEM': {
         'msgid': 'WEKO_ADMIN_I_0033',
-        'msgstr': "Item to be faceted searched has been searched. {search_type} : {search_word}",
+        'msgstr': "Item to be faceted searched has been searched. "\
+            "{search_type} : {search_word}",
         'msglvl': 'INFO',
     },
     'WEKO_ADMIN_SAVED_SITE_INFO': {
@@ -359,7 +376,8 @@ def weko_logger(key=None, ex=None, **kwargs):
 
     * Log message with key and parameters::
 
-        weko_logger(key='WEKO_COMMON_SAMPLE', param1='param1', param2='param2')
+        weko_logger(key='WEKO_COMMON_SAMPLE', param1='param1', \
+param2='param2')
 
     * Log message with key and exception::
 
@@ -367,11 +385,11 @@ def weko_logger(key=None, ex=None, **kwargs):
 
     * Log message with key, parameters and exception::
 
-        weko_logger(key='WEKO_COMMON_SAMPLE', param1='param1', param2='param2', ex=ex)
+        weko_logger(key='WEKO_COMMON_SAMPLE', param1='param1', \
+param2='param2', ex=ex)
     """
     # get message parameters from resource
     param = WEKO_ADMIN_MESSAGE.get(key, None)
-    print(f"param: {param}")
     if param:
         weko_logger_base(param=param, ex=ex, **kwargs)
     else:
