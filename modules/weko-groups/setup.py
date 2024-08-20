@@ -114,8 +114,8 @@ setup(
             'messages = weko_groups',
         ],
         'invenio_assets.webpack': [
-            'group_js_js = weko_groups.webpack:group_js_js',
-            'group_css_styles = weko_groups.webpack:group_css_styles',
+            'group_js_js = weko_groups.webpack:weko_groups',
+            'group_css_styles = weko_groups.webpack:weko_groups',
         ],
         'invenio_db.alembic': [
             'weko_groups = weko_groups:alembic',
