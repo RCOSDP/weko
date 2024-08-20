@@ -133,9 +133,9 @@ setup(
             ' = invenio_deposit.permissions:action_admin_access',
         ],
         'invenio_assets.webpack': [
-            'deposit_css_css = invenio_deposit.webpack:deposit_css_css',
-            'deposit_js_dependencies = invenio_deposit.webpack:deposit_js_dependencies',
-            'deposit_js_js = invenio_deposit.webpack:deposit_js_js',
+            'deposit_css_css = invenio_deposit.webpack:invenio_deposit',
+            'deposit_js_dependencies = invenio_deposit.webpack:invenio_deposit',
+            'deposit_js_js = invenio_deposit.webpack:invenio_deposit',
         ],
         'invenio_i18n.translations': [
             'messages = invenio_deposit',
