@@ -1,3 +1,10 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2024 National Institute of Informatics.
+#
+# WEKO-Records is free software; you can redistribute it and/or modify
+# it under the terms of the MIT License; see LICENSE file for more details.
+
 """Custom errors for weko records."""
 
 class WekoRecordsError(Exception):
@@ -55,6 +62,7 @@ class WekoRecordsLinkError(WekoRecordsError):
 class WekoRecordsEditHistoryError(WekoRecordsError):
     def __init__(self, ex=None, msg=None, *args):
         if msg is None:
-            msg = "Some itemtype edit history error has occurred in weko_records."
+            msg = "Some itemtype edit history error has occurred in "\
+                "weko_records."
         super().__init__(ex, msg, *args)
 
