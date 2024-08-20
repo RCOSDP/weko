@@ -99,7 +99,7 @@ setup(
             'messages = weko_schema_ui',
         ],
         'invenio_assets.webpack': [
-            'weko-schema-ui = weko_schema_ui.webpack:weko-schema-ui',
+            'schema-ui-js = weko_schema_ui.webpack:weko_schema_ui',
         ],
         'invenio_search.mappings': [
             'weko = weko_schema_ui.mappings',
