@@ -1,3 +1,6 @@
+import angular from 'angular';
+import $ from 'jquery';
+
 (function (angular) {
     // Bootstrap it!
     angular.element(document).ready(function () {
@@ -12,9 +15,11 @@
 
             $scope.load_delimiter = 50;
 
+            let db_data;
+
             // page init
             $scope.initData = function (data) {
-                json_obj = angular.fromJson(data)
+                let json_obj = angular.fromJson(data)
                 db_data = json_obj.condition_setting;
 
                 angular.forEach(db_data, function (item, index, array) {
@@ -55,11 +60,11 @@
                     obj_of_condition.selected_key = item.id;
                     obj_of_condition.key_options = $scope.detail_search_key;
                     obj_of_condition.key_value = angular.copy(db_data[item.inx]);
-                    if (db_data[item.inx].inputType == 'checkbox_list'){
-                        if (db_data[item.inx].check_val.length>$scope.load_delimiter){
-                            obj_of_condition.key_value.limit=$scope.load_delimiter;
-                        }else{
-                            obj_of_condition.key_value.limit=db_data[item.inx].check_val.length;
+                    if (db_data[item.inx].inputType == 'checkbox_list') {
+                        if (db_data[item.inx].check_val.length > $scope.load_delimiter) {
+                            obj_of_condition.key_value.limit = $scope.load_delimiter;
+                        } else {
+                            obj_of_condition.key_value.limit = db_data[item.inx].check_val.length;
                         }
                     }
                     $scope.condition_data.push(obj_of_condition)
@@ -102,11 +107,11 @@
                         obj_of_condition.selected_key = $scope.detail_search_key[sub_detail].id;
                         obj_of_condition.key_options = $scope.detail_search_key;
                         obj_of_condition.key_value = angular.copy(db_data[$scope.detail_search_key[sub_detail].inx]);
-                        if (db_data[$scope.detail_search_key[sub_detail].inx].inputType == 'checkbox_list'){
-                            if (db_data[$scope.detail_search_key[sub_detail].inx].check_val.length>$scope.load_delimiter){
-                                obj_of_condition.key_value.limit=$scope.load_delimiter;
-                            }else{
-                                obj_of_condition.key_value.limit=db_data[$scope.detail_search_key[sub_detail].inx].check_val.length;
+                        if (db_data[$scope.detail_search_key[sub_detail].inx].inputType == 'checkbox_list') {
+                            if (db_data[$scope.detail_search_key[sub_detail].inx].check_val.length > $scope.load_delimiter) {
+                                obj_of_condition.key_value.limit = $scope.load_delimiter;
+                            } else {
+                                obj_of_condition.key_value.limit = db_data[$scope.detail_search_key[sub_detail].inx].check_val.length;
                             }
                         }
                         $scope.condition_data.push(obj_of_condition)
@@ -191,23 +196,23 @@
                         var inputValFrom = item.key_value.inputVal_from;
                         var inputValTo = item.key_value.inputVal_to;
                         query_str = query_str + "&" + item.key_value.id + "_from=" + inputValFrom + "&" +
-                                    item.key_value.id + "_to=" + inputValTo;
+                            item.key_value.id + "_to=" + inputValTo;
                     }
                     if (item.key_value.inputType == "geo_distance") {
                         var inputValLat = item.key_value.inputVal_lat;
                         var inputValLon = item.key_value.inputVal_lon;
                         var inputValDistance = item.key_value.inputVal_distance;
                         query_str = query_str + "&" + item.key_value.id + "_lat=" + inputValLat + "&" +
-                                    item.key_value.id + "_lon=" + inputValLon +  "&" +
-                                    item.key_value.id + "_distance=" + inputValDistance;
+                            item.key_value.id + "_lon=" + inputValLon + "&" +
+                            item.key_value.id + "_distance=" + inputValDistance;
                     }
 
                     if (item.key_value.inputType == "dateRange") {
                         var pattern_date = /^(?:[0-9]{4}|[0-9]{4}(0[1-9]|1[0-2])|[0-9]{4}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1]))$/
                         var inputValFrom = item.key_value.inputVal_from;
                         var inputValTo = item.key_value.inputVal_to;
-                        
-                        if (pattern_date.test(inputValFrom)){
+
+                        if (pattern_date.test(inputValFrom)) {
                             switch (inputValFrom.length) {
                                 // YYYY
                                 case 4:
@@ -233,11 +238,11 @@
                                 default:
                                     inputValFrom = '';
                             }
-                        }else{
+                        } else {
                             inputValFrom = '';
                         }
 
-                        if (pattern_date.test(inputValTo)){
+                        if (pattern_date.test(inputValTo)) {
                             switch (inputValTo.length) {
                                 // YYYY
                                 case 4:
@@ -247,7 +252,7 @@
                                 case 6:
                                     var y = inputValTo.substring(0, 4);
                                     var m = inputValTo.substring(4, 6);
-                                    var d =new Date(Number(y), Number(m), 0).getDate();
+                                    var d = new Date(Number(y), Number(m), 0).getDate();
                                     inputValTo = inputValTo + String(d).padStart(2, '0');
                                     break;
                                 //YYYYMMDD
@@ -256,12 +261,12 @@
                                     var m = inputValTo.substring(4, 6);
                                     var d = inputValTo.substring(6, 8);
                                     var date = new Date(y + '-' + m + '-' + d);
-                                    if (date instanceof Date && !isNaN(date) && date.getDate()==Number(d)) {
-                                        inputVal = String(date.getFullYear()).padStart(4, '0');
-                                                   + String(date.getMonth() + 1).padStart(2, '0');
-                                                   + String(date.getDate()).padStart(2, '0');
+                                    if (date instanceof Date && !isNaN(date) && date.getDate() == Number(d)) {
+                                        let inputVal = String(date.getFullYear()).padStart(4, '0')
+                                            + String(date.getMonth() + 1).padStart(2, '0')
+                                            + String(date.getDate()).padStart(2, '0');
 
-                                    // Fix invalid date to the last day of the month
+                                        // Fix invalid date to the last day of the month
                                     } else {
                                         var validDay = new Date(Number(y), Number(m), 0).getDate();
                                         inputValTo = y + m + String(validDay).padStart(2, '0');
@@ -271,12 +276,12 @@
                                 default:
                                     inputValTo = '';
                             }
-                        }else{
+                        } else {
                             inputValTo = '';
                         }
 
                         query_str = query_str + "&" + item.key_value.id + "_from=" + inputValFrom + "&" +
-                                    item.key_value.id + "_to=" + inputValTo;
+                            item.key_value.id + "_to=" + inputValTo;
                     }
 
                     if (item.key_value.inputType == "checkbox_list") {
@@ -379,11 +384,11 @@
                     obj_of_condition.selected_key = item.id;
                     obj_of_condition.key_options = $scope.detail_search_key;
                     obj_of_condition.key_value = angular.copy(db_data[item.inx]);
-                    if (db_data[item.inx].inputType == 'checkbox_list'){
-                        if (db_data[item.inx].check_val.length>$scope.load_delimiter){
-                            obj_of_condition.key_value.limit=$scope.load_delimiter;
-                        }else{
-                            obj_of_condition.key_value.limit=db_data[item.inx].check_val.length;
+                    if (db_data[item.inx].inputType == 'checkbox_list') {
+                        if (db_data[item.inx].check_val.length > $scope.load_delimiter) {
+                            obj_of_condition.key_value.limit = $scope.load_delimiter;
+                        } else {
+                            obj_of_condition.key_value.limit = db_data[item.inx].check_val.length;
                         }
                     }
                     $scope.condition_data.push(obj_of_condition);
@@ -391,12 +396,12 @@
 
                 $scope.update_disabled_flg();
             }
-            $scope.loadMore = function(index){
+            $scope.loadMore = function (index) {
                 var now = $scope.condition_data[index].key_value.limit;
                 var next = 0;
-                if($scope.condition_data[index].key_value.check_val.length < now+$scope.load_delimiter){
+                if ($scope.condition_data[index].key_value.check_val.length < now + $scope.load_delimiter) {
                     next = $scope.condition_data[index].key_value.check_val.length;
-                }else{
+                } else {
                     next = now + $scope.load_delimiter;
                 }
                 $scope.condition_data[index].key_value.limit = next;
@@ -415,11 +420,11 @@
                         obj_of_condition.selected_key = search_key;
                         obj_of_condition.key_options = $scope.detail_search_key;
                         obj_of_condition.key_value = angular.copy(db_data[$scope.detail_search_key[sub_default_key].inx]);
-                        if (db_data[$scope.detail_search_key[sub_default_key].inx].inputType == 'checkbox_list'){
-                            if (db_data[$scope.detail_search_key[sub_default_key].inx].check_val.length>$scope.load_delimiter){
-                                obj_of_condition.key_value.limit=$scope.load_delimiter;
-                            }else{
-                                obj_of_condition.key_value.limit=db_data[$scope.detail_search_key[sub_default_key].inx].check_val.length;
+                        if (db_data[$scope.detail_search_key[sub_default_key].inx].inputType == 'checkbox_list') {
+                            if (db_data[$scope.detail_search_key[sub_default_key].inx].check_val.length > $scope.load_delimiter) {
+                                obj_of_condition.key_value.limit = $scope.load_delimiter;
+                            } else {
+                                obj_of_condition.key_value.limit = db_data[$scope.detail_search_key[sub_default_key].inx].check_val.length;
                             }
                         }
                         break;
@@ -429,8 +434,8 @@
                 return obj_of_condition;
             }
 
-            $scope.daysInMonth = function (month, year){
-                switch(month){
+            $scope.daysInMonth = function (month, year) {
+                switch (month) {
                     case 1:
                         return (year % 4 == 0 && year % 100) || year % 400 == 0 ? 29 : 28;
                     case 8: case 3: case 5: case 10:
@@ -439,19 +444,19 @@
                         return 31
                 }
             }
-        
-            $scope.validDate = function(elem){
+
+            $scope.validDate = function (elem) {
                 const date_pattern = /([0-9]{4})(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])/
-                if (elem.validity.patternMismatch){
+                if (elem.validity.patternMismatch) {
                     return true;
-                }else{
+                } else {
                     const dates = elem.value.match(date_pattern)
-                    if (dates){
+                    if (dates) {
                         const year = parseInt(dates[1])
-                        const month = parseInt(dates[2],10) - 1
+                        const month = parseInt(dates[2], 10) - 1
                         const day = parseInt(dates[3])
                         return day > $scope.daysInMonth(month, year);
-                    }else{
+                    } else {
                         return false
                     }
                 }
@@ -464,7 +469,7 @@
                 // 13はエンターキー
                 if (event.which === 13) {
                     // サブミット時に無効な値が入力されていたら値をクリアする
-                    if ($scope.validDate(elem)){
+                    if ($scope.validDate(elem)) {
                         elem.value = '';
                     } else {
                         $('#' + target.id).removeClass('invalid-date');
@@ -472,16 +477,16 @@
                         invalidDateNoticeEl.addClass('hidden-invalid-date-notice');
                     }
                 } else {
-                if ($scope.validDate(elem)){
-                    $('#' + target.id).addClass('invalid-date');
-                    var invalidDateNoticeEl = $(target).parent().next();
-                    invalidDateNoticeEl.removeClass('hidden-invalid-date-notice');
-                } else {
-                    $('#' + target.id).removeClass('invalid-date');
-                    var invalidDateNoticeEl = $(target).parent().next();
-                    invalidDateNoticeEl.addClass('hidden-invalid-date-notice');
+                    if ($scope.validDate(elem)) {
+                        $('#' + target.id).addClass('invalid-date');
+                        var invalidDateNoticeEl = $(target).parent().next();
+                        invalidDateNoticeEl.removeClass('hidden-invalid-date-notice');
+                    } else {
+                        $('#' + target.id).removeClass('invalid-date');
+                        var invalidDateNoticeEl = $(target).parent().next();
+                        invalidDateNoticeEl.addClass('hidden-invalid-date-notice');
+                    }
                 }
-            }
             }
 
             // $scope.inputDataOnEnter = function () {
@@ -508,28 +513,28 @@
         angular.module('searchDetailModule', ['searchDetail.controllers']);
         angular.module('searchDetailModule', ['searchDetail.controllers']).config(
             [
-                '$interpolateProvider','$locationProvider', function ($interpolateProvider,$locationProvider) {
-                $interpolateProvider.startSymbol('[[');
-                $interpolateProvider.endSymbol(']]');
-                $locationProvider.html5Mode({
-                    enabled: true,
-                    requireBase: false,
-                    rewriteLinks: false,
-                  });
-            }]
-        ).directive('whenScrolled',function(){
-            return function(scope, elem, attr){
+                '$interpolateProvider', '$locationProvider', function ($interpolateProvider, $locationProvider) {
+                    $interpolateProvider.startSymbol('[[');
+                    $interpolateProvider.endSymbol(']]');
+                    $locationProvider.html5Mode({
+                        enabled: true,
+                        requireBase: false,
+                        rewriteLinks: false,
+                    });
+                }]
+        ).directive('whenScrolled', function () {
+            return function (scope, elem, attr) {
                 var raw = elem[0];
-                elem.bind('scroll',  function() {
-                  if (raw.scrollTop + raw.offsetHeight + 1 >= raw.scrollHeight) {
-                    scope.$apply(attr.whenScrolled);
-                  }
+                elem.bind('scroll', function () {
+                    if (raw.scrollTop + raw.offsetHeight + 1 >= raw.scrollHeight) {
+                        scope.$apply(attr.whenScrolled);
+                    }
                 });
             }
         });
         angular.bootstrap(
             document.getElementById('search_detail'), ['searchDetailModule']);
-        
+
         /**
          * Returns faceted search parameters.
          * This function was created for the purpose of providing faceted search parameters for detailed search.
@@ -540,12 +545,12 @@
         function getFacetParameter() {
             let result = "";
             let params = window.location.search.substring(1).split('&');
-            const conds = ['page', 'size', 'sort', 'timestamp', 'search_type', 'q', 'title', 'creator', 'date_range1_from', 'date_range1_to','time'];
+            const conds = ['page', 'size', 'sort', 'timestamp', 'search_type', 'q', 'title', 'creator', 'date_range1_from', 'date_range1_to', 'time'];
             for (let i = 0; i < params.length; i++) {
                 var keyValue = decodeURIComponent(params[i]).split('=');
                 var key = keyValue[0];
                 var value = keyValue[1];
-                if(key && !conds.includes(key) && !key.startsWith("text")) {
+                if (key && !conds.includes(key) && !key.startsWith("text")) {
                     result += "&" + encodeURIComponent(key) + "=" + encodeURIComponent(value);
                 }
             }

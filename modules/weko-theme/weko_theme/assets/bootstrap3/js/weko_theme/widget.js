@@ -1,3 +1,9 @@
+import $ from 'jquery';
+import _ from 'lodash';
+
+import ResizeSensor from './ResizeSensor';
+import GridStackUI from './gridstack';
+
 const MAIN_CONTENT_TYPE = "Main contents";
 const FREE_DESCRIPTION_TYPE = "Free description";
 const NOTICE_TYPE = "Notice";
@@ -53,15 +59,15 @@ const PageBodyGrid = function () {
     }.bind(this);
 
     this.resizeWidget = function (widget, width, height) {
-       this.grid.resize(widget, width, height);
+        this.grid.resize(widget, width, height);
     };
 
     this.getCellHeight = function () {
-      return this.grid.cellHeight();
+        return this.grid.cellHeight();
     };
 
     this.getVerticalMargin = function () {
-      return this.grid.opts.verticalMargin;
+        return this.grid.opts.verticalMargin;
     };
 
     this.updateMainContent = function (node) {
@@ -105,32 +111,32 @@ const PageBodyGrid = function () {
         this.grid.update(mainContents, node.x, node.y, node.width, node.height);
     };
 
-    this.addStyle = function(node){
+    this.addStyle = function (node) {
         let backgroundColor = node.background_color;
         let frameBorderColorMainContent = node.frame_border_color;
         let labelColor = node.label_color;
         return '<style>' +
-                    '#main_contents .panel{' +
-                        'background-color: ' + backgroundColor + ' !important;' +
-                        'border-color: ' + frameBorderColorMainContent + ';' +
-                    '}' +
-                    '#main_contents .active > a{' +
-                        'background-color: ' + labelColor + ';' +
-                    '}' +
-                    '#main_contents .panel-heading{' +
-                        'background-color: ' + labelColor + ';' +
-                    '}' +
-                    '.panel-default > .panel-heading{' +
-                        'border-bottom: ' + '1px ' + 'solid ' + frameBorderColorMainContent + ';' +
-                    '}' +
-                    '.pagination > .active > a, .pagination > .active > span, .pagination > .active > a:hover,' +
-                    '.pagination > .active > span:hover, .pagination > .active > a:focus, .pagination > .active > span:focus {' +
-                        'background-color: #337ab7 !important;' +
-                    '}' +
-                '</style>';
+            '#main_contents .panel{' +
+            'background-color: ' + backgroundColor + ' !important;' +
+            'border-color: ' + frameBorderColorMainContent + ';' +
+            '}' +
+            '#main_contents .active > a{' +
+            'background-color: ' + labelColor + ';' +
+            '}' +
+            '#main_contents .panel-heading{' +
+            'background-color: ' + labelColor + ';' +
+            '}' +
+            '.panel-default > .panel-heading{' +
+            'border-bottom: ' + '1px ' + 'solid ' + frameBorderColorMainContent + ';' +
+            '}' +
+            '.pagination > .active > a, .pagination > .active > span, .pagination > .active > a:hover,' +
+            '.pagination > .active > span:hover, .pagination > .active > a:focus, .pagination > .active > span:focus {' +
+            'background-color: #337ab7 !important;' +
+            '}' +
+            '</style>';
     };
 
-    this.buildMainContentTheme = function (node){
+    this.buildMainContentTheme = function (node) {
         let panelHeadingMainContents = $("#panel-heading-main-contents");
         let backgroundColorMainContent = $("#background-color-main-content");
         let panelMainContent = $("#panel-main-content");
@@ -142,10 +148,10 @@ const PageBodyGrid = function () {
         if (borderStyle === BORDER_STYLE_DOUBLE) {
             pxBorder = "3px ";
             borderRadius = "1px";
-        }else if(borderStyle === BORDER_STYLE_NONE){
+        } else if (borderStyle === BORDER_STYLE_NONE) {
             pxBorder = "0px";
             borderRadius = "3px";
-        }else {
+        } else {
             pxBorder = "1px ";
             borderRadius = "3px";
         }
@@ -178,31 +184,31 @@ const PageBodyGrid = function () {
 
 
     this.updateHeaderPage = function (node) {
-      let headerElement = $("#header");
-      let headerNav = $("#header_nav");
-      let fixedHeader = $("#fixed_header");
-      if (headerElement.length) {
-        // Set Background color and text color for Fixed Header
-        let fixedHeaderBackgroundColor = node.fixedHeaderBackgroundColor || "#ffffff";
-        let fixedHeaderTextColor = node.fixedHeaderTextColor || "#808080";
-        fixedHeader.css({"background-color": fixedHeaderBackgroundColor});
-        $("#language-code-form  span").css({"color": fixedHeaderTextColor});
-        $("#fixed_header a").css({"color": fixedHeaderTextColor});
-        $("#lang-code").css({"color": fixedHeaderTextColor});
+        let headerElement = $("#header");
+        let headerNav = $("#header_nav");
+        let fixedHeader = $("#fixed_header");
+        if (headerElement.length) {
+            // Set Background color and text color for Fixed Header
+            let fixedHeaderBackgroundColor = node.fixedHeaderBackgroundColor || "#ffffff";
+            let fixedHeaderTextColor = node.fixedHeaderTextColor || "#808080";
+            fixedHeader.css({ "background-color": fixedHeaderBackgroundColor });
+            $("#language-code-form  span").css({ "color": fixedHeaderTextColor });
+            $("#fixed_header a").css({ "color": fixedHeaderTextColor });
+            $("#lang-code").css({ "color": fixedHeaderTextColor });
 
-        // Update widget setting for Header Widget.
-        let headerContent = $("#header_content");
-        if (node.background_color) {
-          headerNav.css({"background-color": node.background_color});
+            // Update widget setting for Header Widget.
+            let headerContent = $("#header_content");
+            if (node.background_color) {
+                headerNav.css({ "background-color": node.background_color });
+            }
+            if (node.multiLangSetting && node.multiLangSetting.description) {
+                isHeaderContent = true
+                headerContent.html(node.multiLangSetting.description.description);
+                headerContent.css({ "width": "100%" })
+            }
+            this.grid.update(headerElement, node.x, node.y, node.width, node.height);
+            headerElement.removeClass("hidden");
         }
-        if (node.multiLangSetting && node.multiLangSetting.description) {
-          isHeaderContent = true
-          headerContent.html(node.multiLangSetting.description.description);
-          headerContent.css({"width": "100%"})
-        }
-        this.grid.update(headerElement, node.x, node.y, node.width, node.height);
-        headerElement.removeClass("hidden");
-      }
     };
 
     this.loadGrid = function (widgetListItems) {
@@ -215,7 +221,7 @@ const PageBodyGrid = function () {
                 return false;
             } else if (HEADER_TYPE === node.type) {
                 let community_id = $("#community-id").text();
-                if (!community_id){
+                if (!community_id) {
                     this.updateHeaderPage(node);
                 }
                 return false;
@@ -223,16 +229,16 @@ const PageBodyGrid = function () {
         }, this);
 
         ///Pages do not have to have main content, so hide if not in list
-        if(!hasMainContent) {
+        if (!hasMainContent) {
             $("#" + MAIN_CONTENTS).hide();  // remove(); or empty() ?
         }
         for (let i = 0; i < items.length; i++) {
             let node = items[i];
             let community_id = $("#community-id").text();
             if (node.type === HEADER_TYPE && community_id) {
-              this.addNewWidget(node, i);
+                this.addNewWidget(node, i);
             } else if ([MAIN_CONTENT_TYPE, HEADER_TYPE].indexOf(node.type) === -1) {
-              this.addNewWidget(node, i);
+                this.addNewWidget(node, i);
             }
         }
         return false;
@@ -268,10 +274,10 @@ const PageBodyGrid = function () {
         let result = 0;
         // Convert to display-able number
         if (data && data[widgetId] && data[widgetId][created_date]) {
-          let widget = data[widgetId][created_date];
+            let widget = data[widgetId][created_date];
             let initNum = widget.access_counter ? Number(widget.access_counter) : 0;
             result = widget.all.count ? Number(widget.all.count) : 0;
-            if (typeof(initNum) == 'number') {
+            if (typeof (initNum) == 'number') {
                 result = result + initNum;
             }
         }
@@ -281,12 +287,12 @@ const PageBodyGrid = function () {
         let otherMessage = languageDescription.other_message ? languageDescription.other_message : "";
 
         return '<div>'
-                + ' <div class="counter-container">'
-                +       precedingMessage + '<span data-widget-id="' + widgetId + '" data-created-date="' + created_date
-                + '" class = "text-access-counter">' + result + '</span>' + followingMessage
-                + ' </div>'
-                + ' <div>' + otherMessage + '</div>'
-                + '</div>';
+            + ' <div class="counter-container">'
+            + precedingMessage + '<span data-widget-id="' + widgetId + '" data-created-date="' + created_date
+            + '" class = "text-access-counter">' + result + '</span>' + followingMessage
+            + ' </div>'
+            + ' <div>' + otherMessage + '</div>'
+            + '</div>';
     };
 
     const currentTime = new Date().getTime();
@@ -294,9 +300,9 @@ const PageBodyGrid = function () {
     this.buildNewArrivals = function (widgetID, term, rss, id, count) {
         $.ajax({
             method: 'GET',
-            url: '/api/admin/get_new_arrivals/' + widgetID ,
+            url: '/api/admin/get_new_arrivals/' + widgetID,
             contentType: 'application/json',
-            success: function(response) {
+            success: function (response) {
                 var result = response.data;
                 var rssHtml = '';
                 if (term == 'Today') {
@@ -325,7 +331,7 @@ const PageBodyGrid = function () {
             headers: {
                 'Content-Type': 'application/json'
             },
-            success: function(response) {
+            success: function (response) {
                 var endpoints = response.endpoints;
                 var repoHomeURL = (repoID === DEFAULT_REPOSITORY) ? '/' : ('/' + '?community=' + repoID);
                 var navbarID = 'widgetNav_' + widgetID; // Re-use to build unique class ids
@@ -335,18 +341,18 @@ const PageBodyGrid = function () {
                 let childNavBar = "";
                 let navbarHeader = "";
                 for (let i in endpoints) {  // Create links
-                  let liClass = '';
-                  let communityArgs = (repoID === DEFAULT_REPOSITORY) ? '' : '?community=' + repoID;
-                  let title = endpoints[i].title;
-                  let endpointsURL = endpoints[i].url;
-                  if (endpoints[i].is_main_layout) {
-                    mainLayoutTitle = title;
-                  } else {
-                    if (window.location.pathname === endpointsURL) {
-                      liClass = 'class="active"';
+                    let liClass = '';
+                    let communityArgs = (repoID === DEFAULT_REPOSITORY) ? '' : '?community=' + repoID;
+                    let title = endpoints[i].title;
+                    let endpointsURL = endpoints[i].url;
+                    if (endpoints[i].is_main_layout) {
+                        mainLayoutTitle = title;
+                    } else {
+                        if (window.location.pathname === endpointsURL) {
+                            liClass = 'class="active"';
+                        }
+                        childNavBar += '<li ' + liClass + '><a href="' + endpointsURL + communityArgs + '">' + title + '</a></li>';
                     }
-                    childNavBar += '<li ' + liClass + '><a href="' + endpointsURL + communityArgs + '">' + title + '</a></li>';
-                  }
                 }
 
                 if (mainLayoutTitle === "" && Array.isArray(settings.menu_show_pages) && settings.menu_show_pages.indexOf("0") > -1) {
@@ -354,56 +360,56 @@ const PageBodyGrid = function () {
                 }
 
                 if (mainLayoutTitle) {
-                  let mainLayoutActive = "";
-                  let currentMainLayout = window.location.pathname + window.location.search;
-                  let repoHomeURL2 = "/communities/" + repoID + "/?view=weko";
-                  if (currentMainLayout === repoHomeURL || currentMainLayout === repoHomeURL2) {
-                      mainLayoutActive = 'active';
-                  }
-                  navbarHeader =
-                    '<div class="navbar-header">' +
-                    '  <a class="navbar-brand '+ mainLayoutActive +'" href="' + repoHomeURL + '">' + mainLayoutTitle + '</a>' +
-                    '</div>';
+                    let mainLayoutActive = "";
+                    let currentMainLayout = window.location.pathname + window.location.search;
+                    let repoHomeURL2 = "/communities/" + repoID + "/?view=weko";
+                    if (currentMainLayout === repoHomeURL || currentMainLayout === repoHomeURL2) {
+                        mainLayoutActive = 'active';
+                    }
+                    navbarHeader =
+                        '<div class="navbar-header">' +
+                        '  <a class="navbar-brand ' + mainLayoutActive + '" href="' + repoHomeURL + '">' + mainLayoutTitle + '</a>' +
+                        '</div>';
                 }
 
                 let navbar =
-                '<style>' +  // Renaming classes allows for multiple menus on page
-                '.navbar-default.' + navbarID + ' .navbar-brand {' +
-                '    color:' + settings.menu_default_color + ';' +
-                '}' +
-                '.navbar-default.' + navbarID + ' .navbar-header > a:hover, .navbar-default.' + navbarID + ' .navbar-header > a.active {' +
-                '    background-color:' + settings.menu_active_bg_color + ';' +
-                '    color:' +  settings.menu_active_color + ';' +
-                '}' +
-                '  .navbar-default.' + navbarID + ' .navbar-nav > li > a, .nav-pills > li > a {' +
-                '    color:' +  settings.menu_default_color + ';' +
-                '  }' +
-                '  .navbar-default.' + navbarID + ' .navbar-nav > li > a:hover, .nav-pills.' + navbarID + ' > li > a:hover,' +
-                '  .navbar-default.' + navbarID + ' .navbar-nav > li > a:active, .nav-pills.' + navbarID + '> li > a:active,' +
-                '  .navbar-default.' + navbarID + ' .navbar-nav > li > a:focus, .nav-pills.' + navbarID + ' > li > a:focus,' +
-                '  .nav-pills.' + navbarID + '>li.active>a, .nav-pills.' + navbarID + '>li.active>a:focus, .nav-pills.'+ navbarID + '>li.active>a:hover {' +
-                '    background-color:' + settings.menu_active_bg_color + ';' +
-                '    color:' +  settings.menu_active_color + ';' +
-                '  }' +
-                '  .navbar-default.' + navbarID + ' .navbar-nav > .active > a,' +
-                '  .navbar-default.' + navbarID + ' .navbar-nav > .active > a:hover,' +
-                '  .navbar-default.' + navbarID + ' .navbar-nav > .active > a:focus {' +
-                '    background-color:' + settings.menu_active_bg_color + ';' +
-                '    color:' +  settings.menu_active_color + ';' +
-                '  }' +
-                '.navbar-default.' + navbarID + ' .navbar-brand:focus, .navbar-default.' + navbarID + ' .navbar-brand:hover {' +
-                '    color:' + settings.menu_active_color + ';' +
-                '    background-color: transparent;' +
-                '}' +
-                '</style>' +
-                '<nav class="widget-nav navbar navbar-default ' + navbarID + '" style="border:0;background-color:' + settings.menu_bg_color + ';">' +
-                '  <div class="container-fluid container-fluid2">' +
+                    '<style>' +  // Renaming classes allows for multiple menus on page
+                    '.navbar-default.' + navbarID + ' .navbar-brand {' +
+                    '    color:' + settings.menu_default_color + ';' +
+                    '}' +
+                    '.navbar-default.' + navbarID + ' .navbar-header > a:hover, .navbar-default.' + navbarID + ' .navbar-header > a.active {' +
+                    '    background-color:' + settings.menu_active_bg_color + ';' +
+                    '    color:' + settings.menu_active_color + ';' +
+                    '}' +
+                    '  .navbar-default.' + navbarID + ' .navbar-nav > li > a, .nav-pills > li > a {' +
+                    '    color:' + settings.menu_default_color + ';' +
+                    '  }' +
+                    '  .navbar-default.' + navbarID + ' .navbar-nav > li > a:hover, .nav-pills.' + navbarID + ' > li > a:hover,' +
+                    '  .navbar-default.' + navbarID + ' .navbar-nav > li > a:active, .nav-pills.' + navbarID + '> li > a:active,' +
+                    '  .navbar-default.' + navbarID + ' .navbar-nav > li > a:focus, .nav-pills.' + navbarID + ' > li > a:focus,' +
+                    '  .nav-pills.' + navbarID + '>li.active>a, .nav-pills.' + navbarID + '>li.active>a:focus, .nav-pills.' + navbarID + '>li.active>a:hover {' +
+                    '    background-color:' + settings.menu_active_bg_color + ';' +
+                    '    color:' + settings.menu_active_color + ';' +
+                    '  }' +
+                    '  .navbar-default.' + navbarID + ' .navbar-nav > .active > a,' +
+                    '  .navbar-default.' + navbarID + ' .navbar-nav > .active > a:hover,' +
+                    '  .navbar-default.' + navbarID + ' .navbar-nav > .active > a:focus {' +
+                    '    background-color:' + settings.menu_active_bg_color + ';' +
+                    '    color:' + settings.menu_active_color + ';' +
+                    '  }' +
+                    '.navbar-default.' + navbarID + ' .navbar-brand:focus, .navbar-default.' + navbarID + ' .navbar-brand:hover {' +
+                    '    color:' + settings.menu_active_color + ';' +
+                    '    background-color: transparent;' +
+                    '}' +
+                    '</style>' +
+                    '<nav class="widget-nav navbar navbar-default ' + navbarID + '" style="border:0;background-color:' + settings.menu_bg_color + ';">' +
+                    '  <div class="container-fluid container-fluid2">' +
                     navbarHeader +
-                '    <div class="collapse navbar-collapse in" aria-expanded="true" id="' + navbarID + '">' +
-                '      <ul class="' + navbarClass + '">';  // Use id to make unique class names
+                    '    <div class="collapse navbar-collapse in" aria-expanded="true" id="' + navbarID + '">' +
+                    '      <ul class="' + navbarClass + '">';  // Use id to make unique class names
 
                 navbar += childNavBar;
-                navbar +='</ul></div></div></nav>';
+                navbar += '</ul></div></div></nav>';
                 $("#" + menuID).append(navbar);
                 $("#" + menuID).css('height', '100%');
             }
@@ -429,23 +435,23 @@ const PageBodyGrid = function () {
         } else if (node.type === ACCESS_COUNTER) {
             let widgetId = 0;
             if (node.access_counter &&
-                typeof(node.widget_id) == 'number') {
+                typeof (node.widget_id) == 'number') {
                 widgetId = node.widget_id;
             }
             content = this.buildAccessCounter(widgetId, node.created_date, languageDescription);
             let _this = this
-            setInterval(function() { return _this.setAccessCounterValue(); }, INTERVAL_TIME);
+            setInterval(function () { return _this.setAccessCounterValue(); }, INTERVAL_TIME);
         } else if (node.type === NEW_ARRIVALS) {
             let innerID = 'new_arrivals' + '_' + index;
             id = 'id="' + innerID + '"';
             this.buildNewArrivals(node.widget_id, node.new_dates, node.rss_feed, innerID, node.display_result);
         } else if (node.type === MENU_TYPE) {
-          let innerID = 'widget_pages_menu_' + node.widget_id + '_' + index;  // Allow multiple menus
-          id = 'id="' + innerID + '"';
-          // Extract only the settings we want:
-          var menuSettings = {};
-          Object.keys(node).forEach(function(k) { if (k.indexOf('menu_') == 0) menuSettings[k] = node[k] });
-          this.buildMenu(node.id, node.widget_id, innerID, menuSettings);
+            let innerID = 'widget_pages_menu_' + node.widget_id + '_' + index;  // Allow multiple menus
+            id = 'id="' + innerID + '"';
+            // Extract only the settings we want:
+            var menuSettings = {};
+            Object.keys(node).forEach(function (k) { if (k.indexOf('menu_') == 0) menuSettings[k] = node[k] });
+            this.buildMenu(node.id, node.widget_id, innerID, menuSettings);
         } else if (node.type === HEADER_TYPE) {
             $("#community_header").attr("hidden", true);
             if (!$.isEmptyObject(languageDescription)) {
@@ -506,10 +512,10 @@ const PageBodyGrid = function () {
         }
         var currentTime = new Date().getTime();
         $.ajax({
-            url: '/api/admin/access_counter_record/' + repository_id + '/' + current_language, 
+            url: '/api/admin/access_counter_record/' + repository_id + '/' + current_language,
             method: 'GET',
             async: false,
-            success: function(response) {
+            success: function (response) {
                 data = response;
             }
         });
@@ -566,23 +572,23 @@ let WidgetTheme = function () {
             if (widget_settings.border_style === BORDER_STYLE_DOUBLE) {
                 delete template.border['border-style'];
                 template.border['border'] = '3px double'; //3px is necessary to display double type
-             }
+            }
         }
         let headerBorder;
         if (template === this.TEMPLATE_SIMPLE || template === this.TEMPLATE_SIDE_LINE) {
             headerBorder = 'border-top-right-radius: 0px; border-top-left-radius: 0px; ';
-        }else {
+        } else {
             headerBorder = 'border-bottom:';
             if (widget_settings.border_style === BORDER_STYLE_DOUBLE) {
                 headerBorder += ' 3px double ' + borderColor + ';'
-            }else {
+            } else {
                 headerBorder += ' 1px ' + widget_settings.border_style + ' ' + borderColor + ';'
             }
         }
         let header = (widget_settings.label_enable) ?
             '        <div class="panel-heading no-padding-side widget-header widget-header-position" ' +
-                            'style="' + headerBorder + this.buildCssText('color', labelTextColor)
-                            + this.buildCssText('background-color', labelColor) + '">' +
+            'style="' + headerBorder + this.buildCssText('color', labelTextColor)
+            + this.buildCssText('background-color', labelColor) + '">' +
             '            <strong>' + widget_data.header + '</strong>' +
             '        </div>' : '';
         let headerClass = (widget_settings.label_enable) ? '' : 'no-pad-top-30';
@@ -597,7 +603,7 @@ let WidgetTheme = function () {
         let backgroundColor = (widget_settings.background_color) ? widget_settings.background_color : '';
 
         let setClass = "grid-stack-item-content panel widget";
-        if(widget_settings.type === HEADER_TYPE || widget_settings.type === FOOTER_TYPE){
+        if (widget_settings.type === HEADER_TYPE || widget_settings.type === FOOTER_TYPE) {
             setClass = "grid-stack-item-content panel header-footer-type";
         }
         let overflowY = "overflow-y: hidden !important;";
@@ -606,30 +612,30 @@ let WidgetTheme = function () {
             noAutoHeight = "no-auto-height";
             overflowY = "";
         }
-      return '<div class="grid-stack-item widget-resize">' +
-          '    <div class="' + setClass + '" style="' + borderStyle + '">' +
-          header +
-          '        <div class="' + panelClasses + ' ' + headerClass + ' ' + noAutoHeight + ' " style="padding-top: 0px; padding-bottom: 0!important;'
-          + overflowY + overFlowX + this.buildCssText('background-color', backgroundColor) + ' "' + id + '>'
-          + widget_data.body +
-          '        </div>' +
-          '    </div>' +
-          '</div>';
+        return '<div class="grid-stack-item widget-resize">' +
+            '    <div class="' + setClass + '" style="' + borderStyle + '">' +
+            header +
+            '        <div class="' + panelClasses + ' ' + headerClass + ' ' + noAutoHeight + ' " style="padding-top: 0px; padding-bottom: 0!important;'
+            + overflowY + overFlowX + this.buildCssText('background-color', backgroundColor) + ' "' + id + '>'
+            + widget_data.body +
+            '        </div>' +
+            '    </div>' +
+            '</div>';
     };
 
-  this.validateWidgetHeight = function (widgetType, widgetData) {
-    if ([FREE_DESCRIPTION_TYPE, NOTICE_TYPE, HEADER_TYPE, FOOTER_TYPE].indexOf(widgetType) > -1) {
-      let heightPattern = /height *: *(9[1-9]|\d{3,}) *%/;
-      let searchCSSInlinePattern = new RegExp(/style=((?!<).)*/.source
-        + heightPattern.source
-        + /((?!<).)*?>/.source);
-      let searchCSSClassPattern = new RegExp(/{(.|\n)*/.source
-        + heightPattern.source
-        + /(.|\n)*}/.source);
-      return (widgetData.search(searchCSSInlinePattern) < 0 && widgetData.search(searchCSSClassPattern) < 0);
-    }
-    return true;
-  };
+    this.validateWidgetHeight = function (widgetType, widgetData) {
+        if ([FREE_DESCRIPTION_TYPE, NOTICE_TYPE, HEADER_TYPE, FOOTER_TYPE].indexOf(widgetType) > -1) {
+            let heightPattern = /height *: *(9[1-9]|\d{3,}) *%/;
+            let searchCSSInlinePattern = new RegExp(/style=((?!<).)*/.source
+                + heightPattern.source
+                + /((?!<).)*?>/.source);
+            let searchCSSClassPattern = new RegExp(/{(.|\n)*/.source
+                + heightPattern.source
+                + /(.|\n)*}/.source);
+            return (widgetData.search(searchCSSInlinePattern) < 0 && widgetData.search(searchCSSClassPattern) < 0);
+        }
+        return true;
+    };
 
     this.buildCssText = function (keyword, data) {
         let cssStr = '';
@@ -668,26 +674,26 @@ let WidgetTheme = function () {
  * @returns {number}
  */
 function getNewWidgetHeight(pageBodyGrid, scrollHeight) {
-  let cellHeight = pageBodyGrid.getCellHeight();
-  let verticalMargin = pageBodyGrid.getVerticalMargin();
-  return Math.ceil(
-    (scrollHeight + verticalMargin) / (cellHeight + verticalMargin)
-  );
+    let cellHeight = pageBodyGrid.getCellHeight();
+    let verticalMargin = pageBodyGrid.getVerticalMargin();
+    return Math.ceil(
+        (scrollHeight + verticalMargin) / (cellHeight + verticalMargin)
+    );
 }
 
 /**
  * Resize widget to default height
  */
 function resizeWidgetToDefaultHeight() {
-  // Other widget
-  Object.keys(widgetOtherList).forEach(function (key) {
-    let widget = widgetOtherList[key]['widget'];
-    widget.data("isResize", true);
-  });
-  // Header widget
-  $('#header').data("isResize", true);
-  // Main Content widget
-  $("#" + MAIN_CONTENTS).data("isResize", true);
+    // Other widget
+    Object.keys(widgetOtherList).forEach(function (key) {
+        let widget = widgetOtherList[key]['widget'];
+        widget.data("isResize", true);
+    });
+    // Header widget
+    $('#header').data("isResize", true);
+    // Main Content widget
+    $("#" + MAIN_CONTENTS).data("isResize", true);
 }
 
 /**
@@ -697,77 +703,77 @@ function resizeWidgetToDefaultHeight() {
  * @param otherElement: Other widget element.
  */
 function autoAdjustWidgetHeight(widgetElement, pageBodyGrid, otherElement) {
-  if (otherElement) {
-    let isResize = otherElement.data("isResize");
-    if (isResize) {
-      let parent = otherElement.closest(".grid-stack-item");
-      let width = parent.data("gsWidth");
-      pageBodyGrid.resizeWidget(parent, width, DEFAULT_WIDGET_HEIGHT);
-      otherElement.data("isResize", false);
-      otherElement.data("isUpdated", true);
-    }
-    let scrollHeight = otherElement.prop("scrollHeight");
-    let clientHeight = otherElement.prop("clientHeight");
-    if (scrollHeight > clientHeight) {
-      let parent = otherElement.closest(".grid-stack-item");
-      let width = parent.data("gsWidth");
-      let isUpdated = otherElement.data("isUpdated");
-      let newHeight, widgetHeight;
-      widgetHeight = newHeight = getNewWidgetHeight(pageBodyGrid, scrollHeight);
-      // In the case of IE 11, increase the widget height by three unit.
-      if (isIE11()) {
-        widgetHeight = widgetHeight + 3;
-      }
-      // Check whether the widget has been rendered for the first time
-      if (isUpdated) {
-        let cellHeight = pageBodyGrid.getCellHeight();
-        let verticalMargin = pageBodyGrid.getVerticalMargin();
-        let currentClientHeight = newHeight * (cellHeight + verticalMargin);
-        if (currentClientHeight > scrollHeight) {
-          let height = DEFAULT_WIDGET_HEIGHT > widgetHeight - 1 ? DEFAULT_WIDGET_HEIGHT : widgetHeight - 1;
-          pageBodyGrid.resizeWidget(parent, width, height);
-          //pageBodyGrid.resizeWidget(parent, width, height);
-          console.log("currentClientHeight: "+ currentClientHeight);
-          console.log("scrollHeight: "+ scrollHeight);
-
-
-        } else {
-          let height = DEFAULT_WIDGET_HEIGHT > widgetHeight ? DEFAULT_WIDGET_HEIGHT : widgetHeight;
-          pageBodyGrid.resizeWidget(parent, width, height);
+    if (otherElement) {
+        let isResize = otherElement.data("isResize");
+        if (isResize) {
+            let parent = otherElement.closest(".grid-stack-item");
+            let width = parent.data("gsWidth");
+            pageBodyGrid.resizeWidget(parent, width, DEFAULT_WIDGET_HEIGHT);
+            otherElement.data("isResize", false);
+            otherElement.data("isUpdated", true);
         }
+        let scrollHeight = otherElement.prop("scrollHeight");
+        let clientHeight = otherElement.prop("clientHeight");
+        if (scrollHeight > clientHeight) {
+            let parent = otherElement.closest(".grid-stack-item");
+            let width = parent.data("gsWidth");
+            let isUpdated = otherElement.data("isUpdated");
+            let newHeight, widgetHeight;
+            widgetHeight = newHeight = getNewWidgetHeight(pageBodyGrid, scrollHeight);
+            // In the case of IE 11, increase the widget height by three unit.
+            if (isIE11()) {
+                widgetHeight = widgetHeight + 3;
+            }
+            // Check whether the widget has been rendered for the first time
+            if (isUpdated) {
+                let cellHeight = pageBodyGrid.getCellHeight();
+                let verticalMargin = pageBodyGrid.getVerticalMargin();
+                let currentClientHeight = newHeight * (cellHeight + verticalMargin);
+                if (currentClientHeight > scrollHeight) {
+                    let height = DEFAULT_WIDGET_HEIGHT > widgetHeight - 1 ? DEFAULT_WIDGET_HEIGHT : widgetHeight - 1;
+                    pageBodyGrid.resizeWidget(parent, width, height);
+                    //pageBodyGrid.resizeWidget(parent, width, height);
+                    console.log("currentClientHeight: " + currentClientHeight);
+                    console.log("scrollHeight: " + scrollHeight);
 
-      } else {
-        pageBodyGrid.resizeWidget(parent, width, newHeight - 10);
 
-        otherElement.data("isUpdated", true);
-      }
-      let widgetId = otherElement.attr('id');
-      widgetOtherList[widgetId] = {
-        'parent': parent,
-        'widget': otherElement
-      }
+                } else {
+                    let height = DEFAULT_WIDGET_HEIGHT > widgetHeight ? DEFAULT_WIDGET_HEIGHT : widgetHeight;
+                    pageBodyGrid.resizeWidget(parent, width, height);
+                }
+
+            } else {
+                pageBodyGrid.resizeWidget(parent, width, newHeight - 10);
+
+                otherElement.data("isUpdated", true);
+            }
+            let widgetId = otherElement.attr('id');
+            widgetOtherList[widgetId] = {
+                'parent': parent,
+                'widget': otherElement
+            }
+        }
+    } else {
+        let width = widgetElement.data("gsWidth");
+        let isResize = widgetElement.data("isResize");
+        if (isResize) {
+            pageBodyGrid.resizeWidget(widgetElement, width, DEFAULT_WIDGET_HEIGHT);
+            widgetElement.data("isResize", false);
+        }
+        let scrollHeight = widgetElement.prop("scrollHeight");
+        let clientHeight = widgetElement.prop("clientHeight");
+        let currentHeight = widgetElement.data("gsHeight");
+        if (scrollHeight > clientHeight) {
+            let newHeight = getNewWidgetHeight(pageBodyGrid, scrollHeight);
+            if (newHeight > currentHeight) {
+                pageBodyGrid.resizeWidget(widgetElement, width, newHeight);
+            } else if (newHeight === currentHeight) {
+                pageBodyGrid.resizeWidget(widgetElement, width, newHeight + 1);
+            } else {
+                pageBodyGrid.resizeWidget(widgetElement, width, newHeight);
+            }
+        }
     }
-  } else {
-    let width = widgetElement.data("gsWidth");
-    let isResize = widgetElement.data("isResize");
-    if (isResize) {
-      pageBodyGrid.resizeWidget(widgetElement, width, DEFAULT_WIDGET_HEIGHT);
-      widgetElement.data("isResize", false);
-    }
-    let scrollHeight = widgetElement.prop("scrollHeight");
-    let clientHeight = widgetElement.prop("clientHeight");
-    let currentHeight = widgetElement.data("gsHeight");
-    if (scrollHeight > clientHeight) {
-      let newHeight = getNewWidgetHeight(pageBodyGrid, scrollHeight);
-      if (newHeight > currentHeight) {
-        pageBodyGrid.resizeWidget(widgetElement, width, newHeight);
-      } else if (newHeight === currentHeight) {
-        pageBodyGrid.resizeWidget(widgetElement, width, newHeight + 1);
-      } else {
-        pageBodyGrid.resizeWidget(widgetElement, width, newHeight);
-      }
-    }
-  }
 }
 
 /**
@@ -806,7 +812,7 @@ function getWidgetDesignSetting() {
         let data = {
             repository_id: community_id
         };
-        url = '/api/admin/load_widget_design_setting/' + current_language ;
+        url = '/api/admin/load_widget_design_setting/' + current_language;
         request = $.ajax({
             url: url,
             type: "POST",
@@ -820,114 +826,114 @@ function getWidgetDesignSetting() {
     // Display page loading.
     $(".lds-ring-background").removeClass("hidden");
 
-  request
-    .done(function(data) {
-      if (data.error) {
-        console.log(data.error);
-        toggleWidgetUI();
-        return;
-      } else {
-        widgetList = data["widget-settings"];
-        if (Array.isArray(widgetList) && widgetList.length) {
-          $("#page_body").removeClass("hidden");
-          $("#" + MAIN_CONTENTS).addClass("grid-stack-item");
-          $("#header").addClass("grid-stack-item no-scroll-bar");
-          $("#footer").addClass("grid-stack-item no-scroll-bar");
+    request
+        .done(function (data) {
+            if (data.error) {
+                console.log(data.error);
+                toggleWidgetUI();
+                return;
+            } else {
+                widgetList = data["widget-settings"];
+                if (Array.isArray(widgetList) && widgetList.length) {
+                    $("#page_body").removeClass("hidden");
+                    $("#" + MAIN_CONTENTS).addClass("grid-stack-item");
+                    $("#header").addClass("grid-stack-item no-scroll-bar");
+                    $("#footer").addClass("grid-stack-item no-scroll-bar");
 
-          // Check browser/tab is active
-          if (!document.hidden) {
-            buildWidget();
-          } else {
-            // In case browser/tab is inactive,
-            // create an event build widget when browser/tab active
-            window.addEventListener("focus", buildWidget);
-          }
-        } else {
-          // Pages are able to not have main content, so hide if widget is not present
-          if (is_page) {
-            $("#" + MAIN_CONTENTS).hide();
-          }
-          if (community_id !== DEFAULT_REPOSITORY) {
-            $("#community_header").removeAttr("hidden");
-            $("footer > #community_footer").removeAttr("hidden");
-            $("#page_body").removeClass("hidden");
-          }
-        }
-      }
-      if (!document.hidden) {
-        toggleWidgetUI();
-      } else {
-        window.addEventListener("focus", toggleWidgetUI);
-      }
-    })
-    .fail(function() {
-      console.log(data.error);
-      toggleWidgetUI();
-    });
+                    // Check browser/tab is active
+                    if (!document.hidden) {
+                        buildWidget();
+                    } else {
+                        // In case browser/tab is inactive,
+                        // create an event build widget when browser/tab active
+                        window.addEventListener("focus", buildWidget);
+                    }
+                } else {
+                    // Pages are able to not have main content, so hide if widget is not present
+                    if (is_page) {
+                        $("#" + MAIN_CONTENTS).hide();
+                    }
+                    if (community_id !== DEFAULT_REPOSITORY) {
+                        $("#community_header").removeAttr("hidden");
+                        $("footer > #community_footer").removeAttr("hidden");
+                        $("#page_body").removeClass("hidden");
+                    }
+                }
+            }
+            if (!document.hidden) {
+                toggleWidgetUI();
+            } else {
+                window.addEventListener("focus", toggleWidgetUI);
+            }
+        })
+        .fail(function (data) {
+            console.log(data.error);
+            toggleWidgetUI();
+        });
 }
 
 /**
  * Build widget
  */
 function buildWidget() {
-  if (Array.isArray(widgetList) && widgetList.length) {
-    widgetBodyGrid = new PageBodyGrid();
-    widgetBodyGrid.init();
-    widgetBodyGrid.loadGrid(widgetList);
-    // Adjust widget height.
-    handleAutoAdjustWidget(widgetBodyGrid);
-    // Remove event listener build widget.
-    window.removeEventListener('focus', buildWidget);
-    // In case the browser is resized,
-    // The height of the widgets are set to default.
-    window.addEventListener('resize', function () {
-      fixBrowserResize();
-      resizeWidgetToDefaultHeight();
-    });
-    // Resize Image.
-    setTimeout(resizeImage, 0);
-    // Resize Widget Name.
-    new ResizeSensor($('.widget-resize'), function () {
-      $('.widget-resize').each(function () {
-        let headerElementHeight = $(this).find('.panel-heading').height();
-        if (headerElementHeight) {
-          $(this).find('.panel-body').css("padding-top", String(headerElementHeight + 11) + "px");
-        }
-      });
-    });
-  }
+    if (Array.isArray(widgetList) && widgetList.length) {
+        widgetBodyGrid = new PageBodyGrid();
+        widgetBodyGrid.init();
+        widgetBodyGrid.loadGrid(widgetList);
+        // Adjust widget height.
+        handleAutoAdjustWidget(widgetBodyGrid);
+        // Remove event listener build widget.
+        window.removeEventListener('focus', buildWidget);
+        // In case the browser is resized,
+        // The height of the widgets are set to default.
+        window.addEventListener('resize', function () {
+            fixBrowserResize();
+            resizeWidgetToDefaultHeight();
+        });
+        // Resize Image.
+        setTimeout(resizeImage, 0);
+        // Resize Widget Name.
+        new ResizeSensor($('.widget-resize'), function () {
+            $('.widget-resize').each(function () {
+                let headerElementHeight = $(this).find('.panel-heading').height();
+                if (headerElementHeight) {
+                    $(this).find('.panel-body').css("padding-top", String(headerElementHeight + 11) + "px");
+                }
+            });
+        });
+    }
 }
 
 function resizeImage() {
-  $('.trumbowyg-editor img').each(function () {
-    let notAutoHeight = $(this).closest(".no-auto-height");
-    if (!notAutoHeight.length && $(this).attr('src')) {
-      let currentWidget = $(this).closest(".grid-stack-item");
-      let currentTrumbowyg = $(this).closest(".trumbowyg-editor");
-      let currentHeight = currentWidget.data("gsHeight");
-      let currentWidth = currentWidget.data("gsWidth");
-      let img = new Image();
-      img.src = $(this).attr('src');
-      img.onload = function () {
-        let childElement = currentTrumbowyg.children();
-        let widgetHeight = 0;
-        for (let i = 0; i < childElement.length; i++) {
-          let element = $(childElement[i]);
-          if (!element.hasClass("resize-sensor") && element.height()) {
-            widgetHeight += element.height();
-          }
+    $('.trumbowyg-editor img').each(function () {
+        let notAutoHeight = $(this).closest(".no-auto-height");
+        if (!notAutoHeight.length && $(this).attr('src')) {
+            let currentWidget = $(this).closest(".grid-stack-item");
+            let currentTrumbowyg = $(this).closest(".trumbowyg-editor");
+            let currentHeight = currentWidget.data("gsHeight");
+            let currentWidth = currentWidget.data("gsWidth");
+            let img = new Image();
+            img.src = $(this).attr('src');
+            img.onload = function () {
+                let childElement = currentTrumbowyg.children();
+                let widgetHeight = 0;
+                for (let i = 0; i < childElement.length; i++) {
+                    let element = $(childElement[i]);
+                    if (!element.hasClass("resize-sensor") && element.height()) {
+                        widgetHeight += element.height();
+                    }
+                }
+                let newHeight = getNewWidgetHeight(widgetBodyGrid, widgetHeight);
+                if (newHeight > currentHeight) {
+                    widgetBodyGrid.resizeWidget(currentWidget, currentWidth, newHeight);
+                } else if (newHeight === currentHeight) {
+                    widgetBodyGrid.resizeWidget(currentWidget, currentWidth, newHeight + 1);
+                } else {
+                    widgetBodyGrid.resizeWidget(currentWidget, currentWidth, newHeight);
+                }
+            }
         }
-        let newHeight = getNewWidgetHeight(widgetBodyGrid, widgetHeight);
-        if (newHeight > currentHeight) {
-          widgetBodyGrid.resizeWidget(currentWidget, currentWidth, newHeight);
-        } else if (newHeight === currentHeight) {
-          widgetBodyGrid.resizeWidget(currentWidget, currentWidth, newHeight + 1);
-        }else{
-          widgetBodyGrid.resizeWidget(currentWidget, currentWidth, newHeight);
-        }
-      }
-    }
-  });
+    });
 }
 
 /**
@@ -935,29 +941,29 @@ function resizeImage() {
  * @param sensor
  */
 function removeSensor(sensor) {
-  if (sensor !== 'undefined') {
-    sensor.detach();
-  }
+    if (sensor !== 'undefined') {
+        sensor.detach();
+    }
 }
 
 /**
  * Fix bug layout when the browser is resized.
  */
 function fixBrowserResize() {
-  isClickMainContent = false;
-  if (window.innerWidth < MIN_WIDTH) {
-    if (isFireFox() && !isRegenerate) {
-      isRegenerate = true;
-      // Remove resize sensor.
-      removeSensor(otherSensor);
-      removeSensor(headerSensor);
-      removeSensor(mainContentSensor);
-      // Add  resize sensor.
-      handleAutoAdjustWidget(widgetBodyGrid);
+    isClickMainContent = false;
+    if (window.innerWidth < MIN_WIDTH) {
+        if (isFireFox() && !isRegenerate) {
+            isRegenerate = true;
+            // Remove resize sensor.
+            removeSensor(otherSensor);
+            removeSensor(headerSensor);
+            removeSensor(mainContentSensor);
+            // Add  resize sensor.
+            handleAutoAdjustWidget(widgetBodyGrid);
+        }
+    } else {
+        isRegenerate = false;
     }
-  } else {
-    isRegenerate = false;
-  }
 
 }
 
@@ -966,7 +972,7 @@ function fixBrowserResize() {
  * @returns {boolean}
  */
 function isFireFox() {
-  return navigator.userAgent.toLowerCase().indexOf('firefox') > -1;
+    return navigator.userAgent.toLowerCase().indexOf('firefox') > -1;
 }
 
 /**
@@ -974,7 +980,7 @@ function isFireFox() {
  * @returns {boolean}
  */
 function isItemRegistrationWorkFlow() {
-  return $("#item_registration_workflow").length > 0;
+    return $("#item_registration_workflow").length > 0;
 }
 
 /**
@@ -982,26 +988,26 @@ function isItemRegistrationWorkFlow() {
  * @returns {boolean}
  */
 function isIE11() {
-  return !!window.MSInputMethodContext && !!document.documentMode;
+    return !!window.MSInputMethodContext && !!document.documentMode;
 }
 
 /**
  * Fix widget layout on IE 11
  */
 function fixWidgetIE11() {
-  $(".header-footer-type").parent().removeClass("widgetIE");
-  setTimeout(function () {
-    if (isIE11()) {
-      // Add class fix css IE11
-      $("#page_body").addClass("ie");
-      // scroll-x when content > div
-      $(".trumbowyg-editor").each(function () {
-        if ($(this).find("img").length !== 0) {
-          $(this).addClass("scroll_x");
+    $(".header-footer-type").parent().removeClass("widgetIE");
+    setTimeout(function () {
+        if (isIE11()) {
+            // Add class fix css IE11
+            $("#page_body").addClass("ie");
+            // scroll-x when content > div
+            $(".trumbowyg-editor").each(function () {
+                if ($(this).find("img").length !== 0) {
+                    $(this).addClass("scroll_x");
+                }
+            });
         }
-      });
-    }
-  }, 1000)
+    }, 1000)
 }
 
 /**
@@ -1009,46 +1015,46 @@ function fixWidgetIE11() {
  * @param pageBodyGrid Widget body object.
  */
 function handleAutoAdjustWidget(pageBodyGrid) {
-  if (isIE11()){
-    $('.header-footer-type').parent().addClass('widgetIE');
-  }
+    if (isIE11()) {
+        $('.header-footer-type').parent().addClass('widgetIE');
+    }
 
-  // Auto adjust Other widget
-  otherSensor = new ResizeSensor($('.grid-stack-item-content .panel-body'), function () {
-    $('.grid-stack-item-content .panel-body').each(function () {
-      let _this = $(this);
-      if (!_this.hasClass("no-auto-height")) {
-        autoAdjustWidgetHeight(null, pageBodyGrid, _this);
-      }
+    // Auto adjust Other widget
+    otherSensor = new ResizeSensor($('.grid-stack-item-content .panel-body'), function () {
+        $('.grid-stack-item-content .panel-body').each(function () {
+            let _this = $(this);
+            if (!_this.hasClass("no-auto-height")) {
+                autoAdjustWidgetHeight(null, pageBodyGrid, _this);
+            }
+        });
     });
-  });
 
-  // Auto adjust Header widget
-  headerSensor = new ResizeSensor($('#header_content'), function () {
-    let headerContent = $('#header_content').closest(".grid-stack-item");
-    autoAdjustWidgetHeight(headerContent, pageBodyGrid);
-  });
+    // Auto adjust Header widget
+    headerSensor = new ResizeSensor($('#header_content'), function () {
+        let headerContent = $('#header_content').closest(".grid-stack-item");
+        autoAdjustWidgetHeight(headerContent, pageBodyGrid);
+    });
 
-  // Auto adjust Main Content widget
-  createMainContentSensor()
+    // Auto adjust Main Content widget
+    createMainContentSensor()
 
-  // Fix widget display on IE 11
-  fixWidgetIE11();
+    // Fix widget display on IE 11
+    fixWidgetIE11();
 }
 
 /**
  * Create Main content sensor.
  */
 function createMainContentSensor() {
-  mainContentSensor = new ResizeSensor($('#' + MAIN_CONTENTS), function () {
-    let mainContent = $('#' + MAIN_CONTENTS);
-    $("#weko-records").click(function () {
-      isClickMainContent = true;
+    mainContentSensor = new ResizeSensor($('#' + MAIN_CONTENTS), function () {
+        let mainContent = $('#' + MAIN_CONTENTS);
+        $("#weko-records").click(function () {
+            isClickMainContent = true;
+        });
+        if (!(isClickMainContent && isItemRegistrationWorkFlow())) {
+            autoAdjustWidgetHeight(mainContent, widgetBodyGrid);
+        }
     });
-    if (!(isClickMainContent && isItemRegistrationWorkFlow())) {
-      autoAdjustWidgetHeight(mainContent, widgetBodyGrid);
-    }
-  });
 }
 
 function toggleWidgetUI() {
@@ -1058,29 +1064,29 @@ function toggleWidgetUI() {
     $('footer#footer').css("display", "block");
     $('footer-fix#footer').remove();
     setTimeout(function () {
-      // Remove page loading.
-      $(".lds-ring-background").addClass("hidden");
+        // Remove page loading.
+        $(".lds-ring-background").addClass("hidden");
     }, 500);
     window.removeEventListener("focus", toggleWidgetUI);
 }
 
 function handleMoreNoT(moreDescriptionID, linkID, readMore, hideRest) {
-  let moreDes = $("#" + moreDescriptionID);
-  let textLink = $("#" + linkID);
-  if (moreDes) {
-    let parentElement = moreDes.parent();
-    if (moreDes.hasClass("hidden")) {
-      moreDes.removeClass("hidden");
-      textLink.text(hideRest);
-      parentElement.removeClass('without-after-element');
-    } else {
-      moreDes.addClass("hidden");
-      parentElement.addClass('without-after-element');
-      textLink.text(readMore);
+    let moreDes = $("#" + moreDescriptionID);
+    let textLink = $("#" + linkID);
+    if (moreDes) {
+        let parentElement = moreDes.parent();
+        if (moreDes.hasClass("hidden")) {
+            moreDes.removeClass("hidden");
+            textLink.text(hideRest);
+            parentElement.removeClass('without-after-element');
+        } else {
+            moreDes.addClass("hidden");
+            parentElement.addClass('without-after-element');
+            textLink.text(readMore);
+        }
+        parentElement.data("isResize", true);
+        autoAdjustWidgetHeight(null, widgetBodyGrid, parentElement);
     }
-    parentElement.data("isResize", true);
-    autoAdjustWidgetHeight(null, widgetBodyGrid, parentElement);
-  }
 }
 
 /**
@@ -1090,9 +1096,9 @@ function handleMoreNoT(moreDescriptionID, linkID, readMore, hideRest) {
  */
 function escapeHtml(unsafe) {
     return unsafe
-         .replace(/&/g, "&amp;")
-         .replace(/</g, "&lt;")
-         .replace(/>/g, "&gt;")
-         .replace(/"/g, "&quot;")
-         .replace(/'/g, "&#039;");
- }
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
