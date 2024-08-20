@@ -2092,7 +2092,7 @@ class WorkActivity(object):
 
     def get_activity_index_search(self, activity_id):
         """Get page info after item search."""
-        from flask_babelex import gettext as _
+        from flask_babel import gettext as _
         from invenio_pidstore.resolver import Resolver
         from weko_records.api import ItemsMetadata
         from werkzeug.utils import import_string

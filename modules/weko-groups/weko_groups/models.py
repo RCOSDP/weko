@@ -23,7 +23,7 @@
 from datetime import datetime
 
 from flask import current_app, escape
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 from flask_login import UserMixin, current_user
 from invenio_accounts.models import User
 from invenio_db import db

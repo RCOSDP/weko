@@ -33,7 +33,7 @@ from celery import current_task, shared_task
 from celery.app.control import Inspect
 from celery.utils.log import get_task_logger
 from flask import current_app
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.models import RecordMetadata

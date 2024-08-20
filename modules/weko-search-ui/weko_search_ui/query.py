@@ -30,7 +30,7 @@ from functools import partial
 from elasticsearch_dsl.query import Bool, Q
 from flask import current_app, request
 from flask_security import current_user
-from flask_babelex import get_timezone
+from flask_babel import get_timezone
 from invenio_communities.models import Community
 from invenio_records_rest.errors import InvalidQueryRESTError
 from weko_index_tree.api import Indexes

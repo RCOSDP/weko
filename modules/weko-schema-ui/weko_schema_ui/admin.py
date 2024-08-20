@@ -23,7 +23,7 @@
 from flask import abort, current_app, flash, jsonify, make_response, \
     redirect, request, url_for
 from flask_admin import BaseView, expose
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 from invenio_db import db
 
 from .permissions import schema_permission

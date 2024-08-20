@@ -26,7 +26,7 @@ from datetime import date, timedelta
 from elasticsearch.exceptions import NotFoundError
 from elasticsearch_dsl.query import QueryString, Range
 from flask import current_app, request
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 from flask_login import current_user
 from invenio_communities.forms import SearchForm
 from invenio_communities.models import Community, FeaturedCommunity

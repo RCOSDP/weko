@@ -26,7 +26,7 @@
 
 from __future__ import absolute_import, print_function
 
-from flask_babelex import lazy_gettext as _
+from flask_babel import lazy_gettext as _
 from invenio_oauth2server.models import Scope
 
 activity_scope = Scope(

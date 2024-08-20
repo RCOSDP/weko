@@ -32,9 +32,9 @@ from urllib.parse import urlparse,quote
 from io import StringIO
 
 from flask import abort, current_app, json, request, url_for, make_response, Flask
-from flask_babelex import get_locale
-from flask_babelex import gettext as _
-from flask_babelex import to_user_timezone, to_utc
+from flask_babel import get_locale
+from flask_babel import gettext as _
+from flask_babel import to_user_timezone, to_utc
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_login import current_user

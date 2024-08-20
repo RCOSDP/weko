@@ -22,7 +22,7 @@ invenio-i18n==2.1.1
 # invenio-indexer==1.0.2
 invenio-jsonschemas==1.1.4
 invenio-logging==2.1.0
-invenio-marc21==1.0.0a9
+#invenio-marc21==1.0.0a9
 #invenio-oauthclient==1.0.0
 #invenio-pidrelations==1.0.0a4
 invenio-pidrelations==0.2.0

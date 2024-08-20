@@ -25,7 +25,7 @@
 """Index errors."""
 from invenio_rest.errors import RESTException
 
-# from flask_babelex import gettext as _
+# from flask_babel import gettext as _
 
 
 SUCCESS_MSG = 'Index deleted successfully.'

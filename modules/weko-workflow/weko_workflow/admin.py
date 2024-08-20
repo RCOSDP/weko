@@ -26,7 +26,7 @@ import uuid
 from flask import abort, current_app, jsonify, request, url_for
 from flask_admin import BaseView, expose
 from flask_login import current_user
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 from invenio_accounts.models import Role, User
 from invenio_db import db
 from invenio_files_rest.models import Location

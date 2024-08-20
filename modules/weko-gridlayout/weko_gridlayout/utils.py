@@ -33,7 +33,7 @@ import redis
 from redis import sentinel
 from elasticsearch.exceptions import NotFoundError
 from flask import Markup, Response, abort, current_app, jsonify, request
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 from invenio_cache import current_cache
 from invenio_db import db
 from invenio_files_rest.errors import FileInstanceAlreadySetError, \

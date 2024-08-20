@@ -34,7 +34,7 @@ from flask_admin.babel import gettext, lazy_gettext, ngettext
 from flask_admin.contrib.sqla import ModelView, tools
 from flask_admin.helpers import get_redirect_target
 from flask_admin.model import helpers, typefmt
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 from jinja2 import pass_context
 from sqlalchemy import func
 from wtforms.fields import StringField

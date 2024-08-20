@@ -56,7 +56,7 @@ setup_requires = [
 ]
 
 install_requires = [
-    'Flask-BabelEx>=0.9.2',
+    'Flask-Babel>=3.0.0',
     'jsonpatch>=1.20',
     'feedgen>=0.7.0',
     'lxml>=4.0.0',

@@ -22,7 +22,7 @@ from elasticsearch.exceptions import RequestError
 from flask import Blueprint, abort, current_app, jsonify, make_response, \
     request, url_for
 from flask.views import MethodView
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 from invenio_db import db
 from invenio_indexer.api import RecordIndexer
 from invenio_pidstore import current_pidstore

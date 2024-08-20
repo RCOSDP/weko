@@ -27,7 +27,7 @@ from datetime import datetime, timedelta
 from celery import shared_task
 from celery.utils.log import get_task_logger
 from flask import current_app, render_template
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 from flask_mail import Attachment
 from invenio_mail.api import send_mail
 from invenio_stats.utils import QueryCommonReportsHelper, \

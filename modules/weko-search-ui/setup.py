@@ -56,7 +56,7 @@ setup_requires = [
 ]
 
 install_requires = [
-    "Flask-BabelEx>=0.9.2",
+    'Flask-Babel>=3.0.0',
     "Flask-Assets>=0.12",
     "ipaddress>=1.0.19",
     "angular-gettext-babel>=0.3",

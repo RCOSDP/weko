@@ -33,7 +33,7 @@ import redis
 from redis import sentinel
 from celery.app.control import Inspect
 from flask import current_app, request, session
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 from flask_security import current_user
 from invenio_accounts.models import Role, User, userrole
 from invenio_cache import current_cache

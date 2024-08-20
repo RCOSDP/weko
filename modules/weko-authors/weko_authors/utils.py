@@ -32,7 +32,7 @@ from operator import getitem
 from sys import stdout
 
 from flask import current_app
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 from invenio_cache import current_cache
 from invenio_db import db
 from invenio_files_rest.models import FileInstance, Location

@@ -26,7 +26,7 @@ from datetime import date, datetime, timedelta
 from operator import itemgetter
 
 from flask import Markup, current_app, session
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 from flask_login import current_user
 from invenio_db import db
 from invenio_i18n.ext import current_i18n

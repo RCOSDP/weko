@@ -25,7 +25,7 @@ from functools import partial
 
 from babel.core import Locale
 from flask import _request_ctx_stack, current_app, request, session
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 from flask_login import current_user
 from invenio_accounts.models import Role, userrole
 from invenio_db import db

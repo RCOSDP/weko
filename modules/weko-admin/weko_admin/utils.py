@@ -32,8 +32,8 @@ import redis
 from redis import sentinel
 import requests
 from flask import current_app, request
-from flask_babelex import gettext as __
-from flask_babelex import lazy_gettext as _
+from flask_babel import gettext as __
+from flask_babel import lazy_gettext as _
 from invenio_accounts.models import Role, userrole
 from invenio_cache import cached_unless_authenticated
 from invenio_db import db

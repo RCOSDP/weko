@@ -29,7 +29,7 @@ from flask import abort, current_app, request, session
 from flask.helpers import url_for
 from flask.json import jsonify
 from flask_admin import BaseView, expose
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 from invenio_files_rest.models import FileInstance
 from weko_workflow.utils import update_cache_data
 

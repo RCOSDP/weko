@@ -19,7 +19,7 @@ import sys
 
 import numpy
 from flask import Blueprint, abort, current_app, json, jsonify, render_template
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 from flask_login import login_required
 from invenio_i18n.ext import current_i18n
 from invenio_db import db

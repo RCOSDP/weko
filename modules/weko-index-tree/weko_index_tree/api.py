@@ -29,7 +29,7 @@ from socketserver import DatagramRequestHandler
 
 from redis.exceptions import RedisError
 from flask import current_app, json
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 from flask_login import current_user
 from invenio_accounts.models import Role
 from invenio_db import db

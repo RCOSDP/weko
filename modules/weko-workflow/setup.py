@@ -56,7 +56,7 @@ setup_requires = [
 
 install_requires = [
     'Flask>=0.11.1',
-    'Flask-BabelEx>=0.9.2',
+    'Flask-Babel>=3.0.0',
 ]
 
 packages = find_packages()

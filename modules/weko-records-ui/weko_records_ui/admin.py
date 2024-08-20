@@ -27,7 +27,7 @@ from datetime import datetime
 from flask import abort, current_app, flash, jsonify, request
 from flask_admin import BaseView, expose
 from flask_admin.contrib.sqla import ModelView
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 from flask_login import current_user
 from flask_wtf import FlaskForm
 from invenio_db import db

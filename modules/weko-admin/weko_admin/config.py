@@ -20,7 +20,7 @@
 
 """Configuration for weko-admin."""
 
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 
 WEKO_ADMIN_DEFAULT_AGGREGATION_MONTH = 2
 """default aggregation month for site license mail."""

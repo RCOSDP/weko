@@ -77,7 +77,7 @@ import shutil
 import subprocess
 from time import sleep
 import errno
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 import re
 
 def convert_to(folder, source):
