@@ -88,10 +88,10 @@ setup(
             'invenio_resourcesyncserver.admin:invenio_admin_change_list',
         ],
         'invenio_assets.webpack': [
-            'resourcesyncserver_js_invenio_admin_resource_js = invenio_resourcesyncserver.webpack:resourcesyncserver_js_invenio_admin_resource_js',
-            'resourcesyncserver_css_invenio_admin_resource_css = invenio_resourcesyncserver.webpack:resourcesyncserver_css_invenio_admin_resource_css',
-            'resourcesyncserver_js_invenio_admin_change_list_js = invenio_resourcesyncserver.webpack:resourcesyncserver_js_invenio_admin_change_list_js',
-            'resourcesyncserver_css_invenio_admin_change_list_css = invenio_resourcesyncserver.webpack:resourcesyncserver_css_invenio_admin_change_list_css',
+            'resourcesyncserver_js_invenio_admin_resource_js = invenio_resourcesyncserver.webpack:invenio_resourcesyncserver',
+            'resourcesyncserver_css_invenio_admin_resource_css = invenio_resourcesyncserver.webpack:invenio_resourcesyncserver',
+            'resourcesyncserver_js_invenio_admin_change_list_js = invenio_resourcesyncserver.webpack:invenio_resourcesyncserver',
+            'resourcesyncserver_css_invenio_admin_change_list_css = invenio_resourcesyncserver.webpack:invenio_resourcesyncserver',
         ],
         'invenio_db.models': [
             'invenio_resourcesyncserver = invenio_resourcesyncserver.models',
