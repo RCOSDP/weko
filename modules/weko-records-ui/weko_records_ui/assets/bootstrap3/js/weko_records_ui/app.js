@@ -437,8 +437,4 @@ function OnLinkClick(uri, pid_value, accessrole) {
         }
       });
     window.open(uri);
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> feature/resolve_conflict_invenio_assets_akaike

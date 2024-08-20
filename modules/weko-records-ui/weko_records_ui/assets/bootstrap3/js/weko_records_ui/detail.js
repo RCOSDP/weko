@@ -1,14 +1,3 @@
-<<<<<<< HEAD
-require([
-  "jquery",
-  "bootstrap",
-  "typeahead.js",
-  "bloodhound",
-  "node_modules/angular/angular",
-
-  // "node_modules/invenio-csl-js/dist/invenio-csl-js",
-], function (typeahead, Bloodhound) {
-=======
 // require([
 //   "jquery",
 //   "bootstrap",
@@ -24,7 +13,6 @@ import "typeahead.js";
 import "bloodhound";
 import "node_modules/angular/angular";
 ( function (typeahead, Bloodhound) {
->>>>>>> feature/resolve_conflict_invenio_assets_akaike
   $('#btn_back').on('click', function () {
     window.history.back();
   });
@@ -311,8 +299,4 @@ import "node_modules/angular/angular";
       });
     }
   });
-<<<<<<< HEAD
-});
-=======
 })(typeahead, Bloodhound);
->>>>>>> feature/resolve_conflict_invenio_assets_akaike
