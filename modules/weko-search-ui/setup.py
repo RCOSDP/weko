@@ -116,15 +116,15 @@ setup(
             "weko_search_ui = weko_search_ui.config",
         ],
         "invenio_assets.webpack": [
-            "theme-weko-search-ui = weko_search_ui.webpack:theme-weko-search-ui"
-            "weko-search-ui = weko_search_ui.webpack:weko-search-ui"
-            "import = weko_search_ui.webpack:import"
-            "export = weko_search_ui.webpack:export"
-            "moment = weko_search_ui.webpack:moment"
-            "theme-import = weko_search_ui.webpack:theme-import"
-            "theme-export = weko_search_ui.webpack:theme-export"
-            "facet-search = weko_search_ui.webpack:facet-search"
-            "theme-facet-search = weko_search_ui.webpack:theme-facet-search"
+            "search-ui-css-weko-search-ui = weko_search_ui.webpack:weko_search_ui",
+            "search-ui-js-weko-search-ui = weko_search_ui.webpack:weko_search_ui",
+            "search-ui-js-import = weko_search_ui.webpack:weko_search_ui",
+            "search-ui-js-export = weko_search_ui.webpack:weko_search_ui",
+            "search-ui-js-moment = weko_search_ui.webpack:weko_search_ui",
+            "search-ui-less-import = weko_search_ui.webpack:weko_search_ui",
+            "search-ui-less-export = weko_search_ui.webpack:weko_search_ui",
+            "search-ui-js-facet-search = weko_search_ui.webpack:weko_search_ui",
+            "search-ui-less-theme-facet-search = weko_search_ui.webpack:weko_search_ui",
         ],
         "invenio_i18n.translations": [
             "messages = weko_search_ui",
