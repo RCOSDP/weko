@@ -85,18 +85,6 @@ setup(
         'invenio_assets.webpack': [
             'weko_theme = weko_theme.webpack:weko_theme'
         ],
-        'invenio_assets.bundles': [
-            'weko_theme_css = weko_theme.bundles:css',
-            'weko_theme_css_bootstrap = weko_theme.bundles:css_bootstrap',
-            'weko_theme_css_buttons = weko_theme.bundles:css_buttons',
-            'weko_theme_css_widget = weko_theme.bundles:css_widget',
-            'weko_theme_js_treeview = weko_theme.bundles:js_treeview',
-            'weko_theme_js = weko_theme.bundles:js',
-            'weko_theme_js_top_page = weko_theme.bundles:js_top_page',
-            'weko_theme_js_detail_search = weko_theme.bundles:js_detail_search',
-            'weko_theme_js_widget_lib = weko_theme.bundles:js_widget_lib',
-            'weko_theme_js_widget = weko_theme.bundles:widget_js',
-        ],
         'invenio_base.apps': [
             'weko_theme = weko_theme:WekoTheme',
         ],
