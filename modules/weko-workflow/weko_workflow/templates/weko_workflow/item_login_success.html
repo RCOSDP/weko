@@ -23,19 +23,19 @@
 
 {%- block css %}
   {{ super() }}
-  {% assets "weko_records_ui_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
-  {% assets "workflow_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
-  {% assets "weko_records_ui_bootstrap_popover_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {{ webpack['records_ui_css_style.css'] }}
+  {{ webpack['workflow-css-workflow.css'] }}
+  {{ webpack['records_ui_bootstrap_popover_css.css'] }}
 {%- endblock css %}
 
 {%- block javascript %}
   {{ super() }}
-  {% assets "workflow_iframe_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "workflow_quit_confirmation_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "workflow_lock_activity_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_theme_js_widget" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_records_ui_preview_carousel_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_records_ui_bootstrap_popover_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {{ webpack['workflow-js-iframe.js}}
+  {{ webpack['workflow-js-quit-confirmation.js'}}
+  {{ webpack['workflow-js-lock-activity.js'}}
+  {{ webpack['theme-js-widget.js'}}
+  {{ webpack['records_ui_preview_carousel.js'}}
+  {{ webpack['records_ui_bootstrap_popover_js.js'}}
 {%- endblock javascript %}
 
 {%- block page_body_tabs %}

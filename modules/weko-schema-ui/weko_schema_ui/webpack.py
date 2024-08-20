@@ -7,7 +7,7 @@ weko_schema_ui = WebpackThemeBundle(
     themes={
         "bootstrap3": dict(
             entry={
-                "weko-schema-ui": "js/weko_schema_ui/app.js",
+                "schema-ui-js": "js/weko_schema_ui/app.js",
             },
             dependencies={
             }

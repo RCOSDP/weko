@@ -22,17 +22,17 @@
 {%- from "invenio_communities/macros.html" import community_header %}
 
 {%- block css %}
-{{ super() }}
-{% assets "workflow_datepicker_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
-{% assets "workflow_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {{ super() }}
+  {{ webpack['workflow-css-datepicker-workflow.js'}}
+  {{ webpack['workflow-css-workflow.css'] }}
+  {{ webpack['workflow-css-activity-list.css'] }}
+  {{ webpack['theme-css-widget.css'] }}
 {%- endblock css %}
 
 {%- block javascript %}
-{{ super() }}
-{%- assets "workflow_activity_list_js" %}
-<script src="{{ ASSET_URL }}"></script>{% endassets %}
-{% assets "weko_theme_js_widget" %}
-<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {{ super() }}
+  {{ webpack['workflow-js-activity-list.js'}}
+  {{ webpack['theme-js-widget.js'}}
 {%- endblock javascript %}
 
 {%- block page_body_tabs %}
