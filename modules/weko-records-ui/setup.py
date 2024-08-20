@@ -106,12 +106,13 @@ setup(
             'weko_records_ui = weko_records_ui.config',
         ],
         'invenio_assets.webpack': [
-            'records_ui_css_style = weko_records_ui.webpack:records_ui_css_style',
-            'records_ui_js = weko_records_ui.webpack:records_ui_js',
-            'records_ui_preview_carousel = weko_records_ui.webpack:records_ui_preview_carousel',
-            'records_ui_file_action_js = weko_records_ui.webpack:records_ui_file_action_js',
-            'records_ui_bootstrap_popover_js = weko_records_ui.webpack:records_ui_bootstrap_popover_js',
-            'records_ui_bootstrap_popover_css = weko_records_ui.webpack:records_ui_bootstrap_popover_css',
+            'records_ui_css_style = weko_records_ui.webpack:weko_records_ui',
+            'records_ui_js_dependecies = weko_records_ui.webpack:weko_records_ui',
+            'records_ui_js = weko_records_ui.webpack:weko_records_ui',
+            'records_ui_preview_carousel = weko_records_ui.webpack:weko_records_ui',
+            'records_ui_file_action_js = weko_records_ui.webpack:weko_records_ui',
+            'records_ui_bootstrap_popover_js = weko_records_ui.webpack:weko_records_ui',
+            'records_ui_bootstrap_popover_css = weko_records_ui.webpack:weko_records_ui',
         ],
         'invenio_access.actions': [
             'detail_page_access'
