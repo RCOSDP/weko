@@ -11,6 +11,7 @@ weko_sitemap = WebpackThemeBundle(
                 'sitemap-css-css': './css/weko_sitemap/styles.css',
             },
             dependencies={
+                'jquery': '~2.1.3',
             }
         )
     }
