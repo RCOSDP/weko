@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 {%- extends config.WEKO_ITEMS_UI_BASE_TEMPLATE %}
 {%- block css %}
-  {% assets "invenio_deposit_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
-  {% assets "weko_items_authors_search_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {{ webpack['deposit_css_css.css'}}
+  {{ webpack['items_ui_css_items_author_search.css'}}
   {{ super() }}
   <link href="{{ url_for('static', filename='css/weko_items_ui/contributor.search.css') }}" rel="stylesheet">
   <link href="/static/css/weko_workflow/style.css" rel="stylesheet">
-  {% assets "weko_items_ui_feedback_maillist_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {{ webpack['items_ui_js_feedback_maillist.css'}}
 {%- endblock css %}
 
 {%- block page_header %}

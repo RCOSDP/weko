@@ -27,8 +27,8 @@
 
 {%- block javascript %}
 {{ super() }}
-{% assets "workflow_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-{% assets "weko_theme_js_widget" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {{ webpack['workflow-js-workflow.js'}}
+  {{ webpack['theme-js-widget.js'}}
 {%- endblock javascript %}
 
 {%- block page_body_tabs %}

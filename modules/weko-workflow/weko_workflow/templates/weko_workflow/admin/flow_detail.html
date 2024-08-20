@@ -22,13 +22,13 @@
 
 {% block css %}
   {{ super() }}
-  {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {{ webpack['theme-css-buttons.css'] }}
 {% endblock %}
 
 {%- block javascript %}
   {%- include config.WEKO_WORKFLOW_POP_PAGE -%}
   {{ super() }}
-  {% assets "flow_detail_admin_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {{ webpack['workflow-js-admin-flow-detail.js'}}
 {%- endblock javascript %}
 
 {%- block body %}
