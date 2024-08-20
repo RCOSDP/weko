@@ -7,8 +7,8 @@ weko_groups = WebpackThemeBundle(
     themes={
         "bootstrap3": dict(
             entry={
-                "group_js_js": "js/groups/init.js",
-                "group_css_styles": "css/groups/groups.less",
+                "group_js_js": "./js/groups/init.js",
+                "group_css_styles": "./css/groups/groups.less",
             },
             dependencies={
             }

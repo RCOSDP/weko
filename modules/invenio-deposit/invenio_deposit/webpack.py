@@ -7,9 +7,9 @@ invenio_deposit = WebpackThemeBundle(
     themes={
         "bootstrap3": dict(
             entry={
-                "deposit_css_css": "css/invenio_deposit/css.css",
-                "deposit_js_dependencies": "js/invenio_deposit/js-dependencies.js",
-                "deposit_js_js": "js/invenio_deposit/app.js",
+                "deposit_css_css": "./css/invenio_deposit/css.css",
+                "deposit_js_dependencies": "./js/invenio_deposit/js-dependencies.js",
+                "deposit_js_js": "./js/invenio_deposit/app.js",
             },
             dependencies={
                 'jquery': '~1.9.1',

@@ -7,8 +7,8 @@ weko_sitemap = WebpackThemeBundle(
     themes={
         "bootstrap3": dict(
             entry={
-                'sitemap-js-js': 'js/weko_sitemap/sitemap.js',
-                'sitemap-css-css': 'css/weko_sitemap/styles.css',
+                'sitemap-js-js': './js/weko_sitemap/sitemap.js',
+                'sitemap-css-css': './css/weko_sitemap/styles.css',
             },
             dependencies={
             }

@@ -7,13 +7,13 @@ weko_records_ui = WebpackThemeBundle(
     themes={
         "bootstrap3": dict(
             entry={
-                "records_ui_css_style": "css/weko_records_ui/style.css",
-                "records_ui_js_dependecies": "js/weko_records_ui/js‗dependencies.js",
-                "records_ui_js": "js/weko_records_ui/js_angular.js",
-                "records_ui_preview_carousel": "js/weko_records_ui/preview_carousel.js",
-                "records_ui_file_action_js": "js/weko_records_ui/file_action.js",
-                "records_ui_bootstrap_popover_js": "js/weko_records_ui/bootstrap-popover-x.min.js",
-                "records_ui_bootstrap_popover_css": "css/weko_records_ui/bootstrap-popover-x.min.css"
+                "records_ui_css_style": "./css/weko_records_ui/style.css",
+                "records_ui_js_dependecies": "./js/weko_records_ui/js‗dependencies.js",
+                "records_ui_js": "./js/weko_records_ui/js_angular.js",
+                "records_ui_preview_carousel": "./js/weko_records_ui/preview_carousel.js",
+                "records_ui_file_action_js": "./js/weko_records_ui/file_action.js",
+                "records_ui_bootstrap_popover_js": "./js/weko_records_ui/bootstrap-popover-x.min.js",
+                "records_ui_bootstrap_popover_css": "./css/weko_records_ui/bootstrap-popover-x.min.css"
             },
             dependencies={
                 "bootstrap-sass": "~3.3.5",
