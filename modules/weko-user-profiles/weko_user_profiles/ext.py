@@ -82,3 +82,23 @@ class WekoUserProfiles(object):
             )
             app.config['SECURITY_REGISTER_USER_TEMPLATE'] = \
                 'weko_user_profiles/register_user.html'
+
+def finalize_app(app):
+    """Finalize app."""
+    menu = app.extensions["menu"]
+    
+    menu.submenu("settings.profile").register(
+        "weko_user_profiles",
+        _('%(icon)s Profile', icon='<i class="fa fa-user fa-fw"></i>'),
+        order=0
+    )
+    
+    breadcrumbs = {
+        "breadcrumbs.settings.profile":{
+            "endpoint": "weko_user_profiles.profile",
+            "text": _("Profile")
+        }
+    }
+    
+    for breadcrumb, submenu in breadcrumbs.items():
+        menu.submenu(breadcrumb).register(**submenu)

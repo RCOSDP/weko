@@ -55,7 +55,7 @@ setup_requires = [
 ]
 
 install_requires = [
-    'Flask-BabelEx>=0.9.2',
+    'Flask-Babel>=3.0.0',
     'invenio-assets>=1.0.0b7',
     'invenio_i18n>=1.0.0b4',
     'invenio_theme>=1.0.0b4'

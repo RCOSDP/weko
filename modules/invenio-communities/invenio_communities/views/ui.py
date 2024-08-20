@@ -33,7 +33,7 @@ from functools import wraps
 import bleach
 from flask import Blueprint, abort, current_app, flash, jsonify, redirect, \
     render_template, request, url_for
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 from flask_login import current_user, login_required
 from invenio_db import db
 from invenio_indexer.api import RecordIndexer

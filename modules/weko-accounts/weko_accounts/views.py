@@ -31,7 +31,7 @@ import redis
 from redis import sentinel
 from flask import Blueprint, abort, current_app, flash, redirect, \
     render_template, request, session, url_for
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 from flask_login import current_user
 from flask_menu import current_menu
 from flask_security import url_for_security

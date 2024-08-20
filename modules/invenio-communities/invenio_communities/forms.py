@@ -28,7 +28,7 @@ from __future__ import absolute_import, print_function
 
 import re
 
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 from flask_wtf import Form
 from wtforms import FileField, HiddenField, StringField, TextAreaField, \
     validators

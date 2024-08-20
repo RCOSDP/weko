@@ -20,7 +20,7 @@
 
 """Group Forms."""
 
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 from flask_wtf import FlaskForm
 from sqlalchemy_utils.types.choice import ChoiceType
 from wtforms import RadioField, TextAreaField

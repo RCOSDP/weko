@@ -28,7 +28,7 @@ import sys
 
 from flask import abort, current_app, json, jsonify, session
 from flask_admin import BaseView, expose
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 from flask_login import login_required
 from invenio_i18n.ext import current_i18n
 from weko_records.api import ItemTypes

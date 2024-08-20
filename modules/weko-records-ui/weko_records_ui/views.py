@@ -29,7 +29,7 @@ import six
 import werkzeug
 from flask import Blueprint, abort, current_app, escape, flash, json, \
     jsonify, make_response, redirect, render_template, request, url_for
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 from flask_login import login_required
 from flask_security import current_user
 from invenio_cache import cached_unless_authenticated

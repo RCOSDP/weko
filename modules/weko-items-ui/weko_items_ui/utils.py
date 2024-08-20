@@ -41,7 +41,7 @@ from elasticsearch.exceptions import NotFoundError
 from elasticsearch import exceptions as es_exceptions
 from flask import abort, current_app, flash, redirect, request, send_file, \
     url_for,jsonify, Flask
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_login import current_user

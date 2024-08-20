@@ -23,7 +23,7 @@ import json
 
 from flask import current_app, jsonify, request
 from flask_admin import BaseView, expose
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context

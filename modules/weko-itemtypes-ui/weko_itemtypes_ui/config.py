@@ -20,7 +20,7 @@
 
 """Configuration for weko-itemtypes-ui."""
 
-from flask_babelex import lazy_gettext as _
+from flask_babel import lazy_gettext as _
 
 # TODO: Delete if not being used
 WEKO_ITEMTYPES_UI_BASE_TEMPLATE = 'weko_itemtypes_ui/base.html'

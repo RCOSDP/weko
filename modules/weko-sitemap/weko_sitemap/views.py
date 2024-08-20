@@ -14,7 +14,7 @@ from __future__ import absolute_import, print_function
 
 from flask import Blueprint, abort, current_app, render_template, request, url_for,make_response
 from flask_admin import BaseView, expose
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 from invenio_db import db
 
 blueprint = Blueprint(

@@ -23,7 +23,7 @@
 import re
 import uuid
 from flask import Response, Blueprint, current_app, json, jsonify, make_response, request
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 from flask_login import login_required
 from flask_security import current_user
 from invenio_db import db

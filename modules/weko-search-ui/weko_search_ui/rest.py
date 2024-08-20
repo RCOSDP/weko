@@ -28,7 +28,7 @@ import traceback
 from functools import partial
 
 from flask import Blueprint, abort, current_app, jsonify, redirect, request, url_for, Response
-from flask_babelex import get_locale
+from flask_babel import get_locale
 from elasticsearch.exceptions import ElasticsearchException
 from invenio_db import db
 from invenio_files_rest.storage import PyFSFileStorage

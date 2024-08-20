@@ -24,7 +24,7 @@
 from flask import Blueprint, flash, jsonify, redirect, render_template, \
     request, url_for, current_app
 import bleach
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 from flask_breadcrumbs import register_breadcrumb
 from flask_login import current_user, login_required
 from flask_menu import register_menu

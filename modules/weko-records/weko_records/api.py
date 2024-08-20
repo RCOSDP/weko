@@ -30,7 +30,7 @@ import re
 from elasticsearch.exceptions import NotFoundError
 from elasticsearch_dsl.query import QueryString
 from flask import current_app, request
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.api import Record

@@ -30,8 +30,8 @@ import unicodedata
 from datetime import datetime
 
 from flask import abort, current_app, render_template, request, send_file
-from flask_babelex import gettext as _
-from flask_babelex import get_locale
+from flask_babel import gettext as _
+from flask_babel import get_locale
 from flask_login import current_user
 from invenio_db import db
 from invenio_files_rest import signals

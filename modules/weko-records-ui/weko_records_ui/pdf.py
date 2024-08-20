@@ -29,7 +29,7 @@ import unicodedata
 from datetime import datetime
 
 from flask import current_app, flash, redirect, request, send_file
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 from fpdf import FPDF
 from invenio_files_rest.views import ObjectResource
 from invenio_i18n.ext import current_i18n

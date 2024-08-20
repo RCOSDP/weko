@@ -90,7 +90,7 @@ setup_requires = [
 
 install_requires = [
     'bleach>=2.1.3',
-    'Flask-BabelEx>=0.9.3',
+    'Flask-Babel>=3.0.0',
     'Flask>=0.11.1',
     # 'elasticsearch-dsl>=6.0.0,<7.0.0',
     # 'elasticsearch>=6.0.0,<7.0.0',

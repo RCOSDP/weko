@@ -6,7 +6,7 @@ import sys
 
 from flask import abort, current_app, flash, request
 from flask_admin import BaseView, expose
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 from flask_mail import Message
 from werkzeug.local import LocalProxy
 

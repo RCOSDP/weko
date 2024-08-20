@@ -23,7 +23,7 @@
 # as an Intergovernmental Organization or submit itself to any jurisdiction.
 
 """Index errors."""
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 from invenio_rest.errors import RESTException
 
 

@@ -22,7 +22,7 @@
 
 from flask import redirect, request, url_for
 from flask_admin import BaseView, expose
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 from flask_plugins import get_enabled_plugins, get_plugin
 
 from .proxies import current_plugins

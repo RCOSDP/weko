@@ -14,7 +14,7 @@ from datetime import date, timedelta
 import six
 from flask import Blueprint, abort, current_app, jsonify, render_template, \
     request
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 from flask_login import current_user, login_required
 from invenio_cache import current_cache, current_cache_ext
 from invenio_stats.utils import QueryCommonReportsHelper

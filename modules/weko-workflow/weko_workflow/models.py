@@ -24,7 +24,7 @@ import uuid
 from datetime import datetime
 
 from flask import current_app
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 from invenio_accounts.models import Role, User
 from invenio_db import db
 from sqlalchemy import func

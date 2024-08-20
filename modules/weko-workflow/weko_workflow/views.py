@@ -43,7 +43,7 @@ from marshmallow.exceptions import ValidationError
 
 from flask import Response, Blueprint, abort, current_app, has_request_context, \
     jsonify, make_response, render_template, request, session, url_for, send_file
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 from flask_login import current_user, login_required
 from weko_admin.api import validate_csrf_header
 from flask_wtf import FlaskForm
