@@ -116,5 +116,5 @@ class WekoLoggingFS(WekoLoggingBase):
         #         '[in %(pathname)s:%(lineno)d]')
         #     default_handler.setFormatter(formatter2)
         #     app.logger.addHandler(default_handler)
-        if app.config["WEKO_LOGGING_FS_PYWARNINGS"]:
-            self.capture_pywarnings(handler)
+        # if app.config["WEKO_LOGGING_FS_PYWARNINGS"]:
+        #     self.capture_pywarnings(handler)

@@ -1,4 +1,11 @@
-"""Resource for weko-itemtypes_ui log messages."""
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2024 National Institute of Informatics.
+#
+# WEKO-Logging is free software; you can redistribute it and/or modify
+# it under the terms of the MIT License; see LICENSE file for more details.
+
+"""Resource for common log messages."""
 
 WEKO_COMMON_MESSAGE = {
     'WEKO_COMMON_FOR_LOOP_ITERATION': {
@@ -86,13 +93,15 @@ def weko_logger_base(key=None, param=None, ex=None, **kwargs):
     Returns:
         None
     """
+    # check if console logging is enabled
+    if not current_app.config["WEKO_LOGGING_CONSOLE"]:
+        return
+
     # get message parameters from common resource
     if not param:
         param = WEKO_COMMON_MESSAGE.get(key, None)
     if not param:
         return
-    
-    current_app.logger.info('param is None!!!!!!!!!!')
 
     msgid = param.get('msgid', None)
     msgstr = param.get('msgstr', None)
@@ -107,7 +116,6 @@ def weko_logger_base(key=None, param=None, ex=None, **kwargs):
         'wlineno': frame.lineno,
         'wfuncName': frame.function,
     }
-    print(extra)
 
     # output log by msglvl
     if msglvl == 'ERROR':
