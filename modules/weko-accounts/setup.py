@@ -100,9 +100,9 @@ setup(
             'messages = weko_accounts',
         ],
         'invenio_assets.webpack': [
-            'accounts_css_embedded_wayf_custom = weko_theme.webpack:accounts_css_embedded_wayf_custom',
-            'accounts_js_embedded_ds_multi_language_js = weko_theme.webpack:accounts_js_embedded_ds_multi_language_js',
-            'accounts_js_suggest_js = weko_theme.webpack:accounts_js_suggest_js',
+            'accounts_css_embedded_wayf_custom = weko_theme.webpack:weko_accounts',
+            'accounts_js_embedded_ds_multi_language_js = weko_theme.webpack:weko_accounts',
+            'accounts_js_suggest_js = weko_theme.webpack:weko_accounts',
         ],
     },
     extras_require=extras_require,
