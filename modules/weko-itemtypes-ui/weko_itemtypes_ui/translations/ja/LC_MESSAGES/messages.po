@@ -79,6 +79,10 @@ msgstr "プロパティの保存に失敗しました"
 msgid "Saved property successfully."
 msgstr "プロパティを保存しました"
 
+#: weko_itemtypes_ui/admin.py:454
+msgid "Property ID does not exist."
+msgstr "プロパティIDが存在しません"
+
 #: weko_itemtypes_ui/admin.py:537
 msgid "Duplicate mapping as below:"
 msgstr ""

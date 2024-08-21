@@ -72,6 +72,10 @@ msgstr ""
 msgid "Saved property successfully."
 msgstr ""
 
+#: weko_itemtypes_ui/admin.py:454
+msgid "Property ID does not exist."
+msgstr ""
+
 #: weko_itemtypes_ui/admin.py:537
 msgid "Duplicate mapping as below:"
 msgstr ""

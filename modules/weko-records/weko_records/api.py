@@ -1338,6 +1338,39 @@ class ItemTypeProps(RecordBase):
         return record
 
     @classmethod
+    def create_with_property_id(cls, property_id=None, name=None, schema=None, form_single=None,
+               form_array=None):
+        """Create a new ItemTypeProperty instance and store it in the database.
+
+        :param property_id: ID of Itemtype property.
+        :param name: Property name.
+        :param schema: Property in JSON format.
+        :param form_single: form (single) in JSON format.
+        :param form_array: form (array) in JSON format.
+        :returns: A new :class:`Record` instance.
+        """
+        with db.session.begin_nested():
+            record = cls(schema)
+
+            before_record_insert.send(
+                current_app._get_current_object(),
+                record=record
+            )
+
+            record.model = ItemTypeProperty(name=name,
+                                            schema=schema,
+                                            form=form_single,
+                                            forms=form_array,
+                                            id=property_id)
+            db.session.add(record.model)
+
+        after_record_insert.send(
+            current_app._get_current_object(),
+            record=record
+        )
+        return record
+
+    @classmethod
     def get_record(cls, property_id):
         """Retrieve the record by id.
 

@@ -434,6 +434,36 @@ class ItemTypeMetaDataView(BaseView):
             if not json_schema:
                 raise ValueError('Schema is in wrong format.')
 
+            # get data from ItemType.json
+            table_row_ids = import_data["ItemType"].get('render').get("table_row")
+            meta_list = import_data["ItemType"].get('render').get("meta_list")
+
+            unregistered_prop_ids = set()
+            for row_id in table_row_ids:
+                # remove "cus_"
+                prop_id = int(meta_list.get(row_id).get("input_type")[4:])
+                prop = ItemTypeProps.get_record(prop_id)
+                if prop is None:
+                    unregistered_prop_ids.add(prop_id)
+
+            forced_import = current_app.config[
+                'WEKO_ITEMTYPES_UI_FORCED_IMPORT_ENABLED'
+            ]
+
+            if (len(unregistered_prop_ids) > 0) and not forced_import:
+                raise ValueError(_('Property ID does not exist.'))
+
+            # get unregistered property from ItemTypeProperty.json
+            property_data = import_data["ItemTypeProperty"]
+            for prop_id in unregistered_prop_ids:
+                prop = [x for x in property_data if x.get("id") == prop_id][0]
+
+                ItemTypeProps.create_with_property_id(property_id=prop_id,
+                                     name=prop.get("name"),
+                                     schema=prop.get("schema"),
+                                     form_single=prop.get("form"),
+                                     form_array=prop.get("forms"))
+
             record = ItemTypes.update(id_=0,
                                       name=item_type_name,
                                       schema=json_schema,
