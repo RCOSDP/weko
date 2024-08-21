@@ -2400,37 +2400,10 @@ def get_mail_data(mail_id):
     :mail_id: mail template id in db
     """
     mt = MailTemplates.get_by_id(mail_id)
-    subject = mt.mail_subject
-    body = mt.mail_body
-
-    recipients = []
-    cc = []
-    bcc = []
-    invalid_ids = []
-    records = MailTemplateUsers.query.filter_by(template_id=mail_id).all()
-    for record in records:
-        user = User.query.filter_by(id=record.user_id, active=True).first()
-        if not user:
-            invalid_ids.append(record.user_id)
-        if record.mail_type == MailType.RECIPIENT:
-            recipients.append(user.email)
-        elif record.mail_type == MailType.CC:
-            cc.append(user.email)
-        elif record.mail_type == MailType.BCC:
-            bcc.append(user.email)
-
-    if invalid_ids:
-        for id in invalid_ids:
-            MailTemplateUsers.delete_by_user_id(id)
 
     if mt:
-        return {
-            "mail_subject": subject,
-            "mail_body": body,
-            "mail_recipients": recipients,
-            "mail_cc": cc,
-            "mail_bcc": bcc
-        }
+        subject = mt.mail_subject
+        body = mt.mail_body
     else:
         return {
             "mail_subject": "",
@@ -2439,6 +2412,35 @@ def get_mail_data(mail_id):
             "mail_cc": [],
             "mail_bcc": []
         }
+
+    recipients = []
+    cc = []
+    bcc = []
+    invalid_ids = []
+    records = MailTemplateUsers.query.filter_by(template_id=mail_id).all()
+    for record in records:
+        user = User.query.filter_by(id=record.user_id, active=True).first()
+        if user:
+            if record.mail_type == MailType.RECIPIENT:
+                recipients.append(user.email)
+            elif record.mail_type == MailType.CC:
+                cc.append(user.email)
+            elif record.mail_type == MailType.BCC:
+                bcc.append(user.email)
+        else:
+            invalid_ids.append(record.user_id)
+
+    if invalid_ids:
+        for id in invalid_ids:
+            MailTemplateUsers.delete_by_user_id(id)
+
+    return {
+        "mail_subject": subject,
+        "mail_body": body,
+        "mail_recipients": recipients,
+        "mail_cc": cc,
+        "mail_bcc": bcc
+    }
 
 
 def get_mail_data_tpl(file_name):

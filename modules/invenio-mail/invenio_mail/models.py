@@ -217,6 +217,11 @@ class MailType(enum.Enum):
     CC = 'cc'
     BCC = 'bcc'
 
+    def __lt__(self, other):
+        if isinstance(other, MailType):
+            return self.value < other.value
+        return NotImplemented
+
 class MailTemplateUsers(db.Model, Timestamp):
     """Users in mail templates"""
 
@@ -234,31 +239,63 @@ class MailTemplateUsers(db.Model, Timestamp):
 
         def process_emails(emails_str, mail_type):
             status = True
-            new_emails = [email.strip() for email in emails_str.split(',') if email]
-            new_user_ids = [User.query.filter_by(email=email).first().id for email in new_emails]
-            existing_records = cls.query.filter_by(template_id=data['key'], mail_type=mail_type).all()
-            existing_user_ids = [record.user_id for record in existing_records]
+            new_emails = [
+                email.strip()
+                for email in emails_str.split(',') if email
+            ]
+            new_user_ids = [
+                User.query.filter_by(email=email).first().id
+                for email in new_emails
+            ]
+            existing_records = cls.query.filter_by(
+                template_id=data['key'], mail_type=mail_type
+            ).all()
+            existing_user_ids = [
+                record.user_id
+                for record in existing_records
+            ]
+
             for new_user_id in new_user_ids:
                 if new_user_id not in existing_user_ids:
-                    new_record = cls(template_id=data['key'], user_id=new_user_id, mail_type=mail_type)
+                    new_record = cls(
+                        template_id=data['key'],
+                        user_id=new_user_id,
+                        mail_type=mail_type
+                    )
                     try:
                         db.session.add(new_record)
                     except Exception as ex:
-                        current_app.logger.error(f"Failed to add new record for user_id {new_user_id}: {ex}")
+                        current_app.logger.error(
+                            "Failed to add new record for user_id "
+                            f"{new_user_id}: {ex}"
+                        )
+                        db.session.rollback()
                         status = False
+
             for record in existing_records:
                 if record.user_id not in new_user_ids:
                     try:
                         db.session.delete(record)
                     except Exception as ex:
                         current_app.logger.error(f"Failed to delete record for user_id {record.user_id}: {ex}")
+                        db.session.rollback()
                         status = False
+
             return status
 
         status = True
-        status = status and process_emails(data['content']['recipients'], MailType.RECIPIENT)
-        status = status and process_emails(data['content']['cc'], MailType.CC)
-        status = status and process_emails(data['content']['bcc'], MailType.BCC)
+        status = (
+            status
+            and process_emails(
+                data['content']['recipients'], MailType.RECIPIENT
+            )
+            and process_emails(
+                data['content']['cc'], MailType.CC
+            )
+            and process_emails(
+                data['content']['bcc'], MailType.BCC
+            )
+        )
 
         if status:
             try:
@@ -268,6 +305,8 @@ class MailTemplateUsers(db.Model, Timestamp):
                 db.session.rollback()
                 current_app.logger.error(ex)
                 return False
+        else:
+            return False
 
 
     @classmethod
