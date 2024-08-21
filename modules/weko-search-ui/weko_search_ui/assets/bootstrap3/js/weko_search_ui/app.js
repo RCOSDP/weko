@@ -9,13 +9,7 @@ const MESSAGE = {
         ja: "必須項目がありません。",
     }
 }
-//require([
-//  "jquery",
-//  "bootstrap",
-//  "node_modules/bootstrap-datepicker/dist/js/bootstrap-datepicker"
-//], function () {
-// loading all the jQuery modules for the not require.js ready scripts
-// everywhere.
+
 $(function () {
     $('#myModal').modal({
         show: false
@@ -56,30 +50,28 @@ $(function () {
         });
         return str;
     }
-});
 
-function showJournalInfo() {
-    var check = setInterval(show, 500);
-    function show() {
-        if ($('#index_list_length').val() !== undefined && $('#index_list_length').val() !== '' && $('#index_list_length').val() !== null) {
-            page_global.display_list_flg = $('#display_format').val() == 1;
-            if ($('#index_tree_list').length || !page_global.display_list_flg) {
-                $("#journal_info").remove();
-            } else {
-                $("#journal_info").css({ display: "block" });
+    function showJournalInfo() {
+        var check = setInterval(show, 500);
+        function show() {
+            if ($('#index_list_length').val() !== undefined && $('#index_list_length').val() !== '' && $('#index_list_length').val() !== null) {
+                page_global.display_list_flg = $('#display_format').val() == 1;
+                if ($('#index_tree_list').length || !page_global.display_list_flg) {
+                    $("#journal_info").remove();
+                } else {
+                    $("#journal_info").css({ display: "block" });
+                }
+                clearInterval(check);
+                // display image
+                if ($("#thumbnail_img").length > 0 && page_global.display_list_flg) {
+                    $("#journal_info_img").show();
+                    $("#journal_info_img").html($("#thumbnail_img").get(0));
+                }
+                $("#thumbnail_img").removeClass("ng-hide");
             }
-            clearInterval(check);
-            // display image
-            if ($("#thumbnail_img").length > 0 && page_global.display_list_flg) {
-                $("#journal_info_img").show();
-                $("#journal_info_img").html($("#thumbnail_img").get(0));
-            }
-            $("#thumbnail_img").removeClass("ng-hide");
         }
     }
-}
 
-$(document).ready(function () {
     showJournalInfo();
 
     let urlVars = getUrlVars();

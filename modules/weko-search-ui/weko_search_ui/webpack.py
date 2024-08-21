@@ -22,6 +22,9 @@ weko_search_ui = WebpackThemeBundle(
                 "bootstrap": "~3.3.7",
                 "bootstrap-datepicker": "~1.7.1",
                 "jquery": "~3.2.1",
+                "react": "~15.6.1",
+                "react-bootstrap": "~0.33.1",
+                "react-dom": "~15.6.1",
             }
         )
     }
