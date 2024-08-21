@@ -79,7 +79,7 @@ setup(
             'messages = weko_sitemap',
         ],
         'invenio_admin.views': [
-            'weko_sitemap_sitemap = weko_sitemap.admin:weko_sitemap',
+            'weko_sitemap_sitemap = weko_sitemap.admin:sitemap_adminview',
         ],
         # TODO: Edit these entry points to fit your needs.
         # 'invenio_access.actions': [],
