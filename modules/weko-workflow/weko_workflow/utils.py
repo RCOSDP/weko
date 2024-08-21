@@ -4469,3 +4469,23 @@ def grant_access_rights_to_all_open_restricted_files(activity_id :str ,permissio
 
     #url_and_expired_date of a applyed content.
     return url_and_expired_date
+
+def delete_lock_activity_cache(activity_id, data):
+    cache_key = 'workflow_locked_activity_{}'.format(activity_id)
+    locked_value = str(data.get('locked_value'))
+    msg = None
+    cur_locked_val = str(get_cache_data(cache_key)) or str()
+    if cur_locked_val and cur_locked_val == locked_value:
+        delete_cache_data(cache_key)
+        msg = _('Unlock success')
+    return msg
+
+def delete_user_lock_activity_cache(activity_id, data):
+    cache_key = "workflow_userlock_activity_{}".format(str(current_user.get_id()))
+    cur_locked_val = str(get_cache_data(cache_key)) or str()
+    msg = _("Not unlock")
+
+    if cur_locked_val and not data["is_opened"] or (cur_locked_val == activity_id):
+        delete_cache_data(cache_key)
+        msg = "User Unlock Success"
+    return msg
