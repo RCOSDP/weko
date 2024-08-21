@@ -1,4 +1,4 @@
-import 'js/weko_gridlayout/jquery-ui.js';
-import 'js/weko_gridlayout/lodash.min.js';
-import 'js/weko_gridlayout/gridstack.js';
-import 'js/weko_gridlayout/gridstack.jQueryUI.js';
+import 'jquery-ui.js';
+import 'lodash.min.js';
+import 'gridstack.js';
+import 'gridstack.jQueryUI.js';
