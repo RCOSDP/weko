@@ -360,7 +360,9 @@ class MainLayout extends React.Component {
                     {
                         tabs.map((item, key) => {
                             return (
-                                <li role="presentation" className={`${item.tab_key === tab ? 'active' : ''}`} onClick={() => this.handleChangeTab(item.tab_key)}><a href="#">{item.tab_name}</a></li>
+                                <li role="presentation" className={`${item.tab_key === tab ? 'active' : ''}`} onClick={() => this.handleChangeTab(item.tab_key)}>
+                                    <button>{item.tab_name}</button>
+                                </li>
                             )
                         })
                     }
