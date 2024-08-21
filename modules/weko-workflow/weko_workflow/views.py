@@ -1328,7 +1328,7 @@ def next_action(activity_id='0', action_id=0):
         work_activity.end_activity(activity)
         res = ResponseMessageSchema().load({"code":0,"msg":_("success")})
         return jsonify(res.data), 200
-    if 'approval' == action_endpoint:
+    if 'approval' == action_endpoint and post_json.get('temporary_save') == 0:
         update_approval_date(activity_detail)
     item_id = None
     recid = None
@@ -1378,7 +1378,7 @@ def next_action(activity_id='0', action_id=0):
     next_action_order = next_flow_action[
         0].action_order if action_order else None
     # Start to send mail
-    if next_action_endpoint in ['approval' , 'end_action']:
+    if next_action_endpoint in ['approval' , 'end_action'] and post_json.get('temporary_save') == 0:
         current_flow_action = flow.get_flow_action_detail(
             activity_detail.flow_define.flow_id, action_id, action_order)
         if current_flow_action is None:
