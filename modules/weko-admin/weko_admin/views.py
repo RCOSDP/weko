@@ -111,16 +111,6 @@ def set_lifetime(minutes):
 
 @blueprint.route('/session', methods=['GET', 'POST'])
 @blueprint.route('/session/', methods=['GET', 'POST'])
-@register_menu(
-    blueprint, 'settings.lifetime',
-    _('%(icon)s Session', icon='<i class="fa fa-cogs fa-fw"></i>'),
-    visible_when=_has_admin_access,
-    order=14
-)
-@register_breadcrumb(
-    blueprint, 'breadcrumbs.settings.session',
-    _('Session')
-)
 @login_required
 def lifetime():
     """Loading session setting page.

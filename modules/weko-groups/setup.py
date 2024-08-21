@@ -110,6 +110,9 @@ setup(
         'invenio_base.apps': [
             'weko_groups = weko_groups:WekoGroups',
         ],
+        'invenio_base.finalize_app':[
+            'weko_groups = weko_groups.ext:finalize_app',
+        ],
         'invenio_i18n.translations': [
             'messages = weko_groups',
         ],

@@ -21,8 +21,11 @@
 
 """Extensions for weko-groups."""
 
+from flask import request
+from flask_menu import current_menu
+from invenio_i18n import LazyString
+from invenio_i18n import lazy_gettext as _
 from .views import blueprint
-
 
 class WekoGroups(object):
     """Weko-Groups extension."""
@@ -56,3 +59,16 @@ class WekoGroups(object):
             "GROUPS_BASE_TEMPLATE",
             app.config.get("SETTINGS_TEMPLATE",
                            "weko_groups/base.html"))
+
+def finalize_app(app):
+    icons = app.extensions['invenio-theme'].icons
+    
+    current_menu.submenu('settings.groups').register(
+        endpoint='weko_groups.groups',
+        text=_(
+            '%(icon)s Groups',
+            icon=LazyString(lambda: f'<i class="{icons.codepen}"></i>')
+        ),
+        order=13,
+        active_when=lambda: request.endpoint.startswith('weko_groups.')
+    )

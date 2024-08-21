@@ -146,6 +146,9 @@ setup(
         'invenio_assets.webpack': [
             'weko_admin = weko_admin.webpack:weko_admin',
         ],
+        'invenio_base.finalize_app':[
+            'weko_admin = weko_admin.ext:finalize_app',
+        ],
         'invenio_db.models': [
             'weko_admin = weko_admin.models',
         ],
