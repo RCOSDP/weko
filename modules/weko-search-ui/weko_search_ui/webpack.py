@@ -18,7 +18,10 @@ weko_search_ui = WebpackThemeBundle(
                 'search-ui-less-theme-facet-search': './css/weko_search_ui/facet_search_bundle.less'
             },
             dependencies={
-                "bootstrap-datepicker": "~1.7.1"
+                'angular': "~1.4.9",
+                "bootstrap": "~3.3.7",
+                "bootstrap-datepicker": "~1.7.1",
+                "jquery": "~3.2.1",
             }
         )
     }
