@@ -1,3 +1,3 @@
-import 'js/weko_authors/inline.bundle.js';
-import 'js/weko_authors/polyfills.bundle.js';
-import 'js/weko_authors/main.bundle.js';
+import 'inline.bundle.js';
+import 'polyfills.bundle.js';
+import 'main.bundle.js';

@@ -1,3 +1,3 @@
-import 'js/weko_indextree_journal/inline.bundle.js'
-import 'js/weko_indextree_journal/polyfills.bundle.js'
-import 'js/weko_indextree_journal/main.bundle.js'
+import 'inline.bundle.js'
+import 'polyfills.bundle.js'
+import 'main.bundle.js'

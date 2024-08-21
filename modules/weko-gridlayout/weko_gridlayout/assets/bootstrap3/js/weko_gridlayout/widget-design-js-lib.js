@@ -1,4 +1,4 @@
-import 'js/weko_gridlayout/react.production.min.js';
-import 'js/weko_gridlayout/react-dom.production.min.js';
-import 'js/weko_gridlayout/browser.min.js';
+import 'react.production.min.js';
+import 'react-dom.production.min.js';
+import 'browser.min.js';
 

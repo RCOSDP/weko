@@ -1,3 +1,3 @@
-import 'js/weko_authors/inline.search.bundle.js';
-import 'js/weko_authors/polyfills.search.bundle.js';
-import 'js/weko_authors/main.search.bundle.js';
+import 'inline.search.bundle.js';
+import 'polyfills.search.bundle.js';
+import 'main.search.bundle.js';
