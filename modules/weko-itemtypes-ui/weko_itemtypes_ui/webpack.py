@@ -9,7 +9,7 @@ weko_itemtypes_ui = WebpackThemeBundle(
             entry={
                 "itemstypes_ui_css_style": "./css/weko_itemtypes_ui/itemtype.less",
                 "itemstypes_ui_css_style_mapping": "./css/weko_itemtypes_ui/mapping.less",
-                "itemstypes_ui_css_style_rocrate_mapping": "./css/weko_itemtypes_ui/rocrate_mapping.less'",
+                "itemstypes_ui_css_style_rocrate_mapping": "./css/weko_itemtypes_ui/rocrate_mapping.less",
                 "itemstypes_ui_js_dependencies_schema_editor": "./js/weko_itemtypes_ui/js_react.js",
                 "itemstypes_ui_js_schema_editor": "./js/weko_itemtypes_ui/jsonschemaeditor.js",
                 "itemstypes_ui_js_js": "./js/weko_itemtypes_ui/create_itemtype.js",
