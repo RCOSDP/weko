@@ -33,7 +33,8 @@ WEKO_ITEMS_AUTOFILL_MESSAGE = {
     },
     'WEKO_ITEMS_AUTOFILL_SET_WEB_API_ACCOUNT_INFO': {
         'msgid': 'WEKO_ITEMS_AUTOFILL_I_0001',
-        'msgstr': "Web API account information has been set. Itemid: {pid}",
+        'msgstr': "Web API account information has been set. "\
+            "Itemid: {pid}",
         'msglvl': 'INFO',
     },
     'WEKO_ITEMS_AUTOFILL_POPULATE_AUTO_METADATA_CROSSREF': {
@@ -65,11 +66,13 @@ def weko_logger(key=None, ex=None, **kwargs):
     Method to output logs in current_app.logger using the resource.
 
     Args:
-        key (str): key of message.
-            Not required if ex is specified.
-        ex (Exception): exception object.
+        key (str): \
+            key of message. Not required if ex is specified.
+        ex (Exception): \
+            exception object.
             If you catch an exception, specify it here.
-        **kwargs: message parameters.
+        **kwargs: \
+            message parameters.
             If you want to replace the placeholder in the message,
             specify the key-value pair here.
 

@@ -11,7 +11,7 @@ WEKO_INDEX_TREE_JOURNAL_MESSAGE = {
     'WEKO_INDEX_TREE_JOURNAL_FAILED_DISPLAY_SETTINGS_JOURNAL_INFO': {
         'msgid': 'WEKO_INDEX_TREE_JOURNAL_E_0001',
         'msgstr': "FAILED to change display settings of index {index_name} "\
-            "for journal information to {conf_value}.",
+            "for journal information to {configuration_value}.",
         'msglvl': 'ERROR',
     },
     'WEKO_INDEX_TREE_JOURNAL_FAILED_SAVE_JOURNAL_INFO': {
@@ -40,29 +40,35 @@ WEKO_INDEX_TREE_JOURNAL_MESSAGE = {
     },
     'WEKO_INDEX_TREE_JOURNAL_DISPLAY_SETTINGS_JOURNAL_INFO': {
         'msgid': 'WEKO_INDEX_TREE_JOURNAL_I_0001',
-        'msgstr': "Display settings of index {index_name} for "\
-            "journal information has been changed to {conf_value}.",
+        'msgstr': "Display settings of index {index_name} for journal "\
+            "information has been changed to {configuration_value}.",
+        'msglvl': 'INFO',
+    },
+    'WEKO_INDEX_TREE_JOURNAL_DISPLAY_DETAIL_SETTINGS_JOURNAL_INFO': {
+        'msgid': 'WEKO_INDEX_TREE_JOURNAL_I_0002',
+        'msgstr': "Display settings of index {index_name} for journal "\
+            "information has been changed {section} to {configuration_value}.",
         'msglvl': 'INFO',
     },
     'WEKO_INDEX_TREE_JOURNAL_SAVE_JOURNAL_INFO': {
-        'msgid': 'WEKO_INDEX_TREE_JOURNAL_I_0002',
+        'msgid': 'WEKO_INDEX_TREE_JOURNAL_I_0003',
         'msgstr': "Journal information edited. Index name: {index_name}",
         'msglvl': 'INFO',
     },
     'WEKO_INDEX_TREE_JOURNAL_OUTPUT _JOURNAL_INFO': {
-        'msgid': 'WEKO_INDEX_TREE_JOURNAL_I_0003',
+        'msgid': 'WEKO_INDEX_TREE_JOURNAL_I_0004',
         'msgstr': "Journal information has been output. "\
             "Index name: {index_name}",
         'msglvl': 'INFO',
     },
     'WEKO_INDEX_TREE_JOURNAL_CREATE_NEW_JOURNAL_INFO': {
-        'msgid': 'WEKO_INDEX_TREE_JOURNAL_I_0004',
+        'msgid': 'WEKO_INDEX_TREE_JOURNAL_I_0005',
         'msgstr': "New journal information has been created. "\
             "Index name: {index_name}",
         'msglvl': 'INFO',
     },
     'WEKO_INDEX_TREE_JOURNAL_DELETE_JOURNAL_INFO': {
-        'msgid': 'WEKO_INDEX_TREE_JOURNAL_I_0005',
+        'msgid': 'WEKO_INDEX_TREE_JOURNAL_I_0006',
         'msgstr': "Journal information has been deleted. "\
             "Index name: {index_name}",
         'msglvl': 'INFO',
@@ -78,11 +84,13 @@ def weko_logger(key=None, ex=None, **kwargs):
     Method to output logs in current_app.logger using the resource.
 
     Args:
-        key (str): key of message.
-            Not required if ex is specified.
-        ex (Exception): exception object.
+        key (str): \
+            key of message. Not required if ex is specified.
+        ex (Exception): \
+            exception object.
             If you catch an exception, specify it here.
-        **kwargs: message parameters.
+        **kwargs: \
+            message parameters.
             If you want to replace the placeholder in the message,
             specify the key-value pair here.
 

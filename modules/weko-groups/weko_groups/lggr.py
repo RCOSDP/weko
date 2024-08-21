@@ -8,6 +8,58 @@
 """Resource for weko-groups log messages."""
 
 WEKO_GROUPS_MESSAGE = {
+    'WEKO_GROUPS_FAILED_CREATE_NEW_GROUP': {
+        'msgid': 'WEKO_GROUPS_E_0001',
+        'msgstr': "FAILED to create new group.",
+        'msglvl': 'ERROR',
+    },
+    'WEKO_GROUPS_FAILED_UPDATE_GROUP': {
+        'msgid': 'WEKO_GROUPS_E_0002',
+        'msgstr': "FAILED to update group {group_id}",
+        'msglvl': 'ERROR',
+    },
+    'WEKO_GROUPS_FAILED_DELETE_GROUP': {
+        'msgid': 'WEKO_GROUPS_E_0003',
+        'msgstr': "FAILED to delete group {group_id}",
+        'msglvl': 'ERROR',
+    },
+    'WEKO_GROUPS_FAILED_DISPLAY_MEMBER_LIST': {
+        'msgid': 'WEKO_GROUPS_E_0004',
+        'msgstr': "FAILED to display member list of group {group_id}",
+        'msglvl': 'ERROR',
+    },
+    'WEKO_GROUPS_FAILED_LEAVE_GROUP': {
+        'msgid': 'WEKO_GROUPS_E_0005',
+        'msgstr': "FAILED to leave group {group_id}",
+        'msglvl': 'ERROR',
+    },
+    'WEKO_GROUPS_FAILED_APPROVE_USER_TO_GROUP': {
+        'msgid': 'WEKO_GROUPS_E_0006',
+        'msgstr': "FAILED to approve membership for the group {group_id}",
+        'msglvl': 'ERROR',
+    },
+    'WEKO_GROUPS_FAILED_REMOVE_USER_FROM_GROUP': {
+        'msgid': 'WEKO_GROUPS_E_0007',
+        'msgstr': "FAILED to remove user {user_id} from group {group_id}",
+        'msglvl': 'ERROR',
+    },
+    'WEKO_GROUPS_FAILED_ACCEPT_INVITATION_FROM_GROUP': {
+        'msgid': 'WEKO_GROUPS_E_0008',
+        'msgstr': "FAILED to accept the invitation to join the group "\
+            "{group_id}",
+        'msglvl': 'ERROR',
+    },
+    'WEKO_GROUPS_FAILED_REFUSE_INVITATION_FROM_GROUP': {
+        'msgid': 'WEKO_GROUPS_E_0009',
+        'msgstr': "FAILED to refuse the invitation to join the group "\
+            "{group_id}",
+        'msglvl': 'ERROR',
+    },
+    'WEKO_GROUPS_FAILED_INVITE_USER_TO_GROUP': {
+        'msgid': 'WEKO_GROUPS_E_0010',
+        'msgstr': "Failed to invite new member.",
+        'msglvl': 'ERROR',
+    },
     'WEKO_GROUPS_LOGIN_SUCCESSED': {
         'msgid': 'WEKO_GROUPS_I_0001',
         'msgstr': "Login request SUCCESSED",
@@ -50,12 +102,12 @@ WEKO_GROUPS_MESSAGE = {
     },
     'WEKO_GROUPS_APPROVE_USER_TO_GROUP': {
         'msgid': 'WEKO_GROUPS_I_0009',
-        'msgstr': "Approved user {userid} to be member of group {group_id}",
+        'msgstr': "Approved user {user_id} to be member of group {group_id}",
         'msglvl': 'INFO',
     },
     'WEKO_GROUPS_REMOVE_USER_FROM_GROUP': {
         'msgid': 'WEKO_GROUPS_I_0010',
-        'msgstr': "Remove user {userid} from group {group_id}",
+        'msgstr': "Remove user {user_id} from group {group_id}",
         'msglvl': 'INFO',
     },
     'WEKO_GROUPS_ACCEPT_INVITATION_FROM_GROUP': {
@@ -70,58 +122,8 @@ WEKO_GROUPS_MESSAGE = {
     },
     'WEKO_GROUPS_INVITE_USER_TO_GROUP': {
         'msgid': 'WEKO_GROUPS_I_0013',
-        'msgstr': "Invite user {userid} to group {group_id}",
+        'msgstr': "Invite user {user_id} to group {group_id}",
         'msglvl': 'INFO',
-    },
-    'WEKO_GROUPS_FAILED_CREATE_NEW_GROUP': {
-        'msgid': 'WEKO_GROUPS_E_0001',
-        'msgstr': "FAILED to create new group.",
-        'msglvl': 'ERROR',
-    },
-    'WEKO_GROUPS_FAILED_UPDATE_GROUP': {
-        'msgid': 'WEKO_GROUPS_E_0002',
-        'msgstr': "FAILED to update group {group_id}",
-        'msglvl': 'ERROR',
-    },
-    'WEKO_GROUPS_FAILED_DELETE_GROUP': {
-        'msgid': 'WEKO_GROUPS_E_0003',
-        'msgstr': "FAILED to delete group {group_id}",
-        'msglvl': 'ERROR',
-    },
-    'WEKO_GROUPS_FAILED_DISPLAY_MEMBER_LIST': {
-        'msgid': 'WEKO_GROUPS_E_0004',
-        'msgstr': "FAILED to display member list of group {group_id}",
-        'msglvl': 'ERROR',
-    },
-    'WEKO_GROUPS_FAILED_LEAVE_GROUP': {
-        'msgid': 'WEKO_GROUPS_E_0005',
-        'msgstr': "FAILED to leave group {group_id}",
-        'msglvl': 'ERROR',
-    },
-    'WEKO_GROUPS_FAILED_APPROVE_USER_TO_GROUP': {
-        'msgid': 'WEKO_GROUPS_E_0006',
-        'msgstr': "FAILED to approve membership for the group {group_id}",
-        'msglvl': 'ERROR',
-    },
-    'WEKO_GROUPS_FAILED_REMOVE_USER_FROM_GROUP': {
-        'msgid': 'WEKO_GROUPS_E_0007',
-        'msgstr': "FAILED to remove user {userid} from group {group_id}",
-        'msglvl': 'ERROR',
-    },
-    'WEKO_GROUPS_FAILED_ACCEPT_INVITATION_FROM_GROUP': {
-        'msgid': 'WEKO_GROUPS_E_0008',
-        'msgstr': "FAILED to accept the invitation to join the group {group_id}",
-        'msglvl': 'ERROR',
-    },
-    'WEKO_GROUPS_FAILED_REFUSE_INVITATION_FROM_GROUP': {
-        'msgid': 'WEKO_GROUPS_E_0009',
-        'msgstr': "FAILED to refuse the invitation to join the group {group_id}",
-        'msglvl': 'ERROR',
-    },
-    'WEKO_GROUPS_FAILED_INVITE_USER_TO_GROUP': {
-        'msgid': 'WEKO_GROUPS_E_0010',
-        'msgstr': "Failed to invite new member.",
-        'msglvl': 'ERROR',
     },
 }
 
@@ -134,11 +136,13 @@ def weko_logger(key=None, ex=None, **kwargs):
     Method to output logs in current_app.logger using the resource.
 
     Args:
-        key (str): key of message.
-            Not required if ex is specified.
-        ex (Exception): exception object.
+        key (str): \
+            key of message. Not required if ex is specified.
+        ex (Exception): \
+            exception object.
             If you catch an exception, specify it here.
-        **kwargs: message parameters.
+        **kwargs: \
+            message parameters.
             If you want to replace the placeholder in the message,
             specify the key-value pair here.
 

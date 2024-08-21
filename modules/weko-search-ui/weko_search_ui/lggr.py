@@ -46,7 +46,7 @@ WEKO_SEARCH_UI_MESSAGE = {
     'WEKO_SEARCH_UI_FAILED_DISPLAY_SETTINGS_JOURNAL_INFO': {
         'msgid': 'WEKO_SEARCH_UI_E_0008',
         'msgstr': "FAILED to change display settings of index {index_name} "\
-            "for journal information to {conf_value}.",
+            "for journal information to {configuration_value}.",
         'msglvl': 'ERROR',
     },
     'WEKO_SEARCH_UI_FAILED_SAVE_JOURNAL_INFO': {
@@ -160,90 +160,102 @@ WEKO_SEARCH_UI_MESSAGE = {
     'WEKO_SEARCH_UI_CHANGE_DISPLAY_SETTINGS_SEARCH_RESULTS': {
         'msgid': 'WEKO_SEARCH_UI_I_0008',
         'msgstr': "The display setting for search results has been changed "\
-            "to {conf_value}.",
+            "to {configuration_value}.",
+        'msglvl': 'INFO',
+    },
+    'WEKO_SEARCH_UI_CHANGE_DISPLAY_DETAIL_SETTINGS_SEARCH_RESULTS': {
+        'msgid': 'WEKO_SEARCH_UI_I_0009',
+        'msgstr': "The display setting for search results has been changed "\
+            "{section} to {configuration_value}.",
         'msglvl': 'INFO',
     },
     'WEKO_SEARCH_UI_DISPLAY_SETTINGS_JOURNAL_INFO': {
-        'msgid': 'WEKO_SEARCH_UI_I_0009',
+        'msgid': 'WEKO_SEARCH_UI_I_0010',
         'msgstr': "Display settings of index {index_name} for journal "\
-            "information has been changed to {conf_value}.",
+            "information has been changed to {configuration_value}.",
+        'msglvl': 'INFO',
+    },
+    'WEKO_SEARCH_UI_DISPLAY_DETAIL_SETTINGS_JOURNAL_INFO': {
+        'msgid': 'WEKO_SEARCH_UI_I_0011',
+        'msgstr': "Display settings of index {index_name} for journal "\
+            "information has been changed {section} to {configuration_value}.",
         'msglvl': 'INFO',
     },
     'WEKO_SEARCH_UI_SAVE_JOURNAL_INFO': {
-        'msgid': 'WEKO_SEARCH_UI_I_0010',
+        'msgid': 'WEKO_SEARCH_UI_I_0012',
         'msgstr': "Journal information edited. Index name: {index_name}",
         'msglvl': 'INFO',
     },
     'WEKO_SEARCH_UI_OUTPUT _JOURNAL_INFO': {
-        'msgid': 'WEKO_SEARCH_UI_I_0011',
+        'msgid': 'WEKO_SEARCH_UI_I_0013',
         'msgstr': "Journal information has been output. "\
             "Index name: {index_name}",
         'msglvl': 'INFO',
     },
     'WEKO_SEARCH_UI_BULK_DELETE_ITEMS': {
-        'msgid': 'WEKO_SEARCH_UI_I_0012',
+        'msgid': 'WEKO_SEARCH_UI_I_0014',
         'msgstr': "Bulk deletion of items targeted at the index was "\
             "successful.",
         'msglvl': 'INFO',
     },
     'WEKO_SEARCH_UI_EXPORT_FULL_ITEM': {
-        'msgid': 'WEKO_SEARCH_UI_I_0013',
+        'msgid': 'WEKO_SEARCH_UI_I_0015',
         'msgstr': "Full export of the item has been performed.",
         'msglvl': 'INFO',
     },
     'WEKO_SEARCH_UI_CANCEL_EXPORT_FULL_ITEM': {
-        'msgid': 'WEKO_SEARCH_UI_I_0014',
+        'msgid': 'WEKO_SEARCH_UI_I_0016',
         'msgstr': "Full export of the item has been cancelled.",
         'msglvl': 'INFO',
     },
     'WEKO_SEARCH_UI_BULK_IMPORT_ITEMS': {
-        'msgid': 'WEKO_SEARCH_UI_I_0015',
+        'msgid': 'WEKO_SEARCH_UI_I_0017',
         'msgstr': "Bulk import of items has been done.",
         'msglvl': 'INFO',
     },
     'WEKO_SEARCH_UI_DOWNLOAD_ITEM_ON_SCREEN': {
-        'msgid': 'WEKO_SEARCH_UI_I_0016',
+        'msgid': 'WEKO_SEARCH_UI_I_0018',
         'msgstr': "List of items displayed on the screen has been downloaded "\
             "in TSV format.",
         'msglvl': 'INFO',
     },
     'WEKO_SEARCH_UI_REGISTER_NEW_INDEX': {
-        'msgid': 'WEKO_SEARCH_UI_I_0017',
+        'msgid': 'WEKO_SEARCH_UI_I_0019',
         'msgstr': "New index is registered in the index tree.",
         'msglvl': 'INFO',
     },
     'WEKO_SEARCH_UI_UPDATE_INDEX_TREE': {
-        'msgid': 'WEKO_SEARCH_UI_I_0018',
+        'msgid': 'WEKO_SEARCH_UI_I_0020',
         'msgstr': "Index tree updated.",
         'msglvl': 'INFO',
     },
     'WEKO_SEARCH_UI_PUBLISH_INDEX': {
-        'msgid': 'WEKO_SEARCH_UI_I_0019',
+        'msgid': 'WEKO_SEARCH_UI_I_0021',
         'msgstr': "Index became open to public.",
         'msglvl': 'INFO',
     },
     'WEKO_SEARCH_UI_INDEX_NO_LONGER_PUBLISHED': {
-        'msgid': 'WEKO_SEARCH_UI_I_0020',
+        'msgid': 'WEKO_SEARCH_UI_I_0022',
         'msgstr': "Index is no longer published.",
         'msglvl': 'INFO',
     },
     'WEKO_SEARCH_UI_UPDATE_INDEX': {
-        'msgid': 'WEKO_SEARCH_UI_I_0021',
+        'msgid': 'WEKO_SEARCH_UI_I_0023',
         'msgstr': "Index updated.",
         'msglvl': 'INFO',
     },
     'WEKO_SEARCH_UI_DELETE_INDEX_TREE': {
-        'msgid': 'WEKO_SEARCH_UI_I_0022',
+        'msgid': 'WEKO_SEARCH_UI_I_0024',
         'msgstr': "Index tree deleted.",
         'msglvl': 'INFO',
     },
     'WEKO_SEARCH_UI_MOVED_INDEX_TREE': {
-        'msgid': 'WEKO_SEARCH_UI_I_0023',
+        'msgid': 'WEKO_SEARCH_UI_I_0025',
         'msgstr': "Index tree has been moved.",
         'msglvl': 'INFO',
     },
     'WEKO_SEARCH_UI_CHANGE_ORDER_ITEMS': {
-        'msgid': 'WEKO_SEARCH_UI_I_0024',
+        'msgid': 'WEKO_SEARCH_UI_I_0026',
         'msgstr': "The order in which items are displayed has changed.",
         'msglvl': 'INFO',
     },
@@ -258,11 +270,13 @@ def weko_logger(key=None, ex=None, **kwargs):
     Method to output logs in current_app.logger using the resource.
 
     Args:
-        key (str): key of message.
-            Not required if ex is specified.
-        ex (Exception): exception object.
+        key (str): \
+            key of message. Not required if ex is specified.
+        ex (Exception): \
+            exception object.
             If you catch an exception, specify it here.
-        **kwargs: message parameters.
+        **kwargs: \
+            message parameters.
             If you want to replace the placeholder in the message,
             specify the key-value pair here.
 

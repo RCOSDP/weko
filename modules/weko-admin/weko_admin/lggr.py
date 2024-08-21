@@ -124,6 +124,11 @@ WEKO_ADMIN_MESSAGE = {
         'msgstr': "FAILED send email reminder to report usage.",
         'msglvl': 'ERROR',
     },
+    'WEKO_ADMIN_RESENT_MAIL': {
+        'msgid': 'WEKO_ADMIN_W_0001',
+        'msgstr': "The email failed to send and has been resent.",
+        'msglvl': 'WARN',
+    },
     'WEKO_ADMIN_FEEDBACK_ADDRESS_SET': {
         'msgid': 'WEKO_ADMIN_I_0001',
         'msgstr': "Feedback email address set.",
@@ -207,13 +212,14 @@ WEKO_ADMIN_MESSAGE = {
     },
     'WEKO_ADMIN_CHANGE_FEEDBACK_EMAIL_SETTING': {
         'msgid': 'WEKO_ADMIN_I_0017',
-        'msgstr': "Feedback email setting has been changed to {conf_value}.",
+        'msgstr': "Feedback email setting has been changed to "\
+            "{configuration_value}.",
         'msglvl': 'INFO',
     },
     'WEKO_ADMIN_CHANGE_FEEDBACK_EMAIL_DETAIL_SETTING': {
         'msgid': 'WEKO_ADMIN_I_0018',
         'msgstr': "Feedback email setting has been changed {section} to "\
-            "{conf_value}.",
+            "{configuration_value}.",
         'msglvl': 'INFO',
     },
     'WEKO_ADMIN_SENT_EMAIL': {
@@ -224,13 +230,13 @@ WEKO_ADMIN_MESSAGE = {
     'WEKO_ADMIN_CHANGE_ITEM_USAGE_DISPLAY_SETTING': {
         'msgid': 'WEKO_ADMIN_I_0020',
         'msgstr': "The display setting for item usage stats has been changed "\
-            "to {conf_value}.",
+            "to {configuration_value}.",
         'msglvl': 'INFO',
     },
     'WEKO_ADMIN_CHANGE_ITEM_USAGE_DISPLAY_DETAIL_SETTING': {
         'msgid': 'WEKO_ADMIN_I_0021',
         'msgstr': "The display setting for item usage stats has been changed "\
-            "{section} to {conf_value}.",
+            "{section} to {configuration_value}.",
         'msglvl': 'INFO',
     },
     'WEKO_ADMIN_SAVED_ITEM_IDENTIFIER': {
@@ -266,7 +272,7 @@ WEKO_ADMIN_MESSAGE = {
         'msgstr': "Search Author Setting has been changed to {set_value}.",
         'msglvl': 'INFO',
     },
-    'WEKO_ADMIN_CHANGED_SEARCH_SETTINGS': {
+    'WEKO_ADMIN_CHANGED_SEARCH_SETTING': {
         'msgid': 'WEKO_ADMIN_I_0028',
         'msgstr': "Index tree/facet search setting has been changed to "\
             "{set_value}.",
@@ -277,76 +283,77 @@ WEKO_ADMIN_MESSAGE = {
         'msgstr': "Other search settings have changed.",
         'msglvl': 'INFO',
     },
-    'WEKO_ADMIN_SETTINGS_FACETED_SEARCH': {
+    'WEKO_ADMIN_CHANGED_FACETED_SEARCH_SETTINGS': {
         'msgid': 'WEKO_ADMIN_I_0030',
         'msgstr': "Faceted search settings have been changed to {set_value}.",
         'msglvl': 'INFO',
     },
-    'WEKO_ADMIN_SAVED_FACETED_SEARCH_ITEM': {
+    'WEKO_ADMIN_CHANGED_FACETED_SEARCH_DETAIL_SETTINGS': {
         'msgid': 'WEKO_ADMIN_I_0031',
+        'msgstr': "Faceted search settings have been changed {section} to "\
+            "{set_value}.",
+        'msglvl': 'INFO',
+    },
+    'WEKO_ADMIN_SAVED_FACETED_SEARCH_ITEM': {
+        'msgid': 'WEKO_ADMIN_I_0032',
         'msgstr': "Item to be faceted searched has been saved.",
         'msglvl': 'INFO',
     },
     'WEKO_ADMIN_DELETE_FACETED_SEARCH_ITEM': {
-        'msgid': 'WEKO_ADMIN_I_0032',
+        'msgid': 'WEKO_ADMIN_I_0033',
         'msgstr': "Item to be faceted searched has been deleted.",
         'msglvl': 'INFO',
     },
     'WEKO_ADMIN_SEARCH_FACETED_SEARCH_ITEM': {
-        'msgid': 'WEKO_ADMIN_I_0033',
+        'msgid': 'WEKO_ADMIN_I_0034',
         'msgstr': "Item to be faceted searched has been searched. "\
             "{search_type} : {search_word}",
         'msglvl': 'INFO',
     },
     'WEKO_ADMIN_SAVED_SITE_INFO': {
-        'msgid': 'WEKO_ADMIN_I_0034',
+        'msgid': 'WEKO_ADMIN_I_0035',
         'msgstr': "Site Information saved.",
         'msglvl': 'INFO',
     },
     'WEKO_ADMIN_SAVED_SITE_LICENCE': {
-        'msgid': 'WEKO_ADMIN_I_0035',
+        'msgid': 'WEKO_ADMIN_I_0036',
         'msgstr': "Site Licence saved.",
         'msglvl': 'INFO',
     },
     'WEKO_ADMIN_SAVE_WEB_API_ACCOUNT_INFO': {
-        'msgid': 'WEKO_ADMIN_I_0036',
+        'msgid': 'WEKO_ADMIN_I_0037',
         'msgstr': "Web API account information has been saved.",
         'msglvl': 'INFO',
     },
     'WEKO_ADMIN_DISPLAY_PDF_FILE': {
-        'msgid': 'WEKO_ADMIN_I_0037',
+        'msgid': 'WEKO_ADMIN_I_0038',
         'msgstr': "PDF file is now displayed on screen.",
         'msglvl': 'INFO',
     },
     'WEKO_ADMIN_SAVED_PDF_FILE_SETTINGS': {
-        'msgid': 'WEKO_ADMIN_I_0038',
+        'msgid': 'WEKO_ADMIN_I_0039',
         'msgstr': "Settings of the PDF file have been saved.",
         'msglvl': 'INFO',
     },
     'WEKO_ADMIN_SAVED_RESTRICTRD_ACCESS_SETTINGS': {
-        'msgid': 'WEKO_ADMIN_I_0039',
+        'msgid': 'WEKO_ADMIN_I_0040',
         'msgstr': "Restricted Access settings have been saved.",
         'msglvl': 'INFO',
     },
     'WEKO_ADMIN_SENT_EMAIL_REMINDER_REPORT_USAGE': {
-        'msgid': 'WEKO_ADMIN_I_0040',
+        'msgid': 'WEKO_ADMIN_I_0041',
         'msgstr': "Email reminder to report usage has been sent.",
         'msglvl': 'INFO',
     },
     'WEKO_ADMIN_RECONFIGUR_ITEM_INDEX': {
-        'msgid': 'WEKO_ADMIN_I_0041',
+        'msgid': 'WEKO_ADMIN_I_0042',
         'msgstr': "The item index has been reconfigured.",
         'msglvl': 'INFO',
     },
     'WEKO_ADMIN_PERFORMED_REINDEX_ITEM': {
-        'msgid': 'WEKO_ADMIN_I_0042',
+        'msgid': 'WEKO_ADMIN_I_0043',
         'msgstr': "Item re-indexing has been performed.",
         'msglvl': 'INFO',
-    },
-    'WEKO_ADMIN_RESENT_MAIL': {
-        'msgid': 'WEKO_ADMIN_W_0001',
-        'msgstr': "The email failed to send and has been resent.",
-        'msglvl': 'WARN',
     },
 }
 
@@ -359,11 +366,13 @@ def weko_logger(key=None, ex=None, **kwargs):
     Method to output logs in current_app.logger using the resource.
 
     Args:
-        key (str): key of message.
-            Not required if ex is specified.
-        ex (Exception): exception object.
+        key (str): \
+            key of message. Not required if ex is specified.
+        ex (Exception): \
+            exception object.
             If you catch an exception, specify it here.
-        **kwargs: message parameters.
+        **kwargs: \
+            message parameters.
             If you want to replace the placeholder in the message,
             specify the key-value pair here.
 

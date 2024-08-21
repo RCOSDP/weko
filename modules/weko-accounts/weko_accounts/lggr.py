@@ -24,7 +24,8 @@ WEKO_ACCOUNTS_MESSAGE = {
     },
 }
 
-from weko_logging.lggr import weko_logger_base
+from weko_logging.console import WekoLoggingConsole
+weko_logger_base = WekoLoggingConsole.weko_logger_base
 
 def weko_logger(key=None, ex=None, **kwargs):
     """Log message with key.
@@ -32,11 +33,13 @@ def weko_logger(key=None, ex=None, **kwargs):
     Method to output logs in current_app.logger using the resource.
 
     Args:
-        key (str): key of message.
-            Not required if ex is specified.
-        ex (Exception): exception object.
+        key (str): \
+            key of message. Not required if ex is specified.
+        ex (Exception): \
+            exception object.
             If you catch an exception, specify it here.
-        **kwargs: message parameters.
+        **kwargs: \
+            message parameters.
             If you want to replace the placeholder in the message,
             specify the key-value pair here.
 

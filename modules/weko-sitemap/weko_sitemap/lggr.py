@@ -8,15 +8,15 @@
 """Resource for weko-sitemap log messages."""
 
 WEKO_SITEMAP_MESSAGE = {
-    'WEKO_SITEMAP_GENERATE_SITEMAP': {
-        'msgid': 'WEKO_SITEMAP_I_0001',
-        'msgstr': "Sitemap has been generated.",
-        'msglvl': 'INFO',
-    },
     'WEKO_SITEMAP_FAILED_GENERATE_SITEMAP': {
         'msgid': 'WEKO_SITEMAP_E_0001',
         'msgstr': "FAILED sitemap generation.",
         'msglvl': 'ERROR',
+    },
+    'WEKO_SITEMAP_GENERATE_SITEMAP': {
+        'msgid': 'WEKO_SITEMAP_I_0001',
+        'msgstr': "Sitemap has been generated.",
+        'msglvl': 'INFO',
     },
 }
 
@@ -29,11 +29,13 @@ def weko_logger(key=None, ex=None, **kwargs):
     Method to output logs in current_app.logger using the resource.
 
     Args:
-        key (str): key of message.
-            Not required if ex is specified.
-        ex (Exception): exception object.
+        key (str): \
+            key of message. Not required if ex is specified.
+        ex (Exception): \
+            exception object.
             If you catch an exception, specify it here.
-        **kwargs: message parameters.
+        **kwargs: \
+            message parameters.
             If you want to replace the placeholder in the message,
             specify the key-value pair here.
 

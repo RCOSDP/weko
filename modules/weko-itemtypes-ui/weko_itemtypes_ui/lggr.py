@@ -85,22 +85,23 @@ WEKO_ITEMTYPES_UI_MESSAGE = {
     },
     'WEKO_ITEMTYPES_UI_COPY_ITEM_TYPE': {
         'msgid': 'WEKO_ITEMTYPES_UI_I_0004',
-        'msgstr': "Item type {itmtyp_nm} copied.",
+        'msgstr': "Item type {itemtype_name} copied.",
         'msglvl': 'INFO',
     },
     'WEKO_ITEMTYPES_UI_SAVED_EDITS_TO_ITEM_TYPE': {
         'msgid': 'WEKO_ITEMTYPES_UI_I_0005',
-        'msgstr': "Edits to the item type {itmtyp_nm} have been saved.",
+        'msgstr': "Edits to the item type {itemtype_name} have been saved.",
         'msglvl': 'INFO',
     },
     'WEKO_ITEMTYPES_UI_DELETE_ITEM_TYPE': {
         'msgid': 'WEKO_ITEMTYPES_UI_I_0006',
-        'msgstr': "Item type {itmtyp_nm} deleted.",
+        'msgstr': "Item type {itemtype_name} deleted.",
         'msglvl': 'INFO',
     },
     'WEKO_ITEMTYPES_UI_RESTORE_ITEM_TYPE': {
         'msgid': 'WEKO_ITEMTYPES_UI_I_0007',
-        'msgstr': "Logically deleted item type {itmtyp_nm} have been restored.",
+        'msgstr': "Logically deleted item type {itemtype_name} have been "\
+            "restored.",
         'msglvl': 'INFO',
     },
     'WEKO_ITEMTYPES_UI_ADD_PROPERTY': {
@@ -139,11 +140,13 @@ def weko_logger(key=None, ex=None, **kwargs):
     Method to output logs in current_app.logger using the resource.
 
     Args:
-        key (str): key of message.
-            Not required if ex is specified.
-        ex (Exception): exception object.
+        key (str): \
+            key of message. Not required if ex is specified.
+        ex (Exception): \
+            exception object.
             If you catch an exception, specify it here.
-        **kwargs: message parameters.
+        **kwargs: \
+            message parameters.
             If you want to replace the placeholder in the message,
             specify the key-value pair here.
 

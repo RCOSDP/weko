@@ -25,7 +25,7 @@ WEKO_GRIDLAYOUT_MESSAGE = {
     },
     'WEKO_GRIDLAYOUT_FAILED_SAVE_WIDGET': {
         'msgid': 'WEKO_GRIDLAYOUT_E_0004',
-        'msgstr': "FAILED to edit widget: {widgetid}",
+        'msgstr': "FAILED to edit widget: {widget_id}",
         'msglvl': 'ERROR',
     },
     'WEKO_GRIDLAYOUT_FAILED_APPLY_FILTER': {
@@ -74,63 +74,74 @@ WEKO_GRIDLAYOUT_MESSAGE = {
         'msgstr': "RSS feeds are now enabled.",
         'msglvl': 'INFO',
     },
-    'WEKO_GRIDLAYOUT_OUTPUT_RSS_DOCUMENT': {
+    'WEKO_GRIDLAYOUT_CHANGED_RSS_FEEDS_SETTING': {
         'msgid': 'WEKO_GRIDLAYOUT_I_0002',
+        'msgstr': "The RSS feeds has been changed to {configuration_value}.",
+        'msglvl': 'INFO',
+    },
+    'WEKO_GRIDLAYOUT_CHANGED_RSS_FEEDS_DETAILS_SETTING': {
+        'msgid': 'WEKO_GRIDLAYOUT_I_0003',
+        'msgstr': "The RSS feeds has been changed {section} to "\
+            "{configuration_value}.",
+        'msglvl': 'INFO',
+    },
+    'WEKO_GRIDLAYOUT_OUTPUT_RSS_DOCUMENT': {
+        'msgid': 'WEKO_GRIDLAYOUT_I_0004',
         'msgstr': "RSS document has been output.",
         'msglvl': 'INFO',
     },
     'WEKO_GRIDLAYOUT_BUILT_RSS_DATA_IN_XML': {
-        'msgid': 'WEKO_GRIDLAYOUT_I_0003',
+        'msgid': 'WEKO_GRIDLAYOUT_I_0005',
         'msgstr': "RSS-formatted data built in XML format.",
         'msglvl': 'INFO',
     },
     'WEKO_GRIDLAYOUT_CREATE_WIDGET': {
-        'msgid': 'WEKO_GRIDLAYOUT_I_0004',
-        'msgstr': "New widget created: {widgetid}",
+        'msgid': 'WEKO_GRIDLAYOUT_I_0006',
+        'msgstr': "New widget created: {widget_id}",
         'msglvl': 'INFO',
     },
     'WEKO_GRIDLAYOUT_SAVE_WIDGET': {
-        'msgid': 'WEKO_GRIDLAYOUT_I_0005',
-        'msgstr': "Widget edits have been saved: {widgetid}",
+        'msgid': 'WEKO_GRIDLAYOUT_I_0007',
+        'msgstr': "Widget edits have been saved: {widget_id}",
         'msglvl': 'INFO',
     },
     'WEKO_GRIDLAYOUT_APPLY_FILTER': {
-        'msgid': 'WEKO_GRIDLAYOUT_I_0006',
+        'msgid': 'WEKO_GRIDLAYOUT_I_0008',
         'msgstr': "Filter has been applied.",
         'msglvl': 'INFO',
     },
     'WEKO_GRIDLAYOUT_RESET_FILTER': {
-        'msgid': 'WEKO_GRIDLAYOUT_I_0007',
+        'msgid': 'WEKO_GRIDLAYOUT_I_0009',
         'msgstr': "Filter has been reset.",
         'msglvl': 'INFO',
     },
     'WEKO_GRIDLAYOUT_DELETE_WIDGET': {
-        'msgid': 'WEKO_GRIDLAYOUT_I_0008',
+        'msgid': 'WEKO_GRIDLAYOUT_I_0010',
         'msgstr': "Selected widget has been deleted: {num} records",
         'msglvl': 'INFO',
     },
     'WEKO_GRIDLAYOUT_QUIT_DELETE_WIDGET': {
-        'msgid': 'WEKO_GRIDLAYOUT_I_0009',
+        'msgid': 'WEKO_GRIDLAYOUT_I_0011',
         'msgstr': "Cancelled deletion of selected widgets.",
         'msglvl': 'INFO',
     },
     'WEKO_GRIDLAYOUT_SEARCH_WIDGET': {
-        'msgid': 'WEKO_GRIDLAYOUT_I_0010',
+        'msgid': 'WEKO_GRIDLAYOUT_I_0012',
         'msgstr': "Search widgets: {query}, results: {num} records",
         'msglvl': 'INFO',
     },
     'WEKO_GRIDLAYOUT_ADD_PAGE': {
-        'msgid': 'WEKO_GRIDLAYOUT_I_0011',
+        'msgid': 'WEKO_GRIDLAYOUT_I_0013',
         'msgstr': "Page added.",
         'msglvl': 'INFO',
     },
     'WEKO_GRIDLAYOUT_SAVE_EDIT_PAGE': {
-        'msgid': 'WEKO_GRIDLAYOUT_I_0012',
+        'msgid': 'WEKO_GRIDLAYOUT_I_0014',
         'msgstr': "Page edits have been saved.",
         'msglvl': 'INFO',
     },
     'WEKO_GRIDLAYOUT_DELETE_PAGE': {
-        'msgid': 'WEKO_GRIDLAYOUT_I_0013',
+        'msgid': 'WEKO_GRIDLAYOUT_I_0015',
         'msgstr': "Page deleted.",
         'msglvl': 'INFO',
     },
@@ -145,11 +156,13 @@ def weko_logger(key=None, ex=None, **kwargs):
     Method to output logs in current_app.logger using the resource.
 
     Args:
-        key (str): key of message.
-            Not required if ex is specified.
-        ex (Exception): exception object.
+        key (str): \
+            key of message. Not required if ex is specified.
+        ex (Exception): \
+            exception object.
             If you catch an exception, specify it here.
-        **kwargs: message parameters.
+        **kwargs: \
+            message parameters.
             If you want to replace the placeholder in the message,
             specify the key-value pair here.
 

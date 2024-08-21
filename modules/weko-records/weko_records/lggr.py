@@ -43,23 +43,34 @@ WEKO_RECORDS_MESSAGE = {
         'msgstr': "RSS feeds are now enabled.",
         'msglvl': 'INFO',
     },
-    'WEKO_RECORDS_OUTPUT_RSS_DOCUMENT': {
+    'WEKO_RECORDS_CHANGED_RSS_FEEDS_SETTING': {
         'msgid': 'WEKO_RECORDS_I_0003',
+        'msgstr': "The RSS feeds has been changed to {configuration_value}.",
+        'msglvl': 'INFO',
+    },
+    'WEKO_RECORDS_CHANGED_RSS_FEEDS_DETAILS_SETTING': {
+        'msgid': 'WEKO_RECORDS_I_0004',
+        'msgstr': "The RSS feeds has been changed {section} to "\
+            "{configuration_value}.",
+        'msglvl': 'INFO',
+    },
+    'WEKO_RECORDS_OUTPUT_RSS_DOCUMENT': {
+        'msgid': 'WEKO_RECORDS_I_0005',
         'msgstr': "RSS document has been output.",
         'msglvl': 'INFO',
     },
     'WEKO_RECORDS_SERIALIZE_RESULT_TO_RSS': {
-        'msgid': 'WEKO_RECORDS_I_0004',
+        'msgid': 'WEKO_RECORDS_I_0006',
         'msgstr': "Serialized search results into RSS format.",
         'msglvl': 'INFO',
     },
     'WEKO_RECORDS_DELETE_RECORD': {
-        'msgid': 'WEKO_RECORDS_I_0005',
-        'msgstr': "{dlt_nm} record was deleted. Uuid: {uuid}",
+        'msgid': 'WEKO_RECORDS_I_0007',
+        'msgstr': "{delete_num} record was deleted. Uuid: {uuid}",
         'msglvl': 'INFO',
     },
     'WEKO_RECORDS_RESTORE_RECORD': {
-        'msgid': 'WEKO_RECORDS_I_0006',
+        'msgid': 'WEKO_RECORDS_I_0008',
         'msgstr': "Record restored. Uuid: {uuid}",
         'msglvl': 'INFO',
     },
@@ -74,11 +85,13 @@ def weko_logger(key=None, ex=None, **kwargs):
     Method to output logs in current_app.logger using the resource.
 
     Args:
-        key (str): key of message.
-            Not required if ex is specified.
-        ex (Exception): exception object.
+        key (str): \
+            key of message. Not required if ex is specified.
+        ex (Exception): \
+            exception object.
             If you catch an exception, specify it here.
-        **kwargs: message parameters.
+        **kwargs: \
+            message parameters.
             If you want to replace the placeholder in the message,
             specify the key-value pair here.
 

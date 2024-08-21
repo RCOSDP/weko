@@ -10,7 +10,7 @@
 WEKO_WORKFLOW_MESSAGE = {
     'WEKO_WORKFLOW_FAILED_SAVE': {
         'msgid': 'WEKO_WORKFLOW_E_0001',
-        'msgstr': "FAILED to save worfflow: {workflowid}",
+        'msgstr': "FAILED to save worfflow: {workflow_id}",
         'msglvl': 'ERROR',
     },
     'WEKO_WORKFLOW_FAILED_SAVE_OA_POLICY_CONFIRMATION': {
@@ -48,9 +48,14 @@ WEKO_WORKFLOW_MESSAGE = {
         'msgstr': "Authorization FAILED: {pid}",
         'msglvl': 'ERROR',
     },
+    'WEKO_WORKFLOW_FAILED_ITEM_PROCESS': {
+        'msgid': 'WEKO_WORKFLOW_E_0009',
+        'msgstr': "FAILED item process: {pid}",
+        'msglvl': 'ERROR',
+    },
     'WEKO_WORKFLOW_FAILED_FILE_UPLOAD': {
         'msgid': 'WEKO_WORKFLOW_E_0010',
-        'msgstr': "FAILED file upload: {fileid}",
+        'msgstr': "FAILED file upload: {file_id}",
         'msglvl': 'ERROR',
     },
     'WEKO_WORKFLOW_FAILED_SET_WEB_API_ACCOUNT_INFO': {
@@ -60,12 +65,12 @@ WEKO_WORKFLOW_MESSAGE = {
     },
     'WEKO_WORKFLOW_FAILED_SAVE_FLOW': {
         'msgid': 'WEKO_WORKFLOW_E_0012',
-        'msgstr': "FAILED to save flow action: {flowid}",
+        'msgstr': "FAILED to save flow action: {flow_id}",
         'msglvl': 'ERROR',
     },
     'WEKO_WORKFLOW_FAILED_DELETE_FLOW': {
         'msgid': 'WEKO_WORKFLOW_E_0013',
-        'msgstr': "FAILED to delete flow: {flowid}",
+        'msgstr': "FAILED to delete flow: {flow_id}",
         'msglvl': 'ERROR',
     },
     'WEKO_WORKFLOW_FAILED_VALIDATION': {
@@ -78,9 +83,14 @@ WEKO_WORKFLOW_MESSAGE = {
         'msgstr': "Create workflow: {workflow_id}",
         'msglvl': 'INFO',
     },
+    'WEKO_WORKFLOW_UPDATE_WORKFLOW': {
+        'msgid': 'WEKO_WORKFLOW_I_0002',
+        'msgstr': "Update workflow: {workflow_id}",
+        'msglvl': 'INFO',
+    },
     'WEKO_WORKFLOW_SAVED_SUCCESSFULLY': {
         'msgid': 'WEKO_WORKFLOW_I_0003',
-        'msgstr': "Workflow saved: {workflowid}",
+        'msgstr': "Workflow saved: {workflow_id}",
         'msglvl': 'INFO',
     },
     'WEKO_WORKFLOW_EDIT_ITEM': {
@@ -90,7 +100,7 @@ WEKO_WORKFLOW_MESSAGE = {
     },
     'WEKO_WORKFLOW_DELETE_SUCCESSFULLY': {
         'msgid': 'WEKO_WORKFLOW_I_0005',
-        'msgstr': "Delete workflow: {workflowid}",
+        'msgstr': "Delete workflow: {workflow_id}",
         'msglvl': 'INFO',
     },
     'WEKO_WORKFLOW_DOWNLOAD_TSV': {
@@ -128,6 +138,11 @@ WEKO_WORKFLOW_MESSAGE = {
         'msgstr': "Metadata input was quitted: {pid}",
         'msglvl': 'INFO',
     },
+    'WEKO_WORKFLOW_SAVED_INDEX': {
+        'msgid': 'WEKO_WORKFLOW_I_0013',
+        'msgstr': "Index designation saved: {pid}",
+        'msglvl': 'INFO',
+    },
     'WEKO_WORKFLOW_QUIT_INDEX': {
         'msgid': 'WEKO_WORKFLOW_I_0014',
         'msgstr': "Index designation quitted: {pid}",
@@ -163,6 +178,11 @@ WEKO_WORKFLOW_MESSAGE = {
         'msgstr': "DOI has been granted: {pid}",
         'msglvl': 'INFO',
     },
+    'WEKO_WORKFLOW_QUIT_DOI_GRANT': {
+        'msgid': 'WEKO_WORKFLOW_I_0021',
+        'msgstr': "DOI grant has been quitted: {pid}",
+        'msglvl': 'INFO',
+    },
     'WEKO_WORKFLOW_APPROVED_CONTENT': {
         'msgid': 'WEKO_WORKFLOW_I_0022',
         'msgstr': "The content has been approved: {pid}",
@@ -190,43 +210,49 @@ WEKO_WORKFLOW_MESSAGE = {
     },
     'WEKO_WORKFLOW_UPLOAD_FILE': {
         'msgid': 'WEKO_WORKFLOW_I_0027',
-        'msgstr': "Upload file: {fileid}",
+        'msgstr': "Upload file: {file_id}",
         'msglvl': 'INFO',
     },
     'WEKO_WORKFLOW_QUIT_FILE_UPLOAD': {
         'msgid': 'WEKO_WORKFLOW_I_0028',
-        'msgstr': "File upload has been quitted: {fileid}",
+        'msgstr': "File upload has been quitted: {file_id}",
         'msglvl': 'INFO',
     },
     'WEKO_WORKFLOW_CHANGE_SETTINGS_MULTIPART_UPLOAD': {
         'msgid': 'WEKO_WORKFLOW_I_0029',
+        'msgstr': "The multipart upload function setting has been changed to "\
+            "{configuration_value}.",
+        'msglvl': 'INFO',
+    },
+    'WEKO_WORKFLOW_CHANGE_DETAIL_SETTINGS_MULTIPART_UPLOAD': {
+        'msgid': 'WEKO_WORKFLOW_I_0030',
         'msgstr': "The multipart upload function setting has been changed "\
-            "to {conf_value}.",
+            "{section} to {configuration_value}.",
         'msglvl': 'INFO',
     },
     'WEKO_WORKFLOW_SET_WEB_API_ACCOUNT_INFO': {
-        'msgid': 'WEKO_WORKFLOW_I_0030',
+        'msgid': 'WEKO_WORKFLOW_I_0031',
         'msgstr': "Web API account information has been set. Itemid: {pid}",
         'msglvl': 'INFO',
     },
     'WEKO_WORKFLOW_CREATE_FLOW': {
-        'msgid': 'WEKO_WORKFLOW_I_0031',
-        'msgstr': "Create flow: {flowid}",
+        'msgid': 'WEKO_WORKFLOW_I_0032',
+        'msgstr': "Create flow: {flow_id}",
         'msglvl': 'INFO',
     },
     'WEKO_WORKFLOW_UPDATE_FLOW': {
-        'msgid': 'WEKO_WORKFLOW_I_0032',
-        'msgstr': "Update flow: {flowid}",
+        'msgid': 'WEKO_WORKFLOW_I_0033',
+        'msgstr': "Update flow: {flow_id}",
         'msglvl': 'INFO',
     },
     'WEKO_WORKFLOW_SAVED_FLOW': {
-        'msgid': 'WEKO_WORKFLOW_I_0033',
-        'msgstr': "Flow action saved successfully: {flowid}",
+        'msgid': 'WEKO_WORKFLOW_I_0034',
+        'msgstr': "Flow action saved successfully: {flow_id}",
         'msglvl': 'INFO',
     },
     'WEKO_WORKFLOW_DETELE_FLOW': {
-        'msgid': 'WEKO_WORKFLOW_I_0034',
-        'msgstr': "Delete flow: {flowid}",
+        'msgid': 'WEKO_WORKFLOW_I_0035',
+        'msgstr': "Delete flow: {flow_id}",
         'msglvl': 'INFO',
     },
 }
@@ -240,11 +266,13 @@ def weko_logger(key=None, ex=None, **kwargs):
     Method to output logs in current_app.logger using the resource.
 
     Args:
-        key (str): key of message.
-            Not required if ex is specified.
-        ex (Exception): exception object.
+        key (str): \
+            key of message. Not required if ex is specified.
+        ex (Exception): \
+            exception object.
             If you catch an exception, specify it here.
-        **kwargs: message parameters.
+        **kwargs: \
+            message parameters.
             If you want to replace the placeholder in the message,
             specify the key-value pair here.
 

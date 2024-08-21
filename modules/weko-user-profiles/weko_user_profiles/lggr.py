@@ -8,28 +8,28 @@
 """Resource for weko-user-profiles log messages."""
 
 WEKO_USER_PROFILES_MESSAGE = {
-    'WEKO_USER_PROFILE_FAILED_UPDATE_USER_PROFILE': {
-        'msgid': 'WEKO_USER_PROFILE_E_0001',
-        'msgstr': "FAILED to update user {userid} profile.",
+    'WEKO_USER_PROFILES_FAILED_UPDATE_USER_PROFILE': {
+        'msgid': 'WEKO_USER_PROFILES_E_0001',
+        'msgstr': "FAILED to update user {user_id} profile.",
         'msglvl': 'ERROR',
     },
-    'WEKO_USER_PROFILE_FAILED_DELETE_RECORD': {
-        'msgid': 'WEKO_USER_PROFILE_E_0002',
+    'WEKO_USER_PROFILES_FAILED_DELETE_RECORD': {
+        'msgid': 'WEKO_USER_PROFILES_E_0002',
         'msgstr': "FAILED to delete {num} record.",
         'msglvl': 'ERROR',
     },
-    'WEKO_USER_PROFILE_SENT_CONFIRMATION_EMAIL': {
-        'msgid': 'WEKO_USER_PROFILE_I_0001',
+    'WEKO_USER_PROFILES_SENT_CONFIRMATION_EMAIL': {
+        'msgid': 'WEKO_USER_PROFILES_I_0001',
         'msgstr': "Confirmation email has been sent.",
         'msglvl': 'INFO',
     },
-    'WEKO_USER_PROFILE_UPDATE_USER_PROFILE': {
-        'msgid': 'WEKO_USER_PROFILE_I_0002',
-        'msgstr': "User {userid} profile updated.",
+    'WEKO_USER_PROFILES_UPDATE_USER_PROFILE': {
+        'msgid': 'WEKO_USER_PROFILES_I_0002',
+        'msgstr': "User {user_id} profile updated.",
         'msglvl': 'INFO',
     },
-    'WEKO_USER_PROFILE_DELETE_RECORD': {
-        'msgid': 'WEKO_USER_PROFILE_I_0003',
+    'WEKO_USER_PROFILES_DELETE_RECORD': {
+        'msgid': 'WEKO_USER_PROFILES_I_0003',
         'msgstr': "{num} record was deleted.",
         'msglvl': 'INFO',
     },
@@ -44,11 +44,13 @@ def weko_logger(key=None, ex=None, **kwargs):
     Method to output logs in current_app.logger using the resource.
 
     Args:
-        key (str): key of message.
-            Not required if ex is specified.
-        ex (Exception): exception object.
+        key (str): \
+            key of message. Not required if ex is specified.
+        ex (Exception): \
+            exception object.
             If you catch an exception, specify it here.
-        **kwargs: message parameters.
+        **kwargs: \
+            message parameters.
             If you want to replace the placeholder in the message,
             specify the key-value pair here.
 

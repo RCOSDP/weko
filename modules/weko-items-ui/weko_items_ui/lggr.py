@@ -142,94 +142,111 @@ WEKO_ITEMS_UI_MESSAGE = {
         'msgstr': "RSS feeds are now enabled.",
         'msglvl': 'INFO',
     },
-    'WEKO_ITEMS_UI_OUTPUT_RSS_DOCUMENT': {
+    'WEKO_ITEMS_UI_CHANGED_RSS_FEEDS_SETTING': {
         'msgid': 'WEKO_ITEMS_UI_I_0008',
+        'msgstr': "The RSS feeds has been changed to {configuration_value}.",
+        'msglvl': 'INFO',
+    },
+    'WEKO_ITEMS_UI_CHANGED_RSS_FEEDS_DETAILS_SETTING': {
+        'msgid': 'WEKO_ITEMS_UI_I_0009',
+        'msgstr': "The RSS feeds has been changed {section} to "\
+            "{configuration_value}.",
+        'msglvl': 'INFO',
+    },
+    'WEKO_ITEMS_UI_OUTPUT_RSS_DOCUMENT': {
+        'msgid': 'WEKO_ITEMS_UI_I_0010',
         'msgstr': "RSS document has been output.",
         'msglvl': 'INFO',
     },
     'WEKO_ITEMS_UI_CHANGE_DISPLAY_SETTINGS_SEARCH_RESULTS': {
-        'msgid': 'WEKO_ITEMS_UI_I_0009',
+        'msgid': 'WEKO_ITEMS_UI_I_0011',
         'msgstr': "The display setting for search results has been changed "\
-            "to {conf_value}.",
+            "to {configuration_value}.",
+        'msglvl': 'INFO',
+    },
+    'WEKO_ITEMS_UI_CHANGE_DISPLAY_DETAIL_SETTING _SEARCH_RESULTS': {
+        'msgid': 'WEKO_ITEMS_UI_I_0012',
+        'msgstr': "The display setting for search results has been changed "\
+            "{section} to {configuration_value}.",
         'msglvl': 'INFO',
     },
     'WEKO_ITEMS_UI_ENABLE_ITEM_EXPORT': {
-        'msgid': 'WEKO_ITEMS_UI_I_0010',
+        'msgid': 'WEKO_ITEMS_UI_I_0013',
         'msgstr': "Item export is now enabled.",
         'msglvl': 'INFO',
     },
     'WEKO_ITEMS_UI_DISABLE_ITEM_EXPORT': {
-        'msgid': 'WEKO_ITEMS_UI_I_0011',
+        'msgid': 'WEKO_ITEMS_UI_I_0014',
         'msgstr': "Item export is now disabled.",
         'msglvl': 'INFO',
     },
     'WEKO_ITEMS_UI_SAVED_INDEX': {
-        'msgid': 'WEKO_ITEMS_UI_I_0012',
+        'msgid': 'WEKO_ITEMS_UI_I_0015',
         'msgstr': "Index designation saved: {pid}",
         'msglvl': 'INFO',
     },
     'WEKO_ITEMS_UI_QUIT_INDEX': {
-        'msgid': 'WEKO_ITEMS_UI_I_0013',
+        'msgid': 'WEKO_ITEMS_UI_I_0016',
         'msgstr': "Index designation quitted: {pid}",
         'msglvl': 'INFO',
     },
     'WEKO_ITEMS_UI_POPULATE_AUTO_METADATA_CROSSREF': {
-        'msgid': 'WEKO_ITEMS_UI_I_0014',
+        'msgid': 'WEKO_ITEMS_UI_I_0017',
         'msgstr': "Metadata was automatically populated via CrossRef. "\
             "Itemid: {pid}",
         'msglvl': 'INFO',
     },
     'WEKO_ITEMS_UI_POPULATE_AUTO_METADATA_CINII': {
-        'msgid': 'WEKO_ITEMS_UI_I_0015',
+        'msgid': 'WEKO_ITEMS_UI_I_0018',
         'msgstr': "Metadata was automatically populated via CiNii. "\
             "Itemid: {pid}",
         'msglvl': 'INFO',
     },
     'WEKO_ITEMS_UI_POPULATE_AUTO_METADATA_WEKOID': {
-        'msgid': 'WEKO_ITEMS_UI_I_0016',
+        'msgid': 'WEKO_ITEMS_UI_I_0019',
         'msgstr': "Metadata was automatically populated via WEKOID. "\
             "Itemid: {pid}",
         'msglvl': 'INFO',
     },
     'WEKO_ITEMS_UI_EXPORT_ITEM_IN_JSON': {
-        'msgid': 'WEKO_ITEMS_UI_I_0017',
+        'msgid': 'WEKO_ITEMS_UI_I_0020',
         'msgstr': "Selected items have been exported in json format.",
         'msglvl': 'INFO',
     },
     'WEKO_ITEMS_UI_EXPORT_ITEM_IN_BIBTEX': {
-        'msgid': 'WEKO_ITEMS_UI_I_0018',
+        'msgid': 'WEKO_ITEMS_UI_I_0021',
         'msgstr': "Selected items have been exported in bibtex format.",
         'msglvl': 'INFO',
     },
     'WEKO_ITEMS_UI_EXPORT_ITEM_IN_JSON_WITH_FILE_CONTENTS': {
-        'msgid': 'WEKO_ITEMS_UI_I_0019',
+        'msgid': 'WEKO_ITEMS_UI_I_0022',
         'msgstr': "Selected items have been exported in json format with "\
             "File Contents.",
         'msglvl': 'INFO',
     },
     'WEKO_ITEMS_UI_EXPORT_ITEM_IN_BIBTEX_WITH_FILE_CONTENTS': {
-        'msgid': 'WEKO_ITEMS_UI_I_0020',
+        'msgid': 'WEKO_ITEMS_UI_I_0023',
         'msgstr': "Selected items have been exported in bibtex format with "\
             "File Contents.",
         'msglvl': 'INFO',
     },
     'WEKO_ITEMS_UI_ASSIGN_PROXY_CONTRIBUTOR': {
-        'msgid': 'WEKO_ITEMS_UI_I_0021',
+        'msgid': 'WEKO_ITEMS_UI_I_0024',
         'msgstr': "A proxy contributor has been assigned for the item: {pid}",
         'msglvl': 'INFO',
     },
     'WEKO_ITEMS_UI_REGISTER_INDEX': {
-        'msgid': 'WEKO_ITEMS_UI_I_0022',
+        'msgid': 'WEKO_ITEMS_UI_I_0025',
         'msgstr': "Destination index has been registered: {pid}",
         'msglvl': 'INFO',
     },
     'WEKO_ITEMS_UI_SAVED_RANKING_SETTINGS': {
-        'msgid': 'WEKO_ITEMS_UI_I_0023',
+        'msgid': 'WEKO_ITEMS_UI_I_0026',
         'msgstr': "Ranking settings have been saved.",
         'msglvl': 'INFO',
     },
     'WEKO_ITEMS_UI_CREATED_RANKING_LISTS': {
-        'msgid': 'WEKO_ITEMS_UI_I_0024',
+        'msgid': 'WEKO_ITEMS_UI_I_0027',
         'msgstr': "Ranking lists have been created.",
         'msglvl': 'INFO',
     },
@@ -244,11 +261,13 @@ def weko_logger(key=None, ex=None, **kwargs):
     Method to output logs in current_app.logger using the resource.
 
     Args:
-        key (str): key of message.
-            Not required if ex is specified.
-        ex (Exception): exception object.
+        key (str): \
+            key of message. Not required if ex is specified.
+        ex (Exception): \
+            exception object.
             If you catch an exception, specify it here.
-        **kwargs: message parameters.
+        **kwargs: \
+            message parameters.
             If you want to replace the placeholder in the message,
             specify the key-value pair here.
 

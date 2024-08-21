@@ -88,48 +88,65 @@ WEKO_THEME_MESSAGE = {
         'msgstr': "Faceted search settings have been changed to {set_value}.",
         'msglvl': 'INFO',
     },
-    'WEKO_THEME_CHANGE_ITEM_DISPLAY_SETTINGS': {
+    'WEKO_THEME_DETAIL_SETTINGS_FACETED_SEARCH': {
         'msgid': 'WEKO_THEME_I_0007',
+        'msgstr': "Faceted search settings have been changed {section} to "\
+            "{set_value}.",
+        'msglvl': 'INFO',
+    },
+    'WEKO_THEME_CHANGE_ITEM_DISPLAY_SETTINGS': {
+        'msgid': 'WEKO_THEME_I_0008',
         'msgstr': "Settings for how items are displayed have been changed.",
         'msglvl': 'INFO',
     },
     'WEKO_THEME_ENABLED_RSS_FEEDS': {
-        'msgid': 'WEKO_THEME_I_0008',
+        'msgid': 'WEKO_THEME_I_0009',
         'msgstr': "RSS feeds are now enabled.",
         'msglvl': 'INFO',
     },
+    'WEKO_THEME_CHANGED_RSS_FEEDS_SETTING': {
+        'msgid': 'WEKO_THEME_I_0010',
+        'msgstr': "The RSS feeds has been changed to {configuration_value}.",
+        'msglvl': 'INFO',
+    },
+    'WEKO_THEME_CHANGED_RSS_FEEDS_DETAILS_SETTING': {
+        'msgid': 'WEKO_THEME_I_0011',
+        'msgstr': "The RSS feeds has been changed {section} to "\
+            "{configuration_value}.",
+        'msglvl': 'INFO',
+    },
     'WEKO_THEME_OUTPUT_RSS_DOCUMENT': {
-        'msgid': 'WEKO_THEME_I_0009',
+        'msgid': 'WEKO_THEME_I_0012',
         'msgstr': "RSS document has been output.",
         'msglvl': 'INFO',
     },
     'WEKO_THEME_CREATE_WIDGET_TEMPLATE': {
-        'msgid': 'WEKO_THEME_I_0010',
+        'msgid': 'WEKO_THEME_I_0013',
         'msgstr': "Widget templates have been created.",
         'msglvl': 'INFO',
     },
     'WEKO_THEME_REGISTER_PAGE_LAYOUT': {
-        'msgid': 'WEKO_THEME_I_0011',
+        'msgid': 'WEKO_THEME_I_0014',
         'msgstr': "Page layout has been registered.",
         'msglvl': 'INFO',
     },
     'WEKO_THEME_USER_AGREE_COOKIE': {
-        'msgid': 'WEKO_THEME_I_0012',
+        'msgid': 'WEKO_THEME_I_0015',
         'msgstr': "Cookie use has been agreed.",
         'msglvl': 'INFO',
     },
     'WEKO_THEME_USER_REFUSE_COOKIE': {
-        'msgid': 'WEKO_THEME_I_0013',
+        'msgid': 'WEKO_THEME_I_0016',
         'msgstr': "Cookie usage refused.",
         'msglvl': 'INFO',
     },
     'WEKO_THEME_CHANGE_ORDER_ITEMS': {
-        'msgid': 'WEKO_THEME_I_0014',
+        'msgid': 'WEKO_THEME_I_0017',
         'msgstr': "The order in which items are displayed has changed.",
         'msglvl': 'INFO',
     },
     'WEKO_THEME_CHANGE_BACKGROUND_COLOUR': {
-        'msgid': 'WEKO_THEME_I_0015',
+        'msgid': 'WEKO_THEME_I_0018',
         'msgstr': "Screen background colour has changed.",
         'msglvl': 'INFO',
     },
@@ -144,11 +161,13 @@ def weko_logger(key=None, ex=None, **kwargs):
     Method to output logs in current_app.logger using the resource.
 
     Args:
-        key (str): key of message.
-            Not required if ex is specified.
-        ex (Exception): exception object.
+        key (str): \
+            key of message. Not required if ex is specified.
+        ex (Exception): \
+            exception object.
             If you catch an exception, specify it here.
-        **kwargs: message parameters.
+        **kwargs: \
+            message parameters.
             If you want to replace the placeholder in the message,
             specify the key-value pair here.
 

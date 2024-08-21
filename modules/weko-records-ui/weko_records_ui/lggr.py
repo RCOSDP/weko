@@ -35,7 +35,7 @@ WEKO_RECORDS_UI_MESSAGE = {
     },
     'WEKO_RECORDS_UI_FAILED_FILE_UPLOAD': {
         'msgid': 'WEKO_RECORDS_UI_E_0006',
-        'msgstr': "FAILED file upload: {fileid}",
+        'msgstr': "FAILED file upload: {file_id}",
         'msglvl': 'ERROR',
     },
     'WEKO_RECORDS_UI_UPDATE_ITEMS_IN_BULK': {
@@ -46,47 +46,53 @@ WEKO_RECORDS_UI_MESSAGE = {
     'WEKO_RECORDS_UI_CHANGE_DISPLAY_SETTINGS_SEARCH_RESULTS': {
         'msgid': 'WEKO_RECORDS_UI_I_0002',
         'msgstr': "The display setting for search results has been changed "\
-            "to {conf_value}.",
+            "to {configuration_value}.",
+        'msglvl': 'INFO',
+    },
+    'WEKO_RECORDS_UI_CHANGE_DISPLAY_DETAIL_SETTINGS_SEARCH_RESULTS': {
+        'msgid': 'WEKO_RECORDS_UI_I_0003',
+        'msgstr': "The display setting for search results has been changed "\
+            "{section} to {configuration_value}.",
         'msglvl': 'INFO',
     },
     'WEKO_RECORDS_UI_UPDATE_ITEM': {
-        'msgid': 'WEKO_RECORDS_UI_I_0003',
+        'msgid': 'WEKO_RECORDS_UI_I_0004',
         'msgstr': "Update item: {pid}",
         'msglvl': 'INFO',
     },
     'WEKO_RECORDS_UI_DELETE_ITEM': {
-        'msgid': 'WEKO_RECORDS_UI_I_0004',
+        'msgid': 'WEKO_RECORDS_UI_I_0005',
         'msgstr': "Delete item: {pid}",
         'msglvl': 'INFO',
     },
     'WEKO_RECORDS_UI_CREATE_ITEM': {
-        'msgid': 'WEKO_RECORDS_UI_I_0005',
+        'msgid': 'WEKO_RECORDS_UI_I_0006',
         'msgstr': "Create item: {pid}",
         'msglvl': 'INFO',
     },
     'WEKO_RECORDS_UI_UPLOAD_FILE': {
-        'msgid': 'WEKO_RECORDS_UI_I_0006',
-        'msgstr': "Upload file: {fileid}",
+        'msgid': 'WEKO_RECORDS_UI_I_0007',
+        'msgstr': "Upload file: {file_id}",
         'msglvl': 'INFO',
     },
     'WEKO_RECORDS_UI_QUIT_FILE_UPLOAD': {
-        'msgid': 'WEKO_RECORDS_UI_I_0007',
-        'msgstr': "File upload has been quitted: {fileid}",
+        'msgid': 'WEKO_RECORDS_UI_I_0008',
+        'msgstr': "File upload has been quitted: {file_id}",
         'msglvl': 'INFO',
     },
     'WEKO_RECORDS_UI_CHANGE_SETTINGS_MULTIPART_UPLOAD': {
-        'msgid': 'WEKO_RECORDS_UI_I_0008',
-        'msgstr': "The multipart upload function setting has been changed "\
-            "to {conf_value}.",
+        'msgid': 'WEKO_RECORDS_UI_I_0009',
+        'msgstr': "The multipart upload function setting has been changed to "\
+            "{configuration_value}.",
         'msglvl': 'INFO',
     },
     'WEKO_RECORDS_UI_USER_AUTH_EXISTS': {
-        'msgid': 'WEKO_RECORDS_UI_I_0009',
+        'msgid': 'WEKO_RECORDS_UI_I_0010',
         'msgstr': "Authorisation exists for the user.",
         'msglvl': 'INFO',
     },
     'WEKO_RECORDS_UI_USER_NO_AUTH': {
-        'msgid': 'WEKO_RECORDS_UI_I_0010',
+        'msgid': 'WEKO_RECORDS_UI_I_0011',
         'msgstr': "User is not authorised.",
         'msglvl': 'INFO',
     },
@@ -101,11 +107,13 @@ def weko_logger(key=None, ex=None, **kwargs):
     Method to output logs in current_app.logger using the resource.
 
     Args:
-        key (str): key of message.
-            Not required if ex is specified.
-        ex (Exception): exception object.
+        key (str): \
+            key of message. Not required if ex is specified.
+        ex (Exception): \
+            exception object.
             If you catch an exception, specify it here.
-        **kwargs: message parameters.
+        **kwargs: \
+            message parameters.
             If you want to replace the placeholder in the message,
             specify the key-value pair here.
 

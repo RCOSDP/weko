@@ -25,7 +25,7 @@ WEKO_DEPOSIT_MESSAGE = {
     },
     'WEKO_DEPOSIT_FAILED_FILE_UPLOAD': {
         'msgid': 'WEKO_DEPOSIT_E_0004',
-        'msgstr': "FAILED file upload: {fileid}",
+        'msgstr': "FAILED file upload: {file_id}",
         'msglvl': 'ERROR',
     },
     'WEKO_DEPOSIT_FAILED_REGISTER_INDEX': {
@@ -35,27 +35,27 @@ WEKO_DEPOSIT_MESSAGE = {
     },
     'WEKO_DEPOSIT_FAILED_ADD_AUTHOR': {
         'msgid': 'WEKO_DEPOSIT_E_0006',
-        'msgstr': "FAILED to add author: {authorid}",
+        'msgstr': "FAILED to add author: {author_id}",
         'msglvl': 'ERROR',
     },
     'WEKO_DEPOSIT_FAILED_QUIT_ADD_AUTHOR': {
         'msgid': 'WEKO_DEPOSIT_E_0007',
-        'msgstr': "FAILED to quit adding  author.",
+        'msgstr': "FAILED to quit adding author.",
         'msglvl': 'ERROR',
     },
     'WEKO_DEPOSIT_FAILED_SAVE_AUTHOR': {
         'msgid': 'WEKO_DEPOSIT_E_0008',
-        'msgstr': "FAILED to save author: {authorid}",
+        'msgstr': "FAILED to save author: {author_id}",
         'msglvl': 'ERROR',
     },
     'WEKO_DEPOSIT_FAIILED_DELETE_AUTHOR': {
         'msgid': 'WEKO_DEPOSIT_E_0009',
-        'msgstr': "FAILED to delete author: {authorid}",
+        'msgstr': "FAILED to delete author: {author_id}",
         'msglvl': 'ERROR',
     },
     'WEKO_DEPOSIT_FAILED_MERGE_AUTHORID': {
         'msgid': 'WEKO_DEPOSIT_E_0010',
-        'msgstr': "FAILED to merge author ID:{authorid}",
+        'msgstr': "FAILED to merge author ID:{author_id}",
         'msglvl': 'ERROR',
     },
     'WEKO_DEPOSIT_UPDATE_ITEM': {
@@ -75,52 +75,59 @@ WEKO_DEPOSIT_MESSAGE = {
     },
     'WEKO_DEPOSIT_UPLOAD_FILE': {
         'msgid': 'WEKO_DEPOSIT_I_0004',
-        'msgstr': "Upload file: {fileid}",
+        'msgstr': "Upload file: {file_id}",
         'msglvl': 'INFO',
     },
     'WEKO_DEPOSIT_QUIT_FILE_UPLOAD': {
         'msgid': 'WEKO_DEPOSIT_I_0005',
-        'msgstr': "File upload has been quitted: {fileid}",
+        'msgstr': "File upload has been quitted: {file_id}",
         'msglvl': 'INFO',
     },
-    'WEKO_DEPOSIT_CHANGE_MULTIPART_UPLOAD': {
+    'WEKO_DEPOSIT_CHANGE_MULTI_UPLOAD': {
         'msgid': 'WEKO_DEPOSIT_I_0006',
-        'msgstr': "The multi-upload function has been changed to {conf_value}.",
+        'msgstr': "The multi-upload function has been changed to "\
+            "{configuration_value}.",
+        'msglvl': 'INFO',
+    },
+    'WEKO_DEPOSIT_CHANGE_MULTI_UPLOAD_DETAIL_SETTING': {
+        'msgid': 'WEKO_DEPOSIT_I_0007',
+        'msgstr': "The multi-upload function has been changed {section} to "\
+            "{configuration_value}.",
         'msglvl': 'INFO',
     },
     'WEKO_DEPOSIT_REGISTER_INDEX': {
-        'msgid': 'WEKO_DEPOSIT_I_0007',
+        'msgid': 'WEKO_DEPOSIT_I_0008',
         'msgstr': "Destination index has been registered: {pid}",
         'msglvl': 'INFO',
     },
     'WEKO_DEPOSIT_ADD_AUTHOR': {
-        'msgid': 'WEKO_DEPOSIT_I_0008',
-        'msgstr': "Author added: {authorid}",
+        'msgid': 'WEKO_DEPOSIT_I_0009',
+        'msgstr': "Author added: {author_id}",
         'msglvl': 'INFO',
     },
     'WEKO_DEPOSIT_QUIT_ADD_AUTHOR': {
-        'msgid': 'WEKO_DEPOSIT_I_0009',
+        'msgid': 'WEKO_DEPOSIT_I_0010',
         'msgstr': "The addition of author was quitted.",
         'msglvl': 'INFO',
     },
     'WEKO_DEPOSIT_SAVE_AUTHOR': {
-        'msgid': 'WEKO_DEPOSIT_I_0010',
-        'msgstr': "Author saved: {authorid}",
+        'msgid': 'WEKO_DEPOSIT_I_0011',
+        'msgstr': "Author saved: {author_id}",
         'msglvl': 'INFO',
     },
     'WEKO_DEPOSIT_DELETE_AUTHOR': {
-        'msgid': 'WEKO_DEPOSIT_I_0011',
-        'msgstr': "Delete author: {authorid}",
+        'msgid': 'WEKO_DEPOSIT_I_0012',
+        'msgstr': "Delete author: {author_id}",
         'msglvl': 'INFO',
     },
     'WEKO_DEPOSIT_SEARCH_AUTHOR': {
-        'msgid': 'WEKO_DEPOSIT_I_0012',
+        'msgid': 'WEKO_DEPOSIT_I_0013',
         'msgstr': "Search author: {query}, results: {num} authors",
         'msglvl': 'INFO',
     },
     'WEKO_DEPOSIT_MERGE_AUTHORID': {
-        'msgid': 'WEKO_DEPOSIT_I_0013',
-        'msgstr': "Merged author ID: {authorid}",
+        'msgid': 'WEKO_DEPOSIT_I_0014',
+        'msgstr': "Merged author ID: {author_id}",
         'msglvl': 'INFO',
     },
 }
@@ -134,11 +141,13 @@ def weko_logger(key=None, ex=None, **kwargs):
     Method to output logs in current_app.logger using the resource.
 
     Args:
-        key (str): key of message.
-            Not required if ex is specified.
-        ex (Exception): exception object.
+        key (str): \
+            key of message. Not required if ex is specified.
+        ex (Exception): \
+            exception object.
             If you catch an exception, specify it here.
-        **kwargs: message parameters.
+        **kwargs: \
+            message parameters.
             If you want to replace the placeholder in the message,
             specify the key-value pair here.
 
