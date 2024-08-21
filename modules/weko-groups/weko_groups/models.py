@@ -564,11 +564,11 @@ class Group(db.Model):
 class Membership(db.Model):
     """Represent a users membership of a group."""
 
-    MEMBERSHIP_STATE = {
-        MembershipState.PENDING_ADMIN: _('Pending admin approval'),
-        MembershipState.PENDING_USER: _('Pending member approval'),
-        MembershipState.ACTIVE: _('Active'),
-    }
+    MEMBERSHIP_STATE = [
+        (MembershipState.PENDING_ADMIN, _('Pending admin approval')),
+        (MembershipState.PENDING_USER, _('Pending member approval')),
+        (MembershipState.ACTIVE, _('Active')),
+    ]
     """Membership state choices."""
 
     __tablename__ = 'accounts_group_members'
