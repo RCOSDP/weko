@@ -21,7 +21,7 @@ weko_workflow = WebpackThemeBundle(
                 'workflow-js-admin-flow-detail': './js/weko_workflow/admin/flow_detail.js',
                 },
             dependencies={
-                
+                'jquery': '~2.1.3',
             }
         )
     }
