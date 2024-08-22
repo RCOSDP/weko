@@ -1,6 +1,10 @@
 import angular from "angular";
 import "bootstrap";
 import $ from "jquery";
+import _ from 'lodash';
+
+import { widgetBodyGrid, DEFAULT_WIDGET_HEIGHT } from "../weko_theme/widget"
+import { validateSession } from "../weko_workflow/quit_confirmation"
 
 const ITEM_SAVE_URL = $("#item_save_uri").val();
 const ITEM_SAVE_FREQUENCY = $("#item_save_frequency").val();
@@ -191,10 +195,11 @@ var CustomBSDatePicker = {
         let cls = CustomBSDatePicker.option.cls;
         let element_arr = $('.' + cls);
         $.each(element_arr, function (ind, val) {
+            let str_code;
             CustomBSDatePicker.initAttributeForModel(model, val);
             if (reverse) {
                 //Fill data from model to fields
-                let str_code = "$(val).val(" + $(val).attr('ng-model') + ")";
+                str_code = "$(val).val(" + $(val).attr('ng-model') + ")";
                 try {
                     eval(str_code);
                 } catch (e) {
@@ -2668,7 +2673,7 @@ function toObject(arr) {
              * Resize main content widget after optional items are collapsed
              */
             $scope.resizeMainContentWidget = function () {
-                if (typeof widgetBodyGrid !== 'undefined') { //FIXME: define widgetBodyGrid
+                if (typeof widgetBodyGrid !== 'undefined') {
                     let mainContent = $('#main_contents');
                     let width = mainContent.data("gsWidth");
                     widgetBodyGrid.resizeWidget(mainContent, width, DEFAULT_WIDGET_HEIGHT);
@@ -4290,7 +4295,7 @@ function toObject(arr) {
             /* Check if the JSON Object tree contains empty object by recursive method */
             $scope.isJsonCleaned = function (obj) {
                 if (typeof obj === 'object') {
-                    if (jQuery.isEmptyObject(obj)) {
+                    if ($.isEmptyObject(obj)) {
                         return false;
                     } else {
                         for (var key in obj) {
@@ -4305,9 +4310,9 @@ function toObject(arr) {
 
             /* Filter list removed item */
             $scope.listRemovedItemKey = function (cleanObj) {
-                removedItemKeys = [];
-                originObj = $rootScope.recordsVM.invenioRecordsModel;
-                for (key in originObj) {
+                let removedItemKeys = [];
+                let originObj = $rootScope.recordsVM.invenioRecordsModel;
+                for (let key in originObj) {
                     if (!(key in cleanObj)) {
                         removedItemKeys.push(key);
                     }
@@ -4507,8 +4512,8 @@ function toObject(arr) {
                         //When save: date fields data is lost, so this will fill data.
                         let model = $rootScope.recordsVM.invenioRecordsModel;
                         CustomBSDatePicker.setDataFromFieldToModel(model, true);
-                        message = response.data.msg
-                        class_style = undefined
+                        let message = response.data.msg
+                        let class_style = undefined
                         if (typeof message === 'undefined') {
                             class_style = 'alert-danger';
                             message = 'Your session has timed out. Please login again.';

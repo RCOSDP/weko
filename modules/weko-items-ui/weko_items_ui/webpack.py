@@ -21,6 +21,10 @@ weko_items_ui = WebpackThemeBundle(
                 'angular': "~1.4.9",
                 "bootstrap": "~3.3.7",
                 "jquery": "~3.2.1",
+                'lodash': '~3.10.1',
+                "react": "~15.6.1",
+                "react-bootstrap": "~0.33.1",
+                "react-dom": "~15.6.1",
             }
         )
     }
