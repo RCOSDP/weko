@@ -1108,7 +1108,7 @@ $(document).ready(function () {
 
   function render_object(elementId, initschema) {
     element = document.getElementById(elementId);
-    var editor = new windowJSONSchemaEditor(element, {
+    var editor = new JSONSchemaEditor(element, {
       startval: initschema,
       editor: false
     });
