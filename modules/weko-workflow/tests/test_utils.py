@@ -1258,7 +1258,12 @@ def test_is_usage_application(db_register):
     assert result == True
 # def send_mail_reminder(mail_info):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_send_mail_reminder -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_send_mail_reminder(mock_get_mail_data, mock_replace_characters, mock_send_mail):
+@patch('weko_workflow.utils.get_mail_data')
+@patch('weko_workflow.utils.replace_characters')
+@patch('weko_workflow.utils.send_mail')
+def test_send_mail_reminder(
+    mock_send_mail, mock_replace_characters, mock_get_mail_data
+):
     # Default test data
     test_mail_data = {
         'mail_subject': 'Test Subject',
@@ -1327,7 +1332,9 @@ def test_send_mail_reminder(mock_get_mail_data, mock_replace_characters, mock_se
 
 # def send_mail_approval_done(mail_info):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_send_mail_approval_done -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_send_mail_approval_done(mock_replace_characters, mock_send_mail):
+@patch('weko_workflow.utils.replace_characters')
+@patch('weko_workflow.utils.send_mail')
+def test_send_mail_approval_done(mock_send_mail, mock_replace_characters):
     # Default test data
     test_mail_data = {
         'mail_subject': 'Test Subject',
@@ -1387,7 +1394,12 @@ def test_send_mail_approval_done(mock_replace_characters, mock_send_mail):
 
 # def send_mail_registration_done(mail_info):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_send_mail_registration_done -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_send_mail_registration_done(mock_get_mail_data, mock_replace_characters, mock_send_mail):
+@patch('weko_workflow.utils.get_mail_data')
+@patch('weko_workflow.utils.replace_characters')
+@patch('weko_workflow.utils.send_mail')
+def test_send_mail_registration_done(
+    mock_send_mail, mock_replace_characters, mock_get_mail_data
+):
     # Default test data
     test_mail_data = {
         'mail_subject': 'Test Subject',
@@ -1443,7 +1455,9 @@ def test_send_mail_registration_done(mock_get_mail_data, mock_replace_characters
 
 # def send_mail_request_approval(mail_info):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_send_mail_request_approval -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_send_mail_request_approval(mock_replace_characters, mock_send_mail):
+@patch('weko_workflow.utils.replace_characters')
+@patch('weko_workflow.utils.send_mail')
+def test_send_mail_request_approval(mock_send_mail, mock_replace_characters):
     # Default test data
     test_mail_data = {
         'mail_subject': 'Test Subject',
@@ -2627,7 +2641,12 @@ def test_save_activity_data_2(db_register, mocker):
 
 # def send_mail_url_guest_user(mail_info: dict) -> bool:
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_send_mail_url_guest_user -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_send_mail_url_guest_user(mock_get_mail_data, mock_replace_characters, mock_send_mail):
+@patch('weko_workflow.utils.get_mail_data')
+@patch('weko_workflow.utils.replace_characters')
+@patch('weko_workflow.utils.send_mail')
+def test_send_mail_url_guest_user(
+    mock_send_mail, mock_replace_characters, mock_get_mail_data
+):
     test_mail_data = {
         'mail_subject': 'Test Subject',
         'mail_body': 'Test Body',
@@ -3274,7 +3293,12 @@ def test_get_approval_keys(item_type):
     assert result == ['parentkey.subitem_restricted_access_guarantor_mail_address']
 # def process_send_mail(mail_info, mail_pattern_name):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_process_send_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_process_send_mail(mock_get_mail_data, mock_replace_characters, mock_send_mail, client):
+@patch('weko_workflow.utils.get_mail_data')
+@patch('weko_workflow.utils.replace_characters')
+@patch('weko_workflow.utils.send_mail')
+def test_process_send_mail(
+    mock_send_mail, mock_replace_characters, mock_get_mail_data, client
+):
     # Default test data
     test_mail_data = {
         'mail_subject': 'Test Subject',

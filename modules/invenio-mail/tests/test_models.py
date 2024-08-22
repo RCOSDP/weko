@@ -37,9 +37,9 @@ class TestMailTemplates:
             'content': {
                 'subject': 'Test Subject',
                 'body': 'Test Body',
-                'recipients': 'user1@example.com,user2@example.com',
-                'cc': 'user1@example.com,user2@example.com',
-                'bcc': 'user1@example.com,user2@example.com'
+                'recipients': 'user1@example.com, user2@example.com',
+                'cc': 'user1@example.com, user2@example.com',
+                'bcc': 'user1@example.com, user2@example.com'
             },
             'genre_order': 1,
             'genre_key': 'Test Genre1',

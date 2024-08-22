@@ -139,7 +139,7 @@ class TestMailSettingView:
         mock_send.assert_called()
 
 class TestMailTemplatesView:
-    # .tox/c1/bin/pytest --cov=invenio_mail tests/test_admin.py::TestMailTemplatesView::test_save_mail_template -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-mail/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=invenio_mail tests/test_admin.py::TestMailTemplatesView::test_save_mail_template -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-mail/.tox/c1/tmp
     @patch('invenio_mail.admin.MailTemplatesView.get_invalid_emails')
     @patch('invenio_mail.admin.MailTemplates.save_and_update')
     @patch('invenio_mail.admin.MailTemplateUsers.save_and_update')
@@ -254,8 +254,9 @@ class TestMailTemplatesView:
         assert 'Mail template update failed.' in str(response.data)
 
 
-    # .tox/c1/bin/pytest --cov=invenio_mail tests/test_admin.py::TestMailTemplatesView::test_get_invalid_emails -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-mail/.tox/c1/tmp
-    def test_get_invalid_emails(self, app):
+# .tox/c1/bin/pytest --cov=invenio_mail tests/test_admin.py::TestMailTemplatesView::test_get_invalid_emails -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-mail/.tox/c1/tmp
+    @patch('invenio_mail.admin.User.query')
+    def test_get_invalid_emails(self, mock_query, client):
         # test email addresses list
         registered_emails = ['valid@example.com', 'valid2@example.com']
         unregistered_emails = ['invalid@example.com', 'invalid2@example.com']
@@ -265,36 +266,55 @@ class TestMailTemplatesView:
         mail_templates_view = MailTemplatesView()
         mock_user_instance = MagicMock()
 
-        with app.app_context():
+        # Test when both emails are valid
+        mock_query.filter_by.return_value.first.side_effect = [
+            mock_user_instance, mock_user_instance
+        ]
+        result = mail_templates_view.get_invalid_emails(registered_emails)
+        assert result == []
+        mock_query.filter_by.assert_any_call(
+            email=registered_emails[0],
+            active=True
+        )
+        mock_query.filter_by.assert_any_call(
+            email=registered_emails[1],
+            active=True
+        )
+        assert mock_query.filter_by.call_count == 2
 
-            # Test when both emails are valid
-            with patch('invenio_mail.admin.User.query') as mock_query:
-                mock_query.filter_by.return_value.first.side_effect = [mock_user_instance, mock_user_instance]
-                result = mail_templates_view.get_invalid_emails(registered_emails)
-                assert result == []
-                mock_query.filter_by.assert_any_call(email=registered_emails[0], active=True)
-                mock_query.filter_by.assert_any_call(email=registered_emails[1], active=True)
-                assert mock_query.filter_by.call_count == 2
+        # Test when both emails are invalid
+        mock_query.filter_by.return_value.first.side_effect = [None, None]
+        result = mail_templates_view.get_invalid_emails(
+            unregistered_emails
+        )
+        assert result == unregistered_emails
+        mock_query.filter_by.assert_any_call(
+            email=unregistered_emails[0],
+            active=True
+        )
+        mock_query.filter_by.assert_any_call(
+            email=unregistered_emails[1],
+            active=True
+        )
+        assert mock_query.filter_by.call_count == 4
 
-            # Test when both emails are invalid
-            with patch('invenio_mail.admin.User.query') as mock_query:
-                mock_query.filter_by.return_value.first.side_effect = [None, None]
-                result = mail_templates_view.get_invalid_emails(unregistered_emails)
-                assert result == unregistered_emails
-                mock_query.filter_by.assert_any_call(email=unregistered_emails[0], active=True)
-                mock_query.filter_by.assert_any_call(email=unregistered_emails[1], active=True)
-                assert mock_query.filter_by.call_count == 2
+        # Test when one email is valid and the other is invalid
+        mock_query.filter_by.return_value.first.side_effect = [
+            mock_user_instance,
+            None
+        ]
+        result = mail_templates_view.get_invalid_emails(mixed_emails)
+        assert result == ['invalid@example.com']
+        mock_query.filter_by.assert_any_call(
+            email=mixed_emails[0],
+            active=True
+        )
+        mock_query.filter_by.assert_any_call(
+            email=mixed_emails[1],
+            active=True
+        )
+        assert mock_query.filter_by.call_count == 6
 
-            # Test when one email is valid and the other is invalid
-            with patch('invenio_mail.admin.User.query') as mock_query:
-                mock_query.filter_by.return_value.first.side_effect = [mock_user_instance, None]
-                result = mail_templates_view.get_invalid_emails(mixed_emails)
-                assert result == ['invalid@example.com']
-                mock_query.filter_by.assert_any_call(email=mixed_emails[0], active=True)
-                mock_query.filter_by.assert_any_call(email=mixed_emails[1], active=True)
-                assert mock_query.filter_by.call_count == 2
-
-            # Test when the email list is empty
-            with patch('invenio_mail.admin.User.query') as mock_query:
-                result = mail_templates_view.get_invalid_emails(empty_emails)
-                assert result == []
+        # Test when the email list is empty
+        result = mail_templates_view.get_invalid_emails(empty_emails)
+        assert result == []

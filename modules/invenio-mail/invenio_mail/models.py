@@ -20,7 +20,7 @@
 
 """Database models for mail."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 import enum
 
 import pickle
@@ -42,12 +42,12 @@ class Timestamp(object):
 
     created = db.Column(
         db.DateTime().with_variant(mysql.DATETIME(fsp=6), 'mysql'),
-        default=datetime.utcnow,
+        default=datetime.now(timezone.utc),
         nullable=False
     )
     updated = db.Column(
         db.DateTime().with_variant(mysql.DATETIME(fsp=6), 'mysql'),
-        default=datetime.utcnow,
+        default=datetime.now(timezone.utc),
         nullable=False
     )
 
@@ -55,7 +55,7 @@ class Timestamp(object):
 @db.event.listens_for(Timestamp, 'before_update', propagate=True)
 def timestamp_before_update(mapper, connection, target):
     """Update `updated` property with current time on `before_update` event."""
-    target.updated = datetime.utcnow()
+    target.updated = datetime.now(timezone.utc)
 
 
 class MailConfig(db.Model):
@@ -121,17 +121,40 @@ class MailTemplates(db.Model):
     mail_subject = db.Column(db.String(255), default='')
     mail_body = db.Column(db.Text, nullable=True)
     default_mail = db.Column(db.Boolean, default=False)
-    mail_genre_id = db.Column('genre_id', db.Integer,
-                              db.ForeignKey('mail_template_genres.id', onupdate='CASCADE', ondelete='RESTRICT'),
-                              nullable=False, default=INVENIO_MAIL_DEFAULT_TEMPLATE_CATEGORY_ID)
+    mail_genre_id = db.Column(
+        'genre_id',
+        db.Integer,
+        db.ForeignKey(
+            'mail_template_genres.id',
+            onupdate='CASCADE',
+            ondelete='RESTRICT'
+        ),
+        nullable=False,
+        default=INVENIO_MAIL_DEFAULT_TEMPLATE_CATEGORY_ID
+    )
     
-    users = db.relationship('MailTemplateUsers', back_populates='template', cascade='all, delete-orphan')
+    users = db.relationship(
+        'MailTemplateUsers',
+        back_populates='template',
+        cascade='all, delete')
 
     def toDict(self):
         """model object to dict"""
-        mail_recipients = ','.join([record.user.email for record in self.users if record.mail_type == MailType.RECIPIENT])
-        mail_cc = ','.join([record.user.email for record in self.users if record.mail_type == MailType.CC])
-        mail_bcc = ','.join([record.user.email for record in self.users if record.mail_type == MailType.BCC])
+        mail_recipients = ', '.join([
+            record.user.email
+            for record in self.users
+            if record.mail_type == MailType.RECIPIENT
+        ])
+        mail_cc = ', '.join([
+            record.user.email
+            for record in self.users
+            if record.mail_type == MailType.CC
+        ])
+        mail_bcc = ', '.join([
+            record.user.email
+            for record in self.users
+            if record.mail_type == MailType.BCC
+        ])
         return {
             "key": str(self.id),
             "flag": self.default_mail,
@@ -185,7 +208,9 @@ class MailTemplates(db.Model):
             obj = cls.get_by_id(data['key'])
         else:
             obj = cls()
-            obj.mail_genre_id = current_app.config["INVENIO_MAIL_DEFAULT_TEMPLATE_CATEGORY_ID"]
+            obj.mail_genre_id = current_app.config[
+                "INVENIO_MAIL_DEFAULT_TEMPLATE_CATEGORY_ID"
+            ]
         obj.mail_subject = data['content']['subject']
         obj.mail_body = data['content']['body']
         try:
@@ -212,6 +237,7 @@ class MailTemplates(db.Model):
             current_app.logger.error(ex)
             return False
 
+
 class MailType(enum.Enum):
     RECIPIENT = 'recipient'
     CC = 'cc'
@@ -222,18 +248,39 @@ class MailType(enum.Enum):
             return self.value < other.value
         return NotImplemented
 
+
 class MailTemplateUsers(db.Model, Timestamp):
     """Users in mail templates"""
 
-    template_id = db.Column(db.Integer, db.ForeignKey('mail_templates.id', ondelete='CASCADE'), primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('accounts_user.id', ondelete='CASCADE'), primary_key=True)
-    mail_type = db.Column(db.Enum(MailType), primary_key=True)
+    template_id = db.Column(
+        db.Integer,
+        db.ForeignKey('mail_templates.id', ondelete='CASCADE'),
+        primary_key=True
+    )
+    user_id = db.Column(
+        db.Integer,
+        db.ForeignKey('accounts_user.id',ondelete='CASCADE'),
+        primary_key=True
+    )
+    mail_type = db.Column(
+        db.Enum(MailType),
+        primary_key=True
+    )
 
     template = db.relationship('MailTemplates', back_populates='users')
     user = db.relationship('User', backref='templates')
 
     @classmethod
     def save_and_update(cls, data):
+        """Add new mail_template_users object.
+
+        Args:
+            data (dict): mail template data to be saved
+
+        Returns:
+            bool: True if the operation is successful, False otherwise
+
+        """
         if not data['key']:
             return False
 
@@ -277,7 +324,10 @@ class MailTemplateUsers(db.Model, Timestamp):
                     try:
                         db.session.delete(record)
                     except Exception as ex:
-                        current_app.logger.error(f"Failed to delete record for user_id {record.user_id}: {ex}")
+                        current_app.logger.error(
+                            "Failed to delete record for user_id "
+                            f"{record.user_id}: {ex}"
+                        )
                         db.session.rollback()
                         status = False
 
@@ -308,9 +358,17 @@ class MailTemplateUsers(db.Model, Timestamp):
         else:
             return False
 
-
     @classmethod
     def delete_by_user_id(cls, user_id):
+        """Delete mail_template_users object by user_id.
+        
+        Args:
+            user_id (int): user id
+        
+        Returns:
+            bool: True if the operation is successful, False otherwise
+
+        """
         try:
             cls.query.filter_by(user_id=user_id).delete()
             db.session.commit()

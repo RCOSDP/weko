@@ -4550,21 +4550,6 @@ def db_guestactivity_2(app, db, db_register):
     return [token1, token2]
 
 @pytest.fixture
-def mock_get_mail_data():
-    with patch("weko_workflow.utils.get_mail_data") as mock:
-        yield mock
-    
-@pytest.fixture
-def mock_replace_characters():
-    with patch("weko_workflow.utils.replace_characters") as mock:
-        yield mock
-
-@pytest.fixture
-def mock_send_mail():
-    with patch("weko_workflow.utils.send_mail") as mock:
-        yield mock
-
-@pytest.fixture
 def db_mail_templates(db):
     genre1 = MailTemplateGenres(id=1, name='Test Genre1')
     genre2 = MailTemplateGenres(id=2, name='Test Genre2')

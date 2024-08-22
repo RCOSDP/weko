@@ -2258,7 +2258,7 @@ def send_mail_reminder(mail_info):
         raise ValueError('Cannot get email body')
     else:
         body = replace_characters(mail_info, body)
-        recipients += [mail_info.get('mail_address')]
+        recipients.extend([mail_info.get('mail_address')])
 
     mail_data['mail_body'] = body
     mail_data['mail_recipients'] = recipients
@@ -2280,7 +2280,7 @@ def send_mail_approval_done(mail_info):
 
     if subject and body:
         body = replace_characters(mail_info, body)
-        recipients += [mail_info.get('register_user_mail')]
+        recipients.extend([mail_info.get('register_user_mail')])
         mail_data['mail_body'] = body
         mail_data['mail_recipients'] = recipients
         send_mail(mail_data)
@@ -2299,7 +2299,7 @@ def send_mail_registration_done(mail_info, mail_id):
 
     if subject and body:
         body = replace_characters(mail_info, body)
-        recipients += [mail_info.get('register_user_mail')]
+        recipients.extend([mail_info.get('register_user_mail')])
         mail_data['mail_body'] = body
         mail_data['mail_recipients'] = recipients
         send_mail(mail_data)
@@ -2326,7 +2326,7 @@ def send_mail_request_approval(mail_info):
         if subject and body:
             subject = replace_characters(mail_info, subject)
             body = replace_characters(mail_info, body)
-            recipients += [approver_mail]
+            recipients.extend([approver_mail])
             mail_data['mail_subject'] = subject
             mail_data['mail_body'] = body
             mail_data['mail_recipients'] = recipients
@@ -3311,7 +3311,7 @@ def send_mail_url_guest_user(mail_info):
         return False
     else:
         body = replace_characters(mail_info, body)
-        recipients += [mail_info.get('mail_address')]
+        recipients.extend([mail_info.get('mail_address')])
         mail_data['mail_body'] = body
         mail_data['mail_recipients'] = recipients
 
@@ -3889,7 +3889,7 @@ def process_send_mail(mail_info, mail_id):
 
     if subject and body:
         body = replace_characters(mail_info, body)
-        recipients += [mail_info.get('mail_recipient')]
+        recipients.extend([mail_info.get('mail_recipient')])
         mail_data['mail_body'] = body
         mail_data['mail_recipients'] = recipients
         send_mail(mail_data)

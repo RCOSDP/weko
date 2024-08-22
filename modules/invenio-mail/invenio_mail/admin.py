@@ -162,52 +162,46 @@ class MailTemplatesView(BaseView):
 
         :return:
         """
+        mail_template = request.get_json()['mail_templates'][0]
+        emails = [
+            email.strip()
+            for key in ['recipients', 'cc', 'bcc']
+            for email in mail_template['content'].get(key, '').split(',')
+            if email.strip()
+        ]
+        invalid_emails = (
+            sorted(set(self.get_invalid_emails(emails) if emails else []))
+        )
 
-        mail_templates = request.get_json()['mail_templates']
-        invalid_emails_info = {}
-        for m in mail_templates:
-            recipients = m['content'].get('recipients', '')
-            cc = m['content'].get('cc', '')
-            bcc = m['content'].get('bcc', '')
-
-            recipients_list = [r.strip() for r in recipients.split(",") if r.strip()]
-            cc_list = [c.strip() for c in cc.split(",") if c.strip()]
-            bcc_list = [b.strip() for b in bcc.split(",") if b.strip()]
-            emails = recipients_list
-            emails.extend(cc_list)
-            emails.extend(bcc_list)
-
-            if emails:
-                invalid_emails = self.get_invalid_emails(emails)
-                if invalid_emails:
-                    invalid_emails_info[m['key']] = invalid_emails
-
-        if invalid_emails_info:
-            invalid_emails_message = _("Invalid email addresses ({emails}) detected. Please correct them to match the addresses which are registered in WEKO.").format(emails=", ".join([email for sublist in invalid_emails_info.values() for email in sublist]))
+        if invalid_emails:
+            invalid_emails_message = _(
+                "Invalid email addresses ({emails}) detected. "
+                "Please correct them to match the addresses which are "
+                "registered in WEKO."
+            ).format(emails=", ".join(invalid_emails))
             result = {
                 "status": False,
                 "msg": invalid_emails_message,
                 "data": MailTemplates.get_templates(),
             }
             return jsonify(result), 200
-
-        status = True
-        for m in mail_templates:
-            status = status and MailTemplates.save_and_update(m)
-            status = status and MailTemplateUsers.save_and_update(m)
-        if status:
-            result = {
-                "status": status,
-                "msg": _("Mail template was successfully updated."),
-                "data": MailTemplates.get_templates()
-            }
         else:
-            result = {
-                "status": status,
-                "msg": _("Mail template update failed."),
-                "data": MailTemplates.get_templates()
-            }
-        return jsonify(result), 200
+            status = True
+            status = status and MailTemplates.save_and_update(mail_template)
+            status = status and MailTemplateUsers.save_and_update(mail_template)
+            if status:
+                result = {
+                    "status": status,
+                    "msg": _("Mail template was successfully updated."),
+                    "data": MailTemplates.get_templates()
+                }
+            else:
+                result = {
+                    "status": status,
+                    "msg": _("Mail template update failed."),
+                    "data": MailTemplates.get_templates()
+                }
+            return jsonify(result), 200
 
     @expose('/delete', methods=['DELETE'])
     def delete_mail_template(self):
@@ -234,6 +228,17 @@ class MailTemplatesView(BaseView):
 
 
     def get_invalid_emails(self, emails):
+        """Get invalid email addresses.
+        
+        Return both of unregistered and inactive account emails.
+
+        Args:
+            emails (list): list of email addresses
+        
+        Returns:
+            list: list of invalid email addresses
+
+        """
         invalid_emails = []
         for m in emails:
             valid_mail = User.query.filter_by(email=m, active=True).first()
