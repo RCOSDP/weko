@@ -792,6 +792,8 @@ class TreeNode extends React.Component {
         const { data, tree_name, select_index_list, } = this.props
         const { isCollabsed, defaultChecked } = this.state
 
+        // FIXME: div should be replaced by label if use onClick event
+        // FIXME: need to add keyDown event for accessibility
         return (
             <div className="tree-node">
                 <div
