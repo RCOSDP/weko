@@ -8,6 +8,7 @@ weko_search_ui = WebpackThemeBundle(
         "bootstrap3": dict(
             entry={
                 'search-ui-css-weko-search-ui': './css/weko_search_ui/dot_leaders.css',
+                'search-ui-js-js-dependencies-datepicker': './js/weko_search_ui/js_dependencies_datepicker.js',
                 'search-ui-js-weko-search-ui': './js/weko_search_ui/app.js',
                 'search-ui-js-import': './js/weko_search_ui/import.js',
                 'search-ui-js-export': './js/weko_search_ui/export.js',
