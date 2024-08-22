@@ -1,11 +1,14 @@
-(function(angular) {
-    angular.element(document).ready(function() {
+import $ from 'jquery';
+import angular from 'angular';
+
+(function (angular) {
+    angular.element(document).ready(function () {
         angular.module('wekoRecordDetails.controllers', [
             'ngAnimate', 'ngSanitize', 'mgcrea.ngStrap', 'mgcrea.ngStrap.modal'
         ]);
 
         function ItemController($scope, $modal, $http, $window) {
-            $scope.openConfirm = function(type, url, rdt, id) {
+            $scope.openConfirm = function (type, url, rdt, id) {
                 var confirmModalScope = $scope.$new();
                 confirmModalScope.modalInstance = $modal({
                     //templateUrl: "confirm-modal.html",
@@ -14,25 +17,25 @@
                     scope: confirmModalScope,
                     show: false,
                     resolve: {
-                        type: function() {
+                        type: function () {
                             return type;
                         },
-                        url: function() {
+                        url: function () {
                             return url;
                         },
-                        rdt: function() {
+                        rdt: function () {
                             return rdt;
                         },
-                        id: function() {
+                        id: function () {
                             return id;
                         },
-                        label_title: function() {
+                        label_title: function () {
                             return {
                                 confirm_title: document.getElementById('confirm_title').textContent,
                                 del_ver_msg: document.getElementById('del_ver_msg').textContent,
                                 del_msg: document.getElementById('del_msg').textContent,
                                 ok_label: document.getElementById('ok_label').textContent,
-                                cancel_label: document.getElementById('cancel_label').textContent 
+                                cancel_label: document.getElementById('cancel_label').textContent
                             }
                         }
                     }
@@ -42,7 +45,7 @@
                     confirmModalScope.modalInstance.show);
             };
 
-            $scope.showChangeLog = function(deposit) {
+            $scope.showChangeLog = function (deposit) {
                 // call api for itself to catch field deposit
                 // Call service to catch version by deposit with api /api/files/
                 $('#bodyModal').children().remove();
@@ -59,8 +62,8 @@
                 });
             }
 
-            versionPrivacyChanged = function(bucket_id, key, version_id, index, radio) {
-                var showVersionPrivacyLoading = function(show) {
+            let versionPrivacyChanged = function (bucket_id, key, version_id, index, radio) {
+                var showVersionPrivacyLoading = function (show) {
                     if (show) {
                         $("#version_radios_" + index).addClass('hidden');
                         $("#version_loading_" + index).removeClass('hidden');
@@ -70,7 +73,7 @@
                     }
                 }
 
-                var revertCheckedStatus = function(value) {
+                var revertCheckedStatus = function (value) {
                     if (value == 1) {
                         // Change radio 0 to checked
                         $("input[name=radio_" + index + "][value='0']").prop("checked", true);
@@ -83,7 +86,7 @@
                 // Call the API to change the privacy status of version
                 // If api success, show the download link (attach to version file name) if public checked
                 // Otherwise, revert the checked status and do nothing + output error to console
-                var updateVersionPrivacy = function(value) {
+                var updateVersionPrivacy = function (value) {
                     $.ajax({
                         method: 'PUT',
                         url: '/file_version/update',
@@ -95,7 +98,7 @@
                             "version_id": version_id,
                             "is_show": value
                         },
-                        success: function(data, status, xhr) {
+                        success: function (data, status, xhr) {
                             showVersionPrivacyLoading(false);
 
                             if (data.status != 1) {
@@ -105,7 +108,7 @@
                                 console.log(data.msg);
                             }
                         },
-                        error: function(status, error) {
+                        error: function (status, error) {
                             showVersionPrivacyLoading(false);
                             // Revert the checked radio
                             revertCheckedStatus(radio.value);
@@ -123,7 +126,7 @@
                 let results = '';
                 const bucket_id = response.id;
                 const contents = response.contents;
-                response.contents.sort(function(first, second) {
+                response.contents.sort(function (first, second) {
                     return second.updated - first.updated;
                 });
                 let txt_filename = $('#txt_filename').val();
@@ -284,7 +287,7 @@
             $scope.confirm_title = label_title.confirm_title;
             $scope.ok_label = label_title.ok_label;
             $scope.cancel_label = label_title.cancel_label;
-            $scope.ok = function() {
+            $scope.ok = function () {
                 $('[role="alert"]').hide();
                 $('[role="msg"]').css('display', 'inline-block');
                 $('#btn_edit').attr("disabled", true);
@@ -303,9 +306,9 @@
                         $('#btn_edit').removeAttr("disabled");
                         $('#btn_delete').removeAttr("disabled");
                         $('#btn_ver_delete').removeAttr("disabled");
-                      } else {
+                    } else {
                         $http.post(url).then(
-                            function(response) {
+                            function (response) {
                                 $('[role="msg"]').hide();
                                 if (response.data.code === -1 && response.data.is_locked) {
                                     $('#btn_edit').removeAttr("disabled");
@@ -322,7 +325,7 @@
                                     $window.location.href = rdt;
                                 }
                             },
-                            function(response) {
+                            function (response) {
                                 $('[role="msg"]').hide();
                                 $('#btn_edit').removeAttr("disabled");
                                 $('#btn_delete').removeAttr("disabled");
@@ -337,7 +340,7 @@
                                 console.log(response);
                             }
                         );
-                      };
+                    };
                 }, function errorCallback(response) {
                     $('#btn_edit').removeAttr("disabled");
                     $('#btn_delete').removeAttr("disabled");
@@ -348,7 +351,7 @@
                 });
             };
 
-            $scope.cancel = function() {
+            $scope.cancel = function () {
                 $scope.modalInstance.hide();
                 $('body').removeClass('modal-open');
             };
@@ -371,7 +374,7 @@
     });
 })(angular);
 
-$(function() {
+$(function () {
     handleDownloadBillingFile();
     handleConfirmButton();
 });
@@ -384,7 +387,7 @@ function handleDownloadBillingFile(isVersionTable) {
     if (isVersionTable) {
         billingFileHandleName = 'a.billing-file-version';
     }
-    $(billingFileHandleName).on('click', function() {
+    $(billingFileHandleName).on('click', function () {
         let downloadPermission = $(this).data('billingFilePermission');
         if (downloadPermission) {
             let url = $(this).data('billingFileUrl');
@@ -402,7 +405,7 @@ function handleDownloadBillingFile(isVersionTable) {
 }
 
 function handleConfirmButton() {
-    $('button#confirm_download_button').on('click', function() {
+    $('button#confirm_download_button').on('click', function () {
         let url = $(this).data('billingFileUrl');
         let link = document.createElement("a");
         link.download = "";
@@ -429,12 +432,12 @@ function OnLinkClick(uri, pid_value, accessrole) {
         type: "POST",
         contentType: "application/json",
         data: JSON.stringify(data),
-        success: function(data) {
+        success: function (data) {
             console.log(data);
         },
-        error: function(error) {
-          console.log(error);
+        error: function (error) {
+            console.log(error);
         }
-      });
+    });
     window.open(uri);
 }

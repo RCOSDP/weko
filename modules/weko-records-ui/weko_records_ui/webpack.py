@@ -16,19 +16,20 @@ weko_records_ui = WebpackThemeBundle(
                 "records_ui_bootstrap_popover_css": "./css/weko_records_ui/bootstrap-popover-x.min.css"
             },
             dependencies={
-                "bootstrap-sass": "~3.3.5",
-                "bootstrap-switch": "~3.0.2",
-                "font-awesome": "~4.4.0",
-                "typeahead.js-bootstrap-css": "~1.2.1",
+                "almond": "~0.3.1",
+                "angular": "~1.4.9",
                 "angular-animate": "~1.4.8",
+                "angular-loading-bar": "~0.9.0",
                 "angular-sanitize": "~1.4.10",
                 "angular-strap": "~2.3.9",
                 "angular-ui-bootstrap": "~0.13.2",
-                "almond": "~0.3.1",
-                "angular-loading-bar": "~0.9.0",
-                "typeahead.js": "~0.11.1",
+                "bootstrap-sass": "~3.3.5",
+                "bootstrap-switch": "~3.0.2",
+                "font-awesome": "~4.4.0",
                 "invenio-csl-js": "~0.1.3",
-                "bootstrap-switch": "~3.0.2"
+                "jquery": "~2.1.3",
+                "typeahead.js-bootstrap-css": "~1.2.1",
+                "typeahead.js": "~0.11.1",
             }
         )
     }
