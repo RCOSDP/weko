@@ -1,3 +1,4 @@
+import angular from 'angular';
 angular.module('myApp',[])
   .controller('mp', function ($scope, $http) {
     $scope.reqData = {};
