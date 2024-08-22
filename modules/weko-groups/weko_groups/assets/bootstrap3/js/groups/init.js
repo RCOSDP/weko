@@ -18,23 +18,16 @@
  * MA 02111-1307, USA.
  */
 
-
-//require([
-//  'jquery',
-//], function () {
+'use strict';
 
 import $ from 'jquery';
 
-( function () {
-    'use strict';
-
-  $('.table tr').click(function (ev) {
+$('.table tr').click(function (ev) {
     if (this.children.length > 0) {
-      var data = this.children[0].dataset;
-      if (data.groupId) {
-        window.location.href = "./" + data.groupId;
-      }
+        var data = this.children[0].dataset;
+        if (data.groupId) {
+            window.location.href = "./" + data.groupId;
+        }
     }
-  });
-
 });
+
