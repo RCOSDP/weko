@@ -1,3 +1,4 @@
+import React from 'react';
 /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};

@@ -1,12 +1,13 @@
+import $ from "jquery";
 // require(["jquery", "bootstrap"],function() {});
 $(document).ready(function () {
   var checkboxTemplate = "/static/templates/weko_deposit/checkboxes.html";
 // Number of callbacks(requests) when rendering the page, When add a new callback,
 // please increase/decrease appropriately
   var requestNum = 0;
-  src_render = {};
-  src_mapping = {};
-  page_global = {
+  let src_render = {};
+  let src_mapping = {};
+  let page_global = {
     upload_file: false,
     table_row: [],        // 追加した行番号を保存する元々順番()
     table_row_map: {},    // 生成したschemaとformの情報を保存する
@@ -17,14 +18,14 @@ $(document).ready(function () {
     },
     edit_notes: {}         // Map of notes for each attribute, keep seperate
   };
-  properties_obj = {}     // 作成したメタデータ項目タイプ
-  propertyOptions = '';
-  textPropertyOptions = '';
-  page_json_editor = {}   //   一時的editorオブジェクトの保存
-  url_update_schema = '/admin/itemtypes/register';
-  rename_subitem_config = false;
+  let properties_obj = {}     // 作成したメタデータ項目タイプ
+  let propertyOptions = '';
+  let textPropertyOptions = '';
+  let page_json_editor = {}   //   一時的editorオブジェクトの保存
+  let url_update_schema = '/admin/itemtypes/register';
+  let rename_subitem_config = false;
   // デフォルトマッピングのテンプレート
-  mapping_value = {
+  let mapping_value = {
     "display_lang_type": "",
     "oai_dc_mapping": "",
     "jpcoar_mapping": "",
@@ -33,7 +34,7 @@ $(document).ready(function () {
     "lom_mapping": "",
     "spase_mapping": ""
   }
-  meta_system_info = {
+  let meta_system_info = {
     system_identifier_doi: {
       input_type: "S_Identifier",
       title: "Persistent Identifier(DOI)",
@@ -87,7 +88,7 @@ $(document).ready(function () {
       }
     }
   };
-  meta_fix = {
+  let meta_fix = {
     pubdate: {
       input_type: "Date",
       title: "Publish Date",
@@ -102,8 +103,8 @@ $(document).ready(function () {
       }
     }
   };
-  property_default = {};
-  generalTextProps = ['text', 'textarea', 'cus_1042', 'cus_1043']
+  let property_default = {};
+  let generalTextProps = ['text', 'textarea', 'cus_1042', 'cus_1043']
 
   $('#myModal').modal({
     show: false
@@ -113,7 +114,7 @@ $(document).ready(function () {
     // バージョンアップ
     $('#upt_version').attr('checked', true);
     $('#new_version').attr('checked', false);
-    itemname = $('#item-type-lists').find("option:selected").text();
+    let itemname = $('#item-type-lists').find("option:selected").text();
     itemname = itemname.substr(0,itemname.lastIndexOf('('));
     $('#itemtype_name').val(itemname);
     url_update_schema = '/admin/itemtypes/'+$('#item-type-lists').val()+'/register';
@@ -472,7 +473,7 @@ $(document).ready(function () {
     }
     // End system mapping
     // テーブルの行をトラバースし、マップに追加する
-    err_input_id = []
+    let err_input_id = []
 
     $.each(page_global.table_row, function(idx, row_id){
       var tmp = {}
@@ -597,8 +598,8 @@ $(document).ready(function () {
         }
       } else if(tmp.input_type == 'checkboxes') {
         tmp.input_value = $("#schema_"+row_id).find(".select-value-setting").val();
-        enum_tmp = []
-        titleMap_tmp = []
+        let enum_tmp = []
+        let titleMap_tmp = []
         $.each(tmp.input_value.split('|'), function(i,v){
           enum_tmp.push(v);
           titleMap_tmp.push({value:v, name:v});
@@ -679,8 +680,8 @@ $(document).ready(function () {
         }
       } else if(tmp.input_type == 'radios' || tmp.input_type == 'select') {
         tmp.input_value = $("#schema_"+row_id).find(".select-value-setting").val();
-        enum_tmp = []
-        titleMap_tmp = []
+        let enum_tmp = []
+        let titleMap_tmp = []
         $.each(tmp.input_value.split('|'), function(i,v){
           enum_tmp.push(v);
           titleMap_tmp.push({value:v, name:v});
@@ -752,7 +753,7 @@ $(document).ready(function () {
           });
         }
       } else if(tmp && tmp.input_type.indexOf('cus_') != -1) {
-        editor = page_json_editor['schema_'+row_id];
+        let editor = page_json_editor['schema_'+row_id];
         page_global.schemaeditor.schema[row_id] = JSON.parse(JSON.stringify(editor.getValue()));
         removeEnumForCheckboxes(page_global.schemaeditor.schema[row_id].properties);
         if(tmp.option.multiple) {
@@ -1058,7 +1059,7 @@ $(document).ready(function () {
       let product = properties_obj[$(this).val().substr(4)].schema;
       let product_forms = properties_obj[$(this).val().substr(4)].forms;
       isFile = properties_obj[$(this).val().substr(4)].is_file;
-      for(key in product.properties) {
+      for(let key in product.properties) {
         if(isFile || product.properties[key]["isHide"] ==true){
           product.properties[key]["showListDisable"] = true
           product.properties[key]["specifyNLDisable"] = true
@@ -1107,7 +1108,7 @@ $(document).ready(function () {
   }
 
   function render_object(elementId, initschema) {
-    element = document.getElementById(elementId);
+    let element = document.getElementById(elementId);
     var editor = new JSONSchemaEditor(element, {
       startval: initschema,
       editor: false
@@ -1207,7 +1208,7 @@ $(document).ready(function () {
       return form;
   }
 
-  getPropUrl = '/admin/itemtypes/get-all-properties?lang=' + $('#lang-code').val();
+  let getPropUrl = '/admin/itemtypes/get-all-properties?lang=' + $('#lang-code').val();
   propertyOptions = '';
   textPropertyOptions = '';
   // 作成したメタデータ項目タイプの取得
@@ -1218,11 +1219,11 @@ $(document).ready(function () {
     success: function(data, status){
       properties_obj = data;
 
-      defProps = data.defaults;
+      let defProps = data.defaults;
       Object.keys(defProps).forEach(function(row_id){
          property_default[defProps[row_id].value] = defProps[row_id].name
       })
-      isSelected = true;
+      let isSelected = true;
       Object.keys(defProps).forEach(function (key) {
         if (isSelected) {
           propertyOptions = propertyOptions + '<option value="' + defProps[key].value + '" selected>' + defProps[key].name + '</option>';
@@ -1384,7 +1385,7 @@ $(document).ready(function () {
             itemTypeSchema);
             // Set disable attribute for child in case parent is set Hide
           let isFile = properties_obj[data.meta_list[row_id].input_type.substr(4)].is_file;
-          for(key in properties_obj[data.meta_list[row_id].input_type.substr(4)].schema.properties){
+          for(let key in properties_obj[data.meta_list[row_id].input_type.substr(4)].schema.properties){
             if(isFile || properties_obj[data.meta_list[row_id].input_type.substr(4)].schema.properties[key]["isHide"] ==true){
               properties_obj[data.meta_list[row_id].input_type.substr(4)].schema.properties[key]["showListDisable"] = true
               properties_obj[data.meta_list[row_id].input_type.substr(4)].schema.properties[key]["specifyNLDisable"] = true
@@ -1426,7 +1427,7 @@ $(document).ready(function () {
       //Show message changed properties.
       if(changedProperties.length > 0){
         let message = '<div class="alert alert-info alert-dismissable">' +
-        '<button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>'
+        '<button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>' +
         '<p>' + changedProperties.join('</p><p>') + '</p></div>';
         $('section.content-header').prepend(message);
       }
@@ -1491,7 +1492,7 @@ $(document).ready(function () {
           alert(data.msg);
         },
         function(errmsg){
-          alert(data.msg);
+          alert(errmsg);
       });
     }
   });
@@ -1539,7 +1540,7 @@ $(document).ready(function () {
   function get_form_system(){
     let result = new Array()
     let list_key = Object.keys(meta_system_info)
-    for(i = 0; i< list_key.length; ++i){
+    for(let i = 0; i< list_key.length; ++i){
       let row_id = list_key[i]
       let item = new Object()
       if(meta_system_info[row_id].input_type.indexOf('cus_') != -1) {
@@ -1689,7 +1690,7 @@ $(document).ready(function () {
       propertyKey = fixKey(propertyKey);
       properties[propKey].uniqueKey = propertyKey;
       $.each(subForms, function (ind, form) {
-        formKey = !form.key ? '' : form.key;
+        let formKey = !form.key ? '' : form.key;
         formKey = fixKey(formKey);
         if (propertyKey == formKey) {
           setInfoToSchema(properties[propKey], form, propertyKey);
@@ -1707,7 +1708,7 @@ $(document).ready(function () {
       $.each(subForms, function (ind, form) {
         // define sub key.
         let propertyKey = prefixKey + '.' + propKey;
-        formKey = !form.key ? '' : form.key;
+        let formKey = !form.key ? '' : form.key;
         // Remove all [] in key.
         propertyKey = fixKey(propertyKey);
         formKey = fixKey(formKey);
@@ -1856,7 +1857,7 @@ $(document).ready(function () {
       $.each(subForms, function (ind, form) {
         // define sub key.
         propertyKey = prefixKey + '.' + propKey;
-        formKey = !form.key ? '' : form.key;
+        let formKey = !form.key ? '' : form.key;
         // Remove all [] in key.
         propertyKey = fixKey(propertyKey);
         formKey = fixKey(formKey);
