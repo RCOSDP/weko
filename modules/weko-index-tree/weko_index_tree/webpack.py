@@ -12,6 +12,7 @@ weko_index_tree = WebpackThemeBundle(
                 "index_tree_js_js": "./js/weko_index_tree/app.js",
             },
             dependencies={
+                'jquery': '~2.1.3'
             }
         )
     }

@@ -1,9 +1,10 @@
+import $ from "jquery";
 $(document).ready(function () {
   $('#myModal').modal({
     show: false
   })
 
-  page_global = {
+  let page_global = {
     cur_index_id: 0,
     access_role_name: [0,1,2,3,5,6],
     exclusive_access_role_name: [4],
@@ -17,7 +18,7 @@ $(document).ready(function () {
     exclusive_tree_room_auth: [2,3]
 
   }
-  page_default = {
+  let page_default = {
     role_name_list : {0:'System Administrator',1:'Manager',2:'Moderator',3:'General',4:'Guest',5:'Office',6:'Administrator'},
     access_role_name: [0,1,2,3,5,6],
     exclusive_access_role_name: [4],
