@@ -18,6 +18,9 @@ weko_items_ui = WebpackThemeBundle(
                 "items_ui_css_feedback_maillist": "./css/weko_items_ui/feedback.mail.css"
             },
             dependencies={
+                'angular': "~1.4.9",
+                "bootstrap": "~3.3.7",
+                "jquery": "~3.2.1",
             }
         )
     }
