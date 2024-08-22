@@ -1,8 +1,8 @@
 import $ from 'jquery';
 import React from 'react';
-import ReactBootstrap from 'react-bootstrap';
+import * as ReactBootstrap from 'react-bootstrap';
 import ReactDOM from 'react-dom';
-import internal_server_error from './import';
+import { internal_server_error } from './import';
 
 const last_item_id_label = document.getElementById("last_item_id").value;
 const add_filter_label = document.getElementById("add_filter").value;

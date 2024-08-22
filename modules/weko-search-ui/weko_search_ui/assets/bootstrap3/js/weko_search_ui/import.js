@@ -1,7 +1,7 @@
 import $ from 'jquery';
 import moment from 'moment';
 import React from 'react';
-import ReactBootstrap from 'react-bootstrap';
+import * as ReactBootstrap from 'react-bootstrap';
 import ReactDOM from 'react-dom';
 
 const import_label = document.getElementById("import").value;
@@ -50,7 +50,7 @@ const result_label = document.getElementById("result").value;
 const next = document.getElementById("next").value;
 const error_download = document.getElementById("error_download").value;
 const error_get_lstItemType = document.getElementById("error_get_lstItemType").value;
-const internal_server_error = document.getElementById("internal_server_error").value;
+export const internal_server_error = document.getElementById("internal_server_error").value;
 const not_available_error_another = document.getElementById("not_available_error_another").value;
 const not_available_error = document.getElementById("not_available_error").value;
 const celery_not_run = document.getElementById("celery_not_run").value;
@@ -1272,5 +1272,3 @@ $(function () {
         document.getElementById('root')
     )
 });
-
-export { internal_server_error };
