@@ -1,3 +1,5 @@
+import $ from 'jquery';
+
 $(document).ready(function () {
   $('#step_page').focus();
   $('#activity_locked').hide();
@@ -31,7 +33,7 @@ $(document).ready(function () {
       return;
     }
     var url = '/workflow/activity/user_unlock/' + activity_id;
-    
+
     var data = JSON.stringify({
       is_opened: is_opened
     })
@@ -54,12 +56,12 @@ $(document).ready(function () {
   var permission = $('#hide-res-check').text(); // 0: allow, <> 0: deny
 
 
-  var  csrf_token=$('#csrf_token').val();
+  var csrf_token = $('#csrf_token').val();
   $.ajaxSetup({
-    beforeSend: function(xhr, settings) {
-       if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain){
-           xhr.setRequestHeader("X-CSRFToken", csrf_token);
-       }
+    beforeSend: function (xhr, settings) {
+      if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
+        xhr.setRequestHeader("X-CSRFToken", csrf_token);
+      }
     }
   });
 
@@ -81,14 +83,14 @@ $(document).ready(function () {
             msg = msg.replace('（{}）', '');
           }
           $('#user_locked_msg').html(msg);
-          is_opened=true;
+          is_opened = true;
           sessionStorage.setItem('is_opened', is_opened);
         } else {
           is_opened = false
           sessionStorage.setItem('is_opened', is_opened);
         }
       },
-      error: function(jqXHR, status){
+      error: function (jqXHR, status) {
         alert(jqXHR.responseJSON.msg)
       }
     });
@@ -119,7 +121,7 @@ $(document).ready(function () {
             $('#btn_unlock').on('click', function () {
               $("#action_unlock_activity").modal("hide");
               unlock_activity(activity_id, result.locked_value);
-              location.reload();
+              window.location.reload();
             });
           }
         } else {
@@ -127,7 +129,7 @@ $(document).ready(function () {
           sessionStorage.setItem('locked_value', locked_value);
         }
       },
-      error: function(jqXHR, status){
+      error: function (jqXHR, status) {
         alert(jqXHR.responseJSON.msg)
       }
     });

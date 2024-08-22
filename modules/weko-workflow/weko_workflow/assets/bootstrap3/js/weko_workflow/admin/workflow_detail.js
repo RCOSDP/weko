@@ -1,3 +1,5 @@
+import $ from 'jquery';
+
 $(document).ready(function () {
   checkWorkflowName();
 });
@@ -24,10 +26,10 @@ function checkWorkflowName() {
 function addAlert(message) {
   $("#alerts").append(
     '<div class="alert alert-light" id="alert-style">' +
-      '<button type="button" class="close" data-dismiss="alert">' +
-      "&times;</button>" +
-      message +
-      "</div>"
+    '<button type="button" class="close" data-dismiss="alert">' +
+    "&times;</button>" +
+    message +
+    "</div>"
   );
 }
 
@@ -60,7 +62,7 @@ $("#btn_delete").on("click", function () {
 $("#btn_create").on("click", function () {
   const post_uri = $("#post_uri").text();
   var list_hide = [];
-  $("#select_hide option").each(function() {
+  $("#select_hide option").each(function () {
     list_hide.push(this.value);
   });
   let post_data = {
@@ -76,7 +78,7 @@ $("#btn_create").on("click", function () {
   if (index_id !== '') {
     post_data['index_id'] = index_id;
   }
-  location_id = $('#txt_location').val()
+  let location_id = $('#txt_location').val()
   post_data['location_id'] = location_id !== '' ? location_id : null;
   $.ajax({
     url: post_uri,

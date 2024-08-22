@@ -22,6 +22,7 @@ weko_workflow = WebpackThemeBundle(
                 },
             dependencies={
                 'jquery': '~2.1.3',
+                'angular': '~1.3.15',
             }
         )
     }

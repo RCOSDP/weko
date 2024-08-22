@@ -688,14 +688,14 @@ function clearActivities() {
             paramsAfterFilter[key].value = decodeURIComponent(paramsAfterFilter[key].value.toString().replace(/\+/g, ' '));
             urlEncodedDataPairs.push(encodeURIComponent(paramsAfterFilter[key].name) + '=' + encodeURIComponent(paramsAfterFilter[key].value));
         }
-        clearURL = window.location.pathname + 'clear_activitylog/?' + urlEncodedDataPairs.join('&').replace(/%20/g, '+');
+        let clearURL = window.location.pathname + 'clear_activitylog/?' + urlEncodedDataPairs.join('&').replace(/%20/g, '+');
 
         $.ajax({
             url: clearURL,
             method: 'GET',
             success: function (res) {
-                activitylog_tsv = res;
-                location.reload();
+                let activitylog_tsv = res;
+                window.location.reload();
             },
             error: function (error) {
                 console.error(error);
@@ -711,14 +711,14 @@ function clearActivity(activity_id) {
 
     downloadActivities(activity_id).then(() => {
 
-        clearURL = window.location.pathname + 'clear_activitylog/?activity_id=' + activity_id;
+        let clearURL = window.location.pathname + 'clear_activitylog/?activity_id=' + activity_id;
 
         $.ajax({
             url: clearURL,
             method: 'GET',
             success: function (res) {
-                activitylog_tsv = res;
-                location.reload();
+                let activitylog_tsv = res;
+                window.location.reload();
             },
             error: function (error) {
                 console.error(error);
