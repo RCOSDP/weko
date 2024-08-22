@@ -38,6 +38,7 @@
 
 {%- block body %}
   <input id="lang-code" type="hidden" value="{{lang_code}}" />
+  <input id="uiFixedProperties" type="hidden" value='{{ uiFixedProperties | tojson | safe }}' />  
   <div class="row">
     <div class="col-sm-12 col-md-12 col-lg-11">
       <div class="panel panel-info  gray-color-class">
@@ -183,7 +184,17 @@
           </thead>
           <tbody id="tbody_itemtype">
             <tr>
-              <td>{{_('Publish Date')}}</td>
+                <td>
+                  <input type="text" class="form-control" id="txt_title_item" value="{{ title_item }}">
+                    <div class="hide text-title-JaEn" id="text_title_JaEn_item">
+                      <p>Japanese：</p>
+                    <input type="text" class="form-control" id="txt_title_ja_item" value="{{ title_ja }}">
+                      <p>English：</p>
+                  <input type="text" class="form-control" id="txt_title_en_item" value="{{ title_en }}">
+                     </div>
+                 <button type="button" class="btn btn-link btn-link-item">Localization Settings</button>  
+                </td>
+                  </div>
               <td>{{_('Date')}}</td>
               <td>
                 <fieldset disabled>
