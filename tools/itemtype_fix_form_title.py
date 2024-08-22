@@ -83,9 +83,11 @@ def fix_form_title(db_list):
             print("rollback: "+log)
 
 if __name__ == '__main__':
-    args = sys.argv
+    #args = sys.argv
 
-    input_file_path = args[1] if len(args) == 2 else join(dirname(__file__), TARGET_LIST_FILENAME)
-    db_list = get_db_list(input_file_path)
+    #input_file_path = args[1] if len(args) == 2 else join(dirname(__file__), TARGET_LIST_FILENAME)
+    #db_list = get_db_list(input_file_path)
+
+    db_list = [getenv('INVENIO_POSTGRESQL_DBNAME')]
 
     fix_form_title(db_list)
