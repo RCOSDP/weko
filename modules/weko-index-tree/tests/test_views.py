@@ -8,6 +8,7 @@ from werkzeug.local import LocalProxy
 from invenio_accounts.testutils import login_user_via_session
 
 from invenio_oauth2server.models import Token
+from weko_index_tree.models import Index
 from weko_index_tree.views import set_expand, get_rss_data, create_index
 
 
@@ -71,21 +72,26 @@ def test_set_expand_guest(client_api, users):
 # def create_index():
 # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_views.py::test_create_index -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
 def test_create_index(client_api, db, users, auth_headers):
+    def _request_process(data):
+        return client_api.post(
+            "/api/indextree/create",
+            data=json.dumps(data),
+            content_type="application/json",
+            headers=auth_headers,
+        )
+
     _data = {
         "parent_id": 0,
         "index_info": {}
     }
     login_user_via_session(client=client_api, email=users[0]["email"])
-    res = client_api.post("/api/indextree/create",
-                        data=json.dumps({}),
-                        headers=auth_headers)
+    res = _request_process({})
     assert res.status_code == 400
+    assert res.get_data(as_text=True) == "No data to create."
 
-    res = client_api.post("/api/indextree/create",
-                        data=json.dumps(_data),
-                        content_type="application/json",
-                        headers=auth_headers)
+    res = _request_process(_data)
     assert res.status_code == 400
+    assert res.get_data(as_text=True) == "index_info can not be null."
 
     _data["index_info"] = {
         "index_name": "Test Index",
@@ -94,11 +100,24 @@ def test_create_index(client_api, db, users, auth_headers):
         "public_state": False,
         "harvest_public_state": True
     }
-    res = client_api.post("/api/indextree/create",
-                        data=json.dumps(_data),
-                        content_type="application/json",
-                        headers=auth_headers)
+    res = _request_process(_data)
     assert res.status_code == 400
+
+    with patch("weko_index_tree.api.Indexes.update", return_value=Index(id=100, index_name="Test Index")):
+        res = _request_process(_data)
+        res_data = json.loads(res.get_data(as_text=True))
+        assert res.status_code == 201
+        assert res_data["index_name"] == "Test Index"
+
+    with patch("weko_index_tree.api.Indexes.create", return_value=False):
+        res = _request_process(_data)
+        assert res.status_code == 400
+        assert res.get_data(as_text=True) == "Could not create data."
+
+    with patch("weko_index_tree.api.Indexes.update", return_value=None):
+        res = _request_process(_data)
+        assert res.status_code == 400
+        assert res.get_data(as_text=True) == "Could not update data."
 
 
 # def dbsession_clean(exception):

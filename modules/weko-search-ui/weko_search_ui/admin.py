@@ -209,27 +209,33 @@ class ItemManagementCustomSort(BaseView):
     def save_sort(self):
         """Save custom sort."""
         try:
-            data = request.get_json()
-            index_id = data.get("q_id")
-            sort_data = data.get("sort")
+            with db.session.begin_nested():
+                data = request.get_json()
+                index_id = data.get("q_id")
+                sort_data = data.get("sort")
 
-            # save data to DB
-            item_sort = {}
-            for sort in sort_data:
-                sd = sort.get("custom_sort", {}).get(index_id)
-                if sd:
-                    item_sort[sort.get("id")] = sd
+                # save data to DB
+                item_sort = {}
+                for sort in sort_data:
+                    sd = sort.get("custom_sort", {}).get(index_id)
+                    if sd:
+                        item_sort[sort.get("id")] = sd
 
-            Indexes.set_item_sort_custom(index_id, item_sort)
+                result = Indexes.set_item_sort_custom(index_id, item_sort)
 
             # update es
             # fp = Indexes.get_self_path(index_id)
             # Indexes.update_item_sort_custom_es(fp.path, sort_data)
 
-            jfy = {"status": 200, "message": "Data is successfully updated."}
+            if result:
+                jfy = {"status": 200, "message": "Data is successfully updated."}
+                db.session.commit()
+            else:
+                jfy = {"status": 405, "message": "Data update failed."}
         except Exception as ex:
             jfy = {"status": 405, "message": "Error."}
             current_app.logger.error(ex)
+            db.session.rollback()
         return make_response(jsonify(jfy), jfy["status"])
 
 
