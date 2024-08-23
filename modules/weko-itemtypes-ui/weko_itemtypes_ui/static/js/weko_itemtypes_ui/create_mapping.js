@@ -728,6 +728,9 @@ $(document).ready(function () {
         let sub_jpcoar = element.sub_jpcoar;
         let sub_jpcoar_arr = sub_jpcoar.split('.');
         jpcoar_parent_key = sub_jpcoar_arr[0];
+        if(page_global.mapping_prop[itemtype_key] == "") {
+          page_global.mapping_prop[itemtype_key] = {};
+        }
         if(!page_global.mapping_prop.hasOwnProperty(itemtype_key)) {
           page_global.mapping_prop[itemtype_key] = {};
           page_global.mapping_prop[itemtype_key][jpcoar_type] = {};
