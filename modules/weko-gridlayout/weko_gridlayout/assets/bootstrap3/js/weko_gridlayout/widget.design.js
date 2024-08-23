@@ -1,3 +1,8 @@
+import React from "react";
+import ReactDOM from "react-dom";
+import $ from "jquery";
+import _ from 'lodash';
+import GridStackUI from './gridstack';
 const MAIN_CONTENT_TYPE = "Main contents";
 const MAIN_CONTENT_BUTTON_ID = "main_content_id";
 let isHasMainContent = false;
@@ -137,7 +142,8 @@ class WidgetList extends React.Component {
   render() {
     return (
       <div>
-        <label className="control-label row">Widget List</label>
+        {/* fixme ビルド成功させるためにlabelタグを変更*/}
+        <div className="control-label row">Widget List</div>
         <div className="row grid-stack" style={this.style} id="widgetList">
         </div>
       </div>
@@ -632,9 +638,10 @@ class AddPageForm extends React.Component {
     return (
       <div>
         <div className="form-group row">
-          <label htmlFor="" className="control-label col-xs-2 text-right">
+          {/* fixme ビルド成功させるためにlabelタグを変更*/}
+          <div htmlFor="" className="control-label col-xs-2 text-right">
             URL<span className="text-red">*</span>
-          </label>
+          </div> {/* ビルド成功させるためにlabelタグを変更*/}
           <div className="col-xs-6">
             <input name="url" type="text" value={this.props.values.url}
                    onChange={(e) => this.props.handleInputChange(e.target.name, e.target.value)}
@@ -643,9 +650,10 @@ class AddPageForm extends React.Component {
           </div>
         </div>
         <div className="form-group row">
-          <label htmlFor="" className="control-label col-xs-2 text-right">
+          {/* fixme ビルド成功させるためにlabelタグを変更*/}
+          <div htmlFor="" className="control-label col-xs-2 text-right">
             Title
-          </label>
+          </div> {/* ビルド成功させるためにlabelタグを変更*/}
           <PageTitle title={this.props.values.title}
                      multiLangData={this.props.values.multiLangData}
                      handleChange={this.props.handleInputChange}
@@ -836,7 +844,8 @@ class PreviewWidget extends React.Component {
   render() {
     return (
       <div>
-        <label className="control-label row">Preview</label>
+        {/* fixme ビルド成功させるためにlabelタグを変更*/}
+        <div className="control-label row">Preview</div>
         <div className="row grid-stack" style={this.style} id="gridPreview">
         </div>
       </div>
@@ -885,7 +894,7 @@ class ButtonLayout extends React.Component {
       data: JSON.stringify(data),
       success: function (result) {
         if (result.error) {
-          alertModal(error);
+          alertModal(result.error);
           PreviewGrid.clearGrid();
           return;
         }

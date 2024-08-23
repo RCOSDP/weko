@@ -1845,12 +1845,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	  if (typeof index.index === 'number' && typeof index.length === 'number') {
 	    // Allow for throwaway end (used by insertText/insertEmbed)
 	    if (typeof length !== 'number') {
-	      source = value, value = name, name = length, length = index.length, index = index.index;
+	      source = value; value = name; name = length; length = index.length; index = index.index;
 	    } else {
-	      length = index.length, index = index.index;
+	      length = index.length; index = index.index;
 	    }
 	  } else if (typeof length !== 'number') {
-	    source = value, value = name, name = length, length = 0;
+	    source = value; value = name; name = length; length = 0;
 	  }
 	  // Handle format being object, two format name/value strings or excluded
 	  if ((typeof name === 'undefined' ? 'undefined' : _typeof(name)) === 'object') {
@@ -3081,7 +3081,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            break;
 	          }
 	        }
-	        position.node = node, position.offset = offset;
+	        position.node = node; position.offset = offset;
 	      });
 	      return range;
 	    }
@@ -3240,7 +3240,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	function contains(parent, descendant) {
 	  try {
 	    // Firefox inserts inaccessible nodes around video elements
-	    descendant.parentNode;
+	    void descendant.parentNode;
 	  } catch (e) {
 	    return false;
 	  }
@@ -8167,7 +8167,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  var listener = new EE(fn, context || this)
 	    , evt = prefix ? prefix + event : event;
 	
-	  if (!this._events[evt]) this._events[evt] = listener, this._eventsCount++;
+	  if (!this._events[evt]) {this._events[evt] = listener; this._eventsCount++;}
 	  else if (!this._events[evt].fn) this._events[evt].push(listener);
 	  else this._events[evt] = [this._events[evt], listener];
 	
@@ -8187,7 +8187,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  var listener = new EE(fn, context || this, true)
 	    , evt = prefix ? prefix + event : event;
 	
-	  if (!this._events[evt]) this._events[evt] = listener, this._eventsCount++;
+	  if (!this._events[evt]) {this._events[evt] = listener; this._eventsCount++;}
 	  else if (!this._events[evt].fn) this._events[evt].push(listener);
 	  else this._events[evt] = [this._events[evt], listener];
 	

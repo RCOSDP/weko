@@ -5,10 +5,10 @@
  * gridstack.js may be freely distributed under the MIT license.
  * @preserve
 */
+import jQuery from "jquery";
+import _ from 'lodash';
 (function(factory) {
-    if (typeof define === 'function' && define.amd) {
-        define(['jquery', 'lodash'], factory);
-    } else if (typeof exports !== 'undefined') {
+    if (typeof exports !== 'undefined') {
         try { jQuery = require('jquery'); } catch (e) {}
         try { _ = require('lodash'); } catch (e) {}
         factory(jQuery, _);

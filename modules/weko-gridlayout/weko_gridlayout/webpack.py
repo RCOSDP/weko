@@ -21,6 +21,10 @@ weko_gridlayout = WebpackThemeBundle(
                 "gridlayout_js_trumbowyg_js_plugin": "./js/weko_gridlayout/react-trumbowyg-js.js",
             },
             dependencies={
+                'react': '0.14.8',
+                'react-dom': '0.14.8',
+                'jquery': '~2.1.3',
+                'lodash': '~3.10.1'
             }
         )
     }
