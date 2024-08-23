@@ -441,27 +441,31 @@ def getrecord(**kwargs):
         )
         return e_tree
 
-    _sets = list(set(record.get('path', [])+record['_oai'].get('sets', [])))
-    header(
-        e_record,
-        identifier=pid_object.pid_value,
-        datestamp=record.updated,
-        sets=_sets
-    )
-    e_metadata = SubElement(e_record,
-                            etree.QName(NS_OAIPMH, 'metadata'))
+    try:
+        _sets = list(set(record.get('path', [])+record['_oai'].get('sets', [])))
+        header(
+            e_record,
+            identifier=pid_object.pid_value,
+            datestamp=record.updated,
+            sets=_sets
+        )
+        e_metadata = SubElement(e_record,
+                                etree.QName(NS_OAIPMH, 'metadata'))
 
-    etree_record = pickle.loads(pickle.dumps(record, -1))
+        etree_record = pickle.loads(pickle.dumps(record, -1))
 
-    if not etree_record.get('system_identifier_doi', None):
-        etree_record['system_identifier_doi'] = get_identifier(record)
+        if not etree_record.get('system_identifier_doi', None):
+            etree_record['system_identifier_doi'] = get_identifier(record)
 
-    # Merge licensetype and licensefree
-    etree_record = handle_license_free(etree_record)
+        # Merge licensetype and licensefree
+        etree_record = handle_license_free(etree_record)
 
-    root = record_dumper(pid_object, {'_source': etree_record})
+        root = record_dumper(pid_object, {'_source': etree_record})
 
-    e_metadata.append(root)
+        e_metadata.append(root)
+    except Exception as ex:
+        current_app.logger.error("BaseException: {}".format(ex))
+
     return e_tree
 
 
@@ -548,6 +552,8 @@ def listidentifiers(**kwargs):
         except NoResultFound:
             current_app.logger.error(
                 "NoResultFound: object_uuid: {}".format(pid_object.object_uuid))
+        except Exception as ex:
+            current_app.logger.error("BaseException: {}".format(ex))
 
     if len(e_listidentifiers) == 0:
         return error(get_error_code_msg(), **kwargs)
@@ -662,6 +668,8 @@ def listrecords(**kwargs):
         except NoResultFound:
             current_app.logger.error(
                 "NoResultFound: object_uuid: {}".format(pid_object.object_uuid))
+        except BaseException as ex:
+            current_app.logger.error("BaseException: {}".format(ex))
 
     # Check <record> tag not exist.
     if len(e_listrecords) == 0:
