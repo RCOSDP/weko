@@ -4,6 +4,7 @@
 * Copyright jQuery Foundation and other contributors; Licensed MIT */
 
 import $ from "jquery";
+import Globalize from "globalize";
 
 /*!
  * jQuery UI Widget 1.12.1
