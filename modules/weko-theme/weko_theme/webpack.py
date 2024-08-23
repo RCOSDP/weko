@@ -21,6 +21,7 @@ weko_theme = WebpackThemeBundle(
             dependencies={
                 'almond': '~0.3.1',
                 'angular': '~1.4.9',
+                "bootstrap": "~3.3.7",
                 'bootstrap-sass': '~3.3.5',
                 'font-awesome': '~4.4.0',
                 'jquery': '~2.1.3',
