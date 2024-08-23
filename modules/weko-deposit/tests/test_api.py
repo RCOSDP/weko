@@ -41,6 +41,7 @@ from invenio_pidstore.models import PersistentIdentifier, PIDStatus, Redirect
 from invenio_pidstore.errors import PIDInvalidAction
 from invenio_pidrelations.models import PIDRelation
 from invenio_records.errors import MissingModelError
+from invenio_records.models import RecordMetadata
 from invenio_records_rest.errors import PIDResolveRESTError
 from invenio_records_files.models import RecordsBuckets
 from invenio_records_files.api import Record
@@ -256,12 +257,31 @@ class TestWekoIndexer:
     #         def get_result(result):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoIndexer::test_get_pid_by_es_scroll -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test_get_pid_by_es_scroll(self,es_records):
+        def get_recids(ret):
+            recids = []
+            for obj_uuid in ret:
+                r = RecordMetadata.query.filter_by(id=obj_uuid).first()
+                recids.append(r.json['recid'])
+            return recids
+
         indexer, records = es_records
         ret = indexer.get_pid_by_es_scroll(1)
         assert isinstance(next(ret),list)
         assert isinstance(next(ret),dict)
         assert ret is not None
-        
+
+        # get all versions
+        ret = next(indexer.get_pid_by_es_scroll(4), [])
+        recids = get_recids(ret)
+        assert '10' in recids
+        assert '10.2' in recids
+
+        # get only latest version
+        ret = next(indexer.get_pid_by_es_scroll(4, only_latest_version=True), [])
+        recids = get_recids(ret)
+        assert '10' in recids
+        assert not '10.2' in recids
+
     #     def get_metadata_by_item_id(self, item_id):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoIndexer::test_get_metadata_by_item_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test_get_metadata_by_item_id(self,es_records):
@@ -807,11 +827,26 @@ class TestWekoDeposit:
     # def delete_by_index_tree_id(cls, index_id: str, ignore_items: list = []):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_delete_by_index_tree_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test_delete_by_index_tree_id(sel,app,db,location,es_records):
+        def check_status(pid, status):
+            assert PersistentIdentifier.get('depid', pid).status == status
+
         indexer, records = es_records
         record = records[0]
         deposit = record['deposit']
-        deposit.delete_by_index_tree_id('1',[])
+        deposit.delete_by_index_tree_id('1',['2'])
+        check_status(2, "R")
 
+        time.sleep(1)
+        deposit.delete_by_index_tree_id('1',[])
+        check_status(2, "D")
+
+        # not delete item
+        deposit.delete_by_index_tree_id('3',[]) # 10.1 in 3
+        check_status(10, "R")
+
+        # delete item
+        deposit.delete_by_index_tree_id('4',[]) # 10, 10.2 in 4
+        check_status(10, "D")
 
     # def update_pid_by_index_tree_id(self, path):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_update_pid_by_index_tree_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
