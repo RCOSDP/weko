@@ -21,15 +21,15 @@
  * as an Intergovernmental Organization or submit itself to any jurisdiction.
  */
 
-(function (angular) {
-  // Bootstrap it!
-  angular.element(document).ready(function() {
-    angular.bootstrap(
-      document.getElementById("invenio-records"), [
-        'invenioRecords', 'schemaForm', 'mgcrea.ngStrap',
-        'mgcrea.ngStrap.modal', 'pascalprecht.translate', 'ui.select',
-        'mgcrea.ngStrap.select', 'invenioFiles'
-      ]
-    );
-  });
-})(angular);
+import angular from 'angular';
+
+// Bootstrap it!
+angular.element(document).ready(function() {
+  angular.bootstrap(
+    document.getElementById("invenio-records"), [
+      'invenioRecords', 'schemaForm', 'mgcrea.ngStrap',
+      'mgcrea.ngStrap.modal', 'pascalprecht.translate', 'ui.select',
+      'mgcrea.ngStrap.select', 'invenioFiles'
+    ]
+  );
+});
