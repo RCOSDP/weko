@@ -21,13 +21,13 @@
   {%- extends config.WEKO_ITEMS_UI_BASE_TEMPLATE %}
 
   {%- block css %}
-    {% assets "invenio_deposit_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
-    {% assets "weko_items_authors_search_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+    {{ webpack['deposit_css_css.css']}}
+    {{ webpack['items_ui_css_items_author_search.css']}}
     {{ super() }}
     <link href="{{ url_for('static', filename='css/weko_items_ui/contributor.search.css') }}" rel="stylesheet">
     <link href="/static/css/weko_workflow/style.css" rel="stylesheet">
-    {% assets "weko_items_ui_feedback_maillist_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
-    {% assets "weko_records_ui_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+    {{ webpack['items_ui_js_feedback_maillist.css']}}
+    {{ webpack['records_ui_css_style.css']}}
   {%- endblock css %}
 
   {%- block javascript %}
@@ -44,15 +44,22 @@
 
     <script src="{{ url_for('static', filename='js/weko_items_ui/item.autofill.js') }}" type="text/babel"></script>
     {% assets "invenio_deposit_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+    {{ webpack[''}}
     {% assets "weko_admin_react_bootstrap_js" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
+    {{ webpack['admin_js_react_bootstrap_js.js'}
     {% assets "weko_items_ui_feedback_maillist_js" %}<script type="text/babel" src="{{ ASSET_URL }}"></script>{% endassets %}
+    {{ webpack['items_ui_js_feedback_maillist.js'}}
     {{ super() }}
     {% assets "invenio_deposit_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+    {{ webpack['deposit_js_js.js'}}
     {%- if need_thumbnail %}
       {% assets "weko_items_ui_upload_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+      {{ webpack[''}}
     {% endif %}
     {% assets "weko_items_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+    {{ webpack[''}}
     {% assets "weko_items_authors_search_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+    {{ webpack[''}}
   {%- endblock javascript %}
 
   {%- block page_header %}

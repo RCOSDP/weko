@@ -26,7 +26,7 @@
 
 {%- block javascript %}
   {{ super() }}
-  {% assets "weko_items_ui_upload_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {{ webpack['items_ui_js_upload.js']}}
 {%- endblock javascript %}
 
 {%- block page_body_tabs %}

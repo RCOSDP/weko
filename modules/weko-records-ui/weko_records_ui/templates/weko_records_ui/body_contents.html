@@ -26,7 +26,7 @@
 {{ all_modal() }}
 
 {%- block javascript %}
-  {% assets "weko_records_ui_file_action_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {{ webpack['records_ui_file_action_js.js']}}
 {%- endblock javascript %}
 
 {% from "weko_records_ui/item_detail.html" import output_item_detail with context %}

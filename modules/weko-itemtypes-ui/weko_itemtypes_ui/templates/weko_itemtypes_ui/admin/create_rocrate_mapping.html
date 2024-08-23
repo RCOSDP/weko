@@ -22,22 +22,14 @@
 
 {%- block css %}
 {{ super() }}
-{% assets "weko_rocrate_mapping_ui_css" %}
-<link href="{{ ASSET_URL }}" rel="stylesheet">
-{% endassets %}
-{% assets "weko_theme_css_buttons" %}
-<link href="{{ ASSET_URL }}" rel="stylesheet">
-{% endassets %}
-{% assets "weko_admin_css" %}
-<link href="{{ ASSET_URL }}" rel="stylesheet">
-{% endassets %}
+{{ webpack['itemstypes_ui_css_style_rocrate_mapping.css']}}
+{{ webpack['theme-css-buttons.css']}}
+{{ webpack['admin_css_css.css']}}
 {%- endblock css %}
 
 {%- block javascript %}
 {{ super() }}
-{% assets "weko_itemtypes_rocrate_mapping_ui_js" %}
-<script src="{{ ASSET_URL }}"></script>
-{% endassets %}
+{{ webpack['itemstypes_ui_js_js_rocrate_mapping']}}
 {%- endblock javascript %}
 
 {%- block body %}

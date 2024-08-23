@@ -26,7 +26,7 @@
 
 {%- block javascript %}
   {{ super() }}
-  {% assets "weko_itemtypes_mapping_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {{ webpack['itemstypes_ui_js_js_mapping.js']}}
 {%- endblock javascript %}
 
 {%- block page_body_tabs %}

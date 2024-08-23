@@ -22,13 +22,13 @@
 
 {%- block css %}
   {{ super() }}
-  {% assets "weko_items_ui_indextree_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {{ webpack['items_ui_css_indextree_style.css']}}
 {%- endblock css %}
 
 {%- block javascript %}
   {{ super() }}
-  {% assets "weko_items_ui_js_dependencies" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_theme_js_widget" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {{ webpack['items_ui_js_dependencies_angularjs.js']}}
+  {{ webpack['theme-js-widget.js']}}
 {%- endblock javascript %}
 
 {%- block page_body_tabs %}

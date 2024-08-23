@@ -21,24 +21,24 @@
 {%- extends admin_base_template %}
 
 {%- block css %}
-  {% assets "weko_indextree_journal_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
-  {% assets "invenio_deposit_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {{ webpack['indextree_journal_css_style.js']}}
+  {{ webpack['deposit_css_css.css']}}
   {{ super() }}
   <style>
     body {
     overflow-x:hidden;
     }
   </style>
-  {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
-  {% assets "weko_theme_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {{ webpack['theme-css-buttons.css']}}
+  {{ webpack['weko-theme-css.css']}}
 {%- endblock css %}
 
 {%- block javascript %}
-  {% assets "weko_indextree_journal_view" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "invenio_deposit_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {{ webpack['indextree_journal_js_treeview.js']}}
+  {{ webpack['js-dependencies.js']}}
   {{ super() }}
-  {% assets "invenio_deposit_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_indextree_journal_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {{ webpack['deposit_js_js.js']}}
+  {{ webpack['indextree_journal_js_js.js']}}
 {%- endblock javascript %}
 
 {%- block body %}

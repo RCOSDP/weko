@@ -21,12 +21,12 @@
 {%- extends config.WEKO_INDEXTREE_JOURNAL_BASE_TEMPLATE %}
 
 {%- block css %}
-  {% assets "invenio_deposit_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {{ webpack['deposit_css_css.css']}}
 {%- endblock css %}
 
 {%- block javascript %}
-  {% assets "invenio_deposit_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "invenio_deposit_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {{ webpack['js-dependencies.js']}}
+  {{ webpack['deposit_js_js.js']}}
 {%- endblock javascript %}
 
 <div class="row">

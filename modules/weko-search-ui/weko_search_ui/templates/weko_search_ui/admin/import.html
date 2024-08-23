@@ -25,15 +25,21 @@
 {%- block css %}
   {{ super() }}
   {% assets "weko_admin_item_import_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {{ webpack['search-ui-less-import.css']}}
   {% assets "weko_items_ui_indextree_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {{ webpack['items_ui_css_indextree_style.css']}}
 {%- endblock css %}
 
 {%- block javascript %}
   {{ super() }}
   {% assets "weko_admin_item_import_js" %}<script type="text/babel" src="{{ ASSET_URL }}"></script>{% endassets %}
+  {{ webpack['search-ui-js-import.js]'}}
   {% assets "weko_admin_statistics_reactjs_lib" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
+  {{ webpack['admin_js_statistics_reactjs_lib.js]'}}
   {% assets "weko_admin_react_bootstrap_js" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
+  {{ webpack['admin_js_react_bootstrap_js.js']}}
   {% assets "weko_moment_js" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
+  {{ webpack['search-ui-js-moment.js']}}
 {%- endblock javascript %}
 
 {%- block body %}

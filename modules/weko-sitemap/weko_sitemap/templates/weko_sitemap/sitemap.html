@@ -12,12 +12,15 @@
 {% block css %}
   {{ super() }}
   {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {{ webpack['theme-css-buttons.css']}}
   {% assets "weko_sitemap_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {{ webpack['sitemap-css-css.css']}}
  {% endblock %}
 
 {%- block javascript %}
   {{ super() }}
   {% assets "weko_sitemap_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {{ webpack['sitemap-js-js.js']}}
 {%- endblock javascript %}
 
 {%- block body %}
