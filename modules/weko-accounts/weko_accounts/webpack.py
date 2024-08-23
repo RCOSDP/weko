@@ -12,6 +12,7 @@ weko_accounts = WebpackThemeBundle(
                 "accounts_js_suggest_js": "./js/weko_accounts/suggest.js",
             },
             dependencies={
+                'jquery': '~2.1.3'
             }
         )
     }

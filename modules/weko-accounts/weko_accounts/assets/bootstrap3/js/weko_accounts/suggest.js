@@ -1,3 +1,4 @@
+import jQuery from "jquery";
 jQuery.noConflict();
 jQuery(document).ready(function($) {
     /*
@@ -34,9 +35,9 @@ jQuery(document).ready(function($) {
 
     function setDiscofeedList(json) {
         if (!json) return;
-        inc_search_list = checkDiscofeedList(json, inc_search_list);
-        favorite_list = checkDiscofeedList(json, favorite_list);
-        hint_list = checkDiscofeedList(json, hint_list);
+        let inc_search_list = checkDiscofeedList(json, inc_search_list);
+        let favorite_list = checkDiscofeedList(json, favorite_list);
+        let hint_list = checkDiscofeedList(json, hint_list);
     }
 
     // It adds it to window event.
@@ -64,7 +65,7 @@ jQuery(document).ready(function($) {
     // DiscoFeed
     if (typeof(wayf_discofeed_url) != "undefined" && wayf_discofeed_url != '') {
         var urldomain = wayf_discofeed_url.split('/')[2];
-        if (location.hostname != urldomain && window.XDomainRequest) {
+        if (window.location.hostname != urldomain && window.XDomainRequest) {
             var xdr = new XDomainRequest();
             xdr.onload = function() {
                 setDiscofeedList(eval("(" + xdr.responseText + ")"));
@@ -248,7 +249,7 @@ jQuery(document).ready(function($) {
             }
             if (search_cnt == 1) {
                 this.setStyleActive(this.suggestList[this.hintList.length + this.favoriteList.length]);
-                hiddenKeyText = this.candidateList[this.suggestIndexList[this.hintList.length + this.favoriteList.length]][2];
+                let hiddenKeyText = this.candidateList[this.suggestIndexList[this.hintList.length + this.favoriteList.length]][2];
                 this.activePosition = this.hintList.length + this.favoriteList.length;
                 flg = false;
             }
