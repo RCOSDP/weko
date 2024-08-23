@@ -1120,7 +1120,7 @@ WEKO_ADMIN_REPOSITORY_ACCESS_LIST = [
     'authors/import',
     'flowsetting',
     'identify',
-    # 'items/bulk/delete',
+    'items/bulk/delete',
     'items/bulk/update',
     'items/search',
     'itemtypes',
