@@ -1717,5 +1717,4 @@ $.fn.gridstack = function (opts) {
     });
 };
 
-// return scope.GridStackUI;
 export default scope.GridStackUI;

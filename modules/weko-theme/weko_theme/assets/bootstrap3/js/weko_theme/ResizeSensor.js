@@ -8,18 +8,6 @@
 import jQuery from 'jquery';
 import Elements from 'mootools';
 
-// (function (root, factory) {
-//     if (typeof exports === "object") {
-//         module.exports = factory();
-//     } else {
-//         root.ResizeSensor = factory();
-//     }
-// }(typeof window !== 'undefined' ? window : this, function () {
-
-// Make sure it does not throw in a SSR (Server Side Rendering) situation
-// if (typeof window === "undefined") {
-//     return null;
-// }
 // Only used for the dirty checking, so the event callback count is limited to max 1 call per fps per sensor.
 // In combination with the event based resize sensor this saves cpu time, because the sensor is too fast and
 // would generate too many unnecessary events.
@@ -259,7 +247,4 @@ ResizeSensor.detach = function (element, ev) {
     });
 };
 
-// return ResizeSensor;
 export default ResizeSensor;
-
-// }));
