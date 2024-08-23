@@ -1,4 +1,5 @@
 import $ from "jquery";
+import JSONSchemaEditor from './jsonschemaeditor'
 // require(["jquery", "bootstrap"], function() {});
 $(document).ready(function () {
   let initschema = {
