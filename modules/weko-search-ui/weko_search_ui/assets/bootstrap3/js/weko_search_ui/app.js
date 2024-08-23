@@ -1,6 +1,6 @@
 import angular from 'angular';
 import "bootstrap";
-import "bootstrap-datepicker/dist/js/bootstrap-datepicker"
+import "bootstrap-datepicker"
 import $ from "jquery";
 
 const MESSAGE = {
