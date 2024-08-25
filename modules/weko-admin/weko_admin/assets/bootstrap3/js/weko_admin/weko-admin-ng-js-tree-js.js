@@ -1,2 +1,2 @@
-import 'jstree.min.js';
-import 'ngJsTree.min.js';
+import './jstree.min.js';
+import './ngJsTree.min.js';
