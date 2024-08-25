@@ -12,6 +12,8 @@ weko_indextree_journal = WebpackThemeBundle(
                 "indextree_journal_js_js": "./js/weko_indextree_journal/app.js",
             },
             dependencies={
+                'angular': "~1.4.9",
+                "jquery": "~3.2.1",
             }
         )
     }
