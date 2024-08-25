@@ -1,19 +1,20 @@
+import $ from "jquery";
 // require(["jquery", "bootstrap"], function() {});
 $(document).ready(function () {
-  initschema = {
+  let initschema = {
         type: "object",
         properties: {},
         required: []
   }
-  url_update_schema = '/admin/itemtypes/properties';
-  element = document.getElementById('new_option');
+  let url_update_schema = '/admin/itemtypes/properties';
+  let element = document.getElementById('new_option');
   var editor = new JSONSchemaEditor(element, {
     startval: initschema,
     editor: true
   });
   $('#previews').on('click', function(){
-    schema = editor.getValue();
-    forms = editor.exportForm();
+    let schema = editor.getValue();
+    let forms = editor.exportForm();
     removeCurrentEnum(schema.properties);
     $('#schema_json').val(JSON.stringify(schema, null, 4));
     $('#form1_json').val(JSON.stringify(forms.form, null, 4));
@@ -66,7 +67,7 @@ $(document).ready(function () {
 
   $('#item-type-lists').on('change', function(){
     if($('#item-type-lists').val().length > 0) {
-      url = '/admin/itemtypes/properties/' + $('#item-type-lists').val();
+      let url = '/admin/itemtypes/properties/' + $('#item-type-lists').val();
       $.get(url, function(data, status){
         url_update_schema = '/admin/itemtypes/properties/' + data.id;
         $('#property_name').val(data.name);
@@ -93,9 +94,9 @@ $(document).ready(function () {
 
   // create from json data
   $('#rebuild').on('click', function(){
-    schema_json_val = $('#schema_json').val();
+    let schema_json_val = $('#schema_json').val();
     if(schema_json_val.length > 0) {
-      schema_json = null;
+      let schema_json = null;
       schema_json = JSON.parse(schema_json_val);
       editor.setValue({
         startval: schema_json,
