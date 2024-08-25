@@ -1,4 +1,5 @@
 import $ from "jquery";
+import JSONTreeView from './wrapper_jsontreeview';
 $(document).ready(function () {
   $('#myModal').modal({
     show: false
