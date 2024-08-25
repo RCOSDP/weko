@@ -29,13 +29,17 @@ weko_admin = WebpackThemeBundle(
                 "admin_js_reindex_elasticsearch_js": "./js/weko_admin/reindex_elasticsearch.js",
             },
             dependencies={
-                'requirejs': '~2.3.6',
-                'jquery': '~1.9.1',
-                'angular': '~1.4.9',
-                'moment': '~2.9.0',
-                'select2': '~4.0.2',
                 'admin-lte': '~2.3.6',
                 'angular': '~1.4.9',
+                'bootstrap': '~3.3.6',
+                'bootstrap-datepicker': '~1.7.1',
+                'jquery': '~2.1.3',
+                'moment': '~2.9.0',
+                'react': '~15.6.1',
+                'react-bootstrap': '~0.33.1',
+                'react-dom': '~15.6.1',
+                'requirejs': '~2.3.6',
+                'select2': '~4.0.2',
             }
         )
     }

@@ -10,6 +10,7 @@ weko_schema_ui = WebpackThemeBundle(
                 "schema-ui-js": "./js/weko_schema_ui/app.js",
             },
             dependencies={
+                'angular': '-1.4.9'
             }
         )
     }

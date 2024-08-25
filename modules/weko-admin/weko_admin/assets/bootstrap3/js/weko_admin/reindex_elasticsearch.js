@@ -1,3 +1,8 @@
+import $ from 'jquery';
+import React from 'react';
+import ReactDOM from 'react-dom';
+import * as ReactBootstrap from 'react-bootstrap';
+
 //poファイル定義の文言をhiddenから取得
 const reindex_item_index = document.getElementById("reindex_item_index").value;
 const reindex_item = document.getElementById("reindex_item").value;
@@ -18,9 +23,9 @@ function closeError() {
 }
 
 /** show ErrorMessage */
-function showErrorMsg(msg , success=false) {
+function showErrorMsg(msg, success = false) {
     $('#errors').append(
-        '<div class="alert ' + (success? "alert-success":"alert-danger") + ' alert-dismissable">' +
+        '<div class="alert ' + (success ? "alert-success" : "alert-danger") + ' alert-dismissable">' +
         '<button type="button" class="close" data-dismiss="alert" aria-hidden="true">' +
         '&times;</button>' + msg + '</div>');
 }
@@ -32,11 +37,11 @@ class MainLayout extends React.Component {
         const disabled_Btn = JSON.parse(document.getElementById("disabled_Btn").value.toLowerCase())
         this.state = {
             isError: err
-            ,isExecuting: exe
-            ,disabled_Btn: disabled_Btn
-            ,showModal:false
-            ,riiChecked : true
-            ,riChecked : false
+            , isExecuting: exe
+            , disabled_Btn: disabled_Btn
+            , showModal: false
+            , riiChecked: true
+            , riChecked: false
         }
         this.handleClickExecute = this.handleClickExecute.bind(this);
         this.handleCheckedChange = this.handleCheckedChange.bind(this);
@@ -56,18 +61,18 @@ class MainLayout extends React.Component {
         }
     }
 
-    componentDidCatch(error, info){
+    componentDidCatch(error, info) {
         console.log(info.componentStack);
         showErrorMsg(JSON.stringify(error));
     }
 
 
     /** 画面実行ボタン押下 */
-    handleClickExecute(event){
+    handleClickExecute(event) {
         const riiChecked = document.getElementById("reindex_item_index").checked;
-        const riChecked  = document.getElementById("reindex_item").checked;
+        const riChecked = document.getElementById("reindex_item").checked;
         //validation
-        if(riiChecked === riChecked){
+        if (riiChecked === riChecked) {
             return showErrorMsg(validationMsg1);
         }
 
@@ -77,11 +82,11 @@ class MainLayout extends React.Component {
     }
 
     /** チェックボックス変更 */
-    handleCheckedChange(event){
-        if ( event.target.checked){
+    handleCheckedChange(event) {
+        if (event.target.checked) {
             this.setState({
                 riiChecked: event.target.id === 'reindex_item_index'
-                ,riChecked: event.target.id === 'reindex_item'
+                , riChecked: event.target.id === 'reindex_item'
             });
         }
     }
@@ -94,39 +99,39 @@ class MainLayout extends React.Component {
     }
 
     /** モーダル実行ボタン押下 */
-    handleExecute(){
+    handleExecute() {
 
         //Clear error message
         closeError();
         const riiChecked = document.getElementById("reindex_item_index").checked;
-        const riChecked  = document.getElementById("reindex_item").checked;
-        
+        const riChecked = document.getElementById("reindex_item").checked;
+
         this.setState({
             disabled_Btn: true
-            ,isExecuting: true
-            ,showModal: false
+            , isExecuting: true
+            , showModal: false
         });
         return fetch(
-            new URL('reindex' , window.location.href) + "?is_db_to_es=" + riChecked
-            ,{method: 'POST'}
+            new URL('reindex', window.location.href) + "?is_db_to_es=" + riChecked
+            , { method: 'POST' }
         )
-        .then((res) => {return  res.ok ? res.text() : res.text().then(e => Promise.reject(e))})
-        .then((res) => {
-            showErrorMsg(JSON.parse(res).responce , true);
-            return this.handleCheckReindexIsRunning();
-        })
-        .catch((etext) => {
-            console.log(etext);
-            etext = JSON.parse(etext).error
-            showErrorMsg(etext);
-            this.handleCheckReindexIsRunning();
-        });
+            .then((res) => { return res.ok ? res.text() : res.text().then(e => Promise.reject(e)) })
+            .then((res) => {
+                showErrorMsg(JSON.parse(res).responce, true);
+                return this.handleCheckReindexIsRunning();
+            })
+            .catch((etext) => {
+                console.log(etext);
+                etext = JSON.parse(etext).error
+                showErrorMsg(etext);
+                this.handleCheckReindexIsRunning();
+            });
 
     }
 
-    handleCheckReindexIsRunning(event){
+    handleCheckReindexIsRunning(event) {
         return fetch(
-            new URL('is_reindex_running' , window.location.href)
+            new URL('is_reindex_running', window.location.href)
         ).then((res) => {
             return res.text()
         }).then((txt) => {
@@ -147,18 +152,18 @@ class MainLayout extends React.Component {
                         </div>
                         <div class="row">
                             <label for="reindex_item" class="radio-inline">
-                                <input type="radio" name="reindex_type" id="reindex_item" checked={this.state.riChecked} onChange={this.handleCheckedChange}/>
+                                <input type="radio" name="reindex_type" id="reindex_item" checked={this.state.riChecked} onChange={this.handleCheckedChange} />
                                 {reindex_item}
                             </label>
                         </div>
                         <br />
                         <div class="row">
                             <div class="form-actions">
-                                <button type="submit" id="execute" name="execute" value="save_ranking_settings" class="btn btn-primary" 
-                                onClick={this.handleClickExecute} disabled={this.state.disabled_Btn}>{execute}
+                                <button type="submit" id="execute" name="execute" value="save_ranking_settings" class="btn btn-primary"
+                                    onClick={this.handleClickExecute} disabled={this.state.disabled_Btn}>{execute}
                                 </button>
                                 <span>
-                                    {this.state.isError? haserror :this.state.isExecuting? executing : waiting}
+                                    {this.state.isError ? haserror : this.state.isExecuting ? executing : waiting}
                                 </span>
                             </div>
                         </div>
@@ -186,7 +191,7 @@ class MainLayout extends React.Component {
                 </div>
             </div>
         );
-        
+
         return html;
     }
 

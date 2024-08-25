@@ -1,3 +1,4 @@
+import $ from "jquery";
 //require(["jquery", "bootstrap"], function() {});
 $(document).ready(function () {
   $('#myModal').modal({
@@ -110,12 +111,12 @@ $(document).ready(function () {
     }
   });
   $('button[type="button"]').on('click', function(ev){
-    action = this.dataset.action;
+    let action = this.dataset.action;
     page_global.showDiag = true;
     if('add' == action) {
-      ul_key = '#ul_' + this.parentElement.dataset.key;
-      li_key = ul_key+' li.list_'+$('#jpcoar_lists').val();
-      li_key_last = ul_key+' li.list_'+$('#jpcoar_lists').val()+':last';
+      let ul_key = '#ul_' + this.parentElement.dataset.key;
+      let li_key = ul_key+' li.list_'+$('#jpcoar_lists').val();
+      let li_key_last = ul_key+' li.list_'+$('#jpcoar_lists').val()+':last';
       if($(li_key).length == 1) {
         $(li_key).find('select[name="parent_list"]').find('option:first').remove();
         $(li_key).find('.btn-danger').removeAttr('disabled');
@@ -135,12 +136,12 @@ $(document).ready(function () {
       parent_li.find('.sub_itemtype_link:last').find('.form-group').addClass('hide');
     }
     if('del' == action) {
-      ul_key = '#ul_' + this.parentElement.dataset.key;
-      li_key = ul_key+' li.list_'+$('#jpcoar_lists').val();
+      let ul_key = '#ul_' + this.parentElement.dataset.key;
+      let li_key = ul_key+' li.list_'+$('#jpcoar_lists').val();
       let parent_li = $(this).parents('.list-group-item');
       let is_checked = parent_li.find('input[type="radio"]').is(':checked');
-      itemtype_key = parent_li.find('input[type="radio"]').val();
-      mapping_key = parent_li.find('select').val();
+      let itemtype_key = parent_li.find('input[type="radio"]').val();
+      let mapping_key = parent_li.find('select').val();
       if(remove_mapping_parent_item(itemtype_key, mapping_key)) {
         $(this).parents('.list-group-item').remove();
         if(is_checked) {
@@ -155,8 +156,8 @@ $(document).ready(function () {
     }
     if('del_child' == action) {
       let parent_li = $(this).parents('.sub_child_list');
-      itemtype_key = $('input[type="radio"]:checked').val();
-      mapping_key = parent_li.find('select[name="sub_jpcoar_list"]').val();
+      let itemtype_key = $('input[type="radio"]:checked').val();
+      let mapping_key = parent_li.find('select[name="sub_jpcoar_list"]').val();
       enableSelectOption(mapping_key);
       if(remove_mapping_child_item(itemtype_key, mapping_key)) {
         $(this).parents('.sub_child_list').remove();
@@ -181,10 +182,10 @@ $(document).ready(function () {
   });
   function remove_mapping_parent_item(itemtype_key, mapping_key) {
     if(page_global.mapping_prop == null) {
-      mapping_str = $('#hide_mapping_prop').text();
+      let mapping_str = $('#hide_mapping_prop').text();
       page_global.mapping_prop = JSON.parse(mapping_str);
     }
-    schema_name = $('#jpcoar_lists').val();
+    let schema_name = $('#jpcoar_lists').val();
     if(page_global.mapping_prop.hasOwnProperty(itemtype_key)) {
       if(page_global.mapping_prop[itemtype_key].hasOwnProperty(schema_name)) {
         if(mapping_key.length == 0) {
@@ -200,12 +201,12 @@ $(document).ready(function () {
   }
   function remove_mapping_child_item(itemtype_key, mapping_key) {
     if(page_global.mapping_prop == null) {
-      mapping_str = $('#hide_mapping_prop').text();
+      let mapping_str = $('#hide_mapping_prop').text();
       page_global.mapping_prop = JSON.parse(mapping_str);
     }
-    schema_name = $('#jpcoar_lists').val();
-    sub_jpcoar_arr = mapping_key.split('.');
-    sub_sub_jpcoar = sub_jpcoar_arr.length>1?sub_jpcoar_arr.pop():'';
+    let schema_name = $('#jpcoar_lists').val();
+    let sub_jpcoar_arr = mapping_key.split('.');
+    let sub_sub_jpcoar = sub_jpcoar_arr.length>1?sub_jpcoar_arr.pop():'';
     if(page_global.mapping_prop.hasOwnProperty(itemtype_key)) {
       if(page_global.mapping_prop[itemtype_key].hasOwnProperty(schema_name)) {
         if(sub_sub_jpcoar.length == 0) {
@@ -237,8 +238,8 @@ $(document).ready(function () {
   $('input[type="radio"]').on('click', function(ev){
     $('tr').removeClass('active');
     $(this).parents('tr').addClass('active');
-    item_type_key = $(this).val();
-    jpcoar_key = $(this).parents('.form-inline').find('select').val();
+    let item_type_key = $(this).val();
+    let jpcoar_key = $(this).parents('.form-inline').find('select').val();
     if(jpcoar_key.length == 0) {
       remove_mapping_parent_item(item_type_key, jpcoar_key);
       reset_sub_children_lists();
@@ -308,16 +309,16 @@ $(document).ready(function () {
   }
   function display_sub_lists(item_type_key, jpcoar_key) {
     if(page_global.itemtype_prop == null) {
-      item_type_str = $('#hide_itemtype_prop').text();
+      let item_type_str = $('#hide_itemtype_prop').text();
       page_global.itemtype_prop = JSON.parse(item_type_str);
     }
-    schema_name_str = $('#jpcoar_lists').val();
+    let schema_name_str = $('#jpcoar_lists').val();
     if(!page_global.schema_prop.hasOwnProperty(schema_name_str)) {
-      schema_str = $('#hide_'+schema_name_str).text();
+      let schema_str = $('#hide_'+schema_name_str).text();
       page_global.schema_prop[schema_name_str] = JSON.parse(schema_str);
     }
     if(page_global.mapping_prop == null) {
-      mapping_str = $('#hide_mapping_prop').text();
+      let mapping_str = $('#hide_mapping_prop').text();
       page_global.mapping_prop = JSON.parse(mapping_str);
     }
     page_global.sub_mapping_list={}
@@ -329,12 +330,12 @@ $(document).ready(function () {
       }
     }
     // item_type sub_list logic
-    sub_itemtype_items = page_global.itemtype_prop[item_type_key];
+    let sub_itemtype_items = page_global.itemtype_prop[item_type_key];
     page_global.sub_itemtype_list=[];
     make_list_itemtype(sub_itemtype_items, item_type_key, '');
     $('#sub-item-type-lists-label').text($('#label_item_' + item_type_key).text().trim());
     // jpcoar sub_list logic
-    sub_jpcoar_items = page_global.schema_prop[schema_name_str][jpcoar_key];
+    let sub_jpcoar_items = page_global.schema_prop[schema_name_str][jpcoar_key];
     page_global.sub_jpcoar_list=[];
     if(schema_name_str === "jpcoar_mapping"){
       make_list_jpcoar(sub_jpcoar_items, jpcoar_key);
@@ -674,7 +675,7 @@ $(document).ready(function () {
 
   function saveMappingData(){
     if(page_global.mapping_prop == null) {
-      mapping_str = $('#hide_mapping_prop').text();
+      let mapping_str = $('#hide_mapping_prop').text();
       page_global.mapping_prop = JSON.parse(mapping_str);
     }
     let jpcoar_type = $("#jpcoar_lists").val(); 
@@ -682,8 +683,8 @@ $(document).ready(function () {
     let jpcoar_parent_key = '';
     if(itemtype_key === undefined) return;
     page_global.showDiag = true; 
-    ul_key = '#ul_' + itemtype_key;
-    li_key = ul_key+' li.list_'+jpcoar_type;
+    let ul_key = '#ul_' + itemtype_key;
+    let li_key = ul_key+' li.list_'+jpcoar_type;
     if($(li_key).length == 1) {
       if(page_global.mapping_prop.hasOwnProperty(itemtype_key)) {
         if(page_global.mapping_prop[itemtype_key].hasOwnProperty(jpcoar_type)) {
@@ -691,9 +692,9 @@ $(document).ready(function () {
         }
       }
     }
-    sub_itemtype_list = [];
+    let sub_itemtype_list = [];
     $('div .sub_child_list').each(function (index, element) {
-      sub_temp_itemtype = {
+      let sub_temp_itemtype = {
         sub_jpcoar: null,
         sub_itemtypes: null
       };
@@ -701,7 +702,7 @@ $(document).ready(function () {
       if($(element).find('.sub_child_itemtype_list').length > 1) {
         sub_temp_itemtype.sub_itemtypes = [];
         $(element).find('.sub_child_itemtype_list').each(function (idx, elm) { 
-          sub_itemtype_key = {
+          let sub_itemtype_key = {
             itemtype_key: null,
             itemlink_key: null
           };
@@ -735,7 +736,7 @@ $(document).ready(function () {
         if(!page_global.mapping_prop[itemtype_key].hasOwnProperty(jpcoar_type)) {
           page_global.mapping_prop[itemtype_key][jpcoar_type] = {};
         }
-        cur_obj = page_global.mapping_prop[itemtype_key];
+        let cur_obj = page_global.mapping_prop[itemtype_key];
         if(typeof cur_obj[jpcoar_type] != 'object') {
           cur_obj[jpcoar_type] = {};
         }
@@ -757,16 +758,17 @@ $(document).ready(function () {
               }
             }
           } else {
-            sub_sub_itemtype = '';
+            let sub_sub_itemtype = '';
             if(typeof sub_itemtypes == 'object') {
               if(sub_itemtypes.length > 0) {
-                sub_itemtypes.forEach(function (elm)  {                  
+                sub_itemtypes.forEach(function (elm)  {  
+                  let sub_sub_itemtype_e = '';                
                   if(!elm.itemtype_key.startsWith("=")){
                     if(elm.itemtype_key.indexOf('.') != -1){
                       let index = elm.itemtype_key.indexOf('.') + 1;
                       sub_sub_itemtype_e = elm.itemtype_key.slice(index) + elm.itemlink_key;
                     }else{
-                    sub_sub_itemtype_e = elm.itemtype_key + elm.itemlink_key;
+                      sub_sub_itemtype_e = elm.itemtype_key + elm.itemlink_key;
                     }
                   sub_sub_itemtype = sub_sub_itemtype + sub_sub_itemtype_e;
                 }

@@ -1,3 +1,5 @@
+import $ from 'jquery';
+
 $(document).ready(function () {
 
   // Set the boolean to send email and trigger the create reports event
@@ -14,7 +16,7 @@ $(document).ready(function () {
   // Change selectable options based on frequency
   $('#email_sched_frequency').on('change', function () {
     var frequency = $(this).val();
-    switch(frequency) {
+    switch (frequency) {
       case 'monthly':
         $('#email_sched_details_weekly').addClass('hidden');
         $('.weekly-option').prop('selected', false);

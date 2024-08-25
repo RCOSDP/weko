@@ -13,6 +13,11 @@ invenio_resourcesyncserver = WebpackThemeBundle(
                 "resourcesyncserver_css_invenio_admin_change_list_css": "./css/invenio-resourcesyncserver/change_list.css",
             },
             dependencies={
+                "jquery": "~3.2.1",
+                "jquery-confirm": "~3.2.1",
+                "moment": "~2.18.1",
+                "react": "~15.6.1",
+                "react-dom": "~15.6.1",
             }
         )
     }

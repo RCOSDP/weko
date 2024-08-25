@@ -1,3 +1,4 @@
+import $ from "jquery";
 $(() => {
   $('#message-modal').modal({ show: false })
 
