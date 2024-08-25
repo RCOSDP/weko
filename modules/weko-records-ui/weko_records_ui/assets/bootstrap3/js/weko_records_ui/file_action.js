@@ -1,3 +1,5 @@
+import $ from 'jquery';
+
 // ページ読み込み時のチェックボックス初期化(戻る対策))
 window.addEventListener('DOMContentLoaded', function () {
   var checkbox = $('input[type="checkbox"]');
@@ -135,9 +137,9 @@ $(document).ready(function () {
           userMailElement.val('');
           userMailConfirmElement.val('');
           $('#email_modal').modal('hide');
-          if(1 === res.code && res.data.is_download){
+          if (1 === res.code && res.data.is_download) {
             const url = new URL(res.data.redirect, document.location.origin);
-            url.searchParams.append('terms_of_use_only',true);
+            url.searchParams.append('terms_of_use_only', true);
             document.location.href = url;
             return;
           }
