@@ -22,7 +22,7 @@
 
 {% block css %}
   {{ super() }}
-  {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {{ webpack['theme-css-buttons.css']}}
 {% endblock %}
 
 {% from "weko_admin/settings/_macros.html" import render_field, form_errors %}

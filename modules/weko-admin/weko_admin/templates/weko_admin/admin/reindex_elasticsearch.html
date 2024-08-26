@@ -26,10 +26,10 @@
     
     {%- block javascript %}
     {{ super() }}
-    {% assets "weko_admin_reindex_elasticsearch_js" %}<script type="text/babel" src="{{ ASSET_URL }}"></script>{% endassets %}
-    {% assets "weko_admin_statistics_reactjs_lib" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
-    {% assets "weko_admin_react_bootstrap_js" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
-    {% assets "weko_moment_js" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
+    {{ webpack['admin_js_reindex_elasticsearch_js.js']}}
+    {{ webpack['admin_js_statistics_reactjs_lib.js']}}
+    {{ webpack['admin_js_react_bootstrap_js.js']}}
+    {{ webpack['search-ui-js-moment.js']}}
     {%- endblock javascript %}
     
     {%- block body %}

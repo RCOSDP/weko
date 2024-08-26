@@ -24,17 +24,17 @@
 
 {%- block css %}
   {{ super() }}
-  {% assets "invenio_search_ui_search_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
-  {% assets "weko_search_ui_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {{ webpack['search_ui_theme.css']}}
+  {{ webpack['search-ui-css-weko-search-ui.css']}}
 {%- endblock css %}
 
 {%- block javascript %}
   {{ super() }}
   <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
-  {% assets "invenio_search_ui_search_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_search_ui_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_search_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_theme_js_widget" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {{ webpack['invenio_search_ui_app.js']}}
+  {{ webpack['search-ui-js-js-dependencies-datepicker.js']}}
+  {{ webpack['search-ui-js-weko-search-ui.js']}}
+  {{ webpack['theme-js-widget.js']}}
 {%- endblock javascript %}
 
 {%- block page_body_tabs %}

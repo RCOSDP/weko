@@ -21,11 +21,11 @@
 {%- extends config.WEKO_ITEMS_UI_BASE_TEMPLATE %}
 
 {%- block css %}
-  {% assets "invenio_deposit_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
-  {% assets "weko_items_authors_search_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {{ webpack['deposit_css_css.css']}}
+  {{ webpack['items_ui_css_items_author_search.css']}}
   {{ super() }}
   <link href="{{ url_for('static', filename='css/weko_items_ui/contributor.search.css') }}" rel="stylesheet">
-  {% assets "weko_items_ui_feedback_maillist_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {{ webpack['items_ui_js_feedback_maillist.css']}}
 {%- endblock css %}
 
 {%- block javascript %}
@@ -40,14 +40,14 @@
   <script src="{{ url_for('static', filename='js/axios/axios.min.js') }}"></script>
 
   <script src="{{ url_for('static', filename='js/weko_items_ui/item.autofill.js') }}" type="text/babel"></script>
-  {% assets "invenio_deposit_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_admin_react_bootstrap_js" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_items_ui_feedback_maillist_js" %}<script type="text/babel" src="{{ ASSET_URL }}"></script>{% endassets %}
+  {{ webpack['js-dependencies.js']}}
+  {{ webpack['admin_js_react_bootstrap_js.js']}}
+  {{ webpack['items_ui_js_feedback_maillist.js']}}
   {{ super() }}
-  {% assets "invenio_deposit_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_items_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_items_authors_search_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_theme_js_widget" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {{ webpack['deposit_js_js.js']}}
+  {{ webpack['items_ui_js_app.js']}}
+  {{ webpack['items_ui_js_items_author_search.js']}}
+  {{ webpack['theme-js-widget.js']}}
 {%- endblock javascript %}
 
 {%- block page_body_tabs %}

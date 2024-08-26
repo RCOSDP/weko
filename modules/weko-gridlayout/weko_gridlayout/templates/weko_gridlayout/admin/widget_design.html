@@ -22,20 +22,20 @@
 
 {%- block css %}
 {{ super() }}
-{% assets "weko_gridlayout_widget_setting_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
-{% assets "weko_gridlayout_katex_min_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
-{% assets "weko_gridlayout_widget_design_css" %}<link rel="stylesheet" href="{{ ASSET_URL }}" />{% endassets %}
-{% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+{{ webpack['gridlayout_css_widget_setting_css.css']}}
+{{ webpack['gridlayout_css_katex_min_css.css']}}
+{{ webpack['gridlayout_css_widget_design_css.css']}}
+{{ webpack['theme-css-buttons.css']}}
 {%- endblock css %}
 
 {%- block javascript %}
 {{ super() }}
- {% assets "weko_gridlayout_widget_design_js_lib" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
- {% assets "weko_gridlayout_widget_design_reactjs_lib" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
- {% assets "weko_gridlayout_widget_design_js" %}<script type="text/babel" src="{{ ASSET_URL }}"></script>{% endassets %}
- {% assets "weko_gridlayout_katex_min_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
- {% assets "weko_gridlayout_prop_types_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
- {% assets "weko_gridlayout_react_quill_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+ {{ webpack['gridlayout_js_widget_design_reactjs_lib.js']}}
+ {{ webpack['widget-design-js-lib.js']}}
+ {{ webpack['gridlayout_js_widget_design_reactjs_lib.js']}}
+ {{ webpack['gridlayout_js_katex_min_js.js']}}
+ {{ webpack['gridlayout_js_prop_types_js.js']}}
+ {{ webpack['gridlayout_js_react_quill_js.js']}}
 {%- endblock javascript %}
 
 {%- block body %}

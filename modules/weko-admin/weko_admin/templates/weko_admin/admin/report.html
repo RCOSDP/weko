@@ -24,18 +24,18 @@
 
 {%- block css %}
   {{ super() }}
- {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
- {% assets "weko_admin_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
- {% assets "weko_admin_date_picker_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+ {{ webpack['theme-css-buttons.css']}}
+ {{ webpack['admin_css_css.css']}}
+ {{ webpack['admin_css_date_picker_css.css']}}
 {%- endblock css %}
 
 {%- block javascript %}
   {{ super() }}
   <!-- <script src="{{ url_for('static', filename='js/weko_admin/stats_report.js') }}"></script> -->
-  {%- assets "weko_admin_stats_report_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_admin_date_picker_js" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_admin_statistics_reactjs_lib" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_admin_custom_report" %}<script type="text/babel" src="{{ ASSET_URL }}"></script>{% endassets %}
+  {{ webpack['stats-report-js.js']}}
+  {{ webpack['admin_js_date_picker_js.js']}}
+  {{ webpack['admin_js_statistics_reactjs_lib.js']}}
+  {{ webpack['admin_js_custom_report_js.js']}}
 {%- endblock javascript %}
 
 {%- block body %}

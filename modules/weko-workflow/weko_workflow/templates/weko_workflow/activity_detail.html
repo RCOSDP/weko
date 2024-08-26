@@ -36,8 +36,7 @@
 
   {%- if 'item_link' == cur_step %}
     {{ webpack['theme-js-weko-theme-tree-view.js'}}
-    {% assets "invenio_search_ui_search_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-    {{ webpack['search-ui-js-weko-search-ui.js'}}
+    {{ webpack['invenio_search_ui_app.js']}}
     {{ webpack['workflow-js-item-link.js'}}
   {%- elif 'identifier_grant' == cur_step %}
     {{ webpack['workflow-js-identifier-grant.js'}}

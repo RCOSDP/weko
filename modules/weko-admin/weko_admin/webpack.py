@@ -27,6 +27,7 @@ weko_admin = WebpackThemeBundle(
                 "admin_js_weko_admin_restricted_access_js": "./js/weko_admin/restricted_access.js",
                 "admin_js_weko_admin_facet_search_js": "./js/weko_admin/facet_search_admin.js",
                 "admin_js_reindex_elasticsearch_js": "./js/weko_admin/reindex_elasticsearch.js",
+                "angular_js": "./node_modules/admin-lte/dist/js/app.js",
             },
             dependencies={
                 'admin-lte': '~2.3.6',

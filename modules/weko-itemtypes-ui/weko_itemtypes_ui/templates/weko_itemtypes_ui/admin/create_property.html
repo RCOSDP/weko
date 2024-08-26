@@ -22,9 +22,9 @@
 
 {%- block css %}
   {{ super() }}
-  {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
-  {% assets "weko_admin_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
-  {% assets "weko_itemtypes_ui_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {{ webpack['theme-css-buttons.css']}}
+  {{ webpack['admin_css_css.css']}}
+  {{ webpack['itemstypes_ui_css_style.css']}}
 {%- endblock css %}
 
 {%- block javascript %}
@@ -32,7 +32,7 @@
   <script src="/static/node_modules/react-dom/dist/react-dom.js"></script>
   <script src="/static/js/weko_itemtypes_ui/jsonschemaeditor.js"></script>
   {{ super() }}
-  {% assets "weko_itemtypes_property_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+ {{ webpack['itemstypes_ui_js_js_property.js']}}
 {%- endblock javascript %}
 
 {%- block body %}

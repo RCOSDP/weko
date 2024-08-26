@@ -22,15 +22,15 @@
 
 {%- block css %}
   {{ super() }}
-  {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
-  {% assets "weko_admin_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
-  {% assets "weko_authors_import_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {{ webpack['theme-css-buttons.css']}}
+  {{ webpack['admin_css_css.css']}}
+  {{ webpack['authors_css_author_import_css.css']}}
 {%- endblock css %}
 
 {%- block javascript %}
   {{ super() }}
-  {% assets "weko_theme_js_widget" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_authors_import_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {{ webpack['theme-js-widget.js']}}
+  {{ webpack['authors_js_author_import_js.js']}}
 {%- endblock javascript %}
 
 {%- block body %}

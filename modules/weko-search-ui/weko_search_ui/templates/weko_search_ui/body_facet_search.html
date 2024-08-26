@@ -18,7 +18,7 @@
 # MA 02111-1307, USA.
 #}
 {%- block css %}
-  {% assets "weko_facet_search_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {{ webpack['search-ui-less-theme-facet-search.css']}}
 {%- endblock css %}
 
 
@@ -28,5 +28,5 @@
 <input class="body-facet-search-label" id="cancel" type="hidden" value="{{_('cancel')}}" />
 <div id="app-facet-search"></div>
 {%- block javascript %}
-{% assets "weko_facet_search_js" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}  
+{{ webpack['search-ui-js-facet-search.js']}}
 {%- endblock javascript %}
