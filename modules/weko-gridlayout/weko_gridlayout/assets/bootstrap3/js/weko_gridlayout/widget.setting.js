@@ -1,4 +1,7 @@
-const {useState, useEffect} = React;
+import React from "react";
+import ReactDOM from "react-dom";
+import $ from "jquery";
+const {UseState, useEffect} = React;
 const Trumbowyg = window['react-trumbowyg'];
 
 const FREE_DESCRIPTION_TYPE = "Free description";
@@ -42,7 +45,7 @@ function userSelectedInput(initialValue, getValueOfField, key_binding, component
   if (key_binding === "border_style" && !initialValue) {
     initialValue = DEFAULT_BORDER_STYLE;
   }
-  const [value, setValue] = useState(initialValue);
+  const [value, setValue] = UseState(initialValue);
 
   function handleChange(e) {
     setValue(e.target.value);
@@ -61,7 +64,7 @@ function userSelectedInput(initialValue, getValueOfField, key_binding, component
 
 const ComponentSelectField = function (props) {
   const selectedData = userSelectedInput(props.data_load, props.getValueOfField, props.key_binding);
-  const [selectOptions, setSelectOptions] = useState([]);
+  const [selectOptions, setSelectOptions] = UseState([]);
 
   useEffect(() => {
     let options = [];
@@ -214,7 +217,7 @@ class ComponentTextboxField extends React.Component {
 
 
 const ComponentTextboxForAccessCounter = function (props) {
-  const [value, setValue] = useState(props.value);
+  const [value, setValue] = UseState(props.value);
 
   function handleChange(event) {
     setValue(event.target.value);
@@ -266,7 +269,7 @@ const ComponentSelectColorFiled = (props) => {
     initColor = DEFAULT_BORDER_COLOR;
   }
 
-  const [value, setValue] = useState(props.data_load || initColor);
+  const [value, setValue] = UseState(props.data_load || initColor);
   useEffect(() => {
     if (props.handleChange) {
       props.handleChange(props.key_binding, value);
@@ -305,7 +308,7 @@ const ComponentSelectColorFiled = (props) => {
 };
 
 function userCheckboxInput(initialValue, getValueOfField, key_binding) {
-  const [value, setValue] = useState(initialValue);
+  const [value, setValue] = UseState(initialValue);
 
   function handleChange(e) {
     setValue(e.target.value);
@@ -679,7 +682,7 @@ class ComponentFieldContainSelectMultiple extends React.Component {
 }
 
 const TrumbowygWrapper = props => {
-  const [value, setValue] = useState();
+  const [value, setValue] = UseState();
   let timeoutHandle;
 
   useEffect(() => {
@@ -740,7 +743,7 @@ const TrumbowygWrapper = props => {
 };
 
 const ComponentFieldEditor = function (props) {
-  const [value, setValue] = useState(props.data_load || "");
+  const [value, setValue] = UseState(props.data_load || "");
   const serverPath = '/widget/uploads/' + props.repositoryId + "@widget";
   const btnsDef = {
     image: {
@@ -1582,7 +1585,7 @@ class ComponentButtonLayout extends React.Component {
       data_id: this.props.data_id
     };
     let _this = this;
-    if (confirm("Are you sure to delete this widget Item?")) {
+    if (window.confirm("Are you sure to delete this widget Item?")) {
       return $.ajax({
         url: '/api/admin/delete_widget_item',
         method: 'POST',

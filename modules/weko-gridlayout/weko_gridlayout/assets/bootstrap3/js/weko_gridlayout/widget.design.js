@@ -1,3 +1,8 @@
+import React from "react";
+import ReactDOM from "react-dom";
+import $ from "jquery";
+import _ from 'lodash';
+import GridStackUI from './gridstack';
 const MAIN_CONTENT_TYPE = "Main contents";
 const MAIN_CONTENT_BUTTON_ID = "main_content_id";
 let isHasMainContent = false;
@@ -137,7 +142,7 @@ class WidgetList extends React.Component {
   render() {
     return (
       <div>
-        <label className="control-label row">Widget List</label>
+        <label htmlFor="widgetList" className="control-label row">Widget List</label>
         <div className="row grid-stack" style={this.style} id="widgetList">
         </div>
       </div>
@@ -632,18 +637,18 @@ class AddPageForm extends React.Component {
     return (
       <div>
         <div className="form-group row">
-          <label htmlFor="" className="control-label col-xs-2 text-right">
+          <label htmlFor="url" className="control-label col-xs-2 text-right">
             URL<span className="text-red">*</span>
           </label>
           <div className="col-xs-6">
-            <input name="url" type="text" value={this.props.values.url}
+            <input id="url" name="url" type="text" value={this.props.values.url}
                    onChange={(e) => this.props.handleInputChange(e.target.name, e.target.value)}
                    className="form-control"
                    disabled={this.props.values.isMainLayout}/>
           </div>
         </div>
         <div className="form-group row">
-          <label htmlFor="" className="control-label col-xs-2 text-right">
+          <label htmlFor="page-title-input" className="control-label col-xs-2 text-right">
             Title
           </label>
           <PageTitle title={this.props.values.title}
@@ -836,7 +841,7 @@ class PreviewWidget extends React.Component {
   render() {
     return (
       <div>
-        <label className="control-label row">Preview</label>
+        <label htmlFor="gridPreview" className="control-label row">Preview</label>
         <div className="row grid-stack" style={this.style} id="gridPreview">
         </div>
       </div>
@@ -885,7 +890,7 @@ class ButtonLayout extends React.Component {
       data: JSON.stringify(data),
       success: function (result) {
         if (result.error) {
-          alertModal(error);
+          alertModal(result.error);
           PreviewGrid.clearGrid();
           return;
         }
