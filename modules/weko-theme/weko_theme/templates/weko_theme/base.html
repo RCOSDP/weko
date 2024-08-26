@@ -298,8 +298,7 @@
     {%- endblock body_inner %}
     {%- block javascript %}
     {% include config.THEME_JAVASCRIPT_TEMPLATE %}
-    {% assets "weko_theme_js" %}
-    <script src="{{ ASSET_URL }}"></script>{% endassets %}
+    {{ webpack['theme-js-base.js']}}
 
 
 

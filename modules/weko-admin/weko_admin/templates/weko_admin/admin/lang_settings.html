@@ -23,7 +23,7 @@
 {% block css %}
 {{ super() }}
 {{ webpack['theme-css-buttons.css']}}
-{% assets "weko_theme_css_bootstrap" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}<!-- New -->
+{{ webpack['theme-scss-bootstrap.css']}}
 <link href="{{ url_for('static', filename='css/weko_admin/quill.snow.css') }}" rel="stylesheet">
 <link href="{{ url_for('static', filename='css/weko_admin/language.css') }}" rel="stylesheet">
 {% endblock %}

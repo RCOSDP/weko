@@ -43,23 +43,16 @@
     <!--<script src="https://unpkg.com/axios/dist/axios.min.js"></script>-->
 
     <script src="{{ url_for('static', filename='js/weko_items_ui/item.autofill.js') }}" type="text/babel"></script>
-    {% assets "invenio_deposit_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-    {{ webpack[''}}
-    {% assets "weko_admin_react_bootstrap_js" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
-    {{ webpack['admin_js_react_bootstrap_js.js'}
-    {% assets "weko_items_ui_feedback_maillist_js" %}<script type="text/babel" src="{{ ASSET_URL }}"></script>{% endassets %}
-    {{ webpack['items_ui_js_feedback_maillist.js'}}
+    {{ webpack['js-dependencies.js']}}
+    {{ webpack['admin_js_react_bootstrap_js.js]}}
+    {{ webpack['items_ui_js_feedback_maillist.js']}}
     {{ super() }}
-    {% assets "invenio_deposit_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-    {{ webpack['deposit_js_js.js'}}
+    {{ webpack['deposit_js_js.js']}}
     {%- if need_thumbnail %}
-      {% assets "weko_items_ui_upload_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-      {{ webpack[''}}
+    {{ webpack['items_ui_js_upload.js']}}
     {% endif %}
-    {% assets "weko_items_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-    {{ webpack[''}}
-    {% assets "weko_items_authors_search_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-    {{ webpack[''}}
+    {{ webpack['items_ui_js_dependencies_angularjs.js']}}
+    {{ webpack['items_ui_js_items_author_search.js']}}
   {%- endblock javascript %}
 
   {%- block page_header %}
