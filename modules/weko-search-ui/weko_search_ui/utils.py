@@ -1002,7 +1002,7 @@ def handle_check_exist_record(list_record) -> list:
         errors = item.get("errors") or []
         item_id = item.get("id")
         # current_app.logger.debug("item_id:{}".format(item_id))
-        if item_id and item_id is not "":
+        if item_id and item_id != "":
             system_url = request.host_url + "records/" + str(item_id)
             if item.get("uri") != system_url:
                 errors.append(_("Specified URI and system" " URI do not match."))
@@ -3010,7 +3010,7 @@ def handle_fill_system_item(list_record):
                 existed_doi = False
             
             checked_item_doi_ra = False
-            if item_doi_prefix is not "" and doi_setting:
+            if item_doi_prefix != "" and doi_setting:
                 if doi_setting.jalc_doi == item_doi_prefix:
                     checked_item_doi_ra = (item_doi_ra == "JaLC")
                 elif doi_setting.jalc_crossref_doi == item_doi_prefix:
@@ -3103,15 +3103,15 @@ def handle_fill_system_item(list_record):
             
             if is_change_identifier:
                 if not (current_app.config["WEKO_HANDLE_ALLOW_REGISTER_CNRI"] and item_cnri): 
-                    if item_doi is "":
+                    if item_doi == "":
                         errors.append(_('Please specify DOI prefix/suffix.'))
-                    elif item_doi_suffix is "":
+                    elif item_doi_suffix == "":
                         errors.append(_('Please specify DOI suffix.'))
             # 書き換えモードでなく、ndl
             elif is_ndl:
-                if item_doi is "":
+                if item_doi == "":
                     errors.append(_('Please specify DOI prefix/suffix.'))
-                elif item_doi_suffix is "":
+                elif item_doi_suffix == "":
                     errors.append(_('Please specify DOI suffix.'))
             else:
                 if item_doi_suffix and existed_doi is False: 
@@ -3307,7 +3307,7 @@ def handle_check_duplication_item_id(ids: list):
     """
     result = []
     for element in ids:
-        if element is not "" and ids.count(element) > 1:
+        if element != "" and ids.count(element) > 1:
             result.append(element)
     return list(set(result))
 

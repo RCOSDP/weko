@@ -47,7 +47,7 @@ def _get_itemdata(obj, key):
             if value:
                 return value
     return None
-
+d
 
 def _get_mapping_data(schema, data, keyword):
     """Get mapping by item type."""
@@ -179,11 +179,11 @@ class RecordSchemaCSLJSON(Schema):
         metadata = get_data_from_mapping('datacite:date', obj)
         if not metadata:
             return missing
-        if re.search("\d{4}-\d{2}-\d{2}",metadata):
+        if re.search(r"\d{4}-\d{2}-\d{2}",metadata):
             format = "%Y-%m-%d"
-        elif re.search("\d{4}-\d{2}",metadata):
+        elif re.search(r"\d{4}-\d{2}",metadata):
             format = "%Y-%m"
-        elif re.search("\d{4}",metadata):
+        elif re.search(r"\d{4}",metadata):
             format = "%Y"
         else:
             raise ValidationError("Incorrect format")
