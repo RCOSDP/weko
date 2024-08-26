@@ -142,8 +142,7 @@ class WidgetList extends React.Component {
   render() {
     return (
       <div>
-        {/* fixme ビルド成功させるためにlabelタグを変更*/}
-        <div className="control-label row">Widget List</div>
+        <label htmlFor="widgetList" className="control-label row">Widget List</label>
         <div className="row grid-stack" style={this.style} id="widgetList">
         </div>
       </div>
@@ -638,22 +637,20 @@ class AddPageForm extends React.Component {
     return (
       <div>
         <div className="form-group row">
-          {/* fixme ビルド成功させるためにlabelタグを変更*/}
-          <div htmlFor="" className="control-label col-xs-2 text-right">
+          <label htmlFor="url" className="control-label col-xs-2 text-right">
             URL<span className="text-red">*</span>
-          </div> {/* ビルド成功させるためにlabelタグを変更*/}
+          </label>
           <div className="col-xs-6">
-            <input name="url" type="text" value={this.props.values.url}
+            <input id="url" name="url" type="text" value={this.props.values.url}
                    onChange={(e) => this.props.handleInputChange(e.target.name, e.target.value)}
                    className="form-control"
                    disabled={this.props.values.isMainLayout}/>
           </div>
         </div>
         <div className="form-group row">
-          {/* fixme ビルド成功させるためにlabelタグを変更*/}
-          <div htmlFor="" className="control-label col-xs-2 text-right">
+          <label htmlFor="page-title-input" className="control-label col-xs-2 text-right">
             Title
-          </div> {/* ビルド成功させるためにlabelタグを変更*/}
+          </label>
           <PageTitle title={this.props.values.title}
                      multiLangData={this.props.values.multiLangData}
                      handleChange={this.props.handleInputChange}
@@ -844,8 +841,7 @@ class PreviewWidget extends React.Component {
   render() {
     return (
       <div>
-        {/* fixme ビルド成功させるためにlabelタグを変更*/}
-        <div className="control-label row">Preview</div>
+        <label htmlFor="gridPreview" className="control-label row">Preview</label>
         <div className="row grid-stack" style={this.style} id="gridPreview">
         </div>
       </div>

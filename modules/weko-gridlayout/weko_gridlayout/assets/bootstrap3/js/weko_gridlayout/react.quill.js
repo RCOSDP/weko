@@ -18100,8 +18100,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  if (true) {
 	    module.exports = f(__webpack_require__(/*! react */ 3));
 	    /* global define */
-	  } 
-	  else if (typeof define === 'function' && define.amd) {
+	  } else if (typeof define === 'function' && define.amd) {
 	    define(['react'], f);
 	  } else {
 	    var g;
@@ -18109,8 +18108,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	      g = window;
 	    } else if (typeof global !== 'undefined') {
 	      g = global;
-	    } else if (typeof window !== 'undefined') {
-	      g = window;
 	    } else {
 	      g = this;
 	    }
