@@ -47,7 +47,7 @@ def _get_itemdata(obj, key):
             if value:
                 return value
     return None
-d
+
 
 def _get_mapping_data(schema, data, keyword):
     """Get mapping by item type."""
