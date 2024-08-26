@@ -3405,16 +3405,10 @@ def export_all(root_url, user_id, data, start_time):
                         PersistentIdentifier.pid_value,
                         current_app.config["WEKO_SEARCH_UI_TO_NUMBER_FORMAT"]
                     )).yield_per(500)
-                # current_app.logger.info("get recid complited:{}".format(recids.count()))
+                current_app.logger.info("{}({}) get recids completed:{}".format(item_type_name, item_type_id, recids.count()))
 
                 if recids.count() == 0:
                     item_types.remove(it)
-                    write_file_json = orjson.loads(get_redis_cache(_file_create_key))
-                    write_file_json['write_file_status'][item_type_id + '.1'] = 'finished'
-                    reset_redis_cache(
-                    _file_create_key,
-                    orjson.dumps(write_file_json).decode()
-                    )
                     continue
 
                 record_ids = [(recid.pid_value, recid.object_uuid) 
@@ -3639,7 +3633,6 @@ def write_files(item_datas, export_path, user_id, retrys):
         db.session.commit()
         del item_datas, headers, records, keys, labels, is_systems, options,permissions
         gc.collect()
-        # current_app.logger.info("full_path_exist_filename:{}".format(os.listdir(export_path)))
         return True
     except SQLAlchemyError as ex:
         current_app.logger.error(ex)
@@ -3774,11 +3767,9 @@ def get_export_status():
             task = AsyncResult(task_id)
             status_cond = (task.successful() or task.failed() or task.state == "REVOKED") \
                 and write_file_status != 'STARTED'
-            status = write_file_status
-            if write_file_status == 'BEFORE':
-                export_status = False
-            else:
-                export_status = True if not status_cond else False
+            if not write_file_status == 'BEFORE':
+                status = write_file_status
+            export_status = True if not status_cond else False
             start_time = write_file_data.get("start_time")
             finish_time = write_file_data.get("finish_time")
             if status_cond and write_file_status == 'SUCCESS':
@@ -3792,9 +3783,8 @@ def get_export_status():
                     db.session.commit()
                     download_uri = src.uri
                     finish_time = datetime.now().strftime('%Y/%m/%d %H:%M:%S')
-                    # print("SUCCESS_finish_time:{}".format(finish_time))
-                    current_app.logger.info("Bulk export all finished at {}.".format(finish_time))
                     write_file_data["finish_time"] = finish_time
+                    current_app.logger.info("Bulk export all finished at {}.".format(finish_time))
                     reset_redis_cache(file_msg, orjson.dumps(write_file_data).decode())
                     reset_redis_cache(cache_uri, download_uri)
                     reset_redis_cache(run_msg, "")
