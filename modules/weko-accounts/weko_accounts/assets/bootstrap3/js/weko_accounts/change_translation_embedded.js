@@ -1,3 +1,4 @@
+import $ from "jquery";
 $(document).ready(function() {
   const currentTime = new Date().getTime();
   const urlLoad = '/api/admin/get_selected_lang?' + currentTime;
