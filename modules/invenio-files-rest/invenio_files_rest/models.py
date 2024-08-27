@@ -73,7 +73,6 @@ from .errors import (
     MultipartNotCompleted,
 )
 from .proxies import current_files_rest
-from .utils import guess_mimetype
 
 slug_pattern = re.compile("^[a-z][a-z0-9-]+$")
 
