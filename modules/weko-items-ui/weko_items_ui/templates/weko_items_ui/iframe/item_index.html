@@ -31,7 +31,9 @@
 
 {%- block javascript %}
   {{ super() }}
-  {{ webpack['items_ui_js_dependencies_angularjs.js']}}
+  <script src="{{ url_for('static', filename='js/weko_items_ui/inline.bundle.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/weko_items_ui/polyfills.bundle.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/weko_items_ui/main.bundle.js') }}"></script>
   {{ webpack['workflow-js-quit-confirmation.js']}}
   {{ webpack['workflow-js-lock-activity.js']}}
   {{ webpack['records_ui_preview_carousel.js']}}

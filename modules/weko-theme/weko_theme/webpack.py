@@ -11,7 +11,6 @@ weko_theme = WebpackThemeBundle(
                 'theme-css': './css/weko_theme/theme.scss',
                 'theme-css-buttons': './css/weko_theme/styling.css',
                 'theme-css-widget': './css/weko_theme/weko_theme_widget.css',
-                'theme-js-treeview': './js/weko_theme/weko_theme_tree_view.js',
                 'theme-js': './js/weko_theme/base.js',
                 'theme-js-top-page': './js/weko_theme/top_page.js',
                 'theme-search-detail': './js/weko_theme/search_detail.js',

@@ -29,7 +29,9 @@
 
 {%- block javascript %}
   {{ super() }}
-  {{ webpack['author-search-js.js']}}
+  <script src="{{ url_for('static', filename='js/weko_authors/inline.search.bundle.js') }} "></script>
+  <script src="{{ url_for('static', filename='js/weko_authors/polyfills.search.bundle.js') }} "></script>
+  <script src="{{ url_for('static', filename='js/weko_authors/main.search.bundle.js') }} "></script>
   {{ webpack['theme-js-widget.js']}}
 {%- endblock javascript %}
 

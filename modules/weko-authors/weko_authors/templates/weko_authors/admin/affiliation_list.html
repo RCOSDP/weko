@@ -29,7 +29,9 @@
     
     {%- block javascript %}
       {{ super() }}
-      {{ webpack['author-affiliation-js.js']}}
+      <script src="{{ url_for('static', filename='js/weko_authors/inline.affiliation.bundle.js') }}"></script>
+      <script src="{{ url_for('static', filename='js/weko_authors/polyfills.affiliation.bundle.js') }}"></script>
+      <script src="{{ url_for('static', filename='js/weko_authors/main.affiliation.bundle.js') }}"></script>
       {{ webpack['theme-js-widget.js']}}
     {%- endblock javascript %}
     

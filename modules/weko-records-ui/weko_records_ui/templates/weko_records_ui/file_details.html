@@ -31,7 +31,9 @@
 {%- block javascript %}
   {{ webpack['js-dependencies.js']}}
   {{ super() }}
-  {{ webpack['theme-js-weko-theme-tree-view.js']}}
+  <script src="{{ url_for('static', filename='js/weko_theme/inline.bundle.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/weko_theme/polyfills.bundle.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/weko_theme/main.bundle.js') }}"></script>
   {{ webpack['theme-js-top-page.js']}}
   <!-- {% assets "weko_records_ui_cites_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %} -->
   {{ webpack['theme-search-detail.js']}}

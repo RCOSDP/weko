@@ -34,8 +34,10 @@
 {%- endblock css %}
 
 {%- block javascript %}
-  {{ webpack['indextree_journal_js_treeview.js']}}
-  {{ webpack['js-dependencies.js']}}
+<script src="{{ url_for('static', filename='js/weko_indextree_journal/inline.bundle.js') }}"></script>
+<script src="{{ url_for('static', filename='js/weko_indextree_journal/polyfills.bundle.js') }}"></script>
+<script src="{{ url_for('static', filename='js/weko_indextree_journal/main.bundle.js') }}"></script>
+{{ webpack['js-dependencies.js']}}
   {{ super() }}
   {{ webpack['deposit_js_js.js']}}
   {{ webpack['indextree_journal_js_js.js']}}
