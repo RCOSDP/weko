@@ -465,6 +465,7 @@ def getrecord(**kwargs):
         e_metadata.append(root)
     except Exception as ex:
         current_app.logger.error("BaseException: {}".format(ex))
+        return error([('idDoesNotExist', 'No matching identifier')])
 
     return e_tree
 
@@ -638,6 +639,13 @@ def listrecords(**kwargs):
                     deleted=True
                 )
             else:
+                etree_record = pickle.loads(pickle.dumps(record, -1))
+                if not etree_record.get('system_identifier_doi', None):
+                    etree_record['system_identifier_doi'] = get_identifier(record)
+                # Merge licensetype and licensefree
+                etree_record = handle_license_free(etree_record)
+                _record_serializer = record_dumper(pid, {'_source': etree_record})
+
                 e_record = SubElement(
                     e_listrecords, etree.QName(NS_OAIPMH, 'record'))
                 _sets = list(set(record.get('path', []) +
@@ -650,15 +658,7 @@ def listrecords(**kwargs):
                 )
                 e_metadata = SubElement(e_record, etree.QName(NS_OAIPMH,
                                                               'metadata'))
-                etree_record = pickle.loads(pickle.dumps(record, -1))
-                if not etree_record.get('system_identifier_doi', None):
-                    etree_record['system_identifier_doi'] = get_identifier(
-                        record)
-
-                # Merge licensetype and licensefree
-                etree_record = handle_license_free(etree_record)
-                e_metadata.append(record_dumper(
-                    pid, {'_source': etree_record}))
+                e_metadata.append(_record_serializer)
 
         except PIDDoesNotExistError:
             current_app.logger.error(
