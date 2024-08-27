@@ -65,14 +65,20 @@ class DisabledUserError(RESTException):
 """Custom errors for weko assounts."""
 
 class WekoAccountsError(Exception):
+    """Super class for all weko accounts errors.
+
+    Attributes:
+        exception (Exception, Optional): Original exception object.
+        msg (str): Error message.
+    """
     def __init__(self, ex=None, msg=None, *args):
         """Constructor.
 
         Initialize the weko assounts error.
 
         Args:
-            ex (Exception): Original exception object
-            msg (str): Error message
+            ex (Exception, Optional): Original exception object
+            msg (str, Optional): Error message
         """
         if ex is not None:
             self.exception = ex
@@ -82,6 +88,12 @@ class WekoAccountsError(Exception):
 
 
 class WekoAccountsShibSettingError(WekoAccountsError):
+    """Setting of Shibboleth users error in weko accounts
+
+    Attributes:
+        exception (Exception, Optional): Original exception object.
+        msg (str): Error message
+    """
     def __init__(self, ex=None, msg=None, *args):
         if msg is None:
             msg = "Some shibboleth setting error has occurred in weko_accounts."
@@ -89,6 +101,12 @@ class WekoAccountsShibSettingError(WekoAccountsError):
 
 
 class WekoAccountsShibUserError(WekoAccountsError):
+    """Shibboleth user error in weko accounts.
+
+    Attributes:
+        exception (Exception, Optional): Original exception object.
+        msg (str): Error message
+    """
     def __init__(self, ex=None, msg=None, *args):
         if msg is None:
             msg = "Some shibboleth user error has occurred in weko_accounts."

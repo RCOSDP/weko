@@ -8,14 +8,20 @@
 """Custom errors for weko admin."""
 
 class WekoAdminError(Exception):
+    """Superclass for all weko admin errors.
+
+    Attributes:
+        exception (Exception, Optional): Original exception object.
+        msg (str): Error message
+    """
     def __init__(self, ex=None, msg=None, *args):
         """Constructor.
 
         Initialize the weko admin error.
 
         Args:
-            ex (Exception): Original exception object
-            msg (str): Error message
+            ex (Exception, Optional): Original exception object
+            msg (str, Optional): Error message
         """
         if ex is not None:
             self.exception = ex
@@ -25,6 +31,12 @@ class WekoAdminError(Exception):
 
 
 class WekoAdminSettingError(WekoAdminError):
+    """Setting error in weko admin.
+
+    Attributes:
+        exception (Exception, Optional): Original exception object.
+        msg (str): Error message
+    """
     def __init__(self, ex=None, msg=None, *args):
         if msg is None:
             msg = "Some setting error has occurred in weko_admin."
@@ -32,6 +44,12 @@ class WekoAdminSettingError(WekoAdminError):
 
 
 class WekoAdminMailError(WekoAdminError):
+    """Feedback mail error in weko admin.
+
+    Attributes:
+        exception (Exception, Optional): Original exception object.
+        msg (str): Error message
+    """
     def __init__(self, ex=None, msg=None, *args):
         if msg is None:
             msg = "Some mail error has occurred in weko_admin."
@@ -39,6 +57,12 @@ class WekoAdminMailError(WekoAdminError):
 
 
 class WekoAdminReportError(WekoAdminError):
+    """Report error in weko admin.
+
+    Attributes:
+        exception (Exception, Optional): Original exception object.
+        msg (str): Error message
+    """
     def __init__(self, ex=None, msg=None, *args):
         if msg is None:
             msg = "Some report error has occurred in weko_admin."
@@ -46,6 +70,12 @@ class WekoAdminReportError(WekoAdminError):
 
 
 class WekoAdminLogAnalysisError(WekoAdminError):
+    """Log analysis error in weko admin.
+
+    Attributes:
+        exception (Exception, Optional): Original exception object.
+        msg (str): Error message
+    """
     def __init__(self, ex=None, msg=None, *args):
         if msg is None:
             msg = "Some log analysis error has occurred in weko_admin."
@@ -53,6 +83,12 @@ class WekoAdminLogAnalysisError(WekoAdminError):
 
 
 class WekoAdminReindexError(WekoAdminError):
+    """Reindex error in weko admin.
+
+    Attributes:
+        exception (Exception, Optional): Original exception object.
+        msg (str): Error message
+    """
     def __init__(self, ex=None, msg=None, *args):
         if msg is None:
             msg = "Some reindex error has occurred in weko_admin."

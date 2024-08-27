@@ -8,14 +8,20 @@
 """Custom errors for weko handle."""
 
 class WekoHandleError(Exception):
+    """Super class for weko handle error.
+
+    Attributes:
+        exception (Exception, Optional): Original exception object.
+        msg (str): Error message
+    """
     def __init__(self, ex=None, msg=None, *args):
         """Constructor.
 
         Initialize the weko handle error.
 
         Args:
-            ex (Exception): Original exception object
-            msg (str): Error message
+            ex (Exception, Optional): Original exception object
+            msg (str, Optional): Error message
         """
         if ex is not None:
             self.exception = ex
@@ -25,6 +31,12 @@ class WekoHandleError(Exception):
 
 
 class WekoHandleRegistrationError(WekoHandleError):
+    """Registration error of weko handle.
+
+    Attributes:
+        exception (Exception, Optional): Original exception object.
+        msg (str): Error message
+    """
     def __init__(self, ex=None, msg=None, *args):
         if msg is None:
             msg = "Some registration error has occurred in weko_handle."
@@ -32,6 +44,12 @@ class WekoHandleRegistrationError(WekoHandleError):
 
 
 class WekoHandleRetrievalError(WekoHandleError):
+    """Retrieval error of weko handle.
+
+    Attributes:
+        exception (Exception, Optional): Original exception object.
+        msg (str): Error message
+    """
     def __init__(self, ex=None, msg=None, *args):
         if msg is None:
             msg = "Some retrival error has occurred in weko_handle."

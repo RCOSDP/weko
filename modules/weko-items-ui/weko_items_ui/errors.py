@@ -75,13 +75,6 @@ class WekoItemsUiError(Exception):
         super().__init__(msg, *args)
 
 
-class WekoItemsUiQueryRankingError(WekoItemsUiError):
-    def __init__(self, ex=None, msg=None, *args):
-        if msg is None:
-            msg = "Some error has occurred in weko_items_ui."
-        super().__init__(ex, msg, *args)
-
-
 class WekoItemsUiExportError(WekoItemsUiError):
     def __init__(self, ex=None, msg=None, *args):
         if msg is None:

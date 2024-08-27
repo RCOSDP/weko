@@ -42,14 +42,20 @@ class AuthorNotFoundRESTError(RESTException):
 """Custom errors for weko authors."""
 
 class WekoAuthorsError(Exception):
+    """Super class for weko authors errors.
+
+    Attributes:
+        exception (Exception, Optional): Original exception object.
+        msg (str): Error message
+    """
     def __init__(self, ex=None, msg=None, *args):
         """Constructor.
 
         Initialize the weko authors error.
 
         Args:
-            ex (Exception): Original exception object
-            msg (str): Error message
+            ex (Exception, Optional): Original exception object
+            msg (str, Optional): Error message
         """
         if ex is not None:
             self.exception = ex
@@ -59,6 +65,12 @@ class WekoAuthorsError(Exception):
 
 
 class WekoAuthorsManagementError(WekoAuthorsError):
+    """Author information management error in weko authors.
+
+    Attributes:
+        exception (Exception, Optional): Original exception object.
+        msg (str): Error message
+    """
     def __init__(self, ex=None, msg=None, *args):
         if msg is None:
             msg = "Some management error has occurred in weko_authors."
@@ -66,6 +78,12 @@ class WekoAuthorsManagementError(WekoAuthorsError):
 
 
 class WekoAuthorsSettingsError(WekoAuthorsError):
+    """Setting error in weko authors.
+
+    Attributes:
+        exception (Exception, Optional): Original exception object.
+        msg (str): Error message
+    """
     def __init__(self, ex=None, msg=None, *args):
         if msg is None:
             msg = "Some setting error has occurred in weko_authors."
@@ -73,6 +91,12 @@ class WekoAuthorsSettingsError(WekoAuthorsError):
 
 
 class WekoAuthorsImportError(WekoAuthorsError):
+    """Authors import error in weko authors.
+
+    Attributes:
+        exception (Exception, Optional): Original exception object.
+        msg (str): Error message
+    """
     def __init__(self, ex=None, msg=None, *args):
         if msg is None:
             msg = "Some import error has occurred in weko_authors."
@@ -80,6 +104,12 @@ class WekoAuthorsImportError(WekoAuthorsError):
 
 
 class WekoAuthorsExportError(WekoAuthorsError):
+    """Authors export error in weko authors.
+
+    Attributes:
+        exception (Exception, Optional): Original exception object.
+        msg (str): Error message
+    """
     def __init__(self, ex=None, msg=None, *args):
         if msg is None:
             msg = "Some export error has occurred in weko_authors."
