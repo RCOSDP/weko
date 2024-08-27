@@ -14,8 +14,8 @@ invenio_resourcesyncclient = WebpackThemeBundle(
                 'jquery': '~2.1.3',
                 'jquery-confirm': '~3.2.1',
                 'moment': '~2.18.1',
-                'React': '~15.6.1',
-                'ReactDOM': '~15.6.1',
+                'react': '~15.6.1',
+                'react-dom': '~15.6.1',
             }
         )
     }

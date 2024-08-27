@@ -24,7 +24,6 @@
 
 {%- block css %}
   {{ super() }}
-  {{ webpack['search_ui_theme.css']}}
   {{ webpack['search-ui-css-weko-search-ui.css']}}
 {%- endblock css %}
 
@@ -38,7 +37,7 @@
   {{ webpack['invenio_search_ui_app.js']}}
   {{ webpack['search-ui-js-js-dependencies-datepicker.js']}}
   {{ webpack['search-ui-js-weko-search-ui.js']}}
-  {{ webpack['theme-js-widget.js']}}
+  {{ webpack['theme-widget.js']}}
 {%- endblock javascript %}
 
 {%- block page_body_tabs %}

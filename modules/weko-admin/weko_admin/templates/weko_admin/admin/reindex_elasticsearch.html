@@ -29,7 +29,7 @@
     {{ webpack['admin_js_reindex_elasticsearch_js.js']}}
     {{ webpack['admin_js_statistics_reactjs_lib.js']}}
     {{ webpack['admin_js_react_bootstrap_js.js']}}
-    {{ webpack['search-ui-js-moment.js']}}
+    <script src="{{ url_for('static', filename='/node_modules/moment/min/moment.min.js') }}"></script>
     {%- endblock javascript %}
     
     {%- block body %}

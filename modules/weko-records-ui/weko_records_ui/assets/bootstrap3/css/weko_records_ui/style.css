@@ -1,7 +1,7 @@
 
-@import url('node_modules/angular-loading-bar/build/loading-bar.css');
-@import url('node_modules/typeahead.js-bootstrap-css/typeaheadjs.css');
-@import url('node_modules/bootstrap-switch/dist/css/bootstrap3/bootstrap-switch.css');
+@import url('../../node_modules/angular-loading-bar/build/loading-bar.css');
+@import url('../../node_modules/typeahead.js-bootstrap-css/typeaheadjs.css');
+@import url('../../node_modules/bootstrap-switch/dist/css/bootstrap3/bootstrap-switch.css');
 
 .nowrap {
   white-space: nowrap;

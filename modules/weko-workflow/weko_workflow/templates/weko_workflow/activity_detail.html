@@ -32,7 +32,7 @@
 {%- block javascript %}
   {{ super() }}
   {% include config.THEME_JAVASCRIPT_TEMPLATE %}
-  {{ webpack['theme-js-base.js'}}
+  {{ webpack['theme-js.js'}}
 
   {%- if 'item_link' == cur_step %}
     {{ webpack['theme-js-weko-theme-tree-view.js'}}

@@ -8,7 +8,6 @@ weko_items_ui = WebpackThemeBundle(
         "bootstrap3": dict(
             entry={
                 "items_ui_css_indextree_style": "./css/weko_items_ui/indextree_style.css",
-                "items_ui_js_angular_ui": "./js/weko_items_ui/ui-bootstrap-tpls.min.js",
                 "items_ui_css_items_author_search": "./css/weko_items_ui/styles.items.authorSearch.bundle.css",
                 "items_ui_js_app": "./js/weko_items_ui/app.js",
                 "items_ui_js_upload": "./js/weko_items_ui/upload.js",

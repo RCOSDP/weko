@@ -79,7 +79,7 @@
       });
     };
   //});
-  function validateSession() {
+  export function validateSession() {
     var isValid = true;
     if ($('#current_guest_email').val()) {
       return isValid;

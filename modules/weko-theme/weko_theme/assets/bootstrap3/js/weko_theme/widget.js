@@ -21,7 +21,7 @@ const FOOTER_TYPE = "Footer";
 const BORDER_STYLE_DOUBLE = "double";
 const BORDER_STYLE_NONE = "none";
 const INTERVAL_TIME = 60000; //one minute
-const DEFAULT_WIDGET_HEIGHT = 5;
+export const DEFAULT_WIDGET_HEIGHT = 5;
 const MAIN_CONTENTS = "main_contents";
 const MIN_WIDTH = 768;
 
@@ -34,7 +34,7 @@ let widgetList;
 let mainContentSensor;
 let headerSensor;
 let otherSensor;
-let widgetBodyGrid;
+export let widgetBodyGrid;
 let widgetOtherList = {};
 let isHeaderContent = false;
 let isRegenerate = false;
