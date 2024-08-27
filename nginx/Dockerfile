@@ -32,7 +32,7 @@ RUN cd /tmp/incubator-pagespeed-ngx-1.13.35.2-stable ; wget https://dl.google.co
 #RUN sed -i "s#--modules-path=/usr/lib/nginx/modules#--modules-path=/usr/lib/nginx/modules --add-module=/tmp/headers-more-nginx-module-0.33 --add-module=/tmp/nginx-http-shibboleth-2.0.1 --add-module=/tmp/nginx-http-auth-digest-master --add-module=/tmp/incubator-pagespeed-ngx-1.13.35.2-stable --add-module=/tmp/ngx_cache_purge-2.3 #g" nginx-1.18.0/debian/rules
 #RUN cd nginx-1.18.0 && dpkg-buildpackage -b
 RUN sed -i "s#--modules-path=/usr/lib/nginx/modules#--modules-path=/usr/lib/nginx/modules --add-module=/tmp/headers-more-nginx-module-0.33 --add-module=/tmp/nginx-http-shibboleth-2.0.1 --add-module=/tmp/nginx-http-auth-digest-master --add-module=/tmp/incubator-pagespeed-ngx-1.13.35.2-stable --add-module=/tmp/ngx_cache_purge-2.3 #g" nginx-1.20.1/debian/rules
-RUN cd nginx-1.20.1 && dpkg-buildpackage -b
+RUN cd nginx-1.26.1 && dpkg-buildpackage -b
 
 FROM ubuntu:focal AS nginx-stage_1
 
@@ -43,9 +43,9 @@ WORKDIR /tmp
 #COPY --from=nginx-with-shib /tmp/nginx_1.18.0-2~focal_amd64.deb .
 #COPY --from=nginx-with-shib /tmp/nginx-dbg_1.18.0-2~focal_amd64.deb .
 #RUN dpkg -i nginx_1.18.0-2~focal_amd64.deb
-COPY --from=nginx-with-shib /tmp/nginx_1.20.1-1~focal_amd64.deb .
-COPY --from=nginx-with-shib /tmp/nginx-dbg_1.20.1-1~focal_amd64.deb .
-RUN dpkg -i nginx_1.20.1-1~focal_amd64.deb
+COPY --from=nginx-with-shib /tmp/nginx_1.26.1-1~focal_amd64.deb .
+COPY --from=nginx-with-shib /tmp/nginx-dbg_1.26.1-1~focal_amd64.deb .
+RUN dpkg -i nginx_1.26.1-1~focal_amd64.deb
 
 
 ADD supervisord.conf /etc/supervisor/supervisord.conf
