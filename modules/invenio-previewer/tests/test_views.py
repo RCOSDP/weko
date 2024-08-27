@@ -10,6 +10,8 @@
 
 from flask import render_template_string
 
+from invenio_previewer.views import preview, dbsession_clean
+from mock import patch, MagicMock
 
 def test_view_macro_file_list(testapp):
     """Test file list macro."""
@@ -61,3 +63,11 @@ def test_previewable_test(testapp):
 
     file["type"] = ""
     assert render_template_string(template, file=file) == "Not previewable"
+    
+# def dbsession_clean(exception):
+def test_dbsession_clean(app):
+    exception = "ValueError"
+    dbsession_clean(exception=exception)
+
+    exception = None
+    dbsession_clean(exception=exception)

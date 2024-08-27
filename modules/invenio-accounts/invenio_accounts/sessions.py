@@ -45,6 +45,26 @@ def _extract_info_from_useragent(user_agent):
     }
 
 
+def get_remote_addr():
+    """
+    Get remote ip address.
+
+    # An 'X-Forwarded-For' header includes a comma separated list of the
+    # addresses, the first address being the actual remote address.
+    """
+    if not request:
+        return None
+
+    address = request.headers.get("X-Real-IP", None)
+
+    if address is None:
+        address = request.headers.get("X-Forwarded-For", request.remote_addr)
+        if address is not None:
+            address = address.encode("utf-8").split(b",")[0].strip().decode()
+
+    return address
+
+
 def add_session(session=None):
     r"""Add a session to the SessionActivity table.
 
@@ -62,8 +82,8 @@ def add_session(session=None):
         session_activity = SessionActivity(
             user_id=user_id,
             sid_s=sid_s,
-            ip=request.remote_addr,
-            country=_ip2country(request.remote_addr),
+            ip=get_remote_addr(),
+            country=_ip2country(get_remote_addr()),
             **_extract_info_from_useragent(request.headers.get("User-Agent", ""))
         )
         db.session.merge(session_activity)
@@ -169,3 +189,17 @@ def default_session_store_factory(app):
     from simplekv.memory import DictStore
 
     return DictStore()
+
+def session_update(app):
+    
+    @app.teardown_request
+    def session_ttl_update(arg):
+        if 'user_id' not in session and hasattr(session, 'sid_s'):
+            if request.path == '/ping':
+                _sessionstore.redis.expire(session.sid_s, 1)
+            else:
+                _sessionstore.redis.expire(session.sid_s,900)
+        elif request.path.startswith('/admin/items/import/') and hasattr(session, 'sid_s'):
+            _sessionstore.redis.expire(
+                session.sid_s,
+                current_app.config.get('WEKO_ADMIN_IMPORT_PAGE_LIFETIME', 43200))

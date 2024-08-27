@@ -2,24 +2,28 @@
 #
 # This file is part of Invenio.
 # Copyright (C) 2016-2019 CERN.
-# Copyright (C) 2016-2019 CERN.
 #
-# Invenio is free software; you can redistribute it and/or modify it
-# under the terms of the MIT License; see LICENSE file for more details.
 # Invenio is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
 
 """File reader utility."""
 
+import errno
+import os
+import re
+import shutil
+import subprocess
 from os.path import basename, splitext
+from time import sleep
 
-from flask import url_for
+from flask import current_app, flash, redirect, request, url_for
+from flask_babelex import gettext as _
 
 
 class PreviewFile(object):
     """Preview file default implementation."""
 
-    def __init__(self, pid, record, fileobj):
+    def __init__(self, pid, record, fileobj, allow_aggs=True):
         """Initialize object.
 
         :param file: ObjectVersion instance from Invenio-Files-REST.
@@ -27,6 +31,7 @@ class PreviewFile(object):
         self.file = fileobj
         self.pid = pid
         self.record = record
+        self.allow_aggs = allow_aggs
 
     @property
     def size(self):
@@ -53,10 +58,10 @@ class PreviewFile(object):
             view ``invenio_records_ui.<pid_type>_files``.
         """
         return url_for(
-            ".{0}_files".format(self.pid.pid_type),
+            ".{0}_file_preview".format(self.pid.pid_type),
             pid_value=self.pid.pid_value,
             filename=self.file.key,
-        )
+            allow_aggs=self.allow_aggs) 
 
     def is_local(self):
         """Check if file is local."""
@@ -71,14 +76,6 @@ class PreviewFile(object):
         """Open the file."""
         return self.file.file.storage().open()
 
-from flask import current_app, flash, redirect, request, url_for
-import os
-import shutil
-import subprocess
-from time import sleep
-import errno
-from flask_babel import gettext as _
-import re
 
 def convert_to(folder, source):
     """Convert file to pdf."""
@@ -179,6 +176,7 @@ def convert_to(folder, source):
         raise LibreOfficeError(process.stdout.decode())
     else:
         return filename.group(1)
+
 
 class LibreOfficeError(Exception):
     """Libreoffice process error."""

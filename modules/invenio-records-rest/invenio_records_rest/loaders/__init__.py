@@ -19,8 +19,4 @@ json_patch_v1 = json_patch_loader
 
 json_pid_checker = marshmallow_loader(RecordMetadataSchemaJSONV1)
 
-__all__ = (
-    'json_v1',
-    'json_patch_loader',
-    'json_pid_checker'
-)
+__all__ = ("json_v1", "json_patch_loader", "json_pid_checker")

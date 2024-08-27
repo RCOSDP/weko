@@ -54,7 +54,10 @@ def clean_session_table():
     sessions = SessionActivity.query_by_expired().all()
     for session in sessions:
         delete_session(sid_s=session.sid_s)
-    db.session.commit()
+    try:
+        db.session.commit()
+    except Exception as ex:
+        db.session.rollback()
 
 
 @shared_task

@@ -1,26 +1,10 @@
 # -*- coding: utf-8 -*-
 #
 # This file is part of Invenio.
-# Copyright (C) 2016 CERN.
+# Copyright (C) 2016-2019 CERN.
 #
-# Invenio is free software; you can redistribute it
-# and/or modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; either version 2 of the
-# License, or (at your option) any later version.
-#
-# Invenio is distributed in the hope that it will be
-# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Invenio; if not, write to the
-# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-# MA 02111-1307, USA.
-#
-# In applying this license, CERN does not
-# waive the privileges and immunities granted to it by virtue of its status
-# as an Intergovernmental Organization or submit itself to any jurisdiction.
+# Invenio is free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
 
 
 """Minimal Flask application example for development.
@@ -75,7 +59,7 @@ from invenio_i18n import InvenioI18N
 from invenio_indexer import InvenioIndexer
 from invenio_indexer.api import RecordIndexer
 from invenio_jsonschemas import InvenioJSONSchemas
-from invenio_oauth2server import InvenioOAuth2Server
+from invenio_oauth2server import InvenioOAuth2Server, InvenioOAuth2ServerREST
 from invenio_oauth2server.views import server_blueprint, settings_blueprint
 from invenio_pidstore import InvenioPIDStore
 from invenio_records import InvenioRecords
@@ -153,6 +137,7 @@ InvenioDeposit(app)
 InvenioDepositREST(app)
 
 search = InvenioSearch(app)
+search.register_mappings('deposits', 'invenio_deposit.mappings')
 
 InvenioSearchUI(app)
 InvenioREST(app)
@@ -160,6 +145,7 @@ InvenioIndexer(app)
 InvenioPIDStore(app)
 InvenioAdmin(app)
 InvenioOAuth2Server(app)
+InvenioOAuth2ServerREST(app)
 
 InvenioFilesREST(app)
 
@@ -181,32 +167,18 @@ def fixtures():
 @cli.with_appcontext
 def records():
     """Load records."""
-    import pkg_resources
-    from dojson.contrib.marc21 import marc21
-    from dojson.contrib.marc21.utils import create_record, split_blob
     from flask_login import login_user, logout_user
     from invenio_accounts.models import User
     from invenio_deposit.api import Deposit
 
-    users = User.query.all()
+    user = User.query.one()
 
-    # pkg resources the demodata
-    data_path = pkg_resources.resource_filename(
-        'invenio_records', 'data/marc21/bibliographic.xml'
-    )
-    with open(data_path) as source:
-        with current_app.test_request_context():
-            indexer = RecordIndexer()
-            with db.session.begin_nested():
-                for index, data in enumerate(split_blob(source.read()),
-                                             start=1):
-                    login_user(users[index % len(users)])
-                    # do translate
-                    record = marc21.do(create_record(data))
-                    # create record
-                    indexer.index(Deposit.create(record))
-                    logout_user()
-            db.session.commit()
+    with current_app.test_request_context():
+        login_user(user)
+        with db.session.begin_nested():
+            Deposit.create({'title': 'Test'})
+        logout_user()
+        db.session.commit()
 
 
 @fixtures.command()

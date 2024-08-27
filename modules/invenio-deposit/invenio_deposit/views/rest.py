@@ -1,26 +1,10 @@
 # -*- coding: utf-8 -*-
 #
 # This file is part of Invenio.
-# Copyright (C) 2016, 2017 CERN.
+# Copyright (C) 2016-2019 CERN.
 #
-# Invenio is free software; you can redistribute it
-# and/or modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; either version 2 of the
-# License, or (at your option) any later version.
-#
-# Invenio is distributed in the hope that it will be
-# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Invenio; if not, write to the
-# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-# MA 02111-1307, USA.
-#
-# In applying this license, CERN does not
-# waive the privileges and immunities granted to it by virtue of its status
-# as an Intergovernmental Organization or submit itself to any jurisdiction.
+# Invenio is free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
 
 """Deposit actions."""
 
@@ -76,7 +60,7 @@ def create_blueprint(endpoints):
         __name__,
         url_prefix='',
     )
-    
+
     @blueprint.teardown_request
     def dbsession_clean(exception):
         current_app.logger.debug("invenio_deposit dbsession_clean: {}".format(exception))
@@ -86,7 +70,7 @@ def create_blueprint(endpoints):
             except:
                 db.session.rollback()
         db.session.remove()
-    
+
     create_error_handlers(blueprint)
 
     for endpoint, options in (endpoints or {}).items():
@@ -377,7 +361,7 @@ class DepositFileResource(ContentNegotiatedMethodView):
     @use_kwargs(get_args)
     @pass_record
     @need_record_permission('read_permission_factory')
-    def get(self, pid, record, key, version_id, **kwargs):
+    def get(self, pid, record, key, version_id=None, **kwargs):
         """Get file.
 
         Permission required: `read_permission_factory`.
@@ -428,7 +412,6 @@ class DepositFileResource(ContentNegotiatedMethodView):
             db.session.rollback()
             current_app.logger.error(e)
             raise WrongFile()
-
         return self.make_response(obj=obj, pid=pid, record=record)
 
     @require_api_auth()

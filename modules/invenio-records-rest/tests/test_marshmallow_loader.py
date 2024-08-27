@@ -52,13 +52,10 @@ class _TestSchemaNested(Schema):
 class _TestMetadataSchema(Schema):
     """Test schema."""
 
-    title = fields.Str()
-    stars = fields.Integer()
-    year = fields.Integer()
-    control_number = PersistentIdentifier()
+    recid = fields.Str()
+    title = fields.List(fields.Str())
 
-
-def test_marshmallow_load(app, db, search, test_data, search_url, search_class):
+def test_marshmallow_load(app, db, esindex, record_data10, search_url, search_class):
     """Test marshmallow loader."""
     app.config["RECORDS_REST_DEFAULT_LOADERS"] = {
         "application/json": marshmallow_loader(_TestMetadataSchema)
@@ -68,7 +65,8 @@ def test_marshmallow_load(app, db, search, test_data, search_url, search_class):
         HEADERS = [("Accept", "application/json"), ("Content-Type", "application/json")]
 
         # Create record
-        req_data = test_data[0]
+        #req_data = test_data[0]
+        req_data = record_data10[0]
         res = client.post(search_url, data=json.dumps(req_data), headers=HEADERS)
         assert res.status_code == 201
 

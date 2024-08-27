@@ -28,13 +28,24 @@ blueprint = Blueprint(
 
 
 def can_preview(file):
-    """Determine if the given file can be previewed."""
+    """Determine if the given file can be previewed by its extension.
+
+    :param file: The file to be previewed.
+    :returns: Boolean
+    """
     supported_extensions = ('.jpg', '.jpeg', '.png', '.tif', '.tiff')
     return file.has_extensions(*supported_extensions)
 
 
 def preview(file):
-    """Render appropriate template with embed flag."""
+    """Render appropriate template with embed flag.
+
+    .. note::
+        Any non .png image is treated as .jpg
+
+    :param file: The file to be previewed.
+    :returns: Template with the preview of the provided file.
+    """
     params = deepcopy(current_app.config['IIIF_PREVIEWER_PARAMS'])
     if 'image_format' not in params:
         params['image_format'] = \

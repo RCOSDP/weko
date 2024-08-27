@@ -22,7 +22,7 @@ class SimpleSchema(Schema):
     titles = fields.Raw(attribute="metadata.titles")
 
 
-def test_serialize():
+def test_serialize(app, db, item_type):
     """Test JSON serialize."""
     pid = PersistentIdentifier(pid_type="recid", pid_value="2")
     record = Record({"titles": ["DC test"]})

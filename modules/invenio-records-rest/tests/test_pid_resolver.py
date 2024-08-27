@@ -14,7 +14,7 @@ from helpers import create_record
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus, RecordIdentifier
 
 
-def test_record_resolution(app, db):
+def test_record_resolution(app, db, test_records, item_type):
     """Test resolution of PIDs to records."""
     # OK PID
     pid_ok, record = create_record({"title": "test"})
@@ -22,6 +22,7 @@ def test_record_resolution(app, db):
     # Deleted PID
     pid_del, record = create_record({"title": "deleted"})
     pid_del.delete()
+    db.session.commit()
 
     # Missing object PID
     pid_noobj = PersistentIdentifier.create(
@@ -32,6 +33,7 @@ def test_record_resolution(app, db):
     # Redirected PID
     pid_red = PersistentIdentifier.create("recid", "101", status=PIDStatus.REGISTERED)
     pid_red.redirect(pid_ok)
+    db.session.commit()
 
     # Redirect PID - different endpoint
     pid_doi = PersistentIdentifier.create(

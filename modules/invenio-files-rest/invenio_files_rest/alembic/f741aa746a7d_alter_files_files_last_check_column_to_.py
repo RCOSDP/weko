@@ -12,19 +12,21 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = 'f741aa746a7d'
-down_revision = '2e97565eba72'
+revision = "f741aa746a7d"
+down_revision = "2e97565eba72"
 branch_labels = ()
 depends_on = None
 
 
 def upgrade():
     """Upgrade database."""
-    op.alter_column('files_files', 'last_check', existing_type=sa.BOOLEAN(),
-                    nullable=True)
+    op.alter_column(
+        "files_files", "last_check", existing_type=sa.BOOLEAN(), nullable=True
+    )
 
 
 def downgrade():
     """Downgrade database."""
-    op.alter_column('files_files', 'last_check', existing_type=sa.BOOLEAN(),
-                    nullable=False)
+    op.alter_column(
+        "files_files", "last_check", existing_type=sa.BOOLEAN(), nullable=False
+    )

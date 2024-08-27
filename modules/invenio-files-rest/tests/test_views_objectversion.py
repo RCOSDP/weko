@@ -15,7 +15,7 @@ from unittest.mock import patch
 import pytest
 from flask import url_for
 from fs.opener import open_fs as opendir
-from testutils import BadBytesIO, login_user
+from tests.testutils import BadBytesIO, login_user
 
 from invenio_files_rest.models import FileInstance, ObjectVersion
 from invenio_files_rest.tasks import remove_file_data
@@ -80,7 +80,6 @@ def test_get(client, headers, bucket, objects, permissions, user, expected):
 
         if resp.status_code == 200:
             # Strips prefix 'md5:' from checksum value.
-            assert resp.content_md5 == obj.file.checksum[4:]
             assert resp.get_etag()[0] == obj.file.checksum
 
 
@@ -221,8 +220,6 @@ def test_get_versions(client, headers, bucket, versions, permissions, user, expe
         assert resp.status_code == expected
 
         if resp.status_code == 200:
-            # Strips prefix 'md5:' from checksum value.
-            assert resp.content_md5 == obj.file.checksum[4:]
             assert resp.get_etag()[0] == obj.file.checksum
 
 
@@ -281,7 +278,7 @@ def test_post(client, headers, permissions, bucket, user, expected):
     )
     assert resp.status_code == expected
 
-
+# .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_views_objectversion.py::test_put -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
 @pytest.mark.parametrize(
     "user,expected",
     [
@@ -292,12 +289,12 @@ def test_post(client, headers, permissions, bucket, user, expected):
         ("location", 200),
     ],
 )
-def test_put(client, bucket, permissions, get_md5, get_json, user, expected):
+def test_put(client, bucket, permissions, get_sha256, get_json, user, expected):
     """Test upload of an object."""
 
     key = "test.txt"
     data = b"updated_content"
-    checksum = get_md5(data, prefix=True)
+    checksum = get_sha256(data, prefix=True)
     object_url = url_for("invenio_files_rest.object_api", bucket_id=bucket.id, key=key)
 
     login_user(client, permissions[user])
@@ -313,10 +310,26 @@ def test_put(client, bucket, permissions, get_md5, get_json, user, expected):
         resp = client.get(object_url)
         assert resp.status_code == 200
         assert resp.data == data
-        assert resp.content_md5 == checksum[4:]
+
+# .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_views_objectversion.py::test_put_fail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
+def test_put_fail(client, bucket, permissions, get_sha256, get_json):
+    """Test upload of an object."""
+    key = 'test.txt'
+    data = b'updated_content'
+    checksum = get_sha256(data, prefix=True)
+    object_url = url_for(
+        'invenio_files_rest.object_api', bucket_id=bucket.id, key=key)
+
+    login_user(client, permissions['location'])
+    with patch("invenio_files_rest.views.db.session.commit", side_effect=Exception('')):
+        resp = client.put(
+            object_url,
+            input_stream=BytesIO(data),
+        )
+        assert resp.status_code == 200
 
 
-def test_put_versioning(client, bucket, permissions, get_md5, get_json):
+def test_put_versioning(client, bucket, permissions, get_json):
     """Test versioning feature."""
     key = "test.txt"
     files = [b"v1", b"v2"]

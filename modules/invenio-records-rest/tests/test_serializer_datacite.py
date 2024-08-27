@@ -38,9 +38,9 @@ class SimpleSchema(Schema):
 @pytest.mark.parametrize(
     "serializer", [DataCite31Serializer, DataCite40Serializer, DataCite41Serializer]
 )
-def test_serialize(serializer):
+def test_serialize(serializer, item_type):
     pid = PersistentIdentifier(pid_type="recid", pid_value="2")
-    record = Record({"doi": "10.1234/foo"})
+    record = Record({"doi": "10.1234/foo", "item_type_id": "15"})
     s = serializer(SimpleSchema)
     data = s.serialize(pid, record)
 

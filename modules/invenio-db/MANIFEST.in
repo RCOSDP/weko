@@ -24,3 +24,7 @@ recursive-include invenio_db *.py
 recursive-include tests *.py
 recursive-include .github/workflows *.yml
 include .git-blame-ignore-revs
+
+# added by check-manifest
+include *.properties
+include tox.ini

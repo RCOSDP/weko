@@ -9,7 +9,7 @@
 
 """OAuth2Server configuration variables."""
 
-OAUTH2_CACHE_TYPE = "redis"
+OAUTH2_CACHE_TYPE = "redis" #redis or redissentinl
 """Type of cache to use for storing the temporary grant token."""
 
 OAUTH2_PROVIDER_ERROR_ENDPOINT = "invenio_oauth2server.errors"

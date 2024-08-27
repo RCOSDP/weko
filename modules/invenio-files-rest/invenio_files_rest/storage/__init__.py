@@ -8,13 +8,11 @@
 
 """File storage interface."""
 
-from __future__ import absolute_import, print_function
-
 from .base import FileStorage
 from .pyfs import PyFSFileStorage, pyfs_storage_factory
 
 __all__ = (
-    'FileStorage',
-    'pyfs_storage_factory',
-    'PyFSFileStorage',
+    "FileStorage",
+    "pyfs_storage_factory",
+    "PyFSFileStorage",
 )

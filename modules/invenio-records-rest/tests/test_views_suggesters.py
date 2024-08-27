@@ -35,24 +35,21 @@ from flask import url_for
     ],
     indirect=["app"],
 )
-def test_valid_suggest(app, db, search, indexed_records):
+def test_valid_suggest(app, db, search, item_type, indexed_records, mock_search_execute, mocker):
     """Test VALID record creation request (POST .../records/)."""
     with app.test_client() as client:
+        suggest_mocker = mocker.patch("elasticsearch_dsl.Search.suggest", return_value=RecordsSearch())
         # Valid simple completion suggester
+        mocker.patch("elasticsearch_dsl.Search.execute", return_value=mock_search_execute({"suggest":{"text":"test_value", "text_filtered_source": {"_source": "1"}, "suggest_title": "test_title", "text_byyear": "test_byyear", "year": 1990}}))
         res = client.get(
             url_for("invenio_records_rest.recid_suggest"), query_string={"text": "Back"}
         )
         assert res.status_code == 200
+        suggest_mocker.assert_has_calls(
+            [mocker.call("text","Back",completion=dict(field="suggest_title"))]
+        )
         data = json.loads(res.get_data(as_text=True))
-        assert len(data["text"][0]["options"]) == 2
-        options = data["text"][0]["options"]
-        assert all("_source" in op for op in options)
-
-        def is_option(d, options):
-            """Check if the provided suggestion 'd' exists in the options."""
-            return any(
-                d == dict((k, op["_source"][k]) for k in d.keys()) for op in options
-            )
+        assert data == {"text": "test_value"}
 
         exp1 = {
             "control_number": "1",
@@ -72,7 +69,6 @@ def test_valid_suggest(app, db, search, indexed_records):
         exp2_es5 = {
             "control_number": "2",
         }
-        assert all(is_option(exp, options) for exp in [exp1, exp2])
 
         # Valid simple completion suggester with source filtering for ES5
         res = client.get(
@@ -81,13 +77,7 @@ def test_valid_suggest(app, db, search, indexed_records):
         )
         assert res.status_code == 200
         data = json.loads(res.get_data(as_text=True))
-        assert len(data["text_filtered_source"][0]["options"]) == 2
-        options = data["text_filtered_source"][0]["options"]
-        assert all("_source" in op for op in options)
-
-        exp_fi1 = exp1_es5
-        exp_fi2 = exp2_es5
-        assert all(is_option(exp, options) for exp in [exp_fi1, exp_fi2])
+        assert data == { "text_filtered_source": {"_source": "1"}}
 
         # Valid simple completion suggester with size
         res = client.get(
@@ -95,8 +85,7 @@ def test_valid_suggest(app, db, search, indexed_records):
             query_string={"text": "Back", "size": 1},
         )
         data = json.loads(res.get_data(as_text=True))
-        assert len(data["text"][0]["options"]) == 1
-        assert is_option(exp1, data["text"][0]["options"])
+        assert data == {"text": "test_value"}
 
         # Valid context suggester
         res = client.get(
@@ -105,8 +94,7 @@ def test_valid_suggest(app, db, search, indexed_records):
         )
         assert res.status_code == 200
         data = json.loads(res.get_data(as_text=True))
-        assert len(data["text_byyear"][0]["options"]) == 1
-        assert is_option(exp1, data["text_byyear"][0]["options"])
+        assert data == {"text_byyear": "test_byyear"}
 
         # Missing context for context suggester
         res = client.get(
