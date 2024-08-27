@@ -47,7 +47,9 @@
 
 {%- block javascript %}
   {{ super() }}
-  {% assets "weko_theme_js_treeview" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  <script src="{{ url_for('static', filename='js/weko_theme/inline.bundle.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/weko_theme/polyfills.bundle.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/weko_theme/main.bundle.js') }}"></script>
   {% assets "weko_theme_js_top_page" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_theme_js_detail_search" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "invenio_search_ui_search_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
