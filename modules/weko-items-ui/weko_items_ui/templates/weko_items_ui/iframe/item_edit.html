@@ -51,9 +51,13 @@
     {%- if need_thumbnail %}
       {% assets "weko_items_ui_upload_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
     {% endif %}
-    {% assets "weko_items_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-    {% assets "weko_items_authors_search_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {%- endblock javascript %}
+    <script src="{{ url_for('static', filename='js/weko_items_ui/inline.bundle.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/weko_items_ui/polyfills.bundle.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/weko_items_ui/main.bundle.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/weko_items_ui/inline.items.authorSearch.bundle.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/weko_items_ui/polyfills.items.authorSearch.bundle.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/weko_items_ui/main.items.authorSearch.bundle.js') }}"></script>
+    {%- endblock javascript %}
 
   {%- block page_header %}
   {%- endblock page_header %}

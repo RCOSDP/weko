@@ -30,7 +30,9 @@
 {%- block javascript %}
   {{ super() }}
   {% assets "weko_theme_js_widget" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_authors_import_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  <script src="{{ url_for('static', filename = 'js/weko_authors/app-author-import.runtime-main.js') }}"></script>
+  <script src="{{ url_for('static', filename = 'js/weko_authors/app-author-import.chunk.js') }}"></script>
+  <script src="{{ url_for('static', filename = 'js/weko_authors/app-author-import.main.chunk.js') }}"></script>
 {%- endblock javascript %}
 
 {%- block body %}

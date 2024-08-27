@@ -29,7 +29,9 @@
 
 {%- block javascript %}
   {{ super() }}
-  {% assets "weko_authors_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  <script src="{{ url_for('static', filename='js/weko_authors/inline.bundle.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/weko_authors/polyfills.bundle.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/weko_authors/main.bundle.js') }}"></script>
   {% assets "weko_theme_js_widget" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
 

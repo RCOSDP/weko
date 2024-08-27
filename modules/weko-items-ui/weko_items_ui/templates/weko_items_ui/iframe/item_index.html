@@ -33,7 +33,9 @@
 
 {%- block javascript %}
   {{ super() }}
-  {% assets "weko_items_ui_js_dependencies" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  <script src="{{ url_for('static', filename='js/weko_items_ui/inline.bundle.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/weko_items_ui/polyfills.bundle.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/weko_items_ui/main.bundle.js') }}"></script>
   {% assets "workflow_quit_confirmation_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "workflow_lock_activity_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_records_ui_preview_carousel_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
