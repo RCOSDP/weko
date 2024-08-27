@@ -17,6 +17,7 @@
         "./modules/invenio-queues",
         "./modules/invenio-db",
         "./modules/invenio-accounts",
+        "./modules/invenio-indexer",
         "./modules/weko-theme",
         "./modules/weko-itemtypes-ui",
         "./modules/weko-items-ui",
@@ -42,6 +43,5 @@
         "./modules/invenio-iiif",
         "./modules/weko-redis",
         "./modules/weko-swordserver",
-        "./modules/invenio-indexer"
     ]
 }
