@@ -197,7 +197,7 @@ class DefaultOrderedDict(OrderedDict):
         )
 
 
-def get_tree_items(index_tree_id):
+def get_tree_items(index_tree_id, size=10000):
     """Get tree items."""
     records_search = RecordsSearch()
     records_search = records_search.with_preference_param().params(version=False)
@@ -205,9 +205,22 @@ def get_tree_items(index_tree_id):
     search_instance, _ = item_path_search_factory(
         None, records_search, index_id=index_tree_id
     )
+    search_instance = search_instance.extra(size=size)
     search_result = search_instance.execute()
     rd = search_result.to_dict()
-    return rd.get("hits").get("hits")
+    result = rd.get("hits").get("hits")
+
+    while len(rd['hits']['hits']) == 10000:
+        search_after = rd['hits']['hits'][-1]['sort']
+        search_instance = search_instance.extra(
+            size=size,
+            search_after=search_after
+        )
+        search_result = search_instance.execute()
+        rd = search_result.to_dict()
+        result.extend(rd.get("hits").get("hits"))
+
+    return result
 
 
 def delete_records(index_tree_id, ignore_items):

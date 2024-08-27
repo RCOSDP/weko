@@ -3,11 +3,13 @@
 import copy
 import json
 import os
+import time
 import unittest
-from datetime import datetime
+from datetime import datetime, timedelta
 import uuid
 
 import pytest
+from elasticsearch import helpers
 from flask import current_app, make_response, request
 from flask_babelex import Babel
 from flask_login import current_user
@@ -176,7 +178,7 @@ class MockSearchPerm:
         return True
 # def get_tree_items(index_tree_id): ERROR ~ AttributeError: '_AppCtxGlobals' object has no attribute 'identity'
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_get_tree_items -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-def test_get_tree_items(i18n_app, indices, users, mocker):
+def test_get_tree_items(i18n_app, indices, users, mocker, es):
     i18n_app.config['WEKO_SEARCH_TYPE_INDEX'] = 'index'
     i18n_app.config['OAISERVER_ES_MAX_CLAUSE_COUNT'] = 1
     i18n_app.config['WEKO_ADMIN_MANAGEMENT_OPTIONS'] = WEKO_ADMIN_MANAGEMENT_OPTIONS
@@ -192,6 +194,8 @@ def test_get_tree_items(i18n_app, indices, users, mocker):
                 return self.data
         def __init__(self,data):
             self.data=data
+        def extra(self,size):
+            return self
         def execute(self):
             return self.MockExecute(self.data)
     def mock_search_factory(self, search,index_id=None):
@@ -201,6 +205,34 @@ def test_get_tree_items(i18n_app, indices, users, mocker):
     ):
         # with patch("weko_search_ui.query.item_path_search_factory", return_value="{'abc': 123}"):
         assert get_tree_items(33)
+
+    def _generate_es_data(num, start_datetime=datetime.now()):
+        for i in range(num):
+            doc = {
+                "_index": i18n_app.config['INDEXER_DEFAULT_INDEX'],
+                "_type": "item-v1.0.0",
+                "_id": f"2d1a2520-9080-437f-a304-230adc8{i:05d}",
+                "_source": {
+                    "_item_metadata": {
+                        "title": [f"test_title_{i}"],
+                    },
+                    "relation_version_is_last": True,
+                    "path": ["66"],
+                    "control_number": f"{i:05d}",
+                    "_created": (start_datetime + timedelta(seconds=i)).isoformat(),
+                    "publish_status": "0",
+                },
+            }
+            yield doc
+
+    generate_data_num = 20005
+    helpers.bulk(es, _generate_es_data(generate_data_num))
+    es.indices.refresh(index=i18n_app.config['INDEXER_DEFAULT_INDEX'])
+    i18n_app.config['RECORDS_REST_SORT_OPTIONS'] = {"test-weko":{"controlnumber":{"title":"ID","fields": ["control_number"],"default_order": "asc","order": 2}}}
+
+    with i18n_app.test_request_context(query_string={"sort": "control_number", "q": "66"}):
+        with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
+                assert len(get_tree_items(66)) == generate_data_num
 
 
 # def delete_records(index_tree_id, ignore_items):

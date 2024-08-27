@@ -1016,9 +1016,18 @@ def indices(app, db):
         testIndexPrivate = Index(
             index_name="testIndexPrivate", public_state=False, id=55
         )
+        testIndexSix = Index(
+            index_name="testIndexSix",
+            browsing_role="Contributor",
+            public_state=True,
+            id=66,
+            position=1,
+            item_custom_sort={},
+        )
 
         db.session.add(testIndexThree)
         db.session.add(testIndexThreeChild)
+        db.session.add(testIndexSix)
 
     return {
         "index_dict": dict(testIndexThree),
