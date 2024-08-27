@@ -16,14 +16,14 @@ import logging
 from . import config
 from .ext import WekoLoggingBase
 from .utils import wekoLoggingFilter
-from .lggr import WEKO_COMMON_MESSAGE
+from .resource import WEKO_COMMON_MESSAGE
 
 class WekoLoggingConsole(WekoLoggingBase):
     """Invenio-Logging extension for console."""
 
     def init_app(self, app):
         """Flask application initialization.
-        
+
         Method to initialize the Flask application.
         """
         self.init_config(app)
@@ -91,17 +91,17 @@ class WekoLoggingConsole(WekoLoggingBase):
 
         Args:
             key (str): \
-                key of message.  
+                key of message.
                 Not required if param is specified.
             param (dict): \
-                message parameters.  
+                message parameters.
                 Not required if key is specified.
             ex (Exception): \
-                exception object.  
+                exception object.
                 Not required.
             **kwargs (dict): \
-                message parameters.  
-                If you want to replace the placeholder in the message,  
+                message parameters.
+                If you want to replace the placeholder in the message,
                 specify the key-value pair here.
         Returns:
             None
