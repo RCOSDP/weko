@@ -22,7 +22,10 @@
 
 from . import config
 from .api import current_userprofile
-
+from flask_menu import current_menu
+from invenio_i18n import LazyString
+from invenio_i18n import lazy_gettext as _
+#from flask_babel import lazy_gettext as _
 
 class WekoUserProfiles(object):
     """weko-user-profiles extension."""
@@ -85,20 +88,13 @@ class WekoUserProfiles(object):
 
 def finalize_app(app):
     """Finalize app."""
-    menu = app.extensions["menu"]
+    icons = app.extensions['invenio-theme'].icons
     
-    menu.submenu("settings.profile").register(
-        "weko_user_profiles",
-        _('%(icon)s Profile', icon='<i class="fa fa-user fa-fw"></i>'),
+    current_menu.submenu("settings.profile").register(
+        endpoint="weko_user_profiles.profile",
+        text=_(
+            '%(icon)s Profile', 
+            icon=LazyString(lambda: f'<i class="{icons.codepen}"></i>')
+        ),
         order=0
     )
-    
-    breadcrumbs = {
-        "breadcrumbs.settings.profile":{
-            "endpoint": "weko_user_profiles.profile",
-            "text": _("Profile")
-        }
-    }
-    
-    for breadcrumb, submenu in breadcrumbs.items():
-        menu.submenu(breadcrumb).register(**submenu)

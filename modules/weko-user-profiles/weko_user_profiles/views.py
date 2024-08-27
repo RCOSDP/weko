@@ -110,14 +110,6 @@ def get_profile_info():
 
 @blueprint.route('/', methods=['GET', 'POST'])
 @login_required
-@register_menu(
-    blueprint, 'settings.profile',
-    # NOTE: Menu item text (icon replaced by a user icon).
-    _('%(icon)s Profile', icon='<i class="fa fa-user fa-fw"></i>'),
-    order=0)
-@register_breadcrumb(
-    blueprint, 'breadcrumbs.settings.profile', _('Profile')
-)
 def profile():
     """View for editing a profile."""
     # Create forms

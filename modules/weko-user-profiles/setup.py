@@ -124,6 +124,9 @@ setup(
             'weko_user_profiles'
             ' = weko_user_profiles.views:blueprint_ui_init',
         ],
+        'invenio_base.finalize_app':[
+            'weko_user_profiles = weko_user_profiles.ext:finalize_app',
+        ],
         'invenio_db.models': [
             'weko_user_profiles = weko_user_profiles.models',
         ],

@@ -25,7 +25,9 @@ from functools import partial
 
 from babel.core import Locale
 from flask import _request_ctx_stack, current_app, request, session
-from flask_babel import gettext as _
+from flask_menu import current_menu
+from invenio_i18n import LazyString
+from invenio_i18n import lazy_gettext as _
 from flask_login import current_user
 from invenio_accounts.models import Role, userrole
 from invenio_db import db
@@ -35,7 +37,7 @@ from invenio_i18n.views import set_lang
 from . import config
 from .models import AdminLangSettings, SessionLifetime, SiteInfo
 from .utils import overwrite_the_memory_config_with_db
-from .views import blueprint
+from .views import blueprint, _has_admin_access
 
 
 class WekoAdmin(object):
@@ -185,3 +187,17 @@ class WekoAdmin(object):
         def overwrite_the_memory_config():
             site_info = SiteInfo.get()
             overwrite_the_memory_config_with_db(app, site_info)
+
+def finalize_app(app):
+    """Finalize app."""
+    icons = app.extensions['invenio-theme'].icons
+    
+    current_menu.submenu("settings.lifetime").register(
+        endpoint="weko_admin.lifetime",
+        text=_(
+            '%(icon)s Session', 
+            icon=LazyString(lambda: f'<i class="{icons.codepen}"></i>')
+        ),
+        visible_when=_has_admin_access,
+        order=14
+    )

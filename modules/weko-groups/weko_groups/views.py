@@ -25,9 +25,7 @@ from flask import Blueprint, flash, jsonify, redirect, render_template, \
     request, url_for, current_app
 import bleach
 from flask_babel import gettext as _
-from flask_breadcrumbs import register_breadcrumb
 from flask_login import current_user, login_required
-from flask_menu import register_menu
 from invenio_accounts.models import User
 from invenio_admin.proxies import current_admin
 from six.moves.urllib.parse import urlparse
@@ -134,13 +132,6 @@ def _has_admin_access():
 
 @blueprint.route('/index', methods=['GET'])
 @blueprint.route('/', methods=['GET'])
-@register_menu(
-    blueprint, 'settings.groups',
-    _('%(icon)s Groups', icon='<i class="fa fa-users fa-fw"></i>'),
-    order=13,
-    active_when=lambda: request.endpoint.startswith("groups_settings.")
-)
-@register_breadcrumb(blueprint, 'breadcrumbs.settings.group', _('Groups'))
 @login_required
 def index():
     """List all user memberships."""
@@ -170,7 +161,6 @@ def index():
 
 
 @blueprint.route('/requests', methods=['GET'])
-@register_breadcrumb(blueprint, 'breadcrumbs.settings.request', _('Requests'))
 @login_required
 def requests():
     """List all pending memberships, listed only for group admins."""
@@ -188,10 +178,6 @@ def requests():
 
 
 @blueprint.route('/invitations', methods=['GET'])
-@register_breadcrumb(
-    blueprint,
-    'breadcrumbs.settings.invitations',
-    _('Invitations'))
 @login_required
 def invitations():
     """List all user pending memberships."""
@@ -208,7 +194,6 @@ def invitations():
 
 
 @blueprint.route('/new', methods=['GET', 'POST'])
-@register_breadcrumb(blueprint, 'breadcrumbs.settings.group.new', _('New'))
 @login_required
 def new():
     """
@@ -243,12 +228,6 @@ def new():
 
 @blueprint.route('/<int:group_id>/manage', methods=['GET', 'POST'])
 @blueprint.route('/<int:group_id>/', methods=['GET', 'POST'])
-@register_breadcrumb(
-    blueprint, 'breadcrumbs.settings.manage', _('Manage'),
-    dynamic_list_constructor=lambda:
-    [{'text': get_group_name(request.view_args['group_id'])},
-     {'text': _('Manage')}]
-)
 @login_required
 def manage(group_id):
     """
@@ -328,12 +307,6 @@ def delete(group_id):
 
 @blueprint.route('/<int:group_id>/members', methods=['GET', 'POST'])
 @login_required
-@register_breadcrumb(
-    blueprint, 'breadcrumbs.settings.group.members', _('Members'),
-    dynamic_list_constructor=lambda:
-    [{'text': get_group_name(request.view_args['group_id'])},
-     {'text': _('Members')}]
-)
 def members(group_id):
     """
     List user group members.
@@ -549,11 +522,6 @@ def reject(group_id):
 
 @blueprint.route('/<int:group_id>/members/new', methods=['GET', 'POST'])
 @login_required
-@register_breadcrumb(
-    blueprint,
-    'breadcrumbs.settings.newmember',
-    _('NewMember')
-)
 def new_member(group_id):
     """
     Add (invite) new member.
