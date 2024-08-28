@@ -11,8 +11,8 @@ RUN curl -fsSL https://nginx.org/keys/nginx_signing.key | apt-key add -
 RUN apt-get update -y
 #RUN apt-get source -y nginx=1.18.0
 #RUN apt-get build-dep -y nginx=1.18.0
-RUN apt-get source -y nginx=1.20.1
-RUN apt-get build-dep -y nginx=1.20.1
+RUN apt-get source -y nginx=1.26.1
+RUN apt-get build-dep -y nginx=1.26.1
 
 # https://github.com/samizdatco/nginx-http-auth-digest
 RUN wget "https://github.com/samizdatco/nginx-http-auth-digest/archive/master.zip" -O nginx-http-auth-digest.zip
