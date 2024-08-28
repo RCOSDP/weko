@@ -212,6 +212,7 @@ def create_url_rules(
     search_serializers=None,
     search_serializers_aliases=None,
     search_index=None,
+    search_type=None,
     default_media_type=None,
     max_result_window=None,
     use_options_view=True,
@@ -262,6 +263,7 @@ def create_url_rules(
         query arg (see `config.REST_MIMETYPE_QUERY_ARG_NAME`) to valid
         mimetypes for records search serializers: dict(alias -> mimetype).
     :param search_index: Name of the search index used when searching records.
+    :param search_type: Name of the search type used when searching records.
     :param default_media_type: Default media type for both records and search.
     :param max_result_window: Maximum number of results that the search engine can
         provide for the given search index without use of scroll. This value
@@ -308,6 +310,11 @@ def create_url_rules(
         search_class_kwargs["index"] = search_index
     else:
         search_index = search_class.Meta.index
+
+    if search_type:
+        search_class_kwargs['doc_type'] = search_type
+    else:
+        search_type = search_class.Meta.doc_types
 
     if search_class_kwargs:
         search_class = partial(search_class, **search_class_kwargs)
