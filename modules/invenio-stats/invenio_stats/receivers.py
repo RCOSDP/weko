@@ -72,7 +72,7 @@ def register_receivers(app, config):
         if isinstance(signal, list):
             for sig in signal:
                 sig = obj_or_import_string(sig)
-                signal.connect(event_emitter, sender=app, weak=False)
+                sig.connect(event_emitter, sender=app, weak=False)
         else:
             signal.connect(event_emitter, sender=app, weak=False)
 
