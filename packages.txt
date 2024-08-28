@@ -112,6 +112,7 @@ kombu==5.3.7
 #kombu==4.6.11
 limits==3.11.0
 lxml==5.2.1
+lxml-html-clean==0.2.0
 Mako==1.0.7
 #Mako
 MarkupSafe==2.1.5
