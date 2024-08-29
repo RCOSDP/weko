@@ -51,7 +51,7 @@ Flask-Admin==1.6.1
 Flask-Alembic==2.0.1
 Flask-Assets==0.12
 Flask-Babel==4.0.0
-Flask-BabelEx==0.9.4
+#Flask-BabelEx==0.9.4
 Flask-Breadcrumbs==0.5.1
 Flask-Caching==2.1.0
 flask-celeryext==0.4.0

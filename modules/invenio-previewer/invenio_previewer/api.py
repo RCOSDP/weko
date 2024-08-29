@@ -17,7 +17,7 @@ from os.path import basename, splitext
 from time import sleep
 
 from flask import current_app, flash, redirect, request, url_for
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 
 
 class PreviewFile(object):
