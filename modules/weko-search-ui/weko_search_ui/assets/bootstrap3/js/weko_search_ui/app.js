@@ -2,6 +2,7 @@ import angular from 'angular';
 import "bootstrap";
 import "bootstrap-datepicker"
 import $ from "jquery";
+import "invenio-search-js/dist/invenio-search-js"
 
 const MESSAGE = {
     bibtex_err: {
