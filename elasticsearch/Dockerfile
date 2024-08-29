@@ -19,7 +19,7 @@
 # MA 02111-1307, USA.
 
 # Use Elasticsearch 6.
-FROM docker.elastic.co/elasticsearch/elasticsearch:6.8.23
+FROM docker.elastic.co/elasticsearch/elasticsearch:7.4.1
 WORKDIR /usr/share/elasticsearch
 ARG ELASTICSEARCH_S3_ACCESS_KEY
 ARG ELASTICSEARCH_S3_SECRET_KEY
