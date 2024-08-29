@@ -51,7 +51,6 @@ from invenio_accounts.models import Role, User, userrole
 from invenio_db import db
 from invenio_files_rest.utils import remove_file_cancel_action
 from invenio_oauth2server import require_api_auth, require_oauth_scopes
-#from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.contrib.versioning import PIDNodeVersioning
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.errors import PIDDoesNotExistError,PIDDeletedError

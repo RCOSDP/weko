@@ -50,7 +50,6 @@ from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_indexer.api import RecordIndexer
 from invenio_pidrelations.contrib.versioning import PIDNodeVersioning
-#from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_pidstore.errors import PIDDoesNotExistError
@@ -61,7 +60,6 @@ from invenio_stats.utils import QueryRankingHelper, QuerySearchReportHelper
 from invenio_stats.views import QueryRecordViewCount as _QueryRecordViewCount
 from invenio_stats.proxies import current_stats
 from invenio_stats import config
-#from invenio_stats.views import QueryRecordViewCount
 from jsonschema import SchemaError, ValidationError
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import MetaData, Table
