@@ -134,33 +134,14 @@ cp -prf "/code/modules/weko-index-tree/weko_index_tree/static/indextree" "var/in
 # sphinxdoc-customise-instance-end
 pip install pip==24.1.2
 pip install setuptools==71.0.3
-## sphinxdoc-run-npm-begin
-#${INVENIO_WEB_INSTANCE} npm
-#cdvirtualenv "var/instance/static"
-#CI=true npm install "https://github.com/RCOSDP/invenio-search-js.git#feature/changePaginationForSearchAfterUse" --save
-#CI=true npm install angular-schema-form@0.8.13
-#CI=true npm install
-### for install ckeditor plugins
-#cdvirtualenv "var/instance/static/node_modules/ckeditor/plugins"
-#CI=true git clone https://github.com/RCOSDP/base64image.git
-###
-## sphinxdoc-run-npm-end
-#
-## sphinxdoc-collect-and-build-assets-begin
-#${INVENIO_WEB_INSTANCE} collect -v
-#${INVENIO_WEB_INSTANCE} assets build
-## sphinxdoc-collect-and-build-assets-end
-
 # sphinxdoc-run-npm-begin
 ${INVENIO_WEB_INSTANCE} webpack create
 cdvirtualenv "var/instance/assets"
-#CI=true npm install "https://github.com/RCOSDP/invenio-search-js.git#feature/changePaginationForSearchAfterUse" --save
 CI=true npm install --legacy-peer-deps
 CI=true npm install angular-schema-form@0.8.13 --legacy-peer-deps
 ## for install ckeditor plugins
 cdvirtualenv "var/instance/assets/node_modules/ckeditor/plugins"
 CI=true git clone https://github.com/RCOSDP/base64image.git
-##
 # sphinxdoc-run-npm-end
 cdvirtualenv "var/instance/assets/node_modules"
 rm -rf invenio-search-js

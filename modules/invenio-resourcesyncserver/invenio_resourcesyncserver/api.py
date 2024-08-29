@@ -30,7 +30,6 @@ from datetime import timedelta
 
 from flask import current_app, request, send_file
 from invenio_db import db
-#from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.contrib.versioning import PIDNodeVersioning
 from invenio_pidstore.models import PersistentIdentifier
 from resync import Resource, ResourceList

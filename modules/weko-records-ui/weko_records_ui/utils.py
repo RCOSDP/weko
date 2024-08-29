@@ -44,7 +44,6 @@ from invenio_cache import current_cache
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_oaiserver.response import getrecord
-#from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.contrib.versioning import PIDNodeVersioning
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus

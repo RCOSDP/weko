@@ -42,7 +42,6 @@ from invenio_files_rest.models import Bucket, ObjectVersion
 from invenio_i18n.ext import current_i18n
 from invenio_mail.admin import MailSettingView
 from invenio_mail.models import MailConfig
-#from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.contrib.versioning import PIDNodeVersioning
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.models import PersistentIdentifier, \

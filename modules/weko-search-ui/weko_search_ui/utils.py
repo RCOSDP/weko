@@ -59,7 +59,6 @@ from invenio_files_rest.proxies import current_files_rest
 from invenio_files_rest.utils import find_and_update_location_size
 from invenio_i18n.ext import current_i18n
 from invenio_indexer.api import RecordIndexer
-#from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.contrib.versioning import PIDNodeVersioning
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus

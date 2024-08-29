@@ -15,7 +15,6 @@ from datetime import datetime, timedelta
 from functools import wraps
 
 from flask import Blueprint, abort, current_app, jsonify, request
-#from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.contrib.versioning import PIDNodeVersioning
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_rest.views import ContentNegotiatedMethodView

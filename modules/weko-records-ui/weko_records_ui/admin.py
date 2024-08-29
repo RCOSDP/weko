@@ -31,7 +31,6 @@ from flask_babel import gettext as _
 from flask_login import current_user
 from flask_wtf import FlaskForm
 from invenio_db import db
-#from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.contrib.versioning import PIDNodeVersioning
 from invenio_pidstore.models import PersistentIdentifier
 from sqlalchemy.orm import load_only

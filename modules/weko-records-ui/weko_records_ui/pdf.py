@@ -33,7 +33,6 @@ from flask_babel import gettext as _
 from fpdf import FPDF
 from invenio_files_rest.views import ObjectResource
 from invenio_i18n.ext import current_i18n
-#from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.contrib.versioning import PIDNodeVersioning
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus

@@ -25,7 +25,6 @@ from .api import current_userprofile
 from flask_menu import current_menu
 from invenio_i18n import LazyString
 from invenio_i18n import lazy_gettext as _
-#from flask_babel import lazy_gettext as _
 
 class WekoUserProfiles(object):
     """weko-user-profiles extension."""

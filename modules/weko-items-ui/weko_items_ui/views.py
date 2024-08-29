@@ -36,7 +36,6 @@ from flask_security import current_user
 from flask_wtf import FlaskForm
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
-#from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.contrib.versioning import PIDNodeVersioning
 from invenio_pidstore.resolver import Resolver
 from invenio_pidstore.errors import PIDDoesNotExistError

@@ -44,9 +44,7 @@ from invenio_files_rest.models import Bucket, Location, MultipartObject, ObjectV
 from invenio_i18n.ext import current_i18n
 from invenio_indexer.api import RecordIndexer
 from invenio_oaiserver.models import OAISet
-#from invenio_pidrelations.contrib.records import RecordDraft
 from invenio_pidrelations.contrib.draft import PIDNodeDraft
-#from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.contrib.versioning import PIDNodeVersioning
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidrelations.serializers.utils import serialize_relations

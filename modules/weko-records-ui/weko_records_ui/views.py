@@ -38,7 +38,6 @@ from invenio_files_rest.models import ObjectVersion, FileInstance
 from invenio_files_rest.permissions import has_update_version_role
 from invenio_i18n.ext import current_i18n
 from invenio_oaiserver.response import getrecord
-#from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.contrib.versioning import PIDNodeVersioning
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.errors import PIDDoesNotExistError
