@@ -30,7 +30,7 @@ from wtforms.validators import DataRequired
 from weko_workflow.models import WorkFlow, WorkflowRole
 
 from .cli import commit
-from .models import Role, SessionActivity, User, UserIdentity
+from .models import Role, SessionActivity, User, UserIdentity, LoginInformation as Login
 from .sessions import delete_session
 
 _datastore = LocalProxy(lambda: current_app.extensions["security"].datastore)
@@ -40,9 +40,16 @@ class UserView(ModelView):
     """Flask-Admin view to manage users."""
 
     can_view_details = True
+    
+    form_ajax_refs = {
+        'login_info': {
+            'fields': (Login.last_login_at, Login.current_login_at,
+                       Login.last_login_ip, Login.current_login_ip, Login.login_count)
+        },
+    }
     list_all = (
-        "id", "email", "active", "confirmed_at", "last_login_at",
-        "current_login_at", "last_login_ip", "current_login_ip", "login_count"
+        "id", "email", "active", "confirmed_at", "login_info.last_login_at",
+        "login_info.current_login_at", "login_info.last_login_ip", "login_info.current_login_ip", "login_info.login_count"
     )
     #list_all = ("id", "email", "active", "confirmed_at")#新バージョンではこちら。last_login_atが表示できなかったらこっち？
 
@@ -65,19 +72,21 @@ class UserView(ModelView):
     }
 
     #column_filters = ("id", "email", "active", "confirmed_at")#新バージョンではこちら。last_login_atが表示できなかったらこっち？
-    column_filters = ("id", "email", "active", "confirmed_at", "last_login_at",
-                      "current_login_at", "login_count")
+    column_filters = (
+        "id", "email", "active", "confirmed_at", "login_info.last_login_at",
+        "login_info.current_login_at", "login_info.login_count"
+    )
 
     #column_default_sort = ("email", True)
     # login関連の処理なのでうまく動かない可能性あり
-    column_default_sort = ("last_login_at", True)
+    column_default_sort = ("login_info.last_login_at", True)
     form_overrides = {
-        'last_login_at': DateTimeField
+        'login_info.last_login_at': DateTimeField
     }
 
     column_labels = {
-        'current_login_ip': _('Current Login IP'),
-        'last_login_ip': _('Last Login IP')
+        'login_info.current_login_ip': _('Current Login IP'),
+        'login_info.last_login_ip': _('Last Login IP')
     }
 
     def on_model_change(self, form, User, is_created):

@@ -39,7 +39,7 @@ from invenio_pidstore.errors import PIDInvalidAction
 from invenio_records.api import Record
 from invenio_records_rest.errors import (
     InvalidDataRESTError,
-    MaxResultWindowRESTError,
+    SearchPaginationRESTError,
     UnsupportedMediaRESTError,
 )
 from invenio_records_rest.links import default_links_factory
@@ -257,7 +257,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                 if value:
                     params[param] = value
         if page * size >= self.max_result_window:
-            raise MaxResultWindowRESTError()
+            raise SearchPaginationRESTError()
         urlkwargs = dict()
         search_obj = self.search_class()
         search = search_obj.with_preference_param().params(version=True)
@@ -598,7 +598,7 @@ class IndexSearchResourceAPI(ContentNegotiatedMethodView):
                 if not page:
                     page = 1
                 if page * size >= self.max_result_window:
-                    raise MaxResultWindowRESTError()
+                    raise SearchPaginationRESTError()
                 search = search[(page - 1) * size: page * size]
 
             # filter by registered item type in RocrateMapping
@@ -704,8 +704,8 @@ class IndexSearchResourceAPI(ContentNegotiatedMethodView):
 
             return res
 
-        except MaxResultWindowRESTError:
-            raise MaxResultWindowRESTError()
+        except SearchPaginationRESTError:
+            raise SearchPaginationRESTError()
 
         except ElasticsearchException:
             raise InternalServerError()

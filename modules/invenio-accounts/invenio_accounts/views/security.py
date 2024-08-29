@@ -12,7 +12,7 @@ from __future__ import absolute_import, print_function
 
 from flask import abort, current_app, flash, redirect, render_template, \
     request, url_for
-from flask_babelex import lazy_gettext as _
+from flask_babel import lazy_gettext as _
 from flask_breadcrumbs import register_breadcrumb
 from flask_login import login_required
 from flask_security import current_user

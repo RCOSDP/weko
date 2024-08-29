@@ -66,6 +66,13 @@ def _validate_aggregation_type(ctx, param, value):
         )
     return value
 
+
+def _verify_date(ctx, param, value):
+    if value:
+        dateutil_parse(value)
+        return value
+
+
 events_arg = click.argument(
     "event-types", nargs=-1, callback=_validate_event_type)
 
