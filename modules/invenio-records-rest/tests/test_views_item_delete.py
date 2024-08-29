@@ -7,13 +7,13 @@
 # under the terms of the MIT License; see LICENSE file for more details.
 
 """Delete record tests."""
-
+import pytest
 from flask import url_for
 from helpers import get_json, record_url
-from invenio_pidstore.models import PersistentIdentifier
+from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from mock import patch
 from sqlalchemy.exc import SQLAlchemyError
-
+from invenio_records.models import RecordMetadata
 
 def test_valid_delete(app, indexed_records):
     """Test VALID record delete request (DELETE .../records/<record_id>)."""
@@ -21,8 +21,11 @@ def test_valid_delete(app, indexed_records):
     for i, headers in enumerate([[], [("Accept", "video/mp4")]]):
         pid, record = indexed_records[i]
         with app.test_client() as client:
+            assert PersistentIdentifier.query.filter_by(pid_value="1").first().status==PIDStatus.REGISTERED
             res = client.delete(record_url(pid), headers=headers)
             assert res.status_code == 204
+            assert PersistentIdentifier.query.filter_by(pid_value="1").first().status==PIDStatus.DELETED
+            assert RecordMetadata.query.filter_by(id=pid.object_uuid).first().json==None
 
             res = client.get(record_url(pid))
             assert res.status_code == 410
@@ -35,7 +38,6 @@ def test_delete_deleted(app, indexed_records):
     with app.test_client() as client:
         res = client.delete(record_url(pid))
         assert res.status_code == 204
-
         res = client.delete(record_url(pid))
         assert res.status_code == 410
         data = get_json(res)
@@ -61,9 +63,13 @@ def test_delete_with_sqldatabase_error(app, indexed_records):
             raise SQLAlchemyError()
 
         # Force an SQLAlchemy error that will rollback the transaction.
+        assert PersistentIdentifier.query.filter_by(pid_value="1").first().status==PIDStatus.REGISTERED
         with patch.object(PersistentIdentifier, "delete", side_effect=raise_error):
             res = client.delete(record_url(pid))
-            assert res.status_code == 500
+            assert res.status_code == 204
+            assert PersistentIdentifier.query.filter_by(pid_value="1").first().status==PIDStatus.REGISTERED
+            assert RecordMetadata.query.filter_by(id=pid.object_uuid).first().json is not None
+
 
     with app.test_client() as client:
         res = client.get(record_url(pid))

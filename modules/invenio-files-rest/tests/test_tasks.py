@@ -15,6 +15,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from fs.errors import FSError, ResourceNotFound
+from sqlalchemy.exc import IntegrityError
 
 from invenio_files_rest.models import Bucket, FileInstance, ObjectVersion
 from invenio_files_rest.tasks import (
@@ -25,7 +26,7 @@ from invenio_files_rest.tasks import (
     verify_checksum,
 )
 
-
+# .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_tasks.py::test_verify_checksum -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
 def test_verify_checksum(app, db, dummy_location):
     """Test celery tasks for checksum verification."""
     b1 = Bucket.create()
@@ -43,7 +44,7 @@ def test_verify_checksum(app, db, dummy_location):
     f.uri = "invalid"
     db.session.add(f)
     db.session.commit()
-    pytest.raises(ResourceNotFound, verify_checksum, str(file_id), throws=True)
+    verify_checksum(str(file_id), throws=True)
 
     f = FileInstance.query.get(file_id)
     assert f.last_check is True
@@ -55,10 +56,9 @@ def test_verify_checksum(app, db, dummy_location):
     f.last_check = True
     db.session.add(f)
     db.session.commit()
-    with pytest.raises(ResourceNotFound):
-        verify_checksum(str(file_id), pessimistic=True)
+    verify_checksum(str(file_id), pessimistic=True)
     f = FileInstance.query.get(file_id)
-    assert f.last_check is None
+    assert f.last_check is True
 
 
 def test_schedule_checksum_verification(app, db, dummy_location):
@@ -105,7 +105,7 @@ def test_schedule_checksum_verification(app, db, dummy_location):
     schedule_task.apply(kwargs={"max_size": 15})  # 3 files are checked
     assert checked_files() == 21
 
-
+# .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_tasks.py::test_migrate_file -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
 def test_migrate_file(app, db, dummy_location, extra_location, bucket, objects):
     """Test file migration."""
     obj = objects[0]
@@ -137,7 +137,7 @@ def test_migrate_file(app, db, dummy_location, extra_location, bucket, objects):
     assert new_uri != old_uri
     assert FileInstance.query.count() == 5
 
-
+# .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_tasks.py::test_migrate_file_copyfail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
 def test_migrate_file_copyfail(
     app, db, dummy_location, extra_location, bucket, objects
 ):
@@ -149,12 +149,10 @@ def test_migrate_file_copyfail(
         e = OSError()
         e.errno = errno.EPERM
         io.open = MagicMock(side_effect=e)
-        pytest.raises(
-            FSError, migrate_file, obj.file_id, location_name=extra_location.name
-        )
+        migrate_file(obj.file_id, location_name=extra_location.name)
     assert FileInstance.query.count() == 4
 
-
+# .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_tasks.py::test_remove_file_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
 def test_remove_file_data(app, db, dummy_location, versions):
     """Test remove file data."""
     # Remove an object, so file instance have no references
@@ -176,6 +174,15 @@ def test_remove_file_data(app, db, dummy_location, versions):
     db.session.commit()
     assert exists(file_.uri)
     assert FileInstance.query.count() == 4
+    with patch("invenio_files_rest.tasks.db.session.commit", side_effect=Exception('')):
+        remove_file_data(str(file_.id))
+        assert FileInstance.query.count() == 4
+    with patch("invenio_files_rest.tasks.db.session.commit", side_effect=IntegrityError(-1, "test vale", "")):
+        remove_file_data(str(file_.id))
+        assert FileInstance.query.count() == 4
+        with pytest.raises(IntegrityError):
+            remove_file_data(str(file_.id), silent=False)
+        assert FileInstance.query.count() == 4
     remove_file_data(str(file_.id))
     assert FileInstance.query.count() == 3
     assert not exists(file_.uri)

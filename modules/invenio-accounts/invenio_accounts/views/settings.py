@@ -12,7 +12,7 @@
 from flask import Blueprint, abort, current_app, request
 from flask_security.views import anonymous_user_required
 from flask_security.views import login as base_login
-
+from invenio_db import db
 from .security import revoke_session, security
 
 
@@ -47,5 +47,13 @@ def create_settings_blueprint(app):
         blueprint.add_url_rule(
             "/sessions/revoke", view_func=revoke_session, methods=["POST"]
         )
-
+    @blueprint.teardown_request
+    def dbsession_clean(exception):
+        current_app.logger.debug("invenio_accounts dbsession_clean: {}".format(exception))
+        if exception is None:
+            try:
+                db.session.commit()
+            except:
+                db.session.rollback()
+        db.session.remove()
     return blueprint

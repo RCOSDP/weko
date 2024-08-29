@@ -7,12 +7,15 @@
 # under the terms of the MIT License; see LICENSE file for more details.
 
 """Shared database object for Invenio."""
+from typing import NoReturn
 
 from flask_sqlalchemy import SQLAlchemy as FlaskSQLAlchemy
 from sqlalchemy import MetaData, event, util
 from sqlalchemy.engine import Engine
+from sqlalchemy.pool import QueuePool
 from sqlalchemy.sql import text
 from werkzeug.local import LocalProxy
+from werkzeug.utils import import_string
 
 NAMING_CONVENTION = util.immutabledict(
     {
@@ -37,6 +40,9 @@ class SQLAlchemy(FlaskSQLAlchemy):
         # Don't forget to apply hacks defined on parent object.
         super(SQLAlchemy, self).apply_driver_hacks(app, sa_url, options)
 
+        # Set database pool connection
+        self.__set_db_connection_pool(app, options)
+        
         if sa_url.drivername == "sqlite":
             connect_args = options.setdefault("connect_args", {})
 
@@ -82,6 +88,26 @@ class SQLAlchemy(FlaskSQLAlchemy):
             converters.encoders[LocalProxy] = escape_local_proxy
 
         return sa_url, options
+        
+    @staticmethod
+    def __set_db_connection_pool(app: object, options: dict) -> NoReturn:
+        """Set database connection pool.
+
+        :param app: Invenio app.
+        :param options: The `options` parameter is
+        a dictionary of keyword arguments that will then be used to call
+        the :func:`sqlalchemy.create_engine` function.
+        """
+        try:
+            str_pool_class = app.config['DB_SQLALCHEMY_POOL_PACKAGE'] + '.' + \
+                app.config['DB_POOL_CLASS']
+            pool_class = import_string(
+                str_pool_class)
+        except Exception as error:
+            pool_class = QueuePool
+            app.logger.debug(error)
+        options.setdefault('poolclass', pool_class)
+        options.setdefault('pool_pre_ping', True)
 
 
 def do_sqlite_connect(dbapi_connection, connection_record):

@@ -8,8 +8,6 @@
 
 """Pytest configuration."""
 
-from __future__ import absolute_import, print_function
-
 import multiprocessing
 import os
 import shutil
@@ -18,19 +16,18 @@ import time
 
 import pytest
 from flask import Flask
-from flask_babelex import Babel
 from flask_mail import Mail
 from flask_menu import Menu
 from invenio_db import InvenioDB, db
+from invenio_i18n import Babel
 from selenium import webdriver
-from sqlalchemy_utils.functions import create_database, database_exists, \
-    drop_database
+from sqlalchemy_utils.functions import create_database, database_exists, drop_database
 
 from invenio_accounts import InvenioAccounts
-from invenio_accounts.views.settings import blueprint
+from invenio_accounts.views.settings import create_settings_blueprint
 
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
 def app(request):
     """Flask application fixture for E2E/integration/selenium tests.
 
@@ -38,19 +35,20 @@ def app(request):
     folder and subfolders will see this variant of the `app` fixture.
     """
     instance_path = tempfile.mkdtemp()
-    app = Flask('testapp', instance_path=instance_path)
+    app = Flask("testapp", instance_path=instance_path)
     app.config.update(
         ACCOUNTS_USE_CELERY=False,
-        CELERY_ALWAYS_EAGER=True,
+        CELERY_TASK_ALWAYS_EAGER=True,
         CELERY_CACHE_BACKEND="memory",
-        CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
+        CELERY_TASK_EAGER_PROPAGATES=True,
         CELERY_RESULT_BACKEND="cache",
         LOGIN_DISABLED=False,
         MAIL_SUPPRESS_SEND=True,
         SECRET_KEY="CHANGE_ME",
         SECURITY_PASSWORD_SALT="CHANGE_ME_ALSO",
         SQLALCHEMY_DATABASE_URI=os.environ.get(
-            'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
+            "SQLALCHEMY_DATABASE_URI", "sqlite:///test.db"
+        ),
         TESTING=True,
     )
     Menu(app)
@@ -58,7 +56,7 @@ def app(request):
     Mail(app)
     InvenioDB(app)
     InvenioAccounts(app)
-    app.register_blueprint(blueprint)
+    app.register_blueprint(create_settings_blueprint(app))
 
     with app.app_context():
         if not database_exists(str(db.engine.url)):
@@ -81,16 +79,15 @@ def pytest_generate_tests(metafunc):
     test is called once for each value found in the `E2E_WEBDRIVER_BROWSERS`
     environment variable.
     """
-    browsers = os.environ.get('E2E_WEBDRIVER_BROWSERS', '').split()
+    browsers = os.environ.get("E2E_WEBDRIVER_BROWSERS", "").split()
 
     if not browsers:
-        pytest.skip('E2E_WEBDRIVER_BROWSERS not set, '
-                    'end-to-end tests skipped.')
+        pytest.skip("E2E_WEBDRIVER_BROWSERS not set, " "end-to-end tests skipped.")
 
-    if 'env_browser' in metafunc.fixturenames:
+    if "env_browser" in metafunc.fixturenames:
         # In Python 2.7 the fallback kwarg of os.environ.get is `failobj`,
         # in 3.x it's `default`.
-        metafunc.parametrize('env_browser', browsers, indirect=True)
+        metafunc.parametrize("env_browser", browsers, indirect=True)
 
 
 @pytest.fixture()
@@ -101,7 +98,7 @@ def env_browser(request):
     number of seconds specified by the ``E2E_WEBDRIVER_TIMEOUT`` variable or
     defaults to 300 (five minutes).
     """
-    timeout = int(os.environ.get('E2E_WEBDRIVER_TIMEOUT', 300))
+    timeout = int(os.environ.get("E2E_WEBDRIVER_TIMEOUT", 300))
 
     def wait_kill():
         time.sleep(timeout)

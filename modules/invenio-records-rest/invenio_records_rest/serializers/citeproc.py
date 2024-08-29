@@ -8,13 +8,16 @@
 
 """CSL Citation Formatter serializer for records."""
 
-from __future__ import absolute_import, print_function
-
 import json
 import re
 
-from citeproc import Citation, CitationItem, CitationStylesBibliography, \
-    CitationStylesStyle, formatter
+from citeproc import (
+    Citation,
+    CitationItem,
+    CitationStylesBibliography,
+    CitationStylesStyle,
+    formatter,
+)
 from citeproc.source.bibtex import BibTeX
 from citeproc.source.json import CiteProcJSON
 from flask import has_request_context, request
@@ -26,10 +29,12 @@ from ..errors import StyleNotFoundRESTError
 try:
     from citeproc_styles import get_style_filepath
     from citeproc_styles.errors import StyleNotFoundError
-except BaseException:
+except Exception:
     import warnings
-    warnings.warn('citeproc_styles not found. '
-                  'Please install to enable Citeproc Serialization.')
+
+    warnings.warn(
+        "citeproc_styles not found. " "Please install to enable Citeproc Serialization."
+    )
 
 
 class CiteprocSerializer(object):
@@ -42,22 +47,22 @@ class CiteprocSerializer(object):
     method that returns the CSL-JSON/BibTeX result.
     """
 
-    _default_style = 'harvard1'
+    _default_style = "harvard1"
     """The `citeproc-py` library supports by default the 'harvard1' style."""
 
-    _default_locale = 'en-US'
+    _default_locale = "en-US"
     """The `citeproc-py` library supports by default the 'harvard1' style."""
 
     _user_args = {
-        'style': fields.Str(missing=_default_style),
-        'locale': fields.Str(missing=_default_locale)
+        "style": fields.Str(missing=_default_style),
+        "locale": fields.Str(missing=_default_locale),
     }
     """Arguments for the webargs parser."""
 
-    _valid_formats = ('csl', 'bibtex')
+    _valid_formats = ("csl", "bibtex")
     """Supported formats by citeproc-py."""
 
-    def __init__(self, serializer, record_format='csl'):
+    def __init__(self, serializer, record_format="csl"):
         """Initialize the inner record serializer.
 
         :param serializer: Serializer object that does the record serialization
@@ -69,8 +74,8 @@ class CiteprocSerializer(object):
         """
         assert record_format in self._valid_formats
 
-        assert getattr(serializer, 'serialize', None)
-        assert callable(getattr(serializer, 'serialize'))
+        assert getattr(serializer, "serialize", None)
+        assert callable(getattr(serializer, "serialize"))
 
         self.serializer = serializer
         self.record_format = record_format
@@ -81,37 +86,33 @@ class CiteprocSerializer(object):
 
         Argument location precedence: kwargs > view_args > query
         """
-        csl_args = {
-            'style': cls._default_style,
-            'locale': cls._default_locale
-        }
+        csl_args = {"style": cls._default_style, "locale": cls._default_locale}
 
         if has_request_context():
-            parser = FlaskParser(locations=('view_args', 'query'))
+            parser = FlaskParser(locations=("view_args", "query"))
             csl_args.update(parser.parse(cls._user_args, request))
 
-        csl_args.update({k: kwargs[k]
-                         for k in ('style', 'locale') if k in kwargs})
+        csl_args.update({k: kwargs[k] for k in ("style", "locale") if k in kwargs})
 
         try:
-            csl_args['style'] = get_style_filepath(csl_args['style'].lower())
+            csl_args["style"] = get_style_filepath(csl_args["style"].lower())
         except StyleNotFoundError:
             if has_request_context():
-                raise StyleNotFoundRESTError(csl_args['style'])
+                raise StyleNotFoundRESTError(csl_args["style"])
             raise
         return csl_args
 
     def _get_source(self, data):
         """Get source data object for citeproc-py."""
-        if self.record_format == 'csl':
+        if self.record_format == "csl":
             return CiteProcJSON([json.loads(data)])
-        elif self.record_format == 'bibtex':
+        elif self.record_format == "bibtex":
             return BibTeX(data)
 
     def _clean_result(self, text):
         """Remove double spaces, punctuation and escapes apostrophes."""
-        text = re.sub(r'\s\s+', ' ', text)
-        text = re.sub(r'\.\.+', '.', text)
+        text = re.sub(r"\s\s+", " ", text)
+        text = re.sub(r"\.\.+", ".", text)
         text = text.replace("'", "\\'")
         return text
 
@@ -129,4 +130,4 @@ class CiteprocSerializer(object):
         citation = Citation([CitationItem(pid.pid_value)])
         bib.register(citation)
 
-        return self._clean_result(''.join(bib.bibliography()[0]))
+        return self._clean_result("".join(bib.bibliography()[0]))

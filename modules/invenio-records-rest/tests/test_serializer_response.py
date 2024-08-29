@@ -8,6 +8,9 @@
 
 """Invenio serializer tests."""
 
+import pytest
+from werkzeug.exceptions import InternalServerError
+
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_records import Record
 
@@ -43,21 +46,24 @@ def test_record_responsify(app):
 
     resp = rec_serializer(pid, rec, code=201)
     assert resp.status_code == 201
+    with pytest.raises(InternalServerError):
+        rec_serializer(None, rec, code=201)
 
-
-def test_search_responsify(app):
+def test_search_responsify(app, item_type):
     """Test JSON serialize."""
     search_serializer = search_responsify(TestSerializer(), "application/x-custom")
 
     def fetcher():
         pass
 
-    result = ["a"] * 5
+    tmp = [{'_source': {'item_type_id': '15', 'item_metadata': {'test': 'test'}}}]
+    result = {"hits": {"hits": tmp}}
+    #result = ["a"] * 5
 
     resp = search_serializer(fetcher, result)
     assert resp.status_code == 200
     assert resp.content_type == "application/x-custom"
-    assert resp.get_data(as_text=True) == "5"
+    assert resp.get_data(as_text=True) == "1"
 
     resp = search_serializer(fetcher, result, code=201, headers=[("X-Test", "test")])
     assert resp.status_code == 201

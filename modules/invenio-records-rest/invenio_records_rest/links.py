@@ -23,10 +23,10 @@ def default_links_factory(pid, record=None, **kwargs):
     :param pid: A Persistent Identifier instance.
     :returns: Dictionary containing a list of useful links for the record.
     """
-    endpoint = '.{0}_item'.format(
-        current_records_rest.default_endpoint_prefixes[pid.pid_type])
-    links = dict(self=url_for(endpoint, pid_value=pid.pid_value,
-                 _external=True))
+    endpoint = ".{0}_item".format(
+        current_records_rest.default_endpoint_prefixes[pid.pid_type]
+    )
+    links = dict(self=url_for(endpoint, pid_value=pid.pid_value, _external=True))
     return links
 
 
@@ -37,12 +37,13 @@ def default_links_factory_with_additional(additional_links):
            returned object.
     :returns: A link generation factory.
     """
+
     def factory(pid, **kwargs):
         links = default_links_factory(pid)
         for link in additional_links:
-            links[link] = additional_links[link].format(pid=pid,
-                                                        scheme=request.scheme,
-                                                        host=request.host)
+            links[link] = additional_links[link].format(
+                pid=pid, scheme=request.scheme, host=request.host
+            )
         return links
 
     return factory

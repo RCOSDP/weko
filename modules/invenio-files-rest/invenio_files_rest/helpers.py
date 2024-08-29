@@ -8,33 +8,31 @@
 
 """File serving helpers for Files REST API."""
 
-from __future__ import absolute_import, print_function
-
 import hashlib
 import mimetypes
 import os
 import unicodedata
+import warnings
 from time import time
+from urllib.parse import urlsplit
 
-from flask import current_app, request
+from flask import current_app, make_response, request
 from werkzeug.datastructures import Headers
 from urllib.parse import quote as url_quote
 from werkzeug.wsgi import FileWrapper
 
-MIMETYPE_TEXTFILES = {
-    'readme'
-}
+MIMETYPE_TEXTFILES = {"readme"}
 
 MIMETYPE_WHITELIST = {
-    'audio/mpeg',
-    'audio/ogg',
-    'audio/wav',
-    'audio/webm',
-    'image/gif',
-    'image/jpeg',
-    'image/png',
-    'image/tiff',
-    'text/plain',
+    "audio/mpeg",
+    "audio/ogg",
+    "audio/wav",
+    "audio/webm",
+    "image/gif",
+    "image/jpeg",
+    "image/png",
+    "image/tiff",
+    "text/plain",
 }
 """List of whitelisted MIME types.
 
@@ -45,14 +43,14 @@ MIMETYPE_WHITELIST = {
 """
 
 MIMETYPE_PLAINTEXT = {
-    'application/javascript',
-    'application/json',
-    'application/xhtml+xml',
-    'application/xml',
-    'text/css',
-    'text/csv',
-    'text/html',
-    'image/svg+xml',
+    "application/javascript",
+    "application/json",
+    "application/xhtml+xml",
+    "application/xml",
+    "text/css",
+    "text/csv",
+    "text/html",
+    "image/svg+xml",
 }
 
 
@@ -61,9 +59,20 @@ def chunk_size_or_default(chunk_size):
     return chunk_size or 5 * 1024 * 1024  # 5MiB
 
 
-def send_stream(stream, filename, size, mtime, mimetype=None, restricted=True,
-                as_attachment=False, etag=None, content_md5=None,
-                chunk_size=None, conditional=True, trusted=False):
+def send_stream(
+    stream,
+    filename,
+    size,
+    mtime,
+    mimetype=None,
+    restricted=True,
+    as_attachment=False,
+    etag=None,
+    content_md5=None,
+    chunk_size=None,
+    conditional=True,
+    trusted=False,
+):
     """Send the contents of a file to the client.
 
     .. warning::
@@ -106,46 +115,47 @@ def send_stream(stream, filename, size, mtime, mimetype=None, restricted=True,
     if mimetype is None and filename:
         mimetype = mimetypes.guess_type(filename)[0]
     if mimetype is None:
-        mimetype = 'application/octet-stream'
+        mimetype = "application/octet-stream"
 
     # Construct headers
     headers = Headers()
-    headers['Content-Length'] = size
+    headers["Content-Length"] = size
     if content_md5:
-        headers['Content-MD5'] = content_md5
+        headers["Content-MD5"] = content_md5
 
     if not trusted:
         # Sanitize MIME type
         mimetype = sanitize_mimetype(mimetype, filename=filename)
         # See https://www.owasp.org/index.php/OWASP_Secure_Headers_Project
         # Prevent JavaScript execution
-        headers['Content-Security-Policy'] = "default-src 'none';"
+        headers["Content-Security-Policy"] = "default-src 'none';"
         # Prevent MIME type sniffing for browser.
-        headers['X-Content-Type-Options'] = 'nosniff'
+        headers["X-Content-Type-Options"] = "nosniff"
         # Prevent opening of downloaded file by IE
-        headers['X-Download-Options'] = 'noopen'
+        headers["X-Download-Options"] = "noopen"
         # Prevent cross domain requests from Flash/Acrobat.
-        headers['X-Permitted-Cross-Domain-Policies'] = 'none'
+        headers["X-Permitted-Cross-Domain-Policies"] = "none"
         # Prevent files from being embedded in frame, iframe and object tags.
-        headers['X-Frame-Options'] = 'deny'
+        headers["X-Frame-Options"] = "deny"
         # Enable XSS protection (IE, Chrome, Safari)
-        headers['X-XSS-Protection'] = '1; mode=block'
+        headers["X-XSS-Protection"] = "1; mode=block"
 
     # Force Content-Disposition for application/octet-stream to prevent
     # Content-Type sniffing.
-    if as_attachment or mimetype == 'application/octet-stream':
+    if as_attachment or mimetype == "application/octet-stream":
         # See https://github.com/pallets/flask/commit/0049922f2e690a6d
         try:
-            filenames = {'filename': filename.encode('latin-1')}
+            filenames = {"filename": filename.encode("latin-1")}
         except UnicodeEncodeError:
-            filenames = {'filename*': "UTF-8''%s" % url_quote(filename)}
-            encoded_filename = (unicodedata.normalize('NFKD', filename)
-                                .encode('latin-1', 'ignore'))
+            filenames = {"filename*": "UTF-8''%s" % url_quote(filename)}
+            encoded_filename = unicodedata.normalize("NFKD", filename).encode(
+                "latin-1", "ignore"
+            )
             if encoded_filename:
-                filenames['filename'] = encoded_filename
-        headers.add('Content-Disposition', 'attachment', **filenames)
+                filenames["filename"] = encoded_filename
+        headers.add("Content-Disposition", "attachment", **filenames)
     else:
-        headers.add('Content-Disposition', 'inline')
+        headers.add("Content-Disposition", "inline")
 
     # Construct response object.
     rv = current_app.response_class(
@@ -183,11 +193,12 @@ def sanitize_mimetype(mimetype, filename=None):
     if mimetype in MIMETYPE_WHITELIST:
         return mimetype
     # Rewrite HTML, JavaScript, CSS etc to text/plain.
-    if mimetype in MIMETYPE_PLAINTEXT or \
-            (filename and filename.lower() in MIMETYPE_TEXTFILES):
-        return 'text/plain'
+    if mimetype in MIMETYPE_PLAINTEXT or (
+        filename and filename.lower() in MIMETYPE_TEXTFILES
+    ):
+        return "text/plain"
     # Default
-    return 'application/octet-stream'
+    return "application/octet-stream"
 
 
 def make_path(base_uri, path, filename, path_dimensions, split_length):
@@ -218,11 +229,12 @@ def compute_md5_checksum(stream, **kwargs):
     :param stream: The input stream.
     :returns: The MD5 checksum.
     """
-    return compute_checksum(stream, 'md5', hashlib.md5(), **kwargs)
+    return compute_checksum(stream, "md5", hashlib.md5(), **kwargs)
 
 
-def compute_checksum(stream, algo, message_digest, chunk_size=None,
-                     progress_callback=None):
+def compute_checksum(
+    stream, algo, message_digest, chunk_size=None, progress_callback=None
+):
     """Get helper method to compute checksum from a stream.
 
     :param stream: File-like object.
@@ -249,8 +261,7 @@ def compute_checksum(stream, algo, message_digest, chunk_size=None,
     return "{0}:{1}".format(algo, message_digest.hexdigest())
 
 
-def populate_from_path(bucket, source, checksum=True, key_prefix='',
-                       chunk_size=None):
+def populate_from_path(bucket, source, checksum=True, key_prefix="", chunk_size=None):
     """Populate a ``bucket`` from all files in path.
 
     :param bucket: The bucket (instance or id) to create the object in.
@@ -273,15 +284,14 @@ def populate_from_path(bucket, source, checksum=True, key_prefix='',
 
         if checksum:
             file_checksum = compute_md5_checksum(
-                open(path, 'rb'), chunk_size=chunk_size)
+                open(path, "rb"), chunk_size=chunk_size
+            )
             file_instance = FileInstance.query.filter_by(
                 checksum=file_checksum, size=os.path.getsize(path)
             ).first()
             if file_instance:
-                return ObjectVersion.create(
-                    bucket, key, _file_id=file_instance.id
-                )
-        return ObjectVersion.create(bucket, key, stream=open(path, 'rb'))
+                return ObjectVersion.create(bucket, key, _file_id=file_instance.id)
+        return ObjectVersion.create(bucket, key, stream=open(path, "rb"))
 
     if os.path.isfile(source):
         yield create_file(os.path.basename(source), source)
@@ -290,5 +300,15 @@ def populate_from_path(bucket, source, checksum=True, key_prefix='',
             for name in files:
                 filename = os.path.join(root, name)
                 assert filename.startswith(source)
-                parts = [p for p in filename[len(source):].split(os.sep) if p]
-                yield create_file('/'.join(parts), os.path.join(root, name))
+                parts = [p for p in filename[len(source) :].split(os.sep) if p]
+                yield create_file("/".join(parts), os.path.join(root, name))
+
+
+def create_file_streaming_redirect_response(obj):
+    """Redirect response generating function."""
+    warnings.warn("This streaming does not support multiple storage backends.")
+    response = make_response()
+    redirect_url_base = "/user_files/"
+    redirect_url_key = urlsplit(obj.file.uri).path
+    response.headers["X-Accel-Redirect"] = redirect_url_base + redirect_url_key[1:]
+    return response

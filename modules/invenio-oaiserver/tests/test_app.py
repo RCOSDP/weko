@@ -8,8 +8,6 @@
 
 """Test app."""
 
-from __future__ import absolute_import
-
 import pytest
 from flask import Flask
 
@@ -19,11 +17,12 @@ from invenio_oaiserver import InvenioOAIServer
 def test_version():
     """Test version import."""
     from invenio_oaiserver import __version__
+
     assert __version__
 
 
 def test_init():
     """Test extension initialization."""
-    app = Flask('testapp')
+    app = Flask("testapp")
     with pytest.warns(None):
         InvenioOAIServer(app)

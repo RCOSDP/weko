@@ -48,9 +48,6 @@
 
       {%- block header %}{% endblock header %}
       {%- block css %}
-        {% assets "invenio_theme_css" %}
-          <link href="{{ ASSET_URL }}" rel="stylesheet">
-        {% endassets %}
         {{ webpack['theme.css'] }}
         {{ webpack['theme-admin.css'] }}
         <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->

@@ -17,17 +17,18 @@ from helpers import _mock_validate_fail, assert_hits_len, get_json, record_url
 from mock import patch
 from sqlalchemy.exc import SQLAlchemyError
 
-
+from invenio_records.models import RecordMetadata
 @pytest.mark.parametrize(
     "content_type", ["application/json", "application/json;charset=utf-8"]
 )
 def test_valid_create(
-    app, db, search, test_data, search_url, search_class, content_type
+    app, db, es, test_data, search_url, search_class, content_type
 ):
     """Test VALID record creation request (POST .../records/)."""
     with app.test_client() as client:
         HEADERS = [("Accept", "application/json"), ("Content-Type", content_type)]
         HEADERS.append(("Content-Type", content_type))
+        assert len(RecordMetadata.query.all()) == 0
 
         # Create record
         res = client.post(search_url, data=json.dumps(test_data[0]), headers=HEADERS)
@@ -39,6 +40,7 @@ def test_valid_create(
             assert data["metadata"][k] == test_data[0][k]
 
         # Recid has been added in control number
+        assert len(RecordMetadata.query.all()) == 1
         assert data["metadata"]["control_number"]
 
         # Check location header
@@ -59,10 +61,11 @@ def test_valid_create(
 @pytest.mark.parametrize(
     "content_type", ["application/json", "application/json;charset=utf-8"]
 )
-def test_invalid_create(app, db, search, test_data, search_url, content_type):
+def test_invalid_create(app, db, es, test_data, search_url, content_type):
     """Test INVALID record creation request (POST .../records/)."""
     with app.test_client() as client:
         HEADERS = [("Accept", "application/json"), ("Content-Type", content_type)]
+        assert len(RecordMetadata.query.all()) == 0
 
         # Invalid accept type
         headers = [("Content-Type", "application/json"), ("Accept", "video/mp4")]
@@ -71,6 +74,7 @@ def test_invalid_create(app, db, search, test_data, search_url, content_type):
         # check that nothing is indexed
         res = client.get(search_url, query_string=dict(page=1, size=2))
         assert_hits_len(res, 0)
+        assert len(RecordMetadata.query.all()) == 1
 
         # Invalid content-type
         headers = [("Content-Type", "video/mp4"), ("Accept", "application/json")]
@@ -78,33 +82,32 @@ def test_invalid_create(app, db, search, test_data, search_url, content_type):
         assert res.status_code == 415
         res = client.get(search_url, query_string=dict(page=1, size=2))
         assert_hits_len(res, 0)
+        assert len(RecordMetadata.query.all()) == 0
 
         # Invalid JSON
         res = client.post(search_url, data="{fdssfd", headers=HEADERS)
         assert res.status_code == 400
         res = client.get(search_url, query_string=dict(page=1, size=2))
         assert_hits_len(res, 0)
+        assert len(RecordMetadata.query.all()) == 0
 
         # No data
         res = client.post(search_url, headers=HEADERS)
         assert res.status_code == 400
         res = client.get(search_url, query_string=dict(page=1, size=2))
         assert_hits_len(res, 0)
+        assert len(RecordMetadata.query.all()) == 0
 
         # Posting a list instead of dictionary
-        pytest.raises(TypeError, client.post, search_url, data="[]", headers=HEADERS)
+        res = client.post(search_url, data="[]", headers=HEADERS)
+        assert res.status_code == 500
 
         # Bad internal error:
         with patch("invenio_records_rest.views.db.session.commit") as m:
             m.side_effect = SQLAlchemyError()
-
-            pytest.raises(
-                SQLAlchemyError,
-                client.post,
-                search_url,
-                data=json.dumps(test_data[0]),
-                headers=HEADERS,
-            )
+            res = client.post(search_url, data=json.dumps(test_data[0]), headers=HEADERS)
+            assert res.status_code == 500
+            assert len(RecordMetadata.query.all()) == 0
 
 
 @mock.patch("invenio_records.api.Record.create", _mock_validate_fail)

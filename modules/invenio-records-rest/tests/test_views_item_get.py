@@ -44,7 +44,13 @@ def test_item_get_etag(app, test_records):
         res = client.get(record_url(pid))
         assert res.status_code == 200
         assert res.cache_control.no_cache
+def test_item_get_etag2(app, db, test_records):
+    """Test VALID record get request (GET .../records/<record_id>)."""
+    with app.test_client() as client:
+        pid, record = test_records[0]
 
+        res = client.get(record_url(pid))
+        assert res.status_code == 200
         etag = res.headers["ETag"]
         last_modified = res.headers["Last-Modified"]
 
@@ -52,7 +58,15 @@ def test_item_get_etag(app, test_records):
         res = client.get(record_url(pid), headers={"If-None-Match": etag})
         assert res.status_code == 304
         assert res.cache_control.no_cache
+def test_item_get_etag3(app, db, test_records):
+    """Test VALID record get request (GET .../records/<record_id>)."""
+    with app.test_client() as client:
+        pid, record = test_records[0]
 
+        res = client.get(record_url(pid))
+        assert res.status_code == 200
+
+        last_modified = res.headers['Last-Modified']
         # Test request via last-modified.
         res = client.get(record_url(pid), headers={"If-Modified-Since": last_modified})
         assert res.status_code == 304

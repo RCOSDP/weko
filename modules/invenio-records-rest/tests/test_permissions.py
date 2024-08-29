@@ -15,12 +15,12 @@ from helpers import record_url
 
 
 def test_default_permissions(
-    app, default_permissions, test_data, search_url, test_records, indexed_records
+    app, default_permissions, indexed_10records, record_data10, search_url, test_records, indexed_records, aggs_and_facets
 ):
     """Test default create permissions."""
-    pid, record = test_records[0]
+    pid, record = indexed_10records[0]
     rec_url = record_url(pid)
-    data = json.dumps(test_data[0])
+    data = json.dumps(record_data10[0])
     h = {"Content-Type": "application/json"}
     hp = {"Content-Type": "application/json-patch+json"}
 

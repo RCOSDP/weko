@@ -8,14 +8,16 @@
 
 """Marshmallow schemas for serialization."""
 
-from __future__ import absolute_import, print_function
-
-from .json import Nested, RecordMetadataSchemaJSONV1, RecordSchemaJSONV1, \
-    StrictKeysMixin
+from .json import (
+    Nested,
+    RecordMetadataSchemaJSONV1,
+    RecordSchemaJSONV1,
+    StrictKeysMixin,
+)
 
 __all__ = (
-    'RecordSchemaJSONV1',
-    'StrictKeysMixin',
-    'Nested',
-    'RecordMetadataSchemaJSONV1'
+    "RecordSchemaJSONV1",
+    "StrictKeysMixin",
+    "Nested",
+    "RecordMetadataSchemaJSONV1",
 )

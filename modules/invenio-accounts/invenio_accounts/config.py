@@ -298,6 +298,9 @@ RECAPTCHA_PRIVATE_KEY = None
 ACCOUNTS_USERINFO_HEADERS = False
 """If True, add X-Session-ID and X-User-ID to the HTTP response."""
 
+ACCOUNTS_WORKFLOW_ROLE_HIDE_FILTER = False
+"""If True, add userrole will hide in workflow."""
+
 ACCOUNTS_LOGIN_VIEW_FUNCTION = login
 """The view function to use for the login endpoint.
 

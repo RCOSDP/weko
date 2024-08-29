@@ -27,3 +27,4 @@ Contributors
 - Sebastian Witowski
 - Tibor Simko
 - Wojciech Ziółek
+- Maximilian Moser

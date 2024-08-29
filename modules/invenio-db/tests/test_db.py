@@ -64,7 +64,8 @@ def _mock_entry_points(name):
     return fn
 
 
-def test_init(db, app):
+# .tox/c1/bin/pytest --cov=invenio_db tests/test_db.py::test_init -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/invenio-db/.tox/c1/tmp
+def test_init(db, app,mock_entry_points):
     """Test extension initialization."""
 
     class Demo(db.Model):
@@ -106,7 +107,7 @@ def test_init(db, app):
         db.drop_all()
 
 
-def test_alembic(db, app):
+def test_alembic(db, app,mock_entry_points):
     """Test alembic recipes."""
     ext = InvenioDB(app, entry_point_group=False, db=db)
 
@@ -117,8 +118,8 @@ def test_alembic(db, app):
         ext.alembic.upgrade()
         ext.alembic.downgrade(target="96e796392533")
 
-
-def test_naming_convention(db, app):
+# .tox/c1/bin/pytest --cov=invenio_db tests/test_db.py::test_naming_convention -vv -s --cov-branch --cov-report=term --cov-report=xml --basetemp=/code/modules/invenio-db/.tox/c1/tmp
+def test_naming_convention(db, app,mock_entry_points):
     """Test naming convention."""
     from sqlalchemy_continuum import remove_versioning
 
@@ -286,6 +287,56 @@ def test_transaction(db, app):
 
     with app.app_context():
         db.drop_all()
+
+# .tox/c1/bin/pytest --cov=invenio_db tests/test_db.py::test_entry_points -v -vv -s --cov-branch --cov-report=term --cov-report=xml --basetemp=/code/modules/invenio-db/.tox/c1/tmp
+def test_entry_points(db, app,script_info,mock_entry_points):
+    """Test entrypoints loading."""
+    InvenioDB(app, db=db)
+
+    runner = app.test_cli_runner()
+    assert len(db.metadata.tables) == 3
+
+    # Test merging a base another file.
+    with runner.isolated_filesystem():
+        result = runner.invoke(db_cmd, [], obj=script_info)
+        assert result.exit_code == 0
+
+        result = runner.invoke(db_cmd, ['destroy', '--yes-i-know'],
+                               obj=script_info)
+        assert result.exit_code == 0
+
+        result = runner.invoke(db_cmd, ['init'], obj=script_info)
+        assert result.exit_code == 0
+
+        result = runner.invoke(db_cmd, ['create', '-v'], obj=script_info)
+        assert result.exit_code == 0
+
+        result = runner.invoke(db_cmd, ['drop'],
+                               obj=script_info)
+        assert result.exit_code == 1
+
+        result = runner.invoke(db_cmd, ['drop', '-v', '--yes-i-know'],
+                               obj=script_info)
+        assert result.exit_code == 0
+
+        result = runner.invoke(db_cmd, ['drop', 'create'],
+                               obj=script_info)
+        assert result.exit_code == 1
+
+        result = runner.invoke(db_cmd, ['drop', '--yes-i-know', 'create'],
+                               obj=script_info)
+        assert result.exit_code == 0
+
+        result = runner.invoke(db_cmd, ['destroy'],
+                               obj=script_info)
+        assert result.exit_code == 1
+
+        result = runner.invoke(db_cmd, ['destroy', '--yes-i-know'],
+                               obj=script_info)
+        assert result.exit_code == 0
+
+        result = runner.invoke(db_cmd, ['init'], obj=script_info)
+        assert result.exit_code == 0
 
 
 @patch("importlib_metadata.entry_points", _mock_entry_points("invenio_db.models"))
