@@ -1680,7 +1680,12 @@ class WorkActivity(object):
 
         # query all activities
         common_query = common_query \
-            .outerjoin(_Flow).outerjoin(
+            .outerjoin(
+                _Flow,
+                and_(
+                    _Activity.flow_id == _Flow.id
+                )
+            ).outerjoin(
                 _WorkFlow,
                 and_(
                     _Activity.workflow_id == _WorkFlow.id,
