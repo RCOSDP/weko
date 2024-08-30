@@ -83,15 +83,30 @@ WEKO_DEPOSIT_MESSAGE = {
         'msgstr': "FAILED to find file.",
         'msglvl': 'ERROR',
     },
-        'WEKO_DEPOSIT_FAILED_UPLOAD_FILE_METADATA_TO_ELASTICSEARCH': {
+    'WEKO_DEPOSIT_FAILED_UPLOAD_FILE_METADATA_TO_ELASTICSEARCH': {
         'msgid': 'WEKO_DEPOSIT_E_0019',
         'msgstr': "FAILED to upload file metadata to Elasticsearch. File id: {file_id}",
         'msglvl': 'ERROR',
     },
+    'WEKO_DEPOSIT_FAILED_CONVERT_ITEM_METADATA': {
+        'msgid': 'WEKO_DEPOSIT_E_0020',
+        'msgstr': "FAILED to convert item metadata. Pid: {pid}",
+        'msglvl': 'ERROR',
+    },
+    'WEKO_DEPOSIT_ITEM_HAS_BEEN_DELETED': {
+        'msgid': 'WEKO_DEPOSIT_E_0021',
+        'msgstr': "This item has been deleted: {pid}",
+        'msglvl': 'ERROR',
+    },
+    'WEKO_DEPOSIT_PID_STATUS_NOT_REGISTERED': {
+        'msgid': 'WEKO_DEPOSIT_E_0022',
+        'msgstr': "Pid status is not registered: {pid}",
+        'msglvl': 'ERROR',
+    },
     'WEKO_DEPOSIT_UPDATE_ITEM': {
-    'msgid': 'WEKO_DEPOSIT_I_0001',
-    'msgstr': "Update item: {pid}",
-    'msglvl': 'INFO',
+        'msgid': 'WEKO_DEPOSIT_I_0001',
+        'msgstr': "Update item: {pid}",
+        'msglvl': 'INFO',
     },
     'WEKO_DEPOSIT_DELETE_ITEM': {
         'msgid': 'WEKO_DEPOSIT_I_0002',

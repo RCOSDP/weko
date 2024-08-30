@@ -29,7 +29,7 @@ from typing import NoReturn, Union
 from tika import parser
 
 import redis
-from redis import sentinel
+from redis import RedisError, sentinel
 from dictdiffer import dot_lookup
 from dictdiffer.merge import Merger, UnresolvedConflictsException
 from elasticsearch.exceptions import ElasticsearchException, TransportError
@@ -68,6 +68,7 @@ from weko_records.models import ItemMetadata, ItemReference
 from weko_records.utils import get_all_items, get_attribute_value_all_items, \
     get_options_and_order_list, json_loader, remove_weko2_special_character, \
     set_timestamp,set_file_date
+from weko_redis.errors import WekoRedisError
 from weko_schema_ui.models import PublishStatus
 from weko_redis.redis import RedisConnection
 from weko_user_profiles.models import UserProfile
@@ -831,10 +832,10 @@ class WekoDeposit(Deposit):
             arg1 and arg2.
         Args:
             *args:
-            arg1: index information  
+            arg1: index information
                 example: `{'index': ['1557820086539'], 'actions': '1'}`
             arg2:
-                item_metadata information  
+                item_metadata information
                 example:
         ```
         {'pid': {
@@ -1158,7 +1159,7 @@ class WekoDeposit(Deposit):
 
         Raises:
             PIDInvalidAction(): Invalid operation on persistent identifier \
-                in current state. 
+                in current state.
             AttributeError:
         """
         deposit = None
@@ -1170,7 +1171,13 @@ class WekoDeposit(Deposit):
         versioning = PIDVersioning(child=pid)
         record = WekoDeposit.get_record(pid.object_uuid)
 
-        assert PIDStatus.REGISTERED == pid.status
+        # TODO: delete assert or not
+        # assert PIDStatus.REGISTERED == pid.status
+        if pid.status != PIDStatus.REGISTERED:
+            weko_logger(key='WEKO_DEPOSIT_PID_STATUS_NOT_REGISTERED', pid=pid)
+            raise WekoDepositError(msg="PID status is not registered.")
+
+
         if not record or not versioning.exists or versioning.draft_child:
             return None
 
@@ -1240,7 +1247,7 @@ class WekoDeposit(Deposit):
         return deposit
 
     def get_content_files(self):
-        """ 
+        """
 
         Get content file metadata.
 
@@ -1289,13 +1296,13 @@ class WekoDeposit(Deposit):
                                         weko_logger(
                                             key='WEKO_DEPOSIT_FAILED_FIND_FILE',
                                             ex=ex)
-                                        # raise WekoDepositError(ex=ex,
-                                        #         msg="File not found.") from ex
+                                        raise WekoDepositError(ex=ex,
+                                                msg="File not found.") from ex
                                     except Exception as ex:
                                         weko_logger(
                                             key='WEKO_COMMON_ERROR_UNEXPECTED',
                                             ex=ex)
-                                        # raise WekoDepositError(ex=ex) from ex
+                                        raise WekoDepositError(ex=ex) from ex
 
                                 content.update({"attachment": attachment})
                                 contents.append(content)
@@ -1307,6 +1314,9 @@ class WekoDeposit(Deposit):
                                 # raise WekoDepositError(ex=ex,
                                 # msg="Upload metadata to Elasticsearch error."
                                 # ) from ex
+                            except WekoDepositError as ex:
+                                # raise
+                                pass
                             except Exception as ex:
                                 weko_logger(
                                     key='WEKO_COMMON_ERROR_UNEXPECTED', ex=ex)
@@ -1322,7 +1332,7 @@ class WekoDeposit(Deposit):
             None
 
         Returns:
-            file_data(list): item_filedata 
+            file_data(list): item_filedata
             example:
             ```
             [{'version_id': 'b27b05d9-e19f-47fb-b6f5-7f031b1ef8fe',
@@ -1451,14 +1461,14 @@ class WekoDeposit(Deposit):
                 }]
             }
             ```
-            
+
         Returns:
             None
 
         """
         current_app.logger.debug("self: {}".format(self))
         current_app.logger.debug("data: {}".format(data))
-        
+
         del_key_list = self.keys() - data.keys()
         for key in del_key_list:
             if isinstance(self[key], dict) and \
@@ -1552,10 +1562,10 @@ class WekoDeposit(Deposit):
                     rtn_data["lang"] = lang
 
                     return rtn_data
-        
+
         return None
 
-        
+
     def convert_item_metadata(self, index_obj, data=None):
         """
 
@@ -1566,10 +1576,10 @@ class WekoDeposit(Deposit):
         Args:
             index_obj (dict):
                 The target item's metadata index information
-                example: {'index': ['1557820086539'], 'actions': '1'}" 
+                example: {'index': ['1557820086539'], 'actions': '1'}"
             data (dict):
-                The target item's metadata 
-                example: 
+                The target item's metadata
+                example:
                 ```
                 {'pid': {
                     'type': 'depid', 'value': '34', 'revision_id': 0
@@ -1638,10 +1648,15 @@ class WekoDeposit(Deposit):
                     data = json.loads(data_str.decode('utf-8'))
                 if not data:
                     data = self.record_data_from_act_temp()
-        except BaseException:
-            current_app.logger.error(
-                "Unexpected error: {}".format(sys.exc_info()))
+        except RedisError as ex:
+            weko_logger(key='WEKO_COMMON_ERROR_REDIS', ex=ex)
             abort(500, 'Failed to register item!')
+        except WekoRedisError as ex:
+            abort(500, 'Failed to register item!')
+        except Exception as ex:
+            weko_logger(key='WEKO_COMMON_ERROR_UNEXPECTED', ex=ex)
+            abort(500, 'Failed to register item!')
+
         # Get index path
         index_lst = index_obj.get('index', [])
         # Prepare index id list if the current index_lst is a path list
@@ -1670,11 +1685,13 @@ class WekoDeposit(Deposit):
             self.jrc = jrc
             self.is_edit = is_edit
             self._convert_jpcoar_data_to_es()
-        except RuntimeError:
-            raise
-        except BaseException:
-            import traceback
-            current_app.logger.error(traceback.format_exc())
+        except RuntimeError as ex:
+            weko_logger(key='WEKO_DEPOSIT_FAILED_CONVERT_ITEM_METADATA',
+                        pid=self.pid, ex=ex)
+            raise WekoDepositError(ex=ex,
+                                msg="Convert item metadata error.") from ex
+        except Exception as ex:
+            weko_logger(key="WEKO_COMMON_ERROR_UNEXPECTED", ex=ex)
             abort(500, 'MAPPING_ERROR')
 
         # Save Index Path on ES
@@ -1811,7 +1828,7 @@ class WekoDeposit(Deposit):
 
     @classmethod
     def delete_by_index_tree_id(cls, index_id: str, ignore_items: list = []):
-        """ 
+        """
 
         Delete by index tree id.
 
@@ -1820,13 +1837,13 @@ class WekoDeposit(Deposit):
             ignore_items (list):
                 list of items that will be ingnored, \
                 therefore will not be deleted
-        
+
 
         Returns:
             None
 
         Raises:
-            Exception: all exception 
+            Exception: all exception
         """
         if index_id:
             index_id = str(index_id)
@@ -1854,12 +1871,12 @@ class WekoDeposit(Deposit):
                 The index_tree_path that will run the update
 
         Returns:
-            bool: "True: process success False: process failed" 
+            bool: "True: process success False: process failed"
 
         """
         p = PersistentIdentifier
         try:
-            dt = datetime.utcnow()
+            dt = datetime.now(timezone.utc)
             with db.session.begin_nested():
                 for result in self.indexer.get_pid_by_es_scroll(path):
                     db.session.query(p). \
@@ -1870,7 +1887,12 @@ class WekoDeposit(Deposit):
                     result.clear()
             db.session.commit()
             return True
-        except Exception:
+        except SQLAlchemyError as ex:
+            weko_logger(key='WEKO_COMMON_DB_OTHER_ERROR', ex=ex)
+            db.session.rollback()
+            return False
+        except Exception as ex:
+            weko_logger(key='WEKO_COMMON_ERROR_UNEXPECTED', ex=ex)
             db.session.rollback()
             return False
 
@@ -1894,7 +1916,7 @@ class WekoDeposit(Deposit):
     def delete_es_index_attempt(self, pid):
         """
 
-        Delete es index attempt.
+        Delete Elasticsearch index attempt.
 
         Args:
             pid (:obj: `PersistentIdentifier`):
@@ -1905,17 +1927,21 @@ class WekoDeposit(Deposit):
             None
 
         Raises:
-            PIDResolveRESTError(description='This item has been deleted'): \
-                Invalid PID.
+            PIDResolveRESTError: This item has been deleted. Invalid PID.
         """
         # if this item has been deleted
         if pid.status == PIDStatus.DELETED:
             # attempt to delete index on es
             try:
                 self.indexer.delete(self)
-            except BaseException:
-                pass
+            except ElasticsearchException as ex:
+                weko_logger(key='WEKO_COMMON_ERROR_ELASTICSEARCH', ex=ex)
+            except Exception as ex:
+                weko_logger(key='WEKO_COMMON_ERROR_UNEXPECTED', ex=ex)
+
+            weko_logger(key='WEKO_DEPOSIT_ITEM_HAS_BEEN_DELETED', pid=pid)
             raise PIDResolveRESTError(description='This item has been deleted')
+
 
     def update_author_link(self, author_link):
         """Summary line.
@@ -1987,10 +2013,10 @@ class WekoDeposit(Deposit):
                 item_id of the file to be deleted.
             pre_object_versions (list):
                 information of the file to be deleted.
-                "ex: [87a563d7-537f-41aa-afd6-fed5e3cb4dc2:cd317125-600e-4961-89b6-9bb520f342c7:test.txt]" 
+                "ex: [87a563d7-537f-41aa-afd6-fed5e3cb4dc2:cd317125-600e-4961-89b6-9bb520f342c7:test.txt]"
             new_object_versions (list):
                 information of the new file to be created
-                "ex: [87a563d7-537f-41aa-afd6-fed5e3cb4dc2:cd317125-600e-4961-89b6-9bb520f342c7:test.txt]" 
+                "ex: [87a563d7-537f-41aa-afd6-fed5e3cb4dc2:cd317125-600e-4961-89b6-9bb520f342c7:test.txt]"
             is_import (boolean):
                 import flag
 
@@ -2029,7 +2055,7 @@ class WekoDeposit(Deposit):
         Args:
             pid (:obj:`PersistentIdentifier`):
                 pid information of the item to be updated.
-                "ex <PersistentIdentifier recid:1.0 / rec:5210fd22-576a-4241-8005-4c1f7ab6077a (R)>" 
+                "ex <PersistentIdentifier recid:1.0 / rec:5210fd22-576a-4241-8005-4c1f7ab6077a (R)>"
             keep_version (boolean,optional):
                 version keep flag
                 (Default: ``False``)
@@ -2429,7 +2455,7 @@ class WekoRecord(Record):
             option = meta_options.get(key, {}).get('option')
             if not val or not option:
                 continue
-            
+
             # Just get data of 'File'
             if val.get('attribute_type') != "file":
                 continue
@@ -2604,7 +2630,7 @@ class WekoRecord(Record):
             _type_: _description_
         Raises:
             AttributeError
-        """        
+        """
         return self._get_pid('doi')
 
     @property
@@ -2655,8 +2681,11 @@ class WekoRecord(Record):
             ).order_by(
                 db.desc(PersistentIdentifier.created)
             ).first()
-        except PIDDoesNotExistError as pid_not_exist:
-            current_app.logger.error(pid_not_exist)
+        except PIDDoesNotExistError as ex:
+            weko_logger('WEKO_COMMON_FAILED_GET_PID', ex=ex)
+        except Exception as ex:
+            weko_logger('WEKO_COMMON_ERROR_UNEXPECTED', ex=ex)
+            raise WekoDepositError(ex=ex) from ex
         return None
 
     def update_item_link(self, pid_value):
@@ -2840,7 +2869,7 @@ class _FormatSysCreator:
         if isinstance(creators, dict):
             creator_list_temp = []
             for key, value in creators.items():
-                if (key in [WEKO_DEPOSIT_SYS_CREATOR_KEY['identifiers'], 
+                if (key in [WEKO_DEPOSIT_SYS_CREATOR_KEY['identifiers'],
                             WEKO_DEPOSIT_SYS_CREATOR_KEY['creator_mails'],
                             WEKO_DEPOSIT_SYS_CREATOR_KEY['creator_type']]): #? ADDED 20231017 CREATOR TYPE BUG FIX
                     continue
@@ -2921,7 +2950,7 @@ class _FormatSysCreator:
                         self._merge_creator_data(v, merged_data)
                         creator_temp[k] = merged_data
                 creator_list.append(creator_temp)
-        
+
         # Format creators
         formatted_creator_list = []
         self._format_creator_on_creator_popup(creator_list,
@@ -3108,7 +3137,7 @@ class _FormatSysBibliographicInformation:
         """
         # current_app.logger.error("bibliographic_meta_data_lst:{}".format(bibliographic_meta_data_lst))
         # current_app.logger.error("props_lst:{}".format(props_lst))
-        
+
         self.bibliographic_meta_data_lst = bibliographic_meta_data_lst
         self.props_lst = props_lst
 
@@ -3307,7 +3336,7 @@ class _FormatSysBibliographicInformation:
         if len(title_data_none_lang) > 0:
             if source_titles[0].get('bibliographic_title')==title_data_none_lang[0]:
                 return title_data_none_lang[0],''
-            
+
         if value_latn:
             return value_latn, 'ja-Latn'
 

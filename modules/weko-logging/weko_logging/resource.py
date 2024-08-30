@@ -53,6 +53,21 @@ WEKO_COMMON_MESSAGE = {
         'msgstr': "Unexpected error.",
         'msglvl': 'ERROR',
     },
+    'WEKO_COMMON_ERROR_ELASTICSEARCH': {
+        'msgid': 'WEKO_COMMON_E_0005',
+        'msgstr': "ERROR in Elasticsearch.",
+        'msglvl': 'ERROR',
+    },
+    'WEKO_COMMON_ERROR_REDIS': {
+        'msgid': 'WEKO_COMMON_E_0006',
+        'msgstr': "ERROR in Redis.",
+        'msglvl': 'ERROR',
+    },
+    'WEKO_COMMON_FAILED_GET_PID': {
+        'msgid': 'WEKO_COMMON_E_0007',
+        'msgstr': "FAILED to get pid.",
+        'msglvl': 'ERROR',
+    },
     'WEKO_COMMON_CALLED_ARGUMENT': {
         'msgid': 'WEKO_COMMON_I_0001',
         'msgstr': "Called with arg: arg={arg}",
