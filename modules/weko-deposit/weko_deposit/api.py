@@ -1173,7 +1173,7 @@ class WekoDeposit(Deposit):
 
         # TODO: delete assert or not
         # assert PIDStatus.REGISTERED == pid.status
-        if pid.status != PIDStatus.REGISTERED:
+        if not pid.status == PIDStatus.REGISTERED:
             weko_logger(key='WEKO_DEPOSIT_PID_STATUS_NOT_REGISTERED', pid=pid)
             raise WekoDepositError(msg="PID status is not registered.")
 
