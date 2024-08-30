@@ -25,7 +25,7 @@ WEKO_DEPOSIT_MESSAGE = {
     },
     'WEKO_DEPOSIT_FAILED_FILE_UPLOAD': {
         'msgid': 'WEKO_DEPOSIT_E_0004',
-        'msgstr': "FAILED file upload: {file_id}",
+        'msgstr': "FAILED file upload: {file_name}",
         'msglvl': 'ERROR',
     },
     'WEKO_DEPOSIT_FAILED_REGISTER_INDEX': {
@@ -56,6 +56,22 @@ WEKO_DEPOSIT_MESSAGE = {
     'WEKO_DEPOSIT_FAILED_MERGE_AUTHORID': {
         'msgid': 'WEKO_DEPOSIT_E_0010',
         'msgstr': "FAILED to merge author ID:{author_id}",
+        'msglvl': 'ERROR',
+    },
+    'WeKO_DEPOSIT_FAILED_ENCODING_DECODING_FILE': {
+        'msgid': 'WEKO_DEPOSIT_E_0011',
+        'msgstr': "FAILED to encode/decode file: {file_name}",
+        'msglvl': 'ERROR',
+    },
+    'WEKO_DEPOSIT_FAILED_MAKE_PATH': {
+        'msgid': 'WEKO_DEPOSIT_E_0014',
+        'msgstr': "FAILED to make path: {path}; "\
+            "Path length must be at least {length} characters.",
+        'msglvl': 'ERROR',
+    },
+    'WEKO_DEPOSIT_FAILED_STORAGE_FACTORY':{
+        'msgid': 'WEKO_DEPOSIT_E_0017',
+        'msgstr': "FAILED to make args for file storage factory.",
         'msglvl': 'ERROR',
     },
     'WEKO_DEPOSIT_UPDATE_ITEM': {
