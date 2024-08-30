@@ -1888,7 +1888,7 @@ class WekoDeposit(Deposit):
             db.session.commit()
             return True
         except SQLAlchemyError as ex:
-            weko_logger(key='WEKO_COMMON_DB_OTHER_ERROR', ex=ex)
+            weko_logger(key='WEKO_COMMON_DB_SOME_ERROR', ex=ex)
             db.session.rollback()
             return False
         except Exception as ex:

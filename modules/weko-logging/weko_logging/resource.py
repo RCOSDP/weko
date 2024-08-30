@@ -43,9 +43,9 @@ WEKO_COMMON_MESSAGE = {
         'msgstr': "NOT found object: {object}",
         'msglvl': 'ERROR',
     },
-    'WEKO_COMMON_DB_OTHER_ERROR': {
+    'WEKO_COMMON_DB_SOME_ERROR': {
         'msgid': 'WEKO_COMMON_E_0003',
-        'msgstr': "Other errors in the DB.",
+        'msgstr': "Some errors in the DB.",
         'msglvl': 'ERROR',
     },
     'WEKO_COMMON_ERROR_UNEXPECTED': {
