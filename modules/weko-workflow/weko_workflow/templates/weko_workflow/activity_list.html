@@ -23,16 +23,15 @@
 
 {%- block css %}
   {{ super() }}
-  {{ webpack['workflow-css-datepicker-workflow.js'}}
+  {{ webpack['workflow-css-datepicker-workflow.js']}}
   {{ webpack['workflow-css-workflow.css'] }}
-  {{ webpack['workflow-css-activity-list.css'] }}
   {{ webpack['theme-css-widget.css'] }}
 {%- endblock css %}
 
 {%- block javascript %}
   {{ super() }}
-  {{ webpack['workflow-js-activity-list.js'}}
-  {{ webpack['theme-js-widget.js'}}
+  {{ webpack['workflow-js-activity-list.js']}}
+  {{ webpack['theme-widget.js']}}
 {%- endblock javascript %}
 
 {%- block page_body_tabs %}
