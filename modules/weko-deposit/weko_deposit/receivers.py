@@ -9,17 +9,32 @@
 """Deposit module receivers."""
 
 from flask import current_app
+from sqlalchemy.exc import SQLAlchemyError
 from invenio_pidstore.models import PIDStatus
 from invenio_records.models import RecordMetadata
 from weko_records.api import FeedbackMailList
+from weko_records.errors import WekoRecordsError
 from weko_records.utils import json_loader
 
 from .api import WekoDeposit
+from .errors import WekoDepositError
+from .logger import weko_logger
 from .pidstore import get_record_without_version
 
-
+# TODO: how use elasticsearch in this module?
 def append_file_content(sender, json=None, record=None, index=None, **kwargs):
-    """Append file content to ES record."""
+    """Append file content to ES record.
+
+    Append file content to Elasticsearch record.
+
+    Args:
+        sender (object): Sender object. Not used.
+        json (dict , Optional): JSON data. Default to `None`.
+        record (object, Optional): Record object. Default to `None`.
+        index (str, Optional): Index name. Default to `None`. Not used.
+        **kwargs (dict): Keyword arguments. Need to include `with_deleted`.
+
+    """
     try:
         dep = WekoDeposit.get_record(record.id)
         pid = get_record_without_version(dep.pid)
@@ -36,7 +51,8 @@ def append_file_content(sender, json=None, record=None, index=None, **kwargs):
         for key in pops:
             json.pop(key)
         metadata = dep.item_metadata
-        _, jrc, _ = json_loader(metadata, pid, with_deleted=kwargs.get("with_deleted",False))
+        _, jrc, _ = json_loader(metadata, pid,
+                                with_deleted=kwargs.get("with_deleted",False))
         dep.data = metadata
         dep.jrc = jrc
 
@@ -70,6 +86,11 @@ def append_file_content(sender, json=None, record=None, index=None, **kwargs):
 
         current_app.logger.info('FINISHED reindex record: {0}'.format(
             im['control_number']))
+    except SQLAlchemyError as ex:
+        weko_logger(key='WEKO_COMMON_DB_SOME_ERROR', ex=ex)
+        # raise WekoDepositError(ex=ex)
+    except WekoRecordsError as ex:
+        raise
     except Exception:
-        import traceback
-        current_app.logger.error(traceback.print_exc())
+        weko_logger(key='WEKO_COMMON_ERROR_UNEXPECTED', ex=ex)
+        # raise WekoDepositError(ex=ex)
