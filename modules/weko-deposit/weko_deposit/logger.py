@@ -58,10 +58,40 @@ WEKO_DEPOSIT_MESSAGE = {
         'msgstr': "FAILED to merge author ID:{author_id}",
         'msglvl': 'ERROR',
     },
+    'WEKO_DEPOSIT_FAILED_DELETE_FILE_INDEX': {
+        'msgid': 'WEKO_DEPOSIT_E_0012',
+        'msgstr': "FAILED to delete file index. Record id: {record_id}",
+        'msglvl': 'ERROR',
+    },
+    'WEKO_DEPOSIT_FAILED_DELETE_RECORD_BY_ID': {
+        'msgid': 'WEKO_DEPOSIT_E_0013',
+        'msgstr': "FAILED to delete record by id. Record id: {uuid}",
+        'msglvl': 'ERROR',
+    },
+    'WEKO_DEPOSIT_FAILED_MERGE_CHANGE': {
+        'msgid': 'WEKO_DEPOSIT_E_0014',
+        'msgstr': "FAILED to merge changes with latest published version. pid: {pid}",
+        'msglvl': 'ERROR',
+    },
+    'WEKO_DEPOSIT_FAILED_UPLOAD_FILE_CONTENT_TO_ELASTICSEARCH': {
+        'msgid': 'WEKO_DEPOSIT_E_0016',
+        'msgstr': "FAILED to upload file content to Elasticsearch. Uuid: {uuid}",
+        'msglvl': 'ERROR',
+    },
+    'WEKO_DEPOSIT_FAILED_FIND_FILE': {
+        'msgid': 'WEKO_DEPOSIT_E_0018',
+        'msgstr': "FAILED to find file.",
+        'msglvl': 'ERROR',
+    },
+        'WEKO_DEPOSIT_FAILED_UPLOAD_FILE_METADATA_TO_ELASTICSEARCH': {
+        'msgid': 'WEKO_DEPOSIT_E_0019',
+        'msgstr': "FAILED to upload file metadata to Elasticsearch. File id: {file_id}",
+        'msglvl': 'ERROR',
+    },
     'WEKO_DEPOSIT_UPDATE_ITEM': {
-        'msgid': 'WEKO_DEPOSIT_I_0001',
-        'msgstr': "Update item: {pid}",
-        'msglvl': 'INFO',
+    'msgid': 'WEKO_DEPOSIT_I_0001',
+    'msgstr': "Update item: {pid}",
+    'msglvl': 'INFO',
     },
     'WEKO_DEPOSIT_DELETE_ITEM': {
         'msgid': 'WEKO_DEPOSIT_I_0002',
