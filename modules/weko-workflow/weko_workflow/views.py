@@ -508,27 +508,27 @@ def init_activity():
         post_activity = ActivitySchema().load(request.get_json())
     except ValidationError as err:
         res = ResponseMessageSchema().load({'code':-1,'msg':str(err)})
-        return jsonify(res.data), 400
+        return jsonify(res), 400
 
-    if is_terms_of_use_only(post_activity.data["workflow_id"]):
+    if is_terms_of_use_only(post_activity["workflow_id"]):
         # if the workflow is terms_of_use_only(利用規約のみ) ,
         # do not create activity. redirect file download.
-        file_name = post_activity.data["extra_info"]["file_name"]
-        record_id = post_activity.data["extra_info"]["record_id"]
+        file_name = post_activity["extra_info"]["file_name"]
+        record_id = post_activity["extra_info"]["record_id"]
         url = _generate_download_url(record_id=record_id,file_name=file_name)
         res = ResponseMessageSchema().load({'code':1,'msg':'success','data':{'is_download':True, 'redirect': url}})
-        return jsonify(res.data), 200
+        return jsonify(res), 200
 
     activity = WorkActivity()
     try:
         if 'community' in request.args:
             rtn = activity.init_activity(
-                post_activity.data, request.args.get('community'))
+                post_activity, request.args.get('community'))
         else:
-            rtn = activity.init_activity(post_activity.data)
+            rtn = activity.init_activity(post_activity)
         if rtn is None:
             res = ResponseMessageSchema().load({'code':-1,'msg':'can not make activity_id'})
-            return jsonify(res.data), 500
+            return jsonify(res), 500
 
         url = url_for('weko_workflow.display_activity',
                       activity_id=rtn.activity_id)
@@ -543,16 +543,16 @@ def init_activity():
         current_app.logger.error("sqlalchemy error: {}".format(ex))
         db.session.rollback()
         res = ResponseMessageSchema().load({'code':-1,'msg':"sqlalchemy error: {}".format(ex)})
-        return jsonify(res.data), 500
+        return jsonify(res), 500
     except Exception as ex:
         current_app.logger.error("Unexpected error: {}".format(ex))
         db.session.rollback()
         res = ResponseMessageSchema().load({'code':-1,'msg':"Unexpected error: {}".format(ex)})
-        return jsonify(res.data),500
+        return jsonify(res),500
 
     res = ResponseMessageSchema().load({'code':0,'msg':'success','data':{'redirect': url}})
 
-    return jsonify(res.data),200
+    return jsonify(res),200
 
 
 def _generate_download_url(record_id :str ,file_name :str) -> str:
