@@ -25,9 +25,10 @@ import os
 
 import cchardet as chardet
 from flask import current_app
+from invenio_files_rest.storage.base import StorageError
 from invenio_files_rest.storage.pyfs import PyFSFileStorage
 
-from .lggr import weko_logger
+from .logger import weko_logger
 from .errors import WekoDepositError, WekoDepositStorageError
 
 
@@ -69,10 +70,14 @@ class WekoFileStorage(PyFSFileStorage):
 
         try:
             fp = self.open(mode='rb')
+        except EnvironmentError as ex:
+            # FIXME: get the file name from the fjson if we use this method.
+            weko_logger(key='WEKO_DEPOSIT_FAILED_FILE_UPLOAD',
+                        file_name="", ex=ex)
+            raise StorageError("Could not upload file") from ex
         except Exception as ex:
-            # TODO: use weko_logger
-            raise WekoDepositStorageError(ex=ex,
-                                          msg='Could not send file') from ex
+            weko_logger(key='WEKO_COMMON_ERROR_UNEXPECTED', ex=ex)
+            raise StorageError("Could not upload file") from ex
 
         mime = fjson.get('mimetype', '')
         if 'text' in mime:
@@ -82,14 +87,19 @@ class WekoFileStorage(PyFSFileStorage):
                 try:
                     s = s.decode(ecd).encode('utf-8')
                 except UnicodeError as ex:
-                    # TODO: use weko_logger
+                    # FIXME: get the file name from the fjson.
+                    weko_logger(
+                        key="WEKO_DEPOSIT_FAILED_ENCODING_DECODING_FILE",
+                        file_name="", ex=ex)
                     raise WekoDepositError(ex=ex,
-                                msg='Could not encoding/decoding file') from ex
+                                msg="Could not encoding/decoding file") from ex
             strb = base64.b64encode(s).decode("utf-8")
         else:
             strb = base64.b64encode(fp.read()).decode("utf-8")
         fp.close()
 
+        # FIXME: get the file id if we use this method.
+        weko_logger(key='WEKO_DEPOSIT_UPLOAD_FILE', file_id="")
         fjson.update({"file": strb})
 
 
@@ -115,15 +125,15 @@ def make_path(base_uri, path, filename, path_dimensions, split_length):
         str: \
             A string representing the full path.
     Raises:
-        AssertionError: \
+        WekoDepositError: \
             If the length of the path is not greater than \
-                path_dimensions * split_length.
+            path_dimensions * split_length.
     """
-    # assert len(path) > path_dimensions * split_length
     if len(path) <= path_dimensions * split_length:
-        # TODO: use weko_logger
-        raise WekoDepositError("The length of the path is not greater than \
-                             path_dimensions * split_length.")
+        weko_logger(key='WEKO_DEPOSIT_FAILED_MAKE_PATH',
+                    path=path, length=path_dimensions * split_length)
+        raise WekoDepositError(f"Path length must be at least  \
+                             {path_dimensions * split_length}.")
 
     uri_parts = []
     for i in range(path_dimensions):
@@ -144,25 +154,27 @@ def pyfs_storage_factory(fileinstance=None, default_location=None,
 
     Get factory function for creating a PyFS file storage instance.
 
+    Note:
+        * Either fileinstance or both fileurl and size must be specified.
+        * if fileinstance is specified, the file URL and size are ignored.
+
     Args:
-        fileinstance (FileInstance): \
-            The file instance.  
-            Note: if fileinstance is specified, the file URL and size \
-                are ignored.
+        fileinstance (:obj:`FileInstance`, Optional): \
+            The file instance. Defaults to `None`.<br>
         default_location (str, Optional): \
-            The default location.
-        default_storage_class (Optional): \
-            The default storage class.
-        filestorage_class (Optional): \
+            The default location. Defaults to `None`.
+        default_storage_class (`FileStorage`, Optional): \
+            The default storage class. Defaults to `None`.
+        filestorage_class (`FileStorage`, Optional): \
             The file storage class. Defaults to `WekoFileStorage`.
         fileurl (str, Optional): \
-            The file URL.
+            The file URL. Defaults to `None`.
         size (int, Optional): \
-            The size of the file.
+            The size of the file. Defaults to `None`.
         modified (datetime, Optional): \
-            The modified date of the file.
+            The modified date of the file. Defaults to `None`.
         clean_dir (bool, Optional): \
-            Whether to clean the directory.
+            Whether to clean the directory. Defaults to `True`.
 
     Returns:
         filestorage_class: The file storage instance.
@@ -174,11 +186,10 @@ def pyfs_storage_factory(fileinstance=None, default_location=None,
     """
     # Either the FileInstance needs to be specified or all filestorage
     # class parameters need to be specified
-    # assert fileinstance or (fileurl and size)
     if fileinstance is None or (fileurl is None and size is None):
-        # TODO: use weko_logger
-        raise WekoDepositError("Either fileinstance or both fileurl and \
-                               size must be specified.")
+        weko_logger(key='WEKO_DEPOSIT_FAILED_STORAGE_FACTORY')
+        raise WekoDepositStorageError("Either fileinstance or both fileurl \
+                                and size must be specified.")
 
     if fileinstance:
         # FIXME: Code here should be refactored since it assumes a lot on the
@@ -191,10 +202,10 @@ def pyfs_storage_factory(fileinstance=None, default_location=None,
             # Use already existing URL.
             fileurl = fileinstance.uri
         else:
-            # assert default_location
             if default_location is None:
-                raise WekoDepositError("The default location must be \
-                    specified, when the file instance does not have a URL.")
+                weko_logger(key='WEKO_DEPOSIT_FAILED_STORAGE_FACTORY')
+                raise WekoDepositStorageError("default_location was not "\
+                            "specified, in spite of fileinstance.uri is None")
             # Generate a new URL.
             fileurl = make_path(
                 default_location,
