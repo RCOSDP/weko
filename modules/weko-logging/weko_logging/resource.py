@@ -30,7 +30,7 @@ WEKO_COMMON_MESSAGE = {
     },
     'WEKO_COMMON_IF_ENTER': {
         'msgid': 'WEKO_COMMON_D_0005',
-        'msgstr': "Enter IF: {line}",
+        'msgstr': "Enter IF: {branch}",
         'msglvl': 'DEBUG',
     },
     'WEKO_COMMON_FAILED_DBCONNECTION': {
