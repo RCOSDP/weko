@@ -23,17 +23,19 @@ from .pidstore import get_record_without_version
 
 # TODO: how use elasticsearch in this module?
 def append_file_content(sender, json=None, record=None, index=None, **kwargs):
-    """Append file content to ES record.
+    """Append file content to record for ES.
 
-    Append file content to Elasticsearch record.
+    Append file content to record before reindexing Elasticsearch.
 
     Args:
-        sender (object): Sender object. Not used.
-        json (dict , Optional): JSON data. Default to `None`.
-        record (object, Optional): Record object. Default to `None`.
-        index (str, Optional): Index name. Default to `None`. Not used.
-        **kwargs (dict): Keyword arguments. Need to include `with_deleted`.
-
+        sender (object): The current Flask application. Not used.
+        json (dict , Optional): \
+            The dumped record dictionary which can be modified.\
+            Default to `None`.
+        record (object, Optional): The record being indexed. Default to `None`.
+        index (Optional): The index in which the record will be indexed.\
+            Default to `None`. Not used.
+        **kwargs: Keyword arguments. Need to include `with_deleted`.
     """
     try:
         dep = WekoDeposit.get_record(record.id)
@@ -45,11 +47,24 @@ def append_file_content(sender, json=None, record=None, index=None, **kwargs):
         im['control_number'] = im.get('recid')
         holds = ['_created', '_updated']
         pops = []
-        for key in json:
+
+        weko_logger(key='WEKO_COMMON_FOR_STRT')
+        for i, key in enumerate(json):
+            weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
+                        count=i, element=key)
             if key not in holds:
+                weko_logger(key='WEKO_COMMON_IF_ENTER',
+                            branch=f'key:{key} not in holds')
                 pops.append(key)
-        for key in pops:
+        weko_logger(key='WEKO_COMMON_FOR_END')
+
+        weko_logger(key='WEKO_COMMON_FOR_STRT')
+        for i, key in enumerate(pops):
+            weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
+                        count=i, element=key)
             json.pop(key)
+        weko_logger(key='WEKO_COMMON_FOR_END')
+
         metadata = dep.item_metadata
         _, jrc, _ = json_loader(metadata, pid,
                                 with_deleted=kwargs.get("with_deleted",False))
@@ -67,6 +82,8 @@ def append_file_content(sender, json=None, record=None, index=None, **kwargs):
         dep._convert_jpcoar_data_to_es()
         im.pop('recid')
         if record_metadata.status != PIDStatus.DELETED:
+            weko_logger(key='WEKO_COMMON_IF_ENTER',
+                        branch="record_metadata.status != PIDStatus.DELETED")
             dep.get_content_files()
 
         # Updated metadata's path
@@ -79,13 +96,15 @@ def append_file_content(sender, json=None, record=None, index=None, **kwargs):
         # Updated FeedbackMail List
         mail_list = FeedbackMailList.get_mail_list_by_item_id(record.id)
         if mail_list:
-            feedback_mail = {
-                'feedback_mail_list': mail_list
-            }
+            weko_logger(key='WEKO_COMMON_IF_ENTER',
+                        branch='mail_list is not empty')
+
+            feedback_mail = {'feedback_mail_list': mail_list}
             json.update(feedback_mail)
 
-        current_app.logger.info('FINISHED reindex record: {0}'.format(
-            im['control_number']))
+        weko_logger(key='WEKO_DEPOSIT_APPEND_FILE_CONTENT',
+                    recid=im['control_number'])
+
     except SQLAlchemyError as ex:
         weko_logger(key='WEKO_COMMON_DB_SOME_ERROR', ex=ex)
         # raise WekoDepositError(ex=ex)

@@ -33,6 +33,16 @@ WEKO_COMMON_MESSAGE = {
         'msgstr': "Enter IF: {line}",
         'msglvl': 'DEBUG',
     },
+    'WEKO_COMMON_INIT_APP': {
+        'msgid': 'WEKO_COMMON_D_0006',
+        'msgstr': "Init app: {ext}",
+        'msglvl': 'DEBUG',
+    },
+    'WEKO_COMMON_INIT_CONFIG': {
+        'msgid': 'WEKO_COMMON_D_0007',
+        'msgstr': "Init config: {key}={value}",
+        'msglvl': 'DEBUG',
+    },
     'WEKO_COMMON_FAILED_DBCONNECTION': {
         'msgid': 'WEKO_COMMON_E_0001',
         'msgstr': "FAILED database connection.",
@@ -61,6 +71,11 @@ WEKO_COMMON_MESSAGE = {
     'WEKO_COMMON_UNAUTHORISED_ACCESS': {
         'msgid': 'WEKO_COMMON_I_0002',
         'msgstr': "Unauthorised access by guest user.",
+        'msglvl': 'INFO',
+    },
+    'WEKO_COMMON_CALLED_KW_ARGUMENT': {
+        'msgid': 'WEKO_COMMON_I_0003',
+        'msgstr': "Called with kwarg: kwarg={kwarg}",
         'msglvl': 'INFO',
     },
     'WEKO_COMMON_DBCONNECTION_RETRY': {

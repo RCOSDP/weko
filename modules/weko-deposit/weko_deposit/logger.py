@@ -146,6 +146,12 @@ WEKO_DEPOSIT_MESSAGE = {
         'msgstr': "Merged author ID: {author_id}",
         'msglvl': 'INFO',
     },
+    'WEKODEPOSIT_APPEND_FILE_CONTENT': {
+        'msgid': 'WEKO_DEPOSIT_I_0015',
+        'msgstr': "AAppend file content to record for reindexing "\
+            "Elasticsearch: {recid}",
+        'msglvl': 'INFO',
+    },
 }
 
 from weko_logging.console import WekoLoggingConsole

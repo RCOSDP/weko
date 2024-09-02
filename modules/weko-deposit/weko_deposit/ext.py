@@ -23,6 +23,7 @@
 from invenio_indexer.signals import before_record_index
 
 from . import config
+from .logger import weko_logger
 from .receivers import append_file_content
 from .rest import create_blueprint
 from .views import blueprint
@@ -39,6 +40,7 @@ class WekoDeposit(object):
         """
         if app:
             self.init_app(app)
+            weko_logger(key='WEKO_COMMOM_INIT_APP', ext="weko-deposit")
 
     def init_app(self, app):
         """Flask application initialization.
@@ -58,14 +60,22 @@ class WekoDeposit(object):
         """
         # Use theme's base template if theme is installed
         if 'BASE_TEMPLATE' in app.config:
+            weko_logger(key='WEKO_COMMOM_IF_ENTER',
+                        branch="BASE_TEMPLATE in app.config")
+
             app.config.setdefault(
                 'WEKO_DEPOSIT_BASE_TEMPLATE',
                 app.config['BASE_TEMPLATE'],
             )
 
+        weko_logger(key='WEKO_COMMON_FOR_START')
         for k in dir(config):
             if k.startswith('WEKO_DEPOSIT_'):
-                app.config.setdefault(k, getattr(config, k))
+                val=getattr(config, k)
+                app.config.setdefault(k, val)
+
+                weko_logger(key='WEKO_COMMON_INIT_CONFIG', key=k, val=val)
+
         before_record_index.connect(append_file_content)
 
 
@@ -80,6 +90,7 @@ class WekoDepositREST(object):
         """
         if app:
             self.init_app(app)
+            weko_logger(key='WEKO_COMMON_INIT_APP', ext="weko-deposit-rest")
 
     def init_app(self, app):
         """Flask application initialization.
