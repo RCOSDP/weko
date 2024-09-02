@@ -94,42 +94,103 @@ PRESERVE_FIELDS = (
 
 
 class WekoFileObject(FileObject):
-    """Extend FileObject for detail page."""
+    """Extend FileObject for detail page.
+
+    This class extends the FileObject class to provide additional\
+    functionality for handling file objects in the detail page of the WEKO\
+    system.
+    It includes ethods for binding the object to the current bucket, updating\
+    the file information, and checking if the file can be previewed based on\
+    its type and size.
+
+    Attributes:
+        obj (Record): Record object.
+        data (dict): Record data.
+        preview_able (bool): File preview able or not.
+    """
 
     def __init__(self, obj, data):
-        """Bind to current bucket."""
+        """Bind to current bucket.
+
+        This method initializes the object and binds it to the current bucket.
+
+        Args:
+            obj (Record):\
+                Record object.
+            data (dict):\
+                Record data.
+        """
+        weko_logger(key='WEKO_COMMON_CALLED_ARGUMENT', arg=(obj, data))
         self.obj = obj
         self.data = data
         self.info()
         self.preview_able = self.file_preview_able()
 
     def info(self):
-        """Info."""
+        """Update file information.
+
+        This method updates own file information.
+        Attribute `filename` is not present if the record is not set in the\
+        index. Therefore, nothing is done.
+
+        Returns:
+            dict:\
+                Updated file information.
+        """
         super(WekoFileObject, self).dumps()
         self.data.update(self.obj.file.json)
         if hasattr(self, 'filename'):
-            # If the record has not been set into an index, then the attr
-            # 'filename' will not exist
+            weko_logger(key='WEKO_COMMON_IF_ENTER', branch='filename exsisted')
+
             index = self['filename'].rfind('.')
             self['filename'] = self['filename'][:index]
-        return self.data
+            weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=self.data)
+
+            return self.data
 
     def file_preview_able(self):
-        """Check whether file can be previewed or not."""
+        """Check whether file can be previewed or not.
+
+        This method checks whether the file can be previewed based on its type\
+        and size.
+
+        Returns:
+            bool:\
+                True if the file can be previewed, False otherwise.
+        """
         file_type = ''
         file_size = self.data['size']
+
+        weko_logger(key='WEKO_COMMON_FOR_START')
+        count = 0
         for k, v in current_app.config['WEKO_ITEMS_UI_MS_MIME_TYPE'].items():
+            weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION', count=count,
+                        element=k)
+
             if self.data.get('format') in v:
+                weko_logger(key='WEKO_COMMON_IF_ENTER',
+                            branch='format exsisted in value')
                 file_type = k
                 break
+
+            count+=1
+
+        weko_logger(key='WEKO_COMMON_FOR_END')
+
         if file_type in current_app.config[
                 'WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT'].keys():
+            weko_logger(key='WEKO_COMMON_IF_ENTER', branch='')
             # Convert MB to Bytes in decimal
             file_size_limit = current_app.config[
                 'WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT'][
                 file_type] * 1000000
             if file_size > file_size_limit:
+                weko_logger(key='WEKO_COMMON_IF_ENTER',
+                            branch='file_size is large than file_size_limit')
+                weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=False)
                 return False
+
+        weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=True)
         return True
 
 
@@ -137,19 +198,35 @@ class WekoIndexer(RecordIndexer):
     """Provide an interface for indexing records in Elasticsearch."""
 
     def get_es_index(self):
-        """Elastic search settings."""
+        """Assign Elastic search settings.
+
+        Retrieves the search index, default document type, and file document\
+        type from the application's configuration and assigns them to instance\
+        variables.
+
+        Returns:
+            None
+        """
         self.es_index = current_app.config['SEARCH_UI_SEARCH_INDEX']
         self.es_doc_type = current_app.config['INDEXER_DEFAULT_DOCTYPE']
         self.file_doc_type = current_app.config['INDEXER_FILE_DOC_TYPE']
 
     def upload_metadata(self, jrc, item_id, revision_id, skip_files=False):
-        """Upload the item data to ElasticSearch.
+        """Upload the item metadata to ElasticSearch.
+
+        Prepares and indexes the metadata of an item to Elasticsearch, using\
+        its ID, revision number, and content (`jrc`).
 
         Args:
-            jrc (_type_): _description_
-            item_id (uuid.UUID): _description_
-            revision_id (int): _description_
-            skip_files (bool, optional): _description_. Defaults to False.
+            jrc (dict):\
+                JSON representation of the item's metadata.
+            item_id (:obj:`PersistentIdentifier`):\
+                PID of the item.
+            revision_id (int):\
+                Revision number of the item.
+            skip_files (bool, optional):\
+                Whether to skip indexing of associated files.
+                Defaults to False. Not used.
         """
         es_info = dict(id=str(item_id),
                         index=self.es_index,
@@ -159,21 +236,31 @@ class WekoIndexer(RecordIndexer):
                     body=jrc)
 
         if self.client.exists(**es_info):
+            weko_logger(key='WEKO_COMMON_IF_ENTER', branch='')
             del body['version']
             del body['version_type']
-
-        # hfix merge
-        # self.client.index(**full_body)
 
         self.client.index(**{**es_info, **body})
 
     def delete_file_index(self, body, parent_id):
-        """Delete file index in Elastic search.
+        """Delete file index in Elasticsearch.
 
-        :param body:
-        :param parent_id: Parent item id.
+        Attempts to delete file index specified in `body` from Elasticsearch.
+
+        Args:
+            body (list):\
+                List of file IDs to be deleted.
+            parent_id (int):\
+                Parent item ID used for routing the delete operation.
+
+        Raises:
+            WekoDepositIndexerError:\
+                If an error occurs while deleting a file index.
         """
-        for lst in body:
+        weko_logger(key='WEKO_COMMON_FOR_START')
+        for i, lst in enumerate(body):
+            weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION', count=i,
+                        element=lst)
             try:
                 self.client.delete(id=str(lst),
                                     index=self.es_index,
@@ -187,33 +274,66 @@ class WekoIndexer(RecordIndexer):
             except Exception as ex:
                 weko_logger(key='WEKO_COMMON_ERROR_UNEXPECTED', ex=ex)
                 # raise WekoDepositIndexerError(ex=ex) from ex
+        weko_logger(key='WEKO_COMMON_FOR_END')
 
     def update_relation_version_is_last(self, version):
-        """Update relation version is_last."""
+        """Updates relation version 'is_last' in Elasticsearch.
+
+        This method updates the `is_last` record of a relation on elasticsearch
+        based on the data in `Wekodeposit`.<br>
+        Note: ignore error information if the update fails with certain
+            status codes (400, 404).
+
+        Args:
+            version (dict):
+                It containes the relation version data, including the 'id'
+                (str) of the relation version and the 'is_last' (bool) status.
+
+        Returns:
+            dict:
+                The response from Elasticsearch after attempting the update.
+
+        Raises:
+            ElasticsearchException:
+                If an error occurs during the update process (excluding errors
+                with status codes 400 and 404, which are ignored).
+        """
         self.get_es_index()
         pst = 'relation_version_is_last'
+        id = str(version.get('id'))
         body = {'doc': {pst: version.get('is_last')}}
-        return self.client.update(
+
+        result = self.client.update(
             index=self.es_index,
             doc_type=self.es_doc_type,
-            id=str(version.get('id')),
+            id=id,
             body=body, ignore=[400, 404]
         )
+        weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=result)
+        return result
+
 
     def update_es_data(self, record, update_revision=True,
                     update_oai=False, is_deleted=False,
                     field='path'):
         """Update es data.
 
+        This method updates `oai` and `version` in Elasticsearch based on the
+        data in `record`.
+
         Args:
-            record ([type]): [description]
-            update_revision (bool, optional): [description]. Defaults to True.
-            update_oai (bool, optional): [description]. Defaults to False.
-            is_deleted (bool, optional): [description]. Defaults to False.
-            field (str, optional): [description]. Defaults to 'path'.
+            record (:obj:WekoDeposit): Record instance to update.
+            update_revision (bool, optional): True: Update `version` in ES.\
+                False: Update without `version`. Defaults to True.
+            update_oai (bool, optional): True: Update `oai` in ES.\
+                False: Update nothing in ES. Defaults to False.
+            is_deleted (bool, optional): True: Get `field` in ES.\
+                False: Get empty list in ES.Defaults to False.
+            field (str, optional): This is a key. Defaults to 'path'.
 
         Returns:
-            [type]: [description]
+            dict:
+                The response from Elasticsearch after attempting the update.
 
         """
         self.get_es_index()
@@ -221,17 +341,20 @@ class WekoIndexer(RecordIndexer):
         sets = 'sets'
         body = {}
         if not update_oai:
+            weko_logger(key='WEKO_COMMON_IF_ENTER',
+                        branch='update_oai is False')
             body = {
                 'doc': {
                     '_item_metadata': {
                         field: record.get(field)
                     },
                     field: record.get(field),
-                    '_updated': datetime.utcnow().replace(
-                        tzinfo=timezone.utc).isoformat()
+                    '_updated': datetime.now(timezone.utc).isoformat()
                 }
             }
         else:
+            weko_logger(key='WEKO_COMMON_IF_ENTER',
+                        branch='update_oai is True')
             body = {
                 'doc': {
                     _oai: {
@@ -244,40 +367,52 @@ class WekoIndexer(RecordIndexer):
                         field: record.get(field)
                     },
                     field: record.get(field) if not is_deleted else [],
-                    '_updated': datetime.utcnow().replace(
-                        tzinfo=timezone.utc).isoformat()
+                    '_updated': datetime.now(timezone.utc).isoformat()
                 }
             }
 
         if update_revision:
-            return self.client.update(
+            weko_logger(key='WEKO_COMMON_IF_ENTER',
+                        branch='update_revision is True')
+            result = self.client.update(
                 index=self.es_index,
                 doc_type=self.es_doc_type,
                 id=str(record.id),
                 version=record.revision_id,
                 body=body
             )
+            weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=result)
+            return result
         else:
-            return self.client.update(
+            weko_logger(key='WEKO_COMMON_IF_ENTER',
+                        branch='update_revision is False')
+            result = self.client.update(
                 index=self.es_index,
                 doc_type=self.es_doc_type,
                 id=str(record.id),
                 body=body
             )
+            weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=result)
+            return result
 
     def index(self, record):
         """Index a record(fake function).
 
-        :param record: Record instance.
+        This method indexes a record in Elasticsearch.
+
+        Args:
+            record(:obj:WekoDeposit): Record instance. Not used.
         """
         self.get_es_index()
 
     def delete(self, record):
         """Delete a record.
 
+        This method deletes a record in Elasticsearch.
         Not utilized.
 
-        :param record: Record instance.
+        Args:
+            record(:obj:WekoDeposit): Record instance.
         """
         self.get_es_index()
 
@@ -288,7 +423,10 @@ class WekoIndexer(RecordIndexer):
     def delete_by_id(self, uuid):
         """Delete a record by id.
 
-        :param uuid: Record ID.
+        This method deletes a record in Elasticsearch by its ID.
+
+        Args:
+            uuid(:obj:`UUID`): Record ID.
         """
         try:
             self.get_es_index()
@@ -307,7 +445,10 @@ class WekoIndexer(RecordIndexer):
     def get_count_by_index_id(self, tree_path):
         """Get count by index id.
 
-        :param tree_path: Tree_path instance.
+        This method get count of records in Elasticsearch by tree path.
+
+        Args:
+            tree_path(int): Tree path instance. Index ID.
         """
         search_query = {
             'query': {
@@ -320,7 +461,9 @@ class WekoIndexer(RecordIndexer):
         search_result = self.client.count(index=self.es_index,
                                             doc_type=self.es_doc_type,
                                             body=search_query)
-        return search_result.get('count')
+        result = search_result.get('count')
+        weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=result)
+        return result
 
     def get_pid_by_es_scroll(self, path):
         """Get pid by es scroll.
@@ -340,24 +483,46 @@ class WekoIndexer(RecordIndexer):
 
         def get_result(result):
             if result:
+                weko_logger(key='WEKO_COMMON_IF_ENTER',
+                            branch='result is True')
                 hit = result['hits']['hits']
+
                 if hit:
+                    weko_logger(key='WEKO_COMMON_IF_ENTER',
+                                branch='hit is True')
+                    weko_logger(key='WEKO_COMMON_RETURN_VALUE',
+                                value=[h.get('_id') for h in hit])
                     return [h.get('_id') for h in hit]
                 else:
+                    weko_logger(key='WEKO_COMMON_IF_ENTER',
+                                branch='hit is False')
+                    weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=None)
                     return None
+
             else:
+                weko_logger(key='WEKO_COMMON_IF_ENTER',
+                            branch='result is False')
+                weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=None)
                 return None
 
         ind, doc_type = self.record_to_index({})
         search_result = self.client.search(index=ind, doc_type=doc_type,
                                             body=search_query, scroll='1m')
         if search_result:
+            weko_logger(key='WEKO_COMMON_IF_ENTER',
+                        branch='search_result is True')
             res = get_result(search_result)
             scroll_id = search_result['_scroll_id']
+
             if res:
+                weko_logger(key='WEKO_COMMON_IF_ENTER',
+                            branch='res is True')
+                weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=res)
                 yield res
+
                 while res:
                     res = self.client.scroll(scroll_id=scroll_id, scroll='1m')
+                    weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=res)
                     yield res
 
             self.client.clear_scroll(scroll_id=scroll_id)
@@ -731,6 +896,9 @@ class WekoDeposit(Deposit):
         ).one_or_none()
         relations = serialize_relations(recid)
         if relations and 'version' in relations:
+            weko_logger(key='WEKO_COMMON_IF_ENTER',
+                        branch="relations is not empty and "
+                                "`version` is in relations")
             relations_ver = relations['version'][0]
             relations_ver['id'] = recid.object_uuid
             relations_ver['is_last'] = relations_ver.get('index') == 0
@@ -924,7 +1092,7 @@ class WekoDeposit(Deposit):
         Status required: ``'draft'``.
 
         Args:
-            force(boolean): Force deposit delete. (Default: ``True``)
+            force(bool): Force deposit delete. (Default: ``True``)
             pid(dict): Force pid object. (Default: ``None``)
 
         Returns:
@@ -1053,7 +1221,8 @@ class WekoDeposit(Deposit):
                                                     True)
                         record_id = self['_deposit']['id']
                         message = 'Failed to parse file from item {}'
-                        current_app.logger.warn(message.format(record_id))
+                        # TODO: remove current_app.logger
+                        # current_app.logger.warn(message.format(record_id))
                     else:
                         raise WekoDepositError(
                             ex=ex,
@@ -1079,8 +1248,7 @@ class WekoDeposit(Deposit):
             db.session.merge(record)
 
     def newversion(self, pid=None, is_draft=False):
-        """
-        Create a new version of the deposit.
+        """Create a new version of the deposit.
             1. Check if a newer version than the pid that is passed as an \
                 argument exists.
             2. Update the draft_id then call the create() method to generate \
@@ -2683,6 +2851,7 @@ class WekoRecord(Record):
             ).first()
         except PIDDoesNotExistError as ex:
             weko_logger('WEKO_COMMON_FAILED_GET_PID', ex=ex)
+            pass
         except Exception as ex:
             weko_logger('WEKO_COMMON_ERROR_UNEXPECTED', ex=ex)
             raise WekoDepositError(ex=ex) from ex
