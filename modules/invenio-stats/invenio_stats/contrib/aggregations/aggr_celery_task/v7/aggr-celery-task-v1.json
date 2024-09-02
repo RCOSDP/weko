@@ -1,7 +1,6 @@
 {
   "index_patterns": ["__SEARCH_INDEX_PREFIX__stats-celery-task-*"],
   "settings": {
-    "index.mapper.dynamic": false,
     "index": {
       "refresh_interval": "1m",
       "lifecycle.name": "weko_stats_policy",
@@ -9,7 +8,6 @@
     }
   },
   "mappings": {
-    "_default_": {
       "dynamic_templates": [
         {
           "date_fields": {
@@ -20,9 +18,7 @@
             }
           }
         }
-      ]
-    },
-    "celery-task-day-aggregation": {
+      ],
       "date_detection": false,
       "dynamic": false,
       "numeric_detection": false,
@@ -83,4 +79,3 @@
       }
     }
   }
-}

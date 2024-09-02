@@ -43,7 +43,7 @@ from invenio_mail.admin import MailSettingView
 from invenio_mail.models import MailConfig
 from invenio_records.models import RecordMetadata
 from invenio_records_rest.facets import terms_filter
-from invenio_stats.views import QueryFileStatsCount, QueryRecordViewCount
+
 from jinja2 import Template
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import func
@@ -777,6 +777,7 @@ class StatisticMail:
             [string] -- viewed of item
 
         """
+        from invenio_stats.views import QueryRecordViewCount
         query_file_view = QueryRecordViewCount()
         return str(query_file_view.get_data(item_id, time).get("total"))
 
@@ -792,6 +793,7 @@ class StatisticMail:
             [dictionary] -- dictionary of file and it's downloaded
 
         """
+        from invenio_stats.views import QueryFileStatsCount
         list_file = cls.get_file_in_item(data)
         result = {}
         if list_file:

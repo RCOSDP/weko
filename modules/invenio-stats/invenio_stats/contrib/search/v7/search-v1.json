@@ -1,7 +1,6 @@
 {
   "index_patterns": ["__SEARCH_INDEX_PREFIX__events-stats-search-*"],
   "settings": {
-    "index.mapper.dynamic": false,
     "index": {
       "refresh_interval": "5s",
       "lifecycle.name": "weko_stats_policy",
@@ -9,7 +8,6 @@
     }
   },
   "mappings": {
-    "stats-search": {
       "date_detection": false,
       "dynamic": false,
       "numeric_detection": false,
@@ -70,4 +68,3 @@
       }
     }
   }
-}
