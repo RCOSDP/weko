@@ -354,17 +354,33 @@ class ItemTypeMetaDataView(BaseView):
         fp = io.BytesIO()
         with ZipFile(fp, 'w', compression=ZIP_DEFLATED) as new_zip:
             # zipファイルにJSON文字列を追加
-            new_zip.writestr("ItemType.json", ItemTypeSchema().dumps(item_types).data.encode().decode('unicode-escape').encode())
-            new_zip.writestr("ItemTypeName.json", ItemTypeNameSchema().dumps(item_type_names).data.encode().decode('unicode-escape').encode())
-            new_zip.writestr("ItemTypeMapping.json", ItemTypeMappingSchema().dumps(item_type_mappings.model).data.encode().decode('unicode-escape').encode())
-            json_str = ""
+            item_type_json = json.dumps(
+                ItemTypeSchema().dump(item_types).data,
+                ensure_ascii=False)
+            name_json = json.dumps(
+                ItemTypeNameSchema().dump(item_type_names).data,
+                ensure_ascii=False)
+            mapping_json = json.dumps(
+                ItemTypeMappingSchema().dump(item_type_mappings).data,
+                ensure_ascii=False)
+            properties_json = ""
             for item_type_property in item_type_properties :
-                prop_str = ItemTypePropertySchema().dumps(item_type_property).data
-                if len(json_str) > 0:
-                    json_str += ","
-                json_str += prop_str
-            json_str = "[" + json_str + "]"
-            new_zip.writestr("ItemTypeProperty.json", json_str.encode().decode('unicode-escape').encode())
+                property_json = json.dumps(
+                    ItemTypePropertySchema().dump(item_type_property).data,
+                    ensure_ascii=False
+                )
+                if len(properties_json) > 0:
+                    properties_json += ","
+                properties_json += property_json
+            properties_json = "[" + properties_json + "]"
+            new_zip.writestr(
+                "ItemType.json", item_type_json.encode('utf-8'))
+            new_zip.writestr(
+                "ItemTypeName.json", name_json.encode('utf-8'))
+            new_zip.writestr(
+                "ItemTypeMapping.json", mapping_json.encode('utf-8'))
+            new_zip.writestr(
+                "ItemTypeProperty.json", properties_json.encode('utf-8'))
         fp.seek(0)
         return send_file(
             fp ,
