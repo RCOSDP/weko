@@ -11,162 +11,162 @@ WEKO_INDEX_TREE_MESSAGE = {
     'WEKO_INDEX_TREE_FAILED_INDEX_SEARCH': {
         'msgid': 'WEKO_INDEX_TREE_E_0001',
         'msgstr': "FAILED to search item from index.",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_INDEX_TREE_FAILED_OUTPUT_RSS_DOCUMENT': {
         'msgid': 'WEKO_INDEX_TREE_E_0002',
         'msgstr': "FAILED to output RSS document.",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_INDEX_TREE_FAILED_GET_DATA_FOR_RSS': {
         'msgid': 'WEKO_INDEX_TREE_E_0003',
         'msgstr': "FAILED to get data for RSS output.",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_INDEX_TREE_FAILED_UPDATE_ITEMS_IN_BULK': {
         'msgid': 'WEKO_INDEX_TREE_E_0004',
         'msgstr': "FAILED to update items in bulk",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_INDEX_TREE_FAILED_REGISTER_NEW_INDEX': {
         'msgid': 'WEKO_INDEX_TREE_E_0005',
         'msgstr': "FAILED to register new index in the index tree.",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_INDEX_TREE_FAILED_UPDATE_INDEX_TREE': {
         'msgid': 'WEKO_INDEX_TREE_E_0006',
         'msgstr': "FAILED to update index tree.",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_INDEX_TREE_FAILED_PUBLISH_INDEX': {
         'msgid': 'WEKO_INDEX_TREE_E_0007',
         'msgstr': "FAILED to publish index.",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_INDEX_TREE_FAILED_UPDATE_INDEX': {
         'msgid': 'WEKO_INDEX_TREE_E_0008',
         'msgstr': "FAILED to update index.",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_INDEX_TREE_FAILED_INDEX_NO_LONGER_PUBLISHED': {
         'msgid': 'WEKO_INDEX_TREE_E_0009',
         'msgstr': "FAILED to stop publishing the index.",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_INDEX_TREE_FAILED_MOVE_INDEX_TREE': {
         'msgid': 'WEKO_INDEX_TREE_E_0010',
         'msgstr': "FAILED to move index tree.",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_INDEX_TREE_FAILED_DELETE_INDEX_TREE': {
         'msgid': 'WEKO_INDEX_TREE_E_0011',
         'msgstr': "FAILED to delete index tree.",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_INDEX_TREE_FAILED_DISPLAY_INDEX_LINK': {
         'msgid': 'WEKO_INDEX_TREE_E_0012',
         'msgstr': "FAILED to change display setting of the index link.",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_INDEX_TREE_INDEX_SEARCH_RESULT': {
         'msgid': 'WEKO_INDEX_TREE_I_0001',
         'msgstr': "index search : {search_content}, results: {num} items",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_INDEX_TREE_ENABLED_RSS_FEEDS': {
         'msgid': 'WEKO_INDEX_TREE_I_0002',
         'msgstr': "RSS feeds are now enabled.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_INDEX_TREE_CHANGED_RSS_FEEDS_SETTING': {
         'msgid': 'WEKO_INDEX_TREE_I_0003',
         'msgstr': "The RSS feeds has been changed to {configuration_value}.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_INDEX_TREE_CHANGED_RSS_FEEDS_DETAILS_SETTING': {
         'msgid': 'WEKO_INDEX_TREE_I_0004',
         'msgstr': "The RSS feeds has been changed {section} to "\
             "{configuration_value}.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_INDEX_TREE_OUTPUT_RSS_DOCUMENT': {
         'msgid': 'WEKO_INDEX_TREE_I_0005',
         'msgstr': "RSS document has been output.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_INDEX_TREE_GET_DATA_FOR_RSS': {
         'msgid': 'WEKO_INDEX_TREE_I_0006',
         'msgstr': "Got data for RSS output.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_INDEX_TREE_CHANGE_DISPLAY_SETTINGS_SEARCH_RESULTS': {
         'msgid': 'WEKO_INDEX_TREE_I_0007',
         'msgstr': "The display setting for search results has been changed "\
             "to {configuration_value}.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_INDEX_TREE_CHANGE_DISPLAY_DETAIL_SETTINGS_SEARCH_RESULTS': {
         'msgid': 'WEKO_INDEX_TREE_I_0008',
         'msgstr': "The display setting for search results has been changed "\
             "{section} to {configuration_value}.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_INDEX_TREE_UPDATE_ITEMS_IN_BULK': {
         'msgid': 'WEKO_INDEX_TREE_I_0009',
         'msgstr': "Items updated in bulk: {pid}",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_INDEX_TREE_REGISTER_NEW_INDEX': {
         'msgid': 'WEKO_INDEX_TREE_I_0010',
         'msgstr': "New index is registered in the index tree.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_INDEX_TREE_UPDATE_INDEX_TREE': {
         'msgid': 'WEKO_INDEX_TREE_I_0011',
         'msgstr': "Index tree updated.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_INDEX_TREE_PUBLISH_INDEX': {
         'msgid': 'WEKO_INDEX_TREE_I_0012',
         'msgstr': "Index became open to public.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_INDEX_TREE_INDEX_NO_LONGER_PUBLISHED': {
         'msgid': 'WEKO_INDEX_TREE_I_0013',
         'msgstr': "Index is no longer published.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_INDEX_TREE_UPDATE_INDEX': {
         'msgid': 'WEKO_INDEX_TREE_I_0014',
         'msgstr': "Index updated.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_INDEX_TREE_DELETE_INDEX_TREE': {
         'msgid': 'WEKO_INDEX_TREE_I_0015',
         'msgstr': "Index tree deleted.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_INDEX_TREE_MOVED_INDEX_TREE': {
         'msgid': 'WEKO_INDEX_TREE_I_0016',
         'msgstr': "Index tree has been moved.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_INDEX_TREE_CHANGE_ORDER_ITEMS': {
         'msgid': 'WEKO_INDEX_TREE_I_0017',
         'msgstr': "The order in which items are displayed has changed.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_INDEX_TREE_CHANGE_DISPLAY_INDEX_LINK_SETTING': {
         'msgid': 'WEKO_INDEX_TREE_I_0018',
         'msgstr': "The display setting of the index link has been changed to "\
             "{configuration_value}.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_INDEX_TREE_CHANGE_DISPLAY_INDEX_LINK_DETAIL_SETTING': {
         'msgid': 'WEKO_INDEX_TREE_I_0019',
         'msgstr': "The display setting of the index link has been changed "\
             "{section} to {configuration_value}.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
 }
 

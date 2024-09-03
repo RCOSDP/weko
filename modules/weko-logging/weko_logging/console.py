@@ -122,7 +122,7 @@ class WekoLoggingConsole(WekoLoggingBase):
 
         msgid = param.get('msgid', None)
         msgstr = param.get('msgstr', None)
-        msglvl = param.get('msglvl', None)
+        loglevel = param.get('loglevel', None)
 
         msg = msgid + ' : ' + msgstr
 
@@ -135,13 +135,13 @@ class WekoLoggingConsole(WekoLoggingBase):
         }
 
         # output log by msglvl
-        if msglvl == 'ERROR':
+        if loglevel == 'ERROR':
             current_app.logger.error(msg.format(**kwargs), extra=extra)
-        elif msglvl == 'WARN':
+        elif loglevel == 'WARN':
             current_app.logger.warning(msg.format(**kwargs), extra=extra)
-        elif msglvl == 'INFO':
+        elif loglevel == 'INFO':
             current_app.logger.info(msg.format(**kwargs), extra=extra)
-        elif msglvl == 'DEBUG':
+        elif loglevel == 'DEBUG':
             current_app.logger.debug(msg.format(**kwargs), extra=extra)
         else:
             pass

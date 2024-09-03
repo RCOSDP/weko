@@ -11,253 +11,253 @@ WEKO_SEARCH_UI_MESSAGE = {
     'WEKO_SEARCH_UI_FAILED_SEARCH_ITEM': {
         'msgid': 'WEKO_SEARCH_UI_E_0001',
         'msgstr': "FAILED to search item: {query}",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_SEARCH_UI_FAILED_ADD_SEARCH_CONDITION': {
         'msgid': 'WEKO_SEARCH_UI_E_0002',
         'msgstr': "FAILED to add search condition.",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_SEARCH_UI_FAILED_DELETE_SEARCH_CONDITION': {
         'msgid': 'WEKO_SEARCH_UI_E_0003',
         'msgstr': "FAILED to delete search condition.",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_SEARCH_UI_FAILED_EXPORT_SEARCH_CONDITION': {
         'msgid': 'WEKO_SEARCH_UI_E_0004',
         'msgstr': "FAILED to export items added to the search condition.",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_SEARCH_UI_FAILED_OUTPUT_RSS_DOCUMENT': {
         'msgid': 'WEKO_SEARCH_UI_E_0005',
         'msgstr': "FAILED to output RSS document.",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_SEARCH_UI_FAILED_INDEX_SEARCH': {
         'msgid': 'WEKO_SEARCH_UI_E_0006',
         'msgstr': "FAILED to search item from index.",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_SEARCH_UI_FAILED_SAVE_INDEX_SETTINGS': {
         'msgid': 'WEKO_SEARCH_UI_E_0007',
         'msgstr': "Failed to save changes to index settings.",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_SEARCH_UI_FAILED_DISPLAY_SETTINGS_JOURNAL_INFO': {
         'msgid': 'WEKO_SEARCH_UI_E_0008',
         'msgstr': "FAILED to change display settings of index {index_name} "\
             "for journal information to {configuration_value}.",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_SEARCH_UI_FAILED_SAVE_JOURNAL_INFO': {
         'msgid': 'WEKO_SEARCH_UI_E_0009',
         'msgstr': "FAILED to save journal information. "\
             "Index name: {index_name}",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_SEARCH_UI_FAILED_OUTPUT _JOURNAL_INFO': {
         'msgid': 'WEKO_SEARCH_UI_E_0010',
         'msgstr': "FAILED to output journal information. "\
             "Index name: {index_name}",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_SEARCH_UI_FAILED_BULK_DELETE_ITEMS': {
         'msgid': 'WEKO_SEARCH_UI_E_0011',
         'msgstr': "FAILED to bulk delete items targeted at the index.",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_SEARCH_UI_FAILED_EXPORT_FULL_ITEM': {
         'msgid': 'WEKO_SEARCH_UI_E_0012',
         'msgstr': "FAILED to export all items.",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_SEARCH_UI_FAILED_CANCEL_EXPORT_FULL_ITEM': {
         'msgid': 'WEKO_SEARCH_UI_E_0013',
         'msgstr': "FAILED to cancel full export of the item.",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_SEARCH_UI_FAILED_BULK_IMPORT_ITEMS': {
         'msgid': 'WEKO_SEARCH_UI_E_0014',
         'msgstr': "FAILED to bulk umport items.",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_SEARCH_UI_FAILED_DOWNLOAD_ITEM_ON_SCREEN': {
         'msgid': 'WEKO_SEARCH_UI_E_0015',
         'msgstr': "FAILED to download list of items displayed on the screen "\
             "in TSV format.",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_SEARCH_UI_FAILED_REGISTER_NEW_INDEX': {
         'msgid': 'WEKO_SEARCH_UI_E_0016',
         'msgstr': "FAILED to register new index in the index tree.",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_SEARCH_UI_FAILED_UPDATE_INDEX_TREE': {
         'msgid': 'WEKO_SEARCH_UI_E_0017',
         'msgstr': "FAILED to update index tree.",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_SEARCH_UI_FAILED_PUBLISH_INDEX': {
         'msgid': 'WEKO_SEARCH_UI_E_0018',
         'msgstr': "FAILED to publish index.",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_SEARCH_UI_FAILED_UPDATE_INDEX': {
         'msgid': 'WEKO_SEARCH_UI_E_0019',
         'msgstr': "FAILED to update index.",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_SEARCH_UI_FAILED_INDEX_NO_LONGER_PUBLISHED': {
         'msgid': 'WEKO_SEARCH_UI_E_0020',
         'msgstr': "FAILED to stop publishing the index.",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_SEARCH_UI_FAILED_MOVE_INDEX_TREE': {
         'msgid': 'WEKO_SEARCH_UI_E_0021',
         'msgstr': "FAILED to move index tree.",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_SEARCH_UI_FAILED_DELETE_INDEX_TREE': {
         'msgid': 'WEKO_SEARCH_UI_E_0022',
         'msgstr': "FAILED to delete index tree.",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_SEARCH_UI_SEARCH_ITEM': {
         'msgid': 'WEKO_SEARCH_UI_I_0001',
         'msgstr': "Search item: {query}, result: {num}",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_SEARCH_UI_ADD_SEARCH_CONDITION': {
         'msgid': 'WEKO_SEARCH_UI_I_0002',
         'msgstr': "Search condition added.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_SEARCH_UI_DELETE_SEARCH_CONDITION': {
         'msgid': 'WEKO_SEARCH_UI_I_0003',
         'msgstr': "Search condition deleted.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_SEARCH_UI_EXPORT_SEARCH_CONDITION': {
         'msgid': 'WEKO_SEARCH_UI_I_0004',
         'msgstr': "Items added to the search condition have been exported.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_SEARCH_UI_ENABLED_RSS_FEEDS': {
         'msgid': 'WEKO_SEARCH_UI_I_0005',
         'msgstr': "RSS feeds are now enabled.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_SEARCH_UI_OUTPUT_RSS_DOCUMENT': {
         'msgid': 'WEKO_SEARCH_UI_I_0006',
         'msgstr': "RSS document has been output.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_SEARCH_UI_INDEX_SEARCH_RESULT': {
         'msgid': 'WEKO_SEARCH_UI_I_0007',
         'msgstr': "index search : {search_content}, results: {num} items",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_SEARCH_UI_CHANGE_DISPLAY_SETTINGS_SEARCH_RESULTS': {
         'msgid': 'WEKO_SEARCH_UI_I_0008',
         'msgstr': "The display setting for search results has been changed "\
             "to {configuration_value}.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_SEARCH_UI_CHANGE_DISPLAY_DETAIL_SETTINGS_SEARCH_RESULTS': {
         'msgid': 'WEKO_SEARCH_UI_I_0009',
         'msgstr': "The display setting for search results has been changed "\
             "{section} to {configuration_value}.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_SEARCH_UI_DISPLAY_SETTINGS_JOURNAL_INFO': {
         'msgid': 'WEKO_SEARCH_UI_I_0010',
         'msgstr': "Display settings of index {index_name} for journal "\
             "information has been changed to {configuration_value}.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_SEARCH_UI_DISPLAY_DETAIL_SETTINGS_JOURNAL_INFO': {
         'msgid': 'WEKO_SEARCH_UI_I_0011',
         'msgstr': "Display settings of index {index_name} for journal "\
             "information has been changed {section} to {configuration_value}.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_SEARCH_UI_SAVE_JOURNAL_INFO': {
         'msgid': 'WEKO_SEARCH_UI_I_0012',
         'msgstr': "Journal information edited. Index name: {index_name}",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_SEARCH_UI_OUTPUT _JOURNAL_INFO': {
         'msgid': 'WEKO_SEARCH_UI_I_0013',
         'msgstr': "Journal information has been output. "\
             "Index name: {index_name}",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_SEARCH_UI_BULK_DELETE_ITEMS': {
         'msgid': 'WEKO_SEARCH_UI_I_0014',
         'msgstr': "Bulk deletion of items targeted at the index was "\
             "successful.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_SEARCH_UI_EXPORT_FULL_ITEM': {
         'msgid': 'WEKO_SEARCH_UI_I_0015',
         'msgstr': "Full export of the item has been performed.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_SEARCH_UI_CANCEL_EXPORT_FULL_ITEM': {
         'msgid': 'WEKO_SEARCH_UI_I_0016',
         'msgstr': "Full export of the item has been cancelled.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_SEARCH_UI_BULK_IMPORT_ITEMS': {
         'msgid': 'WEKO_SEARCH_UI_I_0017',
         'msgstr': "Bulk import of items has been done.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_SEARCH_UI_DOWNLOAD_ITEM_ON_SCREEN': {
         'msgid': 'WEKO_SEARCH_UI_I_0018',
         'msgstr': "List of items displayed on the screen has been downloaded "\
             "in TSV format.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_SEARCH_UI_REGISTER_NEW_INDEX': {
         'msgid': 'WEKO_SEARCH_UI_I_0019',
         'msgstr': "New index is registered in the index tree.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_SEARCH_UI_UPDATE_INDEX_TREE': {
         'msgid': 'WEKO_SEARCH_UI_I_0020',
         'msgstr': "Index tree updated.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_SEARCH_UI_PUBLISH_INDEX': {
         'msgid': 'WEKO_SEARCH_UI_I_0021',
         'msgstr': "Index became open to public.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_SEARCH_UI_INDEX_NO_LONGER_PUBLISHED': {
         'msgid': 'WEKO_SEARCH_UI_I_0022',
         'msgstr': "Index is no longer published.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_SEARCH_UI_UPDATE_INDEX': {
         'msgid': 'WEKO_SEARCH_UI_I_0023',
         'msgstr': "Index updated.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_SEARCH_UI_DELETE_INDEX_TREE': {
         'msgid': 'WEKO_SEARCH_UI_I_0024',
         'msgstr': "Index tree deleted.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_SEARCH_UI_MOVED_INDEX_TREE': {
         'msgid': 'WEKO_SEARCH_UI_I_0025',
         'msgstr': "Index tree has been moved.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_SEARCH_UI_CHANGE_ORDER_ITEMS': {
         'msgid': 'WEKO_SEARCH_UI_I_0026',
         'msgstr': "The order in which items are displayed has changed.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
 }
 

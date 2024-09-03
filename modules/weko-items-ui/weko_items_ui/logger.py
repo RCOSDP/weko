@@ -11,244 +11,244 @@ WEKO_ITEMS_UI_MESSAGE = {
     'WEKO_ITEMS_UI_FAILED_SEARCH_ITEM': {
         'msgid': 'WEKO_ITEMS_UI_E_0001',
         'msgstr': "FAILED to search item: {query}",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_ITEMS_UI_FAILED_ADD_SEARCH_CONDITION': {
         'msgid': 'WEKO_ITEMS_UI_E_0002',
         'msgstr': "FAILED to add search condition.",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_ITEMS_UI_FAILED_DELETE_SEARCH_CONDITION': {
         'msgid': 'WEKO_ITEMS_UI_E_0003',
         'msgstr': "FAILED to delete search condition.",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_ITEMS_UI_FAILED_EXPORT_SEARCH_CONDITION': {
         'msgid': 'WEKO_ITEMS_UI_E_0004',
         'msgstr': "FAILED to export items added to the search condition.",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_ITEMS_UI_FAILED_SETTINGS_FACETED_SEARCH': {
         'msgid': 'WEKO_ITEMS_UI_E_0005',
         'msgstr': "FAILED to change faceted search settings to {set_value}.",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_ITEMS_UI_FAILED_CHANGE_ITEM_DISPLAY_SETTINGS': {
         'msgid': 'WEKO_ITEMS_UI_E_0006',
         'msgstr': "FAILED to change item display method settings.",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_ITEMS_UI_FAILED_OUTPUT_RSS_DOCUMENT': {
         'msgid': 'WEKO_ITEMS_UI_E_0007',
         'msgstr': "Failed to output RSS for the item corresponding to the "\
             "search result.",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_ITEMS_UI_FAILED_OUTPUT_RSS_DOCUMENT': {
         'msgid': 'WEKO_ITEMS_UI_E_0008',
         'msgstr': "FAILED to output RSS document.",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_ITEMS_UI_FAILED_SAVE_INDEX_SETTINGS': {
         'msgid': 'WEKO_ITEMS_UI_E_0009',
         'msgstr': "Failed to save changes to index settings.",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_ITEMS_UI_FAILED_SAVE_INDEX': {
         'msgid': 'WEKO_ITEMS_UI_E_0010',
         'msgstr': "FAILED to save index designation: {pid}",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_ITEMS_UI_FAILED_POPULATE_AUTO_METADATA_CROSSREF': {
         'msgid': 'WEKO_ITEMS_UI_E_0011',
         'msgstr': "FAILED to automatically populate metadata via CrossRef. "\
             "Itemid: {pid}",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_ITEMS_UI_FAILED_POPULATE_AUTO_METADATA_CINII': {
         'msgid': 'WEKO_ITEMS_UI_E_0012',
         'msgstr': "FAILED to automatically populate metadata via CiNii. "\
             "Itemid: {pid}",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_ITEMS_UI_FAILED_POPULATE_AUTO_METADATA_WEKOID': {
         'msgid': 'WEKO_ITEMS_UI_E_0013',
         'msgstr': "FAILED to automatically populate metadata via WEKOID. "\
             "Itemid: {pid}",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_ITEMS_UI_FAILED_EXPORT_ITEM_IN_JSON': {
         'msgid': 'WEKO_ITEMS_UI_E_0014',
         'msgstr': "FAILED to export selected items in json format.",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_ITEMS_UI_FAILED_EXPORT_ITEM_IN_BIBTEX': {
         'msgid': 'WEKO_ITEMS_UI_E_0015',
         'msgstr': "FAILED to export selected items in bibtex format.",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_ITEMS_UI_FAILED_ASSIGN_PROXY_CONTRIBUTOR': {
         'msgid': 'WEKO_ITEMS_UI_E_0016',
         'msgstr': "Failed to assign a proxy contributor for the item.",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_ITEMS_UI_FAILED_REGISTER_INDEX': {
         'msgid': 'WEKO_ITEMS_UI_E_0017',
         'msgstr': "FAILED to register index designation: {pid}",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_ITEMS_UI_FAILED_SAVE_RANKING_SETTINGS': {
         'msgid': 'WEKO_ITEMS_UI_E_0018',
         'msgstr': "FAILED to save ranking settings.",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_ITEMS_UI_FAILED_CREATE_RANKING_LISTS': {
         'msgid': 'WEKO_ITEMS_UI_E_0019',
         'msgstr': "FAILED to create ranking lists.",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_ITEMS_UI_SEARCH_ITEM': {
         'msgid': 'WEKO_ITEMS_UI_I_0001',
         'msgstr': "Search item: {query}, result: {num}",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_ITEMS_UI_ADD_SEARCH_CONDITION': {
         'msgid': 'WEKO_ITEMS_UI_I_0002',
         'msgstr': "Search condition added.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_ITEMS_UI_DELETE_SEARCH_CONDITION': {
         'msgid': 'WEKO_ITEMS_UI_I_0003',
         'msgstr': "Search condition deleted.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_ITEMS_UI_EXPORT_SEARCH_CONDITION': {
         'msgid': 'WEKO_ITEMS_UI_I_0004',
         'msgstr': "Items added to the search condition have been exported.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_ITEMS_UI_CHANGE_ITEM_DISPLAY_SETTINGS': {
         'msgid': 'WEKO_ITEMS_UI_I_0005',
         'msgstr': "Settings for how items are displayed have been changed.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_ITEMS_UI_OUTPUT_RSS_DOCUMENT': {
         'msgid': 'WEKO_ITEMS_UI_I_0006',
         'msgstr': "RSS output for items corresponding to the search results.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_ITEMS_UI_ENABLED_RSS_FEEDS': {
         'msgid': 'WEKO_ITEMS_UI_I_0007',
         'msgstr': "RSS feeds are now enabled.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_ITEMS_UI_CHANGED_RSS_FEEDS_SETTING': {
         'msgid': 'WEKO_ITEMS_UI_I_0008',
         'msgstr': "The RSS feeds has been changed to {configuration_value}.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_ITEMS_UI_CHANGED_RSS_FEEDS_DETAILS_SETTING': {
         'msgid': 'WEKO_ITEMS_UI_I_0009',
         'msgstr': "The RSS feeds has been changed {section} to "\
             "{configuration_value}.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_ITEMS_UI_OUTPUT_RSS_DOCUMENT': {
         'msgid': 'WEKO_ITEMS_UI_I_0010',
         'msgstr': "RSS document has been output.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_ITEMS_UI_CHANGE_DISPLAY_SETTINGS_SEARCH_RESULTS': {
         'msgid': 'WEKO_ITEMS_UI_I_0011',
         'msgstr': "The display setting for search results has been changed "\
             "to {configuration_value}.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_ITEMS_UI_CHANGE_DISPLAY_DETAIL_SETTING _SEARCH_RESULTS': {
         'msgid': 'WEKO_ITEMS_UI_I_0012',
         'msgstr': "The display setting for search results has been changed "\
             "{section} to {configuration_value}.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_ITEMS_UI_ENABLE_ITEM_EXPORT': {
         'msgid': 'WEKO_ITEMS_UI_I_0013',
         'msgstr': "Item export is now enabled.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_ITEMS_UI_DISABLE_ITEM_EXPORT': {
         'msgid': 'WEKO_ITEMS_UI_I_0014',
         'msgstr': "Item export is now disabled.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_ITEMS_UI_SAVED_INDEX': {
         'msgid': 'WEKO_ITEMS_UI_I_0015',
         'msgstr': "Index designation saved: {pid}",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_ITEMS_UI_QUIT_INDEX': {
         'msgid': 'WEKO_ITEMS_UI_I_0016',
         'msgstr': "Index designation quitted: {pid}",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_ITEMS_UI_POPULATE_AUTO_METADATA_CROSSREF': {
         'msgid': 'WEKO_ITEMS_UI_I_0017',
         'msgstr': "Metadata was automatically populated via CrossRef. "\
             "Itemid: {pid}",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_ITEMS_UI_POPULATE_AUTO_METADATA_CINII': {
         'msgid': 'WEKO_ITEMS_UI_I_0018',
         'msgstr': "Metadata was automatically populated via CiNii. "\
             "Itemid: {pid}",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_ITEMS_UI_POPULATE_AUTO_METADATA_WEKOID': {
         'msgid': 'WEKO_ITEMS_UI_I_0019',
         'msgstr': "Metadata was automatically populated via WEKOID. "\
             "Itemid: {pid}",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_ITEMS_UI_EXPORT_ITEM_IN_JSON': {
         'msgid': 'WEKO_ITEMS_UI_I_0020',
         'msgstr': "Selected items have been exported in json format.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_ITEMS_UI_EXPORT_ITEM_IN_BIBTEX': {
         'msgid': 'WEKO_ITEMS_UI_I_0021',
         'msgstr': "Selected items have been exported in bibtex format.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_ITEMS_UI_EXPORT_ITEM_IN_JSON_WITH_FILE_CONTENTS': {
         'msgid': 'WEKO_ITEMS_UI_I_0022',
         'msgstr': "Selected items have been exported in json format with "\
             "File Contents.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_ITEMS_UI_EXPORT_ITEM_IN_BIBTEX_WITH_FILE_CONTENTS': {
         'msgid': 'WEKO_ITEMS_UI_I_0023',
         'msgstr': "Selected items have been exported in bibtex format with "\
             "File Contents.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_ITEMS_UI_ASSIGN_PROXY_CONTRIBUTOR': {
         'msgid': 'WEKO_ITEMS_UI_I_0024',
         'msgstr': "A proxy contributor has been assigned for the item: {pid}",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_ITEMS_UI_REGISTER_INDEX': {
         'msgid': 'WEKO_ITEMS_UI_I_0025',
         'msgstr': "Destination index has been registered: {pid}",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_ITEMS_UI_SAVED_RANKING_SETTINGS': {
         'msgid': 'WEKO_ITEMS_UI_I_0026',
         'msgstr': "Ranking settings have been saved.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_ITEMS_UI_CREATED_RANKING_LISTS': {
         'msgid': 'WEKO_ITEMS_UI_I_0027',
         'msgstr': "Ranking lists have been created.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
 }
 

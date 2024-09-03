@@ -11,68 +11,68 @@ WEKO_RECORDS_MESSAGE = {
     'WEKO_RECORDS_FAILED_SEARCH_ITEM': {
         'msgid': 'WEKO_RECORDS_E_0001',
         'msgstr': "FAILED to search item: {query}",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_RECORDS_FAILED_OUTPUT_RSS_DOCUMENT': {
         'msgid': 'WEKO_RECORDS_E_0002',
         'msgstr': "FAILED to output RSS document.",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_RECORDS_FAILED_SERIALIZE_RESULT_TO_RSS': {
         'msgid': 'WEKO_RECORDS_E_0003',
         'msgstr': "FAILED to serialize search results into RSS format.",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_RECORDS_FAILED_DELETE_RECORD': {
         'msgid': 'WEKO_RECORDS_E_0004',
         'msgstr': "FAILED to delete records. Uuid: {uuid}",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_RECORDS_FAILED_RESTORE_RECORD': {
         'msgid': 'WEKO_RECORDS_E_0005',
         'msgstr': "FAILED to restore record. Uuid: {uuid}",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_RECORDS_SEARCH_ITEM': {
         'msgid': 'WEKO_RECORDS_I_0001',
         'msgstr': "Search item: {query}, result: {num}",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_RECORDS_ENABLED_RSS_FEEDS': {
         'msgid': 'WEKO_RECORDS_I_0002',
         'msgstr': "RSS feeds are now enabled.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_RECORDS_CHANGED_RSS_FEEDS_SETTING': {
         'msgid': 'WEKO_RECORDS_I_0003',
         'msgstr': "The RSS feeds has been changed to {configuration_value}.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_RECORDS_CHANGED_RSS_FEEDS_DETAILS_SETTING': {
         'msgid': 'WEKO_RECORDS_I_0004',
         'msgstr': "The RSS feeds has been changed {section} to "\
             "{configuration_value}.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_RECORDS_OUTPUT_RSS_DOCUMENT': {
         'msgid': 'WEKO_RECORDS_I_0005',
         'msgstr': "RSS document has been output.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_RECORDS_SERIALIZE_RESULT_TO_RSS': {
         'msgid': 'WEKO_RECORDS_I_0006',
         'msgstr': "Serialized search results into RSS format.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_RECORDS_DELETE_RECORD': {
         'msgid': 'WEKO_RECORDS_I_0007',
         'msgstr': "{delete_num} record was deleted. Uuid: {uuid}",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_RECORDS_RESTORE_RECORD': {
         'msgid': 'WEKO_RECORDS_I_0008',
         'msgstr': "Record restored. Uuid: {uuid}",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
 }
 

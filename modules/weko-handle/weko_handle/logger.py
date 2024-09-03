@@ -11,12 +11,12 @@ WEKO_HANDLE_MESSAGE = {
     'WEKO_HANDLE_GRANT_CNRI_HANDLE': {
         'msgid': 'WEKO_HANDLE_I_0001',
         'msgstr': "CNRI handle granted: {pid}",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_HANDLE_FAILED_GRANT_CNRI_HANDLE': {
         'msgid': 'WEKO_HANDLE_I_0002',
         'msgstr': "FAILED to grant CNRI handle: {pid}",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
 }
 

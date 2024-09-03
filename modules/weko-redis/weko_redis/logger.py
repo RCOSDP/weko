@@ -11,32 +11,32 @@ WEKO_REDIS_MESSAGE = {
     'WEKO_REDIS_FAILED_DIRECT_REDIS_CONNECT': {
         'msgid': 'WEKO_REDIS_E_0001',
         'msgstr': "FAILED direct Redis connection.",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_REDIS_FAILED_DATA_STORE_CONNECT': {
         'msgid': 'WEKO_REDIS_E_0002',
         'msgstr': "FAILED data store connection via Redis.",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_REDIS_FAILED_REDIS_SENTINEL_CONNECT': {
         'msgid': 'WEKO_REDIS_E_0003',
         'msgstr': "FAILED Redis Sentinel connection.",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_REDIS_SUCCESS_DIRECT_REDIS_CONNECT': {
         'msgid': 'WEKO_REDIS_I_0001',
         'msgstr': "Direct Redis connection established successfully.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_REDIS_SUCCESS_DATA_STORE_CONNECT': {
         'msgid': 'WEKO_REDIS_I_0002',
         'msgstr': "Data store connection established successfully via Redis.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_REDIS_SUCCESS_REDIS_SENTINEL_CONNECT': {
         'msgid': 'WEKO_REDIS_I_0003',
         'msgstr': "Redis Sentinel connection established successfully.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
 }
 

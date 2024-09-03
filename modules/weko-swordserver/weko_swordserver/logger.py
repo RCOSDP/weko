@@ -11,42 +11,42 @@ WEKO_SWORDSERVER_MESSAGE = {
     'WEKO_SWORDSERVER_FAILED_RETRIEVE_FILE': {
         'msgid': 'WEKO_SWORDSERVER_E_0001',
         'msgstr': "FAILED to retrieve {file_type} file.",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_SWORDSERVER_FAILED_UPDATE_FILE': {
         'msgid': 'WEKO_SWORDSERVER_E_0002',
         'msgstr': "FAILED to update {file_type} file.",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_SWORDSERVER_FAILED_DELETE_FILE': {
         'msgid': 'WEKO_SWORDSERVER_E_0003',
         'msgstr': "FAILED to delete {file_type} file.",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_SWORDSERVER_FAILED_CREATE_FILE': {
         'msgid': 'WEKO_SWORDSERVER_E_0004',
         'msgstr': "FAILED to create {file_type} file.",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_SWORDSERVER_RETRIEVE_FILE': {
         'msgid': 'WEKO_SWORDSERVER_I_0001',
         'msgstr': "{file_name} file retrieved.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_SWORDSERVER_UPDATE_FILE': {
         'msgid': 'WEKO_SWORDSERVER_I_0002',
         'msgstr': "{file_type} file updated.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_SWORDSERVER_DELETE_FILE': {
         'msgid': 'WEKO_SWORDSERVER_I_0003',
         'msgstr': "{file_type} file deleted.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_SWORDSERVER_CREATE_FILE': {
         'msgid': 'WEKO_SWORDSERVER_I_0004',
         'msgstr': "{file_type} file created.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
 }
 

@@ -11,67 +11,67 @@ WEKO_SCHEMA_UI_MESSAGE = {
     'WEKO_SCHEMA_UI_FAILED_ADD_SEARCH_CONDITION': {
         'msgid': 'WEKO_SCHEMA_UI_E_0001',
         'msgstr': "FAILED to add search condition.",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_SCHEMA_UI_FAILED_DELETE_SEARCH_CONDITION': {
         'msgid': 'WEKO_SCHEMA_UI_E_0002',
         'msgstr': "FAILED to delete search condition.",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_SCHEMA_UI_FAILED_EXPORT_SEARCH_CONDITION': {
         'msgid': 'WEKO_SCHEMA_UI_E_0003',
         'msgstr': "FAILED to export items added to the search condition.",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_SCHEMA_UI_FAILED_MAP_JPCOARSCHEMA_SEARCH': {
         'msgid': 'WEKO_SCHEMA_UI_E_0004',
         'msgstr': "FAILED to map JPCOAR schema for search.",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_SCHEMA_UI_FAILED_OUTPUT_RSS_DOCUMENT': {
         'msgid': 'WEKO_SCHEMA_UI_E_0005',
         'msgstr': "FAILED to output RSS document.",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_SCHEMA_UI_FAILED_ADD_OAISCHEMA': {
         'msgid': 'WEKO_SCHEMA_UI_E_0006',
         'msgstr': "FAILED to add OAI schema.",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_SCHEMA_UI_ADD_SEARCH_CONDITION': {
         'msgid': 'WEKO_SCHEMA_UI_I_0001',
         'msgstr': "Search condition added.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_SCHEMA_UI_DELETE_SEARCH_CONDITION': {
         'msgid': 'WEKO_SCHEMA_UI_I_0002',
         'msgstr': "Search condition deleted.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_SCHEMA_UI_EXPORT_SEARCH_CONDITION': {
         'msgid': 'WEKO_SCHEMA_UI_I_0003',
         'msgstr': "Items added to the search condition have been exported.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_SCHEMA_UI_MAPPED_JPCOARSCHEMA_SEARCH': {
         'msgid': 'WEKO_SCHEMA_UI_I_0004',
         'msgstr': "Successfully mapped JPCOAR schema for search.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_SCHEMA_UI_ENABLED_RSS_FEEDS': {
         'msgid': 'WEKO_SCHEMA_UI_I_0005',
         'msgstr': "RSS feeds are now enabled.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_SCHEMA_UI_OUTPUT_RSS_DOCUMENT': {
         'msgid': 'WEKO_SCHEMA_UI_I_0006',
         'msgstr': "RSS document has been output.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
     'WEKO_SCHEMA_UI_ADD_OAISCHEMA_SUCCESS': {
         'msgid': 'WEKO_SCHEMA_UI_I_0007',
         'msgstr': "The OAI schema was successfully added.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
 }
 

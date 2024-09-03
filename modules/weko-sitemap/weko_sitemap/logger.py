@@ -11,12 +11,12 @@ WEKO_SITEMAP_MESSAGE = {
     'WEKO_SITEMAP_FAILED_GENERATE_SITEMAP': {
         'msgid': 'WEKO_SITEMAP_E_0001',
         'msgstr': "FAILED sitemap generation.",
-        'msglvl': 'ERROR',
+        'loglevel': 'ERROR',
     },
     'WEKO_SITEMAP_GENERATE_SITEMAP': {
         'msgid': 'WEKO_SITEMAP_I_0001',
         'msgstr': "Sitemap has been generated.",
-        'msglvl': 'INFO',
+        'loglevel': 'INFO',
     },
 }
 
