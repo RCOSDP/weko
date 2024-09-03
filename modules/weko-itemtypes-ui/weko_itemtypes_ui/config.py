@@ -68,6 +68,14 @@ WEKO_ITEMTYPES_UI_UPGRADE_VERSION_ENABLED = True
 
 DISABLE_DUPLICATION_CHECK = False
 
+WEKO_ITEMTYPES_UI_PUBDATE_PROPERTY = {
+    "title": "Publish Date",
+    "title_i18n": {
+        "en": "PubDate",
+        "ja": "公開日"
+    } 
+}
+
 WEKO_ITEMTYPES_UI_FIXED_PROPERTIES = {
     '1001': {
         'fixed_option': {
@@ -86,4 +94,4 @@ WEKO_ITEMTYPES_UI_FIXED_PROPERTIES = {
         }
     }
 }   
-"""RO-Crate file properties. see here: https://schema.org/MediaObject"""
+"""The fixed properties of the item type."""
