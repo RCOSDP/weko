@@ -99,9 +99,8 @@ class WekoFileObject(FileObject):
     This class extends the FileObject class to provide additional\
     functionality for handling file objects in the detail page of the WEKO\
     system.
-    It includes ethods for binding the object to the current bucket, updating\
-    the file information, and checking if the file can be previewed based on\
-    its type and size.
+    It includes methods for updating file information and checking whether a\
+    file can be previewed.
 
     Attributes:
         obj (Record): Record object.
@@ -466,10 +465,13 @@ class WekoIndexer(RecordIndexer):
         return result
 
     def get_pid_by_es_scroll(self, path):
-        """Get pid by es scroll.
+        """Get pid by Elasticsearch scroll.
 
-        :param path:
-        :return: _scroll_id
+        Args:
+            path(int): Path instance. Index ID.
+
+        Returns:
+
         """
         search_query = {
             "query": {
@@ -482,6 +484,16 @@ class WekoIndexer(RecordIndexer):
         }
 
         def get_result(result):
+            """Get result.
+
+            Get result from Elasticsearch.
+
+            Args:
+                result(dict): Result from Elasticsearch.
+
+            Returns:
+                list: Result from Elasticsearch.
+            """
             if result:
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
                             branch='result is True')
@@ -516,7 +528,7 @@ class WekoIndexer(RecordIndexer):
 
             if res:
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
-                            branch='res is True')
+                            branch='res is not none')
                 weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=res)
                 yield res
 
