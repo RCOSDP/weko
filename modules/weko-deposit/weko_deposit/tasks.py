@@ -31,7 +31,6 @@ from invenio_db import db
 from invenio_indexer.api import RecordIndexer
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier
-from invenio_records.models import RecordMetadata
 from invenio_search import RecordsSearch
 from sqlalchemy.exc import SQLAlchemyError
 from weko_authors.models import Authors, AuthorsPrefixSettings, AuthorsAffiliationSettings
@@ -40,6 +39,7 @@ from weko_schema_ui.models import PublishStatus
 from weko_workflow.utils import delete_cache_data, update_cache_data
 
 from .api import WekoDeposit
+from .logger import weko_logger
 
 logger = get_task_logger(__name__)
 
@@ -51,9 +51,18 @@ ORIGIN_LABEL = "origin"
 TITLE_LIST = ["record_id", "author_ids", "message"]
 
 @shared_task(ignore_result=True)
-def update_items_by_authorInfo(user_id, target, origin_pkid_list=[], origin_id_list=[], update_gather_flg=False):
-    """Update item by authorInfo."""
-    current_app.logger.debug('item update task is running.')
+def update_items_by_authorInfo(user_id, target, origin_pkid_list=[],
+                               origin_id_list=[], update_gather_flg=False):
+    """Update item by authorInfo.
+
+    Args:
+        user_id (int): User ID.
+        target (dict): Target data that requires to contain `authorNameInfo`, `authorIdInfo`,
+            `emailInfo` and `affiliationInfo`.
+        origin_pkid_list (list): Origin PKID list.
+        origin_id_list (list): Origin ID list.
+        update_gather_flg (bool): Update gather flag.
+    """
     process_counter = {
         FAIL_LABEL: [],
         SUCCESS_LABEL: [],
@@ -62,31 +71,81 @@ def update_items_by_authorInfo(user_id, target, origin_pkid_list=[], origin_id_l
     }
 
     def _get_author_prefix():
+        """Get author prefix.
+
+        Get author prefix from weko-authors.
+
+        Returns:
+            list: list of author prefix dict.
+                Each dict contains `scheme`, `url`.
+        """
         result = {}
         settings = AuthorsPrefixSettings.query.all()
         if settings:
-            for s in settings:
+            weko_logger(key='WEKO_COMMON_IF_ENTER',
+                        branch="settings is not empty")
+
+            weko_logger(key='WEKO_COMMON_FOR_START')
+            for i, s in enumerate(settings):
+                weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
+                            count=i, element=s)
                 result[str(s.id)] = {
                     'scheme': s.scheme,
                     'url': s.url
                 }
+            weko_logger(key='WEKO_COMMON_FOR_END')
+
+        weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=result)
         return result
 
     def _get_affiliation_id():
+        """Get affiliation id.
+
+        Get affiliation id from weko-authors.
+
+        Returns:
+            list: list of affiliation dict.
+                each dict contains `scheme`, `url`.
+        """
         result = {}
         settings = AuthorsAffiliationSettings.query.all()
         if settings:
-            for s in settings:
+            weko_logger(key='WEKO_COMMON_IF_ENTER',
+                        branch="settings is not empty")
+
+            weko_logger(key='WEKO_COMMON_FOR_START')
+            for i, s in enumerate(settings):
+                weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
+                            count=i, element=s)
                 result[str(s.id)] = {
                     'scheme': s.scheme,
                     'url': s.url
                 }
-        return result    
+            weko_logger(key='WEKO_COMMON_FOR_END')
+
+        weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=result)
+        return result
 
     def _change_to_meta(target, author_prefix, affiliation_id, key_map):
+        """Change to metadata.
+
+        Change target author metadata and get new metadata.
+
+        Args:
+            target (dict): Target data.
+            author_prefix (dict): Author prefix.
+            affiliation_id (dict): Affiliation ID.
+            key_map (dict): Key map.
+
+        Returns:
+            tuple: Tuple of `target_id` and `metadate`.
+                `target_id` is author id. `metadata` is new changed metadata.
+        """
         target_id = None
         meta = {}
         if target:
+            weko_logger(key='WEKO_COMMON_IF_ENTER',
+                        branch="target is not empty")
             family_names = []
             given_names = []
             full_names = []
@@ -96,9 +155,15 @@ def update_items_by_authorInfo(user_id, target, origin_pkid_list=[], origin_id_l
             affiliation_names = []
             affiliations = []
 
-            for name in target.get('authorNameInfo', []):
+            weko_logger(key='WEKO_COMMON_FOR_START')
+            for i, name in enumerate(target.get('authorNameInfo', [])):
+                weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
+                            count=i, element=name)
                 if not bool(name.get('nameShowFlg', "true")):
+                    weko_logger(key='WEKO_COMMON_IF_ENTER',
+                                branch="nameShowFlg is false")
                     continue
+
                 family_names.append({
                     key_map['fname_key']: name.get('familyName', ''),
                     key_map['fname_lang_key']: name.get('language', '')
@@ -113,34 +178,58 @@ def update_items_by_authorInfo(user_id, target, origin_pkid_list=[], origin_id_l
                         name.get('firstName', '')),
                     key_map['name_lang_key']: name.get('language', '')
                 })
+            weko_logger(key='WEKO_COMMON_FOR_END')
 
-            for id in target.get('authorIdInfo', []):
+            weko_logger(key='WEKO_COMMON_FOR_START')
+            for i, id in enumerate(target.get('authorIdInfo', [])):
+                weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
+                            count=i, element=id)
                 if not bool(id.get('authorIdShowFlg', "true")):
+                    weko_logger(key='WEKO_COMMON_IF_ENTER',
+                                branch="authorIdShowFlg is false")
                     continue
+
                 prefix_info = author_prefix.get(id.get('idType', ""), {})
                 if prefix_info:
+                    weko_logger(key='WEKO_COMMON_IF_ENTER',
+                                branch="prefix_info is not empty")
                     id_info = {
                         key_map['id_scheme_key']: prefix_info['scheme'],
                         key_map['id_key']: id.get('authorId', '')
                     }
                     if prefix_info['url']:
+                        weko_logger(key='WEKO_COMMON_IF_ENTER',
+                                    branch="prefix_info['url'] is not empty")
                         if '##' in prefix_info['url']:
+                            weko_logger(key='WEKO_COMMON_IF_ENTER',
+                                        branch="## in prefix_info['url']")
                             url = prefix_info['url'].replace(
                                 '##', id.get('authorId', ''))
                         else:
+                            weko_logger(key='WEKO_COMMON_IF_ENTER',
+                                        branch="## not in prefix_info['url']")
                             url = prefix_info['url']
                         id_info.update({key_map['id_uri_key']: url})
                     identifiers.append(id_info)
 
                     if prefix_info['scheme'] == 'WEKO':
+                        weko_logger(key='WEKO_COMMON_IF_ENTER',
+                                    branch="prefix_info['scheme'] == 'WEKO'")
                         target_id = id.get('authorId', '')
 
-            for email in target.get('emailInfo', []):
+            weko_logger(key='WEKO_COMMON_FOR_START')
+            for i, email in enumerate(target.get('emailInfo', [])):
+                weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
+                            count=i, element=email)
                 mails.append({
                     key_map['mail_key']: email.get('email', '')
                 })
+            weko_logger(key='WEKO_COMMON_FOR_END')
 
+            weko_logger(key='WEKO_COMMON_FOR_START')
             for affiliation in target.get('affiliationInfo', []):
+                weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
+                            count=i, element=affiliation)
                 for identifier in affiliation.get('identifierInfo', []):
                     if not bool(identifier.get('identifierShowFlg', 'true')):
                         continue
@@ -171,6 +260,7 @@ def update_items_by_authorInfo(user_id, target, origin_pkid_list=[], origin_id_l
                     key_map['affiliation_ids_key']: affiliation_identifiers,
                     key_map['affiliation_names_key']: affiliation_names
                 })
+            weko_logger(key='WEKO_COMMON_FOR_END')
 
             if family_names:
                 meta.update({
@@ -196,19 +286,40 @@ def update_items_by_authorInfo(user_id, target, origin_pkid_list=[], origin_id_l
                 meta.update({
                     key_map['affiliations_key']: affiliations
                 })
+
+        weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=(target_id, meta))
         return target_id, meta
 
     def _update_author_data(item_id, record_ids):
+        """Update author data.
+
+
+        Args:
+            item_id (int): Item ID.
+            record_ids (list): Record ID list.
+
+        Returns:
+            tuple: Tuple of `object_uuid` and `author_link`.
+            `object_uuid` is object uuid. `author_link` is author link.
+        """
         temp_list = []
         try:
             pid = PersistentIdentifier.get('recid', item_id)
             dep = WekoDeposit.get_record(pid.object_uuid)
             author_link = set()
             author_data = {}
-            for k, v in dep.items():
+
+            weko_logger(key='WEKO_COMMON_FOR_START')
+            for i, (k, v) in enumerate(dep.items()):
+                weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
+                            count=i, element=k)
+
                 if isinstance(v, dict) \
                     and v.get('attribute_value_mlt') \
                         and isinstance(v['attribute_value_mlt'], list):
+                    weko_logger(key='WEKO_COMMON_IF_ENTER',
+                        branch="value is dict and attribute_value_mlt is list")
+
                     data_list = v['attribute_value_mlt']
                     prop_type = None
                     for index, data in enumerate(data_list):
@@ -245,21 +356,46 @@ def update_items_by_authorInfo(user_id, target, origin_pkid_list=[], origin_id_l
                                     temp_list.append(origin_id)
                                     author_link.remove(origin_id)
                                     author_link.add(target_id)
+            weko_logger(key='WEKO_COMMON_FOR_END')
 
             dep['author_link'] = list(author_link)
             dep.update_item_by_task()
             obj = ItemsMetadata.get_record(pid.object_uuid)
             obj.update(author_data)
             obj.commit()
-            process_counter[SUCCESS_LABEL].append({"record_id": item_id, "author_ids": temp_list, "message": ""})
+            process_counter[SUCCESS_LABEL].append(
+                {"record_id": item_id, "author_ids": temp_list, "message": ""})
+
+            weko_logger(key='WEKO_COMMON_RETURN_VALUE',
+                        value=(pid.object_uuid, author_link))
             return pid.object_uuid, author_link
-        except PIDDoesNotExistError as pid_error:
-            current_app.logger.error("PID {} does not exist.".format(item_id))
-            process_counter[FAIL_LABEL].append({"record_id": item_id, "author_ids": temp_list, "message": "PID {} does not exist.".format(item_id)})
-            return None, set()
+        except PIDDoesNotExistError as ex:
+            weko_logger(key='WEKO_DEPOSIT_PID_STATUS_NOT_REGISTERED',
+                        pid=item_id, ex=ex)
+            process_counter[FAIL_LABEL].append({
+                "record_id": item_id,
+                "author_ids": temp_list,
+                "message": f"PID {item_id} does not exist."})
+            result = None, set()
+            weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=result)
+            return result
+        except SQLAlchemyError as ex:
+            weko_logger(key='DB_SOME_ERROR', ex=ex)
+            process_counter[FAIL_LABEL].append({
+                "record_id": item_id,
+                "author_ids": temp_list,
+                "message": f"Some errors in the DB while query record: "\
+                    "{pid.object_uuid}."
+                })
+            result = None, set()
+            weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=result)
+            return result
         except Exception as ex:
             current_app.logger.error(ex)
-            process_counter[FAIL_LABEL].append({"record_id": item_id, "author_ids": temp_list, "message": str(ex)})
+            process_counter[FAIL_LABEL].append({
+                "record_id": item_id,
+                "author_ids": temp_list,
+                "message": str(ex)})
             return None, set()
 
     def _process(data_size, data_from):
@@ -342,7 +478,7 @@ def update_items_by_authorInfo(user_id, target, origin_pkid_list=[], origin_id_l
             "affiliations_key": "creatorAffiliations",
             "affiliation_ids_key": "affiliationNameIdentifiers",
             "affiliation_id_key": "affiliationNameIdentifier",
-            "affiliation_id_uri_key": "affiliationNameIdentifierURI",            
+            "affiliation_id_uri_key": "affiliationNameIdentifierURI",
             "affiliation_id_scheme_key": "affiliationNameIdentifierScheme",
             "affiliation_names_key": "affiliationNames",
             "affiliation_name_key": "affiliationName",
@@ -367,7 +503,7 @@ def update_items_by_authorInfo(user_id, target, origin_pkid_list=[], origin_id_l
             "affiliations_key": "contributorAffiliations",
             "affiliation_ids_key": "contributorAffiliationNameIdentifiers",
             "affiliation_id_key": "contributorAffiliationNameIdentifier",
-            "affiliation_id_uri_key": "contributorAffiliationURI",            
+            "affiliation_id_uri_key": "contributorAffiliationURI",
             "affiliation_id_scheme_key": "contributorAffiliationScheme",
             "affiliation_names_key": "contributorAffiliationNames",
             "affiliation_name_key": "contributorAffiliationName",
@@ -392,7 +528,7 @@ def update_items_by_authorInfo(user_id, target, origin_pkid_list=[], origin_id_l
             "affiliations_key": "affiliations",
             "affiliation_ids_key": "nameIdentifiers",
             "affiliation_id_key": "nameIdentifier",
-            "affiliation_id_uri_key": "nameIdentifierURI",            
+            "affiliation_id_uri_key": "nameIdentifierURI",
             "affiliation_id_scheme_key": "nameIdentifierScheme",
             "affiliation_names_key": "affiliationNames",
             "affiliation_name_key": "affiliationName",
@@ -451,7 +587,7 @@ def update_db_es_data(origin_pkid_list, origin_id_list):
                 author_data.gather_flg = 1
                 db.session.merge(author_data)
         db.session.commit()
-    
+
         # update ES of Author
         update_author_q = {
             "query": {
