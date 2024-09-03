@@ -80,6 +80,8 @@ def weko_deposit_minter(record_uuid, data, recid=None):
             'status': 'draft',
         },
     })
+
+    weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=depid)
     return depid
 
 
@@ -96,11 +98,14 @@ def weko_deposit_fetcher(record_uuid, data):
         :obj:`FetchedPID`: PID object that contains pid_value.
     """
     pid_value = data.get('_deposit', {}).get('id')
-    return FetchedPID(
+
+    result =FetchedPID(
         provider=None,
         pid_type='depid',
         pid_value=pid_value,
     ) if pid_value else None
+    weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=result)
+    return result
 
 
 def get_latest_version_id(recid):
@@ -124,6 +129,7 @@ def get_latest_version_id(recid):
         version_id = max([int(idx.pid_value.split('.')[-1]) for idx in pid])
         version_id += 1
 
+    weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=version_id)
     return version_id
 
 
@@ -148,6 +154,7 @@ def get_record_identifier(recid):
         weko_logger(key='WEKO_COMMON_ERROR_UNEXPECTED', ex=ex)
         # raise WekoDepositError(ex=ex)
 
+    weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=record_id)
     return record_id
 
 
@@ -177,4 +184,5 @@ def get_record_without_version(pid):
                 pid_type='recid',
                 pid_value=parent_pid_value)
 
+    weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=recid_without_ver)
     return recid_without_ver

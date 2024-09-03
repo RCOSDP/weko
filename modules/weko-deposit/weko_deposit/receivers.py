@@ -21,7 +21,6 @@ from .errors import WekoDepositError
 from .logger import weko_logger
 from .pidstore import get_record_without_version
 
-# TODO: how use elasticsearch in this module?
 def append_file_content(sender, json=None, record=None, index=None, **kwargs):
     """Append file content to record for ES.
 

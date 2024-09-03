@@ -21,7 +21,6 @@
 """Blueprint for Weko deposit rest."""
 
 import json
-import sys
 from wsgiref.util import request_uri
 
 import redis
@@ -195,6 +194,7 @@ def create_blueprint(app, endpoints):
             methods=['PUT'],
         )
 
+    weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=blueprint)
     return blueprint
 
 
@@ -260,11 +260,12 @@ class ItemResource(ContentNegotiatedMethodView):
         Returns:
             Response: Response object containing the result of the operation.
         """
-
-        return self.make_response(pid,
+        result = self.make_response(pid,
                                   record,
                                   201,
                                   links_factory=base_factory)
+        weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=result)
+        return result
 
     def put(self, **kwargs):
         """Put the record.
@@ -408,6 +409,7 @@ class ItemResource(ContentNegotiatedMethodView):
                 sanitize_str += c
         weko_logger(key='WEKO_COMMON_FOR_END')
 
+        weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=sanitize_str)
         return sanitize_str
 
     def __sanitize_input_data(self, data):

@@ -85,7 +85,7 @@ def file_uploaded_owner(created_user_id=0, updated_user_id=0):
             updated_username = updated_userprofile._username
             updated_displayname = updated_userprofile._displayname
 
-    return {
+    result = {
         'created_user': {
             'user_id': created_user_id if show_created_user else 0,
             'username': created_username,
@@ -99,3 +99,5 @@ def file_uploaded_owner(created_user_id=0, updated_user_id=0):
             'email': updated_email,
         }
     }
+    weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=result)
+    return result

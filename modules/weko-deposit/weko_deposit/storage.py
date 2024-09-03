@@ -46,7 +46,9 @@ class WekoFileStorage(PyFSFileStorage):
                 A tuple containing the checksum algorithm and the \
                 message digest object.
         """
-        return 'sha256', hashlib.sha256()
+        result =  hashlib.sha256()
+        weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=('sha256', result))
+        return 'sha256', result
 
     def upload_file(self, fjson):
         """Upload file.
@@ -143,7 +145,9 @@ def make_path(base_uri, path, filename, path_dimensions, split_length):
     uri_parts.append(filename)
 
     url = os.path.join(base_uri, *uri_parts)
-    return url.replace("\\", "/") if os.sys.platform == 'win32' else url
+
+    result = url.replace("\\", "/") if os.sys.platform == 'win32' else url
+    return result
 
 
 def pyfs_storage_factory(fileinstance=None, default_location=None,
@@ -215,5 +219,7 @@ def pyfs_storage_factory(fileinstance=None, default_location=None,
                 current_app.config['FILES_REST_STORAGE_PATH_SPLIT_LENGTH'],
             )
 
-    return filestorage_class(
+    result = filestorage_class(
         fileurl, size=size, modified=modified, clean_dir=clean_dir)
+    weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=result)
+    return result
