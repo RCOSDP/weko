@@ -119,6 +119,11 @@ WEKO_DEPOSIT_MESSAGE = {
         'msgstr': "Pid status is not registered: {pid}",
         'loglevel': 'ERROR',
     },
+    'WEKO_DEPOSIT_FAILED_PARSE_FILE_ITEM': {
+        'msgid': 'WEKO_DEPOSIT_W_0001',
+        'msgstr': "FAILED to parse file from item {record_id}.",
+        'loglevel': 'WARN',
+    },
     'WEKO_DEPOSIT_UPDATE_ITEM': {
         'msgid': 'WEKO_DEPOSIT_I_0001',
         'msgstr': "Update item: {pid}",

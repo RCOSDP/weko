@@ -43,6 +43,21 @@ WEKO_COMMON_MESSAGE = {
         'msgstr': "Init config: {key}={value}",
         'loglevel': 'DEBUG',
     },
+    'WEKO_COMMON_WHILE_START':{
+        'msgid': 'WEKO_COMMON_D_0008',
+        'msgstr': "Start while sentence",
+        'loglevel': 'DEBUG',
+    },
+    'WEKO_COMMON_WHILE_END':{
+        'msgid': 'WEKO_COMMON_D_0009',
+        'msgstr': "End while sentence",
+        'loglevel': 'DEBUG',
+    },
+    'WEKO_COMMON_WHILE_LOOP_ITERATION':{
+        'msgid': 'WEKO_COMMON_D_0010',
+        'msgstr': "Loop iteration {count}, {element}",
+        'loglevel': 'DEBUG',
+    },
     'WEKO_COMMON_FAILED_DBCONNECTION': {
         'msgid': 'WEKO_COMMON_E_0001',
         'msgstr': "FAILED database connection.",

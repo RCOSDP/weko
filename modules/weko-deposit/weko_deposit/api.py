@@ -73,6 +73,9 @@ from weko_schema_ui.models import PublishStatus
 from weko_redis.redis import RedisConnection
 from weko_user_profiles.models import UserProfile
 from weko_deposit.logger import weko_logger
+from weko_workflow.api import WorkActivity
+from weko_workflow.utils import convert_record_to_item_metadata
+from weko_workflow.utils import get_url_root
 
 from .config import WEKO_DEPOSIT_BIBLIOGRAPHIC_INFO_KEY, \
     WEKO_DEPOSIT_BIBLIOGRAPHIC_INFO_SYS_KEY, WEKO_DEPOSIT_SYS_CREATOR_KEY
@@ -194,7 +197,20 @@ class WekoFileObject(FileObject):
 
 
 class WekoIndexer(RecordIndexer):
-    """Provide an interface for indexing records in Elasticsearch."""
+    """Provide an interface for indexing records in Elasticsearch.
+
+    This class extends the RecordIndexer class to index records and manipulate\
+    data in Elasticsearch. It includes methods for uploading metadata, deleting\
+    file indexes, updating relation versions, and updating Elasticsearch data.
+
+    Attributes:
+        es_index (str):\
+            Search index in Elasticsearch.
+        es_doc_type (str):\
+            Default document type in Elasticsearch.
+        file_doc_type (str):\
+            File document type in Elasticsearch.
+    """
 
     def get_es_index(self):
         """Assign Elastic search settings.
@@ -471,7 +487,7 @@ class WekoIndexer(RecordIndexer):
             path(int): Path instance. Index ID.
 
         Returns:
-
+            list: Result from Elasticsearch.
         """
         search_query = {
             "query": {
@@ -532,97 +548,159 @@ class WekoIndexer(RecordIndexer):
                 weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=res)
                 yield res
 
+                weko_logger(key='WEKO_COMMON_WHILE_START')
                 while res:
+                    weko_logger(key='WEKO_COMMON_WHILE_LOOP_ITERATION',
+                                count=None, element=scroll_id)
                     res = self.client.scroll(scroll_id=scroll_id, scroll='1m')
                     weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=res)
                     yield res
+                weko_logger(key='WEKO_COMMON_WHILE_END')
 
             self.client.clear_scroll(scroll_id=scroll_id)
 
     def get_metadata_by_item_id(self, item_id):
-        """Get metadata of item by id from ES.
+        """Get metadata of item by id from Elasticsearch.
 
-        :param item_id: Item ID (UUID).
-        :return: Metadata.
+        This method retrieves the metadata of an item from Elasticsearch by\
+        its ID.
+
+        Args:
+            item_id: Item ID (UUID).
+
+        Return:
+            str: The response from Elasticsearch after attempting the get.
         """
         self.get_es_index()
-        return self.client.get(index=self.es_index,
+        result = self.client.get(index=self.es_index,
                                 doc_type=self.es_doc_type,
                                 id=str(item_id))
+        weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=result)
+        return result
 
     def update_feedback_mail_list(self, feedback_mail):
         """Update feedback mail info.
 
+        This method updates the feedback mail list in Elasticsearch.
+
         Args:
-            feedback_mail (_type_): feedback_mail: mail list in json format. \
+            feedback_mail (dict):\
+                feedback_mail: mail list in json format. \
             {'id': UUID('05fd7cbd-6aad-4c76-a62e-7947868cccf6'), \
             'mail_list': [{'email': 'wekosoftware@nii.ac.jp', \
             'author_id': ''}]}
 
         Returns:
-            _type_: _feedback_mail_id
+            str: _feedback_mail_id
         """
         self.get_es_index()
         pst = 'feedback_mail_list'
         body = {'doc': {pst: feedback_mail.get('mail_list')}}
 
-        return self.client.update(
+        result = self.client.update(
             index=self.es_index,
             doc_type=self.es_doc_type,
             id=str(feedback_mail.get('id')),
             body=body
         )
+        weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=result)
+        return result
 
     def update_author_link(self, author_link):
-        """Update author_link info."""
+        """Update author_link info.
+
+        This method updates the author link in Elasticsearch.
+
+        Args:
+            author_link (dict):\
+                author_link: author link in json format.
+
+        Returns:
+            str: _author_link_id
+        """
         self.get_es_index()
         pst = 'author_link'
         body = {'doc': {pst: author_link.get('author_link')}}
 
-        return self.client.update(
+        result = self.client.update(
             index=self.es_index,
             doc_type=self.es_doc_type,
             id=str(author_link.get('id')),
             body=body
         )
+        weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=result)
+        return result
 
     def update_jpcoar_identifier(self, dc, item_id):
-        """Update JPCOAR meta data item."""
+        """Update JPCOAR meta data item.
+
+        This method updates the JPCOAR identifier in Elasticsearch.
+
+        Args:
+            dc (dict):\
+                dc: Item meta data in json format that use for update index \
+                    in Elasticsearch.
+            item_id (str):\
+                item_id: item id.
+        """
         self.get_es_index()
         body = {'doc': {'_item_metadata': dc}}
-        return self.client.update(
+        result = self.client.update(
             index=self.es_index,
             doc_type=self.es_doc_type,
             id=str(item_id),
             body=body
         )
+        weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=result)
+        return result
 
     def __build_bulk_es_data(self, updated_data):
         """Build ElasticSearch data.
 
-        :param updated_data: Records data.
+        This method builds the data to be used in the bulk update operation.
+
+        Args:
+            updated_data(dict): Records data to update.
         """
-        for record in updated_data:
+        weko_logger(key='WEKO_COMMON_FOR_START')
+        for i, record in enumerate(updated_data):
+            weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
+                        count=i, element=record)
+
             es_data = dict(
                 _id=str(record.get('_id')),
                 _index=self.es_index,
                 _type=self.es_doc_type,
                 _source=record.get('_source'),
             )
+            weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=es_data)
             yield es_data
+        weko_logger(key='WEKO_COMMON_FOR_END')
 
     def bulk_update(self, updated_data):
         """Bulk update.
 
-        :param updated_data: Updated data.
+        This method updates multiple records in Elasticsearch.
+
+        Args:
+            updated_data(dict): Updated data.
         """
         self.get_es_index()
         es_data = self.__build_bulk_es_data(updated_data)
         if es_data:
+            weko_logger(key='WEKO_COMMON_IF_ENTER',
+                        branch='es_data is not None')
             success, failed = bulk(self.client, es_data)
+
             if len(failed) > 0:
-                for error in failed:
+                weko_logger(key='WEKO_COMMON_IF_ENTER',
+                            branch='failed is not None')
+                weko_logger(key='WEKO_COMMON_FOR_START')
+                for i, error in enumerate(failed):
+                    weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
+                                count=i, element=error)
                     current_app.logger.error(error)
+                weko_logger(key='WEKO_COMMON_FOR_END')
 
 
 class WekoDeposit(Deposit):
@@ -640,11 +718,13 @@ class WekoDeposit(Deposit):
 
     @property
     def item_metadata(self):
-        """
-        Return the Item metadata.
+        """Return the Item metadata.
+
+        This method returns the item metadata.
 
         Args:
             None
+
         Returns:
             dict: item_metadata from item_id in instance \
             "ex :OrderedDict([('pubdate', {'attribute_name': 'PubDate', \
@@ -665,12 +745,14 @@ class WekoDeposit(Deposit):
         Raises:
             sqlalchemy.orm.exc.NoResultFound
         """
-        return ItemsMetadata.get_record(self.id).dumps()
+        result = ItemsMetadata.get_record(self.id).dumps()
+        weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=result)
+        return result
 
     def is_published(self):
-        """
+        """Check if deposit is published.
 
-        Check if deposit is published.
+        This method checks if the deposit is published.
 
         Args:
             None
@@ -678,15 +760,17 @@ class WekoDeposit(Deposit):
         Returns:
             dict: published deposit id if  deposit ispubilshed.  \
             {'type': 'depid', 'value': '34', 'revision_id': 0}
-
         """
-        return self['_deposit'].get('pid') is not None
+        result = self['_deposit'].get('pid') is not None
+        weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=result)
+        return result
 
     @preserve(fields=('_deposit', '$schema'))
     def merge_with_published(self):
-        """
+        """Merge changes with latest published version.
 
-        Merge changes with latest published version. (not use)
+        This method merges changes with the latest published version and then\
+        unify the paches. (not use)
 
         Args:
             None
@@ -701,13 +785,23 @@ class WekoDeposit(Deposit):
         lca = first.revisions[self['_deposit']['pid']['revision_id']]
         # ignore _deposit and $schema field
         args = [lca.dumps(), first.dumps(), self.dumps()]
-        for arg in args:
+        weko_logger(key='WEKO_COMMON_FOR_START')
+        for i, arg in enumerate(args):
+            weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION', count=i,
+                        element=arg)
             if '$schema' in arg:
+                weko_logger(key='WEKO_COMMON_IF_ENTER',
+                            branch='$schema is in arg')
                 del arg['$schema']
             if '_deposit' in arg:
+                weko_logger(key='WEKO_COMMON_IF_ENTER',
+                            branch='_deposit is in arg')
                 del arg['_deposit']
             if 'control_number' in arg:
+                weko_logger(key='WEKO_COMMON_IF_ENTER',
+                            branch='control_number is in arg')
                 del arg['control_number']
+        weko_logger(key='WEKO_COMMON_FOR_END')
         args.append({})
         m = Merger(*args)
         try:
@@ -718,13 +812,16 @@ class WekoDeposit(Deposit):
         except Exception as ex:
             weko_logger(key='WEKO_COMMON_ERROR_UNEXPECTED', ex=ex)
             # raise WekoDepositError(ex=ex) from ex
-        return self._patch(m.unified_patches, lca)
+        result = self._patch(m.unified_patches, lca)
+        weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=result)
+        return result
 
     @staticmethod
     def _patch(diff_result, destination, in_place=False):
-        """
+        """Patch the diff result to the destination dictionary.
 
-        Patch the diff result to the destination dictionary. (not use)
+        This method patches the diff result to the destination dictionary.
+        (not use)
 
         Args:
             diff_result (dict): Changes returned by ``diff``.
@@ -733,48 +830,100 @@ class WekoDeposit(Deposit):
             copied before applying the patch, and the copy is returned. \
             Setting ``in_place=True`` means that patch will apply the changes \
             directly to and return the destination structure.
+            Defaults to False.
 
         Returns:
             dict: destination
-
         """
         (ADD, REMOVE, CHANGE) = (
             'add', 'remove', 'change')
         if not in_place:
+            weko_logger(key='WEKO_COMMON_IF_ENTER', branch='in_place is True')
             destination = copy.deepcopy(destination)
 
         def add(node, changes):
-            for key, value in changes:
+            """Add changes to the destination.
+
+            This method adds changes to the destination by three cases.
+
+            Args:
+                node (list): Node to apply the changes to.
+                changes (dict): Changes to apply.
+            """
+            weko_logger(key='WEKO_COMMON_FOR_START')
+            for i, (key, value) in enumerate(changes):
+                weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
+                            count=i, element=key)
                 dest = dot_lookup(destination, node)
                 if isinstance(dest, list):
+                    weko_logger(key='WEKO_COMMON_IF_ENTER',
+                                branch='dest is list')
                     dest.insert(key, value)
                 elif isinstance(dest, set):
+                    weko_logger(key='WEKO_COMMON_IF_ENTER',
+                                branch='dest is set')
                     dest |= value
                 else:
+                    weko_logger(key='WEKO_COMMON_IF_ENTER',
+                                branch='dest is not list and set')
                     dest[key] = value
+            weko_logger(key='WEKO_COMMON_FOR_END')
 
         def change(node, changes):
+            """Apply changes to the specified node.
+
+            This method changes the node in the destination by three cases.
+
+            Args:
+                node (list): Node to apply the changes to.
+                changes (dict): Changes to apply.
+            """
             dest = dot_lookup(destination, node, parent=True)
             if isinstance(node, str):
+                weko_logger(key='WEKO_COMMON_IF_ENTER',
+                            branch='node is str')
                 last_node = node.split('.')[-1]
             else:
+                weko_logger(key='WEKO_COMMON_IF_ENTER',
+                            branch='node is not str')
                 last_node = node[-1]
             if isinstance(dest, list):
+                weko_logger(key='WEKO_COMMON_IF_ENTER',
+                            branch='dest is list')
                 last_node = int(last_node)
             _, value = changes
             dest[last_node] = value
 
         def remove(node, changes):
-            for key, value in changes:
+            """Remove changes from the destination.
+
+            This method removes changes from the destination by three cases.
+
+            Args:
+                node (list): Node to apply the changes to.
+                changes (dict): Changes to apply.
+            """
+            weko_logger(key='WEKO_COMMON_FOR_START')
+            for i, (key, value) in enumerate(changes):
+                weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
+                            count=i, element=key)
                 dest = dot_lookup(destination, node)
                 if isinstance(dest, set):
+                    weko_logger(key='WEKO_COMMON_IF_ENTER',
+                                branch='dest is set')
                     dest -= value
                 else:
                     if isinstance(dest, list) and isinstance(key, int) and len(
                             dest) > key:
+                        weko_logger(key='WEKO_COMMON_IF_ENTER',
+                                    branch='dest is list and key is int and '
+                                            'length of dest is larger than key')
                         del dest[key]
                     elif isinstance(dest, dict) and dest.get(key):
+                        weko_logger(key='WEKO_COMMON_IF_ENTER',
+                                    branch='dest is dict and key is in dest')
                         del dest[key]
+            weko_logger(key='WEKO_COMMON_FOR_END')
 
         patchers = {
             REMOVE: remove,
@@ -782,22 +931,28 @@ class WekoDeposit(Deposit):
             CHANGE: change
         }
 
-        for action, node, changes in diff_result:
+        weko_logger(key='WEKO_COMMON_FOR_START')
+        for i, (action, node, changes) in enumerate(diff_result):
+            weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
+                        count=i, element=action)
             patchers[action](node, changes)
+        weko_logger(key='WEKO_COMMON_FOR_END')
 
+        weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=destination)
         return destination
 
     def _publish_new(self, id_=None):
-        """
+        """Override the publish new to avoid creating multiple pids.
 
-        Override the publish new to avoid creating multiple pids.
+        This method reuses existing PIDs in order to prevent multiple PIDs\
+        being created.
 
         Args:
             id_ (str): uuid for publish new to avoid creating multiple pids.
+                        Defaults to None.
 
         Returns:
             dict: new created record
-
         """
         id_ = id_ or uuid.uuid4()
         record_pid = PersistentIdentifier.query.filter_by(
@@ -815,15 +970,17 @@ class WekoDeposit(Deposit):
         with self._process_files(id_, data):
             record = self.published_record_class.create(data, id_=id_)
 
+        weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=record)
         return record
 
     def _update_version_id(self, metas, bucket_id):
-        """
+        """Update 'version_id' of file_metadatas.
 
-        Update 'version_id' of file_metadatas.
+        This method get version id and updates the 'version_id' of \
+        file_metadatas based on the data in 'metas'.
 
         Args:
-            metas (dict):  Record Metadata  to update version_id
+            metas (dict): Record Metadata to update version_id
             bucket_id (str): Bucket UUID for search ObjectVersion
 
         Returns:
@@ -837,32 +994,53 @@ class WekoDeposit(Deposit):
         files_versions = {x.key: x.version_id for x in files_versions}
         file_meta = []
 
-        for item in metas:
+        weko_logger(key='WEKO_COMMON_FOR_START')
+        for i, item in enumerate(metas):
+            weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
+                        count=i, element=item)
             if not isinstance(metas[item], dict) or \
                     not metas[item].get('attribute_value_mlt'):
+                weko_logger(key='WEKO_COMMON_CONTINUE',
+                            branch='metadata is not dict or attribute_value_mlt'
+                                    ' does not exsist')
                 continue
             itemmeta = metas[item]['attribute_value_mlt']
             if itemmeta and isinstance(itemmeta, list) \
                 and isinstance(itemmeta[0], dict) \
                     and itemmeta[0].get(_filename_prop):
+                weko_logger(key='WEKO_COMMON_IF_ENTER',
+                            branch='itemmeta is list and first element is dict '
+                                    'and filename is in first element')
                 file_meta.extend(itemmeta)
             elif isinstance(itemmeta, dict) \
                     and itemmeta.get(_filename_prop):
+                weko_logger(key='WEKO_COMMON_IF_ENTER',
+                            branch='itemmeta is dict and '
+                                    'filename is in itemmeta')
                 file_meta.extend([itemmeta])
+        weko_logger(key='WEKO_COMMON_FOR_END')
 
         if not file_meta:
+            weko_logger(key='WEKO_COMMON_IF_ENTER',
+                        branch='file_meta is empty')
+            weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=False)
             return False
 
-        for item in file_meta:
+        weko_logger(key='WEKO_COMMON_FOR_START')
+        for i, item in enumerate(file_meta):
+            weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
+                        count=i, element=item)
             item['version_id'] = str(files_versions.get(
                 item.get(_filename_prop), ''))
+        weko_logger(key='WEKO_COMMON_FOR_END')
 
+        weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=True)
         return True
 
     def publish(self, pid=None, id_=None):
-        """
+        """Publish the deposit.
 
-        Publish the deposit.
+        This method publishes the deposit.
 
         Args:
             pid (int): Force the new pid value. (Default: ``None``)
@@ -871,16 +1049,17 @@ class WekoDeposit(Deposit):
 
         Returns:
             dict: pubilshed deposit dict
-
         """
         deposit = None
         deposit = self.publish_without_commit(pid, id_)
+        weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=deposit)
         return deposit
 
     def publish_without_commit(self, pid=None, id_=None):
-        """
+        """Publish the deposit without commit.
 
-        Publish the deposit without commit.
+        This method publishes the deposit without commit and updates the \
+        relation version current to Elasticsearch.
 
         Args:
             pid (int): Force the new pid value. (Default: ``None``)
@@ -889,13 +1068,18 @@ class WekoDeposit(Deposit):
 
         Returns:
             dict: pubilshed deposit dict
-
         """
         if not self.data:
+            weko_logger(key='WEKO_COMMON_IF_ENTER',
+                        branch='data is None')
             self.data = self.get('_deposit', {})
         if 'control_number' in self:
+            weko_logger(key='WEKO_COMMON_IF_ENTER',
+                        branch='control_number is in self')
             self.pop('control_number')
         if '$schema' not in self:
+            weko_logger(key='WEKO_COMMON_IF_ENTER',
+                        branch='$schema is not in self')
             self['$schema'] = current_app.extensions['invenio-jsonschemas']. \
                 path_to_url(current_app.config['DEPOSIT_DEFAULT_JSONSCHEMA'])
         self.is_edit = True
@@ -916,15 +1100,15 @@ class WekoDeposit(Deposit):
             relations_ver['is_last'] = relations_ver.get('index') == 0
             self.indexer.update_relation_version_is_last(relations_ver)
 
-        # current_app.logger.error("deposit:{}".format(deposit))
+        weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=deposit)
         return deposit
 
     @classmethod
     def create(cls, data, id_=None, recid=None):
-        """
+        """Create a deposit.
 
-        Create a deposit.
-        Adds bucket creation immediately on deposit creation.
+        This method adds the creation of the bucket immediately upon creation\
+        of the deposit and associates it.
 
         Args:
             data (dict): new create record data "ex: {'recid': '34', \
@@ -935,9 +1119,6 @@ class WekoDeposit(Deposit):
 
         Returns:
             dict: pubilshed deposit dict
-
-        Raises:
-            BaseException: throw all exception
         """
         if '$schema' in data:
             data.pop('$schema')
@@ -945,11 +1126,14 @@ class WekoDeposit(Deposit):
         # Get workflow storage location
         location_name = None
         if session and 'activity_info' in session:
+            weko_logger(key='WEKO_COMMON_IF_ENTER',
+                        branch='activity_info is in session')
             activity_info = session['activity_info']
-            from weko_workflow.api import WorkActivity
             activity = WorkActivity.get_activity_by_id(
                 activity_info['activity_id'])
             if activity and activity.workflow and activity.workflow.location:
+                weko_logger(key='WEKO_COMMON_IF_ENTER',
+                            branch='activity.workflow.location is in activity')
                 location_name = activity.workflow.location.name
 
         bucket = Bucket.create(
@@ -961,8 +1145,12 @@ class WekoDeposit(Deposit):
 
         # save user_name & display name.
         if current_user and current_user.is_authenticated:
+            weko_logger(key='WEKO_COMMON_IF_ENTER',
+                        branch='current_user is authenticated')
             user = UserProfile.get_by_userid(current_user.get_id())
             if '_deposit' in data:
+                weko_logger(key='WEKO_COMMON_IF_ENTER',
+                            branch='_deposit is in data')
                 data['_deposit']['owners_ext'] = {
                     'username': user._username if user else '',
                     'displayname': user._displayname if user else '',
@@ -970,16 +1158,22 @@ class WekoDeposit(Deposit):
                 }
 
         if recid:
+            weko_logger(key='WEKO_COMMON_IF_ENTER',
+                        branch='recid is not None')
             deposit = super(WekoDeposit, cls).create(
                 data,
                 id_=id_,
                 recid=recid
             )
         else:
+            weko_logger(key='WEKO_COMMON_IF_ENTER',
+                        branch='recid is None')
             deposit = super(WekoDeposit, cls).create(data, id_=id_)
 
         record_id = 0
         if data.get('_deposit'):
+            weko_logger(key='WEKO_COMMON_IF_ENTER',
+                        branch='_deposit is in data')
             record_id = str(data['_deposit']['id'])
         parent_pid = PersistentIdentifier.create(
             'parent',
@@ -997,26 +1191,27 @@ class WekoDeposit(Deposit):
         RecordDraft.link(recid, depid)
         # Update this object_uuid for item_id of activity.
         if session and 'activity_info' in session:
+            weko_logger(key='WEKO_COMMON_IF_ENTER',
+                        branch='activity_info is in session')
             activity = session['activity_info']
-            from weko_workflow.api import WorkActivity
             workactivity = WorkActivity()
             workactivity.upt_activity_item(activity, str(recid.object_uuid))
+        weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=deposit)
         return deposit
 
     @preserve(result=False, fields=PRESERVE_FIELDS)
     def update(self, *args, **kwargs):
-        """Summary line.
+        """Update only drafts.
 
-        Update only drafts.
-            Update the item information using the item metadata of \
-            arg1 and arg2.
+        Update the item information using the item metadata of arg1 and arg2.
+
         Args:
             *args:
-            arg1: index information
-                example: `{'index': ['1557820086539'], 'actions': '1'}`
-            arg2:
-                item_metadata information
-                example:
+                arg1: index information
+                    example: `{'index': ['1557820086539'], 'actions': '1'}`
+                arg2:
+                    item_metadata information
+                    example:
         ```
         {'pid': {
             'type': 'depid',
@@ -1054,35 +1249,28 @@ class WekoDeposit(Deposit):
         ```
             **kwargs:
                 unused: (Default: ``empty``)
-
-            Returns:
-                bool: Description of return value
-
         """
         self['_deposit']['status'] = 'draft'
         if len(args) > 1:
+            weko_logger(key='WEKO_COMMON_IF_ENTER',
+                        branch='args is more than 1')
             dc, deleted_items = self.convert_item_metadata(args[0], args[1])
             super(WekoDeposit, self).update(dc)
         elif len(args)==1:
+            weko_logger(key='WEKO_COMMON_IF_ENTER',
+                        branch='args is 1')
             dc, deleted_items = self.convert_item_metadata(args[0])
             super(WekoDeposit, self).update(dc)
         else:
+            weko_logger(key='WEKO_COMMON_IF_ENTER',
+                        branch='args is empty')
             super(WekoDeposit, self).update()
-
-
-        #if deleted_items:
-        #    for key in deleted_items:
-        #        if key in self:
-        #            self.pop(key)
-
-        #        if 'pid' in self['_deposit']:
-        #            self['_deposit']['pid']['revision_id'] += 1
 
     @preserve(result=False, fields=PRESERVE_FIELDS)
     def clear(self, *args, **kwargs):
-        """
+        """Clear only drafts.
 
-        Clear only drafts.
+        This method clears the draft status of the deposit.
 
         Args:
             *args: usable within weko but is not being used. \
@@ -1094,13 +1282,17 @@ class WekoDeposit(Deposit):
             None
         """
         if self['_deposit']['status'] != 'draft':
+            weko_logger(key='WEKO_COMMON_IF_ENTER',
+                        branch='status is not draft')
+            weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=None)
             return
         super(WekoDeposit, self).clear(*args, **kwargs)
 
     @index(delete=True)
     def delete(self, force=True, pid=None):
-        """
-        Delete deposit.
+        """Delete deposit.
+
+        This method deletes the deposit and removes bucket.
         Status required: ``'draft'``.
 
         Args:
@@ -1116,6 +1308,8 @@ class WekoDeposit(Deposit):
             pid_type='recid', pid_value=self.pid.pid_value)
 
         if recid.status == PIDStatus.RESERVED:
+            weko_logger(key='WEKO_COMMON_IF_ENTER',
+                        branch='recid status is reserved')
             db.session.delete(recid)
 
         # if this item has been deleted
@@ -1136,12 +1330,13 @@ class WekoDeposit(Deposit):
         bucket.locked = False
         bucket.remove()
 
-        return super(Deposit, self).delete()
+        result = super(Deposit, self).delete()
+        weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=result)
+        return result
 
     def commit(self, *args, **kwargs):
-        """
+        """Store changes on current instance in database and index it.
 
-        Store changes on current instance in database and index it.
         1. Get deposit's bucket then set the workflow's storage location to \
             the bucket's default location.
         2. Update the item metadata in the database.
@@ -1154,31 +1349,41 @@ class WekoDeposit(Deposit):
             **kwargs: usable within weko but is not being used. \
                 (Default: ``empty``)
 
-        Returns:
-            None
-
         Raises:
-            TransportError: fail upload metadata to elasticsearch
+            WekoDepositError: fail upload metadata to elasticsearch.
         """
         super(WekoDeposit, self).commit(*args, **kwargs)
         record = RecordMetadata.query.get(self.pid.object_uuid)
         if self.data and len(self.data):
+            weko_logger(key='WEKO_COMMON_IF_ENTER',
+                        branch='data is not empty')
             # Get deposit bucket
             deposit_bucket = Bucket.query.get(self['_buckets']['deposit'])
             if deposit_bucket and deposit_bucket.location:
+                weko_logger(key='WEKO_COMMON_IF_ENTER',
+                            branch='location is in deposit_bucket')
                 # Get workflow storage location
                 workflow_storage_location = None
                 if session and 'activity_info' in session:
+                    weko_logger(key='WEKO_COMMON_IF_ENTER',
+                                branch='activity_info is in session')
                     activity_info = session['activity_info']
-                    from weko_workflow.api import WorkActivity
+                    # from weko_workflow.api import WorkActivity
                     activity = WorkActivity.get_activity_by_id(
                         activity_info['activity_id'])
                     if activity and activity.workflow and \
                         activity.workflow.location:
+                        weko_logger(key='WEKO_COMMON_IF_ENTER',
+                                    branch='workflow.location is in activity')
                         workflow_storage_location = activity.workflow.location
                 if workflow_storage_location == None:
+                    weko_logger(key='WEKO_COMMON_IF_ENTER',
+                                branch='workflow_storage_location is None')
                     workflow_storage_location = Location.get_default()
                 if(deposit_bucket.location.id != workflow_storage_location.id):
+                    weko_logger(key='WEKO_COMMON_IF_ENTER',
+                                branch='deposit_bucket.location.id is not '
+                                        'equal to workflow_storage_location.id')
                     # Set workflow storage location to bucket default location
                     deposit_bucket.default_location = \
                         workflow_storage_location.id
@@ -1188,16 +1393,23 @@ class WekoDeposit(Deposit):
             self.save_or_update_item_metadata()
 
             if self.jrc and len(self.jrc):
+                weko_logger(key='WEKO_COMMON_IF_ENTER',
+                            branch='jrc is not empty')
                 if record and record.json and '_oai' in record.json:
+                    weko_logger(key='WEKO_COMMON_IF_ENTER',
+                                branch='_oai is in record.json')
                     self.jrc['_oai'] = record.json.get('_oai')
                 if 'path' in self.jrc and '_oai' in self.jrc \
                         and ('sets' not in self.jrc['_oai']
                             or not self.jrc['_oai']['sets']):
+                    weko_logger(key='WEKO_COMMON_IF_ENTER',
+                                branch='path is in jrc and _oai is in jrc and '
+                                        'sets is not in jrc[_oai] or sets is '
+                                        'empty')
                     setspec_list = self.jrc['path'] or []
-                    # setspec_list = OAISet.query.filter_by(
-                    #    id=self.jrc['path']).one_or_none()
                     if setspec_list:
-                        # self.jrc['_oai'].update(dict(sets=setspec_list.spec))
+                        weko_logger(key='WEKO_COMMON_IF_ENTER',
+                                    branch='setspec_list is not None')
                         self.jrc['_oai'].update(dict(sets=setspec_list))
                 # upload item metadata to Elasticsearch
                 set_timestamp(self.jrc, self.created, self.updated)
@@ -1213,8 +1425,12 @@ class WekoDeposit(Deposit):
                     feedback_mail_list = \
                         FeedbackMailList.get_mail_list_by_item_id(self.id)
                     if feedback_mail_list:
+                        weko_logger(key='WEKO_COMMON_IF_ENTER',
+                                    branch='feedback_mail_list is not None')
                         self.update_feedback_mail()
                     else:
+                        weko_logger(key='WEKO_COMMON_IF_ENTER',
+                                    branch='feedback_mail_list is None')
                         self.remove_feedback_mail()
                 except ElasticsearchException as ex:
                     weko_logger(
@@ -1226,15 +1442,17 @@ class WekoDeposit(Deposit):
                         'WEKO_DEPOSIT_ES_PARSING_ERROR_KEYWORD')
                     if err_passing_config and \
                             parse_err in ex.info["error"]["reason"]:
+                        weko_logger(key='WEKO_COMMON_IF_ENTER',
+                                    branch='err_passing_config is True and '
+                                            'parse_err is in ex.info')
                         self.delete_content_files()
                         self.indexer.upload_metadata(self.jrc,
                                                     self.pid.object_uuid,
                                                     self.revision_id,
                                                     True)
                         record_id = self['_deposit']['id']
-                        message = 'Failed to parse file from item {}'
-                        # TODO: remove current_app.logger
-                        # current_app.logger.warn(message.format(record_id))
+                        weko_logger(key='WEKO_DEPOSIT_FAILED_PARSE_FILE_ITEM',
+                                    record_id=record_id)
                     else:
                         raise WekoDepositError(
                             ex=ex,
@@ -1246,14 +1464,26 @@ class WekoDeposit(Deposit):
 
                 # Remove large base64 files for release memory
                 if self.jrc.get('content'):
-                    for content in self.jrc['content']:
+                    weko_logger(key='WEKO_COMMON_IF_ENTER',
+                                branch='content is in jrc')
+                    weko_logger(key='WEKO_COMMON_FOR_START')
+                    for i, content in enumerate(self.jrc['content']):
+                        weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
+                                    count=i, element=content)
                         if content.get('file'):
+                            weko_logger(key='WEKO_COMMON_IF_ENTER',
+                                        branch='file is in content')
                             del content['file']
+                    weko_logger(key='WEKO_COMMON_FOR_END')
 
         # fix schema url
         if record and record.json and '$schema' in record.json:
+            weko_logger(key='WEKO_COMMON_IF_ENTER',
+                        branch='$schema is in record.json')
             record.json.pop('$schema')
             if record.json.get('_buckets'):
+                weko_logger(key='WEKO_COMMON_IF_ENTER',
+                            branch='_buckets is in record.json')
                 self._update_version_id(record.json,
                                         record.json['_buckets']['deposit'])
             flag_modified(record, 'json')
@@ -1261,11 +1491,13 @@ class WekoDeposit(Deposit):
 
     def newversion(self, pid=None, is_draft=False):
         """Create a new version of the deposit.
-            1. Check if a newer version than the pid that is passed as an \
-                argument exists.
-            2. Update the draft_id then call the create() method to generate \
-                a new deposit.
-            3. Update both the database and elasticsearch.
+
+        1. Check if a newer version than the pid that is passed as an \
+            argument exists.
+        2. Update the draft_id then call the create() method to generate \
+            a new deposit.
+        3. Update both the database and elasticsearch.
+
         Args:
             pid(dict):
                 Used to check for the lastest pid. Defaults to none.<br>
@@ -1354,19 +1586,30 @@ class WekoDeposit(Deposit):
         # TODO: delete assert or not
         # assert PIDStatus.REGISTERED == pid.status
         if not pid.status == PIDStatus.REGISTERED:
-            weko_logger(key='WEKO_DEPOSIT_PID_STATUS_NOT_REGISTERED', pid=pid)
+            weko_logger(key='WEKO_COMMON_IF_ENTER',
+                        branch='pid status is not registered')
+            weko_logger(key='WEKO_DEPOSIT_PID_STATUS_NOT_REGISTERED',
+                        pid=pid.get('recid'))
             raise WekoDepositError(msg="PID status is not registered.")
 
 
         if not record or not versioning.exists or versioning.draft_child:
+            weko_logger(key='WEKO_COMMON_IF_ENTER',
+                        branch='record is None or versioning does not exists '
+                                'or draft_child exists')
+            weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=None)
             return None
 
         data = record.dumps()
         owners = data['_deposit']['owners']
         keys_to_remove = ('_deposit', 'doi', '_oai',
                         '_files', '_buckets', '$schema')
-        for k in keys_to_remove:
+        weko_logger(key='WEKO_COMMON_FOR_START')
+        for i, k in enumerate(keys_to_remove):
+            weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
+                        count=i, element=k)
             data.pop(k, None)
+        weko_logger(key='WEKO_COMMON_FOR_END')
 
         draft_id = '{0}.{1}'.format(
             pid.pid_value,
@@ -1375,9 +1618,7 @@ class WekoDeposit(Deposit):
         # NOTE: We call the superclass `create()` method, because
         # we don't want a new empty bucket, but
         # an unlocked snapshot of the old record's bucket.
-        deposit = super(
-            WekoDeposit,
-            self).create(data, recid=draft_id)
+        deposit = super().create(data, recid=draft_id)
         # Injecting owners is required in case of creating new
         # version this outside of request context
 
@@ -1394,6 +1635,8 @@ class WekoDeposit(Deposit):
         RecordDraft.link(recid, depid)
 
         if is_draft:
+            weko_logger(key='WEKO_COMMON_IF_ENTER',
+                        branch='is_draft is True')
             with db.session.begin_nested():
                 # Set relation type of draft record is 3: Draft
                 parent_pid = PIDVersioning(child=recid).parent
@@ -1413,39 +1656,57 @@ class WekoDeposit(Deposit):
         index = {'index': self.get('path', []),
                 'actions': self.get('publish_status')}
         if 'activity_info' in session:
+            weko_logger(key='WEKO_COMMON_IF_ENTER',
+                        branch='activity_info is in session')
             del session['activity_info']
         if is_draft:
-            from weko_workflow.utils import convert_record_to_item_metadata
+            weko_logger(key='WEKO_COMMON_IF_ENTER',
+                        branch='is_draft is True')
             item_metadata = convert_record_to_item_metadata(record)
         else:
+            weko_logger(key='WEKO_COMMON_IF_ENTER',
+                        branch='is_draft is False')
             item_metadata = ItemsMetadata.get_record(
                 pid.object_uuid).dumps()
         item_metadata.pop('id', None)
         args = [index, item_metadata]
         deposit.update(*args)
         deposit.commit()
+        weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=deposit)
         return deposit
 
     def get_content_files(self):
-        """
+        """Get content file metadata.
 
-        Get content file metadata.
+        This method gets the content file metadata and updates the file url.
 
         Args:
             None
-        Returns:
-            None
 
+        Raises:
+            WekoDepositError: Upload metadata to Elasticsearch error.
         """
-        from weko_workflow.utils import get_url_root
         contents = []
         fmd = self.get_file_data()
         if fmd:
-            for file in self.files:
+            weko_logger(key='WEKO_COMMON_IF_ENTER',
+                        branch='fmd is not empty')
+            weko_logger(key='WEKO_COMMON_FOR_START')
+            for i, file in enumerate(self.files):
+                weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
+                            count=i, element=file)
                 if isinstance(fmd, list):
-                    for lst in fmd:
+                    weko_logger(key='WEKO_COMMON_IF_ENTER',
+                                branch='fmd is list')
+                    weko_logger(key='WEKO_COMMON_FOR_START')
+                    for i, lst in enumerate(fmd):
+                        weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
+                                    count=i, element=lst)
                         filename = lst.get('filename')
                         if file.obj.key == filename:
+                            weko_logger(key='WEKO_COMMON_IF_ENTER',
+                                        branch='file.obj.key is equal to '
+                                                'filename')
                             lst.update({'mimetype': file.obj.mimetype})
                             lst.update(
                                 {'version_id': str(file.obj.version_id)})
@@ -1467,6 +1728,9 @@ class WekoDeposit(Deposit):
                                 content = lst.copy()
                                 attachment = {}
                                 if file.obj.mimetype in mimetypes:
+                                    weko_logger(key='WEKO_COMMON_IF_ENTER',
+                                                branch='file.obj.mimetype is in'
+                                                        ' mimetypes')
                                     try:
                                         reader = parser.from_file(
                                             file.obj.file.uri)
@@ -1502,11 +1766,13 @@ class WekoDeposit(Deposit):
                                     key='WEKO_COMMON_ERROR_UNEXPECTED', ex=ex)
                                 # raise WekoDepositError(ex=ex) from ex
                             break
+            weko_logger(key='WEKO_COMMON_FOR_END')
             self.jrc.update({'content': contents})
 
     def get_file_data(self):
-        """
-        Get file data.
+        """Get file data.
+
+        This method gets the file data from the item metadata.
 
         Args:
             None
@@ -1524,20 +1790,36 @@ class WekoDeposit(Deposit):
             'url': {'url': \
             'https://192.168.56.48/record/34/files/tagmanifest-sha256.txt'}}]"
             ```
-        Raises:
-            sqlalchemy.exc.OperationalError:
         """
         file_data = []
         data = self.data or self.item_metadata
-        for key in data:
+
+        weko_logger(key='WEKO_COMMON_FOR_START')
+        for i, key in enumerate(data):
+            weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
+                        count=i, element=key)
+
             if isinstance(data.get(key), list):
-                for item in data.get(key):
+                weko_logger(key='WEKO_COMMON_IF_ENTER',
+                            branch='data.get(key) is list')
+                weko_logger(key='WEKO_COMMON_FOR_START')
+
+                for i, item in enumerate(data.get(key)):
+                    weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
+                                count=i, element=item)
+
                     if (isinstance(item, dict) or isinstance(item, list)) \
                             and 'filename' in item:
+                        weko_logger(key='WEKO_COMMON_IF_ENTER',
+                                    branch='filename is in item')
                         file_data.extend(data.get(key))
                         break
+        weko_logger(key='WEKO_COMMON_FOR_END')
+
+        weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=file_data)
         return file_data
 
+    # TODO: refactor down from here.
     def save_or_update_item_metadata(self):
         """
         Save or update item metadata.
@@ -1714,7 +1996,7 @@ class WekoDeposit(Deposit):
             pid_type="recid", pid_value=self.get("recid")).one_or_none()
         if pid:
             item_id = pid.object_uuid
-            from weko_workflow.api import WorkActivity
+            # from weko_workflow.api import WorkActivity
             activity = WorkActivity().get_workflow_activity_by_item_id(item_id)
 
             if activity:
