@@ -1,9 +1,9 @@
 // require(["jquery", "bootstrap"],function() {});
 $(document).ready(function () {
   var checkboxTemplate = "/static/templates/weko_deposit/checkboxes.html";
-  $('#txt_title_item').val('Publish Date');
-  $('#txt_title_ja_item').val('公開日');
-  $('#txt_title_en_item').val('PubDate');
+  $('#txt_title_item_pubdate').val('Publish Date');
+  $('#txt_title_ja_item_pubdate').val('公開日');
+  $('#txt_title_en_item_pubdate').val('PubDate');
 // Number of callbacks(requests) when rendering the page, When add a new callback,
 // please increase/decrease appropriately
   var requestNum = 0;
@@ -26,7 +26,7 @@ $(document).ready(function () {
   page_json_editor = {}   //   一時的editorオブジェクトの保存
   url_update_schema = '/admin/itemtypes/register';
   rename_subitem_config = false;
-
+  // デフォルトマッピングのテンプレート
   mapping_value = {
     "display_lang_type": "",
     "oai_dc_mapping": "",
@@ -111,7 +111,15 @@ $(document).ready(function () {
   $('#myModal').modal({
     show: false
   })
-
+     // `uiFixedProperties` の値を取得
+     const uiFixedPropertiesString = $('#uiFixedProperties').val();
+     let properties;
+     try {
+         properties = JSON.parse(uiFixedPropertiesString);
+     } catch (e) {
+         console.error('Failed to parse uiFixedProperties:', e);
+         return; // JSON パースに失敗した場合は処理を中断
+     }
   if($('#item-type-lists').val().length > 0) {
     // バージョンアップ
     $('#upt_version').attr('checked', true);
@@ -121,6 +129,13 @@ $(document).ready(function () {
     $('#itemtype_name').val(itemname);
     url_update_schema = '/admin/itemtypes/'+$('#item-type-lists').val()+'/register';
   }else{
+    $(document).ready(function () {
+ 
+      for (let key in properties){
+        var id_title = $.now(); // タイムスタンプ生成
+        new_meta_row('item_' + id_title, propertyOptions , false, key); // タイトル
+      }
+  });
     endLoading();
   }
 
@@ -207,9 +222,9 @@ $(document).ready(function () {
   });
 
   function create_itemtype_schema(){
-    var titleItem = $('#txt_title_item').val();
-    var titleJa = $('#txt_title_ja_item').val();
-    var titleEn = $('#txt_title_en_item').val();
+    var titleItem = $('#txt_title_item_pubdate').val();
+    var titleJa = $('#txt_title_ja_item_pubdate').val();
+    var titleEn = $('#txt_title_en_item_pubdate').val();
     page_global.table_row_map['name'] = $('#itemtype_name').val();
     page_global.table_row_map['action'] = $('[name=radio_versionup]:checked').val();
 
@@ -444,17 +459,17 @@ $(document).ready(function () {
 
     page_global.table_row_map.schema.properties["pubdate"] = {
       type: "string",
-      title: titleItem,
+      title:titleItem,
       title_i18n: { ja: titleJa, en: titleEn },
       format: "datetime"
     };
     page_global.table_row_map.form.push({
       key: "pubdate",
       type: "template",
-      title: titleItem, // 編集されたタイトル
+      title: titleItem, 
         title_i18n: { 
-            ja: titleJa,  // 編集された日本語タイトル
-            en: titleEn   // 編集された英語タイトル
+            ja: titleJa,  
+            en: titleEn   
         },
       required: true,
       format: "yyyy-MM-dd",
@@ -496,6 +511,9 @@ $(document).ready(function () {
       tmp.input_value = "";
       tmp.input_minItems = $('#minItems_'+row_id).val();
       tmp.input_maxItems = $('#maxItems_'+row_id).val();
+      if ($('#is_fixed_field' + row_id).val() === 'true'){
+        tmp.is_fixed_field = true;
+      }
       tmp.option = {}
       tmp.option.required = $('#chk_'+row_id+'_0').is(':checked')?true:false;
       tmp.option.multiple = $('#chk_'+row_id+'_1').is(':checked')?true:false;
@@ -838,10 +856,10 @@ $(document).ready(function () {
     });
     //公開日
     var tmp_pubdate = {};
-    tmp_pubdate.title = $('#txt_title_item').val();    
+    tmp_pubdate.title = titleItem    
     tmp_pubdate.title_i18n = {}
-    tmp_pubdate.title_i18n.ja = $('#txt_title_ja_item').val();
-    tmp_pubdate.title_i18n.en = $('#txt_title_en_item').val();
+    tmp_pubdate.title_i18n.ja = titleJa
+    tmp_pubdate.title_i18n.en = titleEn
     tmp_pubdate.input_type = "datetime";
     tmp_pubdate.input_value = "";
     tmp_pubdate.option = {};
@@ -858,14 +876,51 @@ $(document).ready(function () {
   
   //add new meta table row
   $('#btn_new_itemtype_meta').on('click', function(){
-    new_meta_row('item_' + $.now(), propertyOptions);
-  });
-   $('.btn-link-item').click(function() {
-    $(this).closest('td').find('.text-title-JaEn').toggleClass('hide');
+      let uniqueId = 'item_' + $.now();
+      new_meta_row(uniqueId, propertyOptions);
+  
+      // デバッグ: <select> と <option> の確認
+      setTimeout(function() {
+          let $select = $('#select_input_type_' + uniqueId);
+          console.log('Select element:', $select);
+          console.log('Options:', $select.find('option').toArray());
+  
+          // 固定プロパティの存在チェック
+          let fixedProperties = ['cus_1001', 'cus_1014'];
+          let hasFixedProperties = false;
+  
+          // src_render.meta_list から固定プロパティが存在するか確認
+          if (src_render.meta_list) {
+              $.each(src_render.meta_list, function(key, meta) {
+                  if (meta.is_fixed_field && fixedProperties.includes(meta.input_type)) {
+                      hasFixedProperties = true;
+                      return false; // ループを終了
+                  }
+              });
+          }
+          // 固定プロパティが存在する場合のみ、option 要素を非表示にする
+          if (hasFixedProperties) {
+              $select.find('option[value="cus_1001"], option[value="cus_1014"]').hide();
+          }
+          else if ($('#item-type-lists').val().length === 0) {
+          $select.find('option[value="cus_1001"], option[value="cus_1014"]').hide();
+        }
+      }, 100);
     });
-
-  function new_meta_row(row_id, option_list, isDisableChangeInputType=false) {
-    let isDisable = isDisableChangeInputType ? 'disabled' : '';
+  
+      // ボタンがクリックされたときの処理
+      $('.btn-link-item').click(function() {
+      // クリックされたボタンの隣にある多言語設定領域を表示・非表示を切り替える
+      $(this).closest('td').find('.text-title-JaEn').toggleClass('hide');
+      });
+    function new_meta_row(row_id, option_list, isDisableChangeInputType=false, key = null) {
+      let isDisable = isDisableChangeInputType ? 'disabled' : '';
+      let is_fixed_field = false;
+      let fixed_option;
+      if (key && properties.hasOwnProperty(key)) {
+        is_fixed_field = true;
+        fixed_option = properties[key].fixed_option;
+      }
     var row_template = '<tr id="tr_' + row_id + '">'
         + '<td><input type="text" class="form-control" id="txt_title_' + row_id + '" value="">'
         + '  <div class="hide" id="text_title_JaEn_' + row_id + '">'
@@ -917,6 +972,7 @@ $(document).ready(function () {
         + '  <div class="checkbox" id="chk_prev_' + row_id + '_5">'
         + '    <label><input type="checkbox" id="chk_' + row_id + '_5" value="displayoneline">' + "Display on one line" + '</label>'
         + '  </div>'
+        + '  <input type="hidden" id="is_fixed_field' + row_id + '" value="' + !!is_fixed_field + '" >'
         + '</td>'
         + '<td>'
         + '  <textarea type="button" class="form-control" rows="5" id="edit_notes_' + row_id + '">' + "" + '</textarea>'
@@ -928,7 +984,10 @@ $(document).ready(function () {
         + '  </div>'
         + '</td>'
         + '<td>'
-          + '  <button type="button" class="btn btn-danger" id="btn_del_' + row_id + '"><span class="glyphicon glyphicon-remove"></span></button>'
+        + (!is_fixed_field?
+          '  <button type="button" class="btn btn-danger" id="btn_del_' + row_id + '"><span class="glyphicon glyphicon-remove"></span></button>'
+          : ''
+        )
         + '</td>'
         + '</tr>';
     $('#tbody_itemtype').append(row_template);
@@ -981,6 +1040,34 @@ $(document).ready(function () {
         }
       }
     });
+  
+    setTimeout(function() {
+      // `uiFixedProperties` の値を取得
+      const uiFixedPropertiesString = $('#uiFixedProperties').val();
+      let properties;
+      try {
+        properties = JSON.parse(uiFixedPropertiesString);
+      } catch (e) {
+        console.error('Failed to parse uiFixedProperties:', e);
+        return; // JSON パースに失敗した場合は処理を中断
+      }
+        if (properties.hasOwnProperty(key)) {
+          let prop = properties[key];
+          $('#select_input_type_' + row_id).prop('disabled', true);
+          $('#btn_del_' + row_id).remove();
+          $('#select_input_type_' + row_id).val('cus_' + key).trigger('change');
+          let idTitle = `chk_item_${row_id.replace('item_','')}`;
+          $(`#${idTitle}_0`).prop('checked', prop.fixed_option.required|| false).change().prop('disabled', prop.fixed_option.required || undefined);
+          if(prop.fixed_option.multiple){
+            $(`#${idTitle}_1`).trigger('click'); 
+          }
+          $(`#${idTitle}_1`).prop('disabled', prop.fixed_option.multiple !== undefined);
+          $(`#${idTitle}_2`).prop('checked', prop.fixed_option.showlist|| false).prop('disabled', prop.fixed_option.showlist !== undefined);
+          $(`#${idTitle}_3`).prop('checked', prop.fixed_option.crtf|| false).prop('disabled', prop.fixed_option.crtf !== undefined);
+          $(`#${idTitle}_4`).prop('checked', prop.fixed_option.hidden|| false).prop('disabled', prop.fixed_option.hidden !== undefined);
+          $(`#${idTitle}_5`).prop('checked', prop.fixed_option.oneline|| false).prop('disabled', prop.fixed_option.oneline !== undefined);
+          }
+     }, 100); 
   }
 
   $('#tbody_itemtype').on('click', '.sortable_up', function(){
@@ -1324,12 +1411,24 @@ $(document).ready(function () {
       $('#chk_upload_file').attr('checked', data.upload_file);
       // load publish date option
       loadPubdateOptions(data);
+        //         // `uiFixedProperties` の値を取得
+        // const uiFixedPropertiesString = $('#uiFixedProperties').val();
+        // let properties;
+        // try {
+        //     properties = JSON.parse(uiFixedPropertiesString);
+        // } catch (e) {
+        //     console.error('Failed to parse uiFixedProperties:', e);
+        //   return; // JSON パースに失敗した場合は処理を中断
+        // }
       $.each(data.table_row, function(idx, row_id){
         if (generalTextProps.includes(data.meta_list[row_id].input_type)) {
           new_meta_row(row_id, textPropertyOptions);
         } else {
           new_meta_row(row_id, propertyOptions, true);
         }
+        let key = data.meta_list[row_id].input_type.substr(4);
+        let prop = properties[key] || {};
+        let fixedOptions = prop.fixed_option || {};
         let requiredCheckbox = $('#chk_'+row_id+'_0');
         let multipleCheckbox = $('#chk_'+row_id+'_1');
         let newLineCheckbox = $('#chk_'+row_id+'_3');
@@ -1347,7 +1446,7 @@ $(document).ready(function () {
         $('#chk_'+row_id+'_3').attr('checked', data.meta_list[row_id].option.crtf);
         $('#chk_'+row_id+'_4').attr('checked', data.meta_list[row_id].option.hidden);
         $('#chk_'+row_id+'_5').attr('checked', data.meta_list[row_id].option.oneline);
-
+        $('#is_fixed_field' + row_id).val(data.meta_list[row_id].is_fixed_field);
         // Add the notes for the row here
         if(row_id in data.edit_notes) {
           $('#edit_notes_' + row_id).val(data.edit_notes[row_id]);
@@ -1366,6 +1465,16 @@ $(document).ready(function () {
           $('#chk_' + row_id + '_5').attr('disabled', true);
         }
 
+            if (data.meta_list[row_id].is_fixed_field) {
+                    $('#btn_del_' + row_id).remove();
+                    let options = data.meta_list[row_id].option || {};
+                    requiredCheckbox.prop('checked', options.required || false).prop('disabled', fixedOptions.required !== undefined);
+                    multipleCheckbox.prop('checked', options.multiple || false).prop('disabled', fixedOptions.multiple !== undefined);
+                    $('#chk_' + row_id + '_2').prop('checked', options.showlist || false).prop('disabled', fixedOptions.showlist !== undefined);
+                    $('#chk_' + row_id + '_3').prop('checked', options.crtf || false).prop('disabled', fixedOptions.crtf !== undefined);
+                    $('#chk_' + row_id + '_4').prop('checked', options.hidden || false).prop('disabled', fixedOptions.hidden !== undefined);
+                    $('#chk_' + row_id + '_5').prop('checked', options.oneline || false).prop('disabled', fixedOptions.oneline !== undefined);
+            }
         if(data.meta_list[row_id].option.multiple) {
           $('#arr_size_' + row_id).removeClass('hide');
         }
@@ -2017,9 +2126,9 @@ $(document).ready(function () {
         }
       };
       if(options) {
-        $('#txt_title_item').val(tmp_pubdate.title);    
-        $('#txt_title_ja_item').val(tmp_pubdate.title_i18n.ja);
-        $('#txt_title_en_item').val(tmp_pubdate.title_i18n.en);
+        $('#txt_title_item_pubdate').val(tmp_pubdate.title);    
+        $('#txt_title_ja_item_pubdate').val(tmp_pubdate.title_i18n.ja);
+        $('#txt_title_en_item_pubdate').val(tmp_pubdate.title_i18n.en);
         $('#chk_pubdate_1').prop('checked', options.multiple);
         $('#chk_pubdate_2').prop('checked', options.showlist);
         $('#chk_pubdate_3').prop('checked', options.crtf);

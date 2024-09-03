@@ -67,3 +67,23 @@ WEKO_ITEMTYPES_UI_UPGRADE_VERSION_ENABLED = True
 """Enable Upgrade Version."""
 
 DISABLE_DUPLICATION_CHECK = False
+
+WEKO_ITEMTYPES_UI_FIXED_PROPERTIES = {
+    '1001': {
+        'fixed_option': {
+            'required': True,
+            'multiple': True,
+            'showlist': False,
+            'crtf': False,
+            'hidden': False,
+            'oneline': False
+        }
+    },
+    '1014': {
+        'fixed_option': {
+            'required': True,
+            'multiple': False,
+        }
+    }
+}   
+"""RO-Crate file properties. see here: https://schema.org/MediaObject"""
