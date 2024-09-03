@@ -1819,40 +1819,54 @@ class WekoDeposit(Deposit):
         weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=file_data)
         return file_data
 
-    # TODO: refactor down from here.
     def save_or_update_item_metadata(self):
-        """
-        Save or update item metadata.
-        Save when register a new item type, Update when edit an item
+        """Save or update item metadata.
+
+        Save when register a new item type, Update when edit an item.
 
         Args:
             None
-
-        Returns:
-            None
-
         """
         deposit_owners = self.get('_deposit', {}).get('owners')
         owner = str(deposit_owners[0] if deposit_owners else 1)
         if owner:
+            weko_logger(key='WEKO_COMMON_IF_ENTER',
+                        branch='owner is not None')
             dc_owner = self.data.get("owner", None)
             if not dc_owner:
+                weko_logger(key='WEKO_COMMON_IF_ENTER',
+                            branch='dc_owner is None')
                 self.data.update(dict(owner=owner))
 
         if ItemMetadata.query.filter_by(id=self.id).first():
+            weko_logger(key='WEKO_COMMON_IF_ENTER',
+                        branch='ItemMetadata is not None')
             obj = ItemsMetadata.get_record(self.id)
             obj.update(self.data)
             if self.data.get('deleted_items'):
-                for key in self.data.get('deleted_items'):
+                weko_logger(key='WEKO_COMMON_IF_ENTER',
+                            branch='deleted_items is not None')
+                weko_logger(key='WEKO_COMMON_FOR_START')
+                for i, key in enumerate(self.data.get('deleted_items')):
+                    weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
+                                count=i, element=key)
                     if key in obj:
+                        weko_logger(key='WEKO_COMMON_IF_ENTER',
+                                    branch='key is in obj')
                         obj.pop(key)
+                weko_logger(key='WEKO_COMMON_FOR_END')
             obj.commit()
         else:
+            weko_logger(key='WEKO_COMMON_IF_ENTER',
+                        branch='ItemMetadata is None')
             if self.data.get('deleted_items'):
+                weko_logger(key='WEKO_COMMON_IF_ENTER',
+                            branch='deleted_items is not None')
                 self.data.pop('deleted_items')
             ItemsMetadata.create(self.data, id_=self.pid.object_uuid,
                                 item_type_id=self.get('item_type_id'))
 
+    # TODO: refactor down from here.
     def delete_old_file_index(self):
         """
 
