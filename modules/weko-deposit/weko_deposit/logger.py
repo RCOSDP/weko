@@ -25,7 +25,7 @@ WEKO_DEPOSIT_MESSAGE = {
     },
     'WEKO_DEPOSIT_FAILED_FILE_UPLOAD': {
         'msgid': 'WEKO_DEPOSIT_E_0004',
-        'msgstr': "FAILED file upload: {file_id}",
+        'msgstr': "FAILED file upload: {file_name}",
         'msglvl': 'ERROR',
     },
     'WEKO_DEPOSIT_FAILED_REGISTER_INDEX': {
@@ -58,6 +58,11 @@ WEKO_DEPOSIT_MESSAGE = {
         'msgstr': "FAILED to merge author ID:{author_id}",
         'msglvl': 'ERROR',
     },
+    'WeKO_DEPOSIT_FAILED_ENCODING_DECODING_FILE': {
+        'msgid': 'WEKO_DEPOSIT_E_0011',
+        'msgstr': "FAILED to encode/decode file: {file_name}",
+        'msglvl': 'ERROR',
+    },
     'WEKO_DEPOSIT_FAILED_DELETE_FILE_INDEX': {
         'msgid': 'WEKO_DEPOSIT_E_0012',
         'msgstr': "FAILED to delete file index. Record id: {record_id}",
@@ -73,9 +78,20 @@ WEKO_DEPOSIT_MESSAGE = {
         'msgstr': "FAILED to merge changes with latest published version. pid: {pid}",
         'msglvl': 'ERROR',
     },
+    'WEKO_DEPOSIT_FAILED_MAKE_PATH': {
+        'msgid': 'WEKO_DEPOSIT_E_0015',
+        'msgstr': "FAILED to make path: {path}; "\
+            "Path length must be at least {length} characters.",
+        'msglvl': 'ERROR',
+    },
     'WEKO_DEPOSIT_FAILED_UPLOAD_FILE_CONTENT_TO_ELASTICSEARCH': {
         'msgid': 'WEKO_DEPOSIT_E_0016',
         'msgstr': "FAILED to upload file content to Elasticsearch. Uuid: {uuid}",
+        'msglvl': 'ERROR',
+    },
+    'WEKO_DEPOSIT_FAILED_STORAGE_FACTORY':{
+        'msgid': 'WEKO_DEPOSIT_E_0017',
+        'msgstr': "FAILED to make args for file storage factory.",
         'msglvl': 'ERROR',
     },
     'WEKO_DEPOSIT_FAILED_FIND_FILE': {
@@ -173,6 +189,12 @@ WEKO_DEPOSIT_MESSAGE = {
     'WEKO_DEPOSIT_MERGE_AUTHORID': {
         'msgid': 'WEKO_DEPOSIT_I_0014',
         'msgstr': "Merged author ID: {author_id}",
+        'msglvl': 'INFO',
+    },
+    'WEKODEPOSIT_APPEND_FILE_CONTENT': {
+        'msgid': 'WEKO_DEPOSIT_I_0015',
+        'msgstr': "Append file content to record for reindexing "\
+            "Elasticsearch: {recid}",
         'msglvl': 'INFO',
     },
 }

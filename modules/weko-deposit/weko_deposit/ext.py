@@ -23,6 +23,7 @@
 from invenio_indexer.signals import before_record_index
 
 from . import config
+from .logger import weko_logger
 from .receivers import append_file_content
 from .rest import create_blueprint
 from .views import blueprint
@@ -34,15 +35,18 @@ class WekoDeposit(object):
     def __init__(self, app=None):
         """Extension initialization.
 
-        :param app: The Flask application. (Default: ``None``)
+        Args:
+            app (:obj:`flask.Flask`): The Flask application. Default to `None`.
         """
         if app:
             self.init_app(app)
+            weko_logger(key='WEKO_COMMOM_INIT_APP', ext="weko-deposit")
 
     def init_app(self, app):
         """Flask application initialization.
 
-        :param app: The Flask application.
+        Args:
+            app (:obj:`flask.Flask`): The Flask application. Default to `None`.
         """
         self.init_config(app)
         app.register_blueprint(blueprint)
@@ -51,18 +55,27 @@ class WekoDeposit(object):
     def init_config(self, app):
         """Initialize configuration.
 
-        :param app: The Flask application.
+        Args:
+            app (:obj:`flask.Flask`): The Flask application. Default to `None`.
         """
         # Use theme's base template if theme is installed
         if 'BASE_TEMPLATE' in app.config:
+            weko_logger(key='WEKO_COMMOM_IF_ENTER',
+                        branch="BASE_TEMPLATE in app.config")
+
             app.config.setdefault(
                 'WEKO_DEPOSIT_BASE_TEMPLATE',
                 app.config['BASE_TEMPLATE'],
             )
 
+        weko_logger(key='WEKO_COMMON_FOR_START')
         for k in dir(config):
             if k.startswith('WEKO_DEPOSIT_'):
-                app.config.setdefault(k, getattr(config, k))
+                val=getattr(config, k)
+                app.config.setdefault(k, val)
+
+                weko_logger(key='WEKO_COMMON_INIT_CONFIG', key=k, val=val)
+
         before_record_index.connect(append_file_content)
 
 
@@ -72,10 +85,12 @@ class WekoDepositREST(object):
     def __init__(self, app=None):
         """Extension initialization.
 
-        :param app: An instance of :class:`flask.Flask`.
+        Args:
+            app (:obj:`flask.Flask`): The Flask application. Default to `None`.
         """
         if app:
             self.init_app(app)
+            weko_logger(key='WEKO_COMMON_INIT_APP', ext="weko-deposit-rest")
 
     def init_app(self, app):
         """Flask application initialization.
@@ -83,10 +98,10 @@ class WekoDepositREST(object):
         Initialize the REST endpoints.  Connect all signals if
         `DEPOSIT_REGISTER_SIGNALS` is True.
 
-        :param app: An instance of :class:`flask.Flask`.
+        Args:
+            app (:obj:`flask.Flask`): The Flask application. Default to `None`.
         """
         blueprint = create_blueprint(app,
-                                     app.config['WEKO_DEPOSIT_REST_ENDPOINTS']
-                                     )
+                                    app.config['WEKO_DEPOSIT_REST_ENDPOINTS'])
         app.register_blueprint(blueprint)
         app.extensions['weko-deposit-rest'] = self
