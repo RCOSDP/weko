@@ -1357,6 +1357,19 @@ class ItemTypeProps(RecordBase):
                 record=record
             )
 
+            if not name:
+                raise ValueError(
+                    "The property name is required and cannot be empty."
+                )
+
+            duplicated_prop = ItemTypeProperty.query.filter_by(name=name).first()
+            if duplicated_prop:
+                raise IntegrityError(
+                    "The property name already exists in the database.",
+                    params=None,
+                    orig=None
+                )
+
             record.model = ItemTypeProperty(name=name,
                                             schema=schema,
                                             form=form_single,
