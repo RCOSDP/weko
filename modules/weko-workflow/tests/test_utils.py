@@ -135,6 +135,7 @@ from weko_workflow.utils import (
     grant_access_rights_to_all_open_restricted_files,
     delete_lock_activity_cache,
     delete_user_lock_activity_cache,
+    check_require_mapping
 )
 from weko_workflow.api import GetCommunity, UpdateItem, WorkActivity, WorkActivityHistory, WorkFlow
 from weko_workflow.models import Activity
@@ -3056,7 +3057,7 @@ def test_prepare_doi_link_workflow(app):
             }
             assert result == test
         
-         # doi is null
+         # doi is None
         null_identifier = Identifier(id=1, repository='Root Index')
         with patch("weko_workflow.utils.get_identifier_setting",return_value = null_identifier):
             app.config["IDENTIFIER_GRANT_SUFFIX_METHOD"]=0
@@ -3069,7 +3070,7 @@ def test_prepare_doi_link_workflow(app):
             }
             assert result == test
         
-        # identifier_setting is null
+        # identifier_setting is None
         with pytest.raises(Exception) as e:
             app.config["IDENTIFIER_GRANT_SUFFIX_METHOD"]=0
             result = prepare_doi_link_workflow("123456", doi_input)
@@ -3249,3 +3250,46 @@ def test_delete_user_lock_activity_cache(client,users):
     assert current_cache.get(cache_key) == None
     
     current_cache.delete(cache_key)
+    
+from weko_records.models import ItemTypeName, ItemType
+from weko_records.api import Mapping
+def test_check_require_mapping(db, workflow):
+    schema = {"type": "object","$schema": "http://json-schema.org/draft-04/schema#","required": ["pubdate"],"properties": {"pubdate": {"type": "string","title": "PubDate","format": "datetime"},"item_1725251531381": {"type": "object","title": "Title","properties": {"subitem_title": {"type": "string","title": "タイトル","format": "text","title_i18n": {"en": "Title","ja": "タイトル"}},"subitem_title_language": {"enum": [None,"ja","en"],"type": ["None","string"],"title": "言語","format": "select","currentEnum": ["ja","en"]}}},"item_1725251553061": {"type": "object","title": "Item Title","properties": {"subitem_restricted_access_item_title": {"type": "string","title": "アイテムタイトル","format": "text","title_i18n": {"en": "Item Title","ja": "アイテムタイトル"}}}},"item_1725251567653": {"type": "object","title": "Language","properties": {"subitem_language": {"enum": [None,"jpn","eng"],"type": ["None","string"],"title": "言語","format": "select","currentEnum": ["jpn","eng"]}}},"item_1725251612021": {"type": "object","title": "Other Language","properties": {"subitem_language": {"enum": [None,"jpn","eng"],"type": ["None","string"],"title": "言語","format": "select","currentEnum": ["jpn","eng"]}}}},"description": ""}
+    form = [{"key": "pubdate","type": "template","title": "PubDate","format": "yyyy-MM-dd","required": True,"title_i18n": {"en": "PubDate","ja": "公開日"},"templateUrl": "/static/templates/weko_deposit/datepicker.html"},{"key": "item_1725251531381","type": "fieldset","items": [{"key": "item_1725251531381.subitem_title","type": "text","title": "タイトル","title_i18n": {"en": "Title","ja": "タイトル"}},{"key": "item_1725251531381.subitem_title_language","type": "select","title": "言語","titleMap": [{"name": "ja","value": "ja"},{"name": "en","value": "en"}],"title_i18n": {"en": "Language","ja": "言語"}}],"title": "Title","title_i18n": {"en": "","ja": ""}},{"key": "item_1725251553061","type": "fieldset","items": [{"key": "item_1725251553061.subitem_restricted_access_item_title","type": "text","title": "アイテムタイトル","title_i18n": {"en": "Item Title","ja": "アイテムタイトル"}}],"title": "Item Title","title_i18n": {"en": "","ja": ""}},{"key": "item_1725251567653","type": "fieldset","items": [{"key": "item_1725251567653.subitem_language","type": "select","title": "言語","titleMap": [{"name": "jpn","value": "jpn"},{"name": "eng","value": "eng"}],"title_i18n": {"en": "Language","ja": "言語"}}],"title": "Language","title_i18n": {"en": "","ja": ""}},{"key": "item_1725251612021","type": "fieldset","items": [{"key": "item_1725251612021.subitem_language","type": "select","title": "言語","titleMap": [{"name": "jpn","value": "jpn"},{"name": "eng","value": "eng"}],"title_i18n": {"en": "Language","ja": "言語"}}],"title": "Other Language","title_i18n": {"en": "","ja": ""}}]
+    render = {"meta_fix": {"pubdate": {"title": "PubDate","option": {"crtf": False,"hidden": False,"multiple": False,"required": True,"showlist": False},"input_type": "datetime","title_i18n": {"en": "PubDate","ja": "公開日"},"input_value": ""}},"meta_list": {"item_1725251531381": {"title": "Title","option": {"crtf": False,"hidden": False,"oneline": False,"multiple": False,"required": False,"showlist": False},"input_type": "cus_1001","title_i18n": {"en": "","ja": ""},"input_value": "","input_maxItems": "9999","input_minItems": "1"},"item_1725251553061": {"title": "Item Title","option": {"crtf": False,"hidden": False,"oneline": False,"multiple": False,"required": False,"showlist": False},"input_type": "cus_3011","title_i18n": {"en": "","ja": ""},"input_value": "","input_maxItems": "9999","input_minItems": "1"},"item_1725251567653": {"title": "Language","option": {"crtf": False,"hidden": False,"oneline": False,"multiple": False,"required": False,"showlist": False},"input_type": "cus_1003","title_i18n": {"en": "","ja": ""},"input_value": "","input_maxItems": "9999","input_minItems": "1"},"item_1725251612021": {"title": "Other Language","option": {"crtf": False,"hidden": False,"oneline": False,"multiple": False,"required": False,"showlist": False},"input_type": "cus_1003","title_i18n": {"en": "","ja": ""},"input_value": "","input_maxItems": "9999","input_minItems": "1"}},"table_row": ["item_1725251531381","item_1725251553061","item_1725251567653","item_1725251612021"],"edit_notes": {"item_1725251531381": "","item_1725251553061": "","item_1725251567653": "","item_1725251612021": ""},"meta_system": {},"upload_file": False,"schemaeditor": {"schema": {"item_1725251531381": {"type": "object","format": "object","properties": {"subitem_title": {"type": "string","title": "タイトル","format": "text","title_i18n": {"en": "Title","ja": "タイトル"}},"subitem_title_language": {"enum": [None,"ja","en"],"type": ["None","string"],"title": "言語","format": "select","currentEnum": ["ja","en"]}}},"item_1725251553061": {"type": "object","format": "object","properties": {"subitem_restricted_access_item_title": {"type": "string","title": "アイテムタイトル","format": "text","title_i18n": {"en": "Item Title","ja": "アイテムタイトル"}}}},"item_1725251567653": {"type": "object","format": "object","properties": {"subitem_language": {"enum": [None,"jpn","eng"],"type": ["None","string"],"title": "言語","format": "select","currentEnum": ["jpn","eng"]}}},"item_1725251612021": {"type": "object","format": "object","properties": {"subitem_language": {"enum": [None,"jpn","eng"],"type": ["None","string"],"title": "言語","format": "select","currentEnum": ["jpn","eng"]}}}}},"table_row_map": {"form": [{"key": "pubdate","type": "template","title": "PubDate","format": "yyyy-MM-dd","required": True,"title_i18n": {"en": "PubDate","ja": "公開日"},"templateUrl": "/static/templates/weko_deposit/datepicker.html"},{"key": "item_1725251531381","type": "fieldset","items": [{"key": "item_1725251531381.subitem_title","type": "text","title": "タイトル","title_i18n": {"en": "Title","ja": "タイトル"}},{"key": "item_1725251531381.subitem_title_language","type": "select","title": "言語","titleMap": [{"name": "ja","value": "ja"},{"name": "en","value": "en"}],"title_i18n": {"en": "Language","ja": "言語"}}],"title": "Title","title_i18n": {"en": "","ja": ""}},{"key": "item_1725251553061","type": "fieldset","items": [{"key": "item_1725251553061.subitem_restricted_access_item_title","type": "text","title": "アイテムタイトル","title_i18n": {"en": "Item Title","ja": "アイテムタイトル"}}],"title": "Item Title","title_i18n": {"en": "","ja": ""}},{"key": "item_1725251567653","type": "fieldset","items": [{"key": "item_1725251567653.subitem_language","type": "select","title": "言語","titleMap": [{"name": "jpn","value": "jpn"},{"name": "eng","value": "eng"}],"title_i18n": {"en": "Language","ja": "言語"}}],"title": "Language","title_i18n": {"en": "","ja": ""}},{"key": "item_1725251612021","type": "fieldset","items": [{"key": "item_1725251612021.subitem_language","type": "select","title": "言語","titleMap": [{"name": "jpn","value": "jpn"},{"name": "eng","value": "eng"}],"title_i18n": {"en": "Language","ja": "言語"}}],"title": "Other Language","title_i18n": {"en": "","ja": ""}}],"name": "test_itemtype01","action": "new","schema": {"type": "object","$schema": "http://json-schema.org/draft-04/schema#","required": ["pubdate"],"properties": {"pubdate": {"type": "string","title": "PubDate","format": "datetime"},"item_1725251531381": {"type": "object","title": "Title","properties": {"subitem_title": {"type": "string","title": "タイトル","format": "text","title_i18n": {"en": "Title","ja": "タイトル"}},"subitem_title_language": {"enum": [None,"ja","en"],"type": ["None","string"],"title": "言語","format": "select","currentEnum": ["ja","en"]}}},"item_1725251553061": {"type": "object","title": "Item Title","properties": {"subitem_restricted_access_item_title": {"type": "string","title": "アイテムタイトル","format": "text","title_i18n": {"en": "Item Title","ja": "アイテムタイトル"}}}},"item_1725251567653": {"type": "object","title": "Language","properties": {"subitem_language": {"enum": [None,"jpn","eng"],"type": ["None","string"],"title": "言語","format": "select","currentEnum": ["jpn","eng"]}}},"item_1725251612021": {"type": "object","title": "Other Language","properties": {"subitem_language": {"enum": [None,"jpn","eng"],"type": ["None","string"],"title": "言語","format": "select","currentEnum": ["jpn","eng"]}}}},"description": ""},"mapping": {"pubdate": {"lom_mapping": "","lido_mapping": "","spase_mapping": "","jpcoar_mapping": "","junii2_mapping": "","oai_dc_mapping": "","display_lang_type": ""},"item_1725251531381": {"lom_mapping": "","lido_mapping": "","spase_mapping": "","jpcoar_mapping": "","junii2_mapping": "","oai_dc_mapping": "","display_lang_type": ""},"item_1725251553061": {"lom_mapping": "","lido_mapping": "","spase_mapping": "","jpcoar_mapping": "","junii2_mapping": "","oai_dc_mapping": "","display_lang_type": ""},"item_1725251567653": {"lom_mapping": "","lido_mapping": "","spase_mapping": "","jpcoar_mapping": "","junii2_mapping": "","oai_dc_mapping": "","display_lang_type": ""},"item_1725251612021": {"lom_mapping": "","lido_mapping": "","spase_mapping": "","jpcoar_mapping": "","junii2_mapping": "","oai_dc_mapping": "","display_lang_type": ""}}}}
+    itemtype_name = ItemTypeName(name="test_itemtype",is_active=True)
+    db.session.add(itemtype_name)
+    item_type = ItemType(
+        name_id=itemtype_name.id,harvesting_type=True,
+        schema=schema,form=form,render=render,
+        tag=1, version_id=1, is_deleted=False
+    )
+    db.session.add(item_type)
+    mapping_data = {"pubdate": {"lom_mapping": "","lido_mapping": "","spase_mapping": "","jpcoar_mapping": "","junii2_mapping": "","oai_dc_mapping": "","display_lang_type": ""},"item_1725251531381": {"lom_mapping": "","lido_mapping": "","spase_mapping": "","jpcoar_mapping": "","junii2_mapping": "","oai_dc_mapping": "","display_lang_type": ""},"item_1725251553061": {"lom_mapping": "","lido_mapping": "","spase_mapping": "","jpcoar_mapping": "","junii2_mapping": "","oai_dc_mapping": "","display_lang_type": ""},"item_1725251567653": {"lom_mapping": "","lido_mapping": "","spase_mapping": "","jpcoar_mapping": "","junii2_mapping": "","oai_dc_mapping": "","display_lang_type": ""},"item_1725251612021": {"lom_mapping": "","lido_mapping": "","spase_mapping": "","jpcoar_mapping": "","junii2_mapping": "","oai_dc_mapping": "","display_lang_type": ""}}
+    Mapping.create(item_type.id,mapping=mapping_data)
+    test_workflow = WorkFlow(flows_id=uuid.uuid4(),
+             flows_name="test_workflow",
+             item_type_id=item_type.id,
+             index_tree_id=None,
+             flow_id=1,
+             is_delete=False,
+             open_restricted=False,
+             location_id=None,
+             is_gakuninrdm=False)
+    db.session.add(test_workflow)
+    db.session.commit()
+    
+    # mappingなし、必須なし
+    result = check_require_mapping(test_workflow.id)
+    assert result == False
+    
+    # mapping あり、必須なし
+    Mapping.create(item_type.id,mapping={"pubdate": {"lom_mapping": "","lido_mapping": "","spase_mapping": "","jpcoar_mapping": "","junii2_mapping": "","oai_dc_mapping": "","display_lang_type": ""},"item_1725251531381": {"lom_mapping": "","lido_mapping": "","spase_mapping": "","jpcoar_mapping": "","junii2_mapping": "","oai_dc_mapping": "","display_lang_type": ""},"item_1725251553061": {"lom_mapping": "","lido_mapping": "","spase_mapping": "","jpcoar_mapping": "","junii2_mapping": "","oai_dc_mapping": "","display_lang_type": ""},"item_1725251567653": {"lom_mapping": "","lido_mapping": "","spase_mapping": "","jpcoar_mapping": {"language": {"@value": "subitem_language"}},"junii2_mapping": "","oai_dc_mapping": "","display_lang_type": ""},"item_1725251612021": {"lom_mapping": "","lido_mapping": "","spase_mapping": "","jpcoar_mapping": "","junii2_mapping": "","oai_dc_mapping": "","display_lang_type": ""}})
+    db.session.commit()
+    result = check_require_mapping(test_workflow.id)
+    assert result == False
+    
+    Mapping.create(item_type.id,mapping={"pubdate": {"lom_mapping": "","lido_mapping": "","spase_mapping": "","jpcoar_mapping": "","junii2_mapping": "","oai_dc_mapping": "","display_lang_type": ""},"item_1725251531381": {"lom_mapping": "","lido_mapping": "","spase_mapping": "","jpcoar_mapping": {"title": {"@value": "subitem_title","@attributes": {"xml:lang": "subitem_title_language"}}},"junii2_mapping": "","oai_dc_mapping": "","display_lang_type": ""},"item_1725251553061": {"lom_mapping": "","lido_mapping": "","spase_mapping": "","jpcoar_mapping": "","junii2_mapping": "","oai_dc_mapping": "","display_lang_type": ""},"item_1725251567653": {"lom_mapping": "","lido_mapping": "","spase_mapping": "","jpcoar_mapping": {"language": {"@value": "subitem_language"}},"junii2_mapping": "","oai_dc_mapping": "","display_lang_type": ""},"item_1725251612021": {"lom_mapping": "","lido_mapping": "","spase_mapping": "","jpcoar_mapping": "","junii2_mapping": "","oai_dc_mapping": "","display_lang_type": ""}})
+    db.session.commit()
+    result = check_require_mapping(test_workflow.id)
+    assert result == True

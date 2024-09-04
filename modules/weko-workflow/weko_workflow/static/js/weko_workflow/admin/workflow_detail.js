@@ -15,6 +15,10 @@ $("#txt_workflow_name").keyup(function () {
   }
 });
 
+$("#txt_itemtype").on("change", function(){
+  var selectedValue = $(this).val();
+  console.log("select:",selectedValue)
+})
 function checkWorkflowName() {
   if ($("#txt_workflow_name").val().trim() == "") {
     $("#btn_create").attr("disabled", "disabled");

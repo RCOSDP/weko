@@ -23,6 +23,7 @@ from flask import Blueprint, abort, current_app, jsonify, make_response, \
     request, url_for
 from flask.views import MethodView
 from flask_babelex import gettext as _
+from werkzeug.exceptions import InternalServerError
 from invenio_db import db
 from invenio_indexer.api import RecordIndexer
 from invenio_pidstore import current_pidstore
@@ -1143,9 +1144,21 @@ class RecordResource(ContentNegotiatedMethodView):
 
             if self.indexer_class:
                 self.indexer_class().index(record)
+        except InternalServerError as e:
+            db.session.rollback()
+            current_app.logger.error(traceback.format_exc())
+            msg = {"message": e.description}
+            return make_response(jsonify(msg),e.code)
+        except RuntimeError as e:
+            db.session.rollback()
+            current_app.logger.error(traceback.format_exc())
+            msg = {"message": str(e)}
+            return make_response(jsonify(msg), 500)
         except BaseException as e:
             db.session.rollback()
             current_app.logger.error(traceback.format_exc())
+            msg = {"message": str(e)}
+            return make_response(jsonify(msg), 500)
 
         return self.make_response(
             pid, record, links_factory=self.links_factory)

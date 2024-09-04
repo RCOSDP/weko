@@ -541,3 +541,7 @@ WEKO_WORKFLOW_ACTIVITYLOG_XLS_COLUMNS = [
     'action_name',
     'role_name'
 ]
+
+WEKO_WORKFLOW_REQUIRED_MAPPING_FIELDS =[
+    'title.@value'
+]

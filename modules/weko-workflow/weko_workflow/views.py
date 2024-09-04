@@ -3113,6 +3113,11 @@ def clear_activitylog():
 
     return jsonify(code=1, msg='delete activitylogs success') ,200
 
+@workflow_blueprint.route('/check_require_itemtype_mapping/<string:itemtype_id>', methods=['GET'])
+@login_required
+def check_require_itemtype_mapping(itemtype_id):
+    print("get itemtype_id:{}".format(itemtype_id))
+    
 class ActivityActionResource(ContentNegotiatedMethodView):
     """Workflow Activity Resource."""
 
