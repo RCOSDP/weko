@@ -2499,6 +2499,7 @@ def es_records(app, db, db_index, location, db_itemtype, db_oaischema):
                     "resourceuri": "http://purl.org/coar/resource_type/c_5794",
                     "resourcetype": "conference paper",
                 },
+                "index_sort":{}
             }
 
             rec_uuid = uuid.uuid4()
