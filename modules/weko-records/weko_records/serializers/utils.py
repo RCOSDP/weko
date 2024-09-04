@@ -429,6 +429,8 @@ class OpenSearchDetailData:
                     recid = PersistentIdentifier.get('recid', _pid)
                     yhdl = PersistentIdentifier.get_by_object('yhdl', 'rec', recid.object_uuid)
                     yhdl_value = yhdl.pid_value
+                    if not yhdl_value.endswith('/'):
+                        yhdl_value += '/'
                     fe.link(href=yhdl_value, rel='alternate', type='text/html')
                 except:
                     pass
