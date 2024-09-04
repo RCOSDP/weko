@@ -108,26 +108,27 @@ $(document).ready(function () {
   $('#myModal').modal({
     show: false
   })
-  const uiPubdatePropertiesString = $('#uiPubdateProperties').val();
-  let uiPubdateProperties;
+  const uiPubdateTitlesString = $('#uiPubdateTitles').val();
+  let uiPubdateTitles;
   try {
-      // JSONとしてパース
-      uiPubdateProperties = JSON.parse(uiPubdatePropertiesString);
-      // フィールドに設定値をセット
-      $('#txt_title_item_pubdate').val(uiPubdateProperties.title);
-      $('#txt_title_ja_item_pubdate').val(uiPubdateProperties.title_i18n.ja);
-      $('#txt_title_en_item_pubdate').val(uiPubdateProperties.title_i18n.en);
+    // JSONとしてパース
+    uiPubdateTitles = JSON.parse(uiPubdateTitlesString);
+    // フィールドに設定値をセット
+    $('#txt_title_item_pubdate').val(uiPubdateTitles.title);
+    $('#txt_title_ja_item_pubdate').val(uiPubdateTitles.title_i18n.ja);
+    $('#txt_title_en_item_pubdate').val(uiPubdateTitles.title_i18n.en);
   } catch (e) {
-      console.error('Failed to parse uiPubdateProperties:', e);
+    console.error('Failed to parse uiPubdateTitles:', e);
+    return; // JSON パースに失敗した場合は処理を中断
   }
   // uiFixedPropertiesの値を取得
   const uiFixedPropertiesString = $('#uiFixedProperties').val();
-  let properties;  
+  let properties;
   try {
-      properties = JSON.parse(uiFixedPropertiesString);
+    properties = JSON.parse(uiFixedPropertiesString);
   } catch (e) {
-      console.error('Failed to parse uiFixedProperties:', e);
-      return; // JSON パースに失敗した場合は処理を中断
+    console.error('Failed to parse uiFixedProperties:', e);
+    return; // JSON パースに失敗した場合は処理を中断
   }
   if($('#item-type-lists').val().length > 0) {
     // バージョンアップ
@@ -209,6 +210,7 @@ $(document).ready(function () {
       $('#btn_restore_itemtype_schema').prop('disabled', true);
       $('div.metadata-content *').not("[id=btn_restore_itemtype_schema]").prop('disabled', false);
       $('#chk_pubdate_0').attr('disabled', true);
+      $('#chk_pubdate_1').attr('disabled', true);
   }
 
   $('#btn_create_itemtype_schema').on('click', function(){
@@ -864,10 +866,10 @@ $(document).ready(function () {
     });
     //公開日
     var tmp_pubdate = {};
-    tmp_pubdate.title = titleItem
-    tmp_pubdate.title_i18n = {}
-    tmp_pubdate.title_i18n.ja = titleJa
-    tmp_pubdate.title_i18n.en = titleEn
+    tmp_pubdate.title = titleItem;
+    tmp_pubdate.title_i18n = {};
+    tmp_pubdate.title_i18n.ja = titleJa;
+    tmp_pubdate.title_i18n.en = titleEn;
     tmp_pubdate.input_type = "datetime";
     tmp_pubdate.input_value = "";
     tmp_pubdate.option = {};

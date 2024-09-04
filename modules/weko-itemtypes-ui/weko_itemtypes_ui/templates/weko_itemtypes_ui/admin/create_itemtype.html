@@ -39,7 +39,7 @@
 {%- block body %}
   <input id="lang-code" type="hidden" value="{{lang_code}}" />
   <input id="uiFixedProperties" type="hidden" value='{{ uiFixedProperties | tojson | safe }}' />  
-  <input id="uiPubdateProperties" type="hidden" value='{{ ui_pubdate_property | tojson | safe }}' />
+  <input id="uiPubdateTitles" type="hidden" value='{{ ui_pubdate_titles | tojson | safe }}' />
   <div class="row">
     <div class="col-sm-12 col-md-12 col-lg-11">
       <div class="panel panel-info  gray-color-class">

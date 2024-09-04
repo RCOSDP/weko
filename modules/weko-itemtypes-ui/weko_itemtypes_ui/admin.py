@@ -74,7 +74,7 @@ class ItemTypeMetaDataView(BaseView):
             is_sys_admin=is_sys_admin,
             lang_code=session.get('selected_language', 'en'),  # Set default
             uiFixedProperties=current_app.config['WEKO_ITEMTYPES_UI_FIXED_PROPERTIES'],
-            ui_pubdate_property=current_app.config['WEKO_ITEMTYPES_UI_PUBDATE_PROPERTY']
+            ui_pubdate_titles=current_app.config['WEKO_ITEMTYPES_UI_PUBDATE_DEFAULT_TITLES']
         )
 
     @expose('/<int:item_type_id>/render', methods=['GET'])
