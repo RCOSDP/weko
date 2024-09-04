@@ -1137,12 +1137,35 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
     ret = ['#.id', '.uri']
     ret_label = ['#ID', 'URI']
 
+    super_user = False
+    community_admin = False
+
+    if current_user and current_user.is_authenticated:
+        role_names = [role.name for role in current_user.roles]
+        super_user = any(role in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] for role in role_names)
+        community_admin = any(role in current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY'] for role in role_names)
+    
+    if community_admin:
+        can_edit_indexes = []
+        role_ids = [role.id for role in current_user.roles]
+        from invenio_communities.models import Community
+        comm_data = Community.query.filter(
+            Community.id_role.in_(role_ids)
+        ).all()
+        for comm in comm_data:
+            can_edit_indexes += [i.cid for i in Indexes.get_self_list(comm.root_node_id)]
+        can_edit_indexes = list(set(can_edit_indexes))
+
     max_path = records.get_max_ins('path')
     for i in range(max_path):
         ret.append('.metadata.path[{}]'.format(i))
         ret.append('.pos_index[{}]'.format(i))
+        if super_user or community_admin:
+            ret.append('.custom_sort_order[{}]'.format(i))
         ret_label.append('.IndexID[{}]'.format(i))
         ret_label.append('.POS_INDEX[{}]'.format(i))
+        if super_user or community_admin:
+            ret_label.append('.CustomSortOrder[{}]'.format(i))
 
     ret.append('.publish_status')
     ret_label.append('.PUBLISH_STATUS')
@@ -1170,8 +1193,19 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
             records.attr_output[recid].append(info.cid)
             records.attr_output[recid].append(info.name.replace(
                 '-/-', current_app.config['WEKO_ITEMS_UI_INDEX_PATH_SPLIT']))
+            if super_user or (community_admin and info.cid in can_edit_indexes):
+                custom_sort_dict = Indexes.get_item_sort(info.cid)
+                item_sort_order = custom_sort_dict.get(str(recid))
+                records.attr_output[recid].append(item_sort_order)
+            elif community_admin:
+                records.attr_output[recid].append('')
+
+        if super_user or community_admin:
+            index_len = 3
+        else:
+            index_len = 2
         records.attr_output[recid].extend(
-            [''] * (max_path * 2 - len(records.attr_output[recid]))
+            [''] * (max_path * index_len - len(records.attr_output[recid]))
         )
 
         records.attr_output[recid].append(
@@ -1269,7 +1303,7 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
 
     ret_system = []
     ret_option = []
-    multiple_option = ['.metadata.path', '.pos_index',
+    multiple_option = ['.metadata.path', '.pos_index', '.custom_sort_order',
                        '.feedback_mail', '.file_path', '.thumbnail_path']
     meta_list = item_type.get('meta_list', {})
     meta_list.update(item_type.get('meta_fix', {}))
