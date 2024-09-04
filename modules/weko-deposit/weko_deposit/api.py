@@ -3469,8 +3469,11 @@ class _FormatSysBibliographicInformation:
     def _get_source_title(source_titles):
         """Get source title.
 
-        :param source_titles:
-        :return:
+        Args:
+            list: source_titles.        
+
+        Returns:
+            list:title_data.
         """
         title_data = []
         for source_title in source_titles:
@@ -3486,54 +3489,99 @@ class _FormatSysBibliographicInformation:
     def _get_source_title_show_list(source_titles, current_lang):
         """Get source title in show list.
 
-        :param current_lang:
-        :param source_titles:
-        :return:
+        Args:
+            str: current_lang.
+            list: source_titles.        
+
+        Returns:
+            str:title_data_none_lang.
         """
         value_en = None
         value_latn = None
         title_data_lang = []
         title_data_none_lang = []
-        for source_title in source_titles:
+        weko_logger(key='WEKO_COMMON_FOR_START')
+        for i, source_title in enumerate(source_titles):
+            weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
+                        count=i, element=source_title)
             key = source_title.get('bibliographic_titleLang')
             value = source_title.get('bibliographic_title')
             if not value:
+                weko_logger(key='WEKO_COMMON_IF_ENTER',
+                            branch='source_title is not empty')
                 continue
             elif current_lang == key:
+                weko_logger(key='WEKO_COMMON_IF_ENTER',
+                            branch='current_lang == key')
+                
+                weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=key)
                 return value, key
             else:
                 if key:
+                    weko_logger(key='WEKO_COMMON_IF_ENTER',
+                            branch='bibliographic_titleLang is not empty')
                     if key == 'en':
+                        weko_logger(key='WEKO_COMMON_IF_ENTER',
+                                    branch='key == en')
                         value_en = value
                     elif key == 'ja-Latn':
+                        weko_logger(key='WEKO_COMMON_IF_ENTER',
+                                    branch='key == ja-Latn')
                         value_latn = value
                     else:
+                        weko_logger(key='WEKO_COMMON_IF_ENTER',
+                                    branch='key == other')
                         title = {}
                         title[key] = value
                         title_data_lang.append(title)
                 else:
+                    weko_logger(key='WEKO_COMMON_IF_ENTER',
+                            branch='bibliographic_titleLang is empty')
                     title_data_none_lang.append(value)
+        weko_logger(key='WEKO_COMMON_FOR_END')
 
         if len(title_data_none_lang) > 0:
+            weko_logger(key='WEKO_COMMON_IF_ENTER',
+                        branch='len(title_data_none_lang) > 0')
             if source_titles[0].get('bibliographic_title')==title_data_none_lang[0]:
+                weko_logger(key='WEKO_COMMON_IF_ENTER',
+                            branch='bibliographic_title ==title_data_none_lang')
+                weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=title_data_none_lang[0])
                 return title_data_none_lang[0],''
 
         if value_latn:
+            weko_logger(key='WEKO_COMMON_IF_ENTER',
+                        branch='value_latn is not empty')
+            weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=value_latn)
             return value_latn, 'ja-Latn'
 
         if value_en and (current_lang != 'ja' or
                          not current_app.config.get("WEKO_RECORDS_UI_LANG_DISP_FLG", False)):
+            weko_logger(key='WEKO_COMMON_IF_ENTER',
+                        branch='value_en is not empty')
+            weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=value_en)
             return value_en, 'en'
 
         if len(title_data_lang) > 0:
+            weko_logger(key='WEKO_COMMON_IF_ENTER',
+                        branch='len(title_data_lang) > 0')
             if current_lang != 'en' or \
                     not current_app.config.get("WEKO_RECORDS_UI_LANG_DISP_FLG", False):
+                weko_logger(key='WEKO_COMMON_IF_ENTER',
+                        branch='current_lang != en')
+                weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=list(title_data_lang[0].values())[0])
                 return list(title_data_lang[0].values())[0], \
                     list(title_data_lang[0])[0]
             else:
+                weko_logger(key='WEKO_COMMON_FOR_START')
                 for t in title_data_lang:
                     if list(t)[0] != 'ja':
+                        weko_logger(key='WEKO_COMMON_IF_ENTER',
+                                    branch='title_data_lang != ja')
+                        weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=list(t.values())[0])
                         return list(t.values())[0], list(t)[0]
+                    weko_logger(key='WEKO_COMMON_FOR_END')
+        weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=title_data_none_lang[0])
         return (title_data_none_lang[0], 'ja') if len(
             title_data_none_lang) > 0 else (None, 'ja')
 
@@ -3541,37 +3589,56 @@ class _FormatSysBibliographicInformation:
     def _get_page_tart_and_page_end(page_start, page_end):
         """Get page start and page end.
 
-        :param page_start:
-        :param page_end:
-        :return:
+        Args:
+            str: page_start.
+            str: page_end.        
+
+        Returns:
+            str:page.
         """
         page = ''
         page += page_start if page_start is not None else ''
         if page_end is not None:
+            weko_logger(key='WEKO_COMMON_IF_ENTER',
+                        branch='page_end is not None')
             temp = page_end if page == '' else '-' + page_end
             page += temp if page_end else ''
 
+        weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=page)   
         return page
 
     @staticmethod
     def _get_issue_date(issue_date):
-        """
-        Get issue dates.
+        """Get issue dates.
 
-        :param issue_date:
-        :return:
+        Args:
+            list: issue_date.
+
+        Returns:
+            list:date.
         """
         date = []
         issue_type = 'Issued'
         if isinstance(issue_date, list):
-            for issued_date in issue_date:
+            weko_logger(key='WEKO_COMMON_IF_ENTER',
+                        branch='issue_date is list')
+            weko_logger(key='WEKO_COMMON_FOR_START')
+            for i, issued_date in enumerate(issue_date):
+                weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
+                            count=i, element=issued_date)
                 if issued_date.get(
                     'bibliographicIssueDate') and issued_date.get(
                         'bibliographicIssueDateType') == issue_type:
+                    weko_logger(key='WEKO_COMMON_IF_ENTER',
+                                branch='bibliographicIssueDateType is Issued')
                     date.append(issued_date.get('bibliographicIssueDate'))
+            weko_logger(key='WEKO_COMMON_FOR_END')
         elif isinstance(issue_date, dict) and \
             (issue_date.get('bibliographicIssueDate')
              and issue_date.get('bibliographicIssueDateType')
                 == issue_type):
+            weko_logger(key='WEKO_COMMON_IF_ENTER',
+                        branch='bibliographicIssueDate is dict')
             date.append(issue_date.get('bibliographicIssueDate'))
+        weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=date)    
         return date
