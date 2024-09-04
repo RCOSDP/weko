@@ -1061,16 +1061,17 @@ $(document).ready(function () {
         let prop = properties[key];
         $('#select_input_type_' + row_id).prop('disabled', true);
         $('#select_input_type_' + row_id).val('cus_' + key).trigger('change');
+    
         let idTitle = `chk_item_${row_id.replace('item_','')}`;
-        $(`#${idTitle}_0`).prop('checked', prop.fixed_option.required|| false).prop('disabled', prop.fixed_option.required || undefined);
-        if(prop.fixed_option.multiple){
-          $(`#${idTitle}_1`).trigger('click'); 
-        }
-        $(`#${idTitle}_1`).prop('disabled', prop.fixed_option.multiple !== undefined);
+        $(`#${idTitle}_0`).prop('checked', prop.fixed_option.required|| false).prop('disabled', prop.fixed_option.required !== undefined);
+        $(`#${idTitle}_1`).prop('checked', prop.fixed_option.multiple|| false).prop('disabled', prop.fixed_option.multiple !== undefined);
         $(`#${idTitle}_2`).prop('checked', prop.fixed_option.showlist|| false).prop('disabled', prop.fixed_option.showlist !== undefined);
         $(`#${idTitle}_3`).prop('checked', prop.fixed_option.crtf|| false).prop('disabled', prop.fixed_option.crtf !== undefined);
         $(`#${idTitle}_4`).prop('checked', prop.fixed_option.hidden|| false).prop('disabled', prop.fixed_option.hidden !== undefined);
         $(`#${idTitle}_5`).prop('checked', prop.fixed_option.oneline|| false).prop('disabled', prop.fixed_option.oneline !== undefined);
+        if(prop.fixed_option.multiple) {
+          $('#arr_size_' + row_id).removeClass('hide');
+        }
       }
     }, 100); 
   }
