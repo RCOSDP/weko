@@ -124,6 +124,7 @@ from .config import (
     WEKO_IMPORT_VALIDATE_MESSAGE,
     WEKO_REPO_USER,
     WEKO_SEARCH_TYPE_DICT,
+    WEKO_SEARCH_MAX_RESULT,
     WEKO_SEARCH_UI_BULK_EXPORT_LIMIT,
     WEKO_SEARCH_UI_BULK_EXPORT_MSG,
     WEKO_SEARCH_UI_BULK_EXPORT_RUN_MSG,
@@ -195,7 +196,48 @@ class DefaultOrderedDict(OrderedDict):
         )
 
 
-def get_tree_items(index_tree_id, size=10000):
+def execute_search_with_pagination(
+        search_instance,
+        max_result_size=WEKO_SEARCH_MAX_RESULT
+):
+    """Execute search with pagination.
+
+    @param search_instance: search instance
+    @param max_result_size: maximum number of records to get
+                            if < 0, get all records
+    @return: search result
+    """
+    if max_result_size < 0:
+        search_size = 10000
+    else:
+        search_size = min(max_result_size, 10000)
+        max_result_size -= search_size
+
+    search_instance = search_instance.extra(size=search_size)
+    search_result = search_instance.execute()
+    records = search_result.to_dict().get('hits', {}).get('hits', [])
+    result = records
+
+    while len(records) == 10000 and max_result_size != 0:
+        if max_result_size < 0:
+            search_size = 10000
+        else:
+            search_size = min(max_result_size, 10000)
+            max_result_size -= search_size
+
+        search_after = records[-1]['sort']
+        search_instance = search_instance.extra(
+            size=search_size,
+            search_after=search_after
+        )
+        search_result = search_instance.execute()
+        records = search_result.to_dict().get('hits', {}).get('hits', [])
+        result.extend(records)
+
+    return result
+
+
+def get_tree_items(index_tree_id, max_result_size=WEKO_SEARCH_MAX_RESULT):
     """Get tree items."""
     records_search = RecordsSearch()
     records_search = records_search.with_preference_param().params(version=False)
@@ -203,27 +245,12 @@ def get_tree_items(index_tree_id, size=10000):
     search_instance, _ = item_path_search_factory(
         None, records_search, index_id=index_tree_id
     )
-    search_instance = search_instance.extra(size=size)
-    search_result = search_instance.execute()
-    rd = search_result.to_dict()
-    result = rd.get("hits").get("hits")
-
-    while len(rd['hits']['hits']) == 10000:
-        search_after = rd['hits']['hits'][-1]['sort']
-        search_instance = search_instance.extra(
-            size=size,
-            search_after=search_after
-        )
-        search_result = search_instance.execute()
-        rd = search_result.to_dict()
-        result.extend(rd.get("hits").get("hits"))
-
-    return result
+    return execute_search_with_pagination(search_instance, max_result_size)
 
 
 def delete_records(index_tree_id, ignore_items):
     """Bulk delete records."""
-    hits = get_tree_items(index_tree_id)
+    hits = get_tree_items(index_tree_id, max_result_size=-1)
     result = []
 
     for hit in hits:
