@@ -242,7 +242,7 @@ def _aggregations_process(
         aggregation_types,
         start_date=start_date.isoformat() if start_date else None,
         end_date=end_date.isoformat() if end_date else None,
-        update_bookmark=update_bookmark,
+        update_bookmark=update_bookmark, manual=True
     )
     current_app.logger.debug("start_date:{}".format(start_date))
     current_app.logger.debug("end_date:{}".format(end_date))
