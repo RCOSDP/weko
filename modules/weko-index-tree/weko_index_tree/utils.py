@@ -1017,19 +1017,21 @@ def get_editing_items_in_index(index_id, recursively=False):
     @return:
     """
     from weko_items_ui.utils import check_item_is_being_edit
-    from weko_workflow.utils import check_an_item_is_locked
+    from weko_workflow.utils import bulk_check_an_item_is_locked
 
     result = []
     records = get_record_in_es_of_index(index_id, recursively)
-    for record in records:
-        item_id = record.get('_source', {}).get(
-            '_item_metadata', {}).get('control_number')
-        if check_item_is_being_edit(
-            PersistentIdentifier.get('recid', item_id)) or \
-                check_an_item_is_locked(int(item_id)):
+    item_ids = [
+        record.get('_source', {}).get('_item_metadata', {}).get('control_number')
+        for record in records
+    ]
+    for item_id in item_ids:
+        if check_item_is_being_edit(PersistentIdentifier.get('recid', item_id)):
             result.append(item_id)
 
-    return result
+    result.extend(bulk_check_an_item_is_locked(item_ids))
+
+    return sorted(list(set(result)))
 
 def save_index_trees_to_redis(tree, lang=None):
     """save inde_tree to redis for roles

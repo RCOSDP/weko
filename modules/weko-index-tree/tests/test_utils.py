@@ -682,12 +682,17 @@ def test_get_editing_items_in_index(app):
     with patch("weko_index_tree.utils.get_record_in_es_of_index", return_value=_es_data):
         with patch("weko_items_ui.utils.check_item_is_being_edit", return_value=True):
             with patch("invenio_pidstore.models.PersistentIdentifier.get", return_value=True):
-                res = get_editing_items_in_index(0)
-                assert res == ["1", "2"]
-        
+                with patch("weko_workflow.utils.bulk_check_an_item_is_locked", return_value=["1", "2"]):
+                    res = get_editing_items_in_index(0)
+                    assert res == ["1", "2"]
+
         with patch("weko_items_ui.utils.check_item_is_being_edit", return_value=False):
             with patch("invenio_pidstore.models.PersistentIdentifier.get", return_value=True):
-                with patch("weko_workflow.utils.check_an_item_is_locked", return_value=False):
+                with patch("weko_workflow.utils.bulk_check_an_item_is_locked", return_value=["1"]):
+                    res = get_editing_items_in_index(0)
+                    assert res == ["1"]
+
+                with patch("weko_workflow.utils.bulk_check_an_item_is_locked", return_value=[]):
                     res = get_editing_items_in_index(0)
                     assert res == []
 
