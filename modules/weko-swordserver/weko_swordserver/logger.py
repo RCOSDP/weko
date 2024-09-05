@@ -7,6 +7,9 @@
 
 """Resource for weko-swordserver log messages."""
 
+from flask import current_app
+
+
 WEKO_SWORDSERVER_MESSAGE = {
     'WEKO_SWORDSERVER_FAILED_RETRIEVE_FILE': {
         'msgid': 'WEKO_SWORDSERVER_E_0001',
@@ -94,6 +97,6 @@ param2='param2', ex=ex)
     # get message parameters from resource
     param = WEKO_SWORDSERVER_MESSAGE.get(key, None)
     if param:
-        weko_logger_base(param=param, ex=ex, **kwargs)
+        weko_logger_base(app=current_app, param=param, ex=ex, **kwargs)
     else:
-        weko_logger_base(key=key, ex=ex, **kwargs)
+        weko_logger_base(app=current_app, key=key, ex=ex, **kwargs)

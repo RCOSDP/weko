@@ -7,6 +7,9 @@
 
 """Resource for weko-gridlayout log messages."""
 
+from flask import current_app
+
+
 WEKO_GRIDLAYOUT_MESSAGE = {
     'WEKO_GRIDLAYOUT_FAILED_OUTPUT_RSS_DOCUMENT': {
         'msgid': 'WEKO_GRIDLAYOUT_E_0001',
@@ -191,6 +194,6 @@ param2='param2', ex=ex)
     # get message parameters from resource
     param = WEKO_GRIDLAYOUT_MESSAGE.get(key, None)
     if param:
-        weko_logger_base(param=param, ex=ex, **kwargs)
+        weko_logger_base(app=current_app, param=param, ex=ex, **kwargs)
     else:
-        weko_logger_base(key=key, ex=ex, **kwargs)
+        weko_logger_base(app=current_app, key=key, ex=ex, **kwargs)

@@ -58,9 +58,8 @@ from invenio_files_rest.errors import StorageError
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.attributes import flag_modified
+
 from weko_admin.models import AdminSettings
-from weko_deposit.errors import WekoDepositError, WekoDepositIndexerError, \
-    WekoDepositRegistrationError, WekoDepositStorageError
 from weko_index_tree.api import Indexes
 from weko_records.api import FeedbackMailList, ItemLink, ItemsMetadata, \
     ItemTypes
@@ -72,10 +71,10 @@ from weko_redis.errors import WekoRedisError
 from weko_schema_ui.models import PublishStatus
 from weko_redis.redis import RedisConnection
 from weko_user_profiles.models import UserProfile
-from weko_deposit.logger import weko_logger
-from weko_workflow.api import WorkActivity
-from weko_workflow.utils import convert_record_to_item_metadata
-from weko_workflow.utils import get_url_root
+
+from .logger import weko_logger
+from .errors import WekoDepositError, WekoDepositIndexerError, \
+    WekoDepositRegistrationError, WekoDepositStorageError
 
 from .config import WEKO_DEPOSIT_BIBLIOGRAPHIC_INFO_KEY, \
     WEKO_DEPOSIT_BIBLIOGRAPHIC_INFO_SYS_KEY, WEKO_DEPOSIT_SYS_CREATOR_KEY
@@ -1129,6 +1128,7 @@ class WekoDeposit(Deposit):
             weko_logger(key='WEKO_COMMON_IF_ENTER',
                         branch='activity_info is in session')
             activity_info = session['activity_info']
+            from weko_workflow.api import WorkActivity
             activity = WorkActivity.get_activity_by_id(
                 activity_info['activity_id'])
             if activity and activity.workflow and activity.workflow.location:
@@ -1194,6 +1194,7 @@ class WekoDeposit(Deposit):
             weko_logger(key='WEKO_COMMON_IF_ENTER',
                         branch='activity_info is in session')
             activity = session['activity_info']
+            from weko_workflow.api import WorkActivity
             workactivity = WorkActivity()
             workactivity.upt_activity_item(activity, str(recid.object_uuid))
         weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=deposit)
@@ -1368,7 +1369,7 @@ class WekoDeposit(Deposit):
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
                                 branch='activity_info is in session')
                     activity_info = session['activity_info']
-                    # from weko_workflow.api import WorkActivity
+                    from weko_workflow.api import WorkActivity
                     activity = WorkActivity.get_activity_by_id(
                         activity_info['activity_id'])
                     if activity and activity.workflow and \
@@ -1662,6 +1663,7 @@ class WekoDeposit(Deposit):
         if is_draft:
             weko_logger(key='WEKO_COMMON_IF_ENTER',
                         branch='is_draft is True')
+            from weko_workflow.utils import convert_record_to_item_metadata
             item_metadata = convert_record_to_item_metadata(record)
         else:
             weko_logger(key='WEKO_COMMON_IF_ENTER',
@@ -1713,6 +1715,7 @@ class WekoDeposit(Deposit):
 
                             # update file url
                             url_metadata = lst.get('url', {})
+                            from weko_workflow.utils import get_url_root
                             url_metadata['url'] = '{}record/{}/files/{}' \
                                 .format(get_url_root(),
                                         self['recid'], filename)
@@ -2010,7 +2013,7 @@ class WekoDeposit(Deposit):
             pid_type="recid", pid_value=self.get("recid")).one_or_none()
         if pid:
             item_id = pid.object_uuid
-            # from weko_workflow.api import WorkActivity
+            from weko_workflow.api import WorkActivity
             activity = WorkActivity().get_workflow_activity_by_item_id(item_id)
 
             if activity:

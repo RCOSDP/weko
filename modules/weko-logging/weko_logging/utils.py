@@ -37,7 +37,9 @@ class WekoLoggingFilter(logging.Filter):
 
         return True
 
+
 wekoLoggingFilter = WekoLoggingFilter()
+
 
 def get_current_user_id():
     """Get current user id.

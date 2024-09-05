@@ -7,6 +7,9 @@
 
 """Resource for weko-index_tree_journal log messages."""
 
+from flask import current_app
+
+
 WEKO_INDEX_TREE_JOURNAL_MESSAGE = {
     'WEKO_INDEX_TREE_JOURNAL_FAILED_DISPLAY_SETTINGS_JOURNAL_INFO': {
         'msgid': 'WEKO_INDEX_TREE_JOURNAL_E_0001',
@@ -119,6 +122,6 @@ param2='param2', ex=ex)
     # get message parameters from resource
     param = WEKO_INDEX_TREE_JOURNAL_MESSAGE.get(key, None)
     if param:
-        weko_logger_base(param=param, ex=ex, **kwargs)
+        weko_logger_base(app=current_app, param=param, ex=ex, **kwargs)
     else:
-        weko_logger_base(key=key, ex=ex, **kwargs)
+        weko_logger_base(app=current_app, key=key, ex=ex, **kwargs)

@@ -101,44 +101,44 @@ def create_blueprint(app, endpoints):
         Args:
             exception (:obj:`Exception`): Exception object.
         """
-        weko_logger(key='ERROR_UNEXPECTED', ex=exception)
+        weko_logger(app=app, key='ERROR_UNEXPECTED', ex=exception)
         if exception is None:
-            weko_logger(key='WEKO_COMMON_IF_ENTER', branch='exception is None')
+            weko_logger(app=app, key='WEKO_COMMON_IF_ENTER', branch='exception is None')
             try:
                 db.session.commit()
             except SQLAlchemyError as ex:
-                weko_logger(key='WEKO_COMMON_DB_SOME_ERROR', ex=ex)
+                weko_logger(app=app, key='WEKO_COMMON_DB_SOME_ERROR', ex=ex)
                 db.session.rollback()
                 raise WekoDepositError(ex=ex)
         db.session.remove()
 
-    weko_logger(key='WEKO_COMMON_FOR_STRT')
+    weko_logger(app=app, key='WEKO_COMMON_FOR_START')
     for i, (endpoint, options) in enumerate((endpoints or {}).items()):
-        weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
+        weko_logger(app=app, key='WEKO_COMMON_FOR_LOOP_ITERATION',
                     count=i, element=endpoint)
 
         if 'record_serializers' in options:
-            weko_logger(key='WEKO_COMMON_IF_ENTER',
+            weko_logger(app=app, key='WEKO_COMMON_IF_ENTER',
                         branch='record_serializers in options.')
 
             record_serializers = options.get('record_serializers')
             record_serializers = {mime: obj_or_import_string(func)
                                 for mime, func in record_serializers.items()}
         else:
-            weko_logger(key='WEKO_COMMON_IF_ENTER',
+            weko_logger(app=app, key='WEKO_COMMON_IF_ENTER',
                         branch='record_serializers not in options.')
 
             record_serializers = {}
 
         if 'search_serializers' in options:
-            weko_logger(key='WEKO_COMMON_IF_ENTER',
+            weko_logger(app=app, key='WEKO_COMMON_IF_ENTER',
                         branch='search_serializers in options.')
 
             serializers = options.get('search_serializers')
             search_serializers = {mime: obj_or_import_string(func)
                                 for mime, func in serializers.items()}
         else:
-            weko_logger(key='WEKO_COMMON_IF_ENTER',
+            weko_logger(app=app, key='WEKO_COMMON_IF_ENTER',
                         branch='search_serializers not in options.')
 
             search_serializers = {}
@@ -194,7 +194,7 @@ def create_blueprint(app, endpoints):
             methods=['PUT'],
         )
 
-    weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=blueprint)
+    weko_logger(app=app, key='WEKO_COMMON_RETURN_VALUE', value=blueprint)
     return blueprint
 
 
