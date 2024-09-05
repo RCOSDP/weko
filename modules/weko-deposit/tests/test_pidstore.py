@@ -2,6 +2,7 @@
 import unittest
 from unittest.mock import patch
 import uuid
+
 from sqlalchemy.exc import SQLAlchemyError
 
 from invenio_pidrelations.models import PIDRelation
@@ -170,6 +171,7 @@ def test_get_record_without_version(app, db):
     obj_p1 = PersistentIdentifier.create('parent', "parent:1",object_type='rec', object_uuid=uuid.uuid4(),status=PIDStatus.REGISTERED)
     obj_c1 = PersistentIdentifier.create('recid', "1.1",object_type='rec', object_uuid=uuid.uuid4(),status=PIDStatus.REGISTERED)
     obj_without_ver = PersistentIdentifier.create('recid', "1",object_type='rec', object_uuid=uuid.uuid4(),status=PIDStatus.REGISTERED)
+    # obj_without_pid = PersistentIdentifier.create('recid', None,object_type='rec', object_uuid=uuid.uuid4(),status=PIDStatus.REGISTERED)
     rel1 = PIDRelation.create(obj_p1,obj_c1,2,0)
     rel2 = PIDRelation.create(obj_p1,obj_without_ver,2,0)
     db.session.add(rel1)
@@ -184,4 +186,5 @@ def test_get_record_without_version(app, db):
     result = get_record_without_version(obj_c1)
     assert result == obj_without_ver
 
-
+    # result = get_record_without_version(obj_without_pid)
+    # assert result == obj_without_pid
