@@ -29,9 +29,9 @@
 
 {%- block javascript %}
   {{ super() }}
-  <script src="{{ url_for('static', filename='js/weko_theme/inline.bundle.js') }}" defer></script>
-  <script src="{{ url_for('static', filename='js/weko_theme/polyfills.bundle.js') }}" defer></script>
-  <script src="{{ url_for('static', filename='js/weko_theme/main.bundle.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/weko_theme/inline.bundle.js') }}" defer defer></script>
+  <script src="{{ url_for('static', filename='js/weko_theme/polyfills.bundle.js') }}" defer defer></script>
+  <script src="{{ url_for('static', filename='js/weko_theme/main.bundle.js') }}" defer defer></script>
   {{ webpack['search-ui-js-weko-search-ui.js'] }}
   {{ webpack['theme-js-top-page.js'] }}
   {{ webpack['theme-search-detail.js'] }}
