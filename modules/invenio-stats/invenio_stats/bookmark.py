@@ -12,14 +12,18 @@ from collections import OrderedDict
 from datetime import datetime, timedelta
 from functools import wraps
 
+from flask import current_app
 from invenio_search.engine import dsl, search
 from invenio_search.utils import prefix_index
+
+from .models import StatsBookmark
 
 SUPPORTED_INTERVALS = OrderedDict(
     [
         ("hour", "%Y-%m-%dT%H"),
         ("day", "%Y-%m-%d"),
         ("month", "%Y-%m"),
+        ('year', '%Y'),
     ]
 )
 
@@ -76,9 +80,21 @@ class BookmarkAPI(object):
     @_ensure_index_exists
     def set_bookmark(self, value):
         """Set bookmark for starting next aggregation."""
+        _id = self.agg_type
+        _source = {"date": value, "aggregation_type": self.agg_type}
+
+        if current_app.config.get('STATS_WEKO_DB_BACKUP_BOOKMARK'):
+            # Save stats bookmark into Database.
+            StatsBookmark.save(dict(
+                _id=_id,
+                _index=self.bookmark_index,
+                _source=_source,
+            ), delete=True)
+
         self.client.index(
+            _id=_id,
             index=self.bookmark_index,
-            body={"date": value, "aggregation_type": self.agg_type},
+            body=_source,
         )
         self.new_timestamp = None
 
