@@ -256,6 +256,9 @@ class ESTermsQuery(ESQuery):
             agg_query = agg_query.filter(
                 'range',
                 **{self.time_field: time_range})
+        if kwargs.get('should'):
+            should_conditions = kwargs['should']
+            agg_query = agg_query.query('bool', should=should_conditions, minimum_should_match=1)
 
         for modifier in self.query_modifiers:
             agg_query = modifier(agg_query, **kwargs)

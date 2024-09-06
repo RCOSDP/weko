@@ -801,6 +801,14 @@ def test_indexes_get_index_tree(i18n_app,
         res = Indexes.get_item_sort(3)
         assert res=={'1': 1, '2': 2}
 
+        #set_item_sort_illegal
+        res = Indexes.set_item_sort_custom("", {})
+        res = Indexes.set_item_sort_custom(3, {'1': -1, '2': -2})
+        res = Indexes.set_item_sort_custom(3, {'1': "三", '2': 0})
+        with patch("weko_index_tree.api.db.session.commit", side_effect=IntegrityError(None, None, 'uix_position')):
+            res = Indexes.set_item_sort_custom(3, {'1': 1, '2': 2})
+            assert res==None
+
         # get_coverpage_state
         res = Indexes.get_coverpage_state([1])
         assert res==True

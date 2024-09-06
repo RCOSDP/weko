@@ -33,6 +33,7 @@ import tempfile
 import traceback
 import uuid
 import zipfile
+import gc
 from collections import Callable, OrderedDict
 from datetime import datetime
 from functools import partial, reduce, wraps
@@ -84,6 +85,7 @@ from weko_deposit.api import WekoDeposit, WekoIndexer, WekoRecord
 from weko_deposit.pidstore import get_latest_version_id
 from weko_deposit.signals import item_created
 from weko_handle.api import Handle
+from weko_index_tree.api import Indexes
 from weko_index_tree.utils import (
     check_index_permissions,
     check_restrict_doi_with_indexes,
@@ -477,6 +479,9 @@ def parse_to_json_form(data: list, item_path_not_existed=[], include_empty=False
         else:
             return
 
+    meta_path ={}
+    index_sort = {}
+
     for key, value in data:
         if key in item_path_not_existed:
             continue
@@ -494,9 +499,17 @@ def parse_to_json_form(data: list, item_path_not_existed=[], include_empty=False
                 or key_path[-1] == "filename"
             ):
                 set_nested_item(result, key_path, value)
+            # create index sort dict
+            if "metadata" in key_path and "path" in key_path:
+                meta_path[key_path[-1]] = value
+            if "custom_sort_order" in key_path:
+                index_id = meta_path.get(key_path[-1])
+                if index_id is not None:
+                    index_sort[index_id] = value
 
     convert_data(result)
     result = orjson.loads(orjson.dumps(result))
+    result["index_sort"] = index_sort
     return result
 
 
@@ -589,6 +602,7 @@ def check_import_items(file, is_change_identifier: bool, is_gakuninrdm=False,
         handle_check_and_prepare_feedback_mail(list_record)
         # current_app.logger.debug("list_record7: {}".format(list_record))
         # [{'pos_index': ['Index A'], 'publish_status': 'public', 'feedback_mail': ['wekosoftware@nii.ac.jp'], 'edit_mode': 'Keep', 'metadata': {'pubdate': '2021-03-19', 'item_1617186331708': [{'subitem_1551255647225': 'ja_conference paperITEM00000001(public_open_access_open_access_simple)', 'subitem_1551255648112': 'ja'}, {'subitem_1551255647225': 'en_conference paperITEM00000001(public_open_access_simple)', 'subitem_1551255648112': 'en'}], 'item_1617186385884': [{'subitem_1551255720400': 'Alternative Title', 'subitem_1551255721061': 'en'}, {'subitem_1551255720400': 'Alternative Title', 'subitem_1551255721061': 'ja'}], 'item_1617186419668': [{'creatorAffiliations': [{'affiliationNameIdentifiers': [{'affiliationNameIdentifier': '0000000121691048', 'affiliationNameIdentifierScheme': 'ISNI', 'affiliationNameIdentifierURI': 'http://isni.org/isni/0000000121691048'}], 'affiliationNames': [{'affiliationName': 'University', 'affiliationNameLang': 'en'}]}], 'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': '4', 'nameIdentifierScheme': 'WEKO'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}, {'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}, {'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}], 'item_1617349709064': [{'contributorMails': [{'contributorMail': 'wekosoftware@nii.ac.jp'}], 'contributorNames': [{'contributorName': '情報, 太郎', 'lang': 'ja'}, {'contributorName': 'ジョウホウ, タロウ', 'lang': 'ja-Kana'}, {'contributorName': 'Joho, Taro', 'lang': 'en'}], 'contributorType': 'ContactPerson', 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}], 'item_1617186476635': {'subitem_1522299639480': 'open access', 'subitem_1600958577026': 'http://purl.org/coar/access_right/c_abf2'}, 'item_1617351524846': {'subitem_1523260933860': 'Unknown'}, 'item_1617186499011': [{'subitem_1522650717957': 'ja', 'subitem_1522650727486': 'http://localhost', 'subitem_1522651041219': 'Rights Information'}], 'item_1617610673286': [{'nameIdentifiers': [{'nameIdentifier': 'xxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}], 'rightHolderNames': [{'rightHolderLanguage': 'ja', 'rightHolderName': 'Right Holder Name'}]}], 'item_1617186609386': [{'subitem_1522299896455': 'ja', 'subitem_1522300014469': 'Other', 'subitem_1522300048512': 'http://localhost/', 'subitem_1523261968819': 'Sibject1'}], 'item_1617186626617': [{'subitem_description': 'Description\nDescription<br/>Description', 'subitem_description_language': 'en', 'subitem_description_type': 'Abstract'}, {'subitem_description': '概要\n概要\n概要\n概要', 'subitem_description_language': 'ja', 'subitem_description_type': 'Abstract'}], 'item_1617186643794': [{'subitem_1522300295150': 'en', 'subitem_1522300316516': 'Publisher'}], 'item_1617186660861': [{'subitem_1522300695726': 'Available', 'subitem_1522300722591': '2021-06-30'}], 'item_1617186702042': [{'subitem_1551255818386': 'jpn'}], 'item_1617258105262': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, 'item_1617349808926': {'subitem_1523263171732': 'Version'}, 'item_1617265215918': {'subitem_1522305645492': 'AO', 'subitem_1600292170262': 'http://purl.org/coar/version/c_b1a7d7d4d402bcce'}, 'item_1617186783814': [{'subitem_identifier_type': 'URI', 'subitem_identifier_uri': 'http://localhost'}], 'item_1617353299429': [{'subitem_1522306207484': 'isVersionOf', 'subitem_1522306287251': {'subitem_1522306382014': 'arXiv', 'subitem_1522306436033': 'xxxxx'}, 'subitem_1523320863692': [{'subitem_1523320867455': 'en', 'subitem_1523320909613': 'Related Title'}]}], 'item_1617186859717': [{'subitem_1522658018441': 'en', 'subitem_1522658031721': 'Temporal'}], 'item_1617186882738': [{'subitem_geolocation_place': [{'subitem_geolocation_place_text': 'Japan'}]}], 'item_1617186901218': [{'subitem_1522399143519': {'subitem_1522399281603': 'ISNI', 'subitem_1522399333375': 'http://xxx'}, 'subitem_1522399412622': [{'subitem_1522399416691': 'en', 'subitem_1522737543681': 'Funder Name'}], 'subitem_1522399571623': {'subitem_1522399585738': 'Award URI', 'subitem_1522399628911': 'Award Number'}, 'subitem_1522399651758': [{'subitem_1522721910626': 'en', 'subitem_1522721929892': 'Award Title'}]}], 'item_1617186920753': [{'subitem_1522646500366': 'ISSN', 'subitem_1522646572813': 'xxxx-xxxx-xxxx'}], 'item_1617186941041': [{'subitem_1522650068558': 'en', 'subitem_1522650091861': 'Source Title'}], 'item_1617186959569': {'subitem_1551256328147': '1'}, 'item_1617186981471': {'subitem_1551256294723': '111'}, 'item_1617186994930': {'subitem_1551256248092': '12'}, 'item_1617187024783': {'subitem_1551256198917': '1'}, 'item_1617187045071': {'subitem_1551256185532': '3'}, 'item_1617187112279': [{'subitem_1551256126428': 'Degree Name', 'subitem_1551256129013': 'en'}], 'item_1617187136212': {'subitem_1551256096004': '2021-06-30'}, 'item_1617944105607': [{'subitem_1551256015892': [{'subitem_1551256027296': 'xxxxxx', 'subitem_1551256029891': 'kakenhi'}], 'subitem_1551256037922': [{'subitem_1551256042287': 'Degree Grantor Name', 'subitem_1551256047619': 'en'}]}], 'item_1617187187528': [{'subitem_1599711633003': [{'subitem_1599711636923': 'Conference Name', 'subitem_1599711645590': 'ja'}], 'subitem_1599711655652': '1', 'subitem_1599711660052': [{'subitem_1599711680082': 'Sponsor', 'subitem_1599711686511': 'ja'}], 'subitem_1599711699392': {'subitem_1599711704251': '2020/12/11', 'subitem_1599711712451': '1', 'subitem_1599711727603': '12', 'subitem_1599711731891': '2000', 'subitem_1599711735410': '1', 'subitem_1599711739022': '12', 'subitem_1599711743722': '2020', 'subitem_1599711745532': 'ja'}, 'subitem_1599711758470': [{'subitem_1599711769260': 'Conference Venue', 'subitem_1599711775943': 'ja'}], 'subitem_1599711788485': [{'subitem_1599711798761': 'Conference Place', 'subitem_1599711803382': 'ja'}], 'subitem_1599711813532': 'JPN'}], 'item_1617605131499': [{'accessrole': 'open_access', 'date': [{'dateType': 'Available', 'dateValue': '2021-07-12'}], 'displaytype': 'simple', 'filename': '1KB.pdf', 'filesize': [{'value': '1 KB'}], 'format': 'text/plain'}, {'filename': ''}], 'item_1617620223087': [{'subitem_1565671149650': 'ja', 'subitem_1565671169640': 'Banner Headline', 'subitem_1565671178623': 'Subheading'}, {'subitem_1565671149650': 'en', 'subitem_1565671169640': 'Banner Headline', 'subitem_1565671178623': 'Subheding'}], 'path': [1031], 'feedback_mail_list': [{'email': 'wekosoftware@nii.ac.jp', 'author_id': ''}]}, 'file_path': ['file00000001/1KB.pdf', ''], 'item_type_name': 'デフォルトアイテムタイプ（フル）', 'item_type_id': 15, '$schema': 'https://localhost:8443/items/jsonschema/15', 'identifier_key': 'item_1617186819068', 'errors': None, 'status': 'new', 'id': None, 'item_title': 'ja_conference paperITEM00000001(public_open_access_open_access_simple)'}]
+        handle_check_custom_sort_order(list_record)
         handle_check_file_metadata(list_record, data_path)
         # current_app.logger.debug("list_record8: {}".format(list_record))
         # [{'pos_index': ['Index A'], 'publish_status': 'public', 'feedback_mail': ['wekosoftware@nii.ac.jp'], 'edit_mode': 'Keep', 'metadata': {'pubdate': '2021-03-19', 'item_1617186331708': [{'subitem_1551255647225': 'ja_conference paperITEM00000001(public_open_access_open_access_simple)', 'subitem_1551255648112': 'ja'}, {'subitem_1551255647225': 'en_conference paperITEM00000001(public_open_access_simple)', 'subitem_1551255648112': 'en'}], 'item_1617186385884': [{'subitem_1551255720400': 'Alternative Title', 'subitem_1551255721061': 'en'}, {'subitem_1551255720400': 'Alternative Title', 'subitem_1551255721061': 'ja'}], 'item_1617186419668': [{'creatorAffiliations': [{'affiliationNameIdentifiers': [{'affiliationNameIdentifier': '0000000121691048', 'affiliationNameIdentifierScheme': 'ISNI', 'affiliationNameIdentifierURI': 'http://isni.org/isni/0000000121691048'}], 'affiliationNames': [{'affiliationName': 'University', 'affiliationNameLang': 'en'}]}], 'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': '4', 'nameIdentifierScheme': 'WEKO'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}, {'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}, {'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}], 'item_1617349709064': [{'contributorMails': [{'contributorMail': 'wekosoftware@nii.ac.jp'}], 'contributorNames': [{'contributorName': '情報, 太郎', 'lang': 'ja'}, {'contributorName': 'ジョウホウ, タロウ', 'lang': 'ja-Kana'}, {'contributorName': 'Joho, Taro', 'lang': 'en'}], 'contributorType': 'ContactPerson', 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}], 'item_1617186476635': {'subitem_1522299639480': 'open access', 'subitem_1600958577026': 'http://purl.org/coar/access_right/c_abf2'}, 'item_1617351524846': {'subitem_1523260933860': 'Unknown'}, 'item_1617186499011': [{'subitem_1522650717957': 'ja', 'subitem_1522650727486': 'http://localhost', 'subitem_1522651041219': 'Rights Information'}], 'item_1617610673286': [{'nameIdentifiers': [{'nameIdentifier': 'xxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}], 'rightHolderNames': [{'rightHolderLanguage': 'ja', 'rightHolderName': 'Right Holder Name'}]}], 'item_1617186609386': [{'subitem_1522299896455': 'ja', 'subitem_1522300014469': 'Other', 'subitem_1522300048512': 'http://localhost/', 'subitem_1523261968819': 'Sibject1'}], 'item_1617186626617': [{'subitem_description': 'Description\nDescription<br/>Description', 'subitem_description_language': 'en', 'subitem_description_type': 'Abstract'}, {'subitem_description': '概要\n概要\n概要\n概要', 'subitem_description_language': 'ja', 'subitem_description_type': 'Abstract'}], 'item_1617186643794': [{'subitem_1522300295150': 'en', 'subitem_1522300316516': 'Publisher'}], 'item_1617186660861': [{'subitem_1522300695726': 'Available', 'subitem_1522300722591': '2021-06-30'}], 'item_1617186702042': [{'subitem_1551255818386': 'jpn'}], 'item_1617258105262': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, 'item_1617349808926': {'subitem_1523263171732': 'Version'}, 'item_1617265215918': {'subitem_1522305645492': 'AO', 'subitem_1600292170262': 'http://purl.org/coar/version/c_b1a7d7d4d402bcce'}, 'item_1617186783814': [{'subitem_identifier_type': 'URI', 'subitem_identifier_uri': 'http://localhost'}], 'item_1617353299429': [{'subitem_1522306207484': 'isVersionOf', 'subitem_1522306287251': {'subitem_1522306382014': 'arXiv', 'subitem_1522306436033': 'xxxxx'}, 'subitem_1523320863692': [{'subitem_1523320867455': 'en', 'subitem_1523320909613': 'Related Title'}]}], 'item_1617186859717': [{'subitem_1522658018441': 'en', 'subitem_1522658031721': 'Temporal'}], 'item_1617186882738': [{'subitem_geolocation_place': [{'subitem_geolocation_place_text': 'Japan'}]}], 'item_1617186901218': [{'subitem_1522399143519': {'subitem_1522399281603': 'ISNI', 'subitem_1522399333375': 'http://xxx'}, 'subitem_1522399412622': [{'subitem_1522399416691': 'en', 'subitem_1522737543681': 'Funder Name'}], 'subitem_1522399571623': {'subitem_1522399585738': 'Award URI', 'subitem_1522399628911': 'Award Number'}, 'subitem_1522399651758': [{'subitem_1522721910626': 'en', 'subitem_1522721929892': 'Award Title'}]}], 'item_1617186920753': [{'subitem_1522646500366': 'ISSN', 'subitem_1522646572813': 'xxxx-xxxx-xxxx'}], 'item_1617186941041': [{'subitem_1522650068558': 'en', 'subitem_1522650091861': 'Source Title'}], 'item_1617186959569': {'subitem_1551256328147': '1'}, 'item_1617186981471': {'subitem_1551256294723': '111'}, 'item_1617186994930': {'subitem_1551256248092': '12'}, 'item_1617187024783': {'subitem_1551256198917': '1'}, 'item_1617187045071': {'subitem_1551256185532': '3'}, 'item_1617187112279': [{'subitem_1551256126428': 'Degree Name', 'subitem_1551256129013': 'en'}], 'item_1617187136212': {'subitem_1551256096004': '2021-06-30'}, 'item_1617944105607': [{'subitem_1551256015892': [{'subitem_1551256027296': 'xxxxxx', 'subitem_1551256029891': 'kakenhi'}], 'subitem_1551256037922': [{'subitem_1551256042287': 'Degree Grantor Name', 'subitem_1551256047619': 'en'}]}], 'item_1617187187528': [{'subitem_1599711633003': [{'subitem_1599711636923': 'Conference Name', 'subitem_1599711645590': 'ja'}], 'subitem_1599711655652': '1', 'subitem_1599711660052': [{'subitem_1599711680082': 'Sponsor', 'subitem_1599711686511': 'ja'}], 'subitem_1599711699392': {'subitem_1599711704251': '2020/12/11', 'subitem_1599711712451': '1', 'subitem_1599711727603': '12', 'subitem_1599711731891': '2000', 'subitem_1599711735410': '1', 'subitem_1599711739022': '12', 'subitem_1599711743722': '2020', 'subitem_1599711745532': 'ja'}, 'subitem_1599711758470': [{'subitem_1599711769260': 'Conference Venue', 'subitem_1599711775943': 'ja'}], 'subitem_1599711788485': [{'subitem_1599711798761': 'Conference Place', 'subitem_1599711803382': 'ja'}], 'subitem_1599711813532': 'JPN'}], 'item_1617605131499': [{'accessrole': 'open_access', 'date': [{'dateType': 'Available', 'dateValue': '2021-07-12'}], 'displaytype': 'simple', 'filename': '1KB.pdf', 'filesize': [{'value': '1 KB'}], 'format': 'text/plain'}], 'item_1617620223087': [{'subitem_1565671149650': 'ja', 'subitem_1565671169640': 'Banner Headline', 'subitem_1565671178623': 'Subheading'}, {'subitem_1565671149650': 'en', 'subitem_1565671169640': 'Banner Headline', 'subitem_1565671178623': 'Subheding'}], 'path': [1031], 'feedback_mail_list': [{'email': 'wekosoftware@nii.ac.jp', 'author_id': ''}]}, 'file_path': ['file00000001/1KB.pdf', ''], 'item_type_name': 'デフォルトアイテムタイプ（フル）', 'item_type_id': 15, '$schema': 'https://localhost:8443/items/jsonschema/15', 'identifier_key': 'item_1617186819068', 'errors': None, 'status': 'new', 'id': None, 'item_title': 'ja_conference paperITEM00000001(public_open_access_open_access_simple)', 'filenames': [{'id': '.metadata.item_1617605131499[0].filename', 'filename': '1KB.pdf'}, {'id': '.metadata.item_1617605131499[1].filename', 'filename': ''}]}]
@@ -1592,6 +1606,11 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
                 if item.get("status") == "new":
                     # Send item_created event to ES.
                     send_item_created_event_to_es(item, request_info)
+
+            # register custom sort order
+            if item.get("index_sort"):
+                register_item_custom_sort_order(item)
+
             db.session.commit()
 
             # clean unuse file content in keep mode if import success
@@ -2437,6 +2456,18 @@ def register_item_update_publish_status(item, status):
     if lastest_version_id:
         update_publish_status(lastest_version_id, status)
 
+def register_item_custom_sort_order(item):
+    """ register item custom sort order
+    
+    Args:
+        item (dict): item data
+    """
+    index_sort = item.get("index_sort")
+    for index_id, order in index_sort.items():
+        if order:
+            item_id = item.get("id")
+            sort_json = {item_id: order}
+            Indexes.set_item_sort_custom(index_id, sort_json)
 
 def handle_doi_required_check(record):
     """DOI Validation check (Resource Type, Required, either required).
@@ -3278,6 +3309,8 @@ def export_all(root_url, user_id, data, start_time):
     """
     from weko_search_ui.tasks import write_files_task
 
+    current_app.logger.info("Bulk export all start at {}.".format(start_time))
+
     _cache_prefix = current_app.config["WEKO_ADMIN_CACHE_PREFIX"]
     _msg_config = current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_MSG"]
     _msg_key = _cache_prefix.format(
@@ -3320,6 +3353,17 @@ def export_all(root_url, user_id, data, start_time):
 
     def _get_export_data(export_path, item_types, retrys, fromid="", toid="", retry_info={}):
         try:
+            write_file_json = {
+                    'start_time': start_time,
+                    'finish_time': '',
+                    'export_path': export_path,
+                    'cancel_flg': False,
+                    'write_file_status': {}
+                }
+            reset_redis_cache(
+                    _file_create_key,
+                    orjson.dumps(write_file_json).decode()
+                )
             for it in item_types.copy():
                 item_type_id = it[0]
                 item_type_name = it[1]
@@ -3334,7 +3378,7 @@ def export_all(root_url, user_id, data, start_time):
                     file_part = 1
                     from_pid = fromid if fromid else "1"
                 current_app.logger.info(
-                    "Start processing item type {}({}).".format(
+                    "Start bulk export of item type {}({}).".format(
                         item_type_name, item_type_id
                     )
                 )
@@ -3366,7 +3410,7 @@ def export_all(root_url, user_id, data, start_time):
                     ).order_by(_func.to_number(
                         PersistentIdentifier.pid_value,
                         current_app.config["WEKO_SEARCH_UI_TO_NUMBER_FORMAT"]
-                    )).all()
+                    )).yield_per(500)
                 else:
                     recids = db.session.query(
                         PersistentIdentifier.pid_value,
@@ -3390,25 +3434,26 @@ def export_all(root_url, user_id, data, start_time):
                     ).order_by(_func.to_number(
                         PersistentIdentifier.pid_value,
                         current_app.config["WEKO_SEARCH_UI_TO_NUMBER_FORMAT"]
-                    )).all()
+                    )).yield_per(500)
+                current_app.logger.info("{}({}) get recids completed:{}".format(item_type_name, item_type_id, recids.count()))
 
-                if len(recids) == 0:
+                if recids.count() == 0:
                     item_types.remove(it)
                     continue
 
                 record_ids = [(recid.pid_value, recid.object_uuid) 
-                    for recid in recids if 'publish_status' in recid.json 
+                    for recid in recids if recid.json and 'publish_status' in recid.json \
                     and recid.json['publish_status'] in [PublishStatus.PUBLIC.value, PublishStatus.PRIVATE.value]]
+                
+                # recidsを削除
+                del recids
+                gc.collect()
+
                 file_count = math.ceil(len(record_ids) / current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_LIMIT"])
-                write_file_json = {
-                    'start_time': start_time,
-                    'finish_time': '',
-                    'export_path': export_path,
-                    'cancel_flg': False,
-                    'write_file_status': {}
-                }
+
+                write_file_json = orjson.loads(get_redis_cache(_file_create_key))
                 for i in range(file_count):
-                    write_file_json['write_file_status'][str(i + 1)] = 'waiting'
+                    write_file_json['write_file_status'][item_type_id + '.' + str(i + 1)] = 'waiting'
                 reset_redis_cache(
                     _file_create_key,
                     orjson.dumps(write_file_json).decode()
@@ -3419,11 +3464,13 @@ def export_all(root_url, user_id, data, start_time):
                         item_datas["name"] = "{}.part{}".format(
                             item_datas["name"], file_part
                         )
-                        pickle_file_name = "{}.part{}.pickle".format(
-                            user_id, file_part
+                        pickle_file_name = "{}.{}.part{}.pickle".format(
+                            user_id, item_type_id, file_part
                         )
                         with open(pickle_file_name, 'wb') as f:
                             pickle.dump(item_datas, f)
+                        del item_datas
+                        gc.collect()
                         write_files_task.apply_async(args=(export_path, pickle_file_name, user_id,))
                         item_datas = {}
                         file_part += 1
@@ -3446,22 +3493,27 @@ def export_all(root_url, user_id, data, start_time):
                             "recids": [],
                             "data": {},
                         }
-                        pickle_file_name = "{}.pickle".format(user_id)
+                        pickle_file_name = "{}.{}.pickle".format(user_id,item_type_id)
 
                     item_datas["recids"].append(recid)
                     item_datas["data"][recid] = record
                     counter += 1
+                    del record
+                    gc.collect()
 
                 if file_part != 1:
                     item_datas["name"] = "{}.part{}".format(
                         item_datas["name"], file_part
                     )
-                    pickle_file_name = "{}.part{}.pickle".format(
-                        user_id, file_part
+                    pickle_file_name = "{}.{}.part{}.pickle".format(
+                        user_id, item_type_id,file_part
                     )
 
                 with open(pickle_file_name, 'wb') as f:
                     pickle.dump(item_datas, f)
+                
+                del item_datas
+                gc.collect()
 
                 # Create export info file
                 write_files_task.apply_async(args=(export_path, pickle_file_name, user_id,))
@@ -3490,9 +3542,8 @@ def export_all(root_url, user_id, data, start_time):
     reset_redis_cache(_msg_key, "")
     reset_redis_cache(_run_msg_key, "")
     reset_redis_cache(_file_create_key, orjson.dumps({}).decode())
-    temp_path = tempfile.TemporaryDirectory(
-        prefix=current_app.config["WEKO_ITEMS_UI_EXPORT_TMP_PREFIX"]
-    )
+    temp_path = "/tmp/bulk_export"
+    os.makedirs(temp_path, exist_ok=True)
     try:
         # Delete old file
         _task_config = current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_URI"]
@@ -3504,7 +3555,7 @@ def export_all(root_url, user_id, data, start_time):
         if prev_uri:
             delete_exported(prev_uri, _uri_key)
 
-        export_path = temp_path.name + "/" + datetime.utcnow().strftime("%Y%m%d%H%M%S")
+        export_path = temp_path + "/" + datetime.utcnow().strftime("%Y%m%d%H%M%S%f")
         os.makedirs(export_path, exist_ok=True)
 
         item_type_id = data.get('item_type_id', "-1")
@@ -3597,6 +3648,8 @@ def write_files(item_datas, export_path, user_id, retrys):
         with open(file_full_path, "w", encoding="utf-8-sig") as file:
             file_output = package_export_file(item_type_data)
             file.write(file_output.getvalue())
+            del file_output,item_type_data
+            gc.collect()
         reset_redis_cache(
             _run_msg_key,
             "The latest {} file was created on {}.".format(
@@ -3608,6 +3661,8 @@ def write_files(item_datas, export_path, user_id, retrys):
             "{}.{} has been created.".format(item_datas["name"], _file_format)
         )
         db.session.commit()
+        del item_datas, headers, records, keys, labels, is_systems, options,permissions
+        gc.collect()
         return True
     except SQLAlchemyError as ex:
         current_app.logger.error(ex)
@@ -3709,8 +3764,10 @@ def get_export_status():
     _expired_time = current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_EXPIRED_TIME"]
 
     def _check_write_file_info(json):
-        status = json['write_file_status']
-        if ('waiting' not in status.values()) and ('started' not in status.values()):
+        status = json.get('write_file_status','before')
+        if status == 'before':
+            return 'BEFORE'
+        elif status and ('waiting' not in status.values()) and ('started' not in status.values()):
             if 'error' in status.values():
                 return ''
             elif 'canceled' in status.values():
@@ -3740,10 +3797,11 @@ def get_export_status():
             task = AsyncResult(task_id)
             status_cond = (task.successful() or task.failed() or task.state == "REVOKED") \
                 and write_file_status != 'STARTED'
-            status = write_file_status
+            if not write_file_status == 'BEFORE':
+                status = write_file_status
             export_status = True if not status_cond else False
-            start_time = write_file_data["start_time"]
-            finish_time = write_file_data["finish_time"]
+            start_time = write_file_data.get("start_time")
+            finish_time = write_file_data.get("finish_time")
             if status_cond and write_file_status == 'SUCCESS':
                 export_path = write_file_data['export_path']
                 if not os.path.isdir(os.path.join(export_path, 'data')):
@@ -3756,6 +3814,7 @@ def get_export_status():
                     download_uri = src.uri
                     finish_time = datetime.now().strftime('%Y/%m/%d %H:%M:%S')
                     write_file_data["finish_time"] = finish_time
+                    # print("Bulk export all finished at {}.".format(finish_time))
                     reset_redis_cache(file_msg, orjson.dumps(write_file_data).decode())
                     reset_redis_cache(cache_uri, download_uri)
                     reset_redis_cache(run_msg, "")
@@ -3763,10 +3822,12 @@ def get_export_status():
                         args=(
                             download_uri,
                             cache_uri,
-                            cache_key
+                            cache_key,
+                            export_path
                         ),
                         countdown=int(_expired_time) * 60,
                     )
+                    os.remove(export_path + ".zip")
     except Exception as ex:
         current_app.logger.error(ex)
         export_status = False
@@ -3898,6 +3959,33 @@ def handle_check_file_metadata(list_record, data_path):
                 record["warnings"] + warnings if record.get("warnings") else warnings
             )
 
+def handle_check_custom_sort_order(list_record):
+    """Check CustomSortOrder.
+    
+    Args:
+        list_record (list): List record import.
+    """
+    warning = [(_("The CustomSortOrder of the item will be removed from the database."))]
+    half_width_num_error = [(_("Please specify CustomSortOrder as a whole number in half-width characters."))]
+    negative_num_error = [(_("CustomSortOrder cannot be zero or negative, except for -1."))]
+    for record in list_record:
+        custom_sort_orders = record.get("custom_sort_order")
+        if custom_sort_orders:
+            if isinstance(custom_sort_orders, str):
+                custom_sort_orders = [custom_sort_orders]
+            for order in custom_sort_orders:
+                if order == '-1':
+                    record["warnings"] = (
+                    record["warnings"] + warning if record.get("warnings") else warning
+                    )
+                elif not represents_int(order) or re.search(r"([０-９])", order):
+                    record["errors"] = (
+                    record["errors"] + half_width_num_error if record.get("errors") else half_width_num_error
+                    )
+                elif int(order) <= 0:
+                    record["errors"] = (
+                    record["errors"] + negative_num_error if record.get("errors") else negative_num_error
+                    )
 
 def handle_check_file_path(
     paths, data_path, is_new=False, is_thumbnail=False, is_single_thumbnail=False

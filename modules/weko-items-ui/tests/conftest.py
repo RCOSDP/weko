@@ -50,6 +50,7 @@ from invenio_assets import InvenioAssets
 from invenio_assets.cli import collect, npm
 from invenio_cache import InvenioCache
 from invenio_communities import InvenioCommunities
+from invenio_communities.models import Community
 from invenio_communities.views.ui import blueprint as invenio_communities_blueprint
 from invenio_db import InvenioDB
 from invenio_db import db as db_
@@ -820,6 +821,7 @@ def db_records(db,instance_path,users):
         index = Index.get_index_by_id(1)
         index.public_state = True
         index.harvest_public_state = True
+        index.item_custom_sort = {"1":1}
     
     index_metadata = {
             'id': 2,
@@ -832,6 +834,7 @@ def db_records(db,instance_path,users):
         index = Index.get_index_by_id(2)
         index.public_state = True
         index.harvest_public_state = False
+        index.item_custom_sort = {"1":1}
     
     index_metadata = {
             'id': 3,
@@ -844,6 +847,7 @@ def db_records(db,instance_path,users):
         index = Index.get_index_by_id(3)
         index.public_state = False
         index.harvest_public_state = True
+        index.item_custom_sort = {"1":1}
     
     index_metadata = {
             'id': 4,
@@ -856,6 +860,7 @@ def db_records(db,instance_path,users):
         index = Index.get_index_by_id(4)
         index.public_state = False
         index.harvest_public_state = False
+        index.item_custom_sort = {"1":1}
 
  
     yield result
@@ -1107,3 +1112,17 @@ def db_ranking(db):
 #             q.purge()
 
 #     return queue
+
+@pytest.fixture()
+def communities(app, db, users):
+    """Create example communities."""
+
+    comm0 = Community.create(
+        community_id="comm1",
+        role_id=4,
+        root_node_id=1,
+        id_user = 4,
+    )
+    db.session.add(comm0)
+
+    return comm0

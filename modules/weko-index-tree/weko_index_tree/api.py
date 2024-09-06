@@ -1405,22 +1405,32 @@ class Indexes(object):
 
     @classmethod
     def set_item_sort_custom(cls, index_id, sort_json={}):
-        """Set custom sort."""
+        """Set custom sort.
+        
+        Args:
+            index_id (int): search index id
+            sort_json (dict): custom setted item sort
+        """
         sort_dict_db = {}
-
-        for k, v in sort_json.items():
-            try:
-                i = int(v)
-                if i > 0:
-                    sort_dict_db[k] = i
-            except BaseException:
-                pass
 
         try:
             with db.session.begin_nested():
                 index = cls.get_index(index_id)
                 if not index:
                     return
+                # Get current item_custom_sort
+                current_sort = index.item_custom_sort or {}
+                sort_dict_db = current_sort.copy()
+                for k, v in sort_json.items():
+                    try:
+                        i = int(v)
+                        s = str(k)
+                        if i > 0:
+                            sort_dict_db[s] = i
+                        elif i == -1 and s in current_sort:
+                            del sort_dict_db[s]
+                    except BaseException:
+                        pass
                 index.item_custom_sort = sort_dict_db
                 db.session.merge(index)
             db.session.commit()

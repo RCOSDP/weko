@@ -346,9 +346,9 @@ class OpenSearchDetailData:
             index_meta[_index_id] = 'Unnamed Index' \
                 if _index_name is None else _index_name
 
-            fg.title('WEKO OpenSearch: ' + str(index_meta[_index_id]))
+            fg.title('WEKO OpenSearch : ' + str(index_meta[_index_id]))
         else:
-            fg.title('WEKO OpenSearch: ' + str(_keywords))
+            fg.title('WEKO OpenSearch : ' + str(_keywords))
 
         # Set link
         fg.link(href=request.url)

@@ -254,6 +254,18 @@ msgstr ""
 msgid "The file name specified in {} and {} do not match."
 msgstr ""
 
+#: weko_search_ui/utils.py:3933
+msgid "The CustomSortOrder of the item will be removed from the database."
+msgstr ""
+
+#: weko_search_ui/utils.py:3934
+msgid "Please specify CustomSortOrder as a whole number in half-width characters."
+msgstr ""
+
+#: weko_search_ui/utils.py:3935
+msgid "CustomSortOrder cannot be zero or negative, except for -1."
+msgstr ""
+
 #: weko_search_ui/utils.py:4106
 msgid "Please specify price by half-width number."
 msgstr ""

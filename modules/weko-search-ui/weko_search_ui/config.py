@@ -589,6 +589,7 @@ WEKO_EXPORT_TEMPLATE_BASIC_ID = [
     ".uri",
     ".metadata.path[0]",
     ".pos_index[0]",
+    ".custom_sort_order[0]",
     ".publish_status",
     ".feedback_mail[0]",
     ".cnri",
@@ -601,6 +602,7 @@ WEKO_EXPORT_TEMPLATE_BASIC_NAME = [
     "URI",
     ".IndexID[0]",
     ".POS_INDEX[0]",
+    ".CustomSortOrder[0]",
     ".PUBLISH_STATUS",
     ".FEEDBACK_MAIL[0]",
     ".CNRI",
@@ -611,6 +613,7 @@ WEKO_EXPORT_TEMPLATE_BASIC_NAME = [
 WEKO_EXPORT_TEMPLATE_BASIC_OPTION = [
     "#",
     "",
+    "Allow Multiple",
     "Allow Multiple",
     "Allow Multiple",
     "Required",

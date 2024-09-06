@@ -226,7 +226,7 @@ def base_app(instance_path, cache_config,request ,search_class):
             'search': 'SearchReport'
         },
         WEKO_ADMIN_SITELICENSE_REPORT_INTERFACE_NAME = 'WEKO3 v0.9.26_hiroba',
-        WEKO_ADMIN_SITELICENSE_REPORT_REPOSYTORY_NAME = 'WEKO3 v0.9.26_hiroba',
+        WEKO_ADMIN_SITELICENSE_REPORT_REPOSITORY_NAME = 'WEKO3 v0.9.26_hiroba',
         WEKO_ADMIN_SITELICENSE_REPORT_COLS = {
             'file_download':[
                 '', _('SetSpec'), _('Interface name'), _('ONLINE ISSN')
