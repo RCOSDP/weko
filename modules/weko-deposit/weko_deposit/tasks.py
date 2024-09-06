@@ -26,7 +26,7 @@ from io import StringIO
 
 from celery import shared_task
 from celery.utils.log import get_task_logger
-from flask import current_app, abort
+from flask import current_app
 from invenio_db import db
 from invenio_indexer.api import RecordIndexer
 from invenio_pidstore.errors import PIDDoesNotExistError
@@ -410,7 +410,7 @@ def update_items_by_authorInfo(user_id, target, origin_pkid_list=[],
             data_from (int): Data From.
 
         Returns:
-            int: length of `update_es_authorinfo`.
+            int | bool: length of `update_es_authorinfo`.
         """
 
         res = False
@@ -485,12 +485,12 @@ def update_items_by_authorInfo(user_id, target, origin_pkid_list=[],
         data_total = search['hits']['total']
         if data_total > data_size + data_from:
             weko_logger(key='WEKO_COMMON_IF_ENTER',
-                        branch="data_total is not empty")
+                        branch=f"data_total > {data_size + data_from}")
             weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=len(update_es_authorinfo))
             return len(update_es_authorinfo), True
         else:
             weko_logger(key='WEKO_COMMON_IF_ENTER',
-                        branch="data_total is empty")
+                        branch=f"data_total <= {data_size + data_from}")
             weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=len(update_es_authorinfo))
             return len(update_es_authorinfo), False
 
@@ -587,12 +587,12 @@ def update_items_by_authorInfo(user_id, target, origin_pkid_list=[],
             data_from += data_size
             if not next:
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
-                            branch="data_from is empty")
+                            branch="next is false")
                 break
         weko_logger(key='WEKO_COMMON_WHILE_END')
         if update_gather_flg:
             weko_logger(key='WEKO_COMMON_IF_ENTER',
-                        branch="vupdate_gather_flg is not empty")
+                        branch="update_gather_flg is not empty")
             process_counter[ORIGIN_LABEL] = get_origin_data(origin_pkid_list)
             update_db_es_data(origin_pkid_list, origin_id_list)
             delete_cache_data("update_items_by_authorInfo_{}".format(user_id))
@@ -611,7 +611,6 @@ def update_items_by_authorInfo(user_id, target, origin_pkid_list=[],
             current_app.config["WEKO_DEPOSIT_ITEM_UPDATE_STATUS_TTL"])
         db.session.rollback()
         weko_logger(key='WEKO_COMMON_DB_SOME_ERROR', ex=ex)
-        abort(400, "Failed to update items by author data.")
         update_items_by_authorInfo.retry(countdown=3, exc=ex, max_retries=1)
 
 
@@ -692,7 +691,6 @@ def update_db_es_data(origin_pkid_list, origin_id_list):
     except Exception as ex:
         weko_logger(key='WEKO_COMMON_ERROR_UNEXPECTED', ex=ex)
         db.session.rollback()
-        abort(400, "Failed to Update DB data!")
 
 
 def make_stats_file(raw_stats):
@@ -734,7 +732,7 @@ def make_stats_file(raw_stats):
     writer.writerow(["[SUCCESS]"])
     if raw_stats.get(SUCCESS_LABEL, []):
         weko_logger(key='WEKO_COMMON_IF_ENTER',
-                    branch="raw stats is success")
+                    branch="raw stats is not empty")
         writer.writerow(TITLE_LIST)
         weko_logger(key='WEKO_COMMON_FOR_START')
         for i, item in enumerate(raw_stats.get(SUCCESS_LABEL, [])):
@@ -752,7 +750,7 @@ def make_stats_file(raw_stats):
     writer.writerow(["[FAIL]"])
     if raw_stats.get(FAIL_LABEL, []):
         weko_logger(key='WEKO_COMMON_IF_ENTER',
-                    branch="raw stats is fail")
+                    branch="raw stats is not empty")
         writer.writerow(TITLE_LIST)
         weko_logger(key='WEKO_COMMON_FOR_START')
         for i, item in enumerate(raw_stats.get(FAIL_LABEL, [])):
