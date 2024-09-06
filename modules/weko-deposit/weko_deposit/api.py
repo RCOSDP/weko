@@ -3595,6 +3595,7 @@ class _FormatSysBibliographicInformation:
 
         Returns:
             str:page.
+
         """
         page = ''
         page += page_start if page_start is not None else ''
