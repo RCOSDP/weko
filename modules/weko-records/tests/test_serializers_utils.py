@@ -290,7 +290,7 @@ sample = OpenSearchDetailData(
 #     def output_open_search_detail_data(self): 
 def test_output_open_search_detail_data(app):
     with app.test_request_context():
-        assert_str = '<title xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/" xmlns:prism="http://prismstandard.org/namespaces/basic/2.0/"  xmlns:wekolog="http://wekolog.org/namespaces/basic/1.0/">WEKO OpenSearch: </title>'
+        assert_str = '<title xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/" xmlns:prism="http://prismstandard.org/namespaces/basic/2.0/"  xmlns:wekolog="http://wekolog.org/namespaces/basic/1.0/">WEKO OpenSearch : </title>'
         res = sample.output_open_search_detail_data()
         _tree = etree.fromstring(res)
         _record = str(etree.tostring(_tree.findall('title', namespaces=_tree.nsmap)[0]),"utf-8").replace('\n  ', '')
