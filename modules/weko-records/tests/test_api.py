@@ -24,6 +24,7 @@ from re import T
 # from tkinter import W
 import pytest
 import json
+from elasticsearch import helpers
 from elasticsearch.exceptions import RequestError
 from invenio_records.api import Record
 from invenio_records.errors import MissingModelError
@@ -41,7 +42,7 @@ from weko_records.api import FeedbackMailList, FilesMetadata, ItemLink, \
 from weko_records.models import ItemType, ItemTypeName, \
     SiteLicenseInfo, SiteLicenseIpAddress
 from jsonschema.validators import Draft4Validator
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # class RecordBase(dict):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_recordbase -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
@@ -476,6 +477,40 @@ def test_itemtypes_update_item_type(app, db, location):
 #     def __update_item_type(cls, id_, schema, form, render):
 #     def __update_metadata(cls, item_type_id, item_type_name, old_render, new_render):
 #     def __get_records_by_item_type_name(cls, item_type_name):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test__get_records_by_item_type_name -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test__get_records_by_item_type_name(app, esindex):
+    item_type_name = "test_item_type"
+    def _generate_es_data(num, start_datetime=datetime.now()):
+        for i in range(num):
+            doc = {
+                "_index": "test-weko-item-v1.0.0",
+                "_type": "item-v1.0.0",
+                "_id": f"2d1a2520-9080-437f-a304-230adc8{i:05d}",
+                "_source": {
+                    "_item_metadata": {
+                        "title": [f"test_title_{i}"],
+                    },
+                    "relation_version_is_last": True,
+                    "path": ["66"],
+                    "control_number": f"{i:05d}",
+                    "_created": (start_datetime + timedelta(seconds=i)).isoformat(),
+                    "_updated": (start_datetime + timedelta(seconds=i)).isoformat(),
+                    "publish_date": (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d'),
+                    "publish_status": "0",
+                },
+            }
+            if i % 2 == 0:
+                doc["_source"]["itemtype"] = item_type_name
+            else:
+                doc["_source"]["itemtype"] = "test_item_type2"
+            yield doc
+
+    generate_data_num = 20002
+    helpers.bulk(esindex, _generate_es_data(generate_data_num), refresh='true')
+
+    # result over 10000
+    assert len(ItemTypes._ItemTypes__get_records_by_item_type_name(item_type_name)) == int(generate_data_num/2)
+
 
 # class ItemTypes(RecordBase):
 #     def get_record(cls, id_, with_deleted=False):
