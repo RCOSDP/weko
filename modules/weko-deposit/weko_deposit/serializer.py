@@ -50,6 +50,11 @@ def file_uploaded_owner(created_user_id=0, updated_user_id=0):
     updated_email = ''
     show_updated_user = False
 
+    # if not current_user.is_authenticated:
+    #     weko_logger(key='WEKO_COMMON_IF_ENTER',
+    #                 branch="current_user.is_authenticated is False")
+    #     return {}
+
     if current_user.is_authenticated:
         weko_logger(key='WEKO_COMMON_IF_ENTER',
                     branch="current_user.is_authenticated is True")
@@ -57,10 +62,7 @@ def file_uploaded_owner(created_user_id=0, updated_user_id=0):
         show_updated_user = True
 
         created_user = User.query.get_or_404(created_user_id)
-        if created_user is not None:
-            weko_logger(key='WEKO_COMMON_IF_ENTER',
-                        branch="created_user is not None")
-            created_email = created_user.email
+        created_email = created_user.email
 
         created_userprofile = UserProfile.get_by_userid(created_user_id)
 
@@ -71,11 +73,7 @@ def file_uploaded_owner(created_user_id=0, updated_user_id=0):
             created_displayname = created_userprofile._displayname
 
         updated_user = User.query.get_or_404(updated_user_id)
-
-        if updated_user is not None:
-            weko_logger(key='WEKO_COMMON_IF_ENTER',
-                        branch="updated_user is not None")
-            updated_email = updated_user.email
+        updated_email = updated_user.email
 
         updated_userprofile = UserProfile.get_by_userid(updated_user_id)
 
