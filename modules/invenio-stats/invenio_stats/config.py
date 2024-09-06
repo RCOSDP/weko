@@ -15,8 +15,8 @@ from flask_babel import get_timezone
 from kombu.entity import Exchange
 
 from .utils import default_permission_factory, weko_permission_factory
-from invenio_stats.queries import ESDateHistogramQuery, ESTermsQuery, \
-    ESWekoFileStatsQuery, ESWekoTermsQuery, ESWekoRankingQuery, ESWekoFileRankingQuery
+from invenio_stats.queries import DateHistogramQuery, TermsQuery, \
+    WekoFileStatsQuery, WekoTermsQuery, WekoRankingQuery, WekoFileRankingQuery
 from invenio_stats.processors import EventsIndexer, anonymize_user, \
     flag_restricted, flag_robots
 from invenio_stats.contrib.event_builders import build_celery_task_unique_id, \

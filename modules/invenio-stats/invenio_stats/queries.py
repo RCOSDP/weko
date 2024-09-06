@@ -14,7 +14,6 @@ from datetime import datetime
 
 import pickle
 import dateutil.parser
-from elasticsearch_dsl import Search
 from flask import current_app
 from invenio_search import current_search_client
 from invenio_search.engine import dsl
@@ -259,13 +258,13 @@ class TermsQuery(Query):
         """Build the search query."""
         agg_query = dsl.Search(using=self.client, index=self.index)[0:0]
 
-        if start_date or end_date:
+        if start_date is not None or end_date is not None:
             time_range = {}
-            if start_date:
+            if start_date is not None:
                 time_range["gte"] = start_date.isoformat()
-            if end_date:
+            if end_date is not None:
                 time_range["lte"] = end_date.isoformat()
-                time_range["time_zone"] = str(
+            time_range["time_zone"] = str(
                 current_app.config["STATS_WEKO_DEFAULT_TIMEZONE"]())
             agg_query = agg_query.filter("range", **{self.time_field: time_range})
 
@@ -273,20 +272,23 @@ class TermsQuery(Query):
             agg_query = modifier(agg_query, **kwargs)
 
         base_agg = agg_query.aggs
-        
+
 
         def _apply_metric_aggs(agg):
             for dst, (metric, field, opts) in self.metric_fields.items():
                 agg.metric(dst, metric, field=field, **opts)
-        
-        size = kwargs.get("agg_size") if kwargs.get("agg_size") else \
-            current_app.config["STATS_ES_INTEGER_MAX_VALUE"]
-        _apply_metric_aggs(base_agg)
 
+        size = (
+            kwargs.get("agg_size")
+            if kwargs.get("agg_size")
+            else current_app.config["STATS_ES_INTEGER_MAX_VALUE"]
+        )
+
+        _apply_metric_aggs(base_agg)
         if self.group_fields:
             sources = []
             for f in self.group_fields:
-                sources.append({f: A("terms", field=f)})
+                sources.append({f: dsl.aggs.A("terms", field=f)})
             if kwargs.get("after_key"):
                 base_agg.bucket(
                     "my_buckets", "composite", size=size, sources=sources, after=kwargs.get("after_key")
@@ -295,12 +297,13 @@ class TermsQuery(Query):
                 base_agg.bucket(
                     "my_buckets", "composite", size=size, sources=sources
                 )
-        else:
-            if self.aggregated_fields:
-                cur_agg = base_agg
-                for term in self.aggregated_fields:
-                    cur_agg = cur_agg.bucket(term, "terms", field=term, size=size)
-                    _apply_metric_aggs(cur_agg)
+        elif self.aggregated_fields:
+            cur_agg = base_agg
+            for term in self.aggregated_fields:
+                cur_agg = cur_agg.bucket(
+                    term, "terms", field=term, size=self.max_bucket_size
+                )
+                _apply_metric_aggs(cur_agg)
 
         if self.copy_fields:
             base_agg.metric("top_hit", "top_hits", size=1, sort={"timestamp": "desc"})
@@ -321,6 +324,7 @@ class TermsQuery(Query):
             # Add metric results for current bucket
             for metric in self.metric_fields:
                 bucket_result[metric] = agg[metric].get('value')
+
             if self.group_fields:
                 temp_data = {}
                 count = 0
@@ -336,9 +340,13 @@ class TermsQuery(Query):
                     else:
                         temp_data[key_str] = item["key"]
                         temp_data[key_str]["count"] = count
-                bucket_result.update(dict(
-                    buckets=[temp_data[key_str] for key_str in temp_data.keys()]
-                ))
+                bucket_result.update(
+                    {
+                        "buckets": [
+                            temp_data[key_str] for key_str in temp_data.keys()
+                        ],
+                    }
+                )
             elif fields:
                 current_level = fields[0]
                 bucket_result.update(
@@ -412,12 +420,7 @@ class TermsQuery(Query):
         return res
 
 
-# for backwards compatibility
-ESQuery = Query
-ESDateHistogramQuery = DateHistogramQuery
-ESTermsQuery = TermsQuery
-
-class ESWekoFileStatsQuery(ESTermsQuery):
+class WekoFileStatsQuery(TermsQuery):
     """Weko ES Query for File Stats."""
 
     def __init__(self, main_fields=None, main_query=None, *args, **kwargs):
@@ -427,34 +430,31 @@ class ESWekoFileStatsQuery(ESTermsQuery):
         :param main_query: list of fields to copy from the top hit document
             into the resulting aggregation.
         """
-        super(ESWekoFileStatsQuery, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.main_fields = main_fields or []
         self.main_query = main_query or {}
 
     def build_query(self, start_date, end_date, **kwargs):
         """Build the elasticsearch query."""
-        agg_query = Search(using=self.client,
-                           index=self.index,
-                           doc_type=self.doc_type)[0:0]
+        agg_query = dsl.Search(
+            using=self.client,
+            index=self.index)[0:0]
         if self.main_query:
             query_q = self.main_query
             for _field in self.main_fields:
-                query_q = json.dumps(query_q).replace(
-                    "@{}".format(_field), kwargs[_field])
+                query_q = json.dumps(query_q).replace(f"@{_field}", kwargs[_field])
                 query_q = json.loads(query_q)
             agg_query.update_from_dict(query_q)
 
-        if start_date or end_date:
+        if start_date is not None or end_date is not None:
             time_range = {}
-            if start_date:
+            if start_date is not None:
                 time_range["gte"] = start_date.isoformat()
-            if end_date:
+            if end_date is not None:
                 time_range["lte"] = end_date.isoformat()
             time_range["time_zone"] = str(
                 current_app.config["STATS_WEKO_DEFAULT_TIMEZONE"]())
-            agg_query = agg_query.filter(
-                "range",
-                **{self.time_field: time_range})
+            agg_query = agg_query.filter("range", **{self.time_field: time_range})
 
         for modifier in self.query_modifiers:
             agg_query = modifier(agg_query, **kwargs)
@@ -465,13 +465,17 @@ class ESWekoFileStatsQuery(ESTermsQuery):
             for dst, (metric, field, opts) in self.metric_fields.items():
                 agg.metric(dst, metric, field=field, **opts)
 
-        size = kwargs.get("agg_size") if kwargs.get("agg_size") else \
-            current_app.config["STATS_ES_INTEGER_MAX_VALUE"]
+        size = (
+            kwargs.get("agg_size")
+            if kwargs.get("agg_size")
+            else current_app.config["STATS_ES_INTEGER_MAX_VALUE"]
+        )
+
         _apply_metric_aggs(base_agg)
         if self.group_fields:
             sources = []
             for f in self.group_fields:
-                sources.append({f: A("terms", field=f)})
+                sources.append({f: dsl.aggs.A("terms", field=f)})
             if kwargs.get("after_key"):
                 base_agg.bucket(
                     "my_buckets", "composite", size=size, sources=sources, after=kwargs.get("after_key")
@@ -495,15 +499,14 @@ class ESWekoFileStatsQuery(ESTermsQuery):
         return agg_query
 
 
-class ESWekoTermsQuery(ESTermsQuery):
+class WekoTermsQuery(TermsQuery):
     """Weko ES Terms Query."""
 
     def build_query(self, start_date, end_date, **kwargs):
         """Build the elasticsearch query with."""
-        agg_query = Search(using=self.client,
-                           index=self.index,
-                           doc_type=self.doc_type)[0:0]
-
+        agg_query = dsl.Search(
+            using=self.client,
+            index=self.index)[0:0]
         if start_date is not None or end_date is not None:
             time_range = {}
             if start_date is not None:
@@ -512,9 +515,7 @@ class ESWekoTermsQuery(ESTermsQuery):
                 time_range["lte"] = end_date.isoformat()
             time_range["time_zone"] = current_app.config[
                 "STATS_WEKO_DEFAULT_TIMEZONE"]
-            agg_query = agg_query.filter(
-                "range",
-                **{self.time_field: time_range})
+            agg_query = agg_query.filter("range", **{self.time_field: time_range})
 
         for modifier in self.query_modifiers:
             agg_query = modifier(agg_query, **kwargs)
@@ -525,13 +526,16 @@ class ESWekoTermsQuery(ESTermsQuery):
             for dst, (metric, field, opts) in self.metric_fields.items():
                 agg.metric(dst, metric, field=field, **opts)
 
-        size = kwargs.get("agg_size") if kwargs.get("agg_size") else \
-            current_app.config["STATS_ES_INTEGER_MAX_VALUE"]
+        size = (
+            kwargs.get("agg_size")
+            if kwargs.get("agg_size")
+            else current_app.config["STATS_ES_INTEGER_MAX_VALUE"])
+
         _apply_metric_aggs(base_agg)
         if self.group_fields:
             sources = []
             for f in self.group_fields:
-                sources.append({f: A("terms", field=f)})
+                sources.append({f: dsl.aggs.A("terms", field=f)})
             if kwargs.get("after_key"):
                 base_agg.bucket(
                     "my_buckets", "composite", size=size, sources=sources, after=kwargs.get("after_key")
@@ -567,7 +571,7 @@ class ESWekoTermsQuery(ESTermsQuery):
         return agg_query
 
 
-class ESWekoRankingQuery(ESTermsQuery):
+class WekoRankingQuery(TermsQuery):
     """Weko ES Query for Ranking Page."""
 
     def __init__(self, main_fields=None, main_query=None, *args, **kwargs):
@@ -577,7 +581,7 @@ class ESWekoRankingQuery(ESTermsQuery):
         :param main_query: list of fields to copy from the top hit document
             into the resulting aggregation.
         """
-        super(ESWekoRankingQuery, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.main_fields = main_fields or []
         self.main_query = main_query or {}
 
@@ -585,15 +589,12 @@ class ESWekoRankingQuery(ESTermsQuery):
         """Build the elasticsearch query."""
         search_index_prefix = current_app.config["SEARCH_INDEX_PREFIX"].strip("-")
         es_index = self.index.format(search_index_prefix, kwargs.get("event_type"))
-        es_doc_type = self.doc_type.format(kwargs.get("event_type")) if self.doc_type else ""
-        agg_query = Search(using=self.client,
-                           index=es_index,
-                           doc_type=es_doc_type)[0:0]
-
+        agg_query = dsl.Search(
+            using=self.client,
+            index=es_index)[0:0]
         query_q = json.dumps(self.main_query)
         for _field in self.main_fields:
-            query_q = query_q.replace(
-                "@{}".format(_field), kwargs.get(_field, ""))
+            query_q = query_q.replace(f"@{_field}", kwargs.get(_field, ""))
 
         query_q = query_q.replace(
             "@time_zone", str(current_app.config["STATS_WEKO_DEFAULT_TIMEZONE"]())
@@ -621,11 +622,11 @@ class ESWekoRankingQuery(ESTermsQuery):
         agg_query = self.build_query(**kwargs)
 
         query_result = agg_query.execute().to_dict()
-        
+
         return query_result
 
 
-class ESWekoFileRankingQuery(ESTermsQuery):
+class WekoFileRankingQuery(TermsQuery):
     """Weko ES Query for File Download Ranking."""
 
     def __init__(self, main_fields=None, main_query=None, *args, **kwargs):
@@ -635,22 +636,19 @@ class ESWekoFileRankingQuery(ESTermsQuery):
         :param main_query: list of fields to copy from the top hit document
             into the resulting aggregation.
         """
-        super(ESWekoFileRankingQuery, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.main_fields = main_fields or []
         self.main_query = main_query or {}
 
     def build_query(self, start_date, end_date, **kwargs):
         """Build the elasticsearch query."""
-        agg_query = Search(
+        agg_query = dsl.Search(
             using=self.client,
-            index=self.index,
-            doc_type=self.doc_type
-        )[0:0]
+            index=self.index)[0:0]
         if self.main_query:
             query_q = self.main_query
             for _field in self.main_fields:
-                query_q = json.dumps(query_q).replace(
-                    "@{}".format(_field), kwargs[_field])
+                query_q = json.dumps(query_q).replace(f"@{_field}", kwargs[_field])
                 query_q = json.loads(query_q)
 
             if 'root_file_id_list' in kwargs.keys():
@@ -658,17 +656,15 @@ class ESWekoFileRankingQuery(ESTermsQuery):
 
             agg_query.update_from_dict(query_q)
 
-        if start_date or end_date:
+        if start_date is not None or end_date is not None:
             time_range = {}
-            if start_date:
+            if start_date is not None:
                 time_range['gte'] = start_date.isoformat()
-            if end_date:
+            if end_date is not None:
                 time_range['lte'] = end_date.isoformat()
-            time_range['time_zone'] = current_app.config[
-                'STATS_WEKO_DEFAULT_TIMEZONE']
-            agg_query = agg_query.filter(
-                'range',
-                **{self.time_field: time_range})
+            time_range['time_zone'] = str(
+                current_app.config['STATS_WEKO_DEFAULT_TIMEZONE']())
+            agg_query = agg_query.filter('range', **{self.time_field: time_range})
 
         for dst, (metric, field, opts) in self.metric_fields.items():
             agg_query.aggs.metric(dst, metric, field=field, **opts)
@@ -686,10 +682,10 @@ class ESWekoFileRankingQuery(ESTermsQuery):
 
         # Add copy_fields
         aggs = query_result['aggregations']
-        result = dict(
-            start_date=start_date.isoformat() if start_date else None,
-            end_date=end_date.isoformat() if end_date else None,
-        )
+        result = {
+            'start_date': start_date.isoformat() if start_date else None,
+            'end_date': end_date.isoformat() if end_date else None,
+        }
 
         return build_buckets(aggs, self.aggregated_fields, result)
 
@@ -704,3 +700,13 @@ class ESWekoFileRankingQuery(ESTermsQuery):
         query_result = agg_query.execute().to_dict()
 
         return self.process_query_result(query_result, start_date, end_date)
+
+
+# for backwards compatibility
+ESQuery = Query
+ESDateHistogramQuery = DateHistogramQuery
+ESTermsQuery = TermsQuery
+ESWekoFileStatsQuery = WekoFileStatsQuery
+ESWekoTermsQuery = WekoTermsQuery
+ESWekoRankingQuery = WekoRankingQuery
+ESWekoFileRankingQuery = WekoFileRankingQuery
