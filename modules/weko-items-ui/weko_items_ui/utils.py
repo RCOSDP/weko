@@ -1196,7 +1196,7 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
             if super_user or (community_admin and info.cid in can_edit_indexes):
                 custom_sort_dict = Indexes.get_item_sort(info.cid)
                 item_sort_order = custom_sort_dict.get(str(recid))
-                records.attr_output[recid].append(item_sort_order)
+                records.attr_output[recid].append(str(item_sort_order) if item_sort_order else '')
             elif community_admin:
                 records.attr_output[recid].append('')
 
@@ -3136,8 +3136,10 @@ def make_stats_file_with_permission(item_type_id, recids,
     for i in range(max_path):
         ret.append('.metadata.path[{}]'.format(i))
         ret.append('.pos_index[{}]'.format(i))
+        ret.append('.custom_sort_order[{}]'.format(i))
         ret_label.append('.IndexID[{}]'.format(i))
         ret_label.append('.POS_INDEX[{}]'.format(i))
+        ret_label.append('.CustomSortOrder[{}]'.format(i))
 
     ret.append('.publish_status')
     ret_label.append('.PUBLISH_STATUS')
@@ -3161,8 +3163,11 @@ def make_stats_file_with_permission(item_type_id, recids,
             records.attr_output[recid].append(info.cid)
             records.attr_output[recid].append(info.name.replace(
                 '-/-', current_app.config['WEKO_ITEMS_UI_INDEX_PATH_SPLIT']))
+            custom_sort_dict = Indexes.get_item_sort(info.cid)
+            item_sort_order = custom_sort_dict.get(str(recid))
+            records.attr_output[recid].append(str(item_sort_order) if item_sort_order else '')
         records.attr_output[recid].extend(
-            [''] * (max_path * 2 - len(records.attr_output[recid]))
+            [''] * (max_path * 3 - len(records.attr_output[recid]))
         )
 
         records.attr_output[recid].append(
@@ -3264,7 +3269,7 @@ def make_stats_file_with_permission(item_type_id, recids,
 
     ret_system = []
     ret_option = []
-    multiple_option = ['.metadata.path', '.pos_index',
+    multiple_option = ['.metadata.path', '.pos_index', '.custom_sort_order',
                        '.feedback_mail', '.file_path', '.thumbnail_path']
     meta_list = item_type.get('meta_list', {})
     meta_list.update(item_type.get('meta_fix', {}))

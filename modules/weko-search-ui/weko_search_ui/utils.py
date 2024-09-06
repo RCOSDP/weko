@@ -3814,7 +3814,7 @@ def get_export_status():
                     download_uri = src.uri
                     finish_time = datetime.now().strftime('%Y/%m/%d %H:%M:%S')
                     write_file_data["finish_time"] = finish_time
-                    current_app.logger.info("Bulk export all finished at {}.".format(finish_time))
+                    # print("Bulk export all finished at {}.".format(finish_time))
                     reset_redis_cache(file_msg, orjson.dumps(write_file_data).decode())
                     reset_redis_cache(cache_uri, download_uri)
                     reset_redis_cache(run_msg, "")
