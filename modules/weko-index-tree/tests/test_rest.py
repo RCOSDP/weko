@@ -447,16 +447,17 @@ class TestIndexTreeActionResource:
     
 # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_rest.py::TestIndexTreeActionResource::test_put -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
     def test_put(self, client_rest, users, test_indices, admin_lang_setting, redis_connect, without_session_remove):
-        os.environ['INVENIO_WEB_HOST_NAME'] = "test"
+        # os.environ['INVENIO_WEB_HOST_NAME'] = "test"
         with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
             data = {"pre_parent":"0","parent":"0","position":"0"}
             index_id="3"
             url = "/tree/move/{}".format(index_id)
             # not data
             res = client_rest.put(url,json={})
+            print(res)
             assert res.status_code == 400
 
-            # import running
+            #import running
             with patch("weko_workflow.utils.get_cache_data",return_value=True):
                 data = {"pre_parent":"0","parent":"0","position":"0"}
                 index_id="3"
@@ -487,7 +488,7 @@ class TestIndexTreeActionResource:
             assert redis_connect.redis.exists("index_tree_view_test_en") == True
             redis_connect.delete("index_tree_view_test_en")
         
-            # move failed
+        # move failed
         with patch("flask_login.utils._get_user", return_value=users[4]['obj']):
             AdminLangSettings.update_lang(lang_code="en",is_registered=False,sequence=0)
             data = {"pre_parent":"0","parent":"0","position":"0"}
