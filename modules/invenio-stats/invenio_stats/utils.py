@@ -419,7 +419,9 @@ class QueryFileReportsHelper(object):
             all_params = {'start_date': query_month + '-01',
                           'end_date':
                           query_month + '-' + str(lastday).zfill(2)
-                          + 'T23:59:59'}
+                          + 'T23:59:59',
+                          "should":[{"bool":{"must_not":{"term":{"is_open_access":True}}}},
+                                    {"bool":{"must_not":{"exists":{"field":"is_open_access"}}}}]}
             params = {'start_date': query_month + '-01',
                       'end_date':
                       query_month + '-' + str(lastday).zfill(2)
