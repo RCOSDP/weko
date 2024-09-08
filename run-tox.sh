@@ -40,6 +40,7 @@ for module_path in modules/*/; do
     [[ ${module_path} =~ ^modules/(weko-indextree-journal).+$ ]] || 
     [[ ${module_path} =~ ^modules/(weko-items-autofill).+$ ]]|| 
     [[ ${module_path} =~ ^modules/(weko-items-ui).+$ ]]|| 
+    [[ ${module_path} =~ ^modules/(weko-itemtypes-ui).+$ ]]|| 
     [[ ${module_path} =~ ^modules/(weko-logging).+$ ]]|| 
     [[ ${module_path} =~ ^modules/(weko-plugins).+$ ]]|| 
     [[ ${module_path} =~ ^modules/(weko-records-ui).+$ ]]|| 

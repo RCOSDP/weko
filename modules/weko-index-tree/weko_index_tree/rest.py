@@ -249,6 +249,7 @@ class IndexActionResource(ContentNegotiatedMethodView):
             if "ja" in [lang["lang_code"] for lang in langs]:
                 tree_ja = self.record_class.get_index_tree(lang="ja")
             tree = self.record_class.get_index_tree(lang="other_lang")
+            
             for lang in langs:
                 lang_code = lang["lang_code"]
                 if lang_code == "ja":
@@ -279,6 +280,7 @@ class IndexActionResource(ContentNegotiatedMethodView):
         else:
             public_state = data.get('public_state') and data.get(
                 'harvest_public_state')
+            
             if is_index_locked(index_id):
                 errors.append(_('Index Delete is in progress on another device.'))
             elif not public_state and check_doi_in_index(index_id):
@@ -479,6 +481,8 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
         if not data:
             raise InvalidDataRESTError()
 
+        msg = ''
+        status = 200
         check = is_import_running()
         if check == "is_import_running":
             status = 202
