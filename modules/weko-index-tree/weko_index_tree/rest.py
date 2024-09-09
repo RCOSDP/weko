@@ -308,7 +308,7 @@ class IndexActionResource(ContentNegotiatedMethodView):
                 if not self.record_class.update(index_id, **data):
                     raise IndexUpdatedRESTError()
                 msg = 'Index updated successfully.'
-
+                
             #roles = get_account_role()
             #for role in roles:
             langs = AdminLangSettings.get_registered_language()

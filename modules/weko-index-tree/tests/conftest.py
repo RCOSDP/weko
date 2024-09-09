@@ -1616,3 +1616,21 @@ def admin_lang_setting(db):
     AdminLangSettings.create("en","English", True, 0, True)
     AdminLangSettings.create("ja","日本語", True, 1, True)
     AdminLangSettings.create("zh","中文", False, 0, True)
+
+
+@pytest.fixture()
+def index_thumbnail(app,instance_path):
+    dir_path = os.path.join(instance_path,
+    app.config['WEKO_THEME_INSTANCE_DATA_DIR'],'indextree')
+    thumbnail_path = os.path.join(
+                        dir_path,
+                        "test_thumbnail.txt"
+                    )
+    if not os.path.isdir(dir_path):
+        os.makedirs(dir_path)
+    
+    with open(thumbnail_path, "w") as f:
+        f.write("test")
+    
+    return thumbnail_path
+    

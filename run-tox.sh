@@ -8,6 +8,7 @@
 date --iso-8601="minutes"
 pip install tox
 pip install tox-setuptools-version
+pip install pytest-timeout
 for module_path in modules/*/; do
   if [[ ${module_path} =~ ^modules/(invenio-|weko-).+$ ]] && [[ -d ${module_path}tests ]]; then
     if [[ ${module_path} =~ ^modules/(invenio-accounts).+$ ]] || 
