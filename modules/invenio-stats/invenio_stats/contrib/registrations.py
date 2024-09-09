@@ -19,7 +19,7 @@ from invenio_stats.contrib.event_builders import build_celery_task_unique_id, \
 from invenio_stats.processors import EventsIndexer, anonymize_user, \
     flag_restricted, flag_robots
 from invenio_stats.queries import ESDateHistogramQuery, ESTermsQuery, \
-    ESWekoFileStatsQuery, ESWekoTermsQuery, ESWekoRankingQuery, ESWekoFileRankingQuery
+    WekoFileStatsQuery, WekoTermsQuery, WekoRankingQuery, WekoFileRankingQuery
 
 from weko_schema_ui.models import PublishStatus
 
@@ -347,7 +347,7 @@ def register_queries():
         ),
         dict(
             query_name='get-search-report',
-            query_class=ESWekoTermsQuery,
+            query_class=WekoTermsQuery,
             query_config=dict(
                 index='{}-stats-search'.format(search_index_prefix),
                 doc_type='search-day-aggregation',
@@ -447,7 +447,7 @@ def register_queries():
         ),
         dict(
             query_name='bucket-file-download-total',
-            query_class=ESWekoFileStatsQuery,
+            query_class=WekoFileStatsQuery,
             query_config=dict(
                 index='{}-stats-file-download'.format(search_index_prefix),
                 doc_type='file-download-day-aggregation',
@@ -529,7 +529,7 @@ def register_queries():
         ),
         dict(
             query_name='bucket-file-preview-total',
-            query_class=ESWekoFileStatsQuery,
+            query_class=WekoFileStatsQuery,
             query_config=dict(
                 index='{}-stats-file-preview'.format(search_index_prefix),
                 doc_type='file-preview-day-aggregation',
@@ -613,7 +613,7 @@ def register_queries():
         ),
         dict(
             query_name='get-record-view-report',
-            query_class=ESWekoTermsQuery,
+            query_class=WekoTermsQuery,
             query_config=dict(
                 index='{}-stats-record-view'.format(search_index_prefix),
                 doc_type='record-view-day-aggregation',
@@ -656,7 +656,7 @@ def register_queries():
         ),
         dict(
             query_name='item-create-total',
-            query_class=ESWekoTermsQuery,
+            query_class=WekoTermsQuery,
             query_config=dict(
                 index='{}-stats-item-create'.format(search_index_prefix),
                 doc_type='item-create-day-aggregation',
@@ -668,7 +668,7 @@ def register_queries():
         ),
         dict(
             query_name='item-create-per-date',
-            query_class=ESWekoTermsQuery,
+            query_class=WekoTermsQuery,
             query_config=dict(
                 index='{}-stats-item-create'.format(search_index_prefix),
                 doc_type='item-create-day-aggregation',
@@ -726,7 +726,7 @@ def register_queries():
         ),
         dict(
             query_name='get-file-download-per-item-report',
-            query_class=ESWekoTermsQuery,
+            query_class=WekoTermsQuery,
             query_config=dict(
                 index='{}-stats-file-download'.format(search_index_prefix),
                 doc_type='file-download-day-aggregation',
@@ -819,7 +819,7 @@ def register_queries():
         ),
         dict(
             query_name='get-ranking-data',
-            query_class=ESWekoRankingQuery,
+            query_class=WekoRankingQuery,
             query_config=dict(
                 index='{}-stats-{}',
                 doc_type='{}-day-aggregation',
@@ -849,13 +849,13 @@ def register_queries():
                                 "field": "@group_field",
                                 "size": "@agg_size",
                                 "order": {
-                                    "my_sum": "desc" 
+                                    "my_sum": "desc"
                                 }
                             },
                             "aggs": {
                                 "my_sum": {
                                     "sum": {
-                                        "field": "@count_field" 
+                                        "field": "@count_field"
                                     }
                                 }
                             }
@@ -866,7 +866,7 @@ def register_queries():
         ),
         dict(
             query_name='get-new-items-data',
-            query_class=ESWekoRankingQuery,
+            query_class=WekoRankingQuery,
             query_config=dict(
                 index='{}-weko',
                 doc_type='item-v1.0.0',
@@ -914,7 +914,7 @@ def register_queries():
         ),
         dict(
             query_name='item-file-download-aggs',
-            query_class=ESWekoFileRankingQuery,
+            query_class=WekoFileRankingQuery,
             query_config=dict(
                 index='{}-events-stats-file-download'.format(search_index_prefix),
                 doc_type='stats-file-download',
