@@ -120,11 +120,8 @@ setup(
             'deposit_admin_access'
             ' = invenio_deposit.permissions:action_admin_access',
         ],
-        'invenio_assets.bundles': [
-            'invenio_deposit_css = invenio_deposit.bundles:css',
-            'invenio_deposit_js = invenio_deposit.bundles:js',
-            'invenio_deposit_dependencies_js = invenio_deposit.bundles:'
-            'js_dependecies',
+        'invenio_assets.webpack': [
+            'invenio_deposit = invenio_deposit.webpack:invenio_deposit'
         ],
         'invenio_i18n.translations': [
             'messages = invenio_deposit',
