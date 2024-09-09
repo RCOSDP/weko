@@ -12,20 +12,31 @@
 import os
 
 from flask_babel import get_timezone
+from invenio_search import current_search_client
 from kombu.entity import Exchange
 
-from .utils import default_permission_factory, weko_permission_factory
-from invenio_stats.queries import DateHistogramQuery, TermsQuery, \
-    WekoFileStatsQuery, WekoTermsQuery, WekoRankingQuery, WekoFileRankingQuery
-from invenio_stats.processors import EventsIndexer, anonymize_user, \
-    flag_restricted, flag_robots
-from invenio_stats.contrib.event_builders import build_celery_task_unique_id, \
-    build_file_unique_id, build_item_create_unique_id, \
-    build_record_unique_id, build_search_detail_condition, \
-    build_search_unique_id, build_top_unique_id, copy_record_index_list, \
-    copy_search_keyword, copy_search_type, copy_user_group_list
-from invenio_stats.aggregations import StatAggregator, filter_restricted
-from invenio_search import current_search_client
+from .aggregations import StatAggregator, filter_restricted
+from .contrib.event_builders import (
+    build_celery_task_unique_id,
+    build_file_unique_id,
+    build_item_create_unique_id,
+    build_record_unique_id,
+    build_search_detail_condition,
+    build_search_unique_id,
+    build_top_unique_id,
+    copy_record_index_list,
+    copy_search_keyword,
+    copy_search_type,
+    copy_user_group_list
+)
+from .processors import (
+    EventsIndexer,
+    anonymize_user,
+    flag_restricted,
+    flag_robots
+)
+from .utils import weko_permission_factory
+from .queries import TermsQuery
 
 STATS_REGISTER_RECEIVERS = True
 """Enable the registration of signal receivers.
@@ -40,136 +51,138 @@ PROVIDE_PERIOD_YEAR = 5
 
 REPORTS_PER_PAGE = 10
 
-SEARCH_INDEX_PREFIX = os.environ.get('SEARCH_INDEX_PREFIX', '')
+SEARCH_INDEX_PREFIX = os.environ.get("SEARCH_INDEX_PREFIX", "")
 """Search index prefix which is set in weko config."""
 
 
 STATS_EVENTS = {
-    'celery-task': {
-        "templates": 'invenio_stats.contrib.celery_task',
-        'signal': ['invenio_oaiharvester.signals.oaiharvest_finished',
-                   'weko_sitemap.signals.sitemap_finished'],
-        'event_builders': [
-            'invenio_stats.contrib.event_builders.celery_task_event_builder'
+    "celery-task": {
+        "templates": "invenio_stats.contrib.celery_task",
+        "signal": [
+            "invenio_oaiharvester.signals.oaiharvest_finished",
+            "weko_sitemap.signals.sitemap_finished"
         ],
-        'cls':EventsIndexer,
-        'params':dict(
-                preprocessors=[
-                    flag_restricted,
-                    flag_robots,
-                    anonymize_user,
-                    build_celery_task_unique_id
-                ],
-                suffix="%Y",
-            ),
+        "event_builders": [
+            "invenio_stats.contrib.event_builders.celery_task_event_builder"
+        ],
+        "cls":EventsIndexer,
+        "params": {
+            "preprocessors": [
+                flag_restricted,
+                flag_robots,
+                anonymize_user,
+                build_celery_task_unique_id
+            ],
+            "suffix": "%Y",
+        }
     },
-    'file-download': {
-        "templates":'invenio_stats.contrib.file_download',
-        'signal': 'invenio_files_rest.signals.file_downloaded',
-        'event_builders': [
-            'invenio_stats.contrib.event_builders.file_download_event_builder'
+    "file-download": {
+        "templates":"invenio_stats.contrib.file_download",
+        "signal": "invenio_files_rest.signals.file_downloaded",
+        "event_builders": [
+            "invenio_stats.contrib.event_builders.file_download_event_builder"
         ],
-        'cls':EventsIndexer,
-        'params':dict(
-                preprocessors=[
-                    flag_restricted,
-                    flag_robots,
-                    anonymize_user,
-                    build_file_unique_id
-                ],
-                double_click_window=30,
-                suffix="%Y",
-            ),
-    },
-    'file-preview': {
-        'templates':'invenio_stats.contrib.file_preview',
-        'signal': 'invenio_files_rest.signals.file_previewed',
-        'event_builders': [
-            'invenio_stats.contrib.event_builders.file_preview_event_builder'
-        ],
-        'cls':EventsIndexer,
-        'params':dict(
-                preprocessors=[
+        "cls":EventsIndexer,
+        "params": {
+                "preprocessors": [
                     flag_restricted,
                     flag_robots,
                     anonymize_user,
                     build_file_unique_id
                 ],
-                double_click_window=30,
-                suffix="%Y",
-            )
+                "double_click_window": 30,
+                "suffix": "%Y",
+        },
     },
-    'item-create': {
-        'templates':'invenio_stats.contrib.item_create',
-        'signal': 'weko_deposit.signals.item_created',
-        'event_builders': [
-            'invenio_stats.contrib.event_builders.item_create_event_builder'
+    "file-preview": {
+        "templates":"invenio_stats.contrib.file_preview",
+        "signal": "invenio_files_rest.signals.file_previewed",
+        "event_builders": [
+            "invenio_stats.contrib.event_builders.file_preview_event_builder"
         ],
-        'cls':EventsIndexer,
-        'params':dict(
-                preprocessors=[
+        "cls":EventsIndexer,
+        "params": {
+            "preprocessors": [
+                flag_restricted,
+                flag_robots,
+                anonymize_user,
+                build_file_unique_id
+            ],
+            "double_click_window": 30,
+            "suffix": "%Y",
+        }
+    },
+    "item-create": {
+        "templates":"invenio_stats.contrib.item_create",
+        "signal": "weko_deposit.signals.item_created",
+        "event_builders": [
+            "invenio_stats.contrib.event_builders.item_create_event_builder"
+        ],
+        "cls":EventsIndexer,
+        "params":{
+                "preprocessors": [
                     flag_restricted,
                     flag_robots,
                     anonymize_user,
                     build_item_create_unique_id
                 ],
-                suffix="%Y",
-            )
+                "suffix": "%Y",
+        }
     },
-    'record-view': {
-        'templates':'invenio_stats.contrib.record_view',
-        'signal': 'invenio_records_ui.signals.record_viewed',
-        'event_builders': [
-            'invenio_stats.contrib.event_builders.record_view_event_builder'
+    "record-view": {
+        "templates":"invenio_stats.contrib.record_view",
+        "signal": "invenio_records_ui.signals.record_viewed",
+        "event_builders": [
+            "invenio_stats.contrib.event_builders.record_view_event_builder"
         ],
-        'cls':EventsIndexer,
-        'params':dict(
-                preprocessors=[
+        "cls":EventsIndexer,
+        "params": {
+                "preprocessors": [
                     flag_restricted,
                     flag_robots,
                     anonymize_user,
                     build_record_unique_id
                 ],
-                double_click_window=30,
-                suffix="%Y",
-            )
+                "double_click_window": 30,
+                "suffix": "%Y",
+        }
     },
-    'top-view': {
-        'templates':'invenio_stats.contrib.top_view',
-        'signal': 'weko_theme.views.top_viewed',
-        'event_builders': [
-            'invenio_stats.contrib.event_builders.top_view_event_builder'
+    "top-view": {
+        "templates":"invenio_stats.contrib.top_view",
+        "signal": "weko_theme.views.top_viewed",
+        "event_builders": [
+            "invenio_stats.contrib.event_builders.top_view_event_builder"
         ],
-        'cls':EventsIndexer,
-        'params':dict(
-                preprocessors=[
+        "cls":EventsIndexer,
+        "params": {
+                "preprocessors": [
                     flag_restricted,
                     flag_robots,
                     anonymize_user,
                     build_top_unique_id
                 ],
-                double_click_window=30,
-                suffix="%Y",
-            )
+                "double_click_window": 30,
+                "suffix": "%Y",
+        }
     },
-    'search': {
-        'templates':'invenio_stats.contrib.search',
-        'signal': 'weko_search_ui.views.searched',
-        'event_builders': [
-            'invenio_stats.contrib.event_builders.search_event_builder'
+    "search": {
+        "templates":"invenio_stats.contrib.search",
+        "signal": "weko_search_ui.views.searched",
+        "event_builders": [
+            "invenio_stats.contrib.event_builders.search_event_builder"
         ],
-        'cls':EventsIndexer,
-        'params':dict(
-                preprocessors=[
-                    flag_restricted,
-                    flag_robots,
-                    anonymize_user,
-                    build_search_detail_condition,
-                    build_search_unique_id
-                ],
-                double_click_window=30,
-                suffix="%Y",
-            )
+        "cls":EventsIndexer,
+        "params": {
+            "preprocessors": [
+                flag_restricted,
+                flag_robots,
+                anonymize_user,
+                build_search_detail_condition,
+                build_search_unique_id
+            ],
+            "double_click_window": 30,
+            "suffix": "%Y",
+        }
     }
 }
 """Enabled Events.
@@ -195,262 +208,280 @@ You can find a sampe of STATS_EVENT configuration in the `registrations.py`
 STATS_EXCLUDED_ADDRS = []
 """Fill IP Addresses which will be excluded from stats in `[]`"""
 STATS_AGGREGATIONS = {
-    'celery-task-agg': {
-        "templates": 'invenio_stats.contrib.aggregations.aggr_celery_task',
+    "celery-task-agg": {
+        "templates": "invenio_stats.contrib.aggregations.aggr_celery_task",
         "cls":StatAggregator,
-        "params":dict(
-            client=current_search_client,
-            event='celery-task',
-            aggregation_field='unique_id',
-            aggregation_interval='day',
-            index_interval='year',
-            query_modifiers=[filter_restricted],
-            copy_fields=dict(
-                task_id='task_id',
-                task_name='task_name',
-                task_state='task_state',
-                start_time='start_time',
-                end_time='end_time',
-                total_records='total_records',
-                repository_name='repository_name',
-                execution_time='execution_time',
-            ),
-            metric_aggregation_fields={
-                'unique_count': ('cardinality', 'unique_session_id',
-                                 {'precision_threshold': 1000}),
-                'volume': ('sum', 'size', {}),
+        "params": {
+            "client": current_search_client,
+            "event": "celery-task",
+            "aggregation_field": "unique_id",
+            "aggregation_interval": "day",
+            "index_interval": "year",
+            "query_modifiers": [filter_restricted],
+            "copy_fields": {
+                "task_id": "task_id",
+                "task_name": "task_name",
+                "task_state": "task_state",
+                "start_time": "start_time",
+                "end_time": "end_time",
+                "total_records": "total_records",
+                "repository_name": "repository_name",
+                "execution_time": "execution_time",
             },
-        )
-    },
-    'search-agg': {
-        "templates": 'invenio_stats.contrib.aggregations.aggr_search',
-        "cls":StatAggregator,
-        "params":dict(
-                client=current_search_client,
-                event='search',
-                aggregation_field='unique_id',
-                aggregation_interval='day',
-                index_interval='year',
-                query_modifiers=[filter_restricted],
-                copy_fields=dict(
-                    country='country',
-                    referrer='referrer',
-                    search_key=copy_search_keyword,
-                    search_type=copy_search_type,
-                    site_license_name='site_license_name',
-                    site_license_flag='site_license_flag'
-                    # count='count',
+            "metric_aggregation_fields": {
+                "unique_count": (
+                    "cardinality", "unique_session_id",
+                    {"precision_threshold": 1000}
                 ),
-                metric_aggregation_fields={
-                    'unique_count': ('cardinality', 'unique_session_id',
-                                     {'precision_threshold': 1000}),
-                },
-            )
+                "volume": ("sum", "size", {}),
+            }
+        }
     },
-    'file-download-agg': {
-        "templates":'invenio_stats.contrib.aggregations.aggr_file_download',
+    "search-agg": {
+        "templates": "invenio_stats.contrib.aggregations.aggr_search",
         "cls":StatAggregator,
-        "params":dict(
-            client=current_search_client,
-            event='file-download',
-            aggregation_field='unique_id',
-            aggregation_interval='day',
-            index_interval='year',
-            query_modifiers=[filter_restricted],
-            copy_fields=dict(
-                country='country',
-                item_id='item_id',
-                item_title='item_title',
-                file_key='file_key',
-                bucket_id='bucket_id',
-                file_id='file_id',
-                root_file_id='root_file_id',
-                accessrole='accessrole',
-                userrole='userrole',
-                index_list='index_list',
-                is_billing_item='is_billing_item',
-                billing_file_price='billing_file_price',
-                user_group_names=copy_user_group_list,
-                site_license_name='site_license_name',
-                site_license_flag='site_license_flag',
-                cur_user_id='cur_user_id',
-                hostname='hostname',
-                remote_addr='remote_addr',
-            ),
-            metric_aggregation_fields={
-                'unique_count': ('cardinality', 'unique_session_id',
-                                 {'precision_threshold': 1000}),
-                'volume': ('sum', 'size', {}),
+        "params": {
+            "client": current_search_client,
+            "event": "search",
+            "aggregation_field": "unique_id",
+            "aggregation_interval": "day",
+            "index_interval": "year",
+            "query_modifiers": [filter_restricted],
+            "copy_fields": {
+                "country": "country",
+                "referrer": "referrer",
+                "search_key": copy_search_keyword,
+                "search_type": copy_search_type,
+                "site_license_name": "site_license_name",
+                "site_license_flag": "site_license_flag"
             },
-        )
+            "metric_aggregation_fields": {
+                "unique_count": (
+                    "cardinality", "unique_session_id",
+                    {"precision_threshold": 1000}
+                ),
+            }
+        }
     },
-    'file-preview-agg': {
-        "templates": 'invenio_stats.contrib.aggregations.aggr_file_preview',
+    "file-download-agg": {
+        "templates":"invenio_stats.contrib.aggregations.aggr_file_download",
         "cls":StatAggregator,
-        "params":dict(
-            client=current_search_client,
-            event='file-preview',
-            aggregation_field='unique_id',
-            query_modifiers=[filter_restricted],
-            aggregation_interval='day',
-            index_interval='year',
-            copy_fields=dict(
-                country='country',
-                item_id='item_id',
-                item_title='item_title',
-                file_key='file_key',
-                bucket_id='bucket_id',
-                file_id='file_id',
-                root_file_id='root_file_id',
-                accessrole='accessrole',
-                userrole='userrole',
-                index_list='index_list',
-                is_billing_item='is_billing_item',
-                billing_file_price='billing_file_price',
-                user_group_names=copy_user_group_list,
-                site_license_name='site_license_name',
-                site_license_flag='site_license_flag',
-                cur_user_id='cur_user_id',
-                hostname='hostname',
-                remote_addr='remote_addr',
-            ),
-            metric_aggregation_fields={
-                'unique_count': ('cardinality', 'unique_session_id',
-                                 {'precision_threshold': 1000}),
-                'volume': ('sum', 'size', {}),
+        "params": {
+            "client": current_search_client,
+            "event": "file-download",
+            "aggregation_field": "unique_id",
+            "aggregation_interval": "day",
+            "index_interval": "year",
+            "query_modifiers": [filter_restricted],
+            "copy_fields": {
+                "country": "country",
+                "item_id": "item_id",
+                "item_title": "item_title",
+                "file_key": "file_key",
+                "bucket_id": "bucket_id",
+                "file_id": "file_id",
+                "root_file_id": "root_file_id",
+                "accessrole": "accessrole",
+                "userrole": "userrole",
+                "index_list": "index_list",
+                "is_billing_item": "is_billing_item",
+                "billing_file_price": "billing_file_price",
+                "user_group_names": copy_user_group_list,
+                "site_license_name": "site_license_name",
+                "site_license_flag": "site_license_flag",
+                "cur_user_id": "cur_user_id",
+                "hostname": "hostname",
+                "remote_addr": "remote_addr",
             },
-        )
+            "metric_aggregation_fields": {
+                "unique_count": (
+                    "cardinality", "unique_session_id",
+                    {"precision_threshold": 1000}
+                ),
+                "volume": ("sum", "size", {}),
+            }
+        }
     },
-    'item-create-agg': {
-        "templates": 'invenio_stats.contrib.aggregations.aggr_item_create',
+    "file-preview-agg": {
+        "templates": "invenio_stats.contrib.aggregations.aggr_file_preview",
         "cls":StatAggregator,
-        "params":dict(
-            client=current_search_client,
-            event='item-create',
-            aggregation_field='unique_id',
-            aggregation_interval='day',
-            index_interval='year',
-            query_modifiers=[filter_restricted],
-            copy_fields=dict(
-                country='country',
-                hostname='hostname',
-                cur_user_id='cur_user_id',
-                remote_addr='remote_addr',
-                pid_type='pid_type',
-                pid_value='pid_value',
-                record_name='record_name',
-            ),
-            metric_aggregation_fields={
-                'unique_count': ('cardinality', 'unique_session_id',
-                                 {'precision_threshold': 1000}),
+        "params": {
+            "client": current_search_client,
+            "event": "file-preview",
+            "aggregation_field": "unique_id",
+            "query_modifiers": [filter_restricted],
+            "aggregation_interval": "day",
+            "index_interval": "year",
+            "copy_fields": {
+                "country": "country",
+                "item_id": "item_id",
+                "item_title": "item_title",
+                "file_key": "file_key",
+                "bucket_id": "bucket_id",
+                "file_id": "file_id",
+                "root_file_id": "root_file_id",
+                "accessrole": "accessrole",
+                "userrole": "userrole",
+                "index_list": "index_list",
+                "is_billing_item": "is_billing_item",
+                "billing_file_price": "billing_file_price",
+                "user_group_names": copy_user_group_list,
+                "site_license_name": "site_license_name",
+                "site_license_flag": "site_license_flag",
+                "cur_user_id": "cur_user_id",
+                "hostname": "hostname",
+                "remote_addr": "remote_addr",
             },
-        )
+            "metric_aggregation_fields": {
+                "unique_count": ("cardinality", "unique_session_id",
+                                 {"precision_threshold": 1000}),
+                "volume": ("sum", "size", {}),
+            }
+        }
+    },
+    "item-create-agg": {
+        "templates": "invenio_stats.contrib.aggregations.aggr_item_create",
+        "cls":StatAggregator,
+        "params": {
+            "client": current_search_client,
+            "event": "item-create",
+            "aggregation_field": "unique_id",
+            "aggregation_interval": "day",
+            "index_interval": "year",
+            "query_modifiers": [filter_restricted],
+            "copy_fields": {
+                "country": "country",
+                "hostname": "hostname",
+                "cur_user_id": "cur_user_id",
+                "remote_addr": "remote_addr",
+                "pid_type": "pid_type",
+                "pid_value": "pid_value",
+                "record_name": "record_name",
+            },
+            "metric_aggregation_fields": {
+                "unique_count": (
+                    "cardinality", "unique_session_id",
+                    {"precision_threshold": 1000}
+                ),
+            }
+        }
     },
     "record-view-agg": {
-        "templates": 'invenio_stats.contrib.aggregations.aggr_record_view',
+        "templates": "invenio_stats.contrib.aggregations.aggr_record_view",
         "cls":StatAggregator,
-        "params": dict(
-            client=current_search_client,
-            event='record-view',
-            aggregation_field='unique_id',
-            aggregation_interval='day',
-            index_interval='year',
-            query_modifiers=[filter_restricted],
-            copy_fields=dict(
-                country='country',
-                hostname='hostname',
-                remote_addr='remote_addr',
-                record_id='record_id',
-                record_name='record_name',
-                record_index_names=copy_record_index_list,
-                pid_type='pid_type',
-                pid_value='pid_value',
-                cur_user_id='cur_user_id',
-                site_license_name='site_license_name',
-                site_license_flag='site_license_flag'
-            ),
-            metric_aggregation_fields={
-                'unique_count': ('cardinality', 'unique_session_id',
-                                 {'precision_threshold': 1000}),
+        "params": {
+            "client": current_search_client,
+            "event": "record-view",
+            "aggregation_field": "unique_id",
+            "aggregation_interval": "day",
+            "index_interval": "year",
+            "query_modifiers": [filter_restricted],
+            "copy_fields": {
+                "country": "country",
+                "hostname": "hostname",
+                "remote_addr": "remote_addr",
+                "record_id": "record_id",
+                "record_name": "record_name",
+                "record_index_names": copy_record_index_list,
+                "pid_type": "pid_type",
+                "pid_value": "pid_value",
+                "cur_user_id": "cur_user_id",
+                "site_license_name": "site_license_name",
+                "site_license_flag": "site_license_flag"
             },
-        )
+            "metric_aggregation_fields": {
+                "unique_count": (
+                    "cardinality", "unique_session_id",
+                    {"precision_threshold": 1000}
+                ),
+            },
+        }
     },
     "top-view-agg": {
-        "templates": 'invenio_stats.contrib.aggregations.aggr_top_view',
+        "templates": "invenio_stats.contrib.aggregations.aggr_top_view",
         "cls":StatAggregator,
-        "params": dict(
-            client=current_search_client,
-            event='top-view',
-            aggregation_field='unique_id',
-            aggregation_interval='day',
-            index_interval='year',
-            query_modifiers=[filter_restricted],
-            copy_fields=dict(
-                country='country',
-                hostname='hostname',
-                remote_addr='remote_addr',
-                site_license_name='site_license_name',
-                site_license_flag='site_license_flag'
-            ),
-            metric_aggregation_fields={
-                'unique_count': ('cardinality', 'unique_session_id',
-                                 {'precision_threshold': 1000}),
+        "params": {
+            "client": current_search_client,
+            "event": "top-view",
+            "aggregation_field": "unique_id",
+            "aggregation_interval": "day",
+            "index_interval": "year",
+            "query_modifiers": [filter_restricted],
+            "copy_fields": {
+                "country": "country",
+                "hostname": "hostname",
+                "remote_addr": "remote_addr",
+                "site_license_name": "site_license_name",
+                "site_license_flag": "site_license_flag"
             },
-        )
+            "metric_aggregation_fields": {
+                "unique_count": (
+                    "cardinality", "unique_session_id",
+                    {"precision_threshold": 1000}
+                ),
+            },
+        }
     }
 }
 
-search_index_prefix = SEARCH_INDEX_PREFIX.strip('-')
+
+search_index_prefix = SEARCH_INDEX_PREFIX.strip("-")
 STATS_QUERIES = {
-    'get-celery-task-report': {
-        "cls": ESTermsQuery,
-        "params": dict(
-                index='{}-stats-celery-task'.format(search_index_prefix),
-                doc_type='celery-task-day-aggregation',
-                aggregated_fields=['task_id', 'task_name', 'start_time',
-                                   'end_time', 'total_records', 'task_state'],
-                required_filters=dict(
-                    task_name='task_name',
-                ),
-            )
+    "get-celery-task-report": {
+        "cls": TermsQuery,
+        "params": {
+            "index": "{}-stats-celery-task".format(search_index_prefix),
+            "doc_type": "celery-task-day-aggregation",
+            "aggregated_fields": [
+                "task_id",
+                "task_name",
+                "start_time",
+                "end_time",
+                "total_records",
+                "task_state"
+            ],
+            "required_filters": {
+                "task_name": "task_name",
+            }
+        }
     },
-    'get-search-report': {},
-    'get-file-download-report': {},
-    'get-file-download-open-access-report': {},
-    'get-file-preview-report': {},
-    'get-file-preview-open-access-report': {},
-    'get-billing-file-download-report': {},
-    'get-billing-file-preview-report': {},
-    # 'bucket-celery-task-histogram': {},
-    # 'bucket-celery-task-total': {},
-    'bucket-file-download-histogram': {},
-    'bucket-file-download-total': {},
-    'bucket-file-preview-histogram': {},
-    'bucket-file-preview-total': {},
-    'get-file-download-per-user-report': {},
-    'get-file-preview-per-user-report': {},
-    'get-record-view-report': {},
-    'bucket-record-view-histogram': {},
-    'bucket-record-view-total': {},
-    'item-create-total': {},
-    'item-create-per-date': {},
-    'item-create-histogram': {},
-    'item-detail-total': {},
-    'item-detail-item-total': {},
-    'bucket-item-detail-view-histogram': {},
-    'get-file-download-per-host-report': {},
-    'get-file-download-per-item-report': {},
-    'get-file-download-per-time-report': {},
-    'top-view-total': {},
-    'top-view-total-per-host': {},
-    'get-top-view-per-site-license': {},
-    'get-record-view-per-site-license': {},
-    'get-search-per-site-license': {},
-    'get-file-download-per-site-license': {},
-    'get-file-preview-per-site-license': {},
-    'get-ranking-data': {},
-    'get-new-items-data': {},
-    'item-file-download-aggs': {},
+    "get-search-report": {},
+    "get-file-download-report": {},
+    "get-file-download-open-access-report": {},
+    "get-file-preview-report": {},
+    "get-file-preview-open-access-report": {},
+    "get-billing-file-download-report": {},
+    "get-billing-file-preview-report": {},
+    # "bucket-celery-task-histogram": {},
+    # "bucket-celery-task-total": {},
+    "bucket-file-download-histogram": {},
+    "bucket-file-download-total": {},
+    "bucket-file-preview-histogram": {},
+    "bucket-file-preview-total": {},
+    "get-file-download-per-user-report": {},
+    "get-file-preview-per-user-report": {},
+    "get-record-view-report": {},
+    "bucket-record-view-histogram": {},
+    "bucket-record-view-total": {},
+    "item-create-total": {},
+    "item-create-per-date": {},
+    "item-create-histogram": {},
+    "item-detail-total": {},
+    "item-detail-item-total": {},
+    "bucket-item-detail-view-histogram": {},
+    "get-file-download-per-host-report": {},
+    "get-file-download-per-item-report": {},
+    "get-file-download-per-time-report": {},
+    "top-view-total": {},
+    "top-view-total-per-host": {},
+    "get-top-view-per-site-license": {},
+    "get-record-view-per-site-license": {},
+    "get-search-per-site-license": {},
+    "get-file-download-per-site-license": {},
+    "get-file-preview-per-site-license": {},
+    "get-ranking-data": {},
+    "get-new-items-data": {},
+    "item-file-download-aggs": {},
 }
 
 
@@ -476,9 +507,9 @@ STATS_MQ_EXCHANGE = Exchange(
 """Default exchange used for the message queues."""
 
 TARGET_REPORTS = {
-    'Item Registration': '1',
-    'Item Detail': '2',
-    'Contents Download': '3',
+    "Item Registration": "1",
+    "Item Detail": "2",
+    "Contents Download": "3",
 }
 
 STATS_ES_INTEGER_MAX_VALUE = 6000
@@ -491,10 +522,10 @@ Changed from 2147483647 to 6000. (refs. weko#23741)
 """
 
 
-WEKO_STATS_UNKNOWN_LABEL = 'UNKNOWN'
+WEKO_STATS_UNKNOWN_LABEL = "UNKNOWN"
 """Label using for missing of view or file-download stats."""
 
-STATS_EVENT_STRING = 'events'
+STATS_EVENT_STRING = "events"
 """Stats event string."""
 
 STATS_AGGREGATION_INDEXES = []
@@ -512,4 +543,3 @@ STATS_WEKO_DB_BACKUP_AGGREGATION = False
 
 STATS_WEKO_DB_BACKUP_BOOKMARK = False
 """Enable DB backup of bookmark."""
-

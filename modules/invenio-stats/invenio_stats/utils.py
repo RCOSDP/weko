@@ -16,22 +16,20 @@ import re
 from base64 import b64encode
 from datetime import datetime, timedelta
 from math import ceil
-from typing import Generator, NoReturn, Union
+from typing import Generator, Union
 
 import click
 import netaddr
 from dateutil import parser
-from elasticsearch import VERSION as ES_VERSION
-from elasticsearch import exceptions as es_exceptions
-from elasticsearch_dsl.aggs import A
-from elasticsearch.helpers import bulk
-from elasticsearch_dsl import Search
 from flask import current_app, request, session
 from flask_login import current_user
 from geolite2 import geolite2
 from invenio_cache import current_cache
 from invenio_search import current_search_client
-from invenio_search.engine import dsl
+from invenio_search.engine import dsl, search
+from invenio_db import db
+from invenio_indexer.api import RecordIndexer
+from invenio_records.models import RecordMetadata
 from weko_accounts.utils import get_remote_addr
 
 from . import config
@@ -67,13 +65,13 @@ def get_bucket_size(client, index, agg_field, start_date=None, end_date=None):
     if end_date is not None:
         time_range["lte"] = end_date
 
-    search = dsl.Search(using=client, index=index)
+    search_query = dsl.Search(using=client, index=index)
     if time_range:
-        search = search.filter("range", timestamp=time_range)
+        search_query = search_query.filter("range", timestamp=time_range)
 
-    search.aggs.metric("unique_values", "cardinality", field=agg_field)
+    search_query.aggs.metric("unique_values", "cardinality", field=agg_field)
 
-    result = search.execute()
+    result = search_query.execute()
     unique_values = result.aggregations.unique_values.value
 
     # NOTE: we increase the count by 10% in order to be safe
@@ -83,9 +81,8 @@ def get_bucket_size(client, index, agg_field, start_date=None, end_date=None):
 def get_geoip(ip):
     """Lookup country for IP address."""
     reader = geolite2.reader()
-    match = geolite2.reader().get(ip)
-    return match.get("country", {}).get("iso_code") if match else None
-
+    ip_data = reader.get(ip) or {}
+    return ip_data.get("country", {}).get("iso_code")
 
 def get_user():
     """User information.
@@ -103,7 +100,7 @@ def get_user():
        The information is then discarded.
     """
     return {
-        "ip_address": request.remote_addr,
+        "ip_address": get_remote_addr(),
         "user_agent": request.user_agent.string,
         "user_id": (current_user.get_id() if current_user.is_authenticated else None),
         "session_id": session.get("sid_s"),
@@ -123,20 +120,18 @@ def default_permission_factory(query_name, params):
     It enables by default the statistics if they don't have a dedicated
     permission factory.
     """
-    from invenio_stats import current_stats
-
     if current_stats.queries[query_name].permission_factory is None:
         return AllowAllPermission
-    else:
-        return current_stats.queries[query_name].permission_factory(query_name, params)
+
+    return current_stats.queries[query_name].permission_factory(query_name, params)
 
 def weko_permission_factory(*args, **kwargs):  # All queries have same perms
     """Permission factory for weko queries."""
 
-    def can(self):
-        return current_user.is_authenticated and stats_api_permission.can()
-
-    return type("WekoStatsPermissionChecker", (), {"can": can})()
+    return type(
+        "WekoStatsPermissionChecker",
+        (),
+        {"can": lambda self: current_user.is_authenticated and stats_api_permission.can()})()
 
 
 def get_aggregations(index, aggs_query):
@@ -148,7 +143,6 @@ def get_aggregations(index, aggs_query):
     """
     results = {}
     if index and aggs_query and "aggs" in aggs_query:
-        from invenio_indexer.api import RecordIndexer
         results = RecordIndexer().client.search(
             index=index, body=aggs_query)
 
@@ -157,10 +151,10 @@ def get_aggregations(index, aggs_query):
 
 def get_start_end_date(year, month):
     """Get first of the month and last of the month."""
-    query_month = str(year) + "-" + str(month).zfill(2)
+    query_month = f"{year}-{str(month).zfill(2)}"
     _, lastday = calendar.monthrange(year, month)
-    start_date = query_month + "-01"
-    end_date = query_month + "-" + str(lastday).zfill(2)  # + "T23:59:59"
+    start_date = f"{query_month}-01"
+    end_date = f"{query_month}-{str(lastday).zfill(2)}"   # + "T23:59:59"
     return start_date, end_date
 
 
@@ -171,14 +165,14 @@ def agg_bucket_sort(agg_sort, buckets):
     :param buckets: list of dicts to be ordered.
     """
     if agg_sort:
-        order = True if agg_sort["order"] == "desc" else False
+        order = agg_sort["order"] == "desc"
         buckets = sorted(buckets,
                          key=lambda x: x[agg_sort["key_name"]],
                          reverse=order)
     return buckets
 
 
-def parse_bucket_response(raw_res, pretty_result=dict()):
+def parse_bucket_response(raw_res, pretty_result={}):
     """Parsing bucket response."""
     if "buckets" in raw_res:
         field_name = raw_res["field"]
@@ -186,13 +180,8 @@ def parse_bucket_response(raw_res, pretty_result=dict()):
         pretty_result[field_name] = value
         return parse_bucket_response(
             raw_res["buckets"][0], pretty_result)
-    else:
-        return pretty_result
 
-
-def get_doctype(doc_type):
-    """Configure doc_type value according to ES version."""
-    return doc_type if ES_VERSION[0] < 7 else "_doc"
+    return pretty_result
 
 
 def is_valid_access():
@@ -204,7 +193,7 @@ def is_valid_access():
     ip_list = current_app.config["STATS_EXCLUDED_ADDRS"]
     ipaddr = get_remote_addr()
     if ip_list and ipaddr:
-        for i in range(len(ip_list)):
+        for i, _ in enumerate(ip_list):
             if "/" in ip_list[i]:
                 if netaddr.IPAddress(ipaddr) in netaddr.IPNetwork(ip_list[i]):
                     return False
@@ -218,22 +207,22 @@ class QueryFileReportsHelper(object):
     """Helper for parsing elasticsearch aggregations."""
 
     @classmethod
-    def calc_per_group_counts(cls, group_names, current_stats, current_count):
+    def calc_per_group_counts(cls, group_names, group_counts, current_count):
         """Count the downloads for group."""
         groups = [g.strip() for g in group_names.split(",") if g]
         for group in groups:
-            if group in current_stats:
-                current_stats[group] += current_count
+            if group in group_counts:
+                group_counts[group] += current_count
             else:
-                current_stats[group] = current_count
-        return current_stats
+                group_counts[group] = current_count
+        return group_counts
 
     @classmethod
     def calc_file_stats_reports(cls, res, data_list, all_groups):
         """Create response object for file_stats_reports."""
         mapper = {}
         for i in res["buckets"]:
-            key_str = "{}_{}".format(i["file_key"], i["index_list"])
+            key_str = f"{i["file_key"]}_{i["index_list"]}"
             if key_str in mapper:
                 data = data_list[mapper[key_str]]
             else:
@@ -259,7 +248,8 @@ class QueryFileReportsHelper(object):
             elif i["userrole"] == "Contributor":
                 data["reg"] += count
                 data["login"] += count
-            elif i["userrole"] in current_app.config["WEKO_PERMISSION_SUPER_ROLE_USER"]+ current_app.config["WEKO_PERMISSION_ROLE_COMMUNITY"]:
+            elif (i["userrole"] in current_app.config["WEKO_PERMISSION_SUPER_ROLE_USER"]
+                    + current_app.config["WEKO_PERMISSION_ROLE_COMMUNITY"]):
                 data["admin"] += count
                 data["login"] += count
             else:
@@ -270,7 +260,7 @@ class QueryFileReportsHelper(object):
                 group_list = i["user_group_names"]
                 data["group_counts"] = cls.calc_per_group_counts(
                     group_list, data["group_counts"], count)
-            
+
             # Keep track of groups seen
             all_groups.update(data["group_counts"].keys())
 
@@ -315,17 +305,17 @@ class QueryFileReportsHelper(object):
         month = kwargs.get("month")
 
         try:
-            query_month = str(year) + "-" + str(month).zfill(2)
+            query_month = f"{year}-{str(month).zfill(2)}"
             _, lastday = calendar.monthrange(year, month)
-            all_params = {"start_date": query_month + "-01",
-                          "end_date":
-                          query_month + "-" + str(lastday).zfill(2)
-                          + "T23:59:59"}
-            params = {"start_date": query_month + "-01",
-                      "end_date":
-                      query_month + "-" + str(lastday).zfill(2)
-                      + "T23:59:59",
-                      "accessrole": "open_access"}
+            all_params = {
+                "start_date": f"{query_month}-01",
+                "end_date": f"{query_month}-{str(lastday).zfill(2)}T23:59:59"
+            }
+            params = {
+                "start_date": f"{query_month}-01",
+                "end_date": f"{query_month}-{str(lastday).zfill(2)}T23:59:59",
+                "accessrole": "open_access"
+            }
 
             all_query_name = ""
             open_access_query_name = ""
@@ -352,8 +342,8 @@ class QueryFileReportsHelper(object):
                     **open_access_query_cfg.query_config)
                 open_access_res = open_access.run(**params)
                 cls.Calculation(open_access_res, open_access_list)
-        except Exception as e:
-            current_app.logger.debug(e)
+        except Exception as ex:
+            current_app.logger.debug(ex)
 
         result["date"] = query_month
         result["all"] = all_list
@@ -372,11 +362,12 @@ class QueryFileReportsHelper(object):
         month = kwargs.get("month")
 
         try:
-            query_month = str(year) + "-" + str(month).zfill(2)
+            query_month = f"{year}-{str(month).zfill(2)}"
             _, lastday = calendar.monthrange(year, month)
-            params = {"start_date": query_month + "-01",
-                      "end_date": query_month + "-" + str(lastday).zfill(2)
-                      + "T23:59:59"}
+            params = {
+                "start_date": f"{query_month}-01",
+                "end_date": f"{query_month}-{str(lastday).zfill(2)}T23:59:59"
+            }
 
             all_query_name = ["get-file-download-per-user-report",
                               "get-file-preview-per-user-report"]
@@ -387,8 +378,8 @@ class QueryFileReportsHelper(object):
                 all_res[query] = all_query.run(**params)
             cls.Calculation(all_res, all_list)
 
-        except Exception as e:
-            current_app.logger.debug(e)
+        except Exception as ex:
+            current_app.logger.debug(ex)
 
         result["date"] = query_month
         result["all"] = all_list
@@ -399,14 +390,14 @@ class QueryFileReportsHelper(object):
     def get(cls, **kwargs):
         """Get file reports."""
         event = kwargs.get("event")
-        if event == "file_download" or event == "file_preview":
+        if event in ["file_download", "file_preview"]:
             return cls.get_file_stats_report(**kwargs)
         elif event in ["billing_file_download", "billing_file_preview"]:
             return cls.get_file_stats_report(is_billing_item=True, **kwargs)
-        elif event == "file_using_per_user":
+        elif event in ["file_using_per_user"]:
             return cls.get_file_per_using_report(**kwargs)
-        else:
-            return []
+
+        return []
 
 
 class QuerySearchReportHelper(object):
@@ -437,10 +428,12 @@ class QuerySearchReportHelper(object):
             if not start_date or not end_date:
                 start_date, end_date = get_start_end_date(year, month)
                 result["date"] = str(year) + "-" + str(month).zfill(2)
-            params = {"start_date": start_date,
-                      "end_date": end_date + "T23:59:59",
-                      "agg_size": kwargs.get("agg_size", 0),
-                      "agg_filter": kwargs.get("agg_filter", None)}
+            params = {
+                "start_date": start_date,
+                "end_date": end_date + "T23:59:59",
+                "agg_size": kwargs.get("agg_size", 0),
+                "agg_filter": kwargs.get("agg_filter", None)
+            }
 
             # Run query
             keyword_query_cfg = current_stats.queries["get-search-report"]
@@ -454,14 +447,14 @@ class QuerySearchReportHelper(object):
                 current_report["search_key"] = report["search_key"]
                 current_report["count"] = report["count"]
                 all.append(current_report)
-            all = sorted(all, key=lambda x:x["count"], reverse=True) 
+            all = sorted(all, key=lambda x:x["count"], reverse=True)
             result["all"] = all
-        except es_exceptions.NotFoundError as e:
+        except search.exceptions.NotFoundError as ex:
             current_app.logger.debug(
-                "Indexes do not exist yet:" + str(e.info["error"]))
+                "Indexes do not exist yet:" + str(ex.info["error"]))
             result["all"] = []
-        except Exception as e:
-            current_app.logger.debug(e)
+        except Exception as ex:
+            current_app.logger.debug(ex)
             result["all"] = []
 
         return result
@@ -479,20 +472,23 @@ class QueryCommonReportsHelper(object):
         end_date = kwargs.get("end_date")
         if not start_date or not end_date:
             if month > 0 and month <= 12:
-                query_date = str(year) + "-" + str(month).zfill(2)
+                query_date = f"{year}-{str(month).zfill(2)}"
                 _, lastday = calendar.monthrange(year, month)
-                params = {"start_date": query_date + "-01",
-                          "end_date": query_date + "-"
-                          + str(lastday).zfill(2) + "T23:59:59"}
+                params = {
+                    "start_date": query_date + "-01",
+                    "end_date": f"{query_date}-{str(lastday).zfill(2)}T23:59:59"
+                }
             else:
                 query_date = "all"
                 params = {"interval": "day"}
         else:
             query_date = start_date + "-" + end_date
-            params = {"start_date": start_date,
-                      "end_date": end_date + "T23:59:59",
-                      "agg_size": kwargs.get("agg_size", 0),
-                      "agg_sort": kwargs.get("agg_sort", {"_term": "desc"})}
+            params = {
+                "start_date": start_date,
+                "end_date": end_date + "T23:59:59",
+                "agg_size": kwargs.get("agg_size", 0),
+                "agg_sort": kwargs.get("agg_sort", {"_term": "desc"})
+            }
         return query_date, params
 
     @classmethod
@@ -505,8 +501,8 @@ class QueryCommonReportsHelper(object):
             return cls.get_site_access_report(**kwargs)
         elif event == "item_create":
             return cls.get_item_create_ranking(**kwargs)
-        else:
-            return []
+
+        return []
 
     @classmethod
     def get_top_page_access_report(cls, **kwargs):
@@ -552,8 +548,8 @@ class QueryCommonReportsHelper(object):
 
             Calculation(all_res, all_list)
 
-        except Exception as e:
-            current_app.logger.debug(e)
+        except Exception as ex:
+            current_app.logger.debug(ex)
 
         result["date"] = query_month
         result["all"] = all_list
@@ -588,7 +584,7 @@ class QueryCommonReportsHelper(object):
                                 data[k] = i["count"]
                                 institution_name_list.append(data)
             for k in query_list:
-                for i in range(len(institution_name_list)):
+                for i, _ in enumerate(institution_name_list):
                     if k not in institution_name_list[i]:
                         institution_name_list[i][k] = 0
 
@@ -599,8 +595,10 @@ class QueryCommonReportsHelper(object):
         institution_name_list = []
         query_month = ""
 
-        query_list = ["top_view", "search", "record_view",
-                      "file_download", "file_preview"]
+        query_list = [
+            "top_view", "search", "record_view",
+            "file_download", "file_preview"
+        ]
         try:
             query_month, params = cls.get_common_params(**kwargs)
             for q in query_list:
@@ -611,8 +609,8 @@ class QueryCommonReportsHelper(object):
             Calculation(query_list, all_res, site_license_list, other_list,
                         institution_name_list)
 
-        except Exception as e:
-            current_app.logger.debug(e)
+        except Exception as ex:
+            current_app.logger.debug(ex)
 
         result["date"] = query_month
         result["site_license"] = [site_license_list]
@@ -646,8 +644,8 @@ class QueryCommonReportsHelper(object):
             query = query_cfg.query_class(**query_cfg.query_config)
             res = query.run(**params)
             Calculation(res, data_list)
-        except Exception as e:
-            current_app.logger.debug(e)
+        except Exception as ex:
+            current_app.logger.debug(ex)
 
         result["date"] = query_date
         result["all"] = data_list
@@ -664,23 +662,26 @@ class QueryRecordViewPerIndexReportHelper(object):
     @classmethod
     def build_query(cls, start_date, end_date, after_key=None):
         """Get nested aggregation by index id."""
-        agg_query = Search(
+        agg_query = dsl.Search(
             using=current_search_client,
             index="{}-events-stats-record-view".format(
-                current_app.config["SEARCH_INDEX_PREFIX"].strip("-")),
-            doc_type="stats-record-view")[0:0]  # FIXME: Get ALL results
+                current_app.config["SEARCH_INDEX_PREFIX"].strip("-")))[0:0]  # FIXME: Get ALL results
 
         if start_date is not None and end_date is not None:
             time_range = {}
             time_range["gte"] = parser.parse(start_date).isoformat()
             time_range["lte"] = parser.parse(end_date).isoformat()
-            agg_query = agg_query.filter(
-                "range", **{"timestamp": time_range}).filter(
-                "term", **{"is_restricted": False})
+            agg_query = (
+                agg_query
+                .filter("range", **{"timestamp": time_range})
+                .filter("term", **{"is_restricted": False})
+            )
 
         size = current_app.config["STATS_ES_INTEGER_MAX_VALUE"]
-        sources = [{cls.index_id_field: A("terms", field=cls.index_id_field)},
-                   {cls.index_name_field: A("terms", field=cls.index_name_field)}]
+        sources = [
+            {cls.index_id_field: dsl.aggs.A("terms", field=cls.index_id_field)},
+            {cls.index_name_field: dsl.aggs.A("terms", field=cls.index_name_field)}
+        ]
 
         base_agg = agg_query.aggs.bucket(cls.nested_path, "nested", path=cls.nested_path)
         if after_key:
@@ -710,16 +711,16 @@ class QueryRecordViewPerIndexReportHelper(object):
         month = kwargs.get("month")
 
         try:
-            query_month = str(year) + "-" + str(month).zfill(2)
+            query_month = f"{year}-{str(month).zfill(2)}"
             _, lastday = calendar.monthrange(year, month)
-            start_date = query_month + "-01"
-            end_date = query_month + "-" + str(lastday).zfill(2) + "T23:59:59"
+            start_date = f"{query_month}-01"
+            end_date =  f"{query_month}-{str(lastday).zfill(2)}T23:59:59"
             result = {"date": query_month, "all": [], "total": 0}
             first_search = True
             after_key = None
             total = 1
             count = 0
-            while count < total and (after_key or first_search):
+            while (count < total) and (after_key or first_search):
                 agg_query = cls.build_query(start_date, end_date, after_key)
                 current_app.logger.debug(agg_query.to_dict())
                 temp_res = agg_query.execute().to_dict()
@@ -734,8 +735,8 @@ class QueryRecordViewPerIndexReportHelper(object):
                     total = aggs["doc_count"]
                 count += cls.parse_bucket_response(aggs, result)
 
-        except Exception as e:
-            current_app.logger.debug(e)
+        except Exception as ex:
+            current_app.logger.debug(ex)
             return {}
 
         return result
@@ -747,8 +748,8 @@ class QueryRecordViewReportHelper(object):
     @classmethod
     def Calculation(cls, res, data_list):
         """Create response object."""
-        for item in res["buckets"]: 
-            data = { 
+        for item in res["buckets"]:
+            data = {
                 "record_id": item["record_id"],
                 "record_name": item["record_name"],
                 "index_names": item["record_index_names"],
@@ -768,16 +769,15 @@ class QueryRecordViewReportHelper(object):
         @param lst_id:
         @return:
         """
-        from invenio_db import db
-        from invenio_records.models import RecordMetadata
         with db.session.no_autoflush:
-            query = RecordMetadata.query.filter(
-                RecordMetadata.id.in_(lst_id)).with_entities(RecordMetadata.id,
-                                                             RecordMetadata.
-                                                             json[
-                                                                 "title"].
-                                                             label(
-                                                                 "title"))
+            query = (
+                RecordMetadata.query
+                .filter(RecordMetadata.id.in_(lst_id))
+                .with_entities(
+                    RecordMetadata.id,
+                    RecordMetadata.json["title"].label("title")
+                )
+            )
             obj = query.all()
             return obj
 
@@ -792,10 +792,8 @@ class QueryRecordViewReportHelper(object):
         for i in lst_data:
             if lst_data_dict.get(i["record_id"]):
                 lst_data_dict[i["record_id"]]["total_all"] += i["total_all"]
-                lst_data_dict[i["record_id"]]["total_not_login"] += i[
-                    "total_not_login"]
-                if lst_data_dict[i["record_id"]]["record_name"] != i[
-                        "record_name"]:
+                lst_data_dict[i["record_id"]]["total_not_login"] += i["total_not_login"]
+                if lst_data_dict[i["record_id"]]["record_name"] != i["record_name"]:
                     lst_data_dict[i["record_id"]]["same_title"] = False
             else:
                 lst_data_dict[i["record_id"]] = i
@@ -828,16 +826,18 @@ class QueryRecordViewReportHelper(object):
         try:
             start_date = kwargs.get("start_date")
             end_date = kwargs.get("end_date")
-            if not start_date or not end_date:
+            if start_date is None or end_date is None:
                 year = kwargs.get("year")
                 month = kwargs.get("month")
-                query_date = str(year) + "-" + str(month).zfill(2)
+                query_date = f"{year}-{str(month).zfill(2)}"
                 _, lastday = calendar.monthrange(year, month)
-                start_date = query_date + "-01"
-                end_date = query_date + "-" + str(lastday).zfill(2)
-                query_date = start_date + "-" + end_date
-            params = {"start_date": start_date,
-                      "end_date": end_date + "T23:59:59"}
+                start_date = f"{query_date}-01"
+                end_date = f"{query_date}-{str(lastday).zfill(2)}"
+                query_date = f"{start_date}-{end_date}"
+            params = {
+                "start_date": start_date,
+                "end_date": f"{end_date}T23:59:59"
+            }
             if not kwargs.get("ranking", False):
                 # Limit size
                 params.update({"agg_size": kwargs.get("agg_size", 0)})
@@ -847,11 +847,11 @@ class QueryRecordViewReportHelper(object):
             all_res = all_query.run(**params)
             cls.Calculation(all_res, all_list)
 
-        except es_exceptions.NotFoundError as e:
-            current_app.logger.debug(e)
+        except search.exceptions.NotFoundError as ex:
+            current_app.logger.debug(ex)
             result["all"] = []
-        except Exception as e:
-            current_app.logger.debug(e)
+        except Exception as ex:
+            current_app.logger.debug(ex)
 
         result["date"] = query_date
         result["all"] = all_list
@@ -866,12 +866,18 @@ class QueryItemRegReportHelper(object):
     def get(cls, **kwargs):
         """Get item registration report."""
         target_report = kwargs.get("target_report").title()
-        start_date = datetime.strptime(kwargs.get("start_date"), "%Y-%m-%d") \
-            if kwargs.get("start_date") != "0" else None
-        end_date = datetime.strptime(kwargs.get("end_date"), "%Y-%m-%d") \
-            if kwargs.get("end_date") != "0" else None
+        start_date = (
+            datetime.strptime(kwargs.get("start_date"), "%Y-%m-%d")
+            if kwargs.get("start_date") != "0"
+            else None
+        )
+        end_date = (
+            datetime.strptime(kwargs.get("end_date"), "%Y-%m-%d")
+            if kwargs.get("end_date") != "0"
+            else None
+        )
         unit = kwargs.get("unit").title()
-        empty_date_flg = True if not start_date or not end_date else False
+        empty_date_flg = not start_date or not end_date
 
         query_name = "item-create-total"
         count_keyname = "count"
@@ -879,16 +885,20 @@ class QueryItemRegReportHelper(object):
             if unit == "Item":
                 query_name = "item-detail-item-total"
             else:
-                query_name = "item-detail-total" \
-                    if not empty_date_flg or unit == "Host" \
+                query_name = (
+                    "item-detail-total"
+                    if not empty_date_flg or unit == "Host"
                     else "bucket-item-detail-view-histogram"
+                )
         elif target_report == config.TARGET_REPORTS["Contents Download"]:
             if unit == "Item":
                 query_name = "get-file-download-per-item-report"
             else:
-                query_name = "get-file-download-per-host-report" \
-                    if not empty_date_flg or unit == "Host" \
+                query_name = (
+                    "get-file-download-per-host-report"
+                    if not empty_date_flg or unit == "Host"
                     else "get-file-download-per-time-report"
+                )
         elif empty_date_flg:
             query_name = "item-create-histogram"
 
@@ -906,7 +916,7 @@ class QueryItemRegReportHelper(object):
         page_index = kwargs.get("page_index", 0)
 
         result = []
-        if empty_date_flg or end_date >= start_date:
+        if empty_date_flg or (end_date >= start_date):
             try:
                 if unit == "Day":
                     if empty_date_flg:
@@ -916,16 +926,16 @@ class QueryItemRegReportHelper(object):
                         items = []
                         for item in res_total["buckets"]:
                             date = item["date"].split("T")[0]
-                            if item["value"] > 0 \
-                                    and (not start_date or date >= start_date.strftime("%Y-%m-%d")) \
-                                    and (not end_date or date <= end_date.strftime("%Y-%m-%d")):
+                            if (item["value"] > 0
+                                    and (not start_date or date >= start_date.strftime("%Y-%m-%d"))
+                                    and (not end_date or date <= end_date.strftime("%Y-%m-%d"))):
                                 items.append(item)
                         # total results
                         total_results = len(items)
                         i = 0
                         for item in items:
-                            if page_index * \
-                                    reports_per_page <= i < (page_index + 1) * reports_per_page:
+                            if (page_index * reports_per_page
+                                    <= i < (page_index + 1) * reports_per_page):
                                 date = item["date"].split("T")[0]
                                 result.append({
                                     "count": item["value"],
@@ -938,8 +948,8 @@ class QueryItemRegReportHelper(object):
                         total_results = (end_date - start_date).days + 1
                         delta = timedelta(days=1)
                         for i in range(total_results):
-                            if page_index * reports_per_page <= i < (
-                                    page_index + 1) * reports_per_page:
+                            if (page_index * reports_per_page
+                                    <= i < (page_index + 1) * reports_per_page):
                                 d_start = d.replace(hour=0, minute=0, second=0,
                                                     microsecond=0)
                                 d_end = d.replace(hour=23, minute=59, second=59,
@@ -948,11 +958,12 @@ class QueryItemRegReportHelper(object):
                                     "%Y-%m-%d %H:%M:%S")
                                 end_date_string = d_end.strftime(
                                     "%Y-%m-%d %H:%M:%S")
-                                params = {"interval": "day",
-                                          "start_date": start_date_string,
-                                          "end_date": end_date_string,
-                                          "is_restricted": False
-                                          }
+                                params = {
+                                    "interval": "day",
+                                    "start_date": start_date_string,
+                                    "end_date": end_date_string,
+                                    "is_restricted": False
+                                }
                                 res_total = query_total.run(**params)
                                 result.append({
                                     "count": res_total[count_keyname],
@@ -971,9 +982,9 @@ class QueryItemRegReportHelper(object):
                         items = []
                         for item in res_total["buckets"]:
                             date = item["date"].split("T")[0]
-                            if item["value"] > 0 \
-                                    and (not start_date or date >= start_date.strftime("%Y-%m-%d")) \
-                                    and (not end_date or date <= end_date.strftime("%Y-%m-%d")):
+                            if (item["value"] > 0
+                                    and (not start_date or date >= start_date.strftime("%Y-%m-%d"))
+                                    and (not end_date or date <= end_date.strftime("%Y-%m-%d"))):
                                 items.append(item)
                         # total results
                         total_results = len(items)
@@ -984,8 +995,8 @@ class QueryItemRegReportHelper(object):
                                 # Start date of data
                                 d = parser.parse(item["date"])
 
-                            if page_index * \
-                                    reports_per_page <= i < (page_index + 1) * reports_per_page:
+                            if (page_index *  reports_per_page
+                                    <= i < (page_index + 1) * reports_per_page):
                                 start_date_string = d.strftime("%Y-%m-%d")
                                 d1 = d + delta - delta1
                                 if end_date and d1 > end_date.replace(
@@ -1002,13 +1013,12 @@ class QueryItemRegReportHelper(object):
                             i += 1
                     else:
                         # total results
-                        total_results = int(
-                            (end_date - start_date).days / 7) + 1
+                        total_results = int((end_date - start_date).days / 7) + 1
 
                         d = start_date
                         for i in range(total_results):
-                            if page_index * \
-                                    reports_per_page <= i < (page_index + 1) * reports_per_page:
+                            if (page_index * reports_per_page
+                                    <= i < (page_index + 1) * reports_per_page):
                                 d_start = d.replace(hour=0, minute=0, second=0,
                                                     microsecond=0)
                                 start_date_string = d_start.strftime("%Y-%m-%d %H:%M:%S")
@@ -1023,11 +1033,12 @@ class QueryItemRegReportHelper(object):
                                     "end_date": end_date_string,
                                     "is_restricted": False
                                 }
-                                params = {"interval": "week",
-                                          "start_date": temp["start_date"],
-                                          "end_date": temp["end_date"],
-                                          "is_restricted": False
-                                          }
+                                params = {
+                                    "interval": "week",
+                                    "start_date": temp["start_date"],
+                                    "end_date": temp["end_date"],
+                                    "is_restricted": False
+                                }
                                 res_total = query_total.run(**params)
                                 temp["count"] = res_total[count_keyname]
                                 result.append(temp)
@@ -1038,29 +1049,27 @@ class QueryItemRegReportHelper(object):
                         params = {"interval": "year", "is_restricted": False}
                         res_total = query_total.run(**params)
                         # Get start day and end day
-                        start_date_string = "{}-01-01".format(
-                            start_date.year) if start_date else None
-                        end_date_string = "{}-12-31".format(
-                            end_date.year) if end_date else None
+                        start_date_string = f"{start_date.year}-01-01" if start_date else None
+                        end_date_string = f"{end_date.year}-12-31" if end_date else None
                         # Get valuable items
                         items = []
                         for item in res_total["buckets"]:
                             date = item["date"].split("T")[0]
-                            if item["value"] > 0 and (
-                                    not start_date_string or date >= start_date_string) and (
-                                    not end_date_string or date <= end_date_string):
+                            if (item["value"] > 0
+                                    and (not start_date_string or date >= start_date_string)
+                                    and (not end_date_string or date <= end_date_string)):
                                 items.append(item)
                         # total results
                         total_results = len(items)
                         i = 0
                         for item in items:
-                            if page_index * \
-                                    reports_per_page <= i < (page_index + 1) * reports_per_page:
+                            if (page_index * reports_per_page
+                                    <= i < (page_index + 1) * reports_per_page):
                                 event_date = parser.parse(item["date"])
                                 result.append({
                                     "count": item["value"],
-                                    "start_date": "{}-01-01".format(event_date.year),
-                                    "end_date": "{}-12-31".format(event_date.year),
+                                    "start_date": f"{event_date.year}-01-01",
+                                    "end_date": f"{event_date.year}-12-31",
                                     "year": event_date.year,
                                     "is_restricted": False
                                 })
@@ -1071,17 +1080,16 @@ class QueryItemRegReportHelper(object):
                         # total results
                         total_results = end_year - start_year + 1
                         for i in range(total_results):
-                            if page_index * \
-                                    reports_per_page <= i < (page_index + 1) * reports_per_page:
-                                start_date_string = "{}-01-01 00:00:00".format(
-                                    start_year + i)
-                                end_date_string = "{}-12-31 23:59:59".format(
-                                    start_year + i)
-                                params = {"interval": "year",
-                                          "start_date": start_date_string,
-                                          "end_date": end_date_string,
-                                          "is_restricted": False
-                                          }
+                            if (page_index *  reports_per_page
+                                    <= i < (page_index + 1) * reports_per_page):
+                                start_date_string = f"{start_year + i}-01-01 00:00:00"
+                                end_date_string = f"{start_year + i}-12-31 23:59:59"
+                                params = {
+                                    "interval": "year",
+                                    "start_date": start_date_string,
+                                    "end_date": end_date_string,
+                                    "is_restricted": False
+                                }
                                 res_total = query_total.run(**params)
                                 result.append({
                                     "count": res_total[count_keyname],
@@ -1104,21 +1112,17 @@ class QueryItemRegReportHelper(object):
                         # Limit size
                         params.update({"agg_size": kwargs.get("agg_size", 0)})
                     else:
-                        params.update({"agg_sort": kwargs.get(
-                            "agg_sort", {"_count": "desc"})})
+                        params.update({
+                            "agg_sort": kwargs.get("agg_sort", {"_count": "desc"})
+                        })
                     res_total = query_total.run(**params)  # pass args
                     i = 0
                     for item in res_total["buckets"]:
-                        # result.append({
-                        #     "item_id": item["key"],
-                        #     "item_name": item["buckets"][0]["key"],
-                        #     "count": item[count_keyname],
-                        # })
                         pid_value = item["key"]
                         for h in item["buckets"]:
-                            if kwargs.get("ranking", False) \
-                                or (page_index * reports_per_page <= i < (
-                                    page_index + 1) * reports_per_page):
+                            if (kwargs.get("ranking", False)
+                                or (page_index * reports_per_page
+                                    <= i < (page_index + 1) * reports_per_page)):
                                 record_name = h["key"] if h["key"] != "None"\
                                     else ""
                                 # TODO: Set appropriate column names
@@ -1148,8 +1152,8 @@ class QueryItemRegReportHelper(object):
                     i = 0
                     for item in res_total["buckets"]:
                         for h in item["buckets"]:
-                            if page_index * \
-                                    reports_per_page <= i < (page_index + 1) * reports_per_page:
+                            if (page_index * reports_per_page
+                                    <= i < (page_index + 1) * reports_per_page):
                                 hostname = h["key"] if h["key"] != "None" else ""
                                 result.append({
                                     "count": h[count_keyname],
@@ -1190,11 +1194,11 @@ class QueryItemRegReportHelper(object):
                                         reverse=True)
                 else:
                     result = []
-            except es_exceptions.NotFoundError as e:
-                current_app.logger.debug(e)
+            except search.exceptions.NotFoundError as ex:
+                current_app.logger.debug(ex)
                 result = []
-            except Exception as e:
-                current_app.logger.debug(e)
+            except Exception as ex:
+                current_app.logger.debug(ex)
 
         response = {
             "num_page": ceil(float(total_results) / reports_per_page),
@@ -1213,7 +1217,7 @@ class QueryItemRegReportHelper(object):
         new_result = []
         for i in results:
             index = -1
-            for j in range(len(new_result)):
+            for j, _ in enumerate(new_result):
                 if int(float(i["col1"])) == int(float(new_result[j]["col1"])):
                     index = j
             if index > -1:
@@ -1229,8 +1233,8 @@ class QueryRankingHelper(object):
     @classmethod
     def Calculation(cls, res, data_list):
         """Create response object."""
-        for item in res["aggregations"]["my_buckets"]["buckets"]: 
-            data = { 
+        for item in res["aggregations"]["my_buckets"]["buckets"]:
+            data = {
                 "key": item["key"],
                 "count": int(item["my_sum"]["value"])
             }
@@ -1246,7 +1250,7 @@ class QueryRankingHelper(object):
             end_date = kwargs.get("end_date")
             params = {
                 "start_date": start_date,
-                "end_date": end_date + "T23:59:59",
+                "end_date":  f"{end_date}T23:59:59",
                 "agg_size": str(kwargs.get("agg_size", 10)),
                 "event_type": kwargs.get("event_type", ""),
                 "group_field": kwargs.get("group_field", ""),
@@ -1261,10 +1265,10 @@ class QueryRankingHelper(object):
 
             cls.Calculation(all_res, result)
 
-        except es_exceptions.NotFoundError as e:
-            current_app.logger.debug(e)
-        except Exception as e:
-            current_app.logger.debug(e)
+        except search.exceptions.NotFoundError as ex:
+            current_app.logger.debug(ex)
+        except Exception as ex:
+            current_app.logger.debug(ex)
 
         return result
 
@@ -1278,7 +1282,7 @@ class QueryRankingHelper(object):
             end_date = kwargs.get("end_date")
             params = {
                 "start_date": start_date,
-                "end_date": end_date + "T23:59:59",
+                "end_date": f"{end_date}T23:59:59",
                 "agg_size": str(kwargs.get("agg_size", 10)),
                 "must_not": kwargs.get("must_not", ""),
                 "new_items": True
@@ -1291,10 +1295,10 @@ class QueryRankingHelper(object):
                 if r.get("_source", {}).get("path"):
                     result.append(r["_source"])
 
-        except es_exceptions.NotFoundError as e:
-            current_app.logger.debug(e)
-        except Exception as e:
-            current_app.logger.debug(e)
+        except search.exceptions.NotFoundError as ex:
+            current_app.logger.debug(ex)
+        except Exception as ex:
+            current_app.logger.debug(ex)
 
         return result
 
@@ -1337,25 +1341,23 @@ class StatsCliUtil:
             self.affected_indices = set()
             self.flush_indices = set()
 
-    def delete_data(self, bookmark: bool = False) -> NoReturn:
+    def delete_data(self, bookmark: bool = False):
         """Delete stats data in Elasticsearch.
 
         :param bookmark: set True if delete bookmark
         """
-        for _index, _type in self.__prepare_es_indexes(delete=True):
-            self.__cli_delete_es_index(_index, _type)
+        for _index in self.__prepare_es_indexes(delete=True):
+            self.__cli_delete_es_index(_index)
         if bookmark:
             if self.verbose:
                 click.secho(
                     "Start deleting Bookmark data...",
                     fg="green"
                 )
-            _bookmark_index = "{}-stats-bookmarks".format(
-                self._search_index_prefix)
-            _bookmark_doc_type = get_doctype("aggregation-bookmark")
-            self.__cli_delete_es_index(_bookmark_index, _bookmark_doc_type)
+            _bookmark_index = f"{self._search_index_prefix}-stats-bookmarks"
+            self.__cli_delete_es_index(_bookmark_index)
 
-    def restore_data(self, bookmark: bool = False) -> NoReturn:
+    def restore_data(self, bookmark: bool = False) -> None:
         """Restore stats data.
 
         :param bookmark: set True if restore bookmark
@@ -1394,23 +1396,16 @@ class StatsCliUtil:
             search_type = prefix.format(_type)
             # In case prepare indexes for the stats bookmark
             if bookmark_index:
-                _index = "{}-stats-bookmarks".format(search_index_prefix)
-                _doc_type = get_doctype("aggregation-bookmark")
+                _index = f"{search_index_prefix}-stats-bookmarks"
             # In case prepare indexes for the stats event
             elif self.index_prefix:
-                _index = "{0}-{1}-{2}".format(
-                    search_index_prefix,
-                    self.index_prefix,
-                    search_type
-                )
-                _doc_type = search_type
+                _index = f"{search_index_prefix}-{self.index_prefix}-{search_type}"
             else:
-                _index = "{0}-{1}".format(search_index_prefix, search_type)
-                _doc_type = "{0}-{1}-aggregation".format(_type, "day")
+                _index = f"{search_index_prefix}-{search_type}"
             if not delete:
                 yield _index
             else:
-                yield _index, _doc_type
+                yield _index
 
     def __build_es_data(self, data_list: list) -> Generator:
         """Build Elasticsearch data.
@@ -1420,12 +1415,12 @@ class StatsCliUtil:
         for data in data_list:
             if self.flush_indices is not None:
                 self.flush_indices.add(data.index)
-            es_data = dict(
-                _id=data.source_id,
-                _index=data.index,
-                _type=data.type,
-                _source=data.source,
-            )
+            es_data = {
+                "_id": data.source_id,
+                "_index": data.index,
+                "_type": data.type,
+                "_source": data.source
+            }
             if self.cli_type == self.EVENTS_TYPE:
                 es_data["_op_type"] = "index"
             yield es_data
@@ -1471,10 +1466,10 @@ class StatsCliUtil:
         :param failed:failed message.
         """
         if index_name is not None:
-            click.secho("====== {} ======".format(str(index_name)), fg="green")
-        click.secho("Success: {}".format(str(success)), fg="green")
+            click.secho(f"====== {index_name} ======", fg="green")
+        click.secho(f"Success: {success}", fg="green")
         if self.force:
-            click.secho("Failed: {}".format(str(failed)), fg="yellow")
+            click.secho(f"Failed: {failed}", fg="yellow")
         else:
             if len(failed) == 0:
                 click.secho("Error: 0", fg="red")
@@ -1487,14 +1482,14 @@ class StatsCliUtil:
         self,
         restore_data: Generator,
         flush_indices: set = None
-    ) -> NoReturn:
+    ) -> None:
         """Restore ElasticSearch data based on Database.
 
         :param restore_data:
         :param flush_indices:
         """
         if restore_data:
-            success, failed = bulk(
+            success, failed = search.helpers.bulk(
                 current_search_client,
                 restore_data,
                 stats_only=self.force,
@@ -1512,16 +1507,14 @@ class StatsCliUtil:
                 click.secho("There is no stats data from Database.",
                             fg="yellow")
 
-    def __cli_delete_es_index(self, _index: str, doc_type: str) -> NoReturn:
+    def __cli_delete_es_index(self, _index) -> None:
         """Delete ES index.
 
         :param _index: Elasticsearch index.
-        :param doc_type: document type.
         """
-        query = Search(
+        query = dsl.Search(
             using=current_search_client,
             index=_index,
-            doc_type=doc_type,
         ).params(raise_on_error=False, ignore=[400, 404])
         range_args = {}
         if self.start_date:
@@ -1535,15 +1528,16 @@ class StatsCliUtil:
             for doc in query.scan():
                 if self.affected_indices is not None:
                     self.affected_indices.add(doc.meta.index)
-                yield dict(_index=doc.meta.index,
-                           _op_type="delete",
-                           _id=doc.meta.id,
-                           _type=doc.meta.doc_type)
+                yield {
+                    "_index": doc.meta.index,
+                    "_op_type": "delete",
+                    "_id": doc.meta.id
+                }
             if self.affected_indices is not None:
                 current_search_client.indices.flush(
                     index=",".join(self.affected_indices), wait_if_ongoing=True)
 
-        success, failed = bulk(
+        success, failed = search.helpers.bulk(
             current_search_client,
             _delete_actions(),
             stats_only=self.force,
@@ -1555,7 +1549,7 @@ class StatsCliUtil:
     @staticmethod
     def __parse_date(
         _date: str, is_end_date: bool = False
-    ) -> Union[datetime, None]:
+    ) -> Union[datetime, str, None]:
         """Parse date.
 
         :param _date: a string date
@@ -1590,7 +1584,7 @@ class StatsCliUtil:
             return rtn
 
         if not isinstance(_date, str):
-            return
+            return None
         day = r"^\d{4}-\d{1,2}-\d{1,2}$"
         month = r"^\d{4}-\d{1,2}$"
         year = r"^\d{4}$"

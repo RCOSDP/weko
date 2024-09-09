@@ -11,7 +11,6 @@
 
 import math
 from datetime import datetime, timezone
-
 from celery.utils.log import get_task_logger
 from dateutil import parser
 from dateutil.relativedelta import relativedelta
@@ -22,14 +21,6 @@ from invenio_search.utils import prefix_index
 
 from .models import StatsAggregation
 from .utils import get_bucket_size
-
-SUPPORTED_INTERVALS = OrderedDict([
-    ('hour', '%Y-%m-%dT%H'),
-    ('day', '%Y-%m-%d'),
-    ('month', '%Y-%m'),
-    ('year', '%Y')
-])
-
 from .bookmark import SUPPORTED_INTERVALS, BookmarkAPI, format_range_dt
 
 

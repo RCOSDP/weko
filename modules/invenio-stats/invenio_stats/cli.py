@@ -11,15 +11,18 @@
 
 from functools import wraps
 
+from datetime import datetime
 import click
 from dateutil.parser import parse as dateutil_parse
 from flask import current_app
 from flask.cli import with_appcontext
 from werkzeug.local import LocalProxy
+from invenio_db import db
 
 from .proxies import current_stats
 from .tasks import aggregate_events, process_events
 from .utils import StatsCliUtil
+from .models import make_stats_events_partition_table, get_stats_events_partition_tables
 
 
 def abort_if_false(ctx, param, value):
@@ -413,9 +416,6 @@ def _aggregations_restore(
     )
     stats_cli.restore_data(bookmark)
 
-from .models import make_stats_events_partition_table, get_stats_events_partition_tables
-from invenio_db import db
-from datetime import datetime
 
 @stats.group()
 def partition():
