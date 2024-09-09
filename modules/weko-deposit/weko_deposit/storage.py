@@ -61,8 +61,8 @@ class WekoFileStorage(PyFSFileStorage):
         Raises:
             WekoDepositError: \
                 If there is an error encoding/decoding the file.
-            WekoDepositStorageError: \
-                If there is an error sending the file.
+            StorageError: \
+                If there is an error sending the file in invenio.
 
         Returns:
             None
