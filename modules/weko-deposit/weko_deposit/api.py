@@ -163,19 +163,16 @@ class WekoFileObject(FileObject):
         file_size = self.data['size']
 
         weko_logger(key='WEKO_COMMON_FOR_START')
-        count = 0
-        for k, v in current_app.config['WEKO_ITEMS_UI_MS_MIME_TYPE'].items():
-            weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION', count=count,
-                        element=k)
+        for i, (k, v) in \
+            enumerate(current_app.config['WEKO_ITEMS_UI_MS_MIME_TYPE'].items()):
+            weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
+                        count=i, element=k)
 
             if self.data.get('format') in v:
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
                             branch='format exsisted in value')
                 file_type = k
                 break
-
-            count+=1
-
         weko_logger(key='WEKO_COMMON_FOR_END')
 
         if file_type in current_app.config[

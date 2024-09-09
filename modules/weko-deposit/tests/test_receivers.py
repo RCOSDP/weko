@@ -7,7 +7,6 @@ from invenio_pidstore.models import PIDStatus
 
 from weko_records.errors import WekoRecordsError
 from weko_records.models import FeedbackMailList
-from weko_deposit.logger import weko_logger
 from weko_deposit.receivers import append_file_content
 
 
