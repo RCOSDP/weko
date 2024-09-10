@@ -54,6 +54,10 @@ from sqlalchemy.orm.attributes import flag_modified
 
 from weko_admin.models import AdminSettings
 from weko_index_tree.api import Indexes
+from weko_items_autofill.utils import get_title_pubdate_path
+from weko_items_ui.utils import (
+    get_options_and_order_list, get_hide_list_by_schema_form, del_hide_sub_item
+)
 from weko_records.api import (
     FeedbackMailList, ItemLink, ItemsMetadata, ItemTypes
 )
@@ -63,23 +67,13 @@ from weko_records.utils import (
     get_options_and_order_list, json_loader,
     remove_weko2_special_character, set_timestamp,set_file_date
 )
+from weko_records_ui.utils import is_future, soft_delete
 from weko_redis.errors import WekoRedisError
-from weko_schema_ui.models import PublishStatus
 from weko_redis.redis import RedisConnection
+from weko_schema_ui.models import PublishStatus
 from weko_user_profiles.models import UserProfile
-
-from weko_workflow.api import WorkActivity
-from weko_workflow.utils import convert_record_to_item_metadata
-from weko_workflow.utils import get_url_root
-from weko_items_autofill.utils import get_title_pubdate_path
-from weko_records_ui.utils import soft_delete
-from weko_workflow.utils import update_cache_data
 from weko_workflow.api import GetCommunity
-from weko_items_ui.utils import (
-    get_options_and_order_list, get_hide_list_by_schema_form
-)
-from weko_items_ui.utils import get_hide_list_by_schema_form, del_hide_sub_item
-from weko_records_ui.utils import is_future
+from weko_workflow.utils import update_cache_data
 
 from .errors import WekoDepositError
 from .logger import weko_logger
@@ -157,7 +151,7 @@ class WekoFileObject(FileObject):
             self['filename'] = self['filename'][:index]
             weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=self.data)
 
-            return self.data
+        return self.data
 
     def file_preview_able(self):
         """Check whether file can be previewed or not.
@@ -1699,6 +1693,8 @@ class WekoDeposit(Deposit):
         Raises:
             WekoDepositError: Upload metadata to Elasticsearch error.
         """
+        from weko_workflow.utils import get_url_root
+
         contents = []
         fmd = self.get_file_data()
         if fmd:
