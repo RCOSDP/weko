@@ -1,26 +1,10 @@
 # -*- coding: utf-8 -*-
 #
 # This file is part of Invenio.
-# Copyright (C) 2015, 2016 CERN.
+# Copyright (C) 2015-2019 CERN.
 #
-# Invenio is free software; you can redistribute it
-# and/or modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; either version 2 of the
-# License, or (at your option) any later version.
-#
-# Invenio is distributed in the hope that it will be
-# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Invenio; if not, write to the
-# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-# MA 02111-1307, USA.
-#
-# In applying this license, CERN does not
-# waive the privileges and immunities granted to it by virtue of its status
-# as an Intergovernmental Organization or submit itself to any jurisdiction.
+# Invenio is free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
 
 """Invenio module that adds support for communities."""
 
@@ -34,14 +18,28 @@ readme = open('README.rst').read()
 history = open('CHANGES.rst').read()
 
 tests_require = [
+
+    # 'Flask-CeleryExt>=0.3.2',
+    # 'check-manifest>=0.25',
     'coverage>=4.5.3,<5.0.0',
+    # 'invenio-db>=1.0.3,<1.0.4',
+    # 'invenio-mail>=1.0.2',
+    # 'invenio-oaiserver>=1.0.3,<1.1.0',
+    # 'isort>=4.3.3',
+    'jsonresolver>=0.2.1,<0.3.0',
     'mock>=3.0.0,<4.0.0',
+    # 'pydocstyle>=1.0.0',
+    # 'pytest-cov>=2.7.1',
+    # 'pytest-pep8>=1.0.6',
     'pytest>=4.6.4,<5.0.0',
     'pytest-cache',
     'pytest-cov',
     'pytest-pep8',
     'pytest-invenio',
+    'SQLAlchemy-Utils>=0.33.1,<0.36',  # to keep Python 2 support
+    'werkzeug>=0.15.4,<1.0.0',
     'responses',
+    'email-validator>=1.0.5',
 ]
 
 invenio_search_version = '1.2.2'
@@ -166,7 +164,7 @@ setup(
     classifiers=[
         'Environment :: Web Environment',
         'Intended Audience :: Developers',
-        'License :: OSI Approved :: GNU General Public License v2 (GPLv2)',
+        'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
         'Programming Language :: Python',
         'Topic :: Internet :: WWW/HTTP :: Dynamic Content',
