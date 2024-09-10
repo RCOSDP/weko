@@ -40,7 +40,7 @@ WEKO_COMMON_MESSAGE = {
     },
     'WEKO_COMMON_INIT_CONFIG': {
         'msgid': 'WEKO_COMMON_D_0007',
-        'msgstr': "Init config: {key}={value}",
+        'msgstr': "Init config: {config}={value}",
         'loglevel': 'DEBUG',
     },
     'WEKO_COMMON_WHILE_START':{

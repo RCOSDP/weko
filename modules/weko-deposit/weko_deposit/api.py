@@ -51,8 +51,8 @@ from invenio_records_files.models import RecordsBuckets
 from invenio_records_rest.errors import PIDResolveRESTError
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.attributes import flag_modified
+
 from weko_admin.models import AdminSettings
-from weko_deposit.errors import WekoDepositError
 from weko_index_tree.api import Indexes
 from weko_records.api import (
     FeedbackMailList, ItemLink, ItemsMetadata, ItemTypes
@@ -67,6 +67,7 @@ from weko_redis.errors import WekoRedisError
 from weko_schema_ui.models import PublishStatus
 from weko_redis.redis import RedisConnection
 from weko_user_profiles.models import UserProfile
+
 from weko_workflow.api import WorkActivity
 from weko_workflow.utils import convert_record_to_item_metadata
 from weko_workflow.utils import get_url_root
@@ -80,6 +81,7 @@ from weko_items_ui.utils import (
 from weko_items_ui.utils import get_hide_list_by_schema_form, del_hide_sub_item
 from weko_records_ui.utils import is_future
 
+from .errors import WekoDepositError
 from .logger import weko_logger
 from .pidstore import (
     get_latest_version_id, get_record_without_version,
@@ -171,19 +173,16 @@ class WekoFileObject(FileObject):
         file_size = self.data['size']
 
         weko_logger(key='WEKO_COMMON_FOR_START')
-        count = 0
-        for k, v in current_app.config['WEKO_ITEMS_UI_MS_MIME_TYPE'].items():
-            weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION', count=count,
-                        element=k)
+        for i, (k, v) in \
+            enumerate(current_app.config['WEKO_ITEMS_UI_MS_MIME_TYPE'].items()):
+            weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
+                        count=i, element=k)
 
             if self.data.get('format') in v:
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
                             branch='format exsisted in value')
                 file_type = k
                 break
-
-            count+=1
-
         weko_logger(key='WEKO_COMMON_FOR_END')
 
         if file_type in current_app.config[
@@ -1139,6 +1138,7 @@ class WekoDeposit(Deposit):
             weko_logger(key='WEKO_COMMON_IF_ENTER',
                         branch='activity_info is in session')
             activity_info = session['activity_info']
+            from weko_workflow.api import WorkActivity
             activity = WorkActivity.get_activity_by_id(
                 activity_info['activity_id'])
             if activity and activity.workflow and activity.workflow.location:
@@ -1204,6 +1204,7 @@ class WekoDeposit(Deposit):
             weko_logger(key='WEKO_COMMON_IF_ENTER',
                         branch='activity_info is in session')
             activity = session['activity_info']
+            from weko_workflow.api import WorkActivity
             workactivity = WorkActivity()
             workactivity.upt_activity_item(activity, str(recid.object_uuid))
         weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=deposit)
@@ -1375,7 +1376,7 @@ class WekoDeposit(Deposit):
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
                                 branch='activity_info is in session')
                     activity_info = session['activity_info']
-                    # from weko_workflow.api import WorkActivity
+                    from weko_workflow.api import WorkActivity
                     activity = WorkActivity.get_activity_by_id(
                         activity_info['activity_id'])
                     if (activity and activity.workflow
@@ -1673,6 +1674,7 @@ class WekoDeposit(Deposit):
         if is_draft:
             weko_logger(key='WEKO_COMMON_IF_ENTER',
                         branch='is_draft is True')
+            from weko_workflow.utils import convert_record_to_item_metadata
             item_metadata = convert_record_to_item_metadata(record)
         else:
             weko_logger(key='WEKO_COMMON_IF_ENTER',
@@ -1728,6 +1730,7 @@ class WekoDeposit(Deposit):
                                 '{}record/{}/files/{}'.format(
                                     get_url_root(), self['recid'], filename)
                             )
+
                             lst.update({'url': url_metadata})
 
                             # update file_files's json
@@ -2130,7 +2133,7 @@ class WekoDeposit(Deposit):
             weko_logger(key='WEKO_COMMON_IF_ENTER',
                         branch='pid is not empty')
             item_id = pid.object_uuid
-            # from weko_workflow.api import WorkActivity
+            from weko_workflow.api import WorkActivity
             activity = WorkActivity().get_workflow_activity_by_item_id(item_id)
 
             if activity:

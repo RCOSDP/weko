@@ -12,6 +12,8 @@ This extension is enabled by default and automatically installed via
 """
 
 import logging
+import inspect
+import traceback
 
 from . import config
 from .ext import WekoLoggingBase
@@ -84,12 +86,15 @@ class WekoLoggingConsole(WekoLoggingBase):
         app.logger.addFilter(wekoLoggingFilter)
 
     @staticmethod
-    def weko_logger_base(key=None, param=None, ex=None, **kwargs):
+    def weko_logger_base(app=None, key=None, param=None, ex=None, **kwargs):
         """Log message with key.
 
         Method to output logs in current_app.logger using the resource.
 
         Args:
+            app (Flask): \
+                The Flask application.
+                Not required.
             key (str): \
                 key of message.
                 Not required if param is specified.
@@ -106,12 +111,13 @@ class WekoLoggingConsole(WekoLoggingBase):
         Returns:
             None
         """
-        from inspect import stack
-        from traceback import print_exc
-        from flask import current_app
+
+        if app is None:
+            from flask import current_app
+            app = current_app
 
         # check if console logging is enabled
-        if not current_app.config["WEKO_LOGGING_CONSOLE"]:
+        if not app.config.get("WEKO_LOGGING_CONSOLE"):
             return
 
         # get message parameters from common resource
@@ -127,7 +133,7 @@ class WekoLoggingConsole(WekoLoggingBase):
         msg = msgid + ' : ' + msgstr
 
         # get pathname, lineno, funcName of caller
-        frame = stack()[2]
+        frame = inspect.stack()[2]
         extra = {
             'wpathname': frame.filename,
             'wlineno': frame.lineno,
@@ -136,19 +142,19 @@ class WekoLoggingConsole(WekoLoggingBase):
 
         # output log by msglvl
         if loglevel == 'ERROR':
-            current_app.logger.error(msg.format(**kwargs), extra=extra)
+            app.logger.error(msg.format(**kwargs), extra=extra)
         elif loglevel == 'WARN':
-            current_app.logger.warning(msg.format(**kwargs), extra=extra)
+            app.logger.warning(msg.format(**kwargs), extra=extra)
         elif loglevel == 'INFO':
-            current_app.logger.info(msg.format(**kwargs), extra=extra)
+            app.logger.info(msg.format(**kwargs), extra=extra)
         elif loglevel == 'DEBUG':
-            current_app.logger.debug(msg.format(**kwargs), extra=extra)
+            app.logger.debug(msg.format(**kwargs), extra=extra)
         else:
             pass
 
         if ex:
-            current_app.logger.error(
+            app.logger.error(
                 ex.__class__.__name__ + ": " + str(ex), extra=extra)
-            print_exc()
+            traceback.print_exc()
 
 

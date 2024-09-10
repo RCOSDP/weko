@@ -45,7 +45,7 @@ class WekoOAISchemaError(WekoSchemaError):
         super().__init__(ex, msg, *args)
 
 
-class WekoItemtypeSchemaTreeError(WekoSchemaError):
+class WekoItemtypeSchemaError(WekoSchemaError):
     def __init__(self, ex=None, msg=None, *args):
         if not msg:
             msg = "Some itemtype schema error has occurred in weko_schema_ui."

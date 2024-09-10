@@ -7,6 +7,9 @@
 
 """Resource for weko-items_ui log messages."""
 
+from flask import current_app
+
+
 WEKO_ITEMS_UI_MESSAGE = {
     'WEKO_ITEMS_UI_FAILED_SEARCH_ITEM': {
         'msgid': 'WEKO_ITEMS_UI_E_0001',
@@ -296,6 +299,6 @@ param2='param2', ex=ex)
     # get message parameters from resource
     param = WEKO_ITEMS_UI_MESSAGE.get(key, None)
     if param:
-        weko_logger_base(param=param, ex=ex, **kwargs)
+        weko_logger_base(app=current_app, param=param, ex=ex, **kwargs)
     else:
-        weko_logger_base(key=key, ex=ex, **kwargs)
+        weko_logger_base(app=current_app, key=key, ex=ex, **kwargs)

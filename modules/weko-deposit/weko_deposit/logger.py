@@ -207,7 +207,7 @@ WEKO_DEPOSIT_MESSAGE = {
 from weko_logging.console import WekoLoggingConsole
 weko_logger_base = WekoLoggingConsole.weko_logger_base
 
-def weko_logger(key=None, ex=None, **kwargs):
+def weko_logger(app=None, key=None, ex=None, **kwargs):
     """Log message with key.
 
     Method to output logs in current_app.logger using the resource.
@@ -248,6 +248,6 @@ param2='param2', ex=ex)
     # get message parameters from resource
     param = WEKO_DEPOSIT_MESSAGE.get(key, None)
     if param:
-        weko_logger_base(param=param, ex=ex, **kwargs)
+        weko_logger_base(app=app, param=param, ex=ex, **kwargs)
     else:
-        weko_logger_base(key=key, ex=ex, **kwargs)
+        weko_logger_base(app=app, key=key, ex=ex, **kwargs)

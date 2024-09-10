@@ -6,6 +6,9 @@
 # it under the terms of the MIT License; see LICENSE file for more details.
 """Resource for weko-bulkupdate log messages."""
 
+from flask import current_app
+
+
 WEKO_BULKUPDATE_MESSAGE = {
 }
 
@@ -53,6 +56,6 @@ param2='param2', ex=ex)
     # get message parameters from resource
     param = WEKO_BULKUPDATE_MESSAGE.get(key, None)
     if param:
-        weko_logger_base(param=param, ex=ex, **kwargs)
+        weko_logger_base(app=current_app, param=param, ex=ex, **kwargs)
     else:
-        weko_logger_base(key=key, ex=ex, **kwargs)
+        weko_logger_base(app=current_app, key=key, ex=ex, **kwargs)

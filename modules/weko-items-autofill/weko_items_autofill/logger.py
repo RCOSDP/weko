@@ -7,6 +7,9 @@
 
 """Resource for weko-items_autofill log messages."""
 
+from flask import current_app
+
+
 WEKO_ITEMS_AUTOFILL_MESSAGE = {
     'WEKO_ITEMS_AUTOFILL_FAILED_SET_WEB_API_ACCOUNT_INFO': {
         'msgid': 'WEKO_ITEMS_AUTOFILL_E_0001',
@@ -101,6 +104,6 @@ param2='param2', ex=ex)
     # get message parameters from resource
     param = WEKO_ITEMS_AUTOFILL_MESSAGE.get(key, None)
     if param:
-        weko_logger_base(param=param, ex=ex, **kwargs)
+        weko_logger_base(app=current_app, param=param, ex=ex, **kwargs)
     else:
-        weko_logger_base(key=key, ex=ex, **kwargs)
+        weko_logger_base(app=current_app, key=key, ex=ex, **kwargs)

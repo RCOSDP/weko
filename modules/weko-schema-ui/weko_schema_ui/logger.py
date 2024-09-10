@@ -7,6 +7,9 @@
 
 """Resource for weko-schema_ui log messages."""
 
+from flask import current_app
+
+
 WEKO_SCHEMA_UI_MESSAGE = {
     'WEKO_SCHEMA_UI_FAILED_ADD_SEARCH_CONDITION': {
         'msgid': 'WEKO_SCHEMA_UI_E_0001',
@@ -119,6 +122,6 @@ param2='param2', ex=ex)
     # get message parameters from resource
     param = WEKO_SCHEMA_UI_MESSAGE.get(key, None)
     if param:
-        weko_logger_base(param=param, ex=ex, **kwargs)
+        weko_logger_base(app=current_app, param=param, ex=ex, **kwargs)
     else:
-        weko_logger_base(key=key, ex=ex, **kwargs)
+        weko_logger_base(app=current_app, key=key, ex=ex, **kwargs)

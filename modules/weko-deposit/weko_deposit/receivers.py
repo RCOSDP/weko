@@ -47,7 +47,7 @@ def append_file_content(sender, json=None, record=None, index=None, **kwargs):
         holds = ['_created', '_updated']
         pops = []
 
-        weko_logger(key='WEKO_COMMON_FOR_STRT')
+        weko_logger(key='WEKO_COMMON_FOR_START')
         for i, key in enumerate(json):
             weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
                         count=i, element=key)
@@ -57,7 +57,7 @@ def append_file_content(sender, json=None, record=None, index=None, **kwargs):
                 pops.append(key)
         weko_logger(key='WEKO_COMMON_FOR_END')
 
-        weko_logger(key='WEKO_COMMON_FOR_STRT')
+        weko_logger(key='WEKO_COMMON_FOR_START')
         for i, key in enumerate(pops):
             weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
                         count=i, element=key)
@@ -109,6 +109,6 @@ def append_file_content(sender, json=None, record=None, index=None, **kwargs):
         # raise WekoDepositError(ex=ex)
     except WekoRecordsError as ex:
         raise
-    except Exception:
+    except Exception as ex:
         weko_logger(key='WEKO_COMMON_ERROR_UNEXPECTED', ex=ex)
         # raise WekoDepositError(ex=ex)

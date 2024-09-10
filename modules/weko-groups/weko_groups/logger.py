@@ -7,6 +7,9 @@
 
 """Resource for weko-groups log messages."""
 
+from flask import current_app
+
+
 WEKO_GROUPS_MESSAGE = {
     'WEKO_GROUPS_FAILED_CREATE_NEW_GROUP': {
         'msgid': 'WEKO_GROUPS_E_0001',
@@ -171,6 +174,6 @@ param2='param2', ex=ex)
     # get message parameters from resource
     param = WEKO_GROUPS_MESSAGE.get(key, None)
     if param:
-        weko_logger_base(param=param, ex=ex, **kwargs)
+        weko_logger_base(app=current_app, param=param, ex=ex, **kwargs)
     else:
-        weko_logger_base(key=key, ex=ex, **kwargs)
+        weko_logger_base(app=current_app, key=key, ex=ex, **kwargs)
