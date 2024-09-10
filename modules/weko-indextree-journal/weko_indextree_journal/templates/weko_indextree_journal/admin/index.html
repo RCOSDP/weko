@@ -79,10 +79,10 @@
               record='{{ record | tojson }}'
               schema="{{ jsonschema }}">
               <invenio-records-loading
-                template="{{ url_for('static', filename='node_modules/invenio-records-js/dist/templates/loading.html') }}">
+                template="/assets/node_modules/invenio-records-js/dist/templates/loading.html">
               </invenio-records-loading>
               <invenio-records-alert
-                template="{{ url_for('static', filename='node_modules/invenio-records-js/dist/templates/alert.html') }}">
+                template="/assets/node_modules/invenio-records-js/dist/templates/alert.html">
               </invenio-records-alert>
               <div ng-controller="WekoRecordsCtrl">
                 <div ng-show="false" type="text" id="btn_id" ></div>

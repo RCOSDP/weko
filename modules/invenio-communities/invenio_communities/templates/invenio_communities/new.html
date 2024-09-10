@@ -61,9 +61,9 @@
 
 {%- block javascript -%}
   {{ super() }}
-  <script src="{{url_for('static', filename='node_modules/ckeditor/ckeditor.js')}}"></script>
+  <script src="/assets/node_modules/ckeditor/ckeditor.js"></script>
   <script type="text/javascript">
-  var CKEDITOR_BASEPATH = '{{url_for('static', filename='node_modules/ckeditor/')}}';
+  var CKEDITOR_BASEPATH = '/assets/node_modules/ckeditor/';
   function init_ckeditor(selector, type) {
       if(type=="simple"){
           CKEDITOR.replace( selector, {
