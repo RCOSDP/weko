@@ -25,12 +25,12 @@
 
 {%- block css %}
   {{ super() }}
-  {% assets "invenio_communities_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {{ webpack['communities_css_css.scss']}}
 {%- endblock css %}
 
 {%- block javascript -%}
   {{ super() }}
-  {% assets "invenio_communities_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {{ webpack['communities_js_js.js']}}
 {%- endblock javascript -%}
 
 {% block page_body %}
