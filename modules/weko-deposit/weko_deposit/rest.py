@@ -199,7 +199,11 @@ def create_blueprint(app, endpoints):
 
 
 class ItemResource(ContentNegotiatedMethodView):
-    """Redirect to next page(index select)."""
+    """Redirect to next page(index select).
+
+    Attributes:
+        pid_fetcher (str): Persistent Identifier fetcher.
+    """
 
     view_name = '{0}_item'
 

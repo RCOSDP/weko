@@ -1874,6 +1874,7 @@ class WekoDeposit(Deposit):
             ItemsMetadata.create(self.data, id_=self.pid.object_uuid,
                                 item_type_id=self.get('item_type_id'))
 
+    # TODO: refactor down from here.
     def delete_old_file_index(self):
         """Delete old file index before file upload when edit an item.
 
