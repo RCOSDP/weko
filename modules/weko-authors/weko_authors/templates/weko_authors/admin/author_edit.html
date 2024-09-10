@@ -29,9 +29,9 @@
 
 {%- block javascript %}
   {{ super() }}
-  <script src="{{ url_for('static', filename='js/weko_authors/inline.bundle.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/weko_authors/polyfills.bundle.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/weko_authors/main.bundle.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/weko_authors/inline.bundle.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/weko_authors/polyfills.bundle.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/weko_authors/main.bundle.js') }}" defer></script>
   {{ webpack['theme-js-widget.js']}}
 {%- endblock javascript %}
 

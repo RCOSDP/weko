@@ -30,9 +30,9 @@
 
 {%- block javascript %}
   {{ super() }}
-  <script src="{{ url_for('static', filename='js/weko_theme/inline.bundle.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/weko_theme/polyfills.bundle.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/weko_theme/main.bundle.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/weko_theme/inline.bundle.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/weko_theme/polyfills.bundle.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/weko_theme/main.bundle.js') }}" defer></script>
   {{ webpack['theme-js-top-page.js']}}
   {{ webpack['theme-search-detail.js']}}
   {{ webpack['invenio_search_ui_app.js']}}

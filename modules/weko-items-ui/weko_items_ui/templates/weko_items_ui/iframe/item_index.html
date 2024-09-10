@@ -31,9 +31,9 @@
 
 {%- block javascript %}
   {{ super() }}
-  <script src="{{ url_for('static', filename='js/weko_items_ui/inline.bundle.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/weko_items_ui/polyfills.bundle.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/weko_items_ui/main.bundle.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/weko_items_ui/inline.bundle.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/weko_items_ui/polyfills.bundle.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/weko_items_ui/main.bundle.js') }}" defer></script>
   {{ webpack['workflow-js-quit-confirmation.js']}}
   {{ webpack['workflow-js-lock-activity.js']}}
   {{ webpack['records_ui_preview_carousel.js']}}
