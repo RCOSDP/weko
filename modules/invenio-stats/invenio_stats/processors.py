@@ -22,7 +22,7 @@ from invenio_search.engine import search
 from invenio_search.utils import prefix_index
 from pytz import utc
 
-from weko_admin.api import is_restricted_user
+
 
 from .models import StatsEvents
 from .utils import get_anonymization_salt, get_geoip
@@ -93,6 +93,7 @@ def anonymize_user(doc):
 
 def flag_restricted(doc):
     """Mark restricted access."""
+    from weko_admin.api import is_restricted_user
     doc['is_restricted'] = False
     if 'ip_address' in doc and 'user_agent' in doc:
         user_data = {
