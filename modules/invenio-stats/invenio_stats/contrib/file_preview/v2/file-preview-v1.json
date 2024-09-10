@@ -1,7 +1,6 @@
 {
   "template": "events-stats-file-preview-*",
   "settings": {
-    "index.mapper.dynamic": false,
     "index": {
       "refresh_interval": "5s"
     }

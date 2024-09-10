@@ -50,7 +50,7 @@ class WekoQuery(ContentNegotiatedMethodView):
 
     def __init__(self, **kwargs):
         """Constructor."""
-        super(WekoQuery, self).__init__(
+        super().__init__(
             serializers={
                 "application/json": lambda data, *args, **kwargs: jsonify(data),
             },
@@ -87,7 +87,7 @@ class StatsQueryResource(WekoQuery):
                 raise InvalidRequestInputError(
                     "Invalid Input. It should be of the form "
                     '{ STATISTIC_NAME: { "stat": STAT_TYPE, '
-                    r'"params": STAT_PARAMS }}'
+                    '"params": STAT_PARAMS }}'
                 )
 
             stat = config["stat"]
@@ -129,7 +129,7 @@ class QueryRecordViewCount(WekoQuery):
 
     def _get_data(self, record_id, query_date=None, get_period=False):
         """Get data."""
-        
+
         result = {}
         period = []
         country = {}
@@ -137,8 +137,7 @@ class QueryRecordViewCount(WekoQuery):
 
         try:
             if not query_date:
-                params = {"record_id": record_id,
-                          "interval": "month"}
+                params = {"record_id": record_id, "interval": "month"}
             else:
                 year = int(query_date[0: 4])
                 month = int(query_date[5: 7])
@@ -158,7 +157,7 @@ class QueryRecordViewCount(WekoQuery):
             query_total = query_total_cfg.query_class(
                 **query_total_cfg.query_config)
             res_total = query_total.run(**params)
-            
+
             result["total"] = res_total["count"]
             for d in res_total["buckets"]:
                 country[d["key"]] = d["count"]
@@ -167,11 +166,11 @@ class QueryRecordViewCount(WekoQuery):
             # period
             if get_period:
                 provide_year = int(getattr(config, "PROVIDE_PERIOD_YEAR"))
-                sYear = datetime.now().year
-                sMonth = datetime.now().month
-                eYear = sYear - provide_year
-                start = datetime(sYear, sMonth, 15)
-                end = datetime(eYear, 1, 1)
+                start_year = datetime.now().year
+                start_month = datetime.now().month
+                end_year = start_year - provide_year
+                start = datetime(start_year, start_month, 15)
+                end = datetime(end_year, 1, 1)
                 while end < start:
                     period.append(start.strftime("%Y-%m"))
                     start -= timedelta(days=16)
@@ -180,8 +179,9 @@ class QueryRecordViewCount(WekoQuery):
 
             unknown_view = result["total"] - unknown_view
             if unknown_view:
-                country[str(getattr(config, "WEKO_STATS_UNKNOWN_LABEL"))] = \
-                    unknown_view
+                country[
+                    str(getattr(config, "WEKO_STATS_UNKNOWN_LABEL"))
+                    ] =  unknown_view
                 result["country"] = country
         except Exception as e:
             current_app.logger.debug(e)
@@ -193,11 +193,11 @@ class QueryRecordViewCount(WekoQuery):
 
     def get_data(self, record_id, query_date=None, get_period=False):
         """Public interface of _get_data."""
-        result = dict(
-            total=0,
-            country=dict(),
-            period=list()
-        )
+        result = {
+            "total": 0,
+            "country": {},
+            "period": []
+        }
 
         recid = PersistentIdentifier.query.filter_by(
             pid_type="recid",
@@ -209,10 +209,13 @@ class QueryRecordViewCount(WekoQuery):
             #if not versioning.exists:
                 return self._get_data(record_id, query_date, get_period)
             versioning = PIDNodeVersioning(pid=parent_pid)
-            _data = list(self._get_data(
-                record_id=child.object_uuid,
-                query_date=query_date,
-                get_period=True) for child in versioning.children.all())
+            _data = [
+                self._get_data(
+                    record_id=child.object_uuid,
+                    query_date=query_date,
+                    get_period=True
+                ) for child in versioning.children.all()
+            ]
 
             countries = result["country"]
             for _idx in _data:
@@ -225,27 +228,30 @@ class QueryRecordViewCount(WekoQuery):
 
     def get_data_by_pid_value(self, pid_value, query_date=None, get_period=False):
         """Public interface of _get_data."""
-        result = dict(
-            total=0,
-            country=dict(),
-            period=list()
-        )
+        result = {
+            "total": 0,
+            "country": {},
+            "period": []
+        }
 
         recid = PersistentIdentifier.query.filter_by(
             pid_type="recid",
             pid_value=pid_value).first()
 
         if recid:
-            
+
             parent_pid = PIDNodeVersioning(pid=recid).parents.one_or_none()
             if parent_pid is None:
             #if not versioning.exists:
                 return self._get_data(recid.object_uuid, query_date, get_period)
             versioning = PIDNodeVersioning(pid=parent_pid)
-            _data = list(self._get_data(
-                record_id=child.object_uuid,
-                query_date=query_date,
-                get_period=True) for child in versioning.children.all())
+            _data = [
+                self._get_data(
+                    record_id=child.object_uuid,
+                    query_date=query_date,
+                    get_period=True
+                ) for child in versioning.children.all()
+            ]
 
             countries = result["country"]
             for _idx in _data:
@@ -295,7 +301,7 @@ class QueryFileStatsCount(WekoQuery):
         # get root_file_id for url file download/preview event
         if not root_file_id and "{URL_SLASH}" in file_key:
             file_key = file_key.replace("{URL_SLASH}", "/")
-            file_id_key = "{}_{}".format(bucket_id, file_key)
+            file_id_key = f"{bucket_id}_{file_key}"
             root_file_id = str(uuid.uuid3(uuid.NAMESPACE_URL, file_id_key))
 
         params = {"bucket_id": bucket_id,
@@ -359,11 +365,11 @@ class QueryFileStatsCount(WekoQuery):
             # period
             if get_period:
                 provide_year = int(getattr(config, "PROVIDE_PERIOD_YEAR"))
-                sYear = datetime.now().year
-                sMonth = datetime.now().month
-                eYear = sYear - provide_year
-                start = datetime(sYear, sMonth, 15)
-                end = datetime(eYear, 1, 1)
+                start_year = datetime.now().year
+                start_month = datetime.now().month
+                end_year = start_year - provide_year
+                start = datetime(start_year, start_month, 15)
+                end = datetime(end_year, 1, 1)
                 while end < start:
                     period.append(start.strftime("%Y-%m"))
                     start -= timedelta(days=16)
@@ -373,11 +379,11 @@ class QueryFileStatsCount(WekoQuery):
             unknown_download = result["download_total"] - unknown_download
             unknown_preview = result["preview_total"] - unknown_preview
             if unknown_download or unknown_preview:
-                data = dict(
-                    country=str(getattr(config, "WEKO_STATS_UNKNOWN_LABEL")),
-                    download_counts=unknown_download,
-                    preview_counts=unknown_preview
-                )
+                data = {
+                    "country": str(getattr(config, "WEKO_STATS_UNKNOWN_LABEL")),
+                    "download_counts": unknown_download,
+                    "preview_counts": unknown_preview
+                }
                 country_list.append(data)
                 result["country_list"] = country_list
         except Exception as e:
@@ -536,7 +542,7 @@ class QuerySearchReport(ContentNegotiatedMethodView):
 
     def __init__(self, **kwargs):
         """Constructor."""
-        super(QuerySearchReport, self).__init__(
+        super().__init__(
             serializers={
                 "application/json":
                 lambda data, *args, **kwargs: jsonify(data),
