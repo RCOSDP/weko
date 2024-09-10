@@ -4076,7 +4076,7 @@ class _FormatSysCreator:
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
                                 branch=f"key in {[WEKO_DEPOSIT_SYS_CREATOR_KEY['identifiers'],
                                                   WEKO_DEPOSIT_SYS_CREATOR_KEY['creator_mails'],
-                                                  WEKO_DEPOSIT_SYS_CREATOR_KEY['creator_type']])}")
+                                                  WEKO_DEPOSIT_SYS_CREATOR_KEY['creator_type']]}")
                     continue
                 if key == WEKO_DEPOSIT_SYS_CREATOR_KEY['creatorAffiliations']:
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
