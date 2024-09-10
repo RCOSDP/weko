@@ -10,7 +10,7 @@
 """Events indexer."""
 
 import hashlib
-from datetime import datetime
+from datetime import datetime, timezone
 from time import mktime
 
 from counter_robots import is_machine, is_robot
@@ -21,8 +21,8 @@ from invenio_search import current_search_client
 from invenio_search.engine import search
 from invenio_search.utils import prefix_index
 from pytz import utc
-#from weko_admin.api import is_restricted_user
-#from weko_admin.utils import get_redis_cache, reset_redis_cache, is_exists_key_in_redis
+
+
 
 from .models import StatsEvents
 from .utils import get_anonymization_salt, get_geoip
@@ -93,7 +93,7 @@ def anonymize_user(doc):
 
 def flag_restricted(doc):
     """Mark restricted access."""
-    from weko_admin.utils import is_restricted_user
+    from weko_admin.api import is_restricted_user
     doc['is_restricted'] = False
     if 'ip_address' in doc and 'user_agent' in doc:
         user_data = {
@@ -176,10 +176,7 @@ class EventsIndexer(object):
         """
         self.queue = queue
         self.client = client or current_search_client
-        self.search_index_prefix = current_app.config['SEARCH_INDEX_PREFIX'] \
-            .strip('-')
-        self.index = '{0}-{1}-{2}'.format(self.search_index_prefix, prefix,
-                                          self.queue.routing_key)
+        self.index = prefix_index("{0}-{1}".format(prefix, self.queue.routing_key))
         self.suffix = suffix
 
         # load the preprocessors
@@ -212,7 +209,7 @@ class EventsIndexer(object):
                 # This is to improve search engine performances.
                 ts = ts.replace(microsecond=0)
                 msg["timestamp"] = ts.isoformat()
-                msg["updated_timestamp"] = datetime.utcnow().isoformat()
+                msg["updated_timestamp"] = datetime.now(timezone.utc).isoformat()
                 # apply timestamp windowing in order to group events too close in time
                 if self.double_click_window > 0:
                     timestamp = mktime(utc.localize(ts).utctimetuple())

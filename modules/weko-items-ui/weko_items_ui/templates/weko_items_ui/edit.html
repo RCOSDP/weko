@@ -46,9 +46,9 @@
   {{ super() }}
   {{ webpack['deposit_js_js.js']}}
   {{ webpack['items_ui_js_app.js']}}
-  <script src="{{ url_for('static', filename='js/weko_items_ui/inline.items.authorSearch.bundle.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/weko_items_ui/polyfills.items.authorSearch.bundle.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/weko_items_ui/main.items.authorSearch.bundle.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/weko_items_ui/inline.items.authorSearch.bundle.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/weko_items_ui/polyfills.items.authorSearch.bundle.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/weko_items_ui/main.items.authorSearch.bundle.js') }}" defer></script>
   {{ webpack['theme-widget.js']}}
 {%- endblock javascript %}
 

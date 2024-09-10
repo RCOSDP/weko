@@ -52,9 +52,9 @@
     {{ webpack['items_ui_js_upload.js']}}
     {% endif %}
     {{ webpack['items_ui_js_dependencies_angularjs.js']}}
-    <script src="{{ url_for('static', filename='js/weko_items_ui/inline.items.authorSearch.bundle.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/weko_items_ui/polyfills.items.authorSearch.bundle.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/weko_items_ui/main.items.authorSearch.bundle.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/weko_items_ui/inline.items.authorSearch.bundle.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/weko_items_ui/polyfills.items.authorSearch.bundle.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/weko_items_ui/main.items.authorSearch.bundle.js') }}" defer></script>
   {%- endblock javascript %}
 
   {%- block page_header %}

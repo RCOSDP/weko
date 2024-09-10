@@ -25,9 +25,9 @@
 
 {%- block css %}
   {% if is_new -%}
-    {% assets "invenio_communities_css_tree" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+    {{ webpack['communities_css_css_tree.css']}}
   {%- else -%}
-    {% assets "invenio_communities_css_tree_display" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+    {{ webpack['communities_css_css_tree_display.css']}}
   {%- endif %}
   {{ super() }}
   <style>
@@ -109,10 +109,13 @@
   init_ckeditor("community_footer", 'advanced');
   </script>
   {% if is_new -%}
-    {% assets "invenio_communities_js_tree" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+    <script src="{{ url_for('static', filename='js/invenio_communities/inline.community.bundle.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/invenio_communities/polyfills.community.bundle.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/invenio_communities/main.community.bundle.js') }}" defer></script>
   {%- else -%}
-    {% assets "invenio_communities_js_tree_display" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {%- endif %}
+  <script src="{{ url_for('static', filename='js/invenio_communities/inline.bundle.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/invenio_communities/polyfills.bundle.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/invenio_communities/main.bundle.js') }}" defer></script>  {%- endif %}
 {%- endblock javascript -%}
 
 {% block page_body %}
