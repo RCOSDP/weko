@@ -30,7 +30,8 @@ import dateutil
 from flask import current_app, jsonify
 from frozendict import frozendict
 from invenio_db import db
-from invenio_oaiharvester.harvester import DCMapper, DDIMapper, JPCOARMapper
+from invenio_oaiharvester.harvester import DCMapper, DDIMapper, JPCOARMapper, \
+                    BIOSAMPLEMapper, BIOPROJECTMapper
 from invenio_oaiharvester.tasks import event_counter, map_indexes
 from invenio_oaiharvester.utils import ItemEvents
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
@@ -46,6 +47,9 @@ from weko_records_ui.utils import soft_delete
 
 from .config import INVENIO_RESYNC_ENABLE_ITEM_VERSIONING, \
     INVENIO_RESYNC_INDEXES_MODE, INVENIO_RESYNC_MODE
+
+RESYNC_SAVING_FORMAT_BIOPROJECT = 'BIOPROJECT-JSON-LD'
+RESYNC_SAVING_FORMAT_BIOSAMPLE = 'BIOSAMPLE-JSON-LD'
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -234,11 +238,16 @@ def process_item(record, resync, counter):
         __file__, 'start process_item()', record, counter))
     event_counter('processed_items', counter)
     event = ItemEvents.INIT
-    xml = etree.tostring(record, encoding='utf-8').decode()
-    # current_app.logger.debug('{0} {1} {2}: {3}'.format(
-    #     __file__, 'process_item()', 'xml', xml))
+    if resync.saving_format == RESYNC_SAVING_FORMAT_BIOSAMPLE:
+        mapper = BIOSAMPLEMapper(record)
 
-    mapper = JPCOARMapper(xml)
+    elif resync.saving_format == RESYNC_SAVING_FORMAT_BIOPROJECT:
+        mapper = BIOPROJECTMapper(record)
+    else:
+        xml = etree.tostring(record, encoding='utf-8').decode()
+        # current_app.logger.debug('{0} {1} {2}: {3}'.format(
+        #     __file__, 'process_item()', 'xml', xml))
+        mapper = JPCOARMapper(xml)
 
     current_app.logger.debug('{0} {1} {2}: {3}'.format(
         __file__, 'process_item()', 'mapper.identifier()', mapper.identifier()))

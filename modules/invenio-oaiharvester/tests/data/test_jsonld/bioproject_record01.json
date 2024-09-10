@@ -1,0 +1,240 @@
+{
+	"$schema": 32103,
+	"pubdate": "2023-01-18",
+	"item_1723717569243": {
+		"subitem_1586228465211": "PRJNA1139741"
+	},
+	"item_1723717665490": {
+		"subitem_1586228465211": "bioproject"
+	},
+	"item_1723717570626": {
+		"subitem_1586228465211": "BioProject"
+	},
+	"item_1723372943333": {
+		"subitem_1723355974639": "10090",
+		"subitem_1723355975615": "Mus musculus"
+	},
+	"item_1723372990931": {
+		"subitem_1551255647225": "Molecular organization of autonomic, respiratory, and spinally-projecting neurons in the mouse ventrolateral medulla"
+	},
+	"item_1723373031025": {
+		"subitem_1522657697257": "The ventrolateral medulla (VLM) is a crucial region in the brain for visceral and somatic control"
+	},
+	"item_1723717882730": [
+		{
+			"subitem_1723717048899": "2024-06-26T00:00:00Z",
+			"subitem_1723717049479": "38918066",
+			"subitem_1723717050012": "ePublished",
+			"subitem_1723717051591": "38918066",
+			"subitem_1723717052093": "ePubmed"
+		}
+	],
+	"item_1723717884033": [
+		{
+			"subitem_1723718052828": "R01 HL148004",
+			"subitem_1723718053760": "Role of presympathetic neurons of the hindbrain in cardiovascular control",
+			"subitem_1723718055112": {
+				"subitem_1723718059932": "National Heart, Lung, and Blood Institute",
+				"subitem_1723718062249": "National Heart, Lung, and Blood Institute"
+			}
+		},
+		{
+			"subitem_1723718052828": "R01 HL153916",
+			"subitem_1723718053760": "Molecular and Functional Taxonomy of Cardiovagal Neurons",
+			"subitem_1723718055112": {
+				"subitem_1723718059932": "National Heart, Lung, and Blood Institute",
+				"subitem_1723718062249": "National Heart, Lung, and Blood Institute"
+			}
+		}
+	],
+	"item_1723717885029": [
+		{
+			"subitem_1522306287251": {
+				"subitem_1522306436033": "http://cropgenome.project.affrc.go.jp/kenkyu/koubo/sfc.html"
+			},
+			"subitem_1523320863692": {
+				"subitem_1523320909613": "Genomics-based Technology for Agricultural Improvement"
+			}
+		}
+	],
+	"item_1723373319067": {
+		"subitem_1723717025761": "https://ddbj.nig.ac.jp/resource/bioproject/PRJNA1139741",
+		"subitem_1723717026449": "JSON",
+		"subitem_1723717027092": "TEST-TYPE"
+	},
+	"item_1723718545959": {
+		"subitem_1586228465211": "TEST-DOWNLOAD"
+	},
+	"item_1723718547390": {
+		"subitem_1586228465211": "public"
+	},
+	"item_1723718548991": {
+		"subitem_1586228465211": "unrestricted-access"
+	},
+	"item_1723373415064": {
+		"subitem_1522300722591": "2024-07-24"
+	},
+	"item_1723373419792": {
+		"subitem_1522300722591": "2024-07-24"
+	},
+	"item_1723373423152": {
+		"subitem_1522300722591": "2024-08-06T00:00:00Z"
+	},
+	"item_1723718703758": {
+		"subitem_1586228465211": "BioProject"
+	},
+	"item_1723718705368": {
+		"subitem_1586228465211": "TEST-NAME"
+	},
+	"item_1723373509719": {
+		"subitem_identifier_uri": "https://ddbj.nig.ac.jp/search/entry/bioproject/PRJNA1139741"
+	},
+	"item_1724839035729": [
+		{
+			"subitem_1523320863692": [
+				{
+					"subitem_1523320909613": "PRJNA743060"
+				},
+				{
+					"subitem_1523320909613": "bioproject"
+				}
+			],
+			"subitem_1522306287251": {
+				"subitem_1522306436033": "https://ddbj.nig.ac.jp/resource/bioproject/PRJNA743060"
+			}
+		},
+		{
+			"subitem_1523320863692": [
+				{
+					"subitem_1523320909613": "PRJNA743045"
+				},
+				{
+					"subitem_1523320909613": "bioproject"
+				}
+			],
+			"subitem_1522306287251": {
+				"subitem_1522306436033": "https://ddbj.nig.ac.jp/resource/bioproject/PRJNA743045"
+			}
+		},
+		{
+			"subitem_1523320863692": [
+				{
+					"subitem_1523320909613": "SRA1253724"
+				},
+				{
+					"subitem_1523320909613": "sra-submission"
+				}
+			],
+			"subitem_1522306287251": {
+				"subitem_1522306436033": "https://ddbj.nig.ac.jp/resource/sra-submission/SRA1253724"
+			}
+		},
+		{
+			"subitem_1523320863692": [
+				{
+					"subitem_1523320909613": "SRA1253761"
+				},
+				{
+					"subitem_1523320909613": "sra-submission"
+				}
+			],
+			"subitem_1522306287251": {
+				"subitem_1522306436033": "https://ddbj.nig.ac.jp/resource/sra-submission/SRA1253761"
+			}
+		},
+		{
+			"subitem_1523320863692": [
+				{
+					"subitem_1523320909613": "SRX11329880"
+				},
+				{
+					"subitem_1523320909613": "sra-experiment"
+				}
+			],
+			"subitem_1522306287251": {
+				"subitem_1522306436033": "https://ddbj.nig.ac.jp/resource/sra-experiment/SRX11329880"
+			}
+		},
+		{
+			"subitem_1523320863692": [
+				{
+					"subitem_1523320909613": "SRX11331026"
+				},
+				{
+					"subitem_1523320909613": "sra-experiment"
+				}
+			],
+			"subitem_1522306287251": {
+				"subitem_1522306436033": "https://ddbj.nig.ac.jp/resource/sra-experiment/SRX11331026"
+			}
+		},
+		{
+			"subitem_1523320863692": [
+				{
+					"subitem_1523320909613": "SRR15017940"
+				},
+				{
+					"subitem_1523320909613": "sra-run"
+				}
+			],
+			"subitem_1522306287251": {
+				"subitem_1522306436033": "https://ddbj.nig.ac.jp/resource/sra-run/SRR15017940"
+			}
+		},
+		{
+			"subitem_1523320863692": [
+				{
+					"subitem_1523320909613": "SRR15019116"
+				},
+				{
+					"subitem_1523320909613": "sra-run"
+				}
+			],
+			"subitem_1522306287251": {
+				"subitem_1522306436033": "https://ddbj.nig.ac.jp/resource/sra-run/SRR15019116"
+			}
+		},
+		{
+			"subitem_1523320863692": [
+				{
+					"subitem_1523320909613": "SRP326529"
+				},
+				{
+					"subitem_1523320909613": "sra-study"
+				}
+			],
+			"subitem_1522306287251": {
+				"subitem_1522306436033": "https://ddbj.nig.ac.jp/resource/sra-study/SRP326529"
+			}
+		},
+		{
+			"subitem_1523320863692": [
+				{
+					"subitem_1523320909613": "SRP326582"
+				},
+				{
+					"subitem_1523320909613": "sra-study"
+				}
+			],
+			"subitem_1522306287251": {
+				"subitem_1522306436033": "https://ddbj.nig.ac.jp/resource/sra-study/SRP326582"
+			}
+		},
+		{
+			"subitem_1523320863692": [
+				{
+					"subitem_1523320909613": "SRS9365947"
+				},
+				{
+					"subitem_1523320909613": "sra-sample"
+				}
+			],
+			"subitem_1522306287251": {
+				"subitem_1522306436033": "https://ddbj.nig.ac.jp/resource/sra-sample/SRS9365947"
+			}
+		}
+	],
+	"item_1723373560614": {
+		"resourcetype": "dataset"
+	}
+}

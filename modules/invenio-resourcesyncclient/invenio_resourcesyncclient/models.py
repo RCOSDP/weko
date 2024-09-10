@@ -92,7 +92,7 @@ class ResyncIndexes(db.Model, Timestamp):
     """Resync mode."""
 
     saving_format = db.Column(
-        db.String(10),
+        db.String(20),
         nullable=False,
         default=lambda: current_app.config[
             'INVENIO_RESYNC_INDEXES_SAVING_FORMAT'
