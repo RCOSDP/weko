@@ -1896,7 +1896,7 @@ class WekoDeposit(Deposit):
                             count=i, element=obj)
                 if obj.file_id:
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
-                            branch='file_id is not empty')
+                            branch=f"{obj.file_id} is not empty")
                     klst.append(obj.file_id)
             weko_logger(key='WEKO_COMMON_FOR_END')
             if klst:
@@ -1966,7 +1966,7 @@ class WekoDeposit(Deposit):
             if isinstance(self[key], dict) and \
                     'attribute_name' in self[key]:
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
-                        branch='self[key] is dict')
+                        branch=f"{self[key]} is dict")
                 self.pop(key)
         weko_logger(key='WEKO_COMMON_FOR_END')
 
@@ -2003,7 +2003,8 @@ class WekoDeposit(Deposit):
                 flg = False
                 if len(data) == 0:
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                branch='data is empty')
+                                branch=f"{len(data)} == 0")
+                    weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=result)
                     return flg, result
                 else:
                     weko_logger(key='WEKO_COMMON_FOR_START')
@@ -2026,7 +2027,7 @@ class WekoDeposit(Deposit):
                 flg = False
                 if len(data) == 0:
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                branch='data is empty')
+                                branch=f"{len(data)} == 0")
                     weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=None)
                     return flg, None
                 else:
@@ -2064,7 +2065,7 @@ class WekoDeposit(Deposit):
                 dict: data
             or 
             False
-            None         
+            None
             """
             # from weko_items_autofill.utils import get_title_pubdate_path
             path = get_title_pubdate_path(itemtype_id).get("title")
@@ -2072,7 +2073,7 @@ class WekoDeposit(Deposit):
             title = ""
             if "title_parent_key" in path and path["title_parent_key"] in _data:
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
-                            branch=f"title_parent_key in path 
+                            branch=f"'title_parent_key' in path
                                    and {path['title_parent_key']} in _data")
                 temp_record = _data[path["title_parent_key"]]
                 if "title_value_lst_key" in path:
@@ -2085,11 +2086,13 @@ class WekoDeposit(Deposit):
                         if isinstance(temp_record, list) and len(temp_record)>0 \
                             and p in temp_record[0]:
                             weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                        branch='temp_record is list')
+                                        branch=f"temp_record is list
+                                        and {len(temp_record)}>0
+                                        and p in {temp_record[0]}")
                             title = temp_record[0][p]
                         elif p in temp_record:
                             weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                        branch='p in temp_record')  
+                                        branch=f"p in {temp_record}")
                             title = temp_record[p]
                     weko_logger(key='WEKO_COMMON_FOR_END')
                 if "title_lang_lst_key" in path:
@@ -2102,11 +2105,13 @@ class WekoDeposit(Deposit):
                         if isinstance(temp_record, list) and len(temp_record)>0 \
                             and p in temp_record[0]:
                             weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                        branch='temp_record is list')
+                                        branch=f"temp_record is list
+                                        and {len(temp_record)}>0
+                                        and p in {temp_record[0]}")
                             lang = temp_record[0][p]
                         elif p in temp_record:
                             weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                        branch='p in temp_record')  
+                                        branch='p in temp_record')
                             lang = temp_record[p]
                     weko_logger(key='WEKO_COMMON_FOR_END')
             weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=title)
@@ -2229,7 +2234,7 @@ class WekoDeposit(Deposit):
         try:
             if not data:
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
-                            branch='data is not empty')
+                            branch='data is empty')
                 redis_connection = RedisConnection()
                 datastore = redis_connection.connection(
                     db=current_app.config['CACHE_REDIS_DB'], kv = True)
@@ -2239,16 +2244,16 @@ class WekoDeposit(Deposit):
                 # Check exist item cache before delete
                 if datastore.redis.exists(cache_key):
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                branch='datastore.redis.exists(cache_key)')
+                                branch=f'{datastore.redis.exists(cache_key)} is not empty')
                     data_str = datastore.get(cache_key)
                     if not index_obj.get('is_save_path'):
                         weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                    branch='index_obj is not empty')
+                                    branch=f"{index_obj.get('is_save_path')} is empty")
                         datastore.delete(cache_key)
                     data = json.loads(data_str.decode('utf-8'))
                 if not data:
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                branch='data is not empty')
+                                branch='data is empty')
                     data = self.record_data_from_act_temp()
         except RedisError as ex:
             weko_logger(key='WEKO_COMMON_ERROR_REDIS', ex=ex)
@@ -2281,7 +2286,8 @@ class WekoDeposit(Deposit):
 
         if not plst or len(index_lst) != len(plst):
             weko_logger(key='WEKO_COMMON_IF_ENTER',
-                        branch='plst is not empty')
+                        branch=f"plst is empty
+                        or {len(index_lst)} != {len(plst)}")
             raise PIDResolveRESTError(
                 description='Any tree index has been deleted')
 
@@ -2323,7 +2329,8 @@ class WekoDeposit(Deposit):
         actions = index_obj.get('actions')
         if actions == 'publish' or actions == PublishStatus.PUBLIC.value:
             weko_logger(key='WEKO_COMMON_IF_ENTER',
-                        branch='actions == publish')
+                        branch=f"{actions} == 'publish'
+                        or {actions} == {PublishStatus.PUBLIC.value}")
             pubs = PublishStatus.PUBLIC.value
         elif 'id' in data:
             weko_logger(key='WEKO_COMMON_IF_ENTER',
@@ -2357,28 +2364,29 @@ class WekoDeposit(Deposit):
         description_key = "description"
         if isinstance(self.jrc, dict) and self.jrc.get(description_key):
             weko_logger(key='WEKO_COMMON_IF_ENTER',
-                        branch='self.jrc is dict')
+                        branch=f"{self.jrc} is dict
+                            and {self.jrc.get(description_key)} is not empty")
             _description = self.jrc.get(description_key)
             _new_description = []
             if isinstance(_description, list):
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
-                            branch='_description is list')
+                            branch=f"{_description} is list")
                 weko_logger(key='WEKO_COMMON_FOR_START')
                 for i, data in enumerate(_description):
                     weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
                                 count=i, element=data)
                     if isinstance(data, str):
                         weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                    branch='data is str')
+                                    branch=f"{data} is str")
                         _new_description.append({"value": data})
                     else:
                         weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                    branch='data is not str')
+                                    branch=f"{data} is not str")
                         _new_description.append(data)
                 weko_logger(key='WEKO_COMMON_FOR_END')
             if _new_description:
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
-                            branch='_new_description is not empty')
+                            branch=f"{_new_description} is not empty")
                 self.jrc[description_key] = _new_description
 
     def _convert_jpcoar_data_to_es(self):
@@ -2421,7 +2429,8 @@ class WekoDeposit(Deposit):
             if isinstance(value.get("pointLongitude"), list) and isinstance(
                     value.get("pointLatitude"), list):
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
-                            branch=f"{value.get('pointLongitude')} is list")
+                            branch=f"{value.get('pointLongitude')} is list
+                                and {value.get('pointLatitude')} is list")
                 lat_len = len(value.get("pointLatitude"))
                 weko_logger(key='WEKO_COMMON_FOR_START')
                 for _idx, _value in enumerate(value.get("pointLongitude")):
@@ -2473,7 +2482,8 @@ class WekoDeposit(Deposit):
         geo_location_key = "geoLocation"
         if isinstance(self.jrc, dict) and self.jrc.get(geo_location_key):
             weko_logger(key='WEKO_COMMON_IF_ENTER',
-                        branch='self.jrc is dict')
+                        branch=f"{self.jrc} is dict
+                            and {self.jrc.get(geo_location_key)} is not empty")
             geo_location = self.jrc.get(geo_location_key)
             new_data = {}
             weko_logger(key='WEKO_COMMON_FOR_START')
@@ -2482,11 +2492,11 @@ class WekoDeposit(Deposit):
                             count=i, element=k)
                 if "geoLocationPlace" == k:
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                branch='geoLocationPlace == k')
+                                branch=f"'geoLocationPlace' == {k}")
                     new_data[k] = v
                 elif "geoLocationPoint" == k:
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                branch='geoLocationPoint == k')
+                                branch=f"'geoLocationPoint' == {k}")
                     point = _convert_geo_location(v)
                     if point:
                         weko_logger(key='WEKO_COMMON_IF_ENTER',
@@ -2494,7 +2504,7 @@ class WekoDeposit(Deposit):
                         new_data[k] = point
                 elif "geoLocationBox" == k:
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                branch='geoLocationBox == k')
+                                branch=f"'geoLocationBox' == {k}")
                     point = _convert_geo_location_box()
                     if point:
                         weko_logger(key='WEKO_COMMON_IF_ENTER',
@@ -2526,7 +2536,10 @@ class WekoDeposit(Deposit):
             index_id = str(index_id)
         obj_ids = next((cls.indexer.get_pid_by_es_scroll(index_id)), [])
 
-        for obj_uuid in obj_ids:
+        weko_logger(key='WEKO_COMMON_FOR_START')
+        for i, obj_uuid in enumerate(obj_ids):
+            weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
+                        count=i, element=obj_uuid)
             r = RecordMetadata.query.filter_by(id=obj_uuid).first()
             if r.json['recid'].split('.')[0] in ignore_items:
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
@@ -2536,14 +2549,17 @@ class WekoDeposit(Deposit):
             flag_modified(r, 'json')
             if r.json and not r.json['path']:
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
-                            branch=f"{r.json} is not empty") 
+                            branch=f"{r.json} is not empty
+                                and {r.json['path']} is empty") 
                 # from weko_records_ui.utils import soft_delete
                 soft_delete(obj_uuid)
             else:
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
-                            branch=f"{r.json} is empty") 
+                            branch=f"{r.json} is empty
+                                or {r.json['path']} is not empty")
                 dep = WekoDeposit(r.json, r)
                 dep.indexer.update_es_data(dep, update_revision=False)
+        weko_logger(key='WEKO_COMMON_FOR_END')
 
     def update_pid_by_index_tree_id(self, path):
         """Update pid by index tree id (not use).
@@ -2577,12 +2593,12 @@ class WekoDeposit(Deposit):
         except SQLAlchemyError as ex:
             weko_logger(key='WEKO_COMMON_DB_SOME_ERROR', ex=ex)
             db.session.rollback()
-            weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=False)  
+            weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=False)
             return False
         except Exception as ex:
             weko_logger(key='WEKO_COMMON_ERROR_UNEXPECTED', ex=ex)
             db.session.rollback()
-            weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=False) 
+            weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=False)
             return False
 
     def update_item_by_task(self, *args, **kwargs):
@@ -2617,7 +2633,7 @@ class WekoDeposit(Deposit):
         # if this item has been deleted
         if pid.status == PIDStatus.DELETED:
             weko_logger(key='WEKO_COMMON_IF_ENTER',
-                        branch='pid.status is deleted')
+                        branch=f"{pid.status} == {PIDStatus.DELETED}")
             # attempt to delete index on es
             try:
                 self.indexer.delete(self)
@@ -2729,16 +2745,16 @@ class WekoDeposit(Deposit):
                         count=i, element=obv)
             if obv.file_id in unuse_file_ids:
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
-                            branch='obv.file_id in unuse_file_ids')
+                            branch=f"{obv.file_id} in unuse_file_ids")
                 obv.remove()
                 obv.file.delete()
                 if is_import:
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                branch='is_import is true')
+                                branch='is_import is not empty')
                     list_unuse_uri.append(obv.file.uri)
                 else:
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                branch='is_import is false')
+                                branch='is_import is empty')
                     obv.file.storage().delete()
         weko_logger(key='WEKO_COMMON_FOR_END')
         if list_unuse_uri:
@@ -2803,7 +2819,8 @@ class WekoDeposit(Deposit):
                 if not RecordsBuckets.query.filter_by(
                         bucket_id=bucket.id).all():
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                branch='bucket_id is not empty')
+                                branch=f"{RecordsBuckets.query.
+                                    filter_by(bucket_id=bucket.id).all()} is empty")
                     bucket.remove()
 
                 bucket = {
@@ -2927,18 +2944,19 @@ class WekoRecord(Record):
         weko_logger(key='WEKO_COMMON_FOR_START')
         for i, lst in enumerate(solst):
             weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
-                        count=i, element=lst)     
+                        count=i, element=lst)
             key = lst[0]
             val = self.get(key)
             option = meta_options.get(key, {}).get('option')
             # Just get 'File'
             if not (val and option) or val.get('attribute_type') != "file":
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
-                            branch='val or option is empty')
+                            branch=f"{val and option} is empty
+                                or {val.get('attribute_type')} != 'file'")
                 continue
             if option.get("hidden"):
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
-                            branch='hidden of option is not empty')
+                            branch=f"{option.get("hidden")} is not empty")
                 hide_file = True
             break
         weko_logger(key='WEKO_COMMON_FOR_END')
@@ -2961,7 +2979,7 @@ class WekoRecord(Record):
         community = request.args.get('community', None)
         if not community:
             weko_logger(key='WEKO_COMMON_IF_ENTER',
-                        branch='community is not empty')
+                        branch='community is empty')
             weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=navs)
             return navs
 
@@ -3011,10 +3029,10 @@ class WekoRecord(Record):
 
         if len(data) > 0:
             weko_logger(key='WEKO_COMMON_IF_ENTER',
-                        branch='data is not empty')
+                        branch=f"{len(data)} > 0")
             if data[0].get('language',None) == None:
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
-                            branch=f"{data[0].get('language',None)} is none")
+                            branch=f"{data[0].get('language',None)} is None")
                 weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=data[0].get('title', ''))
                 return data[0].get('title', '')
 
@@ -3024,7 +3042,7 @@ class WekoRecord(Record):
                         count=i, element=value)
             if value.get('language', '') == 'en':
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
-                            branch=f"{value.get('language', '')} is english")
+                            branch=f"{value.get('language', '')} is en")
                 weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=value.get('title', ''))
                 return value.get('title', '')
         weko_logger(key='WEKO_COMMON_FOR_END')
@@ -3035,14 +3053,14 @@ class WekoRecord(Record):
                         count=i, element=value)
             if value.get('language', ''):
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
-                            branch=f"{value.get('language', '')} is not none")
+                            branch=f"{value.get('language', '')} is not empty")
                 weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=value.get('title', ''))
                 return value.get('title', '')
         weko_logger(key='WEKO_COMMON_FOR_END')
 
         if len(data) > 0:
             weko_logger(key='WEKO_COMMON_IF_ENTER',
-                        branch='data is not empty')
+                        branch=f"{len(data)} > 0")
             weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=data[0].get('title', ''))
             return data[0].get('title', '')
 
@@ -3083,24 +3101,34 @@ class WekoRecord(Record):
                     and not prop_hidden
                 ):
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                branch='property_data is dict')
+                                branch=f"{property_data} is dict
+                                    and {property_data.get('title')} is not empty
+                                    and prop_hidden is empty")
                     title = property_data.get('title')
                     parent_key = mapping_key
                     title_key = title.get("@value")
                     language_key = title.get("@attributes", {}).get("xml:lang")
-                    for h in hide_list:
+                    weko_logger(key='WEKO_COMMON_FOR_START')
+                    for i, h in enumerate(hide_list):
+                        weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
+                                    count=i, element=h)  
                         if parent_key in h and language_key in h:
                             weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                        branch='h in hide_list')
+                                        branch=f"{parent_key} in h
+                                            and {language_key} in h")
                             language_key = None
                         if parent_key in h and title_key in h:
                             weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                        branch='parent_key in h')
+                                        branch=f"{parent_key} in h
+                                            and {title_key} in h")
                             title_key = None
                             parent_key = None
+                    weko_logger(key='WEKO_COMMON_FOR_END')
                     if parent_key and title_key and language_key:
                         weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                    branch='parent_key is not empty')
+                                        branch=f"{parent_key}
+                                            and {title_key} 
+                                            and {language_key} is not empty")
                         break
             weko_logger(key='WEKO_COMMON_FOR_END')
         weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=parent_key)
@@ -3131,7 +3159,7 @@ class WekoRecord(Record):
             attribute_value = title_metadata.get('attribute_value_mlt')
             if isinstance(attribute_value, list):
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
-                            branch='attribute value is list')
+                            branch=f"{attribute_value} is list")
 
                 weko_logger(key='WEKO_COMMON_FOR_START')
                 for i, attribute in enumerate(attribute_value):
@@ -3185,13 +3213,13 @@ class WekoRecord(Record):
             option = meta_options.get(key, {}).get('option')
             if not val or not option:
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
-                            branch='val is empty')
+                            branch=f"{val} or {option} is empty")
                 continue
 
             hidden = option.get("hidden")
             if hidden:
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
-                            branch='hidden is true')
+                            branch='hidden is not empty')
                 continue
 
             mlt = val.get('attribute_value_mlt')
@@ -3212,11 +3240,12 @@ class WekoRecord(Record):
                 if nval['attribute_name'] == 'Reference' \
                         or nval['attribute_type'] == 'file':
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                branch='attribute_name is Reference')
+                                branch=f"{nval['attribute_name']} == 'Reference'
+                                    or {nval['attribute_type']} == 'file'")
                     file_metadata = copy.deepcopy(mlt)
                     if nval['attribute_type'] == 'file':
                         weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                    branch='attribute_type is file')
+                                    branch=f"{nval['attribute_type']} == 'file'")
                         file_metadata = self. \
                             __remove_file_metadata_do_not_publish(
                                 file_metadata)
@@ -3225,7 +3254,8 @@ class WekoRecord(Record):
                             file_metadata, copy.deepcopy(solst), True)
                 else:
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                branch='attribute_name is not Reference') 
+                                branch=f"{nval['attribute_name']} == 'Reference'
+                                    or {nval['attribute_type']} == 'file'")
                     is_author = nval['attribute_type'] == 'creator'
                     is_thumbnail = any(
                         'subitem_thumbnail' in data for data in mlt)
@@ -3236,22 +3266,23 @@ class WekoRecord(Record):
                     )
                     if is_author:
                         weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                    branch='is_author is true') 
+                                    branch='is_author is not empty') 
                         creators = self._get_creator(mlt, hide_email_flag)
                         nval['attribute_value_mlt'] = creators
                     elif is_thumbnail:
                         weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                    branch='is_thumbnail is true') 
+                                    branch='is_thumbnail is not empty') 
                         nval['is_thumbnail'] = True
                     elif sys_bibliographic.is_bibliographic():
                         weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                    branch='sys_bibliographic is true') 
+                                    branch=f"{sys_bibliographic.is_bibliographic()} is not empty") 
                         nval['attribute_value_mlt'] = \
                             sys_bibliographic.get_bibliographic_list(False)
                     else:
                         if meta_list.get(key, {}).get('input_type') == 'text':
                             weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                        branch='input type is text') 
+                                        branch=f"{meta_list.get(key, {})
+                                                  .get('input_type')} == 'text'") 
 
                             weko_logger(key='WEKO_COMMON_FOR_START')
                             for i, iter in enumerate(mlt):
@@ -3259,7 +3290,7 @@ class WekoRecord(Record):
                                             count=i, element=iter)  
                                 if iter.get('interim'):
                                     weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                                branch='interim is true')
+                                                branch=f"{iter.get('interim')} is not empty")
                                     iter['interim'] = iter[
                                         'interim'].replace("\n", " ")
                             weko_logger(key='WEKO_COMMON_FOR_END')
@@ -3281,10 +3312,10 @@ class WekoRecord(Record):
 
                 if meta_list.get(key, {}).get('input_type') == 'text':
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                branch='input type is text') 
+                                branch=f"{meta_list.get(key, {}).get('input_type')} == 'text'")
                     if 'attribute_value' in val:
                         weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                    branch='attribute value in val')
+                                    branch=f"'attribute_value' in {val}")
                         val['attribute_value'] = val['attribute_value'].replace(
                             "\n", " ")
                 items.append(val)
@@ -3301,7 +3332,7 @@ class WekoRecord(Record):
             None
 
         Returns:
-            items(list): list of file information 
+            items(list): list of file information
 
         """
         item_type_id = self.get('item_type_id')
@@ -3317,23 +3348,23 @@ class WekoRecord(Record):
             option = meta_options.get(key, {}).get('option')
             if not val or not option:
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
-                            branch='val is empty')
+                            branch=f"{val} or {option} is empty")
                 continue
 
             # Just get data of 'File'
             if val.get('attribute_type') != "file":
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
-                            branch='attribute type is not file')
+                            branch=f"{val.get('attribute_type')} != 'file'")
                 continue
             # Check option hide.
             if option.get("hidden"):
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
-                            branch='hidden is true')
+                            branch=f"{option.get('hidden')} is not empty")
                 continue
             mlt = val.get('attribute_value_mlt')
             if mlt is not None:
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
-                            branch='attribute_value_mlt is not None')
+                            branch='mlt is not None')
                 # Processing get files.
                 mlt = copy.deepcopy(mlt)
                 # Get file with current version id.
@@ -3358,7 +3389,7 @@ class WekoRecord(Record):
                                         count=i, element=ea)
                             if f.get(ea, None):
                                 weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                            branch='exclude attr is not empty')
+                                            branch=f"{f.get(ea, None)} is not empty")
                                 del f[ea]
                         weko_logger(key='WEKO_COMMON_FOR_END')
                         file_metadata_temp.append(f)
@@ -3458,11 +3489,12 @@ class WekoRecord(Record):
                 creator_mails = WEKO_DEPOSIT_SYS_CREATOR_KEY['creator_mails']
                 if identifiers in creator_data:
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                branch='identifiers in creator data')
+                                branch=f"{identifiers} in creator_data")
                     creator_dict[identifiers] = creator_data[identifiers]
                 if creator_mails in creator_data and not hide_email_flag:
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                branch='creator mails in creator data')
+                                branch=f"{creator_mails} in creator_data 
+                                    and hide_email_flag is not empty")
                     creator_dict[creator_mails] = creator_data[creator_mails]
                 creators.append(creator_dict)
             weko_logger(key='WEKO_COMMON_FOR_END')
@@ -3489,11 +3521,12 @@ class WekoRecord(Record):
             is_open_no = self.is_do_not_publish(file)
             if self.is_input_open_access_date(file):
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
-                            branch='input open access date is true')
+                            branch=f"{self.is_input_open_access_date(file)} is not empty")
                 if not self.is_future_open_date(self,
                                                 file) or is_permissed_user:
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                branch='permissed user is true')
+                                branch=f"{self.is_future_open_date(self, file)} is empty
+                                    or {is_permissed_user} is not empty")
                     new_file_metadata_list.append(file)
                 else:
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
@@ -3501,7 +3534,8 @@ class WekoRecord(Record):
                     continue
             elif not (is_open_no and not is_permissed_user):
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
-                            branch='input open access date is false')
+                            branch=f"{is_open_no} is empty
+                                    and {is_permissed_user} is not empty")
                 new_file_metadata_list.append(file)
         weko_logger(key='WEKO_COMMON_FOR_END')
         weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=new_file_metadata_list) 
@@ -3542,7 +3576,7 @@ class WekoRecord(Record):
                             count=i, element=role)
                 if role.name in super_users:
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                branch='role in current user roles')
+                                branch=f"{role.name} in super_users")
                     is_ok = True
                     break
             weko_logger(key='WEKO_COMMON_FOR_END')
@@ -3607,7 +3641,7 @@ class WekoRecord(Record):
         date_value = self.get_open_date_value(file_metadata)
         if date_value is None:
             weko_logger(key='WEKO_COMMON_IF_ENTER',
-                        branch='date value is None')
+                        branch=f"{date_value} is None")
             date_value = str(date.max)
         weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=date_value)
         return is_future(date_value)
@@ -3655,7 +3689,7 @@ class WekoRecord(Record):
             # Get pid parent of draft record
             if ".0" in str(self.pid_recid.pid_value):
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
-                            branch="pid value contains '.0'")
+                            branch=f"'.0' in {str(self.pid_recid.pid_value)}")
                 pid_ver.relation_type = 3
                 weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=pid_ver.parents.one_or_none())
                 return pid_ver.parents.one_or_none()
@@ -3721,7 +3755,7 @@ class WekoRecord(Record):
         pid_without_ver = get_record_without_version(self.pid_recid)
         if not pid_without_ver:
             weko_logger(key='WEKO_COMMON_IF_ENTER',
-                        branch='pid_without_ver is empty')
+                        branch=f"{pid_without_ver} is empty")
             weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=None)
             return None
         try:
@@ -3789,7 +3823,7 @@ class WekoRecord(Record):
             # Just get data of 'File'.
             if val.get('attribute_type') != "file":
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
-                            branch='attribute type is not file')
+                            branch=f"{val.get('attribute_type')} != 'file'")
                 continue
             mlt = val.get('attribute_value_mlt')
             if mlt is not None:
@@ -3865,7 +3899,9 @@ class _FormatSysCreator:
                     WEKO_DEPOSIT_SYS_CREATOR_KEY[
                         'affiliation_lang']) not in languages:
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                branch='affiliation language not in languages')
+                                branch=f"{affiliation_name.
+                                    get(WEKO_DEPOSIT_SYS_CREATOR_KEY['affiliation_lang'])} 
+                                    not in languages")
                     languages.append(affiliation_name.get(
                         WEKO_DEPOSIT_SYS_CREATOR_KEY['affiliation_lang']))
             weko_logger(key='WEKO_COMMON_FOR_END')
@@ -3889,45 +3925,46 @@ class _FormatSysCreator:
         lang_key = ''
         if parent_key == WEKO_DEPOSIT_SYS_CREATOR_KEY['creator_names']:
             weko_logger(key='WEKO_COMMON_IF_ENTER',
-                        branch='parent key is creator names')
+                        branch=f"parent_key == {WEKO_DEPOSIT_SYS_CREATOR_KEY['creator_names']}")
             name_key = WEKO_DEPOSIT_SYS_CREATOR_KEY['creator_name']
             lang_key = WEKO_DEPOSIT_SYS_CREATOR_KEY['creator_lang']
         elif parent_key == WEKO_DEPOSIT_SYS_CREATOR_KEY['family_names']:
             weko_logger(key='WEKO_COMMON_IF_ENTER',
-                        branch='parent key is family names')
+                        branch=f"parent_key == {WEKO_DEPOSIT_SYS_CREATOR_KEY['family_names']}")
             name_key = WEKO_DEPOSIT_SYS_CREATOR_KEY['family_name']
             lang_key = WEKO_DEPOSIT_SYS_CREATOR_KEY['family_lang']
         elif parent_key == WEKO_DEPOSIT_SYS_CREATOR_KEY['given_names']:
             weko_logger(key='WEKO_COMMON_IF_ENTER',
-                        branch='parent key is given names')
+                        branch=f"parent_key == {WEKO_DEPOSIT_SYS_CREATOR_KEY['given_names']}")
             name_key = WEKO_DEPOSIT_SYS_CREATOR_KEY['given_name']
             lang_key = WEKO_DEPOSIT_SYS_CREATOR_KEY['given_lang']
         elif parent_key == WEKO_DEPOSIT_SYS_CREATOR_KEY['alternative_names']:
             weko_logger(key='WEKO_COMMON_IF_ENTER',
-                        branch='parent key is alternative names')
+                        branch=f"parent_key == {WEKO_DEPOSIT_SYS_CREATOR_KEY['alternative_names']}")
             name_key = WEKO_DEPOSIT_SYS_CREATOR_KEY['alternative_name']
             lang_key = WEKO_DEPOSIT_SYS_CREATOR_KEY['alternative_lang']
         elif parent_key == WEKO_DEPOSIT_SYS_CREATOR_KEY['creator_type']: #? ADDED 20231017 CREATOR TYPE BUG FIX
             weko_logger(key='WEKO_COMMON_IF_ENTER',
-                        branch='parent key is creator type')
+                        branch=f"parent_key == {WEKO_DEPOSIT_SYS_CREATOR_KEY['creator_type']}")
             return
         if parent_key in self.creator:
             weko_logger(key='WEKO_COMMON_IF_ENTER',
-                        branch='parent key in creator')
+                        branch=f"{parent_key} in {self.creator}")
             lst_value = self.creator[parent_key]
             if len(lst_value) > 0:
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
-                            branch='list value is not empty')
+                            branch=f"{len(lst_value)} > 0")
                 weko_logger(key='WEKO_COMMON_FOR_START')
                 for i in range(len(lst_value)):
                     weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
                             count=i, element=i) 
                     if lst_value[i] and lst_value[i].get(lang_key) == language:
                         weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                    branch='language key is language')
+                                    branch=f"{lst_value[i]} is not empty
+                                        and {lst_value[i].get(lang_key)} == language")
                         if name_key in lst_value[i]:
                             weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                        branch='name key in list value')
+                                        branch=f"name_key in {lst_value[i]}")
                             lst.append(lst_value[i][name_key])
                             break
                 weko_logger(key='WEKO_COMMON_FOR_END')
@@ -3971,7 +4008,7 @@ class _FormatSysCreator:
                             count=index, element=index)
                 if index < len(affiliation_min):
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                branch='index < length of affiliation_min')
+                                branch=f"index < {len(affiliation_min)}")
                     affiliation_max[index].update(
                         affiliation_min[index])
                     self._get_creator_to_show_popup(
@@ -3980,7 +4017,7 @@ class _FormatSysCreator:
                         creator_list_temps)
                 else:
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                branch='index >= length of affiliation_min')
+                                branch=f"index >= {len(affiliation_min)}")
                     self._get_creator_to_show_popup(
                         [affiliation_max[index]],
                         languages, creator_lists,
@@ -4008,14 +4045,14 @@ class _FormatSysCreator:
                 if len(affiliation_name_format) >= len(
                         affiliation_name_identifiers_format):
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                branch="len(affiliation_name_format) >="
-                                    "len(affiliation_name_identifiers_format)")
+                                branch=f"{len(affiliation_name_format)} >=
+                                    {len(affiliation_name_identifiers_format)}")
                     affiliation_max = affiliation_name_format
                     affiliation_min = affiliation_name_identifiers_format
                 else:
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                branch="len(affiliation_name_format) <"
-                                    "len(affiliation_name_identifiers_format)")
+                                branch=f"{len(affiliation_name_format)} <
+                                    {len(affiliation_name_identifiers_format)}")
                     affiliation_max = affiliation_name_identifiers_format
                     affiliation_min = affiliation_name_format
 
@@ -4027,7 +4064,7 @@ class _FormatSysCreator:
 
         if isinstance(creators, dict):
             weko_logger(key='WEKO_COMMON_IF_ENTER',
-                        branch='creators is dict')
+                        branch=f"{creators} is dict")
             creator_list_temp = []
             weko_logger(key='WEKO_COMMON_FOR_START')
             for i, (key, value) in enumerate(creators.items()):
@@ -4037,15 +4074,17 @@ class _FormatSysCreator:
                             WEKO_DEPOSIT_SYS_CREATOR_KEY['creator_mails'],
                             WEKO_DEPOSIT_SYS_CREATOR_KEY['creator_type']]): #? ADDED 20231017 CREATOR TYPE BUG FIX
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                branch='key in WEKO_DEPOSIT_SYS_CREATOR_KEY')
+                                branch=f"key in {[WEKO_DEPOSIT_SYS_CREATOR_KEY['identifiers'],
+                                                  WEKO_DEPOSIT_SYS_CREATOR_KEY['creator_mails'],
+                                                  WEKO_DEPOSIT_SYS_CREATOR_KEY['creator_type']])}")
                     continue
                 if key == WEKO_DEPOSIT_SYS_CREATOR_KEY['creatorAffiliations']:
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                branch='key in creatorAffiliations')
+                                branch=f"key == {WEKO_DEPOSIT_SYS_CREATOR_KEY['creatorAffiliations']}")
                     format_affiliation(value)
                 else:
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                branch='key not in creatorAffiliations')
+                                branch=f"key != {WEKO_DEPOSIT_SYS_CREATOR_KEY['creatorAffiliations']}")
                     self._get_creator_to_show_popup(value, language,
                                                     creator_list,
                                                     creator_list_temp)
@@ -4098,19 +4137,20 @@ class _FormatSysCreator:
                         count=i, element=k)
             if 'Lang' in k:
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
-                            branch='Lang in k')
+                            branch=f"Lang' in {k}")
                 if not language:
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
                                 branch='language is empty')
                     count = count + 1
                 elif v == language:
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                branch='v == language')
+                                branch=f"{v} == language")
                     creator_list_temp.append(creator_data)
         weko_logger(key='WEKO_COMMON_FOR_END')
         if count == 0 and not language:
             weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                branch='count == 0 and not language')
+                                branch=f"{count}  == 0 and
+                                    language is empty")
             creator_list_temp.append(creator_data)
 
     def format_creator(self) -> dict:
@@ -4155,7 +4195,7 @@ class _FormatSysCreator:
                         count=i, element=creator_data)
             if isinstance(creator_data, dict):
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                branch='creator_data is dict')
+                                branch=f"{creator_data} is dict")
                 creator_temp = {}
                 weko_logger(key='WEKO_COMMON_FOR_START')
                 for i, (k, v) in enumerate(creator_data.items()):
@@ -4163,7 +4203,7 @@ class _FormatSysCreator:
                                 count=i, element=k)
                     if isinstance(v, list):
                         weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                    branch='v is list')
+                                    branch=f"{v} is list")
                         merged_data = {}
                         self._merge_creator_data(v, merged_data)
                         creator_temp[k] = merged_data
@@ -4195,7 +4235,7 @@ class _FormatSysCreator:
         """
         if isinstance(creators, list):
             weko_logger(key='WEKO_COMMON_IF_ENTER',
-                        branch='creators is list')
+                        branch=f"{creators} is list")
 
             weko_logger(key='WEKO_COMMON_FOR_START')
             for i, creator_data in enumerate(creators):
@@ -4208,7 +4248,7 @@ class _FormatSysCreator:
             weko_logger(key='WEKO_COMMON_FOR_END')
         elif isinstance(creators, dict):
             weko_logger(key='WEKO_COMMON_IF_ENTER',
-                        branch='creators is dict')
+                        branch=f"{creators} is dict")
             alternative_name_key = WEKO_DEPOSIT_SYS_CREATOR_KEY[
                 'alternative_name']
             weko_logger(key='WEKO_COMMON_FOR_START')
@@ -4218,13 +4258,15 @@ class _FormatSysCreator:
                 des_creator[key] = {}
                 if key != self.no_language_key and isinstance(value, dict):
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                branch='value is dict')
+                                branch=f"key != {self.no_language_key}
+                                    and {value} is dict")
                     self._format_creator_name(value, des_creator[key])
                     des_creator[key][alternative_name_key] = value.get(
                         alternative_name_key, [])
                 else:
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                branch='value is not dict')
+                                branch=f"key == {self.no_language_key}
+                                    and {value} is not dict")
                     des_creator[key] = value.copy()
                 self._format_creator_affiliation(value.copy(),
                                                  des_creator[key])
@@ -4251,22 +4293,22 @@ class _FormatSysCreator:
         given_name = creator_data.get(given_name_key)
         if creator_name:
             weko_logger(key='WEKO_COMMON_IF_ENTER',
-                        branch='creator name is not empty')
+                        branch=f"{creator_name} is not empty")
             des_creator[creator_name_key] = creator_name
         else:
             weko_logger(key='WEKO_COMMON_IF_ENTER',
-                        branch='creator name is empty')
+                        branch=f"{creator_name} is empty")
             if not family_name:
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
-                            branch='family name is empty')
+                            branch=f"{family_name} is empty")
                 des_creator[creator_name_key] = given_name
             elif not given_name:
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
-                            branch='given name is empty')
+                            branch=f"{given_name} is empty")
                 des_creator[creator_name_key] = family_name
             else:
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
-                            branch='family and given name is not empty')
+                            branch=f"{family_name} and {given_name} is not empty")
                 lst = []
 
                 weko_logger(key='WEKO_COMMON_FOR_START')
@@ -4276,7 +4318,7 @@ class _FormatSysCreator:
                     _creator_name = item
                     if len(given_name) > idx:
                         weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                    branch='len(given_name) > idx')
+                                    branch=f"{len(given_name)} > idx")
                         _creator_name += " " + given_name[idx]
                     lst.append(_creator_name)
                 weko_logger(key='WEKO_COMMON_FOR_END')
@@ -4334,11 +4376,11 @@ class _FormatSysCreator:
             tmp_data = ""
             if len(identifier_schema) > idx:
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
-                            branch='len(identifier_schema) > idx')
+                            branch=f"{len(identifier_schema)} > idx")
                 tmp_data += identifier_schema[idx]
             if len(affiliation_name) > idx:
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
-                            branch='len(affiliation_name) > idx')
+                            branch=f"{len(affiliation_name)} > idx")
                 tmp_data += " " + affiliation_name[idx]
             identifier_name_list.append(tmp_data)
 
@@ -4348,11 +4390,11 @@ class _FormatSysCreator:
             }
             if len(identifier) > idx:
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
-                            branch='len(identifier) > idx')
+                            branch=f"{len(identifier)} > idx")
                 identifier_tmp['identifier'] = identifier[idx]
             if len(identifier_uri) > idx:
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
-                            branch='len(identifier_uri) > idx')
+                            branch=f"{len(identifier_uri)} > idx")
                 identifier_tmp['uri'] = identifier_uri[idx]
             identifier_list.append(identifier_tmp)
             idx += 1
@@ -4392,13 +4434,15 @@ class _FormatSysCreator:
         """
         def merge_data(key, value):
             if isinstance(merged_data.get(key), list):
+                weko_logger(key='WEKO_COMMON_IF_ENTER',
+                            branch=f"{merged_data.get(key)} is list")
                 merged_data[key].append(value)
             else:
                 merged_data[key] = [value]
 
         if isinstance(creator_data, list):
             weko_logger(key='WEKO_COMMON_IF_ENTER',
-                        branch='creator_data is list')
+                        branch=f"{creator_data} is list") 
             weko_logger(key='WEKO_COMMON_FOR_START')
             for i, data in enumerate(creator_data):
                 weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
@@ -4407,14 +4451,14 @@ class _FormatSysCreator:
             weko_logger(key='WEKO_COMMON_FOR_END')
         elif isinstance(creator_data, dict):
             weko_logger(key='WEKO_COMMON_IF_ENTER',
-                        branch='creator_data is dict')
+                        branch=f"{creator_data} is dict") 
             weko_logger(key='WEKO_COMMON_FOR_START')
             for i, (k, v) in enumerate(creator_data.items()):
                 weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
                             count=i, element=k)
                 if isinstance(v, str):
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                branch='v is str')
+                                branch=f"{v} is str")
                     merge_data(k, v)
             weko_logger(key='WEKO_COMMON_FOR_END')
 
@@ -4518,7 +4562,7 @@ class _FormatSysBibliographicInformation:
                             count=i, element=key)
                 if key in _meta_data:
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                branch='key in _meta_data')
+                                branch=f"k in {_meta_data}")
                     weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=True)
                     return True
             weko_logger(key='WEKO_COMMON_FOR_END')
@@ -4528,13 +4572,15 @@ class _FormatSysBibliographicInformation:
         meta_data = self.bibliographic_meta_data_lst
         if isinstance(meta_data, dict):
             weko_logger(key='WEKO_COMMON_IF_ENTER',
-                        branch='meta_data is dict')
+                        branch=f"{meta_data} is dict")
             weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=check_key(meta_data))
             return check_key(meta_data)
         elif isinstance(meta_data, list) and len(meta_data) > 0 and isinstance(
                 meta_data[0], dict):
             weko_logger(key='WEKO_COMMON_IF_ENTER',
-                        branch='meta_data is list')
+                        branch=f"{meta_data} is list
+                            and {len(meta_data)} > 0
+                            and {meta_data[0]} is dict")
             weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=check_key(meta_data[0]))
             return check_key(meta_data[0])
 
@@ -4585,10 +4631,10 @@ class _FormatSysBibliographicInformation:
         language = ''
         if bibliographic.get('bibliographic_titles'):
             weko_logger(key='WEKO_COMMON_IF_ENTER',
-                        branch='bibliographic_titles is not empty')
+                        branch=f"{bibliographic.get('bibliographic_titles')} is not empty")
             if is_get_list:
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
-                            branch='is get list is not empty')
+                            branch='is_get_list is not empty')
                 current_lang = current_i18n.language
                 if not current_lang:
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
@@ -4598,12 +4644,12 @@ class _FormatSysBibliographicInformation:
                     bibliographic.get('bibliographic_titles'), current_lang)
             else:
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
-                            branch='is get list is empty')
+                            branch='is_get_list is empty')
                 title_data = self._get_source_title(
                     bibliographic.get('bibliographic_titles'))
         if is_get_list:
             weko_logger(key='WEKO_COMMON_IF_ENTER',
-                        branch='is get list is not empty')
+                        branch='is_get_list is not empty')
             if not language:
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
                             branch='language is empty')
@@ -4612,7 +4658,7 @@ class _FormatSysBibliographicInformation:
                 bibliographic, language)
         else:
             weko_logger(key='WEKO_COMMON_IF_ENTER',
-                        branch='is get list is empty')
+                        branch='is_get_list is empty')
             bibliographic_info, length = self._get_bibliographic_information(
                 bibliographic)
         weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=title_data)
@@ -4657,7 +4703,7 @@ class _FormatSysBibliographicInformation:
             'WEKO_DEPOSIT_BIBLIOGRAPHIC_TRANSLATIONS')
         if key in bibliographic_translation:
             weko_logger(key='WEKO_COMMON_IF_ENTER',
-                        branch='key in bibliographic_translation')
+                        branch=f"k in {bibliographic_translation}")
             weko_logger(key='WEKO_COMMON_RETURN_VALUE', 
                         value=bibliographic_translation.get(key, {}).get(lang, ''))
             return bibliographic_translation.get(key, {}).get(lang, '')
@@ -4680,13 +4726,13 @@ class _FormatSysBibliographicInformation:
                         count=i, element=key)
             if key == 'p.':
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
-                            branch="key is 'p.'")
+                            branch=f"{key} == 'p.'")
                 page = self._get_page_tart_and_page_end(
                     bibliographic.get('bibliographicPageStart'),
                     bibliographic.get('bibliographicPageEnd'))
                 if page != '':
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                branch='page is not empty')
+                                branch=f"{page} != ''")
                     bibliographic_info_list.append({key: page})
             elif key == 'bibliographicIssueDates':
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
@@ -4731,13 +4777,13 @@ class _FormatSysBibliographicInformation:
                         count=i, element=key)
             if key == 'p.':
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
-                            branch="key is 'p.'")
+                            branch=f"{key} == 'p.'")
                 page = self._get_page_tart_and_page_end(
                     bibliographic.get('bibliographicPageStart'),
                     bibliographic.get('bibliographicPageEnd'))
                 if page != '':
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                branch='page is not empty')
+                                branch=f"{page} != ''")
                     bibliographic_info_list.append({key: page})
             elif key == 'bibliographicIssueDates':
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
@@ -4752,7 +4798,7 @@ class _FormatSysBibliographicInformation:
                             str(x) for x in dates)})
             elif bibliographic.get(key):
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
-                            branch='bibliographic is not empty')
+                            branch=f"{bibliographic.get(key)} != ''")
                 bibliographic_info_list.append({
                     self._get_translation_key(key, language): bibliographic.get(
                         key)
@@ -4811,44 +4857,45 @@ class _FormatSysBibliographicInformation:
             value = source_title.get('bibliographic_title')
             if not value:
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
-                            branch='source_title is not empty')
+                            branch=f"{value} is empty")
                 continue
             elif current_lang == key:
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
-                            branch='current_lang == key')
+                            branch=f"{current_lang} == key")
                 
                 weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=key)
                 return value, key
             else:
                 if key:
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
-                            branch='bibliographic_titleLang is not empty')
+                            branch='key is not empty')
                     if key == 'en':
                         weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                    branch='key == en')
+                                    branch=f"{key} == 'en'")
                         value_en = value
                     elif key == 'ja-Latn':
                         weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                    branch='key == ja-Latn')
+                                    branch=f"{key} == 'ja-Latn'")
                         value_latn = value
                     else:
                         weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                    branch='key == other')
+                                    branch=f"{key} == 'other'")
                         title = {}
                         title[key] = value
                         title_data_lang.append(title)
                 else:
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
-                            branch='bibliographic_titleLang is empty')
+                            branch=f"{key} is empty")
                     title_data_none_lang.append(value)
         weko_logger(key='WEKO_COMMON_FOR_END')
 
         if len(title_data_none_lang) > 0:
             weko_logger(key='WEKO_COMMON_IF_ENTER',
-                        branch='len(title_data_none_lang) > 0')
+                        branch=f"{len(title_data_none_lang)} > 0")
             if source_titles[0].get('bibliographic_title')==title_data_none_lang[0]:
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
-                            branch='bibliographic_title ==title_data_none_lang')
+                            branch=f"{source_titles[0].get('bibliographic_title')} 
+                                == {title_data_none_lang[0]}")
                 weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=title_data_none_lang[0])
                 return title_data_none_lang[0],''
 
@@ -4861,17 +4908,20 @@ class _FormatSysBibliographicInformation:
         if value_en and (current_lang != 'ja' or
                          not current_app.config.get("WEKO_RECORDS_UI_LANG_DISP_FLG", False)):
             weko_logger(key='WEKO_COMMON_IF_ENTER',
-                        branch='value_en is not empty')
+                        branch=f"{value_en} is not empty
+                            and ({current_lang} != 'ja' or
+                            {current_app.config.get("WEKO_RECORDS_UI_LANG_DISP_FLG", False)} is empty)")
             weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=value_en)
             return value_en, 'en'
 
         if len(title_data_lang) > 0:
             weko_logger(key='WEKO_COMMON_IF_ENTER',
-                        branch='len(title_data_lang) > 0')
+                        branch=f"{len(title_data_lang)} > 0")
             if current_lang != 'en' or \
                     not current_app.config.get("WEKO_RECORDS_UI_LANG_DISP_FLG", False):
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
-                        branch='current_lang != en')
+                            branch=f"{len(current_lang)} != 'en' or 
+                                {current_app.config.get("WEKO_RECORDS_UI_LANG_DISP_FLG", False)} is empty")
                 weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=list(title_data_lang[0].values())[0])
                 return list(title_data_lang[0].values())[0], \
                     list(title_data_lang[0])[0]
@@ -4880,7 +4930,7 @@ class _FormatSysBibliographicInformation:
                 for t in title_data_lang:
                     if list(t)[0] != 'ja':
                         weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                    branch='title_data_lang != ja')
+                                    branch=f"{list(t)[0]} != 'ja'")
                         weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=list(t.values())[0])
                         return list(t.values())[0], list(t)[0]
                     weko_logger(key='WEKO_COMMON_FOR_END')
@@ -4933,7 +4983,8 @@ class _FormatSysBibliographicInformation:
                     'bibliographicIssueDate') and issued_date.get(
                         'bibliographicIssueDateType') == issue_type:
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                branch='bibliographicIssueDateType is Issued')
+                                branch=f"{issued_date.get('bibliographicIssueDate')} 
+                                    and {issued_date.get('bibliographicIssueDateType')} == issue_type")
                     date.append(issued_date.get('bibliographicIssueDate'))
             weko_logger(key='WEKO_COMMON_FOR_END')
         elif isinstance(issue_date, dict) and \
@@ -4941,7 +4992,9 @@ class _FormatSysBibliographicInformation:
              and issue_date.get('bibliographicIssueDateType')
                 == issue_type):
             weko_logger(key='WEKO_COMMON_IF_ENTER',
-                        branch='bibliographicIssueDate is dict')
+                        branch=f"{issue_date} is dict
+                                    and {issue_date.get('bibliographicIssueDate')}
+                                    and {issue_date.get('bibliographicIssueDateType')} == issue_type")
             date.append(issue_date.get('bibliographicIssueDate'))
         weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=date)
         return date
