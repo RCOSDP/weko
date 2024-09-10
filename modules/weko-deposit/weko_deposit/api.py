@@ -4600,7 +4600,7 @@ class _FormatSysBibliographicInformation:
             """
 
             weko_logger(key='WEKO_COMMON_FOR_START')
-            for i, k in enumerate(current_app.config.get('WEKO_DEPOSIT_BIBLIOGRAPHIC_INFO_SYS_KEY')):
+            for i, key in enumerate(current_app.config.get('WEKO_DEPOSIT_BIBLIOGRAPHIC_INFO_SYS_KEY')):
                 weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
                             count=i, element=key)
                 if key in _meta_data:
