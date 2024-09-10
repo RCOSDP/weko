@@ -27,7 +27,7 @@
 {%- endblock css %}
 
 {%- block javascript %}
-  {{ webpack['js-dependencies.js']}}
+  {{ webpack['deposit_js_dependencies.js']}}
   {{ super() }}
   {{ webpack['deposit_js_js.js']}}
   {{ webpack['schema-ui-js.js']}}
