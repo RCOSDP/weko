@@ -174,15 +174,16 @@ class TestWekoIndexer:
 
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoIndexer::test_get_es_index -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test_get_es_index(self,app):
-        indexer = WekoIndexer()
-        assert isinstance(indexer,WekoIndexer)
+        with patch('weko_deposit.api.weko_logger') as mock_logger:
+            indexer = WekoIndexer()
+            assert isinstance(indexer,WekoIndexer)
 
-        # def get_es_index(self):
-        with app.test_request_context():
-            indexer.get_es_index()
-            assert indexer.es_index==app.config['SEARCH_UI_SEARCH_INDEX']
-            assert indexer.es_doc_type==app.config['INDEXER_DEFAULT_DOCTYPE']
-            assert indexer.file_doc_type=='content'
+            # def get_es_index(self):
+            with app.test_request_context():
+                indexer.get_es_index()
+                assert indexer.es_index==app.config['SEARCH_UI_SEARCH_INDEX']
+                assert indexer.es_doc_type==app.config['INDEXER_DEFAULT_DOCTYPE']
+                assert indexer.file_doc_type=='content'
 
     #  def upload_metadata(self, jrc, item_id, revision_id, skip_files=False):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoIndexer::test_upload_metadata -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
