@@ -27,7 +27,7 @@ def test_append_file_content(app, db, es_records):
         mock_logger.assert_any_call(key='WEKO_COMMON_IF_ENTER', branch=mock.ANY)
         mock_logger.assert_any_call(key='WEKO_COMMON_FOR_END')
         mock_logger.assert_any_call(key='WEKO_DEPOSIT_APPEND_FILE_CONTENT', recid=mock.ANY)
-        mock_logger.reset_mock
+        mock_logger.reset_mock()
 
 
     #add FeedbackMailList to mail
@@ -50,7 +50,7 @@ def test_append_file_content(app, db, es_records):
         mock_logger.assert_any_call(key='WEKO_COMMON_IF_ENTER', branch=mock.ANY)
         mock_logger.assert_any_call(key='WEKO_COMMON_FOR_END')
         mock_logger.assert_any_call(key='WEKO_DEPOSIT_APPEND_FILE_CONTENT', recid=mock.ANY)
-        mock_logger.reset_mock
+        mock_logger.reset_mock()
 
 
     #Throws an exception. Result of append_file_content is None.
@@ -59,14 +59,14 @@ def test_append_file_content(app, db, es_records):
             res = append_file_content(sender, json, es_records[1][0]['record'])
             assert res==None
             mock_logger.assert_any_call(key='WEKO_COMMON_ERROR_UNEXPECTED', ex=mock.ANY)
-            mock_logger.reset_mock
+            mock_logger.reset_mock()
 
     # SQLAlchemyError
     with patch("weko_deposit.receivers.WekoDeposit.get_record", side_effect=SQLAlchemyError("db_error")):
         with patch("weko_deposit.receivers.weko_logger") as mock_logger:
             append_file_content(sender, json, es_records[1][0]['record'])
             mock_logger.assert_any_call(key='WEKO_COMMON_DB_SOME_ERROR', ex=mock.ANY)
-            mock_logger.reset_mock
+            mock_logger.reset_mock()
 
     # WekoRecordsError
     with patch("weko_deposit.receivers.WekoDeposit.get_record", side_effect=WekoRecordsError("record_error")):
@@ -78,7 +78,7 @@ def test_append_file_content(app, db, es_records):
         with patch("weko_deposit.receivers.weko_logger") as mock_logger:
             append_file_content(sender, json, es_records[1][0]['record'])
             mock_logger.assert_any_call(key='WEKO_COMMON_ERROR_UNEXPECTED', ex=mock.ANY)
-            mock_logger.reset_mock
+            mock_logger.reset_mock()
 
     # # record_metadata.status == PIDStatus.DELETED
     # with patch("weko_deposit.receivers.RecordMetadata.query.filter_by") as mock_query:
