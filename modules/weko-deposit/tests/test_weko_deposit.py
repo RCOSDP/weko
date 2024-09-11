@@ -33,33 +33,32 @@ def test_version():
     from weko_deposit import __version__
     assert __version__
 
+# class WekoDeposit(object):
 
+# def __init__(self, app=None):
+# def init_app(self, app): 
+# .tox/c1/bin/pytest --cov=weko_deposit tests/test_weko_deposit.py::test_init -vv -s --cov-branch --cov-report=html --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp --full-trace
 def test_init():
     """Test extension initialization."""
     app = Flask('testapp')
+    # mock weko_logger
     with patch('weko_deposit.ext.weko_logger') as mock_logger:
+
+        # with app
         ext = WekoDeposit(app)
         assert 'weko-deposit' in app.extensions
         mock_logger.assert_any_call(app=app, key='WEKO_COMMON_INIT_APP', ext="weko-deposit")
         mock_logger.reset_mock()
 
+    #  without app
     app = Flask('testapp')
     ext = WekoDeposit()
     assert 'weko-deposit' not in app.extensions
     ext.init_app(app)
     assert 'weko-deposit' in app.extensions
 
-def test_init_no_app():
-    """Test extension initialization without app."""
-    ext = WekoDeposit()
-    assert ext is not None
-    ext.init_app = MagicMock()
-    # Initialize the app separately
-    app = Flask('testapp')
-    ext.init_app(app)
-    # Check if init_app was called
-    ext.init_app.assert_called_once_with(app)
-
+# def init_config(self, app):
+# .tox/c1/bin/pytest --cov=weko_deposit tests/test_weko_deposit.py::test_init -vv -s --cov-branch --cov-report=html --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp --full-trace
 def test_init_with_base_template():
     """Test extension initialization with BASE_TEMPLATE in config."""
     app = Flask('testapp')
@@ -78,24 +77,21 @@ def test_init_with_base_template():
         mock_logger.assert_any_call(app=app, key='WEKO_COMMON_FOR_END')
         mock_logger.reset_mock()
 
-def test_weko_deposit_rest_no_app():
+# class WekoDepositREST(object):
+
+# def __init__(self, app=None):
+# .tox/c1/bin/pytest --cov=weko_deposit tests/test_weko_deposit.py::test_weko_deposit_rest_init -vv -s --cov-branch --cov-report=html --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp --full-trace
+def test_weko_deposit_rest_init():
     """Test extension initialization without app."""
+    # without app
     ext = WekoDepositREST()
     assert ext is not None
     ext.init_app = MagicMock()
-    # Initialize the app separately
+    # with app
     app = Flask('testapp')
     ext.init_app(app)
     # Check if init_app was called
     ext.init_app.assert_called_once_with(app)
-
-# def test_view(app, db):
-#     """Test view."""
-#     WekoDeposit(app)
-#     with app.test_client() as client:
-#         res = client.get("/")
-#         assert res.status_code == 200
-#         assert 'Welcome to weko-deposit' in str(res.data)
 
 class MockRecordsSearch:
     class MockQuery:
