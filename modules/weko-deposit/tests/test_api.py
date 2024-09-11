@@ -27,7 +27,9 @@ import json
 from datetime import datetime
 from typing_extensions import reveal_type
 import pytest
-from mock import patch
+from unittest import mock
+from unittest.mock import patch
+# from mock import patch
 import uuid
 import copy
 from collections import OrderedDict
@@ -101,47 +103,65 @@ class TestWekoFileObject:
     # def __init__(self, obj, data):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoFileObject::test___init__ -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test___init__(self,app,location):
-        bucket = Bucket.create()
-        key = 'hello.txt'
-        stream = BytesIO(b'helloworld')
-        obj = ObjectVersion.create(bucket=bucket, key=key, stream=stream)
-        with app.test_request_context():
-            file = WekoFileObject(obj,{})
-            assert type(file)==WekoFileObject
-        
+
+        with patch('weko_deposit.api.weko_logger') as mock_logger:   
+            bucket = Bucket.create()
+            key = 'hello.txt'
+            stream = BytesIO(b'helloworld')
+            obj = ObjectVersion.create(bucket=bucket, key=key, stream=stream)
+            with app.test_request_context():
+                file = WekoFileObject(obj,{})
+                assert type(file)==WekoFileObject
+
+            assert mock_logger.call_count == 7
+            mock_logger.assert_any_call(key='WEKO_COMMON_CALLED_ARGUMENT', arg=mock.ANY)
+            mock_logger.reset_mock()
+       
     # def info(self):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoFileObject::test_info -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test_info(self,app,location):
-        bucket = Bucket.create()
-        key = 'hello.txt'
-        stream = BytesIO(b'helloworld')
-        obj = ObjectVersion.create(bucket=bucket, key=key, stream=stream)
-        with app.test_request_context():
-            file = WekoFileObject(obj,{})
-            assert file.info()=={'bucket': '{}'.format(file.bucket.id), 'checksum': 'sha256:936a185caaa266bb9cbe981e9e05cb78cd732b0b3280eb944412bb6f8f8f07af', 'key': 'hello.txt', 'size': 10, 'version_id': '{}'.format(file.version_id)}
-            file.filename=key
-            file['filename']=key
-            assert file.info()=={'bucket': '{}'.format(file.bucket.id), 'checksum': 'sha256:936a185caaa266bb9cbe981e9e05cb78cd732b0b3280eb944412bb6f8f8f07af', 'key': 'hello.txt', 'size': 10, 'version_id': '{}'.format(file.version_id), 'filename': 'hello'}
+        with patch('weko_deposit.api.weko_logger') as mock_logger:
+            bucket = Bucket.create()
+            key = 'hello.txt'
+            stream = BytesIO(b'helloworld')
+            obj = ObjectVersion.create(bucket=bucket, key=key, stream=stream)
+            with app.test_request_context():
+                file = WekoFileObject(obj,{})
+                assert file.info()=={'bucket': '{}'.format(file.bucket.id), 'checksum': 'sha256:936a185caaa266bb9cbe981e9e05cb78cd732b0b3280eb944412bb6f8f8f07af', 'key': 'hello.txt', 'size': 10, 'version_id': '{}'.format(file.version_id)}
+                file.filename=key
+                file['filename']=key
+                assert file.info()=={'bucket': '{}'.format(file.bucket.id), 'checksum': 'sha256:936a185caaa266bb9cbe981e9e05cb78cd732b0b3280eb944412bb6f8f8f07af', 'key': 'hello.txt', 'size': 10, 'version_id': '{}'.format(file.version_id), 'filename': 'hello'}
 
+            assert mock_logger.call_count == 1
+            mock_logger.assert_any_call(key='WEKO_COMMON_IF_ENTER', branch='filename exsisted')
+            mock_logger.assert_any_call(key='WEKO_COMMON_RETURN_VALUE', value=mock.ANY)
+            mock_logger.reset_mock()
     
     #  def file_preview_able(self):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoFileObject::test_file_preview_able -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test_file_preview_able(self,app,location):
-        bucket = Bucket.create()
-        key = 'hello.txt'
-        stream = BytesIO(b'helloworld')
-        obj = ObjectVersion.create(bucket=bucket, key=key, stream=stream)
-        with app.test_request_context():
-            file = WekoFileObject(obj,{})
-            assert file.file_preview_able()==True
-            app.config["WEKO_ITEMS_UI_MS_MIME_TYPE"] = WEKO_ITEMS_UI_MS_MIME_TYPE
-            app.config["WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT+"] = {'ms_word': 30,'ms_powerpoint': 20,'ms_excel': 10}
-            assert file.file_preview_able()==True
-            file.data['format'] = 'application/vnd.ms-excel'
-            assert file.file_preview_able()==True
-            file.data['size'] = 10000000+1
-            assert file.file_preview_able()==False
-
+        with patch('weko_deposit.api.weko_logger') as mock_logger:
+            bucket = Bucket.create()
+            key = 'hello.txt'
+            stream = BytesIO(b'helloworld')
+            obj = ObjectVersion.create(bucket=bucket, key=key, stream=stream)
+            with app.test_request_context():
+                file = WekoFileObject(obj,{})
+                assert file.file_preview_able()==True
+                app.config["WEKO_ITEMS_UI_MS_MIME_TYPE"] = WEKO_ITEMS_UI_MS_MIME_TYPE
+                app.config["WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT+"] = {'ms_word': 30,'ms_powerpoint': 20,'ms_excel': 10}
+                assert file.file_preview_able()==True
+                file.data['format'] = 'application/vnd.ms-excel'
+                assert file.file_preview_able()==True
+                file.data['size'] = 10000000+1
+                assert file.file_preview_able()==False
+      
+                mock_logger.assert_any_call(key='WEKO_COMMON_FOR_START')
+                mock_logger.assert_any_call(key='WEKO_COMMON_FOR_LOOP_ITERATION', count=mock.ANY, element=mock.ANY)
+                mock_logger.assert_any_call(key='WEKO_COMMON_IF_ENTER', branch=mock.ANY)
+                mock_logger.assert_any_call(key='WEKO_COMMON_FOR_END')
+                mock_logger.assert_any_call(key='WEKO_COMMON_RETURN_VALUE', value=mock.ANY)
+                mock_logger.reset_mock()
             
     
 
