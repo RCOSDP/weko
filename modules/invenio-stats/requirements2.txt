@@ -159,10 +159,10 @@ invenio-requests==4.1.0
 -e ../invenio-resourcesyncclient
 -e ../invenio-resourcesyncserver
 invenio-rest==1.3.0
--e git+https://github.com/ivis-akaike/weko_fork_prod.git@2398c23a7b124ff444b286bf853e484d06b06d27#egg=invenio_s3&subdirectory=modules/invenio-s3
+-e ../invenio-s3
 invenio-search==2.3.1
 invenio-search-ui==2.8.5
--e git+https://github.com/ivis-akaike/weko_fork_prod.git@2398c23a7b124ff444b286bf853e484d06b06d27#egg=invenio_stats&subdirectory=modules/invenio-stats
+-e ../invenio-stats
 invenio-theme==3.1.0
 invenio-users-resources==5.1.1
 invenio-vocabularies==3.4.0
@@ -243,7 +243,7 @@ pyparsing==3.1.4
 -e git+https://github.com/RCOSDP/PyPDF2.git@fefc684a3a74aff6f99e5dff24f9b4dd1c95169d#egg=PyPDF2
 pyPEG2==2.15.2
 pyproject-api==1.7.1
-pytest==4.2.0
+pytest==7.4.4
 python-dateutil==2.9.0.post0
 python-editor==1.0.3
 python-geoip==1.2
