@@ -950,12 +950,72 @@ class ItemTypes(RecordBase):
                                     data['table_row_map']['schema']['properties'][_prop_id].pop('properties')
                                 if 'format' in data['table_row_map']['schema']['properties'][_prop_id]:
                                     data['table_row_map']['schema']['properties'][_prop_id].pop('format')
+
+                                tmp_data = pickle.loads(pickle.dumps(data['table_row_map']['form'][idx], -1))
                                 _forms = json.loads(json.dumps(pickle.loads(pickle.dumps(_prop.forms, -1))).replace('parentkey',_prop_id))
                                 data['table_row_map']['form'][idx]=pickle.loads(pickle.dumps(_forms, -1))
+                                if "items" in tmp_data:
+                                    for idx2,item2 in enumerate(tmp_data["items"]):
+                                        isHide = False
+                                        isShowList = False
+                                        isNonDisplay = False
+                                        isSpecifyNewline = False
+                                        isRequired = False
+                                        title_i18n_temp = None
+                                        if "isHide" in item2:
+                                            isHide = item2["isHide"]
+                                        if "isShowList" in item2:
+                                            isShowList = item2["isShowList"]
+                                        if "isNonDisplay" in item2:
+                                            isNonDisplay = item2["isNonDisplay"]
+                                        if "isSpecifyNewline" in item2:
+                                            isSpecifyNewline = item2["isSpecifyNewline"]
+                                        if "required" in item2:
+                                            isRequired = item2["required"]
+                                        if "title_i18n" in item2:
+                                            title_i18n_temp = item2["title_i18n"]
+                                        if "title_i18n_temp" in item2:
+                                            title_i18n_temp = item2["title_i18n_temp"]
+                                        
+                                        data['table_row_map']['form'][idx]["items"][idx2]["isHide"] = isHide
+                                        data['table_row_map']['form'][idx]["items"][idx2]["isShowList"] = isShowList
+                                        data['table_row_map']['form'][idx]["items"][idx2]["isNonDisplay"] = isNonDisplay
+                                        data['table_row_map']['form'][idx]["items"][idx2]["isSpecifyNewline"] = isSpecifyNewline
+                                        data['table_row_map']['form'][idx]["items"][idx2]["required"] = isRequired
+                                        data['table_row_map']['form'][idx]["items"][idx2]["title_i18n_temp"] = title_i18n_temp
                             else:
+                                tmp_data = pickle.loads(pickle.dumps(data['table_row_map']['form'][idx], -1))
                                 data['table_row_map']['schema']['properties'][_prop_id]=pickle.loads(pickle.dumps(_prop.schema, -1))
                                 _form = json.loads(json.dumps(pickle.loads(pickle.dumps(_prop.form, -1))).replace('parentkey',_prop_id))
                                 data['table_row_map']['form'][idx]=pickle.loads(pickle.dumps(_form, -1))
+                                if "items" in tmp_data:
+                                    for idx2,item2 in enumerate(tmp_data["items"]):
+                                        isHide = False
+                                        isShowList = False
+                                        isNonDisplay = False
+                                        isSpecifyNewline = False
+                                        isRequired = False
+                                        title_i18n_temp = None
+                                        if "isHide" in item2:
+                                            isHide = item2["isHide"]
+                                        if "isShowList" in item2:
+                                            isShowList = item2["isShowList"]
+                                        if "isNonDisplay" in item2:
+                                            isNonDisplay = item2["isNonDisplay"]
+                                        if "isSpecifyNewline" in item2:
+                                            isSpecifyNewline = item2["isSpecifyNewline"]
+                                        if "required" in item2:
+                                            isRequired = item2["required"]
+                                        if "title_i18n" in item2:
+                                            title_i18n_temp = item2["title_i18n"]
+                                        if "title_i18n_temp" in item2:
+                                            title_i18n_temp = item2["title_i18n_temp"]
+                                        data['table_row_map']['form'][idx]["items"][idx2]["isHide"] = isHide
+                                        data['table_row_map']['form'][idx]["items"][idx2]["isShowList"] = isShowList
+                                        data['table_row_map']['form'][idx]["items"][idx2]["isNonDisplay"] = isNonDisplay
+                                        data['table_row_map']['form'][idx]["items"][idx2]["isSpecifyNewline"] = isSpecifyNewline
+                                        data['table_row_map']['form'][idx]["items"][idx2]["required"] = isRequired
+                                        data['table_row_map']['form'][idx]["items"][idx2]["title_i18n_temp"] = title_i18n_temp
                                                        
         from weko_itemtypes_ui.utils import fix_json_schema,update_required_schema_not_exist_in_form, update_text_and_textarea
         table_row_map = data.get('table_row_map')
@@ -968,13 +1028,6 @@ class ItemTypes(RecordBase):
             json_schema, json_form = update_text_and_textarea(
                 itemtype_id, json_schema, json_form)
         
-        # item_type_mapping = (
-        #             ItemTypeMapping.query.filter(ItemTypeMapping.item_type_id == itemtype_id)
-        #             .order_by(desc(ItemTypeMapping.created))
-        #             .first()
-        #         )
-        # data['table_row_map']['mapping'] = item_type_mapping.mapping if item_type_mapping else {}
-
         record = cls.update(id_=itemtype_id,
                                       name=item_type.item_type_name.name,
                                       schema=json_schema,
