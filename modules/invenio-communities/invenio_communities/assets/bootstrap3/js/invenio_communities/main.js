@@ -23,25 +23,18 @@
 import angular from 'angular';
 import $ from 'jquery';
 import "invenio-search-js/dist/invenio-search-js";
-import "./module";
+import app from "./module";
 
-// require([
-//   "jquery",
-//   "node_modules/angular/angular",
-//   "node_modules/invenio-search-js/dist/invenio-search-js",
-//   "js/invenio_communities/module",
-//   ], function() {
-    // loading all the jQuery modules for the not require.js ready scripts
-    // everywhere.
+// loading all the jQuery modules for the not require.js ready scripts
+// everywhere.
 
-    // On document ready bootstrap angular
-    angular.element(document).ready(function() {
-      angular.bootstrap(
-        document.getElementById("invenio-communities-search"),
-                                ['invenioSearch', 'invenioCommunities']
-      );
-      let communityId = $('#community-id').text()
-      $(".container-fluid").addClass(communityId + "-body");
-      $(".panel").addClass(communityId + "-panel");
-    });
-  // });
+// On document ready bootstrap angular
+angular.element(document).ready(function() {
+  angular.bootstrap(
+    document.getElementById("invenio-communities-search"),
+                            ['invenioSearch', 'invenioCommunities']
+  );
+  let communityId = $('#community-id').text()
+  $(".container-fluid").addClass(communityId + "-body");
+  $(".panel").addClass(communityId + "-panel");
+});

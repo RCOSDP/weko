@@ -24,11 +24,8 @@
 import angular from 'angular';
 import invenioSearchResultsProvisional from './provisional';
 
-// define([
-//   'js/invenio_communities/directives/provisional'
-// ], function(){
-  const app = angular.module('invenioCommunities.directives', [])
-      .directive('invenioSearchResultsProvisional',
-                 invenioSearchResultsProvisional);
-  export default app;
-// });
+const app = (
+  angular.module('invenioCommunities.directives', [])
+  .directive('invenioSearchResultsProvisional', invenioSearchResultsProvisional));
+
+export default app;

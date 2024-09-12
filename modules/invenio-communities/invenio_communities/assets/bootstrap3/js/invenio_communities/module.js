@@ -23,8 +23,6 @@
 import directives from './directives/module';
 import angular from 'angular';
 
-// define(['js/invenio_communities/directives/module'], function(directives){
-  var app = angular.module('invenioCommunities',
-                           ['invenioCommunities.directives', ]);
-  export default app;
-// });
+var app = angular.module('invenioCommunities',
+                          ['invenioCommunities.directives']);
+export default app;
