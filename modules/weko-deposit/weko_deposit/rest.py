@@ -101,7 +101,7 @@ def create_blueprint(app, endpoints):
         Args:
             exception (:obj:`Exception`): Exception object.
         """
-        weko_logger(app=app, key='ERROR_UNEXPECTED', ex=exception)
+        weko_logger(app=app, key='WEKO_COMMON_ERROR_UNEXPECTED', ex=exception)
         if exception is None:
             weko_logger(app=app, key='WEKO_COMMON_IF_ENTER', branch='exception is None')
             try:
