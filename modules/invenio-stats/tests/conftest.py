@@ -495,13 +495,6 @@ class MockEs():
         def search(self,index,doc_type,body,**kwargs):
             pass
 
-
-@pytest.fixture(scope="function")
-def app(base_app, search):
-    """Invenio application with search only (no db)."""
-    yield base_app
-
-
 @pytest.fixture()
 def config_with_index_prefix(app):
     """Add index prefix to the app config."""
