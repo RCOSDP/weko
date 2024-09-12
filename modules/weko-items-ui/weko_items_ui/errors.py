@@ -72,6 +72,7 @@ class WekoItemsUiError(Exception):
             self.exception = ex
         if msg is None:
             msg = "Some error has occurred in weko_items_ui."
+        self.msg = msg
         super().__init__(msg, *args)
 
 

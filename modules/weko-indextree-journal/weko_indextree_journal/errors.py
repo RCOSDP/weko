@@ -94,6 +94,7 @@ class WekoJournalError(Exception):
             self.exception = ex
         if msg is None:
             msg = "Some error has occurred in weko_indextree_journal."
+        self.msg = msg
         super().__init__(msg, *args)
 
 

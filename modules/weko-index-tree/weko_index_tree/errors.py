@@ -124,6 +124,7 @@ class WekoIndexTreeError(Exception):
             self.exception = ex
         if msg is None:
             msg = "Some error has occurred in weko_index_tree."
+        self.msg = msg
         super().__init__(msg, *args)
 
 

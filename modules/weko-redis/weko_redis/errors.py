@@ -21,6 +21,7 @@ class WekoRedisError(Exception):
             self.exception = ex
         if msg is None:
             msg = "Some error has occurred in weko_redis."
+        self.msg = msg
         super().__init__(msg, *args)
 
 

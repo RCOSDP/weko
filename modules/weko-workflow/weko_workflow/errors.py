@@ -78,6 +78,7 @@ class WekoWorkflowError(Exception):
             self.exception = ex
         if msg is None:
             msg = "Some error has occurred in weko_workflow."
+        self.msg = msg
         super().__init__(msg, *args)
 
 

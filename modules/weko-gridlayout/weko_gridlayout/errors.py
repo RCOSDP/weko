@@ -27,6 +27,7 @@ class WekoGridLayoutError(Exception):
             self.exception = ex
         if msg is None:
             msg = "Some error has occurred in weko_gridlayout."
+        self.msg = msg
         super().__init__(msg, *args)
 
 

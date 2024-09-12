@@ -128,6 +128,7 @@ class WekoRecordsUiError(Exception):
             self.exception = ex
         if msg is None:
             msg = "Some error has occurred in weko_records_ui."
+        self.msg = msg
         super().__init__(msg, *args)
 
 

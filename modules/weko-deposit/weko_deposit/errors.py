@@ -27,6 +27,7 @@ class WekoDepositError(Exception):
             self.exception = ex
         if msg is None:
             msg = "Some error has occurred in weko_deposit."
+        self.msg = msg
         super().__init__(msg, *args)
 
 

@@ -21,6 +21,7 @@ class WekoUserProfilesError(Exception):
             self.exception = ex
         if msg is None:
             msg = "Some error has occurred in weko_user_profiles."
+        self.msg = msg
         super().__init__(msg, *args)
 
 

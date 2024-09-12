@@ -21,6 +21,7 @@ class WekoItemsAutoFillError(Exception):
             self.exception = ex
         if msg is None:
             msg = "Some error has occurred in weko_items_autofill."
+        self.msg = msg
         super().__init__(msg, *args)
 
 
