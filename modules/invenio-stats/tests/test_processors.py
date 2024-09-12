@@ -212,70 +212,74 @@ def test_anonymize_user(
 
 def test_anonymiation_salt(app):
     """Test anonymization salt for different days."""
-    event = anonymize_user(
-        {
-            "ip_address": "131.169.180.47",
-            "user_id": "100",
-            "timestamp": datetime(2018, 1, 1, 12).isoformat(),
-        }
-    )
-    event_same_day = anonymize_user(
-        {
-            "ip_address": "131.169.180.47",
-            "user_id": "100",
-            "timestamp": datetime(2018, 1, 1, 21).isoformat(),
-        }
-    )
-    event_other_day = anonymize_user(
-        {
-            "ip_address": "131.169.180.47",
-            "user_id": "100",
-            "timestamp": datetime(2018, 1, 2, 12).isoformat(),
-        }
-    )
+    with app.app_context():
+        event = anonymize_user(
+            {
+                "ip_address": "131.169.180.47",
+                "user_id": "100",
+                "timestamp": datetime(2018, 1, 1, 12).isoformat(),
+            }
+        )
+        event_same_day = anonymize_user(
+            {
+                "ip_address": "131.169.180.47",
+                "user_id": "100",
+                "timestamp": datetime(2018, 1, 1, 21).isoformat(),
+            }
+        )
+        event_other_day = anonymize_user(
+            {
+                "ip_address": "131.169.180.47",
+                "user_id": "100",
+                "timestamp": datetime(2018, 1, 2, 12).isoformat(),
+            }
+        )
 
-    # Same user, same day -> identical visitor id
-    assert event["visitor_id"] == event_same_day["visitor_id"]
-    # Same user, same day, different hour -> different unique session id
-    assert event["unique_session_id"] != event_same_day["unique_session_id"]
-    # Same user, different day -> different visitor id
-    assert event["visitor_id"] != event_other_day["visitor_id"]
-    # Same user, different day and hour -> different unique session id
-    assert event["unique_session_id"] != event_other_day["unique_session_id"]
+        # Same user, same day -> identical visitor id
+        assert event["visitor_id"] == event_same_day["visitor_id"]
+        # Same user, same day, different hour -> different unique session id
+        assert event["unique_session_id"] != event_same_day["unique_session_id"]
+        # Same user, different day -> different visitor id
+        assert event["visitor_id"] != event_other_day["visitor_id"]
+        # Same user, different day and hour -> different unique session id
+        assert event["unique_session_id"] != event_other_day["unique_session_id"]
 
 
 def test_flag_robots(app, mock_user_ctx, request_headers, objects):
-    """Test flag_robots preprocessor."""
+    with app.app_context():
+        """Test flag_robots preprocessor."""
 
-    def build_event(headers):
-        with app.test_request_context(headers=headers):
-            event = file_download_event_builder({}, app, objects[0])
-        return flag_robots(event)
+        def build_event(headers):
+            with app.test_request_context(headers=headers):
+                event = file_download_event_builder({}, app, objects[0])
+            return flag_robots(event)
 
-    assert build_event(request_headers["user"])["is_robot"] is False
-    assert build_event(request_headers["machine"])["is_robot"] is False
-    assert build_event(request_headers["robot"])["is_robot"] is True
+        assert build_event(request_headers["user"])["is_robot"] is False
+        assert build_event(request_headers["machine"])["is_robot"] is False
+        assert build_event(request_headers["robot"])["is_robot"] is True
 
 
 def test_flag_machines(app, mock_user_ctx, request_headers, objects):
-    """Test machines preprocessor."""
+    with app.app_context():
+        """Test machines preprocessor."""
 
-    def build_event(headers):
-        with app.test_request_context(headers=headers):
-            event = file_download_event_builder({}, app, objects[0])
-        return flag_machines(event)
+        def build_event(headers):
+            with app.test_request_context(headers=headers):
+                event = file_download_event_builder({}, app, objects[0])
+            return flag_machines(event)
 
-    assert build_event(request_headers["user"])["is_machine"] is False
-    assert build_event(request_headers["robot"])["is_machine"] is False
-    assert build_event(request_headers["machine"])["is_machine"] is True
+        assert build_event(request_headers["user"])["is_machine"] is False
+        assert build_event(request_headers["robot"])["is_machine"] is False
+        assert build_event(request_headers["machine"])["is_machine"] is True
 
 
 def test_referrer(app, mock_user_ctx, request_headers, objects):
-    """Test referrer header."""
-    request_headers["user"]["REFERER"] = "example.com"
-    with app.test_request_context(headers=request_headers["user"]):
-        event = file_download_event_builder({}, app, objects[0])
-    assert event["referrer"] == "example.com"
+    with app.app_context():
+        """Test referrer header."""
+        request_headers["user"]["REFERER"] = "example.com"
+        with app.test_request_context(headers=request_headers["user"]):
+            event = file_download_event_builder({}, app, objects[0])
+        assert event["referrer"] == "example.com"
 
 
 def test_events_indexer_preprocessors(app, mock_event_queue):

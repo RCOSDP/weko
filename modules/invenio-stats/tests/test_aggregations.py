@@ -11,12 +11,11 @@
 import datetime
 import time
 
-from turtle import pd
 from unittest.mock import patch
 
 import pytest
-from conftest import _create_file_download_event
-from helpers import mock_date
+from .conftest import _create_file_download_event
+from .helpers import mock_date
 from invenio_search import current_search, current_search_client
 from invenio_search.engine import dsl
 
@@ -38,17 +37,18 @@ from invenio_stats.tasks import aggregate_events, process_events
 #     def list_bookmarks(self, start_date=None, end_date=None, limit=None):
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_aggregations.py::test_BookmarkAPI -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
 def test_BookmarkAPI(app):
-    bookmark_api = BookmarkAPI(current_search_client,
-                               "file-download-agg",
-                               "day")
-    bookmark_api.set_bookmark("2021-01-01")
-    time.sleep(10)
-    res = bookmark_api.get_bookmark()
-    assert res==datetime.datetime(2021, 1, 1)
+    with app.app_context():
+        bookmark_api = BookmarkAPI(current_search_client,
+                                "file-download-agg",
+                                "day")
+        bookmark_api.set_bookmark("2021-01-01")
+        time.sleep(10)
+        res = bookmark_api.get_bookmark()
+        assert res==datetime.datetime(2021, 1, 1)
 
-    res = bookmark_api.list_bookmarks(start_date="2021-01-01", end_date="2021-02-01")
-    for b in res:
-        assert b.date=="2021-01-01"
+        res = bookmark_api.list_bookmarks(start_date="2021-01-01", end_date="2021-02-01")
+        for b in res:
+            assert b.date=="2021-01-01"
 
 # class StatAggregator(object):
 #     def __init__(self, name, event, client=None,

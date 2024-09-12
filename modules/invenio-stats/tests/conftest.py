@@ -20,28 +20,37 @@ import json
 from mock import Mock, patch
 from six import BytesIO
 import pytest
+from flask import Flask
 from elasticsearch import Elasticsearch
 from elasticsearch_dsl import response, Search
 from sqlalchemy_utils.functions import create_database, database_exists
 from kombu import Exchange, Queue
 from flask import appcontext_pushed, g
+from flask_celeryext import FlaskCeleryExt
 from flask.cli import ScriptInfo
-from helpers import mock_date
+from .helpers import mock_date, json_data, create_record
 from invenio_access import InvenioAccess
 from invenio_access.models import ActionRoles, ActionUsers
+from invenio_accounts import InvenioAccounts, InvenioAccountsREST
 from invenio_accounts.testutils import create_test_user
 from invenio_accounts.models import Role, User
 from invenio_app.factory import create_api as _create_api
-from invenio_db import db as db_
+from invenio_cache import InvenioCache
+from invenio_db import db as db_, InvenioDB
+from invenio_files_rest import InvenioFilesREST
 from invenio_files_rest.models import Bucket, Location, ObjectVersion
-from invenio_marc21 import InvenioMARC21
 from invenio_indexer import InvenioIndexer
+from invenio_oauth2server import InvenioOAuth2Server, InvenioOAuth2ServerREST
 from invenio_oauth2server.models import Token
+from invenio_pidstore import InvenioPIDStore
 from invenio_pidstore.minters import recid_minter
 from invenio_pidrelations.config import PIDRELATIONS_RELATION_TYPES
+from invenio_queues import InvenioQueues
 from invenio_queues.proxies import current_queues
+from invenio_records import InvenioRecords
+from invenio_records_rest import InvenioRecordsREST
 from invenio_records.api import Record
-from invenio_search import current_search, current_search_client
+from invenio_search import InvenioSearch, current_search, current_search_client
 from werkzeug.local import LocalProxy
 
 from invenio_stats import InvenioStats, current_stats as _current_stats
@@ -61,7 +70,7 @@ from invenio_stats.processors import EventsIndexer, anonymize_user
 from invenio_stats.models import StatsEvents, StatsAggregation, StatsBookmark
 from invenio_stats.tasks import aggregate_events, process_events
 
-from tests.helpers import json_data, create_record
+
 
 
 @pytest.fixture()
@@ -136,7 +145,7 @@ def aggregations_config():
     return deepcopy(AGGREGATIONS_CONFIG)
 
 
-@pytest.fixture()
+@pytest.fixture(scope='function')
 def base_app(instance_path, mock_gethostbyaddr):
     """Flask application fixture without InvenioStats."""
     app_ = Flask('testapp', instance_path=instance_path)
@@ -150,12 +159,17 @@ def base_app(instance_path, mock_gethostbyaddr):
     }
     stats_events.update({'event_{}'.format(idx): {} for idx in range(5)})
     app_.config.update(dict(
-        CELERY_ALWAYS_EAGER=True,
-        CELERY_TASK_ALWAYS_EAGER=True,
-        CELERY_CACHE_BACKEND='memory',
-        CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
-        CELERY_TASK_EAGER_PROPAGATES=True,
-        CELERY_RESULT_BACKEND='cache',
+        #CELERY_ALWAYS_EAGER=True,
+        always_eager=True,
+        #CELERY_TASK_ALWAYS_EAGER=True,
+        task_always_eager=True,
+        #CELERY_CACHE_BACKEND='memory',
+        cacbe_backend='memory',
+        #CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
+        #CELERY_TASK_EAGER_PROPAGATES=True,
+        task_eager_propagates=True,
+        #CELERY_RESULT_BACKEND='cache',
+        result_backend='cache',
         CACHE_REDIS_URL="redis://redis:6379/0",
         CACHE_REDIS_DB=0,
         CACHE_REDIS_HOST="redis",
@@ -185,8 +199,11 @@ def base_app(instance_path, mock_gethostbyaddr):
         STATS_QUERIES=STATS_QUERIES,
         STATS_EVENTS=stats_events,
         STATS_AGGREGATIONS=STATS_AGGREGATIONS,
+        STATS_EXCLUDED_ADDRS = [],
+        STATS_EVENT_STRING = 'events',
         INDEXER_MQ_QUEUE = Queue("indexer", exchange=Exchange("indexer", type="direct"), routing_key="indexer",queue_arguments={"x-queue-type":"quorum"}),
         INDEXER_DEFAULT_INDEX="test-events-stats-file-download-0001"
+        
     ))
     FlaskCeleryExt(app_)
     InvenioAccess(app_)
@@ -201,14 +218,13 @@ def base_app(instance_path, mock_gethostbyaddr):
     InvenioIndexer(app_)
     InvenioOAuth2Server(app_)
     InvenioOAuth2ServerREST(app_)
-    InvenioMARC21(app_)
     InvenioSearch(app_, entry_point_group=None, client=Elasticsearch("http://elasticsearch:9200"))
 
     current_stats = LocalProxy(lambda: app_.extensions["invenio-stats"])
     return app_
 
 
-@pytest.yield_fixture()
+@pytest.yield_fixture(scope='function')
 def app(base_app):
     """Flask application fixture with InvenioStats."""
     InvenioStats(base_app)
@@ -414,7 +430,7 @@ def app_config(app_config, db_uri, events_config, aggregations_config):
     return app_config
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def create_app(instance_path, entry_points):
     """Application factory fixture."""
     return _create_api
@@ -433,14 +449,15 @@ def search_clear(search_clear):
 
 
 @pytest.fixture()
-def db():
-    """Recreate db at each test that requires it."""
-    if not database_exists(str(db_.engine.url)):
-        create_database(str(db_.engine.url))
-    db_.create_all()
-    yield db_
-    db_.session.remove()
-    db_.drop_all()
+def db(app):
+    with app.app_context():
+        """Recreate db at each test that requires it."""
+        if not database_exists(str(db_.engine.url)):
+            create_database(str(db_.engine.url))
+        db_.create_all()
+        yield db_
+        db_.session.remove()
+        db_.drop_all()
 
 
 class MockEs():
@@ -477,13 +494,6 @@ class MockEs():
         
         def search(self,index,doc_type,body,**kwargs):
             pass
-
-
-@pytest.fixture(scope="module")
-def app(base_app, search):
-    """Invenio application with search only (no db)."""
-    yield base_app
-
 
 @pytest.fixture()
 def config_with_index_prefix(app):
