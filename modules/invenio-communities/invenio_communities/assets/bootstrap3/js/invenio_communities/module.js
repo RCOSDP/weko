@@ -21,6 +21,7 @@
 // as an Intergovernmental Organization or submit itself to any jurisdiction.
 
 import directives from './directives/module';
+import angular from 'angular';
 
 // define(['js/invenio_communities/directives/module'], function(directives){
   var app = angular.module('invenioCommunities',
