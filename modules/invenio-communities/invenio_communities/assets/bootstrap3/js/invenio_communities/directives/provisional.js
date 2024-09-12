@@ -21,7 +21,9 @@
  * as an Intergovernmental Organization or submit itself to any jurisdiction.
  */
 
-define([], function(){
+"use strict";
+
+// define([], function(){
   function invenioSearchResultsProvisional($http, $q) {
 
     // Functions
@@ -95,5 +97,7 @@ define([], function(){
     };
   }
   invenioSearchResultsProvisional.$inject = ['$http', '$q'];
-  return invenioSearchResultsProvisional;
-});
+  // return invenioSearchResultsProvisional;
+// });
+
+export default invenioSearchResultsProvisional;
