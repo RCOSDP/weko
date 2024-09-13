@@ -29,7 +29,7 @@
 
 {%- block javascript %}
   {{ super() }}
-  <script src="{{ url_for('static', filename='/node_modules/moment/min/moment.min.js') }}"></script>
+  <script src="/assets/node_modules/moment/min/moment.min.js"></script>
   {{ webpack['admin_js_date_picker_js.js']}}
   {{ webpack['resourcesyncserver_js_invenio_admin_change_list_js.js']}}
   {{ webpack['admin_js_statistics_reactjs_lib.js']}}

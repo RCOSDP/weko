@@ -16,7 +16,7 @@ from click.testing import CliRunner
 from tests.conftest import _create_file_download_event, _create_record_view_event
 from elasticsearch_dsl import Search
 
-from helpers import mock_date
+from .helpers import mock_date
 from invenio_search import current_search
 from invenio_search.engine import dsl
 
@@ -110,7 +110,7 @@ def test_events_delete_restore(app, script_info, es, event_queues):
 # def _aggregations_process(aggregation_types=None, start_date=None, end_date=None, update_bookmark=False, eager=False):
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_cli.py::test_aggregations_process -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
 @pytest.mark.parametrize(
-    "indexed_events",
+    "indexed_file_download_events",
     [
         {
             "file_number": 1,
@@ -258,27 +258,28 @@ def test_aggregations_delete(
 def test_aggregations_list_bookmarks(
     script_info, event_queues, search_clear, aggregated_file_download_events
 ):
-    """Test "aggregations list-bookmarks" CLI command."""
-    search_obj = dsl.Search(using=search_clear)
-    runner = CliRunner()
+    with app.app_context():
+        """Test "aggregations list-bookmarks" CLI command."""
+        search_obj = dsl.Search(using=search_clear)
+        runner = CliRunner()
 
-    current_search.flush_and_refresh(index="test-*")
-    agg_alias = search_obj.index("stats-file-download")
+        current_search.flush_and_refresh(index="test-*")
+        agg_alias = search_obj.index("stats-file-download")
 
-    bookmarks = [b.date for b in search_obj.index("stats-bookmarks").scan()]
+        bookmarks = [b.date for b in search_obj.index("stats-bookmarks").scan()]
 
-    result = runner.invoke(
-        stats,
-        ["aggregations", "list-bookmarks", "file-download-agg", "--limit", "31"],
-        obj=script_info,
-    )
-    assert result
-    assert all(b in result.output for b in bookmarks)
+        result = runner.invoke(
+            stats,
+            ["aggregations", "list-bookmarks", "file-download-agg", "--limit", "31"],
+            obj=script_info,
+        )
+        assert result
+        assert all(b in result.output for b in bookmarks)
 
-    result = runner.invoke(
-        stats, ["aggregations", "list-bookmarks", "file-download-agg"], obj=script_info
-    )
-    assert result
+        result = runner.invoke(
+            stats, ["aggregations", "list-bookmarks", "file-download-agg"], obj=script_info
+        )
+        assert result
 
 # def _aggregations_delete_index(aggregation_types=None, bookmark=False, start_date=None, end_date=None, force=False, verbose=False
 # def _aggregations_restore(aggregation_types=None, bookmark=False, start_date=None, end_date=None, force=False, verbose=False):

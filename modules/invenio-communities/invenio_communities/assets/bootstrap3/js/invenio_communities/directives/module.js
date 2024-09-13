@@ -21,11 +21,11 @@
  * as an Intergovernmental Organization or submit itself to any jurisdiction.
  */
 
-define([
-  'js/invenio_communities/directives/provisional'
-], function(invenioSearchResultsProvisional){
-  var app = angular.module('invenioCommunities.directives', [])
-      .directive('invenioSearchResultsProvisional',
-                 invenioSearchResultsProvisional);
-  return app;
-});
+import angular from 'angular';
+import invenioSearchResultsProvisional from './provisional';
+
+const app = (
+  angular.module('invenioCommunities.directives', [])
+  .directive('invenioSearchResultsProvisional', invenioSearchResultsProvisional));
+
+export default app;

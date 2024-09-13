@@ -20,8 +20,9 @@
 // waive the privileges and immunities granted to it by virtue of its status
 // as an Intergovernmental Organization or submit itself to any jurisdiction.
 
-define(['js/invenio_communities/directives/module'], function(directives){
-  var app = angular.module('invenioCommunities',
-                           ['invenioCommunities.directives', ]);
-  return app;
-});
+import directives from './directives/module';
+import angular from 'angular';
+
+var app = angular.module('invenioCommunities',
+                          ['invenioCommunities.directives']);
+export default app;

@@ -316,21 +316,23 @@ def test_query_record_view_per_index_report(client, role_users, id, status_code)
         (4, 403)
     ],
 )
-def test_query_file_reports(client, role_users, id, status_code):
-    # get
-    login_user_via_session(client=client, email=role_users[id]["email"])
-    res = client.get(
-        url_for("invenio_stats.get_file_reports", event="file_download", year=2022, month=9))
-    assert res.status_code==status_code
+def test_query_file_reports(client, role_users, id, status_code, app):
+    with app.app_context():
+        # get
+        login_user_via_session(client=client, email=role_users[id]["email"])
+        res = client.get(
+            url_for("invenio_stats.get_file_reports", event="file_download", year=2022, month=9))
+        assert res.status_code==status_code
 
 
 # class QueryCommonReports(WekoQuery):
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_views.py::test_query_common_reports -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
-def test_query_common_reports(client):
-    # get
-    res = client.get(
-        url_for("invenio_stats.get_common_report", event="top_page_access", year=2022, month=9))
-    assert res.status_code==200
+def test_query_common_reports(client, app):
+    with app.app_context():
+        # get
+        res = client.get(
+            url_for("invenio_stats.get_common_report", event="top_page_access", year=2022, month=9))
+        assert res.status_code==200
 
 
 # class QueryCeleryTaskReport(WekoQuery):
@@ -395,6 +397,7 @@ def test_query_search_report(client, role_users, id, status_code):
 # def dbsession_clean(exception):
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_views.py::test_dbsession_clean -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
 def test_dbsession_clean(app):
-    with patch("invenio_db.db.session.commit", side_effect=Exception):
-        assert not dbsession_clean(None)
-        assert not dbsession_clean("")
+    with app.app_context():
+        with patch("invenio_db.db.session.commit", side_effect=Exception):
+            assert not dbsession_clean(None)
+            assert not dbsession_clean("")

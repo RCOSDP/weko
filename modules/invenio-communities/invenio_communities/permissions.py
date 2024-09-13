@@ -1,31 +1,20 @@
 # -*- coding: utf-8 -*-
 #
 # This file is part of Invenio.
-# Copyright (C) 2016 CERN.
+# Copyright (C) 2016-2019 CERN.
 #
-# Invenio is free software; you can redistribute it
-# and/or modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; either version 2 of the
-# License, or (at your option) any later version.
-#
-# Invenio is distributed in the hope that it will be
-# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Invenio; if not, write to the
-# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-# MA 02111-1307, USA.
-#
-# In applying this license, CERN does not
-# waive the privileges and immunities granted to it by virtue of its status
-# as an Intergovernmental Organization or submit itself to any jurisdiction.
+# Invenio is free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
 
 """Permissions for communities."""
 
 from __future__ import absolute_import, print_function
 
+import humanize
+
+from datetime import datetime, timedelta
+
+from flask import current_app
 from flask_login import current_user
 from flask_principal import ActionNeed
 from invenio_access.permissions import Permission
@@ -61,3 +50,25 @@ def permission_factory(community, action):
     :type action: str
     """
     return _Permission(community, action)
+
+
+def can_user_create_community(user):
+    """Checks it the user can create community."""
+    current_date = datetime.now()
+    confirmed_date = getattr(user, 'confirmed_at', None)
+    community_user_confirmed_since = \
+        current_app.config['COMMUNITIES_USER_CONFIRMED_SINCE']
+
+    if confirmed_date is None:
+        return False, 'You have not yet confirmed your account.'
+
+    delta = current_date - confirmed_date
+
+    if delta < community_user_confirmed_since:
+        return False, 'To create a community your account must be verified ' \
+           'for at least {}. If you want to speed up the process, you ' \
+           'can contact our support team describing your case.' \
+               .format(humanize.naturaldelta(
+               current_app.config['COMMUNITIES_USER_CONFIRMED_SINCE']))
+
+    return True, ''

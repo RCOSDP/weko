@@ -19,23 +19,22 @@
 // In applying this license, CERN does not
 // waive the privileges and immunities granted to it by virtue of its status
 // as an Intergovernmental Organization or submit itself to any jurisdiction.
-require([
-  "jquery",
-  "node_modules/angular/angular",
-  "node_modules/invenio-search-js/dist/invenio-search-js",
-  "js/invenio_communities/module",
-  ], function() {
-    // loading all the jQuery modules for the not require.js ready scripts
-    // everywhere.
 
-    // On document ready bootstrap angular
-    angular.element(document).ready(function() {
-      angular.bootstrap(
-        document.getElementById("invenio-communities-search"),
-                                ['invenioSearch', 'invenioCommunities']
-      );
-      communityId = $('#community-id').text()
-      $(".container-fluid").addClass(communityId + "-body");
-      $(".panel").addClass(communityId + "-panel");
-    });
-  });
+import angular from 'angular';
+import $ from 'jquery';
+import "invenio-search-js/dist/invenio-search-js";
+import app from "./module";
+
+// loading all the jQuery modules for the not require.js ready scripts
+// everywhere.
+
+// On document ready bootstrap angular
+angular.element(document).ready(function() {
+  angular.bootstrap(
+    document.getElementById("invenio-communities-search"),
+                            ['invenioSearch', 'invenioCommunities']
+  );
+  let communityId = $('#community-id').text()
+  $(".container-fluid").addClass(communityId + "-body");
+  $(".panel").addClass(communityId + "-panel");
+});

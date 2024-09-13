@@ -11,8 +11,8 @@
 import datetime
 from unittest.mock import patch
 
-from conftest import _create_file_download_event
-from helpers import get_queue_size, mock_date
+from .conftest import _create_file_download_event
+from .helpers import get_queue_size, mock_date
 from invenio_queues.proxies import current_queues
 
 from invenio_stats.processors import EventsIndexer, flag_machines, flag_robots

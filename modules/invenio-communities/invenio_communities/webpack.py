@@ -7,13 +7,15 @@ invenio_communities = WebpackThemeBundle(
     themes={
         "bootstrap3": dict(
             entry={
-                "communities_js_js": "./js/main.js",
-                "communities_css_css": "./scss/communities.scss",
-                "communities_css_css_tree": "./scss/styles.community.bundle.css",
-                "communities_css_css_tree_display": "./scss/styles.bundle.css"
+                "communities_js_js": "./js/invenio_communities/main.js",
+                "communities_css_css": "./scss/invenio_communities/communities.scss",
+                "communities_css_css_tree": "./scss/invenio_communities/styles.community.bundle.css",
+                "communities_css_css_tree_display": "./scss/invenio_communities/styles.bundle.css"
             },
             dependencies={
-                "ckeditor": "~4.5.8"
+                "angular": "~1.4.9",
+                "ckeditor": "~4.5.8",
+                "jquery": "~3.2.1",
             }
         )
     }
