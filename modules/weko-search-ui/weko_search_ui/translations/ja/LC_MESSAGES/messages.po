@@ -762,11 +762,23 @@ msgstr "入力内容を破棄してもよろしいですか？"
 
 #: weko_search_ui/templates/weko_search_ui/body_facet_search.html:50
 msgid "Go to"
-msgstr "移動"
+msgstr "検索"
 
 #: weko_search_ui/templates/weko_search_ui/body_facet_search.html:27
 msgid "search"
 msgstr "検索"
+
+#: weko_search_ui/templates/weko_search_ui/body_facet_search.html:29
+msgid "facet slider required validation"
+msgstr "値を設定してください。"
+
+#: weko_search_ui/templates/weko_search_ui/body_facet_search.html:30
+msgid "facet slider value Validation"
+msgstr "正しい値を設定してください。"
+
+#: weko_search_ui/templates/weko_search_ui/body_facet_search.html:31
+msgid "facet slider correlation validation"
+msgstr "範囲fromは範囲to以下にしてください。"
 
 msgid "The following item(s) cannot be deleted."
 msgstr "以下のアイテムを削除することはできませんでした。"

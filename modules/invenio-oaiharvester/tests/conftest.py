@@ -652,6 +652,72 @@ def db_itemtype(app, db):
     )
     item_type_dc_mapping = ItemTypeMapping(id=12, item_type_id=12, mapping=item_type_dc_mapping)
 
+    # BioSample
+    item_type_biosample_name = ItemTypeName(
+        id=32102, name="Biosample", has_site_license=True, is_active=True
+    )
+    item_type_biosample_schema = dict()
+    with open("tests/data/itemtype_biosample_schema.json", "r") as f:
+        item_type_biosample_schema = json.load(f)
+
+    item_type_biosample_form = dict()
+    with open("tests/data/itemtype_biosample_form.json", "r") as f:
+        item_type_biosample_form = json.load(f)
+
+    item_type_biosample_render = dict()
+    with open("tests/data/itemtype_biosample_render.json", "r") as f:
+        item_type_biosample_render = json.load(f)
+
+    item_type_biosample_mapping = dict()
+    with open("tests/data/itemtype_biosample_mapping.json", "r") as f:
+        item_type_biosample_mapping = json.load(f)
+    item_type_biosample = ItemType(
+        id=32102,
+        name_id=32102,
+        harvesting_type=True,
+        schema=item_type_biosample_schema,
+        form=item_type_biosample_form,
+        render=item_type_biosample_render,
+        tag=1,
+        version_id=1,
+        is_deleted=False,
+    )
+
+    item_type_biosample_mapping = ItemTypeMapping(id=32102, item_type_id=32102, mapping=item_type_biosample_mapping)
+
+    # BioProject
+    item_type_bioproject_name = ItemTypeName(
+        id=32103, name="Bioproject", has_site_license=True, is_active=True
+    )
+    item_type_bioproject_schema = dict()
+    with open("tests/data/itemtype_bioproject_schema.json", "r") as f:
+        item_type_bioproject_schema = json.load(f)
+
+    item_type_bioproject_form = dict()
+    with open("tests/data/itemtype_bioproject_form.json", "r") as f:
+        item_type_bioproject_form = json.load(f)
+
+    item_type_bioproject_render = dict()
+    with open("tests/data/itemtype_bioproject_render.json", "r") as f:
+        item_type_bioproject_render = json.load(f)
+
+    item_type_bioproject_mapping = dict()
+    with open("tests/data/itemtype_bioproject_mapping.json", "r") as f:
+        item_type_bioproject_mapping = json.load(f)
+    item_type_bioproject = ItemType(
+        id=32103,
+        name_id=32103,
+        harvesting_type=True,
+        schema=item_type_bioproject_schema,
+        form=item_type_bioproject_form,
+        render=item_type_bioproject_render,
+        tag=1,
+        version_id=1,
+        is_deleted=False,
+    )
+
+    item_type_bioproject_mapping = ItemTypeMapping(id=32103, item_type_id=32103, mapping=item_type_bioproject_mapping)
+
     with db.session.begin_nested():
         db.session.add(item_type_multiple_name)
         db.session.add(item_type_multiple)
@@ -662,6 +728,12 @@ def db_itemtype(app, db):
         db.session.add(item_type_dc_name)
         db.session.add(item_type_dc)
         db.session.add(item_type_dc_mapping)
+        db.session.add(item_type_biosample_name)
+        db.session.add(item_type_biosample)
+        db.session.add(item_type_biosample_mapping)
+        db.session.add(item_type_bioproject_name)
+        db.session.add(item_type_bioproject)
+        db.session.add(item_type_bioproject_mapping)
     db.session.commit()
 
     return {
@@ -671,6 +743,12 @@ def db_itemtype(app, db):
         "item_type_ddi_name": item_type_ddi_name,
         "item_type_ddi": item_type_ddi,
         "item_type_ddi_mapping": item_type_ddi_mapping,
+        "item_type_biosample_name": item_type_biosample_name,
+        "item_type_biosample": item_type_biosample,
+        "item_type_biosample_mapping": item_type_biosample_mapping,
+        "item_type_bioproject_name": item_type_bioproject_name,
+        "item_type_bioproject": item_type_bioproject,
+        "item_type_bioproject_mapping": item_type_bioproject_mapping,
     }
 
 

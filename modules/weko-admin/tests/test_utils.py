@@ -59,7 +59,8 @@ from weko_admin.utils import (
     get_facet_search_query,
     get_title_facets,
     is_exits_facet,
-    overwrite_the_memory_config_with_db
+    overwrite_the_memory_config_with_db,
+    get_detail_search_list
 )
 
 from tests.helpers import json_data
@@ -2072,15 +2073,16 @@ def test_get_facet_search(client,facet_search_settings):
         "mapping": "",
         "active": True,
         "aggregations": [],
+        "ui_type": "CheckboxList",
         "display_number": 5,
-        "is_open":True,
-        "ui_type": "CheckboxList"
+        "is_open": True,
+        "search_condition": "OR"
     }
     result = get_facet_search(None)
     assert result == test
     
     result  = get_facet_search(1)
-    assert result == {"name_en":"Data Language","name_jp":"データの言語","mapping":"language","aggregations":[],"active":True}
+    assert result == {"name_en":"Data Language","name_jp":"データの言語","mapping":"language","aggregations":[],"active":True, "display_number": 1, "is_open": True, 'search_condition': 'OR', 'ui_type': 'SelectBox'}
 
 
 # def get_item_mapping_list():
@@ -2104,9 +2106,10 @@ def test_create_facet_search_query(facet_search_settings):
             "aggs":{"Data Language":{"terms":{"field":"language","size":1000}},
                     "Data Type":{"aggs":{"Data Type":{"terms":{"field":"description.value","size":1000}}},
                                  "filter":{"bool":{"must":[{"term":{"description.descriptionType":"Other"}}]}}},
-                    "raw_test": {"terms": {"field": "test.fields.raw","size": 1000}}
+                    "Time Period(s)": {"terms": {"field": "temporal","size": 1000}},
+                    "raw_test": {"terms": {"field": "fields.raw","size": 1000}}
             },
-            "post_filters":{"Data Language":"language","Data Type":"description.value","raw_test":"test.raw"}
+            "post_filters":{"Data Language":"language","Data Type":"description.value","Time Period(s)":"temporal","raw_test": "fields.raw"}
         }
     }
     test_no_permission = {
@@ -2115,12 +2118,16 @@ def test_create_facet_search_query(facet_search_settings):
                                         'filter': {'bool': {'must': [{'term': {'publish_status': '0'}}]}}},
                     'Data Type': {'aggs': {'Data Type': {'terms': {'field': 'description.value','size': 1000}}},
                                 'filter': {'bool': {'must': [{'term': {'description.descriptionType': 'Other'}},{'term': {'publish_status': '0'}}]}}},
-                    'raw_test': {'aggs': {'raw_test': {'terms':{'field': 'test.fields.raw','size':1000}}},
+                    'Time Period(s)': {'aggs': {'Time Period(s)': {'terms':{'field': 'temporal','size':1000}}},
+                                 'filter':{'bool':{'must':[{'term':{'publish_status':'0'}}]}}},
+                    'raw_test': {'aggs': {'raw_test': {'terms':{'field': 'fields.raw','size':1000}}},
                                  'filter':{'bool':{'must':[{'term':{'publish_status':'0'}}]}}}
                     },
                    'post_filters': {'Data Language': 'language',
                                     'Data Type': 'description.value',
-                                    'raw_test':'test.raw'}},
+                                    'Time Period(s)':'temporal',
+                                    "raw_test": "fields.raw"
+                                    }},
     }
     assert has_permission == test_has_permission
     assert no_permission == test_no_permission
@@ -2173,25 +2180,28 @@ def test_get_facet_search_query(app,mocker):
             "aggs": {"Data Language": { "terms": { "field": "language", "size": 1000 } }}},
           "Data Type": {"filter": {"bool": {"must": [{ "term": { "description.descriptionType": "Other" } },{ "term": { "publish_status": "0" } }]}},
             "aggs": {"Data Type": {"terms": { "field": "description.value", "size": 1000 }}}},
+          "Time Period(s)": {"filter": {"bool": {"must": [{ "term": { "temporal": "Other" } },{ "term": { "publish_status": "0" } }]}},
+            "aggs": {"Time Period(s)": {"terms": { "field": "temporal", "size": 1000 }}}},
           "raw_test": {"filter": {"bool": { "must": [{ "term": { "publish_status": "0" } }] }},
-            "aggs": {"raw_test": { "terms": { "field": "test.fields.raw", "size": 1000 } }}}
+            "aggs": {"raw_test": { "terms": { "field": "fields.raw", "size": 1000 } }}}
         },
-        "post_filters": {"Data Language": "language","Data Type": "description.value","raw_test": "test.raw"}
+        "post_filters": {"Data Language": "language","Data Type": "description.value","raw_test": "test.raw","Time Period(s)": "temporal"}
       }
     }
     cache_data = json.dumps(cache_data)
-    
+    titleFacet={},{},{},{},{},{'Data Language': 'OR', 'Access': 'OR', 'Location': 'OR','raw_test': 'OR', 'Time Period(s)': 'AND', 'Topic': 'OR', 'Distributor': 'OR', 'Data Type': 'AND'}
     # not exist cache
-    with patch("weko_admin.utils.is_exists_key_or_empty_in_redis", return_value=False):
-        with patch("weko_admin.utils.get_redis_cache", side_effect=[None, cache_data]):
-            result = get_facet_search_query()
-            assert result
-            
-    with patch("weko_admin.utils.is_exists_key_or_empty_in_redis", return_value=True):
-        with patch("weko_admin.utils.get_redis_cache", side_effect=[cache_data, cache_data]):
-            result = get_facet_search_query()
-            assert result
-
+    with app.test_request_context(headers=[('Accept-Language', 'en')]):
+        with patch("weko_admin.utils.get_title_facets", return_value=titleFacet):
+            with patch("weko_admin.utils.is_exists_key_or_empty_in_redis", return_value=False):
+                with patch("weko_admin.utils.get_redis_cache", side_effect=[None, cache_data]):
+                    result = get_facet_search_query()
+                    assert result
+                    
+            with patch("weko_admin.utils.is_exists_key_or_empty_in_redis", return_value=True):
+                with patch("weko_admin.utils.get_redis_cache", side_effect=[cache_data, cache_data]):
+                    result = get_facet_search_query()
+                    assert result
 
 # def get_title_facets():
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_get_title_facets -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
@@ -2267,9 +2277,18 @@ from weko_admin.utils import (
 )
 
 # def get_title_facets():
-def test_get_title_facets(i18n_app, users, facet_search_settings):
-    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
-        titles, order, uiTypes, isOpens, displayNumbers = get_title_facets()
+def test_get_title_facets(app, users, facet_search_settings):
+    #facet_search_setting = json_data("data/test_facet.json")
+    with app.test_request_context(headers=[('Accept-Language', 'en')]):
+        #with patch("weko_admin.models.FacetSearchSetting.get_activated_facets", return_value=facet_search_setting):
+        titles, order, uiTypes, isOpens, displayNumbers, searchConditions = get_title_facets()
         assert uiTypes
         assert isOpens
         assert displayNumbers
+        assert searchConditions
+
+# def get_detail_search_list():
+def test_get_detail_search_list(i18n_app, users):
+    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        result =  get_detail_search_list()
+        assert result

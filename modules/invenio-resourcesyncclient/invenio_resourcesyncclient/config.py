@@ -38,6 +38,8 @@ INVENIO_RESYNC_INDEXES_MODE = {
 
 INVENIO_RESYNC_INDEXES_SAVING_FORMAT = {
     'jpcoar': 'JPCOAR-XML',
+    'biosample': 'BIOSAMPLE-JSON-LD',
+    'bioproject': 'BIOPROJECT-JSON-LD',
     # 'json': 'JSON',
 }
 """Value of resync_indexes_mode."""

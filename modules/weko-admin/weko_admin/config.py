@@ -1270,7 +1270,8 @@ WEKO_ADMIN_FACET_SEARCH_SETTING = {
     "aggregations": [],
     "ui_type": "CheckboxList",
     "display_number": 5,
-    "is_open": True
+    "is_open": True,
+    "search_condition": "OR"
 }
 """Default Facet Search settings."""
 

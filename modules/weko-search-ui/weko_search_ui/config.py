@@ -732,3 +732,5 @@ CELERY_RESULT_PERSISTENT = True
 """ If set to True, result messages will be persistent. This means the messages will not be lost after a broker restart. The default is for the results to be transient."""
 CELERY_TASK_TRACK_STARTED=True
 """ If True the task will report its status as ‘started’ when the task is executed by a worker. """
+WEKO_SEARCH_UI_FACET_LANG_DISP_FLG = False
+""" Enable the Facet Search specified language display feature. """

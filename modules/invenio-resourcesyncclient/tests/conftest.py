@@ -378,16 +378,94 @@ def db_itemtype(app, db):
 
     item_type_multiple_mapping = ItemTypeMapping(id=10, item_type_id=10, mapping=item_type_multiple_mapping)
 
+    # BioSample
+    item_type_biosample_name = ItemTypeName(
+        id=32102, name="Biosample", has_site_license=True, is_active=True
+    )
+    item_type_biosample_schema = dict()
+    with open("tests/data/itemtype_biosample_schema.json", "r") as f:
+        item_type_biosample_schema = json.load(f)
+
+    item_type_biosample_form = dict()
+    with open("tests/data/itemtype_biosample_form.json", "r") as f:
+        item_type_biosample_form = json.load(f)
+
+    item_type_biosample_render = dict()
+    with open("tests/data/itemtype_biosample_render.json", "r") as f:
+        item_type_biosample_render = json.load(f)
+
+    item_type_biosample_mapping = dict()
+    with open("tests/data/itemtype_biosample_mapping.json", "r") as f:
+        item_type_biosample_mapping = json.load(f)
+    item_type_biosample = ItemType(
+        id=32102,
+        name_id=32102,
+        harvesting_type=True,
+        schema=item_type_biosample_schema,
+        form=item_type_biosample_form,
+        render=item_type_biosample_render,
+        tag=1,
+        version_id=1,
+        is_deleted=False,
+    )
+
+    item_type_biosample_mapping = ItemTypeMapping(id=32102, item_type_id=32102, mapping=item_type_biosample_mapping)
+
+    # BioProject
+    item_type_bioproject_name = ItemTypeName(
+        id=32103, name="Bioproject", has_site_license=True, is_active=True
+    )
+    item_type_bioproject_schema = dict()
+    with open("tests/data/itemtype_bioproject_schema.json", "r") as f:
+        item_type_bioproject_schema = json.load(f)
+
+    item_type_bioproject_form = dict()
+    with open("tests/data/itemtype_bioproject_form.json", "r") as f:
+        item_type_bioproject_form = json.load(f)
+
+    item_type_bioproject_render = dict()
+    with open("tests/data/itemtype_bioproject_render.json", "r") as f:
+        item_type_bioproject_render = json.load(f)
+
+    item_type_bioproject_mapping = dict()
+    with open("tests/data/itemtype_bioproject_mapping.json", "r") as f:
+        item_type_bioproject_mapping = json.load(f)
+    item_type_bioproject = ItemType(
+        id=32103,
+        name_id=32103,
+        harvesting_type=True,
+        schema=item_type_bioproject_schema,
+        form=item_type_bioproject_form,
+        render=item_type_bioproject_render,
+        tag=1,
+        version_id=1,
+        is_deleted=False,
+    )
+
+    item_type_bioproject_mapping = ItemTypeMapping(id=32103, item_type_id=32103, mapping=item_type_bioproject_mapping)
+
     with db.session.begin_nested():
         db.session.add(item_type_multiple_name)
         db.session.add(item_type_multiple)
         db.session.add(item_type_multiple_mapping)
+        db.session.add(item_type_biosample_name)
+        db.session.add(item_type_biosample)
+        db.session.add(item_type_biosample_mapping)
+        db.session.add(item_type_bioproject_name)
+        db.session.add(item_type_bioproject)
+        db.session.add(item_type_bioproject_mapping)
     db.session.commit()
 
     return {
         "item_type_multiple_name": item_type_multiple_name,
         "item_type_multiple": item_type_multiple,
         "item_type_multiple_mapping": item_type_multiple_mapping,
+        "item_type_biosample_name": item_type_biosample_name,
+        "item_type_biosample": item_type_biosample,
+        "item_type_biosample_mapping": item_type_biosample_mapping,
+        "item_type_bioproject_name": item_type_bioproject_name,
+        "item_type_bioproject": item_type_bioproject,
+        "item_type_bioproject_mapping": item_type_bioproject_mapping,
     }
 
 
@@ -565,6 +643,42 @@ def test_resync(app, db, test_indices):
         task_id=None,
         result='[{"uri": "tests/data/test_records.json", "timestamp": 1664550000, "ln": [{"rel": "file", "href": "tests/data/test_records.json"}]}]'
     )
+    resync_handler6 = ResyncIndexes(
+        id=60,
+        status="Automatic",
+        index_id=2,
+        repository_name="root",
+        from_date=None,
+        to_date=None,
+        resync_save_dir="",
+        resync_mode="Audit",
+        saving_format="BIOSAMPLE-JSON-LD",
+        base_url="base_test6",
+        is_running=None,
+        interval_by_day=1,
+        task_id=None,
+        result='[{"uri": "tests/data/biosample_data01.jsonld",' +
+                    ' "timestamp": 1664550000, "ln": [{"rel": "file",' +
+                    ' "href": "tests/data/biosample_data01.jsonld"}]}]'
+    )
+    resync_handler7 = ResyncIndexes(
+        id=70,
+        status="Automatic",
+        index_id=2,
+        repository_name="root",
+        from_date=None,
+        to_date=None,
+        resync_save_dir="",
+        resync_mode="Audit",
+        saving_format="BIOPROJECT-JSON-LD",
+        base_url="base_test7",
+        is_running=None,
+        interval_by_day=1,
+        task_id=None,
+        result='[{"uri": "tests/data/bioproject_data01.jsonld",' +
+                    ' "timestamp": 1664550000, "ln": [{"rel": "file",' +
+                    ' "href": "tests/data/bioproject_data01.jsonld"}]}]'
+    )
 
     resync_log = ResyncLogs(
         id=10,
@@ -584,5 +698,7 @@ def test_resync(app, db, test_indices):
         db.session.add(resync_handler3)
         db.session.add(resync_handler4)
         db.session.add(resync_handler5)
+        db.session.add(resync_handler6)
+        db.session.add(resync_handler7)
         db.session.add(resync_log)
     db.session.commit()

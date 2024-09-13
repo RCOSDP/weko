@@ -776,6 +776,18 @@ msgstr "Go to"
 msgid "search"
 msgstr ""
 
+#: weko_search_ui/templates/weko_search_ui/body_facet_search.html:29
+msgid "facet slider required validation"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/body_facet_search.html:30
+msgid "facet slider value Validation"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/body_facet_search.html:31
+msgid "facet slider correlation validation"
+msgstr ""
+
 msgid "The following item(s) cannot be deleted."
 msgstr ""
 
