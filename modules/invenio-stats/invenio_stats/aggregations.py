@@ -405,7 +405,7 @@ class StatAggregator(object):
                     index=",".join(affected_indices), wait_if_ongoing=True
                 )
 
-        bookmark_query = StatsBookmark.query.filter_by(agg_type=self.name)
+        bookmark_query = StatsBookmark.query.filter_by(source_id=self.name)
 
         if start_date:
             bookmark_query = bookmark_query.filter(StatsBookmark.date >= start_date)
