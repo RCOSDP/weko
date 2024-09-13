@@ -11,7 +11,7 @@
 from collections import OrderedDict
 from datetime import datetime, timedelta
 from functools import wraps
-
+import json
 from flask import current_app
 from invenio_search.engine import dsl, search
 from invenio_search.utils import prefix_index
@@ -83,39 +83,31 @@ class BookmarkAPI(object):
         _id = self.agg_type
         _source = {"date": value, "aggregation_type": self.agg_type}
 
-        if current_app.config.get('STATS_WEKO_DB_BACKUP_BOOKMARK'):
-            # Save stats bookmark into Database.
-            StatsBookmark.save(dict(
-                _id=_id,
-                _index=self.bookmark_index,
-                _source=_source,
-            ), delete=True)
-
-        self.client.index(
+        # Save stats bookmark into Database.
+        StatsBookmark.save(dict(
             _id=_id,
-            index=self.bookmark_index,
-            body=_source,
-        )
+            _index=self.bookmark_index,
+            _source=_source,
+        ), delete=True)
         self.new_timestamp = None
 
     @_ensure_index_exists
     def get_bookmark(self, refresh_time=60):
         """Get last aggregation date."""
         # retrieve the oldest bookmark
-        query_bookmark = (
-            dsl.Search(using=self.client, index=self.bookmark_index)
-            .filter("term", aggregation_type=self.agg_type)
-            .sort({"date": {"order": "desc"}})
-            .extra(size=1)  # fetch one document only
-        )
-        bookmark = next(iter(query_bookmark.execute()), None)
-        if bookmark:
+        # db_bookmark = StatsBookmark.get_by_source_id(
+        #     source_id= self.agg_type
+        # ).order_by(StatsBookmark.date.desc()).first()        
+        db_bookmark = StatsBookmark.query.filter_by(source_id=self.agg_type).order_by(StatsBookmark.date.desc()).first()
+        
+        if db_bookmark:
+            source_date = json.loads(db_bookmark.source)['date']
             try:
-                my_date = datetime.fromisoformat(bookmark.date)
+                my_date = datetime.fromisoformat(source_date)
             except ValueError:
                 # This one is for backwards compatibility, when the bookmark did not have the time
                 my_date = datetime.strptime(
-                    bookmark.date, SUPPORTED_INTERVALS[self.agg_interval]
+                    source_date, SUPPORTED_INTERVALS[self.agg_interval]
                 )
             # By default, the bookmark returns a slightly sooner date, to make sure that documents
             # that had arrived before the previous run and where not indexed by the engine are caught in this run
@@ -127,21 +119,12 @@ class BookmarkAPI(object):
     @_ensure_index_exists
     def list_bookmarks(self, start_date=None, end_date=None, limit=None):
         """List bookmarks."""
-        query = (
-            dsl.Search(
-                using=self.client,
-                index=self.bookmark_index,
-            )
-            .filter("term", aggregation_type=self.agg_type)
-            .sort({"date": {"order": "desc"}})
-        )
+        query = StatsBookmark.get_by_source_id(self.agg_type, start_date, end_date)
+        
+        if query:
+            query = sorted(query, key=lambda x: x.date, reverse=True)
 
-        range_args = {}
-        if start_date:
-            range_args["gte"] = format_range_dt(start_date, self.agg_interval)
-        if end_date:
-            range_args["lte"] = format_range_dt(end_date, self.agg_interval)
-        if range_args:
-            query = query.filter("range", date=range_args)
+            if limit:
+                query = query[:limit]
 
-        return query[0:limit].execute() if limit else query.scan()
+        return query

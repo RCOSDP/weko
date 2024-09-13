@@ -18,8 +18,9 @@ from flask import current_app
 from invenio_search import current_search_client
 from invenio_search.engine import dsl, search
 from invenio_search.utils import prefix_index
+from invenio_db import db
 
-from .models import StatsAggregation
+from .models import StatsAggregation, StatsBookmark
 from .utils import get_bucket_size
 from .bookmark import SUPPORTED_INTERVALS, BookmarkAPI, format_range_dt
 
@@ -278,6 +279,7 @@ class StatAggregator(object):
                 aggregation_data[self.field] = aggregation["key"]
                 aggregation_data["count"] = aggregation["doc_count"]
                 aggregation_data["updated_timestamp"] = datetime.now(timezone.utc).isoformat()
+                aggregation_data['event_type'] = self.event
 
                 if self.metric_fields:
                     for f in self.metric_fields:
@@ -304,7 +306,7 @@ class StatAggregator(object):
                         .execute()
                     )
 
-                    if res.hits.total > 0:
+                    if res.hits.total.value > 0:
                         index_name = res.hits.hits[0]['_index']
 
                 rtn_data = {
@@ -321,9 +323,12 @@ class StatAggregator(object):
                 yield rtn_data
 
     def _upper_limit(self, end_date):
+        if end_date is not None and end_date.tzinfo is not None:
+            end_date = end_date.replace(tzinfo=None)
+
         return min(
-            end_date or datetime.max,  # ignore if `None`
-            datetime.now(timezone.utc),
+            end_date or datetime.max,  
+            datetime.now().replace(tzinfo=None) 
         )
 
     def run(self, start_date=None, end_date=None, update_bookmark=True, manual=False):
@@ -386,20 +391,8 @@ class StatAggregator(object):
         if range_args:
             aggs_query = aggs_query.filter("range", timestamp=range_args)
 
-        bookmarks_query = (
-            dsl.Search(
-                using=self.client,
-                index=self.bookmark_api.bookmark_index,
-            )
-            .filter("term", aggregation_type=self.name)
-            .sort({"date": {"order": "desc"}})
-        )
-
-        if range_args:
-            bookmarks_query = bookmarks_query.filter("range", date=range_args)
-
         def _delete_actions():
-            for query in (aggs_query, bookmarks_query):
+            for query in aggs_query:
                 affected_indices = set()
                 for doc in query.scan():
                     affected_indices.add(doc.meta.index)
@@ -412,4 +405,14 @@ class StatAggregator(object):
                     index=",".join(affected_indices), wait_if_ongoing=True
                 )
 
+        bookmark_query = StatsBookmark.query.filter_by(source_id=self.name)
+
+        if start_date:
+            bookmark_query = bookmark_query.filter(StatsBookmark.date >= start_date)
+        if end_date:
+            bookmark_query = bookmark_query.filter(StatsBookmark.date <= end_date)
+
+        bookmark_query.delete(synchronize_session=False)
+
         search.helpers.bulk(self.client, _delete_actions(), refresh=True)
+        db.session.commit()

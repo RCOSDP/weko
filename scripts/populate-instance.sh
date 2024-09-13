@@ -152,37 +152,35 @@ curl -XPUT 'http://'${INVENIO_ELASTICSEARCH_HOST}':9200/_ilm/policy/weko_stats_p
   }
 }'
 
-curl -XPOST 'http://'${INVENIO_ELASTICSEARCH_HOST}':9200/_aliases' -H 'Content-Type: application/json' -d '
+curl -XPUT 'http://'${INVENIO_ELASTICSEARCH_HOST}':9200/'${SEARCH_INDEX_PREFIX}'-stats-index-000001' -H 'Content-Type: application/json' -d '
 {
-  "action": [
-    {
-      "add": {
-        "index": "'${SEARCH_INDEX_PREFIX}'-stats-index-000001",
-        "alias": "'${SEARCH_INDEX_PREFIX}'-stats-index",
-        "is_write_index": true
-      }
-    },
-    {
-      "add": {
-        "index": "'${SEARCH_INDEX_PREFIX}'-events-stats-index-000001",
-        "alias": "'${SEARCH_INDEX_PREFIX}'-events-stats-index",
-        "is_write_index": true
-      }
+  "aliases": {
+    "'${SEARCH_INDEX_PREFIX}'-stats-index": {
+      "is_write_index": true
     }
-  ]
+  }
 }'
+curl -XPUT 'http://'${INVENIO_ELASTICSEARCH_HOST}':9200/'${SEARCH_INDEX_PREFIX}'-events-stats-index-000001' -H 'Content-Type: application/json' -d '
+{
+  "aliases": {
+    "'${SEARCH_INDEX_PREFIX}'-events-stats-index": {
+      "is_write_index": true
+    }
+  }
+}'
+
 event_list=('celery-task' 'item-create' 'top-view' 'record-view' 'file-download' 'file-preview' 'search')
 for event_name in ${event_list[@]}
 do
   curl -XPOST 'http://'${INVENIO_ELASTICSEARCH_HOST}':9200/_aliases' -H 'Content-Type: application/json' -d '
   {
-    "action": [
+    "actions": [
       {
         "add": {
           "index": "'${SEARCH_INDEX_PREFIX}'-stats-index-000001",
           "alias": "'${SEARCH_INDEX_PREFIX}'-stats-'${event_name}'",
           "filter": {
-            "term": {"event_type": '${event_name}'}
+            "term": {"event_type": "'${event_name}'"}
           },
           "is_write_index": true
         }
@@ -192,7 +190,7 @@ do
           "index": "'${SEARCH_INDEX_PREFIX}'-events-stats-index-000001",
           "alias": "'${SEARCH_INDEX_PREFIX}'-events-stats-'${event_name}'",
           "filter": {
-            "term": {"event_type": '${event_name}'}
+            "term": {"event_type": "'${event_name}'"}
           },
           "is_write_index": true
         }
