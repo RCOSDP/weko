@@ -23,12 +23,12 @@
 {%- block css %}
   {{ webpack['deposit_css_css.css']}}
   {{ super() }}
-  {{ webpack['weko-theme-css-buttons.css']}}
+  {{ webpack['theme-css-buttons.css']}}
   {{ webpack['admin_css_css.css']}}
 {%- endblock css %}
 
 {%- block javascript %}
-  {{ webpack['js-dependencies.js']}}
+  {{ webpack['deposit_js_dependencies.js']}}
   {{ super() }}
   {{ webpack['deposit_js_js.js']}}
   {{ webpack['schema-ui-js.js']}}

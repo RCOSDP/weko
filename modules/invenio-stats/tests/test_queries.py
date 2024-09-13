@@ -28,124 +28,123 @@ from invenio_stats.queries import (
 # class ESQuery(object):
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_queries.py::test_query -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
 def test_query(app):
-    query = ESQuery('test_name', 'test_type', 'test_index')
+    with app.app_context():
+        query = ESQuery('test_name', 'test_type', 'test_index')
 
-    # extract_date
-    with pytest.raises(ValueError):
-        assert query.extract_date('')
-    with pytest.raises(TypeError):
-        assert query.extract_date(None)
+        # extract_date
+        with pytest.raises(ValueError):
+            assert query.extract_date('')
+        with pytest.raises(TypeError):
+            assert query.extract_date(None)
 
-    # run
-    with pytest.raises(NotImplementedError):
-        assert query.run()
-
-
+        # run
+        with pytest.raises(NotImplementedError):
+            assert query.run()
 
 # class ESDateHistogramQuery(ESQuery):
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_queries.py::test_date_histogram_query -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
 def test_date_histogram_query(app, query_configs):
-    config_num = 8      # query_name='bucket-file-download-histogram'
-    histogram_config = query_configs[config_num]['query_config']
-    # __init__
-    with pytest.raises(ValueError):
-        ESDateHistogramQuery(
+    with app.app_context():
+        config_num = 8      # query_name='bucket-file-download-histogram'
+        histogram_config = query_configs[config_num]['query_config']
+        # __init__
+        with pytest.raises(ValueError):
+            ESDateHistogramQuery(
+                query_name='test_total_count',
+                **histogram_config,
+                metric_fields={'value': ('test', '', {})}
+            )
+
+        # validate_arguments
+        query = ESDateHistogramQuery(
+            query_name='test_total_count',
+            **histogram_config
+        )
+        with pytest.raises(InvalidRequestInputError):
+            query.validate_arguments('test_interval', None, None)
+        with pytest.raises(InvalidRequestInputError):
+            query.validate_arguments('year', None, None)
+        assert not query.validate_arguments('year', None, None, bucket_id='test_id', file_key='test_key')
+
+        # build_query
+        query = ESDateHistogramQuery(
+            query_name='test_total_count',
+            **histogram_config
+        )
+        assert query.build_query('month', datetime.date(2023, 1, 1), datetime.date(2023, 3, 31)).to_dict() == {'query': {'bool': {'filter': [{'range': {'timestamp': {'gte': '2023-01-01', 'lte': '2023-03-31'}}}]}}, 'aggs': {'histogram': {'date_histogram': {'field': 'timestamp', 'interval': 'month', 'time_zone': 'Asia/Tokyo'}, 'aggs': {'value': {'sum': {'field': 'count'}}, 'top_hit': {'top_hits': {'size': 1, 'sort': {'timestamp': 'desc'}}}}}}, 'from': 0, 'size': 0}
+        assert query.build_query('month', datetime.date(2023, 1, 1), None).to_dict() == {'query': {'bool': {'filter': [{'range': {'timestamp': {'gte': '2023-01-01'}}}]}}, 'aggs': {'histogram': {'date_histogram': {'field': 'timestamp', 'interval': 'month', 'time_zone': 'Asia/Tokyo'}, 'aggs': {'value': {'sum': {'field': 'count'}}, 'top_hit': {'top_hits': {'size': 1, 'sort': {'timestamp': 'desc'}}}}}}, 'from': 0, 'size': 0}
+        assert query.build_query('month', None, datetime.date(2023, 1, 1)).to_dict() == {'query': {'bool': {'filter': [{'range': {'timestamp': {'lte': '2023-01-01'}}}]}}, 'aggs': {'histogram': {'date_histogram': {'field': 'timestamp', 'interval': 'month', 'time_zone': 'Asia/Tokyo'}, 'aggs': {'value': {'sum': {'field': 'count'}}, 'top_hit': {'top_hits': {'size': 1, 'sort': {'timestamp': 'desc'}}}}}}, 'from': 0, 'size': 0}
+        assert query.build_query('month', None, None, file_key='test_key').to_dict() == {'query': {'bool': {'filter': [{'term': {'file_key': 'test_key'}}]}}, 'aggs': {'histogram': {'date_histogram': {'field': 'timestamp', 'interval': 'month', 'time_zone': 'Asia/Tokyo'}, 'aggs': {'value': {'sum': {'field': 'count'}}, 'top_hit': {'top_hits': {'size': 1, 'sort': {'timestamp': 'desc'}}}}}}, 'from': 0, 'size': 0}
+
+        query = ESDateHistogramQuery(
             query_name='test_total_count',
             **histogram_config,
-            metric_fields={'value': ('test', '', {})}
+            query_modifiers=[filter_robots]
         )
+        assert query.build_query('month', None, None).to_dict() == {'query': {'bool': {'filter': [{'term': {'is_robot': False}}]}}, 'aggs': {'histogram': {'date_histogram': {'field': 'timestamp', 'interval': 'month', 'time_zone': 'Asia/Tokyo'}, 'aggs': {'value': {'sum': {'field': 'count'}}, 'top_hit': {'top_hits': {'size': 1, 'sort': {'timestamp': 'desc'}}}}}}, 'from': 0, 'size': 0}
 
-    # validate_arguments
-    query = ESDateHistogramQuery(
-        query_name='test_total_count',
-        **histogram_config
-    )
-    with pytest.raises(InvalidRequestInputError):
-        query.validate_arguments('test_interval', None, None)
-    with pytest.raises(InvalidRequestInputError):
-        query.validate_arguments('year', None, None)
-    assert not query.validate_arguments('year', None, None, bucket_id='test_id', file_key='test_key')
+        test_config = copy.deepcopy(histogram_config)
+        test_config.pop('copy_fields')
+        query = ESDateHistogramQuery(
+            query_name='test_total_count',
+            **test_config
+        )
+        assert query.build_query('month', None, None).to_dict() == {'aggs': {'histogram': {'date_histogram': {'field': 'timestamp', 'interval': 'month', 'time_zone': 'Asia/Tokyo'}, 'aggs': {'value': {'sum': {'field': 'count'}}}}}, 'from': 0, 'size': 0}
 
-    # build_query
-    query = ESDateHistogramQuery(
-        query_name='test_total_count',
-        **histogram_config
-    )
-    assert query.build_query('month', datetime.date(2023, 1, 1), datetime.date(2023, 3, 31)).to_dict() == {'query': {'bool': {'filter': [{'range': {'timestamp': {'gte': '2023-01-01', 'lte': '2023-03-31'}}}]}}, 'aggs': {'histogram': {'date_histogram': {'field': 'timestamp', 'interval': 'month', 'time_zone': 'Asia/Tokyo'}, 'aggs': {'value': {'sum': {'field': 'count'}}, 'top_hit': {'top_hits': {'size': 1, 'sort': {'timestamp': 'desc'}}}}}}, 'from': 0, 'size': 0}
-    assert query.build_query('month', datetime.date(2023, 1, 1), None).to_dict() == {'query': {'bool': {'filter': [{'range': {'timestamp': {'gte': '2023-01-01'}}}]}}, 'aggs': {'histogram': {'date_histogram': {'field': 'timestamp', 'interval': 'month', 'time_zone': 'Asia/Tokyo'}, 'aggs': {'value': {'sum': {'field': 'count'}}, 'top_hit': {'top_hits': {'size': 1, 'sort': {'timestamp': 'desc'}}}}}}, 'from': 0, 'size': 0}
-    assert query.build_query('month', None, datetime.date(2023, 1, 1)).to_dict() == {'query': {'bool': {'filter': [{'range': {'timestamp': {'lte': '2023-01-01'}}}]}}, 'aggs': {'histogram': {'date_histogram': {'field': 'timestamp', 'interval': 'month', 'time_zone': 'Asia/Tokyo'}, 'aggs': {'value': {'sum': {'field': 'count'}}, 'top_hit': {'top_hits': {'size': 1, 'sort': {'timestamp': 'desc'}}}}}}, 'from': 0, 'size': 0}
-    assert query.build_query('month', None, None, file_key='test_key').to_dict() == {'query': {'bool': {'filter': [{'term': {'file_key': 'test_key'}}]}}, 'aggs': {'histogram': {'date_histogram': {'field': 'timestamp', 'interval': 'month', 'time_zone': 'Asia/Tokyo'}, 'aggs': {'value': {'sum': {'field': 'count'}}, 'top_hit': {'top_hits': {'size': 1, 'sort': {'timestamp': 'desc'}}}}}}, 'from': 0, 'size': 0}
-
-    query = ESDateHistogramQuery(
-        query_name='test_total_count',
-        **histogram_config,
-        query_modifiers=[filter_robots]
-    )
-    assert query.build_query('month', None, None).to_dict() == {'query': {'bool': {'filter': [{'term': {'is_robot': False}}]}}, 'aggs': {'histogram': {'date_histogram': {'field': 'timestamp', 'interval': 'month', 'time_zone': 'Asia/Tokyo'}, 'aggs': {'value': {'sum': {'field': 'count'}}, 'top_hit': {'top_hits': {'size': 1, 'sort': {'timestamp': 'desc'}}}}}}, 'from': 0, 'size': 0}
-
-    test_config = copy.deepcopy(histogram_config)
-    test_config.pop('copy_fields')
-    query = ESDateHistogramQuery(
-        query_name='test_total_count',
-        **test_config
-    )
-    assert query.build_query('month', None, None).to_dict() == {'aggs': {'histogram': {'date_histogram': {'field': 'timestamp', 'interval': 'month', 'time_zone': 'Asia/Tokyo'}, 'aggs': {'value': {'sum': {'field': 'count'}}}}}, 'from': 0, 'size': 0}
-
-    # process_query_result
-    _res1 = {
-        "aggregations": {
-            "histogram": {
-                "buckets": [
-                    {
-                        "key": "key1",
-                        "key_as_string": "2023-01-01",
-                        "value": {"value": 1},
-                        "top_hit": {
-                            "hits": {
-                                "hits": [
-                                    {
-                                        "_source": {
-                                            "bucket_id": "bucket1",
-                                            "file_key": "file1",
-                                            "test_value": "value1"
+        # process_query_result
+        _res1 = {
+            "aggregations": {
+                "histogram": {
+                    "buckets": [
+                        {
+                            "key": "key1",
+                            "key_as_string": "2023-01-01",
+                            "value": {"value": 1},
+                            "top_hit": {
+                                "hits": {
+                                    "hits": [
+                                        {
+                                            "_source": {
+                                                "bucket_id": "bucket1",
+                                                "file_key": "file1",
+                                                "test_value": "value1"
+                                            }
                                         }
-                                    }
-                                ]
+                                    ]
+                                }
                             }
                         }
-                    }
-                ]
+                    ]
+                }
             }
         }
-    }
-    _res2 = {
-        "aggregations": {
-            "histogram": {
-                "buckets": [
-                    {
-                        "key": "key1",
-                        "key_as_string": "2023-01-01",
-                        "value": {"value": 1},
-                        "top_hit": {
-                            "hits": {
-                                "hits": []
+        _res2 = {
+            "aggregations": {
+                "histogram": {
+                    "buckets": [
+                        {
+                            "key": "key1",
+                            "key_as_string": "2023-01-01",
+                            "value": {"value": 1},
+                            "top_hit": {
+                                "hits": {
+                                    "hits": []
+                                }
                             }
                         }
-                    }
-                ]
+                    ]
+                }
             }
         }
-    }
-    test_config = copy.deepcopy(histogram_config)
-    test_config['copy_fields']['test_value'] = lambda res, data: data['test_value']
-    query = ESDateHistogramQuery(
-        query_name='test_total_count',
-        **test_config
-    )
-    assert query.process_query_result(_res1, 'month', None, None) == {'interval': 'month', 'key_type': 'date', 'start_date': None, 'end_date': None, 'buckets': [{'key': 'key1', 'date': '2023-01-01', 'value': 1, 'bucket_id': 'bucket1', 'file_key': 'file1', 'test_value': 'value1'}]}
-    assert query.process_query_result(_res1, 'month', datetime.date(2023, 1, 1), datetime.date(2023, 1, 2)) == {'interval': 'month', 'key_type': 'date', 'start_date': '2023-01-01', 'end_date': '2023-01-02', 'buckets': [{'key': 'key1', 'date': '2023-01-01', 'value': 1, 'bucket_id': 'bucket1', 'file_key': 'file1', 'test_value': 'value1'}]}
-    assert query.process_query_result(_res2, 'month', None, None) == {'interval': 'month', 'key_type': 'date', 'start_date': None, 'end_date': None, 'buckets': [{'key': 'key1', 'date': '2023-01-01', 'value': 1}]}
-
+        test_config = copy.deepcopy(histogram_config)
+        test_config['copy_fields']['test_value'] = lambda res, data: data['test_value']
+        query = ESDateHistogramQuery(
+            query_name='test_total_count',
+            **test_config
+        )
+        assert query.process_query_result(_res1, 'month', None, None) == {'interval': 'month', 'key_type': 'date', 'start_date': None, 'end_date': None, 'buckets': [{'key': 'key1', 'date': '2023-01-01', 'value': 1, 'bucket_id': 'bucket1', 'file_key': 'file1', 'test_value': 'value1'}]}
+        assert query.process_query_result(_res1, 'month', datetime.date(2023, 1, 1), datetime.date(2023, 1, 2)) == {'interval': 'month', 'key_type': 'date', 'start_date': '2023-01-01', 'end_date': '2023-01-02', 'buckets': [{'key': 'key1', 'date': '2023-01-01', 'value': 1, 'bucket_id': 'bucket1', 'file_key': 'file1', 'test_value': 'value1'}]}
+        assert query.process_query_result(_res2, 'month', None, None) == {'interval': 'month', 'key_type': 'date', 'start_date': None, 'end_date': None, 'buckets': [{'key': 'key1', 'date': '2023-01-01', 'value': 1}]}
 
 # class ESTermsQuery(ESQuery):
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_queries.py::test_terms_query -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp

@@ -92,10 +92,10 @@
             extra-params='{"headers":{"Content-Type": "application/json"}}' form="{{ schemaform }}"
             record='{{ record | tojson }}' schema="{{ jsonschema }}">
             <invenio-records-loading
-              template="{{ url_for('static', filename='node_modules/invenio-records-js/dist/templates/loading.html') }}">
+              template="/assets/node_modules/invenio-records-js/dist/templates/loading.html">
             </invenio-records-loading>
             <invenio-records-alert
-              template="{{ url_for('static', filename='node_modules/invenio-records-js/dist/templates/alert.html') }}">
+              template="/assets/node_modules/invenio-records-js/dist/templates/alert.html">
             </invenio-records-alert>
             <div class="row row-4" ng-hide="false">
               <div class="col-sm-9" ng-show="true">
@@ -128,13 +128,13 @@
             <div class="row row-4" ng-hide="false">
               <div class="col-sm-9" ng-show="true">
                 <invenio-files-error
-                  template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/error.html') }}">
+                  template="/assets/node_modules/invenio-files-js/dist/templates/error.html">
                 </invenio-files-error>
                 <invenio-files-upload-zone
-                  template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/upload.html') }}">
+                  template="/assets/node_modules/invenio-files-js/dist/templates/upload.html">
                 </invenio-files-upload-zone>
                 <invenio-files-list
-                  template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/list.html') }}">
+                  template="/assets/node_modules/invenio-files-js/dist/templates/list.html">
                 </invenio-files-list>
               </div>
             </div>
@@ -145,13 +145,13 @@
             <div class="row row-4" ng-hide="false">
               <div class="col-sm-9" ng-show="true">
                 <invenio-files-error
-                  template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/error.html') }}">
+                  template="/assets/node_modules/invenio-files-js/dist/templates/error.html">
                 </invenio-files-error>
                 <invenio-files-upload-zone
-                  template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/upload.html') }}">
+                  template="/assets/node_modules/invenio-files-js/dist/templates/upload.html">
                 </invenio-files-upload-zone>
                 <invenio-files-list
-                  template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/list.html') }}">
+                  template="/assets/node_modules/invenio-files-js/dist/templates/list.html">
                 </invenio-files-list>
               </div>
             </div>

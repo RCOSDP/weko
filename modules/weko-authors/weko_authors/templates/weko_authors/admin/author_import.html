@@ -29,7 +29,7 @@
 
 {%- block javascript %}
   {{ super() }}
-  {{ webpack['theme-js-widget.js']}}
+  {{ webpack['theme-widget.js']}}
   <script src="{{ url_for('static', filename = 'js/weko_authors/app-author-import.runtime-main.js') }}"></script>
   <script src="{{ url_for('static', filename = 'js/weko_authors/app-author-import.chunk.js') }}"></script>
   <script src="{{ url_for('static', filename = 'js/weko_authors/app-author-import.main.chunk.js') }}"></script>
