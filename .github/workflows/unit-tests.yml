@@ -28,8 +28,6 @@ jobs:
       SQLALCHEMY_DATABASE_URI: postgresql+psycopg2://invenio:dbpass123@localhost:5432/wekotest
       CACHE_REDIS_URL: redis://localhost:6379/0
       SEARCH_ELASTIC_HOSTS: localhost
-      BROKER_URL: amqp://guest:guest@rabbitmq:5672/
-      CELERY_BROKER_URL: amqp://guest:guest@rabbitmq:5672/
     timeout-minutes: 60
     strategy:
       fail-fast: false
