@@ -226,7 +226,9 @@ def base_app(instance_path, search_class, cache_config):
                                          'Repository Administrator'],
         WEKO_PERMISSION_ROLE_COMMUNITY=['Community Administrator'],
         THEME_SITEURL = 'https://localhost',
-        CACHE_REDIS_URL='redis://redis:6379/0',
+        CACHE_REDIS_URL=os.environ.get(
+            "CACHE_REDIS_URL", "redis://redis:6379/0"
+        ),
         CACHE_REDIS_DB='0',
         CACHE_REDIS_HOST="redis",
         REDIS_PORT='6379',
