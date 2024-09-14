@@ -252,7 +252,9 @@ def base_app(instance_path, mock_gethostbyaddr):
         CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
         CELERY_TASK_EAGER_PROPAGATES=True,
         CELERY_RESULT_BACKEND='cache',
-        CACHE_REDIS_URL="redis://redis:6379/0",
+        CACHE_REDIS_URL=os.environ.get(
+            "CACHE_REDIS_URL", "redis://redis:6379/0"
+        ),
         CACHE_REDIS_DB=0,
         CACHE_REDIS_HOST="redis",
         QUEUES_BROKER_URL="amqp://guest:guest@rabbitmq:5672//",
