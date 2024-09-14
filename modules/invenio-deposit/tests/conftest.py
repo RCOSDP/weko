@@ -89,8 +89,10 @@ def base_app(request):
 
     def init_app(app_):
         app_.config.update(
-            BROKER_URL='amqp://guest:guest@rabbitmq:5672/',
-            CELERY_BROKER_URL = 'amqp://guest:guest@rabbitmq:5672/',
+            BROKER_URL=os.getenv(BROKER_URL,
+                                'amqp://guest:guest@rabbitmq:5672/'),
+            CELERY_BROKER_URL=os.getenv(CELERY_BROKER_URL,
+                                'amqp://guest:guest@rabbitmq:5672/'),
             CELERY_ALWAYS_EAGER=True,
             CELERY_CACHE_BACKEND='memory',
             CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
