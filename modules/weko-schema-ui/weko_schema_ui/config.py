@@ -128,6 +128,7 @@ WEKO_SCHEMA_JPCOAR_V2_RESOURCE_TYPE_REPLACE={
     'interview':'other',
     'internal report':'other',
     'report part':'other',
+    'conference object':'conference output',
 }
 """Resource type replace list for jpcoar v2.0"""
 

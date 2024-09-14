@@ -686,6 +686,7 @@ def index_upload():
 
 
 @blueprint_api.route('/get_search_data/<data_type>', methods=['GET'])
+@item_permission.require(http_exception=403)
 def get_search_data(data_type=''):
     """get_search_data.
 
@@ -791,6 +792,7 @@ def validate_user_info():
 
 @blueprint_api.route('/get_user_info/<int:owner>/<int:shared_user_id>',
                      methods=['GET'])
+@item_permission.require(http_exception=403)
 def get_user_info(owner, shared_user_id):
     """get_user_info.
 
@@ -899,7 +901,7 @@ def prepare_edit_item():
         latest_pid = PIDVersioning(child=recid).last_child
 
         # ! Check User's Permissions
-        if user_id not in authenticators and not get_user_roles()[0]:
+        if user_id not in authenticators and not get_user_roles(is_super_role=True)[0]:
             return jsonify(
                 code=err_code,
                 msg=_("You are not allowed to edit this item.")

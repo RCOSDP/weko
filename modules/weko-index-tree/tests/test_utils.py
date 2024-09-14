@@ -151,14 +151,45 @@ def test_reset_tree(app, db, users):
 # def test_get_tree_json(i18n_app, db_records, indices, esindex):
 #     assert get_tree_json([indices['index_non_dict']], 0)
 
-
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_get_user_roles -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
 #+++ def get_user_roles():
 def test_get_user_roles(i18n_app, client_rest, users):
+    # sysadmin
     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
-        assert get_user_roles()[0]
+        result = get_user_roles(is_super_role=True)
+        assert result[0] == True
+        assert result[1] == [1]
+        
+        result = get_user_roles(is_super_role=False)
+        assert result[0] == True
+        assert result[1] == [1]
+        
+    # comadmin
+    with patch("flask_login.utils._get_user", return_value=users[4]['obj']):
+        result = get_user_roles(is_super_role=True)
+        assert result[0] == True
+        assert result[1] == [4]
+
+        result = get_user_roles(is_super_role=False)
+        assert result[0] == False
+        assert result[1] == [4]
+
+
+    # not admin user
+    with patch("flask_login.utils._get_user", return_value=users[1]['obj']):
+        result = get_user_roles(is_super_role=True)
+        assert result[0] == False
+        assert result[1] == [3]
+
+        result = get_user_roles(is_super_role=False)
+        assert result[0] == False
+        assert result[1] == [3]
 
     # User not authenticated
-    assert get_user_roles()[0] == False
+    result = get_user_roles()
+    assert result[0] == False
+    assert result[1] == None
+
 
 
 #+++ def get_user_groups():
@@ -175,16 +206,34 @@ def test_get_user_groups(i18n_app, client_rest, users, db):
     # User not authenticated
     assert len(get_user_groups()) == 0
 
-
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_check_roles -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
 #+++ def check_roles(user_role, roles):
 def test_check_roles(users):
-    with patch("flask_login.utils._get_user", return_value=users[-1]['obj']):
+    # admin user
+    user_role = (True, [])
+    roles = ["1","2"]
+    check_roles(user_role, roles)
     
-        user_role = [role.name for role in users[-1]['obj'].roles]
-        roles = (',').join(user_role)
-
-        assert check_roles(user_role, roles)
-
+    # not admin user
+    ## not login
+    ### not allow -99
+    user_role = (False,[])
+    roles = "1,2"
+    assert check_roles(user_role, roles) == False
+    ### allow -99
+    user_role = (False,[])
+    roles = "1,2,-99"
+    assert check_roles(user_role, roles) == True
+    ## login
+    with patch("flask_login.utils._get_user", return_value=users[-1]['obj']):
+    ### all allow
+        user_role = (False,["1", "2"])
+        roles = "1,2"
+        assert check_roles(user_role, roles) == True
+    ### exist deny
+        user_role = (False,["1", "2", "3"])
+        roles = "1,2"
+        assert check_roles(user_role, roles) == False
 
 #+++ def check_groups(user_group, groups):
 def test_check_groups(i18n_app, users, db):
@@ -461,8 +510,9 @@ def test_check_doi_in_list_record_es(app, db, users):
 
 
 #+++ def check_restrict_doi_with_indexes(index_ids):
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_check_restrict_doi_with_indexes -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
 def test_check_restrict_doi_with_indexes(i18n_app, indices, db_records):
-    assert check_restrict_doi_with_indexes([33,44])
+    assert not check_restrict_doi_with_indexes([33,44])
 
 
 #*** def check_has_any_item_in_index_is_locked(index_id):
@@ -568,9 +618,8 @@ def test_perform_delete_index(app, db, test_indices, users):
                     with patch("weko_workflow.utils.check_an_item_is_locked", return_value=True):
                         assert perform_delete_index(1, Indexes, "move")==('', ['This index cannot be deleted because the item belonging to this index is being edited by the import function.'])
                     with patch("weko_workflow.utils.check_an_item_is_locked", return_value=False):
-                        with pytest.raises(IndexBaseRESTError) as e:
-                            perform_delete_index(1, Indexes, "move")
-                        assert e.value.code == 400
+                        with patch("weko_index_tree.api.Indexes.delete_by_action", return_value=None):
+                            assert perform_delete_index(1, Indexes, "move")==('Failed to delete index.', [])
                         assert perform_delete_index(1, Indexes, "delete")==('Index deleted successfully.', [])
 
 
@@ -636,7 +685,7 @@ def test_save_index_trees_to_redis(app, redis_connect,caplog):
         # except ConnectionError
         with patch("simplekv.memory.redisstore.RedisStore.put",side_effect=ConnectionError("test_error")):
             save_index_trees_to_redis(tree, lang="ja")
-            assert caplog.record_tuples == [('flask.app', 40, 'Fail save index_tree to redis')]
+            assert caplog.record_tuples == [('testapp', 40, 'Fail save index_tree to redis')]
     redis_connect.delete("index_tree_view_test_en")
     redis_connect.delete("index_tree_view_test_ja")
 

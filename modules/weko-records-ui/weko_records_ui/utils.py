@@ -47,7 +47,7 @@ from passlib.handlers.oracle import oracle10
 from weko_admin.models import AdminSettings
 from weko_admin.utils import UsageReport, get_restricted_access
 from weko_deposit.api import WekoDeposit, WekoRecord
-from weko_records.api import FeedbackMailList, ItemTypes
+from weko_records.api import FeedbackMailList, ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
 from weko_records.utils import replace_fqdn
 from weko_records.models import ItemReference
@@ -715,28 +715,29 @@ def hide_by_email(item_metadata, force_flag=False):
     subitem_keys = current_app.config['WEKO_RECORDS_UI_EMAIL_ITEM_KEYS']
 
     item_type_id = item_metadata.get('item_type_id')
-    meta_options, type_mapping = get_options_and_order_list(item_type_id)
-    hide_list = get_hide_list_by_schema_form(item_type_id)
 
-    # Hidden owners_ext.email
-    if item_metadata.get('_deposit') and \
-        item_metadata['_deposit'].get('owners_ext') and item_metadata['_deposit']['owners_ext'].get('email'):
-        if force_flag or not show_email_flag:
-            del item_metadata['_deposit']['owners_ext']['email']
+    if item_type_id:
+        meta_options, type_mapping = get_options_and_order_list(item_type_id)
+        hide_list = get_hide_list_by_schema_form(item_type_id)
 
-    for item in item_metadata:
-        _item = item_metadata[item]
-        prop_hidden = meta_options.get(item, {}).get('option', {}).get('hidden', False)
-        if isinstance(_item, dict) and \
-                _item.get('attribute_value_mlt'):
-            for _idx, _value in enumerate(_item['attribute_value_mlt']):
-                if _value is not None:
-                    for key in subitem_keys:
-                        for h in hide_list:
-                            if h.startswith(item) and h.endswith(key):
-                                prop_hidden = True
-                        if key in _value.keys() and (force_flag or not show_email_flag or prop_hidden):
-                            del _item['attribute_value_mlt'][_idx][key]
+        # Hidden owners_ext info
+        if item_metadata.get('_deposit') and \
+                item_metadata['_deposit'].get('owners_ext'):
+            del item_metadata['_deposit']['owners_ext']
+
+        for item in item_metadata:
+            _item = item_metadata[item]
+            prop_hidden = meta_options.get(item, {}).get('option', {}).get('hidden', False)
+            if isinstance(_item, dict) and \
+                    _item.get('attribute_value_mlt'):
+                for _idx, _value in enumerate(_item['attribute_value_mlt']):
+                    if _value is not None:
+                        for key in subitem_keys:
+                            for h in hide_list:
+                                if h.startswith(item) and h.endswith(key):
+                                    prop_hidden = True
+                            if key in _value.keys() and (force_flag or not show_email_flag or prop_hidden):
+                                del _item['attribute_value_mlt'][_idx][key]
 
     return item_metadata
 
@@ -785,6 +786,43 @@ def item_setting_show_email():
         is_display = False
     return is_display
 
+def is_show_email_of_creator(item_type_id):
+    """Check setting show/hide email for 'Detail' and 'PDF Cover Page' screen.
+
+    :param item_type_id: item type id of current record.
+    :return: True/False, True: show, False: hide.
+    """
+    def get_creator_id(item_type_id):
+        item_map = get_mapping(item_type_id, "jpcoar_mapping")
+        creator = 'creator.creatorName.@value'
+        creator_id = None
+        if creator in item_map:
+            creator_id = item_map[creator].split('.')[0]
+        return creator_id
+
+    def item_type_show_email(item_type_id):
+        # Get flag of creator's email hide from item type.
+        creator_id = get_creator_id(item_type_id)
+        if not creator_id:
+            return None
+        item_type = ItemTypes.get_by_id(item_type_id)
+        schema_editor = item_type.render.get('schemaeditor', {})
+        schema = schema_editor.get('schema', {})
+        creator = schema.get(creator_id)
+        if not creator:
+            return None
+        properties = creator.get('properties', {})
+        creator_mails = properties.get('creatorMails', {})
+        items = creator_mails.get('items', {})
+        properties = items.get('properties', {})
+        creator_mail = properties.get('creatorMail', {})
+        is_hide = creator_mail.get('isHide', None)
+        return is_hide
+
+    is_hide = item_type_show_email(item_type_id)
+    is_display = item_setting_show_email()
+
+    return not is_hide and is_display
 
 def replace_license_free(record_metadata, is_change_label=True):
     """Change the item name 'licensefree' to 'license_note'.

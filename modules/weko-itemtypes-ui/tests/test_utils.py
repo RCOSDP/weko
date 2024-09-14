@@ -95,7 +95,6 @@ def test_parse_required_item_in_schema():
     }
     result = parse_required_item_in_schema(data)
     assert result == None
-    assert 1==2
     
 # def helper_remove_empty_enum(data):
 # .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_utils.py::test_helper_remove_empty_enum -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp

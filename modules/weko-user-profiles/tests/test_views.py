@@ -24,10 +24,14 @@
 """Tests for user profile views."""
 
 from flask import url_for, json,make_response, current_app, g, jsonify
+from mock import patch
 from flask_breadcrumbs import current_breadcrumbs
+from flask._compat import text_type
+from flask.json import JSONEncoder as BaseEncoder
 from flask_security import url_for_security
 from flask_menu import current_menu
 from flask_login import login_user
+from speaklater import _LazyString
 
 from invenio_accounts.models import User
 from invenio_accounts.testutils import login_user_via_session
@@ -46,6 +50,13 @@ from weko_user_profiles.views import (
     )
 
 from tests.helpers import login, sign_up
+
+class TestJSONEncoder(BaseEncoder):
+    def default(self, o):
+        if isinstance(o, _LazyString):
+            return text_type(o)
+
+        return BaseEncoder.default(self, o)
 
 
 def prefix(name, data):
@@ -330,68 +341,72 @@ def test_userprofile(db,users,user_profiles):
 # def get_profile_info():
 # .tox/c1/bin/pytest --cov=weko_user_profiles tests/test_views.py::test_get_profile_info -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-user-profiles/.tox/c1/tmp
 def test_get_profile_info(client,app,admin_app,register_bp,users,mocker):
-    url = url_for("weko_user_profiles_api_init.get_profile_info")
+    with patch("sqlalchemy.orm.scoping.scoped_session.remove", return_value=None):
+        url = url_for("weko_user_profiles_api_init.get_profile_info")
 
-    res = client.get(url)
-    assert json.loads(res.data) == {"positions":"","results":"","error":"'AnonymousUser' object has no attribute 'id'"}
-    login(app,client,obj=users[0]["obj"])
-    profile_info = {
-        "subitem_fullname":"test taro",
-        "subitem_displayname":"sysadmin user",
-        "subitem_user_name":"sysadmin",
-        "subitem_university/institution":"test university",
-        "subitem_affiliated_division/department":"test department",
-        "subitem_position":"test position",
-        "subitem_phone_number":"123-4567",
-        "subitem_position(other)":"test other position",
-        "subitem_affiliated_institution":[
-            {"subitem_affiliated_institution_name":"test institute","subitem_affiliated_institution_position":"test institute position"},
-            {"subitem_affiliated_institution_name":"test institute2","subitem_affiliated_institution_position":"test institute position2"},
-        ],
-        'subitem_mail_address': 'sysadmin@test.org',
-    }
-    test = {
-        "results":profile_info,
-        "positions":WEKO_USERPROFILES_POSITION_LIST,
-        "error":""
-    }
-    mocker.patch("weko_user_profiles.views.get_user_profile_info",return_value=profile_info)
-    res = client.get(url)
-    assert json.loads(res.data) == json.loads(jsonify(test).data)
+        res = client.get(url)
+        assert json.loads(res.data) == {"positions":"","results":"","error":"'AnonymousUser' object has no attribute 'id'"}
+
+        with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
+            profile_info = {
+                "subitem_fullname":"test taro",
+                "subitem_displayname":"sysadmin user",
+                "subitem_user_name":"sysadmin",
+                "subitem_university/institution":"test university",
+                "subitem_affiliated_division/department":"test department",
+                "subitem_position":"test position",
+                "subitem_phone_number":"123-4567",
+                "subitem_position(other)":"test other position",
+                "subitem_affiliated_institution":[
+                    {"subitem_affiliated_institution_name":"test institute","subitem_affiliated_institution_position":"test institute position"},
+                    {"subitem_affiliated_institution_name":"test institute2","subitem_affiliated_institution_position":"test institute position2"},
+                ],
+                'subitem_mail_address': 'sysadmin@test.org',
+            }
+            test = {
+                "results":profile_info,
+                "positions":WEKO_USERPROFILES_POSITION_LIST,
+                "error":""
+            }
+            mocker.patch("weko_user_profiles.views.get_user_profile_info",return_value=profile_info)
+            app.json_encoder = TestJSONEncoder
+            res = client.get(url)
+            assert json.loads(res.data) == json.loads(jsonify(test).data)
 
 
 # def profile():
 # .tox/c1/bin/pytest --cov=weko_user_profiles tests/test_views.py::test_profile -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-user-profiles/.tox/c1/tmp
 def test_profile(client,register_bp,users,mocker):
-    url = url_for("weko_user_profiles.profile")
-    # no login
-    res = client.get(url)
-    assert res.status_code == 302
-    login_user_via_session(client=client,email=users[0]["email"])
+    with patch("sqlalchemy.orm.scoping.scoped_session.remove", return_value=None):
+        url = url_for("weko_user_profiles.profile")
+        # no login
+        res = client.get(url)
+        assert res.status_code == 302
+        login_user_via_session(client=client,email=users[0]["email"])
 
-    mocker.patch("weko_user_profiles.views.profile_form_factory")
-    mocker.patch("weko_user_profiles.views.render_template",return_value=make_response())
-    mock_profile = mocker.patch("weko_user_profiles.views.handle_profile_form")
-    mock_verification = mocker.patch("weko_user_profiles.views.handle_verification_form")
-    
-    # not submit
-    client.post(url,data={})
-    mock_profile.assert_not_called()
-    mock_verification.assert_not_called()
-    
-    # submit is profile
-    client.post(url,data={"submit":"profile"})
-    mock_profile.assert_called_once()
-    
-    # submit is verification
-    client.post(url,data={"submit":"verification"})
-    mock_verification.assert_called_once()
-    
-    # check submenu, breadcrumbs
-    assert current_menu.submenu("settings.profile").active == True
-    assert current_menu.submenu("settings.profile").url == "/account/settings/profile/"
-    assert current_menu.submenu("settings.profile").text == '<i class="fa fa-user fa-fw"></i> Profile'
-    assert list(map(lambda x:x.url,list(current_breadcrumbs))) == ["#","#","#","/account/settings/profile/"]
+        mocker.patch("weko_user_profiles.views.profile_form_factory")
+        mocker.patch("weko_user_profiles.views.render_template",return_value=make_response())
+        mock_profile = mocker.patch("weko_user_profiles.views.handle_profile_form")
+        mock_verification = mocker.patch("weko_user_profiles.views.handle_verification_form")
+
+        # not submit
+        client.post(url,data={})
+        mock_profile.assert_not_called()
+        mock_verification.assert_not_called()
+
+        # submit is profile
+        client.post(url,data={"submit":"profile"})
+        mock_profile.assert_called_once()
+
+        # submit is verification
+        client.post(url,data={"submit":"verification"})
+        mock_verification.assert_called_once()
+
+        # check submenu, breadcrumbs
+        assert current_menu.submenu("settings.profile").active == True
+        assert current_menu.submenu("settings.profile").url == "/account/settings/profile/"
+        assert current_menu.submenu("settings.profile").text == '<i class="fa fa-user fa-fw"></i> Profile'
+        assert list(map(lambda x:x.url,list(current_breadcrumbs))) == ["#","#","#","/account/settings/profile/"]
 
 
 # def profile_form_factory():

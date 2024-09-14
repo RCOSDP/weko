@@ -572,14 +572,14 @@ class Indexes(object):
                 save_index_trees_to_redis(tree)
         else:
             tree = cls.get_index_tree(pid)
-        reset_tree(tree=tree)
+        reset_tree(tree)
         return tree
 
     @classmethod
     def get_more_browsing_tree(cls, pid=0, more_ids=[]):
         """Get more browsing tree."""
         tree = cls.get_index_tree(pid)
-        reset_tree(tree=tree, more_ids=more_ids)
+        reset_tree(tree, more_ids=more_ids)
         return tree
 
     @classmethod
@@ -599,7 +599,7 @@ class Indexes(object):
                 save_index_trees_to_redis(tree)
         else:
             tree = cls.get_index_tree(pid)
-        reset_tree(tree=tree, ignore_more=True)
+        reset_tree(tree, ignore_more=True)
         return tree
 
     @classmethod
@@ -625,9 +625,9 @@ class Indexes(object):
         record = WekoRecord.get_record_by_pid(pid)
         tree = cls.get_index_tree(root_node_id)
         if record.get('_oai'):
-            reset_tree(tree=tree, path=record.get('path'))
+            reset_tree(tree, path=record.get('path'))
         else:
-            reset_tree(tree=tree, path=[])
+            reset_tree(tree, path=[])
 
         return tree
 
@@ -670,7 +670,7 @@ class Indexes(object):
             if isinstance(role, list):
                 while role:
                     tmp = role.pop(0)
-                    if 'Administrator' not in tmp["name"] or not browse_flag:
+                    if tmp["name"] not in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']:
                         if str(tmp["id"]) in allow:
                             alw.append(tmp)
                         else:
@@ -847,7 +847,7 @@ class Indexes(object):
             recursive_t = cls.recs_query()
             query = db.session.query(recursive_t).filter(db.or_(
                 recursive_t.c.cid == index_id, recursive_t.c.pid == index_id))
-            if not get_user_roles()[0]:
+            if not get_user_roles(is_super_role=True)[0]:
                 query = query.filter(recursive_t.c.public_state)
             q = query.order_by(recursive_t.c.path).all()
             lst = list()
@@ -864,7 +864,7 @@ class Indexes(object):
             query = db.session.query(recursive_t).filter(
                 db.or_(recursive_t.c.pid == index_id,
                        recursive_t.c.cid == index_id))
-            if not get_user_roles()[0]:
+            if not get_user_roles(is_super_role=True)[0]:
                 query = query.filter(recursive_t.c.public_state)
             q = query.order_by(recursive_t.c.path).all()
             return q
@@ -1612,7 +1612,7 @@ class Indexes(object):
         query = db.session.query(recursive_t).filter(
             db.or_(recursive_t.c.pid == index_id,
                    recursive_t.c.cid == index_id))
-        if not get_user_roles()[0]:
+        if not get_user_roles(is_super_role=True)[0]:
             query = query.filter(recursive_t.c.public_state)
         q = query.order_by(recursive_t.c.path).all()
         return q

@@ -1400,83 +1400,83 @@ xsd = {
             }
         }
     },
-    "custom:system_file": {
-        "type": {
-            "minOccurs": 0,
-            "maxOccurs": "unbounded"
-        },
-        "jpcoar:URI": {
-            "type": {
-                "minOccurs": 0,
-                "maxOccurs": 1,
-                "attributes": [
-                    {
-                        "name": "objectType",
-                        "ref": None,
-                        "use": "optional",
-                        "restriction": {
-                            "enumeration": [
-                                "abstract",
-                                "summary",
-                                "fulltext",
-                                "thumbnail",
-                                "other"
-                            ]
-                        }
-                    },
-                    {
-                        "name": "label",
-                        "ref": None,
-                        "use": "optional"
-                    }
-                ]
-            }
-        },
-        "jpcoar:mimeType": {
-            "type": {
-                "minOccurs": 0,
-                "maxOccurs": 1
-            }
-        },
-        "jpcoar:extent": {
-            "type": {
-                "minOccurs": 0,
-                "maxOccurs": "unbounded"
-            }
-        },
-        "datacite:date": {
-            "type": {
-                "minOccurs": 1,
-                "maxOccurs": "unbounded",
-                "attributes": [
-                    {
-                        "name": "dateType",
-                        "ref": None,
-                        "use": "required",
-                        "restriction": {
-                            "enumeration": [
-                                "Accepted",
-                                "Available",
-                                "Collected",
-                                "Copyrighted",
-                                "Created",
-                                "Issued",
-                                "Submitted",
-                                "Updated",
-                                "Valid"
-                            ]
-                        }
-                    }
-                ]
-            }
-        },
-        "datacite:version": {
-            "type": {
-                "minOccurs": 0,
-                "maxOccurs": 1
-            }
-        }
-    },
+    # "custom:system_file": {
+    #     "type": {
+    #         "minOccurs": 0,
+    #         "maxOccurs": "unbounded"
+    #     },
+    #     "jpcoar:URI": {
+    #         "type": {
+    #             "minOccurs": 0,
+    #             "maxOccurs": 1,
+    #             "attributes": [
+    #                 {
+    #                     "name": "objectType",
+    #                     "ref": None,
+    #                     "use": "optional",
+    #                     "restriction": {
+    #                         "enumeration": [
+    #                             "abstract",
+    #                             "summary",
+    #                             "fulltext",
+    #                             "thumbnail",
+    #                             "other"
+    #                         ]
+    #                     }
+    #                 },
+    #                 {
+    #                     "name": "label",
+    #                     "ref": None,
+    #                     "use": "optional"
+    #                 }
+    #             ]
+    #         }
+    #     },
+    #     "jpcoar:mimeType": {
+    #         "type": {
+    #             "minOccurs": 0,
+    #             "maxOccurs": 1
+    #         }
+    #     },
+    #     "jpcoar:extent": {
+    #         "type": {
+    #             "minOccurs": 0,
+    #             "maxOccurs": "unbounded"
+    #         }
+    #     },
+    #     "datacite:date": {
+    #         "type": {
+    #             "minOccurs": 1,
+    #             "maxOccurs": "unbounded",
+    #             "attributes": [
+    #                 {
+    #                     "name": "dateType",
+    #                     "ref": None,
+    #                     "use": "required",
+    #                     "restriction": {
+    #                         "enumeration": [
+    #                             "Accepted",
+    #                             "Available",
+    #                             "Collected",
+    #                             "Copyrighted",
+    #                             "Created",
+    #                             "Issued",
+    #                             "Submitted",
+    #                             "Updated",
+    #                             "Valid"
+    #                         ]
+    #                     }
+    #                 }
+    #             ]
+    #         }
+    #     },
+    #     "datacite:version": {
+    #         "type": {
+    #             "minOccurs": 0,
+    #             "maxOccurs": 1
+    #         }
+    #     }
+    # },
     "jpcoar:publisher_jpcoar": {
         "type": {
             "maxOccurs": "unbounded",

@@ -14,6 +14,7 @@ import shutil
 
 import sword3common
 from flask import Blueprint, current_app, jsonify, request, url_for
+from flask_login import current_user
 from invenio_deposit.scopes import write_scope
 from invenio_oauth2server.ext import verify_oauth_token_and_set_current_user
 from invenio_oauth2server.provider import oauth2
@@ -192,7 +193,7 @@ def post_service_document():
         if check_result.get('error'):
             errorType = ErrorType.ServerError
             check_result_msg = check_result.get('error')
-        elif item.get('errors'):
+        elif item and item.get('errors'):
             errorType = ErrorType.ContentMalformed
             check_result_msg = ', '.join(item.get('errors'))
         else:
@@ -208,7 +209,17 @@ def post_service_document():
     item["root_path"] = data_path+"/data"
     
     # import item
-    import_result = import_items_to_system(item, None)
+    owner = -1
+    if current_user.is_authenticated:
+        owner = current_user.id
+    request_info = {
+            "remote_addr": request.remote_addr,
+            "referrer": request.referrer,
+            "hostname": request.host,
+            "user_id": owner,
+            "action": "IMPORT"
+    }
+    import_result = import_items_to_system(item, request_info=request_info)
     if not import_result.get('success'):
         raise WekoSwordserverException('Error in import_items_to_system: {0}'.format(item.get('error_id')), ErrorType.ServerError)
     

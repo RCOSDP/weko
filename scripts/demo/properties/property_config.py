@@ -163,14 +163,14 @@ SPECIFIED_LIST = [
 # e.g.: SPECIFIED_LIST = [3020, 3021] or SPECIFIED_LIST = [PUBLISHED_DATE, SUMMARY]
 
 DEFAULT_MAPPING = {
-    "display_lang_type": None,
-    "jpcoar_v1_mapping": None,
-    "jpcoar_mapping": None,
-    "junii2_mapping": None,
-    "lido_mapping": None,
-    "lom_mapping": None,
-    "oai_dc_mapping": None,
-    "spase_mapping": None,
+    "display_lang_type": "",
+    "jpcoar_v1_mapping": "",
+    "jpcoar_mapping": "",
+    "junii2_mapping": "",
+    "lido_mapping": "",
+    "lom_mapping": "",
+    "oai_dc_mapping": "",
+    "spase_mapping": "",
 }
 
 LANGUAGE_VAL2_1 = [
@@ -948,7 +948,7 @@ RELATION_ID_TYPE_LBL = [
     "PISSN",
     "EISSN",
     "ISSN【非推奨】",
-    "NAID",
+    "NAID【非推奨】",
     "NCID",
     "PMID【現在不使用】",
     "PURL",
