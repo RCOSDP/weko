@@ -12,9 +12,10 @@ jobs:
         ports:
           - "5432:5432"
         env:
-          SQLALCHEMY_DATABASE_URI: postgresql+psycopg2://invenio:dbpass123@localhost:5432/wekotest
           POSTGRES_USER: invenio
           POSTGRES_PASSWORD: dbpass123
+    env:
+      SQLALCHEMY_DATABASE_URI: postgresql+psycopg2://invenio:dbpass123@localhost:5432/wekotest
     strategy:
       fail-fast: false
       matrix:
