@@ -10,8 +10,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Build
-        run: docker-compose build
+        run: docker compose build
       - name: Start
-        run: docker-compose up -d
+        run: docker compose up -d
       - name: Container status
-        run: docker-compose ps
+        run: docker compose ps
