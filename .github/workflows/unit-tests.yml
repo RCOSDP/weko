@@ -7,12 +7,12 @@ jobs:
     name: Test
     runs-on: ubuntu-20.04
     services:
-      postgresql:
+      postgres:
         image: postgres:13
         ports:
           - "5432:5432"
         env:
-          POSTGRES_DB: wekotest
+          SQLALCHEMY_DATABASE_URI: postgresql+psycopg2://invenio:dbpass123@localhost:5432/wekotest
           POSTGRES_USER: invenio
           POSTGRES_PASSWORD: dbpass123
     strategy:
