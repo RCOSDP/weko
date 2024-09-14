@@ -6,6 +6,15 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-20.04
+    services:
+      postgresql:
+        image: postgres:13
+        ports:
+          - "5432:5432"
+        env:
+          POSTGRES_DB: wekotest
+          POSTGRES_USER: invenio
+          POSTGRES_PASSWORD: dbpass123
     strategy:
       fail-fast: false
       matrix:
