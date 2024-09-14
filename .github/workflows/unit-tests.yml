@@ -25,6 +25,7 @@ jobs:
     env:
       SQLALCHEMY_DATABASE_URI: postgresql+psycopg2://invenio:dbpass123@localhost:5432/wekotest
       SEARCH_ELASTIC_HOSTS: localhost
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
