@@ -18,6 +18,10 @@ jobs:
         image: elasticsearch:6.8.23
         ports:
           - 9200:9200
+      rabbitmq:
+        image: rabbitmq:latest
+        ports:
+          - 5672:5672
     env:
       SQLALCHEMY_DATABASE_URI: postgresql+psycopg2://invenio:dbpass123@localhost:5432/wekotest
       SEARCH_ELASTIC_HOSTS: localhost
