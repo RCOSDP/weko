@@ -26,9 +26,7 @@ def test_create_page(create_app,mocker):
 
 # .tox/c1/bin/pytest --cov=weko_sitemap tests/test_ext.py::test_load_page -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-sitemap/.tox/c1/tmp
 def test_load_page(create_app,mocker):
-    app = create_app(CACHE_REDIS_URL='redis://redis:6379/0',
-        CACHE_REDIS_DB='0',
-        CACHE_REDIS_HOST="redis")
+    app = create_app()
     InvenioCache(app)
     with app.app_context():
         current_cache.set("sitemap_0001",{"page":"exist_test_page"})
@@ -40,9 +38,7 @@ def test_load_page(create_app,mocker):
 
 # .tox/c1/bin/pytest --cov=weko_sitemap tests/test_ext.py::test_clear_cache_pages -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-sitemap/.tox/c1/tmp
 def test_clear_cache_pages(create_app):
-    app = create_app(CACHE_REDIS_URL='redis://redis:6379/0',
-        CACHE_REDIS_DB='0',
-        CACHE_REDIS_HOST="redis")
+    app = create_app()
     InvenioCache(app)
     with app.app_context():
         current_cache.set("sitemap_page_keys",["key1","key2"])
@@ -58,9 +54,7 @@ def test_clear_cache_pages(create_app):
 
 # .tox/c1/bin/pytest --cov=weko_sitemap tests/test_ext.py::test_set_cache_page -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-sitemap/.tox/c1/tmp
 def test_set_cache_page(create_app):
-    app = create_app(CACHE_REDIS_URL='redis://redis:6379/0',
-        CACHE_REDIS_DB='0',
-        CACHE_REDIS_HOST="redis")
+    app = create_app()
     InvenioCache(app)
     with app.app_context():
         current_cache.set("sitemap_page_keys",{"key1","key2"})
@@ -74,9 +68,7 @@ def test_set_cache_page(create_app):
 
 # .tox/c1/bin/pytest --cov=weko_sitemap tests/test_ext.py::test_get_cache_page -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-sitemap/.tox/c1/tmp
 def test_get_cache_page(create_app):
-    app = create_app(CACHE_REDIS_URL='redis://redis:6379/0',
-        CACHE_REDIS_DB='0',
-        CACHE_REDIS_HOST="redis")
+    app = create_app()
     InvenioCache(app)
     with app.app_context():
         current_cache.set("sitemap_page_keys",{"key1","key2"})
@@ -84,9 +76,7 @@ def test_get_cache_page(create_app):
 
 # .tox/c1/bin/pytest --cov=weko_sitemap tests/test_ext.py::test_sitemap -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-sitemap/.tox/c1/tmp
 def test_sitemap(create_app, mocker):
-    app = create_app(CACHE_REDIS_URL='redis://redis:6379/0',
-        CACHE_REDIS_DB='0',
-        CACHE_REDIS_HOST="redis")
+    app = create_app()
     def mock_load():
         data = [
             {"loc":"https://localhost/weko/sitemaps/sitemap_1.xml.gz","lastmod":"2023-01-12T10:01:02+0000"},
@@ -104,9 +94,7 @@ def test_sitemap(create_app, mocker):
 
 # .tox/c1/bin/pytest --cov=weko_sitemap tests/test_ext.py::test_page -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-sitemap/.tox/c1/tmp
 def test_page(create_app, mocker):
-    app = create_app(CACHE_REDIS_URL='redis://redis:6379/0',
-        CACHE_REDIS_DB='0',
-        CACHE_REDIS_HOST="redis")
+    app = create_app()
     InvenioCache(app)
     with app.app_context():
         current_cache.set("sitemap_0001",{"page":"test_data"})
@@ -123,9 +111,7 @@ def test_page(create_app, mocker):
 def test_gzip_response(create_app):
     test_data = "test_data"
     
-    app = create_app(CACHE_REDIS_URL='redis://redis:6379/0',
-        CACHE_REDIS_DB='0',
-        CACHE_REDIS_HOST="redis")
+    app = create_app()
     InvenioCache(app)
     with app.app_context():
         result = current_app.extensions["weko-sitemap"].gzip_response(test_data)
@@ -143,9 +129,7 @@ def test_generate_all_item_urls(app,records):
     
 # .tox/c1/bin/pytest --cov=weko_sitemap tests/test_ext.py::test_load_cache_pages -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-sitemap/.tox/c1/tmp
 def test_load_cache_pages(create_app):
-    app = create_app(CACHE_REDIS_URL='redis://redis:6379/0',
-        CACHE_REDIS_DB='0',
-        CACHE_REDIS_HOST="redis")
+    app = create_app()
     InvenioCache(app)
     with app.app_context():
         with app.test_request_context():
