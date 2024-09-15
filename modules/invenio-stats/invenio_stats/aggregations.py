@@ -288,8 +288,7 @@ class StatAggregator(object):
                 for destination, source in self.copy_fields.items():
                     if isinstance(source, str):
                         if source == 'root_file_id' and source not in doc:
-                            if 'file_id' in doc:
-                                aggregation_data[destination] = doc[source]
+                            aggregation_data[destination] = doc.get('file_id', '')
                         else:
                             aggregation_data[destination] = doc.get(source, '')
                     else:
@@ -327,8 +326,8 @@ class StatAggregator(object):
             end_date = end_date.replace(tzinfo=None)
 
         return min(
-            end_date or datetime.max,  
-            datetime.now().replace(tzinfo=None) 
+            end_date or datetime.max,
+            datetime.now().replace(tzinfo=None)
         )
 
     def run(self, start_date=None, end_date=None, update_bookmark=True, manual=False):
@@ -392,18 +391,17 @@ class StatAggregator(object):
             aggs_query = aggs_query.filter("range", timestamp=range_args)
 
         def _delete_actions():
-            for query in aggs_query:
-                affected_indices = set()
-                for doc in query.scan():
-                    affected_indices.add(doc.meta.index)
-                    yield {
-                        "_index": doc.meta.index,
-                        "_op_type": "delete",
-                        "_id": doc.meta.id,
-                    }
-                current_search_client.indices.flush(
-                    index=",".join(affected_indices), wait_if_ongoing=True
-                )
+            affected_indices = set()
+            for doc in aggs_query.scan():
+                affected_indices.add(doc.meta.index)
+                yield {
+                    "_index": doc.meta.index,
+                    "_op_type": "delete",
+                    "_id": doc.meta.id,
+                }
+            current_search_client.indices.flush(
+                index=",".join(affected_indices), wait_if_ongoing=True
+            )
 
         bookmark_query = StatsBookmark.query.filter_by(source_id=self.name)
 

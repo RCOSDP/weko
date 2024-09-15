@@ -342,3 +342,5 @@ yarl==1.9.11
 zipp==3.20.1
 zipstream-ng==1.7.1
 zope.interface==5.5.2
+humanize
+freezegun
