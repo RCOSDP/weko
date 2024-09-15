@@ -705,6 +705,9 @@ def handle_check_required_data(mapping_data, mapping_key):
         _requirements = check_required_data(value, key, True)
         if _requirements:
             requirements.extend(_requirements)
+        else:
+            requirements = []
+            break
 
     return requirements, keys, values
 
@@ -1881,7 +1884,6 @@ def handle_finish_workflow(deposit, current_pid, recid):
                     item_id=item_id,
                     feedback_maillist=feedback_mail_list
                 )
-                ver_attaching_deposit.update_feedback_mail()
             ver_attaching_deposit.publish()
 
             weko_record = WekoRecord.get_record_by_pid(new_deposit.pid.pid_value)
@@ -1917,7 +1919,6 @@ def handle_finish_workflow(deposit, current_pid, recid):
                     new_parent_record = maintain_deposit. \
                         merge_data_to_record_without_version(current_pid, True)
                     maintain_deposit.publish()
-                    new_parent_record.update_feedback_mail()
                     new_parent_record.commit()
                     updated_item.publish(new_parent_record)
                     # update item link info of main record
@@ -1936,7 +1937,6 @@ def handle_finish_workflow(deposit, current_pid, recid):
                     new_draft_record = draft_deposit. \
                         merge_data_to_record_without_version(current_pid)
                     draft_deposit.publish()
-                    new_draft_record.update_feedback_mail()
                     new_draft_record.commit()
                     updated_item.publish(new_draft_record)
                     # update item link info of draft record
@@ -1950,7 +1950,6 @@ def handle_finish_workflow(deposit, current_pid, recid):
                     pid_without_ver.pid_value)
                 if weko_record:
                     weko_record.update_item_link(current_pid.pid_value)
-                parent_record.update_feedback_mail()
                 parent_record.commit()
                 updated_item.publish(parent_record)
                 if ".0" in current_pid.pid_value and last_ver:
@@ -2016,10 +2015,12 @@ def check_an_item_is_locked(item_id=None):
                     return True
         return False
 
-    if not item_id or not inspect().ping():
+    _timeout = current_app.config.get("CELERY_GET_STATUS_TIMEOUT", 3.0)
+    if not item_id or not inspect(timeout=_timeout).ping():
         return False
 
-    return check(inspect().active()) or check(inspect().reserved())
+    return check(inspect(timeout=_timeout).active()) or \
+        check(inspect(timeout=_timeout).reserved())
 
 
 def get_account_info(user_id):
@@ -4468,3 +4469,23 @@ def grant_access_rights_to_all_open_restricted_files(activity_id :str ,permissio
 
     #url_and_expired_date of a applyed content.
     return url_and_expired_date
+
+def delete_lock_activity_cache(activity_id, data):
+    cache_key = 'workflow_locked_activity_{}'.format(activity_id)
+    locked_value = str(data.get('locked_value'))
+    msg = None
+    cur_locked_val = str(get_cache_data(cache_key)) or str()
+    if cur_locked_val and cur_locked_val == locked_value:
+        delete_cache_data(cache_key)
+        msg = _('Unlock success')
+    return msg
+
+def delete_user_lock_activity_cache(activity_id, data):
+    cache_key = "workflow_userlock_activity_{}".format(str(current_user.get_id()))
+    cur_locked_val = str(get_cache_data(cache_key)) or str()
+    msg = _("Not unlock")
+
+    if cur_locked_val and not data["is_opened"] or (cur_locked_val == activity_id):
+        delete_cache_data(cache_key)
+        msg = "User Unlock Success"
+    return msg
