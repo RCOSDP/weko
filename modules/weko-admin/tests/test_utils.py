@@ -1596,7 +1596,7 @@ def test_get_restricted_access(client,admin_settings):
     }
     with patch("weko_admin.utils.AdminSettings.get",return_value=None):
         result = get_restricted_access("not exist key")
-        assert result == None
+        assert result == {}
     
     # not key
     result = get_restricted_access("")

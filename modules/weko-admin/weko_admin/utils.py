@@ -1725,7 +1725,7 @@ def get_restricted_access(key: Optional[str] = None) -> Optional[dict]:
         return restricted_access
     elif key in restricted_access:
         return restricted_access[key]
-    return None
+    return {}
 
 
 def update_restricted_access(restricted_access: dict):
