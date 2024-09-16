@@ -1305,7 +1305,7 @@ def create_onetime_download_url(
     :return:
     """
     content_file_download = get_restricted_access('content_file_download')
-    if isinstance(content_file_download, dict):
+    if content_file_download and isinstance(content_file_download, dict):
         expiration_date = content_file_download.get("expiration_date", 30)
         download_limit = content_file_download.get("download_limit", 10)
         extra_info = dict(
@@ -1369,13 +1369,14 @@ def get_terms():
     terms_result = [{'id': 'term_free', 'name': _('Free Input')}]
     terms_list = get_restricted_access('terms_and_conditions')
     current_lang = current_i18n.language
-    for term in terms_list:
-        terms_result.append(
-            {'id': term.get("key"), "name": term.get("content", {}).
-                get(current_lang, "en").get("title", ""),
-                "content": term.get("content", {}).
-                get(current_lang, "en").get("content", "")}
-        )
+    if terms_list and isinstance(terms_list, list):
+        for term in terms_list:
+            terms_result.append(
+                {'id': term.get("key"), "name": term.get("content", {}).
+                    get(current_lang, "en").get("title", ""),
+                    "content": term.get("content", {}).
+                    get(current_lang, "en").get("content", "")}
+            )
     return terms_result
 
 
@@ -1916,8 +1917,8 @@ def _create_secret_download_url(file_name: str, record_id: str, user_mail: str) 
     """
     secret_url_file_download:dict = get_restricted_access('secret_URL_file_download')
         
-    expiration_date = secret_url_file_download.get("secret_expiration_date")
-    download_limit = secret_url_file_download.get("secret_download_limit")
+    expiration_date = secret_url_file_download.get("secret_expiration_date", 30)
+    download_limit = secret_url_file_download.get("secret_download_limit", 10)
 
     file_secret = FileSecretDownload.create(**{
         "file_name": file_name,
