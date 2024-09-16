@@ -1248,10 +1248,13 @@ class RestrictedAccessSettingView(BaseView):
 
     @expose('/', methods=['GET', 'POST'])
     def index(self):
+        _restricted_access = get_restricted_access()
+        _restricted_access["restricted_access_display_flag"] = current_app.config[
+            "WEKO_ADMIN_RESTRICTED_ACCESS_DISPLAY_FLAG"]
         return self.render(
             current_app.config[
                 "WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS_TEMPLATE"],
-            data=json.dumps(get_restricted_access()),
+            data=json.dumps(_restricted_access),
             items_per_page=current_app.config[
                 "WEKO_ADMIN_ITEMS_PER_PAGE_USAGE_REPORT_REMINDER"],
             maxint=current_app.config["WEKO_ADMIN_RESTRICTED_ACCESS_MAX_INTEGER"]
