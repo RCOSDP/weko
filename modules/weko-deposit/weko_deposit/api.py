@@ -62,8 +62,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.attributes import flag_modified
 from weko_admin.models import AdminSettings
 from weko_index_tree.api import Indexes
-from weko_records.api import FeedbackMailList, ItemLink, ItemsMetadata, \
-    ItemTypes
+from weko_records.api import ItemLink, ItemsMetadata, ItemTypes,FeedbackMailList
 from weko_records.models import ItemMetadata, ItemReference
 from weko_records.utils import get_all_items, get_attribute_value_all_items, \
     get_options_and_order_list, json_loader, remove_weko2_special_character, \
@@ -325,21 +324,37 @@ class WekoIndexer(RecordIndexer):
                                           body=search_query)
         return search_result.get('count')
 
-    def get_pid_by_es_scroll(self, path):
+    def get_pid_by_es_scroll(self, path, only_latest_version=False):
         """Get pid by es scroll.
 
         :param path:
+        :param only_latest_version:
         :return: _scroll_id
         """
         search_query = {
             "query": {
-                "match": {
-                    "path.tree": path
+                "bool": {
+                    "must": [
+                        {
+                            "match": {
+                                "path.tree": path
+                            }
+                        }
+                    ]
                 }
             },
             "_source": "_id",
             "size": 3000
         }
+
+        if only_latest_version:
+            search_query["query"]["bool"]["must"].append(
+                {
+                    "match": {
+                        "relation_version_is_last": "true"
+                    }
+                }
+            )
 
         def get_result(result):
             if result:
@@ -970,15 +985,6 @@ class WekoDeposit(Deposit):
                         for content in self.jrc['content']:
                             if 'attachment' in content and 'content' in content.get('attachment'):
                                 del content['attachment']['content']
-            
-                try:
-                    feedback_mail_list = FeedbackMailList.get_mail_list_by_item_id(self.id)
-                    if feedback_mail_list:
-                        self.update_feedback_mail()
-                    else:
-                        self.remove_feedback_mail()
-                except TransportError as err:    
-                    raise err
 
                 # Remove large base64 files for release memory
                 if self.jrc.get('content'):
@@ -1580,7 +1586,6 @@ class WekoDeposit(Deposit):
             index_id (str): index_id
             ignore_items (list):
                 list of items that will be ingnored, therefore will not be deleted
-        
 
         Returns:
             None
@@ -1590,19 +1595,21 @@ class WekoDeposit(Deposit):
         """
         if index_id:
             index_id = str(index_id)
-        obj_ids = next((cls.indexer.get_pid_by_es_scroll(index_id)), [])
+        obj_ids = next((cls.indexer.get_pid_by_es_scroll(index_id, only_latest_version=True)), [])
+        removed_records = []
         for obj_uuid in obj_ids:
             r = RecordMetadata.query.filter_by(id=obj_uuid).first()
-            if r.json['recid'].split('.')[0] in ignore_items:
+            if r.json['recid'] in ignore_items:
                 continue
             r.json['path'].remove(index_id)
             flag_modified(r, 'json')
             if r.json and not r.json['path']:
                 from weko_records_ui.utils import soft_delete
                 soft_delete(obj_uuid)
-            else:
-                dep = WekoDeposit(r.json, r)
-                dep.indexer.update_es_data(dep, update_revision=False)
+                removed_records.append(r)
+        for r in removed_records:
+            dep = WekoDeposit(r.json, r)
+            dep.indexer.update_es_data(dep, update_revision=False)
 
     def update_pid_by_index_tree_id(self, path):
         """ 
@@ -1693,27 +1700,6 @@ class WekoDeposit(Deposit):
                 "author_link": author_link
             }
             self.indexer.update_author_link(author_link_info)
-
-    def update_feedback_mail(self):
-        """ 
-
-        Index feedback mail list.
-
-        Args:
-            None
-
-        Returns:
-            None
-
-        """
-        item_id = self.id
-        mail_list = FeedbackMailList.get_mail_list_by_item_id(item_id)
-        if mail_list:
-            feedback_mail = {
-                "id": item_id,
-                "mail_list": mail_list
-            }
-            self.indexer.update_feedback_mail_list(feedback_mail)
 
     def remove_feedback_mail(self):
         """ 

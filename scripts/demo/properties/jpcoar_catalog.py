@@ -126,10 +126,10 @@ def schema(title="", multi_flag=multiple_flag):
                                 "format": "select",
                                 "enum": ["HostingInstitution"],
                                 "currentEnum": ["HostingInstitution"],
-                                "title": "Contributor Type",
+                                "title": "Hosting Institution Type",
                                 "title_i18n": {
                                     "ja": "提供機関タイプ",
-                                    "en": "Contributor Type",
+                                    "en": "Hosting Institution Type",
                                 },
                             },
                             "contributor_names": {
@@ -142,10 +142,10 @@ def schema(title="", multi_flag=multiple_flag):
                                         "contributor_name": {
                                             "type": "string",
                                             "format": "text",
-                                            "title": "Contributor Name",
+                                            "title": "Hosting Institution Name",
                                             "title_i18n": {
                                                 "ja": "提供機関名",
-                                                "en": "Contributor Name",
+                                                "en": "Hosting Institution Name",
                                             },
                                         },
                                         "contributor_name_language": {
@@ -161,11 +161,11 @@ def schema(title="", multi_flag=multiple_flag):
                                         },
                                     },
                                 },
-                                "title": "Contributor Name",
+                                "title": "Hosting Institution Name",
                             },
                         },
                     },
-                    "title": "Contributor",
+                    "title": "Hosting Institution",
                 },
                 "catalog_identifiers": {
                     "type": "array",
@@ -218,42 +218,46 @@ def schema(title="", multi_flag=multiple_flag):
                     "title": "Title",
                 },
                 "catalog_descriptions": {
-                    "type": "object",
-                    "format": "object",
-                    "properties": {
-                        "catalog_description": {
-                            "type": "string",
-                            "format": "text",
-                            "title": "Description",
-                            "title_i18n": {"ja": "内容記述", "en": "Description"},
-                        },
-                        "catalog_description_language": {
-                            "type": "string",
-                            "format": "select",
-                            "enum": config.LANGUAGE_VAL2_1,
-                            "currentEnum": config.LANGUAGE_VAL2_1,
-                            "title": "Language",
-                            "title_i18n": {"ja": "言語", "en": "Language"},
-                        },
-                        "catalog_description_type": {
-                            "type": "string",
-                            "format": "select",
-                            "enum": [
-                                "Abstract",
-                                "Methods",
-                                "TableOfContents",
-                                "TechnicalInfo",
-                                "Other",
-                            ],
-                            "currentEnum": [
-                                "Abstract",
-                                "Methods",
-                                "TableOfContents",
-                                "TechnicalInfo",
-                                "Other",
-                            ],
-                            "title": "Description Type",
-                            "title_i18n": {"ja": "内容記述タイプ", "en": "Description Type"},
+                    "type": "array",
+                    "format": "array",
+                    "items": {
+                        "type": "object",
+                        "format": "object",
+                        "properties": {
+                            "catalog_description": {
+                                "type": "string",
+                                "format": "text",
+                                "title": "Description",
+                                "title_i18n": {"ja": "内容記述", "en": "Description"},
+                            },
+                            "catalog_description_language": {
+                                "type": "string",
+                                "format": "select",
+                                "enum": config.LANGUAGE_VAL2_1,
+                                "currentEnum": config.LANGUAGE_VAL2_1,
+                                "title": "Language",
+                                "title_i18n": {"ja": "言語", "en": "Language"},
+                            },
+                            "catalog_description_type": {
+                                "type": "string",
+                                "format": "select",
+                                "enum": [
+                                    "Abstract",
+                                    "Methods",
+                                    "TableOfContents",
+                                    "TechnicalInfo",
+                                    "Other",
+                                ],
+                                "currentEnum": [
+                                    "Abstract",
+                                    "Methods",
+                                    "TableOfContents",
+                                    "TechnicalInfo",
+                                    "Other",
+                                ],
+                                "title": "Description Type",
+                                "title_i18n": {"ja": "内容記述タイプ", "en": "Description Type"},
+                            },
                         },
                     },
                     "title": "Description",
@@ -435,8 +439,8 @@ def schema(title="", multi_flag=multiple_flag):
                         "catalog_file_uri": {
                             "type": "string",
                             "format": "text",
-                            "title": "File URI",
-                            "title_i18n": {"ja": "ファイルURI", "en": "File URI"},
+                            "title": "Thumbnail URI",
+                            "title_i18n": {"ja": "代表画像URI", "en": "Thumbnail URI"},
                         },
                         "catalog_file_object_type": {
                             "type": "string",
@@ -447,7 +451,7 @@ def schema(title="", multi_flag=multiple_flag):
                             "title_i18n": {"ja": "オブジェクトタイプ", "en": "Object Type"},
                         },
                     },
-                    "title": "File",
+                    "title": "Thumbnail",
                 },
             },
         }
@@ -468,7 +472,8 @@ def form(
             "items": [
                 {
                     "key": "{}.catalog_contributors".format(key),
-                    "title": "Contributor",
+                    "title": "Hosting Institution",
+                    "title_i18n": {"ja": "提供機関", "en": "Hosting Institution"},
                     "add": "New",
                     "items": [
                         {
@@ -476,8 +481,8 @@ def form(
                                 key
                             ),
                             "type": "select",
-                            "title": "Contributor Type",
-                            "title_i18n": {"ja": "提供機関タイプ", "en": "Contributor Type"},
+                            "title": "Hosting Institution Type",
+                            "title_i18n": {"ja": "提供機関タイプ", "en": "Hosting Institution Type"},
                             "titleMap": [
                                 {
                                     "value": "HostingInstitution",
@@ -489,7 +494,8 @@ def form(
                             "key": "{}.catalog_contributors[].contributor_names".format(
                                 key
                             ),
-                            "title": "Contributor Name",
+                            "title": "Hosting Institution Name",
+                            "title_i18n": {"ja": "提供機関名", "en": "Hosting Institution Name"},
                             "add": "New",
                             "items": [
                                 {
@@ -497,10 +503,10 @@ def form(
                                         key
                                     ),
                                     "type": "text",
-                                    "title": "Contributor Name",
+                                    "title": "Hosting Institution Name",
                                     "title_i18n": {
                                         "ja": "提供機関名",
-                                        "en": "Contributor Name",
+                                        "en": "Hosting Institution Name",
                                     },
                                 },
                                 {
@@ -523,6 +529,7 @@ def form(
                 {
                     "key": "{}.catalog_identifiers".format(key),
                     "title": "Identifier",
+                    "title_i18n": {"ja": "識別子", "en": "Identifier"},
                     "add": "New",
                     "items": [
                         {
@@ -552,6 +559,7 @@ def form(
                 {
                     "key": "{}.catalog_titles".format(key),
                     "title": "Title",
+                    "title_i18n": {"ja": "タイトル", "en": "Title"},
                     "add": "New",
                     "style": {"add": "btn-success"},
                     "items": [
@@ -575,6 +583,7 @@ def form(
                 {
                     "key": "{}.catalog_descriptions".format(key),
                     "title": "Description",
+                    "title_i18n": {"ja": "内容記述", "en": "Description"},
                     "add": "New",
                     "style": {"add": "btn-success"},
                     "items": [
@@ -615,6 +624,7 @@ def form(
                 {
                     "key": "{}.catalog_subjects".format(key),
                     "title": "Subject",
+                    "title_i18n": {"ja": "主題", "en": "Subject"},
                     "add": "New",
                     "style": {"add": "btn-success"},
                     "items": [
@@ -669,6 +679,7 @@ def form(
                 {
                     "key": "{}.catalog_licenses".format(key),
                     "title": "License",
+                    "title_i18n": {"ja": "ライセンス", "en": "License"},
                     "add": "New",
                     "style": {"add": "btn-success"},
                     "items": [
@@ -713,6 +724,7 @@ def form(
                 {
                     "key": "{}.catalog_rights".format(key),
                     "title": "Rights",
+                    "title_i18n": {"ja": "アクセス権", "en": "Access Rights"},
                     "add": "New",
                     "style": {"add": "btn-success"},
                     "items": [
@@ -744,6 +756,7 @@ def form(
                 {
                     "key": "{}.catalog_access_rights".format(key),
                     "title": "Access Rights",
+                    "title_i18n": {"ja": "アクセス権", "en": "Access Rights"},
                     "add": "New",
                     "style": {"add": "btn-success"},
                     "items": [
@@ -783,13 +796,14 @@ def form(
                 {
                     "key": "{}.catalog_file".format(key),
                     "type": "fieldset",
-                    "title": "File",
+                    "title": "Thumbnail",
+                    "title_i18n": {"ja": "代表画像", "en": "Thumbnail"},
                     "items": [
                         {
                             "key": "{}.catalog_file.catalog_file_uri".format(key),
                             "type": "text",
-                            "title": "File URI",
-                            "title_i18n": {"ja": "ファイルURI", "en": "File URI"},
+                            "title": "Thumbnail URI",
+                            "title_i18n": {"ja": "代表画像URI", "en": "Thumbnail URI"},
                         },
                         {
                             "key": "{}.catalog_file.catalog_file_object_type".format(
