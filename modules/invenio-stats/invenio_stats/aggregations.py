@@ -142,7 +142,7 @@ class StatAggregator(object):
         self.query_modifiers = (
             query_modifiers if query_modifiers is not None else [filter_robots]
         )
-        self.bookmark_api = BookmarkAPI(self.client, self.name, self.interval)
+        self.bookmark_api = BookmarkAPI(self.name, self.interval)
         self.max_bucket_size = max_bucket_size
 
         self.bookmark_alias = prefix_index(f"stats-{event}-bookmark")
