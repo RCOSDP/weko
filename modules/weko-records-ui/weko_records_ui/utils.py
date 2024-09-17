@@ -703,11 +703,12 @@ def hide_by_file(item_metadata):
     return item_metadata
 
 
-def hide_by_email(item_metadata, force_flag=False):
+def hide_by_email(item_metadata, force_flag=False, item_type=None):
     """Hiding emails.
 
     :param item_metadata:
     :param force_flag: force to hide
+    :param item_type: item type data
     :return:
     """
     from weko_items_ui.utils import get_options_and_order_list, get_hide_list_by_schema_form
@@ -717,8 +718,13 @@ def hide_by_email(item_metadata, force_flag=False):
     item_type_id = item_metadata.get('item_type_id')
 
     if item_type_id:
-        meta_options, type_mapping = get_options_and_order_list(item_type_id)
-        hide_list = get_hide_list_by_schema_form(item_type_id)
+        hide_list = []
+        if item_type:
+            meta_options, type_mapping = get_options_and_order_list(
+                item_type_id, item_type_data=ItemTypes(item_type.schema, model=item_type))
+            hide_list = get_hide_list_by_schema_form(schemaform=item_type.render.get('table_row_map', {}).get('form', []))
+        else:
+            meta_options, type_mapping = get_options_and_order_list(item_type_id)
 
         # Hidden owners_ext info
         if item_metadata.get('_deposit') and \
@@ -786,26 +792,28 @@ def item_setting_show_email():
         is_display = False
     return is_display
 
-def is_show_email_of_creator(item_type_id):
+def is_show_email_of_creator(item_type_id, item_type=None):
     """Check setting show/hide email for 'Detail' and 'PDF Cover Page' screen.
 
     :param item_type_id: item type id of current record.
+    :param item_type: item type data
     :return: True/False, True: show, False: hide.
     """
-    def get_creator_id(item_type_id):
-        item_map = get_mapping(item_type_id, "jpcoar_mapping")
+    def get_creator_id(item_type_id, item_type):
+        item_map = get_mapping(item_type_id, "jpcoar_mapping", item_type=item_type)
         creator = 'creator.creatorName.@value'
         creator_id = None
         if creator in item_map:
             creator_id = item_map[creator].split('.')[0]
         return creator_id
 
-    def item_type_show_email(item_type_id):
+    def item_type_show_email(item_type_id, item_type):
         # Get flag of creator's email hide from item type.
-        creator_id = get_creator_id(item_type_id)
+        if not item_type:
+            item_type = ItemTypes.get_by_id(item_type_id)
+        creator_id = get_creator_id(item_type_id, item_type)
         if not creator_id:
             return None
-        item_type = ItemTypes.get_by_id(item_type_id)
         schema_editor = item_type.render.get('schemaeditor', {})
         schema = schema_editor.get('schema', {})
         creator = schema.get(creator_id)
@@ -819,7 +827,7 @@ def is_show_email_of_creator(item_type_id):
         is_hide = creator_mail.get('isHide', None)
         return is_hide
 
-    is_hide = item_type_show_email(item_type_id)
+    is_hide = item_type_show_email(item_type_id, item_type)
     is_display = item_setting_show_email()
 
     return not is_hide and is_display
@@ -856,10 +864,11 @@ def replace_license_free(record_metadata, is_change_label=True):
                         del attr[_license_free]
 
 
-def get_file_info_list(record):
+def get_file_info_list(record, item_type=None):
     """File Information of all file in record.
 
     :param record: all metadata of a record.
+    :param item_type: item type data
     :return: json files.
     """
     def get_file_size(p_file):
@@ -918,7 +927,7 @@ def get_file_info_list(record):
                 meta_data.get('attribute_type', '') == "file":
             file_metadata = meta_data.get("attribute_value_mlt", [])
             for f in file_metadata:
-                if check_file_download_permission(record, f, True)\
+                if check_file_download_permission(record, f, True, item_type=item_type)\
                         or is_open_restricted(f):
                     # Set default version_id.
                     f["version_id"] = f.get('version_id', '')

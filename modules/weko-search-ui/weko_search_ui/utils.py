@@ -1677,9 +1677,18 @@ def handle_item_title(list_record):
         
     for item in list_record:
         error = None
-        meta_option, item_type_mapping = get_options_and_order_list(item["item_type_id"])
-        hide_list = get_hide_list_by_schema_form(item["item_type_id"])
-        item_map = get_mapping(item["item_type_id"], "jpcoar_mapping")
+        item_type_id = item["item_type_id"]
+
+        item_type = ItemTypes.get_by_id(item_type_id)
+        hide_list = []
+        if item_type:
+            meta_option, item_type_mapping = get_options_and_order_list(
+                item_type_id, item_type_data=ItemTypes(item_type.schema, model=item_type))
+            hide_list = get_hide_list_by_schema_form(schemaform=item_type.render.get('table_row_map', {}).get('form', []))
+        else:
+            meta_option, item_type_mapping = get_options_and_order_list(item_type_id)
+        item_map = get_mapping(item_type_id, 'jpcoar_mapping', item_type=item_type)
+
         # current_app.logger.debug("item_type_mapping: {}".format(item_type_mapping))
         # current_app.logger.debug("item_map: {}".format(item_map))
         title_data, _title_key = get_data_by_property(
