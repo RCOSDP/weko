@@ -10,10 +10,7 @@
 
 from collections import OrderedDict
 from datetime import datetime, timedelta
-from functools import wraps
 import json
-from flask import current_app
-from invenio_search.engine import dsl, search
 from invenio_search.utils import prefix_index
 
 from .models import StatsBookmark
@@ -67,12 +64,11 @@ class BookmarkAPI(object):
 
     def get_bookmark(self, refresh_time=60):
         """Get last aggregation date."""
-        # retrieve the oldest bookmark
-        # db_bookmark = StatsBookmark.get_by_source_id(
-        #     source_id= self.agg_type
-        # ).order_by(StatsBookmark.date.desc()).first()        
-        db_bookmark = StatsBookmark.query.filter_by(source_id=self.agg_type).order_by(StatsBookmark.date.desc()).first()
-        
+        db_bookmark = (
+            StatsBookmark.query.filter_by(source_id=self.agg_type)
+            .order_by(StatsBookmark.date.desc()).first()
+        )
+
         if db_bookmark:
             source_date = json.loads(db_bookmark.source)['date']
             try:
@@ -92,7 +88,7 @@ class BookmarkAPI(object):
     def list_bookmarks(self, start_date=None, end_date=None, limit=None):
         """List bookmarks."""
         query = StatsBookmark.get_by_source_id(self.agg_type, start_date, end_date)
-        
+
         if query:
             query = sorted(query, key=lambda x: x.date, reverse=True)
 
