@@ -149,7 +149,11 @@ def base_app(instance_path, mock_gethostbyaddr):
     """Flask application fixture without InvenioStats."""
     app_ = Flask('testapp', instance_path=instance_path)
     stats_events = {
-        'file-download': deepcopy(STATS_EVENTS['file-download']),
+        'file-download': {
+            'signal': 'invenio_files_rest.signals.file_downloaded',
+            'event_builders': ['invenio_stats.contrib.event_builders.file_download_event_builder'],
+            'templates':'hoge'
+        },
         'record-view': {
             'signal': 'invenio_records_ui.signals.record_viewed',
             'event_builders': ['invenio_stats.contrib.event_builders'
@@ -232,14 +236,14 @@ def app(base_app):
         yield base_app
 
 
-@pytest.yield_fixture()
-def client(app):
-    app.register_blueprint(blueprint, url_prefix="/api/stats")
-    with app.test_client() as client:
+@pytest.yield_fixture(scope='function')
+def client(i18n_app):
+    i18n_app.register_blueprint(blueprint, url_prefix="/api/stats")
+    with i18n_app.test_client() as client:
         yield client
 
 
-@pytest.fixture()
+@pytest.fixture(scope='function')
 def role_users(app, db):
     """Create users."""
     ds = app.extensions["invenio-accounts"].datastore
@@ -557,7 +561,7 @@ def es(app):
     finally:
         current_search_client.indices.delete(index='test-*')
 
-@pytest.fixture()
+@pytest.fixture(scope='function')
 def db(app):
     with app.app_context():
         """Recreate db at each test that requires it."""
@@ -1070,7 +1074,7 @@ def esindex(app):
         mapping = json.load(f)
 
     with app.test_request_context():
-        client.indices.create(index=index_name, body=mapping, ignore=[400])
+        client.indices.create(index=index_name, body=mapping)
         client.indices.put_alias(index=index_name, name=alias_name)
 
     yield client
