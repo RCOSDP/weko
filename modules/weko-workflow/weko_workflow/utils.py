@@ -2023,6 +2023,30 @@ def check_an_item_is_locked(item_id=None):
         check(inspect(timeout=_timeout).reserved())
 
 
+def bulk_check_an_item_is_locked(item_ids=[]):
+    """Check bulk if an item is locked.
+
+    :param item_ids: Item id list.
+
+    :return list: Locked item id list.
+    """
+    _timeout = current_app.config.get("CELERY_GET_STATUS_TIMEOUT", 3.0)
+    if not item_ids or not inspect(timeout=_timeout).ping():
+        return []
+
+    item_ids = [str(item_id) for item_id in item_ids]
+    result = []
+    for state in ['active', 'reserved']:
+        workers = getattr(inspect(timeout=_timeout), state)()
+        for worker in workers:
+            for task in workers[worker]:
+                if task['name'] == 'weko_search_ui.tasks.import_item' \
+                        and task['args'][0].get('id') in item_ids:
+                    result.append(task['args'][0].get('id'))
+
+    return result
+
+
 def get_account_info(user_id):
     """Get account's info: email, username.
 

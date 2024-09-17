@@ -585,17 +585,14 @@ class ItemTypes(RecordBase):
         :param item_type_name: Item Type Name.
         :return: Record list.
         """
-        name = urllib.parse.quote_plus(item_type_name)
-        query_string = "itemtype:{}".format(
-            name)
+        from weko_search_ui.utils import execute_search_with_pagination
         result = []
         try:
             search = RecordsSearch(
                 index=current_app.config['SEARCH_UI_SEARCH_INDEX'])
-            search = search.query(QueryString(query=query_string))
+            search = search.query('term', **{"itemtype.keyword": item_type_name})
             search = search.sort('-publish_date', '-_updated')
-            search_result = search.execute().to_dict()
-            result = search_result.get('hits', {}).get('hits', [])
+            result = execute_search_with_pagination(search, -1)
         except NotFoundError as e:
             current_app.logger.debug("Indexes do not exist yet: ", str(e))
         return result
