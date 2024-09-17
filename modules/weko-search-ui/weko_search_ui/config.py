@@ -735,3 +735,12 @@ CELERY_TASK_TRACK_STARTED=True
 WEKO_SEARCH_UI_API_LIMIT_RATE_DEFAULT = ['100 per minute']
 
 WEKO_SEARCH_UI_RESULT_TMP_PREFIX = 'weko_search_result_list_'
+
+# Celery関連の設定
+CELERY_BROKER_URL = 'amqp://guest:guest@rabbitmq:5672//'
+CELERY_RESULT_BACKEND = 'redis://localhost'
+CELERY_ACCEPT_CONTENT = ['json', 'msgpack']
+
+# 他のFlaskの設定（例）
+SECRET_KEY = 'your_secret_key'
+DEBUG = True

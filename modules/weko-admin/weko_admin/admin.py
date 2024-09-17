@@ -26,6 +26,7 @@ import json
 import os
 import re
 import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 import unicodedata
 import ipaddress
 from datetime import datetime, timedelta
@@ -52,6 +53,8 @@ from weko_records_ui.utils import check_items_settings
 from weko_schema_ui.models import PublishStatus
 from wtforms.fields import StringField
 from wtforms.validators import ValidationError
+from .celery_app import create_celery_app
+
 
 
 from .config import WEKO_PIDSTORE_IDENTIFIER_TEMPLATE_CREATOR, \
@@ -65,6 +68,8 @@ from .utils import get_facet_search, get_item_mapping_list, \
 from .utils import get_user_report_data as get_user_report
 from .utils import package_reports, str_to_bool 
 from .tasks import is_reindex_running ,reindex
+
+celery_app = create_celery_app()
 
 
 class ReindexElasticSearchView(BaseView):

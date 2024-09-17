@@ -21,10 +21,15 @@
 """Task for sending scheduled report emails."""
 
 import os
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 import shutil
 from datetime import datetime, timedelta
 
 from celery import shared_task
+from weko_admin.celery_app import create_celery_app
+from weko_admin.celery_app import celery_app
+from celery.app.control import Inspect
 from celery.utils.log import get_task_logger
 from flask import current_app, render_template
 from flask_babel import gettext as _
@@ -46,7 +51,7 @@ from .config import WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS,\
 
 
 logger = get_task_logger(__name__)
-
+celery_app = create_celery_app()
 
 @shared_task(
     name = "weko_admin.tasks.reindex" 
@@ -88,28 +93,40 @@ def is_reindex_running():
     """Check reindex is running."""
     
     if not check_celery_is_run():
+        current_app.logger.error("Celeryが動作していません")
         return False
 
-    reserved = Inspect().reserved()
-    active = Inspect().active()
-    for worker in active:
-        for task in active[worker]:
-            current_app.logger.debug("active")
-            current_app.logger.debug(task)
-            if task["name"] == "weko_admin.tasks.reindex":
-                current_app.logger.info("weko_admin.tasks.reindex is active")
-                return True
+    try:
+        inspector = celery_app.control.inspect()
+        reserved = inspector.reserved()
+        active = inspector.active()
 
-    for worker in reserved:
-        for task in reserved[worker]:
-            current_app.logger.debug("reserved")
-            current_app.logger.debug(task)
-            if task["name"] == "weko_admin.tasks.reindex":
-                current_app.logger.info("weko_admin.tasks.reindex is reserved")
-                return True
+        if not reserved or not active:
+            current_app.logger.debug("Celeryの状態が取得できませんでした")
+            return False
+
+        for worker in active:
+            for task in active[worker]:
+                current_app.logger.debug("active")
+                current_app.logger.debug(task)
+                if task["name"] == "weko_admin.tasks.reindex":
+                    current_app.logger.info("weko_admin.tasks.reindex is active")
+                    return True
+
+        for worker in reserved:
+            for task in reserved[worker]:
+                current_app.logger.debug("reserved")
+                current_app.logger.debug(task)
+                if task["name"] == "weko_admin.tasks.reindex":
+                    current_app.logger.info("weko_admin.tasks.reindex is reserved")
+                    return True
+
+    except Exception as e:
+        current_app.logger.error(f"Celeryの確認中にエラー: {e}")
     
     current_app.logger.debug("weko_admin.tasks.reindex is not running")
     return False
+
 
 @shared_task(ignore_results=True)
 def send_all_reports(report_type=None, year=None, month=None):

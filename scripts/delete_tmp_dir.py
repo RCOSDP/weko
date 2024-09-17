@@ -8,8 +8,10 @@ import glob, re
 import redis
 from celery import Celery
 from celery.worker.control import inspect
+from weko_admin.celery_app import create_celery_app
 
 glob._ishidden = lambda x: False
+celery = create_celery_app()
 
 def get_tasks():
     """現在実行中、待機中のタスクの取得
@@ -32,8 +34,7 @@ def get_tasks():
     celery.conf.broker_url = CELERY_BROKER_URL
     celery.conf.result_backend = CELERY_RESULT_BACKEND
 
-    inspector = inspect()
-
+    inspector = celery.control.inspect()
     active_tasks = inspector.active()
     reserved_tasks = inspector.reserved()
     actives= []

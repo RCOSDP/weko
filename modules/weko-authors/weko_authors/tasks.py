@@ -24,6 +24,7 @@ from datetime import datetime
 from celery import shared_task, states
 from celery.result import GroupResult
 from celery.app.control import Inspect
+from weko_admin.tasks import celery_app
 from flask import current_app
 from weko_workflow.utils import delete_cache_data, get_cache_data
 
@@ -70,25 +71,27 @@ def import_author(author):
 
 def check_is_import_available(group_task_id=None):
     """Is import available."""
-    result = {
-        'is_available': True
-    }
+    inspector = celery_app.control.inspect()
 
-    if not Inspect().ping():
-        result['is_available'] = False
-        result['celery_not_run'] = True
-    else:
-        cache_data = get_cache_data(WEKO_AUTHORS_IMPORT_CACHE_KEY)
-        if cache_data:
-            task = GroupResult.restore(cache_data.get('group_task_id'))
-            if task:
-                if task.successful() or task.failed():
-                    delete_cache_data(WEKO_AUTHORS_IMPORT_CACHE_KEY)
-                else:
-                    result['is_available'] = False
-                    if group_task_id and group_task_id == task.id:
-                        result['continue_data'] = cache_data
-            else:
+    # Celeryの動作確認
+    if not inspector.ping():
+        current_app.logger.error("Celeryが動作していません")
+        return {'is_available': False, 'celery_not_run': True}
+
+    result = {'is_available': True}
+
+    # タスクのキャッシュデータ確認
+    cache_data = get_cache_data(WEKO_AUTHORS_IMPORT_CACHE_KEY)
+    if cache_data:
+        task = GroupResult.restore(cache_data.get('group_task_id'))
+        if task:
+            if task.successful() or task.failed():
                 delete_cache_data(WEKO_AUTHORS_IMPORT_CACHE_KEY)
+            else:
+                result['is_available'] = False
+                if group_task_id and group_task_id == task.id:
+                    result['continue_data'] = cache_data
+        else:
+            delete_cache_data(WEKO_AUTHORS_IMPORT_CACHE_KEY)
 
     return result

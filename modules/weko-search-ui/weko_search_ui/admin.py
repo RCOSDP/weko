@@ -53,6 +53,8 @@ from weko_workflow.api import WorkFlow
 from weko_workflow.utils import delete_cache_data, get_cache_data, update_cache_data
 
 from weko_search_ui.api import get_search_detail_keyword
+from weko_search_ui.tasks import import_item
+from weko_admin.tasks import celery_app
 
 from .config import (
     WEKO_EXPORT_TEMPLATE_BASIC_ID,
@@ -319,6 +321,22 @@ class ItemManagementBulkSearch(BaseView):
 
 class ItemImportView(BaseView):
     """BaseView for Admin Import."""
+
+    @expose("/check_import_is_available", methods=["GET"])
+    def check_import_available(self):
+        # is_import_running関数の修正済み内容を反映する
+        check = is_import_running(celery_app)  # celery_appを引数に渡すように修正
+        if not check:
+            delete_cache_data("import_start_time")
+            return jsonify({"is_available": True})
+        else:
+            return jsonify(
+                {
+                    "is_available": False,
+                    "start_time": get_cache_data("import_start_time"),
+                    "error_id": check,
+                }
+            )
 
     @expose("/", methods=["GET"])
     def index(self):
