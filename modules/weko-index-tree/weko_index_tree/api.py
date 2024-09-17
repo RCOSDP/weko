@@ -1411,31 +1411,37 @@ class Indexes(object):
             index_id (int): search index id
             sort_json (dict): custom setted item sort
         """
-        sort_dict_db = {}
+        from sqlalchemy import update, text
 
         try:
             with db.session.begin_nested():
                 index = cls.get_index(index_id)
                 if not index:
                     return
-                # Get current item_custom_sort
                 current_sort = index.item_custom_sort or {}
-                sort_dict_db = current_sort.copy()
                 for k, v in sort_json.items():
                     try:
+                        delete_flag = False
                         i = int(v)
                         s = str(k)
-                        if i > 0:
-                            sort_dict_db[s] = i
-                        elif i == -1 and s in current_sort:
-                            del sort_dict_db[s]
-                    except BaseException:
-                        pass
-                index.item_custom_sort = sort_dict_db
-                db.session.merge(index)
+                        if i == -1 and s in current_sort:
+                            delete_flag = True
+                        elif i <= 0:
+                            continue
+                    except ValueError:
+                        continue
+                    if delete_flag:
+                        stmt = update(Index).where(Index.id == index_id).values(
+                            item_custom_sort=text(f"item_custom_sort - '{s}'")
+                        )
+                    else:
+                        stmt = update(Index).where(Index.id == index_id).values(
+                            item_custom_sort=text(f"jsonb_set(item_custom_sort, '{{{s}}}', '{i}', true)")
+                        )
+                    db.session.execute(stmt)
             db.session.commit()
             return index
-        except Exception as ex:
+        except SQLAlchemyError as ex:
             current_app.logger.debug(ex)
             db.session.rollback()
         return
