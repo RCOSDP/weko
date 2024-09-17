@@ -41,7 +41,8 @@ def create_oaipmh_set(mapper, connection, community):
     with db.session.begin_nested():
         obj = OAISet(spec=community.oaiset_spec,
                      name=community.title,
-                     description=community.description)
+                     description=community.description
+                     ,system_created=True)
         db.session.add(obj)
 
 
