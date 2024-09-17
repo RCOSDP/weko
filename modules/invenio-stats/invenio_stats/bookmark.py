@@ -43,41 +43,15 @@ class BookmarkAPI(object):
     It provides an interface that lets us interact with a bookmark.
     """
 
-    MAPPINGS = {
-        "mappings": {
-            "dynamic": "strict",
-            "properties": {
-                "date": {"type": "date", "format": "date_optional_time"},
-                "aggregation_type": {"type": "keyword"},
-            },
-        }
-    }
-
-    def __init__(self, client, agg_type, agg_interval):
+    def __init__(self, agg_type, agg_interval):
         """Construct bookmark instance.
 
-        :param client: search client
         :param agg_type: aggregation type for the bookmark
         """
         self.bookmark_index = prefix_index("stats-bookmarks")
-        self.client = client
         self.agg_type = agg_type
         self.agg_interval = agg_interval
 
-    def _ensure_index_exists(func):
-        """Decorator for ensuring the bookmarks index exists."""
-
-        @wraps(func)
-        def wrapped(self, *args, **kwargs):
-            if not dsl.Index(self.bookmark_index, using=self.client).exists():
-                self.client.indices.create(
-                    index=self.bookmark_index, body=BookmarkAPI.MAPPINGS
-                )
-            return func(self, *args, **kwargs)
-
-        return wrapped
-
-    @_ensure_index_exists
     def set_bookmark(self, value):
         """Set bookmark for starting next aggregation."""
         _id = self.agg_type
@@ -91,7 +65,6 @@ class BookmarkAPI(object):
         ), delete=True)
         self.new_timestamp = None
 
-    @_ensure_index_exists
     def get_bookmark(self, refresh_time=60):
         """Get last aggregation date."""
         # retrieve the oldest bookmark
@@ -116,7 +89,6 @@ class BookmarkAPI(object):
                 my_date -= timedelta(seconds=refresh_time)
             return my_date
 
-    @_ensure_index_exists
     def list_bookmarks(self, start_date=None, end_date=None, limit=None):
         """List bookmarks."""
         query = StatsBookmark.get_by_source_id(self.agg_type, start_date, end_date)
