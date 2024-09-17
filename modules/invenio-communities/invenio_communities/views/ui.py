@@ -26,6 +26,7 @@ from invenio_records.api import Record
 from weko_admin.utils import get_search_setting
 from weko_index_tree.models import IndexStyle
 from weko_search_ui.api import SearchSetting, get_search_detail_keyword
+from werkzeug.local import LocalProxy
 
 from invenio_communities.forms import CommunityForm, DeleteCommunityForm, \
     EditCommunityForm, RecaptchaCommunityForm, SearchForm
