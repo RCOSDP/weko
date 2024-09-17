@@ -360,7 +360,7 @@ def test_events_indexer_id_windowing(app, mock_event_queue):
     assert len(ids) == 3
 
 
-def test_double_clicks(app, mock_event_queue, search_clear):
+def test_double_clicks(app, mock_event_queue, es):
     """Test that events occurring within a time window are counted as 1."""
     event_type = "file-download"
     events = [
@@ -376,16 +376,16 @@ def test_double_clicks(app, mock_event_queue, search_clear):
     current_stats.publish(event_type, events)
     process_events(["file-download"])
     current_search.flush_and_refresh(index="*")
-    res = search_clear.search(
+    res = es.search(
         index='test-events-stats-file-download-0001',
     )
     assert res["hits"]["total"]["value"] == 2
 
 
 @pytest.mark.skip('This test dont ever finish')
-def test_failing_processors(app, search_clear, event_queues, caplog):
+def test_failing_processors(app, es, event_queues, caplog):
     """Test events that raise an exception when processed."""
-    search_obj = dsl.Search(using=search_clear)
+    search_obj = dsl.Search(using=es)
 
     current_queues.declare()
     current_stats.publish(
@@ -410,11 +410,11 @@ def test_failing_processors(app, search_clear, event_queues, caplog):
 
     current_search.flush_and_refresh(index="*")
     assert get_queue_size("stats-file-download") == 4
-    assert not search_clear.indices.exists("events-stats-file-download-2018-01")
-    assert not search_clear.indices.exists("events-stats-file-download-2018-01")
-    assert not search_clear.indices.exists("events-stats-file-download-2018-01")
-    assert not search_clear.indices.exists("events-stats-file-download-2018-01")
-    assert not search_clear.indices.exists_alias(name="events-stats-file-download")
+    assert not es.indices.exists("events-stats-file-download-2018-01")
+    assert not es.indices.exists("events-stats-file-download-2018-01")
+    assert not es.indices.exists("events-stats-file-download-2018-01")
+    assert not es.indices.exists("events-stats-file-download-2018-01")
+    assert not es.indices.exists_alias(name="events-stats-file-download")
 
     with caplog.at_level(logging.ERROR):
         indexer.run()  # 2nd event raises exception and is dropped

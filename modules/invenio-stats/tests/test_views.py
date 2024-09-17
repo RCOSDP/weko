@@ -350,6 +350,7 @@ def test_query_common_reports(client, app):
 def test_query_celery_task_report(client, role_users, id, status_code):
     # get
     login_user_via_session(client=client, email=role_users[id]["email"])
+
     res = client.get(
         url_for("invenio_stats.get_celery_task_report", task_name="harvest"))
     assert res.status_code==status_code

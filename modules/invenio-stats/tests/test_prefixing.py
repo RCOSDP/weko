@@ -22,7 +22,7 @@ from invenio_stats.tasks import aggregate_events
 
 
 def test_index_prefix(
-    config_with_index_prefix, app, search_clear, event_queues, queries_config
+    config_with_index_prefix, i18n_app, es, event_queues, queries_config
 ):
     # 1) publish events in the queue
     current_stats.publish(
@@ -39,21 +39,21 @@ def test_index_prefix(
     # 2) preprocess events
     indexer = EventsIndexer(queue, preprocessors=[flag_machines, flag_robots])
     indexer.run()
-    search_clear.indices.refresh(index="*")
+    es.indices.refresh(index="*")
 
     assert get_queue_size("stats-file-download") == 0
 
     index_prefix = config_with_index_prefix["SEARCH_INDEX_PREFIX"]
     index_name = index_prefix + "events-stats-file-download"
 
-    assert search_clear.indices.exists(index_name + "-2018-01")
-    assert search_clear.indices.exists_alias(name=index_name)
+    assert es.indices.exists(index_name + "-2018-01")
+    assert es.indices.exists_alias(name=index_name)
 
     # 3) aggregate events
     with patch("invenio_stats.aggregations.datetime", mock_date(2018, 1, 4)):
         aggregate_events(["file-download-agg"])
-    search_clear.indices.refresh(index="*")
-    search_clear.indices.exists(index_prefix + "stats-file-download-2018-01")
+    es.indices.refresh(index="*")
+    es.indices.exists(index_prefix + "stats-file-download-2018-01")
 
     # 4) queries
     histo_query_name = "bucket-file-download-histogram"

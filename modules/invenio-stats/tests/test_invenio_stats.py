@@ -35,7 +35,7 @@ def test_init():
     assert "invenio-stats" in app.extensions
 
 
-def test_extension_get_query_cache(app, queries_config):
+def test_extension_get_query_cache(i18n_app, queries_config):
     """Test if the query object cache works properly."""
     query1 = current_stats.get_query("test-query")
     query2 = current_stats.get_query("test-query")

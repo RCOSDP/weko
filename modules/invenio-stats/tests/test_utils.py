@@ -96,7 +96,7 @@ def test_default_permission_factory(app):
 
 # def get_aggregations(index, aggs_query):
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_utils.py::test_get_aggregations -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
-def test_get_aggregations(app, es):
+def test_get_aggregations(app):
     with app.app_context():
         res = get_aggregations('', {})
         assert res=={}
@@ -310,7 +310,7 @@ def test_query_file_reports_helper_error(app):
 #     def parse_bucket_response(cls, raw_res, pretty_result):
 #     def get(cls, **kwargs):
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_utils.py::test_query_search_report_helper -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
-def test_query_search_report_helper(app, es):
+def test_query_search_report_helper(app):
     with app.app_context():
         # parse_bucket_response
         _raw_res1 = {
@@ -385,7 +385,7 @@ def test_query_search_report_helper_error(app):
 #     def get_item_create_ranking(cls, **kwargs):
 #         def Calculation(res, result):
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_utils.py::test_query_common_reports_helper -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
-def test_query_common_reports_helper(app, es):
+def test_query_common_reports_helper(app):
     # get
     _res = {
         'buckets': [
@@ -477,7 +477,7 @@ def test_query_common_reports_helper_error(app):
 #     def parse_bucket_response(cls, aggs, result):
 #     def get(cls, **kwargs):
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_utils.py::test_query_record_view_per_index_report_helper -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
-def test_query_record_view_per_index_report_helper(app, es):
+def test_query_record_view_per_index_report_helper(app):
     with app.app_context():
         # build_query
         res = QueryRecordViewPerIndexReportHelper.build_query(None, None, 'test_key')
@@ -532,7 +532,7 @@ def test_query_record_view_per_index_report_helper_error(app):
 #     def correct_record_title(cls, lst_data):
 #     def get(cls, **kwargs):
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_utils.py::test_query_record_view_report_helper -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
-def test_query_record_view_report_helper(app, es, db, records):
+def test_query_record_view_report_helper(app, db, records):
     _id1 = str(uuid.uuid4())
     _id2 = str(uuid.uuid4())
     # Calculation
@@ -612,7 +612,7 @@ def test_query_record_view_report_helper_error(app, db):
 #     def get(cls, **kwargs):
 #     def merge_items_results(cls, results):
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_utils.py::test_query_item_reg_report_helper -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
-def test_query_item_reg_report_helper(app, db, event_queues,es):
+def test_query_item_reg_report_helper(app, db, event_queues):
     # get
     from invenio_search import current_search_client
     res = QueryItemRegReportHelper.get(target_report='1', unit='Day', start_date='2022-09-01', end_date='2022-09-15')
@@ -790,7 +790,7 @@ def test_query_item_reg_report_helper(app, db, event_queues,es):
     res = QueryItemRegReportHelper.merge_items_results(_results)
     assert res==[{'col1': 1.0, 'col3': 5}, {'col1': 2.0, 'col3': 4}]
 
-def test_query_item_reg_report_helper_error(app, db):
+def test_query_item_reg_report_helper_error(i18n_app, queries_config):
     # get
     res = QueryItemRegReportHelper.get(target_report='1', unit='Day', start_date='2022-09-01', end_date='2022-09-15')
     assert res=={'data': [], 'num_page': 2, 'page': 1}
@@ -824,7 +824,7 @@ def test_query_item_reg_report_helper_error(app, db):
 #     def get(cls, **kwargs):
 #     get_new_items(cls, **kwargs):
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_utils.py::test_query_ranking_helper -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
-def test_query_ranking_helper(app, db, es):
+def test_query_ranking_helper(app, db):
     # Calculation
     _res = {
         'aggregations': {
