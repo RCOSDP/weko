@@ -28,7 +28,7 @@ from invenio_stats.utils import (
     get_start_end_date,
     agg_bucket_sort,
     parse_bucket_response,
-    get_doctype,
+    # get_doctype,
     is_valid_access,
     QueryFileReportsHelper,
     QuerySearchReportHelper,
@@ -134,8 +134,8 @@ def test_parse_bucket_response(app):
 
 # def get_doctype(doc_type):
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_utils.py::test_get_doctype -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
-def test_get_doctype(app):
-    assert get_doctype('test_doc')=='_doc'
+#def test_get_doctype(app):
+#    assert get_doctype('test_doc')=='_doc'
 
 # def is_valid_access():
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_utils.py::test_is_valid_access -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp

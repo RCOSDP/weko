@@ -55,12 +55,12 @@ def sanitize_html(value):
     ).strip()
 
 
-blueprint.add_app_template_global(
-    LocalProxy(lambda: (
-        'COMMUNITIES_CAN_CREATE'), "can_user_create_community"))
+def can_user_create_community():
+    return current_app.config.get('COMMUNITIES_CAN_CREATE', False)
 
-blueprint.add_app_template_global(
-    humanize, "humanize")
+
+blueprint.add_app_template_global(can_user_create_community, "can_user_create_community")
+blueprint.add_app_template_global( humanize, "humanize")
 
 
 def pass_community(f):
