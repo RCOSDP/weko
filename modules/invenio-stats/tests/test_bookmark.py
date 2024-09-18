@@ -31,12 +31,12 @@ def test_format_range_dt():
     assert result == "2024-01-01T00:00:00||/d"
 
     # dt is datetime object
-    dt = datetime.fromisoformat("2024-01-01")
+    dt = datetime.fromisoformat("2024-01-01T07:00:00")
     interval = "hour"
 
     result = format_range_dt(dt, interval)
 
-    assert result == "2024-01-01T00:00:00||/h"
+    assert result == "2024-01-01T07:00:00||/h"
 
 
 # class BookmarkAPI(object):
@@ -65,7 +65,7 @@ class TestBookmarkAPI:
     def test_set_bookmark(self, db):
         """Test BookmarkAPI.set_bookmark."""
         agg_type, agg_interval = "test", "day"
-        date = "2024-01-01"
+        date = "2024-01-01T07:00:00"
         bookmark = BookmarkAPI(agg_type, agg_interval)
 
         bookmark.set_bookmark(date)
@@ -95,7 +95,7 @@ class TestBookmarkAPI:
 
         # when there is a bookmark
         index = f"{SEARCH_INDEX_PREFIX}stats-bookmarks"
-        date = "2024-01-01"
+        date = "2024-01-01T07:00:00"
         StatsBookmark.save({
             "_id": agg_type,
             "_index": index,
@@ -113,7 +113,7 @@ class TestBookmarkAPI:
             result = bookmark.get_bookmark(0)
 
         # when refresh_time is defualt
-        date = "2024-01-01"
+        date = "2024-01-01T07:00:00"
 
         result = bookmark.get_bookmark()
 
