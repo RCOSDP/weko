@@ -1440,11 +1440,9 @@ class Indexes(object):
                         )
                     db.session.execute(stmt)
             db.session.commit()
-            return index
         except SQLAlchemyError as ex:
             current_app.logger.debug(ex)
             db.session.rollback()
-        return
 
     @classmethod
     def update_item_sort_custom_es(cls, index_path, sort_json=[]):
