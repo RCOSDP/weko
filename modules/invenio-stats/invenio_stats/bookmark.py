@@ -55,11 +55,11 @@ class BookmarkAPI(object):
         _source = {"date": value, "aggregation_type": self.agg_type}
 
         # Save stats bookmark into Database.
-        StatsBookmark.save(dict(
-            _id=_id,
-            _index=self.bookmark_index,
-            _source=_source,
-        ), delete=True)
+        StatsBookmark.save({
+            "_id": _id,
+            "_index": self.bookmark_index,
+            "_source": _source,
+        }, delete=True)
         self.new_timestamp = None
 
     def get_bookmark(self, refresh_time=60):
