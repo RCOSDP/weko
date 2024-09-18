@@ -192,10 +192,15 @@ class ImportView(BaseView):
     @expose('/is_import_available', methods=['GET'])
     def is_import_available(self):
         """Is import available."""
-        group_task_id = request.args.get(
-            'group_task_id', type=str, default=None)
+        group_task_id = request.args.get('group_task_id', type=str, default=None)
 
-        return jsonify(check_is_import_available(group_task_id))
+        # タスク実行可能かどうかを確認
+        check_result = check_is_import_available(group_task_id)
+
+        if not check_result['is_available']:
+            return jsonify(check_result)
+
+        return jsonify({'is_available': True})
 
     @author_permission.require(http_exception=403)
     @expose('/check_import_file', methods=['POST'])

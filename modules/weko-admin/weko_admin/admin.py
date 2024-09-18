@@ -53,8 +53,6 @@ from weko_records_ui.utils import check_items_settings
 from weko_schema_ui.models import PublishStatus
 from wtforms.fields import StringField
 from wtforms.validators import ValidationError
-from .celery_app import create_celery_app
-
 
 
 from .config import WEKO_PIDSTORE_IDENTIFIER_TEMPLATE_CREATOR, \
@@ -68,8 +66,6 @@ from .utils import get_facet_search, get_item_mapping_list, \
 from .utils import get_user_report_data as get_user_report
 from .utils import package_reports, str_to_bool 
 from .tasks import is_reindex_running ,reindex
-
-celery_app = create_celery_app()
 
 
 class ReindexElasticSearchView(BaseView):
@@ -98,7 +94,7 @@ class ReindexElasticSearchView(BaseView):
         except BaseException:
             import traceback
             estr = traceback.format_exc()
-            current_app.logger.error('Unexpected error: {}'.format( estr ))
+            current_app.logger.error(f'Unexpected error: {estr}')
             return abort(500)
 
     @expose('/reindex', methods=['POST'])
@@ -173,18 +169,43 @@ class ReindexElasticSearchView(BaseView):
         Monitor whether the reindex process is running/error is occurred
         by Celery task and admin_settings
         """
-        ELASTIC_REINDEX_SETTINGS = current_app.config['WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS']
-        HAS_ERRORED = current_app.config['WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS_HAS_ERRORED']
+        try:
+            # Celeryの状態を確認
+            celery_app = current_app.extensions['celery']
+            inspect = celery_app.control.inspect()
+            is_executing = False
 
-        admin_setting = AdminSettings.get(ELASTIC_REINDEX_SETTINGS,False)
-        is_error = admin_setting.get(HAS_ERRORED)
-        is_executing = is_reindex_running()
-        result = dict({
-            "isError": is_error
-            ,"isExecuting": is_executing
-            ,"disabled_Btn": is_error or is_executing 
-        })
-        return result
+            # 実行中のタスクを確認
+            active_tasks = inspect.active()
+            if active_tasks:
+                for worker, tasks in active_tasks.items():
+                    for task in tasks:
+                        if task['name'] == 'weko_admin.tasks.reindex':
+                            is_executing = True
+                            break
+
+            # AdminSettingsの設定を取得
+            ELASTIC_REINDEX_SETTINGS = current_app.config['WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS']
+            HAS_ERRORED = current_app.config['WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS_HAS_ERRORED']
+
+            admin_setting = AdminSettings.get(ELASTIC_REINDEX_SETTINGS, False)
+            is_error = admin_setting.get(HAS_ERRORED)
+
+            result = {
+                "isError": is_error,
+                "isExecuting": is_executing,
+                "disabled_Btn": is_error or is_executing
+            }
+
+            return result
+
+        except Exception as e:
+            current_app.logger.error(f"Error checking reindex status: {e}")
+            return {
+                "isError": True,
+                "isExecuting": False,
+                "disabled_Btn": True
+            }
 
 
 

@@ -28,9 +28,10 @@ from datetime import datetime, timedelta
 from urllib.parse import urlencode
 import pickle
 
+from flask import Response, abort, current_app, jsonify, make_response, request
 from blinker import Namespace
 from celery import chord
-from flask import Response, abort, current_app, jsonify, make_response, request
+from celery import current_app as celery_current_app
 from flask_admin import BaseView, expose
 from flask_babel import gettext as _
 from flask_login import current_user
@@ -54,7 +55,6 @@ from weko_workflow.utils import delete_cache_data, get_cache_data, update_cache_
 
 from weko_search_ui.api import get_search_detail_keyword
 from weko_search_ui.tasks import import_item
-from weko_admin.tasks import celery_app
 
 from .config import (
     WEKO_EXPORT_TEMPLATE_BASIC_ID,
@@ -324,19 +324,28 @@ class ItemImportView(BaseView):
 
     @expose("/check_import_is_available", methods=["GET"])
     def check_import_available(self):
-        # is_import_running関数の修正済み内容を反映する
-        check = is_import_running(celery_app)  # celery_appを引数に渡すように修正
-        if not check:
-            delete_cache_data("import_start_time")
-            return jsonify({"is_available": True})
-        else:
-            return jsonify(
-                {
-                    "is_available": False,
-                    "start_time": get_cache_data("import_start_time"),
-                    "error_id": check,
-                }
-            )
+        try:
+            # Celeryの現在のアプリケーションを取得
+            celery_app = celery_current_app  # current_app.extensions['celery'] ではなく、celery_current_app を使う
+            check = is_import_running(celery_app)
+
+            if not check:
+                # タスクが実行されていない場合、キャッシュデータを削除
+                delete_cache_data("import_start_time")
+                return jsonify({"is_available": True})
+            else:
+                # タスクが実行中の場合、開始時間とエラーIDを返す
+                return jsonify(
+                    {
+                        "is_available": False,
+                        "start_time": get_cache_data("import_start_time"),
+                        "error_id": check,
+                    }
+                )
+        except Exception as e:
+            flask_logger = current_app.logger
+            flask_logger.error(f"Error checking import status: {e}")
+            return jsonify({"error": str(e)}), 500
 
     @expose("/", methods=["GET"])
     def index(self):
@@ -728,21 +737,6 @@ class ItemImportView(BaseView):
                 ),
             },
         )
-
-    @expose("/check_import_is_available", methods=["GET"])
-    def check_import_available(self):
-        check = is_import_running()
-        if not check:
-            delete_cache_data("import_start_time")
-            return jsonify({"is_available": True})
-        else:
-            return jsonify(
-                {
-                    "is_available": False,
-                    "start_time": get_cache_data("import_start_time"),
-                    "error_id": check,
-                }
-            )
 
 
 

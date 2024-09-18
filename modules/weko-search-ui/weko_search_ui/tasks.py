@@ -22,17 +22,17 @@
 import shutil
 from datetime import datetime, timedelta
 
+from celery import Celery
+from flask import current_app
 from celery import shared_task
 from celery.result import AsyncResult
 from celery.app.control import Inspect
-from flask import current_app
 from weko_admin.api import TempDirInfo
 from weko_admin.utils import get_redis_cache
 from weko_redis.redis import RedisConnection
-from weko_admin.celery_app import celery_app
-from .celery_app import celery_app
 from invenio_db import db
-
+from celery.result import GroupResult
+from invenio_cache import current_cache
 
 from .utils import (
     check_import_items,
@@ -42,6 +42,13 @@ from .utils import (
     import_items_to_system,
 )
 
+
+def create_celery_app():
+    """Flask アプリケーションコンテキストで Celery を初期化."""
+    app = current_app._get_current_object()
+    celery_app = Celery(app.import_name, broker=app.config['CELERY_BROKER_URL'])
+    celery_app.conf.update(app.config)
+    return celery_app
 
 @shared_task
 def check_import_items_task(file_path, is_change_identifier: bool, host_url,
@@ -150,45 +157,40 @@ def delete_exported_task(uri, cache_key, task_key):
         current_app.logger.error(e)
 
 
-def is_import_running():
-    """Check if the import task is running."""
-    
-    # Celeryが動作しているかチェック
-    if not check_celery_is_run():
-        current_app.logger.error("Celeryが動作していません")
-        return {"is_available": False, "error_id": "celery_not_running", "start_time": ""}
-    
-    try:
-        # CeleryのInspectorオブジェクトを作成して、実行中のタスクを確認
-        inspector = celery_app.control.inspect()
-        active = inspector.active()
-
-        # 実行中のタスクがあるか確認
-        if active:
-            for worker, tasks in active.items():
-                for task in tasks:
-                    # インポートタスクを探す
-                    if task["name"] == "weko_search_ui.tasks.import_item":
-                        current_app.logger.info("import_itemタスクが実行中です")
-                        start_time = task.get("time_start", "")
-                        return {"is_available": True, "error_id": None, "start_time": start_time}
-
-        # 実行中のタスクがない場合
-        return {"is_available": False, "error_id": "no_task_running", "start_time": ""}
-    
-    except Exception as e:
-        current_app.logger.error(f"Celery確認中にエラー: {e}")
-        return {"is_available": False, "error_id": "check_failed", "start_time": ""}
+def initialize_celery():
+    """Celeryの初期化関数."""
+    global celery_app
+    if celery_app is None:
+        celery_app = create_celery_app()
 
 
+def is_import_running(celery_app):
+    """Check import is running."""
+    if not check_celery_is_run(celery_app):
+        return "celery_not_run"
 
-def check_celery_is_run():
-    """Celeryが実行中かどうかを確認する"""
-    try:
-        inspector = celery_app.control.inspect()
-        if inspector.ping():
-            return True
+    active = celery_app.control.inspect().active()
+    if active:
+        for worker in active:
+            for task in active[worker]:
+                if task["name"] == "weko_search_ui.tasks.import_item":
+                    return "is_import_running"
+
+    # 保留中のタスクを確認
+    reserved = celery_app.control.inspect().reserved()
+    if reserved:
+        for worker in reserved:
+            for task in reserved[worker]:
+                if task["name"] == "weko_search_ui.tasks.import_item":
+                    return "is_import_running"
+
+    return False
+
+
+
+def check_celery_is_run(celery_app):
+    """Check celery is running, or not."""
+    inspect = celery_app.control.inspect()
+    if inspect is None or not inspect.ping():
         return False
-    except Exception as e:
-        current_app.logger.error(f"Celeryの確認中にエラー: {e}")
-        return False
+    return True
