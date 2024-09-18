@@ -65,11 +65,12 @@ require([
     startLoading(_this);
     let post_uri = $('#post_uri').text();
     let workflow_id = $(this).data('workflow-id');
+    let itemtype_id = $('#item_type_' + workflow_id).data('itemtype-id')
     let community = $(this).data('community');
     let post_data = {
       workflow_id: workflow_id,
       flow_id: $('#flow_' + workflow_id).data('flow-id'),
-      itemtype_id: $('#item_type_' + workflow_id).data('itemtype-id')
+      itemtype_id: itemtype_id
     };
     if (community != "") {
       post_uri = post_uri + "?community=" + community;
@@ -80,25 +81,46 @@ require([
       async: true,
       success: function(data, status) {
         if (data.is_open == false) {
+          check_itemtype_mapping_url = "/workflow/check_require_itemtype_mapping/"+itemtype_id
+          
           $.ajax({
-            url: post_uri,
-            method: 'POST',
+            url: check_itemtype_mapping_url,
+            method: 'GET',
             async: true,
             contentType: 'application/json',
-            data: JSON.stringify(post_data),
-            success: function (data, status) {
-              if (0 == data.code) {
-                document.location.href = data.data.redirect;
-              } else {
+            success: function(data, status){
+              if (data.length > 0){
                 endLoading(_this);
-                alert(data.msg);
+                let msg = $('#itemtype_mapping_msg').text();
+                $('#itemtype_mapping_msg').html(msg);
+                $('#action_itemtype_mapping').modal('show');
+              }else{
+                $.ajax({
+                  url: post_uri,
+                  method: 'POST',
+                  async: true,
+                  contentType: 'application/json',
+                  data: JSON.stringify(post_data),
+                  success: function (data, status) {
+                    if (0 == data.code) {
+                      document.location.href = data.data.redirect;
+                    } else {
+                      endLoading(_this);
+                      alert(data.msg);
+                    }
+                  },
+                  error: function (jqXHE, status) {
+                    endLoading(_this);
+                    alert(jqXHE.responseJSON.msg);
+                  }
+                });
               }
             },
             error: function (jqXHE, status) {
               endLoading(_this);
-              alert(jqXHE.responseJSON.msg);
+              alert(jqXHE.responseJSON.msg)
             }
-          });
+          })
         } else {
           endLoading(_this);
           msg = $('#user_locked_msg').text()

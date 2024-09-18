@@ -110,7 +110,8 @@ from .utils import IdentifierHandle, auto_fill_title, \
     send_usage_application_mail_for_guest_user, set_files_display_type, \
     update_approval_date, update_cache_data, validate_guest_activity_expired, \
     validate_guest_activity_token, make_activitylog_tsv, \
-    delete_lock_activity_cache, delete_user_lock_activity_cache
+    delete_lock_activity_cache, delete_user_lock_activity_cache, \
+    check_require_mapping
 
 workflow_blueprint = Blueprint(
     'weko_workflow',
@@ -3116,7 +3117,8 @@ def clear_activitylog():
 @workflow_blueprint.route('/check_require_itemtype_mapping/<string:itemtype_id>', methods=['GET'])
 @login_required
 def check_require_itemtype_mapping(itemtype_id):
-    print("get itemtype_id:{}".format(itemtype_id))
+    not_exists_fields = check_require_mapping(itemtype_id)
+    return jsonify(not_exists_fields)
     
 class ActivityActionResource(ContentNegotiatedMethodView):
     """Workflow Activity Resource."""

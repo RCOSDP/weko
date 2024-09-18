@@ -4494,4 +4494,9 @@ def check_require_mapping(itemtype_id):
     item_type_mapping = Mapping.get_record(itemtype_id)
     jpcoar_mapping = get_full_mapping(item_type_mapping, "jpcoar_mapping")
     required_mapping_files = current_app.config.get("WEKO_WORKFLOW_REQUIRED_MAPPING_FIELDS",[])
-    return all(field in jpcoar_mapping for field in required_mapping_files)
+    not_exists = []
+    for field in required_mapping_files:
+        if field not in jpcoar_mapping:
+            not_exists.append(field.replace(".@value","").replace("@attributes.","@"))
+    
+    return not_exists

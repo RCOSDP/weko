@@ -36,9 +36,16 @@
 {{ all_modal() }}
 <div id="alerts"></div>
 <input type="hidden" id="current_language" value="{{ current_i18n.language }}" />
-
+<input type="hidden" id="mapping_warning" value="指定しているアイテムタイプがマッピングされていないため、アクティビティが開始できません"/>
 <div class="row">
   <div class="col-sm-offset-1 col-sm-10">
+    <div id="itemtype_mapping_warning">
+      <div style="padding: 15px;">
+        <div class="alert alert-warning" style="margin-bottom: 0;">
+          <p id="inputMessage"></p>
+        </div>
+      </div>
+    </div>
     <div class="form-horizontal">
       <div class="form-group">
         <div class="col-sm-offset-2">
