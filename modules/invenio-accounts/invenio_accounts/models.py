@@ -100,13 +100,13 @@ class User(db.Model, UserMixin):
         Returns:
             bool: True if the user is enable to workflow, False otherwise.
         """
-        # check hiroba workflow setting is enable
-        is_enable = current_app.config.get('ENABLE_HIROBA_WORKFLOW_SETTING', False)
+        # check workflow setting is enable
+        is_enable = current_app.config.get('ENABLE_WORKFLOW_AUTH_SETTING', False)
         if not is_enable:
             return True
         
         # check if user has the role to enable workflow
-        enable_roles = current_app.config.get('ENABLE_HIROBA_WORKFLOW_ROLES', [])
+        enable_roles = current_app.config.get('ENABLE_WORKFLOW_AUTH_ROLES', [])
         for role in self.roles:
             if role.name in enable_roles:
                 return True
