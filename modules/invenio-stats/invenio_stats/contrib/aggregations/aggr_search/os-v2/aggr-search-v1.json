@@ -1,5 +1,7 @@
 {
-  "index_patterns": ["__SEARCH_INDEX_PREFIX__stats-search-*"],
+  "index_patterns": [
+    "__SEARCH_INDEX_PREFIX__stats-search-*"
+  ],
   "settings": {
     "index.mapper.dynamic": false,
     "index": {
@@ -9,48 +11,46 @@
     }
   },
   "mappings": {
-    "search-day-aggregation": {
-      "date_detection": false,
-      "dynamic": false,
-      "numeric_detection": false,
-      "properties": {
-        "timestamp": {
-          "type": "date",
-          "format": "date_optional_time"
-        },
-        "count": {
-          "type": "integer"
-        },
-        "unique_count": {
-          "type": "integer"
-        },
-        "unique_id": {
-          "type": "keyword",
-          "index": true
-        },
-        "country": {
-          "type": "keyword",
-          "index": true
-        },
-        "referrer": {
-          "type": "keyword",
-          "index": true
-        },
-        "search_key": {
-          "type": "keyword",
-          "index": true
-        },
-        "search_type": {
-          "type": "keyword",
-          "index": true
-        },
-        "site_license_name": {
-          "type": "keyword",
-          "index": true
-        },
-        "site_license_flag": {
-          "type": "boolean"
-        }
+    "date_detection": false,
+    "dynamic": false,
+    "numeric_detection": false,
+    "properties": {
+      "timestamp": {
+        "type": "date",
+        "format": "date_optional_time"
+      },
+      "count": {
+        "type": "integer"
+      },
+      "unique_count": {
+        "type": "integer"
+      },
+      "unique_id": {
+        "type": "keyword",
+        "index": true
+      },
+      "country": {
+        "type": "keyword",
+        "index": true
+      },
+      "referrer": {
+        "type": "keyword",
+        "index": true
+      },
+      "search_key": {
+        "type": "keyword",
+        "index": true
+      },
+      "search_type": {
+        "type": "keyword",
+        "index": true
+      },
+      "site_license_name": {
+        "type": "keyword",
+        "index": true
+      },
+      "site_license_flag": {
+        "type": "boolean"
       }
     }
   }

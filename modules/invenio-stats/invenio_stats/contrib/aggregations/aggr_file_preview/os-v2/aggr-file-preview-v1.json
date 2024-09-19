@@ -9,7 +9,6 @@
     }
   },
   "mappings": {
-    "file-preview-day-aggregation": {
       "date_detection": false,
       "dynamic": false,
       "numeric_detection": false,
@@ -120,4 +119,3 @@
       }
     }
   }
-}

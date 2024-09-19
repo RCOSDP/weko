@@ -1,5 +1,7 @@
 {
-  "index_patterns": ["__SEARCH_INDEX_PREFIX__stats-item-create-*"],
+  "index_patterns": [
+    "__SEARCH_INDEX_PREFIX__stats-item-create-*"
+  ],
   "settings": {
     "index.mapper.dynamic": false,
     "index": {
@@ -9,53 +11,51 @@
     }
   },
   "mappings": {
-    "item-create-day-aggregation": {
-      "date_detection": false,
-      "dynamic": false,
-      "numeric_detection": false,
-      "properties": {
-        "timestamp": {
-          "type": "date",
-          "format": "date_optional_time"
-        },
-        "unique_id": {
-          "type": "keyword",
-          "index": true
-        },
-        "count": {
-          "type": "integer"
-        },
-        "unique_count": {
-          "type": "integer"
-        },
-        "country": {
-          "type": "keyword",
-          "index": true
-        },
-        "cur_user_id": {
-          "type": "keyword",
-          "index": true
-        },
-        "hostname": {
-          "type": "keyword",
-          "index": true
-        },
-        "remote_addr": {
-          "type": "keyword",
-          "index": true
-        },
-        "pid_value": {
-          "type": "keyword",
-          "index": true
-        },
-        "record_name": {
-          "type": "keyword",
-          "index": true
-        },
-        "collection": {
-          "type": "keyword",
-          "index": true
-        }
+    "date_detection": false,
+    "dynamic": false,
+    "numeric_detection": false,
+    "properties": {
+      "timestamp": {
+        "type": "date",
+        "format": "date_optional_time"
+      },
+      "unique_id": {
+        "type": "keyword",
+        "index": true
+      },
+      "count": {
+        "type": "integer"
+      },
+      "unique_count": {
+        "type": "integer"
+      },
+      "country": {
+        "type": "keyword",
+        "index": true
+      },
+      "cur_user_id": {
+        "type": "keyword",
+        "index": true
+      },
+      "hostname": {
+        "type": "keyword",
+        "index": true
+      },
+      "remote_addr": {
+        "type": "keyword",
+        "index": true
+      },
+      "pid_value": {
+        "type": "keyword",
+        "index": true
+      },
+      "record_name": {
+        "type": "keyword",
+        "index": true
+      },
+      "collection": {
+        "type": "keyword",
+        "index": true
       }
     }
   }
