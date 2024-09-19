@@ -47,6 +47,7 @@ from invenio_assets import InvenioAssets
 from invenio_db import InvenioDB, db as db_
 from invenio_cache import InvenioCache
 from invenio_communities.models import Community
+from weko_authors.models import Authors
 from weko_user_profiles.models import UserProfile
 from invenio_deposit import InvenioDeposit
 from invenio_files_rest import InvenioFilesREST
@@ -201,6 +202,8 @@ def base_app(instance_path):
             'report part':'other',
             'conference object':'conference output',
         },
+        WEKO_AUTHORS_ES_INDEX_NAME="test-authors",
+        WEKO_AUTHORS_ES_DOC_TYPE="test-authors",
     )
     # with ESTestServer(timeout=30) as server:
     Babel(app_)
@@ -710,6 +713,46 @@ def db_oaischema(app, db):
     with db.session.begin_nested():
         db.session.add(jpcoar_mapping)
         db.session.add(jpcoar_v1_mapping)
+
+from invenio_search import current_search_client
+@pytest.fixture()
+def esindex(app):
+    current_search_client.indices.delete(index='test-*')
+    with open("tests/mock_module/mapping/v6/authors/test_authors.json","r") as f:
+        mapping = json.load(f)
+    with app.test_request_context():
+        current_search_client.indices.create(app.config["WEKO_AUTHORS_ES_INDEX_NAME"],body=mapping)
+
+
+    yield current_search_client
+
+    #with app.test_request_context():
+    #    current_search_client.indices.delete(index=app.config["WEKO_AUTHORS_ES_INDEX_NAME"], ignore=[400, 404])
+
+@pytest.fixture()
+def authors(app,db,esindex):
+    datas = json_data("data/author.json")
+    returns = []
+    for data in datas:
+        returns.append(Authors(
+            gather_flg=0,
+            is_deleted=False,
+            json=data
+        ))
+        es_id = data["id"]
+        es_data = json.loads(json.dumps(data))
+        es_data["id"]=""
+        current_search_client.index(
+            index=app.config["WEKO_AUTHORS_ES_INDEX_NAME"],
+            doc_type=app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
+            id=es_id,
+            body=es_data,
+            refresh='true')
+    
+    db.session.add_all(returns)
+    db.session.commit()
+    return returns
+
 
 
 @pytest.fixture()
