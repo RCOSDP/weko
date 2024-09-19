@@ -1394,10 +1394,8 @@ class StatsCliUtil:
                 )
             else:
                 _index = "{0}-{1}".format(search_index_prefix, search_type)
-            if not delete:
-                yield _index
-            else:
-                yield _index
+
+            yield _index
 
     def __build_es_data(self, data_list: list) -> Generator:
         """Build search engine data.
