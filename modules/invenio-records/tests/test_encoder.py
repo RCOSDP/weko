@@ -74,7 +74,7 @@ def record_cls(encoder):
     Record.model_cls.encoder = None
 
 
-def test_noencoding(testapp, db, record_cls):
+def test_noencoding(app, db, record_cls):
     """Simple sanity check."""
     data = {"title": "Title"}
     rec = record_cls.create(data)
@@ -82,7 +82,7 @@ def test_noencoding(testapp, db, record_cls):
     assert rec.model.data == rec.model.json
 
 
-def test_encoding(testapp, db, record_cls, testdate, testdatestr):
+def test_encoding(app, db, record_cls, testdate, testdatestr):
     """Test encoding/decoding in custom classes."""
     # Create a record with a Python date inside (record_cls has an encoder
     # which will encode/decode the "date" field if present).
@@ -107,9 +107,8 @@ def test_encoding(testapp, db, record_cls, testdate, testdatestr):
     assert rec.model.json["nested"]["date"] == testdatestr
 
 
-def test_encoding_with_versioning(testapp, database, record_cls, testdate):
+def test_encoding_with_versioning(app, db, record_cls, testdate):
     """Test reverting a revision."""
-    db = database
     # Create a record and a new revision
     rec = record_cls.create({"title": "Title", "nested": {"date": testdate}})
     db.session.commit()
@@ -130,10 +129,8 @@ def test_encoding_with_versioning(testapp, database, record_cls, testdate):
     assert rec.model.json["nested"]["date"] == testdate.isoformat()
 
 
-def test_encoding_with_schema(testapp, database, record_cls, testdate, schema):
+def test_encoding_with_schema(app, db, record_cls, testdate, schema):
     """Test that schema validation works on JSON, not on dict."""
-    db = database
-
     # Create a record
     rec = record_cls.create(
         {
@@ -155,9 +152,9 @@ def test_encoding_with_schema(testapp, database, record_cls, testdate, schema):
     # if it fails to operate the date
 
 
-def test_encoding_with_schema_fail(testapp, database, testdate, schema):
+def test_encoding_with_schema_fail(app, db, testdate, schema):
     """Test that validation fails when not using encoder."""
-    db = database
+    db = db
 
     data = {
         "$schema": schema,

@@ -127,7 +127,7 @@ def ExtensionRecord():
 #
 # Tests
 #
-def test_constant_field(testapp, record, MyRecord, testschema):
+def test_constant_field(app, record, MyRecord, testschema):
     """Test the constant field."""
     # Test that constant field value was set, and is accessible
     assert record["$schema"] == testschema
@@ -148,7 +148,7 @@ def test_constant_field(testapp, record, MyRecord, testschema):
     assert record.schema is None
 
 
-def test_constant_field_deletion(testapp, db, record, MyRecord, testschema):
+def test_constant_field_deletion(app, db, record, MyRecord, testschema):
     """Test the constant field."""
     # Test that constant field value was set, and is accessible
     db.session.commit()
@@ -159,7 +159,7 @@ def test_constant_field_deletion(testapp, db, record, MyRecord, testschema):
     assert record.schema is None
 
 
-def test_field_overwriting(testapp, record, sysrecord):
+def test_field_overwriting(app, record, sysrecord):
     """Test that field overwriting."""
     # field 'base' is defined in both classes, thus MyRecord overwrites
     # SystemRecord.
@@ -167,28 +167,28 @@ def test_field_overwriting(testapp, record, sysrecord):
     assert sysrecord.base == "systemrecord"
 
 
-def test_field_inheritance(testapp, record, sysrecord):
+def test_field_inheritance(app, record, sysrecord):
     """Test that field inheritance."""
     # field 'test' is defined only in base class, but available on both.
     assert record.test == "test"
     assert sysrecord.test == "test"
 
 
-def test_field_class_access(testapp, MyRecord):
+def test_field_class_access(app, MyRecord):
     """Test that class access is returning the field."""
     assert isinstance(MyRecord.schema, ConstantField)
     assert isinstance(MyRecord.test, ConstantField)
     assert isinstance(MyRecord.base, ConstantField)
 
 
-def test_attrname_injection(testapp, MyRecord):
+def test_attrname_injection(app, MyRecord):
     """Test that class access is returning the field."""
     assert MyRecord.schema.attr_name == "schema"
     assert MyRecord.test.attr_name == "test"
     assert MyRecord.base.attr_name == "base"
 
 
-def test_systemfields_mro(testapp):
+def test_systemfields_mro(app):
     """Test overwriting of system fields according to MRO."""
 
     class A(Record, SystemFieldsMixin):
@@ -228,13 +228,13 @@ def test_systemfields_mro(testapp):
     assert G({}).test == "b"
 
 
-def test_extension_pre_init(testapp, db, ExtensionRecord):
+def test_extension_pre_init(app, db, ExtensionRecord):
     """Test pre init hook."""
     rec = ExtensionRecord({})
     assert ExtensionRecord.ext.called == ["pre_init", "post_init"]
 
 
-def test_extension_post_create(testapp, db, ExtensionRecord):
+def test_extension_post_create(app, db, ExtensionRecord):
     """Test post create hook."""
     rec = ExtensionRecord.create({})
     assert ExtensionRecord.ext.called == [
@@ -245,13 +245,13 @@ def test_extension_post_create(testapp, db, ExtensionRecord):
     ]
 
 
-def test_extension_pre_dump(testapp, db, ExtensionRecord):
+def test_extension_pre_dump(app, db, ExtensionRecord):
     """Test pre dump hook."""
     rec = ExtensionRecord({}).dumps()
     assert ExtensionRecord.ext.called == ["pre_init", "post_init", "pre_dump"]
 
 
-def test_extension_post_load(testapp, db, ExtensionRecord):
+def test_extension_post_load(app, db, ExtensionRecord):
     """Test post load hook."""
     dump = ExtensionRecord({}).dumps()
     rec = ExtensionRecord.loads(dump)
@@ -265,7 +265,7 @@ def test_extension_post_load(testapp, db, ExtensionRecord):
     ]
 
 
-def test_extension_commit(testapp, db, ExtensionRecord):
+def test_extension_commit(app, db, ExtensionRecord):
     """Test commit hooks."""
     rec = ExtensionRecord.create({})
     rec.commit()
@@ -279,7 +279,7 @@ def test_extension_commit(testapp, db, ExtensionRecord):
     ]
 
 
-def test_extension_delete(testapp, db, ExtensionRecord):
+def test_extension_delete(app, db, ExtensionRecord):
     """Test pre/post delete hook."""
     rec = ExtensionRecord.create({})
     db.session.commit()
@@ -294,9 +294,8 @@ def test_extension_delete(testapp, db, ExtensionRecord):
     ]
 
 
-def test_extension_revert(testapp, database, ExtensionRecord):
+def test_extension_revert(app, db, ExtensionRecord):
     """Test pre/post revert hook."""
-    db = database
     rec = ExtensionRecord.create({})
     db.session.commit()
     rec.commit()
@@ -317,7 +316,7 @@ def test_extension_revert(testapp, database, ExtensionRecord):
     ]
 
 
-def test_base_systemfield_base(testapp):
+def test_base_systemfield_base(app):
     """Test default implementation of system field."""
 
     class TestRecord(Record, SystemFieldsMixin):
@@ -330,7 +329,7 @@ def test_base_systemfield_base(testapp):
     assert pytest.raises(AttributeError, TestRecord, {}, field={})
 
 
-def test_systemfield_initialization(testapp):
+def test_systemfield_initialization(app):
     """Test default implementation of system field."""
 
     class TestField(SystemField):
@@ -348,7 +347,7 @@ def test_systemfield_initialization(testapp):
     assert record["arg_value"] == "testval"
 
 
-def test_default_key(testapp):
+def test_default_key(app):
     """Test default key name."""
 
     class TestRecord(Record, SystemFieldsMixin):
@@ -382,7 +381,7 @@ def test_dict_field_simple():
     }
 
 
-def test_dictfield_default_key(testapp):
+def test_dictfield_default_key(app):
     """Test default key name."""
 
     class TestRecord(Record, SystemFieldsMixin):
@@ -436,10 +435,8 @@ def test_dict_field_clear_none():
     assert record == {"metadata": {}}
 
 
-def test_dict_field_deleted(testapp, database):
+def test_dict_field_deleted(app, db):
     """Test dict field with clearing none/empty values."""
-    db = database
-
     class Record1(Record, SystemFieldsMixin):
         metadata = DictField()
 
