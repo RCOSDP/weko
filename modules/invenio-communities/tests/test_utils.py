@@ -1,26 +1,10 @@
 # -*- coding: utf-8 -*-
 #
 # This file is part of Invenio.
-# Copyright (C) 2016 CERN.
+# Copyright (C) 2016-2019 CERN.
 #
-# Invenio is free software; you can redistribute it
-# and/or modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; either version 2 of the
-# License, or (at your option) any later version.
-#
-# Invenio is distributed in the hope that it will be
-# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Invenio; if not, write to the
-# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-# MA 02111-1307, USA.
-#
-# In applying this license, CERN does not
-# waive the privileges and immunities granted to it by virtue of its status
-# as an Intergovernmental Organization or submit itself to any jurisdiction.
+# Invenio is free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
 
 
 """Utility functions tests."""
@@ -46,15 +30,15 @@ def test_Pagination():
     assert pagination.page == 2
     assert pagination.per_page == 5
     assert pagination.total_count == 50
-    
+
     assert pagination.pages == 10
     assert pagination.has_prev == True
     assert pagination.has_next == True
-    
+
     iter = pagination.iter_pages()
     result = [i for i in iter]
     assert result == [1,2,3,4,None,10]
-    
+
 # .tox/c1/bin/pytest --cov=invenio_communities tests/test_utils.py::test_template_formatting_from_string -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp
 def test_template_formatting_from_string(app):
     """Test formatting of string-based template to string."""
@@ -81,13 +65,13 @@ def test_save_and_validate_logo(app, db,instance_path,communities):
     assert result == "png"
     obj = ObjectVersion.query.first()
     assert obj.key == "comm1/logo.png"
-    
+
     # extentions not in png, jpg, jpeg, svg
     logo_filename = "weko-logo.txt"
     logo = open(os.path.join(os.path.dirname(__file__),'data/weko-logo.txt'),"rb")
     result = save_and_validate_logo(logo, logo_filename,"comm1")
     assert result == None
-    
+
     app.config.update(
         COMMUNITIES_LOGO_MAX_SIZE=10
     )
@@ -101,7 +85,7 @@ def test_save_and_validate_logo(app, db,instance_path,communities):
 def test_initialize_communities_bucket(app,db,instance_path):
     loc = Location(name='local', uri=instance_path, default=True)
     db.session.add(loc)
-    
+
     bucket = Bucket(
         id="517f7d98-ab2c-4736-91ea-54ba34e7905d",
         default_location=1,
@@ -110,7 +94,7 @@ def test_initialize_communities_bucket(app,db,instance_path):
     )
     db.session.add(bucket)
     db.session.commit()
-    
+
     # not exist Bucket
     with patch("invenio_communities.utils.db.session.commit", side_effect=Exception('')):
         initialize_communities_bucket()
@@ -120,7 +104,7 @@ def test_initialize_communities_bucket(app,db,instance_path):
     bucket = Bucket.query.filter_by(id="00000000-0000-0000-0000-000000000000").first()
     assert bucket.default_storage_class == "S"
     assert bucket.location == loc
-    
+
     with pytest.raises(FilesException) as e:
         initialize_communities_bucket()
 
@@ -129,11 +113,11 @@ def test_format_request_email_templ(app,db,db_records,communities):
     increq = InclusionRequest(id_community="comm1",id_record=db_records[2].id,id_user=1)
     db.session.add(increq)
     db.session.commit()
-    
+
     test = "foobar: spam, link: https://inveniosoftware.org/communities/comm1/curate/, user: test_user"
     ctx = { "_from_string":True,'baz': 'spam','requester':'test_user'}
     result = format_request_email_templ(increq,"foobar: {{ baz }}, link: {{curate_link}}, user: {{requester}}",**ctx)
-    
+
     assert result == test
 
 # .tox/c1/bin/pytest --cov=invenio_communities tests/test_utils.py::test_send_community_request_email -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp
@@ -141,7 +125,7 @@ def test_send_community_request_email(app,db,db_records,communities,users,mocker
     increq = InclusionRequest(id_community="comm1",id_record=db_records[2].id,id_user=1)
     db.session.add(increq)
     db.session.commit()
-    
+
     test = {
         "recipients": ["test@test.org"],
         "subject": "A record was requested to be added to your community (Title1).",
@@ -150,8 +134,8 @@ def test_send_community_request_email(app,db,db_records,communities,users,mocker
         "cc": [],
         "bcc": [],
         "body": "A new upload requests to be added to your community (Title1):\n\n\nRequested by:  (test@test.org)\n\nRecord Title: [&#39;test_title1&#39;]\nRecord Description: \n\nYou can accept or reject this record in your community curation page:\nhttps://inveniosoftware.org/communities/comm1/curate/",
-        "html": None, 
-        "date": None, 
+        "html": None,
+        "date": None,
         "msgId": "<167897618090.4148.5133223996038127488@63ee5d1d2822>",
         "charset": None,
         "extra_headers": None,
@@ -177,14 +161,14 @@ def test_send_community_request_email(app,db,db_records,communities,users,mocker
     assert data["mail_options"] == []
     assert data["rcpt_options"] ==[]
     assert data["attachments"] == []
-    
+
 
 # .tox/c1/bin/pytest --cov=invenio_communities tests/test_utils.py::test_get_user_role_ids -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp
 def test_get_user_role_ids(app,db, communities,users):
     # without login
     result = get_user_role_ids()
     assert result == []
-    
+
     # with login
     with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
         result = get_user_role_ids()

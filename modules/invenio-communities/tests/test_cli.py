@@ -1,26 +1,10 @@
 # -*- coding: utf-8 -*-
 #
 # This file is part of Invenio.
-# Copyright (C) 2016 CERN.
+# Copyright (C) 2016-2019 CERN.
 #
-# Invenio is free software; you can redistribute it
-# and/or modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; either version 2 of the
-# License, or (at your option) any later version.
-#
-# Invenio is distributed in the hope that it will be
-# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Invenio; if not, write to the
-# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-# MA 02111-1307, USA.
-#
-# In applying this license, CERN does not
-# waive the privileges and immunities granted to it by virtue of its status
-# as an Intergovernmental Organization or submit itself to any jurisdiction.
+# Invenio is free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
 
 
 """Module tests."""
@@ -83,7 +67,7 @@ def test_addlogo(script_info,app,db,communities,instance_path):
     )
     assert result.exit_code == 0
     assert Community.query.filter_by(id="comm1").one().logo_ext == "png"
-    
+
     # community is not existed
     runner = CliRunner()
     result = runner.invoke(
@@ -100,10 +84,10 @@ def test_request(script_info,db_records,communities,mocker):
     mocker.patch("invenio_records.api.before_record_update.send")
     mocker.patch("invenio_records.api.after_record_update.send")
     mocker.patch("invenio_communities.models.inclusion_request_created.send")
-    
+
     community_id = str(communities[0].id)
     record_id = str(db_records[2].id)
-    
+
     # accept is true
     runner = CliRunner()
     mock_index = mocker.patch("invenio_communities.cli.RecordIndexer.index_by_id")
@@ -140,15 +124,15 @@ def test_request(script_info,db_records,communities,mocker):
     args,_=mock_index.call_args
     assert str(args[0]) == record_id
     assert InclusionRequest.query.first().id_community=="comm2"
-    
-    
+
+
 
 # .tox/c1/bin/pytest --cov=invenio_communities tests/no_test_cli.py::test_remove -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp
 def test_remove(script_info,communities,db_records,mocker):
     mocker.patch("invenio_records.api.before_record_update.send")
     mocker.patch("invenio_records.api.after_record_update.send")
     mocker.patch("invenio_communities.models.inclusion_request_created.send")
-    
+
     record_id = str(db_records[2].id)
     comm = Community.query.filter_by(id="comm1").one()
     record = Record.get_record(record_id)
