@@ -25,9 +25,9 @@ from invenio_stats.cli import stats
 
 # def _events_process(event_types=None, eager=False):
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_cli.py::test_events_process -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
-def test_events_process(app, search_clear, script_info, event_queues):
+def test_events_process(app, es, script_info, event_queues):
     """Test "events process" CLI command."""
-    search_obj = dsl.Search(using=search_clear)
+    search_obj = dsl.Search(using=es)
     runner = CliRunner()
 
     # Invalid argument
@@ -59,8 +59,8 @@ def test_events_process(app, search_clear, script_info, event_queues):
 
     current_search.flush_and_refresh(index="test-*")
 
-    assert not search_clear.indices.exists("events-stats-record-view-2018-01")
-    assert not search_clear.indices.exists_alias(name="events-stats-record-view")
+    assert not es.indices.exists("events-stats-record-view-2018-01")
+    assert not es.indices.exists_alias(name="events-stats-record-view")
 
     result = runner.invoke(
         stats, ["events", "process", "record-view", "--eager"], obj=script_info
@@ -122,9 +122,9 @@ def test_events_delete_restore(app, script_info, es, event_queues):
     ],
     indirect=["indexed_file_download_events"]
 )
-def test_aggregations_process(script_info, event_queues, search_clear, indexed_file_download_events):
+def test_aggregations_process(script_info, event_queues, es, indexed_file_download_events):
     """Test "aggregations process" CLI command."""
-    search_obj = dsl.Search(using=search_clear)
+    search_obj = dsl.Search(using=es)
     runner = CliRunner()
 
     # Invalid argument
@@ -205,10 +205,10 @@ def test_aggregations_process(script_info, event_queues, search_clear, indexed_f
     indirect=["aggregated_file_download_events"],
 )
 def test_aggregations_delete(
-    script_info, event_queues, search_clear, aggregated_file_download_events
+    script_info, event_queues, es, aggregated_file_download_events
 ):
     """Test "aggregations process" CLI command."""
-    search_obj = dsl.Search(using=search_clear)
+    search_obj = dsl.Search(using=es)
     runner = CliRunner()
 
     current_search.flush_and_refresh(index="test-*")
@@ -256,11 +256,11 @@ def test_aggregations_delete(
     indirect=["aggregated_file_download_events"],
 )
 def test_aggregations_list_bookmarks(
-    script_info, event_queues, search_clear, aggregated_file_download_events
+    script_info, event_queues, es, aggregated_file_download_events
 ):
     with app.app_context():
         """Test "aggregations list-bookmarks" CLI command."""
-        search_obj = dsl.Search(using=search_clear)
+        search_obj = dsl.Search(using=es)
         runner = CliRunner()
 
         current_search.flush_and_refresh(index="test-*")
@@ -281,7 +281,7 @@ def test_aggregations_list_bookmarks(
         )
         assert result
 
-# def _aggregations_delete_index(aggregation_types=None, bookmark=False, start_date=None, end_date=None, force=False, verbose=False
+# def _aggregations_delete_index(aggregation_types=None, bookindexed_eventssmark=False, start_date=None, end_date=None, force=False, verbose=False
 # def _aggregations_restore(aggregation_types=None, bookmark=False, start_date=None, end_date=None, force=False, verbose=False):
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_cli.py::test_aggregations_deleteindex_restore -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
 def test_aggregations_deleteindex_restore(app, script_info, event_queues, es):

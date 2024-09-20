@@ -43,10 +43,10 @@ def test_query(app):
 
 # class ESDateHistogramQuery(ESQuery):
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_queries.py::test_date_histogram_query -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
-def test_date_histogram_query(app, query_configs):
-    with app.app_context():
+def test_date_histogram_query(i18n_app, queries_config):
+    with i18n_app.app_context():
         config_num = 8      # query_name='bucket-file-download-histogram'
-        histogram_config = query_configs[config_num]['query_config']
+        histogram_config = queries_config[config_num]['queries_config']
         # __init__
         with pytest.raises(ValueError):
             ESDateHistogramQuery(
@@ -165,11 +165,11 @@ def test_date_histogram_query(app, query_configs):
                           (["tests/data/ESTermsQuery_execute03.json"],
                            16,
                            "tests/data/ESTermsQuery_result03.json")])
-def test_terms_query(app,mock_es_execute, event_queues,
-                     aggregated_file_download_events, mock_execute, config_num, res_file, query_configs):
+def test_terms_query(i18n_app,mock_es_execute, event_queues,
+                     aggregated_file_download_events, mock_execute, config_num, res_file, queries_config):
     """Test that the terms query returns the correct total count."""
     terms_query = ESTermsQuery(query_name='test_total_count',
-                               **query_configs[config_num]['query_config'])
+                               **queries_config[config_num]['queries_config'])
 
     with patch("invenio_stats.queries.Search.execute", side_effect=[mock_es_execute(data) for data in mock_execute]):
         results = terms_query.run(bucket_id='B0000000000000000000000000000001',
@@ -181,9 +181,9 @@ def test_terms_query(app,mock_es_execute, event_queues,
         assert results == data
 
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_queries.py::test_terms_query2 -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
-def test_terms_query2(app, query_configs):
+def test_terms_query2(i18n_app, queries_config):
     config_num = 0        # query_name='get-celery-task-report'
-    terms_config = query_configs[config_num]['query_config']
+    terms_config = queries_config[config_num]['queries_config']
     
     # validate_arguments
     query = ESTermsQuery(
@@ -266,9 +266,9 @@ def test_terms_query2(app, query_configs):
 
 
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_queries.py::test_weko_file_stats_query -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
-def test_weko_file_stats_query(app, query_configs):
+def test_weko_file_stats_query(i18n_app, queries_config):
     config_num = 9        # query_name='bucket-file-download-total'
-    filestats_config = query_configs[config_num]['query_config']
+    filestats_config = queries_config[config_num]['queries_config']
 
     # build_query
     test_config = copy.deepcopy(filestats_config)
@@ -292,9 +292,9 @@ def test_weko_file_stats_query(app, query_configs):
 
 
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_queries.py::test_weko_terms_query -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
-def test_weko_terms_query(app, query_configs):
+def test_weko_terms_query(i18n_app, queries_config):
     config_num = 1        # query_name='get-search-report'
-    weko_terms_config = query_configs[config_num]['query_config']
+    weko_terms_config = queries_config[config_num]['queries_config']
 
     # build_query
     test_config = copy.deepcopy(weko_terms_config)
@@ -324,7 +324,7 @@ def test_ESWekoFileRankingQuery(app, esindex):
     import json
     from invenio_stats.proxies import current_stats
     query_download_total_cfg = current_stats.queries['item-file-download-aggs']
-    query_download_total = query_download_total_cfg.query_class(**query_download_total_cfg.query_config)
+    query_download_total = query_download_total_cfg.query_class(**query_download_total_cfg.queries_config)
 
     index = app.config["INDEXER_DEFAULT_INDEX"]
     doc_type = "stats-file-download"
