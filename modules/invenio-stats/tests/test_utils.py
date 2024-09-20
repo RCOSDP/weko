@@ -28,7 +28,6 @@ from invenio_stats.utils import (
     get_start_end_date,
     agg_bucket_sort,
     parse_bucket_response,
-    get_doctype,
     is_valid_access,
     QueryFileReportsHelper,
     QuerySearchReportHelper,
@@ -901,26 +900,17 @@ def test_StatsCliUtil(app, db):
         StatsEvents(
             index='stats-file-download',
             source_id='1',
-            type='file-download',
-            source=''
+            source={'event_type': 'file-download'}
         )
     ]
     _return_agg = [
         StatsAggregation(
             index='test_index_agg',
             source_id='1',
-            type='file-download-agg',
-            source=''
+            source={'event_type': 'file-download-agg'}
         )
     ]
-    _return_bookmark = [
-        StatsBookmark(
-            index='test_index_bookmark',
-            source_id='1',
-            type='bookmark',
-            source=''
-        )
-    ]
+    
     stats_cli = StatsCliUtil(
         StatsCliUtil.EVENTS_TYPE, _event_types, 202201
     )
@@ -992,38 +982,35 @@ def test_StatsCliUtil(app, db):
     stats_cli = StatsCliUtil(
         StatsCliUtil.EVENTS_TYPE, _event_types, verbose=False
     )
-    assert not stats_cli.restore_data(True)
+    assert not stats_cli.restore_data()
 
-    with pytest.raises(TypeError) as e:
-        stats_cli = StatsCliUtil(
-            StatsCliUtil.EVENTS_TYPE, _empty_types, verbose=False
-        )
-        assert not stats_cli.restore_data(True)
+    stats_cli = StatsCliUtil(
+        StatsCliUtil.EVENTS_TYPE, _empty_types, verbose=False
+    )
+    assert not stats_cli.restore_data()
 
     stats_cli = StatsCliUtil(
         StatsCliUtil.EVENTS_TYPE, _event_types, verbose=False
     )
-    assert not stats_cli.restore_data(False)
+    assert not stats_cli.restore_data()
 
     stats_cli = StatsCliUtil(
         StatsCliUtil.AGGREGATIONS_TYPE, _agg_types, verbose=False
     )
-    assert not stats_cli.restore_data(True)
+    assert not stats_cli.restore_data()
 
-    with pytest.raises(TypeError) as e:
-        stats_cli = StatsCliUtil(
-            StatsCliUtil.EVENTS_TYPE, _empty_types, verbose=True, start_date='2022-01-01', end_date='2022-01-03'
-        )
-        assert not stats_cli.restore_data(True)
+    stats_cli = StatsCliUtil(
+        StatsCliUtil.EVENTS_TYPE, _empty_types, verbose=True, start_date='2022-01-01', end_date='2022-01-03'
+    )
+    assert not stats_cli.restore_data()
 
     stats_cli = StatsCliUtil(
         StatsCliUtil.EVENTS_TYPE, None, verbose=True, start_date='2022-01-01', end_date='2022-01-03'
     )
-    assert not stats_cli.restore_data(True)
+    assert not stats_cli.restore_data()
 
-    with patch("invenio_stats.models.StatsEvents.get_all", return_value=_return_event):
-        with pytest.raises(Exception) as e:
-            stats_cli = StatsCliUtil(
-                StatsCliUtil.EVENTS_TYPE, None, verbose=True, start_date='2022-01-01', end_date='2022-01-03'
-            )
-            assert not stats_cli.restore_data(True)
+    with patch("invenio_stats.models.StatsEvents.get_by_index", return_value=_return_event):
+        stats_cli = StatsCliUtil(
+            StatsCliUtil.EVENTS_TYPE, _agg_types, verbose=True, start_date='2022-01-01', end_date='2022-01-03'
+        )
+        assert not stats_cli.restore_data()
