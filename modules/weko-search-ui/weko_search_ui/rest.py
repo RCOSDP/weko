@@ -258,6 +258,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         search_obj = self.search_class()
         search = search_obj.with_preference_param().params(version=True)
         search = search[(page - 1) * size : page * size]
+        search = search.params(track_total_hits=True)
         search, qs_kwargs = self.search_factory(self, search)
         query = request.values.get("q")
         if query:
@@ -654,6 +655,7 @@ class IndexSearchResourceAPI(ContentNegotiatedMethodView):
             #     search = search.post_filter({'terms': {query_key: params[param]}})
 
             # Execute search
+            search = search.params(track_total_hits=True)
             search_results = search.execute()
             search_results = search_results.to_dict()
 
@@ -675,7 +677,7 @@ class IndexSearchResourceAPI(ContentNegotiatedMethodView):
             indent = 4 if request.args.get('pretty') == 'true' else None
 
             cursor = None
-            if len(search_results['hits']['hits']) > 0:
+            if search_results['hits']['total']['value']:
                 sort_key = search_results['hits']['hits'][-1].get('sort')
                 if sort_key:
                     cursor = sort_key[0]

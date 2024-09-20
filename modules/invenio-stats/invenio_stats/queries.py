@@ -257,6 +257,7 @@ class TermsQuery(Query):
     def build_query(self, start_date, end_date, **kwargs):
         """Build the search query."""
         agg_query = dsl.Search(using=self.client, index=self.index)[0:0]
+        agg_query = agg_query.extra(track_total_hits=True)
 
         if start_date or end_date:
             time_range = {}

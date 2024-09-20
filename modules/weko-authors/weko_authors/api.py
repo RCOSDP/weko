@@ -83,11 +83,12 @@ class WekoAuthors(object):
                             'pk_id': {'value': author_id}
                         }
                     },
-                    "size": 1
+                    "size": 1,
+                    "track_total_hits": False
                 }
             )
             exist_flg = False
-            if es_author['hits']['total']['value'] > 0:
+            if len(es_author['hits']['hits']) > 0:
                 if es_author['hits']['hits'][0].get('_id') == es_id:
                     exist_flg = True
                     

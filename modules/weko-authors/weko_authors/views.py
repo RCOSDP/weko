@@ -210,7 +210,8 @@ def get():
         "query": query,
         "from": offset,
         "size": size,
-        "sort": sort
+        "sort": sort,
+        "track_total_hits": True
     }
     indexer = RecordIndexer()
     result = indexer.client.search(

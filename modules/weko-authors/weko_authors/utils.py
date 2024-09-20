@@ -80,7 +80,8 @@ def check_email_existed(email: str):
                     {"term": {"emailInfo.email.raw": email}}
                 ]
             }
-        }
+        },
+        "track_total_hits": False
     }
 
     indexer = RecordIndexer()
@@ -89,7 +90,7 @@ def check_email_existed(email: str):
         body=body
     )
 
-    if result['hits']['total']['value']:
+    if len(result['hits']['hits']) > 0:
         return {
             'email': email,
             'author_id': result['hits']['hits'][0]['_source']['pk_id']
@@ -602,7 +603,8 @@ def get_count_item_link(pk_id):
     count = 0
     query_q = {
         "query": {"term": {"author_link.raw": pk_id}},
-        "_source": ["control_number"]
+        "_source": ["control_number"],
+        "track_total_hits": False
     }
     result_itemCnt = RecordIndexer().client.search(
         index=current_app.config['SEARCH_UI_SEARCH_INDEX'],
@@ -612,8 +614,8 @@ def get_count_item_link(pk_id):
     if result_itemCnt \
             and 'hits' in result_itemCnt \
             and 'total' in result_itemCnt['hits'] \
-            and result_itemCnt['hits']['total']['value'] > 0:
-        count = result_itemCnt['hits']['total']['value'] 
+            and len(result_itemCnt['hits']['hits']) > 0:
+        count = result_itemCnt['hits']['total']['value']
     return count
 
 

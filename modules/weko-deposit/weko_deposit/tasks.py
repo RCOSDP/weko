@@ -284,7 +284,8 @@ def update_items_by_authorInfo(user_id, target, origin_pkid_list=[], origin_id_l
                 "control_number"
             ],
             "size": data_size,
-            "from": data_from
+            "from": data_from,
+            "track_total_hit": True
         }
         search = RecordsSearch(
             index=current_app.config['INDEXER_DEFAULT_INDEX'],). \
@@ -376,7 +377,7 @@ def update_items_by_authorInfo(user_id, target, origin_pkid_list=[], origin_id_l
         "full_name": {
             "ids_key": "nameIdentifiers",
             "id_scheme_key": "nameIdentifierScheme",
-            "id_key": "nameIdentifier",
+            "id_key": "nameIdentifier",                                                                                     
             "id_uri_key": "nameIdentifierURI",
             "names_key": "names",
             "name_key": "name",

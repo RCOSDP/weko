@@ -352,6 +352,7 @@ class ReportView(BaseView):
 
             aggs_query = {
                 "size": 0,
+                "track_total_hits": True,
                 "aggs": {
                     "aggs_public": {
                         "filter": {

@@ -1030,6 +1030,7 @@ class FeedbackMail:
             "query": query,
             "from": offset,
             "size": size,
+            "track_total_hits": True
         }
         indexer = RecordIndexer()
         result = indexer.client.search(
