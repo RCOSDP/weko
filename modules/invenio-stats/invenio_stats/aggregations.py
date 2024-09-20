@@ -327,8 +327,8 @@ class StatAggregator(object):
             end_date = end_date.replace(tzinfo=None)
 
         return min(
-            end_date or datetime.max,  
-            datetime.now().replace(tzinfo=None) 
+            end_date or datetime.max,
+            datetime.now().replace(tzinfo=None)
         )
 
     def run(self, start_date=None, end_date=None, update_bookmark=True, manual=False):
@@ -367,8 +367,8 @@ class StatAggregator(object):
             )
         if update_bookmark:
             self.bookmark_api.set_bookmark(
-                upper_limit.strftime(self.doc_id_suffix)
-                or datetime.now(timezone.utc).strftime(self.doc_id_suffix)
+                upper_limit.strftime("%Y-%m-%dT%H:%M:%S")
+                or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
             )
         return results
 

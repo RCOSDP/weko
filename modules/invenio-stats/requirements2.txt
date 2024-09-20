@@ -109,6 +109,7 @@ geojson==3.1.0
 github3.py==4.0.1
 greenlet==3.0.3
 html5lib==1.1
+humanize
 idna==2.6
 idutils==1.2.1
 iiif-prezi==0.3.0
