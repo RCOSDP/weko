@@ -142,7 +142,7 @@ class StatAggregator(object):
         self.query_modifiers = (
             query_modifiers if query_modifiers is not None else [filter_robots]
         )
-        self.bookmark_api = BookmarkAPI(self.client, self.name, self.interval)
+        self.bookmark_api = BookmarkAPI(self.name, self.interval)
         self.max_bucket_size = max_bucket_size
 
         self.bookmark_alias = prefix_index(f"stats-{event}-bookmark")
@@ -366,8 +366,8 @@ class StatAggregator(object):
             )
         if update_bookmark:
             self.bookmark_api.set_bookmark(
-                upper_limit.strftime(self.doc_id_suffix)
-                or datetime.now(timezone.utc).strftime(self.doc_id_suffix)
+                upper_limit.strftime("%Y-%m-%dT%H:%M:%S")
+                or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
             )
         return results
 

@@ -10,10 +10,7 @@
 
 from collections import OrderedDict
 from datetime import datetime, timedelta
-from functools import wraps
 import json
-from flask import current_app
-from invenio_search.engine import dsl, search
 from invenio_search.utils import prefix_index
 
 from .models import StatsBookmark
@@ -43,63 +40,35 @@ class BookmarkAPI(object):
     It provides an interface that lets us interact with a bookmark.
     """
 
-    MAPPINGS = {
-        "mappings": {
-            "dynamic": "strict",
-            "properties": {
-                "date": {"type": "date", "format": "date_optional_time"},
-                "aggregation_type": {"type": "keyword"},
-            },
-        }
-    }
-
-    def __init__(self, client, agg_type, agg_interval):
+    def __init__(self, agg_type, agg_interval):
         """Construct bookmark instance.
 
-        :param client: search client
         :param agg_type: aggregation type for the bookmark
         """
         self.bookmark_index = prefix_index("stats-bookmarks")
-        self.client = client
         self.agg_type = agg_type
         self.agg_interval = agg_interval
 
-    def _ensure_index_exists(func):
-        """Decorator for ensuring the bookmarks index exists."""
-
-        @wraps(func)
-        def wrapped(self, *args, **kwargs):
-            if not dsl.Index(self.bookmark_index, using=self.client).exists():
-                self.client.indices.create(
-                    index=self.bookmark_index, body=BookmarkAPI.MAPPINGS
-                )
-            return func(self, *args, **kwargs)
-
-        return wrapped
-
-    @_ensure_index_exists
     def set_bookmark(self, value):
         """Set bookmark for starting next aggregation."""
         _id = self.agg_type
         _source = {"date": value, "aggregation_type": self.agg_type}
 
         # Save stats bookmark into Database.
-        StatsBookmark.save(dict(
-            _id=_id,
-            _index=self.bookmark_index,
-            _source=_source,
-        ), delete=True)
+        StatsBookmark.save({
+            "_id": _id,
+            "_index": self.bookmark_index,
+            "_source": _source,
+        }, delete=True)
         self.new_timestamp = None
 
-    @_ensure_index_exists
     def get_bookmark(self, refresh_time=60):
         """Get last aggregation date."""
-        # retrieve the oldest bookmark
-        # db_bookmark = StatsBookmark.get_by_source_id(
-        #     source_id= self.agg_type
-        # ).order_by(StatsBookmark.date.desc()).first()        
-        db_bookmark = StatsBookmark.query.filter_by(source_id=self.agg_type).order_by(StatsBookmark.date.desc()).first()
-        
+        db_bookmark = (
+            StatsBookmark.query.filter_by(source_id=self.agg_type)
+            .order_by(StatsBookmark.date.desc()).first()
+        )
+
         if db_bookmark:
             source_date = json.loads(db_bookmark.source)['date']
             try:
@@ -107,7 +76,7 @@ class BookmarkAPI(object):
             except ValueError:
                 # This one is for backwards compatibility, when the bookmark did not have the time
                 my_date = datetime.strptime(
-                    source_date, SUPPORTED_INTERVALS[self.agg_interval]
+                    source_date, "%Y-%m-%dT%H:%M:%S"
                 )
             # By default, the bookmark returns a slightly sooner date, to make sure that documents
             # that had arrived before the previous run and where not indexed by the engine are caught in this run
@@ -116,11 +85,10 @@ class BookmarkAPI(object):
                 my_date -= timedelta(seconds=refresh_time)
             return my_date
 
-    @_ensure_index_exists
     def list_bookmarks(self, start_date=None, end_date=None, limit=None):
         """List bookmarks."""
         query = StatsBookmark.get_by_source_id(self.agg_type, start_date, end_date)
-        
+
         if query:
             query = sorted(query, key=lambda x: x.date, reverse=True)
 

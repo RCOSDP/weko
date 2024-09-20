@@ -109,6 +109,7 @@ geojson==3.1.0
 github3.py==4.0.1
 greenlet==3.0.3
 html5lib==1.1
+humanize
 idna==2.6
 idutils==1.2.1
 iiif-prezi==0.3.0
@@ -342,5 +343,3 @@ yarl==1.9.11
 zipp==3.20.1
 zipstream-ng==1.7.1
 zope.interface==5.5.2
-humanize
-freezegun
