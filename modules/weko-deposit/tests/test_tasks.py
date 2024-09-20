@@ -20,6 +20,8 @@
 
 """Module tests."""
 
+import csv
+from io import StringIO
 from unittest import mock
 import pytest
 import json
@@ -31,7 +33,12 @@ from invenio_pidstore.errors import PIDDoesNotExistError
 from sqlalchemy.exc import SQLAlchemyError
 from weko_authors.models import Authors, AuthorsAffiliationSettings,AuthorsPrefixSettings
 
-from weko_deposit.tasks import get_origin_data, update_db_es_data, update_items_by_authorInfo
+from weko_deposit.tasks import (
+    get_origin_data,
+    make_stats_file, 
+    update_db_es_data, 
+    update_items_by_authorInfo
+)
 [
     {
         "recid": "1",
@@ -547,9 +554,83 @@ def test_update_db_es_data(app, db, mocker,esindex, es_records,authors):
 
 # def make_stats_file(raw_stats):
 def test_make_stats_file(app, db, mocker):
-    print('\n', raw_stats)
-
+    TARGET_LABEL = 'target'
     # file_format is tsv
+    # success_items and fail_items is empty
+    raw_stats = {
+        "target": {},
+        "origin": [],
+        "success_items": [],
+        "fail_items": []
+    }
+    file = StringIO()
+    writer = csv.writer(file, delimiter="\t", lineterminator="\n")
+    writer.writerow(["[TARGET]"])
+    writer.writerow([])
+    writer.writerow([])
+    writer.writerow("")
+    writer.writerow(["[ORIGIN]"])
+    writer.writerow("")
+    writer.writerow(["[SUCCESS]"])
+    writer.writerow("")
+    writer.writerow(["[FAIL]"])
 
-    app.config.update(WEKO_ADMIN_OUTPUT_FORMAT='csv')
+    result = make_stats_file(raw_stats)
+    assert result.getvalue() == file.getvalue()
+
     # file_format is csv
+    app.config.update(WEKO_ADMIN_OUTPUT_FORMAT='csv')
+    # success_items and fail_items is not empty
+    raw_stats = {
+        "target": {
+            "target_key1": "target_value1",
+            "target_key2": "target_value2"
+        },
+        "origin": [{}, {}],
+        "success_items": [
+            {
+                "record_id":"test_id1",
+                "author_ids":"test_id2",
+                "message":"test_message"
+            },
+            {
+                "record_id":"test_id3",
+                "author_ids":"test_id4",
+                "message":"test_message"
+            }],
+        "fail_items": [
+            {
+                "record_id":"test_id5",
+                "author_ids":"test_id6",
+                "message":"test_message"
+            },
+            {
+                "record_id":"test_id7",
+                "author_ids":"test_id8",
+                "message":"test_message"
+            }]
+    }
+    file = StringIO()
+    writer = csv.writer(file, delimiter=",", lineterminator="\n")
+    writer.writerow(["[TARGET]"])
+    writer.writerow(["target_key1", "target_key2"])
+    writer.writerow(["target_value1", "target_value2"])
+    writer.writerow("")
+    writer.writerow(["[ORIGIN]"])
+    writer.writerow([])
+    writer.writerow([])
+    writer.writerow([])
+    writer.writerow([])
+    writer.writerow("")
+    writer.writerow(["[SUCCESS]"])
+    writer.writerow(["record_id", "author_ids", "message"])
+    writer.writerow(["test_id1", "test_id2", "test_message"])
+    writer.writerow(["test_id3", "test_id4", "test_message"])
+    writer.writerow("")
+    writer.writerow(["[FAIL]"])
+    writer.writerow(["record_id", "author_ids", "message"])
+    writer.writerow(["test_id5", "test_id6", "test_message"])
+    writer.writerow(["test_id7", "test_id8", "test_message"])
+
+    result = make_stats_file(raw_stats)
+    assert result.getvalue() == file.getvalue()
