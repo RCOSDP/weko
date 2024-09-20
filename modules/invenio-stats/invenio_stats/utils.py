@@ -1398,7 +1398,6 @@ class StatsCliUtil:
             es_data = {
                 "_id": data.source_id,
                 "_index": data.index,
-                "_type": data.type,
                 "_source": data.source
             }
             if self.cli_type == self.EVENTS_TYPE:
