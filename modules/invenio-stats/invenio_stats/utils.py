@@ -1346,7 +1346,7 @@ class StatsCliUtil:
 
         :param bookmark: set True if delete bookmark
         """
-        for _index in self.__prepare_es_indexes(delete=True):
+        for _index in self.__prepare_es_indexes():
             self.__cli_delete_es_index(_index)
         if bookmark:
             if self.verbose:
@@ -1357,24 +1357,14 @@ class StatsCliUtil:
             StatsBookmark.query.delete()
             db.session.commit()
 
-    def restore_data(self, bookmark: bool = False) -> None:
-        """Restore stats data.
-
-        :param bookmark: set True if restore bookmark
-        """
+    def restore_data(self) -> None:
+        """Restore stats data."""
         if self.cli_type == self.EVENTS_TYPE:
             data = self.__get_stats_data_from_db(StatsEvents)
         else:
             data = self.__get_stats_data_from_db(StatsAggregation)
         self.__cli_restore_es_data_from_db(data)
 
-        if bookmark:
-            if self.verbose:
-                click.secho(
-                    "Bookmark data is now only stored in the database."
-                    "does not need to be restored to Elasticsearch.",
-                    fg="yellow"
-                )
 
     def __prepare_es_indexes(self):
         """Prepare ElasticSearch index data.
@@ -1425,7 +1415,7 @@ class StatsCliUtil:
 
     def __get_stats_data_from_db(
         self,
-        data_model, bookmark: bool = False
+        data_model
     ) -> Generator:
         """Get bookmark data from database.
 

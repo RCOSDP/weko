@@ -362,12 +362,6 @@ def _aggregations_delete_index(
 @aggregations.command('restore')
 @aggregation_arg
 @click.option(
-    '--bookmark', '-b',
-    is_flag=True,
-    default=False,
-    help='Restore bookmark index on Elasticsearch.'
-)
-@click.option(
     '--start-date',
     default=None,
     callback=_verify_date,
@@ -395,7 +389,7 @@ def _aggregations_delete_index(
 @with_appcontext
 def _aggregations_restore(
     aggregation_types=None,
-    bookmark=False, start_date=None, end_date=None,
+    start_date=None, end_date=None,
     force=False, verbose=False
 ):
     """Restore aggregation index (and bookmark index) on Elasticsearch.
@@ -414,7 +408,7 @@ def _aggregations_restore(
         StatsCliUtil.AGGREGATIONS_TYPE,
         aggregation_types, start_date, end_date, force, verbose
     )
-    stats_cli.restore_data(bookmark)
+    stats_cli.restore_data()
 
 
 @stats.group()
