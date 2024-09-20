@@ -11,17 +11,17 @@
 import pytest
 import sqlalchemy as sa
 from flask import current_app
-from mock import patch
+from unittest.mock import patch
 from sqlalchemy_continuum import remove_versioning
 from sqlalchemy_utils.types import EncryptedType
 
 from invenio_db import InvenioDB
-	from invenio_db.utils import (
-	    rebuild_encrypted_properties,
-	    versioning_model_classname,
-	    versioning_models_registered,
-	    create_alembic_version_table,
-	    drop_alembic_version_table,
+from invenio_db.utils import (
+    rebuild_encrypted_properties,
+    versioning_model_classname,
+    versioning_models_registered,
+    create_alembic_version_table,
+    drop_alembic_version_table,
 	)
 
 
@@ -101,7 +101,7 @@ def test_create_alembic_version_table(db, app, has_version_table):
     idb = InvenioDB(app)
     with patch("alembic.runtime.migration.MigrationContext._has_version_table",return_value=has_version_table):
         create_alembic_version_table()
-    
+
     alembic = current_app.extensions['invenio-db'].alembic
     assert alembic.migration_context._has_version_table() != has_version_table
 
@@ -110,7 +110,7 @@ def test_drop_alembic_version_table(app, db,mock_entry_points):
     # not exist alembic_version
     idb = InvenioDB(app)
     drop_alembic_version_table()
-    
+
     # exist alembic_version
     idb = InvenioDB(app,db=db)
     alembic = current_app.extensions['invenio-db'].alembic
