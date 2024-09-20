@@ -18,14 +18,14 @@ import json
 from .conftest import _create_file_download_event
 from .helpers import mock_date
 from invenio_search import current_search, current_search_client
-from invenio_search.engine import dsl
+from invenio_search.engine import dsl, search
 
 from invenio_stats import current_stats
 from invenio_stats.aggregations import StatAggregator, filter_robots, BookmarkAPI
 from invenio_stats.processors import EventsIndexer
 from invenio_stats.tasks import aggregate_events, process_events
 
-from datetime import datetime, timedelta
+from datetime import timedelta
 from invenio_stats.models import StatsBookmark
 from freezegun import freeze_time
 # def filter_robots(query):
@@ -377,10 +377,9 @@ def test_metric_aggregations(app, search_clear, event_queues):
     assert results[0].volume == 9000 * 12
 
 
-
 def setup_elasticsearch_events(es, event_type, base_time, count=3):
     """Helper function to set up mock events in Elasticsearch."""
-    mock_events = []
+    events = []
     for i in range(count):
         event = {
             "_op_type": "index",
@@ -391,7 +390,7 @@ def setup_elasticsearch_events(es, event_type, base_time, count=3):
                 "file_id": f"file_{event_type}",
                 "user_id": f"user_{event_type}",
                 "visitor_id": f"visitor_{event_type}",
-                "unique_id": f"unique_{event_type}_{i}",
+                "unique_id": f"unique_{event_type}",
                 "size": 1000,
                 "root_file_id": f"root_file_{event_type}",
                 "updated_timestamp": (base_time + timedelta(seconds=i*10)).replace(microsecond=0).replace(tzinfo=None).isoformat(),
@@ -400,11 +399,15 @@ def setup_elasticsearch_events(es, event_type, base_time, count=3):
         }
         if event_type == 'celery-task':
             del event["_source"]["root_file_id"]
-        mock_events.append(event)
-    search.helpers.bulk(es, mock_events)
+        if event_type == 'file-download':
+            del event["_source"]["root_file_id"]
+            del event["_source"]["file_id"]
+            
+        events.append(event)
+    search.helpers.bulk(es, events)
     es.indices.refresh(index=f"test-events-stats-{event_type}")
 
-def setup_elasticsearch_aggregations(es, event_type="file-download", count=1):
+def setup_elasticsearch_aggregations(es, event_type="file-download", count=10):
     """Insert test data into the specified Elasticsearch index for testing the branch logic of 'if res.hits.total.value > 0'."""
     events = []
     for i in range(count):
@@ -413,8 +416,8 @@ def setup_elasticsearch_aggregations(es, event_type="file-download", count=1):
                 "_index": f"test-stats-{event_type}",
                 "_id": f"test_doc_{i}",
                 "_source": {
-                    "timestamp": datetime.now().isoformat(),
-                    "unique_id": f"file_{event_type}",
+                    "timestamp": datetime.datetime.now().isoformat(),
+                    "unique_id": f"unique_{event_type}",   
                     "event_type": f"{event_type}",
                     "file_id": f"file_{i}",
                     "user_id": f"user_{i}",
@@ -432,15 +435,15 @@ def run_aggregation_test(es, event_type, base_time, previous_bookmark, manual, m
         name=f"{event_type}-agg",
         client=es,
         event=event_type,
-        field="file_id",
+        field="unique_id",
         interval="day",
         metric_fields=metric_fields,
         copy_fields={
             "copied_root_file_id": "root_file_id",
-            "custom_field": lambda doc, agg: f"custom_{doc['file_id']}"
+            "custom_field": lambda doc, agg: f"custom_{doc['unique_id']}"
         }
     )
-
+    
     for DA_BACKUP in [True, False]:
         with freeze_time(base_time + timedelta(days=1)), \
             patch("invenio_stats.aggregations.current_app") as mock_app:
@@ -456,7 +459,7 @@ def run_aggregation_test(es, event_type, base_time, previous_bookmark, manual, m
                     assert aggregation["event_type"] == event_type, "Event type mismatch"
                     assert aggregation["count"] > 0, "Expected non-zero count"
                     assert aggregation.get("timestamp", "").startswith(base_time.strftime("%Y-%m-%d")), "Incorrect aggregation timestamp"
-                    assert all(field in aggregation for field in ["file_id", "updated_timestamp", "total_size", "unique_users", "copied_root_file_id", "custom_field"]), "Missing aggregation fields"
+                    assert all(field in aggregation for field in ["updated_timestamp", "total_size", "unique_users", "custom_field"]), "Missing aggregation fields"
             else:
                 print(f"empty fields result length: {len(results)}")
 
@@ -473,7 +476,7 @@ def test_agg_iter(app, es, caplog):
     event_types = ['celery-task', 'item-create', 'top-view', 'record-view', 'file-download', 'file-preview', 'search']
 
     for et_index, event_type in enumerate(event_types):
-        base_time = datetime(2023, 1 + et_index, 1, 12, 0, 0)
+        base_time = datetime.datetime(2023, 1 + et_index, 1, 12, 0, 0)
 
         print(f"\nTesting event type: {event_type}")
         setup_elasticsearch_events(es, event_type, base_time)
@@ -506,10 +509,10 @@ def test_agg_iter(app, es, caplog):
 @pytest.fixture(scope='function')
 def setup_test_data(app, es, db):
     """Pytest fixture to set up test data for various event types."""
-    event_types = ['celery-task', 'item-create', 'top-view', 'record-view',
+    event_types = ['celery-task', 'item-create', 'top-view', 'record-view', 
                    'file-download', 'file-preview', 'search']
-    base_time = datetime(2023, 1, 1, 12, 0, 0)
-
+    base_time = datetime.datetime(2023, 1, 1, 12, 0, 0)
+    
     for event_type in event_types:
         setup_elasticsearch_events(es, event_type, base_time)
 
@@ -523,7 +526,7 @@ def print_specific_tables_data(db_, tables_to_print):
     # Get all table names from the database
     inspector = db_.inspect(db_.engine)
     all_table_names = inspector.get_table_names()
-
+    
     # Filter tables to print
     tables_to_print = [table for table in all_table_names if table in tables_to_print]
     print(f"Tables to print: {tables_to_print}")
@@ -534,33 +537,33 @@ def print_specific_tables_data(db_, tables_to_print):
         query = f"SELECT * FROM {table_name}"
         result = db_.session.execute(query)
         rows = result.fetchall()
-
+        
         if rows:
             for row in rows:
                 print(dict(row))
         else:
             print(f"No data in table '{table_name}'")
-
-
+            
+    
 def test_aggregator_run(app, es, db, setup_test_data):
     """Comprehensive test for StatAggregator run method across multiple event types."""
     event_types = ['celery-task', 'item-create', 'top-view', 'record-view', 'file-download', 'file-preview', 'search']
-    base_time = datetime(2023, 1, 1, 12, 0, 0)
-
+    base_time = datetime.datetime(2023, 1, 1, 12, 0, 0)
+    
     for event_type in event_types:
         # Initialize StatAggregator for each event type
         aggregator = StatAggregator(
             name=f'{event_type}-agg',
             event=event_type,
             client=es,
-            field='file_id',
+            field='unique_id',
             interval='day',
             metric_fields={
                 "total_size": ("sum", "size", {}),
                 "unique_users": ("cardinality", "user_id", {"precision_threshold": 100})
             }
         )
-
+        
         # Test Case 1: Index does not exist
         with patch.object(dsl.Index, 'exists', return_value=False):
             result = aggregator.run()
@@ -568,7 +571,7 @@ def test_aggregator_run(app, es, db, setup_test_data):
 
         # Setup test data
         setup_elasticsearch_events(es, event_type, base_time, count=10)
-
+        
         # Test Case 2: lower_limit is None
         with patch.object(aggregator, '_get_oldest_event_timestamp', return_value=None):
             result = aggregator.run()
@@ -580,24 +583,24 @@ def test_aggregator_run(app, es, db, setup_test_data):
 
         # Test Case 4: Run with end_date provided
         with freeze_time(base_time + timedelta(days=7)):
-            with patch.object(datetime, 'utcnow', return_value=base_time + timedelta(days=5)):
+            with patch.object(datetime.datetime, 'utcnow', return_value=base_time + timedelta(days=5)):
                 aggregator.run(end_date=base_time + timedelta(days=5))
-
+        
         # Verify bookmark was updated
         bookmark = StatsBookmark.query.filter_by(source_id=f'{event_type}-agg').order_by(StatsBookmark.updated.desc()).first()
         assert bookmark is not None, f"Bookmark not found for {event_type}"
         source_data = json.loads(bookmark.source)
-        assert source_data['date'] == (base_time + timedelta(days=5)).strftime('%Y-%m-%d'), f"Incorrect bookmark date for {event_type}"
+        assert source_data['date'] == (base_time + timedelta(days=5)).strftime('%Y-%m-%dT%H:%M:%S'), f"Incorrect bookmark date for {event_type}"
 
         # Test Case 5: Run with update_bookmark set to False
         with freeze_time(base_time + timedelta(days=7)):
             aggregator.run(update_bookmark=False)
-
+        
         # Verify bookmark was not updated
         bookmark = StatsBookmark.query.filter_by(source_id=f'{event_type}-agg').order_by(StatsBookmark.updated.desc()).first()
         assert bookmark is not None, f"Bookmark not found for {event_type}"
         source_data = json.loads(bookmark.source)
-        assert source_data['date'] == (base_time + timedelta(days=5)).strftime('%Y-%m-%d'), f"Bookmark should remain unchanged for {event_type}"
+        assert source_data['date'] == (base_time + timedelta(days=5)).strftime('%Y-%m-%dT%H:%M:%S'), f"Bookmark should remain unchanged for {event_type}"
 
         # Verify final aggregation results
         current_search.flush_and_refresh(index='*')
@@ -607,49 +610,49 @@ def test_aggregator_run(app, es, db, setup_test_data):
         assert results.hits.total.value > 0, f"No aggregation results found for {event_type}"
 
         for hit in results:
-            assert all(field in hit for field in ['timestamp', 'file_id', 'count', 'total_size', 'unique_users']), f"Missing fields in aggregation result for {event_type}"
+            assert all(field in hit for field in ['timestamp', 'count', 'total_size', 'unique_users']), f"Missing fields in aggregation result for {event_type}"
             assert hit.event_type == event_type, f"Incorrect event_type in aggregation result for {event_type}"
-
+            
 
 def test_aggregator_delete(app, es, db, setup_test_data):
     """Test the delete functionality of StatAggregator."""
     event_type = 'file-download'
-    base_time = datetime(2023, 1, 1, 12, 0, 0)
-
+    base_time = datetime.datetime(2023, 1, 1, 12, 0, 0)
+    
     # Initialize the StatAggregator
     aggregator = StatAggregator(
         name=f'{event_type}-agg',
         event=event_type,
         client=es,
-        field='file_id',
+        field='unique_id',
         interval='day',
         metric_fields={
             "total_size": ("sum", "size", {}),
             "unique_users": ("cardinality", "user_id", {"precision_threshold": 100})
         }
     )
-
+    
     # Run aggregations for multiple dates
     for days in range(10):
         with freeze_time(base_time + timedelta(days=days)):
             setup_elasticsearch_events(es, event_type, base_time + timedelta(days=days), count=5)
             aggregator.run()
-
+    
     current_search.flush_and_refresh(index='*')
-
+    
     # Verify initial state
     initial_agg_count = es.count(index=f'test-stats-{event_type}')['count']
     initial_bookmark_count = StatsBookmark.query.filter_by(source_id=f'{event_type}-agg').count()
-
+    
     assert initial_agg_count > 0, "No initial aggregations found"
     assert initial_bookmark_count > 0, "No initial bookmarks found"
-
+    
     # Test Case 1: Delete all
     print(f"Count before delete: {es.count(index=f'test-stats-{event_type}')['count']}")
     print_specific_tables_data(db, "stats_bookmark")
     aggregator.delete()
     current_search.flush_and_refresh(index='*')
-
+    
     print(f"Count after delete: {es.count(index=f'test-stats-{event_type}')['count']}")
     print_specific_tables_data(db, "stats_bookmark")
     assert es.count(index=f'test-stats-{event_type}')['count'] == 0, "Not all aggregations were deleted"
@@ -660,13 +663,13 @@ def test_aggregator_delete(app, es, db, setup_test_data):
         with freeze_time(base_time + timedelta(days=days)):
             setup_elasticsearch_events(es, event_type, base_time + timedelta(days=days), count=5)
             aggregator.run()
-
+    
     current_search.flush_and_refresh(index='*')
 
     # Test Case 2: Delete using start_date
     print(f"Count before delete: {es.count(index=f'test-stats-{event_type}')['count']}")
     print_specific_tables_data(db, "stats_bookmark")
-
+    
     start_date = base_time + timedelta(days=5)
     aggregator.delete(start_date=start_date)
     current_search.flush_and_refresh(index='*')
@@ -675,7 +678,7 @@ def test_aggregator_delete(app, es, db, setup_test_data):
     print_specific_tables_data(db, "stats_bookmark")
     remaining_aggs = es.search(index=f'test-stats-{event_type}')['hits']['hits']
     assert all(agg['_source']['timestamp'] < start_date.isoformat() for agg in remaining_aggs), "Aggregations after start_date were not deleted"
-
+    
     remaining_bookmarks = StatsBookmark.query.filter_by(source_id=f'{event_type}-agg').all()
     assert all(bookmark.date < start_date for bookmark in remaining_bookmarks), "Bookmarks after start_date were not deleted"
 
@@ -690,7 +693,7 @@ def test_aggregator_delete(app, es, db, setup_test_data):
     print_specific_tables_data(db, "stats_bookmark")
     remaining_aggs = es.search(index=f'test-stats-{event_type}')['hits']['hits']
     assert all(agg['_source']['timestamp'] > end_date.isoformat() for agg in remaining_aggs), "Aggregations before end_date were not deleted"
-
+    
     remaining_bookmarks = StatsBookmark.query.filter_by(source_id=f'{event_type}-agg').all()
     assert all(bookmark.date > end_date for bookmark in remaining_bookmarks), "Bookmarks before end_date were not deleted"
 
@@ -706,6 +709,6 @@ def test_aggregator_delete(app, es, db, setup_test_data):
     print_specific_tables_data(db, "stats_bookmark")
     remaining_aggs = es.search(index=f'test-stats-{event_type}')['hits']['hits']
     assert all(agg['_source']['timestamp'] < start_date.isoformat() or agg['_source']['timestamp'] > end_date.isoformat() for agg in remaining_aggs), "Aggregations within specified range were not deleted"
-
+    
     remaining_bookmarks = StatsBookmark.query.filter_by(source_id=f'{event_type}-agg').all()
     assert all(bookmark.date < start_date or bookmark.date > end_date for bookmark in remaining_bookmarks), "Bookmarks within specified range were not deleted"

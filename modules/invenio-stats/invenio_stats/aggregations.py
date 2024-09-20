@@ -288,7 +288,8 @@ class StatAggregator(object):
                 for destination, source in self.copy_fields.items():
                     if isinstance(source, str):
                         if source == 'root_file_id' and source not in doc:
-                            aggregation_data[destination] = doc.get('file_id', '')
+                            if 'file_id' in doc:
+                                aggregation_data[destination] = doc['file_id']
                         else:
                             aggregation_data[destination] = doc.get(source, '')
                     else:
