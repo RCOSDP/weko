@@ -71,6 +71,7 @@ def test_update_oaiset_setting(i18n_app, client_api, indices, db, users, without
     assert res.name=="testIndexThree"
     assert res.description=="testIndexThree"
     assert res.search_pattern=='path:"33"'
+    assert res.system_created==True    
     assert res.spec=="33"
 
     update_oaiset_setting(index_info_two[0], data_two)
@@ -105,6 +106,27 @@ def test_update_oaiset_setting(i18n_app, client_api, indices, db, users, without
     assert res.description=="testIndexThree"
     assert res.search_pattern=='path:"33"'
     assert res.spec=="33"
+ 
+    _data_six = {
+        "public_state": True,
+        "harvest_public_state": True,
+        "parent": 0,
+        "id": 66,
+        "index_name": "testData",
+        "search_pattern": "test search",
+        "system_created": True
+    }
+
+    res = OAISet.query.filter_by(id=66).one_or_none()
+    assert res is None
+
+    update_oaiset_setting(None, _data_six)
+    res = OAISet.query.filter_by(id=66).one_or_none()
+    # assert res is None
+    assert res.name=="testData"
+    assert res.description=="testData"
+    assert res.search_pattern=='path:"66"' 
+    assert res.spec=="66"
 
 
 # def delete_oaiset_setting(id_list):
