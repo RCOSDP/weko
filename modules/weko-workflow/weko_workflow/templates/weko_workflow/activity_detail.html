@@ -269,11 +269,12 @@
               {%- elif 'identifier_grant' == cur_step %}
                 {%- include 'weko_workflow/identifier_grant.html' %}
                 {%- include "weko_workflow/modal_quit_confirmation.html" %}
-              {%- elif 'approval' == cur_step or 'approval_advisor' == cur_step or 'approval_guarantor' == cur_step or 'approval_administrator' == cur_step %}
-                {%- with preview_carousel_id='preview_carousel' %}
-                  {% include 'weko_workflow/record_after_update.html' %}
-                {%- endwith %}
               {%- else %}
+                {%- if 'approval' == cur_step or 'approval_advisor' == cur_step or 'approval_guarantor' == cur_step or 'approval_administrator' == cur_step %}
+                  {%- with preview_carousel_id='preview_carousel' %}
+                    {% include 'weko_workflow/record_after_update.html' %}
+                  {%- endwith %}
+                {%- endif -%}
                 <div class="form-group">
                   <label class="sr-only" for="input-comment">{{_('Comment')}}</label>
                   <div class="input-group">
