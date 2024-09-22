@@ -999,15 +999,16 @@ class ItemTypes(RecordBase):
         return result
 
     @classmethod
-    def update_attribute_options(cls, tmp_data, _tmp_data):
-        if "items" in tmp_data:
-            for idx2,item2 in enumerate(tmp_data["items"]):
+    def update_attribute_options(cls, old_value, new_value):        
+        if "items" in old_value:
+            for idx2,item2 in enumerate(old_value["items"]):
                 isHide = False
                 isShowList = False
                 isNonDisplay = False
                 isSpecifyNewline = False
                 isRequired = False
                 title_i18n_temp = None
+                titleMap = None
                 if "isHide" in item2:
                     isHide = item2["isHide"]
                 if "isShowList" in item2:
@@ -1022,18 +1023,21 @@ class ItemTypes(RecordBase):
                     title_i18n_temp = item2["title_i18n"]
                 if "title_i18n_temp" in item2:
                     title_i18n_temp = item2["title_i18n_temp"]
+                if "titleMap" in item2:
+                    titleMap = item2["titleMap"]
                                         
-                _tmp_data["items"][idx2]["isHide"] = isHide
-                _tmp_data["items"][idx2]["isShowList"] = isShowList
-                _tmp_data["items"][idx2]["isNonDisplay"] = isNonDisplay
-                _tmp_data["items"][idx2]["isSpecifyNewline"] = isSpecifyNewline
-                _tmp_data["items"][idx2]["required"] = isRequired
-                _tmp_data["items"][idx2]["title_i18n_temp"] = title_i18n_temp
+                new_value["items"][idx2]["isHide"] = isHide
+                new_value["items"][idx2]["isShowList"] = isShowList
+                new_value["items"][idx2]["isNonDisplay"] = isNonDisplay
+                new_value["items"][idx2]["isSpecifyNewline"] = isSpecifyNewline
+                new_value["items"][idx2]["required"] = isRequired
+                if title_i18n_temp:
+                    new_value["items"][idx2]["title_i18n_temp"] = title_i18n_temp
+                if titleMap:
+                    new_value["items"][idx2]["titleMap"] = titleMap
 
                 if 'items' in item2:
-                    cls.update_attribute_options(item2, _tmp_data["items"][idx2])
-
-
+                    cls.update_attribute_options(item2, new_value["items"][idx2])
 
             
             
