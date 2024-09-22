@@ -1007,6 +1007,7 @@ class ItemTypes(RecordBase):
                 isNonDisplay = False
                 isSpecifyNewline = False
                 isRequired = False
+                title_i18n = None
                 title_i18n_temp = None
                 titleMap = None
                 if "isHide" in item2:
@@ -1021,6 +1022,7 @@ class ItemTypes(RecordBase):
                     isRequired = item2["required"]
                 if "title_i18n" in item2:
                     title_i18n_temp = item2["title_i18n"]
+                    title_i18n = title_i18n_temp
                 if "title_i18n_temp" in item2:
                     title_i18n_temp = item2["title_i18n_temp"]
                 if "titleMap" in item2:
@@ -1031,6 +1033,8 @@ class ItemTypes(RecordBase):
                 new_value["items"][idx2]["isNonDisplay"] = isNonDisplay
                 new_value["items"][idx2]["isSpecifyNewline"] = isSpecifyNewline
                 new_value["items"][idx2]["required"] = isRequired
+                if title_i18n:
+                    new_value["items"][idx2]["title_i18n"] = title_i18n
                 if title_i18n_temp:
                     new_value["items"][idx2]["title_i18n_temp"] = title_i18n_temp
                 if titleMap:
