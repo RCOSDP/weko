@@ -31,7 +31,15 @@ def test_update_oaiset_setting(i18n_app, client_api, indices, db, users, without
         description='some test description',
         search_pattern='test search'
     )
-    
+     
+    test_set_three = OAISet(
+        id=33,
+        spec='33',
+        name='test_name_33',
+        description='some test description',
+        search_pattern='test search'
+    )
+           
     test_set_three_child = OAISet(
         id=44,
         spec='44',
@@ -47,7 +55,7 @@ def test_update_oaiset_setting(i18n_app, client_api, indices, db, users, without
         description='some test description',
         search_pattern='test search'
     )
-    
+
     login_user_via_session(client=client_api, email=users[3]["email"])
     index_info_one = Indexes.get_path_name([indices['index_non_dict'].id])
     index_info_two = Indexes.get_path_name([indices['index_non_dict_child'].id])
@@ -62,6 +70,7 @@ def test_update_oaiset_setting(i18n_app, client_api, indices, db, users, without
 
     db.session.add(test_set_one)
     db.session.add(test_set_two)
+    db.session.add(test_set_three)
     db.session.add(test_set_three_child)
     db.session.add(test_set_private)
     db.session.commit()
@@ -100,6 +109,7 @@ def test_update_oaiset_setting(i18n_app, client_api, indices, db, users, without
         "id": "33",
         "index_name": "test data"
     }
+
     update_oaiset_setting(None, _data)
     res = OAISet.query.filter_by(id=33).one_or_none()
     assert res.name=="testIndexThree"
