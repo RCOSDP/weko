@@ -1077,6 +1077,10 @@ msgstr ""
 msgid "Expiration Date"
 msgstr ""
 
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:554
+msgid "Setting detail condition"
+msgstr "condition"
+
 #: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:48
 msgid "Content File Download"
 msgstr ""
