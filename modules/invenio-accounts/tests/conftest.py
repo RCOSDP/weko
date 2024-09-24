@@ -66,7 +66,7 @@ def _app_factory(config=None):
         WTF_CSRF_ENABLED=False,
         ACCOUNTS_JWT_ALOGORITHM = 'HS256',
         ACCOUNTS_JWT_SECRET_KEY = None,
-        ENABLE_WORKFLOW_AUTH_SETTING = True,
+        ENABLE_WORKFLOW_AUTH_SETTING = False,
         ENABLE_WORKFLOW_AUTH_ROLES = ['System Administrator', 'Repository Administrator', 'Community Administrator', 'Contributor']
     )
 
