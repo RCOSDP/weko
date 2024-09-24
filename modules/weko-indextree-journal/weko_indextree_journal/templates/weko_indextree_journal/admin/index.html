@@ -30,14 +30,14 @@
     }
   </style>
   {{ webpack['theme-css-buttons.css']}}
-  {{ webpack['weko-theme-css.css']}}
+  {{ webpack['theme-css.css']}}
 {%- endblock css %}
 
 {%- block javascript %}
 <script src="{{ url_for('static', filename='js/weko_indextree_journal/inline.bundle.js') }}" defer></script>
 <script src="{{ url_for('static', filename='js/weko_indextree_journal/polyfills.bundle.js') }}" defer></script>
 <script src="{{ url_for('static', filename='js/weko_indextree_journal/main.bundle.js') }}" defer></script>
-{{ webpack['js-dependencies.js']}}
+{{ webpack['deposit_js_dependencies.js']}}
   {{ super() }}
   {{ webpack['deposit_js_js.js']}}
   {{ webpack['indextree_journal_js_js.js']}}

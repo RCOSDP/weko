@@ -29,9 +29,7 @@
 {%- endblock css %}
 
 {%- block javascript %}
-  <script src="/asssets/node_modules/react/dist/react.js"></script>
-  <script src="/asssets/node_modules/react-dom/dist/react-dom.js"></script>
-  <script src="/static/js/weko_itemtypes_ui/jsonschemaeditor.js"></script>
+  {{ webpack['itemstypes_ui_js_schema_editor.js']}}
   {{ super() }}
   {{ webpack['itemstypes_ui_js_js.js']}}
 {%- endblock javascript %}
