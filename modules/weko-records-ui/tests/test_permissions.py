@@ -14,6 +14,7 @@ from invenio_accounts.models import Role, User
 from invenio_accounts.testutils import create_test_user, login_user_via_session
 from mock import patch
 from weko_records_ui.models import FileOnetimeDownload
+from weko_groups.models import Group, Membership
 
 from weko_records_ui.permissions import (
     check_created_id,
@@ -245,6 +246,22 @@ def test_check_user_group_permission(app, records, users,db_file_permission):
 
     with patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
         assert check_user_group_permission(1) == False
+
+        assert check_user_group_permission("invalid") == False
+        
+        assert check_user_group_permission("") == False
+
+        a = Group.create(name="admin")
+        g = Group.create(name="test", admins=[a])
+        with app.test_request_context():
+            print(current_user.get_id())
+            m = Membership.create(user=current_user, group=g)
+            assert check_user_group_permission(g.id) == True
+        
+    
+    with app.test_request_context():
+        with patch("flask_login.current_user.get_id", return_value=""):
+            assert check_user_group_permission(1) == False
 
 
 # def check_publish_status(record):
