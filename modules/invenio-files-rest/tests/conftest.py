@@ -83,7 +83,7 @@ def base_app():
         TESTING=True,
         # Celery 3
         CELERY_ALWAYS_EAGER=True,
-        CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
+        CELERY_EAGER_PROPAGATES=True,
         # Celery 4
         CELERY_TASK_ALWAYS_EAGER=True,
         CELERY_TASK_EAGER_PROPAGATES=True,
@@ -176,7 +176,7 @@ def dummy_s3_location(db):
     db.session.add(loc)
     db.session.commit()
     yield loc
-    
+
     shutil.rmtree(tmppath)
 
 
@@ -427,6 +427,14 @@ def get_json():
 
     return inner
 
+
+@pytest.fixture()
+def get_sha256():
+    """Get sha256 of data."""
+    def inner(data, prefix=True):
+        m = hashlib.sha256()
+        m.update(data)
+        return "sha256:{0}".format(m.hexdigest()) if prefix else m.hexdigest()
     return inner
 
 
