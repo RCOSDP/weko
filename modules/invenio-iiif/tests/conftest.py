@@ -17,7 +17,7 @@ from os.path import dirname, getsize, join
 
 import pytest
 from flask import Flask, request
-from flask_babelex import Babel
+from flask_babel import Babel
 from flask_mail import Mail
 from flask_menu import Menu
 from flask_iiif.restful import current_iiif
@@ -80,16 +80,16 @@ def base_app(instance_path):
     InvenioAccounts(app_)
     InvenioAccess(app_)
     InvenioFilesREST(app_)
-    InvenioIIIF(app_)
+    # InvenioIIIF(app_)
     InvenioIIIFAPI(app_)
-    
+
     app_.register_blueprint(blueprint)
-    
+
     yield app_
-    
+
 @pytest.yield_fixture()
 def app(base_app):
-    
+
     with base_app.app_context():
         yield base_app
 
@@ -97,7 +97,7 @@ def app(base_app):
 def client(app):
     with app.test_client() as client:
         yield client
-        
+
 @pytest.yield_fixture()
 def db(app):
     # if not database_exists(str(db_.engine.url)) and \
@@ -149,7 +149,7 @@ def location(app, db, instance_path):
 def records(db,location):
     record_data = json_data("data/test_records.json")
     item_data = json_data("data/test_items.json")
-    
+
     record_num = len(record_data)
     result = []
     for d in range(record_num):
