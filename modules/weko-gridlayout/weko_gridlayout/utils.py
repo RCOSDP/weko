@@ -719,11 +719,13 @@ def find_rss_value(data, keyword):
             item_type = ItemTypes.get_by_id(item_type_id)
             hide_list = []
             if item_type:
-                meta_option, item_type_mapping = get_options_and_order_list(
-                    item_type_id, item_type_data=ItemTypes(item_type.schema, model=item_type))
+                meta_option = get_options_and_order_list(
+                    item_type_id,
+                    item_type_data=ItemTypes(item_type.schema, model=item_type),
+                    mapping_flag=False)
                 hide_list = get_hide_list_by_schema_form(schemaform=item_type.render.get('table_row_map', {}).get('form', []))
             else:
-                meta_option, item_type_mapping = get_options_and_order_list(item_type_id)
+                meta_option = get_options_and_order_list(item_type_id, mapping_flag=False)
             item_map = get_mapping(item_type_id, "jpcoar_mapping", item_type=item_type)
             desc_typ_list = item_map.get('description.@attributes.descriptionType').split(',')
             desc_val_list = item_map.get('description.@value').split(',')

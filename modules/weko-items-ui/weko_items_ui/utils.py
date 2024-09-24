@@ -3323,7 +3323,7 @@ def get_options_list(item_type_id, json_item=None):
 
 
 def get_options_and_order_list(item_type_id, item_type_mapping=None,
-                               item_type_data=None):
+                               item_type_data=None, mapping_flag=True):
     """Get Options by item type id.
 
     :param item_type_id:
@@ -3336,9 +3336,13 @@ def get_options_and_order_list(item_type_id, item_type_mapping=None,
     item_type_mapping = None
     if item_type_id:
         meta_options = get_options_list(item_type_id, item_type_data)
-        if item_type_mapping is None:
+        if item_type_mapping is None and mapping_flag:
             item_type_mapping = Mapping.get_record(item_type_id)
-    return meta_options, item_type_mapping
+
+    if mapping_flag:
+        return meta_options, item_type_mapping
+    else:
+        return meta_options
 
 
 def hide_table_row(table_row, hide_key):
@@ -3837,19 +3841,17 @@ def hide_thumbnail(schema_form):
             break
 
 
-def get_ignore_item(_item_type_id, item_type_mapping=None,
-                    item_type_data=None):
+def get_ignore_item(_item_type_id, item_type_data=None):
     """Get ignore item from mapping.
 
     :param _item_type_id:
-    :param item_type_mapping:
     :param item_type_data:
     :return ignore_list:
     """
     ignore_list = []
     sub_ids = []
-    meta_options, _ = get_options_and_order_list(
-        _item_type_id, item_type_mapping, item_type_data)
+    meta_options = get_options_and_order_list(
+        _item_type_id, item_type_data=item_type_data, mapping_flag=False)
     schema_form = None
     if item_type_data is not None:
         schema_form = item_type_data.model.render.get("table_row_map", {}).get(

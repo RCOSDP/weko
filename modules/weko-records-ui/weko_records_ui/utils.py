@@ -617,13 +617,11 @@ def get_pair_value(name_keys, lang_keys, datas):
                 yield name, lang
 
 
-def hide_item_metadata(record, settings=None, item_type_mapping=None,
-                       item_type_data=None):
+def hide_item_metadata(record, settings=None, item_type_data=None):
     """Hiding emails and hidden item metadata.
 
     :param record:
     :param settings:
-    :param item_type_mapping:
     :param item_type_data:
     :return:
     """
@@ -634,7 +632,7 @@ def hide_item_metadata(record, settings=None, item_type_mapping=None,
 
     if hide_meta_data_for_role(record):
         list_hidden = get_ignore_item(
-            record['item_type_id'], item_type_mapping, item_type_data
+            record['item_type_id'], item_type_data
         )
         record = hide_by_itemtype(record, list_hidden)
         
@@ -720,11 +718,13 @@ def hide_by_email(item_metadata, force_flag=False, item_type=None):
     if item_type_id:
         hide_list = []
         if item_type:
-            meta_options, type_mapping = get_options_and_order_list(
-                item_type_id, item_type_data=ItemTypes(item_type.schema, model=item_type))
+            meta_options = get_options_and_order_list(
+                item_type_id,
+                item_type_data=ItemTypes(item_type.schema, model=item_type),
+                mapping_flag=False)
             hide_list = get_hide_list_by_schema_form(schemaform=item_type.render.get('table_row_map', {}).get('form', []))
         else:
-            meta_options, type_mapping = get_options_and_order_list(item_type_id)
+            meta_options = get_options_and_order_list(item_type_id, mapping_flag=False)
 
         # Hidden owners_ext info
         if item_metadata.get('_deposit') and \

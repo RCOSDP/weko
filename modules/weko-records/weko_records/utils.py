@@ -841,14 +841,12 @@ def get_options_and_order_list(item_type_id, item_type_data=None):
 async def sort_meta_data_by_options(
     record_hit,
     settings,
-    item_type_mapping,
     item_type_data,
 ):
     """Reset metadata by '_options'.
 
     :param record_hit:
     :param settings:
-    :param item_type_mapping:
     :param item_type_data:
     """
     
@@ -1379,7 +1377,7 @@ async def sort_meta_data_by_options(
         files_info = []
         creator_info = None
         thumbnail = None
-        hide_item_metadata(src, settings, item_type_mapping, item_type_data)
+        hide_item_metadata(src, settings, item_type_data)
         # Set value and parent option
         for lst in solst:
             key = lst[0]
