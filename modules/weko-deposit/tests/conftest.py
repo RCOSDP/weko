@@ -240,14 +240,17 @@ def base_app(instance_path):
     app_.register_blueprint(invenio_files_rest_blueprint)  # invenio_files_rest
     # rest_blueprint = create_blueprint(app_, WEKO_DEPOSIT_REST_ENDPOINTS)
     # app_.register_blueprint(rest_blueprint)
-    WekoDeposit(app_)
-    WekoDepositREST(app_)
+    # WekoDeposit(app_)
+    # WekoDepositREST(app_)
     return app_
 
 
 @pytest.yield_fixture()
 def app(base_app):
     """Flask application fixture."""
+    WekoDeposit(base_app)
+    WekoDepositREST(base_app)
+
     with open("tests/data/mappings/item-v1.0.0.json", "r") as f:
         mapping = json.load(f)
     es = Elasticsearch("http://{}:9200".format(base_app.config["SEARCH_ELASTIC_HOSTS"]))
@@ -285,6 +288,28 @@ def db(app):
 def records(db):
     record_data = json_data("data/test_records.json")
     item_data = json_data("data/test_items.json")
+    record_num = len(record_data)
+    result = []
+    for d in range(record_num):
+        result.append(create_record(record_data[d], item_data[d]))
+    db.session.commit()
+    yield result
+
+@pytest.fixture()
+def records2(db):
+    record_data = json_data("data/test_no_nameIdentifiers.json")
+    item_data = json_data("data/test_items2.json")
+    record_num = len(record_data)
+    result = []
+    for d in range(record_num):
+        result.append(create_record(record_data[d], item_data[d]))
+    db.session.commit()
+    yield result
+
+@pytest.fixture()
+def records3(db):
+    record_data = json_data("data/test_no_creatorNames_contributorNames_names.json")
+    item_data = json_data("data/test_items3.json")
     record_num = len(record_data)
     result = []
     for d in range(record_num):
