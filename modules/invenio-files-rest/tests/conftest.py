@@ -24,7 +24,9 @@ from invenio_access import InvenioAccess
 from invenio_access.models import ActionRoles, ActionUsers, Role
 from invenio_accounts import InvenioAccounts
 from invenio_accounts.testutils import create_test_user
-from invenio_accounts.views import blueprint as accounts_blueprint
+# from invenio_accounts.views import blueprint as accounts_blueprint
+from invenio_accounts.views.rest import create_rest_blueprint
+from invenio_accounts.views.settings import create_settings_blueprint
 from invenio_db import InvenioDB
 from invenio_db import db as db_
 from invenio_db.utils import drop_alembic_version_table
@@ -117,7 +119,9 @@ def app(base_app):
     InvenioI18N(base_app)
     InvenioAccounts(base_app)
     InvenioAccess(base_app)
-    base_app.register_blueprint(accounts_blueprint)
+    # base_app.register_blueprint(accounts_blueprint)
+    base_app.register_blueprint(create_rest_blueprint(base_app))
+    base_app.register_blueprint(create_settings_blueprint(base_app))
     InvenioFilesREST(base_app)
     base_app.register_blueprint(blueprint)
 
