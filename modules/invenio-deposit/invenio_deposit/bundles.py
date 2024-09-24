@@ -9,7 +9,26 @@
 """UI for Invenio-Deposit."""
 
 from flask_assets import Bundle
-from invenio_assets import NpmBundle
+# from invenio_assets import NpmBundle
+
+
+class NpmBundle(Bundle):
+    """Bundle extension with a name and npm dependencies.
+
+    The npm dependencies are used to generate a package.json file.
+    """
+
+    def __init__(self, *contents, **options):
+        """Initialize the named bundle.
+
+        :param name: name of the bundle
+        :type name: str
+        :param npm: npm dependencies
+        :type npm: dict
+        """
+        self.npm = options.pop('npm', {})
+        super().__init__(*contents, **options)
+
 
 css = Bundle(
     'node_modules/ui-select/dist/select.css',
