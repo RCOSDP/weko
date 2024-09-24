@@ -640,7 +640,7 @@ class WorkFlow(db.Model, TimestampMixin):
     itemtype = db.relationship(
         ItemType,
         backref=db.backref('workflow', lazy='dynamic',
-                           order_by=desc('item_type.tag'))
+                           order_by=desc(ItemType.tag))
     )
 
     index_tree_id = db.Column(

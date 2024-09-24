@@ -1,5 +1,5 @@
 import $ from "jquery";
-import JSONSchemaEditor from './jsonschemaeditor'
+import JSONSchemaEditor from './jsonschemaeditor.js'
 // require(["jquery", "bootstrap"],function() {});
 $(document).ready(function () {
   var checkboxTemplate = "/static/templates/weko_deposit/checkboxes.html";
