@@ -65,7 +65,9 @@ def _app_factory(config=None):
         TESTING=True,
         WTF_CSRF_ENABLED=False,
         ACCOUNTS_JWT_ALOGORITHM = 'HS256',
-        ACCOUNTS_JWT_SECRET_KEY = None
+        ACCOUNTS_JWT_SECRET_KEY = None,
+        ENABLE_WORKFLOW_AUTH_SETTING = False,
+        ENABLE_WORKFLOW_AUTH_ROLES = ['System Administrator', 'Repository Administrator', 'Community Administrator', 'Contributor']
     )
 
     # Set key value session store to use Redis when running on TravisCI.
@@ -203,3 +205,47 @@ def users(app):
         {'email': user2.email, 'id': user2.id,
          'password': user2.password_plaintext, 'obj': user2},
     ]
+
+@pytest.fixture()
+def users_with_roles(app):
+    """Create users with roles."""
+    with app.app_context():
+        ds = app.extensions['invenio-accounts'].datastore
+        # create users
+        sysadmin = create_test_user(email='sysadmin@test.org')
+        repoadmin = create_test_user(email='repoadmin@test.org')
+        comadmin = create_test_user(email='comadmin@test.org')
+        contributor = create_test_user(email='contributor@test.org')
+        general = create_test_user(email='general@test.org')
+        user = create_test_user(email='user@test.org')
+        general_contributor = create_test_user(email='general_contributor@test.org')
+
+        # create roles
+        sysadmin_role = ds.create_role(name='System Administrator')
+        repoadmin_role = ds.create_role(name='Repository Administrator')
+        comadmin_role = ds.create_role(name='Community Administrator')
+        contributor_role = ds.create_role(name='Contributor')
+        general_role = ds.create_role(name='General')
+
+        # add roles to users
+        ds.add_role_to_user(sysadmin, sysadmin_role)
+        ds.add_role_to_user(repoadmin, repoadmin_role)
+        ds.add_role_to_user(comadmin, comadmin_role)
+        ds.add_role_to_user(contributor, contributor_role)
+        ds.add_role_to_user(general, general_role)
+        ds.add_role_to_user(general_contributor, general_role)
+        ds.add_role_to_user(general_contributor, contributor_role)
+
+        # set no roles to user
+        ds.add_role_to_user(user, general_role)
+        ds.remove_role_from_user(user, general_role)
+
+        return [
+            sysadmin,
+            repoadmin,
+            comadmin,
+            contributor,
+            general,
+            user,
+            general_contributor
+        ]

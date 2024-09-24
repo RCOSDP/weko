@@ -3112,6 +3112,18 @@ depositactivity_blueprint.add_url_rule(
     methods=['POST']
 )
 
+@workflow_blueprint.before_request
+def check_workflow_permission():
+    """Check user permission to access the workflow.
+
+    Returns:
+        None: the user is not logged in or the user is allowed to access the workflow.
+
+    response:
+        403: the user is not allowed to access the workflow.
+    """
+    if current_user.is_authenticated and not current_user.is_workflow_enable():
+        return abort(403)
 
 @workflow_blueprint.teardown_request
 @depositactivity_blueprint.teardown_request
