@@ -213,6 +213,7 @@ invenio-csl-rest==1.0.0a1
 #
 # requirements-weko-modules.txt
 #
+-e ../invenio-files-rest
 -e ../invenio-s3
 -e ../invenio-oaiserver
 -e ../invenio-oaiharvester
@@ -220,7 +221,6 @@ invenio-csl-rest==1.0.0a1
 -e ../invenio-records
 -e ../invenio-previewer
 -e ../invenio-stats
--e ../invenio-records
 -e ../invenio-records-rest
 -e ../invenio-communities
 -e ../invenio-mail
