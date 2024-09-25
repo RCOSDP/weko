@@ -41,7 +41,7 @@ class ShibbolethUser(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     """ShibbolethUser identifier."""
 
-    shib_eppn = db.Column(db.String(128), unique=True, nullable=False)
+    shib_eppn = db.Column(db.String(2310), unique=True, nullable=False)
     """SHIB_ATTR_EPPN"""
 
     weko_uid = db.Column(db.Integer, db.ForeignKey(
@@ -56,7 +56,7 @@ class ShibbolethUser(db.Model):
     shib_role_authority_name = db.Column(db.String(255), nullable=True)
     """SHIB_ATTR_ROLE_AUTHORITY_NAME"""
 
-    shib_page_name = db.Column(db.Text, nullable=True)
+    shib_page_name = db.Column(db.String(1024), nullable=True)
     """SHIB_ATTR_PAGE_NAME"""
 
     shib_active_flag = db.Column(db.String(255), nullable=True)
