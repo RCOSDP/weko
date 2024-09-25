@@ -140,7 +140,7 @@ CI=true npm install angular-schema-form@0.8.13
 CI=true npm install
 ## for install ckeditor plugins
 cdvirtualenv "var/instance/static/node_modules/ckeditor/plugins"
-CI=true git clone https://github.com/nmmf/base64image.git
+CI=true git clone https://github.com/RCOSDP/base64image.git
 ##
 # sphinxdoc-run-npm-end
 
@@ -155,3 +155,7 @@ ${INVENIO_WEB_INSTANCE} assets build
 pip install uwsgi
 pip install uwsgitop
 # gunicorn uwsgi -end
+
+# clean cache
+pip cache purge
+CI=true npm cache clean --force
