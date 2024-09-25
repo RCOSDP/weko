@@ -23,7 +23,7 @@
 import mimetypes
 import unicodedata
 
-from flask import abort, current_app, render_template, request
+from flask import abort, current_app, render_template, request, redirect, url_for, session as flask_session
 from flask_babelex import gettext as _
 from flask_login import current_user
 from invenio_db import db
@@ -33,7 +33,6 @@ from invenio_files_rest.views import ObjectResource
 from invenio_records_files.utils import record_file_factory
 from requests.sessions import session
 from sqlalchemy.exc import SQLAlchemyError
-from weko_accounts.views import _redirect_method
 from weko_deposit.api import WekoRecord
 from weko_groups.api import Group
 from weko_records.api import FilesMetadata, ItemTypes
@@ -45,7 +44,7 @@ from werkzeug.urls import url_quote
 from .models import PDFCoverPageSettings
 from .pdf import make_combined_pdf
 from .permissions import check_original_pdf_download_permission, \
-    file_permission_factory
+    file_permission_factory, get_file_price
 from .utils import check_and_create_usage_report, \
     check_and_send_usage_report, get_billing_file_download_permission, \
     get_groups_price, get_min_price_billing_file_download, \
@@ -224,9 +223,17 @@ def file_ui(
 
     # Check file contents permission
     if not file_permission_factory(record, fjson=fileobj).can():
+        redirect_url = url_for('invenio_records_ui.recid',pid_value=record["recid"])
         if not current_user.is_authenticated:
-            return _redirect_method(has_next=True)
-        abort(403)
+            flask_session['check_login'] = "1"
+            return redirect(redirect_url)
+        file_price, _ = get_file_price(record['_deposit']['id'])
+        if file_price is not None:
+            flask_session['check_download_billingfile'] = "1"
+            return redirect(redirect_url)
+        else:
+            flask_session['no_authority'] = "1"
+            return redirect(redirect_url)
 
     # Check and create usage report
     if not is_preview:

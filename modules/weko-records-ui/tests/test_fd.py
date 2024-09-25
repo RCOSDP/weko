@@ -92,7 +92,7 @@ def test_file_download_ui(app,records,itemtypes,users):
 
 # def file_ui(
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_fd.py::test_file_ui -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_file_ui(app,records,itemtypes,users):
+def test_file_ui(app,db,records,itemtypes,users):
     indexer, results = records
     recid = results[0]["recid"]
     record = results[0]["record"]
@@ -119,6 +119,11 @@ def test_file_ui(app,records,itemtypes,users):
         return True
     data3.can = can
     data3.obj = 1
+    data4 = MagicMock()
+    data4.is_authenticated = True
+    data5 = MagicMock()
+    data5.can = cannot
+    data5.obj = 1
 
     with app.test_request_context():
     #     with patch("weko_records_ui.fd.file_permission_factory", return_value=data3):
@@ -130,11 +135,18 @@ def test_file_ui(app,records,itemtypes,users):
     #                 pass
 
         with patch("weko_records_ui.fd.file_permission_factory", return_value=data1):
-            # abort(403) coverage
-            try:
-                file_ui(data2, data3)
-            except:
-                pass
+            # no authenticated
+            res1 = file_ui(data2, data3)
+            assert res1.status == '302 FOUND'
+            
+            with patch("flask_login.utils._get_user", return_value=data4):
+                # check download billingfile
+                with patch("weko_records_ui.fd.get_file_price", return_value=(100,"en")):
+                    res2 = file_ui(data4,data5)
+                    assert res2.status == '302 FOUND'
+                with patch("weko_records_ui.fd.get_file_price", return_value=(None,"en")):
+                    res2 = file_ui(data4,data5)
+                    assert res2.status == '302 FOUND'
 
 
 # def _download_file(file_obj, is_preview, lang, obj, pid, record):

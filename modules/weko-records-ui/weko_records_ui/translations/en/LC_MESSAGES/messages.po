@@ -1341,6 +1341,16 @@ msgstr "Download is available from {}/{}/{}."
 
 msgid "Download / Preview is available from {}/{}/{}."
 msgstr "Download / Preview is available from {}/{}/{}."
+
+msgid "\n If you would like to download immediately, you need to login. \n You want to login?"
+msgstr "\n If you would like to download immediately, you need to login. \n You want to login?"
+
+msgid "\n If you would like to preview immediately, you need to login. \n You want to login?"
+msgstr "\n If you would like to preview immediately, you need to login. \n You want to login?"
+
+msgid "There is no download authority."
+msgstr "There is no download authority."
+
 msgid "Apply JGSS"
 msgstr "Apply"
 
