@@ -54,7 +54,7 @@ from weko_workflow.models import Activity, FlowAction, FlowDefine, WorkFlow
 # .tox/c1/bin/pytest --cov=weko_deposit tests/test_rest.py -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
 
 # def publish(**kwargs):
-# .tox/c1/bin/pytest --cov=weko_deposit tests/test_rest.py::test_publish -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_deposit tests/test_rest.py::test_publish_users -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
 @pytest.mark.parametrize('index, status_code', [
     (0, 200),
     (1, 200),
@@ -96,6 +96,7 @@ def test_publish_user(client, users, deposit, index, status_code):
         assert res.status_code == 400
         assert "Failed to publish item" in res.data.decode("utf-8")
 
+# .tox/c1/bin/pytest --cov=weko_deposit tests/test_rest.py::test_publish_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
 def test_publish_guest(client, deposit):
     """
     Test of publish a guest user.
