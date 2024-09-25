@@ -29,15 +29,15 @@
 {%- endblock css %}
 
 {%- block javascript %}
-  <script src="/asssets/node_modules/react/dist/react.js"></script>
-  <script src="/asssets/node_modules/react-dom/dist/react-dom.js"></script>
-  <script src="/static/js/weko_itemtypes_ui/jsonschemaeditor.js"></script>
+{{ webpack['itemstypes_ui_js_schema_editor.js']}}
   {{ super() }}
   {{ webpack['itemstypes_ui_js_js.js']}}
 {%- endblock javascript %}
 
 {%- block body %}
   <input id="lang-code" type="hidden" value="{{lang_code}}" />
+  <input id="uiFixedProperties" type="hidden" value='{{ uiFixedProperties | tojson | safe }}' />  
+  <input id="uiPubdateTitles" type="hidden" value='{{ ui_pubdate_titles | tojson | safe }}' />
   <div class="row">
     <div class="col-sm-12 col-md-12 col-lg-11">
       <div class="panel panel-info  gray-color-class">
@@ -183,7 +183,16 @@
           </thead>
           <tbody id="tbody_itemtype">
             <tr>
-              <td>{{_('Publish Date')}}</td>
+              <td>
+                <input type="text" class="form-control" id="txt_title_item_pubdate" value="">
+                <div class="hide text-title-JaEn" id="text_title_JaEn_item_pubdate">
+                  <p>Japanese：</p>
+                  <input type="text" class="form-control" id="txt_title_ja_item_pubdate" value="">
+                  <p>English：</p>
+                  <input type="text" class="form-control" id="txt_title_en_item_pubdate" value="">
+                 </div>
+                 <button type="button" class="btn btn-link btn-link-item">Localization Settings</button>  
+              </td>
               <td>{{_('Date')}}</td>
               <td>
                 <fieldset disabled>
@@ -191,8 +200,7 @@
                   <label><input type="checkbox" id="chk_pubdate_0" value="required" checked disabled>{{_('Required')}}</label>
                 </div>
                 <div class="checkbox">
-                  <label><input type="checkbox" id="chk_pubdate_1" value="multiple">{{_('Multiple')}}</label>
-                </div>
+                  <label><input type="checkbox" id="chk_pubdate_1" value="multiple" disabled>{{_('Multiple')}}</label>                </div>
                 <div class="checkbox">
                   <label><input type="checkbox" id="chk_pubdate_2" value="showlist">{{_('List Display')}}</label>
                 </div>

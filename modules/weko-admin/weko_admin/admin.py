@@ -1257,6 +1257,60 @@ class RestrictedAccessSettingView(BaseView):
             maxint=current_app.config["WEKO_ADMIN_RESTRICTED_ACCESS_MAX_INTEGER"]
         )
 
+class CommunitiesPageSettingView(BaseView):
+    """Communities Page Setting admin view."""
+    @expose('/', methods=['GET', 'POST'])
+    def index(self):
+        """
+        show view Settings/Communities Page
+        Returns:
+            'weko_admin/admin/communities_page_setting.html'
+        Raises:
+	        Exception:
+		    When is this error thrown.
+        """
+        if request.method == 'POST':
+            try:
+                form = request.form.get('submit', None)
+                if form == 'save_settings':
+                    # フォームデータを取得
+                    title = request.form.get('title')
+                    title_ja = request.form.get('title_ja')
+                    supplement = request.form.get('supplement')
+                    icon = request.form.get('icon')
+                    # 新しい設定を作成
+                    new_settings = {
+                        'title1': title,
+                        'title2': title_ja,
+                        'supplement': supplement,
+                        'icon_code': icon
+                    }
+                    # 設定をデータベースに保存
+                    AdminSettings.update('community_settings', new_settings)
+                    # フォームデータを処理する
+                    flash(_('MSG_WEKO_THEME_SAVE_SUCCESS'), 'success')
+            except Exception as ex:
+                current_app.logger.debug(ex)
+                flash(_('Failurely Changed Settings.'), 'error')
+            return redirect(url_for('communities_page.index'))
+        # GETリクエストの場合は、フォームを表示
+        settings = AdminSettings.get('community_settings')
+        default_properties = current_app.config['WEKO_COMMUNITIES_DEFAULT_PROPERTIES']
+        temp = {
+            'title1': default_properties['title1'],
+            'title2': default_properties['title2'],
+            'icon_code': default_properties['icon_code'],
+            'supplement': default_properties['supplement']
+        }
+        if settings:
+            temp['title1'] = settings.title1
+            temp['title2'] = settings.title2 if settings.title2 != '' else settings.title1
+            temp['icon_code'] = settings.icon_code if settings.icon_code and settings.icon_code != '' else default_properties['icon_code']
+            temp['supplement'] = settings.supplement if settings.supplement and settings.supplement != '' else default_properties['supplement']
+        return self.render(
+            current_app.config["WEKO_ADMIN_COMMUNITIES_PAGE_SETTINGS_TEMPLATE"],
+            temp = temp
+        )
 
 class FacetSearchSettingView(ModelView):
     """Facet Search view."""
@@ -1497,6 +1551,16 @@ restricted_access_adminview = {
         'endpoint': 'restricted_access'
     }
 }
+
+communities_page_adminview = {
+    'view_class': CommunitiesPageSettingView,
+    'kwargs': {
+        'category': _('Setting'),
+        'name': _('Communities Page'),
+        'endpoint': 'communities_page'
+    }
+}
+
 identifier_adminview = dict(
     modelview=IdentifierSettingView,
     model=Identifier,
@@ -1539,6 +1603,7 @@ __all__ = (
     'item_export_settings_adminview',
     'site_info_settings_adminview',
     'restricted_access_adminview',
+    'communities_page_adminview',
     'identifier_adminview',
     'facet_search_adminview',
     'reindex_elasticsearch_adminview'

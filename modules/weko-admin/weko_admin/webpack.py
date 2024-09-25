@@ -28,6 +28,8 @@ weko_admin = WebpackThemeBundle(
                 "admin_js_weko_admin_facet_search_js": "./js/weko_admin/facet_search_admin.js",
                 "admin_js_reindex_elasticsearch_js": "./js/weko_admin/reindex_elasticsearch.js",
                 "angular_js": "./js/weko_admin/admin-lte/app.js",
+                "admin_communities_setting_js": "./js/weko_admin/communities_setting.js",
+                "admin_communities_setting_css": "./css/weko_admin/communities.setting.css",
             },
             dependencies={
                 'admin-lte': '~2.3.6',

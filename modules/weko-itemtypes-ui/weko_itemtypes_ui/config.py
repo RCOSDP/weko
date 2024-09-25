@@ -68,6 +68,34 @@ WEKO_ITEMTYPES_UI_UPGRADE_VERSION_ENABLED = True
 
 DISABLE_DUPLICATION_CHECK = False
 
+WEKO_ITEMTYPES_UI_PUBDATE_DEFAULT_TITLES = {
+    "title": "Publish Date",
+    "title_i18n": {
+        "en": "PubDate",
+        "ja": "公開日"
+    } 
+}
+
+WEKO_ITEMTYPES_UI_FIXED_PROPERTIES = {
+    '1001': {
+        'fixed_option': {
+            'required': True,
+            'multiple': True,
+            'showlist': False,
+            'crtf': False,
+            'hidden': False,
+            'oneline': False
+        }
+    },
+    '1014': {
+        'fixed_option': {
+            'required': True,
+            'multiple': False,
+        }
+    }
+}   
+"""The fixed properties of the item type."""
+
 WEKO_ITEMTYPES_UI_ADMIN_ROCRATE_MAPPING_TEMPLATE = \
     'weko_itemtypes_ui/admin/create_rocrate_mapping.html'
 """RO-Crate Mapping template for the item type page."""
