@@ -133,8 +133,8 @@ class TestWekoFileStorage:
                 mock_logger.reset_mock()
 
     # ecd is None
-    # .tox/c1/bin/pytest --cov=weko_deposit tests/test_storage.py::TestWekoFileStorage::test_upload_file_with_utc_none -vv -s --cov-branch --cov-report=html --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp --full-trace
-    def test_upload_file_with_utc_none(self, app, wekofs, wekofs_testpath):
+    # .tox/c1/bin/pytest --cov=weko_deposit tests/test_storage.py::TestWekoFileStorage::test_upload_file_with_ecd_none -vv -s --cov-branch --cov-report=html --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp --full-trace
+    def test_upload_file_with_ecd_none(self, app, wekofs, wekofs_testpath):
         bucket = Bucket.create()
         key = 'hello.txt'
         data = b'somedata'

@@ -101,7 +101,6 @@ def create_blueprint(app, endpoints):
         Args:
             exception (:obj:`Exception`): Exception object.
         """
-        weko_logger(app=app, key='WEKO_COMMON_ERROR_UNEXPECTED', ex=exception)
         if exception is None:
             weko_logger(app=app, key='WEKO_COMMON_IF_ENTER', branch='exception is None')
             try:
@@ -110,6 +109,7 @@ def create_blueprint(app, endpoints):
                 weko_logger(app=app, key='WEKO_COMMON_DB_SOME_ERROR', ex=ex)
                 db.session.rollback()
                 raise WekoDepositError(ex=ex)
+        weko_logger(app=app, key='WEKO_COMMON_ERROR_UNEXPECTED', ex=exception)
         db.session.remove()
 
     weko_logger(app=app, key='WEKO_COMMON_FOR_START')
@@ -150,30 +150,30 @@ def create_blueprint(app, endpoints):
         search_class_kwargs['index'] = options.get('search_index')
         search_class_kwargs['doc_type'] = options.get('search_type')
 
-        ctx = dict(
-            read_permission_factory=obj_or_import_string(
+        ctx = {
+            "read_permission_factory": obj_or_import_string(
                 options.get('read_permission_factory_imp')
             ),
-            create_permission_factory=obj_or_import_string(
+            "create_permission_factory": obj_or_import_string(
                 options.get('create_permission_factory_imp')
             ),
-            update_permission_factory=obj_or_import_string(
+            "update_permission_factory": obj_or_import_string(
                 options.get('update_permission_factory_imp')
             ),
-            delete_permission_factory=obj_or_import_string(
+            "delete_permission_factory": obj_or_import_string(
                 options.get('delete_permission_factory_imp')
             ),
-            record_class=record_class,
-            links_factory=obj_or_import_string(
+            "record_class": record_class,
+            "links_factory": obj_or_import_string(
                 options.get('links_factory_imp'), default=default_links_factory
             ),
-            pid_type=options.get('pid_type'),
-            pid_minter=options.get('pid_minter'),
-            pid_fetcher=options.get('pid_fetcher'),
-            loaders={
-                options.get('default_media_type'): lambda: request.get_json()},
-
-        )
+            "pid_type": options.get('pid_type'),
+            "pid_minter": options.get('pid_minter'),
+            "pid_fetcher": options.get('pid_fetcher'),
+            "loaders": {
+                options.get('default_media_type'): lambda: request.get_json()
+                }
+        }
 
         isr = ItemResource.as_view(
             ItemResource.view_name.format(endpoint),
@@ -194,6 +194,7 @@ def create_blueprint(app, endpoints):
             methods=['PUT'],
         )
 
+    weko_logger(app=app, key='WEKO_COMMON_FOR_END')
     weko_logger(app=app, key='WEKO_COMMON_RETURN_VALUE', value=blueprint)
     return blueprint
 
@@ -238,9 +239,9 @@ class ItemResource(ContentNegotiatedMethodView):
             default_media_type=default_media_type,
             **kwargs
         )
-        weko_logger(key='WEKO_COMMON_CALLED_KW_ARGUMENT', kwargs=kwargs)
+        weko_logger(key='WEKO_COMMON_CALLED_KW_ARGUMENT', kwarg=kwargs)
 
-        weko_logger(key='WEKO_COMMON_FOR_STRT')
+        weko_logger(key='WEKO_COMMON_FOR_START')
         for i, (key, value) in enumerate(ctx.items()):
             weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
                         count=i, element=key)
@@ -301,7 +302,6 @@ class ItemResource(ContentNegotiatedMethodView):
                 upgrade_record = deposit.newversion(pid)
 
                 with db.session.begin_nested():
-
                     if upgrade_record is not None and ".0" in pid_value:
                         weko_logger(key='WEKO_COMMON_IF_ENTER',
                                     branch="upgrade_record is not None "
@@ -403,7 +403,7 @@ class ItemResource(ContentNegotiatedMethodView):
         s = s.strip()
         sanitize_str = ""
 
-        weko_logger(key='WEKO_COMMON_FOR_STRT')
+        weko_logger(key='WEKO_COMMON_FOR_START')
         for i, c in enumerate(s):
             weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
                         count=i, element=c)
@@ -431,7 +431,7 @@ class ItemResource(ContentNegotiatedMethodView):
             weko_logger(key='WEKO_COMMON_IF_ENTER',
                         branch="data is dict")
 
-            weko_logger(key='WEKO_COMMON_FOR_STRT')
+            weko_logger(key='WEKO_COMMON_FOR_START')
             for i, (k, v) in enumerate(data.items()):
                 weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
                             count=i, element=k)
@@ -449,7 +449,7 @@ class ItemResource(ContentNegotiatedMethodView):
             weko_logger(key='WEKO_COMMON_IF_ENTER',
                         branch='data is not dict')
 
-            weko_logger(key='WEKO_COMMON_FOR_STRT')
+            weko_logger(key='WEKO_COMMON_FOR_START')
             for i in range(len(data)):
                 weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
                             count=i, element=data[i])

@@ -35,8 +35,8 @@ from weko_authors.models import Authors, AuthorsAffiliationSettings,AuthorsPrefi
 
 from weko_deposit.tasks import (
     get_origin_data,
-    make_stats_file, 
-    update_db_es_data, 
+    make_stats_file,
+    update_db_es_data,
     update_items_by_authorInfo
 )
 [
@@ -77,7 +77,7 @@ class MockRecordsSearch:
             return self.MockExecute()
     def __init__(self, index=None):
         pass
-    
+
     def update_from_dict(self,query=None):
         return self.MockQuery()
 
@@ -109,7 +109,7 @@ def test_update_authorInfo(app, db, records,mocker):
         ],
         'emailInfo': []
     }
-    
+
     mock_recordssearch = MagicMock(side_effect=MockRecordsSearch)
     with patch("weko_deposit.tasks.RecordsSearch", mock_recordssearch):
         with patch("weko_deposit.tasks.RecordIndexer", MockRecordIndexer):
@@ -235,7 +235,7 @@ def test_update_authorInfo(app, db, records,mocker):
     with patch("weko_deposit.tasks.RecordsSearch", mock_recordssearch):
         with patch("weko_deposit.tasks.RecordIndexer", MockRecordIndexer):
             update_items_by_authorInfo(["1","xxx"], _target)
-    
+
     # SQLAlchemyError
     mock_recordssearch = MagicMock(side_effect=MockRecordsSearch)
     with patch("weko_deposit.tasks.RecordsSearch", mock_recordssearch):
@@ -258,6 +258,25 @@ def test_update_authorInfo(app, db, records,mocker):
                         update_items_by_authorInfo(["1","xxx"], _target)
                         mock_logger.assert_any_call(key='WEKO_COMMON_ERROR_UNEXPECTED', ex=ex)
 
+# def _update_author_data(item_id, record_ids):
+# isinstance(data, dict) and 'nameIdentifiers' in data is False
+def test_update_authorInfo_no_nameIdentifiers(app, db, records2, mocker):
+    app.config.update(WEKO_SEARCH_MAX_RESULT=1)
+    mocker.patch("weko_deposit.tasks.WekoDeposit.update_author_link")
+    mock_recordssearch = MagicMock(side_effect=MockRecordsSearch)
+    with patch("weko_deposit.tasks.update_db_es_data") as mock_update_db_es_data:
+        with patch("weko_deposit.tasks.RecordsSearch", mock_recordssearch):
+            with patch("weko_deposit.tasks.RecordIndexer", MockRecordIndexer):
+                update_items_by_authorInfo(1, {})
+
+# Test for _update_author_data when for loop continues
+def test_no_creatorNames_contributorNames_names(app, db, records3, mocker):
+    app.config.update(WEKO_SEARCH_MAX_RESULT=1)
+    mocker.patch("weko_deposit.tasks.WekoDeposit.update_author_link")
+    mock_recordssearch = MagicMock(side_effect=MockRecordsSearch)
+    with patch("weko_deposit.tasks.RecordsSearch", mock_recordssearch):
+        with patch("weko_deposit.tasks.RecordIndexer", MockRecordIndexer):
+            update_items_by_authorInfo(1, {})
 
 # .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::test_update_authorInfo -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
 def test_update_authorInfo_case1(app, db, records,mocker):
@@ -530,14 +549,14 @@ def test_update_db_es_data(app, db, mocker,esindex, es_records,authors):
     assert author2.gather_flg == 1
     from flask import current_app
     current_app.config["WEKO_AUTHORS_ES_DOC_TYPE"]="wrong_doctype"
-    
+
     # SQLAlchemyError by db.session.commit()
     ex = SQLAlchemyError("test_error")
     with patch("weko_deposit.tasks.db.session.commit", side_effect=ex):
         with patch("weko_deposit.tasks.weko_logger") as mock_logger:
             update_db_es_data(origin_pkid_list, origin_id_list)
             mock_logger.assert_any_call(key='WEKO_COMMON_DB_SOME_ERROR', ex=ex)
-    
+
     # ElasticsearchException by indexer.client.update()
     ex = ElasticsearchException("test_elasticsearch_error")
     with patch("invenio_search.ext.Elasticsearch.update", side_effect=ex):

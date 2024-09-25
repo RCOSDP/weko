@@ -342,8 +342,6 @@ def update_items_by_authorInfo(user_id, target, origin_pkid_list=[],
                             for id in data.get('nameIdentifiers', []):
                                 if id.get('nameIdentifierScheme', '') == 'WEKO':
                                     author_link.add(id['nameIdentifier'])
-                                    # print(f"\n*******{id['nameIdentifier']}*******")
-                                    print(f"\n*******{origin_pkid_list}*******")
                                     if id['nameIdentifier'] in origin_pkid_list:
                                         origin_id = id['nameIdentifier']
                                         change_flag = True
@@ -376,8 +374,6 @@ def update_items_by_authorInfo(user_id, target, origin_pkid_list=[],
                         value=(pid.object_uuid, author_link))
             return pid.object_uuid, author_link
         except PIDDoesNotExistError as ex:
-            print("\n_update_author_data_PIDDoesNotExsistError")
-            print(ex)
             weko_logger(key='WEKO_DEPOSIT_PID_STATUS_NOT_REGISTERED',
                         pid=item_id, ex=ex)
             process_counter[FAIL_LABEL].append({
@@ -388,8 +384,6 @@ def update_items_by_authorInfo(user_id, target, origin_pkid_list=[],
             weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=result)
             return result
         except SQLAlchemyError as ex:
-            print("\n_update_author_data_SQLAlchemyError")
-            print(ex)
             weko_logger(key='WEKO_COMMON_DB_SOME_ERROR', ex=ex)
             process_counter[FAIL_LABEL].append({
                 "record_id": item_id,
@@ -401,8 +395,6 @@ def update_items_by_authorInfo(user_id, target, origin_pkid_list=[],
             weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=result)
             return result
         except Exception as ex:
-            print("\n_update_author_data_Exception")
-            print(ex)
             weko_logger(key='WEKO_COMMON_ERROR_UNEXPECTED', ex=ex)
             process_counter[FAIL_LABEL].append({
                 "record_id": item_id,
@@ -472,11 +464,12 @@ def update_items_by_authorInfo(user_id, target, origin_pkid_list=[],
             weko_logger(key='WEKO_COMMON_IF_ENTER',
                         branch="record_ids is not empty")
             sleep(20)
-            query = (x[0] for x in PersistentIdentifier.query.filter(
-                PersistentIdentifier.object_uuid.in_(record_ids)
-            ).values(
-                PersistentIdentifier.object_uuid
-            ))
+            query = [
+                x[0] for x 
+                in PersistentIdentifier.query
+                    .filter(PersistentIdentifier.object_uuid.in_(record_ids))
+                    .values(PersistentIdentifier.object_uuid)
+            ]
             RecordIndexer().bulk_index(query)
             RecordIndexer().process_bulk_queue(
                 es_bulk_kwargs={'raise_on_error': True})
@@ -612,8 +605,6 @@ def update_items_by_authorInfo(user_id, target, origin_pkid_list=[],
                 json.dumps(process_counter),
                 current_app.config["WEKO_DEPOSIT_ITEM_UPDATE_STATUS_TTL"])
     except SQLAlchemyError as ex:
-        print("\nupdate_items_by_authorInfo_SQLAlchemyError")
-        print(ex)
         process_counter[SUCCESS_LABEL] = []
         process_counter[FAIL_LABEL] = [{"record_id": "ALL", 
                                         "author_ids": [], "message": str(ex)}]
@@ -626,8 +617,6 @@ def update_items_by_authorInfo(user_id, target, origin_pkid_list=[],
         weko_logger(key='WEKO_COMMON_DB_SOME_ERROR', ex=ex)
         update_items_by_authorInfo.retry(countdown=3, exc=ex, max_retries=1)
     except Exception as ex:
-        print("\nupdate_items_by_authorInfo_Exception")
-        print(ex)
         process_counter[SUCCESS_LABEL] = []
         process_counter[FAIL_LABEL] = [{"record_id": "ALL", 
                                         "author_ids": [], "message": str(ex)}]
@@ -716,18 +705,12 @@ def update_db_es_data(origin_pkid_list, origin_id_list):
                 )
         weko_logger(key='WEKO_COMMON_FOR_END')
     except SQLAlchemyError as ex:
-        print("\nupdate_db_es_data_SQLAlchemyError")
-        print(ex)
         weko_logger(key='WEKO_COMMON_DB_SOME_ERROR', ex=ex)
         db.session.rollback()
     except ElasticsearchException as ex:
-        print("\nupdate_db_es_data_ElasticsearchException")
-        print(ex)
         weko_logger(key='WEKO_COMMON_ERROR_ELASTICSEARCH', ex=ex)
         db.session.rollback()
     except Exception as ex:
-        print("\nupdate_db_es_data_Exception")
-        print(ex)
         weko_logger(key='WEKO_COMMON_ERROR_UNEXPECTED', ex=ex)
         db.session.rollback()
 
