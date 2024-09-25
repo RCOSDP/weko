@@ -157,3 +157,11 @@ COMMUNITIES_USER_CONFIRMED_SINCE = timedelta(days=7)
 
 COMMUNITIES_CAN_CREATE = can_user_create_community
 """Permission check function for community creation."""
+
+COMMUNITIES_DEFAULT_PROPERTIES = {
+    'title1': 'Communities',
+    'title2': 'コミュニティ',
+    'icon_code': 'fa fa-group',
+    'supplement': 'created and curated by WEKO3 users'
+}
+"""Communities Page Default Properties."""

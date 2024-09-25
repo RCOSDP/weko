@@ -133,6 +133,7 @@ setup(
             'weko_admin_site_info = weko_admin.admin:site_info_settings_adminview',
             'weko_admin_identifier = weko_admin.admin:identifier_adminview',
             'restricted_access_adminview = weko_admin.admin:restricted_access_adminview',
+            'communities_page_adminview = weko_admin.admin:communities_page_adminview',
             'facet_search_adminview = weko_admin.admin:facet_search_adminview',
             'reindex_elasticsearch_adminview = weko_admin.admin:reindex_elasticsearch_adminview'
         ],

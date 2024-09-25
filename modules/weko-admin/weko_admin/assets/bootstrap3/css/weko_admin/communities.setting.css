@@ -1,0 +1,124 @@
+/* 全体のスタイリング */
+form {
+    width: 800px;
+    /* フォームの最大幅を設定 */
+    margin: 0;
+    /* 左右のマージンをリセット */
+    margin-left: 0;
+    /* 左に寄せるための調整 */
+  }
+  
+  .form-add {
+    text-align: right;
+    /* 内部の要素を右揃え */
+    margin-bottom: 10px;
+    /* 下部にスペースを追加 */
+  }
+  
+  .required {
+    color: red;
+  }
+  
+  /* .form-group内の要素を横に並べる */
+  .form-group {
+    display: flex;
+    /* 子要素を横に並べる */
+    align-items: center;
+    /* 垂直方向に中央揃え */
+    gap: 10px;
+    /* 要素間の間隔を調整 */
+    margin-bottom: 10px;
+    /* 各フィールドの下にスペース */
+  }
+  
+  .form-group-ja {
+    display: flex;
+    /* 子要素を横に並べる */
+    align-items: center;
+    /* 垂直方向に中央揃え */
+    gap: 10px;
+    /* 要素間の間隔を調整 */
+    margin-bottom: 10px;
+    /* 各フィールドの下にスペース */
+  }
+  
+  /* ラベルと入力フィールドのスタイル */
+  .input-container {
+    display: flex;
+    align-items: center;
+    /* 垂直方向に中央揃え */
+    gap: 10px;
+    /* 要素間の間隔を調整 */
+    flex: 1;
+    /* 残りのスペースを占める */
+  }
+  
+  .input-container label {
+    width: 75px;
+    /* ラベルの幅を調整 */
+    text-align: left;
+    /* ラベルを左揃え */
+    margin-right: 10px;
+    /* ラベルと入力フィールド間のスペースを調整 */
+  }
+  
+  .input-container input,
+  .input-container select {
+    height: 34px;
+    /* 高さを設定 */
+    padding: 5px;
+    /* 内側の余白を調整 */
+    box-sizing: border-box;
+    /* ボックスサイズにパディングとボーダーを含める */
+  }
+  
+  #title-add-btn {
+    margin-left: 715px;
+  }
+  
+  #title,
+  #title_ja {
+    flex: 1;
+    /* 残りのスペースを占める */
+    max-width: calc(100% - 150px);
+    /* セレクトボックスと間隔分のスペースを確保 */
+  }
+  
+  #language {
+    width: 140px;
+    /* 幅を設定 */
+    margin-left: 10px;
+    /* 左側にスペースを追加して右にずらす */
+    height: 34px;
+    /* 高さを設定 */
+    box-sizing: border-box;
+    /* ボックスサイズにパディングとボーダーを含める */
+  }
+  
+  .input-container .form-control {
+    width: 600px;
+  }
+  
+  #supplement {
+    width: 600px;
+  }
+  
+  #icon {
+    width: 250px;
+  }
+  
+  #icon-draw-button,
+  #delete-ja {
+    width: 54px;
+    height: 34px;
+    /* 高さを設定 */
+    margin-left: 10px;
+    /* 左側のスペース */
+  }
+  
+  #icon_preview {
+    text-align: right;
+    /* 内部の要素を右揃え */
+    margin-left: 150px;
+    /* 左側のスペース */
+  }

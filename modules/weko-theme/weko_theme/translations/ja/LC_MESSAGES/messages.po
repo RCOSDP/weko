@@ -640,6 +640,33 @@ msgstr "その他"
 #~ msgid "ANY"
 #~ msgstr "任意"
 
+msgid "MSG_WEKO_THEME_ICON"
+msgstr "アイコン"
+
+msgid "MSG_WEKO_THEME_SUPPLEMENT"
+msgstr "補足文"
+
+msgid "MSG_WEKO_THEME_DRAW"
+msgstr "描画"
+
+msgid "MSG_WEKO_THEME_VALIDATION_ERROR_TITLE_IS_REQUIRED"
+msgstr "タイトルが空白です"
+
+msgid "MSG_WEKO_THEME_VALIDATION_ERROR_INVALID_ICON"
+msgstr "無効なクラスです"
+
+msgid "MSG_WEKO_THEME_EXPLAIN_ICON"
+msgstr "アイコンについては"
+
+msgid "MSG_WEKO_THEME_CLICK_HERE"
+msgstr "こちらを参照"
+
+msgid "MSG_WEKO_THEME_TITLE_ADD"
+msgstr "タイトルの追加"
+
+msgid "MSG_WEKO_THEME_SAVE_SUCCESS"
+msgstr "レコードが正常に保存されました。"
+
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_ホーム"
 msgstr "ホーム"
@@ -975,6 +1002,10 @@ msgstr "ファイルプレビュー"
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Setting_Shibboleth"
 msgstr "Shibboleth"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Setting_Communities Page"
+msgstr "コミュニティページ"
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Setting_Others"

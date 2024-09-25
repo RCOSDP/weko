@@ -26,6 +26,11 @@ weko_search_ui = WebpackThemeBundle(
                 "react": "~15.6.1",
                 "react-bootstrap": "~0.33.1",
                 "react-dom": "~15.6.1",
+                "@tinymce/tinymce-react": "^4.3.0",
+                "tinymce": "^6.7.2",
+                "luxon": "^1.23.1",
+                "formik": "^2.1.0",
+                "query-string":"^7.0.0"
             }
         )
     }

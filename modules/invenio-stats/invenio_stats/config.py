@@ -210,7 +210,7 @@ STATS_EXCLUDED_ADDRS = []
 """Fill IP Addresses which will be excluded from stats in `[]`"""
 STATS_AGGREGATIONS = {
     "celery-task-agg": {
-        "templates": "invenio_stats.contrib.aggregations",
+        "templates": "invenio_stats.contrib.aggregations.aggr_celery_task",
         "cls":StatAggregator,
         "name": "celery-task-agg",
         "params": {
@@ -240,7 +240,7 @@ STATS_AGGREGATIONS = {
         }
     },
     "search-agg": {
-        "templates": "invenio_stats.contrib.aggregations",
+        "templates": "invenio_stats.contrib.aggregations.aggr_search",
         "cls":StatAggregator,
         "name": "search-agg",
         "params": {
@@ -267,7 +267,7 @@ STATS_AGGREGATIONS = {
         }
     },
     "file-download-agg": {
-        "templates":"invenio_stats.contrib.aggregations",
+        "templates":"invenio_stats.contrib.aggregations.aggr_file_download",
         "cls":StatAggregator,
         "name": "file-download-agg",
         "params": {
@@ -307,7 +307,7 @@ STATS_AGGREGATIONS = {
         }
     },
     "file-preview-agg": {
-        "templates": "invenio_stats.contrib.aggregations",
+        "templates": "invenio_stats.contrib.aggregations.aggr_file_preview",
         "cls":StatAggregator,
         "name": "file-preview-agg",
         "params": {
@@ -345,7 +345,7 @@ STATS_AGGREGATIONS = {
         }
     },
     "item-create-agg": {
-        "templates": "invenio_stats.contrib.aggregations",
+        "templates": "invenio_stats.contrib.aggregations.aggr_item_create",
         "cls":StatAggregator,
         "name": "item-create-agg",
         "params": {
@@ -373,7 +373,7 @@ STATS_AGGREGATIONS = {
         }
     },
     "record-view-agg": {
-        "templates": "invenio_stats.contrib.aggregations",
+        "templates": "invenio_stats.contrib.aggregations.aggr_record_view",
         "cls":StatAggregator,
         "name": "record-view-agg",
         "params": {
@@ -405,7 +405,7 @@ STATS_AGGREGATIONS = {
         }
     },
     "top-view-agg": {
-        "templates": "invenio_stats.contrib.aggregations",
+        "templates": "invenio_stats.contrib.aggregations.aggr_top_view",
         "cls":StatAggregator,
         "name": "top-view-agg",
         "params": {
