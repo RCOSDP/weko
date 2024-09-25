@@ -468,3 +468,25 @@ function OnLinkClick(uri, pid_value, accessrole) {
       });
     window.open(uri);
 }
+function confirm_login(action){
+    let future_date_message = $('#future_date_message').val();
+    let download_preview_message = $('#download_preview_message').val();
+    let download_message = $("#download_message").val();
+    let preview_message = $("#preview_message").val();
+    if(action === 'download'){
+        message = download_message;
+    }else{
+        message = preview_message;
+    }
+    if(download_preview_message){
+        date_message = download_preview_message;
+    }else{
+        date_message = future_date_message;
+    }
+    if(!confirm(date_message + message)){
+        window.location.href = window.location.pathname;
+        return false;
+    } else {
+        return true;
+    }
+}

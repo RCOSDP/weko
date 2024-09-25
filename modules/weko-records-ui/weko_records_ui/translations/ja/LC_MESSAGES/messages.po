@@ -621,6 +621,21 @@ msgstr ""
 msgid "This item has been deleted."
 msgstr "このアイテムは削除されています。"
 
+msgid "Download is available from {}/{}/{}."
+msgstr "{}年{}月{}日からダウンロード可能です。"
+
+msgid "Download / Preview is available from {}/{}/{}."
+msgstr "{}年{}月{}日からダウンロードとプレビューが可能です。"
+
+msgid "\n If you would like to download immediately, you need to login. \n You want to login?"
+msgstr "\n今すぐダウンロードするにはログインが必要です。\nログインしますか？"
+
+msgid "\n If you would like to preview immediately, you need to login. \n You want to login?"
+msgstr "\n今すぐプレビューするにはログインが必要です。\nログインしますか？"
+
+msgid "There is no download authority."
+msgstr "ダウンロード権限がありません"
+
 msgid "Apply JGSS"
 msgstr "申請"
 

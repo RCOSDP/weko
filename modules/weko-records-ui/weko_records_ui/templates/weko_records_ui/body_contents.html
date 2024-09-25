@@ -164,6 +164,11 @@
                           {%- set filesize = '' -%}
                           {%- endif -%}
                           <!-- Show FileName/Label -->
+                          <input type="hidden" id="future_date_message" name="future_date_message" value="{{ file.future_date_message }}">
+                          <input type="hidden" id="download_preview_message" name="download_preview_message" value="{{ file.download_preview_message }}">
+                          <input type="hidden" id="authority_message" name="authority_message" value="{{ _('There is no download authority.')}}">
+                          <input type="hidden" id="download_message" name="download_message" value="{{ _('\n If you would like to download immediately, you need to login. \n You want to login?') }}">
+                          <input type="hidden" id="preview_message" name="download_message" value="{{ _('\n If you would like to preview immediately, you need to login. \n You want to login?') }}">
                           {%- if access_permission and billing_file_access_permission -%}
                             <a class="forcewrap{{ billing_file_class }}" {{ billing_file_data }} {{ billing_file_url }}
                               {% if text_url %} href="javascript:OnLinkClick('{{ text_url }}', {{ pid.pid_value }}, '{{ file.accessrole }}')" {% endif %}>
@@ -180,7 +185,7 @@
                             {%- set next_path = url_for_security('login', next=path) %}
                             {%- if not current_user.is_authenticated -%}
                               <a class="forcewrap{{ billing_file_class }}" {{ billing_file_data }} {{ billing_file_url }}
-                                  href="{{next_path}}">
+                                  href="{{next_path}}" id="next_login" onclick="return confirm_login('download');">
                                 {% autoescape false %}
                                 {{ file_label | escape_str }} {{ filesize }}
                                 {% endautoescape %}
@@ -307,7 +312,7 @@
                             {%- set path = request.path + preview_param %}
                             {%- set next_path = url_for_security('login', next=path) %}
                             <a class="action-anchor preview-button" href="{{next_path}}" data-slide-to="{{ loop.index0 }}">
-                              <button class="img-rounded action-button button-sm" id="{{preview_id}}">
+                              <button class="img-rounded action-button button-sm" id="{{preview_id}}" onclick="return confirm_login('preview');">
                                 <i class="action-icon fa fa-play-circle fa-lg"></i>
                                 {{_('Preview')}}
                               </button>
@@ -538,16 +543,40 @@
       };
       var params = parseQueryString();
       download_id = params['download'];
+      let search = window.location.search;
+      let href = window.location.href;
+      let show_popup = "{{ session.get('check_download_billingfile', False) }}";
+      let check_login = "{{ session.get('check_login', False) }}";
+      let no_authority = "{{ session.get('no_authority', False) }}";
+      let user_id = "{{ session.get('user_id', False) }}";
+      let download_button = document.getElementById(download_id);
+      let charge_button = document.getElementById('charge-button');
+      if (check_login === "1"){
+        let next_login = document.getElementById('next_login');
+        if (next_login) {
+          next_login.click();
+        }
+        "{{ session.pop('check_login', None) }}";
+      }
+      if(download_id && (user_id && !download_button && !charge_button) || no_authority === "1"){
+        let authority_message = $("#authority_message").val();
+        window.history.replaceState( {} , '',  href.replace(search, ''));
+        if(!alert(authority_message)){
+          "{{ session.pop('no_authority', None) }}";
+        } 
+      }
+      if(download_id && charge_button || show_popup === "1"){
+        window.history.replaceState( {} , '',  href.replace(search, ''));
+        handleChargeBillingFile();
+        $('button#charge-button').trigger('click');
+        "{{ session.pop('check_download_billingfile', None) }}";
+      }
       if(download_id){
-        search = window.location.search;
-        href = window.location.href;
         window.history.replaceState( {} , '',  href.replace(search, ''));
         $('#' + download_id).click();
       }
       preview_id = params['preview'];
       if(preview_id){
-        search = window.location.search;
-        href = window.location.href;
         window.history.replaceState( {} , '',  href.replace(search, ''));
         $('#' + preview_id).click();
       }
