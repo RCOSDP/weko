@@ -22,17 +22,14 @@
 import shutil
 from datetime import datetime, timedelta
 
-from celery import Celery
-from flask import current_app
 from celery import shared_task
 from celery.result import AsyncResult
 from celery.app.control import Inspect
+from flask import current_app
 from weko_admin.api import TempDirInfo
 from weko_admin.utils import get_redis_cache
 from weko_redis.redis import RedisConnection
 from invenio_db import db
-from celery.result import GroupResult
-from invenio_cache import current_cache
 
 from .utils import (
     check_import_items,
@@ -41,14 +38,6 @@ from .utils import (
     get_lifetime,
     import_items_to_system,
 )
-
-
-def create_celery_app():
-    """Flask アプリケーションコンテキストで Celery を初期化."""
-    app = current_app._get_current_object()
-    celery_app = Celery(app.import_name, broker=app.config['CELERY_BROKER_URL'])
-    celery_app.conf.update(app.config)
-    return celery_app
 
 @shared_task
 def check_import_items_task(file_path, is_change_identifier: bool, host_url,
@@ -98,7 +87,7 @@ def import_item(item, request_info):
 
 @shared_task
 def remove_temp_dir_task(path):
-    """Import Item ."""
+    """Remove temporary directory."""
     shutil.rmtree(path)
     TempDirInfo().delete(path)
 
@@ -110,7 +99,7 @@ def delete_task_id_cache(task_id, cache_key):
         state = AsyncResult(task_id).state
         if state == "REVOKED":
             redis_connection = RedisConnection()
-            datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
+            datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv=True)
             datastore.delete(cache_key)
 
 @shared_task
@@ -146,7 +135,7 @@ def export_all_task(root_url, user_id, data, timezone):
 def delete_exported_task(uri, cache_key, task_key):
     """Delete expired exported file."""
     redis_connection = RedisConnection()
-    datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
+    datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv=True)
     if datastore.redis.exists(cache_key):
         datastore.delete(task_key)
     try:
@@ -157,40 +146,34 @@ def delete_exported_task(uri, cache_key, task_key):
         current_app.logger.error(e)
 
 
-def initialize_celery():
-    """Celeryの初期化関数."""
-    global celery_app
-    if celery_app is None:
-        celery_app = create_celery_app()
-
-
-def is_import_running(celery_app):
+def is_import_running():
     """Check import is running."""
-    if not check_celery_is_run(celery_app):
-        return "celery_not_run"
+    celery_app = current_app.extensions.get('celery')
+    
+    if celery_app is None:
+        current_app.logger.error("Celery app is not initialized.")
+        return False
 
-    active = celery_app.control.inspect().active()
-    if active:
-        for worker in active:
-            for task in active[worker]:
-                if task["name"] == "weko_search_ui.tasks.import_item":
-                    return "is_import_running"
+    inspect = celery_app.control.inspect()
+    active = inspect.active()
+    reserved = inspect.reserved()
 
-    # 保留中のタスクを確認
-    reserved = celery_app.control.inspect().reserved()
-    if reserved:
-        for worker in reserved:
-            for task in reserved[worker]:
-                if task["name"] == "weko_search_ui.tasks.import_item":
-                    return "is_import_running"
+    for worker, tasks in active.items():
+        for task in tasks:
+            if task["name"] == "weko_admin.tasks.import_task":
+                return "is_import_running"
+
+    for worker, tasks in reserved.items():
+        for task in tasks:
+            if task["name"] == "weko_admin.tasks.import_task":
+                return "is_import_running"
 
     return False
 
 
-
-def check_celery_is_run(celery_app):
+def check_celery_is_run():
     """Check celery is running, or not."""
-    inspect = celery_app.control.inspect()
-    if inspect is None or not inspect.ping():
+    if not Inspect().ping():
         return False
-    return True
+    else:
+        return True

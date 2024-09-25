@@ -22,7 +22,7 @@
 
 import os
 import sys
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
+# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 import shutil
 from datetime import datetime, timedelta
 
@@ -41,6 +41,7 @@ from weko_admin.api import TempDirInfo
 from .models import AdminSettings, StatisticsEmail
 from .utils import StatisticMail, get_user_report_data, package_reports ,elasticsearch_reindex
 from .views import manual_send_site_license_mail 
+from celery.app.control import Inspect
 from weko_search_ui.tasks import check_celery_is_run
 from .config import WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS,\
     WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS_HAS_ERRORED
@@ -48,13 +49,6 @@ from .config import WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS,\
 
 logger = get_task_logger(__name__)
 
-def init_celery_app():
-    """Celeryアプリの初期化"""
-    celery.conf.update({
-        'broker_url': 'amqp://guest:guest@rabbitmq:5672//',
-        'result_backend': 'redis://localhost',
-    })
-    return celery
 
 @shared_task(
     name = "weko_admin.tasks.reindex" 
@@ -83,44 +77,47 @@ def reindex(self, is_db_to_es ):
         if you change this codes, please keep in mind Todo of the method "elasticsearch_reindex"
         in .utils.py .
     """
-    from invenio_app.celery import celery
-
-    try:
-        return elasticsearch_reindex(is_db_to_es)
-    except BaseException as ex:
-        # set error in admin_settings
-        AdminSettings.update(WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS 
-        , dict({WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS_HAS_ERRORED:True}))
-        raise ex
+    with current_app.app_context():
+        try:
+            return elasticsearch_reindex(is_db_to_es)
+        except BaseException as ex:
+            # set error in admin_settings
+            AdminSettings.update(WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS 
+            , dict({WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS_HAS_ERRORED:True}))
+            raise ex
 
 def is_reindex_running():
     """Check if the reindex task is running."""
-    from invenio_app.celery import celery
-    # Celeryアプリケーションの取得
-    celery_app = current_app.extensions['celery']
-    # Celeryのワーカー状態を取得
-    inspect = celery_app.control.inspect()
+    with current_app.app_context():
+        if not check_celery_is_run():
+            return False
 
-    # 実行中タスクを取得
-    active_tasks = inspect.active()
-    # 保留中タスクを取得
-    reserved_tasks = inspect.reserved()
+        inspect = current_app.extensions['celery'].control.inspect()
+        reserved = inspect.reserved()
+        active = inspect.active()
 
-    # 実行中タスクにreindexタスクがあるかを確認
-    if active_tasks:
-        for worker, tasks in active_tasks.items():
-            for task in tasks:
-                if task["name"] == "weko_admin.tasks.reindex":
-                    return True
+        # Check for active tasks
+        if active:
+            for worker, tasks in active.items():
+                for task in tasks:
+                    current_app.logger.debug("active")
+                    current_app.logger.debug(task)
+                    if task["name"] == "weko_admin.tasks.reindex":
+                        current_app.logger.info("weko_admin.tasks.reindex is active")
+                        return True
 
-    # 保留中タスクにreindexタスクがあるかを確認
-    if reserved_tasks:
-        for worker, tasks in reserved_tasks.items():
-            for task in tasks:
-                if task["name"] == "weko_admin.tasks.reindex":
-                    return True
+        # Check for reserved tasks
+        if reserved:
+            for worker, tasks in reserved.items():
+                for task in tasks:
+                    current_app.logger.debug("reserved")
+                    current_app.logger.debug(task)
+                    if task["name"] == "weko_admin.tasks.reindex":
+                        current_app.logger.info("weko_admin.tasks.reindex is reserved")
+                        return True
 
-    return False
+        current_app.logger.debug("weko_admin.tasks.reindex is not running")
+        return False
 
 
 

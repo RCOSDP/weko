@@ -21,22 +21,16 @@
 """WEKO3 authors tasks."""
 from datetime import datetime
 
-from flask import current_app
 from celery import Celery, shared_task, states
 from celery.result import GroupResult
+from celery.app.control import Inspect
+from flask import current_app
 from weko_workflow.utils import delete_cache_data, get_cache_data
+
 from weko_authors.config import WEKO_AUTHORS_IMPORT_CACHE_KEY
+
 from .utils import export_authors, import_author_to_system, save_export_url, \
     set_export_status
-
-
-def initialize_celery():
-    """Celeryの初期化"""
-    if 'celery' not in current_app.extensions:
-        celery = Celery(current_app.import_name, broker=current_app.config['CELERY_BROKER_URL'])
-        celery.conf.update(current_app.config)
-        current_app.extensions['celery'] = celery
-    return current_app.extensions['celery']
 
 
 @shared_task
@@ -49,6 +43,7 @@ def export_all():
         if file_uri:
             end_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             save_export_url(start_time, end_time, file_uri)
+
         return file_uri
     except Exception as ex:
         current_app.logger.error(ex)
@@ -64,27 +59,32 @@ def import_author(author):
     except Exception as ex:
         current_app.logger.error(ex)
         result['status'] = states.FAILURE
-        if ex.args and len(ex.args) and isinstance(ex.args[0], dict) and ex.args[0].get('error_id'):
+        if ex.args and len(ex.args) and isinstance(ex.args[0], dict) \
+                and ex.args[0].get('error_id'):
             error_msg = ex.args[0].get('error_id')
             result['error_id'] = error_msg
+
     result['end_date'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     return result
 
 
 def check_is_import_available(group_task_id=None):
-    """インポートが可能か確認"""
-    # Celeryの初期化
-    celery_app = initialize_celery()
+    """Is import available."""
+    result = {
+        'is_available': True
+        }
+    
+    if 'celery' not in current_app.extensions:
+        celery = Celery(current_app.import_name, broker=current_app.config['CELERY_BROKER_URL'])
+        celery.conf.update(current_app.config)
+        current_app.extensions['celery'] = celery
 
-    # Celeryの動作確認
-    inspect = celery_app.control.inspect()
+    inspect = current_app.extensions['celery'].control.inspect()
     if not inspect.ping():
-        current_app.logger.error("Celeryが動作していません")
-        return {'is_available': False, 'celery_not_run': True}
+        result['is_available'] = False
+        result['celery_not_run'] = True
+        return result
 
-    result = {'is_available': True}
-
-    # タスクのキャッシュデータ確認
     cache_data = get_cache_data(WEKO_AUTHORS_IMPORT_CACHE_KEY)
     if cache_data:
         task = GroupResult.restore(cache_data.get('group_task_id'))

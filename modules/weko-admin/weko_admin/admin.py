@@ -26,7 +26,6 @@ import json
 import os
 import re
 import sys
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 import unicodedata
 import ipaddress
 from datetime import datetime, timedelta
@@ -80,21 +79,21 @@ class ReindexElasticSearchView(BaseView):
             'weko_admin/admin/reindex_elasticsearch.html'
         """
         try:
-            status =  self._check_reindex_is_running()
+            status = self._check_reindex_is_running()
             is_error = status.get("isError")
             is_executing = status.get("isExecuting")
             disabled_btn = status.get("disabled_Btn")
 
             return self.render(
-                template=current_app.config['WEKO_ADMIN_REINDEX_ELASTICSEARCH_TEMPLATE']
-                ,isError=is_error
-                ,isExecuting=is_executing
-                ,disabled_Btn=disabled_btn 
+                template=current_app.config['WEKO_ADMIN_REINDEX_ELASTICSEARCH_TEMPLATE'],
+                isError=is_error,
+                isExecuting=is_executing,
+                disabled_Btn=disabled_btn
             )
         except BaseException:
             import traceback
             estr = traceback.format_exc()
-            current_app.logger.error(f'Unexpected error: {estr}')
+            current_app.logger.error('Unexpected error: {}'.format( estr ))
             return abort(500)
 
     @expose('/reindex', methods=['POST'])
@@ -170,26 +169,12 @@ class ReindexElasticSearchView(BaseView):
         by Celery task and admin_settings
         """
         try:
-            # Celeryの状態を確認
-            celery_app = current_app.extensions['celery']
-            inspect = celery_app.control.inspect()
-            is_executing = False
-
-            # 実行中のタスクを確認
-            active_tasks = inspect.active()
-            if active_tasks:
-                for worker, tasks in active_tasks.items():
-                    for task in tasks:
-                        if task['name'] == 'weko_admin.tasks.reindex':
-                            is_executing = True
-                            break
-
-            # AdminSettingsの設定を取得
             ELASTIC_REINDEX_SETTINGS = current_app.config['WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS']
             HAS_ERRORED = current_app.config['WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS_HAS_ERRORED']
 
             admin_setting = AdminSettings.get(ELASTIC_REINDEX_SETTINGS, False)
             is_error = admin_setting.get(HAS_ERRORED)
+            is_executing = is_reindex_running()
 
             result = {
                 "isError": is_error,

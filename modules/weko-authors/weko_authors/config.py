@@ -317,12 +317,3 @@ WEKO_AUTHORS_COUNT_API_VERSION = {
     'get-v1': Authors.get_v1
 }
 """API version."""
-
-# Celery関連の設定
-CELERY_BROKER_URL = 'amqp://guest:guest@rabbitmq:5672//'
-CELERY_RESULT_BACKEND = 'redis://localhost'
-CELERY_ACCEPT_CONTENT = ['json', 'msgpack']
-
-# 他のFlaskの設定（例）
-SECRET_KEY = 'your_secret_key'
-DEBUG = True

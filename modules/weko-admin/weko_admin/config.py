@@ -1289,12 +1289,3 @@ WEKO_ADMIN_CACHE_TEMP_DIR_INFO_KEY_DEFAULT = 'cache::temp_dir_info'
 
 WEKO_ADMIN_USE_REGEX_IN_CRAWLER_LIST = False
 """ If True, enable regex function in crawler list processing. """
-
-# Celery関連の設定
-CELERY_BROKER_URL = 'amqp://guest:guest@rabbitmq:5672//'
-CELERY_RESULT_BACKEND = 'redis://localhost'
-CELERY_ACCEPT_CONTENT = ['json', 'msgpack']
-
-# 他のFlaskの設定（例）
-SECRET_KEY = 'your_secret_key'
-DEBUG = True

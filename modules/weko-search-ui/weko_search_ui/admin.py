@@ -322,31 +322,6 @@ class ItemManagementBulkSearch(BaseView):
 class ItemImportView(BaseView):
     """BaseView for Admin Import."""
 
-    @expose("/check_import_is_available", methods=["GET"])
-    def check_import_available(self):
-        try:
-            # Celeryの現在のアプリケーションを取得
-            celery_app = celery_current_app  # current_app.extensions['celery'] ではなく、celery_current_app を使う
-            check = is_import_running(celery_app)
-
-            if not check:
-                # タスクが実行されていない場合、キャッシュデータを削除
-                delete_cache_data("import_start_time")
-                return jsonify({"is_available": True})
-            else:
-                # タスクが実行中の場合、開始時間とエラーIDを返す
-                return jsonify(
-                    {
-                        "is_available": False,
-                        "start_time": get_cache_data("import_start_time"),
-                        "error_id": check,
-                    }
-                )
-        except Exception as e:
-            flask_logger = current_app.logger
-            flask_logger.error(f"Error checking import status: {e}")
-            return jsonify({"error": str(e)}), 500
-
     @expose("/", methods=["GET"])
     def index(self):
         """Renders an item import view.
@@ -737,6 +712,27 @@ class ItemImportView(BaseView):
                 ),
             },
         )
+    
+    @expose("/check_import_is_available", methods=["GET"])
+    def check_import_available(self):
+        try:
+            with current_app.app_context():
+                check = is_import_running()
+
+            if not check:
+                delete_cache_data("import_start_time")
+                return jsonify({"is_available": True})
+            else:
+                return jsonify(
+                    {
+                        "is_available": False,
+                        "start_time": get_cache_data("import_start_time"),
+                        "error_id": check,
+                    }
+                )
+        except Exception as e:
+            current_app.logger.error(f"Error checking import status: {e}")
+            return jsonify({"error": str(e)}), 500
 
 
 
