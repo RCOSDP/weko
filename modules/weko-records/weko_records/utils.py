@@ -823,32 +823,30 @@ def to_orderdict(alst, klst, is_full_key=False):
                     to_orderdict(v, klst, is_full_key)
 
 
-def get_options_and_order_list(item_type_id, ojson=None):
+def get_options_and_order_list(item_type_id, item_type_data=None):
     """Get Options by item type id.
 
     :param item_type_id:
-    :param ojson:
+    :param item_type_data:
     :return: options dict and sorted list
     """
-    if ojson is None:
-        ojson = ItemTypes.get_record(item_type_id)
-    solst = find_items(ojson.model.form)
-    meta_options = ojson.model.render.get("meta_fix")
-    meta_options.update(ojson.model.render.get("meta_list"))
+    if item_type_data is None:
+        item_type_data = ItemTypes.get_record(item_type_id)
+    solst = find_items(item_type_data.model.form)
+    meta_options = item_type_data.model.render.get("meta_fix")
+    meta_options.update(item_type_data.model.render.get("meta_list"))
     return solst, meta_options
 
 
 async def sort_meta_data_by_options(
     record_hit,
     settings,
-    item_type_mapping,
     item_type_data,
 ):
     """Reset metadata by '_options'.
 
     :param record_hit:
     :param settings:
-    :param item_type_mapping:
     :param item_type_data:
     """
     
@@ -1328,12 +1326,19 @@ async def sort_meta_data_by_options(
         item_type_id = record_hit["_source"].get("item_type_id") or src.get(
             "item_type_id"
         )
-        item_map = get_mapping(item_type_id, "jpcoar_mapping")
         
         # selected title
         from weko_items_ui.utils import get_hide_list_by_schema_form
-        solst, meta_options = get_options_and_order_list(item_type_id, item_type_data)
-        hide_list = get_hide_list_by_schema_form(item_type_id)
+
+        item_type = ItemTypes.get_by_id(item_type_id)
+        hide_list = []
+        if item_type:
+            solst, meta_options = get_options_and_order_list(
+                item_type_id, item_type_data=ItemTypes(item_type.schema, model=item_type))
+            hide_list = get_hide_list_by_schema_form(schemaform=item_type.render.get('table_row_map', {}).get('form', []))
+        else:
+            solst, meta_options = get_options_and_order_list(item_type_id)
+        item_map = get_mapping(item_type_id, "jpcoar_mapping", item_type=item_type)
         title_value_key = 'title.@value'
         title_lang_key = 'title.@attributes.xml:lang'
         title_languages = []
@@ -1367,15 +1372,12 @@ async def sort_meta_data_by_options(
 
         if not item_type_id:
             return
-        
-        from weko_items_ui.utils import get_hide_list_by_schema_form
-        solst, meta_options = get_options_and_order_list(item_type_id, item_type_data)
-        hide_list = get_hide_list_by_schema_form(item_type_id)
+
         solst_dict_array = convert_data_to_dict(solst)
         files_info = []
         creator_info = None
         thumbnail = None
-        hide_item_metadata(src, settings, item_type_mapping, item_type_data)
+        hide_item_metadata(src, settings, item_type_data)
         # Set value and parent option
         for lst in solst:
             key = lst[0]
