@@ -1,0 +1,227 @@
+[
+    {
+        "_oai": {
+            "id": "oai:weko3.example.org:00000001"
+        },
+        "path": [
+            "1"
+        ],
+        "recid": "1",
+        "_deposit": {
+            "id": "1",
+            "pid": {
+                "type": "depid",
+                "value": "1",
+                "revision_id": 0
+            },
+            "owner": "1",
+            "owners": [
+                1
+            ],
+            "status": "published",
+            "created_by": 1,
+            "owners_ext": {
+                "email": "wekosoftware@nii.ac.jp",
+                "username": "",
+                "displayname": ""
+            }
+        },
+        "year": 2015,
+        "stars": 4,
+        "title": [
+            "Back to the Future"
+        ],
+        "item_title": "Back to the Future",
+        "system_file": "exists",
+        "item_1": {
+            "attribute_name": "item_1",
+            "attribute_value": "Item"
+        },
+        "item_test5_creator": {
+            "attribute_name": "creator",
+            "attribute_type": "creator",
+            "attribute_value_mlt": [
+                {
+                    "familyNames": [
+                        {
+                            "familyName": null,
+                            "familyNameLang": "en"
+                        },
+                        {
+                            "familyName": "takesi family"
+                        }
+                    ],
+                    "givenNames": [
+                        {
+                            "givenName": "takesi given",
+                            "givenNameLang": "en"
+                        }
+                    ],
+                    "nameIdentifierURI": [
+                        {
+                            "nameIdentifierURI": ""
+                        }
+                    ],
+                    "nameIdentifiers": [
+                        {
+                            "nameIdentifierScheme": "Test",
+                            "nameIdentifier": "T1"
+                        },
+                        {
+                            "nameIdentifierScheme": "WEKO",
+                            "nameIdentifier": "1"
+                        }
+                    ]
+                }
+            ]
+        },
+        "item_test5_contributor": {
+            "attribute_name": "contributor",
+            "attribute_type": "contributor",
+            "attribute_value_mlt": [
+                {
+                    "familyNames": [
+                        {
+                            "familyName": null,
+                            "familyNameLang": "en"
+                        },
+                        {
+                            "familyName": "takesi family"
+                        }
+                    ],
+                    "givenNames": [
+                        {
+                            "givenName": "takesi given",
+                            "givenNameLang": "en"
+                        }
+                    ],
+                    "nameIdentifierURI": [
+                        {
+                            "nameIdentifierURI": ""
+                        }
+                    ],
+                    "nameIdentifiers": [
+                        {
+                            "nameIdentifierScheme": "WEKO",
+                            "nameIdentifier": "2"
+                        },
+                        {
+                            "nameIdentifierScheme": "Test",
+                            "nameIdentifier": "T1"
+                        }
+                    ]
+                }
+            ]
+        },
+        "item_test5_names": {
+            "attribute_name": "full_name",
+            "attribute_type": "full_name",
+            "attribute_value_mlt": [
+                {
+                    "familyNames": [
+                        {
+                            "familyName": null,
+                            "familyNameLang": "en"
+                        },
+                        {
+                            "familyName": "takesi family"
+                        }
+                    ],
+                    "givenNames": [
+                        {
+                            "givenName": "takesi given",
+                            "givenNameLang": "en"
+                        }
+                    ],
+                    "nameIdentifierURI": [
+                        {
+                            "nameIdentifierURI": ""
+                        }
+                    ],
+                    "nameIdentifiers": [
+                        {
+                            "nameIdentifierScheme": "WEKO",
+                            "nameIdentifier": "xxx"
+                        },
+                        {
+                            "nameIdentifierScheme": "Test",
+                            "nameIdentifier": "T1"
+                        }
+                    ]
+                }
+            ]
+        },
+        "item_test5_other": {
+            "attribute_name": "full_name",
+            "attribute_type": "full_name",
+            "attribute_value_mlt": [
+                {
+                    "others": [
+                        {
+                            "name": "satosi",
+                            "nameLang": "en"
+                        }
+                    ],
+                    "familyNames": [
+                        {
+                            "familyName": null,
+                            "familyNameLang": "en"
+                        },
+                        {
+                            "familyName": "takesi family"
+                        }
+                    ],
+                    "givenNames": [
+                        {
+                            "givenName": "takesi given",
+                            "givenNameLang": "en"
+                        }
+                    ],
+                    "nameIdentifierURI": [
+                        {
+                            "nameIdentifierURI": ""
+                        }
+                    ],
+                    "nameIdentifiers": [
+                        {
+                            "nameIdentifierScheme": "Test",
+                            "nameIdentifier": "T1"
+                        },
+                        {
+                            "nameIdentifierScheme": "WEKO",
+                            "nameIdentifier": "1"
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "recid": "2",
+        "year": 2042,
+        "stars": 3,
+        "title": [
+            "Back to the Past"
+        ],
+        "item_title": "Back to the Past",
+        "_deposit": {
+            "id": "2",
+            "pid": {
+                "type": "depid",
+                "value": "2",
+                "revision_id": 0
+            },
+            "owner": "1",
+            "owners": [
+                1
+            ],
+            "status": "published",
+            "created_by": 1,
+            "owners_ext": {
+                "email": "wekosoftware@nii.ac.jp",
+                "username": "",
+                "displayname": ""
+            }
+        }
+    }
+]
