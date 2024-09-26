@@ -1305,6 +1305,20 @@ class ItemTypeProps(RecordBase):
         :param form_array: form (array) in JSON format.
         :returns: A new :class:`Record` instance.
         """
+        if not name:
+            raise ValueError(
+                'The property name is required and cannot be empty.'
+            )
+
+        duplicated_prop = ItemTypeProperty.query.filter(
+            ItemTypeProperty.name == name,
+            ItemTypeProperty.id != property_id
+        ).first()
+        if duplicated_prop:
+            raise ValueError(
+                f'The property name "{name}" already exists.'
+            )
+
         with db.session.begin_nested():
             record = cls(schema)
 
@@ -1338,8 +1352,8 @@ class ItemTypeProps(RecordBase):
         return record
 
     @classmethod
-    def create_with_property_id(cls, property_id=None, name=None, schema=None, form_single=None,
-               form_array=None):
+    def create_with_property_id(cls, property_id=None, name=None, schema=None,
+                                form_single=None, form_array=None):
         """Create a new ItemTypeProperty instance and store it in the database.
 
         :param property_id: ID of Itemtype property.
@@ -1349,6 +1363,20 @@ class ItemTypeProps(RecordBase):
         :param form_array: form (array) in JSON format.
         :returns: A new :class:`Record` instance.
         """
+        if not name:
+            raise ValueError(
+                'The property name is required and cannot be empty.'
+            )
+
+        duplicated_prop = ItemTypeProperty.query.filter(
+            ItemTypeProperty.name == name,
+            ItemTypeProperty.id != property_id
+        ).first()
+        if duplicated_prop:
+            raise ValueError(
+                f'The property name "{name}" already exists.'
+            )
+
         with db.session.begin_nested():
             record = cls(schema)
 
@@ -1356,19 +1384,6 @@ class ItemTypeProps(RecordBase):
                 current_app._get_current_object(),
                 record=record
             )
-
-            if not name:
-                raise ValueError(
-                    "The property name is required and cannot be empty."
-                )
-
-            duplicated_prop = ItemTypeProperty.query.filter_by(name=name).first()
-            if duplicated_prop:
-                raise IntegrityError(
-                    "The property name already exists in the database.",
-                    params=None,
-                    orig=None
-                )
 
             record.model = ItemTypeProperty(name=name,
                                             schema=schema,

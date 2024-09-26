@@ -20,6 +20,7 @@
 
 """Pytest configuration."""
 
+from datetime import datetime
 import os
 import sys
 import shutil
@@ -63,8 +64,10 @@ from weko_records_ui.config import WEKO_PERMISSION_SUPER_ROLE_USER, WEKO_PERMISS
 from weko_records import WekoRecords
 from weko_records.api import ItemTypes, Mapping
 from weko_records.config import WEKO_ITEMTYPE_EXCLUDED_KEYS
-from weko_records.models import ItemTypeName, SiteLicenseInfo, ItemReference
-
+from weko_records.models import (
+     SiteLicenseInfo, ItemReference, ItemType, ItemTypeName,
+     ItemTypeMapping, ItemTypeProperty
+)
 from tests.helpers import json_data, create_record
 
 sys.path.append(os.path.dirname(__file__))
@@ -754,3 +757,60 @@ def db_ItemReference(db):
         db.session.add(ir)
 
     return ir
+
+
+@pytest.fixture()
+def simple_item_type(db):
+    item_type_name = ItemTypeName(
+        created = datetime(2024, 9, 6, 0, 0),
+        updated = datetime(2024, 9, 6, 0, 0),
+        id=1,
+        name='test item type',
+        has_site_license=True,
+        is_active=True
+    )
+    item_type = ItemType(
+        created = datetime(2024, 9, 6, 0, 0),
+        updated = datetime(2024, 9, 6, 0, 0),
+        id=1,
+        name_id=1,
+        harvesting_type=False,
+        schema = {},
+        form = {},
+        render = {},
+        tag = 1,
+        version_id = 1,
+        is_deleted = False
+    )
+    item_type_mapping = ItemTypeMapping(
+        created = datetime(2024, 9, 6, 0, 0),
+        updated = datetime(2024, 9, 6, 0, 0),
+        id=1,
+        item_type_id=1,
+        mapping={'test': 'test'},
+        version_id=1
+    )
+    item_type_property = ItemTypeProperty(
+        created = datetime(2024, 9, 6, 0, 0),
+        updated = datetime(2024, 9, 6, 0, 0),
+        id=1,
+        name='test property',
+        schema={'type': 'string'},
+        form={'title_i18n': {'en': 'test property'}},
+        forms=['test form'],
+        delflg=False,
+        sort=1
+    )
+    with db.session.begin_nested():
+        db.session.add(item_type_name)
+        db.session.add(item_type)
+        db.session.add(item_type_mapping)
+        db.session.add(item_type_property)
+    db.session.commit()
+    item_type_list = {
+        'item_type_name': item_type_name,
+        'item_type': item_type,
+        'item_type_mapping': item_type_mapping,
+        'item_type_property': item_type_property
+    }
+    return item_type_list

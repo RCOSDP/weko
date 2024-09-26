@@ -340,7 +340,7 @@ class ItemTypeMetaDataView(BaseView):
     def export(self,item_type_id):
         item_types = ItemTypes.get_by_id(id_=item_type_id)
 
-        # 存在しないアイテムタイプ、削除済みアイテムタイプ、ハーベスト用アイテムタイプの場合はエクスポート不可。エラー画面を表示する。
+        # Error if the item-type is non-existent, deleted, or for harvesting
         if item_types is None or item_types.harvesting_type is True :
             current_app.logger.error('item_type_id={} is cannot export.'.format(item_type_id))
             return self.render(
@@ -353,7 +353,7 @@ class ItemTypeMetaDataView(BaseView):
         item_type_mappings = Mapping.get_record(item_type_id)
         fp = io.BytesIO()
         with ZipFile(fp, 'w', compression=ZIP_DEFLATED) as new_zip:
-            # zipファイルにJSON文字列を追加
+            # Output JSON data to a ZIP file
             item_type_json = json.dumps(
                 ItemTypeSchema().dump(item_types).data,
                 ensure_ascii=False)
@@ -361,7 +361,7 @@ class ItemTypeMetaDataView(BaseView):
                 ItemTypeNameSchema().dump(item_type_names).data,
                 ensure_ascii=False)
             mapping_json = json.dumps(
-                ItemTypeMappingSchema().dump(item_type_mappings).data,
+                ItemTypeMappingSchema().dump(item_type_mappings.model).data,
                 ensure_ascii=False)
             properties_json = ""
             for item_type_property in item_type_properties :
@@ -396,68 +396,95 @@ class ItemTypeMetaDataView(BaseView):
         item_type_id = 0
 
         # Get request data
-        item_type_name = request.form['item_type_name']
-        input_file = request.files['file']
-        if len(item_type_name) == 0:
+        item_type_name = request.form.get('item_type_name')
+        input_file = request.files.get('file')
+
+        # Error if the data is incomplete
+        if not item_type_name:
             return jsonify(msg=_('No item type name Error'))
-        if input_file is None:
+        if not input_file:
             return jsonify(msg=_('No file Error'))
-        if input_file.mimetype is None:
+        if not input_file.mimetype:
             current_app.logger.debug(input_file.mimetype)
             return jsonify(msg=_('Illegal mimetype Error'))
-        
+
         try:
-            readable_files = ["ItemType.json", "ItemTypeName.json", "ItemTypeMapping.json", "ItemTypeProperty.json"]
+            readable_files = [
+                'ItemType.json',
+                'ItemTypeName.json',
+                'ItemTypeMapping.json',
+                'ItemTypeProperty.json'
+            ]
             import_data = {
-                "ItemType":null,
-                "ItemTypeName":null,
-                "ItemTypeMapping":null,
-                "ItemTypeProperty":null,
+                'ItemType': None,
+                'ItemTypeName': None,
+                'ItemTypeMapping': None,
+                'ItemTypeProperty': None,
             }
-            with ZipFile(input_file, 'r') as import_zip:
+            with ZipFile(input_file) as import_zip:
                 # Check JSON files in ZipFile
-                current_app.logger.debug("Unzip requested file...")
+                current_app.logger.debug('Unzip requested file...')
                 for file_name in import_zip.namelist():
-                    current_app.logger.debug("Read file:" + file_name)
+                    current_app.logger.debug('Read file: ' + file_name)
                     if file_name not in readable_files:
-                        current_app.logger.debug(file_name + " is ignored.")
+                        current_app.logger.debug(file_name + ' is ignored.')
                     else:
                         with import_zip.open(file_name, 'r') as json_file:
                             json_obj = json.load(json_file)
-                            if file_name == "ItemType.json":
-                                import_data["ItemType"] = json_obj
-                                #print(json_obj)
-                            elif file_name == "ItemTypeName.json":
-                                import_data["ItemTypeName"] = json_obj
-                                #print(json_obj)
-                            elif file_name == "ItemTypeMapping.json":
-                                import_data["ItemTypeMapping"] = json_obj
-                                #print(json_obj)
-                            elif file_name == "ItemTypeProperty.json":
-                                import_data["ItemTypeProperty"] = json_obj
-                                #print(json_obj)
-            
-            # ZIPファイル内に規定のアイテムタイプデータが無ければエラー
-            if import_data["ItemType"] is null or import_data["ItemTypeName"] is null or import_data["ItemTypeMapping"] is null or import_data["ItemTypeProperty"] is null :
+                            if file_name == 'ItemType.json':
+                                import_data['ItemType'] = json_obj
+                            elif file_name == 'ItemTypeName.json':
+                                import_data['ItemTypeName'] = json_obj
+                            elif file_name == 'ItemTypeMapping.json':
+                                import_data['ItemTypeMapping'] = json_obj
+                            elif file_name == 'ItemTypeProperty.json':
+                                import_data['ItemTypeProperty'] = json_obj
+
+            if (
+                import_data['ItemType'] is None or
+                import_data['ItemTypeName'] is None or
+                import_data['ItemTypeMapping'] is None or
+                import_data['ItemTypeProperty'] is None
+            ):
                 raise ValueError('Zip file contents invalid.')
             
+            # Data of properties related to the item-type
+            render = import_data['ItemType'].get('render')
+            if not render:
+                raise ValueError(
+                    '"render" is missing or invalid in ItemType.json.'
+                )
             
-            json_schema = fix_json_schema(import_data["ItemType"].get('schema'))
-            json_form = import_data["ItemType"].get('form')
+            # Property numbers to identify property IDs
+            table_row_ids = render.get('table_row')
+            if not table_row_ids:
+                raise ValueError(
+                    '"table_row" is missing or invalid in "render".'
+                )
+
+            # Property data including ID and more
+            meta_list = render.get('meta_list')
+            if not meta_list:
+                raise ValueError(
+                    '"meta_list" is missing or invalid in "render".'
+                )
+            
+            json_schema = fix_json_schema(
+                import_data['ItemType'].get('schema')
+            )
+            json_form = import_data['ItemType'].get('form')
             json_schema = update_required_schema_not_exist_in_form(
-                json_schema, json_form)
+                json_schema,
+                json_form
+            )
             
             if not json_schema:
                 raise ValueError('Schema is in wrong format.')
 
-            # get data from ItemType.json
-            table_row_ids = import_data["ItemType"].get('render').get("table_row")
-            meta_list = import_data["ItemType"].get('render').get("meta_list")
-
             unregistered_prop_ids = set()
             for row_id in table_row_ids:
-                # remove "cus_"
-                prop_id = int(meta_list.get(row_id).get("input_type")[4:])
+                # remove 'cus_'
+                prop_id = int(meta_list.get(row_id).get('input_type')[4:])
                 prop = ItemTypeProps.get_record(prop_id)
                 if prop is None:
                     unregistered_prop_ids.add(prop_id)
@@ -469,28 +496,32 @@ class ItemTypeMetaDataView(BaseView):
             if (len(unregistered_prop_ids) > 0) and not forced_import:
                 raise ValueError(_('Property ID does not exist.'))
 
-            # get unregistered property from ItemTypeProperty.json
-            property_data = import_data["ItemTypeProperty"]
+            # Get unregistered property from ItemTypeProperty.json
+            property_data = import_data['ItemTypeProperty']
             for prop_id in unregistered_prop_ids:
-                prop = [x for x in property_data if x.get("id") == prop_id][0]
-
+                prop = [x for x in property_data if x.get('id') == prop_id][0]
+                # Create or update property
                 ItemTypeProps.create_with_property_id(property_id=prop_id,
-                                     name=prop.get("name"),
-                                     schema=prop.get("schema"),
-                                     form_single=prop.get("form"),
-                                     form_array=prop.get("forms"))
-
-            record = ItemTypes.update(id_=0,
-                                      name=item_type_name,
-                                      schema=json_schema,
-                                      form=json_form,
-                                      render=import_data["ItemType"].get('render'))
+                                     name=prop.get('name'),
+                                     schema=prop.get('schema'),
+                                     form_single=prop.get('form'),
+                                     form_array=prop.get('forms'))
+            # Create new item type record
+            record = ItemTypes.update(
+                id_=0,
+                name=item_type_name,
+                schema=json_schema,
+                form=json_form,
+                render=import_data['ItemType'].get('render')
+            )
             upgrade_version = current_app.config[
                 'WEKO_ITEMTYPES_UI_UPGRADE_VERSION_ENABLED'
             ]
             item_type_id=record.model.id
-            Mapping.create(item_type_id=item_type_id,
-                               mapping=import_data["ItemTypeMapping"].get('mapping'))
+            Mapping.create(
+                item_type_id=item_type_id,
+                mapping=import_data['ItemTypeMapping'].get('mapping')
+            )
 
             ItemTypeEditHistory.create_or_update(
                 item_type_id=item_type_id,

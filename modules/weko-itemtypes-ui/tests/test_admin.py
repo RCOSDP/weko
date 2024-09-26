@@ -1,4 +1,10 @@
 
+from datetime import datetime
+import os
+from glob import glob
+from os.path import join, dirname
+from unittest.mock import MagicMock
+from zipfile import ZipFile
 import pytest
 import uuid
 import copy
@@ -346,60 +352,309 @@ class TestItemTypeMetaDataView:
         assert result == test
 #     def export(self,item_type_id):
 # .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_admin.py::TestItemTypeMetaDataView::test_export -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
-    def test_export(self,client,db,admin_view,users,item_type,itemtype_props,mocker):
-        login_user_via_session(client=client,email=users[0]["email"])
-        item_type1 = item_type[0]["item_type"]
-        item_type1.harvesting_type = False
-        db.session.merge(item_type1)
+    def test_export(
+        self, client, admin_view, db, users, simple_item_type, mocker, caplog
+    ):
+        # Setup
+        login_user_via_session(client=client,email=users[0]['email'])
+        test_datetime = '2024-09-06T00:00:00+00:00'
+        expected_files = [
+            'ItemType.json',
+            'ItemTypeName.json',
+            'ItemTypeMapping.json',
+            'ItemTypeProperty.json'
+        ]
+        expected_item_type = {
+            'created': test_datetime,
+            'updated': test_datetime,
+            'id': 1,
+            # 'name_id': 1,
+            'harvesting_type': False,
+            'schema': {},
+            'form': {},
+            'render': {},
+            'tag': 1,
+            'version_id': 1,
+            'is_deleted': False
+        }
+        expected_item_type_name = {
+            'created': test_datetime,
+            'updated': test_datetime,
+            'id': 1,
+            'name': 'test item type',
+            'has_site_license': True,
+            'is_active': True,
+        }
+        expected_item_type_mapping = {
+            'created': test_datetime,
+            'updated': test_datetime,
+            'id': 1,
+            'item_type_id': 1,
+            'mapping': {'test': 'test'},
+            'version_id': 1
+        }
+        expected_item_type_property = [{
+            'created': test_datetime,
+            'updated': test_datetime,
+            'id': 1,
+            'name': 'test property',
+            'schema': {'type': 'string'},
+            'form': {'title_i18n': {'en': 'test property'}},
+            'forms': ['test form'],
+            'delflg': False,
+            'sort': 1,
+        }]
+
+        # Render the error screen if item-type is not found
+        url = url_for('itemtypesregister.export',item_type_id=100)
+        mock_render = mocker.patch(
+            'weko_itemtypes_ui.admin.ItemTypeMetaDataView.render',
+            return_value=make_response()
+        )
+        with caplog.at_level('ERROR'):
+            res = client.get(url)
+        mock_render.assert_called_with('weko_itemtypes_ui/admin/error.html')
+        assert 'item_type_id=100 is cannot export' in caplog.text
+
+        # Assert the response is successful when the item type ID is valid
+        url = url_for('itemtypesregister.export',item_type_id=1)
+        response = client.get(url)
+        assert response.status_code == 200
+
+        # Verify that the JSON files in the ZIP archive contain expected data
+        zip_file = ZipFile(BytesIO(response.data))
+        assert sorted(zip_file.namelist()) == sorted(expected_files)
+        with zip_file.open('ItemType.json') as f:
+            item_type_json = json.load(f)
+            assert item_type_json == expected_item_type
+        with zip_file.open('ItemTypeName.json') as f:
+            item_type_name_json = json.load(f)
+            assert item_type_name_json == expected_item_type_name
+        with zip_file.open('ItemTypeMapping.json') as f:
+            item_type_mapping_json = json.load(f)
+            assert item_type_mapping_json == expected_item_type_mapping
+        with zip_file.open('ItemTypeProperty.json') as f:
+            item_type_property_json = json.load(f)
+            assert item_type_property_json == expected_item_type_property
+
+        # Render the error screen if item-type is for harvesting
+        item_type = simple_item_type['item_type']
+        item_type.harvesting_type = True
         db.session.commit()
-        # not exist itemtype
-        url = url_for("itemtypesregister.export",item_type_id=100)
-        mock_render = mocker.patch("weko_itemtypes_ui.admin.ItemTypeMetaDataView.render",return_value=make_response())
-        
-        res = client.get(url)
-        mock_render.assert_called_with("weko_itemtypes_ui/admin/error.html")
-        
-        url = url_for("itemtypesregister.export",item_type_id=1)
-        mock_send = mocker.patch("weko_itemtypes_ui.admin.send_file",return_value=make_response())#
-        class MockZip:
-            def __init__(self,fp,mode,compression):
-                self.fp=fp
-            def writestr(self,filename,data):
-                self.fp.data[filename]=data
-            def __enter__(self):
-                return self
-            def __exit__(self, exc_type, exc_value, traceback):
-                pass
-        class MockBytesIO():
-            def __init__(self):
-                self.data = {}
-            def seek(self,flg):
-                pass
-        mocker.patch("weko_itemtypes_ui.admin.io.BytesIO",side_effect=MockBytesIO)
-        mocker.patch("weko_itemtypes_ui.admin.ZipFile",side_effect=MockZip)
-        res = client.get(url)
-        fp,kwargs = mock_send.call_args
-        assert "ItemType.json" in fp[0].data
-        assert "ItemTypeName.json" in fp[0].data
-        assert "ItemTypeMapping.json" in fp[0].data
-        assert "ItemTypeProperty.json" in fp[0].data
-        
+        url = url_for('itemtypesregister.export',item_type_id=1)
+        with caplog.at_level('ERROR'):
+            res = client.get(url)
+        mock_render.assert_called_with('weko_itemtypes_ui/admin/error.html')
+        assert 'item_type_id=1 is cannot export' in caplog.text
+
 #     def item_type_import(self):
 # .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_admin.py::TestItemTypeMetaDataView::test_item_type_import -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
-# TODO:zipファイルを扱う方法の調査
-    def test_item_type_import(self,client,admin_view,users,item_type):
-        login_user_via_session(client=client,email=users[0]["email"])
-        url = url_for("itemtypesregister.item_type_import")
-        file = FileStorage(filename="",stream=None)
-        # not exist item_type_name
-        res = client.post(url,data={"item_type_name":"","file":(file,"")},content_type="multipart/form-data")
+    @patch('weko_itemtypes_ui.utils.fix_json_schema')
+    @patch('weko_itemtypes_ui.admin.update_required_schema_not_exist_in_form')
+    @patch('weko_itemtypes_ui.admin.ItemTypeProps.get_record')
+    def test_item_type_import(
+        self, mock_get_record, mock_update_required_schema,
+        mock_fix_json_schema, client, admin_view, users, simple_item_type,
+        create_zipfiles, insufficient_zipfile, no_render_zipfile,
+        no_table_row_zipfile, no_meta_list_zipfile, caplog
+    ):
+        # Setup
+        login_user_via_session(client=client,email=users[0]['email'])
+        url = url_for('itemtypesregister.item_type_import')
+        zipfiles = create_zipfiles
+        test_datetime = '2024-09-06T00:00:00+00:00'
 
-        assert json.loads(res.data)["msg"] == 'No item type name Error'
+        # Error if 'item_type_name' is missing
+        file = FileStorage(filename='test.zip',stream=BytesIO(b'test'))
+        data = {
+            'item_type_name': '',
+            'file': (file, '')
+        }
+        res = client.post(url,data=data,content_type='multipart/form-data')
+        assert json.loads(res.data)['msg'] == 'No item type name Error'
+
+        # Error if 'input_file' is missing
+        data = {
+            'item_type_name': 'test2',
+            'file': (BytesIO(b''), '')
+        }
+        res = client.post(url,data=data,content_type='multipart/form-data')
+        assert json.loads(res.data)['msg'] == 'No file Error'
+
+        # Error if 'input_file.mimetype' is missing
+        file = FileStorage(
+            filename='test.zip',stream=BytesIO(b'test'),content_type=''
+        )
+        data = {
+            'item_type_name': 'test3',
+            'file': (file, '')
+        }
+        res = client.post(url, data=data, content_type='multipart/form-data')
+        assert json.loads(res.data)['msg'] == 'Illegal mimetype Error'
+
+        # Assert that a debug log with the ignored file is generated
+        file = BytesIO(zipfiles[1].getvalue())
+        data = {
+            'item_type_name': 'test4',
+            'file': (file, 'test.zip')
+        }
+        with caplog.at_level('DEBUG'):
+            res = client.post(url, data=data, content_type='multipart/form-data')
+        assert 'extra.json is ignored' in caplog.text
+
+        # Error if the required files are missing in the imported ZIP file
+        file = BytesIO(insufficient_zipfile.getvalue())
+        data = {
+            'item_type_name': 'test5',
+            'file': (file, 'test.zip')
+        }
+        res = client.post(url, data=data, content_type='multipart/form-data')
+        assert json.loads(res.data)['msg'] == (
+            'Failed to import Item type. Zip file contents invalid.'
+        )
+
+        # Error if ItemType.json does not have a 'render' key
+        file = BytesIO(no_render_zipfile.getvalue())
+        data = {
+            'item_type_name': 'test',
+            'file': (file, 'test.zip')
+        }
+        res = client.post(url, data=data, content_type='multipart/form-data')
+        assert res.status_code == 400
+        assert json.loads(res.data)['msg'] == (
+            'Failed to import Item type. '
+            '"render" is missing or invalid in ItemType.json.'
+        )
         
-        
-        file = FileStorage(filename='test', stream=BytesIO(b'test'))
-        res = client.post(url,data={"item_type_name":"テストアイテムタイプ1","file":file},
-                          content_type="multipart/form-data")
+        # Error if 'render' value does not have a 'table_row' key
+        file = BytesIO(no_table_row_zipfile.getvalue())
+        data = {
+            'item_type_name': 'test',
+            'file': (file, 'test.zip')
+        }
+        res = client.post(url, data=data, content_type='multipart/form-data')
+        assert res.status_code == 400
+        assert json.loads(res.data)['msg'] == (
+            'Failed to import Item type. '
+            '"table_row" is missing or invalid in "render".'
+        )
+
+        # Error if 'render' value does not have a 'meta_list' key
+        file = BytesIO(no_meta_list_zipfile.getvalue())
+        data = {
+            'item_type_name': 'test',
+            'file': (file, 'test.zip')
+        }
+        res = client.post(url, data=data, content_type='multipart/form-data')
+        assert res.status_code == 400
+        assert json.loads(res.data)['msg'] == (
+            'Failed to import Item type. '
+            '"meta_list" is missing or invalid in "render".'
+        )
+
+        # Error if 'json_schema' is missing
+        file = BytesIO(zipfiles[2].getvalue())
+        mock_fix_json_schema.return_value = None
+        mock_update_required_schema.return_value = None
+        data = {
+            'item_type_name': 'test6',
+            'file': (file, 'test.zip')
+        }
+        res = client.post(url, data=data, content_type='multipart/form-data')
+        assert json.loads(res.data)['msg'] == (
+            'Failed to import Item type. Schema is in wrong format.'
+        )
+
+        # Import fails if forced-import is False and
+        # item-type has unknown properties
+        with patch.dict(
+            current_app.config,
+            {'WEKO_ITEMTYPES_UI_FORCED_IMPORT_ENABLED': False}
+        ):
+            mock_get_record.return_value = None
+            mock_fix_json_schema.return_value = (
+                {'properties': {'filename': {'items': ['test_file']}}}
+            )
+            mock_update_required_schema.return_value = (
+                {'filename': {'items': ['test_file']}}
+            )
+            file = BytesIO(zipfiles[2].getvalue())
+            data = {
+                'item_type_name': 'test7',
+                'file': (file, 'test.zip')
+            }
+            res = client.post(url, data=data, content_type='multipart/form-data')
+            assert json.loads(res.data)['msg'] == (
+                'Failed to import Item type. Property ID does not exist.'
+            )
+
+        # Import suceeds if forced-import is False but
+        # item-type does not have unknown properties
+        with patch.dict(
+            current_app.config,
+            {'WEKO_ITEMTYPES_UI_FORCED_IMPORT_ENABLED': False}
+        ):
+            class MockProp:
+                updated = ''
+            mock_prop = MockProp()
+            mock_prop.updated = '2024-09-06T00:00:00+00:00'
+            mock_get_record.return_value = mock_prop
+            file = BytesIO(zipfiles[0].getvalue())
+            data = {
+                'item_type_name': 'test8',
+                'file': (file, 'test.zip')
+            }
+            with caplog.at_level('DEBUG'):
+                res = client.post(url, data=data, content_type='multipart/form-data')
+            assert json.loads(res.data)['msg'] == (
+                'Successfuly import Item type.'
+            )
+
+        # Import suceeds if forced-import is True, even when
+        # item-type has unknown properties
+        with patch.dict(
+            current_app.config,
+            {'WEKO_ITEMTYPES_UI_FORCED_IMPORT_ENABLED': True}
+        ):
+            file = BytesIO(zipfiles[2].getvalue())
+            data = {
+                'item_type_name': 'test9',
+                'file': (file, 'test.zip')
+            }
+            res = client.post(url, data=data, content_type='multipart/form-data')
+            assert json.loads(res.data)['msg'] == (
+                'Successfuly import Item type.'
+            )
+
+        # Import suceeds if forced-import is True and
+        # item-type does not have unknown properties
+        with patch.dict(
+            current_app.config,
+            {'WEKO_ITEMTYPES_UI_FORCED_IMPORT_ENABLED': True}
+        ):
+            file = BytesIO(zipfiles[0].getvalue())
+            data = {
+                'item_type_name': 'test10',
+                'file': (file, 'test.zip')
+            }
+            res = client.post(url, data=data, content_type='multipart/form-data')
+            assert json.loads(res.data)['msg'] == (
+                'Successfuly import Item type.'
+            )
+
+        # Error if the database commit fails
+        with patch(
+            'weko_itemtypes_ui.admin.db.session.commit',
+            side_effect=Exception('Commit error test')
+        ):
+            file = BytesIO(zipfiles[3].getvalue())
+            data = {
+                'item_type_name': 'test11',
+                'file': (file, 'test.zip')
+            }
+            res = client.post(url, data=data, content_type='multipart/form-data')
+            assert res.status_code == 400
+            assert 'Failed to import Item type' in json.loads(res.data)['msg']
         
 # class ItemTypeSchema(SQLAlchemyAutoSchema):
 #     class Meta:
