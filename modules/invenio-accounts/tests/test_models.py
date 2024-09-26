@@ -16,6 +16,31 @@ from sqlalchemy import inspect
 from invenio_accounts import testutils
 from invenio_accounts.models import SessionActivity
 
+import pytest
+
+
+class TestUser:
+    @pytest.mark.parametrize('user_index, enable_expected, disable_expected', [
+        (0, True, True),
+        (1, True, True),
+        (2, True, True),
+        (3, True, True),
+        (4, False, True),
+        (5, False, True),
+        (6, True, True)
+    ])
+    def test_is_workflow_enabled(self, app, users_with_roles, user_index, enable_expected, disable_expected):
+        """Test is_workflow_enabled method."""
+        with app.app_context():
+            user = users_with_roles[user_index]
+            
+            # The test what ENABLE_WORKFLOW_AUTH_SETTING is true
+            app.config['ENABLE_WORKFLOW_AUTH_SETTING'] = True
+            assert user.is_workflow_enable() == enable_expected
+
+            # The test what ENABLE_WORKFLOW_AUTH_SETTING is false
+            app.config['ENABLE_WORKFLOW_AUTH_SETTING'] = False
+            assert user.is_workflow_enable() == disable_expected
 
 def test_session_activity_model(app):
     """Test SessionActivity model."""

@@ -8,4 +8,4 @@ values
     );
 
 -- update column type
-ALTER TABLE shibboleth_user ALTER COLUMN shib_page_name TYPE text;
+ALTER TABLE shibboleth_user ALTER COLUMN shib_page_name TYPE CHARACTER VARYING(1024);

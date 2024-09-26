@@ -93,6 +93,24 @@ class User(db.Model, UserMixin):
         if value == 'untrackable':  # pragma: no cover
             value = None
         return value
+    
+    def is_workflow_enable(self):
+        """Check if the user is enable to workflow.
+        
+        Returns:
+            bool: True if the user is enable to workflow, False otherwise.
+        """
+        # check workflow setting is enable
+        is_enable = current_app.config.get('ENABLE_WORKFLOW_AUTH_SETTING', False)
+        if not is_enable:
+            return True
+        
+        # check if user has the role to enable workflow
+        enable_roles = current_app.config.get('ENABLE_WORKFLOW_AUTH_ROLES', [])
+        for role in self.roles:
+            if role.name in enable_roles:
+                return True
+        return False
 
     def __str__(self):
         """Representation."""
