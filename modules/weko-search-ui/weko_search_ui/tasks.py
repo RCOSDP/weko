@@ -156,14 +156,13 @@ def is_import_running():
 
     inspect = celery_app.control.inspect()
     active = inspect.active()
-    reserved = inspect.reserved()
 
-    for worker, tasks in active.items():
+    for tasks in active.values():
         for task in tasks:
             if task["name"] == "weko_admin.tasks.import_task":
                 return "is_import_running"
-
-    for worker, tasks in reserved.items():
+    reserved = inspect.reserved()
+    for tasks in reserved.values():
         for task in tasks:
             if task["name"] == "weko_admin.tasks.import_task":
                 return "is_import_running"

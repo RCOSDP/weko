@@ -31,7 +31,6 @@ import pickle
 from flask import Response, abort, current_app, jsonify, make_response, request
 from blinker import Namespace
 from celery import chord
-from celery import current_app as celery_current_app
 from flask_admin import BaseView, expose
 from flask_babel import gettext as _
 from flask_login import current_user
@@ -716,8 +715,7 @@ class ItemImportView(BaseView):
     @expose("/check_import_is_available", methods=["GET"])
     def check_import_available(self):
         try:
-            with current_app.app_context():
-                check = is_import_running()
+            check = is_import_running()
 
             if not check:
                 delete_cache_data("import_start_time")

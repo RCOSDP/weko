@@ -73,11 +73,6 @@ def check_is_import_available(group_task_id=None):
     result = {
         'is_available': True
         }
-    
-    if 'celery' not in current_app.extensions:
-        celery = Celery(current_app.import_name, broker=current_app.config['CELERY_BROKER_URL'])
-        celery.conf.update(current_app.config)
-        current_app.extensions['celery'] = celery
 
     inspect = current_app.extensions['celery'].control.inspect()
     if not inspect.ping():
