@@ -237,12 +237,16 @@ class WekoIndexer(RecordIndexer):
                 Whether to skip indexing of associated files.
                 Defaults to False. Not used.
         """
-        es_info = dict(id=str(item_id),
-                        index=self.es_index,
-                        doc_type=self.es_doc_type)
-        body = dict(version=revision_id + 1,
-                    version_type=self._version_type,
-                    body=jrc)
+        es_info = {
+            "id": str(item_id),
+            "index": self.es_index,
+            "doc_type": self.es_doc_type
+        }
+        body = {
+            "version": revision_id + 1,
+            "version_type": self._version_type,
+            "body": jrc
+        }
 
         if self.client.exists(**es_info):
             weko_logger(key='WEKO_COMMON_IF_ENTER', branch='')
@@ -662,12 +666,12 @@ class WekoIndexer(RecordIndexer):
             weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
                         count=i, element=record)
 
-            es_data = dict(
-                _id=str(record.get('_id')),
-                _index=self.es_index,
-                _type=self.es_doc_type,
-                _source=record.get('_source'),
-            )
+            es_data = {
+                "_id": str(record.get('_id')),
+                "_index": self.es_index,
+                "_type": self.es_doc_type,
+                "_source": record.get('_source'),
+            }
             weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=es_data)
             yield es_data
         weko_logger(key='WEKO_COMMON_FOR_END')
@@ -1416,7 +1420,7 @@ class WekoDeposit(Deposit):
                     if setspec_list:
                         weko_logger(key='WEKO_COMMON_IF_ENTER',
                                     branch='setspec_list is not None')
-                        self.jrc['_oai'].update(dict(sets=setspec_list))
+                        self.jrc['_oai'].update({"sets": setspec_list})
                 # upload item metadata to Elasticsearch
                 set_timestamp(self.jrc, self.created, self.updated)
 
@@ -1852,7 +1856,7 @@ class WekoDeposit(Deposit):
             if not dc_owner:
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
                             branch='dc_owner is None')
-                self.data.update(dict(owner=owner))
+                self.data.update({"owner": owner})
 
         if ItemMetadata.query.filter_by(id=self.id).first():
             weko_logger(key='WEKO_COMMON_IF_ENTER',
@@ -2330,7 +2334,7 @@ class WekoDeposit(Deposit):
             abort(500, 'MAPPING_ERROR')
 
         # Save Index Path on ES
-        jrc.update(dict(path=index_lst))
+        jrc.update({"path": index_lst})
         # current_app.logger.debug(jrc)
         # add at 20181121 start
         sub_sort = {}
@@ -2341,7 +2345,7 @@ class WekoDeposit(Deposit):
                         count=i, element=pth)
             sub_sort[pth[-13:]] = ""
         weko_logger(key='WEKO_COMMON_FOR_END')
-        dc.update(dict(path=index_lst))
+        dc.update({"path": index_lst})
         pubs = PublishStatus.NEW.value
         actions = index_obj.get('actions')
         if actions == 'publish' or actions == PublishStatus.PUBLIC.value:
@@ -2357,7 +2361,7 @@ class WekoDeposit(Deposit):
             rec = RecordMetadata.query.filter_by(id=recid.object_uuid).first()
             pubs = rec.json['publish_status']
 
-        ps = dict(publish_status=pubs)
+        ps = {"publish_status": pubs}
         jrc.update(ps)
         dc.update(ps)
         if data:
@@ -2568,7 +2572,7 @@ class WekoDeposit(Deposit):
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
                             branch=f"{r.json} is not empty"
                                 f"and {r.json['path']} is empty")
-                
+
                 # Need to import here to avoid circular import
                 from weko_records_ui.utils import soft_delete
                 soft_delete(obj_uuid)
@@ -3194,7 +3198,7 @@ class WekoRecord(Record):
                 for i, attribute in enumerate(attribute_value):
                     weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
                                 count=i, element=attribute)
-                    tmp = dict()
+                    tmp = {}
                     if attribute.get(title_key):
                         weko_logger(key='WEKO_COMMON_IF_ENTER',
                                     branch=f'{attribute.get(title_key)} is not empty')
@@ -3262,7 +3266,7 @@ class WekoRecord(Record):
                 del_hide_sub_item(key.replace('[]', '').split('.')[0],
                                     mlt, hide_list)
                 self.__remove_special_character_of_weko2(mlt)
-                nval = dict()
+                nval = {}
                 nval['attribute_name'] = val.get('attribute_name')
                 nval['attribute_name_i18n'] = lst[2] or val.get(
                     'attribute_name')
@@ -3439,7 +3443,7 @@ class WekoRecord(Record):
                         file_metadata_temp.append(f)
                 weko_logger(key='WEKO_COMMON_FOR_END')
                 file_metadata = file_metadata_temp
-                nval = dict()
+                nval = {}
                 nval['attribute_name'] = val.get('attribute_name')
                 nval['attribute_name_i18n'] = lst[2] or val.get(
                     'attribute_name')
@@ -3847,8 +3851,10 @@ class WekoRecord(Record):
         for i, item in enumerate(items):
             weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
                             count=i, element=item)
-            _item = dict(item_id=item.dst_item_pid,
-                         sele_id=item.reference_type)
+            _item = {
+                "item_id": item.dst_item_pid,
+                "sele_id": item.reference_type
+            }
             relation_data.append(_item)
         weko_logger(key='WEKO_COMMON_FOR_END')
         item_link.update(relation_data)
