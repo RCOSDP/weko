@@ -33,7 +33,7 @@ from invenio_indexer.api import RecordIndexer
 from invenio_records import Record
 
 from flask import Flask
-from flask_babelex import Babel
+from flask_babel import Babel
 from flask_mail import Mail
 from flask_menu import Menu
 from flask.cli import ScriptInfo

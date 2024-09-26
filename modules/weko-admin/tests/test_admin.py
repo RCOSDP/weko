@@ -1604,7 +1604,7 @@ class TestFacetSearchSettingView:
 #    'view_class': SiteInfoView,
 #    'view_class': RestrictedAccessSettingView,
 #
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 class TestsReindexElasticSearchView:
 
     @pytest.mark.parametrize("index,is_permission,status_code",[

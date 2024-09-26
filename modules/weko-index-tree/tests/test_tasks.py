@@ -21,7 +21,8 @@ def test_update_oaiset_setting(i18n_app, client_api, indices, db, users, without
         spec='11',
         name='test_name_11',
         description='some test description',
-        search_pattern='test search'
+        search_pattern='test search',
+        system_created=True
     )
 
     test_set_two = OAISet(
@@ -29,7 +30,8 @@ def test_update_oaiset_setting(i18n_app, client_api, indices, db, users, without
         spec='22',
         name='test_name_22',
         description='some test description',
-        search_pattern='test search'
+        search_pattern='test search',
+        system_created=True
     )
      
     test_set_three = OAISet(
@@ -37,7 +39,8 @@ def test_update_oaiset_setting(i18n_app, client_api, indices, db, users, without
         spec='33',
         name='test_name_33',
         description='some test description',
-        search_pattern='test search'
+        search_pattern='test search',
+        system_created=True
     )
            
     test_set_three_child = OAISet(
@@ -45,7 +48,8 @@ def test_update_oaiset_setting(i18n_app, client_api, indices, db, users, without
         spec='44',
         name='test_name_44',
         description='some test description',
-        search_pattern='test search'
+        search_pattern='test search',
+        system_created=True
     )
     
     test_set_private = OAISet(
@@ -53,7 +57,8 @@ def test_update_oaiset_setting(i18n_app, client_api, indices, db, users, without
         spec='55',
         name='test_name_55',
         description='some test description',
-        search_pattern='test search'
+        search_pattern='test search',
+        system_created=True
     )
 
     login_user_via_session(client=client_api, email=users[3]["email"])
@@ -107,7 +112,8 @@ def test_update_oaiset_setting(i18n_app, client_api, indices, db, users, without
         "harvest_public_state": True,
         "parent": "A",
         "id": "33",
-        "index_name": "test data"
+        "index_name": "test data",
+        "system_created": True
     }
 
     update_oaiset_setting(None, _data)
