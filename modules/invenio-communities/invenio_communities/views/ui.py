@@ -228,7 +228,9 @@ def generic_item(community, template, **extra_ctx):
     """Index page with uploader and list of existing depositions."""
     # Check existence of community
     ctx = mycommunities_ctx()
-    role_id = min(get_user_role_ids())
+    role_ids = get_user_role_ids()
+    numeric_role_ids = get_numeric_user_role_ids(role_ids)
+    role_id = role_ids[numeric_role_ids.index(min(numeric_role_ids))]
     ctx.update({
         'is_owner': community.id_role == role_id,
         'community': community,
