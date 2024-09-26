@@ -33,7 +33,6 @@ def get_tasks():
     celery.conf.result_backend = CELERY_RESULT_BACKEND
 
     inspector = inspect()
-
     active_tasks = inspector.active()
     reserved_tasks = inspector.reserved()
     actives= []

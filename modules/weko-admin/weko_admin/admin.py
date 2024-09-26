@@ -80,16 +80,16 @@ class ReindexElasticSearchView(BaseView):
             'weko_admin/admin/reindex_elasticsearch.html'
         """
         try:
-            status =  self._check_reindex_is_running()
+            status = self._check_reindex_is_running()
             is_error = status.get("isError")
             is_executing = status.get("isExecuting")
             disabled_btn = status.get("disabled_Btn")
 
             return self.render(
-                template=current_app.config['WEKO_ADMIN_REINDEX_ELASTICSEARCH_TEMPLATE']
-                ,isError=is_error
-                ,isExecuting=is_executing
-                ,disabled_Btn=disabled_btn
+                template=current_app.config['WEKO_ADMIN_REINDEX_ELASTICSEARCH_TEMPLATE'],
+                isError=is_error,
+                isExecuting=is_executing,
+                disabled_Btn=disabled_btn
             )
         except BaseException:
             import traceback
@@ -169,18 +169,29 @@ class ReindexElasticSearchView(BaseView):
         Monitor whether the reindex process is running/error is occurred
         by Celery task and admin_settings
         """
-        ELASTIC_REINDEX_SETTINGS = current_app.config['WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS']
-        HAS_ERRORED = current_app.config['WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS_HAS_ERRORED']
+        try:
+            ELASTIC_REINDEX_SETTINGS = current_app.config['WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS']
+            HAS_ERRORED = current_app.config['WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS_HAS_ERRORED']
 
-        admin_setting = AdminSettings.get(ELASTIC_REINDEX_SETTINGS,False)
-        is_error = admin_setting.get(HAS_ERRORED)
-        is_executing = is_reindex_running()
-        result = dict({
-            "isError": is_error
-            ,"isExecuting": is_executing
-            ,"disabled_Btn": is_error or is_executing
-        })
-        return result
+            admin_setting = AdminSettings.get(ELASTIC_REINDEX_SETTINGS, False)
+            is_error = admin_setting.get(HAS_ERRORED)
+            is_executing = is_reindex_running()
+
+            result = {
+                "isError": is_error,
+                "isExecuting": is_executing,
+                "disabled_Btn": is_error or is_executing
+            }
+
+            return result
+
+        except Exception as e:
+            current_app.logger.error(f"Error checking reindex status: {e}")
+            return {
+                "isError": True,
+                "isExecuting": False,
+                "disabled_Btn": True
+            }
 
 
 
