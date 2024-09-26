@@ -29,14 +29,14 @@
 {%- endblock css %}
 
 {%- block javascript %}
-{{ webpack['itemstypes_ui_js_schema_editor.js']}}
+  {{ webpack['itemstypes_ui_js_schema_editor.js']}}
   {{ super() }}
   {{ webpack['itemstypes_ui_js_js.js']}}
 {%- endblock javascript %}
 
 {%- block body %}
   <input id="lang-code" type="hidden" value="{{lang_code}}" />
-  <input id="uiFixedProperties" type="hidden" value='{{ uiFixedProperties | tojson | safe }}' />  
+  <input id="uiFixedProperties" type="hidden" value='{{ uiFixedProperties | tojson | safe }}' />
   <input id="uiPubdateTitles" type="hidden" value='{{ ui_pubdate_titles | tojson | safe }}' />
   <div class="row">
     <div class="col-sm-12 col-md-12 col-lg-11">
@@ -191,7 +191,7 @@
                   <p>English：</p>
                   <input type="text" class="form-control" id="txt_title_en_item_pubdate" value="">
                  </div>
-                 <button type="button" class="btn btn-link btn-link-item">Localization Settings</button>  
+                 <button type="button" class="btn btn-link btn-link-item">Localization Settings</button>
               </td>
               <td>{{_('Date')}}</td>
               <td>

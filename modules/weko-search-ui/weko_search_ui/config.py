@@ -105,7 +105,7 @@ RECORDS_REST_ENDPOINTS["recid"]["search_serializers"] = {
     "application/json": ("weko_records.serializers" ":json_v1_search"),
 }
 
-RECORDS_REST_ENDPOINTS["recid"]["search_index"] = "{}-weko".format(index_prefix)
+RECORDS_REST_ENDPOINTS["recid"]["search_index"] = "weko"
 RECORDS_REST_ENDPOINTS["recid"]["search_type"] = "item-v1.0.0"
 
 # Opensearch endpoint

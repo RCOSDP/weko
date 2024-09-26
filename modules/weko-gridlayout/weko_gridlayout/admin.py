@@ -226,6 +226,8 @@ class WidgetSettingView(ModelView):
             get_pk_value=self.get_pk_value,
             get_value=self.get_list_value,
             return_url=self._get_list_url(view_args),
+
+            extra_args=view_args.extra_args
         )
 
     @expose('/new/', methods=('GET', 'POST'))
