@@ -37,7 +37,7 @@ class _Permission(object):
     def can(self):
         """Grant permission if owner or admin."""
         role_ids = get_user_role_ids()
-        return int(self.community.id_role) in role_ids or \
+        return self.community.id_role in role_ids or \
             Permission(ActionNeed('admin-access')).can()
 
 
