@@ -56,7 +56,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from weko_admin.models import Identifier, SiteInfo
 from weko_admin.utils import get_restricted_access
 from weko_deposit.api import WekoDeposit, WekoRecord
-#from weko_handle.api import Handle
+from weko_handle.api import Handle
 from weko_records.api import FeedbackMailList, ItemsMetadata, ItemTypeNames, \
     ItemTypes, Mapping
 from weko_records.models import ItemType
@@ -243,9 +243,8 @@ def register_hdl(activity_id):
     record_url = request.url.split('/workflow/')[0] \
         + '/records/' + str(deposit_id)
 
-    #weko_handle = Handle()
-    #handle = weko_handle.register_handle(location=record_url)
-    handle = None
+    weko_handle = Handle()
+    handle = weko_handle.register_handle(location=record_url)
     if handle:
         handle = WEKO_SERVER_CNRI_HOST_LINK + str(handle)
         identifier = IdentifierHandle(item_uuid)
@@ -268,9 +267,8 @@ def register_hdl_by_item_id(deposit_id, item_uuid, url_root):
     record_url = url_root \
         + 'records/' + str(deposit_id)
 
-    #weko_handle = Handle()
-    #handle = weko_handle.register_handle(location=record_url)
-    handle = None
+    weko_handle = Handle()
+    handle = weko_handle.register_handle(location=record_url)
     if handle:
         handle = WEKO_SERVER_CNRI_HOST_LINK + str(handle)
         identifier = IdentifierHandle(item_uuid)
@@ -295,10 +293,9 @@ def register_hdl_by_handle(hdl, item_uuid, item_uri):
     current_app.logger.debug(
         "handle:{0} item_uuid:{1}".format(hdl, item_uuid))
 
-    #weko_handle = Handle()
-    #handle = weko_handle.register_handle(
-    #    location=item_uri, hdl=hdl, overwrite=True)
-    handle = None
+    weko_handle = Handle()
+    handle = weko_handle.register_handle(
+        location=item_uri, hdl=hdl, overwrite=True)
     if handle:
         handle = WEKO_SERVER_CNRI_HOST_LINK + str(handle)
         identifier = IdentifierHandle(item_uuid)

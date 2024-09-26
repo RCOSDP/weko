@@ -602,6 +602,33 @@ msgstr ""
 #~ msgid "Author Management"
 #~ msgstr ""
 
+msgid "MSG_WEKO_THEME_ICON"
+msgstr "Icon"
+
+msgid "MSG_WEKO_THEME_SUPPLEMENT"
+msgstr "Supplement"
+
+msgid "MSG_WEKO_THEME_DRAW"
+msgstr "Draw"
+
+msgid "MSG_WEKO_THEME_VALIDATION_ERROR_TITLE_IS_REQUIRED"
+msgstr "Title is blank."
+
+msgid "MSG_WEKO_THEME_VALIDATION_ERROR_INVALID_ICON"
+msgstr "Invalid icon class."
+
+msgid "MSG_WEKO_THEME_EXPLAIN_ICON"
+msgstr "Refer to icons "
+
+msgid "MSG_WEKO_THEME_CLICK_HERE"
+msgstr "here."
+
+msgid "MSG_WEKO_THEME_TITLE_ADD"
+msgstr "Title add"
+
+msgid "MSG_WEKO_THEME_SAVE_SUCCESS"
+msgstr "Record was successfully saved."
+
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Home"
 msgstr "Home"
@@ -937,6 +964,10 @@ msgstr "File Preview"
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Setting_Shibboleth"
 msgstr "Shibboleth"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Setting_Communities Page"
+msgstr "Communities Page"
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Setting_Others"

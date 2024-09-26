@@ -26,7 +26,8 @@ from invenio_records.api import Record
 from weko_admin.utils import get_search_setting
 from weko_index_tree.models import IndexStyle
 from weko_search_ui.api import SearchSetting, get_search_detail_keyword
-from werkzeug.local import LocalProxy
+from weko_admin.models import AdminSettings
+from invenio_i18n.ext import current_i18n
 
 from invenio_communities.forms import CommunityForm, DeleteCommunityForm, \
     EditCommunityForm, RecaptchaCommunityForm, SearchForm
@@ -696,7 +697,30 @@ def community_list():
     per_page = 10
     page = max(page, 1)
     p = Pagination(page, per_page, communities.count())
-
+    lang = get_language()
+    
+    settings = AdminSettings.get('community_settings')
+    
+    default_properties = current_app.config['COMMUNITIES_DEFAULT_PROPERTIES']
+    title = default_properties['title2'] if lang == 'ja' else default_properties['title1']
+    title_en = default_properties['title1']
+    
+    lists = {
+        'title': title,
+        'title_en':title_en,
+        'icon_code': default_properties['icon_code'],
+        'supplement': default_properties['supplement']
+    }
+    
+    if settings:
+        if lang == 'ja':
+            lists['title'] = settings.title2 if settings.title2 and settings.title2 != '' else settings.title1
+        else:
+            lists['title'] = settings.title1
+        lists['title_en'] = settings.title1
+        lists['icon_code'] = settings.icon_code if settings.icon_code and settings.icon_code != '' else default_properties['icon_code']
+        lists['supplement'] = settings.supplement if settings.supplement and settings.supplement != '' else default_properties['supplement']
+    
     ctx.update({
         'r_from': max(p.per_page * (p.page - 1), 0),
         'r_to': min(p.per_page * p.page, p.total_count),
@@ -707,6 +731,7 @@ def community_list():
         'communities': communities.slice(
             per_page * (page - 1), per_page * page).all(),
         'featured_community': featured_community,
+        'lists': lists,
     })
 
     # Get display_community setting.
@@ -721,6 +746,9 @@ def community_list():
         page=render_page,
         render_widgets=render_widgets,
         **ctx)
+    
+def get_language():
+    return current_i18n.language
 
 @blueprint.teardown_request
 def dbsession_clean(exception):

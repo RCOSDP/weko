@@ -75,7 +75,7 @@ from weko_authors.utils import check_email_existed
 from weko_deposit.api import WekoDeposit, WekoIndexer, WekoRecord
 from weko_deposit.pidstore import get_latest_version_id
 from weko_deposit.signals import item_created
-#from weko_handle.api import Handle
+from weko_handle.api import Handle
 from weko_index_tree.utils import (
     check_index_permissions,
     check_restrict_doi_with_indexes,
@@ -1962,8 +1962,8 @@ def handle_check_cnri(list_record):
                     if not suffix:
                         item["cnri_suffix_not_existed"] = True
 
-                    #if prefix != Handle().get_prefix():
-                    #    error = _("Specified Prefix of {} is incorrect.").format("CNRI")
+                    if prefix != Handle().get_prefix():
+                        error = _("Specified Prefix of {} is incorrect.").format("CNRI")
         else:
             if (
                 item.get("status") == "new"

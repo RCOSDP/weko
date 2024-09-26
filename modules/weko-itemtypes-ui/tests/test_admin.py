@@ -58,7 +58,9 @@ class TestItemTypeMetaDataView:
             item_type_list=itemtype_list,
             id=3,
             is_sys_admin=True,
-            lang_code="en"
+            lang_code="en",
+            uiFixedProperties=current_app.config['WEKO_ITEMTYPES_UI_FIXED_PROPERTIES'],
+            ui_pubdate_titles=current_app.config['WEKO_ITEMTYPES_UI_PUBDATE_DEFAULT_TITLES']
         )#
 #     def render_itemtype(self, item_type_id=0):
     @pytest.mark.parametrize("index,is_permission",[

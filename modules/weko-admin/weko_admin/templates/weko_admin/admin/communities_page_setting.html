@@ -1,0 +1,99 @@
+{# -*- coding: utf-8 -*-
+    #
+    # This file is part of WEKO3.
+    # Copyright (C) 2017 National Institute of Informatics.
+    #
+    # WEKO3 is free software; you can redistribute it
+    # and/or modify it under the terms of the GNU General Public License as
+    # published by the Free Software Foundation; either version 2 of the
+    # License, or (at your option) any later version.
+    #
+    # WEKO3 is distributed in the hope that it will be
+    # useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+    # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+    # General Public License for more details.
+    #
+    # You should have received a copy of the GNU General Public License
+    # along with WEKO3; if not, write to the
+    # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+    # MA 02111-1307, USA.
+    #}
+    
+    {%- extends admin_base_template %}
+    
+    {%- block css %}
+    {{ super() }}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    {{ webpack['admin_communities_setting_css.css']}}
+    {%- endblock css %}
+    
+    {%- block javascript %}
+    {{ super() }}
+    {{ webpack['admin_communities_setting_js.js']}}
+    {%- endblock javascript %}
+    
+    {%- block body %}
+    <p class="text-center">
+    <div class="content-wrapper">
+      <section class="content">
+        <form method="POST" action="{{ url_for('communities_page.index') }}" id="settings_form">
+          <div id="alerts"></div>
+          <div class="alert alert-danger hide" role="alert" id="community_title_warning">
+            <strong>{{ _('Warning') }}:</strong> {{ _('MSG_WEKO_THEME_VALIDATION_ERROR_TITLE_IS_REQUIRED') }}
+          </div>
+          <div class="alert alert-danger hide" role="alert" id="icon_warning">
+            <strong>{{ _('Warning') }}:</strong> {{ _('MSG_WEKO_THEME_VALIDATION_ERROR_INVALID_ICON') }}
+          </div>
+          <div class="form-add">
+            <button class="btn btn-success" id="title-add-btn">
+              <span class="glyphicon glyphicon-plus"></span>&nbsp
+              {{_('MSG_WEKO_THEME_TITLE_ADD')}}
+            </button>
+          </div>
+          <div class="form-group">
+            <div class="input-container">
+              <label for="title">{{ _('Title') }}<span class="required">*</span></label>
+              <input type="text" id="title" name="title" class="form-control" value="{{ temp['title1'] }}">
+              <select id="language" name="language" class="form-control ml-2" disabled>
+                <option value="en" selected>English</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group-ja" id="container-ja">
+            <div class="input-container" id="container">
+              <label for="title">{{ _('Title') }}</label>
+              <input type="text" id="title_ja" name="title_ja" class="form-control" value="{{ temp['title2'] }}">
+              <select id="language" name="language" class="form-control ml-2" disabled>
+                <option value="ja" selected>日本語</option>
+              </select>
+            </div>
+            <button class="btn btn-danger ml-2" id="delete-ja" name="">
+              {{ _('Delete') }}
+            </button>
+          </div>
+          <div class="form-group">
+            <div class="input-container">
+              <label for="supplement">{{ _('MSG_WEKO_THEME_SUPPLEMENT') }}</label>
+              <input type="text" id="supplement" name="supplement" class="form-control" value="{{ temp['supplement'] }}">
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="input-container">
+              <label for="icon">{{ _('MSG_WEKO_THEME_ICON') }}</label>
+              <input type="text" id="icon" name="icon" class="form-control" value="{{ temp['icon_code'] }}">
+              <button type="button" id="icon-draw-button" class="btn btn-primary">{{ _('MSG_WEKO_THEME_DRAW') }}</button>
+              <div id="icon_preview" style="font-size: 48px;"></div>
+            </div>
+          </div>
+          <p>
+            {{ _('MSG_WEKO_THEME_EXPLAIN_ICON') }}
+            <a href="https://fontawesome.com/v4/icons/" target="_blank" rel="noopener noreferrer">
+              {{ _('MSG_WEKO_THEME_CLICK_HERE') }}
+            </a>
+          </p>
+          <button type="submit" id="icon-save-button" name="submit" value="save_settings" class="btn btn-primary">{{
+            _('Save') }}</button>
+        </form>
+      </section>
+    </div>
+    {%- endblock body %}

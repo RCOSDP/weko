@@ -177,7 +177,7 @@ numpy==1.26.0
 xmltodict==0.12.0
 ftfy==4.4.3
 attrs==23.2.0
-# b2handle==1.1.1
+-e git+https://github.com/RCOSDP/B2HANDLE.git@nii_develop/W2024-16#egg=b2handle
 resync==1.0.9
 email-validator==1.0.5
 iiif-prezi==0.3.0
