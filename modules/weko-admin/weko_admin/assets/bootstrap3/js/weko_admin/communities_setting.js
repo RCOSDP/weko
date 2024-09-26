@@ -94,29 +94,32 @@ document.addEventListener('DOMContentLoaded', function () {
   });
   
   $(document).ready(function () {
+    // 初期状態で container-ja を非表示
+    $('#container-ja').hide();
+
     // 初期状態のチェック
     toggleButton();
-  
-    // 自動メタデータ入力ボタンがクリックされたときの処理
+
+    // タイトル追加ボタンがクリックされたときの処理
     $('#title-add-btn').click(function (event) {
-      event.preventDefault(); // デフォルトの動作をキャンセル（必要であれば）
-      $('#container-ja').show(); // #container-ja を表示
-      toggleButton(); // ボタンの状態を更新
+        event.preventDefault(); // デフォルトの動作をキャンセル
+        $('#container-ja').show(); // #container-ja を表示
+        toggleButton(); // ボタンの状態を更新
     });
-  
+
     // 削除ボタンがクリックされたら input-container_ja を非表示にし、ボタンの状態を更新
     $('#delete-ja').click(function (event) {
-      event.preventDefault(); // デフォルトの動作をキャンセル
-      $('#container-ja').toggle();  // 表示/非表示を切り替え
-      toggleButton();  // ボタンの状態を更新
+        event.preventDefault(); // デフォルトの動作をキャンセル
+        $('#container-ja').hide(); // 非表示にする
+        toggleButton(); // ボタンの状態を更新
     });
-  
+
     // input-container_ja の表示状態に基づいてボタンの活性/非活性を切り替える関数
     function toggleButton() {
-      if ($('#container-ja').is(':visible')) {
-        $('#title-add-btn').prop('disabled', true);  // 非活性にする
-      } else {
-        $('#title-add-btn').prop('disabled', false);  // 活性にする
-      }
+        if ($('#container-ja').is(':visible')) {
+            $('#title-add-btn').prop('disabled', true);  // 非活性にする
+        } else {
+            $('#title-add-btn').prop('disabled', false);  // 活性にする
+        }
     }
-  });
+});

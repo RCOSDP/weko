@@ -1304,9 +1304,9 @@ class CommunitiesPageSettingView(BaseView):
         }
         if settings:
             temp['title1'] = settings.title1
-            temp['title2'] = settings.title2 if settings.title2 != '' else settings.title1
-            temp['icon_code'] = settings.icon_code if settings.icon_code and settings.icon_code != '' else default_properties['icon_code']
-            temp['supplement'] = settings.supplement if settings.supplement and settings.supplement != '' else default_properties['supplement']
+            temp['title2'] = settings.title2
+            temp['icon_code'] = settings.icon_code
+            temp['supplement'] = settings.supplement
         return self.render(
             current_app.config["WEKO_ADMIN_COMMUNITIES_PAGE_SETTINGS_TEMPLATE"],
             temp = temp
