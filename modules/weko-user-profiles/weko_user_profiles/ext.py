@@ -23,8 +23,8 @@
 from . import config
 from .api import current_userprofile
 from flask_menu import current_menu
-from invenio_i18n import LazyString
 from invenio_i18n import lazy_gettext as _
+from invenio_theme.proxies import current_theme_icons
 
 class WekoUserProfiles(object):
     """weko-user-profiles extension."""
@@ -87,13 +87,11 @@ class WekoUserProfiles(object):
 
 def finalize_app(app):
     """Finalize app."""
-    icons = app.extensions['invenio-theme'].icons
-    
     current_menu.submenu("settings.profile").register(
         endpoint="weko_user_profiles.profile",
         text=_(
-            '%(icon)s Profile', 
-            icon=LazyString(lambda: f'<i class="{icons.codepen}"></i>')
+            '%(icon)s Profile',
+            icon=f'<i class="{current_theme_icons.user}"></i>'
         ),
         order=0
     )
