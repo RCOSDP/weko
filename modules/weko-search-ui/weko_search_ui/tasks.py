@@ -39,7 +39,6 @@ from .utils import (
     import_items_to_system,
 )
 
-
 @shared_task
 def check_import_items_task(file_path, is_change_identifier: bool, host_url,
                             lang="en", all_index_permission=True, can_edit_indexes=[]):
@@ -88,7 +87,7 @@ def import_item(item, request_info):
 
 @shared_task
 def remove_temp_dir_task(path):
-    """Import Item ."""
+    """Remove temporary directory."""
     shutil.rmtree(path)
     TempDirInfo().delete(path)
 
@@ -100,7 +99,7 @@ def delete_task_id_cache(task_id, cache_key):
         state = AsyncResult(task_id).state
         if state == "REVOKED":
             redis_connection = RedisConnection()
-            datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
+            datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv=True)
             datastore.delete(cache_key)
 
 @shared_task
@@ -136,7 +135,7 @@ def export_all_task(root_url, user_id, data, timezone):
 def delete_exported_task(uri, cache_key, task_key):
     """Delete expired exported file."""
     redis_connection = RedisConnection()
-    datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
+    datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv=True)
     if datastore.redis.exists(cache_key):
         datastore.delete(task_key)
     try:
@@ -149,20 +148,27 @@ def delete_exported_task(uri, cache_key, task_key):
 
 def is_import_running():
     """Check import is running."""
-    if not check_celery_is_run():
-        return "celery_not_run"
+    celery_app = current_app.extensions.get('celery')
+    
+    if celery_app is None:
+        current_app.logger.error("Celery app is not initialized.")
+        return False
 
-    active = Inspect().active()
-    for worker in active:
-        for task in active[worker]:
-            if task["name"] == "weko_search_ui.tasks.import_item":
+    inspect = celery_app.control.inspect()
+    active = inspect.active()
+    reserved = inspect.reserved()
+
+    for worker, tasks in active.items():
+        for task in tasks:
+            if task["name"] == "weko_admin.tasks.import_task":
                 return "is_import_running"
 
-    reserved = Inspect().reserved()
-    for worker in reserved:
-        for task in reserved[worker]:
-            if task["name"] == "weko_search_ui.tasks.import_item":
+    for worker, tasks in reserved.items():
+        for task in tasks:
+            if task["name"] == "weko_admin.tasks.import_task":
                 return "is_import_running"
+
+    return False
 
 
 def check_celery_is_run():

@@ -21,6 +21,8 @@
 """Task for sending scheduled report emails."""
 
 import os
+import sys
+# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 import shutil
 from datetime import datetime, timedelta
 
@@ -75,41 +77,49 @@ def reindex(self, is_db_to_es ):
         if you change this codes, please keep in mind Todo of the method "elasticsearch_reindex"
         in .utils.py .
     """
-
-    try:
-        return elasticsearch_reindex(is_db_to_es)
-    except BaseException as ex:
-        # set error in admin_settings
-        AdminSettings.update(WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS 
-        , dict({WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS_HAS_ERRORED:True}))
-        raise ex
+    with current_app.app_context():
+        try:
+            return elasticsearch_reindex(is_db_to_es)
+        except BaseException as ex:
+            # set error in admin_settings
+            AdminSettings.update(WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS 
+            , dict({WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS_HAS_ERRORED:True}))
+            raise ex
 
 def is_reindex_running():
-    """Check reindex is running."""
-    
-    if not check_celery_is_run():
+    """Check if the reindex task is running."""
+    with current_app.app_context():
+        if not check_celery_is_run():
+            return False
+
+        inspect = current_app.extensions['celery'].control.inspect()
+        reserved = inspect.reserved()
+        active = inspect.active()
+
+        # Check for active tasks
+        if active:
+            for worker, tasks in active.items():
+                for task in tasks:
+                    current_app.logger.debug("active")
+                    current_app.logger.debug(task)
+                    if task["name"] == "weko_admin.tasks.reindex":
+                        current_app.logger.info("weko_admin.tasks.reindex is active")
+                        return True
+
+        # Check for reserved tasks
+        if reserved:
+            for worker, tasks in reserved.items():
+                for task in tasks:
+                    current_app.logger.debug("reserved")
+                    current_app.logger.debug(task)
+                    if task["name"] == "weko_admin.tasks.reindex":
+                        current_app.logger.info("weko_admin.tasks.reindex is reserved")
+                        return True
+
+        current_app.logger.debug("weko_admin.tasks.reindex is not running")
         return False
 
-    reserved = Inspect().reserved()
-    active = Inspect().active()
-    for worker in active:
-        for task in active[worker]:
-            current_app.logger.debug("active")
-            current_app.logger.debug(task)
-            if task["name"] == "weko_admin.tasks.reindex":
-                current_app.logger.info("weko_admin.tasks.reindex is active")
-                return True
 
-    for worker in reserved:
-        for task in reserved[worker]:
-            current_app.logger.debug("reserved")
-            current_app.logger.debug(task)
-            if task["name"] == "weko_admin.tasks.reindex":
-                current_app.logger.info("weko_admin.tasks.reindex is reserved")
-                return True
-    
-    current_app.logger.debug("weko_admin.tasks.reindex is not running")
-    return False
 
 @shared_task(ignore_results=True)
 def send_all_reports(report_type=None, year=None, month=None):
