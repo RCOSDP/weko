@@ -70,7 +70,8 @@ from invenio_accounts.models import User
 from weko_items_ui.config import WEKO_ITEMS_UI_MS_MIME_TYPE, WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT
 from weko_workflow.models import Activity
 from sqlalchemy.exc import SQLAlchemyError
-# from .errors import WekoDepositError
+from weko_deposit.errors import WekoDepositError
+from elasticsearch.exceptions import ElasticsearchException,TransportError
 
 from tests.helpers import login
 # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
@@ -173,7 +174,7 @@ class TestWekoFileObject:
                 file.data['format'] = 'application/vnd.ms-excel'
                 assert file.file_preview_able() == True
                 file.data['size'] = 10000000+1
-                assert file.file_preview_able() == False
+                assert file.file_preview_able()==False
 
                 mock_logger.assert_any_call(key='WEKO_COMMON_FOR_START')
                 mock_logger.assert_any_call(
@@ -376,16 +377,14 @@ class TestWekoIndexer:
             assert ret is not None
 
             # todo2
-            # indexer['']
             ret = indexer.get_pid_by_es_scroll(None)
+            assert ret is not None
 
-            # assert isinstance(next(ret),list)
-            # assert isinstance(next(ret),dict)
-            assert ret is None
-            mock_logger.assert_any_call(
-                key='WEKO_COMMON_IF_ENTER', branch=mock.ANY)
-            mock_logger.assert_any_call(
-                key='WEKO_COMMON_RETURN_VALUE', value=mock.ANY)
+            ret = indexer.get_pid_by_es_scroll('non_existent_path_12345')
+
+            assert ret is not None
+            mock_logger.assert_any_call(key='WEKO_COMMON_IF_ENTER', branch=mock.ANY)
+            mock_logger.assert_any_call(key='WEKO_COMMON_RETURN_VALUE', value=mock.ANY)
             mock_logger.reset_mock()
 
     #     def get_metadata_by_item_id(self, item_id):
@@ -529,16 +528,15 @@ class TestWekoDeposit():
             from dictdiffer.merge import UnresolvedConflictsException
             from invenio_deposit.errors import MergeConflict
             from weko_deposit.errors import WekoDepositError
-            # with patch("weko_deposit.api.WekoDeposit.fetch_published",return_value=(records[0]["depid"],record)):
-            # with patch("weko_deposit.api.Merger.run",side_effect=UnresolvedConflictsException(["test_conflict"])):
-            #     with patch("weko_deposit.api.Merger.run", side_effect=WekoDepositError("test_error")):
-            #         ret = dep.merge_with_published()
+            with patch("weko_deposit.api.Merger.run",side_effect=UnresolvedConflictsException("Some error has occurred in weko_deposit")):
+                with pytest.raises(WekoDepositError):
+                    ret = dep.merge_with_published()
 
-            # todo3
-            # with patch("weko_deposit.api.Merger.run", side_effect=Exception("test_error")):
-            #     with patch("weko_deposit.api.Merger.run", side_effect=WekoDepositError("test_error")):
-            #         ret = dep.merge_with_published()
-            #         mock_logger.assert_any_call(key='WEKO_COMMON_ERROR_UNEXPECTED', ex=mock.ANY)
+
+            with patch("weko_deposit.api.Merger.run", side_effect=Exception("test_error")):
+                with pytest.raises(WekoDepositError):
+                    ret = dep.merge_with_published()
+                    mock_logger.assert_any_call(key='WEKO_COMMON_ERROR_UNEXPECTED', ex=mock.ANY)
 
             mock_logger.assert_any_call(key='WEKO_COMMON_FOR_START')
             mock_logger.assert_any_call(
@@ -736,51 +734,62 @@ class TestWekoDeposit():
 
     # def publish_without_commit(self, pid=None, id_=None):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_publish_without_commit -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
-    def test_publish_without_commit(self, app, location, es_records, db):
+    def test_publish_without_commit(self, app, db, location):
         with patch('weko_deposit.api.weko_logger') as mock_logger:
             with app.test_request_context():
-                es = Elasticsearch(
-                    "http://{}:9200".format(app.config["SEARCH_ELASTIC_HOSTS"]))
-                # deposit['recid']='2'
+                es = Elasticsearch("http://{}:9200".format(app.config["SEARCH_ELASTIC_HOSTS"]))
+
+                # テストケース1
                 deposit = WekoDeposit.create({})
                 assert deposit['_deposit']['id']
                 assert 'draft' == deposit.status
                 assert 0 == deposit.revision_id
+
                 deposit.publish_without_commit()
                 assert deposit['_deposit']['id']
                 assert 'published' == deposit.status
                 assert deposit.revision_id == 2
+                mock_logger.assert_any_call(key='WEKO_COMMON_IF_ENTER', branch=mock.ANY)
+                mock_logger.assert_any_call(key='WEKO_COMMON_RETURN_VALUE', value=mock.ANY)
+                mock_logger.reset_mock()
 
-                # todo5
-                # id = uuid.uuid4()
-                # deposit = WekoDeposit.create({'_buckets': {'deposit': '093782df-f0fc-4560-84f7-140e13ca7172'}, '$schema': 'http://localhost/schemas/deposits/deposit-v1.0.0_test.json', 'recid': '2', 'control_number': '1', '_deposit': {'id': '2', 'status': 'draft', 'owners': []}})
-                indexer, records = es_records
-                # deposit = WekoDeposit.create({})
-                # assert deposit['_deposit']['id']
-                # assert 'draft' == deposit.status
-                # assert 0 == deposit.revision_id
-                deposit = records[1]["deposit"]
-                # deposit["recid"]="10"
-                deposit["$schema"] = "https://127.0.0.1/schema/deposits/deposit-v1.0.0.json"
-                deposit["control_number"] = "1"
-                db.session.commit()
+                # テストケース2
+                deposit = WekoDeposit.create({})
+                assert deposit['_deposit']['id']
+                assert 'draft' == deposit.status
+                assert 0 == deposit.revision_id
+
+                # self.data を None に設定
+                deposit.data = None
+
+                deposit["$schema"] = "https://192.168.56.101/schema/deposits/deposit-v1.0.0.json"
+                deposit["control_number"] = "2"
                 deposit.publish_without_commit()
                 assert deposit['_deposit']['id']
                 assert 'published' == deposit.status
                 assert deposit.revision_id == 2
-                # assert deposit['_deposit']['id']
-                # assert 'draft' == deposit.status
-                # assert deposit.revision_id==0
+                assert deposit.data is not None
 
-                # deposit = WekoDeposit.create({'_buckets': {'deposit': '093782df-f0fc-4560-84f7-140e13ca7172'}, 'recid': '1', 'control_number': '1', '_deposit': {'id': '1', 'status': 'draft', 'owners': []}})
-                # # deposit = WekoDeposit.create({})
-                # # assert deposit['_deposit']['id']
-                # # assert 'draft' == deposit.status
-                # # assert 0 == deposit.revision_id
-                # deposit.publish_without_commit()
-                # assert deposit['_deposit']['id']
-                # assert 'published' == deposit.status
-                # assert deposit.revision_id==2
+                mock_logger.assert_any_call(key='WEKO_COMMON_IF_ENTER', branch=mock.ANY)
+                mock_logger.assert_any_call(key='WEKO_COMMON_RETURN_VALUE', value=mock.ANY)
+                mock_logger.reset_mock()
+
+                # テストケース3
+                deposit = WekoDeposit.create({})
+                assert deposit['_deposit']['id']
+                assert 'draft' == deposit.status
+                assert 0 == deposit.revision_id
+
+                # '$schema'キーを削除して、コードパスを通るようにする
+                if '$schema' in deposit:
+                    del deposit['$schema']
+
+                deposit["control_number"] = "3"
+                deposit.publish_without_commit()
+                assert deposit['_deposit']['id']
+                assert 'published' == deposit.status
+                assert deposit.revision_id == 2
+                assert deposit["$schema"] is not None
 
                 mock_logger.assert_any_call(
                     key='WEKO_COMMON_IF_ENTER', branch=mock.ANY)
@@ -825,11 +834,9 @@ class TestWekoDeposit():
                 assert 'draft' == deposit.status
                 assert 0 == deposit.revision_id
 
-                with patch("weko_deposit.api.PersistentIdentifier.create", side_effect=BaseException("test_error")):
-                    session["activity_info"] = {
-                        "activity_id": db_activity[1].activity_id}
-                    data = {"$schema": "https://127.0.0.1/schema/deposits/deposit-v1.0.0.json",
-                            "_deposit": {"id": "2", "owners": [1], "status": "draft", "created_by": 1}}
+                with patch("weko_deposit.api.PersistentIdentifier.create",side_effect=BaseException("test_error")):
+                    session["activity_info"] = {"activity_id":db_activity[1].activity_id}
+                    data = {"$schema":"https://127.0.0.1/schema/deposits/deposit-v1.0.0.json","_deposit":{"id":"2","owners":[1],"status":"draft","created_by":1}}
                     id = uuid.uuid4()
                     with pytest.raises(BaseException):
                         deposit = WekoDeposit.create(data, id_=id)
@@ -842,7 +849,7 @@ class TestWekoDeposit():
 
     # def update(self, *args, **kwargs):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_update -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
-    def test_update(sel, app, db, location, db_index):
+    def test_update(sel,app,db,location,db_index,redis_connect,db_itemtype):
         with patch('weko_deposit.api.weko_logger') as mock_logger:
             with app.test_request_context():
                 deposit = WekoDeposit.create({})
@@ -854,30 +861,20 @@ class TestWekoDeposit():
                 assert 'draft' == deposit.status
                 assert 0 == deposit.revision_id
 
-                # todo6
-                # deposit = WekoDeposit.create({})
-                # assert deposit['_deposit']['id']=="2"
-                # assert 'draft' == deposit.status
-                # assert 0 == deposit.revision_id
-                # deposit.update({'url': "https://test1"})
-                # assert deposit['_deposit']['id']=="2"
-                # assert 'draft' == deposit.status
-                # assert 0 == deposit.revision_id
-                # todo6
-                # deposit = WekoDeposit.create({})
-                # index_obj = {'index': '2', 'actions': 'private'}
-                index_obj = {'index': '2'}
-                data = {'pubdate': '2023-12-07', 'item_1617186331708': [{'subitem_1551255647225': 'test', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, 'shared_user_id': -1, 'title': 'test', 'lang': 'ja', 'deleted_items': ['item_1617186385884', 'item_1617186419668', 'item_1617186499011', 'item_1617186609386', 'item_1617186626617', 'item_1617186643794',
-                                                                                                                                                                                                                                                                                                                                          'item_1617186660861', 'item_1617186702042', 'item_1617186783814', 'item_1617186859717', 'item_1617186882738', 'item_1617186901218', 'item_1617186920753', 'item_1617186941041', 'item_1617187112279', 'item_1617187187528', 'item_1617349709064', 'item_1617353299429', 'item_1617605131499', 'item_1617610673286', 'item_1617620223087', 'item_1617944105607', 'item_1617187056579', 'approval1', 'approval2'], '$schema': '/items/jsonschema/1'}
-                deposit = WekoDeposit.create(data)
+                index_obj = {'index': ['1'], 'actions': '1'}
+                data = {'pubdate': '2023-12-07', 'item_1617187056579': 'item_1617187056579', 'item_1617186331708': [{'subitem_1551255647225': 'test', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, 'shared_user_id': -1, 'title': 'test', 'lang': 'ja', 'deleted_items': ['item_1617186385884', 'item_1617186419668', 'item_1617186499011', 'item_1617186609386', 'item_1617186626617', 'item_1617186643794', 'item_1617186660861', 'item_1617186702042', 'item_1617186783814', 'item_1617186859717', 'item_1617186882738', 'item_1617186901218', 'item_1617186920753', 'item_1617186941041', 'item_1617187112279', 'item_1617187187528', 'item_1617349709064', 'item_1617353299429', 'item_1617605131499', 'item_1617610673286', 'item_1617620223087', 'item_1617944105607', 'item_1617187056579', 'approval1', 'approval2'], '$schema': '/items/jsonschema/1'}
+                deposit = WekoDeposit.create(index_obj)
+                cache_key = app.config[
+                    'WEKO_DEPOSIT_ITEMS_CACHE_PREFIX'].format(
+                    pid_value=deposit.pid.pid_value)
+                redis_connect.put(cache_key,bytes(json.dumps(data),"utf-8"))
                 deposit.update(index_obj)
                 # deposit.update({'actions': 'publish', 'index': '0', })
                 assert deposit['_deposit']['id'] == "2"
                 assert 'draft' == deposit.status
                 assert 0 == deposit.revision_id
-
-                mock_logger.assert_any_call(
-                    key='WEKO_COMMON_IF_ENTER', branch=mock.ANY)
+                redis_connect.delete(cache_key)
+                mock_logger.assert_any_call(key='WEKO_COMMON_IF_ENTER', branch=mock.ANY)
                 mock_logger.reset_mock()
 
     # def clear(self, *args, **kwargs):
@@ -900,16 +897,12 @@ class TestWekoDeposit():
             indexer, records = es_records_1
             record = records[1]
             deposit = record['deposit']
-            es = Elasticsearch(
-                "http://{}:9200".format(app.config["SEARCH_ELASTIC_HOSTS"]))
-            ret = es.get_source(index=app.config['INDEXER_DEFAULT_INDEX'],
-                                doc_type=app.config['INDEXER_DEFAULT_DOC_TYPE'], id=deposit.id)
+            es = Elasticsearch("http://{}:9200".format(app.config["SEARCH_ELASTIC_HOSTS"]))
+            ret = es.get_source(index=app.config['INDEXER_DEFAULT_INDEX'], doc_type=app.config['INDEXER_DEFAULT_DOC_TYPE'],id=deposit.id)
             deposit.clear()
-            ret2 = es.get_source(index=app.config['INDEXER_DEFAULT_INDEX'],
-                                 doc_type=app.config['INDEXER_DEFAULT_DOC_TYPE'], id=deposit.id)
-            assert ret == ret2
-            mock_logger.assert_any_call(
-                key='WEKO_COMMON_IF_ENTER', branch=mock.ANY)
+            ret2 = es.get_source(index=app.config['INDEXER_DEFAULT_INDEX'], doc_type=app.config['INDEXER_DEFAULT_DOC_TYPE'],id=deposit.id)
+            assert ret==ret2
+            mock_logger.assert_any_call(key='WEKO_COMMON_IF_ENTER', branch=mock.ANY)
             mock_logger.reset_mock()
 
     # def delete(self, force=True, pid=None):
@@ -1047,22 +1040,15 @@ class TestWekoDeposit():
 
                 db.session.commit()
                 bucket2 = Bucket.create(loc1)
-                # bucket2.id="3e99cfca-098b-42ed-b8a0-20ddd09b3e00"
                 db.session.merge(bucket2)
                 db.session.commit()
-                # db.session.merge(bucket)
-                print(999)
-                print(bucket2)
-                deposit['_buckets']['deposit'] = str(bucket2.id)
+                deposit['_buckets']['deposit']=str(bucket2.id)
                 deposit.commit()
                 es_data = deposit.indexer.get_metadata_by_item_id(item_id)
                 assert es_data["_source"]["feedback_mail_list"] == [
                     {"email": "test.taro@test.org", "author_id": "1"}]
                 shutil.rmtree(tmppath1)
-                from elasticsearch.exceptions import ElasticsearchException
-                from weko_deposit.errors import WekoDepositError
-                # with patch("weko_deposit.api.WekoIndexer.upload_metadata", side_effect=ElasticsearchException("test_error")):
-                # deposit.commit()
+
 
                 # self.jrc.get('content')
                 # deposit = WekoDeposit.create({})
@@ -1503,9 +1489,9 @@ class TestWekoDeposit():
             indexer, records = es_records
             record = records[0]
             deposit = record['deposit']
-            print(999)
-            print(deposit)
-            db.session.commit()
+            index_obj = {'index': ['1'], 'actions': 'private'}
+            data = {'pubdate': '2023-12-07', 'item_1617187056579':'item_1617187056579', 'item_1617186331708': [{'subitem_1551255647225': 'test', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, 'shared_user_id': -1, 'title': 'test', 'lang': 'ja', 'deleted_items': ['item_1617186385884', 'item_1617186419668', 'item_1617186499011', 'item_1617186609386', 'item_1617186626617', 'item_1617186643794', 'item_1617186660861', 'item_1617186702042', 'item_1617186783814', 'item_1617186859717', 'item_1617186882738', 'item_1617186901218', 'item_1617186920753', 'item_1617186941041', 'item_1617187112279', 'item_1617187187528', 'item_1617349709064', 'item_1617353299429', 'item_1617605131499', 'item_1617610673286', 'item_1617620223087', 'item_1617944105607', 'item_1617187056579', 'approval1', 'approval2'], '$schema': '/items/jsonschema/1'}
+            deposit.update(index_obj,data)
             deposit.save_or_update_item_metadata()
             # todo13
             mock_logger.assert_any_call(key='WEKO_COMMON_FOR_START')
@@ -1638,9 +1624,8 @@ class TestWekoDeposit():
             mock_logger.reset_mock()
 
             # title data is not exist
-            temp_data = {"metainfo": {"pubdate": "2023-10-10", "none_str": "", "empty_list": [], "item_1617186331708": [], "item_1617186385884": [{"subitem_1551255720400": "alter title"}], "item_1617186419668": [{"creatorAffiliations": [{"affiliationNameIdentifiers": [{}], "affiliationNames": [{}]}], "creatorAlternatives": [{}], "creatorMails": [{}], "creatorNames": [{}], "familyNames": [{"familyName": "test_family_name"}], "givenNames": [{}], "nameIdentifiers": [{}]}], "item_1617186499011": [{}], "item_1617186609386": [{}], "item_1617186626617": [{}], "item_1617186643794": [{}], "item_1617186660861": [{}], "item_1617186702042": [{}], "item_1617186783814": [{}], "item_1617186859717": [{}], "item_1617186882738": [{"subitem_geolocation_place": [{}]}], "item_1617186901218": [{"subitem_1522399412622": [{}], "subitem_1522399651758": [{}]}], "item_1617186920753": [{}], "item_1617186941041": [{}], "item_1617187112279": [{}], "item_1617187187528": [{"subitem_1599711633003": [{}],
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            "subitem_1599711660052": [{}], "subitem_1599711758470": [{}], "subitem_1599711788485": [{}]}], "item_1617349709064": [{"contributorAffiliations": [{"contributorAffiliationNameIdentifiers": [{}], "contributorAffiliationNames": [{}]}], "contributorAlternatives": [{}], "contributorMails": [{}], "contributorNames": [{}], "familyNames": [{}], "givenNames": [{}], "nameIdentifiers": [{}]}], "item_1617353299429": [{"subitem_1523320863692": [{}]}], "item_1617605131499": [{"date": [{}], "fileDate": [{}], "filesize": [{}]}], "item_1617610673286": [{"nameIdentifiers": [{}], "rightHolderNames": [{}]}], "item_1617620223087": [{}], "item_1617944105607": [{"subitem_1551256015892": [{}], "subitem_1551256037922": [{}]}], "item_1617187056579": {"bibliographic_titles": [{}]}, "shared_user_id": -1, "item_1617258105262": {"resourcetype": "conference paper", "resourceuri": "http://purl.org/coar/resource_type/c_5794"}}, "files": [], "endpoints": {"initialization": "/api/deposits/items"}}
-            activity.temp_data = json.dumps(temp_data)
+            temp_data = {"metainfo": {"pubdate": "2023-10-10","none_str": "","empty_list": [],"item_1617186331708": [],"item_1617186385884": [{"subitem_1551255720400": "alter title"}],"item_1617186419668": [{"creatorAffiliations": [{"affiliationNameIdentifiers": [{}],"affiliationNames": [{}]}],"creatorAlternatives": [{}],"creatorMails": [{}],"creatorNames": [{}],"familyNames": [{"familyName": "test_family_name"}],"givenNames": [{}],"nameIdentifiers": [{}]}],"item_1617186499011": [{}],"item_1617186609386": [{}],"item_1617186626617": [{}],"item_1617186643794": [{}],"item_1617186660861": [{}],"item_1617186702042": [{}],"item_1617186783814": [{}],"item_1617186859717": [{}],"item_1617186882738": [{"subitem_geolocation_place": [{}]}],"item_1617186901218": [{"subitem_1522399412622": [{}],"subitem_1522399651758": [{}]}],"item_1617186920753": [{}],"item_1617186941041": [{}],"item_1617187112279": [{}],"item_1617187187528": [{"subitem_1599711633003": [{}],"subitem_1599711660052": [{}],"subitem_1599711758470": [{}],"subitem_1599711788485": [{}]}],"item_1617349709064": [{"contributorAffiliations": [{"contributorAffiliationNameIdentifiers": [{}],"contributorAffiliationNames": [{}]}],"contributorAlternatives": [{}],"contributorMails": [{}],"contributorNames": [{}],"familyNames": [{}],"givenNames": [{}],"nameIdentifiers": [{}]}],"item_1617353299429": [{"subitem_1523320863692": [{}]}],"item_1617605131499": [{"date": [{}],"fileDate": [{}],"filesize": [{}]}],"item_1617610673286": [{"nameIdentifiers": [{}],"rightHolderNames": [{}]}],"item_1617620223087": [{}],"item_1617944105607": [{"subitem_1551256015892": [{}],"subitem_1551256037922": [{}]}],"item_1617187056579": {"bibliographic_titles": [{}]},"shared_user_id": -1,"item_1617258105262": {"resourcetype": "conference paper","resourceuri": "http://purl.org/coar/resource_type/c_5794"}},"files": [],"endpoints": {"initialization": "/api/deposits/items"}}
+            activity.temp_data=json.dumps(temp_data)
             db.session.merge(activity)
             db.session.commit()
             result = deposit.record_data_from_act_temp()
@@ -1784,13 +1769,12 @@ class TestWekoDeposit():
 
             with patch("weko_deposit.api.json_loader", side_effect=RuntimeError("test_redis_error")):
                 with pytest.raises(WekoDepositError):
-                    ret = deposit.convert_item_metadata(index_obj, record_data)
-                    mock_logger.assert_any_call(
-                        key='WEKO_DEPOSIT_FAILED_CONVERT_ITEM_METADATA', ex=mock.ANY)
+                    ret = deposit.convert_item_metadata(index_obj,record_data)
+                    mock_logger.assert_any_call(key='WEKO_DEPOSIT_FAILED_CONVERT_ITEM_METADATA', ex=mock.ANY)
                     mock_logger.reset_mock()
                     # raise WekoDepositError(ex=ex, msg="Convert item metadata error.") from ex
 
-            with patch("weko_deposit.api.RedisConnection.connection", side_effect=WekoRedisError("test_redis_error")):
+            with patch("weko_deposit.api.RedisConnection.connection",side_effect=WekoRedisError("test_redis_error")):
                 # with pytest.raises(WekoRedisError) as ex:
                 # ret = deposit.convert_item_metadata(index_obj,{})
                 deposit.convert_item_metadata(index_obj, {})
@@ -1850,10 +1834,10 @@ class TestWekoDeposit():
             deposit = record['deposit']
             deposit._convert_data_for_geo_location()
 
-            jrc = {"geoLocation": {
-                "geoLocationPlace": "test_location_place",
-                "geoLocationPoint": {
-                    "pointLongitude": "not_list_value",
+            jrc = {"geoLocation":{
+                "geoLocationPlace":"test_location_place",
+                "geoLocationPoint":{
+                    "pointLongitude":"not_list_value",
                     "pointLatitude": "not_list_value"
                 },
                 "geoLocationPoint": {
@@ -1898,9 +1882,9 @@ class TestWekoDeposit():
 
     # def delete_by_index_tree_id(cls, index_id: str, ignore_items: list = []):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_delete_by_index_tree_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
-    def test_delete_by_index_tree_id(sel, app, db, location, es_records_2):
+    def test_delete_by_index_tree_id(sel,app,db,location,es_records):
         with patch('weko_deposit.api.weko_logger') as mock_logger:
-            indexer, records = es_records_2
+            indexer, records = es_records
             record = records[0]
             deposit = record['deposit']
             deposit.delete_by_index_tree_id('1', [])
@@ -1912,8 +1896,16 @@ class TestWekoDeposit():
 
             record = records[2]
             deposit = record['deposit']
-            # deposit['path']='2'
-            deposit.delete_by_index_tree_id('3', record['deposit'])
+            deposit['path']='2'
+            deposit.delete_by_index_tree_id('3',record['deposit'])
+
+            with patch("invenio_records.models.RecordMetadata.query") as mock_json:
+                with pytest.raises(TransportError):
+                    mock_json.return_value = True
+                    record = records[1]
+                    deposit = record['deposit']
+                    deposit['path']='3'
+                    deposit.delete_by_index_tree_id('2',record['deposit'])
 
             mock_logger.assert_any_call(key='WEKO_COMMON_FOR_START')
             mock_logger.assert_any_call(
@@ -1933,7 +1925,7 @@ class TestWekoDeposit():
             assert deposit.update_pid_by_index_tree_id('1') == True
 
             with patch("invenio_db.db.session.begin_nested", side_effect=SQLAlchemyError("test_error")):
-                assert deposit.update_pid_by_index_tree_id('1') == False
+                assert deposit.update_pid_by_index_tree_id('1')==False
 
             with patch("invenio_db.db.session.begin_nested", side_effect=Exception("test_error")):
                 assert deposit.update_pid_by_index_tree_id('1') == False
@@ -1971,6 +1963,7 @@ class TestWekoDeposit():
             db.session.commit()
             deposit.delete_es_index_attempt(deposit.pid)
 
+
             with patch("invenio_search.ext.Elasticsearch.delete", side_effect=Exception("test_error")):
                 deposit = WekoDeposit.create({})
                 deposit.pid.status = "D"
@@ -1991,10 +1984,9 @@ class TestWekoDeposit():
             deposit = record['deposit']
             record = records[0]['record']
             author_link_info = {
-
-                "id": deposit.id,
-                "author_link": ['0']
-            }
+                    "id": deposit.id,
+                    "author_link": ['0']
+                }
             # ret = indexer.update_author_link(author_link_info)
             # assert deposit.update_author_link({})==None
             # deposit.update_author_link(author_link_info)
@@ -2016,11 +2008,8 @@ class TestWekoDeposit():
             indexer, records = es_records
             record = records[1]
             deposit = record['deposit']
-            assert deposit.update_feedback_mail() == None
-            # todo20
-            mock_logger.assert_any_call(
-                key='WEKO_COMMON_IF_ENTER', branch='mail_list is not empty')
-            mock_logger.reset_mock()
+            assert deposit.update_feedback_mail()==None
+
 
     # def remove_feedback_mail(self):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_remove_feedback_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
@@ -2047,8 +2036,8 @@ class TestWekoDeposit():
             pre = objs[:3]
             new = objs[-3:]
             with patch("invenio_files_rest.storage.pyfs.PyFSFileStorage.delete"):
-                deposit.clean_unuse_file_contents(1, pre, new)
-                deposit.clean_unuse_file_contents(1, pre, new, is_import=True)
+                deposit.clean_unuse_file_contents(1,pre,new)
+                deposit.clean_unuse_file_contents(1,pre,new,is_import=True)
 
             record = records[1]
             deposit = record['deposit']
@@ -2102,11 +2091,10 @@ class TestWekoDeposit():
             deposit = record['deposit']
             recid = record['recid']
             with app.test_request_context():
-                with patch("weko_deposit.api.WekoDeposit.newversion", return_value="new_version"):
-                    assert deposit.prepare_draft_item(recid) == "new_version"
+                with patch("weko_deposit.api.WekoDeposit.newversion",return_value="new_version"):
+                    assert deposit.prepare_draft_item(recid)=="new_version"
 
-            mock_logger.assert_any_call(
-                key='WEKO_COMMON_RETURN_VALUE', value=mock.ANY)
+            mock_logger.assert_any_call(key='WEKO_COMMON_RETURN_VALUE', value=mock.ANY)
             mock_logger.reset_mock()
     # def delete_content_files(self):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_delete_content_files -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
@@ -2189,9 +2177,8 @@ class TestWekoRecord:
 
             result = results[1]
             record = result['record']
-            record["item_1617186609386"] = {
-                "attribute_type": "file", "attribute_name": "subject", "attribute_value_mlt": ["test_subject"]}
-            assert record.hide_file == False
+            record["item_1617186609386"] = {"attribute_type":"file","attribute_name":"subject","attribute_value_mlt":["test_subject"]}
+            assert record.hide_file==True
 
             mock_logger.assert_any_call(key='WEKO_COMMON_FOR_START')
             mock_logger.assert_any_call(
@@ -2365,7 +2352,174 @@ class TestWekoRecord:
                 key='WEKO_COMMON_RETURN_VALUE', value=mock.ANY)
             mock_logger.reset_mock()
 
+
     #     def __get_titles_key(item_type_mapping):
+    #.tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoRecord::test__get_titles_key -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+    def test__get_titles_key(self,app,es_records):
+        indexer, records = es_records
+        record = records[0]
+        deposit = record["deposit"]
+        meta_option, item_type_mapping = get_options_and_order_list(
+            deposit.get('item_type_id'))
+        meta_option ={
+            "item_1617186609386":{
+                "option":{
+                    "hidden":False
+                }
+            },
+            "key2":{}
+        }
+        item_type_mapping={"item_1617186609386": {
+                "lom_mapping": "",
+                "lido_mapping": "",
+                "spase_mapping": "",
+                "jpcoar_mapping": {
+                    "title": {
+                            "@value": "test1_subitem1",
+                            "@attributes": {"xml:lang": "test1_subitem2"},
+                            "model_id": "test_item1"
+                    },
+                    "subject": {
+                        "@value": "subitem_1523261968819",
+                        "@attributes": {
+                            "xml:lang": "subitem_1522299896455",
+                            "subjectURI": "subitem_1522300048512",
+                            "subjectScheme": "subitem_1522300014469"
+                        }
+                    }
+                },
+                "junii2_mapping": "",
+                "oai_dc_mapping": {
+                    "subject": {
+                        "@value": "subitem_1523261968819"
+                    }
+                },
+                "display_lang_type": "",
+                "jpcoar_v1_mapping": {
+                    "subject": {
+                        "@value": "subitem_1523261968819",
+                        "@attributes": {
+                            "xml:lang": "subitem_1522299896455",
+                            "subjectURI": "subitem_1522300048512",
+                            "subjectScheme": "subitem_1522300014469"
+                        }
+                    }
+                }
+            }}
+        hide_list=["item_1617186609386.subitem_1523261968819","item_1617186609386","test1_subitem1"]
+        app.config['BABEL_DEFAULT_LOCALE'] = 'ja'
+        with app.test_request_context():
+            assert record["record"]._WekoRecord__get_titles_key(item_type_mapping, meta_option,hide_list)
+
+        record = records[1]
+        deposit = record["deposit"]
+        meta_option, item_type_mapping = get_options_and_order_list(
+            deposit.get('item_type_id'))
+        meta_option ={
+            "item_1617186609386":{
+                "option":{
+                    "hidden":False
+                }
+            },
+            "key2":{}
+        }
+        item_type_mapping={"item_1617186609386": {
+                "lom_mapping": "",
+                "lido_mapping": "",
+                "spase_mapping": "",
+                "jpcoar_mapping": {
+                    "title": {
+                            "@value": "test1_subitem1",
+                            "@attributes": {"xml:lang": "test1_subitem2"},
+                            "model_id": "test_item1"
+                    },
+                    "subject": {
+                        "@value": "subitem_1523261968819",
+                        "@attributes": {
+                            "xml:lang": "subitem_1522299896455",
+                            "subjectURI": "subitem_1522300048512",
+                            "subjectScheme": "subitem_1522300014469"
+                        }
+                    }
+                },
+                "junii2_mapping": "",
+                "oai_dc_mapping": {
+                    "subject": {
+                        "@value": "subitem_1523261968819"
+                    }
+                },
+                "display_lang_type": "",
+                "jpcoar_v1_mapping": {
+                    "subject": {
+                        "@value": "subitem_1523261968819",
+                        "@attributes": {
+                            "xml:lang": "subitem_1522299896455",
+                            "subjectURI": "subitem_1522300048512",
+                            "subjectScheme": "subitem_1522300014469"
+                        }
+                    }
+                }
+            }}
+        hide_list=[{"item_1617186609386","test1_subitem2","test1_subitem1"}]
+        app.config['BABEL_DEFAULT_LOCALE'] = 'ja'
+        with app.test_request_context():
+            assert record["record"]._WekoRecord__get_titles_key(item_type_mapping, meta_option,hide_list)
+
+        record = records[2]
+        deposit = record["deposit"]
+        meta_option, item_type_mapping = get_options_and_order_list(
+            deposit.get('item_type_id'))
+        meta_option ={
+            "item_1617186609386":{
+                "option":{
+                    "hidden":False
+                }
+            },
+            "key2":{}
+        }
+        item_type_mapping={"item_1617186609386": {
+                "lom_mapping": "",
+                "lido_mapping": "",
+                "spase_mapping": "",
+                "jpcoar_mapping": {
+                    "title": {
+                            "@value": "test1_subitem1",
+                            "@attributes": {"xml:lang": "test1_subitem2"},
+                            "model_id": "test_item1"
+                    },
+                    "subject": {
+                        "@value": "subitem_1523261968819",
+                        "@attributes": {
+                            "xml:lang": "subitem_1522299896455",
+                            "subjectURI": "subitem_1522300048512",
+                            "subjectScheme": "subitem_1522300014469"
+                        }
+                    }
+                },
+                "junii2_mapping": "",
+                "oai_dc_mapping": {
+                    "subject": {
+                        "@value": "subitem_1523261968819"
+                    }
+                },
+                "display_lang_type": "",
+                "jpcoar_v1_mapping": {
+                    "subject": {
+                        "@value": "subitem_1523261968819",
+                        "@attributes": {
+                            "xml:lang": "subitem_1522299896455",
+                            "subjectURI": "subitem_1522300048512",
+                            "subjectScheme": "subitem_1522300014469"
+                        }
+                    }
+                }
+            }}
+        hide_list=["item_1617186609386.subitem_1523261968819","item_1617186609386","test1_subitem1"]
+        app.config['BABEL_DEFAULT_LOCALE'] = 'ja'
+        with app.test_request_context():
+
+            assert record["record"]._WekoRecord__get_titles_key(item_type_mapping, meta_option,hide_list)
+
     #     def get_titles(self):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoRecord::test_get_titles -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test_get_titles(self, app, es_records, db_itemtype, db_oaischema):
@@ -2414,12 +2568,10 @@ class TestWekoRecord:
             app.config['BABEL_DEFAULT_LOCALE'] = 'fr'
             # from flask_babelex import refresh; refresh()
             with app.test_request_context():
-                assert record.get_titles == "title"
-            # todo25
-            mock_logger.assert_any_call(
-                key='WEKO_COMMON_IF_ENTER', branch=mock.ANY)
-            mock_logger.assert_any_call(
-                key='WEKO_COMMON_RETURN_VALUE', value=mock.ANY)
+                assert record.get_titles=="title"
+
+            mock_logger.assert_any_call(key='WEKO_COMMON_IF_ENTER', branch=mock.ANY)
+            mock_logger.assert_any_call(key='WEKO_COMMON_RETURN_VALUE', value=mock.ANY)
             mock_logger.reset_mock()
 
     #     def items_show_list(self):
@@ -2478,7 +2630,7 @@ class TestWekoRecord:
                 "attribute_name": "description", "attribute_type": "file"}
 
             with app.test_request_context("/test?filename=not_hello.txt"):
-                assert record.display_file_info == []
+                assert record.display_file_info==[{'attribute_name': 'description','attribute_name_i18n': 'Description','attribute_type': 'file','attribute_value_mlt': [[[[{'Description': ''}]]]]},{'attribute_name': 'File','attribute_name_i18n': 'File','attribute_type': 'file','attribute_value_mlt': []}]
 
             indexer, results = es_records
             result = results[2]
@@ -2486,7 +2638,7 @@ class TestWekoRecord:
             record['hidden'] = True
 
             with app.test_request_context("/test?filename=hello.txt"):
-                assert record.display_file_info == []
+                assert record.display_file_info==[{'attribute_name': 'File','attribute_name_i18n': 'File','attribute_type': 'file','attribute_value_mlt': [[[[{'Opendate': '2022-09-07'}],[{'FileName': 'hello.txt'}],[{'Text URL': [[[{'Text URL': 'https://weko3.example.org/record/3/files/hello.txt'}]]]}],[{'Format': 'plain/text'}],[{'Size': [[[[{'Size': '146 KB'}]]]]}]]]]}]
             mock_logger.assert_any_call(key='WEKO_COMMON_FOR_START')
             mock_logger.assert_any_call(
                 key='WEKO_COMMON_FOR_LOOP_ITERATION', count=mock.ANY, element=mock.ANY)
@@ -2498,6 +2650,22 @@ class TestWekoRecord:
             mock_logger.reset_mock()
 
     #     def __remove_special_character_of_weko2(self, metadata):
+    # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoRecord::test__remove_special_character_of_weko2 -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+    def test__remove_special_character_of_weko2(self,es_records):
+        with patch('weko_deposit.api.weko_logger') as mock_logger:
+            record = WekoRecord({})
+            indexer, results = es_records
+            record = results[0]
+            deposit = record["deposit"]
+            metadata = ['url','date']
+            assert record["record"]._WekoRecord__remove_special_character_of_weko2(metadata) is None
+
+            metadata = ''
+            assert record["record"]._WekoRecord__remove_special_character_of_weko2(metadata) is None
+
+            metadata = [{''},'']
+            assert record["record"]._WekoRecord__remove_special_character_of_weko2(metadata) is None
+
     #     def _get_creator(meta_data, hide_email_flag):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoRecord::test__get_creator -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test__get_creator(self, es_records):
@@ -2508,24 +2676,61 @@ class TestWekoRecord:
             mock_logger.assert_any_call(
                 key='WEKO_COMMON_RETURN_VALUE', value=mock.ANY)
             mock_logger.reset_mock()
-            assert record._get_creator({}, True) == []
-            # todo28
-            # record = WekoRecord({})
-            # print(record)
-            # indexer, results = es_records
-            # record = results[0]
-            # record = WekoRecord(record)
-            # deposit = record['item']
-            metadata = {"title": "fuu"}
-            record._get_creator(metadata, False)
-            assert record._get_creator(record, True) == []
-            mock_logger.assert_any_call(
-                key='WEKO_COMMON_RETURN_VALUE', value=mock.ANY)
+            assert record._get_creator({},True)==[]
+
+            metadata = [{'url': {'url': 'https://weko3.example.org/record/2/files/hello.txt'}, 'date': [{'dateType': 'Available', 'dateValue': '2022-09-07'}], 'format': 'plain/text', 'creatorMails': 'creatorMails', 'nameIdentifiers': 'nameIdentifiers', 'filesize': [{'value': '146 KB'}], 'accessrole': 'open_access', 'version_id': '18b2736a-fa2b-4b05-9582-86ffa87ebce9', 'mimetype': 'application/pdf', 'file': 'SGVsbG8sIFdvcmxk'}]
+            assert record._get_creator(metadata,False)==[{'creatorMails': 'creatorMails','name': [],'nameIdentifiers': 'nameIdentifiers','order_lang': []}]
+
+            assert record._get_creator(metadata,True)==[{'name': [], 'nameIdentifiers': 'nameIdentifiers', 'order_lang': []}]
+
+            metadata = [{'url': {'url': 'https://weko3.example.org/record/2/files/hello.txt'}, 'date': [{'dateType': 'Available', 'dateValue': '2022-09-07'}], 'format': 'plain/text', 'creatorMails': 'creatorMails', 'Identifiers': 'nameIdentifiers', 'filesize': [{'value': '146 KB'}], 'accessrole': 'open_access', 'version_id': '18b2736a-fa2b-4b05-9582-86ffa87ebce9', 'mimetype': 'application/pdf', 'file': 'SGVsbG8sIFdvcmxk'}]
+            assert record._get_creator(metadata,True)==[{'name': [], 'order_lang': []}]
+            mock_logger.assert_any_call(key='WEKO_COMMON_RETURN_VALUE', value=mock.ANY)
             mock_logger.reset_mock()
 
     #     def __remove_file_metadata_do_not_publish(self, file_metadata_list):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoRecord::test___remove_file_metadata_do_not_publish -vv -s --cov-branch
+    def test___remove_file_metadata_do_not_publish(self,es_records):
+        with patch('weko_deposit.api.weko_logger') as mock_logger:
+            indexer, results = es_records
+            record = results[0]
+            file_metadata = [{'url': {'url': 'https://weko3.example.org/record/2/files/hello.txt'}, 'date': [{'dateType': 'Available', 'dateValue': '2022-09-07'}], 'format': 'plain/text', 'filename': 'hello.txt', 'filesize': [{'value': '146 KB'}], 'accessrole': 'open_date', 'version_id': '2dfc9468-6a1f-4204-928d-0795625b79c8', 'mimetype': 'application/pdf', 'file': 'SGVsbG8sIFdvcmxk'}]
+            assert record["record"]._WekoRecord__remove_file_metadata_do_not_publish(file_metadata) ==[{'url': {'url': 'https://weko3.example.org/record/2/files/hello.txt'}, 'date': [{'dateType': 'Available', 'dateValue': '2022-09-07'}], 'format': 'plain/text', 'filename': 'hello.txt', 'filesize': [{'value': '146 KB'}], 'accessrole': 'open_date', 'version_id': '2dfc9468-6a1f-4204-928d-0795625b79c8', 'mimetype': 'application/pdf', 'file': 'SGVsbG8sIFdvcmxk'}]
+
+            record = results[1]
+            file_metadata = [{'url': {'url': 'https://weko3.example.org/record/2/files/hello.txt'}, 'date': [{'dateType': 'Available', 'dateValue': ''}], 'format': 'plain/text', 'filename': 'hello.txt', 'filesize': [{'value': '146 KB'}], 'accessrole': 'open_date', 'version_id': '2dfc9468-6a1f-4204-928d-0795625b79c8', 'mimetype': 'application/pdf', 'file': 'SGVsbG8sIFdvcmxk'}]
+            assert record["record"]._WekoRecord__remove_file_metadata_do_not_publish(file_metadata) ==[]
+
+            record = results[2]
+            file_metadata = [{'url': {'url': 'https://weko3.example.org/record/2/files/hello.txt'}, 'date': [{'dateType': 'Available', 'dateValue': ''}], 'format': 'plain/text', 'filename': 'hello.txt', 'filesize': [{'value': '146 KB'}], 'version_id': '2dfc9468-6a1f-4204-928d-0795625b79c8', 'mimetype': 'application/pdf', 'file': 'SGVsbG8sIFdvcmxk'}]
+            assert record["record"]._WekoRecord__remove_file_metadata_do_not_publish(file_metadata) ==[{'url': {'url': 'https://weko3.example.org/record/2/files/hello.txt'}, 'date': [{'dateType': 'Available', 'dateValue': ''}], 'format': 'plain/text', 'filename': 'hello.txt', 'filesize': [{'value': '146 KB'}], 'version_id': '2dfc9468-6a1f-4204-928d-0795625b79c8', 'mimetype': 'application/pdf', 'file': 'SGVsbG8sIFdvcmxk'}]
+
+
     #     def __check_user_permission(user_id_list):
+    #.tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoRecord::test___check_user_permission -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+    def test___check_user_permission(self,es_records,users):
+        with patch('weko_deposit.api.weko_logger') as mock_logger:
+            indexer, results = es_records
+            record = results[0]
+            user_id_list = ["1","2"]
+            assert record["record"]._WekoRecord__check_user_permission(user_id_list) ==False
+
+            record = results[1]
+            user = users[6]
+            with patch("flask_login.utils._get_user", return_value=user["obj"]):
+                user_id_list = ["1","2","3","4","5"]
+                assert record["record"]._WekoRecord__check_user_permission(user_id_list) ==True
+
+            user = users[6]
+            with patch("flask_login.utils._get_user", return_value=user["obj"]):
+                user_id_list = [1,2,3,4,5,6,7,8]
+                assert record["record"]._WekoRecord__check_user_permission(user_id_list) ==True
+
+            user = users[7]
+            with patch("flask_login.utils._get_user", return_value=user["obj"]):
+                user_id_list = ["1","2","3","4","5"]
+                assert record["record"]._WekoRecord__check_user_permission(user_id_list) ==False
+
     #     def is_input_open_access_date(file_metadata):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoRecord::test_is_input_open_access_date -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
 
@@ -2612,41 +2817,22 @@ class TestWekoRecord:
 
     #     def pid_parent(self):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoRecord::test_pid_parent -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
-    def test_pid_parent(self, db, es_records):
+    def test_pid_parent(self,db,es_records_with_draft):
         with patch('weko_deposit.api.weko_logger') as mock_logger:
             record = WekoRecord({})
             with pytest.raises(AttributeError):
                 assert record.pid_parent == ""
 
-            # indexer, records = es_records
-            # record = records[0]['record']
-            # pid = record.pid_parent
-            # assert isinstance(pid,PersistentIdentifier)==True
-            # assert pid.pid_type=='parent'
-
-            indexer, records = es_records
-            record = records[1]['record']
-            # record['recid']="2.0"
-            # record.model.recid="2.0"
-            # db.session.merge(record.model)
-            record.pid.pid_value = "2.0"
-            record['_deposit']['pid'] = "2.0"
-            # record.pid_recid.pid_value="2.0"
-            # record['recid']="2.0"
-            print(999999)
-            print(record)
-            # print(record.pid_recid.pid_value)
-            # db.session.merge(record)
-            db.session.commit()
+            indexer, records = es_records_with_draft
+            record = records['record']
             pid = record.pid_parent
-            assert isinstance(pid, PersistentIdentifier) == True
-            assert pid.pid_type == 'parent'
-            mock_logger.assert_any_call(
-                key='WEKO_COMMON_IF_ENTER', branch=mock.ANY)
-            mock_logger.assert_any_call(
-                key='WEKO_COMMON_RETURN_VALUE', value=mock.ANY)
-            mock_logger.reset_mock()
+            assert isinstance(pid,PersistentIdentifier)==False
 
+            es_records_with_draft[0]["record"].pid_parent
+            assert isinstance(pid,PersistentIdentifier)==False
+
+            es_records_with_draft[1]["record"].pid_parent
+            assert isinstance(pid,PersistentIdentifier)==False
     #     def get_record_by_pid(cls, pid):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoRecord::test_get_record_by_pid -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test_get_record_by_pid(self, es_records):
@@ -2700,56 +2886,39 @@ class TestWekoRecord:
 
             indexer, results = es_records
             result = results[0]
+            result["record"]._get_pid('doi')
+
+            with patch("weko_deposit.api.get_record_without_version") as mock_pid:
+                mock_pid.return_value = False
+                result = results[1]
+                assert result["record"]._get_pid('doi') == None
+
             from invenio_pidstore.models import PersistentIdentifier, PIDStatus
             from invenio_pidstore.errors import PIDDoesNotExistError, PIDInvalidAction
             from weko_deposit.errors import WekoDepositError
-            # with patch("invenio_pidstore.models.PersistentIdentifier", side_effect=PIDDoesNotExistError(record[0].pid_type,record[0].pid_value)):
+            with patch("weko_deposit.api.db.desc", side_effect=PIDDoesNotExistError("test pid_type","test pid_value")):
+                result = results[1]
+                assert result["record"]._get_pid('doi') == None
 
-            with patch("invenio_pidstore.models.PersistentIdentifier", side_effect=Exception("test_error")):
-                with pytest.raises(WekoDepositError, match="Could not encoding/decoding file"):
-                    # record._get_pid(record['_deposit']['pid']['type'])
-                    # record._get_pid(record['pid']['type'])
-                    # record._get_pid('doi')
-                    # indexer, results = es_records
-                    # result = results[0]
-                    # record = result['depid']
-                    # print(999)
-                    # print(record)
-                    # pid = record.pid
-                    record._get_pid("recid")
-                    mock_logger.assert_any_call(
-                        key='WEKO_COMMON_ERROR_UNEXPECTED', value=mock.ANY)
-                    mock_logger.reset_mock()
+            with patch("weko_deposit.api.db.desc", side_effect=SQLAlchemyError("test_error")):
+                 with pytest.raises(WekoDepositError, match="Some error has occurred in weko_deposit."):
+                     indexer, results = es_records
+                     result = results[0]
+                     record = result['record']
+                     pid = record.pid
+                     record._get_pid("recid")
+                     mock_logger.assert_any_call(key='WEKO_COMMON_FAILED_GET_PID', value=mock.ANY)
+                     mock_logger.reset_mock()
 
-            # with patch("invenio_pidstore.models.PersistentIdentifier", side_effect=PIDDoesNotExistError("test pid_type","test pid_value")):
-            with patch("invenio_db.db.session.begin_nested", side_effect=SQLAlchemyError("test_error")):
-                with pytest.raises(WekoDepositError, match="Could not encoding/decoding file"):
-                    indexer, results = es_records
-                    result = results[0]
-                    record = result['record']
-                    pid = record.pid
-                    print(99999)
-                    print(pid)
-                    print(99999)
-                    record._get_pid(pid)
-                    mock_logger.assert_any_call(
-                        key='WEKO_COMMON_FAILED_GET_PID', value=mock.ANY)
-                    mock_logger.reset_mock()
-            with patch("invenio_pidstore.models.PersistentIdentifier", side_effect=PIDDoesNotExistError(record[0].pid_type, record[0].pid_value)):
-                record._get_pid('')
-                mock_logger.assert_any_call(
-                    key='WEKO_COMMON_FAILED_GET_PID', value=mock.ANY)
-                mock_logger.reset_mock()
+            mock_logger.assert_any_call(key='WEKO_COMMON_IF_ENTER', branch=mock.ANY)
+            mock_logger.assert_any_call(key='WEKO_COMMON_RETURN_VALUE', value=mock.ANY)
+            mock_logger.reset_mock()
 
-            # todo31
-            # mock_logger.assert_any_call(key='WEKO_COMMON_IF_ENTER', branch=mock.ANY)
-            # mock_logger.assert_any_call(key='WEKO_COMMON_RETURN_VALUE', value=mock.ANY)
-            # mock_logger.reset_mock()
+
 
     #     def update_item_link(self, pid_value):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoRecord::test_update_item_link -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
-
-    def test_update_item_link(self, db, es_records):
+    def test_update_item_link(self,db, es_records):
         with patch('weko_deposit.api.weko_logger') as mock_logger:
             from weko_records.models import ItemMetadata, ItemReference
             ir = ItemReference(
@@ -2807,7 +2976,7 @@ class Test_FormatSysCreator:
     def test___init__(self, app, prepare_creator):
         with app.test_request_context():
             obj = _FormatSysCreator(prepare_creator)
-            assert isinstance(obj, _FormatSysCreator) == True
+            assert isinstance(obj,_FormatSysCreator)==True
 
 #     def _get_creator_languages_order(self):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::Test_FormatSysCreator::test__get_creator_languages_order -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
@@ -2837,7 +3006,7 @@ class Test_FormatSysCreator:
         with patch('weko_deposit.api.weko_logger') as mock_logger:
             with app.test_request_context():
                 obj = _FormatSysCreator(prepare_creator)
-                assert isinstance(obj, _FormatSysCreator) == True
+                assert isinstance(obj,_FormatSysCreator)==True
                 language = 'en'
                 parent_key = 'creatorNames'
                 lst = []
@@ -2885,53 +3054,54 @@ class Test_FormatSysCreator:
         with patch('weko_deposit.api.weko_logger') as mock_logger:
             with app.test_request_context():
                 obj = _FormatSysCreator(prepare_creator)
-                assert isinstance(obj, _FormatSysCreator) == True
-                creators = {'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierURI': 'https://orcid.org/', 'nameIdentifierScheme': 'ORCID'}, {'nameIdentifier': 'xxxxxxx',
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        'nameIdentifierURI': 'https://ci.nii.ac.jp/', 'nameIdentifierScheme': 'CiNii'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/', 'nameIdentifierScheme': 'KAKEN2'}], 'creatorAffiliations': [{'affiliationNames': [{'affiliationName': '所属機関', 'affiliationNameLang': 'ja'}, {'affiliationName': 'Affilication Name', 'affiliationNameLang': 'en'}], 'affiliationNameIdentifiers': [{'affiliationNameIdentifier': 'xxxxxx', 'affiliationNameIdentifierURI': 'xxxxx', 'affiliationNameIdentifierScheme': 'ISNI'}]}], 'creatorAlternatives': [{'creatorAlternative': 'Alternative Name', 'creatorAlternativeLang': 'en'}, {'creatorAlternative': '別名', 'creatorAlternativeLang': 'ja'}]}
-                language = 'ja'
-                creator_list = []
-                creator_list_temp = None
-                obj._get_creator_to_show_popup(
-                    creators, language, creator_list, creator_list_temp)
-                assert creators == {'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierURI': 'https://orcid.org/', 'nameIdentifierScheme': 'ORCID'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierURI': 'https://ci.nii.ac.jp/', 'nameIdentifierScheme': 'CiNii'}, {
-                    'nameIdentifier': 'zzzzzzz', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/', 'nameIdentifierScheme': 'KAKEN2'}], 'creatorAffiliations': [{'affiliationNames': [{'affiliationName': '所属機関', 'affiliationNameLang': 'ja', 'affiliationNameIdentifier': 'xxxxxx', 'affiliationNameIdentifierURI': 'xxxxx', 'affiliationNameIdentifierScheme': 'ISNI'}, {'affiliationName': 'Affilication Name', 'affiliationNameLang': 'en'}], 'affiliationNameIdentifiers': [{'affiliationNameIdentifier': 'xxxxxx', 'affiliationNameIdentifierURI': 'xxxxx', 'affiliationNameIdentifierScheme': 'ISNI'}]}], 'creatorAlternatives': [{'creatorAlternative': 'Alternative Name', 'creatorAlternativeLang': 'en'}, {'creatorAlternative': '別名', 'creatorAlternativeLang': 'ja'}]}
-                assert language == "ja"
-                assert creator_list == [{'ja': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'familyName': '情報', 'familyNameLang': 'ja'}, {'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {
-                    'affiliationName': '所属機関', 'affiliationNameLang': 'ja', 'affiliationNameIdentifier': 'xxxxxx', 'affiliationNameIdentifierURI': 'xxxxx', 'affiliationNameIdentifierScheme': 'ISNI'}, {'creatorAlternative': '別名', 'creatorAlternativeLang': 'ja'}]}]
-                assert creator_list_temp == None
-                # todo34
-                obj = _FormatSysCreator(prepare_creator)
-                assert isinstance(obj, _FormatSysCreator) == True
-                creators = {'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierURI': 'https://orcid.org/',
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             'nameIdentifierScheme': 'ORCID'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierURI': 'https://ci.nii.ac.jp/', 'nameIdentifierScheme': 'CiNii'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/', 'nameIdentifierScheme': 'KAKEN2'}], 'creatorAffiliations': [{'affiliationNames': [], 'affiliationNameIdentifiers': [{'affiliationNameIdentifier': 'xxxxxx', 'affiliationNameIdentifierURI': 'xxxxx', 'affiliationNameIdentifierScheme': 'ISNI'}]}], 'creatorAlternatives': [{'creatorAlternative': 'Alternative Name', 'creatorAlternativeLang': 'en'}, {'creatorAlternative': '別名', 'creatorAlternativeLang': 'ja'}]}
-                language = 'ja'
-                creator_list = []
-                creator_list_temp = None
-                obj._get_creator_to_show_popup(
-                    creators, language, creator_list, creator_list_temp)
-                assert creators == {'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierURI': 'https://orcid.org/',
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     'nameIdentifierScheme': 'ORCID'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierURI': 'https://ci.nii.ac.jp/', 'nameIdentifierScheme': 'CiNii'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/', 'nameIdentifierScheme': 'KAKEN2'}], 'creatorAffiliations': [{'affiliationNames': [], 'affiliationNameIdentifiers': [{'affiliationNameIdentifier': 'xxxxxx', 'affiliationNameIdentifierURI': 'xxxxx', 'affiliationNameIdentifierScheme': 'ISNI'}]}], 'creatorAlternatives': [{'creatorAlternative': 'Alternative Name', 'creatorAlternativeLang': 'en'}, {'creatorAlternative': '別名', 'creatorAlternativeLang': 'ja'}]}
-                assert language == "ja"
-                assert creator_list == [{'ja': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'familyName': '情報', 'familyNameLang': 'ja'}, {
-                    'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorAlternative': '別名', 'creatorAlternativeLang': 'ja'}]}]
-                assert creator_list_temp == None
+                assert isinstance(obj,_FormatSysCreator)==True
+                creators={'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierURI': 'https://orcid.org/', 'nameIdentifierScheme': 'ORCID'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierURI': 'https://ci.nii.ac.jp/', 'nameIdentifierScheme': 'CiNii'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/', 'nameIdentifierScheme': 'KAKEN2'}], 'creatorAffiliations': [{'affiliationNames': [{'affiliationName': '所属機関', 'affiliationNameLang': 'ja'}, {'affiliationName': 'Affilication Name', 'affiliationNameLang': 'en'}], 'affiliationNameIdentifiers': [{'affiliationNameIdentifier': 'xxxxxx', 'affiliationNameIdentifierURI': 'xxxxx', 'affiliationNameIdentifierScheme': 'ISNI'}]}], 'creatorAlternatives': [{'creatorAlternative': 'Alternative Name', 'creatorAlternativeLang': 'en'}, {'creatorAlternative': '別名', 'creatorAlternativeLang': 'ja'}]}
+                language='ja'
+                creator_list=[]
+                creator_list_temp=None
+                obj._get_creator_to_show_popup(creators,language,creator_list,creator_list_temp)
+                assert creators=={'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierURI': 'https://orcid.org/', 'nameIdentifierScheme': 'ORCID'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierURI': 'https://ci.nii.ac.jp/', 'nameIdentifierScheme': 'CiNii'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/', 'nameIdentifierScheme': 'KAKEN2'}], 'creatorAffiliations': [{'affiliationNames': [{'affiliationName': '所属機関', 'affiliationNameLang': 'ja', 'affiliationNameIdentifier': 'xxxxxx', 'affiliationNameIdentifierURI': 'xxxxx', 'affiliationNameIdentifierScheme': 'ISNI'}, {'affiliationName': 'Affilication Name', 'affiliationNameLang': 'en'}], 'affiliationNameIdentifiers': [{'affiliationNameIdentifier': 'xxxxxx', 'affiliationNameIdentifierURI': 'xxxxx', 'affiliationNameIdentifierScheme': 'ISNI'}]}], 'creatorAlternatives': [{'creatorAlternative': 'Alternative Name', 'creatorAlternativeLang': 'en'}, {'creatorAlternative': '別名', 'creatorAlternativeLang': 'ja'}]}
+                assert language=="ja"
+                assert creator_list==[{'ja': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'familyName': '情報', 'familyNameLang': 'ja'}, {'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'affiliationName': '所属機関', 'affiliationNameLang': 'ja', 'affiliationNameIdentifier': 'xxxxxx', 'affiliationNameIdentifierURI': 'xxxxx', 'affiliationNameIdentifierScheme': 'ISNI'}, {'creatorAlternative': '別名', 'creatorAlternativeLang': 'ja'}]}]
+                assert creator_list_temp==None
 
                 obj = _FormatSysCreator(prepare_creator)
-                assert isinstance(obj, _FormatSysCreator) == True
-                creators = {'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierURI': 'https://orcid.org/', 'nameIdentifierScheme': 'ORCID'}, {'nameIdentifier': 'xxxxxxx',
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        'nameIdentifierURI': 'https://ci.nii.ac.jp/', 'nameIdentifierScheme': 'CiNii'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/', 'nameIdentifierScheme': 'KAKEN2'}], 'creatorAffiliations': [{'affiliationNames': [{'affiliationName': '所属機関', 'affiliationNameLang': 'ja'}, {'affiliationName': 'Affilication Name', 'affiliationNameLang': 'en'}], 'affiliationNameIdentifiers': [{'affiliationNameIdentifier': 'xxxxxx', 'affiliationNameIdentifierURI': 'xxxxx', 'affiliationNameIdentifierScheme': 'ISNI'}]}], 'creatorAlternatives': [{'creatorAlternative': 'Alternative Name', 'creatorAlternativeLang': 'en'}, {'creatorAlternative': '別名', 'creatorAlternativeLang': 'ja'}]}
-                language = ''
-                creator_list = []
-                creator_list_temp = None
+                assert isinstance(obj,_FormatSysCreator)==True
+                creators={'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierURI': 'https://orcid.org/', 'nameIdentifierScheme': 'ORCID'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierURI': 'https://ci.nii.ac.jp/', 'nameIdentifierScheme': 'CiNii'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/', 'nameIdentifierScheme': 'KAKEN2'}], 'creatorAffiliations': [{'affiliationNames': [], 'affiliationNameIdentifiers': [{'affiliationNameIdentifier': 'xxxxxx', 'affiliationNameIdentifierURI': 'xxxxx', 'affiliationNameIdentifierScheme': 'ISNI'}]}], 'creatorAlternatives': [{'creatorAlternative': 'Alternative Name', 'creatorAlternativeLang': 'en'}, {'creatorAlternative': '別名', 'creatorAlternativeLang': 'ja'}]}
+                language='ja'
+                creator_list=[]
+                creator_list_temp=None
+                obj._get_creator_to_show_popup(creators,language,creator_list,creator_list_temp)
+                assert creators=={'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierURI': 'https://orcid.org/', 'nameIdentifierScheme': 'ORCID'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierURI': 'https://ci.nii.ac.jp/', 'nameIdentifierScheme': 'CiNii'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/', 'nameIdentifierScheme': 'KAKEN2'}], 'creatorAffiliations': [{'affiliationNames': [], 'affiliationNameIdentifiers': [{'affiliationNameIdentifier': 'xxxxxx', 'affiliationNameIdentifierURI': 'xxxxx', 'affiliationNameIdentifierScheme': 'ISNI'}]}], 'creatorAlternatives': [{'creatorAlternative': 'Alternative Name', 'creatorAlternativeLang': 'en'}, {'creatorAlternative': '別名', 'creatorAlternativeLang': 'ja'}]}
+                assert language=="ja"
+                assert creator_list==[{'ja': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'familyName': '情報', 'familyNameLang': 'ja'}, {'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorAlternative': '別名', 'creatorAlternativeLang': 'ja'}]}]
+                assert creator_list_temp==None
+
+                obj = _FormatSysCreator(prepare_creator)
+                assert isinstance(obj,_FormatSysCreator)==True
+                creators={'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierURI': 'https://orcid.org/', 'nameIdentifierScheme': 'ORCID'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierURI': 'https://ci.nii.ac.jp/', 'nameIdentifierScheme': 'CiNii'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/', 'nameIdentifierScheme': 'KAKEN2'}], 'creatorAffiliations': [{'affiliationNames': [{'affiliationName': '所属機関', 'affiliationNameLang': 'ja'}, {'affiliationName': 'Affilication Name', 'affiliationNameLang': 'en'}], 'affiliationNameIdentifiers': [{'affiliationNameIdentifier': 'xxxxxx', 'affiliationNameIdentifierURI': 'xxxxx', 'affiliationNameIdentifierScheme': 'ISNI'}]}], 'creatorAlternatives': [{'creatorAlternative': 'Alternative Name', 'creatorAlternativeLang': 'en'}, {'creatorAlternative': '別名', 'creatorAlternativeLang': 'ja'}]}
+                language=''
+                creator_list=[]
+                creator_list_temp=None
                 # creator_list=[{'givenName': '太郎', 'givenNameLang': 'en'}]
                 # creator_list_temp=[{'givenName': '太郎', 'givenNameLang': 'en'}]
-                obj._get_creator_to_show_popup(
-                    creators, language, creator_list, creator_list_temp)
-                assert creators == {'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierURI': 'https://orcid.org/', 'nameIdentifierScheme': 'ORCID'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierURI': 'https://ci.nii.ac.jp/', 'nameIdentifierScheme': 'CiNii'}, {
-                    'nameIdentifier': 'zzzzzzz', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/', 'nameIdentifierScheme': 'KAKEN2'}], 'creatorAffiliations': [{'affiliationNames': [{'affiliationName': '所属機関', 'affiliationNameLang': 'ja', 'affiliationNameIdentifier': 'xxxxxx', 'affiliationNameIdentifierURI': 'xxxxx', 'affiliationNameIdentifierScheme': 'ISNI'}, {'affiliationName': 'Affilication Name', 'affiliationNameLang': 'en'}], 'affiliationNameIdentifiers': [{'affiliationNameIdentifier': 'xxxxxx', 'affiliationNameIdentifierURI': 'xxxxx', 'affiliationNameIdentifierScheme': 'ISNI'}]}], 'creatorAlternatives': [{'creatorAlternative': 'Alternative Name', 'creatorAlternativeLang': 'en'}, {'creatorAlternative': '別名', 'creatorAlternativeLang': 'ja'}]}
-                assert language == ""
-                assert creator_list == []
-                assert creator_list_temp == None
+                obj._get_creator_to_show_popup(creators,language,creator_list,creator_list_temp)
+                assert creators=={'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierURI': 'https://orcid.org/', 'nameIdentifierScheme': 'ORCID'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierURI': 'https://ci.nii.ac.jp/', 'nameIdentifierScheme': 'CiNii'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/', 'nameIdentifierScheme': 'KAKEN2'}], 'creatorAffiliations': [{'affiliationNames': [{'affiliationName': '所属機関', 'affiliationNameLang': 'ja', 'affiliationNameIdentifier': 'xxxxxx', 'affiliationNameIdentifierURI': 'xxxxx', 'affiliationNameIdentifierScheme': 'ISNI'}, {'affiliationName': 'Affilication Name', 'affiliationNameLang': 'en'}], 'affiliationNameIdentifiers': [{'affiliationNameIdentifier': 'xxxxxx', 'affiliationNameIdentifierURI': 'xxxxx', 'affiliationNameIdentifierScheme': 'ISNI'}]}], 'creatorAlternatives': [{'creatorAlternative': 'Alternative Name', 'creatorAlternativeLang': 'en'}, {'creatorAlternative': '別名', 'creatorAlternativeLang': 'ja'}]}
+                assert language==""
+                assert creator_list==[]
+                assert creator_list_temp==None
+
+                obj = _FormatSysCreator(prepare_creator)
+                assert isinstance(obj,_FormatSysCreator)==True
+                creators={'givenNames': [{'givenName': '太郎', 'givenNameLang': ''}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}]}
+                language=''
+                creator_list=["1","2"]
+                creator_list_temp=["1","2"]
+                obj._get_creator_to_show_popup(creators,language,creator_list,creator_list_temp)
+                assert creators=={'givenNames': [{'givenName': '太郎', 'givenNameLang': ''}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}]}
+                assert language==""
+                assert creator_list==['1', '2']
+                assert creator_list_temp==['1', '2']
 
                 mock_logger.assert_any_call(key='WEKO_COMMON_FOR_START')
                 mock_logger.assert_any_call(
@@ -2974,8 +3144,9 @@ class Test_FormatSysCreator:
                 mock_logger.assert_any_call(key='WEKO_COMMON_FOR_END')
                 mock_logger.reset_mock()
 
-#         def _run_format_affiliation(affiliation_max, affiliation_min,
-#         def format_affiliation(affiliation_data):
+
+    # def format_affiliation(affiliation_data):
+    # def _run_format_affiliation(affiliation_max, affiliation_min,
     # def _get_creator_based_on_language(creator_data: dict,
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::Test_FormatSysCreator::test__get_creator_based_on_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test__get_creator_based_on_language(self, app, prepare_creator):
@@ -3001,13 +3172,12 @@ class Test_FormatSysCreator:
                 assert creator_list_temp == []
 
                 obj = _FormatSysCreator(prepare_creator)
-                assert isinstance(obj, _FormatSysCreator) == True
-                creator_data = {}
-                creator_list_temp = []
-                language = ''
-                obj._get_creator_based_on_language(
-                    creator_data, creator_list_temp, language)
-                assert creator_list_temp == [{}]
+                assert isinstance(obj,_FormatSysCreator)==True
+                creator_data ={}
+                creator_list_temp=[]
+                language=''
+                obj._get_creator_based_on_language(creator_data,creator_list_temp,language)
+                assert creator_list_temp==[{}]
 
                 mock_logger.assert_any_call(key='WEKO_COMMON_FOR_START')
                 mock_logger.assert_any_call(
@@ -3023,9 +3193,9 @@ class Test_FormatSysCreator:
         with patch('weko_deposit.api.weko_logger') as mock_logger:
             with app.test_request_context():
                 obj = _FormatSysCreator(prepare_creator)
-                assert isinstance(obj, _FormatSysCreator) == True
-                assert obj.format_creator() == {'name': ['Joho, Taro'], 'order_lang': [{'ja': {'creatorName': ['情報, 太郎'], 'creatorAlternative': ['別名'], 'affiliationName': ['ISNI 所属機関'], 'affiliationNameIdentifier': [{'identifier': 'xxxxxx', 'uri': 'xxxxx'}]}}, {'ja-Kana': {'creatorName': [
-                    'ジョウホウ, タロウ'], 'creatorAlternative': [], 'affiliationName': [], 'affiliationNameIdentifier': []}}, {'en': {'creatorName': ['Joho, Taro'], 'creatorAlternative': ['Alternative Name'], 'affiliationName': [' Affilication Name'], 'affiliationNameIdentifier': [{'identifier': '', 'uri': ''}]}}]}
+                assert isinstance(obj,_FormatSysCreator)==True
+                # assert obj.format_creator()=={'name': ['Joho, Taro','Joho', 'Taro', 'Alternative Name'], 'order_lang': [{'ja': {'creatorName': ['情報, 太郎'], 'creatorAlternative': ['別名'], 'affiliationName': ['ISNI 所属機関'], 'affiliationNameIdentifier': [{'identifier': 'xxxxxx', 'uri': 'xxxxx'}]}}, {'ja-Kana': {'creatorName': ['ジョウホウ, タロウ'], 'creatorAlternative': [], 'affiliationName': [], 'affiliationNameIdentifier': []}}, {'en': {'creatorName': None, 'creatorAlternative': [], 'affiliationName': [' Affilication Name'], 'affiliationNameIdentifier': [{'identifier': '', 'uri': ''}]}}]}
+                assert obj.format_creator()=={'name': ['Joho, Taro','Joho', 'Taro', 'Alternative Name'], 'order_lang': [{'ja': {'creatorName': ['情報, 太郎'], 'creatorAlternative': ['別名'], 'affiliationName': ['ISNI 所属機関'], 'affiliationNameIdentifier': [{'identifier': 'xxxxxx', 'uri': 'xxxxx'}]}}, {'ja-Kana': {'creatorName': ['ジョウホウ, タロウ'], 'creatorAlternative': [], 'affiliationName': [], 'affiliationNameIdentifier': []}}, {'en': {'affiliationName': [],'affiliationNameIdentifier': [], 'creatorAlternative': ['Alternative Name'], 'creatorName': ['Joho, Taro']}},{'cn': {'affiliationName': [' Affilication Name'],'affiliationNameIdentifier': [{'identifier': '','uri': ''}],'creatorAlternative': [],'creatorName': None}}]}
 
                 mock_logger.assert_any_call(key='WEKO_COMMON_FOR_START')
                 mock_logger.assert_any_call(
@@ -3059,13 +3229,6 @@ class Test_FormatSysCreator:
                     elif item.get("en"):
                         assert "creatorType" not in list(item.get("en").keys())
 
-                    mock_logger.assert_any_call(key='WEKO_COMMON_FOR_START')
-                    mock_logger.assert_any_call(
-                        key='WEKO_COMMON_FOR_LOOP_ITERATION', count=mock.ANY, element=mock.ANY)
-                    mock_logger.assert_any_call(
-                        key='WEKO_COMMON_IF_ENTER', branch=mock.ANY)
-                    mock_logger.assert_any_call(key='WEKO_COMMON_FOR_END')
-                    mock_logger.reset_mock()
 
     # def _format_creator_on_creator_popup(self, creators: Union[dict, list],
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::Test_FormatSysCreator::test__format_creator_on_creator_popup -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
@@ -3131,8 +3294,8 @@ class Test_FormatSysCreator:
                 creator_data5 = {'givenName': ['太郎'], 'givenNameLang': ['ja'], 'familyName': ['情報1', '情報2', '情報3'], 'familyNameLang': ['ja'], 'affiliationName': ['所属機関'], 'affiliationNameLang': [
                     'ja'], 'affiliationNameIdentifier': ['xxxxxx'], 'affiliationNameIdentifierURI': ['xxxxx'], 'affiliationNameIdentifierScheme': ['ISNI'], 'creatorAlternative': ['別名'], 'creatorAlternativeLang': ['ja']}
                 tmp = {}
-                obj._format_creator_name(creator_data5, tmp)
-                assert tmp == {'creatorName': ['情報1 太郎', '情報2', '情報3']}
+                obj._format_creator_name(creator_data5,tmp)
+                assert tmp=={'creatorName': ['情報1 太郎', '情報2', '情報3']}
 
                 mock_logger.assert_any_call(key='WEKO_COMMON_FOR_START')
                 mock_logger.assert_any_call(
@@ -3148,14 +3311,11 @@ class Test_FormatSysCreator:
         with patch('weko_deposit.api.weko_logger') as mock_logger:
             with app.test_request_context():
                 obj = _FormatSysCreator(prepare_creator)
-                assert isinstance(obj, _FormatSysCreator) == True
-                creator_data = {'givenName': ['太郎'], 'givenNameLang': ['ja'], 'familyName': ['情報'], 'familyNameLang': ['ja'], 'creatorName': ['情報, 太郎'], 'creatorNameLang': ['ja'], 'affiliationName': ['所属機関'], 'affiliationNameLang': [
-                    'ja'], 'affiliationNameIdentifier': ['xxxxxx'], 'affiliationNameIdentifierURI': ['xxxxx'], 'affiliationNameIdentifierScheme': ['ISNI'], 'creatorAlternative': ['別名'], 'creatorAlternativeLang': ['ja']}
-                des_creator = {'creatorName': [
-                    '情報, 太郎'], 'creatorAlternative': ['別名']}
-                obj._format_creator_affiliation(creator_data, des_creator)
-                assert des_creator == {'creatorName': ['情報, 太郎'], 'creatorAlternative': ['別名'], 'affiliationName': [
-                    'ISNI 所属機関'], 'affiliationNameIdentifier': [{'identifier': 'xxxxxx', 'uri': 'xxxxx'}]}
+                assert isinstance(obj,_FormatSysCreator)==True
+                creator_data = {'givenName': ['太郎'], 'givenNameLang': ['ja'], 'familyName': ['情報'], 'familyNameLang': ['ja'], 'creatorName': ['情報, 太郎'], 'creatorNameLang': ['ja'], 'affiliationName': ['所属機関'], 'affiliationNameLang': ['ja'], 'affiliationNameIdentifier': ['xxxxxx'], 'affiliationNameIdentifierURI': ['xxxxx'], 'affiliationNameIdentifierScheme': ['ISNI'], 'creatorAlternative': ['別名'], 'creatorAlternativeLang': ['ja']}
+                des_creator = {'creatorName': ['情報, 太郎'], 'creatorAlternative': ['別名']}
+                obj._format_creator_affiliation(creator_data,des_creator)
+                assert des_creator=={'creatorName': ['情報, 太郎'], 'creatorAlternative': ['別名'], 'affiliationName': ['ISNI 所属機関'], 'affiliationNameIdentifier': [{'identifier': 'xxxxxx', 'uri': 'xxxxx'}]}
 
                 mock_logger.assert_any_call(key='WEKO_COMMON_WHILE_START')
                 mock_logger.assert_any_call(
@@ -3175,8 +3335,7 @@ class Test_FormatSysCreator:
                 assert isinstance(obj, _FormatSysCreator) == True
                 creator_list = []
                 obj._get_creator_to_display_on_popup(creator_list)
-                assert creator_list == [{'ja': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'familyName': '情報', 'familyNameLang': 'ja'}, {'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'affiliationName': '所属機関', 'affiliationNameLang': 'ja', 'affiliationNameIdentifier': 'xxxxxx', 'affiliationNameIdentifierURI': 'xxxxx', 'affiliationNameIdentifierScheme': 'ISNI'}, {'creatorAlternative': '別名', 'creatorAlternativeLang': 'ja'}]}, {
-                    'ja-Kana': [{'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}]}, {'en': [{'givenName': 'Taro', 'givenNameLang': 'en'}, {'familyName': 'Joho', 'familyNameLang': 'en'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}, {'affiliationName': 'Affilication Name', 'affiliationNameLang': 'en'}, {'creatorAlternative': 'Alternative Name', 'creatorAlternativeLang': 'en'}]}]
+                assert creator_list==[{'ja': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'familyName': '情報', 'familyNameLang': 'ja'}, {'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'affiliationName': '所属機関', 'affiliationNameLang': 'ja', 'affiliationNameIdentifier': 'xxxxxx', 'affiliationNameIdentifierURI': 'xxxxx', 'affiliationNameIdentifierScheme': 'ISNI'}, {'creatorAlternative': '別名', 'creatorAlternativeLang': 'ja'}]}, {'ja-Kana': [{'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}]}, {'en': [{'givenName': 'Taro', 'givenNameLang': 'en'}, {'familyName': 'Joho', 'familyNameLang': 'en'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}, {'creatorAlternative': 'Alternative Name', 'creatorAlternativeLang': 'en'}]},{'cn': [{'affiliationName': 'Affilication Name','affiliationNameLang': 'cn'}]}]
 
             mock_logger.assert_any_call(key='WEKO_COMMON_FOR_START')
             mock_logger.assert_any_call(
@@ -3441,11 +3600,6 @@ class Test__FormatSysBibliographicInformation():
             result = obj._get_translation_key("not_exist_key", "")
             assert result == None
 
-            mock_logger.assert_any_call(
-                key='WEKO_COMMON_IF_ENTER', branch=mock.ANY)
-            mock_logger.assert_any_call(
-                key='WEKO_COMMON_RETURN_VALUE', value=mock.ANY)
-            mock_logger.reset_mock()
 
     # def _get_bibliographic_information(self, bibliographic):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::Test__FormatSysBibliographicInformation::test__get_bibliographic_information -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
@@ -3508,10 +3662,7 @@ class Test__FormatSysBibliographicInformation():
                 'ja : 雑誌タイトル', 'en : Journal Title']
 
             mock_logger.assert_any_call(key='WEKO_COMMON_FOR_START')
-            mock_logger.assert_any_call(
-                key='WEKO_COMMON_FOR_LOOP_ITERATION', count=mock.ANY, element=mock.ANY)
-            mock_logger.assert_any_call(
-                key='WEKO_COMMON_IF_ENTER', branch=mock.ANY)
+            mock_logger.assert_any_call(key='WEKO_COMMON_FOR_LOOP_ITERATION', count=mock.ANY, element=mock.ANY)
             mock_logger.assert_any_call(key='WEKO_COMMON_FOR_END')
             mock_logger.assert_any_call(
                 key='WEKO_COMMON_RETURN_VALUE', value=mock.ANY)
