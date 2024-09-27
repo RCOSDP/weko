@@ -1712,18 +1712,22 @@ class WekoDeposit(Deposit):
             for i, file in enumerate(self.files):
                 weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
                             count=i, element=file)
+
                 if isinstance(fmd, list):
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
                                 branch='fmd is list')
                     weko_logger(key='WEKO_COMMON_FOR_START')
+
                     for i, lst in enumerate(fmd):
                         weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
                                     count=i, element=lst)
+
                         filename = lst.get('filename')
                         if file.obj.key == filename:
                             weko_logger(key='WEKO_COMMON_IF_ENTER',
                                         branch='file.obj.key is equal to '
                                                 'filename')
+
                             lst.update({'mimetype': file.obj.mimetype})
                             lst.update(
                                 {'version_id': str(file.obj.version_id)})
@@ -1769,14 +1773,6 @@ class WekoDeposit(Deposit):
 
                                 content.update({"attachment": attachment})
                                 contents.append(content)
-                            except ElasticsearchException as ex:
-                                weko_logger(
-                                    key='WEKO_DEPOSIT_FAILED_UPLOAD_FILE'
-                                        '_METADATA_TO_ELASTICSEARCH',
-                                    uuid=self.pid.object_uuid, ex=ex)
-                                # raise WekoDepositError(ex=ex,
-                                # msg="Upload metadata to Elasticsearch error."
-                                # ) from ex
                             except WekoDepositError as ex:
                                 # raise
                                 pass
@@ -1812,7 +1808,7 @@ class WekoDeposit(Deposit):
         """
         file_data = []
         data = self.data or self.item_metadata
-
+        print(f"\nget_file_data {data}")
         weko_logger(key='WEKO_COMMON_FOR_START')
         for i, key in enumerate(data):
             weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
