@@ -243,7 +243,6 @@ class WekoIndexer(RecordIndexer):
         body = dict(version=revision_id + 1,
                     version_type=self._version_type,
                     body=jrc)
-
         if self.client.exists(**es_info):
             weko_logger(key='WEKO_COMMON_IF_ENTER', branch='')
             del body['version']

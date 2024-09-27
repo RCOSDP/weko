@@ -922,14 +922,8 @@ class TestWekoDeposit:
 
                 # self.jrc.get('content')
                 deposit = WekoDeposit.create({})
-                # indexer, records = es_records
-                # record = records[0]
-                # deposit = record['deposit']
                 item_id = deposit.pid.object_uuid
                 index_obj = {'index': ['3'], 'actions': 'private',"content":[{"test":"content"},{"file":"test"}]}
-                # data = {'pubdate': '2023-12-07', 'item_1617186331708': [{'subitem_1551255647225': 'test', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, 'shared_user_id': -1, 'title': 'test', 'lang': 'ja', 'deleted_items': ['item_1617186385884', 'item_1617186419668', 'item_1617186499011', 'item_1617186609386', 'item_1617186626617', 'item_1617186643794', 'item_1617186660861', 'item_1617186702042', 'item_1617186783814', 'item_1617186859717', 'item_1617186882738', 'item_1617186901218', 'item_1617186920753', 'item_1617186941041', 'item_1617187112279', 'item_1617187187528', 'item_1617349709064', 'item_1617353299429', 'item_1617605131499', 'item_1617610673286', 'item_1617620223087', 'item_1617944105607', 'item_1617187056579', 'approval1', 'approval2'], '$schema': '/items/jsonschema/1'}
-                # data = {"content":[{"test":"content"},{"file":"test"}],'pubdate': '2023-12-07', 'item_1617186331708': [{'subitem_1551255647225': 'test', 'subitem_1551255648112': 'ja',"content":[{"test":"content"},{"file":"test"}]}], 'item_1617258105262': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, 'shared_user_id': -1, 'title': 'test', 'lang': 'ja', 'deleted_items': ['item_1617186385884', 'item_1617186419668', 'item_1617186499011', 'item_1617186609386', 'item_1617186626617', 'item_1617186643794', 'item_1617186660861', 'item_1617186702042', 'item_1617186783814', 'item_1617186859717', 'item_1617186882738', 'item_1617186901218', 'item_1617186920753', 'item_1617186941041', 'item_1617187112279', 'item_1617187187528', 'item_1617349709064', 'item_1617353299429', 'item_1617605131499', 'item_1617610673286', 'item_1617620223087', 'item_1617944105607', 'item_1617187056579', 'approval1', 'approval2'], '$schema': '/items/jsonschema/1'}
-                #deposit['_buckets']['deposit'] = "3e99cfca-098b-42ed-b8a0-20ddd09b3e01"
                 deposit['item_1617605131499'] = {'attribute_name': 'File', 'attribute_type': 'file', 'attribute_value_mlt': [{'url': {'url': 'https://weko3.example.org/record/{}/files/hello.txt'.format(1)}, 'date': [{'dateType': 'Available', 'dateValue': '2022-09-07'}], 'format': 'plain/text', 'filename': 'hello.txt', 'filesize': [{'value': '146 KB'}], 'accessrole': 'open_access', 'version_id': '', 'mimetype': 'application/pdf',"file": "",}]}
                 data = {'pubdate': '2023-12-07', "item_1617605131499":{'attribute_name': 'File', 'attribute_type': 'file', 'attribute_value_mlt': [{'url': {'url': 'https://weko3.example.org/record/{}/files/hello.txt'.format(1)}, 'date': [{'dateType': 'Available', 'dateValue': '2022-09-07'}], 'format': 'plain/text', 'filename': 'hello.txt', 'filesize': [{'value': '146 KB'}], 'accessrole': 'open_access', 'version_id': '', 'mimetype': 'application/pdf',"file": "",}]}, '$schema': '/items/jsonschema/1'}
                 deposit.update(index_obj,data)
@@ -944,19 +938,27 @@ class TestWekoDeposit:
 
                 deposit.commit()
 
+                # ElasticsearchException to occur
                 from elasticsearch.exceptions import ElasticsearchException,TransportError
                 from weko_deposit.errors import WekoDepositError
+                from weko_deposit.api import WekoIndexer
                 from weko_deposit.config import WEKO_DEPOSIT_ES_PARSING_ERROR_KEYWORD
-                with patch("weko_deposit.api.WekoIndexer.upload_metadata", side_effect=TransportError(500,"test_error",{"error":{"reason": WEKO_DEPOSIT_ES_PARSING_ERROR_KEYWORD}})):
-                    with patch("invenio_search.ext.Elasticsearch.search", return_value=True) as mock_upload_metadata:
-                        # mock_upload_metadata.return_value = True
+                with patch("weko_deposit.api.WekoIndexer.upload_metadata") as mock_upload:
+                    mock_upload.side_effect = [TransportError(500,"test_error",{"error":{"reason": WEKO_DEPOSIT_ES_PARSING_ERROR_KEYWORD}}), "Mocked Data"]
+                    deposit.commit()
+
+                    with pytest.raises(WekoDepositError):
+                        result = deposit.commit()
+
+
+                with patch("weko_deposit.api.WekoIndexer.upload_metadata") as mock_upload:
+                    mock_upload.side_effect = [TransportError(500,"test_error",{"error":{"reason":""}}), "test error"]
+                    with pytest.raises(WekoDepositError) as ex:
                         deposit.commit()
 
-                from weko_deposit.errors import WekoDepositError
-                # with patch("weko_deposit.api.WekoIndexer.upload_metadata", side_effect=ElasticsearchException("test_error")):
-                #     with pytest.raises(WekoDepositError):
-                #         deposit.commit()
 
+                # Exception to occur
+                from weko_deposit.errors import WekoDepositError
                 with patch("weko_deposit.api.WekoIndexer.upload_metadata", side_effect=Exception("test_error")):
                     with pytest.raises(WekoDepositError):
                         deposit.commit()
