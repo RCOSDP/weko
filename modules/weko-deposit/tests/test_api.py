@@ -1707,8 +1707,9 @@ class TestWekoDeposit():
 
     # def convert_item_metadata(self, index_obj, data=None):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_convert_item_metadata -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
-    def test_convert_item_metadata(sel, app, db, es_records):
+    def test_convert_item_metadata(sel, app, db, es_records, redis_connect):
         with patch('weko_deposit.api.weko_logger') as mock_logger:
+            # datastore.redis.exists(cache_key) is None
             indexer, records = es_records
             record = records[0]
             deposit = record['deposit']
@@ -1729,13 +1730,51 @@ class TestWekoDeposit():
             mock_logger.assert_any_call(key='WEKO_COMMON_FOR_END')
             mock_logger.reset_mock()
 
-            # indexer, records = es_records
-            # record = records[1]
-            # deposit = record['deposit']
-            # record_data = record['item_data']
-            # index_obj = {'index': ['1'], 'actions': '1'}
-            # test1 = OrderedDict([('pubdate', {'attribute_name': 'PubDate', 'attribute_value': '2022-08-20'}), ('item_1617186331708', {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'タイトル', 'subitem_1551255648112': 'ja'}, {'subitem_1551255647225': 'title', 'subitem_1551255648112': 'en'}]}), ('item_1617258105262', {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}), ('item_title', 'title'), ('item_type_id', '1'), ('control_number', '2'), ('author_link', []), ('_oai', {'id': '2'}), ('publish_date', '2022-08-20'), ('title', ['title']), ('relation_version_is_last', True), ('path', ['1']), ('publish_status','0')])
-            # test2 = None
+            # datastore.redis.exists(cache_key) is not None, index_obj.get('is_save_path') is None
+            indexer, records = es_records
+            record = records[1]
+            deposit = record['deposit']
+            record_data = record['item_data']
+            index_obj = {'index': ['1'], 'actions': '1'}
+            test1 = OrderedDict([('pubdate', {'attribute_name': 'PubDate', 'attribute_value': '2022-08-20'}), ('item_1617186331708', {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'タイトル', 'subitem_1551255648112': 'ja'}, {'subitem_1551255647225': 'title', 'subitem_1551255648112': 'en'}]}), ('item_1617258105262', {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}), ('item_title', 'title'), ('item_type_id', '1'), ('control_number', '2'), ('author_link', []), ('_oai', {'id': '2'}), ('publish_date', '2022-08-20'), ('title', ['title']), ('relation_version_is_last', True), ('path', ['1']), ('publish_status','0')])
+            test2 = None
+            cache_key = app.config['WEKO_DEPOSIT_ITEMS_CACHE_PREFIX'].format(
+                pid_value=deposit.pid.pid_value)
+            redis_connect.put(cache_key, bytes(json.dumps(record_data), "utf-8"))
+            ret1, ret2 = deposit.convert_item_metadata(index_obj, record_data)
+            assert ret1 == test1
+            assert ret2 == test2
+
+            mock_logger.assert_any_call(key='WEKO_COMMON_FOR_START')
+            mock_logger.assert_any_call(
+                key='WEKO_COMMON_FOR_LOOP_ITERATION', count=mock.ANY, element=mock.ANY)
+            mock_logger.assert_any_call(
+                key='WEKO_COMMON_IF_ENTER', branch=mock.ANY)
+            mock_logger.assert_any_call(key='WEKO_COMMON_FOR_END')
+            mock_logger.reset_mock()
+
+            # datastore.redis.exists(cache_key) is not None, index_obj.get('is_save_path') is not None
+            indexer, records = es_records
+            record = records[1]
+            deposit = record['deposit']
+            record_data = record['item_data']
+            index_obj = {'index': ['1'], 'actions': '1', 'is_save_path': 'path'}
+            test1 = OrderedDict([('pubdate', {'attribute_name': 'PubDate', 'attribute_value': '2022-08-20'}), ('item_1617186331708', {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'タイトル', 'subitem_1551255648112': 'ja'}, {'subitem_1551255647225': 'title', 'subitem_1551255648112': 'en'}]}), ('item_1617258105262', {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}), ('item_title', 'title'), ('item_type_id', '1'), ('control_number', '2'), ('author_link', []), ('_oai', {'id': '2'}), ('publish_date', '2022-08-20'), ('title', ['title']), ('relation_version_is_last', True), ('path', ['1']), ('publish_status','0')])
+            test2 = None
+            cache_key = app.config['WEKO_DEPOSIT_ITEMS_CACHE_PREFIX'].format(
+                pid_value=deposit.pid.pid_value)
+            redis_connect.put(cache_key, bytes(json.dumps(record_data), "utf-8"))
+            ret1, ret2 = deposit.convert_item_metadata(index_obj, record_data)
+            assert ret1 == test1
+            assert ret2 == test2
+
+            mock_logger.assert_any_call(key='WEKO_COMMON_FOR_START')
+            mock_logger.assert_any_call(
+                key='WEKO_COMMON_FOR_LOOP_ITERATION', count=mock.ANY, element=mock.ANY)
+            mock_logger.assert_any_call(
+                key='WEKO_COMMON_IF_ENTER', branch=mock.ANY)
+            mock_logger.assert_any_call(key='WEKO_COMMON_FOR_END')
+            mock_logger.reset_mock()
             # ret1,ret2 = deposit.convert_item_metadata(index_obj,record_data)
             # assert ret1 == test1
             # assert ret2 == test2
