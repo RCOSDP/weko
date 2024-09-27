@@ -1721,7 +1721,6 @@ class WekoDeposit(Deposit):
                         weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
                                     count=i, element=lst)
 
-
                         filename = lst.get('filename')
 
                         if file.obj.key == filename:

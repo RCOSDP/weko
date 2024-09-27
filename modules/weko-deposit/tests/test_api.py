@@ -791,10 +791,8 @@ class TestWekoDeposit():
                 assert deposit.revision_id == 2
                 assert deposit["$schema"] is not None
 
-                mock_logger.assert_any_call(
-                    key='WEKO_COMMON_IF_ENTER', branch=mock.ANY)
-                mock_logger.assert_any_call(
-                    key='WEKO_COMMON_RETURN_VALUE', value=mock.ANY)
+                mock_logger.assert_any_call(key='WEKO_COMMON_IF_ENTER', branch=mock.ANY)
+                mock_logger.assert_any_call(key='WEKO_COMMON_RETURN_VALUE', value=mock.ANY)
                 mock_logger.reset_mock()
 
     # def create(cls, data, id_=None, recid=None):
@@ -1102,11 +1100,26 @@ class TestWekoDeposit():
                 mock_logger.assert_any_call(key='WEKO_COMMON_FOR_END')
                 mock_logger.reset_mock()
 
+                # ElasticsearchException to occur
+                from elasticsearch.exceptions import ElasticsearchException,TransportError
                 from weko_deposit.errors import WekoDepositError
-                # with patch("weko_deposit.api.WekoIndexer.upload_metadata", side_effect=ElasticsearchException("test_error")):
-                #     with pytest.raises(WekoDepositError):
-                #         deposit.commit()
+                from weko_deposit.api import WekoIndexer
+                from weko_deposit.config import WEKO_DEPOSIT_ES_PARSING_ERROR_KEYWORD
+                with patch("weko_deposit.api.WekoIndexer.upload_metadata") as mock_upload:
+                    mock_upload.side_effect = [TransportError(500,"test_error",{"error":{"reason": WEKO_DEPOSIT_ES_PARSING_ERROR_KEYWORD}}), "Mocked Data"]
+                    deposit.commit()
 
+                    with pytest.raises(WekoDepositError):
+                        result = deposit.commit()
+
+
+                with patch("weko_deposit.api.WekoIndexer.upload_metadata") as mock_upload:
+                    mock_upload.side_effect = [TransportError(500,"test_error",{"error":{"reason":""}}), "test error"]
+                    with pytest.raises(WekoDepositError) as ex:
+                        deposit.commit()
+
+                # Exception to occur
+                from weko_deposit.errors import WekoDepositError
                 with patch("weko_deposit.api.WekoIndexer.upload_metadata", side_effect=Exception("test_error")):
                     with pytest.raises(WekoDepositError):
                         deposit.commit()
@@ -1478,8 +1491,7 @@ class TestWekoDeposit():
             mock_logger.assert_any_call(
                 key='WEKO_COMMON_IF_ENTER', branch=mock.ANY)
             mock_logger.assert_any_call(key='WEKO_COMMON_FOR_END')
-            mock_logger.assert_any_call(
-                key='WEKO_COMMON_RETURN_VALUE', value=mock.ANY)
+            mock_logger.assert_any_call(key='WEKO_COMMON_RETURN_VALUE', value=mock.ANY)
             mock_logger.reset_mock()
 
     # def save_or_update_item_metadata(self):
@@ -3654,12 +3666,10 @@ class Test__FormatSysBibliographicInformation():
         with patch('weko_deposit.api.weko_logger') as mock_logger:
             mlt, solst = prepare_formatsysbib
             bibliographic = mlt[0]
-            obj = _FormatSysBibliographicInformation(
-                copy.deepcopy(mlt), copy.deepcopy(solst))
-            assert isinstance(obj, _FormatSysBibliographicInformation) == True
+            obj=_FormatSysBibliographicInformation(copy.deepcopy(mlt),copy.deepcopy(solst))
+            assert isinstance(obj,_FormatSysBibliographicInformation) == True
 
-            assert obj._get_source_title(bibliographic.get('bibliographic_titles')) == [
-                'ja : 雑誌タイトル', 'en : Journal Title']
+            assert obj._get_source_title(bibliographic.get('bibliographic_titles'))==['ja : 雑誌タイトル', 'en : Journal Title']
 
             mock_logger.assert_any_call(key='WEKO_COMMON_FOR_START')
             mock_logger.assert_any_call(key='WEKO_COMMON_FOR_LOOP_ITERATION', count=mock.ANY, element=mock.ANY)
@@ -3715,8 +3725,8 @@ class Test__FormatSysBibliographicInformation():
                 key='WEKO_COMMON_RETURN_VALUE', value=mock.ANY)
             mock_logger.reset_mock()
 
-            data = [{"bibliographic_title": "not_key_title"}, {
-                "bibliographic_titleLang": "ja-Latn", "bibliographic_title": "ja-Latn_title"}]
+
+            data =[{"bibliographic_title":"not_key_title"},{"bibliographic_titleLang":"ja-Latn","bibliographic_title":"ja-Latn_title"}]
             value, lang = obj._get_source_title_show_list(data, "en")
             assert value == "not_key_title"
             assert lang == ""
