@@ -1208,9 +1208,83 @@ class TestWekoDeposit():
             with patch('weko_deposit.api.weko_logger') as mock_logger:
                 # mock self.files
                 with patch.object(WekoDeposit, 'files', new_callable=PropertyMock) as mock_files:
-                    # fmd = [lit0, lst1]
-                    fmd = [{'file': 'data'}, {"filename": "filename"}]
+
+                    # fmd is not List
                     with patch('weko_deposit.api.WekoDeposit.get_file_data') as mock_get_file_data:
+                        fmd_dict = {'file': 'data'}
+                        mock_get_file_data.return_value = fmd_dict
+
+                        def init(self, key, mimetype,version_id):
+                            self.key = key
+                            self.mimetype = mimetype
+                            self.version_id = version_id
+                            self.file = FileInstance.create()
+
+                        filename = "filename"
+                        mimetype = "application/pdf"
+                        version_id = "1"
+                        # return value of mock self.files = [file]
+                        mock_files.return_value = [
+                            # file
+                            FileObject(
+                                type("test_obj",(),
+                                    {"__init__": init})(filename, mimetype, version_id),
+                                {"title": [{"title": "item", "filename": "filename"}]}
+                            )
+                        ]
+                        deposit = copy.deepcopy(es_records_1[1][0]['deposit'])
+                        jrc = {
+                            'type': ['conference paper'],
+                            'title': ['test'],
+                            'control_number': '2',
+                            '_oai': {'id': '2', 'sets': ['1']},
+                            '_item_metadata': OrderedDict([
+                                ('pubdate', {'attribute_name': 'PubDate',
+                                'attribute_value': '2023-12-07'}),
+                                ('item_1617186331708', {
+                                    'attribute_name': 'Title',
+                                    'attribute_value_mlt': [{'subitem_1551255647225': 'test', 'subitem_1551255648112': 'ja'}]
+                                }),
+                                ('item_1617258105262', {
+                                    'attribute_name': 'Resource Type',
+                                    'attribute_value_mlt': [{'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}]
+                                }),
+                                ('item_title', 'test'),
+                                ('item_type_id', '1'),
+                                ('control_number', '2'),
+                                ('author_link', []),
+                                ('_oai', {'id': '2', 'sets': ['1']}),
+                                ('publish_date', '2023-12-07'),
+                                ('title', ['test']),
+                                ('relation_version_is_last', True),
+                                ('path', ['1']),
+                                ('publish_status', '2')
+                            ]),
+                            'itemtype': 'テストアイテムタイプ',
+                            'publish_date': '2023-12-07',
+                            'author_link': [],
+                            'path': ['1'],
+                            'publish_status': '2',
+                            '_created': '2024-09-25T07:58:24.680172+00:00',
+                            '_updated': '2024-09-25T07:58:25.436334+00:00',
+                            'content': [{"test": "content"}, {"file": "test"}]
+                        }
+                        deposit.jrc = jrc
+
+                        deposit.get_content_files()
+
+                        mock_logger.assert_any_call(key='WEKO_COMMON_IF_ENTER', branch='fmd is not empty')
+                        mock_logger.assert_any_call(key='WEKO_COMMON_FOR_START')
+                        mock_logger.assert_any_call(key='WEKO_COMMON_FOR_LOOP_ITERATION', count=mock.ANY, element=mock.ANY)
+                        mock_logger.assert_any_call(key='WEKO_COMMON_FOR_END')
+                        mock_get_file_data.reset_mock()
+                        mock_logger.reset_mock()
+
+                    # file.obj.mimetype not in mimetypes
+
+                    # fmd is list  [lst0, lst1]
+                    with patch('weko_deposit.api.WekoDeposit.get_file_data') as mock_get_file_data:
+                        fmd = [{'file': 'data'}, {"filename": "filename"}]
                         mock_get_file_data.return_value = fmd
                         splited_content = "content1\ncontent2\ncontent3"
                         with patch('weko_deposit.api.parser.from_file') as mock_parser:
