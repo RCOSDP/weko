@@ -14,7 +14,6 @@ from datetime import datetime
 
 import pickle
 import dateutil.parser
-from elasticsearch_dsl import Search
 from flask import current_app
 from invenio_search import current_search_client
 from invenio_search.engine import dsl
@@ -258,6 +257,7 @@ class TermsQuery(Query):
     def build_query(self, start_date, end_date, **kwargs):
         """Build the search query."""
         agg_query = dsl.Search(using=self.client, index=self.index)[0:0]
+        agg_query = agg_query.extra(track_total_hits=True)
 
         if start_date or end_date:
             time_range = {}
@@ -395,7 +395,7 @@ class TermsQuery(Query):
                     after_key = None
                 if first_search:
                     first_search = False
-                    total = temp_res["hits"]["total"]
+                    total = temp_res["hits"]["total"]["value"]
                     for metric in self.metric_fields:
                         res_count[metric] = temp_res["aggregations"][metric]
                 count += len(temp_res["aggregations"]["my_buckets"]["buckets"])
@@ -432,10 +432,9 @@ class ESWekoFileStatsQuery(ESTermsQuery):
         self.main_query = main_query or {}
 
     def build_query(self, start_date, end_date, **kwargs):
-        """Build the elasticsearch query."""
-        agg_query = Search(using=self.client,
-                           index=self.index,
-                           doc_type=self.doc_type)[0:0]
+        """Build the search engine query."""
+        agg_query = dsl.Search(using=self.client, index=self.index)[0:0]
+                           
         if self.main_query:
             query_q = self.main_query
             for _field in self.main_fields:
@@ -499,10 +498,8 @@ class ESWekoTermsQuery(ESTermsQuery):
     """Weko ES Terms Query."""
 
     def build_query(self, start_date, end_date, **kwargs):
-        """Build the elasticsearch query with."""
-        agg_query = Search(using=self.client,
-                           index=self.index,
-                           doc_type=self.doc_type)[0:0]
+        """Build the search engine query with."""
+        agg_query = dsl.Search(using=self.client, index=self.index)[0:0]
 
         if start_date is not None or end_date is not None:
             time_range = {}
@@ -582,13 +579,10 @@ class ESWekoRankingQuery(ESTermsQuery):
         self.main_query = main_query or {}
 
     def build_query(self, **kwargs):
-        """Build the elasticsearch query."""
+        """Build the search engine query."""
         search_index_prefix = current_app.config["SEARCH_INDEX_PREFIX"].strip("-")
         es_index = self.index.format(search_index_prefix, kwargs.get("event_type"))
-        es_doc_type = self.doc_type.format(kwargs.get("event_type")) if self.doc_type else ""
-        agg_query = Search(using=self.client,
-                           index=es_index,
-                           doc_type=es_doc_type)[0:0]
+        agg_query = dsl.Search(using=self.client, index=es_index)[0:0]
 
         query_q = json.dumps(self.main_query)
         for _field in self.main_fields:
@@ -640,12 +634,8 @@ class ESWekoFileRankingQuery(ESTermsQuery):
         self.main_query = main_query or {}
 
     def build_query(self, start_date, end_date, **kwargs):
-        """Build the elasticsearch query."""
-        agg_query = Search(
-            using=self.client,
-            index=self.index,
-            doc_type=self.doc_type
-        )[0:0]
+        """Build the search engine query."""
+        agg_query = dsl.Search(using=self.client, index=self.index)[0:0]
         if self.main_query:
             query_q = self.main_query
             for _field in self.main_fields:

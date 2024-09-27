@@ -32,8 +32,7 @@ import redis
 from redis import sentinel
 from dictdiffer import dot_lookup
 from dictdiffer.merge import Merger, UnresolvedConflictsException
-from elasticsearch.exceptions import TransportError
-from elasticsearch.helpers import bulk
+from invenio_search.engine import search
 from flask import abort, current_app, json, request, session
 from flask_security import current_user
 from invenio_db import db
@@ -130,16 +129,14 @@ class WekoFileObject(FileObject):
 
 
 class WekoIndexer(RecordIndexer):
-    """Provide an interface for indexing records in Elasticsearch."""
+    """Provide an interface for indexing records in search engine."""
 
     def get_es_index(self):
-        """Elastic search settings."""
+        """Search engine settings."""
         self.es_index = current_app.config['SEARCH_UI_SEARCH_INDEX']
-        self.es_doc_type = current_app.config['INDEXER_DEFAULT_DOCTYPE']
-        self.file_doc_type = current_app.config['INDEXER_FILE_DOC_TYPE']
 
     def upload_metadata(self, jrc, item_id, revision_id, skip_files=False):
-        """Upload the item data to ElasticSearch.
+        """Upload the item data to search engine.
 
         Args:
             jrc (_type_): _description_
@@ -154,9 +151,7 @@ class WekoIndexer(RecordIndexer):
         # current_app.logger.error("revision_id:{}".format(revision_id))
         # current_app.logger.error("type(revision_id:{}".format(type(revision_id)))
         # current_app.logger.error("skip_files:{}".format(skip_files))
-        es_info = dict(id=str(item_id),
-                       index=self.es_index,
-                       doc_type=self.es_doc_type)
+        es_info = dict(id=str(item_id), index=self.es_index)
         body = dict(version=revision_id + 1,
                     version_type=self._version_type,
                     body=jrc)
@@ -172,7 +167,7 @@ class WekoIndexer(RecordIndexer):
         self.client.index(**{**es_info, **body})
 
     def delete_file_index(self, body, parent_id):
-        """Delete file index in Elastic search.
+        """Delete file index in search engine.
 
         :param body:
         :param parent_id: Parent item id.
@@ -184,7 +179,6 @@ class WekoIndexer(RecordIndexer):
             try:
                 self.client.delete(id=str(lst),
                                    index=self.es_index,
-                                   doc_type=self.file_doc_type,
                                    routing=parent_id)
             except BaseException:
                 pass
@@ -196,7 +190,6 @@ class WekoIndexer(RecordIndexer):
         body = {'doc': {pst: version.get('is_last')}}
         return self.client.update(
             index=self.es_index,
-            doc_type=self.es_doc_type,
             id=str(version.get('id')),
             body=body, ignore=[400, 404]
         )
@@ -253,7 +246,6 @@ class WekoIndexer(RecordIndexer):
         if update_revision:
             return self.client.update(
                 index=self.es_index,
-                doc_type=self.es_doc_type,
                 id=str(record.id),
                 version=record.revision_id,
                 body=body
@@ -261,7 +253,6 @@ class WekoIndexer(RecordIndexer):
         else:
             return self.client.update(
                 index=self.es_index,
-                doc_type=self.es_doc_type,
                 id=str(record.id),
                 body=body
             )
@@ -282,9 +273,7 @@ class WekoIndexer(RecordIndexer):
         """
         self.get_es_index()
 
-        self.client.delete(id=str(record.id),
-                           index=self.es_index,
-                           doc_type=self.es_doc_type)
+        self.client.delete(id=str(record.id), index=self.es_index)
 
     def delete_by_id(self, uuid):
         """Delete a record by id.
@@ -293,9 +282,7 @@ class WekoIndexer(RecordIndexer):
         """
         try:
             self.get_es_index()
-            self.client.delete(id=str(uuid),
-                               index=self.es_index,
-                               doc_type=self.es_doc_type)
+            self.client.delete(id=str(uuid), index=self.es_index)
         except Exception as ex:
             current_app.logger.error(ex)
 
@@ -312,9 +299,7 @@ class WekoIndexer(RecordIndexer):
             }
         }
         self.get_es_index()
-        search_result = self.client.count(index=self.es_index,
-                                          doc_type=self.es_doc_type,
-                                          body=search_query)
+        search_result = self.client.count(index=self.es_index, body=search_query)
         return search_result.get('count')
 
     def get_pid_by_es_scroll(self, path):
@@ -343,9 +328,8 @@ class WekoIndexer(RecordIndexer):
             else:
                 return None
 
-        ind, doc_type = self.record_to_index({})
-        search_result = self.client.search(index=ind, doc_type=doc_type,
-                                           body=search_query, scroll='1m')
+        ind = self.record_to_index({})
+        search_result = self.client.search(index=ind, body=search_query, scroll='1m')
         if search_result:
             res = get_result(search_result)
             scroll_id = search_result['_scroll_id']
@@ -364,9 +348,7 @@ class WekoIndexer(RecordIndexer):
         :return: Metadata.
         """
         self.get_es_index()
-        return self.client.get(index=self.es_index,
-                               doc_type=self.es_doc_type,
-                               id=str(item_id))
+        return self.client.get(index=self.es_index, id=str(item_id))
 
     def update_feedback_mail_list(self, feedback_mail):
         """Update feedback mail info.
@@ -384,7 +366,6 @@ class WekoIndexer(RecordIndexer):
         
         return self.client.update(
             index=self.es_index,
-            doc_type=self.es_doc_type,
             id=str(feedback_mail.get('id')),
             body=body
         )
@@ -398,7 +379,6 @@ class WekoIndexer(RecordIndexer):
         
         return self.client.update(
             index=self.es_index,
-            doc_type=self.es_doc_type,
             id=str(author_link.get('id')),
             body=body
         )
@@ -410,13 +390,12 @@ class WekoIndexer(RecordIndexer):
         body = {'doc': {'_item_metadata': dc}}
         return self.client.update(
             index=self.es_index,
-            doc_type=self.es_doc_type,
             id=str(item_id),
             body=body
         )
 
     def __build_bulk_es_data(self, updated_data):
-        """Build ElasticSearch data.
+        """Build search engine data.
 
         :param updated_data: Records data.
         """
@@ -425,7 +404,6 @@ class WekoIndexer(RecordIndexer):
             es_data = dict(
                 _id=str(record.get('_id')),
                 _index=self.es_index,
-                _type=self.es_doc_type,
                 _source=record.get('_source'),
             )
             yield es_data
@@ -438,7 +416,7 @@ class WekoIndexer(RecordIndexer):
         self.get_es_index()
         es_data = self.__build_bulk_es_data(updated_data)
         if es_data:
-            success, failed = bulk(self.client, es_data)
+            success, failed = search.helpers.bulk(self.client, es_data)
             if len(failed) > 0:
                 for error in failed:
                     current_app.logger.error(error)
@@ -897,7 +875,7 @@ class WekoDeposit(Deposit):
         Store changes on current instance in database and index it.
         1. Get deposit's bucket then set the workflow's storage location to the bucket's default location.
         2. Update the item metadata in the database.
-        3. Register the item metadata in elasticsearch.
+        3. Register the item metadata in search engine.
         4. Update the version_id of records_metadata in the database.
         
         Args:
@@ -908,7 +886,7 @@ class WekoDeposit(Deposit):
             None
 
         Raises:
-            TransportError: fail upload metadata to elasticsearch
+            TransportError: fail upload metadata to search engine
         """ 
         super(WekoDeposit, self).commit(*args, **kwargs)
         record = RecordMetadata.query.get(self.pid.object_uuid)
@@ -946,14 +924,14 @@ class WekoDeposit(Deposit):
                     if setspec_list:
                         # self.jrc['_oai'].update(dict(sets=setspec_list.spec))
                         self.jrc['_oai'].update(dict(sets=setspec_list))
-                # upload item metadata to Elasticsearch
+                # upload item metadata to search engine
                 set_timestamp(self.jrc, self.created, self.updated)
 
                 # Get file contents
                 self.get_content_files()
 
                 try:
-                    # Upload file content to Elasticsearch
+                    # Upload file content to search engine
                     self.indexer.upload_metadata(self.jrc,
                                                  self.pid.object_uuid,
                                                  self.revision_id)
@@ -962,7 +940,7 @@ class WekoDeposit(Deposit):
                         self.update_feedback_mail()
                     else:
                         self.remove_feedback_mail()
-                except TransportError as err:
+                except search.exceptions.TransportError as err:
                     err_passing_config = current_app.config.get(
                         'WEKO_DEPOSIT_ES_PARSING_ERROR_PROCESS_ENABLE')
                     parse_err = current_app.config.get(
@@ -1000,7 +978,7 @@ class WekoDeposit(Deposit):
         Create a new version of the deposit.
             1. Check if a newer version than the pid that is passed as an argument exists.
             2. Update the draft_id then call the create() method to generate a new deposit.
-            3. Update both the database and elasticsearch.
+            3. Update both the database and search engine.
         Args:
             pid(dict): 
                 Used to check for the lastest pid
@@ -1130,7 +1108,7 @@ class WekoDeposit(Deposit):
                             # update file_files's json
                             file.obj.file.update_json(lst)
 
-                            # upload file metadata to Elasticsearch
+                            # upload file metadata to search engine
                             try:
                                 mimetypes = current_app.config[
                                     'WEKO_MIMETYPE_WHITELIST_FOR_ES']
@@ -3045,7 +3023,7 @@ class _FormatSysBibliographicInformation:
 
         if len(title_data_none_lang) > 0:
             if source_titles[0].get('bibliographic_title')==title_data_none_lang[0]:
-                return title_data_none_lang[0],''
+                return title_data_none_lang[0], ''
             
         if value_latn:
             return value_latn, 'ja-Latn'

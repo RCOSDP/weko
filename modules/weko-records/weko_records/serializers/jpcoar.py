@@ -44,7 +44,7 @@ class JpcoarSerializer(JSONSerializer):
         """Serialize a search result.
 
         :param pid_fetcher: Persistent identifier fetcher.
-        :param search_result: Elasticsearch search result.
+        :param search_result: search engine search result.
         :param links: Dictionary of links to add to response.
 
         """
@@ -62,7 +62,7 @@ class JpcoarSerializer(JSONSerializer):
                               extension_class_entry=PrismEntryExtension)
 
         # Set totalResults
-        _totalResults = search_result['hits']['total']
+        _totalResults = search_result['hits']['total']['value']
         fg.opensearch.totalResults(str(_totalResults))
 
         startPage = request.args.get('page_no', type=str)

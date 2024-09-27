@@ -80,17 +80,17 @@ def check_email_existed(email: str):
                     {"term": {"emailInfo.email.raw": email}}
                 ]
             }
-        }
+        },
+        "track_total_hits": False
     }
 
     indexer = RecordIndexer()
     result = indexer.client.search(
         index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
-        doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
         body=body
     )
 
-    if result['hits']['total']:
+    if len(result['hits']['hits']) > 0:
         return {
             'email': email,
             'author_id': result['hits']['hits'][0]['_source']['pk_id']
@@ -603,7 +603,8 @@ def get_count_item_link(pk_id):
     count = 0
     query_q = {
         "query": {"term": {"author_link.raw": pk_id}},
-        "_source": ["control_number"]
+        "_source": ["control_number"],
+        "track_total_hits": False
     }
     result_itemCnt = RecordIndexer().client.search(
         index=current_app.config['SEARCH_UI_SEARCH_INDEX'],
@@ -613,13 +614,13 @@ def get_count_item_link(pk_id):
     if result_itemCnt \
             and 'hits' in result_itemCnt \
             and 'total' in result_itemCnt['hits'] \
-            and result_itemCnt['hits']['total'] > 0:
-        count = result_itemCnt['hits']['total']
+            and len(result_itemCnt['hits']['hits']) > 0:
+        count = result_itemCnt['hits']['total']['value']
     return count
 
 
 def count_authors():
-    """Count authors from Elasticsearch."""
+    """Count authors from search engine."""
     should = [
         {'bool': {'must': [{'term': {'is_deleted': {'value': 'false'}}}]}},
         {'bool': {'must_not': {'exists': {'field': 'is_deleted'}}}}
@@ -631,7 +632,6 @@ def count_authors():
     indexer = RecordIndexer()
     result = indexer.client.count(
         index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
-        doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
         body={'query': query}
     )
 

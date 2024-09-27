@@ -204,6 +204,22 @@ $(document).ready(function () {
   });
 
   function create_itemtype_schema(){
+
+    // Jsonのネストを返却する関数
+    function getJsonDepth(obj) {
+      let depth = 0;
+      if (obj && typeof obj === 'object') {
+        Object.keys(obj).forEach(function(key) {
+          let tmpDepth = getJsonDepth(obj[key]);
+          if (tmpDepth > depth) {
+            depth = tmpDepth;
+          }
+        });
+        depth++;
+      }
+      return depth;
+    }
+
     page_global.table_row_map['name'] = $('#itemtype_name').val();
     page_global.table_row_map['action'] = $('[name=radio_versionup]:checked').val();
 
@@ -844,6 +860,13 @@ $(document).ready(function () {
     page_global.meta_system = add_meta_system()
     page_global.table_row_map.form = page_global.table_row_map.form.concat(get_form_system())
     add_system_schema_property()
+
+    // JSONのネストがElasticSearchの上限を超えていないかチェック
+    // index.mapping.nested_objects.limitの値が10000のため、その値でチェック。
+    let tableRowMapDepth = getJsonDepth(page_global.table_row_map);
+    if (tableRowMapDepth > 10000) {
+      alert($("#msg_for_deep_nesting").val());
+    }
   }
 
   // add new meta table row

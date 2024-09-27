@@ -380,7 +380,7 @@ class SearchComponent extends React.Component {
     fetch(SEARCH_EMAIL_URL, requestInit)
       .then(res => res.json())
       .then((result) => {
-        this.props.getListUser(result.hits.hits, result.hits.total);
+        this.props.getListUser(result.hits.hits, result.hits.total.value);
       })
       .catch(error => console.error(error));
   }
