@@ -49,7 +49,8 @@ services:
       - INVENIO_POSTGRESQL_DBUSER=invenio
       - INVENIO_POSTGRESQL_DBPASS=dbpass123
       - INVENIO_REDIS_HOST=redis
-      - INVENIO_ELASTICSEARCH_HOST=elasticsearch
+      - INVENIO_ELASTICSEARCH_HOST=opensearch
+      - INVENIO_OPENSEARCH_HOST=opensearch
       - INVENIO_RABBITMQ_HOST=rabbitmq
       - INVENIO_RABBITMQ_USER=guest
       - INVENIO_RABBITMQ_PASS=guest
@@ -135,7 +136,7 @@ services:
     links:
       - postgresql
       - redis
-      - elasticsearch
+      - opensearch
       - rabbitmq
     logging:
       driver: "json-file"
@@ -176,21 +177,22 @@ services:
         limits:
           memory: 100m
 
-  elasticsearch:
+  opensearch:
     restart: "always"
     build:
       context: .
-      dockerfile: ./elasticsearch/Dockerfile
+      dockerfile: ./opensearch/Dockerfile
       args:
-        - ELASTICSEARCH_S3_ACCESS_KEY=${ELASTICSEARCH_S3_ACCESS_KEY}
-        - ELASTICSEARCH_S3_SECRET_KEY=${ELASTICSEARCH_S3_SECRET_KEY}
-        - ELASTICSEARCH_S3_ENDPOINT=${ELASTICSEARCH_S3_ENDPOINT}
-        - ELASTICSEARCH_S3_BUCKET=${ELASTICSEARCH_S3_BUCKET}
+        - OPENSEARCH_S3_ACCESS_KEY=${OPENSEARCH_S3_ACCESS_KEY}
+        - OPENSEARCH_S3_SECRET_KEY=${OPENSEARCH_S3_SECRET_KEY}
+        - OPENSEARCH_S3_ENDPOINT=${OPENSEARCH_S3_ENDPOINT}
+        - OPENSEARCH_S3_BUCKET=${OPENSEARCH_S3_BUCKET}
     volumes:
-      - es-data:/usr/share/elasticsearch/data
+      - os-data:/usr/share/opensearch/data
     environment:
       - "discovery.type=single-node"
-      - "ES_JAVA_OPTS=-Xms2048m -Xmx2048m"
+      - "OPENSEARCH_JAVA_OPTS=-Xms2048m -Xmx2048m"
+      - "OPENSEARCH_INITIAL_ADMIN_PASSWORD=WekoOpensearch123!"
     ports:
       - "29201:9200"
       - "29301:9300"
@@ -247,10 +249,10 @@ services:
 #    ports:
 #      - "5601:5601"
 #    environment:
-#      - "ELASTICSEARCH_URL=http://elasticsearch:9200"
-#      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+#      - "OPENSEARCH_URL=http://opensearch:9200"
+#      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
 #    links:
-#      - elasticsearch
+#      - opensearch
 
 volumes:
   weko3_data:
@@ -258,7 +260,7 @@ volumes:
   data_data:
   conf_data:
   pgsql-data:
-  es-data:
+  os-data:
 #  letsencrypt_etc:
 #  letsencrypt_html:
 

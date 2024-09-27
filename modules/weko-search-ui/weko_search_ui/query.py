@@ -27,7 +27,7 @@ from datetime import datetime
 from datetime import timezone
 from functools import partial
 
-from elasticsearch_dsl.query import Bool, Q
+from invenio_search.engine import dsl
 from flask import current_app, request
 from flask_security import current_user
 from flask_babel import get_timezone
@@ -70,10 +70,10 @@ def get_permission_filter(index_id: str = None):
     else:
         pub_status = [PublishStatus.PUBLIC.value]
     is_perm = search_permission.can()
-    status = Q("terms", publish_status=pub_status)
-    version = Q("match", relation_version_is_last="true")
+    status = dsl.Q("terms", publish_status=pub_status)
+    version = dsl.Q("match", relation_version_is_last="true")
 
-    rng = Q("range", **{"publish_date": {"lte": "now/d","time_zone":str(get_timezone())}})
+    rng = dsl.Q("range", **{"publish_date": {"lte": "now/d","time_zone":str(get_timezone())}})
     term_list = []
     mst = []
     is_perm_paths = Indexes.get_browsing_tree_paths()
@@ -85,16 +85,16 @@ def get_permission_filter(index_id: str = None):
         if search_type == config.WEKO_SEARCH_TYPE_DICT["FULL_TEXT"]:
             should_path = []
             if index_id in is_perm_indexes:
-                should_path.append(Q("terms", path=index_id))
+                should_path.append(dsl.Q("terms", path=index_id))
 
-            terms = Q("bool", should=should_path)
+            terms = dsl.Q("bool", should=should_path)
         else:  # In case search_type is keyword or index
             if index_id in is_perm_indexes:
                 term_list.append(index_id)
 
-            terms = Q("terms", path=term_list)
+            terms = dsl.Q("terms", path=term_list)
     else:
-        terms = Q("terms", path=is_perm_indexes)
+        terms = dsl.Q("terms", path=is_perm_indexes)
     
     if is_admin:
         mst.append(status)
@@ -108,21 +108,21 @@ def get_permission_filter(index_id: str = None):
         user_id, result = check_permission_user()
 
         if result:
-            user_terms = Q("terms", publish_status=[
+            user_terms = dsl.Q("terms", publish_status=[
                 PublishStatus.PUBLIC.value, PublishStatus.PRIVATE.value])
-            creator_user_match = Q("match", weko_creator_id=user_id)
-            shared_user_match = Q("match", weko_shared_id=user_id)
+            creator_user_match = dsl.Q("match", weko_creator_id=user_id)
+            shared_user_match = dsl.Q("match", weko_shared_id=user_id)
             shuld = []
-            shuld.append(Q("bool", must=[user_terms, creator_user_match]))
-            shuld.append(Q("bool", must=[user_terms, shared_user_match]))
-            shuld.append(Q("bool", must=mst))
-            mut.append(Q("bool", should=shuld, must=[terms]))
-            mut.append(Q("bool", must=version))
+            shuld.append(dsl.Q("bool", must=[user_terms, creator_user_match]))
+            shuld.append(dsl.Q("bool", must=[user_terms, shared_user_match]))
+            shuld.append(dsl.Q("bool", must=mst))
+            mut.append(dsl.Q("bool", should=shuld, must=[terms]))
+            mut.append(dsl.Q("bool", must=version))
     else:
         mut = mst
         mut.append(terms)
         base_mut = [status, version]
-        mut.append(Q("bool", must=base_mut))
+        mut.append(dsl.Q("bool", must=base_mut))
 
     return mut, is_perm_paths
 
@@ -131,7 +131,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
     """Parse query using Weko-Query-Parser. MetaData Search.
 
     :param self: REST view.
-    :param search: Elastic search DSL search instance.
+    :param search: search engine DSL search instance.
     :param query_parser: Query parser. (Default: ``None``)
     :param search_type: Search type. (Default: ``None``)
     :returns: Tuple with search instance and URL arguments.
@@ -144,7 +144,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
         :return: Query parser.
         """
         q = (
-            Q(
+            dsl.Q(
                 "query_string",
                 query=qs,
                 default_operator="and",
@@ -174,9 +174,9 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
             if isinstance(v, str):
                 name_dict = dict(operator="and")
                 name_dict.update(dict(query=kv))
-                qry = Q("match", **{v: name_dict})
+                qry = dsl.Q("match", **{v: name_dict})
             elif isinstance(v, list):
-                qry = Q(
+                qry = dsl.Q(
                     "multi_match",
                     query=kv,
                     type="most_fields",
@@ -199,7 +199,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
                         for j in map(partial(lambda x, y: x[int(y)], vlst), kvl):
                             name_dict = dict(operator="and")
                             name_dict.update(dict(query=j))
-                            shud.append(Q("match", **{key: name_dict}))
+                            shud.append(dsl.Q("match", **{key: name_dict}))
 
                         kvl = [
                             x for x in kv.split(",") if not x.isdecimal() and x in vlst
@@ -208,19 +208,19 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
                         for j in kvl:
                             name_dict = dict(operator="and")
                             name_dict.update(dict(query=j))
-                            shud.append(Q("match", **{key: name_dict}))
+                            shud.append(dsl.Q("match", **{key: name_dict}))
 
                         if shud:
-                            return Q("bool", should=shud)
+                            return dsl.Q("bool", should=shud)
 
             elif isinstance(v, tuple) and len(v) >= 2:
                 shud = []
 
                 for i in map(lambda x: v[1](x), kv.split(",")):
-                    shud.append(Q("match", **{v[0]: i}))
+                    shud.append(dsl.Q("match", **{v[0]: i}))
 
                 if shud:
-                    qry = Q("bool", should=shud)
+                    qry = dsl.Q("bool", should=shud)
 
             return qry
 
@@ -250,7 +250,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
                                     if attr_val:
                                         name = v[0] + ".value"
                                         schemas = [vlst[i] for i in attr_val]
-                                        return Bool(
+                                        return dsl.query.Bool(
                                             must=[
                                                 {"term": {name: kv}},
                                                 {"terms": {attr_key_hit[0]: schemas}},
@@ -292,19 +292,19 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
                                             name = alst[0] + ".value"
                                             name_dict = dict(operator="and")
                                             name_dict.update(dict(query=kv))
-                                            mut = [Q("match", **{name: name_dict})]
+                                            mut = [dsl.Q("match", **{name: name_dict})]
                                             qt = None
 
                                             if "=*" in alst[1]:
                                                 name = alst[0] + "." + val_attr_lst[0]
                                                 qt = [
-                                                    Q("term", **{name: val_attr_lst[1]})
+                                                    dsl.Q("term", **{name: val_attr_lst[1]})
                                                 ]
 
                                             mut.extend(qt or [])
-                                            qry = Q("bool", must=mut)
+                                            qry = dsl.Q("bool", must=mut)
                                             shuld.append(
-                                                Q("nested", path=alst[0], query=qry)
+                                                dsl.Q("nested", path=alst[0], query=qry)
                                             )
                         else:
                             attr_key_hit = [
@@ -324,7 +324,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
                                     if attr_val:
                                         mst = []
                                         name = v[0] + ".value"
-                                        qry = Q(
+                                        qry = dsl.Q(
                                             "multi_match",
                                             query=kv,
                                             type="most_fields",
@@ -340,23 +340,23 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
                                                 attr_val,
                                             )
                                         )
-                                        qm = Q("terms", **{name: name_val})
+                                        qm = dsl.Q("terms", **{name: name_val})
                                         mst.append(qm)
                                         shuld.append(
-                                            Q(
+                                            dsl.Q(
                                                 "nested",
                                                 path=v[0],
-                                                query=Q("bool", must=mst),
+                                                query=dsl.Q("bool", must=mst),
                                             )
                                         )
                     elif isinstance(attr_obj, str) and attr_val_str:
-                        query = Q(
+                        query = dsl.Q(
                             "bool",
                             must=[{"terms": {attr_obj: attr_val_str.split(",")}}],
                         )
-                        shuld.append(Q("nested", path=v[0], query=query))
+                        shuld.append(dsl.Q("nested", path=v[0], query=query))
 
-            return Q("bool", should=shuld) if shuld else None
+            return dsl.Q("bool", should=shuld) if shuld else None
 
         def _get_date_query(k, v):
             """[summary]
@@ -404,7 +404,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
                 qv.update(dict(lte=date_to))
 
                 if isinstance(v[1], str):
-                    qry = Q("range", **{v[1]: qv})
+                    qry = dsl.Q("range", **{v[1]: qv})
                 elif isinstance(v[1], tuple) and len(v[1]) >= 2:
                     path = v[1][0]
                     dt = v[1][1]
@@ -428,14 +428,14 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
                                         attr_val = [x for x in attr_val_str.split(",")]
                                         shud = []
                                         for j in attr_val:
-                                            qt = Q("term", **{attr_key_hit[0]: j})
+                                            qt = dsl.Q("term", **{attr_key_hit[0]: j})
                                             shud.append(qt)
 
-                                        qry = Q("range", **{path + ".value": qv})
-                                        qry = Q(
+                                        qry = dsl.Q("range", **{path + ".value": qv})
+                                        qry = dsl.Q(
                                             "nested",
                                             path=path,
-                                            query=Q("bool", should=shud, must=[qry]),
+                                            query=dsl.Q("bool", should=shud, must=[qry]),
                                         )
             current_app.logger.debug(qry)
             return qry
@@ -452,7 +452,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
             if isinstance(v, str):
                 name_dict = dict(operator="and")
                 name_dict.update(dict(query=kv))
-                qry = Q("match", **{v: name_dict})
+                qry = dsl.Q("match", **{v: name_dict})
 
             return qry
 
@@ -471,7 +471,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
                 qv.update(dict(lte=value_to))
 
                 if isinstance(v[1], str):
-                    qry = Q("range", **{v[1]: qv})
+                    qry = dsl.Q("range", **{v[1]: qv})
             return qry
 
         def _get_geo_distance_query(k, v):
@@ -611,7 +611,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
 
         mst.extend(_get_detail_keywords_query())
 
-        return Q("bool", must=mst) if mst else Q()
+        return dsl.Q("bool", must=mst) if mst else dsl.Q()
 
     def _get_simple_search_community_query(community_id, qs=None):
         """Query parser for simple search.
@@ -630,11 +630,11 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
             mst.append(q)
 
         mst.extend(_get_detail_keywords_query())
-        return Q("bool", must=mst) if mst else Q()
+        return dsl.Q("bool", must=mst) if mst else dsl.Q()
 
     def _get_file_content_query(qstr):
         """Query for searching indexed file contents."""
-        multi_cont_q = Q(
+        multi_cont_q = dsl.Q(
             "multi_match",
             query=qstr,
             operator="and",
@@ -642,18 +642,18 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
         )
 
         # Search fields may increase so leaving as multi
-        multi_q = Q(
+        multi_q = dsl.Q(
             "query_string",
             query=qs,
             default_operator="and",
             fields=["search_*", "search_*.ja"],
         )
 
-        nested_content = Q("nested", query=multi_cont_q, path="content")
-        return Q("bool", should=[nested_content, multi_q])
+        nested_content = dsl.Q("nested", query=multi_cont_q, path="content")
+        return dsl.Q("bool", should=[nested_content, multi_q])
 
     def _default_parser(qstr=None):
-        """Default parser that uses the Q() from elasticsearch_dsl.
+        """Default parser that uses the Q() from search engine.
 
            Full text Search.
            Detail Search.
@@ -675,10 +675,10 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
             q_s = _get_file_content_query(qstr)
             mst.append(q_s)
 
-        return Q("bool", must=mst) if mst else Q()
+        return dsl.Q("bool", must=mst) if mst else dsl.Q()
 
     def _default_parser_community(community_id, qstr=None):
-        """Default parser that uses the Q() from elasticsearch_dsl.
+        """Default parser that uses the Q() from search engine.
 
            Full text Search.
            Detail Search.
@@ -702,7 +702,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
             q_s = _get_file_content_query(qstr)
             mst.append(q_s)
 
-        return Q("bool", must=mst) if mst else Q()
+        return dsl.Q("bool", must=mst) if mst else dsl.Q()
 
     from invenio_records_rest.facets import default_facets_factory
     from invenio_records_rest.sorter import default_sorter_factory
@@ -816,7 +816,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
             urlkwargs.add("sort", sort_key)
 
     urlkwargs.add("q", query_q)
-    # debug elastic search query
+    # debug search engine query
     current_app.logger.debug("query: {}".format(json.dumps((search.query()).to_dict())))
     # {"query": {"bool": {"filter": [{"bool": {"must": [{"match": {"publish_status": "0"}}, {"range": {"publish_date": {"lte": "now/d"}}}, {"terms": {"path": ["1031", "1029", "1025", "952", "953", "943", "940", "1017", "1015", "1011", "881", "893", "872", "869", "758", "753", "742", "530", "533", "502", "494", "710", "702", "691", "315", "351", "288", "281", "759", "754", "744", "531", "534", "503", "495", "711", "704", "692", "316", "352", "289", "282", "773", "771", "767", "538", "539", "519", "510", "756", "745", "733", "337", "377", "308", "299", "2063", "2061", "2057", "1984", "1985", "1975", "1972", "2049", "2047", "2043", "1913", "1925", "1904", "1901", "1790", "1785", "1774", "1562", "1565", "1534", "1526", "1742", "1734", "1723", "1347", "1383", "1320", "1313", "1791", "1786", "1776", "1563", "1566", "1535", "1527", "1743", "1736", "1724", "1348", "1384", "1321", "1314", "1805", "1803", "1799", "1570", "1571", "1551", "1542", "1788", "1777", "1765", "1369", "1409", "1340", "1331", "4127", "4125", "4121", "4048", "4049", "4039", "4036", "4113", "4111", "4107", "3977", "3989", "3968", "3965", "3854", "3849", "3838", "3626", "3629", "3598", "3590", "3806", "3798", "3787", "3411", "3447", "3384", "3377", "3855", "3850", "3840", "3627", "3630", "3599", "3591", "3807", "3800", "3788", "3412", "3448", "3385", "3378", "3869", "3867", "3863", "3634", "3635", "3615", "3606", "3852", "3841", "3829", "3433", "3473", "3404", "3395"]}}, {"bool": {"must": [{"match": {"publish_status": "0"}}, {"match": {"relation_version_is_last": "true"}}]}}]}}], "must": [{"match_all": {}}]}}, "aggs": {"Data Language": {"filter": {"bool": {"must": [{"term": {"publish_status": "0"}}]}}, "aggs": {"Data Language": {"terms": {"field": "language", "size": 1000}}}}, "Access": {"filter": {"bool": {"must": [{"term": {"publish_status": "0"}}]}}, "aggs": {"Access": {"terms": {"field": "accessRights", "size": 1000}}}}, "Location": {"filter": {"bool": {"must": [{"term": {"publish_status": "0"}}]}}, "aggs": {"Location": {"terms": {"field": "geoLocation.geoLocationPlace", "size": 1000}}}}, "Temporal": {"filter": {"bool": {"must": [{"term": {"publish_status": "0"}}]}}, "aggs": {"Temporal": {"terms": {"field": "temporal", "size": 1000}}}}, "Topic": {"filter": {"bool": {"must": [{"term": {"publish_status": "0"}}]}}, "aggs": {"Topic": {"terms": {"field": "subject.value", "size": 1000}}}}, "Distributor": {"filter": {"bool": {"must": [{"term": {"contributor.@attributes.contributorType": "Distributor"}}, {"term": {"publish_status": "0"}}]}}, "aggs": {"Distributor": {"terms": {"field": "contributor.contributorName", "size": 1000}}}}, "Data Type": {"filter": {"bool": {"must": [{"term": {"description.descriptionType": "Other"}}, {"term": {"publish_status": "0"}}]}}, "aggs": {"Data Type": {"terms": {"field": "description.value", "size": 1000}}}}}, "from": 0, "size": 20, "_source": {"excludes": ["content"]}}
     # {"query": {"bool": {"filter": [{"bool": {"must": [{"match": {"publish_status": "0"}}, {"range": {"publish_date": {"lte": "now/d"}}}, {"terms": {"path": ["1031", "1029", "1025", "952", "953", "943", "940", "1017", "1015", "1011", "881", "893", "872", "869", "758", "753", "742", "530", "533", "502", "494", "710", "702", "691", "315", "351", "288", "281", "759", "754", "744", "531", "534", "503", "495", "711", "704", "692", "316", "352", "289", "282", "773", "771", "767", "538", "539", "519", "510", "756", "745", "733", "337", "377", "308", "299", "2063", "2061", "2057", "1984", "1985", "1975", "1972", "2049", "2047", "2043", "1913", "1925", "1904", "1901", "1790", "1785", "1774", "1562", "1565", "1534", "1526", "1742", "1734", "1723", "1347", "1383", "1320", "1313", "1791", "1786", "1776", "1563", "1566", "1535", "1527", "1743", "1736", "1724", "1348", "1384", "1321", "1314", "1805", "1803", "1799", "1570", "1571", "1551", "1542", "1788", "1777", "1765", "1369", "1409", "1340", "1331", "4127", "4125", "4121", "4048", "4049", "4039", "4036", "4113", "4111", "4107", "3977", "3989", "3968", "3965", "3854", "3849", "3838", "3626", "3629", "3598", "3590", "3806", "3798", "3787", "3411", "3447", "3384", "3377", "3855", "3850", "3840", "3627", "3630", "3599", "3591", "3807", "3800", "3788", "3412", "3448", "3385", "3378", "3869", "3867", "3863", "3634", "3635", "3615", "3606", "3852", "3841", "3829", "3433", "3473", "3404", "3395"]}}, {"bool": {"must": [{"match": {"publish_status": "0"}}, {"match": {"relation_version_is_last": "true"}}]}}]}}], "must": [{"match_all": {}}]}}, "aggs": {"Data Language": {"filter": {"bool": {"must": [{"term": {"publish_status": "0"}}]}}, "aggs": {"Data Language": {"terms": {"field": "language", "size": 1000}}}}, "Access": {"filter": {"bool": {"must": [{"term": {"publish_status": "0"}}]}}, "aggs": {"Access": {"terms": {"field": "accessRights", "size": 1000}}}}, "Location": {"filter": {"bool": {"must": [{"term": {"publish_status": "0"}}]}}, "aggs": {"Location": {"terms": {"field": "geoLocation.geoLocationPlace", "size": 1000}}}}, "Temporal": {"filter": {"bool": {"must": [{"term": {"publish_status": "0"}}]}}, "aggs": {"Temporal": {"terms": {"field": "temporal", "size": 1000}}}}, "Topic": {"filter": {"bool": {"must": [{"term": {"publish_status": "0"}}]}}, "aggs": {"Topic": {"terms": {"field": "subject.value", "size": 1000}}}}, "Distributor": {"filter": {"bool": {"must": [{"term": {"contributor.@attributes.contributorType": "Distributor"}}, {"term": {"publish_status": "0"}}]}}, "aggs": {"Distributor": {"terms": {"field": "contributor.contributorName", "size": 1000}}}}, "Data Type": {"filter": {"bool": {"must": [{"term": {"description.descriptionType": "Other"}}, {"term": {"publish_status": "0"}}]}}, "aggs": {"Data Type": {"terms": {"field": "description.value", "size": 1000}}}}}, "sort": [{"date_range1.gte": {"order": "asc", "unmapped_type": "date"}}], "from": 0, "size": 20, "_source": {"excludes": ["content"]}}
@@ -830,7 +830,7 @@ def item_path_search_factory(self, search, index_id=None):
     """Parse query using Weko-Query-Parser.
 
     :param self: REST view.
-    :param search: Elastic search DSL search instance.
+    :param search: search engine DSL search instance.
     :param index_id: Index Identifier contains item's path
     :returns: Tuple with search instance and URL arguments.
     """
@@ -1147,7 +1147,7 @@ def item_path_search_factory(self, search, index_id=None):
 
     urlkwargs.add("q", query_q)
     urlkwargs.add("is_perm_paths", is_perm_paths)
-    # debug elastic search query
+    # debug search engine query
     current_app.logger.debug(json.dumps((search.query()).to_dict()))
     return search, urlkwargs
 
@@ -1222,9 +1222,7 @@ def item_search_factory(
     """
 
     def _get_query(start_term, end_term, indexes):
-        query_string = "_type:{} AND relation_version_is_last:true ".format(
-            current_app.config["INDEXER_DEFAULT_DOC_TYPE"]
-        )
+        query_string = "relation_version_is_last:true"
         if not query_with_publish_status:
             query_string += " AND publish_status:{} ".format(PublishStatus.PUBLIC.value)
         query_string += " AND publish_date:[{} TO {}]".format(start_term, end_term)
@@ -1268,7 +1266,7 @@ def item_search_factory(
             "Failed parsing query: {0}".format(query_q), exc_info=True
         )
         raise InvalidQueryRESTError()
-    # debug elastic search query
+    # debug search engine query
     current_app.logger.debug(json.dumps((search.query()).to_dict()))
     return search, urlkwargs
 
@@ -1282,9 +1280,7 @@ def feedback_email_search_factory(self, search):
     """
 
     def _get_query():
-        query_string = "_type:{} AND " "relation_version_is_last:true ".format(
-            current_app.config["INDEXER_DEFAULT_DOC_TYPE"]
-        )
+        query_string = "relation_version_is_last:true"
         query_q = {
             "query": {
                 "bool": {
@@ -1337,6 +1333,6 @@ def feedback_email_search_factory(self, search):
             "Failed parsing query: {0}".format(query_q), exc_info=True
         )
         raise InvalidQueryRESTError()
-    # debug elastic search query
+    # debug search engine query
     current_app.logger.debug(json.dumps((search.query()).to_dict()))
     return search

@@ -29,7 +29,7 @@ from functools import partial
 
 from flask import Blueprint, abort, current_app, jsonify, redirect, request, url_for, Response
 from flask_babel import get_locale
-from elasticsearch.exceptions import ElasticsearchException
+from opensearchpy.exceptions import OpenSearchException
 from invenio_db import db
 from invenio_files_rest.storage import PyFSFileStorage
 from invenio_i18n.ext import current_i18n
@@ -87,7 +87,7 @@ def create_blueprint(app, endpoints):
         __name__,
         url_prefix="",
     )
-    
+
     @blueprint.teardown_request
     def dbsession_clean(exception):
         current_app.logger.debug("weko_search_ui dbsession_clean: {}".format(exception))
@@ -97,7 +97,7 @@ def create_blueprint(app, endpoints):
             except:
                 db.session.rollback()
         db.session.remove()
-    
+
 
     for endpoint, options in (endpoints or {}).items():
         if "record_serializers" in options:
@@ -122,7 +122,6 @@ def create_blueprint(app, endpoints):
 
         search_class_kwargs = {}
         search_class_kwargs["index"] = options.get("search_index")
-        search_class_kwargs["doc_type"] = options.get("search_type")
         search_class = partial(search_class, **search_class_kwargs)
 
         ctx = dict(
@@ -244,7 +243,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         from weko_admin.utils import get_facet_search_query
 
         page = request.values.get("page", 1, type=int)
-        size = request.values.get("size", 20, type=int) 
+        size = request.values.get("size", 20, type=int)
         is_search = request.values.get("is_search", 0 ,type=int ) #toppage and search_page is 1
         community_id = request.values.get("community")
         params = {}
@@ -262,11 +261,12 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         search_obj = self.search_class()
         search = search_obj.with_preference_param().params(version=True)
         search = search[(page - 1) * size : page * size]
+        search = search.params(track_total_hits=True)
         search, qs_kwargs = self.search_factory(self, search)
         query = request.values.get("q")
         if query:
             urlkwargs["q"] = query
-        
+
         # Execute search
         weko_faceted_search_mapping = FacetSearchSetting.get_activated_facets_mapping()
         for param in params:
@@ -287,7 +287,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                 "weko_search_rest.recid_index", page=page - 1, **urlkwargs
             )
         if (
-            size * page < search_result.hits.total
+            size * page < search_result.hits.total.value
             and size * page < self.max_result_window
         ):
             links["next"] = url_for(
@@ -324,7 +324,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
             for k in range(len(agp)):
                 if q == agp[k].get("key"):
                     current_idx = {}
-                    _child_indexes = [] 
+                    _child_indexes = []
                     p = {}
                     for path in paths:
                         if path.path == agp[k].get("key"):
@@ -658,6 +658,7 @@ class IndexSearchResourceAPI(ContentNegotiatedMethodView):
             #     search = search.post_filter({'terms': {query_key: params[param]}})
 
             # Execute search
+            search = search.params(track_total_hits=True)
             search_results = search.execute()
             search_results = search_results.to_dict()
 
@@ -679,14 +680,14 @@ class IndexSearchResourceAPI(ContentNegotiatedMethodView):
             indent = 4 if request.args.get('pretty') == 'true' else None
 
             cursor = None
-            if len(search_results['hits']['hits']) > 0:
+            if search_results['hits']['total']['value']:
                 sort_key = search_results['hits']['hits'][-1].get('sort')
                 if sort_key:
                     cursor = sort_key[0]
 
             # Create result
             result = {
-                'total_results': search_results['hits']['total'],
+                'total_results': search_results['hits']['total']['value'],
                 'count_results': len(rocrate_list),
                 'cursor': cursor,
                 'page': page,
@@ -707,7 +708,7 @@ class IndexSearchResourceAPI(ContentNegotiatedMethodView):
         except SearchPaginationRESTError:
             raise SearchPaginationRESTError()
 
-        except ElasticsearchException:
+        except OpenSearchException:
             raise InternalServerError()
 
         except Exception:
@@ -859,7 +860,7 @@ class IndexSearchResultList(ContentNegotiatedMethodView):
         except (InvalidRequestError, NotFound) as e:
             raise e
 
-        except ElasticsearchException:
+        except OpenSearchException:
             raise InternalServerError()
 
         except Exception:

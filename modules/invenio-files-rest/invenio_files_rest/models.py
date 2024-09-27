@@ -1053,18 +1053,20 @@ class FileInstance(db.Model, Timestamp):
         self.json = jsn.copy()
 
     def upload_file(self, fjson, **kwargs):
-        """Put file to Elasticsearch.
+        """Uploads a file using the specified storage.
 
-        :param fjson:
-        :param kwargs:
+        :param fjson: The file JSON object.
+        :type fjson: dict
         """
+
         self.storage(**kwargs).upload_file(fjson)
 
     def read_file(self, fjson, **kwargs):
-        """Put file to Elasticsearch.
+        """Reads a file from the storage.
 
-        :param fjson:
-        :param kwargs:
+        :param fjson: The file JSON representation.
+        :type fjson: dict
+        :return: The contents of the file.
         """
         return self.storage(**kwargs).read_file(fjson)
 

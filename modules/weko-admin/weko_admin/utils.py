@@ -1032,11 +1032,11 @@ class FeedbackMail:
             "query": query,
             "from": offset,
             "size": size,
+            "track_total_hits": True
         }
         indexer = RecordIndexer()
         result = indexer.client.search(
             index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
-            doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
             body=body
         )
 
@@ -2286,7 +2286,7 @@ def elasticsearch_reindex( is_db_to_es ):
         
     Raises:
     AssersionError 
-        In case of the response code from ElasticSearch is not 200,
+        In case of the response code from seacrh engin is not 200,
         Subsequent processing is interrupted.
     
     Todo:
@@ -2343,7 +2343,7 @@ def elasticsearch_reindex( is_db_to_es ):
         ]
     }
 
-    current_app.logger.info(' START elasticsearch reindex: {}.'.format(index))
+    current_app.logger.info(' START search engine reindex: {}.'.format(index))
 
     # トランザクションログをLucenceに保存。
     response = requests.post(base_url + index + "/_flush?wait_if_ongoing=true") 
@@ -2361,7 +2361,7 @@ def elasticsearch_reindex( is_db_to_es ):
     assert response.status_code == 200 ,response.text
     current_app.logger.info("add setting percolator") 
 
-    _create_percolator_mapping(tmpindex, "item-v1.0.0")
+    _create_percolator_mapping(tmpindex)
     current_app.logger.info("END create tmpindex") 
     
     # 高速化を期待してインデックスの設定を変更。
@@ -2406,7 +2406,7 @@ def elasticsearch_reindex( is_db_to_es ):
     current_app.logger.info(response.text)
     assert response.status_code == 200 ,response.text
     current_app.logger.info("add setting percolator") 
-    _create_percolator_mapping(index, "item-v1.0.0")
+    _create_percolator_mapping(index)
     current_app.logger.info("END create index") 
 
     # 高速化を期待してインデックスの設定を変更。
@@ -2465,7 +2465,7 @@ def elasticsearch_reindex( is_db_to_es ):
     assert response.status_code == 200 ,response.text
     current_app.logger.info("END delete tmpindex") 
 
-    current_app.logger.info(' END elasticsearch reindex: {}.'.format(index))
+    current_app.logger.info(' END search engine reindex: {}.'.format(index))
     
     return 'completed'
 
@@ -2475,16 +2475,16 @@ def _elasticsearch_remake_item_index(index_name):
     from invenio_oaiserver.percolator import _new_percolator
     returnlist = []
     # インデックスを登録
-    current_app.logger.info(' START elasticsearch import from oaiserver_set')
+    current_app.logger.info(' START search engine import from oaiserver_set')
     oaiset_ = OAISet.query.all()
     for target in oaiset_ :
         spec = target.spec
         search_pattern = target.search_pattern
         _new_percolator(spec , search_pattern)
-    current_app.logger.info(' END elasticsearch import from oaiserver_set')
+    current_app.logger.info(' END search engine import from oaiserver_set')
 
     # アイテムを登録
-    current_app.logger.info(' START elasticsearch import from records_metadata')
+    current_app.logger.info(' START search engine import from records_metadata')
     # get all registered record_metadata's ids
     uuids = (x[0] for x in PersistentIdentifier.query.filter_by(
         object_type='rec', status=PIDStatus.REGISTERED
@@ -2499,6 +2499,6 @@ def _elasticsearch_remake_item_index(index_name):
         assert res != None ,'Index class is None.'
         assert res.get("_shards").get("failed") == 0 ,'Index fail.'
         returnlist.append(res)
-    current_app.logger.info(' END elasticsearch import from records_metadata')
+    current_app.logger.info(' END search engine import from records_metadata')
     
     return returnlist

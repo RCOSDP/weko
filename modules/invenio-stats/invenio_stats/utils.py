@@ -204,7 +204,7 @@ def is_valid_access():
 
 
 class QueryFileReportsHelper(object):
-    """Helper for parsing elasticsearch aggregations."""
+    """Helper for parsing search engine aggregations."""
 
     @classmethod
     def calc_per_group_counts(cls, group_names, group_counts, current_count):
@@ -1342,7 +1342,7 @@ class StatsCliUtil:
             self.flush_indices = set()
 
     def delete_data(self, bookmark: bool = False):
-        """Delete stats data in Elasticsearch.
+        """Delete stats data in search engine.
 
         :param bookmark: set True if delete bookmark
         """
@@ -1372,7 +1372,7 @@ class StatsCliUtil:
             if self.verbose:
                 click.secho(
                     "Start to restore of Bookmark data "
-                    "from the Database to Elasticsearch...",
+                    "from the Database to search engine...",
                     fg="green"
                 )
             bookmark_data = self.__get_stats_data_from_db(StatsBookmark,
@@ -1382,7 +1382,7 @@ class StatsCliUtil:
     def __prepare_es_indexes(
         self, bookmark_index=False, delete=False
     ):
-        """Prepare ElasticSearch index data.
+        """Prepare search engine index data.
 
         :param bookmark_index: set True if prepare the index for the bookmark
         :param delete: set True if prepare the index for the delete data feature
@@ -1408,7 +1408,7 @@ class StatsCliUtil:
                 yield _index
 
     def __build_es_data(self, data_list: list) -> Generator:
-        """Build Elasticsearch data.
+        """Build search engine data.
 
         :param data_list: Stats data from DB.
         """
@@ -1461,7 +1461,7 @@ class StatsCliUtil:
     def __show_message(self, index_name, success, failed):
         """Show message.
 
-        :param index_name:Elasticsearch index name.
+        :param index_name:search engine index name.
         :param success:Success message.
         :param failed:failed message.
         """
@@ -1483,7 +1483,7 @@ class StatsCliUtil:
         restore_data: Generator,
         flush_indices: set = None
     ) -> None:
-        """Restore ElasticSearch data based on Database.
+        """Restore search engine data based on Database.
 
         :param restore_data:
         :param flush_indices:
@@ -1510,7 +1510,7 @@ class StatsCliUtil:
     def __cli_delete_es_index(self, _index) -> None:
         """Delete ES index.
 
-        :param _index: Elasticsearch index.
+        :param _index: search engine index.
         """
         query = dsl.Search(
             using=current_search_client,

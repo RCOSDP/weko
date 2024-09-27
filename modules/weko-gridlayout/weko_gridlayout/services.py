@@ -1130,7 +1130,7 @@ class WidgetDataLoaderServices:
     def get_arrivals_rss(cls, data, term, count):
         """Get New Arrivals RSS.
 
-        :dictionary: elastic search data
+        :dictionary: search engine data
 
         """
         from weko_items_ui.utils import find_hidden_items

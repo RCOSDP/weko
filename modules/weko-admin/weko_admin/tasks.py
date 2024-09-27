@@ -120,7 +120,7 @@ def is_reindex_running():
 
 @shared_task(ignore_results=True)
 def send_all_reports(report_type=None, year=None, month=None):
-    """Query elasticsearch for each type of stats report."""
+    """Query seacrh engine for each type of stats report."""
     # By default get the current month and year
     now = datetime.now()
     month = month or now.month

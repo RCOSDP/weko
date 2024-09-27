@@ -489,7 +489,7 @@ class RecordIndexer(object):
         """Bulk index action.
 
         :param payload: Decoded message body.
-        :returns: Dictionary defining an Elasticsearch bulk 'index' action.
+        :returns: Dictionary defining an the search engine bulk 'index' action.
         """
         record = self.record_cls.get_record(id)
         self.count = self.count + 1

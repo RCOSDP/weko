@@ -8,7 +8,7 @@
 
 """Configuration for deposit search."""
 
-from elasticsearch_dsl import Q, TermsFacet
+from invenio_search.engine import dsl
 from flask import has_request_context
 from flask_login import current_user
 from invenio_search import RecordsSearch
@@ -30,9 +30,9 @@ def deposits_filter():
     Otherwise, it filters out any deposit where user is not the owner.
     """
     if not has_request_context() or admin_permission_factory().can():
-        return Q()
+        return dsl.Q()
     else:
-        return Q(
+        return dsl.Q(
             'match', **{'_deposit.owners': getattr(current_user, 'id', 0)}
         )
 
@@ -47,6 +47,6 @@ class DepositSearch(RecordsSearch):
         doc_types = None
         fields = ('*', )
         facets = {
-            'status': TermsFacet(field='_deposit.status'),
+            'status': dsl.TermsFacet(field='_deposit.status'),
         }
         default_filter = DefaultFilter(deposits_filter)

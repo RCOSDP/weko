@@ -111,8 +111,7 @@ def eval_field(field, asc, nested_sorting=None):
             sorting = {"_script":{"type":"number",
             "script":{"lang":"painless","source":"def x = params._source.date_range1;Date dt = new Date();if (x != null && x instanceof List) { if (x[0] != null && x[0] instanceof Map){ def st = x[0].getOrDefault(\"gte\",\"\");SimpleDateFormat format = new SimpleDateFormat();if (st.length()>7) {format.applyPattern(\"yyyy-MM-dd\");}else if (st.length()>4){format.applyPattern(\"yyyy-MM\");}else if (st.length()==4){format.applyPattern(\"yyyy\");} try { dt = format.parse(st);} catch (Exception e){}}} return dt.getTime()"},"order": 'asc' if key_asc else 'desc'}}
         if "control_number" in key:
-            sorting = {"_script":{"type":"number", "script": "Float.parseFloat(doc['control_number'].value)", "order": "asc" if key_asc else "desc"}}
-
+            sorting = {"_script":{"type":"number", "script": "if ( doc['control_number'].size() != 0 ) { return Float.parseFloat(doc['control_number'].value) } else { return 0.0 }", "order": "asc" if key_asc else "desc"}}
         if nested_sorting:
             sorting[key].update({'nested': nested_sorting})
         return sorting
