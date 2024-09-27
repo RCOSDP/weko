@@ -1280,6 +1280,90 @@ class TestWekoDeposit():
                         mock_logger.reset_mock()
 
                     # file.obj.mimetype not in mimetypes
+                    with patch('weko_deposit.api.WekoDeposit.get_file_data') as mock_get_file_data:
+                        fmd = [{'file': 'data'}, {"filename": "filename"}]
+                        mock_get_file_data.return_value = fmd
+                        # splited_content = "content1\ncontent2\ncontent3"
+                        # with patch('weko_deposit.api.parser.from_file') as mock_parser:
+                        #     mock_parser.return_value = {"content": splited_content}
+                        def init(self, key, mimetype,version_id):
+                            self.key = key
+                            self.mimetype = mimetype
+                            self.version_id = version_id
+                            self.file = FileInstance.create()
+
+                        filename = "filename"
+                        # mimetype = "application/pdf"
+                        version_id = "1"
+                        # return value of mock self.files = [file]
+                        mock_files.return_value = [
+                            # file
+                            FileObject(
+                                type("test_obj",(),
+                                    {"__init__": init})(filename, version_id),
+                                {"title": [{"title": "item", "filename": "filename"}]}
+                            )
+                        ]
+                        deposit = copy.deepcopy(es_records_1[1][0]['deposit'])
+                        jrc = {
+                            'type': ['conference paper'],
+                            'title': ['test'],
+                            'control_number': '2',
+                            '_oai': {'id': '2', 'sets': ['1']},
+                            '_item_metadata': OrderedDict([
+                                ('pubdate', {'attribute_name': 'PubDate',
+                                'attribute_value': '2023-12-07'}),
+                                ('item_1617186331708', {
+                                    'attribute_name': 'Title',
+                                    'attribute_value_mlt': [{'subitem_1551255647225': 'test', 'subitem_1551255648112': 'ja'}]
+                                }),
+                                ('item_1617258105262', {
+                                    'attribute_name': 'Resource Type',
+                                    'attribute_value_mlt': [{'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}]
+                                }),
+                                ('item_title', 'test'),
+                                ('item_type_id', '1'),
+                                ('control_number', '2'),
+                                ('author_link', []),
+                                ('_oai', {'id': '2', 'sets': ['1']}),
+                                ('publish_date', '2023-12-07'),
+                                ('title', ['test']),
+                                ('relation_version_is_last', True),
+                                ('path', ['1']),
+                                ('publish_status', '2')
+                            ]),
+                            'itemtype': 'テストアイテムタイプ',
+                            'publish_date': '2023-12-07',
+                            'author_link': [],
+                            'path': ['1'],
+                            'publish_status': '2',
+                            '_created': '2024-09-25T07:58:24.680172+00:00',
+                            '_updated': '2024-09-25T07:58:25.436334+00:00',
+                            'content': [{"test": "content"}, {"file": "test"}]
+                        }
+                        deposit.jrc = jrc
+
+                        deposit.get_content_files()
+
+                        result = deposit.jrc.get('content')
+                        assert 'filename' in result[0]
+                        assert result[0]['filename'] == filename
+                        assert 'version_id' in result[0]
+                        assert result[0]['version_id'] == version_id
+                        assert 'url' in result[0]
+                        from weko_workflow.utils import get_url_root
+                        assert result[0]['url']['url'] == '{}record/{}/files/{}'.format(get_url_root(), deposit['recid'], filename)
+                        assert 'attachment' in result[0]
+                        # assert "".join(splited_content.splitlines()) in result[0]['attachment']['content']
+
+                        # assert 'content' in deposit.jrc
+                        # assert any(("file" in e.keys()) for e in deposit.jrc.get('content'))
+                        mock_logger.assert_any_call(key='WEKO_COMMON_IF_ENTER', branch='fmd is not empty')
+                        mock_logger.assert_any_call(key='WEKO_COMMON_FOR_START')
+                        mock_logger.assert_any_call(key='WEKO_COMMON_FOR_LOOP_ITERATION', count=mock.ANY, element=mock.ANY)
+                        mock_logger.assert_any_call(key='WEKO_COMMON_FOR_END')
+                        mock_logger.reset_mock()
+                        mock_get_file_data.reset_mock()
 
                     # fmd is list  [lst0, lst1]
                     with patch('weko_deposit.api.WekoDeposit.get_file_data') as mock_get_file_data:
@@ -1399,80 +1483,6 @@ class TestWekoDeposit():
                         deposit.jrc = jrc
                         deposit.get_content_files()
                         mock_logger.assert_any_call(key='WEKO_COMMON_ERROR_UNEXPECTED', ex=mock.ANY)
-
-                            # with patch("weko_deposit.api.")
-
-            # indexer, results = es_records_1
-
-            # rec_uuid = es_records_1[1][0]["rec_uuid"]
-            # # recid = []
-
-            # # recid.append(PersistentIdentifier.create(
-            # #     pid_type="recid",
-            # #     pid_value=1,
-            # #     object_type="rec",
-            # #     object_uuid=uuid.uuid4(),
-            # #     status=PIDStatus.REGISTERED,
-            # # ))
-            # # recid.append(PersistentIdentifier.create(
-            # #     pid_type="recid",
-            # #     pid_value=2,
-            # #     object_type="rec",
-            # #     object_uuid=uuid.uuid4(),
-            # #     status=PIDStatus.REGISTERED,
-            # # ))
-            # # print(f"\n{recid}")
-            # db.session.commit()
-            # deposit = results[0]['deposit']
-
-            # if deposit.jrc is None:
-            #     deposit.jrc = {}
-
-            # deposit.get_content_files()
-
-            # assert 'content' in deposit.jrc
-            # self.assertIn('content', deposit.jrc)
-            # self.assertTrue(any(("file" in e.keys()) for e in deposit.jrc.get('content')))
-            # print(deposit.jrc.get('content'))
-
-            # expected_content = [
-            #     {
-            #         'filename': 'hello.txt',
-            #         'mimetype': 'application/pdf',
-            #         'version_id': '1',
-            #         'url': {
-            #             'url': 'http://localhost:5000/record/1/files/hello.txt'
-            #         },
-            #         'attachment': {
-            #             'content': '[{"test": "content"}, {"file": "test"}]'
-            #         }
-            #     }
-            # ]
-
-            # self.assertEqual(deposit.jrc.get('content'), expected_content)
-
-            # sel.assertIn('content', deposit.jrc)
-            # sel.assertTrue(any(("file" in e.keys()) for e in deposit.jrc.get('content')))
-
-
-
-            # indexer, records = es_records_1
-            # record = records[0]
-            # deposit = record['deposit']
-            # ret = deposit.get_content_files()
-            # assert ret == None
-            # # todo11
-            # record = records[1]
-            # deposit = record['deposit']
-            # ret = deposit.get_content_files()
-            # assert ret == None
-            # mock_logger.assert_any_call(key='WEKO_COMMON_FOR_START')
-            # mock_logger.assert_any_call(
-            #     key='WEKO_COMMON_FOR_LOOP_ITERATION', count=mock.ANY, element=mock.ANY)
-            # mock_logger.assert_any_call(
-            #     key='WEKO_COMMON_IF_ENTER', branch=mock.ANY)
-            # mock_logger.assert_any_call(key='WEKO_COMMON_FOR_END')
-            # mock_logger.reset_mock()
 
     # def get_file_data(self):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_get_file_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
