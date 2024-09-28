@@ -156,7 +156,8 @@ class WekoIndexer(RecordIndexer):
         # current_app.logger.error("skip_files:{}".format(skip_files))
         es_info = dict(id=str(item_id),
                        index=self.es_index,
-                       doc_type=self.es_doc_type)
+                    #    doc_type=self.es_doc_type
+                       )
         body = dict(version=revision_id + 1,
                     version_type=self._version_type,
                     body=jrc)
