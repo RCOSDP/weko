@@ -39,7 +39,7 @@ from click.testing import CliRunner
 from flask import Blueprint, Flask
 from flask_assets import assets
 from flask_admin import Admin
-from flask_babelex import Babel
+from flask_babel import Babel
 from flask_menu import Menu
 from invenio_access import InvenioAccess
 from invenio_access.models import ActionRoles, ActionUsers
@@ -141,7 +141,7 @@ import tempfile
 
 import pytest
 from flask import Flask
-from flask_babelex import Babel
+from flask_babel import Babel
 from invenio_assets import InvenioAssets
 from invenio_i18n import InvenioI18N
 from invenio_theme import InvenioTheme

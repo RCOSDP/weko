@@ -23,6 +23,7 @@
 from flask import current_app
 from invenio_deposit.links import deposit_links_factory
 
+from .logger import weko_logger
 from .pidstore import get_latest_version_id
 
 

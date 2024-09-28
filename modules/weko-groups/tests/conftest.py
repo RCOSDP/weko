@@ -27,7 +27,7 @@ import tempfile
 import pytest
 from mock import MagicMock, patch
 from flask import Flask, json, jsonify, session, url_for
-from flask_babelex import Babel
+from flask_babel import Babel
 from flask_breadcrumbs import Breadcrumbs
 from flask_menu import Menu
 from sqlalchemy_utils.functions import create_database, database_exists, \

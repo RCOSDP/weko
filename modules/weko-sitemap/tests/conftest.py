@@ -23,7 +23,7 @@ import uuid
 
 import pytest
 from flask import Flask, current_app
-from flask_babelex import Babel
+from flask_babel import Babel
 from flask_menu import Menu
 from flask_celeryext import FlaskCeleryExt
 

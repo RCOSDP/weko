@@ -30,7 +30,7 @@ from mock import patch
 from sqlalchemy.orm.attributes import flag_modified
 
 from flask import Flask, json, jsonify, url_for, session, make_response, current_app
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 from invenio_db import db
 from sqlalchemy import func
 from sqlalchemy.exc import SQLAlchemyError

@@ -32,7 +32,7 @@ from invenio_search_ui.ext import InvenioSearchUI
 import pytest
 from mock import Mock, patch
 from flask import Flask
-from flask_babelex import Babel, lazy_gettext as _
+from flask_babel import Babel, lazy_gettext as _
 from flask_celeryext import FlaskCeleryExt
 from flask_menu import Menu
 from flask_login import current_user, login_user, LoginManager

@@ -23,7 +23,7 @@ from uuid import UUID
 from mock import patch, MagicMock
 from flask import Flask
 from flask_admin import Admin
-from flask_babelex import Babel
+from flask_babel import Babel
 from sqlalchemy_utils.functions import create_database, database_exists
 from datetime import datetime, timedelta
 from tests.helpers import create_record, json_data
