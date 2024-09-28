@@ -2,7 +2,6 @@ import $ from 'jquery';
 import React from 'react';
 import * as ReactBootstrap from 'react-bootstrap';
 import ReactDOM from 'react-dom';
-import { internal_server_error } from './import';
 
 const last_item_id_label = document.getElementById("last_item_id").value;
 const add_filter_label = document.getElementById("add_filter").value;
@@ -19,6 +18,7 @@ const cancel_label = document.getElementById("cancel").value;
 const celery_not_run = document.getElementById("celery_not_run").value;
 const error_get_lstItemType = document.getElementById("error_get_lstItemType").value;
 const error_get_lastItemId = document.getElementById("error_get_lastItemId").value;
+const internal_server_error = document.getElementById("internal_server_error").value;
 
 const urlExportAll = window.location.origin + '/admin/items/bulk-export/export_all'
 const urlExportStatus = window.location.origin + '/admin/items/bulk-export/check_export_status'
