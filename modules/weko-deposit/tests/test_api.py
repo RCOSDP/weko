@@ -844,7 +844,7 @@ class TestWekoDeposit():
                 mock_logger.assert_any_call(
                     key='WEKO_COMMON_RETURN_VALUE', value=mock.ANY)
                 mock_logger.reset_mock()
-    # TODO
+
     # def update(self, *args, **kwargs):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_update -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test_update(sel,app,db,location,db_index,redis_connect,db_itemtype):
@@ -1195,7 +1195,6 @@ class TestWekoDeposit():
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_get_content_files -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test_get_content_files(self, app, db, location, es_records_1):
         # fmd is empty list
-        print("\nfmd is empty list")
         with app.app_context():
             with patch('weko_deposit.api.weko_logger') as mock_logger:
                 with patch('weko_deposit.api.WekoDeposit.get_file_data', return_value=[]):
@@ -1204,14 +1203,12 @@ class TestWekoDeposit():
                     assert mock_logger.call_count == 0
 
         # fmd has file_data
-        print("\nfmd has file_data")
         with app.app_context():
             with patch('weko_deposit.api.weko_logger') as mock_logger:
                 # mock self.files
                 with patch.object(WekoDeposit, 'files', new_callable=PropertyMock) as mock_files:
 
                     # fmd is not List
-                    print("fmd is not List")
                     with patch('weko_deposit.api.WekoDeposit.get_file_data') as mock_get_file_data:
                         fmd_dict = {'file': 'data'}
                         mock_get_file_data.return_value = fmd_dict
@@ -1283,7 +1280,6 @@ class TestWekoDeposit():
                         mock_logger.reset_mock()
 
                     # file.obj.mimetype not in mimetypes
-                    print("file.obj.mimetype not in mimetypes")
                     with patch('weko_deposit.api.WekoDeposit.get_file_data') as mock_get_file_data:
                         fmd = [{'file': 'data'}, {"filename": "filename"}]
                         mock_get_file_data.return_value = fmd
@@ -1371,7 +1367,6 @@ class TestWekoDeposit():
                         mock_get_file_data.reset_mock()
 
                     # fmd is list
-                    print("fmd is list  [lst0, lst1]")
                     with patch('weko_deposit.api.WekoDeposit.get_file_data') as mock_get_file_data:
                         # fmd   [lst0, lst1]
                         fmd = [{'file': 'data'}, {"filename": "filename"}]
@@ -1458,7 +1453,6 @@ class TestWekoDeposit():
                             assert result[0]['url']['url'] == '{}record/{}/files/{}'.format(get_url_root(), deposit['recid'], filename)
                             assert 'attachment' in result[0]
                             assert "".join(splited_content.splitlines()) in result[0]['attachment']['content']
-                            print(result)
 
                             # assert 'content' in deposit.jrc
                             # assert any(("file" in e.keys()) for e in deposit.jrc.get('content'))
@@ -1719,7 +1713,7 @@ class TestWekoDeposit():
             mock_logger.assert_any_call(
                 key='WEKO_COMMON_RETURN_VALUE', value=mock.ANY)
             mock_logger.reset_mock()
-    # TODO
+
     # def convert_item_metadata(self, index_obj, data=None):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_convert_item_metadata -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test_convert_item_metadata(sel, app, db, es_records, redis_connect):
@@ -1871,90 +1865,6 @@ class TestWekoDeposit():
             ret1, ret2 = deposit.convert_item_metadata(index_obj)
             assert ret1 == dc
             assert ret2 == redis_data['deleted_items']
-
-            # indexer, records = es_records
-            # record = records[1]
-            # deposit = record['deposit']
-            # record_data = record['item_data']
-            # index_obj = {'index': ['1'], 'actions': '1'}
-            # test1 = OrderedDict([('pubdate', {'attribute_name': 'PubDate', 'attribute_value': '2022-08-20'}), ('item_1617186331708', {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'タイトル', 'subitem_1551255648112': 'ja'}, {'subitem_1551255647225': 'title', 'subitem_1551255648112': 'en'}]}), ('item_1617258105262', {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}), ('item_title', 'title'), ('item_type_id', '1'), ('control_number', '2'), ('author_link', []), ('_oai', {'id': '2'}), ('publish_date', '2022-08-20'), ('title', ['title']), ('relation_version_is_last', True), ('path', ['1']), ('publish_status','0')])
-            # test2 = None
-            # ret1,ret2 = deposit.convert_item_metadata(index_obj,record_data)
-            # assert ret1 == test1
-            # assert ret2 == test2
-            # # redis_connection = RedisConnection()
-            # # datastore = redis_connection.connection(db=app.config['CACHE_REDIS_DB'], kv = True)
-            # # datastore.put(
-            # #     app.config['WEKO_DEPOSIT_ITEMS_CACHE_PREFIX'].format(pid_value=recid.pid_value),
-            # #     (json.dumps(record)).encode('utf-8'))
-            # mock_logger.assert_any_call(key='WEKO_COMMON_FOR_START')
-            # mock_logger.assert_any_call(key='WEKO_COMMON_FOR_LOOP_ITERATION', count=mock.ANY, element=mock.ANY)
-            # mock_logger.assert_any_call(key='WEKO_COMMON_IF_ENTER', branch=mock.ANY)
-            # mock_logger.assert_any_call(key='WEKO_COMMON_FOR_END')
-            # mock_logger.reset_mock()
-
-            # with patch("weko_deposit.api.RedisConnection.connection",side_effect=BaseException("test_error")):
-            #     with pytest.raises(HTTPException) as httperror:
-            #         ret = deposit.convert_item_metadata(index_obj,{})
-            #         assert httperror.value.code == 500
-            #         assert httperror.value.data == "Failed to register item!"
-
-            # with patch("weko_deposit.api.json_loader",side_effect=RuntimeError):
-            #     with pytest.raises(RuntimeError):
-            #         ret = deposit.convert_item_metadata(index_obj,record_data)
-            # with patch("weko_deposit.api.json_loader",side_effect=BaseException("test_error")):
-            #     with pytest.raises(HTTPException) as httperror:
-            #         ret = deposit.convert_item_metadata(index_obj,record_data)
-            #         assert httperror.value.code == 500
-            #         assert httperror.value.data == "MAPPING_ERROR"
-
-            # with patch("weko_deposit.api.RedisConnection.connection", side_effect=Exception("test_error")):
-            #     with pytest.raises(HTTPException) as httperror:
-            #         deposit.convert_item_metadata(index_obj, {})
-            #         mock_logger.assert_any_call(
-            #             key='WEKO_COMMON_ERROR_UNEXPECTED', ex=mock.ANY, element=mock.ANY)
-            #         mock_logger.reset_mock()
-
-            # with patch("weko_deposit.api.RedisConnection.connection", side_effect=redis.RedisError("test_redis_error")):
-            #     with pytest.raises(HTTPException) as httperror:
-            #         # ret = deposit.convert_item_metadata(index_obj,{})
-            #         deposit.convert_item_metadata(index_obj, {})
-            #         assert httperror.value.code == 500
-            #         assert httperror.value.data == "Failed to register item!"
-            #         mock_logger.assert_any_call(
-            #             key='WEKO_COMMON_ERROR_REDIS', ex=mock.ANY)
-            #         mock_logger.reset_mock()
-
-            # from weko_deposit.errors import WekoDepositError
-            # with patch("weko_deposit.api.json_loader", side_effect=Exception("")):
-            #     with pytest.raises(Exception) as ex:
-            #         ret = deposit.convert_item_metadata(index_obj, record_data)
-            #         assert ex.value.code == 500
-            #         assert ex.value.data == "MAPPING_ERROR"
-
-            # with patch("weko_deposit.api.json_loader", side_effect=RuntimeError("test_redis_error")):
-            #     with pytest.raises(WekoDepositError):
-            #         ret = deposit.convert_item_metadata(index_obj,record_data)
-            #         mock_logger.assert_any_call(key='WEKO_DEPOSIT_FAILED_CONVERT_ITEM_METADATA', ex=mock.ANY)
-            #         mock_logger.reset_mock()
-            #         # raise WekoDepositError(ex=ex, msg="Convert item metadata error.") from ex
-
-            # with patch("weko_deposit.api.RedisConnection.connection",side_effect=WekoRedisError("test_redis_error")):
-            #     # with pytest.raises(WekoRedisError) as ex:
-            #     # ret = deposit.convert_item_metadata(index_obj,{})
-            #     deposit.convert_item_metadata(index_obj, {})
-            #     # assert ex.value.code == 500
-            #     # assert ex.value.data == "Failed to register item!"
-            #     mock_logger.assert_any_call(key='WEKO_COMMON_ERROR_REDIS')
-            #     mock_logger.reset_mock()
-            # mock_logger.assert_any_call(key='WEKO_COMMON_FOR_START')
-            # mock_logger.assert_any_call(
-            #     key='WEKO_COMMON_FOR_LOOP_ITERATION', count=mock.ANY, element=mock.ANY)
-            # mock_logger.assert_any_call(
-            #     key='WEKO_COMMON_IF_ENTER', branch=mock.ANY)
-            # mock_logger.assert_any_call(key='WEKO_COMMON_FOR_END')
-            # mock_logger.reset_mock()
-
 
     # def _convert_description_to_object(self):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test__convert_description_to_object -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
@@ -3092,13 +3002,6 @@ class TestWekoRecord:
             db.session.add(ir)
             db.session.commit()
             indexer, records = es_records
-            # record = records[0]['record']
-            # recid = records[0]['recid']
-            # record2 = records[2]['record']
-            # print("pid:{}".format(record.pid.pid_value))
-            # record.update_item_link(record2.pid.pid_value)
-            # item_link = ItemLink.get_item_link_info(recid.pid_value)
-            # assert item_link==[]
 
             record = records[0]['record']
             recid = records[0]['recid']
@@ -4214,4 +4117,3 @@ def test_delete_item_metadata(app, db, location):
     b = {'pid': {'type': 'depid', 'value': '2.0', 'revision_id': 0}, 'lang': 'ja', 'owner': '1', 'title': 'ja_conference paperITEM00000002(public_open_access_open_access_simple)', 'owners': [1], 'status': 'published', '$schema': '15', 'pubdate': '2021-02-13', 'edit_mode': 'keep', 'created_by': 1, 'deleted_items': ['item_1617187056579', 'approval1', 'approval2'], 'shared_user_id': -1, 'weko_shared_id': -1, 'item_1617186331708': [{'subitem_1551255647225': 'ja_conference paperITEM00000002(public_open_access_open_access_simple)', 'subitem_1551255648112': 'ja'}, {'subitem_1551255647225': 'en_conference paperITEM00000002(public_open_access_simple)', 'subitem_1551255648112': 'en'}], 'item_1617186385884': [{'subitem_1551255720400': 'Alternative Title', 'subitem_1551255721061': 'en'}, {'subitem_1551255720400': 'Alternative Title', 'subitem_1551255721061': 'ja'}], 'item_1617186419668': [{'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}]}, {'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'creatorNames': [{'creatorName': '情報, 三郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': '3', 'nameIdentifierScheme': 'WEKO'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierURI': 'https://ci.nii.ac.jp/', 'nameIdentifierScheme': 'CiNii'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/', 'nameIdentifierScheme': 'KAKEN2'}]}], 'item_1617186476635': {'subitem_1522299639480': 'open access', 'subitem_1600958577026': 'http://purl.org/coar/access_right/c_abf2'}, 'item_1617186499011': [{'subitem_1522650717957': 'ja', 'subitem_1522650727486': 'http://localhost', 'subitem_1522651041219': 'Rights Information'}], 'item_1617186609386': [{'subitem_1522299896455': 'ja', 'subitem_1522300014469': 'Other', 'subitem_1522300048512': 'http://localhost/', 'subitem_1523261968819': 'Sibject1'}], 'item_1617186626617': [{'subitem_description': 'Description\\nDescription<br/>Description&EMPTY&\\nDescription', 'subitem_description_type': 'Abstract', 'subitem_description_language': 'en'}, {'subitem_description': '概要\\n概要&EMPTY&\\n概要\\n概要', 'subitem_description_type': 'Abstract', 'subitem_description_language': 'ja'}], 'item_1617186643794': [{'subitem_1522300295150': 'en', 'subitem_1522300316516': 'Publisher'}], 'item_1617186660861': [{'subitem_1522300695726': 'Available', 'subitem_1522300722591': '2021-06-30'}], 'item_1617186702042': [{'subitem_1551255818386': 'jpn'}], 'item_1617186783814': [{'subitem_identifier_uri': 'http://localhost', 'subitem_identifier_type': 'URI'}], 'item_1617186859717': [{'subitem_1522658018441': 'en', 'subitem_1522658031721': 'Temporal'}], 'item_1617186882738': [{'subitem_geolocation_place': [{'subitem_geolocation_place_text': 'Japan'}]}], 'item_1617186901218': [{'subitem_1522399143519': {'subitem_1522399281603': 'ISNI', 'subitem_1522399333375': 'http://xxx'}, 'subitem_1522399412622': [{'subitem_1522399416691': 'en', 'subitem_1522737543681': 'Funder Name'}], 'subitem_1522399571623': {'subitem_1522399585738': 'Award URI', 'subitem_1522399628911': 'Award Number'}, 'subitem_1522399651758': [{'subitem_1522721910626': 'en', 'subitem_1522721929892': 'Award Title'}]}], 'item_1617186920753': [{'subitem_1522646500366': 'ISSN', 'subitem_1522646572813': 'xxxx-xxxx-xxxx'}], 'item_1617186941041': [{'subitem_1522650068558': 'en', 'subitem_1522650091861': 'Source Title'}], 'item_1617186959569': {'subitem_1551256328147': '1'}, 'item_1617186981471': {
         'subitem_1551256294723': '111'}, 'item_1617186994930': {'subitem_1551256248092': '12'}, 'item_1617187024783': {'subitem_1551256198917': '1'}, 'item_1617187045071': {'subitem_1551256185532': '3'}, 'item_1617187112279': [{'subitem_1551256126428': 'Degree Name', 'subitem_1551256129013': 'en'}], 'item_1617187136212': {'subitem_1551256096004': '2021-06-30'}, 'item_1617187187528': [{'subitem_1599711633003': [{'subitem_1599711636923': 'Conference Name', 'subitem_1599711645590': 'ja'}], 'subitem_1599711655652': '1', 'subitem_1599711660052': [{'subitem_1599711680082': 'Sponsor', 'subitem_1599711686511': 'ja'}], 'subitem_1599711699392': {'subitem_1599711704251': '2020/12/11', 'subitem_1599711712451': '1', 'subitem_1599711727603': '12', 'subitem_1599711731891': '2000', 'subitem_1599711735410': '1', 'subitem_1599711739022': '12', 'subitem_1599711743722': '2020', 'subitem_1599711745532': 'ja'}, 'subitem_1599711758470': [{'subitem_1599711769260': 'Conference Venue', 'subitem_1599711775943': 'ja'}], 'subitem_1599711788485': [{'subitem_1599711798761': 'Conference Place', 'subitem_1599711803382': 'ja'}], 'subitem_1599711813532': 'JPN'}], 'item_1617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}, 'item_1617265215918': {'subitem_1522305645492': 'AO', 'subitem_1600292170262': 'http://purl.org/coar/version/c_b1a7d7d4d402bcce'}, 'item_1617349709064': [{'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'contributorType': 'ContactPerson', 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierURI': 'https://orcid.org/', 'nameIdentifierScheme': 'ORCID'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierURI': 'https://ci.nii.ac.jp/', 'nameIdentifierScheme': 'CiNii'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/', 'nameIdentifierScheme': 'KAKEN2'}], 'contributorMails': [{'contributorMail': 'wekosoftware@nii.ac.jp'}], 'contributorNames': [{'lang': 'ja', 'contributorName': '情報, 太郎'}, {'lang': 'ja-Kana', 'contributorName': 'ジョウホウ, タロウ'}, {'lang': 'en', 'contributorName': 'Joho, Taro'}]}], 'item_1617349808926': {'subitem_1523263171732': 'Version'}, 'item_1617351524846': {'subitem_1523260933860': 'Unknown'}, 'item_1617353299429': [{'subitem_1522306207484': 'isVersionOf', 'subitem_1522306287251': {'subitem_1522306382014': 'arXiv', 'subitem_1522306436033': 'xxxxx'}, 'subitem_1523320863692': [{'subitem_1523320867455': 'en', 'subitem_1523320909613': 'Related Title'}]}], 'item_1617605131499': [{'url': {'url': 'https://weko3.example.org/record/2/files/1KB.pdf'}, 'date': [{'dateType': 'Available', 'dateValue': '2021-07-12'}], 'format': 'text/plain', 'filename': '1KB.pdf', 'filesize': [{'value': '1 KB'}], 'mimetype': 'application/pdf', 'accessrole': 'open_access', 'version_id': 'c92410f6-ed23-4d2e-a8c5-0b3b06cc79c8', 'displaytype': 'simple'}], 'item_1617610673286': [{'nameIdentifiers': [{'nameIdentifier': 'xxxxxx', 'nameIdentifierURI': 'https://orcid.org/', 'nameIdentifierScheme': 'ORCID'}], 'rightHolderNames': [{'rightHolderName': 'Right Holder Name', 'rightHolderLanguage': 'ja'}]}], 'item_1617620223087': [{'subitem_1565671149650': 'ja', 'subitem_1565671169640': 'Banner Headline', 'subitem_1565671178623': 'Subheading'}, {'subitem_1565671149650': 'en', 'subitem_1565671169640': 'Banner Headline', 'subitem_1565671178623': 'Subheding'}], 'item_1617944105607': [{'subitem_1551256015892': [{'subitem_1551256027296': 'xxxxxx', 'subitem_1551256029891': 'kakenhi'}], 'subitem_1551256037922': [{'subitem_1551256042287': 'Degree Grantor Name', 'subitem_1551256047619': 'en'}]}]}
     # deposit = WekoDeposit.create(a)
-    # print("deposit: {}".format(deposit))

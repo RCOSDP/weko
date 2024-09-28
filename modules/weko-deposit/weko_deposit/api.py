@@ -1594,8 +1594,6 @@ class WekoDeposit(Deposit):
         # and this is the latest version
         versioning = PIDVersioning(child=pid)
         record = WekoDeposit.get_record(pid.object_uuid)
-        # TODO: delete assert or not
-        # assert PIDStatus.REGISTERED == pid.status
         if not pid.status == PIDStatus.REGISTERED:
             weko_logger(key='WEKO_COMMON_IF_ENTER',
                         branch='pid status is not registered')
@@ -1717,9 +1715,9 @@ class WekoDeposit(Deposit):
                                 branch='fmd is list')
                     weko_logger(key='WEKO_COMMON_FOR_START')
 
-                    for i, lst in enumerate(fmd):
+                    for j, lst in enumerate(fmd):
                         weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
-                                    count=i, element=lst)
+                                    count=j, element=lst)
 
                         filename = lst.get('filename')
 
@@ -1880,7 +1878,6 @@ class WekoDeposit(Deposit):
             ItemsMetadata.create(self.data, id_=self.pid.object_uuid,
                                 item_type_id=self.get('item_type_id'))
 
-    # TODO: refactor down from here.
     def delete_old_file_index(self):
         """Delete old file index before file upload when edit an item.
 
@@ -2175,7 +2172,6 @@ class WekoDeposit(Deposit):
         weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=None)
         return None
 
-
     def convert_item_metadata(self, index_obj, data=None):
         """Convert Item Metadata.
         1. Convert Item Metadata
@@ -2245,27 +2241,30 @@ class WekoDeposit(Deposit):
         """
         # if this item has been deleted
         self.delete_es_index_attempt(self.pid)
-
         try:
             if not data:
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
                             branch='data is empty')
+
                 redis_connection = RedisConnection()
                 datastore = redis_connection.connection(
                     db=current_app.config['CACHE_REDIS_DB'], kv = True)
                 cache_key = current_app.config[
                     'WEKO_DEPOSIT_ITEMS_CACHE_PREFIX'].format(
                     pid_value=self.pid.pid_value)
+
                 # Check exist item cache before delete
                 if datastore.redis.exists(cache_key):
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
                                 branch=f'{datastore.redis.exists(cache_key)} is not empty')
                     data_str = datastore.get(cache_key)
+
                     if not index_obj.get('is_save_path'):
                         weko_logger(key='WEKO_COMMON_IF_ENTER',
                                     branch=f"{index_obj.get('is_save_path')} is empty")
                         datastore.delete(cache_key)
                     data = json.loads(data_str.decode('utf-8'))
+
                 if not data:
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
                                 branch='data is empty')
