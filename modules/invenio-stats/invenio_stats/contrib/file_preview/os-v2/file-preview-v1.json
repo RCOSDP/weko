@@ -3,12 +3,9 @@
     "__SEARCH_INDEX_PREFIX__events-stats-file-preview-*"
   ],
   "settings": {
-    "index.mapper.dynamic": false,
     "index": {
       "refresh_interval": "5s",
-      "lifecycle.name": "weko_stats_policy",
-      "lifecycle.rollover_alias": "__SEARCH_INDEX_PREFIX__events-stats-file-preview"
-    }
+      "opendistro.index_state_management.policy_id": "weko_stats_policy"    }
   },
   "mappings": {
     "dynamic_templates": [
@@ -138,5 +135,8 @@
         "index": true
       }
     }
+  },
+  "aliases": {
+    "__SEARCH_INDEX_PREFIX__events-stats-file-preview": {}
   }
 }

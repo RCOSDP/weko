@@ -596,7 +596,7 @@ class ItemTypes(RecordBase):
             search = search.sort('-publish_date', '-_updated')
             search_result = search.execute().to_dict()
             result = search_result.get('hits', {}).get('hits', [])
-        except search.exceptions.NotFoundError as e:
+        except search.NotFoundError as e:
             current_app.logger.debug("Indexes do not exist yet: ", str(e))
         return result
 

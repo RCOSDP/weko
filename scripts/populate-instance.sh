@@ -137,7 +137,7 @@ ${INVENIO_WEB_INSTANCE} index queue init
 # sphinxdoc-index-initialisation-end
 
 # elasticsearch-ilm-setting-begin
-curl -XPUT 'http://'${INVENIO_ELASTICSEARCH_HOST}':9200/_ilm/policy/weko_stats_policy' -H 'Content-Type: application/json' -d '
+curl -ku ${INVENIO_OPENSEARCH_USER}:${INVENIO_OPENSEARCH_PASS} -XPUT 'https://'${INVENIO_ELASTICSEARCH_HOST}':9200/_ism/policy/weko_stats_policy' -H 'Content-Type: application/json' -d '
 {
   "policy":{
     "phases":{
@@ -154,7 +154,7 @@ curl -XPUT 'http://'${INVENIO_ELASTICSEARCH_HOST}':9200/_ilm/policy/weko_stats_p
 event_list=('celery-task' 'item-create' 'top-view' 'record-view' 'file-download' 'file-preview' 'search')
 for event_name in ${event_list[@]}
 do
-  curl -XPUT 'http://'${INVENIO_ELASTICSEARCH_HOST}':9200/'${SEARCH_INDEX_PREFIX}'-events-stats-'${event_name}'-000001' -H 'Content-Type: application/json' -d '
+  curl -ku ${INVENIO_OPENSEARCH_USER}:${INVENIO_OPENSEARCH_PASS} -XPUT 'https://'${INVENIO_ELASTICSEARCH_HOST}':9200/'${SEARCH_INDEX_PREFIX}'-events-stats-'${event_name}'-000001' -H 'Content-Type: application/json' -d '
   {
     "aliases": {
       "'${SEARCH_INDEX_PREFIX}'-events-stats-'${event_name}'": {
@@ -162,7 +162,7 @@ do
       }
     }
   }'
-  curl -XPUT 'http://'${INVENIO_ELASTICSEARCH_HOST}':9200/'${SEARCH_INDEX_PREFIX}'-stats-'${event_name}'-000001' -H 'Content-Type: application/json' -d '
+  curl -ku ${INVENIO_OPENSEARCH_USER}:${INVENIO_OPENSEARCH_PASS} -XPUT 'https://'${INVENIO_ELASTICSEARCH_HOST}':9200/'${SEARCH_INDEX_PREFIX}'-stats-'${event_name}'-000001' -H 'Content-Type: application/json' -d '
   {
     "aliases": {
       "'${SEARCH_INDEX_PREFIX}'-stats-'${event_name}'": {
@@ -468,7 +468,7 @@ ${INVENIO_WEB_INSTANCE} widget init
 
 # create-facet-search-setting-begin
 ${INVENIO_WEB_INSTANCE} facet_search_setting create \
-       "Data Language"	"デ一タの言語"	"language"	"[]"	True   SelectBox     1      True   
+       "Data Language"	"デ一タの言語"	"language"	"[]"	True   SelectBox     1      True
 ${INVENIO_WEB_INSTANCE} facet_search_setting create \
        "Access"	"アクセス制限"	"accessRights"	"[]"	True   SelectBox     2      True
 ${INVENIO_WEB_INSTANCE} facet_search_setting create \

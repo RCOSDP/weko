@@ -60,7 +60,7 @@ def index(method=None, delete=False):
                 self_or_cls.indexer.delete(result)
             else:
                 self_or_cls.indexer.index(result)
-        except search.exceptions.RequestError:
+        except search.RequestError:
             current_app.logger.exception('Could not index {0}.'.format(result))
         return result
     return wrapper

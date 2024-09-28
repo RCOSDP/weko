@@ -1,6 +1,6 @@
 {
   "index_patterns": [
-    "__SEARCH_INDEX_PREFIX__events-stats-celery-task-*"
+    "__SEARCH_INDEX_PREFIX__events-stats-item-create-*"
   ],
   "settings": {
     "index": {
@@ -9,17 +9,6 @@
     }
   },
   "mappings": {
-    "dynamic_templates": [
-      {
-        "date_fields": {
-          "match_mapping_type": "date",
-          "mapping": {
-            "type": "date",
-            "format": "date_optional_time"
-          }
-        }
-      }
-    ],
     "date_detection": false,
     "dynamic": false,
     "numeric_detection": false,
@@ -27,14 +16,6 @@
       "timestamp": {
         "type": "date",
         "format": "strict_date_hour_minute_second"
-      },
-      "task_id": {
-        "type": "keyword",
-        "index": true
-      },
-      "task_name": {
-        "type": "keyword",
-        "index": true
       },
       "unique_id": {
         "type": "keyword",
@@ -44,34 +25,11 @@
         "type": "keyword",
         "index": true
       },
-      "visitor_id": {
+      "referrer": {
         "type": "keyword",
         "index": true
       },
       "country": {
-        "type": "keyword",
-        "index": true
-      },
-      "task_state": {
-        "type": "keyword",
-        "index": true
-      },
-      "start_time": {
-        "type": "keyword",
-        "index": true
-      },
-      "end_time": {
-        "type": "keyword",
-        "index": true
-      },
-      "total_records": {
-        "type": "integer"
-      },
-      "repository_name": {
-        "type": "keyword",
-        "index": true
-      },
-      "execution_time": {
         "type": "keyword",
         "index": true
       },
@@ -80,10 +38,38 @@
       },
       "is_restricted": {
         "type": "boolean"
+      },
+      "cur_user_id": {
+        "type": "keyword",
+        "index": true
+      },
+      "username": {
+        "type": "keyword",
+        "index": true
+      },
+      "hostname": {
+        "type": "keyword",
+        "index": true
+      },
+      "remote_addr": {
+        "type": "keyword",
+        "index": true
+      },
+      "pid_type": {
+        "type": "keyword",
+        "index": true
+      },
+      "pid_value": {
+        "type": "keyword",
+        "index": true
+      },
+      "record_name": {
+        "type": "keyword",
+        "index": true
       }
     }
   },
   "aliases": {
-    "__SEARCH_INDEX_PREFIX__events-stats-celery-task": {}
+    "__SEARCH_INDEX_PREFIX__events-stats-item-create": {}
   }
 }

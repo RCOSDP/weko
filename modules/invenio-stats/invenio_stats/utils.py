@@ -449,7 +449,7 @@ class QuerySearchReportHelper(object):
                 all.append(current_report)
             all = sorted(all, key=lambda x:x["count"], reverse=True)
             result["all"] = all
-        except search.exceptions.NotFoundError as ex:
+        except search.NotFoundError as ex:
             current_app.logger.debug(
                 "Indexes do not exist yet:" + str(ex.info["error"]))
             result["all"] = []
@@ -847,7 +847,7 @@ class QueryRecordViewReportHelper(object):
             all_res = all_query.run(**params)
             cls.Calculation(all_res, all_list)
 
-        except search.exceptions.NotFoundError as ex:
+        except search.NotFoundError as ex:
             current_app.logger.debug(ex)
             result["all"] = []
         except Exception as ex:
@@ -1194,7 +1194,7 @@ class QueryItemRegReportHelper(object):
                                         reverse=True)
                 else:
                     result = []
-            except search.exceptions.NotFoundError as ex:
+            except search.NotFoundError as ex:
                 current_app.logger.debug(ex)
                 result = []
             except Exception as ex:
@@ -1265,7 +1265,7 @@ class QueryRankingHelper(object):
 
             cls.Calculation(all_res, result)
 
-        except search.exceptions.NotFoundError as ex:
+        except search.NotFoundError as ex:
             current_app.logger.debug(ex)
         except Exception as ex:
             current_app.logger.debug(ex)
@@ -1295,7 +1295,7 @@ class QueryRankingHelper(object):
                 if r.get("_source", {}).get("path"):
                     result.append(r["_source"])
 
-        except search.exceptions.NotFoundError as ex:
+        except search.NotFoundError as ex:
             current_app.logger.debug(ex)
         except Exception as ex:
             current_app.logger.debug(ex)
