@@ -38,7 +38,7 @@ from werkzeug.exceptions import HTTPException
 import time
 from flask import session, abort
 from flask_login import login_user
-import redis
+from redis import RedisError
 from weko_deposit.errors import WekoDepositError
 from weko_redis.errors import WekoRedisError
 # from .errors import WekoDepositError
@@ -1835,12 +1835,31 @@ class TestWekoDeposit():
             assert ret2 == redis_data['deleted_items']
             assert redis_connect.redis.exists(cache_key) == False
 
-            # with patch('weko_deposit.api.RedisConnection.connection') as mock_redis:
-            #     mock_redis.side_effect = RedisError("redis_error")
-            #     with patch('weko_deposit.api.abort', side_effect=abort) as mock_abort:
-            #         with pytest.raises(Exception):
-            #             ret = deposit.convert_item_metadata(index_obj)
-            #             mock_redis.assert_called_once_with(500, 'Failed to register item!')
+            # RedisError
+            with patch('weko_deposit.api.RedisConnection.connection') as mock_redis:
+                mock_redis.side_effect = RedisError("redis_error")
+                with patch('weko_deposit.api.abort', side_effect=abort) as mock_abort:
+                    with pytest.raises(Exception):
+                        ret = deposit.convert_item_metadata(index_obj)
+                        mock_redis.assert_called_once_with(500, 'Failed to register item!')
+            # WekoRedisError
+                mock_redis.side_effect = WekoRedisError("weko_redis_error")
+                with patch('weko_deposit.api.abort', side_effect=abort) as mock_abort:
+                    with pytest.raises(Exception):
+                        ret = deposit.convert_item_metadata(index_obj)
+                        mock_redis.assert_called_once_with(500, 'Failed to register item!')
+            # Exception
+                mock_redis.side_effect = Exception("error")
+                with patch('weko_deposit.api.abort', side_effect=abort) as mock_abort:
+                    with pytest.raises(Exception):
+                        ret = deposit.convert_item_metadata(index_obj)
+                        mock_redis.assert_called_once_with(500, 'Failed to register item!')
+
+            # RuntimeError
+            with patch('weko_deposit.api.json_loader', side_effect=RuntimeError):
+                with pytest.raises(WekoDepositError):
+                    ret = deposit.convert_item_metadata(index_obj)
+                    mock_logger.assert_any_call(key='WEKO_DEPOSIT_FAILED_CONVERT_ITEM_METADATA', pid=mock.ANY, ex=mock.ANY)
 
             # index_obj.get('actions') is 'publish'
             index_obj = {'index': ['1'], 'actions': 'publish'}
