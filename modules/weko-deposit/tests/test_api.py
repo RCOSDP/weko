@@ -1830,17 +1830,15 @@ class TestWekoDeposit():
             # index_obj.get('is_save_path') not exists, deletes cache_key
             index_obj = {'index': ['1'], 'actions': '1'}
             dc = OrderedDict([('pubdate', {'attribute_name': 'PubDate', 'attribute_value': '2023-12-07'}), ('item_1617187056579', {'attribute_name': 'Bibliographic Information', 'attribute_value': 'item_1617187056579'}), ('item_1617186331708', {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'test', 'subitem_1551255648112': 'ja'}]}), ('item_1617258105262', {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}]}), ('item_title', 'test'), ('item_type_id', '1'), ('control_number', '1'), ('author_link', []), ('publish_date', '2023-12-07'), ('title', ['test']), ('relation_version_is_last', True), ('path', ['1']), ('publish_status', '2')])
-            # data is really None
-            with patch('weko_deposit.api.WekoDeposit.record_data_from_act_temp', return_value = None):
-                ret1, ret2 = deposit.convert_item_metadata(index_obj)
-                assert ret1 == dc
-                assert ret2 == redis_data['deleted_items']
-                assert redis_connect.redis.exists(cache_key) == False
-            
+            ret1, ret2 = deposit.convert_item_metadata(index_obj)
+            assert ret1 == dc
+            assert ret2 == redis_data['deleted_items']
+            assert redis_connect.redis.exists(cache_key) == False
+
             # with patch('weko_deposit.api.RedisConnection.connection') as mock_redis:
             #     mock_redis.side_effect = RedisError("redis_error")
             #     with patch('weko_deposit.api.abort', side_effect=abort) as mock_abort:
-            #         with pytest.raises(Exception):  
+            #         with pytest.raises(Exception):
             #             ret = deposit.convert_item_metadata(index_obj)
             #             mock_redis.assert_called_once_with(500, 'Failed to register item!')
 
