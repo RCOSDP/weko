@@ -1602,6 +1602,7 @@ restricted_access_adminview = {
         'endpoint': 'restricted_access'
     }
 }
+
 identifier_adminview = dict(
     modelview=IdentifierSettingView,
     model=Identifier,

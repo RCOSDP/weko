@@ -1165,7 +1165,7 @@ WEKO_ADMIN_REPOSITORY_ACCESS_LIST = [
     'facet-search',
     'community',
     'cris_linkage',
-    # 'restricted_access'
+    #'restricted_access'
 ] + WEKO_ADMIN_COMMUNITY_ACCESS_LIST
 """Classes Repository Administrator can access."""
 
@@ -1299,6 +1299,5 @@ WEKO_ADMIN_CACHE_TEMP_DIR_INFO_KEY_DEFAULT = 'cache::temp_dir_info'
 WEKO_ADMIN_USE_REGEX_IN_CRAWLER_LIST = False
 """ If True, enable regex function in crawler list processing. """
 
-WEKO_ADMIN_CRIS_LINKAGE_SETTINGS_TEMPLATE = \
-    'weko_admin/admin/cris_linkage_setting.html'
+WEKO_ADMIN_CRIS_LINKAGE_SETTINGS_TEMPLATE = 'weko_admin/admin/cris_linkage_setting.html'
 """CRIS Linkage Settings template."""

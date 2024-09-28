@@ -2,6 +2,7 @@ import json
 import math
 import traceback
 import uuid
+import os
 from amqp import Channel
 from celery import shared_task
 from celery import current_app as current_celery_app
@@ -115,7 +116,7 @@ def process_researchmap_queue(body , message):
             sender = Researchmap()
             current_app.logger.info(jsons)
             response_txt = sender.post_data('\r\n'.join(jsons))
-
+            current_app.logger.error("rmap:{}".format(response_txt))
             res :dict = json.loads(response_txt)
             url :str = res.get("url" ,"")
 
@@ -205,12 +206,14 @@ def build_achievement(record,item,recid,mapping,jrc, achievement_type):
     #  ,"publication_date":"2024-01-25"
     #  ,"publication_name": {"ja": "ああああ", "en": "aaaaa"} }
 
-    current_app.logger.debug(record)
-    current_app.logger.debug(item.json)
-    current_app.logger.debug(recid.pid_value)
-    current_app.logger.debug(mapping)
-    current_app.logger.debug(jrc)
-    current_app.logger.debug(achievement_type)
+    current_app.logger.debug("record:{}".format(record))
+    current_app.logger.debug("item.json:{}".format(item.json))
+    current_app.logger.debug("recid.pid_value:{}".format(recid.pid_value))
+    current_app.logger.debug("mapping:{}".format(mapping))
+    current_app.logger.debug("jrc:{}".format(jrc))
+    current_app.logger.debug("achievement_type:{}".format(achievement_type))
+
+
 
 
     return_data = {}
@@ -383,9 +386,44 @@ def build_achievement(record,item,recid,mapping,jrc, achievement_type):
                     ## 2つある場合はDefault　'' の値に。
                     break
 
+    # DOI
+    for identifier in jrc.get('identifierRegistration', []):
+            identifierType =identifier.get('identifierType')
+            if identifierType.upper() == "JALC" or identifierType.upper()=="CROSSREF" or identifierType.upper()=="DATACITE":
+                value = identifier.get('value')
+                identifer_kv = {"doi":value}
+            return_data.update({"identifiers":identifer_kv})
 
-    current_app.logger.debug('return_data')
-    current_app.logger.debug(return_data)
+    # see_also
+    # Handle>URLの順番で紐づける    
+    see_also = []
+    pid_int :int= math.floor(float(recid.pid_value))
+    pid = PersistentIdentifier.query.filter_by(pid_type='parent',
+                                        object_type='rec',
+                                        pid_value='parent:{}'.format(pid_int)).first()
+    if pid:
+        hdl = PersistentIdentifier.query.filter_by(pid_type='hdl',
+                                        object_uuid=pid.object_uuid).first()
+        if hdl:
+            see_also.append({"@id":hdl.pid_value,"label":"url"}) 
+    
+    url = "{}://{}/records/{}".format(os.environ['INVENIO_WEB_PROTOCOL'],os.environ['INVENIO_WEB_HOST_NAME'],pid_int)
+    see_also.append({"@id":url,"label":"url"})
+
+    # 現状、ファイルの添付は不可
+    # file = jrc.get('file', None)
+    # if file:
+    #     for i,uri in enumerate(file.get('URI',[])):
+    #         access_url = uri.get('value',None)
+    #         if access_url:
+    #            see_also.append({"@id":access_url,"label":"url"})
+    
+    # return_data.update({"see_also":see_also})
+
+
+
+    current_app.logger.debug('return_data:{}'.format(return_data))
+    
     return return_data
 
     # return { "paper_title": {"ja": "aaaaa", "en": "aaaaa"}
