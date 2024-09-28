@@ -36,7 +36,7 @@ import copy
 from collections import OrderedDict
 from werkzeug.exceptions import HTTPException
 import time
-from flask import session
+from flask import session, abort
 from flask_login import login_user
 import redis
 from weko_deposit.errors import WekoDepositError
@@ -1788,6 +1788,7 @@ class TestWekoDeposit():
                 ],
                 '$schema': '/items/jsonschema/1'
             }
+
             index_obj = {'index': ['1'], 'actions': '1'}
 
             # if datastore.redis.exists(cache_key) is false
@@ -1798,9 +1799,10 @@ class TestWekoDeposit():
             redis_connect.put(cache_key,bytes(json.dumps(redis_data),"utf-8"))
             app.config['WEKO_DEPOSIT_ITEMS_CACHE_PREFIX'] = 'test_{pid_value}'
             dc = OrderedDict([('pubdate', {'attribute_name': 'PubDate', 'attribute_value': '2023-12-07'}), ('item_1617187056579', {'attribute_name': 'Bibliographic Information', 'attribute_value': 'item_1617187056579'}), ('item_1617186331708', {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'test', 'subitem_1551255648112': 'ja'}]}), ('item_1617258105262', {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}]}), ('item_title', 'test'), ('item_type_id', '1'), ('control_number', '1'), ('author_link', []), ('publish_date', '2023-12-07'), ('title', ['test']), ('relation_version_is_last', True), ('path', ['1']), ('publish_status', '2')])
-            # with patch('weko_deposit.api.abort') as mock_abort:
-            deposit.convert_item_metadata(index_obj)
-                # mock_abort.assert_called_once_with(500, 'MAPPING_ERROR')
+            with patch('weko_deposit.api.abort', side_effect=abort) as mock_abort:
+                with pytest.raises(Exception):
+                    deposit.convert_item_metadata(index_obj)
+                    mock_abort.assert_called_once_with(500, 'MAPPING_ERROR')
                 # mock_logger.assert_any_call(key="WEKO_COMMON_ERROR_UNEXPECTED", ex=mock.ANY)
                 # mock_abort.reset_mock()
                 # mock_logger.reset_mock()
@@ -1813,6 +1815,11 @@ class TestWekoDeposit():
                 pid_value=deposit.pid.pid_value)
             redis_connect.put(cache_key,bytes(json.dumps(redis_data),"utf-8"))
 
+            # index_obj.get('index', []) not exists
+            index_obj = {'actions': '1', 'is_save_path': True}
+            with pytest.raises(PIDResolveRESTError):
+                deposit.convert_item_metadata(index_obj)
+
             # index_obj.get('is_save_path') exists
             index_obj = {'index': ['1'], 'actions': '1', 'is_save_path': True}
             ret1, ret2 = deposit.convert_item_metadata(index_obj)
@@ -1820,12 +1827,33 @@ class TestWekoDeposit():
             assert ret2 == redis_data['deleted_items']
             assert redis_connect.redis.exists(cache_key) == True
 
-            # index_obj.get('is_save_path') not exists
+            # index_obj.get('is_save_path') not exists, deletes cache_key
             index_obj = {'index': ['1'], 'actions': '1'}
+            dc = OrderedDict([('pubdate', {'attribute_name': 'PubDate', 'attribute_value': '2023-12-07'}), ('item_1617187056579', {'attribute_name': 'Bibliographic Information', 'attribute_value': 'item_1617187056579'}), ('item_1617186331708', {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'test', 'subitem_1551255648112': 'ja'}]}), ('item_1617258105262', {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}]}), ('item_title', 'test'), ('item_type_id', '1'), ('control_number', '1'), ('author_link', []), ('publish_date', '2023-12-07'), ('title', ['test']), ('relation_version_is_last', True), ('path', ['1']), ('publish_status', '2')])
+            # data is really None
+            with patch('weko_deposit.api.WekoDeposit.record_data_from_act_temp', return_value = None):
+                ret1, ret2 = deposit.convert_item_metadata(index_obj)
+                assert ret1 == dc
+                assert ret2 == redis_data['deleted_items']
+                assert redis_connect.redis.exists(cache_key) == False
+            
+            # with patch('weko_deposit.api.RedisConnection.connection') as mock_redis:
+            #     mock_redis.side_effect = RedisError("redis_error")
+            #     with patch('weko_deposit.api.abort', side_effect=abort) as mock_abort:
+            #         with pytest.raises(Exception):  
+            #             ret = deposit.convert_item_metadata(index_obj)
+            #             mock_redis.assert_called_once_with(500, 'Failed to register item!')
+
+            # index_obj.get('actions') is 'publish'
+            index_obj = {'index': ['1'], 'actions': 'publish'}
+            cache_key = app.config[
+                'WEKO_DEPOSIT_ITEMS_CACHE_PREFIX'].format(
+                pid_value=deposit.pid.pid_value)
+            redis_connect.put(cache_key,bytes(json.dumps(redis_data),"utf-8"))
+            dc = OrderedDict([('pubdate', {'attribute_name': 'PubDate', 'attribute_value': '2023-12-07'}), ('item_1617187056579', {'attribute_name': 'Bibliographic Information', 'attribute_value': 'item_1617187056579'}), ('item_1617186331708', {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'test', 'subitem_1551255648112': 'ja'}]}), ('item_1617258105262', {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}]}), ('item_title', 'test'), ('item_type_id', '1'), ('control_number', '1'), ('author_link', []), ('publish_date', '2023-12-07'), ('title', ['test']), ('relation_version_is_last', True), ('path', ['1']), ('publish_status', '0')])
             ret1, ret2 = deposit.convert_item_metadata(index_obj)
             assert ret1 == dc
             assert ret2 == redis_data['deleted_items']
-            assert redis_connect.redis.exists(cache_key) == False
 
             # indexer, records = es_records
             # record = records[1]
