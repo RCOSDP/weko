@@ -392,15 +392,15 @@ class PagesListSelectControls extends React.Component {
       buttons.push(editButton);
     }
     return (
-      [
+      <div>
         <div className="col-xs-3">
           <div className="btn-toolbar">
             {buttons}
           </div>
-        </div>,
+        </div>
         <DeletePageModal deleteModalOpen={this.state.deleteModalOpen}
                          handleDelete={this.handleDelete}
-                         handleClose={() => this.setState({deleteModalOpen: false})}/>,
+                         handleClose={() => this.setState({deleteModalOpen: false})}/>
         <AddPageModal isEdit={this.state.isEdit}
                       isOpen={this.state.pageModalOpen}
                       handleClose={() => this.setState({pageModalOpen: false})}
@@ -408,7 +408,7 @@ class PagesListSelectControls extends React.Component {
                       addPageEndpoint={'/api/admin/save_widget_design_page'}
                       pageId={selected} page={this.state.page}
                       refreshList={this.props.refreshList}/>
-      ]
+      </div>
     )
   }
 }
