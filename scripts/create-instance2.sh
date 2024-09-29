@@ -149,6 +149,8 @@ git clone --branch feature/changePaginationForSearchAfterUse https://github.com/
 
 cdvirtualenv "var/instance/assets"
 ln -s ../static/templates templates
+# force copy webpack.config.js to NODE_ENV=production
+\cp -pf "/code/scripts/webpack.config.js" "$(pwd)/build/webpack.config.js"
 # sphinxdoc-collect-and-build-assets-begin
 ${INVENIO_WEB_INSTANCE} collect -v
 ${INVENIO_WEB_INSTANCE} webpack build

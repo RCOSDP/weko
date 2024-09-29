@@ -151,7 +151,9 @@ class WekoIndexer(RecordIndexer):
         # current_app.logger.error("revision_id:{}".format(revision_id))
         # current_app.logger.error("type(revision_id:{}".format(type(revision_id)))
         # current_app.logger.error("skip_files:{}".format(skip_files))
+
         es_info = dict(id=str(item_id), index=self.es_index)
+
         body = dict(version=revision_id + 1,
                     version_type=self._version_type,
                     body=jrc)

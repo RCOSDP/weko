@@ -19,7 +19,8 @@
 # MA 02111-1307, USA.
 
 """Configuration for weko-authors."""
-
+# from invenio_stats.config import SEARCH_INDEX_PREFIX as index_prefix
+import os
 from .rest import Authors
 
 WEKO_AUTHORS_LIST_SCHEME = ['e-Rad', 'NRID', 'ORCID', 'ISNI', 'VIAF', 'AID',

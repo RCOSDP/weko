@@ -29,94 +29,76 @@ class Dict2Obj:
     def __init__(self, **kwargs):
         self.__dict__.update(kwargs)
 # def index():
-# .tox/c1/bin/pytest --cov=weko_theme tests/test_views.py::test_index_community_settings -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-theme/.tox/c1/tmp
-def test_index_community_settings(i18n_app, users):
-    WekoTheme(i18n_app)
-    # テスト用の設定を作成
+# .tox/c1/bin/pytest --cov=weko_theme tests/test_views.py::test_index_community_settings -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-theme/.tox/c1/tmp
+def test_index_community_settings(client, users):
+
     db_settings = Dict2Obj(
         title1='DB Title 1',
         title2='DB タイトル 2',
         icon_code='fa fa-handshake-o',
         supplement='Database supplement text'
     )
-    # AdminSettings.getをモックする
+
     with patch("weko_admin.admin.AdminSettings.get", return_value=db_settings):
-        # get_languageをモックする
         with patch("weko_theme.views.get_language", return_value='en'):
-            with i18n_app.test_client() as client:
-                # render_template をモックし、引数をキャプチャする
-                mock_render_template = MagicMock(return_value=('<html></html>', 200))
-                with patch("weko_theme.views.render_template", mock_render_template):
-                    res = client.get(url_for("weko_theme.index"))
-                    assert res.status_code == 200
-                    # モックされた render_template の引数を検証
-                    kwargs = mock_render_template.call_args[1]
-                    assert kwargs['lists']['title'] == db_settings.title1
-                    assert kwargs['lists']['icon_code'] == db_settings.icon_code
-                    assert kwargs['lists']['supplement'] == db_settings.supplement
-            # get_languageをモックする
+            mock_render_template = MagicMock(return_value=('<html></html>', 200))
+            with patch("weko_theme.views.render_template", mock_render_template):
+                res = client.get(url_for("weko_theme.index"))
+                assert res.status_code == 200
+                kwargs = mock_render_template.call_args[1]
+                assert kwargs['lists']['title'] == db_settings.title1
+                assert kwargs['lists']['icon_code'] == db_settings.icon_code
+                assert kwargs['lists']['supplement'] == db_settings.supplement
+
         with patch("weko_theme.views.get_language", return_value='ja'):
-            with i18n_app.test_client() as client:
-                # render_template をモックし、引数をキャプチャする
-                mock_render_template = MagicMock(return_value=('<html></html>', 200))
-                with patch("weko_theme.views.render_template", mock_render_template):
-                    res = client.get(url_for("weko_theme.index"))
-                    assert res.status_code == 200
-                    # モックされた render_template の引数を検証
-                    kwargs = mock_render_template.call_args[1]
-                    assert kwargs['lists']['title'] == db_settings.title2
-                    assert kwargs['lists']['icon_code'] == db_settings.icon_code
-                    assert kwargs['lists']['supplement'] == db_settings.supplement
-    # テスト用の設定を作成
+            mock_render_template = MagicMock(return_value=('<html></html>', 200))
+            with patch("weko_theme.views.render_template", mock_render_template):
+                res = client.get(url_for("weko_theme.index"))
+                assert res.status_code == 200
+                kwargs = mock_render_template.call_args[1]
+                assert kwargs['lists']['title'] == db_settings.title2
+                assert kwargs['lists']['icon_code'] == db_settings.icon_code
+                assert kwargs['lists']['supplement'] == db_settings.supplement
+
     db_settings = Dict2Obj(
         title1='DB Title 1',
         title2='',
         icon_code='fa fa-handshake-o',
         supplement='Database supplement text'
     )
-    # AdminSettings.getをモックする
+
     with patch("weko_admin.admin.AdminSettings.get", return_value=db_settings):
-        # get_languageをモックする
         with patch("weko_theme.views.get_language", return_value='ja'):
-            with i18n_app.test_client() as client:
-                # render_template をモックし、引数をキャプチャする
-                mock_render_template = MagicMock(return_value=('<html></html>', 200))
-                with patch("weko_theme.views.render_template", mock_render_template):
-                    res = client.get(url_for("weko_theme.index"))
-                    assert res.status_code == 200
-                    # モックされた render_template の引数を検証
-                    kwargs = mock_render_template.call_args[1]
-                    assert kwargs['lists']['title'] == db_settings.title1
-                    assert kwargs['lists']['icon_code'] == db_settings.icon_code
-                    assert kwargs['lists']['supplement'] == db_settings.supplement
-    # AdminSettings.getをモックする
+            mock_render_template = MagicMock(return_value=('<html></html>', 200))
+            with patch("weko_theme.views.render_template", mock_render_template):
+                res = client.get(url_for("weko_theme.index"))
+                assert res.status_code == 200
+                kwargs = mock_render_template.call_args[1]
+                assert kwargs['lists']['title'] == db_settings.title1
+                assert kwargs['lists']['icon_code'] == db_settings.icon_code
+                assert kwargs['lists']['supplement'] == db_settings.supplement
+
     with patch("weko_admin.admin.AdminSettings.get", return_value=None):
-        # get_languageを英語でモックする
         with patch("weko_theme.views.get_language", return_value='en'):
-            with i18n_app.test_client() as client:
-                # render_template をモックし、引数をキャプチャする
-                mock_render_template = MagicMock(return_value=('<html></html>', 200))
-                with patch("weko_theme.views.render_template", mock_render_template):
-                    res = client.get(url_for("weko_theme.index"))
-                    assert res.status_code == 200
-                    # モックされた render_template の引数を検証
-                    kwargs = mock_render_template.call_args[1]
-                    assert kwargs["lists"]["title"] == 'Communities'  # 英語ならconfigから英語のデフォルト値を使用
-                    assert kwargs["lists"]["icon_code"] == 'fa fa-group'
-                    assert kwargs["lists"]["supplement"] == 'created and curated by WEKO3 users'
-        # get_languageを日本語でモックする
+            mock_render_template = MagicMock(return_value=('<html></html>', 200))
+            with patch("weko_theme.views.render_template", mock_render_template):
+                res = client.get(url_for("weko_theme.index"))
+                assert res.status_code == 200
+                kwargs = mock_render_template.call_args[1]
+                assert kwargs["lists"]["title"] == 'Communities'
+                assert kwargs["lists"]["icon_code"] == 'fa fa-group'
+                assert kwargs["lists"]["supplement"] == 'created and curated by WEKO3 users'
+
         with patch("weko_theme.views.get_language", return_value='ja'):
-            with i18n_app.test_client() as client:
-                # render_template をモックし、引数をキャプチャする
-                mock_render_template = MagicMock(return_value=('<html></html>', 200))
-                with patch("weko_theme.views.render_template", mock_render_template):
-                    res = client.get(url_for("weko_theme.index"))
-                    assert res.status_code == 200
-                    # モックされた render_template の引数を検証
-                    kwargs = mock_render_template.call_args[1]
-                    assert kwargs["lists"]["title"] == 'コミュニティ'  # 英語ならconfigから英語のデフォルト値を使用
-                    assert kwargs["lists"]["icon_code"] == 'fa fa-group'
-                    assert kwargs["lists"]["supplement"] == 'created and curated by WEKO3 users'
+            mock_render_template = MagicMock(return_value=('<html></html>', 200))
+            with patch("weko_theme.views.render_template", mock_render_template):
+                res = client.get(url_for("weko_theme.index"))
+                assert res.status_code == 200
+                kwargs = mock_render_template.call_args[1]
+                assert kwargs["lists"]["title"] == 'コミュニティ'
+                assert kwargs["lists"]["icon_code"] == 'fa fa-group'
+                assert kwargs["lists"]["supplement"] == 'created and curated by WEKO3 users'
+
                     
 # def edit():
 # .tox/c1/bin/pytest --cov=weko_theme tests/test_views.py::test_edit -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-theme/.tox/c1/tmp
