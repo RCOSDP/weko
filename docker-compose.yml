@@ -195,6 +195,8 @@ services:
       - "discovery.type=single-node"
       - "OPENSEARCH_JAVA_OPTS=-Xms2048m -Xmx2048m"
       - "OPENSEARCH_INITIAL_ADMIN_PASSWORD=WekoOpensearch123!"
+      - "INVENIO_OPENSEARCH_USER=invenio"
+      - "INVENIO_OPENSEARCH_PASS=openpass123!"
     ports:
       - "29201:9200"
       - "29301:9300"
