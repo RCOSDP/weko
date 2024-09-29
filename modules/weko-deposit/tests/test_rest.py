@@ -603,4 +603,3 @@ def test_sanitize_string(client, users,es_records):
         mock_logger.assert_any_call(key='WEKO_COMMON_IF_ENTER', branch=mock.ANY)
         mock_logger.assert_any_call(key='WEKO_COMMON_FOR_END')
         mock_logger.assert_any_call(key='WEKO_COMMON_RETURN_VALUE', value=mock.ANY)
-
