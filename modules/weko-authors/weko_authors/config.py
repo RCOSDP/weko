@@ -210,9 +210,6 @@ WEKO_AUTHORS_ES_INDEX_NAME = "{}-authors".format(os.environ.get("SEARCH_INDEX_PR
 """Elasticsearch index alias for author."""
 
 
-WEKO_AUTHORS_ES_DOC_TYPE = "author-v1.0.0"
-"""Search engine document type for author."""
-
 WEKO_AUTHORS_IMPORT_KEY = {
     'author_name': {
         'contributorNames': ['contributorName', 'lang'],

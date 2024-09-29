@@ -168,7 +168,7 @@ def create_blueprint(endpoints):
         __name__,
         url_prefix="",
     )
-    
+
     @blueprint.teardown_request
     def dbsession_clean(exception):
         current_app.logger.debug("invenio_records_rest dbsession_clean: {}".format(exception))
@@ -310,11 +310,6 @@ def create_url_rules(
         search_class_kwargs["index"] = search_index
     else:
         search_index = search_class.Meta.index
-
-    if search_type:
-        search_class_kwargs['doc_type'] = search_type
-    else:
-        search_type = search_class.Meta.doc_types
 
     if search_class_kwargs:
         search_class = partial(search_class, **search_class_kwargs)
@@ -703,9 +698,9 @@ class RecordsListResource(ContentNegotiatedMethodView):
 
         def get_item_sort_value(search_result):
             return list(search_result["hits"]["hits"][-1]["sort"])
-        
+
         def set_sort_value(sort_condition, sort_value):
-            
+
             sort_fields = [list(condition.keys())[0] for condition in sort_condition]
             new_data = {}
             for i, field in enumerate(sort_fields):
@@ -722,9 +717,9 @@ class RecordsListResource(ContentNegotiatedMethodView):
                 new_data[sort_field] = sort_value[i]
 
             return new_data
-        
+
         def get_new_search_after(_page, search_after_size, cache_data, search_query, last_sort_value, first_page_over_max_results, sort_condition):
-            
+
             conn_num = ""
             # The first page whose page*size is greater than max_result_window
             page_list = []
@@ -803,7 +798,7 @@ class RecordsListResource(ContentNegotiatedMethodView):
                 )
 
             return new_sort_value, max_cache_data
-        
+
         # Sort key being used in the query
         relevance_sort_is_used = False
         try:
@@ -813,7 +808,7 @@ class RecordsListResource(ContentNegotiatedMethodView):
             # This exception is for when sort type "relevance" is used
             sort_element = "control_number"
             relevance_sort_is_used = True
-        
+
         if relevance_sort_is_used:
             sort_key = sort_element
         else:
@@ -828,7 +823,7 @@ class RecordsListResource(ContentNegotiatedMethodView):
             cache_name = User.query.get(current_user.id).email
         else:
             cache_name = "anonymous_user"
-        
+
         # For saving a specific page for search_after use as cache key
         cache_key = str(page)
 
@@ -867,7 +862,7 @@ class RecordsListResource(ContentNegotiatedMethodView):
                         RECORDS_REST_DEFAULT_TTL_VALUE
                     )
                 )
-        
+
         url_args_check()
         next_items_sort_value = []
         if page * size > self.max_result_window:
@@ -887,11 +882,11 @@ class RecordsListResource(ContentNegotiatedMethodView):
             search_after_start_value = search[start_value:end_value]
             search_after_start_value = search_after_start_value.execute()
             last_sort_value = get_item_sort_value(search_after_start_value)
-            
+
             sort_condition=search.to_dict().get("sort")
 
             #sort_fields = [list(condition.keys())[0] for condition in sort_condition]
-            
+
             if not sessionstorage.redis.exists(f"{cache_name}_max_result"):
                 sessionstorage.put(
                     f"{cache_name}_max_result",
@@ -1052,7 +1047,7 @@ class RecordsListResource(ContentNegotiatedMethodView):
             db.session.rollback()
             current_app.logger.error(e)
             response = self.make_response(None, None, 500)
-        
+
         return response
 
 
