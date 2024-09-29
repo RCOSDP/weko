@@ -42,6 +42,7 @@ from invenio_accounts.models import User, Role
 from invenio_access.models import ActionUsers
 from invenio_access import InvenioAccess
 from invenio_admin import InvenioAdmin
+from invenio_i18n import InvenioI18N
 
 from weko_groups import WekoGroups
 from weko_groups.api import Group
@@ -76,6 +77,7 @@ def app(request):
     InvenioDB(app)
     InvenioAccounts(app)
     WekoGroups(app)
+    InvenioI18N(app)
 
     with app.app_context():
         if str(db.engine.url) != 'sqlite://' and \

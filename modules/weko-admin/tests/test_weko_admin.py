@@ -29,9 +29,7 @@ from flask import _request_ctx_stack, Flask, current_app, url_for, session
 from invenio_i18n.ext import current_i18n
 
 from weko_admin import WekoAdmin
-from weko_admin.bundles import (
-    js,statistics_reactjs_lib,custom_report_js,search_management_js,react_bootstrap_js,stats_report_js,feedback_mail_js,log_analysis_js,date_picker_css,date_picker_js,css,weko_admin_quill_sknow_css,weko_admin_feedback_mail_css,admin_lte_js_dependecies,admin_lte_js,angular_js,weko_admin_site_info_js,weko_admin_site_info_css,weko_admin_ng_js_tree_js,weko_admin_restricted_access_js,weko_admin_facet_search_js
-)
+
 from weko_admin.models import AdminLangSettings, SessionLifetime
 
 from tests.helpers import login, logout
