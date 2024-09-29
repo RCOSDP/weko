@@ -588,7 +588,14 @@ def validate_form_input_data(
         return ret
 
     def _get_keys_that_exist_from_data(given_data: dict) -> list:
-        return list(given_data.keys())
+        ret = []
+        if given_data is not None:
+            if type(given_data) is dict:
+                ret = list(given_data.keys())
+            elif type(given_data) is str:
+                ret = list(given_data)
+        return ret
+        
 
     # Get langauge key - DONE
     # Iterate data for validating the value - 
@@ -3160,18 +3167,23 @@ def get_ignore_item_from_mapping(_item_type_id):
             ignore_list.append(
                 get_mapping_name_item_type_by_key(key, item_type_mapping))
     for sub_id in sub_ids:
-        key = [re.sub(r'\[\d+\]', '', _id) for _id in sub_id.split('.')]
+        key = [re.sub(r'\[\d*\]', '', _id) for _id in sub_id.split('.')]
         if key[0] in item_type_mapping:
             mapping = item_type_mapping.get(key[0]).get('jpcoar_mapping')
             if isinstance(mapping, dict):
-                name = [list(mapping.keys())[0]]
-                if len(key) > 1:
-                    tree_name = get_mapping_name_item_type_by_sub_key(
-                        '.'.join(key[1:]), mapping.get(name[0])
-                    )
-                    if tree_name:
-                        name += tree_name
-                ignore_list.append(name)
+                for _name in mapping.keys():
+                    name = None
+                    if len(key) > 1:
+                        tree_name = get_mapping_name_item_type_by_sub_key(
+                            '.'.join(key[1:]),mapping.get(_name)
+                        )
+                        if tree_name is not None:
+                            name = [_name]
+                            name += tree_name
+                    else:
+                        name = [_name]
+                    if name is not None:
+                        ignore_list.append(name)
     return ignore_list
 
 
@@ -3211,7 +3223,10 @@ def get_mapping_name_item_type_by_sub_key(key, item_type_mapping):
                 tree_name += _mapping_name
                 break
         elif key == property_data:
-            tree_name = [mapping_key if mapping_key != '@value' else '']
+            if mapping_key!= '@value':
+                tree_name = [mapping_key]
+            else:
+                tree_name = []
             break
     return tree_name
 

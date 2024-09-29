@@ -23,6 +23,7 @@ from jsonschema import SchemaError, ValidationError
 from mock import patch
 from weko_deposit.api import WekoDeposit, WekoFileObject, WekoRecord
 from weko_records.api import FeedbackMailList, ItemTypes, Mapping
+from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName
 from weko_workflow.api import WorkActivity
 from weko_user_profiles.models import UserProfile
 from weko_admin.models import SessionLifetime,RankingSettings
@@ -8584,8 +8585,29 @@ def test_hide_meta_data_for_role(users,db_records,id,result):
 
 # def get_ignore_item_from_mapping(_item_type_id):
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_get_ignore_item_from_mapping -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_get_ignore_item_from_mapping(users,db_itemtype):
-    assert get_ignore_item_from_mapping(1) == []
+def test_get_ignore_item_from_mapping(users,db):
+    with open("tests/data/item_type_hide/schema.json") as f:
+        schema = json.load(f)
+    with open("tests/data/item_type_hide/form.json") as f:
+        form = json.load(f)
+    with open("tests/data/item_type_hide/render.json") as f:
+        render = json.load(f)
+    with open("tests/data/item_type_hide/mapping.json") as f:
+        mapping = json.load(f)
+        
+    itemtype_name = ItemTypeName(id=10, name="test_itemtype_hide", has_site_license=True, is_active=True)
+    itemtype = ItemType(id=10,name_id=10, schema=schema, form=form, render=render, tag=1)
+    itemtype_mapping = ItemTypeMapping(id=10,item_type_id=10,mapping=mapping)
+    
+    with db.session.begin_nested():
+        db.session.add(itemtype_name)
+        db.session.add(itemtype)
+        db.session.add(itemtype_mapping)
+    db.session.commit()
+    
+    result =  get_ignore_item_from_mapping(10)
+    test = ['title', 'contributor', 'type',  ['date'], ['creator', 'creatorName'], ['contributor', 'contributorName']]
+    assert result == test
 
 
 # def get_mapping_name_item_type_by_key(key, item_type_mapping):
@@ -8598,10 +8620,42 @@ def test_get_mapping_name_item_type_by_key(users,db_itemtype):
 
 # def get_mapping_name_item_type_by_sub_key(key, item_type_mapping):
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_get_mapping_name_item_type_by_sub_key -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_get_mapping_name_item_type_by_sub_key(db_itemtype):
-    key = {'pubdate': {'title': 'PubDate', 'option': {'crtf': False, 'hidden': False, 'multiple': False, 'required': True, 'showlist': False}, 'input_type': 'datetime', 'title_i18n': {'en': 'PubDate', 'ja': '公開日'}, 'input_value': ''}}
-    item_type_mapping = db_itemtype['item_type_mapping']
-    assert get_mapping_name_item_type_by_sub_key(key,item_type_mapping.mapping) == None
+def test_get_mapping_name_item_type_by_sub_key(db):
+    mapping = {
+        "test1":{
+            "test1_1":{
+                "@value": "test1_1.path",
+                "@attributes":{
+                    "test1_1_1": "test1_1_1.path",
+                    "test1_1_2": "test1_1_2.path"
+                }
+            },
+            "test1_2":{
+                "@value": "test1_2.path",
+                "@attributes":{
+                    "test1_2_1": "test1_2_1.path",
+                    "test1_2_2": "test1_2_2.path"
+                }
+            },
+            "@attributes":{"test1_3": "test1_3.path"},
+        },
+        "test2":{
+            "test2_1":"test2_1.path"
+        }
+    }
+    
+    key = "test1_1.path"
+    test = ["test1", "test1_1"]
+    assert get_mapping_name_item_type_by_sub_key(key, mapping) == test
+    
+    key = "test1_1_1.path"
+    test = ["test1", "test1_1", "test1_1_1"]
+    assert get_mapping_name_item_type_by_sub_key(key, mapping) == test
+    
+    key = "not_exist_key"
+    test = None
+    assert get_mapping_name_item_type_by_sub_key(key, mapping) == test
+    
 
 
 # def get_hide_list_by_schema_form(item_type_id=None, schemaform=None):

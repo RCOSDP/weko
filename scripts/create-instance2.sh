@@ -156,6 +156,6 @@ pip install uwsgi
 pip install uwsgitop
 # gunicorn uwsgi -end
 
-# clean cache
+# clean caches
 pip cache purge
 CI=true npm cache clean --force

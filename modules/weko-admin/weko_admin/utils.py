@@ -569,7 +569,7 @@ class StatisticMail:
     @classmethod
     def send_mail_to_all(cls, list_mail_data=None, stats_date=None):
         """Send mail to all setting email."""
-        from weko_search_ui.utils import get_feedback_mail_list
+        from weko_records.api import FeedbackMailList
         from weko_workflow.utils import get_site_info_name
 
         # Load setting:
@@ -588,7 +588,7 @@ class StatisticMail:
         total_mail = 0
         try:
             if not list_mail_data:
-                list_mail_data = get_feedback_mail_list()
+                list_mail_data = FeedbackMailList.get_feedback_mail_list()
                 if not list_mail_data:
                     return
 
@@ -1096,11 +1096,12 @@ class FeedbackMail:
         for author_id in list_author_id:
             if not author_id:
                 continue
-            email = Authors.get_first_email_by_id(author_id)
-            new_data = dict()
-            new_data['author_id'] = author_id
-            new_data['email'] = email
-            list_data.append(new_data)
+            emails = Authors.get_emails_by_id(author_id)
+            for e in emails:
+                new_data = dict()
+                new_data['author_id'] = author_id
+                new_data['email'] = e
+                list_data.append(new_data)
         if list_manual_mail:
             for mail in list_manual_mail:
                 new_data = dict()
@@ -1174,11 +1175,11 @@ class FeedbackMail:
         """
         if not isinstance(data, list):
             return None
-        result = ''
+        result = set()
         for item in data:
             if item.get(keyword):
-                result = result + ',' + item.get(keyword)
-        return result[1:]
+                result.add(str(item.get(keyword)))
+        return ','.join(list(result))
 
     @classmethod
     def get_list_manual_email(cls, data):
@@ -1438,7 +1439,7 @@ class FeedbackMail:
             dictionary -- resend mail data
 
         """
-        from weko_search_ui.utils import get_feedback_mail_list
+        from weko_records.api import FeedbackMailList
 
         result = {
             'data': dict(),
@@ -1453,7 +1454,7 @@ class FeedbackMail:
         if len(list_failed_mail) == 0:
             return None
 
-        list_mail_data = get_feedback_mail_list()
+        list_mail_data = FeedbackMailList.get_feedback_mail_list()
         if not list_mail_data:
             return None
 
@@ -1724,7 +1725,7 @@ def get_restricted_access(key: Optional[str] = None) -> Optional[dict]:
         return restricted_access
     elif key in restricted_access:
         return restricted_access[key]
-    return None
+    return {}
 
 
 def update_restricted_access(restricted_access: dict):
@@ -2222,11 +2223,17 @@ def get_title_facets():
     lang = current_i18n.language
     titles = {}
     order = {}
+    uiTypes = {}
+    isOpens = {}
+    displayNumbers = {}
     activated_facets = FacetSearchSetting.get_activated_facets()
     for item in activated_facets:
         titles[item.name_en] = item.name_jp if lang == 'ja' else item.name_en
         order[item.id] = item.name_en
-    return titles, order
+        uiTypes[item.name_en] = item.ui_type
+        isOpens[item.name_en] = item.is_open
+        displayNumbers[item.name_en] = item.display_number
+    return titles, order, uiTypes, isOpens, displayNumbers
 
 
 def is_exits_facet(data, id):

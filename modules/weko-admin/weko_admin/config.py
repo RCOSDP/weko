@@ -1240,6 +1240,13 @@ WEKO_INDEX_TREE_STYLE_OPTIONS = {
     'widths': ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11']
 }
 
+WEKO_ADMIN_RESTRICTED_ACCESS_DISPLAY_FLAG = False
+"""
+Restricted access feature display flag.
+True: display all feature
+False: only display secret url download
+"""
+
 WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS = {
     "secret_URL_file_download": {
         "secret_expiration_date": 30,

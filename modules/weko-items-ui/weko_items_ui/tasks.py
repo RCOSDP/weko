@@ -418,7 +418,7 @@ def build_achievement(record,item,recid,mapping,jrc, achievement_type):
     #         if access_url:
     #            see_also.append({"@id":access_url,"label":"url"})
     
-    # return_data.update({"see_also":see_also})
+    return_data.update({"see_also":see_also})
 
 
 

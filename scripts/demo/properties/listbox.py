@@ -67,14 +67,14 @@ def form(
             "type": "fieldset",
             "items": [
                 {
-                    "key": "{}.subitem_textarea_language".format(key),
+                    "key": "{}.subitem_select_language".format(key),
                     "type": "select",
                     "title": "言語",
                     "titleMap": get_select_value(config.LANGUAGE_VAL2_1),
                     "title_i18n": {"en": "Language", "ja": "言語"},
                 },
                 {
-                    "key": "{}.subitem_textarea_value".format(key),
+                    "key": "{}.subitem_select_item".format(key),
                     "type": "select",
                     "title": "値",
                     "titleMap": [],

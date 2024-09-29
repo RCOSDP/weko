@@ -91,7 +91,7 @@ def reset_tree(tree, path=None, more_ids=None, ignore_more=False):
     """
     if more_ids is None:
         more_ids = []
-    roles = get_user_roles()
+    roles = get_user_roles(is_super_role=True)
     groups = get_user_groups()
     if path is not None:
         id_tp = []
@@ -209,13 +209,15 @@ def get_tree_json(index_list, root_id):
     return index_tree
 
 
-def get_user_roles():
+def get_user_roles(is_super_role=False):
     """Get user roles."""
     def _check_admin():
         result = False
         for lst in list(current_user.roles or []):
             # if is administrator
-            if 'Administrator' in lst.name:
+            admin_roles = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] + \
+                (current_app.config["WEKO_PERMISSION_ROLE_COMMUNITY"] if is_super_role else [])
+            if lst.name in admin_roles:
                 result = True
         return result
 
@@ -243,10 +245,11 @@ def check_roles(user_role, roles):
         roles = roles.split(',')
     if not user_role[0]:
         if current_user.is_authenticated:
-            role = [x for x in (user_role[1] or ['-98'])
-                    if str(x) in (roles or [])]
-            if not role and (user_role[1] or "-98" not in roles):
-                is_can = False
+            self_role = user_role[1] or ['-98']
+            for role in self_role:
+                if str(role) not in (roles or []):
+                    is_can = False
+                    break
         elif roles and "-99" not in roles:
             is_can = False
     return is_can
@@ -281,7 +284,7 @@ def filter_index_list_by_role(index_list):
         return can_view
 
     result_list = []
-    roles = get_user_roles()
+    roles = get_user_roles(is_super_role=True)
     groups = get_user_groups()
     for i in index_list:
         if _check(i, roles, groups):
@@ -790,7 +793,7 @@ def check_index_permissions(record=None, index_id=None, index_path_list=None,
 
     if not is_check_doi:
         # Get user roles and user groups.
-        roles = get_user_roles()
+        roles = get_user_roles(is_super_role=True)
         groups = get_user_groups()
         check_index_method = _check_index_permission
     else:
@@ -980,7 +983,7 @@ def perform_delete_index(index_id, record_class, action: str):
         db.session.commit()
     except Exception as e:
         db.session.rollback()
-        current_app.logger.erorr(e)
+        current_app.logger.error(e)
         msg = 'Failed to delete index.'
     finally:
         if is_unlock:

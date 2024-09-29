@@ -11,20 +11,34 @@ from weko_index_tree.models import Index, IndexStyle
 #     def get_index_by_id(cls, index):
 # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_models.py::test_Index -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
 def test_Index(app, db, test_indices):
+    # have_children
+    res = Index.have_children(100)
+    assert res == False
+    res = Index.have_children(100, with_deleted=True)
+    assert res == True
+
     # get_all
     res = Index.get_all()
-    assert len(res) == 6
+    assert len(res) == 7
+    res = Index.get_all(with_deleted=True)
+    assert len(res) == 11
 
     # get_index_by_id
     res = Index.get_index_by_id(1)
     assert res.id == 1
-    assert res.index_name == "Test index 1_ja"
+    assert res.index_name == "テストインデックス 1"
+    res = Index.get_index_by_id(32)
+    assert res == None
+    res = Index.get_index_by_id(32, with_deleted=True)
+    assert res.id == 32
+    assert res.index_name == "テストインデックス 32"
 
     # __str__
+    res = Index.get_index_by_id(1)
     with app.test_request_context(headers=[("Accept-Language", "en")]):
-        assert str(res) == "Index <id=1, name=Test index 1_en>"
+        assert str(res) == "Index <id=1, name=Test index 1>"
     with app.test_request_context(headers=[("Accept-Language", "ja")]):
-        assert str(res) == "Index <id=1, name=Test index 1_ja>"
+        assert str(res) == "Index <id=1, name=テストインデックス 1>"
 
 
 # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_models.py::test_Index_get_all -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp

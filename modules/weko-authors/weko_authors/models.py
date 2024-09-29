@@ -89,25 +89,25 @@ class Authors(db.Model, Timestamp):
         return next_id
 
     @classmethod
-    def get_first_email_by_id(cls, author_id):
-        """Get first email of author by id.
+    def get_emails_by_id(cls, author_id):
+        """Get emails of author by id.
 
         Arguments:
             author_id {int} -- author id
 
         Returns:
-            string -- first email
+            list -- emails
 
         """
         try:
             author = cls.query.filter_by(id=author_id).one_or_none()
             if not author:
-                return None
+                return []
             json_data = author.json
             email_info = json_data.get('emailInfo')
-            return email_info[0].get('email')
+            return [e.get('email') for e in email_info if e.get('email')]
         except Exception:
-            return None
+            return []
 
     @classmethod
     def get_author_by_id(cls, author_id):

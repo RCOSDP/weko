@@ -612,6 +612,7 @@ RESOURCE_TYPE_URI = {
     "data paper": "http://purl.org/coar/resource_type/c_beb9",
     "departmental bulletin paper": "http://purl.org/coar/resource_type/c_6501",
     "editorial": "http://purl.org/coar/resource_type/c_b239",
+    "journal": "http://purl.org/coar/resource_type/c_0640",
     "journal article": "http://purl.org/coar/resource_type/c_6501",
     "newspaper": "http://purl.org/coar/resource_type/c_2fe3",
     "periodical": "http://purl.org/coar/resource_type/c_2659",

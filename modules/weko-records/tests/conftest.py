@@ -63,7 +63,7 @@ from weko_records_ui.config import WEKO_PERMISSION_SUPER_ROLE_USER, WEKO_PERMISS
 from weko_records import WekoRecords
 from weko_records.api import ItemTypes, Mapping
 from weko_records.config import WEKO_ITEMTYPE_EXCLUDED_KEYS
-from weko_records.models import ItemTypeName, SiteLicenseInfo, FeedbackMailList
+from weko_records.models import ItemTypeName, SiteLicenseInfo, FeedbackMailList, ItemReference
 
 from tests.helpers import json_data, create_record
 
@@ -106,7 +106,9 @@ def base_app(instance_path):
         I18N_LANGUAGES=[("ja", "Japanese"), ("en", "English")],
         WEKO_PERMISSION_SUPER_ROLE_USER=WEKO_PERMISSION_SUPER_ROLE_USER,
         WEKO_PERMISSION_ROLE_COMMUNITY=WEKO_PERMISSION_ROLE_COMMUNITY,
-        EMAIL_DISPLAY_FLG=EMAIL_DISPLAY_FLG
+        EMAIL_DISPLAY_FLG=EMAIL_DISPLAY_FLG,
+        WEKO_SCHEMA_JPCOAR_V2_SCHEMA_NAME='jpcoar_mapping',
+        WEKO_SCHEMA_JPCOAR_V2_NAMEIDSCHEME_REPLACE = {'e-Rad':'e-Rad_Researcher'},
     )
 
     WekoRecords(app_)
@@ -311,16 +313,24 @@ def user():
 @pytest.fixture()
 def db_index(app, db):
     index_metadata = {
-            'id': 1,
-            'parent': 0,
-            'value': 'IndexA',
-        }
+        'id': 1,
+        'parent': 0,
+        'value': 'IndexA',
+    }
+    index_metadata_deleted = {
+        'id': 99,
+        'parent': 0,
+        'value': 'Deleted Index',
+    }
 
     app.config['WEKO_INDEX_TREE_DEFAULT_DISPLAY_NUMBER'] = 5
     with app.app_context():
         user = create_test_user('test@example.org')
         with patch("flask_login.utils._get_user", return_value=user):
             Indexes.create(0, index_metadata)
+            Indexes.create(0, index_metadata_deleted)
+            Indexes.delete(99, True)
+            db.session.commit()
 
 
 @pytest.fixture()
@@ -341,7 +351,7 @@ def item_type(app, db):
                 }
             }
         },
-        'table_row': ['1']
+        'table_row': ['item_1']
     }
 
     _schema = {
@@ -556,3 +566,16 @@ def meta():
     with open(filepath, encoding="utf-8") as f:
             input_data = json.load(f)
     return input_data
+
+
+@pytest.fixture
+def db_ItemReference(db):
+    ir = ItemReference(
+        src_item_pid="1",
+        dst_item_pid="2",
+        reference_type="reference_type"
+    )
+    with db.session.begin_nested():
+        db.session.add(ir)
+
+    return ir

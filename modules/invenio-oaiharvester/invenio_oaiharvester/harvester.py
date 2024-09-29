@@ -1451,92 +1451,86 @@ RESOURCE_TYPE_MAP = {
 }
 
 RESOURCE_TYPE_URI = {
-    'interactive resource':
-        "http://purl.org/coar/resource_type/c_e9a0",
-    'learning object':
-        "http://purl.org/coar/resource_type/c_1843",
-    'musical notation':
-        "http://purl.org/coar/resource_type/c_18cw",
-    'research proposal':
-        "http://purl.org/coar/resource_type/c_baaf",
-    'software':
-        "http://purl.org/coar/resource_type/c_5ce6",
-    'technical documentation':
-        "http://purl.org/coar/resource_type/c_71bd",
-    'workflow':
-        "http://purl.org/coar/resource_type/c_393c",
-    'other（その他）':
-        "http://purl.org/coar/resource_type/c_1843",
-    'other（プレプリント）':
-        "",
-    'conference object':
-        "http://purl.org/coar/resource_type/c_c94f",
-    'conference proceedings':
-        "http://purl.org/coar/resource_type/c_f744",
-    'conference poster':
-        "http://purl.org/coar/resource_type/c_6670",
-    'patent':
-        "http://purl.org/coar/resource_type/c_15cd",
-    'lecture':
-        "http://purl.org/coar/resource_type/c_8544",
-    'book':
-        "http://purl.org/coar/resource_type/c_2f33",
-    'book part':
-        "http://purl.org/coar/resource_type/c_3248",
-    'dataset':
-        "http://purl.org/coar/resource_type/c_ddb1",
-    'conference paper':
-        "http://purl.org/coar/resource_type/c_5794",
-    'data paper':
-        "http://purl.org/coar/resource_type/c_beb9",
-    'departmental bulletin paper':
-        "http://purl.org/coar/resource_type/c_6501",
-    'editorial':
-        "http://purl.org/coar/resource_type/c_b239",
-    'journal article':
-        "http://purl.org/coar/resource_type/c_6501",
-    'periodical':
-        "http://purl.org/coar/resource_type/c_2659",
-    'review article':
-        "http://purl.org/coar/resource_type/c_dcae04bc",
-    'article':
-        "http://purl.org/coar/resource_type/c_6501",
-    'image':
-        "http://purl.org/coar/resource_type/c_c513",
-    'still image':
-        "http://purl.org/coar/resource_type/c_ecc8",
-    'moving image':
-        "http://purl.org/coar/resource_type/c_8a7e",
-    'video':
-        "http://purl.org/coar/resource_type/c_12ce",
-    'cartographic material':
-        "http://purl.org/coar/resource_type/c_12cc",
-    'map':
-        "http://purl.org/coar/resource_type/c_12cd",
-    'sound':
-        "http://purl.org/coar/resource_type/c_18cc",
-    'internal report':
-        "http://purl.org/coar/resource_type/c_18ww",
-    'report':
-        "http://purl.org/coar/resource_type/c_93fc",
-    'research report':
-        "http://purl.org/coar/resource_type/c_18ws",
-    'technical report':
-        "http://purl.org/coar/resource_type/c_18gh",
-    'policy report':
-        "http://purl.org/coar/resource_type/c_186u",
-    'report part':
-        "http://purl.org/coar/resource_type/c_ba1f",
-    'working paper':
-        "http://purl.org/coar/resource_type/c_8042",
-    'thesis':
-        "http://purl.org/coar/resource_type/c_46ec",
-    'bachelor thesis':
-        "http://purl.org/coar/resource_type/c_7a1f",
-    'master thesis':
-        "http://purl.org/coar/resource_type/c_bdcc",
-    'doctoral thesis':
-        "http://purl.org/coar/resource_type/c_db06"
+    'conference paper': 'http://purl.org/coar/resource_type/c_5794',
+    'data paper': 'http://purl.org/coar/resource_type/c_beb9',
+    'departmental bulletin paper': 'http://purl.org/coar/resource_type/c_6501',
+    'editorial': 'http://purl.org/coar/resource_type/c_b239',
+    'journal': 'http://purl.org/coar/resource_type/c_0640',
+    'journal article': 'http://purl.org/coar/resource_type/c_6501',
+    'newspaper': 'http://purl.org/coar/resource_type/c_2fe3',
+    'periodical': 'http://purl.org/coar/resource_type/c_2659',
+    'review article': 'http://purl.org/coar/resource_type/c_dcae04bc',
+    'other periodical': 'http://purl.org/coar/resource_type/QX5C-AR31',
+    'software paper': 'http://purl.org/coar/resource_type/c_7bab',
+    'article': 'http://purl.org/coar/resource_type/c_6501',
+    'book': 'http://purl.org/coar/resource_type/c_2f33',
+    'book part': 'http://purl.org/coar/resource_type/c_3248',
+    'cartographic material': 'http://purl.org/coar/resource_type/c_12cc',
+    'map': 'http://purl.org/coar/resource_type/c_12cd',
+    'conference output': 'http://purl.org/coar/resource_type/c_c94f',
+    'conference presentation': 'http://purl.org/coar/resource_type/c_c94f',
+    'conference object': 'http://purl.org/coar/resource_type/c_c94f',
+    'conference proceedings': 'http://purl.org/coar/resource_type/c_f744',
+    'conference poster': 'http://purl.org/coar/resource_type/c_6670',
+    'dataset': 'http://purl.org/coar/resource_type/c_ddb1',
+    'interview': 'http://purl.org/coar/resource_type/c_26e4',
+    'image': 'http://purl.org/coar/resource_type/c_c513',
+    'still image': 'http://purl.org/coar/resource_type/c_ecc8',
+    'moving image': 'http://purl.org/coar/resource_type/c_8a7e',
+    'video': 'http://purl.org/coar/resource_type/c_12ce',
+    'lecture': 'http://purl.org/coar/resource_type/c_8544',
+    'patent': 'http://purl.org/coar/resource_type/c_15cd',
+    'internal report': 'http://purl.org/coar/resource_type/c_18ww',
+    'report': 'http://purl.org/coar/resource_type/c_93fc',
+    'research report': 'http://purl.org/coar/resource_type/c_18ws',
+    'technical report': 'http://purl.org/coar/resource_type/c_18gh',
+    'policy report': 'http://purl.org/coar/resource_type/c_186u',
+    'report part': 'http://purl.org/coar/resource_type/c_ba1f',
+    'working paper': 'http://purl.org/coar/resource_type/c_8042',
+    'data management plan': 'http://purl.org/coar/resource_type/c_ab20',
+    'sound': 'http://purl.org/coar/resource_type/c_18cc',
+    'thesis': 'http://purl.org/coar/resource_type/c_46ec',
+    'bachelor thesis': 'http://purl.org/coar/resource_type/c_7a1f',
+    'master thesis': 'http://purl.org/coar/resource_type/c_bdcc',
+    'doctoral thesis': 'http://purl.org/coar/resource_type/c_db06',
+    'interactive resource': 'http://purl.org/coar/resource_type/c_e9a0',
+    'learning object': 'http://purl.org/coar/resource_type/c_e059',
+    'manuscript': 'http://purl.org/coar/resource_type/c_0040',
+    'musical notation': 'http://purl.org/coar/resource_type/c_18cw',
+    'research proposal': 'http://purl.org/coar/resource_type/c_baaf',
+    'software': 'http://purl.org/coar/resource_type/c_5ce6',
+    'technical documentation': 'http://purl.org/coar/resource_type/c_71bd',
+    'workflow': 'http://purl.org/coar/resource_type/c_393c',
+    'other（その他）': 'http://purl.org/coar/resource_type/c_1843',
+    'other（プレプリント）': '',
+    'aggregated data': 'http://purl.org/coar/resource_type/ACF7-8YT9',
+    'clinical trial data': 'http://purl.org/coar/resource_type/c_cb28',
+    'compiled data': 'http://purl.org/coar/resource_type/FXF3-D3G7',
+    'encoded data': 'http://purl.org/coar/resource_type/AM6W-6QAW',
+    'experimental data': 'http://purl.org/coar/resource_type/63NG-B465',
+    'genomic data': 'http://purl.org/coar/resource_type/A8F1-NPV9',
+    'geospatial data': 'http://purl.org/coar/resource_type/2H0M-X761',
+    'laboratory notebook': 'http://purl.org/coar/resource_type/H41Y-FW7B',
+    'measurement and test data': 'http://purl.org/coar/resource_type/DD58-GFSX',
+    'observational data': 'http://purl.org/coar/resource_type/FF4C-28RK',
+    'recorded data': 'http://purl.org/coar/resource_type/CQMR-7K63',
+    'simulation data': 'http://purl.org/coar/resource_type/W2XT-7017',
+    'survey data': 'http://purl.org/coar/resource_type/NHD0-W6SY',
+    'design patent': 'http://purl.org/coar/resource_type/C53B-JCY5/',
+    'PCT application': 'http://purl.org/coar/resource_type/SB3Y-W4EH/',
+    'plant patent': 'http://purl.org/coar/resource_type/Z907-YMBB/',
+    'plant variety protection': 'http://purl.org/coar/resource_type/GPQ7-G5VE/',
+    'software patent': 'http://purl.org/coar/resource_type/MW8G-3CR8/',
+    'trademark': 'http://purl.org/coar/resource_type/H6QP-SC1X/',
+    'utility model': 'http://purl.org/coar/resource_type/9DKX-KSAF/',
+    'commentary': 'http://purl.org/coar/resource_type/D97F-VB57',
+    'design': 'http://purl.org/coar/resource_type/542X-3S04/',
+    'industrial design': 'http://purl.org/coar/resource_type/JBNF-DYAD/',
+    'layout design': 'http://purl.org/coar/resource_type/BW7T-YM2G/',
+    'peer review': 'http://purl.org/coar/resource_type/H9BQ-739P/',
+    'research protocol': 'http://purl.org/coar/resource_type/YZ1N-ZFT9/',
+    'source code': 'http://purl.org/coar/resource_type/QH80-2R4E/',
+    'transcription': 'http://purl.org/coar/resource_type/6NC7-GK9S/',
 }
 
 
