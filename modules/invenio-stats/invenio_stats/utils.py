@@ -204,7 +204,7 @@ def is_valid_access():
 
 
 class QueryFileReportsHelper(object):
-    """Helper for parsing elasticsearch aggregations."""
+    """Helper for parsing search engine aggregations."""
 
     @classmethod
     def calc_per_group_counts(cls, group_names, group_counts, current_count):
@@ -449,7 +449,7 @@ class QuerySearchReportHelper(object):
                 all.append(current_report)
             all = sorted(all, key=lambda x:x["count"], reverse=True)
             result["all"] = all
-        except search.exceptions.NotFoundError as ex:
+        except search.NotFoundError as ex:
             current_app.logger.debug(
                 "Indexes do not exist yet:" + str(ex.info["error"]))
             result["all"] = []
@@ -847,7 +847,7 @@ class QueryRecordViewReportHelper(object):
             all_res = all_query.run(**params)
             cls.Calculation(all_res, all_list)
 
-        except search.exceptions.NotFoundError as ex:
+        except search.NotFoundError as ex:
             current_app.logger.debug(ex)
             result["all"] = []
         except Exception as ex:
@@ -1194,7 +1194,7 @@ class QueryItemRegReportHelper(object):
                                         reverse=True)
                 else:
                     result = []
-            except search.exceptions.NotFoundError as ex:
+            except search.NotFoundError as ex:
                 current_app.logger.debug(ex)
                 result = []
             except Exception as ex:
@@ -1265,7 +1265,7 @@ class QueryRankingHelper(object):
 
             cls.Calculation(all_res, result)
 
-        except search.exceptions.NotFoundError as ex:
+        except search.NotFoundError as ex:
             current_app.logger.debug(ex)
         except Exception as ex:
             current_app.logger.debug(ex)
@@ -1295,7 +1295,7 @@ class QueryRankingHelper(object):
                 if r.get("_source", {}).get("path"):
                     result.append(r["_source"])
 
-        except search.exceptions.NotFoundError as ex:
+        except search.NotFoundError as ex:
             current_app.logger.debug(ex)
         except Exception as ex:
             current_app.logger.debug(ex)
@@ -1342,7 +1342,7 @@ class StatsCliUtil:
             self.flush_indices = set()
 
     def delete_data(self, bookmark: bool = False):
-        """Delete stats data in Elasticsearch.
+        """Delete stats data in search engine.
 
         :param bookmark: set True if delete bookmark
         """
@@ -1379,7 +1379,7 @@ class StatsCliUtil:
                 continue
             prefix = "stats-{}"
             search_type = prefix.format(_type)
-            
+
             if self.index_prefix:
                 _index = f"{search_index_prefix}-{self.index_prefix}-{search_type}"
             else:
@@ -1388,7 +1388,7 @@ class StatsCliUtil:
             yield _index
 
     def __build_es_data(self, data_list: list) -> Generator:
-        """Build Elasticsearch data.
+        """Build search engine data.
 
         :param data_list: Stats data from DB.
         """
@@ -1431,7 +1431,7 @@ class StatsCliUtil:
     def __show_message(self, index_name, success, failed):
         """Show message.
 
-        :param index_name:Elasticsearch index name.
+        :param index_name:search engine index name.
         :param success:Success message.
         :param failed:failed message.
         """
@@ -1453,7 +1453,7 @@ class StatsCliUtil:
         restore_data: Generator,
         flush_indices: set = None
     ) -> None:
-        """Restore ElasticSearch data based on Database.
+        """Restore search engine data based on Database.
 
         :param restore_data:
         :param flush_indices:
@@ -1480,7 +1480,7 @@ class StatsCliUtil:
     def __cli_delete_es_index(self, _index) -> None:
         """Delete ES index.
 
-        :param _index: Elasticsearch index.
+        :param _index: search engine index.
         """
         query = dsl.Search(
             using=current_search_client,

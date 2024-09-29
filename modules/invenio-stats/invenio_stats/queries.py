@@ -257,6 +257,7 @@ class TermsQuery(Query):
     def build_query(self, start_date, end_date, **kwargs):
         """Build the search query."""
         agg_query = dsl.Search(using=self.client, index=self.index)[0:0]
+        agg_query = agg_query.extra(track_total_hits=True)
 
         if start_date is not None or end_date is not None:
             time_range = {}
@@ -403,7 +404,7 @@ class TermsQuery(Query):
                     after_key = None
                 if first_search:
                     first_search = False
-                    total = temp_res["hits"]["total"]
+                    total = temp_res["hits"]["total"]["value"]
                     for metric in self.metric_fields:
                         res_count[metric] = temp_res["aggregations"][metric]
                 count += len(temp_res["aggregations"]["my_buckets"]["buckets"])
@@ -586,7 +587,7 @@ class WekoRankingQuery(TermsQuery):
         self.main_query = main_query or {}
 
     def build_query(self, **kwargs):
-        """Build the elasticsearch query."""
+        """Build the search engine query."""
         search_index_prefix = current_app.config["SEARCH_INDEX_PREFIX"].strip("-")
         es_index = self.index.format(search_index_prefix, kwargs.get("event_type"))
         agg_query = dsl.Search(

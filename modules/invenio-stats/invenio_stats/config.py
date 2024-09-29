@@ -36,7 +36,7 @@ from .processors import (
     flag_robots
 )
 from .utils import weko_permission_factory
-from .queries import TermsQuery, WekoTermsQuery, WekoFileStatsQuery, DateHistogramQuery, WekoRankingQuery, WekoFileRankingQuery
+from .queries import TermsQuery, WekoTermsQuery, DateHistogramQuery, WekoFileStatsQuery, WekoRankingQuery, WekoFileRankingQuery
 from weko_schema_ui.models import PublishStatus
 
 STATS_REGISTER_RECEIVERS = True
@@ -431,7 +431,6 @@ STATS_AGGREGATIONS = {
         }
     }
 }
-
 
 search_index_prefix = SEARCH_INDEX_PREFIX.strip("-")
 STATS_QUERIES = {
@@ -917,13 +916,13 @@ STATS_QUERIES = {
                             "field": "@group_field",
                             "size": "@agg_size",
                             "order": {
-                                "my_sum": "desc" 
+                                "my_sum": "desc"
                             }
                         },
                         "aggs": {
                             "my_sum": {
                                 "sum": {
-                                    "field": "@count_field" 
+                                    "field": "@count_field"
                                 }
                             }
                         }

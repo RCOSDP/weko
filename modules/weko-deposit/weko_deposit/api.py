@@ -32,8 +32,7 @@ import redis
 from redis import sentinel
 from dictdiffer import dot_lookup
 from dictdiffer.merge import Merger, UnresolvedConflictsException
-from elasticsearch.exceptions import TransportError
-from elasticsearch.helpers import bulk
+from invenio_search.engine import search
 from flask import abort, current_app, json, request, session
 from flask_security import current_user
 from invenio_db import db
@@ -130,16 +129,14 @@ class WekoFileObject(FileObject):
 
 
 class WekoIndexer(RecordIndexer):
-    """Provide an interface for indexing records in Elasticsearch."""
+    """Provide an interface for indexing records in search engine."""
 
     def get_es_index(self):
-        """Elastic search settings."""
+        """Search engine settings."""
         self.es_index = current_app.config['SEARCH_UI_SEARCH_INDEX']
-        self.es_doc_type = current_app.config['INDEXER_DEFAULT_DOCTYPE']
-        self.file_doc_type = current_app.config['INDEXER_FILE_DOC_TYPE']
 
     def upload_metadata(self, jrc, item_id, revision_id, skip_files=False):
-        """Upload the item data to ElasticSearch.
+        """Upload the item data to search engine.
 
         Args:
             jrc (_type_): _description_
@@ -154,9 +151,7 @@ class WekoIndexer(RecordIndexer):
         # current_app.logger.error("revision_id:{}".format(revision_id))
         # current_app.logger.error("type(revision_id:{}".format(type(revision_id)))
         # current_app.logger.error("skip_files:{}".format(skip_files))
-        es_info = dict(id=str(item_id),
-                       index=self.es_index,
-                       doc_type=self.es_doc_type)
+        es_info = dict(id=str(item_id), index=self.es_index)
         body = dict(version=revision_id + 1,
                     version_type=self._version_type,
                     body=jrc)
@@ -172,19 +167,18 @@ class WekoIndexer(RecordIndexer):
         self.client.index(**{**es_info, **body})
 
     def delete_file_index(self, body, parent_id):
-        """Delete file index in Elastic search.
+        """Delete file index in search engine.
 
         :param body:
         :param parent_id: Parent item id.
         """
         # current_app.logger.error("body:{}".format(body))
         # current_app.logger.error("parent_id:{}".format(parent_id))
-        
+
         for lst in body:
             try:
                 self.client.delete(id=str(lst),
                                    index=self.es_index,
-                                   doc_type=self.file_doc_type,
                                    routing=parent_id)
             except BaseException:
                 pass
@@ -196,7 +190,6 @@ class WekoIndexer(RecordIndexer):
         body = {'doc': {pst: version.get('is_last')}}
         return self.client.update(
             index=self.es_index,
-            doc_type=self.es_doc_type,
             id=str(version.get('id')),
             body=body, ignore=[400, 404]
         )
@@ -253,7 +246,6 @@ class WekoIndexer(RecordIndexer):
         if update_revision:
             return self.client.update(
                 index=self.es_index,
-                doc_type=self.es_doc_type,
                 id=str(record.id),
                 version=record.revision_id,
                 body=body
@@ -261,7 +253,6 @@ class WekoIndexer(RecordIndexer):
         else:
             return self.client.update(
                 index=self.es_index,
-                doc_type=self.es_doc_type,
                 id=str(record.id),
                 body=body
             )
@@ -270,7 +261,7 @@ class WekoIndexer(RecordIndexer):
         """Index a record(fake function).
 
         :param record: Record instance.
-        """       
+        """
         self.get_es_index()
 
     def delete(self, record):
@@ -282,9 +273,7 @@ class WekoIndexer(RecordIndexer):
         """
         self.get_es_index()
 
-        self.client.delete(id=str(record.id),
-                           index=self.es_index,
-                           doc_type=self.es_doc_type)
+        self.client.delete(id=str(record.id), index=self.es_index)
 
     def delete_by_id(self, uuid):
         """Delete a record by id.
@@ -293,9 +282,7 @@ class WekoIndexer(RecordIndexer):
         """
         try:
             self.get_es_index()
-            self.client.delete(id=str(uuid),
-                               index=self.es_index,
-                               doc_type=self.es_doc_type)
+            self.client.delete(id=str(uuid), index=self.es_index)
         except Exception as ex:
             current_app.logger.error(ex)
 
@@ -312,9 +299,7 @@ class WekoIndexer(RecordIndexer):
             }
         }
         self.get_es_index()
-        search_result = self.client.count(index=self.es_index,
-                                          doc_type=self.es_doc_type,
-                                          body=search_query)
+        search_result = self.client.count(index=self.es_index, body=search_query)
         return search_result.get('count')
 
     def get_pid_by_es_scroll(self, path):
@@ -343,9 +328,8 @@ class WekoIndexer(RecordIndexer):
             else:
                 return None
 
-        ind, doc_type = self.record_to_index({})
-        search_result = self.client.search(index=ind, doc_type=doc_type,
-                                           body=search_query, scroll='1m')
+        ind = self.record_to_index({})
+        search_result = self.client.search(index=ind, body=search_query, scroll='1m')
         if search_result:
             res = get_result(search_result)
             scroll_id = search_result['_scroll_id']
@@ -364,9 +348,7 @@ class WekoIndexer(RecordIndexer):
         :return: Metadata.
         """
         self.get_es_index()
-        return self.client.get(index=self.es_index,
-                               doc_type=self.es_doc_type,
-                               id=str(item_id))
+        return self.client.get(index=self.es_index, id=str(item_id))
 
     def update_feedback_mail_list(self, feedback_mail):
         """Update feedback mail info.
@@ -376,15 +358,14 @@ class WekoIndexer(RecordIndexer):
 
         Returns:
             _type_: _feedback_mail_id
-        """        
+        """
         # current_app.logger.debug("feedback_mail:{}".format(feedback_mail));
         self.get_es_index()
         pst = 'feedback_mail_list'
         body = {'doc': {pst: feedback_mail.get('mail_list')}}
-        
+
         return self.client.update(
             index=self.es_index,
-            doc_type=self.es_doc_type,
             id=str(feedback_mail.get('id')),
             body=body
         )
@@ -395,10 +376,9 @@ class WekoIndexer(RecordIndexer):
         self.get_es_index()
         pst = 'author_link'
         body = {'doc': {pst: author_link.get('author_link')}}
-        
+
         return self.client.update(
             index=self.es_index,
-            doc_type=self.es_doc_type,
             id=str(author_link.get('id')),
             body=body
         )
@@ -410,13 +390,12 @@ class WekoIndexer(RecordIndexer):
         body = {'doc': {'_item_metadata': dc}}
         return self.client.update(
             index=self.es_index,
-            doc_type=self.es_doc_type,
             id=str(item_id),
             body=body
         )
 
     def __build_bulk_es_data(self, updated_data):
-        """Build ElasticSearch data.
+        """Build search engine data.
 
         :param updated_data: Records data.
         """
@@ -425,7 +404,6 @@ class WekoIndexer(RecordIndexer):
             es_data = dict(
                 _id=str(record.get('_id')),
                 _index=self.es_index,
-                _type=self.es_doc_type,
                 _source=record.get('_source'),
             )
             yield es_data
@@ -438,7 +416,7 @@ class WekoIndexer(RecordIndexer):
         self.get_es_index()
         es_data = self.__build_bulk_es_data(updated_data)
         if es_data:
-            success, failed = bulk(self.client, es_data)
+            success, failed = search.helpers.bulk(self.client, es_data)
             if len(failed) > 0:
                 for error in failed:
                     current_app.logger.error(error)
@@ -459,13 +437,13 @@ class WekoDeposit(Deposit):
 
     @property
     def item_metadata(self):
-        """ 
+        """
         Return the Item metadata.
 
         Args:
             None
         Returns:
-            dict: item_metadata from item_id in instance "ex :OrderedDict([('pubdate', {'attribute_name': 'PubDate', 'attribute_value': '2022-06-03'}), ('item_1617186331708', {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'test1', 'subitem_1551255648112': 'ja'}]}), ('item_1617258105262', {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}), ('item_title', 'test1'), ('item_type_id', '15'), ('control_number', '1.1'), ('author_link', []), ('weko_shared_id', -1), ('owner', '1'), ('publish_date', '2022-06-03'), ('title', ['test1']), ('relation_version_is_last', True), ('path', ['1557820086539']), ('publish_status', '0')])" 
+            dict: item_metadata from item_id in instance "ex :OrderedDict([('pubdate', {'attribute_name': 'PubDate', 'attribute_value': '2022-06-03'}), ('item_1617186331708', {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'test1', 'subitem_1551255648112': 'ja'}]}), ('item_1617258105262', {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}), ('item_title', 'test1'), ('item_type_id', '15'), ('control_number', '1.1'), ('author_link', []), ('weko_shared_id', -1), ('owner', '1'), ('publish_date', '2022-06-03'), ('title', ['test1']), ('relation_version_is_last', True), ('path', ['1557820086539']), ('publish_status', '0')])"
 
         Raises:
             sqlalchemy.orm.exc.NoResultFound
@@ -473,7 +451,7 @@ class WekoDeposit(Deposit):
         return ItemsMetadata.get_record(self.id).dumps()
 
     def is_published(self):
-        """ 
+        """
 
         Check if deposit is published.
 
@@ -488,7 +466,7 @@ class WekoDeposit(Deposit):
 
     @preserve(fields=('_deposit', '$schema'))
     def merge_with_published(self):
-        """ 
+        """
 
         Merge changes with latest published version. (not use)
 
@@ -500,7 +478,7 @@ class WekoDeposit(Deposit):
 
         Raises:
             MergeConflict(): throw when catch UnresolvedConflictsException.
-        """ 
+        """
         pid, first = self.fetch_published()
         lca = first.revisions[self['_deposit']['pid']['revision_id']]
         # ignore _deposit and $schema field
@@ -524,7 +502,7 @@ class WekoDeposit(Deposit):
 
     @staticmethod
     def _patch(diff_result, destination, in_place=False):
-        """ 
+        """
 
         Patch the diff result to the destination dictionary. (not use)
 
@@ -587,7 +565,7 @@ class WekoDeposit(Deposit):
         return destination
 
     def _publish_new(self, id_=None):
-        """ 
+        """
 
         Override the publish new to avoid creating multiple pids.
 
@@ -617,7 +595,7 @@ class WekoDeposit(Deposit):
         return record
 
     def _update_version_id(self, metas, bucket_id):
-        """ 
+        """
 
         Update 'version_id' of file_metadatas.
 
@@ -626,7 +604,7 @@ class WekoDeposit(Deposit):
             bucket_id (str): Bucket UUID for search ObjectVersion
 
         Returns:
-            bool: "True: file_version is updated. False: fail file_version update" 
+            bool: "True: file_version is updated. False: fail file_version update"
 
         """
         _filename_prop = 'filename'
@@ -658,7 +636,7 @@ class WekoDeposit(Deposit):
         return True
 
     def publish(self, pid=None, id_=None):
-        """ 
+        """
 
         Publish the deposit.
 
@@ -675,7 +653,7 @@ class WekoDeposit(Deposit):
         return deposit
 
     def publish_without_commit(self, pid=None, id_=None):
-        """ 
+        """
 
         Publish the deposit without commit.
 
@@ -695,7 +673,7 @@ class WekoDeposit(Deposit):
             self['$schema'] = current_app.extensions['invenio-jsonschemas']. \
                 path_to_url(current_app.config['DEPOSIT_DEFAULT_JSONSCHEMA'])
         self.is_edit = True
-        
+
         deposit = super(WekoDeposit, self).publish(pid, id_)
         # update relation version current to ES
         recid = PersistentIdentifier.query.filter_by(
@@ -714,25 +692,25 @@ class WekoDeposit(Deposit):
 
     @classmethod
     def create(cls, data, id_=None, recid=None):
-        """ 
+        """
 
         Create a deposit.
         Adds bucket creation immediately on deposit creation.
 
         Args:
-            data (dict): new create record data "ex: {'recid': '34', '_deposit': {'id': '34', 'status': 'draft'}}" 
-            id_ (str): Force the new uuid value as deposit id. (Default: ``None``) 
+            data (dict): new create record data "ex: {'recid': '34', '_deposit': {'id': '34', 'status': 'draft'}}"
+            id_ (str): Force the new uuid value as deposit id. (Default: ``None``)
             recid (str): new recid value
 
         Returns:
             dict: pubilshed deposit dict
 
         Raises:
-            BaseException: throw all exception 
+            BaseException: throw all exception
         """
         if '$schema' in data:
             data.pop('$schema')
-        
+
         # Get workflow storage location
         location_name = None
         if session and 'activity_info' in session:
@@ -798,7 +776,7 @@ class WekoDeposit(Deposit):
         """Summary line.
 
         Update only drafts.
-            Update the item information using the item metadata of arg1 and arg2. 
+            Update the item information using the item metadata of arg1 and arg2.
         Args:
             *args:
                 arg1:
@@ -806,10 +784,10 @@ class WekoDeposit(Deposit):
                     "arg1 ex: {'index': ['1557820086539'], 'actions': '1'}
                 arg2:
                     item_metadata information
-                    arg2 ex: {'pid': {'type': 'depid', 'value': '34', 'revision_id': 0}, 'lang': 'ja', 'owner': '1', 'title': 'test deposit', 'owners': [1], 'status': 'published', '$schema': '/items/jsonschema/15', 'pubdate': '2022-06-07', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}, 'shared_user_id': -1, 'item_1617186331708': [{'subitem_1551255647225': 'test deposit', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}, 'item_1617605131499': [{'url': {'url': 'https://weko3.example.org/record/34/files/tagmanifest-sha256.txt'}, 'date': [{'dateType': 'Available', 'dateValue': '2022-06-07'}], 'format': 'text/plain', 'filename': 'tagmanifest-sha256.txt', 'filesize': [{'value': '323 B'}], 'accessrole': 'open_access', 'version_id': 'b27b05d9-e19f-47fb-b6f5-7f031b1ef8fe'}]}"      
+                    arg2 ex: {'pid': {'type': 'depid', 'value': '34', 'revision_id': 0}, 'lang': 'ja', 'owner': '1', 'title': 'test deposit', 'owners': [1], 'status': 'published', '$schema': '/items/jsonschema/15', 'pubdate': '2022-06-07', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}, 'shared_user_id': -1, 'item_1617186331708': [{'subitem_1551255647225': 'test deposit', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}, 'item_1617605131499': [{'url': {'url': 'https://weko3.example.org/record/34/files/tagmanifest-sha256.txt'}, 'date': [{'dateType': 'Available', 'dateValue': '2022-06-07'}], 'format': 'text/plain', 'filename': 'tagmanifest-sha256.txt', 'filesize': [{'value': '323 B'}], 'accessrole': 'open_access', 'version_id': 'b27b05d9-e19f-47fb-b6f5-7f031b1ef8fe'}]}"
             **kwargs:
                 unused: (Default: ``empty``)
-        
+
             Returns:
                 bool: Description of return value
 
@@ -824,7 +802,7 @@ class WekoDeposit(Deposit):
         else:
             super(WekoDeposit, self).update()
 
-        
+
         #if deleted_items:
         #    for key in deleted_items:
         #        if key in self:
@@ -835,14 +813,14 @@ class WekoDeposit(Deposit):
 
     @preserve(result=False, fields=PRESERVE_FIELDS)
     def clear(self, *args, **kwargs):
-        """ 
+        """
 
         Clear only drafts.
 
         Args:
             *args: usable within weko but is not being used. (Default: ``empty``)
             **kwargs: usable within weko but is not being used. (Default: ``empty``)
-        
+
         Returns:
             None
         """
@@ -852,7 +830,7 @@ class WekoDeposit(Deposit):
 
     @index(delete=True)
     def delete(self, force=True, pid=None):
-        """ 
+        """
         Delete deposit.
         Status required: ``'draft'``.
 
@@ -892,24 +870,24 @@ class WekoDeposit(Deposit):
         return super(Deposit, self).delete()
 
     def commit(self, *args, **kwargs):
-        """ 
+        """
 
         Store changes on current instance in database and index it.
         1. Get deposit's bucket then set the workflow's storage location to the bucket's default location.
         2. Update the item metadata in the database.
-        3. Register the item metadata in elasticsearch.
+        3. Register the item metadata in search engine.
         4. Update the version_id of records_metadata in the database.
-        
+
         Args:
             *args: usable within weko but is not being used. (Default: ``empty``)
             **kwargs: usable within weko but is not being used. (Default: ``empty``)
-        
+
         Returns:
             None
 
         Raises:
-            TransportError: fail upload metadata to elasticsearch
-        """ 
+            TransportError: fail upload metadata to search engine
+        """
         super(WekoDeposit, self).commit(*args, **kwargs)
         record = RecordMetadata.query.get(self.pid.object_uuid)
         if self.data and len(self.data):
@@ -946,14 +924,14 @@ class WekoDeposit(Deposit):
                     if setspec_list:
                         # self.jrc['_oai'].update(dict(sets=setspec_list.spec))
                         self.jrc['_oai'].update(dict(sets=setspec_list))
-                # upload item metadata to Elasticsearch
+                # upload item metadata to search engine
                 set_timestamp(self.jrc, self.created, self.updated)
 
                 # Get file contents
                 self.get_content_files()
 
                 try:
-                    # Upload file content to Elasticsearch
+                    # Upload file content to search engine
                     self.indexer.upload_metadata(self.jrc,
                                                  self.pid.object_uuid,
                                                  self.revision_id)
@@ -962,7 +940,7 @@ class WekoDeposit(Deposit):
                         self.update_feedback_mail()
                     else:
                         self.remove_feedback_mail()
-                except TransportError as err:
+                except search.TransportError as err:
                     err_passing_config = current_app.config.get(
                         'WEKO_DEPOSIT_ES_PARSING_ERROR_PROCESS_ENABLE')
                     parse_err = current_app.config.get(
@@ -996,27 +974,27 @@ class WekoDeposit(Deposit):
             db.session.merge(record)
 
     def newversion(self, pid=None, is_draft=False):
-        """ 
+        """
         Create a new version of the deposit.
             1. Check if a newer version than the pid that is passed as an argument exists.
             2. Update the draft_id then call the create() method to generate a new deposit.
-            3. Update both the database and elasticsearch.
+            3. Update both the database and search engine.
         Args:
-            pid(dict): 
+            pid(dict):
                 Used to check for the lastest pid
                 (Default: ``None``)
-                "ex: {'path': ['1557820086539'], 'owner': '1', 'recid': '34.1', 'title': ['test deposit'], 'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2022-06-07'}, 'item_title': 'test deposit', 'author_link': [], 'item_type_id': '15', 'publish_date': '2022-06-07', 'publish_status': '1', 'weko_shared_id': -1, 'item_1617186331708': {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'test deposit', 'subitem_1551255648112': 'ja'}]}, 'item_1617258105262': {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}, 'item_1617605131499': {'attribute_name': 'File', 'attribute_type': 'file', 'attribute_value_mlt': [{'url': {'url': 'https://192.168.56.48/record/34.1/files/tagmanifest-sha256.txt'}, 'date': [{'dateType': 'Available', 'dateValue': '2022-06-07'}], 'format': 'text/plain', 'filename': 'tagmanifest-sha256.txt', 'filesize': [{'value': '323 B'}], 'accessrole': 'open_access', 'version_id': 'cd317125-600e-4961-89b6-9bb520f342c7', 'mimetype': 'text/plain'}]}, 'relation_version_is_last': True, '$schema': 'https://127.0.0.1/schema/deposits/deposit-v1.0.0.json', '_deposit': {'id': '34.1', 'status': 'draft', 'owners': [1], 'created_by': 1}, '_buckets': {'deposit': '87a563d7-537f-41aa-afd6-fed5e3cb4dc2'}, 'control_number': '34.1', '_oai': {'id': 'oai:weko3.example.org:00000034.1', 'sets': ['1557820086539']}}" 
-        
+                "ex: {'path': ['1557820086539'], 'owner': '1', 'recid': '34.1', 'title': ['test deposit'], 'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2022-06-07'}, 'item_title': 'test deposit', 'author_link': [], 'item_type_id': '15', 'publish_date': '2022-06-07', 'publish_status': '1', 'weko_shared_id': -1, 'item_1617186331708': {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'test deposit', 'subitem_1551255648112': 'ja'}]}, 'item_1617258105262': {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}, 'item_1617605131499': {'attribute_name': 'File', 'attribute_type': 'file', 'attribute_value_mlt': [{'url': {'url': 'https://192.168.56.48/record/34.1/files/tagmanifest-sha256.txt'}, 'date': [{'dateType': 'Available', 'dateValue': '2022-06-07'}], 'format': 'text/plain', 'filename': 'tagmanifest-sha256.txt', 'filesize': [{'value': '323 B'}], 'accessrole': 'open_access', 'version_id': 'cd317125-600e-4961-89b6-9bb520f342c7', 'mimetype': 'text/plain'}]}, 'relation_version_is_last': True, '$schema': 'https://127.0.0.1/schema/deposits/deposit-v1.0.0.json', '_deposit': {'id': '34.1', 'status': 'draft', 'owners': [1], 'created_by': 1}, '_buckets': {'deposit': '87a563d7-537f-41aa-afd6-fed5e3cb4dc2'}, 'control_number': '34.1', '_oai': {'id': 'oai:weko3.example.org:00000034.1', 'sets': ['1557820086539']}}"
+
             is_draft (boolean, optional):
                 flag for registering the parent_id of pidverioning
                 (Default: ``False``)
-        
+
         Returns:
             deposit: newly created deposit object
-        
+
         Raises:
-           PIDInvalidAction(): Invalid operation on persistent identifier in current state. 
-           AttributeError: 
+           PIDInvalidAction(): Invalid operation on persistent identifier in current state.
+           AttributeError:
         """
         deposit = None
         if not self.is_published():
@@ -1098,7 +1076,7 @@ class WekoDeposit(Deposit):
         return deposit
 
     def get_content_files(self):
-        """ 
+        """
 
         Get content file metadata.
 
@@ -1131,7 +1109,7 @@ class WekoDeposit(Deposit):
                             # update file_files's json
                             file.obj.file.update_json(lst)
 
-                            # upload file metadata to Elasticsearch
+                            # upload file metadata to search engine
                             try:
                                 mimetypes = current_app.config[
                                     'WEKO_MIMETYPE_WHITELIST_FOR_ES']
@@ -1157,14 +1135,14 @@ class WekoDeposit(Deposit):
             self.jrc.update({'content': contents})
 
     def get_file_data(self):
-        """ 
+        """
         Get file data.
 
         Args:
             None
 
         Returns:
-            file_data(list): item_filedata "ex: [{'version_id': 'b27b05d9-e19f-47fb-b6f5-7f031b1ef8fe', 'filename': 'tagmanifest-sha256.txt', 'filesize': [{'value': '323 B'}], 'format': 'text/plain', 'date': [{'dateValue': '2022-06-07', 'dateType': 'Available'}], 'accessrole': 'open_access', 'url': {'url': 'https://192.168.56.48/record/34/files/tagmanifest-sha256.txt'}}]" 
+            file_data(list): item_filedata "ex: [{'version_id': 'b27b05d9-e19f-47fb-b6f5-7f031b1ef8fe', 'filename': 'tagmanifest-sha256.txt', 'filesize': [{'value': '323 B'}], 'format': 'text/plain', 'date': [{'dateValue': '2022-06-07', 'dateType': 'Available'}], 'accessrole': 'open_access', 'url': {'url': 'https://192.168.56.48/record/34/files/tagmanifest-sha256.txt'}}]"
         Raises:
             sqlalchemy.exc.OperationalError:
         """
@@ -1180,7 +1158,7 @@ class WekoDeposit(Deposit):
         return file_data
 
     def save_or_update_item_metadata(self):
-        """ 
+        """
         Save or update item metadata.
         Save when register a new item type, Update when edit an item
 
@@ -1213,7 +1191,7 @@ class WekoDeposit(Deposit):
                                  item_type_id=self.get('item_type_id'))
 
     def delete_old_file_index(self):
-        """ 
+        """
 
         Delete old file index before file upload when edit an item.
 
@@ -1235,22 +1213,22 @@ class WekoDeposit(Deposit):
                 self.indexer.delete_file_index(klst, self.pid.object_uuid)
 
     def delete_item_metadata(self, data):
-        """ 
+        """
 
         Delete item metadata if item changes to empty.
 
         Args:
             data (dict):
             The item's metadata that will be deleted
-            "ex: {'pid': {'type': 'depid', 'value': '34', 'revision_id': 0}, 'lang': 'ja', 'owner': '1', 'title': 'test deposit', 'owners': [1], 'status': 'published', '$schema': '/items/jsonschema/15', 'pubdate': '2022-06-07', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}, 'shared_user_id': -1, 'item_1617186331708': [{'subitem_1551255647225': 'test deposit', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}, 'item_1617605131499': [{'url': {'url': 'https://weko3.example.org/record/34/files/tagmanifest-sha256.txt'}, 'date': [{'dateType': 'Available', 'dateValue': '2022-06-07'}], 'format': 'text/plain', 'filename': 'tagmanifest-sha256.txt', 'filesize': [{'value': '323 B'}], 'accessrole': 'open_access', 'version_id': 'b27b05d9-e19f-47fb-b6f5-7f031b1ef8fe'}]}" 
-        
+            "ex: {'pid': {'type': 'depid', 'value': '34', 'revision_id': 0}, 'lang': 'ja', 'owner': '1', 'title': 'test deposit', 'owners': [1], 'status': 'published', '$schema': '/items/jsonschema/15', 'pubdate': '2022-06-07', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}, 'shared_user_id': -1, 'item_1617186331708': [{'subitem_1551255647225': 'test deposit', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}, 'item_1617605131499': [{'url': {'url': 'https://weko3.example.org/record/34/files/tagmanifest-sha256.txt'}, 'date': [{'dateType': 'Available', 'dateValue': '2022-06-07'}], 'format': 'text/plain', 'filename': 'tagmanifest-sha256.txt', 'filesize': [{'value': '323 B'}], 'accessrole': 'open_access', 'version_id': 'b27b05d9-e19f-47fb-b6f5-7f031b1ef8fe'}]}"
+
         Returns:
             None
 
         """
         current_app.logger.debug("self: {}".format(self))
         current_app.logger.debug("data: {}".format(data))
-        
+
         del_key_list = self.keys() - data.keys()
         for key in del_key_list:
             if isinstance(self[key], dict) and \
@@ -1288,7 +1266,7 @@ class WekoDeposit(Deposit):
                     return True, data
                 else:
                     return False, None
-        
+
         def _get_title_lang(itemtype_id,_data):
             from weko_items_autofill.utils import get_title_pubdate_path
             path = get_title_pubdate_path(itemtype_id).get("title")
@@ -1311,7 +1289,7 @@ class WekoDeposit(Deposit):
                         elif p in temp_record:
                             lang = temp_record[p]
             return title, lang
-            
+
         pid = PersistentIdentifier.query.filter_by(pid_type="recid", pid_value=self.get("recid")).one_or_none()
         if pid:
             item_id = pid.object_uuid
@@ -1343,12 +1321,12 @@ class WekoDeposit(Deposit):
                     rtn_data["lang"] = lang
 
                     return rtn_data
-        
+
         return None
 
-        
+
     def convert_item_metadata(self, index_obj, data=None):
-        """ 
+        """
 
         1. Convert Item Metadata
         2. Inject index tree id to dict
@@ -1357,11 +1335,11 @@ class WekoDeposit(Deposit):
         Args:
             index_obj (dict):
                 The target item's metadata index information
-                "ex: {'index': ['1557820086539'], 'actions': '1'}" 
+                "ex: {'index': ['1557820086539'], 'actions': '1'}"
             data (dict):
                 The target item's metadata
-                "ex: {'pid': {'type': 'depid', 'value': '34', 'revision_id': 0}, 'lang': 'ja', 'owner': '1', 'title': 'test deposit', 'owners': [1], 'status': 'published', '$schema': '/items/jsonschema/15', 'pubdate': '2022-06-07', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}, 'shared_user_id': -1, 'item_1617186331708': [{'subitem_1551255647225': 'test deposit', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}, 'item_1617605131499': [{'url': {'url': 'https://weko3.example.org/record/34/files/tagmanifest-sha256.txt'}, 'date': [{'dateType': 'Available', 'dateValue': '2022-06-07'}], 'format': 'text/plain', 'filename': 'tagmanifest-sha256.txt', 'filesize': [{'value': '323 B'}], 'accessrole': 'open_access', 'version_id': 'b27b05d9-e19f-47fb-b6f5-7f031b1ef8fe'}]}" 
-        
+                "ex: {'pid': {'type': 'depid', 'value': '34', 'revision_id': 0}, 'lang': 'ja', 'owner': '1', 'title': 'test deposit', 'owners': [1], 'status': 'published', '$schema': '/items/jsonschema/15', 'pubdate': '2022-06-07', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}, 'shared_user_id': -1, 'item_1617186331708': [{'subitem_1551255647225': 'test deposit', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}, 'item_1617605131499': [{'url': {'url': 'https://weko3.example.org/record/34/files/tagmanifest-sha256.txt'}, 'date': [{'dateType': 'Available', 'dateValue': '2022-06-07'}], 'format': 'text/plain', 'filename': 'tagmanifest-sha256.txt', 'filesize': [{'value': '323 B'}], 'accessrole': 'open_access', 'version_id': 'b27b05d9-e19f-47fb-b6f5-7f031b1ef8fe'}]}"
+
         Returns:
             dc: OrderedDict item_metada
             data.get('deleted_items'): deleted item data list
@@ -1454,7 +1432,7 @@ class WekoDeposit(Deposit):
         return dc, data.get('deleted_items')
 
     def _convert_description_to_object(self):
-        """ 
+        """
 
         Convert description to object.
 
@@ -1479,7 +1457,7 @@ class WekoDeposit(Deposit):
                 self.jrc[description_key] = _new_description
 
     def _convert_jpcoar_data_to_es(self):
-        """ 
+        """
 
         Convert data jpcoar to es.
 
@@ -1497,7 +1475,7 @@ class WekoDeposit(Deposit):
         self._convert_data_for_geo_location()
 
     def _convert_data_for_geo_location(self):
-        """ 
+        """
 
         Convert geo location to object.
 
@@ -1507,7 +1485,7 @@ class WekoDeposit(Deposit):
         Returns:
             None
 
-        """ 
+        """
         def _convert_geo_location(value):
             _point = []
             if isinstance(value.get("pointLongitude"), list) and isinstance(
@@ -1561,7 +1539,7 @@ class WekoDeposit(Deposit):
 
     @classmethod
     def delete_by_index_tree_id(cls, index_id: str, ignore_items: list = []):
-        """ 
+        """
 
         Delete by index tree id.
 
@@ -1569,13 +1547,13 @@ class WekoDeposit(Deposit):
             index_id (str): index_id
             ignore_items (list):
                 list of items that will be ingnored, therefore will not be deleted
-        
+
 
         Returns:
             None
 
         Raises:
-            Exception: all exception 
+            Exception: all exception
         """
         if index_id:
             index_id = str(index_id)
@@ -1594,18 +1572,18 @@ class WekoDeposit(Deposit):
                 dep.indexer.update_es_data(dep, update_revision=False)
 
     def update_pid_by_index_tree_id(self, path):
-        """ 
+        """
 
         Update pid by index tree id (not use)
 
         Args:
             path (str):
                 The index_tree_path that will run the update
-        
-        Returns:
-            bool: "True: process success False: process failed" 
 
-        """ 
+        Returns:
+            bool: "True: process success False: process failed"
+
+        """
         p = PersistentIdentifier
         try:
             dt = datetime.utcnow()
@@ -1624,14 +1602,14 @@ class WekoDeposit(Deposit):
             return False
 
     def update_item_by_task(self, *args, **kwargs):
-        """ 
+        """
 
         Update item by task
 
         Args:
             *args: usable within weko but is not being used. (Default: ``empty``)
             **kwargs: usable within weko but is not being used. (Default: ``empty``)
-        
+
         Returns:
             None
 
@@ -1639,7 +1617,7 @@ class WekoDeposit(Deposit):
         return super(Deposit, self).commit(*args, **kwargs)
 
     def delete_es_index_attempt(self, pid):
-        """ 
+        """
 
         Delete es index attempt.
 
@@ -1647,13 +1625,13 @@ class WekoDeposit(Deposit):
             pid (:obj: `PersistentIdentifier`):
                 The item's pid information.
                 Erase data related to status deletion.
-        
+
         Returns:
             None
 
         Raises:
             PIDResolveRESTError(description='This item has been deleted'): Invalid PID.
-        """ 
+        """
         # if this item has been deleted
         if pid.status == PIDStatus.DELETED:
             # attempt to delete index on es
@@ -1684,7 +1662,7 @@ class WekoDeposit(Deposit):
             self.indexer.update_author_link(author_link_info)
 
     def update_feedback_mail(self):
-        """ 
+        """
 
         Index feedback mail list.
 
@@ -1705,7 +1683,7 @@ class WekoDeposit(Deposit):
             self.indexer.update_feedback_mail_list(feedback_mail)
 
     def remove_feedback_mail(self):
-        """ 
+        """
 
         Remove feedback mail list.
 
@@ -1733,13 +1711,13 @@ class WekoDeposit(Deposit):
                 item_id of the file to be deleted.
             pre_object_versions (list):
                 information of the file to be deleted.
-                "ex: [87a563d7-537f-41aa-afd6-fed5e3cb4dc2:cd317125-600e-4961-89b6-9bb520f342c7:test.txt]" 
+                "ex: [87a563d7-537f-41aa-afd6-fed5e3cb4dc2:cd317125-600e-4961-89b6-9bb520f342c7:test.txt]"
             new_object_versions (list):
                 information of the new file to be created
-                "ex: [87a563d7-537f-41aa-afd6-fed5e3cb4dc2:cd317125-600e-4961-89b6-9bb520f342c7:test.txt]" 
+                "ex: [87a563d7-537f-41aa-afd6-fed5e3cb4dc2:cd317125-600e-4961-89b6-9bb520f342c7:test.txt]"
             is_import (boolean):
                 import flag
-        
+
         Returns:
             None
 
@@ -1775,14 +1753,14 @@ class WekoDeposit(Deposit):
         Args:
             pid (:obj:`PersistentIdentifier`):
                 pid information of the item to be updated.
-                "ex <PersistentIdentifier recid:1.0 / rec:5210fd22-576a-4241-8005-4c1f7ab6077a (R)>" 
+                "ex <PersistentIdentifier recid:1.0 / rec:5210fd22-576a-4241-8005-4c1f7ab6077a (R)>"
             keep_version (boolean,optional):
                 version keep flag
                 (Default: ``False``)
             is_import (boolean,optional):
                 import flag
                 (Default: ``False``)
-        
+
         Returns:
             bool: Description of return value
 
@@ -1836,7 +1814,7 @@ class WekoDeposit(Deposit):
         return self.__class__(self.model.json, model=self.model)
 
     def prepare_draft_item(self, recid):
-        """ 
+        """
 
         Create draft version of main record.
         1. Call the newversion() method using recid as an argument then create a deposit.
@@ -1849,13 +1827,13 @@ class WekoDeposit(Deposit):
             obj:
                 returns the created draft_deposit
 
-        """ 
+        """
         draft_deposit = self.newversion(recid, is_draft=True)
 
         return draft_deposit
 
     def delete_content_files(self):
-        """ 
+        """
 
         Delete 'file' from content file metadata.
 
@@ -1907,7 +1885,7 @@ class WekoRecord(Record):
         Raises:
             AttributeError
         Note: This function just works fine if file property has value.
-        """        
+        """
         hide_file = False
         item_type_id = self.get('item_type_id')
         solst, meta_options = get_options_and_order_list(item_type_id)
@@ -1932,7 +1910,7 @@ class WekoRecord(Record):
         Raises:
             sqlalchemy.exc.OperationalError
 
-        """        
+        """
         navs = Indexes.get_path_name(self.get('path', []))
 
         community = request.args.get('community', None)
@@ -1953,7 +1931,7 @@ class WekoRecord(Record):
             _type_: _description_
         Raises:
             AttributeError
-        """        
+        """
         item_type = ItemTypes.get_by_id(self.get('item_type_id'))
         return '{}({})'.format(item_type.item_type_name.name, item_type.tag)
 
@@ -1966,12 +1944,12 @@ class WekoRecord(Record):
 
         Returns:
             _type_: _description_
-        """        
+        """
         current_lang = current_i18n.language
         for value in data:
             if value.get('language', '') == current_lang:
                 return value.get('title', '')
-        
+
         if len(data) > 0:
             if data[0].get('language',None) == None:
                 return data[0].get('title', '')
@@ -1979,14 +1957,14 @@ class WekoRecord(Record):
         for value in data:
             if value.get('language', '') == 'en':
                 return value.get('title', '')
-                
+
         for value in data:
             if value.get('language', ''):
                 return value.get('title', '')
-                
+
         if len(data) > 0:
             return data[0].get('title', '')
-        
+
         return ''
 
     @staticmethod
@@ -2115,7 +2093,7 @@ class WekoRecord(Record):
                     is_author = nval['attribute_type'] == 'creator'
                     is_thumbnail = any(
                         'subitem_thumbnail' in data for data in mlt)
-                    
+
                     sys_bibliographic = _FormatSysBibliographicInformation(
                         copy.deepcopy(mlt),
                         copy.deepcopy(solst)
@@ -2171,7 +2149,7 @@ class WekoRecord(Record):
             option = meta_options.get(key, {}).get('option')
             if not val or not option:
                 continue
-            
+
             # Just get data of 'File'
             if val.get('attribute_type') != "file":
                 continue
@@ -2206,7 +2184,7 @@ class WekoRecord(Record):
                 attr_mlt = get_attribute_value_all_items(key, file_metadata,
                                                   copy.deepcopy(solst))
                 set_file_date(key, copy.deepcopy(solst), file_metadata, attr_mlt)
-                
+
                 nval['attribute_value_mlt'] = attr_mlt
                 items.append(nval)
             else:
@@ -2345,7 +2323,7 @@ class WekoRecord(Record):
             _type_: _description_
         Raises:
             AttributeError
-        """        
+        """
         return self._get_pid('doi')
 
     @property
@@ -2528,7 +2506,7 @@ class _FormatSysCreator:
 
         Returns:
             NoReturn: _description_
-        """                                   
+        """
         def _run_format_affiliation(affiliation_max, affiliation_min,
                                     languages,
                                     creator_lists,
@@ -2581,7 +2559,7 @@ class _FormatSysCreator:
         if isinstance(creators, dict):
             creator_list_temp = []
             for key, value in creators.items():
-                if (key in [WEKO_DEPOSIT_SYS_CREATOR_KEY['identifiers'], 
+                if (key in [WEKO_DEPOSIT_SYS_CREATOR_KEY['identifiers'],
                             WEKO_DEPOSIT_SYS_CREATOR_KEY['creator_mails'],
                             WEKO_DEPOSIT_SYS_CREATOR_KEY['creator_type']]): #? ADDED 20231017 CREATOR TYPE BUG FIX
                     continue
@@ -2662,7 +2640,7 @@ class _FormatSysCreator:
                         self._merge_creator_data(v, merged_data)
                         creator_temp[k] = merged_data
                 creator_list.append(creator_temp)
-        
+
         # Format creators
         formatted_creator_list = []
         self._format_creator_on_creator_popup(creator_list,
@@ -2849,7 +2827,7 @@ class _FormatSysBibliographicInformation:
         """
         # current_app.logger.error("bibliographic_meta_data_lst:{}".format(bibliographic_meta_data_lst))
         # current_app.logger.error("props_lst:{}".format(props_lst))
-        
+
         self.bibliographic_meta_data_lst = bibliographic_meta_data_lst
         self.props_lst = props_lst
 
@@ -3047,8 +3025,8 @@ class _FormatSysBibliographicInformation:
 
         if len(title_data_none_lang) > 0:
             if source_titles[0].get('bibliographic_title')==title_data_none_lang[0]:
-                return title_data_none_lang[0],''
-            
+                return title_data_none_lang[0], ''
+
         if value_latn:
             return value_latn, 'ja-Latn'
 

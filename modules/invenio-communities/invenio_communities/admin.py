@@ -22,7 +22,7 @@ from weko_index_tree.models import Index
 from wtforms.validators import ValidationError
 
 from .models import Community, FeaturedCommunity, InclusionRequest
-from .utils import get_user_role_ids
+from .utils import get_user_role_ids, get_numeric_user_role_ids
 
 
 def _(x):
@@ -130,8 +130,9 @@ class CommunityModelView(ModelView):
         which is used when retrieving records for the edit view.
         """
         role_ids = get_user_role_ids()
-
-        if (min(role_ids) <=
+        numeric_role_ids = get_numeric_user_role_ids(role_ids)
+        
+        if (min(numeric_role_ids) <=
                 current_app.config['COMMUNITIES_LIMITED_ROLE_ACCESS_PERMIT']):
             return self.session.query(self.model).filter()
 
@@ -145,8 +146,9 @@ class CommunityModelView(ModelView):
         subquery, so ``query(func.count('*'))`` should be used instead.
         """
         role_ids = get_user_role_ids()
+        numeric_role_ids = get_numeric_user_role_ids(role_ids)
 
-        if (min(role_ids) <=
+        if (min(numeric_role_ids) <=
                 current_app.config['COMMUNITIES_LIMITED_ROLE_ACCESS_PERMIT']):
             return self.session.query(func.count('*')).select_from(self.model)
 
@@ -163,8 +165,9 @@ class CommunityModelView(ModelView):
         :param obj: input object
         """
         role_ids = get_user_role_ids()
+        numeric_role_ids = get_numeric_user_role_ids(role_ids)
 
-        if (min(role_ids) <=
+        if (min(numeric_role_ids) <=
                 current_app.config['COMMUNITIES_LIMITED_ROLE_ACCESS_PERMIT']):
             return super().edit_form(obj)
 

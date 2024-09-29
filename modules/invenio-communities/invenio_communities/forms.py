@@ -13,7 +13,7 @@ from __future__ import absolute_import, print_function
 import re
 
 from flask_babel import gettext as _
-from flask_wtf import Form
+from flask_wtf import Form, Recaptcha, RecaptchaField
 from wtforms import FileField, HiddenField, StringField, TextAreaField, \
     validators
 from wtforms.validators import ValidationError

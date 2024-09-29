@@ -38,16 +38,16 @@
   {{ webpack['angular_js.js']}}
   {{ webpack['admin_js_admin_lte_js_dependecies.js']}}
   {{ webpack['search-ui-js-js-dependencies-datepicker.js']}}
-  {{ webpack['theme-js-base.js.js']}}
+  {{ webpack['theme-js.js']}}
   <script src="{{ url_for('static', filename='js/weko_theme/inline.bundle.js') }}" defer></script>
   <script src="{{ url_for('static', filename='js/weko_theme/polyfills.bundle.js') }}" defer></script>
   <script src="{{ url_for('static', filename='js/weko_theme/main.bundle.js') }}" defer></script>
   {{ webpack['theme-js-top-page.js']}}
   {{ webpack['records_ui_js_dependecies.js']}}
   {{ webpack['records_ui_js.js']}}
-  {{ webpack['invenio_search_ui_app.js']}}
+  {{ webpack['search_ui_app.js']}}
   {{ webpack['search-ui-js-weko-search-ui.js']}}
-  {{ webpack['theme-search-detail']}}
+  {{ webpack['theme-search-detail.js']}}
   {{ webpack['admin_js_admin_lte_js_dependecies.js']}}
 {%- endblock javascript %}
 

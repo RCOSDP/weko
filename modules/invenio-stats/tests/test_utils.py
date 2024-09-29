@@ -95,7 +95,7 @@ def test_default_permission_factory(app):
 
 # def get_aggregations(index, aggs_query):
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_utils.py::test_get_aggregations -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
-def test_get_aggregations(app, es):
+def test_get_aggregations(app):
     with app.app_context():
         res = get_aggregations('', {})
         assert res=={}
@@ -127,14 +127,14 @@ def test_agg_bucket_sort(app):
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_utils.py::test_parse_bucket_response -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
 def test_parse_bucket_response(app):
     _raw_res = {'buckets': [{'key': 'test_value'}], 'field': 'test_name'}
-    
+
     res = parse_bucket_response(_raw_res, {})
     assert res=={'test_name': 'test_value'}
 
 # def get_doctype(doc_type):
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_utils.py::test_get_doctype -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
-def test_get_doctype(app):
-    assert get_doctype('test_doc')=='_doc'
+#def test_get_doctype(app):
+#    assert get_doctype('test_doc')=='_doc'
 
 # def is_valid_access():
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_utils.py::test_is_valid_access -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
@@ -142,7 +142,7 @@ def test_is_valid_access(app):
     with app.app_context():
         res = is_valid_access()
         assert res==True
-        
+
         with patch("invenio_stats.utils.get_remote_addr", return_value='0.0.0.0'):
             app.config['STATS_EXCLUDED_ADDRS'] = ['0.0.0.0']
             res = is_valid_access()
@@ -261,22 +261,22 @@ def test_query_file_reports_helper(app, event_queues, aggregated_file_download_e
             'get-file-download-per-user-report': None,
             'get-file-preview-per-user-report': None},
             _data_list)
-        assert _data_list=={} 
+        assert _data_list=={}
         QueryFileReportsHelper.Calculation(_res, _data_list)
         assert _data_list=={
             1: {'cur_user_id': 1, 'total_download': 2, 'total_preview': 5},
             2: {'cur_user_id': 2, 'total_download': 3},
             3: {'cur_user_id': 3, 'total_download': 4},
             4: {'cur_user_id': 4, 'total_preview': 1}}
-        
+
 
         # get_file_stats_report
-        res = QueryFileReportsHelper.get_file_stats_report(event='file_downlaod', year=2022, month=10)   
-        assert res=={'all': [], 'all_groups': [], 'date': '2022-10', 'open_access': []} 
+        res = QueryFileReportsHelper.get_file_stats_report(event='file_downlaod', year=2022, month=10)
+        assert res=={'all': [], 'all_groups': [], 'date': '2022-10', 'open_access': []}
         res = QueryFileReportsHelper.get_file_stats_report(event='file_preview', year=2022, month=10)
-        assert res=={'all': [], 'all_groups': [], 'date': '2022-10', 'open_access': []} 
-        res = QueryFileReportsHelper.get_file_stats_report(event='billing_file_download', year=2022, month=10) 
-        assert res=={'all': [], 'all_groups': [], 'date': '2022-10', 'open_access': []} 
+        assert res=={'all': [], 'all_groups': [], 'date': '2022-10', 'open_access': []}
+        res = QueryFileReportsHelper.get_file_stats_report(event='billing_file_download', year=2022, month=10)
+        assert res=={'all': [], 'all_groups': [], 'date': '2022-10', 'open_access': []}
 
         # get_file_per_using_report
         res = QueryFileReportsHelper.get_file_per_using_report(year=2022, month=10)
@@ -284,9 +284,9 @@ def test_query_file_reports_helper(app, event_queues, aggregated_file_download_e
 
         # get
         res = QueryFileReportsHelper.get(year=2022, month=10, event='file_download')
-        assert res=={'all': [], 'all_groups': [], 'date': '2022-10', 'open_access': []} 
+        assert res=={'all': [], 'all_groups': [], 'date': '2022-10', 'open_access': []}
         res = QueryFileReportsHelper.get(year=2022, month=10, event='billing_file_download')
-        assert res=={'all': [], 'all_groups': [], 'date': '2022-10', 'open_access': []} 
+        assert res=={'all': [], 'all_groups': [], 'date': '2022-10', 'open_access': []}
         res = QueryFileReportsHelper.get(year=2022, month=10, event='file_using_per_user')
         assert res=={'all': {}, 'date': '2022-10'}
         res = QueryFileReportsHelper.get(year=2022, month=10, event='test')
@@ -296,9 +296,9 @@ def test_query_file_reports_helper_error(app):
     with app.app_context():
         # get
         res = QueryFileReportsHelper.get(year=2022, month=10, event='file_download')
-        assert res=={'all': [], 'all_groups': [], 'date': '2022-10', 'open_access': []} 
+        assert res=={'all': [], 'all_groups': [], 'date': '2022-10', 'open_access': []}
         res = QueryFileReportsHelper.get(year=2022, month=10, event='billing_file_download')
-        assert res=={'all': [], 'all_groups': [], 'date': '2022-10', 'open_access': []} 
+        assert res=={'all': [], 'all_groups': [], 'date': '2022-10', 'open_access': []}
         res = QueryFileReportsHelper.get(year=2022, month=10, event='file_using_per_user')
         assert res=={'all': {}, 'date': '2022-10'}
         res = QueryFileReportsHelper.get(year=2022, month=10, event='test')
@@ -309,7 +309,7 @@ def test_query_file_reports_helper_error(app):
 #     def parse_bucket_response(cls, raw_res, pretty_result):
 #     def get(cls, **kwargs):
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_utils.py::test_query_search_report_helper -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
-def test_query_search_report_helper(app, es):
+def test_query_search_report_helper(app):
     with app.app_context():
         # parse_bucket_response
         _raw_res1 = {
@@ -384,7 +384,7 @@ def test_query_search_report_helper_error(app):
 #     def get_item_create_ranking(cls, **kwargs):
 #         def Calculation(res, result):
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_utils.py::test_query_common_reports_helper -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
-def test_query_common_reports_helper(app, es):
+def test_query_common_reports_helper(app):
     # get
     _res = {
         'buckets': [
@@ -476,7 +476,7 @@ def test_query_common_reports_helper_error(app):
 #     def parse_bucket_response(cls, aggs, result):
 #     def get(cls, **kwargs):
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_utils.py::test_query_record_view_per_index_report_helper -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
-def test_query_record_view_per_index_report_helper(app, es):
+def test_query_record_view_per_index_report_helper(app):
     with app.app_context():
         # build_query
         res = QueryRecordViewPerIndexReportHelper.build_query(None, None, 'test_key')
@@ -531,7 +531,7 @@ def test_query_record_view_per_index_report_helper_error(app):
 #     def correct_record_title(cls, lst_data):
 #     def get(cls, **kwargs):
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_utils.py::test_query_record_view_report_helper -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
-def test_query_record_view_report_helper(app, es, db, records):
+def test_query_record_view_report_helper(app, db, records):
     _id1 = str(uuid.uuid4())
     _id2 = str(uuid.uuid4())
     # Calculation
@@ -611,7 +611,7 @@ def test_query_record_view_report_helper_error(app, db):
 #     def get(cls, **kwargs):
 #     def merge_items_results(cls, results):
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_utils.py::test_query_item_reg_report_helper -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
-def test_query_item_reg_report_helper(app, db, event_queues,es):
+def test_query_item_reg_report_helper(app, db, event_queues):
     # get
     from invenio_search import current_search_client
     res = QueryItemRegReportHelper.get(target_report='1', unit='Day', start_date='2022-09-01', end_date='2022-09-15')
@@ -789,7 +789,7 @@ def test_query_item_reg_report_helper(app, db, event_queues,es):
     res = QueryItemRegReportHelper.merge_items_results(_results)
     assert res==[{'col1': 1.0, 'col3': 5}, {'col1': 2.0, 'col3': 4}]
 
-def test_query_item_reg_report_helper_error(app, db):
+def test_query_item_reg_report_helper_error(i18n_app, queries_config):
     # get
     res = QueryItemRegReportHelper.get(target_report='1', unit='Day', start_date='2022-09-01', end_date='2022-09-15')
     assert res=={'data': [], 'num_page': 2, 'page': 1}
@@ -823,7 +823,7 @@ def test_query_item_reg_report_helper_error(app, db):
 #     def get(cls, **kwargs):
 #     get_new_items(cls, **kwargs):
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_utils.py::test_query_ranking_helper -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
-def test_query_ranking_helper(app, db, es):
+def test_query_ranking_helper(app, db):
     # Calculation
     _res = {
         'aggregations': {
@@ -910,7 +910,7 @@ def test_StatsCliUtil(app, db):
             source={'event_type': 'file-download-agg'}
         )
     ]
-    
+
     stats_cli = StatsCliUtil(
         StatsCliUtil.EVENTS_TYPE, _event_types, 202201
     )
@@ -945,7 +945,7 @@ def test_StatsCliUtil(app, db):
     )
     assert not stats_cli.delete_data(True)
 
-    
+
 
     stats_cli = StatsCliUtil(
         StatsCliUtil.EVENTS_TYPE, _empty_types, verbose=False

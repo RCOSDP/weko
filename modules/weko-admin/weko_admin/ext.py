@@ -28,6 +28,7 @@ from flask import _request_ctx_stack, current_app, request, session
 from flask_menu import current_menu
 from invenio_i18n import LazyString
 from invenio_i18n import lazy_gettext as _
+from invenio_theme.proxies import current_theme_icons
 from flask_login import current_user
 from invenio_accounts.models import Role, userrole
 from invenio_db import db
@@ -116,7 +117,7 @@ class WekoAdmin(object):
                 return
             if request.path == "/oai":
                 return
-            
+
             if "selected_language" not in session:
                 registered_languages = AdminLangSettings\
                     .get_registered_language()
@@ -191,12 +192,12 @@ class WekoAdmin(object):
 def finalize_app(app):
     """Finalize app."""
     icons = app.extensions['invenio-theme'].icons
-    
+
     current_menu.submenu("settings.lifetime").register(
         endpoint="weko_admin.lifetime",
         text=_(
-            '%(icon)s Session', 
-            icon=LazyString(lambda: f'<i class="{icons.codepen}"></i>')
+            '%(icon)s Session',
+            icon=f'<i class="{current_theme_icons.cogs}"></i>'
         ),
         visible_when=_has_admin_access,
         order=14

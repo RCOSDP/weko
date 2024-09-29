@@ -212,7 +212,6 @@ WEKO_ITEMS_UI_RANKING_QUERY = dict(
         query_class = ESWekoRankingQuery,
         query_config = dict(
             index='{}-stats-{}',
-            doc_type='{}-day-aggregation',
             main_fields=['start_date', 'end_date', 'group_field', 'agg_size', 'count_field'],
             metric_fields=dict(),
             main_query={

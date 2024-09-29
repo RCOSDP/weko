@@ -17,23 +17,23 @@ RUN apt-get install -y \
     echo "deb-src http://nginx.org/packages/ubuntu focal nginx" | tee -a /etc/apt/sources.list.d/nginx.list && \
     curl -fsSL https://nginx.org/keys/nginx_signing.key | apt-key add - && \
     apt-get update -y && \
-    apt-get source -y nginx=1.20.1 && \
-    apt-get build-dep -y nginx=1.20.1 && \
+    apt-get source -y nginx=1.26.1 && \
+    apt-get build-dep -y nginx=1.26.1 && \
     wget "https://github.com/samizdatco/nginx-http-auth-digest/archive/master.zip" -O nginx-http-auth-digest.zip && \
     # https://github.com/nginx-shib/nginx-http-shibboleth
     wget "https://github.com/nginx-shib/nginx-http-shibboleth/archive/v2.0.1.tar.gz" -O nginx-http-shibboleth-2.0.1.tar.gz && \
-    wget "https://github.com/openresty/headers-more-nginx-module/archive/v0.33.tar.gz" -O headers-more-nginx-module-0.33.tar.gz && \
+    wget "https://github.com/openresty/headers-more-nginx-module/archive/v0.37.tar.gz" -O headers-more-nginx-module-0.37.tar.gz && \
     wget "https://github.com/FRiCKLE/ngx_cache_purge/archive/2.3.tar.gz" -O ngx_cache_purge-2.3.tar.gz && \
     unzip nginx-http-auth-digest.zip && \
     tar zxf nginx-http-shibboleth-2.0.1.tar.gz && \
-    tar zxf headers-more-nginx-module-0.33.tar.gz && \
+    tar zxf headers-more-nginx-module-0.37.tar.gz && \
     tar zxf ngx_cache_purge-2.3.tar.gz && \
     sed -i "s#--modules-path=/usr/lib/nginx/modules#--modules-path=/usr/lib/nginx/modules \
-    	--add-module=/tmp/headers-more-nginx-module-0.33 \
+    	--add-module=/tmp/headers-more-nginx-module-0.37 \
 	--add-module=/tmp/nginx-http-shibboleth-2.0.1 \
 	--add-module=/tmp/nginx-http-auth-digest-master \
-	--add-module=/tmp/ngx_cache_purge-2.3 #g" nginx-1.20.1/debian/rules && \
-	cd nginx-1.20.1 && dpkg-buildpackage -b
+	--add-module=/tmp/ngx_cache_purge-2.3 #g" nginx-1.26.1/debian/rules && \
+	cd nginx-1.26.1 && dpkg-buildpackage -b
 
 FROM ubuntu:focal AS nginx-stage_1
 
@@ -50,9 +50,9 @@ RUN apt-get update && \
 	    php-fpm php-curl
 
 WORKDIR /tmp
-COPY --from=nginx-with-shib /tmp/nginx_1.20.1-1~focal_arm64.deb .
-COPY --from=nginx-with-shib /tmp/nginx-dbg_1.20.1-1~focal_arm64.deb .
-RUN dpkg -i nginx_1.20.1-1~focal_arm64.deb
+COPY --from=nginx-with-shib /tmp/nginx_1.26.1-2~focal_arm64.deb .
+COPY --from=nginx-with-shib /tmp/nginx-dbg_1.26.1-2~focal_arm64.deb .
+RUN dpkg -i nginx_1.26.1-2~focal_arm64.deb
 
 
 ADD supervisord.conf /etc/supervisor/supervisord.conf

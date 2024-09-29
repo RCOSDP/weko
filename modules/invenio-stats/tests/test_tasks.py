@@ -13,7 +13,7 @@ from invenio_stats import current_stats
 from invenio_stats.tasks import process_events
 
 
-def test_process_events(app, search_clear, event_queues):
+def test_process_events(app, es, event_queues):
     """Test process event."""
     current_stats.publish(
         "file-download",

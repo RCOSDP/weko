@@ -57,6 +57,7 @@ from werkzeug.local import LocalProxy
 
 from invenio_stats import InvenioStats, current_stats as _current_stats
 from invenio_stats.views import blueprint
+from invenio_stats.contrib.registrations import register_queries
 from invenio_stats.contrib.config import (
     AGGREGATIONS_CONFIG,
     EVENTS_CONFIG,
@@ -72,22 +73,86 @@ from invenio_stats.processors import EventsIndexer, anonymize_user
 from invenio_stats.models import StatsEvents, StatsAggregation, StatsBookmark
 from invenio_stats.tasks import aggregate_events, process_events
 
+def mock_iter_entry_points_factory(data, mocked_group):
+    """Create a mock iter_entry_points function."""
+    from pkg_resources import iter_entry_points
+
+    def entrypoints(group, name=None):
+        if group == mocked_group:
+            for entrypoint in data:
+                yield entrypoint
+        else:
+            for x in iter_entry_points(group=group, name=name):
+                yield x
+    return entrypoints
+
 @pytest.fixture()
-def records(db):
-    record_data = json_data("data/test_records.json")
-    item_data = json_data("data/test_items.json")
-    record_num = len(record_data)
-    result = []
-    for d in range(record_num):
-        result.append(create_record(record_data[d], item_data[d]))
-    db.session.commit()
-    yield result
+def records(app, db):
+    with app.app_context():
+        record_data = json_data("data/test_records.json")
+        item_data = json_data("data/test_items.json")
+        record_num = len(record_data)
+        result = []
+        for d in range(record_num):
+            result.append(create_record(record_data[d], item_data[d]))
+        db.session.commit()
+        yield result
 
 
 @pytest.yield_fixture()
 def mock_gethostbyaddr():
     with patch("invenio_stats.contrib.event_builders.gethostbyaddr", return_value="test_host"):
         yield
+
+@pytest.yield_fixture()
+def query_entrypoints(custom_permission_factory):
+    """Same as event_entrypoints for queries."""
+    from pkg_resources import EntryPoint
+    entrypoint = EntryPoint('invenio_stats', 'queries')
+    data = []
+    result = []
+    conf = [dict(
+        query_name='test-query',
+        query_class=CustomQuery,
+        query_config=dict(
+            index='stats-file-download',
+            doc_type='file-download-day-aggregation',
+            copy_fields=dict(
+                bucket_id='bucket_id',
+            ),
+            required_filters=dict(
+                bucket_id='bucket_id',
+            )
+        ),
+        permission_factory=custom_permission_factory
+    ),
+        dict(
+        query_name='test-query2',
+        query_class=CustomQuery,
+        query_config=dict(
+            index='stats-file-download',
+            doc_type='file-download-day-aggregation',
+            copy_fields=dict(
+                bucket_id='bucket_id',
+            ),
+            required_filters=dict(
+                bucket_id='bucket_id',
+            )
+        ),
+        permission_factory=custom_permission_factory
+    )]
+
+    result += conf
+    result += register_queries()
+    entrypoint.load = lambda conf=conf: (lambda: result)
+    data.append(entrypoint)
+
+    entrypoints = mock_iter_entry_points_factory(data, 'invenio_stats.queries')
+
+    with patch('invenio_stats.ext.iter_entry_points',
+               entrypoints):
+        yield result
+
 
 @pytest.fixture()
 def mock_anonymization_salt():
@@ -117,12 +182,13 @@ def instance_path():
 @pytest.fixture()
 def event_queues(app):
     """Delete and declare test queues."""
-    current_queues.delete()
-    try:
-        current_queues.declare()
-        yield
-    finally:
+    with app.app_context():
         current_queues.delete()
+        try:
+            current_queues.declare()
+            yield
+        finally:
+            current_queues.delete()
 
 
 @pytest.fixture(scope="module")
@@ -148,15 +214,6 @@ def aggregations_config():
 def base_app(instance_path, mock_gethostbyaddr):
     """Flask application fixture without InvenioStats."""
     app_ = Flask('testapp', instance_path=instance_path)
-    stats_events = {
-        'file-download': deepcopy(STATS_EVENTS['file-download']),
-        'record-view': {
-            'signal': 'invenio_records_ui.signals.record_viewed',
-            'event_builders': ['invenio_stats.contrib.event_builders'
-                               '.record_view_event_builder']
-        }
-    }
-    stats_events.update({'event_{}'.format(idx): {} for idx in range(5)})
     app_.config.update(dict(
         #CELERY_ALWAYS_EAGER=True,
         always_eager=True,
@@ -196,7 +253,6 @@ def base_app(instance_path, mock_gethostbyaddr):
         SERVER_NAME='localhost',
         PIDRELATIONS_RELATION_TYPES=PIDRELATIONS_RELATION_TYPES,
         STATS_QUERIES=STATS_QUERIES,
-        STATS_EVENTS=stats_events,
         STATS_AGGREGATIONS=STATS_AGGREGATIONS,
         STATS_EXCLUDED_ADDRS = [],
         STATS_EVENT_STRING = 'events',
@@ -223,23 +279,23 @@ def base_app(instance_path, mock_gethostbyaddr):
     return app_
 
 
-@pytest.yield_fixture(scope='function')
+@pytest.fixture(scope='function')
 def app(base_app):
     """Flask application fixture with InvenioStats."""
     InvenioStats(base_app)
     Babel(base_app)
     with base_app.app_context():
-        yield base_app
+        return base_app
 
 
-@pytest.yield_fixture()
-def client(app):
-    app.register_blueprint(blueprint, url_prefix="/api/stats")
-    with app.test_client() as client:
-        yield client
+@pytest.fixture(scope='function')
+def client(i18n_app):
+    i18n_app.register_blueprint(blueprint, url_prefix="/api/stats")
+    with i18n_app.test_client() as client:
+        return client
 
 
-@pytest.fixture()
+@pytest.fixture(scope='function')
 def role_users(app, db):
     """Create users."""
     ds = app.extensions["invenio-accounts"].datastore
@@ -371,36 +427,36 @@ def role_users(app, db):
 def queries_config(app, custom_permission_factory):
     """Queries config for the tests."""
     stats_queries = deepcopy(QUERIES_CONFIG)
-    stats_queries.update(
-        {
-            "test-query": {
-                "cls": CustomQuery,
-                "params": {
-                    "index": "stats-file-download",
-                    "copy_fields": {
-                        "bucket_id": "bucket_id",
-                    },
-                    "required_filters": {
-                        "bucket_id": "bucket_id",
-                    },
-                },
-                "permission_factory": custom_permission_factory,
-            },
-            "test-query2": {
-                "cls": CustomQuery,
-                "params": {
-                    "index": "stats-file-download",
-                    "copy_fields": {
-                        "bucket_id": "bucket_id",
-                    },
-                    "required_filters": {
-                        "bucket_id": "bucket_id",
-                    },
-                },
-                "permission_factory": custom_permission_factory,
-            },
-        }
-    )
+    # stats_queries.update(
+    #     {
+    #         "test-query": {
+    #             "cls": CustomQuery,
+    #             "params": {
+    #                 "index": "stats-file-download",
+    #                 "copy_fields": {
+    #                     "bucket_id": "bucket_id",
+    #                 },
+    #                 "required_filters": {
+    #                     "bucket_id": "bucket_id",
+    #                 },
+    #             },
+    #             "permission_factory": custom_permission_factory,
+    #         },
+    #         "test-query2": {
+    #             "cls": CustomQuery,
+    #             "params": {
+    #                 "index": "stats-file-download",
+    #                 "copy_fields": {
+    #                     "bucket_id": "bucket_id",
+    #                 },
+    #                 "required_filters": {
+    #                     "bucket_id": "bucket_id",
+    #                 },
+    #             },
+    #             "permission_factory": custom_permission_factory,
+    #         },
+    #     }
+    # )
 
     # store the original config value
     original_value = app.config.get("STATS_QUERIES")
@@ -492,16 +548,23 @@ def es(app):
     finally:
         current_search_client.indices.delete(index='test-*')
 
-@pytest.fixture()
+@pytest.fixture(scope='function')
 def db(app):
+    """Recreate db at each test that requires it."""
     with app.app_context():
-        """Recreate db at each test that requires it."""
         if not database_exists(str(db_.engine.url)):
             create_database(str(db_.engine.url))
         db_.create_all()
-        yield db_
-        db_.session.remove()
-        db_.drop_all()
+        return db_
+
+@pytest.fixture(scope='function', autouse=True)
+def teardown_db(app):
+    """Teardown the database after each test."""
+    yield
+    with app.app_context():
+        if database_exists(str(db_.engine.url)):
+            db_.session.remove()
+            db_.drop_all()
 
 
 class MockEs():
@@ -575,29 +638,32 @@ def user_set(app, user):
 
 
 @pytest.fixture()
-def dummy_location(db):
+def dummy_location(app, db):
     """File system location."""
-    tmppath = tempfile.mkdtemp()
+    with app.app_context():
+        tmppath = tempfile.mkdtemp()
 
-    loc = Location(name="testloc", uri=tmppath, default=True)
-    db.session.add(loc)
-    db.session.commit()
+        loc = Location(name="testloc", uri=tmppath, default=True)
+        db.session.add(loc)
+        db.session.commit()
 
-    yield loc
+        yield loc
 
-    shutil.rmtree(tmppath)
+        shutil.rmtree(tmppath)
 
 
 @pytest.fixture()
-def record(db):
-    """File system location."""
-    return Record.create({})
+def record(app, db):
+    with app.app_context():
+        """File system location."""
+        return Record.create({})
 
 
 @pytest.fixture()
-def pid(db, record):
-    """File system location."""
-    return recid_minter(record.id, record)
+def pid(app, db, record):
+    with app.app_context():
+        """File system location."""
+        return recid_minter(record.id, record)
 
 
 @pytest.fixture()
@@ -822,16 +888,22 @@ def indexed_file_download_events(app, es, mock_user_ctx, request):
 
 @pytest.fixture()
 def aggregated_file_download_events(app, es, mock_user_ctx, request):
-    """Parametrized pre indexed sample events."""
-    generate_file_events(app=app, event_type="file-download", **request.param)
-    aggregate_events(
-        ["file-download-agg"],
-        start_date="2022-10-01",
-        end_date="2022-10-30",
-        update_bookmark=False,
-        manual=True)
-    current_search_client.indices.flush(index="test-*")
-    yield
+    with app.app_context():
+        """Parametrized pre indexed sample events."""
+        generate_file_events(app=app, event_type="file-download", **request.param)
+
+        from datetime import datetime, timezone
+        start_date = datetime(2022, 10, 1, tzinfo=timezone.utc).isoformat()
+        end_date = datetime(2022, 10, 30, tzinfo=timezone.utc).isoformat()
+
+        aggregate_events(
+            ["file-download-agg"],
+            start_date=start_date,
+            end_date=end_date,
+            update_bookmark=False,
+            manual=True)
+        current_search_client.indices.flush(index="test-*")
+        yield
 
 @pytest.yield_fixture()
 def indexed_file_preview_events(app, es, mock_user_ctx, request):
@@ -871,6 +943,7 @@ def stats_events_for_db(app, db):
     except:
         db.session.rollback()
 
+        yield
 
 @pytest.fixture()
 def users(app, db):
@@ -1006,7 +1079,7 @@ def esindex(app):
         mapping = json.load(f)
 
     with app.test_request_context():
-        client.indices.create(index=index_name, body=mapping, ignore=[400])
+        client.indices.create(index=index_name, body=mapping)
         client.indices.put_alias(index=index_name, name=alias_name)
 
     yield client
@@ -1020,9 +1093,68 @@ def i18n_app(app):
     with app.test_request_context(
         headers=[('Accept-Language','ja')]):
         app.extensions['invenio-oauth2server'] = 1
-        app.extensions['invenio-queues'] = 1
         app.extensions['invenio-search'] = MagicMock()
         app.extensions['invenio-i18n'] = MagicMock()
         app.extensions['invenio-i18n'].language = "ja"
         InvenioI18N(app)
         yield app
+
+@pytest.fixture()
+def indexed_events(app, db, mock_user_ctx, request):
+    """Parametrized pre indexed sample events."""
+    generate_events(app=app, **request.param)
+    yield
+
+def generate_events(
+    app,
+    file_number=5,
+    event_number=100,
+    robot_event_number=0,
+    start_date=datetime.date(2017, 1, 1),
+    end_date=datetime.date(2017, 1, 7),
+):
+    """Queued events for processing tests."""
+    current_queues.declare()
+
+    def _unique_ts_gen():
+        ts = 0
+        while True:
+            ts += 1
+            yield ts
+
+    def generator_list():
+        unique_ts = _unique_ts_gen()
+        for file_idx in range(file_number):
+            for entry_date in date_range(start_date, end_date):
+                file_id = "F000000000000000000000000000000{}".format(file_idx + 1)
+                bucket_id = "B000000000000000000000000000000{}".format(file_idx + 1)
+
+                def build_event(is_robot=False):
+                    ts = next(unique_ts)
+                    return {
+                        "timestamp": datetime.datetime.combine(
+                            entry_date, datetime.time(minute=ts % 60, second=ts % 60)
+                        ).isoformat(),
+                        "bucket_id": bucket_id,
+                        "file_id": file_id,
+                        "file_key": "test.pdf",
+                        "size": 9000,
+                        "visitor_id": 100,
+                        "is_robot": is_robot,
+                    }
+
+                for event_idx in range(event_number):
+                    yield build_event()
+                for event_idx in range(robot_event_number):
+                    yield build_event(True)
+
+    mock_queue = Mock()
+    mock_queue.consume.return_value = generator_list()
+    mock_queue.routing_key = "stats-file-download"
+
+    EventsIndexer(
+        mock_queue,
+        preprocessors=[build_file_unique_id, anonymize_user],
+        double_click_window=0,
+    ).run()
+    current_search.flush_and_refresh(index="*")

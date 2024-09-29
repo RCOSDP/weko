@@ -85,13 +85,6 @@ class ItemType(db.Model, Timestamp):
     )
     """Name identifier of item type."""
 
-    item_type_name = db.relationship(
-        'ItemTypeName',
-        backref=db.backref('item_type', lazy='dynamic',
-                           order_by=desc('item_type.tag'))
-    )
-    """Name information from ItemTypeName class."""
-
     harvesting_type = db.Column(db.Boolean(name='harvesting_type'),
                                 nullable=False,
                                 default=False)
@@ -172,6 +165,13 @@ class ItemType(db.Model, Timestamp):
     )
     """Status of item type."""
 
+    item_type_name = db.relationship(
+        'ItemTypeName',
+        backref=db.backref('item_type', lazy='dynamic',
+                           order_by=desc(tag))
+    )
+    """Name information from ItemTypeName class."""
+    
     __mapper_args__ = {
         'version_id_col': version_id
     }

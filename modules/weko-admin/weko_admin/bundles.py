@@ -144,6 +144,15 @@ weko_admin_site_info_css = Bundle(
     output="gen/weko_site_info_css.%(version)s.css",
 )
 
+weko_admin_communities_setting_js = Bundle(
+    'js/weko_admin/communities_setting.js',
+    output='gen/communities_setting.%(version)s.js'
+)
+weko_admin_communities_setting_css = Bundle(
+    'css/weko_admin/communities.setting.css',
+    output='gen/communities.setting.%(version)s.css'
+)
+
 weko_admin_ng_js_tree_js = NpmBundle(
     'js/weko_admin/jstree.min.js',
     'js/weko_admin/ngJsTree.min.js',

@@ -11,28 +11,28 @@ RUN curl -fsSL https://nginx.org/keys/nginx_signing.key | apt-key add -
 RUN apt-get update -y
 #RUN apt-get source -y nginx=1.18.0
 #RUN apt-get build-dep -y nginx=1.18.0
-RUN apt-get source -y nginx=1.20.1
-RUN apt-get build-dep -y nginx=1.20.1
+RUN apt-get source -y nginx=1.26.1
+RUN apt-get build-dep -y nginx=1.26.1
 
 # https://github.com/samizdatco/nginx-http-auth-digest
 RUN wget "https://github.com/samizdatco/nginx-http-auth-digest/archive/master.zip" -O nginx-http-auth-digest.zip
 # https://github.com/nginx-shib/nginx-http-shibboleth
 RUN wget "https://github.com/nginx-shib/nginx-http-shibboleth/archive/v2.0.1.tar.gz" -O nginx-http-shibboleth-2.0.1.tar.gz
-RUN wget "https://github.com/openresty/headers-more-nginx-module/archive/v0.33.tar.gz" -O headers-more-nginx-module-0.33.tar.gz
-RUN wget "https://github.com/apache/incubator-pagespeed-ngx/archive/v1.13.35.2-stable.tar.gz" -O incubator-pagespeed-ngx-1.13.35.2-stable.tar.gz
+RUN wget "https://github.com/openresty/headers-more-nginx-module/archive/v0.37.tar.gz" -O headers-more-nginx-module-0.37.tar.gz
+# RUN wget "https://github.com/apache/incubator-pagespeed-ngx/archive/v1.13.35.2-stable.tar.gz" -O incubator-pagespeed-ngx-1.13.35.2-stable.tar.gz
 RUN wget "https://github.com/FRiCKLE/ngx_cache_purge/archive/2.3.tar.gz" -O ngx_cache_purge-2.3.tar.gz
 
 RUN unzip nginx-http-auth-digest.zip && \
   tar zxf nginx-http-shibboleth-2.0.1.tar.gz && \
-  tar zxf headers-more-nginx-module-0.33.tar.gz && \
-  tar zxvf incubator-pagespeed-ngx-1.13.35.2-stable.tar.gz && \
+  tar zxf headers-more-nginx-module-0.37.tar.gz && \
+  # tar zxvf incubator-pagespeed-ngx-1.13.35.2-stable.tar.gz && \
   tar zxf ngx_cache_purge-2.3.tar.gz
 
-RUN cd /tmp/incubator-pagespeed-ngx-1.13.35.2-stable ; wget https://dl.google.com/dl/page-speed/psol/1.13.35.2-x64.tar.gz ; tar -xzvf 1.13.35.2-x64.tar.gz
+# RUN cd /tmp/incubator-pagespeed-ngx-1.13.35.2-stable ; wget https://dl.google.com/dl/page-speed/psol/1.13.35.2-x64.tar.gz ; tar -xzvf 1.13.35.2-x64.tar.gz
 #RUN sed -i "s#--modules-path=/usr/lib/nginx/modules#--modules-path=/usr/lib/nginx/modules --add-module=/tmp/headers-more-nginx-module-0.33 --add-module=/tmp/nginx-http-shibboleth-2.0.1 --add-module=/tmp/nginx-http-auth-digest-master --add-module=/tmp/incubator-pagespeed-ngx-1.13.35.2-stable --add-module=/tmp/ngx_cache_purge-2.3 #g" nginx-1.18.0/debian/rules
 #RUN cd nginx-1.18.0 && dpkg-buildpackage -b
-RUN sed -i "s#--modules-path=/usr/lib/nginx/modules#--modules-path=/usr/lib/nginx/modules --add-module=/tmp/headers-more-nginx-module-0.33 --add-module=/tmp/nginx-http-shibboleth-2.0.1 --add-module=/tmp/nginx-http-auth-digest-master --add-module=/tmp/incubator-pagespeed-ngx-1.13.35.2-stable --add-module=/tmp/ngx_cache_purge-2.3 #g" nginx-1.20.1/debian/rules
-RUN cd nginx-1.20.1 && dpkg-buildpackage -b
+RUN sed -i "s#--modules-path=/usr/lib/nginx/modules#--modules-path=/usr/lib/nginx/modules --add-module=/tmp/headers-more-nginx-module-0.37 --add-module=/tmp/nginx-http-shibboleth-2.0.1 --add-module=/tmp/nginx-http-auth-digest-master --add-module=/tmp/ngx_cache_purge-2.3 #g" nginx-1.26.1/debian/rules
+RUN cd nginx-1.26.1 && dpkg-buildpackage -b
 
 FROM ubuntu:focal AS nginx-stage_1
 
@@ -43,9 +43,9 @@ WORKDIR /tmp
 #COPY --from=nginx-with-shib /tmp/nginx_1.18.0-2~focal_amd64.deb .
 #COPY --from=nginx-with-shib /tmp/nginx-dbg_1.18.0-2~focal_amd64.deb .
 #RUN dpkg -i nginx_1.18.0-2~focal_amd64.deb
-COPY --from=nginx-with-shib /tmp/nginx_1.20.1-1~focal_amd64.deb .
-COPY --from=nginx-with-shib /tmp/nginx-dbg_1.20.1-1~focal_amd64.deb .
-RUN dpkg -i nginx_1.20.1-1~focal_amd64.deb
+COPY --from=nginx-with-shib /tmp/nginx_1.26.1-2~focal_amd64.deb .
+COPY --from=nginx-with-shib /tmp/nginx-dbg_1.26.1-2~focal_amd64.deb .
+RUN dpkg -i nginx_1.26.1-2~focal_amd64.deb
 
 
 ADD supervisord.conf /etc/supervisor/supervisord.conf

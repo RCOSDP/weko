@@ -31,7 +31,7 @@ from xml.etree.ElementTree import tostring
 
 import redis
 from redis import sentinel
-from elasticsearch.exceptions import NotFoundError
+from invenio_search.engine import search
 from flask import Markup, Response, abort, current_app, jsonify, request
 from flask_babel import gettext as _
 from invenio_cache import current_cache
@@ -511,7 +511,7 @@ def build_rss_xml(data=None, index_id=0, page=1, count=20, term=0, lang=''):
     """Build RSS data as XML format.
 
     Arguments:
-        data {dictionary} -- Elastic search data
+        data {dictionary} -- search engine data
         term {int} -- The term
 
     Returns:
@@ -634,10 +634,10 @@ def build_rss_xml(data=None, index_id=0, page=1, count=20, term=0, lang=''):
 
 
 def find_rss_value(data, keyword):
-    """Analyze rss data from elasticsearch data.
+    """Analyze rss data from search engine data.
 
     Arguments:
-        data {dictionary} -- elasticsearch data
+        data {dictionary} -- search engine data
         keyword {string} -- The keyword
 
     Returns:
@@ -769,7 +769,7 @@ def get_rss_data_source(source, keyword):
 
 
 def get_elasticsearch_result_by_date(start_date, end_date, query_with_publish_status=False):
-    """Get data from elastic search.
+    """Get data from search engine.
 
     Arguments:
         start_date {string} -- start date
@@ -777,7 +777,7 @@ def get_elasticsearch_result_by_date(start_date, end_date, query_with_publish_st
         query_with_publish_status {bool} -- Only query public items
 
     Returns:
-        dictionary -- elastic search data
+        dictionary -- search engine data
 
     """
     records_search = RecordsSearch()
@@ -791,7 +791,7 @@ def get_elasticsearch_result_by_date(start_date, end_date, query_with_publish_st
             query_with_publish_status, False)
         search_result = search_instance.execute()
         result = search_result.to_dict()
-    except NotFoundError:
+    except search.NotFoundError:
         current_app.logger.debug('Indexes do not exist yet!')
 
     return result
@@ -866,7 +866,7 @@ def has_main_contents_widget(settings):
 
     Returns:
         _type_: _description_
-    """    
+    """
     if settings:
         for item in settings:
             if item.get('type') == config.WEKO_GRIDLAYOUT_MAIN_TYPE:

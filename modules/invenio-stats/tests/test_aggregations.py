@@ -64,20 +64,20 @@ def test_BookmarkAPI(app):
 #     def delete(self, start_date=None, end_date=None):
 #         def _delete_actions():
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_aggregations.py::test_wrong_intervals -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
-def test_wrong_intervals(app, search_clear):
+def test_wrong_intervals(app, es):
     """Test aggregation with interval > index_interval."""
     with pytest.raises(ValueError):
         StatAggregator(
-            "test-agg", "test", search_clear, interval="month", index_interval="day"
+            "test-agg", "test", es, interval="month", index_interval="day"
         )
 
 
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_aggregations.py::test_StatAggregator -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
-def test_StatAggregator(app, search_clear):
+def test_StatAggregator(app, es):
     """Test bookmark reading."""
     stat_agg = StatAggregator(
         name="file-download-agg",
-        client=search_clear,
+        client=es,
         event="file-download",
         field="file_id",
         interval="day",
@@ -88,7 +88,7 @@ def test_StatAggregator(app, search_clear):
     current_search.flush_and_refresh(index="*")
 
 
-def test_overwriting_aggregations(app, search_clear, mock_event_queue):
+def test_overwriting_aggregations(app, es, mock_event_queue):
     """Check that the StatAggregator correctly starts from bookmark.
 
     1. Create sample file download event and process it.
@@ -117,7 +117,7 @@ def test_overwriting_aggregations(app, search_clear, mock_event_queue):
 
     # Send new events, some on the last aggregated day and some far
     # in the future.
-    res = search_clear.search(index="stats-file-download", version=True)
+    res = es.search(index="stats-file-download", version=True)
     for hit in res["hits"]["hits"]:
         if "file_id" in hit["_source"].keys():
             assert hit["_version"] == 1
@@ -168,7 +168,7 @@ def test_overwriting_aggregations(app, search_clear, mock_event_queue):
         ]
     ]
     current_search.flush_and_refresh(index="*")
-    res = search_clear.search(index="stats-file-download", version=True)
+    res = es.search(index="stats-file-download", version=True)
     for hit in res["hits"]["hits"]:
         if hit["_source"]["timestamp"].startswith("2017-06-02"):
             assert hit["_version"] == 2
@@ -182,7 +182,7 @@ def test_overwriting_aggregations(app, search_clear, mock_event_queue):
     assert d == [[(0, 0)]]
 
 
-def test_aggregation_without_events(app, search_clear):
+def test_aggregation_without_events(app, es):
     """Check that the aggregation doesn't crash if there are no events.
 
     This scenario happens when celery starts aggregating but no events
@@ -197,10 +197,10 @@ def test_aggregation_without_events(app, search_clear):
             interval="day",
             query_modifiers=[],
         ).run()
-    assert not dsl.Index("stats-file-download", using=search_clear).exists()
+    assert not dsl.Index("stats-file-download", using=es).exists()
     # Create the index but without any event. This happens when the events
     # have been indexed but are not yet searchable (before index refresh).
-    dsl.Index("events-stats-file-download-2017", using=search_clear).create()
+    dsl.Index("events-stats-file-download-2017", using=es).create()
 
     # Wait for the index to be available
     current_search.flush_and_refresh(index="*")
@@ -214,10 +214,10 @@ def test_aggregation_without_events(app, search_clear):
             interval="day",
             query_modifiers=[],
         ).run()
-    assert not dsl.Index("stats-file-download", using=search_clear).exists()
+    assert not dsl.Index("stats-file-download", using=es).exists()
 
 
-def test_bookmark_removal(app, search_clear, mock_event_queue):
+def test_bookmark_removal(app, es, mock_event_queue):
     """Remove aggregation bookmark and restart aggregation.
 
     This simulates the scenario where aggregations have been created but the
@@ -241,7 +241,7 @@ def test_bookmark_removal(app, search_clear, mock_event_queue):
                 query_modifiers=[],
             ).run()
         current_search.flush_and_refresh(index="*")
-        res = search_clear.search(index="stats-file-download", version=True)
+        res = es.search(index="stats-file-download", version=True)
         for hit in res["hits"]["hits"]:
             assert hit["_version"] == expected_version
 
@@ -249,7 +249,7 @@ def test_bookmark_removal(app, search_clear, mock_event_queue):
     aggregate_and_check_version(1)
 
     # Delete all bookmarks
-    search_clear.indices.delete(index="stats-bookmarks")
+    es.indices.delete(index="stats-bookmarks")
     current_search.flush_and_refresh(index="*")
     # the aggregations should have been overwritten
     aggregate_and_check_version(2)
@@ -267,12 +267,12 @@ def test_bookmark_removal(app, search_clear, mock_event_queue):
     ],
     indirect=["indexed_events"],
 )
-def test_date_range(app, search_clear, event_queues, indexed_events):
+def test_date_range(app, es, event_queues, indexed_events):
     """Test date ranges."""
     with patch("invenio_stats.aggregations.datetime", mock_date(2015, 2, 4)):
         aggregate_events(["file-download-agg"])
     current_search.flush_and_refresh(index="*")
-    query = dsl.Search(using=search_clear, index="stats-file-download")[0:30].sort(
+    query = dsl.Search(using=es, index="stats-file-download")[0:30].sort(
         "file_id"
     )
     results = query.execute()
@@ -298,7 +298,7 @@ def test_date_range(app, search_clear, event_queues, indexed_events):
     indirect=["indexed_events"],
 )
 @pytest.mark.parametrize("with_robots", [(True), (False)])
-def test_filter_robots(app, search_clear, event_queues, indexed_events, with_robots):
+def test_filter_robots(app, es, event_queues, indexed_events, with_robots):
     """Test the filter_robots query modifier."""
     query_modifiers = []
     if not with_robots:
@@ -307,7 +307,7 @@ def test_filter_robots(app, search_clear, event_queues, indexed_events, with_rob
     with patch("invenio_stats.aggregations.datetime", mock_date(2015, 2, 1)):
         StatAggregator(
             name="file-download-agg",
-            client=search_clear,
+            client=es,
             event="file-download",
             field="file_id",
             interval="day",
@@ -315,7 +315,7 @@ def test_filter_robots(app, search_clear, event_queues, indexed_events, with_rob
         ).run()
 
     current_search.flush_and_refresh(index="*")
-    query = dsl.Search(using=search_clear, index="stats-file-download")[0:30].sort(
+    query = dsl.Search(using=es, index="stats-file-download")[0:30].sort(
         "file_id"
     )
     results = query.execute()
@@ -325,7 +325,7 @@ def test_filter_robots(app, search_clear, event_queues, indexed_events, with_rob
             assert result.count == (5 if with_robots else 2)
 
 
-def test_metric_aggregations(app, search_clear, event_queues):
+def test_metric_aggregations(app, es, event_queues):
     """Test aggregation metrics."""
     current_stats.publish(
         "file-download",
@@ -352,7 +352,7 @@ def test_metric_aggregations(app, search_clear, event_queues):
 
     stat_agg = StatAggregator(
         name="file-download-agg",
-        client=search_clear,
+        client=es,
         event="file-download",
         field="file_id",
         metric_fields={
@@ -369,7 +369,7 @@ def test_metric_aggregations(app, search_clear, event_queues):
         stat_agg.run()
     current_search.flush_and_refresh(index="*")
 
-    query = dsl.Search(using=search_clear, index="stats-file-download")
+    query = dsl.Search(using=es, index="stats-file-download")
     results = query.execute()
     assert len(results) == 1
     assert results[0].count == 12  # 3 views over 4 differnet hour slices

@@ -24,6 +24,7 @@
 
 {%- block css %}
   {{ super() }}
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
   {{ webpack['search-ui-css-weko-search-ui.css'] }}
 {%- endblock css %}
 
@@ -35,7 +36,7 @@
   {{ webpack['search-ui-js-weko-search-ui.js'] }}
   {{ webpack['theme-js-top-page.js'] }}
   {{ webpack['theme-search-detail.js'] }}
-  {{ webpack['invenio_search_ui_app.js'] }}
+  {{ webpack['search_ui_app.js'] }}
   {{ webpack['search-ui-js-js-dependencies-datepicker.js'] }}
   {{ webpack['theme-widget.js'] }}
 
