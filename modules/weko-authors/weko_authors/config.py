@@ -206,12 +206,12 @@ WEKO_AUTHORS_NUM_OF_PAGE = 25
 """Default number of author search results that display in one page."""
 
 
-
 WEKO_AUTHORS_ES_INDEX_NAME = "{}-authors".format(os.environ.get("SEARCH_INDEX_PREFIX", ""))
 """Elasticsearch index alias for author."""
 
+
 WEKO_AUTHORS_ES_DOC_TYPE = "author-v1.0.0"
-"""Elasticsearch document type for author."""
+"""Search engine document type for author."""
 
 WEKO_AUTHORS_IMPORT_KEY = {
     'author_name': {

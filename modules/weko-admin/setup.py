@@ -63,7 +63,6 @@ install_requires = [
     'invenio-db>=1.0.0b9',
     'SQLAlchemy-Continuum>=1.3.6',
     'invenio-accounts>=1.0.0b3',
-    "elasticsearch_dsl<8.0.0,>=7.0.0",
     'invenio-assets>=1.0.0b7',
     'invenio-admin>=1.1.2',
     'requests>=2.18.4',

@@ -26,7 +26,7 @@
     {{ super() }}
     <link href="{{ url_for('static', filename='css/weko_items_ui/contributor.search.css') }}" rel="stylesheet">
     <link href="/static/css/weko_workflow/style.css" rel="stylesheet">
-    {{ webpack['items_ui_js_feedback_maillist.css']}}
+    {{ webpack['items_ui_css_feedback_maillist.css']}}
     {{ webpack['records_ui_css_style.css']}}
   {%- endblock css %}
 
@@ -43,7 +43,7 @@
     <!--<script src="https://unpkg.com/axios/dist/axios.min.js"></script>-->
 
     <script src="{{ url_for('static', filename='js/weko_items_ui/item.autofill.js') }}" type="text/babel"></script>
-    {{ webpack['js-dependencies.js']}}
+    {{ webpack['deposit_js_dependencies.js']}}
     {{ webpack['admin_js_react_bootstrap_js.js']}}
     {{ webpack['items_ui_js_feedback_maillist.js']}}
     {{ super() }}
@@ -51,7 +51,7 @@
     {%- if need_thumbnail %}
     {{ webpack['items_ui_js_upload.js']}}
     {% endif %}
-    {{ webpack['items_ui_js_dependencies_angularjs.js']}}
+    {{ webpack['items_ui_js_app.js']}}
     <script src="{{ url_for('static', filename='js/weko_items_ui/inline.items.authorSearch.bundle.js') }}" defer></script>
     <script src="{{ url_for('static', filename='js/weko_items_ui/polyfills.items.authorSearch.bundle.js') }}" defer></script>
     <script src="{{ url_for('static', filename='js/weko_items_ui/main.items.authorSearch.bundle.js') }}" defer></script>

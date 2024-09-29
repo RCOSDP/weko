@@ -62,12 +62,12 @@ class WekoGroups(object):
 
 def finalize_app(app):
     icons = app.extensions['invenio-theme'].icons
-    
+
     current_menu.submenu('settings.groups').register(
         endpoint='weko_groups.index',
         text=_(
             '%(icon)s Groups',
-            icon=LazyString(lambda: f'<i class="{icons.codepen}"></i>')
+            icon='<i class="fa fa-users fa-fw"></i>'
         ),
         order=13,
         active_when=lambda: request.endpoint.startswith('weko_groups.')

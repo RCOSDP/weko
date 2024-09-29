@@ -374,14 +374,14 @@ def copy_field_test(dc, map, jrc, iid=None):
 
 
 def convert_range_value(start, end=None):
-    """Convert to range value for Elasticsearch
+    """Convert to range value for search engine
 
     Args:
         start ([str]): [description]
         end ([str], optional): [description]. Defaults to None.
 
     Returns:
-        [dict]: range value for Elasticsearch
+        [dict]: range value for search engine
     """
     ret = None
     _start = "gte"
@@ -421,14 +421,14 @@ def convert_range_value(start, end=None):
 
 
 def convert_date_range_value(start, end=None):
-    """Convert to dateRange value for Elasticsearch
+    """Convert to dateRange value for search engine
 
     Args:
         start ([str]): [description]
         end ([str], optional): [description]. Defaults to None.
 
     Returns:
-        [dict]: dateRange value for Elasticsearch
+        [dict]: dateRange value for search engine
     """
     ret = None
     _start = "gte"

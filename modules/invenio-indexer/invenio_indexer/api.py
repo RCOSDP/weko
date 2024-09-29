@@ -31,8 +31,8 @@ from .signals import before_record_index
 # the tests expect this to be present
 bulk = search.helpers.bulk
 BulkIndexError = search.helpers.BulkIndexError
-ConnectionTimeout = search.exceptions.ConnectionTimeout
-ConnectionError = search.exceptions.ConnectionError
+ConnectionTimeout = search.ConnectionTimeout
+ConnectionError = search.ConnectionError
 
 class Producer(KombuProducer):
     """Producer validating published messages.
@@ -489,7 +489,7 @@ class RecordIndexer(object):
         """Bulk index action.
 
         :param payload: Decoded message body.
-        :returns: Dictionary defining an Elasticsearch bulk 'index' action.
+        :returns: Dictionary defining an the search engine bulk 'index' action.
         """
         record = self.record_cls.get_record(id)
         self.count = self.count + 1

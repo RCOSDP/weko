@@ -26,12 +26,13 @@ import json
 import os
 import re
 import sys
+import traceback
 import unicodedata
 import ipaddress
 from datetime import datetime, timedelta
 
 from flask import abort, current_app, flash, jsonify, make_response, \
-    redirect, render_template, request, url_for 
+    redirect, render_template, request, url_for
 from flask_admin import BaseView, expose
 from flask_admin.contrib.sqla import ModelView
 from flask_admin.contrib.sqla.fields import QuerySelectField
@@ -63,7 +64,7 @@ from .permissions import admin_permission_factory ,superuser_access
 from .utils import get_facet_search, get_item_mapping_list, \
     get_response_json, get_restricted_access, get_search_setting
 from .utils import get_user_report_data as get_user_report
-from .utils import package_reports, str_to_bool 
+from .utils import package_reports, str_to_bool
 from .tasks import is_reindex_running ,reindex
 
 
@@ -72,23 +73,23 @@ class ReindexElasticSearchView(BaseView):
     @expose('/', methods=['GET'])
     @superuser_access.require(http_exception=403)
     def index(self):
-        """ 
-        show view Maintenance/ElasticSearch 
-        
+        """
+        show view Maintenance/ElasticSearch
+
         Returns:
             'weko_admin/admin/reindex_elasticsearch.html'
         """
         try:
-            status =  self._check_reindex_is_running()
+            status = self._check_reindex_is_running()
             is_error = status.get("isError")
             is_executing = status.get("isExecuting")
             disabled_btn = status.get("disabled_Btn")
 
             return self.render(
-                template=current_app.config['WEKO_ADMIN_REINDEX_ELASTICSEARCH_TEMPLATE']
-                ,isError=is_error
-                ,isExecuting=is_executing
-                ,disabled_Btn=disabled_btn 
+                template=current_app.config['WEKO_ADMIN_REINDEX_ELASTICSEARCH_TEMPLATE'],
+                isError=is_error,
+                isExecuting=is_executing,
+                disabled_Btn=disabled_btn
             )
         except BaseException:
             import traceback
@@ -99,7 +100,7 @@ class ReindexElasticSearchView(BaseView):
     @expose('/reindex', methods=['POST'])
     @superuser_access.require(http_exception=403)
     def reindex(self):
-        """ 
+        """
         Processing when "Executing Button" is pressed
 
         Args:
@@ -115,7 +116,7 @@ class ReindexElasticSearchView(BaseView):
         in .utils.py .
         """
 
-        
+
         try:
             ## exclusion check
             status =  self._check_reindex_is_running()
@@ -137,10 +138,10 @@ class ReindexElasticSearchView(BaseView):
             import traceback
             estr = traceback.format_exc()
             current_app.logger.error('Unexpected error: {}'.format( estr ))
-            AdminSettings.update(current_app.config['WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS'] 
+            AdminSettings.update(current_app.config['WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS']
             , dict({current_app.config['WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS_HAS_ERRORED']:True}))
             return jsonify({"error" : estr }), 500
-            
+
     @expose('/is_reindex_running', methods=['GET'])
     @superuser_access.require(http_exception=403)
     def check_reindex_is_running(self):
@@ -153,7 +154,7 @@ class ReindexElasticSearchView(BaseView):
                 isError      : boolean
                 isExecuting  : boolean
                 disabled_Btn : boolean
-            
+
         """
         try:
             return jsonify(self._check_reindex_is_running())
@@ -168,18 +169,29 @@ class ReindexElasticSearchView(BaseView):
         Monitor whether the reindex process is running/error is occurred
         by Celery task and admin_settings
         """
-        ELASTIC_REINDEX_SETTINGS = current_app.config['WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS']
-        HAS_ERRORED = current_app.config['WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS_HAS_ERRORED']
+        try:
+            ELASTIC_REINDEX_SETTINGS = current_app.config['WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS']
+            HAS_ERRORED = current_app.config['WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS_HAS_ERRORED']
 
-        admin_setting = AdminSettings.get(ELASTIC_REINDEX_SETTINGS,False)
-        is_error = admin_setting.get(HAS_ERRORED)
-        is_executing = is_reindex_running()
-        result = dict({
-            "isError": is_error
-            ,"isExecuting": is_executing
-            ,"disabled_Btn": is_error or is_executing 
-        })
-        return result
+            admin_setting = AdminSettings.get(ELASTIC_REINDEX_SETTINGS, False)
+            is_error = admin_setting.get(HAS_ERRORED)
+            is_executing = is_reindex_running()
+
+            result = {
+                "isError": is_error,
+                "isExecuting": is_executing,
+                "disabled_Btn": is_error or is_executing
+            }
+
+            return result
+
+        except Exception as e:
+            current_app.logger.error(f"Error checking reindex status: {e}")
+            return {
+                "isError": True,
+                "isExecuting": False,
+                "disabled_Btn": True
+            }
 
 
 
@@ -352,6 +364,7 @@ class ReportView(BaseView):
 
             aggs_query = {
                 "size": 0,
+                "track_total_hits": True,
                 "aggs": {
                     "aggs_public": {
                         "filter": {
@@ -406,7 +419,6 @@ class ReportView(BaseView):
 
             aggs_results = get_aggregations(
                 current_app.config['SEARCH_UI_SEARCH_INDEX'], aggs_query)
-
             result = {
                 'total': 0,
                 'open': 0,
@@ -415,19 +427,17 @@ class ReportView(BaseView):
             if aggs_results and aggs_results.get(
                     'aggregations', {}).get('aggs_public'):
                 result = {
-                    'total': aggs_results['hits']['total'],
+                    'total': aggs_results['hits']['total']['value'],
                     'open': aggs_results['aggregations'][
                         'aggs_public']['doc_count']
                 }
                 result['private'] = result['total'] - result['open']
-            
-            
+
             current_schedule = AdminSettings.get(
                 name='report_email_schedule_settings',
                 dict_to_object=False)
             current_schedule = current_schedule if current_schedule else \
                 current_app.config['WEKO_ADMIN_REPORT_DELIVERY_SCHED']
-
             # Emails to send reports to
             all_email_address = StatisticsEmail().get_all()
             return self.render(
@@ -442,6 +452,7 @@ class ReportView(BaseView):
                 frequency_options=current_app.config[
                     'WEKO_ADMIN_REPORT_FREQUENCIES'])
         except Exception as e:
+            traceback.print_exc()
             current_app.logger.error("Unexpected error: {}".format(e))
         return abort(400)
 
@@ -852,7 +863,7 @@ class SiteLicenseSettingsView(BaseView):
                                         ip_check = ipaddress.ip_address(addr_check)
                                     except ValueError:
                                         err_addr = True
-                                        break    
+                                        break
                                 if err_addr:
                                     # break for addresses
                                     break

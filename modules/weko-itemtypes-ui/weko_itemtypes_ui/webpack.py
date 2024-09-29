@@ -18,9 +18,9 @@ weko_itemtypes_ui = WebpackThemeBundle(
                 "itemstypes_ui_js_js_rocrate_mapping": "./js/weko_itemtypes_ui/create_rocrate_mapping.js",
             },
             dependencies={
-                'react': '0.14.8',
-                'react-dom': '0.14.8',
-                'jquery': '~2.1.3'
+                "react": "~15.6.1",
+                "react-dom": "~15.6.1",
+                "jquery": "~2.1.3"
             }
         )
     }

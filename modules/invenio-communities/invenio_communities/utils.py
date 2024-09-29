@@ -21,6 +21,7 @@ from invenio_db import db
 from invenio_files_rest.errors import FilesException
 from invenio_files_rest.models import Bucket, Location, ObjectVersion
 from invenio_records.api import Record
+from invenio_accounts.models import Role
 
 
 class Pagination(object):
@@ -223,3 +224,28 @@ def get_user_role_ids():
         role_ids = [role.id for role in current_user.roles]
 
     return role_ids
+
+def get_numeric_user_role_ids(role_ids):
+    """
+    Get numeric role ID to prevent errors caused by model changes.
+    account_roles(id, name, description) -> account_roles(created, updated, id, name, description, is_managed, version_id)
+    In new data records, the id may be the same as the name or default to a UUID.
+    """
+    role_list = Role.query.all()
+    legacy_list = []
+    new_list = []
+    for role in role_list:
+        role_id = role.id
+        if isinstance(role_id, int):
+            legacy_list.append(role_id)
+        elif isinstance(role_id, str):
+            if role_id.isdigit():
+                legacy_list.append(role_id)
+            else:
+                new_list.append(role_id)
+    full_list = legacy_list + new_list
+    
+    numeric_id_list = [full_list.index(id) + 1 for id in role_ids if id in full_list]
+
+    return numeric_id_list
+        

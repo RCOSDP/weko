@@ -19,8 +19,8 @@ import six
 from flask import abort, request
 from flask_login import current_user
 from flask_menu import current_menu
-from invenio_i18n import LazyString
 from invenio_i18n import lazy_gettext as _
+from invenio_theme.proxies import current_theme_icons
 from invenio_rest.csrf import csrf
 from werkzeug.utils import cached_property, import_string
 from weko_redis.redis import RedisConnectionExtension
@@ -310,13 +310,11 @@ class InvenioOAuth2ServerREST(object):
 
 def finalize_app(app):
     """Finalize app."""
-    icons = app.extensions["invenio-theme"].icons
-
     current_menu.submenu("settings.applications").register(
         endpoint="invenio_oauth2server_settings.index",
         text=_(
             "%(icon)s Applications",
-            icon=LazyString(lambda: f'<i class="{icons.codepen}"></i>'),
+            icon=f'<i class="{current_theme_icons.shield}"></i>'
         ),
         order=5,
         active_when=lambda: request.endpoint.startswith(

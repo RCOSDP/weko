@@ -16,7 +16,7 @@ from functools import partial, wraps
 
 from dictdiffer import patch
 from dictdiffer.merge import Merger, UnresolvedConflictsException
-from elasticsearch.exceptions import RequestError
+from invenio_search.engine import search
 from flask import current_app
 from flask_login import current_user
 from invenio_db import db
@@ -60,7 +60,7 @@ def index(method=None, delete=False):
                 self_or_cls.indexer.delete(result)
             else:
                 self_or_cls.indexer.index(result)
-        except RequestError:
+        except search.RequestError:
             current_app.logger.exception('Could not index {0}.'.format(result))
         return result
     return wrapper
