@@ -128,6 +128,7 @@ var webpackConfig = {
                 "@babel/plugin-proposal-class-properties",
                 "@babel/plugin-transform-runtime",
               ],
+              cacheDirectory: true,
             },
           },
         ],
@@ -169,7 +170,7 @@ var webpackConfig = {
     ],
   },
   devtool:
-    process.env.NODE_ENV === "production" ? "source-map" : "inline-source-map",
+    "none",
   plugins: [
     new ESLintPlugin({emitWarning: true,
               quiet: true,

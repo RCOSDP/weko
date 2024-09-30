@@ -336,7 +336,6 @@ class StatAggregator(object):
         # If no events have been indexed there is nothing to aggregate
         if not dsl.Index(self.event_index, using=self.client).exists():
             return
-
         logger = get_task_logger(__name__)
         previous_bookmark = self.bookmark_api.get_bookmark()
         lower_limit = (
