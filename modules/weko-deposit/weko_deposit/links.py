@@ -20,7 +20,6 @@
 
 """Link Factory weko-deposit."""
 
-from flask import current_app
 from invenio_deposit.links import deposit_links_factory
 
 from .logger import weko_logger
@@ -28,15 +27,40 @@ from .pidstore import get_latest_version_id
 
 
 def links_factory(pid, **kwargs):
-    """Deposit links factory."""
+    """Deposit links factory.
+
+    Args:
+        pid (:obj:`PersistentIdentifier`): The record PID object.
+        **kwargs: Additional keyword arguments.
+
+    Returns:
+        dict: The links dictionary.
+    """
     links = deposit_links_factory(pid)
 
     links.update(base_factory(pid, **kwargs))
+
+    weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=links)
     return links
 
 
 def base_factory(pid, **kwargs):
-    """Deposit links factory."""
+    """Deposit links factory.
+
+    Args:
+        pid (:obj:`PersistentIdentifier`): The record PID object.
+        **kwargs: Additional keyword arguments.
+
+    Returns:
+
+        dict: The links dictionary.
+            {
+                'index': str,
+                'r': str,
+                'iframe_tree': str,
+                'iframe_tree_upgrade': str,
+            }
+    """
     redirect_url = "/api/deposits/redirect/"
     iframe_index_url = "/items/iframe/index/"
     upgrade_pid_number = "{}.{}".format(
@@ -49,4 +73,5 @@ def base_factory(pid, **kwargs):
     links['iframe_tree'] = iframe_index_url + pid.pid_value
     links['iframe_tree_upgrade'] = iframe_index_url + upgrade_pid_number
 
+    weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=links)
     return links

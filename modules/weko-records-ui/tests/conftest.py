@@ -37,7 +37,7 @@ from datetime import timedelta
 import pytest
 from elasticsearch import Elasticsearch
 from flask import Flask
-from flask_babelex import Babel
+from flask_babel import Babel
 from flask_login import LoginManager, UserMixin
 from flask_menu import Menu
 from invenio_access import InvenioAccess

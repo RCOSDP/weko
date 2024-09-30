@@ -132,18 +132,31 @@ class TestWekoFileStorage:
                 mock_logger.assert_called_with(key='WEKO_COMMON_ERROR_UNEXPECTED', ex=mock.ANY)
                 mock_logger.reset_mock()
 
-    # # 'UTF-8' in ecd
-    # #.tox/c1/bin/pytest --cov=weko_deposit tests/test_storage.py::TestWekoFileStorage::test_upload_file_with_utf8_encoding -vv -s --cov-branch --cov-report=html --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp --full-trace
-    # def test_upload_file_with_utf8_encoding(self, wekofs):
-    #     fjson = {'mimetype': 'plain/text'}
-    #     data = b'somedata'
-    #     with patch.object(wekofs, 'open', return_value=BytesIO(data)):
-    #         with patch('chardet.detect', return_value={'encoding': 'UTF-8'}):
-    #             with patch('weko_deposit.storage.weko_logger') as mock_logger:
-    #                 wekofs.upload_file(fjson)
-    #                 mock_logger.assert_called_with(key='WEKO_DEPOSIT_UPLOAD_FILE', file_id=mock.ANY)
-    #                 assert fjson['file'] == base64.b64encode(data).decode("utf-8")
-    #                 mock_logger.reset_mock()
+    # ecd is None
+    # .tox/c1/bin/pytest --cov=weko_deposit tests/test_storage.py::TestWekoFileStorage::test_upload_file_with_ecd_none -vv -s --cov-branch --cov-report=html --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp --full-trace
+    def test_upload_file_with_ecd_none(self, app, wekofs, wekofs_testpath):
+        bucket = Bucket.create()
+        key = 'hello.txt'
+        data = b'somedata'
+        stream = BytesIO(data)
+        obj = ObjectVersion.create(bucket=bucket, key=key, stream=stream)
+        with app.test_request_context():
+            file = WekoFileObject(obj, {})
+            uri, size, checksum = wekofs.save(BytesIO(data))
+            assert uri == wekofs_testpath
+            assert size == len(data)
+            m = hashlib.sha256()
+            m.update(data)
+            assert checksum == "sha256:{}".format(m.hexdigest())
+            fjson = file.info()
+            fjson['mimetype'] = "plain/text"
+            with patch('weko_deposit.storage.chardet.detect', return_value={"encoding": None, "confidence": None}):
+                with patch('weko_deposit.storage.weko_logger') as mock_logger:
+                    wekofs.upload_file(fjson)
+                    assert 'file' in fjson, "fjson does not contain 'file' key"
+                    assert fjson['file'] == base64.b64encode(data).decode("utf-8")
+                    mock_logger.assert_called_with(key='WEKO_DEPOSIT_UPLOAD_FILE', file_id=mock.ANY)
+                    mock_logger.reset_mock()
 
     # UnicodeError
     #.tox/c1/bin/pytest --cov=weko_deposit tests/test_storage.py::TestWekoFileStorage::test_upload_file_with_unicode_error -vv -s --cov-branch --cov-report=html --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp --full-trace
