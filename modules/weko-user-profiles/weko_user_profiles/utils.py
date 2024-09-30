@@ -56,8 +56,8 @@ def get_user_profile_info(user_id):
         result['subitem_university/institution'] = user_info.university
         result['subitem_affiliated_division/department'] = user_info.department
         result['subitem_position'] = user_info.position
-        result['subitem_phone_number'] = user_info.phoneNumber
-        result['subitem_position(others)'] = user_info.otherPosition
+        result['subitem_phone_number'] = user_info.item2
+        result['subitem_position(others)'] = user_info.item1
         institute_dict_data = user_info.get_institute_data()
         for i in range(1, 6):
             if institute_dict_data.get(i) and institute_dict_data.get(i).get(

@@ -4033,7 +4033,21 @@ def get_usage_data(item_type_id, activity_detail, user_profile=None):
             phone_number='',
             usage_report_id='',
             wf_issued_date=wf_issued_date,
-            item_title=item_title
+            item_title=item_title,
+            item3='',
+            item4='',
+            item5='',
+            item6='',
+            item7='',
+            item8='',
+            item9='',
+            item10='',
+            item11='',
+            item12='',
+            item13='',
+            item14='',
+            item15='',
+            item16='',
         )
     elif item_type_id in cfg.get('WEKO_WORKFLOW_USAGE_REPORT_ITEM_TYPES_LIST'):
         usage_record_id = extra_info.get('usage_record_id')
@@ -4047,6 +4061,20 @@ def get_usage_data(item_type_id, activity_detail, user_profile=None):
             "subitem_position": "position",
             "subitem_position(others)": "position_other",
             "subitem_phone_number": "phone_number",
+            "subitem_item3": "item3",
+            "subitem_item4": "item4",
+            "subitem_item5": "item5",
+            "subitem_item6": "item6",
+            "subitem_item7": "item7",
+            "subitem_item8": "item8",
+            "subitem_item9": "item9",
+            "subitem_item10": "item10",
+            "subitem_item11": "item11",
+            "subitem_item12": "item12",
+            "subitem_item13": "item13",
+            "subitem_item14": "item14",
+            "subitem_item15": "item15",
+            "subitem_item16": "item16",
         }
         result = dict(
             usage_type='Report',
@@ -4060,7 +4088,21 @@ def get_usage_data(item_type_id, activity_detail, user_profile=None):
             phone_number='',
             usage_report_id=activity_detail.activity_id,
             wf_issued_date=wf_issued_date,
-            item_title=''
+            item_title='',
+            item3='',
+            item4='',
+            item5='',
+            item6='',
+            item7='',
+            item8='',
+            item9='',
+            item10='',
+            item11='',
+            item12='',
+            item13='',
+            item14='',
+            item15='',
+            item16='',
         )
         related_activity_id = extra_info.get('usage_activity_id')
         if not related_activity_id:

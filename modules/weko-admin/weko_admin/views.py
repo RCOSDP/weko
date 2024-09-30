@@ -41,6 +41,7 @@ from weko_accounts.utils import roles_required
 from weko_records.models import SiteLicenseInfo
 from weko_index_tree.utils import delete_index_trees_from_redis
 from werkzeug.local import LocalProxy
+from .models import AdminSettings
 
 from .api import send_site_license_mail
 from .config import WEKO_ADMIN_PERMISSION_ROLE_REPO, \
@@ -783,3 +784,34 @@ def dbsession_clean(exception):
         except:
             db.session.rollback()
     db.session.remove()
+
+#プロフィール設定画面のセーブの為のエンドポイントを設定
+@blueprint_api.route("/profile_settings/save", methods=["POST"])
+#ログインユーザーの設定
+@login_required
+@roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
+                 WEKO_ADMIN_PERMISSION_ROLE_REPO])
+def send_profile_settings_save():
+    data = request.get_json()
+    if not data or 'profiles_templates' not in data:
+        return jsonify({"status": "error", "msg": "Invalid data"}), 400
+    profiles_templates = data['profiles_templates']
+    return send_profile_settings_save()
+    
+    # データベースに保存する処理
+def send_profile_settings_save():
+    data = request.get_json()
+    if not data or 'profiles_templates' not in data:
+        return jsonify({"status": "error", "msg": "Invalid data"}), 400
+
+    profiles_templates = data['profiles_templates']
+    
+    # 特定のレコードを取得
+    profile = AdminSettings.query.filter_by(id=6, name='profiles_items_settings').first()
+    if profile:
+        # settingsカラムを更新
+        profile.settings = profiles_templates
+        db.session.commit()
+        return jsonify({"status": "success", "msg": "Settings updated successfully"}), 200
+    else:
+        return jsonify({"status": "error", "msg": "Record not found"}), 404

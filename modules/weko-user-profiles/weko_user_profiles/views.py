@@ -33,6 +33,7 @@ from .forms import EmailProfileForm, ProfileForm, VerificationForm, \
 from .models import UserProfile
 from .utils import get_user_profile_info, handle_profile_form, \
     handle_verification_form
+from weko_admin.models import AdminSettings
 
 blueprint = Blueprint(
     'weko_user_profiles',
@@ -156,18 +157,22 @@ def profile_form_factory():
             university=current_userprofile.university,
             department=current_userprofile.department,
             position=current_userprofile.position,
-            otherPosition=current_userprofile.otherPosition,
-            phoneNumber=current_userprofile.phoneNumber,
-            instituteName=current_userprofile.instituteName,
-            institutePosition=current_userprofile.institutePosition,
-            instituteName2=current_userprofile.instituteName2,
-            institutePosition2=current_userprofile.institutePosition2,
-            instituteName3=current_userprofile.instituteName3,
-            institutePosition3=current_userprofile.institutePosition3,
-            instituteName4=current_userprofile.instituteName4,
-            institutePosition4=current_userprofile.institutePosition4,
-            instituteName5=current_userprofile.instituteName5,
-            institutePosition5=current_userprofile.institutePosition5,
+            item1=current_userprofile.item1,
+            item2=current_userprofile.item2,
+            item3=current_userprofile.item3,
+            item4=current_userprofile.item4,
+            item5=current_userprofile.item5,
+            item6=current_userprofile.item6,
+            item7=current_userprofile.item7,
+            item8=current_userprofile.item8,
+            item9=current_userprofile.item9,
+            item10=current_userprofile.item10,
+            item11=current_userprofile.item11,
+            item12=current_userprofile.item12,
+            item13=current_userprofile.item13,
+            item14=current_userprofile.item14,
+            item15=current_userprofile.item15,
+            item16=current_userprofile.item16,
             prefix='profile', )
         return form
     else:
@@ -175,7 +180,7 @@ def profile_form_factory():
             formdata=None,
             obj=current_userprofile,
             prefix='profile', )
-        return form
+    return form
 
 @blueprint.teardown_request
 @blueprint_ui_init.teardown_request
