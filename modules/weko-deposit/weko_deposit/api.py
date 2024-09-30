@@ -1121,6 +1121,8 @@ class WekoDeposit(Deposit):
         Returns:
             dict: pubilshed deposit dict
         """
+        print("\n!!!!!")
+        print( '_deposit' in data)
         if '$schema' in data:
             data.pop('$schema')
 
@@ -1176,7 +1178,8 @@ class WekoDeposit(Deposit):
             deposit = super(WekoDeposit, cls).create(data, id_=id_)
 
         record_id = 0
-        if data.get('_deposit'):
+        print('_deposit' in data)
+        if data.get('_deposit'):  # TODO: false
             weko_logger(key='WEKO_COMMON_IF_ENTER',
                         branch='_deposit is in data')
             record_id = str(data['_deposit']['id'])
