@@ -27,7 +27,7 @@ import tempfile
 import pytest
 from flask import Flask, current_app
 from flask_admin import Admin
-from flask_babelex import Babel
+from flask_babel import Babel
 from flask_mail import Mail
 from flask_menu import Menu
 from sqlalchemy_utils.functions import create_database, database_exists
@@ -35,7 +35,7 @@ from sqlalchemy_utils.functions import create_database, database_exists
 from invenio_access import InvenioAccess
 from invenio_access.models import ActionUsers,ActionRoles
 from invenio_accounts import InvenioAccounts
-from invenio_accounts.views import blueprint as accounts_blueprint
+#from invenio_accounts.views import blueprint as accounts_blueprint
 from invenio_accounts.models import User, Role
 from invenio_accounts.testutils import create_test_user
 from invenio_db import InvenioDB
@@ -88,7 +88,7 @@ def base_app(instance_path):
     InvenioAccounts(app_)
     WekoUserProfiles(app_)
     
-    app_.register_blueprint(accounts_blueprint)
+    #app_.register_blueprint(accounts_blueprint)
 
     yield app_
 

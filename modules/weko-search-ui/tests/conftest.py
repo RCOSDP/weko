@@ -33,8 +33,8 @@ import requests
 from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import RequestError
 from flask import Flask, url_for
-from flask_babelex import Babel
-from flask_babelex import lazy_gettext as _
+from flask_babel import Babel
+from flask_babel import lazy_gettext as _
 from flask_celeryext import FlaskCeleryExt
 from flask_login import LoginManager, current_user, login_user
 from flask_menu import Menu

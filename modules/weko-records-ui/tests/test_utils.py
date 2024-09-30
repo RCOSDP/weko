@@ -67,7 +67,7 @@ from werkzeug.exceptions import NotFound
 from weko_admin.models import AdminSettings
 from weko_records.serializers.utils import get_mapping
 from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 from datetime import datetime ,timedelta
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp

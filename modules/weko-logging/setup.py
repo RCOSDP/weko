@@ -66,10 +66,10 @@ setup(
     platforms="any",
     entry_points={
         "invenio_base.apps": [
-            "weko_logging_fs = weko_logging.fs:WekoLoggingFS",
+            "weko_logging_console = weko_logging.console:WekoLoggingConsole",
         ],
         "invenio_base.api_apps": [
-            "weko_logging_fs = weko_logging.fs:WekoLoggingFS",
+            "weko_logging_console = weko_logging.console:WekoLoggingConsole",
         ],
     },
     extras_require=extras_require,

@@ -15,7 +15,7 @@ import copy
 from flask import Flask, json, jsonify, session, url_for,request
 from flask import url_for,current_app,make_response
 from flask_security.utils import login_user
-from flask_babelex import get_locale
+from flask_babel import get_locale
 from invenio_accounts.testutils import login_user_via_session
 from mock import patch
 from invenio_records_files.utils import record_file_factory

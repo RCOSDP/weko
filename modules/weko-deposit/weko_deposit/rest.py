@@ -21,33 +21,43 @@
 """Blueprint for Weko deposit rest."""
 
 import json
-import sys
 from wsgiref.util import request_uri
 
 import redis
 from redis import sentinel
-from opensearchpy.exceptions import OpenSearchException
+from invenio_search.engine import search
 from flask import Blueprint, abort, current_app, jsonify, request
 from invenio_db import db
 from invenio_pidstore import current_pidstore
 from invenio_pidstore.models import PersistentIdentifier
+from invenio_pidstore.errors import PIDDoesNotExistError, PIDInvalidAction
 from invenio_records.api import Record
 from invenio_records.models import RecordMetadata
 from invenio_records_rest.links import default_links_factory
 from invenio_records_rest.utils import obj_or_import_string
 from invenio_records_rest.views import pass_record
 from invenio_rest import ContentNegotiatedMethodView
-from simplekv.memory.redisstore import RedisStore
 from sqlalchemy.exc import SQLAlchemyError
+from weko_records.errors import WekoRecordsError
+from weko_redis.errors import WekoRedisError
 from weko_redis.redis import RedisConnection
+from weko_workflow.api import WorkActivity
+from weko_workflow.errors import WekoWorkflowError
 
 from .api import WekoDeposit, WekoRecord
-
-# from copy import deepcopy
-
+from .errors import WekoDepositError
+from .links import base_factory
+from .logger import weko_logger
 
 def publish(**kwargs):
-    """Publish item."""
+    """Publish item.
+
+    Publish the deposit.
+
+    Args:
+        **kwargs: Keyword arguments.<br>
+            pid_value (str): Persistent Identifier value. Required.
+    """
     try:
         pid_value = kwargs.get('pid_value').value
         pid = PersistentIdentifier.query.filter_by(
@@ -56,7 +66,10 @@ def publish(**kwargs):
         dep = WekoDeposit(r.json, r)
         dep.update_feedback_mail()
         dep.publish()
-    except BaseException:
+    except SQLAlchemyError as ex:
+        weko_logger(key='WEKO_COMMON_DB_SOME_ERROR', ex=ex)
+        abort(400, "Some errors in the DB.")
+    except Exception:
         abort(400, "Failed to publish item")
 
     return jsonify({'status': 'success'})
@@ -67,87 +80,105 @@ def create_blueprint(app, endpoints):
 
     See: :data:`invenio_deposit.config.DEPOSIT_REST_ENDPOINTS`.
 
-    :param endpoints: List of endpoints configuration.
-    :returns: The configured blueprint.
+    Args:
+        app: The Flask application.
+        endpoints (dict): List of endpoints configuration.
+
+    Returns:
+        The configured blueprint.
     """
     blueprint = Blueprint(
         'weko_deposit_rest',
         __name__,
         url_prefix='',
     )
-    
+
     @blueprint.teardown_request
     def dbsession_clean(exception):
-        current_app.logger.debug("weko_deposit dbsession_clean: {}".format(exception))
+        """Clean up the database session.
+
+        Clwan up the database session after each request.
+
+        Args:
+            exception (:obj:`Exception`): Exception object.
+        """
         if exception is None:
+            weko_logger(app=app, key='WEKO_COMMON_IF_ENTER', branch='exception is None')
             try:
                 db.session.commit()
-            except:
+            except SQLAlchemyError as ex:
+                weko_logger(app=app, key='WEKO_COMMON_DB_SOME_ERROR', ex=ex)
                 db.session.rollback()
+                raise WekoDepositError(ex=ex)
+        weko_logger(app=app, key='WEKO_COMMON_ERROR_UNEXPECTED', ex=exception)
         db.session.remove()
 
-    for endpoint, options in (endpoints or {}).items():
+    weko_logger(app=app, key='WEKO_COMMON_FOR_START')
+    for i, (endpoint, options) in enumerate((endpoints or {}).items()):
+        weko_logger(app=app, key='WEKO_COMMON_FOR_LOOP_ITERATION',
+                    count=i, element=endpoint)
 
         if 'record_serializers' in options:
+            weko_logger(app=app, key='WEKO_COMMON_IF_ENTER',
+                        branch='record_serializers in options.')
+
             record_serializers = options.get('record_serializers')
             record_serializers = {mime: obj_or_import_string(func)
-                                  for mime, func in record_serializers.items()}
+                                for mime, func in record_serializers.items()}
         else:
+            weko_logger(app=app, key='WEKO_COMMON_IF_ENTER',
+                        branch='record_serializers not in options.')
+
             record_serializers = {}
 
         if 'search_serializers' in options:
+            weko_logger(app=app, key='WEKO_COMMON_IF_ENTER',
+                        branch='search_serializers in options.')
+
             serializers = options.get('search_serializers')
             search_serializers = {mime: obj_or_import_string(func)
-                                  for mime, func in serializers.items()}
+                                for mime, func in serializers.items()}
         else:
+            weko_logger(app=app, key='WEKO_COMMON_IF_ENTER',
+                        branch='search_serializers not in options.')
+
             search_serializers = {}
 
         record_class = obj_or_import_string(options.get('record_class'),
                                             default=Record)
-        # search_class = obj_or_import_string(options.get('search_class'))
-        # search_factory = obj_or_import_string(options.get(
-        # 'search_factory_imp'))
 
         search_class_kwargs = {}
         search_class_kwargs['index'] = options.get('search_index')
         search_class_kwargs['doc_type'] = options.get('search_type')
-        # search_class = partial(search_class, **search_class_kwargs)
 
-        ctx = dict(
-            read_permission_factory=obj_or_import_string(
+        ctx = {
+            "read_permission_factory": obj_or_import_string(
                 options.get('read_permission_factory_imp')
             ),
-            create_permission_factory=obj_or_import_string(
+            "create_permission_factory": obj_or_import_string(
                 options.get('create_permission_factory_imp')
             ),
-            update_permission_factory=obj_or_import_string(
+            "update_permission_factory": obj_or_import_string(
                 options.get('update_permission_factory_imp')
             ),
-            delete_permission_factory=obj_or_import_string(
+            "delete_permission_factory": obj_or_import_string(
                 options.get('delete_permission_factory_imp')
             ),
-            record_class=record_class,
-            # search_class=search_class,
-            # record_loaders=obj_or_import_string(
-            #     options.get('record_loaders'),
-            #     default=app.config['RECORDS_REST_DEFAULT_LOADERS']
-            # ),
-            # search_factory=search_factory,
-            links_factory=obj_or_import_string(
+            "record_class": record_class,
+            "links_factory": obj_or_import_string(
                 options.get('links_factory_imp'), default=default_links_factory
             ),
-            pid_type=options.get('pid_type'),
-            pid_minter=options.get('pid_minter'),
-            pid_fetcher=options.get('pid_fetcher'),
-            loaders={
-                options.get('default_media_type'): lambda: request.get_json()},
-            # max_result_window=options.get('max_result_window'),
-        )
+            "pid_type": options.get('pid_type'),
+            "pid_minter": options.get('pid_minter'),
+            "pid_fetcher": options.get('pid_fetcher'),
+            "loaders": {
+                options.get('default_media_type'): lambda: request.get_json()
+                }
+        }
 
         isr = ItemResource.as_view(
             ItemResource.view_name.format(endpoint),
             ctx=ctx,
-            # search_serializers=search_serializers,
             record_serializers=record_serializers,
             default_media_type=options.get('default_media_type'),
         )
@@ -163,12 +194,18 @@ def create_blueprint(app, endpoints):
             view_func=publish,
             methods=['PUT'],
         )
-    
+
+    weko_logger(app=app, key='WEKO_COMMON_FOR_END')
+    weko_logger(app=app, key='WEKO_COMMON_RETURN_VALUE', value=blueprint)
     return blueprint
 
 
 class ItemResource(ContentNegotiatedMethodView):
-    """Redirect to next page(index select)."""
+    """Redirect to next page(index select).
+
+    Attributes:
+        pid_fetcher (str): Persistent Identifier fetcher.
+    """
 
     view_name = '{0}_item'
 
@@ -176,40 +213,77 @@ class ItemResource(ContentNegotiatedMethodView):
                  record_serializers=None,
                  default_media_type=None,
                  **kwargs):
-        """Constructor."""
+        """Constructor.
 
-        super(ItemResource, self).__init__(
+        Initialize the ItemResource.
+
+        Args:
+            ctx (dict): Context object.
+            search_serializers: Search serializers.\
+                A mapping of HTTP method name. Default to `None`.\
+                Not used.
+            record_serializers: Record serializers. \
+                A mapping of HTTP method name. Default to `None`.
+            default_media_type: Default media type.
+            **kwargs: Keyword arguments
+        """
+
+        super().__init__(
             method_serializers={
-                # 'GET': search_serializers,
                 'PUT': record_serializers,
                 'POST': record_serializers,
             },
             default_method_media_type={
-                # 'GET': default_media_type,
                 'PUT': default_media_type,
                 'POST': default_media_type,
             },
             default_media_type=default_media_type,
             **kwargs
         )
-        current_app.logger.debug('kwargs: {0}'.format(kwargs))
-        for key, value in ctx.items():
+        weko_logger(key='WEKO_COMMON_CALLED_KW_ARGUMENT', kwarg=kwargs)
+
+        weko_logger(key='WEKO_COMMON_FOR_START')
+        for i, (key, value) in enumerate(ctx.items()):
+            weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
+                        count=i, element=key)
             setattr(self, key, value)
+        weko_logger(key='WEKO_COMMON_FOR_END')
 
         self.pid_fetcher = current_pidstore.fetchers[self.pid_fetcher]
 
     @pass_record
     def post(self, pid, record, **kwargs):
-        """Post."""
-        from weko_deposit.links import base_factory
-        return self.make_response(pid,
+        """Post the record.
+
+        This method is used to create a new record in the system.
+
+        Args:
+            pid (:obj:`PersistentIdentifier`):\
+                Persistent Identifier instance associated with the record.
+            record (Objct): The record object to be created.
+            **kwargs: Keyword arguments. Not used.
+
+        Returns:
+            Response: Response object containing the result of the operation.
+        """
+        result = self.make_response(pid,
                                   record,
                                   201,
                                   links_factory=base_factory)
+        weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=result)
+        return result
 
     def put(self, **kwargs):
-        """Put."""
-        from weko_workflow.api import WorkActivity
+        """Put the record.
+
+        Put the record to Postgres DB, Elasticsearch, and Redis.
+        If failed, rollback the transaction and abort 400.
+
+        Args:
+            **kwargs: Keyword arguments.
+                pid_value (str): Persistent Identifier value. Required.
+
+        """
         try:
             data = request.get_json()
             self.__sanitize_input_data(data)
@@ -217,6 +291,9 @@ class ItemResource(ContentNegotiatedMethodView):
             edit_mode = data.get('edit_mode')
 
             if edit_mode and edit_mode == 'upgrade':
+                weko_logger(key='WEKO_COMMON_IF_ENTER',
+                            branch='edit_mode == upgrade')
+
                 data.pop('edit_mode')
                 cur_pid = PersistentIdentifier.get('recid', pid_value)
                 pid = PersistentIdentifier.get(
@@ -226,19 +303,27 @@ class ItemResource(ContentNegotiatedMethodView):
                 upgrade_record = deposit.newversion(pid)
 
                 with db.session.begin_nested():
+                    if upgrade_record is not None and ".0" in pid_value:
+                        weko_logger(key='WEKO_COMMON_IF_ENTER',
+                                    branch="upgrade_record is not None "
+                                        "and '.0' in pid_value")
 
-                    if upgrade_record and ".0" in pid_value:
                         _upgrade_record = WekoDeposit(
                             upgrade_record,
                             upgrade_record.model)
                         _upgrade_record.merge_data_to_record_without_version(
                             cur_pid)
+
                     activity = WorkActivity()
                     wf_activity = activity.get_workflow_activity_by_item_id(
                         cur_pid.object_uuid)
-                    if wf_activity:
+                    if wf_activity is not None:
+                        weko_logger(key='WEKO_COMMON_IF_ENTER',
+                                    branch='wf_activity is not None')
+
                         wf_activity.item_id = upgrade_record.model.id
                         db.session.merge(wf_activity)
+
                 db.session.commit()
                 pid = PersistentIdentifier.query.filter_by(
                     pid_type='recid',
@@ -261,62 +346,120 @@ class ItemResource(ContentNegotiatedMethodView):
                 cache_key,
                 json.dumps(data).encode('utf-8'),
                 ttl_secs=ttl_sec)
+        except PIDDoesNotExistError as ex:
+            weko_logger(key='WEKO_COMMON_NOT_FOUND_OBJECT', object=pid_value)
+            db.session.rollback()
+            abort(400, "Not Found PID in DB.")
+        except PIDInvalidAction as ex:
+            weko_logger(key='WEKO_COMMON_DB_OTHER_ERROR', ex=ex)
+            db.session.rollback()
+            abort(400, "Invalid operation on PID.")
+        except WekoRecordsError as ex:
+            db.session.rollback()
+            abort(400, "Not Found Record in DB.")
+        except WekoRedisError as ex:
+            db.session.rollback()
+            abort(400, "Failed to register item!")
+        except WekoWorkflowError as ex:
+            db.session.rollback()
+            abort(400, "Failed to get activity!")
+
         except SQLAlchemyError as ex:
-            current_app.logger.error('sqlalchemy error: %s', ex)
+            weko_logger(key='WEKO_COMMON_DB_SOME_ERROR', ex=ex)
             db.session.rollback()
             abort(400, "Failed to register item!")
 
-        except OpenSearchException as ex:
-            current_app.logger.error('search engine error: %s', ex)
+        except search.OpenSearchException as ex:
+            weko_logger(key='WEKO_COMMON_ERROR_ELASTICSEARCH', ex=ex)
             db.session.rollback()
-
-            # search engine remove
-            # dammy()
-
             abort(400, "Failed to register item!")
+
         except redis.RedisError as ex:
-            current_app.logger.error('redis error: %s', ex)
+            weko_logger(key='WEKO_COMMON_ERROR_REDIS', ex=ex)
             db.session.rollback()
-
-            # search engine remove
-            # dammy()
-
             abort(400, "Failed to register item!")
-        except BaseException as ex:
-            current_app.logger.error('Unexpected error: %s', ex)
+
+        except Exception as ex:
+            weko_logger(key='WEKO_COMMON_ERROR_UNEXPECTED', ex=ex)
             db.session.rollback()
             abort(400, "Failed to register item!")
 
         return jsonify({'status': 'success'})
 
     @staticmethod
-    def __sanitize_string(s: str):
+    def __sanitize_string(s):
         """Sanitize string.
 
-        :param s:
-        :return:
+        Get sanitized string validated by the following rules:
+        - Remove leading and trailing whitespaces.
+        - Remove control characters except for tab, line feed, and carriage\
+        return.
+
+        Args:
+            s (str): String.
+
+        Returns:
+            str: Sanitized string.
         """
         s = s.strip()
         sanitize_str = ""
-        for i in s:
-            if ord(i) in [9, 10, 13] or (31 < ord(i) != 127):
-                sanitize_str += i
+
+        weko_logger(key='WEKO_COMMON_FOR_START')
+        for i, c in enumerate(s):
+            weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
+                        count=i, element=c)
+            if ord(c) in [9, 10, 13] or (31 < ord(c) != 127):
+                weko_logger(key='WEKO_COMMON_IF_ENTER',
+                            branch=f"charcter:{c} is valid")
+                sanitize_str += c
+        weko_logger(key='WEKO_COMMON_FOR_END')
+
+        weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=sanitize_str)
         return sanitize_str
 
     def __sanitize_input_data(self, data):
         """Sanitize input data.
 
-        :param data: input data.
+        Sanitize input data validated by the following rules:
+        - Remove leading and trailing whitespaces.
+        - Remove control characters except for tab, line feed, and carriage\
+        return.
+
+        Args:
+            data (dict | list): input data to be sanitized.
         """
         if isinstance(data, dict):
-            for k, v in data.items():
+            weko_logger(key='WEKO_COMMON_IF_ENTER',
+                        branch="data is dict")
+
+            weko_logger(key='WEKO_COMMON_FOR_START')
+            for i, (k, v) in enumerate(data.items()):
+                weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
+                            count=i, element=k)
                 if isinstance(v, str):
+                    weko_logger(key='WEKO_COMMON_IF_ENTER',
+                                branch=f"{v} is str")
                     data[k] = self.__sanitize_string(v)
                 else:
+                    weko_logger(key='WEKO_COMMON_IF_ENTER',
+                                branch=f"{v} is not str")
                     self.__sanitize_input_data(v)
+            weko_logger(key='WEKO_COMMON_FOR_END')
+
         elif isinstance(data, list):
+            weko_logger(key='WEKO_COMMON_IF_ENTER',
+                        branch='data is not dict')
+
+            weko_logger(key='WEKO_COMMON_FOR_START')
             for i in range(len(data)):
+                weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
+                            count=i, element=data[i])
                 if isinstance(data[i], str):
+                    weko_logger(key='WEKO_COMMON_IF_ENTER',
+                                branch=f"{data[i]} is str")
                     data[i] = self.__sanitize_string(data[i])
                 else:
+                    weko_logger(key='WEKO_COMMON_IF_ENTER',
+                                branch=f"{data[i]} is not str")
                     self.__sanitize_input_data(data[i])
+            weko_logger(key='WEKO_COMMON_FOR_END')

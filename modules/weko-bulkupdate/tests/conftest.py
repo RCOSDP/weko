@@ -18,7 +18,7 @@ import tempfile
 
 import pytest
 from flask import Flask
-from flask_babelex import Babel
+from flask_babel import Babel
 
 from weko_bulkupdate import WekoBulkupdate
 from weko_bulkupdate.views import blueprint
