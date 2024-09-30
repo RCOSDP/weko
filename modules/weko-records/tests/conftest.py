@@ -32,7 +32,7 @@ import pytest
 from elasticsearch_dsl import response, Search
 from sqlalchemy_utils.functions import create_database, database_exists
 from flask import Flask
-from flask_babelex import Babel
+from flask_babel import Babel
 
 from invenio_i18n import InvenioI18N
 from invenio_access import InvenioAccess

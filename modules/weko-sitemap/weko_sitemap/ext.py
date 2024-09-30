@@ -15,7 +15,7 @@ from functools import wraps
 from io import BytesIO
 
 from flask import Blueprint, Response, current_app, render_template, url_for
-from flask_babelex import format_datetime
+from flask_babel import format_datetime
 from flask_sitemap import Sitemap, sitemap_page_needed
 from invenio_cache import current_cache
 from invenio_db import db

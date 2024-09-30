@@ -25,7 +25,7 @@ import markupsafe
 from operator import index
 
 from flask import current_app, json
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from weko_admin import config as ad_config
@@ -124,7 +124,7 @@ class SearchSetting(object):
             script_str = {
                 "_script": {
                     "script": {
-                        "source": 'if(params.factor.get(doc["control_number"].value.toString())!=null){params.factor.get(doc["control_number"].value.toString())}else{Integer.MAX_VALUE}',
+                        "source": 'if(params.factor.get(doc["control_number"].size()!=0){params.factor.get(doc["control_number"].value.toString())}else{Integer.MAX_VALUE}',
                         "lang": "painless",
                         "params": {"factor": factor_obj},
                     },
@@ -138,7 +138,7 @@ class SearchSetting(object):
             script_str = {
                 "_script": {
                     "script": {
-                        "source": 'if(params.factor.get(doc["control_number"].value.toString())!=null){params.factor.get(doc["control_number"].value.toString())}else{Integer.MAX_VALUE}',
+                        "source": 'if(params.factor.get(doc["control_number"].size()!=0){params.factor.get(doc["control_number"].value.toString())}else{Integer.MAX_VALUE}',
                         "lang": "painless",
                         "params": {"factor": factor_obj},
                     },

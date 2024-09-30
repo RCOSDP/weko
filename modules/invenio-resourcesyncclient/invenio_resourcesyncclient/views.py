@@ -14,7 +14,7 @@
 from __future__ import absolute_import, print_function
 
 from flask import Blueprint, render_template,current_app
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context

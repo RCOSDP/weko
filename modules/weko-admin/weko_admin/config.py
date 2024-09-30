@@ -20,7 +20,7 @@
 
 """Configuration for weko-admin."""
 
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 
 WEKO_ADMIN_DEFAULT_AGGREGATION_MONTH = 2
 """default aggregation month for site license mail."""
@@ -93,6 +93,17 @@ WEKO_ADMIN_ITEM_EXPORT_SETTINGS_TEMPLATE = \
 
 WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS_TEMPLATE = 'weko_admin/admin/restricted_access_settings.html'
 """Restricted Access Settings template."""
+
+WEKO_ADMIN_COMMUNITIES_PAGE_SETTINGS_TEMPLATE = 'weko_admin/admin/communities_page_setting.html'
+"""Communities Page Settings template."""
+
+WEKO_COMMUNITIES_DEFAULT_PROPERTIES = {
+    'title1': 'Communities',
+    'title2': 'コミュニティ',
+    'icon_code': 'fa fa-group',
+    'supplement': 'created and curated by WEKO3 users'
+}
+"""Communities Page Default Properties."""
 
 LOGO_ALLOWED_EXTENSIONS = set(['png', 'jpeg', 'jpg'])
 

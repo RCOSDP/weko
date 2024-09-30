@@ -28,7 +28,7 @@ import re
 from redis import RedisError
 import requests
 from flask import current_app, render_template
-from flask_babelex import lazy_gettext as _
+from flask_babel import lazy_gettext as _
 from invenio_db import db
 from invenio_mail.api import send_mail
 from weko_redis.redis import RedisConnection

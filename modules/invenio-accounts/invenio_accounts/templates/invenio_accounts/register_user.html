@@ -29,13 +29,13 @@
       {%- if form.recaptcha %}
         <div class="form-group form-group-lg">{{ form.recaptcha() }}</div>
       {%- endif %}
-      <button type="submit" class="btn btn-warning btn-lg btn-block"><i class="fa fa-edit"></i> {{ _('Sign Up') }}</button>
+      <button type="submit" class="btn btn-warning btn-lg btn-block"><i class="fa fa-edit"></i> {{ _('Sign up') }}</button>
       </form>
     </div>
     <div class="panel-footer text-center">
       <h4 class="text-muted">
         {{ _('Already have an account?') }}
-        <a href="{{ url_for_security('login') }}">{{ _('Log In') }}</a>
+        <a href="{{ url_for_security('login') }}">{{ _('Log in') }}</a>
       </h4>
     </div>
   </div>

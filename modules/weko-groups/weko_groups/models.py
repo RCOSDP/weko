@@ -23,7 +23,7 @@
 from datetime import datetime
 
 from flask import current_app, escape
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 from flask_login import UserMixin, current_user
 from invenio_accounts.models import User
 from invenio_db import db
@@ -564,11 +564,11 @@ class Group(db.Model):
 class Membership(db.Model):
     """Represent a users membership of a group."""
 
-    MEMBERSHIP_STATE = {
-        MembershipState.PENDING_ADMIN: _('Pending admin approval'),
-        MembershipState.PENDING_USER: _('Pending member approval'),
-        MembershipState.ACTIVE: _('Active'),
-    }
+    MEMBERSHIP_STATE = [
+        (MembershipState.PENDING_ADMIN, _('Pending admin approval')),
+        (MembershipState.PENDING_USER, _('Pending member approval')),
+        (MembershipState.ACTIVE, _('Active')),
+    ]
     """Membership state choices."""
 
     __tablename__ = 'accounts_group_members'

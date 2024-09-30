@@ -12,7 +12,7 @@ from __future__ import absolute_import, print_function
 from . import config
 
 
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 
 # https://stackoverflow.com/questions/48391750/disable-python-requests-ssl-validation-for-an-imported-module/48391751#48391751
 import os

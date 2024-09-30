@@ -23,10 +23,10 @@
 
 {%- block css %}
   {{ super() }}
-  {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
-  {% assets "weko_theme_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
-  {% assets "invenio_search_ui_search_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
-  {% assets "weko_search_ui_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {{ webpack['theme-css-buttons.css']}}
+  {{ webpack['theme-css.css']}}
+  {#{{ webpack['search_ui_theme.css']}} TODO: invenio_search_uiのsemantic-uiでは存在しない。暫定的にコメントアウト。表示してcssがどうなるか確認#}
+  {{ webpack['search-ui-css-weko-search-ui.css']}}
   <style>
     .content-font {
       font-size: 16px;
@@ -35,18 +35,20 @@
 {%- endblock css %}
 
 {%- block javascript %}
-  {% assets "weko_admin_angular_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_admin_admin_lte_js_dependecies" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_search_ui_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_theme_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_theme_js_treeview" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_theme_js_top_page" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_records_ui_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_records_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "invenio_search_ui_search_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_search_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_theme_js_detail_search" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_admin_admin_lte_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {{ webpack['angular_js.js']}}
+  {{ webpack['admin_js_admin_lte_js_dependecies.js']}}
+  {{ webpack['search-ui-js-js-dependencies-datepicker.js']}}
+  {{ webpack['theme-js.js']}}
+  <script src="{{ url_for('static', filename='js/weko_theme/inline.bundle.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/weko_theme/polyfills.bundle.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/weko_theme/main.bundle.js') }}" defer></script>
+  {{ webpack['theme-js-top-page.js']}}
+  {{ webpack['records_ui_js_dependecies.js']}}
+  {{ webpack['records_ui_js.js']}}
+  {{ webpack['search_ui_app.js']}}
+  {{ webpack['search-ui-js-weko-search-ui.js']}}
+  {{ webpack['theme-search-detail.js']}}
+  {{ webpack['admin_js_admin_lte_js_dependecies.js']}}
 {%- endblock javascript %}
 
 {%- block body %}

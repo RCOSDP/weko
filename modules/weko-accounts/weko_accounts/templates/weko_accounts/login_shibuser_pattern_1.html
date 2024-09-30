@@ -11,8 +11,8 @@ details.
 
 {%- block css %}
 {{ super() }}
-{% assets "weko_accounts_css" %}
-<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+{{ webpack['wayf_custom.css.css']}}
+
 {%- endblock css %}
 {% block panel %}
 <div class="col-md-6 col-md-offset-3">

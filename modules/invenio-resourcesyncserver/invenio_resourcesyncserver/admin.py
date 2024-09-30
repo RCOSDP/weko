@@ -22,7 +22,7 @@
 
 from flask import Response, abort, current_app, jsonify, make_response, request
 from flask_admin import BaseView, expose
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 
 from .api import ChangeListHandler, ResourceListHandler
 from .config import INVENIO_RESOURCESYNC_CHANGE_LIST_ADMIN

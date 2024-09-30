@@ -3,13 +3,17 @@
 #
 # This file is part of Invenio.
 # Copyright (C) 2015-2018 CERN.
+# Copyright (C) 2022 Graz University of Technology.
 #
 # Invenio is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
 
-pydocstyle invenio_mail tests docs && \
-isort -rc -c -df && \
-check-manifest --ignore ".travis-*" && \
-sphinx-build -qnNW docs docs/_build/html && \
-python setup.py test && \
-sphinx-build -qnNW -b doctest docs docs/_build/doctest
+# Quit on errors
+set -o errexit
+
+# Quit on unbound symbols
+set -o nounset
+
+python -m check_manifest
+python -m sphinx.cmd.build -qnNW docs docs/_build/html
+python -m pytest

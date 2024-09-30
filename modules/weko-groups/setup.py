@@ -25,7 +25,6 @@ import os
 import sys
 
 from setuptools import find_packages, setup
-from setuptools.command.test import test as TestCommand
 
 readme = open('README.rst').read()
 history = open('CHANGES.rst').read()
@@ -69,10 +68,10 @@ setup_requires = [
 ]
 
 install_requires = [
-    'Flask-BabelEx>=0.9.2',
+    'Flask-Babel>=3.0.0',
     'Flask-Menu>=0.4.0',
     'Flask-Breadcrumbs>=0.3.0',
-    'Flask-Security>=1.7.5',
+    'Flask-Security-Invenio>=3.3.2',
     'Flask-WTF>=0.13',
     'Flask>=0.11.1',
     'invenio-accounts>=1.0.0a15',
@@ -110,12 +109,14 @@ setup(
         'invenio_base.apps': [
             'weko_groups = weko_groups:WekoGroups',
         ],
+        'invenio_base.finalize_app':[
+            'weko_groups = weko_groups.ext:finalize_app',
+        ],
         'invenio_i18n.translations': [
             'messages = weko_groups',
         ],
-        'invenio_assets.bundles': [
-            'weko_groups_js = weko_groups.bundles:js',
-            'weko_groups_styles = weko_groups.bundles:styles',
+        'invenio_assets.webpack': [
+            'weko_groups = weko_groups.webpack:weko_groups',
         ],
         'invenio_db.alembic': [
             'weko_groups = weko_groups:alembic',

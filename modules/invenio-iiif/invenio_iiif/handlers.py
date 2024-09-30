@@ -43,6 +43,10 @@ def protect_api(uuid=None, **kwargs):
 def image_opener(key):
     """Handler to locate file based on key.
 
+    .. note::
+        If the file is a PDF then only the first page will be
+        returned as an image.
+
     :param key: A key encoded in the format "<bucket>:<version>:<object_key>".
     :returns: A file-like object.
     """

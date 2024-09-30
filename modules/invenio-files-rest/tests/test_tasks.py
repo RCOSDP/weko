@@ -8,27 +8,30 @@
 
 """Module test views."""
 
-from __future__ import absolute_import, print_function
-
 import errno
+from io import BytesIO
 from os.path import exists, join
+from unittest.mock import MagicMock, patch
 
 import pytest
-from fs.errors import FSError, ResourceNotFoundError
-from mock import MagicMock, patch
-from six import BytesIO
+from fs.errors import FSError, ResourceNotFound
 from sqlalchemy.exc import IntegrityError
 
 from invenio_files_rest.models import Bucket, FileInstance, ObjectVersion
-from invenio_files_rest.tasks import migrate_file, remove_file_data, \
-    schedule_checksum_verification, verify_checksum
+from invenio_files_rest.tasks import (
+    clear_orphaned_files,
+    migrate_file,
+    remove_file_data,
+    schedule_checksum_verification,
+    verify_checksum,
+)
 
 # .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_tasks.py::test_verify_checksum -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
 def test_verify_checksum(app, db, dummy_location):
     """Test celery tasks for checksum verification."""
     b1 = Bucket.create()
-    with open('README.rst', 'rb') as fp:
-        obj = ObjectVersion.create(b1, 'README.rst', stream=fp)
+    with open("README.rst", "rb") as fp:
+        obj = ObjectVersion.create(b1, "README.rst", stream=fp)
     db.session.commit()
     file_id = obj.file_id
 
@@ -38,11 +41,11 @@ def test_verify_checksum(app, db, dummy_location):
     assert f.last_check_at
     assert f.last_check is True
 
-    f.uri = 'invalid'
+    f.uri = "invalid"
     db.session.add(f)
     db.session.commit()
-
     verify_checksum(str(file_id), throws=True)
+
     f = FileInstance.query.get(file_id)
     assert f.last_check is True
 
@@ -63,8 +66,7 @@ def test_schedule_checksum_verification(app, db, dummy_location):
     b1 = Bucket.create()
     objects = []
     for i in range(100):
-        objects.append(
-            ObjectVersion.create(b1, str(i), stream=BytesIO(b'tests')))
+        objects.append(ObjectVersion.create(b1, str(i), stream=BytesIO(b"tests")))
     db.session.commit()
 
     # 100 files of the 5-byte content 'tests' should be 500 bytes in total
@@ -75,54 +77,56 @@ def test_schedule_checksum_verification(app, db, dummy_location):
         assert obj.file.last_check_at is None
 
     schedule_task = schedule_checksum_verification.s(
-        frequency={'minutes': 20},
-        batch_interval={'minutes': 1}
+        frequency={"minutes": 20}, batch_interval={"minutes": 1}
     )
 
     def checked_files():
-        return len([o for o in ObjectVersion.get_by_bucket(b1)
-                    if o.file.last_check_at])
+        return len([o for o in ObjectVersion.get_by_bucket(b1) if o.file.last_check_at])
 
     # Scheduling for 100 files, for all of them to be checked every 20 minutes,
     # with batches of equal number of file being sent out every minute
     # should total to 20 batches with 5 files per batch.
-    schedule_task.apply(kwargs={'max_count': 0})
+    schedule_task.apply(kwargs={"max_count": 0})
     assert checked_files() == 5
 
     # Repeat the schedule
-    schedule_task.apply(kwargs={'max_count': 0})
+    schedule_task.apply(kwargs={"max_count": 0})
     assert checked_files() == 10
 
-    schedule_task.apply(kwargs={'max_count': 3})  # 3 files are checked
+    schedule_task.apply(kwargs={"max_count": 3})  # 3 files are checked
     assert checked_files() == 13
 
     # Scheduling for 500 bytes of files, for all of them to be checked every 20
     # minutes, with equal in size batches being sent out every minute should
     # total to 20 batches of 25 bytes per batch (5 files).
-    schedule_task.apply(kwargs={'max_size': 0})
+    schedule_task.apply(kwargs={"max_size": 0})
     assert checked_files() == 18
 
-    schedule_task.apply(kwargs={'max_size': 15})  # 3 files are checked
+    schedule_task.apply(kwargs={"max_size": 15})  # 3 files are checked
     assert checked_files() == 21
 
 # .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_tasks.py::test_migrate_file -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
-def test_migrate_file(app, db, dummy_location, extra_location, bucket,
-                      objects):
+def test_migrate_file(app, db, dummy_location, extra_location, bucket, objects):
     """Test file migration."""
     obj = objects[0]
 
     # Test pre-condition
     old_uri = obj.file.uri
     assert exists(old_uri)
-    assert old_uri == join(dummy_location.uri, str(obj.file.id)[0:2],
-                           str(obj.file.id)[2:4], str(obj.file.id)[4:], 'data')
+    assert old_uri == join(
+        dummy_location.uri,
+        str(obj.file.id)[0:2],
+        str(obj.file.id)[2:4],
+        str(obj.file.id)[4:],
+        "data",
+    )
     assert FileInstance.query.count() == 4
 
     # Migrate file
-    with patch('invenio_files_rest.tasks.verify_checksum') as verify_checksum:
+    with patch("invenio_files_rest.tasks.verify_checksum") as verify_checksum:
         migrate_file(
-            obj.file_id, location_name=extra_location.name,
-            post_fixity_check=True)
+            obj.file_id, location_name=extra_location.name, post_fixity_check=True
+        )
         assert verify_checksum.delay.called
 
     # Get object again
@@ -134,13 +138,14 @@ def test_migrate_file(app, db, dummy_location, extra_location, bucket,
     assert FileInstance.query.count() == 5
 
 # .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_tasks.py::test_migrate_file_copyfail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
-def test_migrate_file_copyfail(app, db, dummy_location, extra_location,
-                               bucket, objects):
+def test_migrate_file_copyfail(
+    app, db, dummy_location, extra_location, bucket, objects
+):
     """Test a failed copy."""
     obj = objects[0]
 
     assert FileInstance.query.count() == 4
-    with patch('fs.osfs.io') as io:
+    with patch("fs.osfs.io") as io:
         e = OSError()
         e.errno = errno.EPERM
         io.open = MagicMock(side_effect=e)
@@ -189,4 +194,31 @@ def test_remove_file_data(app, db, dummy_location, versions):
     remove_file_data(str(obj.file.id))
     assert exists(obj.file.uri)
 
-    
+
+def test_clear_orphaned_files(app, db, dummy_location, versions):
+    """Test clearing orphan files."""
+    # create an orphaned file
+    obj = versions[1]
+    file_ = obj.file
+    for obj in file_.objects:
+        obj.remove()
+
+    file_.writable = False
+    db.session.commit()
+
+    # make sure that the file is orphaned
+    assert not file_.objects
+
+    # try to delete the orphan which is marked as not writable
+    assert exists(file_.uri)
+    assert FileInstance.query.count() == 4
+    clear_orphaned_files()
+    assert exists(file_.uri)
+    assert FileInstance.query.count() == 4
+
+    # try to force the deletion
+    assert exists(file_.uri)
+    assert FileInstance.query.count() == 4
+    clear_orphaned_files(force_delete_check=lambda fi: True)
+    assert not exists(file_.uri)
+    assert FileInstance.query.count() == 3

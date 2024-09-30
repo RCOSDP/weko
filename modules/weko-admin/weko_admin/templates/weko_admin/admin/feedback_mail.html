@@ -24,14 +24,16 @@
 
 {%- block css %}
   {{ super() }}
-  {% assets "weko_admin_feedback_mail_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {{ webpack['admin_css_weko_admin_feedback_mail_css.css']}}
 {%- endblock css %}
 
 {%- block javascript %}
   {{ super() }}
-  {% assets "weko_admin_feedback_mail" %}<script type="text/babel" src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_admin_statistics_reactjs_lib" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_admin_react_bootstrap_js" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
+  {{ webpack['admin_js_feedback_mail_js.js']}}
+  <script src="/assets/js/weko_admin/react.production.min.js"></script>
+  <script src="/assets/js/weko_admin/react-dom.production.min.js"></script>
+  <script src="/assets/js/weko_admin/browser.min.js"></script>
+  <script src="/assets/js/weko_admin/react-bootstrap.min.js"></script>
 {%- endblock javascript %}
 
 {%- block body %}

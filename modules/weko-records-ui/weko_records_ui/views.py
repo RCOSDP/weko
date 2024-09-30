@@ -29,7 +29,7 @@ import six
 import werkzeug
 from flask import Blueprint, abort, current_app, escape, flash, json, \
     jsonify, make_response, redirect, render_template, request, url_for
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 from flask_login import login_required
 from flask_security import current_user
 from invenio_cache import cached_unless_authenticated
@@ -38,7 +38,8 @@ from invenio_files_rest.models import ObjectVersion, FileInstance
 from invenio_files_rest.permissions import has_update_version_role
 from invenio_i18n.ext import current_i18n
 from invenio_oaiserver.response import getrecord
-from invenio_pidrelations.contrib.versioning import PIDVersioning
+from invenio_pidrelations.contrib.versioning import PIDNodeVersioning
+from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records_ui.signals import record_viewed
@@ -138,7 +139,8 @@ def publish(pid, record, template=None, **kwargs):
     status = request.values.get('status')
     publish_status = record.get('publish_status')
 
-    pid_ver = PIDVersioning(child=pid)
+    parent_pid = PIDNodeVersioning(pid=pid).parents.one_or_none()
+    pid_ver = PIDNodeVersioning(pid=parent_pid)
     last_record = WekoRecord.get_record_by_pid(pid_ver.last_child.pid_value)
 
     if not publish_status:
@@ -426,12 +428,12 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
             if not path_name_dict['ja'][path]:
                 path_name_dict['ja'][path] = path_name_dict['en'][path]
     # Get PID version object to retrieve all versions of item
-    pid_ver = PIDVersioning(child=pid)
-    if not pid_ver.exists or pid_ver.is_last_child:
+    parent_pid = PIDNodeVersioning(pid=pid).parents.one_or_none()
+    pid_ver = PIDNodeVersioning(pid=parent_pid)
+    if parent_pid is None or pid_ver.is_last_child:
         abort(404)
-    active_versions = list(pid_ver.children or [])
-    all_versions = list(pid_ver.get_children(ordered=True, pid_status=PIDStatus.REGISTERED)
-                        or [])
+    active_versions = list(super(PIDNodeVersioning, pid_ver).children or [])
+    all_versions = list(pid_ver.children or [])
     try:
         if WekoRecord.get_record(id_=active_versions[-1].object_uuid)[
                 '_deposit']['status'] == 'draft':
@@ -819,11 +821,10 @@ def doi_ish_view_method(parent_pid_value=0, version=0):
         p_pid = None
 
     if p_pid:
-        pid_ver = PIDVersioning(parent=p_pid)
+        pid_ver = PIDNodeVersioning(pid=p_pid)
         all_versions = list(
-            pid_ver.get_children(
-                ordered=True,
-                pid_status=None))
+            super(PIDNodeVersioning,pid_ver).children.order_by(PIDRelation.index.asc())
+            )
         if version == 0 or version == len(all_versions):
             return redirect(url_for('invenio_records_ui.recid',
                                     pid_value=pid_ver.last_child.pid_value))
@@ -851,7 +852,7 @@ def parent_view_method(pid_value=0):
         p_pid = None
 
     if p_pid:
-        pid_version = PIDVersioning(parent=p_pid)
+        pid_version = PIDNodeVersioning(pid=p_pid)
         if pid_version.last_child:
             return redirect(
                 url_for('invenio_records_ui.recid',

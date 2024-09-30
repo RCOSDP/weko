@@ -28,7 +28,7 @@ from datetime import timedelta, datetime
 
 from flask import Blueprint, Response, abort, current_app, flash, json, \
     jsonify, render_template, request
-from flask_babelex import lazy_gettext as _
+from flask_babel import lazy_gettext as _
 from flask_breadcrumbs import register_breadcrumb
 from flask_login import current_user, login_required
 from flask_menu import register_menu
@@ -111,16 +111,6 @@ def set_lifetime(minutes):
 
 @blueprint.route('/session', methods=['GET', 'POST'])
 @blueprint.route('/session/', methods=['GET', 'POST'])
-@register_menu(
-    blueprint, 'settings.lifetime',
-    _('%(icon)s Session', icon='<i class="fa fa-cogs fa-fw"></i>'),
-    visible_when=_has_admin_access,
-    order=14
-)
-@register_breadcrumb(
-    blueprint, 'breadcrumbs.settings.session',
-    _('Session')
-)
 @login_required
 def lifetime():
     """Loading session setting page.

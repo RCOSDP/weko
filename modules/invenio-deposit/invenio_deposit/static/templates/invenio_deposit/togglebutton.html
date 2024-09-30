@@ -1,3 +1,10 @@
+<!--
+  This file is part of Invenio.
+  Copyright (C) 2016-2019 CERN.
+
+  Invenio is free software; you can redistribute it and/or modify it
+  under the terms of the MIT License; see LICENSE file for more details.
+-->
 <select class="form-control" name="select-order-{{ data.sortKey }}" ng-model="whichOrder" ng-change="handleOrderChange()">
   <option value="asc" ng-selected="whichOrder === true">asc.</option>
   <option value="desc" ng-selected="whichOrder === false">desc.</option>

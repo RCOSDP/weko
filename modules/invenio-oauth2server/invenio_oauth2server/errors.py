@@ -2,13 +2,13 @@
 #
 # This file is part of Invenio.
 # Copyright (C) 2015-2018 CERN.
+# Copyright (C) 2022 RERO.
+# Copyright (C) 2023 Graz University of Technology.
 #
 # Invenio is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
 
 """Errors raised by Invenio-OAuth2Server."""
-
-from __future__ import absolute_import, print_function
 
 import json
 
@@ -47,7 +47,7 @@ class JWTExtendedException(HTTPException):
         """
         return [e.to_dict() for e in self.errors] if self.errors else None
 
-    def get_body(self, environ=None):
+    def get_body(self, environ=None, scope=None):
         """Get the request body."""
         body = dict(
             status=self.code,
@@ -56,41 +56,41 @@ class JWTExtendedException(HTTPException):
 
         errors = self.get_errors()
         if self.errors:
-            body['errors'] = errors
+            body["errors"] = errors
 
         return json.dumps(body)
 
-    def get_headers(self, environ=None):
+    def get_headers(self, environ=None, scope=None):
         """Get a list of headers."""
-        return [('Content-Type', 'application/json')]
+        return [("Content-Type", "application/json")]
 
 
 class JWTDecodeError(JWTExtendedException):
     """Exception raised when decoding is failed."""
 
     code = 400
-    description = 'The JWT token has invalid format.'
+    description = "The JWT token has invalid format."
 
 
 class JWTInvalidIssuer(JWTExtendedException):
     """Exception raised when the user is not valid."""
 
     code = 403
-    description = 'The JWT token is not valid.'
+    description = "The JWT token is not valid."
 
 
 class JWTExpiredToken(JWTExtendedException):
     """Exception raised when JWT is expired."""
 
     code = 403
-    description = 'The JWT token is expired.'
+    description = "The JWT token is expired."
 
 
 class JWTInvalidHeaderError(JWTExtendedException):
     """Exception raised when header argument is missing."""
 
     code = 400
-    description = 'Missing required header argument.'
+    description = "Missing required header argument."
 
 
 class JWTNoAuthorizationError(JWTExtendedException):

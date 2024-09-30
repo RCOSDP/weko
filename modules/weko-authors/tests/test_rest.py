@@ -6,7 +6,7 @@ from flask import Blueprint, Response
 
 from invenio_deposit.utils import check_oauth2_scope_write, \
     check_oauth2_scope_write_elasticsearch
-from invenio_records_rest.utils import check_elasticsearch
+from invenio_records_rest.utils import check_search
 from weko_authors.rest import (
     create_blueprint,
 )
@@ -40,7 +40,7 @@ endpoints = {
         'default_media_type': 'application/json',
         'links_factory_imp': 'invenio_deposit.links:deposit_links_factory',
         'create_permission_factory_imp': check_oauth2_scope_write,
-        'read_permission_factory_imp': check_elasticsearch,
+        'read_permission_factory_imp': check_search,
         'update_permission_factory_imp':
             check_oauth2_scope_write_elasticsearch,
         'delete_permission_factory_imp':

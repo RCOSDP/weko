@@ -32,8 +32,8 @@ import redis
 from redis import sentinel
 import requests
 from flask import current_app, request
-from flask_babelex import gettext as __
-from flask_babelex import lazy_gettext as _
+from flask_babel import gettext as __
+from flask_babel import lazy_gettext as _
 from invenio_accounts.models import Role, userrole
 from invenio_cache import cached_unless_authenticated
 from invenio_db import db
@@ -43,7 +43,7 @@ from invenio_mail.admin import MailSettingView
 from invenio_mail.models import MailConfig
 from invenio_records.models import RecordMetadata
 from invenio_records_rest.facets import terms_filter
-from invenio_stats.views import QueryFileStatsCount, QueryRecordViewCount
+
 from jinja2 import Template
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import func
@@ -777,6 +777,7 @@ class StatisticMail:
             [string] -- viewed of item
 
         """
+        from invenio_stats.views import QueryRecordViewCount
         query_file_view = QueryRecordViewCount()
         return str(query_file_view.get_data(item_id, time).get("total"))
 
@@ -792,6 +793,7 @@ class StatisticMail:
             [dictionary] -- dictionary of file and it's downloaded
 
         """
+        from invenio_stats.views import QueryFileStatsCount
         list_file = cls.get_file_in_item(data)
         result = {}
         if list_file:
@@ -1030,11 +1032,11 @@ class FeedbackMail:
             "query": query,
             "from": offset,
             "size": size,
+            "track_total_hits": True
         }
         indexer = RecordIndexer()
         result = indexer.client.search(
             index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
-            doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
             body=body
         )
 
@@ -2284,7 +2286,7 @@ def elasticsearch_reindex( is_db_to_es ):
         
     Raises:
     AssersionError 
-        In case of the response code from ElasticSearch is not 200,
+        In case of the response code from seacrh engin is not 200,
         Subsequent processing is interrupted.
     
     Todo:
@@ -2341,7 +2343,7 @@ def elasticsearch_reindex( is_db_to_es ):
         ]
     }
 
-    current_app.logger.info(' START elasticsearch reindex: {}.'.format(index))
+    current_app.logger.info(' START search engine reindex: {}.'.format(index))
 
     # トランザクションログをLucenceに保存。
     response = requests.post(base_url + index + "/_flush?wait_if_ongoing=true") 
@@ -2359,7 +2361,7 @@ def elasticsearch_reindex( is_db_to_es ):
     assert response.status_code == 200 ,response.text
     current_app.logger.info("add setting percolator") 
 
-    _create_percolator_mapping(tmpindex, "item-v1.0.0")
+    _create_percolator_mapping(tmpindex)
     current_app.logger.info("END create tmpindex") 
     
     # 高速化を期待してインデックスの設定を変更。
@@ -2404,7 +2406,7 @@ def elasticsearch_reindex( is_db_to_es ):
     current_app.logger.info(response.text)
     assert response.status_code == 200 ,response.text
     current_app.logger.info("add setting percolator") 
-    _create_percolator_mapping(index, "item-v1.0.0")
+    _create_percolator_mapping(index)
     current_app.logger.info("END create index") 
 
     # 高速化を期待してインデックスの設定を変更。
@@ -2463,7 +2465,7 @@ def elasticsearch_reindex( is_db_to_es ):
     assert response.status_code == 200 ,response.text
     current_app.logger.info("END delete tmpindex") 
 
-    current_app.logger.info(' END elasticsearch reindex: {}.'.format(index))
+    current_app.logger.info(' END search engine reindex: {}.'.format(index))
     
     return 'completed'
 
@@ -2473,16 +2475,16 @@ def _elasticsearch_remake_item_index(index_name):
     from invenio_oaiserver.percolator import _new_percolator
     returnlist = []
     # インデックスを登録
-    current_app.logger.info(' START elasticsearch import from oaiserver_set')
+    current_app.logger.info(' START search engine import from oaiserver_set')
     oaiset_ = OAISet.query.all()
     for target in oaiset_ :
         spec = target.spec
         search_pattern = target.search_pattern
         _new_percolator(spec , search_pattern)
-    current_app.logger.info(' END elasticsearch import from oaiserver_set')
+    current_app.logger.info(' END search engine import from oaiserver_set')
 
     # アイテムを登録
-    current_app.logger.info(' START elasticsearch import from records_metadata')
+    current_app.logger.info(' START search engine import from records_metadata')
     # get all registered record_metadata's ids
     uuids = (x[0] for x in PersistentIdentifier.query.filter_by(
         object_type='rec', status=PIDStatus.REGISTERED
@@ -2497,6 +2499,6 @@ def _elasticsearch_remake_item_index(index_name):
         assert res != None ,'Index class is None.'
         assert res.get("_shards").get("failed") == 0 ,'Index fail.'
         returnlist.append(res)
-    current_app.logger.info(' END elasticsearch import from records_metadata')
+    current_app.logger.info(' END search engine import from records_metadata')
     
     return returnlist

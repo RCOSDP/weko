@@ -45,10 +45,9 @@ class WekoSearchUI(object):
         app.register_blueprint(blueprint)
         app.extensions["weko-search-ui"] = self
 
-        # to integrate search and search index url
-        from .views import search
-
-        app.view_functions["invenio_search_ui.search"] = search
+        ## to integrate search and search index url
+        #from .views import search
+        #app.view_functions["invenio_search_ui.search"] = search
 
     def init_config(self, app):
         """Initialize configuration.

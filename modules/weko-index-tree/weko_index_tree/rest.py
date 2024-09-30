@@ -29,8 +29,8 @@ from datetime import datetime, timezone, timedelta
 
 from flask import Blueprint, abort, current_app, jsonify, make_response, \
     request, Response
-from flask_babelex import gettext as _
-from flask_babelex import get_locale as get_current_locale
+from flask_babel import gettext as _
+from flask_babel import get_locale as get_current_locale
 from flask_login import current_user
 from werkzeug.http import generate_etag
 from invenio_oauth2server import require_api_auth, require_oauth_scopes

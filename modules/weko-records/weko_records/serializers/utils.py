@@ -303,7 +303,7 @@ class OpenSearchDetailData:
         fg.link(href=request.url)
 
         # Set totalResults
-        _total_results = self.search_result['hits']['total']
+        _total_results = self.search_result['hits']['total']['value']
         fg.opensearch.totalResults(str(_total_results))
 
         if self.output_type == self.OUTPUT_ATOM:

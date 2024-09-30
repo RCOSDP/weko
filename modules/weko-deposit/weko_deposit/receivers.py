@@ -9,17 +9,33 @@
 """Deposit module receivers."""
 
 from flask import current_app
+from sqlalchemy.exc import SQLAlchemyError
 from invenio_pidstore.models import PIDStatus
 from invenio_records.models import RecordMetadata
 from weko_records.api import FeedbackMailList
+from weko_records.errors import WekoRecordsError
 from weko_records.utils import json_loader
 
 from .api import WekoDeposit
+from .errors import WekoDepositError
+from .logger import weko_logger
 from .pidstore import get_record_without_version
 
-
 def append_file_content(sender, json=None, record=None, index=None, **kwargs):
-    """Append file content to ES record."""
+    """Append file content to record for ES.
+
+    Append file content to record before reindexing Elasticsearch.
+
+    Args:
+        sender (object): The current Flask application. Not used.
+        json (dict , Optional): \
+            The dumped record dictionary which can be modified.\
+            Default to `None`.
+        record (object, Optional): The record being indexed. Default to `None`.
+        index (Optional): The index in which the record will be indexed.\
+            Default to `None`. Not used.
+        **kwargs: Keyword arguments. Need to include `with_deleted`.
+    """
     try:
         dep = WekoDeposit.get_record(record.id)
         pid = get_record_without_version(dep.pid)
@@ -30,13 +46,27 @@ def append_file_content(sender, json=None, record=None, index=None, **kwargs):
         im['control_number'] = im.get('recid')
         holds = ['_created', '_updated']
         pops = []
-        for key in json:
+
+        weko_logger(key='WEKO_COMMON_FOR_START')
+        for i, key in enumerate(json):
+            weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
+                        count=i, element=key)
             if key not in holds:
+                weko_logger(key='WEKO_COMMON_IF_ENTER',
+                            branch=f'key:{key} not in holds')
                 pops.append(key)
-        for key in pops:
+        weko_logger(key='WEKO_COMMON_FOR_END')
+
+        weko_logger(key='WEKO_COMMON_FOR_START')
+        for i, key in enumerate(pops):
+            weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
+                        count=i, element=key)
             json.pop(key)
+        weko_logger(key='WEKO_COMMON_FOR_END')
+
         metadata = dep.item_metadata
-        _, jrc, _ = json_loader(metadata, pid, with_deleted=kwargs.get("with_deleted",False))
+        _, jrc, _ = json_loader(metadata, pid,
+                                with_deleted=kwargs.get("with_deleted",False))
         dep.data = metadata
         dep.jrc = jrc
 
@@ -51,6 +81,8 @@ def append_file_content(sender, json=None, record=None, index=None, **kwargs):
         dep._convert_jpcoar_data_to_es()
         im.pop('recid')
         if record_metadata.status != PIDStatus.DELETED:
+            weko_logger(key='WEKO_COMMON_IF_ENTER',
+                        branch="record_metadata.status != PIDStatus.DELETED")
             dep.get_content_files()
 
         # Updated metadata's path
@@ -63,13 +95,20 @@ def append_file_content(sender, json=None, record=None, index=None, **kwargs):
         # Updated FeedbackMail List
         mail_list = FeedbackMailList.get_mail_list_by_item_id(record.id)
         if mail_list:
-            feedback_mail = {
-                'feedback_mail_list': mail_list
-            }
+            weko_logger(key='WEKO_COMMON_IF_ENTER',
+                        branch='mail_list is not empty')
+
+            feedback_mail = {'feedback_mail_list': mail_list}
             json.update(feedback_mail)
 
-        current_app.logger.info('FINISHED reindex record: {0}'.format(
-            im['control_number']))
-    except Exception:
-        import traceback
-        current_app.logger.error(traceback.print_exc())
+        weko_logger(key='WEKO_DEPOSIT_APPEND_FILE_CONTENT',
+                    recid=im['control_number'])
+
+    except SQLAlchemyError as ex:
+        weko_logger(key='WEKO_COMMON_DB_SOME_ERROR', ex=ex)
+        # raise WekoDepositError(ex=ex)
+    except WekoRecordsError as ex:
+        raise
+    except Exception as ex:
+        weko_logger(key='WEKO_COMMON_ERROR_UNEXPECTED', ex=ex)
+        # raise WekoDepositError(ex=ex)

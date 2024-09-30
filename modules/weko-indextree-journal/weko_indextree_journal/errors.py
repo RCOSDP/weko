@@ -25,8 +25,6 @@
 """Journal errors."""
 from invenio_rest.errors import RESTException
 
-# from flask_babelex import gettext as _
-
 FAILED_MSG = ''
 
 

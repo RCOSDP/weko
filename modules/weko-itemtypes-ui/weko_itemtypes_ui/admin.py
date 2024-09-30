@@ -28,7 +28,7 @@ from flask import abort, current_app, flash, json, jsonify, redirect, \
     request, session, url_for, make_response, send_file
 from sqlalchemy.sql.expression import null
 from flask_admin import BaseView, expose
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 from flask_login import current_user
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
@@ -73,7 +73,9 @@ class ItemTypeMetaDataView(BaseView):
             item_type_list=item_type_list,
             id=item_type_id,
             is_sys_admin=is_sys_admin,
-            lang_code=session.get('selected_language', 'en')  # Set default
+            lang_code=session.get('selected_language', 'en'),  # Set default
+            uiFixedProperties=current_app.config['WEKO_ITEMTYPES_UI_FIXED_PROPERTIES'],
+            ui_pubdate_titles=current_app.config['WEKO_ITEMTYPES_UI_PUBDATE_DEFAULT_TITLES']
         )
 
     @expose('/<int:item_type_id>/render', methods=['GET'])

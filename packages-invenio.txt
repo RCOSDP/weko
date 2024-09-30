@@ -1,29 +1,27 @@
-invenio-access==1.1.0
-#invenio-accounts==1.1.4
-invenio-admin==1.1.2
-invenio-app==1.1.0
-invenio-assets==1.0.0
-invenio-base==1.0.2
-invenio-cache==1.0.0
-invenio-celery==1.1.3
-invenio-config==1.0.0
-invenio-formatter==1.0.0b3
-invenio-i18n==1.0.0
-# invenio-indexer==1.0.2
-invenio-jsonschemas==1.0.0
-invenio-logging==1.0.0b3
-invenio-marc21==1.0.0a8
-invenio-oauthclient==1.0.0
-invenio-pidrelations==1.0.0a4
-invenio-pidstore==1.0.0
+invenio-access==2.0.0
+invenio-admin==1.4.0
+invenio-app==1.5.0
+invenio-assets==2.0.1
+invenio-base==1.4.0
+invenio-cache==1.3.0
+invenio-celery==1.3.1
+invenio-config==1.0.4
+invenio-formatter==2.0.3
+invenio-i18n==2.1.1
+invenio-jsonschemas==1.1.4
+invenio-logging==2.1.0
+#invenio-marc21==1.0.0a9
+invenio-oauthclient==4.0.0
+invenio-pidrelations==0.2.0
+invenio-pidstore==1.3.1
 invenio-query-parser==0.6.0
-invenio-records-files==1.0.0a10
-invenio-records-ui==1.0.0
-invenio-rest==1.1.2
-# invenio-search==1.1.0
--e git+https://github.com/RCOSDP/invenio-search.git@feature/nii#egg=invenio-search
-#invenio-search-ui==1.0.0a9
+invenio-records-files==1.2.1
+invenio-records-ui==1.2.0
+invenio-rest==1.3.0
+-e git+https://github.com/RCOSDP/invenio-search.git@nii_develop/W2024-16#egg=invenio-search
+#invenio-search==2.3.1
 #-e git+https://github.com/RCOSDP/invenio-search-ui.git@feature/nii#egg=invenio-search-ui
--e git+https://github.com/RCOSDP/invenio-search-ui.git@v1.0.0a9#egg=invenio-search-ui
-invenio-theme==1.0.0b4
+-e git+https://github.com/RCOSDP/invenio-search-ui.git@nii_develop/W2024-16#egg=invenio-search-ui
+#invenio-search-ui==2.8.5
+invenio-theme==3.1.0
 invenio-csl-rest==1.0.0a1

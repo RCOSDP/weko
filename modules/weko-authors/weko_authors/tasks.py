@@ -21,9 +21,9 @@
 """WEKO3 authors tasks."""
 from datetime import datetime
 
-from celery import shared_task, states
+from celery import Celery, shared_task, states
 from celery.result import GroupResult
-from celery.task.control import inspect
+from celery.app.control import Inspect
 from flask import current_app
 from weko_workflow.utils import delete_cache_data, get_cache_data
 
@@ -72,23 +72,25 @@ def check_is_import_available(group_task_id=None):
     """Is import available."""
     result = {
         'is_available': True
-    }
+        }
 
-    if not inspect().ping():
+    inspect = current_app.extensions['celery'].control.inspect()
+    if not inspect.ping():
         result['is_available'] = False
         result['celery_not_run'] = True
-    else:
-        cache_data = get_cache_data(WEKO_AUTHORS_IMPORT_CACHE_KEY)
-        if cache_data:
-            task = GroupResult.restore(cache_data.get('group_task_id'))
-            if task:
-                if task.successful() or task.failed():
-                    delete_cache_data(WEKO_AUTHORS_IMPORT_CACHE_KEY)
-                else:
-                    result['is_available'] = False
-                    if group_task_id and group_task_id == task.id:
-                        result['continue_data'] = cache_data
-            else:
+        return result
+
+    cache_data = get_cache_data(WEKO_AUTHORS_IMPORT_CACHE_KEY)
+    if cache_data:
+        task = GroupResult.restore(cache_data.get('group_task_id'))
+        if task:
+            if task.successful() or task.failed():
                 delete_cache_data(WEKO_AUTHORS_IMPORT_CACHE_KEY)
+            else:
+                result['is_available'] = False
+                if group_task_id and group_task_id == task.id:
+                    result['continue_data'] = cache_data
+        else:
+            delete_cache_data(WEKO_AUTHORS_IMPORT_CACHE_KEY)
 
     return result

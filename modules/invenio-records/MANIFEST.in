@@ -20,9 +20,11 @@ include pytest.ini
 include tox.ini
 prune docs/_build
 recursive-include docs *.bat *.py *.rst Makefile
+recursive-include .github/workflows *.yml
 recursive-include examples *.html *.py *.sh
 recursive-include invenio_records *.html *.mo *.po *.pot *.xml *.py
 recursive-include tests *.xml *.py
+include .git-blame-ignore-revs
 
 # added by check-manifest
 include *.properties

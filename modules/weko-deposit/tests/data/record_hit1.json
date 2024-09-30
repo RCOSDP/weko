@@ -2,7 +2,7 @@
   {
     "_id": "1",
     "_version": "1",
-    "_source":{
+    "_source": {
       "pid": "1",
       "_created": "2021-09-01",
       "_updated": "2021-10-26",
@@ -11,119 +11,125 @@
       },
       "itemtype": "test",
       "control_number": "1",
-      "_item_metadata":{
+      "_item_metadata": {
         "pubdate": {
           "attribute_name": "PubDate",
           "attribute_value": "2021-10-26"
         },
-        "path": [1],
-        "item_type_id":"1",
-        "item_test1_1":{
-          "attribute_name":"Test Item1-1",
-          "attribute_value_mlt":[
+        "path": [
+          1
+        ],
+        "item_type_id": "1",
+        "item_test1_1": {
+          "attribute_name": "Test Item1-1",
+          "attribute_value_mlt": [
             {
-              "test_item_lang1":"en",
-              "test_value1":"this is test item1-1"
+              "test_item_lang1": "en",
+              "test_value1": "this is test item1-1"
             }
           ]
         },
-        "item_test1_2":{
-          "attribute_name":"Test Item1-2",
-          "attribute_value_mlt":[
+        "item_test1_2": {
+          "attribute_name": "Test Item1-2",
+          "attribute_value_mlt": [
             {
-              "test_item_lang1":"en"
+              "test_item_lang1": "en"
             }
           ]
         },
-        "item_test1_3":{
-          "attribute_name":"Test Item1-3",
-          "attribute_value_mlt":[
+        "item_test1_3": {
+          "attribute_name": "Test Item1-3",
+          "attribute_value_mlt": [
             {
-              "test_value1":"this is test item1-3"
+              "test_value1": "this is test item1-3"
             }
           ]
         },
-        "item_test1_4":{
-          "attrinute_name":"Test Item1-4",
-          "attribute_value_mlt":[
+        "item_test1_4": {
+          "attrinute_name": "Test Item1-4",
+          "attribute_value_mlt": [
             {
-              "test_value1":""
+              "test_value1": ""
             }
           ]
         },
-        "item_test1_5":{
-          "attribute_name":"Test Item1-5",
-          "attribute_value_mlt":[
+        "item_test1_5": {
+          "attribute_name": "Test Item1-5",
+          "attribute_value_mlt": [
             {
-              "test_item_lang1":"en",
-              "test_value1":""
+              "test_item_lang1": "en",
+              "test_value1": ""
             }
           ]
         },
-        "item_test2_title":{
-          "attribute_name":"Title",
-          "attribute_value_mlt":[
+        "item_test2_title": {
+          "attribute_name": "Title",
+          "attribute_value_mlt": [
             {
-              "test_title":"this is test item title",
-              "test_title_lang":"en"
+              "test_title": "this is test item title",
+              "test_title_lang": "en"
             }
           ]
         },
-        "item_test3_file":{
-          "attribute_name":"File",
-          "attribute_type":"file",
-          "attribute_value_mlt":[
+        "item_test3_file": {
+          "attribute_name": "File",
+          "attribute_type": "file",
+          "attribute_value_mlt": [
             {
-              "url":{
-                "label":"open and exist label"
+              "url": {
+                "label": "open and exist label"
               },
-              "accessrole":"open_restricted",
-              "format": "application/pdf" 
+              "accessrole": "open_restricted",
+              "format": "application/pdf"
             },
             {
-              "url":{
-                "test":"open and not exist label"
+              "url": {
+                "test": "open and not exist label"
               },
-              "accessrole":"open_restricted",
-              "format": "application/pdf" 
+              "accessrole": "open_restricted",
+              "format": "application/pdf"
             },
             {
-              "url":{
-                "url":"not label, but version_id"
+              "url": {
+                "url": "not label, but version_id"
               },
-              "version_id":"1.0",
-              "filename":"test.txt",
-              "format": "application/pdf" 
+              "version_id": "1.0",
+              "filename": "test.txt",
+              "format": "application/pdf"
             },
             {
-              "url":{
-                "label":"not file url"
+              "url": {
+                "label": "not file url"
               },
-              "version_id":"1.0",
-              "filename":"test_not_extension",
-              "format": "application/pdf" 
+              "version_id": "1.0",
+              "filename": "test_not_extension",
+              "format": "application/pdf"
             },
             {
-              "url":{
-                "test":"not open and not label"
+              "url": {
+                "test": "not open and not label"
               },
-              "format": "application/pdf" 
+              "format": "application/pdf"
             }
           ]
         },
         "item_resource_type": {
           "attribute_name": "Resource Type",
-          "attribute_value_mlt": [{
-            "resourcetype": "test type",
-            "resourceuri": "http://nii.co.jp/resource_type/01"
-          }]
+          "attribute_value_mlt": [
+            {
+              "resourcetype": "test type",
+              "resourceuri": "http://nii.co.jp/resource_type/01"
+            }
+          ]
         },
         "item_description": {
           "attribute_name": "Description",
-          "attribute_value_mlt": [{
-            "subitem_description_value": "test description",
-            "subitem_description_lang": "en"
-          }]
+          "attribute_value_mlt": [
+            {
+              "subitem_description_value": "test description",
+              "subitem_description_lang": "en"
+            }
+          ]
         },
         "item_date": {
           "attribute_name": "Date",
@@ -138,136 +144,174 @@
             }
           ]
         },
-        "item_publisher":{
-          "attribute_name":"Publisher",
-          "attribute_value_mlt":[
+        "item_publisher": {
+          "attribute_name": "Publisher",
+          "attribute_value_mlt": [
             {
               "subitem_publisher": "takeshi",
-              "subitem_publisherLang":"en"
+              "subitem_publisherLang": "en"
             }
           ]
         },
-        "item_source_ids":{
-          "attribute_name":"Source Identifier",
-          "attribute_value_mlt":[
+        "item_source_ids": {
+          "attribute_name": "Source Identifier",
+          "attribute_value_mlt": [
             {
               "subitem_source_id": "123",
-              "subitem_source_id_type":"ISSN"
+              "subitem_source_id_type": "ISSN"
             }
           ]
         },
-        "item_version":{
-          "attribute_name":"Version",
-          "attribute_value_mlt":[
+        "item_version": {
+          "attribute_name": "Version",
+          "attribute_value_mlt": [
             {
               "subitem_version": "1.0.0"
             }
           ]
         },
-        "item_test4_thumbnail":{
-          "attribute_name":"thumbnail",
-          "attribute_type":"thumbnail",
-          "attribute_value_mlt":[
+        "item_test4_thumbnail": {
+          "attribute_name": "thumbnail",
+          "attribute_type": "thumbnail",
+          "attribute_value_mlt": [
             {
-              "subitem_thumbnail":[
-              ]
+              "subitem_thumbnail": []
             }
           ]
         },
-        "item_test4_2_thumbnail":{
-          "attribute_name":"thumbnail2",
-          "attribute_type":"thumbnail",
-          "attribute_value_mlt":[
+        "item_test4_2_thumbnail": {
+          "attribute_name": "thumbnail2",
+          "attribute_type": "thumbnail",
+          "attribute_value_mlt": [
             {
-              "subitem_thumbnail":[
-                {"thumbnail_label":"サムネイルラベル"}
-              ]
-            }
-          ]
-        },
-        "item_test5_creator":{
-          "attribute_name":"creator",
-          "attribute_type":"creator",
-          "attribute_value_mlt":[
-            {
-              "creatorNames":[
+              "subitem_thumbnail": [
                 {
-                  "creatorName":"takeshi",
-                  "creatorNameLang":"en"
+                  "thumbnail_label": "サムネイルラベル"
+                }
+              ]
+            }
+          ]
+        },
+        "item_test5_creator": {
+          "attribute_name": "creator",
+          "attribute_type": "creator",
+          "attribute_value_mlt": [
+            {
+              "creatorNames": [
+                {
+                  "creatorName": "takeshi",
+                  "creatorNameLang": "en"
                 }
               ],
-              "familyNames":[
+              "familyNames": [
                 {
-                  "familyName":null,
-                  "familyNameLang":"en"
+                  "familyName": null,
+                  "familyNameLang": "en"
                 },
                 {
-                  "familyName":"takesi family"
+                  "familyName": "takesi family"
                 }
               ],
-              "givenNames":[
+              "givenNames": [
                 {
-                  "givenName":"takesi given",
-                  "givenNameLang":"en"
+                  "givenName": "takesi given",
+                  "givenNameLang": "en"
                 }
               ],
-              "nameIdentifierURI":[
+              "nameIdentifierURI": [
                 {
-                  "nameIdentifierURI":""
+                  "nameIdentifierURI": ""
                 }
               ],
-              "nameIdentifiers":[
+              "nameIdentifiers": [
                 {
-                  "nameIdentifier":"1234",
-                  "nameIdentifierURI":"https://orcid.org/1234",
-                  "nameIdentifierScheme":"ORCID"
+                  "nameIdentifier": "1234",
+                  "nameIdentifierURI": "https://orcid.org/1234",
+                  "nameIdentifierScheme": "ORCID"
                 },
-                {"nameIdentifier":"1","nameIdentifierScheme":"WEKO"}
+                {
+                  "nameIdentifier": "1",
+                  "nameIdentifierScheme": "WEKO"
+                }
               ]
             }
           ]
         },
-        "contributor":{
-          "attribute_name":"Contributor",
-          "attribute_value_mlt":[
+        "contributor": {
+          "attribute_name": "Contributor",
+          "attribute_value_mlt": [
             {
-              "givenNames":[{"givenName":"smith","givenNameLang":"en"}],
-              "familyNames":[{"familyName":"test","familyNameLang":"en"}],
-              "contributorType":"ContactPerson",
-              "nameIdentifiers":[
+              "givenNames": [
                 {
-                  "nameIdentifier":"5678",
-                  "nameIdentifierURI":"https://orcid.org/5678",
-                  "nameIdentifierScheme":"ORCID"
+                  "givenName": "smith",
+                  "givenNameLang": "en"
                 }
               ],
-              "contributorMails":[{"contributorMail":"test.smith@test.org"}],
-              "contributorNames":[{"lang":"en","contributorName":"test, smith"}],
-              "contributorAffiliations":[
-                {"contributorAffiliationNameIdentifiers":[{
-                  "contributorAffiliationURI":"http://www.isni.org/isni/1234",
-                  "contributorAffiliationScheme":"ISNI","contributorAffiliationNameIdentifier":"1234"
-                }]}
+              "familyNames": [
+                {
+                  "familyName": "test",
+                  "familyNameLang": "en"
+                }
               ],
-              "contributorAlternatives":[{"contributorAlternative":"other smith","contributorAlternativeLang":"en"}]
+              "contributorType": "ContactPerson",
+              "nameIdentifiers": [
+                {
+                  "nameIdentifier": "5678",
+                  "nameIdentifierURI": "https://orcid.org/5678",
+                  "nameIdentifierScheme": "ORCID"
+                }
+              ],
+              "contributorMails": [
+                {
+                  "contributorMail": "test.smith@test.org"
+                }
+              ],
+              "contributorNames": [
+                {
+                  "lang": "en",
+                  "contributorName": "test, smith"
+                }
+              ],
+              "contributorAffiliations": [
+                {
+                  "contributorAffiliationNameIdentifiers": [
+                    {
+                      "contributorAffiliationURI": "http://www.isni.org/isni/1234",
+                      "contributorAffiliationScheme": "ISNI",
+                      "contributorAffiliationNameIdentifier": "1234"
+                    }
+                  ]
+                }
+              ],
+              "contributorAlternatives": [
+                {
+                  "contributorAlternative": "other smith",
+                  "contributorAlternativeLang": "en"
+                }
+              ]
             }
           ]
         },
-        "names":{
-          "attribute_name":"names",
-          "attribute_value_mlt":[{
-            "nameIdentifiers":[
-              {"nameIdentifier":"3","nameIdentifierScheme":"WEKO"}
-            ]
-          }]
-        },
-        "item_test6_bibliographic":{
-          "attribute_value_mlt":[
+        "names": {
+          "attribute_name": "names",
+          "attribute_value_mlt": [
             {
-              "bibliographic_titles":[
+              "nameIdentifiers": [
                 {
-                  "bibliographic_titleLang":"en",
-                  "bibliographic_title":"this is test bibliographic title"
+                  "nameIdentifier": "3",
+                  "nameIdentifierScheme": "WEKO"
+                }
+              ]
+            }
+          ]
+        },
+        "item_test6_bibliographic": {
+          "attribute_value_mlt": [
+            {
+              "bibliographic_titles": [
+                {
+                  "bibliographic_titleLang": "en",
+                  "bibliographic_title": "this is test bibliographic title"
                 }
               ],
               "bibliographic_volume": "10",
@@ -277,34 +321,38 @@
             }
           ]
         },
-        "item_test8_not_mlt":{
-          "attribute_type":"test"
+        "item_test8_not_mlt": {
+          "attribute_type": "test"
         },
-        "item_test9":{
-          "attribute_value_mlt":{
-            "item_test9_dict":{
-              "item_test9_dict_value":"value9_dict"
+        "item_test9": {
+          "attribute_value_mlt": {
+            "item_test9_dict": {
+              "item_test9_dict_value": "value9_dict"
             },
-            "item_test9_list":[
+            "item_test9_list": [
               [
                 "item_test9_list_value"
               ]
             ]
           }
         },
-        "item_test11":{
-          "attribute_value_mlt":"str_attribute_value_mlt"
+        "item_test11": {
+          "attribute_value_mlt": "str_attribute_value_mlt"
         },
-        "item_test12.indot_item":{
-          "attribute_value_mlt":{
-            "value":"value"
+        "item_test12.indot_item": {
+          "attribute_value_mlt": {
+            "value": "value"
           }
         }
       },
       "file": {
-        "URI": [{"value": "http://localhost/records/1/file"}]
+        "URI": [
+          {
+            "value": "http://localhost/records/1/file"
+          }
+        ]
       },
-      "title":[
+      "title": [
         "this is dummy title",
         "this is test item title"
       ]
@@ -313,7 +361,7 @@
   {
     "_id": "2",
     "_version": "1",
-    "_source":{
+    "_source": {
       "pid": "2",
       "_created": "2021-09-01",
       "_updated": "2021-10-26",
@@ -322,119 +370,125 @@
       },
       "itemtype": "test",
       "control_number": "2",
-      "_item_metadata":{
+      "_item_metadata": {
         "pubdate": {
           "attribute_name": "PubDate",
           "attribute_value": "2021-10-26"
         },
-        "path": [1],
-        "item_type_id":"1",
-        "item_test1_1":{
-          "attribute_name":"Test Item1-1",
-          "attribute_value_mlt":[
+        "path": [
+          1
+        ],
+        "item_type_id": "1",
+        "item_test1_1": {
+          "attribute_name": "Test Item1-1",
+          "attribute_value_mlt": [
             {
-              "test_item_lang1":"en",
-              "test_value1":"this is test item1-1"
+              "test_item_lang1": "en",
+              "test_value1": "this is test item1-1"
             }
           ]
         },
-        "item_test1_2":{
-          "attribute_name":"Test Item1-2",
-          "attribute_value_mlt":[
+        "item_test1_2": {
+          "attribute_name": "Test Item1-2",
+          "attribute_value_mlt": [
             {
-              "test_item_lang1":"en"
+              "test_item_lang1": "en"
             }
           ]
         },
-        "item_test1_3":{
-          "attribute_name":"Test Item1-3",
-          "attribute_value_mlt":[
+        "item_test1_3": {
+          "attribute_name": "Test Item1-3",
+          "attribute_value_mlt": [
             {
-              "test_value1":"this is test item1-3"
+              "test_value1": "this is test item1-3"
             }
           ]
         },
-        "item_test1_4":{
-          "attrinute_name":"Test Item1-4",
-          "attribute_value_mlt":[
+        "item_test1_4": {
+          "attrinute_name": "Test Item1-4",
+          "attribute_value_mlt": [
             {
-              "test_value1":""
+              "test_value1": ""
             }
           ]
         },
-        "item_test1_5":{
-          "attribute_name":"Test Item1-5",
-          "attribute_value_mlt":[
+        "item_test1_5": {
+          "attribute_name": "Test Item1-5",
+          "attribute_value_mlt": [
             {
-              "test_item_lang1":"en",
-              "test_value1":""
+              "test_item_lang1": "en",
+              "test_value1": ""
             }
           ]
         },
-        "item_test2_title":{
-          "attribute_name":"Title",
-          "attribute_value_mlt":[
+        "item_test2_title": {
+          "attribute_name": "Title",
+          "attribute_value_mlt": [
             {
-              "test_title":"this is test item title",
-              "test_title_lang":"en"
+              "test_title": "this is test item title",
+              "test_title_lang": "en"
             }
           ]
         },
-        "item_test3_file":{
-          "attribute_name":"File",
-          "attribute_type":"file",
-          "attribute_value_mlt":[
+        "item_test3_file": {
+          "attribute_name": "File",
+          "attribute_type": "file",
+          "attribute_value_mlt": [
             {
-              "url":{
-                "label":"open and exist label"
+              "url": {
+                "label": "open and exist label"
               },
-              "accessrole":"open_restricted",
-              "format": "application/pdf" 
+              "accessrole": "open_restricted",
+              "format": "application/pdf"
             },
             {
-              "url":{
-                "test":"open and not exist label"
+              "url": {
+                "test": "open and not exist label"
               },
-              "accessrole":"open_restricted",
-              "format": "application/pdf" 
+              "accessrole": "open_restricted",
+              "format": "application/pdf"
             },
             {
-              "url":{
-                "url":"not label, but version_id"
+              "url": {
+                "url": "not label, but version_id"
               },
-              "version_id":"1.0",
-              "filename":"test.txt",
-              "format": "application/pdf" 
+              "version_id": "1.0",
+              "filename": "test.txt",
+              "format": "application/pdf"
             },
             {
-              "url":{
-                "label":"not file url"
+              "url": {
+                "label": "not file url"
               },
-              "version_id":"1.0",
-              "filename":"test_not_extension",
-              "format": "application/pdf" 
+              "version_id": "1.0",
+              "filename": "test_not_extension",
+              "format": "application/pdf"
             },
             {
-              "url":{
-                "test":"not open and not label"
+              "url": {
+                "test": "not open and not label"
               },
-              "format": "application/pdf" 
+              "format": "application/pdf"
             }
           ]
         },
         "item_resource_type": {
           "attribute_name": "Resource Type",
-          "attribute_value_mlt": [{
-            "resourcetype": "test type",
-            "resourceuri": "http://nii.co.jp/resource_type/01"
-          }]
+          "attribute_value_mlt": [
+            {
+              "resourcetype": "test type",
+              "resourceuri": "http://nii.co.jp/resource_type/01"
+            }
+          ]
         },
         "item_description": {
           "attribute_name": "Description",
-          "attribute_value_mlt": [{
-            "subitem_description_value": "test description",
-            "subitem_description_lang": "en"
-          }]
+          "attribute_value_mlt": [
+            {
+              "subitem_description_value": "test description",
+              "subitem_description_lang": "en"
+            }
+          ]
         },
         "item_date": {
           "attribute_name": "Date",
@@ -449,136 +503,174 @@
             }
           ]
         },
-        "item_publisher":{
-          "attribute_name":"Publisher",
-          "attribute_value_mlt":[
+        "item_publisher": {
+          "attribute_name": "Publisher",
+          "attribute_value_mlt": [
             {
               "subitem_publisher": "takeshi",
-              "subitem_publisherLang":"en"
+              "subitem_publisherLang": "en"
             }
           ]
         },
-        "item_source_ids":{
-          "attribute_name":"Source Identifier",
-          "attribute_value_mlt":[
+        "item_source_ids": {
+          "attribute_name": "Source Identifier",
+          "attribute_value_mlt": [
             {
               "subitem_source_id": "123",
-              "subitem_source_id_type":"ISSN"
+              "subitem_source_id_type": "ISSN"
             }
           ]
         },
-        "item_version":{
-          "attribute_name":"Version",
-          "attribute_value_mlt":[
+        "item_version": {
+          "attribute_name": "Version",
+          "attribute_value_mlt": [
             {
               "subitem_version": "1.0.0"
             }
           ]
         },
-        "item_test4_thumbnail":{
-          "attribute_name":"thumbnail",
-          "attribute_type":"thumbnail",
-          "attribute_value_mlt":[
+        "item_test4_thumbnail": {
+          "attribute_name": "thumbnail",
+          "attribute_type": "thumbnail",
+          "attribute_value_mlt": [
             {
-              "subitem_thumbnail":[
-              ]
+              "subitem_thumbnail": []
             }
           ]
         },
-        "item_test4_2_thumbnail":{
-          "attribute_name":"thumbnail2",
-          "attribute_type":"thumbnail",
-          "attribute_value_mlt":[
+        "item_test4_2_thumbnail": {
+          "attribute_name": "thumbnail2",
+          "attribute_type": "thumbnail",
+          "attribute_value_mlt": [
             {
-              "subitem_thumbnail":[
-                {"thumbnail_label":"サムネイルラベル"}
-              ]
-            }
-          ]
-        },
-        "item_test5_creator":{
-          "attribute_name":"creator",
-          "attribute_type":"creator",
-          "attribute_value_mlt":[
-            {
-              "creatorNames":[
+              "subitem_thumbnail": [
                 {
-                  "creatorName":"takeshi",
-                  "creatorNameLang":"en"
+                  "thumbnail_label": "サムネイルラベル"
+                }
+              ]
+            }
+          ]
+        },
+        "item_test5_creator": {
+          "attribute_name": "creator",
+          "attribute_type": "creator",
+          "attribute_value_mlt": [
+            {
+              "creatorNames": [
+                {
+                  "creatorName": "takeshi",
+                  "creatorNameLang": "en"
                 }
               ],
-              "familyNames":[
+              "familyNames": [
                 {
-                  "familyName":null,
-                  "familyNameLang":"en"
+                  "familyName": null,
+                  "familyNameLang": "en"
                 },
                 {
-                  "familyName":"takesi family"
+                  "familyName": "takesi family"
                 }
               ],
-              "givenNames":[
+              "givenNames": [
                 {
-                  "givenName":"takesi given",
-                  "givenNameLang":"en"
+                  "givenName": "takesi given",
+                  "givenNameLang": "en"
                 }
               ],
-              "nameIdentifierURI":[
+              "nameIdentifierURI": [
                 {
-                  "nameIdentifierURI":""
+                  "nameIdentifierURI": ""
                 }
               ],
-              "nameIdentifiers":[
+              "nameIdentifiers": [
                 {
-                  "nameIdentifier":"1234",
-                  "nameIdentifierURI":"https://orcid.org/1234",
-                  "nameIdentifierScheme":"ORCID"
+                  "nameIdentifier": "1234",
+                  "nameIdentifierURI": "https://orcid.org/1234",
+                  "nameIdentifierScheme": "ORCID"
                 },
-                {"nameIdentifier":"1","nameIdentifierScheme":"WEKO"}
+                {
+                  "nameIdentifier": "1",
+                  "nameIdentifierScheme": "WEKO"
+                }
               ]
             }
           ]
         },
-        "contributor":{
-          "attribute_name":"Contributor",
-          "attribute_value_mlt":[
+        "contributor": {
+          "attribute_name": "Contributor",
+          "attribute_value_mlt": [
             {
-              "givenNames":[{"givenName":"smith","givenNameLang":"en"}],
-              "familyNames":[{"familyName":"test","familyNameLang":"en"}],
-              "contributorType":"ContactPerson",
-              "nameIdentifiers":[
+              "givenNames": [
                 {
-                  "nameIdentifier":"5678",
-                  "nameIdentifierURI":"https://orcid.org/5678",
-                  "nameIdentifierScheme":"ORCID"
+                  "givenName": "smith",
+                  "givenNameLang": "en"
                 }
               ],
-              "contributorMails":[{"contributorMail":"test.smith@test.org"}],
-              "contributorNames":[{"lang":"en","contributorName":"test, smith"}],
-              "contributorAffiliations":[
-                {"contributorAffiliationNameIdentifiers":[{
-                  "contributorAffiliationURI":"http://www.isni.org/isni/1234",
-                  "contributorAffiliationScheme":"ISNI","contributorAffiliationNameIdentifier":"1234"
-                }]}
+              "familyNames": [
+                {
+                  "familyName": "test",
+                  "familyNameLang": "en"
+                }
               ],
-              "contributorAlternatives":[{"contributorAlternative":"other smith","contributorAlternativeLang":"en"}]
+              "contributorType": "ContactPerson",
+              "nameIdentifiers": [
+                {
+                  "nameIdentifier": "5678",
+                  "nameIdentifierURI": "https://orcid.org/5678",
+                  "nameIdentifierScheme": "ORCID"
+                }
+              ],
+              "contributorMails": [
+                {
+                  "contributorMail": "test.smith@test.org"
+                }
+              ],
+              "contributorNames": [
+                {
+                  "lang": "en",
+                  "contributorName": "test, smith"
+                }
+              ],
+              "contributorAffiliations": [
+                {
+                  "contributorAffiliationNameIdentifiers": [
+                    {
+                      "contributorAffiliationURI": "http://www.isni.org/isni/1234",
+                      "contributorAffiliationScheme": "ISNI",
+                      "contributorAffiliationNameIdentifier": "1234"
+                    }
+                  ]
+                }
+              ],
+              "contributorAlternatives": [
+                {
+                  "contributorAlternative": "other smith",
+                  "contributorAlternativeLang": "en"
+                }
+              ]
             }
           ]
         },
-        "names":{
-          "attribute_name":"names",
-          "attribute_value_mlt":[{
-            "nameIdentifiers":[
-              {"nameIdentifier":"3","nameIdentifierScheme":"WEKO"}
-            ]
-          }]
-        },
-        "item_test6_bibliographic":{
-          "attribute_value_mlt":[
+        "names": {
+          "attribute_name": "names",
+          "attribute_value_mlt": [
             {
-              "bibliographic_titles":[
+              "nameIdentifiers": [
                 {
-                  "bibliographic_titleLang":"en",
-                  "bibliographic_title":"this is test bibliographic title"
+                  "nameIdentifier": "3",
+                  "nameIdentifierScheme": "WEKO"
+                }
+              ]
+            }
+          ]
+        },
+        "item_test6_bibliographic": {
+          "attribute_value_mlt": [
+            {
+              "bibliographic_titles": [
+                {
+                  "bibliographic_titleLang": "en",
+                  "bibliographic_title": "this is test bibliographic title"
                 }
               ],
               "bibliographic_volume": "10",
@@ -588,34 +680,38 @@
             }
           ]
         },
-        "item_test8_not_mlt":{
-          "attribute_type":"test"
+        "item_test8_not_mlt": {
+          "attribute_type": "test"
         },
-        "item_test9":{
-          "attribute_value_mlt":{
-            "item_test9_dict":{
-              "item_test9_dict_value":"value9_dict"
+        "item_test9": {
+          "attribute_value_mlt": {
+            "item_test9_dict": {
+              "item_test9_dict_value": "value9_dict"
             },
-            "item_test9_list":[
+            "item_test9_list": [
               [
                 "item_test9_list_value"
               ]
             ]
           }
         },
-        "item_test11":{
-          "attribute_value_mlt":"str_attribute_value_mlt"
+        "item_test11": {
+          "attribute_value_mlt": "str_attribute_value_mlt"
         },
-        "item_test12.indot_item":{
-          "attribute_value_mlt":{
-            "value":"value"
+        "item_test12.indot_item": {
+          "attribute_value_mlt": {
+            "value": "value"
           }
         }
       },
       "file": {
-        "URI": [{"value": "http://localhost/records/1/file"}]
+        "URI": [
+          {
+            "value": "http://localhost/records/1/file"
+          }
+        ]
       },
-      "title":[
+      "title": [
         "this is dummy title",
         "this is test item title"
       ]

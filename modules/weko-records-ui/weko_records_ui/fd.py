@@ -30,8 +30,8 @@ import unicodedata
 from datetime import datetime
 
 from flask import abort, current_app, render_template, request, send_file
-from flask_babelex import gettext as _
-from flask_babelex import get_locale
+from flask_babel import gettext as _
+from flask_babel import get_locale
 from flask_login import current_user
 from invenio_db import db
 from invenio_files_rest import signals
@@ -49,8 +49,7 @@ from weko_records_ui.errors import AvailableFilesNotFoundRESTError
 from weko_user_profiles.models import UserProfile
 from weko_workflow.utils import is_terms_of_use_only
 from werkzeug.datastructures import Headers
-from werkzeug.urls import url_quote
-
+from urllib.parse import quote as url_quote
 from .models import FileOnetimeDownload, FileSecretDownload, PDFCoverPageSettings
 from .pdf import make_combined_pdf
 from .permissions import check_file_download_permission, check_original_pdf_download_permission, \

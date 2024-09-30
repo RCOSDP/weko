@@ -21,11 +21,11 @@
 {%- extends config.WEKO_ITEMS_UI_BASE_TEMPLATE %}
 
 {%- block css %}
-  {% assets "invenio_deposit_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
-  {% assets "weko_items_authors_search_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {{ webpack['deposit_css_css.css']}}
+  {{ webpack['items_ui_css_items_author_search.css']}}
   {{ super() }}
   <link href="{{ url_for('static', filename='css/weko_items_ui/contributor.search.css') }}" rel="stylesheet">
-  {% assets "weko_items_ui_feedback_maillist_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {{ webpack['items_ui_js_feedback_maillist.css']}}
 {%- endblock css %}
 
 {%- block javascript %}
@@ -40,14 +40,16 @@
   <script src="{{ url_for('static', filename='js/axios/axios.min.js') }}"></script>
 
   <script src="{{ url_for('static', filename='js/weko_items_ui/item.autofill.js') }}" type="text/babel"></script>
-  {% assets "invenio_deposit_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_admin_react_bootstrap_js" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_items_ui_feedback_maillist_js" %}<script type="text/babel" src="{{ ASSET_URL }}"></script>{% endassets %}
+  {{ webpack['js-dependencies.js']}}
+  <script src="/assets/js/weko_admin/react-bootstrap.min.js"></script>
+  {{ webpack['items_ui_js_feedback_maillist.js']}}
   {{ super() }}
-  {% assets "invenio_deposit_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_items_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_items_authors_search_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_theme_js_widget" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {{ webpack['deposit_js_js.js']}}
+  {{ webpack['items_ui_js_app.js']}}
+  <script src="{{ url_for('static', filename='js/weko_items_ui/inline.items.authorSearch.bundle.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/weko_items_ui/polyfills.items.authorSearch.bundle.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/weko_items_ui/main.items.authorSearch.bundle.js') }}" defer></script>
+  {{ webpack['theme-widget.js']}}
 {%- endblock javascript %}
 
 {%- block page_body_tabs %}
@@ -90,10 +92,10 @@
             extra-params='{"headers":{"Content-Type": "application/json"}}' form="{{ schemaform }}"
             record='{{ record | tojson }}' schema="{{ jsonschema }}">
             <invenio-records-loading
-              template="{{ url_for('static', filename='node_modules/invenio-records-js/dist/templates/loading.html') }}">
+              template="/assets/node_modules/invenio-records-js/dist/templates/loading.html">
             </invenio-records-loading>
             <invenio-records-alert
-              template="{{ url_for('static', filename='node_modules/invenio-records-js/dist/templates/alert.html') }}">
+              template="/assets/node_modules/invenio-records-js/dist/templates/alert.html">
             </invenio-records-alert>
             <div class="row row-4" ng-hide="false">
               <div class="col-sm-9" ng-show="true">
@@ -126,13 +128,13 @@
             <div class="row row-4" ng-hide="false">
               <div class="col-sm-9" ng-show="true">
                 <invenio-files-error
-                  template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/error.html') }}">
+                  template="/assets/node_modules/invenio-files-js/dist/templates/error.html">
                 </invenio-files-error>
                 <invenio-files-upload-zone
-                  template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/upload.html') }}">
+                  template="/assets/node_modules/invenio-files-js/dist/templates/upload.html">
                 </invenio-files-upload-zone>
                 <invenio-files-list
-                  template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/list.html') }}">
+                  template="/assets/node_modules/invenio-files-js/dist/templates/list.html">
                 </invenio-files-list>
               </div>
             </div>
@@ -143,13 +145,13 @@
             <div class="row row-4" ng-hide="false">
               <div class="col-sm-9" ng-show="true">
                 <invenio-files-error
-                  template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/error.html') }}">
+                  template="/assets/node_modules/invenio-files-js/dist/templates/error.html">
                 </invenio-files-error>
                 <invenio-files-upload-zone
-                  template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/upload.html') }}">
+                  template="/assets/node_modules/invenio-files-js/dist/templates/upload.html">
                 </invenio-files-upload-zone>
                 <invenio-files-list
-                  template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/list.html') }}">
+                  template="/assets/node_modules/invenio-files-js/dist/templates/list.html">
                 </invenio-files-list>
               </div>
             </div>

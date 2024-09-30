@@ -22,7 +22,8 @@
 
 import copy
 import json
-from collections import Iterable, OrderedDict
+from collections import OrderedDict
+from collections.abc import Iterable
 from functools import partial
 
 import redis

@@ -33,19 +33,16 @@ from mock import patch
 
 import pytest
 from flask import Flask, session, url_for, Response
-from flask_babelex import Babel, lazy_gettext as _
+from flask_babel import Babel, lazy_gettext as _
 from flask_menu import Menu
 from elasticsearch import Elasticsearch
 from invenio_theme import InvenioTheme
-from invenio_theme.views import blueprint as invenio_theme_blueprint
 from invenio_assets import InvenioAssets
 from invenio_access import InvenioAccess
 from invenio_access.models import ActionUsers,ActionRoles
 from invenio_accounts.testutils import create_test_user
 from invenio_accounts import InvenioAccounts
 from invenio_accounts.models import User, Role
-from invenio_accounts.views.settings import blueprint \
-    as invenio_accounts_blueprint
 from invenio_i18n import InvenioI18N
 from invenio_cache import InvenioCache
 from invenio_admin import InvenioAdmin
@@ -562,13 +559,12 @@ def base_app(instance_path, search_class, cache_config):
     WekoAdmin(app_)
     InvenioOAuth2Server(app_)
     # WekoRecordsUI(app_)
-    # app_.register_blueprint(invenio_theme_blueprint)
     app_.register_blueprint(invenio_communities_blueprint)
     # app_.register_blueprint(invenio_admin_blueprint)
     # app_.register_blueprint(invenio_accounts_blueprint)
     # app_.register_blueprint(weko_theme_blueprint)
     # app_.register_blueprint(weko_admin_blueprint)
-    app_.register_blueprint(weko_workflow_blueprint)
+    # app_.register_blueprint(weko_workflow_blueprint)
 
     return app_
 

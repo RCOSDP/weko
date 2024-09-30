@@ -8,17 +8,10 @@
 
 """Mixin helper class for preprocessing records and search results."""
 
-from __future__ import absolute_import, print_function
-
 import copy
 import pickle
 
 import pytz
-import traceback
-
-from flask import current_app
-from weko_records.api import Mapping
-
 from invenio_records_rest.config import RECORDS_REST_DEFAULT_MAPPING_DICT
 
 
@@ -46,15 +39,16 @@ class SerializerMixinInterface(object):
         """
         raise NotImplementedError()
 
-    def serialize_search(self, pid_fetcher, search_result, links=None,
-                         item_links_factory=None, **kwargs):
+    def serialize_search(
+        self, pid_fetcher, search_result, links=None, item_links_factory=None, **kwargs
+    ):
         """Serialize a search result.
 
         This method should delegate each record search hit transformation
         to the transformer mixin's transform_search_hit method.
 
         :param pid_fetcher: Persistent identifier fetcher.
-        :param search_result: Elasticsearch search result.
+        :param search_result: The search engine result.
         :param links: Dictionary of links to add to response.
         :param item_links_factory: Factory function for record links.
         """
@@ -92,8 +86,7 @@ class TransformerMixinInterface(object):
         """
         raise NotImplementedError()
 
-    def transform_search_hit(self, pid, record_hit, links_factory=None,
-                             **kwargs):
+    def transform_search_hit(self, pid, record_hit, links_factory=None, **kwargs):
         """Transform search result hit into an intermediate representation.
 
         This method should delegate the record preprocessing to the
@@ -127,7 +120,7 @@ class PreprocessorMixinInterface(object):
 
     @staticmethod
     def preprocess_search_hit(pid, record_hit, links_factory=None, **kwargs):
-        """Prepare a record hit from Elasticsearch for serialization.
+        """Prepare a record hit from the search engine for serialization.
 
         :param pid: Persistent identifier instance.
         :param record_hit: Record metadata retrieved via search.
@@ -141,7 +134,7 @@ class PreprocessorMixin(PreprocessorMixinInterface):
 
     def __init__(self, replace_refs=False, **kwargs):
         """Constructor."""
-        super(PreprocessorMixin, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.replace_refs = replace_refs
 
     def preprocess_record(self, pid, record, links_factory=None, **kwargs):
@@ -228,8 +221,11 @@ class PreprocessorMixin(PreprocessorMixinInterface):
 
         links_factory = links_factory or (lambda x, record=None, **k: dict())
         
-        metadata = pickle.loads(pickle.dumps(record.replace_refs(), -1)) if self.replace_refs \
+        metadata = (
+            pickle.loads(pickle.dumps(record.replace_refs(),-1))
+            if self.replace_refs
             else record.dumps()
+        )
         # Get keys of metadata record by mapping.
         mapping_key_lang = get_mapping(metadata.get('item_type_id'))
         return dict(
@@ -237,29 +233,35 @@ class PreprocessorMixin(PreprocessorMixinInterface):
             metadata=metadata,
             links=links_factory(pid, record=record, **kwargs),
             revision=record.revision_id,
-            created=(pytz.utc.localize(record.created).isoformat()
-                     if record.created else None),
-            updated=(pytz.utc.localize(record.updated).isoformat()
-                     if record.updated else None),
+            created=(
+                pytz.utc.localize(record.created).isoformat()
+                if record.created
+                else None
+            ),
+            updated=(
+                pytz.utc.localize(record.updated).isoformat()
+                if record.updated
+                else None
+            ),
             mapping_dict=mapping_key_lang,
             record=record
         )
 
     @staticmethod
     def preprocess_search_hit(pid, record_hit, links_factory=None, **kwargs):
-        """Prepare a record hit from Elasticsearch for serialization."""
+        """Prepare a record hit from the search engine for serialization."""
         links_factory = links_factory or (lambda x, **k: dict())
         record = dict(
             pid=pid,
-            metadata=record_hit.get('_source', {}),
+            metadata=record_hit.get("_source"),
             links=links_factory(pid, record_hit=record_hit, **kwargs),
-            revision=record_hit.get('_version', 0),
+            revision=record_hit.get("_version"),
             created=None,
             updated=None,
         )
         # Move created/updated attrs from source to object.
-        for key in ['_created', '_updated']:
-            if key in record['metadata']:
-                record[key[1:]] = record['metadata'][key]
-                del record['metadata'][key]
+        for key in ["_created", "_updated"]:
+            if key in record["metadata"]:
+                record[key[1:]] = record["metadata"][key]
+                del record["metadata"][key]
         return record

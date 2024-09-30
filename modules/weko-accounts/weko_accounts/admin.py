@@ -24,7 +24,7 @@ import sys
 
 from flask import abort, current_app, flash, request
 from flask_admin import BaseView, expose
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 from werkzeug.local import LocalProxy
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)

@@ -1,26 +1,10 @@
 # -*- coding: utf-8 -*-
 #
 # This file is part of Invenio.
-# Copyright (C) 2016 CERN.
+# Copyright (C) 2016-2019 CERN.
 #
-# Invenio is free software; you can redistribute it
-# and/or modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; either version 2 of the
-# License, or (at your option) any later version.
-#
-# Invenio is distributed in the hope that it will be
-# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Invenio; if not, write to the
-# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-# MA 02111-1307, USA.
-#
-# In applying this license, CERN does not
-# waive the privileges and immunities granted to it by virtue of its status
-# as an Intergovernmental Organization or submit itself to any jurisdiction.
+# Invenio is free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
 
 
 """Pytest configuration."""
@@ -61,9 +45,13 @@ from invenio_pidstore import InvenioPIDStore
 from invenio_records import InvenioRecords
 from invenio_records_rest import InvenioRecordsREST
 from invenio_records_rest.utils import PIDConverter
+from invenio_records_rest.views import \
+    create_blueprint_from_app as records_rest_bp
 from invenio_records_ui import InvenioRecordsUI
+from invenio_records_ui.views import create_blueprint_from_app as records_ui_bp
 from invenio_rest import InvenioREST
 from invenio_search import InvenioSearch, current_search, current_search_client
+from invenio_search.errors import IndexAlreadyExistsError
 from invenio_search_ui import InvenioSearchUI
 from six import BytesIO, get_method_self
 from sqlalchemy import inspect
@@ -75,6 +63,7 @@ from invenio_deposit import InvenioDeposit, InvenioDepositREST
 from invenio_deposit.api import Deposit
 from invenio_deposit.scopes import write_scope
 from kombu import Exchange, Queue
+
 
 def object_as_dict(obj):
     """Make a dict from SQLAlchemy object."""
@@ -138,7 +127,8 @@ def base_app(request):
         InvenioFilesREST(app_)
         InvenioPIDStore(app_)
         InvenioRecords(app_)
-        InvenioSearch(app_)
+        search = InvenioSearch(app_)
+        search.register_mappings('deposits', 'invenio_deposit.mappings')
 
     api_app = Flask('testapiapp', instance_path=instance_path)
     api_app.url_map.converters['pid'] = PIDConverter
@@ -160,6 +150,8 @@ def base_app(request):
     InvenioAssets(app)
     InvenioSearchUI(app)
     InvenioRecordsUI(app)
+    app.register_blueprint(records_ui_bp(app))
+    app.register_blueprint(records_rest_bp(app))
     app.wsgi_app = DispatcherMiddleware(app.wsgi_app, {
         '/api': api_app.wsgi_app
     })
@@ -189,6 +181,7 @@ def app(base_app):
 def api(base_app):
     """Yield the REST API application in its context."""
     api = get_method_self(base_app.wsgi_app.mounts['/api'])
+    api.register_blueprint(records_rest_bp(api))
     with api.app_context():
         yield api
 
@@ -300,7 +293,7 @@ def es(app):
     """Elasticsearch fixture."""
     try:
         list(current_search.create())
-    except RequestError:
+    except (RequestError, IndexAlreadyExistsError):
         list(current_search.delete(ignore=[404]))
         list(current_search.create(ignore=[400]))
     current_search_client.indices.refresh()

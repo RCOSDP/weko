@@ -55,7 +55,7 @@ setup_requires = [
 ]
 
 install_requires = [
-    'Flask-BabelEx>=0.9.2',
+    'Flask-Babel>=3.0.0',
     'invenio-assets>=1.0.0b7',
     'invenio_i18n>=1.0.0b4',
     'invenio_theme>=1.0.0b4'
@@ -104,22 +104,8 @@ setup(
         'invenio_i18n.translations': [
             'messages = weko_itemtypes_ui',
         ],
-        'invenio_assets.bundles': [
-            'weko_itemtypes_ui_js = weko_itemtypes_ui.bundles:js',
-            'weko_itemtypes_mapping_ui_js'
-            ' = weko_itemtypes_ui.bundles:js_mapping',
-            'weko_itemtypes_property_ui_js'
-            ' = weko_itemtypes_ui.bundles:js_property',
-            'weko_itemtypes_rocrate_mapping_ui_js'
-            ' = weko_itemtypes_ui.bundles:js_rocrate_mapping',
-            'weko_itemtypes_ui_dependencies_js'
-            ' = weko_itemtypes_ui.bundles:js_dependencies',
-            'weko_itemtypes_ui_schema_editor_js'
-            ' = weko_itemtypes_ui.bundles:js_schema_editor',
-            'weko_mapping_ui_css = weko_itemtypes_ui.bundles:style_mapping',
-            'weko_itemtypes_ui_css = weko_itemtypes_ui.bundles:style',
-            'weko_rocrate_mapping_ui_css'
-            ' = weko_itemtypes_ui.bundles:style_rocrate_mapping',
+        'invenio_assets.webpack': [
+            'weko_itemtypes_ui = weko_itemtypes_ui.webpack:weko_itemtypes_ui'
         ],
         'invenio_access.actions': [
             'item_type_access = '

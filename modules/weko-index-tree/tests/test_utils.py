@@ -57,9 +57,9 @@ from redis import sentinel
 from elasticsearch.exceptions import NotFoundError
 from elasticsearch_dsl.query import Bool, Exists, Q, QueryString
 from flask import Markup, current_app, session
-from flask_babelex import get_locale
-from flask_babelex import gettext as _
-from flask_babelex import to_user_timezone, to_utc
+from flask_babel import get_locale
+from flask_babel import gettext as _
+from flask_babel import to_user_timezone, to_utc
 from flask_login import current_user, login_user, LoginManager
 from invenio_cache import current_cache
 from invenio_i18n.ext import current_i18n

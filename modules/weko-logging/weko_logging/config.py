@@ -48,6 +48,28 @@ for further details):
 
       SENTRY_TRANSPORT = 'raven.transport.http.HTTPTransport'
 """
+# ----------
+# CONSOLE
+# ----------
+
+WEKO_LOGGING_CONSOLE = True
+"""Enable logging to the console."""
+
+CRITICAL = 50
+FATAL = CRITICAL
+ERROR = 40
+WARNING = 30
+WARN = WARNING
+INFO = 20
+DEBUG = 10
+NOTSET = 0
+
+WEKO_LOGGING_CONSOLE_LEVEL = INFO
+"""Console logging level.
+
+Set to a valid Python logging level: ``CRITICAL``, ``ERROR``, ``WARNING``,
+``INFO``, ``DEBUG``, or ``NOTSET``.
+"""
 
 # ----------
 # FILESYSTEM

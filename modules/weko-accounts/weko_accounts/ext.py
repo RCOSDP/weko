@@ -20,7 +20,7 @@
 
 """Extensions for weko-accounts."""
 
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 from flask_login import user_logged_in, user_logged_out
 
 from . import config

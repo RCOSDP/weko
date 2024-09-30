@@ -108,13 +108,13 @@ class WekoLoggingFS(WekoLoggingBase):
             )
         )
         handler.setLevel(app.config["WEKO_LOGGING_FS_LEVEL"])
-        # Add handler to application logger
-        app.logger.addHandler(handler)
+        # do not use this handler
+        # app.logger.addHandler(handler)
         # default_handler.setLevel(app.config['WEKO_LOGGING_FS_LEVEL'])
         # formatter2 = logging.Formatter(
         #         '[%(asctime)s] - %(levelname)s - %(filename)s - %(name)s - %(funcName)s - %(message)s '
         #         '[in %(pathname)s:%(lineno)d]')
         #     default_handler.setFormatter(formatter2)
         #     app.logger.addHandler(default_handler)
-        if app.config["WEKO_LOGGING_FS_PYWARNINGS"]:
-            self.capture_pywarnings(handler)
+        # if app.config["WEKO_LOGGING_FS_PYWARNINGS"]:
+        #     self.capture_pywarnings(handler)

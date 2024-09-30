@@ -20,7 +20,7 @@
 
 """weko-user-profile utils."""
 from flask import current_app, flash, request
-from flask_babelex import lazy_gettext as _
+from flask_babel import lazy_gettext as _
 from flask_login import current_user
 from flask_security.confirmable import send_confirmation_instructions
 from invenio_accounts.models import Role

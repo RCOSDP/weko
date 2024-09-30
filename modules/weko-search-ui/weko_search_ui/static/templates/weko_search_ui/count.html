@@ -4,7 +4,7 @@
      count="vm.invenioSearchResults.hits.total"
      when="{'0': 'No results.',
      'one': 'Found 1 result.',
-     'other': '{{(vm.invenioSearchArgs.page -1)*vm.invenioSearchArgs.size + 1}} - {{vm.invenioSearchArgs.size*vm.invenioSearchArgs.page>vm.invenioSearchResults.hits.total?vm.invenioSearchResults.hits.total:vm.invenioSearchArgs.page*vm.invenioSearchArgs.size}} of {} results.'}">
+     'other': '{{(vm.invenioSearchArgs.page -1)*vm.invenioSearchArgs.size + 1}} - {{vm.invenioSearchArgs.size*vm.invenioSearchArgs.page>vm.invenioSearchResults.hits.total?vm.invenioSearchResults.hits.total.value:vm.invenioSearchArgs.page*vm.invenioSearchArgs.size}} of {} results.'}">
     </ng-pluralize>
   </div>
 </div>

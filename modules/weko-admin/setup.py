@@ -56,14 +56,13 @@ setup_requires = [
 
 install_requires = [
     'WTForms>=2.0.1',
-    'Flask-BabelEx>=0.9.3',
+    'Flask-Babel>=3.0.0',
     'Flask-Breadcrumbs>=0.3.0',
     'Flask-WTF>=0.13.1',
     'Flask-Mail>=0.9.1',
     'invenio-db>=1.0.0b9',
     'SQLAlchemy-Continuum>=1.3.6',
     'invenio-accounts>=1.0.0b3',
-    "elasticsearch_dsl<7.0.0,>=6.0.0",
     'invenio-assets>=1.0.0b7',
     'invenio-admin>=1.1.2',
     'requests>=2.18.4',
@@ -133,6 +132,7 @@ setup(
             'weko_admin_site_info = weko_admin.admin:site_info_settings_adminview',
             'weko_admin_identifier = weko_admin.admin:identifier_adminview',
             'restricted_access_adminview = weko_admin.admin:restricted_access_adminview',
+            'communities_page_adminview = weko_admin.admin:communities_page_adminview',
             'facet_search_adminview = weko_admin.admin:facet_search_adminview',
             'reindex_elasticsearch_adminview = weko_admin.admin:reindex_elasticsearch_adminview'
         ],
@@ -143,29 +143,11 @@ setup(
         'invenio_db.alembic': [
             'weko_admin = weko_admin:alembic',
         ],
-        'invenio_assets.bundles': [
-            'weko_admin_js = weko_admin.bundles:js',
-            'weko_admin_search_js = weko_admin.bundles:search_management_js',
-            'weko_admin_stats_report_js = weko_admin.bundles:stats_report_js',
-            'weko_admin_react_bootstrap_js = weko_admin.bundles:react_bootstrap_js',
-            'weko_admin_css = weko_admin.bundles:css',
-            'weko_admin_quill_css = weko_admin.bundles:weko_admin_quill_sknow_css',
-            'weko_admin_feedback_mail_css = weko_admin.bundles:weko_admin_feedback_mail_css',
-            'weko_admin_date_picker_js = weko_admin.bundles:date_picker_js',
-            'weko_admin_date_picker_css = weko_admin.bundles:date_picker_css',
-            'weko_admin_custom_report = weko_admin.bundles:custom_report_js',
-            'weko_admin_feedback_mail = weko_admin.bundles:feedback_mail_js',
-            'weko_admin_statistics_reactjs_lib = weko_admin.bundles:statistics_reactjs_lib',
-            'weko_admin_log_analysis_js = weko_admin.bundles:log_analysis_js',
-            'weko_admin_admin_lte_js_dependecies = weko_admin.bundles:admin_lte_js_dependecies',
-            'weko_admin_admin_lte_js = weko_admin.bundles:admin_lte_js',
-            'weko_admin_angular_js = weko_admin.bundles:angular_js',
-            'weko_admin_site_info = weko_admin.bundles:weko_admin_site_info_js',
-            'weko_admin_site_info_css = weko_admin.bundles:weko_admin_site_info_css',
-            'weko_admin_ng_js_tree = weko_admin.bundles:weko_admin_ng_js_tree_js',
-            'weko_admin_restricted_access = weko_admin.bundles:weko_admin_restricted_access_js',
-            'weko_admin_facet_search = weko_admin.bundles:weko_admin_facet_search_js',
-            'weko_admin_reindex_elasticsearch_js = weko_admin.bundles:reindex_elasticsearch_js'
+        'invenio_assets.webpack': [
+            'weko_admin = weko_admin.webpack:weko_admin',
+        ],
+        'invenio_base.finalize_app':[
+            'weko_admin = weko_admin.ext:finalize_app',
         ],
         'invenio_db.models': [
             'weko_admin = weko_admin.models',

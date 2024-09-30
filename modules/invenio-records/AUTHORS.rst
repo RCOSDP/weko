@@ -28,3 +28,4 @@ Contributors
 - Rémi Ducceschi
 - Sami Hiltunen
 - Tibor Simko
+- Maximilian Moser

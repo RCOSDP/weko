@@ -12,6 +12,9 @@
 .. image:: https://img.shields.io/github/license/inveniosoftware/invenio-records.svg
         :target: https://github.com/inveniosoftware/invenio-records/blob/master/LICENSE
 
+.. image:: https://github.com/inveniosoftware/invenio-records/workflows/CI/badge.svg
+        :target: https://github.com/inveniosoftware/invenio-records/actions
+
 .. image:: https://travis-ci.org/inveniosoftware/invenio-records.svg?branch=master
         :target: https://travis-ci.org/inveniosoftware/invenio-records
 
@@ -33,7 +36,7 @@ Features:
  * Generic JSON document storage with revision history.
  * JSONSchema validation of documents.
  * Records creation, update and deletion.
- * CLI and administration interface for CRUD operations on records.
+ * Administration interface for CRUD operations on records.
 
 Further documentation available Documentation:
 https://invenio-records.readthedocs.io/

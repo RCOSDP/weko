@@ -31,7 +31,7 @@ from sqlalchemy import inspect
 
 import pytest
 from flask import Flask, url_for, Response
-from flask_babelex import Babel
+from flask_babel import Babel
 from sqlalchemy_utils.functions import create_database, database_exists
 
 from invenio_access import InvenioAccess

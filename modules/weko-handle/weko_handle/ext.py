@@ -9,7 +9,7 @@
 
 from __future__ import absolute_import, print_function
 
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 
 from . import config
 from .views import blueprint

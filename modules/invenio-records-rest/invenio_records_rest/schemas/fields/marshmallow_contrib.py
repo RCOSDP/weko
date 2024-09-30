@@ -1,29 +1,33 @@
 # -*- coding: utf-8 -*-
 #
 # This file is part of Invenio.
-# Copyright (C) 2018 CERN.
+# Copyright (C) 2018-2019 CERN.
 #
 # Invenio is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
 
 """Contributed Marshmallow fields."""
 
-from __future__ import absolute_import, print_function
-
 import functools
-import inspect
+from inspect import isfunction, ismethod
 
 from marshmallow import fields, utils
+
+# Recommended way of maintaining compatibility with python 2 for getargspec
+try:
+    from inspect import getfullargspec as getargspec
+except ImportError:
+    from inspect import getargspec
 
 
 def _get_func_args(func):
     """Get a list of the arguments a function or method has."""
     if isinstance(func, functools.partial):
         return _get_func_args(func.func)
-    if inspect.isfunction(func) or inspect.ismethod(func):
-        return list(inspect.getargspec(func).args)
+    if isfunction(func) or ismethod(func):
+        return list(getargspec(func).args)
     if callable(func):
-        return list(inspect.getargspec(func.__call__).args)
+        return list(getargspec(func.__call__).args)
 
 
 class Function(fields.Function):
@@ -66,10 +70,9 @@ class Function(fields.Function):
         }}
     """
 
-    def _deserialize(self, value, attr, data):
+    def _deserialize(self, value, attr, data, **kwargs):
         if self.deserialize_func:
-            return self._call_or_raise(
-                self.deserialize_func, value, attr, data)
+            return self._call_or_raise(self.deserialize_func, value, attr, data)
         return value
 
     def _call_or_raise(self, func, value, attr, data=None):
@@ -119,7 +122,7 @@ class Method(fields.Method):
         }}
     """
 
-    def _deserialize(self, value, attr, data):
+    def _deserialize(self, value, attr, data, **kwargs):
         if self.deserialize_method_name:
             try:
                 method = utils.callable_or_raise(

@@ -1,27 +1,30 @@
 # -*- coding: utf-8 -*-
 #
 # This file is part of Invenio.
-# Copyright (C) 2015-2018 CERN.
+# Copyright (C) 2015-2019 CERN.
+# Copyright (C) 2022 Graz University of Technology.
 #
 # Invenio is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
 
 """OAI-PMH 2.0 response generator."""
+
 import copy
 import pickle
 import traceback
+
 from datetime import MINYEAR, datetime, timedelta
 
+import arrow
 from flask import current_app, request, url_for
-from flask_babelex import get_locale, to_user_timezone, to_utc
+from flask_babel import get_locale, to_user_timezone, to_utc
 from invenio_communities import config as invenio_communities_config
 from invenio_communities.models import Community
-from invenio_db import db
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PIDStatus
-from invenio_records.models import RecordMetadata
 from lxml import etree
 from lxml.etree import Element, ElementTree, SubElement
+
 from sqlalchemy.orm.exc import NoResultFound
 from weko_deposit.api import WekoRecord
 from weko_index_tree.api import Indexes
@@ -29,19 +32,22 @@ from weko_schema_ui.schema import get_oai_metadata_formats
 from weko_schema_ui.models import PublishStatus
 
 from .api import OaiIdentify
-from .fetchers import oaiid_fetcher
+
+from invenio_oaiserver.percolator import sets_search_all
+
 from .models import OAISet
 from .provider import OAIIDProvider
+from .proxies import current_oaiserver
 from .query import get_records
 from .resumption_token import serialize
 from .utils import HARVEST_PRIVATE, OUTPUT_HARVEST, PRIVATE_INDEX, \
-    datetime_to_datestamp, get_index_state, handle_license_free, \
+    datetime_to_datestamp, sanitize_unicode, get_index_state, handle_license_free, \
     is_output_harvest, serializer
 
-NS_OAIPMH = 'http://www.openarchives.org/OAI/2.0/'
-NS_OAIPMH_XSD = 'http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd'
-NS_XSI = 'http://www.w3.org/2001/XMLSchema-instance'
-NS_OAIDC = 'http://www.openarchives.org/OAI/2.0/oai_dc/'
+NS_OAIPMH = "http://www.openarchives.org/OAI/2.0/"
+NS_OAIPMH_XSD = "http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd"
+NS_XSI = "http://www.w3.org/2001/XMLSchema-instance"
+NS_OAIDC = "http://www.openarchives.org/OAI/2.0/oai_dc/"
 NS_DC = "http://purl.org/dc/elements/1.1/"
 NS_JPCOAR = "https://irdb.nii.ac.jp/schema/jpcoar/1.0/"
 
@@ -50,45 +56,50 @@ NSMAP = {
 }
 
 NSMAP_DESCRIPTION = {
-    'oai_dc': NS_OAIDC,
-    'dc': NS_DC,
-    'xsi': NS_XSI,
+    "oai_dc": NS_OAIDC,
+    "dc": NS_DC,
+    "xsi": NS_XSI,
 }
 
 DATETIME_FORMATS = {
-    'YYYY-MM-DDThh:mm:ssZ': '%Y-%m-%dT%H:%M:%SZ',
-    'YYYY-MM-DD': '%Y-%m-%d',
+    "YYYY-MM-DDThh:mm:ssZ": "%Y-%m-%dT%H:%M:%SZ",
+    "YYYY-MM-DD": "%Y-%m-%d",
 }
 
 
 def envelope(**kwargs):
     """Create OAI-PMH envelope for response."""
-    e_oaipmh = Element(etree.QName(NS_OAIPMH, 'OAI-PMH'), nsmap=NSMAP)
-    e_oaipmh.set(etree.QName(NS_XSI, 'schemaLocation'),
-                 '{0} {1}'.format(NS_OAIPMH, NS_OAIPMH_XSD))
+    e_oaipmh = Element(etree.QName(NS_OAIPMH, "OAI-PMH"), nsmap=NSMAP)
+    e_oaipmh.set(
+        etree.QName(NS_XSI, "schemaLocation"),
+        "{0} {1}".format(NS_OAIPMH, NS_OAIPMH_XSD),
+    )
     e_tree = ElementTree(element=e_oaipmh)
 
-    if current_app.config['OAISERVER_XSL_URL']:
-        e_oaipmh.addprevious(etree.ProcessingInstruction(
-            'xml-stylesheet', 'type="text/xsl" href="{0}"'
-                .format(current_app.config['OAISERVER_XSL_URL'])))
+    if current_app.config["OAISERVER_XSL_URL"]:
+        e_oaipmh.addprevious(
+            etree.ProcessingInstruction(
+                "xml-stylesheet",
+                'type="text/xsl" href="{0}"'.format(
+                    current_app.config["OAISERVER_XSL_URL"]
+                ),
+            )
+        )
 
-    e_responseDate = SubElement(
-        e_oaipmh, etree.QName(
-            NS_OAIPMH, 'responseDate'))
+    e_responseDate = SubElement(e_oaipmh, etree.QName(NS_OAIPMH, "responseDate"))
     # date should be first possible moment
     e_responseDate.text = datetime_to_datestamp(datetime.utcnow())
-    e_request = SubElement(e_oaipmh, etree.QName(NS_OAIPMH, 'request'))
+    e_request = SubElement(e_oaipmh, etree.QName(NS_OAIPMH, "request"))
     for key, value in kwargs.items():
-        if key == 'from_' or key == 'until':
+        if key == "from_" or key == "until":
             value = datetime_to_datestamp(value)
-        elif key == 'resumptionToken':
-            value = value['token']
+        elif key == "resumptionToken":
+            value = value["token"]
         e_request.set(key, value)
     if "url" in kwargs.keys():
-        e_request.text = kwargs['url']
+        e_request.text = kwargs["url"]
     else:
-        e_request.text = url_for('invenio_oaiserver.response', _external=True)
+        e_request.text = url_for("invenio_oaiserver.response", _external=True)
     return e_tree, e_oaipmh
 
 
@@ -96,8 +107,8 @@ def error(errors, **kwargs):
     """Create error element."""
     e_tree, e_oaipmh = envelope(**kwargs)
     for code, message in errors:
-        e_error = SubElement(e_oaipmh, etree.QName(NS_OAIPMH, 'error'))
-        e_error.set('code', code)
+        e_error = SubElement(e_oaipmh, etree.QName(NS_OAIPMH, "error"))
+        e_error.set("code", code)
         e_error.text = message
     return e_tree
 
@@ -105,10 +116,10 @@ def error(errors, **kwargs):
 def verb(**kwargs):
     """Create OAI-PMH envelope for response with verb."""
     # current_app.logger.debug("kwargs:{0}".format(kwargs))
-    # kwargs:{'metadataPrefix': 'jpcoar_1.0', 'identifier': 'oai:weko3.example.org:00000003', 'verb': 'GetRecord'}
+    # kwargs:{"metadataPrefix": "jpcoar_1.0", "identifier": "oai:weko3.example.org:00000003", "verb": "GetRecord"}
 
     e_tree, e_oaipmh = envelope(**kwargs)
-    e_element = SubElement(e_oaipmh, etree.QName(NS_OAIPMH, kwargs['verb']))
+    e_element = SubElement(e_oaipmh, etree.QName(NS_OAIPMH, kwargs["verb"]))
     return e_tree, e_element
 
 
@@ -123,60 +134,68 @@ def identify(**kwargs):
 
     e_tree, e_identify = verb(**kwargs)
 
-    e_repositoryName = SubElement(
-        e_identify, etree.QName(NS_OAIPMH, 'repositoryName'))
+    e_repositoryName = SubElement(e_identify, etree.QName(NS_OAIPMH, "repositoryName"))
 
     # add by Mr ryuu. at 2018/06/06 start
     if identify:
-        cfg['OAISERVER_REPOSITORY_NAME'] = identify.repositoryName
+        cfg["OAISERVER_REPOSITORY_NAME"] = identify.repositoryName
     # add by Mr ryuu. at 2018/06/06 end
-        e_email = SubElement(e_identify, etree.QName(NS_OAIPMH, 'adminEmail'))
+        e_email = SubElement(e_identify, etree.QName(NS_OAIPMH, "adminEmail"))
         e_email.text = identify.emails
 
-    e_repositoryName.text = cfg['OAISERVER_REPOSITORY_NAME']
+    e_repositoryName.text = cfg["OAISERVER_REPOSITORY_NAME"]
 
-    e_baseURL = SubElement(e_identify, etree.QName(NS_OAIPMH, 'baseURL'))
+    e_baseURL = SubElement(e_identify, etree.QName(NS_OAIPMH, "baseURL"))
+    e_baseURL.text = url_for("invenio_oaiserver.response", _external=True)
 
-    e_baseURL.text = url_for('invenio_oaiserver.response', _external=True)
-
-    e_protocolVersion = SubElement(e_identify,
-                                   etree.QName(NS_OAIPMH, 'protocolVersion'))
-    e_protocolVersion.text = cfg['OAISERVER_PROTOCOL_VERSION']
+    e_protocolVersion = SubElement(
+        e_identify, etree.QName(NS_OAIPMH, "protocolVersion")
+    )
+    e_protocolVersion.text = cfg["OAISERVER_PROTOCOL_VERSION"]
 
     e_earliestDatestamp = SubElement(
-        e_identify, etree.QName(
-            NS_OAIPMH, 'earliestDatestamp'))
-
+        e_identify, etree.QName(NS_OAIPMH, "earliestDatestamp")
+    )
+    earliest_date = datetime(MINYEAR, 1, 1)
+    earliest_record = (
+        current_oaiserver.search_cls(index=current_app.config["OAISERVER_RECORD_INDEX"])
+        .sort({current_oaiserver.created_key: {"order": "asc"}})[0:1]
+        .execute()
+    )
+    if len(earliest_record.hits.hits) > 0:
+        hit = earliest_record.hits.hits[0]
+        hit = hit.to_dict()
+        created_date_str = hit.get("_source", {}).get(current_oaiserver.created_key)
+        if created_date_str:
+            earliest_date = (
+                arrow.get(created_date_str).to("utc").datetime.replace(tzinfo=None)
+            )
+    
     # update by Mr ryuu. at 2018/06/06 start
     if not identify:
-        e_earliestDatestamp.text = datetime_to_datestamp(
-            db.session.query(db.func.min(RecordMetadata.created)
-                             ).scalar() or datetime(MINYEAR, 1, 1)
-        )
+        e_earliestDatestamp.text = datetime_to_datestamp(earliest_date)
     else:
         e_earliestDatestamp.text = datetime_to_datestamp(
             identify.earliestDatastamp)
     # update by Mr ryuu. at 2018/06/06 end
 
-    e_deletedRecord = SubElement(e_identify,
-                                 etree.QName(NS_OAIPMH, 'deletedRecord'))
-    e_deletedRecord.text = 'transient'
+    e_deletedRecord = SubElement(e_identify, etree.QName(NS_OAIPMH, "deletedRecord"))
+    e_deletedRecord.text = "transient"
 
-    e_granularity = SubElement(e_identify,
-                               etree.QName(NS_OAIPMH, 'granularity'))
-    assert cfg['OAISERVER_GRANULARITY'] in DATETIME_FORMATS
-    e_granularity.text = cfg['OAISERVER_GRANULARITY']
+    e_granularity = SubElement(e_identify, etree.QName(NS_OAIPMH, "granularity"))
+    assert cfg["OAISERVER_GRANULARITY"] in DATETIME_FORMATS
+    e_granularity.text = cfg["OAISERVER_GRANULARITY"]
 
-    compressions = cfg['OAISERVER_COMPRESSIONS']
-    if compressions != ['identity']:
+    compressions = cfg["OAISERVER_COMPRESSIONS"]
+    if compressions != ["identity"]:
         for compression in compressions:
-            e_compression = SubElement(e_identify,
-                                       etree.QName(NS_OAIPMH, 'compression'))
+            e_compression = SubElement(
+                e_identify, etree.QName(NS_OAIPMH, "compression")
+            )
             e_compression.text = compression
 
-    for description in cfg.get('OAISERVER_DESCRIPTIONS', []):
-        e_description = SubElement(e_identify,
-                                   etree.QName(NS_OAIPMH, 'description'))
+    for description in cfg.get("OAISERVER_DESCRIPTIONS", []):
+        e_description = SubElement(e_identify, etree.QName(NS_OAIPMH, "description"))
         e_description.append(etree.fromstring(description))
 
     return e_tree
@@ -189,21 +208,16 @@ def resumption_token(parent, pagination, **kwargs):
         return
 
     token = serialize(pagination, **kwargs)
-    e_resumptionToken = SubElement(parent, etree.QName(NS_OAIPMH,
-                                                       'resumptionToken'))
+    e_resumptionToken = SubElement(parent, etree.QName(NS_OAIPMH, "resumptionToken"))
     if pagination.total:
         expiration_date = datetime.utcnow() + timedelta(
-            seconds=current_app.config[
-                'OAISERVER_RESUMPTION_TOKEN_EXPIRE_TIME'
-            ]
+            seconds=current_app.config["OAISERVER_RESUMPTION_TOKEN_EXPIRE_TIME"]
         )
-        e_resumptionToken.set('expirationDate', datetime_to_datestamp(
-            expiration_date
-        ))
-        e_resumptionToken.set('cursor', str(
-            (pagination.page - 1) * pagination.per_page
-        ))
-        e_resumptionToken.set('completeListSize', str(pagination.total))
+        e_resumptionToken.set("expirationDate", datetime_to_datestamp(expiration_date))
+        e_resumptionToken.set(
+            "cursor", str((pagination.page - 1) * pagination.per_page)
+        )
+        e_resumptionToken.set("completeListSize", str(pagination.total))
 
     if token:
         e_resumptionToken.text = token
@@ -212,34 +226,36 @@ def resumption_token(parent, pagination, **kwargs):
 def listsets(**kwargs):
     """Create OAI-PMH response for ListSets verb."""
     e_tree, e_listsets = verb(**kwargs)
-    page = kwargs.get('resumptionToken', {}).get('page', 1)
-    size = current_app.config['OAISERVER_PAGE_SIZE']
+
+    page = kwargs.get("resumptionToken", {}).get("page", 1)
+    size = current_app.config["OAISERVER_PAGE_SIZE"]
     oai_sets = OAISet.query.paginate(page=page, per_page=size, error_out=False)
 
     for oai_set in oai_sets.items:
         if Indexes.is_index(str(oai_set.spec)) is True:
-            index_path = [oai_set.spec.replace(':', '/')]
+            index_path = [oai_set.spec.replace(":", "/")]
             if Indexes.is_public_state([str(oai_set.id)]) is not None \
                     and (not Indexes.is_public_state(index_path.copy())
                          or not Indexes.get_harvest_public_state(
                         index_path.copy())):
                 continue
-
-        e_set = SubElement(e_listsets, etree.QName(NS_OAIPMH, 'set'))
-        e_setSpec = SubElement(e_set, etree.QName(NS_OAIPMH, 'setSpec'))
+        e_set = SubElement(e_listsets, etree.QName(NS_OAIPMH, "set"))
+        e_setSpec = SubElement(e_set, etree.QName(NS_OAIPMH, "setSpec"))
         e_setSpec.text = oai_set.spec
-        e_setName = SubElement(e_set, etree.QName(NS_OAIPMH, 'setName'))
-        e_setName.text = oai_set.name
+        e_setName = SubElement(e_set, etree.QName(NS_OAIPMH, "setName"))
+        e_setName.text = sanitize_unicode(oai_set.name)
         if oai_set.description:
-            e_setDescription = SubElement(e_set, etree.QName(NS_OAIPMH,
-                                                             'setDescription'))
-            e_dc = SubElement(
-                e_setDescription, etree.QName(NS_OAIDC, 'dc'),
-                nsmap=NSMAP_DESCRIPTION
+            e_setDescription = SubElement(
+                e_set, etree.QName(NS_OAIPMH, "setDescription")
             )
-            e_dc.set(etree.QName(NS_XSI, 'schemaLocation'), NS_OAIDC)
-            e_description = SubElement(e_dc, etree.QName(NS_DC, 'description'))
-            e_description.text = oai_set.description
+            e_dc = SubElement(
+                e_setDescription,
+                etree.QName(NS_OAIDC, "dc"),
+                nsmap=NSMAP_DESCRIPTION,
+            )
+            e_dc.set(etree.QName(NS_XSI, "schemaLocation"), NS_OAIDC)
+            e_description = SubElement(e_dc, etree.QName(NS_DC, "description"))
+            e_description.text = sanitize_unicode(oai_set.description)
 
     resumption_token(e_listsets, oai_sets, **kwargs)
     return e_tree
@@ -250,41 +266,39 @@ def listmetadataformats(**kwargs):
     oad = get_oai_metadata_formats(current_app)
     e_tree, e_listmetadataformats = verb(**kwargs)
 
-    if 'identifier' in kwargs:
+    if "identifier" in kwargs:
         # test if record exists
-        OAIIDProvider.get(pid_value=kwargs['identifier'])
+        OAIIDProvider.get(pid_value=kwargs["identifier"])
 
     if not len(oad):
-        return error(get_error_code_msg('noMetadataFormats'), **kwargs)
+        return error(get_error_code_msg("noMetadataFormats"), **kwargs)
 
     for prefix, metadata in oad.items():
         e_metadataformat = SubElement(
-            e_listmetadataformats, etree.QName(NS_OAIPMH, 'metadataFormat')
+            e_listmetadataformats, etree.QName(NS_OAIPMH, "metadataFormat")
         )
         e_metadataprefix = SubElement(
-            e_metadataformat, etree.QName(NS_OAIPMH, 'metadataPrefix')
+            e_metadataformat, etree.QName(NS_OAIPMH, "metadataPrefix")
         )
         e_metadataprefix.text = prefix
-        e_schema = SubElement(
-            e_metadataformat, etree.QName(NS_OAIPMH, 'schema')
-        )
-        e_schema.text = metadata['schema']
+        e_schema = SubElement(e_metadataformat, etree.QName(NS_OAIPMH, "schema"))
+        e_schema.text = metadata["schema"]
         e_metadataNamespace = SubElement(
-            e_metadataformat, etree.QName(NS_OAIPMH, 'metadataNamespace')
+            e_metadataformat, etree.QName(NS_OAIPMH, "metadataNamespace")
         )
-        e_metadataNamespace.text = metadata['namespace']
+        e_metadataNamespace.text = metadata["namespace"]
 
     return e_tree
 
 
 def header(parent, identifier, datestamp, sets=[], deleted=False):
     """Attach ``<header/>`` element to a parent."""
-    e_header = SubElement(parent, etree.QName(NS_OAIPMH, 'header'))
+    e_header = SubElement(parent, etree.QName(NS_OAIPMH, "header"))
     if deleted:
-        e_header.set('status', 'deleted')
-    e_identifier = SubElement(e_header, etree.QName(NS_OAIPMH, 'identifier'))
+        e_header.set("status", "deleted")
+    e_identifier = SubElement(e_header, etree.QName(NS_OAIPMH, "identifier"))
     e_identifier.text = identifier
-    e_datestamp = SubElement(e_header, etree.QName(NS_OAIPMH, 'datestamp'))
+    e_datestamp = SubElement(e_header, etree.QName(NS_OAIPMH, "datestamp"))
     e_datestamp.text = datetime_to_datestamp(datestamp)
     if sets:
         _paths, _sets = extract_paths_from_sets(sets)
@@ -292,15 +306,14 @@ def header(parent, identifier, datestamp, sets=[], deleted=False):
         paths = Indexes.get_path_name(_paths)
         for path in paths:
             if path.public_state and path.harvest_public_state:
-                e = SubElement(e_header, etree.QName(NS_OAIPMH, 'setSpec'))
-                e.text = path.path.replace('/', ':')
+                e = SubElement(e_header, etree.QName(NS_OAIPMH, "setSpec"))
+                e.text = path.path.replace("/", ":")
 
         for set in _sets:
-            e = SubElement(e_header, etree.QName(NS_OAIPMH, 'setSpec'))
+            e = SubElement(e_header, etree.QName(NS_OAIPMH, "setSpec"))
             e.text = set
 
     return e_header
-
 
 def extract_paths_from_sets(sets):
     """Extract the paths in the set
@@ -341,13 +354,13 @@ def is_private_workflow(record):
 def is_pubdate_in_future(record):
     """Check pubdate of workflow is in future."""
     from weko_records_ui.utils import is_future
-    adt = record.get('publish_date')
+    adt = record.get("publish_date")
     return is_future(adt)
 
 
 def is_private_index(record):
     """Check index of workflow is private."""
-    paths = pickle.loads(pickle.dumps(record.get('path'), -1))
+    paths = pickle.loads(pickle.dumps(record.get("path"), -1))
     return not Indexes.is_public_state_and_not_in_future(paths)
 
 
@@ -362,26 +375,26 @@ def is_private_index_by_public_list(item_path, public_index_ids):
 def set_identifier(param_record, param_rec):
     """Set identifier (doi, cnri, url) for this record."""
     # Set default value for system_identifier_doi.
-    if not param_record.get('json') or \
-            not param_record['json']['_source'] or \
-            not param_record['json']['_source']['_item_metadata']:
-        param_record['json'] = \
-            {'_source': {'_item_metadata': {'system_identifier_doi': None}}}
+    if not param_record.get("json") or \
+            not param_record["json"]["_source"] or \
+            not param_record["json"]["_source"]["_item_metadata"]:
+        param_record["json"] = \
+            {"_source": {"_item_metadata": {"system_identifier_doi": None}}}
     # Set default identifier for system_identifier_doi.
-    if not param_record['json']['_source']['_item_metadata']\
-            .get('system_identifier_doi'):
-        param_record['json']['_source']['_item_metadata'][
-            'system_identifier_doi'] = get_identifier(param_rec)
+    if not param_record["json"]["_source"]["_item_metadata"]\
+            .get("system_identifier_doi"):
+        param_record["json"]["_source"]["_item_metadata"][
+            "system_identifier_doi"] = get_identifier(param_rec)
 
 
 def is_exists_doi(param_record):
     """Check identifier doi exists in this record."""
-    item_metadata = param_record['json']['_source']['_item_metadata']
-    system_identifier_doi = item_metadata.get('system_identifier_doi', {})
-    attribute_value_mlt = system_identifier_doi.get('attribute_value_mlt', {})
+    item_metadata = param_record["json"]["_source"]["_item_metadata"]
+    system_identifier_doi = item_metadata.get("system_identifier_doi", {})
+    attribute_value_mlt = system_identifier_doi.get("attribute_value_mlt", {})
     for mlt in attribute_value_mlt:
-        identifier_type = mlt.get('subitem_systemidt_identifier_type')
-        if identifier_type == 'DOI':
+        identifier_type = mlt.get("subitem_systemidt_identifier_type")
+        if identifier_type == "DOI":
             return True
     return False
 
@@ -389,22 +402,23 @@ def is_exists_doi(param_record):
 def getrecord(**kwargs):
     """Create OAI-PMH response for verb GetRecord."""
     # current_app.logger.debug("kwargs:{0}".format(kwargs))
-    # kwargs:{'metadataPrefix': 'jpcoar_1.0', 'identifier': 'oai:weko3.example.org:00000003', 'verb': 'GetRecord'}
+    # kwargs:{"metadataPrefix": "jpcoar_1.0", "identifier": "oai:weko3.example.org:00000003", "verb": "GetRecord"}
 
     identify = OaiIdentify.get_all()
     if not identify or not identify.outPutSetting:
-        return error([('idDoesNotExist', 'No matching identifier')])
+        return error([("idDoesNotExist", "No matching identifier")])
+    
+    record_dumper = serializer(kwargs["metadataPrefix"])
 
-    record_dumper = serializer(kwargs['metadataPrefix'])
-    pid_object = OAIIDProvider.get(pid_value=kwargs['identifier']).pid
-    record = WekoRecord.get_record_by_uuid(pid_object.object_uuid)
+    pid_object = OAIIDProvider.get(pid_value=kwargs["identifier"]).pid
+    record = current_oaiserver.record_fetcher(pid_object.object_uuid)
     set_identifier(record, record)
 
     e_tree, e_getrecord = verb(**kwargs)
-    e_record = SubElement(e_getrecord, etree.QName(NS_OAIPMH, 'record'))
+    e_record = SubElement(e_getrecord, etree.QName(NS_OAIPMH, "record"))
 
     index_state = get_index_state()
-    path_list = record.get('path') if 'path' in record else []
+    path_list = record.get("path") if "path" in record else []
     _is_output = is_output_harvest(path_list, index_state)
     current_app.logger.debug("_is_output:{}".format(_is_output))
     current_app.logger.debug("path_list:{}".format(path_list))
@@ -423,7 +437,7 @@ def getrecord(**kwargs):
                       (is_exists_doi(record) and
                        (_is_output == PRIVATE_INDEX or is_pubdate_in_future(record))) or
                       is_new_workflow(record)):
-        return error([('idDoesNotExist', 'No matching identifier')])
+        return error([("idDoesNotExist", "No matching identifier")])
     # Item is deleted
     # or Harvest is public & Item is private
     # or Harvest is public & Index is private
@@ -441,27 +455,28 @@ def getrecord(**kwargs):
         )
         return e_tree
 
-    _sets = list(set(record.get('path', [])+record['_oai'].get('sets', [])))
+    _sets = list(set(record.get("path", [])+record["_oai"].get("sets", [])))
+
     header(
         e_record,
         identifier=pid_object.pid_value,
         datestamp=record.updated,
         sets=_sets
     )
-    e_metadata = SubElement(e_record,
-                            etree.QName(NS_OAIPMH, 'metadata'))
+    e_metadata = SubElement(e_record, etree.QName(NS_OAIPMH, "metadata"))
 
     etree_record = pickle.loads(pickle.dumps(record, -1))
 
-    if not etree_record.get('system_identifier_doi', None):
-        etree_record['system_identifier_doi'] = get_identifier(record)
+    if not etree_record.get("system_identifier_doi", None):
+        etree_record["system_identifier_doi"] = get_identifier(record)
 
     # Merge licensetype and licensefree
     etree_record = handle_license_free(etree_record)
 
-    root = record_dumper(pid_object, {'_source': etree_record})
+    root = record_dumper(pid_object, {"_source": etree_record})
 
     e_metadata.append(root)
+
     return e_tree
 
 
@@ -474,29 +489,41 @@ def listidentifiers(**kwargs):
 
     index_state = get_index_state()
     set_is_output = 0
-    if 'set' in kwargs:
-        set_obj = OAISet.get_set_by_spec(kwargs['set'])
+    if "set" in kwargs:
+        set_obj = OAISet.get_set_by_spec(kwargs["set"])
         if not set_obj:
             return error(get_error_code_msg(), **kwargs)
-        path = kwargs['set'].replace(':', '/')
+        path = kwargs["set"].replace(":", "/")
         set_is_output = is_output_harvest([path], index_state)
         if set_is_output == HARVEST_PRIVATE:
             return error(get_error_code_msg(), **kwargs)
-
+    
     result = get_records(**kwargs)
+
     if not result.total:
         return error(get_error_code_msg(), **kwargs)
 
-    for r in result.items:
+    all_records = [record for record in result.items]
+    records_sets = sets_search_all([r["json"]["_source"] for r in all_records])
+
+    for index, r in enumerate(all_records):
+        pid = current_oaiserver.oaiid_fetcher(r["id"], r["json"]["_source"])
+        header(
+            e_listidentifiers,
+            identifier=pid.pid_value,
+            datestamp=r["updated"],
+            sets=records_sets[index],
+        )
+
         try:
-            pid = oaiid_fetcher(r['id'], r['json']['_source'])
+
             pid_object = OAIIDProvider.get(pid_value=pid.pid_value).pid
             record = WekoRecord.get_record_by_uuid(pid_object.object_uuid)
             set_identifier(record, record)
 
-            path_list = record.get('path') if 'path' in record else []
+            path_list = record.get("path") if "path" in record else []
             _is_output = is_output_harvest(path_list, index_state) \
-                if 'set' not in kwargs else set_is_output
+                if "set" not in kwargs else set_is_output
             current_app.logger.debug("pid:{}".format(pid))
             current_app.logger.debug("_is_output:{}".format(_is_output))
             current_app.logger.debug("path_list:{}".format(path_list))
@@ -526,17 +553,17 @@ def listidentifiers(**kwargs):
                 header(
                     e_listidentifiers,
                     identifier=pid.pid_value,
-                    #datestamp=r['updated'],
+                    #datestamp=r["updated"],
                     datestamp=record.updated,
                     deleted=True
                 )
             else:
-                _sets = list(set(record.get('path', []) +
-                                 record['_oai'].get('sets', [])))
+                _sets = list(set(record.get("path", []) +
+                                 record["_oai"].get("sets", [])))
                 header(
                     e_listidentifiers,
                     identifier=pid.pid_value,
-                    # datestamp=r['updated'],
+                    # datestamp=r["updated"],
                     datestamp=record.updated,
                     sets=_sets
                 )
@@ -544,7 +571,7 @@ def listidentifiers(**kwargs):
             current_app.logger.error(
                 "PIDDoesNotExistError: pid_value: {}".format(pid.pid_value))
             current_app.logger.error(
-                "PIDDoesNotExistError: recid: {}".format(r['id']))
+                "PIDDoesNotExistError: recid: {}".format(r["id"]))
         except NoResultFound:
             current_app.logger.error(
                 "NoResultFound: object_uuid: {}".format(pid_object.object_uuid))
@@ -554,13 +581,20 @@ def listidentifiers(**kwargs):
 
     current_app.logger.debug(
         "number of identifiers :{}".format(len(e_listidentifiers)))
+
     resumption_token(e_listidentifiers, result, **kwargs)
     return e_tree
 
 
 def listrecords(**kwargs):
     """Create OAI-PMH response for verb ListRecords."""
-    record_dumper = serializer(kwargs['metadataPrefix'])
+    metadataPrefix = (
+        kwargs.get("resumptionToken").get("metadataPrefix")
+        if kwargs.get("resumptionToken")
+        else kwargs["metadataPrefix"]
+    )
+    record_dumper = serializer(metadataPrefix)
+
     e_tree, e_listrecords = verb(**kwargs)
 
     identify = OaiIdentify.get_all()
@@ -571,30 +605,44 @@ def listrecords(**kwargs):
 
     index_state = get_index_state()
     set_is_output = 0
-    if 'set' in kwargs:
-        set_obj = OAISet.get_set_by_spec(kwargs['set'])
+    if "set" in kwargs:
+        set_obj = OAISet.get_set_by_spec(kwargs["set"])
         if not set_obj:
             return error(get_error_code_msg(), **kwargs)
         current_app.logger.debug("set: {}".format(set_obj.spec))
-        path = kwargs['set'].replace(':', '/')
+        path = kwargs["set"].replace(":", "/")
         set_is_output = is_output_harvest([path], index_state)
         current_app.logger.debug("set_is_output: {}".format(set_is_output))
         if set_is_output == HARVEST_PRIVATE:
             return error(get_error_code_msg(), **kwargs)
 
+    e_tree, e_listrecords = verb(**kwargs)
     result = get_records(**kwargs)
+
     if not result.total:
         return error(get_error_code_msg(), **kwargs)
 
-    for r in result.items:
+    all_records = [record for record in result.items]
+    records_sets = sets_search_all([r["json"]["_source"] for r in all_records])
+
+    for index, r in enumerate(all_records):
+
+        pid = current_oaiserver.oaiid_fetcher(r["id"], r["json"]["_source"])
+        e_record = SubElement(e_listrecords, etree.QName(NS_OAIPMH, "record"))
+        header(
+            e_record,
+            identifier=pid.pid_value,
+            datestamp=r["updated"],
+            sets=records_sets[index],
+        )
+
         try:
-            pid = oaiid_fetcher(r['id'], r['json']['_source'])
             pid_object = OAIIDProvider.get(pid_value=pid.pid_value).pid
             record = WekoRecord.get_record_by_uuid(pid_object.object_uuid)
             set_identifier(record, record)
-            path_list = record.get('path') if 'path' in record else []
+            path_list = record.get("path") if "path" in record else []
             _is_output = is_output_harvest(path_list, index_state) \
-                if 'set' not in kwargs else set_is_output
+                if "set" not in kwargs else set_is_output
 
             current_app.logger.debug("pid:{}".format(pid))
             current_app.logger.debug("_is_output:{}".format(_is_output))
@@ -623,19 +671,19 @@ def listrecords(**kwargs):
                     is_private_workflow(record) or \
                     is_pubdate_in_future(record):
                 e_record = SubElement(
-                    e_listrecords, etree.QName(NS_OAIPMH, 'record'))
+                    e_listrecords, etree.QName(NS_OAIPMH, "record"))
                 header(
                     e_record,
                     identifier=pid.pid_value,
-                    #datestamp=r['updated'],
+                    #datestamp=r["updated"],
                     datestamp=record.updated,
                     deleted=True
                 )
             else:
                 e_record = SubElement(
-                    e_listrecords, etree.QName(NS_OAIPMH, 'record'))
-                _sets = list(set(record.get('path', []) +
-                                 record['_oai'].get('sets', [])))
+                    e_listrecords, etree.QName(NS_OAIPMH, "record"))
+                _sets = list(set(record.get("path", []) +
+                                 record["_oai"].get("sets", [])))
                 header(
                     e_record,
                     identifier=pid.pid_value,
@@ -643,22 +691,22 @@ def listrecords(**kwargs):
                     sets=_sets
                 )
                 e_metadata = SubElement(e_record, etree.QName(NS_OAIPMH,
-                                                              'metadata'))
+                                                              "metadata"))
                 etree_record = pickle.loads(pickle.dumps(record, -1))
-                if not etree_record.get('system_identifier_doi', None):
-                    etree_record['system_identifier_doi'] = get_identifier(
+                if not etree_record.get("system_identifier_doi", None):
+                    etree_record["system_identifier_doi"] = get_identifier(
                         record)
 
                 # Merge licensetype and licensefree
                 etree_record = handle_license_free(etree_record)
                 e_metadata.append(record_dumper(
-                    pid, {'_source': etree_record}))
+                    pid, {"_source": etree_record}))
 
         except PIDDoesNotExistError:
             current_app.logger.error(
                 "PIDDoesNotExistError: pid_value: {}".format(pid.pid_value))
             current_app.logger.error(
-                "PIDDoesNotExistError: recid: {}".format(r['id']))
+                "PIDDoesNotExistError: recid: {}".format(r["id"]))
         except NoResultFound:
             current_app.logger.error(
                 "NoResultFound: object_uuid: {}".format(pid_object.object_uuid))
@@ -669,19 +717,20 @@ def listrecords(**kwargs):
 
     current_app.logger.debug(
         "number of records :{}".format(len(e_listrecords)))
+
     resumption_token(e_listrecords, result, **kwargs)
     return e_tree
 
 
-def get_error_code_msg(code=''):
+def get_error_code_msg(code=""):
     """Return list error message."""
     msg = ""
-    if code == '':
-        code = current_app.config.get('OAISERVER_CODE_NO_RECORDS_MATCH')
-        msg = current_app.config.get('OAISERVER_MESSAGE_NO_RECORDS_MATCH')
+    if code == "":
+        code = current_app.config.get("OAISERVER_CODE_NO_RECORDS_MATCH")
+        msg = current_app.config.get("OAISERVER_MESSAGE_NO_RECORDS_MATCH")
 
-    if code == 'noMetadataFormats':
-        msg = 'There is no metadata format available.'
+    if code == "noMetadataFormats":
+        msg = "There is no metadata format available."
 
     return [(code, msg)]
 
@@ -689,15 +738,15 @@ def get_error_code_msg(code=''):
 def create_identifier_index(root, **kwargs):
     """Create indentifier index in xml tree."""
     try:
-        e_jpcoar = Element(etree.QName(NS_OAIPMH, 'metadata'))
+        e_jpcoar = Element(etree.QName(NS_OAIPMH, "metadata"))
         e_identifier = SubElement(e_jpcoar,
-                                  etree.QName(NS_JPCOAR, 'identifier'),
+                                  etree.QName(NS_JPCOAR, "identifier"),
                                   attrib={
-                                      'identifierType':
-                                      kwargs['pid_type'].upper()})
-        e_identifier.text = kwargs['pid_value']
+                                      "identifierType":
+                                      kwargs["pid_type"].upper()})
+        e_identifier.text = kwargs["pid_value"]
         e_identifier_registration = root.find(
-            'jpcoar:identifierRegistration',
+            "jpcoar:identifierRegistration",
             namespaces=root.nsmap)
         if e_identifier_registration is not None:
             e_identifier_registration.addprevious(e_identifier)
@@ -741,7 +790,7 @@ def combine_record_file_urls(record, object_uuid, meta_prefix):
 
     metadata_formats = get_oai_metadata_formats(current_app)
     item_type = ItemsMetadata.get_by_object_id(object_uuid)
-    mapping_type = metadata_formats[meta_prefix]['serializer'][1]['schema_type']
+    mapping_type = metadata_formats[meta_prefix]["serializer"][1]["schema_type"]
     item_map = get_mapping(item_type.item_type_id,
                            "{}_mapping".format(mapping_type))
     file_keys_str = None
@@ -755,29 +804,29 @@ def combine_record_file_urls(record, object_uuid, meta_prefix):
     if not file_keys_str:
         return record
     else:
-        file_keys = file_keys_str.split(',')
+        file_keys = file_keys_str.split(",")
 
     for file_key in file_keys:
-        key = file_key.split('.')
+        key = file_key.split(".")
         if len(key) == 3 and record.get(key[0]):
             attr_mlt = record[key[0]]["attribute_value_mlt"]
             if isinstance(attr_mlt, list):
                 for attr in attr_mlt:
-                    if attr.get('filename'):
+                    if attr.get("filename"):
                         if not attr.get(key[1]):
                             attr[key[1]] = {}
                         attr[key[1]][key[2]] = create_files_url(
                             request.url_root,
-                            record.get('recid'),
-                            attr.get('filename'))
+                            record.get("recid"),
+                            attr.get("filename"))
             elif isinstance(attr_mlt, dict) and \
-                    attr_mlt.get('filename'):
+                    attr_mlt.get("filename"):
                 if not attr_mlt.get(key[1]):
                     attr_mlt[key[1]] = {}
                 attr_mlt[key[1]][key[2]] = create_files_url(
                     request.url_root,
-                    record.get('recid'),
-                    attr_mlt.get('filename'))
+                    record.get("recid"),
+                    attr_mlt.get("filename"))
 
     return record
 
@@ -812,11 +861,11 @@ def get_identifier(record):
             subitem_systemidt_identifier=record.pid_cnri.pid_value,
             subitem_systemidt_identifier_type=record.pid_cnri.pid_type.upper(),
         ))
-    if current_app.config.get('WEKO_SCHEMA_RECORD_URL'):
+    if current_app.config.get("WEKO_SCHEMA_RECORD_URL"):
         result["attribute_value_mlt"].append(dict(
             subitem_systemidt_identifier=current_app.config[
-                'WEKO_SCHEMA_RECORD_URL'].format(
-                request.url_root, record['_deposit']['id'].split('.')[0]),
-            subitem_systemidt_identifier_type='URI',
+                "WEKO_SCHEMA_RECORD_URL"].format(
+                request.url_root, record["_deposit"]["id"].split(".")[0]),
+            subitem_systemidt_identifier_type="URI",
         ))
     return result

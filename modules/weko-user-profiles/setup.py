@@ -24,7 +24,6 @@ import os
 import sys
 
 from setuptools import find_packages, setup
-from setuptools.command.test import test as TestCommand
 
 readme = open('README.rst').read()
 history = open('CHANGES.rst').read()
@@ -72,7 +71,7 @@ setup_requires = [
 ]
 
 install_requires = [
-    'Flask-BabelEx>=0.9.3',
+    'Flask-Babel>=3.0.0',
     'Flask-Breadcrumbs>=0.3.0',
     'Flask-Mail>=0.9.1',
     'Flask-Menu>=0.4.0',
@@ -123,6 +122,9 @@ setup(
         'invenio_base.blueprints': [
             'weko_user_profiles'
             ' = weko_user_profiles.views:blueprint_ui_init',
+        ],
+        'invenio_base.finalize_app':[
+            'weko_user_profiles = weko_user_profiles.ext:finalize_app',
         ],
         'invenio_db.models': [
             'weko_user_profiles = weko_user_profiles.models',

@@ -23,6 +23,8 @@ npm install
 cd ..
 flask collect -v
 flask assets build
+# Ignore webpack building to keep compatibility with invenio-assets versions.
+flask webpack buildall || true
 
 # Create the database
 flask db init

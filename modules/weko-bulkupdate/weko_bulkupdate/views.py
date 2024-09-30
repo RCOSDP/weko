@@ -13,7 +13,7 @@
 from __future__ import absolute_import, print_function
 
 from flask import Blueprint, render_template
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 
 blueprint = Blueprint(
     'weko_bulkupdate',

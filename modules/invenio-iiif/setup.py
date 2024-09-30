@@ -2,7 +2,7 @@
 #
 # This file is part of Invenio.
 # Copyright (C) 2018 CERN.
-# Copyright (C) 2019 Esteban J. G. Gabancho.
+# Copyright (C) 2021 TU Wien.
 #
 # Invenio is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
@@ -17,24 +17,13 @@ readme = open('README.rst').read()
 history = open('CHANGES.rst').read()
 
 tests_require = [
-    'check-manifest>=0.25',
-    'coverage>=4.0',
-    # FIXME: Remove elasticsearch once pytest-invenio have fixed the es import.
-    'elasticsearch-dsl>=5.0.0',
-    'elasticsearch>=5.0.0',
-    'invenio-app>=1.0.0',
-    'invenio-db>=1.0.0b3',
-    'isort>=4.3.3',
-    'pydocstyle>=1.0.0',
-    'pytest-cov>=1.8.0',
-    'pytest-invenio>=1.0.4,<1.1.0',
-    'pytest-pep8>=1.0.6',
-    'pytest>=3.8.0',
+    'invenio-db[versioning,postgresql]>=1.0.9',
+    'pytest-invenio>=1.4.2',
 ]
 
 extras_require = {
     'docs': [
-        'Sphinx>=1.5.1',
+        'Sphinx>=3.3.1,<3.4',
     ],
     'tests': tests_require,
 }
@@ -48,14 +37,12 @@ setup_requires = [
 ]
 
 install_requires = [
-    'Flask>=0.11.1',
-    'Flask-CeleryExt>=0.3.0',
-    'Flask-IIIF>=0.4.0',
-    # FIXME: Invenio-Files-REST should specify Invenio-Access as requirement.
-    'invenio-access>=1.0.0',
-    'invenio-files-rest>=1.0.0b1',
-    'invenio-records-files>=1.0.0a10',
-    'six>=1.11.0',
+    'Flask-IIIF>=0.6.1',
+    'invenio-access>=1.4.2',
+    'invenio-base>=1.2.5',
+    'invenio-celery>=1.2.3',
+    'invenio-files-rest>=1.3.0',
+    'invenio-records-files>=1.0.0',
     'Wand>=0.4.4',
     'iiif-prezi==0.3.0', # FIXME: probably this needs some work or fork
 ]
@@ -119,6 +106,6 @@ setup(
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.5',
-        'Development Status :: 1 - Planning',
+        'Development Status :: 5 - Production/Stable',
     ],
 )

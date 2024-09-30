@@ -22,7 +22,7 @@ import tempfile
 from datetime import date, datetime, timedelta
 import pytest
 from flask import Flask
-from flask_babelex import Babel
+from flask_babel import Babel
 from sqlalchemy_utils.functions import create_database, database_exists
 
 from invenio_accounts import InvenioAccounts
@@ -39,7 +39,7 @@ from weko_records import WekoRecords
 from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName
 from weko_index_tree.models import Index
 from weko_index_tree import WekoIndexTree
-from weko_items_ui import WekoItemsUI
+#from weko_items_ui import WekoItemsUI
 from weko_workflow import WekoWorkflow
 
 from weko_indextree_journal import WekoIndextreeJournal, WekoIndextreeJournalREST
@@ -147,7 +147,7 @@ def base_app(request,instance_path):
     WekoRecords(app_)
     WekoWorkflow(app_)
     WekoIndexTree(app_)
-    WekoItemsUI(app_)
+#   WekoItemsUI(app_)
     WekoIndextreeJournal(app_)
     WekoIndextreeJournalREST(app_)
 

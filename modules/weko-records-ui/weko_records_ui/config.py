@@ -21,7 +21,7 @@
 """Configuration for weko-records-ui."""
 import os
 
-from flask_babelex import lazy_gettext as _
+from flask_babel import lazy_gettext as _
 
 WEKO_RECORDS_UI_DETAIL_TEMPLATE = 'weko_records_ui/detail.html'
 WEKO_RECORDS_UI_BASE_TEMPLATE = 'weko_theme/page.html'

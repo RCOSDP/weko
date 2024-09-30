@@ -60,6 +60,3 @@ target/
 
 # Vim swapfiles
 .*.sw?
-
-# examples
-examples/*.db

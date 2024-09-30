@@ -26,7 +26,7 @@ import traceback
 from typing import List, Optional
 
 from flask import abort, current_app
-from flask_babelex import get_locale, to_user_timezone, to_utc
+from flask_babel import get_locale, to_user_timezone, to_utc
 from flask_security import current_user
 from invenio_access import Permission, action_factory
 from invenio_accounts.models import User

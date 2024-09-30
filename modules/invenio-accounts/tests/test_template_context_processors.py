@@ -9,12 +9,9 @@
 
 """Tests for template context processors."""
 
-from __future__ import absolute_import, print_function
-
 from flask import render_template_string
 
 
-# .tox/c1/bin/pytest --cov=invenio_accounts tests/test_template_context_processors.py::test_context_processor_jwt -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-accounts/.tox/c1/tmp
 def test_context_processor_jwt(app):
     """Test context processor JWT."""
     template = r"""
@@ -22,10 +19,9 @@ def test_context_processor_jwt(app):
     """
     with app.test_request_context():
         html = render_template_string(template)
-        assert 'authorized_token' in html
+        assert "authorized_token" in html
 
 
-# .tox/c1/bin/pytest --cov=invenio_accounts tests/test_template_context_processors.py::test_context_processor_jwt_token -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-accounts/.tox/c1/tmp
 def test_context_processor_jwt_token(app):
     """Test context processor token JWT."""
     template = r"""

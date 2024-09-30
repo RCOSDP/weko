@@ -13,20 +13,25 @@ All error classes in this module are inheriting from
 :class:`invenio_rest.errors.RESTValidationError`.
 """
 
-from __future__ import absolute_import, print_function
-
 from flask import request
-from invenio_rest.errors import RESTException, RESTValidationError
+from invenio_rest.errors import FieldError, RESTException, RESTValidationError
 
 
 #
 # Search
 #
-class MaxResultWindowRESTError(RESTException):
-    """Maximum number of results have been reached."""
+class SearchPaginationRESTError(RESTException):
+    """Search pagination error."""
 
     code = 400
-    description = 'Maximum number of results have been reached.'
+
+    def __init__(self, errors=None, **kwargs):
+        """Initialize exception."""
+        _errors = []
+        if errors:
+            for field, messages in errors.items():
+                _errors.extend([FieldError(field, msg) for msg in messages])
+        super().__init__(errors=_errors, **kwargs)
 
 
 #
@@ -36,7 +41,7 @@ class InvalidQueryRESTError(RESTException):
     """Invalid query syntax."""
 
     code = 400
-    description = 'Invalid query syntax.'
+    description = "Invalid query syntax."
 
 
 #
@@ -49,9 +54,9 @@ class StyleNotFoundRESTError(RESTException):
 
     def __init__(self, style=None, **kwargs):
         """Initialize exception."""
-        super(RESTException, self).__init__(**kwargs)
-        self.description = 'Style{0}could not be found.'.format(
-            ' "{0}" '.format(style) if style else ' ')
+        super().__init__(**kwargs)
+        arg = f' "{style}" ' if style else " "
+        self.description = f"Style{arg}could not be found."
 
 
 #
@@ -62,7 +67,7 @@ class PIDRESTException(RESTException):
 
     def __init__(self, pid_error=None, **kwargs):
         """Initialize exception."""
-        super(RESTException, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.pid_error = pid_error
 
 
@@ -70,21 +75,21 @@ class PIDDoesNotExistRESTError(PIDRESTException):
     """Non-existent PID."""
 
     code = 404
-    description = 'PID does not exist.'
+    description = "PID does not exist."
 
 
 class PIDUnregisteredRESTError(PIDRESTException):
     """Unregistered PID."""
 
     code = 404
-    description = 'PID is not registered.'
+    description = "PID is not registered."
 
 
 class PIDDeletedRESTError(PIDRESTException):
     """Deleted PID."""
 
     code = 410
-    description = 'PID has been deleted.'
+    description = "PID has been deleted."
 
 
 class PIDMissingObjectRESTError(PIDRESTException):
@@ -94,8 +99,8 @@ class PIDMissingObjectRESTError(PIDRESTException):
 
     def __init__(self, pid, **kwargs):
         """Initialize exception."""
-        super(PIDMissingObjectRESTError, self).__init__(**kwargs)
-        self.description = 'No object assigned to {0}.'.format(pid)
+        super().__init__(**kwargs)
+        self.description = f"No object assigned to {pid}."
 
 
 class PIDRedirectedRESTError(PIDRESTException):
@@ -105,11 +110,9 @@ class PIDRedirectedRESTError(PIDRESTException):
 
     def __init__(self, pid_type=None, **kwargs):
         """Initialize exception."""
-        super(PIDRedirectedRESTError, self).__init__(**kwargs)
-        self.description = (
-            'Invalid redirect - pid_type{0}endpoint missing.'.format(
-                ' "{0}" '.format(pid_type) if pid_type else ' ')
-        )
+        super().__init__(**kwargs)
+        arg = f' "{pid_type}" ' if pid_type else " "
+        self.description = f"Invalid redirect - pid_type{arg}endpoint missing."
 
 
 #
@@ -122,9 +125,9 @@ class PIDResolveRESTError(RESTException):
 
     def __init__(self, pid=None, **kwargs):
         """Initialize exception."""
-        super(RESTException, self).__init__(**kwargs)
-        self.description = 'PID{0}could not be resolved.'.format(
-            ' #{0} '.format(pid) if pid else ' ')
+        super().__init__(**kwargs)
+        arg = f" #{pid} " if pid else " "
+        self.description = f"PID{arg}could not be resolved."
 
 
 class UnsupportedMediaRESTError(RESTException):
@@ -134,23 +137,23 @@ class UnsupportedMediaRESTError(RESTException):
 
     def __init__(self, content_type=None, **kwargs):
         """Initialize exception."""
-        super(RESTException, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         content_type = content_type or request.mimetype
-        self.description = 'Unsupported media type "{0}".'.format(content_type)
+        self.description = f'Unsupported media type "{content_type}".'
 
 
 class InvalidDataRESTError(RESTException):
     """Invalid request body."""
 
     code = 400
-    description = 'Could not load data.'
+    description = "Could not load data."
 
 
 class PatchJSONFailureRESTError(RESTException):
     """Failed to patch JSON."""
 
     code = 400
-    description = 'Could not patch JSON.'
+    description = "Could not patch JSON."
 
 
 class SuggestMissingContextRESTError(RESTException):
@@ -160,9 +163,9 @@ class SuggestMissingContextRESTError(RESTException):
 
     def __init__(self, ctx_field=None, **kwargs):
         """Initialize exception."""
-        super(RESTException, self).__init__(**kwargs)
-        self.description = 'Missing{0}context'.format(
-            ' "{0}" '.format(ctx_field) if ctx_field else ' ')
+        super().__init__(**kwargs)
+        arg = f' "{ctx_field}" ' if ctx_field else " "
+        self.description = f"Missing{arg}context"
 
 
 class SuggestNoCompletionsRESTError(RESTException):
@@ -172,9 +175,9 @@ class SuggestNoCompletionsRESTError(RESTException):
 
     def __init__(self, options=None, **kwargs):
         """Initialize exception."""
-        super(RESTException, self).__init__(**kwargs)
-        self.description = 'No completions requested.{0}'.format(
-            ' (options: {0})'.format(options) if options else '')
+        super().__init__(**kwargs)
+        arg = f" (options: {options})" if options else ""
+        self.description = f"No completions requested.{arg}"
 
 
 class JSONSchemaValidationError(RESTValidationError):
@@ -184,14 +187,13 @@ class JSONSchemaValidationError(RESTValidationError):
 
     def __init__(self, error=None, **kwargs):
         """Initialize exception."""
-        super(RESTValidationError, self).__init__(**kwargs)
-        self.description = 'Validation error: {0}.'.format(
-            error.message if error else '')
+        super().__init__(**kwargs)
+        error = error.message if error else ""
+        self.description = f"Validation error: {error}."
 
 
-class UnhandledElasticsearchError(RESTException):
+class UnhandledSearchError(RESTException):
     """Failed to handle exception."""
 
     code = 500
-    description = 'An internal server error occurred when handling the ' \
-                  'request.'
+    description = "An internal server error occurred when handling the request."
