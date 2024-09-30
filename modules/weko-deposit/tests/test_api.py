@@ -2229,21 +2229,28 @@ class TestWekoRecord:
                 key='WEKO_COMMON_RETURN_VALUE', value=mock.ANY)
             mock_logger.reset_mock()
 
-    # TODO:
     #     def hide_file(self):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoRecord::test_hide_file -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
-    def test_hide_file(self, es_records):
+    def test_hide_file(self, es_records, es_records_2, es_records_3):
         with patch('weko_deposit.api.weko_logger') as mock_logger:
+            # some value of 'attribute_type' is "file"
+            # all option "hidden" is False
             _, results = es_records
             result = results[0]
             record = result['record']
             assert record.hide_file == False
 
-            # result = results[1]
-            # record = result['record']
-            # print(record["item_1617605131499"])
-            # # record["item_1617605131499"] = {"attribute_type":"file","attribute_name":"subject","attribute_value_mlt":["test_subject"]}
-            # assert record.hide_file==True
+            # contain option "hidden" is True
+            _, results = es_records_2
+            result = results[1]
+            record = result['record']
+            assert record.hide_file == True
+
+            # all value of 'attribute_type' not "file"
+            _, results = es_records_3
+            result = results[1]
+            record = result['record']
+            assert record.hide_file ==  False
 
             mock_logger.assert_any_call(key='WEKO_COMMON_FOR_START')
             mock_logger.assert_any_call(
@@ -2639,23 +2646,24 @@ class TestWekoRecord:
             mock_logger.assert_any_call(key='WEKO_COMMON_RETURN_VALUE', value=mock.ANY)
             mock_logger.reset_mock()
 
+    # TODO:
     #     def items_show_list(self):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoRecord::test_items_show_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
-    def test_items_show_list(self, app, es_records, users, db_itemtype, db_admin_settings):
+    def test_items_show_list(self, app, es_records, es_records_2, es_records_3, users, db_itemtype, db_admin_settings):
         with patch('weko_deposit.api.weko_logger') as mock_logger:
             record = WekoRecord({})
             with app.test_request_context():
                 with pytest.raises(AttributeError):
                     assert record.items_show_list == ""
 
-            indexer, results = es_records
+            _, results = es_records
             result = results[0]
             record = result['record']
             with patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
                 assert record.items_show_list == [{'attribute_name': 'PubDate', 'attribute_value': '2022-08-20', 'attribute_name_i18n': 'PubDate'}, {'attribute_name': 'Title', 'attribute_name_i18n': 'Title', 'attribute_type': None, 'attribute_value_mlt': [[[[{'Title': 'タイトル'}], [{'Language': 'ja'}]]], [[[{'Title': 'title'}], [{'Language': 'en'}]]]]}, {'attribute_name': 'Resource Type', 'attribute_name_i18n': 'Resource Type', 'attribute_type': None, 'attribute_value_mlt': [[[[{'Resource Type': 'conference paper'}], [{'Resource Type Identifier': 'http://purl.org/coar/resource_type/c_5794'}]]]]}, {
                     'attribute_name': 'File', 'attribute_name_i18n': 'File', 'attribute_type': 'file', 'attribute_value_mlt': [[[[{'dateType': 'Available', 'item_1617605131499[].date[0].dateValue': '2022-09-07'}]], [{'item_1617605131499[].url': 'https://weko3.example.org/record/1/files/hello.txt'}], [[{'item_1617605131499[].filesize[].value': '146 KB'}]], {'version_id': '{}'.format(record.files['hello.txt'].version_id), 'mimetype': 'application/pdf', 'file': 'SGVsbG8sIFdvcmxk', 'item_1617605131499[].filename': 'hello.txt', 'item_1617605131499[].format': 'plain/text', 'item_1617605131499[].accessrole': 'open_access'}]]}]
 
-            indexer, results = es_records
+            _, results = es_records
             result = results[1]
             record = result['record']
             with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
@@ -2672,47 +2680,86 @@ class TestWekoRecord:
             mock_logger.assert_any_call(
                 key='WEKO_COMMON_RETURN_VALUE', value=mock.ANY)
             mock_logger.reset_mock()
-    # TODO:
+
+            _, results = es_records_2
+            result = results[0]
+            record = result['record']
+            with patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
+                re = record.items_show_list
+                print("\n",re)
+                # assert record.items_show_list == [{'attribute_name': 'PubDate', 'attribute_value': '2022-08-20', 'attribute_name_i18n': 'PubDate'}, {'attribute_name': 'Creator', 'attribute_name_i18n': 'Creator', 'attribute_type': 'creator',
+                #     'attribute_value_mlt': [[[]], [[[{'Creator Given Name': [[[[{'Given Name': 'givenNames'}]]], [[[{'Language': 'ja'}]]]]}]]], [[[{'Creator Family Name': [[[[{'Family Name': 'mei'}]]], [[[{'Language': 'ja'}]]]]}]]], [[[{'Creator Family Name': [[[[{'Family Name': 'mei'}]]], [[[{'Language': 'ja'}]]]]}]]], [[[{}]]], [[[{'Creator Name': [[[[{'Name': 'name'}]]], [[[{'Language': 'ja'}]]]]}]]], [[[{'Creator Identifier': [[[[{'Creator Identifier': '識別'}]]], [[[{'Creator Identifier URI': 'tets.com'}]]]]}]]], [[[{'Affiliation Name Identifier': [[[[{'Affiliation Name Identifier': '識別子'}]]], [[[{'Affiliation Name Identifier URI': 'tets.com'}]]], [[[{'Affiliation Name Identifier Scheme': 'kakenhi'}]]]]}]]], [[[{'Creator Alternative Name': [[[[{'Alternative Name': '別名'}]]], [[[{'Language': 'ja'}]]]]}]]]]}, {'attribute_name': 'Resource Type', 'attribute_name_i18n': 'Resource Type', 'attribute_type': None, 'attribute_value_mlt': [[[[{'Resource Type': 'conference paper'}], [{'Resource Type Identifier': 'http://purl.org/coar/resource_type/c_5794'}]]]]}, {'attribute_name': 'thumbnail', 'attribute_name_i18n': 'thumbnail', 'attribute_type': 'object', 'is_thumbnail': True}]
+
+            _, results = es_records_3
+            result = results[1]
+            record = result['record']
+            with patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
+                re = record.items_show_list
+                print("\n",re)
+                # assert record.items_show_list == [{'attribute_name': 'PubDate', 'attribute_value': '2022-08-20', 'attribute_name_i18n': 'PubDate'}, {'attribute_name': 'Creator', 'attribute_name_i18n': 'Creator', 'attribute_type': 'object',
+                #     'attribute_value_mlt': [[[]], [[[{'Creator Given Name': [[[[{'Given Name': 'givenNames'}]]], [[[{'Language': 'ja'}]]]]}]]], [[[{'Creator Family Name': [[[[{'Family Name': 'mei'}]]], [[[{'Language': 'ja'}]]]]}]]], [[[{'Creator Family Name': [[[[{'Family Name': 'mei'}]]], [[[{'Language': 'ja'}]]]]}]]], [[[{}]]], [[[{'Creator Name': [[[[{'Name': 'name'}]]], [[[{'Language': 'ja'}]]]]}]]], [[[{'Creator Identifier': [[[[{'Creator Identifier': '識別'}]]], [[[{'Creator Identifier URI': 'tets.com'}]]]]}]]], [[[{'Affiliation Name Identifier': [[[[{'Affiliation Name Identifier': '識別子'}]]], [[[{'Affiliation Name Identifier URI': 'tets.com'}]]], [[[{'Affiliation Name Identifier Scheme': 'kakenhi'}]]]]}]]], [[[{'Creator Alternative Name': [[[[{'Alternative Name': '別名'}]]], [[[{'Language': 'ja'}]]]]}]]]]}, {'attribute_name': 'Resource Type', 'attribute_name_i18n': 'Resource Type', 'attribute_type': None, 'attribute_value_mlt': [[[[{'Resource Type': 'conference paper'}], [{'Resource Type Identifier': 'http://purl.org/coar/resource_type/c_5794'}]]]]}, {'attribute_name': 'thumbnail', 'attribute_name_i18n': 'thumbnail', 'attribute_type': 'object', 'is_thumbnail': True}]
+
+
+    # TODO;
     #     def display_file_info(self):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoRecord::test_display_file_info -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
-    def test_display_file_info(self, app, es_records, db_itemtype):
+    def test_display_file_info(self, app, es_records, es_records_2, es_records_3):
         with patch('weko_deposit.api.weko_logger') as mock_logger:
             record = WekoRecord({})
             with app.test_request_context():
                 with pytest.raises(AttributeError):
                     assert record.display_file_info == ""
 
-            indexer, results = es_records
+            _, results = es_records
             result = results[0]
             record = result['record']
             with app.test_request_context("/test?filename=hello.txt"):
                 assert record.display_file_info == [{'attribute_name': 'File', 'attribute_name_i18n': 'File', 'attribute_type': 'file', 'attribute_value_mlt': [[[[{'Opendate': '2022-09-07'}], [
                     {'FileName': 'hello.txt'}], [{'Text URL': [[[{'Text URL': 'https://weko3.example.org/record/1/files/hello.txt'}]]]}], [{'Format': 'plain/text'}], [{'Size': [[[[{'Size': '146 KB'}]]]]}]]]]}]
 
-            record["item_1617186609386"] = {
-                "attribute_type": "file", "attribute_name": "subject", "attribute_value_mlt": ["test_subject"]}
-            record["item_1617186626617"] = {
-                "attribute_name": "description", "attribute_type": "file"}
+            _, results = es_records_2
+            result = results[0]
+            record = result['record']
+            with app.test_request_context("/test?filename=hello.txt"):
+                re = record.display_file_info
+                print("re: ",re)
 
-            # with app.test_request_context("/test?filename=not_hello.txt"):
-            #     assert record.display_file_info==[{'attribute_name': 'description','attribute_name_i18n': 'Description','attribute_type': 'file','attribute_value_mlt': [[[[{'Description': ''}]]]]},{'attribute_name': 'File','attribute_name_i18n': 'File','attribute_type': 'file','attribute_value_mlt': []}]
+            # nval['attribute_type'] == 'file
+            _, results = es_records_3
+            result = results[0]
+            record = result['record']
+            with app.test_request_context("/test?filename=hello.txt"):
+                re = record.display_file_info
+                print("re: ",re)
+            # record["item_1617186609386"] = {
+            #     "attribute_type": "file", "attribute_name": "subject", "attribute_value_mlt": ["test_subject"]}
+            # record["item_1617186626617"] = {
+            #     "attribute_name": "description", "attribute_type": "file"}
 
-            # indexer, results = es_records
-            # result = results[2]
-            # record = result['record']
-            # record['hidden'] = True
-
-            # with app.test_request_context("/test?filename=hello.txt"):
-            #     assert record.display_file_info==[{'attribute_name': 'File','attribute_name_i18n': 'File','attribute_type': 'file','attribute_value_mlt': [[[[{'Opendate': '2022-09-07'}],[{'FileName': 'hello.txt'}],[{'Text URL': [[[{'Text URL': 'https://weko3.example.org/record/3/files/hello.txt'}]]]}],[{'Format': 'plain/text'}],[{'Size': [[[[{'Size': '146 KB'}]]]]}]]]]}]
-            # mock_logger.assert_any_call(key='WEKO_COMMON_FOR_START')
-            # mock_logger.assert_any_call(
-            #     key='WEKO_COMMON_FOR_LOOP_ITERATION', count=mock.ANY, element=mock.ANY)
-            # mock_logger.assert_any_call(
-            #     key='WEKO_COMMON_IF_ENTER', branch=mock.ANY)
-            # mock_logger.assert_any_call(key='WEKO_COMMON_FOR_END')
-            # mock_logger.assert_any_call(
-            #     key='WEKO_COMMON_RETURN_VALUE', value=mock.ANY)
-            # mock_logger.reset_mock()
+#             with app.test_request_context("/test?filename=not_hello.txt"):
+#                 re = record.display_file_info
+#                 print("\n",re)
+#                 # assert record.display_file_info==[{'attribute_name': 'description','attribute_name_i18n': 'Description','attribute_type': 'file','attribute_value_mlt': [[[[{'Description': ''}]]]]},{'attribute_name': 'File','attribute_name_i18n': 'File','attribute_type': 'file','attribute_value_mlt': []}]
+#
+#             _, results = es_records
+#             result = results[2]
+#             record = result['record']
+#             record['hidden'] = True
+#
+#             with app.test_request_context("/test?filename=hello.txt"):
+#                 re = record.display_file_info
+#                 print("\n",re)
+#                 # assert record.display_file_info==[{'attribute_name': 'File','attribute_name_i18n': 'File','attribute_type': 'file','attribute_value_mlt': [[[[{'Opendate': '2022-09-07'}],[{'FileName': 'hello.txt'}],[{'Text URL': [[[{'Text URL': 'https://weko3.example.org/record/3/files/hello.txt'}]]]}],[{'Format': 'plain/text'}],[{'Size': [[[[{'Size': '146 KB'}]]]]}]]]]}]
+#
+#             mock_logger.assert_any_call(key='WEKO_COMMON_FOR_START')
+#             mock_logger.assert_any_call(
+#                 key='WEKO_COMMON_FOR_LOOP_ITERATION', count=mock.ANY, element=mock.ANY)
+#             mock_logger.assert_any_call(
+#                 key='WEKO_COMMON_IF_ENTER', branch=mock.ANY)
+#             mock_logger.assert_any_call(key='WEKO_COMMON_FOR_END')
+#             mock_logger.assert_any_call(
+#                 key='WEKO_COMMON_RETURN_VALUE', value=mock.ANY)
+#             mock_logger.reset_mock()
 
     #     def __remove_special_character_of_weko2(self, metadata):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoRecord::test__remove_special_character_of_weko2 -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
