@@ -22,22 +22,22 @@
   <div class="row">
     <div class="col-xs-12 col-sm-12 col-md-12">
       <h1>
-        <i class="fa fa-group"></i>
-        {{ _("Communities") }}
-        <small>{{ _("created and curated by %(x_name)s users", x_name=config.THEME_SITENAME) }}</small>
+        <i class="{{ lists['icon_code'] }}"></i>
+        {{ lists['title'] }}
+        <small>{{ lists['supplement'] }}</small>
       </h1>
 
     </div>
     <div class="col-sm-12 col-md-12">
       {%- set args = request.args.copy().to_dict() -%}
       <form method="GET" id="search_form" role="form">
-        {{ form.p(class_="form-control " + form.p.short_name, placeholder='Search communities', type='text') }}
+        {{ form.p(class_="form-control " + form.p.short_name, placeholder='Search ' ~ lists.title_en, type='text') }}
       </form>
       <br/>
       <div class="form-inline">
         <div class="form-group">
           <p class="help-block hidden-xs">
-            {{ _('Showing %(x_from)d to %(x_to)d out of %(x_total)d communities.', x_from=r_from, x_to=r_to, x_total=r_total) }}
+            {{ _('Showing %(x_from)d to %(x_to)d out of %(x_total)d ' ~ lists.title_en, x_from=r_from, x_to=r_to, x_total=r_total) }}
           </p>
         </div>
         <div class="form-group pull-right">

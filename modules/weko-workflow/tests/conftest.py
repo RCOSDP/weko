@@ -564,7 +564,7 @@ def base_app(instance_path, search_class, cache_config):
     # app_.register_blueprint(invenio_accounts_blueprint)
     # app_.register_blueprint(weko_theme_blueprint)
     # app_.register_blueprint(weko_admin_blueprint)
-    app_.register_blueprint(weko_workflow_blueprint)
+    # app_.register_blueprint(weko_workflow_blueprint)
 
     return app_
 

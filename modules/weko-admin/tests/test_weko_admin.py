@@ -29,6 +29,7 @@ from flask import _request_ctx_stack, Flask, current_app, url_for, session
 from invenio_i18n.ext import current_i18n
 
 from weko_admin import WekoAdmin
+
 from weko_admin.models import AdminLangSettings, SessionLifetime
 
 from tests.helpers import login, logout

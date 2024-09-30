@@ -235,6 +235,22 @@ $(document).ready(function () {
     var titleItem = $('#txt_title_item_pubdate').val();
     var titleJa = $('#txt_title_ja_item_pubdate').val();
     var titleEn = $('#txt_title_en_item_pubdate').val();
+
+    // Jsonのネストを返却する関数
+    function getJsonDepth(obj) {
+      let depth = 0;
+      if (obj && typeof obj === 'object') {
+        Object.keys(obj).forEach(function(key) {
+          let tmpDepth = getJsonDepth(obj[key]);
+          if (tmpDepth > depth) {
+            depth = tmpDepth;
+          }
+        });
+        depth++;
+      }
+      return depth;
+    }
+
     page_global.table_row_map['name'] = $('#itemtype_name').val();
     page_global.table_row_map['action'] = $('[name=radio_versionup]:checked').val();
 
@@ -883,6 +899,13 @@ $(document).ready(function () {
     page_global.meta_system = add_meta_system()
     page_global.table_row_map.form = page_global.table_row_map.form.concat(get_form_system())
     add_system_schema_property()
+
+    // JSONのネストがElasticSearchの上限を超えていないかチェック
+    // index.mapping.nested_objects.limitの値が10000のため、その値でチェック。
+    let tableRowMapDepth = getJsonDepth(page_global.table_row_map);
+    if (tableRowMapDepth > 10000) {
+      alert($("#msg_for_deep_nesting").val());
+    }
   }
 
   // add new meta table row
@@ -897,14 +920,14 @@ $(document).ready(function () {
         fixedProperties.push("cus_" + key);
       }
       let hasFixedProperties = false;
-  
+
       // src_render.meta_list から固定プロパティが存在するか確認
       if (src_render.meta_list) {
         $.each(src_render.meta_list, function(key, meta) {
           if (meta.is_fixed_field && fixedProperties.includes(meta.input_type)) {
             hasFixedProperties = true;
             return false; // ループを終了
-          } 
+          }
         });
       }
       // 固定プロパティが登録済み、または新規作成時の時は固定プロパティが選択できないようにする
@@ -1060,7 +1083,7 @@ $(document).ready(function () {
         let prop = properties[key];
         $('#select_input_type_' + row_id).prop('disabled', true);
         $('#select_input_type_' + row_id).val('cus_' + key).trigger('change');
-    
+
         let idTitle = `chk_item_${row_id.replace('item_','')}`;
         $(`#${idTitle}_0`).prop('checked', prop.fixed_option.required|| false).prop('disabled', prop.fixed_option.required !== undefined);
         $(`#${idTitle}_1`).prop('checked', prop.fixed_option.multiple|| false).prop('disabled', prop.fixed_option.multiple !== undefined);
@@ -1072,7 +1095,7 @@ $(document).ready(function () {
           $('#arr_size_' + row_id).removeClass('hide');
         }
       }
-    }, 100); 
+    }, 100);
   }
 
   $('#tbody_itemtype').on('click', '.sortable_up', function(){
@@ -2122,7 +2145,7 @@ $(document).ready(function () {
         }
       };
       if(options) {
-        $('#txt_title_item_pubdate').val(tmp_pubdate.title);    
+        $('#txt_title_item_pubdate').val(tmp_pubdate.title);
         $('#txt_title_ja_item_pubdate').val(tmp_pubdate.title_i18n.ja);
         $('#txt_title_en_item_pubdate').val(tmp_pubdate.title_i18n.en);
         $('#chk_pubdate_2').prop('checked', options.showlist);

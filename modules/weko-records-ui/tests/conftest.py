@@ -307,7 +307,7 @@ def base_app(instance_path):
     WekoIndexTreeREST(app_)
     WekoSchemaUI(app_)
     #Menu(app_)
-    app_.register_blueprint(weko_records_ui_blueprint)
+    # app_.register_blueprint(weko_records_ui_blueprint)
     app_.register_blueprint(invenio_files_rest_blueprint)  # invenio_files_rest
     app_.register_blueprint(invenio_oaiserver_blueprint)
     # rest_blueprint = create_blueprint(app_, WEKO_DEPOSIT_REST_ENDPOINTS)
@@ -1827,11 +1827,13 @@ def make_record(db, indexer, i, filepath, filename, mimetype):
         status=PIDStatus.REGISTERED,
     )
 
-    h1 = PIDVersioning(parent=parent)
-    h1.insert_child(child=recid)
-    h1.insert_child(child=recid_v1)
-    RecordDraft.link(recid, depid)
-    RecordDraft.link(recid_v1, depid_v1)
+    h1 = PIDNodeVersioning(pid=parent)
+    h1.insert_child(child_pid=recid)
+    h1.insert_child(child_pid=recid_v1)
+    PIDNodeDraft(pid=recid).insert_child(depid)
+    PIDNodeDraft(pid=recid_v1).insert_child(depid_v1)
+    # RecordDraft.link(recid, depid)
+    # RecordDraft.link(recid_v1, depid_v1)
 
     if i % 2 == 1:
         doi = PersistentIdentifier.create(
@@ -2631,11 +2633,13 @@ def make_record_v2(db, indexer, i, files, thumbnail=None):
         status=PIDStatus.REGISTERED,
     )
 
-    h1 = PIDVersioning(parent=parent)
-    h1.insert_child(child=recid)
-    h1.insert_child(child=recid_v1)
-    RecordDraft.link(recid, depid)
-    RecordDraft.link(recid_v1, depid_v1)
+    h1 = PIDNodeVersioning(pid=parent)
+    h1.insert_child(child_pid=recid)
+    h1.insert_child(child_pid=recid_v1)
+    PIDNodeDraft(pid=recid).insert_child(depid)
+    PIDNodeDraft(pid=recid_v1).insert_child(depid_v1)
+    # RecordDraft.link(recid, depid)
+    # RecordDraft.link(recid_v1, depid_v1)
 
     if i % 2 == 1:
         doi = PersistentIdentifier.create(
@@ -3730,11 +3734,13 @@ def make_record_restricted(db, indexer, i, filepath, filename, mimetype ,userId 
         status=PIDStatus.REGISTERED,
     )
 
-    h1 = PIDVersioning(parent=parent)
-    h1.insert_child(child=recid)
-    h1.insert_child(child=recid_v1)
-    RecordDraft.link(recid, depid)
-    RecordDraft.link(recid_v1, depid_v1)
+    h1 = PIDNodeVersioning(pid=parent)
+    h1.insert_child(child_pid=recid)
+    h1.insert_child(child_pid=recid_v1)
+    PIDNodeDraft(pid=recid).insert_child(depid)
+    PIDNodeDraft(pid=recid_v1).insert_child(depid_v1)
+    # RecordDraft.link(recid, depid)
+    # RecordDraft.link(recid_v1, depid_v1)
 
     if i % 2 == 1:
         doi = PersistentIdentifier.create(

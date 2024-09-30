@@ -30,8 +30,10 @@
 {%- block javascript %}
 {{ super() }}
 {{ webpack['admin_js_weko_admin_facet_search_js.js']}}
-{{ webpack['admin_js_statistics_reactjs_lib.js']}}
-{{ webpack['admin_js_react_bootstrap_js.js']}}
+<script src="/assets/js/weko_admin/react.production.min.js"></script>
+<script src="/assets/js/weko_admin/react-dom.production.min.js"></script>
+<script src="/assets/js/weko_admin/browser.min.js"></script>
+<script src="/assets/js/weko_admin/react-bootstrap.min.js"></script>
 <script type="text/javascript"
       src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
 {%- endblock javascript %}

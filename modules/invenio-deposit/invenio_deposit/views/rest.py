@@ -117,9 +117,6 @@ def create_blueprint(endpoints):
         if options.get('search_index'):
             search_class_kwargs['index'] = options['search_index']
 
-        if options.get('search_type'):
-            search_class_kwargs['doc_type'] = options['search_type']
-
         ctx = dict(
             read_permission_factory=obj_or_import_string(
                 options.get('read_permission_factory_imp')

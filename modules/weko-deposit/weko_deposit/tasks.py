@@ -437,7 +437,8 @@ def update_items_by_authorInfo(user_id, target, origin_pkid_list=[],
                 "control_number"
             ],
             "size": data_size,
-            "from": data_from
+            "from": data_from,
+            "track_total_hit": True
         }
         search = RecordsSearch(
             index=current_app.config['INDEXER_DEFAULT_INDEX'],). \
@@ -486,7 +487,7 @@ def update_items_by_authorInfo(user_id, target, origin_pkid_list=[],
                 dep.update_author_link(d['author_link'])
             weko_logger(key='WEKO_COMMON_FOR_END')
 
-        data_total = search['hits']['total']
+        data_total = search['hits']['total']['value']
         if data_total > data_size + data_from:
             weko_logger(key='WEKO_COMMON_IF_ENTER',
                         branch=f"data_total > {data_size + data_from}")
@@ -552,7 +553,7 @@ def update_items_by_authorInfo(user_id, target, origin_pkid_list=[],
         "full_name": {
             "ids_key": "nameIdentifiers",
             "id_scheme_key": "nameIdentifierScheme",
-            "id_key": "nameIdentifier",
+            "id_key": "nameIdentifier",                                                                                     
             "id_uri_key": "nameIdentifierURI",
             "names_key": "names",
             "name_key": "name",
@@ -699,7 +700,6 @@ def update_db_es_data(origin_pkid_list, origin_id_list):
                 }
                 indexer.client.update(
                     index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
-                    doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
                     id=h.get("_id"),
                     body=body
                 )

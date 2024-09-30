@@ -9,8 +9,11 @@
 """Event processor tests."""
 
 import logging
-from datetime import datetime
-from unittest.mock import patch
+from datetime import datetime, timezone, timedelta
+from unittest.mock import patch, MagicMock
+from dateutil import parser
+from time import mktime
+from pytz import utc
 
 import pytest
 from tests.conftest import _create_file_download_event
@@ -429,3 +432,185 @@ def test_failing_processors(app, es, event_queues, caplog):
     assert get_queue_size("stats-file-download") == 0
     assert search_obj.index("events-stats-file-download").count() == 3
     assert search_obj.index("events-stats-file-download-2018-01").count() == 3
+
+
+def test_events_indexer_actionsiter(app, mock_event_queue, caplog):
+    def preprocessor_1(msg):
+        msg['preprocessed_1'] = True
+        return msg
+
+    def preprocessor_2(msg):
+        if msg.get('filter_out'):
+            return None
+        if msg.get('raise_exception'):
+            raise Exception("Test exception")
+        msg['preprocessed_2'] = True
+        return msg
+
+    indexer_with_window = EventsIndexer(
+        mock_event_queue,
+        preprocessors=[preprocessor_1, preprocessor_2],
+        double_click_window=10
+    )
+
+    indexer_without_window = EventsIndexer(
+        mock_event_queue,
+        preprocessors=[preprocessor_1, preprocessor_2],
+        double_click_window=0
+    )
+
+    mock_messages = [
+        {"timestamp": "2023-09-13T10:00:00", "event_type": "file-download", "file_id": "123", "user_id": "user1", "unique_id": "unique1"},
+        {"timestamp": "2023-09-13T10:00:05", "event_type": "file-download", "file_id": "123", "user_id": "user2", "filter_out": True, "unique_id": "unique2"},
+        {"timestamp": "2023-09-13T10:00:10", "event_type": "file-download", "file_id": "124", "user_id": "user3", "unique_id": "unique3"},
+        {"timestamp": "2023-09-13T10:00:15", "event_type": "file-download", "file_id": "125", "user_id": "user4", "unique_id": "unique4", "raise_exception": True}
+    ]
+    mock_event_queue.consume.return_value = mock_messages
+
+    with patch('invenio_stats.processors.datetime') as mock_datetime, \
+         patch('invenio_stats.processors.current_app') as mock_app, \
+         patch('invenio_stats.processors.mktime') as mock_mktime, \
+         patch('invenio_stats.processors.utc') as mock_utc, \
+         patch('invenio_stats.processors.StatsEvents.save') as mock_db_save:
+
+        mock_datetime.now.return_value = datetime(2023, 9, 13, 10, 1, 0, tzinfo=timezone.utc)
+        mock_mktime.return_value = 1234567890.0
+        mock_utc.localize.return_value = datetime(2023, 9, 13, 10, 0, 0, tzinfo=timezone.utc)
+
+        # Test with STATS_WEKO_DB_BACKUP_EVENTS = False
+        mock_app.config = {'STATS_WEKO_DB_BACKUP_EVENTS': False}
+        actions_with_window = list(indexer_with_window.actionsiter())
+        actions_without_window = list(indexer_without_window.actionsiter())
+
+        # Verify that StatsEvents.save was not called
+        mock_db_save.assert_not_called()
+
+        # Test with STATS_WEKO_DB_BACKUP_EVENTS = True
+        mock_app.config = {'STATS_WEKO_DB_BACKUP_EVENTS': True}
+        actions_with_backup = list(indexer_with_window.actionsiter())
+
+        # Verify that StatsEvents.save was called
+        mock_db_save.assert_called()
+
+    # Common assertions
+    # Check if the correct number of actions were generated
+    assert len(actions_with_window) == 2, "Expected 2 actions"
+
+    # Verify preprocessor execution
+    assert 'preprocessed_1' in actions_with_window[0]['_source']
+    assert 'preprocessed_2' in actions_with_window[0]['_source']
+    assert actions_with_window[1]['_source'].get('preprocessed_2') == True
+
+    # Check if filtered messages are skipped
+    assert not any(action['_source']['unique_id'] == 'unique2' for action in actions_with_window), "Message with 'filter_out' should be skipped"
+
+    # Verify timestamp handling
+    assert actions_with_window[0]['_source']['timestamp'] == "2023-09-13T10:00:00"
+    assert actions_with_window[0]['_source']['updated_timestamp'] == "2023-09-13T10:01:00+00:00"
+
+    # Check action properties
+    for action in actions_with_window:
+        assert action['_op_type'] == 'index', "Operation type should be 'index'"
+        assert action['_index'].endswith('file-download'), "Index should be related to 'file-download'"
+        assert 'file_id' in action['_source'], "Source should contain 'file_id'"
+        assert action['_source']['event_type'] == 'file-download', "Event type should match the routing key"
+
+    # Test empty queue
+    mock_event_queue.consume.return_value = []
+    assert list(indexer_with_window.actionsiter()) == [], "Empty queue should return no actions"
+
+    # Verify that actions are the same with and without database backup
+    assert actions_with_window == actions_with_backup, "Database backup should not affect action generation"
+
+    print("All assertions passed. EventsIndexer actionsiter functionality verified.")
+
+
+def test_events_indexer_run(app, es):
+    """
+    Test the EventsIndexer run functionality,
+    ensuring correct indexing and processing of events for different event types.
+    """
+
+    # Skip database operation
+    with patch.dict(app.config, {'STATS_WEKO_DB_BACKUP_EVENTS': False}):
+        es_client = es
+        double_click_window = 30
+
+        event_types = ['celery-task', 'item-create', 'top-view', 'record-view', 'file-download', 'file-preview', 'search']
+
+        for et_index, event_type in enumerate(event_types):
+            # Create separate event queue for each event_type
+            mock_events = []
+            routing_key = f"stats-{event_type}"
+            base_time = datetime(2023, 1 + et_index, 1, 12, 0, 0)
+
+            for i in range(10):
+                event = {
+                    "timestamp": (base_time + timedelta(seconds=i*10)).replace(microsecond=0).replace(tzinfo=None).isoformat(),
+                    "event_type": event_type,
+                    "file_id": f"file_{event_type}",
+                    "user_id": f"user_{event_type}",
+                    "visitor_id": f"visitor_{event_type}",
+                    "unique_id": f"unique_{event_type}",
+                }
+                mock_events.append(event)
+
+            # Create separate mock_event_queue for each event_type
+            type_specific_mock_queue = MagicMock()
+            type_specific_mock_queue.consume.return_value = mock_events
+            type_specific_mock_queue.routing_key = routing_key
+
+            # Initialize EventsIndexer
+            indexer = EventsIndexer(type_specific_mock_queue, double_click_window=double_click_window, client=es_client)
+
+            # Run the indexer
+            success, failed = indexer.run()
+
+            # Assert bulk indexing operation success
+            assert success == 10, f"{event_type}: Expected 10 documents to be indexed successfully, but {success} were indexed"
+            assert failed == 0, f"{event_type}: Expected no failed indexing operations, but {failed} failed"
+
+            # Refresh the index
+            es_client.indices.refresh(index=indexer.index)
+
+            # Check total document count in the index
+            total_docs = es_client.count(index=indexer.index)['count']
+            print(f"Total documents in {event_type} index {indexer.index}: {total_docs}")
+
+            # Assert document count (4 due to double click window setting)
+            assert total_docs == 4, f"Expected 4 documents due to double click window, but found {total_docs}"
+
+            # Check random documents
+            for i in range(10):
+                event = mock_events[i]
+                original_ts = parser.parse(event["timestamp"]).replace(tzinfo=None)
+
+                if double_click_window > 0:
+                    timestamp = mktime(utc.localize(original_ts).utctimetuple())
+                    processed_ts = datetime.fromtimestamp(
+                        timestamp // indexer.double_click_window * indexer.double_click_window
+                    )
+                else:
+                    processed_ts = original_ts
+
+                event_id = hash_id(processed_ts.isoformat(), event)
+
+                try:
+                    doc = es_client.get(index=indexer.index, id=event_id)
+                    print(f"{event_type} document {event_id} content: {doc}")
+
+                    # Assert document is indexed
+                    assert doc['found'] is True, f"{event_type}: Document {event_id} should be indexed"
+
+                    source = doc['_source']
+                    # Assert event_type matches
+                    assert source['event_type'] == event_type, f"{event_type}: Document {event_id} 'event_type' mismatch"
+
+                    # Verify other fields
+                    expected_fields = ['timestamp', 'file_id', 'visitor_id', 'unique_id', 'is_robot', 'unique_session_id', 'updated_timestamp']
+                    for field in expected_fields:
+                        assert field in source, f"{event_type}: Document {event_id} should contain '{field}' field"
+
+                except Exception as e:
+                    pytest.fail(f"{event_type}: Error checking document {event_id}: {str(e)}")
+

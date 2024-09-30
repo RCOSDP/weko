@@ -149,6 +149,8 @@ def base_app(instance_path):
             'S': 'Standard',
             'A': 'Archive',
         },
+        APP_THEME='default',  
+        THEME_ICONS={},   
         CACHE_REDIS_URL='redis://redis:6379/0',
         CACHE_REDIS_DB='0',
         CACHE_REDIS_HOST="redis",
@@ -532,7 +534,16 @@ def i18n_app(app):
         app.extensions['invenio-oauth2server'] = 1
         app.extensions['invenio-queues'] = 1
         yield app
-
+@pytest.yield_fixture()
+def client(app):
+    """make a test client.
+    Args:
+        app (Flask): flask app.
+    Yields:
+        FlaskClient: test client
+    """
+    with app.test_client() as client:
+        yield client
 
 @pytest.yield_fixture()
 def client_rest(app):

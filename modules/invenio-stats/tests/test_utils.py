@@ -28,7 +28,6 @@ from invenio_stats.utils import (
     get_start_end_date,
     agg_bucket_sort,
     parse_bucket_response,
-    # get_doctype,
     is_valid_access,
     QueryFileReportsHelper,
     QuerySearchReportHelper,
@@ -128,7 +127,7 @@ def test_agg_bucket_sort(app):
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_utils.py::test_parse_bucket_response -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
 def test_parse_bucket_response(app):
     _raw_res = {'buckets': [{'key': 'test_value'}], 'field': 'test_name'}
-    
+
     res = parse_bucket_response(_raw_res, {})
     assert res=={'test_name': 'test_value'}
 
@@ -143,7 +142,7 @@ def test_is_valid_access(app):
     with app.app_context():
         res = is_valid_access()
         assert res==True
-        
+
         with patch("invenio_stats.utils.get_remote_addr", return_value='0.0.0.0'):
             app.config['STATS_EXCLUDED_ADDRS'] = ['0.0.0.0']
             res = is_valid_access()
@@ -262,22 +261,22 @@ def test_query_file_reports_helper(app, event_queues, aggregated_file_download_e
             'get-file-download-per-user-report': None,
             'get-file-preview-per-user-report': None},
             _data_list)
-        assert _data_list=={} 
+        assert _data_list=={}
         QueryFileReportsHelper.Calculation(_res, _data_list)
         assert _data_list=={
             1: {'cur_user_id': 1, 'total_download': 2, 'total_preview': 5},
             2: {'cur_user_id': 2, 'total_download': 3},
             3: {'cur_user_id': 3, 'total_download': 4},
             4: {'cur_user_id': 4, 'total_preview': 1}}
-        
+
 
         # get_file_stats_report
-        res = QueryFileReportsHelper.get_file_stats_report(event='file_downlaod', year=2022, month=10)   
-        assert res=={'all': [], 'all_groups': [], 'date': '2022-10', 'open_access': []} 
+        res = QueryFileReportsHelper.get_file_stats_report(event='file_downlaod', year=2022, month=10)
+        assert res=={'all': [], 'all_groups': [], 'date': '2022-10', 'open_access': []}
         res = QueryFileReportsHelper.get_file_stats_report(event='file_preview', year=2022, month=10)
-        assert res=={'all': [], 'all_groups': [], 'date': '2022-10', 'open_access': []} 
-        res = QueryFileReportsHelper.get_file_stats_report(event='billing_file_download', year=2022, month=10) 
-        assert res=={'all': [], 'all_groups': [], 'date': '2022-10', 'open_access': []} 
+        assert res=={'all': [], 'all_groups': [], 'date': '2022-10', 'open_access': []}
+        res = QueryFileReportsHelper.get_file_stats_report(event='billing_file_download', year=2022, month=10)
+        assert res=={'all': [], 'all_groups': [], 'date': '2022-10', 'open_access': []}
 
         # get_file_per_using_report
         res = QueryFileReportsHelper.get_file_per_using_report(year=2022, month=10)
@@ -285,9 +284,9 @@ def test_query_file_reports_helper(app, event_queues, aggregated_file_download_e
 
         # get
         res = QueryFileReportsHelper.get(year=2022, month=10, event='file_download')
-        assert res=={'all': [], 'all_groups': [], 'date': '2022-10', 'open_access': []} 
+        assert res=={'all': [], 'all_groups': [], 'date': '2022-10', 'open_access': []}
         res = QueryFileReportsHelper.get(year=2022, month=10, event='billing_file_download')
-        assert res=={'all': [], 'all_groups': [], 'date': '2022-10', 'open_access': []} 
+        assert res=={'all': [], 'all_groups': [], 'date': '2022-10', 'open_access': []}
         res = QueryFileReportsHelper.get(year=2022, month=10, event='file_using_per_user')
         assert res=={'all': {}, 'date': '2022-10'}
         res = QueryFileReportsHelper.get(year=2022, month=10, event='test')
@@ -297,9 +296,9 @@ def test_query_file_reports_helper_error(app):
     with app.app_context():
         # get
         res = QueryFileReportsHelper.get(year=2022, month=10, event='file_download')
-        assert res=={'all': [], 'all_groups': [], 'date': '2022-10', 'open_access': []} 
+        assert res=={'all': [], 'all_groups': [], 'date': '2022-10', 'open_access': []}
         res = QueryFileReportsHelper.get(year=2022, month=10, event='billing_file_download')
-        assert res=={'all': [], 'all_groups': [], 'date': '2022-10', 'open_access': []} 
+        assert res=={'all': [], 'all_groups': [], 'date': '2022-10', 'open_access': []}
         res = QueryFileReportsHelper.get(year=2022, month=10, event='file_using_per_user')
         assert res=={'all': {}, 'date': '2022-10'}
         res = QueryFileReportsHelper.get(year=2022, month=10, event='test')
@@ -901,26 +900,17 @@ def test_StatsCliUtil(app, db):
         StatsEvents(
             index='stats-file-download',
             source_id='1',
-            type='file-download',
-            source=''
+            source={'event_type': 'file-download'}
         )
     ]
     _return_agg = [
         StatsAggregation(
             index='test_index_agg',
             source_id='1',
-            type='file-download-agg',
-            source=''
+            source={'event_type': 'file-download-agg'}
         )
     ]
-    _return_bookmark = [
-        StatsBookmark(
-            index='test_index_bookmark',
-            source_id='1',
-            type='bookmark',
-            source=''
-        )
-    ]
+
     stats_cli = StatsCliUtil(
         StatsCliUtil.EVENTS_TYPE, _event_types, 202201
     )
@@ -955,7 +945,7 @@ def test_StatsCliUtil(app, db):
     )
     assert not stats_cli.delete_data(True)
 
-    
+
 
     stats_cli = StatsCliUtil(
         StatsCliUtil.EVENTS_TYPE, _empty_types, verbose=False
@@ -992,38 +982,35 @@ def test_StatsCliUtil(app, db):
     stats_cli = StatsCliUtil(
         StatsCliUtil.EVENTS_TYPE, _event_types, verbose=False
     )
-    assert not stats_cli.restore_data(True)
+    assert not stats_cli.restore_data()
 
-    with pytest.raises(TypeError) as e:
-        stats_cli = StatsCliUtil(
-            StatsCliUtil.EVENTS_TYPE, _empty_types, verbose=False
-        )
-        assert not stats_cli.restore_data(True)
+    stats_cli = StatsCliUtil(
+        StatsCliUtil.EVENTS_TYPE, _empty_types, verbose=False
+    )
+    assert not stats_cli.restore_data()
 
     stats_cli = StatsCliUtil(
         StatsCliUtil.EVENTS_TYPE, _event_types, verbose=False
     )
-    assert not stats_cli.restore_data(False)
+    assert not stats_cli.restore_data()
 
     stats_cli = StatsCliUtil(
         StatsCliUtil.AGGREGATIONS_TYPE, _agg_types, verbose=False
     )
-    assert not stats_cli.restore_data(True)
+    assert not stats_cli.restore_data()
 
-    with pytest.raises(TypeError) as e:
-        stats_cli = StatsCliUtil(
-            StatsCliUtil.EVENTS_TYPE, _empty_types, verbose=True, start_date='2022-01-01', end_date='2022-01-03'
-        )
-        assert not stats_cli.restore_data(True)
+    stats_cli = StatsCliUtil(
+        StatsCliUtil.EVENTS_TYPE, _empty_types, verbose=True, start_date='2022-01-01', end_date='2022-01-03'
+    )
+    assert not stats_cli.restore_data()
 
     stats_cli = StatsCliUtil(
         StatsCliUtil.EVENTS_TYPE, None, verbose=True, start_date='2022-01-01', end_date='2022-01-03'
     )
-    assert not stats_cli.restore_data(True)
+    assert not stats_cli.restore_data()
 
-    with patch("invenio_stats.models.StatsEvents.get_all", return_value=_return_event):
-        with pytest.raises(Exception) as e:
-            stats_cli = StatsCliUtil(
-                StatsCliUtil.EVENTS_TYPE, None, verbose=True, start_date='2022-01-01', end_date='2022-01-03'
-            )
-            assert not stats_cli.restore_data(True)
+    with patch("invenio_stats.models.StatsEvents.get_by_index", return_value=_return_event):
+        stats_cli = StatsCliUtil(
+            StatsCliUtil.EVENTS_TYPE, _agg_types, verbose=True, start_date='2022-01-01', end_date='2022-01-03'
+        )
+        assert not stats_cli.restore_data()

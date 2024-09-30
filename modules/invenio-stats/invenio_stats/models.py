@@ -34,7 +34,6 @@ class _StataModelBase(Timestamp):
     id = db.Column(db.String(100), primary_key=True)
     source_id = db.Column(db.String(100))
     index = db.Column(db.String(100), nullable=False)
-    type = db.Column(db.String(50), nullable=False)
     source = db.Column(
         db.JSON()
         .with_variant(postgresql.JSONB(none_as_null=True), "postgresql",)
@@ -155,7 +154,7 @@ class _StataModelBase(Timestamp):
             uq_stats_key = cls.get_uq_key()
             stmt = insert(cls)
             db.session.execute(
-                clause=stmt.on_conflict_do_update(
+                stmt.on_conflict_do_update(
                     set_={'source': stmt.excluded.source},
                     constraint=uq_stats_key),
                 params=stats_data)

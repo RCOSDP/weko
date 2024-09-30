@@ -41,7 +41,7 @@
 
   <script src="{{ url_for('static', filename='js/weko_items_ui/item.autofill.js') }}" type="text/babel"></script>
   {{ webpack['js-dependencies.js']}}
-  {{ webpack['admin_js_react_bootstrap_js.js']}}
+  <script src="/assets/js/weko_admin/react-bootstrap.min.js"></script>
   {{ webpack['items_ui_js_feedback_maillist.js']}}
   {{ super() }}
   {{ webpack['deposit_js_js.js']}}

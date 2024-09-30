@@ -23,8 +23,7 @@
 import time
 from datetime import date, timedelta
 
-from elasticsearch.exceptions import NotFoundError
-from elasticsearch_dsl.query import QueryString, Range
+from invenio_search.engine import search, dsl
 from flask import current_app, request
 from flask_babel import gettext as _
 from flask_login import current_user
@@ -90,7 +89,7 @@ def get_weko_contents(getargs):
     ctx.update({
         "display_community": display_community
     })
-    
+
     return dict(
         community_id=community_id,
         detail_condition=detail_condition,
@@ -126,7 +125,7 @@ def get_design_layout(repository_id):
 
     Returns:
         _type_: page, render_widgets
-    """    
+    """
     if not repository_id:
         return None, False
 
@@ -271,7 +270,7 @@ class MainScreenInitDisplaySetting:
                 display_format = current_index.display_format
         if display_format == '2':
             display_number = 100
-        
+
         if not init_disp_index:
             # In case is not found the index
             # set main screen initial display to the default
@@ -302,14 +301,14 @@ class MainScreenInitDisplaySetting:
         query_range = {'publish_date': {'lte': 'now'}}
         result = []
         try:
-            search = RecordsSearch(
+            _search = RecordsSearch(
                 index=current_app.config['SEARCH_UI_SEARCH_INDEX'])
-            search = search.query(QueryString(query=query_string))
-            search = search.filter(Range(**query_range))
-            search = search.sort('-publish_date', '-_updated')
-            search_result = search.execute().to_dict()
+            _search = _search.query(dsl.query.QueryString(query=query_string))
+            _search = _search.filter(dsl.query.Range(**query_range))
+            _search = _search.sort('-publish_date', '-_updated')
+            search_result = _search.execute().to_dict()
             result = search_result.get('hits', {}).get('hits', [])
-        except NotFoundError as e:
+        except search.NotFoundError as e:
             current_app.logger.debug("Indexes do not exist yet: ", str(e))
         return result
 

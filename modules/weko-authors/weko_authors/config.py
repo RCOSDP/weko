@@ -19,8 +19,8 @@
 # MA 02111-1307, USA.
 
 """Configuration for weko-authors."""
-
-from invenio_stats.config import SEARCH_INDEX_PREFIX as index_prefix
+# from invenio_stats.config import SEARCH_INDEX_PREFIX as index_prefix
+import os
 from .rest import Authors
 
 WEKO_AUTHORS_LIST_SCHEME = ['e-Rad', 'NRID', 'ORCID', 'ISNI', 'VIAF', 'AID',
@@ -205,11 +205,9 @@ WEKO_AUTHORS_IMPORT_CACHE_KEY = 'author_import_cache'
 WEKO_AUTHORS_NUM_OF_PAGE = 25
 """Default number of author search results that display in one page."""
 
+from invenio_stats.config import SEARCH_INDEX_PREFIX as index_prefix
 WEKO_AUTHORS_ES_INDEX_NAME = "{}-authors".format(index_prefix)
-"""Elasticsearch index alias for author."""
-
-WEKO_AUTHORS_ES_DOC_TYPE = "author-v1.0.0"
-"""Elasticsearch document type for author."""
+"""Search engine index alias for author."""
 
 WEKO_AUTHORS_IMPORT_KEY = {
     'author_name': {

@@ -66,7 +66,7 @@ class WekoJSONSerializer(JSONSerializer):
 
     def preprocess_search_hit(self, pid, record_hit, links_factory=None,
                               **kwargs):
-        """Prepare a record hit from Elasticsearch for serialization."""
+        """Prepare a record hit from search engine for serialization."""
         result = super(WekoJSONSerializer, self).preprocess_search_hit(
             pid, record_hit, links_factory=links_factory, **kwargs
         )

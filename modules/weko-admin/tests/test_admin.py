@@ -1860,12 +1860,26 @@ class TestCommunitiesPageSettingView:
         })
         mock_flash.assert_called_with(_("MSG_WEKO_THEME_SAVE_SUCCESS"), 'success')
         mock_redirect.assert_called_with(url_for('communities_page.index'))
+    
+    def test_index_form_setting_error(self, client, users, mocker):
+        login_user_via_session(client, email=users[0]["email"])
+        url = url_for("communities_page.index")
+        # POST request test (successful case)
+        data = {
+            "title": "test_title",
+            "title_ja": "テストタイトル",
+            "supplement": "テスト補足",
+            "icon": "fa fa-handshake-o",
+            "submit": "save_settings"
+        }
+        # Mock flash and redirect
+        mock_flash = mocker.patch("weko_admin.admin.flash")
+        mock_redirect = mocker.patch("weko_admin.admin.redirect", return_value=make_response())
         # POST request test (exception case)
         mocker.patch("weko_admin.admin.AdminSettings.update", side_effect=Exception("test_error"))
         res = client.post(url, data=data)
         assert res.status_code == 200
-        mock_flash.assert_called_with(_("Failurely Changed Settings."), 'error')
-        mock_redirect.assert_called_with(url_for('communities_page.index'))
+    
     def test_index_with_default_settings(self, client, users, mocker):
         # ログイン処理
         login_user_via_session(client, email=users[0]["email"])

@@ -133,8 +133,8 @@ def _events_process(event_types=None, eager=False):
     '--force', '-f',
     is_flag=True,
     default=False,
-    help='Ignore Elasticsearch errors '
-         'when performing Elasticsearch index deletion.'
+    help='Ignore search engine errors '
+         'when performing search engine index deletion.'
 )
 @click.option(
     '--verbose', '-v',
@@ -148,11 +148,11 @@ def _events_process(event_types=None, eager=False):
     callback=abort_if_false,
     expose_value=False,
     prompt='Do you know that you are going to delete the event(s) index?',
-    help='Confirm deletion of the Elasticsearch index.'
+    help='Confirm deletion of the search engine index.'
 )
 @with_appcontext
 def _events_delete(event_types, start_date, end_date, force, verbose):
-    """Delete event index(es) on Elasticsearch.
+    """Delete event index(es) on search engine.
 
     EVENT_TYPES: The event types.
     (event type value: celery-task|file-download|file-preview|record-view|
@@ -189,8 +189,8 @@ def _events_delete(event_types, start_date, end_date, force, verbose):
     '--force', '-f',
     is_flag=True,
     default=False,
-    help='Ignore Elasticsearch errors '
-         'when performing Elasticsearch index restoration.'
+    help='Ignore search engine errors '
+         'when performing search engine index restoration.'
 )
 @click.option(
     '--verbose', '-v',
@@ -200,7 +200,7 @@ def _events_delete(event_types, start_date, end_date, force, verbose):
 )
 @with_appcontext
 def _events_restore(event_types, start_date, end_date, force, verbose):
-    """Restore event index(es) on Elasticsearch based on Database.
+    """Restore event index(es) on search engine based on Database.
 
     EVENT_TYPES: The event types.
     (event type value: celery-task|file-download|file-preview|record-view|
@@ -209,7 +209,7 @@ def _events_restore(event_types, start_date, end_date, force, verbose):
     if verbose:
         click.secho(
             'Start to restore Events data '
-            'from the Database to Elasticsearch...',
+            'from the Database to search engine...',
             fg='green'
         )
     stats_cli = StatsCliUtil(
@@ -298,7 +298,7 @@ def _aggregations_list_bookmarks(
     '--bookmark', '-b',
     is_flag=True,
     default=False,
-    help='Delete bookmark index on Elasticsearch.'
+    help='Delete bookmark index on search engine.'
 )
 @click.option(
     '--start-date',
@@ -316,8 +316,8 @@ def _aggregations_list_bookmarks(
     '--force', '-f',
     is_flag=True,
     default=False,
-    help='Ignore Elasticsearch errors '
-         'when performing Elasticsearch index deletion.'
+    help='Ignore search engine errors '
+         'when performing search engine index deletion.'
 )
 @click.option(
     '--verbose', '-v',
@@ -331,7 +331,7 @@ def _aggregations_list_bookmarks(
     callback=abort_if_false,
     expose_value=False,
     prompt='Do you know that you are going to delete the aggregation(s) index?',
-    help='Confirm deletion of the Elasticsearch index.'
+    help='Confirm deletion of the search engine index.'
 )
 @with_appcontext
 def _aggregations_delete_index(
@@ -339,7 +339,7 @@ def _aggregations_delete_index(
     bookmark=False, start_date=None, end_date=None,
     force=False, verbose=False
 ):
-    """Delete aggregation index (and bookmark index) on Elasticsearch.
+    """Delete aggregation index (and bookmark index) on search engine.
 
     AGGREGATION_TYPES: The aggregation types.
     (Aggregation type value: celery-task|file-download|file-preview|record-view|
@@ -362,12 +362,6 @@ def _aggregations_delete_index(
 @aggregations.command('restore')
 @aggregation_arg
 @click.option(
-    '--bookmark', '-b',
-    is_flag=True,
-    default=False,
-    help='Restore bookmark index on Elasticsearch.'
-)
-@click.option(
     '--start-date',
     default=None,
     callback=_verify_date,
@@ -383,8 +377,8 @@ def _aggregations_delete_index(
     '--force', '-f',
     is_flag=True,
     default=False,
-    help='Ignore Elasticsearch errors '
-         'when performing Elasticsearch index restoration.'
+    help='Ignore search engine errors '
+         'when performing search engine index restoration.'
 )
 @click.option(
     '--verbose', '-v',
@@ -395,10 +389,10 @@ def _aggregations_delete_index(
 @with_appcontext
 def _aggregations_restore(
     aggregation_types=None,
-    bookmark=False, start_date=None, end_date=None,
+    start_date=None, end_date=None,
     force=False, verbose=False
 ):
-    """Restore aggregation index (and bookmark index) on Elasticsearch.
+    """Restore aggregation index (and bookmark index) on search engine.
 
     AGGREGATION_TYPES: The aggregation types.
     (Aggregation type value: celery-task|file-download|file-preview|record-view|
@@ -407,14 +401,14 @@ def _aggregations_restore(
     if verbose:
         click.secho(
             'Start to restore Aggregation data '
-            'from the Database to Elasticsearch...',
+            'from the Database to search engine...',
             fg='green'
         )
     stats_cli = StatsCliUtil(
         StatsCliUtil.AGGREGATIONS_TYPE,
         aggregation_types, start_date, end_date, force, verbose
     )
-    stats_cli.restore_data(bookmark)
+    stats_cli.restore_data()
 
 
 @stats.group()

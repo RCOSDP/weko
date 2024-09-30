@@ -17,7 +17,7 @@ import json
 from os.path import dirname, exists, join
 import pytest
 from flask import Flask
-from flask_babelex import Babel
+from flask_babel import Babel
 from flask_celeryext import FlaskCeleryExt
 from flask.cli import ScriptInfo
 from flask_menu import Menu

@@ -3828,6 +3828,53 @@ def test_display_activity(client, users, db_register,mocker,redis_connect,withou
                                     res = client.post(url, query_string=input)
                                     mock_render_template.assert_called()
 
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_check_authority -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_check_authority(app,db,users,db_register,db_records):
+
+    error_msg = _('Authorization required')
+
+    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+        # user has admin role
+        with patch("weko_workflow.views.check_authority_by_admin", return_value=True):
+            result = check_authority(lambda action_id,activity_id:action_id+activity_id)(action_id=str(1),activity_id='A-00000001-10001')  
+            assert result == '1A-00000001-10001'
+            
+    with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
+        # user in deny
+        rs = {"allow":[],"deny":[]}
+        us = {"allow":[],"deny":[2]}
+        with patch("weko_workflow.views.WorkActivity.get_activity_action_role",return_value=(rs,us)):
+            result = check_authority(lambda action_id,activity_id:action_id+activity_id)(action_id=str(1),activity_id='A-00000001-10001')  
+            assert result.get_json(result)['code'] == 403
+            
+        # user in allow
+        rs = {"allow":[],"deny":[]}
+        us = {"allow":[1],"deny":[]}
+        with patch("weko_workflow.views.WorkActivity.get_activity_action_role",return_value=(rs,us)):
+            result = check_authority(lambda action_id,activity_id:action_id+activity_id)(action_id=str(1),activity_id='A-00000001-10001')  
+            assert result.get_json(result)['code'] == 403
+            
+        # role in deny
+        rs = {"allow":[],"deny":[1]}
+        us = {"allow":[1],"deny":[]}
+        with patch("weko_workflow.views.WorkActivity.get_activity_action_role",return_value=(rs,us)):
+            result = check_authority(lambda action_id,activity_id:action_id+activity_id)(action_id=str(1),activity_id='A-00000001-10001') 
+            assert result.get_json(result)['code'] == 403
+            
+        # role not in allow
+        rs = {"allow":[1],"deny":[]}
+        us = {"allow":[2],"deny":[]}
+        with patch("weko_workflow.views.WorkActivity.get_activity_action_role",return_value=(rs,us)):
+            result = check_authority(lambda action_id,activity_id:action_id+activity_id)(action_id=str(1),activity_id='A-00000001-10001') 
+            assert result.get_json(result)['code'] == 403
+        
+        # role not in allow
+        rs = {"allow":[3],"deny":[]}
+        us = {"allow":[2],"deny":[]}
+        with patch("weko_workflow.views.WorkActivity.get_activity_action_role",return_value=(rs,us)):
+            result = check_authority(lambda action_id,activity_id:action_id+activity_id)(action_id=str(1),activity_id='A-00000001-10001') 
+            assert result.get_json(result)['code'] == 403
+
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_check_authority_action -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_check_authority_action(app,db,users,db_register,db_records):
     # no authentiated
@@ -3857,7 +3904,7 @@ def test_check_authority_action(app,db,users,db_register,db_records):
             assert result == 0
             
         # role in deny
-        rs = {"allow":[],"deny":[3]}
+        rs = {"allow":[],"deny":['Contributor']}
         us = {"allow":[],"deny":[]}
         with patch("weko_workflow.views.WorkActivity.get_activity_action_role",return_value=(rs,us)):
             result = check_authority_action()
@@ -3879,7 +3926,7 @@ def test_check_authority_action(app,db,users,db_register,db_records):
             result = check_authority_action(activity_id=activity.activity_id)
             assert result == 0
             
-    rs = {"allow":[3], "deny":[]}
+    rs = {"allow":['Contributor'], "deny":[]}
     us = {"allow":[], "deny":[]}
     with patch("weko_workflow.views.WorkActivity.get_activity_action_role",return_value=(rs,us)):
         with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):

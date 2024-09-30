@@ -31,8 +31,10 @@
 {%- block javascript %}
   {{ super() }}
   {{ webpack['search-ui-js-import.js']}}
-  {{ webpack['admin_js_statistics_reactjs_lib.js']}}
-  {{ webpack['admin_js_react_bootstrap_js.js']}}
+  <script src="/assets/js/weko_admin/react.production.min.js"></script>
+  <script src="/assets/js/weko_admin/react-dom.production.min.js"></script>
+  <script src="/assets/js/weko_admin/browser.min.js"></script>
+  <script src="/assets/js/weko_admin/react-bootstrap.min.js"></script>
   <script src="/assets/node_modules/moment/min/moment.min.js"></script>
 {%- endblock javascript %}
 

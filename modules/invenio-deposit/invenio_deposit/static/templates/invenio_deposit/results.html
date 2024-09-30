@@ -5,7 +5,7 @@
   Invenio is free software; you can redistribute it and/or modify it
   under the terms of the MIT License; see LICENSE file for more details.
 -->
-<div ng-if="vm.invenioSearchResults.hits.total != 0">
+<div ng-if="vm.invenioSearchResults.hits.total.value != 0">
   <div class="list-group">
     <a class="list-group-item"
         ng-repeat="record in vm.invenioSearchResults.hits.hits track by $index"
@@ -30,7 +30,7 @@
     </a>
   </div>
 </div>
-<div ng-if="vm.invenioSearchResults.hits.total == 0">
+<div ng-if="vm.invenioSearchResults.hits.total.value == 0">
 <div class="list-group">
   <div class="list-group-item">
     <div align="center">
