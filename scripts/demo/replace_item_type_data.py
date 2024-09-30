@@ -127,7 +127,7 @@ def replace_item_type_data(render_old, render_new, item_key, sub_key, prop, opti
     _form_old = render_old['table_row_map']['form']
     _form_new = render_new['table_row_map']['form']
     replace_schema(_table_row_schema_old, _table_row_schema_new, item_key, sub_key, multi_flag)
-    #replace_schema(_schema_old, _schema_new, item_key, sub_key, False)
+    replace_schema(_schema_old, _schema_new, item_key, sub_key, False)
     for f in _form_old:
         if f.get("key") == item_key:
             _form_prop_old = f
@@ -151,7 +151,7 @@ def main():
               AND  updated <= :update_date
             ORDER BY version_id DESC;
             """.strip()
-        res = db.session.query(ItemType.id).filter(ItemType.id==40002).all()
+        res = db.session.query(ItemType.id).all()
         for _id in res:
             params = {
                 "item_type_id": _id,
