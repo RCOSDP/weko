@@ -93,7 +93,7 @@ def main():
               AND  updated < :update_date
             ORDER BY version_id DESC;
             """.strip()
-        res = db.session.query(ItemType.id).filter(ItemType.id==40002).all()
+        res = db.session.query(ItemType.id).all()
         for _id in res:
             params = {
                 "item_type_id": _id,
