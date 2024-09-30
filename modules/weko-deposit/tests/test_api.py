@@ -2703,7 +2703,7 @@ class TestWekoRecord:
     # TODO;
     #     def display_file_info(self):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoRecord::test_display_file_info -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
-    def test_display_file_info(self, app, es_records, es_records_2, es_records_3):
+    def test_display_file_info(self, app, es_records, es_records_4, es_records_3):
         with patch('weko_deposit.api.weko_logger') as mock_logger:
             record = WekoRecord({})
             with app.test_request_context():
@@ -2717,7 +2717,7 @@ class TestWekoRecord:
                 assert record.display_file_info == [{'attribute_name': 'File', 'attribute_name_i18n': 'File', 'attribute_type': 'file', 'attribute_value_mlt': [[[[{'Opendate': '2022-09-07'}], [
                     {'FileName': 'hello.txt'}], [{'Text URL': [[[{'Text URL': 'https://weko3.example.org/record/1/files/hello.txt'}]]]}], [{'Format': 'plain/text'}], [{'Size': [[[[{'Size': '146 KB'}]]]]}]]]]}]
 
-            _, results = es_records_2
+            _, results = es_records_4
             result = results[0]
             record = result['record']
             with app.test_request_context("/test?filename=hello.txt"):
