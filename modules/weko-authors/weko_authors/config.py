@@ -209,9 +209,6 @@ from invenio_stats.config import SEARCH_INDEX_PREFIX as index_prefix
 WEKO_AUTHORS_ES_INDEX_NAME = "{}-authors".format(index_prefix)
 """Search engine index alias for author."""
 
-WEKO_AUTHORS_ES_DOC_TYPE = "author-v1.0.0"
-"""Search engine document type for author."""
-
 WEKO_AUTHORS_IMPORT_KEY = {
     'author_name': {
         'contributorNames': ['contributorName', 'lang'],

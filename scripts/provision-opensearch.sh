@@ -200,9 +200,6 @@ cleanup_opensearch_centos7 () {
     # sphinxdoc-install-opensearch-cleanup-centos7-end
 }
 
-create_opensearch_user() {
-    curl -ku admin:${OPENSEARCH_INITIAL_ADMIN_PASSWORD} -XPUT https://localhost:9200/_plugins/_security/api/user/${INVENIO_OPENSEARCH_USER} -H 'Content-Type:application/json' -d '{"password":"'${INVENIO_OPENSEARCH_PASS}'","backend_roles":["admin"]}'
-}
 
 main () {
 
@@ -228,7 +225,6 @@ main () {
             check_environment_variables
             provision_opensearch_ubuntu14
             install_plugins
-            create_opensearch_user
             # settings_script
         else
             echo "[ERROR] Sorry, unsupported release ${os_release}."
@@ -240,7 +236,6 @@ main () {
             # provision_opensearch_centos7
             provision_opensearch_docker
             install_plugins
-            create_opensearch_user
             # settings_script
         else
             echo "[ERROR] Sorry, unsupported release ${os_release}."
@@ -249,7 +244,6 @@ main () {
     elif [ "$os_distribution" = "Docker" ]; then
         provision_opensearch_docker
         install_plugins
-        create_opensearch_user
         # settings_script
     else
         echo "[ERROR] Sorry, unsupported distribution ${os_distribution}."
