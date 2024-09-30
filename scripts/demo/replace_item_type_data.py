@@ -170,7 +170,7 @@ def main():
                             replace_item_type_data(item_type_old.render, item_type_new.render, _k1, "subitem_checkbox_item", checkbox, _option)
                         if "subitem_radio_item" in _prop_keys:
                             _option = get_option(item_type_old, _k1)
-                            replace_item_type_data(item_type_old.render, item_type_new.render, _k1, "subitem_radio_language", radiobutton, _option)
+                            replace_item_type_data(item_type_old.render, item_type_new.render, _k1, "subitem_radio_item", radiobutton, _option)
                         if "subitem_select_item" in _prop_keys:
                             _option = get_option(item_type_old, _k1)
                             replace_item_type_data(item_type_old.render, item_type_new.render, _k1, "subitem_select_item", listbox, _option)
