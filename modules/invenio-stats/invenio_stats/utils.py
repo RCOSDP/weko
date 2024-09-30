@@ -1346,7 +1346,7 @@ class StatsCliUtil:
 
         :param bookmark: set True if delete bookmark
         """
-        for _index in self.__prepare_es_indexes(delete=True):
+        for _index in self.__prepare_es_indexes():
             self.__cli_delete_es_index(_index)
         if bookmark:
             if self.verbose:
@@ -1354,35 +1354,20 @@ class StatsCliUtil:
                     "Start deleting Bookmark data...",
                     fg="green"
                 )
-            _bookmark_index = f"{self._search_index_prefix}-stats-bookmarks"
-            self.__cli_delete_es_index(_bookmark_index)
+            StatsBookmark.query.delete()
+            db.session.commit()
 
-    def restore_data(self, bookmark: bool = False) -> None:
-        """Restore stats data.
-
-        :param bookmark: set True if restore bookmark
-        """
+    def restore_data(self) -> None:
+        """Restore stats data."""
         if self.cli_type == self.EVENTS_TYPE:
             data = self.__get_stats_data_from_db(StatsEvents)
         else:
             data = self.__get_stats_data_from_db(StatsAggregation)
         self.__cli_restore_es_data_from_db(data)
 
-        if bookmark:
-            if self.verbose:
-                click.secho(
-                    "Start to restore of Bookmark data "
-                    "from the Database to search engine...",
-                    fg="green"
-                )
-            bookmark_data = self.__get_stats_data_from_db(StatsBookmark,
-                                                          bookmark)
-            self.__cli_restore_es_data_from_db(bookmark_data)
 
-    def __prepare_es_indexes(
-        self, bookmark_index=False, delete=False
-    ):
-        """Prepare search engine index data.
+    def __prepare_es_indexes(self):
+        """Prepare ElasticSearch index data.
 
         :param bookmark_index: set True if prepare the index for the bookmark
         :param delete: set True if prepare the index for the delete data feature
@@ -1394,18 +1379,13 @@ class StatsCliUtil:
                 continue
             prefix = "stats-{}"
             search_type = prefix.format(_type)
-            # In case prepare indexes for the stats bookmark
-            if bookmark_index:
-                _index = f"{search_index_prefix}-stats-bookmarks"
-            # In case prepare indexes for the stats event
-            elif self.index_prefix:
+
+            if self.index_prefix:
                 _index = f"{search_index_prefix}-{self.index_prefix}-{search_type}"
             else:
                 _index = f"{search_index_prefix}-{search_type}"
-            if not delete:
-                yield _index
-            else:
-                yield _index
+
+            yield _index
 
     def __build_es_data(self, data_list: list) -> Generator:
         """Build search engine data.
@@ -1418,32 +1398,23 @@ class StatsCliUtil:
             es_data = {
                 "_id": data.source_id,
                 "_index": data.index,
-                "_type": data.type,
                 "_source": data.source
             }
             if self.cli_type == self.EVENTS_TYPE:
                 es_data["_op_type"] = "index"
             yield es_data
 
-    def __get_data_from_db_by_stats_type(self, data_model, bookmark):
+    def __get_data_from_db_by_stats_type(self, data_model):
         rtn_data = []
-        if not bookmark:
-            indexes = self.__prepare_es_indexes(bookmark)
-            for _index in indexes:
-                data = data_model.get_by_index(_index, self.start_date,
-                                               self.end_date)
-                if data:
-                    rtn_data.extend(data)
-        else:
-            for _type in self.stats_types:
-                data = data_model.get_by_source_id(_type)
-                if data:
-                    rtn_data.extend(data)
+        for _index in self.__prepare_es_indexes():
+            data = data_model.get_by_index(_index, self.start_date, self.end_date)
+            if data:
+                rtn_data.extend(data)
         return rtn_data
 
     def __get_stats_data_from_db(
         self,
-        data_model, bookmark: bool = False
+        data_model
     ) -> Generator:
         """Get bookmark data from database.
 
@@ -1452,8 +1423,7 @@ class StatsCliUtil:
         :return:
         """
         if self.stats_types:
-            rtn_data = self.__get_data_from_db_by_stats_type(data_model,
-                                                             bookmark)
+            rtn_data = self.__get_data_from_db_by_stats_type(data_model)
         else:
             rtn_data = data_model.get_all(self.start_date, self.end_date)
         return self.__build_es_data(rtn_data)

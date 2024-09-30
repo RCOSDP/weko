@@ -58,7 +58,7 @@ SEARCH_INDEX_PREFIX = os.environ.get("SEARCH_INDEX_PREFIX", "")
 
 STATS_EVENTS = {
     "celery-task": {
-        "templates": "invenio_stats.contrib.celery_task",
+        "templates": "invenio_stats.contrib.events",
         "signal": [
             "invenio_oaiharvester.signals.oaiharvest_finished",
             "weko_sitemap.signals.sitemap_finished"
@@ -78,25 +78,25 @@ STATS_EVENTS = {
         }
     },
     "file-download": {
-        "templates":"invenio_stats.contrib.file_download",
+        "templates":"invenio_stats.contrib.events",
         "signal": "invenio_files_rest.signals.file_downloaded",
         "event_builders": [
             "invenio_stats.contrib.event_builders.file_download_event_builder"
         ],
         "cls":EventsIndexer,
         "params": {
-                "preprocessors": [
-                    flag_restricted,
-                    flag_robots,
-                    anonymize_user,
-                    build_file_unique_id
-                ],
-                "double_click_window": 30,
-                "suffix": "%Y",
+            "preprocessors": [
+                flag_restricted,
+                flag_robots,
+                anonymize_user,
+                build_file_unique_id
+            ],
+            "double_click_window": 30,
+            "suffix": "%Y",
         },
     },
     "file-preview": {
-        "templates":"invenio_stats.contrib.file_preview",
+        "templates":"invenio_stats.contrib.events",
         "signal": "invenio_files_rest.signals.file_previewed",
         "event_builders": [
             "invenio_stats.contrib.event_builders.file_preview_event_builder"
@@ -114,7 +114,7 @@ STATS_EVENTS = {
         }
     },
     "item-create": {
-        "templates":"invenio_stats.contrib.item_create",
+        "templates":"invenio_stats.contrib.events",
         "signal": "weko_deposit.signals.item_created",
         "event_builders": [
             "invenio_stats.contrib.event_builders.item_create_event_builder"
@@ -131,25 +131,25 @@ STATS_EVENTS = {
         }
     },
     "record-view": {
-        "templates":"invenio_stats.contrib.record_view",
+        "templates":"invenio_stats.contrib.events",
         "signal": "invenio_records_ui.signals.record_viewed",
         "event_builders": [
             "invenio_stats.contrib.event_builders.record_view_event_builder"
         ],
         "cls":EventsIndexer,
         "params": {
-                "preprocessors": [
-                    flag_restricted,
-                    flag_robots,
-                    anonymize_user,
-                    build_record_unique_id
-                ],
-                "double_click_window": 30,
-                "suffix": "%Y",
+            "preprocessors": [
+                flag_restricted,
+                flag_robots,
+                anonymize_user,
+                build_record_unique_id
+            ],
+            "double_click_window": 30,
+            "suffix": "%Y",
         }
     },
     "top-view": {
-        "templates":"invenio_stats.contrib.top_view",
+        "templates":"invenio_stats.contrib.events",
         "signal": "weko_theme.views.top_viewed",
         "event_builders": [
             "invenio_stats.contrib.event_builders.top_view_event_builder"
@@ -167,7 +167,7 @@ STATS_EVENTS = {
         }
     },
     "search": {
-        "templates":"invenio_stats.contrib.search",
+        "templates":"invenio_stats.contrib.events",
         "signal": "weko_search_ui.views.searched",
         "event_builders": [
             "invenio_stats.contrib.event_builders.search_event_builder"
@@ -210,7 +210,7 @@ STATS_EXCLUDED_ADDRS = []
 """Fill IP Addresses which will be excluded from stats in `[]`"""
 STATS_AGGREGATIONS = {
     "celery-task-agg": {
-        "templates": "invenio_stats.contrib.aggregations.aggr_celery_task",
+        "templates": "invenio_stats.contrib.aggregations",
         "cls":StatAggregator,
         "name": "celery-task-agg",
         "params": {
@@ -240,7 +240,7 @@ STATS_AGGREGATIONS = {
         }
     },
     "search-agg": {
-        "templates": "invenio_stats.contrib.aggregations.aggr_search",
+        "templates": "invenio_stats.contrib.aggregations",
         "cls":StatAggregator,
         "name": "search-agg",
         "params": {
@@ -267,7 +267,7 @@ STATS_AGGREGATIONS = {
         }
     },
     "file-download-agg": {
-        "templates":"invenio_stats.contrib.aggregations.aggr_file_download",
+        "templates":"invenio_stats.contrib.aggregations",
         "cls":StatAggregator,
         "name": "file-download-agg",
         "params": {
@@ -307,7 +307,7 @@ STATS_AGGREGATIONS = {
         }
     },
     "file-preview-agg": {
-        "templates": "invenio_stats.contrib.aggregations.aggr_file_preview",
+        "templates": "invenio_stats.contrib.aggregations",
         "cls":StatAggregator,
         "name": "file-preview-agg",
         "params": {
@@ -345,7 +345,7 @@ STATS_AGGREGATIONS = {
         }
     },
     "item-create-agg": {
-        "templates": "invenio_stats.contrib.aggregations.aggr_item_create",
+        "templates": "invenio_stats.contrib.aggregations",
         "cls":StatAggregator,
         "name": "item-create-agg",
         "params": {
@@ -373,7 +373,7 @@ STATS_AGGREGATIONS = {
         }
     },
     "record-view-agg": {
-        "templates": "invenio_stats.contrib.aggregations.aggr_record_view",
+        "templates": "invenio_stats.contrib.aggregations",
         "cls":StatAggregator,
         "name": "record-view-agg",
         "params": {
@@ -405,7 +405,7 @@ STATS_AGGREGATIONS = {
         }
     },
     "top-view-agg": {
-        "templates": "invenio_stats.contrib.aggregations.aggr_top_view",
+        "templates": "invenio_stats.contrib.aggregations",
         "cls":StatAggregator,
         "name": "top-view-agg",
         "params": {
@@ -916,13 +916,13 @@ STATS_QUERIES = {
                             "field": "@group_field",
                             "size": "@agg_size",
                             "order": {
-                                "my_sum": "desc" 
+                                "my_sum": "desc"
                             }
                         },
                         "aggs": {
                             "my_sum": {
                                 "sum": {
-                                    "field": "@count_field" 
+                                    "field": "@count_field"
                                 }
                             }
                         }
