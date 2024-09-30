@@ -686,6 +686,7 @@ class WekoIndexer(RecordIndexer):
         """
         self.get_es_index()
         es_data = self.__build_bulk_es_data(updated_data)
+        print(es_data)
         if es_data:
             weko_logger(key='WEKO_COMMON_IF_ENTER',
                         branch='es_data is not None')
@@ -1150,6 +1151,7 @@ class WekoDeposit(Deposit):
         )
         data['_buckets'] = {'deposit': str(bucket.id)}
 
+        print( '_deposit' in data)
         # save user_name & display name.
         if current_user and current_user.is_authenticated:
             weko_logger(key='WEKO_COMMON_IF_ENTER',
@@ -1163,6 +1165,7 @@ class WekoDeposit(Deposit):
                     'displayname': user._displayname if user else '',
                     'email': current_user.email
                 }
+        print( '_deposit' in data)
 
         if recid:
             weko_logger(key='WEKO_COMMON_IF_ENTER',
