@@ -2649,7 +2649,7 @@ class WekoDeposit(Deposit):
         # if this item has been deleted
         if pid.status == PIDStatus.DELETED:
             weko_logger(key='WEKO_COMMON_IF_ENTER',
-                        branch=f"{pid.status} == {PIDStatus.DELETED}")
+                        branch=f"pid.status == {PIDStatus.DELETED}")
             # attempt to delete index on es
             try:
                 self.indexer.delete(self)
@@ -2676,7 +2676,7 @@ class WekoDeposit(Deposit):
         item_id = self.id
         if author_link:
             weko_logger(key='WEKO_COMMON_IF_ENTER',
-                        branch='author_link is not empty')
+                        branch="author_link is not empty")
             author_link_info = {
                 "id": item_id,
                 "author_link": author_link
@@ -2699,7 +2699,7 @@ class WekoDeposit(Deposit):
         mail_list = FeedbackMailList.get_mail_list_by_item_id(item_id)
         if mail_list:
             weko_logger(key='WEKO_COMMON_IF_ENTER',
-                        branch='mail_list is not empty')
+                        branch="mail_list is not empty")
             feedback_mail = {
                 "id": item_id,
                 "mail_list": mail_list
@@ -2944,6 +2944,7 @@ class WekoRecord(Record):
         weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=obj)
         return obj
 
+    # TODO:
     @property
     def hide_file(self):
         """Whether the file property is hidden.
@@ -3363,6 +3364,7 @@ class WekoRecord(Record):
         weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=items)
         return items
 
+    # TODO:
     @property
     def display_file_info(self):
         """Display file information.
@@ -4276,6 +4278,7 @@ class _FormatSysCreator:
         weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=rtn_value)
         return rtn_value
 
+    # TODO:
     def _format_creator_on_creator_popup(self, creators: Union[dict, list],
                                          des_creator: Union[
                                              dict, list]) -> NoReturn:
