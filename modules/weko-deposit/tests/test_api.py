@@ -45,6 +45,7 @@ from invenio_accounts.testutils import login_user_via_session
 from invenio_accounts.models import User
 from invenio_files_rest.models import Bucket, Location, ObjectVersion, FileInstance
 from invenio_pidrelations.serializers.utils import serialize_relations
+from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_pidstore.errors import PIDInvalidAction
 from invenio_records.errors import MissingModelError
@@ -382,6 +383,11 @@ class TestWekoIndexer:
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoIndexer::test_get_pid_by_es_scroll -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test_get_pid_by_es_scroll(self, es_records):
         with patch('weko_deposit.api.weko_logger') as mock_logger:
+            # TODO テスト通す
+            indexer = WekoIndexer()
+            ret = indexer.get_pid_by_es_scroll(None)
+            assert ret is None
+
             indexer, records = es_records
             ret = indexer.get_pid_by_es_scroll(1)
             assert isinstance(next(ret), list)
@@ -474,6 +480,11 @@ class TestWekoIndexer:
             res.append(records[1]['record'])
             res.append(records[2]['record'])
             indexer.bulk_update(res)
+            # TODO テスト通す
+            # es_data is None
+            with patch('weko_deposit.api.__build_bulk_es_data') as mock_bulk:
+                mock_bulk.return_value = None
+                indexer.bulk_update(res)
 
             with patch("weko_deposit.api.bulk", return_value=(0, ["test_error1", "test_error2"])):
                 indexer.bulk_update(res)
@@ -485,6 +496,7 @@ class TestWekoIndexer:
                 key='WEKO_COMMON_IF_ENTER', branch=mock.ANY)
             mock_logger.assert_any_call(key='WEKO_COMMON_FOR_END')
             mock_logger.reset_mock()
+
 
 
 # class WekoDeposit(Deposit):
@@ -554,6 +566,12 @@ class TestWekoDeposit():
                 key='WEKO_COMMON_IF_ENTER', branch=mock.ANY)
             mock_logger.assert_any_call(key='WEKO_COMMON_FOR_END')
             mock_logger.reset_mock()
+            # TODO テスト作成
+            if '$schema' in dep:
+                del dep['$schema']
+            ret = dep.merge_with_published()
+            assert isinstance(ret, RecordRevision) == True
+
 
     # def _patch(diff_result, destination, in_place=False):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test__patch -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
@@ -837,6 +855,14 @@ class TestWekoDeposit():
                 mock_logger.assert_any_call(
                     key='WEKO_COMMON_RETURN_VALUE', value=mock.ANY)
                 mock_logger.reset_mock()
+            # TODO テスト通してprint内容確認
+            # data.get('_deposit'): is None
+            with app.test_request_context():
+                deposit = WekoDeposit.create({})
+                if '_deposit' in deposit:
+                    del deposit['$schema']
+                
+
 
     # def update(self, *args, **kwargs):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_update -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
@@ -901,6 +927,7 @@ class TestWekoDeposit():
     def test_delete(sel, app, db, location, es_records_1):
         with patch('weko_deposit.api.weko_logger') as mock_logger:
             indexer, records = es_records_1
+            # case 1
             record = records[0]
             deposit = record['deposit']
             es = Elasticsearch(
@@ -913,6 +940,7 @@ class TestWekoDeposit():
             assert ret2 == {'error': {'root_cause': [{'type': 'resource_not_found_exception', 'reason': 'Document not found [test-weko-item-v1.0.0]/[item-v1.0.0]/[{}]'.format(
                 deposit.id)}], 'type': 'resource_not_found_exception', 'reason': 'Document not found [test-weko-item-v1.0.0]/[item-v1.0.0]/[{}]'.format(deposit.id)}, 'status': 404}
 
+            # case 2
             record = records[1]
             deposit = record['deposit']
             es = Elasticsearch(
@@ -932,6 +960,23 @@ class TestWekoDeposit():
                 key='WEKO_COMMON_RETURN_VALUE', value=mock.ANY)
             mock_logger.reset_mock()
 
+            # TODO テスト通す
+            # recid.status == PIDStatus.RESERVED is false
+            record = records[0]
+            deposit = record['deposit']
+            recid = PersistentIdentifier.get('recid', str(deposit.id))
+            recid.status = 'A'
+            db.session.commit()
+            es = Elasticsearch(
+                "http://{}:9200".format(app.config["SEARCH_ELASTIC_HOSTS"]))
+            ret = es.get_source(index=app.config['INDEXER_DEFAULT_INDEX'],
+                                doc_type=app.config['INDEXER_DEFAULT_DOC_TYPE'], id=deposit.id)
+            deposit.delete()
+            ret2 = es.get_source(index=app.config['INDEXER_DEFAULT_INDEX'],
+                                 doc_type=app.config['INDEXER_DEFAULT_DOC_TYPE'], id=deposit.id, ignore=[404])
+            assert ret2 == {'error': {'root_cause': [{'type': 'resource_not_found_exception', 'reason': 'Document not found [test-weko-item-v1.0.0]/[item-v1.0.0]/[{}]'.format(
+                deposit.id)}], 'type': 'resource_not_found_exception', 'reason': 'Document not found [test-weko-item-v1.0.0]/[item-v1.0.0]/[{}]'.format(deposit.id)}, 'status': 404}
+
     # def commit(self, *args, **kwargs):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_commit -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test_commit(sel, app, db, location, db_index, db_activity, db_itemtype, bucket):
@@ -944,11 +989,18 @@ class TestWekoDeposit():
                 deposit.commit()
                 assert deposit['_deposit']['id'] == "1"
                 assert 'draft' == deposit.status
-                # assert 2 == deposit.revision_id
+                assert 2 == deposit.revision_id
 
                 mock_logger.assert_any_call(
                     key='WEKO_COMMON_IF_ENTER', branch=mock.ANY)
                 mock_logger.reset_mock()
+
+                # TODO テスト通す
+                # deposit_bucket is None
+                with patch("weko_deposit.api.Bucket.query.get", return_value=None):
+                    deposit = WekoDeposit.create({})
+                    deposit.commit()
+                    assert deposit['_deposit']['id'] == "2"
 
                 # exist feedback_mail_list
                 deposit = WekoDeposit.create({})
