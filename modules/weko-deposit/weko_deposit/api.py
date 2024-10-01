@@ -3189,6 +3189,11 @@ class WekoRecord(Record):
             weko_logger(key='WEKO_COMMON_IF_ENTER',
                         branch='title_metadata is not empty')
             attribute_value = title_metadata.get('attribute_value_mlt')
+            print(999)
+            print(attribute_value)
+            print(999)
+            print(999)
+            print(888)
             if isinstance(attribute_value, list):
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
                             branch=f"{attribute_value} is list")
@@ -3202,10 +3207,20 @@ class WekoRecord(Record):
                         weko_logger(key='WEKO_COMMON_IF_ENTER',
                                     branch=f'{attribute.get(title_key)} is not empty')
                         tmp['title'] = attribute.get(title_key)
+                    print(3333)
+                    print(attribute)
+                    print(language_key)
+                    print(attribute.get(language_key))
+                    print(999)
                     if attribute.get(language_key):
                         weko_logger(key='WEKO_COMMON_IF_ENTER',
                                     branch=f'{attribute.get(language_key)} is not empty')
                         tmp['language'] = attribute.get(language_key)
+                    print(44444)
+                    print(tmp)
+                    print(language_key)
+                    print(tmp.get('title'))
+                    print(999)
                     if tmp.get('title'):
                         weko_logger(key='WEKO_COMMON_IF_ENTER',
                                     branch=f"{tmp.get('title')} is not empty")
@@ -4099,7 +4114,6 @@ class _FormatSysCreator:
                 None.
 
             """
-
             weko_logger(key='WEKO_COMMON_FOR_START')
             for i, creator in enumerate(affiliation_data):
                 weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
@@ -4145,6 +4159,7 @@ class _FormatSysCreator:
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
                                 branch=f"key in 'WEKO_DEPOSIT_SYS_CREATOR_KEY'")
                     format_affiliation(value)
+
                 else:
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
                                 branch=f"key not in 'WEKO_DEPOSIT_SYS_CREATOR_KEY'")
@@ -4152,6 +4167,7 @@ class _FormatSysCreator:
                                                     creator_list,
                                                     creator_list_temp)
             weko_logger(key='WEKO_COMMON_FOR_END')
+
             if creator_list_temp:
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
                         branch='creator_list_temp is not empty')
@@ -4159,11 +4175,11 @@ class _FormatSysCreator:
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
                                 branch='language is not empty')
                     creator_list.append({language: creator_list_temp})
-                # else:
-                #     weko_logger(key='WEKO_COMMON_IF_ENTER',
-                #                 branch='language is empty')
-                #     creator_list.append(
-                #         {self.no_language_key: creator_list_temp})
+                else:
+                    weko_logger(key='WEKO_COMMON_IF_ENTER',
+                                branch='language is empty')
+                    creator_list.append(
+                        {self.no_language_key: creator_list_temp})
         else:
             weko_logger(key='WEKO_COMMON_IF_ENTER',
                         branch='creators is not dict')
@@ -4425,6 +4441,7 @@ class _FormatSysCreator:
             'affiliation_name_identifier']
         identifier_uri_key = WEKO_DEPOSIT_SYS_CREATOR_KEY[
             'affiliation_name_identifier_URI']
+
         identifier_schema = creator_data.get(identifier_schema_key, [])
         affiliation_name = creator_data.get(affiliation_name_key, [])
         identifier = creator_data.get(identifier_key, [])
@@ -5028,7 +5045,6 @@ class _FormatSysBibliographicInformation:
                         branch='page_end is not None')
             temp = page_end if page == '' else '-' + page_end
             page += temp if page_end else ''
-
         weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=page)
         return page
 
