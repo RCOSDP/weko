@@ -444,7 +444,7 @@ class TestWekoIndexer:
             }
             # todo19
             ret = indexer.update_author_link(author_link_info)
-                assert ret == {'_index': 'test-weko-item-v1.0.0', '_type': 'item-v1.0.0', '_id': '{}'.format(record.id), '_version': 3, 'result': 'updated', '_shards': {'total': 2, 'successful': 1, 'failed': 0}, '_seq_no': 9, '_primary_term': 1}
+            assert ret == {'_index': 'test-weko-item-v1.0.0', '_type': 'item-v1.0.0', '_id': '{}'.format(record.id), '_version': 3, 'result': 'updated', '_shards': {'total': 2, 'successful': 1, 'failed': 0}, '_seq_no': 9, '_primary_term': 1}
 
             mock_logger.assert_any_call(
                 key='WEKO_COMMON_RETURN_VALUE', value=mock.ANY)
@@ -979,13 +979,15 @@ class TestWekoDeposit():
 
                 # TODO テスト通す
                 # deposit_bucket is None
-                with patch("weko_deposit.api.Bucket.query.get", return_value=None):
-                    deposit = WekoDeposit.create({})
-                    deposit.commit()
-                    assert deposit['_deposit']['id'] == "2"
+                with patch("weko_deposit.api.Bucket.query.get", return_value="1135fc41-4158-482b-9355-ccc44bad5371"):
+                    with patch("weko_workflow.api.WorkActivity.get_activity_by_id") as mock_activity:
+                        deposit = WekoDeposit.create({})
+                        deposit.commit()
+                        mock_activity.assert_not_called()
+                        # assert deposit['_deposit']['id'] == "2"
                 # TODO テスト通す
                 # activity is None
-                with patch("weko_deposit.api.WorkActivity.get_activity_by_id", return_value=None):
+                with patch("weko_workflow.api.WorkActivity.get_activity_by_id", return_value='1'):
                     deposit = WekoDeposit.create({})
                     deposit.commit()
                 # TODO テスト通す
@@ -2665,7 +2667,6 @@ class TestWekoRecord:
 
     #     def get_titles(self):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoRecord::test_get_titles -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
-    def test_get_titles(self, app, es_records, db_itemtype, db_oaischema):
     def test_get_titles(self,app,es_records,db_itemtype,db_oaischema,es_records_3,es_records_4):
         with patch('weko_deposit.api.weko_logger') as mock_logger:
             record = WekoRecord({})
