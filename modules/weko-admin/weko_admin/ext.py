@@ -55,7 +55,7 @@ class WekoAdmin(object):
             access_table = conf['WEKO_ADMIN_ACCESS_TABLE']
             system_admin = conf['WEKO_ADMIN_PERMISSION_ROLE_SYSTEM']
             try:
-                roles = db.session.query(Role).join(userrole).filter_by(
+                roles = db.session.query(Role).join(userrole, userrole.c.role_id == Role.id).filter_by(
                     user_id=current_user.get_id()).all()
             except Exception as e:
                 current_app.logger.error(

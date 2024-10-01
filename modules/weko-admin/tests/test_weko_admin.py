@@ -29,9 +29,7 @@ from flask import _request_ctx_stack, Flask, current_app, url_for, session
 from invenio_i18n.ext import current_i18n
 
 from weko_admin import WekoAdmin
-from weko_admin.bundles import (
-    js,statistics_reactjs_lib,custom_report_js,search_management_js,react_bootstrap_js,stats_report_js,feedback_mail_js,log_analysis_js,date_picker_css,date_picker_js,css,weko_admin_quill_sknow_css,weko_admin_feedback_mail_css,admin_lte_js_dependecies,admin_lte_js,angular_js,weko_admin_site_info_js,weko_admin_site_info_css,weko_admin_ng_js_tree_js,weko_admin_restricted_access_js,weko_admin_facet_search_js
-)
+
 from weko_admin.models import AdminLangSettings, SessionLifetime
 
 from tests.helpers import login, logout
@@ -79,12 +77,12 @@ def test_role_has_access(app, users):
             with patch("weko_admin.ext.db.session.query", side_effect=Exception("test_error")):
                 result = admin.role_has_access()
                 assert result == False
-            
+
             login(client,users[0]["obj"])
             result = admin.role_has_access()
             assert result == True
             logout(client)
-            
+
             login(client,users[1]["obj"])
             result = admin.role_has_access()
             assert result == False
@@ -98,9 +96,9 @@ def test_is_accessible_to_role(app, db, users,mocker):
         assert current_app.extensions["admin"][0]._views[0].is_accessible.__name__ == "role_has_access"
         assert current_app.extensions["admin"][0]._views[0].is_visible.func.__name__ == "role_has_access"
         assert current_app.extensions["admin"][0]._views[0].is_visible.args[0] == "inclusionrequest"
-        
+
         res = client.get("/ping")
-        
+
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_weko_admin.py::test_set_default_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
 def test_set_default_language(app, db, users):
     admin = WekoAdmin(app)
@@ -115,7 +113,7 @@ def test_set_default_language(app, db, users):
     with app.test_client() as client:
         # registered_language is []
         client.post(url,data=data)
-        
+
         # registered_language is not []
         en = AdminLangSettings(
             lang_code="en",
@@ -127,12 +125,12 @@ def test_set_default_language(app, db, users):
         db.session.add(en)
         db.session.commit()
         client.post(url,data=data)
-        
+
         # selected_language in session
         with client.session_transaction() as session:
             session["selected_language"] = "en"
         client.post(url,data=data,headers={"Accept-Language":"ja"})
-        
+
         # path is /ping
         res = client.get("/ping")
     # ctx is exist, ctx has babel_locale
@@ -152,7 +150,7 @@ def test_make_session_permanent(app,db,users):
         # SessionLifetime is not None
         assert sl.lifetime == 60
         target_method()
-        
+
     # path is /ping
     with app.test_request_context("/ping"):
         target_method()

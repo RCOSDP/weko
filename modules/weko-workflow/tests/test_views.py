@@ -30,7 +30,7 @@ from mock import patch
 from sqlalchemy.orm.attributes import flag_modified
 
 from flask import Flask, json, jsonify, url_for, session, make_response, current_app
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 from invenio_db import db
 from sqlalchemy import func
 from sqlalchemy.exc import SQLAlchemyError
@@ -48,7 +48,7 @@ from weko_workflow.config import WEKO_WORKFLOW_TODO_TAB, WEKO_WORKFLOW_WAIT_TAB,
 from flask_security import login_user
 from invenio_accounts.testutils import login_user_via_session as login
 from weko_workflow.models import ActionStatusPolicy, ActionFeedbackMail, ActionJournal, ActionIdentifier, Activity, ActivityHistory, ActionStatus, Action, WorkFlow, FlowDefine, FlowAction,FlowActionRole, ActivityAction, GuestActivity
-from weko_workflow.views import unlock_activity, check_approval, get_feedback_maillist, save_activity, previous_action,_generate_download_url,check_authority_action
+from weko_workflow.views import unlock_activity, check_approval, get_feedback_maillist, save_activity, previous_action,_generate_download_url,check_authority_action,check_authority
 from marshmallow.exceptions import ValidationError
 from weko_records_ui.models import FileOnetimeDownload, FilePermission
 from weko_records.models import ItemMetadata, ItemReference
@@ -662,7 +662,7 @@ def test_save_activity_acl_users(client, users, users_index, status_code):
     input = {"activity_id":"A-20220921-00001","title":"test","shared_user_id":-1}
     with patch('weko_workflow.views.save_activity_data'):
         res = client.post(url, json=input)
-        assert res.status_code != 302 
+        assert res.status_code != 302
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_save_activity_acl_guestlogin -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_save_activity_acl_guestlogin(guest):
@@ -686,14 +686,14 @@ def test_save_activity_acl_guestlogin(guest):
 def test_save_activity(client, users, db_register, users_index, status_code):
     login(client=client, email=users[users_index]['email'])
     url = url_for('weko_workflow.save_activity')
-    
+
     input = {"activity_id":"A-20220921-00001","title":"test"}
     res = client.post(url, json=input)
     data = response_data(res)
     assert res.status_code== 400
     assert data["code"] == -1
     assert data["msg"] == "{'shared_user_id': ['Missing data for required field.']}"
-    
+
     input = {"activity_id":"A-20220921-00001","title":"test","shared_user_id":-1}
     with patch('weko_workflow.views.save_activity_data'):
         res = client.post(url, json=input)
@@ -713,7 +713,7 @@ def test_save_activity(client, users, db_register, users_index, status_code):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_save_activity_guestlogin -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_save_activity_guestlogin(guest):
     url = url_for('weko_workflow.save_activity')
-    
+
     input = {"activity_id":"A-20220921-00001","title":"test"}
     res = guest.post(url, json=input)
     data = response_data(res)
@@ -1353,7 +1353,7 @@ def test_next_action(client, db, users, db_register_fullaction, db_records, user
     assert q.activity_status == ActionStatusPolicy.ACTION_BEGIN
     assert q.action_id == 3
     assert q.action_status == None
-    assert q.action_order == 2    
+    assert q.action_order == 2
     q = PersistentIdentifier.query.filter(
         PersistentIdentifier.object_uuid==item_id2,
         PersistentIdentifier.object_type=='rec',
@@ -1542,7 +1542,7 @@ def test_next_action(client, db, users, db_register_fullaction, db_records, user
         assert data["msg"] == err_msg
         q = ActionJournal.query.filter(ActionJournal.activity_id=="2", ActionJournal.action_id==6).first()
         assert q.action_journal == {"issn":"test issn 1"}
-    
+
     # action: identifier grant
     update_activity_order("2",7,5,item_id2)
     q = ActivityAction.query.filter(ActivityAction.activity_id=="2", ActivityAction.action_id==7).first()
@@ -1940,7 +1940,7 @@ def test_next_action(client, db, users, db_register_fullaction, db_records, user
         assert len(q) == 0
     else:
         assert len(q) == 1
-    
+
     ## exist feedbackmail
     ### exist feedbackmail, exist maillist
     update_activity_order("2",4,6,item_id2)
@@ -2154,7 +2154,7 @@ def test_next_action_usage_application(client, db, users, db_register_usage_appl
     mock_signal = mocker.patch("weko_workflow.views.item_created.send")
     new_item = uuid.uuid4()
     mocker.patch("weko_workflow.views.handle_finish_workflow",return_value=new_item)
-    
+
     urls = []
     urls.append(url_for("weko_workflow.next_action",
                 activity_id="A-00000001-20001", action_id=3))
@@ -2166,7 +2166,7 @@ def test_next_action_usage_application(client, db, users, db_register_usage_appl
                 activity_id="A-00000001-20004", action_id=4))
     # update_activity_order("2",3,2)
     input = {
-        
+
     }
 
     for url in urls:
@@ -2518,17 +2518,17 @@ def test_is_user_locked(client,db_register, users):
     login(client=client, email=users[2]['email'])
     current_cache.delete("workflow_userlock_activity_5")
     url = url_for('weko_workflow.is_user_locked')
-    
+
     # not exist cache
     res = client.get(url)
     assert res.status_code == 200
     assert json.loads(res.data) == {"is_open": False, "activity_id": ""}
-    
+
     current_cache.set("workflow_userlock_activity_5","1")
     res = client.get(url)
     assert res.status_code == 200
     assert json.loads(res.data) == {"is_open": True, "activity_id": "1"}
-    
+
     current_cache.delete("workflow_userlock_activity_5")
 
 
@@ -2560,13 +2560,13 @@ def test_user_lock_activity(client,db_register2, users, mocker):
     assert res.status_code == 200
     assert json.loads(res.data) == {"code":200,"msg":"Success","err":"","locked_by_username":""}
     assert current_cache.get("workflow_userlock_activity_5") == "1"
-    
+
     # exist cache
     res = client.post(url)
     assert res.status_code == 200
     assert json.loads(res.data) == {"code":200,"msg":"","err":"Opened","locked_by_username":""}
     assert current_cache.get("workflow_userlock_activity_5") == "1"
-    
+
     current_cache.delete("workflow_userlock_activity_5")
 
 
@@ -2598,7 +2598,7 @@ def test_user_unlock_activity(client,users,db_register2,mocker):
     assert res.status_code == 200
     assert json.loads(res.data) == {"code": 200, "msg": "User Unlock Success"}
     assert current_cache.get("workflow_userlock_activity_5") == None
-    
+
     # is_opened is False
     data = json.dumps({"is_opened": False})
     res = client.post(url,data=data)
@@ -2715,7 +2715,7 @@ def test_lock_activity(client, users,db_register, mocker):
                 res = client.post(url, data=input)
                 assert res.status_code == 500
                 assert json.loads(res.data) == {"code": -1, "msg": "can not get user locked"}
-    
+
     # not exist action status is doing
     activity_action = ActivityAction.query.filter_by(
         activity_id="A-00000003-00000",
@@ -2740,7 +2740,7 @@ def test_lock_activity(client, users,db_register, mocker):
     activity_action.action_status="M"
     db.session.merge(activity_action)
     db.session.commit()
-    
+
     # not exist action_handler
     activity_action = ActivityAction.query.filter_by(
         activity_id="A-00000003-00000",
@@ -3671,7 +3671,7 @@ def test_display_activity(client, users, db_register,mocker,redis_connect,withou
                                         assert "itemlogin_id" not in session
                                         assert "activity_info" not in session
     current_cache.delete("workflow_userlock_activity_5")
-    
+
     #raise PIDDeletedError
     url = url_for('weko_workflow.display_activity', activity_id='A-00000001-10001')
     input = {}
@@ -3812,7 +3812,7 @@ def test_display_activity(client, users, db_register,mocker,redis_connect,withou
         id = 0
     mock_user = MagicMock()
     mock_user.id = 0
-    
+
     with patch('weko_workflow.views.get_activity_display_info',
                return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, None, \
                steps, temporary_comment, workflow_detail)):
@@ -3828,19 +3828,66 @@ def test_display_activity(client, users, db_register,mocker,redis_connect,withou
                                     res = client.post(url, query_string=input)
                                     mock_render_template.assert_called()
 
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_check_authority -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_check_authority(app,db,users,db_register,db_records):
+
+    error_msg = _('Authorization required')
+
+    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+        # user has admin role
+        with patch("weko_workflow.views.check_authority_by_admin", return_value=True):
+            result = check_authority(lambda action_id,activity_id:action_id+activity_id)(action_id=str(1),activity_id='A-00000001-10001')
+            assert result == '1A-00000001-10001'
+
+    with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
+        # user in deny
+        rs = {"allow":[],"deny":[]}
+        us = {"allow":[],"deny":[2]}
+        with patch("weko_workflow.views.WorkActivity.get_activity_action_role",return_value=(rs,us)):
+            result = check_authority(lambda action_id,activity_id:action_id+activity_id)(action_id=str(1),activity_id='A-00000001-10001')
+            assert result.get_json(result)['code'] == 403
+
+        # user in allow
+        rs = {"allow":[],"deny":[]}
+        us = {"allow":[1],"deny":[]}
+        with patch("weko_workflow.views.WorkActivity.get_activity_action_role",return_value=(rs,us)):
+            result = check_authority(lambda action_id,activity_id:action_id+activity_id)(action_id=str(1),activity_id='A-00000001-10001')
+            assert result.get_json(result)['code'] == 403
+
+        # role in deny
+        rs = {"allow":[],"deny":[1]}
+        us = {"allow":[1],"deny":[]}
+        with patch("weko_workflow.views.WorkActivity.get_activity_action_role",return_value=(rs,us)):
+            result = check_authority(lambda action_id,activity_id:action_id+activity_id)(action_id=str(1),activity_id='A-00000001-10001')
+            assert result.get_json(result)['code'] == 403
+
+        # role not in allow
+        rs = {"allow":[1],"deny":[]}
+        us = {"allow":[2],"deny":[]}
+        with patch("weko_workflow.views.WorkActivity.get_activity_action_role",return_value=(rs,us)):
+            result = check_authority(lambda action_id,activity_id:action_id+activity_id)(action_id=str(1),activity_id='A-00000001-10001')
+            assert result.get_json(result)['code'] == 403
+
+        # role not in allow
+        rs = {"allow":[3],"deny":[]}
+        us = {"allow":[2],"deny":[]}
+        with patch("weko_workflow.views.WorkActivity.get_activity_action_role",return_value=(rs,us)):
+            result = check_authority(lambda action_id,activity_id:action_id+activity_id)(action_id=str(1),activity_id='A-00000001-10001')
+            assert result.get_json(result)['code'] == 403
+
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_check_authority_action -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_check_authority_action(app,db,users,db_register,db_records):
     # no authentiated
     with app.test_request_context():
         result = check_authority_action()
         assert result == 1
-    
+
     with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
         # user has admin role
         with patch("weko_workflow.views.check_authority_by_admin", return_value=True):
             result = check_authority_action()
             assert result == 0
-            
+
     with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
         # user in deny
         rs = {"allow":[],"deny":[]}
@@ -3848,28 +3895,28 @@ def test_check_authority_action(app,db,users,db_register,db_records):
         with patch("weko_workflow.views.WorkActivity.get_activity_action_role",return_value=(rs,us)):
             result = check_authority_action()
             assert result == 1
-            
+
         # user in allow
         rs = {"allow":[],"deny":[]}
         us = {"allow":[2],"deny":[]}
         with patch("weko_workflow.views.WorkActivity.get_activity_action_role",return_value=(rs,us)):
             result = check_authority_action()
             assert result == 0
-            
+
         # role in deny
-        rs = {"allow":[],"deny":[3]}
+        rs = {"allow":[],"deny":['Contributor']}
         us = {"allow":[],"deny":[]}
         with patch("weko_workflow.views.WorkActivity.get_activity_action_role",return_value=(rs,us)):
             result = check_authority_action()
             assert result == 1
-            
+
         # role not in allow
         rs = {"allow":[1,2],"deny":[]}
         us = {"allow":[],"deny":[]}
         with patch("weko_workflow.views.WorkActivity.get_activity_action_role",return_value=(rs,us)):
             result = check_authority_action()
             assert result == 1
-            
+
     rs = {"allow":[], "deny":[]}
     us = {"allow":[], "deny":[]}
     with patch("weko_workflow.views.WorkActivity.get_activity_action_role",return_value=(rs,us)):
@@ -3878,8 +3925,8 @@ def test_check_authority_action(app,db,users,db_register,db_records):
             # cur_user == activity_login_user
             result = check_authority_action(activity_id=activity.activity_id)
             assert result == 0
-            
-    rs = {"allow":[3], "deny":[]}
+
+    rs = {"allow":['Contributor'], "deny":[]}
     us = {"allow":[], "deny":[]}
     with patch("weko_workflow.views.WorkActivity.get_activity_action_role",return_value=(rs,us)):
         with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
@@ -3892,7 +3939,7 @@ def test_check_authority_action(app,db,users,db_register,db_records):
             db.session.commit()
             result = check_authority_action(activity_id=activity.activity_id)
             assert result == 0
-            
+
             # activity.shared_user_id=cur_user
             item_metadata = ItemMetadata.query.filter_by(id=activity.item_id).one()
             item_metadata.json["shared_user_id"]=-1
@@ -3906,12 +3953,12 @@ def test_check_authority_action(app,db,users,db_register,db_records):
             activity.shared_user_id=-1
             db.session.merge(activity)
             db.session.commit()
-        
+
         with patch("flask_login.utils._get_user", return_value=users[7]["obj"]):
             # cur_user = action_handler
             result = check_authority_action(activity_id=activity.activity_id, action_id=3, contain_login_item_application=True, action_order=2)
             assert result == 0
-            
+
             current_app.config["WEKO_WORKFLOW_ENABLE_CONTRIBUTOR"]=False
             # do not meet all the conditions
             result = check_authority_action(activity_id=activity.activity_id, action_id=3, contain_login_item_application=False, action_order=2)

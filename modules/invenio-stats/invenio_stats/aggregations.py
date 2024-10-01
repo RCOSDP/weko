@@ -18,8 +18,9 @@ from flask import current_app
 from invenio_search import current_search_client
 from invenio_search.engine import dsl, search
 from invenio_search.utils import prefix_index
+from invenio_db import db
 
-from .models import StatsAggregation
+from .models import StatsAggregation, StatsBookmark
 from .utils import get_bucket_size
 from .bookmark import SUPPORTED_INTERVALS, BookmarkAPI, format_range_dt
 
@@ -141,7 +142,7 @@ class StatAggregator(object):
         self.query_modifiers = (
             query_modifiers if query_modifiers is not None else [filter_robots]
         )
-        self.bookmark_api = BookmarkAPI(self.client, self.name, self.interval)
+        self.bookmark_api = BookmarkAPI(self.name, self.interval)
         self.max_bucket_size = max_bucket_size
 
         self.bookmark_alias = prefix_index(f"stats-{event}-bookmark")
@@ -278,6 +279,7 @@ class StatAggregator(object):
                 aggregation_data[self.field] = aggregation["key"]
                 aggregation_data["count"] = aggregation["doc_count"]
                 aggregation_data["updated_timestamp"] = datetime.now(timezone.utc).isoformat()
+                aggregation_data['event_type'] = self.event
 
                 if self.metric_fields:
                     for f in self.metric_fields:
@@ -287,7 +289,7 @@ class StatAggregator(object):
                     if isinstance(source, str):
                         if source == 'root_file_id' and source not in doc:
                             if 'file_id' in doc:
-                                aggregation_data[destination] = doc[source]
+                                aggregation_data[destination] = doc['file_id']
                         else:
                             aggregation_data[destination] = doc.get(source, '')
                     else:
@@ -304,7 +306,7 @@ class StatAggregator(object):
                         .execute()
                     )
 
-                    if res.hits.total > 0:
+                    if res.hits.total.value > 0:
                         index_name = res.hits.hits[0]['_index']
 
                 rtn_data = {
@@ -321,9 +323,12 @@ class StatAggregator(object):
                 yield rtn_data
 
     def _upper_limit(self, end_date):
+        if end_date is not None and end_date.tzinfo is not None:
+            end_date = end_date.replace(tzinfo=None)
+
         return min(
-            end_date or datetime.max,  # ignore if `None`
-            datetime.now(timezone.utc),
+            end_date or datetime.max,
+            datetime.now().replace(tzinfo=None)
         )
 
     def run(self, start_date=None, end_date=None, update_bookmark=True, manual=False):
@@ -331,7 +336,6 @@ class StatAggregator(object):
         # If no events have been indexed there is nothing to aggregate
         if not dsl.Index(self.event_index, using=self.client).exists():
             return
-
         logger = get_task_logger(__name__)
         previous_bookmark = self.bookmark_api.get_bookmark()
         lower_limit = (
@@ -362,8 +366,8 @@ class StatAggregator(object):
             )
         if update_bookmark:
             self.bookmark_api.set_bookmark(
-                upper_limit.strftime(self.doc_id_suffix)
-                or datetime.now(timezone.utc).strftime(self.doc_id_suffix)
+                upper_limit.strftime("%Y-%m-%dT%H:%M:%S")
+                or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
             )
         return results
 
@@ -386,30 +390,27 @@ class StatAggregator(object):
         if range_args:
             aggs_query = aggs_query.filter("range", timestamp=range_args)
 
-        bookmarks_query = (
-            dsl.Search(
-                using=self.client,
-                index=self.bookmark_api.bookmark_index,
-            )
-            .filter("term", aggregation_type=self.name)
-            .sort({"date": {"order": "desc"}})
-        )
-
-        if range_args:
-            bookmarks_query = bookmarks_query.filter("range", date=range_args)
-
         def _delete_actions():
-            for query in (aggs_query, bookmarks_query):
-                affected_indices = set()
-                for doc in query.scan():
-                    affected_indices.add(doc.meta.index)
-                    yield {
-                        "_index": doc.meta.index,
-                        "_op_type": "delete",
-                        "_id": doc.meta.id,
-                    }
-                current_search_client.indices.flush(
-                    index=",".join(affected_indices), wait_if_ongoing=True
-                )
+            affected_indices = set()
+            for doc in aggs_query.scan():
+                affected_indices.add(doc.meta.index)
+                yield {
+                    "_index": doc.meta.index,
+                    "_op_type": "delete",
+                    "_id": doc.meta.id,
+                }
+            current_search_client.indices.flush(
+                index=",".join(affected_indices), wait_if_ongoing=True
+            )
+
+        bookmark_query = StatsBookmark.query.filter_by(source_id=self.name)
+
+        if start_date:
+            bookmark_query = bookmark_query.filter(StatsBookmark.date >= start_date)
+        if end_date:
+            bookmark_query = bookmark_query.filter(StatsBookmark.date <= end_date)
+
+        bookmark_query.delete(synchronize_session=False)
 
         search.helpers.bulk(self.client, _delete_actions(), refresh=True)
+        db.session.commit()

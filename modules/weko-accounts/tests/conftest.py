@@ -26,7 +26,7 @@ import tempfile
 
 import pytest
 from flask import Flask
-from flask_babelex import Babel
+from flask_babel import Babel
 from flask_menu import Menu
 from flask_mail import Mail
 from sqlalchemy_utils.functions import create_database, database_exists

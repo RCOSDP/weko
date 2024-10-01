@@ -29,9 +29,9 @@
 {%- endblock css %}
 
 {%- block javascript %}
-  <script src="{{ url_for('static', filename='js/weko_index_tree/inline.bundle.js') }}" defer></script>
-  <script src="{{ url_for('static', filename='js/weko_index_tree/polyfills.bundle.js') }}" defer></script>
-  <script src="{{ url_for('static', filename='js/weko_index_tree/main.bundle.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/weko_index_tree/inline.bundle.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/weko_index_tree/polyfills.bundle.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/weko_index_tree/main.bundle.js') }}"></script>
   {{ super() }}
   {{ webpack['index_tree_js_js.js']}}
 {%- endblock javascript %}

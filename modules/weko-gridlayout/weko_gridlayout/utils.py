@@ -791,7 +791,7 @@ def get_elasticsearch_result_by_date(start_date, end_date, query_with_publish_st
             query_with_publish_status, False)
         search_result = search_instance.execute()
         result = search_result.to_dict()
-    except search.exceptions.NotFoundError:
+    except search.NotFoundError:
         current_app.logger.debug('Indexes do not exist yet!')
 
     return result
@@ -866,7 +866,7 @@ def has_main_contents_widget(settings):
 
     Returns:
         _type_: _description_
-    """    
+    """
     if settings:
         for item in settings:
             if item.get('type') == config.WEKO_GRIDLAYOUT_MAIN_TYPE:

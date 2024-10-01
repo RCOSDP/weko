@@ -596,7 +596,7 @@ class ItemTypes(RecordBase):
             search = search.sort('-publish_date', '-_updated')
             search_result = search.execute().to_dict()
             result = search_result.get('hits', {}).get('hits', [])
-        except search.exceptions.NotFoundError as e:
+        except search.NotFoundError as e:
             current_app.logger.debug("Indexes do not exist yet: ", str(e))
         return result
 
@@ -701,7 +701,7 @@ class ItemTypes(RecordBase):
         with db.session.no_autoflush:
             query = ItemTypeName.query
             if not with_deleted:
-                query = query.join(ItemType).filter(
+                query = query.join(ItemType, ItemType.name_id == ItemTypeName.id).filter(
                     ItemType.is_deleted.is_(False))
             return query.order_by(ItemTypeName.id).all()
 
@@ -713,7 +713,7 @@ class ItemTypes(RecordBase):
         :returns: A list of :class:`ItemTypeName` joined w/ :class:`ItemType`.
         """
         with db.session.no_autoflush:
-            query = ItemTypeName.query.join(ItemType) \
+            query = ItemTypeName.query.join(ItemType, ItemType.name_id == ItemTypeName.id) \
                 .add_columns(ItemTypeName.name, ItemType.id,
                              ItemType.harvesting_type, ItemType.is_deleted,
                              ItemType.tag)
@@ -734,7 +734,7 @@ class ItemTypes(RecordBase):
         with db.session.no_autoflush:
             query = ItemTypeName.query
             if not with_deleted:
-                query = query.join(ItemType).filter(
+                query = query.join(ItemType, ItemType.id == ItemTypeName.id).filter(
                     ItemType.is_deleted.is_(False),
                     ItemType.harvesting_type.is_(harvesting_type)
                 )

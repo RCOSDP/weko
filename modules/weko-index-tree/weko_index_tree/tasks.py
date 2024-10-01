@@ -46,6 +46,7 @@ def update_oaiset_setting(index_info, data):
                     oaiset.search_pattern = 'path:"{}"'.format(data["id"])
                     #oaiset.search_pattern = '_oai.sets:"{}"'.format(spec)
                     oaiset.description = description
+                    oaiset.system_created = True
                     db.session.merge(oaiset)
                 else:
                     db.session.delete(oaiset)
@@ -54,7 +55,8 @@ def update_oaiset_setting(index_info, data):
                     id=data["id"],
                     spec=spec,
                     name=data["index_name"],
-                    description=description)
+                    description=description,
+                    system_created = True)
                 oaiset.search_pattern = 'path:"{}"'.format(data["id"])
                 #oaiset.search_pattern = '_oai.sets:"{}"'.format(spec)
                 db.session.add(oaiset)

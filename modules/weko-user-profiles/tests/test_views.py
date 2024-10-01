@@ -26,7 +26,6 @@
 from flask import url_for, json,make_response, current_app, g, jsonify
 from mock import patch
 from flask_breadcrumbs import current_breadcrumbs
-from flask._compat import text_type
 from flask.json import JSONEncoder as BaseEncoder
 from flask_security import url_for_security
 from flask_menu import current_menu
@@ -54,7 +53,7 @@ from tests.helpers import login, sign_up
 class TestJSONEncoder(BaseEncoder):
     def default(self, o):
         if isinstance(o, _LazyString):
-            return text_type(o)
+            return str(o)
 
         return BaseEncoder.default(self, o)
 

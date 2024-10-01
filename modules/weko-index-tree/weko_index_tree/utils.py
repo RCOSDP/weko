@@ -141,7 +141,7 @@ def get_tree_json(index_list, root_id):
         index_name = str(index_element.name).replace("&EMPTY&", "")
         index_name = Markup.escape(index_name)
         index_name = index_name.replace("\n", r"<br\>")
-        
+
         index_link_name = str(index_element.link_name).replace("&EMPTY&", "")
         index_link_name = index_link_name.replace("\n", r"<br\>")
 
@@ -473,7 +473,7 @@ def get_elasticsearch_records_data_by_indexes(index_ids, start_date, end_date):
         )
         search_result = search_instance.execute()
         result = search_result.to_dict()
-    except search.exceptions.NotFoundError:
+    except search.NotFoundError:
         current_app.logger.debug('Indexes do not exist yet!')
 
     return result
@@ -1032,7 +1032,7 @@ def get_editing_items_in_index(index_id, recursively=False):
 
 def save_index_trees_to_redis(tree, lang=None):
     """save inde_tree to redis for roles
-    
+
     """
     def default(o):
         if hasattr(o, "isoformat"):
@@ -1044,7 +1044,7 @@ def save_index_trees_to_redis(tree, lang=None):
         lang = current_i18n.language
     try:
         v = bytes(json.dumps(tree, default=default), encoding='utf-8')
-        
+
         redis.put("index_tree_view_" + os.environ.get('INVENIO_WEB_HOST_NAME') + "_" + lang,v)
     except ConnectionError:
         current_app.logger.error("Fail save index_tree to redis")

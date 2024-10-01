@@ -2561,7 +2561,7 @@ def _get_max_export_items():
         return non_user_max
 
     try:
-        roles = db.session.query(Role).join(userrole).filter_by(
+        roles = db.session.query(Role).join(userrole, Role.id == userrole.c.role_id).filter_by(
             user_id=current_user_id).all()
     except Exception:
         return current_app.config['WEKO_ITEMS_UI_DEFAULT_MAX_EXPORT_NUM']
@@ -2713,7 +2713,7 @@ def get_new_items_by_date(start_date: str, end_date: str, ranking=False) -> dict
                                                           ranking=ranking)
         search_result = search_instance.execute()
         result = search_result.to_dict()
-    except search.exceptions.NotFoundError as e:
+    except search.NotFoundError as e:
         current_app.logger.debug("Indexes do not exist yet: ", str(e))
 
     return result
@@ -3533,7 +3533,7 @@ class WekoQueryRankingHelper(QueryRankingHelper):
             all_query = query_class(**cfg)
             all_res = all_query.run(**params)
             cls.Calculation(all_res, result)
-        except search.exceptions.NotFoundError as e:
+        except search.NotFoundError as e:
             current_app.logger.debug(e)
         except Exception as e:
             current_app.logger.debug(e)

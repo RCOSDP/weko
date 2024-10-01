@@ -37,21 +37,21 @@ from mock import patch
 from click.testing import CliRunner
 from flask import Blueprint, Flask
 from flask_assets import assets
-from flask_babelex import Babel
+from flask_babel import Babel
 from flask_menu import Menu
 from invenio_access import InvenioAccess
 from invenio_access.models import ActionRoles, ActionUsers
 from invenio_accounts import InvenioAccounts
 from invenio_accounts.models import Role, User
 from invenio_accounts.testutils import create_test_user, login_user_via_session
-from invenio_accounts.views.settings import blueprint as invenio_accounts_blueprint
+# from invenio_accounts.views.settings import blueprint as invenio_accounts_blueprint
 from invenio_admin import InvenioAdmin
 from invenio_admin.views import blueprint as invenio_admin_blueprint
 from invenio_assets import InvenioAssets
-from invenio_assets.cli import collect, npm
+# from invenio_assets.cli import collect, npm
 from invenio_cache import InvenioCache
 from invenio_communities import InvenioCommunities
-from invenio_communities.views.ui import blueprint as invenio_communities_blueprint
+#from invenio_communities.views.ui import blueprint as invenio_communities_blueprint
 from invenio_db import InvenioDB
 from invenio_db import db as db_
 from invenio_deposit import InvenioDeposit
@@ -77,8 +77,8 @@ from celery.messaging import establish_connection
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore import InvenioPIDStore
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus, Redirect
-from invenio_pidrelations.contrib.versioning import PIDVersioning
-from invenio_pidrelations.contrib.records import RecordDraft
+from invenio_pidrelations.contrib.versioning import PIDNodeVersioning
+from invenio_pidrelations.contrib.draft import PIDNodeDraft
 from invenio_records import InvenioRecords
 from invenio_records_rest import InvenioRecordsREST
 from weko_redis.redis import RedisConnection
@@ -236,7 +236,7 @@ def base_app(instance_path):
         DEPOSIT_RECORDS_UI_ENDPOINTS=DEPOSIT_RECORDS_UI_ENDPOINTS,
         DEPOSIT_REST_ENDPOINTS=DEPOSIT_REST_ENDPOINTS,
         DEPOSIT_DEFAULT_STORAGE_CLASS=DEPOSIT_DEFAULT_STORAGE_CLASS,
-        
+
         WEKO_RECORDS_UI_LICENSE_DICT=WEKO_RECORDS_UI_LICENSE_DICT,
         INDEXER_DEFAULT_INDEX="{}-weko-item-v1.0.0".format(
             'test'
@@ -263,7 +263,7 @@ def base_app(instance_path):
         WEKO_SEARCH_REST_ENDPOINTS=WEKO_SEARCH_REST_ENDPOINTS,
         INDEXER_MQ_QUEUE = Queue("indexer", exchange=Exchange("indexer", type="direct"), routing_key="indexer",queue_arguments={"x-queue-type":"quorum"}),
     )
-    
+
     app_.config['WEKO_SEARCH_REST_ENDPOINTS']['recid']['search_index']='test-weko'
     app_.config['WEKO_ITEMS_UI_RANKING_DEFAULT_SETTINGS'] = {
     'is_show': True,
@@ -295,7 +295,7 @@ def base_app(instance_path):
     # InvenioOAIServer(app_)
 
     search = InvenioSearch(app_)
- 
+
     # WekoSchemaUI(app_)
     InvenioStats(app_)
 
@@ -540,7 +540,7 @@ def users(app, db):
         ds.add_role_to_user(originalroleuser, originalrole)
         ds.add_role_to_user(originalroleuser2, originalrole)
         ds.add_role_to_user(originalroleuser2, repoadmin_role)
-        
+
 
     return [
         {"email": contributor.email, "id": contributor.id, "obj": contributor},
@@ -850,44 +850,44 @@ def db_records(db,instance_path,users):
         index = Index.get_index_by_id(1)
         index.public_state = True
         index.harvest_public_state = True
-    
+
     index_metadata = {
             'id': 2,
             'parent': 0,
             'value': 'Index(public_state = True,harvest_public_state = False)',
         }
-    
+
     with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
         Indexes.create(0, index_metadata)
         index = Index.get_index_by_id(2)
         index.public_state = True
         index.harvest_public_state = False
-    
+
     index_metadata = {
             'id': 3,
             'parent': 0,
             'value': 'Index(public_state = False,harvest_public_state = True)',
     }
-    
+
     with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
         Indexes.create(0, index_metadata)
         index = Index.get_index_by_id(3)
         index.public_state = False
         index.harvest_public_state = True
-    
+
     index_metadata = {
             'id': 4,
             'parent': 0,
             'value': 'Index(public_state = False,harvest_public_state = False)',
     }
-    
+
     with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
         Indexes.create(0, index_metadata)
         index = Index.get_index_by_id(4)
         index.public_state = False
         index.harvest_public_state = False
 
- 
+
     yield result
 
 @pytest.fixture()
@@ -900,7 +900,7 @@ def db_records2(db,instance_path,users):
         for d in range(record_num):
             result.append(create_record(record_data[d], item_data[d]))
     db.session.commit()
- 
+
     yield result
 
 @pytest.fixture()
@@ -925,7 +925,7 @@ def db_records_file(app,db,instance_path,users):
     with db.session.begin_nested():
         depid, recid,parent,doi,record, item=create_record(record_data, item_data)
     db.session.commit()
-    
+
     return depid, recid,parent,doi,record, item
 
 @pytest.fixture()
@@ -1138,7 +1138,7 @@ def db_author(db):
         db.session.add(affiliation_prefix3)
         db.session.add(affiliation_prefix4)
         db.session.add(author1)
-    
+
     return {"author_prefix":[prefix1,prefix2,prefix3,prefix4,prefix5],"affiliation_prefix":[affiliation_prefix1,affiliation_prefix2,affiliation_prefix3,affiliation_prefix4],"author":[author1]}
 
 @pytest.fixture()
@@ -23186,7 +23186,7 @@ def make_record(db, indexer, i, files, thumbnail=None):
         status=PIDStatus.REGISTERED,
     )
 
-    h1 = PIDVersioning(parent=parent)
+    h1 = PIDNodeVersioning(parent=parent)
     h1.insert_child(child=recid)
     h1.insert_child(child=recid_v1)
     RecordDraft.link(recid, depid)

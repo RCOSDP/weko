@@ -344,7 +344,7 @@ class Group(db.Model):
         :param bool eager: Eagerly fetch group members.
         :returns: Query object.
         """
-        q1 = Group.query.join(Membership).filter_by(user_id=user.get_id())
+        q1 = Group.query.join(Membership, Group.id == Membership.id_group ).filter_by(user_id=user.get_id())
         if not with_pending:
             q1 = q1.filter_by(state=MembershipState.ACTIVE)
         if eager:
@@ -737,7 +737,7 @@ class Membership(db.Model):
         :param str q: Search string.
         :returns: Query object.
         """
-        query = query.join(User).filter(
+        query = query.join(User, Membership.user_id == User.id).filter(
             User.email.like('%{0}%'.format(q)),
         )
         return query
@@ -919,7 +919,7 @@ class GroupAdmin(db.Model):
         query = db.session.query(
             Group.id, func.count(GroupAdmin.id)
         ).join(
-            GroupAdmin
+            GroupAdmin, GroupAdmin.group_id == Group.id
         ).group_by(
             Group.id
         )

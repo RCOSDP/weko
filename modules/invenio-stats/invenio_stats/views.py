@@ -115,7 +115,7 @@ class StatsQueryResource(WekoQuery):
 
             except ValueError as e:
                 raise InvalidRequestInputError(e.args[0])
-            except search.exceptions.NotFoundError:
+            except search.NotFoundError:
                 # In case there is no index or value for the metric we return 0
                 result[query_name] = dict.fromkeys(query.metric_fields.keys(), 0)
 

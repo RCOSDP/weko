@@ -1121,7 +1121,7 @@ def check_authority(func):
             action_order=activity_detail.action_order
         )
         cur_user = current_user.get_id()
-        cur_role = db.session.query(Role).join(userrole).filter_by(
+        cur_role = db.session.query(Role).join(userrole, Role.id == userrole.c.role_id).filter_by(
             user_id=cur_user).all()
         error_msg = _('Authorization required')
         if users['deny'] and int(cur_user) in users['deny']:
@@ -1154,7 +1154,7 @@ def check_authority_action(activity_id='0', action_id=0,
     roles, users = work.get_activity_action_role(activity_id, action_id,
                                                  action_order)
     cur_user = current_user.get_id()
-    cur_role = db.session.query(Role).join(userrole).filter_by(
+    cur_role = db.session.query(Role).join(userrole, Role.id == userrole.c.role_id).filter_by(
         user_id=cur_user).all()
 
     # If action_user is set:
