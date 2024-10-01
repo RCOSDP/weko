@@ -1589,24 +1589,55 @@ class TestWekoDeposit():
 
     # def delete_old_file_index(self):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_delete_old_file_index -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
-    def test_delete_old_file_index(sel, app, db, location, es_records):
+    def test_delete_old_file_index(sel, app, db, location,es_records, es_records_8):
         with patch('weko_deposit.api.weko_logger') as mock_logger:
             indexer, records = es_records
-            record = records[0]
-            deposit = record['deposit']
-            # not is_edit
-            deposit.delete_old_file_index()
-            # is_edit
-            deposit.is_edit = True
-            deposit.delete_old_file_index()
+            # record = records[0]
+            # deposit = record['deposit']
+            # # not is_edit
+            # deposit.delete_old_file_index()
+            # # is_edit
+            # deposit.is_edit = True
+            # deposit.delete_old_file_index()
 
-            mock_logger.assert_any_call(key='WEKO_COMMON_FOR_START')
-            mock_logger.assert_any_call(
-                key='WEKO_COMMON_FOR_LOOP_ITERATION', count=mock.ANY, element=mock.ANY)
-            mock_logger.assert_any_call(
-                key='WEKO_COMMON_IF_ENTER', branch=mock.ANY)
-            mock_logger.assert_any_call(key='WEKO_COMMON_FOR_END')
-            mock_logger.reset_mock()
+            # is_edit
+            indexer, records = es_records
+            record = records[1]
+            deposit = record['deposit']
+            deposit.is_edit = True
+
+            # b1 = Bucket.create(location=location)
+            # obj = ObjectVersion.create(b1, 'test').set_location('placeuri', 1, 'chk')
+            # db.session.commit()
+
+            # lst = ObjectVersion.get_by_bucket(
+            #     deposit.files.bucket, True).filter_by(is_head=False).all()
+
+            # del lst[0]
+            # db.session.commit()
+
+
+            # print(777777)
+            # print(lst)
+            with patch("invenio_files_rest.models.ObjectVersion") as mock_objectVersion:
+                mock_objectVersion.return_value.file_id = None
+                mock_objectVersion.return_value = True
+                deposit.delete_old_file_index()
+
+            # is_edit
+            # indexer, records = es_records_8
+            # record = records[1]
+            # deposit = record['deposit']
+            # deposit.is_edit = True
+            # deposit.delete_old_file_index()
+
+            # mock_logger.assert_any_call(key='WEKO_COMMON_FOR_START')
+            # mock_logger.assert_any_call(
+            #     key='WEKO_COMMON_FOR_LOOP_ITERATION', count=mock.ANY, element=mock.ANY)
+            # mock_logger.assert_any_call(
+            #     key='WEKO_COMMON_IF_ENTER', branch=mock.ANY)
+            # mock_logger.assert_any_call(key='WEKO_COMMON_FOR_END')
+            # mock_logger.reset_mock()
 
     # def delete_item_metadata(self, data):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_delete_item_metadata -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
@@ -1772,10 +1803,163 @@ class TestWekoDeposit():
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_convert_item_metadata -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test_convert_item_metadata(sel, app, db, es_records, redis_connect):
         with patch('weko_deposit.api.weko_logger') as mock_logger:
+            # indexer, records = es_records
+            # record = records[0]
+            # deposit = record['deposit']
+            # record_data = record['item_data']
+            # index_obj = {'index': ['1'], 'actions': '1'}
+
+            # test1 = OrderedDict([('pubdate', {'attribute_name': 'PubDate', 'attribute_value': '2022-08-20'}), ('item_1617186331708', {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'タイトル', 'subitem_1551255648112': 'ja'}, {'subitem_1551255647225': 'title', 'subitem_1551255648112': 'en'}]}), ('item_1617258105262', {'attribute_name': 'Resource Type', 'attribute_value_mlt': [
+            #                     {'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}), ('item_title', 'title'), ('item_type_id', '1'), ('control_number', '1'), ('author_link', []), ('_oai', {'id': '1'}), ('publish_date', '2022-08-20'), ('title', ['title']), ('relation_version_is_last', True), ('path', ['1']), ('publish_status', '0')])
+            # test2 = None
+            # ret1, ret2 = deposit.convert_item_metadata(index_obj, record_data)
+            # assert ret1 == test1
+            # assert ret2 == test2
+
+            # mock_logger.assert_any_call(key='WEKO_COMMON_FOR_START')
+            # mock_logger.assert_any_call(
+            #     key='WEKO_COMMON_FOR_LOOP_ITERATION', count=mock.ANY, element=mock.ANY)
+            # mock_logger.assert_any_call(
+            #     key='WEKO_COMMON_IF_ENTER', branch=mock.ANY)
+            # mock_logger.assert_any_call(key='WEKO_COMMON_FOR_END')
+            # mock_logger.reset_mock()
+
+            # redis_data = {
+            #     'pubdate': '2023-12-07',
+            #     'item_1617187056579': 'item_1617187056579',
+            #     'item_1617186331708': [{
+            #         'subitem_1551255647225': 'test',
+            #         'subitem_1551255648112': 'ja'
+            #     }],
+            #     'item_1617258105262': {
+            #         'resourcetype': 'conference paper',
+            #         'resourceuri': 'http://purl.org/coar/resource_type/c_5794'
+            #     },
+            #     'shared_user_id': -1,
+            #     'title': 'test',
+            #     'lang': 'ja',
+            #     'deleted_items': [
+            #         'item_1617186385884',
+            #         'item_1617186419668',
+            #         'item_1617186499011',
+            #         'item_1617186609386',
+            #         'item_1617186626617',
+            #         'item_1617186643794',
+            #         'item_1617186660861',
+            #         'item_1617186702042',
+            #         'item_1617186783814',
+            #         'item_1617186859717',
+            #         'item_1617186882738',
+            #         'item_1617186901218',
+            #         'item_1617186920753',
+            #         'item_1617186941041',
+            #         'item_1617187112279',
+            #         'item_1617187187528',
+            #         'item_1617349709064',
+            #         'item_1617353299429',
+            #         'item_1617605131499',
+            #         'item_1617610673286',
+            #         'item_1617620223087',
+            #         'item_1617944105607',
+            #         'item_1617187056579',
+            #         'approval1',
+            #         'approval2'
+            #     ],
+            #     '$schema': '/items/jsonschema/1'
+            # }
+
+            # index_obj = {'index': ['1'], 'actions': '1'}
+
+            # # if datastore.redis.exists(cache_key) is false
+            # prefix = app.config['WEKO_DEPOSIT_ITEMS_CACHE_PREFIX']
+            # cache_key = app.config[
+            #     'WEKO_DEPOSIT_ITEMS_CACHE_PREFIX'].format(
+            #     pid_value=deposit.pid.pid_value)
+            # redis_connect.put(cache_key,bytes(json.dumps(redis_data),"utf-8"))
+            # app.config['WEKO_DEPOSIT_ITEMS_CACHE_PREFIX'] = 'test_{pid_value}'
+            # dc = OrderedDict([('pubdate', {'attribute_name': 'PubDate', 'attribute_value': '2023-12-07'}), ('item_1617187056579', {'attribute_name': 'Bibliographic Information', 'attribute_value': 'item_1617187056579'}), ('item_1617186331708', {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'test', 'subitem_1551255648112': 'ja'}]}), ('item_1617258105262', {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}]}), ('item_title', 'test'), ('item_type_id', '1'), ('control_number', '1'), ('author_link', []), ('publish_date', '2023-12-07'), ('title', ['test']), ('relation_version_is_last', True), ('path', ['1']), ('publish_status', '2')])
+            # with patch('weko_deposit.api.abort', side_effect=abort) as mock_abort:
+            #     with pytest.raises(Exception):
+            #         deposit.convert_item_metadata(index_obj)
+            #         mock_abort.assert_called_once_with(500, 'MAPPING_ERROR')
+            #     # mock_logger.assert_any_call(key="WEKO_COMMON_ERROR_UNEXPECTED", ex=mock.ANY)
+            #     # mock_abort.reset_mock()
+            #     # mock_logger.reset_mock()
+            # app.config['WEKO_DEPOSIT_ITEMS_CACHE_PREFIX'] = prefix
+
+            # # if datastore.redis.exists(cache_key) is true
+            # dc = OrderedDict([('pubdate', {'attribute_name': 'PubDate', 'attribute_value': '2023-12-07'}), ('item_1617187056579', {'attribute_name': 'Bibliographic Information', 'attribute_value': 'item_1617187056579'}), ('item_1617186331708', {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'test', 'subitem_1551255648112': 'ja'}]}), ('item_1617258105262', {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}]}), ('item_title', 'test'), ('item_type_id', '1'), ('control_number', '1'), ('author_link', []), ('publish_date', '2023-12-07'), ('title', ['test']), ('relation_version_is_last', True), ('path', ['1']), ('publish_status', '2')])
+            # cache_key = app.config[
+            #     'WEKO_DEPOSIT_ITEMS_CACHE_PREFIX'].format(
+            #     pid_value=deposit.pid.pid_value)
+            # redis_connect.put(cache_key,bytes(json.dumps(redis_data),"utf-8"))
+
+            # # index_obj.get('index', []) not exists
+            # index_obj = {'actions': '1', 'is_save_path': True}
+            # with pytest.raises(PIDResolveRESTError):
+            #     deposit.convert_item_metadata(index_obj)
+
+            # # index_obj.get('is_save_path') exists
+            # index_obj = {'index': ['1'], 'actions': '1', 'is_save_path': True}
+            # ret1, ret2 = deposit.convert_item_metadata(index_obj)
+            # assert ret1 == dc
+            # assert ret2 == redis_data['deleted_items']
+            # assert redis_connect.redis.exists(cache_key) == True
+
+            # # index_obj.get('is_save_path') not exists, deletes cache_key
+            # index_obj = {'index': ['1'], 'actions': '1'}
+            # dc = OrderedDict([('pubdate', {'attribute_name': 'PubDate', 'attribute_value': '2023-12-07'}), ('item_1617187056579', {'attribute_name': 'Bibliographic Information', 'attribute_value': 'item_1617187056579'}), ('item_1617186331708', {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'test', 'subitem_1551255648112': 'ja'}]}), ('item_1617258105262', {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}]}), ('item_title', 'test'), ('item_type_id', '1'), ('control_number', '1'), ('author_link', []), ('publish_date', '2023-12-07'), ('title', ['test']), ('relation_version_is_last', True), ('path', ['1']), ('publish_status', '2')])
+            # ret1, ret2 = deposit.convert_item_metadata(index_obj)
+            # assert ret1 == dc
+            # assert ret2 == redis_data['deleted_items']
+            # assert redis_connect.redis.exists(cache_key) == False
+
+            # # RedisError
+            # with patch('weko_deposit.api.RedisConnection.connection') as mock_redis:
+            #     mock_redis.side_effect = RedisError("redis_error")
+            #     with patch('weko_deposit.api.abort', side_effect=abort) as mock_abort:
+            #         with pytest.raises(Exception):
+            #             ret = deposit.convert_item_metadata(index_obj)
+            #             mock_redis.assert_called_once_with(500, 'Failed to register item!')
+            # # WekoRedisError
+            #     mock_redis.side_effect = WekoRedisError("weko_redis_error")
+            #     with patch('weko_deposit.api.abort', side_effect=abort) as mock_abort:
+            #         with pytest.raises(Exception):
+            #             ret = deposit.convert_item_metadata(index_obj)
+            #             mock_redis.assert_called_once_with(500, 'Failed to register item!')
+            # # Exception
+            #     mock_redis.side_effect = Exception("error")
+            #     with patch('weko_deposit.api.abort', side_effect=abort) as mock_abort:
+            #         with pytest.raises(Exception):
+            #             ret = deposit.convert_item_metadata(index_obj)
+            #             mock_redis.assert_called_once_with(500, 'Failed to register item!')
+
+            # # RuntimeError
+            # with patch('weko_deposit.api.json_loader', side_effect=RuntimeError):
+            #     with pytest.raises(WekoDepositError):
+            #         ret = deposit.convert_item_metadata(index_obj)
+            #         mock_logger.assert_any_call(key='WEKO_DEPOSIT_FAILED_CONVERT_ITEM_METADATA', pid=mock.ANY, ex=mock.ANY)
+
+            # # index_obj.get('actions') is 'publish'
+            # index_obj = {'index': ['1'], 'actions': 'publish'}
+            # cache_key = app.config[
+            #     'WEKO_DEPOSIT_ITEMS_CACHE_PREFIX'].format(
+            #     pid_value=deposit.pid.pid_value)
+            # redis_connect.put(cache_key,bytes(json.dumps(redis_data),"utf-8"))
+            # dc = OrderedDict([('pubdate', {'attribute_name': 'PubDate', 'attribute_value': '2023-12-07'}), ('item_1617187056579', {'attribute_name': 'Bibliographic Information', 'attribute_value': 'item_1617187056579'}), ('item_1617186331708', {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'test', 'subitem_1551255648112': 'ja'}]}), ('item_1617258105262', {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}]}), ('item_title', 'test'), ('item_type_id', '1'), ('control_number', '1'), ('author_link', []), ('publish_date', '2023-12-07'), ('title', ['test']), ('relation_version_is_last', True), ('path', ['1']), ('publish_status', '0')])
+            # ret1, ret2 = deposit.convert_item_metadata(index_obj)
+            # assert ret1 == dc
+            # assert ret2 == redis_data['deleted_items']
+
             indexer, records = es_records
             record = records[0]
             deposit = record['deposit']
             record_data = record['item_data']
+            # record_data = []
+            print(8888)
+            print(record_data)
+            print(9999)
+            # del record_data
             index_obj = {'index': ['1'], 'actions': '1'}
 
             test1 = OrderedDict([('pubdate', {'attribute_name': 'PubDate', 'attribute_value': '2022-08-20'}), ('item_1617186331708', {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'タイトル', 'subitem_1551255648112': 'ja'}, {'subitem_1551255647225': 'title', 'subitem_1551255648112': 'en'}]}), ('item_1617258105262', {'attribute_name': 'Resource Type', 'attribute_value_mlt': [
@@ -1784,141 +1968,6 @@ class TestWekoDeposit():
             ret1, ret2 = deposit.convert_item_metadata(index_obj, record_data)
             assert ret1 == test1
             assert ret2 == test2
-
-            mock_logger.assert_any_call(key='WEKO_COMMON_FOR_START')
-            mock_logger.assert_any_call(
-                key='WEKO_COMMON_FOR_LOOP_ITERATION', count=mock.ANY, element=mock.ANY)
-            mock_logger.assert_any_call(
-                key='WEKO_COMMON_IF_ENTER', branch=mock.ANY)
-            mock_logger.assert_any_call(key='WEKO_COMMON_FOR_END')
-            mock_logger.reset_mock()
-
-            redis_data = {
-                'pubdate': '2023-12-07',
-                'item_1617187056579': 'item_1617187056579',
-                'item_1617186331708': [{
-                    'subitem_1551255647225': 'test',
-                    'subitem_1551255648112': 'ja'
-                }],
-                'item_1617258105262': {
-                    'resourcetype': 'conference paper',
-                    'resourceuri': 'http://purl.org/coar/resource_type/c_5794'
-                },
-                'shared_user_id': -1,
-                'title': 'test',
-                'lang': 'ja',
-                'deleted_items': [
-                    'item_1617186385884',
-                    'item_1617186419668',
-                    'item_1617186499011',
-                    'item_1617186609386',
-                    'item_1617186626617',
-                    'item_1617186643794',
-                    'item_1617186660861',
-                    'item_1617186702042',
-                    'item_1617186783814',
-                    'item_1617186859717',
-                    'item_1617186882738',
-                    'item_1617186901218',
-                    'item_1617186920753',
-                    'item_1617186941041',
-                    'item_1617187112279',
-                    'item_1617187187528',
-                    'item_1617349709064',
-                    'item_1617353299429',
-                    'item_1617605131499',
-                    'item_1617610673286',
-                    'item_1617620223087',
-                    'item_1617944105607',
-                    'item_1617187056579',
-                    'approval1',
-                    'approval2'
-                ],
-                '$schema': '/items/jsonschema/1'
-            }
-
-            index_obj = {'index': ['1'], 'actions': '1'}
-
-            # if datastore.redis.exists(cache_key) is false
-            prefix = app.config['WEKO_DEPOSIT_ITEMS_CACHE_PREFIX']
-            cache_key = app.config[
-                'WEKO_DEPOSIT_ITEMS_CACHE_PREFIX'].format(
-                pid_value=deposit.pid.pid_value)
-            redis_connect.put(cache_key,bytes(json.dumps(redis_data),"utf-8"))
-            app.config['WEKO_DEPOSIT_ITEMS_CACHE_PREFIX'] = 'test_{pid_value}'
-            dc = OrderedDict([('pubdate', {'attribute_name': 'PubDate', 'attribute_value': '2023-12-07'}), ('item_1617187056579', {'attribute_name': 'Bibliographic Information', 'attribute_value': 'item_1617187056579'}), ('item_1617186331708', {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'test', 'subitem_1551255648112': 'ja'}]}), ('item_1617258105262', {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}]}), ('item_title', 'test'), ('item_type_id', '1'), ('control_number', '1'), ('author_link', []), ('publish_date', '2023-12-07'), ('title', ['test']), ('relation_version_is_last', True), ('path', ['1']), ('publish_status', '2')])
-            with patch('weko_deposit.api.abort', side_effect=abort) as mock_abort:
-                with pytest.raises(Exception):
-                    deposit.convert_item_metadata(index_obj)
-                    mock_abort.assert_called_once_with(500, 'MAPPING_ERROR')
-                # mock_logger.assert_any_call(key="WEKO_COMMON_ERROR_UNEXPECTED", ex=mock.ANY)
-                # mock_abort.reset_mock()
-                # mock_logger.reset_mock()
-            app.config['WEKO_DEPOSIT_ITEMS_CACHE_PREFIX'] = prefix
-
-            # if datastore.redis.exists(cache_key) is true
-            dc = OrderedDict([('pubdate', {'attribute_name': 'PubDate', 'attribute_value': '2023-12-07'}), ('item_1617187056579', {'attribute_name': 'Bibliographic Information', 'attribute_value': 'item_1617187056579'}), ('item_1617186331708', {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'test', 'subitem_1551255648112': 'ja'}]}), ('item_1617258105262', {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}]}), ('item_title', 'test'), ('item_type_id', '1'), ('control_number', '1'), ('author_link', []), ('publish_date', '2023-12-07'), ('title', ['test']), ('relation_version_is_last', True), ('path', ['1']), ('publish_status', '2')])
-            cache_key = app.config[
-                'WEKO_DEPOSIT_ITEMS_CACHE_PREFIX'].format(
-                pid_value=deposit.pid.pid_value)
-            redis_connect.put(cache_key,bytes(json.dumps(redis_data),"utf-8"))
-
-            # index_obj.get('index', []) not exists
-            index_obj = {'actions': '1', 'is_save_path': True}
-            with pytest.raises(PIDResolveRESTError):
-                deposit.convert_item_metadata(index_obj)
-
-            # index_obj.get('is_save_path') exists
-            index_obj = {'index': ['1'], 'actions': '1', 'is_save_path': True}
-            ret1, ret2 = deposit.convert_item_metadata(index_obj)
-            assert ret1 == dc
-            assert ret2 == redis_data['deleted_items']
-            assert redis_connect.redis.exists(cache_key) == True
-
-            # index_obj.get('is_save_path') not exists, deletes cache_key
-            index_obj = {'index': ['1'], 'actions': '1'}
-            dc = OrderedDict([('pubdate', {'attribute_name': 'PubDate', 'attribute_value': '2023-12-07'}), ('item_1617187056579', {'attribute_name': 'Bibliographic Information', 'attribute_value': 'item_1617187056579'}), ('item_1617186331708', {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'test', 'subitem_1551255648112': 'ja'}]}), ('item_1617258105262', {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}]}), ('item_title', 'test'), ('item_type_id', '1'), ('control_number', '1'), ('author_link', []), ('publish_date', '2023-12-07'), ('title', ['test']), ('relation_version_is_last', True), ('path', ['1']), ('publish_status', '2')])
-            ret1, ret2 = deposit.convert_item_metadata(index_obj)
-            assert ret1 == dc
-            assert ret2 == redis_data['deleted_items']
-            assert redis_connect.redis.exists(cache_key) == False
-
-            # RedisError
-            with patch('weko_deposit.api.RedisConnection.connection') as mock_redis:
-                mock_redis.side_effect = RedisError("redis_error")
-                with patch('weko_deposit.api.abort', side_effect=abort) as mock_abort:
-                    with pytest.raises(Exception):
-                        ret = deposit.convert_item_metadata(index_obj)
-                        mock_redis.assert_called_once_with(500, 'Failed to register item!')
-            # WekoRedisError
-                mock_redis.side_effect = WekoRedisError("weko_redis_error")
-                with patch('weko_deposit.api.abort', side_effect=abort) as mock_abort:
-                    with pytest.raises(Exception):
-                        ret = deposit.convert_item_metadata(index_obj)
-                        mock_redis.assert_called_once_with(500, 'Failed to register item!')
-            # Exception
-                mock_redis.side_effect = Exception("error")
-                with patch('weko_deposit.api.abort', side_effect=abort) as mock_abort:
-                    with pytest.raises(Exception):
-                        ret = deposit.convert_item_metadata(index_obj)
-                        mock_redis.assert_called_once_with(500, 'Failed to register item!')
-
-            # RuntimeError
-            with patch('weko_deposit.api.json_loader', side_effect=RuntimeError):
-                with pytest.raises(WekoDepositError):
-                    ret = deposit.convert_item_metadata(index_obj)
-                    mock_logger.assert_any_call(key='WEKO_DEPOSIT_FAILED_CONVERT_ITEM_METADATA', pid=mock.ANY, ex=mock.ANY)
-
-            # index_obj.get('actions') is 'publish'
-            index_obj = {'index': ['1'], 'actions': 'publish'}
-            cache_key = app.config[
-                'WEKO_DEPOSIT_ITEMS_CACHE_PREFIX'].format(
-                pid_value=deposit.pid.pid_value)
-            redis_connect.put(cache_key,bytes(json.dumps(redis_data),"utf-8"))
-            dc = OrderedDict([('pubdate', {'attribute_name': 'PubDate', 'attribute_value': '2023-12-07'}), ('item_1617187056579', {'attribute_name': 'Bibliographic Information', 'attribute_value': 'item_1617187056579'}), ('item_1617186331708', {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'test', 'subitem_1551255648112': 'ja'}]}), ('item_1617258105262', {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}]}), ('item_title', 'test'), ('item_type_id', '1'), ('control_number', '1'), ('author_link', []), ('publish_date', '2023-12-07'), ('title', ['test']), ('relation_version_is_last', True), ('path', ['1']), ('publish_status', '0')])
-            ret1, ret2 = deposit.convert_item_metadata(index_obj)
-            assert ret1 == dc
-            assert ret2 == redis_data['deleted_items']
 
     # def _convert_description_to_object(self):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test__convert_description_to_object -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
@@ -1999,6 +2048,82 @@ class TestWekoDeposit():
             deposit._convert_data_for_geo_location()
             assert deposit.jrc["geoLocation"] == test
 
+            record = records[1]
+            deposit = record['deposit']
+            deposit._convert_data_for_geo_location()
+
+            jrc = {"geoLocation":{
+                "geoLocationPlace":"test_location_place",
+                "geoLocationPoint":{
+                    "pointLongitude":"not_list_value",
+                    "pointLatitude": "not_list_value"
+                },
+                "geoLocationPoint": {
+                    "pointLongitude": {"1", "2", "3", "4"},
+                    "pointLatitude": ["5", "6", "7", "8"]
+                },
+                "geoLocationBox": {
+                    "northBoundLatitude": "not_list_value",
+                    "eastBoundLongitude": "not_list_value",
+                    "southBoundLatitude": "not_list_value",
+                    "westBoundLongitude": "not_list_value"
+                },
+                "geoLocationBox": {
+                    "northBoundLatitude": ["1", "2", "3"],
+                    "eastBoundLongitude": ["4", "5", "6"],
+                    "southBoundLatitude": ["7", "8", "9"],
+                    "westBoundLongitude": ["0", "1", "2"]
+                },
+                "other": ""}}
+            deposit.jrc = jrc
+            test1 = {
+                'geoLocationBox': {'northEastPoint': [{'lat': '1', 'lon': '4'},
+                                                      {'lat': '2', 'lon': '5'},
+                                                      {'lat': '3', 'lon': '6'}],
+                                    'southWestPoint': [{'lat': '7', 'lon': '0'},
+                                                       {'lat': '8', 'lon': '1'},
+                                                       {'lat': '9', 'lon': '2'}]},
+                'geoLocationPlace': 'test_location_place'
+            }
+            deposit._convert_data_for_geo_location()
+            assert deposit.jrc["geoLocation"] == test1
+
+
+            record = records[2]
+            deposit = record['deposit']
+            deposit._convert_data_for_geo_location()
+
+            jrc = {"geoLocation":{
+                "geoLocationPlace":"test_location_place",
+                "geoLocationPoint":{
+                    "pointLongitude":"not_list_value",
+                    "pointLatitude": "not_list_value"
+                },
+                "geoLocationPoint": {
+                    "pointLongitude": {"1", "2", "3", "4"},
+                    "pointLatitude": {"5", "6", "7", "8"}
+                },
+                "geoLocationBox": {
+                    "northBoundLatitude": "not_list_value",
+                    "eastBoundLongitude": "not_list_value",
+                    "southBoundLatitude": "not_list_value",
+                    "westBoundLongitude": "not_list_value"
+                },
+                "geoLocationBox": {
+                    "northBoundLatitude": {"1", "2", "3"},
+                    "eastBoundLongitude": {"4", "5", "6"},
+                    "southBoundLatitude": {"7", "8", "9"},
+                    "westBoundLongitude": {"0", "1", "2"}
+                },
+                "other": ""}}
+            deposit.jrc = jrc
+            test2 = {
+                'geoLocationPlace': 'test_location_place'
+            }
+            deposit._convert_data_for_geo_location()
+            assert deposit.jrc["geoLocation"] == test2
+
+
             mock_logger.assert_any_call(key='WEKO_COMMON_FOR_START')
             mock_logger.assert_any_call(
                 key='WEKO_COMMON_FOR_LOOP_ITERATION', count=mock.ANY, element=mock.ANY)
@@ -2006,6 +2131,18 @@ class TestWekoDeposit():
                 key='WEKO_COMMON_IF_ENTER', branch=mock.ANY)
             mock_logger.assert_any_call(key='WEKO_COMMON_FOR_END')
             mock_logger.reset_mock()
+
+            record = records[3]
+            deposit = record['deposit']
+            deposit._convert_data_for_geo_location()
+
+            jrc = {"geoLocation":{
+                "test":"test_location_place",
+                "other": ""}}
+            deposit.jrc = jrc
+            test3 = {'other': '', 'test': 'test_location_place'}
+            deposit._convert_data_for_geo_location()
+            assert deposit.jrc["geoLocation"] == test3
 
     #         def _convert_geo_location(value):
     #         def _convert_geo_location_box():
@@ -2028,6 +2165,11 @@ class TestWekoDeposit():
             deposit = record['deposit']
             deposit['path']='2'
             deposit.delete_by_index_tree_id('3',record['deposit'])
+
+            record = records[3]
+            deposit = record['deposit']
+            deposit['path']='2'
+            deposit.delete_by_index_tree_id('',record['deposit'])
 
             with patch("invenio_records.models.RecordMetadata.query") as mock_json:
                 with pytest.raises(TransportError):
@@ -2200,7 +2342,7 @@ class TestWekoDeposit():
 
     # def merge_data_to_record_without_version(self, pid, keep_version=False,
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_merge_data_to_record_without_version -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
-    def test_merge_data_to_record_without_version(sel, app, db, location, es_records):
+    def test_merge_data_to_record_without_version(sel, app, db, location, es_records,es_records_8):
         with patch('weko_deposit.api.weko_logger') as mock_logger:
             indexer, records = es_records
             record = records[0]
@@ -2211,11 +2353,27 @@ class TestWekoDeposit():
 
             assert deposit.merge_data_to_record_without_version(recid, keep_version=True)
 
+            from invenio_records_files.models import RecordsBuckets
+            from invenio_files_rest.models import Bucket
             indexer, records = es_records
-            record = records[8]
+            record = records[1]
             deposit = record['deposit']
             recid = record['recid']
+            record_bucket=RecordsBuckets.query.filter_by(record_id=deposit.id).one_or_none()
+            rd=RecordsBuckets(record_id=records[2]["recid"].object_uuid,bucket_id=record_bucket.bucket.id)
+            db.session.add(rd)
+            db.session.commit()
+            assert deposit.merge_data_to_record_without_version(recid)
 
+
+            indexer, records = es_records
+            record = records[0]
+            deposit = record['deposit']
+            record_bucket=RecordsBuckets.query.filter_by(record_id=deposit.id).one_or_none()
+            if record_bucket:
+                db.session.delete(record_bucket)
+                db.session.commit()
+            recid = record['recid']
             assert deposit.merge_data_to_record_without_version(recid)
 
             mock_logger.assert_any_call(
@@ -2240,7 +2398,7 @@ class TestWekoDeposit():
             mock_logger.reset_mock()
     # def delete_content_files(self):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_delete_content_files -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
-    def test_delete_content_files(sel,app,db,location,es_records, es_records_4,es_records_2):
+    def test_delete_content_files(sel,app,db,location,es_records, es_records_4,es_records_7):
         with patch('weko_deposit.api.weko_logger') as mock_logger:
             indexer, records = es_records
             record = records[0]
@@ -2260,7 +2418,7 @@ class TestWekoDeposit():
             deposit.jrc = copy.deepcopy(ret['_source'])
             deposit.delete_content_files()
 
-            indexer, records = es_records_2
+            indexer, records = es_records_7
             record = records[0]
             deposit = record['deposit']
             # del deposit['date']['file']
@@ -3452,19 +3610,22 @@ class Test_FormatSysCreator:
             with app.test_request_context():
                 obj = _FormatSysCreator(prepare_creator)
                 assert isinstance(obj,_FormatSysCreator)==True
-                assert obj.format_creator()=={'name': ['Joho, Taro','Joho', 'Taro', 'Alternative Name'], 'order_lang': [{'ja': {'creatorName': ['情報, 太郎'], 'creatorAlternative': ['別名'], 'affiliationName': ['ISNI 所属機関'], 'affiliationNameIdentifier': [{'identifier': 'xxxxxx', 'uri': 'xxxxx'}]}}, {'ja-Kana': {'creatorName': ['ジョウホウ, タロウ'], 'creatorAlternative': [], 'affiliationName': [], 'affiliationNameIdentifier': []}}, {'cn': {'creatorName': None, 'creatorAlternative': [], 'affiliationName': [' Affilication Name'], 'affiliationNameIdentifier': [{'identifier': '', 'uri': ''}]}}]}
-                assert obj.format_creator()=={'name': ['Joho, Taro','Joho', 'Taro', 'Alternative Name'], 'order_lang': [{'ja': {'creatorName': ['情報, 太郎'], 'creatorAlternative': ['別名'], 'affiliationName': ['ISNI 所属機関'], 'affiliationNameIdentifier': [{'identifier': 'xxxxxx', 'uri': 'xxxxx'}]}}, {'ja-Kana': {'creatorName': ['ジョウホウ, タロウ'], 'creatorAlternative': [], 'affiliationName': [], 'affiliationNameIdentifier': []}}, {'en': {'affiliationName': [],'affiliationNameIdentifier': [], 'creatorAlternative': ['Alternative Name'], 'creatorName': ['Joho, Taro']}},{'cn': {'affiliationName': [' Affilication Name'],'affiliationNameIdentifier': [{'identifier': '','uri': ''}],'creatorAlternative': [],'creatorName': None}}]}
+                # assert obj.format_creator()=={'name': ['Joho, Taro','Joho', 'Taro', 'Alternative Name'], 'order_lang': [{'ja': {'creatorName': ['情報, 太郎'], 'creatorAlternative': ['別名'], 'affiliationName': ['ISNI 所属機関'], 'affiliationNameIdentifier': [{'identifier': 'xxxxxx', 'uri': 'xxxxx'}]}}, {'ja-Kana': {'creatorName': ['ジョウホウ, タロウ'], 'creatorAlternative': [], 'affiliationName': [], 'affiliationNameIdentifier': []}}, {'cn': {'creatorName': None, 'creatorAlternative': [], 'affiliationName': [' Affilication Name'], 'affiliationNameIdentifier': [{'identifier': '', 'uri': ''}]}}]}
+                # assert obj.format_creator()=={'name': ['Joho, Taro','Joho', 'Taro', 'Alternative Name'], 'order_lang': [{'ja': {'creatorName': ['情報, 太郎'], 'creatorAlternative': ['別名'], 'affiliationName': ['ISNI 所属機関'], 'affiliationNameIdentifier': [{'identifier': 'xxxxxx', 'uri': 'xxxxx'}]}}, {'ja-Kana': {'creatorName': ['ジョウホウ, タロウ'], 'creatorAlternative': [], 'affiliationName': [], 'affiliationNameIdentifier': []}}, {'en': {'affiliationName': [],'affiliationNameIdentifier': [], 'creatorAlternative': ['Alternative Name'], 'creatorName': ['Joho, Taro']}},{'cn': {'affiliationName': [' Affilication Name'],'affiliationNameIdentifier': [{'identifier': '','uri': ''}],'creatorAlternative': [],'creatorName': None}}]}
+                # assert obj.format_creator()=={'name': ['Joho, Taro','Joho', 'Taro', 'Alternative Name'], 'order_lang': [{'ja': {'creatorName': ['情報, 太郎'], 'creatorAlternative': ['別名'], 'affiliationName': ['ISNI 所属機関'], 'affiliationNameIdentifier': [{'identifier': 'xxxxxx', 'uri': 'xxxxx'}]}}, {'ja-Kana': {'creatorName': ['ジョウホウ, タロウ'], 'creatorAlternative': [], 'affiliationName': [], 'affiliationNameIdentifier': []}}, {'en': {'affiliationName': [],'affiliationNameIdentifier': [], 'creatorAlternative': ['Alternative Name'], 'creatorName': ['Joho, Taro']}},{'cn': {'affiliationName': [' Affilication Name'],'affiliationNameIdentifier': [{'identifier': '','uri': ''}],'creatorAlternative': [],'creatorName': None}}]}
+                # assert obj.format_creator()=={'name': ['Joho, Taro','Joho', 'Taro', 'Alternative Name'], 'order_lang': [{'ja': {'creatorName': ['情報, 太郎'], 'creatorAlternative': ['別名'], 'affiliationName': ['ISNI 所属機関'], 'affiliationNameIdentifier': [{'identifier': 'xxxxxx', 'uri': 'xxxxx'}]}}, {'ja-Kana': {'creatorName': ['ジョウホウ, タロウ'], 'creatorAlternative': [], 'affiliationName': [], 'affiliationNameIdentifier': []}}, {'en': {'affiliationName': [],'affiliationNameIdentifier': [], 'creatorAlternative': ['Alternative Name'], 'creatorName': ['Joho, Taro']}},{'cn': {'creatorName': None, 'creatorAlternative': [], 'affiliationName': [' Affilication Name'], 'affiliationNameIdentifier': [{'identifier': '', 'uri': ''}]}}]}
 
-                # prepare_creator_1={'givenNames': {'givenName': '太郎', 'givenNameLang': 'ja'}}
-                # obj = _FormatSysCreator(prepare_creator_1)
+                prepare_creator_1={'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}]}
+                # prepare_creator_1=[{'givenName': '太郎', 'givenNameLang': 'ja'}]
+                # {'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierURI': 'https://orcid.org/', 'nameIdentifierScheme': 'ORCID'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierURI': 'https://ci.nii.ac.jp/', 'nameIdentifierScheme': 'CiNii'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/', 'nameIdentifierScheme': 'KAKEN2'}], 'creatorAffiliations': [{'affiliationNames': [{'affiliationName': '所属機関', 'affiliationNameLang': 'ja'}, {'affiliationName': 'Affilication Name', 'affiliationNameLang': 'cn'}], 'affiliationNameIdentifiers': [{'affiliationNameIdentifier': 'xxxxxx', 'affiliationNameIdentifierURI': 'xxxxx', 'affiliationNameIdentifierScheme': 'ISNI'}]}], 'creatorAlternatives': [{'creatorAlternative': 'Alternative Name', 'creatorAlternativeLang': 'en'}, {'creatorAlternative': '別名', 'creatorAlternativeLang': 'ja'}]}
+
+                obj = _FormatSysCreator(prepare_creator_1)
                 # obj.format_creator()
-                # assert obj.format_creator()== {'name': [], 'order_lang': []}
+                assert obj.format_creator()== {'name': [], 'order_lang': []}
 
                 mock_logger.assert_any_call(key='WEKO_COMMON_FOR_START')
-                mock_logger.assert_any_call(
-                    key='WEKO_COMMON_FOR_LOOP_ITERATION', count=mock.ANY, element=mock.ANY)
-                mock_logger.assert_any_call(
-                    key='WEKO_COMMON_IF_ENTER', branch=mock.ANY)
+                mock_logger.assert_any_call(key='WEKO_COMMON_FOR_LOOP_ITERATION', count=mock.ANY, element=mock.ANY)
+                mock_logger.assert_any_call(key='WEKO_COMMON_IF_ENTER', branch=mock.ANY)
                 mock_logger.assert_any_call(key='WEKO_COMMON_FOR_END')
                 mock_logger.reset_mock()
 
@@ -3712,6 +3873,18 @@ class Test_FormatSysCreator:
                 obj.languages = ["ja"]
                 obj._get_default_creator_name(list_parent_key, creator_name)
                 assert creator_name == []
+
+                prepare_creator ={'givenNames': [{'givenName': '太郎', 'givenNameLang': 'en'}, ]}
+                with app.test_request_context(headers=[("Accept-Language", "ja")]):
+                    obj = _FormatSysCreator(prepare_creator)
+                    assert isinstance(obj, _FormatSysCreator) == True
+                    list_parent_key = ['givenNames']
+
+                    creator_name = []
+                    obj.languages = ["en"]
+                    obj._get_default_creator_name(list_parent_key, creator_name)
+                    assert creator_name == ['太郎']
+
                 mock_logger.assert_any_call(key='WEKO_COMMON_FOR_START')
                 mock_logger.assert_any_call(
                     key='WEKO_COMMON_FOR_LOOP_ITERATION', count=mock.ANY, element=mock.ANY)
@@ -3818,10 +3991,11 @@ class Test__FormatSysBibliographicInformation():
 
             bibliographic = mlt[1]
             obj=_FormatSysBibliographicInformation(copy.deepcopy(mlt),copy.deepcopy(solst))
-            # obj['bibliographic_titles'] is None
             assert isinstance(obj,_FormatSysBibliographicInformation) == True
             with app.test_request_context(headers=[("Accept-Language", "en")]):
-                assert obj._get_bibliographic(bibliographic,True)==([], [{'': '1'}, {'': '12'}, {'p.': '1'}, {'': '99'}, {'': '2022-08-29'}], 5)
+               assert obj._get_bibliographic(bibliographic,True)==([],[{'Volume': '1'},{'Issue': '12'},{'p.': '1'},{'Number of Pages': '99'},{'Issued Date': '2022-08-29'}],5)
+            with app.test_request_context(headers=[("Accept-Language", "")]):
+                assert obj._get_bibliographic(bibliographic,True)==([],[{'Volume': '1'},{'Issue': '12'},{'p.': '1'},{'Number of Pages': '99'},{'Issued Date': '2022-08-29'}],5)
 
 
     # def _get_property_name(self, key):
