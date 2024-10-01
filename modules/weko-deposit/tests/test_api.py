@@ -1126,7 +1126,6 @@ class TestWekoDeposit():
                     mock_json.return_value.filter_by.return_value.first.return_value = None
                     deposit.commit()
 
-                # TODO if record.json.get('_buckets'):がfalseの時の分岐に入らない
                 # setspec_list is None, record.json.get('_buckets) is None
                 deposit = WekoDeposit.create({})
                 index_obj = {'index': ['3'], 'actions': 'private', "content": [
@@ -1155,7 +1154,7 @@ class TestWekoDeposit():
                                     'item_1617944105607', 'item_1617187056579', 'approval1', 'approval2'], 
                     '$schema': '/items/jsonschema/1'
                 }
-                deposit['_buckets']['deposit'] = "1a23bfcd-456e-78ab-c0d1-23eee45a6b78"
+
                 deposit.update(index_obj, data)
                 deposit.jrc = {
                     'type': ['conference paper'],
@@ -1195,25 +1194,15 @@ class TestWekoDeposit():
                     '$schema': '/items/jsonschema/1',
                 }
                 deposit.commit()
-                print("xxxxxxxxxxxxxxxxxxxxxxx")
-                # with patch("weko_deposit.api.WekoDeposit.pid") as mock_pid:
-                record = RecordMetadata.query.get(deposit.pid.object_uuid)
-                print("\nfirstrecord")
-                print(record.json)
-                if '_buckets' in record.json:
-                    record_data = json.loads(json.dumps(record.json))
-                    
-                    del record_data['_buckets']
-                    print(record.json)
-                    record.json = record_data
-                    db.session.merge(record)
-                    db.session.commit()
-                    print("\nsecondrecord")
-                    print(record.json)
 
-                # with patch("invenio_records.models.RecordMetadata.query.filter_by") as mock_query:
+                # record.json.get('_buckets'): is None
+                deposit = WekoDeposit.create({})
+                record = RecordMetadata.query.get(deposit.pid.object_uuid)
+                del deposit["_buckets"]
+                db.session.merge(record)
+                db.session.commit()
                 deposit.commit()
-                print("xxxxxxxxxxxxxxxxxxxxxxx")
+
                 # exist feedback_mail_list
                 deposit = WekoDeposit.create({})
                 item_id = deposit.pid.object_uuid
@@ -1301,78 +1290,6 @@ class TestWekoDeposit():
                     {"email": "test.taro@test.org", "author_id": "1"}]
                 shutil.rmtree(tmppath1)
 
-                # TODO テスト通す
-                # record.json.get('_buckets) is None
-                # deposit = WekoDeposit.create({})
-                # index_obj = {'index': ['3'], 'actions': 'private', "content": [
-                #     {"test": "content"}, {"file": "test"}]}
-                # data = {
-                #     "content": [{"test": "content"}, {"file": "test"}],
-                #     'pubdate': '2023-12-07',
-                #     'item_1617186331708': [{
-                #         'subitem_1551255647225': 'test',
-                #         'subitem_1551255648112': 'ja'
-                #     }],
-                #     'item_1617258105262': {
-                #         'resourcetype': 'conference paper',
-                #         'resourceuri': 'http://purl.org/coar/resource_type/c_5794'
-                #     },
-                #     'shared_user_id': -1,
-                #     'title': 'test',
-                #     'lang': 'ja',
-                #     'deleted_items': ['item_1617186385884', 'item_1617186419668', 'item_1617186499011', 
-                #                     'item_1617186609386', 'item_1617186626617', 'item_1617186643794', 
-                #                     'item_1617186660861', 'item_1617186702042', 'item_1617186783814', 
-                #                     'item_1617186859717', 'item_1617186882738', 'item_1617186901218', 
-                #                     'item_1617186920753', 'item_1617186941041', 'item_1617187112279', 
-                #                     'item_1617187187528', 'item_1617349709064', 'item_1617353299429', 
-                #                     'item_1617605131499', 'item_1617610673286', 'item_1617620223087', 
-                #                     'item_1617944105607', 'item_1617187056579', 'approval1', 'approval2'], 
-                #     '$schema': '/items/jsonschema/1'
-                # }
-                # deposit['_buckets']['deposit'] = "1a23bfcd-456e-78ab-c0d1-23eee45a6b78"
-                # deposit.update(index_obj, data)
-                # deposit.jrc = {
-                #     'type': ['conference paper'],
-                #     'title': ['test'],
-                #     'control_number': '2',
-                #     '_oai': {'id': '2', 'sets': ['1']},
-                #     '_item_metadata': OrderedDict([
-                #         ('pubdate', {'attribute_name': 'PubDate',
-                #         'attribute_value': '2023-12-07'}),
-                #         ('item_1617186331708', {
-                #             'attribute_name': 'Title',
-                #             'attribute_value_mlt': [{'subitem_1551255647225': 'test', 'subitem_1551255648112': 'ja'}]
-                #         }),
-                #         ('item_1617258105262', {
-                #             'attribute_name': 'Resource Type',
-                #             'attribute_value_mlt': [{'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}]
-                #         }),
-                #         ('item_title', 'test'),
-                #         ('item_type_id', '1'),
-                #         ('control_number', '2'),
-                #         ('author_link', []),
-                #         ('_oai', {'id': '2', 'sets': ['1']}),
-                #         ('publish_date', '2023-12-07'),
-                #         ('title', ['test']),
-                #         ('relation_version_is_last', True),
-                #         ('path', ['1']),
-                #         ('publish_status', '2')
-                #     ]),
-                #     'itemtype': 'テストアイテムタイプ',
-                #     'publish_date': '2023-12-07',
-                #     'author_link': [],
-                #     'path': ['1'],
-                #     'publish_status': '2',
-                #     '_created': '2024-09-25T07:58:24.680172+00:00',
-                #     '_updated': '2024-09-25T07:58:25.436334+00:00',
-                #     'content': [{"test": "content"}, {"file": "test"}],
-                #     '$schema': '/items/jsonschema/1',
-                # }
-                # deposit.commit()
-
-                # self.jrc.get('content')
-                # deposit = WekoDeposit.create({})
                 deposit.jrc = {
                     'type': ['conference paper'],
                     'title': ['test'],
@@ -1429,7 +1346,6 @@ class TestWekoDeposit():
 
                     with pytest.raises(WekoDepositError):
                         result = deposit.commit()
-
 
                 with patch("weko_deposit.api.WekoIndexer.upload_metadata") as mock_upload:
                     mock_upload.side_effect = [TransportError(500,"test_error",{"error":{"reason":""}}), "test error"]
@@ -2991,7 +2907,6 @@ class TestWekoRecord:
             mock_logger.assert_any_call(key='WEKO_COMMON_RETURN_VALUE', value=mock.ANY)
             mock_logger.reset_mock()
 
-    # TODO:
     #     def items_show_list(self):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoRecord::test_items_show_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test_items_show_list(self, app, es_records, es_records_2, es_records_5, users, db_itemtype, db_admin_settings):
@@ -3031,7 +2946,6 @@ class TestWekoRecord:
             record = result['record']
             with patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
                 re = record.items_show_list
-                print("\n",re)
                 # assert record.items_show_list == [{'attribute_name': 'PubDate', 'attribute_value': '2022-08-20', 'attribute_name_i18n': 'PubDate'}, {'attribute_name': 'Creator', 'attribute_name_i18n': 'Creator', 'attribute_type': 'creator',
                 #     'attribute_value_mlt': [[[]], [[[{'Creator Given Name': [[[[{'Given Name': 'givenNames'}]]], [[[{'Language': 'ja'}]]]]}]]], [[[{'Creator Family Name': [[[[{'Family Name': 'mei'}]]], [[[{'Language': 'ja'}]]]]}]]], [[[{'Creator Family Name': [[[[{'Family Name': 'mei'}]]], [[[{'Language': 'ja'}]]]]}]]], [[[{}]]], [[[{'Creator Name': [[[[{'Name': 'name'}]]], [[[{'Language': 'ja'}]]]]}]]], [[[{'Creator Identifier': [[[[{'Creator Identifier': '識別'}]]], [[[{'Creator Identifier URI': 'tets.com'}]]]]}]]], [[[{'Affiliation Name Identifier': [[[[{'Affiliation Name Identifier': '識別子'}]]], [[[{'Affiliation Name Identifier URI': 'tets.com'}]]], [[[{'Affiliation Name Identifier Scheme': 'kakenhi'}]]]]}]]], [[[{'Creator Alternative Name': [[[[{'Alternative Name': '別名'}]]], [[[{'Language': 'ja'}]]]]}]]]]}, {'attribute_name': 'Resource Type', 'attribute_name_i18n': 'Resource Type', 'attribute_type': None, 'attribute_value_mlt': [[[[{'Resource Type': 'conference paper'}], [{'Resource Type Identifier': 'http://purl.org/coar/resource_type/c_5794'}]]]]}, {'attribute_name': 'thumbnail', 'attribute_name_i18n': 'thumbnail', 'attribute_type': 'object', 'is_thumbnail': True}]
 
@@ -3040,12 +2954,9 @@ class TestWekoRecord:
             record = result['record']
             with patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
                 re = record.items_show_list
-                print("\n",re)
                 # assert record.items_show_list == [{'attribute_name': 'PubDate', 'attribute_value': '2022-08-20', 'attribute_name_i18n': 'PubDate'}, {'attribute_name': 'Creator', 'attribute_name_i18n': 'Creator', 'attribute_type': 'object',
                 #     'attribute_value_mlt': [[[]], [[[{'Creator Given Name': [[[[{'Given Name': 'givenNames'}]]], [[[{'Language': 'ja'}]]]]}]]], [[[{'Creator Family Name': [[[[{'Family Name': 'mei'}]]], [[[{'Language': 'ja'}]]]]}]]], [[[{'Creator Family Name': [[[[{'Family Name': 'mei'}]]], [[[{'Language': 'ja'}]]]]}]]], [[[{}]]], [[[{'Creator Name': [[[[{'Name': 'name'}]]], [[[{'Language': 'ja'}]]]]}]]], [[[{'Creator Identifier': [[[[{'Creator Identifier': '識別'}]]], [[[{'Creator Identifier URI': 'tets.com'}]]]]}]]], [[[{'Affiliation Name Identifier': [[[[{'Affiliation Name Identifier': '識別子'}]]], [[[{'Affiliation Name Identifier URI': 'tets.com'}]]], [[[{'Affiliation Name Identifier Scheme': 'kakenhi'}]]]]}]]], [[[{'Creator Alternative Name': [[[[{'Alternative Name': '別名'}]]], [[[{'Language': 'ja'}]]]]}]]]]}, {'attribute_name': 'Resource Type', 'attribute_name_i18n': 'Resource Type', 'attribute_type': None, 'attribute_value_mlt': [[[[{'Resource Type': 'conference paper'}], [{'Resource Type Identifier': 'http://purl.org/coar/resource_type/c_5794'}]]]]}, {'attribute_name': 'thumbnail', 'attribute_name_i18n': 'thumbnail', 'attribute_type': 'object', 'is_thumbnail': True}]
 
-
-    # TODO;
     #     def display_file_info(self):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoRecord::test_display_file_info -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test_display_file_info(self, app, es_records, es_records_6, es_records_5):
@@ -3067,7 +2978,6 @@ class TestWekoRecord:
             record = result['record']
             with app.test_request_context("/test?filename=hello.txt"):
                 re = record.display_file_info
-                print("re: ",re)
 
             # nval['attribute_type'] == 'file
             _, results = es_records_5
@@ -3075,36 +2985,6 @@ class TestWekoRecord:
             record = result['record']
             with app.test_request_context("/test?filename=hello.txt"):
                 re = record.display_file_info
-                print("re: ",re)
-            # record["item_1617186609386"] = {
-            #     "attribute_type": "file", "attribute_name": "subject", "attribute_value_mlt": ["test_subject"]}
-            # record["item_1617186626617"] = {
-            #     "attribute_name": "description", "attribute_type": "file"}
-
-#             with app.test_request_context("/test?filename=not_hello.txt"):
-#                 re = record.display_file_info
-#                 print("\n",re)
-#                 # assert record.display_file_info==[{'attribute_name': 'description','attribute_name_i18n': 'Description','attribute_type': 'file','attribute_value_mlt': [[[[{'Description': ''}]]]]},{'attribute_name': 'File','attribute_name_i18n': 'File','attribute_type': 'file','attribute_value_mlt': []}]
-#
-#             _, results = es_records
-#             result = results[2]
-#             record = result['record']
-#             record['hidden'] = True
-#
-#             with app.test_request_context("/test?filename=hello.txt"):
-#                 re = record.display_file_info
-#                 print("\n",re)
-#                 # assert record.display_file_info==[{'attribute_name': 'File','attribute_name_i18n': 'File','attribute_type': 'file','attribute_value_mlt': [[[[{'Opendate': '2022-09-07'}],[{'FileName': 'hello.txt'}],[{'Text URL': [[[{'Text URL': 'https://weko3.example.org/record/3/files/hello.txt'}]]]}],[{'Format': 'plain/text'}],[{'Size': [[[[{'Size': '146 KB'}]]]]}]]]]}]
-#
-#             mock_logger.assert_any_call(key='WEKO_COMMON_FOR_START')
-#             mock_logger.assert_any_call(
-#                 key='WEKO_COMMON_FOR_LOOP_ITERATION', count=mock.ANY, element=mock.ANY)
-#             mock_logger.assert_any_call(
-#                 key='WEKO_COMMON_IF_ENTER', branch=mock.ANY)
-#             mock_logger.assert_any_call(key='WEKO_COMMON_FOR_END')
-#             mock_logger.assert_any_call(
-#                 key='WEKO_COMMON_RETURN_VALUE', value=mock.ANY)
-#             mock_logger.reset_mock()
 
     #     def __remove_special_character_of_weko2(self, metadata):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoRecord::test__remove_special_character_of_weko2 -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
@@ -3731,7 +3611,6 @@ class Test_FormatSysCreator:
                     elif item.get("en"):
                         assert "creatorType" not in list(item.get("en").keys())
 
-    # TODO:
     # def _format_creator_on_creator_popup(self, creators: Union[dict, list],
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::Test_FormatSysCreator::test__format_creator_on_creator_popup -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test__format_creator_on_creator_popup(self, app, prepare_creator):
