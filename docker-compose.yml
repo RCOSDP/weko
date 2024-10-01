@@ -159,7 +159,7 @@ services:
 
   postgresql:
     restart: "always"
-    image: postgres:12
+    image: postgres:14
 #    command: postgres -c log_destination=stderr -c log_statement=all -c log_connections=on -c log_disconnections=on
     environment:
       - POSTGRES_USER=invenio

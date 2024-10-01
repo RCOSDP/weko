@@ -367,7 +367,7 @@ def check_user_group_permission(group_id):
         except ValueError:
             return is_ok
         if user_id:
-            query = Group.query.filter_by(id=group_id).join(Membership) \
+            query = Group.query.filter_by(id=group_id).join(Membership, Group.id == Membership.id_group) \
                 .filter_by(user_id=user_id, state=MembershipState.ACTIVE)
             if query.count() > 0:
                 is_ok = True

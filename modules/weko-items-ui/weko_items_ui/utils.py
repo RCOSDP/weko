@@ -2561,7 +2561,7 @@ def _get_max_export_items():
         return non_user_max
 
     try:
-        roles = db.session.query(Role).join(userrole).filter_by(
+        roles = db.session.query(Role).join(userrole, Role.id == userrole.c.role_id).filter_by(
             user_id=current_user_id).all()
     except Exception:
         return current_app.config['WEKO_ITEMS_UI_DEFAULT_MAX_EXPORT_NUM']
