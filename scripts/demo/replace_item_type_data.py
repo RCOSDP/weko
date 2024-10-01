@@ -95,14 +95,13 @@ def replace_item_type_data(render_old, render_new, _form_prop_old, item_key):
     replace_schema(_schema_old, _schema_new)
     for f in _form_new:
         if f.get("key") == item_key and "items" in f:
-            _form_prop_new = f["items"]
+            replace_form(_form_prop_old, f["items"])
             break
-    replace_form(_form_prop_old, _form_prop_new)
+    
 
 
 def main():
     current_app.logger.info('=============== replace_item_type_data ===============')
-    current_app.logger.info('start')
     try:
         sql = """
             SELECT schema,
@@ -115,6 +114,7 @@ def main():
             ORDER BY version_id DESC;
             """.strip()
         res = db.session.query(ItemType.id).all()
+        current_app.logger.info('Updates to {} item types begin.'.format(len(res)))
         for _id in res:
             params = {
                 "item_type_id": _id,
@@ -125,35 +125,39 @@ def main():
                     item_type_new = ItemType.query.filter(ItemType.id==_id).order_by(desc(ItemType.created)).first()
                     item_type_old = db.session.execute(sql, params).first()
 
-                    for _form_data_old in item_type_old.render['table_row_map']['form']:
-                        _key = _form_data_old.get("key")
-                        if _key and _key not in [
-                            "pubdate",
-                            "system_file",
-                            "system_identifier_doi",
-                            "system_identifier_hdl",
-                            "system_identifier_uri"
-                        ]:
-                            multiple_old = get_multiple(item_type_old.render, _key)
-                            multiple_new = get_multiple(item_type_new.render, _key)
-                            if multiple_old["multiple"] is None or \
-                                    multiple_new["multiple"] is None or \
-                                    multiple_old["multiple"] == multiple_new["multiple"]:
-                                replace_item_type_data(item_type_old.render, item_type_new.render, _form_data_old.get("items"), _key)
-                            else:
-                                _t = multiple_new["title"] if multiple_new["title"] else multiple_old["title"]
-                                current_app.logger.info('Skip element "{}" (id = {}) in item type (id = {}).'.format(_t, _key, _id.id))
-                    json_schema = fix_json_schema(item_type_new.render['table_row_map']['schema'])
-                    json_form = item_type_new.render['table_row_map']['form']
-                    json_schema = update_required_schema_not_exist_in_form(json_schema, json_form)
-                    item_type_new.schema = json_schema
-                    item_type_new.form = json_form
-                    flag_modified(item_type_new, "schema")
-                    flag_modified(item_type_new, "form")
-                    flag_modified(item_type_new, "render")
-                    db.session.merge(item_type_new)
-                db.session.commit()
-                current_app.logger.info('Updated item type (id = {}) successfully from version_id = {}.'.format(_id.id, item_type_old.version_id))
+                    if item_type_old:
+                        for _form_data_old in item_type_old.render['table_row_map']['form']:
+                            _key = _form_data_old.get("key")
+                            if _key and _key not in [
+                                "pubdate",
+                                "system_file",
+                                "system_identifier_doi",
+                                "system_identifier_hdl",
+                                "system_identifier_uri"
+                            ]:
+                                multiple_old = get_multiple(item_type_old.render, _key)
+                                multiple_new = get_multiple(item_type_new.render, _key)
+                                if multiple_old["multiple"] is None or \
+                                        multiple_new["multiple"] is None or \
+                                        multiple_old["multiple"] == multiple_new["multiple"]:
+                                    replace_item_type_data(item_type_old.render, item_type_new.render, _form_data_old.get("items"), _key)
+                                else:
+                                    _t = multiple_new["title"] if multiple_new["title"] else multiple_old["title"]
+                                    current_app.logger.info('Skip element "{}" (id = {}) in item type (id = {}).'.format(_t, _key, _id.id))
+                        json_schema = fix_json_schema(item_type_new.render['table_row_map']['schema'])
+                        json_form = item_type_new.render['table_row_map']['form']
+                        json_schema = update_required_schema_not_exist_in_form(json_schema, json_form)
+                        item_type_new.schema = json_schema
+                        item_type_new.form = json_form
+                        flag_modified(item_type_new, "schema")
+                        flag_modified(item_type_new, "form")
+                        flag_modified(item_type_new, "render")
+                        db.session.merge(item_type_new)
+                if item_type_old:
+                    db.session.commit()
+                    current_app.logger.info('Updated item type (id = {}) successfully from version_id = {}.'.format(_id.id, item_type_old.version_id))
+                else:
+                    current_app.logger.info('The version of item type (id = {}) does not exist.'.format(_id.id))
             except SQLAlchemyError as e:
                 current_app.logger.error('Failed to update item type (id = {}).'.format(_id.id))
                 current_app.logger.error(e)
@@ -164,7 +168,6 @@ def main():
                 db.session.rollback()
     except Exception as ex:
         current_app.logger.error(ex)
-    current_app.logger.info('end')
     current_app.logger.info('=============== Finished! ===============')
 
 if __name__ == '__main__':
