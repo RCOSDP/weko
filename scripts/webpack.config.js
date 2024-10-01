@@ -44,6 +44,7 @@ var webpackConfig = {
     filename: "js/[name].[chunkhash].js",
     chunkFilename: "js/[id].[chunkhash].js",
     publicPath: config.build.assetsURL,
+    jsonpFunction: "wekoWebpackJsonp",
   },
   optimization: {
     minimizer: [
@@ -170,7 +171,7 @@ var webpackConfig = {
     ],
   },
   devtool:
-    "none",
+    process.env.NODE_ENV === "production" ? "none" : "inline-source-map",
   plugins: [
     new ESLintPlugin({emitWarning: true,
               quiet: true,

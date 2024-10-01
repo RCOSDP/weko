@@ -51,6 +51,7 @@ services:
       - INVENIO_REDIS_HOST=redis
       - INVENIO_ELASTICSEARCH_HOST=opensearch
       - INVENIO_OPENSEARCH_HOST=opensearch
+      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=WekoOpensearch123!
       - INVENIO_OPENSEARCH_USER=invenio
       - INVENIO_OPENSEARCH_PASS=openpass123!
       - INVENIO_RABBITMQ_HOST=rabbitmq
