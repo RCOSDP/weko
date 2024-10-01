@@ -6,7 +6,14 @@ from sqlalchemy.orm.attributes import flag_modified
 from invenio_db import db
 from flask import current_app
 
-UPDATE_DATE = '2024/9/30'
+UPDATE_DATE = '2024/10/2'
+
+
+def get_multiple(render_data, item_key):
+    return {
+        "title": render_data.get("meta_list", {}).get(item_key, {}).get("title", ""),
+        "multiple": render_data.get("meta_list", {}).get(item_key, {}).get("option", {}).get("multiple", None)
+    }
 
 
 def replace_schema(schema_old, schema_new):
@@ -18,6 +25,12 @@ def replace_schema(schema_old, schema_new):
     if schema_old and schema_old.get("currentEnum") and \
             isinstance(schema_new, dict):
         schema_new["currentEnum"] = schema_old.get("currentEnum")
+    if schema_old and schema_old.get("title_i18n") and \
+            isinstance(schema_new, dict):
+        schema_new["title_i18n"] = schema_old.get("title_i18n")
+    if schema_old and schema_old.get("title_i18n_temp") and \
+            isinstance(schema_new, dict):
+        schema_new["title_i18n_temp"] = schema_old.get("title_i18n_temp")
     if schema_old and schema_old.get("type") == "array" and \
             schema_new and schema_new.get("type") == "array" and \
             "items" in schema_old and \
@@ -51,14 +64,20 @@ def replace_form(form_old, form_new):
                 "isNonDisplay": i.get("isNonDisplay", False),
             }
             _titleMap = i.get("titleMap")
+            _title_i18n = i.get("title_i18n")
+            _title_i18n_temp = i.get("title_i18n_temp")
             for j in form_new:
                 if j.get("key") == _k:
                     for k, v in _option.items():
                         j[k] = v
                     if _titleMap:
                         j["titleMap"] = _titleMap
-                    if "items" in form_old and "items" in form_new:
-                        replace_form(form_old["items"], form_new["items"])
+                    if _title_i18n:
+                        j["title_i18n"] = _title_i18n
+                    if _title_i18n_temp:
+                        j["title_i18n_temp"] = _title_i18n_temp
+                    if "items" in i and "items" in j:
+                        replace_form(i["items"], j["items"])
                     break
 
 
@@ -80,6 +99,7 @@ def replace_item_type_data(render_old, render_new, _form_prop_old, item_key):
             break
     replace_form(_form_prop_old, _form_prop_new)
 
+
 def main():
     current_app.logger.info('=============== replace_item_type_data ===============')
     current_app.logger.info('start')
@@ -87,7 +107,8 @@ def main():
         sql = """
             SELECT schema,
                    form,
-                   render
+                   render,
+                   version_id
             FROM item_type_version
             WHERE id = :item_type_id
               AND  updated < :update_date
@@ -113,7 +134,15 @@ def main():
                             "system_identifier_hdl",
                             "system_identifier_uri"
                         ]:
-                            replace_item_type_data(item_type_old.render, item_type_new.render, _form_data_old.get("items"), _key)
+                            multiple_old = get_multiple(item_type_old.render, _key)
+                            multiple_new = get_multiple(item_type_new.render, _key)
+                            if multiple_old["multiple"] is None or \
+                                    multiple_new["multiple"] is None or \
+                                    multiple_old["multiple"] == multiple_new["multiple"]:
+                                replace_item_type_data(item_type_old.render, item_type_new.render, _form_data_old.get("items"), _key)
+                            else:
+                                _t = multiple_new["title"] if multiple_new["title"] else multiple_old["title"]
+                                current_app.logger.info('Skip element "{}" (id = {}) in item type (id = {}).'.format(_t, _key, _id))
                     json_schema = fix_json_schema(item_type_new.render['table_row_map']['schema'])
                     json_form = item_type_new.render['table_row_map']['form']
                     json_schema = update_required_schema_not_exist_in_form(json_schema, json_form)
@@ -124,7 +153,7 @@ def main():
                     flag_modified(item_type_new, "render")
                     db.session.merge(item_type_new)
                 db.session.commit()
-                current_app.logger.info('Updated item type (id = {}) successfully.'.format(_id))
+                current_app.logger.info('Updated item type (id = {}) successfully from version_id = {}.'.format(_id, item_type_old.version_id))
             except SQLAlchemyError as e:
                 current_app.logger.error('Failed to update item type (id = {}).'.format(_id))
                 current_app.logger.error(e)
