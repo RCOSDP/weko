@@ -30,7 +30,7 @@ from .helpers import fill_oauth2_headers, make_pdf_fixture
 from invenio_access import InvenioAccess
 from invenio_access.models import ActionUsers
 from invenio_accounts import InvenioAccounts
-from invenio_accounts.views import blueprint as accounts_blueprint
+from invenio_accounts.views.settings import create_settings_blueprint
 from invenio_assets import InvenioAssets
 from invenio_db import InvenioDB, db
 from invenio_files_rest import InvenioFilesREST
@@ -57,7 +57,7 @@ from six import BytesIO, get_method_self
 from sqlalchemy import inspect
 from sqlalchemy_utils.functions import create_database, database_exists, \
     drop_database
-from werkzeug.wsgi import DispatcherMiddleware
+from werkzeug.middleware.dispatcher import DispatcherMiddleware
 
 from invenio_deposit import InvenioDeposit, InvenioDepositREST
 from invenio_deposit.api import Deposit
@@ -145,6 +145,7 @@ def base_app(request):
     # initialize InvenioDeposit first in order to detect any invalid dependency
     InvenioDeposit(app)
     init_app(app)
+    accounts_blueprint = create_settings_blueprint(app)
     app.register_blueprint(accounts_blueprint)
     app.register_blueprint(oauth2server_settings_blueprint)
     InvenioAssets(app)

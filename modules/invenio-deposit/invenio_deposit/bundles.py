@@ -9,7 +9,7 @@
 """UI for Invenio-Deposit."""
 
 from flask_assets import Bundle
-from invenio_assets import NpmBundle
+# from invenio_assets import NpmBundle
 
 css = Bundle(
     'node_modules/ui-select/dist/select.css',
