@@ -142,7 +142,7 @@ def main():
                                 replace_item_type_data(item_type_old.render, item_type_new.render, _form_data_old.get("items"), _key)
                             else:
                                 _t = multiple_new["title"] if multiple_new["title"] else multiple_old["title"]
-                                current_app.logger.info('Skip element "{}" (id = {}) in item type (id = {}).'.format(_t, _key, _id))
+                                current_app.logger.info('Skip element "{}" (id = {}) in item type (id = {}).'.format(_t, _key, _id.id))
                     json_schema = fix_json_schema(item_type_new.render['table_row_map']['schema'])
                     json_form = item_type_new.render['table_row_map']['form']
                     json_schema = update_required_schema_not_exist_in_form(json_schema, json_form)
@@ -153,13 +153,13 @@ def main():
                     flag_modified(item_type_new, "render")
                     db.session.merge(item_type_new)
                 db.session.commit()
-                current_app.logger.info('Updated item type (id = {}) successfully from version_id = {}.'.format(_id, item_type_old.version_id))
+                current_app.logger.info('Updated item type (id = {}) successfully from version_id = {}.'.format(_id.id, item_type_old.version_id))
             except SQLAlchemyError as e:
-                current_app.logger.error('Failed to update item type (id = {}).'.format(_id))
+                current_app.logger.error('Failed to update item type (id = {}).'.format(_id.id))
                 current_app.logger.error(e)
                 db.session.rollback()
             except Exception as e:
-                current_app.logger.error('Failed to update item type (id = {}).'.format(_id))
+                current_app.logger.error('Failed to update item type (id = {}).'.format(_id.id))
                 current_app.logger.error(e)
                 db.session.rollback()
     except Exception as ex:
