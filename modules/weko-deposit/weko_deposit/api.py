@@ -2822,8 +2822,14 @@ class WekoDeposit(Deposit):
             # Clone bucket
             _deposit = WekoDeposit.get_record(pid.object_uuid)
             # Get draft bucket's data
+            print(9999)
+            print(self.id)
+            print(9999)
             sync_bucket = RecordsBuckets.query.filter_by(
                 record_id=self.id).first()
+            print(8888)
+            print(sync_bucket)
+            print(8888)
             if sync_bucket:
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
                             branch='sync_bucket is not empty')
@@ -2905,6 +2911,7 @@ class WekoDeposit(Deposit):
             for i, content in enumerate(self.jrc['content']):
                 weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
                             count=i, element=content)
+
                 if content.get('file'):
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
                                 branch=f"{content.get('file')} is not empty")
