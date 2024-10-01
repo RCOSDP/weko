@@ -996,27 +996,27 @@ class TestWekoDeposit():
                 index_obj = {'index': ['3'], 'actions': 'private', "content": [
                     {"test": "content"}, {"file": "test"}]}
                 data = {
-                    "content": [{"test": "content"}, {"file": "test"}], 
-                    'pubdate': '2023-12-07', 
+                    "content": [{"test": "content"}, {"file": "test"}],
+                    'pubdate': '2023-12-07',
                     'item_1617186331708': [{
-                        'subitem_1551255647225': 'test', 
+                        'subitem_1551255647225': 'test',
                         'subitem_1551255648112': 'ja'
-                    }], 
+                    }],
                     'item_1617258105262': {
-                        'resourcetype': 'conference paper', 
+                        'resourcetype': 'conference paper',
                         'resourceuri': 'http://purl.org/coar/resource_type/c_5794'
-                    }, 
-                    'shared_user_id': -1, 
-                    'title': 'test', 
-                    'lang': 'ja', 
-                    'deleted_items': ['item_1617186385884', 'item_1617186419668', 'item_1617186499011', 
-                                    'item_1617186609386', 'item_1617186626617', 'item_1617186643794', 
-                                    'item_1617186660861', 'item_1617186702042', 'item_1617186783814', 
-                                    'item_1617186859717', 'item_1617186882738', 'item_1617186901218', 
-                                    'item_1617186920753', 'item_1617186941041', 'item_1617187112279', 
-                                    'item_1617187187528', 'item_1617349709064', 'item_1617353299429', 
-                                    'item_1617605131499', 'item_1617610673286', 'item_1617620223087', 
-                                    'item_1617944105607', 'item_1617187056579', 'approval1', 'approval2'], 
+                    },
+                    'shared_user_id': -1,
+                    'title': 'test',
+                    'lang': 'ja',
+                    'deleted_items': ['item_1617186385884', 'item_1617186419668', 'item_1617186499011',
+                                    'item_1617186609386', 'item_1617186626617', 'item_1617186643794',
+                                    'item_1617186660861', 'item_1617186702042', 'item_1617186783814',
+                                    'item_1617186859717', 'item_1617186882738', 'item_1617186901218',
+                                    'item_1617186920753', 'item_1617186941041', 'item_1617187112279',
+                                    'item_1617187187528', 'item_1617349709064', 'item_1617353299429',
+                                    'item_1617605131499', 'item_1617610673286', 'item_1617620223087',
+                                    'item_1617944105607', 'item_1617187056579', 'approval1', 'approval2'],
                     '$schema': '/items/jsonschema/1'
                 }
                 deposit['_buckets']['deposit'] = "1a23bfcd-456e-78ab-c0d1-23eee45a6b78"
@@ -1041,14 +1041,14 @@ class TestWekoDeposit():
                     'shared_user_id': -1,
                     'title': 'test',
                     'lang': 'ja',
-                    'deleted_items': ['item_1617186385884', 'item_1617186419668', 'item_1617186499011', 
-                                    'item_1617186609386', 'item_1617186626617', 'item_1617186643794', 
-                                    'item_1617186660861', 'item_1617186702042', 'item_1617186783814', 
-                                    'item_1617186859717', 'item_1617186882738', 'item_1617186901218', 
-                                    'item_1617186920753', 'item_1617186941041', 'item_1617187112279', 
-                                    'item_1617187187528', 'item_1617349709064', 'item_1617353299429', 
-                                    'item_1617605131499', 'item_1617610673286', 'item_1617620223087', 
-                                    'item_1617944105607', 'item_1617187056579', 'approval1', 'approval2'], 
+                    'deleted_items': ['item_1617186385884', 'item_1617186419668', 'item_1617186499011',
+                                    'item_1617186609386', 'item_1617186626617', 'item_1617186643794',
+                                    'item_1617186660861', 'item_1617186702042', 'item_1617186783814',
+                                    'item_1617186859717', 'item_1617186882738', 'item_1617186901218',
+                                    'item_1617186920753', 'item_1617186941041', 'item_1617187112279',
+                                    'item_1617187187528', 'item_1617349709064', 'item_1617353299429',
+                                    'item_1617605131499', 'item_1617610673286', 'item_1617620223087',
+                                    'item_1617944105607', 'item_1617187056579', 'approval1', 'approval2'],
                     '$schema': '/items/jsonschema/1'
                 }
                 deposit['_buckets']['deposit'] = "1a23bfcd-456e-78ab-c0d1-23eee45a6b78"
@@ -1074,14 +1074,14 @@ class TestWekoDeposit():
                     'shared_user_id': -1,
                     'title': 'test',
                     'lang': 'ja',
-                    'deleted_items': ['item_1617186385884', 'item_1617186419668', 'item_1617186499011', 
-                                    'item_1617186609386', 'item_1617186626617', 'item_1617186643794', 
-                                    'item_1617186660861', 'item_1617186702042', 'item_1617186783814', 
-                                    'item_1617186859717', 'item_1617186882738', 'item_1617186901218', 
-                                    'item_1617186920753', 'item_1617186941041', 'item_1617187112279', 
-                                    'item_1617187187528', 'item_1617349709064', 'item_1617353299429', 
-                                    'item_1617605131499', 'item_1617610673286', 'item_1617620223087', 
-                                    'item_1617944105607', 'item_1617187056579', 'approval1', 'approval2'], 
+                    'deleted_items': ['item_1617186385884', 'item_1617186419668', 'item_1617186499011',
+                                    'item_1617186609386', 'item_1617186626617', 'item_1617186643794',
+                                    'item_1617186660861', 'item_1617186702042', 'item_1617186783814',
+                                    'item_1617186859717', 'item_1617186882738', 'item_1617186901218',
+                                    'item_1617186920753', 'item_1617186941041', 'item_1617187112279',
+                                    'item_1617187187528', 'item_1617349709064', 'item_1617353299429',
+                                    'item_1617605131499', 'item_1617610673286', 'item_1617620223087',
+                                    'item_1617944105607', 'item_1617187056579', 'approval1', 'approval2'],
                     '$schema': '/items/jsonschema/1'
                 }
                 deposit['_buckets']['deposit'] = "1a23bfcd-456e-78ab-c0d1-23eee45a6b78"
@@ -1144,14 +1144,14 @@ class TestWekoDeposit():
                     'shared_user_id': -1,
                     'title': 'test',
                     'lang': 'ja',
-                    'deleted_items': ['item_1617186385884', 'item_1617186419668', 'item_1617186499011', 
-                                    'item_1617186609386', 'item_1617186626617', 'item_1617186643794', 
-                                    'item_1617186660861', 'item_1617186702042', 'item_1617186783814', 
-                                    'item_1617186859717', 'item_1617186882738', 'item_1617186901218', 
-                                    'item_1617186920753', 'item_1617186941041', 'item_1617187112279', 
-                                    'item_1617187187528', 'item_1617349709064', 'item_1617353299429', 
-                                    'item_1617605131499', 'item_1617610673286', 'item_1617620223087', 
-                                    'item_1617944105607', 'item_1617187056579', 'approval1', 'approval2'], 
+                    'deleted_items': ['item_1617186385884', 'item_1617186419668', 'item_1617186499011',
+                                    'item_1617186609386', 'item_1617186626617', 'item_1617186643794',
+                                    'item_1617186660861', 'item_1617186702042', 'item_1617186783814',
+                                    'item_1617186859717', 'item_1617186882738', 'item_1617186901218',
+                                    'item_1617186920753', 'item_1617186941041', 'item_1617187112279',
+                                    'item_1617187187528', 'item_1617349709064', 'item_1617353299429',
+                                    'item_1617605131499', 'item_1617610673286', 'item_1617620223087',
+                                    'item_1617944105607', 'item_1617187056579', 'approval1', 'approval2'],
                     '$schema': '/items/jsonschema/1'
                 }
 
@@ -2853,7 +2853,7 @@ class TestWekoRecord:
             mock_logger.reset_mock()
 
 
-    #     def __get_titles_key(item_type_mapping):
+    # def __get_titles_key(item_type_mapping):
     #.tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoRecord::test__get_titles_key -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test__get_titles_key(self,app,es_records):
         indexer, records = es_records
@@ -3088,7 +3088,7 @@ class TestWekoRecord:
 
     #     def items_show_list(self):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoRecord::test_items_show_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
-    def test_items_show_list(self, app, es_records, es_records_2, es_records_5, users, db_itemtype, db_admin_settings):
+    def test_items_show_list(self, app, es_records, es_records_2, es_records_5, es_records_6, users, db_itemtype, db_admin_settings):
         with patch('weko_deposit.api.weko_logger') as mock_logger:
             record = WekoRecord({})
             with app.test_request_context():
@@ -3098,17 +3098,41 @@ class TestWekoRecord:
             _, results = es_records
             result = results[0]
             record = result['record']
+            version_id = str(result['version_id'])
             with patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
-                assert record.items_show_list == [{'attribute_name': 'PubDate', 'attribute_value': '2022-08-20', 'attribute_name_i18n': 'PubDate'}, {'attribute_name': 'Title', 'attribute_name_i18n': 'Title', 'attribute_type': None, 'attribute_value_mlt': [[[[{'Title': 'タイトル'}], [{'Language': 'ja'}]]], [[[{'Title': 'title'}], [{'Language': 'en'}]]]]}, {'attribute_name': 'Resource Type', 'attribute_name_i18n': 'Resource Type', 'attribute_type': None, 'attribute_value_mlt': [[[[{'Resource Type': 'conference paper'}], [{'Resource Type Identifier': 'http://purl.org/coar/resource_type/c_5794'}]]]]}, {
-                    'attribute_name': 'File', 'attribute_name_i18n': 'File', 'attribute_type': 'file', 'attribute_value_mlt': [[[[{'dateType': 'Available', 'item_1617605131499[].date[0].dateValue': '2022-09-07'}]], [{'item_1617605131499[].url': 'https://weko3.example.org/record/1/files/hello.txt'}], [[{'item_1617605131499[].filesize[].value': '146 KB'}]], {'version_id': '{}'.format(record.files['hello.txt'].version_id), 'mimetype': 'application/pdf', 'file': 'SGVsbG8sIFdvcmxk', 'item_1617605131499[].filename': 'hello.txt', 'item_1617605131499[].format': 'plain/text', 'item_1617605131499[].accessrole': 'open_access'}]]}]
+                assert record.items_show_list == [{'attribute_name': 'PubDate', 'attribute_value': '2022-08-20', 'attribute_name_i18n': 'PubDate'}, {'attribute_name': 'Title', 'attribute_name_i18n': 'Title', 'attribute_type': None, 'attribute_value_mlt': [[[[{'Title': 'タイトル'}], [{'Language': 'ja'}]]], [[[{'Title': 'title'}], [{'Language': 'en'}]]]]}, {'attribute_name': 'Resource Type', 'attribute_name_i18n': 'Resource Type', 'attribute_type': None, 'attribute_value_mlt': [[[[{'Resource Type': 'conference paper'}], [{'Resource Type Identifier': 'http://purl.org/coar/resource_type/c_5794'}]]]]}, {'attribute_name': 'File', 'attribute_name_i18n': 'File', 'attribute_type': 'file', 'attribute_value_mlt': [[[[{'dateType': 'Available', 'item_1617605131499[].date[0].dateValue': '2022-09-07'}]], [{'item_1617605131499[].url': 'https://weko3.example.org/record/1/files/hello.txt'}], [[{'item_1617605131499[].filesize[].value': '146 KB'}]], {'version_id': version_id, 'mimetype': 'application/pdf', 'file': 'SGVsbG8sIFdvcmxk', 'filename': 'hello.txt', 'filename.name': 'ファイル名', 'item_1617605131499[].format': 'plain/text', 'item_1617605131499[].accessrole': 'open_access'}]]}]
 
             _, results = es_records
             result = results[1]
             record = result['record']
+            version_id = str(result['version_id'])
             with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
-                assert record.items_show_list == [{'attribute_name': 'PubDate', 'attribute_value': '2022-08-20', 'attribute_name_i18n': 'PubDate'}, {'attribute_name': 'Title', 'attribute_name_i18n': 'Title', 'attribute_type': None, 'attribute_value_mlt': [[[[{'Title': 'タイトル'}], [{'Language': 'ja'}]]], [[[{'Title': 'title'}], [{'Language': 'en'}]]]]}, {'attribute_name': 'Resource Type', 'attribute_name_i18n': 'Resource Type', 'attribute_type': None, 'attribute_value_mlt': [[[[{'Resource Type': 'conference paper'}], [{'Resource Type Identifier': 'http://purl.org/coar/resource_type/c_5794'}]]]]}, {
-                    'attribute_name': 'File', 'attribute_name_i18n': 'File', 'attribute_type': 'file', 'attribute_value_mlt': [[[[{'dateType': 'Available', 'item_1617605131499[].date[0].dateValue': '2022-09-07'}]], [{'item_1617605131499[].url': 'https://weko3.example.org/record/2/files/hello.txt'}], [[{'item_1617605131499[].filesize[].value': '146 KB'}]], {'version_id': '{}'.format(record.files['hello.txt'].version_id), 'mimetype': 'application/pdf', 'file': 'SGVsbG8sIFdvcmxk', 'item_1617605131499[].filename': 'hello.txt', 'item_1617605131499[].format': 'plain/text', 'item_1617605131499[].accessrole': 'open_access'}]]}]
+                assert record.items_show_list == [{'attribute_name': 'PubDate', 'attribute_value': '2022-08-20', 'attribute_name_i18n': 'PubDate'}, {'attribute_name': 'Title', 'attribute_name_i18n': 'Title', 'attribute_type': None, 'attribute_value_mlt': [[[[{'Title': 'タイトル'}], [{'Language': 'ja'}]]], [[[{'Title': 'title'}], [{'Language': 'en'}]]]]}, {'attribute_name': 'Resource Type', 'attribute_name_i18n': 'Resource Type', 'attribute_type': None, 'attribute_value_mlt': [[[[{'Resource Type': 'conference paper'}], [{'Resource Type Identifier': 'http://purl.org/coar/resource_type/c_5794'}]]]]}, {'attribute_name': 'File', 'attribute_name_i18n': 'File', 'attribute_type': 'file', 'attribute_value_mlt': [[[[{'dateType': 'Available', 'item_1617605131499[].date[0].dateValue': '2022-09-07'}]], [{'item_1617605131499[].url': 'https://weko3.example.org/record/2/files/hello.txt'}], [[{'item_1617605131499[].filesize[].value': '146 KB'}]], {'version_id': version_id, 'mimetype': 'application/pdf', 'file': 'SGVsbG8sIFdvcmxk', 'filename': 'hello.txt', 'filename.name': 'ファイル名', 'item_1617605131499[].format': 'plain/text', 'item_1617605131499[].accessrole': 'open_access'}]]}]
 
+
+            # contain hidden record
+            _, results = es_records_2
+            result = results[0]
+            record = result['record']
+            version_id = str(result['version_id'])
+            with patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
+                assert record.items_show_list == [{'attribute_name': 'PubDate', 'attribute_value': '2022-08-20', 'attribute_name_i18n': 'PubDate'}, {'attribute_name': 'Creator', 'attribute_name_i18n': 'Creator', 'attribute_type': 'creator', 'attribute_value_mlt': [{'name': [], 'order_lang': []}, {'name': ['givenNames'], 'order_lang': [{'NoLanguage': {'givenName': ['givenNames'], 'affiliationName': [], 'affiliationNameIdentifier': []}}, {'ja': {'creatorName': None, 'creatorAlternative': [], 'affiliationName': [], 'affiliationNameIdentifier': []}}]}, {'name': ['mei'], 'order_lang': [{'NoLanguage': {'familyName': ['mei'], 'affiliationName': [], 'affiliationNameIdentifier': []}}, {'ja': {'creatorName': None, 'creatorAlternative': [], 'affiliationName': [], 'affiliationNameIdentifier': []}}]}, {'name': ['mei'], 'order_lang': [{'NoLanguage': {'familyName': ['mei'], 'affiliationName': [], 'affiliationNameIdentifier': []}}, {'ja': {'creatorName': None, 'creatorAlternative': [], 'affiliationName': [], 'affiliationNameIdentifier': []}}]}, {'name': [], 'order_lang': []}, {'name': ['name'], 'order_lang': [{'NoLanguage': {'creatorName': ['name'], 'affiliationName': [], 'affiliationNameIdentifier': []}}, {'ja': {'creatorName': None, 'creatorAlternative': [], 'affiliationName': [], 'affiliationNameIdentifier': []}}]}, {'name': [], 'order_lang': [], 'nameIdentifiers': [{'nameIdentifier': '識別'}, {'nameIdentifierURI': 'tets.com'}]}, {'name': [], 'order_lang': []}, {'name': ['別名'], 'order_lang': [{'NoLanguage': {'creatorAlternative': ['別名'], 'affiliationName': [], 'affiliationNameIdentifier': []}}, {'ja': {'creatorName': None, 'creatorAlternative': [], 'affiliationName': [], 'affiliationNameIdentifier': []}}]}]}, {'attribute_name': 'Resource Type', 'attribute_name_i18n': 'Resource Type', 'attribute_type': None, 'attribute_value_mlt': [[[[{'Resource Type': 'conference paper'}], [{'Resource Type Identifier': 'http://purl.org/coar/resource_type/c_5794'}]]]]}, {'attribute_name': 'thumbnail', 'attribute_name_i18n': 'thumbnail', 'attribute_type': 'object', 'is_thumbnail': True}]
+
+            #
+            _, results = es_records_5
+            result = results[1]
+            record = result['record']
+            version_id = str(result['version_id'])
+            with patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
+                assert record.items_show_list == [{'attribute_name': 'PubDate', 'attribute_value': '2022-08-20', 'attribute_name_i18n': 'PubDate'}, {'attribute_name': 'Creator', 'attribute_name_i18n': 'Creator', 'attribute_type': 'creator', 'attribute_value_mlt': [{'name': [], 'order_lang': []}, {'name': ['givenNames'], 'order_lang': [{'NoLanguage': {'givenName': ['givenNames'], 'affiliationName': [], 'affiliationNameIdentifier': []}}, {'ja': {'creatorName': None, 'creatorAlternative': [], 'affiliationName': [], 'affiliationNameIdentifier': []}}]}, {'name': ['mei'], 'order_lang': [{'NoLanguage': {'familyName': ['mei'], 'affiliationName': [], 'affiliationNameIdentifier': []}}, {'ja': {'creatorName': None, 'creatorAlternative': [], 'affiliationName': [], 'affiliationNameIdentifier': []}}]}, {'name': ['mei'], 'order_lang': [{'NoLanguage': {'familyName': ['mei'], 'affiliationName': [], 'affiliationNameIdentifier': []}}, {'ja': {'creatorName': None, 'creatorAlternative': [], 'affiliationName': [], 'affiliationNameIdentifier': []}}]}, {'name': [], 'order_lang': []}, {'name': ['name'], 'order_lang': [{'NoLanguage': {'creatorName': ['name'], 'affiliationName': [], 'affiliationNameIdentifier': []}}, {'ja': {'creatorName': None, 'creatorAlternative': [], 'affiliationName': [], 'affiliationNameIdentifier': []}}]}, {'name': [], 'order_lang': [], 'nameIdentifiers': [{'nameIdentifier': '識別'}, {'nameIdentifierURI': 'tets.com'}]}, {'name': [], 'order_lang': []}, {'name': ['別名'], 'order_lang': [{'NoLanguage': {'creatorAlternative': ['別名'], 'affiliationName': [], 'affiliationNameIdentifier': []}}, {'ja': {'creatorName': None, 'creatorAlternative': [], 'affiliationName': [], 'affiliationNameIdentifier': []}}]}]}, {'attribute_name': 'Reference', 'attribute_name_i18n': 'Resource Type', 'attribute_type': None, 'attribute_value_mlt': [[{'item_1617258105262.resourcetype': 'conference paper', 'item_1617258105262.resourceuri': 'http://purl.org/coar/resource_type/c_5794'}]]}, {'attribute_name': 'Bibliographic Information', 'attribute_name_i18n': 'Bibliographic Information', 'attribute_type': 'object', 'attribute_value_mlt': [{'title_attribute_name': [], 'magazine_attribute_name': [{'p.': '終了ページ'}], 'length': 1}, {'title_attribute_name': ['タイトル', 'ja : '], 'magazine_attribute_name': [], 'length': 0}, {'title_attribute_name': [], 'magazine_attribute_name': [{'p.': '開始ページ'}], 'length': 1}, {'title_attribute_name': [], 'magazine_attribute_name': [], 'length': 0}, {'title_attribute_name': [], 'magazine_attribute_name': [{'Issue Number': '号'}], 'length': 1}, {'title_attribute_name': [], 'magazine_attribute_name': [{'Number of Page': 'ページ数'}], 'length': 1}]}, {'attribute_name': 'thumbnail', 'attribute_name_i18n': 'thumbnail', 'attribute_type': 'object', 'attribute_value_mlt': []}]
+
+            # contain 'input_type' == 'text', 'interim', contain BibliographicInfo
+            _, results = es_records_6
+            result = results[2]
+            record = result['record']
+            version_id = str(result['version_id'])
+            # with patch("weko_deposit.api._FormatSysBibliographicInformation.is_bibliographic", return_value=True):
+            assert record.items_show_list == [{'attribute_name': 'PubDate', 'attribute_value': '2022-08-20', 'attribute_name_i18n': 'PubDate'}, {'attribute_name': 'Creator', 'attribute_name_i18n': 'Creator', 'attribute_type': 'creator', 'attribute_value_mlt': [{'name': [], 'order_lang': []}, {'name': ['givenNames'], 'order_lang': [{'NoLanguage': {'givenName': ['givenNames'], 'affiliationName': [], 'affiliationNameIdentifier': []}}, {'ja': {'creatorName': None, 'creatorAlternative': [], 'affiliationName': [], 'affiliationNameIdentifier': []}}]}, {'name': ['mei'], 'order_lang': [{'NoLanguage': {'familyName': ['mei'], 'affiliationName': [], 'affiliationNameIdentifier': []}}, {'ja': {'creatorName': None, 'creatorAlternative': [], 'affiliationName': [], 'affiliationNameIdentifier': []}}]}, {'name': ['mei'], 'order_lang': [{'NoLanguage': {'familyName': ['mei'], 'affiliationName': [], 'affiliationNameIdentifier': []}}, {'ja': {'creatorName': None, 'creatorAlternative': [], 'affiliationName': [], 'affiliationNameIdentifier': []}}]}, {'name': [], 'order_lang': []}, {'name': ['name'], 'order_lang': [{'NoLanguage': {'creatorName': ['name'], 'affiliationName': [], 'affiliationNameIdentifier': []}}, {'ja': {'creatorName': None, 'creatorAlternative': [], 'affiliationName': [], 'affiliationNameIdentifier': []}}]}, {'name': [], 'order_lang': [], 'nameIdentifiers': [{'nameIdentifier': '識別'}, {'nameIdentifierURI': 'tets.com'}]}, {'name': [], 'order_lang': []}, {'name': ['別名'], 'order_lang': [{'NoLanguage': {'creatorAlternative': ['別名'], 'affiliationName': [], 'affiliationNameIdentifier': []}}, {'ja': {'creatorName': None, 'creatorAlternative': [], 'affiliationName': [], 'affiliationNameIdentifier': []}}]}]}, {'attribute_name': 'Reference', 'attribute_type': 'file', 'content': [{'test': 'content'}, {'file': 'test'}], 'attribute_name_i18n': 'Resource Type'}, {'attribute_name': 'Bibliographic Information', 'attribute_name_i18n': 'Bibliographic Information', 'attribute_type': 'object', 'attribute_value_mlt': [{'title_attribute_name': [], 'magazine_attribute_name': [{'p.': '終了ページ'}], 'length': 1}, {'title_attribute_name': ['タイトル', 'ja : '], 'magazine_attribute_name': [], 'length': 0}, {'title_attribute_name': [], 'magazine_attribute_name': [{'p.': '開始ページ'}], 'length': 1}, {'title_attribute_name': [], 'magazine_attribute_name': [], 'length': 0}, {'title_attribute_name': [], 'magazine_attribute_name': [{'Issue Number': '号'}], 'length': 1}, {'title_attribute_name': [], 'magazine_attribute_name': [{'Number of Page': 'ページ数'}], 'length': 1}]}, {'attribute_name': 'Bibliographic Information', 'attribute_name_i18n': 'Bibliographic Information', 'attribute_type': 'object', 'attribute_value_mlt': [{'title_attribute_name': [], 'magazine_attribute_name': [{'p.': '終了ページ'}], 'length': 1}, {'title_attribute_name': ['タイトル', 'ja : '], 'magazine_attribute_name': [], 'length': 0}, {'title_attribute_name': [], 'magazine_attribute_name': [{'p.': '開始ページ'}], 'length': 1}, {'title_attribute_name': [], 'magazine_attribute_name': [], 'length': 0}, {'title_attribute_name': [], 'magazine_attribute_name': [{'Issue Number': '号'}], 'length': 1}, {'title_attribute_name': [], 'magazine_attribute_name': [{'Number of Page': 'ページ数'}], 'length': 1}]}, {'attribute_name': 'Bibliographic Information', 'attribute_name_i18n': 'Bibliographic Information', 'attribute_type': 'object', 'attribute_value_mlt': [[[]], [[]], [[]]]}, {'attribute_name': 'Information', 'attribute_type': 'object', 'attribute_value': '2022-08-20', 'attribute_name_i18n': 'Information'}, {'attribute_name': 'Information', 'attribute_type': 'nothing', 'attribute_name_i18n': 'Information'}, {'attribute_name': 'thumbnail', 'attribute_name_i18n': 'thumbnail', 'attribute_type': 'object', 'is_thumbnail': True}]
 
             mock_logger.assert_any_call(key='WEKO_COMMON_FOR_START')
             mock_logger.assert_any_call(
@@ -3120,23 +3144,6 @@ class TestWekoRecord:
                 key='WEKO_COMMON_RETURN_VALUE', value=mock.ANY)
             mock_logger.reset_mock()
 
-            _, results = es_records_2
-            result = results[0]
-            record = result['record']
-            with patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
-                re = record.items_show_list
-                # assert record.items_show_list == [{'attribute_name': 'PubDate', 'attribute_value': '2022-08-20', 'attribute_name_i18n': 'PubDate'}, {'attribute_name': 'Creator', 'attribute_name_i18n': 'Creator', 'attribute_type': 'creator',
-                #     'attribute_value_mlt': [[[]], [[[{'Creator Given Name': [[[[{'Given Name': 'givenNames'}]]], [[[{'Language': 'ja'}]]]]}]]], [[[{'Creator Family Name': [[[[{'Family Name': 'mei'}]]], [[[{'Language': 'ja'}]]]]}]]], [[[{'Creator Family Name': [[[[{'Family Name': 'mei'}]]], [[[{'Language': 'ja'}]]]]}]]], [[[{}]]], [[[{'Creator Name': [[[[{'Name': 'name'}]]], [[[{'Language': 'ja'}]]]]}]]], [[[{'Creator Identifier': [[[[{'Creator Identifier': '識別'}]]], [[[{'Creator Identifier URI': 'tets.com'}]]]]}]]], [[[{'Affiliation Name Identifier': [[[[{'Affiliation Name Identifier': '識別子'}]]], [[[{'Affiliation Name Identifier URI': 'tets.com'}]]], [[[{'Affiliation Name Identifier Scheme': 'kakenhi'}]]]]}]]], [[[{'Creator Alternative Name': [[[[{'Alternative Name': '別名'}]]], [[[{'Language': 'ja'}]]]]}]]]]}, {'attribute_name': 'Resource Type', 'attribute_name_i18n': 'Resource Type', 'attribute_type': None, 'attribute_value_mlt': [[[[{'Resource Type': 'conference paper'}], [{'Resource Type Identifier': 'http://purl.org/coar/resource_type/c_5794'}]]]]}, {'attribute_name': 'thumbnail', 'attribute_name_i18n': 'thumbnail', 'attribute_type': 'object', 'is_thumbnail': True}]
-
-            _, results = es_records_5
-            result = results[1]
-            record = result['record']
-            with patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
-                re = record.items_show_list
-                # assert record.items_show_list == [{'attribute_name': 'PubDate', 'attribute_value': '2022-08-20', 'attribute_name_i18n': 'PubDate'}, {'attribute_name': 'Creator', 'attribute_name_i18n': 'Creator', 'attribute_type': 'object',
-                #     'attribute_value_mlt': [[[]], [[[{'Creator Given Name': [[[[{'Given Name': 'givenNames'}]]], [[[{'Language': 'ja'}]]]]}]]], [[[{'Creator Family Name': [[[[{'Family Name': 'mei'}]]], [[[{'Language': 'ja'}]]]]}]]], [[[{'Creator Family Name': [[[[{'Family Name': 'mei'}]]], [[[{'Language': 'ja'}]]]]}]]], [[[{}]]], [[[{'Creator Name': [[[[{'Name': 'name'}]]], [[[{'Language': 'ja'}]]]]}]]], [[[{'Creator Identifier': [[[[{'Creator Identifier': '識別'}]]], [[[{'Creator Identifier URI': 'tets.com'}]]]]}]]], [[[{'Affiliation Name Identifier': [[[[{'Affiliation Name Identifier': '識別子'}]]], [[[{'Affiliation Name Identifier URI': 'tets.com'}]]], [[[{'Affiliation Name Identifier Scheme': 'kakenhi'}]]]]}]]], [[[{'Creator Alternative Name': [[[[{'Alternative Name': '別名'}]]], [[[{'Language': 'ja'}]]]]}]]]]}, {'attribute_name': 'Resource Type', 'attribute_name_i18n': 'Resource Type', 'attribute_type': None, 'attribute_value_mlt': [[[[{'Resource Type': 'conference paper'}], [{'Resource Type Identifier': 'http://purl.org/coar/resource_type/c_5794'}]]]]}, {'attribute_name': 'thumbnail', 'attribute_name_i18n': 'thumbnail', 'attribute_type': 'object', 'is_thumbnail': True}]
-
-    #     def display_file_info(self):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoRecord::test_display_file_info -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test_display_file_info(self, app, es_records, es_records_6, es_records_5):
         with patch('weko_deposit.api.weko_logger') as mock_logger:
@@ -3152,22 +3159,28 @@ class TestWekoRecord:
                 assert record.display_file_info == [{'attribute_name': 'File', 'attribute_name_i18n': 'File', 'attribute_type': 'file', 'attribute_value_mlt': [[[[{'Opendate': '2022-09-07'}], [
                     {'FileName': 'hello.txt'}], [{'Text URL': [[[{'Text URL': 'https://weko3.example.org/record/1/files/hello.txt'}]]]}], [{'Format': 'plain/text'}], [{'Size': [[[[{'Size': '146 KB'}]]]]}]]]]}]
 
+            # invalid filename
+            result = results[1]
+            record = result['record']
+            with app.test_request_context("/test?filename=no_hello.txt"):
+                assert record.display_file_info == [{'attribute_name': 'File', 'attribute_name_i18n': 'File', 'attribute_type': 'file', 'attribute_value_mlt': []}]
+
             _, results = es_records_6
             result = results[0]
             record = result['record']
             with app.test_request_context("/test?filename=hello.txt"):
-                re = record.display_file_info
+                assert record.display_file_info == [{'attribute_name': 'Reference', 'attribute_type': 'file', 'content': [{'test': 'content'}, {'file': 'test'}], 'attribute_name_i18n': 'Resource Type', 'attribute_value_mlt': [[[[{'Resource Type': ''}]]]]}]
 
+        with patch('weko_deposit.api.weko_logger') as mock_logger:
             # nval['attribute_type'] == 'file
             _, results = es_records_5
             result = results[0]
             record = result['record']
             with app.test_request_context("/test?filename=hello.txt"):
-                re = record.display_file_info
+                assert record.display_file_info == []
 
     #     def __remove_special_character_of_weko2(self, metadata):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoRecord::test__remove_special_character_of_weko2 -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
-    def test__remove_special_character_of_weko2(self,es_records):
         with patch('weko_deposit.api.weko_logger') as mock_logger:
             record = WekoRecord({})
             indexer, results = es_records
@@ -3483,6 +3496,9 @@ class TestWekoRecord:
             with app.test_request_context():
                 result = record.get_file_data()
                 assert result == []
+
+            with app.test_request_context(filename=""):
+                pass
 
             mock_logger.assert_any_call(key='WEKO_COMMON_FOR_START')
             mock_logger.assert_any_call(

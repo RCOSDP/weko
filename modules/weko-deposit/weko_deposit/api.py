@@ -1891,22 +1891,13 @@ class WekoDeposit(Deposit):
         if self.is_edit:
             weko_logger(key='WEKO_COMMON_IF_ENTER',
                         branch='is_edit is not empty')
-            print(99991111)
-            print(self.files.bucket)
-            print(88882222)
             lst = ObjectVersion.get_by_bucket(
                 self.files.bucket, True).filter_by(is_head=False).all()
             klst = []
-            print(9999)
-            print(lst)
-            print(8888)
             weko_logger(key='WEKO_COMMON_FOR_START')
             for i, obj in enumerate(lst):
                 weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
                             count=i, element=obj)
-                print(9999555)
-                print(self.files.bucket)
-                print(8888666)
                 if obj.file_id:
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
                             branch=f"{obj.file_id} is not empty")
@@ -2366,9 +2357,6 @@ class WekoDeposit(Deposit):
         ps = {"publish_status": pubs}
         jrc.update(ps)
         dc.update(ps)
-        print(88881111)
-        print(data)
-        print(99992222)
         if data:
             weko_logger(key='WEKO_COMMON_IF_ENTER',
                         branch='data is not empty')
@@ -4573,13 +4561,11 @@ class _FormatSysCreator:
         _get_creator(self.current_language)
         # if current language has no creator
 
-        print(creator_names)
         if not creator_names:
             weko_logger(key='WEKO_COMMON_IF_ENTER',
                         branch='creator_names is empty')
             weko_logger(key='WEKO_COMMON_FOR_START')
 
-            print(self.languages)
             for i, lang in enumerate(self.languages):
                 weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
                             count=i, element=lang)
