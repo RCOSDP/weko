@@ -8,7 +8,6 @@ done
 DOCKER_BUILDKIT=1 COMPOSE_DOCKER_CLI_BUILD=1 docker compose build --no-cache --force-rm
 
 # Initialize resources
-docker-compose run --rm web ./scripts/create_user_opensearch.sh
 docker-compose run --rm web ./scripts/populate-instance.sh
 docker cp scripts/demo/item_type3.sql $(docker-compose ps -q postgresql):/tmp/item_type.sql
 docker-compose exec postgresql psql -U invenio -d invenio -f /tmp/item_type.sql

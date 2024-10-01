@@ -23,7 +23,7 @@ import csv
 import json
 from time import sleep
 from io import StringIO
-from elasticsearch import ElasticsearchException
+from invenio_search.engine import search
 
 from celery import shared_task
 from celery.utils.log import get_task_logger
@@ -707,7 +707,7 @@ def update_db_es_data(origin_pkid_list, origin_id_list):
     except SQLAlchemyError as ex:
         weko_logger(key='WEKO_COMMON_DB_SOME_ERROR', ex=ex)
         db.session.rollback()
-    except ElasticsearchException as ex:
+    except search.OpenSearchException as ex:
         weko_logger(key='WEKO_COMMON_ERROR_ELASTICSEARCH', ex=ex)
         db.session.rollback()
     except Exception as ex:
