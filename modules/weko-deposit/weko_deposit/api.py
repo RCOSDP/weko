@@ -686,7 +686,6 @@ class WekoIndexer(RecordIndexer):
         """
         self.get_es_index()
         es_data = self.__build_bulk_es_data(updated_data)
-        print(es_data)
         if es_data:
             weko_logger(key='WEKO_COMMON_IF_ENTER',
                         branch='es_data is not None')
@@ -1122,8 +1121,6 @@ class WekoDeposit(Deposit):
         Returns:
             dict: pubilshed deposit dict
         """
-        print("\n!!!!!")
-        print( '_deposit' in data)
         if '$schema' in data:
             data.pop('$schema')
 
@@ -1151,7 +1148,6 @@ class WekoDeposit(Deposit):
         )
         data['_buckets'] = {'deposit': str(bucket.id)}
 
-        print( '_deposit' in data)
         # save user_name & display name.
         if current_user and current_user.is_authenticated:
             weko_logger(key='WEKO_COMMON_IF_ENTER',
@@ -1165,7 +1161,6 @@ class WekoDeposit(Deposit):
                     'displayname': user._displayname if user else '',
                     'email': current_user.email
                 }
-        print( '_deposit' in data)
 
         if recid:
             weko_logger(key='WEKO_COMMON_IF_ENTER',
@@ -1181,7 +1176,7 @@ class WekoDeposit(Deposit):
             deposit = super(WekoDeposit, cls).create(data, id_=id_)
 
         record_id = 0
-        print('_deposit' in data)
+
         if data.get('_deposit'):
             weko_logger(key='WEKO_COMMON_IF_ENTER',
                         branch='_deposit is in data')
@@ -3188,11 +3183,6 @@ class WekoRecord(Record):
             weko_logger(key='WEKO_COMMON_IF_ENTER',
                         branch='title_metadata is not empty')
             attribute_value = title_metadata.get('attribute_value_mlt')
-            print(999)
-            print(attribute_value)
-            print(999)
-            print(999)
-            print(888)
             if isinstance(attribute_value, list):
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
                             branch=f"{attribute_value} is list")
@@ -3206,20 +3196,10 @@ class WekoRecord(Record):
                         weko_logger(key='WEKO_COMMON_IF_ENTER',
                                     branch=f'{attribute.get(title_key)} is not empty')
                         tmp['title'] = attribute.get(title_key)
-                    print(3333)
-                    print(attribute)
-                    print(language_key)
-                    print(attribute.get(language_key))
-                    print(999)
                     if attribute.get(language_key):
                         weko_logger(key='WEKO_COMMON_IF_ENTER',
                                     branch=f'{attribute.get(language_key)} is not empty')
                         tmp['language'] = attribute.get(language_key)
-                    print(44444)
-                    print(tmp)
-                    print(language_key)
-                    print(tmp.get('title'))
-                    print(999)
                     if tmp.get('title'):
                         weko_logger(key='WEKO_COMMON_IF_ENTER',
                                     branch=f"{tmp.get('title')} is not empty")
@@ -3382,7 +3362,6 @@ class WekoRecord(Record):
 
         weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=items)
         return items
-
 
     @property
     def display_file_info(self):
@@ -4297,7 +4276,6 @@ class _FormatSysCreator:
         rtn_value.update({'order_lang': formatted_creator_list})
         weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=rtn_value)
         return rtn_value
-
 
     def _format_creator_on_creator_popup(self, creators: Union[dict, list],
                                          des_creator: Union[
