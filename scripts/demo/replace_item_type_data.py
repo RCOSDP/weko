@@ -6,7 +6,9 @@ from sqlalchemy.orm.attributes import flag_modified
 from invenio_db import db
 from flask import current_app
 
-UPDATE_DATE = '2024/10/2'
+import argparse
+
+UPDATE_DATE = '2024/9/9'
 
 
 def get_multiple(render_data, item_key):
@@ -103,6 +105,7 @@ def replace_item_type_data(render_old, render_new, _form_prop_old, item_key):
 def main():
     current_app.logger.info('=============== replace_item_type_data ===============')
     try:
+        _update_date = args.update_date if args else UPDATE_DATE
         sql = """
             SELECT schema,
                    form,
@@ -114,11 +117,12 @@ def main():
             ORDER BY version_id DESC;
             """.strip()
         res = db.session.query(ItemType.id).all()
+        current_app.logger.info('{} (update_date = {})'.format(sql.strip(), _update_date))
         current_app.logger.info('Updates to {} item types begin.'.format(len(res)))
         for _id in res:
             params = {
                 "item_type_id": _id,
-                "update_date": UPDATE_DATE
+                "update_date": _update_date
             }
             try:
                 with db.session.begin_nested():
@@ -172,4 +176,10 @@ def main():
 
 if __name__ == '__main__':
     """Main context."""
+    try:
+        parser = argparse.ArgumentParser()
+        parser.add_argument('update_date', type=str)
+        args = parser.parse_args()
+    except:
+        args = None
     main()
