@@ -32,7 +32,7 @@ import uuid
 from collections import OrderedDict
 from datetime import datetime
 from unittest import mock
-from unittest.mock import patch, PropertyMock
+from unittest.mock import patch, PropertyMock, MagicMock
 from six import BytesIO
 
 from flask import session, abort
@@ -53,6 +53,7 @@ from invenio_records.errors import MissingModelError
 from invenio_records_rest.errors import PIDResolveRESTError
 from invenio_records_files.api import FileObject, Record
 from invenio_records.api import RecordRevision
+from invenio_records.models import RecordMetadata
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -974,7 +975,7 @@ class TestWekoDeposit():
 
     # def commit(self, *args, **kwargs):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_commit -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
-    def test_commit(sel, app, db, location, db_index, db_activity, db_itemtype, bucket):
+    def test_commit(self, app, db, location, db_index, db_activity, db_itemtype, bucket):
         with patch('weko_deposit.api.weko_logger') as mock_logger:
             with app.test_request_context():
                 deposit = WekoDeposit.create({})
@@ -1193,12 +1194,26 @@ class TestWekoDeposit():
                     'content': [{"test": "content"}, {"file": "test"}],
                     '$schema': '/items/jsonschema/1',
                 }
-                with patch("invenio_records.models.RecordMetadata.query") as mock_json:
-                    if mock_json['_buckets'] is not None:
-                        del mock_json['_buckets']
-                    deposit.commit()
+                deposit.commit()
+                print("xxxxxxxxxxxxxxxxxxxxxxx")
+                # with patch("weko_deposit.api.WekoDeposit.pid") as mock_pid:
+                record = RecordMetadata.query.get(deposit.pid.object_uuid)
+                print("\nfirstrecord")
+                print(record.json)
+                if '_buckets' in record.json:
+                    record_data = json.loads(json.dumps(record.json))
+                    
+                    del record_data['_buckets']
+                    print(record.json)
+                    record.json = record_data
+                    db.session.merge(record)
+                    db.session.commit()
+                    print("\nsecondrecord")
+                    print(record.json)
 
-
+                # with patch("invenio_records.models.RecordMetadata.query.filter_by") as mock_query:
+                deposit.commit()
+                print("xxxxxxxxxxxxxxxxxxxxxxx")
                 # exist feedback_mail_list
                 deposit = WekoDeposit.create({})
                 item_id = deposit.pid.object_uuid
