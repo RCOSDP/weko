@@ -104,6 +104,7 @@ from weko_deposit.config import (
     _PID,
     DEPOSIT_REST_ENDPOINTS as _DEPOSIT_REST_ENDPOINTS,
     WEKO_MIMETYPE_WHITELIST_FOR_ES as _WEKO_MIMETYPE_WHITELIST_FOR_ES,
+    WEKO_DEPOSIT_BIBLIOGRAPHIC_INFO_SYS_KEY as _WEKO_DEPOSIT_BIBLIOGRAPHIC_INFO_SYS_KEY
 )
 from weko_index_tree.config import (
     WEKO_INDEX_TREE_REST_ENDPOINTS as _WEKO_INDEX_TREE_REST_ENDPOINTS,
@@ -210,6 +211,7 @@ def base_app(instance_path):
         WEKO_AUTHORS_ES_INDEX_NAME="test-authors",
         WEKO_AUTHORS_ES_DOC_TYPE="test-authors",
         WEKO_MIMETYPE_WHITELIST_FOR_ES=_WEKO_MIMETYPE_WHITELIST_FOR_ES,
+        WEKO_DEPOSIT_BIBLIOGRAPHIC_INFO_SYS_KEY = _WEKO_DEPOSIT_BIBLIOGRAPHIC_INFO_SYS_KEY
     )
     # with ESTestServer(timeout=30) as server:
     Babel(app_)
@@ -742,7 +744,7 @@ def es_records(app, db, db_index, location, db_itemtype,db_oaischema):
             indexer.upload_metadata(record_data, rec_uuid, 1, False)
             item = ItemsMetadata.create(item_data, id_=rec_uuid)
 
-            results.append({"depid":depid, "recid":recid, "parent": parent, "doi":doi, "hdl": hdl,"record":record, "record_data":record_data,"item":item , "item_data":item_data,"deposit": deposit, "rec_uuid":rec_uuid})
+            results.append({"depid":depid, "recid":recid, "parent": parent, "doi":doi, "hdl": hdl,"record":record, "record_data":record_data,"item":item , "item_data":item_data,"deposit": deposit, "rec_uuid":rec_uuid, "version_id":obj.version_id})
 
     time.sleep(3)
     # es = Elasticsearch("http://{}:9200".format(app.config["SEARCH_ELASTIC_HOSTS"]))
@@ -874,7 +876,7 @@ def es_records_2(app, db, db_index, location, db_itemtype2,db_oaischema):
             indexer.upload_metadata(record_data, rec_uuid, 1, False)
             item = ItemsMetadata.create(item_data, id_=rec_uuid)
 
-            results.append({"depid":depid, "recid":recid, "parent": parent, "doi":doi, "hdl": hdl,"record":record, "record_data":record_data,"item":item , "item_data":item_data,"deposit": deposit, "rec_uuid":rec_uuid})
+            results.append({"depid":depid, "recid":recid, "parent": parent, "doi":doi, "hdl": hdl,"record":record, "record_data":record_data,"item":item , "item_data":item_data,"deposit": deposit, "rec_uuid":rec_uuid, "version_id":obj.version_id})
 
     time.sleep(3)
     # es = Elasticsearch("http://{}:9200".format(app.config["SEARCH_ELASTIC_HOSTS"]))
@@ -1084,7 +1086,7 @@ def es_records_5(app, db, db_index, location, db_itemtype,db_oaischema):
             indexer.upload_metadata(record_data, rec_uuid, 1, False)
             item = ItemsMetadata.create(item_data, id_=rec_uuid)
 
-            results.append({"depid":depid, "recid":recid, "parent": parent, "doi":doi, "hdl": hdl,"record":record, "record_data":record_data,"item":item , "item_data":item_data,"deposit": deposit, "rec_uuid":rec_uuid})
+            results.append({"depid":depid, "recid":recid, "parent": parent, "doi":doi, "hdl": hdl,"record":record, "record_data":record_data,"item":item , "item_data":item_data,"deposit": deposit, "rec_uuid":rec_uuid, "version_id":obj.version_id})
 
     time.sleep(3)
     # es = Elasticsearch("http://{}:9200".format(app.config["SEARCH_ELASTIC_HOSTS"]))
@@ -1093,31 +1095,53 @@ def es_records_5(app, db, db_index, location, db_itemtype,db_oaischema):
 
 
 @pytest.fixture()
-def es_records_6(app, db, db_index, location, db_itemtype2,db_oaischema):
+def es_records_6(app, db, db_index, location, db_itemtype2, db_oaischema):
 
     indexer = WekoIndexer()
     indexer.get_es_index()
     results = []
     with app.test_request_context():
-        for i in range(11, 20):
-            record_data =  {"_oai": {"id": "oai:weko3.example.org:000000{:02d}".format(i), "sets": ["{}".format((i % 2) + 1)]}, "path": ["{}".format((i % 2) + 1)], "owner": "1", "recid": "{}".format(i), "title": ["title"], "pubdate": {"attribute_name": "PubDate", "attribute_value": "2022-08-20"}, "_buckets": {"deposit": "3e99cfca-098b-42ed-b8a0-20ddd09b3e02","content":[{"test":"content"},{"file":"test"}]}, "_deposit": {"id": "{}".format(i), "pid": {"type": "depid", "value": "{}".format(i), "revision_id": 0}, "owner": "1", "owners": [1], "status": "draft", "created_by": 1, "owners_ext": {"email": "wekosoftware@nii.ac.jp", "username": "", "displayname": ""}}, "item_title": "title", "author_link": [], "item_type_id": "2", "publish_date": "2022-08-20", "publish_status": "0", "weko_shared_id": -1, "item_1617186331708": {"attribute_name": "Title", "attribute_value_mlt": [{"subitem_1551255647225": "タイトル", "subitem_1551255648112": "ja"},{"subitem_1551255647225": "title", "subitem_1551255648112": "en"}]}, "item_1617258105262": {"attribute_name": "Resource Type","content":[{"test":"content"},{"file":"test"}], "attribute_value_mlt": [{"resourceuri": "http://purl.org/coar/resource_type/c_5794", "resourcetype": "conference paper"}]}, "relation_version_is_last": True,
-            'item_1617605131499': {'attribute_name': 'File', 'attribute_type': 'file', 'attribute_value_mlt': [{'url': {'url': 'https://weko3.example.org/record/{}/files/hello.txt'.format(i)}, 'date': [{'dateType': 'Available', 'dateValue': '2022-09-07'}], 'format': 'plain/text', 'filename': 'hello.txt', 'filesize': [{'value': '146 KB'}], 'accessrole': 'open_access', 'version_id': '', 'mimetype': 'application/pdf',"file": "",}]},"item_1617258105262": {"attribute_name": "Reference","attribute_type": "file" ,"content":[{"test":"content"},{"file":"test"}]},
-            'item_1662046377046': {'attribute_name': 'thumbnail', 'attribute_type': 'object', 'attribute_value_mlt': [{'subitem_thumbnail': [{'thumbnail_url': 'http://purl.org/coar/resource_type/c_5794'.format(i)}, {'thumbnail_label': 'label'.format(i)}] }]},
-            'item_1617186419668': {'attribute_name': 'Creator', 'attribute_type': 'creator', 'attribute_value_mlt': [{'iscreator':'is'.format(i)},{'givenNames': [{'givenName': "givenNames".format(i)}, {'givenNameLang':"ja"}]},{"familyNames":[{"familyName":"mei"},{"familyNameLang":"ja"}]},{"familyNames":[{"familyName":"mei"},{"familyNameLang":"ja"}]}
-            ,{"creatorMails":[{"creatorMail":"mail"},{"title_i18n_temp":"Email Addresss"}]}
-            ,{"creatorNames":[{"creatorName":"name"},{"creatorNameLang":"ja"}]}
-            ,{"nameIdentifiers":[{"nameIdentifier":"識別"},{"nameIdentifierURI":"tets.com"}]}
-            ,{"affiliationNameIdentifiers":[{"affiliationNameIdentifier":"識別子"},{"affiliationNameIdentifierURI":"tets.com"},{"affiliationNameIdentifierScheme":"kakenhi"}]}
-            ,{"creatorAlternatives":[{"creatorAlternative":"別名"},{"creatorAlternativeLang":"ja"}]}
-            ]},
-            'item_1727609004387': {'attribute_name': 'Bibliographic Information', 'attribute_type': 'object', 'attribute_value_mlt': [
-                {'bibliographicPageEnd':'終了ページ'.format(i)}
-                ,{'bibliographic_titles': [{'bibliographic_title': "タイトル".format(i)}, {'bibliographic_titleLang':"ja"}]}
-                ,{'bibliographicPageStart':'開始ページ'.format(i)}
-            ,{'bibliographicIssueDates': [{'bibliographicIssueDate': "日付".format(i)}, {'bibliographicIssueDateType':"Issued"}]}
-            ,{'bibliographicIssueNumber':'号'.format(i)}
-            ,{'bibliographicNumberOfPages':'ページ数'.format(i)}
-            ]},
+        for i in range(31, 40):
+            record_data =  {
+                "_oai": {"id": "oai:weko3.example.org:000000{:02d}".format(i), "sets": ["{}".format((i % 2) + 1)]},
+                "path": ["{}".format((i % 2) + 1)], "owner": "1", "recid": "{}".format(i), "title": ["title"],
+                "pubdate": {"attribute_name": "PubDate", "attribute_value": "2022-08-20"},
+                "_buckets": {"deposit": "3e99cfca-098b-42ed-b8a0-20ddd09b3e02","content":[{"test":"content"},{"file":"test"}]},
+                "_deposit": {"id": "{}".format(i), "pid": {"type": "depid", "value": "{}".format(i), "revision_id": 0}, "owner": "1", "owners": [1], "status": "draft", "created_by": 1, "owners_ext": {"email": "wekosoftware@nii.ac.jp", "username": "", "displayname": ""}},
+                "item_title": "title", "author_link": [], "item_type_id": "2", "publish_date": "2022-08-20", "publish_status": "0", "weko_shared_id": -1,
+                "item_1617186331708": {"attribute_name": "Title", "attribute_value_mlt": [{"subitem_1551255647225": "タイトル", "subitem_1551255648112": "ja"},{"subitem_1551255647225": "title", "subitem_1551255648112": "en"}]},
+                "item_1617258105262": {"attribute_name": "Resource Type","content":[{"test":"content"},{"file":"test"}], "attribute_value_mlt": [{"resourceuri": "http://purl.org/coar/resource_type/c_5794", "resourcetype": "conference paper"}]}, "relation_version_is_last": True,
+                'item_1617605131499': {'attribute_name': 'File', 'attribute_type': 'file', 'attribute_value_mlt': [{'url': {'url': 'https://weko3.example.org/record/{}/files/hello.txt'.format(i)}, 'date': [{'dateType': 'Available', 'dateValue': '2022-09-07'}], 'format': 'plain/text', 'filename': 'hello.txt', 'filesize': [{'value': '146 KB'}], 'accessrole': 'open_access', 'version_id': '', 'mimetype': 'application/pdf',"file": "",}]},"item_1617258105262": {"attribute_name": "Reference","attribute_type": "file" ,"content":[{"test":"content"},{"file":"test"}]},
+                'item_1662046377046': {'attribute_name': 'thumbnail', 'attribute_type': 'object', 'attribute_value_mlt': [{'subitem_thumbnail': [{'thumbnail_url': 'http://purl.org/coar/resource_type/c_5794'.format(i)}, {'thumbnail_label': 'label'.format(i)}] }]},
+                'item_1617186419668': {
+                    'attribute_name': 'Creator', 'attribute_type': 'creator',
+                    'attribute_value_mlt': [
+                        {'iscreator':'is'.format(i)},{'givenNames': [{'givenName': "givenNames".format(i)}, {'givenNameLang':"ja"}]},{"familyNames":[{"familyName":"mei"},{"familyNameLang":"ja"}]},
+                        {"familyNames":[{"familyName":"mei"},{"familyNameLang":"ja"}]},{"creatorMails":[{"creatorMail":"mail"},{"title_i18n_temp":"Email Addresss"}]}, {"creatorNames":[{"creatorName":"name"},{"creatorNameLang":"ja"}]}, {"nameIdentifiers":[{"nameIdentifier":"識別"},{"nameIdentifierURI":"tets.com"}]},
+                        {"affiliationNameIdentifiers":[{"affiliationNameIdentifier":"識別子"},{"affiliationNameIdentifierURI":"tets.com"},{"affiliationNameIdentifierScheme":"kakenhi"}]},
+                        {"creatorAlternatives":[{"creatorAlternative":"別名"},{"creatorAlternativeLang":"ja"}]}
+                    ]},
+                'item_1617187056579': {
+                    'attribute_name': 'Bibliographic Information', 'attribute_type': 'object',
+                    'attribute_value_mlt': [
+                        {'bibliographicPageEnd':'終了ページ'.format(i)},{'bibliographic_titles': [{'bibliographic_title': "タイトル".format(i)}, {'bibliographic_titleLang':"ja"}]},{'bibliographicPageStart':'開始ページ'.format(i)},
+                        {'bibliographicIssueDates': [{'bibliographicIssueDate': "日付".format(i)}, {'bibliographicIssueDateType':"Issued"}]},{'bibliographicIssueNumber':'号'.format(i)},{'bibliographicNumberOfPages':'ページ数'.format(i)}
+                    ]},
+                'item_1727608787134': {'attribute_name': 'Bibliographic Information', 'attribute_type': 'object',
+                    'attribute_value_mlt': [
+                        {'bibliographicPageEnd':'終了ページ'.format(i)},
+                        {'bibliographic_titles': [{'bibliographic_title': "タイトル".format(i)}, {'bibliographic_titleLang':"ja"}]},
+                        {'bibliographicPageStart':'開始ページ'.format(i)},
+                        {'bibliographicIssueDates': [{'bibliographicIssueDate': "日付".format(i)}, {'bibliographicIssueDateType':"Issued"}]},
+                        {'bibliographicIssueNumber':'号'.format(i)},
+                        {'bibliographicNumberOfPages':'ページ数'.format(i)}
+                    ]
+                },
+                'item_1727608787136': {
+                    'attribute_name': 'Bibliographic Information', 'attribute_type': 'object',
+                    'attribute_value_mlt': [{'interim': 'test'}, {'format': 'plain/text'}, {'filename': 'hello.txt'}]},
+                'item_1727608787199': {'attribute_name': 'Information', 'attribute_type': 'object', 'attribute_value': '2022-08-20'},
+                'item_1727608788054': {'attribute_name': 'Information', 'attribute_type': 'nothing'},
             }
 
             item_data = {"id": "{}".format(i), "pid": {"type": "depid", "value": "{}".format(i), "revision_id": 0}, "lang": "ja", "owner": "1", "title": "title", "owners": [1], "status": "published", "$schema": "/items/jsonschema/1", "pubdate": "2022-08-20", "created_by": 1, "owners_ext": {"email": "wekosoftware@nii.ac.jp", "username": "", "displayname": ""}, "shared_user_id": -1, "item_1617186331708": [{"subitem_1551255647225": "タイトル", "subitem_1551255648112": "ja"},{"subitem_1551255647225": "title", "subitem_1551255648112": "en"}], "item_1617258105262": {"resourceuri": "http://purl.org/coar/resource_type/c_5794", "resourcetype": "conference paper"},
@@ -1160,7 +1184,7 @@ def es_records_6(app, db, db_index, location, db_itemtype2,db_oaischema):
             indexer.upload_metadata(record_data, rec_uuid, 1, False)
             item = ItemsMetadata.create(item_data, id_=rec_uuid)
 
-            results.append({"depid":depid, "recid":recid, "parent": parent, "doi":doi, "hdl": hdl,"record":record, "record_data":record_data,"item":item , "item_data":item_data,"deposit": deposit, "rec_uuid":rec_uuid})
+            results.append({"depid":depid, "recid":recid, "parent": parent, "doi":doi, "hdl": hdl,"record":record, "record_data":record_data,"item":item , "item_data":item_data,"deposit": deposit, "rec_uuid":rec_uuid, "version_id":obj.version_id})
 
     time.sleep(3)
     # es = Elasticsearch("http://{}:9200".format(app.config["SEARCH_ELASTIC_HOSTS"]))
@@ -1555,6 +1579,19 @@ def prepare_formatsysbib():
         ['item_1662130103088.subitem_heading_banner_headline', '大見出し', 'Heading', {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, ''],
         ['item_1662130103088.subitem_heading_headline', '小見出し', 'Subheading', {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, ''],
         ['item_1662130103088.subitem_heading_language', '言語', 'Language', {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, ''],
+        ['item_1727608787134', 'Bibliographic Information', 'Bibliographic Information', {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, ''],
+        ['item_1727608787134.bibliographic_titles', '雑誌名', 'Journal Title', {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, ''],
+        ['item_1727608787134.bibliographic_titles[].bibliographic_title', 'タイトル', 'Title', {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, ''],
+        ['item_1727608787134.bibliographic_titles[].bibliographic_titleLang', '言語', 'Language', {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, ''],
+        ['item_1727608787134.bibliographicVolumeNumber', '巻', 'Volume Number', {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, ''],
+        ['item_1727608787134.bibliographicIssueNumber', '号', 'Issue Number', {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, ''],
+        ['item_1727608787134.bibliographicPageStart', '開始ページ', 'Page Start', {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, ''],
+        ['item_1727608787134.bibliographicPageEnd', '終了ページ', 'Page End', {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, ''],
+        ['item_1727608787134.bibliographicNumberOfPages', 'ページ数', 'Number of Page', {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, ''],
+        ['item_1727608787134.bibliographicIssueDates', '発行日', 'Issue Date', {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, ''],
+        ['item_1727608787134.bibliographicIssueDates.bibliographicIssueDate', '日付', 'Date', {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, ''],
+        ['item_1727608787134.bibliographicIssueDates.bibliographicIssueDateType', '日付タイプ', 'Date Type', {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, ''],
+
         ['system_identifier_doi', 'Persistent Identifier(DOI)', 'Persistent Identifier(DOI)', {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, ''],
         ['parentkey.subitem_systemidt_identifier', 'SYSTEMIDT Identifier', 'SYSTEMIDT Identifier', {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, ''],
         ['parentkey.subitem_systemidt_identifier_type', 'SYSTEMIDT Identifier Type', 'SYSTEMIDT Identifier Type', {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, ''],

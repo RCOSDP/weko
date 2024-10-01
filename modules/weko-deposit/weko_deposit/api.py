@@ -1182,7 +1182,7 @@ class WekoDeposit(Deposit):
 
         record_id = 0
         print('_deposit' in data)
-        if data.get('_deposit'):  # TODO: false
+        if data.get('_deposit'):
             weko_logger(key='WEKO_COMMON_IF_ENTER',
                         branch='_deposit is in data')
             record_id = str(data['_deposit']['id'])
@@ -2950,7 +2950,6 @@ class WekoRecord(Record):
         weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=obj)
         return obj
 
-    # TODO:
     @property
     def hide_file(self):
         """Whether the file property is hidden.
@@ -3230,6 +3229,7 @@ class WekoRecord(Record):
         weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=result)
         return result
 
+
     @property
     def items_show_list(self):
         """Return the item show list.
@@ -3256,14 +3256,12 @@ class WekoRecord(Record):
             weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
                         count=i, element=lst)
             key = lst[0]
-
             val = self.get(key)
             option = meta_options.get(key, {}).get('option')
             if not val or not option:
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
                             branch=f"{val} or {option} is empty")
                 continue
-
             hidden = option.get("hidden")
             if hidden:
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
@@ -3385,7 +3383,7 @@ class WekoRecord(Record):
         weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=items)
         return items
 
-    # TODO:
+
     @property
     def display_file_info(self):
         """Display file information.
@@ -3408,7 +3406,6 @@ class WekoRecord(Record):
                         count=i, element=lst)
             key = lst[0]
             val = self.get(key)
-
             option = meta_options.get(key, {}).get('option')
             if not val or not option:
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
@@ -3425,6 +3422,7 @@ class WekoRecord(Record):
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
                             branch=f"{option.get('hidden')} is not empty")
                 continue
+
             mlt = val.get('attribute_value_mlt')
             if mlt is not None:
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
@@ -4300,7 +4298,7 @@ class _FormatSysCreator:
         weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=rtn_value)
         return rtn_value
 
-    # TODO:
+
     def _format_creator_on_creator_popup(self, creators: Union[dict, list],
                                          des_creator: Union[
                                              dict, list]) -> NoReturn:
@@ -4645,7 +4643,7 @@ class _FormatSysBibliographicInformation:
                             count=i, element=key)
                 if key in _meta_data:
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
-                                branch=f"k in {_meta_data}")
+                                branch=f"{key} in _meta_data")
                     weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=True)
                     return True
             weko_logger(key='WEKO_COMMON_FOR_END')
