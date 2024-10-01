@@ -1,6 +1,6 @@
 {
   "mappings": {
-    "test-weko-item-v1.0.0": {
+
       "_source" : { "enabled" : true },
       "properties" : {
         "title_statement": {
@@ -30,4 +30,4 @@
       }
     }
   }
-}
+
