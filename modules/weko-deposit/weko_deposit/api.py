@@ -1891,14 +1891,22 @@ class WekoDeposit(Deposit):
         if self.is_edit:
             weko_logger(key='WEKO_COMMON_IF_ENTER',
                         branch='is_edit is not empty')
+            print(99991111)
+            print(self.files.bucket)
+            print(88882222)
             lst = ObjectVersion.get_by_bucket(
                 self.files.bucket, True).filter_by(is_head=False).all()
             klst = []
-
+            print(9999)
+            print(lst)
+            print(8888)
             weko_logger(key='WEKO_COMMON_FOR_START')
             for i, obj in enumerate(lst):
                 weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
                             count=i, element=obj)
+                print(9999555)
+                print(self.files.bucket)
+                print(8888666)
                 if obj.file_id:
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
                             branch=f"{obj.file_id} is not empty")
@@ -2358,6 +2366,9 @@ class WekoDeposit(Deposit):
         ps = {"publish_status": pubs}
         jrc.update(ps)
         dc.update(ps)
+        print(88881111)
+        print(data)
+        print(99992222)
         if data:
             weko_logger(key='WEKO_COMMON_IF_ENTER',
                         branch='data is not empty')
@@ -2483,6 +2494,7 @@ class WekoDeposit(Deposit):
                 jpcoar_north_east_point)
             es_south_west_point = _convert_geo_location(
                 jpcoar_south_west_point)
+
             if es_north_east_point:
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
                             branch='es_north_east_point is not empty')
@@ -2900,6 +2912,7 @@ class WekoDeposit(Deposit):
             for i, content in enumerate(self.jrc['content']):
                 weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
                             count=i, element=content)
+
                 if content.get('file'):
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
                                 branch=f"{content.get('file')} is not empty")
@@ -4043,6 +4056,7 @@ class _FormatSysCreator:
         Returns:
             NoReturn: _description_
         """
+
         def _run_format_affiliation(affiliation_max, affiliation_min,
                                     languages,
                                     creator_lists,
@@ -4118,6 +4132,7 @@ class _FormatSysCreator:
                                         creator_list_temp)
             weko_logger(key='WEKO_COMMON_FOR_END')
         if isinstance(creators, dict):
+
             weko_logger(key='WEKO_COMMON_IF_ENTER',
                         branch=f"{creators} is dict")
             creator_list_temp = []
@@ -4144,7 +4159,6 @@ class _FormatSysCreator:
                                                     creator_list,
                                                     creator_list_temp)
             weko_logger(key='WEKO_COMMON_FOR_END')
-
             if creator_list_temp:
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
                         branch='creator_list_temp is not empty')
@@ -4186,7 +4200,6 @@ class _FormatSysCreator:
 
         """
         count = 0
-
         weko_logger(key='WEKO_COMMON_FOR_START')
         for i, (k, v) in enumerate(creator_data.items()):
             weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
@@ -4203,6 +4216,7 @@ class _FormatSysCreator:
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
                                 branch=f"{v} == language")
                     creator_list_temp.append(creator_data)
+
         weko_logger(key='WEKO_COMMON_FOR_END')
         if count == 0 and not language:
             weko_logger(key='WEKO_COMMON_IF_ENTER',
@@ -4245,7 +4259,6 @@ class _FormatSysCreator:
 
         # Get creators are displayed on creator pop up.
         self._get_creator_to_display_on_popup(creator_list_tmp)
-
         weko_logger(key='WEKO_COMMON_FOR_START')
         for i, creator_data in enumerate(creator_list_tmp):
             weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
@@ -4475,6 +4488,7 @@ class _FormatSysCreator:
         for i, lang in enumerate(self.languages):
             weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
                         count=i, element=lang)
+
             self._get_creator_to_show_popup(self.creator, lang,
                                             creator_list)
         weko_logger(key='WEKO_COMMON_FOR_END')
@@ -4544,6 +4558,7 @@ class _FormatSysCreator:
             """
 
             weko_logger(key='WEKO_COMMON_FOR_START')
+
             for i, parent_key in enumerate(list_parent_key):
                 weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
                             count=i, element=parent_key)
@@ -4558,18 +4573,21 @@ class _FormatSysCreator:
         _get_creator(self.current_language)
         # if current language has no creator
 
+        print(creator_names)
         if not creator_names:
             weko_logger(key='WEKO_COMMON_IF_ENTER',
                         branch='creator_names is empty')
             weko_logger(key='WEKO_COMMON_FOR_START')
+
+            print(self.languages)
             for i, lang in enumerate(self.languages):
                 weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
                             count=i, element=lang)
                 _get_creator(lang)
-                # if creator_names:
-                #     weko_logger(key='WEKO_COMMON_IF_ENTER',
-                #                 branch='creator_names is not empty')
-                #     break
+                if creator_names:
+                    weko_logger(key='WEKO_COMMON_IF_ENTER',
+                                branch='creator_names is not empty')
+                    break
             weko_logger(key='WEKO_COMMON_FOR_END')
 
 
@@ -4709,10 +4727,11 @@ class _FormatSysBibliographicInformation:
         if is_get_list:
             weko_logger(key='WEKO_COMMON_IF_ENTER',
                         branch='is_get_list is not empty')
-            # if not language:
-            #     weko_logger(key='WEKO_COMMON_IF_ENTER',
-            #                 branch='language is empty')
-            #     language = current_lang
+            current_lang = current_i18n.language
+            if not language:
+                weko_logger(key='WEKO_COMMON_IF_ENTER',
+                            branch='language is empty')
+                language = current_lang
             bibliographic_info, length = self._get_bibliographic_show_list(
                 bibliographic, language)
         else:
