@@ -1624,7 +1624,7 @@ class TestWekoDeposit():
             #     mock_objectVersion.return_value = True
             #     deposit.delete_old_file_index()
 
-            is_edit
+            # is_edit
             indexer, records = es_records_8
             record = records[1]
             deposit = record['deposit']
