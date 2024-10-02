@@ -86,31 +86,36 @@ def create_app(instance_path):
 @pytest.fixture()
 def base_app(instance_path):
     app_ = Flask('testapp', instance_path=instance_path, static_folder=os.path.join(instance_path, "static"),)
-    app_.config.update(
-        SERVER_NAME='TEST_SERVER',
-        THEME_SITEURL = 'https://localhost',
-        ACCOUNTS_JWT_ENABLE=True,
-        SECRET_KEY='SECRET_KEY',
-        SECURITY_PASSWORD_SALT="CHANGE_ME_ALSO",
-        # SQLALCHEMY_DATABASE_URI=os.environ.get(
-        #     "SQLALCHEMY_DATABASE_URI", "sqlite:///test.db"
-        # ),
-        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-                                           'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
-        SQLALCHEMY_TRACK_MODIFICATIONS=True,
-        SQLALCHEMY_ECHO=False,
-        TESTING=True,
-        WEKO_SITEMAP_ADMIN_TEMPLATE=WEKO_SITEMAP_ADMIN_TEMPLATE,
-        CELERY_ALWAYS_EAGER=True,
-        CELERY_CACHE_BACKEND="memory",
-        CELERY_EAGER_PROPAGATES=True,
-        CELERY_RESULT_BACKEND="cache",
-        CACHE_REDIS_URL='redis://redis:6379/0',
-        CACHE_REDIS_DB='0',
-        CACHE_REDIS_HOST="redis",
-        REDIS_PORT='6379',
-        ACCOUNTS_SESSION_REDIS_DB_NO = 1,
-    )
+    app_.config.update({
+        "SERVER_NAME": 'TEST_SERVER',
+        "THEME_SITEURL": 'https://localhost',
+        "ACCOUNTS_JWT_ENABLE": True,
+        "SECRET_KEY": 'SECRET_KEY',
+        "SECURITY_PASSWORD_SALT": "CHANGE_ME_ALSO",
+        "SQLALCHEMY_DATABASE_URI":
+            os.getenv('SQLALCHEMY_DATABASE_URI',
+                    'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
+        "SQLALCHEMY_TRACK_MODIFICATIONS": True,
+        "SQLALCHEMY_ECHO": False,
+        "TESTING": True,
+        "WEKO_SITEMAP_ADMIN_TEMPLATE": WEKO_SITEMAP_ADMIN_TEMPLATE,
+        "CELERY_ALWAYS_EAGER": True,
+        "CELERY_CACHE_BACKEND": "memory",
+        "CELERY_EAGER_PROPAGATES": True,
+        "CELERY_RESULT_BACKEND": "cache",
+        "CACHE_REDIS_URL": 'redis://redis:6379/0',
+        "CACHE_REDIS_DB": '0',
+        "CACHE_REDIS_HOST": "redis",
+        "REDIS_PORT": '6379',
+        "ACCOUNTS_SESSION_REDIS_DB_NO": 1,
+        "FILES_REST_DEFAULT_STORAGE_CLASS": "S",
+        "FILES_REST_STORAGE_CLASS_LIST": {
+            'S': 'Standard',
+            'A': 'Archive',
+        },
+        "FILES_REST_DEFAULT_QUOTA_SIZE": None,
+        "FILES_REST_DEFAULT_MAX_FILE_SIZE": None,
+    })
     Babel(app_)
     Menu(app_)
     FlaskCeleryExt(app_)
@@ -124,7 +129,6 @@ def base_app(instance_path):
     InvenioRecordsUI(app_)
     InvenioI18N(app_)
     WekoTheme(app_)
-    WekoSitemap(app_)
     WekoAdmin(app_)
     app_.register_blueprint(blueprint)
     return app_
@@ -132,6 +136,7 @@ def base_app(instance_path):
 @pytest.yield_fixture()
 def app(base_app):
     """Flask application fixture."""
+    WekoSitemap(base_app)
     with base_app.app_context():
         yield base_app
 
