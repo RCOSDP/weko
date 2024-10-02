@@ -30,11 +30,9 @@ from invenio_records.systemfields.relations.modelrelations import (
 )
 
 
-@pytest.fixture(scope="module")
-def Record3Metadata(database):
+@pytest.fixture(scope="function")
+def Record3Metadata(db):
     """."""
-    db = database
-
     class Record3Metadata(db.Model, RecordMetadataBase):
         __tablename__ = "record3_metadata"
 
@@ -42,11 +40,9 @@ def Record3Metadata(database):
     return Record3Metadata
 
 
-@pytest.fixture(scope="module")
-def Record2Metadata(Record3Metadata, database):
+@pytest.fixture(scope="function")
+def Record2Metadata(Record3Metadata, db):
     """."""
-    db = database
-
     class Record2Metadata(db.Model, RecordMetadataBase):
         __tablename__ = "record2_metadata"
 
@@ -56,10 +52,8 @@ def Record2Metadata(Record3Metadata, database):
     return Record2Metadata
 
 
-def test_model_relation(testapp, database, Record3Metadata, Record2Metadata):
+def test_model_relation(app, db, Record3Metadata, Record2Metadata):
     """Test model field with clearing none/empty values."""
-    db = database
-
     class Record3(Record, SystemFieldsMixin):
         model_cls = Record3Metadata
         dumper = SearchDumper()
