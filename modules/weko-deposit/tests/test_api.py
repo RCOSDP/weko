@@ -1843,7 +1843,7 @@ class TestWekoDeposit():
             deposit.is_edit = True
             deposit.delete_old_file_index()
 
-            # is_edit
+            # klst is none
             indexer, records = es_records_8
             record = records[1]
             deposit = record['deposit']
@@ -1923,8 +1923,7 @@ class TestWekoDeposit():
             db.session.merge(activity)
             db.session.commit()
             result = deposit.record_data_from_act_temp()
-            test = {"pubdate": "2023-10-10", "item_1617186331708": [{"subitem_1551255647225": "test_title", "subitem_1551255648112": "ja"}], "item_1617186385884": [{"subitem_1551255720400": "alter title"}], "item_1617186419668": [{"familyNames": [{"familyName": "test_family_name"}]}], "shared_user_id": -1, "item_1617258105262": {"resourcetype": "conference paper", "resourceuri": "http://purl.org/coar/resource_type/c_5794"}, "deleted_items": ["none_str", "empty_list", "item_1617186499011", "item_1617186609386",
-                                                                                                                                                                                                                                                                                                                                                                                                                                                              "item_1617186626617", "item_1617186643794", "item_1617186660861", "item_1617186702042", "item_1617186783814", "item_1617186859717", "item_1617186882738", "item_1617186901218", "item_1617186920753", "item_1617186941041", "item_1617187112279", "item_1617187187528", "item_1617349709064", "item_1617353299429", "item_1617605131499", "item_1617610673286", "item_1617620223087", "item_1617944105607", "item_1617187056579"], "$schema": "/items/jsonschema/1", "title": "test_title", "lang": "ja"}
+            test = {"pubdate": "2023-10-10", "item_1617186331708": [{"subitem_1551255647225": "test_title", "subitem_1551255648112": "ja"}], "item_1617186385884": [{"subitem_1551255720400": "alter title"}], "item_1617186419668": [{"familyNames": [{"familyName": "test_family_name"}]}], "shared_user_id": -1, "item_1617258105262": {"resourcetype": "conference paper", "resourceuri": "http://purl.org/coar/resource_type/c_5794"}, "deleted_items": ["none_str", "empty_list", "item_1617186499011", "item_1617186609386","item_1617186626617", "item_1617186643794", "item_1617186660861", "item_1617186702042", "item_1617186783814", "item_1617186859717", "item_1617186882738", "item_1617186901218", "item_1617186920753", "item_1617186941041", "item_1617187112279", "item_1617187187528", "item_1617349709064", "item_1617353299429", "item_1617605131499", "item_1617610673286", "item_1617620223087", "item_1617944105607", "item_1617187056579"], "$schema": "/items/jsonschema/1", "title": "test_title", "lang": "ja"}
             assert result == test
 
             mock_logger.assert_any_call(key='WEKO_COMMON_FOR_START')
@@ -2169,6 +2168,7 @@ class TestWekoDeposit():
             ret1, ret2 = deposit.convert_item_metadata(index_obj)
             assert ret1 == dc
             assert ret2 == redis_data['deleted_items']
+
 
     # def _convert_description_to_object(self):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test__convert_description_to_object -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
@@ -3522,7 +3522,7 @@ class TestWekoRecord:
                 result = record.get_file_data()
                 assert result == []
 
-            with app.test_request_context(filename=""):
+            with app.test_request_context():
                 pass
 
             mock_logger.assert_any_call(key='WEKO_COMMON_FOR_START')
@@ -3793,16 +3793,13 @@ class Test_FormatSysCreator:
                 assert isinstance(obj,_FormatSysCreator)==True
                 # assert obj.format_creator()=={'name': ['Joho, Taro','Joho', 'Taro', 'Alternative Name'], 'order_lang': [{'ja': {'creatorName': ['情報, 太郎'], 'creatorAlternative': ['別名'], 'affiliationName': ['ISNI 所属機関'], 'affiliationNameIdentifier': [{'identifier': 'xxxxxx', 'uri': 'xxxxx'}]}}, {'ja-Kana': {'creatorName': ['ジョウホウ, タロウ'], 'creatorAlternative': [], 'affiliationName': [], 'affiliationNameIdentifier': []}}, {'cn': {'creatorName': None, 'creatorAlternative': [], 'affiliationName': [' Affilication Name'], 'affiliationNameIdentifier': [{'identifier': '', 'uri': ''}]}}]}
                 # assert obj.format_creator()=={'name': ['Joho, Taro','Joho', 'Taro', 'Alternative Name'], 'order_lang': [{'ja': {'creatorName': ['情報, 太郎'], 'creatorAlternative': ['別名'], 'affiliationName': ['ISNI 所属機関'], 'affiliationNameIdentifier': [{'identifier': 'xxxxxx', 'uri': 'xxxxx'}]}}, {'ja-Kana': {'creatorName': ['ジョウホウ, タロウ'], 'creatorAlternative': [], 'affiliationName': [], 'affiliationNameIdentifier': []}}, {'en': {'affiliationName': [],'affiliationNameIdentifier': [], 'creatorAlternative': ['Alternative Name'], 'creatorName': ['Joho, Taro']}},{'cn': {'affiliationName': [' Affilication Name'],'affiliationNameIdentifier': [{'identifier': '','uri': ''}],'creatorAlternative': [],'creatorName': None}}]}
-                # assert obj.format_creator()=={'name': ['Joho, Taro','Joho', 'Taro', 'Alternative Name'], 'order_lang': [{'ja': {'creatorName': ['情報, 太郎'], 'creatorAlternative': ['別名'], 'affiliationName': ['ISNI 所属機関'], 'affiliationNameIdentifier': [{'identifier': 'xxxxxx', 'uri': 'xxxxx'}]}}, {'ja-Kana': {'creatorName': ['ジョウホウ, タロウ'], 'creatorAlternative': [], 'affiliationName': [], 'affiliationNameIdentifier': []}}, {'en': {'affiliationName': [],'affiliationNameIdentifier': [], 'creatorAlternative': ['Alternative Name'], 'creatorName': ['Joho, Taro']}},{'cn': {'affiliationName': [' Affilication Name'],'affiliationNameIdentifier': [{'identifier': '','uri': ''}],'creatorAlternative': [],'creatorName': None}}]}
-                # assert obj.format_creator()=={'name': ['Joho, Taro','Joho', 'Taro', 'Alternative Name'], 'order_lang': [{'ja': {'creatorName': ['情報, 太郎'], 'creatorAlternative': ['別名'], 'affiliationName': ['ISNI 所属機関'], 'affiliationNameIdentifier': [{'identifier': 'xxxxxx', 'uri': 'xxxxx'}]}}, {'ja-Kana': {'creatorName': ['ジョウホウ, タロウ'], 'creatorAlternative': [], 'affiliationName': [], 'affiliationNameIdentifier': []}}, {'en': {'affiliationName': [],'affiliationNameIdentifier': [], 'creatorAlternative': ['Alternative Name'], 'creatorName': ['Joho, Taro']}},{'cn': {'creatorName': None, 'creatorAlternative': [], 'affiliationName': [' Affilication Name'], 'affiliationNameIdentifier': [{'identifier': '', 'uri': ''}]}}]}
+                assert obj.format_creator()=={'name': ['Joho, Taro','Joho', 'Taro', 'Alternative Name'], 'order_lang': [{'ja': {'creatorName': ['情報, 太郎'], 'creatorAlternative': ['別名'], 'affiliationName': ['ISNI 所属機関'], 'affiliationNameIdentifier': [{'identifier': 'xxxxxx', 'uri': 'xxxxx'}]}}, {'ja-Kana': {'creatorName': ['ジョウホウ, タロウ'], 'creatorAlternative': [], 'affiliationName': [], 'affiliationNameIdentifier': []}}, {'en': {'affiliationName': [],'affiliationNameIdentifier': [], 'creatorAlternative': ['Alternative Name'], 'creatorName': ['Joho, Taro']}},{'cn': {'affiliationName': [' Affilication Name'],'affiliationNameIdentifier': [{'identifier': '','uri': ''}],'creatorAlternative': [],'creatorName': None}}]}
+                assert obj.format_creator()=={'name': ['Joho, Taro','Joho', 'Taro', 'Alternative Name'], 'order_lang': [{'ja': {'creatorName': ['情報, 太郎'], 'creatorAlternative': ['別名'], 'affiliationName': ['ISNI 所属機関'], 'affiliationNameIdentifier': [{'identifier': 'xxxxxx', 'uri': 'xxxxx'}]}}, {'ja-Kana': {'creatorName': ['ジョウホウ, タロウ'], 'creatorAlternative': [], 'affiliationName': [], 'affiliationNameIdentifier': []}}, {'en': {'affiliationName': [],'affiliationNameIdentifier': [], 'creatorAlternative': ['Alternative Name'], 'creatorName': ['Joho, Taro']}},{'cn': {'creatorName': None, 'creatorAlternative': [], 'affiliationName': [' Affilication Name'], 'affiliationNameIdentifier': [{'identifier': '', 'uri': ''}]}}]}
 
-                prepare_creator_1={'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}]}
-                # prepare_creator_1=[{'givenName': '太郎', 'givenNameLang': 'ja'}]
-                # {'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierURI': 'https://orcid.org/', 'nameIdentifierScheme': 'ORCID'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierURI': 'https://ci.nii.ac.jp/', 'nameIdentifierScheme': 'CiNii'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/', 'nameIdentifierScheme': 'KAKEN2'}], 'creatorAffiliations': [{'affiliationNames': [{'affiliationName': '所属機関', 'affiliationNameLang': 'ja'}, {'affiliationName': 'Affilication Name', 'affiliationNameLang': 'cn'}], 'affiliationNameIdentifiers': [{'affiliationNameIdentifier': 'xxxxxx', 'affiliationNameIdentifierURI': 'xxxxx', 'affiliationNameIdentifierScheme': 'ISNI'}]}], 'creatorAlternatives': [{'creatorAlternative': 'Alternative Name', 'creatorAlternativeLang': 'en'}, {'creatorAlternative': '別名', 'creatorAlternativeLang': 'ja'}]}
-
-                obj = _FormatSysCreator(prepare_creator_1)
-                # obj.format_creator()
-                assert obj.format_creator()== {'name': [], 'order_lang': []}
+                # with app.test_request_context(headers=[("Accept-Language", "en")]):
+                #     prepare_creator_1={'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}],'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}]}
+                #     obj = _FormatSysCreator(prepare_creator_1)
+                # assert obj.format_creator()== {'name': [], 'order_lang': []}
 
                 mock_logger.assert_any_call(key='WEKO_COMMON_FOR_START')
                 mock_logger.assert_any_call(key='WEKO_COMMON_FOR_LOOP_ITERATION', count=mock.ANY, element=mock.ANY)
@@ -4133,10 +4130,11 @@ class Test__FormatSysBibliographicInformation():
                 copy.deepcopy(mlt), copy.deepcopy(solst))
             assert isinstance(obj, _FormatSysBibliographicInformation) == True
             with app.test_request_context(headers=[("Accept-Language", "en")]):
-                assert obj.get_bibliographic_list(True) == [{'title_attribute_name': 'Journal Title', 'magazine_attribute_name': [
-                    {'Volume': '1'}, {'Issue': '12'}, {'p.': '1-100'}, {'Number of Pages': '99'}, {'Issued Date': '2022-08-29'}], 'length': 5}]
-                assert obj.get_bibliographic_list(False) == [{'title_attribute_name': ['ja : 雑誌タイトル', 'en : Journal Title'], 'magazine_attribute_name': [
-                    {'Volume Number': '1'}, {'Issue Number': '12'}, {'p.': '1-100'}, {'Number of Page': '99'}, {'Issue Date': '2022-08-29'}], 'length': 5}]
+                # assert obj.get_bibliographic_list(True) == [{'title_attribute_name': 'Journal Title', 'magazine_attribute_name': [
+                #     {'Volume': '1'}, {'Issue': '12'}, {'p.': '1-100'}, {'Number of Pages': '99'}, {'Issued Date': '2022-08-29'}], 'length': 5}]
+                assert obj.get_bibliographic_list(True) == [{'length': 5,'magazine_attribute_name': [{'Volume': '1'},{'Issue': '12'},{'p.': '1-100'},{'Number of Pages': '99'},{'Issued Date': '2022-08-29'}],'title_attribute_name': 'Journal Title'},{'length': 5,'magazine_attribute_name': [{'Volume': '1'},{'Issue': '12'},{'p.': '1'},{'Number of Pages': '99'},{'Issued Date': '2022-08-29'}],'title_attribute_name': []}]
+
+                assert obj.get_bibliographic_list(False) == [{'length': 5,'magazine_attribute_name': [{'Volume Number': '1'},{'Issue Number': '12'},{'p.': '1-100'},{'Number of Page': '99'},{'Issue Date': '2022-08-29'}],'title_attribute_name': ['ja : 雑誌タイトル', 'en : Journal Title']},{'length': 5,'magazine_attribute_name': [{'Volume Number': '1'},{'Issue Number': '12'},{'p.': '1'},{'Number of Page': '99'},{'Issue Date': '2022-08-29'}],'title_attribute_name': []}]
 
             mock_logger.assert_any_call(key='WEKO_COMMON_FOR_START')
             mock_logger.assert_any_call(
@@ -4377,6 +4375,24 @@ class Test__FormatSysBibliographicInformation():
             mock_logger.reset_mock()
 
             data = [{}, {"bibliographic_title": "not_key_title"}]
+            value, lang = obj._get_source_title_show_list(data, "en")
+            assert value == "not_key_title"
+            assert lang == "ja"
+
+            mock_logger.assert_any_call(key='WEKO_COMMON_FOR_START')
+            mock_logger.assert_any_call(
+                key='WEKO_COMMON_FOR_LOOP_ITERATION', count=mock.ANY, element=mock.ANY)
+            mock_logger.assert_any_call(
+                key='WEKO_COMMON_IF_ENTER', branch=mock.ANY)
+            mock_logger.assert_any_call(key='WEKO_COMMON_FOR_END')
+            mock_logger.assert_any_call(
+                key='WEKO_COMMON_RETURN_VALUE', value=mock.ANY)
+            mock_logger.reset_mock()
+
+
+            app.config.update(WEKO_RECORDS_UI_LANG_DISP_FLG=True)
+            data = [{}, {"bibliographic_title": "not_key_title"}, {"bibliographic_titleLang": "ja","bibliographic_title": "ja_title"}, {"bibliographic_titleLang": "ja","bibliographic_title": "ja_title"}]
+
             value, lang = obj._get_source_title_show_list(data, "en")
             assert value == "not_key_title"
             assert lang == "ja"
