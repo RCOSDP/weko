@@ -20,7 +20,7 @@ from functools import partial, wraps
 from elasticsearch import VERSION as ES_VERSION
 from elasticsearch.exceptions import RequestError
 from flask import Blueprint, abort, current_app, jsonify, make_response, \
-    request, url_for
+    request, url_for, redirect
 from flask.views import MethodView
 from flask_babelex import gettext as _
 from invenio_db import db
@@ -549,6 +549,13 @@ class RecordsListResource(ContentNegotiatedMethodView):
         :returns: Search result containing hits and aggregations as
                   returned by invenio-search.
         """
+        format = request.values.get('format')
+        index_id = request.values.get('index_id')
+        if not format and index_id:
+            url = request.host_url + "/search?page=1&search_type=2&q=" + index_id
+            response = make_response(redirect(url))
+            response.status_code = 302
+            return response
         # default_results_size = current_app.config.get(
         #     'RECORDS_REST_DEFAULT_RESULTS_SIZE', 10)
         # page_no is parameters for Opensearch
