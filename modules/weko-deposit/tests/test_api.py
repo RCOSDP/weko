@@ -59,7 +59,8 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from weko_admin.models import AdminSettings
 from weko_items_ui.config import WEKO_ITEMS_UI_MS_MIME_TYPE
-from weko_records.api import FeedbackMailList, ItemLink, WekoRecord
+from weko_records.api import FeedbackMailList, ItemLink, ItemsMetadata, WekoRecord
+from weko_records.models import ItemMetadata
 from weko_records.utils import get_options_and_order_list
 from weko_redis.errors import WekoRedisError
 from weko_workflow.models import Activity
@@ -1747,21 +1748,87 @@ class TestWekoDeposit():
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_save_or_update_item_metadata -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test_save_or_update_item_metadata(sel, app, db, location, es_records):
         with patch('weko_deposit.api.weko_logger') as mock_logger:
-            indexer, records = es_records
-            record = records[0]
-            deposit = record['deposit']
-            index_obj = {'index': ['1'], 'actions': 'private'}
-            data = {'pubdate': '2023-12-07', 'item_1617187056579':'item_1617187056579', 'item_1617186331708': [{'subitem_1551255647225': 'test', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, 'shared_user_id': -1, 'title': 'test', 'lang': 'ja', 'deleted_items': ['item_1617186385884', 'item_1617186419668', 'item_1617186499011', 'item_1617186609386', 'item_1617186626617', 'item_1617186643794', 'item_1617186660861', 'item_1617186702042', 'item_1617186783814', 'item_1617186859717', 'item_1617186882738', 'item_1617186901218', 'item_1617186920753', 'item_1617186941041', 'item_1617187112279', 'item_1617187187528', 'item_1617349709064', 'item_1617353299429', 'item_1617605131499', 'item_1617610673286', 'item_1617620223087', 'item_1617944105607', 'item_1617187056579', 'approval1', 'approval2'], '$schema': '/items/jsonschema/1'}
-            deposit.update(index_obj,data)
-            deposit.save_or_update_item_metadata()
+            with patch("weko_deposit.api.ItemsMetadata.get_record", side_effect=ItemsMetadata.get_record) as mock_metaRecord:
+                # if owner: is true
+                indexer, records = es_records
+                record = records[0]
+                deposit = record['deposit']
+                index_obj = {'index': ['1'], 'actions': 'private'}
+                data = {'pubdate': '2023-12-07', 'item_1617187056579':'item_1617187056579', 'item_1617186331708': [{'subitem_1551255647225': 'test', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, 'shared_user_id': -1, 'title': 'test', 'lang': 'ja', 'deleted_items': ['item_1617186385884', 'item_1617186419668', 'item_1617186499011', 'item_1617186609386', 'item_1617186626617', 'item_1617186643794', 'item_1617186660861', 'item_1617186702042', 'item_1617186783814', 'item_1617186859717', 'item_1617186882738', 'item_1617186901218', 'item_1617186920753', 'item_1617186941041', 'item_1617187112279', 'item_1617187187528', 'item_1617349709064', 'item_1617353299429', 'item_1617605131499', 'item_1617610673286', 'item_1617620223087', 'item_1617944105607', 'item_1617187056579', 'approval1', 'approval2'], '$schema': '/items/jsonschema/1'}
+                deposit.update(index_obj,data)
+                deposit.save_or_update_item_metadata()
+                mock_metaRecord.assert_called_once()
 
-            mock_logger.assert_any_call(key='WEKO_COMMON_FOR_START')
-            mock_logger.assert_any_call(
-                key='WEKO_COMMON_FOR_LOOP_ITERATION', count=mock.ANY, element=mock.ANY)
-            mock_logger.assert_any_call(
-                key='WEKO_COMMON_IF_ENTER', branch=mock.ANY)
-            mock_logger.assert_any_call(key='WEKO_COMMON_FOR_END')
-            mock_logger.reset_mock()
+                mock_logger.assert_any_call(key='WEKO_COMMON_FOR_START')
+                mock_logger.assert_any_call(
+                    key='WEKO_COMMON_FOR_LOOP_ITERATION', count=mock.ANY, element=mock.ANY)
+                mock_logger.assert_any_call(
+                    key='WEKO_COMMON_IF_ENTER', branch=mock.ANY)
+                mock_logger.assert_any_call(key='WEKO_COMMON_FOR_END')
+                mock_logger.reset_mock()
+                mock_metaRecord.reset_mock()
+
+                # if not dc_owner: is false
+                indexer, records = es_records
+                record = records[1]
+                deposit = record['deposit']
+                index_obj = {'index': ['1'], 'actions': 'private'}
+                data = {'pubdate': '2023-12-07', 'item_1617187056579':'item_1617187056579', 'item_1617186331708': [{'subitem_1551255647225': 'test', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, 'shared_user_id': -1, 'title': 'test', 'lang': 'ja', 'deleted_items': ['item_1617186385884', 'item_1617186419668', 'item_1617186499011', 'item_1617186609386', 'item_1617186626617', 'item_1617186643794', 'item_1617186660861', 'item_1617186702042', 'item_1617186783814', 'item_1617186859717', 'item_1617186882738', 'item_1617186901218', 'item_1617186920753', 'item_1617186941041', 'item_1617187112279', 'item_1617187187528', 'item_1617349709064', 'item_1617353299429', 'item_1617605131499', 'item_1617610673286', 'item_1617620223087', 'item_1617944105607', 'item_1617187056579', 'approval1', 'approval2'], '$schema': '/items/jsonschema/1', 'owner': '1'}
+                deposit.update(index_obj,data)
+                deposit.save_or_update_item_metadata()
+                mock_metaRecord.assert_called_once()
+                mock_metaRecord.reset_mock()
+
+                # if owner: is false
+                record = records[2]
+                deposit = record['deposit']
+                deposit['_deposit']['owners'] = [""]
+                index_obj = {'index': ['1'], 'actions': 'private'}
+                data = {'pubdate': '2023-12-07', 'item_1617187056579':'item_1617187056579', 'item_1617186331708': [{'subitem_1551255647225': 'test', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, 'shared_user_id': -1, 'title': 'test', 'lang': 'ja', 'deleted_items': ['item_1617186385884', 'item_1617186419668', 'item_1617186499011', 'item_1617186609386', 'item_1617186626617', 'item_1617186643794', 'item_1617186660861', 'item_1617186702042', 'item_1617186783814', 'item_1617186859717', 'item_1617186882738', 'item_1617186901218', 'item_1617186920753', 'item_1617186941041', 'item_1617187112279', 'item_1617187187528', 'item_1617349709064', 'item_1617353299429', 'item_1617605131499', 'item_1617610673286', 'item_1617620223087', 'item_1617944105607', 'item_1617187056579', 'approval1', 'approval2'], '$schema': '/items/jsonschema/1'}
+                deposit.update(index_obj,data)
+                deposit.save_or_update_item_metadata()
+                mock_metaRecord.assert_called_once()
+                mock_metaRecord.reset_mock()
+
+                # exists ItemMetadata and has not 'deleted_items'
+                record = records[3]
+                deposit = record['deposit']
+                deposit['_deposit']['owners'] = [""]
+                index_obj = {'index': ['1'], 'actions': 'private'}
+                data = {'pubdate': '2023-12-07', 'item_1617187056579':'item_1617187056579', 'item_1617186331708': [{'subitem_1551255647225': 'test', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, 'shared_user_id': -1, 'title': 'test', 'lang': 'ja',
+                        'deleted_items': [], '$schema': '/items/jsonschema/1'}
+                deposit.update(index_obj,data)
+                deposit.save_or_update_item_metadata()
+                mock_metaRecord.reset_mock()
+
+            # ItemMetadata not exists
+            with patch("weko_deposit.api.ItemsMetadata.create", side_effect=ItemsMetadata.create) as mock_metaCreate:
+                record = records[4]
+                deposit = record['deposit']
+                deposit['_deposit']['owners'] = [""]
+                rec_uuid = record['rec_uuid']
+                metadata = ItemMetadata.query.filter_by(id=rec_uuid).first()
+                db.session.delete(metadata)
+                index_obj = {'index': ['1'], 'actions': 'private'}
+                data = {'pubdate': '2023-12-07', 'item_1617187056579':'item_1617187056579', 'item_1617186331708': [{'subitem_1551255647225': 'test', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, 'shared_user_id': -1, 'title': 'test', 'lang': 'ja', 'deleted_items': ['item_1617186385884', 'item_1617186419668', 'item_1617186499011', 'item_1617186609386', 'item_1617186626617', 'item_1617186643794', 'item_1617186660861', 'item_1617186702042', 'item_1617186783814', 'item_1617186859717', 'item_1617186882738', 'item_1617186901218', 'item_1617186920753', 'item_1617186941041', 'item_1617187112279', 'item_1617187187528', 'item_1617349709064', 'item_1617353299429', 'item_1617605131499', 'item_1617610673286', 'item_1617620223087', 'item_1617944105607', 'item_1617187056579', 'approval1', 'approval2'], '$schema': '/items/jsonschema/1'}
+                deposit.update(index_obj,data)
+                deposit.save_or_update_item_metadata()
+                mock_metaCreate.assert_called_once()
+                mock_metaCreate.reset_mock()
+
+                # ItemMetadata not exists and has not 'deleted_items'
+                record = records[5]
+                deposit = record['deposit']
+                deposit['_deposit']['owners'] = [""]
+                rec_uuid = record['rec_uuid']
+                metadata = ItemMetadata.query.filter_by(id=rec_uuid).first()
+                db.session.delete(metadata)
+                index_obj = {'index': ['1'], 'actions': 'private'}
+                data = {'pubdate': '2023-12-07', 'item_1617187056579':'item_1617187056579', 'item_1617186331708': [{'subitem_1551255647225': 'test', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, 'shared_user_id': -1, 'title': 'test', 'lang': 'ja',
+                        'deleted_items': [], '$schema': '/items/jsonschema/1'}
+                deposit.update(index_obj,data)
+                deposit.save_or_update_item_metadata()
+                mock_metaCreate.assert_called_once()
 
     # def delete_old_file_index(self):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_delete_old_file_index -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
@@ -1775,30 +1842,6 @@ class TestWekoDeposit():
             # is_edit
             deposit.is_edit = True
             deposit.delete_old_file_index()
-
-            # is_edit
-            # indexer, records = es_records
-            # record = records[1]
-            # deposit = record['deposit']
-            # deposit.is_edit = True
-
-            # # b1 = Bucket.create(location=location)
-            # # obj = ObjectVersion.create(b1, 'test').set_location('placeuri', 1, 'chk')
-            # # db.session.commit()
-
-            # # lst = ObjectVersion.get_by_bucket(
-            # #     deposit.files.bucket, True).filter_by(is_head=False).all()
-
-            # # del lst[0]
-            # # db.session.commit()
-
-
-            # # print(777777)
-            # # print(lst)
-            # with patch("invenio_files_rest.models.ObjectVersion") as mock_objectVersion:
-            #     mock_objectVersion.return_value.file_id = None
-            #     mock_objectVersion.return_value = True
-            #     deposit.delete_old_file_index()
 
             # is_edit
             indexer, records = es_records_8
@@ -2126,24 +2169,6 @@ class TestWekoDeposit():
             ret1, ret2 = deposit.convert_item_metadata(index_obj)
             assert ret1 == dc
             assert ret2 == redis_data['deleted_items']
-
-            # indexer, records = es_records
-            # record = records[0]
-            # deposit = record['deposit']
-            # record_data = record['item_data']
-            # # record_data = []
-            # print(8888)
-            # print(record_data)
-            # print(9999)
-            # # del record_data
-            # index_obj = {'index': ['1'], 'actions': '1'}
-
-            # test1 = OrderedDict([('pubdate', {'attribute_name': 'PubDate', 'attribute_value': '2022-08-20'}), ('item_1617186331708', {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'タイトル', 'subitem_1551255648112': 'ja'}, {'subitem_1551255647225': 'title', 'subitem_1551255648112': 'en'}]}), ('item_1617258105262', {'attribute_name': 'Resource Type', 'attribute_value_mlt': [
-            #                     {'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}), ('item_title', 'title'), ('item_type_id', '1'), ('control_number', '1'), ('author_link', []), ('_oai', {'id': '1'}), ('publish_date', '2022-08-20'), ('title', ['title']), ('relation_version_is_last', True), ('path', ['1']), ('publish_status', '0')])
-            # test2 = None
-            # ret1, ret2 = deposit.convert_item_metadata(index_obj, record_data)
-            # assert ret1 == test1
-            # assert ret2 == test2
 
     # def _convert_description_to_object(self):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test__convert_description_to_object -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
