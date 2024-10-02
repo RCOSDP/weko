@@ -16,9 +16,12 @@ import json
 
 import mock
 import pytest
+from mock import patch
+from flask import abort
 from .conftest import IndexFlusher
 from tests.helpers import _mock_validate_fail, assert_hits_len, get_json, record_url
 from invenio_records.models import RecordMetadata
+
 
 
 @pytest.mark.parametrize('content_type', [
@@ -166,11 +169,11 @@ def test_invalid_put(app, es, test_records, charset, search_url):
         assert res.status_code == 412
 
 
-@mock.patch('invenio_records.api.Record.validate', _mock_validate_fail)
 @pytest.mark.parametrize('content_type', [
     'application/json', 'application/json;charset=utf-8'
 ])
-def test_validation_error(app, test_records, content_type):
+def test_validation_error(app, test_records, content_type,mocker):
+    mocker.patch('invenio_records_rest.views.db.session.remove')
     """Test when record validation fail."""
     HEADERS = [
         ('Accept', 'application/json'),
@@ -183,8 +186,30 @@ def test_validation_error(app, test_records, content_type):
     record['year'] = 1234
 
     with app.test_client() as client:
-        assert RecordMetadata.query.filter_by(id=obj_id).first().json['year']==2015
-        url = record_url(pid)
-        res = client.put(url, data=json.dumps(record.dumps()), headers=HEADERS)
-        assert res.status_code == 200
-        assert RecordMetadata.query.filter_by(id=obj_id).first().json['year']==2015
+        with patch("invenio_records.api.Record.validate", _mock_validate_fail):
+            assert RecordMetadata.query.filter_by(id=obj_id).first().json['year']==2015
+            url = record_url(pid)
+            res = client.put(url, data=json.dumps(record.dumps()), headers=HEADERS)
+            assert res.status_code == 500
+            assert RecordMetadata.query.filter_by(id=obj_id).first().json['year']==2015
+
+        with patch("invenio_records.api.Record.validate",side_effect=lambda: abort(500, "MAPPING_ERROR")):
+            url = record_url(pid)
+            res = client.put(url, data=json.dumps(record.dumps()), headers=HEADERS)
+            assert res.status_code == 500
+            assert get_json(res) == {"message": "MAPPING_ERROR"}
+            assert RecordMetadata.query.filter_by(id=obj_id).first().json['year']==2015
+
+        with patch("invenio_records.api.Record.validate",side_effect=RuntimeError("Item Type 1 does not exist.")):
+            url = record_url(pid)
+            res = client.put(url, data=json.dumps(record.dumps()), headers=HEADERS)
+            assert res.status_code == 500
+            assert get_json(res) == {"message": "Item Type 1 does not exist."}
+            assert RecordMetadata.query.filter_by(id=obj_id).first().json['year']==2015
+
+        with patch("invenio_records.api.Record.validate",side_effect=Exception("test_error")):
+            url = record_url(pid)
+            res = client.put(url, data=json.dumps(record.dumps()), headers=HEADERS)
+            assert res.status_code == 500
+            assert get_json(res) == {"message": "test_error"}
+            assert RecordMetadata.query.filter_by(id=obj_id).first().json['year']==2015

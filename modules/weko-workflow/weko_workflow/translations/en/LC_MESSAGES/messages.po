@@ -356,6 +356,11 @@ msgstr ""
 msgid "Close"
 msgstr ""
 
+#: weko_workflow/templates/weko_workflow/admin/workflow_detail.html:39
+#: weko_workflow/templates/weko_workflow/modal_itemtype_mapping.html:33
+msgid "The activity cannot be started because the specified item type is not mapped."
+msgstr ""
+
 #: weko_workflow/templates/weko_workflow/identifier_grant.html:77
 msgid "DOI was withdrawn."
 msgstr ""
