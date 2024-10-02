@@ -868,6 +868,20 @@ def test_group_admin_query_admins_by_group_ids(app):
         with pytest.raises(AssertionError):
             GroupAdmin.query_admins_by_group_ids('invalid')
 
+    with app.app_context():
+        from weko_groups.models import Group, GroupAdmin
+        from sqlalchemy.orm.query import Query
+
+        b = Group.create(name="admin2")
+        c = Group.create(name="admin3")
+        g = Group.create(name="test", admins=[b,c])
+        h = Group.create(name="test2", admins=[b,c])
+        
+        assert 0 == GroupAdmin.query_admins_by_group_ids([b.id]).count()
+        assert 0 == GroupAdmin.query_admins_by_group_ids([c.id]).count()
+        assert 1 == GroupAdmin.query_admins_by_group_ids([g.id]).count()
+        assert 2 == GroupAdmin.query_admins_by_group_ids([g.id, h.id]).count()
+        assert 2 == GroupAdmin.query_admins_by_group_ids(None).count()
 
 def test_invite_by_emails(app):
     """

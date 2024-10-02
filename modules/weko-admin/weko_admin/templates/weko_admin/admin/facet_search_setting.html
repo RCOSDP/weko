@@ -23,20 +23,17 @@
 
 {% block css %}
   {{ super() }}
-  {% assets "weko_theme_css_buttons" %}
-    <link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
-    {% assets "weko_admin_css" %}
-    <link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {{ webpack['theme-css-buttons.css']}}
+    {{ webpack['admin_css_css.css']}}
 {% endblock %}
 
 {%- block javascript %}
 {{ super() }}
-{% assets "weko_admin_facet_search" %}
-<script type="text/babel" src="{{ ASSET_URL }}"></script>{% endassets %}
-{% assets "weko_admin_statistics_reactjs_lib" %}
-<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
-{% assets "weko_admin_react_bootstrap_js" %}
-<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
+{{ webpack['admin_js_weko_admin_facet_search_js.js']}}
+<script src="/assets/js/weko_admin/react.production.min.js"></script>
+<script src="/assets/js/weko_admin/react-dom.production.min.js"></script>
+<script src="/assets/js/weko_admin/browser.min.js"></script>
+<script src="/assets/js/weko_admin/react-bootstrap.min.js"></script>
 <script type="text/javascript"
       src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
 {%- endblock javascript %}

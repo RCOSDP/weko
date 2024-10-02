@@ -1,33 +1,19 @@
-{#
-# This file is part of Invenio.
-# Copyright (C) 2013, 2014, 2015, 2016 CERN.
-#
-# Invenio is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; either version 2 of the
-# License, or (at your option) any later version.
-#
-# Invenio is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Invenio; if not, write to the Free Software Foundation, Inc.,
-# 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
-#
-# In applying this license, CERN does not
-# waive the privileges and immunities granted to it by virtue of its status
-# as an Intergovernmental Organization or submit itself to any jurisdiction.
+{# -*- coding: utf-8 -*-
+
+  This file is part of Invenio.
+  Copyright (C) 2015-2019 CERN.
+
+  Invenio is free software; you can redistribute it and/or modify it
+  under the terms of the MIT License; see LICENSE file for more details.
 #}
 
 {%- extends config.COMMUNITIES_BASE_TEMPLATE -%}
 
 {%- block css %}
   {% if is_new -%}
-    {% assets "invenio_communities_css_tree" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+    {{ webpack['communities_css_css_tree.css']}}
   {%- else -%}
-    {% assets "invenio_communities_css_tree_display" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+    {{ webpack['communities_css_css_tree_display.css']}}
   {%- endif %}
   {{ super() }}
   <style>
@@ -61,9 +47,9 @@
 
 {%- block javascript -%}
   {{ super() }}
-  <script src="{{url_for('static', filename='node_modules/ckeditor/ckeditor.js')}}"></script>
+  <script src="/assets/node_modules/ckeditor/ckeditor.js"></script>
   <script type="text/javascript">
-  var CKEDITOR_BASEPATH = '{{url_for('static', filename='node_modules/ckeditor/')}}';
+  var CKEDITOR_BASEPATH = '/assets/node_modules/ckeditor/';
   function init_ckeditor(selector, type) {
       if(type=="simple"){
           CKEDITOR.replace( selector, {
@@ -109,10 +95,13 @@
   init_ckeditor("community_footer", 'advanced');
   </script>
   {% if is_new -%}
-    {% assets "invenio_communities_js_tree" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+    <script src="{{ url_for('static', filename='js/invenio_communities/inline.community.bundle.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/invenio_communities/polyfills.community.bundle.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/invenio_communities/main.community.bundle.js') }}" defer></script>
   {%- else -%}
-    {% assets "invenio_communities_js_tree_display" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {%- endif %}
+  <script src="{{ url_for('static', filename='js/invenio_communities/inline.bundle.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/invenio_communities/polyfills.bundle.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/invenio_communities/main.bundle.js') }}" defer></script>  {%- endif %}
 {%- endblock javascript -%}
 
 {% block page_body %}

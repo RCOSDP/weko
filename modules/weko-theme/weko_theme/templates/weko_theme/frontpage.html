@@ -24,19 +24,22 @@
 
 {%- block css %}
   {{ super() }}
-  {% assets "invenio_search_ui_search_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
-  {% assets "weko_search_ui_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  {{ webpack['search-ui-css-weko-search-ui.css'] }}
 {%- endblock css %}
 
 {%- block javascript %}
   {{ super() }}
-  {% assets "weko_theme_js_treeview" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_theme_js_top_page" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_theme_js_detail_search" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "invenio_search_ui_search_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_search_ui_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_search_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_theme_js_widget" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  <script src="{{ url_for('static', filename='js/weko_theme/inline.bundle.js') }}" defer defer></script>
+  <script src="{{ url_for('static', filename='js/weko_theme/polyfills.bundle.js') }}" defer defer></script>
+  <script src="{{ url_for('static', filename='js/weko_theme/main.bundle.js') }}" defer defer></script>
+  {{ webpack['search-ui-js-weko-search-ui.js'] }}
+  {{ webpack['theme-js-top-page.js'] }}
+  {{ webpack['theme-search-detail.js'] }}
+  {{ webpack['search_ui_app.js'] }}
+  {{ webpack['search-ui-js-js-dependencies-datepicker.js'] }}
+  {{ webpack['theme-widget.js'] }}
+
 {%- endblock javascript %}
 
 {%- block page_body_tabs %}

@@ -1,25 +1,10 @@
 # -*- coding: utf-8 -*-
 #
 # This file is part of Invenio.
-# Copyright (C) 2013, 2015, 2016, 2017 CERN.
+# Copyright (C) 2015-2019 CERN.
 #
-# Invenio is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; either version 2 of the
-# License, or (at your option) any later version.
-#
-# Invenio is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Invenio; if not, write to the Free Software Foundation, Inc.,
-# 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
-#
-# In applying this license, CERN does not
-# waive the privileges and immunities granted to it by virtue of its status
-# as an Intergovernmental Organization or submit itself to any jurisdiction.
+# Invenio is free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
 
 """Utils for communities."""
 
@@ -36,6 +21,7 @@ from invenio_db import db
 from invenio_files_rest.errors import FilesException
 from invenio_files_rest.models import Bucket, Location, ObjectVersion
 from invenio_records.api import Record
+from invenio_accounts.models import Role
 
 
 class Pagination(object):
@@ -68,8 +54,8 @@ class Pagination(object):
         last = 0
         for num in range(1, self.pages + 1):
             if num <= left_edge or \
-               (num > self.page - left_current - 1
-                and num < self.page + right_current) or \
+               (num > self.page - left_current - 1 and
+                num < self.page + right_current) or \
                num > self.pages - right_edge:
                 if last + 1 != num:
                     yield None
@@ -238,3 +224,28 @@ def get_user_role_ids():
         role_ids = [role.id for role in current_user.roles]
 
     return role_ids
+
+def get_numeric_user_role_ids(role_ids):
+    """
+    Get numeric role ID to prevent errors caused by model changes.
+    account_roles(id, name, description) -> account_roles(created, updated, id, name, description, is_managed, version_id)
+    In new data records, the id may be the same as the name or default to a UUID.
+    """
+    role_list = Role.query.all()
+    legacy_list = []
+    new_list = []
+    for role in role_list:
+        role_id = role.id
+        if isinstance(role_id, int):
+            legacy_list.append(role_id)
+        elif isinstance(role_id, str):
+            if role_id.isdigit():
+                legacy_list.append(role_id)
+            else:
+                new_list.append(role_id)
+    full_list = legacy_list + new_list
+    
+    numeric_id_list = [full_list.index(id) + 1 for id in role_ids if id in full_list]
+
+    return numeric_id_list
+        

@@ -55,7 +55,7 @@ setup_requires = [
 ]
 
 install_requires = [
-    'Flask-BabelEx>=0.9.2',
+    'Flask-Babel>=3.0.0',
 ]
 
 packages = find_packages()
@@ -117,19 +117,8 @@ setup(
         'invenio_search.mappings': [
             'authors = weko_authors.mappings',
         ],
-        'invenio_assets.bundles': [
-            'weko_authors_css = weko_authors.bundles:css',
-            'weko_authors_js = weko_authors.bundles:js',
-            'weko_authors_search_css = weko_authors.bundles:author_search_css',
-            'weko_authors_search_js = weko_authors.bundles:author_search_js',
-            'weko_authors_prefix_css = weko_authors.bundles:author_prefix_css',
-            'weko_authors_prefix_js = weko_authors.bundles:author_prefix_js',
-            'weko_authors_affiliation_css = weko_authors.bundles:author_affiliation_css',
-            'weko_authors_affiliation_js = weko_authors.bundles:author_affiliation_js',
-            'weko_authors_export_css = weko_authors.bundles:author_export_css',
-            'weko_authors_export_js = weko_authors.bundles:author_export_js',
-            'weko_authors_import_css = weko_authors.bundles:author_import_css',
-            'weko_authors_import_js = weko_authors.bundles:author_import_js',
+        'invenio_assets.webpack': [
+            'weko_authors = weko_authors.webpack:weko_authors',
         ],
         'invenio_access.actions': [
             'author_access = weko_authors.permissions:action_author_access',

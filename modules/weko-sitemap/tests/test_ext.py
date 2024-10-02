@@ -3,7 +3,7 @@ import pytest
 from mock import patch
 from datetime import datetime
 from flask import current_app,make_response, url_for
-from flask_babelex import format_datetime
+from flask_babel import format_datetime
 
 from invenio_cache import InvenioCache, current_cache
 

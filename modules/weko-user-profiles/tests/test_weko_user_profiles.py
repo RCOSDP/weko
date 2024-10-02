@@ -22,7 +22,7 @@
 
 import pytest
 from flask import Flask
-from flask_babelex import Babel
+from flask_babel import Babel
 from flask_mail import Mail
 from flask_menu import Menu
 from invenio_accounts import InvenioAccounts

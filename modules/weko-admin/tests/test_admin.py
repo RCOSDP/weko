@@ -1604,7 +1604,7 @@ class TestFacetSearchSettingView:
 #    'view_class': SiteInfoView,
 #    'view_class': RestrictedAccessSettingView,
 #
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 class TestsReindexElasticSearchView:
 
     @pytest.mark.parametrize("index,is_permission,status_code",[
@@ -1808,3 +1808,118 @@ class TestsReindexElasticSearchView:
             res = client.get(url)
             assert res.status_code == 500
             assert res.data != str(dict({ "isError":False ,"isExecuting":False,"disabled_Btn":False }))     
+
+class Dict2Obj:
+    def __init__(self, **kwargs):
+        self.__dict__.update(kwargs)
+#class CommunitiesPageSettingView(BaseView):
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py::TestCommunitiesPageSettingView -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+class TestCommunitiesPageSettingView:
+    def test_index(self, client, users, mocker):
+        login_user_via_session(client, email=users[0]["email"])
+        url = url_for("communities_page.index")
+        # Mock current settings for GET request
+        current_settings = Dict2Obj(
+            title1='DB Title 1',
+            title2='DB タイトル 2',
+            icon_code='fa fa-handshake-o',
+            supplement='Database supplement text'
+        )
+        mocker.patch("weko_admin.admin.AdminSettings.get", return_value=current_settings)
+        # Mock render for GET request
+        mock_render = mocker.patch("weko_admin.admin.CommunitiesPageSettingView.render", return_value=make_response())
+        # GET request test
+        res = client.get(url)
+        assert res.status_code == 200
+        args, kwargs = mock_render.call_args
+        assert args[0] == "weko_admin/admin/communities_page_setting.html"
+        # 属性としてアクセス
+        assert kwargs["temp"]["title1"] == current_settings.title1
+        assert kwargs["temp"]["title2"] == current_settings.title2
+        assert kwargs["temp"]["supplement"] == current_settings.supplement
+        assert kwargs["temp"]["icon_code"] == current_settings.icon_code
+        # POST request test (successful case)
+        data = {
+            "title": "test_title",
+            "title_ja": "テストタイトル",
+            "supplement": "テスト補足",
+            "icon": "fa fa-handshake-o",
+            "submit": "save_settings"
+        }
+        # Mock flash and redirect
+        mock_flash = mocker.patch("weko_admin.admin.flash")
+        mock_redirect = mocker.patch("weko_admin.admin.redirect", return_value=make_response())
+        mock_update = mocker.patch("weko_admin.admin.AdminSettings.update")
+        res = client.post(url, data=data)
+        assert res.status_code == 200
+        mock_update.assert_called_with("community_settings", {
+            "title1": data["title"],
+            "title2": data["title_ja"],
+            "supplement": data["supplement"],
+            "icon_code": data["icon"]
+        })
+        mock_flash.assert_called_with(_("MSG_WEKO_THEME_SAVE_SUCCESS"), 'success')
+        mock_redirect.assert_called_with(url_for('communities_page.index'))
+    
+    def test_index_form_setting_error(self, client, users, mocker):
+        login_user_via_session(client, email=users[0]["email"])
+        url = url_for("communities_page.index")
+        # POST request test (successful case)
+        data = {
+            "title": "test_title",
+            "title_ja": "テストタイトル",
+            "supplement": "テスト補足",
+            "icon": "fa fa-handshake-o",
+            "submit": "save_settings"
+        }
+        # Mock flash and redirect
+        mock_flash = mocker.patch("weko_admin.admin.flash")
+        mock_redirect = mocker.patch("weko_admin.admin.redirect", return_value=make_response())
+        # POST request test (exception case)
+        mocker.patch("weko_admin.admin.AdminSettings.update", side_effect=Exception("test_error"))
+        res = client.post(url, data=data)
+        assert res.status_code == 200
+    
+    def test_index_with_default_settings(self, client, users, mocker):
+        # ログイン処理
+        login_user_via_session(client, email=users[0]["email"])
+        # URLを取得
+        url = url_for("communities_page.index")
+        # AdminSettings.getをモックし、設定が存在しない場合の挙動をテスト
+        mocker.patch("weko_admin.admin.AdminSettings.get", return_value=None)
+        # GETリクエスト
+        mock_render = mocker.patch("weko_admin.admin.CommunitiesPageSettingView.render", return_value=make_response())
+        res = client.get(url)
+        # ステータスコードが200か確認
+        assert res.status_code == 200
+        # デフォルトの設定値を取得し、モックされたrenderメソッドに渡されたかを確認
+        args, kwargs = mock_render.call_args
+        default_properties = current_app.config['WEKO_COMMUNITIES_DEFAULT_PROPERTIES']
+        assert kwargs["temp"]["title1"] == default_properties['title1']
+        assert kwargs["temp"]["title2"] == default_properties['title2']
+        assert kwargs["temp"]["icon_code"] == default_properties['icon_code']
+        assert kwargs["temp"]["supplement"] == default_properties['supplement']
+    def test_index_with_database_settings(self, client, users, mocker):
+        # ログイン処理
+        login_user_via_session(client, email=users[0]["email"])
+        # URLを取得
+        url = url_for("communities_page.index")
+        # データベースから取得できる設定をモック
+        db_settings = {
+            'title1': 'DB Title 1',
+            'title2': 'DB タイトル 2',
+            'icon_code': 'fa fa-handshake-o',
+            'supplement': 'Database supplement text'
+        }
+        mocker.patch("weko_admin.admin.AdminSettings.get", return_value=Dict2Obj(**db_settings))
+        # GETリクエスト
+        mock_render = mocker.patch("weko_admin.admin.CommunitiesPageSettingView.render", return_value=make_response())
+        res = client.get(url)
+        # ステータスコードが200か確認
+        assert res.status_code == 200
+        # データベースから取得した設定が正しく渡されているかを確認
+        args, kwargs = mock_render.call_args
+        assert kwargs["temp"]["title1"] == db_settings['title1']
+        assert kwargs["temp"]["title2"] == db_settings['title2']
+        assert kwargs["temp"]["icon_code"] == db_settings['icon_code']
+        assert kwargs["temp"]["supplement"] == db_settings['supplement']

@@ -42,7 +42,7 @@ setup_requires = [
 ]
 
 install_requires = [
-    'Flask-BabelEx>=0.9.3',
+    'Flask-Babel>=3.0.0',
 ]
 
 packages = find_packages()
@@ -102,30 +102,8 @@ setup(
         # TODO: Edit these entry points to fit your needs.
         # 'invenio_access.actions': [],
         # 'invenio_admin.actions': [],
-        'invenio_assets.bundles': [
-            'weko_gridlayout_widget_design_js_lib = '
-            'weko_gridlayout.bundles:widget_design_js_lib',
-            'weko_gridlayout_widget_design_reactjs_lib = '
-            'weko_gridlayout.bundles:widget_design_reactjs_lib',
-            'weko_gridlayout_widget_design_js = '
-            'weko_gridlayout.bundles:widget_design_js',
-            'weko_gridlayout_widget_setting_js = '
-            'weko_gridlayout.bundles:widget_setting_js',
-            'weko_gridlayout_widget_design_css = '
-            'weko_gridlayout.bundles:widget_design_css',
-            'weko_gridlayout_widget_setting_css = '
-            'weko_gridlayout.bundles:widget_setting_css',
-            'weko_gridlayout_katex_min_css = '
-            'weko_gridlayout.bundles:katex_min_css',
-            'weko_gridlayout_katex_min_js = '
-            'weko_gridlayout.bundles:katex_min_js',
-            'weko_gridlayout_prop_types_js = '
-            'weko_gridlayout.bundles:prop_types_js',
-            'weko_gridlayout_react_quill_js = '
-            'weko_gridlayout.bundles:react_quill_js',
-            'widget_trumbowyg_css = weko_gridlayout.bundles:trumbowyg_css',
-            'widget_react_trumbowyg_js = '
-            'weko_gridlayout.bundles:react_trumbowyg_js',
+        'invenio_assets.webpack': [
+            'weko_gridlayout = weko_gridlayout.webpack:weko_gridlayout',
         ],
         # 'invenio_base.api_apps': [],
         # 'invenio_base.blueprints': [],

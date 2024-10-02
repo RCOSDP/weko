@@ -10,7 +10,7 @@ import base64
 import flask
 from werkzeug.datastructures import MultiDict
 from flask import current_app,session
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 from sqlalchemy.orm.exc import NoResultFound
 from mock import MagicMock
 from weko_deposit.pidstore import get_record_without_version

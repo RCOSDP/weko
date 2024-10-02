@@ -12,7 +12,7 @@ from blinker import Namespace
 
 _signals = Namespace()
 
-before_record_insert = _signals.signal('before-record-insert')
+before_record_insert = _signals.signal("before-record-insert")
 """Signal is sent before a record is inserted.
 
 When implementing the event listener, the record data can be retrieved from
@@ -29,7 +29,7 @@ Example event listener (subscriber) implementation:
     before_record_insert.connect(listener)
 """
 
-after_record_insert = _signals.signal('after-record-insert')
+after_record_insert = _signals.signal("after-record-insert")
 """Signal sent after a record is inserted.
 
 When implementing the event listener, the record data can be retrieved from
@@ -41,14 +41,14 @@ When implementing the event listener, the record data can be retrieved from
    persisted.
 """
 
-before_record_update = _signals.signal('before-record-update')
+before_record_update = _signals.signal("before-record-update")
 """Signal is sent before a record is updated.
 
 When implementing the event listener, the record data can be retrieved from
 `kwarg['record']`.
 """
 
-after_record_update = _signals.signal('after-record-update')
+after_record_update = _signals.signal("after-record-update")
 """Signal sent after a record is updated.
 
 When implementing the event listener, the record data can be retrieved from
@@ -60,14 +60,14 @@ When implementing the event listener, the record data can be retrieved from
    persisted.
 """
 
-before_record_delete = _signals.signal('before-record-delete')
+before_record_delete = _signals.signal("before-record-delete")
 """Signal is sent before a record is deleted.
 
 When implementing the event listener, the record data can be retrieved from
 `kwarg['record']`.
 """
 
-after_record_delete = _signals.signal('after-record-delete')
+after_record_delete = _signals.signal("after-record-delete")
 """Signal sent after a record is deleted.
 
 When implementing the event listener, the record data can be retrieved from
@@ -79,14 +79,14 @@ When implementing the event listener, the record data can be retrieved from
    persisted.
 """
 
-before_record_revert = _signals.signal('before-record-revert')
+before_record_revert = _signals.signal("before-record-revert")
 """Signal is sent before a record is reverted.
 
 When implementing the event listener, the record data can be retrieved from
 `kwarg['record']`.
 """
 
-after_record_revert = _signals.signal('after-record-revert')
+after_record_revert = _signals.signal("after-record-revert")
 """Signal sent after a record is reverted.
 
 When implementing the event listener, the record data can be retrieved from

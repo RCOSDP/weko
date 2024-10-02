@@ -23,8 +23,7 @@ The entities of this module consists of:
    The location of the file is specified via a URI. A file instance can have
    many object versions.
  * **Locations** - A bucket belongs to a specific location. Locations can be
-   used to represent e.g. different storage systems and/or geographical
-   locations.
+   used to represent e.g. different storage systems.
  * **Multipart Objects** - Identified by UUIDs and belongs to a specific bucket
    and key.
  * **Part object** - Identified by their multipart object and a part number.
@@ -34,24 +33,22 @@ have their own model, but are represented via the :py:data:`ObjectVersion`
 model.
 """
 
-from __future__ import absolute_import, print_function
-
 import shutil
-import mimetypes
 import os
 import re
 import sys
 import uuid
+from copy import deepcopy
 from datetime import datetime
 from functools import wraps
 from os.path import basename
 
-import six
 import sqlalchemy as sa
 from flask import current_app, flash, redirect, request, url_for
 from flask_login import current_user
 from invenio_db import db
 from invenio_previewer.api import convert_to
+from sqlalchemy import insert, inspect
 from sqlalchemy.dialects import mysql, postgresql
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import validates
@@ -60,14 +57,24 @@ from sqlalchemy.sql.expression import func
 from sqlalchemy_utils.types import JSONType, UUIDType
 from weko_admin.models import AdminSettings
 
-from .errors import BucketLockedError, FileInstanceAlreadySetError, \
-    FileInstanceUnreadableError, FileSizeError, InvalidKeyError, \
-    InvalidOperationError, MultipartAlreadyCompleted, \
-    MultipartInvalidChunkSize, MultipartInvalidPartNumber, \
-    MultipartInvalidSize, MultipartMissingParts, MultipartNotCompleted
+
+from .errors import (
+    BucketLockedError,
+    FileInstanceAlreadySetError,
+    FileInstanceUnreadableError,
+    FileSizeError,
+    InvalidKeyError,
+    InvalidOperationError,
+    MultipartAlreadyCompleted,
+    MultipartInvalidChunkSize,
+    MultipartInvalidPartNumber,
+    MultipartInvalidSize,
+    MultipartMissingParts,
+    MultipartNotCompleted,
+)
 from .proxies import current_files_rest
 
-slug_pattern = re.compile('^[a-z][a-z0-9-]+$')
+slug_pattern = re.compile("^[a-z][a-z0-9-]+$")
 
 
 #
@@ -82,7 +89,7 @@ def validate_key(key):
         :data:`invenio_files_rest.config.FILES_REST_FILE_URI_MAX_LEN`.
     :returns: The key.
     """
-    if len(key) > current_app.config['FILES_REST_OBJECT_KEY_MAX_LEN']:
+    if len(key) > current_app.config["FILES_REST_OBJECT_KEY_MAX_LEN"]:
         raise InvalidKeyError()
     return key
 
@@ -113,8 +120,11 @@ def as_object_version(value):
         object version ID.
     :returns: A :class:`invenio_files_rest.models.ObjectVersion` instance.
     """
-    return value if isinstance(value, ObjectVersion) \
+    return (
+        value
+        if isinstance(value, ObjectVersion)
         else ObjectVersion.query.filter_by(version_id=value).one_or_none()
+    )
 
 
 def as_object_version_id(value):
@@ -132,17 +142,20 @@ def as_object_version_id(value):
 #
 def update_bucket_size(f):
     """Decorate to update bucket size after operation."""
+
     @wraps(f)
     def inner(self, *args, **kwargs):
         res = f(self, *args, **kwargs)
         self.bucket.size += self.file.size
         # self.bucket.location.size += self.file.size
         return res
+
     return inner
 
 
 def ensure_state(default_getter, exc_class, default_msg=None):
     """Create a decorator factory function."""
+
     def decorator(getter=default_getter, msg=default_msg):
         def ensure_decorator(f):
             @wraps(f)
@@ -150,7 +163,9 @@ def ensure_state(default_getter, exc_class, default_msg=None):
                 if not getter(self):
                     raise exc_class(msg) if msg else exc_class()
                 return f(self, *args, **kwargs)
+
             return inner
+
         return ensure_decorator
 
     return decorator
@@ -182,46 +197,38 @@ class ObjectVersionError(object):
         return self.res
 
 
-ensure_readable = ensure_state(
-    lambda o: o.readable,
-    FileInstanceUnreadableError)
+ensure_readable = ensure_state(lambda o: o.readable, FileInstanceUnreadableError)
 """Ensure file is readable."""
 
 ensure_writable = ensure_state(
-    lambda o: o.writable,
-    ValueError, 'File is not writable.')
+    lambda o: o.writable, ValueError, "File is not writable."
+)
 """Ensure file is writeable."""
 
-ensure_completed = ensure_state(
-    lambda o: o.completed,
-    MultipartNotCompleted)
+ensure_completed = ensure_state(lambda o: o.completed, MultipartNotCompleted)
 """Ensure file is completed."""
 
-ensure_uncompleted = ensure_state(
-    lambda o: not o.completed,
-    MultipartAlreadyCompleted)
+ensure_uncompleted = ensure_state(lambda o: not o.completed, MultipartAlreadyCompleted)
 """Ensure file is not completed."""
 
 ensure_not_deleted = ensure_state(
     lambda o: not o.deleted,
     InvalidOperationError,
-    [BucketError('Cannot make snapshot of a deleted bucket.')])
+    [BucketError("Cannot make snapshot of a deleted bucket.")],
+)
 """Ensure file is not deleted."""
 
-ensure_unlocked = ensure_state(
-    lambda o: not o.locked,
-    BucketLockedError)
+ensure_unlocked = ensure_state(lambda o: not o.locked, BucketLockedError)
 """Ensure bucket is locked."""
 
-ensure_no_file = ensure_state(
-    lambda o: o.file_id is None,
-    FileInstanceAlreadySetError)
+ensure_no_file = ensure_state(lambda o: o.file_id is None, FileInstanceAlreadySetError)
 """Ensure file is not already set."""
 
 ensure_is_previous_version = ensure_state(
     lambda o: not o.is_head,
     InvalidOperationError,
-    [ObjectVersionError('Cannot restore latest version.')])
+    [ObjectVersionError("Cannot restore latest version.")],
+)
 """Ensure file is the previous version."""
 
 
@@ -236,21 +243,21 @@ class Timestamp(object):
     """
 
     created = db.Column(
-        db.DateTime().with_variant(mysql.DATETIME(fsp=6), 'mysql'),
+        db.DateTime().with_variant(mysql.DATETIME(fsp=6), "mysql"),
         default=datetime.utcnow,
-        nullable=False
+        nullable=False,
     )
     """Creation timestamp."""
 
     updated = db.Column(
-        db.DateTime().with_variant(mysql.DATETIME(fsp=6), 'mysql'),
+        db.DateTime().with_variant(mysql.DATETIME(fsp=6), "mysql"),
         default=datetime.utcnow,
-        nullable=False
+        nullable=False,
     )
     """Modification timestamp."""
 
 
-@db.event.listens_for(Timestamp, 'before_update', propagate=True)
+@db.event.listens_for(Timestamp, "before_update", propagate=True)
 def timestamp_before_update(mapper, connection, target):
     """Listen for updating updated field."""
     target.updated = datetime.utcnow()
@@ -259,7 +266,7 @@ def timestamp_before_update(mapper, connection, target):
 class Location(db.Model, Timestamp):
     """Model defining base locations."""
 
-    __tablename__ = 'files_location'
+    __tablename__ = "files_location"
 
     id = db.Column(db.Integer, primary_key=True)
     """Internal identifier for locations.
@@ -274,9 +281,7 @@ class Location(db.Model, Timestamp):
     uri = db.Column(db.String(255), nullable=False)
     """URI of the location."""
 
-    default = db.Column(db.Boolean(name='default'),
-                        nullable=False,
-                        default=False)
+    default = db.Column(db.Boolean(name="default"), nullable=False, default=False)
     """True if the location is the default location.
 
     At least one location should be the default location.
@@ -290,7 +295,7 @@ class Location(db.Model, Timestamp):
 
     s3_endpoint_url = db.Column(db.String(128), nullable=True)
 
-    s3_send_file_directly = db.Column(db.Boolean(name='s3_send_file_directly'), nullable=False, default=True)
+    s3_send_file_directly = db.Column(db.Boolean(name="s3_send_file_directly"), nullable=False, default=True)
     
     size = db.Column(db.BigInteger, default=0, nullable=True)
 
@@ -298,12 +303,13 @@ class Location(db.Model, Timestamp):
 
     max_file_size = db.Column(db.BigInteger, nullable=True)
 
-    @validates('name')
+    @validates("name")
     def validate_name(self, key, name):
         """Validate name."""
         if not slug_pattern.match(name) or len(name) > 20:
             raise ValueError(
-                'Invalid location name (lower-case alphanumeric + danshes).')
+                "Invalid location name (lower-case alphanumeric + dashes)."
+            )
         return name
 
     @classmethod
@@ -311,7 +317,7 @@ class Location(db.Model, Timestamp):
         """Fetch a specific location object."""
         return cls.query.filter_by(
             name=name,
-        ).one()
+        ).one_or_none()
 
     @classmethod
     def get_default(cls):
@@ -345,7 +351,7 @@ class Bucket(db.Model, Timestamp):
     of all objects in the bucket (including all versions).
     """
 
-    __tablename__ = 'files_bucket'
+    __tablename__ = "files_bucket"
 
     id = db.Column(
         UUIDType,
@@ -355,14 +361,15 @@ class Bucket(db.Model, Timestamp):
     """Bucket identifier."""
 
     default_location = db.Column(
-        db.Integer,
-        db.ForeignKey(Location.id, ondelete='RESTRICT'),
-        nullable=False)
+        db.Integer, db.ForeignKey(Location.id, ondelete="RESTRICT"), nullable=False
+    )
     """Default location."""
 
     default_storage_class = db.Column(
-        db.String(1), nullable=False,
-        default=lambda: current_app.config['FILES_REST_DEFAULT_STORAGE_CLASS'])
+        db.String(1),
+        nullable=False,
+        default=lambda: current_app.config["FILES_REST_DEFAULT_STORAGE_CLASS"],
+    )
     """Default storage class."""
 
     size = db.Column(db.BigInteger, default=0, nullable=False)
@@ -375,7 +382,7 @@ class Bucket(db.Model, Timestamp):
     quota_size = db.Column(
         db.BigInteger,
         nullable=True,
-        default=lambda: current_app.config['FILES_REST_DEFAULT_QUOTA_SIZE']
+        default=lambda: current_app.config["FILES_REST_DEFAULT_QUOTA_SIZE"],
     )
     """Quota size of bucket.
 
@@ -385,27 +392,23 @@ class Bucket(db.Model, Timestamp):
     max_file_size = db.Column(
         db.BigInteger,
         nullable=True,
-        default=lambda: current_app.config['FILES_REST_DEFAULT_MAX_FILE_SIZE']
+        default=lambda: current_app.config["FILES_REST_DEFAULT_MAX_FILE_SIZE"],
     )
     """Maximum size of a single file in the bucket.
 
     Usage of this property depends on which file size limiters are installed.
     """
 
-    locked = db.Column(db.Boolean(name='locked'),
-                       default=False,
-                       nullable=False)
+    locked = db.Column(db.Boolean(name="locked"), default=False, nullable=False)
     """Lock state of bucket.
 
     Modifications are not allowed on a locked bucket.
     """
 
-    deleted = db.Column(db.Boolean(name='deleted'),
-                        default=False,
-                        nullable=False)
+    deleted = db.Column(db.Boolean(name="deleted"), default=False, nullable=False)
     """Delete state of bucket."""
 
-    location = db.relationship(Location, backref='buckets')
+    location = db.relationship(Location, backref="buckets")
     """Location associated with this bucket."""
 
     def __repr__(self):
@@ -425,18 +428,20 @@ class Bucket(db.Model, Timestamp):
         The limit is based on the minimum output of the file size limiters.
         """
         limits = [
-            lim for lim in current_files_rest.file_size_limiters(
-                self)
+            lim
+            for lim in current_files_rest.file_size_limiters(self)
             if lim.limit is not None
         ]
         return min(limits) if limits else None
 
-    @validates('default_storage_class')
+    @validates("default_storage_class")
     def validate_storage_class(self, key, default_storage_class):
         """Validate storage class."""
-        if default_storage_class not in \
-           current_app.config['FILES_REST_STORAGE_CLASS_LIST']:
-            raise ValueError('Invalid storage class.')
+        if (
+            default_storage_class
+            not in current_app.config["FILES_REST_STORAGE_CLASS_LIST"]
+        ):
+            raise ValueError("Invalid storage class.")
         return default_storage_class
 
     @ensure_not_deleted()
@@ -461,47 +466,74 @@ class Bucket(db.Model, Timestamp):
 
         return bucket
 
-    @ensure_not_deleted(msg=[BucketError('Cannot sync a deleted bucket.')])
+    @ensure_not_deleted(msg=[BucketError("Cannot sync a deleted bucket.")])
     def sync(self, bucket, delete_extras=False):
         """Sync self bucket ObjectVersions to the destination bucket.
 
         The bucket is fully mirrored with the destination bucket following the
         logic:
 
-         * same ObjectVersions are not touched
-         * new ObjectVersions are added to destination
-         * deleted ObjectVersions are deleted in destination
-         * extra ObjectVersions in dest are deleted if `delete_extras` param is
-           True
+        * same ObjectVersions are not touched
+        * new ObjectVersions are added to destination
+        * deleted ObjectVersions are deleted in destination
+        * extra ObjectVersions in dest are deleted if `delete_extras` param is True
 
         :param bucket: The destination bucket.
         :param delete_extras: Delete extra ObjectVersions in destination if
             True.
-        :returns: The bucket with an exact copy of ObjectVersions in self.
+        :returns: A tuple with the bucket having an exact copy of ObjectVersions in
+            self, and a list with the changes applied in the format (action, value).
+            Specifically, there are 2 possible actions:
+            * "add": the`value` is the new copied object version.
+            * "delete": the `value` is the key of the deleted object version.
+
         """
         assert not bucket.locked
 
         src_ovs = ObjectVersion.get_by_bucket(bucket=self, with_deleted=True)
-        dest_ovs = ObjectVersion.get_by_bucket(bucket=bucket,
-                                               with_deleted=True)
-        # transform into a dict { key: object version }
-        src_keys = {ov.key: ov for ov in src_ovs}
-        dest_keys = {ov.key: ov for ov in dest_ovs}
+        dest_ovs = ObjectVersion.get_by_bucket(bucket=bucket, with_deleted=True)
+        changed_ovs = []
 
-        for key, ov in src_keys.items():
-            if not ov.deleted:
-                if key not in dest_keys or \
-                        ov.file_id != dest_keys[key].file_id:
-                    ov.copy(bucket=bucket)
-            elif key in dest_keys and not dest_keys[key].deleted:
-                ObjectVersion.delete(bucket, key)
+        # transform into a dict { key: object version }
+        src_dict_ovs = {}
+        for ov in src_ovs:
+            # keep only the latest version of an ObjectVersion and don't
+            # override with previous
+            if ov.key not in src_dict_ovs:
+                src_dict_ovs[ov.key] = ov
+
+        dest_dict_ovs = {}
+        for ov in dest_ovs:
+            # keep only the latest version of an ObjectVersion and don't
+            # override with previous
+            if ov.key not in dest_dict_ovs:
+                dest_dict_ovs[ov.key] = ov
+
+        for key, ov in src_dict_ovs.items():
+            key_in_dest = key in dest_dict_ovs
+            if ov.deleted:
+                if key_in_dest and not dest_dict_ovs[key].deleted:
+                    ObjectVersion.delete(bucket, key)
+                    changed_ovs.append(("delete", key))
+            else:
+                if not key_in_dest:
+                    new_ov = ov.copy(bucket=bucket)
+                    changed_ovs.append(("add", new_ov))
+                else:
+                    dest_ov = dest_dict_ovs[key]
+                    file_in_dest_differs = ov.file_id != dest_ov.file_id
+                    ov_deleted_in_dest = dest_ov.deleted
+                    if file_in_dest_differs or ov_deleted_in_dest:
+                        new_ov = ov.copy(bucket=bucket)
+                        changed_ovs.append(("add", new_ov))
 
         if delete_extras:
-            for key, ov in dest_keys.items():
-                if key not in src_keys:
+            for key, ov in dest_dict_ovs.items():
+                if key not in src_dict_ovs:
                     ObjectVersion.delete(bucket, key)
+                    changed_ovs.append(("delete", key))
 
-        return bucket
+        return bucket, changed_ovs
 
     def get_tags(self):
         """Get tags for bucket as dictionary."""
@@ -523,13 +555,13 @@ class Bucket(db.Model, Timestamp):
         with db.session.begin_nested():
             if location is None:
                 location = Location.get_default()
-            elif isinstance(location, six.string_types):
+            elif isinstance(location, str):
                 location = Location.get_by_name(location)
 
             obj = cls(
                 default_location=location.id,
-                default_storage_class=storage_class or current_app.config[
-                    'FILES_REST_DEFAULT_STORAGE_CLASS'],
+                default_storage_class=storage_class
+                or current_app.config["FILES_REST_DEFAULT_STORAGE_CLASS"],
                 **kwargs
             )
             db.session.add(obj)
@@ -542,17 +574,12 @@ class Bucket(db.Model, Timestamp):
         :param bucket_id: Bucket identifier.
         :returns: Bucket instance.
         """
-        return cls.query.filter_by(
-            id=bucket_id,
-            deleted=False
-        ).one_or_none()
+        return cls.query.filter_by(id=bucket_id, deleted=False).one_or_none()
 
     @classmethod
     def all(cls):
         """Return query of all buckets (excluding deleted)."""
-        return cls.query.filter_by(
-            deleted=False
-        )
+        return cls.query.filter_by(deleted=False)
 
     @classmethod
     def delete(cls, bucket_id):
@@ -583,10 +610,10 @@ class Bucket(db.Model, Timestamp):
         :returns: ``self``.
         """
         with db.session.begin_nested():
-            ObjectVersion.query.filter_by(
-                bucket_id=self.id
-            ).delete()
-            self.query.filter_by(id=self.id).delete()
+            ObjectVersion.query.filter_by(bucket_id=self.id).delete(
+                synchronize_session=False
+            )
+            self.query.filter_by(id=self.id).delete(synchronize_session=False)
         return self
 
 
@@ -596,13 +623,14 @@ class BucketTag(db.Model):
     This is useful to store extra information for a bucket.
     """
 
-    __tablename__ = 'files_buckettags'
+    __tablename__ = "files_buckettags"
 
     bucket_id = db.Column(
         UUIDType,
-        db.ForeignKey(Bucket.id, ondelete='CASCADE'),
+        db.ForeignKey(Bucket.id, ondelete="CASCADE"),
         default=uuid.uuid4,
-        primary_key=True, )
+        primary_key=True,
+    )
 
     key = db.Column(db.String(255), primary_key=True)
     """Tag key."""
@@ -610,7 +638,7 @@ class BucketTag(db.Model):
     value = db.Column(db.Text, nullable=False)
     """Tag value."""
 
-    bucket = db.relationship(Bucket, backref='tags')
+    bucket = db.relationship(Bucket, backref="tags")
     """Relationship to buckets."""
 
     @classmethod
@@ -625,11 +653,7 @@ class BucketTag(db.Model):
     def create(cls, bucket, key, value):
         """Create a new tag for bucket."""
         with db.session.begin_nested():
-            obj = cls(
-                bucket_id=as_bucket_id(bucket),
-                key=key,
-                value=value
-            )
+            obj = cls(bucket_id=as_bucket_id(bucket), key=key, value=value)
             db.session.add(obj)
         return obj
 
@@ -674,7 +698,7 @@ class FileInstance(db.Model, Timestamp):
     link to files on externally controlled storage).
     """
 
-    __tablename__ = 'files_files'
+    __tablename__ = "files_files"
 
     id = db.Column(
         UUIDType,
@@ -683,8 +707,9 @@ class FileInstance(db.Model, Timestamp):
     )
     """Identifier of file."""
 
-    uri = db.Column(db.Text().with_variant(mysql.VARCHAR(255), 'mysql'),
-                    unique=True, nullable=True)
+    uri = db.Column(
+        db.Text().with_variant(mysql.VARCHAR(255), "mysql"), unique=True, nullable=True
+    )
     """Location of file."""
 
     storage_class = db.Column(db.String(1), nullable=True)
@@ -696,14 +721,10 @@ class FileInstance(db.Model, Timestamp):
     checksum = db.Column(db.String(255), nullable=True)
     """String representing the checksum of the object."""
 
-    readable = db.Column(db.Boolean(name='readable'),
-                         default=True,
-                         nullable=False)
+    readable = db.Column(db.Boolean(name="readable"), default=True, nullable=False)
     """Defines if the file is read only."""
 
-    writable = db.Column(db.Boolean(name='writable'),
-                         default=True,
-                         nullable=False)
+    writable = db.Column(db.Boolean(name="writable"), default=True, nullable=False)
     """Defines if file is writable.
 
     This property is used to create a file instance prior to having the actual
@@ -713,30 +734,29 @@ class FileInstance(db.Model, Timestamp):
     last_check_at = db.Column(db.DateTime, nullable=True)
     """Timestamp of last fixity check."""
 
-    last_check = db.Column(db.Boolean(name='last_check'), default=True)
+    last_check = db.Column(db.Boolean(name="last_check"), default=True)
     """Result of last fixity check."""
 
     json = db.Column(
         db.JSON().with_variant(
             postgresql.JSONB(none_as_null=True),
-            'postgresql',
+            "postgresql",
         ).with_variant(
             JSONType(),
-            'sqlite',
+            "sqlite",
         ).with_variant(
             JSONType(),
-            'mysql',
+            "mysql",
         ),
         default=lambda: dict(),
         nullable=True
     )
 
-    @validates('uri')
+    @validates("uri")
     def validate_uri(self, key, uri):
         """Validate uri."""
-        if len(uri) > current_app.config['FILES_REST_FILE_URI_MAX_LEN']:
-            raise ValueError(
-                'FileInstance URI too long ({0}).'.format(len(uri)))
+        if len(uri) > current_app.config["FILES_REST_FILE_URI_MAX_LEN"]:
+            raise ValueError("FileInstance URI too long ({0}).".format(len(uri)))
         return uri
 
     @classmethod
@@ -749,7 +769,7 @@ class FileInstance(db.Model, Timestamp):
         """Get a file instance by URI."""
         assert uri is not None
         return cls.query.filter_by(uri=uri).one_or_none()
-
+    
     @classmethod
     def get_location_by_file_instance(cls):
         """Get a file instance by URI."""
@@ -801,12 +821,15 @@ class FileInstance(db.Model, Timestamp):
         return current_files_rest.storage_factory(fileinstance=self, **kwargs)
 
     @ensure_readable()
-    def update_checksum(self, progress_callback=None, chunk_size=None,
-                        checksum_kwargs=None, **kwargs):
+    def update_checksum(
+        self, progress_callback=None, chunk_size=None, checksum_kwargs=None, **kwargs
+    ):
         """Update checksum based on file."""
         self.checksum = self.storage(**kwargs).checksum(
-            progress_callback=progress_callback, chunk_size=chunk_size,
-            **(checksum_kwargs or {}))
+            progress_callback=progress_callback,
+            chunk_size=chunk_size,
+            **(checksum_kwargs or {})
+        )
 
     def clear_last_check(self):
         """Clear the checksum of the file."""
@@ -815,8 +838,14 @@ class FileInstance(db.Model, Timestamp):
             self.last_check_at = datetime.utcnow()
         return self
 
-    def verify_checksum(self, progress_callback=None, chunk_size=None,
-                        throws=True, checksum_kwargs=None, **kwargs):
+    def verify_checksum(
+        self,
+        progress_callback=None,
+        chunk_size=None,
+        throws=True,
+        checksum_kwargs=None,
+        **kwargs
+    ):
         """Verify checksum of file instance.
 
         :param bool throws: If `True`, exceptions raised during checksum
@@ -829,16 +858,19 @@ class FileInstance(db.Model, Timestamp):
         """
         try:
             real_checksum = self.storage(**kwargs).checksum(
-                progress_callback=progress_callback, chunk_size=chunk_size,
-                **(checksum_kwargs or {}))
+                progress_callback=progress_callback,
+                chunk_size=chunk_size,
+                **(checksum_kwargs or {})
+            )
         except Exception as exc:
             current_app.logger.exception(str(exc))
             if throws:
                 raise
             real_checksum = None
         with db.session.begin_nested():
-            self.last_check = (None if real_checksum is None
-                               else (self.checksum == real_checksum))
+            self.last_check = (
+                None if real_checksum is None else (self.checksum == real_checksum)
+            )
             self.last_check_at = datetime.utcnow()
         return self.last_check
 
@@ -846,12 +878,19 @@ class FileInstance(db.Model, Timestamp):
     def init_contents(self, size=0, **kwargs):
         """Initialize file."""
         self.set_uri(
-            *self.storage(**kwargs).initialize(size=size),
-            readable=False, writable=True)
+            *self.storage(**kwargs).initialize(size=size), readable=False, writable=True
+        )
 
     @ensure_writable()
-    def update_contents(self, stream, seek=0, size=None, chunk_size=None,
-                        progress_callback=None, **kwargs):
+    def update_contents(
+        self,
+        stream,
+        seek=0,
+        size=None,
+        chunk_size=None,
+        progress_callback=None,
+        **kwargs
+    ):
         """Save contents of stream to this file.
 
         :param obj: ObjectVersion instance from where this file is accessed
@@ -860,14 +899,24 @@ class FileInstance(db.Model, Timestamp):
         """
         self.checksum = None
         return self.storage(**kwargs).update(
-            stream, seek=seek, size=size, chunk_size=chunk_size,
-            progress_callback=progress_callback
+            stream,
+            seek=seek,
+            size=size,
+            chunk_size=chunk_size,
+            progress_callback=progress_callback,
         )
 
     @ensure_writable()
-    def set_contents(self, stream, chunk_size=None, size=None, size_limit=None,
-                     progress_callback=None, is_set_size_location=True,
-                     **kwargs):
+    def set_contents(
+        self,
+        stream,
+        chunk_size=None,
+        size=None,
+        size_limit=None,
+        progress_callback=None,
+        is_set_size_location=True,
+        **kwargs
+    ):
         """Save contents of stream to this file.
 
         :param obj: ObjectVersion instance from where this file is accessed
@@ -877,18 +926,24 @@ class FileInstance(db.Model, Timestamp):
         old_size = self.size if self.size else 0
         self.set_uri(
             *self.storage(**kwargs).save(
-                stream, chunk_size=chunk_size, size=size,
-                size_limit=size_limit, progress_callback=progress_callback))
+                stream,
+                chunk_size=chunk_size,
+                size=size,
+                size_limit=size_limit,
+                progress_callback=progress_callback,
+            )
+        )
         if is_set_size_location:
             location = self.get_location_by_file_instance()
             location.size = location.size + self.size - old_size
 
     @ensure_writable()
-    def copy_contents(self, fileinstance, progress_callback=None,
-                      chunk_size=None, **kwargs):
+    def copy_contents(
+        self, fileinstance, progress_callback=None, chunk_size=None, **kwargs
+    ):
         """Copy this file instance into another file instance."""
         def copy(storage, src, chunk_size=None, progress_callback=None):
-            fp = src.open(mode='rb')
+            fp = src.open(mode="rb")
             try:
                 return storage.save(fp, chunk_size=chunk_size,
                                     progress_callback=progress_callback)
@@ -896,9 +951,9 @@ class FileInstance(db.Model, Timestamp):
                 fp.close()
 
         if not fileinstance.readable:
-            raise ValueError('Source file instance is not readable.')
+            raise ValueError("Source file instance is not readable.")
         if not self.size == 0:
-            raise ValueError('File instance has data.')
+            raise ValueError("File instance has data.")
 
         storage = self.storage(**kwargs)
         fileinstance_storage = fileinstance.storage(**kwargs)
@@ -907,29 +962,37 @@ class FileInstance(db.Model, Timestamp):
         self.set_uri(*copy_result)
 
     @ensure_readable()
-    def send_file(self, filename, restricted=True, mimetype=None,
-                  trusted=False, chunk_size=None, as_attachment=False,
-                  convert_to_pdf=False, **kwargs):
+    def send_file(
+        self,
+        filename,
+        restricted=True,
+        mimetype=None,
+        trusted=False,
+        chunk_size=None,
+        as_attachment=False,
+        convert_to_pdf=False,
+        **kwargs
+    ):
         """Send file to client."""
         # Convert ms office file to PDF for preview
         if convert_to_pdf:
 
             try:
-                settings = AdminSettings.get('convert_pdf_settings')
+                settings = AdminSettings.get("convert_pdf_settings")
 
                 # Load settings from settings if there is not settings in db
                 if settings:
                     path = settings.path
                 else:
-                    path = current_app.config['FILES_REST_DEFAULT_PDF_SAVE_PATH']
+                    path = current_app.config["FILES_REST_DEFAULT_PDF_SAVE_PATH"]
 
-                pdf_dir = path + '/pdf_dir/' + str(self.id)
-                pdf_filename = '/data.pdf'
-                file_type = os.path.splitext(self.json['filename'])[1].lower()
+                pdf_dir = path + "/pdf_dir/" + str(self.id)
+                pdf_filename = "/data.pdf"
+                file_type = os.path.splitext(self.json["filename"])[1].lower()
                 # Change preview file to pdf
-                self.json['mimetype'] = 'application/pdf'
-                self.json['filename'] = self.json['filename'].replace(
-                    file_type, '.pdf')
+                self.json["mimetype"] = "application/pdf"
+                self.json["filename"] = self.json["filename"].replace(
+                    file_type, ".pdf")
 
                 if not os.path.isfile(pdf_dir + pdf_filename):
                     convert_dir = path+"/convert_"+str(self.id)
@@ -939,7 +1002,7 @@ class FileInstance(db.Model, Timestamp):
                         if os.path.exists(convert_dir):
                             shutil.rmtree(convert_dir)
                         os.makedirs(convert_dir)
-                        fp = self.storage(**kwargs).open(mode='rb')
+                        fp = self.storage(**kwargs).open(mode="rb")
                         data = fp.read()
                         fp.close()
                         with open(target_uri,"wb") as f:
@@ -953,9 +1016,8 @@ class FileInstance(db.Model, Timestamp):
                 self.uri = pdf_dir + pdf_filename
                 self.size = os.path.getsize(pdf_dir + pdf_filename)
             except Exception as ex:
-                current_app.logger.error('convert to pdf error')
+                current_app.logger.error("convert to pdf error")
                 current_app.logger.error(ex)
-
         return self.storage(**kwargs).send_file(
             filename,
             mimetype=mimetype,
@@ -966,20 +1028,22 @@ class FileInstance(db.Model, Timestamp):
             as_attachment=as_attachment,
         )
 
-    def set_uri(self, uri, size, checksum, readable=True, writable=False,
-                storage_class=None):
+    def set_uri(
+        self, uri, size, checksum, readable=True, writable=False, storage_class=None
+    ):
         """Set a location of a file."""
         self.uri = uri
         self.size = size
         self.checksum = checksum
         self.writable = writable
         self.readable = readable
-        self.storage_class = \
-            current_app.config['FILES_REST_DEFAULT_STORAGE_CLASS'] \
-            if storage_class is None else \
-            storage_class
+        self.storage_class = (
+            current_app.config["FILES_REST_DEFAULT_STORAGE_CLASS"]
+            if storage_class is None
+            else storage_class
+        )
         return self
-
+    
     def update_json(self, jsn):
         """Update file metadata.
 
@@ -989,18 +1053,20 @@ class FileInstance(db.Model, Timestamp):
         self.json = jsn.copy()
 
     def upload_file(self, fjson, **kwargs):
-        """Put file to Elasticsearch.
+        """Uploads a file using the specified storage.
 
-        :param fjson:
-        :param kwargs:
+        :param fjson: The file JSON object.
+        :type fjson: dict
         """
+
         self.storage(**kwargs).upload_file(fjson)
 
     def read_file(self, fjson, **kwargs):
-        """Put file to Elasticsearch.
+        """Reads a file from the storage.
 
-        :param fjson:
-        :param kwargs:
+        :param fjson: The file JSON representation.
+        :type fjson: dict
+        :return: The contents of the file.
         """
         return self.storage(**kwargs).read_file(fjson)
 
@@ -1028,27 +1094,25 @@ class ObjectVersion(db.Model, Timestamp):
     shown in the bucket.
     """
 
-    __tablename__ = 'files_object'
+    __tablename__ = "files_object"
 
-    version_id = db.Column(
-        UUIDType,
-        primary_key=True,
-        default=uuid.uuid4)
+    version_id = db.Column(UUIDType, primary_key=True, default=uuid.uuid4)
     """Identifier for the specific version of an object."""
 
-    key = db.Column(
-        db.Text().with_variant(mysql.VARCHAR(255), 'mysql'), nullable=False)
+    key = db.Column(db.Text().with_variant(mysql.VARCHAR(255), "mysql"), nullable=False)
     """Key identifying the object."""
 
     bucket_id = db.Column(
         UUIDType,
-        db.ForeignKey(Bucket.id, ondelete='RESTRICT'),
-        default=uuid.uuid4, nullable=False)
+        db.ForeignKey(Bucket.id, ondelete="RESTRICT"),
+        default=uuid.uuid4,
+        nullable=False,
+    )
     """Bucket identifier."""
 
     file_id = db.Column(
-        UUIDType,
-        db.ForeignKey(FileInstance.id, ondelete='RESTRICT'), nullable=True)
+        UUIDType, db.ForeignKey(FileInstance.id, ondelete="RESTRICT"), nullable=True
+    )
     """File instance for this object version.
 
     A null value in this column defines that the object has been deleted.
@@ -1060,12 +1124,11 @@ class ObjectVersion(db.Model, Timestamp):
     _mimetype = db.Column(
         db.String(255),
         index=True,
-        nullable=True, )
+        nullable=True,
+    )
     """MIME type of the object."""
 
-    is_head = db.Column(db.Boolean(name='is_head'),
-                        nullable=False,
-                        default=True)
+    is_head = db.Column(db.Boolean(name="is_head"), nullable=False, default=True)
     """Defines if object is the latest version."""
 
     created_user_id = db.Column(db.Integer, nullable=True, default=0)
@@ -1075,44 +1138,44 @@ class ObjectVersion(db.Model, Timestamp):
     """updated user id of uploading."""
 
     # Relationships definitions
-    bucket = db.relationship(Bucket, backref='objects')
+    bucket = db.relationship(Bucket, backref="objects")
     """Relationship to buckets."""
 
-    file = db.relationship(FileInstance, backref='objects')
+    file = db.relationship(FileInstance, backref="objects")
     """Relationship to file instance."""
 
-    is_show = db.Column(db.Boolean(name='is_show'),
+    is_show = db.Column(db.Boolean(name="is_show"),
                         nullable=False,
                         default=False)
 
-    is_thumbnail = db.Column(db.Boolean(name='is_thumbnail'),
+    is_thumbnail = db.Column(db.Boolean(name="is_thumbnail"),
                              nullable=False,
                              default=False)
     """Defines if object is the thumbnail."""
 
-    __table_args__ = (
-        db.UniqueConstraint('bucket_id', 'version_id', 'key'),
-    )
+    __table_args__ = (db.UniqueConstraint("bucket_id", "version_id", "key"),)
 
-    @validates('key')
+    @validates("key")
     def validate_key(self, key, key_):
         """Validate key."""
         return validate_key(key_)
 
     def __unicode__(self):
         """Return unicoded object."""
-        return u"{0}:{1}:{2}".format(
-            self.bucket_id, self.version_id, self.key)
+        return "{0}:{1}:{2}".format(self.bucket_id, self.version_id, self.key)
 
     # https://docs.python.org/3.3/howto/pyporting.html#str-unicode
     if sys.version_info[0] >= 3:  # Python 3
+
         def __repr__(self):
             """Return representation of location."""
             return self.__unicode__()
+
     else:  # Python 2
+
         def __repr__(self):
             """Return representation of location."""
-            return self.__unicode__().encode('utf8')
+            return self.__unicode__().encode("utf8")
 
     @hybrid_property
     def mimetype(self):
@@ -1137,9 +1200,17 @@ class ObjectVersion(db.Model, Timestamp):
 
     @ensure_no_file()
     @update_bucket_size
-    def set_contents(self, stream, chunk_size=None, size=None, size_limit=None,
-                     replace_version_id=None, root_file_id=None,
-                     progress_callback=None, is_set_size_location=True):
+    def set_contents(
+        self,
+        stream,
+        chunk_size=None,
+        size=None,
+        size_limit=None,
+        replace_version_id=None,
+        root_file_id=None,
+        progress_callback=None,
+        is_set_size_location=True
+    ):
         """Save contents of stream to file instance.
 
         If a file instance has already been set, this methods raises an
@@ -1159,7 +1230,10 @@ class ObjectVersion(db.Model, Timestamp):
 
         self.file = FileInstance.create()
         self.file.set_contents(
-            stream, size_limit=size_limit, size=size, chunk_size=chunk_size,
+            stream,
+            size_limit=size_limit,
+            size=size,
+            chunk_size=chunk_size,
             progress_callback=progress_callback,
             default_location=self.bucket.location.uri,
             default_storage_class=self.bucket.default_storage_class,
@@ -1192,9 +1266,7 @@ class ObjectVersion(db.Model, Timestamp):
         :param storage_class: Storage class where file is stored ()
         """
         self.file = FileInstance()
-        self.file.set_uri(
-            uri, size, checksum, storage_class=storage_class
-        )
+        self.file.set_uri(uri, size, checksum, storage_class=storage_class)
         db.session.add(self.file)
         return self
 
@@ -1205,8 +1277,7 @@ class ObjectVersion(db.Model, Timestamp):
         self.file = fileinstance
         return self
 
-    def send_file(self, restricted=True, trusted=False,
-                  convert_to_pdf=False, **kwargs):
+    def send_file(self, restricted=True, trusted=False, convert_to_pdf=False, **kwargs):
         """Wrap around FileInstance's send file."""
         return self.file.send_file(
             self.basename,
@@ -1226,8 +1297,7 @@ class ObjectVersion(db.Model, Timestamp):
         # Note, copy calls create which will fail if bucket is locked.
         return self.copy()
 
-    @ensure_not_deleted(
-        msg=[ObjectVersionError('Cannot copy a delete marker.')])
+    @ensure_not_deleted(msg=[ObjectVersionError("Cannot copy a delete marker.")])
     def copy(self, bucket=None, key=None, is_thumbnail=False):
         """Copy an object version to a given bucket + object key.
 
@@ -1260,11 +1330,50 @@ class ObjectVersion(db.Model, Timestamp):
         )
 
         for tag in self.tags:
-            ObjectVersionTag.create_or_update(object_version=new_ob,
-                                              key=tag.key,
-                                              value=tag.value)
+            ObjectVersionTag.create_or_update(
+                object_version=new_ob, key=tag.key, value=tag.value
+            )
 
         return new_ob
+
+    @classmethod
+    def copy_from(cls, bucket_id, destination_bucket_id):
+        """Copy all objects from source to destination bucket.
+
+        The object versions of source bucket are copied by value i.e there is no
+        interaction with the db.
+
+        The copy operation is handled completely at the metadata level. The
+        actual data on disk is not copied. Instead, the two object versions
+        will point to the same physical file (via the same FileInstance).
+
+        All the tags associated with the current object version are copied over
+        to the new instance.
+
+        :param bucket_id: The bucket id to copy the objects from.
+        :param destination_bucket_id: The bucket id to copy the objects to.
+        :returns: A list of object versions as dictionaries.
+        """
+        new_versions = []
+
+        with db.session.begin_nested():
+            obj_columns = [col.name for col in inspect(ObjectVersion).columns]
+            for o in ObjectVersion.get_by_bucket(bucket_id):
+                new_ov = deepcopy(
+                    {
+                        key: value
+                        for key, value in o.__dict__.items()
+                        if key in obj_columns
+                    }
+                )
+                new_ov["bucket_id"] = destination_bucket_id
+                new_ov["version_id"] = uuid.uuid4()
+                new_versions.append(new_ov)
+
+            if new_versions:
+                db.session.execute(insert(ObjectVersion), new_versions)
+
+        return new_versions
 
     @ensure_unlocked(getter=lambda o: not o.bucket.locked)
     def remove(self):
@@ -1293,8 +1402,18 @@ class ObjectVersion(db.Model, Timestamp):
         return self
 
     @classmethod
-    def create(cls, bucket, key, _file_id=None, root_file_id=None, stream=None,
-               mimetype=None, version_id=None, is_thumbnail=False, **kwargs):
+    def create(
+        cls,
+        bucket,
+        key,
+        _file_id=None,
+        root_file_id=None,
+        stream=None,
+        mimetype=None,
+        version_id=None,
+        is_thumbnail=False,
+        **kwargs
+    ):
         """Create a new object in a bucket.
 
         The created object is by default created as a delete marker. You must
@@ -1324,7 +1443,7 @@ class ObjectVersion(db.Model, Timestamp):
             login_user_id = 0
             if current_user and current_user.is_authenticated:
                 login_user_id = current_user.get_id()
-
+    
             if latest_obj is not None:
                 # set updated user id.
                 latest_obj.updated_user_id = login_user_id
@@ -1345,8 +1464,11 @@ class ObjectVersion(db.Model, Timestamp):
                 is_thumbnail=is_thumbnail,
             )
             if _file_id:
-                file_ = _file_id if isinstance(_file_id, FileInstance) else \
-                    FileInstance.get(_file_id)
+                file_ = (
+                    _file_id
+                    if isinstance(_file_id, FileInstance)
+                    else FileInstance.get(_file_id)
+                )
                 obj.set_file(file_)
                 obj.root_file_id = root_file_id or file_.id
             db.session.add(obj)
@@ -1408,11 +1530,12 @@ class ObjectVersion(db.Model, Timestamp):
         :param key: Key of object.
         :returns: Created delete marker object if key exists else ``None``.
         """
-        bucket_id = as_bucket_id(bucket)
+        bucket = as_bucket(bucket)
 
-        obj = cls.get(bucket_id, key)
+        obj = cls.get(bucket.id, key)
         if obj:
-            return cls.create(as_bucket(bucket), key)
+            bucket.size -= obj.file.size
+            return cls.create(bucket, key)
         return None
 
     @classmethod
@@ -1460,8 +1583,9 @@ class ObjectVersion(db.Model, Timestamp):
         assert new_file.id
 
         with db.session.begin_nested():
-            ObjectVersion.query.filter_by(file_id=str(old_file.id)).update({
-                ObjectVersion.file_id: str(new_file.id)})
+            ObjectVersion.query.filter_by(file_id=str(old_file.id)).update(
+                {ObjectVersion.file_id: str(new_file.id)}
+            )
 
     @classmethod
     def num_version_link_to_files(cls, file_ids):
@@ -1483,12 +1607,36 @@ class ObjectVersion(db.Model, Timestamp):
 
     def __eq__(self, other):
         """Check if the two object are equals."""
-        return other and isinstance(other, self.__class__) and \
-            self.key == other.key and self.file_id == other.file_id
+        return (
+            other
+            and isinstance(other, self.__class__)
+            and self.key == other.key
+            and self.file_id == other.file_id
+        )
 
     def __ne__(self, other):
         """Check if are not equal."""
         return not self.__eq__(other=other)
+
+    # DDL string used to avoid automap in mysql until sqlalchemy 2.0
+    # https://github.com/sqlalchemy/sqlalchemy/discussions/7597
+    @classmethod
+    def ix_uq_partial_files_object_is_head_dll(cls):
+        """Return DDL instruction for ix_uq_partial_files_object_is_head."""
+        return db.DDL(
+            "CREATE UNIQUE INDEX ix_uq_partial_files_object_is_head "
+            "ON %(table)s (bucket_id, key) WHERE is_head"
+        )
+
+
+db.event.listen(
+    ObjectVersion.__table__,
+    "after_create",
+    ObjectVersion.ix_uq_partial_files_object_is_head_dll().execute_if(
+        dialect="postgresql"
+    ),
+)
+"""Create ix_uq_partial_files_object_is_head only on postgresql backend."""
 
 
 class ObjectVersionTag(db.Model):
@@ -1497,13 +1645,14 @@ class ObjectVersionTag(db.Model):
     Used for storing extra technical information for an object version.
     """
 
-    __tablename__ = 'files_objecttags'
+    __tablename__ = "files_objecttags"
 
     version_id = db.Column(
         UUIDType,
-        db.ForeignKey(ObjectVersion.version_id, ondelete='CASCADE'),
+        db.ForeignKey(ObjectVersion.version_id, ondelete="CASCADE"),
         default=uuid.uuid4,
-        primary_key=True, )
+        primary_key=True,
+    )
     """Object version id."""
 
     key = db.Column(db.String(255), primary_key=True)
@@ -1512,7 +1661,7 @@ class ObjectVersionTag(db.Model):
     value = db.Column(db.Text, nullable=False)
     """Tag value."""
 
-    object_version = db.relationship(ObjectVersion, backref='tags')
+    object_version = db.relationship(ObjectVersion, backref="tags")
     """Relationship to object versions."""
 
     def copy(self, object_version=None, key=None):
@@ -1527,7 +1676,7 @@ class ObjectVersionTag(db.Model):
         return ObjectVersionTag.create(
             self.object_version if object_version is None else object_version,
             key or self.key,
-            self.value
+            self.value,
         )
 
     @classmethod
@@ -1544,9 +1693,9 @@ class ObjectVersionTag(db.Model):
         assert len(key) < 256
         assert len(value) < 256
         with db.session.begin_nested():
-            obj = cls(version_id=as_object_version_id(object_version),
-                      key=key,
-                      value=value)
+            obj = cls(
+                version_id=as_object_version_id(object_version), key=key, value=value
+            )
             db.session.add(obj)
         return obj
 
@@ -1578,8 +1727,7 @@ class ObjectVersionTag(db.Model):
             Default: delete all tags.
         """
         with db.session.begin_nested():
-            q = cls.query.filter_by(
-                version_id=as_object_version_id(object_version))
+            q = cls.query.filter_by(version_id=as_object_version_id(object_version))
             if key:
                 q = q.filter_by(key=key)
             q.delete()
@@ -1599,10 +1747,10 @@ class MultipartObject(db.Model, Timestamp):
     last part.
     """
 
-    __tablename__ = 'files_multipartobject'
+    __tablename__ = "files_multipartobject"
 
     __table_args__ = (
-        db.UniqueConstraint('upload_id', 'bucket_id', 'key', name='uix_item'),
+        db.UniqueConstraint("upload_id", "bucket_id", "key", name="uix_item"),
     )
 
     upload_id = db.Column(
@@ -1614,18 +1762,18 @@ class MultipartObject(db.Model, Timestamp):
 
     bucket_id = db.Column(
         UUIDType,
-        db.ForeignKey(Bucket.id, ondelete='RESTRICT'),
+        db.ForeignKey(Bucket.id, ondelete="RESTRICT"),
     )
     """Bucket identifier."""
 
     key = db.Column(
-        db.Text().with_variant(mysql.VARCHAR(255), 'mysql'),
+        db.Text().with_variant(mysql.VARCHAR(255), "mysql"),
     )
     """Key identifying the object."""
 
     file_id = db.Column(
-        UUIDType,
-        db.ForeignKey(FileInstance.id, ondelete='RESTRICT'), nullable=False)
+        UUIDType, db.ForeignKey(FileInstance.id, ondelete="RESTRICT"), nullable=False
+    )
     """File instance for this multipart object."""
 
     chunk_size = db.Column(db.Integer, nullable=True)
@@ -1634,36 +1782,35 @@ class MultipartObject(db.Model, Timestamp):
     size = db.Column(db.BigInteger, nullable=True)
     """Size of file."""
 
-    completed = db.Column(db.Boolean(name='completed'),
-                          nullable=False,
-                          default=False)
+    completed = db.Column(db.Boolean(name="completed"), nullable=False, default=False)
     """Defines if object is the completed."""
 
     # Relationships definitions
-    bucket = db.relationship(Bucket, backref='multipart_objects')
+    bucket = db.relationship(Bucket, backref="multipart_objects")
     """Relationship to buckets."""
 
-    file = db.relationship(FileInstance, backref='multipart_objects')
+    file = db.relationship(FileInstance, backref="multipart_objects")
     """Relationship to buckets."""
 
     def __repr__(self):
         """Return representation of the multipart object."""
-        return "{0}:{2}:{1}".format(
-            self.bucket_id, self.key, self.upload_id)
+        return "{0}:{2}:{1}".format(self.bucket_id, self.key, self.upload_id)
 
     @property
     def last_part_number(self):
         """Get last part number."""
-        return int(self.size / self.chunk_size) \
-            if self.size % self.chunk_size else \
-            int(self.size / self.chunk_size) - 1
+        return (
+            int(self.size / self.chunk_size)
+            if self.size % self.chunk_size
+            else int(self.size / self.chunk_size) - 1
+        )
 
     @property
     def last_part_size(self):
         """Get size of last part."""
         return self.size % self.chunk_size
 
-    @validates('key')
+    @validates("key")
     def validate_key(self, key, key_):
         """Validate key."""
         return validate_key(key_)
@@ -1671,16 +1818,15 @@ class MultipartObject(db.Model, Timestamp):
     @staticmethod
     def is_valid_chunksize(chunk_size):
         """Check if size is valid."""
-        min_csize = current_app.config['FILES_REST_MULTIPART_CHUNKSIZE_MIN']
-        max_csize = current_app.config['FILES_REST_MULTIPART_CHUNKSIZE_MAX']
+        min_csize = current_app.config["FILES_REST_MULTIPART_CHUNKSIZE_MIN"]
+        max_csize = current_app.config["FILES_REST_MULTIPART_CHUNKSIZE_MAX"]
         return chunk_size >= min_csize and chunk_size <= max_csize
 
     @staticmethod
     def is_valid_size(size, chunk_size):
         """Validate max theoretical size."""
-        min_csize = current_app.config['FILES_REST_MULTIPART_CHUNKSIZE_MIN']
-        max_size = \
-            chunk_size * current_app.config['FILES_REST_MULTIPART_MAX_PARTS']
+        min_csize = current_app.config["FILES_REST_MULTIPART_CHUNKSIZE_MIN"]
+        max_size = chunk_size * current_app.config["FILES_REST_MULTIPART_MAX_PARTS"]
         return size > min_csize and size <= max_size
 
     def expected_part_size(self, part_number):
@@ -1712,10 +1858,7 @@ class MultipartObject(db.Model, Timestamp):
         self.file.update_checksum(**kwargs)
         with db.session.begin_nested():
             obj = ObjectVersion.create(
-                self.bucket,
-                self.key,
-                _file_id=self.file_id,
-                version_id=version_id
+                self.bucket, self.key, _file_id=self.file_id, version_id=version_id
             )
             self.delete()
         return obj
@@ -1748,8 +1891,11 @@ class MultipartObject(db.Model, Timestamp):
         # Validate max bucket size.
         bucket_limit = bucket.size_limit
         if bucket_limit and size > bucket_limit:
-            desc = 'File size limit exceeded.' \
-                if isinstance(bucket_limit, int) else bucket_limit.reason
+            desc = (
+                "File size limit exceeded."
+                if isinstance(bucket_limit, int)
+                else bucket_limit.reason
+            )
             raise FileSizeError(description=desc)
 
         with db.session.begin_nested():
@@ -1803,11 +1949,11 @@ class MultipartObject(db.Model, Timestamp):
 class Part(db.Model, Timestamp):
     """Part object."""
 
-    __tablename__ = 'files_multipartobject_part'
+    __tablename__ = "files_multipartobject_part"
 
     upload_id = db.Column(
         UUIDType,
-        db.ForeignKey(MultipartObject.upload_id, ondelete='RESTRICT'),
+        db.ForeignKey(MultipartObject.upload_id, ondelete="RESTRICT"),
         primary_key=True,
     )
     """Multipart object identifier."""
@@ -1819,7 +1965,7 @@ class Part(db.Model, Timestamp):
     """String representing the checksum of the part."""
 
     # Relationships definitions
-    multipart = db.relationship(MultipartObject, backref='parts')
+    multipart = db.relationship(MultipartObject, backref="parts")
     """Relationship to multipart objects."""
 
     @property
@@ -1831,8 +1977,7 @@ class Part(db.Model, Timestamp):
     def end_byte(self):
         """Get end byte in file for this part."""
         return min(
-            (self.part_number + 1) * self.multipart.chunk_size,
-            self.multipart.size
+            (self.part_number + 1) * self.multipart.chunk_size, self.multipart.size
         )
 
     @property
@@ -1860,8 +2005,7 @@ class Part(db.Model, Timestamp):
     def get_or_none(cls, mp, part_number):
         """Get part number."""
         return cls.query.filter_by(
-            upload_id=mp.upload_id,
-            part_number=part_number
+            upload_id=mp.upload_id, part_number=part_number
         ).one_or_none()
 
     @classmethod
@@ -1876,8 +2020,7 @@ class Part(db.Model, Timestamp):
     def delete(cls, mp, part_number):
         """Get part number."""
         return cls.query.filter_by(
-            upload_id=mp.upload_id,
-            part_number=part_number
+            upload_id=mp.upload_id, part_number=part_number
         ).delete()
 
     @classmethod
@@ -1888,11 +2031,10 @@ class Part(db.Model, Timestamp):
             instance.
         :returns: A :class:`invenio_files_rest.models.Part` instance.
         """
-        upload_id = multipart.upload_id \
-            if isinstance(multipart, MultipartObject) else multipart
-        return cls.query.filter_by(
-            upload_id=upload_id
+        upload_id = (
+            multipart.upload_id if isinstance(multipart, MultipartObject) else multipart
         )
+        return cls.query.filter_by(upload_id=upload_id)
 
     @classmethod
     def count(cls, mp):
@@ -1912,7 +2054,9 @@ class Part(db.Model, Timestamp):
             the storage interface if it respects this value.
         """
         size, checksum = self.multipart.file.update_contents(
-            stream, seek=self.start_byte, size=self.part_size,
+            stream,
+            seek=self.start_byte,
+            size=self.part_size,
             progress_callback=progress_callback,
         )
         self.checksum = checksum
@@ -1920,10 +2064,12 @@ class Part(db.Model, Timestamp):
 
 
 __all__ = (
-    'Bucket',
-    'FileInstance',
-    'Location',
-    'MultipartObject',
-    'ObjectVersion',
-    'Part',
+    "Bucket",
+    "BucketTag",
+    "FileInstance",
+    "Location",
+    "MultipartObject",
+    "ObjectVersion",
+    "ObjectVersionTag",
+    "Part",
 )

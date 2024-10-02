@@ -21,7 +21,7 @@ import os
 
 import pytest
 from flask import Flask
-from flask_babelex import Babel
+from flask_babel import Babel
 from sqlalchemy_utils.functions import create_database, database_exists
 from invenio_db import InvenioDB
 from invenio_db import db as db_

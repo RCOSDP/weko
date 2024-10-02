@@ -24,15 +24,17 @@
 
 {%- block css %}
   {{ super() }}
-  {% assets "weko_admin_item_export_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {{ webpack['search-ui-less-import.css']}}
 {%- endblock css %}
 
 {%- block javascript %}
   {{ super() }}
-  {% assets "weko_admin_item_export_js" %}<script type="text/babel" src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_admin_statistics_reactjs_lib" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_admin_react_bootstrap_js" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_moment_js" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
+  {{ webpack['search-ui-js-export.js']}}
+  <script src="/assets/js/weko_admin/react.production.min.js"></script>
+  <script src="/assets/js/weko_admin/react-dom.production.min.js"></script>
+  <script src="/assets/js/weko_admin/browser.min.js"></script>
+  <script src="/assets/js/weko_admin/react-bootstrap.min.js"></script>
+  <script src="/assets/node_modules/moment/min/moment.min.js"></script>
 {%- endblock javascript %}
 
 {%- block body %}

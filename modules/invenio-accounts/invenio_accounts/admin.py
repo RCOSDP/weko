@@ -12,16 +12,16 @@ import os
 
 from flask import current_app, flash
 from flask_admin.actions import action
-from flask_admin.babel import lazy_gettext
 from flask_admin.contrib.sqla import ModelView
 from flask_admin.contrib.sqla.ajax import QueryAjaxModelLoader
 from flask_admin.form.fields import DateTimeField
 from flask_admin.model.fields import AjaxSelectMultipleField
-from flask_babelex import gettext as _
 from flask_security import current_user
 from flask_security.recoverable import send_reset_password_instructions
 from flask_security.utils import hash_password
 from invenio_db import db
+from invenio_i18n import gettext as _
+from invenio_i18n import lazy_gettext
 from passlib import pwd
 from werkzeug.local import LocalProxy
 from wtforms.fields import BooleanField
@@ -30,59 +30,69 @@ from wtforms.validators import DataRequired
 from weko_workflow.models import WorkFlow, WorkflowRole
 
 from .cli import commit
-from .models import Role, SessionActivity, User
+from .models import Role, SessionActivity, User, UserIdentity, LoginInformation as Login
 from .sessions import delete_session
 
-_datastore = LocalProxy(lambda: current_app.extensions['security'].datastore)
+_datastore = LocalProxy(lambda: current_app.extensions["security"].datastore)
 
 
 class UserView(ModelView):
     """Flask-Admin view to manage users."""
 
     can_view_details = True
-
+    
+    form_ajax_refs = {
+        'login_info': {
+            'fields': (Login.last_login_at, Login.current_login_at,
+                       Login.last_login_ip, Login.current_login_ip, Login.login_count)
+        },
+    }
     list_all = (
-        'id', 'email', 'active', 'confirmed_at', 'last_login_at',
-        'current_login_at', 'last_login_ip', 'current_login_ip', 'login_count'
+        "id", "email", "active", "confirmed_at", "login_info.last_login_at",
+        "login_info.current_login_at", "login_info.last_login_ip", "login_info.current_login_ip", "login_info.login_count"
     )
+    #list_all = ("id", "email", "active", "confirmed_at")#新バージョンではこちら。last_login_atが表示できなかったらこっち？
 
-    column_list = \
-        column_searchable_list = \
-        column_sortable_list = \
-        column_details_list = \
-        list_all
+    column_list = column_searchable_list = column_sortable_list = (
+        column_details_list
+    ) = list_all
 
-    form_columns = ('email', 'password', 'active', 'roles', 'notification')
+    form_columns = ("email", "password", "active", "roles", "notification")
 
     form_args = dict(
-        email=dict(label='Email', validators=[DataRequired()]),
-        password=dict(default=lambda: pwd.genword(length=12))
+        email=dict(label="Email", validators=[DataRequired()]),
+        password=dict(default=lambda: pwd.genword(length=12)),
     )
 
     form_extra_fields = {
-        'notification': BooleanField(
-            'Send User Notification',
-            description='Send the new user an email about their account.')
+        "notification": BooleanField(
+            "Send User Notification",
+            description="Send the new user an email about their account.",
+        )
     }
 
-    column_filters = ('id', 'email', 'active', 'confirmed_at', 'last_login_at',
-                      'current_login_at', 'login_count')
+    #column_filters = ("id", "email", "active", "confirmed_at")#新バージョンではこちら。last_login_atが表示できなかったらこっち？
+    column_filters = (
+        "id", "email", "active", "confirmed_at", "login_info.last_login_at",
+        "login_info.current_login_at", "login_info.login_count"
+    )
 
-    column_default_sort = ('last_login_at', True)
-
+    #column_default_sort = ("email", True)
+    # login関連の処理なのでうまく動かない可能性あり
+    column_default_sort = ("login_info.last_login_at", True)
     form_overrides = {
-        'last_login_at': DateTimeField
+        'login_info.last_login_at': DateTimeField
     }
 
     column_labels = {
-        'current_login_ip': _('Current Login IP'),
-        'last_login_ip': _('Last Login IP')
+        'login_info.current_login_ip': _('Current Login IP'),
+        'login_info.last_login_ip': _('Last Login IP')
     }
 
     def on_model_change(self, form, User, is_created):
         """Hash password when saving."""
         if form.password.data is not None:
-            pwd_ctx = current_app.extensions['security'].pwd_context
+            pwd_ctx = current_app.extensions["security"].pwd_context
             if pwd_ctx.identify(form.password.data) is None:
                 User.password = hash_password(form.password.data)
 
@@ -91,8 +101,11 @@ class UserView(ModelView):
         if is_created and form.notification.data is True:
             send_reset_password_instructions(User)
 
-    @action('inactivate', _('Inactivate'),
-            _('Are you sure you want to inactivate selected users?'))
+    @action(
+        "inactivate",
+        _("Inactivate"),
+        _("Are you sure you want to inactivate selected users?"),
+    )
     @commit
     def action_inactivate(self, ids):
         """Inactivate users."""
@@ -105,17 +118,19 @@ class UserView(ModelView):
                 if _datastore.deactivate_user(user):
                     count += 1
             if count > 0:
-                flash(_('User(s) were successfully inactivated.'), 'success')
+                flash(_("User(s) were successfully inactivated."), "success")
         except Exception as exc:
             if not self.handle_view_exception(exc):
                 raise
 
             current_app.logger.exception(str(exc))  # pragma: no cover
-            flash(_('Failed to inactivate users.'),
-                  'error')  # pragma: no cover
+            flash(_("Failed to inactivate users."), "error")  # pragma: no cover
 
-    @action('activate', _('Activate'),
-            _('Are you sure you want to activate selected users?'))
+    @action(
+        "activate",
+        _("Activate"),
+        _("Are you sure you want to activate selected users?"),
+    )
     @commit
     def action_activate(self, ids):
         """Inactivate users."""
@@ -128,13 +143,13 @@ class UserView(ModelView):
                 if _datastore.activate_user(user):
                     count += 1
             if count > 0:
-                flash(_('User(s) were successfully inactivated.'), 'success')
+                flash(_("User(s) were successfully inactivated."), "success")
         except Exception as exc:
             if not self.handle_view_exception(exc):
                 raise
 
             current_app.logger.exception(str(exc))  # pragma: no cover
-            flash(_('Failed to activate users.'), 'error')  # pragma: no cover
+            flash(_("Failed to activate users."), "error")  # pragma: no cover
 
     _system_role = os.environ.get('INVENIO_ROLE_SYSTEM',
                                   'System Administrator')
@@ -160,32 +175,25 @@ class RoleView(ModelView):
 
     can_view_details = True
 
-    list_all = ('id', 'name', 'description')
+    list_all = ("id", "name", "description")
 
-    column_list = \
-        column_searchable_list = \
-        column_filters = \
-        column_details_list = \
-        columns_sortable_list = \
-        list_all
+    column_list = column_searchable_list = column_filters = column_details_list = (
+        columns_sortable_list
+    ) = list_all
 
-    form_columns = ('name', 'description', 'users')
+    form_columns = ("name", "description", "users")
 
     user_loader = QueryAjaxModelLoader(
-        'user',
+        "user",
         LocalProxy(lambda: _datastore.db.session),
         User,
-        fields=['email'],
-        page_size=10
+        fields=["email"],
+        page_size=10,
     )
 
-    form_extra_fields = {
-        'users': AjaxSelectMultipleField(user_loader)
-    }
+    form_extra_fields = {"users": AjaxSelectMultipleField(user_loader)}
 
-    form_ajax_refs = {
-        'user': user_loader
-    }
+    form_ajax_refs = {"user": user_loader}
 
     def after_model_change(self, form, model, is_created):
         if is_created and current_app.config.get('ACCOUNTS_WORKFLOW_ROLE_HIDE_FILTER', False):
@@ -218,28 +226,26 @@ class SessionActivityView(ModelView):
     can_create = False
     can_edit = False
 
-    list_all = ('user.id', 'user.email', 'sid_s', 'created')
+    list_all = ("user.id", "user.email", "sid_s", "created")
 
     column_labels = {
-        'user.id': 'User ID',
-        'user.email': 'Email',
-        'sid_s': 'Session ID',
+        "user.id": "User ID",
+        "user.email": "Email",
+        "sid_s": "Session ID",
     }
     column_list = list_all
     column_filters = list_all
     column_sortable_list = list_all
 
     form_ajax_refs = {
-        'user': {
-            'fields': (User.id, User.email)
-        },
+        "user": {"fields": (User.id, User.email)},
     }
 
     def delete_model(self, model):
         """Delete a specific session."""
         try:
             if SessionActivity.is_current(sid_s=model.sid_s):
-                flash('You could not remove your current session', 'error')
+                flash("You could not remove your current session", "error")
                 return
             delete_session(sid_s=model.sid_s)
             db.session.commit()
@@ -247,14 +253,17 @@ class SessionActivityView(ModelView):
             db.session.rollback()
             current_app.logger.error(e)
 
-    @action('delete', lazy_gettext('Delete selected sessions'),
-            lazy_gettext('Are you sure you want to delete selected sessions?'))
+    @action(
+        "delete",
+        lazy_gettext("Delete selected sessions"),
+        lazy_gettext("Are you sure you want to delete selected sessions?"),
+    )
     def action_delete(self, ids):
         """Delete selected sessions."""
         try:
             is_current = any(SessionActivity.is_current(sid_s=id_) for id_ in ids)
             if is_current:
-                flash('You could not remove your current session', 'error')
+                flash("You could not remove your current session", "error")
                 return
             for id_ in ids:
                 delete_session(sid_s=id_)
@@ -264,29 +273,65 @@ class SessionActivityView(ModelView):
             current_app.logger.error(e)
 
 
+class UserIdentityView(ModelView):
+    """Flask-Admin view to manage user identities from invenio-accounts."""
+
+    can_view_details = True
+    can_create = False
+
+    column_list = (
+        "id",
+        "method",
+        "id_user",
+        "user.email",
+    )
+
+    column_searchable_list = column_sortable_list = column_list
+
+    column_filters = (
+        "id",
+        "method",
+        "id_user",
+        "user.email",
+    )
+
+    column_labels = {
+        "user.email": _("Email"),
+        "id_user": _("User ID"),
+    }
+
+
 session_adminview = {
-    'model': SessionActivity,
-    'modelview': SessionActivityView,
-    'category': _('User Management')
+    "model": SessionActivity,
+    "modelview": SessionActivityView,
+    "category": _("User Management"),
 }
 
 user_adminview = {
-    'model': User,
-    'modelview': UserView,
-    'category': _('User Management')
+    "model": User,
+    "modelview": UserView,
+    "category": _("User Management"),
 }
 
 role_adminview = {
-    'model': Role,
-    'modelview': RoleView,
-    'category': _('User Management')
+    "model": Role,
+    "modelview": RoleView,
+    "category": _("User Management"),
+}
+
+user_identity_adminview = {
+    "model": UserIdentity,
+    "modelview": UserIdentityView,
+    "category": _("User Management"),
+    "name": _("Linked account identities"),
 }
 
 __all__ = (
-    'role_adminview',
-    'RoleView',
-    'session_adminview',
-    'SessionActivityView',
-    'user_adminview',
-    'UserView',
+    "role_adminview",
+    "RoleView",
+    "session_adminview",
+    "SessionActivityView",
+    "user_adminview",
+    "user_identity_adminview",
+    "UserView",
 )

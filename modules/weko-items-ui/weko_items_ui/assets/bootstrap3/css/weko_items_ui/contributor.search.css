@@ -1,0 +1,117 @@
+.autocomplete {
+    position: relative;
+    display: -webkit-inline-box;
+    width: 100%;
+  }
+  
+  input {
+    border: 1px solid transparent;
+    background-color: #fff;
+    padding: 10px;
+    font-size: 16px;
+  }
+  
+  input[type=text] {
+    background-color: #fff !important;
+    width: 100%;
+  }
+
+  input[disabled] {
+    background-color: #eee !important;
+  }
+  
+  input[type=submit] {
+    background-color: DodgerBlue;
+    color: #fff;
+    cursor: pointer;
+  }
+  
+  .autocomplete-items {
+    position: absolute;
+    border: 1px solid #d4d4d4;
+    border-bottom: none;
+    border-top: none;
+    z-index: 99;
+    /*position the autocomplete items to be the same width as the container:*/
+    top: 100%;
+    left: 0;
+    right: 0;
+  }
+  
+  .autocomplete-items div {
+    padding: 10px;
+    cursor: pointer;
+    background-color: #fff; 
+    border-bottom: 1px solid #d4d4d4; 
+  }
+  
+  /*when hovering an item:*/
+  .autocomplete-items div:hover {
+    background-color: #fff; 
+  }
+  
+  /*when navigating through the items using the arrow keys:*/
+  .autocomplete-active {
+    background-color: DodgerBlue !important; 
+    color: #ffffff; 
+  }
+
+  .glyphicon-refresh-animate {
+  -animation: spin .7s infinite linear;
+  -webkit-animation: spinWebkit .7s infinite linear;
+  -moz-animation: spinMoz .7s infinite linear;
+  }
+
+  @-webkit-keyframes spinWebkit {
+      from { -webkit-transform: rotate(0deg);}
+      to { -webkit-transform: rotate(360deg);}
+  }
+  @keyframes spinMoz {
+      from { transform: scale(1) rotate(0deg);}
+      to { transform: scale(1) rotate(360deg);}
+  }
+  @keyframes spin {
+      from { transform: scale(1) rotate(0deg);}
+      to { transform: scale(1) rotate(360deg);}
+  } 
+
+  #id_spinners_username {
+    margin-left: -24px;
+    margin-top: 8px;
+  }
+
+  #id_spinners_email {
+    margin-left: -24px;
+    margin-top: 8px;
+  }
+
+  #radio_form_share {
+    margin-left: 12rem !important;
+  }
+
+  .form_share_permission {
+    display: none;
+  }
+
+  .form_share_permission_username {
+    padding-bottom: 20px;
+  }
+
+  #label_username {
+    text-align: right;
+    margin-top: 7px;
+  }
+
+  #label_email {
+    text-align: right;
+    margin-top: 7px;
+  }
+
+  #pd_username {
+    margin-bottom: 20px;
+  }
+
+  label.field-required::after {
+    content: "*";
+    color: red;
+  }

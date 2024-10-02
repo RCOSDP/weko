@@ -1,0 +1,58 @@
+{
+  "index_patterns": ["__SEARCH_INDEX_PREFIX__events-stats-top-view-*"],
+  "settings": {
+    "index": {
+      "refresh_interval": "5s",
+      "lifecycle.name": "weko_stats_policy",
+      "lifecycle.rollover_alias": "__SEARCH_INDEX_PREFIX__events-stats-top-view"
+    }
+  },
+  "mappings": {
+      "date_detection": false,
+      "dynamic": false,
+      "numeric_detection": false,
+      "properties": {
+        "timestamp": {
+          "type": "date",
+          "format": "strict_date_hour_minute_second"
+        },
+        "unique_id": {
+          "type": "keyword",
+          "index": true
+        },
+        "unique_session_id": {
+          "type": "keyword",
+          "index": true
+        },
+        "referrer": {
+          "type": "keyword",
+          "index": true
+        },
+        "country": {
+          "type": "keyword",
+          "index": true
+        },
+        "is_robot": {
+          "type": "boolean"
+        },
+        "is_restricted": {
+          "type": "boolean"
+        },
+        "hostname": {
+          "type": "keyword",
+          "index": true
+        },
+        "remote_addr": {
+          "type": "keyword",
+          "index": true
+        },
+        "site_license_name": {
+          "type": "keyword",
+          "index": true
+        },
+        "site_license_flag": {
+          "type": "boolean"
+        }
+      }
+    }
+  }

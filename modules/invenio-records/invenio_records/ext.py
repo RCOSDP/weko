@@ -1,23 +1,30 @@
 # -*- coding: utf-8 -*-
 #
 # This file is part of Invenio.
-# Copyright (C) 2015-2018 CERN.
+# Copyright (C) 2015-2021 CERN.
+# Copyright (C) 2021      TU Wien.
 #
 # Invenio is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
 
 """Invenio module for metadata storage."""
 
-from __future__ import absolute_import, print_function
 
+from functools import lru_cache
+
+from invenio_base.utils import obj_or_import_string
 from jsonref import JsonRef
 from jsonresolver import JSONResolver
 from jsonresolver.contrib.jsonref import json_loader_factory
 from jsonresolver.contrib.jsonschema import ref_resolver_factory
 from jsonschema import validate
 
+from invenio_records.errors import RecordsRefResolverConfigError
+from invenio_records.resolver import urljoin_with_custom_scheme
+
 from . import config
 from .views import blueprint
+from .validators import _create_validator
 
 
 class _RecordsState(object):
@@ -28,20 +35,38 @@ class _RecordsState(object):
         self.app = app
         self.app.register_blueprint(blueprint)
         self.resolver = JSONResolver(entry_point_group=entry_point_group)
-        self.ref_resolver_cls = ref_resolver_factory(self.resolver)
+        self.refresolver_cls = ref_resolver_factory(self.resolver)
+        self.refresolver_store = None
+        if self.app.config.get("RECORDS_REFRESOLVER_CLS"):
+            self.refresolver_cls = obj_or_import_string(
+                self.app.config.get("RECORDS_REFRESOLVER_CLS"),
+            )
+            self.refresolver_store = obj_or_import_string(
+                self.app.config.get("RECORDS_REFRESOLVER_STORE")
+            )
+
         self.loader_cls = json_loader_factory(self.resolver)
 
     def validate(self, data, schema, **kwargs):
         """Validate data using schema with ``JSONResolver``."""
         if not isinstance(schema, dict):
-            schema = {'$ref': schema}
-        return validate(
-            data,
-            schema,
-            resolver=self.ref_resolver_cls.from_schema(schema),
-            types=self.app.config.get('RECORDS_VALIDATION_TYPES', {}),
-            **kwargs
+            schema = {"$ref": schema}
+        refresolver_cls_kwargs = {}
+        if self.refresolver_store:
+            refresolver_cls_kwargs["store"] = self.refresolver_store
+            refresolver_cls_kwargs["urljoin_cache"] = lru_cache(1024)(
+                urljoin_with_custom_scheme
+            )
+
+        validator_cls = _create_validator(
+            schema=schema,
+            base_validator_cls=kwargs.pop("cls", None),
+            custom_checks=self.app.config.get("RECORDS_VALIDATION_TYPES", {}),
         )
+
+        resolver = self.refresolver_cls.from_schema(schema, **refresolver_cls_kwargs)
+
+        return validate(data, schema, cls=validator_cls, resolver=resolver, **kwargs)
 
     def replace_refs(self, data):
         """Replace the JSON reference objects with ``JsonRef``."""
@@ -56,8 +81,7 @@ class InvenioRecords(object):
         if app:
             self._state = self.init_app(app, **kwargs)
 
-    def init_app(self, app,
-                 entry_point_group='invenio_records.jsonresolver', **kwargs):
+    def init_app(self, app, entry_point_group="invenio_records.jsonresolver", **kwargs):
         """Flask application initialization.
 
         :param app: The Flask application.
@@ -66,7 +90,7 @@ class InvenioRecords(object):
         """
         self.init_config(app)
         state = _RecordsState(app, entry_point_group=entry_point_group)
-        app.extensions['invenio-records'] = state
+        app.extensions["invenio-records"] = state
         return state
 
     def init_config(self, app):
@@ -74,7 +98,15 @@ class InvenioRecords(object):
 
         :param app: The Flask application.
         """
-        app.config.setdefault('SQLALCHEMY_TRACK_MODIFICATIONS', True)
+        app.config.setdefault("SQLALCHEMY_TRACK_MODIFICATIONS", True)
         for k in dir(config):
-            if k.startswith('RECORDS_'):
+            if k.startswith("RECORDS_"):
                 app.config.setdefault(k, getattr(config, k))
+
+        if app.config.get("RECORDS_REFRESOLVER_CLS") and not app.config.get(
+            "RECORDS_REFRESOLVER_STORE"
+        ):
+            raise RecordsRefResolverConfigError(
+                "RECORDS_REFRESOLVER_CLS config requires "
+                "RECORDS_REFRESOLVER_STORE to be set."
+            )

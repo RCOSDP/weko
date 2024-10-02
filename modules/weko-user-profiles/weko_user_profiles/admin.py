@@ -32,7 +32,7 @@ from flask_admin.contrib.sqla import ModelView
 from flask_admin.form import FormOpts
 from flask_admin.helpers import get_redirect_target
 from flask_admin.model.helpers import get_mdict_item_or_list
-from flask_babelex import lazy_gettext as __
+from flask_babel import lazy_gettext as __
 from flask_security import current_user
 from invenio_accounts.models import Role, User
 from invenio_db import db

@@ -9,20 +9,20 @@
 """JWT context processors."""
 
 from flask import current_app, render_template
-from jinja2 import Markup
+from markupsafe import Markup
 
 from ..proxies import current_accounts
 
 
 def jwt_proccessor():
     """Context processor for jwt."""
+
     def jwt():
         """Context processor function to generate jwt."""
         token = current_accounts.jwt_creation_factory()
         return Markup(
             render_template(
-                current_app.config['ACCOUNTS_JWT_DOM_TOKEN_TEMPLATE'],
-                token=token
+                current_app.config["ACCOUNTS_JWT_DOM_TOKEN_TEMPLATE"], token=token
             )
         )
 
@@ -31,6 +31,6 @@ def jwt_proccessor():
         return current_accounts.jwt_creation_factory()
 
     return {
-        'jwt': jwt,
-        'jwt_token': jwt_token,
+        "jwt": jwt,
+        "jwt_token": jwt_token,
     }

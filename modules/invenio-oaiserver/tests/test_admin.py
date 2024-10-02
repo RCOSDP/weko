@@ -8,11 +8,10 @@
 
 """Test admin interface."""
 
-from __future__ import absolute_import, print_function
 import copy
 from flask import url_for
 from flask_admin import Admin, menu
-from mock import patch
+from invenio_db import db
 
 from invenio_oaiserver.admin import set_adminview, set_OAIPMHview
 from invenio_oaiserver.models import OAISet, Identify
@@ -20,44 +19,48 @@ from invenio_oaiserver.models import OAISet, Identify
 # .tox/c1/bin/pytest --cov=invenio_oaiserver tests/test_admin.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiserver/.tox/c1/tmp
 
 # .tox/c1/bin/pytest --cov=invenio_oaiserver tests/test_admin.py::test_admin -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiserver/.tox/c1/tmp
+
 def test_admin(es_app, db,without_oaiset_signals):
     """Test Flask-Admin interace."""
-    admin = Admin(es_app, name='Test')
+    admin = Admin(es_app, name="Test")
 
-    assert 'model' in set_adminview
-    assert 'modelview' in set_adminview
+    assert "model" in set_adminview
+    assert "modelview" in set_adminview
 
     # Register both models in admin
     copy_modelview = copy.deepcopy(set_adminview)
     model = copy_modelview.pop('model')
-    view = copy_modelview.pop('modelview')
+    view = copy_modelview.pop("modelview")
     admin.add_view(view(model, db.session, **copy_modelview))
 
     # Check if generated admin menu contains the correct items
     menu_items = {str(item.name): item for item in admin.menu()}
-    assert 'OAI-PMH' in menu_items
-    assert menu_items['OAI-PMH'].is_category()
+    assert "OAI-PMH" in menu_items
+    assert menu_items["OAI-PMH"].is_category()
 
     submenu_items = {
-        str(item.name): item for item in menu_items['OAI-PMH'].get_children()
+        str(item.name): item for item in menu_items["OAI-PMH"].get_children()
     }
-    assert 'Sets' in submenu_items
-    assert isinstance(submenu_items['Sets'], menu.MenuView)
+    assert "Sets" in submenu_items
+    assert isinstance(submenu_items["Sets"], menu.MenuView)
 
     # Create a test set.
     with es_app.app_context():
-        test_set = OAISet(id=1,
-                          spec='test',
-                          name='test_name',
-                          description='some test description',
-                          search_pattern='test search')
+        test_set = OAISet(
+            id=1,
+            spec="test",
+            name="test_name",
+            description="some test description",
+            search_pattern="title_statement.title:Test0",
+            system_created=False,
+        )
         db.session.add(test_set)
         db.session.commit()
 
     with es_app.test_request_context():
-        index_view_url = url_for('oaiset.index_view')
-        delete_view_url = url_for('oaiset.delete_view')
-        detail_view_url = url_for('oaiset.details_view', id=1)
+        index_view_url = url_for("oaiset.index_view")
+        delete_view_url = url_for("oaiset.delete_view")
+        detail_view_url = url_for("oaiset.details_view", id=1)
 
     with es_app.test_client() as client:
         # List index view and check record is there.
@@ -65,8 +68,7 @@ def test_admin(es_app, db,without_oaiset_signals):
         assert res.status_code == 200
 
         # Deletion is forbiden.
-        res = client.post(
-            delete_view_url, data={'id': 1}, follow_redirects=True)
+        res = client.post(delete_view_url, data={"id": 1}, follow_redirects=True)
         assert res.status_code == 200
 
         # View the deleted record.

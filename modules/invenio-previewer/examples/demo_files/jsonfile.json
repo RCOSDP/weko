@@ -1,0 +1,4 @@
+{
+  "app": "invenio-previewer",
+  "hello": "<script>alert(1)</script>"
+}

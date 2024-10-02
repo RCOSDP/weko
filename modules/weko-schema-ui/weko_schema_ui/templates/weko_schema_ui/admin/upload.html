@@ -21,16 +21,16 @@
 {%- extends admin_base_template %}
 
 {%- block css %}
-  {% assets "invenio_deposit_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {{ webpack['deposit_css_css.css']}}
   {{ super() }}
-  {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {{ webpack['theme-css-buttons.css']}}
 {%- endblock css %}
 
 {%- block javascript %}
-  {% assets "invenio_deposit_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {{ webpack['deposit_js_dependencies.js']}}
   {{ super() }}
-  {% assets "invenio_deposit_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_schema_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {{ webpack['deposit_js_js.js']}}
+  {{ webpack['schema-ui-js.js']}}
 {%- endblock javascript %}
 
 {%- block body %}
@@ -56,10 +56,10 @@
               schema="{{ url_for('static', filename=config.WEKO_SCHEMA_UI_FORM_JSONSCHEMA) }}"
               record='{{record}}'>
               <invenio-records-loading
-                template="{{ url_for('static', filename='node_modules/invenio-records-js/dist/templates/loading.html') }}">
+                template="/assets/node_modules/invenio-records-js/dist/templates/loading.html">
               </invenio-records-loading>
               <invenio-records-alert
-                template="{{ url_for('static', filename='node_modules/invenio-records-js/dist/templates/alert.html') }}">
+                template="/assets/node_modules/invenio-records-js/dist/templates/alert.html">
               </invenio-records-alert>
               <div ng-hide="false">
              <!--   <div ng-show="true">
@@ -82,13 +82,13 @@
 </div>-->
               </div>
               <invenio-files-error
-                template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/error.html') }}">
+                template="/assets/node_modules/invenio-files-js/dist/templates/error.html">
               </invenio-files-error>
               <invenio-files-upload-zone
-                template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/upload.html') }}">
+                template="/assets/node_modules/invenio-files-js/dist/templates/upload.html">
               </invenio-files-upload-zone>
               <invenio-files-list
-                template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/list.html') }}"
+                template="/assets/node_modules/invenio-files-js/dist/templates/list.html"
               ></invenio-files-list>
               <invenio-records-form
                 form-templates='{{ config.DEPOSIT_FORM_TEMPLATES | tojson }}'

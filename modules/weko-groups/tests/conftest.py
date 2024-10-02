@@ -27,7 +27,7 @@ import tempfile
 import pytest
 from mock import MagicMock, patch
 from flask import Flask, json, jsonify, session, url_for
-from flask_babelex import Babel
+from flask_babel import Babel
 from flask_breadcrumbs import Breadcrumbs
 from flask_menu import Menu
 from sqlalchemy_utils.functions import create_database, database_exists, \
@@ -42,6 +42,7 @@ from invenio_accounts.models import User, Role
 from invenio_access.models import ActionUsers
 from invenio_access import InvenioAccess
 from invenio_admin import InvenioAdmin
+from invenio_i18n import InvenioI18N
 
 from weko_groups import WekoGroups
 from weko_groups.api import Group
@@ -76,6 +77,7 @@ def app(request):
     InvenioDB(app)
     InvenioAccounts(app)
     WekoGroups(app)
+    InvenioI18N(app)
 
     with app.app_context():
         if str(db.engine.url) != 'sqlite://' and \

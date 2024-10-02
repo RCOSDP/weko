@@ -74,7 +74,7 @@ import os
 
 import pkg_resources
 from flask import Flask, redirect, url_for
-from flask_babelex import Babel
+from flask_babel import Babel
 from invenio_access import InvenioAccess
 from invenio_accounts import InvenioAccounts
 from invenio_accounts.views import blueprint

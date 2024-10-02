@@ -1680,7 +1680,12 @@ class WorkActivity(object):
 
         # query all activities
         common_query = common_query \
-            .outerjoin(_Flow).outerjoin(
+            .outerjoin(
+                _Flow,
+                and_(
+                    _Activity.flow_id == _Flow.id
+                )
+            ).outerjoin(
                 _WorkFlow,
                 and_(
                     _Activity.workflow_id == _WorkFlow.id,
@@ -2092,7 +2097,7 @@ class WorkActivity(object):
 
     def get_activity_index_search(self, activity_id):
         """Get page info after item search."""
-        from flask_babelex import gettext as _
+        from flask_babel import gettext as _
         from invenio_pidstore.resolver import Resolver
         from weko_records.api import ItemsMetadata
         from werkzeug.utils import import_string

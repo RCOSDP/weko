@@ -1,26 +1,10 @@
 # -*- coding: utf-8 -*-
 #
 # This file is part of Invenio.
-# Copyright (C) 2016 CERN.
+# Copyright (C) 2016-2019 CERN.
 #
-# Invenio is free software; you can redistribute it
-# and/or modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; either version 2 of the
-# License, or (at your option) any later version.
-#
-# Invenio is distributed in the hope that it will be
-# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Invenio; if not, write to the
-# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-# MA 02111-1307, USA.
-#
-# In applying this license, CERN does not
-# waive the privileges and immunities granted to it by virtue of its status
-# as an Intergovernmental Organization or submit itself to any jurisdiction.
+# Invenio is free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
 
 """Click command-line interface for communities management."""
 
@@ -72,9 +56,9 @@ def addlogo(community_id, logo):
         ext = save_and_validate_logo(logo, logo.name, c.id)
         c.logo_ext = ext
         db.session.commit()
-    except Exception as e:
+    except Exception as ex:
         db.session.rollback()
-        click.secho(e, fg='red')
+        click.secho(ex, fg='red')
 
 
 @communities.command()
@@ -96,10 +80,10 @@ def request(community_id, record_id, accept):
                                     notify=False)
         db.session.commit()
         RecordIndexer().index_by_id(record_id)
-    except Exception as e:
+    except Exception as ex:
         db.session.rollback()
         RecordIndexer().delete_by_id(record_id)
-        click.secho(e, fg='red')
+        click.secho(ex, fg='red')
 
 
 @communities.command()
@@ -115,7 +99,7 @@ def remove(community_id, record_id):
         c.remove_record(record)
         db.session.commit()
         RecordIndexer().delete_by_id(record_id)
-    except Exception as e:
+    except Exception as ex:
         db.session.rollback()
         RecordIndexer().index_by_id(record_id)
-        click.secho(e, fg='red')
+        click.secho(ex, fg='red')

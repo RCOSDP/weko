@@ -24,7 +24,7 @@ import uuid
 from datetime import datetime
 
 from flask import current_app
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 from invenio_accounts.models import Role, User
 from invenio_db import db
 from sqlalchemy import func
@@ -590,7 +590,7 @@ class FlowActionRole(db.Model, TimestampMixin):
         nullable=False, unique=False, index=True)
     """the id of flow_action."""
 
-    action_role = db.Column(db.Integer(), db.ForeignKey(Role.id),
+    action_role = db.Column(db.String(80), db.ForeignKey(Role.id),
                             nullable=True, unique=False)
 
     action_role_exclude = db.Column(
@@ -640,7 +640,7 @@ class WorkFlow(db.Model, TimestampMixin):
     itemtype = db.relationship(
         ItemType,
         backref=db.backref('workflow', lazy='dynamic',
-                           order_by=desc('item_type.tag'))
+                           order_by=desc(ItemType.tag))
     )
 
     index_tree_id = db.Column(
@@ -1035,7 +1035,7 @@ class WorkflowRole(db.Model, TimestampMixin):
         unique=False)
 
     role_id = db.Column(
-        db.Integer(),
+        db.String(80),
         db.ForeignKey(Role.id, ondelete='CASCADE'), primary_key=True,
         nullable=True, unique=False)
 

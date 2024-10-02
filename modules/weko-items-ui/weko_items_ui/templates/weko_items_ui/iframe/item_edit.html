@@ -21,13 +21,13 @@
   {%- extends config.WEKO_ITEMS_UI_BASE_TEMPLATE %}
 
   {%- block css %}
-    {% assets "invenio_deposit_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
-    {% assets "weko_items_authors_search_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+    {{ webpack['deposit_css_css.css']}}
+    {{ webpack['items_ui_css_items_author_search.css']}}
     {{ super() }}
     <link href="{{ url_for('static', filename='css/weko_items_ui/contributor.search.css') }}" rel="stylesheet">
     <link href="/static/css/weko_workflow/style.css" rel="stylesheet">
-    {% assets "weko_items_ui_feedback_maillist_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
-    {% assets "weko_records_ui_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+    {{ webpack['items_ui_css_feedback_maillist.css']}}
+    {{ webpack['records_ui_css_style.css']}}
   {%- endblock css %}
 
   {%- block javascript %}
@@ -43,16 +43,18 @@
     <!--<script src="https://unpkg.com/axios/dist/axios.min.js"></script>-->
 
     <script src="{{ url_for('static', filename='js/weko_items_ui/item.autofill.js') }}" type="text/babel"></script>
-    {% assets "invenio_deposit_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-    {% assets "weko_admin_react_bootstrap_js" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
-    {% assets "weko_items_ui_feedback_maillist_js" %}<script type="text/babel" src="{{ ASSET_URL }}"></script>{% endassets %}
+    {{ webpack['deposit_js_dependencies.js']}}
+    <script src="/assets/js/weko_admin/react-bootstrap.min.js"></script>
+    {{ webpack['items_ui_js_feedback_maillist.js']}}
     {{ super() }}
-    {% assets "invenio_deposit_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+    {{ webpack['deposit_js_js.js']}}
     {%- if need_thumbnail %}
-      {% assets "weko_items_ui_upload_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+    {{ webpack['items_ui_js_upload.js']}}
     {% endif %}
-    {% assets "weko_items_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-    {% assets "weko_items_authors_search_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+    {{ webpack['items_ui_js_app.js']}}
+    <script src="{{ url_for('static', filename='js/weko_items_ui/inline.items.authorSearch.bundle.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/weko_items_ui/polyfills.items.authorSearch.bundle.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/weko_items_ui/main.items.authorSearch.bundle.js') }}" defer></script>
   {%- endblock javascript %}
 
   {%- block page_header %}
@@ -108,7 +110,7 @@
                 template="{{ url_for('static', filename='node_modules/invenio-records-js/dist/templates/loading.html') }}">
               </invenio-records-loading> -->
               <invenio-records-alert
-                template="{{ url_for('static', filename='node_modules/invenio-records-js/dist/templates/alert.html') }}">
+                template="/assets/node_modules/invenio-records-js/dist/templates/alert.html">
               </invenio-records-alert>
               <div class="row row-4" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
                 <div class="col-sm-12">
@@ -246,7 +248,7 @@
                   <div id="file_upload" class="row row-4" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
                     <div class="col-sm-12">
                       <invenio-files-error
-                        template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/error.html') }}">
+                        template="/assets/node_modules/invenio-files-js/dist/templates/error.html">
                       </invenio-files-error>
                       <invenio-files-upload-zone
                         template="{{ url_for('static', filename='templates/weko_items_ui/upload.html') }}">
@@ -261,7 +263,7 @@
                   <div id="billing_file_upload" class="row row-4" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
                     <div class="col-sm-12">
                       <invenio-files-error
-                        template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/error.html') }}">
+                        template="/assets/node_modules/invenio-files-js/dist/templates/error.html">
                       </invenio-files-error>
                       <invenio-files-upload-zone
                         template="{{ url_for('static', filename='templates/weko_items_ui/upload.html') }}">

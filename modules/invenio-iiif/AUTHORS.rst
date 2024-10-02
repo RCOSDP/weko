@@ -14,3 +14,4 @@ Authors
 - Lars Holm Nielsen
 - Nikos Filippakis
 - Sebastian Witowski
+- Maximilian Moser

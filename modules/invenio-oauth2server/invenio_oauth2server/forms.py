@@ -8,15 +8,20 @@
 
 """Define forms for generating access tokens and clients."""
 
-from flask_babelex import lazy_gettext as _
+from flask import current_app
 from flask_wtf import FlaskForm as Form
-from oauthlib.oauth2.rfc6749.errors import InsecureTransportError, \
-    InvalidRedirectURIError
+from invenio_i18n import lazy_gettext as _
+from oauthlib.oauth2.rfc6749.errors import (
+    InsecureTransportError,
+    InvalidRedirectURIError,
+)
+from werkzeug.local import LocalProxy
 from wtforms import fields, validators, widgets
 from wtforms.widgets import HTMLString
 from wtforms_alchemy import model_form_factory
 
 from .models import Client
+from .theme.semantic.form_styling import SelectSUI
 from .validators import URLValidator, validate_redirect_uri
 
 
@@ -25,37 +30,37 @@ from .validators import URLValidator, validate_redirect_uri
 #
 def scopes_multi_checkbox(field, **kwargs):
     """Render multi checkbox widget."""
-    kwargs.setdefault('type', 'checkbox')
-    field_id = kwargs.pop('id', field.id)
+    kwargs.setdefault("type", "checkbox")
+    field_id = kwargs.pop("id", field.id)
 
-    html = [u'<div class="row">']
+    html = ['<div class="row">']
 
     for value, label, checked in field.iter_choices():
-        choice_id = u'%s-%s' % (field_id, value)
+        choice_id = "%s-%s" % (field_id, value)
 
         options = dict(
             kwargs,
             name=field.name,
             value=value,
             id=choice_id,
-            class_=' ',
+            class_=" ",
         )
 
         if checked:
-            options['checked'] = 'checked'
+            options["checked"] = "checked"
 
-        html.append(u'<div class="col-md-3">')
-        html.append(u'<label for="{0}" class="checkbox-inline">'.format(
-            field_id
-        ))
-        html.append(u'<input {0} /> '.format(widgets.html_params(**options)))
-        html.append(u'{0} <br/><small class="text-muted">{1}</small>'.format(
-            value, label.help_text
-        ))
-        html.append(u'</label></div>')
-    html.append(u'</div>')
+        html.append('<div class="col-md-3">')
+        html.append('<label for="{0}" class="checkbox-inline">'.format(choice_id))
+        html.append("<input {0} /> ".format(widgets.html_params(**options)))
+        html.append(
+            '{0} <br/><small class="text-muted">{1}</small>'.format(
+                value, label.help_text
+            )
+        )
+        html.append("</label></div>")
+    html.append("</div>")
 
-    return HTMLString(u''.join(html))
+    return HTMLString("".join(html))
 
 
 #
@@ -67,14 +72,16 @@ class RedirectURIField(fields.TextAreaField):
     def process_formdata(self, valuelist):
         """Process form data."""
         if valuelist:
-            self.data = '\n'.join([
-                x.strip() for x in
-                filter(lambda x: x, '\n'.join(valuelist).splitlines())
-            ])
+            self.data = "\n".join(
+                [
+                    x.strip()
+                    for x in filter(lambda x: x, "\n".join(valuelist).splitlines())
+                ]
+            )
 
     def process_data(self, value):
         """Process data."""
-        self.data = '\n'.join(value)
+        self.data = "\n".join(value)
 
 
 class RedirectURIValidator(object):
@@ -93,7 +100,7 @@ class RedirectURIValidator(object):
 
         if errors:
             raise validators.ValidationError(
-                _('Invalid redirect URIs: %(urls)s', urls=', '.join(errors))
+                _("Invalid redirect URIs: {urls}").format(urls=", ".join(errors))
             )
 
 
@@ -108,8 +115,8 @@ class ClientFormBase(model_form_factory(Form)):
 
         model = Client
         exclude = [
-            'client_secret',
-            'is_internal',
+            "client_secret",
+            "is_internal",
         ]
         strip_string_fields = True
         field_args = dict(
@@ -125,26 +132,38 @@ class ClientForm(ClientFormBase):
 
     # Trick to make redirect_uris render in the bottom of the form.
     redirect_uris = RedirectURIField(
-        label=_('Redirect URIs (one per line)'),
+        label=_("Redirect URIs (one per line)"),
         description=_(
             "One redirect URI per line. This is your application's"
-            ' authorization callback URLs. HTTPS must be used for all '
-            'hosts except localhost (for testing purposes).'),
+            " authorization callback URLs. HTTPS must be used for all "
+            "hosts except localhost (for testing purposes)."
+        ),
         validators=[RedirectURIValidator(), validators.DataRequired()],
-        default='',
+        default="",
+    )
+
+    widget = LocalProxy(
+        lambda: (
+            SelectSUI()
+            if current_app.config.get("APP_THEME")
+            and current_app.config.get("APP_THEME")[0] == "semantic-ui"
+            else widgets.Select()
+        )
     )
 
     is_confidential = fields.SelectField(
-        label=_('Client type'),
+        label=_("Client type"),
         description=_(
-            'Select confidential if your application is capable of keeping '
-            'the issued client secret confidential (e.g. a web application), '
-            'select public if your application cannot (e.g. a browser-based '
-            'JavaScript application). If you select public, your application '
-            'MUST validate the redirect URI.'),
-        coerce=bool,
-        choices=[(True, _('Confidential')), (False, _('Public'))],
-        default=True,
+            "Select confidential if your application is capable of keeping "
+            "the issued client secret confidential (e.g. a web application), "
+            "select public if your application cannot (e.g. a browser-based "
+            "JavaScript application). If you select public, your application "
+            "MUST validate the redirect URI."
+        ),
+        coerce=lambda x: False if x == "False" else bool(x),
+        choices=[("True", _("Confidential")), ("False", _("Public"))],
+        default="True",
+        widget=widget,
     )
 
 
@@ -152,20 +171,21 @@ class TokenForm(Form):
     """Token form."""
 
     name = fields.StringField(
-        description=_('Name of personal access token.'),
+        description=_("Name of personal access token."),
         validators=[
             validators.DataRequired(),
             validators.Length(
-                max=40,
-                message=_('The name must be less than 40 characters long.'))
-        ]
+                max=40, message=_("The name must be less than 40 characters long.")
+            ),
+        ],
     )
 
     scopes = fields.SelectMultipleField(
         widget=scopes_multi_checkbox,
         choices=[],  # Must be dynamically provided in view.
         description=_(
-            'Scopes assign permissions to your personal access token.'
-            ' A personal access token works just like a normal OAuth '
-            ' access token for authentication against the API.')
+            "Scopes assign permissions to your personal access token."
+            " A personal access token works just like a normal OAuth "
+            " access token for authentication against the API."
+        ),
     )

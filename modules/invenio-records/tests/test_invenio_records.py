@@ -8,8 +8,6 @@
 
 """Test Invenio Records."""
 
-from __future__ import absolute_import, print_function
-
 import json
 import os
 import uuid
@@ -27,60 +25,40 @@ from invenio_records.errors import MissingModelError
 def test_version():
     """Test version import."""
     from invenio_records import __version__
+
     assert __version__
 
 
 def test_init():
     """Test extension initialization."""
-    app = Flask('testapp')
+    app = Flask("testapp")
     ext = InvenioRecords(app)
-    assert 'invenio-records' in app.extensions
+    assert "invenio-records" in app.extensions
 
-    app = Flask('testapp')
+    app = Flask("testapp")
     ext = InvenioRecords()
-    assert 'invenio-records' not in app.extensions
+    assert "invenio-records" not in app.extensions
     ext.init_app(app)
-    assert 'invenio-records' in app.extensions
-
-
-# def test_alembic(app, db):
-#     """Test alembic recipes."""
-#     ext = app.extensions['invenio-db']
-
-#     if db.engine.name == 'sqlite':
-#         raise pytest.skip('Upgrades are not supported on SQLite.')
-
-#     assert not ext.alembic.compare_metadata()
-#     db.drop_all()
-#     drop_alembic_version_table()
-#     ext.alembic.upgrade()
-
-#     assert not ext.alembic.compare_metadata()
-#     ext.alembic.stamp()
-#     ext.alembic.downgrade(target='96e796392533')
-#     ext.alembic.upgrade()
-
-#     assert not ext.alembic.compare_metadata()
-#     drop_alembic_version_table()
+    assert "invenio-records" in app.extensions
 
 
 def test_db(app, db):
     """Test database backend."""
     with app.app_context():
-        assert 'records_metadata' in db.metadata.tables
-        assert 'records_metadata_version' in db.metadata.tables
-        assert 'transaction' in db.metadata.tables
+        assert "records_metadata" in db.metadata.tables
+        assert "records_metadata_version" in db.metadata.tables
+        assert "transaction" in db.metadata.tables
 
     schema = {
-        'type': 'object',
-        'properties': {
-            'title': {'type': 'string'},
-            'field': {'type': 'boolean'},
-            'hello': {'type': 'array'},
+        "type": "object",
+        "properties": {
+            "title": {"type": "string"},
+            "field": {"type": "boolean"},
+            "hello": {"type": "array"},
         },
-        'required': ['title'],
+        "required": ["title"],
     }
-    data = {'title': 'Test', '$schema': schema}
+    data = {"title": "Test", "$schema": schema}
     from invenio_records.models import RecordMetadata as RM
 
     # Create a record
@@ -99,87 +77,59 @@ def test_db(app, db):
         assert record.dumps() == data
         with pytest.raises(NoResultFound):
             Record.get_record(uuid.uuid4())
-        record['field'] = True
-        record = record.patch([
-            {'op': 'add', 'path': '/hello', 'value': ['world']}
-        ])
-        assert record['hello'] == ['world']
+        record["field"] = True
+        record = record.patch([{"op": "add", "path": "/hello", "value": ["world"]}])
+        assert record["hello"] == ["world"]
         record.commit()
         db.session.commit()
 
     with app.app_context():
         record2 = Record.get_record(record_uuid)
         assert record2.model.version_id == 2
-        assert record2['field']
-        assert record2['hello'] == ['world']
+        assert record2["field"]
+        assert record2["hello"] == ["world"]
         db.session.commit()
 
     # Cannot commit record without model (i.e. Record.create_record)
     with app.app_context():
-        record3 = Record({'title': 'Not possible'})
+        record3 = Record({"title": "Not possible"})
         with pytest.raises(MissingModelError):
             record3.commit()
 
-    # # Check invalid schema values
+    # Check invalid schema values
     # with app.app_context():
-    #     data = {
-    #         '$schema': 'http://json-schema.org/learn/examples/'
-    #                    'geographical-location.schema.json',
-    #         'latitude': 42,
-    #         'longitude': 42,
+    #     v_schema = {
+    #         "$id": "https://example.com/geographical-location.schema.json",
+    #         "$schema": "https://json-schema.org/draft/2020-12/schema",
+    #         "title": "Longitude and Latitude Values",
+    #         "description": "A geographical coordinate.",
+    #         "required": ["latitude", "longitude"],
+    #         "type": "object",
+    #         "properties": {
+    #             "latitude": {"type": "number", "minimum": -90, "maximum": 90},
+    #             "longitude": {"type": "number", "minimum": -180, "maximum": 180},
+    #         },
     #     }
 
+    #     data = {
+    #         "$schema": v_schema,
+    #         "latitude": 42,
+    #         "longitude": 42,
+    #     }
     #     record_with_schema = Record.create(data).commit()
     #     db.session.commit()
 
-    #     record_with_schema['latitude'] = 'invalid'
+    #     record_with_schema["latitude"] = "invalid"
     #     with pytest.raises(ValidationError):
     #         record_with_schema.commit()
 
     # # Allow types overriding on schema validation
     # with app.app_context():
-    #     data = {
-    #         'title': 'Test',
-    #         'hello': tuple(['foo', 'bar']),
-    #         '$schema': schema
-    #     }
-    #     app.config['RECORDS_VALIDATION_TYPES'] = {}
+    #     data = {"title": "Test", "hello": tuple(["foo", "bar"]), "$schema": schema}
+    #     app.config["RECORDS_VALIDATION_TYPES"] = {}
     #     with pytest.raises(ValidationError):
     #         Record.create(data).commit()
 
-    #     app.config['RECORDS_VALIDATION_TYPES'] = {'array': (list, tuple)}
+    #     app.config["RECORDS_VALIDATION_TYPES"] = {"array": (list, tuple)}
     #     record_uuid = Record.create(data).commit()
     #     db.session.commit()
-
-
-def test_class_model(app, custom_db, CustomMetadata):
-    """Test custom class model."""
-    db = custom_db
-
-    class CustomRecord(Record):
-        model_cls = CustomMetadata
-
-    assert 'custom_metadata' in db.metadata.tables.keys()
-
-    recid = uuid.UUID('262d2748-ba41-456f-a844-4d043a419a6f')
-
-    # Create a new record with two mutables, a list and a dict
-    rec = CustomRecord.create(
-        {
-            'title': 'Title',
-            'list': ['foo', ],
-            'dict': {'moo': 'boo'},
-        },
-        id_=recid)
-
-    db.session.commit()
-    db.session.expunge_all()
-    # record should be in the table
-    rec = CustomRecord.get_record(recid)
-    assert rec == {
-        'title': 'Title',
-        'list': ['foo', ],
-        'dict': {'moo': 'boo'}
-    }
-    # the record should not be in the default table
-    pytest.raises(NoResultFound, Record.get_record, recid)

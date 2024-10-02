@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # This file is part of Invenio.
-# Copyright (C) 2015-2018 CERN.
+# Copyright (C) 2015-2024 CERN.
 #
 # Invenio is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
@@ -35,16 +35,8 @@ When deleting a record, two options are available:
 
 Records creation and update can be validated if the schema is provided.
 
-Records CRUD operations are available using the administration interface and
-the CLI, which also allows batch operations.
-
-If `InvenioPIDStore`_ is installed, it also enables to
-mint PIDs in a record using the CLI.
-
 Further documentation available Documentation:
 https://invenio-records.readthedocs.io/
-
-.. _InvenioPIDStore: https://invenio-pidstore.readthedocs.io/
 
 Initialization
 --------------
@@ -302,84 +294,6 @@ Traceback (most recent call last):
 ValidationError: 'title' is a required property
   ...
 
-CLI
----
-
-The CLI provides a way of creating, patching or deleting records.
-Batch operations should be performed using the CLI.
-
-Create a new record:
-
-.. code-block:: console
-
-    $ echo '{"title": "New record"}' | flask records create
-
-Create multiple records:
-
-.. code-block:: console
-
-    $ echo '[{"title": "1st"},{"title":"2nd"}]' | flask records create
-
-A file with a list of records can be specified as parameter to create multiple
-records in one shot. It is also possible to specify a list of ``ids``, where
-each ``id`` corresponds to an input record, respecting the ordering.
-
-In case of already existing ``id``, the ``force`` parameter will create a new
-revision of the record:
-
-.. code-block:: console
-
-    $ echo '{"title": "New record"}' | flask records create \
-       -i deadbeef-9fe4-43d3-a08f-38c2b309afba
-    $ echo '{"title": "Same new record"}' | flask records create --force \
-       -i deadbeef-9fe4-43d3-a08f-38c2b309afba
-
-Patch an existing record:
-
-.. code-block:: console
-
-    $ echo '{"title": "New record"}' | flask records create \
-       -i deadbeef-9fe4-43d3-a08f-38c2b309afbe
-    $ echo '[{"op": "replace", "path": "/title", "value": "Patched"}]' | \
-       flask records patch -i deadbeef-9fe4-43d3-a08f-38c2b309afbe
-
-Soft and hard delete a record:
-
-.. code-block:: console
-
-    $ echo '{"title": "New record"}' | flask records create \
-       -i 28c18220-f22e-480c-88ea-cd414aef035b
-    $ flask records delete -i 28c18220-f22e-480c-88ea-cd414aef035b
-    $ flask records delete --force -i 28c18220-f22e-480c-88ea-cd414aef035b
-
-Minting PIDs
-------------
-
-If the module `InvenioPIDStore`_ is installed and loaded, the CLI option
-``--pid-minter`` allows minting PIDs in records.
-
-To use ``InvenioPIDStore``, initialize your app with:
-
->>> from invenio_pidstore import InvenioPIDStore
->>> ext_pid = InvenioPIDStore(app)
-
-Then, when creating a record/records using the CLI, the name of an existing PID
-minter can be specified as parameter:
-
-.. code-block:: console
-
-    $ echo '{"title": "New record with PID"}' | flask records create \
-       -i deadbeef-9fe4-43d3-a08f-38c2b309afbc --pid-minter recid
-    $ flask run
-    $ curl http://127.0.0.1:5000/deadbeef-9fe4-43d3-a08f-38c2b309afbc
-
-        {
-          "control_number": "1",
-          "title": "New record with PID"
-        }
-
-See `InvenioPIDStore`_ documentation for more information.
-
 Signals
 -------
 Invenio-Records provides several types of signals and they can be used to react
@@ -413,14 +327,14 @@ record has been correctly modified:
 See :doc:`api` for extensive API documentation.
 """
 
-from __future__ import absolute_import, print_function
 
 from .api import Record
 from .ext import InvenioRecords
-from .version import __version__
+
+__version__ = "2.3.0"
 
 __all__ = (
-    'InvenioRecords',
-    'Record',
-    '__version__',
+    "InvenioRecords",
+    "Record",
+    "__version__",
 )

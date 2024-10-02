@@ -43,7 +43,7 @@ setup_requires = [
 ]
 
 install_requires = [
-    'Flask-BabelEx>=0.9.3',
+    'Flask-Babel>=3.0.0',
 ]
 
 packages = find_packages()
@@ -85,11 +85,9 @@ setup(
             'invenio_admin_resync_client = '
             'invenio_resourcesyncclient.admin:invenio_admin_resync_client',
         ],
-        'invenio_assets.bundles': [
-            'invenio_admin_resync_client_js = '
-            'invenio_resourcesyncclient.bundles:invenio_admin_resync_client_js',
-            'invenio_admin_resync_client_css = '
-            'invenio_resourcesyncclient.bundles:invenio_admin_resync_client_css',
+        'invenio_assets.webpack': [
+            'invenio_resourcesyncclient = '
+            'invenio_resourcesyncclient.webpack:invenio_resourcesyncclient',
         ],
         'invenio_db.models': [
             'invenio_resourcesyncclient = invenio_resourcesyncclient.models',

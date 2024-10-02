@@ -1,0 +1,475 @@
+# Translations template for invenio-oauth2server.
+# Copyright (C) 2022 CERN
+# This file is distributed under the same license as the
+# invenio-oauth2server project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2022.
+# 
+# Translators:
+# Tibor Simko <tibor.simko@cern.ch>, 2021
+# Bessem Aamira <bessemamira@gmail.com>, 2022
+# Salaheddine Ben Ali <salaheddine.benali@cnudst.tn>, 2023
+# 
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: invenio-oauth2server 1.3.7\n"
+"Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
+"POT-Creation-Date: 2022-10-12 09:26+0000\n"
+"PO-Revision-Date: 2016-08-18 08:03+0000\n"
+"Last-Translator: Salaheddine Ben Ali <salaheddine.benali@cnudst.tn>, 2023\n"
+"Language-Team: Arabic (https://app.transifex.com/inveniosoftware/teams/23537/ar/)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.10.3\n"
+"Language: ar\n"
+"Plural-Forms: nplurals=6; plural=n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 && n%100<=99 ? 4 : 5;\n"
+
+#: invenio_oauth2server/admin.py:68
+msgid "OAuth Applications"
+msgstr "تطبيقات OAuth"
+
+#: invenio_oauth2server/admin.py:69 invenio_oauth2server/admin.py:78
+msgid "User Management"
+msgstr "إدارة المستخدم"
+
+#: invenio_oauth2server/admin.py:77
+msgid "OAuth Application Tokens"
+msgstr "رموز تطبيقات OAuth"
+
+#: invenio_oauth2server/forms.py:103
+#, python-format
+msgid "Invalid redirect URIs: %(urls)s"
+msgstr "عناوين URIs لإعادة التوجيه غير صحيحة: %(urls)s"
+
+#: invenio_oauth2server/forms.py:135
+msgid "Redirect URIs (one per line)"
+msgstr "إعادة توجيه عناوين ويب URIs (واحد لكل سطر)  "
+
+#: invenio_oauth2server/forms.py:136
+msgid ""
+"One redirect URI per line. This is your application's authorization callback"
+" URLs. HTTPS must be used for all hosts except localhost (for testing "
+"purposes)."
+msgstr ""
+"معرّف ويب واحد URI لإعادة التوجيه في كل سطر. هذه هي عناوين URL لمعاودة "
+"الاتصال الخاصة بتفويض تطبيقك. يجب استخدام HTTPS لجميع العنواين باستثناء "
+"العنوان المحلي localhost (لأغراض الاختبار)."
+
+#: invenio_oauth2server/forms.py:155
+msgid "Client type"
+msgstr "نوع الحريف"
+
+#: invenio_oauth2server/forms.py:156
+msgid ""
+"Select confidential if your application is capable of keeping the issued "
+"client secret confidential (e.g. a web application), select public if your "
+"application cannot (e.g. a browser-based JavaScript application). If you "
+"select public, your application MUST validate the redirect URI."
+msgstr ""
+" اختر \"سري\" إذا كان التطبيق الخاص بك قادرًا على الحفاظ على سرية الحريف "
+"(على سبيل المثال ، تطبيق ويب) ، حدد \"مشاع\" إذا كان التطبيق الخاص بك لا "
+"يمكنه ذلك (على سبيل المثال ، تطبيق تعتمد على متصفح  JavaScript ). إذا قمت "
+"بتحديد \"مشاع\" ، يجب أن يتحقق التطبيق الخاص بك من صحة عنوان URI لإعادة "
+"التوجيه."
+
+#: invenio_oauth2server/forms.py:164
+msgid "Confidential"
+msgstr "سري"
+
+#: invenio_oauth2server/forms.py:164
+msgid "Public"
+msgstr "مشاع"
+
+#: invenio_oauth2server/forms.py:174
+msgid "Name of personal access token."
+msgstr "إسم الرمز للولوج الشخصي. "
+
+#: invenio_oauth2server/forms.py:178
+msgid "The name must be less than 40 characters long."
+msgstr "يجب أن يكون طول الاسم أقل من 40 حرفا."
+
+#: invenio_oauth2server/forms.py:186
+msgid ""
+"Scopes assign permissions to your personal access token. A personal access "
+"token works just like a normal OAuth  access token for authentication "
+"against the API."
+msgstr ""
+"تقوم النطاقات بتعيين الأذونات لرمز الولوج الشخصي الخاص بك. يعمل رمز الولوج "
+"الشخصي تمامًا مثل رمز ولوج OAuth المميز للمصادقة مقابل واجهة برمجة التطبيقات"
+" API ."
+
+#: invenio_oauth2server/models.py:122
+msgid "Name"
+msgstr "اسم"
+
+#: invenio_oauth2server/models.py:123
+msgid "Name of application (displayed to users)."
+msgstr "إسم التطبيق (المعروض للمستخدمين). "
+
+#: invenio_oauth2server/models.py:133
+msgid "Description"
+msgstr "وصف"
+
+#: invenio_oauth2server/models.py:134
+msgid "Optional. Description of the application (displayed to users)."
+msgstr "إختياري. وصف التطبيق (معروض للمستخدمين)."
+
+#: invenio_oauth2server/models.py:144
+msgid "Website URL"
+msgstr "عنوان ويب الموقع URL"
+
+#: invenio_oauth2server/models.py:145
+msgid "URL of your application (displayed to users)."
+msgstr "URL تطبيقك  (المعروض للمستخدمين)."
+
+#: invenio_oauth2server/scopes.py:20
+msgid "Allow access to email address (read-only)."
+msgstr "السّماح بالولوج لعنوان البريد (للقراءة فقط)."
+
+#: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:19
+#: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:20
+#: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:59
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/authorize.html:18
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/authorize.html:21
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/authorize.html:66
+#: invenio_oauth2server/views/server.py:67
+msgid "Authorize application"
+msgstr "الإذن بالتّطبيق"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:21
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/authorize.html:23
+#, python-format
+msgid ""
+"Application '%(client_name)s' by '%(client_user)s' wants permission to "
+"access your '%(current_user)s' account."
+msgstr ""
+"تطبيق '%(client_name)s' من طرف  '%(client_user)s' يريد إذنًا للولوج إلى "
+"حسابك '%(current_user)s' ."
+
+#: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:28
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_permission_view.html:30
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/authorize.html:34
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/token_permission_view.html:26
+msgid "Review permissions"
+msgstr "مراجعة الأذون"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:37
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_permission_view.html:39
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/authorize.html:47
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/token_permission_view.html:39
+msgid "No permissions granted."
+msgstr " لا أذون ممنوحة. "
+
+#: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:44
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_permission_view.html:44
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/authorize.html:53
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/token_permission_view.html:44
+msgid "Application"
+msgstr "تطبيق"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:47
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_permission_view.html:47
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/authorize.html:56
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/token_permission_view.html:47
+msgid "Visit application website"
+msgstr "زيارة موقع ويب التطبيق"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:60
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/authorize.html:67
+msgid "Reject"
+msgstr "مرفوض"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/errors.html:18
+#: invenio_oauth2server/templates/invenio_oauth2server/errors.html:22
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/errors.html:17
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/errors.html:20
+msgid "Invalid authorization request"
+msgstr "طلب تفويض غير صالح"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/errors.html:24
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/errors.html:22
+#, python-format
+msgid ""
+"The service that redirected your here made an invalid authorization request "
+"(error code: %(x_error)s)."
+msgstr ""
+"الخدمة التي وجهتك إلي هنا إستعملت طلب تفويض غير صالح (رمز الخطأ : "
+"%(x_error)s)."
+
+#: invenio_oauth2server/templates/invenio_oauth2server/errors.html:31
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/errors.html:28
+msgid "Get me out of here!"
+msgstr "أخرجني من هنا!"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_new.html:17
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_new.html:17
+msgid "New OAuth Application"
+msgstr "تطبيقة OAuth جديدة"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_new.html:25
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_new.html:26
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_new.html:24
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/token_new.html:25
+msgid "Cancel"
+msgstr "إلغاء"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_new.html:26
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_new.html:27
+msgid "Register"
+msgstr "تسجيل"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:17
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:18
+#, python-format
+msgid "Application / %(client_name)s"
+msgstr "تطبيق / %(client_name)s"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:22
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:30
+msgid "Client ID"
+msgstr "معرّف حريف"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:23
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:36
+msgid "Client Secret"
+msgstr "سر الحريف"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:24
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:39
+msgid "Do not share the client secret with anyone!"
+msgstr "لا تشارك سر الحريف مع احد!"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:30
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:26
+msgid "Reset client secret"
+msgstr "إعادة ضبط سر الحريف"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:47
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_view.html:48
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:51
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/token_view.html:49
+msgid "Delete"
+msgstr "حذف"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:48
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_view.html:49
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:54
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/token_view.html:52
+msgid "Save"
+msgstr "حفظ"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:55
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:60
+msgid "OAuth 2.0 Endpoints"
+msgstr "نقاط نهاية OAuth 2.0"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:59
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:65
+msgid "Authorize URL (GET)"
+msgstr "ترخيص URL  (طلب GET)"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:62
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:71
+msgid "Query parameters"
+msgstr "معلمات الاستعلام"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:69
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:78
+msgid "example request"
+msgstr "مثال لطلب"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:72
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:89
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:81
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:102
+msgid "required, use"
+msgstr "إجباري، استعمل"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:73
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:87
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:88
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:82
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:100
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:101
+msgid "required"
+msgstr "إجباري"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:74
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:83
+msgid "required, space separate list of scopes"
+msgstr "إجباري، قائمة النطاقات مفصولة بمسافات"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:75
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:84
+msgid "required, URL encoded"
+msgstr "إجباري، عنوان ويب URL مرمٌز"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:76
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:85
+msgid "recommended, for CSRF protection"
+msgstr "منصوح بها، للحماية من CSRF."
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:83
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:93
+msgid "Access token URL (POST)"
+msgstr "عنوان ويب URL لرمز الولوج ( طلب POST)"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:85
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:98
+msgid "Request body parameters:"
+msgstr "معلمات طلب الجسم:"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:90
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:91
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:92
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:103
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:104
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:105
+msgid "required for grant_type"
+msgstr "إجباري لنوع  المنحة"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/index.html:17
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/index.html:17
+msgid "Developer Applications"
+msgstr "تطبيقات المبرمجين"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/index.html:18
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/index.html:18
+msgid "New application"
+msgstr "تطبيق جديد"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/index.html:25
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/index.html:25
+#, python-format
+msgid "You have registered these applications to use the %(site_name)s API:"
+msgstr "لقد سجلت هذه التطبيقات لاستغلال %(site_name)s API:"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/index.html:36
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/index.html:37
+#, python-format
+msgid ""
+"You have not yet registered any applications. Click the 'New application' "
+"button to create an application to access the %(site_name)s API."
+msgstr ""
+"لم تقم بتسجيل أية تطبيق لحد الساعة. انقر على زر 'تطبيق جديد' لإضافة تطبيق "
+"تلج لـ  %(site_name)s API."
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/index.html:41
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/index.html:43
+msgid "Personal access tokens"
+msgstr "رموز الولوج الشخصي. "
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/index.html:42
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/index.html:44
+msgid "New token"
+msgstr "رمز جديد"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/index.html:49
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/index.html:51
+#, python-format
+msgid "Following are personal tokens used to access the %(site_name)s API:"
+msgstr "فيما يلي الرموز الشخصية المستخدمة للولوج إلى %(site_name)s API:"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/index.html:60
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/index.html:69
+msgid ""
+"You have not yet created any personal access tokens. Click the 'New token' "
+"button to create a personal access token."
+msgstr ""
+"لم تقم بعد بإنشاء أي رموز ولوج  شخصية. انقر فوق الزر \"رمز شخصي جديد\" "
+"لإنشاء رمز ولوج شخصي."
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/index.html:65
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/index.html:74
+msgid "Authorized applications"
+msgstr "التطبيقات المخولة"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/index.html:70
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/index.html:79
+msgid "You have granted the following application access to your account:"
+msgstr "لقد منحت التطبيق التالي حق الولوج لحسابك:"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/index.html:76
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/index.html:84
+msgid "Revoke"
+msgstr "إلغاء"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/index.html:84
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/index.html:94
+msgid ""
+"You have not yet granted any external applications access to your account."
+msgstr "لم تمنح أي تطبيقات خارجية حق الولوج إلى حسابك حتى الآن."
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_new.html:18
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/token_new.html:18
+msgid "New personal access token"
+msgstr "رمز ولوج شخصي جديد"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_new.html:27
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/token_new.html:28
+msgid "Create"
+msgstr "إضافة"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_permission_view.html:17
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/token_permission_view.html:17
+#, python-format
+msgid "Authorized application: %(client_name)s"
+msgstr "تطبيق مخول :%(client_name)s"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_view.html:17
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/token_view.html:17
+#, python-format
+msgid "Personal access token / %(name)s"
+msgstr "رمز ولوج شخصي / %(name)s"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_view.html:24
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/token_view.html:24
+msgid "Access token"
+msgstr "رمز ولوج"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_view.html:26
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/token_view.html:30
+msgid "Please copy the personal access token now. You won't see it again!"
+msgstr "يرجى نسخ رمز الولوج الشخصي الآن. لن يمكنك رأيته مرة أخرى!"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_view.html:29
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/token_view.html:33
+msgid ""
+"Do not share this personal access token. It gives full access to your "
+"account."
+msgstr ""
+"لا تشارك رمز الولوج الشخصي مع أحد. يمنح هذا الرمز لممتلكه حق الولوج الكامل "
+"إلى حسابك."
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_view.html:40
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/token_view.html:41
+msgid ""
+"If you've lost or forgotten this token please create a new one. Be aware "
+"that any scripts or applications using this token will need to be updated."
+msgstr ""
+"ذا فقدت أو نسيت هذا الرمز ، فيرجى إنشاء رمز جديد. على إثر ذلك، يجدر بك تحيين"
+" أن أي برامج نصية أو تطبيقات تستخدم الرمز القديم ."
+
+#: invenio_oauth2server/templates/semantic-ui/invenio_oauth2server/settings/client_view.html:81
+msgid "or"
+msgstr "أو"
+
+#: invenio_oauth2server/views/settings.py:105
+#, python-format
+msgid "%(icon)s Applications"
+msgstr "%(icon)s تطبيقات"
+
+#: invenio_oauth2server/views/settings.py:110
+msgid "Applications"
+msgstr "تطبيقات"
+
+#: invenio_oauth2server/views/settings.py:151
+#: invenio_oauth2server/views/settings.py:212
+msgid "New"
+msgstr "جديد"
+
+#: invenio_oauth2server/views/settings.py:174
+#: invenio_oauth2server/views/settings.py:238
+msgid "Edit"
+msgstr "تعديل"

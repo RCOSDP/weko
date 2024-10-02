@@ -8,8 +8,6 @@
 
 """Marshmallow based DataCite serializer for records."""
 
-from __future__ import absolute_import, print_function
-
 from datacite import schema31, schema40, schema41
 from invenio_records.api import Record
 from lxml import etree
@@ -38,32 +36,38 @@ class BaseDataCiteSerializer(MarshmallowMixin, PreprocessorMixin):
         :param record: Record instance.
         :param links_factory: Factory function for record links.
         """
-        return self.schema.tostring(
-            self.transform_record(pid, record, links_factory))
+        return self.schema.tostring(self.transform_record(pid, record, links_factory))
 
-    def serialize_search(self, pid_fetcher, search_result, links=None,
-                         item_links_factory=None):
+    def serialize_search(
+        self, pid_fetcher, search_result, links=None, item_links_factory=None
+    ):
         """Serialize a search result.
 
         :param pid_fetcher: Persistent identifier fetcher.
-        :param search_result: Elasticsearch search result.
+        :param search_result: The search engine result.
         :param links: Dictionary of links to add to response.
         """
         records = []
-        for hit in search_result['hits']['hits']:
-            records.append(self.schema.tostring(self.transform_search_hit(
-                pid_fetcher(hit['_id'], hit['_source']),
-                hit,
-                links_factory=item_links_factory,
-            )))
+        for hit in search_result["hits"]["hits"]:
+            records.append(
+                self.schema.tostring(
+                    self.transform_search_hit(
+                        pid_fetcher(hit["_id"], hit["_source"]),
+                        hit,
+                        links_factory=item_links_factory,
+                    )
+                )
+            )
 
         return "\n".join(records)
 
     def serialize_oaipmh(self, pid, record):
         """Serialize a single record for OAI-PMH."""
-        obj = self.transform_record(pid, record['_source']) \
-            if isinstance(record['_source'], Record) \
+        obj = (
+            self.transform_record(pid, record["_source"])
+            if isinstance(record["_source"], Record)
             else self.transform_search_hit(pid, record)
+        )
 
         return self.schema.dump_etree(obj)
 
@@ -77,7 +81,7 @@ class DataCite31Serializer(BaseDataCiteSerializer):
 
     schema = schema31
     """Class variable to define which schema use."""
-    version = '3.1'
+    version = "3.1"
     """Class variable to tell the version of the schema."""
 
 
@@ -90,7 +94,7 @@ class DataCite40Serializer(BaseDataCiteSerializer):
 
     schema = schema40
     """Class variable to define which schema use."""
-    version = '4.0'
+    version = "4.0"
     """Class variable to tell the version of the schema."""
 
 
@@ -103,15 +107,14 @@ class DataCite41Serializer(BaseDataCiteSerializer):
 
     schema = schema41
     """Class variable to define which schema use."""
-    version = '4.1'
+    version = "4.1"
     """Class variable to tell the version of the schema."""
 
 
 class OAIDataCiteSerializer(object):
     """OAI DataCite serializer (only for OAI-PMH)."""
 
-    def __init__(self, serializer=None, datacentre=None,
-                 is_reference_quality='true'):
+    def __init__(self, serializer=None, datacentre=None, is_reference_quality="true"):
         """Initialize serializer."""
         self.serializer = serializer
         self.datacentre = datacentre
@@ -120,23 +123,20 @@ class OAIDataCiteSerializer(object):
     def serialize_oaipmh(self, pid, record):
         """Serialize a single record for OAI-PMH."""
         root = etree.Element(
-            'oai_datacite',
+            "oai_datacite",
             nsmap={
-                None: 'http://schema.datacite.org/oai/oai-1.0/',
-                'xsi': 'http://www.w3.org/2001/XMLSchema-instance',
-                'xml': 'xml',
+                None: "http://schema.datacite.org/oai/oai-1.0/",
+                "xsi": "http://www.w3.org/2001/XMLSchema-instance",
+                "xml": "xml",
             },
             attrib={
-                '{http://www.w3.org/2001/XMLSchema-instance}schemaLocation':
-                'http://schema.datacite.org/oai/oai-1.0/ oai_datacite.xsd',
-            }
+                "{http://www.w3.org/2001/XMLSchema-instance}schemaLocation": "http://schema.datacite.org/oai/oai-1.0/ oai_datacite.xsd",
+            },
         )
 
         root.append(E.isReferenceQuality(self.is_reference_quality))
         root.append(E.schemaVersion(self.serializer.version))
         root.append(E.datacentreSymbol(self.datacentre))
-        root.append(E.payload(
-            self.serializer.serialize_oaipmh(pid, record)
-        ))
+        root.append(E.payload(self.serializer.serialize_oaipmh(pid, record)))
 
         return root

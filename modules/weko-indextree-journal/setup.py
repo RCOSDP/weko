@@ -47,7 +47,7 @@ setup_requires = [
 ]
 
 install_requires = [
-    'Flask-BabelEx>=0.9.3',
+    'Flask-Babel>=3.0.0',
     'invenio-logging>=1.0.0b3',
 ]
 
@@ -81,9 +81,9 @@ setup(
         'invenio_base.api_apps': [
             'weko_indextree_journal_rest = weko_indextree_journal:WekoIndextreeJournalREST',
         ],
-        'invenio_base.blueprints': [
-            'weko_indextree_journal = weko_indextree_journal.views:blueprint',
-        ],
+        #'invenio_base.blueprints': [
+        #    'weko_indextree_journal = weko_indextree_journal.views:blueprint',
+        #],
         'invenio_i18n.translations': [
             'messages = weko_indextree_journal',
         ],
@@ -97,10 +97,8 @@ setup(
             'indextree_journal_access = '
             'weko_indextree_journal.permissions:action_indextree_journal_access',
         ],
-        'invenio_assets.bundles': [
-            'weko_indextree_journal_css = weko_indextree_journal.bundles:style',
-            'weko_indextree_journal_view = weko_indextree_journal.bundles:js_treeview',
-            'weko_indextree_journal_js = weko_indextree_journal.bundles:js',
+        'invenio_assets.webpack': [
+            'weko_indextree_journal = weko_indextree_journal.webpack:weko_indextree_journal',
         ],
         'invenio_celery.tasks': [
             'weko_indextree_journal = weko_indextree_journal.tasks',

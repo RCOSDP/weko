@@ -117,7 +117,7 @@
       </div>
   
       <div id="search-result-body" class="panel-body" >
-          <div id="index_item_list" ng-if="vm.invenioSearchResults.hits.total">
+          <div id="index_item_list" ng-if="vm.invenioSearchResults.hits.total.value != 0">
           <div class="form-inline flow-root">
             <label for="goExportORPrint" hidden>{{_(goExportORPrint)}}</label>
             <select class="form-control hide" id="goExportORPrint">

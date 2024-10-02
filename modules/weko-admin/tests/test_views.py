@@ -1,7 +1,7 @@
 import json
 import pytest
 from flask import url_for, make_response, current_app
-from flask_babelex import lazy_gettext as _
+from flask_babel import lazy_gettext as _
 from flask_breadcrumbs import current_breadcrumbs
 from flask_menu import current_menu
 from mock import patch, MagicMock

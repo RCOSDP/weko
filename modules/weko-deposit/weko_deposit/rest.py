@@ -24,7 +24,8 @@ import json
 from wsgiref.util import request_uri
 
 import redis
-from elasticsearch import ElasticsearchException
+from redis import sentinel
+from invenio_search.engine import search
 from flask import Blueprint, abort, current_app, jsonify, request
 from invenio_db import db
 from invenio_pidstore import current_pidstore
@@ -368,7 +369,7 @@ class ItemResource(ContentNegotiatedMethodView):
             db.session.rollback()
             abort(400, "Failed to register item!")
 
-        except ElasticsearchException as ex:
+        except search.OpenSearchException as ex:
             weko_logger(key='WEKO_COMMON_ERROR_ELASTICSEARCH', ex=ex)
             db.session.rollback()
             abort(400, "Failed to register item!")

@@ -6,15 +6,10 @@
 # Invenio is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
 
-# .tox/c1/bin/pytest --cov=invenio_records_rest tests/test_views_item_delete.py -vv -s -v --cov-branch --cov-report=term --basetemp=/code/modules/invenio-records-rest/.tox/c1/tmp
-
 """Delete record tests."""
-
-from __future__ import absolute_import, print_function
-
 import pytest
 from flask import url_for
-from tests.helpers import get_json, record_url
+from helpers import get_json, record_url
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from mock import patch
 from sqlalchemy.exc import SQLAlchemyError
@@ -23,14 +18,17 @@ from invenio_records.models import RecordMetadata
 def test_valid_delete(app, indexed_records):
     """Test VALID record delete request (DELETE .../records/<record_id>)."""
     # Test with and without headers
-    for i, headers in enumerate([[('Accept', 'video/mp4')]]):
+    for i, headers in enumerate([[], [("Accept", "video/mp4")]]):
         pid, record = indexed_records[i]
         with app.test_client() as client:
-            assert PersistentIdentifier.query.filter_by(pid_value='1').first().status==PIDStatus.REGISTERED
+            assert PersistentIdentifier.query.filter_by(pid_value="1").first().status==PIDStatus.REGISTERED
             res = client.delete(record_url(pid), headers=headers)
             assert res.status_code == 204
-            assert PersistentIdentifier.query.filter_by(pid_value='1').first().status==PIDStatus.DELETED
+            assert PersistentIdentifier.query.filter_by(pid_value="1").first().status==PIDStatus.DELETED
             assert RecordMetadata.query.filter_by(id=pid.object_uuid).first().json==None
+
+            res = client.get(record_url(pid))
+            assert res.status_code == 410
 
 
 def test_delete_deleted(app, indexed_records):
@@ -40,21 +38,18 @@ def test_delete_deleted(app, indexed_records):
     with app.test_client() as client:
         res = client.delete(record_url(pid))
         assert res.status_code == 204
-
-        with pytest.raises(AttributeError):
-            res = client.delete(record_url(pid))
-            # assert res.status_code == 410
-            # data = get_json(res)
-            # assert 'message' in data
-            # assert data['status'] == 410
+        res = client.delete(record_url(pid))
+        assert res.status_code == 410
+        data = get_json(res)
+        assert "message" in data
+        assert data["status"] == 410
 
 
 def test_delete_notfound(app, indexed_records):
     """Test INVALID record delete request (DELETE .../records/<record_id>)."""
     with app.test_client() as client:
         # Check that GET with non existing id will return 404
-        res = client.delete(url_for(
-            'invenio_records_rest.recid_item', pid_value=0))
+        res = client.delete(url_for("invenio_records_rest.recid_item", pid_value=0))
         assert res.status_code == 404
 
 
@@ -63,17 +58,19 @@ def test_delete_with_sqldatabase_error(app, indexed_records):
     pid, record = indexed_records[0]
 
     with app.test_client() as client:
+
         def raise_error():
             raise SQLAlchemyError()
+
         # Force an SQLAlchemy error that will rollback the transaction.
-        assert PersistentIdentifier.query.filter_by(pid_value='1').first().status==PIDStatus.REGISTERED
-        with patch.object(PersistentIdentifier, 'delete',
-                          side_effect=raise_error):
+        assert PersistentIdentifier.query.filter_by(pid_value="1").first().status==PIDStatus.REGISTERED
+        with patch.object(PersistentIdentifier, "delete", side_effect=raise_error):
             res = client.delete(record_url(pid))
             assert res.status_code == 204
-            assert PersistentIdentifier.query.filter_by(pid_value='1').first().status==PIDStatus.REGISTERED
+            assert PersistentIdentifier.query.filter_by(pid_value="1").first().status==PIDStatus.REGISTERED
             assert RecordMetadata.query.filter_by(id=pid.object_uuid).first().json is not None
 
-    # with app.test_client() as client:
-    #         res = client.get(record_url(pid))
-    #         assert res.status_code == 200
+
+    with app.test_client() as client:
+        res = client.get(record_url(pid))
+        assert res.status_code == 200

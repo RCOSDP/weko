@@ -1,6 +1,6 @@
 
 from flask import make_response,render_template,url_for
-from mock import patch
+from mock import patch, MagicMock
 from weko_index_tree.models import Index
 from invenio_accounts.testutils import create_test_user
 from invenio_communities.models import Community
@@ -208,6 +208,90 @@ def test_community_list(client,app,db,users,mocker):
         assert kwargs["communities"][0].id == "comm1"
         assert kwargs["featured_community"] == None
         assert kwargs["display_community"] == False
+
+class Dict2Obj:
+    def __init__(self, **kwargs):
+        self.__dict__.update(kwargs)
+# def community_list():
+# .tox/c1/bin/pytest --cov=invenio_communities tests/test_views_ui.py::test_community_list_settings -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp
+def test_community_list_settings(client,app,users):
+    url = url_for("invenio_communities.community_list")
+    app.config.update(
+        WEKO_THEME_DEFAULT_COMMUNITY="Root Index"
+    )
+    # AdminSettings.getをモックし、DBからの設定を返す
+    db_settings = Dict2Obj(
+        title1='DB Title 1',
+        title2='DB タイトル 2',
+        icon_code='fa fa-handshake-o',
+        supplement='Database supplement text'
+    )
+    with patch("weko_admin.admin.AdminSettings.get", return_value=db_settings):
+        # get_languageをモックする
+        with patch("invenio_communities.views.ui.get_language", return_value='en'):
+            # render_template をモックし、引数をキャプチャする
+            mock_render_template = MagicMock(return_value=('<html></html>', 200))
+            with patch("invenio_communities.views.ui.render_template", mock_render_template):
+                res = client.get(url)
+                assert res.status_code == 200
+                # モックされた render_template の引数を検証
+                kwargs = mock_render_template.call_args[1]
+                assert kwargs['lists']['title'] == db_settings.title1
+                assert kwargs['lists']['icon_code'] == db_settings.icon_code
+                assert kwargs['lists']['supplement'] == db_settings.supplement
+        # get_languageをモックする
+        with patch("invenio_communities.views.ui.get_language", return_value='ja'):
+            # render_template をモックし、引数をキャプチャする
+            mock_render_template = MagicMock(return_value=('<html></html>', 200))
+            with patch("invenio_communities.views.ui.render_template", mock_render_template):
+                res = client.get(url)
+                assert res.status_code == 200
+                # モックされた render_template の引数を検証
+                kwargs = mock_render_template.call_args[1]
+                assert kwargs['lists']['title'] == db_settings.title2
+                assert kwargs['lists']['icon_code'] == db_settings.icon_code
+                assert kwargs['lists']['supplement'] == db_settings.supplement
+    with patch("weko_admin.admin.AdminSettings.get", return_value=None):
+        with patch("invenio_communities.views.ui.get_language", return_value='en'):
+            # render_template をモックし、引数をキャプチャする
+            mock_render_template = MagicMock(return_value=('<html></html>', 200))
+            with patch("invenio_communities.views.ui.render_template", mock_render_template):
+                res = client.get(url)
+                assert res.status_code == 200
+                # モックされた render_template の引数を検証
+                kwargs = mock_render_template.call_args[1]
+                assert kwargs["lists"]["title"] == 'Communities'  # 英語ならconfigから英語のデフォルト値を使用
+                assert kwargs["lists"]["icon_code"] == 'fa fa-group'
+                assert kwargs["lists"]["supplement"] == 'created and curated by WEKO3 users'
+        with patch("invenio_communities.views.ui.get_language", return_value='ja'):
+            # render_template をモックし、引数をキャプチャする
+            mock_render_template = MagicMock(return_value=('<html></html>', 200))
+            with patch("invenio_communities.views.ui.render_template", mock_render_template):
+                res = client.get(url)
+                assert res.status_code == 200
+                # モックされた render_template の引数を検証
+                kwargs = mock_render_template.call_args[1]
+                assert kwargs["lists"]["title"] == 'コミュニティ'  # 日本語ならconfigから英語のデフォルト値を使用
+                assert kwargs["lists"]["icon_code"] == 'fa fa-group'
+                assert kwargs["lists"]["supplement"] == 'created and curated by WEKO3 users'
+    # AdminSettings.getをモックし、DBからの設定を返す
+    db_settings = Dict2Obj(
+        title1='DB Title 1',
+        title2='',
+        icon_code='fa fa-handshake-o',
+        supplement='Database supplement text'
+    )
+    with patch("weko_admin.admin.AdminSettings.get", return_value=db_settings):
+        # get_languageをモックする
+        with patch("invenio_communities.views.ui.get_language", return_value='ja'):
+            # render_template をモックし、引数をキャプチャする
+            mock_render_template = MagicMock(return_value=('<html></html>', 200))
+            with patch("invenio_communities.views.ui.render_template", mock_render_template):
+                res = client.get(url)
+                assert res.status_code == 200
+                # モックされた render_template の引数を検証
+                kwargs = mock_render_template.call_args[1]
+                assert kwargs['lists']['title'] == db_settings.title1 # title2が未設定かつ言語が日本語の場合、title1を使用
 
 # def dbsession_clean(exception):
 # .tox/c1/bin/pytest --cov=invenio_communities tests/test_views_ui.py::test_dbsession_clean -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp    

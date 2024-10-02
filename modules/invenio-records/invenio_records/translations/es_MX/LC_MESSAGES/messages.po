@@ -1,0 +1,41 @@
+# Translations template for invenio-records.
+# Copyright (C) 2022 CERN
+# This file is distributed under the same license as the invenio-records
+# project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2022.
+# 
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: invenio-records 2.0.0\n"
+"Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
+"POT-Creation-Date: 2022-10-12 09:39+0000\n"
+"PO-Revision-Date: 2016-08-19 12:42+0000\n"
+"Language-Team: Spanish (Mexico) (https://app.transifex.com/inveniosoftware/teams/23537/es_MX/)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.10.3\n"
+"Language: es_MX\n"
+"Plural-Forms: nplurals=3; plural=n == 1 ? 0 : n != 0 && n % 1000000 == 0 ? 1 : 2;\n"
+
+#: invenio_records/admin.py:41
+msgid "UUID"
+msgstr ""
+
+#: invenio_records/admin.py:42
+msgid "Revision"
+msgstr ""
+
+#: invenio_records/admin.py:43
+msgid "JSON"
+msgstr ""
+
+#: invenio_records/admin.py:69
+#, python-format
+msgid "Failed to delete record. %(error)s"
+msgstr ""
+
+#: invenio_records/admin.py:78
+msgid "Records"
+msgstr ""

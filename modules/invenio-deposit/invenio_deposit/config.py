@@ -1,31 +1,15 @@
 # -*- coding: utf-8 -*-
 #
 # This file is part of Invenio.
-# Copyright (C) 2016 CERN.
+# Copyright (C) 2016-2019 CERN.
 #
-# Invenio is free software; you can redistribute it
-# and/or modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; either version 2 of the
-# License, or (at your option) any later version.
-#
-# Invenio is distributed in the hope that it will be
-# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Invenio; if not, write to the
-# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-# MA 02111-1307, USA.
-#
-# In applying this license, CERN does not
-# waive the privileges and immunities granted to it by virtue of its status
-# as an Intergovernmental Organization or submit itself to any jurisdiction.
+# Invenio is free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
 
 """Default configuration of deposit module."""
 
 from invenio_records_rest.facets import terms_filter
-from invenio_records_rest.utils import check_elasticsearch
+from invenio_records_rest.utils import check_search
 
 from .utils import check_oauth2_scope_write, \
     check_oauth2_scope_write_elasticsearch
@@ -81,7 +65,7 @@ DEPOSIT_REST_ENDPOINTS = {
         'default_media_type': 'application/json',
         'links_factory_imp': 'invenio_deposit.links:deposit_links_factory',
         'create_permission_factory_imp': check_oauth2_scope_write,
-        'read_permission_factory_imp': check_elasticsearch,
+        'read_permission_factory_imp': check_search,
         'update_permission_factory_imp':
             check_oauth2_scope_write_elasticsearch,
         'delete_permission_factory_imp':

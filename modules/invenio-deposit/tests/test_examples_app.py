@@ -1,26 +1,10 @@
 # -*- coding: utf-8 -*-
 #
 # This file is part of Invenio.
-# Copyright (C) 2016 CERN.
+# Copyright (C) 2016-2019 CERN.
 #
-# Invenio is free software; you can redistribute it
-# and/or modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; either version 2 of the
-# License, or (at your option) any later version.
-#
-# Invenio is distributed in the hope that it will be
-# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Invenio; if not, write to the
-# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-# MA 02111-1307, USA.
-#
-# In applying this license, CERN does not
-# waive the privileges and immunities granted to it by virtue of its status
-# as an Intergovernmental Organization or submit itself to any jurisdiction.
+# Invenio is free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
 
 """Test example app."""
 
@@ -45,6 +29,10 @@ def example_app():
     cmd = './app-setup.sh'
     exit_status = subprocess.call(cmd, shell=True)
     assert exit_status == 1
+    # load fixtures
+    cmd = './app-fixtures.sh'
+    exit_status = subprocess.call(cmd, shell=True)
+    assert exit_status == 0
     # Starting example web app
     cmd = 'FLASK_APP=app.py flask run --debugger -p 5000'
     webapp = subprocess.Popen(cmd, stdout=subprocess.PIPE,
@@ -63,16 +51,15 @@ def example_app():
 
 def test_example_app(example_app):
     """Test example app."""
-    # load fixtures
-    cmd = './app-fixtures.sh'
-    exit_status = subprocess.call(cmd, shell=True)
-    assert exit_status == 1
+    cmd = 'FLASK_APP=app.py flask tokens create --name test_token' \
+          ' --user info@inveniosoftware.org'
+    token = subprocess.check_output(cmd, shell=True).decode('utf-8').strip()
     # search page
     # cmd = 'curl http://localhost:5000/search'
     # output = subprocess.check_output(cmd, shell=True).decode('utf-8')
     # assert 'invenio-search-results' in output
     # # search API
-    # cmd = 'curl http://localhost:5000/deposits/'
+    # cmd = 'curl http://localhost:5000/deposits/?access_token={0}'.format(token)
     # output = json.loads(
     #     subprocess.check_output(cmd, shell=True).decode('utf-8')
     # )

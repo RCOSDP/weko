@@ -27,10 +27,9 @@ import json
 import copy
 import re
 
-from elasticsearch.exceptions import NotFoundError
-from elasticsearch_dsl.query import QueryString
+from invenio_search.engine import search,dsl
 from flask import current_app, request
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.api import Record
@@ -477,9 +476,9 @@ class ItemTypes(RecordBase):
             return result
 
         def __update_es_data(_es_data, _delete_list):
-            """Update metadata on ElasticSearch.
+            """Update metadata on search engine.
 
-            :param _es_data: Elasticsearch data.
+            :param _es_data: search engine data.
             :param _delete_list: delete list
             """
             item_type_mapping = Mapping.get_record(item_type_id=item_type_id)
@@ -554,7 +553,7 @@ class ItemTypes(RecordBase):
         if len(delete_list) == 0:
             return
 
-        # Get records on ElasticSearch based on Item Type Name
+        # Get records on search engine based on Item Type Name
         records = cls.__get_records_by_item_type_name(item_type_name)
         record_ids = []
         es_data = []
@@ -576,12 +575,12 @@ class ItemTypes(RecordBase):
         __update_record_metadata(record_ids, delete_list)
         # Update item metadata in DB based on data from ES.
         __update_item_metadata(record_ids, delete_list)
-        # Update Elasticsearch data
+        # Update search engine data
         __update_es_data(es_data, delete_list)
 
     @classmethod
     def __get_records_by_item_type_name(cls, item_type_name):
-        """Get records on Elasticsearch by Item Type Name.
+        """Get records on search engine by Item Type Name.
 
         :param item_type_name: Item Type Name.
         :return: Record list.
@@ -593,11 +592,11 @@ class ItemTypes(RecordBase):
         try:
             search = RecordsSearch(
                 index=current_app.config['SEARCH_UI_SEARCH_INDEX'])
-            search = search.query(QueryString(query=query_string))
+            search = search.query(dsl.query.QueryString(query=query_string))
             search = search.sort('-publish_date', '-_updated')
             search_result = search.execute().to_dict()
             result = search_result.get('hits', {}).get('hits', [])
-        except NotFoundError as e:
+        except search.NotFoundError as e:
             current_app.logger.debug("Indexes do not exist yet: ", str(e))
         return result
 
@@ -702,7 +701,7 @@ class ItemTypes(RecordBase):
         with db.session.no_autoflush:
             query = ItemTypeName.query
             if not with_deleted:
-                query = query.join(ItemType).filter(
+                query = query.join(ItemType, ItemType.name_id == ItemTypeName.id).filter(
                     ItemType.is_deleted.is_(False))
             return query.order_by(ItemTypeName.id).all()
 
@@ -714,7 +713,7 @@ class ItemTypes(RecordBase):
         :returns: A list of :class:`ItemTypeName` joined w/ :class:`ItemType`.
         """
         with db.session.no_autoflush:
-            query = ItemTypeName.query.join(ItemType) \
+            query = ItemTypeName.query.join(ItemType, ItemType.name_id == ItemTypeName.id) \
                 .add_columns(ItemTypeName.name, ItemType.id,
                              ItemType.harvesting_type, ItemType.is_deleted,
                              ItemType.tag)
@@ -735,7 +734,7 @@ class ItemTypes(RecordBase):
         with db.session.no_autoflush:
             query = ItemTypeName.query
             if not with_deleted:
-                query = query.join(ItemType).filter(
+                query = query.join(ItemType, ItemType.id == ItemTypeName.id).filter(
                     ItemType.is_deleted.is_(False),
                     ItemType.harvesting_type.is_(harvesting_type)
                 )

@@ -1,0 +1,54 @@
+{# -*- coding: utf-8 -*-
+
+  This file is part of Invenio.
+  Copyright (C) 2015-2020 CERN.
+
+  Invenio is free software; you can redistribute it and/or modify it
+  under the terms of the MIT License; see LICENSE file for more details.
+#}
+{%- extends config.ACCOUNTS_COVER_TEMPLATE %}
+{% from "invenio_accounts/_macros.html" import render_field, form_errors %}
+
+{% block page_body %}
+
+  <div class="ui padded segments big form">
+    <div class="ui segment padded relaxed">
+      <div class="divider hidden"></div>
+
+      {%- block form_header %}
+        <h1 class="ui small login header">
+          {% trans sitename=config.ACCOUNTS_SITENAME %}Sign up for an {{ sitename }} account!{% endtrans %}
+        </h1>
+      {%- endblock form_header %}
+
+      {%- with form = register_user_form %}
+        <form action="{{ url_for_security('register') }}" method="POST"
+              name="register_user_form">
+          {{ form.hidden_tag() }}
+          {%- block registration_form_fields scoped %}
+            {{ render_field(form.email, icon="user icon", autofocus=True, errormsg='email' in form.errors) }}
+            {{ render_field(form.password, icon="lock icon", errormsg='password' in form.errors) }}
+            {%- if form.password_confirm %}
+              {{ render_field(form.password_confirm, icon="lock icon", errormsg=False) }}
+            {%- endif %}
+          {%- endblock registration_form_fields %}
+
+          {%- if form.recaptcha %}
+            <div class="grouped fields">{{ form.recaptcha() }}</div>
+          {%- endif %}
+
+          <button type="submit" class="ui fluid large signup submit button">
+            <i class="ui edit outline icon"></i>{{ _('Sign up') }}
+          </button>
+        </form>
+      {%- endwith %}
+      <div class="divider hidden"></div>
+    </div>
+
+    <p class="ui primary segment padded text-muted">
+      {{ _('Already have an account?') }}
+      <a href="{{ url_for_security('login', next=request.args.get('next')) }}">{{ _('Log in') }}</a>
+    </p>
+  </div>
+
+{% endblock page_body %}

@@ -55,7 +55,7 @@ SPHINX-END
 """
 
 from flask import Flask
-from flask_babelex import Babel
+from flask_babel import Babel
 
 from weko_theme import WekoTheme
 

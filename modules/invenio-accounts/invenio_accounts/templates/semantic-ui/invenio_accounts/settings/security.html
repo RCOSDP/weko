@@ -1,0 +1,78 @@
+{# -*- coding: utf-8 -*-
+
+  This file is part of Invenio.
+  Copyright (C) 2015-2020 CERN.
+
+  Invenio is free software; you can redistribute it and/or modify it
+  under the terms of the MIT License; see LICENSE file for more details.
+#}
+{%- extends config.ACCOUNTS_SETTINGS_TEMPLATE %}
+
+{% set panel_title = _('Sessions') %}
+{% set panel_icon = current_theme_icons.shield %}
+{% from "invenio_accounts/_macros.html" import render_field, form_errors %}
+
+{%- block settings_body %}
+
+  {% block settings_form %}
+    <p class="ui segment">{{_('This is a list of devices that have logged into your account.')}}</p>
+
+    <ul class="ui segments no-border no-border-radius-top no-style-list m-0 p-0">
+      {%- for session in sessions %}
+        {%- set is_current_sid = is_current(session.sid_s) %}
+        {%- set form = formclass(sid_s=session.sid_s) %}
+        <li class="ui segment grid">
+          <div class="two column stackable row">
+            <div class="column">
+              <div class="header mb-10 flex">
+                {%- if is_current_sid %}
+                  <i class="circle icon green" aria-hidden="true"></i>
+                {%- else %}
+                  <i class="circle icon grey" aria-hidden="true"></i>
+                {%- endif %}
+                <h2 class="ui tiny header m-0">{{ session.ip }}</h2>
+              </div>
+
+              <p>
+                <small>
+                  {{_("Signed in")}}:
+                  {{ session.created | tousertimezone | dateformat }}
+                  {% if is_current_sid %}({{ _("current session") }}){% endif %}
+                  {%- if session.browser %}
+                    <br>
+                    {{ session.browser }} {{ session.browser_version }} on {{ session.os }} ({{ session.device }})
+                  {%- endif %}
+                  {%- if session.country %}
+                    <br>{{_('Location')}}: {{session.country}}
+                  {%- endif %}
+                </small>
+              </p>
+            </div>
+
+            <div class="middle aligned column">
+              <form
+                action="{{url_for('invenio_accounts.revoke_session') if not is_current_sid else url_for_security('logout')}}"
+                method="{{'POST' if not is_current_sid else 'GET'}}"
+              >
+                {{ form.csrf_token }}
+                {{ form.sid_s }}
+                <button
+                  type="submit"
+                  class="ui right floated labeled icon button"
+                  title="{{remove_action}}"
+                >
+                  <i
+                    class="{{'times' if not is_current_sid else 'sign-out'}} icon"
+                    aria-hidden="true"
+                  ></i>
+                  {{_("Revoke") if not is_current_sid else _('Logout')}}
+                </button>
+              </form>
+            </div>
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+  {% endblock settings_form %}
+{%- endblock settings_body %}
+

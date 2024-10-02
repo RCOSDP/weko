@@ -35,7 +35,7 @@ from datetime import datetime
 import pytest
 from flask import Flask
 from flask_menu import Menu
-from flask_babelex import Babel
+from flask_babel import Babel
 from invenio_accounts import InvenioAccounts
 from invenio_accounts.models import User, Role
 from invenio_access.models import ActionRoles, ActionUsers
@@ -707,7 +707,6 @@ def es_records(app, db, db_index, location, db_itemtype,db_oaischema):
     with app.test_request_context():
         for i in range(1, 10):
             record_data =  {"_oai": {"id": "oai:weko3.example.org:000000{:02d}".format(i), "sets": ["{}".format((i % 2) + 1)]}, "path": ["{}".format((i % 2) + 1)], "owner": "1", "recid": "{}".format(i), "title": ["title"], "pubdate": {"attribute_name": "PubDate", "attribute_value": "2022-08-20"}, "_buckets": {"deposit": "3e99cfca-098b-42ed-b8a0-20ddd09b3e02","content":[{"test":"content"},{"file":"test"}]}, "_deposit": {"id": "{}".format(i), "pid": {"type": "depid", "value": "{}".format(i), "revision_id": 0}, "owner": "1", "owners": [1], "status": "draft", "created_by": 1, "owners_ext": {"email": "wekosoftware@nii.ac.jp", "username": "", "displayname": ""}}, "item_title": "title", "author_link": [], "item_type_id": "1", "publish_date": "2022-08-20", "publish_status": "0", "weko_shared_id": -1, "item_1617186331708": {"attribute_name": "Title", "attribute_value_mlt": [{"subitem_1551255647225": "タイトル", "subitem_1551255648112": "ja"},{"subitem_1551255647225": "title", "subitem_1551255648112": "en"}]}, "item_1617258105262": {"attribute_name": "Resource Type","content":[{"test":"content"},{"file":"test"}], "attribute_value_mlt": [{"resourceuri": "http://purl.org/coar/resource_type/c_5794", "resourcetype": "conference paper"}]}, "relation_version_is_last": True, 'item_1617605131499': {'attribute_name': 'File', 'attribute_type': 'file', 'attribute_value_mlt': [{'url': {'url': 'https://weko3.example.org/record/{}/files/hello.txt'.format(i)}, 'date': [{'dateType': 'Available', 'dateValue': '2022-09-07'}], 'format': 'plain/text', 'filename': 'hello.txt', 'filesize': [{'value': '146 KB'}], 'accessrole': 'open_access', 'version_id': '', 'mimetype': 'application/pdf',"file": "",}]}}
-
             item_data = {"id": "{}".format(i), "pid": {"type": "depid", "value": "{}".format(i), "revision_id": 0}, "lang": "ja", "owner": "1", "title": "title", "owners": [1], "status": "published", "$schema": "/items/jsonschema/1", "pubdate": "2022-08-20", "created_by": 1, "owners_ext": {"email": "wekosoftware@nii.ac.jp", "username": "", "displayname": ""}, "shared_user_id": -1, "item_1617186331708": [{"subitem_1551255647225": "タイトル", "subitem_1551255648112": "ja"},{"subitem_1551255647225": "title", "subitem_1551255648112": "en"}], "item_1617258105262": {"resourceuri": "http://purl.org/coar/resource_type/c_5794", "resourcetype": "conference paper"}}
 
             rec_uuid = uuid.uuid4()
@@ -871,7 +870,6 @@ def es_records_2(app, db, db_index, location, db_itemtype2,db_oaischema):
             deposit = aWekoDeposit(record, record.model)
             deposit.commit()
             record['item_1617605131499']['attribute_value_mlt'][0]['version_id'] = str(obj.version_id)
-
             record_data['content']= [{"date":[{"dateValue":"2021-07-12","dateType":"Available"}],"accessrole":"open_access","displaytype" : "simple","filename" : "hello.txt","attachment" : {},"format" : "text/plain","mimetype" : "text/plain","filesize" : [{"value" : "1 KB"}],"version_id" : "{}".format(obj.version_id),"url" : {"url":"http://localhost/record/{}/files/hello.txt".format(i)},"file":(base64.b64encode(stream.getvalue())).decode('utf-8')}]
             indexer.upload_metadata(record_data, rec_uuid, 1, False)
             item = ItemsMetadata.create(item_data, id_=rec_uuid)
@@ -937,6 +935,7 @@ def es_records_3(app, db, db_index, location, db_itemtype,db_oaischema):
     # es = Elasticsearch("http://{}:9200".format(app.config["SEARCH_ELASTIC_HOSTS"]))
     # print(es.cat.indices())
     return indexer, results
+
 
 @pytest.fixture()
 def es_records_4(app, db, db_index, location, db_itemtype,db_oaischema):
@@ -1444,6 +1443,7 @@ def prepare_formatsysbib():
         'bibliographicIssueDates': {'bibliographicIssueDate': '2022-08-29', 'bibliographicIssueDateType':'Issued'},
         'bibliographicIssueNumber': '12',
         'bibliographicVolumeNumber': '1', 'bibliographicNumberOfPages': '99'},{'bibliographicPageEnd': None, 'bibliographic_titles': [], 'bibliographicPageStart': '1', 'bibliographicIssueDates': {'bibliographicIssueDate': '2022-08-29', 'bibliographicIssueDateType': 'Issued'}, 'bibliographicIssueNumber': '12', 'bibliographicVolumeNumber': '1', 'bibliographicNumberOfPages': '99'}
+
     ]
     props = [
         ['pubdate', 'PubDate', 'PubDate', {'required': True, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, ''],
@@ -1702,7 +1702,6 @@ def prepare_formatsysbib():
         ['item_1727608787134.bibliographicIssueDates', '発行日', 'Issue Date', {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, ''],
         ['item_1727608787134.bibliographicIssueDates.bibliographicIssueDate', '日付', 'Date', {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, ''],
         ['item_1727608787134.bibliographicIssueDates.bibliographicIssueDateType', '日付タイプ', 'Date Type', {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, ''],
-
         ['system_identifier_doi', 'Persistent Identifier(DOI)', 'Persistent Identifier(DOI)', {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, ''],
         ['parentkey.subitem_systemidt_identifier', 'SYSTEMIDT Identifier', 'SYSTEMIDT Identifier', {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, ''],
         ['parentkey.subitem_systemidt_identifier_type', 'SYSTEMIDT Identifier Type', 'SYSTEMIDT Identifier Type', {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, ''],
@@ -1729,11 +1728,6 @@ def prepare_formatsysbib():
 def prepare_creator():
     creator ={'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierURI': 'https://orcid.org/', 'nameIdentifierScheme': 'ORCID'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierURI': 'https://ci.nii.ac.jp/', 'nameIdentifierScheme': 'CiNii'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/', 'nameIdentifierScheme': 'KAKEN2'}], 'creatorAffiliations': [{'affiliationNames': [{'affiliationName': '所属機関', 'affiliationNameLang': 'ja'}, {'affiliationName': 'Affilication Name', 'affiliationNameLang': 'cn'}], 'affiliationNameIdentifiers': [{'affiliationNameIdentifier': 'xxxxxx', 'affiliationNameIdentifierURI': 'xxxxx', 'affiliationNameIdentifierScheme': 'ISNI'}]}], 'creatorAlternatives': [{'creatorAlternative': 'Alternative Name', 'creatorAlternativeLang': 'en'}, {'creatorAlternative': '別名', 'creatorAlternativeLang': 'ja'}]}
     return creator
-
-# @pytest.fixture()
-# def prepare_creator_1():
-#     creator ={'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierURI': 'https://orcid.org/', 'nameIdentifierScheme': 'ORCID'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierURI': 'https://ci.nii.ac.jp/', 'nameIdentifierScheme': 'CiNii'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/', 'nameIdentifierScheme': 'KAKEN2'}], 'creatorAffiliations': [{'affiliationNames': [{'affiliationName': '所属機関', 'affiliationNameLang': 'cn'}, {'affiliationName': 'Affilication Name', 'affiliationNameLang': 'en'}], 'affiliationNameIdentifiers': [{'affiliationNameIdentifier': 'xxxxxx', 'affiliationNameIdentifierURI': 'xxxxx', 'affiliationNameIdentifierScheme': 'ISNI'}]}], 'creatorAlternatives': [{'creatorAlternative': 'Alternative Name', 'creatorAlternativeLang': 'en'}, {'creatorAlternative': '別名', 'creatorAlternativeLang': 'ja'}]}
-#     return creator
 
 @pytest.fixture()
 def db_admin_settings(db):

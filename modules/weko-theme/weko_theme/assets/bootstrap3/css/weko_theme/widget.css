@@ -1,0 +1,251 @@
+.grid-stack-item {
+  overflow: auto;
+}
+
+.header-footer-type {
+  left: 0 !important;
+  right: 0 !important;
+  padding-left: 15px;
+  padding-right: 15px;
+  overflow: hidden !important;
+  border-radius: 0% !important;
+}
+
+.widget {
+  border-radius: 0px !important;
+  left: 15px !important;
+  right: 15px !important;
+  /*margin-top: 5px !important;*/
+  overflow-y: hidden !important;
+  overflow-x: auto !important;
+}
+
+.widget-header {
+  z-index: 999;
+}
+
+.writeMoreNoT {
+  cursor: pointer !important;
+}
+
+.writeMoreNoT:hover {
+  text-decoration: underline;
+}
+
+.widget-footer {
+  left: 0;
+  bottom: 0;
+  width: 100%;
+}
+
+.widget-header-position {
+  position: inherit;
+  width: 100%;
+  top: 0;
+}
+
+.no-pad-top-30 {
+  padding-top: 0px !important;
+}
+
+.no-li-style {
+  list-style-type: none;
+}
+
+.rss {
+  padding-left: 0px;
+  padding-right: 0px;
+}
+
+.rss a {
+  background-color: orange;
+  padding: 5px;
+  padding-top: 3px !important;
+  padding-bottom: 3px !important;
+  text-decoration: none;
+  border-radius: 25%;
+}
+
+.rss a:hover {
+  text-decoration: none;
+}
+
+.rss a > i {
+  color: white;
+}
+
+.arrival-scale {
+  text-overflow: ellipsis;
+  width: 100%;
+  white-space: nowrap;
+  display: block;
+  overflow: hidden;
+}
+
+.no-padding-col {
+  padding-left: 0px !important;
+  padding-right: 0px !important;
+}
+
+.widget-resize {
+  position: absolute !important;
+}
+
+.drop-line-span span {
+  display: inline-block;
+}
+
+.counter-container {
+  word-wrap: break-word;
+  margin-top: -15px;
+}
+
+.text-access-counter {
+  font-size: 15px;
+  font-weight: bold;
+  margin-bottom: -3px;
+}
+
+.no-before-content::before {
+  display: none;
+}
+
+.no-padding-side {
+  padding-left: 4px !important;
+  padding-right: 4px !important;
+}
+
+.widget-nav {
+  white-space: pre-line !important;
+  /* margin-top: 25px; */
+  border-radius: 4px !important;
+}
+
+#header_content {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.header-footer-type {
+  border: none;
+}
+
+.grid-stack-item {
+  box-shadow: none;
+}
+
+#title-main-content {
+  margin: 0 0 1px !important;
+}
+
+/* #panel-heading-main-contents {
+  margin-top: 1px !important;
+} */
+
+.navbar-nav > li > a {
+  /* font-size: 14px; */
+  font-size: 15px;
+}
+
+.pull-left > li > a {
+  /* font-size: 14px; */
+  font-size: 15px;
+}
+
+.navbar-header > a.navbar-brand {
+  /* font-size: 14px !important; */
+  font-size: 15px !important;
+  padding-top: 20px !important;
+  padding-bottom: 20px !important;
+  line-height: 20px !important;
+}
+
+.trumbowyg-editor {
+  height: 100%;
+  min-height: 0 !important;
+  margin: unset !important;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+/* 課題 #32415 */
+/* overwrite cursor: move with cursor: default */
+.trumbowyg-editor img {
+  max-width: none !important;
+  cursor: default !important;
+}
+
+.lds-ring-background {
+  width: 100vw;
+  height: 100vh;
+  z-index: 1000;
+  background-color: white;
+  opacity: 1;
+  position: fixed;
+}
+
+.lds-ring {
+  position: fixed;
+  height: 20vh;
+  width: 20vh;
+  z-index: 1001;
+  right: calc(50% - 10vh);
+  top: 40vh;
+  border: 5px solid rgba(0, 0, 0, 0.2);
+  border-top-color: rgba(0, 174, 239, 0.8);
+  border-radius: 100%;
+  animation: rotation 1.5s infinite linear 0.25s;
+  opacity: 1;
+}
+
+.widgetIE{
+  height: auto !important;
+}
+
+.ie .counter-container {
+  word-wrap: break-word;
+  margin-top: 0px;
+  padding: 15px 0;
+}
+
+.ie .trumbowyg-editor {
+  white-space: normal;
+  word-wrap: break-word;
+}
+
+.ie .scroll_x.trumbowyg-editor{
+  overflow-x: auto;
+  margin: 0 !important;
+}
+
+@-ms-viewport{
+  width:auto!important;
+}
+
+@keyframes rotation {
+  from {
+    opacity: 1;
+    transform: rotate(0deg);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(359deg);
+  }
+}
+
+.panel-body.without-after-element:after {
+  content: none;
+}
+
+#header {
+  overflow: initial !important;
+  overflow: inherit !important;
+}
+
+.widget-header > strong {
+  font-size: 15px;
+}
+
+.nav-tabs > li > a {
+  font-size: 15px;
+}

@@ -21,7 +21,7 @@
 """Blueprint for weko-plugins."""
 
 from flask import Blueprint, render_template
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 from flask_plugins import get_plugin
 
 blueprint = Blueprint(

@@ -55,7 +55,7 @@ setup_requires = [
 ]
 
 install_requires = [
-    'Flask-BabelEx>=0.9.2',
+    'Flask-Babel>=3.0.0',
 ]
 
 packages = find_packages()
@@ -97,10 +97,8 @@ setup(
         'invenio_i18n.translations': [
             'messages = weko_index_tree',
         ],
-        'invenio_assets.bundles': [
-            'weko_index_tree_css = weko_index_tree.bundles:style',
-            'weko_index_tree_view = weko_index_tree.bundles:js_treeview',
-            'weko_index_tree_js = weko_index_tree.bundles:js',
+        'invenio_assets.webpack': [
+            'weko_index_tree = weko_index_tree.webpack:weko_index_tree',
         ],
         'invenio_db.alembic': [
             'weko_index_tree = weko_index_tree:alembic',

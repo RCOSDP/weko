@@ -1,0 +1,254 @@
+{
+  "index_patterns": [
+    "__SEARCH_INDEX_PREFIX__stats-index-*"
+  ],
+  "settings": {
+    "index": {
+      "refresh_interval": "5s",
+      "opendistro.index_state_management.policy_id": "weko_stats_policy"
+    }
+  },
+  "mappings": {
+    "dynamic_templates": [
+      {
+        "date_fields": {
+          "match_mapping_type": "date",
+          "mapping": {
+            "type": "date",
+            "format": "date_optional_time"
+          }
+        }
+      }
+    ],
+    "date_detection": false,
+    "dynamic": false,
+    "numeric_detection": false,
+    "properties": {
+      "timestamp": {
+        "type": "date",
+        "format": "date_optional_time"
+      },
+      "event_type": {
+        "type": "keyword"
+      },
+
+      "count": {
+        "type": "integer"
+      },
+      "unique_count": {
+        "type": "integer"
+      },
+      "volume": {
+        "type": "double"
+      },
+      "unique_id": {
+        "type": "keyword",
+        "index": true
+      },
+      "country": {
+        "type": "keyword",
+        "index": true
+      },
+      "task_id": {
+        "type": "keyword",
+        "index": true
+      },
+      "task_name": {
+        "type": "keyword",
+        "index": true
+      },
+      "task_state": {
+        "type": "keyword",
+        "index": true
+      },
+      "start_time": {
+        "type": "keyword",
+        "index": true
+      },
+      "end_time": {
+        "type": "keyword",
+        "index": true
+      },
+      "total_records": {
+        "type": "keyword",
+        "index": true
+      },
+      "repository_name": {
+        "type": "keyword",
+        "index": true
+      },
+      "execution_time": {
+        "type": "keyword",
+        "index": true
+      },
+
+      "file_id": {
+        "type": "keyword",
+        "index": true
+      },
+      "file_key": {
+        "type": "keyword",
+        "index": true
+      },
+      "bucket_id": {
+        "type": "keyword",
+        "index": true
+      },
+      "collection": {
+        "type": "keyword",
+        "index": true
+      },
+      "updated_timestamp": {
+        "type": "date"
+      },
+
+      "item_id": {
+        "type": "keyword",
+        "index": true
+      },
+      "item_title": {
+        "type": "keyword",
+        "index": true
+      },
+      "root_file_id": {
+        "type": "keyword",
+        "index": true
+      },
+      "accessrole": {
+        "type": "keyword",
+        "index": true
+      },
+      "userrole": {
+        "type": "keyword",
+        "index": true
+      },
+      "site_license_name": {
+        "type": "keyword",
+        "index": true
+      },
+      "site_license_flag": {
+        "type": "boolean"
+      },
+      "index_list": {
+        "type": "keyword",
+        "index": true
+      },
+      "cur_user_id": {
+        "type": "keyword",
+        "index": true
+      },
+      "is_billing_item": {
+        "type": "boolean"
+      },
+      "billing_file_price": {
+        "type": "keyword",
+        "index": true
+      },
+      "user_group_names": {
+        "type": "keyword",
+        "index": true
+      },
+      "user_group_list": {
+        "type": "nested",
+        "properties": {
+          "group_id": {
+            "type": "keyword"
+          },
+          "group_name": {
+            "type": "keyword",
+            "index": true
+          }
+        }
+      },
+      "hostname": {
+        "type": "keyword",
+        "index": true
+      },
+      "remote_addr": {
+        "type": "keyword",
+        "index": true
+      },
+
+      "pid_value": {
+        "type": "keyword",
+        "index": true
+      },
+      "record_name": {
+        "type": "keyword",
+        "index": true
+      },
+
+      "record_id": {
+        "type": "keyword"
+      },
+      "pid_type": {
+        "type": "keyword"
+      },
+
+      "referrer": {
+        "type": "keyword",
+        "index": true
+      },
+      "search_key": {
+        "type": "keyword",
+        "index": true
+      },
+      "search_type": {
+        "type": "keyword",
+        "index": true
+      }
+    }
+  },
+  "aliases": {
+    "__SEARCH_INDEX_PREFIX__stats-index": {},
+    "__SEARCH_INDEX_PREFIX__stats-celery-task": {
+      "filter": {
+        "term": {
+          "event_type": "celery-task"
+        }
+      }
+    },
+    "__SEARCH_INDEX_PREFIX__stats-file-download": {
+      "filter": {
+        "term": {
+          "event_type": "file-download"
+        }
+      }
+    },
+    "__SEARCH_INDEX_PREFIX__stats-file-preview": {
+      "filter": {
+        "term": {
+          "event_type": "file-preview"
+        }
+      }
+    },
+    "__SEARCH_INDEX_PREFIX__stats-item-create": {
+      "filter": {
+        "term": {
+          "event_type": "item-create"
+        }
+      }
+    },
+    "__SEARCH_INDEX_PREFIX__stats-record-view": {
+      "filter": {
+        "term": {
+          "event_type": "record-view"
+        }
+      }
+    },
+    "__SEARCH_INDEX_PREFIX__stats-search": {
+      "filter": {
+        "term": {
+          "event_type": "search"
+        }
+      }
+    },
+    "__SEARCH_INDEX_PREFIX__stats-top-view": {
+      "filter": {
+        "term": {
+          "event_type": "top-view"
+        }
+      }
+    }
+  }
+}

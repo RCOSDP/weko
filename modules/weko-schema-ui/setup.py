@@ -52,12 +52,12 @@ for reqs in extras_require.values():
 setup_requires = [
     'Babel>=1.3',
     'pytest-runner>=3.0.0,<5',
-    'xmlschema==0.9.30',
+    'xmlschema==1.0.8',
 ]
 
 install_requires = [
-    'Flask-BabelEx>=0.9.2',
-    'xmlschema==0.9.30',
+    'Flask-Babel>=3.0.0',
+    'xmlschema==1.0.8',
     'bibtexparser>=1.0.1',
 ]
 
@@ -98,8 +98,8 @@ setup(
         'invenio_i18n.translations': [
             'messages = weko_schema_ui',
         ],
-        'invenio_assets.bundles': [
-            'weko_schema_ui_js = weko_schema_ui.bundles:js',
+        'invenio_assets.webpack': [
+            'weko_schema_ui = weko_schema_ui.webpack:weko_schema_ui',
         ],
         'invenio_search.mappings': [
             'weko = weko_schema_ui.mappings',

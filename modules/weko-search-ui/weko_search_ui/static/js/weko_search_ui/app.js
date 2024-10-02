@@ -4,11 +4,14 @@ const MESSAGE = {
     ja: "必須項目がありません。",
   }
 }
-require([
-  "jquery",
-  "bootstrap",
-  "node_modules/bootstrap-datepicker/dist/js/bootstrap-datepicker"
-], function () {
+//require([
+//  "jquery",
+//  "bootstrap",
+//  "node_modules/bootstrap-datepicker/dist/js/bootstrap-datepicker"
+//], function () {
+import "bootstrap";
+import $ from "jquery";
+import "bootstrap-datepicker/dist/js/bootstrap-datepicker"
   // loading all the jQuery modules for the not require.js ready scripts
   // everywhere.
   $(function () {
@@ -104,7 +107,7 @@ require([
       return vars;
     }
   });
-});
+//});
 
 function getMessage(messageCode) {
   const defaultLanguage = "en";

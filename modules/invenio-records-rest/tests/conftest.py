@@ -8,8 +8,6 @@
 
 """Pytest configuration."""
 
-from __future__ import absolute_import, print_function
-
 import copy
 import json
 import os
@@ -22,33 +20,35 @@ import uuid
 
 import pytest
 from mock import patch
-from elasticsearch import Elasticsearch
-from elasticsearch import VERSION as ES_VERSION
-from elasticsearch.exceptions import RequestError
-from elasticsearch_dsl import response, Search
-from flask import Flask, url_for, Response
-from flask_login import LoginManager, UserMixin
-from tests.helpers import create_record
 
-from invenio_access.models import ActionRoles, ActionUsers
+from flask import Flask, g, url_for
+from flask_login import LoginManager, UserMixin
+from helpers import create_record
+from invenio_config import InvenioConfigDefault
+from invenio_access.models import ActionRoles
 from invenio_accounts import InvenioAccounts
 from invenio_accounts.testutils import create_test_user
 from invenio_access import InvenioAccess
 from invenio_db import InvenioDB
 from invenio_db import db as db_
 from invenio_i18n import InvenioI18N
-
 from invenio_indexer import InvenioIndexer
 from invenio_indexer.api import RecordIndexer
 from invenio_indexer.signals import before_record_index
 from invenio_pidstore import InvenioPIDStore
 from invenio_records import InvenioRecords
 from invenio_rest import InvenioREST
-from invenio_search import InvenioSearch, RecordsSearch, current_search, \
-    current_search_client
+from invenio_search import (
+    InvenioSearch,
+    RecordsSearch,
+    current_search,
+    current_search_client,
+)
+from invenio_search.engine import search as search_engine
+from invenio_search.errors import IndexAlreadyExistsError
+from invenio_search.engine import dsl
 from sqlalchemy_utils.functions import create_database, database_exists
 from weko_admin.models import AdminSettings,FacetSearchSetting
-from weko_records import WekoRecords
 from weko_records.models import ItemTypeName, ItemType, ItemTypeMapping
 from weko_redis.redis import RedisConnection
 from weko_records_ui.config import (
@@ -60,7 +60,7 @@ from weko_index_tree.models import Index
 
 from invenio_records_rest import InvenioRecordsREST, config
 from invenio_records_rest.facets import terms_filter
-from invenio_records_rest.utils import PIDConverter, deny_all
+from invenio_records_rest.utils import PIDConverter
 from invenio_records_rest.views import create_blueprint_from_app
 
 sys.path.append(os.path.dirname(__file__))
@@ -72,13 +72,12 @@ class TestSearch(RecordsSearch):
     class Meta:
         """Test configuration."""
 
-        index = 'invenio-records-rest'
-        doc_types = None
+        index = "invenio-records-rest"
 
     def __init__(self, **kwargs):
         """Add extra options."""
         super(TestSearch, self).__init__(**kwargs)
-        self._extra.update(**{'_source': {'excludes': ['_access']}})
+        self._extra.update(**{"_source": {"excludes": ["_access"]}})
 
 
 class IndexFlusher(object):
@@ -93,63 +92,20 @@ class IndexFlusher(object):
         current_search.flush_and_refresh(self.search_class.Meta.index)
 
 
-@pytest.yield_fixture(scope='session')
+@pytest.fixture(scope="session")
 def search_class():
     """Search class."""
     yield TestSearch
 
 
-@pytest.yield_fixture()
+@pytest.fixture()
 def search_url():
     """Search class."""
     yield url_for('invenio_records_rest.recid_list')
 
-class MockEs():
-    def __init__(self,**keywargs):
-        self.indices = self.MockIndices()
-        self.es = Elasticsearch()
-        self.cluster = self.MockCluster()
-    def index(self, id="",version="",version_type="",index="",doc_type="",body="",**arguments):
-        pass
-    def delete(self,id="",index="",doc_type="",**kwargs):
-        return Response(response=json.dumps({}),status=500)
-    @property
-    def transport(self):
-        return self.es.transport
-    class MockIndices():
-        def __init__(self,**keywargs):
-            self.mapping = dict()
-        def delete(self,index="", ignore=""):
-            pass
-        def delete_template(self,index=""):
-            pass
-        def create(self,index="",body={},ignore=""):
-            self.mapping[index] = body
-        def put_alias(self,index="", name="", ignore=""):
-            pass
-        def put_template(self,name="", body={}, ignore=""):
-            pass
-        def refresh(self,index=""):
-            pass
-        def exists(self, index="", **kwargs):
-            if index in self.mapping:
-                return True
-            else:
-                return False
-        def flush(self,index="",wait_if_ongoing=""):
-            pass
-        def delete_alias(self, index="", name="",ignore=""):
-            pass
-        
-        # def search(self,index="",doc_type="",body={},**kwargs):
-        #     pass
-    class MockCluster():
-        def __init__(self,**kwargs):
-            pass
-        def health(self, wait_for_status="", request_timeout=0):
-            pass
-@pytest.yield_fixture()
-def app(request):
+
+@pytest.fixture()
+def app(request, search_class):
     """Flask application fixture.
 
     Note that RECORDS_REST_ENDPOINTS is used during application creation to
@@ -185,7 +141,7 @@ def app(request):
     This will fully parameterize RECORDS_REST_ENDPOINTS.
     """
     instance_path = tempfile.mkdtemp()
-    app = Flask('testapp', instance_path=instance_path)
+    app = Flask("testapp", instance_path=instance_path)
     app.config.update(
         SECRET_KEY="SECRET_KEY",
         PRESERVE_CONTEXT_ON_EXCEPTION=False,
@@ -205,43 +161,36 @@ def app(request):
         RECORDS_REST_FACETS={
             #search_class.Meta.index: {
             "test-weko": {
-                'aggs': {
-                    'stars': {'terms': {'field': 'stars'}}
-                    #'control_number':{'terms':{'field':'control_number'}}
+                "aggs": {
+                    "stars": {"terms": {"field": "stars"}}
+                    #"control_number":{"terms":{"field":"control_number"}}
                 },
-                'post_filters': {
-                    #'stars': terms_filter('stars'),
-                    'control_number':terms_filter('control_number')
+                "post_filters": {
+                    #"stars": terms_filter("stars"),
+                    "control_number":terms_filter("control_number")
                 },
-                
             }
         },
         RECORDS_REST_SORT_OPTIONS={
-            #search_class.Meta.index: dict(
             "test-weko": dict(
                 year=dict(
-                    fields=['year'],
+                    fields=["year"],
                 ),
                 control_number=dict(
-                    fields=['control_number']
+                    fields=["control_number"]
                 )
             )
         },
-        SERVER_NAME='localhost:5000',
-        SEARCH_INDEX_PREFIX='test-',
+        SERVER_NAME="localhost:5000",
+        SEARCH_INDEX_PREFIX="test-",
         SEARCH_UI_SEARCH_INDEX="{}-weko".format("test"),
-        #SEARCH_UI_SEARCH_INDEX=search_class.Meta.index,
         CACHE_TYPE="redis",
         CACHE_REDIS_DB=0,
         CACHE_REDIS_HOST="redis",
         REDIS_PORT="6379",
         ACCOUNTS_SESSION_REDIS_DB_NO=1,
-        # SQLALCHEMY_DATABASE_URI=os.environ.get(
-        #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'
-        # ),
-        #SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-        #                                  'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
-        SQLALCHEMY_DATABASE_URI='postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest',
+        SQLALCHEMY_DATABASE_URI=os.getenv("SQLALCHEMY_DATABASE_URI",
+                                          "postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest"),
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         TESTING=True,
         WEKO_PERMISSION_SUPER_ROLE_USER=WEKO_PERMISSION_SUPER_ROLE_USER,
@@ -250,30 +199,30 @@ def app(request):
         WEKO_RECORDS_UI_LICENSE_DICT=WEKO_RECORDS_UI_LICENSE_DICT,
     )
 
-    #app.config['RECORDS_REST_ENDPOINTS']['recid']['search_class'] = \
+    #app.config["RECORDS_REST_ENDPOINTS"]["recid"]["search_class"] = \
     #    search_class
-    app.config['RECORDS_REST_ENDPOINTS']['recid']['search_index']='test-weko'
-    app.config['RECORDS_REST_ENDPOINTS']['recid']['search_type']='item-v1.0.0'
-    #app.config['RECORDS_REST_ENDPOINTS']['recid']['search_factory_imp']="weko_search_ui.query.es_search_factory"
+    app.config["RECORDS_REST_ENDPOINTS"]["recid"]["search_index"]="test-weko"
+    app.config["RECORDS_REST_ENDPOINTS"]["recid"]["search_type"]="item-v1.0.0"
+    #app.config["RECORDS_REST_ENDPOINTS"]["recid"]["search_factory_imp"]="weko_search_ui.query.es_search_factory"
 
     # Parameterize application.
-    if hasattr(request, 'param'):
-        if 'endpoint' in request.param:
-            app.config['RECORDS_REST_ENDPOINTS']['recid'].update(
-                request.param['endpoint'])
-        if 'records_rest_endpoints' in request.param:
-            original_endpoint = app.config['RECORDS_REST_ENDPOINTS']['recid']
-            del app.config['RECORDS_REST_ENDPOINTS']['recid']
+    if hasattr(request, "param"):
+        if "endpoint" in request.param:
+            app.config["RECORDS_REST_ENDPOINTS"]["recid"].update(
+                request.param["endpoint"])
+        if "records_rest_endpoints" in request.param:
+            original_endpoint = app.config["RECORDS_REST_ENDPOINTS"]["recid"]
+            del app.config["RECORDS_REST_ENDPOINTS"]["recid"]
             for new_endpoint_prefix, new_endpoint_value in \
-                    request.param['records_rest_endpoints'].items():
+                    request.param["records_rest_endpoints"].items():
                 new_endpoint = dict(original_endpoint)
                 new_endpoint.update(new_endpoint_value)
-                app.config['RECORDS_REST_ENDPOINTS'][new_endpoint_prefix] = \
+                app.config["RECORDS_REST_ENDPOINTS"][new_endpoint_prefix] = \
                     new_endpoint
-        if 'max_result_window' in request.param:
-            app.config['RECORDS_REST_ENDPOINTS']['recid']['max_result_window'] = request.param['max_result_window']
+        if "max_result_window" in request.param:
+            app.config["RECORDS_REST_ENDPOINTS"]["recid"]["max_result_window"] = request.param["max_result_window"]
 
-    app.url_map.converters['pid'] = PIDConverter
+    app.url_map.converters["pid"] = PIDConverter
     InvenioAccounts(app)
     InvenioAccess(app)
     InvenioDB(app)
@@ -282,11 +231,9 @@ def app(request):
     InvenioIndexer(app)
     InvenioI18N(app)
     InvenioPIDStore(app)
-    
-    WekoRecords(app)
+    InvenioConfigDefault(app)
+    InvenioI18N(app)
     search = InvenioSearch(app)
-    #search = InvenioSearch(app, client=MockEs())
-    #search.register_mappings(search_class.Meta.index, 'mock_module.mappings')
     InvenioRecordsREST(app)
     app.register_blueprint(create_blueprint_from_app(app))
 
@@ -297,11 +244,13 @@ def app(request):
     shutil.rmtree(instance_path)
 
 
-@pytest.yield_fixture()
+@pytest.fixture()
 def db(app):
     """Database fixture."""
-    if not database_exists(str(db_.engine.url)) and \
-            app.config['SQLALCHEMY_DATABASE_URI'] != 'sqlite://':
+    if (
+        not database_exists(str(db_.engine.url))
+        and app.config["SQLALCHEMY_DATABASE_URI"] != "sqlite://"
+    ):
         create_database(db_.engine.url)
     db_.create_all()
 
@@ -311,13 +260,13 @@ def db(app):
     db_.drop_all()
 
 
-@pytest.yield_fixture()
-def es(app):
-    """Elasticsearch fixture."""
+@pytest.fixture()
+def search(app):
+    """Search engine fixture."""
     list(current_search.delete(ignore=[404]))
     try:
         list(current_search.create())
-    except RequestError:
+    except (search_engine.RequestError, IndexAlreadyExistsError):
         list(current_search.delete(ignore=[404]))
         list(current_search.create(ignore=[400]))
     current_search_client.indices.refresh()
@@ -325,7 +274,7 @@ def es(app):
     list(current_search.delete(ignore=[404]))
 
 @pytest.fixture()
-def esindex(app):
+def search_index(app):
     with open("tests/data/item-v1.0.0.json","r") as f:
         mapping = json.load(f)
         
@@ -358,59 +307,41 @@ def account_redis(app):
     return redis_connection
 
 
-def record_indexer_receiver(sender, json=None, record=None, index=None,
-                            **kwargs):
+def record_indexer_receiver(sender, json=None, record=None, index=None, **kwargs):
     """Mock-receiver of a before_record_index signal."""
-    if ES_VERSION[0] == 2:
-        suggest_byyear = {}
-        suggest_byyear['context'] = {
-            'year': json['year']
-        }
-        suggest_byyear['input'] = [json['title'], ]
-        suggest_byyear['output'] = json['title']
-        suggest_byyear['payload'] = copy.deepcopy(json)
+    suggest_byyear = {}
+    suggest_byyear["contexts"] = {"year": [str(json["year"])]}
+    suggest_byyear["input"] = [
+        json["title"],
+    ]
 
-        suggest_title = {}
-        suggest_title['input'] = [json['title'], ]
-        suggest_title['output'] = json['title']
-        suggest_title['payload'] = copy.deepcopy(json)
-
-        json['suggest_byyear'] = suggest_byyear
-        json['suggest_title'] = suggest_title
-
-    elif ES_VERSION[0] >= 5:
-        suggest_byyear = {}
-        suggest_byyear['contexts'] = {
-            'year': [str(json['year'])]
-        }
-        suggest_byyear['input'] = [json['title'], ]
-
-        suggest_title = {}
-        suggest_title['input'] = [json['title'], ]
-        json['suggest_byyear'] = suggest_byyear
-        json['suggest_title'] = suggest_title
-
+    suggest_title = {}
+    suggest_title["input"] = [
+        json["title"],
+    ]
+    json["suggest_byyear"] = suggest_byyear
+    json["suggest_title"] = suggest_title
     return json
 
 
-@pytest.yield_fixture()
-def indexer(app, es):
+@pytest.fixture()
+def indexer(app, search):
     """Create a record indexer."""
     InvenioIndexer(app)
     before_record_index.connect(record_indexer_receiver, sender=app)
     yield RecordIndexer()
 
 
-@pytest.yield_fixture(scope='session')
+@pytest.fixture(scope="session")
 def test_data():
     """Load test records."""
-    path = 'data/testrecords.json'
+    path = "data/testrecords.json"
     with open(join(dirname(__file__), path)) as fp:
         records = json.load(fp)
     yield records
 
 
-@pytest.yield_fixture()
+@pytest.fixture()
 def test_records(db, test_data):
     """Load test records."""
     result = []
@@ -420,8 +351,8 @@ def test_records(db, test_data):
     yield result
 
 
-@pytest.yield_fixture()
-def indexed_records(app, esindex, test_records):
+@pytest.fixture()
+def indexed_records(app, search_index, test_records):
     """Get a function to wait for records to be flushed to index."""
     InvenioIndexer(app)
     before_record_index.connect(record_indexer_receiver, sender=app)
@@ -486,7 +417,7 @@ def register_record(id, indexer, index_path):
     return pid, record
 
 @pytest.fixture()
-def indexed_10records(app, db, esindex, item_type, indexes):
+def indexed_10records(app, db, search_index, item_type, indexes):
     index_path = indexes.id
     result = []
     InvenioIndexer(app)
@@ -499,7 +430,7 @@ def indexed_10records(app, db, esindex, item_type, indexes):
     return result
 
 @pytest.fixture()
-def indexed_100records(app, db, esindex, item_type,indexes):
+def indexed_100records(app, db, search_index, item_type,indexes):
     index_path = indexes.id
     result = []
     InvenioIndexer(app)
@@ -508,24 +439,26 @@ def indexed_100records(app, db, esindex, item_type,indexes):
         pid, record = register_record(i, indexer, index_path)
         result.append((pid,record))
     db.session.commit()
-    current_search.flush_and_refresh(index='test-weko')
+    current_search.flush_and_refresh(index="test-weko")
     
     return result
 
 
-@pytest.yield_fixture(scope='session')
+@pytest.yield_fixture(scope="session")
 def test_patch():
     """A JSON patch."""
-    yield [{'op': 'replace', 'path': '/year', 'value': 1985}]
+    yield [{"op": "replace", "path": "/year", "value": 1985}]
 
 
-@pytest.yield_fixture
+@pytest.fixture()
 def default_permissions(app):
     """Test default deny all permission."""
-    for key in ['RECORDS_REST_DEFAULT_CREATE_PERMISSION_FACTORY',
-                'RECORDS_REST_DEFAULT_UPDATE_PERMISSION_FACTORY',
-                'RECORDS_REST_DEFAULT_DELETE_PERMISSION_FACTORY',
-                'RECORDS_REST_DEFAULT_READ_PERMISSION_FACTORY']:
+    for key in [
+        "RECORDS_REST_DEFAULT_CREATE_PERMISSION_FACTORY",
+        "RECORDS_REST_DEFAULT_UPDATE_PERMISSION_FACTORY",
+        "RECORDS_REST_DEFAULT_DELETE_PERMISSION_FACTORY",
+        "RECORDS_REST_DEFAULT_READ_PERMISSION_FACTORY",
+    ]:
         app.config[key] = getattr(config, key)
 
     lm = LoginManager(app)
@@ -537,14 +470,19 @@ def default_permissions(app):
 
     @lm.request_loader
     def load_user(request):
-        uid = request.args.get('user', type=int)
+        uid = request.args.get("user", type=int)
         if uid:
             return User(uid)
         return None
 
+    @app.after_request
+    def logout(response):
+        g.pop("_login_user", None)
+        return response
+
     yield app
 
-    app.extensions['invenio-records-rest'].reset_permission_factories()
+    app.extensions["invenio-records-rest"].reset_permission_factories()
 
 @pytest.fixture()
 def search_user(app, db):
@@ -559,24 +497,14 @@ def search_user(app, db):
     return {"obj":test_user, "email":user_email}
 
 @pytest.fixture()
-def mock_es_execute():
+def mock_search_execute():
     def _dummy_response(data):
         if isinstance(data, str):
             with open(data, "r") as f:
                 data = json.load(f)
-        dummy=response.Response(Search(), data)
+        dummy=dsl.response.Response(dsl.Search(), data)
         return dummy
     return _dummy_response
-
-@pytest.fixture()
-def item_type_mapping(db):
-    path = "data/itemtypemapping.json"
-
-    with open(join(dirname(__file__), path), "r") as f:
-        data = json.load(f)
-    with db.session.begin_nested():
-        item=ItemTypeMapping(**data)
-        db.session.add(item)
 
 @pytest.fixture()
 def item_type(db):

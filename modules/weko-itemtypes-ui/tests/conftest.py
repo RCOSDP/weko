@@ -39,22 +39,18 @@ from click.testing import CliRunner
 from flask import Blueprint, Flask
 from flask_assets import assets
 from flask_admin import Admin
-from flask_babelex import Babel
+from flask_babel import Babel
 from flask_menu import Menu
 from invenio_access import InvenioAccess
 from invenio_access.models import ActionRoles, ActionUsers
 from invenio_accounts import InvenioAccounts
 from invenio_accounts.models import Role, User
 from invenio_accounts.testutils import create_test_user, login_user_via_session
-from invenio_accounts.views.settings import blueprint as invenio_accounts_blueprint
 from invenio_admin import InvenioAdmin
-from invenio_admin.views import blueprint as invenio_admin_blueprint
 from invenio_assets import InvenioAssets
-from invenio_assets.cli import collect, npm
 from invenio_cache import InvenioCache
 from invenio_communities import InvenioCommunities
 from invenio_communities.models import Community
-from invenio_communities.views.ui import blueprint as invenio_communities_blueprint
 from invenio_db import InvenioDB
 from invenio_db import db as db_
 from invenio_deposit import InvenioDeposit
@@ -83,7 +79,6 @@ from invenio_records_rest import InvenioRecordsREST
 from invenio_rest import InvenioREST
 from invenio_search import InvenioSearch, RecordsSearch, current_search, current_search_client
 from invenio_stats import InvenioStats
-from invenio_stats.config import SEARCH_INDEX_PREFIX as index_prefix
 from invenio_theme import InvenioTheme
 from kombu import Exchange, Queue
 from mock import patch
@@ -141,7 +136,7 @@ import tempfile
 
 import pytest
 from flask import Flask
-from flask_babelex import Babel
+from flask_babel import Babel
 from invenio_assets import InvenioAssets
 from invenio_i18n import InvenioI18N
 from invenio_theme import InvenioTheme

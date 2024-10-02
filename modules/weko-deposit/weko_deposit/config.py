@@ -205,7 +205,7 @@ WEKO_DEPOSIT_BIBLIOGRAPHIC_INFO_SYS_KEY = [
 """Bibliographic information sys key."""
 
 WEKO_DEPOSIT_ES_PARSING_ERROR_PROCESS_ENABLE = True
-"""Allow reindex data when catching parsing error from ElasticSearch."""
+"""Allow reindex data when catching parsing error from search engine."""
 
 WEKO_DEPOSIT_ES_PARSING_ERROR_KEYWORD = 'ElasticsearchParseException'
-"""Parsing error's Keyword in Elasticsearch exception info."""
+"""Parsing error's Keyword in search engine exception info."""

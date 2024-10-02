@@ -31,8 +31,10 @@ the secret key is leaked, it is imperative that a new secret key is created.
 
 Sessions
 --------
-Server-side session data is currently stored in Redis, you must therefore
-configure where your Redis instance is located using:
+Server-side session data can be saved in different data stores (e.g. Redis),
+you must therefore provide a factory that returns the KV session store object:
+
+.. autodata:: invenio_accounts.config.ACCOUNTS_SESSION_STORE_FACTORY
 
 .. autodata:: invenio_accounts.config.ACCOUNTS_SESSION_REDIS_URL
 
@@ -111,6 +113,10 @@ by configuring a Celery Beat schedule similar to this:
             'task': 'invenio_accounts.tasks.clean_session_table',
             'schedule': timedelta(days=1),
         },
+        'delete_login_ips': {
+            'task': 'invenio_accounts.tasks.delete_ips',
+            'schedule': timedelta(days=30),
+        }
     }
 
 Templates
@@ -123,6 +129,8 @@ login, logout, email confirmations etc. Here are some few of the possiblities:
 .. autodata:: invenio_accounts.config.SECURITY_REGISTER_USER_TEMPLATE
 
 .. autodata:: invenio_accounts.config.SECURITY_RESET_PASSWORD_TEMPLATE
+
+.. autodata:: invenio_accounts.config.SECURITY_CHANGE_PASSWORD_TEMPLATE
 
 .. autodata:: invenio_accounts.config.SECURITY_FORGOT_PASSWORD_TEMPLATE
 

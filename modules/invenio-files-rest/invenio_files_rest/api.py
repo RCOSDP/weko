@@ -16,7 +16,7 @@
 """API for invenio files rest."""
 
 from flask import current_app, render_template
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 from invenio_mail.api import send_mail
 from weko_accounts.api import get_user_info_by_role_name
 from weko_admin.models import AdminLangSettings

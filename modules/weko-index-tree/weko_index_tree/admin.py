@@ -25,7 +25,7 @@ import sys
 
 from flask import abort, current_app, flash, jsonify, request, session, url_for
 from flask_admin import BaseView, expose
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 from flask_wtf import FlaskForm
 from invenio_db import db
 

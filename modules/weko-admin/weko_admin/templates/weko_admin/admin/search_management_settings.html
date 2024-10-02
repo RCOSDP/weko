@@ -22,16 +22,16 @@
 
 {%- block css %}
   {{ super() }}
-  {% assets "weko_admin_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
-  {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {{ webpack['admin_css_css.css']}}
+  {{ webpack['theme-css-buttons.css']}}
   <link href="{{ url_for('static', filename='css/weko_admin/jstree_themes/jstree.style.min.css') }}" rel="stylesheet">
 {%- endblock css %}
 
 {%- block javascript %}
   {{ super() }}
-  {% assets "weko_admin_angular_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_admin_search_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_admin_ng_js_tree" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {{ webpack['angular_js.js']}}
+  {{ webpack['admin_js_search_management_js.js']}}
+  {{ webpack['admin_js_weko_admin_ng_js_tree_js.js']}}
 {%- endblock javascript %}
 
 {%- block body %}

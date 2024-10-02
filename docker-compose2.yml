@@ -69,9 +69,7 @@ services:
       - INVENIO_ROLE_CONTRIBUTOR=Contributor
       - INVENIO_ROLE_COMMUNITY=Community Administrator
       # production or development
-      # - FLASK_ENV=development
-      - FLASK_ENV=production
-      # - FLASK_DEBUG=True
+      - FLASK_DEBUG=0
       - SEARCH_INDEX_PREFIX=tenant1
       #- INVENIO_DB_POOL_CLASS=QueuePool
       - INVENIO_DB_POOL_CLASS=NullPool
@@ -285,7 +283,7 @@ services:
 
   postgresql:
     restart: "always"
-    image: postgres:12
+    image: postgres:14
 #    command: postgres -c log_destination=stderr -c log_statement=all -c log_connections=on -c log_disconnections=on
     environment:
       - POSTGRES_USER=invenio

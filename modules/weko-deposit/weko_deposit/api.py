@@ -26,10 +26,12 @@ from collections import OrderedDict
 from elasticsearch.exceptions import ElasticsearchException
 from elasticsearch.helpers import bulk
 from datetime import datetime, timezone,date
-from dictdiffer import dot_lookup
-from dictdiffer.merge import Merger, UnresolvedConflictsException
 from typing import NoReturn, Union
 from tika import parser
+from redis import RedisError
+from dictdiffer import dot_lookup
+from dictdiffer.merge import Merger, UnresolvedConflictsException
+from invenio_search.engine import search
 from redis import RedisError
 from flask import abort, current_app, json, request, session
 from flask_security import current_user
@@ -42,8 +44,8 @@ from invenio_files_rest.models import (
     Bucket, Location, MultipartObject, ObjectVersion, Part)
 from invenio_i18n.ext import current_i18n
 from invenio_indexer.api import RecordIndexer
-from invenio_pidrelations.contrib.records import RecordDraft
-from invenio_pidrelations.contrib.versioning import PIDVersioning
+from invenio_pidrelations.contrib.draft import PIDNodeDraft
+from invenio_pidrelations.contrib.versioning import PIDNodeVersioning
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidrelations.serializers.utils import serialize_relations
 from invenio_pidstore.errors import PIDDoesNotExistError, PIDInvalidAction
@@ -52,6 +54,8 @@ from invenio_records.models import RecordMetadata
 from invenio_records_files.api import FileObject, Record
 from invenio_records_files.models import RecordsBuckets
 from invenio_records_rest.errors import PIDResolveRESTError
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm.attributes import flag_modified
 
 from weko_admin.models import AdminSettings
 from weko_index_tree.api import Indexes
@@ -218,8 +222,6 @@ class WekoIndexer(RecordIndexer):
             None
         """
         self.es_index = current_app.config['SEARCH_UI_SEARCH_INDEX']
-        self.es_doc_type = current_app.config['INDEXER_DEFAULT_DOCTYPE']
-        self.file_doc_type = current_app.config['INDEXER_FILE_DOC_TYPE']
 
     def upload_metadata(self, jrc, item_id, revision_id, skip_files=False):
         """Upload the item metadata to ElasticSearch.
@@ -241,7 +243,6 @@ class WekoIndexer(RecordIndexer):
         es_info = {
             "id": str(item_id),
             "index": self.es_index,
-            "doc_type": self.es_doc_type
         }
         body = {
             "version": revision_id + 1,
@@ -276,12 +277,9 @@ class WekoIndexer(RecordIndexer):
             weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION', count=i,
                         element=lst)
             try:
-                self.client.delete(
-                    id=str(lst),
-                    index=self.es_index,
-                    doc_type=self.file_doc_type,
-                    routing=parent_id
-                )
+                self.client.delete(id=str(lst),
+                                    index=self.es_index,
+                                    routing=parent_id)
             except ElasticsearchException as ex:
                 weko_logger(key='WEKO_DEPOSIT_FAILED_DELETE_FILE_INDEX',
                             record_id=str(lst), ex=ex)
@@ -321,8 +319,7 @@ class WekoIndexer(RecordIndexer):
 
         result = self.client.update(
             index=self.es_index,
-            doc_type=self.es_doc_type,
-            id=id,
+            id=str(version.get('id')),
             body=body, ignore=[400, 404]
         )
         weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=result)
@@ -392,7 +389,6 @@ class WekoIndexer(RecordIndexer):
                         branch='update_revision is True')
             result = self.client.update(
                 index=self.es_index,
-                doc_type=self.es_doc_type,
                 id=str(record.id),
                 version=record.revision_id,
                 body=body
@@ -405,7 +401,6 @@ class WekoIndexer(RecordIndexer):
                         branch='update_revision is False')
             result = self.client.update(
                 index=self.es_index,
-                doc_type=self.es_doc_type,
                 id=str(record.id),
                 body=body
             )
@@ -434,9 +429,7 @@ class WekoIndexer(RecordIndexer):
         """
         self.get_es_index()
 
-        self.client.delete(id=str(record.id),
-                            index=self.es_index,
-                            doc_type=self.es_doc_type)
+        self.client.delete(id=str(record.id), index=self.es_index)
 
     def delete_by_id(self, uuid):
         """Delete a record by id.
@@ -448,11 +441,10 @@ class WekoIndexer(RecordIndexer):
         """
         try:
             self.get_es_index()
-            self.client.delete(
-                id=str(uuid),
-                index=self.es_index,
-                doc_type=self.es_doc_type)
-        except ElasticsearchException as ex:
+            self.client.delete(id=str(uuid),
+                                index=self.es_index,
+                                doc_type=self.es_doc_type)
+        except search.OpenSearchException as ex:
             weko_logger(key='WEKO_DEPOSIT_FAILED_DELETE_RECORD_BY_ID',
                         uuid=str(uuid), ex=ex)
             # raise WekoDepositIndexerError(ex=ex,
@@ -477,11 +469,8 @@ class WekoIndexer(RecordIndexer):
             }
         }
         self.get_es_index()
-        search_result = self.client.count(
-            index=self.es_index,
-            doc_type=self.es_doc_type,
-            body=search_query
-        )
+        search_result = self.client.count(index=self.es_index,
+                                            body=search_query)
         result = search_result.get('count')
         weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=result)
         return result
@@ -531,11 +520,10 @@ class WekoIndexer(RecordIndexer):
                 weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=None)
                 return None
 
-        ind, doc_type = self.record_to_index({})
+        ind = self.record_to_index({})
 
-        search_result = self.client.search(
-            index=ind, doc_type=doc_type,
-            body=search_query, scroll='1m')
+        search_result = self.client.search(index=ind,
+                                            body=search_query, scroll='1m')
         if search_result:
             weko_logger(key='WEKO_COMMON_IF_ENTER',
                         branch='search_result is True')
@@ -561,7 +549,6 @@ class WekoIndexer(RecordIndexer):
 
     def get_metadata_by_item_id(self, item_id):
         """Get metadata of item by id from Elasticsearch.
-
         This method retrieves the metadata of an item from Elasticsearch by
         its ID.
 
@@ -572,11 +559,8 @@ class WekoIndexer(RecordIndexer):
             str: The response from Elasticsearch after attempting the get.
         """
         self.get_es_index()
-        result = self.client.get(
-            index=self.es_index,
-            doc_type=self.es_doc_type,
-            id=str(item_id)
-        )
+        result = self.client.get(index=self.es_index,
+                                id=str(item_id))
         weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=result)
         return result
 
@@ -602,7 +586,6 @@ class WekoIndexer(RecordIndexer):
 
         result = self.client.update(
             index=self.es_index,
-            doc_type=self.es_doc_type,
             id=str(feedback_mail.get('id')),
             body=body
         )
@@ -627,7 +610,6 @@ class WekoIndexer(RecordIndexer):
 
         result = self.client.update(
             index=self.es_index,
-            doc_type=self.es_doc_type,
             id=str(author_link.get('id')),
             body=body
         )
@@ -650,7 +632,6 @@ class WekoIndexer(RecordIndexer):
         body = {'doc': {'_item_metadata': dc}}
         result = self.client.update(
             index=self.es_index,
-            doc_type=self.es_doc_type,
             id=str(item_id),
             body=body
         )
@@ -658,7 +639,7 @@ class WekoIndexer(RecordIndexer):
         return result
 
     def __build_bulk_es_data(self, updated_data):
-        """Build ElasticSearch data.
+        """Build search engine data.
 
         This method builds the data to be used in the bulk update operation.
 
@@ -673,7 +654,6 @@ class WekoIndexer(RecordIndexer):
             es_data = {
                 "_id": str(record.get('_id')),
                 "_index": self.es_index,
-                "_type": self.es_doc_type,
                 "_source": record.get('_source'),
             }
             weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=es_data)
@@ -693,8 +673,7 @@ class WekoIndexer(RecordIndexer):
         if es_data:
             weko_logger(key='WEKO_COMMON_IF_ENTER',
                         branch='es_data is not None')
-            success, failed = bulk(self.client, es_data)
-
+            success, failed = search.helpers.bulk(self.client, es_data)
             if len(failed) > 0:
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
                             branch='failed is not None')
@@ -754,7 +733,6 @@ class WekoDeposit(Deposit):
 
     def is_published(self):
         """Check if deposit is published.
-
         This method checks if the deposit is published.
 
         Args:
@@ -1201,8 +1179,8 @@ class WekoDeposit(Deposit):
 
         recid = PersistentIdentifier.get('recid', record_id)
         depid = PersistentIdentifier.get('depid', record_id)
-        PIDVersioning(parent=parent_pid).insert_draft_child(child=recid)
-        RecordDraft.link(recid, depid)
+        PIDNodeVersioning(pid=parent_pid).insert_draft_child(child_pid=recid)
+        PIDNodeDraft(pid=recid).insert_child(depid)
         # Update this object_uuid for item_id of activity.
         if session and 'activity_info' in session:
             weko_logger(key='WEKO_COMMON_IF_ENTER',
@@ -1355,7 +1333,7 @@ class WekoDeposit(Deposit):
         1. Get deposit's bucket then set the workflow's storage location to\
             the bucket's default location.
         2. Update the item metadata in the database.
-        3. Register the item metadata in elasticsearch.
+        3. Register the item metadata in search engine.
         4. Update the version_id of records_metadata in the database.
 
         Args:
@@ -1398,7 +1376,6 @@ class WekoDeposit(Deposit):
                         weko_logger(key='WEKO_COMMON_IF_ENTER',
                                     branch='workflow.location is in activity')
                         workflow_storage_location = activity.workflow.location
-
                 if workflow_storage_location is None:
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
                                 branch='workflow_storage_location is None')
@@ -1419,7 +1396,6 @@ class WekoDeposit(Deposit):
             if self.jrc and len(self.jrc):
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
                             branch='jrc is not empty')
-
                 if record and record.json and '_oai' in record.json:
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
                                 branch='_oai is in record.json')
@@ -1463,8 +1439,7 @@ class WekoDeposit(Deposit):
                         weko_logger(key='WEKO_COMMON_IF_ENTER',
                                     branch='feedback_mail_list is None')
                         self.remove_feedback_mail()
-
-                except ElasticsearchException as ex:
+                except search.TransportError as ex:
                     weko_logger(
                         key='WEKO_DEPOSIT_FAILED_UPLOAD_FILE_CONTENT_TO_ELASTICSEARCH',
                         uuid=self.pid.object_uuid, ex=ex)
@@ -1617,7 +1592,8 @@ class WekoDeposit(Deposit):
 
         # Check that there is not a newer draft version for this record
         # and this is the latest version
-        versioning = PIDVersioning(child=pid)
+        parent_pid = PIDNodeVersioning(pid=pid).parents.one_or_none()
+        versioning = PIDNodeVersioning(pid=parent_pid)
         record = WekoDeposit.get_record(pid.object_uuid)
         if not pid.status == PIDStatus.REGISTERED:
             weko_logger(key='WEKO_COMMON_IF_ENTER',
@@ -1662,10 +1638,10 @@ class WekoDeposit(Deposit):
         depid = PersistentIdentifier.get(
             'depid', str(data['_deposit']['id']))
 
-        PIDVersioning(
-            parent=versioning.parent).insert_draft_child(
+        PIDNodeVersioning(
+            pid=parent_pid).insert_draft_child(
             child=recid)
-        RecordDraft.link(recid, depid)
+        PIDNodeDraft(pid=recid).insert_child(depid)
         if is_draft:
             weko_logger(key='WEKO_COMMON_IF_ENTER',
                         branch='is_draft is True')
@@ -1768,7 +1744,7 @@ class WekoDeposit(Deposit):
                             # update file_files's json
                             file.obj.file.update_json(lst)
 
-                            # upload file metadata to Elasticsearch
+                            # upload file metadata to search engine
                             try:
                                 mimetypes = current_app.config[
                                     'WEKO_MIMETYPE_WHITELIST_FOR_ES']
@@ -1800,7 +1776,6 @@ class WekoDeposit(Deposit):
 
                                 content.update({"attachment": attachment})
                                 contents.append(content)
-
                             except WekoDepositError as ex:
                                 # raise
                                 pass
@@ -1815,7 +1790,6 @@ class WekoDeposit(Deposit):
 
     def get_file_data(self):
         """Get file data.
-
         This method gets the file data from the item metadata.
 
         Args:
@@ -1891,7 +1865,6 @@ class WekoDeposit(Deposit):
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
                             branch='deleted_items is not None')
                 weko_logger(key='WEKO_COMMON_FOR_START')
-
                 for i, key in enumerate(self.data.get('deleted_items')):
                     weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
                                 count=i, element=key)
@@ -2120,7 +2093,6 @@ class WekoDeposit(Deposit):
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
                                 branch='title_value_lst_key in path')
                     weko_logger(key='WEKO_COMMON_FOR_START')
-
                     for i, p in enumerate(path["title_value_lst_key"]):
                         weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
                                     count=i, element=p)
@@ -2136,7 +2108,6 @@ class WekoDeposit(Deposit):
                                         branch=f"p in {temp_record}")
                             title = temp_record[p]
                     weko_logger(key='WEKO_COMMON_FOR_END')
-
                 if "title_lang_lst_key" in path:
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
                                 branch='title_lang_lst_key in path')
@@ -2193,7 +2164,6 @@ class WekoDeposit(Deposit):
                         else:
                             deleted_items.append(k)
                     weko_logger(key='WEKO_COMMON_FOR_END')
-
                     rtn_data["deleted_items"] = deleted_items
                     rtn_data["$schema"] = schema
                     rtn_data["title"] = title if title else activity.title
@@ -2481,7 +2451,6 @@ class WekoDeposit(Deposit):
                                 f"and {value.get('pointLatitude')} is list")
                 lat_len = len(value.get("pointLatitude"))
                 weko_logger(key='WEKO_COMMON_FOR_START')
-
                 for _idx, _value in enumerate(value.get("pointLongitude")):
                     weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
                                 count=_idx, element=_value)
@@ -2935,7 +2904,6 @@ class WekoDeposit(Deposit):
             for i, content in enumerate(self.jrc['content']):
                 weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
                             count=i, element=content)
-
                 if content.get('file'):
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
                                 branch=f"{content.get('file')} is not empty")
@@ -2981,6 +2949,7 @@ class WekoRecord(Record):
         weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=obj)
         return obj
 
+    # TODO:
     @property
     def hide_file(self):
         """Whether the file property is hidden.
@@ -3245,7 +3214,6 @@ class WekoRecord(Record):
         weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=result)
         return result
 
-
     @property
     def items_show_list(self):
         """Return the item show list.
@@ -3399,6 +3367,7 @@ class WekoRecord(Record):
         weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=items)
         return items
 
+    # TODO:
     @property
     def display_file_info(self):
         """Display file information.
@@ -3421,6 +3390,7 @@ class WekoRecord(Record):
                         count=i, element=lst)
             key = lst[0]
             val = self.get(key)
+
             option = meta_options.get(key, {}).get('option')
             if not val or not option:
                 weko_logger(key='WEKO_COMMON_IF_ENTER',
@@ -3772,7 +3742,8 @@ class WekoRecord(Record):
         Returns:
             pid_value of parent.
         """
-        pid_ver = PIDVersioning(child=self.pid_recid)
+        parent_pid = PIDNodeVersioning(pid=self.pid_recid).parents.one_or_none()
+        pid_ver = PIDNodeVersioning(pid=parent_pid)
         # if pid_ver:
         weko_logger(key='WEKO_COMMON_IF_ENTER',
                     branch='pid_ver is not empty')
@@ -4079,7 +4050,6 @@ class _FormatSysCreator:
         Returns:
             NoReturn: _description_
         """
-
         def _run_format_affiliation(affiliation_max, affiliation_min,
                                     languages,
                                     creator_lists,
@@ -4155,7 +4125,6 @@ class _FormatSysCreator:
                                         creator_list_temp)
             weko_logger(key='WEKO_COMMON_FOR_END')
         if isinstance(creators, dict):
-
             weko_logger(key='WEKO_COMMON_IF_ENTER',
                         branch=f"{creators} is dict")
             creator_list_temp = []
@@ -4239,7 +4208,6 @@ class _FormatSysCreator:
                     weko_logger(key='WEKO_COMMON_IF_ENTER',
                                 branch=f"{v} == language")
                     creator_list_temp.append(creator_data)
-
         weko_logger(key='WEKO_COMMON_FOR_END')
         if count == 0 and not language:
             weko_logger(key='WEKO_COMMON_IF_ENTER',
@@ -4303,7 +4271,6 @@ class _FormatSysCreator:
                 weko_logger(key='WEKO_COMMON_FOR_END')
                 creator_list.append(creator_temp)
         weko_logger(key='WEKO_COMMON_FOR_END')
-
         # Format creators
         formatted_creator_list = []
         self._format_creator_on_creator_popup(creator_list,
@@ -4313,6 +4280,7 @@ class _FormatSysCreator:
         weko_logger(key='WEKO_COMMON_RETURN_VALUE', value=rtn_value)
         return rtn_value
 
+    # TODO:
     def _format_creator_on_creator_popup(self, creators: Union[dict, list],
                                          des_creator: Union[
                                              dict, list]) -> NoReturn:
@@ -4511,7 +4479,6 @@ class _FormatSysCreator:
         for i, lang in enumerate(self.languages):
             weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
                         count=i, element=lang)
-
             self._get_creator_to_show_popup(self.creator, lang,
                                             creator_list)
         weko_logger(key='WEKO_COMMON_FOR_END')
@@ -4581,7 +4548,6 @@ class _FormatSysCreator:
             """
 
             weko_logger(key='WEKO_COMMON_FOR_START')
-
             for i, parent_key in enumerate(list_parent_key):
                 weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
                             count=i, element=parent_key)
@@ -4600,7 +4566,6 @@ class _FormatSysCreator:
             weko_logger(key='WEKO_COMMON_IF_ENTER',
                         branch='creator_names is empty')
             weko_logger(key='WEKO_COMMON_FOR_START')
-
             for i, lang in enumerate(self.languages):
                 weko_logger(key='WEKO_COMMON_FOR_LOOP_ITERATION',
                             count=i, element=lang)

@@ -21,17 +21,19 @@
 {%- extends admin_base_template %}
 
 {%- block css %}
-  {% assets "weko_items_ui_indextree_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
-  {% assets "weko_index_tree_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {{ webpack['items_ui_css_indextree_style.css']}}
+  {{ webpack['index_tree_css_style.css']}}
   {{ super() }}
-  {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
-  {% assets "weko_theme_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {{ webpack['theme-css-buttons.css']}}
+  {{ webpack['theme-css.css']}}
 {%- endblock css %}
 
 {%- block javascript %}
-  {% assets "weko_index_tree_view" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  <script src="{{ url_for('static', filename='js/weko_index_tree/inline.bundle.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/weko_index_tree/polyfills.bundle.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/weko_index_tree/main.bundle.js') }}"></script>
   {{ super() }}
-  {% assets "weko_index_tree_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {{ webpack['index_tree_js_js.js']}}
 {%- endblock javascript %}
 
 {%- block body %}

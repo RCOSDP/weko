@@ -21,24 +21,30 @@
 {%- extends admin_base_template %}
 
 {%- block css %}
-  {% assets "weko_indextree_journal_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
-  {% assets "invenio_deposit_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {{ webpack['indextree_journal_css_style.js']}}
   {{ super() }}
+  {{ webpack['theme-css-buttons.css']}}
+  {{ webpack['admin_css_css.css']}}
+  {{ webpack['deposit_css_css.css']}}
+  {{ webpack['theme-css.css']}}
+  {{ webpack['theme-css-widget.css']}}
   <style>
     body {
     overflow-x:hidden;
     }
   </style>
-  {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
-  {% assets "weko_theme_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 {%- endblock css %}
 
 {%- block javascript %}
-  {% assets "weko_indextree_journal_view" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "invenio_deposit_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+<script src="{{ url_for('static', filename='js/weko_indextree_journal/inline.bundle.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/weko_indextree_journal/polyfills.bundle.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/weko_indextree_journal/main.bundle.js') }}" defer></script>
   {{ super() }}
-  {% assets "invenio_deposit_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_indextree_journal_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {{ webpack['theme-angular.js']}}
+  {{ webpack['theme-schema-form.js']}}
+  {{ webpack['deposit_js_dependencies.js']}}
+  {{ webpack['deposit_js_js.js']}}
+  {{ webpack['indextree_journal_js_js.js']}}
 {%- endblock javascript %}
 
 {%- block body %}
@@ -77,10 +83,10 @@
               record='{{ record | tojson }}'
               schema="{{ jsonschema }}">
               <invenio-records-loading
-                template="{{ url_for('static', filename='node_modules/invenio-records-js/dist/templates/loading.html') }}">
+                template="/assets/node_modules/invenio-records-js/dist/templates/loading.html">
               </invenio-records-loading>
               <invenio-records-alert
-                template="{{ url_for('static', filename='node_modules/invenio-records-js/dist/templates/alert.html') }}">
+                template="/assets/node_modules/invenio-records-js/dist/templates/alert.html">
               </invenio-records-alert>
               <div ng-controller="WekoRecordsCtrl">
                 <div ng-show="false" type="text" id="btn_id" ></div>

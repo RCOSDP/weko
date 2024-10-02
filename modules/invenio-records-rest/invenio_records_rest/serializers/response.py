@@ -10,9 +10,6 @@
 
 Responsible for creating a HTTP response given the output of a serializer.
 """
-
-from __future__ import absolute_import, print_function
-
 import asyncio
 from concurrent.futures.thread import ThreadPoolExecutor
 
@@ -29,17 +26,21 @@ def record_responsify(serializer, mimetype):
     :param mimetype: MIME type of response.
     :returns: Function that generates a record HTTP response.
     """
+
     def view(pid, record, code=200, headers=None, links_factory=None):
         if pid and record:
             response = current_app.response_class(
                 serializer.serialize(pid, record, links_factory=links_factory),
-                mimetype=mimetype)
+                mimetype=mimetype,
+            )
+            response.status_code = code
+            response.cache_control.no_cache = True
             response.set_etag(str(record.revision_id))
             response.last_modified = record.updated
         else:
             response = current_app.response_class(abort(500), mimetype=mimetype)
             response.status_code = code
-        
+
         if headers is not None:
             response.headers.extend(headers)
 
@@ -125,10 +126,16 @@ def search_responsify(serializer, mimetype):
             mapping_dict[str(mapping.model.item_type_id)] = mapping
         return mapping_dict
 
-    def view(pid_fetcher, search_result, code=200, headers=None, links=None,
-             item_links_factory=None):
+    def view(
+        pid_fetcher,
+        search_result,
+        code=200,
+        headers=None,
+        links=None,
+        item_links_factory=None,
+    ):
         if search_result['hits']['hits'] and \
-                len(search_result['hits']['hits']) > 0:
+            len(search_result['hits']['hits']) > 0:
             try:
                 loop = asyncio.get_event_loop()
             except RuntimeError:
@@ -142,10 +149,14 @@ def search_responsify(serializer, mimetype):
                 )
                 loop.run_until_complete(task)
         response = current_app.response_class(
-            serializer.serialize_search(pid_fetcher, search_result,
-                                        links=links,
-                                        item_links_factory=item_links_factory),
-            mimetype=mimetype)
+            serializer.serialize_search(
+                pid_fetcher,
+                search_result,
+                links=links,
+                item_links_factory=item_links_factory,
+            ),
+            mimetype=mimetype,
+        )
         response.status_code = code
         if headers is not None:
             response.headers.extend(headers)
@@ -165,7 +176,10 @@ def add_link_header(response, links):
     :param links: Dictionary of links
     """
     if links is not None:
-        response.headers.extend({
-            'Link': ', '.join([
-                '<{0}>; rel="{1}"'.format(l, r) for r, l in links.items()])
-        })
+        response.headers.extend(
+            {
+                "Link": ", ".join(
+                    ['<{0}>; rel="{1}"'.format(l, r) for r, l in links.items()]
+                )
+            }
+        )

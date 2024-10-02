@@ -28,11 +28,11 @@ from datetime import datetime, timedelta
 from urllib.parse import urlencode
 import pickle
 
+from flask import Response, abort, current_app, jsonify, make_response, request
 from blinker import Namespace
 from celery import chord
-from flask import Response, abort, current_app, jsonify, make_response, request
 from flask_admin import BaseView, expose
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 from flask_login import current_user
 from flask_wtf import FlaskForm
 from weko_admin.api import validate_csrf_header
@@ -53,6 +53,7 @@ from weko_workflow.api import WorkFlow
 from weko_workflow.utils import delete_cache_data, get_cache_data, update_cache_data
 
 from weko_search_ui.api import get_search_detail_keyword
+from weko_search_ui.tasks import import_item
 
 from .config import (
     WEKO_EXPORT_TEMPLATE_BASIC_ID,
@@ -710,21 +711,26 @@ class ItemImportView(BaseView):
                 ),
             },
         )
-
+    
     @expose("/check_import_is_available", methods=["GET"])
     def check_import_available(self):
-        check = is_import_running()
-        if not check:
-            delete_cache_data("import_start_time")
-            return jsonify({"is_available": True})
-        else:
-            return jsonify(
-                {
-                    "is_available": False,
-                    "start_time": get_cache_data("import_start_time"),
-                    "error_id": check,
-                }
-            )
+        try:
+            check = is_import_running()
+
+            if not check:
+                delete_cache_data("import_start_time")
+                return jsonify({"is_available": True})
+            else:
+                return jsonify(
+                    {
+                        "is_available": False,
+                        "start_time": get_cache_data("import_start_time"),
+                        "error_id": check,
+                    }
+                )
+        except Exception as e:
+            current_app.logger.error(f"Error checking import status: {e}")
+            return jsonify({"error": str(e)}), 500
 
 
 

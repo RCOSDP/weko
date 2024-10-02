@@ -6,7 +6,7 @@ from unittest import mock  # python3
 import mock  # python2, after pip install mock
 import pytest
 from flask import Flask, json, jsonify, session, url_for
-from flask_babelex import get_locale, to_user_timezone, to_utc
+from flask_babel import get_locale, to_user_timezone, to_utc
 from flask_login import current_user
 from flask_security import login_user
 from flask_security.utils import login_user

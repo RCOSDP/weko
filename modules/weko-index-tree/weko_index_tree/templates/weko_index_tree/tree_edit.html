@@ -20,14 +20,16 @@
 {%- extends config.WEKO_INDEX_TREE_BASE_TEMPLATE %}
 
 {%- block css %}
-  {% assets "weko_index_tree_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {{ webpack['index_tree_css_style.css']}}
   {{ super() }}
 {%- endblock css %}
 
 {%- block javascript %}
   {{ super() }}
-  {% assets "weko_index_tree_view" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_index_tree_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  <script src="{{ url_for('static', filename='js/weko_index_tree/inline.bundle.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/weko_index_tree/polyfills.bundle.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/weko_index_tree/main.bundle.js') }}" defer></script>
+  {{ webpack['index_tree_js_js.js']}}
 {%- endblock javascript %}
 
 {%- block page_body_tabs %}

@@ -25,7 +25,7 @@ from xml.etree import ElementTree
 
 from blinker import Namespace
 from flask import Blueprint, current_app, flash, jsonify, render_template, request
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 from flask_login import login_required
 from flask_security import current_user
 from flask_wtf import FlaskForm

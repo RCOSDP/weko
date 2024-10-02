@@ -1,0 +1,231 @@
+@import "styles.bundle.css";
+
+.btn-menu {
+    color: #333;
+    background-color: #fff;
+    border-color: #ccc;
+}
+
+.btn-menu:hover {
+    color: #333;
+    background-color: #e6e6e6;
+    border-color: #adadad;
+}
+
+.btn-menu:focus {
+    color: #fff;
+    background-color: #337ab7;
+    border-color: #2e6da4;
+}
+
+.btn-menu:active {
+    color: #fff;
+    background-color: #337ab7;
+    border-color: #2e6da4;
+}
+
+.btn-menu:visited {
+    color: #fff;
+    background-color: #337ab7;
+    border-color: #2e6da4;
+}
+
+.row {
+    margin-top: 5px;
+}
+
+.row>hr {
+    margin: 5px 15px;
+}
+
+.pagination {
+    margin: -10px 0;
+}
+
+.badge {
+    font-size: 10px;
+}
+
+input[type="date"] {
+    width: 180px;
+}
+
+span.indent {
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+dl dd {
+    padding-left: 5px;
+    word-wrap: break-word;
+    word-break: break-all;
+}
+
+.break-word {
+    word-wrap: break-word;
+    word-break: break-all;
+}
+
+.table-bordered th,
+.table-bordered td {
+    word-break: break-all;
+}
+
+.panel_bread .breadcrumb {
+    margin-bottom: 5px;
+}
+
+.close-container {
+    height: 21px;
+}
+
+.flow-root {
+    display: flow-root;
+}
+
+.p-left-5 {
+    padding-left: 5px;
+}
+.p-left-10 {
+    padding-left: 10px;
+}
+.p-top-20 {
+    padding-top: 20px;
+}
+
+.m-top-5, .row-line-space {
+    margin-top: 5px;
+}
+
+.m-top-20 {
+    margin-top: 20px;
+}
+
+.del-col-space {
+    margin-left: -30px;
+}
+
+.max-width-64 {
+    max-width: 64px;
+}
+
+table .license {
+    width: 120px;
+}
+
+div .pre-scrollable {
+  overflow-x: hidden;
+}
+
+td .list-group {
+  margin-bottom: 0;
+}
+
+.list-group .list-group-item .radio {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.fileupload-buttonbar .btn,
+.fileupload-buttonbar .toggle {
+  margin-bottom: 5px;
+}
+
+.fileinput-button {
+  position: relative;
+  overflow: hidden;
+  display: inline-block;
+}
+.fileinput-button input {
+  position: absolute;
+  top: 0;
+  right: 0;
+  margin: 0;
+  opacity: 0;
+  -ms-filter: 'alpha(opacity=0)';
+  font-size: 200px !important;
+  direction: ltr;
+  cursor: pointer;
+}
+
+/* Fixes for IE < 8 */
+@media screen\9 {
+  .fileinput-button input {
+    filter: alpha(opacity=0);
+    font-size: 100%;
+    height: 100%;
+  }
+}
+
+/* For weko index tree */
+tree-internal .tree .folding.weko-node-leaf {display: none;}
+tree-internal .tree .folding.weko-node-empty:before {
+  content: '\25B7';
+  color: #757575;
+}
+tree-internal ul .more {
+  -webkit-text-fill-color: #337ab7;
+  text-decoration: underline;
+}
+tree-internal ul .value-container {
+/*  font-size: 14px; */
+font-size: 15px;
+}
+tree-internal ul .tree {
+  margin-left: 0;
+  padding-left: 1em;
+  text-indent: 0;
+  padding-inline-start: 1em;
+}
+tree-internal .rootless {
+  margin: -1em;
+  padding: -1em;
+  text-indent: 0;
+  padding-inline-start: -1em;
+}
+
+
+
+
+/* For Bootstrap collapse arrow */
+.hide-on-collapsed {
+  display:block
+}
+.panel-toggle.collapsed .hide-on-collapsed,.show-on-collapsed {
+  display:none
+}
+.panel-toggle.collapsed .show-on-collapsed {
+  display:block
+}
+
+/* For weko search ui*/
+.rss_icon {
+    background-color: orange;
+    padding: 5px;
+    padding-top: 3px !important;
+    padding-bottom: 3px !important;
+    text-decoration: none;
+    border-radius: 25%;
+    color: white;
+}
+
+@media print {
+  @page {
+    size: auto;
+    margin: 0;
+  }
+  body {
+    padding: 72px;
+  }
+  a,
+  a:link:after,
+  a:visited {
+    text-decoration: underline;
+  }
+  a[href]:after {
+    content: none !important;
+  }
+  abbr[title]:after {
+    content: none !important;
+  }
+}

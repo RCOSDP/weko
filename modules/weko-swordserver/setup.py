@@ -42,7 +42,7 @@ setup_requires = [
 ]
 
 install_requires = [
-    'Flask-BabelEx>=0.9.3',
+    'Flask-Babel>=3.0.0',
     'sword3common>=0.1.1',
 ]
 

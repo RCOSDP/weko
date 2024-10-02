@@ -29,7 +29,7 @@ from socketserver import DatagramRequestHandler
 
 from redis.exceptions import RedisError
 from flask import current_app, json
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 from flask_login import current_user
 from invenio_accounts.models import Role
 from invenio_db import db
@@ -1431,7 +1431,6 @@ class Indexes(object):
                 }
             }
             es_index = current_app.config['SEARCH_UI_SEARCH_INDEX']
-            es_doc_type = current_app.config['INDEXER_DEFAULT_DOCTYPE']
             query_q = json.dumps(upd_item_sort_q).replace("@index", index_path)
             query_q = json.loads(query_q)
             indexer = RecordIndexer()
@@ -1451,7 +1450,6 @@ class Indexes(object):
                         }
                         indexer.client.update(
                             index=es_index,
-                            doc_type=es_doc_type,
                             id=h.get("_id"),
                             body=body
                         )

@@ -24,17 +24,19 @@
 
 {%- block css %}
   {{ super() }}
-  {% assets "invenio_search_ui_search_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
-  {% assets "weko_search_ui_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {{ webpack['search_ui_theme.css']}}
+  {{ webpack['search-ui-css-weko-search-ui.css']}}
 {%- endblock css %}
 
 {%- block javascript %}
   {{ super() }}
-  {% assets "weko_theme_js_treeview" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_theme_js_top_page" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "invenio_search_ui_search_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_search_ui_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_search_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  <script src="{{ url_for('static', filename='js/weko_theme/inline.bundle.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/weko_theme/polyfills.bundle.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/weko_theme/main.bundle.js') }}" defer></script>
+  {{ webpack['theme-js-top-page.js']}}
+  {{ webpack['search_ui_app.js']}}
+  {{ webpack['search-ui-js-js-dependencies-datepicker.js']}}
+  {{ webpack['search-ui-js-weko-search-ui.js']}}
 {%- endblock javascript %}
 
 {%- block page_body_tabs %}

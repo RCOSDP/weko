@@ -27,7 +27,7 @@ from datetime import datetime, timedelta
 from celery import shared_task
 from celery.utils.log import get_task_logger
 from flask import current_app, render_template
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 from flask_mail import Attachment
 from invenio_mail.api import send_mail
 from invenio_stats.utils import QueryCommonReportsHelper, \
@@ -39,7 +39,7 @@ from weko_admin.api import TempDirInfo
 from .models import AdminSettings, StatisticsEmail
 from .utils import StatisticMail, get_user_report_data, package_reports ,elasticsearch_reindex
 from .views import manual_send_site_license_mail 
-from celery.task.control import inspect
+from celery.app.control import Inspect
 from weko_search_ui.tasks import check_celery_is_run
 from .config import WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS,\
     WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS_HAS_ERRORED
@@ -75,7 +75,6 @@ def reindex(self, is_db_to_es ):
         if you change this codes, please keep in mind Todo of the method "elasticsearch_reindex"
         in .utils.py .
     """
-
     try:
         return elasticsearch_reindex(is_db_to_es)
     except BaseException as ex:
@@ -85,35 +84,43 @@ def reindex(self, is_db_to_es ):
         raise ex
 
 def is_reindex_running():
-    """Check reindex is running."""
-    
+    """Check if the reindex task is running."""
     if not check_celery_is_run():
         return False
 
-    reserved = inspect().reserved()
-    active = inspect().active()
-    for worker in active:
-        for task in active[worker]:
-            current_app.logger.debug("active")
-            current_app.logger.debug(task)
-            if task["name"] == "weko_admin.tasks.reindex":
-                current_app.logger.info("weko_admin.tasks.reindex is active")
-                return True
-
-    for worker in reserved:
-        for task in reserved[worker]:
-            current_app.logger.debug("reserved")
-            current_app.logger.debug(task)
-            if task["name"] == "weko_admin.tasks.reindex":
-                current_app.logger.info("weko_admin.tasks.reindex is reserved")
-                return True
+    inspect = current_app.extensions['celery'].control.inspect()
     
+    active = inspect.active()
+
+    # Check for active tasks
+    if active:
+        for tasks in active.values():
+            for task in tasks:
+                current_app.logger.debug("active")
+                current_app.logger.debug(task)
+                if task["name"] == "weko_admin.tasks.reindex":
+                    current_app.logger.info("weko_admin.tasks.reindex is active")
+                    return True
+                
+    reserved = inspect.reserved()
+    # Check for reserved tasks
+    if reserved:
+        for tasks in reserved.values():
+            for task in tasks:
+                current_app.logger.debug("reserved")
+                current_app.logger.debug(task)
+                if task["name"] == "weko_admin.tasks.reindex":
+                    current_app.logger.info("weko_admin.tasks.reindex is reserved")
+                    return True
+
     current_app.logger.debug("weko_admin.tasks.reindex is not running")
     return False
 
+
+
 @shared_task(ignore_results=True)
 def send_all_reports(report_type=None, year=None, month=None):
-    """Query elasticsearch for each type of stats report."""
+    """Query seacrh engine for each type of stats report."""
     # By default get the current month and year
     now = datetime.now()
     month = month or now.month

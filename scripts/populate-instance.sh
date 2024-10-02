@@ -130,45 +130,84 @@ ${INVENIO_WEB_INSTANCE} stats partition create $(date -d 'year' +%Y)
 # sphinxdoc-create-database-end
 
 # sphinxdoc-index-initialisation-begin
-# ${INVENIO_WEB_INSTANCE} index destroy --yes-i-know
+
+curl -ku admin:${OPENSEARCH_INITIAL_ADMIN_PASSWORD} -XPUT 'https://'${INVENIO_ELASTICSEARCH_HOST}':9200/_plugins/_security/api/user/'${INVENIO_OPENSEARCH_USER} -H 'Content-Type:application/json' -d '
+{
+  "password":"'${INVENIO_OPENSEARCH_PASS}'",
+  "backend_roles":["admin"]
+}'
+
+#${INVENIO_WEB_INSTANCE} index destroy --yes-i-know
 ${INVENIO_WEB_INSTANCE} index init
 sleep 20
 ${INVENIO_WEB_INSTANCE} index queue init
 # sphinxdoc-index-initialisation-end
 
 # elasticsearch-ilm-setting-begin
-curl -XPUT 'http://'${INVENIO_ELASTICSEARCH_HOST}':9200/_ilm/policy/weko_stats_policy' -H 'Content-Type: application/json' -d '
+curl -ku ${INVENIO_OPENSEARCH_USER}:${INVENIO_OPENSEARCH_PASS} -XPUT 'https://'${INVENIO_ELASTICSEARCH_HOST}':9200/_plugins/_ism/policies/weko_stats_policy' -H 'Content-Type: application/json' -d '
 {
-  "policy":{
-    "phases":{
-      "hot":{
-        "actions":{
-          "rollover":{
-            "max_size":"50gb"
+  "policy": {
+    "description": "Rollover policy based on max size",
+    "default_state": "hot",
+    "states": [
+      {
+        "name": "hot",
+        "actions": [
+          {
+            "rollover": {
+              "min_size": "50gb"
+            }
           }
-        }
+        ]
       }
+    ]
+  }
+}'
+
+curl -ku ${INVENIO_OPENSEARCH_USER}:${INVENIO_OPENSEARCH_PASS} -XPUT 'https://'${INVENIO_ELASTICSEARCH_HOST}':9200/'${SEARCH_INDEX_PREFIX}'-stats-index-000001' -H 'Content-Type: application/json' -d '
+{
+  "aliases": {
+    "'${SEARCH_INDEX_PREFIX}'-stats-index": {
+      "is_write_index": true
     }
   }
 }'
+curl -ku ${INVENIO_OPENSEARCH_USER}:${INVENIO_OPENSEARCH_PASS} -XPUT 'https://'${INVENIO_ELASTICSEARCH_HOST}':9200/'${SEARCH_INDEX_PREFIX}'-events-stats-index-000001' -H 'Content-Type: application/json' -d '
+{
+  "aliases": {
+    "'${SEARCH_INDEX_PREFIX}'-events-stats-index": {
+      "is_write_index": true
+    }
+  }
+}'
+
 event_list=('celery-task' 'item-create' 'top-view' 'record-view' 'file-download' 'file-preview' 'search')
 for event_name in ${event_list[@]}
 do
-  curl -XPUT 'http://'${INVENIO_ELASTICSEARCH_HOST}':9200/'${SEARCH_INDEX_PREFIX}'-events-stats-'${event_name}'-000001' -H 'Content-Type: application/json' -d '
+  curl -ku ${INVENIO_OPENSEARCH_USER}:${INVENIO_OPENSEARCH_PASS} -XPOST 'https://'${INVENIO_ELASTICSEARCH_HOST}':9200/_aliases' -H 'Content-Type: application/json' -d '
   {
-    "aliases": {
-      "'${SEARCH_INDEX_PREFIX}'-events-stats-'${event_name}'": {
-        "is_write_index": true
+    "actions": [
+      {
+        "add": {
+          "index": "'${SEARCH_INDEX_PREFIX}'-stats-index-000001",
+          "alias": "'${SEARCH_INDEX_PREFIX}'-stats-'${event_name}'",
+          "filter": {
+            "term": {"event_type": "'${event_name}'"}
+          },
+          "is_write_index": true
+        }
+      },
+      {
+        "add": {
+          "index": "'${SEARCH_INDEX_PREFIX}'-events-stats-index-000001",
+          "alias": "'${SEARCH_INDEX_PREFIX}'-events-stats-'${event_name}'",
+          "filter": {
+            "term": {"event_type": "'${event_name}'"}
+          },
+          "is_write_index": true
+        }
       }
-    }
-  }'
-  curl -XPUT 'http://'${INVENIO_ELASTICSEARCH_HOST}':9200/'${SEARCH_INDEX_PREFIX}'-stats-'${event_name}'-000001' -H 'Content-Type: application/json' -d '
-  {
-    "aliases": {
-      "'${SEARCH_INDEX_PREFIX}'-stats-'${event_name}'": {
-        "is_write_index": true
-      }
-    }
+    ]
   }'
 done
 # elasticsearch-ilm-setting-end
@@ -468,7 +507,7 @@ ${INVENIO_WEB_INSTANCE} widget init
 
 # create-facet-search-setting-begin
 ${INVENIO_WEB_INSTANCE} facet_search_setting create \
-       "Data Language"	"デ一タの言語"	"language"	"[]"	True   SelectBox     1      True   
+       "Data Language"	"デ一タの言語"	"language"	"[]"	True   SelectBox     1      True
 ${INVENIO_WEB_INSTANCE} facet_search_setting create \
        "Access"	"アクセス制限"	"accessRights"	"[]"	True   SelectBox     2      True
 ${INVENIO_WEB_INSTANCE} facet_search_setting create \

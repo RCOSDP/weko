@@ -27,11 +27,11 @@ from datetime import datetime
 from flask import abort, current_app, flash, jsonify, request
 from flask_admin import BaseView, expose
 from flask_admin.contrib.sqla import ModelView
-from flask_babelex import gettext as _
+from flask_babel import gettext as _
 from flask_login import current_user
 from flask_wtf import FlaskForm
 from invenio_db import db
-from invenio_pidrelations.contrib.versioning import PIDVersioning
+from invenio_pidrelations.contrib.versioning import PIDNodeVersioning
 from invenio_pidstore.models import PersistentIdentifier
 from sqlalchemy.orm import load_only
 from weko_admin.models import AdminSettings
@@ -210,7 +210,8 @@ class ItemManagementBulkUpdate(BaseView):
 
             pid = PersistentIdentifier.get('recid', pid_value)
             meta = ItemsMetadata.get_record(pid.object_uuid)
-            last_pid = PIDVersioning(child=pid).last_child
+            parent_pid = PIDNodeVersioning(pid=pid).parents.one_or_none()
+            last_pid = PIDNodeVersioning(pid=parent_pid).last_child
 
             if meta:
                 data[pid_value] = {}

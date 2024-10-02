@@ -1,0 +1,265 @@
+.scroll {
+  overflow: auto;
+  white-space: nowrap;
+}
+
+/* CSS  */
+.testimonial-group>.row {
+    overflow-x: auto;
+    white-space: normal;
+}
+
+.testimonial-group>.row>.col-xs-4 {
+    display: inline-block;
+    float: none;
+}
+
+.testimonial-group .col-sm-3:nth-child(4n+1) {
+    clear: both;
+}
+
+@media (min-width: 768px) {
+    .testimonial-group {
+        max-width: 750px;
+        width: 100%;
+    }
+}
+
+@media (min-width: 992px) {
+    .testimonial-group {
+        max-width: 970px;
+    }
+}
+
+@media (min-width: 1200px) {
+    .testimonial-group {
+        max-width: 1170px;
+    }
+}
+/* END  */
+
+.workflow-span {
+ display: block;
+ word-break: break-word;
+}
+
+.workflow-ul {
+ width: 200px;
+ display: table;
+ table-layout: fixed;
+}
+
+.back-button, .done-button {
+  width: 120px;
+  height: 40px;
+  font-size: 15px;
+}
+
+.save-button, .delete-button, .edit-button, .action-button, .next-button, .detail-button {
+  width: 120px;
+  height: 40px;
+  font-size: 15px;
+}
+
+.save-flow-button {
+  width: 150px;
+  height: 40px;
+  font-size: 15px;
+}
+
+.cancel-button, .close-button {
+  width: auto;
+  min-width: 100px;
+  height: 40px;
+  font-size: 15px;
+}
+
+.add-button {
+  background-color:#008000;
+  border-color: #9ACD32;
+  color: white;
+  width: 100px;
+  height: 40px;
+  font-size: 15px;
+}
+
+.more-big-button, .create-big-button, .add-big-button {
+  background-color:#008000;
+  border-color: #9ACD32;
+  color: white;
+  width: 150px;
+  height: 40px;
+  font-size: 15px;
+}
+
+.more-button,.create-button {
+  background-color:#008000;
+  border-color: #9ACD32;
+  color: white;
+  width: 120px;
+  height: 40px;
+  font-size: 15px;
+}
+
+button#btn_quit.done-button {
+  width: 120px;
+  height: 40px;
+  font-size: 15px;
+}
+
+.ok-button {
+  width: 70px;
+  height: 40px;
+  font-size: 15px;
+}
+
+.send-button{
+  background-color: #32CD32;
+  border-color: #808000;
+  color: white;
+  width: 120px;
+  height: 40px;
+  font-size: 15px;
+}
+
+.update-button, .sighup-button,.login-button, .logout-button {
+   width: 130px;
+   height: 40px;
+   font-size: 15px;
+ }
+
+.action-big-button, .update-profile-button, .mapping-button, .property-button {
+  width: 150px;
+  height: 40px;
+  font-size: 15px;
+}
+
+.ten-pixel-margin {
+ margin: 10px;
+}
+
+.ten-pixel-bottom-margin {
+ margin-bottom: 10px;
+}
+
+.ten-pixel-right-margin {
+  margin-right: 10px;
+}
+
+.ten-pixel-left-margin {
+  margin-left: 10px;
+}
+
+.ten-pixel-top-margin {
+ margin-top: 10px;
+}
+
+.five-pixel-margin {
+  margin: 5px;
+}
+
+.five-pixel-right-margin {
+  margin-right: 5px;
+}
+
+.ten-pixel-bottom-margin {
+  margin-bottom: 10px;
+}
+
+.twentyfive-pixel-bottom-margin {
+  margin-bottom: 25px;
+}
+
+.twentyeight-pixel-right-margin {
+  margin-right: 28px;
+}
+
+.ten-pixel-bottom-margin {
+  margin-bottom: 10px;
+}
+
+.detail-lable {
+ text-align: center;
+}
+
+.gray-color-class {
+  border-color: #D3D3D3;
+}
+
+.withdraw-button{
+  width: 200px;
+  height: 40px;
+  font-size: 15px;
+}
+
+#add-icon {
+ color: white;
+ position: relative;
+ left: -15.5em;
+ top:1.2em;
+}
+
+#delete-icon {
+ color: white;
+ position: relative;
+ right: 9em;
+ top:1.2em;
+}
+
+#delete-icon-two {
+ color: white;
+ position: relative;
+ right: -2em;
+ top:.2em;
+}
+
+#alert-style {
+ background-color: #00a65a;
+ border-color: #008d4c;
+ border-radius: 3px;
+ color: white;
+}
+
+.alert-danger {
+  background-color: #dd4b39!important;
+  color: black;
+}
+
+label.field-required::after {
+  content: "*";
+  color: red;
+}
+
+.padding-display-hide {
+   padding: 0!important;
+}
+
+#detail_search_main {
+  background-color: #1b8391;
+  width: 110px;
+}
+
+#top-search-btn {
+  width: 110px;
+}
+
+.detail-search-close {
+  display: none;
+}
+
+.daterange-text-notice {
+  display: none;
+  color: #a94442;
+}
+
+.invalid-date {
+  border: 2px solid #a94442 !important;
+}
+
+.hidden-invalid-date-notice {
+  display: none;
+}
+
+.invalid-date-notice-txt {
+  color: #a94442;
+}

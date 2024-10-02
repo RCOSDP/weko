@@ -1,0 +1,6 @@
+{{ _('Your password has been changed') }}
+{% if security.recoverable %}
+{{ _('If you did not change your password, click the link below to reset it.') }}
+{{ reset_password_link }}
+{% endif %}
+

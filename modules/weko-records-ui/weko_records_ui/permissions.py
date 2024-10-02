@@ -26,7 +26,7 @@ import traceback
 from typing import List, Optional
 
 from flask import abort, current_app
-from flask_babelex import get_locale, to_user_timezone, to_utc
+from flask_babel import get_locale, to_user_timezone, to_utc
 from flask_security import current_user
 from invenio_access import Permission, action_factory
 from invenio_accounts.models import User
@@ -367,7 +367,7 @@ def check_user_group_permission(group_id):
         except ValueError:
             return is_ok
         if user_id:
-            query = Group.query.filter_by(id=group_id).join(Membership) \
+            query = Group.query.filter_by(id=group_id).join(Membership, Group.id == Membership.id_group) \
                 .filter_by(user_id=user_id, state=MembershipState.ACTIVE)
             if query.count() > 0:
                 is_ok = True
