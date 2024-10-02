@@ -28,32 +28,31 @@ from flask_menu import Menu
 from flask_celeryext import FlaskCeleryExt
 
 from invenio_admin import InvenioAdmin
-from invenio_cache import InvenioCache
-
-from weko_sitemap import WekoSitemap
-from weko_sitemap.views import blueprint
-from weko_sitemap.config import WEKO_SITEMAP_ADMIN_TEMPLATE
-from weko_admin import WekoAdmin
-from weko_admin.models import SessionLifetime
-from weko_theme import WekoTheme
+from invenio_access import InvenioAccess
+from invenio_access.models import ActionUsers, ActionRoles
 from invenio_assets import InvenioAssets
 from invenio_accounts import InvenioAccounts
 from invenio_accounts.models import User, Role
 from invenio_accounts.testutils import create_test_user, login_user_via_session
-from invenio_access.models import ActionUsers
-from invenio_access import InvenioAccess
-from invenio_access.models import ActionUsers, ActionRoles
-from invenio_db import InvenioDB
-from invenio_db import db as db_
+from invenio_cache import InvenioCache
+from invenio_db import InvenioDB, db as db_
+from invenio_files_rest.models import Location
+from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore import InvenioPIDStore
+from invenio_pidstore.errors import PIDDoesNotExistError
+from invenio_pidstore.models import PersistentIdentifier, PIDStatus,RecordIdentifier
+from invenio_i18n import InvenioI18N
+from invenio_records_ui import InvenioRecordsUI
 from sqlalchemy_utils.functions import create_database, database_exists, drop_database
 
-from invenio_pidrelations.models import PIDRelation
-from invenio_pidstore.models import PersistentIdentifier, PIDStatus,RecordIdentifier
-from invenio_pidstore.errors import PIDDoesNotExistError
-from weko_deposit.api import WekoDeposit,WekoRecord
+from weko_admin import WekoAdmin
+from weko_admin.models import SessionLifetime
+from weko_deposit.api import WekoDeposit, WekoRecord
+from weko_sitemap import WekoSitemap
+from weko_sitemap.views import blueprint
+from weko_sitemap.config import WEKO_SITEMAP_ADMIN_TEMPLATE
+from weko_theme import WekoTheme
 from weko_records.api import ItemsMetadata
-from invenio_records_ui import InvenioRecordsUI 
 
 @pytest.fixture(scope='module')
 def celery_config():
@@ -104,7 +103,7 @@ def base_app(instance_path):
         WEKO_SITEMAP_ADMIN_TEMPLATE=WEKO_SITEMAP_ADMIN_TEMPLATE,
         CELERY_ALWAYS_EAGER=True,
         CELERY_CACHE_BACKEND="memory",
-        CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
+        CELERY_EAGER_PROPAGATES=True,
         CELERY_RESULT_BACKEND="cache",
         CACHE_REDIS_URL='redis://redis:6379/0',
         CACHE_REDIS_DB='0',
@@ -123,6 +122,7 @@ def base_app(instance_path):
     InvenioAccess(app_)
     InvenioPIDStore(app_)
     InvenioRecordsUI(app_)
+    InvenioI18N(app_)
     WekoTheme(app_)
     WekoSitemap(app_)
     WekoAdmin(app_)
@@ -182,7 +182,7 @@ def users(app, db):
         originalroleuser = create_test_user(email='originalroleuser@test.org')
         originalroleuser2 = create_test_user(email='originalroleuser2@test.org')
         noroleuser = create_test_user(email='noroleuser@test.org')
-        
+
     role_count = Role.query.filter_by(name='System Administrator').count()
     if role_count != 1:
         sysadmin_role = ds.create_role(name='System Administrator')
@@ -210,7 +210,7 @@ def users(app, db):
     ds.add_role_to_user(user, repoadmin_role)
     ds.add_role_to_user(user, contributor_role)
     ds.add_role_to_user(user, comadmin_role)
-    
+
     # Assign access authorization
     with db.session.begin_nested():
         action_users = [
@@ -288,21 +288,40 @@ def db_sessionlifetime(app, db):
     with db.session.begin_nested():
         db.session.add(session_lifetime)
 
+
 @pytest.fixture()
-def records(app, db):
+def location(app, db):
+    """Create default location."""
+    tmppath = tempfile.mkdtemp()
+
+    location = Location.query.filter_by(name="testloc").count()
+    if location != 1:
+        loc = Location(name="testloc", uri=tmppath, default=True)
+        db.session.add(loc)
+        db.session.commit()
+    else:
+        loc = Location.query.filter_by(name="testloc").first()
+
+    yield loc
+
+    shutil.rmtree(tmppath)
+
+
+@pytest.fixture()
+def records(app, db, location):
     current_app.config.update(
         SEARCH_UI_SEARCH_INDEX="test-weko",
         INDEXER_DEFAULT_DOCTYPE="item-v1.0.0",
         INDEXER_FILE_DOC_TYPE="content",
     )
-    
+
     item_datas = list()
     with open(join(dirname(__file__),"data/test_items.json"), "r") as f:
         item_datas = json.load(f)
     record_datas = list()
     with open(join(dirname(__file__),"data/test_records.json"), "r") as f:
         record_datas = json.load(f)
-        
+
     result = list()
     record_num = len(record_datas)
     for i in range(record_num):
@@ -334,6 +353,6 @@ def records(app, db):
         item = ItemsMetadata.create(item_data, id_=rec_uuid)
         deposit = WekoDeposit(record, record.model)
         deposit.commit()
-        
+
         result.append([recid, depid, record, item, parent, doi, deposit])
     return result
