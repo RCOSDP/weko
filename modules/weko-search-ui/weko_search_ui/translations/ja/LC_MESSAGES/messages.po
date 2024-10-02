@@ -123,7 +123,7 @@ msgstr "指定されたURIとシステムURIが一致しません。"
 
 #: weko_search_ui/utils.py:805
 msgid "Item already DELETED in the system"
-msgstr ""
+msgstr "該当アイテムは削除済です"
 
 #: weko_search_ui/utils.py:815
 msgid "Please specify either \"Keep\" or \"Upgrade\"."

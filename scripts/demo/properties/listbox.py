@@ -34,10 +34,10 @@ def schema(title="", multi_flag=multiple_flag):
             "format": "object",
             "properties": {
                 "subitem_select_item": {
-                    "items": {"enum": [None], "type": "string"},
-                    "type": "array",
+                    "enum": [None],
+                    "type": ["null","string"],
                     "title": "値",
-                    "format": "checkboxes",
+                    "format": "select",
                     "editAble": True,
                 },
                 "subitem_select_language": {

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-マッピングの中で存在しないプロパティを使っているものを検出するツール
+ログ例
+* データベース名,アイテムタイプ名,アイテムタイプID,修正対象のプロパティ名(key)
 """
 import csv, json, psycopg2, sys, traceback
 from os import getenv
@@ -18,7 +19,6 @@ def get_connection(db_name):
 
 def check_mapping(db_list):
     try:
-        print("{}:{}:{}:{}".format("db_name","item_type_id","property","count"))
         for db_name in db_list:
             update_logs = []
             with get_connection(db_name) as conn, conn.cursor() as cur:
