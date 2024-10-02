@@ -24,7 +24,6 @@ import json
 from time import sleep
 from io import StringIO
 from invenio_search.engine import search
-
 from celery import shared_task
 from celery.utils.log import get_task_logger
 from flask import current_app
