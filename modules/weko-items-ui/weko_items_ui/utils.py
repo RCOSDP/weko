@@ -1972,6 +1972,19 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
 
             return self.attr_data[attr]['max_size']
 
+        def get_enum_max_ins(self, attr):
+            """Get max data each checkbox enum in all exporting records."""
+            largest_size = 1
+            self.attr_data[attr]['enum_max_size'] = 0
+            for record in self.records:
+                if self.records[record].get(attr):
+                    rec_size = len(self.records[record][attr]['attribute_value_mlt'][0]['subitem_checkbox_item'])
+                    if rec_size > largest_size:
+                        largest_size = rec_size
+            self.attr_data[attr]['enum_max_size'] = largest_size
+
+            return self.attr_data[attr]['enum_max_size']
+
         def get_max_ins_feedback_mail(self):
             """Get max data each feedback mail in all exporting records."""
             largest_size = 1
@@ -2076,13 +2089,17 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
                     if properties[key].get('format', '') == 'checkboxes':
                         new_key += '[{}]'
                         new_label += '[{}]'
+                        enum_max_size = self.attr_data[item_key].get('enum_max_size', 1)
                         if isinstance(data, dict):
                             data = [data]
-                        if data and data[idx].get(key):
-                            for idx_c in range(len(data[idx][key])):
+                        if data and idx < len(data) and data[idx].get(key):
+                            for idx_c in range(enum_max_size):
                                 key_list.append(new_key.format(idx_c))
                                 key_label.append(new_label.format(idx_c))
-                                key_data.append(data[idx][key][idx_c])
+                                if len(data[idx][key]) > idx_c:
+                                    key_data.append(data[idx][key][idx_c])
+                                else:
+                                    key_data.append('')
                         else:
                             key_list.append(new_key.format('0'))
                             key_label.append(new_label.format('0'))
@@ -2242,6 +2259,11 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
     for item_key in item_type.get('table_row'):
         item = table_row_properties.get(item_key)
         records.get_max_ins(item_key)
+        for i in item.get('properties', {}):
+            if 'subitem_checkbox_item' in i:
+                records.get_enum_max_ins(item_key)
+                break
+
         keys = []
         labels = []
         for recid in recids:
@@ -3982,6 +4004,21 @@ def make_stats_file_with_permission(item_type_id, recids,
 
             return self.attr_data[attr]['max_size']
 
+        def get_enum_max_ins(self, attr):
+            """Get max data each checkbox enum in all exporting records."""
+            largest_size = 1
+            self.attr_data[attr]['enum_max_size'] = 0
+            for record in self.records:
+                if self.records[record].get(attr):
+                    rec_size = len(
+                        self.records[record][attr]['attribute_value_mlt'][0]['subitem_checkbox_item']
+                    )
+                    if rec_size > largest_size:
+                        largest_size = rec_size
+            self.attr_data[attr]['enum_max_size'] = largest_size
+
+            return self.attr_data[attr]['enum_max_size']
+
         def get_max_ins_feedback_mail(self):
             """Get max data each feedback mail in all exporting records."""
             largest_size = 1
@@ -4086,13 +4123,17 @@ def make_stats_file_with_permission(item_type_id, recids,
                     if properties[key].get('format', '') == 'checkboxes':
                         new_key += '[{}]'
                         new_label += '[{}]'
+                        enum_max_size = self.attr_data[item_key].get('enum_max_size', 1)
                         if isinstance(data, dict):
                             data = [data]
-                        if data and data[idx].get(key):
-                            for idx_c in range(len(data[idx][key])):
+                        if data and idx < len(data) and data[idx].get(key):
+                            for idx_c in range(enum_max_size):
                                 key_list.append(new_key.format(idx_c))
                                 key_label.append(new_label.format(idx_c))
-                                key_data.append(data[idx][key][idx_c])
+                                if len(data[idx][key]) > idx_c:
+                                    key_data.append(data[idx][key][idx_c])
+                                else:
+                                    key_data.append('')
                         else:
                             key_list.append(new_key.format('0'))
                             key_label.append(new_label.format('0'))
@@ -4249,6 +4290,11 @@ def make_stats_file_with_permission(item_type_id, recids,
     for item_key in item_type.get('table_row'):
         item = table_row_properties.get(item_key)
         records.get_max_ins(item_key)
+        for i in item.get('properties', {}):
+            if 'subitem_checkbox_item' in i:
+                records.get_enum_max_ins(item_key)
+                break
+
         keys = []
         labels = []
         for recid in recids:
