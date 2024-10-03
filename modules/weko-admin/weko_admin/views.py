@@ -791,27 +791,30 @@ def dbsession_clean(exception):
 @login_required
 @roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
                  WEKO_ADMIN_PERMISSION_ROLE_REPO])
-def send_profile_settings_save():
-    data = request.get_json()
-    if not data or 'profiles_templates' not in data:
-        return jsonify({"status": "error", "msg": "Invalid data"}), 400
-    profiles_templates = data['profiles_templates']
-    return send_profile_settings_save()
     
     # データベースに保存する処理
 def send_profile_settings_save():
-    data = request.get_json()
-    if not data or 'profiles_templates' not in data:
-        return jsonify({"status": "error", "msg": "Invalid data"}), 400
+    try:    
+        data = request.get_json()
+        if not data or 'profiles_templates' not in data:
+            return jsonify({"status": "error", "msg": "Invalid data"}), 400
 
-    profiles_templates = data['profiles_templates']
-    
-    # 特定のレコードを取得
-    profile = AdminSettings.query.filter_by(id=6, name='profiles_items_settings').first()
-    if profile:
-        # settingsカラムを更新
-        profile.settings = profiles_templates
-        db.session.commit()
-        return jsonify({"status": "success", "msg": "Settings updated successfully"}), 200
-    else:
-        return jsonify({"status": "error", "msg": "Record not found"}), 404
+        profiles_templates = data['profiles_templates']
+        
+        # 特定のレコードを取得
+        profile = AdminSettings.query.filter_by(name='profiles_items_settings').first()
+        if profile:
+                try:
+                    # settingsカラムを更新
+                    profile.settings = profiles_templates
+                    db.session.commit()
+                    return jsonify({"status": "success", "msg": "Settings updated successfully"}), 200
+                except Exception as e:
+                    db.session.rollback()
+                    current_app.logger.error("Error updating profile settings: {}".format(str(e)))
+                    return jsonify({"status": "error", "msg": "Failed to update settings"}), 500
+        else:
+            return jsonify({"status": "error", "msg": "Record not found"}), 404
+    except Exception as e:
+        current_app.logger.error("Error in send_profile_settings_save: {}".format(str(e)))
+        return jsonify({"status": "error", "msg": "An unexpected error occurred"}), 500

@@ -20,6 +20,8 @@
 
 """Forms for user profiles."""
 
+import re
+
 from flask import current_app, Flask
 from flask_babelex import lazy_gettext as _
 from flask_login import current_user
@@ -38,6 +40,7 @@ from .config import USERPROFILES_LANGUAGE_LIST, USERPROFILES_TIMEZONE_LIST, \
 from .models import UserProfile
 from .validators import USERNAME_RULES, validate_username
 from weko_admin.models import AdminSettings
+from collections import OrderedDict
 
 def strip_filter(text):
     """Filter for trimming whitespace.
@@ -52,19 +55,6 @@ def current_user_email(form, field):
     """Field validator to stop validation if email wasn't changed."""
     if current_user.email == field.data:
         raise StopValidation()
-
-
-def check_phone_number(form, field):
-    """Validate phone number.
-
-    @param form:
-    @param field:
-    """
-    if len(field.data) > 15:
-        raise ValidationError('Phone number must be less than 15 characters.')
-    field = field.data.split("-")
-    if not all([x.isdigit() for x in field]):
-        raise ValidationError(_('Phone Number format is incorrect.'))
 
 
 def check_length_100_characters(form, field):
@@ -91,6 +81,7 @@ def check_other_position(form, field):
     else:
         if len(strip_filter(field.data)) == 0:
             raise ValidationError(_('Position not provided.'))
+        
 
 #識別子を判別するためのバリデーション
 def validate_digits(form, field):
@@ -99,8 +90,10 @@ def validate_digits(form, field):
     @param form:
     @param field:
     """
-    if not field.data.isdigit():
-        raise ValidationError(_('Only digits are allowed.'))
+    
+    error_message = _('Only digits are allowed.')
+    if not re.fullmatch(r'[0-9]*', field.data):
+        raise ValidationError(error_message)
 
 app = Flask(__name__)
 
@@ -155,199 +148,72 @@ class ProfileForm(FlaskForm):
         ]
     )
 
-    fullname = StringField(
-        # NOTE: Form label
-        _('Fullname'),
-        validators=[
-            DataRequired(message=_('Full name not provided.')),
-            check_length_100_characters
-        ],
-        filters=[strip_filter])
-
-    # University / Institution
-    university = StringField(
-        _('University/Institution'),
-        validators=[
-            DataRequired(message=_('University/Institution not provided.')),
-            check_length_100_characters
-        ],
-        filters=[strip_filter]
-    )
-
-    # Affiliation department / Department
-    department = StringField(
-        _('Affiliated Division/Department'),
-        validators=[
-            DataRequired(
-                message=_('Affiliated Division/Department not provided.')),
-            check_length_100_characters
-        ],
-        filters=[strip_filter]
-    )
-
-    # Position
-    position = SelectField(
-        _('Position'),
-        filters=[strip_filter],
-        validators=[
-            DataRequired(message=_('Position not provided.')),
-        ],
-        choices=WEKO_USERPROFILES_POSITION_LIST
-    )
-
-    # Other Position
-    item1 = StringField(
-        _('Position (Others)'),
-        validators=[
-            check_other_position
-        ],
-        render_kw={"placeholder": _("Input when selecting Others")}
-    )
-
-    # Phone number
-    item2 = StringField(
-        _('Phone number'),
-        validators=[
-            DataRequired(message=_('Phone number not provided.')),
-            check_phone_number
-        ]
-    )
-
-    # Affiliation institute 1
-    # Affiliation institute name (n)
-    item3 = StringField(
-        _('Affiliated Institution Name'),
-        validators=[
-            check_length_100_characters
-        ],
-        filters=[strip_filter]
-    )
-
-    # Affiliation institute position (n)
-    item4 = SelectField(
-        _('Affiliated Institution Position'),
-        filters=[strip_filter],
-        choices=WEKO_USERPROFILES_INSTITUTE_POSITION_LIST
-    )
-
-    # Affiliation institute 2
-    # Affiliation institute name (n)
-    item5 = StringField(
-        _('Affiliated Institution Name'),
-        validators=[
-            check_length_100_characters
-        ],
-        filters=[strip_filter]
-    )
-
-    # Affiliation institute position (n)
-    item6 = SelectField(
-        _('Affiliated Institution Position'),
-        filters=[strip_filter],
-        choices=WEKO_USERPROFILES_INSTITUTE_POSITION_LIST
-    )
-
-    # Affiliation institute 3
-    # Affiliation institute name (n)
-    item7 = StringField(
-        _('Affiliated Institution Name'),
-        validators=[
-            check_length_100_characters
-        ],
-        filters=[strip_filter]
-    )
-
-    # Affiliation institute position (n)
-    item8 = SelectField(
-        _('Affiliated Institution Position'),
-        filters=[strip_filter],
-        choices=WEKO_USERPROFILES_INSTITUTE_POSITION_LIST
-    )
-
-    # Affiliation institute 4
-    # Affiliation institute name (n)
-    item9 = StringField(
-        _('Affiliated Institution Name'),
-        validators=[
-            check_length_100_characters
-        ],
-        filters=[strip_filter]
-    )
-
-    # Affiliation institute position (n)
-    item10 = SelectField(
-        _('Affiliated Institution Position'),
-        filters=[strip_filter],
-        choices=WEKO_USERPROFILES_INSTITUTE_POSITION_LIST
-    )
-
-    # Affiliation institute 5
-    # Affiliation institute name (n)
-    item11 = StringField(
-        _('Affiliated Institution Name'),
-        validators=[
-            check_length_100_characters
-        ],
-        filters=[strip_filter]
-    )
-
-    # Affiliation institute position (n)
-    item12 = SelectField(
-        _('Affiliated Institution Position'),
-        filters=[strip_filter],
-        choices=WEKO_USERPROFILES_INSTITUTE_POSITION_LIST
-    )
-
-    item13 = StringField(
-        _('Item13'),
-        validators=[
-            check_length_100_characters
-        ],
-        filters=[strip_filter]
-    )
-
-    item14 = StringField(
-        _('Item14'),
-        validators=[
-            check_length_100_characters
-        ],
-        filters=[strip_filter]
-    )
-
-    item15 = StringField(
-        _('Item15'),
-        validators=[
-            check_length_100_characters
-        ],
-        filters=[strip_filter]
-    )
-
-    item16 = StringField(
-        _('Item16'),
-        validators=[
-            check_length_100_characters
-        ],
-        filters=[strip_filter]
-    )
-    
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # アプリケーションコンテキスト内でデータベースクエリを実行
         profile_conf = AdminSettings.get('profiles_items_settings', dict_to_object=False)
+        print("profile_conf",profile_conf)
+
+        if profile_conf is None:
+            raise ValueError("Could not retrieve profile configuration settings.")
         
         # プロフィール設定の表示設定を取得
         self.field_visibility = {}
-        
-        #それぞれのフィールドに取得したアイテムデータを設定
-        for key, value in profile_conf.items():
-            if hasattr(self, key):
-                field = getattr(self, key)
+
+        # 順序を指定して OrderedDict に変換
+        ordered_profile_conf = OrderedDict()
+
+        # 固定されたキーを最初に追加
+        fix_keys = ["fullname", "university", "department", "position"]
+        missing_keys = []
+
+        for key in fix_keys:
+            if key in profile_conf:
+                ordered_profile_conf[key] = profile_conf.pop(key)
+            else:
+                missing_keys.append(key)
+
+        if missing_keys:
+            raise KeyError("Could not find the following keys in profile configuration settings: {}".format(missing_keys))
+
+        # 固定キー以外を追加
+        ordered_profile_conf.update(profile_conf)
+
+        # それぞれのフィールドに取得したアイテムデータを設定
+        for key, value in ordered_profile_conf.items():
+            try:
+                 # 'current_type'と'label_name'のチェック
+                if not all(subkey_list in value for subkey_list in ['current_type', 'label_name','visible','select']):
+                    raise KeyError(f"Missing required key in field : {key}")
+                
                 self.field_visibility[key] = value['visible']
-                field.label.text = _(value['label_name'])
+
                 if value['current_type'] == 'select':
-                    field.choices = [(choice, choice) for choice in value['select'][0].split('|')]
-                if value['current_type'] == 'identifier':
-                    field.validators.append(validate_digits)
+                    field = SelectField(
+                        _(value['label_name']),
+                        filters=[strip_filter],
+                        choices=[(choice, choice) for choice in value['select'][0].split('|')]
+                    )
+                    if field:
+                        setattr(ProfileForm, key, field)
+                else:
+                    validators = [check_length_100_characters]
+                    if value['current_type'] == 'identifier':
+                        validators.append(validate_digits)
+                    elif value['current_type'] == 'text':
+                        validators.append(check_length_100_characters)
+                    field = StringField(
+                        _(value['label_name']),
+                        validators=validators,
+                        filters=[strip_filter]
+                    )
+                    if field:
+                        setattr(ProfileForm, key, field)
+            except KeyError as e:
+                print(f"KeyError: {e} in field {key}")
+            except Exception as e:
+                print(f"Unexpected error: {e} in field {key}")
+
 
     def validate_username(form, field):
         """Wrap username validator for WTForms."""
