@@ -22,6 +22,7 @@ from flask import Flask
 from flask_babel import Babel
 from sqlalchemy_utils.functions import create_database, database_exists
 
+from invenio_i18n import InvenioI18N
 
 from invenio_access import InvenioAccess
 from invenio_access.models import ActionUsers, ActionRoles
@@ -34,7 +35,7 @@ from invenio_db import InvenioDB
 from invenio_db import db as db_
 from invenio_files_rest.models import Location
 
-from weko_search_ui.config import INDEXER_DEFAULT_DOCTYPE,INDEXER_FILE_DOC_TYPE
+from weko_search_ui.config import INDEXER_FILE_DOC_TYPE
 from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName
 from weko_records_ui import WekoRecordsUI
 from weko_index_tree.models import Index
@@ -94,7 +95,7 @@ def base_app(instance_path):
         CACHE_REDIS_DB='0',
         CACHE_REDIS_HOST="redis",
         SEARCH_UI_SEARCH_INDEX="test-weko",
-        INDEXER_DEFAULT_DOCTYPE=INDEXER_DEFAULT_DOCTYPE,
+        # INDEXER_DEFAULT_DOCTYPE=INDEXER_DEFAULT_DOCTYPE,
         INDEXER_FILE_DOC_TYPE=INDEXER_FILE_DOC_TYPE,
         WEKO_PERMISSION_SUPER_ROLE_USER=[
             "System Administrator",
@@ -110,6 +111,7 @@ def base_app(instance_path):
     #WekoSearchUI(app_)
     WekoRecordsUI(app_)
     WekoItemsAutofill(app_)
+    InvenioI18N(app_),
     return app_
 
 

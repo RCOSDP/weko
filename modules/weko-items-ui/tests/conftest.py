@@ -110,7 +110,7 @@ from weko_records_ui.config import WEKO_RECORDS_UI_LICENSE_DICT
 from weko_schema_ui import WekoSchemaUI
 from weko_schema_ui.models import OAIServerSchema
 from weko_search_ui import WekoSearchREST, WekoSearchUI
-from weko_search_ui.config import WEKO_SEARCH_REST_ENDPOINTS,RECORDS_REST_SORT_OPTIONS,INDEXER_DEFAULT_DOCTYPE,INDEXER_FILE_DOC_TYPE
+from weko_search_ui.config import WEKO_SEARCH_REST_ENDPOINTS,RECORDS_REST_SORT_OPTIONS #INDEXER_DEFAULT_DOCTYPE,INDEXER_FILE_DOC_TYPE
 from weko_theme import WekoTheme
 from weko_theme.views import blueprint as weko_theme_blueprint
 from weko_user_profiles.models import UserProfile
@@ -255,8 +255,8 @@ def base_app(instance_path):
         WEKO_USERPROFILES_GENERAL_ROLE=WEKO_USERPROFILES_GENERAL_ROLE,
         CACHE_REDIS_DB = 2,
         WEKO_DEPOSIT_ITEMS_CACHE_PREFIX=WEKO_DEPOSIT_ITEMS_CACHE_PREFIX,
-        INDEXER_DEFAULT_DOCTYPE=INDEXER_DEFAULT_DOCTYPE,
-        INDEXER_FILE_DOC_TYPE=INDEXER_FILE_DOC_TYPE,
+        # INDEXER_DEFAULT_DOCTYPE="item-v1.0.0",
+        # INDEXER_FILE_DOC_TYPE="item-v1.0.0",
         WEKO_INDEX_TREE_DEFAULT_DISPLAY_NUMBER=WEKO_INDEX_TREE_DEFAULT_DISPLAY_NUMBER,
         DEPOSIT_DEFAULT_JSONSCHEMA=DEPOSIT_DEFAULT_JSONSCHEMA,
         DEPOSIT_JSONSCHEMAS_PREFIX=DEPOSIT_JSONSCHEMAS_PREFIX,

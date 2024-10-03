@@ -110,8 +110,6 @@ from weko_schema_ui import WekoSchemaUI
 from weko_schema_ui.models import OAIServerSchema
 from weko_search_ui import WekoSearchREST, WekoSearchUI
 from weko_search_ui.config import (
-    INDEXER_DEFAULT_DOCTYPE,
-    INDEXER_FILE_DOC_TYPE,
     RECORDS_REST_SORT_OPTIONS,
     SEARCH_UI_SEARCH_INDEX,
     WEKO_SEARCH_REST_ENDPOINTS,
@@ -223,8 +221,8 @@ def base_app(instance_path):
         WEKO_USERPROFILES_GENERAL_ROLE=WEKO_USERPROFILES_GENERAL_ROLE,
         CACHE_REDIS_DB = 0,
         WEKO_DEPOSIT_ITEMS_CACHE_PREFIX=WEKO_DEPOSIT_ITEMS_CACHE_PREFIX,
-        INDEXER_DEFAULT_DOCTYPE=INDEXER_DEFAULT_DOCTYPE,
-        INDEXER_FILE_DOC_TYPE=INDEXER_FILE_DOC_TYPE,
+        # INDEXER_DEFAULT_DOCTYPE=INDEXER_DEFAULT_DOCTYPE,
+        # INDEXER_FILE_DOC_TYPE=INDEXER_FILE_DOC_TYPE,
         WEKO_INDEX_TREE_DEFAULT_DISPLAY_NUMBER=WEKO_INDEX_TREE_DEFAULT_DISPLAY_NUMBER,
         DEPOSIT_DEFAULT_JSONSCHEMA=DEPOSIT_DEFAULT_JSONSCHEMA,
         DEPOSIT_JSONSCHEMAS_PREFIX=DEPOSIT_JSONSCHEMAS_PREFIX,
@@ -882,3 +880,15 @@ def rocrate_mapping(db, item_type):
     rocrate_mapping1 = RocrateMapping(2, mapping)
     with db.session.begin_nested():
         db.session.add(rocrate_mapping1)
+
+def test_super_role_user_config(app_):
+    # 'WEKO_PERMISSION_SUPER_ROLE_USER' が正しく設定されているか確認
+    assert app_.config["WEKO_PERMISSION_SUPER_ROLE_USER"] == "Administrator"
+
+def test_cache_type_config(app_):
+    # 'CACHE_TYPE' が 'simple' に設定されているか確認
+    assert app_.config["CACHE_TYPE"] == "simple"
+
+def test_logging_level_config(app_):
+    # ログレベルの設定が正しいか確認
+    assert app_.config["LOGGING_LEVEL"] == "DEBUG"
