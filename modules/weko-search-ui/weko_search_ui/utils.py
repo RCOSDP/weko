@@ -3423,6 +3423,11 @@ def export_all(root_url, user_id, data, timezone):
                 record_ids = [(recid.pid_value, recid.object_uuid) 
                     for recid in recids if 'publish_status' in recid.json 
                     and recid.json['publish_status'] in [PublishStatus.PUBLIC.value, PublishStatus.PRIVATE.value]]
+
+                if len(record_ids) == 0:
+                    item_types.remove(it)
+                    continue
+
                 for recid, uuid in record_ids:
                     if counter % WEKO_SEARCH_UI_BULK_EXPORT_LIMIT == 0 and item_datas:
                         # Create export info file
