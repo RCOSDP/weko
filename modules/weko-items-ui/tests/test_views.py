@@ -1,6 +1,7 @@
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 import json
-from collections import Iterable, OrderedDict
+from collections.abc import Iterable
+from collections import OrderedDict
 from datetime import datetime
 from unittest.mock import MagicMock
 from time import sleep
@@ -11,7 +12,7 @@ from flask import Flask, json, jsonify, session, url_for, make_response
 from flask_security.utils import login_user
 from jinja2.exceptions import TemplateNotFound
 from invenio_accounts.testutils import login_user_via_session
-from invenio_i18n.babel import set_locale
+from invenio_i18n import get_locale
 from invenio_pidstore.errors import PIDDoesNotExistError
 from mock import patch
 from weko_redis.redis import RedisConnection
