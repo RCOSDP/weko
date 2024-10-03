@@ -24,7 +24,7 @@ import uuid
 
 import pytest
 from flask import Flask
-from flask_babelex import Babel
+from flask_babel import Babel
 from flask_menu import Menu
 from sqlalchemy_utils.functions import create_database, database_exists
 from invenio_access import InvenioAccess

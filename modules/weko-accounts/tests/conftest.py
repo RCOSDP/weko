@@ -91,7 +91,7 @@ def base_app(instance_path):
     WekoRecordsUI(app_)
     WekoAdmin(app_)
     WekoUserProfiles(app_)
-    app_.register_blueprint(blueprint)
+     app_.register_blueprint(blueprint, name='weko_accounts_unique')
     WekoAccountsREST(app_)
     return app_
 

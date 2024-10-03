@@ -3,7 +3,8 @@ import json
 import uuid
 import pytest
 from flask import current_app
-from elasticsearch.exceptions import NotFoundError
+# from elasticsearch.exceptions import NotFoundError
+from opensearchpy.exceptions import NotFoundError
 from invenio_indexer.api import RecordIndexer
 from invenio_search import current_search_client
 
