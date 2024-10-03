@@ -26,7 +26,8 @@ import pytest
 import uuid
 from flask import url_for
 from mock import patch, MagicMock
-from elasticsearch.exceptions import NotFoundError
+# from elasticsearch.exceptions import NotFoundError
+from opensearchpy.exceptions import NotFoundError
 from invenio_indexer.api import RecordIndexer
 
 from invenio_accounts.testutils import login_user_via_session
