@@ -24,8 +24,6 @@ import itertools
 import re
 from functools import reduce
 
-from invenio_oaiserver.response import NS_OAIPMH, NS_OAIPMH_XSD, NS_XSI, \
-    NSMAP, header, verb
 from invenio_records_ui.utils import obj_or_import_string
 from lxml import etree
 from lxml.etree import Element, ElementTree, SubElement
@@ -102,6 +100,8 @@ def dumps(records, schema_type='jpcoar', **kwargs):
 
 def export_tree(record, **kwargs):
     """Create OAI-PMH response for verb Identify."""
+    from invenio_oaiserver.response import NS_OAIPMH, NS_OAIPMH_XSD, NS_XSI, \
+    NSMAP, header, verb
     e_tree, e_getrecord = verb(**kwargs)
     e_record = SubElement(e_getrecord, etree.QName(NS_OAIPMH, 'record'))
 
