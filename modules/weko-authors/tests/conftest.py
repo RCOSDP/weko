@@ -26,7 +26,8 @@ import json
 import uuid
 from os.path import dirname, join
 
-from elasticsearch import Elasticsearch
+# from elasticsearch import Elasticsearch
+from opensearchpy import OpenSearch
 from sqlalchemy import inspect
 
 import pytest
@@ -93,7 +94,8 @@ def instance_path():
 class MockEs():
     def __init__(self,**keywargs):
         self.indices = self.MockIndices()
-        self.es = Elasticsearch()
+        # self.es = Elasticsearch()
+        self.es = OpenSearch()
         self.cluster = self.MockCluster()
     def index(self, id="",version="",version_type="",index="",doc_type="",body="",**arguments):
         pass
@@ -206,11 +208,11 @@ def base_app2(instance_path,search_class):
         SECRET_KEY='SECRET_KEY',
         TESTING=True,
         SERVER_NAME='app2',
-        # SQLALCHEMY_DATABASE_URI=os.environ.get(
-        #    'SQLALCHEMY_DATABASE_URI',
-        #    'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/invenio'),
         SQLALCHEMY_DATABASE_URI=os.environ.get(
-            'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
+           'SQLALCHEMY_DATABASE_URI',
+           'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/invenio'),
+        # SQLALCHEMY_DATABASE_URI=os.environ.get(
+        #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         INDEX_IMG='indextree/36466818-image.jpg',
         INDEXER_DEFAULT_INDEX="{}-authors-author-v1.0.0".format(

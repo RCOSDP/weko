@@ -26,7 +26,8 @@ import tempfile
 import uuid
 import json
 from datetime import datetime
-from elasticsearch import Elasticsearch
+# from elasticsearch import Elasticsearch
+from opensearchpy import OpenSearch
 from invenio_indexer import InvenioIndexer
 import pytest
 from invenio_indexer.api import RecordIndexer
@@ -1062,7 +1063,8 @@ def search_class():
 class MockEs():
     def __init__(self,**keywargs):
         self.indices = self.MockIndices()
-        self.es = Elasticsearch()
+        # self.es = Elasticsearch()
+        self.es = OpenSearch()
         self.cluster = self.MockCluster()
     def index(self, id="",version="",version_type="",index="",doc_type="",body="",**arguments):
         return {"_shards":{"failed":0} }
