@@ -46,7 +46,7 @@ from weko_indextree_journal import WekoIndextreeJournal, WekoIndextreeJournalRES
 from weko_indextree_journal.models import Journal
 from weko_indextree_journal.views import blueprint
 from weko_indextree_journal.rest import create_blueprint
-from weko_indextree_journal.bundles import *
+# from weko_indextree_journal.bundles import *
 
 sys.path.append(os.path.dirname(__file__))
 

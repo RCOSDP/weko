@@ -11,7 +11,7 @@
 import pytest
 from mock import patch
 from flask import json, url_for
-from tests.testutils import login_user
+from .testutils import login_user
 
 from invenio_files_rest.models import Bucket
 
