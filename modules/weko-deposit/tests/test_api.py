@@ -4477,7 +4477,7 @@ class Test__FormatSysBibliographicInformation():
             mock_logger.reset_mock()
 
 
-def test_missing_location(app, record):
+def test_missing_location(app, location, record ):
     """Test missing location."""
     with pytest.raises(AttributeError):
         WekoRecord.create({}).file
