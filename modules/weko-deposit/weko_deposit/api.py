@@ -23,8 +23,8 @@ import copy
 import uuid
 
 from collections import OrderedDict
-from elasticsearch.exceptions import ElasticsearchException
-from elasticsearch.helpers import bulk
+from opensearchpy import exceptions
+from opensearchpy.helpers import bulk
 from datetime import datetime, timezone,date
 from typing import NoReturn, Union
 from tika import parser
@@ -280,7 +280,7 @@ class WekoIndexer(RecordIndexer):
                 self.client.delete(id=str(lst),
                                     index=self.es_index,
                                     routing=parent_id)
-            except ElasticsearchException as ex:
+            except exceptions.OpenSearchException as ex:
                 weko_logger(key='WEKO_DEPOSIT_FAILED_DELETE_FILE_INDEX',
                             record_id=str(lst), ex=ex)
                 # raise WekoDepositIndexerError(ex=ex,
@@ -2658,7 +2658,7 @@ class WekoDeposit(Deposit):
             # attempt to delete index on es
             try:
                 self.indexer.delete(self)
-            except ElasticsearchException as ex:
+            except exceptions.OpenSearchException as ex:
                 weko_logger(key='WEKO_COMMON_ERROR_ELASTICSEARCH', ex=ex)
             except Exception as ex:
                 weko_logger(key='WEKO_COMMON_ERROR_UNEXPECTED', ex=ex)
