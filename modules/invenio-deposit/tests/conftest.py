@@ -30,6 +30,7 @@ from .helpers import fill_oauth2_headers, make_pdf_fixture
 from invenio_access import InvenioAccess
 from invenio_access.models import ActionUsers
 from invenio_accounts import InvenioAccounts
+from invenio_accounts.views.rest import create_rest_blueprint
 from invenio_accounts.views.settings import create_settings_blueprint
 from invenio_assets import InvenioAssets
 from invenio_db import InvenioDB, db
@@ -144,17 +145,17 @@ def base_app(request):
     app_ = Flask('testapp', instance_path=instance_path)
     app_.url_map.converters['pid'] = PIDConverter
     # initialize InvenioDeposit first in order to detect any invalid dependency
-    InvenioDeposit(app)
-    init_app(app)
-    accounts_blueprint = create_settings_blueprint(app)
-    app.register_blueprint(accounts_blueprint)
-    app.register_blueprint(oauth2server_settings_blueprint)
-    InvenioAssets(app)
-    InvenioSearchUI(app)
-    InvenioRecordsUI(app)
-    app.register_blueprint(records_ui_bp(app))
-    app.register_blueprint(records_rest_bp(app))
-    app.wsgi_app = DispatcherMiddleware(app.wsgi_app, {
+    InvenioDeposit(app_)
+    init_app(app_)
+    app_.register_blueprint(create_settings_blueprint(app_))
+    app_.register_blueprint(create_rest_blueprint(app_))
+    app_.register_blueprint(oauth2server_settings_blueprint)
+    InvenioAssets(app_)
+    InvenioSearchUI(app_)
+    InvenioRecordsUI(app_)
+    app_.register_blueprint(records_ui_bp(app_))
+    app_.register_blueprint(records_rest_bp(app_))
+    app_.wsgi_app = DispatcherMiddleware(app_.wsgi_app, {
         '/api': api_app.wsgi_app
     })
 
