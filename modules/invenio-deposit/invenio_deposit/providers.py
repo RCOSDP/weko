@@ -27,7 +27,8 @@ class DepositProvider(BaseProvider):
     provide any additional features besides creation of deposit ids.
     """
 
-    default_status = PIDStatus.REGISTERED
+    #default_status = PIDStatus.REGISTERED
+    default_status = PIDStatus.RESERVED
     """Deposit IDs are by default registered immediately."""
 
     @classmethod
@@ -38,6 +39,7 @@ class DepositProvider(BaseProvider):
         :param object_uuid: The object UUID (Default: ``None``)
         :param kwargs: It contains the pid value.
         """
+        print(f"default_status = {cls.default_status}")
         assert 'pid_value' in kwargs
         kwargs.setdefault('status', cls.default_status)
         return super(DepositProvider, cls).create(

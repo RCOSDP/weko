@@ -1394,8 +1394,8 @@ def db_oaischema(app, db):
 from invenio_search import current_search_client
 @pytest.fixture()
 def esindex(app):
-    current_search_client.indices.delete(index='test-*')
-    with open("tests/mock_module/mapping/v6/authors/test_authors.json","r") as f:
+    current_search_client.indices.delete(index='test-*', ignore=[400, 404])
+    with open("tests/mock_module/mapping/v7/authors/test_authors.json","r") as f:
         mapping = json.load(f)
     with app.test_request_context():
         current_search_client.indices.create(app.config["WEKO_AUTHORS_ES_INDEX_NAME"],body=mapping)
@@ -1421,7 +1421,6 @@ def authors(app,db,esindex):
         es_data["id"]=""
         current_search_client.index(
             index=app.config["WEKO_AUTHORS_ES_INDEX_NAME"],
-            doc_type=app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
             id=es_id,
             body=es_data,
             refresh='true')

@@ -1763,7 +1763,9 @@ class TestWekoDeposit():
 
                 # if not dc_owner: is false
                 indexer, records = es_records
-                record = records[1]                deposit = record['deposit']
+                record = records[1]
+                deposit = record['deposit']
+
                 index_obj = {'index': ['1'], 'actions': 'private'}
                 data = {'pubdate': '2023-12-07', 'item_1617187056579':'item_1617187056579', 'item_1617186331708': [{'subitem_1551255647225': 'test', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, 'shared_user_id': -1, 'title': 'test', 'lang': 'ja', 'deleted_items': ['item_1617186385884', 'item_1617186419668', 'item_1617186499011', 'item_1617186609386', 'item_1617186626617', 'item_1617186643794', 'item_1617186660861', 'item_1617186702042', 'item_1617186783814', 'item_1617186859717', 'item_1617186882738', 'item_1617186901218', 'item_1617186920753', 'item_1617186941041', 'item_1617187112279', 'item_1617187187528', 'item_1617349709064', 'item_1617353299429', 'item_1617605131499', 'item_1617610673286', 'item_1617620223087', 'item_1617944105607', 'item_1617187056579', 'approval1', 'approval2'], '$schema': '/items/jsonschema/1', 'owner': '1'}
                 deposit.update(index_obj,data)
@@ -4475,7 +4477,7 @@ class Test__FormatSysBibliographicInformation():
             mock_logger.reset_mock()
 
 
-def test_missing_location(app, record):
+def test_missing_location(app, location, record ):
     """Test missing location."""
     with pytest.raises(AttributeError):
         WekoRecord.create({}).file
