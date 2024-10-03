@@ -34,7 +34,6 @@ from invenio_db import db
 from weko_groups.api import Group, Membership, MembershipState
 from weko_index_tree.utils import check_index_permissions, get_user_roles
 from weko_records.api import ItemTypes
-from weko_workflow.api import WorkActivity
 
 from .ipaddr import check_site_license_permission
 from .models import FilePermission
@@ -321,6 +320,8 @@ def get_permission(record:dict, fjson:dict) -> Optional[FilePermission]:
             return permission
         else:
             activity_id = permission.usage_application_activity_id
+            # Need to import here to avoid circular import
+            from weko_workflow.api import WorkActivity
             activity = WorkActivity()
             steps = activity.get_activity_steps(activity_id)
             if steps:

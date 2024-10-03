@@ -26,7 +26,6 @@ import tempfile
 import uuid
 import json
 from datetime import datetime
-# from elasticsearch import Elasticsearch
 from opensearchpy import OpenSearch
 from invenio_indexer import InvenioIndexer
 import pytest
@@ -183,7 +182,7 @@ def base_app(instance_path, cache_config,request ,search_class):
     WekoRecordsUI(app_)
     WekoIndexTree(app_)
     WekoTheme(app_)
-    
+
     FlaskCeleryExt(app_)
     WekoSearchUI(app_)
     WekoSchemaUI(app_)
@@ -198,7 +197,7 @@ def base_app(instance_path, cache_config,request ,search_class):
 @pytest.yield_fixture()
 def app(base_app):
     """Flask application fixture."""
-    
+
     with base_app.app_context():
         yield base_app
 
@@ -221,6 +220,7 @@ def i18n_app(app):
         headers=[('Accept-Language','ja')]):
         app.extensions['invenio-oauth2server'] = 1
         app.extensions['invenio-queues'] = 1
+        app.extensions['invenio-i18n'].language = "en"
         yield app
 
 def _database_setup(app, request):
@@ -271,10 +271,10 @@ def admin_app(instance_path):
     InvenioDB(base_app)
     InvenioAccounts(base_app)
     InvenioAccess(base_app)
-    
+
     with base_app.app_context():
         yield base_app
-        
+
 @pytest.yield_fixture()
 def admin_db(admin_app):
     if not database_exists(str(db_.engine.url)):
@@ -318,7 +318,7 @@ def users(app, db):
         originalroleuser = create_test_user(email='originalroleuser@test.org')
         originalroleuser2 = create_test_user(email='originalroleuser2@test.org')
         student = User.query.filter_by(email='student@test.org').first()
-        
+
     role_count = Role.query.filter_by(name='System Administrator').count()
     if role_count != 1:
         sysadmin_role = ds.create_role(name='System Administrator')
@@ -443,7 +443,7 @@ def site_info(db):
         ogp_image_name="test ogp image name1"
     )
     db.session.add(siteinfo1)
-    
+
     siteinfos.append(siteinfo1)
     siteinfo2 = SiteInfo(
         copy_right="test_copy_right2",
@@ -522,7 +522,7 @@ def item_type(db):
     with db.session.begin_nested():
         db.session.add(item_type1)
         db.session.add(item_type2)
-    
+
     return [{"obj":item_type1,"name":item_type_name1},{"obj":item_type2,"name":item_type_name2}]
 
 @pytest.fixture()
@@ -628,7 +628,7 @@ def location(app, db, instance_path):
 def records(db,location):
     record_data = json_data("data/test_records.json")
     item_data = json_data("data/test_items.json")
-    
+
     record_num = len(record_data)
     result = []
     for d in range(record_num):
@@ -686,7 +686,7 @@ def site_infos(db):
 
 @pytest.fixture()
 def feedback_mail_histories(db):
-    
+
     history1 = FeedbackMailHistory(
         start_time=datetime(2022,10,1,1,2,3,45678),
         end_time=datetime(2022,10,1,2,3,4,56789),
@@ -696,7 +696,7 @@ def feedback_mail_histories(db):
         is_latest=True
     )
     db.session.add(history1)
-    
+
     history2 = FeedbackMailHistory(
         start_time=datetime(2022,10,1,1,2,3,45678),
         end_time=datetime(2022,10,1,2,3,4,56789),
@@ -765,15 +765,15 @@ def actions(db):
     for data in action_datas:
         action_db.append(Action(**data))
     db.session.add_all(action_db)
-    
+
     status_datas = json_data("data/action_status.json")
     status_db = list()
     for data in status_datas:
         status_db.append(ActionStatus(**data))
     db.session.add_all(status_db)
-    
+
     db.session.commit()
-    
+
     return action_db, status_db
 
 @pytest.fixture()
@@ -869,7 +869,7 @@ def activities(db,flows,records,users):
                     title='test item1', shared_user_id=-1, extra_info={"is_guest":True,"guest_mail":"test.guest@test.org","file_name":"test_file"},
                     action_order=1,
                     )
-    
+
     db.session.add(activity_item_guest)
     activity_usage = Activity(activity_id='3',item_id=records[0][2].id,workflow_id=flows["workflow"][0].id, flow_id=flows["flow"].id,
                     action_id=1, activity_login_user=users[3]["id"],
@@ -877,7 +877,7 @@ def activities(db,flows,records,users):
                     activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
                     activity_community_id=3,
                     activity_confirm_term_of_use=True,
-                    title='test item1', shared_user_id=-1, 
+                    title='test item1', shared_user_id=-1,
                     extra_info={"usage_activity_id":"3","usage_application_record_data":{"subitem_restricted_access_name":"test_access_name",}},
                     action_order=1,
                     )
@@ -895,9 +895,9 @@ def activities(db,flows,records,users):
     db.session.add(activity_action1_1)
     db.session.add(activity_action1_2)
     db.session.add(activity_action1_3)
-    
+
     db.session.commit()
-    
+
     return [activity_item1, activity_31001, activity_item_guest, activity_usage]
 
 @pytest.fixture()
@@ -932,7 +932,7 @@ def facet_search_settings(db):
         display_number=3,
         is_open=True
     )
-    
+
     fields_raw = FacetSearchSetting(
         name_en="raw_test",
         name_jp="raw_test",
@@ -974,7 +974,7 @@ def log_crawler_list(db):
         list_url="https://bitbucket.org/niijp/jairo-crawler-list/raw/master/test_Crawler-List_useragent.txt",
         is_active=True
     )
-    
+
     db.session.add(crawler1)
     db.session.add(crawler2)
     db.session.commit()
@@ -1024,7 +1024,7 @@ def mail_config(db):
     )
     db.session.add(config)
     db.session.commit()
-    
+
     return config
 
 @pytest.fixture()
@@ -1063,7 +1063,6 @@ def search_class():
 class MockEs():
     def __init__(self,**keywargs):
         self.indices = self.MockIndices()
-        # self.es = Elasticsearch()
         self.es = OpenSearch()
         self.cluster = self.MockCluster()
     def index(self, id="",version="",version_type="",index="",doc_type="",body="",**arguments):
@@ -1104,7 +1103,7 @@ class MockEs():
         #     pass
         def put_mapping(self,index="",doc_type="", body={}, ignore=""):
             pass
-        
+
     class MockCluster():
         def __init__(self,**kwargs):
             pass
