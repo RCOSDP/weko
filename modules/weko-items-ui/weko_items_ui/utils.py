@@ -61,6 +61,7 @@ from invenio_stats import config
 from jsonschema import SchemaError, ValidationError
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import MetaData, Table
+from sqlalchemy.exc import SQLAlchemyError
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_deposit.pidstore import get_record_without_version
 from weko_index_tree.api import Indexes
@@ -1835,7 +1836,7 @@ def recursive_update_schema_form_with_condition(
             condition_item['item'])
 
 
-def package_export_file(item_type_data):
+def package_export_file(item_type_data, error_records=[]):
     """Export TSV/CSV Files.
 
     Args:
@@ -1887,7 +1888,10 @@ def package_export_file(item_type_data):
     file_metadata_option_writer.writeheader()
     for recid in item_type_data.get('recids'):
         file_metadata_data_writer.writerow(
-            [recid, item_type_data.get('root_url') + 'records/' + str(recid)]
+            [
+                '#' + recid if recid in error_records else recid,
+                item_type_data.get('root_url') + 'records/' + str(recid)
+            ]
             + item_type_data['data'].get(recid)
         )
 
@@ -4208,6 +4212,7 @@ def make_stats_file_with_permission(item_type_id, recids,
             return o_ret, o_ret_label, ret_data
 
     records = RecordsManager(recids, records_metadata)
+    error_records = []
 
     ret = ['#.id', '.uri']
     ret_label = ['#ID', 'URI']
@@ -4234,58 +4239,64 @@ def make_stats_file_with_permission(item_type_id, recids,
                      permissions['current_language']() == 'ja' else 'PubDate')
 
     for recid in recids:
-        record = records.records[recid]
-        paths = records.attr_data['path'][recid]
-        index_infos = Indexes.get_path_list(paths)
-        for info in index_infos:
-            records.attr_output[recid].append(info.cid)
-            records.attr_output[recid].append(info.name_en.replace(
-                '-/-', current_app.config['WEKO_ITEMS_UI_INDEX_PATH_SPLIT']))
-        records.attr_output[recid].extend(
-            [''] * (max_path * 2 - len(records.attr_output[recid]))
-        )
+        try:
+            record = records.records[recid]
+            paths = records.attr_data['path'][recid]
+            index_infos = Indexes.get_path_list(paths)
+            for info in index_infos:
+                records.attr_output[recid].append(info.cid)
+                records.attr_output[recid].append(info.name_en.replace(
+                    '-/-', current_app.config['WEKO_ITEMS_UI_INDEX_PATH_SPLIT']))
+            records.attr_output[recid].extend(
+                [''] * (max_path * 2 - len(records.attr_output[recid]))
+            )
 
-        records.attr_output[recid].append(
-            'public' if record['publish_status'] == PublishStatus.PUBLIC.value else 'private')
-        feedback_mail_list = records.attr_data['feedback_mail_list'] \
-            .get(recid, [])
-        records.attr_output[recid].extend(feedback_mail_list)
-        records.attr_output[recid].extend(
-            [''] * (max_feedback_mail - len(feedback_mail_list))
-        )
+            records.attr_output[recid].append(
+                'public' if record['publish_status'] == PublishStatus.PUBLIC.value else 'private')
+            feedback_mail_list = records.attr_data['feedback_mail_list'] \
+                .get(recid, [])
+            records.attr_output[recid].extend(feedback_mail_list)
+            records.attr_output[recid].extend(
+                [''] * (max_feedback_mail - len(feedback_mail_list))
+            )
 
-        pid_cnri = record.pid_cnri
-        cnri = ''
-        if pid_cnri:
-            cnri = pid_cnri.pid_value.replace(WEKO_SERVER_CNRI_HOST_LINK, '')
-        records.attr_output[recid].append(cnri)
+            pid_cnri = record.pid_cnri
+            cnri = ''
+            if pid_cnri:
+                cnri = pid_cnri.pid_value.replace(WEKO_SERVER_CNRI_HOST_LINK, '')
+            records.attr_output[recid].append(cnri)
 
-        identifier = IdentifierHandle(record.pid_recid.object_uuid)
-        doi_value, doi_type = identifier.get_idt_registration_data()
-        doi_type_str = doi_type[0] if doi_type and doi_type[0] else ''
-        doi_str = doi_value[0] if doi_value and doi_value[0] else ''
-        if doi_type_str and doi_str:
-            doi_domain = ''
-            if doi_type_str == WEKO_IMPORT_DOI_TYPE[0]:
-                doi_domain = IDENTIFIER_GRANT_LIST[1][2]
-            elif doi_type_str == WEKO_IMPORT_DOI_TYPE[1]:
-                doi_domain = IDENTIFIER_GRANT_LIST[2][2]
-            elif doi_type_str == WEKO_IMPORT_DOI_TYPE[2]:
-                doi_domain = IDENTIFIER_GRANT_LIST[3][2]
-            elif doi_type_str == WEKO_IMPORT_DOI_TYPE[3]:
-                doi_domain = IDENTIFIER_GRANT_LIST[4][2]
-            if doi_domain and doi_str.startswith(doi_domain):
-                doi_str = doi_str.replace(doi_domain + '/', '', 1)
-        records.attr_output[recid].extend([
-            doi_type_str,
-            doi_str
-        ])
+            identifier = IdentifierHandle(record.pid_recid.object_uuid)
+            doi_value, doi_type = identifier.get_idt_registration_data()
+            doi_type_str = doi_type[0] if doi_type and doi_type[0] else ''
+            doi_str = doi_value[0] if doi_value and doi_value[0] else ''
+            if doi_type_str and doi_str:
+                doi_domain = ''
+                if doi_type_str == WEKO_IMPORT_DOI_TYPE[0]:
+                    doi_domain = IDENTIFIER_GRANT_LIST[1][2]
+                elif doi_type_str == WEKO_IMPORT_DOI_TYPE[1]:
+                    doi_domain = IDENTIFIER_GRANT_LIST[2][2]
+                elif doi_type_str == WEKO_IMPORT_DOI_TYPE[2]:
+                    doi_domain = IDENTIFIER_GRANT_LIST[3][2]
+                elif doi_type_str == WEKO_IMPORT_DOI_TYPE[3]:
+                    doi_domain = IDENTIFIER_GRANT_LIST[4][2]
+                if doi_domain and doi_str.startswith(doi_domain):
+                    doi_str = doi_str.replace(doi_domain + '/', '', 1)
+            records.attr_output[recid].extend([
+                doi_type_str,
+                doi_str
+            ])
 
-        # .edit Keep or Upgrade. default is Keep
-        records.attr_output[recid].append('Keep')
+            # .edit Keep or Upgrade. default is Keep
+            records.attr_output[recid].append('Keep')
 
-        records.attr_output[recid].append(record[
-            'pubdate']['attribute_value'])
+            records.attr_output[recid].append(record[
+                'pubdate']['attribute_value'])
+        except SQLAlchemyError as e:
+            raise e
+        except Exception as e:
+            error_records.append(recid)
+            records.attr_output[recid] = [record.get('title'), f'{type(e).__name__} : {str(e)}']
 
     for item_key in item_type.get('table_row'):
         item = table_row_properties.get(item_key)
@@ -4298,46 +4309,55 @@ def make_stats_file_with_permission(item_type_id, recids,
         keys = []
         labels = []
         for recid in recids:
-            records.cur_recid = recid
-            # print("item.get(type):{}".format(item.get('type')))
-            # print("item_key:{}".format(item_key))
-            # print("records.attr_data[item_key]: {}".format(records.attr_data[item_key]))
-            if item.get('type') == 'array':
-                key, label, data = records.get_subs_item(
-                    item_key,
-                    item.get('title'),
-                    item['items']['properties'],
-                    records.attr_data[item_key][recid]
-                )
-                if not keys:
-                    keys = key
-                if not labels:
-                    labels = label
-                records.attr_output[recid].extend(data)
-            elif item.get('type') == 'object':
-                key, label, data = records.get_subs_item(
-                    item_key,
-                    item.get('title'),
-                    item['properties'],
-                    records.attr_data[item_key][recid],
-                    True
-                )
-                if not keys:
-                    keys = key
-                if not labels:
-                    labels = label
-                records.attr_output[recid].extend(data)
-            else:
-                if not keys:
-                    keys = [item_key]
-                if not labels:
-                    labels = [item.get('title')]
-                data = records.attr_data[item_key].get(recid) or {}
-                attr_val = data.get("attribute_value", "")
-                if isinstance(attr_val,str):
-                    records.attr_output[recid].append(attr_val)
+            try:
+                if recid in error_records:
+                    continue
+                records.cur_recid = recid
+                # print("item.get(type):{}".format(item.get('type')))
+                # print("item_key:{}".format(item_key))
+                # print("records.attr_data[item_key]: {}".format(records.attr_data[item_key]))
+                if item.get('type') == 'array':
+                    key, label, data = records.get_subs_item(
+                        item_key,
+                        item.get('title'),
+                        item['items']['properties'],
+                        records.attr_data[item_key][recid]
+                    )
+                    if not keys:
+                        keys = key
+                    if not labels:
+                        labels = label
+                    records.attr_output[recid].extend(data)
+                elif item.get('type') == 'object':
+                    key, label, data = records.get_subs_item(
+                        item_key,
+                        item.get('title'),
+                        item['properties'],
+                        records.attr_data[item_key][recid],
+                        True
+                    )
+                    if not keys:
+                        keys = key
+                    if not labels:
+                        labels = label
+                    records.attr_output[recid].extend(data)
                 else:
-                    records.attr_output[recid].extend(attr_val)
+                    if not keys:
+                        keys = [item_key]
+                    if not labels:
+                        labels = [item.get('title')]
+                    data = records.attr_data[item_key].get(recid) or {}
+                    attr_val = data.get("attribute_value", "")
+                    if isinstance(attr_val,str):
+                        records.attr_output[recid].append(attr_val)
+                    else:
+                        records.attr_output[recid].extend(attr_val)
+            except SQLAlchemyError as e:
+                raise e
+            except Exception as e:
+                record = records.records[recid]
+                error_records.append(recid)
+                records.attr_output[recid] = [record.get('title'), f'{type(e).__name__} : {str(e)}']
 
         new_keys = []
         for key in keys:
@@ -4388,7 +4408,7 @@ def make_stats_file_with_permission(item_type_id, recids,
             ret_system.append('')
             ret_option.append('')
 
-    return [ret, ret_label, ret_system, ret_option], records.attr_output
+    return [ret, ret_label, ret_system, ret_option], records.attr_output, error_records
 
 
 def check_item_is_being_edit(

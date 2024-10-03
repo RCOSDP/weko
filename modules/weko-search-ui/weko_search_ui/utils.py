@@ -3304,7 +3304,7 @@ def export_all(root_url, user_id, data, timezone):
             hide_meta_data_for_role=lambda a: True,
             current_language=lambda: True,
         )
-        headers, records = make_stats_file_with_permission(
+        headers, records, error_records = make_stats_file_with_permission(
             item_datas["item_type_id"],
             item_datas["recids"],
             item_datas["data"],
@@ -3312,7 +3312,7 @@ def export_all(root_url, user_id, data, timezone):
             export_path
         )
         keys, labels, is_systems, options = headers
-        item_datas["recids"].sort()
+        item_datas["recids"].sort(key=int)
         item_datas["keys"] = keys
         item_datas["labels"] = labels
         item_datas["is_systems"] = is_systems
@@ -3322,7 +3322,7 @@ def export_all(root_url, user_id, data, timezone):
 
         file_full_path = "{}/{}.{}".format(export_path, item_type_data.get("name"), _file_format)
         with open(file_full_path, "w", encoding="utf-8-sig") as file:
-            file_output = package_export_file(item_type_data)
+            file_output = package_export_file(item_type_data, error_records)
             file.write(file_output.getvalue())
 
     def _get_item_type_list(item_type_id):
