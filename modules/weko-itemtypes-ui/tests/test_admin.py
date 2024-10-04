@@ -471,11 +471,11 @@ class TestItemTypeMetaDataView:
             'file': (file, '')
         }
         res = client.post(url,data=data,content_type='multipart/form-data')
-        assert json.loads(res.data)['msg'] == 'No item type name Error'
+        assert json.loads(res.data)['msg'] == 'No item-type name Error'
 
         # Error if 'input_file' is missing
         data = {
-            'item_type_name': 'test2',
+            'item_type_name': 'error test',
             'file': (BytesIO(b''), '')
         }
         res = client.post(url,data=data,content_type='multipart/form-data')
@@ -486,7 +486,7 @@ class TestItemTypeMetaDataView:
             filename='test.zip',stream=BytesIO(b'test'),content_type=''
         )
         data = {
-            'item_type_name': 'test3',
+            'item_type_name': 'error test',
             'file': (file, '')
         }
         res = client.post(url, data=data, content_type='multipart/form-data')
@@ -495,7 +495,7 @@ class TestItemTypeMetaDataView:
         # Assert that a debug log with the ignored file is generated
         file = BytesIO(zipfiles[1].getvalue())
         data = {
-            'item_type_name': 'test4',
+            'item_type_name': 'ignoring test',
             'file': (file, 'test.zip')
         }
         with caplog.at_level('DEBUG'):
@@ -505,50 +505,50 @@ class TestItemTypeMetaDataView:
         # Error if the required files are missing in the imported ZIP file
         file = BytesIO(insufficient_zipfile.getvalue())
         data = {
-            'item_type_name': 'test5',
+            'item_type_name': 'error test',
             'file': (file, 'test.zip')
         }
         res = client.post(url, data=data, content_type='multipart/form-data')
         assert json.loads(res.data)['msg'] == (
-            'Failed to import Item type. Zip file contents invalid.'
+            'Failed to import the item-type. Zip file contents invalid.'
         )
 
         # Error if ItemType.json does not have a 'render' key
         file = BytesIO(no_render_zipfile.getvalue())
         data = {
-            'item_type_name': 'test',
+            'item_type_name': 'error test',
             'file': (file, 'test.zip')
         }
         res = client.post(url, data=data, content_type='multipart/form-data')
         assert res.status_code == 400
         assert json.loads(res.data)['msg'] == (
-            'Failed to import Item type. '
+            'Failed to import the item-type. '
             '"render" is missing or invalid in ItemType.json.'
         )
         
         # Error if 'render' value does not have a 'table_row' key
         file = BytesIO(no_table_row_zipfile.getvalue())
         data = {
-            'item_type_name': 'test',
+            'item_type_name': 'error test',
             'file': (file, 'test.zip')
         }
         res = client.post(url, data=data, content_type='multipart/form-data')
         assert res.status_code == 400
         assert json.loads(res.data)['msg'] == (
-            'Failed to import Item type. '
+            'Failed to import the item-type. '
             '"table_row" is missing or invalid in "render".'
         )
 
         # Error if 'render' value does not have a 'meta_list' key
         file = BytesIO(no_meta_list_zipfile.getvalue())
         data = {
-            'item_type_name': 'test',
+            'item_type_name': 'error test',
             'file': (file, 'test.zip')
         }
         res = client.post(url, data=data, content_type='multipart/form-data')
         assert res.status_code == 400
         assert json.loads(res.data)['msg'] == (
-            'Failed to import Item type. '
+            'Failed to import the item-type. '
             '"meta_list" is missing or invalid in "render".'
         )
 
@@ -557,12 +557,12 @@ class TestItemTypeMetaDataView:
         mock_fix_json_schema.return_value = None
         mock_update_required_schema.return_value = None
         data = {
-            'item_type_name': 'test6',
+            'item_type_name': 'error test',
             'file': (file, 'test.zip')
         }
         res = client.post(url, data=data, content_type='multipart/form-data')
         assert json.loads(res.data)['msg'] == (
-            'Failed to import Item type. Schema is in wrong format.'
+            'Failed to import the item-type. Schema is in wrong format.'
         )
 
         # Import fails if forced-import is False and
@@ -580,12 +580,12 @@ class TestItemTypeMetaDataView:
             )
             file = BytesIO(zipfiles[2].getvalue())
             data = {
-                'item_type_name': 'test7',
+                'item_type_name': 'failure test',
                 'file': (file, 'test.zip')
             }
             res = client.post(url, data=data, content_type='multipart/form-data')
             assert json.loads(res.data)['msg'] == (
-                'Failed to import Item type. Property ID does not exist.'
+                'Failed to import the item-type. Unregistered properties detected.'
             )
 
         # Import suceeds if forced-import is False but
@@ -595,19 +595,17 @@ class TestItemTypeMetaDataView:
             {'WEKO_ITEMTYPES_UI_FORCED_IMPORT_ENABLED': False}
         ):
             class MockProp:
-                updated = ''
-            mock_prop = MockProp()
-            mock_prop.updated = '2024-09-06T00:00:00+00:00'
-            mock_get_record.return_value = mock_prop
+                updated = datetime(2024, 9, 6, 0, 0)
+            mock_get_record.return_value = MockProp()
             file = BytesIO(zipfiles[0].getvalue())
             data = {
-                'item_type_name': 'test8',
+                'item_type_name': 'success test 1',
                 'file': (file, 'test.zip')
             }
             with caplog.at_level('DEBUG'):
                 res = client.post(url, data=data, content_type='multipart/form-data')
             assert json.loads(res.data)['msg'] == (
-                'Successfuly import Item type.'
+                'The item-type imported successfully.'
             )
 
         # Import suceeds if forced-import is True, even when
@@ -618,12 +616,12 @@ class TestItemTypeMetaDataView:
         ):
             file = BytesIO(zipfiles[2].getvalue())
             data = {
-                'item_type_name': 'test9',
+                'item_type_name': 'success test 2',
                 'file': (file, 'test.zip')
             }
             res = client.post(url, data=data, content_type='multipart/form-data')
             assert json.loads(res.data)['msg'] == (
-                'Successfuly import Item type.'
+                'The item-type imported successfully.'
             )
 
         # Import suceeds if forced-import is True and
@@ -634,12 +632,12 @@ class TestItemTypeMetaDataView:
         ):
             file = BytesIO(zipfiles[0].getvalue())
             data = {
-                'item_type_name': 'test10',
+                'item_type_name': 'success test 3',
                 'file': (file, 'test.zip')
             }
             res = client.post(url, data=data, content_type='multipart/form-data')
             assert json.loads(res.data)['msg'] == (
-                'Successfuly import Item type.'
+                'The item-type imported successfully.'
             )
 
         # Error if the database commit fails
@@ -649,13 +647,56 @@ class TestItemTypeMetaDataView:
         ):
             file = BytesIO(zipfiles[3].getvalue())
             data = {
-                'item_type_name': 'test11',
+                'item_type_name': 'failure test',
                 'file': (file, 'test.zip')
             }
             res = client.post(url, data=data, content_type='multipart/form-data')
             assert res.status_code == 400
-            assert 'Failed to import Item type' in json.loads(res.data)['msg']
+            assert 'Failed to import the item-type' in json.loads(res.data)['msg']
         
+        # Import suceeds but duplicated IDs reported
+        with patch.dict(
+            current_app.config,
+            {'WEKO_ITEMTYPES_UI_FORCED_IMPORT_ENABLED': True} 
+        ):
+            test_id = 5
+            expected_json = {
+                '5': {
+                    'created': '2024-09-06T00:00:00+00:00',
+                    'delflg': False,
+                    'form': {'title_i18n': {'en': 'test property'}},
+                    'forms': ['test form'],
+                    'id': 5,
+                    'name': 'test property 5',
+                    'schema': {'type': 'string'},
+                    'sort': 1,
+                    'updated': '2024-09-06T00:00:00+00:00'
+                }
+            }
+            file = BytesIO(zipfiles[4].getvalue())
+            data = {
+                'item_type_name': 'duplication test',
+                'file': (file, 'test.zip')
+            }
+            res = client.post(url, data=data, content_type='multipart/form-data')
+            file = BytesIO(zipfiles[4].getvalue())
+            data = {
+                'item_type_name': 'duplication test2',
+                'file': (file, 'test.zip')
+            }
+            class MockProp:
+                id = test_id
+                updated = datetime(2024, 9, 7, 0, 0)
+            mock_get_record.return_value = MockProp()
+            res = client.post(url, data=data, content_type='multipart/form-data')
+            assert json.loads(res.data)['msg'] == (
+                'The item-type imported successfully, but these property '
+                'IDs were duplicated and were not imported:'
+            )
+            assert json.loads(res.data)['duplicated_props'] == expected_json
+            
+
+
 # class ItemTypeSchema(SQLAlchemyAutoSchema):
 #     class Meta:
 # class ItemTypeNameSchema(SQLAlchemyAutoSchema):

@@ -401,7 +401,7 @@ class ItemTypeMetaDataView(BaseView):
 
         # Error if the data is incomplete
         if not item_type_name:
-            return jsonify(msg=_('No item type name Error'))
+            return jsonify(msg=_('No item-type name Error'))
         if not input_file:
             return jsonify(msg=_('No file Error'))
         if not input_file.mimetype:
@@ -447,14 +447,14 @@ class ItemTypeMetaDataView(BaseView):
                 import_data['ItemTypeProperty'] is None
             ):
                 raise ValueError('Zip file contents invalid.')
-            
+
             # Data of properties related to the item-type
             render = import_data['ItemType'].get('render')
             if not render:
                 raise ValueError(
                     '"render" is missing or invalid in ItemType.json.'
                 )
-            
+
             # Property numbers to identify property IDs
             table_row_ids = render.get('table_row')
             if not table_row_ids:
@@ -468,7 +468,7 @@ class ItemTypeMetaDataView(BaseView):
                 raise ValueError(
                     '"meta_list" is missing or invalid in "render".'
                 )
-            
+
             json_schema = fix_json_schema(
                 import_data['ItemType'].get('schema')
             )
@@ -477,36 +477,51 @@ class ItemTypeMetaDataView(BaseView):
                 json_schema,
                 json_form
             )
-            
+
             if not json_schema:
                 raise ValueError('Schema is in wrong format.')
 
-            unregistered_prop_ids = set()
+            importing_props = {
+                prop.get('id'): prop
+                for prop in import_data['ItemTypeProperty']
+            }
+            new_prop_ids = []
+            duplicated_prop_ids = []
             for row_id in table_row_ids:
-                # remove 'cus_'
-                prop_id = int(meta_list.get(row_id).get('input_type')[4:])
-                prop = ItemTypeProps.get_record(prop_id)
-                if prop is None:
-                    unregistered_prop_ids.add(prop_id)
+                # Extract the property ID from 'input_type'
+                input_type = meta_list.get(row_id).get('input_type')
+                prop_id = int(input_type[4:])
+                record = ItemTypeProps.get_record(prop_id)
+
+                if not record:
+                    new_prop_ids.append(prop_id)
+                else:
+                    importing_prop = importing_props.get(prop_id)
+                    if importing_prop:
+                        importing_updated = (
+                            importing_prop.get('updated').split('+')[0])
+                        record_updated = record.updated.isoformat()
+                        if importing_updated != record_updated:
+                            duplicated_prop_ids.append(prop_id)
 
             forced_import = current_app.config[
                 'WEKO_ITEMTYPES_UI_FORCED_IMPORT_ENABLED'
             ]
 
-            if (len(unregistered_prop_ids) > 0) and not forced_import:
-                raise ValueError(_('Property ID does not exist.'))
+            if new_prop_ids and not forced_import:
+                raise ValueError(_('Unregistered properties detected.'))
 
-            # Get unregistered property from ItemTypeProperty.json
+            # Get data of new property from ItemTypeProperty.json
             property_data = import_data['ItemTypeProperty']
-            for prop_id in unregistered_prop_ids:
+            for prop_id in new_prop_ids:
                 prop = [x for x in property_data if x.get('id') == prop_id][0]
-                # Create or update property
+                # Create new property record using the data
                 ItemTypeProps.create_with_property_id(property_id=prop_id,
                                      name=prop.get('name'),
                                      schema=prop.get('schema'),
                                      form_single=prop.get('form'),
                                      form_array=prop.get('forms'))
-            # Create new item type record
+            # Create new item type record(not update)
             record = ItemTypes.update(
                 id_=0,
                 name=item_type_name,
@@ -532,15 +547,34 @@ class ItemTypeMetaDataView(BaseView):
             db.session.commit()
         except Exception as ex:
             db.session.rollback()
-            default_msg = _('Failed to import Item type.')
+            default_msg = _('Failed to import the item-type.')
             response = jsonify(msg='{} {}'.format(default_msg, str(ex)))
             response.status_code = 400
             return response
+
         current_app.logger.debug('itemtype import: {}'.format(item_type_id))
-        flash(_('Successfuly import Item type.'))
+        flash(_('The item-type imported successfully.'))
         redirect_url = url_for('.index', item_type_id=item_type_id)
-        return jsonify(msg=_('Successfuly import Item type.'),
-                       redirect_url=redirect_url)
+
+        if duplicated_prop_ids:
+            duplicated_props = {
+                prop_id: importing_props[prop_id]
+                for prop_id in duplicated_prop_ids
+            }
+            response = jsonify(
+                msg=_(
+                    'The item-type imported successfully, but these property '
+                    'IDs were duplicated and were not imported:'
+                ),
+                duplicated_props=duplicated_props,
+                redirect_url=redirect_url
+            )
+        else:
+            response = jsonify(
+                msg=_('The item-type imported successfully.'),
+                redirect_url=redirect_url
+            )
+        return response
 
 class ItemTypeSchema(SQLAlchemyAutoSchema):
     class Meta:

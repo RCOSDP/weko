@@ -962,8 +962,8 @@ def create_zipfiles():
             'render': {
                     'table_row': ['row1', 'row2'],
                     'meta_list': {
-                        'row1': {'input_type': 'cus_1'},
-                        'row2': {'input_type': 'cus_2'}
+                        'row1': {'input_type': 'cus_' + str(i)},
+                        'row2': {'input_type': 'cus_' + str(i + 1)}
                     }
                 },
             'tag': 1,
