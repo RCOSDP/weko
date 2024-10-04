@@ -6,12 +6,10 @@ import pytest
 from mock import patch, MagicMock
 from flask import Response, current_app
 from flask_babel import get_locale
-from opensearch_dsl import response, Search
-from opensearchpy.exceptions import OpenSearchException
 from tests.conftest import json_data
 
-# from invenio_records_rest.errors import MaxResultWindowRESTError
 from invenio_rest import ContentNegotiatedMethodView
+from invenio_search.engine import dsl, search
 
 from weko_records.api import ItemTypes
 from weko_search_ui.rest import create_blueprint, IndexSearchResource, get_heading_info
@@ -121,7 +119,7 @@ def test_IndexSearchResource_get_Exception(client_rest, db, users, item_type, db
     def dummy_response(data):
         if isinstance(data, str):
             data = json_data(data)
-        dummy=response.Response(Search(), data)
+        dummy=dsl.response.Response(dsl.Search(), data)
         return dummy
     facet = json_data("data/search/facet.json")
     links = {"self":"?page=1&size=20"}
@@ -373,7 +371,7 @@ def test_IndexSearchResourceAPI_error(client_rest, db_register2, db_rocrate_mapp
     res = client_rest.get(url('/v1/records', param))
     assert res.status_code == 400
 
-    with patch('invenio_search.api.RecordsSearch.execute', side_effect=OpenSearchException()):
+    with patch('invenio_search.api.RecordsSearch.execute', side_effect=search.exceptions.OpenSearchException()):
         res = client_rest.get(url('/v1/records'))
         assert res.status_code == 500
 

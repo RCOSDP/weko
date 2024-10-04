@@ -36,8 +36,8 @@ from unittest.mock import patch
 
 import pytest
 from click.testing import CliRunner
-from elasticsearch import Elasticsearch
-from elasticsearch.client.ingest import IngestClient
+from opensearchpy import OpenSearch
+from opensearchpy.client.ingest import IngestClient
 from flask import Blueprint, Flask
 from flask_assets import assets
 from flask_babel import Babel
@@ -67,8 +67,8 @@ from invenio_oaiserver import InvenioOAIServer
 from invenio_oaiserver.models import Identify
 from invenio_oaiserver.views.server import blueprint as invenio_oaiserver_blueprint
 from invenio_pidrelations import InvenioPIDRelations
-from invenio_pidrelations.contrib.records import RecordDraft
-from invenio_pidrelations.contrib.versioning import PIDVersioning
+from invenio_pidrelations.contrib.draft import PIDNodeDraft
+from invenio_pidrelations.contrib.versioning import PIDNodeVersioning
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore import InvenioPIDStore
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus, Redirect
@@ -252,7 +252,12 @@ def base_app(instance_path):
         INDEXER_DEFAULT_DOCTYPE="item-v1.0.0",
         INDEXER_DEFAULT_DOC_TYPE="item-v1.0.0",
         INDEXER_FILE_DOC_TYPE="content",
-        SEARCH_ELASTIC_HOSTS="elasticsearch",
+        SEARCH_ELASTIC_HOSTS=os.environ.get('SEARCH_ELASTIC_HOSTS', 'opensearch'),
+        SEARCH_CLIENT_CONFIG={
+            "http_auth":(os.environ.get('INVENIO_OPENSEARCH_USER', 'invenio'),os.environ.get('INVENIO_OPENSEARCH_PASS', 'openpass123!')),
+            "use_ssl":True, 
+            "verify_certs":False
+        },
         SEARCH_INDEX_PREFIX="test-",
         WEKO_BUCKET_QUOTA_SIZE=50 * 1024 * 1024 * 1024,
         WEKO_MAX_FILE_SIZE=50 * 1024 * 1024 * 1024,
@@ -273,6 +278,7 @@ def base_app(instance_path):
     InvenioAdmin(app_)
     InvenioDB(app_)
     InvenioCache(app_)
+    InvenioI18N(app_)
     InvenioPIDStore(app_)
     InvenioPIDRelations(app_)
     InvenioSearch(app_)
@@ -297,7 +303,7 @@ def base_app(instance_path):
     WekoDeposit(app_)
     WekoDepositREST(app_)
     # app_.register_blueprint(weko_schema_ui_blueprint)
-    app_.register_blueprint(weko_records_ui_blueprint)
+    # app_.register_blueprint(weko_records_ui_blueprint)
     app_.register_blueprint(invenio_files_rest_blueprint)  # invenio_files_rest
     app_.register_blueprint(invenio_oaiserver_blueprint)
     
@@ -733,7 +739,7 @@ def esindex(app):
             index=app.config["INDEXER_DEFAULT_INDEX"], name="test-weko"
         )
         
-        es = Elasticsearch(
+        es = OpenSearch(
             [app.config['SEARCH_ELASTIC_HOSTS']],
             scheme="http",
             port=9200
@@ -2157,11 +2163,11 @@ def make_record(db, indexer, i, filepath, filename, mimetype):
         status=PIDStatus.REGISTERED,
     )
 
-    h1 = PIDVersioning(parent=parent)
-    h1.insert_child(child=recid)
-    h1.insert_child(child=recid_v1)
-    RecordDraft.link(recid, depid)
-    RecordDraft.link(recid_v1, depid_v1)
+    h1 = PIDNodeVersioning(pid=parent)
+    h1.insert_child(child_pid=recid)
+    h1.insert_child(child_pid=recid_v1)
+    PIDNodeDraft(pid=recid).insert_child(depid)
+    PIDNodeDraft(pid=recid_v1).insert_child(depid_v1)
 
     if i % 2 == 1:
         doi = PersistentIdentifier.create(

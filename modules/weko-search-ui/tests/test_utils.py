@@ -13,7 +13,7 @@ import pytest
 from flask import current_app, make_response, request, _request_ctx_stack
 from flask_babel import Babel
 from flask_login import current_user
-# from invenio_i18n.babel import set_locale
+from invenio_i18n import force_locale
 from invenio_records.api import Record
 from mock import MagicMock, Mock, patch
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
@@ -382,15 +382,12 @@ def test_unpackage_import_file(app, db,mocker, mocker_itemtype):
         os.path.dirname(os.path.realpath(__file__)), "data", "unpackage_import_file"
     )
     with app.test_request_context():
-        # with set_locale("en"):
-        ctx = _request_ctx_stack.top
-        if ctx is not None and hasattr(ctx, 'babel_locale'):
-            with setattr(ctx, 'babel_locale', 'en'):
-                assert unpackage_import_file(path, "items.csv", "csv", False) == result
-                assert (
-                    unpackage_import_file(path, "items.csv", "csv", True)
-                    == result_force_new
-                )
+        with force_locale("en"):
+            assert unpackage_import_file(path, "items.csv", "csv", False) == result
+            assert (
+                unpackage_import_file(path, "items.csv", "csv", True)
+                == result_force_new
+            )
 
 
 # def getEncode(filepath):
@@ -480,16 +477,13 @@ def test_handle_validate_item_import(app, mocker_itemtype):
         result = json.load(f)
 
     with app.test_request_context():
-        # with set_locale("en"):
-        ctx = _request_ctx_stack.top
-        if ctx is not None and hasattr(ctx, 'babel_locale'):
-            with setattr(ctx, 'babel_locale', 'en'):
-                assert (
-                    handle_validate_item_import(
-                        list_record, data.get("item_type_schema", {})
-                    )
-                    == result
+        with force_locale("en"):
+            assert (
+                handle_validate_item_import(
+                    list_record, data.get("item_type_schema", {})
                 )
+                == result
+            )
 
 
 # def represents_int(s):
@@ -561,11 +555,8 @@ def test_handle_check_exist_record(app):
         result = json.load(f)
 
     with app.test_request_context():
-        # with set_locale("en"):
-        ctx = _request_ctx_stack.top
-        if ctx is not None and hasattr(ctx, 'babel_locale'):
-            with setattr(ctx, 'babel_locale', 'en'):
-                case.assertCountEqual(handle_check_exist_record(list_record), result)
+        with force_locale("en"):
+            case.assertCountEqual(handle_check_exist_record(list_record), result)
 
     # case 3 import items with id and uri
     filepath = os.path.join(
@@ -587,14 +578,11 @@ def test_handle_check_exist_record(app):
         result = json.load(f)
 
     with app.test_request_context():
-        # with set_locale("en"):
-        ctx = _request_ctx_stack.top
-        if ctx is not None and hasattr(ctx, 'babel_locale'):
-            with setattr(ctx, 'babel_locale', 'en'):
-                with patch("weko_deposit.api.WekoRecord.get_record_by_pid") as m:
-                    m.return_value.pid.is_deleted.return_value = False
-                    m.return_value.get.side_effect = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-                    case.assertCountEqual(handle_check_exist_record(list_record), result)
+        with force_locale("en"):
+            with patch("weko_deposit.api.WekoRecord.get_record_by_pid") as m:
+                m.return_value.pid.is_deleted.return_value = False
+                m.return_value.get.side_effect = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+                case.assertCountEqual(handle_check_exist_record(list_record), result)
 
     # case 4 import new items with doi_ra
     filepath = os.path.join(
@@ -616,11 +604,8 @@ def test_handle_check_exist_record(app):
         result = json.load(f)
 
     with app.test_request_context():
-        # with set_locale("en"):
-        ctx = _request_ctx_stack.top
-        if ctx is not None and hasattr(ctx, 'babel_locale'):
-            with setattr(ctx, 'babel_locale', 'en'):
-                case.assertCountEqual(handle_check_exist_record(list_record), result)
+        with force_locale("en"):
+            case.assertCountEqual(handle_check_exist_record(list_record), result)
 
 
 # def make_file_by_line(lines):
@@ -1330,7 +1315,7 @@ def test_handle_doi_required_check(
 
     record2 = {
         "id": 1,
-        "item_type_id": 1,
+        "item_type_id": 10,
         "metadata": {"a": 1},
         "doi_ra": "JaLC",
         "file_path": "a b c d",
@@ -1725,13 +1710,10 @@ def test_handle_fill_system_item(app, test_list_records,identifier, mocker):
     #     items_result = json.load(f)
     mocker.patch("weko_deposit.api.WekoRecord.get_record_by_pid",return_value=mock_record)
     with app.test_request_context():
-        # with set_locale("en"):
-        ctx = _request_ctx_stack.top
-        if ctx is not None and hasattr(ctx, 'babel_locale'):
-            with setattr(ctx, 'babel_locale', 'en'):
-                handle_fill_system_item(items)
-                assert len(items) == len(items_result)
-                assert items == items_result
+        with force_locale('en'):
+            handle_fill_system_item(items)
+            assert len(items) == len(items_result)
+            assert items == items_result
 
 
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_fill_system_item3 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
@@ -2083,7 +2065,7 @@ def test_handle_fill_system_item3(app,doi_records,item_id,before_doi,after_doi,w
 
 # def get_thumbnail_key(item_type_id=0):
 def test_get_thumbnail_key(i18n_app, db_itemtype, db_workflow):
-    assert get_thumbnail_key(item_type_id=1)
+    assert get_thumbnail_key(item_type_id=10)
 
 
 # def handle_check_thumbnail_file_type(thumbnail_paths):
@@ -2702,7 +2684,7 @@ def test_function_issue34535(db,db_index,db_itemtype,location,db_oaischema,mocke
     # register item
     indexer = WekoIndexer()
     indexer.get_es_index()
-    record_data = {"_oai":{"id":"oai:weko3.example.org:00000004","sets":[]},"path":["1"],"owner":"1","recid":"4","title":["test item in br"],"pubdate":{"attribute_name":"PubDate","attribute_value":"2022-11-21"},"_buckets":{"deposit":"0796e490-6dcf-4e7d-b241-d7201c3de83a"},"_deposit":{"id":"4","pid":{"type":"depid","value":"4","revision_id":0},"owner":"1","owners":[1],"status":"published","created_by":1},"item_title":"test item in br","author_link":[],"item_type_id":"1","publish_date":"2022-11-21","publish_status":"0","weko_shared_id":-1,"item_1617186331708":{"attribute_name":"Title","attribute_value_mlt":[{"subitem_1551255647225":"test item in br","subitem_1551255648112":"ja"}]},"item_1617186626617":{"attribute_name":"Description","attribute_value_mlt":[{"subitem_description":"this is line1.\nthis is line2.","subitem_description_type":"Abstract","subitem_description_language":"en"}]},"item_1617258105262":{"attribute_name":"Resource Type","attribute_value_mlt":[{"resourceuri":"http://purl.org/coar/resource_type/c_5794","resourcetype":"conference paper"}]},"relation_version_is_last":True}
+    record_data = {"_oai":{"id":"oai:weko3.example.org:00000004","sets":[]},"path":["1"],"owner":"1","recid":"4","title":["test item in br"],"pubdate":{"attribute_name":"PubDate","attribute_value":"2022-11-21"},"_buckets":{"deposit":"0796e490-6dcf-4e7d-b241-d7201c3de83a"},"_deposit":{"id":"4","pid":{"type":"depid","value":"4","revision_id":0},"owner":"1","owners":[1],"status":"published","created_by":1},"item_title":"test item in br","author_link":[],"item_type_id":"10","publish_date":"2022-11-21","publish_status":"0","weko_shared_id":-1,"item_1617186331708":{"attribute_name":"Title","attribute_value_mlt":[{"subitem_1551255647225":"test item in br","subitem_1551255648112":"ja"}]},"item_1617186626617":{"attribute_name":"Description","attribute_value_mlt":[{"subitem_description":"this is line1.\nthis is line2.","subitem_description_type":"Abstract","subitem_description_language":"en"}]},"item_1617258105262":{"attribute_name":"Resource Type","attribute_value_mlt":[{"resourceuri":"http://purl.org/coar/resource_type/c_5794","resourcetype":"conference paper"}]},"relation_version_is_last":True}
     item_data = {"id":"4","pid":{"type":"depid","value":"4","revision_id":0},"lang":"ja","path":[1],"owner":"1","title":"test item in br","owners":[1],"status":"published","$schema":"https://192.168.56.103/items/jsonschema/1","pubdate":"2022-11-21","edit_mode":"keep","created_by":1,"owners_ext":{"email":"wekosoftware@nii.ac.jp","username":"","displayname":""},"deleted_items":["item_1617605131499"],"shared_user_id":-1,"weko_shared_id":-1,"item_1617186331708":[{"subitem_1551255647225":"test item in br","subitem_1551255648112":"ja"}],"item_1617186626617":[{"subitem_description":"this is line1.\nthis is line2.","subitem_description_type":"Abstract","subitem_description_language":"en"}],"item_1617258105262":{"resourceuri":"http://purl.org/coar/resource_type/c_5794","resourcetype":"conference paper"}}
     rec_uuid = uuid.uuid4()
     recid = PersistentIdentifier.create(
@@ -2729,7 +2711,7 @@ def test_function_issue34535(db,db_index,db_itemtype,location,db_oaischema,mocke
 
     # new item
     root_path = os.path.dirname(os.path.abspath(__file__))
-    new_item = {'$schema': 'https://192.168.56.103/items/jsonschema/1', 'edit_mode': 'Keep', 'errors': None, 'file_path': [''], 'filenames': [{'filename': '', 'id': '.metadata.item_1617605131499[0].filename'}], 'id': '4', 'identifier_key': 'item_1617186819068', 'is_change_identifier': False, 'item_title': 'test item in br', 'item_type_id': 1, 'item_type_name': 'デフォルトアイテムタイプ（フル）', 'metadata': {'item_1617186331708': [{'subitem_1551255647225': 'test item in br', 'subitem_1551255648112': 'ja'}], 'item_1617186626617': [{'subitem_description': 'this is line1.<br/>this is line2.', 'subitem_description_language': 'en', 'subitem_description_type': 'Abstract'}], 'item_1617258105262': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, 'path': [1], 'pubdate': '2022-11-21'}, 'pos_index': ['Faculty of Humanities and Social Sciences'], 'publish_status': 'public', 'status': 'keep', 'uri': 'https://192.168.56.103/records/4', 'warnings': [], 'root_path': root_path}
+    new_item = {'$schema': 'https://192.168.56.103/items/jsonschema/1', 'edit_mode': 'Keep', 'errors': None, 'file_path': [''], 'filenames': [{'filename': '', 'id': '.metadata.item_1617605131499[0].filename'}], 'id': '4', 'identifier_key': 'item_1617186819068', 'is_change_identifier': False, 'item_title': 'test item in br', 'item_type_id': 10, 'item_type_name': 'デフォルトアイテムタイプ（フル）', 'metadata': {'item_1617186331708': [{'subitem_1551255647225': 'test item in br', 'subitem_1551255648112': 'ja'}], 'item_1617186626617': [{'subitem_description': 'this is line1.<br/>this is line2.', 'subitem_description_language': 'en', 'subitem_description_type': 'Abstract'}], 'item_1617258105262': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, 'path': [1], 'pubdate': '2022-11-21'}, 'pos_index': ['Faculty of Humanities and Social Sciences'], 'publish_status': 'public', 'status': 'keep', 'uri': 'https://192.168.56.103/records/4', 'warnings': [], 'root_path': root_path}
     
     register_item_metadata(new_item,root_path,True)
     record = WekoDeposit.get_record(recid.object_uuid)

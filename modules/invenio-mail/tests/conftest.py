@@ -33,6 +33,7 @@ from invenio_access.models import ActionUsers,ActionRoles
 from invenio_accounts import InvenioAccounts
 from invenio_accounts.models import User, Role
 from invenio_accounts.testutils import create_test_user
+from invenio_i18n import InvenioI18N
 
 from invenio_mail import InvenioMail, config
 from invenio_mail.admin import mail_adminview
@@ -55,6 +56,7 @@ def base_app(instance_path):
         SERVER_NAME='app',
         SQLALCHEMY_DATABASE_URI=os.environ.get(
              'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
+        SECURITY_PASSWORD_SINGLE_HASH=False
         #SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
         #                                  'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
     )
@@ -62,6 +64,7 @@ def base_app(instance_path):
     InvenioDB(app_)
     InvenioAccounts(app_)
     InvenioAccess(app_)
+    InvenioI18N(app_)
     InvenioMail(app_)
     
     app_.jinja_loader.searchpath.append('tests/templates')
@@ -279,7 +282,7 @@ def email_task_app(request):
         CELERY_ALWAYS_EAGER=True,
         CELERY_RESULT_BACKEND="cache",
         CELERY_CACHE_BACKEND="memory",
-        CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
+        CELERY_EAGER_PROPAGATES=True,
         MAIL_SUPPRESS_SEND=True,
         MAIL_MAX_ATTACHMENT_SIZE=30,
     )

@@ -36,7 +36,7 @@ def base_app(request):
                 'SEARCH_ELASTIC_HOSTS', 'elasticsearch'),
         BROKER_URL='amqp://guest:guest@rabbitmq:5672/',
         CELERY_BROKER_URL=os.environ.get(
-            "BROKER_URL", "amqp://guest:guest@localhost:5672//"
+            "BROKER_URL", "amqp://guest:guest@rabbitmq:5672//"
         ),
         CELERY_TASK_ALWAYS_EAGER=True,
         CELERY_CACHE_BACKEND="memory",
