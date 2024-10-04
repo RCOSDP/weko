@@ -149,8 +149,8 @@ def base_app(instance_path):
             'S': 'Standard',
             'A': 'Archive',
         },
-        APP_THEME='default',  
-        THEME_ICONS={},   
+        APP_THEME='default',
+        THEME_ICONS={},
         CACHE_REDIS_URL='redis://redis:6379/0',
         CACHE_REDIS_DB='0',
         CACHE_REDIS_HOST="redis",
@@ -170,7 +170,7 @@ def base_app(instance_path):
         # SQLALCHEMY_DATABASE_URI=os.environ.get(
         #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
         SEARCH_ELASTIC_HOSTS=os.environ.get(
-            'SEARCH_ELASTIC_HOSTS', 'elasticsearch'),
+            'SEARCH_ELASTIC_HOSTS', 'opensearch'),
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         JSONSCHEMAS_HOST='inveniosoftware.org',
         ACCOUNTS_USERINFO_HEADERS=True,
@@ -622,7 +622,7 @@ def users(app, db):
         originalroleuser = create_test_user(email='originalroleuser@test.org')
         originalroleuser2 = create_test_user(email='originalroleuser2@test.org')
         noroleuser = create_test_user(email='noroleuser@test.org')
-        
+
     role_count = Role.query.filter_by(name='System Administrator').count()
     if role_count != 1:
         sysadmin_role = ds.create_role(name='System Administrator')
@@ -650,7 +650,7 @@ def users(app, db):
     ds.add_role_to_user(user, repoadmin_role)
     ds.add_role_to_user(user, contributor_role)
     ds.add_role_to_user(user, comadmin_role)
-    
+
     # Assign access authorization
     with db.session.begin_nested():
         action_users = [
@@ -757,7 +757,7 @@ def indices(app, db):
         db.session.add(testIndexThree)
         db.session.add(testIndexThreeChild)
     db.session.commit()
-        
+
     return {
         'index_dict': dict(testIndexThree),
         'index_non_dict': testIndexThree,
@@ -780,10 +780,10 @@ def esindex(app,db_records):
             search.client.indices.create("test-weko-items",body=mapping)
             search.client.indices.put_alias(index="test-weko-items", name="test-weko")
         # print(current_search_client.indices.get_alias())
-    
+
     for depid, recid, parent, doi, record, item in db_records:
         search.client.index(index='test-weko-item-v1.0.0', doc_type='item-v1.0.0', id=record.id, body=record,refresh='true')
-    
+
 
     yield search
 
@@ -825,11 +825,11 @@ def db_records(db, instance_path, users):
             'parent': 0,
             'value': 'IndexB',
         }
-    
+
     with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
         Indexes.create(0, index_metadata)
 
- 
+
     yield result
 
 
@@ -849,7 +849,7 @@ def db_register(app, db):
         for data in action_datas:
             actions_db.append(Action(**data))
         db.session.add_all(actions_db)
-    
+
     actionstatus_datas = dict()
     with open('tests/data/action_status.json') as f:
         actionstatus_datas = json.load(f)
@@ -858,7 +858,7 @@ def db_register(app, db):
         for data in actionstatus_datas:
             actionstatus_db.append(ActionStatus(**data))
         db.session.add_all(actionstatus_db)
-    
+
     index = Index(
         public_state=True
     )
@@ -882,7 +882,7 @@ def db_register(app, db):
                          form={'type':'test form'},
                          render={'type':'test render'},
                          tag=1,version_id=1,is_deleted=False)
-    
+
     flow_action1 = FlowAction(status='N',
                      flow_id=flow_define.flow_id,
                      action_id=1,
@@ -929,7 +929,7 @@ def db_register(app, db):
                     activity_confirm_term_of_use=True,
                     title='test', shared_user_id=-1, extra_info={},
                     action_order=6)
-    
+
     with db.session.begin_nested():
         db.session.add(index)
         db.session.add(flow_define)
@@ -940,7 +940,7 @@ def db_register(app, db):
         db.session.add(flow_action3)
         db.session.add(workflow)
         db.session.add(activity)
-    
+
     # return {'flow_define':flow_define,'item_type_name':item_type_name,'item_type':item_type,'flow_action':flow_action,'workflow':workflow,'activity':activity}
     return {
         'flow_define': flow_define,
@@ -957,7 +957,7 @@ def db_register(app, db):
 @pytest.fixture()
 def db_register2(app, db):
     session_lifetime = SessionLifetime(lifetime=60,is_delete=False)
-    
+
     with db.session.begin_nested():
         db.session.add(session_lifetime)
 
@@ -989,7 +989,7 @@ def records(db):
         db.session.add(rec1)
         db.session.add(rec2)
         db.session.add(rec3)
-        
+
         search_query_result = json_data("data/search_result.json")
 
     return(search_query_result)
@@ -1322,7 +1322,7 @@ def mock_user_ctx(mock_users):
 
 @pytest.yield_fixture()
 def es(app):
-    """Provide elasticsearch access, create and clean indices.
+    """Provide opencsearch access, create and clean indices.
 
     Don't create template so that the test or another fixture can modify the
     enabled events.
