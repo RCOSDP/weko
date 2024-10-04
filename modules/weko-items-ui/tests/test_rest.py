@@ -25,7 +25,7 @@ from flask import json
 from mock import patch, MagicMock
 
 from sqlalchemy.exc import SQLAlchemyError
-from elasticsearch.exceptions import ElasticsearchException
+from invenio_search.engine import search
 
 ranking_type = [
     'new_items',
@@ -88,11 +88,12 @@ def test_WekoRanking_error(app, client, db, db_ranking):
         res = client.get('/v1/ranking/no_ranking')
         assert res.status_code == 404
 
-        with patch('weko_admin.models.RankingSettings.get', MagicMock(side_effect=SQLAlchemyError())):
+        with patch('weko_admin.models.RankingSettings.get', MagicMock(side_effect=SQLAlchemyError("SQLAlchemy connection failed"))):
             res = client.get(url)
             assert res.status_code == 500
+            assert b"SQLAlchemy connection failed" in res.get_data()
 
-        with patch('weko_admin.models.RankingSettings.get', MagicMock(side_effect=ElasticsearchException())):
+        with patch('weko_admin.models.RankingSettings.get', MagicMock(side_effect=search.OpenSearchException())):
             res = client.get(url)
             assert res.status_code == 500
 
