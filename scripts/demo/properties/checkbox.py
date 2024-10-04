@@ -63,7 +63,6 @@ def form(
         """Form text."""
         _d = {
             "key": key.replace("[]", ""),
-            "type": "fieldset",
             "items": [
                 {
                     "key": "{}.subitem_checkbox_language".format(key),

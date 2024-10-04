@@ -64,7 +64,6 @@ def form(
         """Form text."""
         _d = {
             "key": key.replace("[]", ""),
-            "type": "fieldset",
             "items": [
                 {
                     "key": "{}.subitem_select_language".format(key),
