@@ -28,7 +28,7 @@ import copy
 import uuid
 from unittest.mock import patch
 from collections import OrderedDict
-from elasticsearch import Elasticsearch
+from opensearchpy import Opensearch
 import time
 from datetime import datetime
 
@@ -191,7 +191,7 @@ def base_app(instance_path):
         WEKO_INDEX_TREE_REST_ENDPOINTS=WEKO_INDEX_TREE_REST_ENDPOINTS,
         I18N_LANGUAGES=[("ja", "Japanese"), ("en", "English"),("da", "Danish")],
         SERVER_NAME="TEST_SERVER",
-        SEARCH_ELASTIC_HOSTS="elasticsearch",
+        SEARCH_ELASTIC_HOSTS="Opensearch",
         SEARCH_INDEX_PREFIX="test-",
         WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME=WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME,
         WEKO_SCHEMA_DDI_SCHEMA_NAME=WEKO_SCHEMA_DDI_SCHEMA_NAME,
@@ -261,7 +261,7 @@ def app(base_app):
 
     with open("tests/data/mappings/item-v1.0.0.json", "r") as f:
         mapping = json.load(f)
-    es = Elasticsearch("http://{}:9200".format(base_app.config["SEARCH_ELASTIC_HOSTS"]))
+    es = Opensearch("http://{}:9200".format(base_app.config["SEARCH_ELASTIC_HOSTS"]))
     es.indices.create(
         index=base_app.config["INDEXER_DEFAULT_INDEX"], body=mapping, ignore=[400, 404]
     )

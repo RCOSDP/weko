@@ -23,7 +23,8 @@ import copy
 import uuid
 
 from collections import OrderedDict
-from opensearchpy.exceptions import OpenSearchException
+from opensearchpy import exceptions
+from opensearchpy.helpers import bulk
 
 from datetime import datetime, timezone,date
 from typing import NoReturn, Union
@@ -280,7 +281,7 @@ class WekoIndexer(RecordIndexer):
                 self.client.delete(id=str(lst),
                                     index=self.es_index,
                                     routing=parent_id)
-            except OpenSearchException as ex:
+            except exceptions.OpenSearchException as ex:
                 weko_logger(key='WEKO_DEPOSIT_FAILED_DELETE_FILE_INDEX',
                             record_id=str(lst), ex=ex)
                 # raise WekoDepositIndexerError(ex=ex,
@@ -2676,7 +2677,7 @@ class WekoDeposit(Deposit):
             # attempt to delete index on es
             try:
                 self.indexer.delete(self)
-            except OpenSearchException as ex:
+            except exceptions.OpenSearchException as ex:
                 weko_logger(key='WEKO_COMMON_ERROR_ELASTICSEARCH', ex=ex)
             except Exception as ex:
                 weko_logger(key='WEKO_COMMON_ERROR_UNEXPECTED', ex=ex)
