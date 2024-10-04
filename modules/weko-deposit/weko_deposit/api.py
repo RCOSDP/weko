@@ -52,8 +52,6 @@ from invenio_records.models import RecordMetadata
 from invenio_records_files.api import FileObject, Record
 from invenio_records_files.models import RecordsBuckets
 from invenio_records_rest.errors import PIDResolveRESTError
-from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm.attributes import flag_modified
 
 from weko_admin.models import AdminSettings
 from weko_index_tree.api import Indexes
@@ -308,7 +306,6 @@ class WekoIndexer(RecordIndexer):
 
         Raises:
             search.OpenSearchException:
-
                 If an error occurs during the update process (excluding errors
                 with status codes 400 and 404, which are ignored).
         """
