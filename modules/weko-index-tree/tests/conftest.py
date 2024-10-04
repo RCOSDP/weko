@@ -164,7 +164,11 @@ def base_app(instance_path):
         # SQLALCHEMY_DATABASE_URI=os.environ.get(
         #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
         SEARCH_ELASTIC_HOSTS=os.environ.get(
-            'SEARCH_ELASTIC_HOSTS', 'elasticsearch'),
+                    'SEARCH_ELASTIC_HOSTS', 'opensearch'),
+        SEARCH_HOSTS=os.environ.get(
+            'SEARCH_HOST', 'opensearch'
+        ),
+        SEARCH_CLIENT_CONFIG={"http_auth":(os.environ['INVENIO_OPENSEARCH_USER'],os.environ['INVENIO_OPENSEARCH_PASS']),"use_ssl":True, "verify_certs":False},
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         JSONSCHEMAS_HOST='inveniosoftware.org',
         ACCOUNTS_USERINFO_HEADERS=True,
@@ -181,7 +185,6 @@ def base_app(instance_path):
         SEARCH_UI_SEARCH_INDEX="test-weko",
         # SEARCH_ELASTIC_HOSTS=os.environ.get("INVENIO_ELASTICSEARCH_HOST"),
         SEARCH_INDEX_PREFIX="{}-".format('test'),
-        SEARCH_CLIENT_CONFIG=dict(timeout=120, max_retries=10),
         OAISERVER_ID_PREFIX="oai:inveniosoftware.org:recid/",
         OAISERVER_RECORD_INDEX="_all",
         OAISERVER_REGISTER_SET_SIGNALS=True,
@@ -839,7 +842,7 @@ def esindex(app,db_records):
         # print(current_search_client.indices.get_alias())
     
     for depid, recid, parent, doi, record, item in db_records:
-        search.client.index(index='test-weko-item-v1.0.0', doc_type='item-v1.0.0', id=record.id, body=record,refresh='true')
+        search.client.index(index='test-weko-item-v1.0.0', id=record.id, body=record,refresh='true')
     
 
     yield search

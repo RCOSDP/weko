@@ -54,8 +54,7 @@ from operator import itemgetter
 
 import redis
 from redis import sentinel
-from elasticsearch.exceptions import NotFoundError
-from elasticsearch_dsl.query import Bool, Exists, Q, QueryString
+from opensearchpy.exceptions import NotFoundError
 from flask import Markup, current_app, session
 from flask_babel import get_locale
 from flask_babel import gettext as _
@@ -438,6 +437,13 @@ def test_get_elasticsearch_records_data_by_indexes(i18n_app, db_records, indices
 
     assert get_elasticsearch_records_data_by_indexes(idx_tree_ids, start_date, end_date)
     
+    idx_tree_ids = ['nonexistent_index']
+    current_date = date.today()
+    start_date = (current_date - timedelta(days=1)).strftime("%Y-%m-%d")
+    end_date = current_date.strftime("%Y-%m-%d")
+    
+    with pytest.raises(NotFoundError):
+        get_elasticsearch_records_data_by_indexes(idx_tree_ids, start_date, end_date)
 
 #+++ def generate_path(index_ids):
 def test_generate_path(i18n_app, indices, esindex):

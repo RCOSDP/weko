@@ -14,7 +14,7 @@ def test_jpcoar_serializer(app, db, hit):
         assert obj_uuid=="1"
         return PersistentIdentifier(pid_type='recid', pid_value=data['pid'])
 
-    _search_result = {'hits': {'total': 1, 'hits': [json_data(hit)]}}
+    _search_result = {'hits': {'total': {"value": 1, "relation": "eq"}, 'hits': [json_data(hit)]}}
     _jpcoar_serializer = JpcoarSerializer()
     with app.test_request_context():
         assert _jpcoar_serializer.serialize_search(fetcher, _search_result)

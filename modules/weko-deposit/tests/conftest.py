@@ -27,8 +27,8 @@ import tempfile
 import copy
 import uuid
 from unittest.mock import patch
-from collections import OrderedDict
-from elasticsearch import Elasticsearch
+from collections import OrderedDict, namedtuple
+from opensearchpy import OpenSearch
 import time
 from datetime import datetime
 
@@ -109,7 +109,7 @@ from weko_index_tree.config import (
     WEKO_INDEX_TREE_REST_ENDPOINTS as _WEKO_INDEX_TREE_REST_ENDPOINTS,
 )
 from invenio_accounts.testutils import login_user_via_session
-
+from invenio_pidrelations.config import PIDRELATIONS_RELATION_TYPES
 from tests.helpers import json_data, create_record
 # from weko_deposit.config import DEPOSIT_RECORDS_API, WEKO_DEPOSIT_ITEMS_CACHE_PREFIX
 
@@ -123,7 +123,7 @@ def instance_path():
 @pytest.fixture()
 def base_app(instance_path):
     """Flask application fixture."""
-
+    RelationType = namedtuple('RelationType', ['id', 'name', 'label', 'api', 'schema'])
     app_ = Flask("testapp", instance_path=instance_path)
     app_.url_map.converters["pid"] = PIDConverter
     # initialize InvenioDeposit first in order to detect any invalid dependency
@@ -138,7 +138,6 @@ def base_app(instance_path):
     ] = "/deposits/publish/<{0}:pid_value>".format(_PID)
     WEKO_INDEX_TREE_REST_ENDPOINTS = copy.deepcopy(_WEKO_INDEX_TREE_REST_ENDPOINTS)
     WEKO_INDEX_TREE_REST_ENDPOINTS["tid"]["index_route"] = "/tree/index/<int:index_id>"
-
     app_.config.update(
         CELERY_ALWAYS_EAGER=True,
         CELERY_CACHE_BACKEND="memory",
@@ -190,7 +189,12 @@ def base_app(instance_path):
         WEKO_INDEX_TREE_REST_ENDPOINTS=WEKO_INDEX_TREE_REST_ENDPOINTS,
         I18N_LANGUAGES=[("ja", "Japanese"), ("en", "English"),("da", "Danish")],
         SERVER_NAME="TEST_SERVER",
-        SEARCH_ELASTIC_HOSTS="elasticsearch",
+        SEARCH_ELASTIC_HOSTS=os.environ.get(
+                    'SEARCH_ELASTIC_HOSTS', 'opensearch'),
+        SEARCH_HOSTS=os.environ.get(
+            'SEARCH_HOST', 'opensearch'
+        ),
+        SEARCH_CLIENT_CONFIG={"http_auth":(os.environ['INVENIO_OPENSEARCH_USER'],os.environ['INVENIO_OPENSEARCH_PASS']),"use_ssl":True, "verify_certs":False},
         SEARCH_INDEX_PREFIX="test-",
         WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME=WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME,
         WEKO_SCHEMA_DDI_SCHEMA_NAME=WEKO_SCHEMA_DDI_SCHEMA_NAME,
@@ -210,6 +214,15 @@ def base_app(instance_path):
         WEKO_AUTHORS_ES_INDEX_NAME="test-authors",
         WEKO_AUTHORS_ES_DOC_TYPE="test-authors",
         WEKO_MIMETYPE_WHITELIST_FOR_ES=_WEKO_MIMETYPE_WHITELIST_FOR_ES,
+        # PIDRELATIONS_RELATION_TYPES= [
+        #     RelationType(0, 'version', 'Version',
+        #          'invenio_pidrelations.contrib.versioning:PIDNodeVersioning',
+        #          'invenio_pidrelations.serializers.schemas.RelationSchema'),
+        #     RelationType(2, 'record_draft', 'Record Draft',
+        #          'invenio_pidrelations.contrib.draft:PIDNodeDraft',
+        #          'invenio_pidrelations.serializers.schemas.RelationSchema'),
+        # ],
+        PIDRELATIONS_RELATION_TYPES=PIDRELATIONS_RELATION_TYPES,
     )
     # with ESTestServer(timeout=30) as server:
     Babel(app_)
@@ -259,7 +272,21 @@ def app(base_app):
 
     with open("tests/data/mappings/item-v1.0.0.json", "r") as f:
         mapping = json.load(f)
-    es = Elasticsearch("http://{}:9200".format(base_app.config["SEARCH_ELASTIC_HOSTS"]))
+    search_hosts = base_app.config["SEARCH_ELASTIC_HOSTS"]
+    search_client_config = base_app.config["SEARCH_CLIENT_CONFIG"]
+    es = OpenSearch(
+        hosts=[{'host': search_hosts, 'port': 9200}],
+        http_auth=search_client_config['http_auth'],
+        use_ssl=search_client_config['use_ssl'],
+        verify_certs=search_client_config['verify_certs'],
+    )
+    es.indices.delete_alias(
+        index=base_app.config["INDEXER_DEFAULT_INDEX"],
+        name=base_app.config["SEARCH_UI_SEARCH_INDEX"],
+        ignore=[400, 404],
+    )
+    es.indices.delete(index=base_app.config["INDEXER_DEFAULT_INDEX"], ignore=[400, 404])
+
     es.indices.create(
         index=base_app.config["INDEXER_DEFAULT_INDEX"], body=mapping, ignore=[400, 404]
     )
@@ -270,12 +297,12 @@ def app(base_app):
     )
     with base_app.app_context():
         yield base_app
-    es.indices.delete_alias(
-        index=base_app.config["INDEXER_DEFAULT_INDEX"],
-        name=base_app.config["SEARCH_UI_SEARCH_INDEX"],
-        ignore=[400, 404],
-    )
-    es.indices.delete(index=base_app.config["INDEXER_DEFAULT_INDEX"], ignore=[400, 404])
+    #es.indices.delete_alias(
+    #    index=base_app.config["INDEXER_DEFAULT_INDEX"],
+    #    name=base_app.config["SEARCH_UI_SEARCH_INDEX"],
+    #    ignore=[400, 404],
+    #)
+    #es.indices.delete(index=base_app.config["INDEXER_DEFAULT_INDEX"], ignore=[400, 404])
 
 
 @pytest.yield_fixture()
@@ -295,7 +322,7 @@ def redis_connect(app):
     return redis_connection
 
 @pytest.fixture()
-def records(db):
+def records(db, location):
     record_data = json_data("data/test_records.json")
     item_data = json_data("data/test_items.json")
     record_num = len(record_data)
@@ -658,20 +685,19 @@ def es_records(app, db, db_index, location, db_itemtype,db_oaischema):
     results = []
     with app.test_request_context():
         for i in range(1, 10):
-            record_data =  {"_oai": {"id": "oai:weko3.example.org:000000{:02d}".format(i), "sets": ["{}".format((i % 2) + 1)]}, "path": ["{}".format((i % 2) + 1)], "owner": "1", "recid": "{}".format(i), "title": ["title"], "pubdate": {"attribute_name": "PubDate", "attribute_value": "2022-08-20"}, "_buckets": {"deposit": "3e99cfca-098b-42ed-b8a0-20ddd09b3e02","content":[{"test":"content"},{"file":"test"}]}, "_deposit": {"id": "{}".format(i), "pid": {"type": "depid", "value": "{}".format(i), "revision_id": 0}, "owner": "1", "owners": [1], "status": "draft", "created_by": 1, "owners_ext": {"email": "wekosoftware@nii.ac.jp", "username": "", "displayname": ""}}, "item_title": "title", "author_link": [], "item_type_id": "1", "publish_date": "2022-08-20", "publish_status": "0", "weko_shared_id": -1, "item_1617186331708": {"attribute_name": "Title", "attribute_value_mlt": [{"subitem_1551255647225": "タイトル", "subitem_1551255648112": "ja"},{"subitem_1551255647225": "title", "subitem_1551255648112": "en"}]}, "item_1617258105262": {"attribute_name": "Resource Type","content":[{"test":"content"},{"file":"test"}], "attribute_value_mlt": [{"resourceuri": "http://purl.org/coar/resource_type/c_5794", "resourcetype": "conference paper"}]}, "relation_version_is_last": True, 'item_1617605131499': {'attribute_name': 'File', 'attribute_type': 'file', 'attribute_value_mlt': [{'url': {'url': 'https://weko3.example.org/record/{}/files/hello.txt'.format(i)}, 'date': [{'dateType': 'Available', 'dateValue': '2022-09-07'}], 'format': 'plain/text', 'filename': 'hello.txt', 'filesize': [{'value': '146 KB'}], 'accessrole': 'open_access', 'version_id': '', 'mimetype': 'application/pdf',"file": "",}]}}
-
+            record_data =  {"_oai": {"id": "oai:weko3.example.org:000000{:02d}".format(i), "sets": ["{}".format((i % 2) + 1)]}, "path": ["{}".format((i % 2) + 1)], "owner": "1", "recid": "{}".format(i), "title": ["title"], "pubdate": {"attribute_name": "PubDate", "attribute_value": "2022-08-20"}, "_buckets": {"deposit": "3e99cfca-098b-42ed-b8a0-20ddd09b3e02"}, "_deposit": {"id": "{}".format(i), "pid": {"type": "depid", "value": "{}".format(i), "revision_id": 0}, "owner": "1", "owners": [1], "status": "draft", "created_by": 1, "owners_ext": {"email": "wekosoftware@nii.ac.jp", "username": "", "displayname": ""}}, "item_title": "title", "author_link": [], "item_type_id": "1", "publish_date": "2022-08-20", "publish_status": "0", "weko_shared_id": -1, "item_1617186331708": {"attribute_name": "Title", "attribute_value_mlt": [{"subitem_1551255647225": "タイトル", "subitem_1551255648112": "ja"},{"subitem_1551255647225": "title", "subitem_1551255648112": "en"}]}, "item_1617258105262": {"attribute_name": "Resource Type", "attribute_value_mlt": [{"resourceuri": "http://purl.org/coar/resource_type/c_5794", "resourcetype": "conference paper"}]}, "relation_version_is_last": True, 'item_1617605131499': {'attribute_name': 'File', 'attribute_type': 'file', 'attribute_value_mlt': [{'url': {'url': 'https://weko3.example.org/record/{}/files/hello.txt'.format(i)}, 'date': [{'dateType': 'Available', 'dateValue': '2022-09-07'}], 'format': 'plain/text', 'filename': 'hello.txt', 'filesize': [{'value': '146 KB'}], 'accessrole': 'open_access', 'version_id': '', 'mimetype': 'application/pdf',"file": "",}]}}
+ 
             item_data = {"id": "{}".format(i), "pid": {"type": "depid", "value": "{}".format(i), "revision_id": 0}, "lang": "ja", "owner": "1", "title": "title", "owners": [1], "status": "published", "$schema": "/items/jsonschema/1", "pubdate": "2022-08-20", "created_by": 1, "owners_ext": {"email": "wekosoftware@nii.ac.jp", "username": "", "displayname": ""}, "shared_user_id": -1, "item_1617186331708": [{"subitem_1551255647225": "タイトル", "subitem_1551255648112": "ja"},{"subitem_1551255647225": "title", "subitem_1551255648112": "en"}], "item_1617258105262": {"resourceuri": "http://purl.org/coar/resource_type/c_5794", "resourcetype": "conference paper"}}
-
             rec_uuid = uuid.uuid4()
 
             recid = PersistentIdentifier.create('recid', str(i),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
             depid = PersistentIdentifier.create('depid', str(i),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
-            rel = PIDRelation.create(recid,depid,3)
+            rel = PIDRelation.create(recid,depid,0)
             db.session.add(rel)
             parent = None
             doi = None
             parent = PersistentIdentifier.create('parent', "parent:{}".format(i),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
-            rel = PIDRelation.create(parent,recid,2,0)
+            rel = PIDRelation.create(parent,recid,1,0)
             db.session.add(rel)
             if(i%2==1):
                 doi = PersistentIdentifier.create('doi', "https://doi.org/10.xyz/{}".format((str(i)).zfill(10)),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
@@ -909,7 +935,7 @@ from invenio_search import current_search_client
 @pytest.fixture()
 def esindex(app):
     current_search_client.indices.delete(index='test-*')
-    with open("tests/mock_module/mapping/v6/authors/test_authors.json","r") as f:
+    with open("tests/mock_module/mapping/os-v2/authors/test_authors.json","r") as f:
         mapping = json.load(f)
     with app.test_request_context():
         current_search_client.indices.create(app.config["WEKO_AUTHORS_ES_INDEX_NAME"],body=mapping)

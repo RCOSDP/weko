@@ -22,8 +22,8 @@ from six import BytesIO
 import pytest
 from flask import Flask
 from flask_babel import Babel
-from elasticsearch import Elasticsearch
-from elasticsearch_dsl import response, Search
+from opensearchpy import OpenSearch
+from invenio_search.engine import dsl
 from sqlalchemy_utils.functions import create_database, database_exists
 from kombu import Exchange, Queue
 from flask import appcontext_pushed, g
@@ -234,8 +234,11 @@ def base_app(instance_path, mock_gethostbyaddr):
         #     'SQLALCHEMY_DATABASE_URI', 'sqlite://'),
         SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
                                            'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
-        SEARCH_ELASTIC_HOSTS=os.environ.get(
-            'SEARCH_ELASTIC_HOSTS', 'elasticsearch'),
+        SEARCH_ELASTIC_HOSTS=os.environ.get('SEARCH_ELASTIC_HOSTS', 'opensearch'),
+        SEARCH_HOSTS=os.environ.get(
+            'SEARCH_HOST', 'opensearch'
+        ),
+        SEARCH_CLIENT_CONFIG={"http_auth":(os.environ['INVENIO_OPENSEARCH_USER'],os.environ['INVENIO_OPENSEARCH_PASS']),"use_ssl":True, "verify_certs":False},
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         TESTING=True,
         OAUTH2SERVER_CLIENT_ID_SALT_LEN=64,
@@ -570,7 +573,14 @@ def teardown_db(app):
 class MockEs():
     def __init__(self,**keywargs):
         self.indices = self.MockIndices()
-        self.es = Elasticsearch()
+        search_hosts = base_app.config["SEARCH_ELASTIC_HOSTS"]
+        search_client_config = base_app.config["SEARCH_CLIENT_CONFIG"]
+        self.es = OpenSearch(
+            hosts=[{'host': search_hosts, 'port': 9200}],
+            http_auth=search_client_config['http_auth'],
+            use_ssl=search_client_config['use_ssl'],
+            verify_certs=search_client_config['verify_certs'],
+        )
 
     @property
     def transport(self):
@@ -789,7 +799,7 @@ def mock_es_execute():
         if isinstance(data, str):
             with open(data, "r") as f:
                 data = json.load(f)
-        dummy=response.Response(Search(), data)
+        dummy=dsl.response.Response(Search(), data)
         return dummy
     return _dummy_response
 

@@ -48,7 +48,6 @@ from sqlalchemy.orm import Session
 from sqlalchemy_utils.functions import create_database, database_exists, drop_database
 from werkzeug.local import LocalProxy
 from invenio_records.api import Record
-from invenio_stats.processors import EventsIndexer
 from tests.helpers import create_record, json_data
 
 from invenio_access import InvenioAccess
@@ -1747,6 +1746,7 @@ def generate_events(
     mock_queue.consume.return_value = generator_list()
     # mock_queue.routing_key = 'stats-file-download'
     mock_queue.routing_key = "generate-sample"
+    from invenio_stats.processors import EventsIndexer
 
     EventsIndexer(
         mock_queue, preprocessors=[build_file_unique_id], double_click_window=0

@@ -16,6 +16,7 @@ asttokens==2.4.1
 atomicwrites==1.4.1
 attrs==23.2.0
 Babel==2.14.0
+-e git+https://github.com/RCOSDP/B2HANDLE.git@nii_develop/W2024-16#egg=b2handle
 babel-edtf==1.1.4
 bagit==1.7.0
 base32-lib==1.0.2
@@ -58,8 +59,8 @@ dnspython==2.6.1
 docutils==0.21.2
 dojson==1.3.2
 edtf==4.0.1
-elasticsearch==7.0.1
-elasticsearch-dsl==7.0.0
+opensearch-py==2.0.0
+opensearch-dsl==2.0.1
 elementpath==1.1.2
 email-validator==1.0.5
 entrypoints==0.2.3

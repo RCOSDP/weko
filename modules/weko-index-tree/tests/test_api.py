@@ -29,7 +29,7 @@ from datetime import datetime
 from mock import patch, Mock, MagicMock
 
 from redis.exceptions import RedisError
-from elasticsearch.exceptions import NotFoundError
+from opensearchpy.exceptions import NotFoundError
 from invenio_access.models import Role
 from invenio_communities.models import Community
 from invenio_accounts.testutils import login_user_via_view, login_user_via_session

@@ -24,7 +24,6 @@ from re import T
 # from tkinter import W
 import pytest
 import json
-from elasticsearch.exceptions import RequestError
 from invenio_records.api import Record
 from invenio_records.errors import MissingModelError
 from weko_deposit.api import WekoDeposit

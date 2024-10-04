@@ -37,7 +37,6 @@ from invenio_i18n.views import set_lang
 
 from . import config
 from .models import AdminLangSettings, SessionLifetime, SiteInfo
-from .utils import overwrite_the_memory_config_with_db
 from .views import blueprint, _has_admin_access
 
 
@@ -186,6 +185,7 @@ class WekoAdmin(object):
         """Init Overwrite the memory Config values with the DB values."""
         @app.before_first_request
         def overwrite_the_memory_config():
+            from .utils import overwrite_the_memory_config_with_db
             site_info = SiteInfo.get()
             overwrite_the_memory_config_with_db(app, site_info)
 

@@ -42,7 +42,7 @@ from weko_redis.errors import WekoRedisError
 # from .errors import WekoDepositError
 from weko_redis.redis import RedisConnection
 
-from elasticsearch.exceptions import NotFoundError
+from opensearchpy.exceptions import NotFoundError
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus, Redirect
 from invenio_pidstore.errors import PIDInvalidAction
 from invenio_pidrelations.models import PIDRelation
@@ -54,7 +54,6 @@ from invenio_files_rest.models import Bucket, ObjectVersion,FileInstance
 from invenio_records.api import RecordRevision
 from six import BytesIO
 from weko_records.utils import get_options_and_order_list
-from elasticsearch import Elasticsearch
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.exc import OperationalError
 from weko_admin.models import AdminSettings
