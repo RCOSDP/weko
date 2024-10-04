@@ -363,7 +363,7 @@ def client(app):
     Yields:
         FlaskClient: test client
     """
-    app.register_blueprint(weko_items_ui_blueprint, url_prefix="/items")
+    app.register_blueprint(weko_items_ui_blueprint, url_prefix="/items", name="weko_items")
     with app.test_client() as client:
         yield client
 
@@ -435,6 +435,8 @@ def esindex2(app):
 @pytest.fixture()
 def users(app, db):
     """Create users."""
+    db.create_all()
+    
     ds = app.extensions["invenio-accounts"].datastore
     user_count = User.query.filter_by(email="user@test.org").count()
     if user_count != 1:
@@ -452,7 +454,7 @@ def users(app, db):
         comadmin = User.query.filter_by(email="comadmin@test.org").first()
         repoadmin = User.query.filter_by(email="repoadmin@test.org").first()
         sysadmin = User.query.filter_by(email="sysadmin@test.org").first()
-        generaluser = User.query.filter_by(email="generaluser@test.org")
+        generaluser = User.query.filter_by(email="generaluser@test.org").first()
         originalroleuser = User.query.filter_by(email="originalroleuser@test.org")
         originalroleuser2 = User.query.filter_by(email="originalroleuser2@test.org")
 
@@ -615,7 +617,7 @@ def db_userprofile(app, db):
 
 @pytest.fixture()
 def db_itemtype2(app, db):
-    item_type_name = ItemTypeName(id=2,
+    item_type_name = ItemTypeName(id=None,
         name="テストアイテムタイプ2", has_site_license=True, is_active=True
     )
     item_type_schema = dict()
@@ -645,7 +647,7 @@ def db_itemtype2(app, db):
         is_deleted=False,
     )
 
-    item_type_mapping = ItemTypeMapping(id=2,item_type_id=2, mapping=item_type_mapping)
+    item_type_mapping = ItemTypeMapping(id=None,item_type_id=2, mapping=item_type_mapping)
 
     with db.session.begin_nested():
         db.session.add(item_type_name)
@@ -656,7 +658,7 @@ def db_itemtype2(app, db):
 
 @pytest.fixture()
 def db_itemtype3(app, db):
-    item_type_name = ItemTypeName(id=3,
+    item_type_name = ItemTypeName(id=None,
         name="テストアイテムタイプ3", has_site_license=True, is_active=True
     )
     item_type_schema = dict()
@@ -687,7 +689,7 @@ def db_itemtype3(app, db):
         is_deleted=False,
     )
 
-    item_type_mapping = ItemTypeMapping(id=3,item_type_id=3, mapping=item_type_mapping)
+    item_type_mapping = ItemTypeMapping(id=None,item_type_id=3, mapping=item_type_mapping)
 
     with db.session.begin_nested():
         db.session.add(item_type_name)
@@ -698,7 +700,7 @@ def db_itemtype3(app, db):
 
 @pytest.fixture()
 def db_itemtype4(app, db):
-    item_type_name = ItemTypeName(id=4,
+    item_type_name = ItemTypeName(id=None,
         name="テストアイテムタイプ4", has_site_license=True, is_active=True
     )
     item_type_schema = dict()
@@ -729,7 +731,7 @@ def db_itemtype4(app, db):
         is_deleted=False,
     )
 
-    item_type_mapping = ItemTypeMapping(id=4,item_type_id=4, mapping=item_type_mapping)
+    item_type_mapping = ItemTypeMapping(id=None,item_type_id=4, mapping=item_type_mapping)
 
     with db.session.begin_nested():
         db.session.add(item_type_name)
@@ -740,7 +742,7 @@ def db_itemtype4(app, db):
 
 @pytest.fixture()
 def db_itemtype5(app, db):
-    item_type_name = ItemTypeName(id=5,
+    item_type_name = ItemTypeName(id=None,
         name="テストアイテムタイプ5", has_site_license=True, is_active=True
     )
     item_type_schema = dict()
@@ -771,7 +773,7 @@ def db_itemtype5(app, db):
         is_deleted=False,
     )
 
-    item_type_mapping = ItemTypeMapping(id=5,item_type_id=5, mapping=item_type_mapping)
+    item_type_mapping = ItemTypeMapping(id=None,item_type_id=5, mapping=item_type_mapping)
 
     with db.session.begin_nested():
         db.session.add(item_type_name)
@@ -782,7 +784,7 @@ def db_itemtype5(app, db):
 
 @pytest.fixture()
 def db_itemtype(app, db):
-    item_type_name = ItemTypeName(id=1,
+    item_type_name = ItemTypeName(id=None,
         name="テストアイテムタイプ", has_site_license=True, is_active=True
     )
     item_type_schema = dict()
@@ -813,7 +815,7 @@ def db_itemtype(app, db):
         is_deleted=False,
     )
 
-    item_type_mapping = ItemTypeMapping(id=1,item_type_id=1, mapping=item_type_mapping)
+    item_type_mapping = ItemTypeMapping(id=None,item_type_id=1, mapping=item_type_mapping)
 
     with db.session.begin_nested():
         db.session.add(item_type_name)
@@ -1171,7 +1173,7 @@ def db_ranking(db):
 
 @pytest.fixture()
 def db_itemtype_15(app, db):
-    item_type_name = ItemTypeName(id=1,
+    item_type_name = ItemTypeName(id=None,
         name="テストアイテムタイプ", has_site_license=True, is_active=True
     )
     item_type_schema = {
@@ -22384,7 +22386,7 @@ def db_itemtype_15(app, db):
         is_deleted=False,
     )
 
-    item_type_mapping = ItemTypeMapping(id=1,item_type_id=1, mapping=item_type_mapping)
+    item_type_mapping = ItemTypeMapping(id=None,item_type_id=1, mapping=item_type_mapping)
 
     with db.session.begin_nested():
         db.session.add(item_type_name)

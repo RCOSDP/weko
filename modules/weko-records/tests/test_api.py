@@ -1197,7 +1197,7 @@ def test_item_metadata_get_record(app, db):
     with pytest.raises(Exception) as e:
         ItemsMetadata.get_record(_uuid1)
     assert e.type==NoResultFound
-    assert str(e.value)=="No row was found for one()"
+    assert str(e.value)=="No row was found when one was required"
     record2 = ItemsMetadata.get_record(_uuid2)
     assert record2=={'item1': None}
     assert record2.id==_uuid2
@@ -1207,7 +1207,7 @@ def test_item_metadata_get_record(app, db):
     with pytest.raises(Exception) as e:
         ItemsMetadata.get_record(str(_uuid3), False)
     assert e.type==NoResultFound
-    assert str(e.value)=="No row was found for one()"
+    assert str(e.value)=="No row was found when one was required"
     # need to fix
     with pytest.raises(Exception) as e:
         record3 = ItemsMetadata.get_record(str(_uuid3), True)
@@ -1438,7 +1438,7 @@ def test_files_metadata_get_record(app, db):
     with pytest.raises(Exception) as e:
         FilesMetadata.get_record(None, False)
     assert e.type==NoResultFound
-    assert str(e.value)=="No row was found for one()"
+    assert str(e.value)=="No row was found when one was required"
     record = FilesMetadata.get_record(None, True)
     assert record.id==2
     assert record.model.pid==None
@@ -1486,7 +1486,7 @@ def test_files_metadata_update_data(app, db):
     assert record.model.pid==1
     assert record.model.contents==b'test content'
     #assert record.model.json=={'data': 'test'}
-    assert record.model.json=={}
+    assert record.model.json=={'data': 'test'}
     assert record.model.version_id==1
 
 # class FilesMetadata(RecordBase):

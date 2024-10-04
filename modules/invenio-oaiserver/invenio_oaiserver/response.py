@@ -26,7 +26,7 @@ from lxml import etree
 from lxml.etree import Element, ElementTree, SubElement
 
 from sqlalchemy.orm.exc import NoResultFound
-from weko_deposit.api import WekoRecord
+# from weko_deposit.api import WekoRecord
 from weko_index_tree.api import Indexes
 from weko_schema_ui.schema import get_oai_metadata_formats
 from weko_schema_ui.models import PublishStatus
@@ -401,6 +401,7 @@ def is_exists_doi(param_record):
 
 def getrecord(**kwargs):
     """Create OAI-PMH response for verb GetRecord."""
+    from weko_deposit.api import WekoRecord
     # current_app.logger.debug("kwargs:{0}".format(kwargs))
     # kwargs:{"metadataPrefix": "jpcoar_1.0", "identifier": "oai:weko3.example.org:00000003", "verb": "GetRecord"}
 
@@ -482,6 +483,7 @@ def getrecord(**kwargs):
 
 def listidentifiers(**kwargs):
     """Create OAI-PMH response for verb ListIdentifiers."""
+    from weko_deposit.api import WekoRecord
     e_tree, e_listidentifiers = verb(**kwargs)
     identify = OaiIdentify.get_all()
     if not identify or not identify.outPutSetting:
@@ -588,6 +590,7 @@ def listidentifiers(**kwargs):
 
 def listrecords(**kwargs):
     """Create OAI-PMH response for verb ListRecords."""
+    from weko_deposit.api import WekoRecord
     metadataPrefix = (
         kwargs.get("resumptionToken").get("metadataPrefix")
         if kwargs.get("resumptionToken")

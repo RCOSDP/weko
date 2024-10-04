@@ -25,6 +25,7 @@ import uuid
 from collections import OrderedDict
 from opensearchpy import exceptions
 from opensearchpy.helpers import bulk
+
 from datetime import datetime, timezone,date
 from typing import NoReturn, Union
 from tika import parser
@@ -32,7 +33,7 @@ from redis import RedisError
 from dictdiffer import dot_lookup
 from dictdiffer.merge import Merger, UnresolvedConflictsException
 from invenio_search.engine import search
-from redis import RedisError
+
 from flask import abort, current_app, json, request, session
 from flask_security import current_user
 from sqlalchemy.exc import SQLAlchemyError
@@ -308,7 +309,7 @@ class WekoIndexer(RecordIndexer):
                 The response from Elasticsearch after attempting the update.
 
         Raises:
-            ElasticsearchException:
+            OpenSearchException:
                 If an error occurs during the update process (excluding errors
                 with status codes 400 and 404, which are ignored).
         """
@@ -1172,13 +1173,31 @@ class WekoDeposit(Deposit):
             'parent:{0}'.format(record_id),
             object_type='rec',
             object_uuid=deposit.id,
-            status=PIDStatus.REGISTERED
+            status=PIDStatus.RESERVED
         )
 
         RecordsBuckets.create(record=deposit.model, bucket=bucket)
 
         recid = PersistentIdentifier.get('recid', record_id)
+        print(f"recid = {recid}")
+        print(f"recid.id = {recid.id}")
+        print(f"recid.pid_type = {recid.pid_type}")
+        print(f"recid.pid_value = {recid.pid_value}")
+        print(f"recid.status = {recid.status}")
+      
         depid = PersistentIdentifier.get('depid', record_id)
+        print(f"depid = {depid}")
+        print(f"depid.id = {depid.id}")
+        print(f"depid.pid_type = {depid.pid_type}")
+        print(f"depid.pid_value = {depid.pid_value}")
+        print(f"depid.status = {depid.status}")
+
+        print(f"parent_pid = {parent_pid}")
+        print(f"parent_pid.id = {parent_pid}")
+        print(f"parent_pid.pid_type = {parent_pid}")
+        print(f"parent_pid.pid_value = {parent_pid}")
+        print(f"parent_pid.status = {parent_pid}")
+
         PIDNodeVersioning(pid=parent_pid).insert_draft_child(child_pid=recid)
         PIDNodeDraft(pid=recid).insert_child(depid)
         # Update this object_uuid for item_id of activity.

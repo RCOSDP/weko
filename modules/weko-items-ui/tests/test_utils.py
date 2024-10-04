@@ -24,7 +24,6 @@ from jsonschema import SchemaError, ValidationError
 from mock import patch
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_records.api import FeedbackMailList, ItemTypes, Mapping
-from weko_workflow.api import WorkActivity
 from weko_user_profiles.models import UserProfile
 from weko_admin.models import SessionLifetime,RankingSettings
 from weko_workflow.models import (
@@ -9608,6 +9607,8 @@ def test_save_title(app, db_itemtype, db_workflow, db_records, users):
         "endpoints": {"initialization": "/api/deposits/redirect/1.0"},
     }
     save_title("A-00000000-00000", request_data)
+    # Need to import here to avoid circular import
+    from weko_workflow.api import WorkActivity
     activity = WorkActivity()
     db_activity = activity.get_activity_detail("A-00000000-00000")
     assert (
