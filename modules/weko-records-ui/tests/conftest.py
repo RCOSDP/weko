@@ -35,7 +35,9 @@ from unittest.mock import patch
 from datetime import timedelta
 
 import pytest
-from elasticsearch import Elasticsearch
+# from elasticsearch import Elasticsearch
+from opensearchpy import OpenSearch
+from invenio_search.engine import search,dsl
 from flask import Flask
 from flask_babel import Babel
 from flask_login import LoginManager, UserMixin
@@ -160,6 +162,7 @@ def instance_path():
     shutil.rmtree(path)
 
 
+@patch.dict('os.environ', {'INVENIO_OPENSEARCH_USER': 'invenio', 'INVENIO_OPENSEARCH_PASSWORD': 'openpass123!'})
 @pytest.fixture()
 def base_app(instance_path):
     """Flask application fixture."""
@@ -224,7 +227,11 @@ def base_app(instance_path):
         WEKO_INDEX_TREE_REST_ENDPOINTS=WEKO_INDEX_TREE_REST_ENDPOINTS,
         I18N_LANGUAGE=[("ja", "Japanese"), ("en", "English")],
         SERVER_NAME="TEST_SERVER",
-        SEARCH_ELASTIC_HOSTS="elasticsearch",
+        SEARCH_HOSTS=os.environ.get(
+            'SEARCH_HOST', 'opensearch'),
+        SEARCH_ELASTIC_HOSTS=os.environ.get(
+                    'SEARCH_ELASTIC_HOSTS', 'opensearch'),
+        SEARCH_CLIENT_CONFIG={"http_auth":(os.environ['INVENIO_OPENSEARCH_USER'],os.environ['INVENIO_OPENSEARCH_PASS']),"use_ssl":True, "verify_certs":False},
         SEARCH_INDEX_PREFIX="test-",
         WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME=WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME,
         WEKO_SCHEMA_DDI_SCHEMA_NAME=WEKO_SCHEMA_DDI_SCHEMA_NAME,
