@@ -28,7 +28,7 @@ import copy
 import uuid
 from unittest.mock import patch
 from collections import OrderedDict
-from elasticsearch import Elasticsearch
+from opensearchpy import Opensearch
 import time
 from datetime import datetime
 
@@ -191,7 +191,7 @@ def base_app(instance_path):
         WEKO_INDEX_TREE_REST_ENDPOINTS=WEKO_INDEX_TREE_REST_ENDPOINTS,
         I18N_LANGUAGES=[("ja", "Japanese"), ("en", "English"),("da", "Danish")],
         SERVER_NAME="TEST_SERVER",
-        SEARCH_ELASTIC_HOSTS="elasticsearch",
+        SEARCH_ELASTIC_HOSTS="Opensearch",
         SEARCH_INDEX_PREFIX="test-",
         WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME=WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME,
         WEKO_SCHEMA_DDI_SCHEMA_NAME=WEKO_SCHEMA_DDI_SCHEMA_NAME,
@@ -261,7 +261,7 @@ def app(base_app):
 
     with open("tests/data/mappings/item-v1.0.0.json", "r") as f:
         mapping = json.load(f)
-    es = Elasticsearch("http://{}:9200".format(base_app.config["SEARCH_ELASTIC_HOSTS"]))
+    es = Opensearch("http://{}:9200".format(base_app.config["SEARCH_ELASTIC_HOSTS"]))
     es.indices.create(
         index=base_app.config["INDEXER_DEFAULT_INDEX"], body=mapping, ignore=[400, 404]
     )
@@ -1394,8 +1394,8 @@ def db_oaischema(app, db):
 from invenio_search import current_search_client
 @pytest.fixture()
 def esindex(app):
-    current_search_client.indices.delete(index='test-*')
-    with open("tests/mock_module/mapping/v6/authors/test_authors.json","r") as f:
+    current_search_client.indices.delete(index='test-*', ignore=[400, 404])
+    with open("tests/mock_module/mapping/v7/authors/test_authors.json","r") as f:
         mapping = json.load(f)
     with app.test_request_context():
         current_search_client.indices.create(app.config["WEKO_AUTHORS_ES_INDEX_NAME"],body=mapping)
@@ -1421,7 +1421,6 @@ def authors(app,db,esindex):
         es_data["id"]=""
         current_search_client.index(
             index=app.config["WEKO_AUTHORS_ES_INDEX_NAME"],
-            doc_type=app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
             id=es_id,
             body=es_data,
             refresh='true')

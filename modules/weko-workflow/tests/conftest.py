@@ -37,15 +37,12 @@ from flask_babel import Babel, lazy_gettext as _
 from flask_menu import Menu
 from opensearchpy import OpenSearch
 from invenio_theme import InvenioTheme
-# from invenio_theme.views import blueprint as invenio_theme_blueprint
 from invenio_assets import InvenioAssets
 from invenio_access import InvenioAccess
 from invenio_access.models import ActionUsers,ActionRoles
 from invenio_accounts.testutils import create_test_user
 from invenio_accounts import InvenioAccounts
 from invenio_accounts.models import User, Role
-# from invenio_accounts.views.settings import blueprint \
-#     as invenio_accounts_blueprint
 from invenio_i18n import InvenioI18N
 from invenio_cache import InvenioCache
 from invenio_admin import InvenioAdmin

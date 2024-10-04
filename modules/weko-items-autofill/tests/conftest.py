@@ -22,6 +22,7 @@ from flask import Flask
 from flask_babel import Babel
 from sqlalchemy_utils.functions import create_database, database_exists
 
+from invenio_i18n import InvenioI18N
 
 from invenio_access import InvenioAccess
 from invenio_access.models import ActionUsers, ActionRoles
@@ -110,6 +111,7 @@ def base_app(instance_path):
     #WekoSearchUI(app_)
     WekoRecordsUI(app_)
     WekoItemsAutofill(app_)
+    InvenioI18N(app_),
     return app_
 
 

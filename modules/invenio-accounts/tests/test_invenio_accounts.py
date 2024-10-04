@@ -36,7 +36,7 @@ def test_init():
     """Test extension initialization."""
     app = Flask("testapp")
     app.config.update(
-        SECRET_KEY="CHANGEME",
+        # SECRET_KEY="CHANGEME",
         ACCOUNTS_USE_CELERY=False,
         task_always_eager=True,
         CELERY_CACHE_BACKEND="memory",
@@ -45,7 +45,8 @@ def test_init():
         LOGIN_DISABLED=False,
         MAIL_SUPPRESS_SEND=True,
         SECRET_KEY="CHANGE_ME",
-        SECURITY_PASSWORD_SALT="CHANGE_ME_ALSO",
+        # SECURITY_PASSWORD_SALT="CHANGE_ME_ALSO",
+        SECURITY_PASSWORD_SINGLE_HASH=False,
         SECURITY_CONFIRM_EMAIL_WITHIN="2 seconds",
         SECURITY_RESET_PASSWORD_WITHIN="2 seconds",
         DB_VERSIONING=False,
@@ -68,7 +69,7 @@ def test_init():
 
     app = Flask("testapp")
     app.config.update(
-        SECRET_KEY="CHANGEME",
+        # SECRET_KEY="CHANGEME",
         ACCOUNTS_USE_CELERY=False,
         task_always_eager=True,
         CELERY_CACHE_BACKEND="memory",
@@ -77,7 +78,8 @@ def test_init():
         LOGIN_DISABLED=False,
         MAIL_SUPPRESS_SEND=True,
         SECRET_KEY="CHANGE_ME",
-        SECURITY_PASSWORD_SALT="CHANGE_ME_ALSO",
+        # SECURITY_PASSWORD_SALT="CHANGE_ME_ALSO",
+        SECURITY_PASSWORD_SINGLE_HASH=False,
         SECURITY_CONFIRM_EMAIL_WITHIN="2 seconds",
         SECURITY_RESET_PASSWORD_WITHIN="2 seconds",
         DB_VERSIONING=False,
@@ -106,7 +108,7 @@ def test_init_rest():
     """Test REST extension initialization."""
     app = Flask("testapp")
     app.config.update(
-        SECRET_KEY="CHANGEME",
+        # SECRET_KEY="CHANGEME"",
         ACCOUNTS_USE_CELERY=False,
         task_always_eager=True,
         CELERY_CACHE_BACKEND="memory",
@@ -115,7 +117,8 @@ def test_init_rest():
         LOGIN_DISABLED=False,
         MAIL_SUPPRESS_SEND=True,
         SECRET_KEY="CHANGE_ME",
-        SECURITY_PASSWORD_SALT="CHANGE_ME_ALSO",
+        # SECURITY_PASSWORD_SALT="CHANGE_ME_ALSO",
+        SECURITY_PASSWORD_SINGLE_HASH=False,
         SECURITY_CONFIRM_EMAIL_WITHIN="2 seconds",
         SECURITY_RESET_PASSWORD_WITHIN="2 seconds",
         DB_VERSIONING=False,
@@ -139,7 +142,7 @@ def test_init_rest():
 
     app = Flask("testapp")
     app.config.update(
-        SECRET_KEY="CHANGEME",
+        # SECRET_KEY="CHANGEME"",
         ACCOUNTS_USE_CELERY=False,
         task_always_eager=True,
         CELERY_CACHE_BACKEND="memory",
@@ -148,7 +151,8 @@ def test_init_rest():
         LOGIN_DISABLED=False,
         MAIL_SUPPRESS_SEND=True,
         SECRET_KEY="CHANGE_ME",
-        SECURITY_PASSWORD_SALT="CHANGE_ME_ALSO",
+        # SECURITY_PASSWORD_SALT="CHANGE_ME_ALSO",
+        SECURITY_PASSWORD_SINGLE_HASH=False,
         SECURITY_CONFIRM_EMAIL_WITHIN="2 seconds",
         SECURITY_RESET_PASSWORD_WITHIN="2 seconds",
         DB_VERSIONING=False,
@@ -175,7 +179,7 @@ def test_init_rest():
 
     app = Flask("testapp")
     app.config.update(
-        SECRET_KEY="CHANGEME",
+        # SECRET_KEY="CHANGEME"",
         ACCOUNTS_USE_CELERY=False,
         task_always_eager=True,
         CELERY_CACHE_BACKEND="memory",
@@ -184,7 +188,8 @@ def test_init_rest():
         LOGIN_DISABLED=False,
         MAIL_SUPPRESS_SEND=True,
         SECRET_KEY="CHANGE_ME",
-        SECURITY_PASSWORD_SALT="CHANGE_ME_ALSO",
+        # SECURITY_PASSWORD_SALT="CHANGE_ME_ALSO",
+        SECURITY_PASSWORD_SINGLE_HASH=False,
         SECURITY_CONFIRM_EMAIL_WITHIN="2 seconds",
         SECURITY_RESET_PASSWORD_WITHIN="2 seconds",
         DB_VERSIONING=False,
@@ -212,7 +217,7 @@ def test_init_rest():
 
     app = Flask("testapp")
     app.config.update(
-        SECRET_KEY="CHANGEME",
+        # SECRET_KEY="CHANGEME"",
         ACCOUNTS_USE_CELERY=False,
         task_always_eager=True,
         CELERY_CACHE_BACKEND="memory",
@@ -221,7 +226,8 @@ def test_init_rest():
         LOGIN_DISABLED=False,
         MAIL_SUPPRESS_SEND=True,
         SECRET_KEY="CHANGE_ME",
-        SECURITY_PASSWORD_SALT="CHANGE_ME_ALSO",
+        # SECURITY_PASSWORD_SALT="CHANGE_ME_ALSO",
+        SECURITY_PASSWORD_SINGLE_HASH=False,
         SECURITY_CONFIRM_EMAIL_WITHIN="2 seconds",
         SECURITY_RESET_PASSWORD_WITHIN="2 seconds",
         DB_VERSIONING=False,

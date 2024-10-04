@@ -90,7 +90,7 @@ class MockRecordIndexer:
         pass
 
 # .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::test_update_authorInfo -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
-def test_update_authorInfo(app, db, records,mocker):
+def test_update_authorInfo(app, db, location, records, mocker):
 # def test_update_authorInfo(app, db, records,mocker, authors):
     app.config.update(WEKO_SEARCH_MAX_RESULT=1)
     mocker.patch("weko_deposit.tasks.WekoDeposit.update_author_link")
@@ -260,7 +260,7 @@ def test_update_authorInfo(app, db, records,mocker):
 
 # def _update_author_data(item_id, record_ids):
 # isinstance(data, dict) and 'nameIdentifiers' in data is False
-def test_update_authorInfo_no_nameIdentifiers(app, db, records2, mocker):
+def test_update_authorInfo_no_nameIdentifiers(app, db, location, records2, mocker):
     app.config.update(WEKO_SEARCH_MAX_RESULT=1)
     mocker.patch("weko_deposit.tasks.WekoDeposit.update_author_link")
     mock_recordssearch = MagicMock(side_effect=MockRecordsSearch)
@@ -270,7 +270,7 @@ def test_update_authorInfo_no_nameIdentifiers(app, db, records2, mocker):
                 update_items_by_authorInfo(1, {})
 
 # Test for _update_author_data when for loop continues
-def test_no_creatorNames_contributorNames_names(app, db, records3, mocker):
+def test_no_creatorNames_contributorNames_names(app, db, location, records3, mocker):
     app.config.update(WEKO_SEARCH_MAX_RESULT=1)
     mocker.patch("weko_deposit.tasks.WekoDeposit.update_author_link")
     mock_recordssearch = MagicMock(side_effect=MockRecordsSearch)
@@ -279,7 +279,7 @@ def test_no_creatorNames_contributorNames_names(app, db, records3, mocker):
             update_items_by_authorInfo(1, {})
 
 # .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::test_update_authorInfo -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
-def test_update_authorInfo_case1(app, db, records,mocker):
+def test_update_authorInfo_case1(app, db, location, records, mocker):
 # def test_update_authorInfo(app, db, records,mocker, authors):
     app.config.update(WEKO_SEARCH_MAX_RESULT=1)
     mocker.patch("weko_deposit.tasks.WekoDeposit.update_author_link")
@@ -427,7 +427,7 @@ def test_update_authorInfo_case1(app, db, records,mocker):
 
 
 # update_gather_flg = True
-def test_update_authorInfo_with_update_gather_flg(app, db, records,mocker):
+def test_update_authorInfo_with_update_gather_flg(app, db, location, records, mocker):
     app.config.update(WEKO_SEARCH_MAX_RESULT=1)
     mocker.patch("weko_deposit.tasks.WekoDeposit.update_author_link")
     _target = {

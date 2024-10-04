@@ -1,7 +1,8 @@
 
 from __future__ import absolute_import, print_function
 
-from flask import Flask, url_for,make_response
+from flask import Flask, url_for, make_response
+from flask_babel import Babel
 
 from weko_bulkupdate import WekoBulkupdate
 from weko_bulkupdate.views import blueprint
@@ -13,9 +14,12 @@ def test_index(mocker):
         SECRET_KEY="SECRET_KEY",
         TESTING=True,
         SERVER_NAME="test_server",
+        BABEL_DEFAULT_LOCALE='en', 
     )
+    babel = Babel(app)
     WekoBulkupdate(app)
     app.register_blueprint(blueprint)
+    
     with app.app_context():
         with app.test_client() as client:
             mock_render = mocker.patch("weko_bulkupdate.views.render_template",return_value=make_response())

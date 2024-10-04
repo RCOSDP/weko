@@ -5,12 +5,12 @@ import json
 import pytest
 from mock import patch, MagicMock
 from flask import Response, current_app
-from flask_babelex import get_locale
-from elasticsearch_dsl import response, Search
-from elasticsearch.exceptions import ElasticsearchException
+from flask_babel import get_locale
+from opensearch_dsl import response, Search
+from opensearchpy.exceptions import OpenSearchException
 from tests.conftest import json_data
 
-from invenio_records_rest.errors import MaxResultWindowRESTError
+# from invenio_records_rest.errors import MaxResultWindowRESTError
 from invenio_rest import ContentNegotiatedMethodView
 
 from weko_records.api import ItemTypes
@@ -373,7 +373,7 @@ def test_IndexSearchResourceAPI_error(client_rest, db_register2, db_rocrate_mapp
     res = client_rest.get(url('/v1/records', param))
     assert res.status_code == 400
 
-    with patch('invenio_search.api.RecordsSearch.execute', side_effect=ElasticsearchException()):
+    with patch('invenio_search.api.RecordsSearch.execute', side_effect=OpenSearchException()):
         res = client_rest.get(url('/v1/records'))
         assert res.status_code == 500
 
