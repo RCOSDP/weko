@@ -28,7 +28,7 @@ import copy
 import uuid
 from unittest.mock import patch
 from collections import OrderedDict
-from elasticsearch import Elasticsearch
+from opensearchpy  import OpenSearch
 import time
 from datetime import datetime
 
@@ -191,7 +191,6 @@ def base_app(instance_path):
         WEKO_INDEX_TREE_REST_ENDPOINTS=WEKO_INDEX_TREE_REST_ENDPOINTS,
         I18N_LANGUAGES=[("ja", "Japanese"), ("en", "English"),("da", "Danish")],
         SERVER_NAME="TEST_SERVER",
-        SEARCH_ELASTIC_HOSTS="elasticsearch",
         SEARCH_INDEX_PREFIX="test-",
         WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME=WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME,
         WEKO_SCHEMA_DDI_SCHEMA_NAME=WEKO_SCHEMA_DDI_SCHEMA_NAME,
@@ -211,7 +210,21 @@ def base_app(instance_path):
         WEKO_AUTHORS_ES_INDEX_NAME="test-authors",
         WEKO_AUTHORS_ES_DOC_TYPE="test-authors",
         WEKO_MIMETYPE_WHITELIST_FOR_ES=_WEKO_MIMETYPE_WHITELIST_FOR_ES,
-        WEKO_DEPOSIT_BIBLIOGRAPHIC_INFO_SYS_KEY = _WEKO_DEPOSIT_BIBLIOGRAPHIC_INFO_SYS_KEY
+        WEKO_DEPOSIT_BIBLIOGRAPHIC_INFO_SYS_KEY=_WEKO_DEPOSIT_BIBLIOGRAPHIC_INFO_SYS_KEY,
+        SEARCH_ELASTIC_HOSTS=os.environ.get(
+            'SEARCH_ELASTIC_HOSTS', 'opensearch'
+        ),
+        SEARCH_HOSTS=os.environ.get(
+            'SEARCH_HOST', 'opensearch'
+        ),
+        SEARCH_CLIENT_CONFIG = {
+            "http_auth": (
+                os.environ.get('INVENIO_OPENSEARCH_USER'),
+                os.environ.get('INVENIO_OPENSEARCH_PASS')
+            ),
+            "use_ssl": True,
+            "verify_certs": False
+        }
     )
     # with ESTestServer(timeout=30) as server:
     Babel(app_)
@@ -261,7 +274,16 @@ def app(base_app):
 
     with open("tests/data/mappings/item-v1.0.0.json", "r") as f:
         mapping = json.load(f)
-    es = Elasticsearch("http://{}:9200".format(base_app.config["SEARCH_ELASTIC_HOSTS"]))
+    
+    search_hosts = base_app.config["SEARCH_ELASTIC_HOSTS"]
+    search_client_config = base_app.config["SEARCH_CLIENT_CONFIG"] 
+    es = OpenSearch(
+        hosts=[{'host': search_hosts, 'port': 9200}],
+        http_auth=search_client_config['http_auth'],
+        use_ssl=search_client_config['use_ssl'],
+        verify_certs=search_client_config['verify_certs'],
+    )
+    
     es.indices.create(
         index=base_app.config["INDEXER_DEFAULT_INDEX"], body=mapping, ignore=[400, 404]
     )
@@ -1395,7 +1417,7 @@ from invenio_search import current_search_client
 @pytest.fixture()
 def esindex(app):
     current_search_client.indices.delete(index='test-*', ignore=[400, 404])
-    with open("tests/mock_module/mapping/v7/authors/test_authors.json","r") as f:
+    with open("tests/mock_module/mapping/os-v2/authors/test_authors.json","r") as f:
         mapping = json.load(f)
     with app.test_request_context():
         current_search_client.indices.create(app.config["WEKO_AUTHORS_ES_INDEX_NAME"],body=mapping)

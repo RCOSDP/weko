@@ -1178,24 +1178,7 @@ class WekoDeposit(Deposit):
         RecordsBuckets.create(record=deposit.model, bucket=bucket)
 
         recid = PersistentIdentifier.get('recid', record_id)
-        print(f"recid = {recid}")
-        print(f"recid.id = {recid.id}")
-        print(f"recid.pid_type = {recid.pid_type}")
-        print(f"recid.pid_value = {recid.pid_value}")
-        print(f"recid.status = {recid.status}")
-      
         depid = PersistentIdentifier.get('depid', record_id)
-        print(f"depid = {depid}")
-        print(f"depid.id = {depid.id}")
-        print(f"depid.pid_type = {depid.pid_type}")
-        print(f"depid.pid_value = {depid.pid_value}")
-        print(f"depid.status = {depid.status}")
-
-        print(f"parent_pid = {parent_pid}")
-        print(f"parent_pid.id = {parent_pid}")
-        print(f"parent_pid.pid_type = {parent_pid}")
-        print(f"parent_pid.pid_value = {parent_pid}")
-        print(f"parent_pid.status = {parent_pid}")
 
         PIDNodeVersioning(pid=parent_pid).insert_draft_child(child_pid=recid)
         PIDNodeDraft(pid=recid).insert_child(depid)

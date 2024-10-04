@@ -39,16 +39,14 @@ from six import BytesIO
 from flask import session, abort
 from flask_login import login_user
 from redis import RedisError
-from elasticsearch import Elasticsearch
-from elasticsearch.exceptions import NotFoundError, TransportError
-from elasticsearch.helpers import bulk
-from elasticsearch.exceptions import NotFoundError
+from opensearchpy  import OpenSearch
 from invenio_accounts.testutils import login_user_via_session
 from invenio_accounts.models import User
 from invenio_files_rest.models import Bucket, Location, ObjectVersion, FileInstance
 from invenio_pidrelations.serializers.utils import serialize_relations
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_pidstore.errors import PIDInvalidAction
+from invenio_search.engine import search
 from invenio_records.errors import MissingModelError
 from invenio_records_rest.errors import PIDResolveRESTError
 from invenio_records_files.api import FileObject, Record
@@ -99,7 +97,7 @@ class MockClient():
 
     def update(self, index=None, doc_type=None, id=None, body=None):
         if self.is_get_error:
-            raise NotFoundError
+            raise search.exceptions.NotFoundError
         else:
             return None
 
@@ -242,7 +240,7 @@ class TestWekoIndexer:
             mock_logger.reset_mock()
 
             # Elastic Search Not Found Error
-            with pytest.raises(NotFoundError):
+            with pytest.raises(search.exceptions.NotFoundError):
                 indexer.get_metadata_by_item_id(record.pid)
                 mock_logger.assert_any_call(key='WEKO_COMMON_FOR_START')
                 mock_logger.assert_any_call(
@@ -349,7 +347,7 @@ class TestWekoIndexer:
         indexer, records = es_records
         record = records[0]['record']
         indexer.delete(record)
-        with pytest.raises(NotFoundError):
+        with pytest.raises(search.exceptions.NotFoundError):
             indexer.get_metadata_by_item_id(record.pid)
 
     #     def delete_by_id(self, uuid):
@@ -358,7 +356,7 @@ class TestWekoIndexer:
         indexer, records = es_records
         record = records[0]['record']
         indexer.delete_by_id(record.id)
-        with pytest.raises(NotFoundError):
+        with pytest.raises(search.exceptions.NotFoundError):
             indexer.get_metadata_by_item_id(record.pid)
 
         indexer.delete_by_id(record.id)
@@ -474,7 +472,7 @@ class TestWekoIndexer:
             indexer, records = es_records
             res = []
 
-            with patch("weko_deposit.api.bulk", side_effect=bulk) as mock_bulk:
+            with patch("weko_deposit.api.bulk", side_effect=search.helpers.bulk) as mock_bulk:
                 indexer.bulk_update(res)
                 assert mock_bulk.call_count == 1
 
@@ -759,9 +757,17 @@ class TestWekoDeposit():
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_publish_without_commit -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test_publish_without_commit(self, app, db, location):
         with patch('weko_deposit.api.weko_logger') as mock_logger:
-            with app.test_request_context():
-                es = Elasticsearch("http://{}:9200".format(app.config["SEARCH_ELASTIC_HOSTS"]))
-
+            with app.test_request_context(): 
+                
+                # search_hosts = app.config["SEARCH_ELASTIC_HOSTS"]
+                # search_client_config = app.config["SEARCH_CLIENT_CONFIG"]
+                # es = OpenSearch(
+                #     hosts=[{'host': search_hosts, 'port': 9200}],
+                #     http_auth=search_client_config['http_auth'],
+                #     use_ssl=search_client_config['use_ssl'],
+                #     verify_certs=search_client_config['verify_certs'],
+                # )
+                
                 # self.data is not None, "control_number" not in self,
                 # "$schema" in self, "version" in relations
                 deposit = WekoDeposit.create({})
@@ -891,8 +897,16 @@ class TestWekoDeposit():
             record = records[0]
             deposit = record['deposit']
             deposit['_deposit']['status'] = 'draft'
-            es = Elasticsearch(
-                "http://{}:9200".format(app.config["SEARCH_ELASTIC_HOSTS"]))
+            
+            search_hosts = app.config["SEARCH_ELASTIC_HOSTS"]
+            search_client_config = app.config["SEARCH_CLIENT_CONFIG"]
+            es = OpenSearch(
+                 hosts=[{'host': search_hosts, 'port': 9200}],
+                 http_auth=search_client_config['http_auth'],
+                 use_ssl=search_client_config['use_ssl'],
+                 verify_certs=search_client_config['verify_certs'],
+            )
+
             ret = es.get_source(index=app.config['INDEXER_DEFAULT_INDEX'],
                                 doc_type=app.config['INDEXER_DEFAULT_DOC_TYPE'], id=deposit.id)
             deposit.clear()
@@ -903,7 +917,14 @@ class TestWekoDeposit():
             indexer, records = es_records_1
             record = records[1]
             deposit = record['deposit']
-            es = Elasticsearch("http://{}:9200".format(app.config["SEARCH_ELASTIC_HOSTS"]))
+
+            es = OpenSearch(
+                 hosts=[{'host': search_hosts, 'port': 9200}],
+                 http_auth=search_client_config['http_auth'],
+                 use_ssl=search_client_config['use_ssl'],
+                 verify_certs=search_client_config['verify_certs'],
+            )
+
             ret = es.get_source(index=app.config['INDEXER_DEFAULT_INDEX'], doc_type=app.config['INDEXER_DEFAULT_DOC_TYPE'],id=deposit.id)
             deposit.clear()
             ret2 = es.get_source(index=app.config['INDEXER_DEFAULT_INDEX'], doc_type=app.config['INDEXER_DEFAULT_DOC_TYPE'],id=deposit.id)
@@ -918,8 +939,16 @@ class TestWekoDeposit():
             indexer, records = es_records_1
             record = records[0]
             deposit = record['deposit']
-            es = Elasticsearch(
-                "http://{}:9200".format(app.config["SEARCH_ELASTIC_HOSTS"]))
+            
+            search_hosts = app.config["SEARCH_ELASTIC_HOSTS"]
+            search_client_config = app.config["SEARCH_CLIENT_CONFIG"]
+            es = OpenSearch(
+                 hosts=[{'host': search_hosts, 'port': 9200}],
+                 http_auth=search_client_config['http_auth'],
+                 use_ssl=search_client_config['use_ssl'],
+                 verify_certs=search_client_config['verify_certs'],
+            )
+            
             ret = es.get_source(index=app.config['INDEXER_DEFAULT_INDEX'],
                                 doc_type=app.config['INDEXER_DEFAULT_DOC_TYPE'], id=deposit.id)
             deposit.delete()
@@ -930,8 +959,13 @@ class TestWekoDeposit():
 
             record = records[1]
             deposit = record['deposit']
-            es = Elasticsearch(
-                "http://{}:9200".format(app.config["SEARCH_ELASTIC_HOSTS"]))
+            
+            es = OpenSearch(
+                 hosts=[{'host': search_hosts, 'port': 9200}],
+                 http_auth=search_client_config['http_auth'],
+                 use_ssl=search_client_config['use_ssl'],
+                 verify_certs=search_client_config['verify_certs'],
+            )
             ret = es.get_source(index=app.config['INDEXER_DEFAULT_INDEX'],
                                 doc_type=app.config['INDEXER_DEFAULT_DOC_TYPE'], id=deposit.id)
             deposit.pid
@@ -950,8 +984,14 @@ class TestWekoDeposit():
             # recid.status == PIDStatus.RESERVED is false
             record = records[2]
             deposit = record['deposit']
-            es = Elasticsearch(
-                "http://{}:9200".format(app.config["SEARCH_ELASTIC_HOSTS"]))
+            
+            es = OpenSearch(
+                 hosts=[{'host': search_hosts, 'port': 9200}],
+                 http_auth=search_client_config['http_auth'],
+                 use_ssl=search_client_config['use_ssl'],
+                 verify_certs=search_client_config['verify_certs'],
+            )
+           
             ret = es.get_source(index=app.config['INDEXER_DEFAULT_INDEX'],
                                 doc_type=app.config['INDEXER_DEFAULT_DOC_TYPE'], id=deposit.id)
             recid = PersistentIdentifier.get(
@@ -1335,14 +1375,14 @@ class TestWekoDeposit():
                 mock_logger.reset_mock()
 
                 with patch("weko_deposit.api.WekoIndexer.upload_metadata") as mock_upload:
-                    mock_upload.side_effect = [TransportError(500,"test_error",{"error":{"reason": WEKO_DEPOSIT_ES_PARSING_ERROR_KEYWORD}}), "Mocked Data"]
+                    mock_upload.side_effect = [seacrh.exceptions.TransportError(500,"test_error",{"error":{"reason": WEKO_DEPOSIT_ES_PARSING_ERROR_KEYWORD}}), "Mocked Data"]
                     deposit.commit()
 
                     with pytest.raises(WekoDepositError):
                         result = deposit.commit()
 
                 with patch("weko_deposit.api.WekoIndexer.upload_metadata") as mock_upload:
-                    mock_upload.side_effect = [TransportError(500,"test_error",{"error":{"reason":""}}), "test error"]
+                    mock_upload.side_effect = [seacrh.exceptions.TransportError(500,"test_error",{"error":{"reason":""}}), "test error"]
                     with pytest.raises(WekoDepositError) as ex:
                         deposit.commit()
 
@@ -2365,7 +2405,7 @@ class TestWekoDeposit():
             deposit.delete_by_index_tree_id('',record['deposit'])
 
             with patch("invenio_records.models.RecordMetadata.query") as mock_json:
-                with pytest.raises(TransportError):
+                with pytest.raises(seacrh.exceptions.TransportError):
                     mock_json.return_value = True
                     record = records[1]
                     deposit = record['deposit']
@@ -4637,7 +4677,7 @@ def test_weko_indexer(app, db, location):
         skip_files=True
     )
     indexer.client.update_get_error(True)
-    with pytest.raises(NotFoundError):
+    with pytest.raises(search.exceptions.NotFoundError):
         indexer.update_relation_version_is_last({
             'id': 1,
             'is_last': True
@@ -4692,8 +4732,8 @@ def test_weko_deposit_new(app, db, location):
 
     record = WekoDeposit.get_record(pid.object_uuid)
     deposit = WekoDeposit(record, record.model)
-    with patch('weko_deposit.api.WekoIndexer.update_relation_version_is_last', side_effect=NotFoundError):
-        with pytest.raises(NotFoundError):
+    with patch('weko_deposit.api.WekoIndexer.update_relation_version_is_last', side_effect=search.exceptions.NotFoundError):
+        with pytest.raises(search.exceptions.NotFoundError):
             deposit.publish()
 
 
