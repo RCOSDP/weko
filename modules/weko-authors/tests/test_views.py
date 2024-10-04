@@ -105,9 +105,9 @@ def test_create_acl_users(client, users, index, is_permission):
     assert_role(res, is_permission)
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_create -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
-@pytest.mark.parametrize('base_app2',[dict(
+@pytest.mark.parametrize('base_app',[dict(
     is_es=True
-)],indirect=['base_app2'])
+)],indirect=['base_app'])
 def test_create(client, users, esindex):
     """
     Test of create author.
@@ -214,9 +214,9 @@ def test_update_author_acl_users(client, users, index, is_permission):
     assert_role(res, is_permission)
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_update_author -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
-@pytest.mark.parametrize('base_app2',[dict(
+@pytest.mark.parametrize('base_app',[dict(
     is_es=True
-)],indirect=['base_app2'])
+)],indirect=['base_app'])
 def test_update_author(client, db, users, esindex, create_author):
     """
     Test of update author data.
@@ -314,9 +314,9 @@ def test_delete_author_acl_users(client, users, index, is_permission):
     
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_delete_author -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
-@pytest.mark.parametrize('base_app2',[dict(
+@pytest.mark.parametrize('base_app',[dict(
     is_es=True
-)],indirect=['base_app2'])
+)],indirect=['base_app'])
 def test_delete_author(client, db,users, esindex, create_author, mocker):
     """
     Test of delete author data.
