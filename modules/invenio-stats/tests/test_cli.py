@@ -14,11 +14,10 @@ import pytest
 from unittest.mock import patch
 from click.testing import CliRunner
 from tests.conftest import _create_file_download_event, _create_record_view_event
-from elasticsearch_dsl import Search
 
 from .helpers import mock_date
 from invenio_search import current_search
-from invenio_search.engine import dsl
+from invenio_search.engine import search, dsl
 
 from invenio_stats import current_stats
 from invenio_stats.cli import stats
@@ -86,7 +85,7 @@ def test_events_process(app, es, script_info, event_queues):
 # def _events_restore(event_types, start_date, end_date, force, verbose):
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_cli.py::test_events_delete_restore -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
 def test_events_delete_restore(app, script_info, es, event_queues):
-    search = Search(using=es)
+    search = search(using=es)
     runner = CliRunner()
 
     current_stats.publish(
@@ -285,7 +284,7 @@ def test_aggregations_list_bookmarks(
 # def _aggregations_restore(aggregation_types=None, bookmark=False, start_date=None, end_date=None, force=False, verbose=False):
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_cli.py::test_aggregations_deleteindex_restore -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
 def test_aggregations_deleteindex_restore(app, script_info, event_queues, es):
-    search = Search(using=es)
+    search = search(using=es)
     runner = CliRunner()
 
     result = runner.invoke(
@@ -301,7 +300,7 @@ def test_aggregations_deleteindex_restore(app, script_info, event_queues, es):
 # def _partition_create(year, month):
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_cli.py::test_partition_create -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
 def test_partition_create(db, script_info, event_queues, es):
-    search = Search(using=es)
+    search = search(using=es)
     runner = CliRunner()
 
     with patch("invenio_stats.cli.get_stats_events_partition_tables",return_value=["stats_events_202201", "stats_events_202202"]):

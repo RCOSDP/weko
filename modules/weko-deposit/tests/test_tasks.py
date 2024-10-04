@@ -25,8 +25,7 @@ from io import StringIO
 from unittest import mock
 import pytest
 import json
-from elasticsearch import ElasticsearchException
-from elasticsearch.exceptions import NotFoundError
+from opensearchpy.exceptions import OpenSearchException
 from tests.helpers import json_data
 from unittest.mock import patch, MagicMock
 from invenio_pidstore.errors import PIDDoesNotExistError
@@ -557,8 +556,8 @@ def test_update_db_es_data(app, db, mocker,esindex, es_records,authors):
             update_db_es_data(origin_pkid_list, origin_id_list)
             mock_logger.assert_any_call(key='WEKO_COMMON_DB_SOME_ERROR', ex=ex)
 
-    # ElasticsearchException by indexer.client.update()
-    ex = ElasticsearchException("test_elasticsearch_error")
+    # OpenSearchException by indexer.client.update()
+    ex = OpenSearchException("test_elasticsearch_error")
     with patch("invenio_search.ext.Elasticsearch.update", side_effect=ex):
         with patch("weko_deposit.tasks.weko_logger") as mock_logger:
             update_db_es_data(origin_pkid_list, origin_id_list)
