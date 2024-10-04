@@ -47,12 +47,13 @@ from invenio_cache import InvenioCache
 from invenio_communities.models import Community
 from invenio_db import InvenioDB, db as db_
 from invenio_files_rest import InvenioFilesREST
-from invenio_files_rest.models import Location, FileInstance
+from invenio_files_rest.models import Location, FileInstance, Bucket
 from invenio_indexer import InvenioIndexer
 from invenio_search import InvenioSearch,RecordsSearch
 from weko_authors.config import WEKO_AUTHORS_REST_ENDPOINTS
 from weko_search_ui import WekoSearchUI
 from weko_index_tree.models import Index
+from invenio_i18n import InvenioI18N
 
 from weko_authors.views import blueprint_api
 from weko_authors import WekoAuthors
@@ -92,14 +93,23 @@ def instance_path():
 
 
 class MockEs():
-    def __init__(self,**keywargs):
+    def __init__(self, base_app2,**keywargs):
+        search_hosts = base_app2.config["SEARCH_ELASTIC_HOSTS"]
+        search_client_config = base_app2.config["SEARCH_CLIENT_CONFIG"]
         self.indices = self.MockIndices()
         # self.es = Elasticsearch()
-        self.es = OpenSearch()
+        self.es = OpenSearch(
+            hosts=[{'host': search_hosts, 'port': 9200}],
+            http_auth=search_client_config['http_auth'],
+            use_ssl=search_client_config['use_ssl'],
+            verify_certs=search_client_config['verify_certs'],
+        )
         self.cluster = self.MockCluster()
-    def index(self, id="",version="",version_type="",index="",doc_type="",body="",**arguments):
+    # def index(self, id="",version="",version_type="",index="",doc_type="",body="",**arguments):
+    def index(self, id="",version="",version_type="",index="",body="",**arguments):
         pass
-    def delete(self,id="",index="",doc_type="",**kwargs):
+    # def delete(self,id="",index="",doc_type="",**kwargs):
+    def delete(self,id="",index="",**kwargs):
         return Response(response=json.dumps({}),status=500)
     @property
     def transport(self):
@@ -165,9 +175,12 @@ def base_app(request, instance_path,search_class):
         CACHE_REDIS_URL='redis://redis:6379/0',
         CACHE_REDIS_DB='0',
         CACHE_REDIS_HOST="redis",
-        SEARCH_ELASTIC_HOSTS=os.environ.get("INVENIO_ELASTICSEARCH_HOST"),
+        # SEARCH_ELASTIC_HOSTS=os.environ.get("INVENIO_ELASTICSEARCH_HOST"),
+        SEARCH_ELASTIC_HOSTS=os.environ.get('SEARCH_ELASTIC_HOSTS', 'opensearch'),
+        SEARCH_HOSTS=os.environ.get('SEARCH_HOST', 'opensearch'),
         SEARCH_INDEX_PREFIX="{}-".format('test'),
-        SEARCH_CLIENT_CONFIG=dict(timeout=120, max_retries=10),
+        # SEARCH_CLIENT_CONFIG=dict(timeout=120, max_retries=10),
+        SEARCH_CLIENT_CONFIG={"http_auth":(os.environ['INVENIO_OPENSEARCH_USER'],os.environ['INVENIO_OPENSEARCH_PASS']),"use_ssl":True, "verify_certs":False},
     )
     Babel(app_)
     InvenioDB(app_)
@@ -178,11 +191,13 @@ def base_app(request, instance_path,search_class):
     InvenioAssets(app_)
     InvenioIndexer(app_)
     InvenioFilesREST(app_)
+    InvenioI18N(app_)
     if hasattr(request, 'param'):
         if 'is_es' in request.param:
             search = InvenioSearch(app_)
     else:
-        search = InvenioSearch(app_, client=MockEs())
+        # search = InvenioSearch(app_, client=MockEs())
+        search = InvenioSearch(app_, client=MockEs(base_app2=app_))
         search.register_mappings(search_class.Meta.index, 'mock_module.mapping')
     WekoTheme(app_)
     WekoAuthors(app_)
@@ -230,7 +245,10 @@ def base_app2(instance_path,search_class):
         CACHE_REDIS_URL='redis://redis:6379/0',
         CACHE_REDIS_DB='0',
         CACHE_REDIS_HOST="redis",
-        SEARCH_ELASTIC_HOSTS=os.environ.get("SEARCH_ELASTIC_HOSTS", "elasticsearch"),
+        # SEARCH_ELASTIC_HOSTS=os.environ.get("SEARCH_ELASTIC_HOSTS", "elasticsearch"),
+        SEARCH_ELASTIC_HOSTS=os.environ.get('SEARCH_ELASTIC_HOSTS', 'opensearch'),
+        SEARCH_HOSTS=os.environ.get('SEARCH_HOST', 'opensearch'),
+        SEARCH_CLIENT_CONFIG={"http_auth":(os.environ['INVENIO_OPENSEARCH_USER'],os.environ['INVENIO_OPENSEARCH_PASS']),"use_ssl":True, "verify_certs":False},
     )
     Babel(app_)
     InvenioDB(app_)
@@ -241,6 +259,7 @@ def base_app2(instance_path,search_class):
     InvenioAssets(app_)
     InvenioIndexer(app_)
     InvenioFilesREST(app_)
+    InvenioI18N(app_)
 
     search = InvenioSearch(app_)
     search.register_mappings(search_class.Meta.index, 'mock_module.mapping')
@@ -265,7 +284,14 @@ def db(app):
     """Database fixture."""
     if not database_exists(str(db_.engine.url)):
         create_database(str(db_.engine.url))
-    db_.create_all()
+    # db_.create_all()
+    # テーブルの存在を確認
+    inspector = inspect(db_.engine)
+    existing_tables = inspector.get_table_names()
+
+    # テーブルが存在しない場合にのみテーブルを作成
+    if not existing_tables:
+        db_.create_all()
     yield db_
     db_.session.remove()
     db_.drop_all()
@@ -282,7 +308,7 @@ from invenio_search import current_search_client
 @pytest.fixture()
 def esindex(app):
     current_search_client.indices.delete(index='test-*')
-    with open("tests/mock_module/mapping/v6/authors/author-v1.0.0.json","r") as f:
+    with open("tests/mock_module/mapping/v7/authors/author-v1.0.0.json","r") as f:
         mapping = json.load(f)
     with app.test_request_context():
         current_search_client.indices.create("test-authors-author-v1.0.0",body=mapping)
@@ -443,7 +469,7 @@ def create_author(app, db, esindex):
             
         current_search_client.index(
             index=app.config["WEKO_AUTHORS_ES_INDEX_NAME"],
-            doc_type=app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
+            # doc_type=app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
             id=es_id,
             body=es_data,
             refresh='true')
@@ -484,7 +510,7 @@ def authors(app,db,esindex):
         es_data["id"]=""
         current_search_client.index(
             index=app.config["WEKO_AUTHORS_ES_INDEX_NAME"],
-            doc_type=app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
+            # doc_type=app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
             id=es_id,
             body=es_data,
             refresh='true')
@@ -498,6 +524,11 @@ def authors(app,db,esindex):
 def location(app,db):
     """Create default location."""
     tmppath = tempfile.mkdtemp()
+    location_to_delete = Location.get_default()
+    if location_to_delete:
+        db.session.query(Bucket).filter_by(default_location=location_to_delete.id).update({'default_location': None})
+        db.session.query(FileInstance).delete()
+        
     with db.session.begin_nested():
         Location.query.delete()
         loc = Location(name='local', uri=tmppath, default=True)
@@ -547,7 +578,7 @@ def esindex(app2):
     index_name = app2.config["INDEXER_DEFAULT_INDEX"]
     alias_name = "test-author-alias"
 
-    with open("tests/data/mappings/author-v1.0.0.json","r") as f:
+    with open("tests/mock_module/mapping/v7/authors/author-v1.0.0.json","r") as f:
         mapping = json.load(f)
 
     with app2.test_request_context():

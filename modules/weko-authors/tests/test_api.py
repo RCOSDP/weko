@@ -4,7 +4,7 @@ import uuid
 import pytest
 from flask import current_app
 # from elasticsearch.exceptions import NotFoundError
-from opensearchpy.exceptions import NotFoundError
+from invenio_search.engine import search
 from invenio_indexer.api import RecordIndexer
 from invenio_search import current_search_client
 
@@ -18,15 +18,19 @@ class MockClient():
     def __init__(self):
         self.index_ = self.MockIndex()
         self.return_value=""
-    def index(self,index,doc_type,body):
+    # def index(self,index,doc_type,body):
+    def index(self,index,body):
         return self.index_
-    def delete(self,index,doc_type,id):
+    # def delete(self,index,doc_type,id):
+    def delete(self,index,id):
         pass
     def set_return(self,value):
         self.return_value=value
-    def search(self,index,doc_type,body):
+    # def search(self,index,doc_type,body):
+    def search(self,index,body):
         return self.return_value
-    def update(self,index,doc_type,id,body):
+    # def update(self,index,doc_type,id,body):
+    def update(self,index,id,body):
         pass
     class MockIndex():
         def __init__(self):
@@ -41,10 +45,10 @@ class MockClient():
 class TestWekoAuthors:
 #     def create(cls, data):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthors::test_create -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
-    @pytest.mark.parametrize('base_app',[dict(
+    @pytest.mark.parametrize('base_app2',[dict(
         is_es=True
-    )],indirect=['base_app'])
-    def test_create(self,app,db,esindex, mocker):
+    )],indirect=['base_app2'])
+    def test_create(self,app2,db,esindex, mocker):
         id = 1
         es_id = uuid.uuid4()
         with patch("weko_authors.api.Authors.get_sequence",return_value=id):
@@ -56,7 +60,8 @@ class TestWekoAuthors:
                 test = {"authorIdInfo": [{"authorId": "1", "authorIdShowFlg": "true", "idType": "1"}], "gather_flg": 0, "id": 1, "pk_id": "1"}
                 assert author
                 assert author.json == test
-                res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=str(es_id))
+                # res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=str(es_id))
+                res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],id=str(es_id))
                 assert res["_source"]["pk_id"]==str(id)
         
         id = 2
@@ -70,16 +75,17 @@ class TestWekoAuthors:
                         
                     author = Authors.query.filter_by(id=id).one_or_none()
                     assert author == None
-                    with pytest.raises(NotFoundError):
-                        res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=str(es_id))
+                    with pytest.raises(search.NotFound):
+                        # res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=str(es_id))
+                        res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],id=str(es_id))
             
 #     def update(cls, author_id, data):
 #         def update_es_data(data):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthors::test_update -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
-    @pytest.mark.parametrize('base_app',[dict(
+    @pytest.mark.parametrize('base_app2',[dict(
         is_es=True
-    )],indirect=['base_app'])
-    def test_update(self,app,db,esindex,create_author,mocker):
+    )],indirect=['base_app2'])
+    def test_update(self,app2,db,esindex,create_author,mocker):
         test_data = {
             "authorNameInfo": [{"familyName": "テスト","firstName": "ハナコ","fullName": "","language": "ja-Kana","nameFormat": "familyNmAndNm","nameShowFlg": "true"}],
             "authorIdInfo": [{"idType": "2","authorId": "01234","authorIdShowFlg": "true"}],
@@ -101,7 +107,8 @@ class TestWekoAuthors:
         db.session.commit()
         author = Authors.query.filter_by(id=author_id).one()
         assert author.json["is_deleted"] == False
-        res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=es_id)
+        # res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=es_id)
+        res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],id=es_id)
         assert res["_source"]["is_deleted"] == False
 
         # is_deleted is true
@@ -115,7 +122,8 @@ class TestWekoAuthors:
         db.session.commit()
         author = Authors.query.filter_by(id=author_id).one()
         assert author.json["is_deleted"] == True
-        res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=es_id)
+        # res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=es_id)
+        res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],id=es_id)
         assert res["_source"]["is_deleted"] == True
         
         author_id=2
@@ -127,7 +135,8 @@ class TestWekoAuthors:
             db.session.rollback()
             author = Authors.query.filter_by(id=author_id).one()
             assert author.is_deleted==False
-            res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=es_id)
+            # res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=es_id)
+            res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],id=es_id)
             assert res["_source"]["is_deleted"] == "false"
                 
         # not hit in es
@@ -144,8 +153,9 @@ class TestWekoAuthors:
         author = Authors(id=author_id,json=test_data)
         db.session.add(author)
         db.session.commit()
-        with pytest.raises(NotFoundError):
-            res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=str(es_id))
+        with pytest.raises(search.NotFound):
+            # res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=str(es_id))
+            res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],id=str(es_id))
         data={
             "authorNameInfo": [{"familyName": "テスト","firstName": "ハナコ","fullName": "","language": "ja-Kana","nameFormat": "familyNmAndNm","nameShowFlg": "true"}],
             "authorIdInfo": [{"idType": "2","authorId": "01234","authorIdShowFlg": "true"}],
@@ -155,7 +165,8 @@ class TestWekoAuthors:
         WekoAuthors.update(author_id,data)
         db.session.commit()
         assert Authors.query.filter_by(id=author_id).one().is_deleted==True
-        res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=str(es_id))
+        # res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=str(es_id))
+        res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],id=str(es_id))
         assert res["_source"]["is_deleted"] == True
         
         # not es_id in data
@@ -176,8 +187,8 @@ class TestWekoAuthors:
         db.session.add(author)
         db.session.commit()
         current_search_client.index(
-            index=app.config["WEKO_AUTHORS_ES_INDEX_NAME"],
-            doc_type=app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
+            index=app2.config["WEKO_AUTHORS_ES_INDEX_NAME"],
+            # doc_type=app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
             id=es_id2,
             body=es_data,
             refresh='true')
@@ -190,12 +201,13 @@ class TestWekoAuthors:
         WekoAuthors.update(author_id,data)
         db.session.commit()
         assert Authors.query.filter_by(id=author_id).one().is_deleted==True
-        res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=str(es_id))
+        # res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=str(es_id))
+        res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],id=str(es_id))
         assert res["_source"]["is_deleted"] == True
             
 #     def get_all(cls, with_deleted=True, with_gather=True):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthors::test_get_all -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
-    def test_get_all(self,app,authors):
+    def test_get_all(self,app2,authors):
         result = WekoAuthors.get_all()
         assert authors
         result = WekoAuthors.get_all(False,False)

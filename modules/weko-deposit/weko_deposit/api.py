@@ -23,8 +23,6 @@ import copy
 import uuid
 
 from collections import OrderedDict
-from elasticsearch.exceptions import ElasticsearchException
-from elasticsearch.helpers import bulk
 from datetime import datetime, timezone,date
 from typing import NoReturn, Union
 from tika import parser
@@ -32,12 +30,8 @@ from redis import RedisError
 from dictdiffer import dot_lookup
 from dictdiffer.merge import Merger, UnresolvedConflictsException
 from invenio_search.engine import search
-from redis import RedisError
 from flask import abort, current_app, json, request, session
 from flask_security import current_user
-from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm.attributes import flag_modified
-
 from invenio_db import db
 from invenio_deposit.api import Deposit, index, preserve
 from invenio_files_rest.models import (
@@ -280,7 +274,7 @@ class WekoIndexer(RecordIndexer):
                 self.client.delete(id=str(lst),
                                     index=self.es_index,
                                     routing=parent_id)
-            except ElasticsearchException as ex:
+            except search.OpenSearchException as ex:
                 weko_logger(key='WEKO_DEPOSIT_FAILED_DELETE_FILE_INDEX',
                             record_id=str(lst), ex=ex)
                 # raise WekoDepositIndexerError(ex=ex,
@@ -308,7 +302,7 @@ class WekoIndexer(RecordIndexer):
                 The response from Elasticsearch after attempting the update.
 
         Raises:
-            ElasticsearchException:
+            search.OpenSearchException:
                 If an error occurs during the update process (excluding errors
                 with status codes 400 and 404, which are ignored).
         """
@@ -1422,7 +1416,7 @@ class WekoDeposit(Deposit):
                 self.get_content_files()
 
                 try:
-                    # Upload file content to Elasticsearch
+                    # Upload file content to search engine
                     self.indexer.upload_metadata(
                         self.jrc,
                         self.pid.object_uuid,
@@ -1647,12 +1641,10 @@ class WekoDeposit(Deposit):
                         branch='is_draft is True')
             with db.session.begin_nested():
                 # Set relation type of draft record is 3: Draft
-                parent_pid = PIDVersioning(child=recid).parent
-                relation = (
-                    PIDRelation.query
-                    .filter_by(parent=parent_pid, child=recid)
-                    .one_or_none()
-                )
+                parent_pid = PIDNodeVersioning(pid=recid).parents.one_or_none()
+                relation = PIDRelation.query. \
+                    filter_by(parent=parent_pid,
+                            child=recid).one_or_none()
                 relation.relation_type = 3
             db.session.merge(relation)
 
@@ -2658,7 +2650,7 @@ class WekoDeposit(Deposit):
             # attempt to delete index on es
             try:
                 self.indexer.delete(self)
-            except ElasticsearchException as ex:
+            except search.OpenSearchException as ex:
                 weko_logger(key='WEKO_COMMON_ERROR_ELASTICSEARCH', ex=ex)
             except Exception as ex:
                 weko_logger(key='WEKO_COMMON_ERROR_UNEXPECTED', ex=ex)

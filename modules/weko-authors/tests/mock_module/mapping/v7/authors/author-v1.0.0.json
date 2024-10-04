@@ -49,9 +49,7 @@
           ],
           "tokenizer": "standard",
           "filter": [
-            "standard",
             "lowercase",
-            "stop",
             "cjk_width"
           ]
         },
@@ -62,109 +60,107 @@
     }
   },
   "mappings": {
-    "author-v1.0.0": {
-      "properties": {
-        "pk_id": {
-          "type": "keyword"
-        },
-        "authorNameInfo": {
-          "type": "object",
-          "properties": {
-            "familyName": {
-              "type": "text"
-            },
-            "firstName": {
-              "type": "text"
-            },
-            "fullName": {
-              "type": "text",
-              "fields": {
-                "raw": {
-                  "type": "keyword",
-                  "index": true
-                }
-              }
-            },
-            "language": {
-              "type": "text",
-              "index": false
-            },
-            "nameFormat": {
-              "type": "text",
-              "index": false
-            },
-            "nameShowFlg": {
-              "type": "boolean"
-            }
-          }
-        },
-        "authorIdInfo": {
-          "type": "object",
-          "properties": {
-            "authorId": {
-              "type": "text"
-            },
-            "idType": {
-              "type": "text",
-              "index": false
-            },
-            "authorIdShowFlg": {
-              "type": "boolean"
-            }
-          }
-        },
-        "emailInfo": {
-          "type": "object",
-          "properties": {
-            "email": {
-              "type": "text",
-              "fields": {
-                "raw": {
-                  "type": "keyword",
-                  "index": true
-                }
+    "properties": {
+      "pk_id": {
+        "type": "keyword"
+      },
+      "authorNameInfo": {
+        "type": "object",
+        "properties": {
+          "familyName": {
+            "type": "text"
+          },
+          "firstName": {
+            "type": "text"
+          },
+          "fullName": {
+            "type": "text",
+            "fields": {
+              "raw": {
+                "type": "keyword",
+                "index": true
               }
             }
+          },
+          "language": {
+            "type": "text",
+            "index": false
+          },
+          "nameFormat": {
+            "type": "text",
+            "index": false
+          },
+          "nameShowFlg": {
+            "type": "boolean"
           }
-        },
-        "affiliationInfo": {
-          "type": "object",
-          "properties": {
-            "identifierInfo": {
-              "type": "object",
-              "properties": {
-                "affiliationId": {
-                  "type": "text"
-                },
-                "affiliationIdType": {
-                  "type": "text",
-                  "index": false
-                },
-                "identifierShowFlg": {
-                  "type": "boolean"
-                }
-              }
-            },
-            "affiliationNameInfo": {
-              "type": "object",
-              "properties": {
-                "affiliationName": {
-                  "type": "text",
-                  "index": false
-                },
-                "affiliationNameLang": {
-                  "type": "text"
-                },
-                "affiliationNameShowFlg": {
-                  "type": "boolean"
-                }
-              }
-            }
-          }
-        },
-        "is_deleted": {
-          "type": "boolean"
         }
+      },
+      "authorIdInfo": {
+        "type": "object",
+        "properties": {
+          "authorId": {
+            "type": "text"
+          },
+          "idType": {
+            "type": "text",
+            "index": false
+          },
+          "authorIdShowFlg": {
+            "type": "boolean"
+          }
+        }
+      },
+      "emailInfo": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "text",
+            "fields": {
+              "raw": {
+                "type": "keyword",
+                "index": true
+              }
+            }
+          }
+        }
+      },
+      "affiliationInfo": {
+        "type": "object",
+        "properties": {
+          "identifierInfo": {
+            "type": "object",
+            "properties": {
+              "affiliationId": {
+                "type": "text"
+              },
+              "affiliationIdType": {
+                "type": "text",
+                "index": false
+              },
+              "identifierShowFlg": {
+                "type": "boolean"
+              }
+            }
+          },
+          "affiliationNameInfo": {
+            "type": "object",
+            "properties": {
+              "affiliationName": {
+                "type": "text",
+                "index": false
+              },
+              "affiliationNameLang": {
+                "type": "text"
+              },
+              "affiliationNameShowFlg": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      },
+      "is_deleted": {
+        "type": "boolean"
       }
     }
   }
