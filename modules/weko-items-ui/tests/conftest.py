@@ -444,13 +444,13 @@ def users(app, db):
     if user_count != 1:
         # ユーザーが存在しない場合は新規作成
         user = User(email="user@test.org", password="password", active=True)
-        # contributor = User(email="contributor@test.org", password="password", active=True)
-        # comadmin = User(email="comadmin@test.org", password="password", active=True)
-        # repoadmin = User(email="repoadmin@test.org", password="password", active=True)
-        # sysadmin = User(email="sysadmin@test.org", password="password", active=True)
-        # generaluser = User(email="generaluser@test.org", password="password", active=True)
-        # originalroleuser = User(email="originalroleuser@test.org", password="password", active=True)
-        # originalroleuser2 = User(email="originalroleuser2@test.org", password="password", active=True)
+        contributor = User(email="contributor@test.org", password="password", active=True)
+        comadmin = User(email="comadmin@test.org", password="password", active=True)
+        repoadmin = User(email="repoadmin@test.org", password="password", active=True)
+        sysadmin = User(email="sysadmin@test.org", password="password", active=True)
+        generaluser = User(email="generaluser@test.org", password="password", active=True)
+        originalroleuser = User(email="originalroleuser@test.org", password="password", active=True)
+        originalroleuser2 = User(email="originalroleuser2@test.org", password="password", active=True)
 
         # データベースに追加
         db.session.add_all([user, contributor, comadmin, repoadmin, sysadmin, generaluser, originalroleuser, originalroleuser2])
@@ -460,13 +460,13 @@ def users(app, db):
     else:
         # 既存のユーザーを取得
         user = User.query.filter_by(email="user@test.org").first()
-        # contributor = User.query.filter_by(email="contributor@test.org").first()
-        # comadmin = User.query.filter_by(email="comadmin@test.org").first()
-        # repoadmin = User.query.filter_by(email="repoadmin@test.org").first()
-        # sysadmin = User.query.filter_by(email="sysadmin@test.org").first()
-        # generaluser = User.query.filter_by(email="generaluser@test.org").first()
-        # originalroleuser = User.query.filter_by(email="originalroleuser@test.org").first()
-        # originalroleuser2 = User.query.filter_by(email="originalroleuser2@test.org").first()
+        contributor = User.query.filter_by(email="contributor@test.org").first()
+        comadmin = User.query.filter_by(email="comadmin@test.org").first()
+        repoadmin = User.query.filter_by(email="repoadmin@test.org").first()
+        sysadmin = User.query.filter_by(email="sysadmin@test.org").first()
+        generaluser = User.query.filter_by(email="generaluser@test.org").first()
+        originalroleuser = User.query.filter_by(email="originalroleuser@test.org").first()
+        originalroleuser2 = User.query.filter_by(email="originalroleuser2@test.org").first()
         print(f"User created: {user}")
 
     # Roleの作成または取得
@@ -530,24 +530,24 @@ def users(app, db):
             ActionRoles(action="author-access", role=contributor_role),
         ]
         db.session.add_all(action_roles)
-        # ds.add_role_to_user(sysadmin, sysadmin_role)
-        # ds.add_role_to_user(repoadmin, repoadmin_role)
-        # ds.add_role_to_user(contributor, contributor_role)
-        # ds.add_role_to_user(comadmin, comadmin_role)
-        # ds.add_role_to_user(generaluser, general_role)
-        # ds.add_role_to_user(originalroleuser, originalrole)
-        # ds.add_role_to_user(originalroleuser2, originalrole)
-        # ds.add_role_to_user(originalroleuser2, repoadmin_role)
+        ds.add_role_to_user(sysadmin, sysadmin_role)
+        ds.add_role_to_user(repoadmin, repoadmin_role)
+        ds.add_role_to_user(contributor, contributor_role)
+        ds.add_role_to_user(comadmin, comadmin_role)
+        ds.add_role_to_user(generaluser, general_role)
+        ds.add_role_to_user(originalroleuser, originalrole)
+        ds.add_role_to_user(originalroleuser2, originalrole)
+        ds.add_role_to_user(originalroleuser2, repoadmin_role)
 
     # 最後にユーザー情報を返す
     return [
-        # {"email": contributor.email, "id": contributor.id, "obj": contributor},
-        # {"email": repoadmin.email, "id": repoadmin.id, "obj": repoadmin},
-        # {"email": sysadmin.email, "id": sysadmin.id, "obj": sysadmin},
-        # {"email": comadmin.email, "id": comadmin.id, "obj": comadmin},
-        # {"email": generaluser.email, "id": generaluser.id, "obj": generaluser},
-        # {"email": originalroleuser.email, "id": originalroleuser.id, "obj": originalroleuser},
-        # {"email": originalroleuser2.email, "id": originalroleuser2.id, "obj": originalroleuser2},
+        {"email": contributor.email, "id": contributor.id, "obj": contributor},
+        {"email": repoadmin.email, "id": repoadmin.id, "obj": repoadmin},
+        {"email": sysadmin.email, "id": sysadmin.id, "obj": sysadmin},
+        {"email": comadmin.email, "id": comadmin.id, "obj": comadmin},
+        {"email": generaluser.email, "id": generaluser.id, "obj": generaluser},
+        {"email": originalroleuser.email, "id": originalroleuser.id, "obj": originalroleuser},
+        {"email": originalroleuser2.email, "id": originalroleuser2.id, "obj": originalroleuser2},
         {"email": user.email, "id": user.id, "obj": user},
     ]
 
