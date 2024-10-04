@@ -10,7 +10,8 @@ import copy
 import tempfile
 from uuid import UUID
 from dictdiffer import diff, patch, swap, revert
-from elasticsearch import exceptions as es_exceptions
+# from elasticsearch import exceptions as es_exceptions
+from invenio_search.engine import search
 import uuid
 
 import pytest
@@ -8759,7 +8760,7 @@ def test_WekoQueryRankingHelper_get(app, users, db_records,esindex,mocker):
         assert result == []
     
     # raise NotFoundError
-    with patch("invenio_stats.queries.ESWekoRankingQuery.run",side_effect=es_exceptions.NotFoundError(404,"test_error")):
+    with patch("invenio_stats.queries.ESWekoRankingQuery.run",side_effect=search.OpenSearchException.NotFoundError(404,"test_error")):
         result = WekoQueryRankingHelper.get(
             start_date="2023-08-19",
             end_date="2023-09-01",
