@@ -258,6 +258,7 @@ redis==5.0.4
 referencing==0.35.1
 requests==2.32.3
 requests-oauthlib==1.1.0
+responses
 resync==1.0.9
 rocrate==0.6.0
 rpds-py==0.20.0
