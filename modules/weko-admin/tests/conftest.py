@@ -257,23 +257,34 @@ def client(app):
 
 @pytest.fixture()
 def admin_app(instance_path):
-    base_app = Flask(__name__, instance_path=instance_path)
-    base_app.config.update(
+    base_app_ = Flask(__name__, instance_path=instance_path)
+    base_app_.config.update(
         SECRET_KEY='SECRET KEY',
         SESSION_TYPE='memcached',
         SERVER_NAME='test_server',
         SQLALCHEMY_DATABASE_URI=os.environ.get(
             'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
+        I18N_LANGUAGES=[("ja","Japanese"), ("en","English")],
         WEKO_ADMIN_FACET_SEARCH_SETTING={"name_en": "","name_jp": "","mapping": "","active": True,"aggregations": []},
         WEKO_ADMIN_FACET_SEARCH_SETTING_TEMPLATE="weko_admin/admin/facet_search_setting.html"
     )
-    base_app.testing = True
-    InvenioDB(base_app)
-    InvenioAccounts(base_app)
-    InvenioAccess(base_app)
+    base_app_.testing = True
+    InvenioDB(base_app_)
+    InvenioAccounts(base_app_)
+    InvenioAccess(base_app_)
+    InvenioI18N(base_app_)
 
-    with base_app.app_context():
-        yield base_app
+    with base_app_.app_context():
+        yield base_app_
+
+@pytest.fixture()
+def i18n_admin_app(admin_app):
+    with admin_app.test_request_context(
+        headers=[('Accept-Language','ja')]):
+        admin_app.extensions['invenio-oauth2server'] = 1
+        admin_app.extensions['invenio-queues'] = 1
+        yield admin_app
+
 
 @pytest.fixture()
 def admin_db(admin_app):
