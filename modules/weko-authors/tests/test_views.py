@@ -27,7 +27,7 @@ import uuid
 from flask import url_for
 from mock import patch, MagicMock
 # from elasticsearch.exceptions import NotFoundError
-from opensearchpy.exceptions import NotFoundError
+from invenio_search.engine import search
 from invenio_indexer.api import RecordIndexer
 
 from invenio_accounts.testutils import login_user_via_session
@@ -105,9 +105,9 @@ def test_create_acl_users(client, users, index, is_permission):
     assert_role(res, is_permission)
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_create -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
-@pytest.mark.parametrize('base_app',[dict(
+@pytest.mark.parametrize('base_app2',[dict(
     is_es=True
-)],indirect=['base_app'])
+)],indirect=['base_app2'])
 def test_create(client, users, esindex):
     """
     Test of create author.
@@ -158,7 +158,8 @@ def test_create(client, users, esindex):
             author = Authors.query.filter_by(id=pk_id).one()
             assert author
             assert type(author.json) == dict
-            res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=str(es_id))
+            # res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=str(es_id))
+            res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],id=str(es_id))
             assert res["_source"]["pk_id"] == str(pk_id)
     
     # raise Exception
@@ -174,8 +175,9 @@ def test_create(client, users, esindex):
                 assert res.status_code==500
                 assert get_json(res) == {"msg":"Failed"}
                 assert Authors.query.filter_by(id=pk_id).one_or_none() == None
-                with pytest.raises(NotFoundError):
-                    res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=str(es_id))
+                with pytest.raises(search.NotFound):
+                    # res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=str(es_id))
+                    res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],id=str(es_id))
             
             
     
@@ -212,9 +214,9 @@ def test_update_author_acl_users(client, users, index, is_permission):
     assert_role(res, is_permission)
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_update_author -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
-@pytest.mark.parametrize('base_app',[dict(
+@pytest.mark.parametrize('base_app2',[dict(
     is_es=True
-)],indirect=['base_app'])
+)],indirect=['base_app2'])
 def test_update_author(client, db, users, esindex, create_author):
     """
     Test of update author data.
@@ -247,7 +249,8 @@ def test_update_author(client, db, users, esindex, create_author):
         author = Authors.query.filter_by(id=id).one()
         assert author
         assert author.json["authorNameInfo"][0]["firstName"] == "タロウ"
-        res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=es_id)
+        # res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=es_id)
+        res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],id=es_id)
         assert res["_source"]["authorNameInfo"][0]["firstName"] == "タロウ"
     
     # failed update
@@ -270,7 +273,8 @@ def test_update_author(client, db, users, esindex, create_author):
         author = Authors.query.filter_by(id=id).one()
         assert author
         assert author.json["authorNameInfo"][0]["firstName"] == "ハナコ"
-        res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=es_id)
+        # res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=es_id)
+        res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],id=es_id)
         assert res["_source"]["authorNameInfo"][0]["firstName"] == "ハナコ"
         
     
@@ -310,9 +314,9 @@ def test_delete_author_acl_users(client, users, index, is_permission):
     
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_delete_author -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
-@pytest.mark.parametrize('base_app',[dict(
+@pytest.mark.parametrize('base_app2',[dict(
     is_es=True
-)],indirect=['base_app'])
+)],indirect=['base_app2'])
 def test_delete_author(client, db,users, esindex, create_author, mocker):
     """
     Test of delete author data.
@@ -338,7 +342,8 @@ def test_delete_author(client, db,users, esindex, create_author, mocker):
     assert res.status_code == 200
     result = Authors.query.filter_by(id=id).one()
     assert result.is_deleted == True
-    res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=es_id)
+    # res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=es_id)
+    res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],id=es_id)
     assert res["_source"]["is_deleted"] == "true"
     
     id = 2
@@ -350,7 +355,8 @@ def test_delete_author(client, db,users, esindex, create_author, mocker):
         assert res.status_code == 200
         result = Authors.query.filter_by(id=id).one()
         assert result.is_deleted == False
-        res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=es_id)
+        # res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=es_id)
+        res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],id=es_id)
         assert res["_source"]["is_deleted"] == "false"
 
     # author is linked to items
@@ -407,7 +413,8 @@ def test_get(client, users):
     class MockClient():
         def __init__(self,data):
             self.data = data
-        def search(self,index=None,doc_type=None, body=None):
+        # def search(self,index=None,doc_type=None, body=None):
+        def search(self,index=None, body=None):
             return self.data[index]
     url = url_for("weko_authors.get")
     login_user_via_session(client=client, email=users[0]['email'])
@@ -496,7 +503,8 @@ def test_getById(client, users, mocker):
     class MockClient:
         def __init__(self,data):
             self.data = data
-        def search(self,index=None,doc_type=None,body=None):
+        # def search(self,index=None,doc_type=None,body=None):
+        def search(self,index=None,body=None):
             return self.data
     login_user_via_session(client=client, email=users[0]['email'])
     url = url_for("weko_authors.getById")
@@ -559,7 +567,8 @@ def test_mapping(client, users, authors_prefix_settings, authors_affiliation_set
     class MockClient:
         def __init__(self, value):
             self.data = value
-        def get(self,index=None,doc_type=None,id=None):
+        # def get(self,index=None,doc_type=None,id=None):
+        def get(self,index=None,id=None):
             return self.data
     input = {"id": "1"}
     data = {
@@ -759,7 +768,8 @@ def test_gatherById(client, users, authors):
         def search(self,index=None, body=None):
             id = body["query"]["match"]["_id"]
             return self.data[index][id]
-        def update(self,index=None,doc_type=None,id=None,body=None):
+        # def update(self,index=None,doc_type=None,id=None,body=None):
+        def update(self,index=None,id=None,body=None):
             pass
     
     input = {
