@@ -23,7 +23,8 @@ import copy
 import uuid
 
 from collections import OrderedDict
-from opensearchpy.exceptions import OpenSearchException
+from opensearchpy import exceptions
+from opensearchpy.helpers import bulk
 
 from datetime import datetime, timezone,date
 from typing import NoReturn, Union
@@ -35,9 +36,6 @@ from invenio_search.engine import search
 
 from flask import abort, current_app, json, request, session
 from flask_security import current_user
-from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm.attributes import flag_modified
-
 from invenio_db import db
 from invenio_deposit.api import Deposit, index, preserve
 from invenio_files_rest.models import (
@@ -279,6 +277,7 @@ class WekoIndexer(RecordIndexer):
                                     index=self.es_index,
                                     routing=parent_id)
             except search.OpenSearchException as ex:
+
                 weko_logger(key='WEKO_DEPOSIT_FAILED_DELETE_FILE_INDEX',
                             record_id=str(lst), ex=ex)
                 # raise WekoDepositIndexerError(ex=ex,
@@ -1176,24 +1175,7 @@ class WekoDeposit(Deposit):
         RecordsBuckets.create(record=deposit.model, bucket=bucket)
 
         recid = PersistentIdentifier.get('recid', record_id)
-        print(f"recid = {recid}")
-        print(f"recid.id = {recid.id}")
-        print(f"recid.pid_type = {recid.pid_type}")
-        print(f"recid.pid_value = {recid.pid_value}")
-        print(f"recid.status = {recid.status}")
-      
         depid = PersistentIdentifier.get('depid', record_id)
-        print(f"depid = {depid}")
-        print(f"depid.id = {depid.id}")
-        print(f"depid.pid_type = {depid.pid_type}")
-        print(f"depid.pid_value = {depid.pid_value}")
-        print(f"depid.status = {depid.status}")
-
-        print(f"parent_pid = {parent_pid}")
-        print(f"parent_pid.id = {parent_pid}")
-        print(f"parent_pid.pid_type = {parent_pid}")
-        print(f"parent_pid.pid_value = {parent_pid}")
-        print(f"parent_pid.status = {parent_pid}")
 
         PIDNodeVersioning(pid=parent_pid).insert_draft_child(child_pid=recid)
         PIDNodeDraft(pid=recid).insert_child(depid)
@@ -1438,7 +1420,7 @@ class WekoDeposit(Deposit):
                 self.get_content_files()
 
                 try:
-                    # Upload file content to Elasticsearch
+                    # Upload file content to search engine
                     self.indexer.upload_metadata(
                         self.jrc,
                         self.pid.object_uuid,

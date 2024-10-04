@@ -22,8 +22,7 @@ from six import BytesIO
 import pytest
 from flask import Flask
 from flask_babel import Babel
-from elasticsearch import Elasticsearch
-from elasticsearch_dsl import response, Search
+from opensearchpy import OpenSearch
 from sqlalchemy_utils.functions import create_database, database_exists
 from kombu import Exchange, Queue
 from flask import appcontext_pushed, g
@@ -52,6 +51,7 @@ from invenio_queues.proxies import current_queues
 from invenio_records import InvenioRecords
 from invenio_records_rest import InvenioRecordsREST
 from invenio_records.api import Record
+from invenio_search.engine import dsl
 from invenio_search import InvenioSearch, current_search, current_search_client
 from werkzeug.local import LocalProxy
 
@@ -233,9 +233,9 @@ def base_app(instance_path, mock_gethostbyaddr):
         # SQLALCHEMY_DATABASE_URI=os.environ.get(
         #     'SQLALCHEMY_DATABASE_URI', 'sqlite://'),
         SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-                                           'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/invenio'),
-        SEARCH_ELASTIC_HOSTS=os.environ.get(
-            'SEARCH_ELASTIC_HOSTS', 'elasticsearch'),
+                                           'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
+        #SEARCH_ELASTIC_HOSTS=os.environ.get(
+        #    'SEARCH_ELASTIC_HOSTS', 'elasticsearch'),
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         TESTING=True,
         OAUTH2SERVER_CLIENT_ID_SALT_LEN=64,
@@ -254,11 +254,25 @@ def base_app(instance_path, mock_gethostbyaddr):
         PIDRELATIONS_RELATION_TYPES=PIDRELATIONS_RELATION_TYPES,
         STATS_QUERIES=STATS_QUERIES,
         STATS_AGGREGATIONS=STATS_AGGREGATIONS,
-        STATS_EXCLUDED_ADDRS = [],
-        STATS_EVENT_STRING = 'events',
-        INDEXER_MQ_QUEUE = Queue("indexer", exchange=Exchange("indexer", type="direct"), routing_key="indexer",queue_arguments={"x-queue-type":"quorum"}),
+        STATS_EXCLUDED_ADDRS=[],
+        STATS_EVENT_STRING='events',
+        INDEXER_MQ_QUEUE=Queue("indexer", exchange=Exchange("indexer", type="direct"), routing_key="indexer",queue_arguments={"x-queue-type":"quorum"}),
         INDEXER_DEFAULT_INDEX="test-events-stats-file-download-0001",
-        I18N_LANGUAGES = [('en', 'English'),('ja', 'Japanese') ]
+        I18N_LANGUAGES=[('en', 'English'),('ja', 'Japanese') ],
+        SEARCH_ELASTIC_HOSTS=os.environ.get(
+            'SEARCH_ELASTIC_HOSTS', 'opensearch'
+        ),
+        SEARCH_HOSTS=os.environ.get(
+            'SEARCH_HOST', 'opensearch'
+        ),
+        SEARCH_CLIENT_CONFIG={
+            "http_auth": (
+                os.environ['INVENIO_OPENSEARCH_USER'],
+                os.environ['INVENIO_OPENSEARCH_PASS']
+            ), 
+            "use_ssl": True, 
+            "verify_certs": False
+        },      
     ))
     FlaskCeleryExt(app_)
     InvenioAccess(app_)
@@ -499,63 +513,64 @@ def es(app):
     Don't create template so that the test or another fixture can modify the
     enabled events.
     """
-    current_search_client.indices.delete(index='test-*')
-    # events
-    with open("invenio_stats/contrib/events/v7/events-v1.json", "r") as f:
-        item_create_mapping = json.load(f)
-        if "index_patterns" in item_create_mapping:
-            del item_create_mapping["index_patterns"]
-        if "aliases" in item_create_mapping:
-            del item_create_mapping["aliases"]
-    current_search_client.indices.create(
-        index='{}events-stats-index'.format(app.config['SEARCH_INDEX_PREFIX']),
-        body=item_create_mapping
-        )
-    # aggregations
-    with open("invenio_stats/contrib/aggregations/v7/aggregation-v1.json", "r") as f:
-        aggr_item_create_mapping = json.load(f)
-        if "index_patterns" in aggr_item_create_mapping:
-            del aggr_item_create_mapping["index_patterns"]
-        if "aliases" in aggr_item_create_mapping:
-            del aggr_item_create_mapping["aliases"]
-    current_search_client.indices.create(
-       index='{}stats-index'.format(app.config['SEARCH_INDEX_PREFIX']),
-       body=aggr_item_create_mapping
-    )
-
-    event_list=('celery-task', 'item-create', 'top-view', 'record-view', 'file-download', 'file-preview', 'search')
-    for event_name in event_list:
-        current_search_client.indices.put_alias(
-            index="{}events-stats-index".format(app.config['SEARCH_INDEX_PREFIX']),
-            name="{}events-stats-{}".format(app.config['SEARCH_INDEX_PREFIX'], event_name),
-            body={
-                "is_write_index": True,
-                "filter": {"term": {"event_type": event_name}}
-            }
-        )
-
-        current_search_client.indices.put_alias(
-            index="{}stats-index".format(app.config['SEARCH_INDEX_PREFIX']),
-            name="{}stats-{}".format(app.config['SEARCH_INDEX_PREFIX'], event_name),
-            body={
-                "is_write_index": True,
-                "filter": {"term": {"event_type": event_name}}
-            }
-        )
-
-    try:
-        yield current_search_client
-    finally:
+    with app.app_context():       
         current_search_client.indices.delete(index='test-*')
+        # events
+        with open("invenio_stats/contrib/events/os-v2/events-v1.json", "r") as f:
+            item_create_mapping = json.load(f)
+            if "index_patterns" in item_create_mapping:
+                del item_create_mapping["index_patterns"]
+            if "aliases" in item_create_mapping:
+                del item_create_mapping["aliases"]
+        current_search_client.indices.create(
+            index='{}events-stats-index'.format(app.config['SEARCH_INDEX_PREFIX']),
+            body=item_create_mapping
+            )
+        # aggregations
+        with open("invenio_stats/contrib/aggregations/os-v2/aggregation-v1.json", "r") as f:
+            aggr_item_create_mapping = json.load(f)
+            if "index_patterns" in aggr_item_create_mapping:
+                del aggr_item_create_mapping["index_patterns"]
+            if "aliases" in aggr_item_create_mapping:
+                del aggr_item_create_mapping["aliases"]
+        current_search_client.indices.create(
+        index='{}stats-index'.format(app.config['SEARCH_INDEX_PREFIX']),
+        body=aggr_item_create_mapping
+        )
+
+        event_list=('celery-task', 'item-create', 'top-view', 'record-view', 'file-download', 'file-preview', 'search')
+        for event_name in event_list:
+            current_search_client.indices.put_alias(
+                index="{}events-stats-index".format(app.config['SEARCH_INDEX_PREFIX']),
+                name="{}events-stats-{}".format(app.config['SEARCH_INDEX_PREFIX'], event_name),
+                body={
+                    "is_write_index": True,
+                    "filter": {"term": {"event_type": event_name}}
+                }
+            )
+
+            current_search_client.indices.put_alias(
+                index="{}stats-index".format(app.config['SEARCH_INDEX_PREFIX']),
+                name="{}stats-{}".format(app.config['SEARCH_INDEX_PREFIX'], event_name),
+                body={
+                    "is_write_index": True,
+                    "filter": {"term": {"event_type": event_name}}
+                }
+            )
+
+        try:
+            yield current_search_client
+        finally:
+            current_search_client.indices.delete(index='test-*')
 
 @pytest.fixture(scope='function')
 def db(app):
-    """Recreate db at each test that requires it."""
+    """Database fixture."""
+    if not database_exists(str(db_.engine.url)):
+        create_database(str(db_.engine.url))
     with app.app_context():
-        if not database_exists(str(db_.engine.url)):
-            create_database(str(db_.engine.url))
         db_.create_all()
-        return db_
+    return db_
 
 @pytest.fixture(scope='function', autouse=True)
 def teardown_db(app):
@@ -570,7 +585,16 @@ def teardown_db(app):
 class MockEs():
     def __init__(self,**keywargs):
         self.indices = self.MockIndices()
-        self.es = Elasticsearch()
+
+        search_hosts = base_app.config["SEARCH_ELASTIC_HOSTS"]
+        search_client_config = base_app.config["SEARCH_CLIENT_CONFIG"]
+      
+        self.es = OpenSearch(
+            hosts=[{'host': search_hosts, 'port': 9200}],
+            http_auth=search_client_config['http_auth'],
+            use_ssl=search_client_config['use_ssl'],
+            verify_certs=search_client_config['verify_certs'],
+        )
 
     @property
     def transport(self):
@@ -789,7 +813,7 @@ def mock_es_execute():
         if isinstance(data, str):
             with open(data, "r") as f:
                 data = json.load(f)
-        dummy=response.Response(Search(), data)
+        dummy = dsl.response.Response(dsl.Search(), data)
         return dummy
     return _dummy_response
 

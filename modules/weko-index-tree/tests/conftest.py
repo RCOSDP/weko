@@ -35,6 +35,7 @@ from flask_babel import Babel, lazy_gettext as _
 from flask_celeryext import FlaskCeleryExt
 from flask_menu import Menu
 from flask_login import current_user, login_user, LoginManager
+from pytest_mock import mocker
 from werkzeug.local import LocalProxy
 from tests.helpers import create_record, json_data, fill_oauth2_headers
 
@@ -118,7 +119,7 @@ from weko_admin.models import SessionLifetime
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 from sqlalchemy import event
-
+from invenio_search.engine import search
 
 @pytest.yield_fixture()
 def instance_path():
@@ -164,7 +165,10 @@ def base_app(instance_path):
         # SQLALCHEMY_DATABASE_URI=os.environ.get(
         #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
         SEARCH_ELASTIC_HOSTS=os.environ.get(
-            'SEARCH_ELASTIC_HOSTS', 'elasticsearch'),
+                    'SEARCH_ELASTIC_HOSTS', 'opensearch'),
+        SEARCH_HOSTS=os.environ.get(
+            'SEARCH_HOST', 'opensearch'
+        ),
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         JSONSCHEMAS_HOST='inveniosoftware.org',
         ACCOUNTS_USERINFO_HEADERS=True,
@@ -181,7 +185,8 @@ def base_app(instance_path):
         SEARCH_UI_SEARCH_INDEX="test-weko",
         # SEARCH_ELASTIC_HOSTS=os.environ.get("INVENIO_ELASTICSEARCH_HOST"),
         SEARCH_INDEX_PREFIX="{}-".format('test'),
-        SEARCH_CLIENT_CONFIG=dict(timeout=120, max_retries=10),
+        # SEARCH_CLIENT_CONFIG={"http_auth":(os.environ['INVENIO_OPENSEARCH_USER'],os.environ['INVENIO_OPENSEARCH_PASS']),"use_ssl":True, "verify_certs":False},
+        SEARCH_CLIENT_CONFIG={"http_auth":(os.environ.get('INVENIO_OPENSEARCH_USER', 'invenio'),os.environ.get('INVENIO_OPENSEARCH_PASS', 'openpass123!')),"use_ssl":True, "verify_certs":False},
         OAISERVER_ID_PREFIX="oai:inveniosoftware.org:recid/",
         OAISERVER_RECORD_INDEX="_all",
         OAISERVER_REGISTER_SET_SIGNALS=True,
@@ -839,7 +844,7 @@ def esindex(app,db_records):
         # print(current_search_client.indices.get_alias())
     
     for depid, recid, parent, doi, record, item in db_records:
-        search.client.index(index='test-weko-item-v1.0.0', doc_type='item-v1.0.0', id=record.id, body=record,refresh='true')
+        search.client.index(index='test-weko-item-v1.0.0', id=record.id, body=record,refresh='true')
     
 
     yield search
