@@ -28,7 +28,9 @@ import copy
 import uuid
 from unittest.mock import patch
 from collections import OrderedDict
-from opensearchpy  import OpenSearch
+
+from opensearchpy import Opensearch
+
 import time
 from datetime import datetime
 
@@ -283,7 +285,7 @@ def app(base_app):
         use_ssl=search_client_config['use_ssl'],
         verify_certs=search_client_config['verify_certs'],
     )
-    
+
     es.indices.create(
         index=base_app.config["INDEXER_DEFAULT_INDEX"], body=mapping, ignore=[400, 404]
     )

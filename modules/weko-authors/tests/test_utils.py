@@ -39,7 +39,8 @@ from weko_authors.utils import (
 class MockClient():
     def __init__(self):
         self.return_value=""
-    def search(self,index,doc_type,body):
+    # def search(self,index,doc_type,body):
+    def search(self,index,body):
         return self.return_value
 
 # def get_author_prefix_obj(scheme):
