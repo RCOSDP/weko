@@ -426,8 +426,15 @@ class ReportView(BaseView):
             }
             if aggs_results and aggs_results.get(
                     'aggregations', {}).get('aggs_public'):
+
+                total_hits = aggs_results['hits']['total']
+                if isinstance(total_hits, dict):
+                    total = total_hits['value']
+                else:
+                    total = 0
+
                 result = {
-                    'total': aggs_results['hits']['total']['value'],
+                    'total': total,
                     'open': aggs_results['aggregations'][
                         'aggs_public']['doc_count']
                 }

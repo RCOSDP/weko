@@ -23,8 +23,6 @@ import copy
 import uuid
 
 from collections import OrderedDict
-from opensearchpy.exceptions import OpenSearchException
-
 from datetime import datetime, timezone,date
 from typing import NoReturn, Union
 from tika import parser
@@ -280,7 +278,7 @@ class WekoIndexer(RecordIndexer):
                 self.client.delete(id=str(lst),
                                     index=self.es_index,
                                     routing=parent_id)
-            except OpenSearchException as ex:
+            except search.exceptions.OpenSearchException as ex:
                 weko_logger(key='WEKO_DEPOSIT_FAILED_DELETE_FILE_INDEX',
                             record_id=str(lst), ex=ex)
                 # raise WekoDepositIndexerError(ex=ex,
@@ -308,7 +306,7 @@ class WekoIndexer(RecordIndexer):
                 The response from Elasticsearch after attempting the update.
 
         Raises:
-            OpenSearchException:
+            search.exceptions.OpenSearchException:
                 If an error occurs during the update process (excluding errors
                 with status codes 400 and 404, which are ignored).
         """
@@ -1183,7 +1181,7 @@ class WekoDeposit(Deposit):
         print(f"recid.pid_type = {recid.pid_type}")
         print(f"recid.pid_value = {recid.pid_value}")
         print(f"recid.status = {recid.status}")
-      
+
         depid = PersistentIdentifier.get('depid', record_id)
         print(f"depid = {depid}")
         print(f"depid.id = {depid.id}")
@@ -2676,7 +2674,7 @@ class WekoDeposit(Deposit):
             # attempt to delete index on es
             try:
                 self.indexer.delete(self)
-            except OpenSearchException as ex:
+            except search.exceptions.OpenSearchException as ex:
                 weko_logger(key='WEKO_COMMON_ERROR_ELASTICSEARCH', ex=ex)
             except Exception as ex:
                 weko_logger(key='WEKO_COMMON_ERROR_UNEXPECTED', ex=ex)
