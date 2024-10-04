@@ -54,8 +54,6 @@ from invenio_records.models import RecordMetadata
 from invenio_records_files.api import FileObject, Record
 from invenio_records_files.models import RecordsBuckets
 from invenio_records_rest.errors import PIDResolveRESTError
-from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm.attributes import flag_modified
 
 from weko_admin.models import AdminSettings
 from weko_index_tree.api import Indexes
@@ -280,7 +278,7 @@ class WekoIndexer(RecordIndexer):
                 self.client.delete(id=str(lst),
                                     index=self.es_index,
                                     routing=parent_id)
-            except OpenSearchException as ex:
+            except search.OpenSearchException as ex:
                 weko_logger(key='WEKO_DEPOSIT_FAILED_DELETE_FILE_INDEX',
                             record_id=str(lst), ex=ex)
                 # raise WekoDepositIndexerError(ex=ex,
@@ -308,7 +306,7 @@ class WekoIndexer(RecordIndexer):
                 The response from Elasticsearch after attempting the update.
 
         Raises:
-            OpenSearchException:
+            search.OpenSearchException:
                 If an error occurs during the update process (excluding errors
                 with status codes 400 and 404, which are ignored).
         """
@@ -1665,12 +1663,10 @@ class WekoDeposit(Deposit):
                         branch='is_draft is True')
             with db.session.begin_nested():
                 # Set relation type of draft record is 3: Draft
-                parent_pid = PIDVersioning(child=recid).parent
-                relation = (
-                    PIDRelation.query
-                    .filter_by(parent=parent_pid, child=recid)
-                    .one_or_none()
-                )
+                parent_pid = PIDNodeVersioning(pid=recid).parents.one_or_none()
+                relation = PIDRelation.query. \
+                    filter_by(parent=parent_pid,
+                            child=recid).one_or_none()
                 relation.relation_type = 3
             db.session.merge(relation)
 
@@ -2676,7 +2672,7 @@ class WekoDeposit(Deposit):
             # attempt to delete index on es
             try:
                 self.indexer.delete(self)
-            except OpenSearchException as ex:
+            except search.OpenSearchException as ex:
                 weko_logger(key='WEKO_COMMON_ERROR_ELASTICSEARCH', ex=ex)
             except Exception as ex:
                 weko_logger(key='WEKO_COMMON_ERROR_UNEXPECTED', ex=ex)
