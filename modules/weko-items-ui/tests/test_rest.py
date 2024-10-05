@@ -20,16 +20,12 @@
 
 """Module tests."""
 import os
+from unittest.mock import patch, MagicMock
 import pytest
-from flask import json
-from mock import patch, MagicMock
 
+from flask import json
 from sqlalchemy.exc import SQLAlchemyError
-# from elasticsearch.exceptions import ElasticsearchException
 from invenio_search.engine import search
-from invenio_search.engine import dsl
-from opensearchpy import OpenSearch
-from opensearchpy.exceptions import OpenSearchException
 
 ranking_type = [
     'new_items',
@@ -43,7 +39,7 @@ opensearch_username = os.getenv('OPENSEARCH_USERNAME', 'admin')
 opensearch_password = os.getenv('OPENSEARCH_PASSWORD', 'admin')
 
 # OpenSearchクライアントの設定
-client = OpenSearch(
+client = search.client.OpenSearch(
     hosts=[{'host': 'localhost', 'port': 9200}],
     http_auth=(opensearch_username, opensearch_password),  # 認証情報を追加
     use_ssl=True,
@@ -104,11 +100,12 @@ def test_WekoRanking_error(app, client, db, db_ranking):
         res = client.get('/v1/ranking/no_ranking')
         assert res.status_code == 404
 
-        with patch('weko_admin.models.RankingSettings.get', MagicMock(side_effect=SQLAlchemyError())):
+        with patch('weko_admin.models.RankingSettings.get', MagicMock(side_effect=SQLAlchemyError("SQLAlchemy connection failed"))):
             res = client.get(url)
             assert res.status_code == 500
+            assert b"SQLAlchemy connection failed" in res.get_data()
 
-        with patch('weko_admin.models.RankingSettings.get', MagicMock(side_effect=OpenSearchException)):
+        with patch('weko_admin.models.RankingSettings.get', MagicMock(side_effect=search.OpenSearchException())):
             res = client.get(url)
             assert res.status_code == 500
 
@@ -199,8 +196,8 @@ def test_WekoFileRanking_error(app, client, records, db_itemtype):
         headers['If-None-Match'] = etag
         res = client.get(url, headers=headers)
         assert res.status_code == 304
-        
+
         # 12 Handle OpenSearchException
-    with patch('weko_admin.models.RankingSettings.get', MagicMock(side_effect=OpenSearchException)):
+    with patch('weko_admin.models.RankingSettings.get', MagicMock(side_effect=search.OpenSearchException)):
         res = client.get(url)
         assert res.status_code == 500

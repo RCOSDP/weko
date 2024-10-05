@@ -216,7 +216,7 @@ def base_app(instance_path):
         WEKO_BUCKET_QUOTA_SIZE=50 * 1024 * 1024 * 1024,
         WEKO_MAX_FILE_SIZE=50 * 1024 * 1024 * 1024,
         SEARCH_ELASTIC_HOSTS=os.environ.get('SEARCH_ELASTIC_HOSTS', 'opensearch'),
-        SEARCH_HOSTS=os.environ.get('SEARCH_HOST', 'opensearch'),      
+        SEARCH_HOSTS=os.environ.get('SEARCH_HOST', 'opensearch'),
         SEARCH_INDEX_PREFIX="{}-".format('test'),
         SEARCH_CLIENT_CONFIG={"http_auth":(os.environ['INVENIO_OPENSEARCH_USER'],os.environ['INVENIO_OPENSEARCH_PASS']),"use_ssl":True, "verify_certs":False},
         OAISERVER_ID_PREFIX="oai:inveniosoftware.org:recid/",
@@ -281,6 +281,7 @@ def base_app(instance_path):
     InvenioDB(app_)
     InvenioAccounts(app_)
     InvenioAccess(app_)
+    InvenioCache(app_)
     # InvenioTheme(app_)
     # InvenioREST(app_)
 
@@ -295,7 +296,7 @@ def base_app(instance_path):
     InvenioJSONSchemas(app_)
     # InvenioOAIServer(app_)
 
-    search = InvenioSearch(app_)
+    InvenioSearch(app_)
 
     # WekoSchemaUI(app_)
     InvenioStats(app_)
@@ -395,7 +396,7 @@ def esindex(app,db_records):
         # print(current_search_client.indices.get_alias())
 
     for depid, recid, parent, doi, record, item in db_records:
-        search.client.index(index=index_name, doc_type='item-v1.0.0', id=record.id, body=record, refresh='true')
+        search.client.index(index=index_name, id=record.id, body=record, refresh='true')
 
     yield search
 
@@ -436,29 +437,40 @@ def esindex2(app):
 @pytest.fixture()
 def users(app, db):
     """Create users."""
-    db.create_all()
-    
+    db.create_all()  # データベースの初期化
+
     ds = app.extensions["invenio-accounts"].datastore
     user_count = User.query.filter_by(email="user@test.org").count()
+
     if user_count != 1:
-        user = create_test_user(email="user@test.org")
-        contributor = create_test_user(email="contributor@test.org")
-        comadmin = create_test_user(email="comadmin@test.org")
-        repoadmin = create_test_user(email="repoadmin@test.org")
-        sysadmin = create_test_user(email="sysadmin@test.org")
-        generaluser = create_test_user(email="generaluser@test.org")
-        originalroleuser = create_test_user(email="originalroleuser@test.org")
-        originalroleuser2 = create_test_user(email="originalroleuser2@test.org")
+        # ユーザーが存在しない場合は新規作成
+        user = User(email="user@test.org", password="password", active=True)
+        contributor = User(email="contributor@test.org", password="password", active=True)
+        comadmin = User(email="comadmin@test.org", password="password", active=True)
+        repoadmin = User(email="repoadmin@test.org", password="password", active=True)
+        sysadmin = User(email="sysadmin@test.org", password="password", active=True)
+        generaluser = User(email="generaluser@test.org", password="password", active=True)
+        originalroleuser = User(email="originalroleuser@test.org", password="password", active=True)
+        originalroleuser2 = User(email="originalroleuser2@test.org", password="password", active=True)
+
+        # データベースに追加
+        db.session.add_all([user, contributor, comadmin, repoadmin, sysadmin, generaluser, originalroleuser, originalroleuser2])
+        db.session.commit()
+        print(f"User created: {user}")
+
     else:
+        # 既存のユーザーを取得
         user = User.query.filter_by(email="user@test.org").first()
         contributor = User.query.filter_by(email="contributor@test.org").first()
         comadmin = User.query.filter_by(email="comadmin@test.org").first()
         repoadmin = User.query.filter_by(email="repoadmin@test.org").first()
         sysadmin = User.query.filter_by(email="sysadmin@test.org").first()
         generaluser = User.query.filter_by(email="generaluser@test.org").first()
-        originalroleuser = User.query.filter_by(email="originalroleuser@test.org")
-        originalroleuser2 = User.query.filter_by(email="originalroleuser2@test.org")
+        originalroleuser = User.query.filter_by(email="originalroleuser@test.org").first()
+        originalroleuser2 = User.query.filter_by(email="originalroleuser2@test.org").first()
+        print(f"User created: {user}")
 
+    # Roleの作成または取得
     role_count = Role.query.filter_by(name="System Administrator").count()
     if role_count != 1:
         sysadmin_role = ds.create_role(name="System Administrator")
@@ -475,9 +487,7 @@ def users(app, db):
         general_role = Role.query.filter_by(name="General").first()
         originalrole = Role.query.filter_by(name="Original Role").first()
 
-
-
-    # Assign access authorization
+    # Access Authorizationの割り当て
     with db.session.begin_nested():
         action_users = [
             ActionUsers(action="superuser-access", user=sysadmin),
@@ -503,7 +513,6 @@ def users(app, db):
             ActionRoles(action="stats-api-access", role=repoadmin_role),
             ActionRoles(action="read-style-action", role=repoadmin_role),
             ActionRoles(action="update-style-action", role=repoadmin_role),
-            ActionRoles(action="detail-page-acces", role=repoadmin_role),
             ActionRoles(action="admin-access", role=comadmin_role),
             ActionRoles(action="index-tree-access", role=comadmin_role),
             ActionRoles(action="indextree-journal-access", role=comadmin_role),
@@ -513,26 +522,13 @@ def users(app, db):
             ActionRoles(action="files-rest-object-delete-version", role=comadmin_role),
             ActionRoles(action="files-rest-object-read", role=comadmin_role),
             ActionRoles(action="search-access", role=comadmin_role),
-            ActionRoles(action="detail-page-acces", role=comadmin_role),
             ActionRoles(action="download-original-pdf-access", role=comadmin_role),
-            ActionRoles(action="author-access", role=comadmin_role),
-            ActionRoles(action="items-autofill", role=comadmin_role),
-            ActionRoles(action="detail-page-acces", role=comadmin_role),
-            ActionRoles(action="detail-page-acces", role=comadmin_role),
             ActionRoles(action="item-access", role=contributor_role),
             ActionRoles(action="files-rest-bucket-update", role=contributor_role),
             ActionRoles(action="files-rest-object-delete", role=contributor_role),
-            ActionRoles(
-                action="files-rest-object-delete-version", role=contributor_role
-            ),
             ActionRoles(action="files-rest-object-read", role=contributor_role),
             ActionRoles(action="search-access", role=contributor_role),
-            ActionRoles(action="detail-page-acces", role=contributor_role),
-            ActionRoles(action="download-original-pdf-access", role=contributor_role),
             ActionRoles(action="author-access", role=contributor_role),
-            ActionRoles(action="items-autofill", role=contributor_role),
-            ActionRoles(action="detail-page-acces", role=contributor_role),
-            ActionRoles(action="detail-page-acces", role=contributor_role),
         ]
         db.session.add_all(action_roles)
         ds.add_role_to_user(sysadmin, sysadmin_role)
@@ -544,23 +540,15 @@ def users(app, db):
         ds.add_role_to_user(originalroleuser2, originalrole)
         ds.add_role_to_user(originalroleuser2, repoadmin_role)
 
-
+    # 最後にユーザー情報を返す
     return [
         {"email": contributor.email, "id": contributor.id, "obj": contributor},
         {"email": repoadmin.email, "id": repoadmin.id, "obj": repoadmin},
         {"email": sysadmin.email, "id": sysadmin.id, "obj": sysadmin},
         {"email": comadmin.email, "id": comadmin.id, "obj": comadmin},
-        {"email": generaluser.email, "id": generaluser.id, "obj": sysadmin},
-        {
-            "email": originalroleuser.email,
-            "id": originalroleuser.id,
-            "obj": originalroleuser,
-        },
-        {
-            "email": originalroleuser2.email,
-            "id": originalroleuser2.id,
-            "obj": originalroleuser2,
-        },
+        {"email": generaluser.email, "id": generaluser.id, "obj": generaluser},
+        {"email": originalroleuser.email, "id": originalroleuser.id, "obj": originalroleuser},
+        {"email": originalroleuser2.email, "id": originalroleuser2.id, "obj": originalroleuser2},
         {"email": user.email, "id": user.id, "obj": user},
     ]
 
