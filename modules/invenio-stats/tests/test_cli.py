@@ -17,13 +17,15 @@ from tests.conftest import _create_file_download_event, _create_record_view_even
 
 from .helpers import mock_date
 from invenio_search import current_search
-from invenio_search.engine import search, dsl
+from invenio_search.engine import dsl
 
 from invenio_stats import current_stats
 from invenio_stats.cli import stats
 
 # def _events_process(event_types=None, eager=False):
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_cli.py::test_events_process -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
+
+
 def test_events_process(app, es, script_info, event_queues):
     """Test "events process" CLI command."""
     search_obj = dsl.Search(using=es)
@@ -72,7 +74,8 @@ def test_events_process(app, es, script_info, event_queues):
     current_stats.publish(
         "file-download", [_create_file_download_event((2018, 2, 1, 12))]
     )
-    current_stats.publish("record-view", [_create_record_view_event((2018, 2, 1, 10))])
+    current_stats.publish(
+        "record-view", [_create_record_view_event((2018, 2, 1, 10))])
 
     current_search.flush_and_refresh(index="test-*")
     # Process all event types via a celery task
@@ -84,8 +87,10 @@ def test_events_process(app, es, script_info, event_queues):
 # def _events_delete(event_types, start_date, end_date, force, verbose):
 # def _events_restore(event_types, start_date, end_date, force, verbose):
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_cli.py::test_events_delete_restore -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
+
+
 def test_events_delete_restore(app, script_info, es, event_queues):
-    search = search(using=es)
+    search = dsl.Search(using=es)
     runner = CliRunner()
 
     current_stats.publish(
@@ -97,11 +102,13 @@ def test_events_delete_restore(app, script_info, es, event_queues):
         [_create_record_view_event(date) for date in
          [(2018, 1, 1, 10), (2018, 1, 2, 12), (2018, 1, 3, 14)]])
     result = runner.invoke(
-        stats, ["events", "delete", "file-download", "--start-date=2018-01-01", "--end-date=2018-01-02", "--force", "--verbose", "--yes-i-know"],
+        stats, ["events", "delete", "file-download", "--start-date=2018-01-01",
+                "--end-date=2018-01-02", "--force", "--verbose", "--yes-i-know"],
         obj=script_info)
     assert result
     result = runner.invoke(
-        stats, ["events", "restore", "file-download", "--start-date=2018-01-01", "--end-date=2018-01-02", "--force", "--verbose"],
+        stats, ["events", "restore", "file-download", "--start-date=2018-01-01",
+                "--end-date=2018-01-02", "--force", "--verbose"],
         obj=script_info)
     assert result
 
@@ -190,6 +197,8 @@ def test_aggregations_process(script_info, event_queues, es, indexed_file_downlo
 
 # def _aggregations_delete(aggregation_types=None, start_date=None, end_date=None):
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_cli.py::test_aggregations_delete -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
+
+
 @pytest.mark.parametrize(
     "aggregated_file_download_events",
     [
@@ -241,6 +250,8 @@ def test_aggregations_delete(
 
 # def _aggregations_list_bookmarks(aggregation_types=None, start_date=None, end_date=None, limit=None):
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_cli.py::test_aggregations_list_bookmarks -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
+
+
 @pytest.mark.parametrize(
     "aggregated_file_download_events",
     [
@@ -265,7 +276,8 @@ def test_aggregations_list_bookmarks(
         current_search.flush_and_refresh(index="test-*")
         agg_alias = search_obj.index("stats-file-download")
 
-        bookmarks = [b.date for b in search_obj.index("stats-bookmarks").scan()]
+        bookmarks = [b.date for b in search_obj.index(
+            "stats-bookmarks").scan()]
 
         result = runner.invoke(
             stats,
@@ -283,28 +295,34 @@ def test_aggregations_list_bookmarks(
 # def _aggregations_delete_index(aggregation_types=None, bookindexed_eventssmark=False, start_date=None, end_date=None, force=False, verbose=False
 # def _aggregations_restore(aggregation_types=None, bookmark=False, start_date=None, end_date=None, force=False, verbose=False):
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_cli.py::test_aggregations_deleteindex_restore -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
+
+
 def test_aggregations_deleteindex_restore(app, script_info, event_queues, es):
-    search = search(using=es)
+    search = dsl.Search(using=es)
     runner = CliRunner()
 
     result = runner.invoke(
-        stats, ["aggregations", "delete-index", "file-download-agg", "--start-date=2018-01-01", "--end-date=2018-01-10", "--force", "--verbose", "--yes-i-know"],
+        stats, ["aggregations", "delete-index", "file-download-agg", "--start-date=2018-01-01",
+                "--end-date=2018-01-10", "--force", "--verbose", "--yes-i-know"],
         obj=script_info)
     assert result
 
     result = runner.invoke(
-        stats, ["aggregations", "restore", "file-download-agg", "--start-date=2018-01-01", "--end-date=2018-01-10", "--force", "--verbose"],
+        stats, ["aggregations", "restore", "file-download-agg",
+                "--start-date=2018-01-01", "--end-date=2018-01-10", "--force", "--verbose"],
         obj=script_info)
     assert result
 
 # def _partition_create(year, month):
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_cli.py::test_partition_create -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
+
+
 def test_partition_create(db, script_info, event_queues, es):
-    search = search(using=es)
+    search = dsl.Search(using=es)
     runner = CliRunner()
 
-    with patch("invenio_stats.cli.get_stats_events_partition_tables",return_value=["stats_events_202201", "stats_events_202202"]):
-        with patch("invenio_stats.cli.make_stats_events_partition_table",return_value="stats_events_202201"):
+    with patch("invenio_stats.cli.get_stats_events_partition_tables", return_value=["stats_events_202201", "stats_events_202202"]):
+        with patch("invenio_stats.cli.make_stats_events_partition_table", return_value="stats_events_202201"):
             result = runner.invoke(
                 stats, ["partition", "create", "2022", "1"],
                 obj=script_info)
@@ -320,7 +338,7 @@ def test_partition_create(db, script_info, event_queues, es):
                 obj=script_info)
             assert result
 
-        with patch("invenio_stats.cli.make_stats_events_partition_table",return_value="stats_events_202203"):
+        with patch("invenio_stats.cli.make_stats_events_partition_table", return_value="stats_events_202203"):
             result = runner.invoke(
                 stats, ["partition", "create", "2022", "3"],
                 obj=script_info)

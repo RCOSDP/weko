@@ -165,6 +165,8 @@ def test_date_histogram_query(i18n_app, queries_config):
                           (["tests/data/ESTermsQuery_execute03.json"],
                            16,
                            "tests/data/ESTermsQuery_result03.json")])
+
+# .tox/c1/bin/pytest --cov=invenio-stats tests/test_queries.py::test_terms_query -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/invenio-stats/.tox/c1/tmp --full-trace 
 def test_terms_query(i18n_app,mock_es_execute, event_queues,
                      aggregated_file_download_events, mock_execute, config_num, res_file, queries_config):
     """Test that the terms query returns the correct total count."""

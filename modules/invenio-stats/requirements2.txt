@@ -17,6 +17,7 @@ atomicwrites==1.4.1
 attrs==23.2.0
 -e git+https://github.com/RCOSDP/B2HANDLE.git@nii_develop/W2024-16#egg=b2handle
 Babel==2.14.0
+-e git+https://github.com/RCOSDP/B2HANDLE.git@nii_develop/W2024-16#egg=b2handle
 babel-edtf==1.1.4
 bagit==1.7.0
 base32-lib==1.0.2

@@ -2,6 +2,7 @@
   "settings": {
     "number_of_shards": 1,
     "number_of_replicas": 1,
+    "index.max_ngram_diff":2,
     "index.mapping.total_fields.limit": 50000,
     "refresh_interval": "1s",
     "index.max_ngram_diff": 2,
@@ -1217,4 +1218,4 @@
         }
       ]
   }
-}
+

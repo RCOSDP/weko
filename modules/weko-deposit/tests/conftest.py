@@ -27,10 +27,7 @@ import tempfile
 import copy
 import uuid
 from unittest.mock import patch
-from collections import OrderedDict
-
-from opensearchpy import Opensearch
-
+from collections import OrderedDict, namedtuple
 import time
 from datetime import datetime
 
@@ -67,6 +64,7 @@ from invenio_records import InvenioRecords
 from invenio_records_rest import InvenioRecordsREST
 from invenio_records_rest.utils import PIDConverter
 from invenio_search import InvenioSearch
+from invenio_search.engine import search
 from invenio_search_ui import InvenioSearchUI
 from invenio_stats.config import SEARCH_INDEX_PREFIX as index_prefix
 from six import BytesIO
@@ -77,12 +75,9 @@ from weko_admin.models import AdminSettings
 from weko_items_ui import WekoItemsUI
 from weko_records import WekoRecords
 from weko_redis.redis import RedisConnection
-
-# from weko_records_ui import WekoRecordsUI
 from weko_search_ui import WekoSearchUI
 from weko_search_ui.config import WEKO_SEARCH_MAX_RESULT
 from weko_index_tree import WekoIndexTree, WekoIndexTreeREST
-
 from weko_theme import WekoTheme
 from weko_groups import WekoGroups
 from invenio_pidrelations.models import PIDRelation
@@ -112,7 +107,7 @@ from weko_index_tree.config import (
     WEKO_INDEX_TREE_REST_ENDPOINTS as _WEKO_INDEX_TREE_REST_ENDPOINTS,
 )
 from invenio_accounts.testutils import login_user_via_session
-
+from invenio_pidrelations.config import PIDRELATIONS_RELATION_TYPES
 from tests.helpers import json_data, create_record
 # from weko_deposit.config import DEPOSIT_RECORDS_API, WEKO_DEPOSIT_ITEMS_CACHE_PREFIX
 
@@ -126,11 +121,10 @@ def instance_path():
 @pytest.fixture()
 def base_app(instance_path):
     """Flask application fixture."""
-
+    RelationType = namedtuple('RelationType', ['id', 'name', 'label', 'api', 'schema'])
     app_ = Flask("testapp", instance_path=instance_path)
     app_.url_map.converters["pid"] = PIDConverter
     # initialize InvenioDeposit first in order to detect any invalid dependency
-    # WEKO_DEPOSIT_REST_ENDPOINTS = copy.deepcopy(_DEPOSIT_REST_ENDPOINTS)
     DEPOSIT_REST_ENDPOINTS = copy.deepcopy(_DEPOSIT_REST_ENDPOINTS)
     WEKO_DEPOSIT_REST_ENDPOINTS = copy.deepcopy(_WEKO_DEPOSIT_REST_ENDPOINTS)
     WEKO_DEPOSIT_REST_ENDPOINTS["depid"][
@@ -157,12 +151,6 @@ def base_app(instance_path):
         SECURITY_PASSWORD_SALT="CHANGE_ME_ALSO",
         SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
                                           'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
-        # SQLALCHEMY_DATABASE_URI=os.environ.get(
-        #     'SQLALCHEMY_DATABASE_URI',
-        #     'postgresql+psycopg2://invenio:dbpass123@postgresql:25401/invenio'),
-        # SQLALCHEMY_DATABASE_URI=os.environ.get(
-        #     "SQLALCHEMY_DATABASE_URI", "sqlite:///test.db"
-        # ),
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         SQLALCHEMY_ECHO=False,
         TESTING=True,
@@ -242,8 +230,6 @@ def base_app(instance_path):
     InvenioIndexer(app_)
     InvenioPIDStore(app_)
     InvenioRecords(app_)
-    # client = Elasticsearch(['localhost:%s'%server.port])
-    # InvenioSearch(app_, client=client)
     InvenioSearch(app_)
     InvenioSearchUI(app_)
     InvenioPIDRelations(app_)
@@ -251,7 +237,6 @@ def base_app(instance_path):
     InvenioRecordsREST(app_)
     WekoRecords(app_)
     WekoItemsUI(app_)
-    # WekoRecordsUI(app_)
     WekoAdmin(app_)
     WekoSearchUI(app_)
     WekoTheme(app_)
@@ -259,12 +244,7 @@ def base_app(instance_path):
     WekoIndexTree(app_)
     WekoIndexTreeREST(app_)
     Menu(app_)
-    # app_.register_blueprint(blueprint)
     app_.register_blueprint(invenio_files_rest_blueprint)  # invenio_files_rest
-    # rest_blueprint = create_blueprint(app_, WEKO_DEPOSIT_REST_ENDPOINTS)
-    # app_.register_blueprint(rest_blueprint)
-    # WekoDeposit(app_)
-    # WekoDepositREST(app_)
     return app_
 
 
@@ -276,10 +256,10 @@ def app(base_app):
 
     with open("tests/data/mappings/item-v1.0.0.json", "r") as f:
         mapping = json.load(f)
-    
+
     search_hosts = base_app.config["SEARCH_ELASTIC_HOSTS"]
-    search_client_config = base_app.config["SEARCH_CLIENT_CONFIG"] 
-    es = OpenSearch(
+    search_client_config = base_app.config["SEARCH_CLIENT_CONFIG"]
+    es = search.client.OpenSearch(
         hosts=[{'host': search_hosts, 'port': 9200}],
         http_auth=search_client_config['http_auth'],
         use_ssl=search_client_config['use_ssl'],
@@ -313,15 +293,14 @@ def db(app):
     yield db_
     db_.session.remove()
     db_.drop_all()
-    # drop_database(str(db_.engine.url))
 
 @pytest.fixture()
 def redis_connect(app):
-    redis_connection = RedisConnection().connection(db=app.config['CACHE_REDIS_DB'], kv = True)
+    redis_connection = RedisConnection().connection(db=app.config['CACHE_REDIS_DB'], kv=True)
     return redis_connection
 
 @pytest.fixture()
-def records(db):
+def records(db, location):
     record_data = json_data("data/test_records.json")
     item_data = json_data("data/test_items.json")
     record_num = len(record_data)
@@ -536,7 +515,7 @@ def users(app, db):
     index = Index()
     db.session.add(index)
     db.session.commit()
-    comm = Community.create(community_id="test_com", role_id=sysadmin_role.id,
+    Community.create(community_id="test_com", role_id=sysadmin_role.id,
                             id_user=sysadmin.id, title="test community",
                             description=("this is test community"),
                             root_node_id=index.id)
@@ -721,7 +700,6 @@ def db_itemtype2(app, db):
         "item_type_mapping": item_type_mapping,
     }
 
-
 @pytest.fixture()
 def es_records(app, db, db_index, location, db_itemtype,db_oaischema):
 
@@ -770,8 +748,6 @@ def es_records(app, db, db_index, location, db_itemtype,db_oaischema):
             results.append({"depid":depid, "recid":recid, "parent": parent, "doi":doi, "hdl": hdl,"record":record, "record_data":record_data,"item":item , "item_data":item_data,"deposit": deposit, "rec_uuid":rec_uuid, "version_id":obj.version_id})
 
     time.sleep(3)
-    # es = Elasticsearch("http://{}:9200".format(app.config["SEARCH_ELASTIC_HOSTS"]))
-    # print(es.cat.indices())
     return indexer, results
 
 
@@ -826,8 +802,6 @@ def es_records_1(app, db, db_index, location, db_itemtype,db_oaischema):
             results.append({"depid":depid, "recid":recid, "parent": parent, "doi":doi, "hdl": hdl,"record":record, "record_data":record_data,"item":item , "item_data":item_data,"deposit": deposit, "rec_uuid":rec_uuid})
 
     time.sleep(3)
-    # es = Elasticsearch("http://{}:9200".format(app.config["SEARCH_ELASTIC_HOSTS"]))
-    # print(es.cat.indices())
     return indexer, results
 
 
@@ -919,19 +893,8 @@ def es_records_3(app, db, db_index, location, db_itemtype,db_oaischema):
 
             rec_uuid = uuid.uuid4()
 
-            # recid = PersistentIdentifier.create('recid', str(i),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
-            # depid = PersistentIdentifier.create('depid', str(i),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
-            # rel = PIDRelation.create(recid,depid,3)
-            # db.session.add(rel)
             parent = None
             doi = None
-            # parent = PersistentIdentifier.create('parent', "parent:{}".format(i),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
-            # rel = PIDRelation.create(parent,recid,2,0)
-            # db.session.add(rel)
-            # if(i%2==1):
-            #     doi = PersistentIdentifier.create('doi', "https://doi.org/10.xyz/{}".format((str(i)).zfill(10)),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
-            #     hdl = PersistentIdentifier.create('hdl', "https://hdl.handle.net/0000/{}".format((str(i)).zfill(10)),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
-
             record = WekoRecord.create(record_data, id_=rec_uuid)
             # from six import BytesIO
             from invenio_files_rest.models import Bucket
@@ -942,22 +905,16 @@ def es_records_3(app, db, db_index, location, db_itemtype,db_oaischema):
             stream = BytesIO(b'Hello, World')
             record.files['hello.txt'] = stream
             obj=ObjectVersion.create(bucket=bucket.id, key='hello.txt',stream=stream)
-            # record['item_1617605131499']['attribute_value_mlt'][0]['file'] = (base64.b64encode(stream.getvalue())).decode('utf-8')
             deposit = aWekoDeposit(record, record.model)
             deposit.commit()
-            # record['item_1617605131499']['attribute_value_mlt'][0]['version_id'] = str(obj.version_id)
 
             record_data['content']= [{"date":[{"dateValue":"2021-07-12","dateType":"Available"}],"accessrole":"open_access","displaytype" : "simple","filename" : "hello.txt","attachment" : {},"format" : "text/plain","mimetype" : "text/plain","filesize" : [{"value" : "1 KB"}],"version_id" : "{}".format(obj.version_id),"url" : {"url":"http://localhost/record/{}/files/hello.txt".format(i)},"file":(base64.b64encode(stream.getvalue())).decode('utf-8')}]
-            # indexer.upload_metadata(record_data, rec_uuid, 1, False)
-            # record_data1=[]
             indexer.upload_metadata(record_data, rec_uuid, 1, False)
             item = ItemsMetadata.create(item_data, id_=rec_uuid)
 
             results.append({"depid":"2", "recid":'1', "parent": parent, "doi":doi, "hdl": "3","record":record, "record_data":record_data,"item":item , "item_data":item_data,"deposit": deposit})
 
     time.sleep(3)
-    # es = Elasticsearch("http://{}:9200".format(app.config["SEARCH_ELASTIC_HOSTS"]))
-    # print(es.cat.indices())
     return indexer, results
 
 
@@ -975,18 +932,8 @@ def es_records_4(app, db, db_index, location, db_itemtype,db_oaischema):
 
             rec_uuid = uuid.uuid4()
 
-            # recid = PersistentIdentifier.create('recid', str(i),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
-            # depid = PersistentIdentifier.create('depid', str(i),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
-            # rel = PIDRelation.create(recid,depid,3)
-            # db.session.add(rel)
             parent = None
             doi = None
-            # parent = PersistentIdentifier.create('parent', "parent:{}".format(i),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
-            # rel = PIDRelation.create(parent,recid,2,0)
-            # db.session.add(rel)
-            # if(i%2==1):
-            #     doi = PersistentIdentifier.create('doi', "https://doi.org/10.xyz/{}".format((str(i)).zfill(10)),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
-            #     hdl = PersistentIdentifier.create('hdl', "https://hdl.handle.net/0000/{}".format((str(i)).zfill(10)),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
 
             record = WekoRecord.create(record_data, id_=rec_uuid)
             # from six import BytesIO
@@ -998,23 +945,14 @@ def es_records_4(app, db, db_index, location, db_itemtype,db_oaischema):
             stream = BytesIO(b'Hello, World')
             record.files['hello.txt'] = stream
             obj=ObjectVersion.create(bucket=bucket.id, key='hello.txt',stream=stream)
-            # record['item_1617605131499']['attribute_value_mlt'][0]['file'] = (base64.b64encode(stream.getvalue())).decode('utf-8')
             deposit = aWekoDeposit(record, record.model)
             deposit.commit()
-            # record['item_1617605131499']['attribute_value_mlt'][0]['version_id'] = str(obj.version_id)
-
-            # todo1001
-            # record_data['content']= [{"date":[{"dateValue":"2021-07-12","dateType":"Available"}],"accessrole":"open_access","displaytype" : "simple","filename" : "hello.txt","attachment" : {},"format" : "text/plain","mimetype" : "text/plain","filesize" : [{"value" : "1 KB"}],"version_id" : "{}".format(obj.version_id),"url" : {"url":"http://localhost/record/{}/files/hello.txt".format(i)},"file":(base64.b64encode(stream.getvalue())).decode('utf-8')}]
-            # indexer.upload_metadata(record_data, rec_uuid, 1, False)
-            # record_data1=[]
             indexer.upload_metadata(record_data, rec_uuid, 1, False)
             item = ItemsMetadata.create(item_data, id_=rec_uuid)
 
             results.append({"depid":"2", "recid":'1', "parent": parent, "doi":doi, "hdl": "3","record":record, "record_data":record_data,"item":item , "item_data":item_data,"deposit": deposit})
 
     time.sleep(3)
-    # es = Elasticsearch("http://{}:9200".format(app.config["SEARCH_ELASTIC_HOSTS"]))
-    # print(es.cat.indices())
     return indexer, results
 
 
@@ -1112,8 +1050,6 @@ def es_records_5(app, db, db_index, location, db_itemtype,db_oaischema):
             results.append({"depid":depid, "recid":recid, "parent": parent, "doi":doi, "hdl": hdl,"record":record, "record_data":record_data,"item":item , "item_data":item_data,"deposit": deposit, "rec_uuid":rec_uuid, "version_id":obj.version_id})
 
     time.sleep(3)
-    # es = Elasticsearch("http://{}:9200".format(app.config["SEARCH_ELASTIC_HOSTS"]))
-    # print(es.cat.indices())
     return indexer, results
 
 
@@ -1210,8 +1146,6 @@ def es_records_6(app, db, db_index, location, db_itemtype2, db_oaischema):
             results.append({"depid":depid, "recid":recid, "parent": parent, "doi":doi, "hdl": hdl,"record":record, "record_data":record_data,"item":item , "item_data":item_data,"deposit": deposit, "rec_uuid":rec_uuid, "version_id":obj.version_id})
 
     time.sleep(3)
-    # es = Elasticsearch("http://{}:9200".format(app.config["SEARCH_ELASTIC_HOSTS"]))
-    # print(es.cat.indices())
     return indexer, results
 
 
@@ -1229,18 +1163,8 @@ def es_records_7(app, db, db_index, location, db_itemtype,db_oaischema):
 
             rec_uuid = uuid.uuid4()
 
-            # recid = PersistentIdentifier.create('recid', str(i),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
-            # depid = PersistentIdentifier.create('depid', str(i),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
-            # rel = PIDRelation.create(recid,depid,3)
-            # db.session.add(rel)
             parent = None
             doi = None
-            # parent = PersistentIdentifier.create('parent', "parent:{}".format(i),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
-            # rel = PIDRelation.create(parent,recid,2,0)
-            # db.session.add(rel)
-            # if(i%2==1):
-            #     doi = PersistentIdentifier.create('doi', "https://doi.org/10.xyz/{}".format((str(i)).zfill(10)),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
-            #     hdl = PersistentIdentifier.create('hdl', "https://hdl.handle.net/0000/{}".format((str(i)).zfill(10)),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
 
             record = WekoRecord.create(record_data, id_=rec_uuid)
             # from six import BytesIO
@@ -1252,23 +1176,16 @@ def es_records_7(app, db, db_index, location, db_itemtype,db_oaischema):
             stream = BytesIO(b'Hello, World')
             record.files['hello.txt'] = stream
             obj=ObjectVersion.create(bucket=bucket.id, key='hello.txt',stream=stream)
-            # record['item_1617605131499']['attribute_value_mlt'][0]['file'] = (base64.b64encode(stream.getvalue())).decode('utf-8')
             deposit = aWekoDeposit(record, record.model)
             deposit.commit()
-            # record['item_1617605131499']['attribute_value_mlt'][0]['version_id'] = str(obj.version_id)
 
-            # todo1001
             record_data['content']= [{"date":[{"dateValue":"2021-07-12","dateType":"Available"}],"accessrole":"open_access","displaytype" : "simple","filename" : "hello.txt","attachment" : {},"format" : "text/plain","mimetype" : "text/plain","filesize" : [{"value" : "1 KB"}],"version_id" : "{}".format(obj.version_id),"url" : {"url":"http://localhost/record/{}/files/hello.txt".format(i)}}]
-            # indexer.upload_metadata(record_data, rec_uuid, 1, False)
-            # record_data1=[]
             indexer.upload_metadata(record_data, rec_uuid, 1, False)
             item = ItemsMetadata.create(item_data, id_=rec_uuid)
 
             results.append({"depid":"2", "recid":'1', "parent": parent, "doi":doi, "hdl": "3","record":record, "record_data":record_data,"item":item , "item_data":item_data,"deposit": deposit})
 
     time.sleep(3)
-    # es = Elasticsearch("http://{}:9200".format(app.config["SEARCH_ELASTIC_HOSTS"]))
-    # print(es.cat.indices())
     return indexer, results
 
 
@@ -1284,46 +1201,23 @@ def es_records_8(app, db, db_index, location, db_itemtype,db_oaischema):
 
             item_data = {"id": "{}".format(i), "pid": {"type": "depid", "value": "{}".format(i), "revision_id": 0}, "lang": "ja", "owner": "1", "title": "title", "owners": [1], "status": "published", "$schema": "/items/jsonschema/1", "pubdate": "2022-08-20", "created_by": 1, "owners_ext": {"email": "wekosoftware@nii.ac.jp", "username": "", "displayname": ""}, "shared_user_id": -1, "item_1617186331708": [{"subitem_1551255647225": "タイトル", "subitem_1551255648112": "ja"},{"subitem_1551255647225": "title", "subitem_1551255648112": "en"}], "item_1617258105262": {"resourceuri": "http://purl.org/coar/resource_type/c_5794", "resourcetype": "conference paper"}}
 
-            # rec_uuid = uuid.uuid4()
             rec_uuid = None
-            # recid = PersistentIdentifier.create('recid', str(i),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
-            # depid = PersistentIdentifier.create('depid', str(i),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
-            # rel = PIDRelation.create(recid,depid,3)
-            # db.session.add(rel)
             parent = None
             doi = None
             hdl = None
-            # parent = PersistentIdentifier.create('parent', "parent:{}".format(i),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
-            # rel = PIDRelation.create(parent,recid,2,0)
-            # db.session.add(rel)
-            # if(i%2==1):
-            #     doi = PersistentIdentifier.create('doi', "https://doi.org/10.xyz/{}".format((str(i)).zfill(10)),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
-            #     hdl = PersistentIdentifier.create('hdl', "https://hdl.handle.net/0000/{}".format((str(i)).zfill(10)),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
 
             record = WekoRecord.create(record_data, id_=rec_uuid)
-            # from six import BytesIO
             from invenio_files_rest.models import Bucket
             from invenio_records_files.models import RecordsBuckets
             import base64
-            # bucket = Bucket.create()
-            # record_buckets = RecordsBuckets.create(record=record.model, bucket=bucket)
-            # stream = BytesIO(b'Hello, World')
-            # record.files['hello.txt'] = stream
-            # obj=ObjectVersion.create(bucket=bucket.id, key='hello.txt',stream=stream)
-            # record['item_1617605131499']['attribute_value_mlt'][0]['file'] = (base64.b64encode(stream.getvalue())).decode('utf-8')
             deposit = aWekoDeposit(record, record.model)
             deposit.commit()
-            # record['item_1617605131499']['attribute_value_mlt'][0]['version_id'] = str(obj.version_id)
-
-            # record_data['content']= [{"date":[{"dateValue":"2021-07-12","dateType":"Available"}],"accessrole":"open_access","displaytype" : "simple","filename" : "hello.txt","attachment" : {},"format" : "text/plain","mimetype" : "text/plain","filesize" : [{"value" : "1 KB"}],"version_id" : "{}".format(obj.version_id),"url" : {"url":"http://localhost/record/{}/files/hello.txt".format(i)},"file":(base64.b64encode(stream.getvalue())).decode('utf-8')}]
             indexer.upload_metadata(record_data, rec_uuid, 1, False)
             item = ItemsMetadata.create(item_data, id_=rec_uuid)
 
             results.append({"depid":'1', "recid":'1', "parent": parent, "doi":doi, "hdl": hdl,"record":record, "record_data":record_data,"item":item , "item_data":item_data,"deposit": deposit, "rec_uuid":rec_uuid})
 
     time.sleep(3)
-    # es = Elasticsearch("http://{}:9200".format(app.config["SEARCH_ELASTIC_HOSTS"]))
-    # print(es.cat.indices())
     return indexer, results
 
 @pytest.fixture()
@@ -1364,8 +1258,6 @@ def es_records_with_draft(app, db, db_index, location, db_itemtype,db_oaischema)
         db.session.commit()
 
     time.sleep(3)
-    # es = Elasticsearch("http://{}:9200".format(app.config["SEARCH_ELASTIC_HOSTS"]))
-    # print(es.cat.indices())
     return results
 
 @pytest.fixture()
@@ -1427,8 +1319,6 @@ def esindex(app):
 
     yield current_search_client
 
-    #with app.test_request_context():
-    #    current_search_client.indices.delete(index=app.config["WEKO_AUTHORS_ES_INDEX_NAME"], ignore=[400, 404])
 
 @pytest.fixture()
 def authors(app,db,esindex):

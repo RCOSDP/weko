@@ -212,6 +212,8 @@ nbformat==5.10.4
 netaddr==0.8.0
 node-semver==0.1.1
 numpy==1.26.0
+opensearch-py==2.0.0
+opensearch-dsl==2.0.1
 oauthlib==2.1.0
 opensearch-py==2.0.0
 opensearch-dsl==2.0.1

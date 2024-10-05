@@ -45,13 +45,16 @@ from invenio_indexer.api import RecordIndexer
 from invenio_pidrelations.contrib.draft import PIDNodeDraft
 from invenio_pidrelations.contrib.versioning import PIDNodeVersioning
 from invenio_pidrelations.models import PIDRelation
-from invenio_pidrelations.serializers.utils import serialize_relations
+from invenio_pidrelations.serializers.utils import dump_relation
 from invenio_pidstore.errors import PIDDoesNotExistError, PIDInvalidAction
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.models import RecordMetadata
 from invenio_records_files.api import FileObject, Record
 from invenio_records_files.models import RecordsBuckets
 from invenio_records_rest.errors import PIDResolveRESTError
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm.attributes import flag_modified
+
 
 from weko_admin.models import AdminSettings
 from weko_index_tree.api import Indexes
@@ -93,6 +96,22 @@ PRESERVE_FIELDS = (
 # WEKO_DEPOSIT_SYS_CREATOR_KEY = (
 #     current_app.config.get('WEKO_DEPOSIT_SYS_CREATOR_KEY')
 # )
+
+from invenio_pidrelations.api import PIDRelation
+from invenio_pidrelations.utils import resolve_relation_type_config
+def serialize_relations(pid):
+    """Serialize the relations for given PID."""
+    data = {}
+    relations = PIDRelation.get_child_relations(pid).all()
+    for relation in relations:
+        rel_cfg = resolve_relation_type_config(relation.relation_type)
+        dump_relation(rel_cfg.api(relation.parent),
+                      rel_cfg, pid, data)
+    parent_relations = PIDRelation.get_parent_relations(pid).all()
+    rel_cfgs = set([resolve_relation_type_config(p.relation_type) for p in parent_relations])
+    for rel_cfg in rel_cfgs:
+        dump_relation(rel_cfg.api(pid), rel_cfg, pid, data)
+    return data
 
 class WekoFileObject(FileObject):
     """Extend FileObject for detail page.
@@ -381,7 +400,7 @@ class WekoIndexer(RecordIndexer):
                 }
             }
 
-        if update_revision:
+        if update_revision:# TODO version があるとエラー
             weko_logger(key='WEKO_COMMON_IF_ENTER',
                         branch='update_revision is True')
             result = self.client.update(
@@ -1157,13 +1176,13 @@ class WekoDeposit(Deposit):
             weko_logger(key='WEKO_COMMON_IF_ENTER',
                         branch='recid is None')
             deposit = super(WekoDeposit, cls).create(data, id_=id_)
-
         record_id = 0
 
         if data.get('_deposit'):
             weko_logger(key='WEKO_COMMON_IF_ENTER',
                         branch='_deposit is in data')
             record_id = str(data['_deposit']['id'])
+
         parent_pid = PersistentIdentifier.create(
             'parent',
             'parent:{0}'.format(record_id),
@@ -1600,7 +1619,12 @@ class WekoDeposit(Deposit):
                         pid=pid)
             raise WekoDepositError(msg="PID status is not registered.")
 
-        if not record or not versioning.exists or versioning.draft_child:
+        print(11111111111111)
+        print(record)
+        print(11111111111111)
+        print(parent_pid)
+        print(11111111111111)
+        if not record or versioning.is_child is None or versioning.draft_child:
             weko_logger(key='WEKO_COMMON_IF_ENTER',
                         branch='record is None or versioning does not exists '
                                 'or draft_child exists')

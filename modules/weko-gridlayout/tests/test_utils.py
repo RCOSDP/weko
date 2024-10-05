@@ -661,7 +661,7 @@ def test_get_rss_data_source(i18n_app):
 
 # def get_elasticsearch_result_by_date(start_date, end_date):
 def test_get_elasticsearch_result_by_date(i18n_app):
-    from elasticsearch.exceptions import NotFoundError
+    from opensearchpy.exceptions import NotFoundError
 
     start_date = "2021-11-11"
     end_date = "2021-11-22"

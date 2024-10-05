@@ -29,8 +29,7 @@ import uuid
 import pytest
 from unittest.mock import patch
 import redis
-
-from opensearchpy.exceptions import OpenSearchException
+from invenio_search.engine import search
 from sqlalchemy.exc import SQLAlchemyError
 from flask import url_for, current_app
 from invenio_files_rest.app import Flask
@@ -412,9 +411,12 @@ def test_depid_item_put(client, users,es_records):
     # success case with edit_mode
     # cur_pid = PersistentIdentifier.get('recid', kwargs['pid_value'])
     # pid = PersistentIdentifier.get('recid', kwargs['pid_value'].split(".")[0])
-    with patch("weko_deposit.rest.PersistentIdentifier.get", side_effect=PersistentIdentifier.get) as mock_pid:
+    with patch("weko_deposit.rest.PersistentIdentifier.get", side_effect=PersistentIdentifier.get):
         res = client.put(url, data=json.dumps(input),
                         content_type='application/json')
+        print(111111111111111111111111111111111111111111111)
+        print(res.data.decode('utf-8'))
+        print(111111111111111111111111111111111111111111111)
         assert res.status_code == 200
         assert json.loads(res.data) == {"status":"success"}
 
@@ -474,8 +476,8 @@ def test_depid_item_put(client, users,es_records):
             mock_logger.assert_called_with(key='WEKO_COMMON_DB_SOME_ERROR', ex=mock.ANY)
             mock_logger.reset_mock()
 
-    # OpenSearchException
-    with patch("weko_deposit.rest.PersistentIdentifier.get",side_effect=OpenSearchException("test_es_error")):
+    # ElasticsearchException
+    with patch("weko_deposit.rest.PersistentIdentifier.get",side_effect=search.OpenSearchException("test_es_error")):
         with patch("weko_deposit.rest.weko_logger") as mock_logger:
             res = client.put(url, data=json.dumps(input),
                         content_type='application/json')

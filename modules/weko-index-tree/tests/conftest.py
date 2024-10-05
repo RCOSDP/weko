@@ -475,7 +475,7 @@ def base_app(instance_path):
     WekoSearchUI(app_)
     WekoWorkflow(app_)
     WekoGroups(app_)
-    
+
     current_assets = LocalProxy(lambda: app_.extensions["invenio-assets"])
     current_assets.collect.collect()
 
@@ -596,7 +596,7 @@ def users(app, db):
         originalroleuser = create_test_user(email='originalroleuser@test.org')
         originalroleuser2 = create_test_user(email='originalroleuser2@test.org')
         noroleuser = create_test_user(email='noroleuser@test.org')
-        
+
     role_count = Role.query.filter_by(name='System Administrator').count()
     if role_count != 1:
         sysadmin_role = ds.create_role(name='System Administrator')
@@ -624,7 +624,7 @@ def users(app, db):
     ds.add_role_to_user(user, repoadmin_role)
     ds.add_role_to_user(user, contributor_role)
     ds.add_role_to_user(user, comadmin_role)
-    
+
     # Assign access authorization
     with db.session.begin_nested():
         action_users = [
@@ -757,7 +757,7 @@ def indices(app, db):
         db.session.add(testIndexThreeChild)
         db.session.add(testIndexMore)
         db.session.add(testIndexPrivate)
-        
+
     return {
         'index_dict': dict(testIndexThree),
         'index_non_dict': testIndexThree,
@@ -807,7 +807,7 @@ def test_indices(app, db):
             biblio_flag=True if not online_issn else False,
             online_issn=online_issn
         )
-    
+
     with db.session.begin_nested():
         db.session.add(base_index(1, 0, 0, True, datetime(2022, 1, 1), True, True, True, True, True, '1234-5678'))
         db.session.add(base_index(2, 0, 1))
@@ -842,10 +842,10 @@ def esindex(app,db_records):
             search.client.indices.create("test-weko-items",body=mapping)
             search.client.indices.put_alias(index="test-weko-items", name="test-weko")
         # print(current_search_client.indices.get_alias())
-    
+
     for depid, recid, parent, doi, record, item in db_records:
         search.client.index(index='test-weko-item-v1.0.0', id=record.id, body=record,refresh='true')
-    
+
 
     yield search
 
@@ -887,11 +887,11 @@ def db_records(db, instance_path, users):
             'parent': 0,
             'value': 'IndexB',
         }
-    
+
     with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
         Indexes.create(0, index_metadata)
 
- 
+
     yield result
 
 
@@ -911,7 +911,7 @@ def db_register(app, db):
         for data in action_datas:
             actions_db.append(Action(**data))
         db.session.add_all(actions_db)
-    
+
     actionstatus_datas = dict()
     with open('tests/data/action_status.json') as f:
         actionstatus_datas = json.load(f)
@@ -920,7 +920,7 @@ def db_register(app, db):
         for data in actionstatus_datas:
             actionstatus_db.append(ActionStatus(**data))
         db.session.add_all(actionstatus_db)
-    
+
     index = Index(
         public_state=True
     )
@@ -944,7 +944,7 @@ def db_register(app, db):
                          form={'type':'test form'},
                          render={'type':'test render'},
                          tag=1,version_id=1,is_deleted=False)
-    
+
     flow_action1 = FlowAction(status='N',
                      flow_id=flow_define.flow_id,
                      action_id=1,
@@ -991,7 +991,7 @@ def db_register(app, db):
                     activity_confirm_term_of_use=True,
                     title='test', shared_user_id=-1, extra_info={},
                     action_order=6)
-    
+
     with db.session.begin_nested():
         db.session.add(index)
         db.session.add(flow_define)
@@ -1002,7 +1002,7 @@ def db_register(app, db):
         db.session.add(flow_action3)
         db.session.add(workflow)
         db.session.add(activity)
-    
+
     # return {'flow_define':flow_define,'item_type_name':item_type_name,'item_type':item_type,'flow_action':flow_action,'workflow':workflow,'activity':activity}
     return {
         'flow_define': flow_define,
@@ -1019,7 +1019,7 @@ def db_register(app, db):
 @pytest.fixture()
 def db_register2(app, db):
     session_lifetime = SessionLifetime(lifetime=60,is_delete=False)
-    
+
     with db.session.begin_nested():
         db.session.add(session_lifetime)
 
@@ -1051,7 +1051,7 @@ def records(db):
         db.session.add(rec1)
         db.session.add(rec2)
         db.session.add(rec3)
-        
+
         search_query_result = json_data("data/search_result.json")
 
     return(search_query_result)
