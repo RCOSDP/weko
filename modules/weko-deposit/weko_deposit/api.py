@@ -23,8 +23,6 @@ import copy
 import uuid
 
 from collections import OrderedDict
-from opensearchpy import exceptions
-from opensearchpy.helpers import bulk
 
 from datetime import datetime, timezone,date
 from typing import NoReturn, Union
@@ -296,7 +294,6 @@ class WekoIndexer(RecordIndexer):
                                     index=self.es_index,
                                     routing=parent_id)
             except search.OpenSearchException as ex:
-
                 weko_logger(key='WEKO_DEPOSIT_FAILED_DELETE_FILE_INDEX',
                             record_id=str(lst), ex=ex)
                 # raise WekoDepositIndexerError(ex=ex,

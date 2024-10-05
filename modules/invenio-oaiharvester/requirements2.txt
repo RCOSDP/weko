@@ -33,7 +33,7 @@ cachetools==5.5.0
 captcha==0.6.0
 cchardet==2.2.0a2
 celery==5.3.6
-certifi==2017.11.5
+certifi==2024.8.30
 cffi==1.16.0
 chardet==5.2.0
 charset-normalizer==3.3.2
@@ -258,6 +258,7 @@ redis==5.0.4
 referencing==0.35.1
 requests==2.32.3
 requests-oauthlib==1.1.0
+responses
 resync==1.0.9
 rocrate==0.6.0
 rpds-py==0.20.0

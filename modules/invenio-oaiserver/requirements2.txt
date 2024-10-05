@@ -1,15 +1,25 @@
+#requirements2.txt
+aiobotocore==2.1.2
+aiohappyeyeballs==2.4.0
+aiohttp==3.10.5
+aioitertools==0.12.0
+aiosignal==1.3.1
 alabaster==0.7.16
 alembic==1.10.4
 amqp==5.2.0
 angular-gettext-babel==0.3
 aniso8601==8.0.0
+appdirs==1.4.4
 arrow==1.3.0
 asn1crypto==0.23.0
+asttokens==2.4.1
 atomicwrites==1.4.1
 attrs==23.2.0
--e git+https://github.com/RCOSDP/B2HANDLE.git@nii_develop/W2024-16#egg=b2handle
 Babel==2.14.0
+babel-edtf==1.1.4
+-e git+https://github.com/RCOSDP/B2HANDLE.git@nii_develop/W2024-16#egg=b2handle
 bagit==1.7.0
+base32-lib==1.0.2
 beautifulsoup4==4.9.3
 bibtexparser==1.0.1
 billiard==4.2.0
@@ -19,16 +29,22 @@ blinker==1.7.0
 boto3==1.20.0
 botocore==1.23.24
 cachelib==0.9.0
-captcha==0.6.0
 cachetools==5.5.0
+captcha==0.6.0
 cchardet==2.2.0a2
 celery==5.3.6
-certifi==2017.11.5
+certifi==2024.8.30
 cffi==1.16.0
 chardet==5.2.0
+charset-normalizer==3.3.2
 citeproc-py==0.5.1
 citeproc-py-styles==0.1.3
 click==8.1.7
+click-default-group==1.2.4
+click-didyoumean==0.3.1
+click-plugins==1.1.1
+click-repl==0.3.0
+colorama==0.4.6
 cookiecutter==1.6.0
 counter-robots==2018.6
 cryptography==42.0.5
@@ -36,23 +52,27 @@ datacite==1.0.1
 DateTime==4.9
 decorator==4.1.2
 defusedxml==0.5.0
+Deprecated==1.2.14
 dictdiffer==0.9.0
 distlib==0.3.8
 dnspython==2.6.1
 docutils==0.21.2
 dojson==1.3.2
-elasticsearch==7.0.1
-elasticsearch-dsl==7.0.0
+edtf==4.0.1
+opensearch-py==2.0.0
+opensearch-dsl==2.0.1
 elementpath==1.1.2
 email-validator==1.0.5
 entrypoints==0.2.3
+executing==2.1.0
+fastjsonschema==2.20.0
 feedgen==0.7.0
 filelock==3.15.4
 Flask==2.2.0
 Flask-Admin==1.6.1
 Flask-Alembic==2.0.1
 Flask-Assets==0.12
-Flask-Babel
+flask-babel==4.0.0
 Flask-Breadcrumbs==0.5.1
 Flask-Caching==2.1.0
 Flask-CeleryExt==0.4.0
@@ -61,6 +81,7 @@ Flask-Cors==4.0.0
 Flask-DebugToolbar==0.13.1
 flask-iiif==1.0.0
 Flask-KVSession==0.6.2
+Flask-KVSession-Invenio==0.6.3
 Flask-Limiter==2.0.0
 Flask-Login==0.6.3
 Flask-Mail==0.9.1
@@ -69,22 +90,30 @@ flask-menu==1.0.1
 -e git+https://github.com/RCOSDP/flask-oauthlib.git@98eb36e1dfc66256fa7ea62237e9879acb906e9d#egg=Flask_OAuthlib
 Flask-Plugins==1.6.1
 Flask-Principal==0.4.0
+flask-resources==1.2.0
 Flask-RESTful==0.3.10
-Flask-Security==3.0.0
+Flask-Security-Invenio==3.3.3
 flask-shell-ipython==0.5.1
 Flask-Sitemap==0.4.0
 Flask-SQLAlchemy==2.5.1
 flask-talisman==0.8.1
+flask-webpackext==1.0.0
 Flask-WTF==1.2.1
 -e git+https://github.com/RCOSDP/pyfpdf.git@f9b032148283d535cabc7789858081c80de36fef#egg=fpdf
+freezegun
 frozendict==2.4.4
+frozenlist==1.4.1
 fs==2.4.16
+fsspec==2022.1.0
 ftfy==4.4.3
 future==1.0.0
+geojson==3.1.0
 github3.py==4.0.1
-humanize
+greenlet==3.0.3
 html5lib==1.1
+humanize==4.10.0
 idna==2.6
+idutils==1.2.1
 iiif-prezi==0.3.0
 imagesize==1.4.1
 importlib-metadata==4.8.3
@@ -94,6 +123,7 @@ intervals==0.8.0
 invenio-access==2.0.0
 -e ../invenio-accounts
 invenio-admin==1.4.0
+invenio-administration==2.2.0
 invenio-app==1.5.0
 invenio-assets==2.0.1
 invenio-base==1.4.0
@@ -112,7 +142,7 @@ invenio-i18n==2.1.1
 invenio-jsonschemas==1.1.4
 invenio-logging==2.1.0
 -e ../invenio-mail
-invenio-marc21==1.0.0a8
+invenio-notifications==0.5.0
 -e ../invenio-oaiharvester
 -e ../invenio-oaiserver
 -e ../invenio-oauth2server
@@ -124,8 +154,11 @@ invenio-query-parser==0.6.0
 -e ../invenio-queues
 -e ../invenio-records
 invenio-records-files==1.2.1
+invenio-records-permissions==0.19.2
+invenio-records-resources==5.5.0
 -e ../invenio-records-rest
 invenio-records-ui==1.2.0
+invenio-requests==4.1.0
 -e ../invenio-resourcesyncclient
 -e ../invenio-resourcesyncserver
 invenio-rest==1.3.0
@@ -134,9 +167,12 @@ invenio-search==2.3.1
 invenio-search-ui==2.8.5
 -e ../invenio-stats
 invenio-theme==3.1.0
+invenio-users-resources==5.1.1
+invenio-vocabularies==3.4.0
 ipaddress==1.0.19
 ipython==8.26.0
 ipython-genutils==0.2.0
+isbnlib==3.10.14
 itsdangerous==2.0.1
 jedi==0.19.1
 Jinja2==3.1.4
@@ -150,21 +186,30 @@ jsonpointer==1.14
 jsonref==1.1.0
 jsonresolver==0.3.2
 jsonschema==4.21.1
+jsonschema-specifications==2023.12.1
 jupyter-client==6.1.12
 jupyter_core==4.12.0
+jupyterlab_pygments==0.3.0
 kombu==5.3.7
 limits==3.11.0
+luqum==0.13.0
 lxml==5.2.1
+lxml_html_clean==0.2.0
 Mako==1.0.7
 MarkupSafe==2.1.5
 marshmallow==3.21.3
+marshmallow-oneofschema==3.1.1
 marshmallow-sqlalchemy==0.23.1
+marshmallow-utils==0.9.1
+matplotlib-inline==0.1.7
 maxminddb==1.5.2
 maxminddb-geolite2==2018.703
 mistune==3.0.2
-more-itertools==8.10.0
 mock==5.1.0
+more-itertools==8.10.0
 msgpack==1.0.8
+multidict==6.0.5
+nbclient==0.10.0
 nbconvert==7.16.3
 nbformat==5.10.4
 netaddr==0.8.0
@@ -179,41 +224,47 @@ passlib==1.7.4
 pbr==6.1.0
 pexpect==4.9.0
 pickleshare==0.7.5
+pillow==10.3.0
 platformdirs==4.2.2
 pluggy==0.13.1
 ply==3.11
 poyo==0.4.1
 prompt_toolkit==3.0.47
 psycopg2==2.9.9
+psycopg2-binary==2.9.9
 ptyprocess==0.5.2
+pure_eval==0.2.3
 py==1.11.0
+pycountry==24.6.1
 pycparser==2.18
 Pygments==2.4.1
 PyJWT==2.8.0
 PyLD==2.0.4
+PyMySQL==1.1.1
+pynpm==0.2.0
 pyparsing==3.1.4
 -e git+https://github.com/RCOSDP/PyPDF2.git@fefc684a3a74aff6f99e5dff24f9b4dd1c95169d#egg=PyPDF2
 pyPEG2==2.15.2
+pyproject-api==1.7.1
 pytest==7.4.4
-pytest-black
-pytest-flake8
-pytest-isort
-pytest-pydocstyle
-pytest-mock==3.6.1
 python-dateutil==2.9.0.post0
 python-editor==1.0.3
 python-geoip==1.2
 pytz==2024.1
+pywebpack==1.2.0
+PyYAML==6.0.1
 pyzmq==25.1.1
 redis==5.0.4
+referencing==0.35.1
 requests==2.32.3
 requests-oauthlib==1.1.0
-rocrate==0.6.0
 resync==1.0.9
+rocrate==0.6.0
+rpds-py==0.20.0
 s3fs==2022.1.0
 s3transfer==0.5.2
-selenium
-pillow==10.3.0
+sentry-sdk==1.0.0
+setuptools==71.0.3
 Sickle==0.7.0
 simplegeneric==0.8.1
 simplejson==3.19.2
@@ -228,15 +279,19 @@ sphinxcontrib-websupport==1.2.4
 SQLAlchemy==1.4.50
 SQLAlchemy-Continuum==1.4.1
 SQLAlchemy-Utils==0.38.3
+stack-data==0.6.3
 stevedore==5.3.0
 sword3common==0.1.1
 testpath==0.3.1
 tika==2.6.0
+tinycss2==1.3.0
 toml==0.10.2
 tornado==4.5.3
 tox==3.28.0
 traitlets==5.14.3
+types-python-dateutil==2.9.0.20240906
 typing_extensions==4.12.2
+tzdata==2024.1
 ua-parser==0.18.0
 uritemplate==4.1.1
 uritools==4.0.2
@@ -249,6 +304,7 @@ virtualenv==20.26.3
 virtualenv-clone==0.5.7
 virtualenvwrapper==6.1.0
 Wand==0.6.13
+watchdog==2.2.1
 wcwidth==0.1.7
 webargs==5.5.3
 webassets==2.0
@@ -279,10 +335,13 @@ webencodings==0.5.1
 -e ../weko-workflow
 Werkzeug==2.2.2
 whichcraft==0.4.1
+wrapt==1.16.0
 WTForms==2.3.3
 WTForms-Alchemy==0.18.0
 WTForms-Components==0.10.5
 xmlschema==1.0.8
 xmltodict==0.12.0
+yarl==1.9.11
 zipp==3.20.1
+zipstream-ng==1.7.1
 zope.interface==5.5.2
