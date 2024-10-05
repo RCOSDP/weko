@@ -15,10 +15,10 @@ import tempfile
 import pytest
 import json
 from os.path import join, dirname
-from mock import patch
+from unittest.mock import patch
 from flask import Flask
 from flask_celeryext import FlaskCeleryExt
-from flask_babelex import Babel
+from flask_babel import Babel
 from sqlalchemy_utils.functions import create_database, database_exists
 from elasticsearch_dsl import response, Search
 
@@ -36,7 +36,7 @@ from invenio_jsonschemas import InvenioJSONSchemas
 from invenio_pidstore import InvenioPIDStore
 from invenio_records import InvenioRecords
 from invenio_search import InvenioSearch
-from invenio_search.engine import SearchEngine
+from invenio_search.engine import search, dsl
 
 from weko_records.api import ItemTypes
 from weko_records.models import ItemTypeName
@@ -50,7 +50,7 @@ from invenio_oaiserver.provider import OAIIDProvider
 from .helpers import load_records, remove_records, create_record_oai
 
 
-@pytest.yield_fixture()
+@pytest.fixture()
 def instance_path():
     """Temporary instance path."""
     path = tempfile.mkdtemp()
@@ -100,7 +100,13 @@ def base_app(instance_path):
         INDEXER_FILE_DOC_TYPE="content",
         INDEXER_DEFAULT_INDEX="{}-weko-item-v1.0.0".format("test"),
         SEARCH_UI_SEARCH_INDEX="{}-weko".format("test"),
-        SEARCH_ELASTIC_HOSTS="elasticsearch",
+        SEARCH_ELASTIC_HOSTS=os.environ.get(
+                'SEARCH_ELASTIC_HOSTS', 'opensearch'),
+        SEARCH_HOSTS=os.environ.get(
+            'SEARCH_HOST', 'opensearch'
+        ),
+
+        SEARCH_CLIENT_CONFIG={"http_auth":("invenio","openpass123!"),"use_ssl":True, "verify_certs":False},
         SEARCH_INDEX_PREFIX="test-"
     )
     if not hasattr(app_, "cli"):
@@ -116,22 +122,22 @@ def base_app(instance_path):
     InvenioPIDStore(app_)
     InvenioIndexer(app_)
     InvenioOAIServer(app_)
-    
+
     app_.register_blueprint(blueprint)
-    
+
     return app_
 
-@pytest.yield_fixture()
+@pytest.fixture()
 def app(base_app):
     with base_app.app_context():
         yield base_app
 
-@pytest.yield_fixture()
+@pytest.fixture()
 def client(app):
     with app.test_client() as client:
         yield client
-        
-@pytest.yield_fixture()
+
+@pytest.fixture()
 def db(app):
     """Database fixture."""
     if not database_exists(str(db_.engine.url)):
@@ -166,7 +172,7 @@ def users(app, db):
         originalroleuser = create_test_user(email="originalroleuser@test.org")
         originalroleuser2 = create_test_user(email="originalroleuser2@test.org")
         student = User.query.filter_by(email="student@test.org").first()
-        
+
     role_count = Role.query.filter_by(name="System Administrator").count()
     if role_count != 1:
         sysadmin_role = ds.create_role(name="System Administrator")
@@ -273,35 +279,35 @@ def users(app, db):
         {"email": user.email, "id": user.id, "obj": user},
         {"email": student.email,"id": student.id, "obj": student}
     ]
-    
-@pytest.yield_fixture()
+
+@pytest.fixture()
 def es_app(app):
     with open(join(dirname(__file__),"data/mappings/item-v1.0.0.json"),"r") as f:
     #with open(join(dirname(__file__),"data/v6/records/record-v1.0.0.json"),"r") as f:
         mapping = json.load(f)
-    es = Elasticsearch("http://{}:9200".format(app.config["SEARCH_ELASTIC_HOSTS"]))
-    
+    es = search.cilent.Opensearch("http://{}:9200".format(app.config["SEARCH_ELASTIC_HOSTS"]))
+
     es.indices.create(
-        index=app.config["INDEXER_DEFAULT_INDEX"], 
+        index=app.config["INDEXER_DEFAULT_INDEX"],
         body=mapping, ignore=[400, 404]
     )
-    
+
     es.indices.put_alias(
         index=app.config["INDEXER_DEFAULT_INDEX"],
         name=app.config["SEARCH_UI_SEARCH_INDEX"],
         ignore=[400, 404],
     )
-    search = InvenioSearch(app, client=es)
+    InvenioSearch(app, client=es)
     #search.register_mappings("items", "tests.data")
     yield app
-    
+
     es.indices.delete_alias(
         index=app.config["INDEXER_DEFAULT_INDEX"],
         name=app.config["SEARCH_UI_SEARCH_INDEX"],
         ignore=[400, 404],
     )
     es.indices.delete(
-        index=app.config["INDEXER_DEFAULT_INDEX"], 
+        index=app.config["INDEXER_DEFAULT_INDEX"],
         ignore=[400, 404])
 
 
@@ -367,7 +373,7 @@ def schema():
 @pytest.fixture()
 def mock_execute():
     def factory(data):
-        dummy = response.Response(Search(), data)
+        dummy = dsl.response.Response(dsl.Search(), data)
         return dummy
     return factory
 
@@ -523,7 +529,7 @@ def identify(app, db):
         )
     db.session.add(iden)
     db.session.commit()
-    
+
     return [iden]
 
 @pytest.fixture()
@@ -533,7 +539,7 @@ def oaiset(app, db,without_oaiset_signals):
         name='test_name',
         description='some test description',
         search_pattern='test search')
-    
+
     db.session.add(oai)
     db.session.commit()
     return [oai]

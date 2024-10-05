@@ -11,7 +11,7 @@
 import importlib
 
 from flask import Flask
-from mock import patch
+from unittest.mock import patch
 from pkg_resources import EntryPoint
 
 from invenio_previewer import InvenioPreviewer
