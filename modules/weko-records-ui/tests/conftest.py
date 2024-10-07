@@ -334,22 +334,46 @@ def app(base_app):
         yield base_app
 
 @pytest.fixture()
-def esindex(app):
-    current_search_client.indices.delete(index='test-*')
+def esindex(app,base_app):
+    # current_search_client.indices.delete(index='test-*')
+    # with open("tests/data/mappings/item-v1.0.0.json","r") as f:
+    #     mapping = json.load(f)
+    # try:
+    #     current_search_client.indices.create(app.config["INDEXER_DEFAULT_INDEX"],body=mapping)
+    #     current_search_client.indices.put_alias(index=app.config["INDEXER_DEFAULT_INDEX"], name="test-weko")
+    # except:
+    #     current_search_client.indices.create("test-weko-items",body=mapping)
+    #     current_search_client.indices.put_alias(index="test-weko-items", name="test-weko")
+    # # print(current_search_client.indices.get_alias())
+
+    # try:
+    #     yield current_search_client
+    # finally:
+    #     current_search_client.indices.delete(index='test-*')
+    search_hosts = base_app.config["SEARCH_ELASTIC_HOSTS"]
+    search_client_config = base_app.config["SEARCH_CLIENT_CONFIG"]
+    search = OpenSearch(
+        hosts=[{'host': search_hosts, 'port': 9200}],
+        http_auth=search_client_config['http_auth'],
+        use_ssl=search_client_config['use_ssl'],
+        verify_certs=search_client_config['verify_certs'],
+    )
+
+    search.indices.delete(index='test-*')
     with open("tests/data/mappings/item-v1.0.0.json","r") as f:
         mapping = json.load(f)
     try:
-        current_search_client.indices.create(app.config["INDEXER_DEFAULT_INDEX"],body=mapping)
-        current_search_client.indices.put_alias(index=app.config["INDEXER_DEFAULT_INDEX"], name="test-weko")
+        search.indices.create(app.config["INDEXER_DEFAULT_INDEX"],body=mapping)
+        search.indices.put_alias(index=app.config["INDEXER_DEFAULT_INDEX"], name="test-weko")
     except:
-        current_search_client.indices.create("test-weko-items",body=mapping)
-        current_search_client.indices.put_alias(index="test-weko-items", name="test-weko")
+        search.indices.create("test-weko-items",body=mapping)
+        search.indices.put_alias(index="test-weko-items", name="test-weko")
     # print(current_search_client.indices.get_alias())
 
     try:
-        yield current_search_client
+        yield search
     finally:
-        current_search_client.indices.delete(index='test-*')
+        search.indices.delete(index='test-*')
 
 
 @pytest.yield_fixture()
@@ -4426,7 +4450,7 @@ def db_admin_settings(db):
 
 
 @pytest.fixture()
-def records_rest(app, db):
+def records_rest(app, db, location):
     rec_uuid = uuid.uuid4()
 
     depid = PersistentIdentifier.create(
